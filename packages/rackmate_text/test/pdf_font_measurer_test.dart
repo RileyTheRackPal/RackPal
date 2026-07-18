@@ -1,6 +1,6 @@
 // Smoke test for PdfFontMeasurer (docs/08-pdf-export.md §7.5).
 //
-// Uses the real bundled IBM Plex Sans Regular TTF -- not a placeholder --
+// Uses the real bundled Jost Regular TTF -- not a placeholder --
 // read via dart:io File (this package is pure Dart, no Flutter
 // rootBundle). The path is relative to THIS package's own directory, which
 // is what `dart test` (run from packages/rackmate_text) resolves against.
@@ -18,11 +18,11 @@ void main() {
     'bundled font, and caches identical repeats',
     () {
       final bytes = File(
-        '../../apps/rackmate/assets/fonts/IBMPlexSans-Regular.ttf',
+        '../../apps/rackmate/assets/fonts/Jost-Regular.ttf',
       ).readAsBytesSync();
 
       final doc = PdfDocument();
-      const font = FontRef('IBM Plex Sans');
+      const font = FontRef('Jost');
       final measurer = PdfFontMeasurer.fromBytes(doc, {font: bytes});
 
       const style = TextStyleSpec(

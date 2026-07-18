@@ -39,15 +39,21 @@ flutter:
   # makes the other silently fall back to a different font and every
   # measured metric diverges -- the exact failure CR-081 exists to
   # prevent. Family name must match `_familyFor` in
-  # rackmate_ui/src/draw/flutter_canvas.dart and the `FontRef('IBM Plex
-  # Sans')` used by both packages' test fixtures, verbatim.
+  # rackmate_ui/src/draw/flutter_canvas.dart and the `FontRef('Jost')`
+  # used by both packages' test fixtures, verbatim.
   #
-  # SCOPE NOTE: only Regular is bundled at this stage -- SemiBold,
-  # Condensed, Mono and Noto Sans Symbols (docs/08-pdf-export.md §10.1's
-  # full font table, CR-080) are a later stage's job.
+  # FONT CHOICE: Jost, a geometric sans in the Futura tradition -- chosen
+  # over CR-080's originally-specified IBM Plex Sans for a denser,
+  # control-panel-like read (the same reasoning that put Futura on Boeing
+  # cockpit placards). This supersedes CR-080's font pick; CR-080's other
+  # rulings (bundle twice, SIL-OFL-only, no built-in fallback) still hold.
+  #
+  # SCOPE NOTE: only Regular is bundled at this stage -- other weights and
+  # Noto Sans Symbols (docs/08-pdf-export.md §10.1's full font table) are a
+  # later stage's job.
   fonts:
-    - family: IBM Plex Sans
+    - family: Jost
       fonts:
-        - asset: assets/fonts/IBMPlexSans-Regular.ttf
+        - asset: assets/fonts/Jost-Regular.ttf
   assets:
-    - assets/fonts/IBMPlexSans-Regular.ttf
+    - assets/fonts/Jost-Regular.ttf

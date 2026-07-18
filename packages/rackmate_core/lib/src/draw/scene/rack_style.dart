@@ -10,11 +10,11 @@ import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/draw/text.dart';
 
 /// The font family every rack label uses. Matches the one bundled TTF
-/// (`apps/rackmate/assets/fonts/IBMPlexSans-Regular.ttf`) and the family
+/// (`apps/rackmate/assets/fonts/Jost-Regular.ttf`) and the family
 /// string `FlutterDiagramCanvas._familyFor` resolves (CR-080). No bold cut
 /// is bundled yet, so "bolder" labels are expressed through colour weight,
 /// not a heavier face — see [RackPalette].
-const FontRef kRackFont = FontRef('IBM Plex Sans');
+const FontRef kRackFont = FontRef('Jost');
 
 /// Packed-ARGB colours for one rack rendering. Defaults are a neutral
 /// light-theme greyscale; `rackmate_ui` overrides them from the active

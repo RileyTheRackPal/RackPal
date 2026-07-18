@@ -23,11 +23,11 @@ void main() {
     'throwing, and the resulting PDF bytes are non-empty',
     () async {
       final bytes = File(
-        '../../apps/rackmate/assets/fonts/IBMPlexSans-Regular.ttf',
+        '../../apps/rackmate/assets/fonts/Jost-Regular.ttf',
       ).readAsBytesSync();
 
       final doc = pw.Document();
-      const fontRef = FontRef('IBM Plex Sans');
+      const fontRef = FontRef('Jost');
       final measurer = PdfFontMeasurer.fromBytes(doc.document, {
         fontRef: bytes,
       });

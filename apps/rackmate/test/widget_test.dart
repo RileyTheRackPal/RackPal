@@ -14,9 +14,9 @@ void main() {
   late TextMeasurer measurer;
 
   setUpAll(() {
-    final bytes = File('assets/fonts/IBMPlexSans-Regular.ttf').readAsBytesSync();
+    final bytes = File('assets/fonts/Jost-Regular.ttf').readAsBytesSync();
     measurer = PdfFontMeasurer.fromBytes(PdfDocument(), {
-      const FontRef('IBM Plex Sans'): bytes,
+      const FontRef('Jost'): bytes,
     });
   });
 

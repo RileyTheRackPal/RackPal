@@ -78,7 +78,7 @@ import 'package:rackmate_ui/rackmate_ui.dart';
 
 // ── the fixture, per §11.2 ────────────────────────────────────────────────
 const String _kFixtureText = 'AV Wa To Ty'; // kerning-heavy on purpose
-const String _kFamily = 'IBM Plex Sans';
+const String _kFamily = 'Jost';
 const FontRef _kFont = FontRef(_kFamily);
 const DPt _kAt = DPt(100, 200);
 const double _kBoxHeight = 500; // the PDF page/box height we flip about
@@ -345,7 +345,7 @@ void main() {
 
 Uint8List _loadFontBytes() {
   // `flutter test` runs with CWD = the package root (apps/rackmate).
-  const rel = 'assets/fonts/IBMPlexSans-Regular.ttf';
+  const rel = 'assets/fonts/Jost-Regular.ttf';
   for (final candidate in <String>[
     rel,
     'apps/rackmate/$rel', // in case a runner is rooted at the repo top
@@ -355,7 +355,7 @@ Uint8List _loadFontBytes() {
   }
   throw StateError(
     'Could not find $rel from CWD ${Directory.current.path}. The parity '
-    'gate needs the real bundled IBM Plex Sans Regular TTF.',
+    'gate needs the real bundled Jost Regular TTF.',
   );
 }
 

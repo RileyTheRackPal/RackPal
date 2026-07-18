@@ -8,7 +8,7 @@
 // transform all run without throwing and produce a valid `ui.Picture` via
 // `recorder.endRecording()`.
 //
-// Uses the real bundled IBM Plex Sans Regular TTF, read via `dart:io`
+// Uses the real bundled Jost Regular TTF, read via `dart:io`
 // `File` -- this package already depends on `rackmate_text`, and `flutter
 // test` can read files from disk the same as any Dart VM. Path is
 // relative to THIS package's own directory (packages/rackmate_ui), which
@@ -31,11 +31,11 @@ void main() {
     'throwing, and the recording ends as a valid ui.Picture',
     () {
       final bytes = File(
-        '../../apps/rackmate/assets/fonts/IBMPlexSans-Regular.ttf',
+        '../../apps/rackmate/assets/fonts/Jost-Regular.ttf',
       ).readAsBytesSync();
 
       final doc = PdfDocument();
-      const fontRef = FontRef('IBM Plex Sans');
+      const fontRef = FontRef('Jost');
       final measurer = PdfFontMeasurer.fromBytes(doc, {fontRef: bytes});
 
       const textStyle = TextStyleSpec(

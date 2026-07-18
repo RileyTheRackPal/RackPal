@@ -7,7 +7,7 @@ import 'package:rackmate_ui/rackmate_ui.dart';
 
 // M1: the rack editor canvas. The viewport skeleton now hosts a real rack
 // chassis and device bodies (docs/03 §7, CR-086). The one `TextMeasurer`
-// (PdfFontMeasurer, CR-081) is built once from the bundled IBM Plex Sans TTF
+// (PdfFontMeasurer, CR-081) is built once from the bundled Jost TTF
 // and injected into the UI so on-screen layout matches the PDF backend.
 // Providers, menus and the three-panel shell (docs/04 §1) stack on later.
 Future<void> main() async {
@@ -20,8 +20,8 @@ Future<void> main() async {
 /// backend needs SOME `PdfDocument` to construct a `PdfTtfFont`; the metrics
 /// it reads are document-independent (CR-081, docs/08 §7.5).
 Future<TextMeasurer> _loadMeasurer() async {
-  const family = FontRef('IBM Plex Sans');
-  final bytes = await rootBundle.load('assets/fonts/IBMPlexSans-Regular.ttf');
+  const family = FontRef('Jost');
+  final bytes = await rootBundle.load('assets/fonts/Jost-Regular.ttf');
   return PdfFontMeasurer.fromBytes(PdfDocument(), {
     family: bytes.buffer.asUint8List(),
   });

@@ -210,7 +210,7 @@ void main() {
       final canvas = _RecordingCanvas();
       const stroke = Stroke(argb: 0xFF000000, widthPt: 1);
       const style = TextStyleSpec(
-        font: FontRef('IBM Plex Sans'),
+        font: FontRef('Jost'),
         sizePt: 12,
         argb: 0xFF000000,
         anchor: TextAnchor.baselineLeft,

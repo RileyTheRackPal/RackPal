@@ -121,10 +121,10 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
   /// rasterises the SAME TTF `PdfFontMeasurer`/`PdfTtfFont` measure on the
   /// PDF side (CR-080, docs/08-pdf-export.md §10.2).
   ///
-  /// SCOPE NOTE: only IBM Plex Sans Regular is bundled at this stage (see
+  /// SCOPE NOTE: only Jost Regular is bundled at this stage (see
   /// `FontRef`'s own doc comment in rackmate_core/src/draw/text.dart), and
   /// `FontRef.family` already carries the exact pubspec family string
-  /// (`'IBM Plex Sans'` -- matching both `rackmate_text`'s and
+  /// (`'Jost'` -- matching both `rackmate_text`'s and
   /// `rackmate_export`'s test fixtures), so this is a passthrough for now.
   /// `bold` is not wired to a distinct family yet because no bold TTF is
   /// bundled -- a later stage adds the SemiBold cut and must branch here.

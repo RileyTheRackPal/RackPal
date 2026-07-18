@@ -18,8 +18,8 @@ import 'package:rackmate_core/src/draw/geometry.dart';
 
 /// A bundled font family + weight, identified minimally.
 ///
-/// SCOPE NOTE: only IBM Plex Sans **Regular** is bundled as of this stage
-/// (`apps/rackmate/assets/fonts/IBMPlexSans-Regular.ttf`) — Bold,
+/// SCOPE NOTE: only Jost **Regular** is bundled as of this stage
+/// (`apps/rackmate/assets/fonts/Jost-Regular.ttf`) — Bold,
 /// Condensed, Mono and Noto Sans Symbols are a later stage's job per the
 /// architecture doc's font table. `bold` exists so callers can express
 /// intent now without a breaking change later, but nothing currently
