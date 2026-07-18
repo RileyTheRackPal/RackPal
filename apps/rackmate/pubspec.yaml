@@ -11,6 +11,11 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
+  # Used by lib/main.dart to build the shared PdfFontMeasurer (CR-081): the
+  # metrics font needs a PdfDocument, which lives in the low-level pdf API.
+  # rackmate_ui deliberately does NOT depend on pdf, so the app is the layer
+  # that constructs the one concrete measurer and injects it into the UI.
+  pdf: ^3.13.0
   rackmate_core:
     path: ../../packages/rackmate_core
   rackmate_export:
@@ -23,11 +28,6 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  # Imported directly by test/baseline_parity_test.dart (the CR-081/AC-007
-  # baseline-parity gate) to drive the real PdfDiagramCanvas through a real
-  # PdfGraphics and decode the emitted content stream. Elsewhere `pdf` is only
-  # a transitive dep via rackmate_export/rackmate_text.
-  pdf: ^3.13.0
 
 flutter:
   uses-material-design: true
