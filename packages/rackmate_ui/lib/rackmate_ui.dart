@@ -9,4 +9,8 @@
 /// apps/rackmate).
 library;
 
+export 'src/canvas/canvas_intent.dart';
+export 'src/canvas/grid_painter.dart';
+export 'src/canvas/rack_canvas_screen.dart';
+export 'src/canvas/viewport_controller.dart';
 export 'src/draw/flutter_canvas.dart';

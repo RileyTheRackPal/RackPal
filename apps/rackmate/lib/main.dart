@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:rackmate_ui/rackmate_ui.dart';
 
-// M0 placeholder: "no UI beyond a window that opens" (docs/09-roadmap.md M0 goal).
-// The real shell — providers, menus, viewport — lands at M1 (docs/03-architecture.md §2.2).
+// M1 walking skeleton: the viewport comes first (docs/09-roadmap.md build
+// order; docs/03-architecture.md §4.4). This shows the pannable/zoomable
+// background grid via RackCanvasScreen, replacing the M0 placeholder Text.
+// Providers, menus and the three-panel shell (docs/04-rack-editor.md §1) stack
+// on top in later stages.
 void main() {
   runApp(const RackMateApp());
 }
@@ -15,9 +19,7 @@ class RackMateApp extends StatelessWidget {
       title: 'RackMate',
       theme: ThemeData(colorSchemeSeed: Colors.blueGrey, useMaterial3: true),
       home: const Scaffold(
-        body: Center(
-          child: Text('RackMate — M0 foundations'),
-        ),
+        body: RackCanvasScreen(),
       ),
     );
   }
