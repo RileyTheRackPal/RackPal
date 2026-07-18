@@ -48,3 +48,7 @@ test/**/failures/
 # App artifacts
 *.rackmate.bak
 *.rackmate.autosave
+
+# Python (tools/)
+__pycache__/
+*.pyc
