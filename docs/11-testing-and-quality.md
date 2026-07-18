@@ -1,0 +1,364 @@
+# Testing and Quality
+
+RackMate's deliverable is a printed sheet set an installer follows in an attic at 7 pm, so the quality bar is set by G1 ("the schedule is the deliverable") and G4 ("never fabricate data"): a test suite that proves the drawing is pretty but not that the schedule is right has tested the wrong thing. This document fixes the testing pyramid, the fixture corpora, the golden strategy and its font determinism, how PDF output is asserted without byte comparison, the performance harness, the CI matrix, the lint stance, the definition of done, and the diagnostics/privacy posture. It is binding on every milestone exit criterion in [Roadmap](09-roadmap.md); where a test is named there, its mechanism is specified here.
+
+---
+
+## 1. The pyramid, and why it is bottom-heavy
+
+The `rackmate_core` package is pure, synchronous Dart with no `package:flutter`, no `dart:ui` and no `package:pdf` (per CR-083). Every rule, every derived number, every route and every byte of the file format is therefore testable in `dart test` in milliseconds, with no binding, no golden, and no runner variance. That is the reason the pyramid is shaped the way it is.
+
+```text
+                 ┌───────────────────────────┐
+        ~6       │  manual / hardware         │  print matrix, CVD sim, mixed-DPI,
+                 │  (pre-release checklist)   │  domain-expert review        AC-058/D13
+                 ├───────────────────────────┤
+       ~25       │  integration_test          │  file lifecycle, crash recovery
+                 ├───────────────────────────┤
+      ~150       │  widget + pixel goldens    │  Linux only, 2 renderers, small
+                 ├───────────────────────────┤
+      ~400       │  display-list goldens      │  DiagramScene text dumps
+                 ├───────────────────────────┤
+   ~2 000+       │  pure-Dart unit + property │  model, rules, routing, codecs
+                 └───────────────────────────┘
+```
+
+| Tier | Package | Runs | Gate |
+|---|---|---|---|
+| Unit / property | `rackmate_core`, `rackmate_text`, `rackmate_export` | every PR, all 3 OSes | blocking |
+| Display-list goldens | `rackmate_core` (`dart test`) | every PR, all 3 OSes | blocking |
+| Widget / pixel goldens | `rackmate_ui` | every PR, **Linux only** | blocking |
+| Integration | `apps/rackmate` | every PR, Windows + macOS | blocking |
+| Performance | `rackmate_core/test/perf/` | every PR under `perf` tag | warn-only for 3 months, then blocking |
+| Pixel-diff PDF | `rackmate_export` | nightly | non-blocking, triaged |
+| Manual / hardware | — | per milestone | milestone exit criterion |
+
+Rejected alternative: a Flutter-first suite where the model is exercised through widgets. It makes every domain assertion cost a pump-and-settle and it cannot run the 1,000-seed property tests at all.
+
+---
+
+## 2. Unit testing the pure-Dart core
+
+### 2.1 Model invariants and units
+
+Two tests are written **before any other code in the repository** (CR-001, AC-001), because they discriminate between the four unit bases the design documents proposed and only one survives:
+
+```dart
+test('EIA 1/32-inch inter-panel clearance is exact', () {
+  expect(Len.inches(1, 32), Len(793750));            // no rounding, no double
+});
+
+test('45U stack accumulates zero error', () {
+  var y = Len.zero;
+  for (var i = 0; i < 45; i++) { y += k1RackUnit; }  // 44_450_000 nm
+  expect(y, Len(2_000_250_000));
+  expect(y.toMillimetres(), 2000.25);
+});
+```
+
+Companion invariant tests, each named for the ruling it defends: `ruIndex` is 1-based bottom-origin and asserted at load (CR-025); `heightU` is 1..60 (CR-038); `order` is a `FracIndex` everywhere it appears and re-inserting between two neighbours never renumbers a sibling (CR-027); a `Conductor` spans exactly two `Endpoint`s while a `Link` may reach N devices (CR-014); `Service.netId` is non-null and `Link.netId` does not exist (CR-010); `dominantSignalFamily` is never present in serialized output (CR-009, CR-115); `typicalWatts` is never inferred from `nameplateWatts` (G4, AC-039); `Len`→PDF-point conversion happens in exactly one function (CR-007).
+
+Two mechanical guards, both dependency-free, both cheap enough to keep forever:
+
+1. `no_flutter_import_test.dart` — greps `packages/rackmate_core/lib` for `package:flutter/`, `dart:ui` and `package:pdf/` and fails the build with the offending path (CR-083). Belt and braces: core's pubspec has no `flutter:` key, so a stray import is also a compile error.
+2. `banned_names_test.dart` — greps the whole repository, including prose and comments, for the §4.7 banned vocabulary (`Connection`, `PhysicalLink`, `CableType`, `bottomU`, `refDes`, `StructureDrop`, `RulePredicate`, `RendererCaps`, `ObstacleField`, `blockExportOnErrors`, `Money`, …). N2 makes a banned word banned in prose too; without a test that is an aspiration. One allowlisted file: the migration note that explains each removal.
+3. A third grep asserts no entity setter is invoked outside `src/commands/`, backing the `@internal` decision (AC-013).
+
+### 2.2 Command round-trip and epoch coverage
+
+```dart
+test('apply ∘ revert == identity over 1000 seeded (doc, command) pairs', () {
+  for (var seed = 0; seed < 1000; seed++) {
+    final rng = Random(seed);
+    final doc = randomDocument(rng);              // domain-aware, hand-rolled
+    final before = DocumentCodec.encode(doc);     // bytes, not a semantic compare
+    final cmd = randomCommandFor(doc, rng);
+    cmd..apply(doc)..revert(doc);
+    expect(DocumentCodec.encode(doc), before, reason: 'seed=$seed');
+  }
+});
+```
+
+The generator must emit add-device commands so that `TemplateSnapshot` refcounting is covered for free (AC-015), and the comparison is on **encoded bytes**, which is what makes it also assert `templates.keys` ordering. The alternation invariant `apply; revert; apply == apply` runs on the same seeds. Rejected alternative: a generic property-testing package with an automatic shrinker — it cannot generate valid RU spans or compatible connectors, and a failing seed number is a perfectly good repro.
+
+The **epoch-mask coverage test** (AC-014) is forty lines and is the highest value-per-line test in the plan: for every registered command type, snapshot every derived output, apply the command, snapshot again, diff, and assert the command's declared `touches` mask covers every epoch that actually changed. Hand-declared masks with "when in doubt, over-declare" produce stale renders, which is the hardest bug class to reproduce. `lodLevel` is an explicit parameter of every `SceneBuilder.build*` and part of every cache key, so the same test catches LOD-keyed staleness (AC-016 #13).
+
+### 2.3 Validation rules, addressed by rule ID
+
+The v1 catalogue is 22 rules (AC-040) and every one is a Dart function in a registry keyed by `ruleId` (CR-024, AC-011). The gate is AC-051, and it is absolute: **no rule ships without its fixture pair.**
+
+```text
+packages/rackmate_core/test/fixtures/drc/
+  DIR-003.bad.rackmate      # output driven into output — the rule that describes hardware damage
+  DIR-003.near.rackmate     # bidirectional port pair, superficially identical, must be silent
+  SIG-001.bad.rackmate      SIG-001.near.rackmate
+  PWR-001.bad.rackmate      PWR-001.near.rackmate
+  ...
+  expectations.json         # ruleId -> {bad: [findingId...], near: []}
+```
+
+One table-driven test walks `expectations.json`: the `.bad` document must produce **exactly** that finding — not merely include it — and the `.near` document must produce **none** from that rule. A near-miss that is one field away from the bad case is what stops a rule from being written as `return true`. Three further assertions ride along: every `ruleId` in `docs/rules.md` resolves to a registered function and vice versa (a rule not in the catalogue does not exist, CR-021); every rule's severity is one of the CR-018 vocabulary with `Severity.info` absent; and **no rule at any severity prevents a PDF from being written to disk** (CR-022, G3), asserted by exporting each `.bad` fixture and checking the file exists.
+
+Fixtures are `.rackmate` files, not Dart builders, so a domain expert can open one in the app during the M5 sign-off review (AC-051) without reading code.
+
+### 2.4 Routing determinism
+
+The router is Sugiyama layering plus interval-graph channel routing with **full deterministic recompute** (CR-013); `ObstacleField` and `RouteCache` do not exist. Determinism is therefore not an implementation detail, it is the property that makes goldens possible, and it is asserted directly:
+
+- **Byte-identical replay.** Same `RackDocument` in ⇒ byte-identical `DiagramScene` dump out, asserted 20× on one 300-connection fixture within a run, and across a run with a shuffled iteration order of the entity maps (flat UUID-keyed maps must not leak hash order into layout).
+- **Insertion-order independence.** Building the same graph by adding links in a different sequence produces the same layout. This is the assertion that catches an accidental dependency on map order.
+- **Phase 5 is not on the commit path.** The crossing sweep and hop arcs run at paint time, viewport-scoped (AC-016 #20), so a routing test never observes them; a separate test asserts the commit-path scene contains zero `HOP` ops and that hop generation degrades to `gap` mode above the crossing threshold. The real crossing count `X` on the 300-connection fixture is **measured and recorded**, never assumed.
+
+### 2.5 Schema migrations and the golden corpus
+
+The migration corpus is the highest-value directory in the repository: it is what allows the model to be refactored for years. `migrateToCurrent` returns `Outcome<T>` and never throws for an expected condition (CR-093).
+
+```text
+packages/rackmate_core/test/fixtures/schema/
+  v1_minimal.rackmate         # one empty 42U rack
+  v1_full.rackmate            # every entity type, every connector, every media type
+  v1_unicode.rackmate         # Ω ° ± µ → × ≈ — " " plus an accented client name
+  v1_unknown_fields.rackmate  # hand-edited with future keys at three nesting depths
+  v2_*.rackmate               # added the day v2 ships. NEVER edited afterwards.
+```
+
+Assertions per fixture: it migrates to a valid current document; unknown fields survive the round-trip and are re-emitted in their original position (`unknown` on every persisted object, §4.4); `minReaderVersion > kSchemaVersion` ⇒ `Err(NewerSchema(refuse))`; `schemaVersion > kSchemaVersion` with a readable `minReaderVersion` ⇒ `Ok(doc, openReadOnly: true)` (CR-093, defect fixed). `.rmdev` has its own parallel chain and its own corpus (CR-063).
+
+The **byte round-trip** is the contract, not the semantic one (CR-117): `write(read(bytes)) == bytes`. This is what constrains key ordering — including inside nested `unknown` maps — timestamp precision, and integer formatting, and those are exactly the things that otherwise produce spurious git diffs and a lying dirty flag. Rejected alternative: `read(write(read(x))) == read(x)`, which passes while the file churns.
+
+The four starter projects (AC-052) are real `.rackmate` files and do triple duty: golden corpus, performance fixtures, screenshot source. At least one exercises the Structure device and at least one exports a full sheet set.
+
+### 2.6 Registry and catalog assertions
+
+The §6.7 acceptance criteria are unit tests, not aspirations, and they run in `dart test` with no rendering:
+
+| Test | Assertion | Ruling |
+|---|---|---|
+| PAL-1 | WCAG relative luminance for all eight domain colours; for every pair within 0.10, differing dash class **and** weight ratio ≥ 1.4 | §6.7/4, AC-054 |
+| Dash floor | every shipped dash period ≥ 4.25 pt (1.5 mm) | §6.7/5 |
+| Glyph coverage | every registry glyph resolves in `RackBody` or `Noto Sans Symbols 2` | §6.7/6, CR-080 |
+| Referential integrity | every `defaultConnector`, `typicalMedia`, `MediaTypeDef.supports` and `SignalFamilyDef.domain` resolves; every connector on a shipped template has a footprint | §6.7/7, AC-050/A2.2 |
+| Prefix collision | no catalog template shares a `typePrefix` with a system prefix (`STR` stays with Structure, streaming is `STRM`) | CR-043 |
+| Provenance | every safety-adjacent field (`pinoutVariant`, `impedanceOhms`, `poeBudgetWatts`, `maxUnsupportedMass`) has a citation in `assets/catalog/sources.md`; an uncited template fails the build | AC-052 |
+
+The provenance test is what sets the catalog count, not a target number (CR-061) — see [Seed devices](catalog/seed-devices.md).
+
+---
+
+## 3. Goldens: display lists first, pixels second
+
+**Do not pixel-diff the canvas as the first line of defence, and do not byte-diff the PDF.** The primary painter regression net is a canonical deterministic text dump of the `DiagramScene`:
+
+```text
+RECT      l=0 t=0 w=48260 h=186690  fill=#1A1D21 stroke=#3A4048/0.75pt
+TEXT      "U42" @(-2400,900) font=RackMono size=6.0pt anchor=centerRight baseline=903.4
+POLYLINE  [(12000,4445),(20000,4445),(20000,17780)] stroke=#E8A33D/1.5pt dash=none
+SVGPATH   "M0 0h8v6h-8z" @(31000,8890) fill=#2AB3A6
+```
+
+This is reviewable in a pull request — a reviewer reads *"the wire moved 2 mm and changed colour"*, not *"47 pixels differ"* — it is deterministic across platforms and Flutter versions, it runs under `dart test` with no Flutter binding, and because CR-086 puts screen and print on **one** rendering path it covers both simultaneously. Device faceplates are covered by construction, which is the parity mechanism CR-086 exists to create. Goldens pin `lodLevel` explicitly, with at least one golden at print LOD (AC-016 #13).
+
+Pixel goldens then serve one narrow purpose: proving the two backends are faithful interpreters of that list. Keep them small and few.
+
+- `matchesGoldenFile` via plain `flutter_test`. No `golden_toolkit`, no `alchemist` — the value over a good `flutter_test_config.dart` is small and the maintenance risk is not. VERIFY: `golden_toolkit` maintenance status at the time of scaffolding.
+- Golden the device faceplate renderer and the wire layer **separately**. Never golden the whole canvas: one pixel of change anywhere fails everything and reviewers begin rubber-stamping.
+- `debugDisableShadows = true`, fixed `Random` seeds, no animations, fixed `Size`. A separate invariant test asserts the scene contains no gradient, shadow, blur, blend mode or shader op — CR-088 deleted `RendererCaps` and promoted that rule from prose to a test — and that `saveLayer` count is zero.
+- Tagged `@Tags(['golden'])` in `dart_test.yaml` so non-Linux jobs skip them.
+
+### 3.1 Font strategy — the thing that actually makes goldens flaky
+
+Three families ship, aliased so no test ever names a system font: `RackBody` = IBM Plex Sans (Regular + SemiBold), `RackCond` = IBM Plex Sans Condensed, `RackMono` = IBM Plex Mono (Regular + Bold), fallback Noto Sans Symbols 2, all SIL OFL 1.1 (CR-080). Rejected alternative: Inter + JetBrains Mono, which lacks a true condensed cut and the `Ω`/`µ` coverage the schedule needs.
+
+Four rules remove the system-font variable entirely:
+
+1. Register the bundled TTFs in `flutter_test_config.dart` via `FontLoader` before any golden runs.
+2. A test asserts **no golden scene references a family other than `RackBody`, `RackCond` or `RackMono`** — a fallback silently substituting Ahem or Roboto is the classic invisible golden drift.
+3. Goldens run on **Linux only**, with a **pinned** Flutter version. Windows and macOS jobs run `--exclude-tags golden`. Per-platform golden sets collapse under maintenance cost within months; this is the only approach that holds.
+4. Golden regeneration is a deliberate, reviewed step of every Flutter upgrade, because a minor bump routinely shifts antialiasing by a pixel.
+
+---
+
+## 4. PDF output testing
+
+### 4.1 Why byte comparison fails
+
+A PDF's bytes are not deterministic: `/CreationDate` and `/ModDate` are wall-clock, object numbering and the xref table depend on emission order, and font subsetting depends on the glyph set encountered. Hashing the file therefore produces a test that fails on a clock tick and passes on a wrong drawing. **Never hash the file.** Generation itself is made as deterministic as it can be — a fixed `DateTime` injected through the same `Clock` the document uses, a fixed document ID, no randomness in layout (CR-013) — so that a diff between two runs of the same fixture is small and explicable, but the assertion is structural.
+
+### 4.2 Structural assertions, every PR
+
+Generate a document from each starter project and assert: page count equals the dry-run count; page sizes match the requested `ExportSpec`; every font referenced is embedded and subset; no page is empty; the **schedule row count equals the `Link` count** for the sheet's filter (one row per cable, services on a sub-line, per CR-010); every `W###` designator on the diagram appears in the schedule and vice versa; the 40-sheet warning fires and the 2000-sheet cap is not hit (AC-050/A7.4); the legend prints **one row per named cable type**, not per domain, and all ten requirement-4 types are present (AC-054); `T0.02` lists every `AckedFinding` with reason, author and date; and — the G3 assertion — a document with errors at every severity still writes a file.
+
+### 4.3 The CR-081 baseline parity assertion, concretely
+
+CR-081 makes one injected `TextMeasurer`, backed by `PdfFont.stringMetrics` and living in `rackmate_text`, the single source of truth for both backends, and AC-007 requires the parity test to assert on **baseline Y**, not just a bounding box. That is directly testable in four steps:
+
+```dart
+const kFixtures = ['AV Wa To Ty', 'W014', 'WO14', 'Ω 75 µs', 'RK1-PP2-24'];
+
+for (final s in kFixtures) {
+  for (final anchor in TextAnchor.values) {
+    // 1. One scene, built once, in pure Dart with the shared measurer.
+    final scene = SceneBuilder(measurer: PdfFontMeasurer(RackBody.regular))
+        .buildTextProbe(s, anchor, size: 8.0);
+    final op = scene.ops.single as TextOp;   // carries the resolved baseline Y
+
+    // 2. What the PDF backend actually emits: the Tm/Td translation in the
+    //    content stream for this op, un-flipped by the single global flip (CR-085).
+    final pdfBaselineY = PdfProbe.baselineOf(renderToStream(op));   // VERIFY: content-stream
+                                                                    // introspection API in package:pdf
+
+    // 3. What Flutter actually paints, with kern AND liga disabled (CR-081).
+    final painter = TextPainter(text: op.toTextSpan(), textDirection: TextDirection.ltr)
+      ..layout();
+    final uiBaselineY = op.origin.y + painter.computeDistanceToActualBaseline(TextBaseline.alphabetic);
+
+    // 4. Both must agree with the shared value and with each other.
+    expect(pdfBaselineY, closeTo(op.baselineY, op.baselineY.abs() * 0.005));
+    expect(uiBaselineY,  closeTo(op.baselineY, op.baselineY.abs() * 0.005));
+    expect(painter.width, closeTo(op.advanceWidth, op.advanceWidth * 0.005));
+  }
+}
+```
+
+`'AV Wa To Ty'` is the kerning-heavy fixture named in AC-007; if Flutter applies GPOS kerning and dart_pdf does not, this string diverges first. `'W014'` versus `'WO14'` is the glyph-disambiguation case CR-080's font argument rests on. The anchor loop matters because `TextAnchor` resolves in one shared pure-Dart helper (CR-081) — the test proves neither adapter guesses a baseline, which is the failure that is otherwise diagnosed months later as "the PDF is wrong". A second test covers CR-085: a label rotated 90° for a vertical rail lands in the same place under the global flip as an unrotated one does under composition, which per-coordinate negation could not satisfy.
+
+### 4.4 Pixel diff, nightly only
+
+Render pages with poppler's `pdftoppm` in the Linux job and image-diff against references. Nightly, not per-PR: it is slow and mildly flaky, and it is the third line of defence behind structural assertions and display-list goldens. VERIFY: `pdftoppm` availability and version pinning on the GitHub-hosted Ubuntu image.
+
+---
+
+## 5. Widget and integration tests
+
+**Widget tests** cover the surfaces where state and UI meet: inspector panels binding typed `DeviceOverrides` (CR-053); the device-builder port grid with fill-down and TSV paste; menu enablement (Undo disabled at sequence 0, enabled after one command, with the correct label); the spring-back reason chip and its `[ Connect anyway ]` affordance (CR-017); the Staging Bin return affordance (CR-032). **Leak tests** via `leak_tracker_flutter_testing` run on every canvas widget test, targeting undisposed `TextPainter` and `ui.Picture` — with a 12,000-entry label cache (AC-009) that is not optional.
+
+**Integration tests** (`integration_test`, desktop) cover the file lifecycle end to end: new → place devices → connect → save → close → reopen → assert a **byte-identical** document; the unsaved-changes close interception; the crash-recovery path (kill mid-edit, relaunch, assert the recovery prompt, accept, assert the document matches); open a `.rackmate` with a newer `minReaderVersion` and assert the refuse path, then one with a newer `schemaVersion` only and assert the read-only banner (CR-093). Two error-surface cases from AC-058/D3 are integration tests because nothing else catches them: **target PDF open in Acrobat** — the most common Windows export failure — and two app instances on one file.
+
+The keyboard connection path (AC-058/D11) is asserted at both levels: a widget test drives select port → `W` → `Tab`/`Shift+Tab` across all ports → `Enter` and asserts one `Link` results; the NVDA/VoiceOver announcement matrix is manual and gated at M7.
+
+---
+
+## 6. Performance testing against the budget
+
+The budget lives in [Architecture](03-architecture.md); this is how it is defended. Scale targets are 200 devices / 2,000 ports / 1,000 links, hard caps at 500 / 6,000 / 3,000, with a soft warning at 1.5× and an open-read-only gate at 3× (AC-058/D14).
+
+| Operation | Target (p95) | Harness |
+|---|---|---|
+| Commit a command | **≤ 16 ms**, ≤ 8 ms reserved for non-paint terms (re-baselined by AC-008) | `benchmark_harness` + op count |
+| Undo / redo step | ≤ 4 ms | core benchmark |
+| Full re-route, 1,000 links, cold | ≤ 40 ms | core benchmark |
+| Full DRC sweep (isolate) | ≤ 150 ms, no UI hitch | isolate timing |
+| Load → first paint (500 KB) | ≤ 400 ms | integration `Stopwatch` |
+| Explicit save (500 KB, atomic) | ≤ 150 ms | integration test |
+| PDF export, 8-sheet set | ≤ 2.5 s, UI never blocks > 16 ms | export benchmark |
+| Cold start → empty document | ≤ 1.2 s (includes lazy `PdfTtfFont` first-paint cost, AC-016 #18) | `--trace-startup` |
+
+Three mechanisms, and the first one is the CI signal:
+
+1. **Op count per layer, not wall time.** AC-008 is explicit: op count is stable across CI runners and wall time is not. The harness asserts that an edit to one HDMI run rebuilds ~1,200 ops in one of the eight per-domain sub-pictures and that the other seven are untouched. Wall-clock thresholds are asserted too, but the job is **warn-only for the first three months** — establish the baseline curve on runner hardware before it can fail a build, or three months are spent chasing variance instead of writing the app.
+2. **The LOD gate is a test, not an intention** (AC-009): at fit-to-sheet zoom, assert **zero text runs laid out**. `dashPath` is explicitly profiled rather than assumed cheap (AC-016 #17).
+3. **DevTools timeline on demand**, driven by a scripted 30-second pan/zoom/drag `integration_test` under `--profile`, asserting `frame_build_times` and `frame_rasterizer_times` p95 from `TimelineSummary`. Not per-PR: desktop CI runners have no GPU worth trusting.
+
+A three-item manual checklist catches what nothing automated will: `debugRepaintRainbowEnabled` (only the overlay flickers during a drag), `checkerboardOffscreenLayers` (must be zero — any `saveLayer` is a bug), and dragging the window between a 4K and a 1080p monitor, because mixed-DPI breaks naive viewport code and Windows users genuinely run that configuration.
+
+---
+
+## 7. CI
+
+```yaml
+# .github/workflows/ci.yaml — shape, not a full listing
+jobs:
+  analyze-and-test:
+    strategy: { fail-fast: false, matrix: { os: [ubuntu-latest, windows-latest, macos-latest] } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { flutter-version: '3.44.4', channel: stable, cache: true }   # PINNED (goldens)
+      - uses: actions/cache@v4                      # ~/.pub-cache keyed on pubspec.lock
+      - run: dart pub get                           # workspace root resolves all members
+      - run: dart analyze --fatal-infos --fatal-warnings
+      - run: dart format --output=none --set-exit-if-changed .
+      - run: dart test                              # core + text + export, all 3 OSes
+      - run: flutter gen-l10n && git diff --exit-code    # AC-058/D12: generated l10n is current
+      - run: flutter test --exclude-tags golden
+      - run: flutter build windows --release        # if: windows
+  goldens:
+    runs-on: ubuntu-latest                          # ONE platform only, see §3.1
+    steps: [ ..., run: flutter test --tags golden ]
+  perf-budget:
+    runs-on: ubuntu-latest
+    steps: [ ..., run: dart test --tags perf ]      # warn-only for the first 3 months
+  nightly-pdf-pixels:
+    if: github.event_name == 'schedule'
+    steps: [ ..., run: sudo apt-get install -y poppler-utils, run: dart test --tags pdf-pixel ]
+```
+
+Caching: the Flutter SDK via `flutter-action`'s `cache: true`, and `~/.pub-cache` keyed on `pubspec.lock`. Do not cache `build/` — a stale plugin registrant costs more debugging time than a cold build costs wall time.
+
+Artifacts uploaded on every run: failed golden `*_testImage.png`/`*_masterImage.png` pairs, the generated PDFs from the structural-assertion job (a reviewer looking at the actual sheet resolves most export failures in seconds), the perf JSON so the baseline curve can be plotted over time, and on tagged builds the Windows installer plus its symbols. The Flutter version pin is load-bearing and lives in exactly one place, referenced by every job.
+
+---
+
+## 8. Linting and `analysis_options.yaml`
+
+`very_good_analysis`, **pinned exactly** (`9.0.0`, not `^9.0.0`) and bumped deliberately, because a minor bump of a third-party lint set can fail CI on code nobody touched. Fallback if the strictness proves noisy in practice: `flutter_lints`. It is stricter than `flutter_lints` where it matters for a document editor — `prefer_final`, `avoid_dynamic_calls`, and the unawaited-future family.
+
+Project additions on top of the base set:
+
+- `--fatal-infos --fatal-warnings` in CI. An info-level lint that nobody fixes is a lint that trains people to ignore output.
+- `public_member_api_docs` **on for `rackmate_core` only**. The core is the shared vocabulary; the UI package is not.
+- Generated code (`*.g.dart`, `l10n/`) excluded; nothing else is.
+- Custom naming is enforced by test rather than by lint, because no analyzer rule expresses it: N3 (types `UpperCamelCase`, JSON keys `lowerCamelCase`, registry IDs `lower.dotted.snake`, tokens `UPPER_SNAKE`, rule IDs `AAA-000`) and N4 (a serialized `weight` or `length` without a unit suffix or a unit type is a defect) are asserted over the codec layer in `naming_conventions_test.dart`.
+
+VERIFY: `very_good_analysis` 9.x rule set against Dart 3.12 before pinning.
+
+---
+
+## 9. Definition of done
+
+A change is done when all of the following are true. This list is the PR checklist and it is short on purpose.
+
+1. `dart analyze --fatal-infos --fatal-warnings` and `dart format` are clean.
+2. New behaviour has a test at the **lowest tier that can express it** — a rule gets fixtures, not a widget test; a layout change gets a display-list golden, not a screenshot.
+3. A new DRC rule ships with its `.bad`/`.near` fixture pair (AC-051). No exceptions; this is the gate that holds the v1 catalogue at 22.
+4. A new command declares its `touches` mask and passes the epoch-coverage test (AC-014), and participates in the round-trip property test.
+5. A format change adds a schema fixture on the day it ships and never edits an existing one (§2.5).
+6. A new name exists in `docs/glossary.md` and no banned name was introduced (§4.7, N2).
+7. Any user-visible string is localisable and any number that could be unknown renders `—` with an unknown count in its rollup (G4).
+8. Goldens that changed were regenerated deliberately and the diff was read, not rubber-stamped.
+
+A milestone is done when its exit criterion in [Roadmap](09-roadmap.md) is demonstrated by running something, CI is green, goldens pass, and the app opens all four starter projects. A milestone that ends with a known-broken build has not ended.
+
+---
+
+## 10. Crash reporting, diagnostics, and the privacy stance
+
+**No telemetry by default.** RackMate is a locally installed professional tool holding client project data; silent network egress is a trust violation and for some commercial clients a contractual one.
+
+- On an uncaught error, write a redacted bundle plus stack to `crashes/<timestamp>.json` in application support. `ErrorWidget.builder` is replaced by a neutral pane offering "Copy diagnostics" and "Save a recovery copy" — a red-and-yellow error box inside a professional tool destroys credibility.
+- On next launch, offer **View report** (showing the exact JSON — no hidden payload), **Send**, and **Never ask again**. Nothing leaves the machine without an opt-in, and then only to a self-hosted Sentry, which is deliberately **not a v1 dependency** until there is somewhere to send reports.
+- **Recovery files are never attached automatically (CR-096).** A recovery file is a complete project containing the client's name and site address. The crash dialog offers an explicit, **default-off** "Attach the project file" checkbox labelled *"This includes your client's name and site address."* The design document contradicted itself here; this is the resolution.
+- The diagnostics bundle carries versions, document **statistics** (device count, link count, schema version), the last 200 log records, and epoch/`sequence` values — never document content.
+- **Redaction is a test.** `redaction_test.dart` asserts no log call above `FINE` interpolates a device name, client name, project address or file path, and that a synthesized crash bundle built from a starter project contains none of that project's proper nouns. Convention alone does not survive a debugging session at 2 am.
+- Rollback poisoning is tested: force a command to throw mid-`apply`, assert the transaction reverts, and if revert itself fails assert the undo stack is poisoned, a forced recovery snapshot is written, and the unrecoverable notice appears (M8 exit criterion: a deliberately induced crash produces a local report containing no project content).
+
+---
+
+## 11. Later work: signing, notarisation, and distribution
+
+Named here so it is not rediscovered, and scheduled in [Roadmap](09-roadmap.md) rather than treated as a build step (AC-058/D10 calls distribution the largest unowned area in the corpus).
+
+| Item | When | Note |
+|---|---|---|
+| Windows OV/EV certificate procurement | **starts at M6**, two milestones before release | Reputation-building against SmartScreen takes weeks of real-world download volume; starting at M8 means shipping with warnings |
+| Signed MSIX / installer, symbol archival | M8 | Exit criterion: a signed installer runs on a clean Windows 11 machine with **no SmartScreen warning** |
+| Vendored pdfium | M8 | The `printing` plugin's CMake downloads binaries at build time; a network-restricted runner fails `flutter build windows` (CR-100). Vendor and point CMake at the vendored copy |
+| macOS notarisation and stapling | Not v1 unless §10.10 resolves for macOS | Costs `Cmd`/`Ctrl` keymap work across ~40 bindings, a second font-availability check, and a second print matrix — 3–5 weeks plus ongoing CI |
+| Reproducible signed builds | Post-v1 | A signed release is a supply-chain and reproducibility problem, not only a CI one |
+| In-app auto-update | **Not doing in v1** (RJ-014) | Signed installer plus a version-check ping. Auto-update is a security surface and a support burden before there are users |
+
+VERIFY: MSIX packaging versus a plain signed installer for a desktop app that registers a `.rackmate` file association — the file-association path differs between the two and drives the choice.
+
+---
+
+**Related:** [Overview](00-overview.md) · [Architecture](03-architecture.md) · [Data model](02-data-model.md) · [PDF export](08-pdf-export.md) · [Roadmap](09-roadmap.md) · [Decisions](10-decisions.md)
