@@ -2545,8 +2545,8 @@ exists for.
 
 **Accepted as a genuine deviation from a stated requirement, and it is resolved rather than
 absorbed.** The technical argument is correct and is not reversed: no palette is CVD-safe past
-~9 categories, and Okabe-Ito's greyscale claim is demonstrably false (Sky Blue 0.401 vs Orange
-0.416). But the requirement names ten specific types, and today *Analog RCA* and *speaker level*
+~9 categories, and Okabe-Ito's greyscale claim is demonstrably false (Sky Blue 0.4050 vs Orange
+0.4162). But the requirement names ten specific types, and today *Analog RCA* and *speaker level*
 share one orange, and *S/PDIF* and *TOSLINK* share one vermillion.
 
 **Change, three parts:**
@@ -4020,10 +4020,10 @@ Several sources claim Okabe–Ito "has distinct luminance values so it works in 
 **Computing WCAG relative luminance shows that claim is false**, and RackMate does not repeat it.
 Two collision bands exist in the shipped palette:
 
-- **Sky Blue `#56B4E9` (L 0.401) vs Orange `#E69F00` (L 0.416)** — 1.5% apart. Indistinguishable
+- **Sky Blue `#56B4E9` (L 0.4050) vs Orange `#E69F00` (L 0.4162)** — ΔL 0.0112. Indistinguishable
   in greyscale. These are analog video and analog audio.
-- **Vermillion `#D55E00` (0.222) / Bluish Green `#009E73` (0.257) / Reddish Purple `#CC79A7`
-  (0.293)** — a crowded 0.07 band. These are digital audio, network and control.
+- **Vermillion `#D55E00` (0.2215) / Bluish Green `#009E73` (0.2569) / Reddish Purple `#CC79A7`
+  (0.2930)** — a crowded 0.0715-wide band. These are digital audio, network and control.
 
 The collisions are placed **deliberately**, not accepted. Each colliding pair is separated
 maximally on the other three channels, and that is promoted from a hope to a checkable rule:
@@ -4031,7 +4031,16 @@ maximally on the other three channels, and that is promoted from a hope to a che
 > **PAL-1 — Within any greyscale luminance band narrower than 0.10, no two domains may share a
 > dash class, and their line weights must differ by a factor of ≥ 1.4.**
 
-Verification of the shipped palette against PAL-1:
+> **Superseded — see §14.1; ruled at §12.6(c).** The conjunctive domain-level form stated above is
+> not PAL-1. The binding form is **pairwise over rendered family values** and **disjunctive** (dash
+> class differs **or** weight ratio ≥ 1.4). Stated over eight domain rows it is unsatisfiable by
+> the shipped palette, and reading those eight rows instead of the family pairs actually drawn is
+> what allowed collisions to ship undetected three times. The authority is the executable check
+> **`tools/pal1_check.py`** — not this statement, and not the table below.
+
+The table below is the superseded domain-level verdict, retained as the record of the argument.
+It is **not** a verification: it reads eight domain rows, not the family pairs that are drawn.
+Conformance is established only by running `tools/pal1_check.py`.
 
 | Collision band | Domains | Dash class | Weight | Verdict |
 |---|---|---|---|---|
@@ -4044,8 +4053,8 @@ Verification of the shipped palette against PAL-1:
 > **PAL-3 — The screen theme never affects the export.** Export palette is
 > `ExportSpec.palette: colour | greyscale | cmyk`, default `colour`, default `greyscale` in the
 > Installer preset, never inherited from the UI theme (CR-077). Greyscale export drops hue
-> entirely and renders every domain in black at its own dash and weight — which the table above
-> proves is sufficient.
+> entirely and renders every domain in black at its own dash and weight — and
+> `tools/pal1_check.py` is what establishes that this is sufficient.
 
 #### 6.2.3 Units and storage
 
@@ -4085,27 +4094,27 @@ palette that `design-data-model.md` simultaneously carried and argued against.
 
 | `id` | Display name | Light hex | Dark hex | Base dash (pt) | Weight | Glyph (native / transported) | Rel. lum. |
 |---|---|---|---|---|---|---|---|
-| `video.digital` | Digital Video | `#0072B2` | `#4DA6DD` | solid | 1.00× | ▲ / △ | 0.151 |
-| `video.analog` | Analog Video & RF | `#56B4E9` | `#8ACFF5` | `12,4` | 1.00× | ▼ / ▽ | 0.401 |
-| `audio.analog` | Analog Audio | `#E69F00` | `#F0B443` | `6,3` | 1.00× | ● / ◐ / ○ | 0.416 |
-| `audio.digital` | Digital Audio | `#D55E00` | `#F07A33` | `6,3,1,3` | 1.00× | ◆ / ◇ | 0.222 |
-| `net` | Network | `#009E73` | `#2FC79A` | solid | 1.50× | ■ / □ | 0.257 |
-| `ctl` | Control | `#CC79A7` | `#E29CC3` | `1.5,3` | 0.75× | ✚ / ✳ | 0.293 |
-| `pwr` | Power | `#000000` | `#E8E8E8` *(inverted — black is invisible on dark)* | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.000 |
-| `str` | Structure | `#999999` | `#A8A8A8` | `4,4` | 0.75× | ★ / ☆ | 0.319 |
+| `video.digital` | Digital Video | `#0072B2` | `#4DA6DD` | solid | 1.00× | ▲ / △ | 0.1525 |
+| `video.analog` | Analog Video & RF | `#56B4E9` | `#8ACFF5` | `12,4` | 1.00× | ▼ / ▽ | 0.4050 |
+| `audio.analog` | Analog Audio | `#E69F00` | `#F0B443` | `6,3` | 1.00× | ● / ◐ / ○ | 0.4162 |
+| `audio.digital` | Digital Audio | `#D55E00` | `#F07A33` | `6,3,1,3` | 1.00× | ◆ / ◇ | 0.2215 |
+| `net` | Network | `#009E73` | `#2FC79A` | solid | 1.50× | ■ / □ | 0.2569 |
+| `ctl` | Control | `#CC79A7` | `#E29CC3` | `1.5,3` | 0.75× | ✚ / ✳ | 0.2930 |
+| `pwr` | Power | `#000000` | `#E8E8E8` *(inverted — black is invisible on dark)* | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.0000 |
+| `str` | Structure | `#999999` | `#A8A8A8` | `6,3,3,3` | 0.75× | ★ / ☆ | 0.3185 |
 | *(reserved)* | Selection / focus | `#F0E442` | `#F5E76B` | — | — | — | 0.744 |
 
 Dash patterns, weights, glyphs and tags are **identical across themes**. Only hue moves, and the
 theme is a UI preference never persisted in the document.
 
-> **The `str` base dash `4,4` is superseded — see §14.3.** It is `6,3,3,3`, class `(short,short)`, period 15 pt. The rows for `audio.spdif_optical` (§6.4) and `structure.pathway` (§6.4) are likewise superseded by §14.3.
+> **The `str` base dash `4,4` is superseded — see §14.3.** It is **`6,3,3,3`**, class `(short,short)`, period 15 pt, and the row above is corrected in place. The §6.4 rows for `audio.spdif_optical`, `structure.pathway`, `structure.undetermined`, `video.hdmi.1_4`, `video.composite`, `audio.line_bal`, `audio.spdif_coax` and `audio.aes3` are likewise superseded by §14.3. Every effective value in this section is checked by `tools/pal1_check.py`.
 
 `str`'s base dash was authored `4,4` rather than `design-ux-schematic.md`'s `6,3`, on the reasoning
 that an even dash is unambiguous against a 2:1 dash. **That reasoning is retracted.** It predates
 the mechanical dash-class definition of §14.2, under which `4,4` and `6,3` are both `(short)`, and
 `4,4` @ 0.75× against analog audio's `6,3` @ 1.00× is a weight ratio of 1.33 — the identical
 failure the paragraph was written to avoid. The `str` base dash is **`6,3,3,3`**, class
-`(short,short)`, period 15 pt; the table row above is historical. See **§14.3**.
+`(short,short)`, period 15 pt; the table row above now carries that corrected value. See **§14.3**.
 
 ---
 
@@ -4174,7 +4183,7 @@ medium · **⤳** logical flow riding a network. Topology: **P2P** · **MD** mul
 
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
-| `video.hdmi.1_4` | HDMI 1.4 | `conn.hdmi_a` | → | P2P | solid | 1.00× | `HD14` | ▲ |
+| `video.hdmi.1_4` | HDMI 1.4 | `conn.hdmi_a` | → | P2P | solid | 0.75× | `HD14` | ▲ |
 | `video.hdmi.2_0` | HDMI 2.0 (18 Gbps) | `conn.hdmi_a` | → (+ARC ↔) | P2P | solid | 1.00× | `HD20` | ▲ |
 | `video.hdmi.2_1` | HDMI 2.1 (48 Gbps) | `conn.hdmi_a` | → (+eARC ↔) | P2P | solid | 1.25× | `HD21` | ▲ |
 | `video.displayport` | DisplayPort 1.4 / 2.1 | `conn.dp` | → (+AUX ↔) | P2P / MST | `18,4` | 1.00× | `DP` | ▲ |
@@ -4193,7 +4202,7 @@ and this is what makes `SIG-001` fire.
 
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
-| `video.composite` | Composite (CVBS) | `conn.rca75` | → | P2P | `12,4` | 1.00× | `CVBS` | ▼ |
+| `video.composite` | Composite (CVBS) | `conn.rca75` | → | P2P | `1.5,3` | 1.00× | `CVBS` | ▼ |
 | `video.component` | Component YPbPr | `conn.rca75` | → | P2P (3-port set) | `12,4,3,4` | 1.00× | `YPBPR` | ▼ |
 | `video.vga` | VGA / RGBHV | `conn.hd15` | → (+DDC ↔) | P2P | `12,4,3,4,3,4` | 1.00× | `VGA` | ▼ |
 | `video.svideo` | S-Video | `conn.mini_din4` | → | P2P | `9,4` | 1.00× | `SVID` | ▼ |
@@ -4213,7 +4222,7 @@ cascade budget is computable (a 2-way splitter is ≈ 3.5 dB); the cascade rule 
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
 | `audio.line_unbal` | **Line level, unbalanced (RCA)** | `conn.rca` | → | P2P | `6,3` | 1.00× | `AUD` | ● |
-| `audio.line_bal` | Line level, balanced | `conn.xlr3` | → | P2P | `10,3` | 1.00× | `AUDB` | ● |
+| `audio.line_bal` | Line level, balanced | `conn.xlr3` | → | P2P | solid | 1.00× | `AUDB` | ● |
 | `audio.mic` | Mic level | `conn.xlr3` | → | P2P | `4,3` | 1.00× | `MIC` | ● |
 | `audio.phono` | Phono / turntable | `conn.rca` | → | P2P | `4,3,1.5,3` | 1.00× | `PHNO` | ● |
 | `audio.speaker_lowz` | **Speaker level, low-Z** | `conn.binding_post` | → | P2P / parallel | `6,3` | **2.00×** | `SPK` | ◐ |
@@ -4238,9 +4247,9 @@ evaluate — the field-device templates of AC-031 exist so these rules have obje
 
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
-| `audio.spdif_coax` | **S/PDIF, coaxial (75 Ω)** | `conn.rca75` | → | P2P | `6,3,1,3` | 1.00× | `SPD` | ◆ |
-| `audio.spdif_optical` | **TOSLINK (optical S/PDIF)** | `conn.jis_f05` | → | P2P | `2,3` | 1.00× | `OPT` | ◇ |
-| `audio.aes3` | AES/EBU (AES3, 110 Ω) | `conn.xlr3` | → | P2P | `10,3,1,3` | 1.00× | `AES` | ◆ |
+| `audio.spdif_coax` | **S/PDIF, coaxial (75 Ω)** | `conn.rca75` | → | P2P | `12,4,3,4` | 1.00× | `SPD` | ◆ |
+| `audio.spdif_optical` | **TOSLINK (optical S/PDIF)** | `conn.jis_f05` | → | P2P | `2,3` | 1.25× | `OPT` | ◇ |
+| `audio.aes3` | AES/EBU (AES3, 110 Ω) | `conn.xlr3` | → | P2P | `12,4,10,4` | 1.00× | `AES` | ◆ |
 | `audio.aes3id` | AES3id (75 Ω BNC) | `conn.bnc75` | → | P2P | `10,3,1,3,1,3` | 1.00× | `AES75` | ◆ |
 | `audio.dante` | Dante | `conn.rj45` | ⤳ | STAR | `6,3,1,3` | 1.50× | `DNT` | ◇ |
 | `audio.aes67` | AES67 | `conn.rj45` | ⤳ | STAR | `6,3,1,3,1,3` | 1.50× | `A67` | ◇ |
@@ -4356,8 +4365,8 @@ default, appearing instead as an **outlet map** on the power schedule (AC-026).
 
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
-| `structure.undetermined` | Undetermined home run | `conn.unterminated` | passive | P2P | `4,4` | 0.75× | `STR` | ★ |
-| `structure.pathway` | Pathway only (conduit / pull string) | — | passive | — | `2,6` | 0.75× | `PATH` | ☆ |
+| `structure.undetermined` | Undetermined home run | `conn.unterminated` | passive | P2P | `6,3,3,3` | 0.75× | `STR` | ★ |
+| `structure.pathway` | Pathway only (conduit / pull string) | — | passive | — | `1.5,3,1.5,9` | 0.75× | `PATH` | ☆ |
 
 `structure.undetermined` is the interesting case and it is deliberate: a Cat6 home run at
 rough-in may end up carrying Ethernet, HDBaseT, or nothing. The family is legal, it schedules, it
@@ -4433,23 +4442,26 @@ by side.** This is the audit that the resolution actually covers what was asked.
 | Named in requirement 4 | Canonical family (or media) | Effective hue | Dash | Wt | Glyph | Tag |
 |---|---|---|---|---|---|---|
 | **Analog RCA** | `audio.line_unbal` | `#E69F00` | `6,3` | 1.00× | ● | `AUD` |
-| **HDMI** | `video.hdmi.2_0` / `2_1` / `1_4` | `#0072B2` | solid | 1.00× / 1.25× | ▲ | `HD20` `HD21` `HD14` |
+| **HDMI** | `video.hdmi.2_0` / `2_1` / `1_4` | `#0072B2` | solid | 1.00× / 1.25× / 0.75× | ▲ | `HD20` `HD21` `HD14` |
 | **Network** | `net.ethernet` (+ `net.poe`) | `#009E73` | solid | 1.50× / 2.00× | ■ | `NET` `PoE` |
-| **IR** | `ctl.ir_emitter` (+ `ctl.ir_receiver`) | `#CC79A7` | `1.5,3` | 0.75× | ✚ | `IR` `IRRX` |
+| **IR** | `ctl.ir_emitter` (+ `ctl.ir_receiver`) | `#CC79A7` | `1.5,3` / `4,3,1.5,3` | 0.75× | ✚ | `IR` `IRRX` |
 | **RS-232** | `ctl.rs232` | `#CC79A7` | `6,3,1.5,3` | 0.75× | ✚ | `232` |
 | **RG6** | `media.rg6` carrying `rf.catv` / `rf.satellite` / `rf.ota` | `#56B4E9` | `12,4` / `12,4,3,4` / `16,4` | 1.50× / 1.50× / 1.00× | ▽ | `RF` `SAT` `OTA` |
-| **S/PDIF** | `audio.spdif_coax` | `#D55E00` | `6,3,1,3` | 1.00× | ◆ | `SPD` |
-| **TOSLINK** | `audio.spdif_optical` | `#D55E00` | `2,3` | 1.00× | ◇ | `OPT` |
+| **S/PDIF** | `audio.spdif_coax` | `#D55E00` | `12,4,3,4` | 1.00× | ◆ | `SPD` |
+| **TOSLINK** | `audio.spdif_optical` | `#D55E00` | `2,3` | 1.25× | ◇ | `OPT` |
 | **Speaker level** | `audio.speaker_lowz` (+ `audio.speaker_cv`) | `#E69F00` | `6,3` / `10,3,2,3` | **2.00×** | ◐ / ○ | `SPK` `70V` |
 | **Power** | `power.ac_branch` / `power.ac_iec` | `#000000` | `8,3,1.5,3,1.5,3` / `8,3,1.5,3` | 2.00× | ⬢ | `PWR` `IEC` |
-| *"etc."* | 40 further families across the same 8 domains | — | — | — | — | — |
+| *"etc."* | 37 further families across the same 8 domains | — | — | — | — | — |
 
 The two within-domain collisions the requirement would have produced are both resolved on
 non-hue channels, and both resolutions are legible in a greyscale photocopy:
 
 - **Analog RCA vs speaker level** (both `#E69F00`): identical dash, but **1.00× vs 2.00×** stroke
   and ● vs ◐. A 2× weight difference is the single most legible mono discriminator available.
-- **S/PDIF vs TOSLINK** (both `#D55E00`): `6,3,1,3` dash-dot vs `2,3` fine dot, and ◆ vs ◇.
+- **S/PDIF vs TOSLINK** (both `#D55E00`): `12,4,3,4` long-short @ 1.00× vs `2,3` fine dot @ 1.25×,
+  and ◆ vs ◇ — separated on three channels, not two. S/PDIF's earlier `6,3,1,3` is retracted: at
+  class `(dot,short)` it collided with six `ctl` families, RS-232 among them, which is two of the
+  ten named types rendering as one line. The authority for both values is `tools/pal1_check.py`.
 
 RG6 is correctly a **medium**, not a signal (that is the point of the three-axis split), so it is
 colour-coded by what it carries. The legend row for RG6 shows all three of its families, which is
@@ -4474,7 +4486,7 @@ These are named milestone exit criteria, not aspirations.
 4. **PAL-1 is a unit test.** Compute WCAG relative luminance for all eight domain colours; for
    every pair within 0.10, assert differing dash class and a weight ratio ≥ 1.4.
 
-   > **Superseded — see §14.1 and §14.5.** PAL-1 is a **pairwise** test over **rendered family values**, not the eight domain colours, and its two limbs are **disjunctive** (dash class differs **or** weight ratio ≥ 1.4), not conjunctive. The conjunctive domain-level form stated here is unsatisfiable by the shipped palette and is what allowed three collisions to ship.
+   > **Superseded — see §14.1 and §14.5.** PAL-1 is a **pairwise** test over **rendered family values**, not the eight domain colours, and its two limbs are **disjunctive** (dash class differs **or** weight ratio ≥ 1.4), not conjunctive. The conjunctive domain-level form stated here is unsatisfiable by the shipped palette and is what allowed fourteen collisions to ship. The authority is `tools/pal1_check.py`.
 
 5. **Dash floor is a unit test.** Assert every shipped dash period ≥ 4.5 pt (1.5875 mm). 4.25 pt is
    1.4992 mm and is *below* the 1.5 mm physical floor the rule derives from (§14.4).
@@ -4572,7 +4584,7 @@ Grouped by subsystem. The **Why** column names the filter or the ruling that put
 | `Command` / `Transaction` / `UndoStack` / `DocumentController` as the single mutation gate, with the round-trip property test and the epoch-mask coverage test | Architecture step 3; AC-014. The most expensive retrofit in the project |
 | `@internal` setters, not `part of` | AC-013 |
 | Epoch counters; three-tier derived pipeline; `lodLevel` explicit in every scene-builder signature and every cache key | AC-016 (#13) |
-| `DiagramCanvas` display-list IR, `TextMetrics{width, height, ascent, descent}`, explicit `TextAnchor` resolved in the shared scene builder, both backends fed by `PdfFont.stringMetrics`, baseline-y parity test | CR-087, AC-007. Architecture step 6 |
+| `DiagramCanvas` display-list IR, `TextMetrics{advanceWidth, ascent, descent, capHeight, xHeight, lineHeight}`, explicit `TextAnchor` resolved in the shared scene builder, both backends fed by `PdfFont.stringMetrics`, baseline-y parity test | CR-087, AC-007. Architecture step 6 |
 | `CanvasIntent{beginDrag, updateDrag, commitDrag, cancel}` built first; no editor logic branches on `PointerDeviceKind` | AC-016 (#23). Confirmed decision 1 makes this non-optional |
 | Atomic save, autosave, crash recovery, close interception, recents | Architecture §7 |
 | i18n plumbing with one locale; `l10n.yaml` in CI; localisable registry display names | AC-058 (D12) |
@@ -5041,9 +5053,12 @@ rather than by drift:
 
 ## 10. Open questions
 
-These are **not settled**. Everything in Parts 1–2 and §§7–9 is binding; this section is
-deliberately the opposite — the calls that require a human judgement about what this product is
-for and who is going to buy it, which no amount of internal consistency can supply.
+**Five of these thirteen are now ANSWERED and binding** — 10.1, 10.2, 10.4, 10.6 and 10.7, by
+DR-001…DR-005 in §11 (indexed in §13). **The remaining eight are still open.** Everything in
+Parts 1–2 and §§7–9 is binding; the open entries below are deliberately the opposite — the calls
+that require a human judgement about what this product is for and who is going to buy it, which no
+amount of internal consistency can supply. The five answered entries are retained in full as the
+record of the argument, each marked where it stands.
 
 > **Five of these thirteen are now ANSWERED — see §13.** 10.1 (DR-001), 10.2 (DR-002), 10.4 (DR-003), 10.6 (DR-005) and 10.7 (DR-004) are settled by the user's decisions in §11 and are **binding**, not open. The text below is retained as the record of the argument, per the Part 4 preamble.
 
@@ -5821,7 +5836,7 @@ exactly the contradiction §12 exists to prevent.
 |---|---|---|---|
 | a | **CR-071 vs §7.3 vs §7.7 cut #9** | CR-071 point 2 rules the rear panel **prints in v1** as sheet `T2.02`; §4.3 agrees ("the rear elevation still *prints* in v1"); §7.2.7 lists rear elevation in the v1 export set; but §7.3's v1.1 table says "the rear-panel view **as a printable sheet**" and §7.7 cut #9 repeats it. | **CR-071 governs, unambiguously.** Sheet **`T2.02 Rack Elevation — Rear` prints in v1**, with connector fields and landing cable IDs. What is **v1.1** is the **interactive Rear Panel view** (`Ctrl+3`) — leaders, tag pills, per-connector navigation, egress heat map. §7.3's row and §7.7 cut #9 are corrected to say "the interactive Rear Panel view". The Part 3 preamble's "Part 3 governs the release bucket" rule does not apply here, because Part 3 contradicts *itself* (§7.2.7 vs §7.3) and CR-071 is the only source that is internally consistent. |
 | b | **AC-040 / §5.8 / §7.2.6 rule count** | All three state "v1 ships **22** rules". AC-040's own enumeration lists **24** IDs (`TOP-001..005`, `SIG-001`, `SIG-002`, `DIR-001`, `DIR-003`, `CON-001`, `ELE-003`, `ELE-006`, `NET-001`, `PWR-001`, `PWR-003`, `LEN-001`, `RCK-001`, `RCK-002`, `RCK-003`, `RCK-012`, `RCK-013`, `CODE-001`, `CODE-002`, `LNK-020`). CR-017 additionally names three placement-coherence conditions and assigns them no IDs. | **The enumeration governs; the count "22" is an arithmetic error.** `PLC-001`, `PLC-002` and `PLC-003` are **RATIFIED** as distinct tier-1 rules — CR-017 already rules the conditions model-illegal, CR-021 says a rule not in the catalogue does not exist, and an unnumbered blocking rule can carry neither a `Finding.ruleId` nor an AC-051 fixture pair. **The v1 catalogue is 27 rules: 8 tier-1 + 6 tier-2 + 13 tier-3.** Every occurrence of "22 rules" in every document becomes **27**. AC-051's gate is unchanged and now applies to 27 pairs. |
-| c | **§6.2.2 PAL-1** | PAL-1 is stated and verified over the **eight domain base values**, while §6.4 assigns per-family `dashOverride` and weight overrides that PAL-1 never re-checks. Two shipped families collide on every non-hue channel: `audio.spdif_optical` (TOSLINK, dash `2,3`, 1.00×, domain L 0.222) and `ctl.ir_emitter` (IR, dash `1.5,3`, 0.75×, domain L 0.293) — ΔL 0.071 inside the 0.10 band, same fine-dot dash class, weight ratio 1.33 below the 1.4 floor. Two of requirement 4's ten named types are indistinguishable in greyscale. A second pair, `structure.pathway` (`2,6`, 0.75×, L 0.319) vs `ctl.ir_emitter` (ΔL 0.026), fails identically. | **PAL-1 is restated over rendered family values and made pairwise and disjunctive; three families are re-spaced.** Full statement, the dash-class definition, and the corrected registry rows are in **§14**. |
+| c | **§6.2.2 PAL-1** | PAL-1 is stated and verified over the **eight domain base values**, while §6.4 assigns per-family `dashOverride` and weight overrides that PAL-1 never re-checks. Two shipped families collide on every non-hue channel: `audio.spdif_optical` (TOSLINK, dash `2,3`, 1.00×, domain L 0.2215) and `ctl.ir_emitter` (IR, dash `1.5,3`, 0.75×, domain L 0.2930) — ΔL 0.0715 inside the 0.10 band, same fine-dot dash class, weight ratio 1.33 below the 1.4 floor. Two of requirement 4's ten named types are indistinguishable in greyscale. A second pair, `structure.pathway` (`2,6`, 0.75×, L 0.3185) vs `ctl.ir_emitter` (ΔL 0.0255), fails identically. Enumerating the 385 in-band family pairs — rather than the eight domain rows — subsequently found **fourteen** collisions in all, six involving brief-named types. | **PAL-1 is restated over rendered family values and made pairwise and disjunctive; eight families are re-spaced.** Full statement, the dash-class definition, and the corrected registry rows are in **§14**. The authority is the executable check **`tools/pal1_check.py`**, and where a document disagrees with it the file wins. |
 | d | **§7.7 cut #1** | Lists "zone grids" as cut, while CR-073 explicitly keeps the zone grid and the schedule's `REF` column depends on it. | **The zone grid ships in v1.** DR-005 confirms it. Cut #1's row drops "zone grids". |
 
 ### 12.7 The plan, re-costed
@@ -5856,13 +5871,14 @@ pointer does not restate the new ruling; it names where the new ruling lives.
 | 1 | §2.5, router restatement | after line 2666 | `> **Superseded — see §12.1 (§7.2.3 router row).** Phases 0–3 only; no channel routing, no phase 5.` |
 | 2 | §4.x banned-names table, router column | after the table at 3323 | `> **Superseded in part — see §12.1 (§7.2.3 router row).** The banned names in the left column stand (§12.1, CR-013 row); the replacement named in the right column is now Sugiyama phases 0–3 plus a deterministic orthogonal staircase.` |
 | 3 | §5.7, router prose | after line 3889 | `> **Third sentence superseded — see §12.1 (§7.2.3 router row).** The router is Sugiyama phases 0–3 plus a deterministic layer-ordered orthogonal staircase; there is no channel routing, no crossing sweep, no hop arcs and no paint-time phase. The first two sentences (CR-012 — route geometry never persisted, symbol placement persisted) are **unaffected and still binding** (§12.1, CR-012 row).` |
-| 4 | §6.2.5, `str` row | after line 4093 | ``> **The `str` base dash `4,4` is superseded — see §14.3.** It is `6,3,3,3`, class `(short,short)`, period 15 pt. The rows for `audio.spdif_optical` (§6.4) and `structure.pathway` (§6.4) are likewise superseded by §14.3.`` |
-| 5 | §6.7, criterion 4 | after line 4464 | `> **Superseded — see §14.1 and §14.5.** PAL-1 is a **pairwise** test over **rendered family values**, not the eight domain colours, and its two limbs are **disjunctive** (dash class differs **or** weight ratio ≥ 1.4), not conjunctive. The conjunctive domain-level form stated here is unsatisfiable by the shipped palette and is what allowed three collisions to ship.` |
-| 6 | §7.2.3, wiring scope table | after line 4601 | `> **The router row is superseded — see §12.1.** v1 builds Sugiyama phases 0–3 plus a deterministic layer-ordered orthogonal staircase. Phase 4 is v1.2; phase 5 is not built. The remaining rows of this table stand, as amended by the §7.2.3 row already listed in §12.1.` |
-| 7 | §9.3, M2 contents | after line 4878 | ``> **Superseded — see §12.1 (§7.2.3 router row) and §11.1.3.** M2's router is phases 0–3 plus the orthogonal staircase, and M2 is sized `M` (4–7 weeks) — see §12.7.`` |
-| 8 | §9.11, "The honest total" | above the table at 4987 | ``> **Superseded — see §12.7.** M2 is `M` (4–7 weeks); the plan totals **42–65 weeks, 11–17 months**. The "41–69" figure below is additionally an arithmetic error against this section's own table, whose final cumulative row reads 45–69. Lever 2 is withdrawn by DR-003.`` |
-| 9 | §10 preamble | after line 5025 | `> **Five of these thirteen are now ANSWERED — see §13.** 10.1 (DR-001), 10.2 (DR-002), 10.4 (DR-003), 10.6 (DR-005) and 10.7 (DR-004) are settled by the user's decisions in §11 and are **binding**, not open. The text below is retained as the record of the argument, per the Part 4 preamble.` |
-| 10 | §10.13 | after the heading at 5336 | `> **Retired — see §13.** All three questions this section prioritises (10.1, 10.2, 10.4) are answered by DR-001, DR-002 and DR-003. Do not sequence work from this section.` |
+| 4 | §6.2.2, PAL-1 statement | after the PAL-1 blockquote | `> **Superseded — see §14.1; ruled at §12.6(c).** The conjunctive domain-level form stated above is not PAL-1. The binding form is **pairwise over rendered family values** and **disjunctive** (dash class differs **or** weight ratio ≥ 1.4). Stated over eight domain rows it is unsatisfiable by the shipped palette, and reading those eight rows instead of the family pairs actually drawn is what allowed collisions to ship undetected three times. The authority is the executable check **`tools/pal1_check.py`** — not this statement, and not the table below.` |
+| 5 | §6.2.5, `str` row | after the domain table | ``> **The `str` base dash `4,4` is superseded — see §14.3.** It is **`6,3,3,3`**, class `(short,short)`, period 15 pt, and the row above is corrected in place. The §6.4 rows for `audio.spdif_optical`, `structure.pathway`, `structure.undetermined`, `video.hdmi.1_4`, `video.composite`, `audio.line_bal`, `audio.spdif_coax` and `audio.aes3` are likewise superseded by §14.3. Every effective value in this section is checked by `tools/pal1_check.py`.`` |
+| 6 | §6.7, criterion 4 | after line 4464 | `> **Superseded — see §14.1 and §14.5.** PAL-1 is a **pairwise** test over **rendered family values**, not the eight domain colours, and its two limbs are **disjunctive** (dash class differs **or** weight ratio ≥ 1.4), not conjunctive. The conjunctive domain-level form stated here is unsatisfiable by the shipped palette and is what allowed fourteen collisions to ship. The authority is `tools/pal1_check.py`.` |
+| 7 | §7.2.3, wiring scope table | after line 4601 | `> **The router row is superseded — see §12.1.** v1 builds Sugiyama phases 0–3 plus a deterministic layer-ordered orthogonal staircase. Phase 4 is v1.2; phase 5 is not built. The remaining rows of this table stand, as amended by the §7.2.3 row already listed in §12.1.` |
+| 8 | §9.3, M2 contents | after line 4878 | ``> **Superseded — see §12.1 (§7.2.3 router row) and §11.1.3.** M2's router is phases 0–3 plus the orthogonal staircase, and M2 is sized `M` (4–7 weeks) — see §12.7.`` |
+| 9 | §9.11, "The honest total" | above the table at 4987 | ``> **Superseded — see §12.7.** M2 is `M` (4–7 weeks); the plan totals **42–65 weeks, 11–17 months**. The "41–69" figure below is additionally an arithmetic error against this section's own table, whose final cumulative row reads 45–69. Lever 2 is withdrawn by DR-003.`` |
+| 10 | §10 preamble | after line 5025 | `> **Five of these thirteen are now ANSWERED — see §13.** 10.1 (DR-001), 10.2 (DR-002), 10.4 (DR-003), 10.6 (DR-005) and 10.7 (DR-004) are settled by the user's decisions in §11 and are **binding**, not open. The text below is retained as the record of the argument, per the Part 4 preamble.` |
+| 11 | §10.13 | after the heading at 5336 | `> **Retired — see §13.** All three questions this section prioritises (10.1, 10.2, 10.4) are answered by DR-001, DR-002 and DR-003. Do not sequence work from this section.` |
 
 ---
 
@@ -5945,52 +5961,78 @@ Worked: `2,3` → `(dot)` · `1.5,3` → `(dot)` · `6,3` → `(short)` ·
 `1.5,3,4,3` → `(dot,short)` = `(short,dot)` by rotation · `1.5,3,1.5,9` → `(dot,dot)` ·
 `8,3,1.5,3,1.5,3` → `(short,dot,dot)`.
 
-### 14.3 The three collisions, and their fixes
+### 14.3 The collisions, and their fixes
+
+**Eight families moved in total: the three below, plus the five in "The further five" beneath the
+table.** The authority for every effective value is `tools/pal1_check.py`.
+
+The first three collisions found — these fixes stand and are reproduced in the check file:
 
 | Pair | Before | Verdict | Fix |
 |---|---|---|---|
-| `audio.spdif_optical` (TOSLINK, L 0.222) vs `ctl.ir_emitter` (IR, L 0.293) | `2,3` @ 1.00× vs `1.5,3` @ 0.75×. ΔL 0.071; both `(dot)`; ratio **1.33**. | **FAILS.** Two of requirement 4's ten named types render as near-identical fine dots in greyscale. | **`audio.spdif_optical` weight 1.00× → `1.25×`.** Dash stays `2,3`. Ratio becomes **1.67 ≥ 1.4** ✓ |
-| `structure.pathway` (L 0.319) vs `ctl.ir_emitter` (L 0.293) | `2,6` @ 0.75× vs `1.5,3` @ 0.75×. ΔL 0.026; both `(dot)`; ratio **1.00**. | **FAILS.** | **`structure.pathway` dash `2,6` → `1.5,3,1.5,9`**, class `(dot,dot)` ✓, period 15 pt. Weight stays 0.75×. A double-dot reads correctly as "a route, not a conductor". |
-| `structure.undetermined` (L 0.319) vs **five** families: `audio.line_unbal` `6,3` @ 1.00×, `audio.mic` `4,3` @ 1.00×, `audio.headphone` `3,3` @ 0.75×, `ctl.rs485` `6,3` @ 1.00×, `ctl.trigger12v` `4,3` @ 0.75× | `4,4` @ 0.75×, inherited from the `str` domain base. ΔL 0.097 / 0.097 / 0.097 / 0.026 / 0.026; **all six are `(short)`**; ratios 1.33, 1.33, **1.00**, 1.33, **1.00**. | **FAILS all five.** Against `audio.headphone` and `ctl.trigger12v` the dash class *and* the weight are identical — in greyscale they are the same line, separated by hue alone. | **The `str` domain base dash `4,4` → `6,3,3,3`**, class `(short,short)` ✓, period 15 pt, permille `[6000, 3000, 3000, 3000]`. Weight stays 0.75×. `structure.undetermined` carries no `dashOverride` and inherits it, so the legend's `str` swatch and the drawn line move together. `structure.undetermined` is the correct family to move: it is a placeholder, it is not one of requirement 4's ten named types, and moving it is one edit against five. |
+| `audio.spdif_optical` (TOSLINK, L 0.2215) vs `ctl.ir_emitter` (IR, L 0.2930) | `2,3` @ 1.00× vs `1.5,3` @ 0.75×. ΔL 0.0715; both `(dot)`; ratio **1.33**. | **FAILS.** Two of requirement 4's ten named types render as near-identical fine dots in greyscale. | **`audio.spdif_optical` weight 1.00× → `1.25×`.** Dash stays `2,3`. Ratio becomes **1.67 ≥ 1.4** ✓ |
+| `structure.pathway` (L 0.3185) vs `ctl.ir_emitter` (L 0.2930) | `2,6` @ 0.75× vs `1.5,3` @ 0.75×. ΔL 0.0255; both `(dot)`; ratio **1.00**. | **FAILS.** | **`structure.pathway` dash `2,6` → `1.5,3,1.5,9`**, class `(dot,dot)` ✓, period 15 pt. Weight stays 0.75×. A double-dot reads correctly as "a route, not a conductor". |
+| `structure.undetermined` (L 0.3185) vs **five** families: `audio.line_unbal` `6,3` @ 1.00×, `audio.mic` `4,3` @ 1.00×, `audio.headphone` `3,3` @ 0.75×, `ctl.rs485` `6,3` @ 1.00×, `ctl.trigger12v` `4,3` @ 0.75× | `4,4` @ 0.75×, inherited from the `str` domain base. ΔL 0.0977 / 0.0977 / 0.0977 / 0.0255 / 0.0255; **all six are `(short)`**; ratios 1.33, 1.33, **1.00**, 1.33, **1.00**. | **FAILS all five.** Against `audio.headphone` and `ctl.trigger12v` the dash class *and* the weight are identical — in greyscale they are the same line, separated by hue alone. | **The `str` domain base dash `4,4` → `6,3,3,3`**, class `(short,short)` ✓, period 15 pt, permille `[6000, 3000, 3000, 3000]`. Weight stays 0.75×. `structure.undetermined` carries no `dashOverride` and inherits it, so the legend's `str` swatch and the drawn line move together. `structure.undetermined` is the correct family to move: it is a placeholder, it is not one of requirement 4's ten named types, and moving it is one edit against five. |
 
 `ctl.ir_emitter` is deliberately **not** touched: it is a requirement-4 named type and its `1.5,3`
 was itself the correction that brought the control domain up to the dash-period floor.
 
-**What was verified, and how.** All three fixes were checked by enumerating every shipped
-`SignalFamilyDef` (55 families across the eight domains), computing its rendered triple, and
-comparing it against every family in a different domain whose luminance is within 0.10. The three
-in-band sets are: TOSLINK — 4 domains, 26 families; `structure.pathway` and
-`structure.undetermined` — 5 domains, 40 families each.
+**The "What was verified, and how" paragraph that stood here is retracted.** It claimed all three
+fixes "were checked by enumerating every shipped `SignalFamilyDef` (55 families across the eight
+domains) … and comparing it against every family in a different domain whose luminance is within
+0.10", and it published per-family in-band tallies and pass counts. **No such enumeration was
+performed.** Its own figures give it away: TOSLINK's in-band set is **27** families across four
+domains, not the 26 it reported. That made three successive assertions that PAL-1 was "verified
+clear" — each one made by reading a table of eight domain rows rather than enumerating the family
+pairs actually drawn, and each one false. The palette those assertions certified carried
+**fourteen** collisions, six of them involving types requirement 4 names by hand: S/PDIF against
+RS-232, DMX512, DALI, KNX, contact closure and IR receive.
 
-- **`structure.undetermined` at `(short,short)` / 0.75× passes all 40 of its in-band cross-domain
-  pairs on limb (a).** `(short,short)` is unoccupied not merely in the band but across all 55
-  shipped families, so no pair depends on limb (b) and no future weight change can reopen the fix.
-- **`structure.pathway` at `(dot,dot)` / 0.75× passes all 40 on limb (a)** — `(dot,dot)` is
-  likewise the only two-dot pattern in the shipped set.
-- **TOSLINK at `(dot)` / 1.25× passes 25 of its 26 on limb (a)**; the twenty-sixth,
-  `ctl.ir_emitter`, is the only other `(dot)` family in the band and passes on limb (b) at a ratio
-  of 1.667. Within `audio.digital` it remains distinct from `audio.spdif_coax` on dash class,
-  weight **and** glyph (◇ vs ◆).
+**A rule checked by inspection is not checked, and the remedy is to stop making the claim in
+prose.** No part of this record may assert that a manual PAL-1 sweep was performed, or enumerate
+which families were checked against which. The authority is a committed, executable check:
 
-**The previous statement of this paragraph — "both fixes are verified clear against every other
-family in the L 0.15–0.42 neighbourhood" — is retracted.** No such sweep had been run when it was
-written; running it is what found the third collision above. The clearance now claimed is only the
-clearance actually computed, and §14.5's test is what keeps it true.
+> **`tools/pal1_check.py` is the authority.** It enumerates all **55** shipped families, computes
+> each rendered triple *(L, dashClass, weight)*, and tests all **385** in-band cross-domain pairs
+> against §14.1 plus the within-domain and dash-period limbs. It exits 0 on the corrected palette
+> and reproduces all fourteen violations if the corrections are reverted. **Where this document
+> and that file disagree, the file wins and the document is wrong.** It is ported to
+> `pal1_conformance_test.dart` in `rackmate_core` at M0 and is the authority thereafter (§14.5).
+
+**The further five.** Enumerating the pairs rather than the eight domain rows found five more
+families that had to move. All five preserve their domain's base weight semantics, and **no hue
+changed** — the Okabe–Ito domain palette is untouched.
+
+| Family | Before | After | Class change | Why |
+|---|---|---|---|---|
+| `video.hdmi.1_4` | solid @ 1.00× | **solid @ 0.75×** | stays `solid` | It was byte-identical to `video.hdmi.2_0`, violating the within-domain limb. The three HDMI generations now read as a bandwidth progression **0.75× / 1.00× / 1.25×** and all stay solid — solid being the native digital-video carrier. |
+| `video.composite` | `12,4` @ 1.00× | **`1.5,3` @ 1.00×** | `long` → `dot` | Weight is untouched; the analog-video base weight semantics are preserved. |
+| `audio.line_bal` | `10,3` @ 1.00× | **solid @ 1.00×** | `long` → `solid` | It collided with **four** `video.analog` families at once — `video.composite`, `video.svideo`, `rf.ota` and `rf.modulated` — all at ΔL 0.0112. |
+| `audio.spdif_coax` | `6,3,1,3` @ 1.00× | **`12,4,3,4` @ 1.00×** | `(dot,short)` → `(long,short)` | Requirement 4's S/PDIF. Cleared all six `ctl` collisions: RS-232, DMX512, DALI, KNX, contact closure and IR receive. |
+| `audio.aes3` | `10,3,1,3` @ 1.00× | **`12,4,10,4` @ 1.00×** | `(dot,long)` → `(long,long)` | Cleared `ctl.cresnet` and `video.avoip`. |
+
+Effective values for all eight moved families live in `tools/pal1_check.py`'s `FAMILIES` table,
+which is the row-for-row source the §6.4 registry rows must match.
 
 ### 14.4 The dash-period floor
 
 **≥ 4.5 pt (1.5875 mm).** The competing figure of 4.25 pt is wrong: 4.25 pt = 1.4992 mm, which is
 *below* the 1.5 mm physical floor the rule is derived from, and 4.5 pt is the figure that
 generated the shipped correction of the control domain's `1,3` (4.0 pt period) to `1.5,3` (4.5 pt).
-Every occurrence of "≥ 4.25 pt" becomes **"≥ 4.5 pt"**. All three corrected patterns clear it:
-`2,3` = 5 pt, `1.5,3,1.5,9` = 15 pt, `6,3,3,3` = 15 pt.
+Every occurrence of "≥ 4.25 pt" becomes **"≥ 4.5 pt"**. Every corrected pattern clears it:
+`2,3` = 5 pt, `1.5,3,1.5,9` = 15 pt, `6,3,3,3` = 15 pt, `1.5,3` = 4.5 pt, `12,4,3,4` = 23 pt,
+`12,4,10,4` = 30 pt (the remaining two corrections are `solid`, which has no period). The floor is
+a limb of `tools/pal1_check.py`, so this list is checked rather than asserted.
 
 ### 14.5 The test that makes this real
 
 A unit test enumerates every shipped `SignalFamilyDef`, computes its rendered triple, and checks
-**every cross-domain pair** against §14.1. It is a named acceptance criterion of the registry
-(§6.7) and of M2's exit. The within-domain exemption is expressed in the test as a domain-equality
-check, **not** as an allowlist of pairs — an allowlist is how a real collision gets waived.
+**every cross-domain pair** against §14.1. It exists today as **`tools/pal1_check.py`** — runnable
+before any Dart exists (`python tools/pal1_check.py`, exit 0 clean, 1 on any violation) — and is
+ported to `pal1_conformance_test.dart` in `rackmate_core` at M0, remaining the authority
+thereafter. It is a named acceptance criterion of the registry (§6.7) and of M2's exit. The
+within-domain exemption is expressed in the test as a domain-equality check, **not** as an
+allowlist of pairs — an allowlist is how a real collision gets waived.
 
 ---
 

@@ -1504,11 +1504,22 @@ Three palette rules are checkable, not aspirational:
 `1.5,3,4,3` → `(dot,short)` = `(short,dot)` by rotation · `1.5,3,1.5,9` → `(dot,dot)` ·
 `8,3,1.5,3,1.5,3` → `(short,dot,dot)`.
 
-PAL-1 is verified by a **pairwise unit test over every shipped family** (§7 criterion 4), not by a
-table of domain rows. The domain-level verification this section used to carry is what missed all
-three of the collisions canon §14.3 found — it evaluated domain base weights rather than the family
-values actually drawn. The within-domain exemption is a domain-equality check in the test, **never
-an allowlist of pairs**: an allowlist is how a real collision gets waived.
+**PAL-1 is verified by `tools/pal1_check.py`, and by nothing else.** That file enumerates all 385
+in-band cross-domain pairs over the 55 shipped families and exits non-zero on any violation; it is
+the authority, and §§4.3–4.5 below are a projection of it. It must be ported to
+`pal1_conformance_test.dart` in `rackmate_core` at M0 (§7 criterion 4) and remain the authority
+after the port.
+
+The rule is not checkable by reading a table of domain rows, and the attempt is what produced the
+defect. PAL-1 was signed off as clear **three times** against a palette that in fact held
+**fourteen** collisions — six of them involving types requirement 4 names by hand — because each
+sign-off read §4.3's eight domain base weights instead of the family values actually drawn. A
+family-level `dashOverride` or weight override is invisible at the domain level by construction,
+so the method could not have found them. A rule checked by inspection is not checked. Do not
+re-add a prose assertion that a sweep was performed; cite the file and its exit status.
+
+The within-domain exemption is a domain-equality check in the test, **never an allowlist of
+pairs**: an allowlist is how a real collision gets waived.
 
 **Units and storage.** Dash patterns are in points (1/72 in), stored as `List<int>` of
 permille-points so the file stays integral — `6,3` is `[6000, 3000]` and `1.5,3` is
@@ -1531,25 +1542,31 @@ glyph, glyphAlt}`.
 
 | `id` | Display name | Light hex | Dark hex | Base dash (pt) | Weight | Glyph (native / transported) | Rel. lum. |
 |---|---|---|---|---|---|---|---|
-| `video.digital` | Digital Video | `#0072B2` | `#4DA6DD` | solid | 1.00× | ▲ / △ | 0.151 |
-| `video.analog` | Analog Video & RF | `#56B4E9` | `#8ACFF5` | `12,4` | 1.00× | ▼ / ▽ | 0.401 |
-| `audio.analog` | Analog Audio | `#E69F00` | `#F0B443` | `6,3` | 1.00× | ● / ◐ / ○ | 0.416 |
-| `audio.digital` | Digital Audio | `#D55E00` | `#F07A33` | `6,3,1,3` | 1.00× | ◆ / ◇ | 0.222 |
-| `net` | Network | `#009E73` | `#2FC79A` | solid | 1.50× | ■ / □ | 0.257 |
-| `ctl` | Control | `#CC79A7` | `#E29CC3` | `1.5,3` | 0.75× | ✚ / ✳ | 0.293 |
-| `pwr` | Power | `#000000` | `#E8E8E8` *(inverted — black is invisible on dark)* | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.000 |
-| `str` | Structure | `#999999` | `#A8A8A8` | `6,3,3,3` | 0.75× | ★ / ☆ | 0.319 |
+| `video.digital` | Digital Video | `#0072B2` | `#4DA6DD` | solid | 1.00× | ▲ / △ | 0.1525 |
+| `video.analog` | Analog Video & RF | `#56B4E9` | `#8ACFF5` | `12,4` | 1.00× | ▼ / ▽ | 0.4050 |
+| `audio.analog` | Analog Audio | `#E69F00` | `#F0B443` | `6,3` | 1.00× | ● / ◐ / ○ | 0.4162 |
+| `audio.digital` | Digital Audio | `#D55E00` | `#F07A33` | `6,3,1,3` | 1.00× | ◆ / ◇ | 0.2215 |
+| `net` | Network | `#009E73` | `#2FC79A` | solid | 1.50× | ■ / □ | 0.2569 |
+| `ctl` | Control | `#CC79A7` | `#E29CC3` | `1.5,3` | 0.75× | ✚ / ✳ | 0.2930 |
+| `pwr` | Power | `#000000` | `#E8E8E8` *(inverted — black is invisible on dark)* | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.0000 |
+| `str` | Structure | `#999999` | `#A8A8A8` | `6,3,3,3` | 0.75× | ★ / ☆ | 0.3185 |
 | *(reserved)* | Selection / focus | `#F0E442` | `#F5E76B` | — | — | — | 0.744 |
 
 Dash patterns, weights, glyphs and tags are **identical across themes**. Only hue moves, and the
 theme is a UI preference never persisted in the document.
 
+The **Rel. lum.** column is the WCAG relative luminance computed from the light hex in the same
+row. These are the authoritative figures and they are recomputed from the shipped hexes by
+`tools/pal1_check.py`; where any other document publishes a different value — `video.analog` as
+`0.401` is the recurring one — that document is wrong.
+
 `str`'s base dash is `6,3,3,3` (class `(short,short)`, period 15 pt). It was authored `4,4`, which
 fails PAL-1 identically to the `6,3` it was chosen over — `4,4` and `6,3` are both `(short)` and
 1.00×/0.75× is a ratio of 1.33 — and the "an even dash is unambiguous against a 2:1 dash" reasoning
 is retracted, because §4.2's dash class is computed from mark lengths, not from the mark-to-gap
-ratio. `(short,short)` is the only unoccupied two-mark class in the shipped set, so it clears every
-in-band partner on dash class alone (canon §14.3).
+ratio. `(short,short)` is the only two-mark class no other shipped family occupies, which is why
+`6,3,3,3` clears its in-band partners on dash class alone. That is a result of
+`tools/pal1_check.py`, not of reading this table.
 
 ### 4.4 `SignalFamilyDef` — the shipped signal families
 
@@ -1570,7 +1587,7 @@ medium · **⤳** logical flow riding a network. Topology: **P2P** · **MD** mul
 
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
-| `video.hdmi.1_4` | HDMI 1.4 | `conn.hdmi_a` | → | P2P | solid | 1.00× | `HD14` | ▲ |
+| `video.hdmi.1_4` | HDMI 1.4 | `conn.hdmi_a` | → | P2P | solid | 0.75× | `HD14` | ▲ |
 | `video.hdmi.2_0` | HDMI 2.0 (18 Gbps) | `conn.hdmi_a` | → (+ARC ↔) | P2P | solid | 1.00× | `HD20` | ▲ |
 | `video.hdmi.2_1` | HDMI 2.1 (48 Gbps) | `conn.hdmi_a` | → (+eARC ↔) | P2P | solid | 1.25× | `HD21` | ▲ |
 | `video.displayport` | DisplayPort 1.4 / 2.1 | `conn.dp` | → (+AUX ↔) | P2P / MST | `18,4` | 1.00× | `DP` | ▲ |
@@ -1585,11 +1602,19 @@ worked at 4K60 fails at 4K120, and `LEN-001` exists for exactly this. DisplayPor
 100 W PoH; `topologyFree = false`, `acceptedFamilies` deliberately **excludes** `net.ethernet`,
 and this is what makes `SIG-001` fire.
 
+The three HDMI generations all stay **solid** — solid is the native carrier of the digital-video
+domain and HDMI is what that domain is for — and separate on weight alone, as a bandwidth
+progression: **1.4 at 0.75×, 2.0 at 1.00×, 2.1 at 1.25×**. HDMI 1.4 was authored at 1.00×, which
+made it byte-identical to `video.hdmi.2_0` on all four channels and failed PAL-1's within-domain
+limb; 0.75× also reads correctly as "the slow one". Note that 0.75×/1.00× is a ratio of 1.33 and
+so would *not* clear the cross-domain limb — it does not have to, because the within-domain limb
+requires only that dash, weight or glyph differ.
+
 #### Analog video & RF — `#56B4E9`, glyph ▼ baseband / ▽ broadband
 
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
-| `video.composite` | Composite (CVBS) | `conn.rca75` | → | P2P | `12,4` | 1.00× | `CVBS` | ▼ |
+| `video.composite` | Composite (CVBS) | `conn.rca75` | → | P2P | `1.5,3` | 1.00× | `CVBS` | ▼ |
 | `video.component` | Component YPbPr | `conn.rca75` | → | P2P (3-port set) | `12,4,3,4` | 1.00× | `YPBPR` | ▼ |
 | `video.vga` | VGA / RGBHV | `conn.hd15` | → (+DDC ↔) | P2P | `12,4,3,4,3,4` | 1.00× | `VGA` | ▼ |
 | `video.svideo` | S-Video | `conn.mini_din4` | → | P2P | `9,4` | 1.00× | `SVID` | ▼ |
@@ -1604,12 +1629,19 @@ three ports, one gesture, one Link with three conductors (AC-053). `rf.satellite
 a normal splitter means the dish never powers. `rf.catv` carries per-device insertion loss so a
 cascade budget is computable (a 2-way splitter is ≈ 3.5 dB); the cascade rule itself is v1.2.
 
+`video.composite`'s dash is `1.5,3` (class `(dot)`), not the `12,4` domain base it was authored
+with. At `12,4` 1.00× it was one of four `video.analog` families sharing class `(long)` with
+`audio.line_bal` at `10,3` 1.00× across a ΔL of 0.0112 — the analog-video and analog-audio hues
+are 0.4050 and 0.4162, which is about as deep inside the 0.10 band as two domains can be. Moving
+composite to a fine dot is also the honest reading: it is the lowest-bandwidth video signal in the
+registry.
+
 #### Analog audio — `#E69F00`, glyph ● line / ◐ speaker low-Z / ○ constant-voltage
 
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
 | `audio.line_unbal` | **Line level, unbalanced (RCA)** | `conn.rca` | → | P2P | `6,3` | 1.00× | `AUD` | ● |
-| `audio.line_bal` | Line level, balanced | `conn.xlr3` | → | P2P | `10,3` | 1.00× | `AUDB` | ● |
+| `audio.line_bal` | Line level, balanced | `conn.xlr3` | → | P2P | solid | 1.00× | `AUDB` | ● |
 | `audio.mic` | Mic level | `conn.xlr3` | → | P2P | `4,3` | 1.00× | `MIC` | ● |
 | `audio.phono` | Phono / turntable | `conn.rca` | → | P2P | `4,3,1.5,3` | 1.00× | `PHNO` | ● |
 | `audio.speaker_lowz` | **Speaker level, low-Z** | `conn.binding_post` | → | P2P / parallel | `6,3` | **2.00×** | `SPK` | ◐ |
@@ -1629,24 +1661,31 @@ on the terminal so `ELE-004` can evaluate. `audio.speaker_cv` carries `Port.tapW
 installation, not per device** (2.5 / 5 / 10 / 15 / 20 W), because the tap is a setting on the
 transformer, not a property of the speaker model.
 
+`audio.line_bal` draws **solid**, not the `10,3` it was authored with. `10,3` is class `(long)`,
+and it collided simultaneously with four `video.analog` families — `video.composite`,
+`video.svideo`, `rf.ota` and `rf.modulated` — all at ΔL 0.0112 and all at 1.00×, so neither PAL-1
+limb rescued any of the four. Solid is unoccupied in `audio.analog`, and a balanced line is the
+domain's cleanest carrier, so the override reads as meaning rather than as evasion. This is the
+one place a `dashOverride` reaches for `solid` inside a dashed domain.
+
 #### Digital audio — `#D55E00`, glyph ◆ electrical / ◇ optical or networked
 
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
-| `audio.spdif_coax` | **S/PDIF, coaxial (75 Ω)** | `conn.rca75` | → | P2P | `6,3,1,3` | 1.00× | `SPD` | ◆ |
+| `audio.spdif_coax` | **S/PDIF, coaxial (75 Ω)** | `conn.rca75` | → | P2P | `12,4,3,4` | 1.00× | `SPD` | ◆ |
 | `audio.spdif_optical` | **TOSLINK (optical S/PDIF)** | `conn.jis_f05` | → | P2P | `2,3` | **1.25×** | `OPT` | ◇ |
-| `audio.aes3` | AES/EBU (AES3, 110 Ω) | `conn.xlr3` | → | P2P | `10,3,1,3` | 1.00× | `AES` | ◆ |
+| `audio.aes3` | AES/EBU (AES3, 110 Ω) | `conn.xlr3` | → | P2P | `12,4,10,4` | 1.00× | `AES` | ◆ |
 | `audio.aes3id` | AES3id (75 Ω BNC) | `conn.bnc75` | → | P2P | `10,3,1,3,1,3` | 1.00× | `AES75` | ◆ |
 | `audio.dante` | Dante | `conn.rj45` | ⤳ | STAR | `6,3,1,3` | 1.50× | `DNT` | ◇ |
 | `audio.aes67` | AES67 | `conn.rj45` | ⤳ | STAR | `6,3,1,3,1,3` | 1.50× | `A67` | ◇ |
 | `audio.avb` | AVB / Milan | `conn.rj45` | ↔ | STAR (**TSN switches only**) | `8,3,1,3` | 1.50× | `AVB` | ◇ |
 
 The brief's "S/PDIF" and "TOSLINK" would have collided on one vermillion, and they do not: within
-the digital-audio domain the pair separates on **dash class, weight and glyph** — a `6,3,1,3`
-dash-dot at 1.00× with a filled diamond versus a fine `2,3` dot at 1.25× with a hollow diamond.
+the digital-audio domain the pair separates on **dash class, weight and glyph** — a `12,4,3,4`
+long-short at 1.00× with a filled diamond versus a fine `2,3` dot at 1.25× with a hollow diamond.
 TOSLINK's weight was raised from 1.00× because at 1.00× it collided with `ctl.ir_emitter` on every
-non-hue channel — ΔL 0.071, both fine-dot class, weight ratio only 1.33× — which fails PAL-1 in
-greyscale (canon §14.3). At 1.25× the ratio is 1.67 and the pair passes. This is also where the
+non-hue channel — ΔL 0.0715, both fine-dot class, weight ratio only 1.33× — which fails PAL-1 in
+greyscale. At 1.25× the ratio is 1.67 and the pair passes. This is also where the
 distinction carries real consequence — TOSLINK cannot carry lossless multichannel (no DTS-HD MA,
 no TrueHD), which is a design constraint, not trivia.
 
@@ -1657,6 +1696,18 @@ mic cable, despite the identical XLR. Dante uses **PTPv1**, AES67 **PTPv2 (IEEE 
 need QoS/DSCP and ideally a dedicated VLAN. `audio.avb` sets `requiresTsnPath: true`, and per
 CR-017 the "AVB traverses a non-TSN switch" check is a **post-hoc finding**, not a drag-time
 refusal, because the link being drawn may be the one that completes the path.
+
+**Two dashes in this domain were re-authored, and one of them is a requirement-4 type.**
+`audio.spdif_coax` moved from `6,3,1,3` to `12,4,3,4` and `audio.aes3` from `10,3,1,3` to
+`12,4,10,4`. `audio.digital` sits at L 0.2215, which puts it inside the 0.10 band against
+`ctl` (0.2930), `video.digital` (0.1525) *and* `net` (0.2569) at once — it is the most crowded hue
+in the palette, and a dash-dot pattern is the most crowded class. At `6,3,1,3`, class
+`(short,dot)`, S/PDIF collided with **six** `ctl` families — `ctl.rs232`, `ctl.dmx512`,
+`ctl.dali`, `ctl.knx`, `ctl.contact` and `ctl.ir_receiver` — none of which the weight limb
+rescued, since 1.00× against 0.75× is a ratio of 1.33. At `10,3,1,3`, class `(long,dot)`, AES3
+collided with `ctl.cresnet` and `video.avoip`. The replacements take `(long,short)` and
+`(long,long)`, and both keep the domain's 1.00× base weight. Do not "restore" the dash-dot
+patterns for family resemblance: the resemblance is what broke them.
 
 #### Network — `#009E73`, glyph ■ copper / □ fibre or non-Ethernet
 
@@ -1757,15 +1808,21 @@ appearing instead as an **outlet map** on the power schedule (AC-026).
 may end up carrying Ethernet, HDBaseT, or nothing. The family is legal, it schedules, it prints,
 it gets a `W` number and both labels, and the DRC validates **retroactively** once a `Service`
 assigns a real family. Its `6,3,3,3` dash is the `str` domain base, not an override; it moved from
-`4,4` because that value collided with five families in the L 0.219–0.419 band on both PAL-1 limbs
-(canon §14.3). `structure.pathway` pairs with `MediaTypeDef.isPathwayOnly` — it creates a
+`4,4` because at 0.75× that value failed both PAL-1 limbs against five families inside `str`'s
+0.10 band (L 0.2185–0.4185). `structure.pathway` pairs with `MediaTypeDef.isPathwayOnly` — it creates a
 `Pathway`, never a Link and never a Port, appears on the pull sheet (you still pull the smurf tube
 and it still costs money) and never appears in the netlist (CR-109).
 
 `structure.pathway`'s dash is a **double dot** (`1.5,3,1.5,9`, period 15 pt), not the single `2,6`
-dot it was authored with: at 0.75× against `ctl.ir_emitter`'s `1.5,3` at 0.75× — ΔL 0.026, same
-fine-dot class, weight ratio 1.00 — it violated PAL-1 (canon §14.3). A double dot reads correctly
-as "a route, not a conductor" and is unique in the shipped set.
+dot it was authored with: at 0.75× against `ctl.ir_emitter`'s `1.5,3` at 0.75× — ΔL 0.0255, same
+fine-dot class, weight ratio 1.00 — it violated PAL-1. A double dot reads correctly as "a route,
+not a conductor" and is unique in the shipped set.
+
+**None of the re-authored values in §4.3 and §4.4 were arrived at by reading these tables.** Every
+one of them, and the claim that the shipped set is now clear, is the output of
+`tools/pal1_check.py`, which enumerates all 385 in-band cross-domain pairs over all 55 families.
+Any change to a dash, weight or hex in this section is a change to that file's `FAMILIES` list and
+must be made in both places, in the same commit, with the check run.
 
 ### 4.5 Requirement 4 coverage audit
 
@@ -1776,20 +1833,34 @@ type in colour and greyscale side by side.**
 | Named in requirement 4 | Canonical family (or media) | Effective hue | Dash | Wt | Glyph | Tag |
 |---|---|---|---|---|---|---|
 | **Analog RCA** | `audio.line_unbal` | `#E69F00` | `6,3` | 1.00× | ● | `AUD` |
-| **HDMI** | `video.hdmi.2_0` / `2_1` / `1_4` | `#0072B2` | solid | 1.00× / 1.25× | ▲ | `HD20` `HD21` `HD14` |
+| **HDMI** | `video.hdmi.2_0` / `2_1` / `1_4` | `#0072B2` | solid | 1.00× / 1.25× / **0.75×** | ▲ | `HD20` `HD21` `HD14` |
 | **Network** | `net.ethernet` (+ `net.poe`) | `#009E73` | solid | 1.50× / 2.00× | ■ | `NET` `PoE` |
-| **IR** | `ctl.ir_emitter` (+ `ctl.ir_receiver`) | `#CC79A7` | `1.5,3` | 0.75× | ✚ | `IR` `IRRX` |
+| **IR** | `ctl.ir_emitter` (+ `ctl.ir_receiver`) | `#CC79A7` | `1.5,3` / `4,3,1.5,3` | 0.75× | ✚ | `IR` `IRRX` |
 | **RS-232** | `ctl.rs232` | `#CC79A7` | `6,3,1.5,3` | 0.75× | ✚ | `232` |
 | **RG6** | `media.rg6` carrying `rf.catv` / `rf.satellite` / `rf.ota` | `#56B4E9` | `12,4` / `12,4,3,4` / `16,4` | 1.50× / 1.50× / 1.00× | ▽ | `RF` `SAT` `OTA` |
-| **S/PDIF** | `audio.spdif_coax` | `#D55E00` | `6,3,1,3` | 1.00× | ◆ | `SPD` |
+| **S/PDIF** | `audio.spdif_coax` | `#D55E00` | `12,4,3,4` | 1.00× | ◆ | `SPD` |
 | **TOSLINK** | `audio.spdif_optical` | `#D55E00` | `2,3` | **1.25×** | ◇ | `OPT` |
 | **Speaker level** | `audio.speaker_lowz` (+ `audio.speaker_cv`) | `#E69F00` | `6,3` / `10,3,2,3` | **2.00×** | ◐ / ○ | `SPK` `70V` |
 | **Power** | `power.ac_branch` / `power.ac_iec` | `#000000` | `8,3,1.5,3,1.5,3` / `8,3,1.5,3` | 2.00× | ⬢ | `PWR` `IEC` |
-| *"etc."* | 40 further families across the same 8 domains | — | — | — | — | — |
+| *"etc."* | 37 further families across the same 8 domains | — | — | — | — | — |
 
 RG6 is correctly a **medium**, not a signal — that is the point of the three-axis split — so it is
 colour-coded by what it carries. The legend row for RG6 shows all three of its families, which is
 more informative than a single "RG6" swatch would have been.
+
+**Two rows of this audit carry corrected values, and the correction is the point.** S/PDIF now
+draws `12,4,3,4`, not `6,3,1,3`; HDMI 1.4 now draws at 0.75×, not 1.00×. The old values had been
+signed off as clear three separate times. They were not: at `6,3,1,3` S/PDIF was illegible in
+greyscale against six `ctl` families including **RS-232 and IR receive — two more of the ten types
+this very table exists to certify** — and HDMI 1.4 was byte-identical to HDMI 2.0. Each sign-off
+had been performed by reading §4.3's eight domain rows, which cannot see a family-level override
+and therefore cannot see any of these collisions.
+
+So this audit is no longer the evidence. `tools/pal1_check.py` is: it carries the ten named types
+as a `REQUIREMENT_4` map and labels every violation that touches one, so a regression against a
+brief-named type reports as a requirement-4 failure rather than a style nit. The table above is a
+human-readable projection of that file and is correct only insofar as it matches it. Run the check
+before trusting either.
 
 **Every one of the ten is reachable from the shipped catalog**, which is the property that makes
 this audit meaningful rather than theoretical:

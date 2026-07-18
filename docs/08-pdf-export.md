@@ -191,11 +191,27 @@ The chip is **not** a solid swatch. It is a 16 × 9 pt box containing a 1.5 pt h
  └──────────────┘
 ```
 
-Three consequences. **(1)** The schedule and the drawing cross-reference visually with no legend lookup — you find `━━━` in the chip, you look for `━━━` on the sheet. **(2)** Greyscale works by construction: drop the hue and the tint and the dash class plus the weight ratio still discriminate all eight domains, per **PAL-1** — *for every pair of shipped families in different domains whose luminances are within 0.10, either their dash classes differ **or** their weight multipliers differ by a factor ≥ 1.4 (canon §14.1)*. **(3)** The tag text is the third layer and never fails: `VID·HDMI`, `CTL·232`, `AUD·SPK`.
+Three consequences. **(1)** The schedule and the drawing cross-reference visually with no legend lookup — you find `━━━` in the chip, you look for `━━━` on the sheet. **(2)** Greyscale works by construction: drop the hue and the tint, and dash class **or** weight multiplier still separates every pair of families that greyscale brings together, per **PAL-1**, stated below in the rendered-value form that governs. **(3)** The tag text is the third layer and never fails: `VID·HDMI`, `CTL·232`, `AUD·SPK`.
 
-This matters because the common claim that Okabe-Ito is greyscale-safe **is false** and this project does not repeat it: Sky Blue `#56B4E9` (relative luminance 0.401) and Orange `#E69F00` (0.416) are 1.5% apart, and Vermillion/Green/Purple sit inside a 0.07 band. The dash-and-weight layer is load-bearing, not decoration (AC-054).
+> **PAL-1 (rendered-value form).** Every shipped `SignalFamilyDef` renders as the triple
+> *(L, dashClass, weight)*, where **L** is the WCAG relative luminance of its **effective** hue,
+> **dashClass** is the class of its effective dash pattern, and **weight** is its effective
+> line-weight multiplier — *effective* meaning **after** any per-family override, not the domain
+> base value.
+>
+> For **every pair of families belonging to different `SignalDomainDef`s** whose luminances satisfy
+> **|L₁ − L₂| < 0.10**, at least one of the following must hold: **(a)** their dash classes differ,
+> **or** **(b)** their weight multipliers differ by a factor **≥ 1.4**.
+>
+> Families **within one domain** are exempt from (a)/(b) — they share a hue by construction and the
+> legend prints them adjacently — but any two families in one domain must still differ in **dash
+> pattern, weight, or glyph**.
 
-Greyscale export drops hue entirely and renders every domain black at its own dash and weight; CMYK export uses `PdfColorCmyk` with pure black as `0,0,0,1`, never rich black. `str`'s dash is `6,3,3,3`, class `(short,short)` — the only unoccupied two-mark dash class in the shipped set, which is what clears it against `audio.line_unbal`, `audio.mic`, `audio.headphone`, `ctl.rs485` and `ctl.trigger12v` (canon §14.3).
+The rule is pairwise over **rendered family values**, not over the eight domain rows of the chip above. The chip prints each domain's *base* rendering; a family carrying a dash or weight override renders differently from its base, and it is the rendered value that reaches the paper. Reading the eight rows is not a check — the authority is `tools/pal1_check.py`, which enumerates every in-band cross-domain pair and exits non-zero on any violation. It is ported to `pal1_conformance_test.dart` in `rackmate_core` at M0 and remains the authority thereafter; where this document and that file disagree, the file wins. The dash-class definition, the collisions the check found and the palette corrections it forced are in [Schematic editor §6.3](05-schematic-editor.md) and are deliberately not restated here.
+
+This matters because the common claim that Okabe-Ito is greyscale-safe **is false** and this project does not repeat it: Sky Blue `#56B4E9` (relative luminance 0.4050) and Orange `#E69F00` (0.4162) are ΔL 0.0112 apart, and Vermillion `#D55E00` (0.2215) / Green `#009E73` (0.2569) / Purple `#CC79A7` (0.2930) sit inside a 0.072 band. The dash-and-weight layer is load-bearing, not decoration (AC-054).
+
+Greyscale export drops hue entirely and renders every domain black at its own dash and weight; CMYK export uses `PdfColorCmyk` with pure black as `0,0,0,1`, never rich black. The `str` base dash is `6,3,3,3`, class `(short,short)`, period 15 pt — **not** the retracted `4,4`, whose "an even dash is unambiguous against a 2:1 dash" justification does not survive the mechanical dash-class definition (canon §14.3, [Schematic editor §6.3](05-schematic-editor.md)). The chip above prints the shipped value.
 
 ### 3.6 Sort and group
 

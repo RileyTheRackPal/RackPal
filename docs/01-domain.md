@@ -279,20 +279,22 @@ The **tag pill** (`W042 · HDMI · 25 ft`, carried at both ends of every run) is
 
 | `id` | Display | Light hex | Base dash (pt) | Weight | Glyph (native / transported) | Rel. lum. |
 |---|---|---|---|---|---|---|
-| `video.digital` | Digital Video | `#0072B2` | solid | 1.00× | ▲ / △ | 0.151 |
-| `video.analog` | Analog Video & RF | `#56B4E9` | `12,4` | 1.00× | ▼ / ▽ | 0.401 |
-| `audio.analog` | Analog Audio | `#E69F00` | `6,3` | 1.00× | ● / ◐ / ○ | 0.416 |
-| `audio.digital` | Digital Audio | `#D55E00` | `6,3,1,3` | 1.00× | ◆ / ◇ | 0.222 |
-| `net` | Network | `#009E73` | solid | 1.50× | ■ / □ | 0.257 |
-| `ctl` | Control | `#CC79A7` | `1.5,3` | 0.75× | ✚ / ✳ | 0.293 |
-| `pwr` | Power | `#000000` | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.000 |
-| `str` | Structure | `#999999` | `4,4` | 0.75× | ★ / ☆ | 0.319 |
+| `video.digital` | Digital Video | `#0072B2` | solid | 1.00× | ▲ / △ | 0.1525 |
+| `video.analog` | Analog Video & RF | `#56B4E9` | `12,4` | 1.00× | ▼ / ▽ | 0.4050 |
+| `audio.analog` | Analog Audio | `#E69F00` | `6,3` | 1.00× | ● / ◐ / ○ | 0.4162 |
+| `audio.digital` | Digital Audio | `#D55E00` | `6,3,1,3` | 1.00× | ◆ / ◇ | 0.2215 |
+| `net` | Network | `#009E73` | solid | 1.50× | ■ / □ | 0.2569 |
+| `ctl` | Control | `#CC79A7` | `1.5,3` | 0.75× | ✚ / ✳ | 0.2930 |
+| `pwr` | Power | `#000000` | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.0000 |
+| `str` | Structure | `#999999` | `6,3,3,3` | 0.75× | ★ / ☆ | 0.3185 |
 
-Yellow `#F0E442` is reserved for selection and focus and **is never a cable** (PAL-2). The claim that Okabe–Ito survives greyscale is **false** and is not repeated: sky blue (0.401) and orange (0.416) are 1.5% apart, and vermillion/green/purple share a 0.07 band. The collisions are placed deliberately and separated on the other three channels, which is promoted to a checkable rule:
+Yellow `#F0E442` is reserved for selection and focus and **is never a cable** (PAL-2). The claim that Okabe–Ito survives greyscale is **false** and is not repeated: sky blue (0.4050) and orange (0.4162) are 1.1% apart, and vermillion/green/purple share a 0.07 band. The collisions are placed deliberately and separated on the other three channels, which is promoted to a checkable rule:
 
-> **PAL-1.** Every shipped `SignalFamilyDef` renders as *(L, dashClass, weight)* where **L** is the WCAG relative luminance of its **effective** hue and dashClass/weight are its **effective** values *after* any §6.4 override — not the domain base values. For every pair of families in **different** `SignalDomainDef`s with **|L₁ − L₂| < 0.10**, at least one must hold: **(a)** their dash classes differ, **or** **(b)** their weight multipliers differ by a factor **≥ 1.4**. Families within one domain are exempt from (a)/(b) — they share a hue by construction and the legend prints them adjacently — but must still differ in dash pattern, weight, or glyph.
+> **PAL-1 (rendered-value form).** Every shipped `SignalFamilyDef` renders as the triple **(L, dashClass, weight)**, where **L** is the WCAG relative luminance of its **effective** hue, **dashClass** is the class of its **effective** dash pattern, and **weight** is its **effective** line weight — *effective* meaning after any per-family override, not the domain base value. For every pair of families in **different** domains with **|L₁ − L₂| < 0.10**, at least one must hold: **(a)** their dash classes differ, **or** **(b)** their weights differ by a factor **≥ 1.4**. Families within one domain are exempt from (a)/(b) — they share a hue by construction and the legend prints them adjacently — but must still differ in dash, weight, or glyph.
 
-PAL-1 is checked by a unit test over every shipped family pair, not by inspection of the eight domain rows (canon §14). The dash-period floor is **≥ 4.5 pt** (1.5875 mm).
+The within-domain limb is a **domain-equality check, never an allowlist of waived pairs**. An allowlist is how a real collision gets waived.
+
+PAL-1 is enforced by [`tools/pal1_check.py`](../tools/pal1_check.py), which enumerates every in-band cross-domain family pair actually drawn; it is ported to `pal1_conformance_test.dart` in `rackmate_core` at M0 and that check is the authority thereafter (canon §14). Where this document and that file disagree, **the file wins and this document is the bug report**. PAL-1 is never established by reading the eight domain rows above: the domain table states base values, while PAL-1 is a statement about the ~55 shipped families' *effective* values, and a check performed against the eight rows passed three times over a palette carrying fourteen collisions. The dash-period floor is **≥ 4.5 pt** (1.5875 mm).
 
 ---
 

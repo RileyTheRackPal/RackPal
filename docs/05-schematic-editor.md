@@ -182,9 +182,9 @@ A drawn `Link` is an orthogonal polyline emitted by the router (§10), stroked w
 
 | Weight class | Screen (device px) | Print (pt) |
 |---|---|---|
-| 0.75× control / structure | 1.2 | 0.5 |
-| 1.00× signal | 1.6 | 0.7 |
-| 1.25× HDBaseT, HDMI 2.1 | 2.0 | 0.9 |
+| 0.75× control / structure, HDMI 1.4 | 1.2 | 0.5 |
+| 1.00× signal, HDMI 2.0 | 1.6 | 0.7 |
+| 1.25× HDBaseT, HDMI 2.1, TOSLINK | 2.0 | 0.9 |
 | 1.50× network, RF, digital audio networked | 2.4 | 1.0 |
 | 2.00× power, speaker level, PoE | 3.2 | 1.4 |
 | Selection halo | +5 px behind, `#F0E442` @ 55% | never prints |
@@ -234,66 +234,81 @@ So RackMate uses **four independent encoding channels**, and hue is never one of
 
 | `id` | Display name | Light hex | Dark hex | Base dash (pt) | Weight | Glyph native / transported | Rel. lum. | Greyscale export |
 |---|---|---|---|---|---|---|---|---|
-| `video.digital` | Digital Video | `#0072B2` | `#4DA6DD` | solid | 1.00× | ▲ / △ | 0.151 | black, solid, 1.00× |
-| `video.analog` | Analog Video & RF | `#56B4E9` | `#8ACFF5` | `12,4` | 1.00× | ▼ / ▽ | 0.401 | black, `12,4`, 1.00× |
-| `audio.analog` | Analog Audio | `#E69F00` | `#F0B443` | `6,3` | 1.00× | ● / ◐ / ○ | 0.416 | black, `6,3`, 1.00× |
-| `audio.digital` | Digital Audio | `#D55E00` | `#F07A33` | `6,3,1,3` | 1.00× | ◆ / ◇ | 0.222 | black, dash-dot, 1.00× |
-| `net` | Network | `#009E73` | `#2FC79A` | solid | 1.50× | ■ / □ | 0.257 | black, solid, 1.50× |
-| `ctl` | Control | `#CC79A7` | `#E29CC3` | `1.5,3` | 0.75× | ✚ / ✳ | 0.293 | black, fine dot, 0.75× |
-| `pwr` | Power | `#000000` | `#E8E8E8` *(inverted — black is invisible on dark)* | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.000 | black, dash-dot-dot, 2.00× |
-| `str` | Structure | `#999999` | `#A8A8A8` | `6,3,3,3` | 0.75× | ★ / ☆ | 0.319 | black, `6,3,3,3`, 0.75× |
-| *(reserved)* | Selection / focus | `#F0E442` | `#F5E76B` | — | — | — | 0.744 | never printed |
+| `video.digital` | Digital Video | `#0072B2` | `#4DA6DD` | solid | 1.00× | ▲ / △ | 0.1525 | black, solid, 1.00× |
+| `video.analog` | Analog Video & RF | `#56B4E9` | `#8ACFF5` | `12,4` | 1.00× | ▼ / ▽ | 0.4050 | black, `12,4`, 1.00× |
+| `audio.analog` | Analog Audio | `#E69F00` | `#F0B443` | `6,3` | 1.00× | ● / ◐ / ○ | 0.4162 | black, `6,3`, 1.00× |
+| `audio.digital` | Digital Audio | `#D55E00` | `#F07A33` | `6,3,1,3` | 1.00× | ◆ / ◇ | 0.2215 | black, dash-dot, 1.00× |
+| `net` | Network | `#009E73` | `#2FC79A` | solid | 1.50× | ■ / □ | 0.2569 | black, solid, 1.50× |
+| `ctl` | Control | `#CC79A7` | `#E29CC3` | `1.5,3` | 0.75× | ✚ / ✳ | 0.2930 | black, fine dot, 0.75× |
+| `pwr` | Power | `#000000` | `#E8E8E8` *(inverted — black is invisible on dark)* | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.0000 | black, dash-dot-dot, 2.00× |
+| `str` | Structure | `#999999` | `#A8A8A8` | `6,3,3,3` | 0.75× | ★ / ☆ | 0.3185 | black, `6,3,3,3`, 0.75× |
+| *(reserved)* | Selection / focus | `#F0E442` | `#F5E76B` | — | — | — | 0.7441 | never printed |
+
+The luminances above are computed from the shipped light hexes by the `luminance()` function in [`tools/pal1_check.py`](../tools/pal1_check.py) and are the figures this project publishes. Any document carrying `video.analog` as `0.401` is stale; the value is **0.4050**.
 
 Dash patterns, weights, glyphs and tags are **identical across themes**. Only hue moves, and the theme is a UI preference never persisted in the document.
 
-`str`'s base dash was authored `4,4` rather than the design document's `6,3`, on the reasoning that an even dash reads as unambiguous against a 2:1 dash. **That reasoning predates the mechanical dash-class definition in §6.3 and does not survive it:** `4,4` and `6,3` both classify as `(short)`, `str` (L 0.319) and `audio.analog` (L 0.416) are ΔL 0.097 apart, and 1.00× / 0.75× is a ratio of 1.33 — the pair was inside PAL-1's band on every channel the rule tests. Running the pairwise test is what settled it, and it found not one failing partner but **five**: `audio.line_unbal` `6,3` @ 1.00×, `audio.mic` `4,3` @ 1.00×, `audio.headphone` `3,3` @ 0.75×, `ctl.rs485` `6,3` @ 1.00× and `ctl.trigger12v` `4,3` @ 0.75×. Against `audio.headphone` and `ctl.trigger12v` the dash class *and* the weight were identical — in greyscale, the same line. **The `str` base dash is therefore `6,3,3,3`**, class `(short,short)`, period 15 pt, weight unchanged at 0.75× (canon §14.3). `(short,short)` is unoccupied across all 55 shipped families, so `structure.undetermined` clears all 40 of its in-band cross-domain pairs on the dash-class limb alone and no future weight change can reopen it. This is exactly the class of collision a domain-level table waves through, which is why the check is a pairwise test over rendered family values and not a table of eight rows.
+`str`'s base dash was authored `4,4` rather than the design document's `6,3`, on the reasoning that an even dash reads as unambiguous against a 2:1 dash. **That reasoning predates the mechanical dash-class definition in §6.3 and does not survive it:** `4,4` and `6,3` both classify as `(short)`, so the authored value left `structure.undetermined` — which carries no `dashOverride` and inherits the domain base — sharing a dash class with the `(short)` families sitting inside PAL-1's luminance band, in some cases at an identical weight as well. **The `str` base dash is therefore `6,3,3,3`**, class `(short,short)`, period 15 pt, permille `[6000, 3000, 3000, 3000]`, weight unchanged at 0.75× (canon §14.3). Because `structure.undetermined` inherits it, the legend's `str` swatch and the drawn line move together.
+
+**This pair is closed, not outstanding.** `str` is `6,3,3,3` and [`tools/pal1_check.py`](../tools/pal1_check.py) passes on the shipped palette. Which partners the change clears is the file's output and not a claim made here — that is the whole point of moving the rule into an executable check, and it is why the check enumerates rendered family values pairwise rather than reading a table of eight domain rows.
 
 ### 6.3 The honest greyscale caveat, and the rule it generates
 
 Several sources claim Okabe–Ito "has distinct luminance values so it works in greyscale." **Computing WCAG relative luminance shows that claim is false**, and RackMate does not repeat it. Two collision bands exist in the shipped palette:
 
-- **Sky Blue `#56B4E9` (L 0.401) vs Orange `#E69F00` (L 0.416)** — 1.5% apart, indistinguishable in greyscale. These are analog video and analog audio.
-- **Vermillion `#D55E00` (0.222) / Bluish Green `#009E73` (0.257) / Reddish Purple `#CC79A7` (0.293)** — a crowded 0.07 band. These are digital audio, network and control.
+- **Sky Blue `#56B4E9` (L 0.4050) vs Orange `#E69F00` (L 0.4162)** — ΔL 0.0112, indistinguishable in greyscale. These are analog video and analog audio.
+- **Vermillion `#D55E00` (0.2215) / Bluish Green `#009E73` (0.2569) / Reddish Purple `#CC79A7` (0.2930)** — a crowded 0.07 band. These are digital audio, network and control.
 
 The collisions are placed **deliberately**, not accepted. Each colliding pair is separated maximally on the other three channels, and that is promoted from a hope to a checkable rule:
 
 > **PAL-1 (rendered-value form).** Every shipped `SignalFamilyDef` renders as the triple
 > *(L, dashClass, weight)*, where **L** is the WCAG relative luminance of its **effective** hue,
-> **dashClass** is the class of its effective dash pattern per the mechanical definition below, and
-> **weight** is its effective line-weight multiplier — *effective* meaning **after** any
-> `colorOverride`, `dashOverride` or weight override declared in the signal-family registry, not
-> the domain base value.
+> **dashClass** is the class of its **effective** dash pattern per the mechanical definition below,
+> and **weight** is its **effective** line weight — *effective* meaning **after** any per-family
+> override (`colorOverride`, `dashOverride`, weight override), **not** the domain base value.
 >
-> For **every pair of families belonging to different `SignalDomainDef`s** whose luminances satisfy
-> **|L₁ − L₂| < 0.10**, at least one of the following must hold: **(a)** their dash classes differ,
-> **or** **(b)** their weight multipliers differ by a factor **≥ 1.4**.
+> For **every pair of families in different domains** with **|L₁ − L₂| < 0.10**, at least one must
+> hold: **(a)** their dash classes differ, **or** **(b)** their weights differ by a factor **≥ 1.4**.
 >
-> Families **within one domain** are exempt from (a)/(b) — they share a hue by construction, the
-> legend prints them adjacently, and the tag pill disambiguates them — but any two families in one
-> domain must still differ in **dash pattern, weight, or glyph**.
+> Families **within one domain** are exempt from (a)/(b) — they share a hue by construction and the
+> legend prints them adjacently — but must still differ in **dash, weight, or glyph**.
+>
+> The within-domain limb is a **domain-equality check, never an allowlist of waived pairs.** An
+> allowlist is how a real collision gets waived.
 
 > **Dash class.** Classify each mark in one period as **dot** (< 2.5 pt), **short** (2.5–8.9 pt) or
 > **long** (≥ 9 pt); the class is that sequence of mark classes, compared **up to rotation**.
-> `solid` is its own class. Worked: `2,3` → `(dot)` · `1.5,3` → `(dot)` · `6,3` → `(short)` ·
-> `6,3,3,3` → `(short,short)` · `12,4` → `(long)` · `6,3,1,3` → `(short,dot)` ·
-> `1.5,3,4,3` → `(dot,short)` = `(short,dot)` by rotation · `1.5,3,1.5,9` → `(dot,dot)` ·
-> `8,3,1.5,3,1.5,3` → `(short,dot,dot)`.
+> `solid` is its own class. Marks are the even indices; gaps carry no class. Each class is written
+> as its **lexicographically least rotation**, so two patterns with the same rhythm compare equal.
+> Worked: `2,3` → `(dot)` · `1.5,3` → `(dot)` · `6,3` → `(short)` · `6,3,3,3` → `(short,short)` ·
+> `12,4` → `(long)` · `6,3,1,3` → `(dot,short)` · `1.5,3,4,3` → `(dot,short)`, the same class by
+> rotation · `12,4,3,4` → `(long,short)` · `12,4,10,4` → `(long,long)` ·
+> `1.5,3,1.5,9` → `(dot,dot)` · `8,3,1.5,3,1.5,3` → `(dot,dot,short)`.
 
-**The check is a pairwise unit test over every shipped family, not a table of domains.** The domain-level table that used to sit here checked eight rows and missed three real collisions between families, because §6.4's `dashOverride` and weight overrides are never re-checked against the domain values PAL-1 was verified over (canon §12.6(c)). The within-domain exemption is a domain-equality check inside the test, **never an allowlist of pairs** — an allowlist is how a real collision gets waived.
+**The authority for PAL-1 is [`tools/pal1_check.py`](../tools/pal1_check.py), an executable check, and no longer any sentence in this document.** It enumerates the **55 shipped families** and the **385 in-band cross-domain pairs** they actually produce, and it exits non-zero on any violation. Where this document and that file disagree, **the file wins and this document is wrong.**
 
-Three collisions were found this way and all three are corrected in §6.4:
+That change of authority was not procedural tidiness. PAL-1 had been recorded as clear three separate times against a palette that in fact contained **fourteen** collisions, because each of those checks read the eight domain rows of §6.2 rather than the family rows §6.4's `dashOverride` and weight overrides actually draw (canon §12.6(c)). **Six of the fourteen involved types requirement 4 names by hand** — S/PDIF alone collided with RS-232, DMX512, DALI, KNX, contact closure and IR receive. A rule that is checked by reading a table is not checked; this section therefore records *what was corrected* and delegates *whether the palette is clear* to the file.
 
-| Failing pair | Was | Correction |
-|---|---|---|
-| TOSLINK `audio.spdif_optical` (L 0.222) vs IR `ctl.ir_emitter` (L 0.293) — ΔL 0.071, both `(dot)`, weight ratio 1.33 | `2,3` @ 1.00× | **`audio.spdif_optical` weight → `1.25×`.** Dash stays `2,3`. Ratio becomes **1.67 ≥ 1.4** ✓ |
-| `structure.pathway` (L 0.319) vs IR (L 0.293) — ΔL 0.026, both `(dot)`, ratio 1.00 | `2,6` @ 0.75× | **`structure.pathway` dash → `1.5,3,1.5,9`**, class `(dot,dot)` ✓, period 15 pt. Weight stays 0.75×. |
-| `structure.undetermined` (L 0.319) vs **five** families — `audio.line_unbal` `6,3` @ 1.00×, `audio.mic` `4,3` @ 1.00×, `audio.headphone` `3,3` @ 0.75×, `ctl.rs485` `6,3` @ 1.00×, `ctl.trigger12v` `4,3` @ 0.75×; ΔL 0.097 / 0.097 / 0.097 / 0.026 / 0.026, **all six `(short)`**, ratios 1.33, 1.33, **1.00**, 1.33, **1.00**. Against `audio.headphone` and `ctl.trigger12v` the dash class *and* the weight are identical — in greyscale they are the same line, separated by hue alone | `4,4` @ 0.75×, inherited from the `str` domain base | **The `str` domain base dash `4,4` → `6,3,3,3`**, class `(short,short)` ✓, period 15 pt, permille `[6000, 3000, 3000, 3000]`. Weight stays 0.75×. `structure.undetermined` carries no `dashOverride` and inherits it, so the legend's `str` swatch and the drawn line move together. It is the correct family to move: it is a placeholder, it is not one of requirement 4's ten named types, and moving it is one edit against five. |
+The corrections below are what the check required. Run it to see the pairs each one resolves:
+
+| Family | Was | Now | What it resolves |
+|---|---|---|---|
+| `video.hdmi.1_4` | solid @ 1.00× | **solid @ 0.75×** | It was byte-identical to `video.hdmi.2_0` and so failed the within-domain limb outright. The three HDMI generations now read as a bandwidth progression — **0.75× / 1.00× / 1.25×** — and all three stay **solid**, solid being the native carrier of digital video. |
+| `video.composite` | `12,4` @ 1.00× | **`1.5,3` @ 1.00×** | Class `(long)` → `(dot)`. Period 4.5 pt, at the floor. |
+| `audio.line_bal` | `10,3` @ 1.00× | **solid @ 1.00×** | Class `(long)` → `(solid)`. It was colliding with **four** `video.analog` families at once — `video.composite`, `video.svideo`, `rf.ota` and `rf.modulated` — every one of them at ΔL 0.0112, the analog-video/analog-audio band named above. |
+| `audio.spdif_coax` | `6,3,1,3` @ 1.00× | **`12,4,3,4` @ 1.00×** | Class `(dot,short)` → `(long,short)`. This is **requirement 4's S/PDIF**, and the move cleared all six of its `ctl` collisions in one edit. |
+| `audio.aes3` | `10,3,1,3` @ 1.00× | **`12,4,10,4` @ 1.00×** | Class `(dot,long)` → `(long,long)`. Cleared `ctl.cresnet` and `video.avoip`. |
+| `audio.spdif_optical` | `2,3` @ 1.00× | **`2,3` @ 1.25×** | Dash unchanged. Against IR `ctl.ir_emitter` (ΔL 0.0715, both `(dot)`) the weight ratio rises from 1.33 to **1.67 ≥ 1.4** ✓ — the (b) limb, since (a) cannot be used without disturbing a second requirement-4 type. |
+| `structure.pathway` | `2,6` @ 0.75× | **`1.5,3,1.5,9` @ 0.75×** | Class `(dot)` → `(dot,dot)` ✓, period 15 pt. Weight unchanged. |
+| `str` domain base — inherited by `structure.undetermined` | `4,4` @ 0.75× | **`6,3,3,3` @ 0.75×** | Class `(short)` → `(short,short)` ✓, period 15 pt, permille `[6000, 3000, 3000, 3000]`. It is the correct place to move: a placeholder family, not one of requirement 4's ten named types, and one edit rather than many. |
+
+All eight preserve their domain's base **weight** semantics, and **no hue changed** — the Okabe–Ito domain palette in §6.2 is untouched, so nothing above alters a luminance or reopens a band. The failing pairs named in the last column are the check's output, not an assertion made here: revert any row and `python tools/pal1_check.py` prints the violations back.
 
 `ctl.ir_emitter` is **not** touched: it is a requirement-4 named type and its `1.5,3` is itself the correction that brought the control domain up to the dash-period floor.
 
-> **PAL-2** — Yellow `#F0E442` is reserved for selection and focus and is **never a cable**. At L 0.744 it is illegible as a thin line on white paper.
+> **PAL-2** — Yellow `#F0E442` is reserved for selection and focus and is **never a cable**. At L 0.7441 it is illegible as a thin line on white paper.
 
-> **PAL-3** — **The screen theme never affects the export.** Export palette is `ExportSpec.palette: colour | greyscale | cmyk`, default `colour`, default `greyscale` in the Installer preset, never inherited from the UI theme (CR-077). Greyscale export drops hue entirely and renders every domain in black at its own dash and weight — which the table above proves is sufficient. `ProjectSettings.greyscaleSafeExport` is deleted: it is an export option, not a property of the design.
+> **PAL-3** — **The screen theme never affects the export.** Export palette is `ExportSpec.palette: colour | greyscale | cmyk`, default `colour`, default `greyscale` in the Installer preset, never inherited from the UI theme (CR-077). Greyscale export drops hue entirely and renders every family in black at its own dash and weight — which is sufficient exactly when PAL-1 holds, and PAL-1 holding is what [`tools/pal1_check.py`](../tools/pal1_check.py) decides. No table in this document establishes it. `ProjectSettings.greyscaleSafeExport` is deleted: it is an export option, not a property of the design.
 
 **Units and storage** (CR-079) are stated once in §6.6, including the **≥ 4.5 pt** shipped dash-period floor that the corrections above are measured against.
 
@@ -304,12 +319,12 @@ Requirement 4 names ten cable types and demands the plan be colour-coded by them
 | Named in requirement 4 | Canonical family (or media) | Effective hue | Dash | Wt | Glyph | Tag |
 |---|---|---|---|---|---|---|
 | **Analog RCA** | `audio.line_unbal` | `#E69F00` | `6,3` | 1.00× | ● | `AUD` |
-| **HDMI** | `video.hdmi.2_0` / `2_1` / `1_4` | `#0072B2` | solid | 1.00× / 1.25× | ▲ | `HD20` `HD21` `HD14` |
+| **HDMI** | `video.hdmi.1_4` / `2_0` / `2_1` | `#0072B2` | solid | **0.75× / 1.00× / 1.25×** | ▲ | `HD14` `HD20` `HD21` |
 | **Network** | `net.ethernet` (+ `net.poe`) | `#009E73` | solid | 1.50× / 2.00× | ■ | `NET` `PoE` |
-| **IR** | `ctl.ir_emitter` (+ `ctl.ir_receiver`) | `#CC79A7` | `1.5,3` | 0.75× | ✚ | `IR` `IRRX` |
+| **IR** | `ctl.ir_emitter` (+ `ctl.ir_receiver`) | `#CC79A7` | `1.5,3` / `4,3,1.5,3` | 0.75× | ✚ | `IR` `IRRX` |
 | **RS-232** | `ctl.rs232` | `#CC79A7` | `6,3,1.5,3` | 0.75× | ✚ | `232` |
 | **RG6** | `media.rg6` carrying `rf.catv` / `rf.satellite` / `rf.ota` | `#56B4E9` | `12,4` / `12,4,3,4` / `16,4` | 1.50× / 1.50× / 1.00× | ▽ | `RF` `SAT` `OTA` |
-| **S/PDIF** | `audio.spdif_coax` | `#D55E00` | `6,3,1,3` | 1.00× | ◆ | `SPD` |
+| **S/PDIF** | `audio.spdif_coax` | `#D55E00` | **`12,4,3,4`** | 1.00× | ◆ | `SPD` |
 | **TOSLINK** | `audio.spdif_optical` | `#D55E00` | `2,3` | **1.25×** | ◇ | `OPT` |
 | **Speaker level** | `audio.speaker_lowz` (+ `audio.speaker_cv`) | `#E69F00` | `6,3` / `10,3,2,3` | **2.00×** | ◐ / ○ | `SPK` `70V` |
 | **Power** | `power.ac_branch` / `power.ac_iec` | `#000000` | `8,3,1.5,3,1.5,3` / `8,3,1.5,3` | 2.00× | ⬢ | `PWR` `IEC` |
@@ -317,11 +332,11 @@ Requirement 4 names ten cable types and demands the plan be colour-coded by them
 The two within-domain collisions the requirement would have produced are both resolved off the hue channel and both survive a greyscale photocopy:
 
 - **Analog RCA vs speaker level** (both `#E69F00`): identical dash, but **1.00× vs 2.00×** stroke and ● vs ◐. A 2× weight difference is the single most legible mono discriminator available.
-- **S/PDIF vs TOSLINK** (both `#D55E00`): `6,3,1,3` dash-dot at 1.00× with a filled diamond versus a fine `2,3` dot at **1.25×** with a hollow diamond — three channels, not two. The weight was raised from 1.00× to 1.25× because at 1.00× TOSLINK collided with IR (`ctl.ir_emitter`, `1.5,3`, 0.75×) on every non-hue channel: ΔL 0.071, same fine-dot dash class, weight ratio 1.33 below PAL-1's 1.4 floor. Two of the brief's ten named types rendered as near-identical dotted lines in greyscale. At 1.25× the ratio is 1.67 (canon §14.3). This pair also carries real consequence — TOSLINK cannot carry lossless multichannel.
+- **S/PDIF vs TOSLINK** (both `#D55E00`): a **`12,4,3,4`** long-short at 1.00× with a filled diamond versus a fine `2,3` dot at **1.25×** with a hollow diamond — three channels, not two. Both endpoints of this pair moved, and for different reasons. TOSLINK's weight was raised from 1.00× to 1.25× because at 1.00× it collided with IR (`ctl.ir_emitter`, `1.5,3`, 0.75×) on every non-hue channel: ΔL 0.0715, same `(dot)` class, weight ratio 1.33 below PAL-1's 1.4 floor; at 1.25× the ratio is 1.67 (canon §14.3). S/PDIF's dash moved from `6,3,1,3` to `12,4,3,4` — class `(dot,short)` → `(long,short)` — because `(dot,short)` at 1.00× put it in collision with **six** `ctl` families at once. Between them, three of the brief's ten named types were rendering as near-identical dotted lines in greyscale. This pair also carries real consequence — TOSLINK cannot carry lossless multichannel.
 
 RG6 is correctly a **medium**, not a signal, so it is colour-coded by what it carries; its legend row shows all three families, which is more informative than one "RG6" swatch. `ProjectSettings.familyColorOverrides` lets a user override any hue in v1 (AC-054).
 
-**Acceptance is on hardware, not in simulation** (canon §6.7): the legend is rendered under protanopia and deuteranopia simulation with every domain pair distinguishable; and the same legend is printed on a real greyscale office laser at ANSI B and photocopied once, with all ten requirement-4 types remaining identifiable. PAL-1 **over rendered family values, pairwise, every cross-domain pair** (canon §14.5), the **≥ 4.5 pt** dash floor, and glyph font coverage are each unit tests.
+**Acceptance is on hardware, not in simulation** (canon §6.7): the legend is rendered under protanopia and deuteranopia simulation with every domain pair distinguishable; and the same legend is printed on a real greyscale office laser at ANSI B and photocopied once, with all ten requirement-4 types remaining identifiable. PAL-1 **over rendered family values, pairwise, every cross-domain pair** (canon §14.5), the **≥ 4.5 pt** dash-period floor, and glyph font coverage are each executable checks, never review items. PAL-1 and the period floor ship today as [`tools/pal1_check.py`](../tools/pal1_check.py); that file is ported to `pal1_conformance_test.dart` in `rackmate_core` at M0 and is the authority before and after the port.
 
 ### 6.5 Themes
 
@@ -342,7 +357,7 @@ Symbol bodies must stay **lighter** than the canvas in dark theme; inverting to 
 
 This section is the single home for the rendering constants that were previously deferred to a `docs/visual-language.md` that does not exist and will not be written. Other documents link here; do not rename the anchor.
 
-**Dash units and storage** (CR-079). Dash patterns are in **points (1/72 in)**, stored as `List<int>` of permille-points so the file stays integral — `6,3` is `[6000, 3000]`. The screen backend divides by the zoom scale so a dash is zoom-invariant; the PDF backend passes them through. **Every shipped dash period is ≥ 4.5 pt (1.5875 mm)**, above the 1.5 mm floor below which a dash blurs to solid at 300 dpi. `4.25 pt` is 1.4992 mm — *below* the physical floor the rule derives from — so 4.5 pt is the figure, and it is the figure that generated the shipped `1,3` → `1.5,3` correction to the control domain's dot.
+**Dash units and storage** (CR-079). Dash patterns are in **points (1/72 in)**, stored as `List<int>` of permille-points so the file stays integral — `6,3` is `[6000, 3000]`. The screen backend divides by the zoom scale so a dash is zoom-invariant; the PDF backend passes them through. **The dash-period floor is 4.5 pt, and 4.5 pt is the only figure.** Every shipped dash period is ≥ 4.5 pt (1.5875 mm), above the 1.5 mm floor below which a dash blurs to solid at 300 dpi. The `4.25 pt` that appeared in earlier drafts is 1.4992 mm — *below* the physical floor the rule derives from — and is retracted rather than rounded: it is not an alternative reading, it is wrong. 4.5 pt is the figure that generated the shipped `1,3` → `1.5,3` correction to the control domain's dot, it is the figure §6.3 and §6.4 measure against, and it is enforced as `PERIOD_FLOOR = 4.5` in [`tools/pal1_check.py`](../tools/pal1_check.py).
 
 **Filtered-wire ghost alpha.** **VERIFY** — the number lands here, in this section, once measured. The design document's 8% is a placeholder below a legible floor; AC-058/D11 requires a *tested* value against both themes, which is genuine measurement and not a thing that can be settled on paper. DR-001 **raises its importance**: under net labels the ghost state is what a non-matching domain looks like on a filtered sheet, so it is seen constantly rather than occasionally. The alpha is baked into `Paint.color`, never an opacity layer.
 

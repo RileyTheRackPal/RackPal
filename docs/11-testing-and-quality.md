@@ -138,11 +138,12 @@ The §6.7 acceptance criteria are unit tests, not aspirations, and they run in `
 
 | Test | Assertion | Ruling |
 |---|---|---|
-| PAL-1 | pairwise over **rendered family values** — see below | §6.7/4, AC-054, canon §14 |
+| PAL-1 | pairwise over **rendered family values**; reference implementation is `tools/pal1_check.py`, ported to Dart at M0 — see below | §6.7/4, AC-054, canon §14 |
 | Dash floor | every shipped dash period ≥ 4.5 pt (1.5875 mm) — 4.25 pt is 1.4992 mm and therefore *below* the 1.5 mm physical floor the rule derives from | §6.7/5 |
 | Glyph coverage | every registry glyph resolves in `RackBody` or `Noto Sans Symbols 2` | §6.7/6, CR-080 |
 | Referential integrity | every `defaultConnector`, `typicalMedia`, `MediaTypeDef.supports` and `SignalFamilyDef.domain` resolves; every connector on a shipped template has a footprint | §6.7/7, AC-050/A2.2 |
 | Documented IDs resolve | every `media.*`, `conn.*`, `SignalDomainId` and signal-family ID appearing in any repository document, template or fixture resolves in `assets/catalog/registries.json` — see below | N1, §6.7/7, seed-devices C2 |
+| Documented **values** match | every hue, dash pattern and weight multiplier printed in a prose table beside such an ID equals the registry's effective value for that family — see below | N1, §6.7/7 |
 | Prefix collision | no catalog template shares a `typePrefix` with a system prefix (`STR` stays with Structure, streaming is `STRM`) | CR-043 |
 | Provenance | every safety-adjacent field (`pinoutVariant`, `impedanceOhms`, `poeBudgetWatts`, `maxUnsupportedMass`) has a citation in `assets/catalog/sources.md`; an uncited template fails the build | AC-052 |
 
@@ -165,9 +166,44 @@ The §6.7 acceptance criteria are unit tests, not aspirations, and they run in `
 > legend prints them adjacently, and the tag pill disambiguates them — but any two families in one
 > domain must still differ in **dash pattern, weight, or glyph**.
 
-Dash class is the mechanical definition of canon §14.2, reproduced there in full. The test enumerates every shipped `SignalFamilyDef`, computes its triple, and checks every cross-domain pair inside the band; the within-domain exemption is a **domain-equality check, never an allowlist of pairs** — an allowlist is how a real collision gets waived. This test exists because the domain-level version passed while TOSLINK and IR, and `structure.undetermined` and five of its neighbours, were indistinguishable in greyscale (canon §12.6(c), §14.3).
+Dash class is the mechanical definition of canon §14.2, reproduced there in full. The test enumerates every shipped `SignalFamilyDef`, computes its triple, and checks every cross-domain pair inside the band; the within-domain exemption is a **domain-equality check, never an allowlist of pairs** — an allowlist is how a real collision gets waived.
+
+**The rule is now enforced by a committed, executable check: [`tools/pal1_check.py`](../tools/pal1_check.py).** Where this document — or any other — disagrees with that file about a family's dash pattern, weight or luminance, **the file wins and the document is wrong.** It runs with no dependencies and no Dart:
+
+```text
+python tools/pal1_check.py     # exits 0 clean, 1 on any violation
+PAL-1 conformance: 55 families, 385 in-band cross-domain pairs checked
+PASS - no collisions.
+```
+
+What it checks, in one pass over the 55 shipped families:
+
+1. **The (a)/(b) limb.** Every pair of families in **different** domains whose luminances lie within the 0.10 band — 385 pairs, not 8 domain rows — must differ in dash class or by a weight factor ≥ 1.4. Luminance is computed from the shipped hex, never transcribed.
+2. **The within-domain limb.** No two families in one domain may render as the same `(dash, weight)`. This is the limb that caught two byte-identical pairs.
+3. **The period floor.** Every dash period ≥ 4.5 pt, the same rule the Dash-floor row above states.
+4. **Requirement-4 attribution.** A violation touching one of the ten cable types the brief names by hand is reported with that name attached, because such a collision is not a style nit — it is requirement 4 failing its own acceptance test.
+
+**This file is the reference implementation, and it is ported — not re-derived — to `pal1_conformance_test.dart` in `rackmate_core` at M0.** The port reads the shipped registry rather than a transcribed family list, and thereafter the Dart test is the authority; `pal1_check.py` remains in the tree as the executable statement of intent the port is diffed against. **Both run in CI on every PR** (§7), the Python check as a dependency-free job that cannot be broken by a Dart refactor.
+
+**The port must carry a known-bad fixture, and that requirement is not negotiable: a conformance test that cannot fail is worthless.** `pal1_check.py` is verified in both directions — it passes on the corrected palette, and it reproduces **all fourteen** violations when the five corrections below are reverted, six of them naming S/PDIF, one of the brief's ten types. The Dart port asserts the same two directions: green on the shipped registry, and exactly fourteen findings on a checked-in reverted-palette fixture, matched by family pair rather than by count alone. A count-only assertion passes when one collision is fixed and another introduced.
+
+Note the asymmetry, because it is the reason the fixture obligation falls on the port. `pal1_check.py` takes no arguments and has **no built-in negative mode**: its positive direction runs in CI on every PR, but its negative direction is reproduced by hand-reverting the five rows above and re-running. That is a verification someone performed, not a verification the repository performs — the same shape of assurance that failed three times. Institutionalising it as a checked-in known-bad fixture is precisely what the M0 port is for, and the port is not done until the fixture exists and has been observed to fail loudly when the corrections are restored to it.
+
+| Reverted to | Family | Restores the collision |
+|---|---|---|
+| `solid` 1.00× | `video.hdmi.1_4` | byte-identical to `video.hdmi.2_0` (within-domain) |
+| `12,4` 1.00× | `video.composite` | byte-identical to `rf.modulated` (within-domain) |
+| `10,3` 1.00× | `audio.line_bal` | four video.analog families at once, all at dL 0.0112 |
+| `6,3,1,3` 1.00× | `audio.spdif_coax` | six ctl families: RS-232, DMX512, DALI, KNX, contact, IR receive |
+| `10,3,1,3` 1.00× | `audio.aes3` | `ctl.cresnet` and `video.avoip` |
+
+That `dL 0.0112` is the whole argument for the rule: `video.analog` (`#56B4E9`, **L = 0.4050**) and `audio.analog` (`#E69F00`, **L = 0.4162**) are vividly different colours and near-identical greys. Publish that figure as 0.4050; several documents round it to 0.401, and the value in [`tools/pal1_check.py`](../tools/pal1_check.py) — computed from the hex, not typed — is the one that governs.
+
+**No document may claim PAL-1 was verified by inspection.** It was asserted "verified clear" three times against a palette that contained fourteen collisions, because each check read the eight domain rows rather than enumerating the 385 family pairs actually drawn. A rule checked by reading is not checked. Prose that names which families were compared against which is prose that will be wrong again; the only durable form of the claim is a pointer to the file and its exit code.
 
 **Every `media.*`, `conn.*`, `SignalDomainId` and signal-family ID appearing in any repository document, template or fixture resolves in `assets/catalog/registries.json`.** A grep-and-resolve test over `docs/**/*.md` and `assets/**`. This exists because RJ-012 makes an unmatched media value in a Structure CSV import **silently create a new `MediaTypeDef`** with a confirmation chip rather than fail — so a wrong ID in a shipped synonym table manufactures duplicate media types on the first real import and splits the `T6.30` footage rollup across them. That is a silent data-quality failure, which is exactly the class a test must catch (N1, canon §6.7 criterion 7, seed-devices C2). One allowlisted file: the migration note that records each renamed ID.
+
+**The same test resolves VALUES, not only IDs.** Where a prose table prints a hue, a dash pattern or a weight multiplier beside a family or media ID, the test parses that cell and asserts it equals the registry's **effective** value — after overrides, the same value PAL-1 renders. This is not a tidiness rule. Value drift between a prose table and the registry is the exact class of defect that shipped here: the palette tables were re-read and re-blessed three times while the drawn values disagreed with them, and an ID-only resolve test was green throughout, because every ID in those tables was perfectly valid. A document that is authoritative about which families exist and wrong about what they look like is worse than one that says nothing, because it is the document a reviewer trusts. The parse is deliberately narrow — hex, `solid`, comma-separated dash lists, and `N.NN×` — and a cell it cannot parse fails rather than skips, since a silently skipped cell is how the check quietly becomes an ID test again.
 
 The provenance test is what sets the catalog count, not a target number (CR-061) — see [Seed devices](catalog/seed-devices.md).
 
@@ -317,6 +353,11 @@ jobs:
       - run: flutter gen-l10n && git diff --exit-code    # AC-058/D12: generated l10n is current
       - run: flutter test --exclude-tags golden
       - run: flutter build windows --release        # if: windows
+  pal1:
+    runs-on: ubuntu-latest                          # no Dart, no deps: a Dart refactor cannot break it
+    steps:
+      - uses: actions/checkout@v4
+      - run: python tools/pal1_check.py             # BLOCKING. exit 1 = a palette collision ships
   goldens:
     runs-on: ubuntu-latest                          # ONE platform only, see §3.1
     steps: [ ..., run: flutter test --tags golden ]
@@ -358,9 +399,10 @@ A change is done when all of the following are true. This list is the PR checkli
 3. A new DRC rule ships with its `.bad`/`.near` fixture pair (AC-051). No exceptions; this is the gate that holds the v1 catalogue at 27, and it now covers 27 fixture pairs.
 4. A new command declares its `touches` mask and passes the epoch-coverage test (AC-014), and participates in the round-trip property test.
 5. A format change adds a schema fixture on the day it ships and never edits an existing one (§2.5).
-6. A new name exists in [the glossary](01-domain.md) and in canon §4, and no banned name was introduced ([canon §4.7](canonical-decisions.md#47-banned-names), N2).
-7. Any user-visible string is localisable and any number that could be unknown renders `—` with an unknown count in its rollup (G4).
-8. Goldens that changed were regenerated deliberately and the diff was read, not rubber-stamped.
+6. A change to any signal-family hue, dash or weight — in the registry **or** in a prose table — keeps `python tools/pal1_check.py` at exit 0, and the family list in that file was updated in the same commit. PAL-1 is never re-blessed by reading (§2.6).
+7. A new name exists in [the glossary](01-domain.md) and in canon §4, and no banned name was introduced ([canon §4.7](canonical-decisions.md#47-banned-names), N2).
+8. Any user-visible string is localisable and any number that could be unknown renders `—` with an unknown count in its rollup (G4).
+9. Goldens that changed were regenerated deliberately and the diff was read, not rubber-stamped.
 
 A milestone is done when its exit criterion in [Roadmap](09-roadmap.md) is demonstrated by running something, CI is green, goldens pass, and the app opens all four starter projects. A milestone that ends with a known-broken build has not ended.
 
