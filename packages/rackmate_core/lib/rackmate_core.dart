@@ -16,6 +16,8 @@
 /// list (docs/03-architecture.md §7–8, docs/08-pdf-export.md §7, CR-086).
 library;
 
+export 'src/catalog/seed_catalog.dart';
+export 'src/commands/catalog_placement.dart';
 export 'src/commands/clock.dart';
 export 'src/commands/command.dart';
 export 'src/commands/device_commands.dart';
@@ -41,6 +43,7 @@ export 'src/draw/scene/scene_builder.dart';
 export 'src/draw/spec.dart';
 export 'src/draw/text.dart';
 export 'src/idformat/collision_policy.dart';
+export 'src/idformat/designator_allocator.dart';
 export 'src/idformat/id_format.dart';
 export 'src/idformat/tokens.dart';
 export 'src/model/acked_finding.dart';

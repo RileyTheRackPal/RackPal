@@ -2007,11 +2007,16 @@ SignalFamilyDef _decodeSignalFamilyDef(SignalFamilyId id, JsonMap json) =>
       ],
     );
 
-JsonMap _encodeConnectorTypeDef(ConnectorTypeDef d) => {
-  'id': d.id.v,
-  'displayName': d.displayName,
-  'aliases': d.aliases,
-};
+JsonMap _encodeConnectorTypeDef(ConnectorTypeDef d) {
+  final json = <String, Object?>{
+    'id': d.id.v,
+    'displayName': d.displayName,
+    'aliases': d.aliases,
+  };
+  putIfNotNull(json, 'footprintWidthNm', d.footprintWidth?.nm);
+  putIfNotNull(json, 'footprintHeightNm', d.footprintHeight?.nm);
+  return json;
+}
 
 ConnectorTypeDef _decodeConnectorTypeDef(ConnectorTypeId id, JsonMap json) =>
     ConnectorTypeDef(
@@ -2024,6 +2029,14 @@ ConnectorTypeDef _decodeConnectorTypeDef(ConnectorTypeId id, JsonMap json) =>
         ))
           asStr(v, 'ConnectorTypeDef.aliases[]'),
       ],
+      footprintWidth: _decodeLenOrNull(
+        json['footprintWidthNm'],
+        'ConnectorTypeDef.footprintWidthNm',
+      ),
+      footprintHeight: _decodeLenOrNull(
+        json['footprintHeightNm'],
+        'ConnectorTypeDef.footprintHeightNm',
+      ),
     );
 
 JsonMap _encodeMediaTypeDef(MediaTypeDef d) {

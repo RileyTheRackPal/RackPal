@@ -70,16 +70,29 @@ final class SignalFamilyDef {
 /// user-extensible (CR-058).
 ///
 /// M0 MINIMAL SHAPE: full spec pending, see docs/02-data-model.md §4.9.
+///
+/// [footprintWidth]/[footprintHeight] are the rectangular panel-cutout
+/// footprint this connector needs on a rear panel, added for the M1 catalog
+/// stage's "zero-authoring correct rear panel" claim (docs/catalog/seed-
+/// devices.md §5, AC-050/A2.2): "every connector referenced by a shipped
+/// template has a footprint entry, asserted in CI". Both null means no
+/// footprint has been authored yet — never estimated (G4) — and a shipped
+/// catalog template must not reference such a connector; see
+/// `seed_catalog_test.dart`'s connector-footprint assertion.
 final class ConnectorTypeDef {
   const ConnectorTypeDef({
     required this.id,
     required this.displayName,
     this.aliases = const [],
+    this.footprintWidth,
+    this.footprintHeight,
   });
 
   final ConnectorTypeId id;
   final String displayName;
   final List<String> aliases;
+  final Len? footprintWidth;
+  final Len? footprintHeight;
 }
 
 /// What cable is pulled, how long it may run, what jacket it takes.

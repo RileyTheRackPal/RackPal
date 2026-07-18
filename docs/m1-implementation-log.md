@@ -22,7 +22,7 @@ Status legend: **Done** (built and tested) · **Partial** (some of the cited beh
 | 3 | Hybrid `RenderRackCanvas`, device widgets, RU snapping, front/rear elevations with per-rack mirroring | **Partial** — RU snapping and front/rear filtering done; **mirroring not done** |
 | 4 | Quick-add by typing with the drop caret; the Staging Bin; shelves with auto-pack; 0U occupants from the inspector | **Not started** |
 | 5 | Compact Up/Down with preview-then-accept, and the shrink-rack dialog; locks | **Not started** |
-| 6 | The full seeded catalog (incl. 18 field devices, `sources.md` provenance, connector-footprint CI assertion) | **Not started** — still 4 hand-built demo devices |
+| 6 | The full seeded catalog (incl. 18 field devices, `sources.md` provenance, connector-footprint CI assertion) | **Partial** — 48-template seed catalog (30 rack-side + 18 field) with `assets/catalog/sources.md` provenance and the connector-footprint CI assertion all landed, plus a device palette panel wired into `RackCanvasScreen` (search + categories, **click-to-add** via double-click/Enter — the full drag-from-palette-to-rails gesture of §3.1 is not built); the 4 hand-built demo devices remain as the rack's starting contents alongside the catalog |
 | 7 | Copy-on-place with `DeviceOverrides`; the chip strip (RU, weight, VA, outlets) with unknown counts | **Not started** |
 | 8 | `DiagramCanvas` + `SceneBuilder` + both backends + the baseline-Y parity test | **Done** — mutation-tested twice |
 | 9 | Minimal PDF exporter: front elevation, rear elevation, `T6.30`, title block, revision block | **Not started** |
@@ -33,7 +33,9 @@ Status legend: **Done** (built and tested) · **Partial** (some of the cited beh
 ## 2. Against the rack editor spec (docs/04-rack-editor.md), section by section
 
 ### §1 Screen layout
-- [ ] Palette panel (280 px, collapsible, search, categories) — **not started**
+- [x] Palette panel (280 px, search, categories) — **done** — collapsible
+      per-category (not the whole panel) via `ExpansionTile`; panel-width
+      persistence/resize handle not built
 - [ ] Inspector panel (320 px, selection section + Rack Vitals) — **not started**
 - [ ] Validation drawer (28 px, auto-expands on first error) — **not started**
 - [ ] Status bar (cursor context, zoom, selection rollup, project counts) — **partial**: zoom HUD only
@@ -56,9 +58,13 @@ Status legend: **Done** (built and tested) · **Partial** (some of the cited beh
 
 ### §3 Placement
 - [ ] §3.1 Drag from palette to rails (arm/lift/enter-canvas/snap/evaluate/commit), incl. the
-      seven-check drop evaluation table and blocked-drop rendering — **not started** (no palette)
+      seven-check drop evaluation table and blocked-drop rendering — **not started** (palette
+      now exists; this stage shipped click-to-add instead, see §3.2)
 - [ ] §3.2 Faster paths: `/` search-and-place, double-click palette row, double-click empty U
-      quick-insert popover, `Ctrl+Alt+I` insert dialog, right-click empty-U menu — **not started**
+      quick-insert popover, `Ctrl+Alt+I` insert dialog, right-click empty-U menu — **partial** —
+      `/` focuses palette search (done); double-click a palette row places at the lowest fitting
+      free U with an idformat-allocated designator (done); `Enter`-places-at-caret, the empty-U
+      quick-insert popover, `Ctrl+Alt+I` and the right-click menu are **not started**
 - [x] §3.3 Moving a placed device: grab, drag, commit `MoveDeviceCommand` — **done** (basic case)
   - [ ] Cross-rack move (drag past 60 px beyond a rail) — **not started**
   - [ ] `Ctrl` at drag start = duplicate — **not started**
@@ -111,9 +117,10 @@ Status legend: **Done** (built and tested) · **Partial** (some of the cited beh
 ### §7 Naming and designators
 - [x] `designator` and `name` exist as data fields — **done** (model only)
 - [ ] `F2` inline designator edit / `Ctrl+F2` name edit — **not started**
-- [ ] Auto-assignment via the `idformat` engine on device creation (`{TYPE_PREFIX}{SEP}{SEQ}`)
-      — **not started** (demo devices have hand-typed designators; `AddDeviceCommand` does not
-      yet call the idformat engine — confirm/build when the catalog/creation-UI stage lands)
+- [x] Auto-assignment via the `idformat` engine on device creation (`{TYPE_PREFIX}{SEP}{SEQ}`)
+      — **done** for catalog placement (`allocateDeviceDesignator` + `buildPlaceFromCatalogCommand`,
+      `rackmate_core/src/idformat/designator_allocator.dart`); the 4 original hand-built demo
+      devices still carry their original hand-typed designators (unchanged, pre-existing)
 - [ ] Collision UI (`[Swap] [Go to]`) — **not started**
 - [ ] `Ctrl+R` Renumber dialog with diff preview — **not started**
 - [ ] Project-level Locations panel — **not started**

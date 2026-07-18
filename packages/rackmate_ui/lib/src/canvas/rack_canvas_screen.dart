@@ -11,6 +11,7 @@ import 'package:rackmate_ui/src/canvas/render_device_box.dart';
 import 'package:rackmate_ui/src/canvas/render_rack_canvas.dart';
 import 'package:rackmate_ui/src/canvas/selection_controller.dart';
 import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
+import 'package:rackmate_ui/src/palette/device_palette_panel.dart';
 
 /// The rack editor canvas: the pannable/zoomable grid (L0) with a real rack
 /// chassis (L1) and device bodies (L2) rendered on top, per CR-086 — the
@@ -64,15 +65,25 @@ class _RackCanvasScreenState extends State<RackCanvasScreen> {
   /// Focus for the canvas so its Shortcuts/Actions receive Del/undo/redo.
   final FocusNode _canvasFocus = FocusNode(debugLabel: 'rackCanvas');
 
-  // Temporary DEMO data (see _buildDemoDocument): there is no catalog loader
-  // or device-creation UI yet, so one rack + a few devices are hand-built
-  // here purely to have something real to render. This is NOT a seeded
-  // catalog and must be deleted when the catalog/creation stages land.
+  /// `/` focuses the palette search field (docs/04 §3.2, §8 keymap).
+  final FocusNode _paletteSearchFocus = FocusNode(debugLabel: 'paletteSearch');
+
+  /// The seeded catalog (docs/09-roadmap.md M1 checklist #6,
+  /// docs/catalog/seed-devices.md): 30 rack-side archetypes + 18 field
+  /// devices. Every entry is ALSO embedded into `_doc.templates` at
+  /// document construction (see `_buildDemoDocument`) so a palette
+  /// placement always resolves a real `TemplateSnapshot`.
+  late final Map<String, TemplateBody> _catalog = buildSeedCatalog();
+
+  // Four hand-built demo devices (see _buildDemoDocument) still seed the
+  // INITIAL rack contents — kept for continuity with earlier stages rather
+  // than deleted, per this stage's task brief ("existing demo devices can
+  // stay… your call"). The catalog above is what the palette adds FROM.
   //
-  // Now wrapped in the REAL DocumentController — THE one mutation entry
-  // point (docs/03 §5.4). Every move/delete/undo/redo below runs through it.
+  // Wrapped in the REAL DocumentController — THE one mutation entry point
+  // (docs/03 §5.4). Every move/delete/undo/redo/place below runs through it.
   late final DocumentController _controller =
-      DocumentController(_buildDemoDocument());
+      DocumentController(_buildDemoDocument(_catalog));
   RackDocument get _doc => _controller.doc;
   late final Rack _rack = _doc.racks.values.first;
   late final RackGeometry _geo = RackGeometry(_rack.heightU);
@@ -119,6 +130,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen> {
     _controller.epochs.structure.removeListener(_onEditorChanged);
     _gridCache.dispose();
     _canvasFocus.dispose();
+    _paletteSearchFocus.dispose();
     super.dispose();
   }
 
@@ -315,6 +327,38 @@ class _RackCanvasScreenState extends State<RackCanvasScreen> {
     if (restore != null) _selection.restore(restore);
   }
 
+  // ── palette placement (docs/09-roadmap.md M1 checklist #6; docs/04 §3.2
+  // "the faster paths") — CLICK-TO-ADD, not the full drag-from-palette-to-
+  // rails gesture of §3.1 (arm/lift/enter-canvas/snap/evaluate/commit with
+  // live blocked-drop feedback), which is this stage's explicitly deferred
+  // stretch goal. Double-clicking (or pressing Enter on) a palette row
+  // inserts one new instance of that catalog template at the lowest
+  // fitting free U on the demo rack, exactly like §3.2's "faster paths".
+
+  void _placeFromCatalog(String catalogId) {
+    // selectionBefore for the undo entry = the live selection, same
+    // convention as _handleMove/_deleteSelection.
+    _controller.selection = _selection.snapshot();
+    final result = buildPlaceFromCatalogCommand(
+      doc: _doc,
+      catalogId: catalogId,
+      targetRack: _rack,
+      now: _controller.clock.nowUtc(),
+      actor: _controller.actor,
+    );
+    if (result is CatalogPlacementReady) {
+      _controller.run(result.command);
+      // The freshly-placed device becomes the sole selection (docs/04
+      // §3.1 step 6) — a plain UI-selection update, not itself undoable
+      // (docs/03 §4.4: selection is observed, never document state).
+      _selection.apply([result.command.id], SelectMode.replace);
+    } else if (result is CatalogPlacementFailed && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.reason)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -354,6 +398,9 @@ class _RackCanvasScreenState extends State<RackCanvasScreen> {
         SingleActivator(LogicalKeyboardKey.keyZ, meta: true, shift: true):
             _RedoIntent(),
         SingleActivator(LogicalKeyboardKey.keyY, control: true): _RedoIntent(),
+        // docs/04 §3.2 / §8: "/" focuses the palette search field — the
+        // fastest path to populating a rack.
+        SingleActivator(LogicalKeyboardKey.slash): _FocusPaletteSearchIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -375,11 +422,40 @@ class _RackCanvasScreenState extends State<RackCanvasScreen> {
               return null;
             },
           ),
+          _FocusPaletteSearchIntent: CallbackAction<_FocusPaletteSearchIntent>(
+            onInvoke: (_) {
+              _paletteSearchFocus.requestFocus();
+              return null;
+            },
+          ),
         },
-        child: Focus(
-          focusNode: _canvasFocus,
-          autofocus: true,
-          child: _buildCanvas(context, scheme, gridStyle, palette, rackScene),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              width: 280,
+              child: DevicePalettePanel(
+                catalog: _catalog,
+                categoryOrder: kCatalogCategoryOrder,
+                searchFocusNode: _paletteSearchFocus,
+                onPlace: _placeFromCatalog,
+              ),
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(
+              child: Focus(
+                focusNode: _canvasFocus,
+                autofocus: true,
+                child: _buildCanvas(
+                  context,
+                  scheme,
+                  gridStyle,
+                  palette,
+                  rackScene,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -533,6 +609,11 @@ class _RedoIntent extends Intent {
   const _RedoIntent();
 }
 
+/// Focus the palette search field (`/`).
+class _FocusPaletteSearchIntent extends Intent {
+  const _FocusPaletteSearchIntent();
+}
+
 /// Routes the pointer-agnostic `CanvasIntent` sequence into the screen's
 /// select / move logic (docs/03 §4.4). A thin adapter: it holds no state of
 /// its own and never branches on `PointerDeviceKind` (the editing-semantics
@@ -559,7 +640,7 @@ class _RackCanvasHandler implements CanvasIntentHandler {
 
 // ── temporary demo data (see the field comment above) ─────────────────────
 
-RackDocument _buildDemoDocument() {
+RackDocument _buildDemoDocument(Map<String, TemplateBody> catalog) {
   final now = DateTime.utc(2026, 7, 18);
   EntityMeta meta() =>
       EntityMeta(createdAt: now, updatedAt: now, updatedBy: 'demo');
@@ -682,6 +763,22 @@ RackDocument _buildDemoDocument() {
     ),
   ]) {
     doc.devices[d.id] = d;
+  }
+
+  // Embed every seeded catalog template as a version-1 TemplateSnapshot
+  // (docs/09-roadmap.md M1 checklist #6) so the palette can place any of
+  // them — a `buildPlaceFromCatalogCommand` call just resolves
+  // `"$catalogId@1"` here rather than inserting a snapshot lazily on first
+  // placement (TemplateSnapshot refcounting/eviction is AC-015, deferred
+  // past M0/M1 per `AddDeviceCommand`'s own TODO).
+  for (final entry in catalog.entries) {
+    doc.templates[catalogTemplateKey(entry.key)] = TemplateSnapshot(
+      templateId: TemplateId(entry.key),
+      version: 1,
+      contentHash: 'sha256:seed-${entry.key}',
+      capturedAt: now,
+      body: entry.value,
+    );
   }
 
   return doc;

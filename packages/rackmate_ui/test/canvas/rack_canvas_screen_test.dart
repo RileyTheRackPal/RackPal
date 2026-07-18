@@ -9,7 +9,17 @@
 // device render objects (position + the `selected` chrome flag), never by
 // reaching into private state. Geometry is reconstructed with a matching
 // RackGeometry(12) since the screen's demo rack is 12U.
+//
+// COORDINATE NOTE (M1 catalog/palette stage): the screen now lays out a
+// 280 px palette panel + a 1 px divider to the LEFT of the canvas (see
+// rack_canvas_screen.dart's `build`), so the canvas's own top-left is no
+// longer the Scaffold body's origin. Every gesture/expectation below is
+// expressed in SCENE coordinates and translated through `_canvasOrigin`
+// (the live top-left of the `CanvasIntentDetector`) rather than assuming
+// screen == scene, which is what let this file survive that layout change
+// unchanged in spirit.
 
+import 'package:flutter/gestures.dart' show kDoubleTapMinTime;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,13 +39,21 @@ final class _FakeMeasurer implements TextMeasurer {
 }
 
 // The screen's demo rack is 12U; these mirror its device placements so the
-// tests can aim gestures at real device rects (identity viewport at load ⇒
-// scene coords == screen coords, Scaffold body pinned at the origin).
+// tests can aim gestures at real device rects.
 const _geo = RackGeometry(12);
 
-Offset _centreOf(int ru, int deviceH) {
+/// The canvas's live top-left in screen space — the palette panel now sits
+/// to its left, so scene (0, 0) is no longer the Scaffold body's origin.
+Offset _canvasOrigin(WidgetTester tester) =>
+    tester.getTopLeft(find.byType(CanvasIntentDetector));
+
+Offset _centreOf(WidgetTester tester, int ru, int deviceH) {
   final rect = _geo.deviceRect(ru, deviceH);
-  return Offset((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
+  final scene = Offset(
+    (rect.left + rect.right) / 2,
+    (rect.top + rect.bottom) / 2,
+  );
+  return _canvasOrigin(tester) + scene;
 }
 
 Finder _device(String id) => find.descendant(
@@ -55,8 +73,8 @@ Widget _app() => MaterialApp(
 );
 
 // Demo front-face devices: UPS-1 @U1 (2U), AMP-1 @U4 (2U), SW-1 @U7 (1U).
-Offset get _ampCentre => _centreOf(4, 2);
-Offset get _swCentre => _centreOf(7, 1);
+Offset _ampCentre(WidgetTester tester) => _centreOf(tester, 4, 2);
+Offset _swCentre(WidgetTester tester) => _centreOf(tester, 7, 1);
 
 Future<void> _ctrlTap(WidgetTester tester, Offset at) async {
   await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -72,19 +90,20 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pump();
 
-    await tester.tapAt(_ampCentre);
+    await tester.tapAt(_ampCentre(tester));
     await tester.pump();
     expect(_render(tester, 'dev-amp').selected, isTrue);
     expect(_render(tester, 'dev-ups').selected, isFalse);
 
     // A plain click replaces: selecting SW deselects AMP.
-    await tester.tapAt(_swCentre);
+    await tester.tapAt(_swCentre(tester));
     await tester.pump();
     expect(_render(tester, 'dev-sw').selected, isTrue);
     expect(_render(tester, 'dev-amp').selected, isFalse);
 
-    // Click far from any device → selection clears.
-    await tester.tapAt(const Offset(500, 400));
+    // Click far from any device (well inside the canvas, past the
+    // palette) → selection clears.
+    await tester.tapAt(_canvasOrigin(tester) + const Offset(300, 400));
     await tester.pump();
     expect(_render(tester, 'dev-sw').selected, isFalse);
   });
@@ -95,13 +114,13 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pump();
 
-    await tester.tapAt(_ampCentre); // replace-select AMP
+    await tester.tapAt(_ampCentre(tester)); // replace-select AMP
     await tester.pump();
-    await _ctrlTap(tester, _swCentre); // add SW
+    await _ctrlTap(tester, _swCentre(tester)); // add SW
     expect(_render(tester, 'dev-amp').selected, isTrue);
     expect(_render(tester, 'dev-sw').selected, isTrue);
 
-    await _ctrlTap(tester, _ampCentre); // subtract AMP
+    await _ctrlTap(tester, _ampCentre(tester)); // subtract AMP
     expect(_render(tester, 'dev-amp').selected, isFalse);
     expect(_render(tester, 'dev-sw').selected, isTrue);
   });
@@ -112,12 +131,12 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pump();
 
-    await tester.tapAt(_ampCentre); // AMP must be selected to be draggable
+    await tester.tapAt(_ampCentre(tester)); // AMP must be selected to drag
     await tester.pump();
     final beforeTop = tester.getTopLeft(_device('dev-amp')).dy;
 
     // Drag up 88px: AMP (U4–U5) → U8–U9 (free; SW is only U7). 88px = 4U.
-    final gesture = await tester.startGesture(_ampCentre);
+    final gesture = await tester.startGesture(_ampCentre(tester));
     await gesture.moveBy(const Offset(0, -88));
     await gesture.up();
     await tester.pump();
@@ -125,7 +144,10 @@ void main() {
     final afterTop = tester.getTopLeft(_device('dev-amp')).dy;
     expect(afterTop, lessThan(beforeTop)); // moved up
     // Snapped exactly to U8's top edge (proves the inverse RU geometry ran).
-    expect(afterTop, closeTo(_geo.deviceRect(8, 2).top, 0.5));
+    expect(
+      afterTop,
+      closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(8, 2).top, 0.5),
+    );
   });
 
   testWidgets('a move into an occupied range is refused silently', (
@@ -134,12 +156,12 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pump();
 
-    await tester.tapAt(_ampCentre);
+    await tester.tapAt(_ampCentre(tester));
     await tester.pump();
     final beforeTop = tester.getTopLeft(_device('dev-amp')).dy;
 
     // Drag AMP (2U) down so its target would overlap UPS at U1–U2.
-    final gesture = await tester.startGesture(_ampCentre);
+    final gesture = await tester.startGesture(_ampCentre(tester));
     await gesture.moveBy(const Offset(0, 66)); // ~3U down → U1-ish, occupied
     await gesture.up();
     await tester.pump();
@@ -157,7 +179,7 @@ void main() {
     await tester.pump();
 
     // Select + delete.
-    await tester.tapAt(_ampCentre);
+    await tester.tapAt(_ampCentre(tester));
     await tester.pump();
     expect(_device('dev-amp'), findsOneWidget);
 
@@ -175,7 +197,7 @@ void main() {
 
     // Now a move, then undo, restores the original ruIndex (position).
     final originalTop = tester.getTopLeft(_device('dev-amp')).dy;
-    final gesture = await tester.startGesture(_ampCentre);
+    final gesture = await tester.startGesture(_ampCentre(tester));
     await gesture.moveBy(const Offset(0, -88));
     await gesture.up();
     await tester.pump();
@@ -195,7 +217,7 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pump();
 
-    await tester.tapAt(_ampCentre);
+    await tester.tapAt(_ampCentre(tester));
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.delete);
     await tester.pump();
@@ -216,5 +238,63 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pump();
     expect(_device('dev-amp'), findsNothing);
+  });
+
+  group('palette placement (docs/09-roadmap.md M1 checklist #6)', () {
+    testWidgets('double-clicking a palette row adds a real device to the '
+        'rack and selects it', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+
+      final beforeCount = tester.widgetList(find.byType(DeviceBox)).length;
+
+      // X01 (Blank Panel, 1U) is a small, unambiguous row to search for.
+      await tester.enterText(find.byType(TextField), 'Blank Panel');
+      await tester.pumpAndSettle();
+
+      final row = find.widgetWithText(ListTile, 'Blank Panel, 1U');
+      expect(row, findsOneWidget);
+      await tester.tap(row);
+      await tester.pump(kDoubleTapMinTime);
+      await tester.tap(row);
+      await tester.pumpAndSettle();
+
+      final afterCount = tester.widgetList(find.byType(DeviceBox)).length;
+      expect(afterCount, beforeCount + 1);
+
+      // The new device is the sole selection (docs/04 §3.1 step 6).
+      final selected = tester.allRenderObjects
+          .whereType<RenderDeviceBox>()
+          .where((r) => r.selected)
+          .toList();
+      expect(selected, hasLength(1));
+    });
+
+    testWidgets('placing then undoing removes the placed device', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+      final beforeCount = tester.widgetList(find.byType(DeviceBox)).length;
+
+      await tester.enterText(find.byType(TextField), 'Blank Panel');
+      await tester.pumpAndSettle();
+      final row = find.widgetWithText(ListTile, 'Blank Panel, 1U');
+      await tester.tap(row);
+      await tester.pump(kDoubleTapMinTime);
+      await tester.tap(row);
+      await tester.pumpAndSettle();
+      expect(
+        tester.widgetList(find.byType(DeviceBox)).length,
+        beforeCount + 1,
+      );
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+
+      expect(tester.widgetList(find.byType(DeviceBox)).length, beforeCount);
+    });
   });
 }

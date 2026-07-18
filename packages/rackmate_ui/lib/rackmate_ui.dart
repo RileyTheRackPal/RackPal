@@ -17,3 +17,4 @@ export 'src/canvas/render_rack_canvas.dart';
 export 'src/canvas/selection_controller.dart';
 export 'src/canvas/viewport_controller.dart';
 export 'src/draw/flutter_canvas.dart';
+export 'src/palette/device_palette_panel.dart';
