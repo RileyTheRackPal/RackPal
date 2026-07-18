@@ -50,18 +50,18 @@ test('EIA 1/32-inch inter-panel clearance is exact', () {
 
 test('45U stack accumulates zero error', () {
   var y = Len.zero;
-  for (var i = 0; i < 45; i++) { y += k1RackUnit; }  // 44_450_000 nm
+  for (var i = 0; i < 45; i++) { y += kRackUnit; }   // 44_450_000 nm
   expect(y, Len(2_000_250_000));
   expect(y.toMillimetres(), 2000.25);
 });
 ```
 
-Companion invariant tests, each named for the ruling it defends: `ruIndex` is 1-based bottom-origin and asserted at load (CR-025); `heightU` is 1..60 (CR-038); `order` is a `FracIndex` everywhere it appears and re-inserting between two neighbours never renumbers a sibling (CR-027); a `Conductor` spans exactly two `Endpoint`s while a `Link` may reach N devices (CR-014); `Service.netId` is non-null and `Link.netId` does not exist (CR-010); `dominantSignalFamily` is never present in serialized output (CR-009, CR-115); `typicalWatts` is never inferred from `nameplateWatts` (G4, AC-039); `Len`→PDF-point conversion happens in exactly one function (CR-007).
+Companion invariant tests, each named for the ruling it defends: `ruIndex` is 1-based bottom-origin and asserted at load (CR-025); `heightU` is 1..60 (CR-038); `order` is a `FracIndex` everywhere it appears and re-inserting between two neighbours never renumbers a sibling (CR-027); a `Conductor` spans exactly two `Endpoint`s while a `Link` may reach N devices (CR-014); `Service.netId` is non-null and `Link.netId` does not exist (CR-010); `dominantSignalFamily` is never present in serialized output (CR-009, CR-115); `typicalWatts` is never inferred from `nameplateWatts` (G4, AC-039); `TemplateBody.bodyDepth` and `.weight` are nullable, serialize as **absent** when null, and every rollup that consumes them reports its unknown count (G4, CR-114, canon §12 G5); `LifecycleStatus` has five values on both `DeviceInstance` and `Link` (canon §4.2); `Len`→PDF-point conversion happens in exactly one function (CR-007).
 
 Two mechanical guards, both dependency-free, both cheap enough to keep forever:
 
 1. `no_flutter_import_test.dart` — greps `packages/rackmate_core/lib` for `package:flutter/`, `dart:ui` and `package:pdf/` and fails the build with the offending path (CR-083). Belt and braces: core's pubspec has no `flutter:` key, so a stray import is also a compile error.
-2. `banned_names_test.dart` — greps the whole repository, including prose and comments, for the §4.7 banned vocabulary (`Connection`, `PhysicalLink`, `CableType`, `bottomU`, `refDes`, `StructureDrop`, `RulePredicate`, `RendererCaps`, `ObstacleField`, `blockExportOnErrors`, `Money`, …). N2 makes a banned word banned in prose too; without a test that is an aspiration. One allowlisted file: the migration note that explains each removal.
+2. `banned_names_test.dart` — greps the whole repository, including prose and comments, for the [canon §4.7](canonical-decisions.md#47-banned-names) banned vocabulary (`Connection`, `PhysicalLink`, `CableType`, `bottomU`, `refDes`, `StructureDrop`, `StructureBundle`, `bundleStatus`, `RulePredicate`, `RendererCaps`, `ObstacleField`, `blockExportOnErrors`, `Money`, …). `StructureBundle` and `bundleStatus` are named explicitly because bare "bundle" is banned (CR-016) and `Outlet.bundleStatus` survived in prose long after the field became `Outlet.roughInStatus`; the word survives only as UI copy for `Pathway`. Registry IDs are **not** in this list — those are caught by the resolve test in §2.6. N2 makes a banned word banned in prose too; without a test that is an aspiration. One allowlisted file: the migration note that explains each removal.
 3. A third grep asserts no entity setter is invoked outside `src/commands/`, backing the `@internal` decision (AC-013).
 
 ### 2.2 Command round-trip and epoch coverage
@@ -85,7 +85,7 @@ The **epoch-mask coverage test** (AC-014) is forty lines and is the highest valu
 
 ### 2.3 Validation rules, addressed by rule ID
 
-The v1 catalogue is 22 rules (AC-040) and every one is a Dart function in a registry keyed by `ruleId` (CR-024, AC-011). The gate is AC-051, and it is absolute: **no rule ships without its fixture pair.**
+The v1 catalogue is **27 rules** — 8 tier-1, 6 tier-2, 13 tier-3, with `PLC-001..003` ratified (canon §12.6(b)) — and every one is a Dart function in a registry keyed by `ruleId` (CR-024, AC-011). The gate is AC-051, and it is absolute: **no rule ships without its fixture pair.**
 
 ```text
 packages/rackmate_core/test/fixtures/drc/
@@ -93,21 +93,25 @@ packages/rackmate_core/test/fixtures/drc/
   DIR-003.near.rackmate     # bidirectional port pair, superficially identical, must be silent
   SIG-001.bad.rackmate      SIG-001.near.rackmate
   PWR-001.bad.rackmate      PWR-001.near.rackmate
+  PLC-001.bad.rackmate      PLC-001.near.rackmate    # ratified tier-1, canon §12.6(b)
+  PLC-002.bad.rackmate      PLC-002.near.rackmate
+  PLC-003.bad.rackmate      PLC-003.near.rackmate
   ...
   expectations.json         # ruleId -> {bad: [findingId...], near: []}
 ```
 
-One table-driven test walks `expectations.json`: the `.bad` document must produce **exactly** that finding — not merely include it — and the `.near` document must produce **none** from that rule. A near-miss that is one field away from the bad case is what stops a rule from being written as `return true`. Three further assertions ride along: every `ruleId` in `docs/rules.md` resolves to a registered function and vice versa (a rule not in the catalogue does not exist, CR-021); every rule's severity is one of the CR-018 vocabulary with `Severity.info` absent; and **no rule at any severity prevents a PDF from being written to disk** (CR-022, G3), asserted by exporting each `.bad` fixture and checking the file exists.
+One table-driven test walks `expectations.json`: the `.bad` document must produce **exactly** that finding — not merely include it — and the `.near` document must produce **none** from that rule. A near-miss that is one field away from the bad case is what stops a rule from being written as `return true`. Three further assertions ride along: every `ruleId` in [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers) resolves to a registered function and vice versa (a rule not in the catalogue does not exist, CR-021); every rule's severity is one of the CR-018 vocabulary with `Severity.info` absent; and **no rule at any severity prevents a PDF from being written to disk** (CR-022, G3), asserted by exporting each `.bad` fixture and checking the file exists.
 
 Fixtures are `.rackmate` files, not Dart builders, so a domain expert can open one in the app during the M5 sign-off review (AC-051) without reading code.
 
 ### 2.4 Routing determinism
 
-The router is Sugiyama layering plus interval-graph channel routing with **full deterministic recompute** (CR-013); `ObstacleField` and `RouteCache` do not exist. Determinism is therefore not an implementation detail, it is the property that makes goldens possible, and it is asserted directly:
+The router is Sugiyama phases 0–3 plus a deterministic layer-ordered orthogonal trace (CR-013 as amended by DR-001), with **full deterministic recompute**; `ObstacleField` and `RouteCache` do not exist. Determinism is therefore not an implementation detail, it is the property that makes goldens possible, and it is asserted directly:
 
 - **Byte-identical replay.** Same `RackDocument` in ⇒ byte-identical `DiagramScene` dump out, asserted 20× on one 300-connection fixture within a run, and across a run with a shuffled iteration order of the entity maps (flat UUID-keyed maps must not leak hash order into layout).
 - **Insertion-order independence.** Building the same graph by adding links in a different sequence produces the same layout. This is the assertion that catches an accidental dependency on map order.
-- **Phase 5 is not on the commit path.** The crossing sweep and hop arcs run at paint time, viewport-scoped (AC-016 #20), so a routing test never observes them; a separate test asserts the commit-path scene contains zero `HOP` ops and that hop generation degrades to `gap` mode above the crossing threshold. The real crossing count `X` on the 300-connection fixture is **measured and recorded**, never assumed.
+- **There are no `HOP` ops.** A test asserts the display list contains none in any mode, because hop arcs are not built in v1 (DR-001). Crossings render as plain crossovers. The 300-connection fixture survives and changes purpose: it is the **layout-determinism and label-density** fixture, and what is measured on it is text-run count and label-layer commit time.
+- **Both render modes are deterministic, and the switch is lossless.** Same input ⇒ byte-identical display list in **both** render modes, and switching `netLabels` ⇄ `drawn` and back reproduces the original display list exactly. Net labels are the default render; `drawn` appears only under a domain filter, `Alt`-hover or focus (DR-001), and `SheetRenderMode` is derived from the active filter, never persisted.
 
 ### 2.5 Schema migrations and the golden corpus
 
@@ -134,12 +138,17 @@ The §6.7 acceptance criteria are unit tests, not aspirations, and they run in `
 
 | Test | Assertion | Ruling |
 |---|---|---|
-| PAL-1 | WCAG relative luminance for all eight domain colours; for every pair within 0.10, differing dash class **and** weight ratio ≥ 1.4 | §6.7/4, AC-054 |
-| Dash floor | every shipped dash period ≥ 4.25 pt (1.5 mm) | §6.7/5 |
+| PAL-1 | pairwise over **rendered family values** — see below | §6.7/4, AC-054, canon §14 |
+| Dash floor | every shipped dash period ≥ 4.5 pt (1.5875 mm) — 4.25 pt is 1.4992 mm and therefore *below* the 1.5 mm physical floor the rule derives from | §6.7/5 |
 | Glyph coverage | every registry glyph resolves in `RackBody` or `Noto Sans Symbols 2` | §6.7/6, CR-080 |
 | Referential integrity | every `defaultConnector`, `typicalMedia`, `MediaTypeDef.supports` and `SignalFamilyDef.domain` resolves; every connector on a shipped template has a footprint | §6.7/7, AC-050/A2.2 |
+| Documented IDs resolve | every `media.*`, `conn.*`, `SignalDomainId` and signal-family ID appearing in any repository document, template or fixture resolves in `assets/catalog/registries.json` — see below | N1, §6.7/7, seed-devices C2 |
 | Prefix collision | no catalog template shares a `typePrefix` with a system prefix (`STR` stays with Structure, streaming is `STRM`) | CR-043 |
 | Provenance | every safety-adjacent field (`pinoutVariant`, `impedanceOhms`, `poeBudgetWatts`, `maxUnsupportedMass`) has a citation in `assets/catalog/sources.md`; an uncited template fails the build | AC-052 |
+
+**PAL-1 is a pairwise test over rendered family values.** For every shipped `SignalFamilyDef`, compute *(L of its effective hue, dash class of its effective dash, effective weight)*. For every pair in **different** domains with |ΔL| < 0.10, assert dash classes differ **or** weights differ by ≥ 1.4. Within-domain pairs are exempt from that test and instead must differ in dash, weight or glyph. The exemption is a **domain-equality check, never an allowlist of pairs** — an allowlist is how a real collision gets waived. Dash class is defined mechanically in canon §14.2. This test exists because the domain-level version passed while TOSLINK and IR were indistinguishable in greyscale (canon §12.6(c)).
+
+**Every `media.*`, `conn.*`, `SignalDomainId` and signal-family ID appearing in any repository document, template or fixture resolves in `assets/catalog/registries.json`.** A grep-and-resolve test over `docs/**/*.md` and `assets/**`. This exists because RJ-012 makes an unmatched media value in a Structure CSV import **silently create a new `MediaTypeDef`** with a confirmation chip rather than fail — so a wrong ID in a shipped synonym table manufactures duplicate media types on the first real import and splits the `T6.30` footage rollup across them. That is a silent data-quality failure, which is exactly the class a test must catch (N1, canon §6.7 criterion 7, seed-devices C2). One allowlisted file: the migration note that records each renamed ID.
 
 The provenance test is what sets the catalog count, not a target number (CR-061) — see [Seed devices](catalog/seed-devices.md).
 
@@ -152,9 +161,11 @@ The provenance test is what sets the catalog count, not a target number (CR-061)
 ```text
 RECT      l=0 t=0 w=48260 h=186690  fill=#1A1D21 stroke=#3A4048/0.75pt
 TEXT      "U42" @(-2400,900) font=RackMono size=6.0pt anchor=centerRight baseline=903.4
-POLYLINE  [(12000,4445),(20000,4445),(20000,17780)] stroke=#E8A33D/1.5pt dash=none
-SVGPATH   "M0 0h8v6h-8z" @(31000,8890) fill=#2AB3A6
+POLYLINE  [(12000,4445),(20000,4445),(20000,17780)] stroke=#009E73/1.5pt dash=none
+PATH      "M0 0h8v6h-8z" @(31000,8890) fill=#0072B2
 ```
+
+Every colour in that sample is a real palette value, because the whole argument for the dump is that a reviewer reads *"the wire changed colour"* — a fixture teaching a hue that does not ship teaches the reviewer nothing. `#009E73` is Network, the domain that ships at 1.5×; `#0072B2` is Digital Video. The opcode is `PATH`, not `SVGPATH`: `drawSvgPath` does not exist on `DiagramCanvas`, and authored `d` strings are parsed once at catalog load by `DiagramPath.fromSvg`, because a backend that parses strings is a backend that can disagree with the other one. The dump keeps the `d` payload; only the opcode changed.
 
 This is reviewable in a pull request — a reviewer reads *"the wire moved 2 mm and changed colour"*, not *"47 pixels differ"* — it is deterministic across platforms and Flutter versions, it runs under `dart test` with no Flutter binding, and because CR-086 puts screen and print on **one** rendering path it covers both simultaneously. Device faceplates are covered by construction, which is the parity mechanism CR-086 exists to create. Goldens pin `lodLevel` explicitly, with at least one golden at print LOD (AC-016 #13).
 
@@ -188,9 +199,14 @@ A PDF's bytes are not deterministic: `/CreationDate` and `/ModDate` are wall-clo
 
 Generate a document from each starter project and assert: page count equals the dry-run count; page sizes match the requested `ExportSpec`; every font referenced is embedded and subset; no page is empty; the **schedule row count equals the `Link` count** for the sheet's filter (one row per cable, services on a sub-line, per CR-010); every `W###` designator on the diagram appears in the schedule and vice versa; the 40-sheet warning fires and the 2000-sheet cap is not hit (AC-050/A7.4); the legend prints **one row per named cable type**, not per domain, and all ten requirement-4 types are present (AC-054); `T0.02` lists every `AckedFinding` with reason, author and date; and — the G3 assertion — a document with errors at every severity still writes a file.
 
+Two further families of assertion, each defending a ruling that is easy to erode silently:
+
+- **Sheet furniture is a deliverable, so it is asserted (DR-005).** Every emitted sheet carries a title block, a revision block, a drawing border, zone references and a sheet number; revision clouds render where a revision is flagged; the issued-for-construction stamp appears when the `ExportSpec` requests it. Sheet furniture is **orthogonal to wire idiom** — a fully drafted sheet still renders net labels by default (DR-001), and no assertion here may be written as though polish implied drawn wires.
+- **The `T6.01…` count is a partition, not multi-sheet authoring (DR-004, CR-073).** Assert that the document contains exactly one schematic `Sheet` and that the exporter emits one interconnect sheet per domain partition of it, so cross-sheet connections are zero by construction. There are no match lines, no off-sheet connectors and no sheet-boundary link handling to test, because they are never built. A test that reads "N sheets came out of the PDF, therefore multi-sheet exists" is asserting the wrong thing. Those sheets render `drawn`, because a domain partition *is* a domain filter; and where `ExportSpec.wireRender: auto` degrades a dense sheet back to `netLabels`, a test asserts the printed note saying so is present — a degradation the reader cannot see is a lie about the drawing (G4).
+
 ### 4.3 The CR-081 baseline parity assertion, concretely
 
-CR-081 makes one injected `TextMeasurer`, backed by `PdfFont.stringMetrics` and living in `rackmate_text`, the single source of truth for both backends, and AC-007 requires the parity test to assert on **baseline Y**, not just a bounding box. That is directly testable in four steps:
+CR-081 makes one injected `TextMeasurer`, backed by `PdfFont.stringMetrics` and living in `rackmate_text`, the single source of truth for both backends, and AC-007 requires the parity test to assert on **baseline Y**, not just a bounding box. The test is written against the one declared shape: `TextMetrics measureText(String text, TextStyleSpec style)`, declared in `rackmate_core/draw/text.dart` alongside `TextMetrics`, `TextStyleSpec` and the 12-value `TextAnchor`, with `DiagramCanvas` in `rackmate_core/draw/canvas.dart` carrying the identical signature on every backend. Neither `draw/text_measurer.dart` nor `draw/diagram_canvas.dart` exists; a test that imports one is testing a file the design does not have. That is directly testable in four steps:
 
 ```dart
 const kFixtures = ['AV Wa To Ty', 'W014', 'WO14', 'Ω 75 µs', 'RK1-PP2-24'];
@@ -320,10 +336,10 @@ A change is done when all of the following are true. This list is the PR checkli
 
 1. `dart analyze --fatal-infos --fatal-warnings` and `dart format` are clean.
 2. New behaviour has a test at the **lowest tier that can express it** — a rule gets fixtures, not a widget test; a layout change gets a display-list golden, not a screenshot.
-3. A new DRC rule ships with its `.bad`/`.near` fixture pair (AC-051). No exceptions; this is the gate that holds the v1 catalogue at 22.
+3. A new DRC rule ships with its `.bad`/`.near` fixture pair (AC-051). No exceptions; this is the gate that holds the v1 catalogue at 27, and it now covers 27 fixture pairs.
 4. A new command declares its `touches` mask and passes the epoch-coverage test (AC-014), and participates in the round-trip property test.
 5. A format change adds a schema fixture on the day it ships and never edits an existing one (§2.5).
-6. A new name exists in `docs/glossary.md` and no banned name was introduced (§4.7, N2).
+6. A new name exists in [the glossary](01-domain.md) and in canon §4, and no banned name was introduced ([canon §4.7](canonical-decisions.md#47-banned-names), N2).
 7. Any user-visible string is localisable and any number that could be unknown renders `—` with an unknown count in its rollup (G4).
 8. Goldens that changed were regenerated deliberately and the diff was read, not rubber-stamped.
 

@@ -1,8 +1,8 @@
 # Seed Device Catalog
 
 This document is the authoring specification and the shipping content for RackMate's seeded
-template library: the 48 generic archetypes that ship in v1 (30 rack-side, 18 field-side, per
-CR-061), the compact port notation the catalog is authored in, the four registries those templates
+template library: the generic archetypes that ship in v1 (per CR-061; the counts are in §3.10 and
+nowhere else), the compact port notation the catalog is authored in, the four registries those templates
 reference (signal domain, signal family, connector type, media type, reproduced from canon §6
 verbatim because that section *is* the shipping data), and the `.rmdev` seed file format with one
 fully worked example. It exists because the catalog is not decoration — three of the product's
@@ -47,6 +47,9 @@ Twelve principles. Each one is a decision that was made against a named alternat
 traceable to a ruling. Where a principle looks arbitrary it is one of the governing frame's five
 principles (G1–G5) applied mechanically.
 
+The catalog covers the common case; the device builder covers the long tail and ships in v1
+(DR-003). Neither substitutes for the other.
+
 ### P1 — Generic archetypes, never real SKUs
 
 Every template is `manufacturer: "Generic"` with a descriptive `model` string
@@ -69,15 +72,19 @@ highest-value checks in the product and **none of them can fire unless a speaker
 rack and absent from every draft of this catalog), the F-type ground block (AC-034/m21) and the
 IR receiver eye (the destructive-pinout hazard has two ends and only one of them was modelled).
 
-This is why the shipping split is **30 rack-side and 18 field-side** rather than 48 rack-side.
+The archetype mix is chosen **residential CI first** (DR-002) — those three inclusions are
+residential-driven, and commercial capability is carried without ever fronting the picker.
 
-### P3 — 48 templates, and the number lives in exactly one place
+This is why the shipping split is rack-side and field-side archetypes rather than rack-side only;
+the counts are in §3.10.
 
-CR-061 settles a four-way contradiction (58 / 62 / ~40 / "~30–50") at **48: 30 rack-side, 18
-field-side**. That count is stated in `docs/catalog.md` and nowhere else; **no prose in any
-document states a template count**, including this one outside of this paragraph and the summary
-table in §3.10. The gate for shipping a template is AC-052 provenance, not a target number — if a
-template cannot be cited it is cut and the number goes to 47.
+### P3 — the template count lives in exactly one place
+
+CR-061 settles a four-way contradiction (58 / 62 / ~40 / "~30–50"). The resolution is not a number
+in this paragraph — it is that the count is stated in **exactly one place, the summary table in
+§3.10**, and **no prose in any document, including this one, states a template count**. The gate
+for shipping a template is AC-052 provenance, not a target: if a template cannot be cited it is cut
+and the number in §3.10 goes down.
 
 ### P4 — Parametric families, and what "parametric" is allowed to vary
 
@@ -1392,11 +1399,11 @@ because `impedanceOhms` lives on the speaker terminal and `tapWatts` on the inst
 | Field Devices | 18 |
 | **Total shipped templates** | **48** |
 
-Of the 48, six are parametric families (V04, V06, V07, A01, N01, N03, P01, P03, X01, X02, X03 —
-eleven templates carrying a build-time parameter), which is what lets the catalog cover roughly
-seventy distinct configurations without seventy authoring-and-citation jobs.
+**Eleven templates carry a build-time parameter** — V04, V06, V07, A01, N01, N03, P01, P03, X01,
+X02, X03 — which is what lets the catalog cover roughly seventy distinct configurations without
+seventy authoring-and-citation jobs.
 
-**Deliberately not in the 30, with the reason.** These are rulings, not omissions. Each is a
+**Deliberately not in the rack-side set, with the reason.** These are rulings, not omissions. Each is a
 v1.1 catalog-pack candidate, and each is cheap in the Device Builder precisely because the
 archetype it forks from already ships.
 
@@ -1468,8 +1475,13 @@ fails, and it is mandatory, not decorative.
 
 Three palette rules are checkable, not aspirational:
 
-> **PAL-1** — Within any greyscale luminance band narrower than 0.10, no two domains may share a
-> dash class, and their line weights must differ by a factor of ≥ 1.4.
+> **PAL-1.** Every shipped `SignalFamilyDef` renders as *(L, dashClass, weight)* where **L** is the
+> WCAG relative luminance of its **effective** hue and dashClass/weight are its **effective**
+> values *after* any §4.4 override — not the domain base values. For every pair of families in
+> **different** `SignalDomainDef`s with **|L₁ − L₂| < 0.10**, at least one must hold: **(a)** their
+> dash classes differ, **or** **(b)** their weight multipliers differ by a factor **≥ 1.4**.
+> Families within one domain are exempt from (a)/(b) — they share a hue by construction and the
+> legend prints them adjacently — but must still differ in dash pattern, weight, or glyph.
 
 > **PAL-2** — Yellow `#F0E442` is reserved for selection and focus and is never a cable. At
 > L 0.744 it is illegible as a thin line on white paper.
@@ -1478,20 +1490,25 @@ Three palette rules are checkable, not aspirational:
 > `ExportSpec.palette: colour | greyscale | cmyk`, default `colour`, default `greyscale` in the
 > Installer preset, never inherited from the UI theme (CR-077).
 
-Verification of the shipped palette against PAL-1:
+**Dash class, defined so a test can compute it.** Classify each mark in one period as **dot**
+(< 2.5 pt), **short** (2.5–8.9 pt) or **long** (≥ 9 pt); the class is that sequence, compared **up
+to rotation**. `solid` is its own class. Worked: `2,3`→`(dot)`; `1.5,3`→`(dot)`; `2,6`→`(dot)`;
+`6,3`→`(short)`; `12,4`→`(long)`; `6,3,1,3`→`(short,dot)`; `8,3,1.5,3,1.5,3`→`(short,dot,dot)`.
 
-| Collision band | Domains | Dash class | Weight | Verdict |
-|---|---|---|---|---|
-| L ≈ 0.40 | Analog video / RF · Analog audio | long dash `12,4` vs short dash `6,3` | 1.0× vs 1.0× | pass — dash class differs; glyphs ▼ vs ● |
-| L ≈ 0.22–0.29 | Digital audio · Network · Control | dash-dot vs **solid** vs fine dot | 1.0× · 1.5× · 0.75× | pass — 2.0× spread across the band |
+PAL-1 is verified by a **pairwise unit test over every shipped family** (§7 criterion 4), not by a
+table of domain rows. The domain-level verification this section used to carry is what missed both
+of the collisions canon §14.3 found — it evaluated domain base weights rather than the family
+values actually drawn. The within-domain exemption is a domain-equality check in the test, **never
+an allowlist of pairs**: an allowlist is how a real collision gets waived.
 
 **Units and storage.** Dash patterns are in points (1/72 in), stored as `List<int>` of
 permille-points so the file stays integral — `6,3` is `[6000, 3000]` and `1.5,3` is
 `[1500, 3000]` (CR-079). Line weight is `Permille`; `1000` = 1× = the base signal weight. Minimum
 print stroke is 0.5 pt and no stroke is ever emitted at 0. Every shipped dash period is ≥ 4.5 pt
-(1.59 mm), above the floor below which a dash blurs to solid at 300 dpi. Hop arcs are
-**suppressed on dashed domains** — control and structure — because dash phase diverges across an
-arc (AC-016/#17).
+(1.5875 mm), above the floor below which a dash blurs to solid at 300 dpi. Dash patterns matter on
+paper even though **net labels are the default render** (DR-001): drawn wires appear on a domain
+filter, `Alt`-hover or focus, and the exported interconnect sheets `T6.01…` are drawn by
+construction because a domain partition *is* a domain filter.
 
 **The glyph channel.** A glyph is drawn at the midpoint of each run and in the legend. **Shape
 encodes domain; fill encodes tier within the domain** — filled = the domain's native carrier,
@@ -1605,17 +1622,21 @@ transformer, not a property of the speaker model.
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
 | `audio.spdif_coax` | **S/PDIF, coaxial (75 Ω)** | `conn.rca75` | → | P2P | `6,3,1,3` | 1.00× | `SPD` | ◆ |
-| `audio.spdif_optical` | **TOSLINK (optical S/PDIF)** | `conn.jis_f05` | → | P2P | `2,3` | 1.00× | `OPT` | ◇ |
+| `audio.spdif_optical` | **TOSLINK (optical S/PDIF)** | `conn.jis_f05` | → | P2P | `2,3` | **1.25×** | `OPT` | ◇ |
 | `audio.aes3` | AES/EBU (AES3, 110 Ω) | `conn.xlr3` | → | P2P | `10,3,1,3` | 1.00× | `AES` | ◆ |
 | `audio.aes3id` | AES3id (75 Ω BNC) | `conn.bnc75` | → | P2P | `10,3,1,3,1,3` | 1.00× | `AES75` | ◆ |
 | `audio.dante` | Dante | `conn.rj45` | ⤳ | STAR | `6,3,1,3` | 1.50× | `DNT` | ◇ |
 | `audio.aes67` | AES67 | `conn.rj45` | ⤳ | STAR | `6,3,1,3,1,3` | 1.50× | `A67` | ◇ |
 | `audio.avb` | AVB / Milan | `conn.rj45` | ↔ | STAR (**TSN switches only**) | `8,3,1,3` | 1.50× | `AVB` | ◇ |
 
-The brief's "S/PDIF" and "TOSLINK" would have collided on one vermillion, and they do not: a
-`6,3,1,3` dash-dot with a filled diamond versus a fine `2,3` dot with a hollow diamond. This is
-also the pair where the distinction carries real consequence — TOSLINK cannot carry lossless
-multichannel (no DTS-HD MA, no TrueHD), which is a design constraint, not trivia.
+The brief's "S/PDIF" and "TOSLINK" would have collided on one vermillion, and they do not: within
+the digital-audio domain the pair separates on **dash class, weight and glyph** — a `6,3,1,3`
+dash-dot at 1.00× with a filled diamond versus a fine `2,3` dot at 1.25× with a hollow diamond.
+TOSLINK's weight was raised from 1.00× because at 1.00× it collided with `ctl.ir_emitter` on every
+non-hue channel — ΔL 0.071, both fine-dot class, weight ratio only 1.33× — which fails PAL-1 in
+greyscale (canon §14.3). At 1.25× the ratio is 1.67 and the pair passes. This is also where the
+distinction carries real consequence — TOSLINK cannot carry lossless multichannel (no DTS-HD MA,
+no TrueHD), which is a design constraint, not trivia.
 
 `audio.spdif_coax` sets `nominalImpedanceOhms: 75` and is physically indistinguishable from
 `audio.line_unbal` at the connector: wiring a plain analog interconnect causes intermittent
@@ -1718,7 +1739,7 @@ appearing instead as an **outlet map** on the power schedule (AC-026).
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
 | `structure.undetermined` | Undetermined home run | `conn.unterminated` | passive | P2P | `4,4` | 0.75× | `STR` | ★ |
-| `structure.pathway` | Pathway only (conduit / pull string) | — | passive | — | `2,6` | 0.75× | `PATH` | ☆ |
+| `structure.pathway` | Pathway only (conduit / pull string) | — | passive | — | `1.5,3,1.5,9` | 0.75× | `PATH` | ☆ |
 
 `structure.undetermined` is the interesting case and it is deliberate: a Cat6 home run at rough-in
 may end up carrying Ethernet, HDBaseT, or nothing. The family is legal, it schedules, it prints,
@@ -1726,6 +1747,11 @@ it gets a `W` number and both labels, and the DRC validates **retroactively** on
 assigns a real family. `structure.pathway` pairs with `MediaTypeDef.isPathwayOnly` — it creates a
 `Pathway`, never a Link and never a Port, appears on the pull sheet (you still pull the smurf tube
 and it still costs money) and never appears in the netlist (CR-109).
+
+`structure.pathway`'s dash is a **double dot** (`1.5,3,1.5,9`, period 15 pt), not the single `2,6`
+dot it was authored with: at 0.75× against `ctl.ir_emitter`'s `1.5,3` at 0.75× — ΔL 0.026, same
+fine-dot class, weight ratio 1.00 — it violated PAL-1 (canon §14.3). A double dot reads correctly
+as "a route, not a conductor" and is unique in the shipped set.
 
 ### 4.5 Requirement 4 coverage audit
 
@@ -1742,7 +1768,7 @@ type in colour and greyscale side by side.**
 | **RS-232** | `ctl.rs232` | `#CC79A7` | `6,3,1.5,3` | 0.75× | ✚ | `232` |
 | **RG6** | `media.rg6` carrying `rf.catv` / `rf.satellite` / `rf.ota` | `#56B4E9` | `12,4` / `12,4,3,4` / `16,4` | 1.50× / 1.50× / 1.00× | ▽ | `RF` `SAT` `OTA` |
 | **S/PDIF** | `audio.spdif_coax` | `#D55E00` | `6,3,1,3` | 1.00× | ◆ | `SPD` |
-| **TOSLINK** | `audio.spdif_optical` | `#D55E00` | `2,3` | 1.00× | ◇ | `OPT` |
+| **TOSLINK** | `audio.spdif_optical` | `#D55E00` | `2,3` | **1.25×** | ◇ | `OPT` |
 | **Speaker level** | `audio.speaker_lowz` (+ `audio.speaker_cv`) | `#E69F00` | `6,3` / `10,3,2,3` | **2.00×** | ◐ / ○ | `SPK` `70V` |
 | **Power** | `power.ac_branch` / `power.ac_iec` | `#000000` | `8,3,1.5,3,1.5,3` / `8,3,1.5,3` | 2.00× | ⬢ | `PWR` `IEC` |
 | *"etc."* | 40 further families across the same 8 domains | — | — | — | — | — |
@@ -2318,9 +2344,13 @@ Reproduced from canon §6.7, which governs.
    ANSI B and photocopied once, and every one of the ten requirement-4 types must remain
    identifiable. The entire dash-and-weight argument is predicated on this test, so it is run on
    hardware, not simulated (AC-058/D13).
-4. **PAL-1 is a unit test.** Compute WCAG relative luminance for all eight domain colours; for
-   every pair within 0.10, assert differing dash class and a weight ratio ≥ 1.4.
-5. **Dash floor is a unit test.** Assert every shipped dash period ≥ 4.25 pt (1.5 mm).
+4. **PAL-1 is a unit test over rendered family values.** For every shipped `SignalFamilyDef`,
+   compute *(L of its effective hue, dash class of its effective dash, effective weight)*; for
+   every pair in **different** domains with |ΔL| < 0.10, assert dash classes differ **or** weights
+   differ by ≥ 1.4. Within-domain pairs are exempt from that check and must instead differ in dash,
+   weight or glyph; the exemption is a domain-equality check, never an allowlist.
+5. **Dash floor is a unit test.** Assert every shipped dash period ≥ **4.5** pt (1.5875 mm) —
+   4.25 pt is 1.4992 mm and is below the 1.5 mm floor the rule derives from.
 6. **Glyph coverage is a unit test.** Assert every glyph in the registry resolves in `RackBody`
    (IBM Plex Sans) or `Noto Sans Symbols 2`. A tofu box in an exported drawing is a defect this
    test exists to prevent.
@@ -2331,7 +2361,7 @@ Reproduced from canon §6.7, which governs.
    with a system prefix (CR-043).
 8. **DRC fixtures.** Every rule that reads this registry ships with one known-bad design that must
    produce exactly that finding and one known-good near-miss that must not. **No rule ships without
-   its pair** (AC-051) — and this is also the gate that holds the v1 rule catalogue at 22.
+   its pair** (AC-051) — and this is also the gate that holds the v1 rule catalogue at 27.
 9. **Domain-expert review** of the shipped registry values and of the catalog is a named milestone
    exit criterion, not a code review.
 
@@ -2343,7 +2373,7 @@ that reaches a drawing.
 | # | Assertion | Catches |
 |---|---|---|
 | C1 | Every `.rmdev` in `assets/catalog/` parses, round-trips byte-identically, and has `schemaVersion == 1` | A hand-edited seed file that no longer loads |
-| C2 | The template count in `assets/catalog/` equals the number stated in `docs/catalog.md` and appears in no other document | Four contradictory counts, which is the state CR-061 resolved |
+| C2 | The template count in `assets/catalog/` equals the number in the §3.10 summary table of this document, and appears in no prose in any document | Four contradictory counts, which is the state CR-061 resolved |
 | C3 | Expanding each §3 notation block reproduces its `.rmdev` exactly | The spec and the data drifting apart |
 | C4 | No template's `typePrefix` collides with another template's or with a system prefix (`STR`, `RK`, `W`, `N`, `J`) | CR-043's `STR` / `STRM` collision, generalised |
 | C5 | Every `PortDef.key` is unique within its template, and stable across versions of that template | A migration that silently orphans conductors |
@@ -2383,9 +2413,14 @@ a `Link` endpoint may be a `PlaceEndpoint` — "proj shelf, beam 3" — rather t
 
 Listed so a reader does not mistake silence for a decision. Each is tracked in canon §10.
 
+Two that used to be listed here are now closed and are recorded as rulings, not questions: **§10.2
+is answered — residential CI is the primary market and commercial capability never fronts the UI
+(DR-002)**, which sets the archetype mix and points the next catalog pack at STB / keypad / 70 V
+rather than DMX / DALI / Dante; and **§10.4 is answered — the device builder ships in v1
+(DR-003)**, so the catalog is never asked to stand in for it.
+
 | # | Question | Bearing on the catalog |
 |---|---|---|
-| §10.2 | Residential CI or commercial AV as the primary customer | Decides whether the next catalog pack is DMX/DALI/Dante-heavy or STB/keypad/70 V-heavy. The current 48 deliberately straddles |
 | §10.5 | Metric or imperial as the shipped default | Display only. Storage is nanometres and micrograms either way (CR-001, CR-003), so this is a `UnitFormatter` default, not a catalog change |
 | §10.9 | Generic archetypes forever, or a real-SKU catalog eventually | The single largest open question for this document. `derivedFrom` (CR-062) and `manufacturer`/`model` as free strings keep the door open at zero cost today |
 | §10.12 | The small calls with an owner rather than an essay | Includes the exact `FracIndex` encoding flagged VERIFY in §6.4 |

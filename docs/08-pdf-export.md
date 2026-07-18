@@ -33,7 +33,7 @@ Rejected: making NCS mandatory (design-data-model.md I-40). The exporter auto-fi
 
 ### 2.2 The v1 sheets, in order
 
-Canon §7.2.7 is the exhaustive v1 list. `Default` is `ON` (always emitted), `AUTO` (emitted iff the data exists), or `PRESET` (only in a named preset).
+This is the v1 sheet set. Canon §7.2.7's eight-item list is a summary, not a ceiling; `T0.00`, `T6.20` and `T5.01` are v1 (canon §4.3, CR-073, DR-005). `Default` is `ON` (always emitted), `AUTO` (emitted iff the data exists), or `PRESET` (only in a named preset).
 
 | # | Sheet | ID | Default | Contents |
 |---|---|---|---|---|
@@ -42,12 +42,14 @@ Canon §7.2.7 is the exhaustive v1 list. `Default` is `ON` (always emitted), `AU
 | 3 | **Exceptions & Acknowledgements** | `T0.02` | ON | Every open `Finding` with rule ID, severity and locus; every `AckedFinding` with its reason, author and date. This is where "the reason prints" — a promise three design documents made and no sheet list honoured (CR-022). Emitted even when empty, stating so. |
 | 4 | **Rack Elevation — Front** | `T2.01` | ON | One per `Rack`. RU ruler both edges per `Rack.ruNumbering`; device blocks with `designator`, name, model, RU span (`4U · 12–15`), `lifecycleStatus` border; cumulative mass from the bottom up, draw, and BTU/hr in the gutter; blanks, vents and shelves as hatched bands. |
 | 5 | **Rack Elevation — Rear** | `T2.02` | ON | Same frame, rear faces, mirrored per `Rack.mirrorRearElevation`, connector fields drawn from the template footprints, every port labelled with its `designator` and the `Link.designator` landing on it. The rear panel **prints** in v1; the interactive Rear Panel view is v1.1 (CR-071). |
-| 6..n | **Interconnect** | `T6.01`… | ON | One sheet per **domain partition** of the single schematic `Sheet` (CR-073). Order: Video, Audio, Network, Control, Power, Structure. A domain with zero `Link`s produces no sheet. |
+| 6..n | **Interconnect** | `T6.01`… | ON | One sheet per **domain partition** of the single schematic `Sheet` (CR-073). Order: Video, Audio, Network, Control, Power, Structure. A domain with zero `Link`s produces no sheet. This is partition at export, not multi-sheet authoring, which is never built (DR-004, canon §11.4.3). |
 | n+1 | **Pull Sheet** | `T6.10` | ON | §3. Portrait, sorted room then pathway, `fieldCable` only. |
 | n+2 | **Termination Schedule** | `T6.11` | ON | §3. Landscape, sorted rack then panel then port. |
 | n+3 | **Unused Home Runs** | `T6.20` | AUTO | Home-run `Link`s whose rack end is an `OpenEndpoint` — a real deliverable and a differentiator; keep the name (canon §4.3). On iff ≥1 exists. |
 | n+4 | **Equipment List and Materials** | `T6.30` | ON | Qty · designators · manufacturer · model · description · RU · rack · location · face · mass · draw · `lifecycleStatus` · notes, grouped by rack then RU descending. Plus the **cable footage rollup by media with waste factor** (AC-024), the hardware implied by rules (ear kits, rear supports), the jumper/power-cord rollup by media + length + colour, and the PDU **outlet map** that AC-026 keeps off the cable schedule. **No pricing** — `Money`, `cost`, `supplier` and `purchaseOrder` do not exist in v1 (AC-055). Never called a BOM. |
 | n+5 | **Plate, Panel & Pinout Details** | `T5.01` | AUTO | On iff any non-standard pinout exists — null-modem RS-232, IR pinout variant, Euroblock role map, non-default T568A. |
+
+**How the interconnect sheets render.** Interconnect sheets render **`drawn`** — orthogonal polylines with a tag pill at each end — because a domain partition is a domain filter (DR-001, canon §11.1.2). The unfiltered all-domains schematic, which renders as net labels on screen, is not an exported sheet. `ExportSpec.wireRender: auto | netLabels | drawn`, default `auto`; `drawn` degrades to `netLabels` above a per-sheet `Link` count **and prints a note on the sheet saying so** — never silently.
 
 **Not in v1, and this is a ruling, not an omission.** `T6.40` Power Schedule and `T6.50` Network/IP Schedule appear in `design-pdf-export.md §1.1` and are absent from canon §7.2.7; they defer to v1.1, and the PDU outlet map that AC-026 depends on rides on `T6.30` instead. The datasheet appendix defers to v2 — the `pdf` package writes documents, it does not import pages. A "SYSTEM OVERVIEW — all devices" sheet is **deleted**: twenty symbols at the schematic's own sizing rules consume 84% of an ANSI B sheet before a wire is drawn, and shipping an illegible sheet sets an expectation the product cannot meet (CR-074). The cover's rack summary strip serves that purpose honestly.
 
@@ -61,7 +63,9 @@ The load-bearing observation, from `critique-ux-simplicity.md`:
 
 So the entire apparatus that `design-pdf-export.md §5.4` budgeted for — paired pentagon off-sheet flags, the second placement pass, cross-reference resolution, min-cut cost functions, match lines, key plans — **is not built in v1**. Devices simply repeat across sheets, identified by their `designator`. Four to six engineering weeks removed (canon §7.7 cut #1). What survives: the zone grid, because it is ~30 lines and the schedule's `REF` column is genuinely useful for finding a run on a sheet; and `TilingStrategy.geometric`, for the single case of one over-tall rack elevation.
 
-Rejected alternative: shipping user-facing multi-sheet in v1 (`design-ux-schematic.md §4.5`), which also carried a graph min-cut partitioner and by-rack tiling. Multi-sheet partitioned by domain only returns in v1.2, gated on real projects showing which partition users want (canon §7.4).
+Rejected alternative: shipping user-facing multi-sheet in v1 (`design-ux-schematic.md §4.5`), which also carried a graph min-cut partitioner and by-rack tiling. **Multi-sheet authoring is never built** (DR-004): one schematic `Sheet` plus domain filtering, permanently. Match lines, off-sheet connectors, sheet-boundary link handling and schematic PDF tiling are deleted from the plan, not deferred. The `Sheet` entity nonetheless remains in the schema (AC-037) so the file format never migrates if that is ever reversed; it is not vestigial and must not be described as removable.
+
+Do not read "N sheets come out of the PDF" as evidence that multi-sheet exists. Exporter domain partition and multi-sheet authoring are different things: the first ships in v1 unchanged (CR-073), the second never ships.
 
 ### 2.4 Presets
 
@@ -73,9 +77,9 @@ Presets are the primary UI; the per-sheet checkbox list sits behind a disclosure
 | **Installer set** | Full set, rear elevation forced ON | `palette: greyscale` (CR-077), sign-off columns ON, zebra OFF |
 | **Client set** | Cover, Legend, front elevations, interconnect with symbols collapsed and no port stubs, Equipment List | `palette: colour`, `Link` designators hidden on traces, NOTES column hidden |
 | **This sheet only** | the sheet currently open | furniture unchanged |
-| **As-built** | Full set | revision block populated from `RevisionEntry` history, `roughInStatus` column ON, `AS BUILT` stamp. Revision **clouds** are v1.1. |
+| **As-built** | Full set | revision block populated from `RevisionEntry` history, `roughInStatus` column ON, `AS BUILT` stamp. Revision **clouds** ship in v1 (DR-005): an arc-scalloped closed path around the changed region, driven from `RevisionEntry`, with a revision triangle carrying the revision letter. |
 
-Touching any individual switch moves the radio to `Custom…`. `ExportSpec` is `{preset, palette: colour \| greyscale \| cmyk, issuedForConstruction, paper, maxPages}` — and the screen theme **never** affects the export (CR-077, PAL-3). `ProjectSettings.greyscaleSafeExport` is deleted: it is an export option, not a property of the design.
+Touching any individual switch moves the radio to `Custom…`. `ExportSpec` is `{preset, palette: colour \| greyscale \| cmyk, wireRender: auto \| netLabels \| drawn, issuedForConstruction, paper, maxPages}` — and the screen theme **never** affects the export (CR-077, PAL-3). `ProjectSettings.greyscaleSafeExport` is deleted: it is an export option, not a property of the design.
 
 ---
 
@@ -367,7 +371,9 @@ Changing a scheme offers a **renumber with a before/after diff**, never a silent
 
 ## 5. Sheet furniture
 
-All furniture — border, zone band, title block, revision block, legend swatches — is drawn through `DiagramCanvas` (P1), attached via `pw.PageTheme(buildBackground:)` wrapping `pw.FullPage(ignoreMargins: true, child: pw.CustomPaint(painter: ...))`. It therefore draws on every page including ones `MultiPage` creates by overflow, and it renders identically in the on-screen preview. VERIFY: `PageTheme.buildBackground` / `buildForeground` parameter names on the pinned `pdf` version.
+**Sheet furniture is a v1 deliverable (DR-005), not a polish item to be traded away under schedule pressure.** The PDF is a client deliverable: border, zone grid, title block, revision block, revision clouds, the `ISSUED FOR CONSTRUCTION` stamp and sheet numbering all ship. Note that this is orthogonal to wire idiom — sheet furniture is drafting polish, and polishing the sheet does not reopen DR-001. The schematic's reader is technical (GC, electrician, low-voltage sub, technically-literate homeowner); the sheet is polished fully and net labels stay the default.
+
+All furniture — border, zone band, title block, revision block, revision clouds, legend swatches — is drawn through `DiagramCanvas` (P1), attached via `pw.PageTheme(buildBackground:)` wrapping `pw.FullPage(ignoreMargins: true, child: pw.CustomPaint(painter: ...))`. It therefore draws on every page including ones `MultiPage` creates by overflow, and it renders identically in the on-screen preview. VERIFY: `PageTheme.buildBackground` / `buildForeground` parameter names on the pinned `pdf` version.
 
 ### 5.1 Border and zone grid
 
@@ -418,7 +424,7 @@ Directly above the title block, same 396 pt width, rows 13 pt, entries stacking 
 |---|---|---|---|
 | 30 pt, centre | 62 pt, centre | 268 pt, left | 36 pt, centre |
 
-Rows come from `RevisionEntry`, which is a document entity and a conflict unit — **generated from project history, not hand-entered**. Re-issuing a rack drawing after a change order yields `C · 2026-07-18 · Added AMP-2, 4 speaker runs to Zone 3 · JS` automatically. `RevisionEntry` is never conflated with `RackDocument.sequence`, the strictly-monotonic sync cursor (CR-094); `issued` was deleted from `RoughInStatus` because it is a revision-block concept, not a cable state (CR-065). Revision **clouds** — a scalloped arc-chain around each element changed since the last issued revision — defer to v1.1.
+Rows come from `RevisionEntry`, which is a document entity and a conflict unit — **generated from project history, not hand-entered**. Re-issuing a rack drawing after a change order yields `C · 2026-07-18 · Added AMP-2, 4 speaker runs to Zone 3 · JS` automatically. `RevisionEntry` is never conflated with `RackDocument.sequence`, the strictly-monotonic sync cursor (CR-094); `issued` was deleted from `RoughInStatus` because it is a revision-block concept, not a cable state (CR-065). Revision **clouds** — a scalloped arc-chain around each element changed since the last issued revision — **ship in v1** (DR-005). A cloud is an arc-scalloped closed path around the changed region, driven from `RevisionEntry`, accompanied by a revision triangle carrying the revision letter. It is drawn with `drawPath`, so **no new `DiagramCanvas` method is required** — which is why it costs what it costs.
 
 ### 5.4 Legend sheet `T0.01`
 
@@ -427,7 +433,7 @@ Six blocks on one ANSI B landscape sheet:
 1. **Cable-type key** — one row per **named cable type** (not per domain), each showing its exact drawn rendering in colour and in greyscale side by side, with hue, dash, weight, glyph and tag. All ten types the brief names are individually identifiable here and on the drawing (AC-054). The hue-is-domain argument is printed on the sheet so the reader sees *why*.
 2. **Connector symbol table** — every glyph used in the set, at drawing scale. Glyphs are the same `DiagramPath` constants the drawing uses, so the legend cannot drift from it.
 3. **Device block anatomy** — one annotated example: designator position, name, model, port stub, port label, RU span, `lifecycleStatus` border.
-4. **Convention key** — lifecycle borders; junction dot vs crossing hop; home-run vs local tag-pill shape; `— OPEN —` end notation.
+4. **Convention key** — lifecycle borders; junction dot vs plain crossover (there are no hop arcs in v1, DR-001); the **net-label stub** — a labelled stub at a pin standing in for a drawn wire, which is the default rendering everywhere except a domain-filtered sheet, so the legend must explain it; home-run vs local tag-pill shape; `— OPEN —` end notation; the revision cloud and revision triangle.
 5. **Identifier formats** — the active templates, expanded, with a worked decomposition field by field.
 6. **Abbreviations and general notes** — editable, seeded.
 
@@ -489,7 +495,7 @@ if (k * scene.minTextSizePt < kMinPrintPt) {
 }
 ```
 
-The outcome is reported in the export summary. `TilingStrategy.geometric` survives in the codebase for exactly one v1 case — a single rack elevation too tall for one sheet — with a 0.5 in physical overlap band and `MATCH LINE — SEE SHEET …` along the shared edge. Key plans, min-cut partitioning and general geometric tiling are cut (CR-073).
+The outcome is reported in the export summary. `TilingStrategy.geometric` survives in the codebase for exactly one v1 case — **a single over-tall rack elevation**, never a schematic sheet — with a 0.5 in physical overlap band and `MATCH LINE — SEE SHEET …` along the shared edge. That edge label is a physical overlap marker on one elevation, not schematic sheet-boundary handling: match lines, off-sheet connectors and schematic tiling in the multi-sheet sense are deleted, not deferred (DR-004). Key plans, min-cut partitioning and general geometric tiling are cut (CR-073).
 
 ### 6.3 Why raster is disqualified, once, for the record
 
@@ -595,12 +601,15 @@ abstract interface class DiagramCanvas {
 }
 ```
 
-Four decisions embedded in that shape:
+This is the single declaration of `DiagramCanvas` in the corpus. [Architecture §8.1](03-architecture.md) cross-references it and does not restate it (CR-086). No method exists beyond the ones above, and none may be added without an amendment.
+
+Five decisions embedded in that shape:
 
 - **`RendererCaps` is deleted** (CR-088). The moment a scene builder branches on capabilities there are two code paths and the abstraction has already leaked. The interface is the common denominator, and the rule that makes that denominator sufficient — **no gradients, no shadows, no blurs, no blend modes, no shaders** — is promoted from prose to an invariant with a test. Flat fills, strokes, dashes and text are what let the two backends agree *exactly* rather than approximately. That is a feature, not a limitation.
 - **`measureText` returns `TextMetrics`, never `Pt`** (CR-087). A `Pt` cannot express a baseline, and the abstraction leaks precisely there.
 - **Immediate-mode value objects, not retained setters.** `Stroke` and `Fill` travel with the draw call. They are therefore hashable, which is what makes the graphics-state cache in §7.10 possible, and a recorder cannot get out of sync with an interpreter.
 - **`drawPolyline` is separate from `drawPath`** because orthogonal traces are the hottest primitive in this application and deserve a route that skips `DiagramPath` allocation entirely.
+- **There is no `drawSvgPath`.** Authored connector-symbol `d` strings are parsed once, at catalog load, by `DiagramPath.fromSvg(String d)`. The canvas interface never parses strings — a backend that parses is a backend that can disagree with the other one, which is exactly what CR-086 exists to prevent.
 
 `Stroke` carries `argb`, `widthPt`, `dash` (points, `List<double>?`), `dashPhase`, `cap`, `join`, `miterLimit` (10.0, matching PDF's default), plus `scaleWithGeometry` and `hairlineFloor` per CR-082 — with value equality and `hashCode` on all of it. Dash patterns are in **points** (CR-079), stored in the registry as permille-points so the file stays integral: `6,3` is `[6000, 3000]`. Transform currency is `vector_math_64.Matrix4` — pure Dart, already a transitive dependency of `pdf`, accepted directly by `PdfGraphics.setTransform`, and `Matrix4.storage` is exactly the column-major `Float64List(16)` that `ui.Canvas.transform` wants. Zero conversion on either side; do not hand-roll a `Mat3`.
 
@@ -623,14 +632,14 @@ Bundling the same TTF is **not** a sufficient fix — that is `design-architectu
 1. Bundle each TTF **twice** in `pubspec.yaml` — under `fonts:` for Flutter's text engine and under `assets:` for `rootBundle.load()`. Declaring only the first makes the PDF silently fall back and every metric diverges (§10.2).
 2. Load it into a `PdfTtfFont` in every context — main isolate, background isolate, screen renderer.
 3. Inject one `TextMeasurer` into the scene builder, backed by `PdfFont.stringMetrics`.
-4. `DiagramCanvas.measureText` delegates to that same measurer on **every** backend, including the Flutter one.
+4. `DiagramCanvas.measureText(String text, TextStyleSpec style)` — the **identical signature** — delegates to that same measurer on **every** backend, including the Flutter one.
 5. `FlutterDiagramCanvas.drawText` still uses `TextPainter` to *rasterise* glyphs — Skia is far better at that than anything we would write — but **anchors using the injected metrics**, and disables `kern`, `liga` and `clig`.
 
 ```dart
 // rackmate_core/draw/text.dart — pure Dart. Abstract only.
+// THE declaration site. There is no draw/text_measurer.dart.
 abstract interface class TextMeasurer {
-  TextMetrics measure(String text, FontRef font, double sizePt,
-                      double letterSpacing);
+  TextMetrics measureText(String text, TextStyleSpec style);
 }
 
 final class TextMetrics {
@@ -647,11 +656,17 @@ final class TextMetrics {
 final class PdfFontMeasurer implements TextMeasurer {
   PdfFontMeasurer(this._fonts);
   final Map<FontRef, PdfFont> _fonts;
+  // Key is the 4-tuple EXTRACTED from the spec, never the TextStyleSpec object.
+  // TextAnchor is deliberately excluded: it does not affect metrics, and
+  // including it would multiply the cache 12x. Do not "simplify" this to
+  // key on `style` — that is the bug.
   final _cache = <(String, FontRef, double, double), TextMetrics>{};
 
   @override
-  TextMetrics measure(String t, FontRef f, double size, double ls) =>
-      _cache.putIfAbsent((t, f, size, ls), () {
+  TextMetrics measureText(String t, TextStyleSpec style) =>
+      _cache.putIfAbsent(
+          (t, style.font, style.sizePt, style.letterSpacing), () {
+        final f = style.font, size = style.sizePt, ls = style.letterSpacing;
         final font = _fonts[f]!;
         final m = font.stringMetrics(t);   // VERIFY: signature; and whether
                                            // PdfFontMetrics * double exists
@@ -667,7 +682,7 @@ final class PdfFontMeasurer implements TextMeasurer {
 }
 ```
 
-Cache aggressively — a rack sheet re-measures the same designators hundreds of times. The label cache is sized at **12,000** entries keyed on `(text, styleId, quantisedScale)`, because 200 devices × 20 ports × 2 runs plus headers and tag pills is ~10,000 text runs, and a thrashing LRU is worse than none when eviction disposes a native `ui.Paragraph` in the paint path (AC-009).
+Cache aggressively — a rack sheet re-measures the same designators hundreds of times. Both caches are sized at **12,000** entries: the `PdfFontMeasurer` metrics cache keyed on the 4-tuple above, and the paint-side label cache keyed on `(text, styleId, quantisedScale)`. 200 devices × 20 ports × 2 runs plus headers and tag pills is ~10,000 text runs, and a thrashing LRU is worse than none when eviction disposes a native `ui.Paragraph` in the paint path (AC-009).
 
 **Anchor resolution lives in one shared pure-Dart helper**, so neither adapter ever guesses a baseline. `TextStyleSpec` carries an explicit 12-way `TextAnchor` including `baselineLeft/Center/Right`:
 
@@ -786,8 +801,7 @@ final class PdfDiagramCanvas implements DiagramCanvas {
   }
 
   @override
-  TextMetrics measureText(String t, TextStyleSpec s) =>
-      _measurer.measure(t, s.font, s.sizePt, s.letterSpacing);
+  TextMetrics measureText(String t, TextStyleSpec s) => _measurer.measureText(t, s);
 
   @override
   void drawText(String text, Pt at, TextStyleSpec s) {
@@ -865,7 +879,7 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
 
   @override
   TextMetrics measureText(String t, TextStyleSpec s) =>
-      _measurer.measure(t, s.font, s.sizePt, s.letterSpacing);   // ← NOT TextPainter
+      _measurer.measureText(t, s);                 // ← NOT TextPainter
 
   @override
   void drawText(String text, Pt at, TextStyleSpec s) {

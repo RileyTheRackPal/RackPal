@@ -1,6 +1,6 @@
 # Device Builder
 
-The Device Builder is the authoring surface for a `DeviceTemplate` — the library object that owns a device's physical facts and its port list, and from which every placed `DeviceInstance` inherits. It exists because requirement 2 demands it and because a 48-template seeded catalog can only ever cover archetypes; the real device in the integrator's hand is never quite the archetype. This document covers the ordinary builder and the template library only. The **Structure device** has a fundamentally different entry axis (room × media × quantity, not port-by-port) and its own editor — see [Structure device](07-structure-device.md).
+The Device Builder is the authoring surface for a `DeviceTemplate` — the library object that owns a device's physical facts and its port list, and from which every placed `DeviceInstance` inherits. It exists because requirement 2 demands it and because a seeded catalog can only ever cover archetypes; the real device in the integrator's hand is never quite the archetype. This document covers the ordinary builder and the template library only. The **Structure device** has a fundamentally different entry axis (room × media × quantity, not port-by-port) and its own editor — see [Structure device](07-structure-device.md).
 
 ---
 
@@ -21,6 +21,8 @@ Consequences that follow mechanically:
 | `connectorProjection` is **derived from the deepest rear connector footprint**, never `bodyDepth + 75 mm`. | AC-032, CR-036 |
 | Every rollup that consumes a template field reports its unknown count — *"Total weight 148 lb · 3 devices have no weight"*. | CR-114, G4 |
 | The `Draft` flag survives **only** for templates saved with zero ports and no category. | AC-049 |
+
+The device builder ships in v1 and M4 keeps its position (DR-003). This is settled — it is no longer an open question, and "move M4 after M6" is no longer an available schedule lever.
 
 ---
 
@@ -91,6 +93,8 @@ Occupancy is a struct, never a scalar (CR-036): `frontU`, `rearU`, `side`, `moun
 
 All lengths are `Len` (int64 nanometres, CR-001) and all masses `Mass` (int64 micrograms, CR-003). Serialized names carry the unit: `depthNm`, `weightUg`, `chassisWidth`. `chassisWidth` defaults to **432 mm** for `widthClass: full`, not 482.6 mm — 482.6 is the *panel* width including ears, and flowing connectors across it draws jacks out past the rails on the very view that gets taped inside the rack door (AC-032). `maxUnsupportedMass` defaults to ~7 kg for `rackEars` and feeds `RCK-013` (AC-028).
 
+Depth and weight are **optional, with a visible `unknown` state**: the fields are `Len? bodyDepth` and `Mass? weight`, and an untouched field stays unknown rather than acquiring a default. Unknown **serializes as an absent key, never an explicit `null`** — the codec omits it, and an absent key reads back as unknown. This is AC-049's three-required-fields promise made concrete: nothing here blocks `Save`, and every rollup that consumes these fields reports its unknown count instead of fabricating a number (CR-114, G4).
+
 ### 3.3 Power & thermal
 
 `PowerProfile` fields are all nullable `int` and all optional: `nameplateWatts`, `typicalWatts`, `standbyWatts`, `nominalVolts`, `apparentVA`, `powerFactor` (permille), `poeBudgetWatts`, `btuPerHourOverride`, `outletsProvided`, `outletsConsumed`, `isContinuousLoad`, `inletPlug`.
@@ -134,7 +138,7 @@ Grammar — everything but qty and connector is optional and order-insensitive:
 
 Aliases resolve aggressively **against the registry** (CR-058): `ConnectorTypeDef.aliases` and `SignalFamilyDef.aliases` hold the bare trade names, while the canonical IDs stay namespaced `lower.dotted.snake`. So `hdmi` → `conn.hdmi_a` + `video.hdmi.2_0`; `rj45` → `conn.rj45` + `net.ethernet`; `hdbt` → `conn.rj45` + `video.hdbaset` — *a different family on the same connector, which is the entire point of keeping connector, family and direction orthogonal*. `spdif` → `conn.rca` + `audio.spdif_coax` + impedance 75.
 
-*Rejected alternative (CR-058):* flat bare names as the canonical vocabulary. The DSL gets its ergonomics from the aliases; the file format gets its namespacing and forward compatibility from the IDs. `ac-inlet` as a *signal family* is re-authored throughout as `power.ac_120` + `role: inlet`.
+*Rejected alternative (CR-058):* flat bare names as the canonical vocabulary. The DSL gets its ergonomics from the aliases; the file format gets its namespacing and forward compatibility from the IDs. `ac-inlet` as a *signal family* is re-authored throughout as **`power.ac_iec`** + `PortPowerSpec.role: inlet` (CR-058, CR-060). **Inlet and outlet are not directions** — they are `sink`/`source` on a `power.*` family plus a role.
 
 | Typed | Result |
 |---|---|
@@ -142,7 +146,7 @@ Aliases resolve aggressively **against the registry** (CR-058): `ConnectorTypeDe
 | `16 euro2 out "ZONE {n@2} {L,R}"` | ZONE 1 L, ZONE 1 R, ZONE 2 L … ZONE 8 R — a whole 16-channel amp bank |
 | `24 rj45 poe:at @Ports "{n:2}"` | 01…24, PSE, 802.3at |
 | `24 rj45 pass both "{n:2}"` | 48 ports: 24 front + 24 rear, auto-paired as a passthrough panel |
-| `1 c14 in` | AC inlet — `power.ac_120`, `role: inlet` |
+| `1 c14 in` | AC inlet — `conn.iec_c14` / `power.ac_iec` / sink, `PortPowerSpec.role: inlet` |
 
 ### 4.2 Label pattern language
 
@@ -174,7 +178,7 @@ CR-055 resolves a live name collision, and both concepts ship in v1.
 | **Bank** | `BankDef{key, label, abbr, symbolSide, collapseInSymbol, order}`, joined by `PortDef.bankKey` | **Presentation** | symbol edges, brackets, symbol collapse, auto panel layout |
 | **Port set** | `PortSetDef`, joined by `PortDef.setKey` + `setRole` | **Electrical** | Y/Pb/Pr, L/R, +/−, `atomicConnect`, and the conductor roles of CR-010 |
 
-*Rejected alternative:* `PortGroupDef` / `PortGroup` as one name for both. It is banned (§4.7 of the record); "group" meant an electrical grouping in the data model and a presentation grouping in the schematic spec, which is two concepts wearing one word.
+*Rejected alternative:* `PortGroupDef` / `PortGroup` as one name for both. It is banned ([canon §4.7](canonical-decisions.md#47-banned-names)); "group" meant an electrical grouping in the data model and a presentation grouping in the schematic spec, which is two concepts wearing one word.
 
 ### 4.5 The port table
 
@@ -292,7 +296,7 @@ Storage is the app catalog directory (seeded, read-only) plus the user library d
 
 The palette in the browser is the **same widget** used to insert devices everywhere — one palette, one insert command, placement decided by the drop target (CR-104). Dropping on a rack yields a `RailPlacement`; dropping on the schematic, or inserting with no rack focused, yields a `StagedPlacement` plus a `SheetItem`.
 
-The v1 template count is stated in exactly one place, `docs/catalog.md`, and in no prose anywhere (CR-061). See [Seed devices](catalog/seed-devices.md).
+The v1 template count is stated in exactly one place — the summary table in [Seed devices](catalog/seed-devices.md#310-catalog-summary-and-what-is-deliberately-not-in-it) — and in no prose anywhere (CR-061).
 
 ### 7.2 Versioning
 
@@ -446,7 +450,7 @@ Two invariants make the numbers real rather than a demo. First, **focus never le
 | The Structure device's separate editor | [Structure device](07-structure-device.md) |
 | Rear-panel printing, `T2.02`, equipment list | [PDF export](08-pdf-export.md) |
 | M4 sizing and exit criterion | [Roadmap](09-roadmap.md) |
-| Every ruling cited above | [Decisions](10-decisions.md) |
+| Every ruling cited above | [Canonical decisions](canonical-decisions.md) — normative; [10-decisions](10-decisions.md) is the short-form ADR summary of it |
 | Footprint CI assertion, DSL parse-error fixtures, catalog provenance | [Testing and quality](11-testing-and-quality.md) |
 
 Two extensibility paths ship with the builder and one does not. The **media-type editor** and **connector aliases** ship, because users hit them — the Structure CSV import already creates media types, and that is correct (AC-050 / A2.1). A **general registry authoring UI** does not ship (RJ-012): it is a database admin tool wearing a product's clothes. The claim that users can author **validation rules** is withdrawn from every document (AC-011); rules are Dart functions in a registry keyed by `ruleId`.

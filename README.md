@@ -1,6 +1,6 @@
 # RackMate
 
-RackMate is a desktop application for designing A/V equipment racks for residential and commercial custom-integration work: you enter a rack height in rack units, populate the rack from a seeded catalog of generic archetypes, wire the gear together on a schematic canvas, and export a PDF sheet set containing both the drawing and the cable schedule. This repository currently holds **planning documents only** — the canonical decision record, twelve specification documents derived from it, and the raw working papers they were adjudicated from. There is no Dart code, no `pubspec.yaml`, and no runnable application yet.
+RackMate is a desktop application for designing A/V equipment racks for custom-integration work — **residential-CI-first, commercial-capable** (DR-002): you enter a rack height in rack units, populate the rack from a seeded catalog of generic archetypes, wire the gear together on a schematic canvas, and export a PDF sheet set containing both the drawing and the cable schedule. This repository currently holds **planning documents only** — the canonical decision record, twelve specification documents derived from it, and the raw working papers they were adjudicated from. There is no Dart code, no `pubspec.yaml`, and no runnable application yet.
 
 ## Status: PLANNING
 
@@ -9,7 +9,7 @@ RackMate is a desktop application for designing A/V equipment racks for resident
 | Phase | Specification complete, implementation not started |
 | Code in repo | None |
 | Next step | M0 — Foundations (see [Roadmap](docs/09-roadmap.md)) |
-| Estimated effort to v1 | 41–69 weeks of implementation; 12–18 months to a shipped v1 with normal overhead |
+| Estimated effort to v1 | 42–65 weeks of implementation; 11–17 months to a shipped v1 with normal overhead |
 
 The estimate above is the record's own honest number, not a target. It is stated rather than softened because a detailed design with no cost attached stalls, and one with a *wrong* cost attached stalls while also destroying trust in the plan.
 
@@ -23,15 +23,15 @@ The seven core requirements of the brief, and what v1 does about each. All seven
 | 2 | GUI device builder with I/O | Three required fields — name, RU height, designator prefix — then the port grid, with fill-down, TSV paste, archetype generators and a pattern DSL (AC-049) |
 | 3 | Physical connections | Drag-to-connect on the Schematic with magnetic type-weighted snap, chain-draw and multi-draw; a `Link` is one physical cable carrying a list of `Service`s over `Conductor`s (CR-008, CR-010) |
 | 4 | Colour-coding by cable type | Hue = signal domain, dash + weight + tag = type; eight domains, per-family colour override, legend printed in colour and greyscale side by side (CR-078, AC-054) |
-| 5 | Schematic idiom | Sugiyama layering plus interval-graph channel routing, full deterministic recompute; no route geometry is persisted, only symbol placement (CR-013, CR-012) |
+| 5 | Schematic idiom | Net labels by default, drawn wires on domain filter, hover or focus (DR-001); Sugiyama phases 0–3 place the symbols and a deterministic layer-ordered orthogonal trace draws the wires; no route geometry is persisted, only symbol placement (DR-001, CR-013, CR-012) |
 | 6 | Structure device | A `DeviceInstance` with `kind == structure` rendering as an edge bank of off-page flags; `Outlet` is the creation atom, a home run is a `Link` carrying a `StructureOrigin` (CR-016, AC-019) |
-| 7 | PDF with diagram **and** schedule | Legend, exceptions page, front and rear elevations, one schematic sheet, Pull Sheet, Termination Schedule, Equipment List and Materials (AC-025, AC-055) |
+| 7 | PDF with diagram **and** schedule | Cover and drawing index, legend, exceptions page, front and rear elevations, **N interconnect sheets — one per domain partition of the single schematic `Sheet`**, Pull Sheet, Termination Schedule, Unused Home Runs, Equipment List and Materials, and plate/panel/pinout details where a non-standard pinout exists (AC-025, AC-055, CR-073, DR-005) |
 
-Beyond the seven: a live [Schedule](docs/05-schematic-editor.md) tab that fills in as you wire rather than appearing at export time (AC-035), 22 validation rules that never block an export (CR-022), a Staging Bin, a project-level location tree, pathways, three separate cable-length fields, and CSV import for structured wiring.
+Beyond the seven: a live [Schedule](docs/05-schematic-editor.md) tab that fills in as you wire rather than appearing at export time (AC-035), 27 validation rules that never block an export (CR-022), a Staging Bin, a project-level location tree, pathways, three separate cable-length fields, and CSV import for structured wiring.
 
 ## Documentation
 
-Read [00-overview](docs/00-overview.md) first, then [10-decisions](docs/10-decisions.md) — the second is the authority every other document defers to.
+Read [00-overview](docs/00-overview.md) first, then [canonical-decisions](docs/canonical-decisions.md) — the second is the authority every other document defers to. [10-decisions](docs/10-decisions.md) is the short-form ADR summary of it.
 
 | Document | What it covers |
 |---|---|
@@ -45,10 +45,11 @@ Read [00-overview](docs/00-overview.md) first, then [10-decisions](docs/10-decis
 | [docs/07-structure-device.md](docs/07-structure-device.md) | Structured wiring entering the rack: outlets, home runs, dual labels |
 | [docs/08-pdf-export.md](docs/08-pdf-export.md) | The sheet set, schedule presets, the PDF backend, greyscale and print tests |
 | [docs/09-roadmap.md](docs/09-roadmap.md) | M0–M9, exit criteria, the honest total, v1.1 / v1.2 / v2 buckets |
-| [docs/10-decisions.md](docs/10-decisions.md) | **Normative.** The CR/AC/RJ rulings, canonical naming, scope ruling, open questions |
+| [docs/canonical-decisions.md](docs/canonical-decisions.md) | **Normative.** The full decision record — 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`, canonical naming, the data model, the registry, the scope ruling, the milestone plan, and Part 4's binding user decisions `DR-001`–`DR-005`. Every other document defers to this one |
+| [docs/10-decisions.md](docs/10-decisions.md) | Short-form ADR log — sixteen ADRs summarising the record for readers who want the shape without the adjudication, plus the open questions. A summary with a pointer, not a ruling |
 | [docs/11-testing-and-quality.md](docs/11-testing-and-quality.md) | Fixture corpora, golden files, parity tests, performance budgets, accessibility |
 | [docs/catalog/seed-devices.md](docs/catalog/seed-devices.md) | The seeded archetypes. **The only place a template count is stated** (CR-061) |
-| [docs/research/](docs/research/) | The raw working papers — four research briefs, six design documents, four critiques. **Non-normative rationale.** They explain *why*, and they are wrong wherever [10-decisions](docs/10-decisions.md) contradicts them |
+| [docs/research/](docs/research/) | The raw working papers — four research briefs, six design documents, four critiques. **Non-normative rationale.** They explain *why*, and they are wrong wherever [canonical-decisions](docs/canonical-decisions.md) contradicts them |
 
 ## Target platforms
 
@@ -121,16 +122,17 @@ RackMate/
 
 ## Design principles
 
-Six principles decide most of the close calls in the decision record. Where a ruling looks arbitrary, it is almost always one of these applied mechanically.
+Five principles decide most of the close calls in the decision record. Where a ruling looks arbitrary, it is almost always one of these applied mechanically.
 
 1. **The schedule is the deliverable; the drawing is the receipt** (G1). RackMate is a cable-schedule generator with a rack elevation and a schematic on the front of it. Effort and risk budget follow the schedule; anything that delays or degrades it loses. The drawing is not decoration either — it is what the integrator hands the client to prove the schedule describes a real system, and what the integrator reads to find their own mistake.
 2. **The document must be able to represent a wrong, incomplete, or found-in-the-field world** (G2). A model that cannot draw a mistake cannot document reality. A cable can run to a location that has no device yet, or to nothing at all. Only model-incoherence is illegal.
 3. **A heuristic may never hold a user's deliverable hostage** (G3). No computed number, trade opinion or drafting convention blocks an export. Errors gate one thing — the `ISSUED FOR CONSTRUCTION` stamp — and never gate bytes. `blockExportOnErrors` is deleted, not deferred (CR-022).
 4. **Never fabricate data; show `unknown`** (G4). A missing weight contributes nothing to a rollup and the rollup reports its unknown count. `typicalWatts` never silently defaults to half of nameplate. `null` means unknown everywhere and renders `—`.
 5. **Cut features, never foundations** (G5). Units, UUIDv7 identity, tombstones, per-entity metadata, fractional indices, the command stack and the drawing IR all ship in v1 even where their UI does not. Anything expensive to retrofit is done now; this produces the "model ships, gesture defers" pattern that appears eleven times in the scope ruling.
-6. **The gesture may hesitate; the document may not lie** (CR-017). An invalid connection attempt gets spring-back — a reason chip and a `[ Connect anyway ]` button — not a refusal. The user knows things the software does not.
 
-One concept has one name everywhere — Dart identifier, JSON key, UI label, prose, commit message and PDF column header all derive from one glossary entry (N1). `Connection`, `CableType`, `PhysicalLink`, `bottomU`, `refDes` and the rest of [§4.7](docs/10-decisions.md) are banned in code *and* in comments.
+Alongside the five, one ruling acts as the binding validation frame: **the gesture may hesitate; the document may not lie** (CR-017). An invalid connection attempt gets spring-back — a reason chip and a `[ Connect anyway ]` button — not a refusal. The user knows things the software does not.
+
+One concept has one name everywhere — Dart identifier, JSON key, UI label, prose, commit message and PDF column header all derive from one glossary entry (N1). `Connection`, `CableType`, `PhysicalLink`, `bottomU`, `refDes` and the rest of [canon §4.7](docs/canonical-decisions.md#47-banned-names) are banned in code *and* in comments.
 
 ## Licence
 

@@ -1,6 +1,6 @@
 # The Structure Device
 
-The Structure device is RackMate's answer to brief requirement 6: a first-class representation of the structured wiring — the home runs — that arrive at the rack from the rest of the building. This document states what structured wiring is and how it physically reaches a rack, defines the `StructureBody` entity and the ways it deliberately differs from an ordinary `DeviceInstance`, specifies the dedicated editor that replaces the port-by-port device builder for this one case, gives the CSV import contract in full, and traces a home run from the matrix cell that created it through the schematic and into the exported sheet set. It cross-references [Data model](02-data-model.md) for entity definitions rather than restating them, and cites the governing ruling ID (`CR-nnn`, `AC-nnn`, `RJ-nnn`) for every decision; the adjudications themselves are in [Decisions](10-decisions.md).
+The Structure device is RackMate's answer to brief requirement 6: a first-class representation of the structured wiring — the home runs — that arrive at the rack from the rest of the building. This document states what structured wiring is and how it physically reaches a rack, defines the `StructureBody` entity and the ways it deliberately differs from an ordinary `DeviceInstance`, specifies the dedicated editor that replaces the port-by-port device builder for this one case, gives the CSV import contract in full, and traces a home run from the matrix cell that created it through the schematic and into the exported sheet set. It cross-references [Data model](02-data-model.md) for entity definitions rather than restating them, and cites the governing ruling ID (`CR-nnn`, `AC-nnn`, `RJ-nnn`) for every decision; the adjudications themselves are in [the canonical decision record](canonical-decisions.md), which is normative — [10-decisions](10-decisions.md) is its short-form ADR summary.
 
 ---
 
@@ -16,7 +16,7 @@ The standard defines grades as a minimum media count per outlet location:
 | Grade 2 | 2 × Cat6A or better | 2 | optional (2-fibre) |
 | Grade 3 | 2 × Cat6 or better | 1 | **required** (2-fibre) |
 
-Grade 2 — two Cat6/6A plus two RG6 per TV location — is the canonical residential outlet and ships as a seeded preset. But grades are **not** the primary specification axis in RackMate (CR-108): essentially no CI integrator speaks in grades. They say "two Cat6 and two RG6 to every TV, one Cat6 per AP, 16/4 to every speaker pair." The first-class object is therefore the user-defined `OutletTemplate` ("TV location", "AP", "Keypad", "Ceiling speaker pair", "Camera", "Data only"), with the TIA-570-D grades shipped as three more presets and `Outlet.tia570Grade: String?` retained as a standards **tag** for specifications that cite one. Rejected alternative: `StructureGrade{grade1, grade2, grade3, custom}` as a modelled enum with `custom` as the escape hatch, which had the relationship backwards.
+Grade 2 — two Cat6/6A plus two RG6 per TV location — is the canonical residential outlet and ships as a seeded preset. But grades are **not** the primary specification axis in RackMate (CR-108): essentially no CI integrator speaks in grades — the residential integrator this screen is built for **does not speak TIA-570-D and does not want to be asked** (AC-034/m23, confirmed by DR-002 — residential is the primary market). They say "two Cat6 and two RG6 to every TV, one Cat6 per AP, 16/4 to every speaker pair." The first-class object is therefore the user-defined `OutletTemplate` ("TV location", "AP", "Keypad", "Ceiling speaker pair", "Camera", "Data only"), with the TIA-570-D grades shipped as three more presets and `Outlet.tia570Grade: String?` retained as a standards **tag** for specifications that cite one. Rejected alternative: `StructureGrade{grade1, grade2, grade3, custom}` as a modelled enum with `custom` as the escape hatch, which had the relationship backwards.
 
 Physically, the runs land in one of two places. In mid-market work they terminate in a **Structured Media Center** — a recessed in-wall enclosure (14″, 21″, 28″, 42″) with module bays, not rack units. In the work RackMate targets, the SMC is replaced or supplemented by a real rack and the home runs land on **rack-mounted patch panels**, F-barrel bulkheads, punch-down blocks, Euroblocks and binding posts. Three drawing conventions are in use for representing this, and RackMate implements two of them simultaneously: an **off-rack field-infrastructure block** at the drawing boundary (the Structure device itself) whose individual runs resolve onto **real patch-panel ports inside the rack** (the port-to-drop map). J-STD-710 supplies a sanctioned "Demarcation for All Services" symbol for the former.
 
@@ -48,7 +48,7 @@ A Structure with zero drops is valid and shows an empty state pointing at the th
 
 Full definitions live in [Data model](02-data-model.md) §5.7; this section states only what is specific to Structure and the reasoning attached to it.
 
-**A home run is a `Link`. There is no drop entity.** `StructureDrop` is deleted (CR-107, AC-019) and the word is banned (canon §4.7). The prior design modelled one physical cable twice — a `StructureDrop` carrying `media`, `jacket`, `gaugeAwg`, `actualLength`, `status`, `test` *and* a `Link` carrying `media`, `jacket`, `gaugeAwg`, `calculatedLength`, `status`, `test` — which is guaranteed to diverge within a week of real use and is precisely the failure that makes people stop trusting the document. One cable, one row, one length, one certificate, one status.
+**A home run is a `Link`. There is no drop entity.** `StructureDrop` is deleted (CR-107, AC-019) and the word is banned ([canon §4.7](canonical-decisions.md#47-banned-names)). The prior design modelled one physical cable twice — a `StructureDrop` carrying `media`, `jacket`, `gaugeAwg`, `actualLength`, `status`, `test` *and* a `Link` carrying `media`, `jacket`, `gaugeAwg`, `calculatedLength`, `status`, `test` — which is guaranteed to diverge within a week of real use and is precisely the failure that makes people stop trusting the document. One cable, one row, one length, one certificate, one status.
 
 A home run is therefore: a `Link` whose field end is a `PlaceEndpoint` (or, once the field device exists, a `PortEndpoint`), whose rack end is a `PortEndpoint` or an `OpenEndpoint`, and which carries `StructureOrigin{structureBodyId, outletId, fieldLabel, rackLabel, wall?, mountSurface?, mountHeightAff?, terminationField}`. `Link.linkClass` is `fieldCable`, so it is on the Pull Sheet by default (AC-026). It carries `List<Service>`, because one Cat5e to a TV location routinely carries an IR run, a 12 V trigger and RS-232 on separate pairs (CR-010, AC-021).
 
@@ -147,7 +147,7 @@ Kitchen: 2x Cat6 + 1x RG6 @outlet="KIT-TV-1"
 
 `@outlet="…"` creates or joins one `Outlet` — note that this is the *outlet* sense of "bundle", not the pathway sense (CR-016); the DSL uses the canonical word. `@pathway="…"` is the conduit sense.
 
-`+ Add outlet ▾` instantiates an `OutletTemplate` in one action — *TV location* → 2 × Cat6 + 2 × RG6 as one `Outlet` with four `Link`s and four label pairs. Seeded templates: **TV location · AP · Keypad · Ceiling speaker pair · Camera · Data only**, plus **TIA-570-D Grade 1 / 2 / 3** (CR-108). Which location fields the inspector demands is driven by the template: a ceiling speaker pair asks for `mountSurface: ceiling` and never for a wall compass direction (AC-034/m24).
+`+ Add outlet ▾` instantiates an `OutletTemplate` in one action — *TV location* → 2 × Cat6 + 2 × RG6 as one `Outlet` with four `Link`s and four label pairs. Seeded templates: **TV location · AP · Keypad · Ceiling speaker pair · Camera · Data only**, plus **TIA-570-D Grade 1 / 2 / 3** (CR-108). The grades stay **presets and a standards tag, never an axis** — the integrator does not speak TIA-570-D and is never asked to (AC-034/m23, DR-002). Which location fields the inspector demands is driven by the template: a ceiling speaker pair asks for `mountSurface: ceiling` and never for a wall compass direction (AC-034/m24).
 
 ---
 
@@ -180,7 +180,27 @@ Header matching is case-, space-, underscore- and hyphen-insensitive. Every sour
 | `jacket` / `jacketColor` | `jacket`, `color`, `colour`, `jacket_color` | |
 | `notes` | `notes`, `comments`, `remarks`, `note` | |
 
-Media synonyms ship as data and are extensible: `cat6 / cat-6 / c6 / cat6 utp` → `media.cat6_utp`; `cat6a / c6a / f/utp` → `media.cat6a_futp`; `cat5e / c5e / cat5` → `media.cat5e_utp`; `rg6 / rg-6 / coax` → `media.rg6`; `rg6q / quad shield` → `media.rg6_quad`; `16/2 / 16-2 / spkr 16/2` → `media.spk_16_2`; `16/4 / 14/4` → `media.spk_16_4`; `22/4 / control / keypad` → `media.ctl_22_4`; `os2 / smf / single mode` → `media.fiber_os2`; `conduit / smurf / ent` → `media.conduit_ent` (`isPathwayOnly`). An unmatched value creates a new media type with a confirmation chip; it is never a rejected row.
+Media synonyms ship as data and are extensible:
+
+```text
+cat6 / cat-6 / c6 / cat6 utp            → media.cat6
+cat6a / c6a / f/utp                     → media.cat6a_futp
+cat5e / c5e / cat5                      → media.cat5e
+rg6 / rg-6 / coax                       → media.rg6
+rg6q / quad shield                      → media.rg6_quad
+16/2 / 16-2 / spkr 16/2                 → media.16_2
+16/4 / 16-4                             → media.16_4
+14/2 / 14-2                             → media.14_2
+14/4 / 14-4                             → media.14_4
+22/4 / control / keypad                 → media.22_4
+22/2                                    → media.22_2
+os2 / smf / single mode                 → media.os2
+conduit / smurf / ent                   → media.conduit_ent   (isPathwayOnly)
+```
+
+14 AWG gets its own targets rather than folding onto the 16 AWG ones: mapping `14/4` to a 16 AWG media type changes the gauge and the footage rollup, and `media.14_2` / `media.14_4` exist in the registry precisely so it does not have to.
+
+Every target above resolves in `assets/catalog/registries.json`; a CI assertion enforces it for every `media.*`, `conn.*` and signal-family ID appearing in any document (N1, seed-devices C2). RJ-012 makes an unmatched value create a new type rather than fail, so a wrong target here is a silent data-quality failure, not a loud one. An unmatched value creates a new media type with a confirmation chip; it is never a rejected row.
 
 ### 5.2 Example
 
@@ -248,11 +268,15 @@ Five layered mechanisms keep this readable past 60 drops:
 | 2 | **Room grouping with headers** | Flags grouped under a rule bearing the room name and `Location.code`; group order follows the location tree. |
 | 3 | **Unused collapse** (default on) | Only *connected* runs render individually. Unconnected ones collapse per room into one summary flag — `Living Room · 3 spare (2× Cat6, 1× RG6)` — expandable in place. This also produces the **Unused Home Runs** page (§9). |
 | 4 | **Pathway trunks** | A `Pathway` draws as one thick trunk from the boundary toward the rack, fanning to individual ports only at the destination. Six runs become one line for 90% of their length. This is the whole visual payoff of CR-016's `Pathway`. |
-| 5 | **Net-label degradation** | Above a per-sheet threshold, a run switches from *drawn* to *named*: a flag at the Structure and a matching flag at the destination port, with the label as the join. Duplicate *source* names prohibited, duplicate *destination* names permitted (CR-049). |
+| 5 | **Net labels by default** | A run renders *named*, not *drawn*: a flag at the Structure and a matching flag at the destination port, with the label as the join. Duplicate *source* names prohibited, duplicate *destination* names permitted (CR-049). |
 
-Plus room-level isolate/filter in both the editor and the schematic. Mechanism 5's default is governed by canon open question 10.1 (draw-every-wire vs net-labels-by-default), which is a live fork; the current recommendation is draw-by-default with automatic degradation above the threshold. **VERIFY:** the threshold value — pick it from the paper test in 10.1, not from a guess.
+Plus room-level isolate/filter in both the editor and the schematic. Mechanism 5 is no longer conditional — canon open question 10.1 is answered:
 
-Automatic **sheet paging by room group** above a configurable flag count per sheet is deferred: v1 has exactly one schematic `Sheet` and the *exporter* partitions by domain (CR-073). A domain partition produces zero cross-sheet connections by construction, so no off-sheet connector apparatus is built.
+> Render mode is a function of the active filter. Unfiltered sheet ⇒ `netLabels`: every `Link` is two labelled stubs, one at each pin, with no polyline between them. Filtered to exactly one `SignalDomainId`, or `Alt`-hover, or focus/isolate ⇒ `drawn`: every `Link` in scope is an orthogonal polyline with a tag pill at each end. `SheetRenderMode` is **derived**, never persisted, never a setting (DR-001, canon §11.1.1).
+
+There is no density threshold that switches rendering, and nothing "degrades" — the mode follows the filter, not the drop count. **The Structure device's flags were always a label rendering; DR-001 changes nothing here.** What DR-001 does change is that the *rest* of the sheet now matches the idiom the Structure device already used, so the boundary between the flag bank and the rack side stops being a change of visual language.
+
+Automatic **sheet paging by room group** is **never built** (DR-004): there is permanently exactly one schematic `Sheet`, and room grouping is served by filtering it. The *exporter* separately partitions that one `Sheet` by domain and emits N interconnect sheets `T6.01…` (CR-073, unaffected by DR-004) — partitioning at export is not multi-sheet authoring. A domain partition produces zero cross-sheet connections by construction, so no match lines, off-sheet connectors or sheet-boundary link handling are built at all.
 
 ---
 
@@ -294,15 +318,15 @@ Both are editable, and a project may write its own pattern from the token vocabu
 
 | Output | What home runs contribute | Ruling |
 |---|---|---|
-| **Pull Sheet** (portrait) | Every `fieldCable`, sorted **room then pathway** — the order the tech walks the house. Per-room footage subtotals, jacket colour, both labels on both ends, and `Pulled ☐ Terminated ☐ Tested ☐ Init ___`. Pathway-only entries (conduit, pull string) appear here and nowhere else. | AC-025, AC-026, CR-109 |
-| **Termination Schedule** (landscape) | Every cable landing in the rack, sorted **rack, panel, port** — the port-to-drop map of §1. Adds T568A/B, punch position, polarity, and `Conductor.colorCode` per role. | AC-025 |
-| **Unused Home Runs** | Home runs whose rack end is an `OpenEndpoint`, grouped by room. A deliverable integrators cannot get from anything else; the name is canonical and stays. | canon §4.3 |
+| **Pull Sheet** (`T6.10`, portrait) | Every `fieldCable`, sorted **room then pathway** — the order the tech walks the house. Per-room footage subtotals, jacket colour, both labels on both ends, and `Pulled ☐ Terminated ☐ Tested ☐ Init ___`. Pathway-only entries (conduit, pull string) appear here and nowhere else. | AC-025, AC-026, CR-109 |
+| **Termination Schedule** (`T6.11`, landscape) | Every cable landing in the rack, sorted **rack, panel, port** — the port-to-drop map of §1. Adds T568A/B, punch position, polarity, and `Conductor.colorCode` per role. | AC-025 |
+| **Unused Home Runs** (`T6.20`) | Home runs whose rack end is an `OpenEndpoint`, grouped by room. Emitted automatically whenever at least one exists. A deliverable integrators cannot get from anything else; the name is canonical and stays. | canon §4.3 |
 | **Equipment List and Materials** (`T6.30`) | Cable footage rollup by media with a configurable waste factor — *"Cat6: 2,140 ft estimated + 10% = 2,354 ft → 3 boxes (1000 ft)"*. No pricing in v1. | AC-024, AC-055 |
-| **Schematic sheets** | The flag banks of §6, partitioned by domain by the exporter. | CR-073 |
+| **Interconnect sheets** (`T6.01…`) | The flag banks of §6. N interconnect sheets, one per domain partition of the single schematic `Sheet`. Each partition is a domain filter, so these sheets render `drawn` rather than as net labels (DR-001). | CR-073 |
 
 Both schedule presets carry location on **both** ends — `RK-1 / U14 / rear` and `Great Room / TV wall / WP-1` — never a schematic zone reference alone. Estimated lengths derived from `Location.estimatedRunLengthFromRack` render in italic and are tagged in the schedule so nobody bills off them (AC-024, G4); a null length makes `LEN-*` emit `advisory: length unknown, cannot verify` rather than passing silently. Unbound endpoints raise `LNK-020 advisory: N links have unbound endpoints` — a checklist, not an error, and never a gate on export (AC-018, CR-022, G3).
 
-Full sheet order, furniture and table layout are in [PDF export](08-pdf-export.md).
+Full sheet order, furniture and table layout are in [PDF export](08-pdf-export.md). The set is a **client deliverable** and carries full drafting furniture — title block, revision block, revision clouds, issued-for-construction stamp, drawing border, zone references and sheet numbering (DR-005). Sheet furniture is orthogonal to wire idiom: the sheet is polished fully and the wires stay net-labelled (DR-001).
 
 ---
 
@@ -314,8 +338,10 @@ Everything in this document is **v1**, delivered in milestone **M3 — Structure
 
 One of the four starter projects authored as real `.rackmate` files exercises Structure end to end, doing triple duty as a golden, a perf fixture and a screenshot source (AC-052). Field devices — display, projector, in-ceiling speaker pair, camera, AP, keypad, ISP gateway/ONT, wall plate and the rest of the 18 `mountMethod: notInRack` templates — are what the field ends eventually bind to; see [Seed devices](catalog/seed-devices.md) and [Device builder](06-device-builder.md) for the stripped authoring form they use.
 
-**Not in v1, and these are rulings rather than omissions:** automatic sheet paging by room group (CR-073); a signal-family editor or a rule editor, though the media-type editor does ship (RJ-012); reel IDs (RJ-004); pricing on any Structure output (AC-055); and `.rmlib` library packs for sharing outlet templates between projects (AC-042). Outlet templates are per-installation library objects in v1.
+**Not in v1, and these are rulings rather than omissions:** a signal-family editor or a rule editor, though the media-type editor does ship (RJ-012); reel IDs (RJ-004); pricing on any Structure output (AC-055); and `.rmlib` library packs for sharing outlet templates between projects (AC-042). Outlet templates are per-installation library objects in v1.
+
+**Never built, in any version:** automatic sheet paging by room group, and multi-sheet authoring generally (DR-004). There is permanently one schematic `Sheet`; room and domain grouping are served by filtering it and, at export, by the domain partition of CR-073. The `Sheet` entity stays in the schema (AC-037) so the file format never has to migrate if that is ever revisited.
 
 ---
 
-**See also:** [Domain](01-domain.md) · [Data model](02-data-model.md) · [Schematic editor](05-schematic-editor.md) · [Device builder](06-device-builder.md) · [PDF export](08-pdf-export.md) · [Decisions](10-decisions.md) · [Testing and quality](11-testing-and-quality.md)
+**See also:** [Domain](01-domain.md) · [Data model](02-data-model.md) · [Schematic editor](05-schematic-editor.md) · [Device builder](06-device-builder.md) · [PDF export](08-pdf-export.md) · [Canonical decisions](canonical-decisions.md) · [Decisions (ADR log)](10-decisions.md) · [Testing and quality](11-testing-and-quality.md)

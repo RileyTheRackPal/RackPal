@@ -47,8 +47,12 @@ RackMate/
 ├─ pubspec.yaml                       workspace root: workspace: [packages/*, apps/*]
 ├─ analysis_options.yaml              shared lint baseline, inherited by all members
 ├─ dart_test.yaml                     tag definitions: golden, slow, perf
-├─ docs/                              this document set; file-format.md, rules.md,
-│                                     visual-language.md, keymap.md, glossary.md, catalog.md
+├─ docs/                              the fourteen planning documents plus the canonical
+│                                     decision record. The six single-home documents the
+│                                     corpus once referenced (rules.md, visual-language.md,
+│                                     catalog.md, keymap.md, glossary.md, file-format.md)
+│                                     were never authored; each has an existing home —
+│                                     see the redirect table in canon §13.
 │
 ├─ packages/
 │  ├─ rackmate_core/                  ══ PURE DART. no flutter, no dart:ui, NO pdf ══
@@ -73,19 +77,25 @@ RackMate/
 │  │     │                            intervals per (RU, face) — AC-022) · totals.dart ·
 │  │     │                            schedule.dart (ONE function; UI table and PDF share it) ·
 │  │     │                            validation.dart (Dart functions in a registry — CR-024)
-│  │     ├─ routing/                  sugiyama.dart (phases 0–4) · channel.dart (interval-graph
-│  │     │                            colouring) · crossings.dart (phase 5, PAINT-TIME only).
-│  │     │                            NO ObstacleField, NO RouteCache — CR-013
+│  │     ├─ routing/                  sugiyama.dart (phases 0–3, symbol placement) ·
+│  │     │                            trace.dart (deterministic layer-ordered orthogonal
+│  │     │                            trace, `drawn` mode only). Channel routing is v1.2 —
+│  │     │                            DR-001. NO ObstacleField, NO RouteCache — CR-013
 │  │     ├─ draw/                     ══ D4: the drawing IR ══
-│  │     │  ├─ diagram_canvas.dart    abstract DiagramCanvas. No RendererCaps — CR-088
-│  │     │  ├─ text_measurer.dart     abstract TextMeasurer + TextMetrics + TextAnchor. CR-081
+│  │     │  ├─ canvas.dart            abstract DiagramCanvas. No RendererCaps — CR-088
+│  │     │  ├─ text.dart              abstract TextMeasurer + TextMetrics + TextStyleSpec +
+│  │     │  │                         TextAnchor + anchorOffset(). One cluster. CR-081
 │  │     │  ├─ ops.dart               sealed DiagramOp; DiagramScene {ops, bounds, hits}
-│  │     │  ├─ spec.dart              Stroke{width, cap, join, miterLimit, dash,
-│  │     │  │                         scaleWithGeometry, hairlineFloor} · Fill · TextStyleSpec
-│  │     │  ├─ bounds_canvas.dart     BoundsCanvas — v1. scale-to-fit, tiling, key plan. CR-089
+│  │     │  ├─ spec.dart              Stroke{width, cap, join, miterLimit, dash, dashPhase,
+│  │     │  │                         scaleWithGeometry, hairlineFloor} · Fill · Radii
+│  │     │  │                         (TextStyleSpec lives in text.dart, not here)
+│  │     │  ├─ bounds_canvas.dart     BoundsCanvas — v1. scale-to-fit, zoom-to-fit,
+│  │     │  │                         elevation tile count. CR-089
 │  │     │  ├─ hit_test.dart          GEOMETRIC hit test only. CR-084
 │  │     │  └─ scene/                 scene_builder.dart · rack_layer.dart · device_layer.dart ·
-│  │     │                            wire_layer.dart. Every build*() takes lodLevel. AC-016/#13
+│  │     │                            label_layer.dart (net-label stubs — the DEFAULT render,
+│  │     │                            DR-001) · wire_layer.dart (`drawn` mode only).
+│  │     │                            Every build*() takes lodLevel. AC-016/#13
 │  │     ├─ persistence/              codec.dart (DocumentCodec, sniffs PK\x03\x04) ·
 │  │     │                            json_codec.dart (hand-written) · schema.dart ·
 │  │     │                            migrations.dart (append-only, Outcome<T>) — CR-091..093
@@ -96,7 +106,8 @@ RackMate/
 │  │                                  no_flutter_import_test · internal_setter_grep_test
 │  │
 │  ├─ rackmate_text/                  ══ PURE DART. core + pdf ══  ~5 files
-│  │  └─ lib/src/pdf_text_measurer.dart  the ONE concrete TextMeasurer. CR-081
+│  │  └─ lib/src/pdf_font_measurer.dart  PdfFontMeasurer — the ONE concrete
+│  │                                     TextMeasurer. CR-081, CR-083
 │  │
 │  ├─ rackmate_export/                ══ PURE DART. isolate entry point ══
 │  │  └─ lib/src/                     pdf_diagram_canvas.dart (global Y-flip — CR-085) ·
@@ -125,7 +136,9 @@ RackMate/
    ├─ lib/main.dart                   runZonedGuarded, error hooks, window setup
    ├─ lib/providers/                  the ONLY place providers are declared
    ├─ lib/shell/                      app_menu.dart · intents.dart (the ONE Intent registry
-   │                                  docs/keymap.md is generated from — CR-101) · actions.dart
+   │                                  build/keymap.md is generated from at build time; the
+   │                                  arbitrated bindings are ruled in canon §1.10 — CR-101)
+   │                                  · actions.dart
    ├─ lib/files/                      document_file_service · autosave_service ·
    │                                  recovery_service · recent_files
    ├─ lib/export/export_service.dart  font preload on main isolate → Isolate.spawn
@@ -543,11 +556,11 @@ Rollups report their unknowns rather than fabricating (**CR-114**, G4): *"Total 
 
 ### 6.2 Tier 2 — per-domain scene sub-pictures
 
-The original tier-2 slot held a `RouteCache` with an `ObstacleField` and per-link incremental invalidation. **CR-013 deletes all of it.** The router is Sugiyama layering (phases 0–4) plus interval-graph channel routing, with a **full deterministic recompute** — the interval-graph-colouring insight makes the invalidation bookkeeping more expensive than the recompute it avoids, and full recompute is perfectly stable. `ObstacleField`, `RouteCache` and the phrase "obstacle-aware" do not appear in the repository.
+The original tier-2 slot held a `RouteCache` with an `ObstacleField` and per-link incremental invalidation. **CR-013 deletes all of it.** The router is **Sugiyama phases 0–3 (cycle-break, layer, barycentre, coordinate assign) for symbol placement, plus a deterministic layer-ordered orthogonal trace for `drawn` mode**, with a **full deterministic recompute** — full recompute is perfectly stable and the invalidation bookkeeping costs more than it saves. Interval-graph channel routing is **v1.2** (DR-001, canon §12.1): it exists to keep 150 simultaneous polylines legible, and under DR-001 the maximum simultaneous polyline count is one domain partition. `ObstacleField`, `RouteCache` and the phrase "obstacle-aware" do not appear in the repository — the v1 router is simpler still.
 
-The slot is not left empty. Per **AC-003** and **AC-008** it is reassigned to **eight per-domain scene sub-pictures**. The original commit budget counted one stroked polyline per link; the real per-run cost is polyline + dash synthesis + arrowhead + **two tag pills** + junction dots + hop arcs — roughly 8–10 ops, so ~10 000 ops rebuilt on commit, not 1 000. Splitting L3a by signal domain means an edit to one HDMI run rebuilds ~1 200 ops while seven pictures replay untouched. This is nearly free, since paths are already batched by colour class.
+The slot is not left empty. Per **AC-003** and **AC-008** it is reassigned to **eight per-domain scene sub-pictures**.
 
-**Phase 5 is off the commit path (AC-016/#20).** The crossing sweep and hop-arc generation are Bentley–Ottmann at `O((N+X) log N)` where `X` — the crossing count — is **not** bounded by `N`; in a dense schematic it approaches `O(N²)`. Phase 5 therefore runs **at paint time, scoped to the visible viewport**, and hop rendering falls back to `gap` mode above a crossing threshold. `VERIFY:` measure `X` on a real 300-link fixture before repeating any "sub-millisecond at N=300" claim.
+**The commit-path arithmetic, restated under DR-001.** The original commit budget counted one stroked polyline per link. Under DR-001 the default render is **two net-label stubs per link — text, not geometry** — so the dominant commit-path term is the **label layer**, not the wire layer. Two labels per link on a 150-run project is ~300 text runs on top of the ~10 000 the label cache is sized for (AC-009). The eight per-domain sub-pictures are **kept**: they are precisely what lets a domain filter switch that domain to `drawn` mode without rebuilding the other seven. An edit to one HDMI run rebuilds ~1 200 ops while seven pictures replay untouched, and this is nearly free since paths are already batched by colour class.
 
 ### 6.3 Tier 3 — incremental DRC, with a debounced isolate sweep
 
@@ -577,8 +590,7 @@ Nothing here blocks anything. `Finding`s are computed and never stored; errors g
 | Totals (weight / VA / BTU / RU / outlets) | 1 sync memo | `structure \| rack` | ~40 µs |
 | Depth occupancy intervals per (RU, face) | 1 sync memo | `structure \| rack` | ~25 µs |
 | Schedule rows (shared with PDF) | 1 sync memo | `wires \| structure \| meta` | ~900 µs |
-| Layout + channel routing (phases 0–4) | full recompute | `wires \| structure \| sheet` | ≤ 40 ms cold, 300 links |
-| Crossings + hop arcs (phase 5) | paint-time, viewport-scoped | viewport, `wires` | per frame, visible only |
+| Layout (Sugiyama phases 0–3) + orthogonal trace | full recompute | `wires \| structure \| sheet` | ≤ 40 ms cold, 300 links |
 | Scene sub-picture, per domain × LOD | 2 cache | matching epoch + `lodLevel` | ~1 200 ops |
 | DRC findings (local) | 3a incremental sync | touched entities | ~200 µs |
 | DRC findings (full) | 3b debounced isolate | whole document | ≤ 150 ms off-thread |
@@ -605,7 +617,7 @@ RackDocument
    ▼
    ├─ replay → FlutterDiagramCanvas(PictureRecorder) → ui.Picture → canvas.drawPicture()
    ├─ replay → PdfDiagramCanvas(PdfGraphics)         → vector PDF page content
-   └─ replay → BoundsCanvas                          → true extent, for fit / tiling / key plan
+   └─ replay → BoundsCanvas                          → true extent, for fit / elevation tiling
 ```
 
 **`lodLevel` is an explicit parameter of every `build*` and part of every cache key (AC-016/#13).** Without it the cache silently returns the wrong LOD after a zoom change, and the claim that display-list goldens cover screen and PDF simultaneously is false, since PDF exports at print LOD and the screen is at current zoom. Goldens pin the LOD, with one golden specifically at print LOD.
@@ -686,25 +698,7 @@ Start with brute force plus an AABB reject (`if (!w.bounds.inflate(tol).contains
 
 ### 8.1 The interface
 
-```dart
-// rackmate_core/draw/diagram_canvas.dart — pure Dart, no dart:ui, no pdf
-abstract interface class DiagramCanvas {
-  void save();
-  void restore();
-  void translate(double dx, double dy);
-  void scale(double sx, double sy);
-  void rotate(double radians);
-  void clipRect(Box r);
-
-  void drawLine(Pt a, Pt b, Stroke s);
-  void drawPolyline(List<Pt> pts, Stroke s);
-  void drawRect(Box r, {Fill? fill, Stroke? stroke});
-  void drawRRect(Box r, double radius, {Fill? fill, Stroke? stroke});
-  void drawCircle(Pt c, double r, {Fill? fill, Stroke? stroke});
-  void drawSvgPath(String d, {Fill? fill, Stroke? stroke});   // connector symbols
-  void drawText(String s, Pt baselineAnchor, TextStyleSpec spec);
-}
-```
+The single declaration of `DiagramCanvas` is [PDF export §7.3](08-pdf-export.md), in `rackmate_core/draw/canvas.dart`. It is not restated here: CR-086 makes this the one drawing IR both backends replay, and two declarations of it are two chances to diverge.
 
 There is **no `RendererCaps` (CR-088)**. The moment a scene builder branches on capabilities there are two code paths and the abstraction has already leaked. The interface is the common denominator, and the visual-language restriction — **flat fills, strokes, dashes and text only; no gradients, no shadows, no blurs, no blend modes, no shaders** — is promoted from prose to an invariant with a test. This is not a hardship; it *is* the schematic aesthetic, and it is what guarantees the backends agree.
 
@@ -714,24 +708,7 @@ There is **no `RendererCaps` (CR-088)**. The moment a scene builder branches on 
 
 **CR-081** is what forces the five-package split, so it is worth stating exactly.
 
-```dart
-// rackmate_core/draw/text_measurer.dart — abstract, injected
-abstract interface class TextMeasurer {
-  TextMetrics measureText(String s, TextStyleSpec spec);
-}
-
-final class TextMetrics {
-  const TextMetrics({
-    required this.advanceWidth, required this.ascent, required this.descent,
-    required this.capHeight,    required this.xHeight, required this.lineHeight,
-  });
-  final double advanceWidth, ascent, descent, capHeight, xHeight, lineHeight;
-}
-
-enum TextAnchor { baselineLeft, baselineCenter, baselineRight,
-                  topLeft, topCenter, topRight,
-                  centerLeft, centerCenter, centerRight, /* … */ }
-```
+`TextMeasurer`, `TextMetrics`, `TextStyleSpec`, `TextAnchor` and the shared `anchorOffset` helper are declared once, in `rackmate_core/draw/text.dart` — see [PDF export §7.5](08-pdf-export.md). One file, one cluster; there is no `draw/text_measurer.dart`.
 
 The rejected alternative was `Pt measureText(...)` with each backend answering independently. It fails at exactly one point, and the failure is invisible until it is printed: `PdfGraphics.drawString` positions at the **baseline**, while `TextPainter.paint` positions at the **top-left of the line box**. Converting between them needs `ascent`, which `Pt` cannot express — so each adapter derives a baseline independently, one from `PdfFontMetrics.ascent` and the other from a fudge of `height × 0.8`, and they do not agree. The result is text sitting a fraction of a line off between screen and print, uniformly, everywhere: invisible in code review, invisible in a display-list golden (which records the anchor, not the resolved baseline), and glaring on a printed drawing beside a leader line.
 
@@ -749,19 +726,19 @@ The residual error is understood and accepted: Skia *paints* a string a fraction
 
 ### 8.3 The two backends
 
-**`FlutterDiagramCanvas`** (`rackmate_ui`) replays a scene into a `ui.Canvas`. It absorbs one mismatch: **`dart:ui Canvas` has no dashing at all**, while `PdfGraphics.setLineDashPattern` is native. Without handling this, dashed domains render solid on screen and dashed in the PDF. It synthesizes via `path_drawing`'s `dashPath` and caches the dashed `ui.Path` per `(geometry, dash)` pair. Two consequences are recorded rather than discovered later (**AC-016/#17**): `dashPath` resamples via `PathMetrics`, which is an approximation on curves, so **dash phase diverges between screen and print on hop arcs and corner fillets** — documented in `docs/visual-language.md`, and **hops are suppressed on the dashed domains** (control and structure), which are also the two where hops matter least. `VERIFY:` profile `dashPath` explicitly in the perf harness rather than assuming the cache absorbs it.
+**`FlutterDiagramCanvas`** (`rackmate_ui`) replays a scene into a `ui.Canvas`. It absorbs one mismatch: **`dart:ui Canvas` has no dashing at all**, while `PdfGraphics.setLineDashPattern` is native. Without handling this, dashed domains render solid on screen and dashed in the PDF. It synthesizes via `path_drawing`'s `dashPath` and caches the dashed `ui.Path` per `(geometry, dash)` pair. One consequence is recorded rather than discovered later (**AC-016/#17**): `dashPath` resamples via `PathMetrics`, which is an approximation on curves, so dash phase can diverge between screen and print on corner fillets — documented in [the visual language](05-schematic-editor.md#66-rendering-constants-stated-once). There are no hop arcs in v1 (DR-001), so that half of the original concern is gone; straight dashed segments remain squarely on the hot path. `VERIFY:` profile `dashPath` explicitly in the perf harness rather than assuming the cache absorbs it.
 
 **`PdfDiagramCanvas`** (`rackmate_export`) replays into `PdfGraphics`. It uses a **global Y-flip (CR-085)**, not per-coordinate negation. Per-coordinate flipping is valid only for an axis-aligned, rotation-free interface, and `DiagramCanvas` exposes `rotate()`; a rotation composed with per-coordinate negation is not a valid transform, and the failure is invisible until someone rotates a label 90° for a vertical rail, at which point it is diagnosed as "the PDF is wrong" months later. Text is counter-flipped in exactly one method. Recorded normatively because it will otherwise cost a day: **`pw.CustomPaint` pre-translates to the *widget box's* bottom-left, so the flip height is `size.y`, not the page height.**
 
-**`BoundsCanvas`** (`rackmate_core`) ships in v1 (**CR-089**). Bounds are not optional — scale-to-fit, tile counts, zoom-to-fit and the key plan all need the diagram's true extent and there is no other way to get it. `SvgDiagramCanvas` is v1.1: one file on top of an architecture that already exists.
+**`BoundsCanvas`** (`rackmate_core`) ships in v1 (**CR-089**). Bounds are not optional — scale-to-fit, zoom-to-fit and the tile count for the one over-tall rack elevation all need the diagram's true extent and there is no other way to get it. Key plans are cut with the rest of the multi-sheet apparatus (CR-073, DR-004). `SvgDiagramCanvas` is v1.1: one file on top of an architecture that already exists.
 
-Defining every connector symbol once as an SVG path `d` string eliminates the remaining duplication risk: `PdfGraphics.drawShape(d)` consumes it natively, and `parseSvgPathData(d)` gives a `ui.Path` on the Flutter side. Both signatures were verified in the feasibility review.
+Defining every connector symbol once as an SVG path `d` string eliminates the remaining duplication risk — but **the parse happens once, at catalog load**, via `DiagramPath.fromSvg(String d)`, and both backends then draw the resulting `DiagramPath` through `drawPath`. There is no `drawSvgPath` on the interface: a backend that parses strings is a backend that can disagree with the other one, which is exactly what CR-086 exists to prevent. `PdfGraphics.drawShape` and `parseSvgPathData` remain useful below that boundary, and both signatures were verified in the feasibility review.
 
 ---
 
 ## 9. Persistence
 
-Full field-level detail is in [Data model](02-data-model.md) and `docs/file-format.md`; this section covers the machinery.
+Full field-level detail is in [the file format](02-data-model.md#6-the-rackmate-file-format); this section covers the machinery.
 
 ### 9.1 Container and envelope
 
@@ -920,8 +897,8 @@ Targets are p95 at the scale targets on a mid-range 2022 laptop.
 | Device-drag frame | UI ≤ 4 ms, raster ≤ 8 ms; **zero** device/settled-run repaints | `debugRepaintRainbowEnabled` + timeline |
 | **Commit a transaction** (mutate + invalidate + relayout + revalidate + repaint) | **≤ 16 ms**, with ≤ 8 ms for the non-paint terms | `benchmark_harness` + widget-test timing |
 | Undo / redo step | ≤ 4 ms | core benchmark |
-| Full layout + channel route, cold, 300 links | ≤ 40 ms | core benchmark |
-| Phase 5 crossings, visible viewport | ≤ 4 ms | core benchmark on a real 300-link fixture |
+| Full layout, cold, 300 links | ≤ 40 ms | core benchmark |
+| Label-layer build, 300 links in `netLabels` mode | ≤ 4 ms | core benchmark on a real 300-link fixture |
 | Full DRC sweep (isolate) | ≤ 150 ms, UI never hitches | isolate timing + timeline |
 | File load → first paint | ≤ 400 ms | integration test `Stopwatch` |
 | Explicit save (atomic, in isolate) | ≤ 150 ms | integration test |
@@ -1033,7 +1010,7 @@ Poisoning the stack rather than pretending is the honest behaviour: a user who k
 |---|---|
 | **Menus** | Material **`MenuBar`**. `PlatformMenuBar` is macOS-only out of the box; there is no native Win32 menu bar in Flutter and that plugin ecosystem is unmaintained. The visual difference is negligible in a themed pro tool. |
 | **Menu as data** | One tree of `AppMenuItem{labelKey, shortcut, intent, enabled, checked}`. Every item dispatches an `Intent` through `Actions`, so the menu item, the shortcut, the toolbar button and the context menu funnel to **one** `Action` with **one** enablement rule. This is also what makes the macOS port cheap. |
-| **Keymap** | ~40 bindings generated from the single `Intent` registry into `docs/keymap.md` (**CR-101**). The corpus had ~170 bindings with ~18 collisions and no arbitration; `Ctrl+P` is the export dialog everywhere. |
+| **Keymap** | ~40 bindings generated from the single `Intent` registry into `build/keymap.md` at build time; the arbitrated bindings are ruled in [canon §1.10](canonical-decisions.md#110-interaction) (**CR-101**). The corpus had ~170 bindings with ~18 collisions and no arbitration; `Ctrl+P` is the export dialog everywhere. |
 | **DPI** | Users run 125%/150% scaling and mixed-DPI multi-monitor. All canvas geometry is in document units with an explicit zoom transform, never in logical pixels. The 4K↔1080p window drag is a named pre-release check. |
 | **Canvas text entry** | **No inline canvas editing in v1.** Names are edited in the inspector with a real `TextField`. IME positioning, context menus and selection over a `CustomPaint` are the classic Flutter desktop pain point, and CAD tools do it in a panel anyway. |
 | **Input** | `Listener` for wheel and precision mouse work (the gesture arena adds disambiguation delay); recognizers for trackpad and touch. `PointerScrollEvent` pans, `Ctrl+scroll` zooms at the cursor, `PointerScaleEvent` handles trackpad pinch. All of it enters through `CanvasIntent`, and no editor logic branches on `PointerDeviceKind` (**AC-016/#23**). |
@@ -1068,7 +1045,7 @@ Reconciled from the two conflicting orders in the corpus (**CR-120**). The five 
 6. **`DiagramCanvas` + `TextMeasurer` + `DiagramScene` + both backends + the baseline-Y parity test, together and early.** If parity does not hold, stop — every hour spent on layout before parity is an hour that may need redoing.
 7. **`CanvasIntent`, `ViewportController`, wheel/trackpad input, grid painter.** Pan and zoom must feel right before anything sits on them.
 8. `RenderRackCanvas` + device `RenderBox` children replaying scene fragments + RU snapping.
-9. Ports, links, the snap cascade, the Sugiyama + channel router.
+9. Ports, links, the snap cascade, Sugiyama phases 0–3 plus the orthogonal trace.
 10. Derived pipeline: totals, occupancy, incremental DRC, the shared schedule function.
 11. Menus, shortcuts, marquee, context menus, the outline tree.
 12. PDF export: sheets, furniture, title and revision blocks, pagination.
@@ -1092,6 +1069,6 @@ Collected so none is lost in prose. Each is an API or environment claim the desi
 | 5 | Riverpod 3.3.2 `legacy` demotion of `ChangeNotifierProvider` | §4.2 — the hand-written adapter |
 | 6 | The pinned Flutter stable version (3.44.4 vs 3.41 in the corpus) | §10.2 — goldens do not survive Flutter bumps |
 | 7 | Impeller default status on Windows | §11 — all raster budgets are Skia numbers |
-| 8 | Crossing count `X` on a real 300-link fixture | §6.2 — phase 5 is unbounded by `N` |
+| 8 | **Label-layer commit cost** on a real 300-link fixture — text-run count and commit time in `netLabels` mode, which is now the dominant term | §6.2 — DR-001 makes labels, not wires, the commit-path budget |
 
 See also: [Overview](00-overview.md) · [Domain](01-domain.md) · [Data model](02-data-model.md) · [Rack editor](04-rack-editor.md) · [Schematic editor](05-schematic-editor.md) · [Device builder](06-device-builder.md) · [Structure device](07-structure-device.md) · [PDF export](08-pdf-export.md) · [Decisions](10-decisions.md) · [Testing and quality](11-testing-and-quality.md)

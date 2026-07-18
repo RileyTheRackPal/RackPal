@@ -5346,3 +5346,590 @@ If only three of the above get attention before M1 starts:
 
 Everything else in §10 can wait until there is evidence, which is the entire point of shipping M1
 as a real release rather than as a foundation.
+
+---
+---
+
+# RackMate — Canonical Decision Record, Part 4. Amendments
+
+**Status:** NORMATIVE. Amends Parts 1, 2 and 3.
+**Authority:** these are the **user's own answers** to §10, given directly. §10 said a
+recommendation there "can be overruled without an amendment to this record"; the user overruled
+two of them, so this Part exists to write the overruling down rather than to leave the record
+disagreeing with the product.
+
+**Precedence, stated once and applying to every document in the repository:**
+
+1. **Part 4 (this Part)** — the user's decisions and everything derived from them.
+2. **Parts 1–3** — `CR-nnn` / `AC-nnn` / `RJ-nnn`, canonical naming, the model, the registry,
+   the scope ruling, the milestone plan.
+3. The fourteen authored planning documents in `docs/`.
+4. `docs/research/` — non-normative rationale.
+
+Where Part 4 and Parts 1–3 disagree, **Part 4 wins and Parts 1–3 are historical**. Parts 1–3
+are deliberately **not rewritten**: a superseded ruling with its supersession recorded is more
+useful than a silently edited one, because the argument that produced it is still the argument
+you need if the decision is ever revisited. §12 is the index of every such supersession. If a
+ruling is not listed in §12, it stands exactly as written.
+
+The five decisions are numbered `DR-001` … `DR-005` (**D**ecided by the user, **R**uling). They
+are cited by that ID everywhere, in the same way `CR-nnn` is.
+
+---
+
+## 11. User decisions (binding)
+
+### 11.0 How to read these
+
+Each entry states **what it settles**, **what it supersedes**, and its **derived consequences**,
+enumerated concretely enough that an implementer never has to infer one. Where a consequence
+removes work, the removal is named as a specific subsystem and given a home (`v1.2`, `v2`, or
+`never`) so it cannot drift back across the line under R3 (scope drift). Where a consequence adds
+work, it is costed.
+
+Two of these five **reverse the record's own recommendation**. That is not a defect in the record
+— §10 exists precisely so that the calls requiring a human judgement about the market are made by
+the human and not by internal consistency. The reversals are DR-001 and DR-005. Neither is to be
+re-argued in any document; both are to be applied.
+
+---
+
+### 11.1 DR-001 · Net labels by default — the fork, answered
+
+> **RULING — (B) NET LABELS BY DEFAULT.** Every `Link` renders, by default, as a pair of net
+> labels: a short stub off each of its two pins carrying the generated net name. Drawn wires are
+> available **on demand** — filter to a signal domain, `Alt`-hover, or focus/isolate a selection
+> — but a drawn orthogonal polyline is **not** the default rendering of a Link on an unfiltered
+> sheet.
+
+**What it settles.** §10.1, the single most consequential open question in the project. It
+decides what RackMate's schematic *is*.
+
+**What it supersedes.** §10.1's **recommendation**, which was the opposite — "(A) draw every wire
+as the default, with (B) as an automatic degradation above a per-sheet threshold". The
+recommendation carried no normative weight and is now void. **This is not to be re-argued in any
+document.** Any prose that presents draw-every-wire as the default, or net labels as a
+*degradation*, *fallback*, *density mitigation* or *mode the product falls back into*, is
+inverted: labels are the base state and wires are the opt-in overlay.
+
+**11.1.1 The render-mode rule, stated normatively.**
+
+Render mode is a **function of the active filter**, not a user setting and not a threshold:
+
+| Scope | Mode | What is drawn |
+|---|---|---|
+| Unfiltered sheet (all domains) | `netLabels` | Every Link is two labelled stubs, one at each pin. No polyline between them. |
+| Filtered to exactly one `SignalDomainId` | `drawn` | Every Link in scope is an orthogonal polyline with a tag pill at each end. |
+| `Alt`-hover on a symbol, pin or Link | `drawn`, transient | Only the hovered element's Links, for the duration of the hover. |
+| Focus / isolate on a selection | `drawn`, scoped | Only the selection's Links. |
+
+`SheetRenderMode { netLabels, drawn }` is a **derived** value, computed from the active filter
+state. It is never persisted, never a `ProjectSettings` field, and never a `Sheet` field — for
+exactly CR-115's reason.
+
+**11.1.2 What this does to the exported interconnect sheets.**
+
+The exporter partitions by domain (CR-073), so **every exported interconnect sheet `T6.01…` is a
+domain filter by construction and therefore renders `drawn`**. This is not an exception to
+DR-001; it is DR-001's own trigger applied at export. The unfiltered all-domains schematic sheet
+is not an exported artifact and never was (CR-074 deleted the all-devices overview sheet).
+
+`ExportSpec.wireRender: auto | netLabels | drawn`, **default `auto`** = the table in §11.1.1.
+`netLabels` forces label mode on every sheet, which is the right answer for a large commercial
+job. `drawn` is honoured up to a per-sheet Link count above which it would be illegible, at which
+point the sheet degrades to `netLabels` **and prints a note saying so** — a silent degradation is
+the failure mode §10.1 named as (A)'s worst property, and it is not reintroduced through the
+export dialog.
+
+**11.1.3 Subsystems that leave v1 scope. This is the exhaustive list.**
+
+| # | Subsystem | New home | Why |
+|---|---|---|---|
+| 1 | **Interval-graph channel routing** (Sugiyama phase 4) | **v1.2**, gated on evidence | Channel allocation and track ordering exist to keep 150 simultaneous polylines legible. At domain-filtered density (a 150-run house is ~25 runs per domain) a layer-ordered orthogonal trace is sufficient. |
+| 2 | **Track ordering / channel assignment** within a routing corridor | v1.2, with #1 | Same argument; it is the same code. |
+| 3 | **Bentley–Ottmann crossing sweep** (Sugiyama phase 5, first half) | **never**, unless #1 lands | Its only consumer is hop-arc placement. |
+| 4 | **Hop arcs at crossings** (phase 5, second half), and `Hops: arc \| gap \| none` | **never**, unless #1 lands | Crossings render as plain crossovers in v1. |
+| 5 | **Junction staggering** | never | A density mitigation for drawn wires that are not drawn. |
+| 6 | **Dash-phase divergence handling on arcs** (AC-016 #17) | moot in v1 | There are no arcs. The straight-segment `dashPath` profiling item **survives** — dashes still exist. |
+| 7 | **The crossing count `X`** as a budgeted quantity | moot in v1 | Nothing consumes it. |
+| 8 | **Auto net-label degradation** and its per-sheet threshold | **deleted, not deferred** | There is nothing to degrade *to*. Labels are the base state. |
+| 9 | **Multi-sheet splitting** | never — see DR-004 | §10.1 predicted this: "under (B) one sheet holds a whole house, and CR-073's deferral becomes permanent". It did. |
+
+**What explicitly does NOT leave v1 scope**, because it will otherwise be cut by association:
+
+- Sugiyama **phases 0–3** — cycle-break, layering, barycentre crossing-reduction, coordinate
+  assignment. These place the **symbols**, and symbol placement is required in both idioms.
+  "Layering/ordering only" means these four phases and nothing after them.
+- The **deterministic per-link orthogonal trace** used in `drawn` mode: a layer-ordered staircase
+  with a fixed bend budget, no channel allocation. Deterministic, same input ⇒ byte-identical
+  display list. This is the whole v1 router.
+- **Every gesture**: drag-to-connect, click-click sticky, magnetic type-weighted snap, chain-draw,
+  multi-draw, `atomicConnect`, re-terminating by dragging an endpoint handle, `Tidy sheet`.
+  DR-001 changes how a Link is *rendered*, not how it is *made*.
+- **The whole palette** — hue by domain, dash + weight + glyph + tag by family. It applies to
+  drawn wires, to the tag pill, to the net-label stub's leader, to the legend `T0.01`, and to the
+  `TYPE` chip in the schedule. Requirement 4 is unaffected by DR-001 and its acceptance test is
+  unchanged.
+- **`SheetItem.position` / `pinned`** and manual symbol placement (CR-068, CR-069).
+- **The domain filter bar**, which is now load-bearing rather than a mitigation: it is the primary
+  affordance for seeing wires at all.
+
+**11.1.4 Rulings whose reasoning is superseded.** Recorded in §12.1. In summary: **CR-013**'s
+router type is superseded to the extent it assumed a draw-every-wire default; **AC-016 #17 and
+#20** are moot in v1; **AC-040**'s density-table half is inverted; **CR-012**, **RJ-001** and
+**RJ-002** are *unaffected* and are listed there so nobody assumes otherwise.
+
+**11.1.5 M2 is re-sized.**
+
+M2 was `L` (8–12 weeks) and carried the expensive half of the router. §10.1's own estimate —
+"roughly 4–6 weeks leave the critical path and three of the hardest correctness problems in the
+corpus disappear" — is adopted.
+
+**M2 becomes `M` (4–7 weeks).** The consequences for the plan:
+
+- **M1 is now the only `L` milestone**, and the critical path's centre of gravity moves from M2
+  (wiring) to M1 (elevation, catalog, the drawing IR and the parity test). The walking skeleton
+  and the M0→M1 sequencing constraints are unchanged.
+- The three hardest correctness problems in the corpus — channel-colouring stability, crossing
+  sweep determinism, and dash phase across arcs — are no longer on the critical path.
+- **Risk R2 does not disappear; it changes shape.** It was "the wire-layer rebuild is 10–25 ms,
+  not 4". It becomes **text-bound**: two net labels per Link is ~300 additional text runs on a
+  150-run project, on top of the ~10,000 the label cache was already sized for (AC-009). The
+  mitigation is the same cache, the same `(text, styleId, quantisedScale)` key and the same LOD
+  gate — but it is now the *primary* commit-budget term rather than a secondary one, and the perf
+  harness must measure the **label layer**, not the wire layer.
+- Net labels make the **generated net name** load-bearing on screen, which raises the stakes on
+  CR-049 (names are generated, editable, and never carry membership — membership is
+  `Service.netId`). The name is now the primary visual identity of a connection, so its generation
+  rule is a legibility decision, not a cosmetic one.
+
+---
+
+### 11.2 DR-002 · Residential CI primary, commercial capable
+
+> **RULING — (a) RESIDENTIAL CUSTOM INTEGRATION IS THE PRIMARY MARKET AND FRONTS THE UI.**
+> Commercial capability — the code rules, the ISO/NCS sheet-numbering option, the field-device
+> set, the drafting apparatus — **remains present and never fronts the UI**.
+
+**What it settles.** §10.2. It converts a bet Part 1 made a dozen times implicitly into a stated
+constraint that a reviewer can hold a design against.
+
+**What it supersedes.** Nothing. §10.2's recommendation was (a) and the user confirmed it. The
+value of this entry is that it stops being *implicit*: every "default off for wall racks", every
+"simple sheet numbering", every "does not speak TIA-570-D and does not want to be asked" is now
+traceable to a ruling instead of to a habit.
+
+**Derived consequences.**
+
+1. **The primary persona is 00-overview §4.1**, the residential CI designer. §4.2, the commercial
+   AV designer, is "supported, never fronted" — and that phrase is now normative, not descriptive.
+2. **`ProjectSettings.sheetNumbering` default `simple`** (CR-066) is confirmed as a *ruling*
+   rather than a default. `ncs` remains fully implemented and is reachable from the commercial
+   starter project and from settings; it is never the first-run state.
+3. **TIA-570-D grades remain a standards *tag*, never an axis** (CR-108). Reaffirmed against
+   AC-034/m23: integrators say "two Cat6 and two RG6 to every TV", not "Grade 2".
+4. **`CODE-001` and `CODE-002` stay in v1 and are not "commercial features".** NEC 725.136 and
+   800.154 apply to a house. They are among the very few checks that protect a residential user
+   from a red-tagged job (AC-027).
+5. **The 18 field-device templates stay** (AC-031). Field devices are more residential than
+   commercial, not less.
+6. **§10.12(d) is settled by implication:** the four starter projects are **three residential and
+   one small commercial**. The commercial one exists to keep the commercial path exercised in CI
+   and to be the domain-coverage evidence for this decision; it is not a second product.
+7. **A "commercial mode" switch is refused.** §10.2 option (c) is rejected on its own stated
+   grounds: it doubles the vocabulary the user must navigate. Commercial capability is reached
+   through settings and starter projects, never through a mode.
+
+---
+
+### 11.3 DR-003 · The device builder ships in v1
+
+> **RULING — (a) THE DEVICE BUILDER IS IN v1. M4 STAYS WHERE IT IS.**
+
+**What it settles.** §10.4. No change to the existing plan; it is recorded here so it stops being
+an open question and so nobody re-derives it as a schedule lever under pressure.
+
+**What it supersedes.** Nothing in Parts 1–3 — this confirms confirmed product decision 2 and
+§10.4's own recommendation. One item in a *derived* document is withdrawn:
+
+- **09-roadmap §6 lever 2 — "Move M4 after M6" — is WITHDRAWN.** Its own text said it "defers a
+  brief requirement, so it needs an explicit decision, not a slip". DR-003 is that explicit
+  decision, made in the negative. The lever list drops from three to two. Levers 1 (ship M1 as a
+  public v0.9) and 3 (cut the catalog to 40 archetypes at full fidelity) are unaffected.
+
+**Derived consequences.**
+
+1. **M4 keeps its position and its size** (`M`), between M3 and M5, independent of M2 and M3.
+2. **Requirement 2 is met at M4, not at M1.** The catalog half of R2 lands at M1; the builder
+   half — which is what requirement 2 actually asks for — lands at M4. See §12.6 and the
+   requirement-to-milestone traceability the roadmap now carries.
+3. **Measure 7 (catalog miss rate) survives but changes purpose.** It was instrumented to resolve
+   §10.4 for free. §10.4 is now answered, so the miss rate is no longer a v1-scope trigger. It is
+   retained as **catalog-coverage evidence** feeding §10.9 (real-SKU catalog) and as the input to
+   lever 3's sizing. It must not be described as resolving an open question.
+4. **AC-049's reduction stands and is the reason this is affordable**: three required fields —
+   name, RU height, designator prefix — then ports, then done. Everything else optional with a
+   visible `unknown` state. The port grid was never the barrier and ships in full.
+5. **Option (c) — the reduced duplicate-and-edit builder — is not a fallback.** If M4 is ever at
+   risk, the lever is lever 1 or lever 3, not a partial builder.
+
+---
+
+### 11.4 DR-004 · Multi-sheet splitting is never built
+
+> **RULING — (c) ONE SCHEMATIC `Sheet`, PLUS DOMAIN FILTERING, PERMANENTLY.** Multi-sheet
+> authoring is not v1, not v1.1, not v1.2, not v2. It is **never**.
+
+**What it settles.** §10.7. §10.1 said this question would resolve itself once the fork was
+answered, and it did: under net labels, one sheet holds a whole house.
+
+**What it supersedes.** §10.7's recommendation ("hold at v1.2") and, more consequentially, the
+**v1.2 row in §7.4**. See §12.4.
+
+**11.4.1 Deleted from the plan. Not deferred — deleted.**
+
+| Deleted | Was |
+|---|---|
+| **Match lines** | v1.2 with multi-sheet |
+| **Off-sheet connectors** (paired pentagon flags, the second placement pass, cross-reference resolution) | already not-v1 under CR-073; now never |
+| **Sheet-boundary link handling** — any logic that asks which sheet an endpoint is on | v1.2 |
+| **PDF tiling logic for the schematic** — `TilingStrategy` as applied to diagram sheets, key plans, min-cut and by-rack partitioning | v1.2 |
+| **`Layout → Split to Sheets…`** and every UI surface that creates a second schematic `Sheet` | v1.2 |
+| **Unit splitting** (`MTX1:A/:B/:C`, CR-070) | v2, conditional on multi-sheet landing. Its condition can now never be met, so it moves to §7.6. |
+
+`TilingStrategy.geometric` **survives** for its one non-schematic use: a single over-tall rack
+elevation that does not fit one page. That is page tiling of one drawing, not sheet partitioning
+of a document, and CR-073 already scoped it that way.
+
+**11.4.2 The `Sheet` entity REMAINS in the schema. This is not negotiable.**
+
+**AC-037 stands unchanged.** `Sheet` ships in the model and the file format, holding exactly one
+schematic sheet per project, with `number`, `title`, `kind`, `paper`, `orientation`, `scale*`,
+`carriesLegend`, `includedRackIds`, `includedDeviceIds`, `domainFilter`, `lifecycleFilter`,
+`items`, `order` and `meta`. Deleting the entity to re-add it later is a format migration;
+keeping it is one map with one member (G5). **If this decision is ever reversed, the file format
+does not change.** No document may describe `Sheet` as vestigial, dead, or a candidate for
+removal.
+
+**11.4.3 The distinction every document must preserve.**
+
+These are two different things and the corpus conflates them:
+
+- **Multi-sheet authoring** — the user creates, names and populates more than one schematic
+  `Sheet` in the document, and a Link can therefore have its two ends on different sheets.
+  **Never built.**
+- **Exporter domain partition** — one schematic `Sheet` in the document; the **exporter** emits N
+  sheets `T6.01…` by filtering that one sheet's contents by `SignalDomainId`. Devices repeat
+  across sheets, identified by `designator`. Zero cross-sheet connections by construction, because
+  a cable belongs to exactly one domain. **Ships in v1, unchanged.**
+
+**CR-073's exporter-partition behaviour is UNAFFECTED by DR-004 and remains correct.** Partition
+at export is not multi-sheet authoring. Any sentence that treats "N sheets come out of the PDF"
+as evidence that multi-sheet exists is wrong and must be reworded.
+
+**11.4.4 What this does not remove.** The **zone grid** stays (CR-073 already kept it; DR-005
+reinforces it). The schedule's `REF` column stays. `Sheet.domainFilter` and
+`Sheet.lifecycleFilter` stay — they are the filter state DR-001 makes load-bearing.
+
+---
+
+### 11.5 DR-005 · The schematic is a client deliverable — invest in drafting polish
+
+> **RULING — (a) CLIENT DELIVERABLE.** The sheet set is a billable artifact handed to a client, a
+> GC and a job site. Full sheet furniture ships: title block, revision block, **revision clouds**,
+> issued-for-construction stamps, drawing borders, zone references, and sheet numbering.
+
+**What it settles.** §10.6.
+
+**What it supersedes.** §10.6's **recommendation**, which was (b) internal-first with "no further
+investment in drafting ceremony until a user asks". The user asked. See §12.5.
+
+**11.5.1 THE CRITICAL NUANCE — drafting polish is orthogonal to wire idiom.**
+
+**This decision does not reopen DR-001 and must never be read as doing so.**
+
+§10.6's trade-off text argued that (a) "argues for (A) in 10.1". That inference is **explicitly
+rejected by the user and by this amendment.** The reasoning it rested on — that a client
+deliverable "has to survive being looked at by someone who has never read a schematic" — does not
+hold here, because **the schematic's reader is technical**: the general contractor, the
+electrician, the low-voltage sub, and a technically-literate homeowner. Those readers read net
+labels. Net labels are how large electrical schematics have been drafted for forty years, and the
+audience that receives this document is the audience that reads them.
+
+The two axes:
+
+| Axis | Decided by | Value |
+|---|---|---|
+| **Sheet furniture** — borders, title block, revision block, clouds, stamps, zones, numbering, index | **DR-005** | Full. Invest. |
+| **Wire idiom** — how a `Link` renders inside the drawing frame | **DR-001** | Net labels by default; drawn on filter/hover/focus. |
+
+Polish the sheet fully. Keep net labels. A beautifully drafted sheet whose connections are net
+labels is a normal, professional, forty-year-old idiom — not a compromise.
+
+**11.5.2 Concrete additions to v1.**
+
+1. **Revision clouds move from v1.1 to v1.** They are currently listed as v1.1 on the As-built
+   preset. They ship: a cloud primitive on `DiagramCanvas` (an arc-scalloped closed path around a
+   bounding region), driven from `RevisionEntry`, with a revision triangle carrying the revision
+   letter. Cost ≈ 0.5–1 week in M6.
+2. **The drafting apparatus in the export document's sheet-furniture section is confirmed v1 and
+   is not available as a schedule lever.** Border, zone band and grid, title block, revision
+   block, legend swatches: all v1, all drawn through `DiagramCanvas` (P1/CR-086).
+3. **`T0.00 Cover & Drawing Index` is confirmed ON in v1.** A client deliverable has a cover. The
+   drawing index is generated after the sheet list resolves so it can never reference a sheet that
+   is not in the file.
+4. **Zone references are confirmed v1**, which retroactively confirms CR-073's decision to keep
+   the zone grid and corrects §7.7 cut #1, which listed "zone grids" as cut (§12.6).
+5. **`ISSUED FOR CONSTRUCTION` is unchanged**: gated on zero open errors, and it **never gates
+   bytes** (CR-022, G3). DR-005 raises the stamp's value; it does not weaken G3. `blockExportOnErrors`
+   remains deleted.
+6. **Both sheet-numbering schemes ship**, default `simple` (CR-066), per DR-002.
+7. **M6 grows by ~0.5–1 week** and moves to the top of its `M` band.
+
+**11.5.3 What DR-005 does NOT do.**
+
+- It does not add floor plans, riser diagrams, reflected ceiling plans, datasheet appendices,
+  `T6.40` Power Schedule or `T6.50` Network/IP Schedule to v1. Those remain out (v1.1 / v2).
+- It does not add PDF/UA tagging (RJ-015 stands).
+- It does not add branding as a v1 requirement (RJ-017 stands).
+- It does not change G1. The schedule is still the deliverable; the drawing is still the receipt.
+  DR-005 says the receipt is handed to the client, so it must look like it was drafted by a
+  professional — not that the drawing outranks the schedule.
+- It **sharpens** the hazard in §10.3(c): if a watermarked free tier ever ships, the watermark
+  goes on client-facing sheets only and never on the Pull Sheet or Termination Schedule. A
+  watermarked pull sheet is worse than useless in an attic, and DR-005 makes the client-facing set
+  larger and more valuable, which makes getting that split right more important, not less.
+
+---
+
+## 12. Superseded rulings
+
+Every ruling in Parts 1–3 that DR-001…DR-005 change or void, plus the small set of internal
+contradictions the amendment sweep exposed and which are ruled here so the record does not
+contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
+
+Each entry gives the ID, what it said, and what now governs.
+
+### 12.1 Superseded by DR-001 (net labels by default)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **CR-013** | "Sugiyama layering + interval-graph channel routing, full deterministic recompute", with phase 5 (crossing sweep, hop arcs) moved to paint time. | **Superseded in part.** v1 builds **Sugiyama phases 0–3 only** — cycle-break, layer, barycentre sweep, coordinate assignment — which place symbols. Phase 4 (interval-graph channel routing) moves to **v1.2**, gated on evidence that filtered density warrants it. Phase 5 (crossing sweep + hops) is **not built**. `drawn` mode uses a deterministic layer-ordered orthogonal staircase per Link with no channel allocation. Everything CR-013 *deleted* stays deleted: `ObstacleField`, `RouteCache` and "obstacle-aware" remain banned names — the v1 router is not obstacle-aware either, it is simpler still. The interval-graph insight remains the right answer *if* #4 is ever built; it is not wrong, it is not yet needed. |
+| **AC-016 #17** | Dash phase diverges across hop arcs; document it in the visual language; suppress hops on control and structure. | **Moot in v1.** No arcs are drawn, so no arc dash-phase divergence exists and there are no hops to suppress. The finding is retained as a v1.2 note attached to CR-013 phase 4. **The other half survives:** `dashPath` is still on the hot path for straight dashed segments and is still explicitly profiled in the perf harness rather than assumed cheap. |
+| **AC-016 #20** | "sub-millisecond at N=300" ignores that crossings are unbounded by N; move the Bentley–Ottmann sweep and hop generation to paint time, viewport-scoped; cap hops to `gap` above a threshold; measure X on a real 300-connection fixture. | **Moot in v1.** No sweep, no hops, no cap, no X. **The 300-connection fixture survives** and changes purpose: it is now the layout-determinism and **label-density** fixture, and the thing measured on it is text-run count and commit time for the label layer, not crossings. |
+| **AC-040**, density-table half | Kept `design-ux-schematic.md §1.5`'s automatic degradation to net labels above a per-sheet threshold. | **Inverted.** There is no degradation and no threshold, because labels are the base state. The **rule-catalogue half of AC-040 is untouched** and still governs — see §12.6 for its arithmetic. |
+| **§7.2.3**, wiring scope table | "Domain filter bar, **auto net-label degradation**, symbol collapse to vector pins, `Alt`-hover transient focus". | The domain filter bar, symbol collapse and `Alt`-hover **stay and are load-bearing**. "Auto net-label degradation" is replaced by **"net labels as the default render; drawn wires on domain filter, hover or focus (DR-001 §11.1.1)"**. |
+| **§9.3 (M2)** | Sized `L`; contents included phases 0–4, channel routing and phase 5. | **M2 is `M` (4–7 weeks)**, contents per §11.1.3. M1 becomes the only `L`. New cumulative plan in §12.7. |
+| **§10.1** recommendation | "(A) draw every wire as the default, with (B) as an automatic degradation." | **Void.** DR-001. Not to be re-argued. |
+
+**Explicitly NOT superseded — listed here because they will otherwise be cut by association:**
+
+| Ruling | Status under DR-001 |
+|---|---|
+| **CR-012** | **Unaffected.** No route geometry is persisted, in either idiom. Symbol placement is persisted; wire geometry is not. `RouteWaypoint`, `waypointsBySheet` and `routeOverrides` remain banned names. |
+| **RJ-001** | **Unaffected and reaffirmed.** The editable schematic canvas and its layout engine survive. Drag-to-connect, magnetic type-weighted snap, chain-draw, multi-draw, pinning on manual move and `Tidy sheet` all ship in v1. DR-001 changes how a Link is *rendered*, not whether the canvas exists or how a Link is *made*. |
+| **RJ-002** | **Unaffected and reaffirmed.** The Schematic remains a separate view and remains the only place connections are created in v1 (CR-105). Wiring is not moved onto the rack elevation. |
+| **CR-068, CR-069** | **Unaffected.** `SheetItem.position` is the one symbol position; any manual move sets `pinned`. |
+| **CR-078, CR-079, CR-082, AC-054, PAL-1/2/3** | **Unaffected.** The palette applies to drawn wires, tag pills, net-label leaders, the `T0.01` legend and the schedule's `TYPE` chip. Requirement 4 and its acceptance test are untouched by DR-001. |
+| **CR-049** | **Unaffected in mechanism, raised in importance.** Net names stay generated, editable and never load-bearing for membership (`Service.netId` is membership). The name is now the primary on-screen identity of a connection, so its generation rule is a legibility decision. |
+| **CR-105, AC-035** | **Unaffected.** The Schedule is still present from an empty project and still populates live. |
+
+### 12.2 Superseded by DR-002 (residential primary)
+
+No ruling is superseded. DR-002 **confirms** CR-066 (`simple` default), CR-108 (grades as a tag),
+AC-027 (`CODE-001`/`CODE-002` in v1), AC-031 (18 field devices) and AC-034/m23, and converts each
+from an implicit bet into a stated constraint. §10.12(d) is settled by implication: **three
+residential starter projects and one small commercial**.
+
+### 12.3 Superseded by DR-003 (device builder in v1)
+
+No ruling in Parts 1–3 is superseded — DR-003 confirms confirmed product decision 2 and §10.4's
+recommendation. One derived item is withdrawn:
+
+| Item | Status |
+|---|---|
+| **09-roadmap §6, lever 2 — "Move M4 after M6"** | **Withdrawn.** No longer an available schedule lever. The lever list is two, not three. |
+| **Measure 7 (catalog miss rate)** | **Retained, repurposed.** No longer resolves an open question; it is catalog-coverage evidence feeding §10.9 and lever 3's sizing. |
+
+### 12.4 Superseded by DR-004 (multi-sheet never)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **§7.4**, v1.2 table, row 1 | "**Multi-sheet**, partitioned by domain only … Ships when real projects show which partition users want." | **Deleted from v1.2.** The row moves to **§7.6 Not doing**, with DR-004 as its ruling. There is no gate and no evidence that reopens it. |
+| **§7.7**, cut #1 | "Multi-sheet, off-sheet connectors, zone grids, cross-refs, min-cut, unit splitting — v1.2 / v2 — 4–6 weeks." | The cut is **permanent**, not deferred. Two corrections to the row itself: **"zone grids" was never cut** (CR-073 keeps the zone grid, and DR-005 confirms it as a v1 deliverable), and unit splitting's v2 home becomes **never**. |
+| **CR-070** | Unit splitting is v2, "only if multi-sheet lands and users demonstrably need it". | Its condition can never be met. **Unit splitting moves to §7.6 Not doing.** Symbol collapse covers the ground it was for. |
+| **AC-010** | Multi-sheet is a v2 stack sitting on the critical path to the first PDF; cut it. | **Reinforced and made permanent.** The finding was right and is now unconditional. |
+| **§10.7** recommendation | "(a) hold at v1.2, and re-decide immediately after 10.1 resolves." | **Void.** 10.1 resolved to net labels; the re-decision is DR-004 = (c) never. |
+
+**Explicitly NOT superseded:**
+
+| Ruling | Status under DR-004 |
+|---|---|
+| **AC-037** | **Unaffected and load-bearing.** The `Sheet` entity ships in the model and the format, holding exactly one schematic sheet. It is not vestigial. If DR-004 is ever reversed, the format does not migrate. |
+| **CR-073**, exporter half | **Unaffected and still correct.** The exporter emits N domain sheets `T6.01…` from the one schematic `Sheet`. Partition at export is not multi-sheet authoring — §11.4.3. |
+| **CR-075** | **Unaffected.** One field, `SheetKind kind`, 11 values, plus `exceptions`. |
+| **CR-066, CR-067** | **Unaffected.** `Sheet.domainFilter` and `Sheet.lifecycleFilter` are the filter state DR-001 makes load-bearing. |
+
+### 12.5 Superseded by DR-005 (client deliverable)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **§10.6** recommendation | "(b) internal-first, with the title block and revision block present … but **no further investment in drafting ceremony until a user asks**." | **Void.** DR-005 = (a). Full sheet furniture ships in v1: title block, revision block, **revision clouds**, IFC stamp, drawing border, zone references, sheet numbering, `T0.00` cover and drawing index. |
+| **Revision clouds = v1.1** (export document, As-built preset) | "Revision **clouds** are v1.1." | **v1.** A cloud primitive on `DiagramCanvas`, driven from `RevisionEntry`, with a revision triangle carrying the revision letter. |
+| **§9.7 (M6)** | Sized `M`, mid-band. | Still `M`, at the **top** of its band (+0.5–1 week) for revision clouds. Sheet furniture is not available as a schedule lever. |
+| **§10.6**'s inference that (a) "argues for (A) in 10.1" | — | **Explicitly rejected.** §11.5.1. Drafting polish is sheet furniture; wire idiom is DR-001. They are orthogonal axes and this decision does not reopen that one. |
+
+**Explicitly NOT superseded:** **CR-022 / G3** — the IFC stamp is gated on zero open errors and
+**never gates bytes**; `blockExportOnErrors` stays deleted. **G1** — the schedule is still the
+deliverable and the drawing is still the receipt. **RJ-015** (no PDF/UA) and **RJ-017** (no
+branding in v1) stand.
+
+### 12.6 Corrections ruled here so the record is self-consistent
+
+These are not consequences of DR-001…DR-005. They are internal contradictions inside Parts 1–3
+that the amendment sweep surfaced, and they are ruled here because leaving them would produce
+exactly the contradiction §12 exists to prevent.
+
+| # | Ruling | The contradiction | What now governs |
+|---|---|---|---|
+| a | **CR-071 vs §7.3 vs §7.7 cut #9** | CR-071 point 2 rules the rear panel **prints in v1** as sheet `T2.02`; §4.3 agrees ("the rear elevation still *prints* in v1"); §7.2.7 lists rear elevation in the v1 export set; but §7.3's v1.1 table says "the rear-panel view **as a printable sheet**" and §7.7 cut #9 repeats it. | **CR-071 governs, unambiguously.** Sheet **`T2.02 Rack Elevation — Rear` prints in v1**, with connector fields and landing cable IDs. What is **v1.1** is the **interactive Rear Panel view** (`Ctrl+3`) — leaders, tag pills, per-connector navigation, egress heat map. §7.3's row and §7.7 cut #9 are corrected to say "the interactive Rear Panel view". The Part 3 preamble's "Part 3 governs the release bucket" rule does not apply here, because Part 3 contradicts *itself* (§7.2.7 vs §7.3) and CR-071 is the only source that is internally consistent. |
+| b | **AC-040 / §5.8 / §7.2.6 rule count** | All three state "v1 ships **22** rules". AC-040's own enumeration lists **24** IDs (`TOP-001..005`, `SIG-001`, `SIG-002`, `DIR-001`, `DIR-003`, `CON-001`, `ELE-003`, `ELE-006`, `NET-001`, `PWR-001`, `PWR-003`, `LEN-001`, `RCK-001`, `RCK-002`, `RCK-003`, `RCK-012`, `RCK-013`, `CODE-001`, `CODE-002`, `LNK-020`). CR-017 additionally names three placement-coherence conditions and assigns them no IDs. | **The enumeration governs; the count "22" is an arithmetic error.** `PLC-001`, `PLC-002` and `PLC-003` are **RATIFIED** as distinct tier-1 rules — CR-017 already rules the conditions model-illegal, CR-021 says a rule not in the catalogue does not exist, and an unnumbered blocking rule can carry neither a `Finding.ruleId` nor an AC-051 fixture pair. **The v1 catalogue is 27 rules: 8 tier-1 + 6 tier-2 + 13 tier-3.** Every occurrence of "22 rules" in every document becomes **27**. AC-051's gate is unchanged and now applies to 27 pairs. |
+| c | **§6.3 PAL-1** | PAL-1 is stated and verified over the **eight domain base values**, while §6.4 assigns per-family `dashOverride` and weight overrides that PAL-1 never re-checks. Two shipped families collide on every non-hue channel: `audio.spdif_optical` (TOSLINK, dash `2,3`, 1.00×, domain L 0.222) and `ctl.ir_emitter` (IR, dash `1.5,3`, 0.75×, domain L 0.293) — ΔL 0.071 inside the 0.10 band, same fine-dot dash class, weight ratio 1.33 below the 1.4 floor. Two of requirement 4's ten named types are indistinguishable in greyscale. A second pair, `structure.pathway` (`2,6`, 0.75×, L 0.319) vs `ctl.ir_emitter` (ΔL 0.026), fails identically. | **PAL-1 is restated over rendered family values and made pairwise and disjunctive; two families are re-spaced.** Full statement, the dash-class definition, and the corrected registry rows are in **§14**. |
+| d | **§7.7 cut #1** | Lists "zone grids" as cut, while CR-073 explicitly keeps the zone grid and the schedule's `REF` column depends on it. | **The zone grid ships in v1.** DR-005 confirms it. Cut #1's row drops "zone grids". |
+
+### 12.7 The plan, re-costed
+
+DR-001 removes 4–5 weeks from M2; DR-005 adds 0.5–1 week to M6. Nothing else moves.
+
+| Milestone | Size | Weeks | Cumulative |
+|---|---|---|---|
+| M0 Foundations | `S` | 2–3 | 2–3 |
+| M1 Elevation release | **`L`** | 8–12 | 10–15 |
+| M2 Wiring and the live schedule | **`M`** *(was `L`)* | 4–7 | 14–22 |
+| M3 Structure and the field | `M` | 4–7 | 18–29 |
+| M4 Device builder | `M` | 5–7 | 23–36 |
+| M5 Validation | `M` | 4–6 | 27–42 |
+| M6 Full sheet set | `M` | 5–7 | 32–49 |
+| M7 Platform and access | `M` | 4–6 | 36–55 |
+| M8 Release engineering | `S` | 2–3 | 38–58 |
+| M9 Beta hardening | `M` | 4–7 | 42–65 |
+
+**42–65 weeks of implementation; 11–17 months to a shipped v1** for one experienced engineer.
+**M1 is the only `L` milestone and the sole long pole.** Two schedule levers remain (ship M1 as a
+public v0.9; cut the catalog to 40 archetypes at full fidelity); lever 2 is withdrawn by DR-003.
+
+---
+
+## 13. Resolved §10 questions
+
+§10 is no longer entirely open. Five of its thirteen entries are **ANSWERED**. The text of §10
+stays in place as the record of the argument; this section is the index of what was decided.
+
+| § | Question | Status | Answer |
+|---|---|---|---|
+| **10.1** | Draw every wire, or net labels by default — the fork | **ANSWERED — DR-001** | **(B) Net labels by default.** Drawn wires on domain filter, `Alt`-hover or focus. Reverses the record's recommendation. §11.1. |
+| **10.2** | Residential CI or commercial AV — the primary customer | **ANSWERED — DR-002** | **(a) Residential-primary, commercial-capable.** Commercial capability present, never fronted. Confirms the recommendation. §11.2. |
+| 10.3 | Pricing and licensing model | open | — |
+| **10.4** | Does the device builder have to be in v1 | **ANSWERED — DR-003** | **(a) Yes. M4 stays where it is.** Confirms the recommendation. §11.3. |
+| 10.5 | Metric or imperial default | open | — |
+| **10.6** | Is the schematic a client deliverable or an internal tool | **ANSWERED — DR-005** | **(a) Client deliverable — invest in drafting polish.** Reverses the record's recommendation. Orthogonal to 10.1. §11.5. |
+| **10.7** | Multi-sheet timing | **ANSWERED — DR-004** | **(c) Never.** One `Sheet` plus domain filtering, permanently. The entity remains. §11.4. |
+| 10.8 | Cloud-ready investment | open | — |
+| 10.9 | Generic archetypes forever, or a real-SKU catalog | open | — |
+| 10.10 | macOS in v1 | open | — |
+| 10.11 | What the beta gate actually is | open | — |
+| 10.12 | Small calls needing an owner | (d) settled; (a)(b)(c)(e)(f)(g) open | (d) three residential + one commercial starter project, settled by DR-002. |
+| 10.13 | The three to answer first | **retired** | All three — 10.1, 10.2, 10.4 — are answered. The section has served its purpose. |
+
+### 13.1 What the answers make easier or moot
+
+| Remaining question | Effect |
+|---|---|
+| **10.3 — pricing** | **Sharper, not easier.** DR-005 makes the client-facing set larger and more valuable, which strengthens option (c)'s logic (price the deliverable, not the software) *and* raises the stakes on the watermark split: client-facing sheets only, never the Pull Sheet or Termination Schedule. Still needs deciding before M6. |
+| **10.5 — metric or imperial** | **Unchanged and still cheap.** DR-002 tilts it toward (a) imperial default, since North American residential is the stated primary market. One settings row either way. |
+| **10.8 — cloud-ready investment** | **Easier.** DR-004 removes multi-sheet, which was the largest remaining source of entity-graph churn. The conflict unit is more stable than it was, so (a) — spend nothing further, write the conflict-unit page down — is now the clear answer rather than the cautious one. |
+| **10.9 — real-SKU catalog** | **Better instrumented.** DR-003 keeps the builder, so the long tail has a first-class answer in v1 and the real-SKU question stops being urgent. Measure 7's miss rate now feeds this question instead of 10.4. |
+| **10.10 — macOS in v1** | **Unchanged.** Independent of all five. Ask before M7. |
+| **10.11 — the beta gate** | **Easier.** DR-005 makes M9's criterion sharper and more testable: "a sheet set they were willing to send out" now has a concrete bar — full sheet furniture, revision block populated, IFC stamp available. |
+| **10.12(a) undo depth, (b) autosave, (c) default rack height** | Unchanged. |
+| **10.12(e) telemetry** | **Easier.** Its only stated cost was that opt-in-only makes 10.4's miss-rate instrumentation manual. 10.4 is answered, so that objection is gone: opt-in, local-first crash reports only. |
+| **10.12(f) branding** | Unchanged. RJ-017 stands. |
+| **10.12(g) is `rules.md` user-visible** | **Answer stands, home changes.** Still user-visible, in-app, linked from every finding — but the catalogue's canonical home is the data-model document's validation section, not a separate `docs/rules.md`, and the count is **27**, not 22. |
+| **10.13** | **Moot.** Retired; all three are answered. |
+
+---
+
+## 14. PAL-1, restated — the greyscale rule over rendered values
+
+Ruled under §12.6(c). This section supersedes the statement of PAL-1 in §6.3 and the domain-level
+verdict table beneath it. It does **not** change any hue, and it does not change requirement 4's
+resolution (hue = domain; dash + weight + glyph + tag = type).
+
+### 14.1 The restated rule
+
+> **PAL-1 (rendered-value form).** Every shipped `SignalFamilyDef` renders as the triple
+> *(L, dashClass, weight)*, where **L** is the WCAG relative luminance of its **effective** hue,
+> **dashClass** is the class of its effective dash pattern per §14.2, and **weight** is its
+> effective line-weight multiplier — effective meaning **after** any `dashOverride`,
+> `glyphOverride` or weight override in §6.4, not the domain base value.
+>
+> For **every pair of families belonging to different `SignalDomainDef`s** whose luminances
+> satisfy **|L₁ − L₂| < 0.10**, at least one of the following must hold:
+> **(a)** their dash classes differ, **or** **(b)** their weight multipliers differ by a factor
+> **≥ 1.4**.
+>
+> Families **within one domain** are exempt from (a)/(b) — they share a hue by construction, the
+> legend prints them adjacently, and the tag pill disambiguates them — but any two families in one
+> domain must still differ in **dash pattern, weight, or glyph**.
+
+Two things changed and both matter. It is now stated over **rendered family values**, not domain
+base values — which is what is actually drawn. And it is **disjunctive**: the old conjunctive
+reading ("no two may share a dash class, *and* weights must differ by ≥ 1.4") is unsatisfiable by
+the shipped palette and was never the intent; the domain-level verdict table quoted the maximum
+spread across a band rather than checking pairs, which is how the collision survived.
+
+### 14.2 Dash class, defined mechanically so a test can compute it
+
+A dash pattern is a repeating sequence of alternating **marks** and **gaps** in points. Classify
+each mark: **dot** < 2.5 pt · **short** 2.5–8.9 pt · **long** ≥ 9 pt. The **dash class** is the
+sequence of mark classes over one period, compared **up to rotation**. `solid` is its own class.
+
+Worked: `2,3` → `(dot)` · `1.5,3` → `(dot)` · `2,6` → `(dot)` · `6,3` → `(short)` ·
+`4,4` → `(short)` · `12,4` → `(long)` · `6,3,1,3` → `(short,dot)` · `1.5,3,4,3` → `(dot,short)`
+= same class as `(short,dot)` by rotation · `8,3,1.5,3,1.5,3` → `(short,dot,dot)`.
+
+### 14.3 The two collisions, and their fixes
+
+| Pair | Before | Verdict | Fix |
+|---|---|---|---|
+| `audio.spdif_optical` (TOSLINK, L 0.222) vs `ctl.ir_emitter` (IR, L 0.293) | `2,3` @ 1.00× vs `1.5,3` @ 0.75×. ΔL 0.071; both `(dot)`; ratio **1.33**. | **FAILS.** Two of requirement 4's ten named types render as near-identical fine dots in greyscale. | **`audio.spdif_optical` weight 1.00× → `1.25×`.** Dash stays `2,3`. Ratio becomes **1.67 ≥ 1.4** ✓ |
+| `structure.pathway` (L 0.319) vs `ctl.ir_emitter` (L 0.293) | `2,6` @ 0.75× vs `1.5,3` @ 0.75×. ΔL 0.026; both `(dot)`; ratio **1.00**. | **FAILS.** | **`structure.pathway` dash `2,6` → `1.5,3,1.5,9`**, class `(dot,dot)` ✓, period 15 pt. Weight stays 0.75×. A double-dot reads correctly as "a route, not a conductor". |
+
+`ctl.ir_emitter` is deliberately **not** touched: it is a requirement-4 named type and its `1.5,3`
+was itself the correction that brought the control domain up to the dash-period floor.
+
+Both fixes are verified clear against every other family in the L 0.15–0.42 neighbourhood:
+TOSLINK at `(dot)`/1.25× differs by dash class from every family in `video.digital`, `net` and
+`str`, and by weight from `ctl.ir_emitter` and `structure.pathway`; TOSLINK remains distinct from
+`audio.spdif_coax` within its own domain on dash class, weight **and** glyph (◇ vs ◆).
+`structure.pathway` at `(dot,dot)` is the only two-dot pattern in the shipped set.
+
+### 14.4 The dash-period floor
+
+**≥ 4.5 pt (1.5875 mm).** The competing figure of 4.25 pt is wrong: 4.25 pt = 1.4992 mm, which is
+*below* the 1.5 mm physical floor the rule is derived from, and 4.5 pt is the figure that
+generated the shipped correction of the control domain's `1,3` (4.0 pt period) to `1.5,3` (4.5 pt).
+Every occurrence of "≥ 4.25 pt" becomes **"≥ 4.5 pt"**. Both corrected patterns clear it:
+`2,3` = 5 pt, `1.5,3,1.5,9` = 15 pt.
+
+### 14.5 The test that makes this real
+
+A unit test enumerates every shipped `SignalFamilyDef`, computes its rendered triple, and checks
+**every cross-domain pair** against §14.1. It is a named acceptance criterion of the registry
+(§6.7) and of M2's exit. The within-domain exemption is expressed in the test as a domain-equality
+check, **not** as an allowlist of pairs — an allowlist is how a real collision gets waived.
+
+---
+
+**End of Part 4.** DR-001…DR-005 are the user's decisions and are binding. §12 is the complete
+index of what they supersede. Anything not listed there stands as written in Parts 1–3.

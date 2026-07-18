@@ -1,6 +1,6 @@
 # RackMate — Product Overview
 
-RackMate is a Windows-first desktop application in which a custom-integration professional builds one or more equipment racks, wires them port-to-port on a schematic canvas, watches a cable schedule fill in live beside them, and exports a PDF sheet set that an installer can carry into an attic and work from without making a phone call. This document is the entry point to the planning set: it states the problem, the vision, the core loop, who the product is for, the seven brief requirements restated as things you can check by running something, what the project explicitly refuses to build, where it sits against the incumbents, and how success is measured. Every statement here is downstream of the canonical decision record; where a ruling governs, it is cited by ID (`CR-nnn` contradiction resolved, `AC-nnn` accepted critique, `RJ-nnn` rejected critique) and the full adjudication is in [Decisions](10-decisions.md).
+RackMate is a Windows-first desktop application in which a custom-integration professional builds one or more equipment racks, wires them port-to-port on a schematic canvas, watches a cable schedule fill in live beside them, and exports a PDF sheet set that an installer can carry into an attic and work from without making a phone call. This document is the entry point to the planning set: it states the problem, the vision, the core loop, who the product is for, the seven brief requirements restated as things you can check by running something, what the project explicitly refuses to build, where it sits against the incumbents, and how success is measured. Every statement here is downstream of the canonical decision record; where a ruling governs, it is cited by ID (`CR-nnn` contradiction resolved, `AC-nnn` accepted critique, `RJ-nnn` rejected critique) and the full adjudication is in [the canonical decision record](canonical-decisions.md).
 
 ---
 
@@ -61,7 +61,7 @@ Canon §8. One unbroken sequence, and every step of it was a cliff in the raw de
   wire it by clicking a port and then another port          magnetic type-weighted snap
         │
         ▼
-  watch the schedule fill in live beside you                the SECOND TAB, not an export artifact
+  watch the schedule fill in live beside you                a TOP-LEVEL TAB (Ctrl+4), not an export artifact
         │
         ▼
   export a sheet set that is complete and honest on the first attempt
@@ -87,11 +87,11 @@ Four people touch the output. They want different things from it and only one of
 
 ### 4.1 The residential CI designer — the primary user
 
-Designs a whole-house system: a credenza or closet rack, 80–150 home runs, rooms named the way the homeowner names them. Works in feet, inches and AWG. Does not speak TIA-570-D and does not want to be asked (AC-034/m23). Needs: fast population by typing, a Structure device that handles two drops as gracefully as sixty, dual labels so the field tech and the rack both get the name they use (CR-044), and a PDF that is a billable client deliverable. This is the persona Part 1 implicitly assumes throughout — see [open question 10.2](10-decisions.md), which asks for that assumption to be made explicit rather than paid for by accident.
+Designs a whole-house system: a credenza or closet rack, 80–150 home runs, rooms named the way the homeowner names them. Works in feet, inches and AWG. Does not speak TIA-570-D and does not want to be asked (AC-034/m23). Needs: fast population by typing, a Structure device that handles two drops as gracefully as sixty, dual labels so the field tech and the rack both get the name they use (CR-044), and a PDF that is a billable client deliverable. This is the persona Part 1 implicitly assumes throughout — and that assumption is now explicit: residential CI is the primary market and commercial capability never fronts the UI (DR-002, canon §11.2).
 
 ### 4.2 The commercial AV designer — supported, never fronted
 
-Conference rooms, phased retrofits, drawings that may go to a GC or a permit office. Needs the drafting apparatus the residential user must never see: NCS sheet numbering (`sheetNumbering: ncs`, non-default per CR-066), TIA-606 rack labels, plenum and Class 2/3 code rules, `ISSUED FOR CONSTRUCTION`. Commercial capability stays present and stays out of the way. Layers for phased retrofit are the one thing this persona genuinely needs that v1 does not ship — deferred to v2 with `lifecycleStatus` covering ~80% as a single field (CR-064, AC-038).
+Conference rooms, phased retrofits, drawings that may go to a GC or a permit office. Needs the drafting apparatus the residential user must never see: NCS sheet numbering (`sheetNumbering: ncs`, non-default per CR-066), TIA-606 rack labels, plenum and Class 2/3 code rules, `ISSUED FOR CONSTRUCTION`. Commercial capability stays present and stays out of the way. That phrasing is now a ruling (DR-002), not an observation. Layers for phased retrofit are the one thing this persona genuinely needs that v1 does not ship — deferred to v2 with `lifecycleStatus` covering ~80% as a single field (CR-064, AC-038).
 
 ### 4.3 The installer receiving the output — the person the product is actually for
 
@@ -113,9 +113,9 @@ Each is binary and demonstrable. "Works well" is not an exit criterion (canon §
 | **R2** | GUI device builder with I/O specification | A user creates a working template from **three required fields** — name, RU height, designator prefix — then ports, then done. Every other field is optional with a visible `unknown` state. A 16×16 matrix is authored via the archetype generator; the port grid supports fill-down, TSV paste and multi-row edit. Ports instantiate per device from the template, NetBox-style. | AC-049, CR-114, CR-051 |
 | **R3** | Physical connections between devices | Drag from a port to a port creates a `Link`. Illegal connections **spring back** with a reason chip and `[ Connect anyway ]` — they are never silently permitted and never hard-refused (G2). A `Link` carries `List<Service>`, because one Cat5e routinely carries an IR run, a 12 V trigger and RS-232 on separate pairs. A keyboard-only path to create a connection works end to end with screen-reader announcements. | CR-017, CR-010, CR-008, AC-058/D11 |
 | **R4** | Colour-coded by cable type | The `T0.01` **Symbol Legend** prints **one row per named cable type** — all ten the brief names — in colour and greyscale side by side. Hue encodes domain; dash, weight, glyph and text tag encode type. Verified under protanopia and deuteranopia simulation, and on a **real greyscale office laser at ANSI B, photocopied once**. Per-family colour override ships in settings. | AC-054, CR-078, canon §6.6 |
-| **R5** | Schematic idiom | Orthogonal routed links, junction dots, tag pills at both ends, pin shapes that encode type (the Q-SYS lesson). Layout is Sugiyama phases 0–4 plus interval-graph channel routing, **fully deterministic**: same input ⇒ byte-identical display list. No route geometry is persisted; symbol placement is. | RJ-001, RJ-002, CR-013, CR-012 |
+| **R5** | Schematic idiom | **Net labels at both pins by default**; on a domain filter, `Alt`-hover or focus, links render as orthogonal routed polylines with tag pills at both ends and junction dots at genuine multi-drop nodes. Pin shapes encode type (the Q-SYS lesson). Layout is Sugiyama phases 0–3 plus a deterministic layer-ordered orthogonal trace, **fully deterministic**: same input ⇒ byte-identical display list. No route geometry is persisted; symbol placement is. | DR-001, RJ-001, RJ-002, CR-013, CR-012 |
 | **R6** | Structure device | Structured wiring entering the rack is a `DeviceInstance` with `kind == structure`, rendering as an edge bank of off-page flags. A home run is a `Link` with a `StructureOrigin` and a `PlaceEndpoint` — modelled **once**, not twice. `fieldLabel` (required) and `rackLabel` (optional) are both generated, both editable, and **both print on every cable**. Multiple Structure instances are supported. | CR-107, AC-019, CR-044, CR-113 |
-| **R7** | PDF containing both diagram and schedule | One export produces `T0.01` legend, `T0.02` exceptions & acknowledgements, front elevation, rear elevation, one schematic sheet, **Pull Sheet**, **Termination Schedule**, and `T6.30` Equipment List and Materials. Elevations are dimensionally correct against a physical tape measure at true scale. **Nothing blocks the export** — findings print as an appendix. | CR-022, AC-025, AC-055, CR-023 |
+| **R7** | PDF containing both diagram and schedule | One export produces eleven sheet slots — nine on by default, two automatic: `T0.00` cover & drawing index, `T0.01` legend, `T0.02` exceptions & acknowledgements, `T2.01` front elevation and `T2.02` rear elevation (one pair per `Rack`), **N interconnect sheets (`T6.01…`), one per domain partition of the single schematic `Sheet`**, `T6.10` **Pull Sheet**, `T6.11` **Termination Schedule**, `T6.20` Unused Home Runs (auto, iff ≥ 1 exists), `T6.30` Equipment List and Materials, and `T5.01` Plate, Panel & Pinout Details (auto, iff a non-standard pinout exists). Elevations are dimensionally correct against a physical tape measure at true scale. **Nothing blocks the export** — findings print as an appendix. | CR-022, AC-025, AC-055, CR-023, CR-073, DR-005 |
 
 R4 is a recorded requirement deviation with explicit sign-off (AC-050/A4.1): the brief says colour-coded *by cable type*, and hue-per-type across ~50 families is not achievable safely for colour-vision-deficient users or on a greyscale photocopy. The resolution moves type onto dash, weight, glyph and tag, and the legend audit in canon §6.6 proves all ten named types remain distinguishable on both channels.
 
@@ -130,7 +130,7 @@ Not omissions — rulings (canon §7.6). Each has been argued and closed.
 | CRM, quoting, proposals, procurement, purchase orders, field service | D-Tools' entire surface area, the reason its users say they are "learning a new language", and a different business. `Money`, `cost`, `supplier`, `purchaseOrder` are deleted from the model. The sheet is an **Equipment List**, never a BOM. | AC-055 |
 | Visio or AutoCAD as the drawing canvas | The incumbent's core structural weakness: a second expensive licence, and a drawing that can always contradict the database. Own the canvas. | RJ-001 |
 | A rule-authoring UI and the JSON predicate AST | ~20 of 70 rules cannot be expressed in a boolean predicate tree. The AST buys a second rule system, a second debugger and a second test suite for rules nobody can author without a UI that was never designed. **The user-authored-rules claim is withdrawn from all documents.** | CR-024, AC-011 |
-| Real-SKU manufacturer catalog | Stencil and SKU coverage is *always* incomplete, and maintaining it is a permanent staffed cost. ~40–55 generic archetypes at full fidelity with cited provenance beat 80 guessed ones. | RJ-007, AC-052 |
+| Real-SKU manufacturer catalog | Stencil and SKU coverage is *always* incomplete, and maintaining it is a permanent staffed cost. A seeded catalog can only ever cover archetypes, and generic archetypes at full fidelity with cited provenance beat a larger set of guessed ones. | RJ-007, AC-052 |
 | Device images, 3D racks, photorealistic front panels | Cosmetic, ~1 MB per template, an image-decode import surface, and already a source of competitor complaints. 2D vector elevations with accurate RU geometry are what get printed. | AC-057 |
 | Cable dressing, bend radius, tie-downs, floor plans, thermal simulation | Out of the brief, correctly. `Pathway` groups cables organisationally and does **not** affect tracing — the NetBox precedent. | brief; CR-016, AC-027 |
 | Cloud sync, multi-user, accounts, an in-app updater | The model is already cloud-ready (stable UUIDs, `schemaVersion`, tombstones, `sequence`). Nothing more is spent until someone asks. Auto-update is a security surface before there are users. | v2; RJ-014 |
@@ -157,24 +157,27 @@ Two refusals from the raw prior-art analysis were themselves **overruled** and a
 | Diffable local project file | **Yes** — pretty-printed key-sorted JSON, stable UUIDs, `schemaVersion` | Proprietary / cloud | Binary | Cloud | Unknown |
 | Blocks your export on a heuristic | **Never** (G3) | — | — | — | — |
 
-Two competitors outside that table set the real bar. **NetBox** has the reference data model — typed templated components, front/rear pass-through ports that let a trace run straight through a patch panel, and cables carrying type, colour, length and label — but its rack elevations are read-only rendered images and its signal vocabulary is Ethernet, fibre and power. **Q-SYS Designer** has the reference interaction model — pin shape encodes type, only complementary directions connect, and a loose wire is prohibited outright. RackMate takes the data model from the first and the gesture from the second, and applies both to a domain neither serves. Notably, Q-SYS — the most refined tool in this space — ships **no auto-routing at all**; RackMate builds one anyway (CR-013), and that is a deliberate, costed bet, not an oversight.
+Two competitors outside that table set the real bar. **NetBox** has the reference data model — typed templated components, front/rear pass-through ports that let a trace run straight through a patch panel, and cables carrying type, colour, length and label — but its rack elevations are read-only rendered images and its signal vocabulary is Ethernet, fibre and power. **Q-SYS Designer** has the reference interaction model — pin shape encodes type, only complementary directions connect, and a loose wire is prohibited outright. RackMate takes the data model from the first and the gesture from the second, and applies both to a domain neither serves. Notably, Q-SYS — the most refined tool in this space — ships **no auto-routing at all**; RackMate builds one anyway (CR-013, DR-001), scoped to the `drawn` render mode a domain filter or a hover turns on, and that is a deliberate, costed bet, not an oversight.
+
+The other axis RackMate competes on is the sheet itself. The exported set is a **client deliverable with full drafting furniture** — title block, revision block, revision clouds, `ISSUED FOR CONSTRUCTION` stamp, drawing border, zone references and sheet numbering (DR-005). Sheet furniture is orthogonal to wire idiom: the schematic's reader is technical — GC, electrician, low-voltage sub, technically-literate homeowner — so the sheet is polished fully and the wires stay net-labelled (DR-001).
 
 ---
 
-## 8. The three confirmed product decisions
+## 8. The four confirmed product decisions
 
 Constraints, not inputs (canon §0.2). Several critique recommendations violate them and are rejected on that ground alone.
 
 **1. Desktop-first; mobile read-only in v1; the architecture must not preclude touch.**
 Rationale: the authoring surface is a canvas with a keyboard-driven quick-add, and a squeezed mobile editor would be worse than no mobile editor. Honoured honestly — mobile and tablet are read-only on exactly three surfaces (rack elevation, schedule table, exported PDF) and the app **says so** rather than shipping a degraded editor (AC-056). The door stays open at zero ongoing cost: `CanvasIntent{beginDrag, updateDrag, commitDrag, cancel}` is built first and **no editor logic anywhere branches on `PointerDeviceKind`** (AC-016/#23). *Rejected alternative:* responsive-everywhere, which pays for touch in every gesture and delivers a bad experience on both.
 
-**2. A device builder PLUS a seeded catalog of ~40–55 generic archetypes.**
+**2. A device builder PLUS a seeded catalog of generic archetypes.**
 Rationale: the Visio-stencil complaint is unambiguous — coverage is always incomplete, commercial libraries are overpriced, everyone ends up rolling their own. The catalog handles the common case and makes the first session fast; the builder handles the long tail, which is exactly where a professional discovers a tool cannot represent their job. Generic archetypes avoid the permanent staffed cost of SKU maintenance. The count is set by the **provenance gate** — every numeric field cited in `assets/catalog/sources.md`, and a template with uncited safety-adjacent fields does not ship — not by a target number (CR-061, AC-052). *Rejected alternative:* shipping the catalog at lower fidelity to halve authoring effort (RJ-007) — that trades the honesty guarantee for weeks, and honesty is the wedge.
 
 **3. Local single-file `.rackmate` projects (JSON), cloud-ready.**
 Rationale: integrators own their files, and a diffable text project is a differentiator no competitor offers. Plain, pretty-printed, key-sorted UTF-8 JSON with a `document` wrapper; UUIDv7 identity; `schemaVersion` + `minReaderVersion`; tombstones, `EntityMeta` and `FracIndex` ordering all ship in v1 even where their UI does not, because they are the retrofits that cost 10× later (G5, CR-095, CR-027). `DocumentCodec` sniffs `PK\x03\x04` from commit one, so a v2 zip container is a non-event (CR-091). *Rejected alternative:* zip-from-the-start, unnecessary once device images were cut (AC-057).
 
-A fourth item is fixed by the brief and is not a "decision" so much as the definition of done: **all seven core requirements are represented in v1.** This is the first of the four scope filters (canon §7.0) and it is why the schematic canvas, the device builder, the Structure device, and the both-in-one-PDF export all survive the cut regardless of cost.
+**4. All seven core requirements are represented in v1.**
+Fixed by the brief and not so much a decision as the definition of done. It is the first of the four scope filters (canon §7.0) and it is why the schematic canvas, the device builder, the Structure device and the both-in-one-PDF export all survive the cut regardless of cost.
 
 ---
 
@@ -187,14 +190,13 @@ Ordered from cheapest to hardest. The last one is deliberately a judgement, not 
 | 1 | **Population speed** | 20 devices into a 42U rack in **under four minutes, keyboard only**. Undo restores every operation in that sequence. (M1 exit) |
 | 2 | **Dimensional truth** | Exported elevations measure correct against a **physical tape measure** at true scale; the equipment list matches rack contents exactly. (M1 exit) |
 | 3 | **Wiring throughput** | 60 connections created **without touching a menu**; the schedule tab shows 60 correctly sorted rows with both labels on both ends. (M2 exit) |
-| 4 | **Determinism** | Same input ⇒ **byte-identical display list**; a 300-connection fixture routes within one frame at commit, with the crossing count measured rather than assumed. (M2 exit) |
+| 4 | **Determinism** | Same input ⇒ **byte-identical display list**; a 300-connection fixture lays out within one frame at commit. (M2 exit) |
 | 5 | **Print legibility** | All ten requirement-4 cable types remain identifiable on a **real greyscale office laser at ANSI B, photocopied once**, and under protanopia/deuteranopia simulation. |
-| 6 | **Rule trustworthiness** | Every shipped rule has a known-bad fixture that produces exactly that finding and a known-good near-miss that does not. **No rule ships without its pair.** This is also the gate that holds the v1 catalogue at 22 rules. (AC-051, AC-040) |
-| 7 | **Catalog miss rate** | Instrumented from M1: how often a user hits a device the catalog does not have. Under ~10% of placements means a reduced builder would suffice; over 25% means the builder is load-bearing. This number resolves [open question 10.4](10-decisions.md) for free. |
-| 8 | **The paper test** | Both schematic idioms — draw-every-wire vs net-labels — put in front of five integrators as **printed paper**, at 40 and 140 connections. One question: which would you hand to your lead installer, and which to the homeowner? This resolves the largest open fork in the project (canon §10.1). |
-| 9 | **Beta gate** | **Three integrators have each produced a sheet set they were willing to send to a client or a job site, and none of the three needed to leave the app to fix something.** (M9 exit) |
+| 6 | **Rule trustworthiness** | Every shipped rule has a known-bad fixture that produces exactly that finding and a known-good near-miss that does not. **No rule ships without its pair.** This is also the gate that holds the v1 catalogue at 27 rules. (AC-051, AC-040) |
+| 7 | **Catalog miss rate** | Instrumented from M1: how often a user hits a device the catalog does not have. §10.4 is answered — the device builder ships in v1 (DR-003) — so this is no longer a scope trigger. It is catalog-coverage evidence feeding canon §10.9 and the sizing of the catalog lever. |
+| 8 | **Beta gate** | **Three integrators have each produced a sheet set they were willing to send to a client or a job site, and none of the three needed to leave the app to fix something.** (M9 exit) |
 
-Cost, stated honestly rather than comfortably: **41–69 weeks of implementation, 12–18 months to a shipped v1** for one experienced engineer. That is better than the 16–22 months the unreduced design was priced at, and it is not the 5–6 months a proposed cut table promised — because that table cut a brief requirement (RJ-008). Three explicit levers exist if the number is unacceptable, and they are to be pulled deliberately rather than by drift; see [Roadmap](09-roadmap.md).
+Cost, stated honestly rather than comfortably: **42–65 weeks of implementation, 11–17 months to a shipped v1** for one experienced engineer. That is better than the 16–22 months the unreduced design was priced at, and it is not the 5–6 months a proposed cut table promised — because that table cut a brief requirement (RJ-008). Two explicit levers exist if the number is unacceptable, and they are to be pulled deliberately rather than by drift; see [Roadmap](09-roadmap.md).
 
 ---
 
@@ -204,14 +206,15 @@ Cost, stated honestly rather than comfortably: **41–69 weeks of implementation
 |---|---|
 | [Domain](01-domain.md) | The trade, the vocabulary, the signal and cable registry |
 | [Data model](02-data-model.md) | `Link` → `Service` → `Conductor`, `Net`, `Placement`, templates, the file format |
-| [Architecture](03-architecture.md) | The four packages, the command stack, the display-list IR, the isolate |
+| [Architecture](03-architecture.md) | The five packages, the command stack, the display-list IR, the isolate |
 | [Rack editor](04-rack-editor.md) | Elevations, quick-add, the Staging Bin, compaction |
-| [Schematic editor](05-schematic-editor.md) | Symbols, drag-to-connect, layout and routing, density mitigations |
+| [Schematic editor](05-schematic-editor.md) | Symbols, drag-to-connect, layout and routing, net labels and the domain filter |
 | [Device builder](06-device-builder.md) | Three required fields, the port grid, the three doors |
 | [Structure device](07-structure-device.md) | Outlets, home runs, dual labels, the location tree |
 | [PDF export](08-pdf-export.md) | The sheet set, the schedule presets, the export contract |
 | [Roadmap](09-roadmap.md) | v1 / v1.1 / v1.2 / v2, the ten milestones, the honest total |
-| [Decisions](10-decisions.md) | The canonical record — 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`, and the open questions |
+| [Canonical decisions](canonical-decisions.md) | **Normative.** 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`, canonical naming, the model, the registry, the scope ruling, the milestone plan, and the binding user decisions `DR-001`–`DR-005` |
+| [Decisions (ADR log)](10-decisions.md) | The sixteen ADRs and the open questions, summarising the record above |
 | [Testing and quality](11-testing-and-quality.md) | The DRC fixture corpus, goldens, the print test matrix |
 | [Seed devices](catalog/seed-devices.md) | The archetype catalog and its provenance |
 

@@ -186,7 +186,8 @@ final class RackDocument {
   Map<Uuid, Outlet>         outlets       = {};
   Map<Uuid, StructureBody>  structures    = {};
   Map<Uuid, Circuit>        circuits      = {};
-  Map<Uuid, Sheet>          sheets        = {};   // exactly one schematic sheet in v1. CR-073.
+  Map<Uuid, Sheet>          sheets        = {};   // exactly one schematic sheet, always.
+                                                  // CR-073, DR-004, AC-037.
   Map<Uuid, Note>           notes         = {};
   Map<Uuid, AckedFinding>   ackedFindings = {};
 
@@ -382,11 +383,11 @@ final class TemplateBody {
   List<MountMethod> alternateMountMethods;
   WidthClass widthClass; int nominalSpanTwelfths; Len? customPanelWidth;
 
-  Len bodyDepth;
+  Len? bodyDepth;                         // null means unknown, never estimated. G4, CR-114.
   Len? connectorProjection;               // DERIVED from the deepest rear connector,
                                           // not bodyDepth + 75 mm. AC-022/M7.
   Len chassisWidth;                       // default 432 mm for full width — NOT 482.6. AC-032.
-  Mass weight;
+  Mass? weight;                           // null means unknown, never estimated. G4, CR-114.
   Mass? maxUnsupportedMass;               // default ~7 kg for rackEars. Feeds RCK-013. AC-028.
 
   int requiresClearanceAboveU, requiresClearanceBelowU;
@@ -484,7 +485,10 @@ final class PassthroughPairDef {          // patch panels. CR-057.
 | `connectorProjection` derives from the deepest rear connector | AC-022/M7 | `bodyDepth + 75 mm`. A molded HDMI plug with a bend is 100–125 mm; a Cat6a boot is ~50 mm. |
 | `typicalWatts` never defaults to a fraction of nameplate | AC-039, RJ-007, G4 | A silent 50%-of-nameplate estimate. Fabricated data the user cannot see is worse than missing data they can. |
 | `apparentVA` and `powerFactor` exist | CR-056, AC-020 | `amps = watts / 120`. A linear-supply amplifier at PF 0.65 under-reports current by 35% on exactly the gear where it matters. |
+| `bodyDepth` and `weight` are **nullable** | CR-114, AC-039, G4 | Non-nullable `Len bodyDepth` / `Mass weight`, which force a fabricated zero or a silent estimate on every template whose figure is uncited — and the AC-052 provenance gate guarantees many will be. `null` means unknown, everywhere; rollups report their unknown count. Canon §5.6's non-nullable declaration is superseded by the stronger and more recent CR-114/G4/AC-039 rulings. |
 | No `frontImage` / `rearImage` | AC-057 | Bitmap panel art in v1. `panelGraphics` (vector) covers the legible cases. |
+
+**What nullable depth and mass oblige downstream.** The rack rollup is `rackWeight = Σ device.weight where weight != null` with `unknownCount = count(device.weight == null)`, and the chip strip reads *"Total weight 148 lb · 3 devices have no weight"*. Depth is the same shape. The depth-interval check `RCK-012` **skips** when either `bodyDepth` or `Rack.usableDepth` is null, exactly as it already skips for a 2-post frame (AC-050/A1.3) — a skipped check is honest; a check run against a fabricated zero is not. On the wire, `weightUg` and `bodyDepthNm` are **omitted from JSON when null**, an absent key reads as null, and the codec never writes an explicit `null` for either; §6.2's matrix template carries `weightUg` while the generic patch panel omits it entirely. `Len chassisWidth`, `int frontU` and `int rearU` stay **non-nullable** — a device with no width or no RU height cannot be placed, so unknown is not a representable state there.
 
 ### 4.5 `DeviceInstance`, `Port`, overrides
 
@@ -496,7 +500,8 @@ final class DeviceInstance {
   TemplateRef templateRef;                // ALWAYS resolves to an embedded snapshot. CR-054.
   String designator, name;                // "MTX-1" — unique project-wide
   bool designatorLocked;                  // CR-034
-  LifecycleStatus lifecycleStatus;        // existing|new|future|removed. CR-064.
+  LifecycleStatus lifecycleStatus;        // existing|new|future|removed|designIntent.
+                                          // CR-064, CR-065, AC-018.
   Placement placement;
   Uuid? locationId;
   String? serialNumber, assetTag, macAddressPrimary, firmwareVersion;
@@ -524,6 +529,8 @@ final class Port {
   Map<String, Object?> unknown;
 }                                          // NO EntityMeta. CR-095.
 ```
+
+**`LifecycleStatus` is one enum of five values — `existing`, `new`, `future`, `removed`, `designIntent` — and it is the same enum on `DeviceInstance` and on `Link`** (CR-064, canon §4.2). `designIntent` arises almost always on a `Link` — a run scheduled to a device that does not exist yet (AC-018) — but a `DeviceInstance` placed to reserve RU for gear not yet selected is a legitimate `designIntent` device. One enum, five values, both entities; it is not split in two.
 
 **Lazy port materialisation (AC-006).** A `Port` is serialized **only if it carries project state** — a conductor endpoint, an override, a pinned designator, network config, a bus address, a tap wattage, or a reserve/orphan flag. Everything else is reconstructed at load by key-joining `TemplateBody.ports` against the device. Typical files drop ~70%. This is what keeps plain pretty-printed JSON defensible at the design's own 2,000-port target.
 
@@ -570,7 +577,8 @@ final class Link {                        // ONE PHYSICAL CABLE. One W###. One s
   Uuid? pathwayId;                        // → Pathway
   CrossoverKind? crossover;               // straight|nullModem|fiberPolarityAB
 
-  LifecycleStatus lifecycleStatus;        // + designIntent, for a cable with no device yet
+  LifecycleStatus lifecycleStatus;        // existing|new|future|removed|designIntent — the
+                                          // same five values. CR-064, CR-065, AC-018.
   RoughInStatus roughInStatus;            // planned|pulled|dressed|terminated|tested
   TestResult? test;                       // pass/fail + headroom + certificate id. RJ-004.
   String? installedBy; DateTime? terminatedAt;
@@ -647,7 +655,7 @@ final class Pathway {                     // conduit / j-hook / tray / trunk. CR
 | `linkClass` exists and the schedule excludes jumpers by default | AC-026/B5 | Every patch cord as a schedule row. A 180-row schedule where 110 rows are factory cords out of a bag is a schedule nobody reads past row 20. |
 | Three length fields | AC-024/M9 | One `calculatedLength`. The pull sheet wants cut length; the as-built wants terminated length; the takeoff wants routed length. |
 | `Pathway` is a first-class entity | CR-016, AC-027/M13 | An opaque `conduitId` string. `CODE-001` (Class 2/3 conductor sharing a pathway with line voltage) and `CODE-002` (non-plenum jacket in a plenum space) are two of the few checks that protect the user from an actual code citation, and both need `containsLineVoltage` and `kind`. |
-| **No route geometry is persisted** | CR-012 | `waypointsBySheet`, `routeOverrides`, `RouteWaypoint`. Symbol placement is user intent and is stored (`SheetItem`); wire geometry is a pure deterministic function of the model. Manual rerouting returns in v1.2 as **constraints** — ordered grid points the router must pass through, in `routeConstraintsBySheet` — never as a polyline. |
+| **No route geometry is persisted** | CR-012 | `waypointsBySheet`, `routeOverrides`, `RouteWaypoint`. Symbol placement is user intent and is stored (`SheetItem`); wire geometry is a pure deterministic function of the model. Manual rerouting returns in **v1.1** as **constraints** — ordered grid points the router must pass through, in `routeConstraintsBySheet` — never as a polyline (canon §7.3, ADR-008). |
 
 `Net` is auto-created as an implicit singleton for every new link (`isImplicit: true`, unnamed). It becomes explicit — gaining a name and an `N###` designator — the moment a second service joins it or the user names it. The common case stays free of ceremony.
 
@@ -718,7 +726,7 @@ final class OutletTemplate {              // first-class recipe. CR-108.
 | `StructureDrop` is **deleted**; a home run *is* a `Link` with a `StructureOrigin` | CR-107, AC-019/B2 | Drop and Link as two entities each carrying media, jacket, gauge, length, status and test result. That divergence is guaranteed within one week of real use: the drop schedule says 78 ft and the wiring schedule says 90 ft, and nobody knows which to bill against. One cable, one row, one length, one certificate, one status. |
 | `Outlet` (renamed from `StructureBundle`) is the creation/specification/pricing atom | CR-016, RJ-011 | Making it a bare grouping over Links. The three-level Body → Outlet → run hierarchy maps exactly onto how the work is specified, priced, pulled and tested. |
 | `Outlet` holds no member list | AC-019 | `dropIds: List<Uuid>`. Members key back via `Link.structureOrigin.outletId`, so there is one source of truth for membership. |
-| Outlet templates are first-class; TIA-570-D grades are presets and a tag | CR-108, m23 | `StructureGrade{grade1, grade2, grade3, custom}` as the primary axis. Essentially no CI integrator speaks in grades; they say "two Cat6 and two RG6 to every TV". |
+| Outlet templates are first-class; TIA-570-D grades are a standards **tag**, not an axis | CR-108, m23; confirmed by DR-002 | `StructureGrade{grade1, grade2, grade3, custom}` as the primary axis. Essentially no CI integrator speaks in grades; they say "two Cat6 and two RG6 to every TV". |
 | Both labels, both printed | CR-044, AC-047 | One label. The most common on-site failure is a schedule carrying one label when the technician needs the other. `fieldLabel` is required and project-unique; `rackLabel` is unique when set. |
 | Conduit is `isPathwayOnly` media creating a `Pathway`, not a Link | CR-109 | A conduit "drop" with a connectable port. An empty conduit is not a cable and cannot be connected to anything — but you still pull the smurf tube and it still costs money, so it appears in the drop table and on the pull sheet. |
 | `Outlet.roughInStatus` is derived as the **minimum** across member Links | CR-111, CR-115 | Derived-max, and persisting it. A max would report an outlet "tested" when three of its four cables are still coiled. Not serialized. |
@@ -726,7 +734,7 @@ final class OutletTemplate {              // first-class recipe. CR-108.
 | Removed from the rack palette | CR-110 | A palette entry that cannot be placed. A body is created from `Project ▸ Structured wiring…`, or implicitly on first use of the Structure editor. |
 | `Project ▸ Locations…` is a top-level panel | CR-112 | The location tree owned by the Structure editor. A project with racks and no Structure device must still be able to say which room a rack is in. |
 
-A drop's signal family may legitimately be `signal.undetermined` at rough-in — at rough-in a Cat6 is just a Cat6. The Link assigns a family later and the DRC re-validates retroactively. That state being first-class is a genuine differentiator; no competitor models it.
+A drop's signal family may legitimately be `structure.undetermined` at rough-in — at rough-in a Cat6 is just a Cat6. The Link assigns a family later and the DRC re-validates retroactively. That state being first-class is a genuine differentiator; no competitor models it.
 
 ### 4.8 `Sheet`, `SheetItem`, `Note`, `AckedFinding`, `Tombstone`, `EntityMeta`
 
@@ -783,7 +791,7 @@ final class EntityMeta {                  // CONFLICT UNITS ONLY. CR-095.
 
 | Decision | Ruling | Rejected alternative |
 |---|---|---|
-| Exactly one schematic `Sheet` in v1; the **exporter** partitions by domain | CR-073, AC-010 | A full multi-sheet subsystem on the critical path to the first PDF. A domain partition has zero cross-sheet connections by construction, so no off-sheet connector pairs and no min-cut are needed. |
+| Exactly one schematic `Sheet`; the **exporter** partitions by domain | CR-073, AC-010, DR-004 | A full multi-sheet subsystem on the critical path to the first PDF. A domain partition has zero cross-sheet connections by construction, so no off-sheet connector pairs and no min-cut are needed. |
 | `Sheet.kind`, not `viewKind` | CR-075 | Two spellings of the same field. |
 | `SheetItem` is the only symbol position and the only z-order | CR-069 | Three candidate homes for a symbol position. `StagedPlacement.schematicHint` is consumed **once**, when the first `SheetItem` is created. |
 | `pinned` on `SheetItem` | CR-068 | Unmodelled pinning. Any manual move sets it; auto-layout never moves a pinned symbol. |
@@ -792,6 +800,10 @@ final class EntityMeta {                  // CONFLICT UNITS ONLY. CR-095.
 | `EntityMeta` on conflict units only | CR-095 | `EntityMeta` on every object. On `Port`, `Conductor`, `Service`, `SheetItem` and `ZeroUChannel` it is dead weight by the design's own conflict model; those carry a bare `unknown` map instead. |
 | Tombstones ship in v1 | CR-095, G5 | Hard deletes. With hard deletes a later sync cannot distinguish "the peer deleted this" from "the peer never had it", and the second reading resurrects deleted devices on every sync. Tombstones also make delete commands trivially invertible for undo. |
 | `Finding` is computed, never stored | §5.8 | Persisted findings. Only acknowledgements persist. |
+
+**Exactly one schematic `Sheet` is created per project, and multi-sheet authoring is never built (DR-004).** The entity ships anyway so the format never migrates if that is ever reversed (AC-037). It is not vestigial and must not be described as removable. There is therefore no field, note or TODO for sheet-boundary link handling, match lines or off-sheet connectors: a `Link` can never have its two ends on different sheets, because there is only one. Distinguish this from the **exporter's** domain partition, which is untouched (CR-073): one `Sheet` in the document, N interconnect sheets `T6.01…` emitted from it by filtering, alongside `T0.00` cover and drawing index, `T0.01` legend, `T0.02` exceptions, `T2.01`/`T2.02` elevations, `T6.10` pull sheet, `T6.11` termination schedule, `T6.20` unused home runs, `T6.30` equipment list and materials, and `T5.01` plate/panel/pinout details. **N sheets coming out of the PDF is not evidence that multi-sheet authoring exists.**
+
+**Wire idiom is not a stored property.** Every `Link` renders as a pair of net labels by default; on a domain filter, `Alt`-hover or focus, the Links in scope render as orthogonal polylines with a tag pill at each end (DR-001). `Link` carries no render field and `Sheet` carries no render setting — render mode is **derived** from the active filter, never persisted (CR-115). The only sheet state that persists is `domainFilter`, `lifecycleFilter` and the `SheetItem` placements.
 
 ### 4.9 `Registries` — the three orthogonal axes
 
@@ -814,7 +826,11 @@ Unresolvable registry IDs degrade to an `unknown(rawId)` placeholder that round-
 
 ---
 
-## 5. Connection validity — three tiers
+## 5. The v1 validation rule catalogue — three tiers
+
+**This section is the rule catalogue. A rule not listed here does not exist (CR-021).** It is the single home the corpus refers to as `docs/rules.md`; that file is not created.
+
+**27 rules: 8 tier-1 + 6 tier-2 + 13 tier-3.** AC-040's "22" is an arithmetic error against its own enumeration of 24; `PLC-001..003` are ratified here as distinct tier-1 rules because CR-017 already rules their conditions model-illegal and an unnumbered blocking rule can carry neither a `Finding.ruleId` nor an AC-051 fixture pair (canon §12.6(b)).
 
 The naive design is `hard-illegal / warn / allow` as three static rule outcomes. That shape is rejected, because **which tier a rule belongs to is not a property of the rule — it is a property of the situation.** "HDBaseT into a switch port" is a catastrophic error in a new design and *a correct depiction of an existing system you were called in to fix*. A model that cannot draw a mistake cannot document reality, cannot plan a remediation, and cannot import an as-found survey (G2).
 
@@ -843,7 +859,7 @@ The former "Class A — hard-invalid, refused at drag time, cannot exist in the 
 | `PLC-002` | `startTwelfth ∈ [0,11]`, `spanTwelfths ∈ [1,12]`, `startTwelfth + spanTwelfths ≤ 12`. | CR-030 |
 | `PLC-003` | `ZeroUPlacement.channelId` resolves in `rack.zeroUChannels` and the offset lies within the channel. | CR-031 |
 
-> **VERIFY:** CR-017 names the three placement-coherence conditions without assigning rule IDs. `PLC-001..003` are proposed here and must be ratified in `docs/rules.md`, which is the one rule catalogue — a rule not in it does not exist (CR-021).
+CR-017 names the three placement-coherence conditions without assigning rule IDs; they are **ratified here** as `PLC-001..003`, distinct tier-1 rules of the eight (canon §12.6(b)).
 
 The rack editor's other blocking drop checks are demoted to warnings, **except** RU-range-free on the same face and fits-within-rack-extent, which are physical impossibilities rather than trade opinions (CR-017).
 
@@ -880,9 +896,7 @@ Severity vocabulary is `error | warning | advisory | off` — "info" is renamed 
 | `CODE-002` | `Pathway.kind == plenumSpace` and jacket is not `cmp`/`lszh` (NEC 800.154). | error | AC-027/M13 |
 | `LNK-020` | N links have unbound endpoints. A checklist, not a failure. | advisory | AC-018/B1 |
 
-**v1 ships this set and no more** (AC-040). Everything else in the full catalogue — the remaining `DIR`, `CON`, `ELE`, `LEN`, `BUS`, `SER`, `NET`, `PWR` and `RCK` rules, plus `PWR-006`, `RCK-003b`, `RCK-007`, `RCK-014`, `TOP-010`, `TOP-011` and `SEQ-001` adopted by CR-021 and AC-033 — moves to v1.2 behind a fixture corpus. **No rule ships without a known-bad and a known-good fixture** (AC-040, AC-051).
-
-> **VERIFY:** AC-040 states "v1 ships 22 rules" and then enumerates 24 (`TOP-001..005`, `SIG-001`, `SIG-002`, `DIR-001`, `DIR-003`, `CON-001`, `ELE-003`, `ELE-006`, `NET-001`, `PWR-001`, `PWR-003`, `LEN-001`, `RCK-001`, `RCK-002`, `RCK-003`, `RCK-012`, `RCK-013`, `CODE-001`, `CODE-002`, `LNK-020`). The **enumeration** governs; the count must be corrected in `docs/rules.md`. `PLC-001..003` above would make it 27 if ratified as distinct rules.
+**v1 ships this set and no more** (AC-040) — thirteen tier-3 rules, completing the 27. Everything else in the full catalogue — the remaining `DIR`, `CON`, `ELE`, `LEN`, `BUS`, `SER`, `NET`, `PWR` and `RCK` rules, plus `PWR-006`, `RCK-003b`, `RCK-007`, `RCK-014`, `TOP-010`, `TOP-011` and `SEQ-001` adopted by CR-021 and AC-033 — moves to v1.2 behind a fixture corpus. **No rule ships without a known-bad and a known-good fixture** (AC-040, AC-051).
 
 ### 5.4 Acknowledgement — one mechanism, two scopes
 
@@ -898,6 +912,8 @@ Rules are **Dart functions** in a registry keyed by `ruleId`; the **catalogue** 
 
 ## 6. The `.rackmate` file format
 
+This section **is** the file-format specification; `docs/file-format.md` is not created and every citation of it points here.
+
 ### 6.1 Container and persistence contract
 
 | Property | Binding value | Ruling |
@@ -905,7 +921,8 @@ Rules are **Dart functions** in a registry keyed by `ruleId`; the **catalogue** 
 | Container | Plain, **pretty-printed, key-sorted UTF-8 JSON**. 2-space indent. | CR-091 |
 | Codec | `DocumentCodec` from commit one, sniffing `PK\x03\x04` on read, so a v2 zip container is a non-event. The extension never changes; v1 files keep opening forever. | CR-091 |
 | Envelope | Format metadata at the root; all entity maps under `"document"`. | CR-092 |
-| Round trip | **Byte** round trip: `write(read(bytes)) == bytes`. | CR-117 |
+| Round trip | **Byte** round trip: `write(read(bytes)) == bytes`, asserted over files RackMate wrote — an explicit `null` in a hand-edited file reads as absent and re-emits as absent. | CR-117 |
+| Unknown values | Written as an **absent key**, never an explicit `null`. `weightUg` and `bodyDepthNm` are the two that most often go missing. | CR-114, G4 |
 | Saves | Atomic: write `foo.rackmate.tmp` in the same directory → `flush()` → `rename()`. One sibling `.bak`. **No `.history/` folder** in the user's directory. | CR-098 |
 | Snapshots | `getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rackmate`, last 10. | CR-098 |
 | Floats | **None**, in any persisted model, including `.rmdev`. | CR-001, CR-063, I-1 |
@@ -918,7 +935,7 @@ Two container decisions and their rejected alternatives. **Plain JSON over zip (
 
 ### 6.2 Annotated example
 
-A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel, one Structure body with one outlet, and four Links — one home run still `signal.undetermined` at rough-in, one patch jumper, one multi-service Cat5e, and one design-intent HDMI run to a device that does not exist yet.
+A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel, one Structure body with one outlet, and four Links — one home run still `structure.undetermined` at rough-in, one patch jumper, one multi-service Cat5e, and one design-intent HDMI run to a device that does not exist yet.
 
 **Presentation note.** The codec key-sorts every object, which would place the enormous `document` value between `createdAt` and `generator`. It is shown last here so the envelope reads as a unit. Port arrays inside templates are elided with an explicit sentinel string. This listing is therefore *derived from* `test/fixtures/v1_sample.rackmate` and is not itself byte-identical to it.
 
@@ -1087,7 +1104,7 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
               "gender": "male", "key": "ac_in", "label": "AC IN", "maxConnections": 1,
               "order": "d0", "renamedFrom": [],
               "power": { "drawWatts": 60, "maxAmps": 5, "role": "inlet", "volts": 120 },
-              "signalFamily": "pwr.ac_120", "topology": "p2p" }
+              "signalFamily": "power.ac_iec", "topology": "p2p" }
           ],
           "portSets": [],
           "power": { "apparentVA": 52, "inletPlug": "C14", "isContinuousLoad": true,
@@ -1148,7 +1165,6 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
         "templateId": "tpl.generic.patch_panel_24",
         "version": 1,
         "body": {
-          "bodyDepthNm": 76200000,
           "category": "infrastructure.patch_panel",
           "chassisWidthNm": 432000000,
           "displayName": "24-Port Cat6A Patch Panel",
@@ -1168,7 +1184,7 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
           "rearU": 1,
           "requiresClearanceAboveU": 0, "requiresClearanceBelowU": 0,
           "side": "both", "tags": ["infrastructure"], "thermalClass": "passive",
-          "typePrefix": "PP", "weightUg": 1360777100, "widthClass": "full"
+          "typePrefix": "PP", "widthClass": "full"
         }
       },
 
@@ -1371,7 +1387,7 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
         "services": [
           { "conductorRoles": [""], "id": "svc-1", "label": null,
             "netId": "0190e3c1-d090-79ff-9af0-17fb3c6d80ef",
-            "signalFamily": "signal.undetermined" }
+            "signalFamily": "structure.undetermined" }
         ],
         "shielded": true,
         "structureOrigin": {
@@ -1399,10 +1415,10 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
         "designator": "W002", "designatorLocked": false,
         "id": "0190e3c1-cf81-76cc-87bd-e4c80f3a5dbc",
         "inlineAdapters": [],
-        "jacket": "cm",
+        "jacket": "cl2",
         "lifecycleStatus": "new",
         "linkClass": "jumper",
-        "media": "media.cat6_patch",
+        "media": "media.cat6",
         "order": "a1",
         "plenum": false,
         "roughInStatus": "terminated",
@@ -1454,10 +1470,10 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
         "services": [
           { "conductorRoles": ["IR"], "id": "svc-1", "label": "IR emitter",
             "netId": "0190e3c1-d092-7b21-9c12-390d5e8fa201",
-            "signalFamily": "ctl.ir" },
+            "signalFamily": "ctl.ir_emitter" },
           { "conductorRoles": ["+12V"], "id": "svc-2", "label": "Screen trigger",
             "netId": "0190e3c1-d093-7c32-8d23-4a1e6f90b312",
-            "signalFamily": "ctl.trigger_12v" },
+            "signalFamily": "ctl.trigger12v" },
           { "conductorRoles": [""], "id": "svc-3", "label": "Display control",
             "netId": "0190e3c1-d094-7d43-9e34-5b2f70a1c423",
             "signalFamily": "ctl.rs232" }
@@ -1493,7 +1509,7 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
         "jacket": "cl3",
         "lifecycleStatus": "designIntent",
         "linkClass": "fieldCable",
-        "media": "media.hdmi_18g",
+        "media": "media.hdmi_passive",
         "order": "a3",
         "plenum": false,
         "roughInStatus": "planned",
@@ -1511,13 +1527,13 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
     "nets": {
       "0190e3c1-d090-79ff-9af0-17fb3c6d80ef": {
         "id": "0190e3c1-d090-79ff-9af0-17fb3c6d80ef", "isImplicit": true,
-        "name": "", "signalFamily": "signal.undetermined", "topology": "p2p",
+        "name": "", "signalFamily": "structure.undetermined", "topology": "p2p",
         "meta": { "createdAt": "2026-07-18T10:03:12.000000Z", "localRevision": 1,
                   "updatedAt": "2026-07-18T10:03:12.000000Z", "updatedBy": "rriley" }
       },
       "0190e3c1-d092-7b21-9c12-390d5e8fa201": {
         "designator": "N012", "id": "0190e3c1-d092-7b21-9c12-390d5e8fa201",
-        "isImplicit": false, "name": "LR TV IR", "signalFamily": "ctl.ir",
+        "isImplicit": false, "name": "LR TV IR", "signalFamily": "ctl.ir_emitter",
         "topology": "star",
         "meta": { "createdAt": "2026-07-18T10:09:02.000000Z", "localRevision": 2,
                   "updatedAt": "2026-07-18T11:20:00.000000Z", "updatedBy": "rriley" }
@@ -1590,13 +1606,13 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
         "media.cat6a_futp": { "conductorCount": 8, "id": "media.cat6a_futp",
                               "impedanceOhms": 100, "isPathwayOnly": false,
                               "maxChannelLengthNm": 100000000000, "pairCount": 4 },
-        "…media.cat6_patch, media.hdmi_18g elided…": {}
+        "…media.cat6, media.hdmi_passive elided…": {}
       },
       "outletTemplates": {
         "outlet.tv_location": {
           "drops": [ { "count": 2, "media": "media.cat6a_futp", "service": "net.ethernet" },
-                     { "count": 2, "media": "media.rg6_quad",  "service": "video.catv" },
-                     { "count": 1, "media": "media.cat5e",     "service": "ctl.ir" } ],
+                     { "count": 2, "media": "media.rg6_quad",  "service": "rf.catv" },
+                     { "count": 1, "media": "media.cat5e",     "service": "ctl.ir_emitter" } ],
           "id": "outlet.tv_location", "name": "TV location"
         }
       },
@@ -1611,14 +1627,14 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
         "…video.digital, video.analog, audio.analog, audio.digital, pwr, str elided…": {}
       },
       "signalFamilies": {
-        "ctl.ir":       { "domain": "ctl", "id": "ctl.ir", "shortTag": "IR",
-                          "topologyFree": true },
-        "net.ethernet": { "domain": "net", "id": "net.ethernet",
-                          "maxChannelLengthNm": 100000000000, "shortTag": "ENET",
-                          "topologyFree": false },
-        "signal.undetermined": { "domain": "str", "id": "signal.undetermined",
-                                 "shortTag": "TBD", "topologyFree": true },
-        "…video.hdmi.2_0, video.hdbaset, ctl.rs232, ctl.trigger_12v elided…": {}
+        "ctl.ir_emitter": { "domain": "ctl", "id": "ctl.ir_emitter", "shortTag": "IR",
+                            "topologyFree": true },
+        "net.ethernet":   { "domain": "net", "id": "net.ethernet",
+                            "maxChannelLengthNm": 100000000000, "shortTag": "NET",
+                            "topologyFree": false },
+        "structure.undetermined": { "domain": "str", "id": "structure.undetermined",
+                                    "shortTag": "TBD", "topologyFree": true },
+        "…video.hdmi.2_0, video.hdbaset, ctl.rs232, ctl.trigger12v elided…": {}
       }
     },
 
@@ -1642,13 +1658,14 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
 | `generator: "RackMate"` | A magic key, so foreign JSON is rejected with a real error rather than a null-cast crash (CR-092). |
 | `sequence: 412` at the root, no `revision` key | CR-094. `stateId` is in-memory and absent from the file. |
 | `usableDepthNm`, `weightCapacityUg`, `mountHeightAffNm` | N4 — the unit is in the name. All integers (CR-001, CR-003). |
+| The matrix template carries `weightUg` and `bodyDepthNm`; the patch panel carries **neither** | `null` means unknown and is written as an **absent key**, never an explicit `null` (G4, CR-114). The rack rollup reports the panel in its unknown count rather than adding a fabricated zero; `RCK-012` skips it. |
 | `ruIndex: 9` on a 2U device in a 12U rack | 1-based, bottom origin (CR-025). The matrix occupies U9–U10. |
 | `placement.type: "rail" \| "offRack"` | The sealed-union tag. No elevation X/Y anywhere in the file (CR-006). |
 | Four templates, all content-addressed and embedded | The file is self-describing; a snapshot can never be a sync conflict (CR-054, AC-015). |
 | Only **five** ports serialized across four devices | Lazy materialisation. The switch's other 23 ports, the panel's other 46 and the matrix's other 8 are key-joined at load (AC-006). |
 | Port IDs are UUID**v5** while entity IDs are v7 | `uuidv5(deviceId, portKey)` makes materialisation idempotent across peers (AC-006). |
 | `W001` has `structureOrigin` and one `PlaceEndpoint` | A home run **is** a Link. There is no `StructureDrop`, one length, one status (CR-107, AC-019). |
-| `W001.services[0].signalFamily == "signal.undetermined"` | At rough-in a Cat6 is just a Cat6; the family is assigned later and the DRC re-validates. |
+| `W001.services[0].signalFamily == "structure.undetermined"` | At rough-in a Cat6 is just a Cat6; the family is assigned later and the DRC re-validates. |
 | `W002.linkClass == "jumper"` | Excluded from the pull sheet by default so 110 factory patch cords do not bury 70 real pulls (AC-026). |
 | `W003` has three `Service`s over three conductors | One Cat5e carrying IR, a 12 V trigger and RS-232 (CR-010, AC-021). |
 | `W003` mixes `PortEndpoint`, `PlaceEndpoint` and `OpenEndpoint` | The sealed endpoint union (AC-018). |
@@ -1846,7 +1863,7 @@ Structural invariants (**I-n**) mean the model is *corrupt* if violated: assert 
 | 5 | Embedded immutable versioned snapshots; copy-on-place | A live library reference | Non-reproducible deliverables; drawings that change silently across machines | CR-054, AC-041 |
 | 6 | `PortDef.key` + `renamedFrom` as the migration join | A port UUID | Every template revision rewires the project | CR-051 |
 | 7 | Three orthogonal registries | One `CableType` enum | The HDBaseT-into-a-switch class of error becomes inexpressible | CR-008, §6.1 |
-| 8 | Findings + acknowledgement; only five rules block | A static hard-illegal tier | Cannot document an existing miswired system — the remediation market | CR-017, CR-019 |
+| 8 | Findings + acknowledgement; only the eight tier-1 rules block | A static hard-illegal tier | Cannot document an existing miswired system — the remediation market | CR-017, CR-019 |
 | 9 | Nothing blocks export | `blockExportOnErrors` | A heuristic holds the deliverable hostage; users export a PNG into Word | CR-022, G3 |
 | 10 | `ruIndex` 1-based, bottom origin | 0-based `bottomU` | The elevation says U7 and the label says U8 | CR-025 |
 | 11 | Elevation derived; schematic stored in integer gu; no route geometry | Stored elevation coords; persisted polylines | Drawing/RU divergence; unstable round-trips; an unroutable authored drawing | CR-006, CR-004, CR-012 |

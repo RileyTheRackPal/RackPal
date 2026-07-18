@@ -1,6 +1,6 @@
 # Rack Editor
 
-The Rack Editor is the elevation authoring view (`Ctrl+1`) where a user creates racks, sets `heightU`, and places occupants against the rails. It is the first surface a new project shows and the one an installer recognises fastest, but it is not where wiring happens — connections are created in the [Schematic](05-schematic-editor.md) in v1, and the Rack Editor's job is to signpost that (per CR-105) rather than grow a second wiring surface. This document specifies the screen layout, the canvas visual language, every placement gesture and its feedback, rack configuration including the shrink-below-occupancy dialog, the derived readouts, non-device occupants, designator assignment, the keymap, first-run states, and accessibility. Names are taken verbatim from canon §4; `bottomU`, `refDes`, `slot` and `Bay` do not appear here because they do not exist (CR-025, CR-040, CR-033).
+The Rack Editor is the elevation authoring view (`Ctrl+1`) where a user creates racks, sets `heightU`, and places occupants against the rails. It is the first surface a new project shows and the one an installer recognises fastest, but it is not where wiring happens — connections are created in the [Schematic](05-schematic-editor.md) in v1, and the Rack Editor's job is to signpost that (per CR-105) rather than grow a second wiring surface. What that signpost leads to is worth stating here so the handoff is not a surprise: the Schematic renders every `Link` as **a pair of net labels by default** (DR-001), and drawn wires appear when the user filters to one domain, `Alt`-hovers, or focuses — which is why the coach mark on that first switch teaches the domain filter (§9). This document specifies the screen layout, the canvas visual language, every placement gesture and its feedback, rack configuration including the shrink-below-occupancy dialog, the derived readouts, non-device occupants, designator assignment, the keymap, first-run states, and accessibility. Names are taken verbatim from canon §4; `bottomU`, `refDes`, `slot` and `Bay` do not appear here because they do not exist (CR-025, CR-040, CR-033).
 
 ---
 
@@ -10,7 +10,7 @@ Single window, one document (RJ-013). Three resizable regions between a fixed to
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ ≡  RackMate   Hillcrest Residence*        [Rack|Schematic|Rear|Schedule]  [Front|Rear|Both] ⚙ │ 44
+│ ≡  RackMate   Hillcrest Residence*            [Rack|Schematic|Schedule]  [Front|Rear|Both] ⚙ │ 44
 ├────────────┬───────────────────────────────────────────────────────────┬─────────────────────┤
 │ PALETTE    │  RACK CANVAS                                              │ INSPECTOR           │
 │ 280px      │  flex, min 480px                                          │ 320px               │
@@ -42,7 +42,7 @@ Single window, one document (RJ-013). Three resizable regions between a fixed to
 
 | Region | Default | Min / Max | Behaviour |
 |---|---|---|---|
-| Toolbar | 44 px | fixed | Never hides. Left group = view switch (`Ctrl+1..4`); right group = the face segmented control. |
+| Toolbar | 44 px | fixed | Never hides. Left group = view switch (`Ctrl+1..4`), showing **three tabs in v1** — Rack, Schematic, Schedule; right group = the face segmented control. |
 | Palette | 280 px | 220 / 480 | 4 px splitter, 8 px hit slop. Collapses to a 40 px icon rail (`Ctrl+Alt+1`). **One palette widget, shared with the Schematic's library panel** (CR-104). |
 | Canvas | flex | 480 px | Never collapses. Owns both scroll axes. |
 | Inspector | 320 px | 280 / 520 | `Ctrl+Alt+2`. Selection section on top (scrolls); Rack Vitals pinned below, 200 px, collapsible. |
@@ -135,15 +135,15 @@ All gestures are hand-rolled on `Listener` and expressed as `CanvasIntent{beginD
 |---|---|---|
 | Front U range free on this face | **blocks** | `Occupied by AMP-1 (U19–U20)` |
 | Fits within rack extent | **blocks** | `Needs 4U, only 2U free at top` |
-| Rear U range free | warning `RCK-002` | `Rear blocked by PP-2 at U19` |
-| Depth interval fits — front + rear + 50 mm allowance ≤ `usableDepth` | warning `RCK-012` | `18.0 in front + 8.0 in rear in a 25.75 in rack` |
+| Opposite face occupied at these RU | advisory, **no `ruleId`** | `Rear blocked by PP-2 at U19` — a gesture-time hint that `RCK-012` will evaluate once depths are known |
+| Depth interval fits — front + rear + 50 mm allowance ≤ `usableDepth` | error `RCK-012` | `18.0 in front + 8.0 in rear in a 25.75 in rack` |
 | Clearance requested above/below | warning | `AMP-1 requests 1U above` |
 | Mount method compatible | warning | `Shelf-only device — drop it on a shelf` |
 | Half-rack on bare rails | advisory | `Half-rack: an ear kit is required` |
 
-Depth is an **interval on the depth axis per (RU, face)**, not a boolean (AC-022) — front and rear occupants fighting for the same air in a shallow rack is *the* residential failure mode, and checking the two faces independently could never catch it. `usableDepth` is nullable and the depth checks skip when it is null, because a 2-post frame has no meaningful depth (AC-050/A1.3).
+Depth is an **interval on the depth axis per (RU, face)**, not a boolean (AC-022) — front and rear occupants fighting for the same air in a shallow rack is *the* residential failure mode, and checking the two faces independently could never catch it. `TemplateBody.bodyDepth` and `Rack.usableDepth` are both nullable and the depth checks **skip** when either is null, because a 2-post frame has no meaningful depth and an uncited body depth must never be estimated into one (AC-050/A1.3, CR-114/G4). Note that `RCK-012` is an **error** but a non-blocking one: only the first two rows are model-incoherence and stop the gesture. Severity governs the finding, not the drop.
 
-**Blocked-drop rendering.** Ghost fill → `error @ 12 %`, border → 1.5 px dashed error, the conflicting occupant gets a 45° hatch at `error @ 25 %`, cursor → `forbidden`, and a 28 px reason chip states the message. Release while blocked is a no-op with a 120 ms shake and the chip persisting 1.2 s. A warning-level drop **completes normally** and files a finding; heuristics never hold a deliverable hostage (G3).
+**Blocked-drop rendering.** Ghost fill → `error @ 12 %`, border → 1.5 px dashed error, the conflicting occupant gets a 45° hatch at `error @ 25 %`, cursor → `forbidden`, and a 28 px reason chip states the message. Release while blocked is a no-op with a 120 ms shake and the chip persisting 1.2 s. Any drop that trips a non-blocking check — advisory, warning, or `RCK-012`'s error — **completes normally** and files a finding; heuristics never hold a deliverable hostage (G3).
 
 **Escape hatches.** `Esc` cancels, ghost fades over 100 ms, palette row restores. Dragging outside any rack shows the ghost at 40 % with a `Release to add to Staging Bin` chip; dropping there creates a `StagedPlacement` (CR-031, CR-032).
 
@@ -246,7 +246,7 @@ Three entry points to one `RackInspector`, which replaces the Selection section:
 
 `heightU ∈ [1, 60]`, asserted as an invariant, advisory above 50 (CR-038). Rejected alternatives: 1–58 and a soft cap of 45 — 58U and 60U products both exist, and 60 is the honest cap that matches the performance envelope. `Circuit` is flat on the document with an optional `rackId`; the inspector merely filters (CR-028). Circuit **membership is derived** by walking power `Link`s from device inlet → PDU outlet → PDU inlet → circuit; `Port.circuitId` survives only where the rack meets the building. `Rack.lineVoltage` is deleted — `Circuit.volts` is authoritative and `ProjectSettings.defaultLineVolts` seeds new circuits (CR-039).
 
-Presets are the fast path and are seed data in the same editable format as device templates: `Wall box 6U/12 in`, `Swing gate 12U/18 in`, `Pivot cabinet 10U`, `Floor enclosure 18/21/27/35/44U`, `Open frame 4-post 44U`, `Credenza bay 8U`, `Data 42U/36 in`. Each carries height, depth, capacity, rail type and `RackFormFactor` — which also gates `RCK-004` and `RCK-007`, both **advisory and default off** for wall and credenza form factors where they would otherwise be permanent noise (CR-020, AC-034/m19).
+Presets are the fast path and are seed data in the same editable format as device templates: `Wall box 6U/12 in`, `Swing gate 12U/18 in`, `Pivot cabinet 10U`, `Floor enclosure 18/21/27/35/44U`, `Open frame 4-post 44U`, `Credenza bay 8U`, `Data 42U/36 in`. Each carries height, depth, capacity, rail type and `RackFormFactor` — which also gates `RCK-004` and `RCK-007` — both v1.2 rules, and when they land, both **advisory and default off** for wall and credenza form factors where they would otherwise be permanent noise (CR-020, AC-034/m19). `RackFormFactor` itself is v1 data; only the two rules that read it defer.
 
 ### 4.1 Changing height, and the shrink-below-occupancy case
 
@@ -278,7 +278,7 @@ If the requested height is below the highest occupied U, commit opens a modal. *
 4. Link counts are shown, because that is the real cost signal — a 24-link patch panel losing its position matters more than a blank.
 5. `Trim from: Bottom` shifts every occupant's `ruIndex` down by the removed count, which is what a changed base plinth actually does.
 6. Apply is **one** undo entry covering the resize and every displacement.
-7. Devices sent to the bin get `StagedPlacement{lastRackId, lastRuIndex, lastFace}`, so the chip offers `↩ Return to RK-1 U21` once space exists (CR-032). A non-empty bin files `RCK-014`, an **advisory** — it is a legitimate intermediate state (CR-021).
+7. Devices sent to the bin get `StagedPlacement{lastRackId, lastRuIndex, lastFace}`, so the chip offers `↩ Return to RK-1 U21` once space exists (CR-032). A non-empty bin is a legitimate intermediate state, so v1 files nothing for it at all; the `RCK-014` advisory that names it arrives with the v1.2 rules (CR-021).
 
 ### 4.2 Other geometry changes
 
@@ -293,8 +293,10 @@ Two tiers on screen plus the validation drawer. The split follows AC-039 directl
 **Always-visible chip strip** (20 px, in the rack header):
 
 ```
-RU 15/24 · 148/200 lb · 1.24 kVA · outlets 14/16 · ⚠2
+RU 15/24 · 148/200 lb ⁽³⁾ · 1.24 kVA · outlets 14/16 · ⚠2
 ```
+
+Each of the four rollups — RU, weight, VA, outlets — carries its **unknown count** where one exists, as a superscript that expands on hover to `Total weight 148 lb · 3 devices have no weight`. RU and outlets are counted from placement and port data and are rarely unknown; weight and VA frequently are, because the AC-052 provenance gate stops a template shipping with an uncited safety-adjacent field rather than inventing one. A rollup with nothing unknown shows no superscript.
 
 **Collapsed advisory panel** (closed by default): BTU/hr, centre of gravity, thermal adjacency, deepest-device-vs-usable-depth, largest contiguous free run.
 
@@ -325,20 +327,22 @@ Rules that make these honest:
 
 Severity is `error | warning | advisory | off` (CR-018) — `info` is renamed `advisory` everywhere. Every finding, **including errors**, is acknowledgeable via one `AckedFinding{ruleId, targetFingerprint, reason, by, at, demotedTo}` at two scopes, reason required at project scope (CR-019, RJ-006); refusing a professional the right to override the tool's opinion about their own system is how the tool gets abandoned. Reasons print on sheet `T0.02`.
 
-| Rule | Severity | Trigger |
-|---|---|---|
-| `RCK-001` | error | two occupants share a front or rear U |
-| `RCK-002` | warning | rear-face occupancy conflict |
-| `RCK-003` | warning (advisory at 85 %) | Σ weight > `weightCapacity` |
-| `RCK-003b` | warning | wall-mount rack over 80 % of capacity |
-| `RCK-012` | error | front + rear depth + 50 mm > `usableDepth` on overlapping RU |
-| `RCK-013` | warning | device over `maxUnsupportedMass` on front ears only — needs rear support or a shelf (AC-028) |
-| `RCK-014` | advisory | devices present in the Staging Bin |
-| `RCK-004` / `RCK-007` | advisory, default off on wall & credenza | centre of gravity above 55 % · heat source with no vent above |
-| `PWR-001` | warning | Σ continuous amps > 80 % of breaker |
-| `PWR-006` | warning | device draws power with no outlet assigned |
+| Rule | v1? | Severity | Trigger |
+|---|---|---|---|
+| `RCK-001` | **v1** | error | RU overlap on the same face |
+| `RCK-002` | **v1** | error | device extends past `heightU` |
+| `RCK-003` | **v1** | warning (advisory at 85 %) | Σ weight > `weightCapacity` |
+| `RCK-012` | **v1** | error | front + rear depth + 50 mm > `usableDepth` on overlapping RU |
+| `RCK-013` | **v1** | warning | device over `maxUnsupportedMass` on front ears only — needs rear support or a shelf (AC-028) |
+| `PWR-001` | **v1** | warning | Σ continuous amps > 80 % of breaker |
+| `RCK-003b` | v1.2 | warning | wall-mount rack over 80 % of capacity |
+| `RCK-004` / `RCK-007` | v1.2 | advisory, default off on wall & credenza | centre of gravity above 55 % · heat source with no vent above |
+| `RCK-014` | v1.2 | advisory | devices present in the Staging Bin |
+| `PWR-006` | v1.2 | warning | device draws power with no outlet assigned |
 
-Rejected alternatives on severity: `RCK-003` and `RCK-012` as blocking errors, and "errors are not dismissible" — a found over-spec install must be documentable (G2). The full 22-rule catalogue lives in [docs/rules.md](11-testing-and-quality.md); a rule not in it does not exist (CR-021). Findings surface in three places at once: a 14×14 badge on the device (triangle/octagon/circle — **shape as well as colour**), the rack header's `⚠n` rollup, and the drawer, where each row selects and zooms to its subject. Recomputation is incremental per rack on a microtask, so a multi-device drag computes once; `F7` re-checks the project with progress and cancel (AC-058/D14).
+The `v1?` column is not decoration: the v1 catalogue is a **counted** set, and a table that shows an unmarked superset is how the count drifted in the first place. Only the six rules marked **v1** above are members of it; the v1.2 rows are deferred by [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers) §5.3 and must not be tallied into it.
+
+Rejected alternatives on severity: `RCK-003` and `RCK-012` as blocking errors, and "errors are not dismissible" — a found over-spec install must be documentable (G2). The full **27-rule** catalogue lives in [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers); a rule not in it does not exist (CR-021). Findings surface in three places at once: a 14×14 badge on the device (triangle/octagon/circle — **shape as well as colour**), the rack header's `⚠n` rollup, and the drawer, where each row selects and zooms to its subject. Recomputation is incremental per rack on a microtask, so a multi-device drag computes once; `F7` re-checks the project with progress and cancel (AC-058/D14).
 
 ---
 
@@ -405,7 +409,7 @@ Locations come from the **project-level Locations panel** (`Project ▸ Location
 
 ## 8. Keymap
 
-Rack-editor bindings only; the complete ~40-binding table is generated from the single `Intent` registry into `docs/keymap.md` so it cannot drift from the code (CR-101). Three arbitration principles apply: view-switching and global keys beat view-local meanings; a key means the same thing everywhere or nothing; unmodified letters must not collide between views sharing the canvas.
+Rack-editor bindings only; the complete ~40-binding table is generated from the single `Intent` registry into `build/keymap.md` at build time so it cannot drift from the code, and the arbitrated bindings themselves are ruled in [canon §1.10](canonical-decisions.md#110-interaction) (CR-101). Three arbitration principles apply: view-switching and global keys beat view-local meanings; a key means the same thing everywhere or nothing; unmodified letters must not collide between views sharing the canvas.
 
 | Key | Action | Scope |
 |---|---|---|
@@ -432,6 +436,8 @@ Rack-editor bindings only; the complete ~40-binding table is generated from the 
 | `Space+drag`, `MMB` · `Ctrl+wheel` | pan · zoom about cursor | global |
 | `Esc` | cancel drag, exit mode, clear selection | global |
 
+**In v1 the tab strip shows three tabs — Rack, Schematic, Schedule.** `Ctrl+3` is reserved for the Rear Panel view and is an unbound no-op until v1.1 (CR-071); `Ctrl+4` is the Schedule in v1 and forever. Do not rebind the Schedule to `Ctrl+3` — `Ctrl+n` is a view identity, not an ordinal. The `Ctrl+1..4` row above is therefore written as the stable identity map, not as what the v1 strip renders.
+
 Deleted bindings and why: `F`/`Shift+F` are unbound here (they mean Focus/Isolate in the schematic and rear views); `Ctrl+B` is reserved with `Fill gaps` (AC-045); `Ctrl+Shift+R` belongs to the schematic since auto-arrange defers; "Focus mode on this rack" is deleted as a distinct command — it is fit-selection with a rack selected, i.e. `Ctrl+9`.
 
 ---
@@ -442,7 +448,7 @@ Deleted bindings and why: `F`/`Shift+F` are unbound here (they mean Focus/Isolat
 
 **New rack** is three fields — Name, Preset, Height — and `Enter` commits. The `Location` combobox is **removed from this dialog** (AC-048): an empty required-looking dropdown on field two of the very first dialog was the first cliff in the corpus, and location is set later from the rack inspector or the Locations panel.
 
-**Empty rack** renders rails, holes and ruler at full fidelity — it should look like a rack immediately — with a 40 % hint card reading `Press / to search devices, or drag from the palette`, fading out permanently on the first pointer-down. The measured keyboard-only path from launch to a populated 8-device rack is nine `/ query ⏎` cycles, roughly 25 seconds. That works because `Enter` from palette search places at the caret and advances it; it is worth protecting in every future change. Eight further empty states (no racks, empty bin, no findings, empty schedule, no templates in a category, no search results, no circuits, no locations) are designed alongside it (AC-058/D4). Progressive disclosure is two one-time coach marks, not a tour: one on first placement, one on first finding.
+**Empty rack** renders rails, holes and ruler at full fidelity — it should look like a rack immediately — with a 40 % hint card reading `Press / to search devices, or drag from the palette`, fading out permanently on the first pointer-down. The measured keyboard-only path from launch to a populated 8-device rack is nine `/ query ⏎` cycles, roughly 25 seconds. That works because `Enter` from palette search places at the caret and advances it; it is worth protecting in every future change. Eight further empty states (no racks, empty bin, no findings, empty schedule, no templates in a category, no search results, no circuits, no locations) are designed alongside it (AC-058/D4). Progressive disclosure is three one-time coach marks, not a tour: one on first placement, one on first finding, and one on the first rack→schematic switch (CR-104, AC-048). The third points at the **domain filter bar** and reads `Filter to a domain to draw the wires` — under DR-001 the filter is the primary way a user sees routed links, not a fallback for a crowded sheet, so it is taught the first time the Schematic is opened rather than discovered later.
 
 **Accessibility.** `F6`/`Shift+F6` cycle focus regions; `Ctrl+F6` returns to canvas. Within the canvas focus has two levels — `Tab` moves between racks, `Enter` descends to the insertion caret at U1, `Esc` ascends. The caret **announces every U it passes**: `U14, free` / `U19 to U20, AMP-1, 16-channel amplifier`. Every keyboard action produces a spoken result via `SemanticsService.announce` on a polite live region, with vitals announcements throttled to one per 2 s and only on a threshold crossing. **No pointer-only affordance exists**: the header `⋮`, the resize band and shelf reordering all have keyboard equivalents.
 

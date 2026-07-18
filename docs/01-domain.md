@@ -15,6 +15,8 @@ This document is the source of truth for the physical, electrical and documentar
 | **VERIFY:** | Figure taken from a secondary source and not yet confirmed against a datasheet or the standard text. Must be resolved before the value ships in `assets/catalog/`. |
 | `CR-nnn` etc. | The ruling in the canonical decision record that governs the statement. Cite it in code comments and commit messages. |
 
+This document is the project glossary: the canonical home for every trade term. Canonical Dart/JSON/UI names are ruled in canon §4.
+
 Two standing prohibitions apply to everything below. **Never fabricate a number** — an unknown physical fact is `null`, renders as `—`, and every rollup reports how many unknowns it contains (G4, CR-114). **Never let a domain heuristic block a deliverable** — trade guidance produces findings, and findings never gate bytes (G3, CR-022).
 
 ---
@@ -37,7 +39,7 @@ EIA-310-D (US, inches), IEC 60297-3-100 (metric) and DIN 41494 are the harmonise
 
 ### 2.2 1U is 44.45 mm exactly, and panel height is not `n × 1.75`
 
-**Ruling — `k1RackUnit = Len(44_450_000)` (CR-001, CR-002).** A raw design document asserted "1U = 44.45 mm = 444 tenths-mm, exact — no rounding anywhere in the vertical axis". That statement is arithmetically false: 44.45 mm is 444.5 tenths. The error loses 0.05 mm per U and **2.25 mm across a 45U rack**, which is visible on a dimensioned print. CR-002 deleted the claim; CR-001 replaced the unit. *Rejected alternative: hundredths-of-a-millimetre, which is exact for 1U but not for the 1/32-in clearance (79.375 hundredths).*
+**Ruling — `kRackUnit = Len(44_450_000)` (CR-001, CR-002; spelling per canon §5.2).** A raw design document asserted "1U = 44.45 mm = 444 tenths-mm, exact — no rounding anywhere in the vertical axis". That statement is arithmetically false: 44.45 mm is 444.5 tenths. The error loses 0.05 mm per U and **2.25 mm across a 45U rack**, which is visible on a dimensioned print. CR-002 deleted the claim; CR-001 replaced the unit. *Rejected alternative: hundredths-of-a-millimetre, which is exact for 1U but not for the 1/32-in clearance (79.375 hundredths).*
 
 A rack-mount panel is **1/32 in (0.79375 mm) shorter than its nominal U height** so that adjacent units clear each other **[std]**:
 
@@ -271,7 +273,7 @@ There are ~50 signal families and **no categorical palette is colour-vision-defi
 | Line weight | domain tier (0.75×–2.0×) | yes | yes | yes |
 | Glyph + tag pill | exact family | yes | yes | yes |
 
-The **tag pill** (`W042 · HDMI · 25 ft`, drawn at both ends of every run) is the encoding that never fails and is mandatory, not decorative. Full rendering detail is in [Schematic editor](05-schematic-editor.md) and `docs/visual-language.md`.
+The **tag pill** (`W042 · HDMI · 25 ft`, carried at both ends of every run) is the encoding that never fails and is mandatory, not decorative. It survives the default rendering, which is **net labels**: every `Link` is two labelled stubs, one at each pin, with no polyline between them; drawn wires appear on domain filter, `Alt`-hover or focus (DR-001). Full rendering detail is in [the visual language](05-schematic-editor.md#66-rendering-constants-stated-once).
 
 #### The eight domains
 
@@ -286,7 +288,11 @@ The **tag pill** (`W042 · HDMI · 25 ft`, drawn at both ends of every run) is t
 | `pwr` | Power | `#000000` | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.000 |
 | `str` | Structure | `#999999` | `4,4` | 0.75× | ★ / ☆ | 0.319 |
 
-Yellow `#F0E442` is reserved for selection and focus and **is never a cable** (PAL-2). The claim that Okabe–Ito survives greyscale is **false** and is not repeated: sky blue (0.401) and orange (0.416) are 1.5% apart, and vermillion/green/purple share a 0.07 band. The collisions are placed deliberately and separated on the other three channels, which is promoted to a checkable rule — **PAL-1: within any greyscale luminance band narrower than 0.10, no two domains may share a dash class, and their line weights must differ by a factor ≥ 1.4.**
+Yellow `#F0E442` is reserved for selection and focus and **is never a cable** (PAL-2). The claim that Okabe–Ito survives greyscale is **false** and is not repeated: sky blue (0.401) and orange (0.416) are 1.5% apart, and vermillion/green/purple share a 0.07 band. The collisions are placed deliberately and separated on the other three channels, which is promoted to a checkable rule:
+
+> **PAL-1.** Every shipped `SignalFamilyDef` renders as *(L, dashClass, weight)* where **L** is the WCAG relative luminance of its **effective** hue and dashClass/weight are its **effective** values *after* any §6.4 override — not the domain base values. For every pair of families in **different** `SignalDomainDef`s with **|L₁ − L₂| < 0.10**, at least one must hold: **(a)** their dash classes differ, **or** **(b)** their weight multipliers differ by a factor **≥ 1.4**. Families within one domain are exempt from (a)/(b) — they share a hue by construction and the legend prints them adjacently — but must still differ in dash pattern, weight, or glyph.
+
+PAL-1 is checked by a unit test over every shipped family pair, not by inspection of the eight domain rows (canon §14). The dash-period floor is **≥ 4.5 pt** (1.5875 mm).
 
 ---
 
@@ -498,7 +504,7 @@ Polarity is a **derived property of the port pairing** (`PortDef.polarity`), not
 
 ### 8.1 The standard
 
-**ANSI/TIA-570-D** (2018) governs residential telecommunications infrastructure **[std]**. Its architectural fact is the topology: **star / home run** — every outlet runs back unbroken to a central Distribution Device (DD). No daisy-chaining. That is precisely what the Structure device models.
+**ANSI/TIA-570-D** (2018) governs residential telecommunications infrastructure **[std]**. Residential CI is the primary market and fronts the UI; commercial capability is present and never fronts it (DR-002). Its architectural fact is the topology: **star / home run** — every outlet runs back unbroken to a central Distribution Device (DD). No daisy-chaining. That is precisely what the Structure device models.
 
 Grades specify minimum media per cabled outlet location:
 
@@ -510,7 +516,7 @@ Grades specify minimum media per cabled outlet location:
 
 The canonical residential outlet is Grade 2: **2 × Cat6/6A + 2 × RG6**.
 
-**Ruling — user-defined `OutletTemplate` is first-class; grades are presets and a standards tag** (CR-108, AC-034/m23). Seeded templates: TV location · AP · Keypad · Ceiling speaker pair · Camera · Data-only, *plus* Grade 1/2/3. `StructureGrade` as an enum is deleted; `Outlet.tia570Grade: String?` survives for specs that cite it. *Rejected alternative: grades as the primary specification axis — essentially no CI integrator speaks in grades.*
+**Ruling — user-defined `OutletTemplate` is first-class; grades are a standards tag, not an axis** (CR-108, confirmed by DR-002; AC-034/m23). Seeded templates: TV location · AP · Keypad · Ceiling speaker pair · Camera · Data-only, *plus* Grade 1/2/3. `StructureGrade` as an enum is deleted; `Outlet.tia570Grade: String?` survives for specs that cite it. *Rejected alternative: grades as the primary specification axis — essentially no CI integrator speaks in grades.*
 
 ### 8.2 The distribution device and the rack
 
@@ -522,7 +528,7 @@ Low-voltage rough-in is deliberately routed in separate stud bays from AC, and t
 
 **Ruling — `StructureDrop` is deleted; a home run *is* a `Link`** (CR-107, AC-019). Its field end is a `PlaceEndpoint`, and it carries `Link.structureOrigin{structureBodyId, outletId, fieldLabel, rackLabel, wall?, mountHeightAff?, terminationField}`. *Rejected alternative: `StructureDrop` alongside `Link`, which gives one physical cable two rows, two lengths and two test results — guaranteed to diverge within a week of real use.* One cable, one row, one length, one certificate, one status.
 
-`Outlet` (renamed from `StructureBundle`) is **one wall plate or one ceiling location** — the atom of creation, specification and pricing (CR-016). `Pathway` absorbs "bundle/snake" and `conduitId` and is purely organisational, carrying `kind: conduit | jhook | tray | plenumSpace | riser | directBury | exterior` and `containsLineVoltage: bool`. The word "bundle" survives only as UI copy for `Pathway`. `Outlet.bundleStatus` is the **minimum** of member statuses, derived, not serialized — an outlet is as complete as its least-complete run (CR-111).
+`Outlet` (renamed from `StructureBundle`) is **one wall plate or one ceiling location** — the atom of creation, specification and pricing (CR-016). `Pathway` absorbs "bundle/snake" and `conduitId` and is purely organisational, carrying `kind: conduit | jhook | tray | plenumSpace | riser | directBury | exterior` and `containsLineVoltage: bool`. The word "bundle" survives only as UI copy for `Pathway`. **`Outlet.roughInStatus`** is the **minimum** of member statuses, derived, not serialized — an outlet is as complete as its least-complete run (CR-111, CR-115).
 
 An unbound endpoint is legal and expected: `Endpoint = PortEndpoint | PlaceEndpoint | OpenEndpoint` plus `LifecycleStatus.designIntent` (AC-018). **A Cat6 to a projector shelf that does not exist yet still schedules, prints, gets a `W` number and gets a label** — that is the state of every job in February when drywall goes up in three weeks. `LNK-020 advisory: 14 links have unbound endpoints` is a checklist, not an error.
 
@@ -595,7 +601,7 @@ The most directly applicable standard to this product: it defines the *minimum d
 
 | D401.01 item | RackMate artifact |
 |---|---|
-| **System Interconnection Information** — "detailed information on how each component in the system is connected… part numbers, cable type, cable labels" | The Schematic sheet + the Pull Sheet + the Termination Schedule |
+| **System Interconnection Information** — "detailed information on how each component in the system is connected… part numbers, cable type, cable labels" | The Interconnect sheets (`T6.01…`) + the Pull Sheet + the Termination Schedule |
 | **Equipment Mounting Information** — "the location and placement of equipment inside of any equipment rack… part numbers and detailed rack or location identification" | Front and rear rack elevations |
 | **Bill of Materials** | Equipment List and Materials (`T6.30`) — **no pricing** (AC-055) |
 
@@ -647,18 +653,25 @@ Front and rear elevations are drawn **separately, side by side on the same sheet
 
 US National CAD Standard / Uniform Drawing System: `[Discipline][SheetType][Sequence]`, where **T = Telecommunications**, type **0** = general, **2** = elevations, **6** = schedules and diagrams **[std]**. **Ruling — `ProjectSettings.sheetNumbering: ncs | simple`, default `simple`**, because the NCS regex is overkill for a four-page residential set (CR-066, AC-034/m17).
 
-The v1 sheet set (§7.2.7 of the decision record) — full detail in [PDF export](08-pdf-export.md):
+The v1 sheet set — full detail in [PDF export](08-pdf-export.md) §2.2, which is the source this table restates. Canon §7.2.7's eight-item list is a summary, not a ceiling; `T0.00`, `T6.20` and `T5.01` are v1 (canon §4.3, CR-073, DR-005).
 
-| Sheet | Content |
-|---|---|
-| `T0.01` **Symbol Legend** | One row per named cable type, in colour and greyscale side by side |
-| `T0.02` **Exceptions & Acknowledgements** | Every open finding and every acknowledgement with reason, author, date |
-| Front elevation | §9.8 |
-| Rear elevation | §9.8 |
-| Schematic sheet | Signal flow, left to right, colour by domain |
-| **Pull Sheet** | §9.7 |
-| **Termination Schedule** | §9.7 |
-| `T6.30` **Equipment List and Materials** | Includes the cable footage rollup by media with waste factor. No pricing |
+| Sheet | Content | Default |
+|---|---|---|
+| `T0.00` **Cover & Drawing Index** | Project identification and the index of every sheet in the set | ON |
+| `T0.01` **Symbol Legend** | One row per named cable type, in colour and greyscale side by side | ON |
+| `T0.02` **Exceptions & Acknowledgements** | Every open finding and every acknowledgement with reason, author, date | ON |
+| `T2.01` **Rack Elevation — Front** | §9.8 | ON, one per `Rack` |
+| `T2.02` **Rack Elevation — Rear** | §9.8. The rear panel *prints* in v1; the interactive Rear Panel view is v1.1 (CR-071) | ON, one per `Rack` |
+| `T6.01…` **Interconnect** | One sheet per domain partition of the single schematic `Sheet` (CR-073). Signal flow, left to right, colour by domain. Devices repeat across sheets, identified by `designator`. Zero cross-sheet connections by construction | ON |
+| `T6.10` **Pull Sheet** | §9.7 | ON |
+| `T6.11` **Termination Schedule** | §9.7 | ON |
+| `T6.20` **Unused Home Runs** | Every home run terminated at the DD with no device on it | AUTO (iff ≥ 1 exists) |
+| `T6.30` **Equipment List and Materials** | Includes the cable footage rollup by media with waste factor. No pricing | ON |
+| `T5.01` **Plate, Panel & Pinout Details** | Per-plate and per-panel detail where a connector's pinout is non-standard | AUTO (iff a non-standard pinout exists) |
+
+Partition at export is not multi-sheet authoring; multi-sheet authoring is never built (DR-004). Exactly one schematic `Sheet` exists per project and the exporter filters it by domain to emit `T6.01…`.
+
+The set is a **client deliverable and is drafted as one** (DR-005): drawing border, zone references, title block, revision block, revision clouds driven from `RevisionEntry`, the `ISSUED FOR CONSTRUCTION` stamp, and `simple`/`ncs` sheet numbering. Sheet furniture is orthogonal to wire idiom — the schematic's reader is technical (GC, electrician, low-voltage sub, technically-literate homeowner), so the sheet is polished fully and the wires stay net labels (DR-001).
 
 J-STD-710 requires that any sheet omitting the legend carry a note stating where the legend is shown. **The exporter auto-fills `SYMBOL LEGEND: SEE SHEET T0.01`; it is not an invariant and it does not gate export** (CR-023). Likewise `ISSUED FOR CONSTRUCTION` is gated on zero open errors but **never gates bytes** (CR-022, G3). *Rejected alternative: `blockExportOnErrors` — deleted, not deferred; no setting, no equivalent.*
 
