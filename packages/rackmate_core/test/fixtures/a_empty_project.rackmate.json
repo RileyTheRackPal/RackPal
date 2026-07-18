@@ -1,0 +1,70 @@
+{
+  "appVersion": "0.1.0+build.1",
+  "createdAt": "2026-07-18T09:00:00.000Z",
+  "document": {
+    "ackedFindings": {},
+    "circuits": {},
+    "devices": {},
+    "info": {
+      "projectName": "Ashford Residence"
+    },
+    "links": {},
+    "locations": {},
+    "meta": {
+      "createdAt": "2026-07-18T09:00:00.000Z",
+      "localRevision": 0,
+      "unknown": {},
+      "updatedAt": "2026-07-18T09:00:00.000Z",
+      "updatedBy": "rriley"
+    },
+    "nets": {},
+    "notes": {},
+    "outlets": {},
+    "pathways": {},
+    "ports": {},
+    "racks": {},
+    "registries": {
+      "cableSpecs": {},
+      "connectors": {},
+      "media": {},
+      "outletTemplates": {},
+      "signalDomains": {},
+      "signalFamilies": {}
+    },
+    "revisionBlock": [],
+    "settings": {
+      "cableWasteFactor": 100,
+      "collisionPolicy": "suffixLetter",
+      "defaultLineVolts": 120,
+      "defaultMirrorRearElevation": true,
+      "defaultNetworkMedia": "media.cat6a_futp",
+      "defaultRackHeightU": 12,
+      "defaultRuNumbering": "bottomUpFromOne",
+      "designatorBlockSize": 100,
+      "designatorPad": 0,
+      "designatorSeparator": "-",
+      "deviceDesignatorFormat": "{TYPE_PREFIX}{SEP}{SEQ}",
+      "displayUnits": "imperial",
+      "diversityFactorsByCategory": {},
+      "familyColorOverrides": {},
+      "linkDesignatorFormat": "W{SEQ:3}",
+      "netNameFormat": "N{SEQ:3}",
+      "outletFieldLabelFormat": "{ROOM_ABBR}-{SERVICE}-{SEQ}",
+      "outletRackLabelFormat": "{FLOOR}{SPACE}-{PANEL}{PORT:2}",
+      "portDesignatorFormat": "J{PORT_SEQ:2}",
+      "ruleOverrides": {},
+      "sheetNumbering": "simple"
+    },
+    "sheets": {},
+    "structures": {},
+    "templates": {},
+    "tombstones": {}
+  },
+  "generator": "RackMate",
+  "id": "0190e3c1-0000-7000-8000-000000000000",
+  "minReaderVersion": 1,
+  "modifiedAt": "2026-07-18T09:00:00.000Z",
+  "schemaVersion": 1,
+  "sequence": 0,
+  "unknown": {}
+}
