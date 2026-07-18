@@ -1,4 +1,7 @@
-// The single concrete TextMeasurer, backed by PdfFont.stringMetrics (CR-081).
-//
-// Not implemented yet -- lands with the DiagramCanvas work at M1. This package
-// exists now only so the five-package workspace resolves (M0, CR-083).
+/// The single concrete `TextMeasurer`, backed by `PdfFont.stringMetrics`
+/// (CR-081).
+///
+/// Lands with the `DiagramCanvas` work at M1 (docs/08-pdf-export.md §7.5).
+library;
+
+export 'src/pdf_font_measurer.dart';

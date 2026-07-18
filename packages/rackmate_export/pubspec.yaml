@@ -16,6 +16,11 @@ dependencies:
     path: ../rackmate_core
   rackmate_text:
     path: ../rackmate_text
+  # Transitive via `pdf` (PdfGraphics.setTransform takes a Matrix4 and
+  # PdfDiagramCanvas needs Matrix4 directly for its transform stack) --
+  # pinned explicitly per the architecture doc's guidance to pin
+  # transitive dependencies that are imported directly.
+  vector_math: ^2.2.0
 
 dev_dependencies:
   test: ^1.26.0
