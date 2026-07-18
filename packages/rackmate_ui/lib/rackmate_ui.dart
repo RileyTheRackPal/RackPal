@@ -14,5 +14,6 @@ export 'src/canvas/grid_painter.dart';
 export 'src/canvas/rack_canvas_screen.dart';
 export 'src/canvas/render_device_box.dart';
 export 'src/canvas/render_rack_canvas.dart';
+export 'src/canvas/selection_controller.dart';
 export 'src/canvas/viewport_controller.dart';
 export 'src/draw/flutter_canvas.dart';

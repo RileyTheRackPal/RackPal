@@ -1,9 +1,15 @@
+import 'dart:math' as math;
+
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'
+    show HardwareKeyboard, LogicalKeyboardKey;
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/canvas/canvas_intent.dart';
 import 'package:rackmate_ui/src/canvas/grid_painter.dart';
 import 'package:rackmate_ui/src/canvas/render_device_box.dart';
 import 'package:rackmate_ui/src/canvas/render_rack_canvas.dart';
+import 'package:rackmate_ui/src/canvas/selection_controller.dart';
 import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
 
 /// The rack editor canvas: the pannable/zoomable grid (L0) with a real rack
@@ -12,11 +18,23 @@ import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
 /// `FlutterDiagramCanvas`, and each device is a `RenderDeviceBox` widget
 /// that owns its own hit-testing, hover, focus and Semantics.
 ///
-/// The scene is (re)built only when the FACE, the LOD tier, or the theme
-/// palette changes — never per pan/zoom frame. Panning and zooming inside
-/// one LOD tier is a pure repaint driven by the `ViewportController`
-/// listenable (docs/03 §7.3: "no setState in the canvas path"); the scene
-/// geometry is identical within a tier, so it is not rebuilt.
+/// M1 wires the first REAL, command-routed editing loop on top of that:
+/// click to select (Ctrl/Cmd+click toggles), drag a selected device to move
+/// it with RU snapping, `Del`/`Backspace` to remove, `Ctrl/Cmd+Z` /
+/// `Ctrl/Cmd+Shift+Z` (or `Ctrl+Y`) to undo/redo. Every mutation goes
+/// through the real `DocumentController`/`Command` system
+/// (docs/03 §5) — the document is only ever changed through a `Command`,
+/// exercised here by a real gesture for the first time. Selection is
+/// OBSERVED, not owned by the document (docs/03 §4.4): it lives in
+/// [SelectionController] and never dirties the file or bumps an epoch.
+///
+/// The scene is (re)built only when something MEANINGFUL changes — the face,
+/// the LOD tier, the theme palette, the current SELECTION, or a committed
+/// structural edit (the `structure` epoch) — never per pan/zoom frame.
+/// Panning and zooming inside one LOD tier is a pure repaint driven by the
+/// `ViewportController` listenable (docs/03 §7.3: "no setState in the canvas
+/// path"); the scene geometry is identical within a tier, so it is not
+/// rebuilt.
 class RackCanvasScreen extends StatefulWidget {
   const RackCanvasScreen({required this.measurer, super.key});
 
@@ -31,24 +49,63 @@ class RackCanvasScreen extends StatefulWidget {
 }
 
 class _RackCanvasScreenState extends State<RackCanvasScreen> {
+  /// Net pointer travel (screen px) below which a drag is treated as a click
+  /// (docs/04 §3.1 step 1: "Nothing until 4 px of movement, so a click still
+  /// means show details"). Compared in screen space so the slop does not
+  /// shrink/grow with zoom.
+  static const double _clickSlopPx = 4;
+
   final ViewportController _viewport = ViewportController();
   final GridCache _gridCache = GridCache();
+
+  /// The observable selection (docs/03 §4.4) — UI-owned, never persisted.
+  final SelectionController _selection = SelectionController();
+
+  /// Focus for the canvas so its Shortcuts/Actions receive Del/undo/redo.
+  final FocusNode _canvasFocus = FocusNode(debugLabel: 'rackCanvas');
 
   // Temporary DEMO data (see _buildDemoDocument): there is no catalog loader
   // or device-creation UI yet, so one rack + a few devices are hand-built
   // here purely to have something real to render. This is NOT a seeded
   // catalog and must be deleted when the catalog/creation stages land.
-  late final RackDocument _doc = _buildDemoDocument();
+  //
+  // Now wrapped in the REAL DocumentController — THE one mutation entry
+  // point (docs/03 §5.4). Every move/delete/undo/redo below runs through it.
+  late final DocumentController _controller =
+      DocumentController(_buildDemoDocument());
+  RackDocument get _doc => _controller.doc;
   late final Rack _rack = _doc.racks.values.first;
   late final RackGeometry _geo = RackGeometry(_rack.heightU);
 
   Face _face = Face.front;
   late LodLevel _lod = LodLevel.forScale(_viewport.scale);
 
+  /// The scene most recently built in [build]. The intent handler hit-tests
+  /// and reads device layouts against exactly what is on screen, so it must
+  /// see the current build's scene; cached here rather than threaded through
+  /// the pointer-agnostic `CanvasIntentHandler` interface.
+  RackScene? _rackScene;
+
+  late final _RackCanvasHandler _handler = _RackCanvasHandler(this);
+
+  // ── per-drag scratch state (one primary pointer at a time) ────────────
+  String? _dragDeviceId; // device hit at beginDrag, or null (empty canvas)
+  DPt _dragStartScene = const DPt(0, 0);
+  double _dragStartScale = 1;
+  bool _dragModifierToggle = false; // Ctrl/Cmd held at beginDrag → toggle
+  bool _dragMoved = false; // crossed the click→drag threshold
+  int _dragDeviceHeightU = 0; // hit device's U height (0 if none)
+  double _dragDeviceStartTopY = 0; // hit device's scene-space top edge
+
   @override
   void initState() {
     super.initState();
     _viewport.addListener(_onViewportChanged);
+    // A committed structural edit (add/remove/move touches `structure`) and a
+    // selection change both mean "rebuild the scene / repaint chrome"; both
+    // fire at human speed, never on the pan/zoom hot path.
+    _selection.addListener(_onEditorChanged);
+    _controller.epochs.structure.addListener(_onEditorChanged);
   }
 
   @override
@@ -56,7 +113,12 @@ class _RackCanvasScreenState extends State<RackCanvasScreen> {
     _viewport
       ..removeListener(_onViewportChanged)
       ..dispose();
+    _selection
+      ..removeListener(_onEditorChanged)
+      ..dispose();
+    _controller.epochs.structure.removeListener(_onEditorChanged);
     _gridCache.dispose();
+    _canvasFocus.dispose();
     super.dispose();
   }
 
@@ -68,10 +130,189 @@ class _RackCanvasScreenState extends State<RackCanvasScreen> {
     if (next != _lod) setState(() => _lod = next);
   }
 
+  /// A selection change or a committed structural edit — rebuild so the new
+  /// selection chrome and any add/remove/move show up. Never called during
+  /// build (selection/document mutate only from gestures and key actions).
+  void _onEditorChanged() {
+    if (mounted) setState(() {});
+  }
+
   void _cycleFace() {
     // Front → Rear (docs/04 §2.2 cycles Front → Rear → Both; Both is
     // deferred with rear-mirroring, so this stage toggles the two faces).
     setState(() => _face = _face == Face.front ? Face.rear : Face.front);
+  }
+
+  // ── the command-routed editing loop ───────────────────────────────────
+
+  DeviceLayout? _layoutFor(String deviceId) {
+    for (final layout in _rackScene?.devices ?? const <DeviceLayout>[]) {
+      if (layout.deviceId.v == deviceId) return layout;
+    }
+    return null;
+  }
+
+  void _onBeginDrag(DPt sceneStart, Set<PointerDeviceKind> kinds) {
+    // Take canvas focus so Del/undo/redo shortcuts land here, not on a
+    // device's FocusableActionDetector (or nothing).
+    _canvasFocus.requestFocus();
+    _dragStartScene = sceneStart;
+    _dragStartScale = _viewport.scale;
+    _dragMoved = false;
+    _dragModifierToggle = HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isMetaPressed;
+
+    final scene = _rackScene?.scene;
+    // Nearest-hit against the CURRENT scene (draw/hit_test.dart) — device
+    // bodies only this stage, so exact containment; a small tolerance would
+    // matter once wires exist.
+    final region = scene == null ? null : hitTest(scene, sceneStart);
+    _dragDeviceId = region?.entityId;
+    _dragDeviceHeightU = 0;
+    final layout = region == null ? null : _layoutFor(region.entityId);
+    if (layout != null) {
+      _dragDeviceStartTopY = layout.rect.top;
+      _dragDeviceHeightU =
+          (layout.rect.height / RackGeometry.unitsPerRu).round();
+    }
+  }
+
+  void _onUpdateDrag(DPt sceneCurrent, DPt sceneDelta) {
+    if (_dragMoved) return; // already a drag; nothing to recompute until commit
+    final dx = sceneCurrent.x - _dragStartScene.x;
+    final dy = sceneCurrent.y - _dragStartScene.y;
+    final movedScreenPx = math.sqrt(dx * dx + dy * dy) * _dragStartScale;
+    if (movedScreenPx >= _clickSlopPx) _dragMoved = true;
+  }
+
+  void _onCommitDrag(DPt sceneEnd) {
+    final deviceId = _dragDeviceId;
+    if (!_dragMoved) {
+      _handleClick(deviceId);
+    } else if (deviceId != null &&
+        _dragDeviceHeightU > 0 &&
+        _selection.contains(Uuid(deviceId))) {
+      // Move only a device that is BOTH hit at grab time AND already
+      // selected (task brief). Single-device move: if several are selected,
+      // dragging one moves just that one (multi-device drag is deferred).
+      _handleMove(deviceId, sceneEnd);
+    }
+    // else — a drag on empty canvas, or on an unselected device: a no-op this
+    // stage. Left-drag-on-empty is reserved for marquee (deferred, docs/04
+    // §3.5); grab-to-move-an-unselected-device is intentionally not a gesture
+    // (select first, then drag).
+    _resetDrag();
+  }
+
+  void _onCancelDrag() => _resetDrag();
+
+  void _resetDrag() {
+    _dragDeviceId = null;
+    _dragDeviceHeightU = 0;
+    _dragMoved = false;
+  }
+
+  void _handleClick(String? deviceId) {
+    if (deviceId == null) {
+      _selection.clear(); // click on empty canvas clears the selection
+      return;
+    }
+    final id = Uuid(deviceId);
+    if (_dragModifierToggle) {
+      // Ctrl/Cmd+click toggles this one id: subtract if present, else add.
+      _selection.apply(
+        [id],
+        _selection.contains(id) ? SelectMode.subtract : SelectMode.add,
+      );
+    } else {
+      _selection.apply([id], SelectMode.replace);
+    }
+  }
+
+  void _handleMove(String deviceId, DPt sceneEnd) {
+    final device = _doc.devices[Uuid(deviceId)];
+    final placement = device?.placement;
+    if (placement is! RailPlacement) return;
+
+    // New top edge = the device's original top + the vertical drag delta, so
+    // the grab offset is preserved; then snapped + rack-clamped through the
+    // ONE inverse geometry (rack_geometry.ruIndexForTopY).
+    final newTopY = _dragDeviceStartTopY + (sceneEnd.y - _dragStartScene.y);
+    final candidate = _geo.ruIndexForTopY(newTopY, _dragDeviceHeightU);
+    if (candidate == placement.ruIndex) return; // no net move
+
+    // SIMPLIFICATION (task brief): a target RU range already occupied by
+    // ANOTHER device on this face refuses the move SILENTLY — no clamp to a
+    // free slot, no push. Live blocked-drop / collision feedback during the
+    // drag is a later stage (docs/04 §3.1). The candidate is already clamped
+    // to the rack extent, so this only guards inter-device overlap.
+    if (!_rangeFreeOnFace(candidate, _dragDeviceHeightU, Uuid(deviceId))) {
+      return;
+    }
+
+    // selectionBefore for the undo entry = the live selection (docs/03 §4.4);
+    // a move leaves the selection unchanged, so selectionAfter matches.
+    _controller.selection = _selection.snapshot();
+    _controller.run(
+      MoveDeviceCommand(
+        id: Uuid(deviceId),
+        fromRuIndex: placement.ruIndex,
+        toRuIndex: candidate,
+        fromFace: placement.face,
+        toFace: placement.face,
+        now: _controller.clock.nowUtc(),
+        actor: _controller.actor,
+      ),
+    );
+  }
+
+  /// Whether `[ruStart, ruStart+deviceH-1]` is free of every OTHER device on
+  /// the current face. Derived from the current scene's device layouts (which
+  /// are exactly the visible devices on this face), so no template re-resolve
+  /// is needed and it can never disagree with what is drawn.
+  bool _rangeFreeOnFace(int ruStart, int deviceH, Uuid exceptId) {
+    final endExcl = ruStart + deviceH;
+    for (final layout in _rackScene?.devices ?? const <DeviceLayout>[]) {
+      if (layout.deviceId == exceptId) continue;
+      final otherStart =
+          (_geo.heightU + 1 - layout.rect.bottom / RackGeometry.unitsPerRu)
+              .round();
+      final otherEndExcl =
+          otherStart + (layout.rect.height / RackGeometry.unitsPerRu).round();
+      if (ruStart < otherEndExcl && otherStart < endExcl) return false;
+    }
+    return true;
+  }
+
+  void _deleteSelection() {
+    final ids = _selection.ids.toList();
+    if (ids.isEmpty) return;
+    _controller.selection = _selection.snapshot(); // before = current selection
+    // One transaction so a multi-device delete is a SINGLE undo entry, not N
+    // (docs/04 §3.5: "undo restores device and links as one command"). Links
+    // are not modelled on these demo devices yet; a real delete will also
+    // carry each device's Links in this same transaction (deferred).
+    _controller.transact(LabelKey.removeDevice, (tx) {
+      for (final id in ids) {
+        if (_doc.devices.containsKey(id)) {
+          tx.add(RemoveDeviceCommand(id: id));
+        }
+      }
+      // Post-delete the selection is empty; capture it so undo restores the
+      // pre-delete selection and redo restores empty.
+      _selection.clear();
+      _controller.selection = _selection.snapshot(); // after = {}
+    });
+  }
+
+  void _undo() {
+    final restore = _controller.undoLast();
+    if (restore != null) _selection.restore(restore);
+  }
+
+  void _redo() {
+    final restore = _controller.redoLast();
+    if (restore != null) _selection.restore(restore);
   }
 
   @override
@@ -84,7 +325,9 @@ class _RackCanvasScreenState extends State<RackCanvasScreen> {
     final palette = _rackPalette(scheme);
 
     // Built here (not cached in a field) so a theme or face change rebuilds
-    // it for free; it is cheap for one rack + a handful of devices.
+    // it for free; it is cheap for one rack + a handful of devices. Cached
+    // into `_rackScene` immediately so the intent handler hit-tests against
+    // the SAME scene the frame paints.
     final rackScene = buildRackScene(
       rack: _rack,
       devices: _doc.devices.values,
@@ -94,7 +337,61 @@ class _RackCanvasScreenState extends State<RackCanvasScreen> {
       measurer: widget.measurer,
       palette: palette,
     );
+    _rackScene = rackScene;
 
+    // Shortcuts/Actions + an autofocused Focus give the canvas Del/Backspace
+    // (delete the selection) and Ctrl/Cmd+Z / Ctrl/Cmd+Shift+Z / Ctrl+Y
+    // (undo/redo). SingleActivator's exact-modifier match keeps Ctrl+Z and
+    // Ctrl+Shift+Z mutually exclusive, so redo never also fires undo.
+    return Shortcuts(
+      shortcuts: const <ShortcutActivator, Intent>{
+        SingleActivator(LogicalKeyboardKey.delete): _DeleteIntent(),
+        SingleActivator(LogicalKeyboardKey.backspace): _DeleteIntent(),
+        SingleActivator(LogicalKeyboardKey.keyZ, control: true): _UndoIntent(),
+        SingleActivator(LogicalKeyboardKey.keyZ, meta: true): _UndoIntent(),
+        SingleActivator(LogicalKeyboardKey.keyZ, control: true, shift: true):
+            _RedoIntent(),
+        SingleActivator(LogicalKeyboardKey.keyZ, meta: true, shift: true):
+            _RedoIntent(),
+        SingleActivator(LogicalKeyboardKey.keyY, control: true): _RedoIntent(),
+      },
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          _DeleteIntent: CallbackAction<_DeleteIntent>(
+            onInvoke: (_) {
+              _deleteSelection();
+              return null;
+            },
+          ),
+          _UndoIntent: CallbackAction<_UndoIntent>(
+            onInvoke: (_) {
+              _undo();
+              return null;
+            },
+          ),
+          _RedoIntent: CallbackAction<_RedoIntent>(
+            onInvoke: (_) {
+              _redo();
+              return null;
+            },
+          ),
+        },
+        child: Focus(
+          focusNode: _canvasFocus,
+          autofocus: true,
+          child: _buildCanvas(context, scheme, gridStyle, palette, rackScene),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCanvas(
+    BuildContext context,
+    ColorScheme scheme,
+    GridStyle gridStyle,
+    RackPalette palette,
+    RackScene rackScene,
+  ) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final viewportSize = constraints.biggest;
@@ -105,9 +402,11 @@ class _RackCanvasScreenState extends State<RackCanvasScreen> {
               Positioned.fill(
                 child: CanvasIntentDetector(
                   viewport: _viewport,
-                  // No editing handler yet: primary drags pan (device
-                  // drag/select land in a later stage). Devices still hover,
-                  // focus and expose Semantics via their widgets.
+                  // The editing handler now consumes primary drags (select /
+                  // move). Panning is via scroll, trackpad, or middle-mouse
+                  // drag; primary-drag-on-empty is reserved for marquee
+                  // (deferred), so it no longer pans.
+                  handler: _handler,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -136,6 +435,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen> {
                                 measurer: widget.measurer,
                                 semanticLabel: d.semanticLabel,
                                 palette: palette,
+                                selected: _selection.contains(d.deviceId),
                               ),
                             ),
                         ],
@@ -171,8 +471,10 @@ class _RackCanvasScreenState extends State<RackCanvasScreen> {
                 bottom: 12,
                 child: IgnorePointer(
                   child: Text(
-                    'Scroll to pan  ·  Ctrl/Cmd+scroll or pinch to zoom  ·  '
-                    'Fit to frame the rack  ·  Front/Rear toggles the face',
+                    'Click to select  ·  Ctrl/Cmd+click toggles  ·  drag a '
+                    'selected device to move  ·  Del removes  ·  '
+                    'Ctrl/Cmd+Z / +Shift+Z undo/redo  ·  scroll or '
+                    'middle-drag to pan  ·  Ctrl/Cmd+scroll to zoom',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -207,8 +509,52 @@ class _RackCanvasScreenState extends State<RackCanvasScreen> {
       deviceBadge: argb(s.onSurfaceVariant),
       hover: argb(s.primary),
       focus: argb(s.primary),
+      // A different accent than hover/focus so the third (selected) state
+      // reads as its own even where a device is both selected and focused.
+      selection: argb(s.tertiary),
     );
   }
+}
+
+// ── keyboard intents + the pointer-agnostic editing handler ────────────────
+
+/// Delete the current selection (`Del` / `Backspace`).
+class _DeleteIntent extends Intent {
+  const _DeleteIntent();
+}
+
+/// Undo the last committed transaction (`Ctrl/Cmd+Z`).
+class _UndoIntent extends Intent {
+  const _UndoIntent();
+}
+
+/// Redo the last undone transaction (`Ctrl/Cmd+Shift+Z`, `Ctrl+Y`).
+class _RedoIntent extends Intent {
+  const _RedoIntent();
+}
+
+/// Routes the pointer-agnostic `CanvasIntent` sequence into the screen's
+/// select / move logic (docs/03 §4.4). A thin adapter: it holds no state of
+/// its own and never branches on `PointerDeviceKind` (the editing-semantics
+/// rule), forwarding each call to the `State` that owns the controllers.
+class _RackCanvasHandler implements CanvasIntentHandler {
+  _RackCanvasHandler(this._state);
+
+  final _RackCanvasScreenState _state;
+
+  @override
+  void beginDrag(DPt sceneStart, Set<PointerDeviceKind> sourceKinds) =>
+      _state._onBeginDrag(sceneStart, sourceKinds);
+
+  @override
+  void updateDrag(DPt sceneCurrent, DPt sceneDelta) =>
+      _state._onUpdateDrag(sceneCurrent, sceneDelta);
+
+  @override
+  void commitDrag(DPt sceneEnd) => _state._onCommitDrag(sceneEnd);
+
+  @override
+  void cancel() => _state._onCancelDrag();
 }
 
 // ── temporary demo data (see the field comment above) ─────────────────────

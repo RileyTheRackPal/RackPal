@@ -52,6 +52,21 @@ class UndoStack<A> {
   String? get undoLabelKey => _done.lastOrNull?.command.label.name;
   String? get redoLabelKey => _undone.lastOrNull?.command.label.name;
 
+  /// The selection to restore when the NEXT [undo] runs — the
+  /// `selectionBefore` captured with the entry currently on top of the done
+  /// stack, or `null` if there is nothing to undo. Read this BEFORE calling
+  /// [undo], since [undo] pops that entry (docs/03-architecture.md §4.4:
+  /// "undo restores it, so undoing a delete does not leave the caret on an
+  /// entity that no longer exists"). Added in M1 to close the loop with
+  /// `rackmate_ui`'s `SelectionController`; the `selectionBefore`/`After`
+  /// were already captured in M0, they simply had no reader.
+  Selection? get undoSelection => canUndo ? _done.last.selectionBefore : null;
+
+  /// The selection to restore when the NEXT [redo] runs — the
+  /// `selectionAfter` of the entry currently on top of the undone stack.
+  /// Read before calling [redo].
+  Selection? get redoSelection => canRedo ? _undone.last.selectionAfter : null;
+
   /// Coalesces into the stack top iff `mergeKey` matches AND the window
   /// has not elapsed.
   EpochMask push(Command c, Selection before, Selection after, DateTime now) {

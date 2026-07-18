@@ -30,6 +30,7 @@ export 'src/commands/undo_stack.dart';
 export 'src/document_controller.dart';
 export 'src/draw/canvas.dart';
 export 'src/draw/geometry.dart';
+export 'src/draw/hit_test.dart';
 export 'src/draw/ops.dart';
 export 'src/draw/path.dart';
 export 'src/draw/scene/device_layer.dart';

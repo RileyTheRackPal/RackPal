@@ -37,6 +37,7 @@ final class RackPalette {
     this.deviceBadge = 0xFF475569,
     this.hover = 0xFF2563EB,
     this.focus = 0xFF1D4ED8,
+    this.selection = 0xFF7C3AED,
   });
 
   /// Rack enclosure outline.
@@ -85,6 +86,13 @@ final class RackPalette {
   /// Focus ring (drawn by the device widget, not the scene).
   final int focus;
 
+  /// Selection outline — the THIRD device chrome state (docs/04 §3.5:
+  /// "Multi-select draws a 2px outline per member"), distinct from [hover]
+  /// and [focus] and, like them, drawn by the device widget rather than the
+  /// scene. A default accent that differs from the hover/focus blues so the
+  /// state reads as its own even before a theme remaps it.
+  final int selection;
+
   @override
   bool operator ==(Object other) =>
       other is RackPalette &&
@@ -102,7 +110,8 @@ final class RackPalette {
       other.deviceType == deviceType &&
       other.deviceBadge == deviceBadge &&
       other.hover == hover &&
-      other.focus == focus;
+      other.focus == focus &&
+      other.selection == selection;
 
   @override
   int get hashCode => Object.hashAll([
@@ -121,6 +130,7 @@ final class RackPalette {
     deviceBadge,
     hover,
     focus,
+    selection,
   ]);
 }
 

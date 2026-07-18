@@ -190,4 +190,94 @@ void main() {
       },
     );
   });
+
+  // The M1 canvas edit loop routes select→move→delete→undo through exactly
+  // this API. These assert the command-routing correctness the whole M1
+  // interaction stage rests on, plus the new selection-restore return values
+  // undoLast()/redoLast() now expose for the UI SelectionController.
+  group('DocumentController — command-routed edit loop (M1)', () {
+    Selection sel(Iterable<String> ids, [String? focus]) => Selection(
+      ids: {for (final id in ids) Uuid(id)},
+      focus: focus == null ? null : Uuid(focus),
+    );
+
+    test('move-then-undo restores the device ruIndex, and undo returns '
+        'the pre-move selection', () {
+      final doc = _docWithRack(fixed);
+      // Select, then move — the exact sequence a canvas gesture produces.
+      final controller = DocumentController(doc, clock: FixedClock(fixed))
+        ..run(_addDevice(fixed, id: const Uuid('dc-dev-move')))
+        ..selection = sel(['dc-dev-move'], 'dc-dev-move')
+        ..run(
+          MoveDeviceCommand(
+            id: const Uuid('dc-dev-move'),
+            fromRuIndex: 1,
+            toRuIndex: 5,
+            fromFace: Face.front,
+            toFace: Face.front,
+            now: fixed,
+            actor: 'tester',
+          ),
+        );
+      const deviceId = Uuid('dc-dev-move');
+      expect((doc.devices[deviceId]!.placement as RailPlacement).ruIndex, 5);
+
+      final restored = controller.undoLast();
+      expect((doc.devices[deviceId]!.placement as RailPlacement).ruIndex, 1);
+      expect(restored, isNotNull);
+      expect(restored!.ids, {deviceId});
+      expect(restored.focus, deviceId);
+
+      final redone = controller.redoLast();
+      expect((doc.devices[deviceId]!.placement as RailPlacement).ruIndex, 5);
+      expect(redone!.ids, {deviceId});
+    });
+
+    test('delete-then-undo brings the whole device back as one command', () {
+      final doc = _docWithRack(fixed);
+      const deviceId = Uuid('dc-dev-del');
+      final controller = DocumentController(doc, clock: FixedClock(fixed))
+        ..run(_addDevice(fixed, id: deviceId, ruIndex: 3));
+      final before = doc.devices[deviceId];
+
+      controller
+        ..selection = sel(['dc-dev-del'], 'dc-dev-del')
+        ..run(RemoveDeviceCommand(id: deviceId));
+      expect(doc.devices.containsKey(deviceId), isFalse);
+
+      final restored = controller.undoLast();
+      // The SAME whole entity object comes back (RemoveDeviceCommand holds it).
+      expect(doc.devices[deviceId], same(before));
+      expect(restored!.ids, {deviceId});
+    });
+
+    test('a multi-device delete undoes as ONE step (transact grouping)', () {
+      final doc = _docWithRack(fixed);
+      const a = Uuid('dc-del-a');
+      const b = Uuid('dc-del-b');
+      // One transaction, two removes — the canvas's Del path for a selection.
+      final controller = DocumentController(doc, clock: FixedClock(fixed))
+        ..run(_addDevice(fixed, id: a))
+        ..run(_addDevice(fixed, id: b, ruIndex: 5))
+        ..selection = sel(['dc-del-a', 'dc-del-b'])
+        ..transact(LabelKey.removeDevice, (tx) {
+          tx
+            ..add(RemoveDeviceCommand(id: a))
+            ..add(RemoveDeviceCommand(id: b));
+        });
+      expect(doc.devices, isEmpty);
+
+      // A single undo restores BOTH devices, not just one.
+      controller.undoLast();
+      expect(doc.devices.keys.toSet(), {a, b});
+      expect(controller.undo.canUndo, isTrue); // the two adds still remain
+    });
+
+    test('undoLast/redoLast on an empty history return null', () {
+      final doc = _docWithRack(fixed);
+      final controller = DocumentController(doc, clock: FixedClock(fixed));
+      expect(controller.undoLast(), isNull);
+      expect(controller.redoLast(), isNull);
+    });
+  });
 }

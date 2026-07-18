@@ -146,17 +146,31 @@ class DocumentController {
     }
   }
 
-  void undoLast() {
-    if (!undo.canUndo) return;
+  /// Undoes the last transaction and RETURNS the [Selection] that was in
+  /// effect before it (or `null` if nothing was undone). The caller — the
+  /// UI's `SelectionController` — restores it, so undoing a delete puts the
+  /// selection back on the entity it just brought back rather than leaving
+  /// a dangling focus (docs/03-architecture.md §4.4). Return type widened
+  /// from `void` in M1; existing `void`-context callers are unaffected.
+  Selection? undoLast() {
+    if (!undo.canUndo) return null;
+    // Captured BEFORE undo() pops the entry off the done stack.
+    final restore = undo.undoSelection;
     final touched = undo.undo(doc);
     epochs.bump(touched, doc);
     doc.stateId++;
+    return restore;
   }
 
-  void redoLast() {
-    if (!undo.canRedo) return;
+  /// Redoes the last undone transaction and RETURNS the [Selection] that
+  /// was in effect after it originally committed (or `null` if nothing was
+  /// redone), for the same selection-restore reason as [undoLast].
+  Selection? redoLast() {
+    if (!undo.canRedo) return null;
+    final restore = undo.redoSelection;
     final touched = undo.redo(doc);
     epochs.bump(touched, doc);
     doc.stateId++;
+    return restore;
   }
 }

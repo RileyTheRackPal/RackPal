@@ -18,15 +18,22 @@
 //
 // [DeviceBox] is the widget that owns the behaviour (focus + hover +
 // cursor + Semantics label); [RenderDeviceBox] is the leaf render object
-// whose paint() is a bare fragment replay plus a screen-chrome hover/focus
-// ring. The only bytes it draws come from `scene.fragmentFor(deviceId)`.
+// whose paint() is a bare fragment replay plus screen chrome — a
+// hover/focus ring AND (M1 selection stage) a third, distinct SELECTED
+// outline. The only body bytes it draws come from
+// `scene.fragmentFor(deviceId)`.
 //
-// DEFERRED, stated honestly (this stage's task brief): keyboard ACTIONS
-// (arrow-nudge, delete, …) and selection are not wired — the device is
-// focusable and hoverable and carries its Semantics, but the actions map is
-// empty until the interaction/selection stage. Hit-testing returns true so
-// the device is a hit target, but nothing consumes the hit yet (drag/select
-// land later); the canvas still pans when a gesture starts over a device.
+// The `selected` flag is pushed DOWN from `RackCanvasScreen`'s
+// `SelectionController` (selection lives in the UI, observed here, never in
+// the document — docs/03 §4.4), unlike hover/focus which the widget tracks
+// itself. Three visually distinct states result: hover (thin edge glow),
+// focus (2px edge ring), selected (2px inset accent border, docs/04 §3.5).
+//
+// STILL DEFERRED, stated honestly (this stage's task brief): keyboard
+// ACTIONS local to the device (arrow-nudge, etc.) are not wired here — the
+// canvas owns Delete/undo/redo via a Shortcuts/Actions layer, and this
+// render object's own actions map stays empty. Marquee/range-select and the
+// insertion caret are also later stages.
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -45,6 +52,7 @@ class DeviceBox extends StatefulWidget {
     required this.measurer,
     required this.semanticLabel,
     required this.palette,
+    this.selected = false,
     super.key,
   });
 
@@ -61,6 +69,12 @@ class DeviceBox extends StatefulWidget {
   final String semanticLabel;
 
   final RackPalette palette;
+
+  /// Whether this device is in the current selection (pushed down from
+  /// `RackCanvasScreen`'s `SelectionController`). Drives the third,
+  /// selected chrome state. Defaults false so non-editing hosts (and the
+  /// render tests) need not supply it.
+  final bool selected;
 
   @override
   State<DeviceBox> createState() => _DeviceBoxState();
@@ -88,6 +102,7 @@ class _DeviceBoxState extends State<DeviceBox> {
         palette: widget.palette,
         hovered: _hovered,
         focused: _focused,
+        selected: widget.selected,
       ),
     );
   }
@@ -102,6 +117,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
     required this.palette,
     required this.hovered,
     required this.focused,
+    required this.selected,
   });
 
   final DiagramScene scene;
@@ -111,6 +127,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
   final RackPalette palette;
   final bool hovered;
   final bool focused;
+  final bool selected;
 
   @override
   RenderDeviceBox createRenderObject(BuildContext context) => RenderDeviceBox(
@@ -121,6 +138,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
     palette: palette,
     hovered: hovered,
     focused: focused,
+    selected: selected,
   );
 
   @override
@@ -132,7 +150,8 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
       ..semanticLabel = semanticLabel
       ..palette = palette
       ..hovered = hovered
-      ..focused = focused;
+      ..focused = focused
+      ..selected = selected;
   }
 }
 
@@ -150,13 +169,15 @@ class RenderDeviceBox extends RenderBox {
     required RackPalette palette,
     bool hovered = false,
     bool focused = false,
+    bool selected = false,
   }) : _scene = scene,
        _deviceId = deviceId,
        _measurer = measurer,
        _semanticLabel = semanticLabel,
        _palette = palette,
        _hovered = hovered,
-       _focused = focused;
+       _focused = focused,
+       _selected = selected;
 
   DiagramScene _scene;
   DiagramScene get scene => _scene;
@@ -214,6 +235,14 @@ class RenderDeviceBox extends RenderBox {
     markNeedsPaint();
   }
 
+  bool _selected;
+  bool get selected => _selected;
+  set selected(bool value) {
+    if (_selected == value) return;
+    _selected = value;
+    markNeedsPaint();
+  }
+
   // Sized entirely by the parent's tight constraints (the device's scene
   // size). No intrinsic content drives layout.
   @override
@@ -247,6 +276,19 @@ class RenderDeviceBox extends RenderBox {
         ..strokeWidth = _focused ? 2.0 : 1.5
         ..color = Color(_focused ? _palette.focus : _palette.hover);
       context.canvas.drawRect((offset & size).deflate(0.75), ring);
+    }
+
+    // The third state (docs/04 §3.5: "a 2px outline per member"), drawn AS
+    // WELL AS any hover/focus ring and at a different inset (1.5px inside the
+    // body) so a selected-and-focused device shows both borders distinctly
+    // rather than one masking the other. Selection is chrome, so like the
+    // hover/focus rings it is screen-space and not part of the shared IR.
+    if (_selected) {
+      final outline = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = Color(_palette.selection);
+      context.canvas.drawRect((offset & size).deflate(1.5), outline);
     }
   }
 

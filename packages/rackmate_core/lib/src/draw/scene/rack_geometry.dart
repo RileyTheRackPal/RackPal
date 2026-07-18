@@ -159,4 +159,51 @@ final class RackGeometry {
     final width = (spanTwelfths / 12) * openingWidth;
     return DBox.fromLtwh(left, top, width, bottom - top);
   }
+
+  // ── the INVERSE conversion: scene-space Y → snapped ruIndex ──────────
+  //
+  // Drag-to-move needs the reverse of the forward geometry above. The task
+  // brief and docs/04 §3.1 both pin the formula
+  //   ruIndex = clamp(round((cursorSceneY − ghostHeight/2 − rackOriginY)
+  //                          / kRackUnit), 1, heightU − heightU(device) + 1)
+  // but that spelling assumes a TOP-origin index that grows downward with
+  // Y. This scene is BOTTOM-origin (CR-025): U1 is at the bottom (largest
+  // Y), U[heightU] at the top (Y = 0). So the honest inverse is not that
+  // literal expression — it is the algebraic inverse of [deviceRect]'s own
+  // top edge, which is what guarantees the two directions cannot drift
+  // (round-trip tested). The clamp BOUNDS are exactly the doc's
+  // `[1, heightU − deviceH + 1]`; only the sign of the Y term flips to
+  // match this file's downward-Y, bottom-origin convention. `rackOriginY`
+  // is 0 here — the rack's top-left is the scene origin (see the class
+  // doc), so it drops out.
+
+  /// The highest `ruIndex` a device of [deviceH] U can occupy without
+  /// overflowing the rack top: `heightU − deviceH + 1`, floored at 1 so a
+  /// device taller than the rack still yields a legal (if overflowing)
+  /// index rather than an inverted clamp range.
+  int maxRuIndexFor(int deviceH) {
+    final max = heightU - deviceH + 1;
+    return max < 1 ? 1 : max;
+  }
+
+  /// Given a device's TOP-edge Y in scene space and its [deviceH], the
+  /// snapped, rack-clamped `ruIndex` it should occupy. Exact inverse of
+  /// `yTopOfU(ruIndex + deviceH - 1)` (the top edge [deviceRect] emits), so
+  /// `ruIndexForTopY(deviceRect(r, h).top, h) == r` for every valid `r`
+  /// (proved by rack_geometry_test's round-trip).
+  int ruIndexForTopY(double topY, int deviceH) {
+    // Forward: top = (heightU − ruIndex − deviceH + 1) · unitsPerRu.
+    // Solve for ruIndex, then round to the nearest U and clamp to the rack.
+    final raw = (heightU - deviceH + 1) - topY / unitsPerRu;
+    return raw.round().clamp(1, maxRuIndexFor(deviceH));
+  }
+
+  /// docs/04 §3.1's drag spelling, made consistent with this geometry: the
+  /// cursor is treated as the vertical CENTRE of the ghost, so the ghost's
+  /// top edge is `cursorSceneY − ghostHeight/2` and `ghostHeight =
+  /// deviceH · unitsPerRu`. Delegates to [ruIndexForTopY] so there is still
+  /// exactly ONE inverse formula — this is only the centre-offset the doc's
+  /// `− ghostHeight/2` term expresses, not a second derivation.
+  int ruIndexForCursorY(double cursorSceneY, int deviceH) =>
+      ruIndexForTopY(cursorSceneY - (deviceH * unitsPerRu) / 2, deviceH);
 }
