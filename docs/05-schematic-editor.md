@@ -241,12 +241,12 @@ So RackMate uses **four independent encoding channels**, and hue is never one of
 | `net` | Network | `#009E73` | `#2FC79A` | solid | 1.50× | ■ / □ | 0.257 | black, solid, 1.50× |
 | `ctl` | Control | `#CC79A7` | `#E29CC3` | `1.5,3` | 0.75× | ✚ / ✳ | 0.293 | black, fine dot, 0.75× |
 | `pwr` | Power | `#000000` | `#E8E8E8` *(inverted — black is invisible on dark)* | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.000 | black, dash-dot-dot, 2.00× |
-| `str` | Structure | `#999999` | `#A8A8A8` | `4,4` | 0.75× | ★ / ☆ | 0.319 | black, `4,4`, 0.75× |
+| `str` | Structure | `#999999` | `#A8A8A8` | `6,3,3,3` | 0.75× | ★ / ☆ | 0.319 | black, `6,3,3,3`, 0.75× |
 | *(reserved)* | Selection / focus | `#F0E442` | `#F5E76B` | — | — | — | 0.744 | never printed |
 
 Dash patterns, weights, glyphs and tags are **identical across themes**. Only hue moves, and the theme is a UI preference never persisted in the document.
 
-`str`'s base dash is `4,4` rather than the design document's `6,3`, on the reasoning that an even dash reads as unambiguous against a 2:1 dash. **That reasoning predates the mechanical dash-class definition in §6.3** and does not survive it: `4,4` and `6,3` both classify as `(short)`, `str` (L 0.319) and `audio.analog` (L 0.416) are ΔL 0.097 apart, and 1.00× / 0.75× is a ratio of 1.33. The pair is inside PAL-1's band on every channel the rule tests. **The pairwise unit test is what adjudicates it** — this is precisely the class of collision a domain-level table waves through, and the resolution of this pair is an output of running the test, not of arguing here. Canon §14 rules the two family-level corrections in §6.3; this domain-level pair is not among them and is flagged for the test to settle.
+`str`'s base dash was authored `4,4` rather than the design document's `6,3`, on the reasoning that an even dash reads as unambiguous against a 2:1 dash. **That reasoning predates the mechanical dash-class definition in §6.3 and does not survive it:** `4,4` and `6,3` both classify as `(short)`, `str` (L 0.319) and `audio.analog` (L 0.416) are ΔL 0.097 apart, and 1.00× / 0.75× is a ratio of 1.33 — the pair was inside PAL-1's band on every channel the rule tests. Running the pairwise test is what settled it, and it found not one failing partner but **five**: `audio.line_unbal` `6,3` @ 1.00×, `audio.mic` `4,3` @ 1.00×, `audio.headphone` `3,3` @ 0.75×, `ctl.rs485` `6,3` @ 1.00× and `ctl.trigger12v` `4,3` @ 0.75×. Against `audio.headphone` and `ctl.trigger12v` the dash class *and* the weight were identical — in greyscale, the same line. **The `str` base dash is therefore `6,3,3,3`**, class `(short,short)`, period 15 pt, weight unchanged at 0.75× (canon §14.3). `(short,short)` is unoccupied across all 55 shipped families, so `structure.undetermined` clears all 40 of its in-band cross-domain pairs on the dash-class limb alone and no future weight change can reopen it. This is exactly the class of collision a domain-level table waves through, which is why the check is a pairwise test over rendered family values and not a table of eight rows.
 
 ### 6.3 The honest greyscale caveat, and the rule it generates
 
@@ -257,18 +257,37 @@ Several sources claim Okabe–Ito "has distinct luminance values so it works in 
 
 The collisions are placed **deliberately**, not accepted. Each colliding pair is separated maximally on the other three channels, and that is promoted from a hope to a checkable rule:
 
-> **PAL-1.** Every shipped `SignalFamilyDef` renders as *(L, dashClass, weight)* where **L** is the WCAG relative luminance of its **effective** hue and dashClass/weight are its **effective** values *after* any §6.4 override — not the domain base values. For every pair of families in **different** `SignalDomainDef`s with **|L₁ − L₂| < 0.10**, at least one must hold: **(a)** their dash classes differ, **or** **(b)** their weight multipliers differ by a factor **≥ 1.4**. Families within one domain are exempt from (a)/(b) — they share a hue by construction and the legend prints them adjacently — but must still differ in dash pattern, weight, or glyph.
+> **PAL-1 (rendered-value form).** Every shipped `SignalFamilyDef` renders as the triple
+> *(L, dashClass, weight)*, where **L** is the WCAG relative luminance of its **effective** hue,
+> **dashClass** is the class of its effective dash pattern per the mechanical definition below, and
+> **weight** is its effective line-weight multiplier — *effective* meaning **after** any
+> `colorOverride`, `dashOverride` or weight override declared in the signal-family registry, not
+> the domain base value.
+>
+> For **every pair of families belonging to different `SignalDomainDef`s** whose luminances satisfy
+> **|L₁ − L₂| < 0.10**, at least one of the following must hold: **(a)** their dash classes differ,
+> **or** **(b)** their weight multipliers differ by a factor **≥ 1.4**.
+>
+> Families **within one domain** are exempt from (a)/(b) — they share a hue by construction, the
+> legend prints them adjacently, and the tag pill disambiguates them — but any two families in one
+> domain must still differ in **dash pattern, weight, or glyph**.
 
-**Dash class**, defined so a test can compute it: classify each mark in one period as **dot** (< 2.5 pt), **short** (2.5–8.9 pt) or **long** (≥ 9 pt); the class is that sequence, compared **up to rotation**. `solid` is its own class. Worked: `2,3`→`(dot)`; `1.5,3`→`(dot)`; `2,6`→`(dot)`; `6,3`→`(short)`; `12,4`→`(long)`; `6,3,1,3`→`(short,dot)`; `8,3,1.5,3,1.5,3`→`(short,dot,dot)`.
+> **Dash class.** Classify each mark in one period as **dot** (< 2.5 pt), **short** (2.5–8.9 pt) or
+> **long** (≥ 9 pt); the class is that sequence of mark classes, compared **up to rotation**.
+> `solid` is its own class. Worked: `2,3` → `(dot)` · `1.5,3` → `(dot)` · `6,3` → `(short)` ·
+> `6,3,3,3` → `(short,short)` · `12,4` → `(long)` · `6,3,1,3` → `(short,dot)` ·
+> `1.5,3,4,3` → `(dot,short)` = `(short,dot)` by rotation · `1.5,3,1.5,9` → `(dot,dot)` ·
+> `8,3,1.5,3,1.5,3` → `(short,dot,dot)`.
 
-**The check is a pairwise unit test over every shipped family, not a table of domains.** The domain-level table that used to sit here checked eight rows and missed two real collisions between families, because §6.4's `dashOverride` and weight overrides are never re-checked against the domain values PAL-1 was verified over (canon §12.6(c)). The within-domain exemption is a domain-equality check inside the test, **never an allowlist of pairs** — an allowlist is how a real collision gets waived.
+**The check is a pairwise unit test over every shipped family, not a table of domains.** The domain-level table that used to sit here checked eight rows and missed three real collisions between families, because §6.4's `dashOverride` and weight overrides are never re-checked against the domain values PAL-1 was verified over (canon §12.6(c)). The within-domain exemption is a domain-equality check inside the test, **never an allowlist of pairs** — an allowlist is how a real collision gets waived.
 
-Two collisions were found this way and both are corrected in §6.4:
+Three collisions were found this way and all three are corrected in §6.4:
 
 | Failing pair | Was | Correction |
 |---|---|---|
 | TOSLINK `audio.spdif_optical` (L 0.222) vs IR `ctl.ir_emitter` (L 0.293) — ΔL 0.071, both `(dot)`, weight ratio 1.33 | `2,3` @ 1.00× | **`audio.spdif_optical` weight → `1.25×`.** Dash stays `2,3`. Ratio becomes **1.67 ≥ 1.4** ✓ |
 | `structure.pathway` (L 0.319) vs IR (L 0.293) — ΔL 0.026, both `(dot)`, ratio 1.00 | `2,6` @ 0.75× | **`structure.pathway` dash → `1.5,3,1.5,9`**, class `(dot,dot)` ✓, period 15 pt. Weight stays 0.75×. |
+| `structure.undetermined` (L 0.319) vs **five** families — `audio.line_unbal` `6,3` @ 1.00×, `audio.mic` `4,3` @ 1.00×, `audio.headphone` `3,3` @ 0.75×, `ctl.rs485` `6,3` @ 1.00×, `ctl.trigger12v` `4,3` @ 0.75×; ΔL 0.097 / 0.097 / 0.097 / 0.026 / 0.026, **all six `(short)`**, ratios 1.33, 1.33, **1.00**, 1.33, **1.00**. Against `audio.headphone` and `ctl.trigger12v` the dash class *and* the weight are identical — in greyscale they are the same line, separated by hue alone | `4,4` @ 0.75×, inherited from the `str` domain base | **The `str` domain base dash `4,4` → `6,3,3,3`**, class `(short,short)` ✓, period 15 pt, permille `[6000, 3000, 3000, 3000]`. Weight stays 0.75×. `structure.undetermined` carries no `dashOverride` and inherits it, so the legend's `str` swatch and the drawn line move together. It is the correct family to move: it is a placeholder, it is not one of requirement 4's ten named types, and moving it is one edit against five. |
 
 `ctl.ir_emitter` is **not** touched: it is a requirement-4 named type and its `1.5,3` is itself the correction that brought the control domain up to the dash-period floor.
 

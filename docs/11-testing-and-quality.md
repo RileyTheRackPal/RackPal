@@ -146,7 +146,26 @@ The §6.7 acceptance criteria are unit tests, not aspirations, and they run in `
 | Prefix collision | no catalog template shares a `typePrefix` with a system prefix (`STR` stays with Structure, streaming is `STRM`) | CR-043 |
 | Provenance | every safety-adjacent field (`pinoutVariant`, `impedanceOhms`, `poeBudgetWatts`, `maxUnsupportedMass`) has a citation in `assets/catalog/sources.md`; an uncited template fails the build | AC-052 |
 
-**PAL-1 is a pairwise test over rendered family values.** For every shipped `SignalFamilyDef`, compute *(L of its effective hue, dash class of its effective dash, effective weight)*. For every pair in **different** domains with |ΔL| < 0.10, assert dash classes differ **or** weights differ by ≥ 1.4. Within-domain pairs are exempt from that test and instead must differ in dash, weight or glyph. The exemption is a **domain-equality check, never an allowlist of pairs** — an allowlist is how a real collision gets waived. Dash class is defined mechanically in canon §14.2. This test exists because the domain-level version passed while TOSLINK and IR were indistinguishable in greyscale (canon §12.6(c)).
+**The prefix-collision row is about template `typePrefix` values only.** A catalog template's `typePrefix` and a signal family's `shortTag` are **different namespaces** and are never looked up together, so a family may carry a tag spelled like a reserved prefix without colliding with it: `structure.undetermined` ships `shortTag` `STR` (seed-devices §4.4), and that is the correct value precisely because `STR` belongs to Structure on both sides. What CR-043 forbids is a *template* claiming `STR` — which is why streaming templates are `STRM`.
+
+**PAL-1 is a pairwise test over rendered family values.** The rule it asserts, stated verbatim as canon §14.1 states it:
+
+> **PAL-1 (rendered-value form).** Every shipped `SignalFamilyDef` renders as the triple
+> *(L, dashClass, weight)*, where **L** is the WCAG relative luminance of its **effective** hue,
+> **dashClass** is the class of its effective dash pattern per the mechanical definition below, and
+> **weight** is its effective line-weight multiplier — *effective* meaning **after** any
+> `colorOverride`, `dashOverride` or weight override declared in the signal-family registry, not
+> the domain base value.
+>
+> For **every pair of families belonging to different `SignalDomainDef`s** whose luminances satisfy
+> **|L₁ − L₂| < 0.10**, at least one of the following must hold: **(a)** their dash classes differ,
+> **or** **(b)** their weight multipliers differ by a factor **≥ 1.4**.
+>
+> Families **within one domain** are exempt from (a)/(b) — they share a hue by construction, the
+> legend prints them adjacently, and the tag pill disambiguates them — but any two families in one
+> domain must still differ in **dash pattern, weight, or glyph**.
+
+Dash class is the mechanical definition of canon §14.2, reproduced there in full. The test enumerates every shipped `SignalFamilyDef`, computes its triple, and checks every cross-domain pair inside the band; the within-domain exemption is a **domain-equality check, never an allowlist of pairs** — an allowlist is how a real collision gets waived. This test exists because the domain-level version passed while TOSLINK and IR, and `structure.undetermined` and five of its neighbours, were indistinguishable in greyscale (canon §12.6(c), §14.3).
 
 **Every `media.*`, `conn.*`, `SignalDomainId` and signal-family ID appearing in any repository document, template or fixture resolves in `assets/catalog/registries.json`.** A grep-and-resolve test over `docs/**/*.md` and `assets/**`. This exists because RJ-012 makes an unmatched media value in a Structure CSV import **silently create a new `MediaTypeDef`** with a confirmation chip rather than fail — so a wrong ID in a shipped synonym table manufactures duplicate media types on the first real import and splits the `T6.30` footage rollup across them. That is a silent data-quality failure, which is exactly the class a test must catch (N1, canon §6.7 criterion 7, seed-devices C2). One allowlisted file: the migration note that records each renamed ID.
 
@@ -262,7 +281,7 @@ The budget lives in [Architecture](03-architecture.md); this is how it is defend
 |---|---|---|
 | Commit a command | **≤ 16 ms**, ≤ 8 ms reserved for non-paint terms (re-baselined by AC-008) | `benchmark_harness` + op count |
 | Undo / redo step | ≤ 4 ms | core benchmark |
-| Full re-route, 1,000 links, cold | ≤ 40 ms | core benchmark |
+| Full layout, cold, 300 links | ≤ 40 ms | core benchmark on the 300-link fixture |
 | Full DRC sweep (isolate) | ≤ 150 ms, no UI hitch | isolate timing |
 | Load → first paint (500 KB) | ≤ 400 ms | integration `Stopwatch` |
 | Explicit save (500 KB, atomic) | ≤ 150 ms | integration test |

@@ -1475,13 +1475,20 @@ fails, and it is mandatory, not decorative.
 
 Three palette rules are checkable, not aspirational:
 
-> **PAL-1.** Every shipped `SignalFamilyDef` renders as *(L, dashClass, weight)* where **L** is the
-> WCAG relative luminance of its **effective** hue and dashClass/weight are its **effective**
-> values *after* any §4.4 override — not the domain base values. For every pair of families in
-> **different** `SignalDomainDef`s with **|L₁ − L₂| < 0.10**, at least one must hold: **(a)** their
-> dash classes differ, **or** **(b)** their weight multipliers differ by a factor **≥ 1.4**.
-> Families within one domain are exempt from (a)/(b) — they share a hue by construction and the
-> legend prints them adjacently — but must still differ in dash pattern, weight, or glyph.
+> **PAL-1 (rendered-value form).** Every shipped `SignalFamilyDef` renders as the triple
+> *(L, dashClass, weight)*, where **L** is the WCAG relative luminance of its **effective** hue,
+> **dashClass** is the class of its effective dash pattern per the mechanical definition below, and
+> **weight** is its effective line-weight multiplier — *effective* meaning **after** any
+> `colorOverride`, `dashOverride` or weight override declared in the signal-family registry, not
+> the domain base value.
+>
+> For **every pair of families belonging to different `SignalDomainDef`s** whose luminances satisfy
+> **|L₁ − L₂| < 0.10**, at least one of the following must hold: **(a)** their dash classes differ,
+> **or** **(b)** their weight multipliers differ by a factor **≥ 1.4**.
+>
+> Families **within one domain** are exempt from (a)/(b) — they share a hue by construction, the
+> legend prints them adjacently, and the tag pill disambiguates them — but any two families in one
+> domain must still differ in **dash pattern, weight, or glyph**.
 
 > **PAL-2** — Yellow `#F0E442` is reserved for selection and focus and is never a cable. At
 > L 0.744 it is illegible as a thin line on white paper.
@@ -1490,14 +1497,16 @@ Three palette rules are checkable, not aspirational:
 > `ExportSpec.palette: colour | greyscale | cmyk`, default `colour`, default `greyscale` in the
 > Installer preset, never inherited from the UI theme (CR-077).
 
-**Dash class, defined so a test can compute it.** Classify each mark in one period as **dot**
-(< 2.5 pt), **short** (2.5–8.9 pt) or **long** (≥ 9 pt); the class is that sequence, compared **up
-to rotation**. `solid` is its own class. Worked: `2,3`→`(dot)`; `1.5,3`→`(dot)`; `2,6`→`(dot)`;
-`6,3`→`(short)`; `12,4`→`(long)`; `6,3,1,3`→`(short,dot)`; `8,3,1.5,3,1.5,3`→`(short,dot,dot)`.
+**Dash class.** Classify each mark in one period as **dot** (< 2.5 pt), **short** (2.5–8.9 pt) or
+**long** (≥ 9 pt); the class is that sequence of mark classes, compared **up to rotation**.
+`solid` is its own class. Worked: `2,3` → `(dot)` · `1.5,3` → `(dot)` · `6,3` → `(short)` ·
+`6,3,3,3` → `(short,short)` · `12,4` → `(long)` · `6,3,1,3` → `(short,dot)` ·
+`1.5,3,4,3` → `(dot,short)` = `(short,dot)` by rotation · `1.5,3,1.5,9` → `(dot,dot)` ·
+`8,3,1.5,3,1.5,3` → `(short,dot,dot)`.
 
 PAL-1 is verified by a **pairwise unit test over every shipped family** (§7 criterion 4), not by a
-table of domain rows. The domain-level verification this section used to carry is what missed both
-of the collisions canon §14.3 found — it evaluated domain base weights rather than the family
+table of domain rows. The domain-level verification this section used to carry is what missed all
+three of the collisions canon §14.3 found — it evaluated domain base weights rather than the family
 values actually drawn. The within-domain exemption is a domain-equality check in the test, **never
 an allowlist of pairs**: an allowlist is how a real collision gets waived.
 
@@ -1529,15 +1538,18 @@ glyph, glyphAlt}`.
 | `net` | Network | `#009E73` | `#2FC79A` | solid | 1.50× | ■ / □ | 0.257 |
 | `ctl` | Control | `#CC79A7` | `#E29CC3` | `1.5,3` | 0.75× | ✚ / ✳ | 0.293 |
 | `pwr` | Power | `#000000` | `#E8E8E8` *(inverted — black is invisible on dark)* | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.000 |
-| `str` | Structure | `#999999` | `#A8A8A8` | `4,4` | 0.75× | ★ / ☆ | 0.319 |
+| `str` | Structure | `#999999` | `#A8A8A8` | `6,3,3,3` | 0.75× | ★ / ☆ | 0.319 |
 | *(reserved)* | Selection / focus | `#F0E442` | `#F5E76B` | — | — | — | 0.744 |
 
 Dash patterns, weights, glyphs and tags are **identical across themes**. Only hue moves, and the
 theme is a UI preference never persisted in the document.
 
-`str`'s base dash is `4,4` rather than `6,3`: at 0.75× against analog audio's `6,3` at 1.00× it
-would violate PAL-1 in greyscale (dash class identical, weight ratio only 1.33×). An even dash is
-unambiguous against a 2:1 dash and is unique in the set.
+`str`'s base dash is `6,3,3,3` (class `(short,short)`, period 15 pt). It was authored `4,4`, which
+fails PAL-1 identically to the `6,3` it was chosen over — `4,4` and `6,3` are both `(short)` and
+1.00×/0.75× is a ratio of 1.33 — and the "an even dash is unambiguous against a 2:1 dash" reasoning
+is retracted, because §4.2's dash class is computed from mark lengths, not from the mark-to-gap
+ratio. `(short,short)` is the only unoccupied two-mark class in the shipped set, so it clears every
+in-band partner on dash class alone (canon §14.3).
 
 ### 4.4 `SignalFamilyDef` — the shipped signal families
 
@@ -1738,13 +1750,15 @@ appearing instead as an **outlet map** on the power schedule (AC-026).
 
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
-| `structure.undetermined` | Undetermined home run | `conn.unterminated` | passive | P2P | `4,4` | 0.75× | `STR` | ★ |
+| `structure.undetermined` | Undetermined home run | `conn.unterminated` | passive | P2P | `6,3,3,3` | 0.75× | `STR` | ★ |
 | `structure.pathway` | Pathway only (conduit / pull string) | — | passive | — | `1.5,3,1.5,9` | 0.75× | `PATH` | ☆ |
 
 `structure.undetermined` is the interesting case and it is deliberate: a Cat6 home run at rough-in
 may end up carrying Ethernet, HDBaseT, or nothing. The family is legal, it schedules, it prints,
 it gets a `W` number and both labels, and the DRC validates **retroactively** once a `Service`
-assigns a real family. `structure.pathway` pairs with `MediaTypeDef.isPathwayOnly` — it creates a
+assigns a real family. Its `6,3,3,3` dash is the `str` domain base, not an override; it moved from
+`4,4` because that value collided with five families in the L 0.219–0.419 band on both PAL-1 limbs
+(canon §14.3). `structure.pathway` pairs with `MediaTypeDef.isPathwayOnly` — it creates a
 `Pathway`, never a Link and never a Port, appears on the pull sheet (you still pull the smurf tube
 and it still costs money) and never appears in the netlist (CR-109).
 
@@ -2345,10 +2359,12 @@ Reproduced from canon §6.7, which governs.
    identifiable. The entire dash-and-weight argument is predicated on this test, so it is run on
    hardware, not simulated (AC-058/D13).
 4. **PAL-1 is a unit test over rendered family values.** For every shipped `SignalFamilyDef`,
-   compute *(L of its effective hue, dash class of its effective dash, effective weight)*; for
-   every pair in **different** domains with |ΔL| < 0.10, assert dash classes differ **or** weights
-   differ by ≥ 1.4. Within-domain pairs are exempt from that check and must instead differ in dash,
-   weight or glyph; the exemption is a domain-equality check, never an allowlist.
+   compute *(L of its effective hue, dash class of its effective dash, effective weight)* —
+   *effective* meaning **after** any `colorOverride`, `dashOverride` or weight override declared in
+   the signal-family registry, not the domain base value. For every pair in **different** domains
+   with |ΔL| < 0.10, assert dash classes differ **or** weights differ by ≥ 1.4. Within-domain pairs
+   are exempt from that check and must instead differ in dash, weight or glyph; the exemption is a
+   domain-equality check, never an allowlist.
 5. **Dash floor is a unit test.** Assert every shipped dash period ≥ **4.5** pt (1.5875 mm) —
    4.25 pt is 1.4992 mm and is below the 1.5 mm floor the rule derives from.
 6. **Glyph coverage is a unit test.** Assert every glyph in the registry resolves in `RackBody`

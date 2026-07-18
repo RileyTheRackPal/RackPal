@@ -9,7 +9,7 @@ The PDF is the artifact that leaves the office. Everything upstream of it — th
 | # | Rule | Ruling | Enforced by |
 |---|---|---|---|
 | **P1** | **One renderer.** Every mark on a sheet — traces, device blocks, symbols, borders, title block, zone band, legend swatches — is produced by one body of code targeting an abstract `DiagramCanvas`. | CR-086, D4 | §8. The parity test replays one `DiagramScene` through both backends. |
-| **P2** | **True vector, always.** No `RepaintBoundary`, no `toImage`, no PNG-in-PDF for anything a user reads. | §6.3 | Raster survives only as the title-block logo. |
+| **P2** | **True vector, always.** No `RepaintBoundary`, no `toImage`, no PNG-in-PDF for anything a user reads. | §6.3 | **No raster anywhere.** The document is 100% vector; there is no image path in the interface (RJ-017, AC-057). |
 | **P3** | **The renderer compiles without Flutter.** `dart test` — not `flutter test` — builds a full document. | CR-083 | `no_flutter_import_test` bans `package:flutter/`, `dart:ui` and `package:pdf/` in `rackmate_core`. |
 | **P4** | **Colour is never the only encoding.** Four channels: hue, dash, weight, glyph — plus the tag text. | AC-054, PAL-1 | §5. |
 | **P5** | **Emitted identifiers are facts about the physical world.** A designator that has been printed exists on a label in a wall. Stored at allocation, never recomputed at render time. | CR-048, CR-034 | §4. |
@@ -187,15 +187,15 @@ The chip is **not** a solid swatch. It is a 16 × 9 pt box containing a 1.5 pt h
  │ ━━━━━━━━━━━━ │  NET   solid,     1.50×, #009E73   ■
  │ ·  ·  ·  ·   │  CTL   1.5,3      0.75×, #CC79A7   ✚
  │ ━ ·· ━ ·· ━  │  PWR   8,3,1.5,3,1.5,3  2.00×, #000000  ⬢
- │ ─ ─ ─ ─ ─ ─  │  STR   4,4        0.75×, #999999   ★
+ │ ── ─ ── ─ ── │  STR   6,3,3,3   0.75×, #999999   ★
  └──────────────┘
 ```
 
-Three consequences. **(1)** The schedule and the drawing cross-reference visually with no legend lookup — you find `━━━` in the chip, you look for `━━━` on the sheet. **(2)** Greyscale works by construction: drop the hue and the tint and the dash class plus the weight ratio still discriminate all eight domains, per **PAL-1** — *within any greyscale luminance band narrower than 0.10, no two domains may share a dash class, and their weights must differ by ≥ 1.4×*. **(3)** The tag text is the third layer and never fails: `VID·HDMI`, `CTL·232`, `AUD·SPK`.
+Three consequences. **(1)** The schedule and the drawing cross-reference visually with no legend lookup — you find `━━━` in the chip, you look for `━━━` on the sheet. **(2)** Greyscale works by construction: drop the hue and the tint and the dash class plus the weight ratio still discriminate all eight domains, per **PAL-1** — *for every pair of shipped families in different domains whose luminances are within 0.10, either their dash classes differ **or** their weight multipliers differ by a factor ≥ 1.4 (canon §14.1)*. **(3)** The tag text is the third layer and never fails: `VID·HDMI`, `CTL·232`, `AUD·SPK`.
 
 This matters because the common claim that Okabe-Ito is greyscale-safe **is false** and this project does not repeat it: Sky Blue `#56B4E9` (relative luminance 0.401) and Orange `#E69F00` (0.416) are 1.5% apart, and Vermillion/Green/Purple sit inside a 0.07 band. The dash-and-weight layer is load-bearing, not decoration (AC-054).
 
-Greyscale export drops hue entirely and renders every domain black at its own dash and weight; CMYK export uses `PdfColorCmyk` with pure black as `0,0,0,1`, never rich black. `str`'s dash is `4,4` rather than `6,3` precisely because at 0.75× against analog audio's `6,3` at 1.00× it would violate PAL-1 — same dash class, weight ratio only 1.33×.
+Greyscale export drops hue entirely and renders every domain black at its own dash and weight; CMYK export uses `PdfColorCmyk` with pure black as `0,0,0,1`, never rich black. `str`'s dash is `6,3,3,3`, class `(short,short)` — the only unoccupied two-mark dash class in the shipped set, which is what clears it against `audio.line_unbal`, `audio.mic`, `audio.headphone`, `ctl.rs485` and `ctl.trigger12v` (canon §14.3).
 
 ### 3.6 Sort and group
 
@@ -396,9 +396,9 @@ Bottom-right, 396 × 115 pt on ANSI B and larger; on ANSI A a full-width 690 × 
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
-│  SMITH RESIDENCE — MASTER EQUIPMENT RACK                       ┌─────────┐ │
-│  1428 Alder Ct, Portland OR 97214                              │  LOGO   │ │
-│  CLIENT  J. & M. Smith                                         └─────────┘ │
+│  SMITH RESIDENCE — MASTER EQUIPMENT RACK                                   │
+│  1428 Alder Ct, Portland OR 97214                                          │
+│  CLIENT  J. & M. Smith                                                     │
 ├──────────────────────────────────────────────────────────────────────────  ┤
 │  INTERCONNECT — VIDEO                                                      │
 │  RK-1  MASTER RACK  ·  42U                                                 │
@@ -410,6 +410,8 @@ Bottom-right, 396 × 115 pt on ANSI B and larger; on ANSI A a full-width 690 × 
 │  SYMBOL LEGEND: SEE SHEET T0.01          SHEET NO.  T6.01                  │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
+
+There is no logo. RJ-017 ships the integrator's **text** block — firm, contact, licence number — which carries the same information and needs no raster asset in the container.
 
 Every field resolves from `ProjectInfo`, `Rack`, the sheet definition, or app preferences. Nothing is typed at export time. Empty optional lines collapse rather than printing a blank. Two fields are computed rather than stored:
 
@@ -594,7 +596,6 @@ abstract interface class DiagramCanvas {
   void drawCircle(Pt c, double radius, {Fill? fill, Stroke? stroke});
   void drawEllipse(Pt c, double rx, double ry, {Fill? fill, Stroke? stroke});
   void drawText(String text, Pt at, TextStyleSpec style);
-  void drawImage(ImageRef image, Box dst, {double opacity = 1.0});
 
   // ── measurement — identical on every backend by construction (§7.5) ────
   TextMetrics measureText(String text, TextStyleSpec style);
@@ -602,6 +603,8 @@ abstract interface class DiagramCanvas {
 ```
 
 This is the single declaration of `DiagramCanvas` in the corpus. [Architecture §8.1](03-architecture.md) cross-references it and does not restate it (CR-086). No method exists beyond the ones above, and none may be added without an amendment.
+
+`drawImage`/`ImageRef` are **not** in the v1 interface. Their only consumer was the title-block logo, which RJ-017 defers to v2; they return with the v2 zip container as one amendment. The exported document is therefore 100% vector with no raster path and no alpha path at all.
 
 Five decisions embedded in that shape:
 
@@ -724,7 +727,7 @@ Pt anchorOffset(TextAnchor a, TextMetrics m) {
 | 6 | **Text metrics** | `TextPainter`, full shaping | `PdfFont.stringMetrics`, unkerned advances | **`stringMetrics` is the single source of truth on both backends. CR-081** |
 | 7 | **Kerning / ligatures** | Skia applies GPOS `kern` and `liga` | dart_pdf applies neither | `FontFeature.disable('kern')`, `disable('liga')`, `disable('clig')` on the Flutter side. Without this, screen text is 1–3% narrower than print and every collision calculation disagrees. **CR-081** |
 | 8 | Colour space | `ui.Color`, sRGB 8-bit ARGB | `PdfColor`, 4 × double, **DeviceRGB** | `PdfColor.fromInt(argb)`. DeviceRGB is unmanaged; mitigations are the CMYK palette (pure black `0,0,0,1`, never rich black) and explicit grey values for greyscale rather than luminance conversion. sRGB `OutputIntent` is v1.1 |
-| 9 | **Alpha** | per-`Paint` alpha | no per-paint alpha; needs `ExtGState` | **Do not use alpha in the document.** Tints are pre-composited at palette-definition time (18% over white). Alpha is reserved for the on-screen selection highlight, which never reaches the PDF. VERIFY: `setGraphicState` / `PdfGraphicState` field names, for the one logo-opacity path |
+| 9 | **Alpha** | per-`Paint` alpha | no per-paint alpha; needs `ExtGState` | **Do not use alpha in the document — absolutely, with no exception.** Tints are pre-composited at palette-definition time (18% over white). Alpha is reserved for the on-screen selection highlight, which never reaches the PDF. The one former exception, the logo-opacity path, is gone with the logo (RJ-017), so no `ExtGState` is ever emitted and `setGraphicState` is never called. |
 | 10 | Miter limit | `strokeMiterLimit` default **4** | PDF default **10** | Set `strokeMiterLimit = 10` on the Flutter side to match PDF, not the reverse. Invisible for orthogonal traces (90° miter ratio √2 ≈ 1.414), visible on acute symbol paths |
 | 11 | Line cap | default butt | default butt | 1:1. Keep butt on dashed traces — round caps change apparent dash length on both |
 | 12 | Transform | `Canvas.transform` concatenates | `setTransform(Matrix4)` **concatenates** despite the name | 1:1. `Matrix4.storage` feeds `Canvas.transform` directly. Always bracket with save/restore |
@@ -732,7 +735,7 @@ Pt anchorOffset(TextAnchor a, TextMetrics m) {
 | 14 | Zero-width strokes | `0` → one device pixel | `0` → thinnest device line, invisible at 2400 dpi | **Never emit 0.** Clamp in `_applyStroke` on both backends: 0.5 pt signal floor, 0.25 pt furniture floor (CR-082) |
 | 15 | Winding under flip | — | the flip reverses winding | Only matters for `evenOdd` on nested subpaths. Symbol paths do not nest; `addEllipse` emits a consistent direction |
 | 16 | Text wrapping | `TextPainter` wraps and shapes | `drawString` is single-line, baseline-origin | The interface has **no wrapping**. Multi-line is the scene builder's job: measure, split, emit N `drawText` calls at a computed leading. Layout belongs in the builder, not the backend |
-| 17 | Images | full format support | `PdfImage`, pre-decoded | `ImageRef` is an opaque handle resolved per backend from the same `Uint8List`. Only the logo uses it |
+| 17 | Images | full format support | `PdfImage`, pre-decoded | **Not in v1.** `ImageRef` and `drawImage` are not in the interface — their only consumer was the title-block logo (RJ-017). Recorded here so the v2 container change knows what it must add |
 | 18 | OS text scaling | inherits accessibility scale | none | `textScaler: TextScaler.noScaling`. Without it a user at 125% OS scaling sees labels 25% larger than the PDF and blames the PDF |
 
 ### 7.7 The two adapters
@@ -1019,7 +1022,7 @@ Four design notes.
 
 ### 8.2 Isolate generation, progress and cancel
 
-`doc.save()` blocks, and so does the widget layout pass. The whole export runs off-thread. **The constraint that catches everyone: a background isolate has no `rootBundle`, no plugins, no platform channels, no `BuildContext`.** Load every font and image to `Uint8List` on the main isolate, then send plain bytes and JSON.
+`doc.save()` blocks, and so does the widget layout pass. The whole export runs off-thread. **The constraint that catches everyone: a background isolate has no `rootBundle`, no plugins, no platform channels, no `BuildContext`.** Load every font to `Uint8List` on the main isolate, then send plain bytes and JSON. There are no images to load — the document carries no raster (RJ-017, §7.6 divergence 17).
 
 `Isolate.run` supports neither progress nor cancellation, so **CR-099 rules `Isolate.spawn` plus a `SendPort` pair** for export. `Isolate.run` is used only where neither is wanted — autosave serialisation.
 
@@ -1032,7 +1035,6 @@ final assets = ExportAssets(
   monoTtf:     await _bytes('assets/fonts/IBMPlexMono-Regular.ttf'),
   monoBoldTtf: await _bytes('assets/fonts/IBMPlexMono-Bold.ttf'),
   symbolTtf:   await _bytes('assets/fonts/NotoSansSymbols2-Regular.ttf'),
-  logoPng:     projectInfo.logoBytes,
 );
 
 final rx = ReceivePort()..listen((m) {
@@ -1182,10 +1184,9 @@ Every item below is cheap to confirm with a 30-line spike and expensive to disco
 | 1 | `PdfFont.stringMetrics(String)` exact signature, and whether a `PdfFontMetrics * double` operator exists | Everything in §7.5 funnels through one wrapper, so a fix is localised — but confirm before building on it |
 | 2 | Whether `pw.Table.headerCount` repeats the header on each page fragment | §3.7 sidesteps it with manual pagination; confirm anyway so the workaround's necessity is known |
 | 3 | `PageTheme.buildBackground` / `buildForeground` parameter names | All sheet furniture attaches here |
-| 4 | `PdfGraphics.setGraphicState` and `PdfGraphicState`'s field names (`opacity` / `fillOpacity` / `strokeOpacity`) | Only the logo path needs it — divergence 9 removes alpha everywhere else |
-| 5 | The rotation sign in `drawText`'s counter-flip matrix | Render a 45°-rotated string on both backends and overlay them. Sign errors here are invisible until someone rotates a rail label |
-| 6 | `Printing.layoutPdf` on Windows without fetched pdfium; `forceCustomPrintPaper` for 11×17 | Gates whether the OS print dialog can ship in v1.1 (CR-100) |
-| 7 | `MultiPage.maxPages` validation behaviour in release builds | The 2000 cap must actually hold |
+| 4 | The rotation sign in `drawText`'s counter-flip matrix | Render a 45°-rotated string on both backends and overlay them. Sign errors here are invisible until someone rotates a rail label |
+| 5 | `Printing.layoutPdf` on Windows without fetched pdfium; `forceCustomPrintPaper` for 11×17 | Gates whether the OS print dialog can ship in v1.1 (CR-100) |
+| 6 | `MultiPage.maxPages` validation behaviour in release builds | The 2000 cap must actually hold |
 
 ### 11.2 Test gates
 

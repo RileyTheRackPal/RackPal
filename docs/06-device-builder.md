@@ -328,7 +328,7 @@ Templates are immutable versioned records. Editing a published template does not
   "physical": { "frontU": 4, "rearU": 4, "side": "both", "mountMethod": "rackEars",
                 "widthClass": "full", "depthNm": 330000000, "weightUg": 7300000000,
                 "chassisWidth": 432000000, "isPassthrough": false },
-  "power":    { "nameplateWatts": 90, "typicalWatts": null, "apparentVA": null },
+  "power":    { "nameplateWatts": 90 },
   "banks": [ { "key": "hdmi-in", "label": "HDMI Inputs", "abbr": "IN",
                "symbolSide": "left", "collapseInSymbol": true, "order": "a0" } ],
   "ports": [ { "key": "hdmi-in-01", "renamedFrom": [], "bankKey": "hdmi-in", "order": "a0",
@@ -341,6 +341,8 @@ Templates are immutable versioned records. Editing a published template does not
 ```
 
 Note what is **not** in the file: no `portId` UUID, no semver object, no `frontImage`, no `signature`, no `xMm`. The `identity.` / `physical.` / `power.` sections are a **file layout only**; the codec flattens them onto `TemplateBody` (CR-053).
+
+Note also what is **absent rather than null**: `typicalWatts` and `apparentVA` are unknown on this template and are therefore omitted entirely. The codec never writes an explicit `null` for an unknown value, and an absent key reads back as unknown (CR-114, G4).
 
 ---
 

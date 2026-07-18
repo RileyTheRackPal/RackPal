@@ -2669,6 +2669,8 @@ cheapest part of the list — plus drag-to-connect, chain-draw, multi-draw, magn
 on manual move, and one `Tidy sheet` command. That is a fraction of the cut's target and it
 keeps the requirement.
 
+> **Superseded — see §12.1 (§7.2.3 router row).** Phases 0–3 only; no channel routing, no phase 5.
+
 ### RJ-002 · `critique-ux-simplicity.md` — "pick one view for v1; wire on the rack elevation"
 
 **The argument.** Two canvases means two mental models, two coordinate systems, two selection
@@ -3334,6 +3336,8 @@ in code, JSON, UI, or prose.
 | `Bay` | — (cut from v1, not reserved) | CR-033 |
 | `Status` as a bare column header | `LIFECYCLE`, `ROUGH-IN`, or `ISSUES` | CR-065 |
 
+> **Superseded in part — see §12.1 (§7.2.3 router row).** The banned names in the left column stand (§12.1, CR-013 row); the replacement named in the right column is now Sugiyama phases 0–3 plus a deterministic orthogonal staircase.
+
 ---
 
 ## 5. Canonical data model summary
@@ -3888,6 +3892,8 @@ is not. The router is a pure deterministic function of the model: Sugiyama layer
 interval-graph channel routing, full recompute, with the crossing sweep and hop arcs run at
 **paint time, viewport-scoped** (CR-013, AC-016/#20).
 
+> **Third sentence superseded — see §12.1 (§7.2.3 router row).** The router is Sugiyama phases 0–3 plus a deterministic layer-ordered orthogonal staircase; there is no channel routing, no crossing sweep, no hop arcs and no paint-time phase. The first two sentences (CR-012 — route geometry never persisted, symbol placement persisted) are **unaffected and still binding** (§12.1, CR-012 row).
+
 ### 5.8 Sheet, Note, Finding, Tombstone
 
 ```dart
@@ -4092,9 +4098,14 @@ palette that `design-data-model.md` simultaneously carried and argued against.
 Dash patterns, weights, glyphs and tags are **identical across themes**. Only hue moves, and the
 theme is a UI preference never persisted in the document.
 
-`str`'s base dash is `4,4` rather than `design-ux-schematic.md`'s `6,3`: at 0.75× against analog
-audio's `6,3` at 1.00× it would violate PAL-1 in greyscale (dash class identical, weight ratio
-only 1.33×). An even dash is unambiguous against a 2:1 dash and is unique in the set.
+> **The `str` base dash `4,4` is superseded — see §14.3.** It is `6,3,3,3`, class `(short,short)`, period 15 pt. The rows for `audio.spdif_optical` (§6.4) and `structure.pathway` (§6.4) are likewise superseded by §14.3.
+
+`str`'s base dash was authored `4,4` rather than `design-ux-schematic.md`'s `6,3`, on the reasoning
+that an even dash is unambiguous against a 2:1 dash. **That reasoning is retracted.** It predates
+the mechanical dash-class definition of §14.2, under which `4,4` and `6,3` are both `(short)`, and
+`4,4` @ 0.75× against analog audio's `6,3` @ 1.00× is a weight ratio of 1.33 — the identical
+failure the paragraph was written to avoid. The `str` base dash is **`6,3,3,3`**, class
+`(short,short)`, period 15 pt; the table row above is historical. See **§14.3**.
 
 ---
 
@@ -4462,7 +4473,11 @@ These are named milestone exit criteria, not aspirations.
    hardware, not simulated (AC-058/D13).
 4. **PAL-1 is a unit test.** Compute WCAG relative luminance for all eight domain colours; for
    every pair within 0.10, assert differing dash class and a weight ratio ≥ 1.4.
-5. **Dash floor is a unit test.** Assert every shipped dash period ≥ 4.25 pt (1.5 mm).
+
+   > **Superseded — see §14.1 and §14.5.** PAL-1 is a **pairwise** test over **rendered family values**, not the eight domain colours, and its two limbs are **disjunctive** (dash class differs **or** weight ratio ≥ 1.4), not conjunctive. The conjunctive domain-level form stated here is unsatisfiable by the shipped palette and is what allowed three collisions to ship.
+
+5. **Dash floor is a unit test.** Assert every shipped dash period ≥ 4.5 pt (1.5875 mm). 4.25 pt is
+   1.4992 mm and is *below* the 1.5 mm physical floor the rule derives from (§14.4).
 6. **Glyph coverage is a unit test.** Assert every glyph in the registry resolves in `RackBody` or
    `Noto Sans Symbols 2`.
 7. **Referential integrity is a unit test.** Every `defaultConnector` resolves; every
@@ -4599,6 +4614,8 @@ Grouped by subsystem. The **Why** column names the filter or the ruling that put
 | **One** schematic sheet, with the `Sheet` entity present in the format | CR-073, AC-037 |
 | Wiring is signposted from the rack elevation; the schedule table is the **second tab**, live from an empty project | CR-105, AC-035 |
 | Hue = domain; dash + weight + tag = type; per-family colour override in settings; legend prints one row per named cable type in colour and greyscale | AC-054 |
+
+> **The router row is superseded — see §12.1.** v1 builds Sugiyama phases 0–3 plus a deterministic layer-ordered orthogonal staircase. Phase 4 is v1.2; phase 5 is not built. The remaining rows of this table stand, as amended by the §7.2.3 row already listed in §12.1.
 
 #### 7.2.4 Structure and the field
 
@@ -4884,6 +4901,8 @@ empty project, with the Pull Sheet and Termination Schedule presets as two views
 derivation. Wiring signposted from the elevation (CR-105); the coach mark at the first
 rack→schematic switch (CR-104, AC-048).
 
+> **Superseded — see §12.1 (§7.2.3 router row) and §11.1.3.** M2's router is phases 0–3 plus the orthogonal staircase, and M2 is sized `M` (4–7 weeks) — see §12.7.
+
 **Exit criterion.** Starting from the M1 output, a user creates 60 connections without touching a
 menu; the schedule tab shows 60 correctly-sorted rows with both labels on both ends and conductor
 colours where they exist; the schematic re-lays-out deterministically (same input ⇒ byte-identical
@@ -4984,6 +5003,8 @@ the only exit criterion that matters and it is deliberately a judgement, not a m
 
 ### 9.11 The honest total
 
+> **Superseded — see §12.7.** M2 is `M` (4–7 weeks); the plan totals **42–65 weeks, 11–17 months**. The "41–69" figure below is additionally an arithmetic error against this section's own table, whose final cumulative row reads 45–69. Lever 2 is withdrawn by DR-003.
+
 | Milestone | Size | Cumulative |
 |---|---|---|
 | M0 Foundations | S | 2–3 |
@@ -5023,6 +5044,8 @@ rather than by drift:
 These are **not settled**. Everything in Parts 1–2 and §§7–9 is binding; this section is
 deliberately the opposite — the calls that require a human judgement about what this product is
 for and who is going to buy it, which no amount of internal consistency can supply.
+
+> **Five of these thirteen are now ANSWERED — see §13.** 10.1 (DR-001), 10.2 (DR-002), 10.4 (DR-003), 10.6 (DR-005) and 10.7 (DR-004) are settled by the user's decisions in §11 and are **binding**, not open. The text below is retained as the record of the argument, per the Part 4 preamble.
 
 Each entry states the options, the honest trade-off, **what evidence would tip it**, and a
 **recommendation** — clearly labelled as a recommendation and carrying no normative weight. A
@@ -5334,6 +5357,8 @@ touches it. Recommendations only.
 ---
 
 ### 10.13 The three that should be answered first
+
+> **Retired — see §13.** All three questions this section prioritises (10.1, 10.2, 10.4) are answered by DR-001, DR-002 and DR-003. Do not sequence work from this section.
 
 If only three of the above get attention before M1 starts:
 
@@ -5719,7 +5744,9 @@ Each entry gives the ID, what it said, and what now governs.
 | **AC-016 #20** | "sub-millisecond at N=300" ignores that crossings are unbounded by N; move the Bentley–Ottmann sweep and hop generation to paint time, viewport-scoped; cap hops to `gap` above a threshold; measure X on a real 300-connection fixture. | **Moot in v1.** No sweep, no hops, no cap, no X. **The 300-connection fixture survives** and changes purpose: it is now the layout-determinism and **label-density** fixture, and the thing measured on it is text-run count and commit time for the label layer, not crossings. |
 | **AC-040**, density-table half | Kept `design-ux-schematic.md §1.5`'s automatic degradation to net labels above a per-sheet threshold. | **Inverted.** There is no degradation and no threshold, because labels are the base state. The **rule-catalogue half of AC-040 is untouched** and still governs — see §12.6 for its arithmetic. |
 | **§7.2.3**, wiring scope table | "Domain filter bar, **auto net-label degradation**, symbol collapse to vector pins, `Alt`-hover transient focus". | The domain filter bar, symbol collapse and `Alt`-hover **stay and are load-bearing**. "Auto net-label degradation" is replaced by **"net labels as the default render; drawn wires on domain filter, hover or focus (DR-001 §11.1.1)"**. |
+| **§7.2.3**, router row | "Schematic canvas: Sugiyama phases 0–4 + interval-graph channel routing, full deterministic recompute; phase 5 (crossing sweep, hops) at paint time, viewport-scoped." | **Superseded.** v1 builds **Sugiyama phases 0–3 only**, placing symbols, plus a deterministic layer-ordered orthogonal staircase per Link with no channel allocation. Phase 4 (interval-graph channel routing) is **v1.2**, gated on evidence. Phase 5 (crossing sweep, hop arcs) is **not built**. Nothing runs at paint time. This row is the same ruling as the CR-013 row above it, restated in the scope table; it was missed in the first pass and is listed here because §12's preamble makes an unlisted row read as still-binding v1 scope — the exact work DR-001 removed. The identical restatement appears at **§5.7 (3886-3889)**, **§9.3 M2 (4878)**, **§2.5 (2666)** and the banned-names table **§4.x (3323)**; all four are superseded by this row and each carries the §12.8 pointer. |
 | **§9.3 (M2)** | Sized `L`; contents included phases 0–4, channel routing and phase 5. | **M2 is `M` (4–7 weeks)**, contents per §11.1.3. M1 becomes the only `L`. New cumulative plan in §12.7. |
+| **§9.11** "The honest total" | Sized M2 as `L` and totalled "41–69 weeks; 12–18 months", against a table whose own final cumulative row reads 45–69. | **Superseded by §12.7.** M2 is **`M` (4–7 weeks)**; the plan totals **42–65 weeks, 11–17 months**; M1 is the only `L` and the sole long pole. The "41–69" prose figure was additionally an arithmetic error against §9.11's own table (45–69) and should not be quoted even as the historical number. **Lever 2** ("move M4 after M6") is **withdrawn by DR-003**; levers 1 (ship M1 as a public v0.9) and 3 (cut the catalog to 40 archetypes at full fidelity) survive. §9.11's lever 1 also mis-states M1 as "10–15 weeks of invisible work" — 10–15 is M1's *cumulative* position; its *duration* is 8–12 — and claims shipping M1 "would resolve half of §10", which Part 4 has since resolved directly (see §13). |
 | **§10.1** recommendation | "(A) draw every wire as the default, with (B) as an automatic degradation." | **Void.** DR-001. Not to be re-argued. |
 
 **Explicitly NOT superseded — listed here because they will otherwise be cut by association:**
@@ -5794,7 +5821,7 @@ exactly the contradiction §12 exists to prevent.
 |---|---|---|---|
 | a | **CR-071 vs §7.3 vs §7.7 cut #9** | CR-071 point 2 rules the rear panel **prints in v1** as sheet `T2.02`; §4.3 agrees ("the rear elevation still *prints* in v1"); §7.2.7 lists rear elevation in the v1 export set; but §7.3's v1.1 table says "the rear-panel view **as a printable sheet**" and §7.7 cut #9 repeats it. | **CR-071 governs, unambiguously.** Sheet **`T2.02 Rack Elevation — Rear` prints in v1**, with connector fields and landing cable IDs. What is **v1.1** is the **interactive Rear Panel view** (`Ctrl+3`) — leaders, tag pills, per-connector navigation, egress heat map. §7.3's row and §7.7 cut #9 are corrected to say "the interactive Rear Panel view". The Part 3 preamble's "Part 3 governs the release bucket" rule does not apply here, because Part 3 contradicts *itself* (§7.2.7 vs §7.3) and CR-071 is the only source that is internally consistent. |
 | b | **AC-040 / §5.8 / §7.2.6 rule count** | All three state "v1 ships **22** rules". AC-040's own enumeration lists **24** IDs (`TOP-001..005`, `SIG-001`, `SIG-002`, `DIR-001`, `DIR-003`, `CON-001`, `ELE-003`, `ELE-006`, `NET-001`, `PWR-001`, `PWR-003`, `LEN-001`, `RCK-001`, `RCK-002`, `RCK-003`, `RCK-012`, `RCK-013`, `CODE-001`, `CODE-002`, `LNK-020`). CR-017 additionally names three placement-coherence conditions and assigns them no IDs. | **The enumeration governs; the count "22" is an arithmetic error.** `PLC-001`, `PLC-002` and `PLC-003` are **RATIFIED** as distinct tier-1 rules — CR-017 already rules the conditions model-illegal, CR-021 says a rule not in the catalogue does not exist, and an unnumbered blocking rule can carry neither a `Finding.ruleId` nor an AC-051 fixture pair. **The v1 catalogue is 27 rules: 8 tier-1 + 6 tier-2 + 13 tier-3.** Every occurrence of "22 rules" in every document becomes **27**. AC-051's gate is unchanged and now applies to 27 pairs. |
-| c | **§6.3 PAL-1** | PAL-1 is stated and verified over the **eight domain base values**, while §6.4 assigns per-family `dashOverride` and weight overrides that PAL-1 never re-checks. Two shipped families collide on every non-hue channel: `audio.spdif_optical` (TOSLINK, dash `2,3`, 1.00×, domain L 0.222) and `ctl.ir_emitter` (IR, dash `1.5,3`, 0.75×, domain L 0.293) — ΔL 0.071 inside the 0.10 band, same fine-dot dash class, weight ratio 1.33 below the 1.4 floor. Two of requirement 4's ten named types are indistinguishable in greyscale. A second pair, `structure.pathway` (`2,6`, 0.75×, L 0.319) vs `ctl.ir_emitter` (ΔL 0.026), fails identically. | **PAL-1 is restated over rendered family values and made pairwise and disjunctive; two families are re-spaced.** Full statement, the dash-class definition, and the corrected registry rows are in **§14**. |
+| c | **§6.2.2 PAL-1** | PAL-1 is stated and verified over the **eight domain base values**, while §6.4 assigns per-family `dashOverride` and weight overrides that PAL-1 never re-checks. Two shipped families collide on every non-hue channel: `audio.spdif_optical` (TOSLINK, dash `2,3`, 1.00×, domain L 0.222) and `ctl.ir_emitter` (IR, dash `1.5,3`, 0.75×, domain L 0.293) — ΔL 0.071 inside the 0.10 band, same fine-dot dash class, weight ratio 1.33 below the 1.4 floor. Two of requirement 4's ten named types are indistinguishable in greyscale. A second pair, `structure.pathway` (`2,6`, 0.75×, L 0.319) vs `ctl.ir_emitter` (ΔL 0.026), fails identically. | **PAL-1 is restated over rendered family values and made pairwise and disjunctive; three families are re-spaced.** Full statement, the dash-class definition, and the corrected registry rows are in **§14**. |
 | d | **§7.7 cut #1** | Lists "zone grids" as cut, while CR-073 explicitly keeps the zone grid and the schedule's `REF` column depends on it. | **The zone grid ships in v1.** DR-005 confirms it. Cut #1's row drops "zone grids". |
 
 ### 12.7 The plan, re-costed
@@ -5817,6 +5844,25 @@ DR-001 removes 4–5 weeks from M2; DR-005 adds 0.5–1 week to M6. Nothing else
 **42–65 weeks of implementation; 11–17 months to a shipped v1** for one experienced engineer.
 **M1 is the only `L` milestone and the sole long pole.** Two schedule levers remain (ship M1 as a
 public v0.9; cut the catalog to 40 archetypes at full fidelity); lever 2 is withdrawn by DR-003.
+
+### 12.8 Part 1–3 sites carrying a supersession pointer
+
+Parts 1–3 are not rewritten (see the Part 4 preamble). These sites state rulings that §11–§14
+supersede, and each carries the pointer below, inserted verbatim at the stated position. The
+pointer does not restate the new ruling; it names where the new ruling lives.
+
+| # | Site | Insert at | Pointer text (verbatim) |
+|---|---|---|---|
+| 1 | §2.5, router restatement | after line 2666 | `> **Superseded — see §12.1 (§7.2.3 router row).** Phases 0–3 only; no channel routing, no phase 5.` |
+| 2 | §4.x banned-names table, router column | after the table at 3323 | `> **Superseded in part — see §12.1 (§7.2.3 router row).** The banned names in the left column stand (§12.1, CR-013 row); the replacement named in the right column is now Sugiyama phases 0–3 plus a deterministic orthogonal staircase.` |
+| 3 | §5.7, router prose | after line 3889 | `> **Third sentence superseded — see §12.1 (§7.2.3 router row).** The router is Sugiyama phases 0–3 plus a deterministic layer-ordered orthogonal staircase; there is no channel routing, no crossing sweep, no hop arcs and no paint-time phase. The first two sentences (CR-012 — route geometry never persisted, symbol placement persisted) are **unaffected and still binding** (§12.1, CR-012 row).` |
+| 4 | §6.2.5, `str` row | after line 4093 | ``> **The `str` base dash `4,4` is superseded — see §14.3.** It is `6,3,3,3`, class `(short,short)`, period 15 pt. The rows for `audio.spdif_optical` (§6.4) and `structure.pathway` (§6.4) are likewise superseded by §14.3.`` |
+| 5 | §6.7, criterion 4 | after line 4464 | `> **Superseded — see §14.1 and §14.5.** PAL-1 is a **pairwise** test over **rendered family values**, not the eight domain colours, and its two limbs are **disjunctive** (dash class differs **or** weight ratio ≥ 1.4), not conjunctive. The conjunctive domain-level form stated here is unsatisfiable by the shipped palette and is what allowed three collisions to ship.` |
+| 6 | §7.2.3, wiring scope table | after line 4601 | `> **The router row is superseded — see §12.1.** v1 builds Sugiyama phases 0–3 plus a deterministic layer-ordered orthogonal staircase. Phase 4 is v1.2; phase 5 is not built. The remaining rows of this table stand, as amended by the §7.2.3 row already listed in §12.1.` |
+| 7 | §9.3, M2 contents | after line 4878 | ``> **Superseded — see §12.1 (§7.2.3 router row) and §11.1.3.** M2's router is phases 0–3 plus the orthogonal staircase, and M2 is sized `M` (4–7 weeks) — see §12.7.`` |
+| 8 | §9.11, "The honest total" | above the table at 4987 | ``> **Superseded — see §12.7.** M2 is `M` (4–7 weeks); the plan totals **42–65 weeks, 11–17 months**. The "41–69" figure below is additionally an arithmetic error against this section's own table, whose final cumulative row reads 45–69. Lever 2 is withdrawn by DR-003.`` |
+| 9 | §10 preamble | after line 5025 | `> **Five of these thirteen are now ANSWERED — see §13.** 10.1 (DR-001), 10.2 (DR-002), 10.4 (DR-003), 10.6 (DR-005) and 10.7 (DR-004) are settled by the user's decisions in §11 and are **binding**, not open. The text below is retained as the record of the argument, per the Part 4 preamble.` |
+| 10 | §10.13 | after the heading at 5336 | `> **Retired — see §13.** All three questions this section prioritises (10.1, 10.2, 10.4) are answered by DR-001, DR-002 and DR-003. Do not sequence work from this section.` |
 
 ---
 
@@ -5861,7 +5907,7 @@ stays in place as the record of the argument; this section is the index of what 
 
 ## 14. PAL-1, restated — the greyscale rule over rendered values
 
-Ruled under §12.6(c). This section supersedes the statement of PAL-1 in §6.3 and the domain-level
+Ruled under §12.6(c). This section supersedes the statement of PAL-1 in §6.2.2 and the domain-level
 verdict table beneath it. It does **not** change any hue, and it does not change requirement 4's
 resolution (hue = domain; dash + weight + glyph + tag = type).
 
@@ -5869,14 +5915,14 @@ resolution (hue = domain; dash + weight + glyph + tag = type).
 
 > **PAL-1 (rendered-value form).** Every shipped `SignalFamilyDef` renders as the triple
 > *(L, dashClass, weight)*, where **L** is the WCAG relative luminance of its **effective** hue,
-> **dashClass** is the class of its effective dash pattern per §14.2, and **weight** is its
-> effective line-weight multiplier — effective meaning **after** any `dashOverride`,
-> `glyphOverride` or weight override in §6.4, not the domain base value.
+> **dashClass** is the class of its effective dash pattern per the mechanical definition below, and
+> **weight** is its effective line-weight multiplier — *effective* meaning **after** any
+> `colorOverride`, `dashOverride` or weight override declared in the signal-family registry, not
+> the domain base value.
 >
-> For **every pair of families belonging to different `SignalDomainDef`s** whose luminances
-> satisfy **|L₁ − L₂| < 0.10**, at least one of the following must hold:
-> **(a)** their dash classes differ, **or** **(b)** their weight multipliers differ by a factor
-> **≥ 1.4**.
+> For **every pair of families belonging to different `SignalDomainDef`s** whose luminances satisfy
+> **|L₁ − L₂| < 0.10**, at least one of the following must hold: **(a)** their dash classes differ,
+> **or** **(b)** their weight multipliers differ by a factor **≥ 1.4**.
 >
 > Families **within one domain** are exempt from (a)/(b) — they share a hue by construction, the
 > legend prints them adjacently, and the tag pill disambiguates them — but any two families in one
@@ -5894,33 +5940,50 @@ A dash pattern is a repeating sequence of alternating **marks** and **gaps** in 
 each mark: **dot** < 2.5 pt · **short** 2.5–8.9 pt · **long** ≥ 9 pt. The **dash class** is the
 sequence of mark classes over one period, compared **up to rotation**. `solid` is its own class.
 
-Worked: `2,3` → `(dot)` · `1.5,3` → `(dot)` · `2,6` → `(dot)` · `6,3` → `(short)` ·
-`4,4` → `(short)` · `12,4` → `(long)` · `6,3,1,3` → `(short,dot)` · `1.5,3,4,3` → `(dot,short)`
-= same class as `(short,dot)` by rotation · `8,3,1.5,3,1.5,3` → `(short,dot,dot)`.
+Worked: `2,3` → `(dot)` · `1.5,3` → `(dot)` · `6,3` → `(short)` ·
+`6,3,3,3` → `(short,short)` · `12,4` → `(long)` · `6,3,1,3` → `(short,dot)` ·
+`1.5,3,4,3` → `(dot,short)` = `(short,dot)` by rotation · `1.5,3,1.5,9` → `(dot,dot)` ·
+`8,3,1.5,3,1.5,3` → `(short,dot,dot)`.
 
-### 14.3 The two collisions, and their fixes
+### 14.3 The three collisions, and their fixes
 
 | Pair | Before | Verdict | Fix |
 |---|---|---|---|
 | `audio.spdif_optical` (TOSLINK, L 0.222) vs `ctl.ir_emitter` (IR, L 0.293) | `2,3` @ 1.00× vs `1.5,3` @ 0.75×. ΔL 0.071; both `(dot)`; ratio **1.33**. | **FAILS.** Two of requirement 4's ten named types render as near-identical fine dots in greyscale. | **`audio.spdif_optical` weight 1.00× → `1.25×`.** Dash stays `2,3`. Ratio becomes **1.67 ≥ 1.4** ✓ |
 | `structure.pathway` (L 0.319) vs `ctl.ir_emitter` (L 0.293) | `2,6` @ 0.75× vs `1.5,3` @ 0.75×. ΔL 0.026; both `(dot)`; ratio **1.00**. | **FAILS.** | **`structure.pathway` dash `2,6` → `1.5,3,1.5,9`**, class `(dot,dot)` ✓, period 15 pt. Weight stays 0.75×. A double-dot reads correctly as "a route, not a conductor". |
+| `structure.undetermined` (L 0.319) vs **five** families: `audio.line_unbal` `6,3` @ 1.00×, `audio.mic` `4,3` @ 1.00×, `audio.headphone` `3,3` @ 0.75×, `ctl.rs485` `6,3` @ 1.00×, `ctl.trigger12v` `4,3` @ 0.75× | `4,4` @ 0.75×, inherited from the `str` domain base. ΔL 0.097 / 0.097 / 0.097 / 0.026 / 0.026; **all six are `(short)`**; ratios 1.33, 1.33, **1.00**, 1.33, **1.00**. | **FAILS all five.** Against `audio.headphone` and `ctl.trigger12v` the dash class *and* the weight are identical — in greyscale they are the same line, separated by hue alone. | **The `str` domain base dash `4,4` → `6,3,3,3`**, class `(short,short)` ✓, period 15 pt, permille `[6000, 3000, 3000, 3000]`. Weight stays 0.75×. `structure.undetermined` carries no `dashOverride` and inherits it, so the legend's `str` swatch and the drawn line move together. `structure.undetermined` is the correct family to move: it is a placeholder, it is not one of requirement 4's ten named types, and moving it is one edit against five. |
 
 `ctl.ir_emitter` is deliberately **not** touched: it is a requirement-4 named type and its `1.5,3`
 was itself the correction that brought the control domain up to the dash-period floor.
 
-Both fixes are verified clear against every other family in the L 0.15–0.42 neighbourhood:
-TOSLINK at `(dot)`/1.25× differs by dash class from every family in `video.digital`, `net` and
-`str`, and by weight from `ctl.ir_emitter` and `structure.pathway`; TOSLINK remains distinct from
-`audio.spdif_coax` within its own domain on dash class, weight **and** glyph (◇ vs ◆).
-`structure.pathway` at `(dot,dot)` is the only two-dot pattern in the shipped set.
+**What was verified, and how.** All three fixes were checked by enumerating every shipped
+`SignalFamilyDef` (55 families across the eight domains), computing its rendered triple, and
+comparing it against every family in a different domain whose luminance is within 0.10. The three
+in-band sets are: TOSLINK — 4 domains, 26 families; `structure.pathway` and
+`structure.undetermined` — 5 domains, 40 families each.
+
+- **`structure.undetermined` at `(short,short)` / 0.75× passes all 40 of its in-band cross-domain
+  pairs on limb (a).** `(short,short)` is unoccupied not merely in the band but across all 55
+  shipped families, so no pair depends on limb (b) and no future weight change can reopen the fix.
+- **`structure.pathway` at `(dot,dot)` / 0.75× passes all 40 on limb (a)** — `(dot,dot)` is
+  likewise the only two-dot pattern in the shipped set.
+- **TOSLINK at `(dot)` / 1.25× passes 25 of its 26 on limb (a)**; the twenty-sixth,
+  `ctl.ir_emitter`, is the only other `(dot)` family in the band and passes on limb (b) at a ratio
+  of 1.667. Within `audio.digital` it remains distinct from `audio.spdif_coax` on dash class,
+  weight **and** glyph (◇ vs ◆).
+
+**The previous statement of this paragraph — "both fixes are verified clear against every other
+family in the L 0.15–0.42 neighbourhood" — is retracted.** No such sweep had been run when it was
+written; running it is what found the third collision above. The clearance now claimed is only the
+clearance actually computed, and §14.5's test is what keeps it true.
 
 ### 14.4 The dash-period floor
 
 **≥ 4.5 pt (1.5875 mm).** The competing figure of 4.25 pt is wrong: 4.25 pt = 1.4992 mm, which is
 *below* the 1.5 mm physical floor the rule is derived from, and 4.5 pt is the figure that
 generated the shipped correction of the control domain's `1,3` (4.0 pt period) to `1.5,3` (4.5 pt).
-Every occurrence of "≥ 4.25 pt" becomes **"≥ 4.5 pt"**. Both corrected patterns clear it:
-`2,3` = 5 pt, `1.5,3,1.5,9` = 15 pt.
+Every occurrence of "≥ 4.25 pt" becomes **"≥ 4.5 pt"**. All three corrected patterns clear it:
+`2,3` = 5 pt, `1.5,3,1.5,9` = 15 pt, `6,3,3,3` = 15 pt.
 
 ### 14.5 The test that makes this real
 

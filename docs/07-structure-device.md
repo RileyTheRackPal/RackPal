@@ -174,11 +174,21 @@ Header matching is case-, space-, underscore- and hyphen-insensitive. Every sour
 | `service` → `SignalFamilyId` | `service`, `use`, `purpose`, `signal`, `function`, `application` | |
 | `pathway` → `Pathway.name` | `bundle`, `bundle_id`, `run`, `group`, `home_run`, `conduit`, `raceway`, `pathway` | |
 | `routedLength` | `length`, `length_ft`, `footage`, `ft`, `len` | |
-| `terminationRack` | `termination_rack`, `rack_end`, `panel`, `panel_port`, `head_end` | |
+| rack-end termination → `PlaceEndpoint.intendedTermination` | `termination_rack`, `rack_end`, `panel`, `panel_port`, `head_end` | see note |
 | `terminationField` | `termination_field`, `device_end`, `field_end`, `far_end` | |
 | `roughInStatus` | `status`, `state`, `phase` | |
 | `jacket` / `jacketColor` | `jacket`, `color`, `colour`, `jacket_color` | |
 | `notes` | `notes`, `comments`, `remarks`, `note` | |
+
+> There is no `terminationRack` field. `StructureDrop` is deleted and a home run *is* a `Link`
+> (CR-107, AC-019); `StructureOrigin` carries `terminationField` for the wall-plate end only. The
+> rack end is an `Endpoint`, and where it resolves to a `PlaceEndpoint` — the normal case at
+> rough-in, when the patch panel is not modelled yet — the imported value lands on
+> `PlaceEndpoint.intendedTermination`, whose enum is the same `keystone | punchdown | fBarrel |
+> euroblock | unterminated | fieldConnector`. Where the rack end already resolves to a real
+> `PortEndpoint`, the column is **dropped with an import note**: a `PortEndpoint` carries no
+> termination type because the panel port is the source of truth for it. This is not data loss — it
+> is the single-source-of-truth property CR-107 was ruled to obtain.
 
 Media synonyms ship as data and are extensible:
 

@@ -1628,12 +1628,12 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
       },
       "signalFamilies": {
         "ctl.ir_emitter": { "domain": "ctl", "id": "ctl.ir_emitter", "shortTag": "IR",
-                            "topologyFree": true },
+                            "topologyFree": false },
         "net.ethernet":   { "domain": "net", "id": "net.ethernet",
                             "maxChannelLengthNm": 100000000000, "shortTag": "NET",
                             "topologyFree": false },
         "structure.undetermined": { "domain": "str", "id": "structure.undetermined",
-                                    "shortTag": "TBD", "topologyFree": true },
+                                    "shortTag": "STR", "topologyFree": false },
         "…video.hdmi.2_0, video.hdbaset, ctl.rs232, ctl.trigger12v elided…": {}
       }
     },
