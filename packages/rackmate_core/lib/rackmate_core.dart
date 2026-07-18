@@ -9,7 +9,11 @@
 /// the migration chain (docs/02-data-model.md §6, docs/03-architecture.md
 /// §9) — and the command/undo system: `Command`, `EpochMask`/`DocEpochs`,
 /// `Transaction`, `UndoStack` and `DocumentController` (docs/03-architecture.md
-/// §4–5).
+/// §4–5). M1 adds the shared drawing IR under `draw/` — geometry
+/// (`DPt`/`DBox`), style (`Stroke`/`Fill`/`Radii`), `DiagramPath`, the
+/// `TextMeasurer`/`TextMetrics`/`TextStyleSpec`/`TextAnchor` cluster, the
+/// `DiagramCanvas` interface and the `DiagramOp`/`DiagramScene` display
+/// list (docs/03-architecture.md §7–8, docs/08-pdf-export.md §7, CR-086).
 library;
 
 export 'src/commands/clock.dart';
@@ -24,6 +28,12 @@ export 'src/commands/simple_notifier.dart';
 export 'src/commands/transaction.dart';
 export 'src/commands/undo_stack.dart';
 export 'src/document_controller.dart';
+export 'src/draw/canvas.dart';
+export 'src/draw/geometry.dart';
+export 'src/draw/ops.dart';
+export 'src/draw/path.dart';
+export 'src/draw/spec.dart';
+export 'src/draw/text.dart';
 export 'src/idformat/collision_policy.dart';
 export 'src/idformat/id_format.dart';
 export 'src/idformat/tokens.dart';
