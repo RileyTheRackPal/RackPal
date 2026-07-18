@@ -1,0 +1,28 @@
+name: rackmate
+description: RackMate — A/V rack and wiring design for custom integration.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.12.0
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  rackmate_core:
+    path: ../../packages/rackmate_core
+  rackmate_export:
+    path: ../../packages/rackmate_export
+  rackmate_text:
+    path: ../../packages/rackmate_text
+  rackmate_ui:
+    path: ../../packages/rackmate_ui
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

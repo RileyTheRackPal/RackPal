@@ -1,0 +1,21 @@
+name: rackmate_export
+description: >
+  PdfDiagramCanvas, sheet furniture, schedule tables and document assembly.
+  The isolate entry point for PDF generation. Pure Dart (isolate-safe).
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.12.0
+
+resolution: workspace
+
+dependencies:
+  pdf: ^3.13.0
+  rackmate_core:
+    path: ../rackmate_core
+  rackmate_text:
+    path: ../rackmate_text
+
+dev_dependencies:
+  test: ^1.26.0
