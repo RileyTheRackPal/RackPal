@@ -1,5 +1,12 @@
 /// `FlutterDiagramCanvas`, render objects, widgets, viewport and canvas input.
 ///
-/// Not implemented yet — lands with the rack/schematic editors at M1/M2. This
-/// package exists now only so the five-package workspace resolves (M0, CR-083).
+/// M1 adds `FlutterDiagramCanvas` (docs/08-pdf-export.md §7.7, CR-086) --
+/// the Flutter backend of `rackmate_core`'s shared `DiagramCanvas` drawing
+/// IR, sharing `PdfFontMeasurer` (`rackmate_text`) with the PDF backend
+/// (`rackmate_export`) so on-screen and printed layout can never diverge
+/// (CR-081). Render objects, widgets, viewport and canvas input land with
+/// the rack/schematic editors at M1/M2. No app shell (that lives in
+/// apps/rackmate).
 library;
+
+export 'src/draw/flutter_canvas.dart';

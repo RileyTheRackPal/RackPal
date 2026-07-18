@@ -13,6 +13,7 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
+  meta: ^1.16.0
   path_drawing: ^1.0.1
   rackmate_core:
     path: ../rackmate_core
@@ -24,3 +25,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   leak_tracker_flutter_testing: ^3.0.0
+  # Only used in test/flutter_canvas_test.dart, to build a real
+  # PdfDocument for PdfFontMeasurer.fromBytes (the same concrete
+  # TextMeasurer the PDF backend uses, injected here per CR-081) -- lib/
+  # code never imports package:pdf.
+  pdf: ^3.13.0

@@ -26,3 +26,23 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # Bundled TWICE per docs/08-pdf-export.md §10.2 ("the two-declaration
+  # trap") -- once here under `fonts:` so Flutter's text engine can shape
+  # and paint it (FlutterDiagramCanvas.drawText), and once under `assets:`
+  # below so it is also loadable as raw bytes via `rootBundle.load()` for
+  # `PdfFontMeasurer`/`PdfTtfFont` on the PDF side. Declaring only one side
+  # makes the other silently fall back to a different font and every
+  # measured metric diverges -- the exact failure CR-081 exists to
+  # prevent. Family name must match `_familyFor` in
+  # rackmate_ui/src/draw/flutter_canvas.dart and the `FontRef('IBM Plex
+  # Sans')` used by both packages' test fixtures, verbatim.
+  #
+  # SCOPE NOTE: only Regular is bundled at this stage -- SemiBold,
+  # Condensed, Mono and Noto Sans Symbols (docs/08-pdf-export.md §10.1's
+  # full font table, CR-080) are a later stage's job.
+  fonts:
+    - family: IBM Plex Sans
+      fonts:
+        - asset: assets/fonts/IBMPlexSans-Regular.ttf
+  assets:
+    - assets/fonts/IBMPlexSans-Regular.ttf
