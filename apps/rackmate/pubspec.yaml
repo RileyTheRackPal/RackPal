@@ -23,6 +23,11 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # Imported directly by test/baseline_parity_test.dart (the CR-081/AC-007
+  # baseline-parity gate) to drive the real PdfDiagramCanvas through a real
+  # PdfGraphics and decode the emitted content stream. Elsewhere `pdf` is only
+  # a transitive dep via rackmate_export/rackmate_text.
+  pdf: ^3.13.0
 
 flutter:
   uses-material-design: true
