@@ -200,9 +200,15 @@ void main() {
     );
   });
 
-  testWidgets('a move into an occupied range is refused silently', (
+  testWidgets('a move into an occupied range does not move the device', (
     tester,
   ) async {
+    // The refusal itself (the device does not move). What the user SEES
+    // while and after being refused — the live reason chip, the blocked
+    // ghost, the 1.2s linger — is asserted by the §3.3 group at the bottom
+    // of this file; this case pins the document-level outcome on its own so
+    // a regression in the feedback layer can't mask a regression in the
+    // refusal.
     await tester.pumpWidget(_app());
     await tester.pump();
 
@@ -221,6 +227,7 @@ void main() {
       tester.getTopLeft(_device('dev-amp')).dy,
       closeTo(beforeTop, 0.5),
     );
+    await tester.pump(const Duration(milliseconds: 1300)); // drain the linger
   });
 
   testWidgets('Delete removes the selection; Ctrl+Z restores device AND '
@@ -825,6 +832,306 @@ void main() {
       await gesture.up(); // clean up -- outside canvas, so a plain no-op.
       await tester.pump();
       await _settleDoubleTapRecognizer(tester);
+    });
+  });
+
+  group('moving a placed device, with live feedback (docs/04 §3.3)', () {
+    // Demo rack occupancy recap (front face): UPS-1 @U1-U2, AMP-1 @U4-U5,
+    // SW-1 @U7 -- free front 1U slots are U3, U6, U8..U12.
+    //
+    // Every case below drives a REAL down/moveBy/up (or sendKeyEvent)
+    // sequence through `CanvasIntentDetector`, never an internal method:
+    // what is being tested is precisely that the gesture wiring produces
+    // the feedback, so short-circuiting the gesture would test nothing.
+
+    /// Selects AMP-1 (a 2U device at U4-U5 -- move-drag requires the device
+    /// to already be selected) and presses the pointer on it, returning the
+    /// live gesture.
+    Future<TestGesture> grabAmp(WidgetTester tester) async {
+      await tester.tapAt(_ampCentre(tester));
+      await tester.pump();
+      return tester.startGesture(_ampCentre(tester));
+    }
+
+    testWidgets('the source device fades to 30% IN PLACE past the 4px '
+        'threshold, and returns to full opacity on release (step 1)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+
+      final gesture = await grabAmp(tester);
+      await tester.pump();
+
+      // Pointer down, no movement at all: still a potential click.
+      expect(_render(tester, 'dev-amp').dragSource, isFalse);
+
+      // A real move event, but UNDER the 4px slop -- "Nothing until 4 px of
+      // movement, so a click still means show details" (§3.1 step 1, which
+      // §3.3 step 1 reuses verbatim). This must arm nothing: no fade, no
+      // ghost chrome.
+      await gesture.moveBy(const Offset(0, -2));
+      await tester.pump();
+      expect(
+        _render(tester, 'dev-amp').dragSource,
+        isFalse,
+        reason: 'a 2px twitch is a click, not a drag',
+      );
+      expect(find.text('U4-U5'), findsNothing); // no RU-range chip yet
+
+      await gesture.moveBy(const Offset(0, -86)); // total 88 = 4U up -> U8-U9
+      await tester.pump();
+
+      // Past the threshold: the source is now the 30%-opacity vacated-U
+      // placeholder, and it has NOT itself moved -- the ghost is what
+      // follows the cursor.
+      final render = _render(tester, 'dev-amp');
+      expect(render.dragSource, isTrue);
+      // ...and that flag actually reaches the PIXELS: the whole device is
+      // composited through one `saveLayer` carrying 30% alpha. Asserted at
+      // the paint level, not just as state, so a regression that stopped
+      // honouring the flag in `paint()` cannot pass this test.
+      expect(
+        render,
+        paints..something((symbol, args) {
+          if (symbol != #saveLayer) return false;
+          final paint = args[1] as Paint;
+          return (paint.color.a - RenderDeviceBox.dragSourceOpacity).abs() <
+              1 / 255;
+        }),
+      );
+      expect(
+        tester.getTopLeft(_device('dev-amp')).dy,
+        closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(4, 2).top, 0.5),
+        reason: 'the source stays put mid-drag, showing the vacated U',
+      );
+      // No OTHER device is dimmed -- this is a per-device flag, not a
+      // canvas-wide one.
+      expect(_render(tester, 'dev-ups').dragSource, isFalse);
+      expect(_render(tester, 'dev-sw').dragSource, isFalse);
+
+      await gesture.up();
+      await tester.pump();
+
+      expect(_render(tester, 'dev-amp').dragSource, isFalse);
+      // ...and the move really did commit, at the previewed U8.
+      expect(
+        tester.getTopLeft(_device('dev-amp')).dy,
+        closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(8, 2).top, 0.5),
+      );
+    });
+
+    testWidgets('the live RU-range chip tracks the snapped target U while '
+        'dragging (step 3, shared with §3.1)', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+
+      final gesture = await grabAmp(tester);
+      await gesture.moveBy(const Offset(0, -88)); // 4U up: U4-U5 -> U8-U9
+      await tester.pump();
+      expect(find.text('U8-U9'), findsOneWidget);
+
+      // Drag one more U up and the chip re-snaps -- proof it is recomputed
+      // per frame from the live evaluation, not captured once at grab.
+      await gesture.moveBy(const Offset(0, -22));
+      await tester.pump();
+      expect(find.text('U9-U10'), findsOneWidget);
+      expect(find.text('U8-U9'), findsNothing);
+
+      await gesture.up();
+      await tester.pump();
+    });
+
+    testWidgets('dragging onto an occupied range shows the reason chip LIVE '
+        '(mid-drag), and release is a no-op with the chip persisting 1.2s '
+        '(step 3)', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+
+      final gesture = await grabAmp(tester);
+      final beforeTop = tester.getTopLeft(_device('dev-amp')).dy;
+
+      // 3U down: AMP (2U) would land at U1-U2, straight onto UPS-1.
+      await gesture.moveBy(const Offset(0, 66));
+      await tester.pump();
+
+      // THE HEART OF THIS STAGE: the conflict is reported DURING the drag,
+      // before any release -- the exact feedback move-drag previously had
+      // none of. Wording is `findBlockingOccupant`'s, i.e. identical to
+      // what the palette drag and the keyboard nudge report.
+      expect(find.textContaining('Occupied by UPS-1'), findsWidgets);
+
+      await gesture.up();
+      await tester.pump();
+
+      // Blocked release is a no-op...
+      expect(
+        tester.getTopLeft(_device('dev-amp')).dy,
+        closeTo(beforeTop, 0.5),
+      );
+      // ...the source is immediately back to full opacity (the pointer is
+      // up; only the ghost/chip linger)...
+      expect(_render(tester, 'dev-amp').dragSource, isFalse);
+      // ...the chip persists right after the blocked release...
+      expect(find.textContaining('Occupied by UPS-1'), findsWidgets);
+
+      // ...and clears once the 1.2s linger elapses.
+      await tester.pump(const Duration(milliseconds: 1300));
+      expect(find.textContaining('Occupied by UPS-1'), findsNothing);
+    });
+
+    testWidgets('Esc mid-drag reverts: no command runs, the device returns '
+        'to full opacity at its original U, and the later pointer-up '
+        'cannot resurrect the move (step 4)', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+
+      final gesture = await grabAmp(tester);
+      final beforeTop = tester.getTopLeft(_device('dev-amp')).dy;
+
+      // A perfectly VALID target (U8-U9 is free) -- so if anything commits,
+      // it is because Esc failed, not because the drop was refused anyway.
+      await gesture.moveBy(const Offset(0, -88));
+      await tester.pump();
+      expect(_render(tester, 'dev-amp').dragSource, isTrue);
+      expect(find.text('U8-U9'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+
+      // Immediately, before the pointer is even released: full opacity, no
+      // ghost chrome, device untouched.
+      expect(_render(tester, 'dev-amp').dragSource, isFalse);
+      expect(find.text('U8-U9'), findsNothing);
+      expect(
+        tester.getTopLeft(_device('dev-amp')).dy,
+        closeTo(beforeTop, 0.5),
+      );
+
+      // The pointer is still physically down and `CanvasIntentDetector`
+      // will still deliver moveBy/up for it -- neither may revive the
+      // cancelled move.
+      await gesture.moveBy(const Offset(0, -22));
+      await tester.pump();
+      expect(_render(tester, 'dev-amp').dragSource, isFalse);
+
+      await gesture.up();
+      await tester.pump();
+      expect(
+        tester.getTopLeft(_device('dev-amp')).dy,
+        closeTo(beforeTop, 0.5),
+        reason: 'Esc reverted; the pointer-up must commit nothing',
+      );
+
+      // Nothing was ever committed, so undo has nothing of this drag to
+      // revert -- the device stays exactly where it started.
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(
+        tester.getTopLeft(_device('dev-amp')).dy,
+        closeTo(beforeTop, 0.5),
+      );
+    });
+
+    testWidgets('a device never blocks itself: dragging within its own '
+        'occupied range is evaluated as a VALID drop', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+
+      // AMP-1 occupies U4-U5. Nudging it up ONE U targets U5-U6, which
+      // OVERLAPS its own current U5 -- a self-collision the shared
+      // `findBlockingOccupant(exceptId:)` must exclude. (This is the case
+      // the deleted `_rangeFreeOnFace` also had to special-case; it is
+      // pinned here because consolidating onto the core query is exactly
+      // where such an exclusion could have been dropped.)
+      final gesture = await grabAmp(tester);
+      await gesture.moveBy(const Offset(0, -22)); // 1U up -> U5-U6
+      await tester.pump();
+
+      expect(find.text('U5-U6'), findsOneWidget);
+      expect(find.textContaining('Occupied by'), findsNothing);
+
+      await gesture.up();
+      await tester.pump();
+      expect(
+        tester.getTopLeft(_device('dev-amp')).dy,
+        closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(5, 2).top, 0.5),
+      );
+    });
+
+    testWidgets("a new move-drag started during the previous one's 1.2s "
+        "blocked linger is not torn down by that previous drag's timer", (
+      tester,
+    ) async {
+      // Regression coverage for a real bug found while wiring this up: the
+      // blocked-release `Timer` is keyed to no particular drag, so if a
+      // second drag begins inside the 1.2s window, the FIRST drag's timer
+      // would still fire and `reset()` the shared controller out from under
+      // it -- clearing the live evaluation mid-gesture, which (because the
+      // commit gates on `isDragging`) turns the second drag's release into
+      // a silent no-op. `_armMovePreview` now cancels it on arm.
+      await tester.pumpWidget(_app());
+      await tester.pump();
+
+      // Drag 1: blocked (AMP -> U1-U2, onto UPS-1), released.
+      final blockedDrag = await grabAmp(tester);
+      await blockedDrag.moveBy(const Offset(0, 66));
+      await tester.pump();
+      await blockedDrag.up();
+      await tester.pump();
+      expect(find.textContaining('Occupied by UPS-1'), findsWidgets);
+
+      // Drag 2 begins only 300ms later -- well inside drag 1's linger.
+      await tester.pump(const Duration(milliseconds: 300));
+      final secondDrag = await grabAmp(tester);
+      await secondDrag.moveBy(const Offset(0, -88)); // -> U8-U9, free
+      await tester.pump();
+      expect(find.text('U8-U9'), findsOneWidget);
+
+      // Cross the instant drag 1's timer WOULD have fired at.
+      await tester.pump(const Duration(milliseconds: 1000));
+      expect(
+        _render(tester, 'dev-amp').dragSource,
+        isTrue,
+        reason: "the stale timer must not end the second drag's preview",
+      );
+      expect(find.text('U8-U9'), findsOneWidget);
+
+      // ...and the second drag still commits normally.
+      await secondDrag.up();
+      await tester.pump();
+      expect(
+        tester.getTopLeft(_device('dev-amp')).dy,
+        closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(8, 2).top, 0.5),
+      );
+    });
+
+    testWidgets('dragging an UNSELECTED device arms no preview and moves '
+        'nothing (select first, then drag)', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+
+      // Select AMP, then drag SW-1 -- which is NOT selected.
+      await tester.tapAt(_ampCentre(tester));
+      await tester.pump();
+      final swBefore = tester.getTopLeft(_device('dev-sw')).dy;
+
+      final gesture = await tester.startGesture(_swCentre(tester));
+      await gesture.moveBy(const Offset(0, -66));
+      await tester.pump();
+
+      expect(_render(tester, 'dev-sw').dragSource, isFalse);
+      expect(find.textContaining('U'), findsWidgets); // (ruler labels exist)
+      expect(_render(tester, 'dev-amp').dragSource, isFalse);
+
+      await gesture.up();
+      await tester.pump();
+      expect(
+        tester.getTopLeft(_device('dev-sw')).dy,
+        closeTo(swBefore, 0.5),
+      );
     });
   });
 }

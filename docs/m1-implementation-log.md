@@ -70,7 +70,10 @@ Status legend: **Done** (built and tested) · **Partial** (some of the cited beh
       `DragTarget`**, per docs/04 §3's hard constraint. New `PaletteDragController`
       (`rackmate_ui/src/canvas/palette_drag_controller.dart`) is the observable phase machine
       (armed -> lifted -> dragging, plus a `releaseLingering` state for the 1.2s post-blocked-
-      release chip persistence); `DevicePalettePanel`/`_PaletteRow` gained `onArmDrag` (an
+      release chip persistence) — **since RENAMED to `DragPreviewController`
+      (`drag_preview_controller.dart`) by §3.3 below**, once the move-a-placed-device gesture
+      began sharing it; every symbol named in this §3.1 entry is listed with its new name in
+      §3.3's own entry. `DevicePalettePanel`/`_PaletteRow` gained `onArmDrag` (an
       ADDITIONAL `Listener` wrapped around the existing double-tap/Enter subtree — composes
       safely, since `Listener` never enters the gesture arena) and `draggingCatalogId` (dims the
       source row to 40% opacity + a 1px accent inset outline once LIFTED, not merely armed).
@@ -158,20 +161,89 @@ Status legend: **Done** (built and tested) · **Partial** (some of the cited beh
       needs a keyboard deselect gesture this codebase still doesn't have (`Esc` is now wired, per
       §3.1 below, but only as the drag-cancel gesture — it is not a general deselect key and does
       not address this gap).
-- [x] §3.3 Moving a placed device: grab, drag, commit `MoveDeviceCommand` — **done** (basic case)
-  - [ ] Cross-rack move (drag past 60 px beyond a rail) — **not started**
-  - [ ] `Ctrl` at drag start = duplicate — **not started**
-  - [ ] `Alt` at drop = insert-and-push (displaces occupants) — **not started**
-  - [ ] `Ctrl+Shift` at drop over an equal-height device = swap — **not started**
-  - [ ] Live blocked-drop ghost rendering *during* an EXISTING-device move-drag — **still not
-        started for this specific gesture** (commit-time silent refusal only via `_handleMove`/
-        `_rangeFreeOnFace`, no ghost/hatch/reason-chip feedback while dragging an already-placed
-        device). The drag-from-palette stage (§3.1, now done) DID land the reusable pieces this
-        would need — `EditingOverlayPainter`'s ghost/hatch/snap-line painting and
-        `findBlockingOccupant` — but wiring move-drag itself onto them (replacing `_rangeFreeOnFace`
-        and adding a `_RackCanvasHandler`-side evaluate step) was correctly out of scope for §3.1's
-        own brief (touching already-working, already-tested move-drag code was not requested) and
-        remains a flagged, low-risk follow-up
+- [x] §3.3 Moving a placed device: grab, drag, commit `MoveDeviceCommand` — **done**, steps 1, 3
+      and 4 (live feedback landed this stage; steps 2/5/6/7 remain deferred below)
+  - [x] Step 1 grab + 4 px threshold + **30 % opacity in place** — **done, this stage**. Past the
+        existing `_clickSlopPx` threshold the source device composites through ONE `saveLayer` at
+        `RenderDeviceBox.dragSourceOpacity` (0.30), fading body AND hover/focus/selection chrome
+        uniformly so a ghosted body can't end up ringed by a full-strength outline; it stays put,
+        "showing the vacated U", while the ghost previews the target. The flag is pushed down as an
+        ordinary `DeviceBox.dragSource` constructor argument exactly like `selected` — adding NO
+        widget layer (which `RenderDeviceBox.shake`'s own doc comment warns breaks
+        `allRenderObjects`' one-entry-per-device assumption) and costing one `setState` at drag
+        start and one at drag end via the same coarse `_lastMoveDragSourceId` filter
+        `_lastPaletteDragDimId` already established; per-frame evaluation never rebuilds.
+        **DELIBERATE, STATED DEVIATION** from step 1's literal "a full-opacity ghost follows the
+        cursor with the grab offset preserved": the ghost is drawn HARD-SNAPPED to the evaluated
+        RU, not free-floating. Step 3 requires §3.1's rendering, and §3.1 step 4's ghost is
+        explicitly hard-quantised ("Snap is instant"); a free-floating ghost would need a second
+        ghost-painting path and could sit where the commit would never place the device. The grab
+        offset is fully preserved as the SNAP INPUT (`_dragDeviceStartTopY + drag delta` through
+        `RackGeometry.ruIndexForTopY`), so grabbing near a device's bottom edge still tracks
+        differently from grabbing near its top.
+  - [x] Step 3 same checks + same blocked rendering as §3.1 — **done, this stage**, and literally
+        rather than approximately: `PaletteDragController` was **generalised into
+        `DragPreviewController`** (`drag_preview_controller.dart`, renamed from
+        `palette_drag_controller.dart`; `PaletteDragPhase`/`PaletteDragEvaluation`/
+        `kPaletteGhostShakeId` → `DragPreviewPhase`/`DragPreviewEvaluation`/`kDragGhostShakeId`,
+        `catalogId` → `subjectId`) and BOTH gestures now drive one instance each of that same
+        type. Exactly one implementation survives of each of the three things that could have been
+        duplicated: (i) the per-frame blocking evaluation — `_evaluateDrop`, extent-check-first
+        then occupancy, the order `buildPlaceFromCatalogCommand`'s `explicitRuIndex` path uses,
+        with a `Uuid? exceptId` as the ONLY per-gesture input; (ii) the ghost / snap-line / 45°
+        hatch — `EditingOverlayPainter`, whose `paletteDrag` field became a
+        `List<DragPreviewController> dragPreviews` it scans for the one reporting
+        `isShowingGhost` (at most one can per frame), plus the RU-range/reason chips, whose
+        `_PaletteDragOverlay` became `_DragPreviewOverlay` with a single `showCursorCard` knob
+        (false for move-drag, which has no pre-canvas-entry stage to card); (iii) the "is this RU
+        range free" query — core's `findBlockingOccupant`.
+  - [x] `_rangeFreeOnFace` consolidated onto `findBlockingOccupant` — **done, this stage**, closing
+        the duplicate flagged in the previous stage's review. `_handleMove` + `_rangeFreeOnFace`
+        are **deleted**: occupancy was derived there from RENDERED SCENE LAYOUTS (inverting each
+        `DeviceLayout`'s Y back into RU indices by hand — a second occupancy query AND a second
+        inverse-Y derivation living beside core's own); it is now asked of the DOCUMENT MODEL
+        through the one core function keyboard-nudge, quick-add and the palette drag already
+        shared. The commit reads the SAME `DragPreviewEvaluation` object the ghost last drew,
+        re-evaluated once at the exact release point (pointer-up's position need not equal the
+        last move event's), so "the live preview and the commit never disagree" holds by
+        construction, not by review.
+  - [x] Blocked move release is no longer a **silent** refusal — **changed, this stage**: it is now
+        a no-op with the 120 ms `ShakeController` ghost shake and the reason chip persisting 1.2 s,
+        exactly as §3.1 step 5 specifies and §3.3 step 3 inherits (§3.4's "a nudge that would
+        collide never silently stops" principle applied to drops). The GHOST shakes, not the
+        device: the device never moved and returns to full opacity the instant the pointer lifts
+        (`beginBlockedRelease` clears the phase, so `isSourceEngaged` goes false that same frame)
+        while only the frozen verdict lingers. **BUG FOUND AND FIXED while wiring this**: a
+        blocked-release `Timer` left pending from one move-drag would fire during a SECOND
+        move-drag begun inside its 1.2 s window, `reset()`-ing the shared controller mid-gesture —
+        clearing the live evaluation, dropping the chips, and (because the commit gates on
+        `isDragging`) turning that second drag's release into a silent failed move. Arming now
+        cancels it, mirroring the identical fix `_onPaletteArmDrag` already carried; regression
+        test included.
+  - [x] Step 4 `Esc` mid-drag reverts — **done, this stage**: the source returns to full opacity at
+        its original U, ghost and chips vanish, and no command runs. **A STATED ASYMMETRY WITH
+        §3.1**: this uses the ordinary `Shortcuts`/`Actions` layer (a new `_CancelDragIntent`),
+        NOT the raw `HardwareKeyboard.instance.addHandler` hook the palette drag needs. That hook
+        exists because a palette drag is armed from a sibling widget while Flutter focus may be
+        anywhere; a move drag has the opposite guarantee — `_onBeginDrag` calls
+        `_canvasFocus.requestFocus()` as its first statement — so the focus-scoped binding is
+        provably sufficient and stays out of the handler-registration leak class. Because
+        `CanvasIntentDetector` owns the gesture and cannot be un-routed mid-flight (unlike the
+        palette's `pointerRouter` subscription, which `_cancelPaletteDrag` removes outright), a
+        `_dragCancelled` latch makes the still-down pointer's remaining `updateDrag`/`commitDrag`
+        callbacks no-ops. `Esc` is still NOT a general deselect key (see §3.2's known gap).
+  - [ ] Step 2 — cross-rack move (drag past 60 px beyond a rail) — **not started**. Structurally
+        untestable today regardless: `_buildDemoDocument` creates exactly ONE rack, so there is no
+        neighbouring rack to jump to, re-snap against, or pulse a target border around.
+  - [ ] Step 5 — `Ctrl` at drag start = duplicate — **not started** (needs duplicate + designator
+        re-allocation on drop)
+  - [ ] Step 6 — `Alt` at drop = insert-and-push (displaces occupants, push-up then push-down,
+        else `Insert would overflow rack by NU`) — **not started** (needs re-pack logic)
+  - [ ] Step 7 — `Ctrl+Shift` at drop over an equal-height device = swap (both showing a ↔ badge)
+        — **not started** (needs swap logic)
+  - [ ] Multi-device drag — **not started**, unchanged documented restriction: dragging one device
+        while several are selected moves just that one (`_onBeginDrag`'s `_dragPlacement` gate),
+        matching the keyboard nudge's own single-focused-device rule
   - [ ] Lateral `Width position` dropdown (Full/Left half/Right half) — **not started** (model
         already carries `startTwelfth`/`spanTwelfths`; no UI)
 - [x] §3.4 Insertion caret (first-class object) + keyboard nudge (`↑↓`, `Shift`, `Ctrl`, `Alt`,
@@ -294,7 +366,7 @@ Chronological, oldest first — see `git log --oneline` for the full history:
 288 tests passing across the workspace as of commit 11 (133 core + 42 ui + 13 app, plus the
 rendering-spine packages' own suites).
 
-UNCOMMITTED, as of this log update: TWO stacked, uncommitted stages sit on top of commit 11 —
+UNCOMMITTED, as of this log update: THREE stacked, uncommitted stages sit on top of commit 11 —
 (1) the insertion caret + keyboard nudge + quick-add-at-the-caret stage (§3.2/§3.4 above —
 `CaretController`/`InsertionCaret`, `EditingOverlayPainter`, `ShakeController`,
 `StatusMessageController`, `findBlockingOccupant`, `buildPlaceFromCatalogCommand`'s
@@ -310,6 +382,23 @@ keyboard hook), reordered the live drag evaluation to match `buildPlaceFromCatal
 extent-then-occupancy check order (see §3.1 above), and added a `MutableClock` test fixture
 (`rackmate_core/src/commands/clock.dart`) plus real paint-content assertions for the blocked/valid
 ghost styles — no scope changed, only correctness and test-coverage.
+
+And (3), stacked on those, the move-drag live-feedback stage (§3.3 above): the spec gap where
+dragging an EXISTING placed device had none of the ghost / snap-line / hatch / reason-chip
+feedback the palette drag had, despite §3.3 step 3 saying it uses the "same blocked rendering as
+§3.1". `PaletteDragController` was generalised to `DragPreviewController` and both gestures now
+drive one instance each; `_handleMove`/`_rangeFreeOnFace` were deleted in favour of the shared
+`_evaluateDrop` + core's `findBlockingOccupant`; `RenderDeviceBox` gained the 30%-opacity
+`dragSource` state; `Esc` gained a `_CancelDragIntent` binding. 301 tests passing across the
+workspace with all three stages in place (165 core + 123 ui + 13 app), `flutter analyze` clean at
+the same 212 pre-existing style infos as before the stage, and `flutter build windows` succeeding.
+One real bug was found and fixed while wiring it (a stale blocked-release `Timer` silently killing
+a second move-drag begun inside the 1.2 s linger — see §3.3 above), with a regression test. Seven
+deliberate mutations were run against the new tests (Esc revert removed, `exceptId` dropped,
+`dragSource` never set, blocked release committing anyway, per-frame evaluation frozen, the
+painter ignoring `isShowingGhost`, the 4 px threshold defeated, the stale-timer cancel removed);
+all were killed, one of them only after the threshold test was strengthened from a vacuous
+assertion into a real sub-slop move event.
 
 ---
 
@@ -329,7 +418,10 @@ Roughly in the order that unblocks the most subsequent work, not a commitment:
    extent), built directly on top of this one's `CaretController`, `EditingOverlayPainter`,
    `ShakeController`, and `findBlockingOccupant` rather than duplicating any of them — see §3.1
    above for the full mechanism and what remains deferred (the five advisory/warning checks, the
-   Staging Bin, and several visual-polish animations).
+   Staging Bin, and several visual-polish animations). **Moving an EXISTING placed device (§3.3)**
+   now shares all of that machinery too — same evaluator, same ghost/hatch/chip rendering, same
+   blocked-release behaviour — closing the gap where only the palette drag had live feedback; see
+   §3.3 above for the four remaining deferred steps (cross-rack, duplicate, insert-and-push, swap).
 3. **Rack configuration UI** (§4) — height changes, the shrink dialog, presets. Needed before a
    user can create a rack that isn't hardcoded.
 4. **Chip strip + Rack Vitals + validation rules** (§5) — the first of the 27 v1 DRC rules

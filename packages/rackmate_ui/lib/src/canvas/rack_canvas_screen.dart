@@ -12,10 +12,10 @@ import 'package:flutter/services.dart'
         SystemMouseCursors;
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/canvas/canvas_intent.dart';
+import 'package:rackmate_ui/src/canvas/drag_preview_controller.dart';
 import 'package:rackmate_ui/src/canvas/editing_overlay_painter.dart';
 import 'package:rackmate_ui/src/canvas/grid_painter.dart';
 import 'package:rackmate_ui/src/canvas/insertion_caret.dart';
-import 'package:rackmate_ui/src/canvas/palette_drag_controller.dart';
 import 'package:rackmate_ui/src/canvas/render_device_box.dart';
 import 'package:rackmate_ui/src/canvas/render_rack_canvas.dart';
 import 'package:rackmate_ui/src/canvas/selection_controller.dart';
@@ -105,11 +105,28 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// silently stops").
   final StatusMessageController _status = StatusMessageController();
 
-  /// The drag-from-palette-to-rails state machine (docs/04 §3.4 — added
-  /// this stage). See palette_drag_controller.dart's header and the
-  /// "palette drag" section below for the full arm/track/commit
-  /// mechanism.
-  final PaletteDragController _paletteDrag = PaletteDragController();
+  /// The drag-from-palette-to-rails state machine (docs/04 §3.1). See
+  /// drag_preview_controller.dart's header and the "palette drag" section
+  /// below for the full arm/track/commit mechanism.
+  final DragPreviewController _paletteDrag = DragPreviewController();
+
+  /// The move-a-placed-device state machine (docs/04 §3.3) — the SAME
+  /// controller type as [_paletteDrag], driving the SAME painter through
+  /// the SAME evaluation function, because §3.3 step 3 is literally "Same
+  /// checks and same blocked rendering as §3.1".
+  ///
+  /// A SECOND INSTANCE rather than one shared between the gestures: the
+  /// two are armed from different places (a sibling palette row vs. a hit
+  /// inside the canvas) and tracked through different plumbing (the global
+  /// `pointerRouter` vs. `CanvasIntentDetector`'s own `Listener`), so two
+  /// simultaneous pointers — one on a palette row, one on a placed device
+  /// — are physically possible on a touch device. One shared instance
+  /// would let each clobber the other's live evaluation mid-flight;
+  /// separate instances make that structurally impossible, and cost only
+  /// the painter checking two sources instead of one (at most one can ever
+  /// report `isShowingGhost` per frame — see `EditingOverlayPainter`'s own
+  /// `_activeDrag`).
+  final DragPreviewController _moveDrag = DragPreviewController();
 
   /// The `CanvasIntentDetector`'s own `RenderBox`, looked up on every
   /// palette-drag pointer move to test "is the pointer inside the canvas
@@ -122,7 +139,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   final GlobalKey _canvasBoxKey = GlobalKey(debugLabel: 'rackCanvasBox');
 
   /// The pointer id currently armed/tracked for a palette drag (docs/04
-  /// §3.1), or null. Tracked here (not inside [PaletteDragController],
+  /// §3.1), or null. Tracked here (not inside [DragPreviewController],
   /// which holds only UI-observable STATE, not plumbing) so the same
   /// pointer id can be unsubscribed from `GestureBinding`'s router on
   /// every exit path (commit, blocked no-op, Esc cancel, pointer-cancel,
@@ -143,6 +160,14 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// path.
   OverlayEntry? _paletteDragOverlayEntry;
 
+  /// The move-drag's own 1.2s blocked-release timer and screen-space chip
+  /// overlay — siblings of [_blockedReleaseTimer]/[_paletteDragOverlayEntry]
+  /// with identical lifecycles, kept SEPARATE for the same reason
+  /// [_moveDrag] itself is (see its doc comment): two concurrent pointers
+  /// must not share one timer slot or one `OverlayEntry`.
+  Timer? _moveBlockedReleaseTimer;
+  OverlayEntry? _moveDragOverlayEntry;
+
   // Coarse (non-per-frame) change tracking for `_paletteDrag`, so a
   // Screen-level `setState` (needed only to re-render the palette's
   // dimmed row, since `draggingCatalogId` is an ordinary constructor
@@ -153,6 +178,14 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   // `ShakeController`/`RenderDeviceBox` already established).
   bool _lastPaletteDragInProgress = false;
   String? _lastPaletteDragDimId;
+
+  /// The same coarse filter for `_moveDrag`: the id of the device that
+  /// should currently paint at 30% opacity in place (docs/04 §3.3 step 1),
+  /// or null. A `setState` fires only when this VALUE changes — i.e. once
+  /// when a move-drag crosses the 4px threshold and once when it ends —
+  /// never on the per-frame evaluation updates, which reach
+  /// `EditingOverlayPainter` by it listening to `_moveDrag` directly.
+  String? _lastMoveDragSourceId;
 
   /// The seeded catalog (docs/09-roadmap.md M1 checklist #6,
   /// docs/catalog/seed-devices.md): 30 rack-side archetypes + 18 field
@@ -196,6 +229,33 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   int _dragDeviceHeightU = 0; // hit device's U height (0 if none)
   double _dragDeviceStartTopY = 0; // hit device's scene-space top edge
 
+  /// The hit device's rail placement at grab time, or null when the drag
+  /// did not start on a movable, rail-placed, ALREADY-SELECTED device.
+  /// Non-null is precisely the condition under which a live move preview
+  /// arms and a `MoveDeviceCommand` can eventually run — computed ONCE at
+  /// `beginDrag` so the preview and the commit can never disagree about
+  /// whether this gesture is a move at all.
+  RailPlacement? _dragPlacement;
+
+  /// The pointer kinds `CanvasIntentDetector` reported at `beginDrag`,
+  /// carried into the drag preview purely as INFORMATION (matching the
+  /// palette drag's own `sourceKinds`). Nothing branches on it — doing so
+  /// for editing semantics is forbidden (AC-016 #23) — but recording it
+  /// honestly beats arming with an empty set that claims the gesture came
+  /// from nowhere.
+  Set<PointerDeviceKind> _dragSourceKinds = const {};
+
+  /// Set by `Esc` mid-move-drag (docs/04 §3.3 step 4: "`Esc` mid-drag
+  /// reverts"). The pointer is still physically down at that moment and
+  /// `CanvasIntentDetector` will keep delivering `updateDrag` and,
+  /// eventually, `commitDrag` for it — there is no way to un-route a
+  /// gesture that detector owns — so this latch makes every remaining
+  /// callback for the cancelled drag a no-op until the pointer is
+  /// released. (The palette drag needs no equivalent: it is tracked
+  /// through the global `pointerRouter`, which `_cancelPaletteDrag` can
+  /// and does unsubscribe outright.)
+  bool _dragCancelled = false;
+
   @override
   void initState() {
     super.initState();
@@ -215,6 +275,8 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // doc comment for why this is coarse-filtered rather than a repaint
     // on every frame.
     _paletteDrag.addListener(_onPaletteDragChanged);
+    // Same coarse filter for the move drag — see `_lastMoveDragSourceId`.
+    _moveDrag.addListener(_onMoveDragChanged);
     // Seed the caret immediately rather than waiting for the first focus/
     // selection event, so it has a sensible (if inactive) position from
     // the very first frame.
@@ -244,6 +306,14 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _removePaletteDragOverlay();
     _paletteDrag
       ..removeListener(_onPaletteDragChanged)
+      ..dispose();
+    // Likewise for a move drag in flight at dispose time (same reasoning:
+    // unusual in production, real in a widget test that pumps a new tree
+    // mid-drag) — no leaked Timer, no orphaned OverlayEntry.
+    _moveBlockedReleaseTimer?.cancel();
+    _removeMoveDragOverlay();
+    _moveDrag
+      ..removeListener(_onMoveDragChanged)
       ..dispose();
     _gridCache.dispose();
     _canvasFocus.dispose();
@@ -279,7 +349,12 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _caret.recompute(
       selectionEmpty: _selection.isEmpty,
       canvasHasFocus: _canvasFocus.hasFocus,
-      dragInProgress: _paletteDrag.isInProgress,
+      // EITHER drag suppresses the caret (docs/04 §3.4: the caret and an
+      // in-flight drag are mutually exclusive) — in practice a move drag
+      // already implies a non-empty selection, which suppresses it anyway,
+      // but the caret's activation formula should state the real rule
+      // rather than lean on a coincidence.
+      dragInProgress: _paletteDrag.isInProgress || _moveDrag.isInProgress,
       rack: _rack,
       smartDefaultRuIndex: findLowestFreeRu(
         rack: _rack,
@@ -307,12 +382,14 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   }
 
   void _onBeginDrag(DPt sceneStart, Set<PointerDeviceKind> kinds) {
-    // Take canvas focus so Del/undo/redo shortcuts land here, not on a
+    // Take canvas focus so Del/undo/redo/Esc shortcuts land here, not on a
     // device's FocusableActionDetector (or nothing).
     _canvasFocus.requestFocus();
+    _dragSourceKinds = kinds;
     _dragStartScene = sceneStart;
     _dragStartScale = _viewport.scale;
     _dragMoved = false;
+    _dragCancelled = false;
     _dragModifierToggle = HardwareKeyboard.instance.isControlPressed ||
         HardwareKeyboard.instance.isMetaPressed;
 
@@ -323,33 +400,60 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     final region = scene == null ? null : hitTest(scene, sceneStart);
     _dragDeviceId = region?.entityId;
     _dragDeviceHeightU = 0;
+    _dragPlacement = null;
     final layout = region == null ? null : _layoutFor(region.entityId);
     if (layout != null) {
       _dragDeviceStartTopY = layout.rect.top;
       _dragDeviceHeightU =
           (layout.rect.height / RackGeometry.unitsPerRu).round();
     }
+
+    // Decide ONCE, here, whether this gesture can become a move — the same
+    // gate `_onCommitDrag` used to apply on its own at release time, hoisted
+    // so the LIVE PREVIEW and the eventual commit are governed by one
+    // condition rather than two that could drift. Move only a device that is
+    // BOTH hit at grab time AND already selected; single-device move: if
+    // several are selected, dragging one moves just that one (multi-device
+    // drag remains deferred, docs/m1-implementation-log.md §3.3).
+    final deviceId = _dragDeviceId;
+    if (deviceId != null && _dragDeviceHeightU > 0) {
+      final id = Uuid(deviceId);
+      final placement = _doc.devices[id]?.placement;
+      if (placement is RailPlacement && _selection.contains(id)) {
+        _dragPlacement = placement;
+      }
+    }
   }
 
   void _onUpdateDrag(DPt sceneCurrent, DPt sceneDelta) {
-    if (_dragMoved) return; // already a drag; nothing to recompute until commit
-    final dx = sceneCurrent.x - _dragStartScene.x;
-    final dy = sceneCurrent.y - _dragStartScene.y;
-    final movedScreenPx = math.sqrt(dx * dx + dy * dy) * _dragStartScale;
-    if (movedScreenPx >= _clickSlopPx) _dragMoved = true;
+    if (_dragCancelled) return; // Esc already reverted this drag.
+    if (!_dragMoved) {
+      final dx = sceneCurrent.x - _dragStartScene.x;
+      final dy = sceneCurrent.y - _dragStartScene.y;
+      final movedScreenPx = math.sqrt(dx * dx + dy * dy) * _dragStartScale;
+      if (movedScreenPx < _clickSlopPx) return;
+      // docs/04 §3.3 step 1: "Grab the body; 4 px threshold." Only NOW does
+      // the source device fade and the ghost appear — below the threshold
+      // this is still potentially a click ("a click still means show
+      // details").
+      _dragMoved = true;
+      _armMovePreview();
+    }
+    _updateMovePreview(sceneCurrent);
   }
 
   void _onCommitDrag(DPt sceneEnd) {
+    if (_dragCancelled) {
+      // Esc already reverted; the pointer-up that finally arrives must not
+      // resurrect the move (docs/04 §3.3 step 4).
+      _resetDrag();
+      return;
+    }
     final deviceId = _dragDeviceId;
     if (!_dragMoved) {
       _handleClick(deviceId);
-    } else if (deviceId != null &&
-        _dragDeviceHeightU > 0 &&
-        _selection.contains(Uuid(deviceId))) {
-      // Move only a device that is BOTH hit at grab time AND already
-      // selected (task brief). Single-device move: if several are selected,
-      // dragging one moves just that one (multi-device drag is deferred).
-      _handleMove(deviceId, sceneEnd);
+    } else if (_moveDrag.isDragging) {
+      _commitOrNoopMoveDrag(sceneEnd);
     }
     // else — a drag on empty canvas, or on an unselected device: a no-op this
     // stage. Left-drag-on-empty is reserved for marquee (deferred, docs/04
@@ -358,12 +462,20 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _resetDrag();
   }
 
-  void _onCancelDrag() => _resetDrag();
+  void _onCancelDrag() {
+    // A pointer-cancel (not an Esc): tear the live preview down with no
+    // command and no lingering chip — nothing was released, so nothing was
+    // attempted-and-refused.
+    _cancelMoveDrag();
+    _resetDrag();
+  }
 
   void _resetDrag() {
     _dragDeviceId = null;
     _dragDeviceHeightU = 0;
     _dragMoved = false;
+    _dragCancelled = false;
+    _dragPlacement = null;
   }
 
   void _handleClick(String? deviceId) {
@@ -383,25 +495,171 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     }
   }
 
-  void _handleMove(String deviceId, DPt sceneEnd) {
+  // ── moving a placed device, with live feedback (docs/04 §3.3) ─────────
+  //
+  // THE MECHANISM, stated once. Unlike the palette drag (§3.1, further
+  // below), this gesture starts INSIDE the canvas subtree, so it needs no
+  // `pointerRouter` and no `Overlay`-based arming: it is already a plain
+  // `CanvasIntentHandler` begin/update/commit/cancel sequence delivered by
+  // `CanvasIntentDetector`. What §3.3 step 3 demands — "Same checks and
+  // same blocked rendering as §3.1" — is delivered by sharing, not
+  // cloning:
+  //
+  //   * the per-frame verdict comes from `_evaluateDrop`, the SAME function
+  //     the palette drag calls (extent check first, then occupancy via
+  //     core's `findBlockingOccupant`);
+  //   * the ghost / snap-line / 45° hatch come from the SAME
+  //     `EditingOverlayPainter._paintGhost`, fed by a `DragPreviewController`
+  //     that is the same type the palette drag uses;
+  //   * the RU-range and reason chips come from the SAME
+  //     `_DragPreviewOverlay` widget;
+  //   * a blocked release is the SAME no-op + 120ms `ShakeController` shake
+  //     + 1.2s chip linger.
+  //
+  // The one thing that is NOT shared is the commit: a palette drag builds an
+  // `AddDeviceCommand` via `buildPlaceFromCatalogCommand`, a move builds a
+  // `MoveDeviceCommand`. That is the actual difference between the two
+  // gestures, and it is the only difference left in the code.
+  //
+  // WHAT THIS REPLACED, honestly: `_handleMove` + a private
+  // `_rangeFreeOnFace` that derived occupancy by inverting each RENDERED
+  // device layout's Y back into RU indices — a second occupancy query and a
+  // second inverse-Y derivation living alongside core's `findBlockingOccupant`
+  // and `RackGeometry.ruIndexForTopY`. Both are gone; occupancy is now asked
+  // of the DOCUMENT MODEL through the one core function every other surface
+  // (keyboard nudge, quick-add, palette drag) already used.
+  //
+  // STILL DEFERRED for this gesture, unchanged (docs/m1-implementation-log.md
+  // §3.3): step 2 (cross-rack drag past 60px beyond a rail — only one rack
+  // exists in the demo document, so there is no neighbour to jump to), step 5
+  // (`Ctrl` = duplicate), step 6 (`Alt` = insert-and-push), step 7
+  // (`Ctrl+Shift` = swap), and multi-device drag.
+
+  /// docs/04 §3.3 step 1, once past the 4px threshold: the source device
+  /// drops to 30% opacity IN PLACE (via `_lastMoveDragSourceId` →
+  /// `DeviceBox.dragSource`) and the ghost goes live.
+  void _armMovePreview() {
+    final deviceId = _dragDeviceId;
+    final placement = _dragPlacement;
+    if (deviceId == null || placement == null) return;
+
+    // A new drag starting is reason enough to stop honouring the PREVIOUS
+    // drag's blocked-release linger timer. Left pending, it would fire
+    // (up to 1.2s later) against the `_moveDrag`/overlay this new drag now
+    // owns: `reset()` would wipe the live evaluation mid-gesture, the chips
+    // would vanish, and — because `_onCommitDrag` gates on
+    // `_moveDrag.isDragging` — the release would then commit NOTHING, a
+    // silent failed move. Exactly the bug class already fixed on the
+    // palette side (see `_onPaletteArmDrag`'s own note); the same guard
+    // belongs here for the same reason.
+    _moveBlockedReleaseTimer?.cancel();
+    _moveBlockedReleaseTimer = null;
+
     final device = _doc.devices[Uuid(deviceId)];
-    final placement = device?.placement;
-    if (placement is! RailPlacement) return;
+    _moveDrag
+      ..arm(
+        subjectId: deviceId,
+        deviceH: _dragDeviceHeightU,
+        face: placement.face,
+        displayName: device?.name ?? '',
+        badge: '${_dragDeviceHeightU}U',
+        sourceKinds: _dragSourceKinds,
+      )
+      // No pre-canvas-entry stage exists for this gesture — the grab
+      // happened inside the canvas — so `armed -> dragging` directly.
+      ..liftIntoCanvas();
+    _insertMoveDragOverlay();
+  }
 
-    // New top edge = the device's original top + the vertical drag delta, so
-    // the grab offset is preserved; then snapped + rack-clamped through the
-    // ONE inverse geometry (rack_geometry.ruIndexForTopY).
-    final newTopY = _dragDeviceStartTopY + (sceneEnd.y - _dragStartScene.y);
-    final candidate = _geo.ruIndexForTopY(newTopY, _dragDeviceHeightU);
-    if (candidate == placement.ruIndex) return; // no net move
+  /// One frame of the live move preview (docs/04 §3.3 steps 1/3).
+  ///
+  /// The snapped RU comes from the device's ORIGINAL top edge plus the
+  /// vertical drag delta — "the grab offset preserved" (§3.3 step 1) —
+  /// through `RackGeometry.ruIndexForTopY`, the one inverse geometry.
+  ///
+  /// A DELIBERATE, STATED DEVIATION from §3.3 step 1's literal wording: the
+  /// ghost is drawn HARD-SNAPPED to that RU, not free-floating under the
+  /// cursor. §3.3 step 3 requires the same rendering as §3.1, and §3.1 step
+  /// 4's ghost is explicitly hard-quantised ("Snap is instant"); a
+  /// free-floating ghost would need a second ghost-painting path and would
+  /// let the preview sit somewhere the commit would never place the device.
+  /// The grab offset is still fully preserved — it is what feeds the
+  /// snap — so a grab near a device's bottom edge still tracks differently
+  /// from a grab near its top, which is the behaviour that wording exists to
+  /// protect.
+  void _updateMovePreview(DPt sceneCurrent) {
+    if (!_moveDrag.isDragging) return;
+    final deviceId = _dragDeviceId;
+    final placement = _dragPlacement;
+    if (deviceId == null || placement == null) return;
 
-    // SIMPLIFICATION (task brief): a target RU range already occupied by
-    // ANOTHER device on this face refuses the move SILENTLY — no clamp to a
-    // free slot, no push. Live blocked-drop / collision feedback during the
-    // drag is a later stage (docs/04 §3.1). The candidate is already clamped
-    // to the rack extent, so this only guards inter-device overlap.
-    if (!_rangeFreeOnFace(candidate, _dragDeviceHeightU, Uuid(deviceId))) {
+    final newTopY = _dragDeviceStartTopY + (sceneCurrent.y - _dragStartScene.y);
+    final ruIndex = _geo.ruIndexForTopY(newTopY, _dragDeviceHeightU);
+    _moveDrag
+      ..updateCursorGlobal(_sceneToGlobal(sceneCurrent))
+      ..updateEvaluation(
+        sceneCurrent,
+        _evaluateDrop(
+          ruIndex,
+          _dragDeviceHeightU,
+          placement.face,
+          // A device never blocks its own move against its OWN current
+          // placement (core's `findBlockingOccupant` takes this exact
+          // parameter for exactly this reason).
+          exceptId: Uuid(deviceId),
+        ),
+      );
+  }
+
+  /// docs/04 §3.3 step 4 ("Pointer up commits one `MoveDeviceCommand`") and
+  /// step 3's inherited §3.1-step-5 blocked behaviour.
+  ///
+  /// The verdict committed to is the SAME `DragPreviewEvaluation` object the
+  /// ghost last drew — re-evaluated one final time at the exact release
+  /// point first, because `CanvasIntentDetector` reports pointer-up at a
+  /// position that need not equal the last move event's. That refresh runs
+  /// through `_updateMovePreview` (hence `_evaluateDrop`), so "commit reads
+  /// the last live-evaluated state" stays literally true: there is no second
+  /// code path deciding whether the move is legal.
+  void _commitOrNoopMoveDrag(DPt sceneEnd) {
+    final deviceId = _dragDeviceId;
+    final placement = _dragPlacement;
+    if (deviceId == null || placement == null) {
+      _cancelMoveDrag();
       return;
+    }
+
+    _updateMovePreview(sceneEnd);
+    final evaluation = _moveDrag.evaluation;
+
+    if (evaluation == null || evaluation.blocked) {
+      // docs/04 §3.1 step 5, inherited by §3.3 step 3: "Release while
+      // blocked is a no-op with a 120ms shake and the chip persisting
+      // 1.2s." Deliberately NOT the old silent refusal — docs/04 §3.4's
+      // "silent no-ops are the most common source of 'the app is broken'"
+      // applies to a refused drop exactly as it does to a refused nudge.
+      // The GHOST shakes, not the device: the device never moved, and it
+      // has already snapped back to full opacity (`beginBlockedRelease`
+      // clears the phase, so `isSourceEngaged` goes false this same frame).
+      _shake.trigger(kDragGhostShakeId);
+      _moveDrag.beginBlockedRelease();
+      _moveBlockedReleaseTimer?.cancel();
+      _moveBlockedReleaseTimer = Timer(
+        const Duration(milliseconds: 1200),
+        () {
+          _moveDrag.reset();
+          _removeMoveDragOverlay();
+          _moveBlockedReleaseTimer = null;
+        },
+      );
+      return;
+    }
+
+    _removeMoveDragOverlay();
+    _moveDrag.reset();
+
+    if (evaluation.ruIndex == placement.ruIndex) {
+      return; // Genuine no-op: dropped back where it started.
     }
 
     // selectionBefore for the undo entry = the live selection (docs/03 §4.4);
@@ -411,7 +669,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       MoveDeviceCommand(
         id: Uuid(deviceId),
         fromRuIndex: placement.ruIndex,
-        toRuIndex: candidate,
+        toRuIndex: evaluation.ruIndex,
         fromFace: placement.face,
         toFace: placement.face,
         now: _controller.clock.nowUtc(),
@@ -420,22 +678,26 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     );
   }
 
-  /// Whether `[ruStart, ruStart+deviceH-1]` is free of every OTHER device on
-  /// the current face. Derived from the current scene's device layouts (which
-  /// are exactly the visible devices on this face), so no template re-resolve
-  /// is needed and it can never disagree with what is drawn.
-  bool _rangeFreeOnFace(int ruStart, int deviceH, Uuid exceptId) {
-    final endExcl = ruStart + deviceH;
-    for (final layout in _rackScene?.devices ?? const <DeviceLayout>[]) {
-      if (layout.deviceId == exceptId) continue;
-      final otherStart =
-          (_geo.heightU + 1 - layout.rect.bottom / RackGeometry.unitsPerRu)
-              .round();
-      final otherEndExcl =
-          otherStart + (layout.rect.height / RackGeometry.unitsPerRu).round();
-      if (ruStart < otherEndExcl && otherStart < endExcl) return false;
-    }
-    return true;
+  /// Tears down a move preview with no command and no lingering chip — the
+  /// `Esc` revert (docs/04 §3.3 step 4) and the pointer-cancel path.
+  void _cancelMoveDrag() {
+    _moveBlockedReleaseTimer?.cancel();
+    _moveBlockedReleaseTimer = null;
+    _removeMoveDragOverlay();
+    _moveDrag.reset();
+  }
+
+  /// A scene point as a GLOBAL screen offset, for the screen-space chips
+  /// (`_DragPreviewOverlay` positions from global coordinates, since the
+  /// palette drag — its other caller — tracks raw global pointer positions).
+  /// Null-safe against a detached/rebuilt canvas render object, exactly as
+  /// `_handlePaletteDragMove` is.
+  Offset _sceneToGlobal(DPt scene) {
+    final screen = _viewport.sceneToScreen(scene);
+    final local = Offset(screen.x, screen.y);
+    final box = _canvasBoxKey.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.attached) return local;
+    return box.localToGlobal(local);
   }
 
   void _deleteSelection() {
@@ -540,6 +802,21 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   void _onPageUp() => _dispatchVertical(10);
   void _onPageDown() => _dispatchVertical(-10);
 
+  /// `Esc` (docs/04 §3.3 step 4): reverts an in-flight move drag — the
+  /// source device returns to full opacity at its original U, the ghost and
+  /// chips disappear, and NO command runs. Latches [_dragCancelled] so the
+  /// still-down pointer's remaining `updateDrag`/`commitDrag` callbacks
+  /// cannot resurrect the move (see that field's own doc comment).
+  ///
+  /// A no-op when no move drag is in flight — including during a PALETTE
+  /// drag, which cancels through its own raw keyboard hook and consumes the
+  /// key before it ever reaches this binding.
+  void _onEscape() {
+    if (!_moveDrag.isInProgress) return;
+    _dragCancelled = true;
+    _cancelMoveDrag();
+  }
+
   void _onHome() {
     if (!_canvasFocus.hasFocus) return;
     if (_selection.isEmpty) {
@@ -601,7 +878,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
 
     // selectionBefore for the undo entry = the live selection (docs/03
     // §4.4); a nudge leaves the selection unchanged, so selectionAfter
-    // matches — same convention as _handleMove.
+    // matches — same convention as the move-drag commit.
     _controller.selection = _selection.snapshot();
     _controller.run(
       MoveDeviceCommand(
@@ -629,7 +906,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
 
   void _placeFromCatalog(String catalogId) {
     // selectionBefore for the undo entry = the live selection, same
-    // convention as _handleMove/_deleteSelection.
+    // convention as the move-drag commit/_deleteSelection.
     _controller.selection = _selection.snapshot();
 
     // CARET TARGETING — a deliberate, explained deviation from gating this
@@ -769,9 +1046,9 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   //     position into the CANVAS's own coordinate space via
   //     `_canvasBoxKey`'s `RenderBox` (`globalToLocal`, valid even when the
   //     position is outside that box's rect) and drives
-  //     `PaletteDragController`'s phase machine (`_handlePaletteDragMove`).
+  //     `DragPreviewController`'s phase machine (`_handlePaletteDragMove`).
   //  3. EVALUATE — every frame the pointer is inside the canvas widget's
-  //     bounds, `_evaluatePaletteDrop` runs CR-017's two BLOCKING checks,
+  //     bounds, `_evaluateDrop` runs CR-017's two BLOCKING checks,
   //     first-failure-wins, and caches the verdict on `_paletteDrag`.
   //  4. COMMIT — a `PointerUpEvent` reads that SAME cached verdict
   //     (`_commitOrNoopPaletteDrag`): valid -> one
@@ -828,7 +1105,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // is legitimate; `_armPointer != null` is defense in depth for the
     // narrow window where phase and the tracked pointer could otherwise
     // disagree.
-    if (_paletteDrag.phase != PaletteDragPhase.none || _armPointer != null) {
+    if (_paletteDrag.phase != DragPreviewPhase.none || _armPointer != null) {
       return;
     }
 
@@ -853,7 +1130,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _armPointer = event.pointer;
     _armGlobalStart = event.position; // PointerEvent.position is always global.
     _paletteDrag.arm(
-      catalogId: catalogId,
+      subjectId: catalogId,
       deviceH: deviceH,
       face: face,
       displayName: body.displayName,
@@ -887,9 +1164,9 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// docs/04 §3.1 steps 2-5: lift (past 4px), enter/exit the canvas
   /// widget's bounds, and — while inside — snap + evaluate every frame.
   void _handlePaletteDragMove(Offset globalPosition) {
-    if (_paletteDrag.phase == PaletteDragPhase.none) return; // ended already.
+    if (_paletteDrag.phase == DragPreviewPhase.none) return; // ended already.
 
-    if (_paletteDrag.phase == PaletteDragPhase.armed) {
+    if (_paletteDrag.phase == DragPreviewPhase.armed) {
       final dx = globalPosition.dx - _armGlobalStart.dx;
       final dy = globalPosition.dy - _armGlobalStart.dy;
       if (math.sqrt(dx * dx + dy * dy) < _clickSlopPx) return;
@@ -903,14 +1180,14 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
         box.attached &&
         (Offset.zero & box.size).contains(box.globalToLocal(globalPosition));
 
-    final wasDragging = _paletteDrag.phase == PaletteDragPhase.dragging;
-    if (insideCanvas && _paletteDrag.phase == PaletteDragPhase.lifted) {
+    final wasDragging = _paletteDrag.phase == DragPreviewPhase.dragging;
+    if (insideCanvas && _paletteDrag.phase == DragPreviewPhase.lifted) {
       _paletteDrag.enterCanvas();
     } else if (!insideCanvas && wasDragging) {
       _paletteDrag.exitCanvas();
     }
 
-    if (_paletteDrag.phase == PaletteDragPhase.dragging) {
+    if (_paletteDrag.phase == DragPreviewPhase.dragging) {
       final canvasBox = box! as RenderBox;
       final local = canvasBox.globalToLocal(globalPosition);
       final scene = _viewport.screenToScene(DPt(local.dx, local.dy));
@@ -918,7 +1195,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       final ruIndex = _geo.ruIndexForCursorY(scene.y, deviceH);
       _paletteDrag.updateEvaluation(
         scene,
-        _evaluatePaletteDrop(ruIndex, deviceH, _paletteDrag.face),
+        _evaluateDrop(ruIndex, deviceH, _paletteDrag.face),
       );
     }
   }
@@ -927,6 +1204,13 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// wins in the SAME order `buildPlaceFromCatalogCommand`'s
   /// `explicitRuIndex` path checks them (catalog_placement.dart): fits
   /// within the rack extent FIRST, then front U range free on this face.
+  ///
+  /// THE ONE EVALUATOR for BOTH drag gestures — the palette drag (§3.1) and
+  /// the move-a-placed-device drag (§3.3, whose step 3 is literally "Same
+  /// checks ... as §3.1"). The only per-gesture input is [exceptId]: a move
+  /// must not be blocked by the device being moved, a palette placement has
+  /// no such device. Everything else — which checks, in which order, with
+  /// which wording — is identical by construction rather than by review.
   /// This order must match that function's exactly — not just reuse the
   /// same `findBlockingOccupant` call — because `RackGeometry.
   /// maxRuIndexFor` can clamp a candidate `ruIndex` for an over-tall device
@@ -942,15 +1226,16 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// and quick-add's `explicitRuIndex` path do (catalog_placement.dart's
   /// own doc comment: "so both surfaces report the exact same occupant for
   /// the exact same range") — no new core function is added.
-  PaletteDragEvaluation _evaluatePaletteDrop(
+  DragPreviewEvaluation _evaluateDrop(
     int ruIndex,
     int deviceH,
-    Face face,
-  ) {
+    Face face, {
+    Uuid? exceptId,
+  }) {
     final overflow = ruIndex + deviceH - 1 > _rack.heightU;
     if (overflow) {
       final freeAtTop = (_rack.heightU - ruIndex + 1).clamp(0, _rack.heightU);
-      return PaletteDragEvaluation(
+      return DragPreviewEvaluation(
         ruIndex: ruIndex,
         blocked: true,
         reason: 'Needs ${deviceH}U, only ${freeAtTop}U free at top.',
@@ -964,6 +1249,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       templates: _doc.templates,
       ruStart: ruIndex,
       deviceH: deviceH,
+      exceptId: exceptId,
     );
     if (blocker != null) {
       final blockerPlacement = blocker.placement;
@@ -975,7 +1261,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
           ? 1
           : (face == Face.front ? snapshot.body.frontU : snapshot.body.rearU);
       final end = start + h - 1;
-      return PaletteDragEvaluation(
+      return DragPreviewEvaluation(
         ruIndex: ruIndex,
         blocked: true,
         reason: 'Occupied by ${blocker.designator} (U$start-U$end).',
@@ -983,7 +1269,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       );
     }
 
-    return PaletteDragEvaluation(ruIndex: ruIndex, blocked: false);
+    return DragPreviewEvaluation(ruIndex: ruIndex, blocked: false);
   }
 
   /// `"$templateId@$version"` — the SAME key format
@@ -1008,10 +1294,10 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // AND (redundantly, harmlessly) nowhere else below is correct.
     _removePaletteEscHandler();
 
-    final catalogId = _paletteDrag.catalogId;
+    final catalogId = _paletteDrag.subjectId;
     if (catalogId == null) return;
 
-    if (_paletteDrag.phase != PaletteDragPhase.dragging) {
+    if (_paletteDrag.phase != DragPreviewPhase.dragging) {
       // Released while still armed/lifted — outside the canvas widget's
       // bounds entirely. SCOPE DECISION: no Staging Bin exists, so this is
       // a plain no-op (no shake: an expected outcome, not a violated
@@ -1026,7 +1312,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       // Blocked release (docs/04 §3.1 step 5 verbatim): "Release while
       // blocked is a no-op with a 120ms shake and the chip persisting
       // 1.2s."
-      _shake.trigger(kPaletteGhostShakeId);
+      _shake.trigger(kDragGhostShakeId);
       _paletteDrag.beginBlockedRelease();
       _blockedReleaseTimer?.cancel();
       _blockedReleaseTimer = Timer(const Duration(milliseconds: 1200), () {
@@ -1104,7 +1390,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // hook was still registered on a since-ended drag.
     _removePaletteEscHandler();
 
-    if (_paletteDrag.catalogId == null && !_paletteDrag.releaseLingering) {
+    if (_paletteDrag.subjectId == null && !_paletteDrag.releaseLingering) {
       return;
     }
     _removePaletteDragOverlay();
@@ -1128,7 +1414,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   void _insertPaletteDragOverlay() {
     if (_paletteDragOverlayEntry != null) return;
     _paletteDragOverlayEntry = OverlayEntry(
-      builder: (context) => _PaletteDragOverlay(
+      builder: (context) => _DragPreviewOverlay(
         controller: _paletteDrag,
         viewport: _viewport,
         geo: _geo,
@@ -1142,6 +1428,29 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _paletteDragOverlayEntry = null;
   }
 
+  /// The move drag's RU-range + reason chips (docs/04 §3.3 step 3's
+  /// inherited §3.1 chrome). The SAME widget the palette drag uses, minus
+  /// the pre-canvas-entry cursor card: a move drag never has a pre-entry
+  /// stage (it is grabbed inside the canvas), so there is nothing for that
+  /// card to represent — see [_DragPreviewOverlay.showCursorCard].
+  void _insertMoveDragOverlay() {
+    if (_moveDragOverlayEntry != null) return;
+    _moveDragOverlayEntry = OverlayEntry(
+      builder: (context) => _DragPreviewOverlay(
+        controller: _moveDrag,
+        viewport: _viewport,
+        geo: _geo,
+        showCursorCard: false,
+      ),
+    );
+    Overlay.of(context, rootOverlay: true).insert(_moveDragOverlayEntry!);
+  }
+
+  void _removeMoveDragOverlay() {
+    _moveDragOverlayEntry?.remove();
+    _moveDragOverlayEntry = null;
+  }
+
   /// Coarse (non-per-frame) reaction to `_paletteDrag` — see that field's
   /// own doc comment for why this is filtered rather than a screen-wide
   /// `setState` on every evaluate/cursor update.
@@ -1151,9 +1460,22 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       _lastPaletteDragInProgress = inProgress;
       _recomputeCaret();
     }
-    final dimId = _paletteDrag.isLifted ? _paletteDrag.catalogId : null;
+    final dimId = _paletteDrag.isSourceEngaged ? _paletteDrag.subjectId : null;
     if (dimId != _lastPaletteDragDimId) {
       _lastPaletteDragDimId = dimId;
+      if (mounted) setState(() {});
+    }
+  }
+
+  /// The same coarse filter for `_moveDrag`: rebuild ONLY when which device
+  /// should paint at 30% opacity changes (docs/04 §3.3 step 1), i.e. once at
+  /// drag start and once at drag end — never on the per-frame evaluation
+  /// updates, which `EditingOverlayPainter` and `_DragPreviewOverlay` pick
+  /// up by listening to `_moveDrag` directly.
+  void _onMoveDragChanged() {
+    final sourceId = _moveDrag.isSourceEngaged ? _moveDrag.subjectId : null;
+    if (sourceId != _lastMoveDragSourceId) {
+      _lastMoveDragSourceId = sourceId;
       if (mounted) setState(() {});
     }
   }
@@ -1213,6 +1535,24 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
         SingleActivator(LogicalKeyboardKey.end): _EndIntent(),
         SingleActivator(LogicalKeyboardKey.pageUp): _PageUpIntent(),
         SingleActivator(LogicalKeyboardKey.pageDown): _PageDownIntent(),
+        // docs/04 §3.3 step 4: "`Esc` mid-drag reverts."
+        //
+        // WHY THE `Shortcuts` LAYER HERE, when the PALETTE drag needed a raw
+        // `HardwareKeyboard.instance.addHandler` hook instead (see
+        // `_onRawKeyDuringPaletteDrag`): that hook exists because a palette
+        // drag is armed from a sibling widget while Flutter focus may be
+        // anywhere (or nowhere), so no focus-scoped binding could be trusted
+        // to hear the key. A move drag has the opposite guarantee —
+        // `_onBeginDrag` calls `_canvasFocus.requestFocus()` as its very
+        // first statement, so the canvas provably owns focus for the whole
+        // gesture. Using the ordinary binding here keeps this out of the
+        // handler-registration leak class those raw hooks live in, at the
+        // cost of one deliberately-stated asymmetry.
+        //
+        // Harmless when no drag is in flight: `_onEscape` finds nothing to
+        // cancel and does nothing. It is NOT a general deselect key (see
+        // docs/m1-implementation-log.md §3.2's known gap).
+        SingleActivator(LogicalKeyboardKey.escape): _CancelDragIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -1273,6 +1613,12 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
           _PageDownIntent: CallbackAction<_PageDownIntent>(
             onInvoke: (_) {
               _onPageDown();
+              return null;
+            },
+          ),
+          _CancelDragIntent: CallbackAction<_CancelDragIntent>(
+            onInvoke: (_) {
+              _onEscape();
               return null;
             },
           ),
@@ -1363,27 +1709,37 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                                 semanticLabel: d.semanticLabel,
                                 palette: palette,
                                 selected: _selection.contains(d.deviceId),
+                                // docs/04 §3.3 step 1: the device being
+                                // move-dragged fades to 30% IN PLACE,
+                                // "showing the vacated U", while its
+                                // full-opacity ghost follows the cursor.
+                                dragSource:
+                                    _lastMoveDragSourceId == d.deviceId.v,
                                 shake: _shake,
                               ),
                             ),
                         ],
                       ),
-                      // The insertion caret (docs/04 §3.4) AND — added this
-                      // stage — the drag-from-palette ghost/snap-line/
-                      // blocked-occupant hatch (docs/04 §3.1), mutually
-                      // exclusive per frame (see editing_overlay_painter.
-                      // dart's header). Scene-space, painted LAST so it
-                      // sits on top of the chassis and every device,
-                      // mirroring GridPainter's viewport-transform replay
-                      // pattern. `IgnorePointer`-wrapped: purely visual,
-                      // never a hit target.
+                      // The insertion caret (docs/04 §3.4) AND the drag
+                      // ghost/snap-line/blocked-occupant hatch — for BOTH
+                      // the palette drag (docs/04 §3.1) and the move drag
+                      // (§3.3 step 3: "same blocked rendering as §3.1"),
+                      // which is why both controllers are handed to ONE
+                      // painter rather than each getting its own. All
+                      // mutually exclusive per frame (see
+                      // editing_overlay_painter.dart's header).
+                      // Scene-space, painted LAST so it sits on top of the
+                      // chassis and every device, mirroring GridPainter's
+                      // viewport-transform replay pattern.
+                      // `IgnorePointer`-wrapped: purely visual, never a hit
+                      // target.
                       IgnorePointer(
                         child: CustomPaint(
                           painter: EditingOverlayPainter(
                             viewport: _viewport,
                             caret: _caret,
                             geo: _geo,
-                            paletteDrag: _paletteDrag,
+                            dragPreviews: [_paletteDrag, _moveDrag],
                             shake: _shake,
                             style: EditingOverlayStyle(
                               caretColor: scheme.tertiary,
@@ -1539,6 +1895,11 @@ class _PageUpIntent extends Intent {
 /// (`PgDn`).
 class _PageDownIntent extends Intent {
   const _PageDownIntent();
+}
+
+/// Revert an in-flight move drag (`Esc`, docs/04 §3.3 step 4).
+class _CancelDragIntent extends Intent {
+  const _CancelDragIntent();
 }
 
 /// Routes the pointer-agnostic `CanvasIntent` sequence into the screen's
@@ -1796,7 +2157,7 @@ class _ViewportHud extends StatelessWidget {
   }
 }
 
-// ── the palette-drag screen-space chrome (docs/04 §3.1) ────────────────────
+// ── the drag screen-space chrome (docs/04 §3.1, and §3.3 step 3) ──────────
 //
 // The cursor card (pre-canvas-entry), the RU-range chip ("U19-U20", pinned
 // to the ghost's top-right), and the reason chip (blocked-only) are all
@@ -1810,21 +2171,34 @@ class _ViewportHud extends StatelessWidget {
 // simplifying assumption this package's own widget tests already make via
 // `_canvasOrigin(tester)` treating a `RenderBox`'s global top-left as
 // directly usable in gesture coordinates.
+//
+// ONE widget serves both drag gestures, since §3.3 step 3 asks for §3.1's
+// rendering verbatim; the only per-gesture knob is [showCursorCard].
 
-/// The floating chrome for an in-flight palette drag. A single
-/// `OverlayEntry`'s builder, listening to [controller] (+ [viewport], so
-/// zoom/pan repositions the RU-range chip, which is anchored to the
-/// ghost's SCENE-space top-right corner).
-class _PaletteDragOverlay extends StatelessWidget {
-  const _PaletteDragOverlay({
+/// The floating chrome for an in-flight drag — a palette drag (docs/04
+/// §3.1) or a move drag (§3.3). A single `OverlayEntry`'s builder,
+/// listening to [controller] (+ [viewport], so zoom/pan repositions the
+/// RU-range chip, which is anchored to the ghost's SCENE-space top-right
+/// corner).
+class _DragPreviewOverlay extends StatelessWidget {
+  const _DragPreviewOverlay({
     required this.controller,
     required this.viewport,
     required this.geo,
+    this.showCursorCard = true,
   });
 
-  final PaletteDragController controller;
+  final DragPreviewController controller;
   final ViewportController viewport;
   final RackGeometry geo;
+
+  /// Whether the pre-canvas-entry cursor card (docs/04 §3.1 step 2) may be
+  /// shown at all. True for a palette drag, which really does spend time
+  /// lifted-but-not-yet-over-the-canvas. FALSE for a move drag: it is
+  /// grabbed inside the canvas and goes straight to `dragging`, so a cursor
+  /// card could only ever appear as a glitch — this makes that structural,
+  /// not merely improbable.
+  final bool showCursorCard;
 
   @override
   Widget build(BuildContext context) {
@@ -1843,8 +2217,10 @@ class _PaletteDragOverlay extends StatelessWidget {
           final cursor = controller.cursorGlobal;
           if (cursor == null) return const SizedBox.shrink();
 
-          final showGhostChrome =
-              controller.isDragging || controller.releaseLingering;
+          // The SAME predicate `EditingOverlayPainter` uses to decide
+          // whether a ghost is on screen, so the scene-space ghost and
+          // these screen-space chips can never disagree about it.
+          final showGhostChrome = controller.isShowingGhost;
           final evaluation = controller.evaluation;
           final blocked = evaluation?.blocked ?? false;
 
@@ -1868,7 +2244,7 @@ class _PaletteDragOverlay extends StatelessWidget {
               Positioned.fill(
                 child: MouseRegion(cursor: cursorShape, opaque: false),
               ),
-              if (!showGhostChrome)
+              if (!showGhostChrome && showCursorCard)
                 Positioned(
                   left: cursor.dx + 16,
                   top: cursor.dy + 16,
@@ -1877,7 +2253,7 @@ class _PaletteDragOverlay extends StatelessWidget {
                     badge: controller.badge,
                   ),
                 )
-              else if (evaluation != null) ...[
+              else if (showGhostChrome && evaluation != null) ...[
                 Positioned(
                   left: chipAnchor.dx + 8,
                   top: chipAnchor.dy - 14,

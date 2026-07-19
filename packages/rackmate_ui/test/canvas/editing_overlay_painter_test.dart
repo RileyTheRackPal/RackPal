@@ -180,10 +180,10 @@ void main() {
   });
 
   group('palette-drag ghost (docs/04 §3.1, added this stage)', () {
-    PaletteDragController armedAndDragging({int deviceH = 2}) =>
-        PaletteDragController()
+    DragPreviewController armedAndDragging({int deviceH = 2}) =>
+        DragPreviewController()
           ..arm(
-            catalogId: 'V01',
+            subjectId: 'V01',
             deviceH: deviceH,
             face: Face.front,
             displayName: 'Test Amp',
@@ -203,12 +203,12 @@ void main() {
       final valid = armedAndDragging()
         ..updateEvaluation(
           const DPt(0, 100),
-          const PaletteDragEvaluation(ruIndex: 3, blocked: false),
+          const DragPreviewEvaluation(ruIndex: 3, blocked: false),
         );
       final occupancyBlocked = armedAndDragging()
         ..updateEvaluation(
           const DPt(0, 100),
-          PaletteDragEvaluation(
+          DragPreviewEvaluation(
             ruIndex: 4,
             blocked: true,
             reason: 'Occupied by AMP-1 (U4-U5).',
@@ -218,7 +218,7 @@ void main() {
       final extentBlocked = armedAndDragging(deviceH: 20)
         ..updateEvaluation(
           const DPt(0, 10),
-          const PaletteDragEvaluation(
+          const DragPreviewEvaluation(
             ruIndex: 1,
             blocked: true,
             reason: 'Needs 20U, only 12U free at top.',
@@ -231,7 +231,7 @@ void main() {
           caret: caret,
           geo: geo,
           style: _style,
-          paletteDrag: drag,
+          dragPreviews: [drag],
         );
         for (final s in <double>[0.05, 1, 8]) {
           vp
@@ -263,7 +263,7 @@ void main() {
       final drag = armedAndDragging()
         ..updateEvaluation(
           const DPt(0, 100),
-          PaletteDragEvaluation(
+          DragPreviewEvaluation(
             ruIndex: 4,
             blocked: true,
             reason: 'Occupied by AMP-1 (U4-U5).',
@@ -275,7 +275,7 @@ void main() {
         caret: caret,
         geo: geo,
         style: _style,
-        paletteDrag: drag,
+        dragPreviews: [drag],
       );
       final invocations = _recordPaint(painter);
 
@@ -339,14 +339,14 @@ void main() {
       final drag = armedAndDragging()
         ..updateEvaluation(
           const DPt(0, 100),
-          const PaletteDragEvaluation(ruIndex: 3, blocked: false),
+          const DragPreviewEvaluation(ruIndex: 3, blocked: false),
         );
       final painter = EditingOverlayPainter(
         viewport: vp,
         caret: caret,
         geo: geo,
         style: _style,
-        paletteDrag: drag,
+        dragPreviews: [drag],
       );
       final invocations = _recordPaint(painter);
 
@@ -400,7 +400,7 @@ void main() {
       final drag = armedAndDragging()
         ..updateEvaluation(
           const DPt(0, 100),
-          const PaletteDragEvaluation(
+          const DragPreviewEvaluation(
             ruIndex: 3,
             blocked: true,
             reason: 'Occupied by X (U3-U4).',
@@ -409,7 +409,7 @@ void main() {
 
       const vsync = TestVSync();
       final shake = ShakeController(vsync: vsync)
-        ..trigger(kPaletteGhostShakeId);
+        ..trigger(kDragGhostShakeId);
       addTearDown(shake.dispose);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 30));
@@ -419,7 +419,7 @@ void main() {
         caret: caret,
         geo: geo,
         style: _style,
-        paletteDrag: drag,
+        dragPreviews: [drag],
         shake: shake,
       );
       final recorder = ui.PictureRecorder();
@@ -440,7 +440,7 @@ void main() {
       final drag = armedAndDragging()
         ..updateEvaluation(
           const DPt(0, 100),
-          const PaletteDragEvaluation(
+          const DragPreviewEvaluation(
             ruIndex: 3,
             blocked: true,
             reason: 'Occupied by X (U3-U4).',
@@ -455,7 +455,7 @@ void main() {
         caret: caret,
         geo: geo,
         style: _style,
-        paletteDrag: drag,
+        dragPreviews: [drag],
       );
       final recorder = ui.PictureRecorder();
       expect(
@@ -487,7 +487,7 @@ void main() {
       final drag = armedAndDragging()
         ..updateEvaluation(
           const DPt(0, 100),
-          const PaletteDragEvaluation(ruIndex: 3, blocked: false),
+          const DragPreviewEvaluation(ruIndex: 3, blocked: false),
         );
 
       final painter = EditingOverlayPainter(
@@ -495,7 +495,7 @@ void main() {
         caret: caret,
         geo: geo,
         style: _style,
-        paletteDrag: drag,
+        dragPreviews: [drag],
       );
       // No assertion beyond "doesn't throw" is possible without inspecting
       // recorded canvas ops, but the important guarantee -- exercised by
@@ -511,7 +511,96 @@ void main() {
       recorder.endRecording().dispose();
     });
 
-    test('shouldRepaint reacts to a different paletteDrag/shake instance', () {
+    test('with several drag sources, the ONE reporting a ghost is drawn -- '
+        'in either list order -- and an idle source never suppresses the '
+        'caret', () {
+      // docs/04 §3.3 wires a SECOND `DragPreviewController` (the move drag)
+      // into this same painter alongside the palette drag. This pins
+      // `_activeDrag`'s contract: pick whichever source is actually showing
+      // a ghost, regardless of position, and fall through to the caret when
+      // none is. A regression that only ever consulted `dragPreviews.first`
+      // would draw nothing at all for a move drag.
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      const geo = RackGeometry(12);
+      final rack = _rack();
+      final idle = DragPreviewController(); // never armed -- no ghost.
+      final live = armedAndDragging()
+        ..updateEvaluation(
+          const DPt(0, 100),
+          const DragPreviewEvaluation(ruIndex: 3, blocked: false),
+        );
+
+      final expectedGhost = geo.deviceRect(3, 2);
+      for (final previews in <List<DragPreviewController>>[
+        [idle, live],
+        [live, idle],
+      ]) {
+        final invocations = _recordPaint(
+          EditingOverlayPainter(
+            viewport: vp,
+            caret: CaretController(),
+            geo: geo,
+            style: _style,
+            dragPreviews: previews,
+          ),
+        );
+        final strokedRects = invocations.where((r) {
+          if (r.invocation.memberName != #drawRect) return false;
+          final paint = r.invocation.positionalArguments[1] as ui.Paint;
+          return paint.style == ui.PaintingStyle.stroke;
+        }).toList();
+        expect(
+          strokedRects,
+          hasLength(1),
+          reason: 'the live source must be found at index '
+              '${previews.indexOf(live)}',
+        );
+        final drawn =
+            strokedRects.single.invocation.positionalArguments[0] as ui.Rect;
+        expect(drawn.top, closeTo(expectedGhost.top, 0.001));
+        expect(drawn.bottom, closeTo(expectedGhost.bottom, 0.001));
+      }
+
+      // No source showing a ghost -> the caret line is painted as normal.
+      final activeCaret = CaretController()
+        ..recompute(
+          selectionEmpty: true,
+          canvasHasFocus: true,
+          dragInProgress: false,
+          rack: rack,
+          smartDefaultRuIndex: 6,
+        );
+      final caretInvocations = _recordPaint(
+        EditingOverlayPainter(
+          viewport: vp,
+          caret: activeCaret,
+          geo: geo,
+          style: _style,
+          dragPreviews: [idle],
+        ),
+      );
+      expect(
+        caretInvocations.where((r) {
+          if (r.invocation.memberName != #drawLine) return false;
+          final paint = r.invocation.positionalArguments[2] as ui.Paint;
+          return _colorsMatch(paint.color, _style.caretColor);
+        }),
+        isNotEmpty,
+        reason: 'an idle drag source must not swallow the caret',
+      );
+      expect(
+        caretInvocations.where((r) {
+          if (r.invocation.memberName != #drawRect) return false;
+          final paint = r.invocation.positionalArguments[1] as ui.Paint;
+          return paint.style == ui.PaintingStyle.stroke;
+        }),
+        isEmpty,
+        reason: 'no ghost border when nothing is being dragged',
+      );
+    });
+
+    test('shouldRepaint reacts to a different drag-preview/shake instance', () {
       final vp = ViewportController();
       addTearDown(vp.dispose);
       final rack = _rack();
@@ -532,21 +621,21 @@ void main() {
         caret: caret,
         geo: geo,
         style: _style,
-        paletteDrag: dragA,
+        dragPreviews: [dragA],
       );
       final withSameA = EditingOverlayPainter(
         viewport: vp,
         caret: caret,
         geo: geo,
         style: _style,
-        paletteDrag: dragA,
+        dragPreviews: [dragA],
       );
       final withB = EditingOverlayPainter(
         viewport: vp,
         caret: caret,
         geo: geo,
         style: _style,
-        paletteDrag: dragB,
+        dragPreviews: [dragB],
       );
 
       expect(withA.shouldRepaint(withSameA), isFalse);

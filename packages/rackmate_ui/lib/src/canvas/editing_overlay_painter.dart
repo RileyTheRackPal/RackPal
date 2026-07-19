@@ -4,14 +4,22 @@
 //  * the keyboard insertion caret (docs/04-rack-editor.md §3.4): "a 2px
 //    accent line at a U boundary with a 6px triangle at each rail and the
 //    ruler label highlighted."
-//  * the drag-from-palette ghost/snap-line/blocked-occupant hatch (docs/04
-//    §3.1 steps 3-5), added this stage — the caret and the drag's snap
-//    indicator share ONE routine, [paintInsertionLine], so they read as
-//    the same visual language (docs/04 §3.1 step 4's snap line uses an
-//    identical extent to the caret's own line) and are mutually exclusive
-//    by construction: `CaretController.active` already factors in
-//    `!paletteDrag.isInProgress` (see insertion_caret.dart), so [paint]
-//    only ever draws ONE of the two per frame — never both.
+//  * the drag ghost/snap-line/blocked-occupant hatch (docs/04 §3.1 steps
+//    3-5) — the caret and the drag's snap indicator share ONE routine,
+//    [paintInsertionLine], so they read as the same visual language
+//    (docs/04 §3.1 step 4's snap line uses an identical extent to the
+//    caret's own line) and are mutually exclusive by construction:
+//    `CaretController.active` already factors in `!drag.isInProgress` (see
+//    insertion_caret.dart), so [paint] only ever draws ONE of the two per
+//    frame — never both.
+//
+// The ghost is drawn from a `DragPreviewController`, which is deliberately
+// NOT palette-specific: docs/04 §3.3 step 3 ("Moving a placed device")
+// says the move gesture uses the "same blocked rendering as §3.1", so BOTH
+// gestures feed this one painter through [dragPreviews]. At most one of
+// them can be showing a ghost on any given frame (a pointer can only drive
+// one drag at a time), which [_activeDrag] asserts by construction: it
+// takes the first source reporting `isShowingGhost` and ignores the rest.
 //
 // Scene-space, mirroring GridPainter's viewport-transform replay pattern
 // (grid_painter.dart): `canvas.transform(viewport.transform.storage)`,
@@ -38,8 +46,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart' show CustomPainter;
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/canvas/drag_preview_controller.dart';
 import 'package:rackmate_ui/src/canvas/insertion_caret.dart';
-import 'package:rackmate_ui/src/canvas/palette_drag_controller.dart';
 import 'package:rackmate_ui/src/canvas/shake_animation.dart';
 import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
 
@@ -100,8 +108,9 @@ ui.Rect rulerHighlightRect(RackGeometry geo, int ruIndex) => ui.Rect.fromLTRB(
   geo.yBottomOfU(ruIndex),
 );
 
-/// Paints the insertion caret AND (docs/04 §3.1, added this stage) the
-/// drag-from-palette ghost/snap-line/blocked-occupant hatch.
+/// Paints the insertion caret AND the drag ghost/snap-line/blocked-occupant
+/// hatch (docs/04 §3.1 for the palette gesture, §3.3 step 3 for the
+/// move-a-placed-device gesture — one implementation, both surfaces).
 /// `IgnorePointer`-wrapped by the caller — purely visual, never a hit
 /// target.
 class EditingOverlayPainter extends CustomPainter {
@@ -110,13 +119,13 @@ class EditingOverlayPainter extends CustomPainter {
     required this.caret,
     required this.geo,
     required this.style,
-    this.paletteDrag,
+    this.dragPreviews = const [],
     this.shake,
   }) : super(
          repaint: Listenable.merge([
            viewport,
            caret,
-           if (paletteDrag != null) paletteDrag,
+           ...dragPreviews,
            if (shake != null) shake,
          ]),
        );
@@ -126,18 +135,33 @@ class EditingOverlayPainter extends CustomPainter {
   final RackGeometry geo;
   final EditingOverlayStyle style;
 
-  /// The palette-drag state machine (docs/04 §3.1), or null for hosts that
-  /// never drag from a palette (e.g. most of this file's own unit tests).
-  /// When [PaletteDragController.isDragging] or `.releaseLingering` is
-  /// true, the ghost/snap-line/hatch REPLACE the caret line for this
-  /// frame — never both (see the file header).
-  final PaletteDragController? paletteDrag;
+  /// Every drag-preview source that may want a ghost drawn — the palette
+  /// drag (docs/04 §3.1) and the move drag (§3.3) in `RackCanvasScreen`;
+  /// empty for hosts that never drag at all (e.g. most of this file's own
+  /// unit tests). At most one can report [DragPreviewController
+  /// .isShowingGhost] on a given frame, and that one's ghost/snap-line/
+  /// hatch REPLACE the caret line for that frame — never both (see the
+  /// file header).
+  ///
+  /// A list rather than two named fields precisely because this painter
+  /// has no business knowing WHICH gesture is driving it: it renders "a
+  /// drag preview", which is the whole reason §3.3's blocked rendering is
+  /// literally, not approximately, the same as §3.1's.
+  final List<DragPreviewController> dragPreviews;
 
   /// The shared blocked-feedback shake (docs/04 §3.1 step 5/6: "Release
   /// while blocked is a no-op with a 120ms shake"), reused for the ghost
   /// exactly as `RenderDeviceBox` reuses it for a real device — see
-  /// `palette_drag_controller.dart`'s `kPaletteGhostShakeId` doc comment.
+  /// `drag_preview_controller.dart`'s `kDragGhostShakeId` doc comment.
   final ShakeController? shake;
+
+  /// The one drag source (if any) whose ghost this frame belongs to.
+  DragPreviewController? get _activeDrag {
+    for (final drag in dragPreviews) {
+      if (drag.isShowingGhost) return drag;
+    }
+    return null;
+  }
 
   /// Nominal screen-constant sizes (docs/04 §3.4), divided by the viewport
   /// scale before stroking — see the file header.
@@ -162,17 +186,16 @@ class EditingOverlayPainter extends CustomPainter {
     final scale = viewport.scale;
     if (scale <= 0) return;
 
-    final drag = paletteDrag;
+    final drag = _activeDrag;
+    // Non-null exactly when `drag != null` — `isShowingGhost` already
+    // requires an evaluation, so this is a type narrowing, not a second
+    // (drift-prone) condition.
     final evaluation = drag?.evaluation;
-    final showGhost =
-        drag != null &&
-        (drag.isDragging || drag.releaseLingering) &&
-        evaluation != null;
 
     canvas
       ..save()
       ..transform(viewport.transform.storage);
-    if (showGhost) {
+    if (drag != null && evaluation != null) {
       _paintGhost(canvas, drag, evaluation, scale);
     } else {
       final active = caret.caret;
@@ -197,19 +220,20 @@ class EditingOverlayPainter extends CustomPainter {
     );
   }
 
-  /// The drag ghost (docs/04 §3.1 steps 3-5): fill + border (solid accent
-  /// when valid, dashed error when blocked) at the snapped RU, the shared
-  /// snap-line, and — when blocked by an occupant (not an extent
-  /// overflow) — a 45-degree hatch clipped to that occupant's own rect.
+  /// The drag ghost (docs/04 §3.1 steps 3-5, and §3.3 step 3's "same
+  /// blocked rendering"): fill + border (solid accent when valid, dashed
+  /// error when blocked) at the snapped RU, the shared snap-line, and —
+  /// when blocked by an occupant (not an extent overflow) — a 45-degree
+  /// hatch clipped to that occupant's own rect.
   void _paintGhost(
     ui.Canvas canvas,
-    PaletteDragController drag,
-    PaletteDragEvaluation evaluation,
+    DragPreviewController drag,
+    DragPreviewEvaluation evaluation,
     double scale,
   ) {
     final color = evaluation.blocked ? style.errorColor : style.caretColor;
     final rect = geo.deviceRect(evaluation.ruIndex, drag.deviceH);
-    final shakeOffset = shake?.offsetFor(kPaletteGhostShakeId);
+    final shakeOffset = shake?.offsetFor(kDragGhostShakeId);
     final dx = shakeOffset?.dx ?? 0;
     final drawRect = ui.Rect.fromLTRB(
       rect.left + dx,
@@ -371,6 +395,6 @@ class EditingOverlayPainter extends CustomPainter {
       caret != old.caret ||
       geo != old.geo ||
       style != old.style ||
-      paletteDrag != old.paletteDrag ||
+      !listEquals(dragPreviews, old.dragPreviews) ||
       shake != old.shake;
 }

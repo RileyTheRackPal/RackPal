@@ -1,4 +1,4 @@
-// Pure-logic unit tests for PaletteDragController's arm/lift/enter/exit/
+// Pure-logic unit tests for DragPreviewController's arm/lift/enter/exit/
 // evaluate/commit/cancel state machine (docs/04-rack-editor.md §3.1) — no
 // widgets, no pointer routing, just the controller's own transitions and
 // invariants. Full pointer+keyboard gesture integration lives in
@@ -9,9 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
-PaletteDragController _armed() => PaletteDragController()
+DragPreviewController _armed() => DragPreviewController()
   ..arm(
-    catalogId: 'V01',
+    subjectId: 'V01',
     deviceH: 2,
     face: Face.front,
     displayName: 'Test Amp',
@@ -22,38 +22,38 @@ PaletteDragController _armed() => PaletteDragController()
 void main() {
   test('arm sets phase to armed and stores the catalog/device metadata', () {
     final drag = _armed();
-    expect(drag.phase, PaletteDragPhase.armed);
-    expect(drag.catalogId, 'V01');
+    expect(drag.phase, DragPreviewPhase.armed);
+    expect(drag.subjectId, 'V01');
     expect(drag.deviceH, 2);
     expect(drag.face, Face.front);
     expect(drag.displayName, 'Test Amp');
     expect(drag.badge, '2U');
     expect(drag.isInProgress, isTrue);
-    expect(drag.isLifted, isFalse);
+    expect(drag.isSourceEngaged, isFalse);
     expect(drag.isDragging, isFalse);
   });
 
   test('lift only transitions from armed, and only forward', () {
-    final drag = PaletteDragController();
+    final drag = DragPreviewController();
     drag.lift(); // no-op: never armed.
-    expect(drag.phase, PaletteDragPhase.none);
+    expect(drag.phase, DragPreviewPhase.none);
 
     final armed = _armed()..lift();
-    expect(armed.phase, PaletteDragPhase.lifted);
-    expect(armed.isLifted, isTrue);
+    expect(armed.phase, DragPreviewPhase.lifted);
+    expect(armed.isSourceEngaged, isTrue);
 
     armed.lift(); // already lifted -- no-op, not an error.
-    expect(armed.phase, PaletteDragPhase.lifted);
+    expect(armed.phase, DragPreviewPhase.lifted);
   });
 
   test('enterCanvas only transitions from lifted', () {
     final drag = _armed();
     drag.enterCanvas(); // still just armed -- no-op.
-    expect(drag.phase, PaletteDragPhase.armed);
+    expect(drag.phase, DragPreviewPhase.armed);
 
     drag.lift();
     drag.enterCanvas();
-    expect(drag.phase, PaletteDragPhase.dragging);
+    expect(drag.phase, DragPreviewPhase.dragging);
     expect(drag.isDragging, isTrue);
   });
 
@@ -64,13 +64,13 @@ void main() {
       ..enterCanvas()
       ..updateEvaluation(
         const DPt(10, 20),
-        const PaletteDragEvaluation(ruIndex: 4, blocked: false),
+        const DragPreviewEvaluation(ruIndex: 4, blocked: false),
       );
     expect(drag.sceneCursor, isNotNull);
     expect(drag.evaluation, isNotNull);
 
     drag.exitCanvas();
-    expect(drag.phase, PaletteDragPhase.lifted);
+    expect(drag.phase, DragPreviewPhase.lifted);
     expect(drag.sceneCursor, isNull);
     expect(drag.evaluation, isNull);
     expect(drag.isInProgress, isTrue); // the gesture is still alive.
@@ -80,14 +80,14 @@ void main() {
     final drag = _armed()..lift();
     drag.updateEvaluation(
       const DPt(0, 0),
-      const PaletteDragEvaluation(ruIndex: 1, blocked: false),
+      const DragPreviewEvaluation(ruIndex: 1, blocked: false),
     );
     expect(drag.evaluation, isNull); // not dragging yet -- ignored.
 
     drag.enterCanvas();
     drag.updateEvaluation(
       const DPt(1, 2),
-      const PaletteDragEvaluation(ruIndex: 5, blocked: true, reason: 'x'),
+      const DragPreviewEvaluation(ruIndex: 5, blocked: true, reason: 'x'),
     );
     expect(drag.evaluation?.ruIndex, 5);
     expect(drag.evaluation?.blocked, isTrue);
@@ -101,7 +101,7 @@ void main() {
       ..enterCanvas()
       ..updateEvaluation(
         const DPt(0, 0),
-        const PaletteDragEvaluation(
+        const DragPreviewEvaluation(
           ruIndex: 3,
           blocked: true,
           reason: 'Occupied by SW-1 (U3-U3).',
@@ -109,7 +109,7 @@ void main() {
       );
 
     drag.beginBlockedRelease();
-    expect(drag.phase, PaletteDragPhase.none);
+    expect(drag.phase, DragPreviewPhase.none);
     expect(drag.releaseLingering, isTrue);
     expect(drag.isInProgress, isTrue); // still suppresses the caret.
     expect(drag.isDragging, isFalse); // ghost is frozen, not "live" anymore.
@@ -125,12 +125,12 @@ void main() {
       ..enterCanvas()
       ..updateEvaluation(
         const DPt(1, 1),
-        const PaletteDragEvaluation(ruIndex: 2, blocked: false),
+        const DragPreviewEvaluation(ruIndex: 2, blocked: false),
       );
 
     drag.reset();
-    expect(drag.phase, PaletteDragPhase.none);
-    expect(drag.catalogId, isNull);
+    expect(drag.phase, DragPreviewPhase.none);
+    expect(drag.subjectId, isNull);
     expect(drag.deviceH, 0);
     expect(drag.sceneCursor, isNull);
     expect(drag.evaluation, isNull);
@@ -144,7 +144,7 @@ void main() {
       ..enterCanvas()
       ..updateEvaluation(
         const DPt(0, 0),
-        const PaletteDragEvaluation(ruIndex: 1, blocked: true, reason: 'x'),
+        const DragPreviewEvaluation(ruIndex: 1, blocked: true, reason: 'x'),
       )
       ..beginBlockedRelease();
     expect(drag.releaseLingering, isTrue);
@@ -156,7 +156,7 @@ void main() {
 
   test('reset on an already-clear controller does not notify listeners '
       '(no spurious rebuild)', () {
-    final drag = PaletteDragController();
+    final drag = DragPreviewController();
     var notifications = 0;
     drag.addListener(() => notifications++);
     drag.reset();
@@ -170,14 +170,73 @@ void main() {
     expect(drag.cursorGlobal, const Offset(100, 200));
   });
 
-  test('isLifted is true for both lifted and dragging, false for armed/none', () {
+  test('isSourceEngaged is true for both lifted and dragging, false for '
+      'armed/none', () {
     final drag = _armed();
-    expect(drag.isLifted, isFalse);
+    expect(drag.isSourceEngaged, isFalse);
     drag.lift();
-    expect(drag.isLifted, isTrue);
+    expect(drag.isSourceEngaged, isTrue);
     drag.enterCanvas();
-    expect(drag.isLifted, isTrue);
+    expect(drag.isSourceEngaged, isTrue);
     drag.reset();
-    expect(drag.isLifted, isFalse);
+    expect(drag.isSourceEngaged, isFalse);
+  });
+
+  group('shared with the move gesture (docs/04 §3.3)', () {
+    test('liftIntoCanvas goes armed -> dragging in one step, skipping '
+        'lifted (a move drag is grabbed INSIDE the canvas)', () {
+      final drag = _armed()..liftIntoCanvas();
+      expect(drag.phase, DragPreviewPhase.dragging);
+      expect(drag.isDragging, isTrue);
+      // It composes the two legal transitions rather than assigning a
+      // phase directly, so it inherits their guards: calling it on a
+      // controller that was never armed must do nothing at all.
+      final never = DragPreviewController()..liftIntoCanvas();
+      expect(never.phase, DragPreviewPhase.none);
+    });
+
+    test('isShowingGhost requires BOTH a live/lingering phase AND an '
+        'evaluation -- the one predicate the painter and the chip overlay '
+        'share', () {
+      final drag = _armed();
+      expect(drag.isShowingGhost, isFalse); // armed, no evaluation
+      drag.liftIntoCanvas();
+      expect(
+        drag.isShowingGhost,
+        isFalse,
+        reason: 'dragging but nothing evaluated yet -- there is no ruIndex '
+            'to draw a ghost at',
+      );
+      drag.updateEvaluation(
+        const DPt(0, 100),
+        const DragPreviewEvaluation(ruIndex: 4, blocked: true, reason: 'x'),
+      );
+      expect(drag.isShowingGhost, isTrue);
+
+      // A blocked release freezes the ghost (still shown for its 1.2s)
+      // while releasing the SOURCE back to full strength immediately --
+      // the device is no longer being dragged, only the verdict lingers.
+      drag.beginBlockedRelease();
+      expect(drag.isShowingGhost, isTrue);
+      expect(drag.isSourceEngaged, isFalse);
+      expect(drag.isDragging, isFalse);
+
+      drag.reset();
+      expect(drag.isShowingGhost, isFalse);
+    });
+
+    test('exitCanvas clears the evaluation, so a backed-out drag stops '
+        'showing a ghost', () {
+      final drag = _armed()
+        ..liftIntoCanvas()
+        ..updateEvaluation(
+          const DPt(0, 100),
+          const DragPreviewEvaluation(ruIndex: 4, blocked: false),
+        );
+      expect(drag.isShowingGhost, isTrue);
+      drag.exitCanvas();
+      expect(drag.isShowingGhost, isFalse);
+      expect(drag.evaluation, isNull);
+    });
   });
 }

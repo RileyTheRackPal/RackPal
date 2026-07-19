@@ -54,6 +54,7 @@ class DeviceBox extends StatefulWidget {
     required this.semanticLabel,
     required this.palette,
     this.selected = false,
+    this.dragSource = false,
     this.shake,
     super.key,
   });
@@ -77,6 +78,18 @@ class DeviceBox extends StatefulWidget {
   /// selected chrome state. Defaults false so non-editing hosts (and the
   /// render tests) need not supply it.
   final bool selected;
+
+  /// Whether this device is the SOURCE of an in-flight move-drag (docs/04
+  /// §3.3 step 1: "The device drops to 30 % opacity **in place**, showing
+  /// the vacated U, while a full-opacity ghost follows the cursor").
+  /// Pushed down from `RackCanvasScreen` exactly like [selected] — a plain
+  /// constructor argument through the existing `_DeviceBoxLeaf`, adding NO
+  /// widget layer (which is what `RenderDeviceBox.shake`'s doc comment
+  /// warns against) and costing one `setState` at drag start and one at
+  /// drag end, never one per frame: the per-frame ghost/evaluation updates
+  /// are read by `EditingOverlayPainter` listening to the drag controller
+  /// directly. Defaults false.
+  final bool dragSource;
 
   /// Optional shake-feedback source (docs/04 §3.4: a blocked keyboard
   /// nudge "shakes 3px"), shared by every device in the rack. Passed
@@ -118,6 +131,7 @@ class _DeviceBoxState extends State<DeviceBox> {
         hovered: _hovered,
         focused: _focused,
         selected: widget.selected,
+        dragSource: widget.dragSource,
         shake: widget.shake,
       ),
     );
@@ -134,6 +148,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
     required this.hovered,
     required this.focused,
     required this.selected,
+    required this.dragSource,
     required this.shake,
   });
 
@@ -145,6 +160,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
   final bool hovered;
   final bool focused;
   final bool selected;
+  final bool dragSource;
   final ShakeController? shake;
 
   @override
@@ -157,6 +173,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
     hovered: hovered,
     focused: focused,
     selected: selected,
+    dragSource: dragSource,
     shake: shake,
   );
 
@@ -171,6 +188,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
       ..hovered = hovered
       ..focused = focused
       ..selected = selected
+      ..dragSource = dragSource
       ..shake = shake;
   }
 }
@@ -190,6 +208,7 @@ class RenderDeviceBox extends RenderBox {
     bool hovered = false,
     bool focused = false,
     bool selected = false,
+    bool dragSource = false,
     ShakeController? shake,
   }) : _scene = scene,
        _deviceId = deviceId,
@@ -199,6 +218,7 @@ class RenderDeviceBox extends RenderBox {
        _hovered = hovered,
        _focused = focused,
        _selected = selected,
+       _dragSource = dragSource,
        _shake = shake;
 
   DiagramScene _scene;
@@ -265,6 +285,20 @@ class RenderDeviceBox extends RenderBox {
     markNeedsPaint();
   }
 
+  /// docs/04 §3.3 step 1's 30%-opacity-in-place source of an in-flight
+  /// move-drag. See [DeviceBox.dragSource] for why this is a pushed-down
+  /// flag rather than a listened-to controller.
+  bool _dragSource;
+  bool get dragSource => _dragSource;
+  set dragSource(bool value) {
+    if (_dragSource == value) return;
+    _dragSource = value;
+    markNeedsPaint();
+  }
+
+  /// docs/04 §3.3 step 1: "The device drops to 30 % opacity in place."
+  static const double dragSourceOpacity = 0.30;
+
   /// The shared shake-feedback source (docs/04 §3.4's blocked-nudge
   /// "shakes 3px"), or null for hosts that never shake (non-editing hosts,
   /// most render tests). Listened to DIRECTLY here — attach/detach a
@@ -322,6 +356,35 @@ class RenderDeviceBox extends RenderBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
+    if (!_dragSource) {
+      _paintBody(context, offset);
+      return;
+    }
+    // docs/04 §3.3 step 1: while this device is the source of an in-flight
+    // move-drag it "drops to 30 % opacity IN PLACE, showing the vacated
+    // U" — the full-opacity ghost that follows the cursor is
+    // `EditingOverlayPainter`'s job, not this render object's, so all this
+    // one does is fade itself.
+    //
+    // A `saveLayer` whose paint carries only an alpha composites the WHOLE
+    // device — replayed fragment plus any hover/focus/selection chrome —
+    // at that alpha uniformly, which is what "the device drops to 30 %"
+    // means; fading the fragment alone would leave a full-strength
+    // selection outline ringing a ghosted body. The bounds are inflated
+    // past the widest chrome stroke (the 2px focus ring, drawn on the
+    // deflated body rect) so nothing is clipped at the edge.
+    final bounds = (offset & size).inflate(4);
+    context.canvas.saveLayer(
+      bounds,
+      Paint()..color = const Color(0xFF000000).withValues(
+        alpha: dragSourceOpacity,
+      ),
+    );
+    _paintBody(context, offset);
+    context.canvas.restore();
+  }
+
+  void _paintBody(PaintingContext context, Offset offset) {
     // CR-086: pixels come from the IR. Replay the device's own fragment,
     // translated to this child's paint offset (the parent has already put
     // the canvas in scene space, so `offset` is the device's scene

@@ -57,7 +57,7 @@ class InsertionCaret {
 /// canvas has focus AND no palette drag is in progress` — [recompute] is
 /// how the screen feeds that three-input formula in every time one of the
 /// inputs changes (selection, canvas focus, or a palette drag starting/
-/// ending — the last is fed from `PaletteDragController.isInProgress`,
+/// ending — the last is fed from `DragPreviewController.isInProgress`,
 /// docs/04 §3.1's drag-from-palette-to-rails stage). This controller does
 /// not poll or read any of the three inputs itself.
 ///
