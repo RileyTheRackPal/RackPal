@@ -22,10 +22,41 @@ import 'package:rackmate_core/src/model/placement.dart';
 import 'package:rackmate_core/src/model/rack.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/model/template.dart';
+import 'package:rackmate_core/src/units/ids.dart';
 
 /// The `RackDocument.templates` key for a seed catalog id at version 1
 /// (matching `scene_builder.dart`'s own `"$templateId@$version"` scheme).
 String catalogTemplateKey(String catalogId) => '$catalogId@1';
+
+/// Builds a 1-based `U -> occupying device` map for [face] within [rack],
+/// resolving each device's per-face height through [templates] (a device
+/// whose snapshot can't be resolved is skipped, exactly as before this was
+/// factored out). Shared by [findLowestFreeRu] and [findBlockingOccupant]
+/// so the occupancy scan exists in exactly ONE place — a `Map<int,
+/// DeviceInstance>` rather than a bare `List<bool>` so a caller can report
+/// WHICH device is in the way, not just that the slot is taken.
+Map<int, DeviceInstance> _occupancyByRu({
+  required Rack rack,
+  required Iterable<DeviceInstance> devices,
+  required Face face,
+  required Map<String, TemplateSnapshot> templates,
+}) {
+  final occupied = <int, DeviceInstance>{};
+  for (final d in devices) {
+    final placement = d.placement;
+    if (placement is! RailPlacement) continue;
+    if (placement.rackId != rack.id || placement.face != face) continue;
+    final snapshot = templates[_templateKey(d.templateRef)];
+    if (snapshot == null) continue;
+    final otherH = face == Face.front
+        ? snapshot.body.frontU
+        : snapshot.body.rearU;
+    for (var u = placement.ruIndex; u < placement.ruIndex + otherH; u++) {
+      if (u >= 1 && u <= rack.heightU) occupied[u] = d;
+    }
+  }
+  return occupied;
+}
 
 /// The lowest `ruIndex` at which a device needing [deviceH] U on [face]
 /// fits in [rack] without overlapping any of [devices]' existing rail
@@ -40,27 +71,17 @@ int? findLowestFreeRu({
   required int deviceH,
 }) {
   if (deviceH <= 0 || deviceH > rack.heightU) return null;
-
-  // 1-based occupancy flags, index 0 unused.
-  final occupied = List<bool>.filled(rack.heightU + 1, false);
-  for (final d in devices) {
-    final placement = d.placement;
-    if (placement is! RailPlacement) continue;
-    if (placement.rackId != rack.id || placement.face != face) continue;
-    final snapshot = templates[_templateKey(d.templateRef)];
-    if (snapshot == null) continue;
-    final otherH = face == Face.front
-        ? snapshot.body.frontU
-        : snapshot.body.rearU;
-    for (var u = placement.ruIndex; u < placement.ruIndex + otherH; u++) {
-      if (u >= 1 && u <= rack.heightU) occupied[u] = true;
-    }
-  }
+  final occupied = _occupancyByRu(
+    rack: rack,
+    devices: devices,
+    face: face,
+    templates: templates,
+  );
 
   for (var start = 1; start + deviceH - 1 <= rack.heightU; start++) {
     var fits = true;
     for (var u = start; u < start + deviceH; u++) {
-      if (occupied[u]) {
+      if (occupied.containsKey(u)) {
         fits = false;
         break;
       }
@@ -70,7 +91,67 @@ int? findLowestFreeRu({
   return null;
 }
 
+/// The first OTHER device occupying any U in `[ruStart, ruStart+deviceH-1]`
+/// on [face] within [rack], or null when that range is free. [exceptId],
+/// when given, excludes that device from the scan — the device being
+/// nudged/moved does not "block" itself against its OWN current placement.
+///
+/// Used by keyboard nudge (docs/04-rack-editor.md §3.4: "a nudge that
+/// would collide never silently stops... the status bar reads 'Blocked by
+/// SW-1'") and by [buildPlaceFromCatalogCommand]'s `explicitRuIndex` path
+/// (caret-targeted quick-add), so both surfaces report the exact same
+/// occupant for the exact same range.
+DeviceInstance? findBlockingOccupant({
+  required Rack rack,
+  required Iterable<DeviceInstance> devices,
+  required Face face,
+  required Map<String, TemplateSnapshot> templates,
+  required int ruStart,
+  required int deviceH,
+  Uuid? exceptId,
+}) {
+  final occupied = _occupancyByRu(
+    rack: rack,
+    devices: devices,
+    face: face,
+    templates: templates,
+  );
+  for (var u = ruStart; u < ruStart + deviceH; u++) {
+    final occupant = occupied[u];
+    if (occupant != null && occupant.id != exceptId) return occupant;
+  }
+  return null;
+}
+
 String _templateKey(TemplateRef ref) => '${ref.templateId.v}@${ref.version}';
+
+/// The lowest U a [findBlockingOccupant] hit currently occupies — for the
+/// "Occupied by AMP-1 (U19-U20)" style failure message. Returns 0 if,
+/// somehow, [blocker] is not rail-placed (unreachable in practice:
+/// [_occupancyByRu] only ever records rail-placed devices).
+int _blockerStartRu(DeviceInstance blocker) {
+  final placement = blocker.placement;
+  return placement is RailPlacement ? placement.ruIndex : 0;
+}
+
+/// The highest U [blocker] occupies on [face], resolved through
+/// [templates] the same way [_occupancyByRu] does — kept as a tiny,
+/// message-only helper rather than widening [findBlockingOccupant]'s
+/// return type, since only [buildPlaceFromCatalogCommand]'s failure text
+/// needs the full range.
+int _blockerEndRu(
+  DeviceInstance blocker,
+  Face face,
+  Map<String, TemplateSnapshot> templates,
+) {
+  final placement = blocker.placement;
+  if (placement is! RailPlacement) return _blockerStartRu(blocker);
+  final snapshot = templates[_templateKey(blocker.templateRef)];
+  final h = snapshot == null
+      ? 1
+      : (face == Face.front ? snapshot.body.frontU : snapshot.body.rearU);
+  return placement.ruIndex + h - 1;
+}
 
 /// The outcome of [buildPlaceFromCatalogCommand]: either a ready-to-run
 /// command, or a reason it could not build one (surfaced to the user
@@ -92,21 +173,30 @@ final class CatalogPlacementFailed extends CatalogPlacementResult {
 
 /// Builds the [AddDeviceCommand] that places one new instance of the
 /// seeded template [catalogId] (e.g. `"V01"`) into [doc]. Rack-mountable
-/// templates (`frontU`/`rearU` > 0) go to the lowest fitting free U of
-/// [targetRack] on whichever face their occupancy uses (front, when both
-/// faces are occupied — docs/m1-implementation-log.md §2 notes rear-
-/// mirroring/dual-face rendering is not yet built, so a `both`-occupancy
-/// device can only be assigned one face today). Field devices
-/// (`mountMethod: notInRack`) get an [OffRackPlacement] — there is no
-/// Staging Bin or off-rack device list surface in this stage, but the
-/// device still exists in the document, undoes/redoes correctly, and is a
-/// real `DeviceInstance` rather than a UI fiction.
+/// templates (`frontU`/`rearU` > 0) go to [explicitRuIndex] when given —
+/// the insertion-caret / drag-drop target (docs/04-rack-editor.md §3.2:
+/// "places at the insertion caret") — validated against the rack extent
+/// and existing occupants via [findBlockingOccupant] rather than trusted
+/// blindly, so a stale or out-of-range caret still fails loudly instead of
+/// silently overlapping a device. When [explicitRuIndex] is omitted (the
+/// pre-existing behaviour, unchanged), placement falls back to the lowest
+/// fitting free U on whichever face the template's occupancy uses (front,
+/// when both faces are occupied — docs/m1-implementation-log.md §2 notes
+/// rear-mirroring/dual-face rendering is not yet built, so a
+/// `both`-occupancy device can only be assigned one face today). Field
+/// devices (`mountMethod: notInRack`) always get an [OffRackPlacement]
+/// regardless of [explicitRuIndex] (a caret position is meaningless for a
+/// device that isn't rail-mounted) — there is no Staging Bin or off-rack
+/// device list surface in this stage, but the device still exists in the
+/// document, undoes/redoes correctly, and is a real `DeviceInstance`
+/// rather than a UI fiction.
 CatalogPlacementResult buildPlaceFromCatalogCommand({
   required RackDocument doc,
   required String catalogId,
   required Rack targetRack,
   required DateTime now,
   required String actor,
+  int? explicitRuIndex,
 }) {
   final key = catalogTemplateKey(catalogId);
   final snapshot = doc.templates[key];
@@ -121,18 +211,52 @@ CatalogPlacementResult buildPlaceFromCatalogCommand({
   } else {
     final face = body.frontU > 0 ? Face.front : Face.rear;
     final deviceH = face == Face.front ? body.frontU : body.rearU;
-    final ruIndex = findLowestFreeRu(
-      rack: targetRack,
-      devices: doc.devices.values,
-      face: face,
-      templates: doc.templates,
-      deviceH: deviceH,
-    );
-    if (ruIndex == null) {
-      return CatalogPlacementFailed(
-        'No ${deviceH}U free on ${targetRack.designator} '
-        '(${face.name}) for $catalogId.',
+
+    final int ruIndex;
+    if (explicitRuIndex != null) {
+      final overflow =
+          explicitRuIndex < 1 ||
+          explicitRuIndex + deviceH - 1 > targetRack.heightU;
+      if (overflow) {
+        final freeAtTop = (targetRack.heightU - explicitRuIndex + 1).clamp(
+          0,
+          targetRack.heightU,
+        );
+        return CatalogPlacementFailed(
+          'Needs ${deviceH}U, only ${freeAtTop}U free at top.',
+        );
+      }
+      final blocker = findBlockingOccupant(
+        rack: targetRack,
+        devices: doc.devices.values,
+        face: face,
+        templates: doc.templates,
+        ruStart: explicitRuIndex,
+        deviceH: deviceH,
       );
+      if (blocker != null) {
+        final blockerEnd = _blockerEndRu(blocker, face, doc.templates);
+        return CatalogPlacementFailed(
+          'Occupied by ${blocker.designator} '
+          '(U${_blockerStartRu(blocker)}-U$blockerEnd).',
+        );
+      }
+      ruIndex = explicitRuIndex;
+    } else {
+      final lowest = findLowestFreeRu(
+        rack: targetRack,
+        devices: doc.devices.values,
+        face: face,
+        templates: doc.templates,
+        deviceH: deviceH,
+      );
+      if (lowest == null) {
+        return CatalogPlacementFailed(
+          'No ${deviceH}U free on ${targetRack.designator} '
+          '(${face.name}) for $catalogId.',
+        );
+      }
+      ruIndex = lowest;
     }
     placement = RailPlacement(rackId: targetRack.id, ruIndex: ruIndex, face: face);
   }

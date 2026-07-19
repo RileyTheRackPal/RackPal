@@ -5,18 +5,29 @@
 // §1's mockup ("⌕ /" search field over "▾ Recent / ▾ Amplif." category
 // groups).
 //
-// PLACEMENT GESTURE, stated honestly (this stage's task brief): this is
-// CLICK-TO-ADD, not docs/04 §3.1's full drag-from-palette-to-rails gesture
-// (arm/lift/enter-canvas/snap/evaluate/commit with live blocked-drop
-// feedback) — that gesture is a stretch goal explicitly deferred here.
-// Double-click a row (or press Enter with a row focused) inserts it at the
-// lowest fitting free U, which is docs/04 §3.2's "faster paths" behaviour
-// ("Double-click a palette row — identical to Enter").
+// TWO PLACEMENT GESTURES now originate here:
+//  * CLICK-TO-ADD (double-click a row, or press Enter with a row
+//    focused) — inserts at the insertion caret when one exists, else the
+//    lowest fitting free U (docs/04 §3.2's "faster paths").
+//  * DRAG-TO-RAILS (docs/04 §3.1, added this stage) — [onArmDrag] fires on
+//    a plain pointer-down (any button/touch/stylus, no `PointerDeviceKind`
+//    branch, AC-016 #23) from an ADDITIONAL `Listener` wrapped AROUND each
+//    row's existing double-tap/Enter subtree. `Listener` never enters the
+//    gesture arena, so it cannot interfere with double-tap detection —
+//    both see the same raw down event independently, exactly like
+//    `CanvasIntentDetector`'s own `Listener` already coexists with its
+//    children (canvas_intent.dart). `RackCanvasScreen` owns everything
+//    past this pointer-down: it tracks the rest of the gesture via a
+//    GLOBAL `GestureBinding.instance.pointerRouter` route, not through
+//    this widget's own tree — see that file's header for the full
+//    mechanism (Draggable/DragTarget are off-limits, docs/04 §3's hard
+//    constraint).
 //
 // The palette does not own placement geometry or the document — it only
-// reports WHICH catalog id was activated via [onPlace]; the caller (the
-// rack editor screen, which holds the `DocumentController`) decides where
-// and how to place it (`rackmate_core`'s `buildPlaceFromCatalogCommand`).
+// reports WHICH catalog id was activated (via [onPlace]) or armed for a
+// drag (via [onArmDrag]); the caller (the rack editor screen, which holds
+// the `DocumentController`) decides where and how to place it
+// (`rackmate_core`'s `buildPlaceFromCatalogCommand`).
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show KeyDownEvent, LogicalKeyboardKey;
@@ -66,6 +77,8 @@ class DevicePalettePanel extends StatefulWidget {
     required this.categoryOrder,
     required this.onPlace,
     this.searchFocusNode,
+    this.onArmDrag,
+    this.draggingCatalogId,
     super.key,
   });
 
@@ -82,6 +95,20 @@ class DevicePalettePanel extends StatefulWidget {
   /// Optional externally-owned focus node so the screen can bind `/` to
   /// focus the search field (docs/04 §3.2, §8 keymap).
   final FocusNode? searchFocusNode;
+
+  /// Fired on a plain pointer-down anywhere on a row (docs/04 §3.1 step 1:
+  /// "Arm — pointer down on a palette row"). Null (the default) means
+  /// drag-from-palette is disabled for this host — every render test that
+  /// doesn't care about it need not supply one.
+  final void Function(String catalogId, PointerDownEvent event)? onArmDrag;
+
+  /// The catalog id currently LIFTED (docs/04 §3.1 step 2 — past the 4px
+  /// slop, not merely armed) by an in-flight palette drag, or null. That
+  /// one row dims to 40% opacity and gets a 1px accent inset outline; the
+  /// caller (`RackCanvasScreen`) is the sole owner of this value, pushed
+  /// down the same way `RackCanvasScreen` pushes `selected` into
+  /// `DeviceBox` — this widget never tracks its own drag state.
+  final String? draggingCatalogId;
 
   @override
   State<DevicePalettePanel> createState() => _DevicePalettePanelState();
@@ -125,6 +152,20 @@ class _DevicePalettePanelState extends State<DevicePalettePanel> {
                 border: OutlineInputBorder(),
               ),
               onChanged: (v) => setState(() => _query = v),
+              // docs/04 §3.2: "Type, press Enter -> the top match ...
+              // places". "Top match" reads as "the first row in the
+              // current filtered list" (no fuzzy-match ranking is in
+              // scope) — the SAME filter+sort `_SearchResults` below
+              // already uses, so the row that's on screen when Enter is
+              // pressed is exactly the row this places.
+              onSubmitted: (query) {
+                if (query.trim().isEmpty) return; // "type, then Enter"
+                final matches = widget.catalog.entries
+                    .where((e) => _matchesQuery(query, e.key, e.value))
+                    .toList()
+                  ..sort((a, b) => a.key.compareTo(b.key));
+                if (matches.isNotEmpty) widget.onPlace(matches.first.key);
+              },
             ),
           ),
           const Divider(height: 1),
@@ -134,11 +175,15 @@ class _DevicePalettePanelState extends State<DevicePalettePanel> {
                     catalog: widget.catalog,
                     query: _query,
                     onPlace: widget.onPlace,
+                    onArmDrag: widget.onArmDrag,
+                    draggingCatalogId: widget.draggingCatalogId,
                   )
                 : _CategoryList(
                     catalog: widget.catalog,
                     categoryOrder: widget.categoryOrder,
                     onPlace: widget.onPlace,
+                    onArmDrag: widget.onArmDrag,
+                    draggingCatalogId: widget.draggingCatalogId,
                   ),
           ),
         ],
@@ -152,11 +197,15 @@ class _CategoryList extends StatelessWidget {
     required this.catalog,
     required this.categoryOrder,
     required this.onPlace,
+    this.onArmDrag,
+    this.draggingCatalogId,
   });
 
   final Map<String, TemplateBody> catalog;
   final List<String> categoryOrder;
   final void Function(String catalogId) onPlace;
+  final void Function(String catalogId, PointerDownEvent event)? onArmDrag;
+  final String? draggingCatalogId;
 
   @override
   Widget build(BuildContext context) {
@@ -179,6 +228,8 @@ class _CategoryList extends StatelessWidget {
                     catalogId: entry.key,
                     body: entry.value,
                     onPlace: onPlace,
+                    onArmDrag: onArmDrag,
+                    dragging: entry.key == draggingCatalogId,
                   ),
               ],
             ),
@@ -192,11 +243,15 @@ class _SearchResults extends StatelessWidget {
     required this.catalog,
     required this.query,
     required this.onPlace,
+    this.onArmDrag,
+    this.draggingCatalogId,
   });
 
   final Map<String, TemplateBody> catalog;
   final String query;
   final void Function(String catalogId) onPlace;
+  final void Function(String catalogId, PointerDownEvent event)? onArmDrag;
+  final String? draggingCatalogId;
 
   @override
   Widget build(BuildContext context) {
@@ -218,7 +273,13 @@ class _SearchResults extends StatelessWidget {
       padding: EdgeInsets.zero,
       children: [
         for (final entry in matches)
-          _PaletteRow(catalogId: entry.key, body: entry.value, onPlace: onPlace),
+          _PaletteRow(
+            catalogId: entry.key,
+            body: entry.value,
+            onPlace: onPlace,
+            onArmDrag: onArmDrag,
+            dragging: entry.key == draggingCatalogId,
+          ),
       ],
     );
   }
@@ -227,22 +288,32 @@ class _SearchResults extends StatelessWidget {
 /// One palette row. `docs/04 §3.1` step 1 — "pointer down… nothing until
 /// 4 px of movement, so a click still means 'show details'" — has no
 /// details pane in this stage, so a single click is a no-op selection
-/// affordance only; double-click (or `Enter` once focused) places.
+/// affordance only; double-click (or `Enter` once focused) places, and a
+/// pointer-down that crosses 4px of movement arms/lifts a drag-to-rails
+/// gesture instead (docs/04 §3.1, [onArmDrag]).
 class _PaletteRow extends StatelessWidget {
   const _PaletteRow({
     required this.catalogId,
     required this.body,
     required this.onPlace,
+    this.onArmDrag,
+    this.dragging = false,
   });
 
   final String catalogId;
   final TemplateBody body;
   final void Function(String catalogId) onPlace;
+  final void Function(String catalogId, PointerDownEvent event)? onArmDrag;
+
+  /// Whether THIS row is the one currently lifted by an in-flight palette
+  /// drag (docs/04 §3.1 step 2) — dims to 40% opacity with a 1px accent
+  /// inset outline.
+  final bool dragging;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Focus(
+    final row = Focus(
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent &&
             (event.logicalKey == LogicalKeyboardKey.enter ||
@@ -285,6 +356,37 @@ class _PaletteRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    // docs/04 §3.1 step 2: the source row "drops to 40% opacity in place"
+    // with "a 1px accent inset outline" once LIFTED (not merely armed).
+    final decorated = dragging
+        ? Opacity(
+            opacity: 0.40,
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: scheme.tertiary),
+              ),
+              child: row,
+            ),
+          )
+        : row;
+
+    final armDrag = onArmDrag;
+    if (armDrag == null) return decorated;
+
+    // The ADDITIONAL outer `Listener` (docs/04 §3.1's arm mechanism — see
+    // this file's header). `Listener` never enters the gesture arena, so
+    // it cannot interfere with `GestureDetector.onDoubleTap`/`Focus`'s own
+    // Enter handling above — both see the same raw pointer-down
+    // independently. Any primary button/touch/stylus contact arms a
+    // POTENTIAL drag (no `PointerDeviceKind` branch, AC-016 #23); whether
+    // it ever crosses the 4px lift threshold is `RackCanvasScreen`'s call,
+    // not this widget's.
+    return Listener(
+      behavior: HitTestBehavior.opaque,
+      onPointerDown: (event) => armDrag(catalogId, event),
+      child: decorated,
     );
   }
 }

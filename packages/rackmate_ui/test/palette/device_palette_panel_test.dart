@@ -4,18 +4,24 @@
 // regression in the catalog data itself (an empty category, a duplicate
 // id) would also show up here.
 
-import 'package:flutter/gestures.dart' show kDoubleTapMinTime;
+import 'package:flutter/gestures.dart' show PointerDownEvent, kDoubleTapMinTime;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
-Widget _app({required void Function(String) onPlace}) => MaterialApp(
+Widget _app({
+  required void Function(String) onPlace,
+  void Function(String, PointerDownEvent)? onArmDrag,
+  String? draggingCatalogId,
+}) => MaterialApp(
   home: Scaffold(
     body: DevicePalettePanel(
       catalog: buildSeedCatalog(),
       categoryOrder: kCatalogCategoryOrder,
       onPlace: onPlace,
+      onArmDrag: onArmDrag,
+      draggingCatalogId: draggingCatalogId,
     ),
   ),
 );
@@ -107,5 +113,76 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(placed, 'V01');
+  });
+
+  group('drag-from-palette arming (docs/04 §3.1, added this stage)', () {
+    testWidgets('a pointer-down on a row fires onArmDrag with its catalog '
+        'id, without interfering with double-tap-to-place', (tester) async {
+      final armed = <String>[];
+      String? placed;
+      await tester.pumpWidget(
+        _app(
+          onPlace: (id) => placed = id,
+          onArmDrag: (id, _) => armed.add(id),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'HDMI/HDBaseT Matrix 8x8');
+      await tester.pumpAndSettle();
+      final row = find.widgetWithText(ListTile, 'HDMI/HDBaseT Matrix 8x8');
+
+      // A stationary double-tap ALSO arms (any pointer-down does, per
+      // AC-016 -- no PointerDeviceKind/gesture-outcome branch), but never
+      // crosses this widget's own concern (that's RackCanvasScreen's 4px
+      // slop, exercised in rack_canvas_screen_test.dart) and must not
+      // suppress the existing double-tap place.
+      await tester.tap(row);
+      await tester.pump(kDoubleTapMinTime);
+      await tester.tap(row);
+      await tester.pumpAndSettle();
+
+      expect(armed, isNotEmpty);
+      expect(armed, everyElement('V01'));
+      expect(placed, 'V01'); // double-tap still placed -- Listener didn't
+      // steal the gesture arena from GestureDetector.onDoubleTap.
+    });
+
+    testWidgets('draggingCatalogId dims + outlines only the matching row', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _app(onPlace: (_) {}, draggingCatalogId: 'V01'),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'HDMI/HDBaseT Matrix 8x8');
+      await tester.pumpAndSettle();
+      final draggingRow = find.widgetWithText(ListTile, 'HDMI/HDBaseT Matrix 8x8');
+      expect(draggingRow, findsOneWidget);
+      // The dimmed row sits inside an Opacity(0.40) ancestor; a plain row
+      // (searched for below) has no such ancestor.
+      final dimmedOpacity = tester
+          .widgetList<Opacity>(
+            find.ancestor(of: draggingRow, matching: find.byType(Opacity)),
+          )
+          .where((o) => o.opacity == 0.40);
+      expect(dimmedOpacity, isNotEmpty);
+    });
+
+    testWidgets('no draggingCatalogId means no row is dimmed', (tester) async {
+      await tester.pumpWidget(_app(onPlace: (_) {}));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'HDMI/HDBaseT Matrix 8x8');
+      await tester.pumpAndSettle();
+      final row = find.widgetWithText(ListTile, 'HDMI/HDBaseT Matrix 8x8');
+      final dimmedOpacity = tester
+          .widgetList<Opacity>(
+            find.ancestor(of: row, matching: find.byType(Opacity)),
+          )
+          .where((o) => o.opacity == 0.40);
+      expect(dimmedOpacity, isEmpty);
+    });
   });
 }

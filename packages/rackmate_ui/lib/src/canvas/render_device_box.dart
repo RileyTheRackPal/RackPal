@@ -38,6 +38,7 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/canvas/shake_animation.dart';
 import 'package:rackmate_ui/src/draw/flutter_canvas.dart';
 
 /// The widget that owns a device's interactive behaviour. Wraps the leaf
@@ -53,6 +54,7 @@ class DeviceBox extends StatefulWidget {
     required this.semanticLabel,
     required this.palette,
     this.selected = false,
+    this.shake,
     super.key,
   });
 
@@ -76,6 +78,15 @@ class DeviceBox extends StatefulWidget {
   /// render tests) need not supply it.
   final bool selected;
 
+  /// Optional shake-feedback source (docs/04 §3.4: a blocked keyboard
+  /// nudge "shakes 3px"), shared by every device in the rack. Passed
+  /// straight through to [RenderDeviceBox], which listens to it directly
+  /// (see that class's own doc comment on why) so a 120ms shake repaints
+  /// only the one targeted device, at animation-frame rate, without any
+  /// widget rebuild at all. `null` for non-editing hosts (and most render
+  /// tests), which then never shake.
+  final ShakeController? shake;
+
   @override
   State<DeviceBox> createState() => _DeviceBoxState();
 }
@@ -90,6 +101,10 @@ class _DeviceBoxState extends State<DeviceBox> {
     // idiomatic "this thing owns focus/hover/keyboard" widget. The hover and
     // focus flags flow into the render object, which repaints the chrome —
     // a per-device rebuild at human speed, never on the pan/zoom hot path.
+    // `shake` is deliberately NOT threaded through a widget rebuild the same
+    // way (see `RenderDeviceBox.shake`'s doc comment): `RenderDeviceBox`
+    // listens to it directly, exactly like `RenderRackCanvas` already does
+    // for `viewport` in this same file family.
     return FocusableActionDetector(
       mouseCursor: SystemMouseCursors.click,
       onShowHoverHighlight: (h) => setState(() => _hovered = h),
@@ -103,6 +118,7 @@ class _DeviceBoxState extends State<DeviceBox> {
         hovered: _hovered,
         focused: _focused,
         selected: widget.selected,
+        shake: widget.shake,
       ),
     );
   }
@@ -118,6 +134,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
     required this.hovered,
     required this.focused,
     required this.selected,
+    required this.shake,
   });
 
   final DiagramScene scene;
@@ -128,6 +145,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
   final bool hovered;
   final bool focused;
   final bool selected;
+  final ShakeController? shake;
 
   @override
   RenderDeviceBox createRenderObject(BuildContext context) => RenderDeviceBox(
@@ -139,6 +157,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
     hovered: hovered,
     focused: focused,
     selected: selected,
+    shake: shake,
   );
 
   @override
@@ -151,7 +170,8 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
       ..palette = palette
       ..hovered = hovered
       ..focused = focused
-      ..selected = selected;
+      ..selected = selected
+      ..shake = shake;
   }
 }
 
@@ -170,6 +190,7 @@ class RenderDeviceBox extends RenderBox {
     bool hovered = false,
     bool focused = false,
     bool selected = false,
+    ShakeController? shake,
   }) : _scene = scene,
        _deviceId = deviceId,
        _measurer = measurer,
@@ -177,7 +198,8 @@ class RenderDeviceBox extends RenderBox {
        _palette = palette,
        _hovered = hovered,
        _focused = focused,
-       _selected = selected;
+       _selected = selected,
+       _shake = shake;
 
   DiagramScene _scene;
   DiagramScene get scene => _scene;
@@ -243,6 +265,48 @@ class RenderDeviceBox extends RenderBox {
     markNeedsPaint();
   }
 
+  /// The shared shake-feedback source (docs/04 §3.4's blocked-nudge
+  /// "shakes 3px"), or null for hosts that never shake (non-editing hosts,
+  /// most render tests). Listened to DIRECTLY here — attach/detach a
+  /// listener that just calls [markNeedsPaint], exactly like
+  /// `RenderRackCanvas` already does for its own `viewport` field in this
+  /// same file family — rather than pushed down through a widget rebuild.
+  /// This matters because a shake runs for 120ms at animation-frame rate:
+  /// routing it through `DeviceBox`'s `State.build()` (the way
+  /// hovered/focused/selected are) would need an extra widget layer
+  /// (e.g. `AnimatedBuilder`) around this leaf for every device — which
+  /// silently doubles this device's count in `WidgetTester.allRenderObjects`
+  /// (it maps EVERY element to its nearest render object, so if an extra
+  /// ancestor Element is now in play, this same `RenderDeviceBox` gets
+  /// listed once per ancestor rather than once per device), unrelated to
+  /// production behaviour but real damage to any test built on that API's
+  /// implicit "one entry per device" assumption — this was caught by
+  /// `rack_canvas_screen_test.dart`'s existing "sole selection" assertion
+  /// the first time this was wired the other way. Listening here avoids
+  /// both problems: no extra widget, and a strictly cheaper repaint-only
+  /// (never a rebuild) path.
+  ShakeController? _shake;
+  ShakeController? get shake => _shake;
+  set shake(ShakeController? value) {
+    if (identical(_shake, value)) return;
+    if (attached) _shake?.removeListener(markNeedsPaint);
+    _shake = value;
+    if (attached) _shake?.addListener(markNeedsPaint);
+    markNeedsPaint();
+  }
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    _shake?.addListener(markNeedsPaint);
+  }
+
+  @override
+  void detach() {
+    _shake?.removeListener(markNeedsPaint);
+    super.detach();
+  }
+
   // Sized entirely by the parent's tight constraints (the device's scene
   // size). No intrinsic content drives layout.
   @override
@@ -261,12 +325,18 @@ class RenderDeviceBox extends RenderBox {
     // CR-086: pixels come from the IR. Replay the device's own fragment,
     // translated to this child's paint offset (the parent has already put
     // the canvas in scene space, so `offset` is the device's scene
-    // top-left). This is the doc's RenderDeviceBox.paint snippet, with the
-    // one honest addition it elides: the translate that positions the
-    // local-coordinate fragment.
+    // top-left) PLUS the current shake offset, if any (docs/04 §3.4) — a
+    // paint-time-only nudge, so hit-testing/layout stay put. Read fresh
+    // from `_shake` on every paint (not cached) since `_shake`'s own
+    // listener only ever calls `markNeedsPaint`, never stores a value.
+    // This is the doc's RenderDeviceBox.paint snippet, with the two honest
+    // additions it elides: the translate that positions the
+    // local-coordinate fragment, and the shake.
+    final shakeOffset = _shake?.offsetFor(Uuid(_deviceId)) ?? Offset.zero;
+    final paintOffset = offset + shakeOffset;
     final canvas = FlutterDiagramCanvas(context.canvas, measurer: _measurer)
       ..save()
-      ..translate(offset.dx, offset.dy);
+      ..translate(paintOffset.dx, paintOffset.dy);
     _scene.fragmentFor(_deviceId).replay(canvas);
     canvas.restore();
 
@@ -275,7 +345,7 @@ class RenderDeviceBox extends RenderBox {
         ..style = PaintingStyle.stroke
         ..strokeWidth = _focused ? 2.0 : 1.5
         ..color = Color(_focused ? _palette.focus : _palette.hover);
-      context.canvas.drawRect((offset & size).deflate(0.75), ring);
+      context.canvas.drawRect((paintOffset & size).deflate(0.75), ring);
     }
 
     // The third state (docs/04 §3.5: "a 2px outline per member"), drawn AS
@@ -288,7 +358,7 @@ class RenderDeviceBox extends RenderBox {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2
         ..color = Color(_palette.selection);
-      context.canvas.drawRect((offset & size).deflate(1.5), outline);
+      context.canvas.drawRect((paintOffset & size).deflate(1.5), outline);
     }
   }
 

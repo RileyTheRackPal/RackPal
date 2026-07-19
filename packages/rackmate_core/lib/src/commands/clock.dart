@@ -35,3 +35,27 @@ final class FixedClock extends Clock {
   @override
   DateTime nowUtc() => fixed;
 }
+
+/// A clock a test can step forward between commands — what `FixedClock`
+/// cannot provide, since it always returns the same instant no matter how
+/// many commands run. `UndoStack.push`'s merge check
+/// (`now.difference(top.at) < mergeWindow`) always compares `0 <
+/// mergeWindow` under a `FixedClock`, which is true for ANY positive
+/// window — proving nothing about the actual 400ms boundary. `MutableClock`
+/// lets a test [advance] simulated time by a real `Duration` between two
+/// `DocumentController.run()` calls, so it can exercise BOTH sides of the
+/// merge window (just under it -> coalesce; just over it -> two entries)
+/// without a real `Future.delayed`/sleep.
+final class MutableClock extends Clock {
+  MutableClock(this._now);
+
+  DateTime _now;
+
+  @override
+  DateTime nowUtc() => _now;
+
+  /// Moves the clock forward by [duration] (or backward, if negative).
+  void advance(Duration duration) {
+    _now = _now.add(duration);
+  }
+}

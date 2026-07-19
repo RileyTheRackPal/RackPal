@@ -10,11 +10,16 @@
 library;
 
 export 'src/canvas/canvas_intent.dart';
+export 'src/canvas/editing_overlay_painter.dart';
 export 'src/canvas/grid_painter.dart';
+export 'src/canvas/insertion_caret.dart';
+export 'src/canvas/palette_drag_controller.dart';
 export 'src/canvas/rack_canvas_screen.dart';
 export 'src/canvas/render_device_box.dart';
 export 'src/canvas/render_rack_canvas.dart';
 export 'src/canvas/selection_controller.dart';
+export 'src/canvas/shake_animation.dart';
+export 'src/canvas/status_message_controller.dart';
 export 'src/canvas/viewport_controller.dart';
 export 'src/draw/flutter_canvas.dart';
 export 'src/palette/device_palette_panel.dart';

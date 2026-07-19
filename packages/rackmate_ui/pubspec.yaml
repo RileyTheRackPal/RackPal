@@ -22,6 +22,12 @@ dependencies:
   vector_math: ^2.2.0
 
 dev_dependencies:
+  # Only used in test/canvas/status_message_controller_test.dart, to
+  # deterministically test StatusMessageController's Timer-based
+  # auto-clear without a real sleep. Was already resolved transitively
+  # (flutter_test -> ... -> fake_async); listed directly now that a test
+  # imports it, per pub's "declare what you import" convention.
+  fake_async: ^1.3.3
   flutter_test:
     sdk: flutter
   leak_tracker_flutter_testing: ^3.0.0
