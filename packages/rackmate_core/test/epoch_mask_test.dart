@@ -271,6 +271,105 @@ void main() {
       _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
     });
 
+    // One case per EpochMask branch the RackField table declares, rather
+    // than one per field: twelve near-identical cases would assert the
+    // same relation twelve times. The table's own per-field mask
+    // assignments are asserted directly in
+    // set_rack_property_command_test.dart; what THIS file exists to catch
+    // is a command whose declared mask under-reports what it changed, and
+    // that property is per-mask, not per-field.
+    test('SetRackPropertyCommand (rack-epoch field)', () {
+      final doc = _freshDoc();
+      const rackId = Uuid('rack-1');
+      doc.racks[rackId] = _rack(rackId);
+      final cmd = SetRackPropertyCommand<RackWidthClass>(
+        id: rackId,
+        field: RackField.widthClass,
+        from: RackWidthClass.eia19,
+        to: RackWidthClass.etsi,
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
+    });
+
+    test('SetRackPropertyCommand (meta-epoch field)', () {
+      final doc = _freshDoc();
+      const rackId = Uuid('rack-1');
+      doc.racks[rackId] = _rack(rackId);
+      final cmd = SetRackPropertyCommand<String>(
+        id: rackId,
+        field: RackField.designator,
+        from: 'RK-1',
+        to: 'RK-9',
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
+    });
+
+    test('SetRackPropertyCommand (rack|style display field)', () {
+      final doc = _freshDoc();
+      const rackId = Uuid('rack-1');
+      doc.racks[rackId] = _rack(rackId);
+      final cmd = SetRackPropertyCommand<RuNumbering>(
+        id: rackId,
+        field: RackField.ruNumbering,
+        from: RuNumbering.bottomUpFromOne,
+        to: RuNumbering.topDown,
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
+    });
+
+    test('SetRackPropertyCommand (nullable field, set and cleared)', () {
+      final doc = _freshDoc();
+      const rackId = Uuid('rack-1');
+      doc.racks[rackId] = _rack(rackId);
+      final set = SetRackPropertyCommand<Len?>(
+        id: rackId,
+        field: RackField.usableDepth,
+        from: null,
+        to: const Len(600000000),
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      _expectTouchesCoversChanges(
+        set,
+        _changedTopLevelKeys(doc, () => set.apply(doc)),
+        expectAtLeast: {'racks'},
+      );
+
+      // Clearing back to null must ALSO register as a change — an
+      // absent-key encoding (CR-117) that silently matched the set state
+      // would make this test vacuous in one direction.
+      final clear = SetRackPropertyCommand<Len?>(
+        id: rackId,
+        field: RackField.usableDepth,
+        from: const Len(600000000),
+        to: null,
+        now: DateTime.utc(2026, 1, 3),
+        actor: 'tester',
+      );
+
+      _expectTouchesCoversChanges(
+        clear,
+        _changedTopLevelKeys(doc, () => clear.apply(doc)),
+        expectAtLeast: {'racks'},
+      );
+    });
+
     test('AddLinkCommand', () {
       final doc = _freshDoc();
       final cmd = AddLinkCommand(

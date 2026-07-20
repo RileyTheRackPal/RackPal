@@ -77,6 +77,19 @@ RenderDeviceBox _render(WidgetTester tester, String id) =>
       (r) => r.deviceId == id,
     );
 
+/// Whether [id] is currently rendering as a MOVE-DRAG source — docs/04 §3.3
+/// step 1's 30 % in-place fade.
+///
+/// `RenderDeviceBox`'s boolean `dragSource` flag became the nullable
+/// `fadeOpacity` when §3.6's compaction preview needed the same in-place
+/// fade at 25 % ("current positions dimmed to 25%"): two booleans would have
+/// needed a precedence rule between them for a combination that cannot
+/// happen. These tests therefore ask about the drag's specific opacity
+/// rather than "is it faded at all", which keeps them able to tell the two
+/// features apart.
+bool _isDragSource(WidgetTester tester, String id) =>
+    _render(tester, id).fadeOpacity == RenderDeviceBox.dragSourceOpacity;
+
 Widget _app({Clock clock = const SystemClock()}) => MaterialApp(
   home: Scaffold(
     body: RackCanvasScreen(measurer: _FakeMeasurer(), clock: clock),
@@ -134,6 +147,33 @@ Future<void> _settleDoubleTapRecognizer(WidgetTester tester) =>
     tester.pump(kDoubleTapTimeout + const Duration(milliseconds: 50));
 
 void main() {
+  // A REALISTIC WINDOW, required as of the rack-configuration stage. The
+  // screen's layout is now `Row(palette 280 | canvas | inspector 320)`
+  // (docs/04 §1's four columns), so the default 800x600 test surface leaves
+  // the canvas ~198 logical pixels — narrower than the rack's own 267-unit
+  // scene width, and narrow enough that `_focusCanvas`'s click at (300, 400)
+  // would land on the INSPECTOR rather than the canvas. docs/04 §1 itself
+  // treats anything below 1080px as the (unbuilt) tablet collapse case, so
+  // 800x600 was never a supported size for this screen; the tests now say
+  // so explicitly rather than depending on a default that happened to work
+  // while there were only two columns.
+  //
+  // Every gesture in this file is already expressed relative to
+  // `_canvasOrigin`, so widening the window changes no expectation.
+  setUp(() {
+    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
+        .implicitView!
+      ..physicalSize = const Size(1600, 1000)
+      ..devicePixelRatio = 1;
+  });
+
+  tearDown(() {
+    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
+        .implicitView!
+      ..resetPhysicalSize()
+      ..resetDevicePixelRatio();
+  });
+
   testWidgets('clicking a device selects it; clicking empty canvas clears', (
     tester,
   ) async {
@@ -864,7 +904,7 @@ void main() {
       await tester.pump();
 
       // Pointer down, no movement at all: still a potential click.
-      expect(_render(tester, 'dev-amp').dragSource, isFalse);
+      expect(_isDragSource(tester, 'dev-amp'), isFalse);
 
       // A real move event, but UNDER the 4px slop -- "Nothing until 4 px of
       // movement, so a click still means show details" (§3.1 step 1, which
@@ -873,7 +913,7 @@ void main() {
       await gesture.moveBy(const Offset(0, -2));
       await tester.pump();
       expect(
-        _render(tester, 'dev-amp').dragSource,
+        _isDragSource(tester, 'dev-amp'),
         isFalse,
         reason: 'a 2px twitch is a click, not a drag',
       );
@@ -886,7 +926,7 @@ void main() {
       // placeholder, and it has NOT itself moved -- the ghost is what
       // follows the cursor.
       final render = _render(tester, 'dev-amp');
-      expect(render.dragSource, isTrue);
+      expect(render.fadeOpacity, RenderDeviceBox.dragSourceOpacity);
       // ...and that flag actually reaches the PIXELS: the whole device is
       // composited through one `saveLayer` carrying 30% alpha. Asserted at
       // the paint level, not just as state, so a regression that stopped
@@ -907,13 +947,13 @@ void main() {
       );
       // No OTHER device is dimmed -- this is a per-device flag, not a
       // canvas-wide one.
-      expect(_render(tester, 'dev-ups').dragSource, isFalse);
-      expect(_render(tester, 'dev-sw').dragSource, isFalse);
+      expect(_isDragSource(tester, 'dev-ups'), isFalse);
+      expect(_isDragSource(tester, 'dev-sw'), isFalse);
 
       await gesture.up();
       await tester.pump();
 
-      expect(_render(tester, 'dev-amp').dragSource, isFalse);
+      expect(_isDragSource(tester, 'dev-amp'), isFalse);
       // ...and the move really did commit, at the previewed U8.
       expect(
         tester.getTopLeft(_device('dev-amp')).dy,
@@ -971,7 +1011,7 @@ void main() {
       );
       // ...the source is immediately back to full opacity (the pointer is
       // up; only the ghost/chip linger)...
-      expect(_render(tester, 'dev-amp').dragSource, isFalse);
+      expect(_isDragSource(tester, 'dev-amp'), isFalse);
       // ...the chip persists right after the blocked release...
       expect(find.textContaining('Occupied by UPS-1'), findsWidgets);
 
@@ -993,7 +1033,7 @@ void main() {
       // it is because Esc failed, not because the drop was refused anyway.
       await gesture.moveBy(const Offset(0, -88));
       await tester.pump();
-      expect(_render(tester, 'dev-amp').dragSource, isTrue);
+      expect(_isDragSource(tester, 'dev-amp'), isTrue);
       expect(find.text('U8-U9'), findsOneWidget);
 
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -1001,7 +1041,7 @@ void main() {
 
       // Immediately, before the pointer is even released: full opacity, no
       // ghost chrome, device untouched.
-      expect(_render(tester, 'dev-amp').dragSource, isFalse);
+      expect(_isDragSource(tester, 'dev-amp'), isFalse);
       expect(find.text('U8-U9'), findsNothing);
       expect(
         tester.getTopLeft(_device('dev-amp')).dy,
@@ -1013,7 +1053,7 @@ void main() {
       // cancelled move.
       await gesture.moveBy(const Offset(0, -22));
       await tester.pump();
-      expect(_render(tester, 'dev-amp').dragSource, isFalse);
+      expect(_isDragSource(tester, 'dev-amp'), isFalse);
 
       await gesture.up();
       await tester.pump();
@@ -1093,7 +1133,7 @@ void main() {
       // Cross the instant drag 1's timer WOULD have fired at.
       await tester.pump(const Duration(milliseconds: 1000));
       expect(
-        _render(tester, 'dev-amp').dragSource,
+        _isDragSource(tester, 'dev-amp'),
         isTrue,
         reason: "the stale timer must not end the second drag's preview",
       );
@@ -1122,9 +1162,9 @@ void main() {
       await gesture.moveBy(const Offset(0, -66));
       await tester.pump();
 
-      expect(_render(tester, 'dev-sw').dragSource, isFalse);
+      expect(_isDragSource(tester, 'dev-sw'), isFalse);
       expect(find.textContaining('U'), findsWidgets); // (ruler labels exist)
-      expect(_render(tester, 'dev-amp').dragSource, isFalse);
+      expect(_isDragSource(tester, 'dev-amp'), isFalse);
 
       await gesture.up();
       await tester.pump();

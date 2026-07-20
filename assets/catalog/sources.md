@@ -128,3 +128,39 @@ connector-footprint group.
   sync by hand at this stage; `seed_catalog_test.dart` asserts the count and
   category split so a future edit here or in `catalog_*.dart` cannot drift
   from docs/catalog/seed-devices.md §3.10 silently.
+
+## 5. Rack presets (`rackmate_core/src/catalog/rack_presets.dart`)
+
+The eleven rack presets docs/04-rack-editor.md §4 names carry a height, a
+usable depth, a static weight capacity, a rail type and a `RackFormFactor`.
+They fall under exactly the same rule as the device catalog: **each is a
+generic archetype for a class of enclosure, never a real manufacturer SKU**
+(DR-002 / AC-052). No figure below is any vendor's published specification,
+and nothing in the file names a manufacturer or model.
+
+Unlike device templates, rack presets are **not persisted**. A `Rack` has no
+`presetRef`; applying a preset is a fan-out of writes to `Rack` fields the
+codec already round-trips, so none of these numbers ever appears in a saved
+file as a preset — only as whatever the user's rack ended up holding.
+
+| Field | Where the numbers come from |
+|---|---|
+| `heightU` | Stated verbatim in docs/04 §4's own preset list (6, 12, 10, 18/21/27/35/44, 44, 8, 42). Not derived, not chosen here. |
+| `usableDepth` | Whole-inch depths typical of each enclosure class. Three are stated by §4 itself (wall box 12 in, swing gate 18 in, data 36 in); the rest use the nearest conventional depth for that archetype (20 in for the pivot cabinet and credenza bay, 24 in for the shallower floor enclosures, 30 in for the deep ones and the 4-post frame). Stored as exact `Len` inch multiples, so no persisted length is a rounded float (CR-001). |
+| `weightCapacity` | Order-of-magnitude static load ratings for the archetype class, in whole kilograms: 45–90 kg for wall-mounted boxes and gates, 68 kg for furniture and pivot cabinets, 400–680 kg for floor enclosures scaling with height, 450 kg for the open frame, 900 kg for the data cabinet. These are *representative of the class*, in the sense §2 above defines — enough for a `RCK-003` capacity check to be meaningful once that rule exists, and explicitly not a spec for any product. |
+| `railType` | The rail standard conventional for the archetype: `tapped10_32` for wall boxes, gates, pivot cabinets and furniture bays; `squareCageNut` for floor enclosures, the 4-post frame and the data cabinet. |
+| `formFactor` | Read directly off §4's preset names (wall box → `wallFixed`, swing gate → `wallSwingGate`, pivot cabinet → `wallPivotCabinet`, floor enclosure / data → `floorEnclosure`, open frame 4-post → `openFrame4Post`, credenza bay → `credenzaFurniture`). |
+| `widthClass` | `eia19` for all eleven. §4 names no non-19-inch preset, and `RackGeometry` currently draws every width class at EIA-19 geometry anyway (a flagged cut, stated in rack_geometry.dart). |
+| `isSwingFrame` / `hingeSide` | Set only on the swing gate and the pivot cabinet — the two archetypes that physically swing. `hingeSide` defaults to `left` and is null on every other preset, so the inspector's disabled-and-dashed hinge control renders the real data rather than a UI convention. |
+
+**No `openFrame2Post` preset ships**, even though §4 cites a 2-post frame as
+the reason `usableDepth` is nullable and `RackFormFactor` carries the value.
+§4's list does not name one, and inventing an archetype purely to make a
+null-depth case reachable would put unreviewed dimensions in front of users.
+The unset state is reached by clearing the field; it is covered by unit test.
+
+`rack_presets_test.dart` asserts the count, the eleven ids and heights, the
+exact-inch and whole-kilogram constraints, and the swing-frame/hinge-side
+coherence rule — so an edit here or in `rack_presets.dart` cannot drift from
+docs/04 §4 silently, the same guarantee `seed_catalog_test.dart` gives the
+device catalog.

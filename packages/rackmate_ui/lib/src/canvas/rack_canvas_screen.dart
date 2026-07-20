@@ -12,16 +12,22 @@ import 'package:flutter/services.dart'
         SystemMouseCursors;
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/canvas/canvas_intent.dart';
+import 'package:rackmate_ui/src/canvas/compaction_preview_bar.dart';
+import 'package:rackmate_ui/src/canvas/compaction_preview_controller.dart';
 import 'package:rackmate_ui/src/canvas/drag_preview_controller.dart';
 import 'package:rackmate_ui/src/canvas/editing_overlay_painter.dart';
 import 'package:rackmate_ui/src/canvas/grid_painter.dart';
 import 'package:rackmate_ui/src/canvas/insertion_caret.dart';
+import 'package:rackmate_ui/src/canvas/rack_header_bar.dart';
 import 'package:rackmate_ui/src/canvas/render_device_box.dart';
 import 'package:rackmate_ui/src/canvas/render_rack_canvas.dart';
+import 'package:rackmate_ui/src/canvas/resize_preview_controller.dart';
 import 'package:rackmate_ui/src/canvas/selection_controller.dart';
 import 'package:rackmate_ui/src/canvas/shake_animation.dart';
 import 'package:rackmate_ui/src/canvas/status_message_controller.dart';
 import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
+import 'package:rackmate_ui/src/inspector/inspector_panel.dart';
+import 'package:rackmate_ui/src/inspector/shrink_rack_dialog.dart';
 import 'package:rackmate_ui/src/palette/device_palette_panel.dart';
 
 /// The rack editor canvas: the pannable/zoomable grid (L0) with a real rack
@@ -51,6 +57,7 @@ class RackCanvasScreen extends StatefulWidget {
   const RackCanvasScreen({
     required this.measurer,
     this.clock = const SystemClock(),
+    this.document,
     super.key,
   });
 
@@ -68,6 +75,20 @@ class RackCanvasScreen extends StatefulWidget {
   /// arrow-key-nudge merge window without a real sleep.
   final Clock clock;
 
+  /// The document to edit, instead of the built-in demo seed. TESTS ONLY,
+  /// and a sibling of [clock] for exactly the same reason that one exists:
+  /// some behaviour is only reachable from a document shape the seed cannot
+  /// express, and faking it is better than not testing it.
+  ///
+  /// The case that forced it is §4.1's real-time shrink hatch. Its truthfulness
+  /// depends on occupants `railOccupantsOnFace` cannot model — a 0U-channel
+  /// device, or a rail device whose `templates['<id>@<version>']` snapshot is
+  /// missing (see core's `DoomedKind`). Both are "reachable by loading a file
+  /// and none by in-app authoring today", so no sequence of gestures against
+  /// the demo seed can produce one, and a hatch test without one cannot fail.
+  @visibleForTesting
+  final RackDocument? document;
+
   @override
   State<RackCanvasScreen> createState() => _RackCanvasScreenState();
 }
@@ -79,6 +100,14 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// means show details"). Compared in screen space so the slop does not
   /// shrink/grow with zoom.
   static const double _clickSlopPx = 4;
+
+  /// docs/04 §4.1's grab band for the drag-the-top-edge gesture: "8 px
+  /// band". SCREEN pixels, like [_clickSlopPx] — divided by the viewport
+  /// scale before it is compared in scene space, exactly as
+  /// `EditingOverlayPainter` compensates its own nominal px strokes, so the
+  /// band stays 8 physical pixels at 0.2x and at 4x rather than becoming
+  /// unusably thin or swallowing the whole top U.
+  static const double _topEdgeBandPx = 8;
 
   final ViewportController _viewport = ViewportController();
   final GridCache _gridCache = GridCache();
@@ -127,6 +156,71 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// report `isShowingGhost` per frame — see `EditingOverlayPainter`'s own
   /// `_activeDrag`).
   final DragPreviewController _moveDrag = DragPreviewController();
+
+  /// docs/04 §3.6's compaction preview — the THIRD preview-then-commit
+  /// interaction on this screen, and deliberately not a third
+  /// `DragPreviewController` (see compaction_preview_controller.dart's
+  /// header for why the shapes genuinely differ).
+  final CompactionPreviewController _compaction =
+      CompactionPreviewController();
+
+  /// True only for the instant `_applyCompaction` is inside its
+  /// `transact`. The stale-plan guard below fires on ANY document sequence
+  /// bump, and an apply is itself a bump — without this latch the preview
+  /// would report its own successful application as a concurrent edit that
+  /// invalidated it.
+  bool _applyingCompaction = false;
+
+  /// docs/04 §4.1's drag-the-top-edge preview — the THIRD preview-then-commit
+  /// interaction on this screen after the two drags and the compaction, and
+  /// deliberately its own controller type (see
+  /// resize_preview_controller.dart's header).
+  final ResizePreviewController _resize = ResizePreviewController();
+
+  /// True for the whole life of one top-edge drag: set in `_onBeginDrag`
+  /// when the grab lands in the 8px band, cleared in `_resetDrag`. It is
+  /// what makes the resize and the select/move gestures mutually exclusive
+  /// AT THE SOURCE rather than by the two handlers each checking a condition
+  /// the other might disagree about.
+  bool _resizeDrag = false;
+
+  /// The move drag's screen-space chip has a resize sibling: the "24U (+3)"
+  /// readout that follows the cursor (§4.1). Same `OverlayEntry` lifecycle,
+  /// same reason (it is screen-space text tracking a global pointer
+  /// position, so it cannot live in the scene-space painter).
+  OverlayEntry? _resizeOverlayEntry;
+
+  /// THE MODAL-STORM LATCH (docs/04 §4.1 leaves this problem unaddressed).
+  /// A held stepper ratcheting down through occupied territory, or a drag
+  /// that commits while a previous modal is still closing, must not open one
+  /// modal per event. `_requestHeight` refuses to open a second one while
+  /// this is set, and the header stepper's hold-repeat halts on the same
+  /// signal — the repeat stopping IS the feedback, and the modal is already
+  /// on screen, so nothing about it is silent.
+  bool _shrinkDialogOpen = false;
+
+  /// Which POINTER-DRIVEN gesture currently owns the canvas, or null when
+  /// none does. THE one piece of state behind this screen's exclusivity
+  /// rule — see the "the exclusivity rule, in one place" section below for
+  /// why it is one field consulted by every entry point rather than a
+  /// condition each entry point re-derives.
+  _PointerGesture? _liveGesture;
+
+  /// Which of the two things the 320px inspector column shows (docs/04 §4's
+  /// "REPLACES the Selection section" — see inspector_panel.dart's header
+  /// for how that is implemented given there was no Selection section).
+  InspectorTarget _inspectorTarget = InspectorTarget.selection;
+
+  /// Focused by `Ctrl+Alt+U` so the keyboard entry point lands on the
+  /// inspector's first field rather than nowhere.
+  final FocusNode _inspectorFirstFieldFocus = FocusNode(
+    debugLabel: 'inspectorFirstField',
+  );
+
+  /// docs/04 §4's rack presets, built once (`buildRackPresets()` returns a
+  /// fresh map per call by contract, so a caller cannot mutate a shared
+  /// singleton).
+  late final Map<String, RackPreset> _presets = buildRackPresets();
 
   /// The `CanvasIntentDetector`'s own `RenderBox`, looked up on every
   /// palette-drag pointer move to test "is the pointer inside the canvas
@@ -202,12 +296,36 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   // Wrapped in the REAL DocumentController — THE one mutation entry point
   // (docs/03 §5.4). Every move/delete/undo/redo/place below runs through it.
   late final DocumentController _controller = DocumentController(
-    _buildDemoDocument(_catalog),
+    widget.document ?? _buildDemoDocument(_catalog),
     clock: widget.clock,
   );
   RackDocument get _doc => _controller.doc;
   late final Rack _rack = _doc.racks.values.first;
-  late final RackGeometry _geo = RackGeometry(_rack.heightU);
+
+  /// Derived geometry for the CURRENT rack height, memoised on that height.
+  ///
+  /// Was `late final RackGeometry _geo = RackGeometry(_rack.heightU)` — a
+  /// once-and-never-again value, computed on the assumption (true until
+  /// docs/04 §4.1's height editing landed) that a rack's height never
+  /// changes. It does now, so every consumer — drag evaluation, the caret
+  /// clamp, the overlay painter, `fitToContent`, the RU-range chip — would
+  /// otherwise have gone on using a stale height after a resize.
+  ///
+  /// A memoised GETTER rather than a field re-assigned from the epoch
+  /// listener, because the getter cannot go stale by construction: there is
+  /// no ordering to get wrong between "the command mutated heightU" and
+  /// "somebody read `_geo`". `RackGeometry` is an immutable single-`int`
+  /// value type, so the cache exists purely to keep IDENTITY stable within a
+  /// height — which is what stops `EditingOverlayPainter.shouldRepaint`'s
+  /// `geo != old.geo` from being pointlessly true on every build. (It also
+  /// has real `==`/`hashCode` as of this stage, so that comparison would be
+  /// correct either way; the cache just avoids the allocation.)
+  RackGeometry? _geoCache;
+  RackGeometry get _geo {
+    final cached = _geoCache;
+    if (cached != null && cached.heightU == _rack.heightU) return cached;
+    return _geoCache = RackGeometry(_rack.heightU);
+  }
 
   Face _face = Face.front;
   late LodLevel _lod = LodLevel.forScale(_viewport.scale);
@@ -256,6 +374,40 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// and does unsubscribe outright.)
   bool _dragCancelled = false;
 
+  /// Set when `_onBeginDrag` could not CLAIM the screen because another
+  /// pointer-driven gesture was already live (a palette drag, armed from a
+  /// sibling widget through a separate pointer route, is the only such case
+  /// reachable — `CanvasIntentDetector`'s own single-gesture guard already
+  /// stops a second CANVAS pointer from ever getting here).
+  ///
+  /// A SIBLING OF [_dragCancelled], not a duplicate of it. Both make every
+  /// remaining callback for a still-down pointer a no-op, but they differ in
+  /// what they must NOT do: a cancelled drag had a preview and tears it
+  /// down, whereas a refused one never armed anything, so running the usual
+  /// teardown would reach into the OTHER gesture's live state.
+  bool _dragRefused = false;
+
+  /// True only for the duration of `_onCommitDrag` — the sibling of
+  /// [_applyingCompaction], for the same reason and with the same shape. The
+  /// stale-state guard fires on ANY document sequence bump, and a drag's own
+  /// commit IS a bump, delivered while the gesture still holds its
+  /// exclusivity claim; without this latch a successful move or resize would
+  /// be read as the concurrent edit that invalidated it.
+  ///
+  /// HONEST NOTE, because a mutation removing this one survives: no CURRENT
+  /// canvas commit path needs it. `_commitOrNoopMoveDrag` resets `_moveDrag`
+  /// and `_commitResizeDrag` cancels `_resize` BEFORE running their command,
+  /// so by the time the bump arrives the guard finds nothing live to cancel
+  /// and only sets a `_dragCancelled` that `_resetDrag` clears one statement
+  /// later. It is kept because that safety is an ORDERING COINCIDENCE across
+  /// three call sites rather than a property, and this same file already
+  /// contains a commit path with the opposite ordering: `_applyCompaction`
+  /// deliberately runs its `transact` BEFORE `_compaction.cancel()`, which is
+  /// exactly why [_applyingCompaction] had to exist. A latch that makes the
+  /// guard's precondition explicit costs one bool; rediscovering this the
+  /// third time would not.
+  bool _dragCommitting = false;
+
   @override
   void initState() {
     super.initState();
@@ -265,6 +417,20 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // fire at human speed, never on the pan/zoom hot path.
     _selection.addListener(_onEditorChanged);
     _controller.epochs.structure.addListener(_onEditorChanged);
+    // THE FIRST-EVER `rack` EPOCH SUBSCRIPTION. `SetRackHeightCommand` and
+    // `SetRackPropertyCommand` both touch `EpochMask.rack`, and until this
+    // stage nothing on this screen listened to it — so a height change
+    // would have mutated the document and repainted NOTHING, and an
+    // inspector edit would have left the panel showing the old value.
+    _controller.epochs.rack.addListener(_onEditorChanged);
+    // `meta` carries designator/name edits (`RenameEntityCommand`,
+    // `SetRackPropertyCommand(designator)`), which the header bar and the
+    // inspector both display.
+    _controller.epochs.meta.addListener(_onEditorChanged);
+    // Bumped by EVERY commit, undo and redo (CR-094) — the one signal broad
+    // enough to catch "the document moved under an open compaction
+    // preview", whatever moved it. See `_onDocumentSequenceChanged`.
+    _controller.epochs.sequence.addListener(_onDocumentSequenceChanged);
     // The caret's activation formula (docs/04 §3.4) has "canvas has focus"
     // as one of its three inputs — a plain FocusNode is not itself a
     // ChangeNotifier the caret can merge into its own repaint listenable,
@@ -292,6 +458,16 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       ..removeListener(_onEditorChanged)
       ..dispose();
     _controller.epochs.structure.removeListener(_onEditorChanged);
+    _controller.epochs.rack.removeListener(_onEditorChanged);
+    _controller.epochs.meta.removeListener(_onEditorChanged);
+    _controller.epochs.sequence.removeListener(_onDocumentSequenceChanged);
+    _compaction.dispose();
+    // A top-edge drag in flight at dispose time (as with the other two
+    // previews: unusual in production, real in a widget test that pumps a
+    // new tree mid-drag) must not leave an orphaned `OverlayEntry`.
+    _removeResizeOverlay();
+    _resize.dispose();
+    _inspectorFirstFieldFocus.dispose();
     _canvasFocus.removeListener(_onFocusChanged);
     _caret.dispose();
     _shake.dispose();
@@ -341,6 +517,52 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// activation inputs (docs/04 §3.4).
   void _onFocusChanged() => _recomputeCaret();
 
+  /// THE STALE-STATE GUARD (docs/04 §3.6, and §3.3 step 4 by extension).
+  ///
+  /// EVERY preview on this screen holds positions captured against a
+  /// document snapshot and then waits — a compaction preview until the user
+  /// Applies or Cancels, a move drag until the pointer comes up, a resize
+  /// drag likewise. If anything mutates the document in between (Ctrl+Z, a
+  /// palette placement, a keyboard nudge, a device delete), each of those
+  /// captures describes a world that no longer exists:
+  ///
+  ///  * a `CompactionMove.fromRuIndex` becomes a fabrication, so Apply would
+  ///    issue `MoveDeviceCommand`s whose "from" was never true;
+  ///  * `_dragPlacement.ruIndex` — captured ONCE at `beginDrag` — becomes
+  ///    one too, so `_commitOrNoopMoveDrag` would commit a `MoveDeviceCommand
+  ///    (fromRuIndex: <a U the device never occupied>)`;
+  ///  * `_resize.originalHeightU` becomes a baseline the rack no longer has,
+  ///    so the "24U (+3)" readout states a delta against a vanished height.
+  ///
+  /// In all three cases `revert()` would faithfully restore the fabricated
+  /// value, so the corruption SURVIVES an undo. That is the whole reason
+  /// this guard exists, and it is why it now covers all of them rather than
+  /// the compaction preview alone: the compaction case was merely the one
+  /// that got noticed first, not the only one that had it.
+  ///
+  /// Cancelling (rather than silently re-planning, or blocking undo
+  /// outright) is the honest option: a re-plan would swap different ghosts
+  /// under a user who is mid-decision and might then Apply something they
+  /// never previewed, and refusing `Ctrl+Z` would deny a documented shortcut
+  /// to protect a preview that has committed nothing and costs nothing to
+  /// re-open. Nothing is lost by cancelling — no command has run — and the
+  /// status line says so, so it is not a silent disappearance either.
+  ///
+  /// This is the same bug class as the two stale-`Timer` bugs this file has
+  /// already been bitten by (see `_onPaletteArmDrag`'s and `_armMovePreview`'s
+  /// own notes), and it gets the same treatment: an explicit guard with a
+  /// regression test, not a hope that the window is too narrow to hit.
+  void _onDocumentSequenceChanged() {
+    if (_applyingCompaction) return; // our own commit — expected.
+    if (_compaction.isActive && _doc.sequence == _compaction.documentSequence) {
+      return; // the plan was captured against exactly this document.
+    }
+    final what = _invalidateLivePreviews();
+    if (what == null) return; // nothing was live — an ordinary edit.
+    _status.show('$what cancelled — the rack changed.');
+    if (mounted) setState(() {});
+  }
+
   /// Feeds the screen's live selection/focus/rack/palette-drag state into
   /// [CaretController.recompute] (docs/04 §3.4's activation formula: the
   /// caret and an in-flight palette drag are mutually exclusive, docs/04
@@ -366,11 +588,747 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     );
   }
 
+  /// Front → Rear (docs/04 §2.2 cycles Front → Rear → Both; Both is
+  /// deferred with rear-mirroring, so this stage toggles the two faces).
+  ///
+  /// A FACE CHANGE INVALIDATES EVERY LIVE PREVIEW, and that is not a
+  /// nicety. A compaction plan is computed for ONE face (see this section's
+  /// header: "a previewed operation should act on the elevation you are
+  /// actually looking at"); `_paintCompactionGhosts` has no face filter, so
+  /// after a toggle it paints front-face ghosts on top of unrelated rear
+  /// devices, `RenderDeviceBox.fadeOpacity` dims nothing (the movers are not
+  /// rendered on this face), and Apply then relocates devices the user was
+  /// shown no preview of — the consent gate docs/04 §3.6's "never apply
+  /// silently" rests on, bypassed. The two device drags are face-bound in
+  /// the same way (`DragPreviewController.face` is fixed at arm time). The
+  /// stale-state guard above cannot help here: it fires on a `doc.sequence`
+  /// bump, and a face change is pure UI state.
+  ///
+  /// The resize preview is NOT face-bound (its hatch is computed across both
+  /// faces on purpose — see resize_preview_controller.dart's header) and is
+  /// torn down anyway, because ONE invalidation path with one rule is worth
+  /// more than an exemption that has to be re-derived every time somebody
+  /// adds a preview.
   void _cycleFace() {
-    // Front → Rear (docs/04 §2.2 cycles Front → Rear → Both; Both is
-    // deferred with rear-mirroring, so this stage toggles the two faces).
+    final what = _invalidateLivePreviews();
+    if (what != null) {
+      _status.show('$what cancelled — the elevation changed.');
+    }
     setState(() => _face = _face == Face.front ? Face.rear : Face.front);
   }
+
+  // ── THE EXCLUSIVITY RULE, IN ONE PLACE ────────────────────────────────
+  //
+  // FOUR preview-then-commit interactions coexist on this screen: the
+  // palette drag (§3.1), the move drag (§3.3), the compaction preview
+  // (§3.6) and the top-edge resize (§4.1). This file has now been bitten
+  // THREE separate times by the same failure — a second entry point
+  // re-initialising state a live interaction still owned: `_onPaletteArmDrag`
+  // being re-armed by a second pointer, its blocked-release `Timer` firing
+  // against a drag it no longer owned, and `_armMovePreview` inheriting that
+  // second bug verbatim. Three recurrences in one file is the code saying
+  // that re-asserting the rule at each entry point is too easy to get wrong.
+  //
+  // So the rule is stated ONCE, here, in two halves, and every entry point
+  // ASKS instead of remembering:
+  //
+  //  1. AT MOST ONE POINTER-DRIVEN GESTURE, arbitrated by
+  //     [_claimPointerGesture] / [_releasePointerGesture] over the single
+  //     [_liveGesture] field. A second gesture is REFUSED, never allowed to
+  //     preempt: the first pointer is still physically down and will keep
+  //     delivering events only its own live state can interpret, so
+  //     preemption would orphan that state permanently. The compaction
+  //     preview is the exception that proves the rule — it has no pointer
+  //     of its own, so a new gesture can and does take the screen from it.
+  //
+  //  2. ONE TEARDOWN, [_invalidateLivePreviews], called from the two places
+  //     where every live preview's premise stops being true at once: a
+  //     document mutation the preview did not cause
+  //     (`_onDocumentSequenceChanged`) and a face change (`_cycleFace`).
+  //
+  // BELOW this, `CanvasIntentDetector` enforces its own half structurally: a
+  // second CANVAS pointer never reaches `_onBeginDrag` at all, so half of
+  // rule 1 is a property of the routing rather than a check this screen has
+  // to keep passing. What remains here is genuinely cross-route (a palette
+  // drag is armed from a sibling widget and tracked through the global
+  // `pointerRouter`), which no single detector can see.
+  //
+  // BELT AND BRACES, deliberately kept: `EditingOverlayPainter`'s own
+  // precedence chain still exists. It is cheap, and a screen bitten three
+  // times by this class does not get to rely on one mechanism.
+
+  /// Claims the screen for [gesture]. Returns false — and starts nothing —
+  /// when another pointer-driven gesture is already live.
+  ///
+  /// A REFUSAL IS REPORTED, never silent (docs/04 §3.4's "never silently do
+  /// nothing"): the user pressed something and got nothing back, which is
+  /// exactly the case that principle exists for. There is no shake, because
+  /// nothing was ever armed for this pointer — there is no ghost or device
+  /// to shake, and shaking the OTHER gesture's would blame the wrong one.
+  bool _claimPointerGesture(_PointerGesture gesture) {
+    if (_liveGesture != null) {
+      _status.show('One drag at a time — finish the one in progress first.');
+      return false;
+    }
+    _liveGesture = gesture;
+    // The compaction preview has no pointer of its own, so it is the one
+    // interaction a new gesture may take the screen from. (§3.6's floating
+    // bar keeps its own Apply/Cancel buttons for the deliberate paths, and
+    // those live ABOVE the detector in the Stack, so clicking them never
+    // reaches a claim.)
+    _cancelCompaction();
+    return true;
+  }
+
+  /// Releases [gesture]'s claim. A no-op when [gesture] is not the one
+  /// holding it, so a refused gesture running its own teardown can never
+  /// release the claim belonging to the gesture that refused it.
+  void _releasePointerGesture(_PointerGesture gesture) {
+    if (_liveGesture == gesture) _liveGesture = null;
+  }
+
+  /// THE ONE TEARDOWN for every live preview and in-flight gesture.
+  ///
+  /// Returns a user-facing name for what it cancelled, or null when nothing
+  /// was live — a preview vanishing with no explanation would be exactly the
+  /// silent no-op §3.4 forbids, so the callers all report. At most one of
+  /// the four can be live at a time (rule 1 above), so a single name is
+  /// always enough; all four are nevertheless checked rather than
+  /// short-circuited, because a teardown is the wrong place to lean on an
+  /// invariant asserted somewhere else.
+  ///
+  /// THE PALETTE case uses `isSourceEngaged` rather than `isInProgress`: an
+  /// `armed`-but-not-yet-lifted palette drag has captured nothing from the
+  /// document at all (its snap and its verdict are recomputed every frame,
+  /// and its commit re-runs `buildPlaceFromCatalogCommand` against the live
+  /// document), so there is nothing stale about it and cancelling it would
+  /// emit a status line for an interaction the user never started.
+  ///
+  /// THE CANVAS case cannot use that test, and the difference is the whole
+  /// reason it is one branch keyed on the CLAIM instead of two keyed on the
+  /// previews. `_onBeginDrag` captures `_dragPlacement`, `_dragDeviceId` and
+  /// `_dragDeviceStartTopY` at pointer-DOWN — before the 4px threshold, and
+  /// therefore before any preview exists. A `Ctrl+Z` in that window shows
+  /// nothing to cancel, and then the very next 4px of movement arms
+  /// `_armMovePreview` from those already-stale captures and commits a
+  /// `MoveDeviceCommand` whose `fromRuIndex` the device never had. Keying on
+  /// "is a canvas gesture live" rather than "is a canvas preview visible"
+  /// closes that window.
+  ///
+  /// WHAT IT MAY NOT DO IN THAT WINDOW IS CANCEL THE CLICK, and this is where
+  /// the first version of the guard over-corrected. `_dragCancelled` makes
+  /// `_commitDragBody` return before `_handleClick`, so a press that had not
+  /// yet become a drag — an ordinary click, or one that hesitated — was
+  /// swallowed whole by any concurrent mutation: press AMP-1, `Ctrl+Z`,
+  /// release, and the device is not selected and the inspector never switches
+  /// to the rack. A silent no-op, produced by a guard whose entire purpose is
+  /// to prevent silent corruption.
+  ///
+  /// THE PRECISE RULE, therefore: a sub-threshold press has no PREVIEW to
+  /// cancel, so it is not cancelled — only its stale CAPTURE is dropped.
+  /// Clearing `_dragPlacement` disarms `_armMovePreview` (which returns early
+  /// without one) as thoroughly as the latch did, so the next 4px can no
+  /// longer arm from a placement that has become a lie, while the release
+  /// still resolves as the click it always was. `_handleClick` is safe to
+  /// leave alive because of what it reads and what it writes: `_dragDeviceId`
+  /// and `_dragStartScene`, mutating only the non-undoable `_selection` and
+  /// `_inspectorTarget`. It has no captured `fromRuIndex` to fabricate.
+  /// (`_dragDeviceId` is re-validated here too: a mutation that DELETED the
+  /// pressed device turns the press into a click on the rack background,
+  /// which is the truth, rather than a selection of a ghost id.)
+  ///
+  /// A sub-threshold RESIZE press needs nothing dropped at all — it captured
+  /// only `_dragStartScene`, and `_armResizePreview` reads `_rack.heightU`
+  /// live at arm time — so it simply carries on against the new document.
+  ///
+  /// [_dragCommitting] excludes the gesture's OWN commit: `_onCommitDrag`
+  /// runs the `MoveDeviceCommand`/`SetRackHeightCommand` while the claim is
+  /// still held (the release is what eventually calls `_resetDrag`), and
+  /// without the latch a successful drag would report itself as a concurrent
+  /// edit that invalidated it — exactly what `_applyingCompaction` already
+  /// does for the compaction preview's own Apply.
+  String? _invalidateLivePreviews() {
+    String? what;
+    if (_compaction.isActive) {
+      _compaction.cancel();
+      what ??= 'Compaction preview';
+    }
+    if (_paletteDrag.isSourceEngaged) {
+      _cancelPaletteDrag();
+      what ??= 'Placement drag';
+    }
+    if (_liveGesture == _PointerGesture.canvasDrag && !_dragCommitting) {
+      if (_dragMoved) {
+        // Past the 4px threshold: a preview really is on screen. Named BEFORE
+        // the teardown, which clears the very state the name is derived from.
+        if (_moveDrag.isSourceEngaged) what ??= 'Move';
+        if (_resize.isActive) what ??= 'Resize preview';
+        _cancelMoveDrag();
+        _cancelResizePreview();
+        // The pointer is still physically down and `CanvasIntentDetector`
+        // will keep delivering for it; the same latch `Esc` uses makes every
+        // remaining callback a no-op, so neither the release nor a later
+        // threshold crossing can resurrect the gesture from a capture that no
+        // longer describes the document.
+        _dragCancelled = true;
+      } else {
+        // Sub-threshold: nothing is armed and nothing is on screen, so there
+        // is nothing to cancel and nothing to name. Drop the one capture that
+        // has gone stale and let the press stay a click (see this method's
+        // doc for why that is the whole distinction).
+        _dragPlacement = null;
+        final pressed = _dragDeviceId;
+        if (pressed != null && !_doc.devices.containsKey(Uuid(pressed))) {
+          _dragDeviceId = null;
+        }
+      }
+    }
+    return what;
+  }
+
+  // ── compaction, preview-then-accept (docs/04 §3.6) ────────────────────
+  //
+  // "Compact Down and Compact Up ship; they never apply silently. Each opens
+  // a preview overlay — proposed positions as solid ghosts, current
+  // positions dimmed to 25%, and a floating bar 'Compact Up — 4 devices move
+  // — 3U freed [Apply] [Cancel]'. Enter applies as one undo entry, Esc
+  // cancels. Locked placements are immovable anchors."
+  //
+  // THE PLANNING IS ENTIRELY CORE (`planCompaction`, pure Dart, mutating
+  // nothing); this screen owns only the preview's lifecycle. That split is
+  // what makes preview-then-accept possible without a speculative
+  // apply-then-undo, which would have polluted the undo stack with an entry
+  // the user never asked for.
+  //
+  // AFFORDANCE, chosen and stated: the rack header's overflow menu. §3.6
+  // requires the two commands to ship while leaving `Ctrl+B` RESERVED AND
+  // UNBOUND (AC-045), so they need a non-keyboard home, and compaction is a
+  // per-rack operation — hanging it off the rack's own chrome puts it where
+  // its subject is. `Ctrl+B` is NOT bound here or anywhere.
+  //
+  // ONE FACE, deliberately: the currently displayed one. A previewed
+  // operation should act on the elevation you are actually looking at.
+  // (`planRackShrink` unions both faces, because a shrink is a physical
+  // change to the whole rack — see compaction.dart's header for the full
+  // statement of that asymmetry.)
+
+  void _beginCompaction(CompactDirection direction) {
+    // PREVIEW EXCLUSIVITY, through the ONE teardown (see the exclusivity
+    // section above) rather than three hand-listed cancels that a fourth
+    // preview would have to remember to join.
+    //
+    // THIS TEARDOWN CURRENTLY FINDS NOTHING, EVERY TIME, and that is worth
+    // writing down because the opposite is the obvious reading and has been
+    // filed as a defect once already ("a gesture torn down here vanishes with
+    // no status line"). All three things `_invalidateLivePreviews` can report
+    // are unreachable from here, for three different reasons:
+    //
+    //  * A CANVAS GESTURE. This method's only entry point is
+    //    `_onRackHeaderAction`, i.e. the header's `PopupMenuButton` — a
+    //    Navigator ROUTE. `NavigatorState._afterNavigation` calls
+    //    `_cancelActivePointers()` on every push, which dispatches a real
+    //    `PointerCancelEvent` for every pointer still down. So the two-finger
+    //    case (A mid-drag, B opening the menu) has already lost A to
+    //    `_onCancelDrag` — the deliberately silent "nothing was released, so
+    //    nothing was attempted-and-refused" path — before the menu item is
+    //    even tapped, let alone before this line runs.
+    //  * A PALETTE DRAG. Same cancel; it handles `PointerCancelEvent` on its
+    //    own `pointerRouter` route and calls `_cancelPaletteDrag` itself.
+    //  * AN OPEN COMPACTION PREVIEW. It has no pointer, so nothing cancels
+    //    it — but `RackHeaderBar.compactionEnabled` is wired to
+    //    `!_compaction.isActive`, so the two menu items that reach this
+    //    method are DISABLED for exactly as long as one is open.
+    //
+    // canvas_exclusivity_test.dart pins the first and third; the second
+    // follows the first's mechanism.
+    //
+    // THE REPORT BELOW IS THEREFORE DEFENCE, NOT A LIVE PATH, and it is kept
+    // for the reason [_dragCommitting] gives at length about its own
+    // unreachable case: every argument above is a property of OTHER code —
+    // a Flutter widget's pointer bookkeeping and one `enabled:` expression in
+    // a sibling file — not of this method. A call site that silently relies
+    // on three such coincidences is one refactor away from being the silent
+    // no-op it was accused of being, and honouring `_invalidateLivePreviews`'
+    // documented contract ("the callers all report") costs one local.
+    //
+    // The name is threaded through both exits below rather than shown here,
+    // because `_status` holds ONE line and the empty-plan branch has its own
+    // thing to say — a bare `show` here would simply be overwritten by it a
+    // few statements later.
+    final cancelled = _invalidateLivePreviews();
+
+    final plan = planCompaction(
+      rack: _rack,
+      devices: _doc.devices.values,
+      face: _face,
+      templates: _doc.templates,
+      direction: direction,
+    );
+    if (!_compaction.show(plan, documentSequence: _doc.sequence)) {
+      // §3.4's "never silently do nothing": an empty plan is a real answer
+      // ("already packed"), and the user gets told rather than watching the
+      // menu close on nothing. A torn-down gesture is prefixed rather than
+      // dropped — the preview did NOT open here, so "…— the compaction
+      // preview opened" would be a false explanation.
+      final prefix = cancelled == null ? '' : '$cancelled cancelled. ';
+      _status.show(
+        '${prefix}Nothing to compact on the ${_face.name} face of '
+        '${_rack.designator}.',
+      );
+      return;
+    }
+    if (cancelled != null) {
+      // Named by what REPLACED it, which is the one phrasing that reads
+      // correctly for every value `cancelled` can take — including
+      // 'Compaction preview', where "…— the compaction preview opened" would
+      // have been a sentence about itself.
+      final label = direction == CompactDirection.down ? 'Down' : 'Up';
+      _status.show('$cancelled cancelled — Compact $label previewed instead.');
+    }
+    // The canvas must own focus for `Enter`/`Esc` to reach this screen's
+    // own bindings — otherwise a focused palette row would claim `Enter`
+    // for its own place-this-device handler while the bar sat there
+    // apparently offering to Apply.
+    _canvasFocus.requestFocus();
+    setState(() {}); // dim the moving devices (§3.6's "25%").
+  }
+
+  /// §3.6: "Enter applies as one undo entry." Displacements only — a
+  /// compaction never changes the rack itself, so there is no height command
+  /// to order against (that ordering constraint belongs to §4.1's shrink
+  /// path, which is pass 3).
+  void _applyCompaction() {
+    final plan = _compaction.plan;
+    if (plan == null) return;
+
+    // selectionBefore for the undo entry = the live selection (docs/03
+    // §4.4); a compaction leaves the selection unchanged, so selectionAfter
+    // matches — the same convention the move-drag commit and the keyboard
+    // nudge already use.
+    _controller.selection = _selection.snapshot();
+    _applyingCompaction = true;
+    try {
+      _controller.transact(LabelKey.compactRack, (tx) {
+        for (final c in compactionCommands(
+          plan,
+          now: _controller.clock.nowUtc(),
+          actor: _controller.actor,
+        )) {
+          tx.add(c);
+        }
+      });
+    } finally {
+      // A `finally` rather than a trailing assignment: if a command throws,
+      // `transact` rolls back and rethrows, and a latch left stuck true
+      // would permanently disable the stale-plan guard for the rest of the
+      // session.
+      _applyingCompaction = false;
+    }
+
+    final freed = plan.freedU;
+    final n = plan.moves.length;
+    _compaction.cancel();
+    _status.show(
+      'Compacted ${_rack.designator}: '
+      '${n == 1 ? '1 device' : '$n devices'} moved, ${freed}U freed.',
+    );
+    setState(() {});
+  }
+
+  /// §3.6: "Esc cancels." No command, no document mutation.
+  void _cancelCompaction() {
+    if (!_compaction.isActive) return;
+    _compaction.cancel();
+    setState(() {});
+  }
+
+  // ── rack configuration (docs/04 §4) ───────────────────────────────────
+
+  /// The rack header's overflow menu (docs/04 §3.6's compaction affordance
+  /// and §4's third inspector entry point).
+  void _onRackHeaderAction(RackHeaderAction action) {
+    switch (action) {
+      case RackHeaderAction.compactDown:
+        _beginCompaction(CompactDirection.down);
+      case RackHeaderAction.compactUp:
+        _beginCompaction(CompactDirection.up);
+      case RackHeaderAction.rackSettings:
+        _showRackInspector();
+    }
+  }
+
+  /// Opens the `RackInspector` (§4's three entry points all land here).
+  void _showRackInspector({bool focusFirstField = false}) {
+    setState(() => _inspectorTarget = InspectorTarget.rack);
+    if (focusFirstField) {
+      // After the frame that actually builds the panel — the focus node has
+      // no attached widget until then.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _inspectorFirstFieldFocus.requestFocus();
+      });
+    }
+  }
+
+  /// One `SetRackPropertyCommand` per inspector edit — or nothing at all
+  /// when the value is unchanged, which `buildSetRackProperty` reports by
+  /// returning null so a no-op never pushes an empty undo entry (§3.4's
+  /// "never silently do nothing" read in the other direction: an edit that
+  /// changed nothing should not LOOK like it did).
+  void _setRackProperty<T>(RackField<T> field, T value) {
+    final command = buildSetRackProperty<T>(
+      doc: _doc,
+      rackId: _rack.id,
+      field: field,
+      to: value,
+      now: _controller.clock.nowUtc(),
+      actor: _controller.actor,
+    );
+    if (command == null) return;
+    _controller.selection = _selection.snapshot();
+    _controller.run(command);
+  }
+
+  /// Rebuilds so the inspector's Height field re-reads the rack's real
+  /// height, whatever its own buffer currently says.
+  ///
+  /// A REBUILD IS THE WHOLE MECHANISM, and that is the point.
+  /// `_InspectorTextField` already re-reads the model in `didUpdateWidget`
+  /// — the re-sync that stops an undo from leaving the panel displaying a
+  /// value the document no longer holds. What it cannot do is run when
+  /// nothing rebuilds, and TWO height paths resolve without committing
+  /// anything:
+  ///
+  ///  * §4.1's modal, CANCELLED — no command, no epoch bump, no rebuild
+  ///    anywhere. The buffer kept the rejected height, so the panel stated a
+  ///    fact the document did not hold; and since a blur commits, the next
+  ///    click anywhere re-fired `onRequestHeight` with it and re-opened the
+  ///    modal the user had just cancelled. On a loop, until they manually
+  ///    retyped the old value. Cancel has to leave zero trace.
+  ///  * CR-038's clamp — the rack lands on 60 while the field says 99, and
+  ///    the same blur loop follows.
+  ///
+  /// NO FOCUS OVERRIDE IS NEEDED, which is worth stating because it looks
+  /// like it should be: this field opens the modal, so "still focused when
+  /// the answer arrives" is the obvious worry. It cannot happen. The field's
+  /// two commit paths are `_onFocusChanged` (fires ON focus loss) and
+  /// `onSubmitted` — and `EditableText._finalizeEditing` calls
+  /// `focusNode.unfocus()` BEFORE invoking `onSubmitted`, on every platform.
+  /// So the field is always unfocused by the time this runs, and
+  /// `didUpdateWidget`'s ordinary gate lets the re-sync through. An override
+  /// was written for this and deleted again: no reachable scenario could
+  /// kill a mutation that removed it.
+  void _resyncInspectorHeight() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  /// `name` is the one rack identity field that already had a command
+  /// before this stage — reused unchanged rather than duplicated into the
+  /// `RackField` table.
+  void _renameRack(String name) {
+    if (name == _rack.name) return;
+    _controller.selection = _selection.snapshot();
+    _controller.run(
+      RenameEntityCommand(
+        targetKind: RenameTargetKind.rack,
+        id: _rack.id,
+        from: _rack.name,
+        to: name,
+        now: _controller.clock.nowUtc(),
+        actor: _controller.actor,
+      ),
+    );
+  }
+
+  /// THE ONE HEIGHT FUNNEL (docs/04 §4.1: "Three ways to set height, ALL
+  /// producing one ResizeRackCommand"). ALL FOUR entry points call this and
+  /// nothing else, which is what makes it structurally impossible for any
+  /// path to shrink past occupancy without §4.1's modal:
+  ///
+  ///  1. the header stepper's 400ms-then-8/s hold-repeat (`_stepHeight`);
+  ///  2. the inspector field, committing on blur or Enter;
+  ///  3. the drag-the-top-edge gesture's commit (`_onCommitDrag`);
+  ///  4. applying a rack preset (`_applyPreset`), whose height is not
+  ///     exempt just because it arrived with eight other fields.
+  ///
+  /// SHRINK-BELOW-OCCUPANCY OPENS THE MODAL (§4.1: "never destroy, never
+  /// silently move, always name the casualties"). Pass 2 REFUSED here and
+  /// said so on the status line, which honoured the first two clauses and as
+  /// much of the third as one line can; this pass replaces that branch with
+  /// the real conversation. Note what did NOT change: this method still
+  /// never silently clamps to `smallestFittingHeightU`. Taking a height the
+  /// user did not ask for is a decision only the user gets to make, and now
+  /// the modal is where they make it.
+  ///
+  /// Growing is always safe (§4.1: "new U appear at the top and existing
+  /// ruIndex values are untouched"), so it never reaches the modal — a grow
+  /// yields an empty `doomed` list from the planner without a special case.
+  _HeightOutcome _requestHeight(int target, {RackPreset? preset}) {
+    final clamped = target.clamp(1, kMaxRackHeightU); // CR-038
+    if (clamped == _rack.heightU) {
+      // A genuine no-op as far as the DOCUMENT is concerned — the value
+      // already IS what was asked for. Silent on purpose: §3.4's "never
+      // silently do nothing" is about REFUSING an action, and nothing was
+      // refused here. (The stepper cannot reach this at all: its buttons
+      // disable at the bounds.)
+      //
+      // NOT a no-op for the inspector, though, and this is the one outcome
+      // where that matters. Typing `99` at a rack already sitting at CR-038's
+      // 60U clamps to 60, finds 60 == 60, and runs no command — so nothing
+      // rebuilds, the buffer keeps saying `99`, and the next blur commits it
+      // again, reporting "clamped to 60U" forever. The two OTHER outcomes
+      // need no such call: an applied height bumps an epoch and rebuilds on
+      // its own, and the modal re-syncs when it resolves. Verified by
+      // mutation — a resync here is killable, one on the applied path is not.
+      _resyncInspectorHeight();
+      return _HeightOutcome.unchanged;
+    }
+
+    final plan = planRackShrink(
+      doc: _doc,
+      rackId: _rack.id,
+      toHeightU: clamped,
+    );
+
+    if (!plan.hasCasualties) {
+      _controller.selection = _selection.snapshot();
+      if (preset != null) {
+        _runPresetTransaction(preset, toHeightU: clamped, moves: const []);
+      } else {
+        _controller.run(
+          SetRackHeightCommand(
+            id: _rack.id,
+            fromHeightU: _rack.heightU,
+            toHeightU: clamped,
+            now: _controller.clock.nowUtc(),
+            actor: _controller.actor,
+          ),
+        );
+      }
+      return _HeightOutcome.applied;
+    }
+
+    // See `_shrinkDialogOpen`: one modal at a time, whatever is generating
+    // the requests.
+    if (!_shrinkDialogOpen) {
+      _shrinkDialogOpen = true;
+      unawaited(_openShrinkDialog(clamped, preset: preset));
+    }
+    return _HeightOutcome.deferredToModal;
+  }
+
+  /// docs/04 §4.1's modal, and rule 6's single undo entry.
+  ///
+  /// The dialog DECIDES (it pops a `ShrinkDecision`: a height and a list of
+  /// displacements); this method is what turns that into commands, because
+  /// running commands is the screen's job everywhere else in this file and
+  /// making the dialog an exception would put document mutation somewhere a
+  /// reader would not look for it.
+  Future<void> _openShrinkDialog(int target, {RackPreset? preset}) async {
+    try {
+      final decision = await showDialog<ShrinkDecision>(
+        context: context,
+        builder: (_) => ShrinkRackDialog(
+          doc: _doc,
+          rackId: _rack.id,
+          requestedHeightU: target,
+        ),
+      );
+      // Cancel / `Esc` / a barrier tap: no command, no mutation, and the
+      // rack keeps the height it had. The `finally` below is what makes
+      // "keeps the height it had" true on SCREEN as well as in the document
+      // — see `_resyncInspectorHeight`.
+      if (decision == null || !mounted) return;
+
+      // CR-038, as a BACKSTOP. `resolveShrink` already clamps every height
+      // it returns (shrink_rack_dialog.dart's `_withinBounds`, which is
+      // where it belongs — the tile has to SHOW the same number Apply
+      // USES). This second clamp is not redundancy for its own sake: this
+      // is the one place a popped `ShrinkDecision` becomes a command, and
+      // `SetRackHeightCommand` does not clamp while `Rack.heightU`'s setter
+      // asserts `[1, 60]`, so the conversion states the bound itself rather
+      // than trusting a value that arrived from a dialog.
+      final toHeightU = decision.toHeightU.clamp(1, kMaxRackHeightU);
+
+      _controller.selection = _selection.snapshot();
+      if (preset != null) {
+        _runPresetTransaction(
+          preset,
+          toHeightU: toHeightU,
+          moves: decision.moves,
+        );
+      } else {
+        // RULE 6, verbatim: "Apply is ONE undo entry covering the resize and
+        // every displacement." ORDER MATTERS — every displacement first, the
+        // height change LAST, so no intermediate state has an occupant
+        // standing above the rack top. `Transaction.revert` runs children in
+        // REVERSE, so undo restores the height before the positions, which
+        // is the correct unwinding of exactly that ordering.
+        _controller.transact(LabelKey.resizeRack, (tx) {
+          for (final c in shrinkDisplacementCommands(
+            decision.moves,
+            now: _controller.clock.nowUtc(),
+            actor: _controller.actor,
+          )) {
+            tx.add(c);
+          }
+          // NO PHANTOM UNDO ENTRY, the same guard `_runPresetTransaction`
+          // has always had on its own height write. Two of §4.1's options
+          // legitimately resolve to the height the rack ALREADY has —
+          // `keepSmallest` whenever the tallest occupant already reaches the
+          // rack top (or a bottom trim whose lowest occupant sits at U1),
+          // and `compactFirst` whenever the rescue is only partial. Adding
+          // the command anyway pushed a `SetRackHeightCommand(N -> N)`:
+          // `DocumentController._commit` only skips a push for an EMPTY
+          // child list, so the document went dirty and gained an undo entry
+          // whose Ctrl+Z visibly does nothing — for the one option the user
+          // chose precisely because it changes nothing. With this guard AND
+          // an empty `moves` list the transaction has no children at all, so
+          // `_commit` skips it outright; `decision.summary` still reports,
+          // so the choice is acknowledged rather than swallowed.
+          if (toHeightU != _rack.heightU) {
+            tx.add(
+              SetRackHeightCommand(
+                id: _rack.id,
+                fromHeightU: _rack.heightU,
+                toHeightU: toHeightU,
+                now: _controller.clock.nowUtc(),
+                actor: _controller.actor,
+              ),
+            );
+          }
+        });
+      }
+      _status.show(decision.summary);
+    } finally {
+      // A `finally` rather than a trailing assignment: a latch left stuck
+      // true would permanently disable every future height change on this
+      // screen.
+      _shrinkDialogOpen = false;
+      // EVERY resolution, including Cancel and including an Apply that
+      // chose a height other than the one typed. The modal is the one path
+      // where the inspector's buffer can outlive the request that came from
+      // it — see `_resyncInspectorHeight` for the full mechanism.
+      _resyncInspectorHeight();
+    }
+  }
+
+  /// docs/04 §4: applying a preset is a fan-out of writes to ordinary
+  /// `Rack` fields (a rack has no `presetRef` — see rack_presets.dart), so
+  /// it is N `SetRackPropertyCommand`s plus one `SetRackHeightCommand` in
+  /// ONE `Transaction`, giving one undo entry.
+  ///
+  /// ATOMIC OR NOTHING, and the height goes through the SAME funnel as every
+  /// other height change. Pass 2 refused a preset outright when its height
+  /// would displace occupants — applying the eight other fields and quietly
+  /// skipping the height would leave the rack claiming to be a "Wall box 6U"
+  /// at 12U, the exact partial state the one-undo-entry requirement exists to
+  /// prevent. This pass keeps the atomicity and replaces the refusal with
+  /// §4.1's modal: `_requestHeight` decides, and either outcome still lands
+  /// as ONE transaction containing the property writes AND the height.
+  ///
+  /// A CONSEQUENCE WORTH STATING: if the user resolves that modal with
+  /// "keep at the smallest that fits", the rack ends up carrying the
+  /// preset's other properties at a height the preset does not name. That is
+  /// an informed choice, not a silent partial — they were shown the
+  /// requested height, the casualties and the alternative before choosing —
+  /// and the inspector's Preset dropdown immediately reads "Custom",
+  /// because `matchingPresetId` compares heightU too. The rack never claims
+  /// to be something it is not.
+  void _applyPreset(RackPreset preset) {
+    final targetHeight = preset.heightU.clamp(1, kMaxRackHeightU); // CR-038
+    if (targetHeight != _rack.heightU) {
+      // The funnel runs the whole transaction (properties + height) on the
+      // safe path, and hands `preset` to the modal on the shrink path so the
+      // eventual Apply carries the property writes with it.
+      final outcome = _requestHeight(targetHeight, preset: preset);
+      if (outcome != _HeightOutcome.applied) return;
+      _status.show('Applied ${preset.displayName} to ${_rack.designator}.');
+      return;
+    }
+    // Same height already — nothing for the funnel to decide, so the
+    // property writes stand alone.
+    _controller.selection = _selection.snapshot();
+    _runPresetTransaction(preset, toHeightU: null, moves: const []);
+    _status.show('Applied ${preset.displayName} to ${_rack.designator}.');
+  }
+
+  /// The preset's property writes, plus any displacement and height change,
+  /// as ONE `Transaction` — one undo entry however the height was resolved.
+  ///
+  /// [toHeightU] null means "the height is already right"; [moves] is
+  /// non-empty only when §4.1's modal chose an option that displaces
+  /// occupants, and is ordered before the height change for the same reason
+  /// `_openShrinkDialog` orders its own.
+  void _runPresetTransaction(
+    RackPreset preset, {
+    required int? toHeightU,
+    required List<CompactionMove> moves,
+  }) {
+    _controller.transact(LabelKey.applyRackPreset, (tx) {
+      void set<T>(RackField<T> field, T value) {
+        final command = buildSetRackProperty<T>(
+          doc: _doc,
+          rackId: _rack.id,
+          field: field,
+          to: value,
+          now: _controller.clock.nowUtc(),
+          actor: _controller.actor,
+        );
+        if (command != null) tx.add(command);
+      }
+
+      // Deliberately NOT every field: a preset states the facts that define
+      // the archetype and never touches identity (name/designator/location)
+      // or display preferences (ruNumbering/mirrorRearElevation). Picking
+      // "Floor enclosure 27U" must not silently reset the user's RU
+      // numbering.
+      set(RackField.formFactor, preset.formFactor);
+      set(RackField.widthClass, preset.widthClass);
+      set(RackField.railType, preset.railType);
+      set(RackField.usableDepth, preset.usableDepth);
+      set(RackField.weightCapacity, preset.weightCapacity);
+      set(RackField.isSwingFrame, preset.isSwingFrame);
+      set(RackField.hingeSide, preset.hingeSide);
+
+      for (final c in shrinkDisplacementCommands(
+        moves,
+        now: _controller.clock.nowUtc(),
+        actor: _controller.actor,
+      )) {
+        tx.add(c);
+      }
+
+      if (toHeightU != null && toHeightU != _rack.heightU) {
+        tx.add(
+          SetRackHeightCommand(
+            id: _rack.id,
+            fromHeightU: _rack.heightU,
+            toHeightU: toHeightU,
+            now: _controller.clock.nowUtc(),
+            actor: _controller.actor,
+          ),
+        );
+      }
+    });
+  }
+
+  /// docs/04 §4.1's header stepper, way one. One tick of the hold-repeat.
+  ///
+  /// Returns whether the repeat may continue — false the instant a step
+  /// stops taking effect, which is what stops a held `-` from opening a
+  /// modal per tick as it ratchets down into occupied territory (see
+  /// `_shrinkDialogOpen` and `RackHeightStep`).
+  ///
+  /// EACH TICK IS AN ORDINARY `_controller.run`, and that is the whole
+  /// mechanism behind "a held stepper is ONE undo entry": `run` wraps its
+  /// single child in a `Transaction`, `Transaction.mergeKey` forwards a lone
+  /// child's key, `SetRackHeightCommand.mergeKey` is `(SetRackHeightCommand,
+  /// id)`, and `UndoStack.mergeWindow` is 400ms against a 125ms tick — so
+  /// the merge chain never lapses mid-hold. No new timing constant is
+  /// introduced here, and none is needed.
+  bool _stepHeight(int delta) =>
+      _requestHeight(_rack.heightU + delta) == _HeightOutcome.applied;
 
   // ── the command-routed editing loop ───────────────────────────────────
 
@@ -382,6 +1340,22 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   }
 
   void _onBeginDrag(DPt sceneStart, Set<PointerDeviceKind> kinds) {
+    // THE EXCLUSIVITY RULE, asked rather than restated (see that section):
+    // the claim cancels an open compaction preview — which has no pointer,
+    // so a canvas gesture may take the screen from it — and REFUSES
+    // outright while a palette drag is live, since that gesture's pointer is
+    // still down and re-initialising the per-drag fields below would orphan
+    // its preview for the rest of the session.
+    //
+    // `_dragRefused` (not an early `return` alone) because
+    // `CanvasIntentDetector` has already routed this pointer to us and will
+    // keep delivering `updateDrag`/`commitDrag` for it; there is no way to
+    // decline a gesture that detector owns.
+    _dragRefused = false;
+    if (!_claimPointerGesture(_PointerGesture.canvasDrag)) {
+      _dragRefused = true;
+      return;
+    }
     // Take canvas focus so Del/undo/redo/Esc shortcuts land here, not on a
     // device's FocusableActionDetector (or nothing).
     _canvasFocus.requestFocus();
@@ -390,8 +1364,26 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _dragStartScale = _viewport.scale;
     _dragMoved = false;
     _dragCancelled = false;
+    _resizeDrag = false;
     _dragModifierToggle = HardwareKeyboard.instance.isControlPressed ||
         HardwareKeyboard.instance.isMetaPressed;
+
+    // docs/04 §4.1's third way to change height, and it is tested BEFORE the
+    // device hit-test so a resize can never also select or move a device.
+    //
+    // THE TRADE-OFF, stated rather than discovered: a device occupying the
+    // topmost U shares its own top edge with the rack's, so the 8px band
+    // wins there and that device becomes hard to grab along that one edge.
+    // It is still grabbable across the whole rest of its body, and the rack
+    // top edge has exactly one gesture while a device has several — so the
+    // band goes to the interaction that has nowhere else to live.
+    if (_isTopEdgeGrab(sceneStart)) {
+      _resizeDrag = true;
+      _dragDeviceId = null;
+      _dragDeviceHeightU = 0;
+      _dragPlacement = null;
+      return; // skip the hit-test entirely.
+    }
 
     final scene = _rackScene?.scene;
     // Nearest-hit against the CURRENT scene (draw/hit_test.dart) — device
@@ -426,6 +1418,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   }
 
   void _onUpdateDrag(DPt sceneCurrent, DPt sceneDelta) {
+    if (_dragRefused) return; // never claimed the screen; nothing is armed.
     if (_dragCancelled) return; // Esc already reverted this drag.
     if (!_dragMoved) {
       final dx = sceneCurrent.x - _dragStartScene.x;
@@ -435,17 +1428,55 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       // docs/04 §3.3 step 1: "Grab the body; 4 px threshold." Only NOW does
       // the source device fade and the ghost appear — below the threshold
       // this is still potentially a click ("a click still means show
-      // details").
+      // details"). The resize preview arms on the SAME threshold, so a click
+      // on the rack's top edge stays a click.
       _dragMoved = true;
-      _armMovePreview();
+      if (_resizeDrag) {
+        _armResizePreview();
+      } else {
+        _armMovePreview();
+      }
+    }
+    if (_resizeDrag) {
+      _updateResizePreview(sceneCurrent);
+      return;
     }
     _updateMovePreview(sceneCurrent);
   }
 
   void _onCommitDrag(DPt sceneEnd) {
+    // See [_dragCommitting]: the commands this method runs bump the document
+    // sequence while the gesture still holds its claim, and the stale-state
+    // guard must not read a gesture's own successful commit as the edit that
+    // invalidated it. `try`/`finally` rather than a trailing assignment, for
+    // the same reason `_applyCompaction` uses one: a command that throws
+    // must not leave the latch stuck true and the guard permanently off.
+    _dragCommitting = true;
+    try {
+      _commitDragBody(sceneEnd);
+    } finally {
+      _dragCommitting = false;
+    }
+  }
+
+  void _commitDragBody(DPt sceneEnd) {
+    if (_dragRefused) {
+      // Nothing was armed for this pointer and nothing may be committed for
+      // it — in particular NOT `_handleClick`, whose `_dragDeviceId` was
+      // never populated, and not the resize teardown, which would tear down
+      // the preview belonging to the gesture that refused this one.
+      _resetDrag();
+      return;
+    }
     if (_dragCancelled) {
       // Esc already reverted; the pointer-up that finally arrives must not
-      // resurrect the move (docs/04 §3.3 step 4).
+      // resurrect the move (docs/04 §3.3 step 4) or the resize.
+      _cancelResizePreview();
+      _resetDrag();
+      return;
+    }
+    if (_resizeDrag) {
+      _commitResizeDrag(sceneEnd);
       _resetDrag();
       return;
     }
@@ -463,25 +1494,58 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   }
 
   void _onCancelDrag() {
+    if (_dragRefused) {
+      _resetDrag(); // see `_onCommitDrag`: nothing of ours to tear down.
+      return;
+    }
     // A pointer-cancel (not an Esc): tear the live preview down with no
     // command and no lingering chip — nothing was released, so nothing was
     // attempted-and-refused.
     _cancelMoveDrag();
+    _cancelResizePreview();
     _resetDrag();
   }
 
+  /// THE ONE EXIT for a canvas gesture — reached from every `commitDrag`
+  /// and `cancel` branch, which is why it is also where the exclusivity
+  /// claim is released.
   void _resetDrag() {
     _dragDeviceId = null;
     _dragDeviceHeightU = 0;
     _dragMoved = false;
     _dragCancelled = false;
+    _dragRefused = false;
     _dragPlacement = null;
+    _resizeDrag = false;
+    _releasePointerGesture(_PointerGesture.canvasDrag);
   }
 
   void _handleClick(String? deviceId) {
     if (deviceId == null) {
       _selection.clear(); // click on empty canvas clears the selection
+      // docs/04 §4's SECOND inspector entry point: "click the rack header or
+      // its EMPTY BACKGROUND". Inside the rack body but not on a device is
+      // that background; outside it is genuinely empty canvas and means
+      // "deselect", nothing more. Tested against the existing `_geo` extent
+      // rather than a new hit region — `rack_layer.dart` emits no hit
+      // regions of its own, so there is nothing else to ask.
+      final start = _dragStartScene;
+      final insideRack =
+          start.x >= 0 &&
+          start.x <= _geo.rackWidth &&
+          start.y >= 0 &&
+          start.y <= _geo.rackHeight;
+      setState(() {
+        _inspectorTarget = insideRack
+            ? InspectorTarget.rack
+            : InspectorTarget.selection;
+      });
       return;
+    }
+    // Clicking a device is what puts the inspector back on the selection —
+    // the other half of §4's "REPLACES the Selection section".
+    if (_inspectorTarget != InspectorTarget.selection) {
+      setState(() => _inspectorTarget = InspectorTarget.selection);
     }
     final id = Uuid(deviceId);
     if (_dragModifierToggle) {
@@ -493,6 +1557,173 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     } else {
       _selection.apply([id], SelectMode.replace);
     }
+  }
+
+  // ── dragging the rack's top edge (docs/04 §4.1, way three) ────────────
+  //
+  // "Dragging the rack's top edge (8 px band, snaps to whole U, a '24U (+3)'
+  // readout follows the cursor). While dragging SMALLER, any occupied U
+  // about to be removed is hatched in red IN REAL TIME, so the collision is
+  // visible before release. Growing is always safe: new U appear at the top
+  // and existing ruIndex values are untouched."
+  //
+  // ROUTED THROUGH `CanvasIntentHandler`, like the move drag and unlike the
+  // palette drag. The grab starts INSIDE the canvas subtree, so
+  // `CanvasIntentDetector` already owns the pointer and delivers the whole
+  // begin/update/commit/cancel sequence — no `pointerRouter`, no `Overlay`
+  // -based arming, and (docs/04 §3's hard constraint) no `Draggable`/
+  // `DragTarget`. Nothing here branches on `PointerDeviceKind` (AC-016 #23).
+  //
+  // NO COMMAND RUNS DURING THE DRAG. The gesture accumulates a candidate
+  // height and hands exactly one integer to `_requestHeight` at pointer-up,
+  // which is what makes §4.1's "ALL producing one ResizeRackCommand" true
+  // for this path and why dragging across occupied territory cannot open a
+  // modal per frame.
+  //
+  // GEOMETRY DURING THE DRAG IS THE ORIGINAL. The model has not changed, so
+  // `_geo` and every `DeviceLayout` are still at the pre-drag height and the
+  // doomed rects are valid as drawn. The candidate top-edge line is the one
+  // thing drawn at the NEW height, and `RackGeometry.yOfBoundary` expresses
+  // it against the current geometry without needing a second `RackGeometry`.
+
+  /// Whether [p] lands in §4.1's 8px grab band on the rack's top edge.
+  ///
+  /// The band is CENTRED on the edge (`|y| <= band`), so it is reachable
+  /// from the empty canvas above the rack as well as from inside the top U —
+  /// a user aiming at a boundary does not know which side of it they are on.
+  bool _isTopEdgeGrab(DPt p) {
+    final band = _topEdgeBandPx / _viewport.scale;
+    return p.y.abs() <= band && p.x >= 0 && p.x <= _geo.rackWidth;
+  }
+
+  void _armResizePreview() {
+    // PREVIEW EXCLUSIVITY: arming is unconditional, and now for a reason
+    // that actually covers every case. `_onBeginDrag` cannot have reached
+    // the band test at all without CLAIMING the screen, which cancels a
+    // compaction preview and refuses outright while a PALETTE drag is live;
+    // a move drag cannot coexist because the band test short-circuits the
+    // hit-test in that same method.
+    //
+    // WHAT THIS COMMENT USED TO SAY, and why it was wrong: it enumerated
+    // "compaction, and a move drag cannot coexist" and omitted the palette
+    // drag entirely. That gesture is armed from a SIBLING widget through a
+    // completely separate pointer route, so nothing in this method's
+    // reasoning applied to it and both previews genuinely ran at once — with
+    // `EditingOverlayPainter`'s resize-first precedence blanking the palette
+    // drag's ghost, snap line and blocked hatch while it was still live and
+    // still evaluating, so a release committed a placement no feedback had
+    // ever been shown for.
+    _resize.begin(_rack.heightU);
+    _insertResizeOverlay();
+  }
+
+  /// One frame of the live resize (§4.1's readout + real-time hatch).
+  void _updateResizePreview(DPt sceneCurrent) {
+    if (!_resize.isActive) return;
+    // THE GRAB OFFSET IS PRESERVED, exactly as the move drag preserves it:
+    // the top edge sits at scene y == 0, so the offset between the pointer
+    // and the edge at grab time is `_dragStartScene.y`, and the edge's
+    // candidate position is the pointer minus that. Without this, grabbing
+    // the band 7px below the edge would teleport the edge up to the pointer
+    // on the first move event.
+    final topY = sceneCurrent.y - _dragStartScene.y;
+    // ONE core inverse, not UI-side RU math — `heightForTopEdgeY` snaps to
+    // whole U and clamps to CR-038's [1, 60] (rack_geometry.dart).
+    final candidate = _geo.heightForTopEdgeY(topY);
+    _resize.update(
+      candidateHeightU: candidate,
+      cursorGlobal: _sceneToGlobal(sceneCurrent),
+      doomedRects: _doomedRectsFor(candidate),
+    );
+  }
+
+  /// The scene rects §4.1 hatches in red: every occupant, ON EITHER FACE,
+  /// whose highest U would fall outside a rack of [candidateHeightU].
+  ///
+  /// ASKED OF `planRackShrink` — THE SAME FUNCTION THE RELEASE WILL ASK, and
+  /// that identity is the entire point rather than a convenience. §4.1's
+  /// promise is that "any occupied U about to be removed is hatched in red IN
+  /// REAL TIME, so the collision is visible BEFORE release", which is only
+  /// true if the preview and the commit agree on who the occupants ARE. They
+  /// did not. This method used to run its own scan over
+  /// `railOccupantsOnFace`, and that primitive deliberately returns only
+  /// rail-placed devices whose template snapshot resolves to a positive
+  /// height on the face they claim — correct for the placement/collision
+  /// callers it was factored out of, and wrong here. `planRackShrink` was
+  /// fixed to enumerate the rest (a device with a dangling
+  /// `templates['<id>@<version>']` ref, a 0U-channel occupant — see
+  /// `DoomedKind`); this scan was not, so a drag over exactly those occupants
+  /// painted a clean unhatched preview and a `12U (-12)` chip with no warning
+  /// line, and then the release opened §4.1's modal naming a casualty the
+  /// whole gesture had insisted did not exist.
+  ///
+  /// So there is now ONE occupant enumeration for this gesture instead of
+  /// two that could drift — the same consolidation `_evaluateDrop` gives the
+  /// two device drags (one verdict function feeding both the live ghost and
+  /// the commit), and the same one core made internally when it routed
+  /// `smallestFittingHeightU`, `achievableHeightU` and `freedU` through a
+  /// single `_losslessFloor`. `planRackShrink` is a pure read whose own doc
+  /// declares it "Safe to call on every tick of a drag", and `TrimFrom.top`
+  /// is both its default and what `_requestHeight` will pass, so the plan
+  /// this frame draws is the plan that release will act on.
+  ///
+  /// Reading the DOCUMENT rather than the rendered layouts is also the only
+  /// way to see the REAR face while the front is displayed, and the only way
+  /// to see an occupant `scene_builder` declines to draw at all (see
+  /// resize_preview_controller.dart's header for why both matter).
+  List<DBox> _doomedRectsFor(int candidateHeightU) {
+    if (candidateHeightU >= _rack.heightU) return const []; // growing is safe
+    final plan = planRackShrink(
+      doc: _doc,
+      rackId: _rack.id,
+      toHeightU: candidateHeightU,
+    );
+    return [
+      for (final o in plan.doomed) _geo.deviceRect(o.ruIndex, o.deviceH),
+    ];
+  }
+
+  /// Pointer-up on a top-edge drag: hand the candidate to the ONE height
+  /// funnel and tear the preview down.
+  void _commitResizeDrag(DPt sceneEnd) {
+    if (!_dragMoved) {
+      // Never crossed the 4px threshold, so this was a CLICK on the rack's
+      // top edge. The top edge is rack chrome, so it opens the inspector —
+      // the same thing clicking the rack's empty background does (§4's
+      // second entry point), stated here rather than left to
+      // `_handleClick(null)`, whose inside-the-rack test would call a grab
+      // 2px ABOVE the edge "outside" and deselect instead.
+      _selection.clear();
+      setState(() => _inspectorTarget = InspectorTarget.rack);
+      return;
+    }
+    // Re-evaluate at the exact release point first: `CanvasIntentDetector`
+    // reports pointer-up at a position that need not equal the last move
+    // event's, and the height committed must be the one last shown.
+    _updateResizePreview(sceneEnd);
+    final candidate = _resize.candidateHeightU;
+    _cancelResizePreview();
+    _requestHeight(candidate);
+  }
+
+  /// Tears the resize preview down with no command — `Esc`, pointer-cancel,
+  /// commit, or another interaction claiming the screen.
+  void _cancelResizePreview() {
+    _removeResizeOverlay();
+    _resize.cancel();
+  }
+
+  void _insertResizeOverlay() {
+    if (_resizeOverlayEntry != null) return;
+    _resizeOverlayEntry = OverlayEntry(
+      builder: (context) => _ResizePreviewOverlay(controller: _resize),
+    );
+    Overlay.of(context, rootOverlay: true).insert(_resizeOverlayEntry!);
+  }
+
+  void _removeResizeOverlay() {
+    _resizeOverlayEntry?.remove();
+    _resizeOverlayEntry = null;
   }
 
   // ── moving a placed device, with live feedback (docs/04 §3.3) ─────────
@@ -808,10 +2039,29 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// still-down pointer's remaining `updateDrag`/`commitDrag` callbacks
   /// cannot resurrect the move (see that field's own doc comment).
   ///
-  /// A no-op when no move drag is in flight — including during a PALETTE
-  /// drag, which cancels through its own raw keyboard hook and consumes the
-  /// key before it ever reaches this binding.
+  /// A no-op when neither is in flight — including during a PALETTE drag,
+  /// which cancels through its own raw keyboard hook and consumes the key
+  /// before it ever reaches this binding.
+  ///
+  /// ALSO CANCELS AN OPEN COMPACTION PREVIEW (docs/04 §3.6: "Esc cancels").
+  /// The two cannot both be live — `_beginCompaction` tears down any
+  /// in-flight drag first — so the order below is for readability, not
+  /// arbitration.
   void _onEscape() {
+    // A live top-edge drag goes first: it is the only one of the three whose
+    // pointer may still be physically down while the OTHER two are provably
+    // not (the band test short-circuits the hit-test, and `_beginCompaction`
+    // tears down any drag). `_dragCancelled` makes every remaining callback
+    // for that still-down pointer a no-op, exactly as it does for a move.
+    if (_resize.isActive) {
+      _dragCancelled = true;
+      _cancelResizePreview();
+      return;
+    }
+    if (_compaction.isActive) {
+      _cancelCompaction();
+      return;
+    }
     if (!_moveDrag.isInProgress) return;
     _dragCancelled = true;
     _cancelMoveDrag();
@@ -1091,28 +2341,32 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
 
   /// docs/04 §3.1 step 1: "Arm — pointer down on a palette row."
   void _onPaletteArmDrag(String catalogId, PointerDownEvent event) {
-    // FIX (concurrent-arm guard): exactly one palette drag can ever be in
-    // flight — matching `CanvasIntentDetector`'s own single-`_dragPointer`
-    // convention — so a second pointer-down on any palette row while one
-    // is already armed/lifted/dragging is rejected outright rather than
-    // overwriting `_armPointer`/`_paletteDrag`'s shared state out from
-    // under the FIRST pointer's still-live `pointerRouter` route (which
-    // would then leak forever, and could misattribute later events to the
-    // wrong catalogId/evaluation — see this fix's own report). `phase !=
-    // none` alone would ALSO (correctly) still allow arming again during a
-    // blocked release's 1.2s linger, since `beginBlockedRelease` resets
-    // phase to `none` while `releaseLingering` stays true — that sequence
-    // is legitimate; `_armPointer != null` is defense in depth for the
-    // narrow window where phase and the tracked pointer could otherwise
-    // disagree.
-    if (_paletteDrag.phase != DragPreviewPhase.none || _armPointer != null) {
-      return;
-    }
-
+    // THE "CAN THIS ROW ARM AT ALL" TESTS COME FIRST, before the claim: a
+    // press on a field-device row is not a gesture, so it must not take the
+    // screen from an open compaction preview for a drag that was never going
+    // to start. (A subsequent click/double-click on that row places the
+    // device, which runs a command, which the stale-state guard turns into
+    // that same cancel — through the one path, at the moment it is true.)
     final body = _catalog[catalogId];
     if (body == null) return;
     final mountable = body.frontU > 0 || body.rearU > 0;
     if (!mountable) return; // field devices: click/double-click-only, see above.
+
+    // THE EXCLUSIVITY RULE, asked rather than restated (see that section).
+    // This subsumes the hand-written concurrent-arm guard that used to live
+    // here — `_liveGesture` is set for the whole life of a palette drag and
+    // released in `_stopTrackingPalettePointer`, the same single place
+    // `_armPointer` is cleared, so the two can never disagree. It ALSO now
+    // refuses while a CANVAS gesture (a move drag or a top-edge resize) is
+    // live, which the old guard did not: those are tracked through a
+    // different route entirely, so both previews used to run at once.
+    //
+    // Arming again during a previous drag's 1.2s blocked-release linger
+    // stays legitimate and stays allowed: `beginBlockedRelease` leaves the
+    // pointer up, so `_stopTrackingPalettePointer` has already released the
+    // claim even though `releaseLingering` is still true.
+    if (!_claimPointerGesture(_PointerGesture.paletteDrag)) return;
+
     final face = body.frontU > 0 ? Face.front : Face.rear;
     final deviceH = face == Face.front ? body.frontU : body.rearU;
 
@@ -1400,6 +2654,9 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _paletteDrag.reset();
   }
 
+  /// THE ONE EXIT for a palette gesture — pointer-up, pointer-cancel, `Esc`
+  /// and `dispose` all funnel through it, which is why it is also where the
+  /// exclusivity claim is released (the sibling of `_resetDrag`'s own).
   void _stopTrackingPalettePointer() {
     final pointer = _armPointer;
     if (pointer != null) {
@@ -1409,6 +2666,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       );
       _armPointer = null;
     }
+    _releasePointerGesture(_PointerGesture.paletteDrag);
   }
 
   void _insertPaletteDragOverlay() {
@@ -1551,8 +2809,23 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
         //
         // Harmless when no drag is in flight: `_onEscape` finds nothing to
         // cancel and does nothing. It is NOT a general deselect key (see
-        // docs/m1-implementation-log.md §3.2's known gap).
+        // docs/m1-implementation-log.md §3.2's known gap). Since this
+        // stage it ALSO cancels an open compaction preview (§3.6).
         SingleActivator(LogicalKeyboardKey.escape): _CancelDragIntent(),
+        // docs/04 §4 / §8's keymap: `Ctrl+Alt+U` opens the RackInspector —
+        // the third of the section's three entry points.
+        SingleActivator(LogicalKeyboardKey.keyU, control: true, alt: true):
+            _RackSettingsIntent(),
+        // docs/04 §3.6: "Enter applies as one undo entry." Bound BARE, and
+        // therefore inside the same subtree as the palette search box and
+        // the focusable palette rows — see `_ApplyCompactionAction` for why
+        // that is safe (a real `Action` whose `isActionEnabled` is false
+        // when no preview is open, so the key falls through unhandled).
+        //
+        // `Ctrl+B` is deliberately ABSENT: §3.6/AC-045 keep it RESERVED AND
+        // UNBOUND in v1. Compact Up/Down are reachable from the rack
+        // header's overflow menu instead.
+        SingleActivator(LogicalKeyboardKey.enter): _ApplyCompactionIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -1622,6 +2895,17 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
               return null;
             },
           ),
+          _RackSettingsIntent: CallbackAction<_RackSettingsIntent>(
+            onInvoke: (_) {
+              _showRackInspector(focusFirstField: true);
+              return null;
+            },
+          ),
+          // NOT a `CallbackAction`. See the class's own doc comment: a
+          // CallbackAction returning null still reports the key as HANDLED,
+          // which would swallow every `Enter` in the palette search box and
+          // on every focusable palette row.
+          _ApplyCompactionIntent: _ApplyCompactionAction(this),
         },
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1649,6 +2933,29 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                   palette,
                   rackScene,
                 ),
+              ),
+            ),
+            const VerticalDivider(width: 1),
+            // docs/04 §1's 320px inspector column — the FOURTH column, added
+            // this stage. §4's `RackInspector` and the minimal selection
+            // summary share it; see inspector_panel.dart's header for how
+            // "the RackInspector REPLACES the Selection section" is honoured
+            // given there was no Selection section to replace.
+            SizedBox(
+              width: 320,
+              child: InspectorPanel(
+                target: _inspectorTarget,
+                rack: _rack,
+                doc: _doc,
+                presets: _presets,
+                selectedIds: _selection.ids.toSet(),
+                focusedId: _selection.focus,
+                onSetProperty: _setRackProperty,
+                onRename: _renameRack,
+                onRequestHeight: _requestHeight,
+                onApplyPreset: _applyPreset,
+                onRefuse: _status.show,
+                firstFieldFocus: _inspectorFirstFieldFocus,
               ),
             ),
           ],
@@ -1709,12 +3016,28 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                                 semanticLabel: d.semanticLabel,
                                 palette: palette,
                                 selected: _selection.contains(d.deviceId),
-                                // docs/04 §3.3 step 1: the device being
-                                // move-dragged fades to 30% IN PLACE,
-                                // "showing the vacated U", while its
-                                // full-opacity ghost follows the cursor.
-                                dragSource:
-                                    _lastMoveDragSourceId == d.deviceId.v,
+                                // Two in-place fades, one knob (see
+                                // `RenderDeviceBox.fadeOpacity`):
+                                //  * §3.3 step 1 — the device being
+                                //    move-dragged drops to 30 %, "showing
+                                //    the vacated U", while its full-opacity
+                                //    ghost follows the cursor;
+                                //  * §3.6 — while a compaction preview is
+                                //    open, every device it proposes to move
+                                //    dims to 25 % at its CURRENT position,
+                                //    with the solid ghost at the proposed
+                                //    one.
+                                // Mutually exclusive by the screen's
+                                // preview-exclusivity invariant (opening
+                                // either cancels the other), so the order
+                                // below is readability, not arbitration.
+                                fadeOpacity:
+                                    _lastMoveDragSourceId == d.deviceId.v
+                                    ? RenderDeviceBox.dragSourceOpacity
+                                    : (_compaction.moves(d.deviceId.v)
+                                          ? RenderDeviceBox
+                                                .compactionSourceOpacity
+                                          : null),
                                 shake: _shake,
                               ),
                             ),
@@ -1740,6 +3063,8 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                             caret: _caret,
                             geo: _geo,
                             dragPreviews: [_paletteDrag, _moveDrag],
+                            compaction: _compaction,
+                            resize: _resize,
                             shake: _shake,
                             style: EditingOverlayStyle(
                               caretColor: scheme.tertiary,
@@ -1777,6 +3102,47 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                 right: 12,
                 top: 12,
                 child: _FaceToggle(face: _face, onToggle: _cycleFace),
+              ),
+              // docs/04 §4's rack header — screen-space chrome, a sibling of
+              // the zoom HUD rather than part of the scene (see
+              // rack_header_bar.dart's header for why). Centred at the top,
+              // between the zoom HUD on the left and the face toggle on the
+              // right.
+              Positioned(
+                top: 12,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: RackHeaderBar(
+                    designator: _rack.designator,
+                    name: _rack.name,
+                    heightU: _rack.heightU,
+                    onHeaderTap: _showRackInspector,
+                    compactionEnabled: !_compaction.isActive,
+                    onAction: _onRackHeaderAction,
+                    // docs/04 §4.1's first way to change height. Returns
+                    // whether the hold-repeat may continue — see
+                    // `_stepHeight`.
+                    onStep: _stepHeight,
+                  ),
+                ),
+              ),
+              // docs/04 §3.6's floating Apply/Cancel bar. Renders nothing
+              // when no preview is open, so it can live here permanently.
+              // Above the `CanvasIntentDetector` in the Stack, so clicking
+              // its buttons never also begins a canvas gesture (which would
+              // cancel the very preview being applied — see `_onBeginDrag`).
+              Positioned(
+                bottom: 56,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: CompactionPreviewBar(
+                    controller: _compaction,
+                    onApply: _applyCompaction,
+                    onCancel: _cancelCompaction,
+                  ),
+                ),
               ),
               Positioned(
                 left: 12,
@@ -1842,6 +3208,44 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   }
 }
 
+/// The pointer-driven gestures this screen arbitrates between (see
+/// `_RackCanvasScreenState`'s "the exclusivity rule, in one place").
+///
+/// TWO VALUES, NOT FOUR, and the grouping is the point. The move drag and the
+/// top-edge resize are ONE value because they are the same pointer arriving
+/// through the same `CanvasIntentDetector` route — `_onBeginDrag` decides
+/// which of the two it is AFTER claiming, and only one of them can exist per
+/// gesture. The compaction preview is not here at all: it has no pointer, so
+/// it can never be the thing a new gesture would collide with, only the thing
+/// a new gesture takes the screen from.
+enum _PointerGesture {
+  /// docs/04 §3.1 — armed on a palette row, tracked through the global
+  /// `pointerRouter`.
+  paletteDrag,
+
+  /// docs/04 §3.3 (move) or §4.1 (top-edge resize) — grabbed inside the
+  /// canvas, delivered by `CanvasIntentDetector`.
+  canvasDrag,
+}
+
+/// What `_requestHeight` did with a request (docs/04 §4.1).
+///
+/// A three-valued answer rather than a bool, because the header stepper's
+/// hold-repeat needs to tell "the height moved, keep going" from BOTH "there
+/// was nothing to do" and "a modal is now on screen waiting for the user" —
+/// and the last of those must stop the repeat dead (see `_shrinkDialogOpen`).
+enum _HeightOutcome {
+  /// A `SetRackHeightCommand` ran (possibly inside a preset transaction).
+  applied,
+
+  /// The rack was already at that height. Nothing ran, nothing was refused.
+  unchanged,
+
+  /// The shrink would strand an occupant, so §4.1's modal is open (or was
+  /// already open). Nothing has been committed yet, and may never be.
+  deferredToModal,
+}
+
 // ── keyboard intents + the pointer-agnostic editing handler ────────────────
 
 /// Delete the current selection (`Del` / `Backspace`).
@@ -1897,9 +3301,49 @@ class _PageDownIntent extends Intent {
   const _PageDownIntent();
 }
 
-/// Revert an in-flight move drag (`Esc`, docs/04 §3.3 step 4).
+/// Revert an in-flight move drag, or cancel an open compaction preview
+/// (`Esc`, docs/04 §3.3 step 4 and §3.6).
 class _CancelDragIntent extends Intent {
   const _CancelDragIntent();
+}
+
+/// Open the `RackInspector` (`Ctrl+Alt+U`, docs/04 §4 and §8's keymap).
+class _RackSettingsIntent extends Intent {
+  const _RackSettingsIntent();
+}
+
+/// Apply an open compaction preview (`Enter`, docs/04 §3.6).
+class _ApplyCompactionIntent extends Intent {
+  const _ApplyCompactionIntent();
+}
+
+/// `Enter` -> apply the compaction preview, IF one is open.
+///
+/// A REAL `Action` SUBCLASS, NOT A `CallbackAction`, and the difference is
+/// the whole point. `Enter` is bound BARE at the screen level, inside the
+/// same `Shortcuts` subtree as the palette search box (whose `onSubmitted`
+/// is docs/04 §3.2's headline "type, press Enter" placement flow) and every
+/// focusable palette row (whose own `Enter` handler places the focused
+/// template). A `CallbackAction` that merely returned null when no preview
+/// was open would still report the key as HANDLED — `ShortcutManager`
+/// consults `isActionEnabled`, not the return value — and would therefore
+/// swallow every `Enter` in the palette for the entire session.
+///
+/// Overriding [isActionEnabled] makes `ShortcutManager.handleKeypress`
+/// return `KeyEventResult.ignored` instead, so the key falls through to
+/// whatever else wants it. In practice the palette's own handlers sit BELOW
+/// this in the focus chain and claim `Enter` first anyway; this guarantees
+/// the fallback even when they do not (e.g. focus on the canvas itself).
+class _ApplyCompactionAction extends Action<_ApplyCompactionIntent> {
+  _ApplyCompactionAction(this._state);
+
+  final _RackCanvasScreenState _state;
+
+  @override
+  bool get isActionEnabled => _state._compaction.isActive;
+
+  @override
+  void invoke(_ApplyCompactionIntent intent) => _state._applyCompaction();
 }
 
 /// Routes the pointer-agnostic `CanvasIntent` sequence into the screen's
@@ -1987,6 +3431,31 @@ RackDocument _buildDemoDocument(Map<String, TemplateBody> catalog) {
     modifiedAt: now,
     meta: meta(),
   );
+
+  // Three demo Locations (docs/04 §4's Location dropdown, CR-047's
+  // arbitrary-depth tree). DEMO DATA ONLY — no model or codec change: the
+  // `Location` entity, `doc.locations` and full codec round-trip all
+  // predate this stage; only INSTANCES were missing, which left the
+  // dropdown permanently showing one empty option and made it untestable.
+  // The project Locations panel (CR-112) and the "+ New…" creation flow
+  // remain out of scope, so these are seeded rather than creatable.
+  for (final (id, kind, name, code, order) in <
+      (String, LocationKind, String, String, String)
+  >[
+    ('loc-house', LocationKind.building, 'Main House', 'MH', 'a0'),
+    ('loc-closet', LocationKind.room, 'Media Closet', 'MC', 'a1'),
+    ('loc-living', LocationKind.room, 'Living Room', 'LR', 'a2'),
+  ]) {
+    doc.locations[Uuid(id)] = Location(
+      id: Uuid(id),
+      kind: kind,
+      name: name,
+      code: code,
+      order: FracIndex(order),
+      meta: meta(),
+      parentId: id == 'loc-house' ? null : const Uuid('loc-house'),
+    );
+  }
 
   doc.racks[const Uuid('demo-rack')] = Rack(
     id: const Uuid('demo-rack'),
@@ -2349,6 +3818,91 @@ class _RuRangeChip extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// docs/04 §4.1's resize readout: "a '24U (+3)' readout follows the cursor".
+///
+/// A sibling of [_RuRangeChip] in every respect — screen-space floating text
+/// positioned from a tracked GLOBAL pointer position, hence an `OverlayEntry`
+/// rather than the scene-space `EditingOverlayPainter` (which owns the red
+/// hatch and the candidate top-edge line instead). The split is the same one
+/// the drag chrome already follows.
+///
+/// The SECOND line is not in the spec and is here for a reason stated in
+/// resize_preview_controller.dart: the red hatch cannot distinguish a device
+/// you can see from one on the face you cannot, so when a shrink is about to
+/// strand occupants the chip says how many. Without it, hatching a rear-face
+/// device's U on a front elevation would paint red across apparently empty
+/// rack with no explanation.
+class _ResizePreviewOverlay extends StatelessWidget {
+  const _ResizePreviewOverlay({required this.controller});
+
+  final ResizePreviewController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, _) {
+          if (!controller.isActive) return const SizedBox.shrink();
+          final cursor = controller.cursorGlobal;
+          if (cursor == null) return const SizedBox.shrink();
+          final doomed = controller.doomedCount;
+          // The same valid/blocked colour language the drag ghost uses, so
+          // "this is going to cost you" reads identically across gestures.
+          final blocked = doomed > 0;
+          return Stack(
+            children: [
+              Positioned(
+                left: cursor.dx + 16,
+                top: cursor.dy + 16,
+                child: Material(
+                  elevation: 3,
+                  borderRadius: BorderRadius.circular(4),
+                  color: blocked
+                      ? scheme.errorContainer
+                      : scheme.tertiaryContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          controller.readout,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: blocked
+                                ? scheme.onErrorContainer
+                                : scheme.onTertiaryContainer,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (blocked)
+                          Text(
+                            doomed == 1
+                                ? '1 device would lose its U'
+                                : '$doomed devices would lose their U',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: scheme.onErrorContainer,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

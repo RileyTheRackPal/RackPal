@@ -16,16 +16,21 @@
 /// list (docs/03-architecture.md §7–8, docs/08-pdf-export.md §7, CR-086).
 library;
 
+export 'src/catalog/rack_presets.dart';
 export 'src/catalog/seed_catalog.dart';
 export 'src/commands/catalog_placement.dart';
 export 'src/commands/clock.dart';
 export 'src/commands/command.dart';
+export 'src/commands/compaction.dart';
 export 'src/commands/device_commands.dart';
 export 'src/commands/label_key.dart';
 export 'src/commands/link_commands.dart';
+export 'src/commands/link_count.dart';
+export 'src/commands/rack_shrink.dart';
 export 'src/commands/rename_entity_command.dart';
 export 'src/commands/selection.dart';
 export 'src/commands/set_rack_height_command.dart';
+export 'src/commands/set_rack_property_command.dart';
 export 'src/commands/simple_notifier.dart';
 export 'src/commands/transaction.dart';
 export 'src/commands/undo_stack.dart';

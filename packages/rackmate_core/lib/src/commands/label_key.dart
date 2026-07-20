@@ -11,4 +11,15 @@ enum LabelKey {
   removeLink,
   renameEntity,
   setRackHeight,
+
+  // M1 §4 rack configuration. `setRackHeight` above is deliberately NOT
+  // renamed to docs/04 §4.1's "ResizeRackCommand" spelling — the existing
+  // command and its merge behaviour predate that section and work as-is;
+  // `resizeRack` below is the TRANSACTION label for a resize that also
+  // carries displacements (§4.1 rule 6), which is a different thing from
+  // the bare height write.
+  setRackProperty,
+  compactRack,
+  resizeRack,
+  applyRackPreset,
 }

@@ -39,15 +39,45 @@ void main() {
 
     // Files outside src/model/ and src/commands/ that a setter call must
     // not appear in.
-    final otherFiles = Directory('lib')
-        .listSync(recursive: true)
+    //
+    // SCANS rackmate_ui TOO. Until the rack-configuration stage the UI had
+    // no reason to touch a `Rack` setter, and this test only ever looked
+    // at rackmate_core/lib — so `@internal` plus the analyzer was the ONLY
+    // thing standing between the inspector and a dozen direct field
+    // writes that would bypass the command system entirely. A whole panel
+    // of editable fields is exactly the wrong place to rely on a lint
+    // nobody has to look at.
+    //
+    // The sibling path is resolved relative to this package's CWD and
+    // guarded, so the test degrades to core-only rather than failing if
+    // the workspace layout ever moves. That is a real trade-off: it will
+    // stop protecting anything silently. Worth revisiting if the packages
+    // are ever rearranged.
+    final scanRoots = <Directory>[
+      Directory('lib'),
+      Directory('../rackmate_ui/lib'),
+    ].where((d) => d.existsSync()).toList();
+
+    expect(
+      scanRoots.length,
+      2,
+      reason:
+          'expected to scan both rackmate_core/lib and '
+          '../rackmate_ui/lib; found ${scanRoots.map((d) => d.path)}. If '
+          'the workspace layout changed, update this path — otherwise the '
+          'UI package silently stops being checked.',
+    );
+
+    final otherFiles = scanRoots
+        .expand((d) => d.listSync(recursive: true))
         .whereType<File>()
         .where((f) => f.path.endsWith('.dart'))
         .where((f) {
           final p = f.path.replaceAll(r'\', '/');
           return !p.contains('/src/model/') &&
               !p.contains('/src/commands/');
-        });
+        })
+        .toList();
 
     for (final name in setterNames) {
       // Matches `.<name> =` but not `==`, `!=`, `=>`, or compound
@@ -80,6 +110,22 @@ void main() {
             '?',
           };
           if (compoundOps.contains(precedingChar)) continue;
+          // `this.<name> = ...` is an INITIALIZING FORMAL with a default
+          // value in a constructor parameter list, not a setter call —
+          // e.g. `RackPreset({this.isSwingFrame = false})`. The grep
+          // matches by setter NAME across every model type, so any value
+          // class anywhere in the package that happens to share a field
+          // name with an @internal setter would otherwise trip it.
+          //
+          // Safe to skip wholesale in THIS workspace: `unnecessary_this`
+          // is enabled by very_good_analysis 9.0.0 (analysis_options
+          // line 194), so an explicit `this.x = v` in a method body is a
+          // lint failure and cannot exist here. Were that lint ever
+          // disabled, this exclusion would start hiding real call sites.
+          if (contents.startsWith('this', m.start - 4 < 0 ? 0 : m.start - 4)
+              && m.start >= 4) {
+            continue;
+          }
           fail(
             'possible external call to @internal setter "$name" in '
             '${f.path}: ${m.group(0)}',

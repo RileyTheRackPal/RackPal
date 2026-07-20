@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/widgets.dart' show Size;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
 import 'package:rackmate/main.dart';
@@ -18,6 +19,28 @@ void main() {
     measurer = PdfFontMeasurer.fromBytes(PdfDocument(), {
       const FontRef('Jost'): bytes,
     });
+  });
+
+  // A REALISTIC WINDOW, required as of the rack-configuration stage: the
+  // screen now lays out docs/04 §1's four columns (palette 280 | canvas |
+  // inspector 320), so on the default 800x600 test surface the canvas is
+  // ~198 logical pixels wide and its floating chrome — the zoom HUD, the new
+  // rack header, the Front/Rear toggle — overlap each other. §1 treats
+  // anything under 1080px as the (unbuilt) tablet-collapse case, so this
+  // states the supported size rather than relying on a default that happened
+  // to work while there were only two columns.
+  setUp(() {
+    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
+        .implicitView!
+      ..physicalSize = const Size(1600, 1000)
+      ..devicePixelRatio = 1;
+  });
+
+  tearDown(() {
+    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
+        .implicitView!
+      ..resetPhysicalSize()
+      ..resetDevicePixelRatio();
   });
 
   testWidgets('RackMateApp renders the rack canvas with a zoom readout', (

@@ -70,8 +70,86 @@ enum _StepKind {
   renameDevice,
   renameRack,
   setRackHeight,
+  setRackProperty,
   addLink,
   removeLink,
+}
+
+/// Builds a `SetRackPropertyCommand` for a randomly chosen field, with a
+/// randomly chosen NEW value of that field's own type.
+///
+/// Deliberately covers all five value shapes the table carries — String,
+/// bool, enum, `Len?` and `Mass?` — because the byte property is most
+/// fragile exactly where nullability meets CR-117's absent-key-not-null
+/// rule: `usableDepth`/`weightCapacity` encode as an ABSENT key when null,
+/// so a revert that restored `Len(0)` instead of `null` would produce a
+/// semantically-equal document with different bytes, and only this test
+/// would catch it.
+Command _buildSetRackProperty(_SequenceState s, Random rnd) {
+  final rack = s.doc.racks[_rackId]!;
+  final now = s.nextNow();
+  const actor = 'gen';
+
+  T pick<T>(List<T> options, T current) {
+    final others = options.where((o) => o != current).toList();
+    return others.isEmpty
+        ? current
+        : others[rnd.nextInt(others.length)];
+  }
+
+  SetRackPropertyCommand<T> make<T>(RackField<T> field, T to) =>
+      SetRackPropertyCommand<T>(
+        id: _rackId,
+        field: field,
+        from: field.get(rack),
+        to: to,
+        now: now,
+        actor: actor,
+      );
+
+  switch (rnd.nextInt(8)) {
+    case 0:
+      return make(
+        RackField.designator,
+        'RK-${rnd.nextInt(1000)}',
+      );
+    case 1:
+      return make(
+        RackField.locationId,
+        rnd.nextBool() ? Uuid('loc-${rnd.nextInt(5)}') : null,
+      );
+    case 2:
+      return make(
+        RackField.ruNumbering,
+        pick(RuNumbering.values, rack.ruNumbering),
+      );
+    case 3:
+      return make(RackField.mirrorRearElevation, !rack.mirrorRearElevation);
+    case 4:
+      return make(
+        RackField.widthClass,
+        pick(RackWidthClass.values, rack.widthClass),
+      );
+    case 5:
+      // Nullable Len — the absent-key case.
+      return make(
+        RackField.usableDepth,
+        rnd.nextBool() ? Len(1000000 * (1 + rnd.nextInt(900))) : null,
+      );
+    case 6:
+      // Nullable Mass — the other absent-key case.
+      return make(
+        RackField.weightCapacity,
+        rnd.nextBool() ? Mass(1000000000 * (1 + rnd.nextInt(900))) : null,
+      );
+    default:
+      // The conditional-key case: `hingeSide` is written with a bare
+      // `if (r.hingeSide != null)` rather than `putIfNotNull`.
+      return make(
+        RackField.hingeSide,
+        rnd.nextBool() ? pick(HingeSide.values, rack.hingeSide) : null,
+      );
+  }
 }
 
 /// One generated sequence's mutable bookkeeping: which ids currently
@@ -100,6 +178,7 @@ final class _SequenceState {
     if (aliveDeviceIds.isNotEmpty) _StepKind.renameDevice,
     _StepKind.renameRack,
     _StepKind.setRackHeight,
+    _StepKind.setRackProperty,
     _StepKind.addLink,
     if (aliveLinkIds.isNotEmpty) _StepKind.removeLink,
   ];
@@ -169,6 +248,9 @@ Command _buildCommand(_StepKind kind, _SequenceState s, Random rnd, int step) {
         actor: 'gen',
       );
 
+    case _StepKind.setRackProperty:
+      return _buildSetRackProperty(s, rnd);
+
     case _StepKind.addLink:
       return AddLinkCommand(
         designator: 'W${step.toString().padLeft(3, '0')}',
@@ -206,6 +288,7 @@ void _reconcileTrackingAfterCommit(
     case _StepKind.renameDevice:
     case _StepKind.renameRack:
     case _StepKind.setRackHeight:
+    case _StepKind.setRackProperty:
     // Mutate entities already tracked; no alive-id bookkeeping needed.
   }
 }

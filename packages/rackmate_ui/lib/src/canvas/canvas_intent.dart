@@ -31,7 +31,10 @@ abstract interface class CanvasIntentHandler {
   void updateDrag(DPt sceneCurrent, DPt sceneDelta);
 
   /// The drag ended at [sceneEnd]. Exactly one of [commitDrag]/[cancel] fires
-  /// per [beginDrag].
+  /// per [beginDrag], and a second [beginDrag] never arrives before one of
+  /// them has — see [CanvasIntentDetector]'s own single-gesture guarantee,
+  /// which is what makes a handler's per-drag state safe to (re)initialise
+  /// in [beginDrag] without a concurrency check of its own.
   void commitDrag(DPt sceneEnd);
 
   /// The drag was aborted (pointer cancelled, e.g. Esc/app switch upstream).
@@ -56,6 +59,52 @@ abstract interface class CanvasIntentHandler {
 /// Distinguishing signal-vs-gesture *channels* is allowed (it is about which
 /// physical channel carries pan/zoom, not about editing semantics); branching
 /// on device *kind* is not.
+///
+/// ONE ROUTED DRAG AT A TIME, and this is the class that guarantees it. A
+/// second primary pointer going down while a drag is already routed gets no
+/// [CanvasIntentHandler.beginDrag], so the handler sees a strict
+/// `begin -> update* -> (commit|cancel)` sequence per gesture and never a
+/// second `beginDrag` interleaved into a live one. Without that guard, a
+/// second contact silently re-pointed `_dragPointer` at itself: the handler's
+/// per-drag state was re-initialised out from under the FIRST pointer's still
+/// live preview (orphaning it permanently, since that pointer's up/cancel then
+/// matched nothing and neither [CanvasIntentHandler.commitDrag] nor
+/// [CanvasIntentHandler.cancel] ever fired for it), which also broke this
+/// interface's own "exactly one of commitDrag/cancel per beginDrag" contract.
+/// Enforcing it HERE rather than in each handler is deliberate: it is a
+/// property of the routing, every handler needs it, and re-asserting it per
+/// handler is exactly the thing this codebase has already got wrong three
+/// times (see `rack_canvas_screen.dart`'s own exclusivity section).
+///
+/// DEFERRED, NOT DISCARDED — and the difference is the whole reason the state
+/// below keeps a `_deferred` map rather than a bare `return`. The
+/// justification above holds only WHILE the first gesture's handler state is
+/// live; it expires the
+/// instant that gesture ends. A second contact that was merely dropped stayed
+/// dropped forever, because `_dragPointer` was only ever assigned on
+/// pointer-DOWN and that pointer's down was already spent: finger A scrubs,
+/// finger B lands on a device, A lifts and frees the route, and B — still
+/// physically on the glass — then drags and releases into a DEAD ZONE, its
+/// events matching neither `_dragPointer` nor `_panPointer`. No begin, no
+/// move, no click: the silent no-op docs/04 §3.4 forbids, produced by the
+/// very guard that was meant to make gestures honest.
+///
+/// So a refused pointer is REMEMBERED, with its latest position and kind, and
+/// every one of its subsequent events is explicitly consumed (its moves
+/// update that remembered position; its up/cancel simply forget it, with no
+/// handler call — it never got a `beginDrag`, so it is owed neither a
+/// `commitDrag` nor a `cancel`). When the routed gesture ends while a
+/// deferred pointer is still down, that pointer is ADOPTED: it receives a
+/// `beginDrag` at where the finger actually is now, and from there it is an
+/// ordinary routed gesture with the full begin/update*/commit|cancel
+/// sequence. The exclusivity invariant is untouched — there is never more
+/// than one routed pointer, and the adoption happens strictly AFTER the
+/// previous gesture's `commitDrag`/`cancel` has returned — while a second
+/// finger stops being a black hole.
+///
+/// Adoption is FIFO across multiple deferred pointers (three-finger contact
+/// is the only way to get there), so which one inherits the route is a
+/// property of the code rather than of `Map` iteration luck.
 class CanvasIntentDetector extends StatefulWidget {
   const CanvasIntentDetector({
     required this.viewport,
@@ -83,6 +132,14 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
   int? _dragPointer;
   DPt? _lastDragScene;
 
+  /// Pointers that went down while [_dragPointer] was already routed, keyed
+  /// by pointer id and carrying the LATEST local position each has reported
+  /// (so an adoption starts from where the finger is, not from where it
+  /// landed several move events ago). Insertion-ordered, which is what makes
+  /// [_adoptDeferredPointer] FIFO. See the class doc's deferral rule.
+  final Map<int, ({Offset position, PointerDeviceKind kind})> _deferred =
+      <int, ({Offset position, PointerDeviceKind kind})>{};
+
   // A drag being consumed as a pan (middle button, or primary with no handler).
   int? _panPointer;
 
@@ -106,13 +163,35 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
     }
     final handler = widget.handler;
     if (handler != null) {
-      _dragPointer = event.pointer;
-      final scene = _toScene(event.localPosition);
-      _lastDragScene = scene;
-      handler.beginDrag(scene, {event.kind});
+      // THE SINGLE-GESTURE GUARD (see the class doc). A second contact while
+      // a drag is already routed gets no `beginDrag` — it must not steal the
+      // route from a gesture whose handler state is still live — but it is
+      // REMEMBERED rather than dropped, so its own later events are consumed
+      // deliberately below and it can inherit the route once the current
+      // gesture ends.
+      if (_dragPointer != null) {
+        _deferred[event.pointer] = (
+          position: event.localPosition,
+          kind: event.kind,
+        );
+        return;
+      }
+      _beginDragFor(event.pointer, event.localPosition, event.kind);
     } else {
       _panPointer = event.pointer;
     }
+  }
+
+  /// Routes [pointer] to the handler and opens its gesture. The ONE place
+  /// `_dragPointer` is assigned and `beginDrag` is called, so a first contact
+  /// and an adopted deferred one are the same code path by construction.
+  void _beginDragFor(int pointer, Offset local, PointerDeviceKind kind) {
+    final handler = widget.handler;
+    if (handler == null) return;
+    _dragPointer = pointer;
+    final scene = _toScene(local);
+    _lastDragScene = scene;
+    handler.beginDrag(scene, {kind});
   }
 
   void _onPointerMove(PointerMoveEvent event) {
@@ -123,6 +202,14 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
       _lastDragScene = scene;
     } else if (event.pointer == _panPointer) {
       _vp.panBy(event.delta);
+    } else if (_deferred.containsKey(event.pointer)) {
+      // Deferred: no handler call — it has had no `beginDrag`, so it may not
+      // have an `updateDrag` — but its position is tracked so an adoption
+      // begins where the finger IS, not where it first landed.
+      _deferred[event.pointer] = (
+        position: event.localPosition,
+        kind: event.kind,
+      );
     }
   }
 
@@ -132,6 +219,12 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
       _endDrag();
     } else if (event.pointer == _panPointer) {
       _panPointer = null;
+    } else {
+      // A deferred pointer lifting before it was ever adopted: forget it, and
+      // call NOTHING. It never received a `beginDrag`, so it is owed neither
+      // a `commitDrag` nor a `cancel` — the interface's contract is "exactly
+      // one of them PER beginDrag", not "one per pointer".
+      _deferred.remove(event.pointer);
     }
   }
 
@@ -141,12 +234,32 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
       _endDrag();
     } else if (event.pointer == _panPointer) {
       _panPointer = null;
+    } else {
+      _deferred.remove(event.pointer); // see `_onPointerUp`.
     }
   }
 
   void _endDrag() {
     _dragPointer = null;
     _lastDragScene = null;
+    _adoptDeferredPointer();
+  }
+
+  /// The route just fell free. If a pointer is still physically down having
+  /// been refused earlier, hand it the route now (class doc's deferral rule).
+  ///
+  /// Deliberately called from [_endDrag] — i.e. from BOTH the commit and the
+  /// cancel path, and in both cases strictly after the previous gesture's
+  /// terminal callback has returned, so the handler has already run its own
+  /// teardown and is ready to be (re)initialised by `beginDrag`. A handler
+  /// that still cannot accept the gesture (this screen's palette drag holds a
+  /// claim through a different pointer route entirely) refuses it on its own
+  /// terms and says so; that is its call to make, not the detector's.
+  void _adoptDeferredPointer() {
+    if (_deferred.isEmpty) return;
+    final pointer = _deferred.keys.first; // FIFO — see the class doc.
+    final deferred = _deferred.remove(pointer)!;
+    _beginDragFor(pointer, deferred.position, deferred.kind);
   }
 
   void _onPointerSignal(PointerSignalEvent event) {

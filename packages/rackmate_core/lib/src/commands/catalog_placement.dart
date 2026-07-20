@@ -28,13 +28,68 @@ import 'package:rackmate_core/src/units/ids.dart';
 /// (matching `scene_builder.dart`'s own `"$templateId@$version"` scheme).
 String catalogTemplateKey(String catalogId) => '$catalogId@1';
 
+/// One rail-placed device on one face, with its per-face height already
+/// resolved through the template store.
+///
+/// `ruIndex` and `deviceH` are the RAW model values — deliberately NOT
+/// clipped to the rack extent, unlike [_occupancyByRu]'s map. A caller
+/// asking "which devices would a shrink to N U destroy?" needs to see a
+/// device whose top U already exceeds the rack, and clipping would hide
+/// exactly that. Callers that want rack-clipped occupancy build it from
+/// this list (as [_occupancyByRu] does).
+typedef RailOccupant = ({
+  DeviceInstance device,
+  int ruIndex,
+  int deviceH,
+  bool locked,
+});
+
+/// Every rail-placed occupant of [face] within [rack], ascending by
+/// `ruIndex` (ties broken by device id, so the order is total and stable
+/// across runs — a planner that emits moves in this order must not depend
+/// on `Map` iteration order to be reproducible).
+///
+/// THE ONE occupancy scan in the system. A device whose template snapshot
+/// cannot be resolved is skipped, and a device whose per-face height is 0
+/// (it occupies the OTHER face only) is skipped too — both exactly as the
+/// private occupancy map behaved before this was factored out.
+List<RailOccupant> railOccupantsOnFace({
+  required Rack rack,
+  required Iterable<DeviceInstance> devices,
+  required Face face,
+  required Map<String, TemplateSnapshot> templates,
+}) {
+  final out = <RailOccupant>[];
+  for (final d in devices) {
+    final placement = d.placement;
+    if (placement is! RailPlacement) continue;
+    if (placement.rackId != rack.id || placement.face != face) continue;
+    final snapshot = templates[_templateKey(d.templateRef)];
+    if (snapshot == null) continue;
+    final deviceH = face == Face.front
+        ? snapshot.body.frontU
+        : snapshot.body.rearU;
+    if (deviceH <= 0) continue;
+    out.add((
+      device: d,
+      ruIndex: placement.ruIndex,
+      deviceH: deviceH,
+      locked: placement.locked,
+    ));
+  }
+  out.sort((a, b) {
+    final byRu = a.ruIndex.compareTo(b.ruIndex);
+    return byRu != 0 ? byRu : a.device.id.v.compareTo(b.device.id.v);
+  });
+  return out;
+}
+
 /// Builds a 1-based `U -> occupying device` map for [face] within [rack],
-/// resolving each device's per-face height through [templates] (a device
-/// whose snapshot can't be resolved is skipped, exactly as before this was
-/// factored out). Shared by [findLowestFreeRu] and [findBlockingOccupant]
-/// so the occupancy scan exists in exactly ONE place — a `Map<int,
-/// DeviceInstance>` rather than a bare `List<bool>` so a caller can report
-/// WHICH device is in the way, not just that the slot is taken.
+/// as a fold over [railOccupantsOnFace] — so `findLowestFreeRu`,
+/// `findBlockingOccupant` and the compaction/shrink planners all resolve
+/// template heights through exactly ONE piece of code. A device-valued map
+/// rather than a bare `List<bool>` so a caller can report WHICH device is
+/// in the way, not just that the slot is taken.
 Map<int, DeviceInstance> _occupancyByRu({
   required Rack rack,
   required Iterable<DeviceInstance> devices,
@@ -42,17 +97,14 @@ Map<int, DeviceInstance> _occupancyByRu({
   required Map<String, TemplateSnapshot> templates,
 }) {
   final occupied = <int, DeviceInstance>{};
-  for (final d in devices) {
-    final placement = d.placement;
-    if (placement is! RailPlacement) continue;
-    if (placement.rackId != rack.id || placement.face != face) continue;
-    final snapshot = templates[_templateKey(d.templateRef)];
-    if (snapshot == null) continue;
-    final otherH = face == Face.front
-        ? snapshot.body.frontU
-        : snapshot.body.rearU;
-    for (var u = placement.ruIndex; u < placement.ruIndex + otherH; u++) {
-      if (u >= 1 && u <= rack.heightU) occupied[u] = d;
+  for (final o in railOccupantsOnFace(
+    rack: rack,
+    devices: devices,
+    face: face,
+    templates: templates,
+  )) {
+    for (var u = o.ruIndex; u < o.ruIndex + o.deviceH; u++) {
+      if (u >= 1 && u <= rack.heightU) occupied[u] = o.device;
     }
   }
   return occupied;

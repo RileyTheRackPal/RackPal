@@ -1,0 +1,171 @@
+// packages/rackmate_ui/lib/src/inspector/inspector_panel.dart
+//
+// The 320px inspector column (docs/04-rack-editor.md §1) and the host that
+// decides what fills it.
+//
+// §4 says the `RackInspector` "REPLACES the Selection section". There was no
+// Selection section to replace: docs/m1-implementation-log.md's §1 row has
+// recorded the whole inspector panel as "not started" through every prior
+// stage, and the screen's layout was `Row(palette | divider | canvas)` with
+// only floating chrome over the canvas. So "replaces" is implemented here as
+// a TARGET SWITCH rather than as a swap between two built panels: the column
+// shows either the rack inspector or a minimal selection summary, and the
+// three §4 entry points (header click, empty-rack-background click,
+// `Ctrl+Alt+U`) set the target to `rack` while clicking a device sets it
+// back to `selection`. That gives the spec's semantics honestly using the
+// surfaces that actually exist.
+//
+// THE SELECTION VIEW IS DELIBERATELY MINIMAL — a count, and the focused
+// device's designator and name. It is NOT a device inspector: editing device
+// properties is its own body of work (§3's Width position dropdown, §6's
+// shelf capacity, §7's F2 rename flow, copy-on-place `DeviceOverrides`), none
+// of which is in this stage's scope. Rendering a plausible-looking device
+// form with no working fields would be worse than rendering the honest
+// summary.
+
+import 'package:flutter/material.dart';
+import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/inspector/rack_inspector_panel.dart';
+
+/// Which of the two things the inspector column is currently showing.
+enum InspectorTarget {
+  /// The full `RackInspector` (§4).
+  rack,
+
+  /// The minimal selection summary this stage ships in place of the
+  /// not-yet-built device inspector (see the file header).
+  selection,
+}
+
+/// The inspector column. Width is the caller's business (the screen wraps
+/// this in the `SizedBox(width: 320)` §1 specifies); this widget only
+/// decides what goes inside it.
+class InspectorPanel extends StatelessWidget {
+  const InspectorPanel({
+    required this.target,
+    required this.rack,
+    required this.doc,
+    required this.presets,
+    required this.selectedIds,
+    required this.focusedId,
+    required this.onSetProperty,
+    required this.onRename,
+    required this.onRequestHeight,
+    required this.onApplyPreset,
+    required this.onRefuse,
+    this.firstFieldFocus,
+    super.key,
+  });
+
+  final InspectorTarget target;
+  final Rack rack;
+  final RackDocument doc;
+  final Map<String, RackPreset> presets;
+  final Set<Uuid> selectedIds;
+  final Uuid? focusedId;
+  final void Function<T>(RackField<T> field, T value) onSetProperty;
+  final ValueChanged<String> onRename;
+  final ValueChanged<int> onRequestHeight;
+  final ValueChanged<RackPreset> onApplyPreset;
+  final ValueChanged<String> onRefuse;
+  final FocusNode? firstFieldFocus;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    // `Material`, not `ColoredBox`: the panel is full of `ListTile`-based
+    // controls (checkboxes, radios), and `ListTile` paints its background
+    // and ink splashes onto the nearest `Material` ancestor — a plain
+    // coloured box between them and that ancestor would hide both (Flutter
+    // asserts on exactly this).
+    return Material(
+      color: scheme.surfaceContainerLow,
+      child: switch (target) {
+        InspectorTarget.rack => RackInspectorPanel(
+          rack: rack,
+          doc: doc,
+          presets: presets,
+          onSetProperty: onSetProperty,
+          onRename: onRename,
+          onRequestHeight: onRequestHeight,
+          onApplyPreset: onApplyPreset,
+          onRefuse: onRefuse,
+          firstFieldFocus: firstFieldFocus,
+        ),
+        InspectorTarget.selection => _SelectionSummary(
+          doc: doc,
+          selectedIds: selectedIds,
+          focusedId: focusedId,
+        ),
+      },
+    );
+  }
+}
+
+/// The minimal stand-in described in the file header. Shows what IS known
+/// (how many, and which one has focus) and claims nothing else.
+class _SelectionSummary extends StatelessWidget {
+  const _SelectionSummary({
+    required this.doc,
+    required this.selectedIds,
+    required this.focusedId,
+  });
+
+  final RackDocument doc;
+  final Set<Uuid> selectedIds;
+  final Uuid? focusedId;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final focused = focusedId == null ? null : doc.devices[focusedId];
+    final n = selectedIds.length;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'SELECTION',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: scheme.primary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            n == 0
+                ? 'Nothing selected'
+                : (n == 1 ? '1 device selected' : '$n devices selected'),
+            style: theme.textTheme.bodyMedium,
+          ),
+          if (focused != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              focused.designator,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              focused.name,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+          const Spacer(),
+          Text(
+            'Rack settings: Ctrl+Alt+U, or click the rack header.',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

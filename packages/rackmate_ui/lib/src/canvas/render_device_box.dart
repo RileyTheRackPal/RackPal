@@ -54,7 +54,7 @@ class DeviceBox extends StatefulWidget {
     required this.semanticLabel,
     required this.palette,
     this.selected = false,
-    this.dragSource = false,
+    this.fadeOpacity,
     this.shake,
     super.key,
   });
@@ -79,17 +79,30 @@ class DeviceBox extends StatefulWidget {
   /// render tests) need not supply it.
   final bool selected;
 
-  /// Whether this device is the SOURCE of an in-flight move-drag (docs/04
-  /// §3.3 step 1: "The device drops to 30 % opacity **in place**, showing
-  /// the vacated U, while a full-opacity ghost follows the cursor").
-  /// Pushed down from `RackCanvasScreen` exactly like [selected] — a plain
-  /// constructor argument through the existing `_DeviceBoxLeaf`, adding NO
-  /// widget layer (which is what `RenderDeviceBox.shake`'s doc comment
-  /// warns against) and costing one `setState` at drag start and one at
-  /// drag end, never one per frame: the per-frame ghost/evaluation updates
-  /// are read by `EditingOverlayPainter` listening to the drag controller
-  /// directly. Defaults false.
-  final bool dragSource;
+  /// The alpha this device composites at IN PLACE, or null (the default)
+  /// for full opacity. Two callers today, both from `RackCanvasScreen`:
+  ///
+  ///  * `RenderDeviceBox.dragSourceOpacity` (0.30) while this device is the
+  ///    SOURCE of an in-flight move-drag — docs/04 §3.3 step 1: "The device
+  ///    drops to 30 % opacity **in place**, showing the vacated U, while a
+  ///    full-opacity ghost follows the cursor."
+  ///  * `RenderDeviceBox.compactionSourceOpacity` (0.25) while a compaction
+  ///    preview proposes to move it — docs/04 §3.6: "proposed positions as
+  ///    solid ghosts, current positions dimmed to 25%."
+  ///
+  /// GENERALISED FROM A `bool dragSource` when §3.6 landed, rather than
+  /// adding a second boolean beside it. Two booleans would have needed a
+  /// precedence rule between them the moment both were true, for a
+  /// combination that means nothing (a device cannot be both drag-dragged
+  /// and compaction-previewed — the screen's preview-exclusivity invariant
+  /// forbids it); one nullable double has no such state to get wrong, and
+  /// keeps the single `saveLayer` implementation below serving both.
+  ///
+  /// Pushed down exactly like [selected] — a plain constructor argument
+  /// through the existing `_DeviceBoxLeaf`, adding NO widget layer (which
+  /// is what `RenderDeviceBox.shake`'s doc comment warns against) and
+  /// costing one `setState` when the value changes, never one per frame.
+  final double? fadeOpacity;
 
   /// Optional shake-feedback source (docs/04 §3.4: a blocked keyboard
   /// nudge "shakes 3px"), shared by every device in the rack. Passed
@@ -131,7 +144,7 @@ class _DeviceBoxState extends State<DeviceBox> {
         hovered: _hovered,
         focused: _focused,
         selected: widget.selected,
-        dragSource: widget.dragSource,
+        fadeOpacity: widget.fadeOpacity,
         shake: widget.shake,
       ),
     );
@@ -148,7 +161,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
     required this.hovered,
     required this.focused,
     required this.selected,
-    required this.dragSource,
+    required this.fadeOpacity,
     required this.shake,
   });
 
@@ -160,7 +173,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
   final bool hovered;
   final bool focused;
   final bool selected;
-  final bool dragSource;
+  final double? fadeOpacity;
   final ShakeController? shake;
 
   @override
@@ -173,7 +186,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
     hovered: hovered,
     focused: focused,
     selected: selected,
-    dragSource: dragSource,
+    fadeOpacity: fadeOpacity,
     shake: shake,
   );
 
@@ -188,7 +201,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
       ..hovered = hovered
       ..focused = focused
       ..selected = selected
-      ..dragSource = dragSource
+      ..fadeOpacity = fadeOpacity
       ..shake = shake;
   }
 }
@@ -208,7 +221,7 @@ class RenderDeviceBox extends RenderBox {
     bool hovered = false,
     bool focused = false,
     bool selected = false,
-    bool dragSource = false,
+    double? fadeOpacity,
     ShakeController? shake,
   }) : _scene = scene,
        _deviceId = deviceId,
@@ -218,7 +231,7 @@ class RenderDeviceBox extends RenderBox {
        _hovered = hovered,
        _focused = focused,
        _selected = selected,
-       _dragSource = dragSource,
+       _fadeOpacity = fadeOpacity,
        _shake = shake;
 
   DiagramScene _scene;
@@ -285,19 +298,25 @@ class RenderDeviceBox extends RenderBox {
     markNeedsPaint();
   }
 
-  /// docs/04 §3.3 step 1's 30%-opacity-in-place source of an in-flight
-  /// move-drag. See [DeviceBox.dragSource] for why this is a pushed-down
-  /// flag rather than a listened-to controller.
-  bool _dragSource;
-  bool get dragSource => _dragSource;
-  set dragSource(bool value) {
-    if (_dragSource == value) return;
-    _dragSource = value;
+  /// The in-place composite alpha, or null for full opacity. See
+  /// [DeviceBox.fadeOpacity] for the two callers and why this is one
+  /// nullable double rather than two booleans.
+  double? _fadeOpacity;
+  double? get fadeOpacity => _fadeOpacity;
+  set fadeOpacity(double? value) {
+    if (_fadeOpacity == value) return;
+    _fadeOpacity = value;
     markNeedsPaint();
   }
 
   /// docs/04 §3.3 step 1: "The device drops to 30 % opacity in place."
   static const double dragSourceOpacity = 0.30;
+
+  /// docs/04 §3.6: while a compaction preview is open, "current positions
+  /// dimmed to 25%" — a deeper fade than a move-drag's, because the
+  /// proposed ghost is a genuine alternative the user is choosing between
+  /// rather than a single device mid-flight.
+  static const double compactionSourceOpacity = 0.25;
 
   /// The shared shake-feedback source (docs/04 §3.4's blocked-nudge
   /// "shakes 3px"), or null for hosts that never shake (non-editing hosts,
@@ -356,15 +375,16 @@ class RenderDeviceBox extends RenderBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    if (!_dragSource) {
+    final alpha = _fadeOpacity;
+    if (alpha == null) {
       _paintBody(context, offset);
       return;
     }
-    // docs/04 §3.3 step 1: while this device is the source of an in-flight
-    // move-drag it "drops to 30 % opacity IN PLACE, showing the vacated
-    // U" — the full-opacity ghost that follows the cursor is
-    // `EditingOverlayPainter`'s job, not this render object's, so all this
-    // one does is fade itself.
+    // The device fades IN PLACE — docs/04 §3.3 step 1's move-drag source
+    // "showing the vacated U", or §3.6's compaction "current position". In
+    // both cases the full-strength alternative (the drag ghost, the
+    // compaction ghost) is `EditingOverlayPainter`'s job, not this render
+    // object's, so all this one does is fade itself.
     //
     // A `saveLayer` whose paint carries only an alpha composites the WHOLE
     // device — replayed fragment plus any hover/focus/selection chrome —
@@ -376,9 +396,7 @@ class RenderDeviceBox extends RenderBox {
     final bounds = (offset & size).inflate(4);
     context.canvas.saveLayer(
       bounds,
-      Paint()..color = const Color(0xFF000000).withValues(
-        alpha: dragSourceOpacity,
-      ),
+      Paint()..color = const Color(0xFF000000).withValues(alpha: alpha),
     );
     _paintBody(context, offset);
     context.canvas.restore();

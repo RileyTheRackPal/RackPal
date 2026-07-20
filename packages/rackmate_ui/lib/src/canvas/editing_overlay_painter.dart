@@ -12,6 +12,30 @@
 //    `CaretController.active` already factors in `!drag.isInProgress` (see
 //    insertion_caret.dart), so [paint] only ever draws ONE of the two per
 //    frame — never both.
+//  * the COMPACTION preview's proposed-position ghosts (docs/04 §3.6:
+//    "proposed positions as solid ghosts, current positions dimmed to
+//    25%"). The dimming half is `RenderDeviceBox.fadeOpacity`, since it
+//    happens to real devices at their real positions; only the ghosts are
+//    painted here.
+//  * the RACK-RESIZE preview's red hatch and candidate top-edge line
+//    (docs/04 §4.1: "While dragging SMALLER, any occupied U about to be
+//    removed is hatched in red IN REAL TIME, so the collision is visible
+//    before release"). The "24U (+3)" readout that accompanies it is
+//    screen-space text and therefore lives in the canvas `Stack`, not here
+//    — the same split the drag's RU-range chip already follows.
+//
+// EXACTLY ONE SOURCE PER FRAME, still. [paint]'s precedence is resize ->
+// compaction -> drag ghost -> caret, an if/else chain rather than four
+// independent draws, preserving the mutual exclusion the caret/drag pair
+// already had. The screen enforces the same thing one level up (opening any
+// one of the three previews cancels the other two), so this ordering is a
+// belt to that invariant's braces, not the invariant itself.
+//
+// RESIZE GOES FIRST because it is the only source whose subject is the RACK
+// rather than a device: while the top edge is moving, the rack's own extent
+// is the thing in question, and a caret line or a device ghost drawn against
+// a height that is about to change would be pointing at geometry the user is
+// in the middle of invalidating.
 //
 // The ghost is drawn from a `DragPreviewController`, which is deliberately
 // NOT palette-specific: docs/04 §3.3 step 3 ("Moving a placed device")
@@ -46,8 +70,10 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart' show CustomPainter;
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/canvas/compaction_preview_controller.dart';
 import 'package:rackmate_ui/src/canvas/drag_preview_controller.dart';
 import 'package:rackmate_ui/src/canvas/insertion_caret.dart';
+import 'package:rackmate_ui/src/canvas/resize_preview_controller.dart';
 import 'package:rackmate_ui/src/canvas/shake_animation.dart';
 import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
 
@@ -120,12 +146,16 @@ class EditingOverlayPainter extends CustomPainter {
     required this.geo,
     required this.style,
     this.dragPreviews = const [],
+    this.compaction,
+    this.resize,
     this.shake,
   }) : super(
          repaint: Listenable.merge([
            viewport,
            caret,
            ...dragPreviews,
+           if (compaction != null) compaction,
+           if (resize != null) resize,
            if (shake != null) shake,
          ]),
        );
@@ -148,6 +178,18 @@ class EditingOverlayPainter extends CustomPainter {
   /// drag preview", which is the whole reason §3.3's blocked rendering is
   /// literally, not approximately, the same as §3.1's.
   final List<DragPreviewController> dragPreviews;
+
+  /// docs/04 §3.6's compaction preview, or null for hosts that never
+  /// compact. When it reports a plan, its proposed-position ghosts REPLACE
+  /// both the drag ghost and the caret for the frame (see the file header's
+  /// precedence note).
+  final CompactionPreviewController? compaction;
+
+  /// docs/04 §4.1's drag-the-top-edge preview, or null for hosts that never
+  /// resize. When active it takes precedence over everything else on the
+  /// frame — see the file header for why the rack's own extent outranks any
+  /// device-scoped chrome.
+  final ResizePreviewController? resize;
 
   /// The shared blocked-feedback shake (docs/04 §3.1 step 5/6: "Release
   /// while blocked is a no-op with a 120ms shake"), reused for the ghost
@@ -191,11 +233,17 @@ class EditingOverlayPainter extends CustomPainter {
     // requires an evaluation, so this is a type narrowing, not a second
     // (drift-prone) condition.
     final evaluation = drag?.evaluation;
+    final plan = compaction?.plan;
+    final resizing = resize?.isActive ?? false;
 
     canvas
       ..save()
       ..transform(viewport.transform.storage);
-    if (drag != null && evaluation != null) {
+    if (resizing) {
+      _paintResizePreview(canvas, resize!, scale);
+    } else if (plan != null) {
+      _paintCompactionGhosts(canvas, plan, scale);
+    } else if (drag != null && evaluation != null) {
       _paintGhost(canvas, drag, evaluation, scale);
     } else {
       final active = caret.caret;
@@ -212,6 +260,96 @@ class EditingOverlayPainter extends CustomPainter {
     }
     canvas.restore();
   }
+
+  /// docs/04 §4.1's live resize feedback: a 45-degree red hatch over every
+  /// occupied U about to be removed, plus a line marking where the rack's
+  /// top edge would land.
+  ///
+  /// THE HATCH IS THE EXISTING [_paintHatch], byte for byte the routine the
+  /// blocked-drop occupant already uses at the same `error@25%` — §3.1 step
+  /// 5 and §4.1 are describing the same visual idea ("this occupied space is
+  /// the problem"), so they must not drift into two different reds at two
+  /// different angles. Only the SOURCE of the rects differs: there it is the
+  /// one occupant a drop collides with, here it is every occupant the shrink
+  /// would strand (computed by the screen from the document, on both faces —
+  /// see resize_preview_controller.dart).
+  ///
+  /// THE CANDIDATE LINE IS DELIBERATELY NOT [paintInsertionLine]. That
+  /// routine's rail triangles mean "insert here", a claim about where a
+  /// device would land; pointing them at a rack's top edge would be a lie
+  /// about what this gesture does. It gets the shared 2px screen-constant
+  /// width and nothing else.
+  ///
+  /// Growing paints the line and no hatch at all — "growing is always safe"
+  /// (§4.1) needs no special case here, because the screen simply reports no
+  /// doomed rects.
+  void _paintResizePreview(
+    ui.Canvas canvas,
+    ResizePreviewController resize,
+    double scale,
+  ) {
+    final doomed = resize.doomedRects;
+    for (final rect in doomed) {
+      _paintHatch(canvas, rect, style.errorColor.withValues(alpha: 0.25));
+    }
+
+    // Red once the drag is costing the user something, accent while it is
+    // free — the same valid/blocked colour language the drag ghost uses, so
+    // "this is going to hurt" reads identically across both gestures.
+    final color = doomed.isEmpty ? style.caretColor : style.errorColor;
+
+    // `yOfBoundary` is documented over `k ∈ [0, heightU]`; a GROW asks for
+    // `k > heightU`, and the formula's linear extension is exactly right
+    // there (the boundary floats above the rack's current top, which is
+    // precisely where the enlarged rack's top edge would be). Reusing it
+    // rather than spelling a second formula is what keeps this painter free
+    // of its own RU math — see rack_geometry.dart's header.
+    final y = geo.yOfBoundary(resize.candidateHeightU);
+    canvas.drawLine(
+      ui.Offset(-lineOverhang, y),
+      ui.Offset(geo.rackWidth + lineOverhang, y),
+      ui.Paint()
+        ..color = color
+        ..strokeWidth = lineWidthPx / scale
+        ..style = ui.PaintingStyle.stroke
+        ..isAntiAlias = true,
+    );
+  }
+
+  /// docs/04 §3.6: "proposed positions as solid ghosts". One ghost box per
+  /// move, at its PROPOSED `toRuIndex`, in the same accent fill + solid
+  /// border a valid drag ghost uses (the shared [_paintGhostBox]), so
+  /// "a ghost is where this would land" reads identically across both
+  /// features.
+  ///
+  /// DELIBERATELY NO [paintInsertionLine]. That routine's rail triangles
+  /// mean "insert here", which is a claim about ONE boundary; a compaction
+  /// proposes N simultaneous landings and has no insertion point at all.
+  /// Drawing N snap-lines would also cover the rack in accent rules and
+  /// make the ghosts themselves hard to read.
+  ///
+  /// The CURRENT positions are not drawn here: they are real devices, and
+  /// `RenderDeviceBox.fadeOpacity` dims them in place (§3.6's "dimmed to
+  /// 25%"). Painting a second, greyed copy of each would double every
+  /// moving device on screen.
+  void _paintCompactionGhosts(
+    ui.Canvas canvas,
+    CompactionPlan plan,
+    double scale,
+  ) {
+    for (final move in plan.moves) {
+      _paintGhostBox(
+        canvas,
+        rectOf(geo.deviceRect(move.toRuIndex, move.deviceH)),
+        style.caretColor,
+        scale,
+      );
+    }
+  }
+
+  /// `DBox` (core's Flutter-free rect) to `ui.Rect`, in one place.
+  static ui.Rect rectOf(DBox b) =>
+      ui.Rect.fromLTRB(b.left, b.top, b.right, b.bottom);
 
   void _paintRulerHighlight(ui.Canvas canvas, int ruIndex) {
     canvas.drawRect(
@@ -242,21 +380,13 @@ class EditingOverlayPainter extends CustomPainter {
       rect.bottom,
     );
 
-    canvas.drawRect(
+    _paintGhostBox(
+      canvas,
       drawRect,
-      ui.Paint()..color = color.withValues(alpha: 0.12),
+      color,
+      scale,
+      dashedBorder: evaluation.blocked,
     );
-
-    final borderPaint = ui.Paint()
-      ..style = ui.PaintingStyle.stroke
-      ..strokeWidth = ghostBorderWidthPx / scale
-      ..color = color
-      ..isAntiAlias = true;
-    if (evaluation.blocked) {
-      _paintDashedRect(canvas, drawRect, borderPaint);
-    } else {
-      canvas.drawRect(drawRect, borderPaint);
-    }
 
     paintInsertionLine(canvas, geo, evaluation.ruIndex, color, scale);
 
@@ -267,6 +397,38 @@ class EditingOverlayPainter extends CustomPainter {
         blockingRect,
         style.errorColor.withValues(alpha: 0.25),
       );
+    }
+  }
+
+  /// The ghost BOX itself — "fill accent@12%, 1.5px solid accent border"
+  /// (docs/04 §3.1 step 3), or a dashed border when [dashedBorder]
+  /// (§3.1 step 5's blocked style). Extracted from [_paintGhost] when §3.6's
+  /// compaction preview needed the same box without the snap-line, so the
+  /// two features cannot drift into looking like different things.
+  ///
+  /// Takes a `ui.Rect` rather than a `DBox` because the drag caller has
+  /// already had to offset its rect by the live shake; making that caller
+  /// convert back would be the only reason for this routine to know about
+  /// `DBox` at all. [rectOf] does the conversion for callers that start
+  /// from geometry.
+  static void _paintGhostBox(
+    ui.Canvas canvas,
+    ui.Rect r,
+    ui.Color color,
+    double scale, {
+    bool dashedBorder = false,
+  }) {
+    canvas.drawRect(r, ui.Paint()..color = color.withValues(alpha: 0.12));
+
+    final borderPaint = ui.Paint()
+      ..style = ui.PaintingStyle.stroke
+      ..strokeWidth = ghostBorderWidthPx / scale
+      ..color = color
+      ..isAntiAlias = true;
+    if (dashedBorder) {
+      _paintDashedRect(canvas, r, borderPaint);
+    } else {
+      canvas.drawRect(r, borderPaint);
     }
   }
 
@@ -297,7 +459,7 @@ class EditingOverlayPainter extends CustomPainter {
   /// 45-degree hatch lines clipped to [rect] (docs/04 §3.1 step 5: "the
   /// conflicting occupant gets a 45-degree hatch at error@25%").
   static void _paintHatch(ui.Canvas canvas, DBox rect, ui.Color color) {
-    final r = ui.Rect.fromLTRB(rect.left, rect.top, rect.right, rect.bottom);
+    final r = rectOf(rect);
     canvas
       ..save()
       ..clipRect(r);
@@ -396,5 +558,7 @@ class EditingOverlayPainter extends CustomPainter {
       geo != old.geo ||
       style != old.style ||
       !listEquals(dragPreviews, old.dragPreviews) ||
+      compaction != old.compaction ||
+      resize != old.resize ||
       shake != old.shake;
 }

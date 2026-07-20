@@ -600,7 +600,8 @@ void main() {
       );
     });
 
-    test('shouldRepaint reacts to a different drag-preview/shake instance', () {
+    test('shouldRepaint reacts to a different drag-preview/shake '
+        'instance', () {
       final vp = ViewportController();
       addTearDown(vp.dispose);
       final rack = _rack();
@@ -640,6 +641,601 @@ void main() {
 
       expect(withA.shouldRepaint(withSameA), isFalse);
       expect(withA.shouldRepaint(withB), isTrue);
+    });
+  });
+
+  group('compaction preview ghosts (docs/04 §3.6)', () {
+    // The demo-shaped plan used throughout: AMP-1 drops U4 -> U2 (2U) and
+    // SW-1 drops U7 -> U4 (1U).
+    CompactionPlan planDown() => const CompactionPlan(
+      direction: CompactDirection.down,
+      face: Face.front,
+      moves: [
+        CompactionMove(
+          deviceId: Uuid('dev-amp'),
+          designator: 'AMP-1',
+          fromRuIndex: 4,
+          toRuIndex: 2,
+          deviceH: 2,
+          face: Face.front,
+        ),
+        CompactionMove(
+          deviceId: Uuid('dev-sw'),
+          designator: 'SW-1',
+          fromRuIndex: 7,
+          toRuIndex: 4,
+          deviceH: 1,
+          face: Face.front,
+        ),
+      ],
+      freedU: 3,
+    );
+
+    CompactionPreviewController showing(CompactionPlan plan) =>
+        CompactionPreviewController()..show(plan, documentSequence: 1);
+
+    test('one solid ghost per move, at the PROPOSED position — never at '
+        'the current one', () {
+      // The heart of §3.6: "proposed positions as solid ghosts". A
+      // regression that drew ghosts at `fromRuIndex` would still paint two
+      // boxes and still not throw, so this asserts the actual rects.
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      const geo = RackGeometry(12);
+      final compaction = showing(planDown());
+      addTearDown(compaction.dispose);
+
+      final invocations = _recordPaint(
+        EditingOverlayPainter(
+          viewport: vp,
+          caret: CaretController(),
+          geo: geo,
+          style: _style,
+          compaction: compaction,
+        ),
+      );
+
+      final strokedRects = invocations
+          .where((r) {
+            if (r.invocation.memberName != #drawRect) return false;
+            final paint = r.invocation.positionalArguments[1] as ui.Paint;
+            return paint.style == ui.PaintingStyle.stroke;
+          })
+          .map((r) => r.invocation.positionalArguments[0] as ui.Rect)
+          .toList();
+
+      expect(strokedRects, hasLength(2));
+
+      final proposedAmp = geo.deviceRect(2, 2); // AMP-1's TARGET
+      final proposedSw = geo.deviceRect(4, 1); // SW-1's TARGET
+      final currentAmp = geo.deviceRect(4, 2); // where it is NOW
+      final currentSw = geo.deviceRect(7, 1);
+
+      bool drawnAt(DBox box) => strokedRects.any(
+        (r) =>
+            (r.top - box.top).abs() < 0.001 &&
+            (r.bottom - box.bottom).abs() < 0.001,
+      );
+
+      expect(drawnAt(proposedAmp), isTrue, reason: 'AMP-1 ghost at U2');
+      expect(drawnAt(proposedSw), isTrue, reason: 'SW-1 ghost at U4');
+      // The CURRENT positions are real devices dimmed in place by
+      // `RenderDeviceBox.fadeOpacity`, not a second painted copy — drawing
+      // them here would double every moving device on screen.
+      expect(drawnAt(currentAmp), isFalse);
+      expect(drawnAt(currentSw), isFalse);
+    });
+
+    test('compaction ghosts are SOLID and un-hatched — the blocked-drag '
+        'vocabulary must not leak in', () {
+      // A compaction plan has no blocked verdict at all (see
+      // compaction_preview_controller.dart's header), so a dashed border or
+      // a 45-degree hatch here would be actively misleading: both mean
+      // "this drop is refused".
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      final compaction = showing(planDown());
+      addTearDown(compaction.dispose);
+
+      final invocations = _recordPaint(
+        EditingOverlayPainter(
+          viewport: vp,
+          caret: CaretController(),
+          geo: const RackGeometry(12),
+          style: _style,
+          compaction: compaction,
+        ),
+      );
+
+      // No hatch: `_paintHatch` is the only thing that clips.
+      expect(
+        invocations.where((r) => r.invocation.memberName == #clipRect),
+        isEmpty,
+      );
+      // No dashes, and no snap-line: `paintInsertionLine` is deliberately
+      // NOT called (its rail triangles mean "insert HERE", a claim about one
+      // boundary that N simultaneous landings cannot make), so the only
+      // `drawLine` a dashed border would contribute is absent too.
+      expect(
+        invocations.where((r) => r.invocation.memberName == #drawLine),
+        isEmpty,
+      );
+      // ...and therefore no rail triangles either.
+      expect(
+        invocations.where((r) => r.invocation.memberName == #drawPath),
+        isEmpty,
+      );
+      // Every ghost border is in the accent colour, never the error colour.
+      for (final r in invocations.where(
+        (r) => r.invocation.memberName == #drawRect,
+      )) {
+        final paint = r.invocation.positionalArguments[1] as ui.Paint;
+        expect(_colorsMatch(paint.color, _style.errorColor), isFalse);
+      }
+    });
+
+    test('a compaction preview TAKES PRECEDENCE over both a live drag '
+        'ghost and an active caret — exactly one source paints', () {
+      // The screen enforces preview exclusivity one level up (opening a
+      // compaction cancels any in-flight drag), but the painter must not
+      // depend on that to avoid drawing two overlapping proposals.
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      const geo = RackGeometry(12);
+      final rack = _rack();
+
+      final drag = DragPreviewController()
+        ..arm(
+          subjectId: 'V01',
+          deviceH: 2,
+          face: Face.front,
+          displayName: 'Test Amp',
+          badge: '2U',
+          sourceKinds: const {PointerDeviceKind.mouse},
+        )
+        ..lift()
+        ..enterCanvas()
+        ..updateEvaluation(
+          const DPt(0, 100),
+          // U9 — a rect no compaction ghost occupies, so its presence or
+          // absence is unambiguous.
+          const DragPreviewEvaluation(ruIndex: 9, blocked: false),
+        );
+      final caret = CaretController()
+        ..recompute(
+          selectionEmpty: true,
+          canvasHasFocus: true,
+          dragInProgress: false,
+          rack: rack,
+          smartDefaultRuIndex: 6,
+        );
+      final compaction = showing(planDown());
+      addTearDown(compaction.dispose);
+
+      final invocations = _recordPaint(
+        EditingOverlayPainter(
+          viewport: vp,
+          caret: caret,
+          geo: geo,
+          style: _style,
+          dragPreviews: [drag],
+          compaction: compaction,
+        ),
+      );
+
+      final strokedRects = invocations
+          .where((r) {
+            if (r.invocation.memberName != #drawRect) return false;
+            final paint = r.invocation.positionalArguments[1] as ui.Paint;
+            return paint.style == ui.PaintingStyle.stroke;
+          })
+          .map((r) => r.invocation.positionalArguments[0] as ui.Rect)
+          .toList();
+
+      // The two compaction ghosts and NOT the drag ghost.
+      expect(strokedRects, hasLength(2));
+      final dragGhost = geo.deviceRect(9, 2);
+      expect(
+        strokedRects.any((r) => (r.top - dragGhost.top).abs() < 0.001),
+        isFalse,
+        reason: 'the drag ghost must not paint under a compaction preview',
+      );
+      // ...and no caret line either (the caret is active but outranked).
+      expect(
+        invocations.where((r) => r.invocation.memberName == #drawLine),
+        isEmpty,
+      );
+    });
+
+    test('a CANCELLED compaction paints nothing and hands the frame back '
+        'to the caret', () {
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      final rack = _rack();
+      final compaction = showing(planDown())..cancel();
+      addTearDown(compaction.dispose);
+      final caret = CaretController()
+        ..recompute(
+          selectionEmpty: true,
+          canvasHasFocus: true,
+          dragInProgress: false,
+          rack: rack,
+          smartDefaultRuIndex: 6,
+        );
+
+      final invocations = _recordPaint(
+        EditingOverlayPainter(
+          viewport: vp,
+          caret: caret,
+          geo: const RackGeometry(12),
+          style: _style,
+          compaction: compaction,
+        ),
+      );
+
+      expect(
+        invocations.where((r) {
+          if (r.invocation.memberName != #drawRect) return false;
+          final paint = r.invocation.positionalArguments[1] as ui.Paint;
+          return paint.style == ui.PaintingStyle.stroke;
+        }),
+        isEmpty,
+      );
+      expect(
+        invocations.where((r) {
+          if (r.invocation.memberName != #drawLine) return false;
+          final paint = r.invocation.positionalArguments[2] as ui.Paint;
+          return _colorsMatch(paint.color, _style.caretColor);
+        }),
+        isNotEmpty,
+        reason: 'a cancelled preview must not keep swallowing the caret',
+      );
+    });
+
+    test('shouldRepaint reacts to a different compaction instance', () {
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      const geo = RackGeometry(12);
+      final caret = CaretController();
+      final a = showing(planDown());
+      final b = showing(planDown());
+      addTearDown(a.dispose);
+      addTearDown(b.dispose);
+
+      EditingOverlayPainter painter(CompactionPreviewController c) =>
+          EditingOverlayPainter(
+            viewport: vp,
+            caret: caret,
+            geo: geo,
+            style: _style,
+            compaction: c,
+          );
+
+      expect(painter(a).shouldRepaint(painter(a)), isFalse);
+      expect(painter(a).shouldRepaint(painter(b)), isTrue);
+    });
+  });
+
+  group('top-edge resize preview (docs/04 §4.1, way three of three)', () {
+    // THE PAINT-LEVEL HALF of §4.1's live resize feedback. An adversarial
+    // review killed an early `return` at the top of `_paintResizePreview` —
+    // i.e. neither the 45° hatch nor the candidate top-edge line drawn on any
+    // drag, "the collision is visible BEFORE release" violated outright —
+    // with the whole rackmate_ui suite still green. Every assertion below
+    // reads ACTUAL recorded canvas ops for that reason; the gesture that
+    // feeds this controller is covered in rack_resize_drag_test.dart.
+
+    const geo = RackGeometry(12);
+
+    ResizePreviewController resizing({
+      required int from,
+      required int to,
+      List<DBox> doomed = const [],
+    }) =>
+        ResizePreviewController()
+          ..begin(from)
+          ..update(
+            candidateHeightU: to,
+            cursorGlobal: Offset.zero,
+            doomedRects: doomed,
+          );
+
+    /// Every `drawLine` whose paint matches [color], as its two endpoints.
+    List<(ui.Offset, ui.Offset)> linesIn(
+      List<RecordedInvocation> invocations,
+      ui.Color color,
+    ) => invocations
+        .where((r) {
+          if (r.invocation.memberName != #drawLine) return false;
+          final paint = r.invocation.positionalArguments[2] as ui.Paint;
+          return _colorsMatch(paint.color, color);
+        })
+        .map(
+          (r) => (
+            r.invocation.positionalArguments[0] as ui.Offset,
+            r.invocation.positionalArguments[1] as ui.Offset,
+          ),
+        )
+        .toList();
+
+    test('SHRINKING hatches every doomed occupant in error@25% and draws the '
+        'candidate top-edge line, in the ERROR colour, at the candidate '
+        "height's own boundary", () {
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      // The screen's demo shape: a 12U rack dragged to 8U stranding SW-1
+      // (U7, 1U) and the REAR-face PP-1 (U9, 1U) — see
+      // resize_preview_controller.dart's header for why a rear occupant is
+      // hatched on a front elevation.
+      final sw = geo.deviceRect(7, 1);
+      final pp = geo.deviceRect(9, 1);
+      final resize = resizing(from: 12, to: 8, doomed: [sw, pp]);
+      addTearDown(resize.dispose);
+
+      final invocations = _recordPaint(
+        EditingOverlayPainter(
+          viewport: vp,
+          caret: CaretController(),
+          geo: geo,
+          style: _style,
+          resize: resize,
+        ),
+      );
+
+      // ONE hatch clip per doomed occupant, at that occupant's own rect —
+      // `_paintHatch` is the only thing in this painter that clips.
+      final clipRects = invocations
+          .where((r) => r.invocation.memberName == #clipRect)
+          .map((r) => r.invocation.positionalArguments[0] as ui.Rect)
+          .toList();
+      expect(clipRects, hasLength(2));
+      for (final box in [sw, pp]) {
+        expect(
+          clipRects.any(
+            (r) =>
+                (r.top - box.top).abs() < 0.001 &&
+                (r.bottom - box.bottom).abs() < 0.001,
+          ),
+          isTrue,
+          reason: 'expected a hatch clipped to U${box.top}',
+        );
+      }
+
+      // ...and the hatch STROKES themselves, at the shared error@25% the
+      // blocked-drop occupant uses. A regression that clipped but drew
+      // nothing would pass the assertion above alone.
+      expect(
+        linesIn(invocations, _style.errorColor.withValues(alpha: 0.25)),
+        isNotEmpty,
+      );
+
+      // The candidate line: exactly one, full-strength error (NOT the 25%
+      // hatch colour), horizontal, at the 8U boundary — with the shared
+      // overhang on both sides.
+      final candidate = linesIn(invocations, _style.errorColor);
+      expect(candidate, hasLength(1));
+      final (start, end) = candidate.single;
+      final expectedY = geo.yOfBoundary(8);
+      expect(start.dy, closeTo(expectedY, 0.001));
+      expect(end.dy, closeTo(expectedY, 0.001));
+      expect(
+        start.dy,
+        isNot(closeTo(geo.yOfBoundary(12), 0.001)),
+        reason: 'the line marks where the top edge WOULD land, not where it '
+            'is now',
+      );
+      expect(start.dx, closeTo(-EditingOverlayPainter.lineOverhang, 0.001));
+      expect(
+        end.dx,
+        closeTo(geo.rackWidth + EditingOverlayPainter.lineOverhang, 0.001),
+      );
+
+      // No rail triangles: the candidate line is deliberately NOT
+      // `paintInsertionLine`, whose triangles claim "a device inserts here".
+      expect(
+        invocations.where((r) => r.invocation.memberName == #drawPath),
+        isEmpty,
+      );
+    });
+
+    test('GROWING draws the candidate line in the ACCENT colour and no hatch '
+        'at all — "growing is always safe" needs no special case', () {
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      final resize = resizing(from: 12, to: 15);
+      addTearDown(resize.dispose);
+
+      final invocations = _recordPaint(
+        EditingOverlayPainter(
+          viewport: vp,
+          caret: CaretController(),
+          geo: geo,
+          style: _style,
+          resize: resize,
+        ),
+      );
+
+      expect(
+        invocations.where((r) => r.invocation.memberName == #clipRect),
+        isEmpty,
+        reason: 'nothing is doomed, so nothing may be hatched',
+      );
+      expect(linesIn(invocations, _style.errorColor), isEmpty);
+
+      final candidate = linesIn(invocations, _style.caretColor);
+      expect(candidate, hasLength(1));
+      // `yOfBoundary`'s linear extension past the rack top: a 15U candidate
+      // on a 12U rack floats 3U ABOVE scene y == 0, which is exactly where
+      // the enlarged rack's top edge would be.
+      expect(candidate.single.$1.dy, closeTo(geo.yOfBoundary(15), 0.001));
+      expect(candidate.single.$1.dy, lessThan(0));
+    });
+
+    test('the IDENTITY position still draws its line — a drag sitting at its '
+        'starting height is live feedback, not an absent preview', () {
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      final resize = resizing(from: 12, to: 12);
+      addTearDown(resize.dispose);
+
+      final invocations = _recordPaint(
+        EditingOverlayPainter(
+          viewport: vp,
+          caret: CaretController(),
+          geo: geo,
+          style: _style,
+          resize: resize,
+        ),
+      );
+
+      final candidate = linesIn(invocations, _style.caretColor);
+      expect(candidate, hasLength(1));
+      expect(candidate.single.$1.dy, closeTo(geo.yOfBoundary(12), 0.001));
+    });
+
+    test('a resize preview OUTRANKS a compaction plan, a live drag ghost and '
+        'an active caret — exactly one source paints', () {
+      // `paint`'s stated precedence is resize -> compaction -> drag -> caret.
+      // The screen enforces exclusivity one level up, but the painter must
+      // not depend on that to avoid drawing two contradictory proposals.
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      final rack = _rack();
+
+      final drag = DragPreviewController()
+        ..arm(
+          subjectId: 'V01',
+          deviceH: 2,
+          face: Face.front,
+          displayName: 'Test Amp',
+          badge: '2U',
+          sourceKinds: const {PointerDeviceKind.mouse},
+        )
+        ..lift()
+        ..enterCanvas()
+        ..updateEvaluation(
+          const DPt(0, 100),
+          const DragPreviewEvaluation(ruIndex: 3, blocked: false),
+        );
+      final compaction = CompactionPreviewController()
+        ..show(
+          const CompactionPlan(
+            direction: CompactDirection.down,
+            face: Face.front,
+            moves: [
+              CompactionMove(
+                deviceId: Uuid('dev-amp'),
+                designator: 'AMP-1',
+                fromRuIndex: 4,
+                toRuIndex: 2,
+                deviceH: 2,
+                face: Face.front,
+              ),
+            ],
+            freedU: 2,
+          ),
+          documentSequence: 1,
+        );
+      addTearDown(compaction.dispose);
+      final caret = CaretController()
+        ..recompute(
+          selectionEmpty: true,
+          canvasHasFocus: true,
+          dragInProgress: false,
+          rack: rack,
+          smartDefaultRuIndex: 6,
+        );
+      final resize = resizing(from: 12, to: 15);
+      addTearDown(resize.dispose);
+
+      final invocations = _recordPaint(
+        EditingOverlayPainter(
+          viewport: vp,
+          caret: caret,
+          geo: geo,
+          style: _style,
+          dragPreviews: [drag],
+          compaction: compaction,
+          resize: resize,
+        ),
+      );
+
+      // No ghost box from EITHER the drag or the compaction: a stroked
+      // `drawRect` is how both of them draw a proposal.
+      expect(
+        invocations.where((r) {
+          if (r.invocation.memberName != #drawRect) return false;
+          final paint = r.invocation.positionalArguments[1] as ui.Paint;
+          return paint.style == ui.PaintingStyle.stroke;
+        }),
+        isEmpty,
+      );
+      // Exactly the resize's own one line, and nothing the caret would add.
+      expect(
+        invocations.where((r) => r.invocation.memberName == #drawLine),
+        hasLength(1),
+      );
+    });
+
+    test('a CANCELLED resize paints nothing and hands the frame back to the '
+        'caret', () {
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      final rack = _rack();
+      final resize = resizing(from: 12, to: 6, doomed: [geo.deviceRect(9, 1)])
+        ..cancel();
+      addTearDown(resize.dispose);
+      final caret = CaretController()
+        ..recompute(
+          selectionEmpty: true,
+          canvasHasFocus: true,
+          dragInProgress: false,
+          rack: rack,
+          smartDefaultRuIndex: 6,
+        );
+
+      final invocations = _recordPaint(
+        EditingOverlayPainter(
+          viewport: vp,
+          caret: caret,
+          geo: geo,
+          style: _style,
+          resize: resize,
+        ),
+      );
+
+      expect(
+        invocations.where((r) => r.invocation.memberName == #clipRect),
+        isEmpty,
+        reason: 'a cancelled preview must not keep hatching the rack',
+      );
+      expect(
+        linesIn(invocations, _style.caretColor),
+        isNotEmpty,
+        reason: 'the caret gets its frame back',
+      );
+    });
+
+    test('shouldRepaint reacts to a different resize instance', () {
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      final caret = CaretController();
+      final a = resizing(from: 12, to: 9);
+      final b = resizing(from: 12, to: 9);
+      addTearDown(a.dispose);
+      addTearDown(b.dispose);
+
+      EditingOverlayPainter painter(ResizePreviewController c) =>
+          EditingOverlayPainter(
+            viewport: vp,
+            caret: caret,
+            geo: geo,
+            style: _style,
+            resize: c,
+          );
+
+      expect(painter(a).shouldRepaint(painter(a)), isFalse);
+      expect(painter(a).shouldRepaint(painter(b)), isTrue);
     });
   });
 }

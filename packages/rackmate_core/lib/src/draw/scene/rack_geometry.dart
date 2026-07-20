@@ -27,6 +27,7 @@
 // stays honest against kRackUnit (and lands on ~238.9, matching the doc's
 // "239 px").
 
+import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/draw/geometry.dart';
 import 'package:rackmate_core/src/units/constants.dart';
 import 'package:rackmate_core/src/units/len.dart';
@@ -66,6 +67,7 @@ enum LodLevel {
 /// `draw/geometry.dart`). Vertical positions come from `ruIndex`, which is
 /// 1-based with a BOTTOM origin always (CR-025), so U1 sits at the bottom
 /// and U[heightU] at the top.
+@immutable
 final class RackGeometry {
   const RackGeometry(this.heightU);
 
@@ -206,4 +208,45 @@ final class RackGeometry {
   /// `− ghostHeight/2` term expresses, not a second derivation.
   int ruIndexForCursorY(double cursorSceneY, int deviceH) =>
       ruIndexForTopY(cursorSceneY - (deviceH * unitsPerRu) / 2, deviceH);
+
+  /// The rack height implied by dragging THE RACK'S OWN TOP EDGE to
+  /// [topY] (docs/04-rack-editor.md §4.1's third way to change height).
+  ///
+  /// A genuinely different direction from [ruIndexForTopY], not a
+  /// rephrasing of it: that one snaps a DEVICE's top edge and clamps to
+  /// the CURRENT `heightU`, which is precisely the quantity this one is
+  /// solving for — it could never express "24U (+3)". Here the rack's
+  /// BOTTOM edge is fixed at `y = rackHeight` and the top edge moves, so
+  /// the height is the distance between them in U. That fixed bottom is
+  /// also why "growing is always safe... existing ruIndex values are
+  /// untouched": U1 does not move when the top does.
+  ///
+  /// Bounds default to CR-038's `[1, 60]`. `topY == 0` returns the
+  /// current [heightU] exactly (the identity case), and a negative
+  /// [topY] — the edge dragged ABOVE the current top — grows the rack.
+  int heightForTopEdgeY(
+    double topY, {
+    int minHeightU = 1,
+    int maxHeightU = 60,
+  }) => ((rackHeight - topY) / unitsPerRu).round().clamp(
+    minHeightU,
+    maxHeightU,
+  );
+
+  // A single-field value type with no equality is a repaint hazard the
+  // moment `heightU` becomes mutable: every rebuild allocates a fresh
+  // `RackGeometry`, and any `shouldRepaint` comparing `geo != old.geo`
+  // would then be unconditionally true. Value equality makes those
+  // comparisons mean what they read as.
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RackGeometry && other.heightU == heightU;
+
+  @override
+  int get hashCode => heightU.hashCode;
+
+  @override
+  String toString() => 'RackGeometry(${heightU}U)';
 }
