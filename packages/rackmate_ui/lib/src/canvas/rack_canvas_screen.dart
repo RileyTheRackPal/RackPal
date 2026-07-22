@@ -3,6 +3,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+
+import '../canvas/rack_metrics_row.dart';
 import 'package:flutter/services.dart'
     show
         HardwareKeyboard,
@@ -3144,35 +3146,47 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                   ),
                 ),
               ),
-              Positioned(
-                left: 12,
-                bottom: 12,
-                child: IgnorePointer(
-                  // A minimal transient-message stub (docs/04 §3.4's
-                  // "never silently stops"), NOT the full always-visible
-                  // status bar of §1 (cursor context / zoom / selection
-                  // rollup / project counts — still not-started, see
-                  // docs/m1-implementation-log.md). While `_status` has a
-                  // message (nudge-blocked / placement-confirmed), it
-                  // replaces the static help text; otherwise the help text
-                  // shows as before.
-                  child: AnimatedBuilder(
-                    animation: _status,
-                    builder: (context, _) => Text(
-                      _status.text ??
-                          'Click to select  ·  Ctrl/Cmd+click toggles  ·  '
-                              'drag a selected device to move  ·  Del '
-                              'removes  ·  Ctrl/Cmd+Z / +Shift+Z undo/redo  '
-                              '·  ↑↓ nudge/caret, Home/End/PgUp/PgDn  ·  '
-                              'scroll or middle-drag to pan  ·  Ctrl/Cmd+'
-                              'scroll to zoom',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+               Positioned.fill(
+                 child: Align(
+                   alignment: Alignment.bottomCenter,
+                   child: RackMetricsRow(
+                     ruCount: _rack.heightU,
+                     ruFree: 0, // TODO(M1): wire to actual computed free RU
+                     weightKg: 0.0, // TODO(M1): wire to actual weight
+                     vaDraw: 0, // TODO(M1): wire to actual VA draw
+                     outletCount: 0, // TODO(M1): wire to actual outlets
+                   ),
+                 ),
+               ),
+               Positioned(
+                 left: 12,
+                 bottom: 48,
+                 child: IgnorePointer(
+                   // A minimal transient-message stub (docs/04 §3.4's
+                   // "never silently stops"), NOT the full always-visible
+                   // status bar of §1 (cursor context / zoom / selection
+                   // rollup / project counts — still not-started, see
+                   // docs/m1-implementation-log.md). While `_status` has a
+                   // message (nudge-blocked / placement-confirmed), it
+                   // replaces the static help text; otherwise the help text
+                   // shows as before.
+                   child: AnimatedBuilder(
+                     animation: _status,
+                     builder: (context, _) => Text(
+                       _status.text ??
+                           'Click to select  ·  Ctrl/Cmd+click toggles  ·  '
+                               'drag a selected device to move  ·  Del '
+                               'removes  ·  Ctrl/Cmd+Z / +Shift+Z undo/redo  '
+                               '·  ↑↓ nudge/caret, Home/End/PgUp/PgDn  ·  '
+                               'scroll or middle-drag to pan  ·  Ctrl/Cmd+'
+                               'scroll to zoom',
+                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                         color: scheme.onSurfaceVariant,
+                       ),
+                     ),
+                   ),
+                 ),
+               ),
             ],
           ),
         );
