@@ -42,6 +42,25 @@ class RenderedSymbol {
   final Map<SymbolSide, List<SymbolPort>> ports;
 }
 
+/// Simple color palette for schematic rendering.
+final class SchematicPalette {
+  const SchematicPalette({
+    this.headerFill = 0xFFE8E8E8,
+    this.deviceStroke = 0xFF333333,
+    this.deviceFill = 0xFFFFFFFF,
+    this.portStroke = 0xFF333333,
+    this.wireColor = 0xFF4CAF50,
+    this.deviceDesignator = 0xFF333333, // text color for device name
+  });
+  
+  final int headerFill;
+  final int deviceStroke;
+  final int deviceFill;
+  final int portStroke;
+  final int wireColor;
+  final int deviceDesignator;
+}
+
 /// Symbol builder for schematic rendering.
 final class SymbolBuilder {
   /// Create a rendered symbol from template data.
@@ -93,7 +112,7 @@ final class SymbolBuilder {
     required FlutterDiagramCanvas canvas,
     required RenderedSymbol symbol,
     required DBox bounds,
-    required RackPalette palette,
+    required SchematicPalette palette,
     double xOffset = 0,
     double yOffset = 0,
   }) {
@@ -139,7 +158,7 @@ final class SymbolBuilder {
     required SymbolPort port,
     required SymbolSide side,
     required DBox bodyRect,
-    required RackPalette palette,
+    required SchematicPalette palette,
     required double xOffset,
     required double yOffset,
   }) {

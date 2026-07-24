@@ -52,11 +52,13 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     // Auto-layout symbols (placeholder - just position in a grid)
     _autolayoutSymbols();
     
-    // Build hit test data
-    _schematicHitTest = SchematicHitTest(
-      symbols: _symbols,
-      params: HitTestParams(),
-    );
+    // Build hit test data - only if we have symbols
+    if (_symbols.isNotEmpty) {
+      _schematicHitTest = SchematicHitTest(
+        symbols: _symbols,
+        params: HitTestParams(),
+      );
+    }
   }
   
   @override
@@ -66,8 +68,48 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   
   /// Run layout on all devices in the scene.
   void _autolayoutSymbols() {
-    // Create placeholder symbols - real template integration comes later
-    final gridSize = 120.0;
+    // Create default placeholder symbols - real template integration comes later
+    final gridSize = 180.0;
+    
+    // Always create at least one symbol for testing
+    if (widget.scene.fragments.isEmpty) {
+      final sidePorts = <SymbolSide, List<SymbolPort>>{
+        SymbolSide.left: [],
+        SymbolSide.right: [],
+        SymbolSide.top: [],
+        SymbolSide.bottom: [],
+      };
+      
+      // Add some dummy ports for testing
+      sidePorts[SymbolSide.left]?.add(SymbolPort(
+        id: 'in1',
+        side: SymbolSide.left,
+        offset: 20.0,
+        size: 8.0,
+        direction: PortDirection.sink,
+        family: SignalFamilyId('power'),
+      ));
+      
+      sidePorts[SymbolSide.right]?.add(SymbolPort(
+        id: 'out1',
+        side: SymbolSide.right,
+        offset: 20.0,
+        size: 8.0,
+        direction: PortDirection.source,
+        family: SignalFamilyId('signal'),
+      ));
+      
+      final symbol = RenderedSymbol(
+        id: 'default-device-1',
+        bodyRect: DBox.fromLtwh(50, 50, 140.0, 80.0),
+        headerHeight: 24.0,
+        ports: sidePorts,
+      );
+      
+      _symbols.add(symbol);
+      return;
+    }
+    
     var col = 0;
     var row = 0;
     
@@ -105,10 +147,10 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
           bodyRect: DBox.fromLtwh(
             col * gridSize + 50,
             row * gridSize + 50,
-            100.0,
-            60.0,
+            140.0,
+            80.0,
           ),
-          headerHeight: 20.0,
+          headerHeight: 24.0,
           ports: sidePorts,
         );
         
@@ -440,7 +482,7 @@ final class _RenderSchematicCanvas extends RenderBox {
         canvas: canvas,
         symbol: symbol,
         bounds: DBox.fromLtwh(0, 0, size.width, size.height),
-        palette: const RackPalette(),
+        palette: SchematicPalette(),
         xOffset: offset.dx,
         yOffset: offset.dy,
       );
