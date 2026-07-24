@@ -5,7 +5,7 @@
 // - Port hit-testing with magnetic snapping
 // - Wire drawing with chain-draw functionality
 
-import 'dart:math' show pi;
+// import 'dart:math' show pi; - unused import removed
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -281,10 +281,8 @@ DPt offsetToDpt(Offset offset) => DPt(offset.dx, offset.dy);
 final class _SchematicLayoutDelegate extends SingleChildLayoutDelegate {
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
-    return BoxConstraints.tightFor(
-      width: double.infinity,
-      height: double.infinity,
-    );
+    // Allow child to be any size up to constraints
+    return constraints;
   }
   
   @override
@@ -451,16 +449,15 @@ final class _RenderSchematicCanvas extends RenderBox {
   bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
     final scenePos = DPt(position.dx, position.dy);
     
+    // Always add self to receive pointer events
+    result.add(BoxHitTestEntry(this, position));
+    
     if (_schematicHitTest != null) {
       final hit = _schematicHitTest!.testPoint(scenePos);
-      
-      // Add self for pan/zoom
-      result.add(BoxHitTestEntry(this, position));
-      
       return hit.hit != SchematicHitType.none;
     }
     
-    return false;
+    return true; // Always hit test self when no hit tester available
   }
   
   @override
