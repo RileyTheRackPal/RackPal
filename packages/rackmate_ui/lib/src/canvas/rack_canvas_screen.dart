@@ -14,6 +14,7 @@ import 'package:flutter/services.dart'
         SystemMouseCursors;
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/canvas/canvas_intent.dart';
+import 'package:rackmate_ui/src/canvas/staging_bin_overlay.dart';
 import 'package:rackmate_ui/src/canvas/compaction_preview_bar.dart';
 import 'package:rackmate_ui/src/canvas/compaction_preview_controller.dart';
 import 'package:rackmate_ui/src/canvas/drag_preview_controller.dart';
@@ -255,6 +256,10 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// snap-line/hatch instead). Inserted on lift, removed on every drag-end
   /// path.
   OverlayEntry? _paletteDragOverlayEntry;
+
+  /// Staging Bin overlay entry — shown when a palette drag exits canvas bounds,
+  /// indicating where items will be placed (in the staging bin).
+  OverlayEntry? _stagingBinOverlayEntry;
 
   /// The move-drag's own 1.2s blocked-release timer and screen-space chip
   /// overlay — siblings of [_blockedReleaseTimer]/[_paletteDragOverlayEntry]
@@ -2443,6 +2448,14 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       _paletteDrag.exitCanvas();
     }
 
+    // Staging Bin: show when outside canvas, hide when inside
+    final isOutsideCanvas = !insideCanvas && _paletteDrag.phase == DragPreviewPhase.lifted;
+    if (isOutsideCanvas) {
+      _insertStagingBinOverlay();
+    } else if (!isOutsideCanvas && _stagingBinOverlayEntry != null) {
+      _removeStagingBinOverlay();
+    }
+
     if (_paletteDrag.phase == DragPreviewPhase.dragging) {
       final canvasBox = box! as RenderBox;
       final local = canvasBox.globalToLocal(globalPosition);
@@ -2555,10 +2568,10 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
 
     if (_paletteDrag.phase != DragPreviewPhase.dragging) {
       // Released while still armed/lifted — outside the canvas widget's
-      // bounds entirely. SCOPE DECISION: no Staging Bin exists, so this is
-      // a plain no-op (no shake: an expected outcome, not a violated
-      // attempt at a valid drop).
+      // bounds entirely. This is now handled by the Staging Bin: show an
+      // overlay indicating where items will be placed.
       _removePaletteDragOverlay();
+      _removeStagingBinOverlay();
       _paletteDrag.reset();
       return;
     }
@@ -2686,6 +2699,25 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   void _removePaletteDragOverlay() {
     _paletteDragOverlayEntry?.remove();
     _paletteDragOverlayEntry = null;
+  }
+
+  void _insertStagingBinOverlay() {
+    if (_stagingBinOverlayEntry != null) return;
+    final box = _canvasBoxKey.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.attached) return;
+    
+    _stagingBinOverlayEntry = OverlayEntry(
+      builder: (context) => StagingBinOverlay(
+        controller: _paletteDrag,
+        canvasSize: box.size,
+      ),
+    );
+    Overlay.of(context, rootOverlay: true).insert(_stagingBinOverlayEntry!);
+  }
+
+  void _removeStagingBinOverlay() {
+    _stagingBinOverlayEntry?.remove();
+    _stagingBinOverlayEntry = null;
   }
 
   /// The move drag's RU-range + reason chips (docs/04 §3.3 step 3's
