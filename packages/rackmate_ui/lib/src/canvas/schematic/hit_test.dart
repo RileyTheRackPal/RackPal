@@ -222,26 +222,26 @@ final class SchematicHitTest {
     return sqrt(dx * dx + dy * dy);
   }
   
-  /// Create a mock PortDef for testing compatibility.
-  PortDef _mockPortDef(SymbolPort port, SymbolSide side) {
-    // Direction is determined by side (left=source, right=sink, etc.)
-    final direction = switch (side) {
-      SymbolSide.left => PortDirection.source,
-      SymbolSide.right => PortDirection.sink,
-      _ => PortDirection.bidirectional,
-    };
-    
-       return PortDef(
-         key: PortKey(port.id),
-         label: '',
-         connector: const ConnectorTypeId('mock'),
-         signalFamily: port.family,
-      face: Face.front,
-      position: PanelPosition(ruOffset: 0, xTwelfth: 0, xFineNm: Len(0), yFineNm: Len(0)),
+   /// Create a mock PortDef for testing compatibility.
+   PortDef _mockPortDef(SymbolPort port, SymbolSide side) {
+     // Direction is determined by side (left=source, right=sink, etc.)
+     final direction = switch (side) {
+       SymbolSide.left => PortDirection.source,
+       SymbolSide.right => PortDirection.sink,
+       _ => PortDirection.bidirectional,
+     };
+     
+     return PortDef(
+       key: PortKey(port.id),
+       label: '',
+       connector: const ConnectorTypeId('mock'),
+       signalFamily: port.family,
+       face: Face.front,
+       position: PanelPosition(ruOffset: 0, xTwelfth: 0, xFineNm: Len(0), yFineNm: Len(0)),
        order: FracIndex('a0'),
-      direction: direction,
-    );
-  }
+       direction: direction,
+     );
+   }
 }
 
 /// Extension on DPt for distance calculations.
