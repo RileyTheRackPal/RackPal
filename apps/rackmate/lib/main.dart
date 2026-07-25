@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' show WidgetsBinding;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:rackmate_core/rackmate_core.dart';
@@ -136,6 +139,11 @@ class __SchematicWithToolbarState extends State<_SchematicWithToolbar> {
   void initState() {
     super.initState();
     _wireDrawer = WireDrawer(params: HitTestParams());
+    // Initialize hit test with empty symbols - will be updated when autolayout runs
+    _schematicHitTest = SchematicHitTest(
+      symbols: const [],
+      params: HitTestParams(),
+    );
   }
 
   @override
@@ -145,12 +153,15 @@ class __SchematicWithToolbarState extends State<_SchematicWithToolbar> {
   }
 
   void _updateHitTestIfSymbolsReady(List<RenderedSymbol> symbols) {
-    if (symbols.isNotEmpty && _schematicHitTest == null) {
-      setState(() {
-        _schematicHitTest = SchematicHitTest(
-          symbols: symbols,
-          params: HitTestParams(),
-        );
+    if (symbols.isNotEmpty && _schematicHitTest != null) {
+      // Defer setState to post-frame to avoid call during build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          _schematicHitTest = SchematicHitTest(
+            symbols: symbols,
+            params: HitTestParams(),
+          );
+        });
       });
     }
   }
@@ -177,6 +188,8 @@ class __SchematicWithToolbarState extends State<_SchematicWithToolbar> {
                 measurer: widget.measurer,
                 wireDrawer: _wireDrawer,
                 schematicHitTest: _schematicHitTest,
+                onSymbolsReady: (symbols) =>
+                    _updateHitTestIfSymbolsReady(symbols),
               );
             },
           ),

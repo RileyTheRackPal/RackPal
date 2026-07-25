@@ -5,8 +5,11 @@
 // - Port hit-testing with magnetic snapping
 // - Wire drawing with chain-draw functionality
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart' show WidgetsBinding;
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/canvas/schematic/hit_test.dart';
 import 'package:rackmate_ui/src/canvas/schematic/symbol.dart';
@@ -87,6 +90,7 @@ final class SchematicCanvasScreen extends StatefulWidget {
     required this.measurer,
     required this.wireDrawer,
     required this.schematicHitTest,
+    this.onSymbolsReady,
   });
 
   final DiagramScene scene;
@@ -94,6 +98,7 @@ final class SchematicCanvasScreen extends StatefulWidget {
   final TextMeasurer measurer;
   final WireDrawer wireDrawer;
   final SchematicHitTest? schematicHitTest;
+  final void Function(List<RenderedSymbol>)? onSymbolsReady;
 
   @override
   State<SchematicCanvasScreen> createState() => _SchematicCanvasScreenState();
@@ -112,8 +117,8 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   void initState() {
     super.initState();
 
-    // Auto-layout symbols (placeholder - just position in a grid)
-    _autolayoutSymbols();
+    // Auto-layout symbols on next frame to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) => _autolayoutSymbols());
   }
 
   @override
@@ -128,6 +133,9 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
 
     // Always create at least one symbol for testing
     if (widget.scene.fragments.isEmpty) {
+      // Clear existing symbols before adding new ones
+      _symbols.clear();
+
       final sidePorts = <SymbolSide, List<SymbolPort>>{
         SymbolSide.left: [],
         SymbolSide.right: [],
@@ -166,6 +174,9 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       );
 
       _symbols.add(symbol);
+
+      // Notify parent that symbols are ready
+      widget.onSymbolsReady?.call(_symbols);
       return;
     }
 
@@ -227,6 +238,9 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
         }
       }
     }
+
+    // Notify parent that symbols are ready
+    widget.onSymbolsReady?.call(_symbols);
   }
 
   @override
