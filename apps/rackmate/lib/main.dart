@@ -7,6 +7,7 @@ import 'package:rackmate_ui/rackmate_ui.dart';
 import 'package:rackmate_ui/src/canvas/schematic/hit_test.dart';
 import 'package:rackmate_ui/src/canvas/schematic/schematic_canvas_screen.dart';
 import 'package:rackmate_ui/src/canvas/schematic/wire_drawing.dart';
+import 'package:rackmate_ui/src/canvas/schematic/symbol.dart';
 import 'package:rackmate_ui/src/schedule/schedule_screen.dart';
 
 // M1: the rack editor canvas. The viewport skeleton now hosts a real rack
@@ -129,6 +130,7 @@ class _SchematicWithToolbar extends StatefulWidget {
 
 class __SchematicWithToolbarState extends State<_SchematicWithToolbar> {
   late WireDrawer _wireDrawer;
+  SchematicHitTest? _schematicHitTest;
 
   @override
   void initState() {
@@ -142,8 +144,20 @@ class __SchematicWithToolbarState extends State<_SchematicWithToolbar> {
     super.dispose();
   }
 
+  void _updateHitTestIfSymbolsReady(List<RenderedSymbol> symbols) {
+    if (symbols.isNotEmpty && _schematicHitTest == null) {
+      setState(() {
+        _schematicHitTest = SchematicHitTest(
+          symbols: symbols,
+          params: HitTestParams(),
+        );
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Create a wrapper that exposes the hit test to child widgets
     return Column(
       children: [
         SchematicToolbar(
@@ -154,10 +168,17 @@ class __SchematicWithToolbarState extends State<_SchematicWithToolbar> {
           onDomainFilterChanged: (value) => setState(() {}),
         ),
         Expanded(
-          child: SchematicCanvasScreen(
-            scene: widget.scene,
-            rackId: widget.rackId,
-            measurer: widget.measurer,
+          child: Builder(
+            builder: (context) {
+              // The hit test will be updated when the render object has symbols
+              return SchematicCanvasScreen(
+                scene: widget.scene,
+                rackId: widget.rackId,
+                measurer: widget.measurer,
+                wireDrawer: _wireDrawer,
+                schematicHitTest: _schematicHitTest,
+              );
+            },
           ),
         ),
       ],

@@ -5,11 +5,8 @@
 // - Port hit-testing with magnetic snapping
 // - Wire drawing with chain-draw functionality
 
-// import 'dart:math' show pi; - unused import removed
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/canvas/schematic/hit_test.dart';
 import 'package:rackmate_ui/src/canvas/schematic/symbol.dart';
@@ -88,20 +85,21 @@ final class SchematicCanvasScreen extends StatefulWidget {
     required this.scene,
     required this.rackId,
     required this.measurer,
+    required this.wireDrawer,
+    required this.schematicHitTest,
   });
 
   final DiagramScene scene;
   final String rackId;
   final TextMeasurer measurer;
+  final WireDrawer wireDrawer;
+  final SchematicHitTest? schematicHitTest;
 
   @override
   State<SchematicCanvasScreen> createState() => _SchematicCanvasScreenState();
 }
 
 final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
-  late WireDrawer _wireDrawer;
-  SchematicHitTest? _schematicHitTest;
-
   // Auto-layout state
   final List<RenderedSymbol> _symbols = [];
   final List<WireConnection> _wires = [];
@@ -113,18 +111,9 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   @override
   void initState() {
     super.initState();
-    _wireDrawer = WireDrawer(params: HitTestParams());
 
     // Auto-layout symbols (placeholder - just position in a grid)
     _autolayoutSymbols();
-
-    // Build hit test data - only if we have symbols
-    if (_symbols.isNotEmpty) {
-      _schematicHitTest = SchematicHitTest(
-        symbols: _symbols,
-        params: HitTestParams(),
-      );
-    }
   }
 
   @override
@@ -258,8 +247,8 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
                 measurer: widget.measurer,
                 symbols: _symbols,
                 wires: _wires,
-                wireDrawer: _wireDrawer,
-                schematicHitTest: _schematicHitTest,
+                wireDrawer: widget.wireDrawer,
+                schematicHitTest: widget.schematicHitTest,
               ),
             ],
           ),
@@ -270,16 +259,21 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
 
   void _handlePointerDown(PointerDownEvent event) {
     final scenePos = offsetToDpt(event.position);
+    final hitTest = widget.schematicHitTest;
 
     // Check for port hit
-    if (_schematicHitTest != null) {
-      final result = _schematicHitTest!.testPoint(scenePos);
+    if (hitTest != null) {
+      final result = hitTest.testPoint(scenePos);
 
       if (result.hit == SchematicHitType.port &&
           result.nodeId != null &&
           result.portId != null) {
         // Start wire drawing from this port
-        _wireDrawer.startFrom(result.nodeId!, result.portId!, result.side!);
+        widget.wireDrawer.startFrom(
+          result.nodeId!,
+          result.portId!,
+          result.side!,
+        );
 
         setState(() {});
       } else if (result.hit == SchematicHitType.node && result.nodeId != null) {
@@ -308,10 +302,10 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
           break;
         }
       }
-    } else if (_wireDrawer.state == DrawState.preview &&
-        _wireDrawer.fromNodeId != null) {
+    } else if (widget.wireDrawer.state == DrawState.preview &&
+        widget.wireDrawer.fromNodeId != null) {
       // Update wire preview
-      _wireDrawer.updatePreview(scenePos, snap: true);
+      widget.wireDrawer.updatePreview(scenePos, snap: true);
     }
 
     setState(() {});
@@ -326,16 +320,16 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       _draggableNodeId = null;
 
       setState(() {});
-    } else if (_wireDrawer.state == DrawState.preview &&
-        _wireDrawer.fromNodeId != null) {
+    } else if (widget.wireDrawer.state == DrawState.preview &&
+        widget.wireDrawer.fromNodeId != null) {
       // Check if ended on a port
-      final result = _schematicHitTest?.testPoint(scenePos);
+      final result = widget.schematicHitTest?.testPoint(scenePos);
 
       if (result?.hit == SchematicHitType.port &&
           result?.nodeId != null &&
           result?.portId != null) {
         // Finish wire connection
-        _wireDrawer.finishAt(
+        widget.wireDrawer.finishAt(
           result!.nodeId!,
           result.portId!,
           result.side!,
@@ -343,7 +337,7 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
         );
       } else {
         // Cancel - wire not connected
-        _wireDrawer.cancel();
+        widget.wireDrawer.cancel();
       }
     }
 
@@ -571,20 +565,26 @@ final class _RenderSchematicCanvas extends RenderBox {
     // Paint wires
     if (_wireDrawer.wires.isNotEmpty) {
       for (final wire in _wireDrawer.wires) {
-        _paintWire(canvas, wire);
+        _paintWire(canvas, wire, offset);
       }
     }
 
     // Paint preview wire
     if (_wireDrawer.state == DrawState.preview &&
-        _wireDrawer.fromNodeId != null) {
-      final start = DPt(0, 0); // TODO: calculate from symbol
-      final end = _wireDrawer.previewPos ?? DPt(100, 100);
+        _wireDrawer.fromNodeId != null &&
+        _wireDrawer.previewPos != null) {
+      final startPos = _getPortPosition(
+        _wireDrawer.fromNodeId!,
+        _wireDrawer.fromPortId!,
+      );
+      final endPos = _wireDrawer.previewPos!;
+
+      if (startPos == null) return;
 
       canvas.drawPath(
         DiagramPath([
-          MoveTo(start.x, start.y),
-          LineTo(end.x, end.y),
+          MoveTo(startPos.x, startPos.y),
+          LineTo(endPos.x, endPos.y),
           const ClosePath(),
         ]),
         stroke: Stroke(argb: 0x804CAF50, widthPt: 2, dash: const [10, 5]),
@@ -592,18 +592,59 @@ final class _RenderSchematicCanvas extends RenderBox {
     }
   }
 
-  void _paintWire(FlutterDiagramCanvas canvas, WireConnection wire) {
-    // Calculate positions from symbols
-    final startPos = DPt(0, 0);
-    final endPos = DPt(100, 50);
+  void _paintWire(
+    FlutterDiagramCanvas canvas,
+    WireConnection wire,
+    Offset offset,
+  ) {
+    final start = _getPortPosition(wire.fromNodeId, wire.fromPortId);
+    final end = _getPortPosition(wire.toNodeId, wire.toPortId);
+
+    if (start == null || end == null) return;
 
     final path = DiagramPath([
-      MoveTo(startPos.x, startPos.y),
-      LineTo(endPos.x, endPos.y),
+      MoveTo(start.x, start.y),
+      LineTo(end.x, end.y),
       const ClosePath(),
     ]);
 
     canvas.drawPath(path, stroke: Stroke(argb: wire.color, widthPt: 2));
+  }
+
+  DPt? _getPortPosition(String nodeId, String portId) {
+    for (final symbol in _symbols) {
+      if (symbol.id == nodeId) {
+        for (final entry in symbol.ports.entries) {
+          final side = entry.key;
+          final ports = entry.value;
+          for (final port in ports) {
+            if (port.id == portId) {
+              // Calculate position based on side
+              final double x, y;
+              switch (side) {
+                case SymbolSide.left:
+                  x = symbol.bodyRect.left - port.size / 2;
+                  y = symbol.bodyRect.top + symbol.headerHeight + port.offset;
+                  return DPt(x, y);
+                case SymbolSide.right:
+                  x = symbol.bodyRect.right + port.size / 2;
+                  y = symbol.bodyRect.top + symbol.headerHeight + port.offset;
+                  return DPt(x, y);
+                case SymbolSide.top:
+                  x = symbol.bodyRect.left + port.offset;
+                  y = symbol.bodyRect.top - port.size / 2;
+                  return DPt(x, y);
+                case SymbolSide.bottom:
+                  x = symbol.bodyRect.left + port.offset;
+                  y = symbol.bodyRect.bottom + port.size / 2;
+                  return DPt(x, y);
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 }
 
