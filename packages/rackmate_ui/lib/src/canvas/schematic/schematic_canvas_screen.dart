@@ -7,6 +7,7 @@
 
 // import 'dart:math' show pi; - unused import removed
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rackmate_core/rackmate_core.dart';
@@ -14,6 +15,71 @@ import 'package:rackmate_ui/src/canvas/schematic/hit_test.dart';
 import 'package:rackmate_ui/src/canvas/schematic/symbol.dart';
 import 'package:rackmate_ui/src/canvas/schematic/wire_drawing.dart';
 import 'package:rackmate_ui/src/draw/flutter_canvas.dart';
+
+/// Toolbar controls for schematic canvas.
+final class SchematicToolbar extends StatelessWidget {
+  const SchematicToolbar({
+    super.key,
+    required this.wireDrawer,
+    required this.onChainModeChanged,
+    required this.onNewWirePressed,
+    required this.domainFilter,
+    required this.onDomainFilterChanged,
+  });
+
+  final WireDrawer wireDrawer;
+  final VoidCallback onChainModeChanged;
+  final VoidCallback onNewWirePressed;
+  final String domainFilter;
+  final ValueChanged<String?> onDomainFilterChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Chain mode toggle
+          IconButton(
+            icon: Icon(
+              wireDrawer.chainMode ? Icons.link : Icons.link_off,
+              color: wireDrawer.chainMode ? Colors.green : null,
+            ),
+            tooltip: wireDrawer.chainMode
+                ? 'Chain mode: ON'
+                : 'Chain mode: OFF',
+            onPressed: onChainModeChanged,
+          ),
+          // New wire button
+          ElevatedButton.icon(
+            icon: const Icon(Icons.add_link),
+            label: const Text('New Wire'),
+            onPressed: onNewWirePressed,
+          ),
+          const SizedBox(width: 16),
+          // Domain filter dropdown
+          Expanded(
+            child: DropdownButton<String?>(
+              value: domainFilter.isEmpty ? null : domainFilter,
+              hint: const Text('Filter by Net'),
+              items: [
+                DropdownMenuItem(value: '', child: const Text('All Nets')),
+                DropdownMenuItem(value: 'power', child: const Text('Power')),
+                DropdownMenuItem(value: 'signal', child: const Text('Signal')),
+              ],
+              onChanged: onDomainFilterChanged,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// Schematic canvas widget with automatic layout.
 final class SchematicCanvasScreen extends StatefulWidget {
@@ -23,11 +89,11 @@ final class SchematicCanvasScreen extends StatefulWidget {
     required this.rackId,
     required this.measurer,
   });
-  
+
   final DiagramScene scene;
   final String rackId;
   final TextMeasurer measurer;
-  
+
   @override
   State<SchematicCanvasScreen> createState() => _SchematicCanvasScreenState();
 }
@@ -35,23 +101,23 @@ final class SchematicCanvasScreen extends StatefulWidget {
 final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   late WireDrawer _wireDrawer;
   SchematicHitTest? _schematicHitTest;
-  
+
   // Auto-layout state
   final List<RenderedSymbol> _symbols = [];
   final List<WireConnection> _wires = [];
-  
+
   // Input handling state
   String? _draggableNodeId;
   bool _isDraggingNode = false;
-  
+
   @override
   void initState() {
     super.initState();
     _wireDrawer = WireDrawer(params: HitTestParams());
-    
+
     // Auto-layout symbols (placeholder - just position in a grid)
     _autolayoutSymbols();
-    
+
     // Build hit test data - only if we have symbols
     if (_symbols.isNotEmpty) {
       _schematicHitTest = SchematicHitTest(
@@ -60,17 +126,17 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       );
     }
   }
-  
+
   @override
   void dispose() {
     super.dispose();
   }
-  
+
   /// Run layout on all devices in the scene.
   void _autolayoutSymbols() {
     // Create default placeholder symbols - real template integration comes later
     final gridSize = 180.0;
-    
+
     // Always create at least one symbol for testing
     if (widget.scene.fragments.isEmpty) {
       final sidePorts = <SymbolSide, List<SymbolPort>>{
@@ -79,40 +145,44 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
         SymbolSide.top: [],
         SymbolSide.bottom: [],
       };
-      
+
       // Add some dummy ports for testing
-      sidePorts[SymbolSide.left]?.add(SymbolPort(
-        id: 'in1',
-        side: SymbolSide.left,
-        offset: 20.0,
-        size: 8.0,
-        direction: PortDirection.sink,
-        family: SignalFamilyId('power'),
-      ));
-      
-      sidePorts[SymbolSide.right]?.add(SymbolPort(
-        id: 'out1',
-        side: SymbolSide.right,
-        offset: 20.0,
-        size: 8.0,
-        direction: PortDirection.source,
-        family: SignalFamilyId('signal'),
-      ));
-      
+      sidePorts[SymbolSide.left]?.add(
+        SymbolPort(
+          id: 'in1',
+          side: SymbolSide.left,
+          offset: 20.0,
+          size: 8.0,
+          direction: PortDirection.sink,
+          family: SignalFamilyId('power'),
+        ),
+      );
+
+      sidePorts[SymbolSide.right]?.add(
+        SymbolPort(
+          id: 'out1',
+          side: SymbolSide.right,
+          offset: 20.0,
+          size: 8.0,
+          direction: PortDirection.source,
+          family: SignalFamilyId('signal'),
+        ),
+      );
+
       final symbol = RenderedSymbol(
         id: 'default-device-1',
         bodyRect: DBox.fromLtwh(50, 50, 140.0, 80.0),
         headerHeight: 24.0,
         ports: sidePorts,
       );
-      
+
       _symbols.add(symbol);
       return;
     }
-    
+
     var col = 0;
     var row = 0;
-    
+
     for (final fragmentId in widget.scene.fragments.keys) {
       if (!fragmentId.startsWith('rack-')) {
         // Create a simple placeholder symbol with dummy ports
@@ -122,26 +192,30 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
           SymbolSide.top: [],
           SymbolSide.bottom: [],
         };
-        
+
         // Add some dummy ports for testing
-        sidePorts[SymbolSide.left]?.add(SymbolPort(
-          id: 'in1',
-          side: SymbolSide.left,
-          offset: 20.0,
-          size: 8.0,
-          direction: PortDirection.sink,
-          family: SignalFamilyId('power'),
-        ));
-        
-        sidePorts[SymbolSide.right]?.add(SymbolPort(
-          id: 'out1',
-          side: SymbolSide.right,
-          offset: 20.0,
-          size: 8.0,
-          direction: PortDirection.source,
-          family: SignalFamilyId('signal'),
-        ));
-        
+        sidePorts[SymbolSide.left]?.add(
+          SymbolPort(
+            id: 'in1',
+            side: SymbolSide.left,
+            offset: 20.0,
+            size: 8.0,
+            direction: PortDirection.sink,
+            family: SignalFamilyId('power'),
+          ),
+        );
+
+        sidePorts[SymbolSide.right]?.add(
+          SymbolPort(
+            id: 'out1',
+            side: SymbolSide.right,
+            offset: 20.0,
+            size: 8.0,
+            direction: PortDirection.source,
+            family: SignalFamilyId('signal'),
+          ),
+        );
+
         final symbol = RenderedSymbol(
           id: fragmentId,
           bodyRect: DBox.fromLtwh(
@@ -153,9 +227,9 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
           headerHeight: 24.0,
           ports: sidePorts,
         );
-        
+
         _symbols.add(symbol);
-        
+
         if (col >= 3) {
           col = 0;
           row++;
@@ -165,7 +239,7 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       }
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Listener(
@@ -193,32 +267,34 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       ),
     );
   }
-  
+
   void _handlePointerDown(PointerDownEvent event) {
     final scenePos = offsetToDpt(event.position);
-    
+
     // Check for port hit
     if (_schematicHitTest != null) {
       final result = _schematicHitTest!.testPoint(scenePos);
-      
-      if (result.hit == SchematicHitType.port && result.nodeId != null && result.portId != null) {
+
+      if (result.hit == SchematicHitType.port &&
+          result.nodeId != null &&
+          result.portId != null) {
         // Start wire drawing from this port
         _wireDrawer.startFrom(result.nodeId!, result.portId!, result.side!);
-        
+
         setState(() {});
       } else if (result.hit == SchematicHitType.node && result.nodeId != null) {
         // Start dragging this node
         _draggableNodeId = result.nodeId;
         _isDraggingNode = true;
-        
+
         setState(() {});
       }
     }
   }
-  
+
   void _handlePointerMove(PointerMoveEvent event) {
     final scenePos = offsetToDpt(event.position);
-    
+
     if (_isDraggingNode && _draggableNodeId != null) {
       // Update node position
       for (final symbol in _symbols) {
@@ -232,27 +308,29 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
           break;
         }
       }
-    } else if (_wireDrawer.state == DrawState.preview && _wireDrawer.fromNodeId != null) {
+    } else if (_wireDrawer.state == DrawState.preview &&
+        _wireDrawer.fromNodeId != null) {
       // Update wire preview
       _wireDrawer.updatePreview(scenePos, snap: true);
     }
-    
+
     setState(() {});
   }
-  
+
   void _handlePointerUp(PointerUpEvent event) {
     final scenePos = offsetToDpt(event.position);
-    
+
     if (_isDraggingNode && _draggableNodeId != null) {
       // Finish dragging
       _isDraggingNode = false;
       _draggableNodeId = null;
-      
+
       setState(() {});
-    } else if (_wireDrawer.state == DrawState.preview && _wireDrawer.fromNodeId != null) {
+    } else if (_wireDrawer.state == DrawState.preview &&
+        _wireDrawer.fromNodeId != null) {
       // Check if ended on a port
       final result = _schematicHitTest?.testPoint(scenePos);
-      
+
       if (result?.hit == SchematicHitType.port &&
           result?.nodeId != null &&
           result?.portId != null) {
@@ -268,10 +346,9 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
         _wireDrawer.cancel();
       }
     }
-    
+
     setState(() {});
   }
-  
 }
 
 /// Convert Flutter Offset to DPt.
@@ -284,18 +361,19 @@ final class _SchematicLayoutDelegate extends SingleChildLayoutDelegate {
     // Allow child to be any size up to constraints
     return constraints;
   }
-  
+
   @override
   Offset getPositionForChild(Size size, Size childSize) {
     return Offset.zero;
   }
-  
+
   @override
   bool shouldRelayout(_SchematicLayoutDelegate oldDelegate) => false;
 }
 
 /// Render object widget for schematic canvas.
-final class _SchematicCanvasRenderObjectWidget extends SingleChildRenderObjectWidget {
+final class _SchematicCanvasRenderObjectWidget
+    extends SingleChildRenderObjectWidget {
   const _SchematicCanvasRenderObjectWidget({
     required this.scene,
     required this.rackId,
@@ -305,7 +383,7 @@ final class _SchematicCanvasRenderObjectWidget extends SingleChildRenderObjectWi
     required this.wireDrawer,
     required this.schematicHitTest,
   });
-  
+
   final DiagramScene scene;
   final String rackId;
   final TextMeasurer measurer;
@@ -313,18 +391,19 @@ final class _SchematicCanvasRenderObjectWidget extends SingleChildRenderObjectWi
   final List<WireConnection> wires;
   final WireDrawer wireDrawer;
   final SchematicHitTest? schematicHitTest;
-  
+
   @override
-  RenderObject createRenderObject(BuildContext context) => _RenderSchematicCanvas(
-    scene: scene,
-    rackId: rackId,
-    measurer: measurer,
-    symbols: symbols,
-    wires: wires,
-    wireDrawer: wireDrawer,
-    schematicHitTest: schematicHitTest,
-  );
-  
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderSchematicCanvas(
+        scene: scene,
+        rackId: rackId,
+        measurer: measurer,
+        symbols: symbols,
+        wires: wires,
+        wireDrawer: wireDrawer,
+        schematicHitTest: schematicHitTest,
+      );
+
   @override
   void updateRenderObject(BuildContext context, RenderObject renderObject) {
     final object = renderObject as _RenderSchematicCanvas;
@@ -356,73 +435,73 @@ final class _RenderSchematicCanvas extends RenderBox {
        _wires = wires,
        _wireDrawer = wireDrawer,
        _schematicHitTest = schematicHitTest;
-  
+
   DiagramScene _scene;
   String _rackId;
   TextMeasurer _measurer;
-  
+
   List<RenderedSymbol> _symbols;
   List<WireConnection> _wires;
   WireDrawer _wireDrawer;
   SchematicHitTest? _schematicHitTest;
-  
+
   DiagramScene get scene => _scene;
   set scene(DiagramScene value) {
     if (_scene == value) return;
     _scene = value;
     markNeedsLayout();
   }
-  
+
   String get rackId => _rackId;
   set rackId(String value) {
     if (_rackId == value) return;
     _rackId = value;
     markNeedsLayout();
   }
-  
+
   TextMeasurer get measurer => _measurer;
   set measurer(TextMeasurer value) {
     if (_measurer == value) return;
     _measurer = value;
     markNeedsPaint();
   }
-  
+
   List<RenderedSymbol> get symbols => _symbols;
   set symbols(List<RenderedSymbol> value) {
     if (identical(_symbols, value)) return;
     _symbols = value;
     markNeedsLayout();
   }
-  
+
   List<WireConnection> get wires => _wires;
   set wires(List<WireConnection> value) {
     if (_wires == value) return;
     _wires = value;
     markNeedsPaint();
   }
-  
+
   WireDrawer get wireDrawer => _wireDrawer;
   set wireDrawer(WireDrawer value) {
     if (identical(_wireDrawer, value)) return;
     _wireDrawer = value;
     markNeedsLayout();
   }
-  
+
   SchematicHitTest? get schematicHitTest => _schematicHitTest;
   set schematicHitTest(SchematicHitTest? value) {
     if (_schematicHitTest == value) return;
     _schematicHitTest = value;
     markNeedsPaint();
   }
-  
+
   @override
   bool get isRepaintBoundary => false;
-  
+
   @override
   Size computeDryLayout(BoxConstraints constraints) {
     double minX = double.infinity, minY = double.infinity;
     double maxX = -double.infinity, maxY = -double.infinity;
-    
+
     for (final symbol in _symbols) {
       final rect = symbol.bodyRect;
       minX = _min(minX, rect.left);
@@ -430,49 +509,53 @@ final class _RenderSchematicCanvas extends RenderBox {
       maxX = _max(maxX, rect.right);
       maxY = _max(maxY, rect.bottom);
     }
-    
+
     return Size(
-      constraints.constrainWidth((maxX - minX + 100).isNaN ? 400 : maxX - minX + 100),
-      constraints.constrainHeight((maxY - minY + 100).isNaN ? 300 : maxY - minY + 100),
+      constraints.constrainWidth(
+        (maxX - minX + 100).isNaN ? 400 : maxX - minX + 100,
+      ),
+      constraints.constrainHeight(
+        (maxY - minY + 100).isNaN ? 300 : maxY - minY + 100,
+      ),
     );
   }
-  
+
   @override
   void performLayout() {
     size = constraints.biggest;
   }
-  
+
   @override
   bool hitTestSelf(Offset position) => true;
-  
+
   @override
   bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
     final scenePos = DPt(position.dx, position.dy);
-    
+
     // Always add self to receive pointer events
     result.add(BoxHitTestEntry(this, position));
-    
+
     if (_schematicHitTest != null) {
       final hit = _schematicHitTest!.testPoint(scenePos);
       return hit.hit != SchematicHitType.none;
     }
-    
+
     return true; // Always hit test self when no hit tester available
   }
-  
+
   @override
   void paint(PaintingContext context, Offset offset) {
     final canvas = FlutterDiagramCanvas(
       context.canvas,
       measurer: _measurer,
     );
-    
+
     // Paint background
     canvas.drawRect(
       DBox.fromLtwh(0, 0, size.width, size.height),
       fill: Fill(0xFFFFFFFF),
     );
-    
+
     // Paint symbols
     for (final symbol in _symbols) {
       SymbolBuilder().paint(
@@ -484,19 +567,20 @@ final class _RenderSchematicCanvas extends RenderBox {
         yOffset: offset.dy,
       );
     }
-    
+
     // Paint wires
     if (_wireDrawer.wires.isNotEmpty) {
       for (final wire in _wireDrawer.wires) {
         _paintWire(canvas, wire);
       }
     }
-    
+
     // Paint preview wire
-    if (_wireDrawer.state == DrawState.preview && _wireDrawer.fromNodeId != null) {
+    if (_wireDrawer.state == DrawState.preview &&
+        _wireDrawer.fromNodeId != null) {
       final start = DPt(0, 0); // TODO: calculate from symbol
       final end = _wireDrawer.previewPos ?? DPt(100, 100);
-      
+
       canvas.drawPath(
         DiagramPath([
           MoveTo(start.x, start.y),
@@ -507,18 +591,18 @@ final class _RenderSchematicCanvas extends RenderBox {
       );
     }
   }
-  
+
   void _paintWire(FlutterDiagramCanvas canvas, WireConnection wire) {
     // Calculate positions from symbols
     final startPos = DPt(0, 0);
     final endPos = DPt(100, 50);
-    
+
     final path = DiagramPath([
       MoveTo(startPos.x, startPos.y),
       LineTo(endPos.x, endPos.y),
       const ClosePath(),
     ]);
-    
+
     canvas.drawPath(path, stroke: Stroke(argb: wire.color, widthPt: 2));
   }
 }
@@ -530,7 +614,7 @@ final class _LayoutNode {
     required this.width,
     required this.height,
   });
-  
+
   final String id;
   final double width;
   final double height;

@@ -18,7 +18,7 @@ final class SymbolPort {
     required this.direction, // source/sink/bidirectional
     required this.family, // signal family id
   });
-  
+
   final String id;
   final SymbolSide side;
   final double offset;
@@ -35,7 +35,7 @@ class RenderedSymbol {
     required this.headerHeight, // header band height
     required this.ports, // ports on each side
   });
-  
+
   final String id;
   DBox bodyRect;
   final double headerHeight;
@@ -52,7 +52,7 @@ final class SchematicPalette {
     this.wireColor = 0xFF4CAF50,
     this.deviceDesignator = 0xFF333333, // text color for device name
   });
-  
+
   final int headerFill;
   final int deviceStroke;
   final int deviceFill;
@@ -78,27 +78,33 @@ final class SymbolBuilder {
       SymbolSide.top: [],
       SymbolSide.bottom: [],
     };
-    
+
     // Distribute ports on edges based on their direction
     for (final port in ports.values) {
       final side = _getDefaultSideForPort(port);
-      final offset = _calculatePortOffset(side, sidePorts[side]!.length, portSize);
-      
-      sidePorts[side]?.add(SymbolPort(
-        id: port.key.v,
-        side: side,
-        offset: offset,
-        size: portSize,
-        direction: port.direction,
-        family: port.signalFamily,
-      ));
+      final offset = _calculatePortOffset(
+        side,
+        sidePorts[side]!.length,
+        portSize,
+      );
+
+      sidePorts[side]?.add(
+        SymbolPort(
+          id: port.key.v,
+          side: side,
+          offset: offset,
+          size: portSize,
+          direction: port.direction,
+          family: port.signalFamily,
+        ),
+      );
     }
-    
+
     // Calculate total height including header and ports
     final maxTop = _maxOffset(sidePorts[SymbolSide.top] ?? []);
     final maxBottom = _maxOffset(sidePorts[SymbolSide.bottom] ?? []);
     final bodyHeight = headerHeight + 2 * portSize + maxTop + maxBottom;
-    
+
     return RenderedSymbol(
       id: deviceId,
       bodyRect: DBox.fromLtwh(0, 0, bodyWidth, bodyHeight),
@@ -106,7 +112,7 @@ final class SymbolBuilder {
       ports: sidePorts,
     );
   }
-  
+
   /// Paint the rendered symbol to a canvas.
   void paint({
     required FlutterDiagramCanvas canvas,
@@ -117,7 +123,7 @@ final class SymbolBuilder {
     double yOffset = 0,
   }) {
     final bodyRect = _translateBox(symbol.bodyRect, xOffset, yOffset);
-    
+
     // Header band
     final headerRect = DBox.fromLtwh(
       bodyRect.left,
@@ -125,17 +131,20 @@ final class SymbolBuilder {
       bodyRect.width,
       symbol.headerHeight,
     );
-     // Header band - use deviceFill for header background
-     canvas.drawRect(headerRect, fill: Fill(palette.deviceFill));
-    
+    // Header band - use deviceFill for header background
+    canvas.drawRect(headerRect, fill: Fill(palette.deviceFill));
+
     // Device body outline
-     canvas.drawRect(bodyRect, stroke: Stroke(argb: palette.deviceStroke, widthPt: 1));
-    
+    canvas.drawRect(
+      bodyRect,
+      stroke: Stroke(argb: palette.deviceStroke, widthPt: 1),
+    );
+
     // Paint ports on each side
     for (final entry in symbol.ports.entries) {
       final side = entry.key;
       final ports = entry.value;
-      
+
       for (final port in ports) {
         _paintPort(
           canvas: canvas,
@@ -150,7 +159,7 @@ final class SymbolBuilder {
       }
     }
   }
-  
+
   /// Paint a single port.
   void _paintPort({
     required FlutterDiagramCanvas canvas,
@@ -163,7 +172,7 @@ final class SymbolBuilder {
     required double yOffset,
   }) {
     final DBox portRect;
-    
+
     switch (side) {
       case SymbolSide.left:
         portRect = DBox.fromLtwh(
@@ -194,12 +203,16 @@ final class SymbolBuilder {
           port.size,
         );
     }
-    
+
     // Port circle
     final cx = portRect.left + portRect.width / 2;
     final cy = portRect.top + portRect.height / 2;
-     canvas.drawCircle(DPt(cx, cy), port.size / 2, stroke: Stroke(argb: palette.deviceStroke, widthPt: 1));
-    
+    canvas.drawCircle(
+      DPt(cx, cy),
+      port.size / 2,
+      stroke: Stroke(argb: palette.deviceStroke, widthPt: 1),
+    );
+
     // Direction indicator (triangle)
     canvas.save();
     canvas.translate(cx, cy);
@@ -212,18 +225,31 @@ final class SymbolBuilder {
       LineTo(-triSize / 2, triSize / 2),
       const ClosePath(),
     ]);
-     canvas.drawPath(path, fill: Fill(palette.deviceFill));
+    canvas.drawPath(path, fill: Fill(palette.deviceFill));
     canvas.restore();
-    
+
     // Port label
     final anchor = _labelAnchor(side);
     canvas.drawText(
       'P${port.id}',
-      DPt(cx + (side == SymbolSide.left ? -10 : side == SymbolSide.right ? 5 : 0), cy + (side == SymbolSide.top ? -10 : side == SymbolSide.bottom ? 5 : 0)),
-       rackText(8, palette.deviceDesignator, anchor),
+      DPt(
+        cx +
+            (side == SymbolSide.left
+                ? -10
+                : side == SymbolSide.right
+                ? 5
+                : 0),
+        cy +
+            (side == SymbolSide.top
+                ? -10
+                : side == SymbolSide.bottom
+                ? 5
+                : 0),
+      ),
+      rackText(8, palette.deviceDesignator, anchor),
     );
   }
-  
+
   /// Get default side for a port based on direction.
   SymbolSide _getDefaultSideForPort(PortDef port) {
     switch (port.direction) {
@@ -237,19 +263,19 @@ final class SymbolBuilder {
         return SymbolSide.top;
     }
   }
-  
+
   /// Calculate port offset based on index and side.
   double _calculatePortOffset(SymbolSide side, int index, double spacing) {
     const baseOffset = 10.0;
     return baseOffset + index * spacing;
   }
-  
+
   /// Get maximum offset from a list of ports.
   double _maxOffset(List<SymbolPort> ports) {
     if (ports.isEmpty) return 0;
     return ports.map((p) => p.offset).reduce((a, b) => a > b ? a : b);
   }
-  
+
   /// Get rotation angle for direction indicator on a side.
   double _sideAngle(SymbolSide side) {
     const pi = 3.1415926535897932;
@@ -264,7 +290,7 @@ final class SymbolBuilder {
         return pi / 2; // pointing up
     }
   }
-  
+
   /// Get text anchor for port labels.
   TextAnchor _labelAnchor(SymbolSide side) {
     switch (side) {
@@ -288,6 +314,22 @@ DBox _translateBox(DBox box, double dx, double dy) => DBox.fromLtwh(
   box.height,
 );
 
+/// Extension on SymbolSide for string conversion.
+extension SymbolSideExt on SymbolSide {
+  String toShortString() {
+    switch (this) {
+      case SymbolSide.left:
+        return 'left';
+      case SymbolSide.right:
+        return 'right';
+      case SymbolSide.top:
+        return 'top';
+      case SymbolSide.bottom:
+        return 'bottom';
+    }
+  }
+}
+
 /// Extension on DPt for distance calculations.
 extension DPointExt on DPt {
   double distanceTo(DPt other) {
@@ -295,7 +337,7 @@ extension DPointExt on DPt {
     final dy = y - other.y;
     return _sqrt(dx * dx + dy * dy);
   }
-  
+
   static double _sqrt(double x) => x >= 0 ? _sqrtNewton(x) : double.nan;
   static double _sqrtNewton(double x) {
     if (x == 0) return 0;
