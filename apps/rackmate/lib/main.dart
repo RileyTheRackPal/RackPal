@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart' show WidgetsBinding;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:rackmate_core/rackmate_core.dart';
@@ -153,7 +152,7 @@ class __SchematicWithToolbarState extends State<_SchematicWithToolbar> {
   }
 
   void _updateHitTestIfSymbolsReady(List<RenderedSymbol> symbols) {
-    if (symbols.isNotEmpty && _schematicHitTest != null) {
+    if (symbols.isNotEmpty) {
       // Defer setState to post-frame to avoid call during build
       WidgetsBinding.instance.addPostFrameCallback((_) {
         setState(() {
