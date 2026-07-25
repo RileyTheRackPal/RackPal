@@ -167,7 +167,7 @@ class __SchematicWithToolbarState extends State<_SchematicWithToolbar> {
 
   @override
   Widget build(BuildContext context) {
-    // Create a wrapper that exposes the hit test to child widgets
+    // The hit test will be updated when the render object has symbols
     return Column(
       children: [
         SchematicToolbar(
@@ -178,19 +178,18 @@ class __SchematicWithToolbarState extends State<_SchematicWithToolbar> {
           onDomainFilterChanged: (value) => setState(() {}),
         ),
         Expanded(
-          child: Builder(
-            builder: (context) {
-              // The hit test will be updated when the render object has symbols
-              return SchematicCanvasScreen(
-                scene: widget.scene,
-                rackId: widget.rackId,
-                measurer: widget.measurer,
-                wireDrawer: _wireDrawer,
-                schematicHitTest: _schematicHitTest,
-                onSymbolsReady: (symbols) =>
-                    _updateHitTestIfSymbolsReady(symbols),
-              );
-            },
+          child: SchematicCanvasScreen(
+            scene: widget.scene,
+            rackId: widget.rackId,
+            measurer: widget.measurer,
+            wireDrawer: _wireDrawer,
+            schematicHitTest:
+                _schematicHitTest ??
+                SchematicHitTest(
+                  symbols: const [],
+                  params: HitTestParams(),
+                ),
+            onSymbolsReady: (symbols) => _updateHitTestIfSymbolsReady(symbols),
           ),
         ),
       ],

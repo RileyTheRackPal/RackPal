@@ -245,13 +245,13 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      onPointerDown: _handlePointerDown,
-      onPointerMove: _handlePointerMove,
-      onPointerUp: _handlePointerUp,
-      behavior: HitTestBehavior.translucent,
-      child: LayoutBuilder(
-        builder: (context, constraints) => CustomSingleChildLayout(
+    return LayoutBuilder(
+      builder: (context, constraints) => Listener(
+        onPointerDown: _handlePointerDown,
+        onPointerMove: _handlePointerMove,
+        onPointerUp: _handlePointerUp,
+        behavior: HitTestBehavior.translucent,
+        child: CustomSingleChildLayout(
           delegate: _SchematicLayoutDelegate(),
           child: Stack(
             children: [
