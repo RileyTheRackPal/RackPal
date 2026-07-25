@@ -543,12 +543,7 @@ final class _RenderSchematicCanvas extends RenderBox {
     // Always add self to receive pointer events
     result.add(BoxHitTestEntry(this, position));
 
-    if (_schematicHitTest != null) {
-      final hit = _schematicHitTest!.testPoint(scenePos);
-      return hit.hit != SchematicHitType.none;
-    }
-
-    return true; // Always hit test self when no hit tester available
+    return true; // Allow all pointer events through to this render object
   }
 
   @override
