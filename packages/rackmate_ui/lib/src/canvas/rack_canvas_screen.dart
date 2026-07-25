@@ -164,8 +164,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// interaction on this screen, and deliberately not a third
   /// `DragPreviewController` (see compaction_preview_controller.dart's
   /// header for why the shapes genuinely differ).
-  final CompactionPreviewController _compaction =
-      CompactionPreviewController();
+  final CompactionPreviewController _compaction = CompactionPreviewController();
 
   /// True only for the instant `_applyCompaction` is inside its
   /// `transact`. The stale-plan guard below fires on ANY document sequence
@@ -1372,7 +1371,8 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _dragMoved = false;
     _dragCancelled = false;
     _resizeDrag = false;
-    _dragModifierToggle = HardwareKeyboard.instance.isControlPressed ||
+    _dragModifierToggle =
+        HardwareKeyboard.instance.isControlPressed ||
         HardwareKeyboard.instance.isMetaPressed;
 
     // docs/04 §4.1's third way to change height, and it is tested BEFORE the
@@ -1403,8 +1403,8 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     final layout = region == null ? null : _layoutFor(region.entityId);
     if (layout != null) {
       _dragDeviceStartTopY = layout.rect.top;
-      _dragDeviceHeightU =
-          (layout.rect.height / RackGeometry.unitsPerRu).round();
+      _dragDeviceHeightU = (layout.rect.height / RackGeometry.unitsPerRu)
+          .round();
     }
 
     // Decide ONCE, here, whether this gesture can become a move — the same
@@ -2357,7 +2357,8 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     final body = _catalog[catalogId];
     if (body == null) return;
     final mountable = body.frontU > 0 || body.rearU > 0;
-    if (!mountable) return; // field devices: click/double-click-only, see above.
+    if (!mountable)
+      return; // field devices: click/double-click-only, see above.
 
     // THE EXCLUSIVITY RULE, asked rather than restated (see that section).
     // This subsumes the hand-written concurrent-arm guard that used to live
@@ -2449,7 +2450,8 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     }
 
     // Staging Bin: show when outside canvas, hide when inside
-    final isOutsideCanvas = !insideCanvas && _paletteDrag.phase == DragPreviewPhase.lifted;
+    final isOutsideCanvas =
+        !insideCanvas && _paletteDrag.phase == DragPreviewPhase.lifted;
     if (isOutsideCanvas) {
       _insertStagingBinOverlay();
     } else if (!isOutsideCanvas && _stagingBinOverlayEntry != null) {
@@ -2703,14 +2705,11 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
 
   void _insertStagingBinOverlay() {
     if (_stagingBinOverlayEntry != null) return;
-    final box = _canvasBoxKey.currentContext?.findRenderObject();
-    if (box is! RenderBox || !box.attached) return;
-    
+
+    // Staging bin only shows when phase == lifted (pointer outside canvas).
+    // No need to pass canvas size - the overlay checks controller.phase directly.
     _stagingBinOverlayEntry = OverlayEntry(
-      builder: (context) => StagingBinOverlay(
-        controller: _paletteDrag,
-        canvasSize: box.size,
-      ),
+      builder: (context) => StagingBinOverlay(controller: _paletteDrag),
     );
     Overlay.of(context, rootOverlay: true).insert(_stagingBinOverlayEntry!);
   }
@@ -3178,47 +3177,47 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                   ),
                 ),
               ),
-               Positioned.fill(
-                 child: Align(
-                   alignment: Alignment.bottomCenter,
-                   child: RackMetricsRow(
-                     ruCount: _rack.heightU,
-                     ruFree: 0, // TODO(M1): wire to actual computed free RU
-                     weightKg: 0.0, // TODO(M1): wire to actual weight
-                     vaDraw: 0, // TODO(M1): wire to actual VA draw
-                     outletCount: 0, // TODO(M1): wire to actual outlets
-                   ),
-                 ),
-               ),
-               Positioned(
-                 left: 12,
-                 bottom: 48,
-                 child: IgnorePointer(
-                   // A minimal transient-message stub (docs/04 §3.4's
-                   // "never silently stops"), NOT the full always-visible
-                   // status bar of §1 (cursor context / zoom / selection
-                   // rollup / project counts — still not-started, see
-                   // docs/m1-implementation-log.md). While `_status` has a
-                   // message (nudge-blocked / placement-confirmed), it
-                   // replaces the static help text; otherwise the help text
-                   // shows as before.
-                   child: AnimatedBuilder(
-                     animation: _status,
-                     builder: (context, _) => Text(
-                       _status.text ??
-                           'Click to select  ·  Ctrl/Cmd+click toggles  ·  '
-                               'drag a selected device to move  ·  Del '
-                               'removes  ·  Ctrl/Cmd+Z / +Shift+Z undo/redo  '
-                               '·  ↑↓ nudge/caret, Home/End/PgUp/PgDn  ·  '
-                               'scroll or middle-drag to pan  ·  Ctrl/Cmd+'
-                               'scroll to zoom',
-                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                         color: scheme.onSurfaceVariant,
-                       ),
-                     ),
-                   ),
-                 ),
-               ),
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: RackMetricsRow(
+                    ruCount: _rack.heightU,
+                    ruFree: 0, // TODO(M1): wire to actual computed free RU
+                    weightKg: 0.0, // TODO(M1): wire to actual weight
+                    vaDraw: 0, // TODO(M1): wire to actual VA draw
+                    outletCount: 0, // TODO(M1): wire to actual outlets
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 12,
+                bottom: 48,
+                child: IgnorePointer(
+                  // A minimal transient-message stub (docs/04 §3.4's
+                  // "never silently stops"), NOT the full always-visible
+                  // status bar of §1 (cursor context / zoom / selection
+                  // rollup / project counts — still not-started, see
+                  // docs/m1-implementation-log.md). While `_status` has a
+                  // message (nudge-blocked / placement-confirmed), it
+                  // replaces the static help text; otherwise the help text
+                  // shows as before.
+                  child: AnimatedBuilder(
+                    animation: _status,
+                    builder: (context, _) => Text(
+                      _status.text ??
+                          'Click to select  ·  Ctrl/Cmd+click toggles  ·  '
+                              'drag a selected device to move  ·  Del '
+                              'removes  ·  Ctrl/Cmd+Z / +Shift+Z undo/redo  '
+                              '·  ↑↓ nudge/caret, Home/End/PgUp/PgDn  ·  '
+                              'scroll or middle-drag to pan  ·  Ctrl/Cmd+'
+                              'scroll to zoom',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         );
@@ -3485,13 +3484,12 @@ RackDocument _buildDemoDocument(Map<String, TemplateBody> catalog) {
   // dropdown permanently showing one empty option and made it untestable.
   // The project Locations panel (CR-112) and the "+ New…" creation flow
   // remain out of scope, so these are seeded rather than creatable.
-  for (final (id, kind, name, code, order) in <
-      (String, LocationKind, String, String, String)
-  >[
-    ('loc-house', LocationKind.building, 'Main House', 'MH', 'a0'),
-    ('loc-closet', LocationKind.room, 'Media Closet', 'MC', 'a1'),
-    ('loc-living', LocationKind.room, 'Living Room', 'LR', 'a2'),
-  ]) {
+  for (final (id, kind, name, code, order)
+      in <(String, LocationKind, String, String, String)>[
+        ('loc-house', LocationKind.building, 'Main House', 'MH', 'a0'),
+        ('loc-closet', LocationKind.room, 'Media Closet', 'MC', 'a1'),
+        ('loc-living', LocationKind.room, 'Living Room', 'LR', 'a2'),
+      ]) {
     doc.locations[Uuid(id)] = Location(
       id: Uuid(id),
       kind: kind,
