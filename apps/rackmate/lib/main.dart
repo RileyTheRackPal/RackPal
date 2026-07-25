@@ -4,7 +4,10 @@ import 'package:pdf/pdf.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_text/rackmate_text.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
+import 'package:rackmate_ui/src/canvas/schematic/hit_test.dart';
 import 'package:rackmate_ui/src/canvas/schematic/schematic_canvas_screen.dart';
+import 'package:rackmate_ui/src/canvas/schematic/wire_drawing.dart';
+import 'package:rackmate_ui/src/schedule/schedule_screen.dart';
 
 // M1: the rack editor canvas. The viewport skeleton now hosts a real rack
 // chassis and device bodies (docs/03 §7, CR-086). The one `TextMeasurer`
@@ -40,15 +43,16 @@ class RackMateApp extends StatefulWidget {
   State<RackMateApp> createState() => _RackMateAppState();
 }
 
-class _RackMateAppState extends State<RackMateApp> with SingleTickerProviderStateMixin {
+class _RackMateAppState extends State<RackMateApp>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
-  
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -68,6 +72,7 @@ class _RackMateAppState extends State<RackMateApp> with SingleTickerProviderStat
             tabs: const [
               Tab(icon: Icon(Icons.dashboard_outlined), text: 'Rack'),
               Tab(icon: Icon(Icons.auto_fix_high_outlined), text: 'Schematic'),
+              Tab(icon: Icon(Icons.schedule_outlined), text: 'Schedule'),
             ],
           ),
         ),
@@ -75,7 +80,7 @@ class _RackMateAppState extends State<RackMateApp> with SingleTickerProviderStat
           controller: _tabController,
           children: [
             RackCanvasScreen(measurer: widget.measurer),
-            SchematicCanvasScreen(
+            _SchematicWithToolbar(
               scene: DiagramScene(
                 ops: const [],
                 bounds: DBox.fromLtwh(0, 0, 1000, 800),
@@ -86,9 +91,76 @@ class _RackMateAppState extends State<RackMateApp> with SingleTickerProviderStat
               rackId: '',
               measurer: widget.measurer,
             ),
+            ScheduleScreen(
+              document: RackDocument(
+                id: Uuid('00000000-0000-0000-0000-000000000000'),
+                appVersion: '1.0.0',
+                createdAt: DateTime(2024),
+                modifiedAt: DateTime(2024),
+                meta: EntityMeta(
+                  createdAt: DateTime(2024),
+                  updatedAt: DateTime(2024),
+                  updatedBy: '',
+                ),
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Schematic canvas with toolbar wrapper.
+class _SchematicWithToolbar extends StatefulWidget {
+  const _SchematicWithToolbar({
+    required this.scene,
+    required this.rackId,
+    required this.measurer,
+  });
+
+  final DiagramScene scene;
+  final String rackId;
+  final TextMeasurer measurer;
+
+  @override
+  State<_SchematicWithToolbar> createState() => __SchematicWithToolbarState();
+}
+
+class __SchematicWithToolbarState extends State<_SchematicWithToolbar> {
+  late WireDrawer _wireDrawer;
+
+  @override
+  void initState() {
+    super.initState();
+    _wireDrawer = WireDrawer(params: HitTestParams());
+  }
+
+  @override
+  void dispose() {
+    _wireDrawer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SchematicToolbar(
+          wireDrawer: _wireDrawer,
+          onChainModeChanged: () => setState(() {}),
+          onNewWirePressed: () => setState(() {}),
+          domainFilter: '',
+          onDomainFilterChanged: (value) => setState(() {}),
+        ),
+        Expanded(
+          child: SchematicCanvasScreen(
+            scene: widget.scene,
+            rackId: widget.rackId,
+            measurer: widget.measurer,
+          ),
+        ),
+      ],
     );
   }
 }
