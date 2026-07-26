@@ -168,34 +168,36 @@ class __SchematicWithToolbarState extends State<_SchematicWithToolbar> {
   @override
   Widget build(BuildContext context) {
     // The hit test will be updated when the render object has symbols
-    // Note: This widget is already inside a Scaffold (in main.dart's TabBarView)
-    // TabBarView gives expanded constraints to its children, so Column fills all space
-    return Column(
-      children: [
-        SchematicToolbar(
-          wireDrawer: _wireDrawer,
-          onChainModeChanged: () => setState(() {}),
-          onNewWirePressed: () => setState(() {}),
-          domainFilter: '',
-          onDomainFilterChanged: (value) => setState(() {}),
-        ),
-        // SchematicCanvasScreen will fill the remaining vertical space
-        Expanded(
-          child: SchematicCanvasScreen(
-            scene: widget.scene,
-            rackId: widget.rackId,
-            measurer: widget.measurer,
+    // TabBarView gives unbounded constraints, so we use LayoutBuilder to get actual available size
+    return LayoutBuilder(
+      builder: (context, constraints) => Column(
+        children: [
+          SchematicToolbar(
             wireDrawer: _wireDrawer,
-            schematicHitTest:
-                _schematicHitTest ??
-                SchematicHitTest(
-                  symbols: const [],
-                  params: HitTestParams(),
-                ),
-            onSymbolsReady: (symbols) => _updateHitTestIfSymbolsReady(symbols),
+            onChainModeChanged: () => setState(() {}),
+            onNewWirePressed: () => setState(() {}),
+            domainFilter: '',
+            onDomainFilterChanged: (value) => setState(() {}),
           ),
-        ),
-      ],
+          // Fill remaining vertical space with canvas
+          Expanded(
+            child: SchematicCanvasScreen(
+              scene: widget.scene,
+              rackId: widget.rackId,
+              measurer: widget.measurer,
+              wireDrawer: _wireDrawer,
+              schematicHitTest:
+                  _schematicHitTest ??
+                  SchematicHitTest(
+                    symbols: const [],
+                    params: HitTestParams(),
+                  ),
+              onSymbolsReady: (symbols) =>
+                  _updateHitTestIfSymbolsReady(symbols),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
