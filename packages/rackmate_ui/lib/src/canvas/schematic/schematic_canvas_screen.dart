@@ -40,6 +40,7 @@ final class SchematicToolbar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
+        color: Colors.white,
         border: Border(
           bottom: BorderSide(color: Colors.grey.shade300, width: 1),
         ),

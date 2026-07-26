@@ -168,6 +168,8 @@ class __SchematicWithToolbarState extends State<_SchematicWithToolbar> {
   @override
   Widget build(BuildContext context) {
     // The hit test will be updated when the render object has symbols
+    // Note: This widget is already inside a Scaffold (in main.dart's TabBarView)
+    // TabBarView gives expanded constraints to its children, so Column fills all space
     return Column(
       children: [
         SchematicToolbar(
@@ -177,6 +179,7 @@ class __SchematicWithToolbarState extends State<_SchematicWithToolbar> {
           domainFilter: '',
           onDomainFilterChanged: (value) => setState(() {}),
         ),
+        // SchematicCanvasScreen will fill the remaining vertical space
         Expanded(
           child: SchematicCanvasScreen(
             scene: widget.scene,
