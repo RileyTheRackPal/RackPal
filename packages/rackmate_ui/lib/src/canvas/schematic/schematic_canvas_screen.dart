@@ -35,6 +35,8 @@ final class SchematicToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('SchematicToolbar.build() called');
+
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -117,8 +119,14 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   void initState() {
     super.initState();
 
-    // Auto-layout symbols on next frame to avoid setState during build
+    // Auto-layout symbols on next frame to ensure they're populated
     WidgetsBinding.instance.addPostFrameCallback((_) => _autolayoutSymbols());
+
+    // Force rebuild after autolayout populates symbols (only if we're still mounted)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {});
+    });
   }
 
   @override
@@ -127,7 +135,10 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   }
 
   /// Run layout on all devices in the scene.
+  /// This method populates _symbols with placeholder RenderedSymbol objects.
   void _autolayoutSymbols() {
+    // Clear existing symbols before adding new ones
+    _symbols.clear();
     // Create default placeholder symbols - real template integration comes later
     final gridSize = 180.0;
 
@@ -176,7 +187,10 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       _symbols.add(symbol);
 
       // Notify parent that symbols are ready
-      widget.onSymbolsReady?.call(_symbols);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onSymbolsReady?.call(_symbols);
+      });
+
       return;
     }
 
@@ -240,32 +254,36 @@ final class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     }
 
     // Notify parent that symbols are ready
-    widget.onSymbolsReady?.call(_symbols);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onSymbolsReady?.call(_symbols);
+    });
+  }
+
+  void _updateSymbols() {
+    if (!mounted) return;
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    print(
+      'SchematicCanvasScreen.build() called with ${_symbols.length} symbols',
+    );
+
     return LayoutBuilder(
       builder: (context, constraints) => Listener(
         onPointerDown: _handlePointerDown,
         onPointerMove: _handlePointerMove,
         onPointerUp: _handlePointerUp,
         behavior: HitTestBehavior.translucent,
-        child: CustomSingleChildLayout(
-          delegate: _SchematicLayoutDelegate(),
-          child: Stack(
-            children: [
-              _SchematicCanvasRenderObjectWidget(
-                scene: widget.scene,
-                rackId: widget.rackId,
-                measurer: widget.measurer,
-                symbols: _symbols,
-                wires: _wires,
-                wireDrawer: widget.wireDrawer,
-                schematicHitTest: widget.schematicHitTest,
-              ),
-            ],
-          ),
+        child: _SchematicCanvasRenderObjectWidget(
+          scene: widget.scene,
+          rackId: widget.rackId,
+          measurer: widget.measurer,
+          symbols: _symbols,
+          wires: _wires,
+          wireDrawer: widget.wireDrawer,
+          schematicHitTest: widget.schematicHitTest,
         ),
       ),
     );
@@ -422,7 +440,7 @@ final class _SchematicCanvasRenderObjectWidget
       ..symbols = symbols
       ..wires = wires
       ..wireDrawer = wireDrawer
-      .._schematicHitTest = schematicHitTest;
+      ..schematicHitTest = schematicHitTest;
   }
 }
 
@@ -530,7 +548,11 @@ final class _RenderSchematicCanvas extends RenderBox {
 
   @override
   void performLayout() {
+    // Use the maximum available size from constraints
     size = constraints.biggest;
+    print(
+      'SchematicCanvas: performLayout with size=$size, constraints=$constraints',
+    );
   }
 
   @override
@@ -548,19 +570,27 @@ final class _RenderSchematicCanvas extends RenderBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
+    print('SchematicCanvas: painting with ${_symbols.length} symbols');
+
     final canvas = FlutterDiagramCanvas(
       context.canvas,
       measurer: _measurer,
     );
 
-    // Paint background
+    // Paint background - use a light gray to see the area
     canvas.drawRect(
       DBox.fromLtwh(0, 0, size.width, size.height),
-      fill: Fill(0xFFFFFFFF),
+      fill: Fill(0xFFE0E0E0), // Light gray background instead of white
     );
 
     // Paint symbols
+    if (_symbols.isEmpty) {
+      print('SchematicCanvas: No symbols to paint');
+    }
     for (final symbol in _symbols) {
+      print(
+        'SchematicCanvas: Painting symbol ${symbol.id} at ${symbol.bodyRect}',
+      );
       SymbolBuilder().paint(
         canvas: canvas,
         symbol: symbol,
