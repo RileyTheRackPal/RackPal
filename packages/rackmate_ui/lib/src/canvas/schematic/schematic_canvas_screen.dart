@@ -38,6 +38,7 @@ final class SchematicToolbar extends StatelessWidget {
     print('SchematicToolbar.build() called');
 
     return Container(
+      height: 48.0,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
