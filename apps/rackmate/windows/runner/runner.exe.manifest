@@ -3,6 +3,27 @@
   <application xmlns="urn:schemas-microsoft-com:asm.v3">
     <windowsSettings>
       <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+      <!-- Opt in to paths longer than MAX_PATH (260).
+
+           WHY THIS LINE EXISTS, and why the runtime handling stays
+           anyway. A developer probe under the `dart` binary wrote a
+           311-character path successfully on this machine, because the
+           Dart SDK's own executable declares long-path awareness. The
+           SHIPPED app did not, so it would have failed at ~260
+           characters in exactly the case no developer could reproduce —
+           the worst possible shape for a bug.
+
+           This is necessary but NOT sufficient: it only takes effect
+           when the machine-wide
+           HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled
+           policy is also on, which on a user's machine it may not be.
+           So `SavePaths.exceedsWindowsMaxPath` and the errno-3
+           disambiguation in errors.dart both remain: the manifest widens
+           the happy path, and the runtime code is what turns the
+           remaining failures into a sentence the user can act on rather
+           than "that folder does not exist" about a folder they are
+           looking at. -->
+      <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
     </windowsSettings>
   </application>
   <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">

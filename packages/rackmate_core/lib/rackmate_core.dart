@@ -91,6 +91,13 @@ export 'src/model/tombstone.dart';
 export 'src/model/zero_u_channel.dart';
 export 'src/persistence/codec.dart';
 export 'src/persistence/json_codec.dart';
+export 'src/persistence/json_limits.dart';
+// The `JsonMap` typedef only — the plain-JSON-tree currency the split
+// codec pipeline (`encodeToJsonTree`/`encodeJsonTreeBytes`/
+// `parseDocumentJsonTree`/`readFromJsonTree`) deals in, and therefore a
+// type app-layer callers must be able to NAME. The rest of json_util.dart
+// is internal plumbing and stays unexported.
+export 'src/persistence/json_util.dart' show JsonMap;
 export 'src/persistence/migrations.dart';
 export 'src/persistence/schema.dart';
 export 'src/units/box.dart';

@@ -43,10 +43,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
-import 'package:rackmate/main.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_text/rackmate_text.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
+
+import 'session/session_fakes.dart';
 
 /// The four chips the demo document puts on the strip. `RU front 5/12` is
 /// the only rollup any demo template authors; the other three are honestly
@@ -133,15 +134,17 @@ void main() {
   });
 
   void setWindow(Size size) {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = size
       ..devicePixelRatio = 1;
   }
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -153,7 +156,7 @@ void main() {
       tester,
     ) async {
       setWindow(size);
-      await tester.pumpWidget(RackMateApp(measurer: measurer));
+      await tester.pumpWidget((await buildTestApp(measurer)).app);
       await tester.pump();
 
       expect(
@@ -168,7 +171,7 @@ void main() {
     testWidgets('every chip stays inside the strip, and the strip inside the '
         'canvas column, at $label', (tester) async {
       setWindow(size);
-      await tester.pumpWidget(RackMateApp(measurer: measurer));
+      await tester.pumpWidget((await buildTestApp(measurer)).app);
       await tester.pump();
       // Consumed deliberately: this test is about geometry, and the sibling
       // above is the one that owns the overflow report. Leaving it pending
@@ -217,7 +220,7 @@ void main() {
     // 0 or unknown is what the pre-rewrite strip did (`if (weightKg > 0)`),
     // and it would make every containment assertion above trivially pass.
     setWindow(const Size(1024, 768));
-    await tester.pumpWidget(RackMateApp(measurer: measurer));
+    await tester.pumpWidget((await buildTestApp(measurer)).app);
     await tester.pump();
     tester.takeException();
 

@@ -3,10 +3,11 @@ import 'dart:io';
 import 'package:flutter/widgets.dart' show Size;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
-import 'package:rackmate/main.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_text/rackmate_text.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
+
+import 'session/session_fakes.dart';
 
 void main() {
   // A real measurer from the bundled TTF (read via dart:io, as the sibling
@@ -30,15 +31,17 @@ void main() {
   // states the supported size rather than relying on a default that happened
   // to work while there were only two columns.
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -46,7 +49,7 @@ void main() {
   testWidgets('RackMateApp renders the rack canvas with a zoom readout', (
     tester,
   ) async {
-    await tester.pumpWidget(RackMateApp(measurer: measurer));
+    await tester.pumpWidget((await buildTestApp(measurer)).app);
 
     // M1: the pannable/zoomable canvas now hosts a rack and devices; the HUD
     // shows the live zoom at 100% on the first frame.
@@ -64,7 +67,7 @@ void main() {
   testWidgets('the Front/Rear toggle swaps which devices are shown', (
     tester,
   ) async {
-    await tester.pumpWidget(RackMateApp(measurer: measurer));
+    await tester.pumpWidget((await buildTestApp(measurer)).app);
 
     // Front face: AMP-1 is present, the rear-only PP-1 is not.
     expect(find.bySemanticsLabel(RegExp('AMP-1')), findsOneWidget);

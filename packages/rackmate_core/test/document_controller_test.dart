@@ -82,14 +82,150 @@ void main() {
       controller.undoLast();
       expect(doc.devices, isEmpty);
       expect(controller.undo.canRedo, isTrue);
-      // stateId only ever advances (CR-094) — undoing back to the saved
-      // CONTENT does not undo the STATE-ID counter, so this correctly
-      // (conservatively) still reads as dirty rather than risk a false
-      // "nothing to save" after an undo/redo dance.
-      expect(controller.isDirty, isTrue);
+      // Still dirty, but the REASON changed with CR-094 conformance, and
+      // the difference matters. It used to be dirty because `stateId`
+      // only ever advanced — a counter that could never come back, so
+      // every undo read as an edit. It is dirty now because this undo
+      // genuinely moved the document AWAY from what was written: the save
+      // point is the one-device state and the document is now empty.
+      // (The old comment here defended the monotonic counter as
+      // "conservative". The counter is gone; see
+      // `undo back onto the save point reads CLEAN` below, which is the
+      // assertion the old behaviour actually failed.)
+      expect(
+        controller.isDirty,
+        isTrue,
+        reason: 'undone PAST the save point — the document really does '
+            'differ from the bytes on disk',
+      );
 
       controller.redoLast();
       expect(doc.devices, hasLength(1));
+      // ...and redoing back ONTO the save point reads clean again. This
+      // is impossible under a monotonic stateId.
+      expect(controller.isDirty, isFalse);
+    });
+
+    // THE CR-094 MUTATION TEST. Revert `doc.stateId = restoreStateId` in
+    // `undoLast` to `doc.stateId++` and this fails on the last line.
+    test('undo back onto the save point reads CLEAN (CR-094)', () {
+      final doc = _docWithRack(fixed);
+      final controller = DocumentController(doc, clock: FixedClock(fixed))
+        ..run(_addDevice(fixed, id: const Uuid('dev-a')))
+        ..markSaved();
+      expect(controller.isDirty, isFalse);
+      expect(controller.editsSinceSave, 0);
+
+      controller.run(_addDevice(fixed, id: const Uuid('dev-b'), ruIndex: 5));
+      expect(controller.isDirty, isTrue);
+      expect(controller.editsSinceSave, 1);
+
+      controller.undoLast();
+
+      expect(doc.devices, hasLength(1));
+      expect(
+        controller.isDirty,
+        isFalse,
+        reason: 'the document is once again exactly what was written',
+      );
+      expect(controller.editsSinceSave, 0);
+    });
+
+    test('editsSinceSave counts forward AND backward from the save '
+        'point', () {
+      final doc = _docWithRack(fixed);
+      final controller = DocumentController(doc, clock: FixedClock(fixed));
+
+      for (var i = 0; i < 5; i++) {
+        controller.run(
+          _addDevice(fixed, id: Uuid('dev-$i'), ruIndex: i + 1),
+        );
+      }
+      controller.markSaved();
+      expect(controller.editsSinceSave, 0);
+
+      controller
+        ..undoLast()
+        ..undoLast();
+      // Undone two steps BEHIND the save point: still two edits away
+      // from the bytes on disk, and the close prompt must say so.
+      expect(controller.isDirty, isTrue);
+      expect(controller.editsSinceSave, 2);
+
+      controller
+        ..redoLast()
+        ..redoLast()
+        // A third redo is a no-op — there is nothing left to redo — and
+        // must not move the state id off the save point.
+        ..redoLast();
+      expect(controller.isDirty, isFalse);
+      expect(controller.editsSinceSave, 0);
+    });
+
+    test('editsSinceSave is null — not a guess — when the undo stack is '
+        'poisoned (G4)', () {
+      final doc = _docWithRack(fixed);
+      final controller = DocumentController(doc, clock: FixedClock(fixed))
+        ..run(_addDevice(fixed));
+      expect(controller.editsSinceSave, 1);
+
+      controller.undo.poison();
+
+      expect(controller.isDirty, isTrue, reason: 'still unsaved');
+      expect(
+        controller.editsSinceSave,
+        isNull,
+        reason: 'the history that knew the number is gone; the UI must '
+            'omit the count rather than invent one',
+      );
+    });
+
+    test('changes notifier fires on commit, undo, redo and markSaved', () {
+      final doc = _docWithRack(fixed);
+      final controller = DocumentController(doc, clock: FixedClock(fixed));
+
+      var fired = 0;
+      controller.changes.addListener(() => fired++);
+
+      controller.run(_addDevice(fixed));
+      expect(fired, 1);
+
+      controller.undoLast();
+      expect(fired, 2);
+
+      controller.redoLast();
+      expect(fired, 3);
+
+      controller.markSaved();
+      expect(fired, 4);
+
+      // A no-op transaction commits nothing, so it must not pretend
+      // anything changed — the title bar would flicker a `*` on and off.
+      controller.transact<void>(LabelKey.addDevice, (tx) {});
+      expect(fired, 4);
+    });
+
+    test('markSavedAt clears the flag for the state that was SERIALIZED, '
+        'not the state at completion', () {
+      final doc = _docWithRack(fixed);
+      final controller = DocumentController(doc, clock: FixedClock(fixed))
+        ..run(_addDevice(fixed, id: const Uuid('dev-a')));
+      // What an async save captures synchronously at serialize time.
+      final captured = doc.stateId;
+
+      // The user edits across the isolate await.
+      controller
+        ..run(_addDevice(fixed, id: const Uuid('dev-b'), ruIndex: 5))
+        ..markSavedAt(captured);
+
+      expect(
+        controller.isDirty,
+        isTrue,
+        reason: 'dev-b was never written; marking it saved would let a '
+            'crash take it with no recovery snapshot',
+      );
+      expect(controller.editsSinceSave, 1);
+      expect(controller.savedStateId, captured);
     });
 
     test('nested transact() calls flatten into one undo entry', () {

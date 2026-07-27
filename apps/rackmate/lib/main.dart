@@ -1,35 +1,200 @@
+import 'dart:async';
+import 'dart:ui' show PlatformDispatcher;
+
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:path/path.dart' as p;
 import 'package:pdf/pdf.dart';
+import 'package:rackmate/src/session/app_services.dart';
+import 'package:rackmate/src/session/app_shell.dart';
+import 'package:rackmate/src/session/blank_document.dart';
+import 'package:rackmate/src/session/window_chrome.dart';
+import 'package:rackmate/src/storage/data_root.dart';
+import 'package:rackmate/src/storage/io_file_store.dart';
+import 'package:rackmate/src/storage/prefs_store.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_text/rackmate_text.dart';
-import 'package:rackmate_ui/rackmate_ui.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 
-// M1: the rack editor canvas. The viewport skeleton now hosts a real rack
-// chassis and device bodies (docs/03 §7, CR-086). The one `TextMeasurer`
-// (PdfFontMeasurer, CR-081) is built once from the bundled Jost TTF
-// and injected into the UI so on-screen layout matches the PDF backend.
-// Providers, menus and the three-panel shell (docs/04 §1) stack on later.
+// M1: the rack editor canvas plus the file lifecycle. The viewport
+// skeleton hosts a real rack chassis and device bodies (docs/03 §7,
+// CR-086), and as of this stage the SHELL owns the document: New / Open /
+// Save / Save As, the dirty marker in the window title, close
+// interception, the 30 s recovery snapshot and the startup recovery
+// prompt (docs/03 §9). The one `TextMeasurer` (PdfFontMeasurer, CR-081)
+// is still built once from the bundled Jost TTF and injected into the UI
+// so on-screen layout matches the PDF backend.
 //
 // THE THREE-TAB STRIP, AND WHY TWO OF ITS TABS ARE INERT. docs/05 §12
 // (line 780) fixes the v1 strip at Rack / Schematic / Schedule, so the
 // strip has three tabs. docs/09 M1 is equally explicit that the schematic
-// and the schedule are not M1 work and that pretending otherwise is a lie.
-// So the Schematic and Schedule tabs render `UnbuiltView` — a panel whose
-// first line is that the view is not built, containing no control of any
-// kind. This SHELL owns no document beyond the one `RackCanvasScreen`
-// seeds privately; there is deliberately no app-level `DocumentController`
-// yet, because introducing one belongs with roadmap item #10 (atomic save,
-// autosave, recovery, recents, the outline tree) rather than here.
+// and the schedule are not M1 work and that pretending otherwise is a
+// lie. So the Schematic and Schedule tabs render `UnbuiltView` — a panel
+// whose first line is that the view is not built, containing no control
+// of any kind. That strip now lives in `src/session/app_shell.dart`,
+// which is also where the document lives, because persistence is a
+// property of the DOCUMENT and not of one tab.
 //
-// `Ctrl+1`/`Ctrl+2` and the reserved `Ctrl+3` (docs/05 §12) are NOT bound:
-// no view-switching keymap exists in this app yet, in any view. Binding
-// two of the three here would be a partial keymap that reads as a whole
-// one. It lands with the keymap pass.
+// `Ctrl+1`/`Ctrl+2` and the reserved `Ctrl+3` (docs/05 §12) are STILL NOT
+// bound: no view-switching keymap exists in this app, in any view.
+// Binding two of the three would be a partial keymap that reads as a
+// whole one. It lands with the keymap pass. The FOUR file bindings —
+// Ctrl+N / Ctrl+O / Ctrl+S / Ctrl+Shift+S — are bound, as a complete
+// group: unlike a partial view-switching row, "the file menu works" is a
+// whole promise that this build keeps.
+//
+// STARTUP ORDER IS LOAD-BEARING and is explained in app_services.dart.
+// The one rule with a measurement behind it: nothing here stats a recent
+// file, because `exists` on a dead UNC path was measured at 1261 ms and
+// the cold-start budget is 1.2 s.
+//
+// ==================================================================
+// §12.1's PROGRAMMER-ERROR CHANNEL EXISTS, AND IT STARTS HERE
+// ==================================================================
+// The session layer throws `StateError` into it on purpose, twice —
+// `DocumentStore.open returned a non-OpenError` and its save twin — as
+// the honest way to say "this is our bug, not the user's file". Until
+// this function installed the three handlers below, those throws landed
+// in a discarded future and vanished. So did anything thrown by the four
+// awaits before `runApp`, which is worse: a failure there means the
+// process exits with a black window and no message at all.
 Future<void> main() async {
+  // ONE ZONE AROUND THE WHOLE APP, so an error from a callback with no
+  // caller — a timer tick, a window event, an `unawaited` save — has
+  // somewhere to go.
+  await runZonedGuarded(_run, _reportFatal);
+}
+
+Future<void> _run() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Framework errors (build/layout/paint) and errors from futures the
+  // engine is waiting on. Both default to printing in debug and to
+  // silence in release; neither is a channel.
+  FlutterError.onError = (details) =>
+      _reportFatal(details.exception, details.stack ?? StackTrace.empty);
+  PlatformDispatcher.instance.onError = (error, stack) {
+    _reportFatal(error, stack);
+    // Handled: an unhandled asynchronous error must not take the window
+    // down while the user has unsaved work in it.
+    return true;
+  };
+
+  final chrome = WindowManagerChrome(displayEnumerator: _enumerateDisplays);
+  // BEFORE runApp. `setPreventClose(true)` — inside `initialize` — is the
+  // one load-bearing API in the whole `window_manager` dependency:
+  // without it the OS destroys the window and Flutter finds out
+  // afterwards, and the three-button close prompt cannot exist at all.
+  await chrome.initialize();
+
   final measurer = await _loadMeasurer();
-  runApp(RackMateApp(measurer: measurer));
+  const fs = DartIoFileStore();
+
+  // The ONE data-root resolution in the app. Both environment lookups are
+  // injected here rather than read inside `resolveDataRoot`, because
+  // `Platform.resolvedExecutable` under `flutter test` points at the test
+  // runner — see data_root.dart.
+  final dataRoot = await resolveDataRoot(
+    fs: fs,
+    executableDirectory: productionExecutableDirectory(),
+    applicationSupportDirectory: productionApplicationSupportDirectory,
+  );
+
+  final navigatorKey = GlobalKey<NavigatorState>();
+
+  final services = await buildAppServices(
+    fs: fs,
+    dataRoot: dataRoot,
+    // THE FIRST FRAME IS THE START CARD (docs/04 §9), so this document is
+    // what sits behind it until the user chooses — and it is a BLANK
+    // PROJECT rather than the old demo seed, because whatever the user
+    // picks replaces it and the one thing that must never happen is a
+    // demo rack surviving into a document they then save. Picking `Blank
+    // project` on the card runs `Ctrl+N`, which builds a fresh one
+    // through the same function.
+    initialDocument: buildBlankDocument(
+      now: DateTime.now().toUtc(),
+      appVersion: kAppVersion,
+    ),
+    chrome: chrome,
+    prompts: NavigatorSessionPrompts(navigatorKey),
+    context: p.context,
+    // THE THIRD ENVIRONMENT LOOKUP, and it belongs here beside the other
+    // two rather than as a `= true` default nobody overrode. It decides
+    // which errno table classifies a failed save and whether MAX_PATH is
+    // enforced, so defaulting it made a disk-full save on macOS read
+    // "something went wrong that RackMate does not have a specific
+    // explanation for" and refused any path over 259 characters on a
+    // filesystem whose limit is 4096 bytes.
+    //
+    // `defaultTargetPlatform` rather than `Platform.isWindows`:
+    // `storage_layering_test.dart` RULE 1 allows `dart:io` in exactly two
+    // files and this is not one of them, and the two answers are the same
+    // on desktop.
+    isWindows: defaultTargetPlatform == TargetPlatform.windows,
+  );
+
+  // Geometry is restored BEFORE the window is shown, so the user never
+  // watches it jump from a default position to the remembered one.
+  await restoreWindowGeometry(chrome: chrome, prefs: services.prefs);
+
+  runApp(
+    RackMateApp(
+      measurer: measurer,
+      services: services,
+      navigatorKey: navigatorKey,
+    ),
+  );
+
+  await chrome.show();
+}
+
+/// §12.1's programmer-error channel, at the one place it can be installed.
+///
+/// NO `print`, and not because of the lint: §12.4 forbids file paths,
+/// client names and site addresses reaching a log, and an exception's
+/// `toString` is exactly where a path ends up. `FlutterError.presentError`
+/// is the framework's own sink — it is a no-op in release, and in debug it
+/// prints the structured report a developer needs. When a crash reporter
+/// lands (M2), this is the single function it hooks.
+void _reportFatal(Object error, StackTrace stack) {
+  FlutterError.presentError(
+    FlutterErrorDetails(
+      exception: error,
+      stack: stack,
+      library: 'rackmate',
+      context: ErrorDescription('in the RackMate app zone'),
+    ),
+  );
+}
+
+/// Every display's work area, in the pure geometry type
+/// `validateRestoredBounds` reasons in.
+///
+/// A failure here answers with an EMPTY LIST, which the caller treats
+/// exactly like "the saved rectangle matches no display": centre the
+/// window. That is deliberately the same conservative branch, because a
+/// display list we could not read and a display that is not there are the
+/// same amount of knowledge.
+Future<List<WindowBounds>> _enumerateDisplays() async {
+  try {
+    final displays = await screenRetriever.getAllDisplays();
+    return [
+      for (final display in displays)
+        WindowManagerChrome.displayBounds(
+          visiblePosition: display.visiblePosition,
+          visibleSize: display.visibleSize,
+          size: display.size,
+        ),
+    ];
+    // A display enumeration that throws is answered the same way as one
+    // that comes back empty — see this function's own doc comment.
+    // ignore: avoid_catches_without_on_clauses
+  } catch (_) {
+    return const [];
+  }
 }
 
 /// Loads the bundled font bytes and builds the shared measurer. The PDF
@@ -43,114 +208,66 @@ Future<TextMeasurer> _loadMeasurer() async {
   });
 }
 
-/// The app shell: the three-tab strip of docs/05 §12 over the rack editor.
-class RackMateApp extends StatefulWidget {
-  /// Creates the shell with the one shared [measurer] (CR-081).
-  const RackMateApp({required this.measurer, super.key});
+/// The app: the shell of docs/05 §12 over one document.
+class RackMateApp extends StatelessWidget {
+  /// Creates the app with the one shared [measurer] (CR-081) and the
+  /// [services] the shell runs the file lifecycle through.
+  const RackMateApp({
+    required this.measurer,
+    required this.services,
+    this.navigatorKey,
+    this.runStartupRecovery = true,
+    this.showStartCard = true,
+    super.key,
+  });
 
   /// The single `TextMeasurer` every view measures through, so on-screen
   /// layout and the PDF backend can never disagree (CR-081).
   final TextMeasurer measurer;
 
-  @override
-  State<RackMateApp> createState() => _RackMateAppState();
-}
+  /// The document, the stores, the window and the prompts, wired once.
+  ///
+  /// REQUIRED, with no in-app default, on purpose. A "detached" fallback
+  /// would be a second way the app can be wired that only tests ever
+  /// take, and the storage layer is exactly where a second wiring rots
+  /// unnoticed. Tests build these over `FakeFileStore`, which means they
+  /// exercise the REAL shell against a fake disk rather than a shell that
+  /// only exists under test.
+  final AppServices services;
 
-class _RackMateAppState extends State<RackMateApp>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  /// Used by `NavigatorSessionPrompts` to reach a dialog context that
+  /// survives the awaits a save runs across.
+  final GlobalKey<NavigatorState>? navigatorKey;
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
+  /// Whether to run §9.4's recovery scan on the first frame. Off in the
+  /// widget tests whose subject is something else, so they do not have to
+  /// script an answer to a prompt they never wanted.
+  final bool runStartupRecovery;
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+  /// Whether the first frame is docs/04 §9's start card. See
+  /// `AppShell.showStartCard`.
+  final bool showStartCard;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'RackMate',
+      navigatorKey: navigatorKey,
+      // THE FILE BINDINGS GO HERE, above the app's root focus scope,
+      // because the document is global. See `kFileShortcuts`. The
+      // defaults are merged rather than replaced: dropping them would
+      // take Tab traversal, Enter-activates and Esc-dismisses with them.
+      shortcuts: {...WidgetsApp.defaultShortcuts, ...kFileShortcuts},
+      actions: {
+        ...WidgetsApp.defaultActions,
+        ...buildFileActions(services.controller),
+      },
       theme: ThemeData(colorSchemeSeed: Colors.blueGrey, useMaterial3: true),
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('RackMate'),
-          bottom: TabBar(
-            controller: _tabController,
-            tabs: const [
-              Tab(icon: Icon(Icons.dashboard_outlined), text: 'Rack'),
-              // The construction glyph is the strip's own honest marker:
-              // the tab TEXT stays exactly as docs/05 §12 spells it, and
-              // the icon says which two do nothing yet.
-              Tab(icon: Icon(Icons.construction_outlined), text: 'Schematic'),
-              Tab(icon: Icon(Icons.construction_outlined), text: 'Schedule'),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            RackCanvasScreen(measurer: widget.measurer),
-            // THE COPY BELOW IS LOAD-BEARING AND IS CHECKED AGAINST THE
-            // CODE, not written from memory. A panel whose entire job is to
-            // be accurate about what exists cannot be inaccurate about what
-            // exists: the previous text said "the Link / Service / Conductor
-            // / Net model the schematic reads does not exist yet" and "no
-            // Link can exist yet", and all four models are real, live on
-            // `RackDocument`, round-trip through `json_codec`, and are minted
-            // together by `AddLinkCommand` — which `linkCountForDevice`
-            // already counts for the shrink dialog. An engineer who believed
-            // the panel would have rebuilt a data model that was already
-            // there. What is actually missing is narrower and is now stated:
-            // no view, no scene builder, no command call site.
-            const UnbuiltView(
-              viewName: 'Schematic',
-              milestone: 'M2',
-              absent:
-                  'Nothing here is derived from your document. No sheet is '
-                  'laid out, no symbol is placed on one, no wire is routed '
-                  'between two pins and no net label is drawn — and nothing '
-                  'in this build creates a connection, so a document edited '
-                  'here holds zero Links. The gap is the view, not the data: '
-                  'Link, Service, Conductor, Net, Sheet and SheetItem are '
-                  'real models on RackDocument, AddLinkCommand already mints '
-                  'a Link with its Service, Conductor and implicit Net, and '
-                  "rackmate_core already turns a template's ports into a "
-                  'pinned symbol (draw/scene/symbol_layer.dart, exercised by '
-                  'the PDF backend). None of it is wired to a canvas.',
-              why:
-                  'The tab is in the strip because docs/05 §12 fixes the v1 '
-                  'strip at Rack / Schematic / Schedule. It is empty rather '
-                  'than populated with sample content, because a symbol on '
-                  'this canvas that is in no rack would be a fabrication '
-                  '(G4).',
-              reference: 'docs/05-schematic-editor.md · docs/09-roadmap.md M2',
-            ),
-            const UnbuiltView(
-              viewName: 'Schedule',
-              milestone: 'M2',
-              absent:
-                  'This is not an empty schedule; there is no schedule. Every '
-                  'row derives from a Link, and nothing in this build creates '
-                  'one — AddLinkCommand exists and is tested, but no surface '
-                  'calls it, and no code turns a Link into a row. A table '
-                  'with no rows would say you have not wired anything, when '
-                  'the truth is that this build gives you no way to wire '
-                  'anything.',
-              why:
-                  'The tab is in the strip because docs/05 §12 fixes the v1 '
-                  'strip at Rack / Schematic / Schedule. docs/09 M1 calls an '
-                  'empty Schedule tab that explains it is coming a lie; this '
-                  'one states that it is not built instead.',
-              reference: 'docs/09-roadmap.md M2 · CR-105, G1',
-            ),
-          ],
-        ),
+      home: AppShell(
+        services: services,
+        measurer: measurer,
+        runStartupRecovery: runStartupRecovery,
+        showStartCard: showStartCard,
       ),
     );
   }

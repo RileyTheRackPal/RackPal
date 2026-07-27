@@ -68,6 +68,7 @@ import 'package:rackmate_core/src/model/tombstone.dart';
 import 'package:rackmate_core/src/model/zero_u_channel.dart';
 import 'package:rackmate_core/src/persistence/codec.dart';
 import 'package:rackmate_core/src/persistence/enum_wire.dart';
+import 'package:rackmate_core/src/persistence/json_limits.dart';
 import 'package:rackmate_core/src/persistence/json_util.dart';
 import 'package:rackmate_core/src/persistence/migrations.dart';
 import 'package:rackmate_core/src/persistence/schema.dart';
@@ -81,35 +82,127 @@ import 'package:rackmate_core/src/util/outcome.dart';
 
 /// The M0 `DocumentCodec` implementation — plain JSON, hand-written both
 /// directions.
+///
+/// THE PIPELINE IS EXPOSED IN HALVES AS WELL AS WHOLE. [write] and [read]
+/// are the compositions; [encodeToJsonTree]/[encodeJsonTreeBytes] and
+/// [parseDocumentJsonTree]/[readFromJsonTree] are the same two pipelines
+/// split at the plain-JSON-tree boundary. Byte-exactness (CR-117) is
+/// preserved BY CONSTRUCTION — the composition is the old single-step
+/// body verbatim — so the existing round-trip corpus still guards it.
+///
+/// WHY THE SPLIT EXISTS. A caller that wants to serialize off the UI
+/// thread (AC-006, CR-099) needs to snapshot the document at a
+/// well-defined instant and then do the expensive sort+encode+utf8
+/// elsewhere. Handing a live `RackDocument` to `Isolate.run` does NOT do
+/// that: Dart does not document *when* a captured mutable object graph is
+/// copied, so an edit racing the spawn could be half-included. Splitting
+/// at the tree makes the snapshot explicit and synchronous, and means the
+/// only thing crossing the isolate boundary is plain
+/// Map/List/String/int/bool/null — no property of the 30-class mutable
+/// document graph has to be true for it to work.
+///
+/// Do not "simplify" this back into a single `Isolate.run(() =>
+/// write(doc))`. That reintroduces a torn-snapshot race no test can see.
 final class JsonDocumentCodec extends DocumentCodec {
   const JsonDocumentCodec();
 
   @override
-  Uint8List write(RackDocument document) => Uint8List.fromList(
-    encodeCanonicalJsonBytes(_encodeRackDocument(document)),
-  );
+  Uint8List write(RackDocument document) =>
+      encodeJsonTreeBytes(encodeToJsonTree(document));
 
   @override
   Outcome<RackDocument> read(Uint8List bytes) {
-    if (looksLikeZip(bytes)) {
-      return const Err(UnsupportedZipContainerError());
+    switch (parseDocumentJsonTree(bytes)) {
+      case Err(:final error):
+        return Err(error);
+      case Ok(value: final root):
+        return readFromJsonTree(root);
     }
-    try {
-      final parsed = jsonDecode(utf8.decode(bytes));
-      final root = asJsonMap(parsed, 'root');
-      final migrated = migrateToCurrent(root);
-      switch (migrated) {
-        case Err(:final error):
-          return Err(error);
-        case Ok(value: final migratedDoc, :final openReadOnly):
-          return Ok(
-            _decodeRackDocument(migratedDoc.raw),
-            openReadOnly: openReadOnly,
-          );
-      }
-    } on Exception catch (e) {
-      return Err(e);
+  }
+
+  /// Phase 1 of [write]: the live document to a plain JSON tree.
+  /// Synchronous and cheap; run it on the main isolate so the snapshot is
+  /// taken at a known instant.
+  JsonMap encodeToJsonTree(RackDocument document) =>
+      _encodeRackDocument(document);
+}
+
+/// Phase 2 of [JsonDocumentCodec.write]: a plain JSON tree to the
+/// canonical sorted, pretty-printed UTF-8 bytes.
+///
+/// TOP-LEVEL AND ISOLATE-SAFE ON PURPOSE — this is the expensive half
+/// (deep key sort, encode, UTF-8) and the half a caller runs in
+/// `Isolate.run`. It closes over nothing and touches no instance state.
+Uint8List encodeJsonTreeBytes(JsonMap tree) =>
+    Uint8List.fromList(encodeCanonicalJsonBytes(tree));
+
+/// Phase 1 of [JsonDocumentCodec.read]: bytes to a plain JSON tree, with
+/// the zip sniff and both import-hardening limits (§9.5) run FIRST.
+///
+/// Top-level and isolate-safe for the same reason as
+/// [encodeJsonTreeBytes]; both the `Ok` payload and every `Err` it can
+/// produce are plain data. Never throws (CR-093).
+///
+/// The limits run before `jsonDecode` because doing it after would mean
+/// allocating a tree that is already known to be refused. What they are
+/// actually protecting is the WRITE side — `deepSortKeys` and
+/// `JsonEncoder` are recursive and throw an uncatchable-by-`on Exception`
+/// `StackOverflowError` past ~10 000 levels. See json_limits.dart, which
+/// records the measurements.
+Outcome<JsonMap> parseDocumentJsonTree(
+  Uint8List bytes, {
+  JsonLimits limits = const JsonLimits(),
+}) {
+  if (looksLikeZip(bytes)) {
+    return const Err(UnsupportedZipContainerError());
+  }
+  switch (checkJsonLimits(bytes, limits: limits)) {
+    case Err(:final error):
+      return Err(error);
+    case Ok<void>():
+      break;
+  }
+  try {
+    return Ok(asJsonMap(jsonDecode(utf8.decode(bytes)), 'root'));
+    // `on Object`, NOT `on Exception`. CR-093 says never throws, and an
+    // `on Exception` clause walks straight past every `Error` — which is
+    // not a hypothetical here: json_limits.dart's own header records that
+    // the recursive descent in `deepSortKeys`/`JsonEncoder` raises
+    // `StackOverflowError`, and a file near the 64 MB cap can raise
+    // `OutOfMemoryError` inside `jsonDecode`. Both are Errors. Escaping
+    // here means an unhandled future in whichever caller forgot to await
+    // it, which reaches the user as Ctrl+O doing NOTHING AT ALL — no
+    // dialog, no log, no crash. A reported failure beats a silent one
+    // even when the cause is our own bug.
+  } on Object catch (e) {
+    return Err(e);
+  }
+}
+
+/// Phase 2 of [JsonDocumentCodec.read]: migrate the raw envelope, then
+/// typed-decode it. Never throws (CR-093).
+///
+/// Separate from [parseDocumentJsonTree] so a caller that parsed in an
+/// isolate can still run the migration chain and the typed decode on the
+/// main isolate, where the resulting `RackDocument` is needed.
+Outcome<RackDocument> readFromJsonTree(JsonMap raw) {
+  try {
+    switch (migrateToCurrent(raw)) {
+      case Err(:final error):
+        return Err(error);
+      case Ok(value: final migratedDoc, :final openReadOnly):
+        return Ok(
+          _decodeRackDocument(migratedDoc.raw),
+          openReadOnly: openReadOnly,
+        );
     }
+    // `on Object` for the same reason as [parseDocumentJsonTree]: a
+    // `TypeError` from a decoder change, or a `StackOverflowError` from a
+    // pathologically nested payload that slipped under the depth cap, is
+    // an Error and would otherwise escape a function whose whole contract
+    // is that it does not throw.
+  } on Object catch (e) {
+    return Err(e);
   }
 }
 
@@ -216,9 +309,34 @@ JsonMap _encodeRackDocument(RackDocument doc) {
     kKeyDocument: document,
     kKeyGenerator: kGeneratorName,
     kKeyId: doc.id.v,
-    kKeyMinReaderVersion: doc.minReaderVersion,
+    // THE VERSION STAMP DESCRIBES THESE BYTES, NOT THE FILE THEY CAME
+    // FROM. `doc.schemaVersion` is the version the document was READ at;
+    // re-emitting it is the single most dangerous thing this encoder
+    // could do, because the value that a stamp is trusted for is exactly
+    // "what shape is the payload below me".
+    //
+    // The case that makes it concrete. A future build (kSchemaVersion 3)
+    // writes Smith.rackmate with new fields. THIS build opens it: the
+    // minReaderVersion gate lets it through, `migrateToCurrent` returns
+    // openReadOnly with the envelope untouched, and `_decodeRackDocument`
+    // silently drops every v3 field it has no class member for. The user
+    // then picks "Save a copy…". Re-emitting `doc.schemaVersion` would
+    // write a file that ADVERTISES v3 while containing only v2 data — so
+    // the next v3 reader sees its own version, runs no migration, applies
+    // no read-only gate, and trusts a document whose v3 fields are gone.
+    // That is the precise corruption the read-only gate exists to
+    // prevent, arriving through the one door it left open.
+    //
+    // These bytes are produced by THIS encoder, so they are exactly a
+    // `kSchemaVersion` document and they need exactly a
+    // `kMinReaderVersion` reader. Both facts are properties of the code
+    // below, not of the file the document was loaded from. `RackDocument`
+    // keeps the fields it was read with (they are what the pre-update
+    // snapshot and the migration bookkeeping reason about); the CONTAINER
+    // is stamped from the constants.
+    kKeyMinReaderVersion: kMinReaderVersion,
     kKeyModifiedAt: encodeDateTime(doc.modifiedAt),
-    kKeySchemaVersion: doc.schemaVersion,
+    kKeySchemaVersion: kSchemaVersion,
     kKeySequence: doc.sequence,
     kKeyUnknown: doc.unknown,
   };

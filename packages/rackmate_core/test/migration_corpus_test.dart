@@ -19,6 +19,10 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:rackmate_core/rackmate_core.dart';
+// The src path on purpose: `asJsonMap` is internal plumbing, and the
+// "never throws" group below proves its cast really does raise an ERROR
+// rather than asserting that from memory.
+import 'package:rackmate_core/src/persistence/json_util.dart' show asJsonMap;
 import 'package:test/test.dart';
 
 typedef _JsonMap = Map<String, Object?>;
@@ -258,6 +262,139 @@ void main() {
 
       expect(result, isA<Err<MigratedDoc>>());
       expect((result as Err<MigratedDoc>).error, isA<NotARackMateFileError>());
+    });
+  });
+
+  group('A CHAIN THAT DID NOT ARRIVE IS AN ERROR, NOT A SUCCESS', () {
+    // `migrateToCurrent`'s whole contract to the typed decoder downstream
+    // is "whatever comes back is kSchemaVersion-shaped". A loop that
+    // breaks out on a missing migration and still returns Ok breaks
+    // exactly that contract, and `current` looks identical either way —
+    // so nothing downstream can notice.
+
+    test('a mangled "schemaVersion": -1 is REFUSED, not adopted as a '
+        'healthy document', () {
+      // Live today: -1 passes the minReaderVersion gate, finds no
+      // migration, and would otherwise be decoded, adopted with
+      // openReadOnly false, and written back out stamped -1.
+      final raw = _v0Fixture()
+        ..['schemaVersion'] = -1
+        ..['minReaderVersion'] = -1;
+
+      final result = migrateToCurrent(raw);
+
+      expect(result, isA<Err<MigratedDoc>>());
+      final error = (result as Err<MigratedDoc>).error;
+      expect(error, isA<UnmigratableSchemaError>());
+      final unmigratable = error as UnmigratableSchemaError;
+      expect(unmigratable.storedSchemaVersion, -1);
+      expect(unmigratable.stalledAtVersion, -1);
+      expect(unmigratable.targetSchemaVersion, kSchemaVersion);
+    });
+
+    test('and it does NOT reach the typed decoder', () {
+      const codec = JsonDocumentCodec();
+      final raw = _v0Fixture()
+        ..['schemaVersion'] = -1
+        ..['minReaderVersion'] = -1;
+
+      final result = codec.read(
+        Uint8List.fromList(utf8.encode(jsonEncode(raw))),
+      );
+
+      expect(
+        result,
+        isA<Err<RackDocument>>(),
+        reason:
+            'an unmigrated envelope decoded by the typed decoder either '
+            'throws a confusing "damaged file" or — if the shapes happen '
+            'to overlap — loads partially, which is worse',
+      );
+      expect(
+        (result as Err<RackDocument>).error,
+        isA<UnmigratableSchemaError>(),
+      );
+    });
+
+    test('EVERY version below kSchemaVersion has a migration — the '
+        'append-only chain has no holes', () {
+      // THE STANDING TRAP, checked mechanically rather than remembered: a
+      // future kSchemaVersion bump that forgets its `migrations[]` entry.
+      // Without this the omission does not fail loudly, it hands every
+      // older file to the typed decoder unmigrated.
+      for (var v = 0; v < kSchemaVersion; v++) {
+        expect(
+          migrations[v],
+          isNotNull,
+          reason:
+              'migrations[$v] is missing, so every document stored at '
+              'v$v stalls at $v instead of reaching v$kSchemaVersion',
+        );
+      }
+    });
+
+    test('a version at or above kSchemaVersion is NOT an unmigratable '
+        'chain — the newer-file case still opens read-only', () {
+      // Guards the guard: a post-loop check written as `version !=
+      // kSchemaVersion` would refuse exactly the files §9.2 says to open.
+      final raw = _v0Fixture()
+        ..['schemaVersion'] = kSchemaVersion + 1
+        ..['minReaderVersion'] = kMinReaderVersion;
+
+      final result = migrateToCurrent(raw);
+
+      expect(result, isA<Ok<MigratedDoc>>());
+      expect((result as Ok<MigratedDoc>).openReadOnly, isTrue);
+    });
+  });
+
+  group('CR-093 "never throws" covers ERRORS, not just EXCEPTIONS', () {
+    // `on Exception catch` walks straight past every `Error`. On the read
+    // path that means an unhandled future in whichever caller forgot to
+    // await it — which reaches the user as Ctrl+O doing NOTHING AT ALL: no
+    // dialog, no log, no crash, because nothing above installs a
+    // zone/PlatformDispatcher handler.
+    //
+    // MEASURED, so this suite claims only what it reproduced: `jsonDecode`
+    // is NOT the overflow risk json_limits.dart warns about. A probe
+    // decoded 200 000 levels of nesting without incident — Dart's parser
+    // keeps its own stack. The recursion that DOES overflow is
+    // `deepSortKeys`/`JsonEncoder` on the WRITE side. So
+    // `parseDocumentJsonTree`'s `on Object` clause is defensive breadth
+    // with no reproduced case behind it and no test that mutating it
+    // fails; that is recorded here rather than dressed up.
+    //
+    // `readFromJsonTree` is a different story: `asJsonMap` casts every key
+    // with `k as String`, and a cast failure is a `TypeError`, an ERROR.
+    // The shape below is exactly what a JSON tree assembled anywhere other
+    // than `jsonDecode` can carry — a recovery sidecar, a future importer,
+    // a test helper — and it reaches this function through the very split
+    // that exists so a caller can parse somewhere else.
+    test('a TypeError inside the typed decode comes back as an Err rather '
+        'than escaping', () {
+      final raw = <String, Object?>{
+        'generator': 'RackMate',
+        'schemaVersion': kSchemaVersion,
+        'minReaderVersion': kMinReaderVersion,
+        // A non-String key: `asJsonMap`'s `k as String` raises TypeError.
+        'document': <Object?, Object?>{1: 'not a string key'},
+      };
+
+      // Proves the premise rather than assuming it: the thing being
+      // caught really is an Error and really would slip past `on
+      // Exception`.
+      expect(
+        () => asJsonMap(raw['document'], 'document'),
+        throwsA(isA<Error>()),
+      );
+
+      final result = readFromJsonTree(raw);
+      expect(
+        result,
+        isA<Err<RackDocument>>(),
+        reason: 'an Error escaping here is an unhandled future upstream',
+      );
+      expect((result as Err<RackDocument>).error, isA<Error>());
     });
   });
 }

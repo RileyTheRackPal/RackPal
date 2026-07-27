@@ -22,12 +22,27 @@ import 'package:rackmate_core/src/commands/selection.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 
 final class _Entry {
-  _Entry(this.command, this.selectionBefore, this.selectionAfter, this.at);
+  _Entry(
+    this.command,
+    this.selectionBefore,
+    this.selectionAfter,
+    this.at,
+    this.stateIdBefore,
+    this.stateIdAfter,
+  );
 
   final Command command;
   final Selection selectionBefore;
   final Selection selectionAfter;
   final DateTime at;
+
+  /// CR-094: "each undo entry records the stateId before and after". These
+  /// are what let `DocumentController` RESTORE `doc.stateId` on undo/redo
+  /// instead of merely advancing it, which is in turn what makes
+  /// `isDirty == stateId != savedStateId` exact in both directions —
+  /// undoing back to the save point really does read as clean.
+  final int stateIdBefore;
+  final int stateIdAfter;
 }
 
 /// The undo/redo history for one aggregate. Linear undo — no undo tree in
@@ -67,9 +82,37 @@ class UndoStack<A> {
   /// Read before calling [redo].
   Selection? get redoSelection => canRedo ? _undone.last.selectionAfter : null;
 
+  /// The `stateId` to restore when the NEXT [undo] runs — the
+  /// `stateIdBefore` of the entry on top of the done stack, or `null` if
+  /// there is nothing to undo. Read BEFORE calling [undo], which pops it.
+  int? get undoStateId => canUndo ? _done.last.stateIdBefore : null;
+
+  /// The `stateId` to restore when the NEXT [redo] runs — the
+  /// `stateIdAfter` of the entry on top of the undone stack. Read before
+  /// calling [redo].
+  int? get redoStateId => canRedo ? _undone.last.stateIdAfter : null;
+
+  /// How many undo entries are currently on the done stack.
+  int get depth => _done.length;
+
   /// Coalesces into the stack top iff `mergeKey` matches AND the window
   /// has not elapsed.
-  EpochMask push(Command c, Selection before, Selection after, DateTime now) {
+  ///
+  /// [stateIdBefore]/[stateIdAfter] are the ids of the document state on
+  /// either side of [c] (CR-094). On a MERGE the surviving entry keeps
+  /// the original top's `stateIdBefore` and takes the new
+  /// [stateIdAfter] — the merged pair is one undo step, so it spans from
+  /// where the first edit started to where the second one ended, and the
+  /// intermediate id is simply retired. The allocator never reuses an id,
+  /// so a retired one can never be mistaken for a live state.
+  EpochMask push(
+    Command c,
+    Selection before,
+    Selection after,
+    DateTime now,
+    int stateIdBefore,
+    int stateIdAfter,
+  ) {
     _undone.clear(); // linear undo; no undo tree in v1
     final top = _done.lastOrNull;
     if (top != null &&
@@ -83,13 +126,41 @@ class UndoStack<A> {
           top.selectionBefore,
           after,
           now,
+          top.stateIdBefore,
+          stateIdAfter,
         );
         return c.touches;
       }
     }
-    _done.add(_Entry(c, before, after, now));
+    _done.add(_Entry(c, before, after, now, stateIdBefore, stateIdAfter));
     if (_done.length > maxEntries) _done.removeAt(0);
     return c.touches;
+  }
+
+  /// How many undo (or redo) steps separate the state identified by
+  /// [stateId] from [currentStateId] — i.e. how many edits stand between
+  /// "what is on disk" and "what is on screen".
+  ///
+  /// Returns `null` when [stateId] is NOT on this stack's timeline: the
+  /// stack was poisoned, the entry aged out past [maxEntries], or the id
+  /// was retired by a merge. Null means UNKNOWN and callers must say so
+  /// rather than substitute a plausible number (G4) — "12 unsaved
+  /// changes" that is actually 13 is worse than no count at all.
+  int? distanceTo(int stateId, int currentStateId) {
+    if (stateId == currentStateId) return 0;
+    if (_poisoned) return null;
+    // Undo direction: after k undos, doc.stateId == _done[len - k].
+    // stateIdBefore.
+    for (var k = 1; k <= _done.length; k++) {
+      if (_done[_done.length - k].stateIdBefore == stateId) return k;
+    }
+    // Redo direction: after k redos, doc.stateId == _undone[len - k].
+    // stateIdAfter. This is the "saved, then undone past the save point"
+    // case, which is just as dirty as having edited forward.
+    for (var k = 1; k <= _undone.length; k++) {
+      if (_undone[_undone.length - k].stateIdAfter == stateId) return k;
+    }
+    return null;
   }
 
   /// Reverts the top of [_done] and pushes it onto [_undone]. Returns the

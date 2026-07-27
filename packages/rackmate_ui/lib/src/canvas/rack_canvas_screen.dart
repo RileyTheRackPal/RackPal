@@ -61,6 +61,7 @@ class RackCanvasScreen extends StatefulWidget {
     required this.measurer,
     this.clock = const SystemClock(),
     this.document,
+    this.controller,
     super.key,
   });
 
@@ -91,6 +92,27 @@ class RackCanvasScreen extends StatefulWidget {
   /// the demo seed can produce one, and a hatch test without one cannot fail.
   @visibleForTesting
   final RackDocument? document;
+
+  /// The `DocumentController` this screen edits through, when something
+  /// ABOVE it owns the document.
+  ///
+  /// WHY THIS EXISTS. Until the persistence layer landed, the screen was
+  /// the only thing in the app that had a document, so it built its own
+  /// controller over a demo seed. Save, autosave, the dirty marker in the
+  /// window title and the close-while-dirty prompt are all properties of
+  /// THE DOCUMENT, not of one tab, so they belong to the app shell — and
+  /// the shell can only own them if it owns the controller.
+  ///
+  /// Null keeps the previous behaviour exactly: the screen builds its own
+  /// controller over [document] or the demo seed. Every existing test and
+  /// the whole `rackmate_ui` suite therefore stay untouched.
+  ///
+  /// REPLACING THE DOCUMENT IS A NEW STATE, not a rebuild: [clock] and the
+  /// controller are read into `late final` fields, and the rack, geometry
+  /// and scene caches are all derived from the document identity. The app
+  /// passes a `ValueKey` over the controller so Ctrl+N / Ctrl+O construct
+  /// a fresh `State` rather than leaving stale derived data behind.
+  final DocumentController? controller;
 
   @override
   State<RackCanvasScreen> createState() => _RackCanvasScreenState();
@@ -301,10 +323,12 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   //
   // Wrapped in the REAL DocumentController — THE one mutation entry point
   // (docs/03 §5.4). Every move/delete/undo/redo/place below runs through it.
-  late final DocumentController _controller = DocumentController(
-    widget.document ?? _buildDemoDocument(_catalog),
-    clock: widget.clock,
-  );
+  late final DocumentController _controller =
+      widget.controller ??
+      DocumentController(
+        widget.document ?? buildDemoRackDocument(catalog: _catalog),
+        clock: widget.clock,
+      );
   RackDocument get _doc => _controller.doc;
   late final Rack _rack = _doc.racks.values.first;
 
@@ -3468,6 +3492,21 @@ class _RackCanvasHandler implements CanvasIntentHandler {
 }
 
 // ── temporary demo data (see the field comment above) ─────────────────────
+
+/// Builds the demo-seeded document this screen falls back to.
+///
+/// PUBLIC AS OF THE PERSISTENCE STAGE, and only because the app shell now
+/// owns the document: the shell needs SOMETHING to open with until the
+/// start card and the four starter projects land, and it must be the same
+/// something the screen used to seed itself with, or the app's behaviour
+/// would change the moment the controller moved up a layer.
+///
+/// THIS IS A SEAM WITH A SHORT LIFE. docs/04 §9 says first launch shows a
+/// start card — `Blank project` plus four real `.rackmate` starters — not
+/// a demo rack. When those land, the shell opens one of them instead and
+/// this returns to being the screen's private fallback for tests.
+RackDocument buildDemoRackDocument({Map<String, TemplateBody>? catalog}) =>
+    _buildDemoDocument(catalog ?? buildSeedCatalog());
 
 RackDocument _buildDemoDocument(Map<String, TemplateBody> catalog) {
   final now = DateTime.utc(2026, 7, 18);

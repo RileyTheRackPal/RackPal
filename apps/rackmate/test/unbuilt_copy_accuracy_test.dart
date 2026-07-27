@@ -25,10 +25,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
-import 'package:rackmate/main.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_text/rackmate_text.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
+
+import 'session/session_fakes.dart';
 
 /// Opens [viewName]'s tab in a freshly pumped shell and returns the full
 /// copy of the [UnbuiltView] the app builds for it.
@@ -43,7 +44,7 @@ Future<String> _copyFor(
   TextMeasurer measurer,
   String viewName,
 ) async {
-  await tester.pumpWidget(RackMateApp(measurer: measurer));
+  await tester.pumpWidget((await buildTestApp(measurer)).app);
   await tester.tap(find.text(viewName));
   await tester.pumpAndSettle();
   final view = tester.widget<UnbuiltView>(find.byType(UnbuiltView));
@@ -63,15 +64,17 @@ void main() {
 
   // The supported window (docs/04 §1), matching the sibling shell tests.
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -150,7 +153,8 @@ void main() {
           expect(
             copy,
             isNot(contains(lie)),
-            reason: '$view claims "$lie", which the wiring-model tests in '
+            reason:
+                '$view claims "$lie", which the wiring-model tests in '
                 'this file disprove',
           );
         }
@@ -203,7 +207,8 @@ void main() {
       expect(
         callers,
         isEmpty,
-        reason: 'a UI now creates Links; the unbuilt tabs must stop saying '
+        reason:
+            'a UI now creates Links; the unbuilt tabs must stop saying '
             'nothing does',
       );
     });

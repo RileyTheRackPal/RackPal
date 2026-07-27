@@ -42,10 +42,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
-import 'package:rackmate/main.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_text/rackmate_text.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
+
+import 'session/session_fakes.dart';
 
 /// The demo seed's designators (`rack_canvas_screen.dart`'s
 /// `_buildDemoDocument`). None of them may appear on an unbuilt tab.
@@ -125,28 +126,30 @@ void main() {
   // The supported window (docs/04 §1 treats anything under 1080px as the
   // unbuilt tablet-collapse case), matching the sibling widget_test.
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
 
   Future<void> openTab(WidgetTester tester, String label) async {
-    await tester.pumpWidget(RackMateApp(measurer: measurer));
+    await tester.pumpWidget((await buildTestApp(measurer)).app);
     await tester.tap(find.text(label));
     await tester.pumpAndSettle();
   }
 
   testWidgets('the strip is Rack / Schematic / Schedule, in that order '
       '(docs/05 §12 line 780)', (tester) async {
-    await tester.pumpWidget(RackMateApp(measurer: measurer));
+    await tester.pumpWidget((await buildTestApp(measurer)).app);
 
     final tabs = tester
         .widgetList<Tab>(find.byType(Tab))
@@ -158,7 +161,7 @@ void main() {
   testWidgets('the Rack tab is the one that works, and still does', (
     tester,
   ) async {
-    await tester.pumpWidget(RackMateApp(measurer: measurer));
+    await tester.pumpWidget((await buildTestApp(measurer)).app);
 
     expect(find.byType(RackCanvasScreen), findsOneWidget);
     expect(find.byType(UnbuiltView), findsNothing);
@@ -289,7 +292,7 @@ void main() {
     // which is exactly what it WAS doing when it was scoped to the
     // `UnbuiltView` panel. Here the identical finder, identical matcher and
     // a tab that really draws proves the instrument works.
-    await tester.pumpWidget(RackMateApp(measurer: measurer));
+    await tester.pumpWidget((await buildTestApp(measurer)).app);
     await tester.pumpAndSettle();
 
     expect(find.byType(RackCanvasScreen), findsOneWidget);

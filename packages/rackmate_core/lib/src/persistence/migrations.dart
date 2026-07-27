@@ -65,6 +65,52 @@ final class MalformedEnvelopeError implements Exception {
   String toString() => 'MalformedEnvelopeError: $message';
 }
 
+/// The migration chain ran out of migrations before it reached
+/// [kSchemaVersion], so the envelope handed on would NOT be this build's
+/// shape.
+///
+/// WHY THIS IS AN ERROR AND NOT A SHRUG. [migrateToCurrent]'s entire
+/// contract to the typed decoder downstream is "whatever you get back is
+/// `kSchemaVersion`-shaped". A chain that stops early breaks exactly that
+/// contract, and the typed decoder has no way to notice: it reads the
+/// keys it knows and produces a `RackDocument` that LOOKS healthy.
+///
+/// Two ways to get here, one live and one waiting:
+///
+///  * A corrupt or hand-edited envelope — `"schemaVersion": -1` from a
+///    mangled byte or a merge artefact. It clears the `minReaderVersion`
+///    gate, finds no migration for -1, and would otherwise be adopted as
+///    a healthy document.
+///  * THE STANDING TRAP OF AN APPEND-ONLY CHAIN: a future
+///    [kSchemaVersion] bump that forgets its `migrations` entry. Silently
+///    returning `Ok` would hand every older file to the typed decoder
+///    unmigrated, surfacing as a confusing "damaged file" or — worse, if
+///    the shapes happen to overlap — as a partial load. Failing loudly
+///    here is what turns that into a bug someone finds in five minutes.
+final class UnmigratableSchemaError implements Exception {
+  const UnmigratableSchemaError({
+    required this.storedSchemaVersion,
+    required this.stalledAtVersion,
+    required this.targetSchemaVersion,
+  });
+
+  /// What the file's root `schemaVersion` actually said.
+  final int storedSchemaVersion;
+
+  /// The version the chain got to before it ran out — the key that has no
+  /// [migrations] entry.
+  final int stalledAtVersion;
+
+  /// [kSchemaVersion], the version it needed to reach.
+  final int targetSchemaVersion;
+
+  @override
+  String toString() =>
+      'UnmigratableSchemaError: a document stored at schemaVersion '
+      '$storedSchemaVersion could not be migrated to $targetSchemaVersion '
+      '— no migration is registered for version $stalledAtVersion.';
+}
+
 /// APPEND-ONLY. A shipped migration is a historical record — editing one
 /// corrupts users' already-saved files. Never delete, never modify; only
 /// ever add a new entry for a new `schemaVersion` bump.
@@ -194,12 +240,26 @@ Outcome<MigratedDoc> migrateToCurrent(JsonMap raw) {
     final migration = migrations[version];
     if (migration == null) {
       // No migration registered to advance past this version. Nothing
-      // more this build knows how to do — stop rather than loop forever;
-      // the caller gets whatever shape the chain reached.
+      // more this build knows how to do — stop rather than loop forever.
+      // The post-loop check below turns this into the Err it is.
       break;
     }
     current = migration(current);
     version++;
+  }
+
+  // THE CHAIN EITHER ARRIVED OR IT FAILED. There is no third answer, and
+  // the version this loop stopped at is the only evidence of which
+  // happened — `current` looks identical either way, which is exactly why
+  // this check cannot be left to the caller. See [UnmigratableSchemaError].
+  if (version < kSchemaVersion) {
+    return Err(
+      UnmigratableSchemaError(
+        storedSchemaVersion: schemaVersion,
+        stalledAtVersion: version,
+        targetSchemaVersion: kSchemaVersion,
+      ),
+    );
   }
 
   // schemaVersion > kSchemaVersion: a newer-than-us file this build's

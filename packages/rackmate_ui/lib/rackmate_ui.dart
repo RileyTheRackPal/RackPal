@@ -40,4 +40,17 @@ export 'src/inspector/inspector_panel.dart';
 export 'src/inspector/rack_inspector_panel.dart';
 export 'src/inspector/shrink_rack_dialog.dart';
 export 'src/palette/device_palette_panel.dart';
+// `src/shell/` — shell-shaped WIDGETS the app composes. Every one of the
+// persistence-stage additions below is PRESENTATIONAL: it takes a plain
+// value object and callbacks and returns an enum or an action id. None of
+// them knows what a file is, which is what keeps this package free of the
+// native file dialog, `window_manager`, the path provider and `dart:io`
+// while the app layer owns all four.
+export 'src/shell/file_error_dialog.dart';
+export 'src/shell/no_racks_view.dart';
+export 'src/shell/recent_files_menu.dart';
+export 'src/shell/recovery_prompt_dialog.dart';
+export 'src/shell/shell_banner.dart';
+export 'src/shell/start_card.dart';
 export 'src/shell/unbuilt_view.dart';
+export 'src/shell/unsaved_changes_dialog.dart';

@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include "file_dialog_channel.h"
 #include "flutter/generated_plugin_registrant.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
@@ -25,6 +26,21 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+  // RackMate's own open/save dialogs. `file_selector` is not a dependency
+  // of this app: its Windows implementation cannot set
+  // FOS_DONTADDTORECENT, and without that flag every open and every save
+  // writes the project's name and full path into the host's ComDlg32
+  // OpenSavePidlMRU. With it, no file name reaches the host — but the
+  // shell writes values under ComDlg32 that RackMate does not control, at
+  // minimum LastVisitedPidlMRU (this executable plus the last folder
+  // browsed) and CIDSizeMRU (this executable, written even on a cancelled
+  // dialog). Measured examples, not an inventory. See
+  // file_dialog_channel.h for the bounded statement of both halves.
+  //
+  // The window handle is passed so the dialog is MODAL to this window
+  // rather than free-floating: a modeless file dialog can be left behind
+  // the editor with the app apparently frozen.
+  RegisterFileDialogChannel(flutter_controller_->engine(), GetHandle());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {

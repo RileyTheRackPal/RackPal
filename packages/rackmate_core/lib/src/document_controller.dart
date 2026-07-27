@@ -12,6 +12,7 @@ import 'package:rackmate_core/src/commands/clock.dart';
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/label_key.dart';
 import 'package:rackmate_core/src/commands/selection.dart';
+import 'package:rackmate_core/src/commands/simple_notifier.dart';
 import 'package:rackmate_core/src/commands/transaction.dart';
 import 'package:rackmate_core/src/commands/undo_stack.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
@@ -50,7 +51,8 @@ class DocumentController {
     this.doc, {
     this.clock = const SystemClock(),
     this.actor = 'local',
-  }) : _savedStateId = doc.stateId;
+  }) : _savedStateId = doc.stateId,
+       _nextStateId = doc.stateId + 1;
 
   final RackDocument doc;
 
@@ -73,8 +75,26 @@ class DocumentController {
   /// assign a new [Selection] as the user clicks around.
   Selection selection = Selection();
 
+  /// Bumped once for every commit, undo, redo and save-point move —
+  /// i.e. exactly the events that can change `isDirty`, `editsSinceSave`
+  /// or the window title. A `SimpleNotifier` because it is pure Dart
+  /// (simple_notifier.dart); the app layer subscribes and re-broadcasts to
+  /// widgets, so no Flutter enters core.
+  ///
+  /// The value is an opaque monotonically-increasing tick. Do not read
+  /// meaning into it — read [isDirty] / [editsSinceSave].
+  final changes = SimpleNotifier<int>(0);
+
   _TxnBuilder? _open;
   int _savedStateId;
+
+  /// The state-id allocator. STRICTLY MONOTONIC AND NEVER REUSED, which
+  /// is what lets `doc.stateId` be RESTORED on undo/redo without two
+  /// different document states ever colliding on one id. `doc.stateId`
+  /// itself is therefore non-monotonic (it goes backwards on undo) —
+  /// that is the point, and it is what `RackDocument.stateId`'s own
+  /// "non-monotonic" doc comment already promised.
+  int _nextStateId;
 
   /// `isDirty == stateId != savedStateId` (CR-094) — distinct from
   /// `doc.sequence`, the persisted sync cursor. `stateId` is in-memory
@@ -82,10 +102,39 @@ class DocumentController {
   /// this class is the only thing that advances it.
   bool get isDirty => doc.stateId != _savedStateId;
 
-  /// Called by the persistence layer after a successful write.
-  void markSaved() {
-    _savedStateId = doc.stateId;
+  /// The `stateId` the last successful write captured. Exposed so the
+  /// persistence layer can record it alongside the bytes it wrote.
+  int get savedStateId => _savedStateId;
+
+  /// How many edits stand between what is on disk and what is on screen —
+  /// the number in "12 unsaved changes" and in "If you don't save, 12
+  /// changes will be lost."
+  ///
+  /// `null` means UNKNOWN, not zero: the undo stack was poisoned, or the
+  /// save point aged out past `maxEntries`. Callers must OMIT the count
+  /// in that case rather than guess one (G4).
+  int? get editsSinceSave => undo.distanceTo(_savedStateId, doc.stateId);
+
+  /// Called by the persistence layer after a successful write, with the
+  /// `stateId` that was actually SERIALIZED — not the one current when
+  /// the write finished.
+  ///
+  /// THE DISTINCTION IS LOAD-BEARING. A save serializes in an isolate and
+  /// awaits it; the user can edit across that await. Clearing the dirty
+  /// flag against `doc.stateId` at completion would mark those later
+  /// edits saved when they were never written, and the next crash would
+  /// take them with no recovery snapshot to fall back on, because a
+  /// "clean" document deletes its snapshot. Capture the id synchronously
+  /// at serialize time and pass it here.
+  void markSavedAt(int stateId) {
+    _savedStateId = stateId;
+    _bumpChanges();
   }
+
+  /// Convenience for a synchronous save path: marks the CURRENT state
+  /// saved. An asynchronous save must use [markSavedAt] with the id it
+  /// captured before serializing.
+  void markSaved() => markSavedAt(doc.stateId);
 
   void run(Command c) => transact(c.label, (tx) => tx.add(c));
 
@@ -119,9 +168,28 @@ class DocumentController {
       b.selectionBefore,
       selection.snapshot(),
     );
-    undo.push(txn, b.selectionBefore, selection.snapshot(), clock.nowUtc());
+    final stateIdBefore = doc.stateId;
+    final stateIdAfter = _nextStateId++;
+    undo.push(
+      txn,
+      b.selectionBefore,
+      selection.snapshot(),
+      clock.nowUtc(),
+      stateIdBefore,
+      stateIdAfter,
+    );
     epochs.bump(txn.touches, doc); // invalidation happens ONCE per commit
-    doc.stateId++; // distinct from doc.sequence, bumped inside epochs.bump
+    // Distinct from doc.sequence, which epochs.bump advances. A commit
+    // always lands on a FRESH id, so it can never collide with a state
+    // some earlier save point still refers to.
+    doc.stateId = stateIdAfter;
+    _bumpChanges();
+  }
+
+  int _changeTick = 0;
+
+  void _bumpChanges() {
+    changes.value = ++_changeTick;
   }
 
   /// Reverts every child already applied, in reverse order, so a failed
@@ -156,9 +224,16 @@ class DocumentController {
     if (!undo.canUndo) return null;
     // Captured BEFORE undo() pops the entry off the done stack.
     final restore = undo.undoSelection;
+    final restoreStateId = undo.undoStateId!;
     final touched = undo.undo(doc);
     epochs.bump(touched, doc);
-    doc.stateId++;
+    // RESTORED, not advanced (CR-094): undoing back to the state that was
+    // written to disk must read as clean, because this milestone makes
+    // `isDirty` user-visible in the title bar and in the close-while-dirty
+    // prompt. A monotonic counter here would prompt "save changes?" for a
+    // document byte-identical to the one already on disk.
+    doc.stateId = restoreStateId;
+    _bumpChanges();
     return restore;
   }
 
@@ -168,9 +243,11 @@ class DocumentController {
   Selection? redoLast() {
     if (!undo.canRedo) return null;
     final restore = undo.redoSelection;
+    final restoreStateId = undo.redoStateId!;
     final touched = undo.redo(doc);
     epochs.bump(touched, doc);
-    doc.stateId++;
+    doc.stateId = restoreStateId;
+    _bumpChanges();
     return restore;
   }
 }

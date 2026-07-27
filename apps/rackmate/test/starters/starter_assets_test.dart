@@ -1,0 +1,401 @@
+// THE ROADMAP'S GLOBAL RULE, MADE MECHANICAL.
+//
+// docs/09-roadmap.md §4: *"**Every milestone ends green**: CI passes,
+// goldens pass, the app opens the four starter projects."* §8.5 restates
+// it as the regression net: *"They are goldens, perf fixtures and
+// screenshot source at once, and every milestone must open all four."*
+//
+// This file is that rule. It does NOT construct documents in memory and
+// check them: it reads the four `.rackmate` files off the disk they ship
+// on, through `DocumentStore` over `DartIoFileStore` — the same class,
+// the same codec, the same error classification a user's own file goes
+// through — and then, separately, through the PRODUCTION `rootBundle`
+// loader the running application uses. A starter that would not open is
+// a red suite.
+//
+// The five things it proves, in order of how much they would cost to
+// discover late:
+//
+//   1. All four open. Through the real read path, from real files.
+//   2. All four round-trip BYTE-EXACTLY (CR-117). `write(read(bytes)) ==
+//      bytes`, which is the property the whole persistence layer rests on
+//      and which these files — the largest and most varied documents in
+//      the repository — are the strongest available test of.
+//   3. All four are structurally clean by every rule this build can
+//      decide. See `starter_integrity.dart` for what that can honestly
+//      mean before the DRC exists.
+//   4. The checked-in bytes are exactly what `tool/starters/` produces,
+//      so a hand-edited asset or a codec change fails here rather than
+//      in a screenshot six weeks later.
+//   5. Each file stays under its asserted size ceiling — `RISK-11`'s own
+//      early-warning ("the four starter projects act as size fixtures
+//      with an asserted ceiling").
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
+import 'package:rackmate/src/session/starter_projects.dart';
+import 'package:rackmate/src/storage/atomic_writer.dart';
+import 'package:rackmate/src/storage/document_store.dart';
+import 'package:rackmate/src/storage/io_file_store.dart';
+import 'package:rackmate/src/storage/recovery_store.dart';
+import 'package:rackmate/src/storage/serialization.dart';
+import 'package:rackmate_core/rackmate_core.dart';
+
+import '../../tool/starters/authoring.dart';
+import '../../tool/starters/starter_sources.dart';
+import 'starter_integrity.dart';
+
+/// The per-file ceiling, in bytes.
+///
+/// WHERE THE NUMBER COMES FROM. An empty document carrying the 48-template
+/// seed catalog is ~661 KB, and every document this build writes carries
+/// it (see `StarterAuthor.newDocument` and `buildBlankDocument` for why).
+/// The largest starter's own content is a further ~150 KB. 1 MB leaves
+/// room for a starter to grow with each milestone — AC-052 requires
+/// exactly that — while still tripping long before the format itself is
+/// in question. `RISK-11`'s trigger is "a starter project crossing its
+/// asserted byte budget"; this is the assertion.
+const int kStarterByteCeiling = 1024 * 1024;
+
+/// The real read path over the real filesystem.
+DocumentStore _diskStore() {
+  const fs = DartIoFileStore();
+  final writer = AtomicWriter(fs: fs, queue: SaveQueue());
+  return DocumentStore(
+    fs: fs,
+    writer: writer,
+    recovery: RecoveryStore(fs: fs, writer: writer, dataRoot: '.'),
+    // Inline rather than the isolate pair: `serialization_test.dart`
+    // already proves the isolate produces byte-identical output, and
+    // spawning one per starter would buy nothing here.
+    serializer: inlineSerializer,
+    deserializer: inlineDeserializer,
+  );
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  final store = _diskStore();
+
+  test('there are exactly four starter projects, and the runtime list '
+      'agrees with the authoring list', () {
+    // FOUR, from docs/04 §9 and AC-052. Asserted here rather than in the
+    // `StartCard` widget, because "there are four" is a fact about the
+    // assets.
+    expect(kStarterProjects, hasLength(4));
+    expect(kStarterSources, hasLength(4));
+    expect(
+      [for (final s in kStarterProjects) p.basename(s.assetPath)],
+      [for (final s in kStarterSources) s.fileName],
+      reason:
+          'the runtime list and the authoring list must name the same '
+          'four files, in the same order — a starter the card offers and '
+          'the generator does not write is a card entry that fails at '
+          'the moment it is pressed',
+    );
+    expect(
+      kStarterProjects.map((s) => s.id).toSet(),
+      hasLength(4),
+      reason: 'ids are used as widget keys and by the shell lookup',
+    );
+  });
+
+  for (final starter in kStarterProjects) {
+    group(starter.title, () {
+      final path = starter.assetPath;
+
+      test('opens through the real read path, from disk', () async {
+        expect(
+          File(path).existsSync(),
+          isTrue,
+          reason: '$path is missing; run tool/generate_starters.dart',
+        );
+
+        final opened = await store.open(path);
+        expect(
+          opened,
+          isA<Ok<OpenedDocument>>(),
+          reason:
+              'THE ROADMAP GATE: "every milestone ends with the app '
+              'opening the four starter projects". ${starter.title} did '
+              'not open: ${opened is Err ? (opened as Err).error : ''}',
+        );
+
+        final document = (opened as Ok<OpenedDocument>).value;
+        expect(document.openReadOnly, isFalse);
+        expect(
+          document.migratedFromSchemaVersion,
+          isNull,
+          reason:
+              'a starter shipped by THIS build must already be at '
+              'kSchemaVersion — a migration on open means the assets '
+              'were generated by an older codec',
+        );
+        expect(document.document.racks, isNotEmpty);
+        expect(document.document.templates, hasLength(48));
+      });
+
+      test('round-trips byte-exactly (CR-117)', () async {
+        final bytes = File(path).readAsBytesSync();
+        final decoded = const JsonDocumentCodec().read(bytes);
+        expect(decoded, isA<Ok<RackDocument>>());
+        final rewritten = const JsonDocumentCodec().write(
+          (decoded as Ok<RackDocument>).value,
+        );
+        expect(
+          rewritten,
+          orderedEquals(bytes),
+          reason:
+              '${starter.title} does not survive a read/write cycle '
+              'unchanged. CR-117 (sorted keys at every level, '
+              'absent-key-not-null, unit-suffixed names) is the property '
+              'every save in this application depends on.',
+        );
+      });
+
+      test(
+        'is structurally clean by every rule this build can decide',
+        () async {
+          final opened = await store.open(path);
+          expectStarterIsStructurallyClean(
+            (opened as Ok<OpenedDocument>).value.document,
+            of: starter.title,
+          );
+        },
+      );
+
+      test('stays under the asserted size ceiling (RISK-11)', () {
+        final length = File(path).lengthSync();
+        expect(
+          length,
+          lessThan(kStarterByteCeiling),
+          reason:
+              '${starter.title} is $length bytes. RISK-11 uses the four '
+              'starters as size fixtures precisely so this shows up as a '
+              'test failure and not as a support ticket.',
+        );
+      });
+
+      test('loads through the production rootBundle loader', () async {
+        // The one place the SHIPPING asset loader is exercised. Everything
+        // else in the suite injects a loader; this asserts the injected
+        // seam has a real implementation behind it that finds the file
+        // the pubspec declares.
+        final bytes = await loadStarterAssetFromBundle(path);
+        expect(
+          bytes,
+          orderedEquals(File(path).readAsBytesSync()),
+          reason:
+              'the bundled asset and the file on disk must be the same '
+              'bytes — a ByteData view taken with the wrong offset would '
+              'differ here and nowhere else',
+        );
+      });
+    });
+  }
+
+  group('the checked-in bytes are what tool/starters/ produces', () {
+    for (final source in kStarterSources) {
+      test(source.fileName, () {
+        final produced = const JsonDocumentCodec().write(source.build());
+        final onDisk = File(
+          '$kStarterAssetDirectory/${source.fileName}',
+        ).readAsBytesSync();
+        expect(
+          produced,
+          orderedEquals(onDisk),
+          reason:
+              '${source.fileName} on disk differs from what its builder '
+              'produces. Either the asset was hand-edited, or a builder '
+              'changed and `dart run tool/generate_starters.dart` was '
+              'not re-run. Regenerating is the fix; hand-editing a '
+              'golden is not.',
+        );
+      });
+    }
+
+    test('regenerating twice produces identical bytes', () {
+      // DETERMINISM IS WHAT MAKES THEM GOLDENS. `StarterAuthor.mint`
+      // exists because `newEntityId()` is random; if that ever leaked
+      // back in, the assets would churn on every regeneration and the
+      // check above would fail for a reason nobody could act on. This
+      // catches it at the source instead.
+      for (final source in kStarterSources) {
+        const codec = JsonDocumentCodec();
+        expect(
+          codec.write(source.build()),
+          orderedEquals(codec.write(source.build())),
+          reason: '${source.fileName} is not deterministic',
+        );
+      }
+    });
+  });
+
+  test('every device kind in a starter matches what the palette would '
+      'have produced', () {
+    // `starterDeviceKindFor` is a transcription of
+    // `buildPlaceFromCatalogCommand`'s own private `_kindFor`. This runs
+    // the REAL command for all 48 catalog ids and compares, so the
+    // transcription cannot drift into a starter whose blank panels are
+    // typed as ordinary devices.
+    final catalog = buildSeedCatalog();
+    final doc = RackDocument(
+      id: const Uuid('kind-parity'),
+      appVersion: '0.1.0',
+      createdAt: DateTime.utc(2026),
+      modifiedAt: DateTime.utc(2026),
+      meta: EntityMeta(
+        createdAt: DateTime.utc(2026),
+        updatedAt: DateTime.utc(2026),
+        updatedBy: 'test',
+      ),
+    );
+    for (final entry in catalog.entries) {
+      doc.templates[catalogTemplateKey(entry.key)] = TemplateSnapshot(
+        templateId: TemplateId(entry.key),
+        version: 1,
+        contentHash: 'sha256:seed-${entry.key}',
+        capturedAt: DateTime.utc(2026),
+        body: entry.value,
+      );
+    }
+    final rack = Rack(
+      id: const Uuid('kind-parity-rack'),
+      name: 'r',
+      designator: 'RK-1',
+      heightU: 60,
+      order: const FracIndex('a0'),
+      meta: doc.meta,
+    );
+    doc.racks[rack.id] = rack;
+
+    var compared = 0;
+    for (final entry in catalog.entries) {
+      final result = buildPlaceFromCatalogCommand(
+        doc: doc,
+        catalogId: entry.key,
+        targetRack: rack,
+        now: DateTime.utc(2026),
+        actor: 'test',
+      );
+      // P01 is refused by the command (it is a 0U occupant added from the
+      // inspector, AC-044), so there is nothing to compare for it — the
+      // starters place it through `addZeroUDevice`, which is the path
+      // AC-044 names.
+      if (result is! CatalogPlacementReady) continue;
+      compared++;
+      expect(
+        starterDeviceKindFor(entry.key, entry.value),
+        result.command.kind,
+        reason: '${entry.key}: starter authoring and the palette disagree',
+      );
+    }
+    expect(compared, greaterThan(40), reason: 'a vacuous scan proves nothing');
+  });
+
+  test('two copies of the same starter never share a document id', () async {
+    // The property `DocumentStore.decodeBytes`'s `asNewDocumentId` exists
+    // for: a shared id means a shared recovery snapshot path
+    // (`recovery/<docUuid>.rackmate`), so recovering one copy would offer
+    // the other's work.
+    final bytes = await loadStarterAssetFromBundle(
+      kStarterProjects.first.assetPath,
+    );
+    final a = await store.decodeBytes(
+      path: null,
+      bytes: bytes,
+      asNewDocumentId: 'copy-a',
+    );
+    final b = await store.decodeBytes(
+      path: null,
+      bytes: bytes,
+      asNewDocumentId: 'copy-b',
+    );
+    expect((a as Ok<OpenedDocument>).value.document.id.v, 'copy-a');
+    expect((b as Ok<OpenedDocument>).value.document.id.v, 'copy-b');
+    expect(a.value.path, isNull, reason: 'a starter opens as untitled');
+
+    // And the rewrite touches ONLY the id: everything else is the file.
+    final untouched = await store.decodeBytes(path: null, bytes: bytes);
+    expect(
+      (untouched as Ok<OpenedDocument>).value.document.racks.length,
+      a.value.document.racks.length,
+    );
+    expect(
+      untouched.value.document.info.projectName,
+      a.value.document.info.projectName,
+    );
+  });
+
+  test('the four are genuinely different documents', () {
+    // A guard against the failure mode where four files exist and three
+    // of them are copies. Compares the shape of each, not the bytes.
+    final shapes = <String>{};
+    for (final source in kStarterSources) {
+      final doc = source.build();
+      shapes.add(
+        '${doc.racks.length}/${doc.devices.length}/${doc.links.length}/'
+        '${doc.outlets.length}/${doc.locations.length}/'
+        '${doc.racks.values.map((r) => r.heightU).join(",")}',
+      );
+    }
+    expect(shapes, hasLength(4), reason: 'two starters have the same shape');
+  });
+
+  test('an asset handed back as a ByteData VIEW yields only its own '
+      'bytes', () {
+    // THIS TEST EXISTS BECAUSE THE MUTATION SURVIVED. Replacing
+    // `bytesOfAssetData`'s offset-aware conversion with
+    // `buffer.asUint8List()` left the entire starter suite GREEN: every
+    // `ByteData` this bundle returns happens to span its whole buffer,
+    // so nothing could tell the two apart. A bundle implementation that
+    // packs assets into one buffer — which `AssetBundle` is explicitly
+    // allowed to do — would then hand the codec a file with its
+    // neighbours glued to both ends.
+    final buffer = Uint8List.fromList([
+      ...List<int>.filled(7, 0xAA),
+      ...utf8.encode('the asset'),
+      ...List<int>.filled(5, 0xBB),
+    ]);
+    final view = ByteData.view(buffer.buffer, 7, 9);
+    expect(utf8.decode(bytesOfAssetData(view)), 'the asset');
+    expect(bytesOfAssetData(view), hasLength(9));
+  });
+
+  test('rootBundle serves the DECLARED bundle, not the working '
+      'directory', () async {
+    // THE CONTROL FOR THE FOUR `rootBundle` TESTS ABOVE. Without it,
+    // "the starter loads through rootBundle" would also pass if
+    // `rootBundle` were quietly reading files relative to the package
+    // root — and the four assets would then be absent from the SHIPPED
+    // application while every test stayed green, which is a failure only
+    // a user would find.
+    //
+    // `pubspec.yaml` certainly exists on disk and is certainly not
+    // declared under `flutter: assets:`. It must fail to load.
+    expect(File('pubspec.yaml').existsSync(), isTrue);
+    Object? thrown;
+    try {
+      await rootBundle.load('pubspec.yaml');
+      // A caught-and-recorded throw rather than `expectLater(...,
+      // throwsA)`: `rootBundle` is a `CachingAssetBundle` and caches the
+      // FAILED future, which the test zone then reports as an unhandled
+      // error before the matcher ever sees it.
+      // ignore: avoid_catches_without_on_clauses
+    } catch (error) {
+      thrown = error;
+    }
+    expect(
+      thrown,
+      isNotNull,
+      reason:
+          'rootBundle loaded an undeclared file, so the four passing '
+          'starter loads prove nothing about pubspec.yaml',
+    );
+  });
+}
