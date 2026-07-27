@@ -20,12 +20,29 @@
 // apart (the brief's explicit instruction: "derive it, do not hardcode a
 // second unrelated constant that could drift from kRackUnit").
 //
-// Two widths are deliberately NOT physical: the RU ruler column (28) and
-// each rail (20) are fixed chrome, exactly as docs/04 states them as fixed
-// px — they are legibility furniture, not scaled rack metal. The panel
-// width, by contrast, is derived from the real EIA-19 panel width so it
-// stays honest against kRackUnit (and lands on ~238.9, matching the doc's
-// "239 px").
+// ONE width is deliberately NOT physical: the RU ruler column (28) is
+// fixed chrome, exactly as docs/04 states it as fixed px. It sits OUTSIDE
+// the mounting panel and is a dimensionless annotation gutter, so nothing
+// a reader would scale off depends on it.
+//
+// THE RAIL WIDTH USED TO BE THE SAME KIND OF CHROME, AND IT WAS NOT
+// HARMLESS. docs/04 §2.1 states "20 px each at z1.0" and this file
+// honoured that literally. But a rail sits INSIDE the 19 in panel, so
+// [openingWidth] — and therefore every full-width device body — was
+// derived from it: 238.9 − 2·20 = 198.9 units, which is 15.82 in of
+// equivalent, against a real EIA-19 clear opening of 17.75 in. Every
+// device on the sheet was 11% narrow horizontally while the vertical axis
+// and the overall panel width were exact, and the PDF exporter's whole
+// claim is that its elevations are "dimensionally correct against a
+// physical tape measure at true scale".
+//
+// So [railWidth] is now DERIVED from the real 0.625 in rail flange, which
+// makes 19 − 2·0.625 = 17.75 in fall out exactly. **This is a stated
+// deviation from docs/04 §2.1's "20 px"**: rails render ≈7.86 units wide
+// at zoom 1.0 instead of 20, i.e. visibly thinner on screen — and
+// proportionally correct, since a real flange is 3.3% of the panel width
+// and 20 units was 8.4%. Recorded in docs/m1-implementation-log.md rather
+// than left to be discovered by someone measuring a printout.
 
 import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/draw/geometry.dart';
@@ -90,18 +107,30 @@ final class RackGeometry {
   /// unit test), which is the "no drift" guarantee.
   static double unitsForLen(Len l) => l.nm * _unitsPerNm;
 
-  // ── fixed chrome widths (docs/04 §2.1, stated as fixed px) ───────────
+  // ── fixed chrome width (docs/04 §2.1, stated as fixed px) ────────────
 
   /// RU ruler column, left of the left rail (docs/04: "28 px").
+  ///
+  /// The ONE remaining non-physical width, and it is outside the panel —
+  /// see the file header.
   static const double rulerWidth = 28;
 
-  /// Each rail (docs/04: "20 px each at z1.0").
-  static const double railWidth = 20;
-
-  // ── the one physically-derived width ─────────────────────────────────
+  // ── the physically-derived widths ────────────────────────────────────
 
   /// EIA-19 panel width (19 in = 482.6 mm) in the model's exact nanometres.
   static const Len _eia19PanelWidth = Len(482_600_000);
+
+  /// EIA-19 rail flange width — 0.625 in = 15.875 mm, exactly.
+  ///
+  /// The figure that makes `19 − 2 × 0.625 = 17.75` in, the standard clear
+  /// opening, fall out of [openingWidth] rather than being asserted
+  /// separately.
+  static const Len _eia19RailFlange = Len(15_875_000);
+
+  /// Each rail, DERIVED from the real flange width — ≈7.86 units at zoom
+  /// 1.0, not docs/04's "20 px". See the file header for why that changed
+  /// and what it cost.
+  static double get railWidth => unitsForLen(_eia19RailFlange);
 
   /// Full mounting-panel width (rail + opening + rail), derived from the
   /// real EIA-19 width so it stays tied to kRackUnit. ≈ 238.9 units, i.e.
@@ -149,15 +178,36 @@ final class RackGeometry {
   /// U's starting (at its lowest U) at [ruIndex], laterally spanning
   /// [spanTwelfths] twelfths from [startTwelfth] (CR-030). The device's
   /// highest U is `ruIndex + deviceH - 1`.
+  ///
+  /// ── REAR MIRRORING (docs/04 §2.2, CR-035) ───────────────────────────
+  /// [mirrored] reflects the lateral span about the opening's centre, so a
+  /// half-width device at the LEFT of the front elevation appears at the
+  /// RIGHT of the rear one — which is what a technician standing behind
+  /// the rack actually sees.
+  ///
+  /// IT IS A LAYOUT REFLECTION, NOT A CANVAS `scale(-1, 1)`, and that is
+  /// the whole design. A negative X scale on the canvas would mirror the
+  /// GLYPHS too: every designator, name and model string on the rear sheet
+  /// would print backwards. The reflection therefore happens here, in the
+  /// geometry, where only rectangles move — and `rack_mirror_test.dart`
+  /// asserts that no `OpTransform` in a mirrored scene carries a negative
+  /// X scale, so the cheap wrong fix cannot be reintroduced by accident.
+  ///
+  /// Reflecting the SPAN rather than the rect keeps it exact in integer
+  /// twelfths: `mirroredStart = 12 − startTwelfth − spanTwelfths`. A
+  /// full-width device (start 0, span 12) is therefore unchanged, and
+  /// mirroring twice is the identity.
   DBox deviceRect(
     int ruIndex,
     int deviceH, {
     int startTwelfth = 0,
     int spanTwelfths = 12,
+    bool mirrored = false,
   }) {
     final top = yTopOfU(ruIndex + deviceH - 1);
     final bottom = yBottomOfU(ruIndex);
-    final left = openingLeft + (startTwelfth / 12) * openingWidth;
+    final start = mirrored ? 12 - startTwelfth - spanTwelfths : startTwelfth;
+    final left = openingLeft + (start / 12) * openingWidth;
     final width = (spanTwelfths / 12) * openingWidth;
     return DBox.fromLtwh(left, top, width, bottom - top);
   }

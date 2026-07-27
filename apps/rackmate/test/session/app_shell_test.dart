@@ -237,6 +237,41 @@ void main() {
       expect(find.text('Open Recent'), findsOneWidget);
       expect(find.text('Save'), findsOneWidget);
       expect(find.text('Save As…'), findsOneWidget);
+      expect(find.text('Export PDF…'), findsOneWidget);
+    });
+
+    testWidgets('Export PDF… runs the export and reports on the status '
+        'line', (tester) async {
+      // The whole export is proved in `export_controller_test.dart` and in
+      // `rackmate_export`'s own suite; what this asserts is the WIRING —
+      // that the menu entry reaches the controller at all.
+      final t = await pump(tester, savePaths: [r'C:\jobs\smith.pdf']);
+      await tester.tap(find.text('File'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Export PDF…'));
+      await tester.pumpAndSettle();
+
+      expect(t.fs.state.files.containsKey(r'C:\jobs\smith.pdf'), isTrue);
+      expect(find.textContaining('Exported '), findsOneWidget);
+    });
+
+    testWidgets('Export PDF… carries NO accelerator — the binding is a '
+        'separate decision', (tester) async {
+      // docs/08 §8.1 gives export Ctrl+P. `session_layering_test.dart`
+      // RULE 14 counts activators in this file, so declaring one on the
+      // menu item would edit that rule by stealth AND advertise a key
+      // nothing listens for.
+      await pump(tester);
+      await tester.tap(find.text('File'));
+      await tester.pumpAndSettle();
+
+      final item = tester.widget<MenuItemButton>(
+        find.ancestor(
+          of: find.text('Export PDF…'),
+          matching: find.byType(MenuItemButton),
+        ),
+      );
+      expect(item.shortcut, isNull);
     });
 
     testWidgets('Save from the menu does the same thing as Ctrl+S', (
@@ -484,8 +519,9 @@ void main() {
       expect(t.picker.suggestedNames.single, 'Smith (copy).rackmate');
     });
 
-    testWidgets('autosave failing MID-SESSION puts a warning on screen',
-        (tester) async {
+    testWidgets('autosave failing MID-SESSION puts a warning on screen', (
+      tester,
+    ) async {
       // The warning used to be a `final String?` computed once during
       // `buildAppServices`. Persistence does not only fail at startup:
       // the volume fills, the portable stick's write-protect switch is

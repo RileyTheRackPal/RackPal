@@ -558,11 +558,43 @@ LayerBuild buildSymbolLayer(
     // Hairline rule under the header (§3's figure). Square corners
     // throughout: §3 fixes the body corner radius at 0 because "rounded
     // reads as flowchart".
+    //
+    // ── BOTH CR-082 KNOBS, STATED, BECAUSE THIS IS THE ONE PLACE THEY
+    //    DISAGREE ──────────────────────────────────────────────────────
+    // This was `Stroke(..., hairlineFloor: true)` with `scaleWithGeometry`
+    // left at its `true` default, written when the two backends branched
+    // on `hairlineFloor` ALONE and it therefore meant BOTH "use the
+    // 0.25 pt print floor" AND "keep the width constant on the device".
+    // Splitting the two (`_applyStroke`/`_strokePaint`) silently changed
+    // what this line means, and it is the only production `Stroke` in the
+    // repository where the flags disagree, so it was the only one that
+    // moved.
+    //
+    // The split behaviour is the CORRECT one and it is now explicit.
+    // CR-082: "Cable traces, SYMBOL OUTLINES and rack rails scale; UI
+    // chrome, selection halos and hit slop are constant in screen pixels."
+    // This rule is drawn in the symbol's LOCAL coordinates, one op away
+    // from the body outline that has always scaled — a header rule that
+    // stayed 1 device-pixel while the box around it grew with zoom would
+    // read as a different weight at every zoom level, and would print
+    // differently again inside a scaled sheet bracket. So it SCALES.
+    // `hairlineFloor: true` is kept for what it now means alone: a rule
+    // may legitimately print finer than the 0.5 pt signal floor.
     ..add(
       OpLine(
         DPt(0, symbol.headerHeight),
         DPt(width, symbol.headerHeight),
-        Stroke(argb: palette.headerRule, widthPt: 1, hairlineFloor: true),
+        Stroke(
+          argb: palette.headerRule,
+          widthPt: 1,
+          hairlineFloor: true,
+          // The default, spelled out on purpose: this is the one site
+          // where the two knobs disagree, and "it inherited the default"
+          // is what let the rewrite change this line's meaning without
+          // anyone noticing. `draw_source_gate_test.dart` requires it.
+          // ignore: avoid_redundant_argument_values
+          scaleWithGeometry: true,
+        ),
       ),
     )
     ..add(OpRect(body, stroke: Stroke(argb: palette.bodyStroke, widthPt: 1)));

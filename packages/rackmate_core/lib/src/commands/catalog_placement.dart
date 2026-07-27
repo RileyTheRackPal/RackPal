@@ -16,6 +16,7 @@
 // which is exactly what those gestures do when there is no specific caret.
 
 import 'package:rackmate_core/src/commands/device_commands.dart';
+import 'package:rackmate_core/src/derived/device_loads.dart';
 import 'package:rackmate_core/src/idformat/designator_allocator.dart';
 import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/placement.dart';
@@ -44,32 +45,96 @@ typedef RailOccupant = ({
   bool locked,
 });
 
-/// Every rail-placed occupant of [face] within [rack], ascending by
-/// `ruIndex` (ties broken by device id, so the order is total and stable
-/// across runs — a planner that emits moves in this order must not depend
-/// on `Map` iteration order to be reproducible).
+/// Every device that OCCUPIES U on [face]'s elevation within [rack],
+/// ascending by `ruIndex` (ties broken by device id, so the order is total
+/// and stable across runs — a planner that emits moves in this order must
+/// not depend on `Map` iteration order to be reproducible).
 ///
-/// THE ONE occupancy scan in the system. A device whose template snapshot
-/// cannot be resolved is skipped, and a device whose per-face height is 0
-/// (it occupies the OTHER face only) is skipped too — both exactly as the
-/// private occupancy map behaved before this was factored out.
-List<RailOccupant> railOccupantsOnFace({
+/// THE ONE occupancy scan for "is there room here", resolved through
+/// `derived/device_loads.dart`'s [elevationOccupancyU] — the same
+/// predicate `scene_builder.dart` draws by and `totals.dart` counts by. A
+/// device is on this list exactly when this elevation DRAWS it, so
+/// `findLowestFreeRu`, `findBlockingOccupant`, the insertion caret and the
+/// drop evaluator can never call a U range free that the user can see a
+/// device in.
+///
+/// WHICH RAILS THE DEVICE IS BOLTED TO DOES NOT ENTER INTO IT (docs/04
+/// §2.2, CR-036). This used to additionally require
+/// `placement.face == face`, which is why `whole_house` RK-1's UPS-1 —
+/// front-bolted at U1, `frontU 3 / rearU 3`, `side: both` — was drawn
+/// across rear U1-U3 by the rear elevation while `findLowestFreeRu(face:
+/// rear, deviceH: 1)` answered `1` and `findBlockingOccupant` reported the
+/// range free. Committing that put two device blocks in one rear U on both
+/// the canvas and T2.02. The bolted-rails question still exists and still
+/// has callers: it is [boltedOccupantsOnFace].
+///
+/// A device whose template snapshot cannot be resolved is skipped, and so
+/// is one whose height on THIS face is 0 (it occupies the other face
+/// only) — both exactly as the private occupancy map behaved before this
+/// was factored out.
+List<RailOccupant> elevationOccupantsOnFace({
   required Rack rack,
   required Iterable<DeviceInstance> devices,
   required Face face,
   required Map<String, TemplateSnapshot> templates,
+}) => _occupantsOnFace(
+  rack: rack,
+  devices: devices,
+  face: face,
+  templates: templates,
+  boltedOnly: false,
+);
+
+/// Every device BOLTED TO [face]'s rails within [rack] and modelled on
+/// that face, in [elevationOccupantsOnFace]'s order.
+///
+/// THE OTHER QUESTION (see `derived/device_loads.dart`'s [boltedRailFace]),
+/// and it exists for the two callers whose answer is WRITTEN BACK into a
+/// `RailPlacement.face`: `compaction.dart` and `rack_shrink.dart` turn
+/// their plans into `MoveDeviceCommand(fromFace:, toFace:)`, so planning a
+/// rear-elevation move over a front-bolted device by its rear FOOTPRINT
+/// would silently unbolt it and re-hang it on the rear rails. Those
+/// planners therefore move only what is bolted to the face they are
+/// planning — and take what merely OCCUPIES that face as an immovable
+/// anchor, so they still never pack anything through visible ink.
+///
+/// No other caller should reach for this. Anything that draws, counts or
+/// collision-checks a face wants [elevationOccupantsOnFace].
+List<RailOccupant> boltedOccupantsOnFace({
+  required Rack rack,
+  required Iterable<DeviceInstance> devices,
+  required Face face,
+  required Map<String, TemplateSnapshot> templates,
+}) => _occupantsOnFace(
+  rack: rack,
+  devices: devices,
+  face: face,
+  templates: templates,
+  boltedOnly: true,
+);
+
+/// The single implementation behind both scans: identical in every respect
+/// except the one question they differ on, so the two can never drift into
+/// disagreeing about heights, ordering or what "modelled" means.
+List<RailOccupant> _occupantsOnFace({
+  required Rack rack,
+  required Iterable<DeviceInstance> devices,
+  required Face face,
+  required Map<String, TemplateSnapshot> templates,
+  required bool boltedOnly,
 }) {
   final out = <RailOccupant>[];
   for (final d in devices) {
     final placement = d.placement;
     if (placement is! RailPlacement) continue;
-    if (placement.rackId != rack.id || placement.face != face) continue;
-    final snapshot = templates[_templateKey(d.templateRef)];
-    if (snapshot == null) continue;
-    final deviceH = face == Face.front
-        ? snapshot.body.frontU
-        : snapshot.body.rearU;
-    if (deviceH <= 0) continue;
+    if (placement.rackId != rack.id) continue;
+    if (boltedOnly && placement.face != face) continue;
+    final deviceH = elevationOccupancyU(
+      d,
+      templates[templateKeyFor(d.templateRef)]?.body,
+      face,
+    );
+    if (deviceH == null) continue;
     out.add((
       device: d,
       ruIndex: placement.ruIndex,
@@ -85,11 +150,11 @@ List<RailOccupant> railOccupantsOnFace({
 }
 
 /// Builds a 1-based `U -> occupying device` map for [face] within [rack],
-/// as a fold over [railOccupantsOnFace] — so `findLowestFreeRu`,
-/// `findBlockingOccupant` and the compaction/shrink planners all resolve
-/// template heights through exactly ONE piece of code. A device-valued map
-/// rather than a bare `List<bool>` so a caller can report WHICH device is
-/// in the way, not just that the slot is taken.
+/// as a fold over [elevationOccupantsOnFace] — so `findLowestFreeRu`,
+/// `findBlockingOccupant` and the elevation that DRAWS the face all
+/// resolve occupancy through exactly ONE piece of code. A device-valued
+/// map rather than a bare `List<bool>` so a caller can report WHICH device
+/// is in the way, not just that the slot is taken.
 Map<int, DeviceInstance> _occupancyByRu({
   required Rack rack,
   required Iterable<DeviceInstance> devices,
@@ -97,7 +162,7 @@ Map<int, DeviceInstance> _occupancyByRu({
   required Map<String, TemplateSnapshot> templates,
 }) {
   final occupied = <int, DeviceInstance>{};
-  for (final o in railOccupantsOnFace(
+  for (final o in elevationOccupantsOnFace(
     rack: rack,
     devices: devices,
     face: face,
@@ -175,8 +240,6 @@ DeviceInstance? findBlockingOccupant({
   return null;
 }
 
-String _templateKey(TemplateRef ref) => '${ref.templateId.v}@${ref.version}';
-
 /// The lowest U a [findBlockingOccupant] hit currently occupies — for the
 /// "Occupied by AMP-1 (U19-U20)" style failure message. Returns 0 if,
 /// somehow, [blocker] is not rail-placed (unreachable in practice:
@@ -198,7 +261,7 @@ int _blockerEndRu(
 ) {
   final placement = blocker.placement;
   if (placement is! RailPlacement) return _blockerStartRu(blocker);
-  final snapshot = templates[_templateKey(blocker.templateRef)];
+  final snapshot = templates[templateKeyFor(blocker.templateRef)];
   final h = snapshot == null
       ? 1
       : (face == Face.front ? snapshot.body.frontU : snapshot.body.rearU);

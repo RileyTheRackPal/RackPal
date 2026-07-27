@@ -9,6 +9,9 @@ import 'package:rackmate/src/storage/file_store.dart';
 /// The `.rackmate` extension, including the dot, lower-case.
 const String kDocumentExtension = '.rackmate';
 
+/// The extension an exported PDF gets, including the dot, lower-case.
+const String kPdfExtension = '.pdf';
+
 /// Appended to the target to name the in-progress write.
 const String kTempSuffix = '.tmp';
 
@@ -45,11 +48,22 @@ final class SavePaths {
   /// open dialog's filter. Appending is done rather than replacing, so a
   /// deliberate `Smith.v2` becomes `Smith.v2.rackmate` and nothing the
   /// user typed is thrown away.
-  factory SavePaths.forTarget(String chosen, {p.Context? context}) {
+  ///
+  /// [extension] EXISTS SO THE PDF EXPORT SHARES THIS NORMALISATION rather
+  /// than growing its own. The rule — "append unless it is already there,
+  /// compared case-insensitively" — is the same rule for a `.pdf` as for a
+  /// `.rackmate`, and it is exactly the kind of thing that drifts once
+  /// there are two copies of it. The default keeps every existing caller
+  /// unchanged.
+  factory SavePaths.forTarget(
+    String chosen, {
+    p.Context? context,
+    String extension = kDocumentExtension,
+  }) {
     final ctx = context ?? p.context;
-    final target = ctx.extension(chosen).toLowerCase() == kDocumentExtension
+    final target = ctx.extension(chosen).toLowerCase() == extension
         ? chosen
-        : '$chosen$kDocumentExtension';
+        : '$chosen$extension';
     return SavePaths(
       target: target,
       // SAME DIRECTORY, always. Same directory means same volume, and
@@ -123,10 +137,9 @@ final class SavePaths {
 
   /// The length of the longest path a save with this [keepBackup] setting
   /// will actually create.
-  int longestPathLength({required bool keepBackup}) =>
-      pathsWritten(keepBackup: keepBackup)
-          .map((path) => path.length)
-          .reduce((a, b) => a > b ? a : b);
+  int longestPathLength({required bool keepBackup}) => pathsWritten(
+    keepBackup: keepBackup,
+  ).map((path) => path.length).reduce((a, b) => a > b ? a : b);
 
   /// True when a path this save will actually create exceeds
   /// [kWindowsMaxPath].
@@ -135,8 +148,7 @@ final class SavePaths {
 
   /// The file name without its directory or extension — the default
   /// display name when a document carries no project name.
-  String stemOf(p.Context context) =>
-      context.basenameWithoutExtension(target);
+  String stemOf(p.Context context) => context.basenameWithoutExtension(target);
 
   @override
   String toString() => 'SavePaths($target)';
@@ -230,8 +242,7 @@ final class FileBaseline {
   bool operator ==(Object other) =>
       other is FileBaseline &&
       other.size == size &&
-      other.modified.millisecondsSinceEpoch ==
-          modified.millisecondsSinceEpoch;
+      other.modified.millisecondsSinceEpoch == modified.millisecondsSinceEpoch;
 
   @override
   int get hashCode => Object.hash(size, modified.millisecondsSinceEpoch);

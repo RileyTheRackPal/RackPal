@@ -20,6 +20,8 @@ import 'package:rackmate_export/rackmate_export.dart';
 import 'package:rackmate_text/rackmate_text.dart';
 import 'package:test/test.dart';
 
+import 'support/source_gate.dart';
+
 const _kZeroPosition = PanelPosition(
   ruOffset: 0,
   xTwelfth: 0,
@@ -168,26 +170,144 @@ TextMeasurer _measurer() {
 }
 
 void main() {
-  test(
-    'rackmate_export imports rackmate_core only — never its sibling '
-    'rackmate_ui (the constraint that forced the relocation)',
-    () {
-      // Same shape as rackmate_core's no_flutter_import_test: a source-level
-      // gate, so the rule fails a test run rather than a code review.
-      final banned = RegExp(r'''import\s+['"]package:rackmate_ui/''');
-      for (final f
-          in Directory('lib')
-              .listSync(recursive: true)
-              .whereType<File>()
-              .where((f) => f.path.endsWith('.dart'))) {
+  group('rackmate_export never reaches its sibling rackmate_ui (the '
+      'constraint that forced the relocation)', () {
+    // ====================================================================
+    // THE GATE USED THE PATTERN ITS OWN SIBLING DOCUMENTS AS BROKEN.
+    // ====================================================================
+    // It was `RegExp(r"""import\s+['"]package:rackmate_ui/""")` over lib/
+    // — the exact naive shape `rackmate_core/test/no_flutter_import_test
+    // .dart` replaced, and for the same three reasons: an `export` in the
+    // barrel is invisible to it, a conditional import puts the URI after
+    // `)` rather than after `import`, and `\s+` requires whitespace that
+    // valid Dart does not. It also never looked at the pubspec, where a
+    // dependency is DECLARED, and it had no vacuity guard, so a run that
+    // found no files passed.
+    //
+    // `support/source_gate.dart` carries the directive scanner; the
+    // spellings it must catch are proved below rather than asserted in a
+    // comment.
+
+    test('no source file under lib/ pulls in rackmate_ui, Flutter or '
+        'dart:ui', () {
+      final offenders = <String>[];
+      var scanned = 0;
+      for (final f in dartFilesUnder('lib')) {
+        scanned++;
+        for (final uri in bannedUris(f.readAsStringSync())) {
+          offenders.add('${f.path} pulls in $uri');
+        }
+      }
+
+      // Guards the guard: a scan that found no files would pass vacuously.
+      // The sibling gate in core says `greaterThan(10)`; this package's
+      // lib/ is smaller (7 files at the time of writing), so the floor is
+      // set below that and above zero, which is the property that matters.
+      expect(scanned, greaterThan(5));
+      expect(offenders, isEmpty, reason: offenders.join('\n'));
+    });
+
+    test('...and the PUBSPEC does not declare them either, which is where '
+        'a dependency actually comes from', () {
+      // A source scan cannot see a dependency that has been added but not
+      // yet imported, and that is the state a package is in for exactly as
+      // long as it takes to write the next line. `flutter` here would also
+      // stop this package being isolate-safe pure Dart, which is the whole
+      // reason the two backends are siblings.
+      final pubspec = File('pubspec.yaml');
+      expect(pubspec.existsSync(), isTrue, reason: 'run from the package root');
+
+      final deps = pubspec.readAsLinesSync().where(
+        (l) => !l.trimLeft().startsWith('#'),
+      );
+      for (final banned in <String>['rackmate_ui', 'flutter']) {
         expect(
-          banned.hasMatch(f.readAsStringSync()),
+          deps.any(
+            (l) => RegExp('^\\s+$banned\\s*:').hasMatch(l),
+          ),
           isFalse,
-          reason: '${f.path} imports rackmate_ui',
+          reason: 'pubspec.yaml declares a dependency on $banned',
         );
       }
-    },
-  );
+      // ...and the scan is not vacuous: the dependencies it IS allowed to
+      // have are there to be found.
+      expect(
+        deps.any((l) => RegExp(r'^\s+rackmate_core\s*:').hasMatch(l)),
+        isTrue,
+      );
+    });
+
+    group('the pattern catches every legal spelling — the three the old '
+        'one missed', () {
+      // Strings, not files: the point is what the matcher does, and a
+      // fixture file containing a real rackmate_ui import could not live
+      // under lib/ without failing the gate above.
+      test('a plain import', () {
+        expect(bannedUris("import 'package:rackmate_ui/rackmate_ui.dart';"), [
+          'package:rackmate_ui/',
+        ]);
+      });
+
+      test('an EXPORT — the barrel is a re-export surface, and this is the '
+          'spelling that would hand rackmate_ui to every consumer', () {
+        expect(bannedUris("export 'package:rackmate_ui/rackmate_ui.dart';"), [
+          'package:rackmate_ui/',
+        ]);
+      });
+
+      test('a CONDITIONAL import, where the banned URI follows `)` and not '
+          '`import`', () {
+        expect(
+          bannedUris(
+            "import 'stub.dart' "
+            "if (dart.library.ui) 'package:rackmate_ui/rackmate_ui.dart';",
+          ),
+          ['package:rackmate_ui/'],
+        );
+      });
+
+      test('no whitespace after the keyword', () {
+        expect(bannedUris('import"package:rackmate_ui/rackmate_ui.dart";'), [
+          'package:rackmate_ui/',
+        ]);
+      });
+
+      test('Flutter and dart:ui directly, without going through '
+          'rackmate_ui', () {
+        expect(bannedUris("import 'package:flutter/material.dart';"), [
+          'package:flutter/',
+        ]);
+        expect(bannedUris("import 'dart:ui' deferred as ui;"), ['dart:ui']);
+      });
+    });
+
+    group('the pattern does not cry wolf', () {
+      test('the permitted imports are permitted', () {
+        expect(
+          bannedUris('''
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:pdf/pdf.dart';
+import 'package:rackmate_core/rackmate_core.dart';
+import 'package:vector_math/vector_math_64.dart';
+'''),
+          isEmpty,
+        );
+      });
+
+      test('a COMMENT naming rackmate_ui is prose, not an import — which '
+          'this very file depends on', () {
+        expect(
+          bannedUris("""
+// `rackmate_export` must never import 'package:rackmate_ui/…'.
+/* import 'package:flutter/material.dart'; would be a violation. */
+import 'package:pdf/pdf.dart';
+"""),
+          isEmpty,
+        );
+      });
+    });
+  });
 
   test('the export package can build a symbol fragment from core alone', () {
     final built = buildSymbolLayer(

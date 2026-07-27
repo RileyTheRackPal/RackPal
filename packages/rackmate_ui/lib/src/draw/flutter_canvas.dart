@@ -68,9 +68,15 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
 
   // ── paint state helpers ──────────────────────────────────────────────
 
+  // CR-082 IS TWO INDEPENDENT KNOBS -- see the identical note in
+  // `rackmate_export/src/draw/pdf_canvas.dart`'s `_applyStroke`. The width
+  // decision reads `scaleWithGeometry`; the FLOOR decision reads
+  // `hairlineFloor`. They used to share one branch, which left
+  // `scaleWithGeometry` with no readers on either backend. The two
+  // spellings coincide at k == 1, so nothing on screen moves.
   ui.Paint _strokePaint(Stroke s) {
     final k = _k == 0 ? 1.0 : _k;
-    var w = s.hairlineFloor ? s.widthPt / k : s.widthPt;
+    var w = s.scaleWithGeometry ? s.widthPt : s.widthPt / k;
     final floor = s.hairlineFloor ? 0.25 : 0.5; // pt -- CR-082
     if (w * k < floor) w = floor / k;
     return ui.Paint()

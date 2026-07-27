@@ -2458,6 +2458,11 @@ JsonMap _encodePowerProfile(PowerProfile p) {
   // must come back absent so the rollups keep counting it unknown (CR-114).
   putIfNotNull(json, 'outletsProvided', p.outletsProvided);
   putIfNotNull(json, 'outletsConsumed', p.outletsConsumed);
+  // A CAPACITY, not a draw — see `PowerProfile`'s class doc. Omitted when
+  // unauthored like every other optional figure, so a document written
+  // before these two existed round-trips byte-for-byte (CR-117).
+  putIfNotNull(json, 'outputCapacityVA', p.outputCapacityVA);
+  putIfNotNull(json, 'outputCapacityWatts', p.outputCapacityWatts);
   putIfNotNull(json, 'nameplateWatts', p.nameplateWatts);
   putIfNotNull(json, 'typicalWatts', p.typicalWatts);
   putIfNotNull(json, 'standbyWatts', p.standbyWatts);
@@ -2491,6 +2496,14 @@ PowerProfile _decodePowerProfile(JsonMap json) => PowerProfile(
   outletsConsumed: asIntOrNull(
     json['outletsConsumed'],
     'PowerProfile.outletsConsumed',
+  ),
+  outputCapacityVA: asIntOrNull(
+    json['outputCapacityVA'],
+    'PowerProfile.outputCapacityVA',
+  ),
+  outputCapacityWatts: asIntOrNull(
+    json['outputCapacityWatts'],
+    'PowerProfile.outputCapacityWatts',
   ),
   inletPlug: json['inletPlug'] == null
       ? null

@@ -228,7 +228,7 @@ ShrinkDecision resolveShrink({
 /// bounds what the user ASKED FOR, while these two heights are DERIVED —
 /// [RackShrinkPlan.smallestFittingHeightU] and
 /// [CompactionRescue.achievableHeightU] are computed from raw occupant U
-/// values that `railOccupantsOnFace` deliberately does not clip to the rack
+/// values that `boltedOccupantsOnFace` deliberately does not clip to the rack
 /// extent (so an already-overflowing device stays visible rather than being
 /// hidden). A document decoded from JSON — explicitly the non-validating
 /// path — can carry a device whose top U exceeds 60, making "the smallest

@@ -19,14 +19,14 @@ Status legend: **Done** (built and tested) · **Partial** (some of the cited beh
 |---|---|---|
 | 1 | `ViewportController` with wheel/trackpad/pan/zoom and the grid painter | **Done** |
 | 2 | `CanvasIntent` on top, no `PointerDeviceKind` branching | **Done** |
-| 3 | Hybrid `RenderRackCanvas`, device widgets, RU snapping, front/rear elevations with per-rack mirroring | **Partial** — RU snapping and front/rear filtering done; **mirroring not done** |
+| 3 | Hybrid `RenderRackCanvas`, device widgets, RU snapping, front/rear elevations with per-rack mirroring | **Done** — RU snapping and front/rear filtering shipped earlier; **per-rack mirroring shipped in the PDF exporter's pass 2** and is in `RackGeometry.deviceRect`, so BOTH backends get it — the rear canvas mirrors on screen exactly as the rear sheet does (`rack_mirror_test.dart`). It is a LAYOUT reflection of the twelfth span, never a canvas `scale(-1, 1)`, which would print every designator backwards; a test asserts no `OpTransform` in a rear scene carries a negative X scale. See §3e |
 | 4 | Quick-add by typing with the drop caret; the Staging Bin; shelves with auto-pack; 0U occupants from the inspector | **Partial** — quick-add by typing now places at the insertion caret (docs/04 §3.2/§3.4), see §3.2/§3.4 below; the Staging Bin, shelves-with-auto-pack, and 0U-from-the-inspector remain **not started**. §3.1's "release outside any rack" now shows an HONEST chip and reports its refusal instead of silently doing nothing, but it still creates no `StagedPlacement` — see §3c |
 | 5 | Compact Up/Down with preview-then-accept, and the shrink-rack dialog; locks | **Partial** — Compact Up/Down ship COMPLETE (planner + preview overlay + floating Apply/Cancel bar + `Enter`/`Esc`, see §3.6); the shrink-rack dialog is planner-only (see §4.1) and its modal is pass 3; locks are honoured as immovable anchors by the planner but there is still no `Ctrl+L` UI to SET one |
 | 6 | The full seeded catalog (incl. 18 field devices, `sources.md` provenance, connector-footprint CI assertion) | **Partial** — 48-template seed catalog (30 rack-side + 18 field) with `assets/catalog/sources.md` provenance and the connector-footprint CI assertion all landed, plus a device palette panel wired into `RackCanvasScreen` (search + categories, **click-to-add** via double-click/Enter, **and now drag-from-palette-to-rails** — see §3.1 below); the 4 hand-built demo devices remain as the rack's starting contents alongside the catalog |
 | 7 | Copy-on-place with `DeviceOverrides`; the chip strip (RU, weight, VA, outlets) with unknown counts | **Partial** — the **chip strip ships complete**, including the unknown counts (`rackmate_core/derived/totals.dart` + `rackmate_ui/canvas/rack_metrics_row.dart`, 54 new tests, see §5 below). Copy-on-place with `DeviceOverrides` remains **not started** — the rollup READS `DeviceOverrides.weight` where one exists, but nothing writes one |
 | 8 | `DiagramCanvas` + `SceneBuilder` + both backends + the baseline-Y parity test | **Done** — mutation-tested twice |
-| 9 | Minimal PDF exporter: front elevation, rear elevation, `T6.30`, title block, revision block | **Not started** |
-| 10 | Atomic save, autosave, recovery, recents, close interception; the outline tree; four starter projects | **Not started** |
+| 9 | Minimal PDF exporter: front elevation, rear elevation, `T6.30`, title block, revision block | **Done** — both passes ship. Pass 1: ANSI page sizes, the drawing-scale engine with the honest `1:n`/`NTS` report, the border, the title block and the revision block (§3d). Pass 2: `T2.01` front and `T2.02` rear elevations rendering the EXISTING `buildRackScene` through `PdfDiagramCanvas`, `T6.30` equipment list with §3.7 pagination, and `File ▸ Export PDF…` wired into the app over the shipped save surface (§3e). The elevations are asserted DIMENSIONALLY CORRECT against the emitted PDF bytes in PDF user space, with every expectation computed from `44_450_000` / `25_400_000` / `72.0` literals and the ratio read back out of the sheet's own SCALE field |
+| 10 | Atomic save, autosave, recovery, recents, close interception; the outline tree; four starter projects | **Done, except the outline tree** — CORRECTED, this row was stale: `apps/rackmate/lib/src/storage/` (atomic save with `AtomicWriter`/`SavePaths`, autosave, crash recovery, the enumerated `SaveError` surface), `lib/src/session/` (recents, close interception, the native save dialog) and the four starter projects at `assets/starters/*.rackmate` all shipped in the persistence stage, with 624 app tests covering them. The **outline tree** remains not started |
 
 ---
 
@@ -70,7 +70,14 @@ Status legend: **Done** (built and tested) · **Partial** (some of the cited beh
       microtext, PDU outlet map) — **not started**
 - [x] Front / Rear as a coordinate switch — **done**
 - [ ] "Both" view (mirrored side-by-side) — **not started**
-- [ ] Rear mirroring (`Rack.mirrorRearElevation`) + the "NOT MIRRORED" chip — **not started**
+- [x] Rear mirroring (`Rack.mirrorRearElevation`) — **done** in `RackGeometry.deviceRect`, so the
+      rear CANVAS and the rear SHEET mirror identically (§3e). A LAYOUT reflection of the twelfth
+      span, never a canvas `scale(-1, 1)` — that would print every designator backwards, and a test
+      asserts no `OpTransform` in a rear scene carries a negative X scale
+- [x] The `NOT MIRRORED` chip (CR-035) — **done ON THE PDF SHEET** (`T2.02` carries
+      `REAR VIEW — MIRRORED` or `NOT MIRRORED`, because a reader cannot tell the conventions apart
+      by looking). **NOT on the on-screen canvas** — the chip is sheet furniture and the rack canvas
+      has no chip surface yet; recorded rather than claimed
 - [ ] `chassisRotation` reversed-face badge (↺) — **not started**
 - [ ] Multiple racks laid out left-to-right by `Rack.order` — **not started** (one hardcoded rack)
 - [ ] Wall-mounted rack offset/hatch rendering — **not started**
@@ -1013,6 +1020,699 @@ either its name or its scoping key.
 
 ---
 
+## 3d. The PDF exporter, pass 1 of 2 — the sheet frame and furniture (roadmap item 9)
+
+Roadmap item 9 was built in two passes. **Pass 1, described here, is the sheet FRAME and
+FURNITURE**: page setup, the scale engine, the border, the title block and the revision block.
+**Pass 2 builds the three sheets on top** — `T2.01` front elevation, `T2.02` rear elevation and
+`T6.30` equipment list — and has since SHIPPED; see §3e, which also records the two things pass 1
+flagged and pass 2 had to act on (the 5.73 pt print-floor breach, and `Stroke.scaleWithGeometry`
+having no readers).
+
+### Where the code went, and why not where docs/08 §7.1 says
+
+docs/08 §7.1 puts "sheets, furniture, tables" in `rackmate_export`. **That is unimplementable as
+filed**, and the conflict is inside the same document: §5 requires furniture to "render
+identically in the on-screen preview", §8.1 note 3 makes the preview the SCREEN backend, and
+`rackmate_ui` may not import `rackmate_export` (docs/03 §7.1). Furniture living in the export
+package is furniture the preview can never draw.
+
+So **all sheet layout is pure core**, under `rackmate_core/lib/src/draw/sheet/`, and
+`rackmate_export` keeps only what genuinely needs `package:pdf`:
+
+| File | Package | Contents |
+|---|---|---|
+| `units/print_units.dart` | core | `kPdfPointsPerInch`, `pointsForLen`, `kFoot`. Nothing else may hardcode 72 or 126 |
+| `draw/sheet/drawing_scale.dart` | core | `SceneFactor`, `PhysicalRatio`, `DrawingScale`, `fitSceneFactor`, the graphic scale bar, the §6.2 legibility check |
+| `draw/sheet/sheet_def.dart` | core | `SheetSize`, `SheetRole`, `SheetDef`, `SheetSet` (the dry run), NCS validation |
+| `draw/sheet/sheet_frame.dart` | core | `SheetMargins`, `SheetGeometry`, `SheetLayout`, `SheetPalette`, `SheetTextSizes`, the §5.1 border |
+| `draw/sheet/title_block.dart` | core | `TitleBlockFields.resolve` + the §5.2 layout |
+| `draw/sheet/revision_block.dart` | core | the §5.3 block |
+| `draw/sheet/text_fit.dart` | core | measured truncation, optional-fragment joining, the one date format |
+| `draw/sheet/sheet_furniture.dart` | core | composes the above into one `DiagramScene` and reports the drawing area |
+| `sheets/page_sizes.dart` | export | the ANSI `PdfPageFormat`s `PdfPageFormat` does not ship |
+| `sheets/sheet_page.dart` | export | `buildSheetPage` — the one `pw.Page` + `FullPage` + `CustomPaint` wiring |
+
+### The scale property, and the two numbers that are not the same number
+
+CR-007's "1 diagram unit = 1 PDF point" is true at the `DiagramCanvas` boundary and **false of the
+rack scene**: `RackGeometry.unitsPerRu` is 22 while one RU is `pointsForLen(kRackUnit) = 126.0` pt
+of paper, so `buildRackScene` output arrives already reduced by 22:126. §6.2's `fitScale` therefore
+returns a SCENE factor while §5.2's `k` is a PHYSICAL ratio, and they differ by 5.7273x. Feeding one
+into the other prints `1:1.4` on a sheet drawn at 1:8. They are now two distinct extension types,
+`SceneFactor` and `PhysicalRatio`, and neither is assignable to the other or from a bare `double`.
+
+§5.2's `|k − 1/n| < 2%` is implemented as a **relative** tolerance. The absolute reading is refuted
+by the doc's own counter-example: `1/8.34 = 0.11990` against `1/8 = 0.125` is 0.0051 absolute —
+comfortably under 0.02 — so an absolute reading would print the `1:8` the same sentence forbids.
+
+The scale is **chosen, not measured**: `elevation_sheet.dart`'s `_fitElevation` takes the largest
+scale (smallest `n`) from `{1,2,4,8,10,16,20,24,32,48,64,96}` that fits both axes, so `k` is exactly
+`1/n` and the label is true at 0% error. There is exactly ONE such walk — a `chooseDrawingScale`
+helper in `drawing_scale.dart` did the same thing against a FIXED content box, had no production
+caller (an elevation's content changes with the candidate ratio, because annotation is inflated as
+the drawing shrinks), and was deleted along with the seven tests that guarded it, two of which
+asserted a fit the shipped path does not produce. The 2% predicate survives as a guard that forces `NTS` if anything upstream
+ever hands the block a non-standard ratio. **Note on the stage brief's wording:** it said "the
+largest `n` … for which the elevation fits", which under monotonicity is always 96 (the tiniest
+drawing); the intended and implemented reading is the largest SCALE.
+
+### What is DEFERRED, and why — stated, not silently dropped
+
+- **The three sheets themselves** (`T2.01`, `T2.02`, `T6.30`) — pass 2.
+- **The zone grid (§5.1).** Its only v1 consumer is the schedule's `REF` column, which needs
+  `Link`s, which do not exist until M2. The 0.22 in zone band is not drawn, and the gap between the
+  outer and inner rules is §3.2's 6 pt — the figure that reproduces the doc's own stated usable
+  widths (510 portrait / 690 landscape). §5.1 and §3.2 disagree on this; §3.2's arithmetic wins.
+- **Revision clouds and the revision triangle (§5.3, DR-005).** A cloud encircles "each element
+  changed since the last issued revision". `RevisionEntry` EXISTS
+  (`model/rack_document.dart`, round-trips through `json_codec.dart`) but **no generator does** —
+  a repo-wide search finds no writer outside the codec and the starter-authoring tool. With no
+  history there is no such set. **This is a stated DR-005 deviation.** The exporter renders whatever
+  real entries exist and, when there are none — the normal case in this build — prints one row
+  reading `NO REVISIONS RECORDED`. It never fabricates an entry and never falls back to
+  `RackDocument.sequence`, which is the sync cursor (CR-094); a test asserts that against the source.
+- **The symbol-legend cross-reference** (`SYMBOL LEGEND: SEE SHEET …`). `T0.01` is not in this
+  sheet set, and pointing a reader at a sheet the file does not contain is exactly what T0.00's own
+  drawing-index rule forbids. The line is omitted rather than pointed at nothing. For the same
+  reason the revision overflow line reads `+n EARLIER REVISIONS — SEE PROJECT FILE` instead of
+  §5.3's `SEE SHEET T0.00 FOR FULL REVISION HISTORY`.
+- **The revision block on ANSI A.** §5.2 makes the ANSI A title block a full-width strip
+  specifically "so the schedule table is not notched"; stacking an eight-row revision grid above it
+  would notch the table by 130 pt and undo that. The compact strip carries the REV field but not the
+  history table. A **stated §5.3 deviation**.
+- **`TilingStrategy.geometric`** (§6.2). Every legal rack (`heightU ≤ 60`, CR-038) fits ANSI B
+  portrait at 1:8 — asserted at the 60 U worst case — so the case is unreachable in v1. The
+  legibility check is implemented and reports; the tiler is not built.
+- **`PageTheme(buildBackground:)`.** §5 specifies attaching furniture through it, with a VERIFY on
+  the parameter names. **VERIFIED present on pdf 3.13.0** (`page_theme.dart`, `BuildCallback?`), and
+  `Page.postProcess` does paint them — the doc's mechanism works. It is deliberately **not used**:
+  furniture and content compose into ONE `DiagramScene` before the page exists, which satisfies §5's
+  two actual requirements (every page, identical in preview) more strongly, because the preview can
+  replay the identical pure-core object and one scene means one coordinate origin rather than two
+  chances to get §7.4's `boxHeight` gotcha wrong.
+- **File-level PDF determinism** (§8.4). **Impossible on the pinned pdf 3.13.0**:
+  `PdfDocument.documentID` is `sha256(DateTime.now() + Random.secure())` and lands in the trailer
+  `/ID`, and `PdfInfo` hardcodes `/CreationDate: DateTime.now()`. Neither is injectable. The
+  determinism gate is therefore scoped to CONTENT STREAMS and says so — and a test asserts that two
+  renders are byte-identical in their content stream AND *not* byte-identical as files, so the
+  limitation stays visible rather than remembered.
+- **No golden PDF is committed.** Bytes vary with the pdf package version and with the two
+  non-deterministic fields above, and `.gitattributes` marks `.pdf` binary. Assertions are on
+  recovered content-stream operators instead, which also keeps them readable in a diff.
+
+### Multi-rack sheet numbering, and the counter that would have shipped
+
+"Three-sheet PDF" in the exit criterion is the ONE-RACK case; with N racks the set is `2N + 1`. A
+running counter incremented during rendering is right for one rack and wrong for two — and the exit
+criterion only exercises one. So `SheetSet.forRacks` is a **dry run** that resolves every `SheetDef`
+with `index`/`total` already baked in, before anything is rendered. §2.2 names `T2.01`/`T2.02` for
+the single-rack case; with N racks the sequence continues within sheet type 2 (rack `i` gets
+`T2.{2i+1}`/`T2.{2i+2}`), so one rack reproduces the doc exactly and two racks produce `T2.01`–`T2.04`
+rather than a collision. Above 49 racks the sequence stops matching the NCS pattern; that is a
+NOTICE, never a gate (CR-023, G3).
+
+### A real finding the legibility check surfaced
+
+`RackTextSizes.type` is 8 diagram units. At 1:8 that is **5.73 pt on paper — below §6.2's 6.0 pt
+hard floor**. This is asserted as a live fact about the current rack scene, not a hypothesis, and it
+is the argument for giving the elevation sheets a print type scale in pass 2 (annotation on a scaled
+drawing is never at model scale). Sheet furniture is unaffected: it is drawn at 1:1 and every one of
+its declared sizes is at or above 6.0 pt, asserted mechanically over `SheetTextSizes.all`.
+
+**ACTED ON IN PASS 2:** `RackTypeScale` inflates every rack label so the smallest lands at exactly
+6.5 pt of paper, and the elevation sheet asserts `scene.minTextSizePt × sceneFactor` equals that —
+which is what turns §6.2's legibility check from decorative into a check. See §3e.
+
+### Test counts and mutation testing
+
+| Package | before | after |
+|---|---|---|
+| `rackmate_core` | 530 | **683** (+10 `print_units_test.dart`, +143 under `test/sheet/`) |
+| `rackmate_export` | 7 | **47** (+18 `content_stream_harness_test.dart`, +6 `page_sizes_test.dart`, +16 `sheet_furniture_pdf_test.dart`) |
+| `rackmate_ui` | 341 | 341 (unchanged) |
+| `apps/rackmate` | 624 | 624 (unchanged) |
+
+`flutter analyze` holds at 203 style infos, zero errors, zero warnings. `flutter build windows`
+succeeds.
+
+**26 mutations run, 26 killed — but three did not land on the first attempt and two of those were
+real holes rather than bad mutations.** Reported in full because the pattern matters:
+
+1. **A genuine surviving test.** Making the title block emit blank rows for an absent address and
+   client line — the exact thing §5.2's "empty optional lines collapse" forbids — **passed the whole
+   suite**. The "no empty text op is emitted" assertion could not see it, because a blank ROW emits
+   nothing at all rather than emitting an empty string. Fixed by asserting the collapse
+   **geometrically**: the identity band's text rows must be evenly pitched, since a collapsed line
+   that left a hole shows up as a double gap. The mutation now dies.
+2. **A mutation that was too weak, hiding a real gap in the test harness.** The content-stream
+   CTM interpreter is what every PDF geometry assertion stands on. Swapping one term of its matrix
+   composition survived — because every matrix in its self-test was diagonal-plus-translation, for
+   which several wrong compositions agree. Fixed by adding a 45°-inside-90° rotation case and a
+   translate-inside-rotation case; **each of the six matrix terms was then dropped in turn and all
+   six mutations died.**
+3. One mutation mistargeted a comment string and was re-run corrected (the §7.4 `boxHeight` gotcha —
+   flipping about the wrong height now fails six assertions).
+
+The mutations that matter most: `pointsForLen`'s 72 → 71; the scene factor × 1.01;
+`unitsPerRu` 22 → 23; the 2% tolerance read as absolute instead of relative (this is §5.2's exact
+prohibition, and it kills the 1:8.34 → `NTS` case); the scale chooser walking denominators
+descending; the SCALE field hardcoded to `1:8` while drawn at 1:8.34; the binding margin 54 → 36;
+the title block moved to the top of the frame; measured truncation removed; a revision fabricated
+when there is no history; revision rows stacked downward; the overflow line pointing at the absent
+`T0.00`; `SHEET i OF n` using a fixed 3 instead of the resolved total; `DateTime.now()` replacing the
+injected clock; the page flipped about the wrong height; the ANSI B page format 1224 → 1234; and
+the furniture stroke losing `hairlineFloor`.
+
+### The API pass 2 consumes
+
+```dart
+final layout    = sheetLayoutFor(sheet, doc.revisionBlock);   // drawing area, no scale needed
+final area      = elevationAreaOf(layout.drawingArea);         // less the two bands
+final scale     = /* the fit: rebuild the scene per candidate ratio and measure what it
+                     would EMIT — see elevation_sheet.dart's `_fitElevation` */;
+final furniture = buildSheetFurniture(sheet: …, scale: scale, issuedAt: …, measurer: …);
+final ops       = [...furniture.ops, /* content, bracketed by OpSave/OpTransform/OpRestore */];
+doc.addPage(buildSheetPage(size: sheet.size, scene: scene, fonts: fonts, measurer: measurer));
+```
+
+The two-step dance is what keeps the dependency acyclic: the drawing area depends on the revision
+count but not on the scale, while the title block's SCALE field depends on the scale, which depends
+on the drawing area. `buildSheetFurniture` re-resolves the identical layout from the same inputs, and
+a test asserts the two agree.
+
+---
+
+## 3e. The PDF exporter, pass 2 of 2 — the three sheets (roadmap item 9, and item 3's mirroring)
+
+Pass 1 built the sheet FRAME. Pass 2 builds what goes on it: `T2.01` front elevation, `T2.02` rear
+elevation and `T6.30` equipment list, plus `File ▸ Export PDF…`. Roadmap item 9 is now **Done**, and
+so is item 3's long-outstanding **per-rack rear mirroring**, which landed here because it belongs in
+core where both backends get it.
+
+### The elevations are the EXISTING scene, scaled. There is no second renderer
+
+`T2.01`/`T2.02` call `buildRackScene` — the same function `RackCanvasScreen` calls, with the same
+layers, the same `RackGeometry` and the same injected `TextMeasurer` — and splice the returned ops
+into the sheet inside ONE `OpSave` / `OpTransform(translate · scale)` / `OpRestore` bracket. That is
+the identical idiom `scene_builder.dart` already uses per device fragment, and
+`elevation_sheet_test.dart` asserts it by IDENTITY: the spliced ops are the same objects, in order,
+so a future "just rebuild it here" cannot pass.
+
+The scale is an `OpTransform` INSIDE the scene rather than a canvas call in the exporter. That keeps
+the whole sheet one replayable `DiagramScene`, so `BoundsCanvas`, the future on-screen sheet preview
+and every op-level test see the identical composition — and `rackmate_export` contributes exactly
+zero geometry.
+
+### Where the code went
+
+| File | Package | Contents |
+|---|---|---|
+| `derived/device_loads.dart` | core | `resolveDeviceLoads`, `hostRackOf`/`belongsToRack`, `occupancyU`, `templateKeyFor` — EXTRACTED from `totals.dart`, which now calls them |
+| `derived/equipment_list.dart` | core | `buildEquipmentList` → deterministic groups, one row per device |
+| `draw/scene/rack_load_gutter.dart` | core | cumulative mass bottom-up, rack draw, BTU/hr |
+| `draw/sheet/elevation_sheet.dart` | core | `T2.01`/`T2.02` composition, the fit search, the graphic scale bar |
+| `draw/sheet/equipment_sheet.dart` | core | `T6.30` columns, §3.7 pagination, measured wrapping |
+| `document/export_request.dart` | export | the isolate-ready request and the typed refusals |
+| `document/build_document.dart` | export | `buildExportDocument` → `Outcome<ExportedDocument>` |
+| `session/export_controller.dart` | app | `File ▸ Export PDF…` over the shipped save surface |
+
+### THE HORIZONTAL AXIS WAS 11% WRONG, AND IT IS FIXED IN CORE
+
+`RackGeometry.railWidth` was 20 diagram units of declared "legibility chrome", following docs/04
+§2.1's "20 px each at z1.0". The RU ruler is chrome too and that is harmless — it sits OUTSIDE the
+mounting panel. **A rail is not**: it sits INSIDE the 19 in panel, so `openingWidth` — and with it
+every full-width device body — was derived from it. At 22 units per RU, 20 units is 1.59 in, so the
+drawn clear opening was 19 − 2 × 1.59 = **15.82 in against a real EIA-19 opening of 17.75 in**. The
+vertical axis and the overall panel width were exact; every device was 11% narrow.
+
+`railWidth` is now `unitsForLen(Len(15_875_000))` — the real 0.625 in flange — so 19 − 2 × 0.625 =
+17.75 in FALLS OUT of `openingWidth` rather than being asserted separately.
+
+**This is a stated deviation from docs/04 §2.1's "20 px".** Rails render ≈7.86 units wide at zoom
+1.0 instead of 20 — visibly thinner on screen, and proportionally correct, since a real flange is
+3.3% of the panel width and 20 units was 8.4%. **Not one pre-existing `rackmate_ui` or app test
+needed editing**: every one of them references the geometry symbolically (`RackGeometry.rulerWidth`,
+`geo.deviceRect(...)`) rather than numerically, which is what made a real physical correction cheap.
+
+The core-side proof is `rack_geometry_physical_test.dart`, added because a mutation said so:
+reverting `railWidth` to 20 is caught by the PDF tape-measure gate and by **nothing** in
+`rackmate_core` or `rackmate_ui`. The physical property belongs to `rack_geometry.dart`, so it now
+has an assertion that does not need a PDF to state it.
+
+### Rear mirroring (roadmap item 3, CR-035)
+
+`RackGeometry.deviceRect` gained `mirrored`, which reflects the lateral span about the opening
+centre — `12 − startTwelfth − spanTwelfths`. `buildRackScene` reads `rack.mirrorRearElevation`
+directly (it is a per-rack property with a `SetRackPropertyCommand` behind it; a parameter would be
+a second answer to a question the model already answers) and applies it on `Face.rear`.
+
+It is a LAYOUT reflection, never a canvas `scale(-1, 1)` — that would mirror every designator, name
+and model string on the sheet. `rack_mirror_test.dart` asserts that against the composed scene's
+actual transforms: no `OpTransform` in a rear scene carries a negative X scale or a negative
+determinant, and every device bracket is a pure translation.
+
+A full-width device (start 0, span 12) is unchanged by mirroring, which is why the on-screen rear
+elevation moved for nobody in the existing suites. `T2.02` carries a chip either way —
+`REAR VIEW — MIRRORED` or `NOT MIRRORED` — because a reader cannot tell the two conventions apart
+by looking, and "no chip" is not a convention anyone can look up.
+
+### The scale is chosen against the content that is ACTUALLY drawn
+
+There is a genuine circularity: the scale depends on the ink extent, the ink extent depends on the
+text sizes, and the text sizes depend on the scale — because annotation on a scaled drawing is never
+at model scale. Pass 1 surfaced the concrete fact: `RackTextSizes.type` is 8 units, which at 1:8 is
+**5.73 pt on paper, under §6.2's 6.0 pt hard floor**.
+
+`RackTypeScale` (in `rack_style.dart`, a sibling of `RackPalette` so no new branching concept)
+inflates every rack label so the SMALLEST one lands at exactly 6.5 pt of paper. `buildElevationSheet`
+then walks the standard denominators from the largest scale down and, for EACH candidate, builds the
+scene it would actually draw — inflated text and all — keeping the first that fits both axes. The
+reported ratio is therefore exactly `1/n` for the thing on the paper, at 0% error. At most twelve
+scene builds; in practice two or three.
+
+`elevation_sheet_test.dart` asserts every legal rack height 1..60 U (CR-038) lands on a STANDARD
+ratio — which is the claim `TilingStrategy.geometric`'s omission rests on. The tallest, 60 U, needs
+**1:10**, not 1:8: 105 in at 1:8 is 945 pt against a 909 pt drawing area.
+
+### T6.30, and why it is not a `pw.Table`
+
+Drawn entirely through `DiagramCanvas` ops with the pagination computed in core from the shared
+measurer. A `pw.Table` would be laid out by dart_pdf's own text engine — not the engine the preview
+uses — so the schedule would break lines, truncate cells and paginate DIFFERENTLY in preview and
+print, which is the divergence CR-081 and CR-086 exist to make impossible. It also disposes of
+§3.7's three VERIFY items (`Table.headerCount`, `MultiPage` overflow, `maxPages`) because the pages
+are hand-cut and each is a plain `pw.Page`.
+
+Thirteen columns exactly as §2.2 names them, summing to the ANSI A landscape usable width — asserted
+against `frameBox.width` rather than against a repeated literal. **No pricing** (AC-055): no `Money`,
+no cost, no supplier, no purchaseOrder, and the word BOM appears nowhere.
+
+**One row per device instance; QTY is always 1.** The identical-device collapse is DELIBERATELY not
+built: the exit criterion is "the equipment list matches the rack contents EXACTLY", which is a
+bijection claim, and a quantity rollup is precisely the transform that would make an off-by-one
+invisible to both the reader and the test. The column ships carrying 1; the collapse is deferred.
+
+**Nothing is silently dropped.** Every `DeviceInstance` lands in exactly one group — including a
+device whose rail placement names a rack the document does not hold, which goes to the trailing
+`NOT IN A RACK` group rather than vanishing.
+
+### Multi-page schedules, and the counter that would have shipped
+
+`SheetSet.forRacks` gained `equipmentListSheets`. The order is forced: build the equipment list →
+PAGINATE it (pure core, no PDF) → resolve the sheet set from `(racks, page count)` → render. A
+running counter incremented during rendering is right for a one-rack, one-page project and wrong for
+`whole_house`, whose 48 devices need `T6.30` **and** `T6.31`. Continuation pages take `T6.31`,
+`T6.32`, … which stay inside sheet type 6 and still satisfy the NCS pattern.
+
+### One resolver, four consumers
+
+`resolveDeviceLoads` and `hostRackOf` were EXTRACTED from `totals.dart` — which now calls them —
+so the chip strip, the elevation's load gutter, T6.30's rows and T6.30's subtotals read the same
+numbers through the same code. `starters_export_test.dart` asserts the schedule's per-rack subtotal
+equals `computeRackRollups`' figure on the same inputs, and `rack_load_gutter_test.dart` asserts the
+gutter's topmost cumulative reading does too. A second weight-resolution path is exactly the drift
+this codebase keeps shipping.
+
+BTU/hr is `btuPerHourOverride ?? wattsToBtuPerHour(typicalWatts)` and is NULL when `typicalWatts` is
+null — never synthesised from `apparentVA` (a power factor nobody authored) or `nameplateWatts`
+(AC-039's explicitly rejected behaviour). Both have their own tests.
+
+### `Stroke.scaleWithGeometry` had ZERO readers, and this stage is the first caller that could tell
+
+CR-082 declares two independent knobs: `scaleWithGeometry` ("cable traces, symbol outlines and rack
+rails scale with the diagram; UI chrome does not") and `hairlineFloor` ("sheet furniture uses a
+0.25 pt print floor; everything else 0.5 pt"). **Both backends branched on `hairlineFloor` alone for
+both decisions**, so `scaleWithGeometry` had no readers anywhere in the repository — a production
+field whose only appearance was its own declaration. It was invisible because no caller had ever
+applied a scale != 1; the elevation sheets are the first.
+
+The width decision now reads `scaleWithGeometry` and the floor decision reads `hairlineFloor`, on
+BOTH backends. At k == 1 the two spellings are identical, so nothing on screen or on an existing
+sheet moved. `sheetRule` sets `scaleWithGeometry: false` explicitly. Two test files —
+`rackmate_export/test/stroke_scaling_test.dart` and `rackmate_ui/test/stroke_scaling_test.dart` —
+assert it at k = 126/(22·8), and a mutation confirmed the second one was needed: fixing only the PDF
+backend passed the entire `rackmate_ui` suite.
+
+### The export UX
+
+`File ▸ Export PDF…` reuses the shipped save surface exactly: `picker.pickSave` →
+`SavePaths.forTarget(…, extension: '.pdf')` → `AtomicWriter.write(keepBackup: false)` →
+`describeSaveError` + `SessionPrompts.showFileError`. That inherits the whole enumerated failure
+surface for free, including `SaveLocked` — AC-058/D4's "the target PDF is open in Acrobat".
+`keepBackup: false` because a PDF is a regenerable deliverable, not the project.
+
+`SavePaths.forTarget` gained an `extension` parameter rather than the export growing its own
+normalisation, so "append unless it is already there, compared case-insensitively" stays in one
+asserted call site.
+
+**Never silently do nothing:** a cancelled picker reports `Export cancelled.`; a document with no
+racks is refused OUT LOUD **before** the dialog rather than producing a one-sheet PDF of nothing;
+success reports `Exported 3 sheets · 214 KB`, with the notice count appended when §6.2's legibility
+check or the NCS validation had anything to say. Notices are reported and NEVER gate (CR-023, G3).
+
+**No new keybinding.** docs/08 §8.1 gives export `Ctrl+P`, and `session_layering_test.dart` RULE 14
+asserts exactly four bindings and eight activators precisely so the file group cannot grow a fifth
+member without that decision being re-taken. The menu item carries no `shortcut:` — which also stops
+it advertising a key nothing listens for — and a widget test asserts `item.shortcut` is null.
+
+### What is DEFERRED, and why — stated, not silently dropped
+
+- **Every other sheet in §2.2's table** — `T0.00` cover, `T0.01` legend, `T0.02` exceptions,
+  `T6.01+` interconnect, `T6.10` pull sheet, `T6.11` termination schedule, `T6.20` unused home runs,
+  `T5.01` pinout details. M6, and most need `Link`s, which arrive in M2.
+- **Everything on an in-scope sheet that needs `Link`/`Service`/`Conductor` data**: per-port labels
+  and connector fields on `T2.02`, the cable-footage rollup with waste factor, the jumper/power-cord
+  rollup and the PDU outlet map on `T6.30`. Omitted WHOLE rather than printed empty — and because
+  each absence changes what the sheet promises, it is stated ON THE SHEET:
+  `REAR FACES SHOWN. PORT AND CONNECTION DETAIL NOT ISSUED IN THIS SET.` and
+  `EQUIPMENT ONLY. CABLE AND POWER SCHEDULES NOT ISSUED IN THIS SET.`
+- **Revision clouds and the revision triangle** (§5.3, DR-005) — unchanged from pass 1: no
+  `RevisionEntry` generator exists, so there is no "changed since the last issued revision" set.
+- **The zone grid** (§5.1) — its only v1 consumer is the schedule's `REF` column, which needs
+  `Link`s.
+- **Identical-device QTY collapse on T6.30** — see above; it would hide an off-by-one from the exit
+  criterion's own bijection test.
+- **`TilingStrategy.geometric`** (§6.2) — every legal rack (1..60 U) fits ANSI B portrait on a
+  standard ratio, asserted over all sixty. The legibility check is implemented and reports; the
+  tiler is not built.
+- **`Isolate.spawn` export with progress and cancel** (§8.2). `buildExportDocument` already takes
+  only bytes and an injected `DateTime`, so it is isolate-ready; three sheets sit far under §8.2's
+  own 400 ms "do not show progress" threshold, so M1 calls it synchronously on the main isolate.
+- **The `Ctrl+P` export dialog** (§8.1) — presets, sheet checklist, palette, live preview pane. One
+  File menu entry ships. Greyscale/CMYK palettes, the `ISSUED FOR CONSTRUCTION` stamp and "embed
+  .rackmate source" are `ExportSpec` options that belong with that dialog.
+- **printing/pdfium preview and the OS print dialog** (docs/03 §10.1 — vendored binaries). Export to
+  file only; the `printing` package is not added. "Open in system viewer" is not built either.
+- **CSV exports** (§9).
+- **File-level PDF determinism** — impossible on pdf 3.13.0, unchanged from pass 1. The gate is
+  scoped to CONTENT STREAMS and says so, and a test asserts two exports are NOT byte-identical as
+  files so the limit stays visible.
+- **The hatch band keys on `TemplateBody.category == kCatPassive`**, which is a free-form `String`.
+  Correct for the seeded catalog, which puts exactly blanks, vents and shelves there. A
+  user-authored blank panel filed under another category simply does not hatch — graceful
+  degradation rather than a guess, but a **silent partial behaviour**, recorded here rather than
+  discovered later.
+- **`RackGeometry.rulerWidth` is still 28 fixed units.** It is annotation OUTSIDE the panel, so
+  nothing scalable depends on it — and the elevation says so on the sheet:
+  `SCALE APPLIES TO THE MOUNTING PANEL. RULER AND GUTTER ARE ANNOTATION.` The graphic scale bar,
+  exactly one foot of reality long, is what a reader measures against.
+
+### Test counts
+
+| Package | pass 1 | pass 2 |
+|---|---|---|
+| `rackmate_core` | 683 | **810** |
+| `rackmate_export` | 47 | **125** |
+| `rackmate_ui` | 341 | **348** |
+| `apps/rackmate` | 624 | **648** |
+
+`flutter analyze`: **204 style infos, ZERO errors, ZERO warnings** (baseline 203; the one addition is
+a wrapped-line info in a new test). `flutter build windows` succeeds. All four starter projects
+export end to end.
+
+### THE GATE: how "dimensionally correct against a tape measure" is proved without a printer
+
+`rackmate_export/test/elevation_true_scale_test.dart` runs the REAL export entry, recovers the
+emitted page's operator stream, walks the actual `q`/`Q`/`cm` operators into **PDF USER SPACE
+POINTS**, and asserts:
+
+- the chassis frame is `45 × 44_450_000 × 72 / 25_400_000 / n` tall;
+- the mounting panel is `482_600_000 × 72 / 25_400_000 / n` wide (EIA-19);
+- **a full-width device body is `450_850_000 × 72 / 25_400_000 / n` — the 17.75 in clear opening**;
+- two 1 U devices 44 U apart are separated by exactly 44 U of pitch, and each is 1 U tall;
+- **the frame is 9.84375 in of paper at 1:8**, written as a literal so a reviewer can check it
+  against a ruler by hand — and independently reproducing docs/08 §6.1's own "9.84 in";
+- the graphic scale bar is exactly `12 × 72 / n` pt;
+- the rack's bottom edge sits at a user-space Y derived from `1224 / 36 / 6 / 115 / 26 / 34` alone.
+
+Three deliberate defences against the assertion being unfalsifiable:
+
+1. **It asserts on the emitted BYTES**, not on the calculator.
+2. **`n` is read back out of the sheet's own SCALE field**, in the same PDF. The number a human
+   would scale off the paper is the number the test converts with — so drawing at 1:8.34 while
+   printing "1:8" fails, which is §5.2's exact prohibition.
+3. **Every expectation is computed from literals** — `44_450_000`, `25_400_000`, `72.0`,
+   `482_600_000`, `450_850_000`. Nothing reads `unitsPerRu`, `pointsForLen` or `sceneFactor`.
+
+Plus `content_stream_harness_test.dart`, which proves the CTM interpreter itself against hand-written
+streams — without it, a harness that silently found zero shapes would make every assertion above
+vacuously true. It gained a general PATH recovery this pass, because a device block at
+`LodLevel.full` is a `drawRRect` and emits no `re` at all: a `re`-only harness would have found ZERO
+device blocks and the width/pitch/height assertions would all have passed on nothing.
+
+**On the tolerance.** `PdfNum.precision` is a compile-time `const int = 5` in pdf 3.13.0, so every
+number dart_pdf writes is `toStringAsFixed(5)`. At 1:8 the scene factor 0.715909090… reaches the page
+as `0.71591`, which over a 45 U rack accumulates to 9e-4 pt. The tolerance is 0.01 pt — set from that
+bound, not tuned — and the test asserts that 0.01 pt is finer than a 600 dpi printer's own dot, so
+the slack is checked rather than claimed.
+
+### Mutation testing: 47 run, 47 killed — but SEVEN survived their first pass
+
+Reported in full, because the pattern is the point.
+
+**Six were real holes and are now fixed:**
+
+1. **Substituting `Mass.zero` for an unknown mass passed the entire export suite.** The starters test
+   compared the em-dashed cell count against `Rollup.unknownCount` — two numbers that BOTH come out
+   of `resolveDeviceLoads`, so the mutation moved both to zero and they still matched. Exactly the
+   self-referential shape this project keeps shipping. The expectation is now computed from the RAW
+   DOCUMENT (a mass is unknown iff neither the override nor the template body states one), and a
+   separate test asserts the unknown path is genuinely exercised — otherwise two zeroes would compare
+   equal again.
+2. **Paginating one row short survived.** "No row is lost" and "every page fits" are both true of a
+   paginator that puts one row per page. Added: every page but the last must be FULL, i.e. the next
+   item genuinely does not fit.
+3. **Reverting `scaleWithGeometry` on the FLUTTER backend survived.** The fix was asserted on one of
+   two backends. `rackmate_ui/test/stroke_scaling_test.dart` is the other half.
+4. **`DateTime.now()` inside `buildExportDocument` survived.** Pass 1 proved the injected clock on a
+   furniture-only render it assembled itself; nothing asserted the date on a sheet that came out of
+   the real entry point, so §8.4's "no `DateTime.now()` outside the one date field" was held by a
+   comment. `export_determinism_test.dart` now asserts the injected date reaches EVERY sheet, that
+   today's date appears nowhere, and that dates one day apart still differ.
+5. **Removing the designator fit guard survived**, and so did the missing-font refusal and the
+   rackless refusal at the export entry — three production branches nothing read.
+6. **`keepBackup: true` survived**, because the test exported ONCE to a fresh path and
+   `AtomicWriter` only attempts a backup when the target already exists. Moved to the OVERWRITE
+   case, which is the only one that exercises step 4 at all.
+
+**One survivor is NOT a hole, and is reported as a finding.** Changing `RackGeometry.unitsPerRu`
+from 22 to 23 leaves the export suite green. That is correct and designed: `unitsPerRu` is an
+arbitrary internal anchor, everything length-based derives from it through `_unitsPerNm`, and
+`sceneFactorForRatio` divides by it — so the PHYSICAL result is invariant, which is precisely what
+`rack_geometry.dart`'s "derive it, do not hardcode a second unrelated constant" note promises. The
+core suite kills it (it asserts the anchor itself), so the mutation dies against the suite as a
+whole; it dies for the right reason in the right place.
+
+The mutations that matter most, all killed: the scene factor × 1.01; `pointsForLen`'s 72 → 71; the
+SCALE field printing `1:4` on a 1:8 sheet; `openingWidth = panelWidth` (the rail-width regression);
+`railWidth` back to 20; the rail flange off by 18 microns; the elevation shifted by one band —
+which fails the absolute-placement assertion alone while every size and spacing assertion passes,
+proving that assertion earns its place; `deviceRect` ignoring `mirrored`; `buildRackScene` never
+mirroring; the equipment list losing one row per group; rows sorted RU-ascending; unplaced devices
+dropped; the shelf chain no longer resolving to a rack; BTU derived from `nameplateWatts`; the 2%
+tolerance read as absolute; `SHEET i OF n` hardcoded to 3; the sheet set ignoring the real schedule
+page count; the continuation band dropped; the schedule claiming `1:1`; a revision fabricated when
+there is none; the cumulative readings failing to accumulate; off-axis devices silently dropped; the
+load gutter dropped from the scene entirely; an unknown DRAW or MASS printing `0`; the cancelled
+export going silent; the rackless document not being refused; the `.pdf` extension normalisation
+dropped; the export inventing its own error surface; the filename losing its revision; and — on the
+test harness itself — dropping curve control points, counting a clip as ink, and failing to inflate
+a compressed stream.
+
+---
+
+## 3f. The PDF exporter, pass 3 — the rear elevation was blank, and the sheet said otherwise
+
+Four defects found by MEASURING emitted PDF content streams rather than by reading code. Two of
+them were regressions introduced by pass 2's own fixes.
+
+### The rear elevation drew nothing on every shipped starter (scene_builder.dart)
+
+Measured off `whole_house.rackmate` through the real `buildExportDocument`: `T2.01` carried 27
+device designators as ink and `T2.02` carried **zero** — 68 recovered paths, all frame and RU
+ruler — while both sheets printed the identical band claiming only `NOT DRAWN 4 OF 31 DEVICES`.
+One of the three sheets the M1 exit criterion names was an empty 42U frame stating a count that
+contradicted its own contents.
+
+The model disagreed with the picture: 19 of RK-1's 27 rail devices resolve to templates with
+`rearU > 0` and `side: both`. `_visibleDevices` dropped them on `placement.face != face` — the
+face a device is BOLTED TO — while docs/04 §2.2 is explicit that the face control "selects a
+coordinate, not a filter" and that occupancy (CR-036) is what decides: "a 2U patch panel with
+`{frontU: 2, rearU: 2}` renders on both faces and a rear lace bar renders only on rear".
+
+So `elevationOccupancyU(device, body, face)` now takes the SHEET's face, `_visibleDevices` filters
+on it, and a device's rear block is bottom-anchored at the same `ruIndex` its front block is and
+spans `rearU` (a derivation, not a stored fact — CR-006). **This changes the on-screen rear view
+too**, deliberately: the screen and the sheet share one builder (CR-086) and two spellings of "what
+is on this face" is the drift this stage keeps paying for. `whole_house` T2.02 now carries 19
+designators and 106 paths.
+
+`RackLoadProfile` gained `undrawnFrontCount`/`undrawnRearCount` and `undrawnOn(face)`, and the
+gutter's boundary arithmetic moved from `occupancyU(body, rail.face)` to `stackOccupancyU(body)`
+(the taller of the two faces) — otherwise a rear lacing bar screwed to the front rails has "no
+knowable position" in the gutter while T2.02 draws it at its stated RU.
+
+### The omission sentence is now per-face, and names where the missing ones ARE
+
+Pass 2 made the count deliberately face-INDEPENDENT ("drawn on NEITHER elevation") to avoid crying
+wolf on T2.02 about front-rail devices. That reasoning is right about crying wolf and wrong about
+the primary duty: **a sheet must never state a count that contradicts what it visibly contains.**
+
+`rackLoadSummaryLines(profile, units, face)` now prints, e.g. on `whole_house` T2.02:
+
+    NOT DRAWN HERE  12 OF 31 — 8 ON FRONT, 4 ONLY ON T6.30; 4 COUNTED AT TOP
+
+— the count for THIS sheet, split into the part the opposite elevation draws and the part no
+elevation draws, so nobody is sent hunting for a row that is one sheet away. Still ONE line: the
+note band is a hard five (`kElevationHeaderBand` = 56 pt) and the other four are the load figures.
+Every clause is abbreviated against the 337 pt half-band, measured with the real font in
+`elevation_omission_line_test.dart` rather than argued in a comment.
+
+### Every device label vanished on a legal rack (device_layer.dart)
+
+Pass 2's new vertical-fit guard, `_pad + designatorPt <= height - _pad`, suppressed the ENTIRE
+label branch — designator, RU-span badge, name and type — for every 1U device on any elevation
+drawn at 1:10 or smaller. A 58–60U rack is legal (`kMaxRackHeightU` = 60, CR-038) and reachable
+from the header stepper and the inspector; `_fitElevation` picks 1:10 at `heightU >= 58`, where the
+inflated designator is 15.61 units against a 22-unit body. So a user could build a legal rack,
+export, and get elevations on which no block carried the one string that joins it to its T6.30 row
+— with nothing in the export summary saying so (`scale.notice` and `fit.notice` were both null, and
+the legibility check STRUCTURALLY cannot see a blackout: a fragment that emits no text contributes
+`double.infinity` to `minTextSizePt`, so it can only ever raise the reported minimum).
+
+The guard is now a LADDER — type, then name, then the designator + badge line last, with its
+vertical pad shrinking to zero before the line is given up. The glyphs fit a 1U body at 1:10; only
+the 8 units of padding did not. When the glyphs genuinely are taller than the block,
+`DeviceLayerBuild.labelDropped` carries it out through `RackScene.unlabelledDeviceIds` and
+`ElevationLabels` to BOTH a note on the sheet (`n OF m BLOCKS TOO SHORT TO LABEL AT THIS SCALE —
+SEE T6.30.`) and a line in the export summary. A notice, never a gate (CR-023, G3).
+
+### The schematic header rule's meaning had been inverted (symbol_layer.dart)
+
+Pass 2's parallel `_applyStroke`/`_strokePaint` rewrite changed
+`w = hairlineFloor ? widthPt / k : widthPt` to `w = scaleWithGeometry ? widthPt : widthPt / k`.
+The two agree everywhere EXCEPT the one production `Stroke` where the flags disagree — the
+schematic header rule, which sets `hairlineFloor: true` and inherited `scaleWithGeometry: true` —
+so it moved from pixel-constant to geometry-scaled.
+
+**The scaled reading is correct** and is now stated explicitly. CR-082, verbatim: "Cable traces,
+SYMBOL OUTLINES and rack rails scale". The rule is drawn in the symbol's local coordinates one op
+after the body outline that has always scaled; `hairlineFloor` is kept for what it now means alone
+(this rule may print finer than the 0.5 pt signal floor). The two flags stay independently
+MEANINGFUL and stop being independently SETTABLE by accident: `draw_source_gate_test.dart` requires
+every production `Stroke` naming one to name the other, across all three packages.
+
+### Numbers that join the sheets, now pinned where they are EMITTED
+
+Each of these survived both suites under mutation before this pass:
+
+| Mutation | Now killed by |
+|---|---|
+| `offAxisCount` substituted for the undrawn count in the omission sentence | `rack_load_gutter_test` (a shelf-hosted + rear-only fixture separates all five counts) and `elevation_omission_line_test` against emitted ink |
+| off-by-one in T6.30's `RK-1 SUBTOTAL n DEVICES` | `equipment_sheet_test` (compared against `contributingCount`, the elevations' own denominator) and `starters_export_test` (8) |
+| `(n unknown)` dropped from `formatIntRollup` (VA) / `formatBtuRollup` (BTU/hr) | `elevation_sheet_test` and `elevation_omission_line_test`, with the three counts made DISTINCT and derived from authored template fields, never from a `Rollup` |
+| `RackSceneOptions.forPrint` reverting to discard the receiver | `scene_builder_test` (`copyWith` carries every field) + `draw_source_gate_test` (`forPrint` delegates to `copyWith` on `this`) — no behavioural test can see it while `forPrint` happens to force all seven fields |
+
+---
+
+## 3g. The PDF exporter, pass 4 — the other two callers of "what is on this face"
+
+Pass 3 fixed `_visibleDevices` and stopped there. The same question is asked at three places, and
+the other two were still answering it the old way — so on one screen the canvas and the chip
+strip above it disagreed, and on the same screen the drop evaluator disagreed with both.
+
+### One question, one predicate: `elevationOccupancyU`
+
+`derived/device_loads.dart`'s `elevationOccupancyU(device, body, face)` is now THE answer to *"does
+this device occupy U on this face, and how many"*, and it has four readers:
+
+| Reader | What it does with it |
+|---|---|
+| `draw/scene/scene_builder.dart` | draws the canvas and T2.01/T2.02 (pass 3) |
+| `draw/scene/rack_load_gutter.dart` | counts what it EXCLUDES, so the sheet can say how many |
+| `derived/totals.dart` | the chip strip's per-face RU |
+| `commands/catalog_placement.dart` | `elevationOccupantsOnFace` → `findLowestFreeRu` / `findBlockingOccupant` |
+
+**The chip strip contradicted the canvas beneath it.** `computeRackRollups` still counted RU only
+for devices whose `placement.face` equalled the requested face. Measured in the real widget tree
+(`RackCanvasScreen` with `whole_house` at 1600×1200): `RU rear 0/42` above **19 rendered
+`RenderDeviceBox`es covering 28 distinct rear U**. `rack_metrics_row_test` now recovers the U
+actually covered by the boxes on screen — from their laid-out rects, through `RackGeometry`'s
+inverse — and requires the chip to say that number; it never hard-codes it against the strip.
+
+`ruUnknownCount` had to be re-derived along with it, or every half-depth rack would have grown a
+superscript. It now counts a rail device only when NO elevation can place it (`!
+isDrawnOnSomeElevation`) — snapshot missing, or zero U on *both* faces. A front-only blank seen
+from the rear is a **measured zero**, and G4 cuts both ways: refusing to state a number you have
+is as dishonest as inventing one you do not.
+
+**The drop evaluator would let you drop onto an occupied slot.** `whole_house` RK-1 bolts UPS-1 to
+the FRONT rails at U1 with `frontU 3 / rearU 3 / side: both`, so the rear elevation draws it over
+rear U1–U3 — yet `findLowestFreeRu(face: rear, deviceH: 1)` answered `1` and `findBlockingOccupant`
+called the range free. The insertion caret sat on top of drawn ink, and a palette drop or a device
+move to rear U1 was evaluated "not blocked" with no `Occupied by UPS-1 (U1-U3)` reason. Committing
+it put two blocks in one rear U on the canvas AND on T2.02.
+
+### The bolted-rails question still exists, and is now named
+
+Two callers legitimately want the OTHER question, because their answer is **written back into a
+`RailPlacement.face`**: `planCompaction` and `planRackShrink` turn plans into
+`MoveDeviceCommand(fromFace:, toFace:)`. Planning the rear elevation by elevation FOOTPRINT would
+unbolt every front-mounted `side: both` device and re-hang it on the rear rails — a far larger edit
+than "close the gaps", out of a preview that showed only vertical movement. `rack_shrink` has the
+additional constraint that its enumeration must name each occupant exactly once.
+
+So `railOccupantsOnFace` became two names over one implementation:
+
+* **`elevationOccupantsOnFace`** — what this elevation draws. Placement, collision, the caret, the
+  drag ghost, keyboard nudge, and `starter_integrity`'s overlap/overhang gate.
+* **`boltedOccupantsOnFace`** — what is bolted to these rails. `compaction.dart`,
+  `rack_shrink.dart`, and nothing else. `device_loads.dart`'s `boltedRailFace` is the same question
+  for one device.
+
+The split is load-bearing rather than cosmetic: pointing compaction/shrink at the elevation scan
+makes `rack_shrink_test`'s "two faces each freeing 3U have together freed 3U" throw, because two
+`side: both` devices at the same U on opposite rails are an occupancy conflict the bolted view
+cannot see.
+
+### Deferred, and named rather than dropped
+
+`planCompaction` packs around the **bolted** set, so it still does not anchor on a device the other
+face bolted and this face merely draws: Compact Down on a rear elevation can propose a target the
+drop evaluator would now refuse. Closing it means anchoring on `elevationOccupantsOnFace`, which
+also re-anchors every `side: both` device against its own twin on the other face and so changes
+what compaction proposes on ordinary racks — a planner behaviour change with its own preview,
+`freedU` arithmetic and test surface. `compaction.dart`'s `_immovableAnchors` states this in place.
+
+Likewise `planRackShrink` measures an occupant by its height on the face it is bolted to rather
+than by `stackOccupancyU` (the taller of the two), so a device with `frontU 1 / rearU 4` is judged
+by 1 U. No shipped template has `frontU != rearU` with both non-zero, so nothing in the repository
+exercises it today.
+
+### A source-level gate can only be followed if the file it names exists
+
+`spec.dart` spent this stage sending its reader to `stroke_flag_pairing_test.dart`, which has never
+existed; the CR-082 flag-pairing rule is enforced by `draw_source_gate_test.dart` (which
+`symbol_layer.dart` already cited correctly). Following a citation and finding nothing is
+indistinguishable from finding the gate deleted — the one failure a source-level gate cannot
+survive. `draw_source_gate_test.dart` gained a third gate: every `*_test.dart` named by any
+production comment, in any package, must exist somewhere in the repository.
+
+### Test counts and mutation testing
+
+`rackmate_core` 886, `rackmate_ui` 351, `apps/rackmate` 651, `rackmate_export` 183 — **2071**.
+`flutter analyze` 195 infos, 0 errors, 0 warnings.
+
+| Mutation | Killed by |
+|---|---|
+| `computeRackRollups` restores the `placement.face == face` filter | `rack_metrics_row_test` (widget tree: chip vs rendered boxes) + 2 `totals_test` cases |
+| `elevationOccupantsOnFace` reverts to `boltedOnly: true` | `catalog_placement_test` (`findBlockingOccupant` returns null over UPS-1's drawn rear block; the caret quick-add succeeds into it) |
+| `boltedOccupantsOnFace` widened to `boltedOnly: false` | `rack_shrink_test` freedU (null rescue plan) |
+| `spec.dart` cites `stroke_flag_pairing_test.dart` again | `draw_source_gate_test`'s citation gate, naming the file and the line |
+
+---
+
 ## 4. Suggested next order
 
 Roughly in the order that unblocks the most subsequent work, not a commitment:
@@ -1050,7 +1750,11 @@ Roughly in the order that unblocks the most subsequent work, not a commitment:
 7. **Naming/designator UI + idformat wiring** (§7).
 8. **Persistence wiring + starter projects** (roadmap item 10) — needed regardless of interaction
    completeness, since the exit criterion requires opening/saving real files.
-9. **Minimal PDF exporter** (roadmap item 9) — the rendering spine already exists; this is sheet
-   assembly on top of it.
+9. ~~**Minimal PDF exporter** (roadmap item 9)~~ — **DONE, both passes.** §3d is the sheet frame and
+   furniture; §3e is `T2.01`/`T2.02` rendering the EXISTING `buildRackScene` through
+   `PdfDiagramCanvas` inside one scale bracket, `T6.30` off the shared `resolveDeviceLoads`, and
+   `File ▸ Export PDF…` on the shipped storage layer. Rear mirroring (item 3) landed with it, in
+   core, so both backends have it. What remains of docs/08 is the M6 sheet set and the `Ctrl+P`
+   dialog — see §3e's deferred list.
 10. **Remaining keymap + accessibility + empty states** (§8/§9) — can land incrementally
     alongside any of the above rather than as one dedicated pass.

@@ -132,7 +132,7 @@ void _addChannel(
 }
 
 /// A rail-placed device whose `templates[...]` snapshot is simply absent —
-/// `railOccupantsOnFace` skips it, `scene_builder` declines to draw it, and
+/// `boltedOccupantsOnFace` skips it, `scene_builder` declines to draw it, and
 /// before this was fixed the shrink planner never saw it either.
 void _addDanglingTemplate(
   RackDocument doc,
@@ -156,7 +156,7 @@ void _addDanglingTemplate(
 }
 
 /// A device rail-placed on a face its template gives ZERO height on — the
-/// other half of what `railOccupantsOnFace` silently drops.
+/// other half of what `boltedOccupantsOnFace` silently drops.
 void _addZeroHeightOnFace(
   RackDocument doc,
   String designator, {
@@ -696,7 +696,7 @@ void main() {
   });
 
   // "Always name the casualties" is not "name the ones the occupancy scan
-  // happens to see". `railOccupantsOnFace` skips 0U placements and devices
+  // happens to see". `boltedOccupantsOnFace` skips 0U placements and devices
   // whose template snapshot does not resolve; a shrink planner that took
   // its casualty list from that scan alone would report `hasCasualties ==
   // false`, apply with NO modal, and leave the device outside the rack.

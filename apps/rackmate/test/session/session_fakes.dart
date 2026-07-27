@@ -21,6 +21,7 @@ import 'package:rackmate/main.dart';
 import 'package:rackmate/src/session/app_services.dart';
 import 'package:rackmate/src/session/app_shell.dart';
 import 'package:rackmate/src/session/document_session.dart';
+import 'package:rackmate/src/session/export_controller.dart';
 import 'package:rackmate/src/session/file_picker.dart';
 import 'package:rackmate/src/session/session_controller.dart';
 import 'package:rackmate/src/session/session_prompts.dart';
@@ -91,6 +92,16 @@ String testSidecarPath(String documentId, {String? sessionId}) =>
 /// card still on screen.
 Future<Uint8List> loadStarterAssetFromDisk(String assetPath) async =>
     File(assetPath).readAsBytesSync();
+
+/// The [ExportFontLoader] for tests: the REAL bundled TTF, off disk.
+///
+/// The real bytes rather than a stub, because every measurement the
+/// exporter makes goes through them (CR-081) — a fake font would make
+/// every layout assertion about a font that does not ship.
+Future<Map<FontRef, Uint8List>> loadExportFontsFromDisk() async =>
+    <FontRef, Uint8List>{
+      kExportFont: File(kExportFontAsset).readAsBytesSync(),
+    };
 
 // --- Timers ------------------------------------------------------------
 
@@ -440,6 +451,7 @@ Future<TestSession> buildTestSession({
   DataRoot? dataRoot,
   MutableClock? clock,
   StarterAssetLoader? starterLoader,
+  ExportFontLoader? exportFontLoader,
   Serializer? serializer,
   Duration pathProbeTimeout = kSessionPathProbeTimeout,
   String recoverySessionId = kTestSessionId,
@@ -493,6 +505,7 @@ Future<TestSession> buildTestSession({
     timerFactory: oneShot.oneShot,
     periodicTimerFactory: periodic.periodic,
     starterLoader: starterLoader ?? loadStarterAssetFromDisk,
+    exportFontLoader: exportFontLoader ?? loadExportFontsFromDisk,
     context: context,
     // The fakes speak Windows paths on every platform, so the Windows
     // errno table and MAX_PATH are the ones under test.

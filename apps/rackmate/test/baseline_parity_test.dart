@@ -301,42 +301,157 @@ void main() {
   });
 
   group('production wiring smoke — the real page-export path runs', () {
-    test('buildDiagramScenePage renders an OpText scene end-to-end', () async {
-      // Exercises the exact wiring page_wiring.dart documents (pw.Page ->
-      // pw.CustomPaint -> PdfDiagramCanvas with boxHeight: size.y), so the
-      // precise-extraction path above is not the only path that has ever run
-      // the backend through a real document.
-      final doc = pw.Document();
+    // ====================================================================
+    // `isNotEmpty` AND `length > 2000` PROVED NOTHING HERE.
+    // ====================================================================
+    // This was the SOLE test of `buildDiagramScenePage`, and both of its
+    // assertions passed on a page that drew nothing: measured, the same
+    // document built with an EMPTY scene (`ops: []`) and the same real Jost
+    // TTF saves to 3019 bytes — over the threshold, because the embedded
+    // font object alone clears it. So deleting `scene.replay(canvas)` from
+    // `page_wiring.dart` survived, and so did the ONE gotcha that file's
+    // header exists to prevent: `boxHeight: size.y` changed to the PAGE
+    // height, which flips every mark about the wrong axis and "looks
+    // plausible enough to ship".
+    //
+    // `buildDiagramScenePage` is exported from the public barrel and has no
+    // production caller, so this is all the coverage it gets. It therefore
+    // reads the two things the wiring is FOR, out of the emitted operators.
+    const style = TextStyleSpec(
+      font: _kFont,
+      sizePt: 12,
+      argb: 0xFF000000,
+      anchor: TextAnchor.baselineLeft,
+    );
+    const usableWidth = 400.0;
+    const usableHeight = 300.0;
+
+    Future<Uint8List> renderPageBytes({required List<DiagramOp> ops}) async {
+      // UNCOMPRESSED, so the page's operators are readable ASCII. The
+      // shipped export compresses; what is under test here is the wiring,
+      // and the wiring emits the same operators either way.
+      final doc = pw.Document(compress: false);
       final pageFont =
           PdfTtfFont(doc.document, ByteData.sublistView(fontBytes));
-      const style = TextStyleSpec(
-        font: _kFont,
-        sizePt: 12,
-        argb: 0xFF000000,
-        anchor: TextAnchor.baselineLeft,
-      );
-      const scene = DiagramScene(
-        ops: [OpText(_kFixtureText, _kAt, style)],
-        bounds: DBox.fromLtwh(0, 0, 400, 300),
-        hits: [],
+      final scene = DiagramScene(
+        ops: ops,
+        bounds: const DBox.fromLtwh(0, 0, usableWidth, usableHeight),
+        hits: const [],
         minTextSizePt: 12,
-        fragments: {},
+        fragments: const {},
       );
 
       doc.addPage(
         buildDiagramScenePage(
-          usableWidth: 400,
-          usableHeight: 300,
+          usableWidth: usableWidth,
+          usableHeight: usableHeight,
           scene: scene,
           fonts: <FontRef, PdfFont>{_kFont: pageFont},
           measurer: measurer,
         ),
       );
 
-      final bytes = await doc.save();
+      final bytes = Uint8List.fromList(await doc.save());
       expect(bytes, isNotEmpty);
-      // A real page with an embedded font is comfortably over a few KB.
-      expect(bytes.length, greaterThan(2000));
+      expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+      return bytes;
+    }
+
+    Future<String> renderPageStream({required List<DiagramOp> ops}) async =>
+        _operatorStream(
+          await renderPageBytes(ops: ops),
+          mustContain: ' cm',
+        );
+
+    test('the scene is REPLAYED — its ops reach the page as operators',
+        () async {
+      // Deleting `scene.replay(canvas)` leaves a perfectly valid document
+      // of the same order of size. It does not leave a `BT`.
+      final stream = await renderPageStream(
+        ops: const <DiagramOp>[OpText(_kFixtureText, _kAt, style)],
+      );
+
+      expect(stream, contains('BT'), reason: 'the scene was never replayed');
+      expect(_tdRe.hasMatch(stream), isTrue);
+
+      // ==================================================================
+      // AND THE CONTROL, WHICH IS WHY THE OLD ASSERTIONS PROVED NOTHING.
+      // ==================================================================
+      // The identical wiring with an EMPTY scene produces a document with
+      // NO page content stream whatsoever — and it still clears both of
+      // the assertions this test used to consist of. Stated as an
+      // executable fact rather than as a paragraph, so nobody has to take
+      // it on trust that `length > 2000` was not a threshold.
+      final empty = await renderPageBytes(ops: const <DiagramOp>[]);
+      expect(empty, isNotEmpty);
+      expect(empty.length, greaterThan(2000));
+      expect(
+        () => _operatorStream(empty, mustContain: ' cm'),
+        throwsStateError,
+        reason: 'a page that draws nothing has no operators to find',
+      );
+    });
+
+    test('boxHeight is size.y — the WIDGET box, NOT the page height '
+        '(§7.4)', () async {
+      // ==================================================================
+      // THE ONE GOTCHA page_wiring.dart's HEADER EXISTS TO PREVENT.
+      // ==================================================================
+      // The construction transform is `1 0 0 -1 0 boxHeight`. Feed it the
+      // page height instead of the CustomPaint's `size.y` and every mark
+      // slides by the page margin — a plausible-looking sheet that is
+      // wrong by a constant, which is precisely how it would ship. The
+      // page here is A4 (841.89 pt tall) and the box is 300, so the two
+      // are not remotely the same number.
+      final stream = await renderPageStream(
+        ops: const <DiagramOp>[OpText(_kFixtureText, _kAt, style)],
+      );
+
+      final btIdx = stream.indexOf('BT');
+      final cms =
+          _cmRe.allMatches(stream).where((m) => m.end <= btIdx).toList();
+      expect(
+        cms.length,
+        greaterThanOrEqualTo(2),
+        reason: 'expected the construction flip and the text matrix',
+      );
+
+      // The construction flip is the cm immediately before drawText's own.
+      final construction = _sixNums(cms[cms.length - 2]);
+      expect(construction[0], closeTo(1, 1e-9), reason: 'a');
+      expect(construction[1], closeTo(0, 1e-9), reason: 'b');
+      expect(construction[2], closeTo(0, 1e-9), reason: 'c');
+      expect(construction[3], closeTo(-1, 1e-9), reason: 'd — the Y flip');
+      expect(construction[4], closeTo(0, 1e-9), reason: 'e');
+      expect(
+        construction[5],
+        closeTo(usableHeight, 1e-9),
+        reason: 'f is boxHeight: it must be size.y (300), not the page '
+            'height (A4 is 841.89)',
+      );
+    });
+
+    test('the op lands at the coordinate the scene gave it', () async {
+      // The wiring is only correct if a diagram-space point survives it.
+      // `baselineLeft` makes `anchorOffset` zero, so the emitted text
+      // matrix applied to the Td operands must reproduce `_kAt` exactly —
+      // no font metrics, no anchor arithmetic in between.
+      final stream = await renderPageStream(
+        ops: const <DiagramOp>[OpText(_kFixtureText, _kAt, style)],
+      );
+
+      final btIdx = stream.indexOf('BT');
+      final cms =
+          _cmRe.allMatches(stream).where((m) => m.end <= btIdx).toList();
+      final m = _sixNums(cms.last);
+      final td = _tdRe.firstMatch(
+        RegExp('BT(.*?)ET', dotAll: true).firstMatch(stream)!.group(1)!,
+      )!;
+      final tdX = double.parse(td.group(1)!);
+      final tdY = double.parse(td.group(2)!);
+
+      expect(m[0] * tdX + m[2] * tdY + m[4], closeTo(_kAt.x, 1e-4));
+      expect(m[1] * tdX + m[3] * tdY + m[5], closeTo(_kAt.y, 1e-4));
     });
   });
 }

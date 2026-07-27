@@ -287,6 +287,17 @@ final class AppShellState extends State<AppShell>
     await _services.controller.saveAs();
   }
 
+  /// docs/08 §8.1's export, as ONE menu entry.
+  ///
+  /// §8.1's full `Ctrl+P` dialog — presets, the sheet checklist, palette,
+  /// live preview — is not built this stage, and neither is the binding:
+  /// [kFileShortcuts] is exactly four, `session_layering_test.dart` RULE
+  /// 14 asserts it, and that rule exists so a fifth cannot arrive without
+  /// the decision being taken again.
+  Future<void> _exportPdf() async {
+    await _services.export.exportPdf();
+  }
+
   Future<void> _openRecent(String path) async {
     if (await _services.controller.openPath(path)) _dismissStartCard();
   }
@@ -329,6 +340,7 @@ final class AppShellState extends State<AppShell>
               onOpen: _openDocument,
               onSave: _save,
               onSaveAs: _saveAs,
+              onExportPdf: _exportPdf,
               onOpenRecent: _openRecent,
             ),
             const SizedBox(width: 16),
@@ -498,6 +510,7 @@ final class _FileMenu extends StatelessWidget {
     required this.onOpen,
     required this.onSave,
     required this.onSaveAs,
+    required this.onExportPdf,
     required this.onOpenRecent,
   });
 
@@ -509,6 +522,7 @@ final class _FileMenu extends StatelessWidget {
   final Future<void> Function() onOpen;
   final Future<void> Function() onSave;
   final Future<void> Function() onSaveAs;
+  final Future<void> Function() onExportPdf;
   final Future<void> Function(String path) onOpenRecent;
 
   @override
@@ -575,6 +589,18 @@ final class _FileMenu extends StatelessWidget {
               ),
               onPressed: () => unawaited(onSaveAs()),
               child: const Text('Save As…'),
+            ),
+            // NO `shortcut:` — and that is a decision, not an omission.
+            // docs/08 §8.1 gives export `Ctrl+P`, but
+            // `session_layering_test.dart` RULE 14 asserts exactly four
+            // bindings and eight activators precisely so the file group
+            // cannot grow a fifth member without that being re-taken.
+            // Declaring one here would ALSO advertise a key nothing
+            // listens for, which is the other half of what that rule
+            // protects.
+            MenuItemButton(
+              onPressed: () => unawaited(onExportPdf()),
+              child: const Text('Export PDF…'),
             ),
           ],
           child: const Text('File'),

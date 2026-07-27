@@ -466,4 +466,234 @@ void main() {
       );
     });
   });
+
+  // ── the strip must not contradict the canvas underneath it ────────────
+  //
+  // docs/04 §2.2: the face control "selects a coordinate, not a filter".
+  // Once `scene_builder.dart` started honouring CR-036's occupancy struct,
+  // the rear elevation drew every front-bolted `side: both` device — and
+  // the strip, still filtering on `placement.face`, went on reporting the
+  // rear as empty. Measured on `whole_house` at 1600x1200: `RU rear 0/42`
+  // above 19 rendered `RenderDeviceBox`es covering 28 distinct rear U.
+  //
+  // These tests do not hard-code the strip's number against a hand-counted
+  // one. They read the RU actually covered by the device boxes ON SCREEN,
+  // through the geometry those boxes were laid out with, and require the
+  // chip to say that. A change that breaks the agreement in EITHER
+  // direction fails here.
+  group('the RU chip agrees with the boxes rendered beneath it', () {
+    setUp(() {
+      TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
+          .implicitView!
+        ..physicalSize = const Size(1600, 1200)
+        ..devicePixelRatio = 1;
+    });
+
+    tearDown(() {
+      TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
+          .implicitView!
+        ..resetPhysicalSize()
+        ..resetDevicePixelRatio();
+    });
+
+    const rackId = Uuid('rack-faces');
+    final when = DateTime.utc(2026, 7, 18);
+    EntityMeta meta() =>
+        EntityMeta(createdAt: when, updatedAt: when, updatedBy: 'test');
+    const geo = RackGeometry(12);
+
+    void addTemplate(
+      RackDocument doc,
+      String id, {
+      required int frontU,
+      required int rearU,
+    }) {
+      doc.templates['$id@1'] = TemplateSnapshot(
+        templateId: TemplateId(id),
+        version: 1,
+        contentHash: 'sha256:$id',
+        capturedAt: when,
+        body: TemplateBody(
+          manufacturer: 'Generic',
+          model: id,
+          displayName: id,
+          frontU: frontU,
+          rearU: rearU,
+          side: frontU > 0 && rearU > 0
+              ? OccupancySide.both
+              : (rearU > 0 ? OccupancySide.rear : OccupancySide.front),
+          mountMethod: MountMethod.rackEars,
+        ),
+      );
+    }
+
+    void addDevice(
+      RackDocument doc,
+      String designator, {
+      required String templateId,
+      required int ruIndex,
+      required Face face,
+    }) {
+      doc.devices[Uuid('dev-$designator')] = DeviceInstance(
+        id: Uuid('dev-$designator'),
+        kind: DeviceKind.rackDevice,
+        templateRef: TemplateRef(
+          templateId: TemplateId(templateId),
+          version: 1,
+          contentHash: 'sha256:$templateId',
+        ),
+        designator: designator,
+        name: designator,
+        placement: RailPlacement(rackId: rackId, ruIndex: ruIndex, face: face),
+        meta: meta(),
+      );
+    }
+
+    /// `whole_house` RK-1's shape in miniature: a 12U rack whose devices
+    /// are almost all bolted to the FRONT rails and almost all
+    /// `side: both`, plus one front-only blank and one rear-only patch
+    /// panel so the two faces have genuinely different answers.
+    ///
+    ///   UPS-1  front rails, U1, 3U front / 3U rear -> front 1-3, rear 1-3
+    ///   SW-1   front rails, U5, 1U front / 1U rear -> front 5,   rear 5
+    ///   BLK-1  front rails, U7, 1U front / 0U rear -> front 7
+    ///   PP-1   rear rails,  U9, 0U front / 1U rear ->            rear 9
+    RackDocument mixedFacesDoc() {
+      final doc = RackDocument(
+        id: const Uuid('doc-faces'),
+        appVersion: '0.1.0',
+        createdAt: when,
+        modifiedAt: when,
+        meta: meta(),
+      );
+      doc.racks[rackId] = Rack(
+        id: rackId,
+        name: 'Faces Rack',
+        designator: 'RK-1',
+        heightU: 12,
+        order: const FracIndex('a0'),
+        meta: meta(),
+      );
+      addTemplate(doc, 'tpl.both3', frontU: 3, rearU: 3);
+      addTemplate(doc, 'tpl.both1', frontU: 1, rearU: 1);
+      addTemplate(doc, 'tpl.frontonly', frontU: 1, rearU: 0);
+      addTemplate(doc, 'tpl.rearonly', frontU: 0, rearU: 1);
+      addDevice(
+        doc,
+        'UPS-1',
+        templateId: 'tpl.both3',
+        ruIndex: 1,
+        face: Face.front,
+      );
+      addDevice(
+        doc,
+        'SW-1',
+        templateId: 'tpl.both1',
+        ruIndex: 5,
+        face: Face.front,
+      );
+      addDevice(
+        doc,
+        'BLK-1',
+        templateId: 'tpl.frontonly',
+        ruIndex: 7,
+        face: Face.front,
+      );
+      addDevice(
+        doc,
+        'PP-1',
+        templateId: 'tpl.rearonly',
+        ruIndex: 9,
+        face: Face.rear,
+      );
+      return doc;
+    }
+
+    Widget facesApp() => MaterialApp(
+      home: Scaffold(
+        body: RackCanvasScreen(
+          measurer: _FakeMeasurer(),
+          document: mixedFacesDoc(),
+        ),
+      ),
+    );
+
+    /// Every rack U covered by a device box CURRENTLY ON SCREEN, recovered
+    /// from the boxes' own laid-out rects through `RackGeometry`'s inverse
+    /// — the same geometry the scene was built with, and nothing the chip
+    /// strip has any part in computing.
+    Set<int> renderedRu(WidgetTester tester) {
+      final origin = tester.getTopLeft(find.byType(CanvasIntentDetector));
+      final out = <int>{};
+      for (final box in tester.allRenderObjects.whereType<RenderDeviceBox>()) {
+        final deviceH = (box.size.height / RackGeometry.unitsPerRu).round();
+        final top = box.localToGlobal(Offset.zero).dy - origin.dy;
+        final ru = geo.ruIndexForTopY(top, deviceH);
+        for (var u = ru; u < ru + deviceH; u++) {
+          out.add(u);
+        }
+      }
+      return out;
+    }
+
+    int boxCount(WidgetTester tester) =>
+        tester.allRenderObjects.whereType<RenderDeviceBox>().length;
+
+    RackMetricsRow strip(WidgetTester tester) =>
+        tester.widget<RackMetricsRow>(find.byType(RackMetricsRow));
+
+    testWidgets('REAR: the chip counts the front-bolted devices the rear '
+        'elevation draws', (tester) async {
+      await tester.pumpWidget(facesApp());
+      await tester.pump();
+
+      await tester.tap(find.text('Rear'));
+      await tester.pumpAndSettle();
+
+      // Pinned so a scene builder that drew NOTHING could not satisfy the
+      // agreement assertion vacuously.
+      expect(boxCount(tester), 3, reason: 'UPS-1, SW-1 and PP-1');
+      expect(renderedRu(tester), {1, 2, 3, 5, 9});
+
+      expect(
+        find.text('RU rear ${renderedRu(tester).length}/12'),
+        findsOneWidget,
+        reason: 'the strip read "RU rear 1/12" — PP-1 alone — while the '
+            'canvas beneath it drew UPS-1 across rear U1-U3 and SW-1 at '
+            'rear U5',
+      );
+      expect(find.text('RU rear 5/12'), findsOneWidget);
+    });
+
+    testWidgets('FRONT: unchanged, and it too matches the ink', (
+      tester,
+    ) async {
+      await tester.pumpWidget(facesApp());
+      await tester.pump();
+
+      expect(boxCount(tester), 3, reason: 'UPS-1, SW-1 and BLK-1');
+      expect(renderedRu(tester), {1, 2, 3, 5, 7});
+      expect(
+        find.text('RU front ${renderedRu(tester).length}/12'),
+        findsOneWidget,
+      );
+      expect(find.text('RU front 5/12'), findsOneWidget);
+    });
+
+    testWidgets('neither face claims an unknown contributor: every device '
+        'here is fully modelled', (tester) async {
+      // A front-only blank seen from the REAR is a measured zero, not an
+      // unknown — the model states its rear height. Counting it as unknown
+      // would put a superscript on the RU chip of every half-depth rack
+      // and say "we do not know" about the one thing the file is explicit
+      // about (G4 cuts both ways).
+      await tester.pumpWidget(facesApp());
+      await tester.pump();
+      expect(strip(tester).rollups.ruUnknownCount, 0);
+
+      await tester.tap(find.text('Rear'));
+      await tester.pumpAndSettle();
+      expect(strip(tester).rollups.ruUnknownCount, 0);
+    });
+  });
 }

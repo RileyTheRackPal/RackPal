@@ -11,12 +11,12 @@
 // range and its link count (rule 4), for the caller to display.
 //
 // "ALWAYS NAME THE CASUALTIES" IS NOT "NAME THE ONES THE OCCUPANCY SCAN
-// HAPPENS TO SEE" (see [DoomedKind]). `railOccupantsOnFace` deliberately
+// HAPPENS TO SEE" (see [DoomedKind]). `boltedOccupantsOnFace` deliberately
 // returns only rail-placed devices whose template snapshot resolves and
-// whose per-face height is > 0 — correct for the placement/collision
-// callers it was factored out of, and WRONG as the sole input to a
-// planner that decides whether a device is about to be left standing
-// outside the rack. A device the scan skips would otherwise be invisible
+// whose per-face height is > 0 — correct for the planner it was factored
+// out of, and WRONG as the sole input to a planner that decides whether a
+// device is about to be left standing outside the rack. A device the scan
+// skips would otherwise be invisible
 // three times over: absent from [RackShrinkPlan.doomed], uncounted by
 // [RackShrinkPlan.smallestFittingHeightU], and — because
 // [RackShrinkPlan.hasCasualties] is what opens the modal at all — the
@@ -69,7 +69,7 @@ enum DoomedKind {
   /// `deviceH` are the exact footprint, and compaction can relocate it.
   rail,
 
-  /// Rail-placed in this rack, but [railOccupantsOnFace] cannot resolve a
+  /// Rail-placed in this rack, but [boltedOccupantsOnFace] cannot resolve a
   /// footprint for it — its `templates['<id>@<version>']` snapshot is
   /// missing, or the snapshot gives it zero height on the face it claims
   /// to be mounted on. `ruIndex` is real; `deviceH` is reported as 1, the
@@ -369,11 +369,21 @@ RackShrinkPlan planRackShrink({
 /// Ordered face-major (front, then rear), ascending by `ruIndex`, ties
 /// broken by device id, so `doomed` and `shiftMoves` are reproducible
 /// across runs and do not depend on `Map` iteration order.
+///
+/// THE BOLTED SCAN, NOT THE ELEVATION ONE, and the union over faces is
+/// why: this enumeration must name every occupant EXACTLY ONCE (a device
+/// listed twice is a casualty list that double-counts and a rescue plan
+/// that moves it twice), and `_Occupant.face` is written straight back
+/// into `MoveDeviceCommand(fromFace:, toFace:)` by the shift and rescue
+/// paths below. `elevationOccupantsOnFace` would return a `side: both`
+/// device on both faces and hand the rear copy's face to a move command,
+/// re-hanging a front-bolted device on the rear rails. See
+/// `catalog_placement.dart`'s two scans.
 List<_Occupant> _rackOccupants(RackDocument doc, Rack rack) {
   final out = <_Occupant>[];
   final modelled = <Uuid>{};
   for (final face in Face.values) {
-    for (final o in railOccupantsOnFace(
+    for (final o in boltedOccupantsOnFace(
       rack: rack,
       devices: doc.devices.values,
       face: face,

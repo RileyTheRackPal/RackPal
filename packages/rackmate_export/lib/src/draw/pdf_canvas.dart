@@ -122,9 +122,29 @@ final class PdfDiagramCanvas implements DiagramCanvas {
   // caller that DOES override `miterLimit` will see no effect on this
   // backend. Worth an amendment (`..setMiterLimit(s.miterLimit)` in the
   // cascade below) before v1 ships if any caller actually varies it.
+  // CR-082 IS TWO INDEPENDENT KNOBS, AND THEY USED TO BE ONE.
+  //
+  // `Stroke` carries `scaleWithGeometry` ("cable traces, symbol outlines
+  // and rack rails scale with the diagram; UI chrome does not") AND
+  // `hairlineFloor` ("sheet furniture uses a 0.25 pt print floor;
+  // everything else 0.5 pt"). Both backends used to branch on
+  // `hairlineFloor` ALONE for both decisions, so `scaleWithGeometry` had
+  // zero readers anywhere in the repository -- a production field whose
+  // only mention was its own declaration.
+  //
+  // It was invisible because no caller had ever applied a scale != 1. The
+  // elevation sheets are the first: they wrap the whole rack scene in one
+  // `OpTransform` at 1:8, where the two knobs stop agreeing. The width
+  // decision now reads `scaleWithGeometry` and the floor decision reads
+  // `hairlineFloor`, which is what CR-082 says.
+  //
+  // At k == 1 the two spellings are identical, which is why this changes
+  // nothing about any sheet drawn at 1:1 -- `sheetRule` sets
+  // `scaleWithGeometry: false` so furniture keeps behaving exactly as it
+  // did, and `stroke_scaling_test.dart` proves the difference at k != 1.
   void _applyStroke(Stroke s) {
     final k = _k == 0 ? 1.0 : _k;
-    var w = s.hairlineFloor ? s.widthPt / k : s.widthPt;
+    var w = s.scaleWithGeometry ? s.widthPt : s.widthPt / k;
     final floor = s.hairlineFloor ? 0.25 : 0.5; // pt -- CR-082
     if (w * k < floor) w = floor / k;
     _g

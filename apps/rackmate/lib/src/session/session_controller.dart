@@ -940,6 +940,15 @@ final class SessionController {
     return null;
   }
 
+  /// [_initialDirectory], for the PDF export dialog.
+  ///
+  /// Exposed rather than duplicated so the export dialog opens where the
+  /// last document save did — including the bounded probe that stops a
+  /// stored UNC path freezing the window (see [_initialDirectory]). A
+  /// second "where should the dialog open" answer is a second place for
+  /// that probe to be forgotten.
+  Future<String?> exportInitialDirectory() => _initialDirectory();
+
   String? _lastSaveDirectory;
 
   /// Seeds the save dialog's starting folder from `prefs.json`. Called

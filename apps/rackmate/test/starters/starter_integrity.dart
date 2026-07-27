@@ -298,7 +298,7 @@ void _expectStructureLabelsUnique(RackDocument doc, String of) {
 
 void _expectNoOverlapOrOverhang(RackDocument doc, Rack rack, String of) {
   for (final face in Face.values) {
-    final occupants = railOccupantsOnFace(
+    final occupants = elevationOccupantsOnFace(
       rack: rack,
       devices: doc.devices.values,
       face: face,

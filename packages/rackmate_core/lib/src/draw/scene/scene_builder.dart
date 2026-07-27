@@ -24,14 +24,21 @@
 // `hits` are absolute (hit-testing happens in scene space), which is also
 // where each device's on-screen rect comes from.
 
+import 'package:meta/meta.dart';
+import 'package:rackmate_core/src/catalog/catalog_passive.dart'
+    show kCatPassive;
+import 'package:rackmate_core/src/derived/device_loads.dart'
+    show elevationOccupancyU, templateKeyFor;
 import 'package:rackmate_core/src/draw/geometry.dart';
 import 'package:rackmate_core/src/draw/ops.dart';
 import 'package:rackmate_core/src/draw/scene/device_layer.dart';
 import 'package:rackmate_core/src/draw/scene/rack_geometry.dart';
 import 'package:rackmate_core/src/draw/scene/rack_layer.dart';
+import 'package:rackmate_core/src/draw/scene/rack_load_gutter.dart';
 import 'package:rackmate_core/src/draw/scene/rack_style.dart';
 import 'package:rackmate_core/src/draw/text.dart';
 import 'package:rackmate_core/src/model/device_instance.dart';
+import 'package:rackmate_core/src/model/enums.dart' show UnitSystem;
 import 'package:rackmate_core/src/model/placement.dart';
 import 'package:rackmate_core/src/model/rack.dart';
 import 'package:rackmate_core/src/model/template.dart';
@@ -69,6 +76,7 @@ final class RackScene {
     required this.rackId,
     required this.devices,
     required this.chassisBounds,
+    this.unlabelledDeviceIds = const <Uuid>[],
   });
 
   /// The one composed display list. `fragmentFor(rackId.v)` → chassis;
@@ -82,6 +90,155 @@ final class RackScene {
 
   /// Absolute bounds of the rack chassis (rack top-left at origin).
   final DBox chassisBounds;
+
+  /// The devices in [devices] whose block was drawn with NO designator,
+  /// because at this drawing scale the inflated label is taller than the
+  /// block (`device_layer.dart`'s ladder, rung 3).
+  ///
+  /// EMPTY IS THE NORMAL CASE and the screen never fills it — `RackTypeScale`
+  /// is the identity there. It exists so a printed sheet can never carry an
+  /// unlabelled elevation in silence: `elevation_sheet.dart` turns it into
+  /// a note ON the sheet and `build_document.dart` into an export notice.
+  final List<Uuid> unlabelledDeviceIds;
+}
+
+/// The sheet-only extras docs/08 §2.2 asks of a rack elevation, grouped so
+/// a caller opts into the whole print treatment with one value rather than
+/// five booleans it has to keep in step.
+///
+/// EVERY DEFAULT IS THE SCREEN'S CURRENT BEHAVIOUR. The screen and the
+/// sheet share one builder (CR-086) but not one set of options, exactly as
+/// they already share it while differing in `face`, `lod` and `palette` —
+/// what CR-086 forbids is a SECOND renderer, not a parameter.
+@immutable
+final class RackSceneOptions {
+  const RackSceneOptions({
+    this.dualRuler = false,
+    this.showRuSpan = false,
+    this.lifecycleBorders = false,
+    this.hatchPassive = false,
+    this.loadGutter = false,
+    this.units = UnitSystem.imperial,
+    this.typeScale = const RackTypeScale.identity(),
+  });
+
+  /// What the on-screen canvas draws.
+  static const RackSceneOptions screen = RackSceneOptions();
+
+  /// docs/08 §2.2's "RU ruler BOTH EDGES".
+  final bool dualRuler;
+
+  /// docs/08 §2.2's `4U · 12–15` in place of the plain `4U` badge.
+  final bool showRuSpan;
+
+  /// docs/08 §2.2's `lifecycleStatus` border — dash and weight, not hue.
+  final bool lifecycleBorders;
+
+  /// docs/08 §2.2's "blanks, vents and shelves as hatched bands".
+  final bool hatchPassive;
+
+  /// docs/08 §2.2's "cumulative mass from the bottom up, draw, and BTU/hr
+  /// in the gutter".
+  final bool loadGutter;
+
+  /// Which units the gutter's figures print in
+  /// (`ProjectSettings.displayUnits`, CR-097).
+  final UnitSystem units;
+
+  /// Inflates every label so it clears §6.2's print floor at a reduced
+  /// drawing scale. See [RackTypeScale].
+  final RackTypeScale typeScale;
+
+  /// This value with the named fields replaced and everything else
+  /// carried over.
+  ///
+  /// Exists so [forPrint] can be what its name says. It is also the shape
+  /// a per-rack or detail-sheet override needs — the callers the old
+  /// [forPrint] would have silently discarded.
+  ///
+  /// EVERY FIELD MUST APPEAR HERE, and `scene_builder_test.dart` asserts
+  /// it the only way a language without reflection can: `custom.copyWith()`
+  /// with no arguments must equal `custom` for a value whose every field
+  /// is non-default. A field added to this class and forgotten here would
+  /// otherwise be dropped by [forPrint], silently, on every printed sheet.
+  RackSceneOptions copyWith({
+    bool? dualRuler,
+    bool? showRuSpan,
+    bool? lifecycleBorders,
+    bool? hatchPassive,
+    bool? loadGutter,
+    UnitSystem? units,
+    RackTypeScale? typeScale,
+  }) => RackSceneOptions(
+    dualRuler: dualRuler ?? this.dualRuler,
+    showRuSpan: showRuSpan ?? this.showRuSpan,
+    lifecycleBorders: lifecycleBorders ?? this.lifecycleBorders,
+    hatchPassive: hatchPassive ?? this.hatchPassive,
+    loadGutter: loadGutter ?? this.loadGutter,
+    units: units ?? this.units,
+    typeScale: typeScale ?? this.typeScale,
+  );
+
+  /// THIS options value with the print treatment applied on top.
+  ///
+  /// IT NOW USES THE RECEIVER. It used to build a fresh value from
+  /// literals and ignore `this` entirely, so
+  /// `RackSceneOptions.screen.forPrint(…)` advertised "take the screen
+  /// options and add print" while discarding them. `screen` is
+  /// all-defaults, so the two agreed and nothing was wrong on paper — but
+  /// a detail sheet or a per-rack override written as
+  /// `myOptions.forPrint(…)` would have lost every customisation, and so
+  /// would ANY field added to this class after today, with no compiler or
+  /// test complaint either time.
+  ///
+  /// The five treatment flags are still forced, because they ARE the
+  /// print treatment: docs/08 §2.2 asks a printed elevation for both
+  /// rulers, the RU span label, lifecycle borders, hatched passives and
+  /// the load gutter. Everything else the receiver carries survives.
+  RackSceneOptions forPrint({
+    required RackTypeScale typeScale,
+    required UnitSystem units,
+  }) => copyWith(
+    dualRuler: true,
+    showRuSpan: true,
+    lifecycleBorders: true,
+    hatchPassive: true,
+    loadGutter: true,
+    units: units,
+    typeScale: typeScale,
+  );
+
+  // Value equality exists for ONE reason: it is what makes [copyWith]'s
+  // completeness checkable without reflection. See that method's doc.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RackSceneOptions &&
+          other.dualRuler == dualRuler &&
+          other.showRuSpan == showRuSpan &&
+          other.lifecycleBorders == lifecycleBorders &&
+          other.hatchPassive == hatchPassive &&
+          other.loadGutter == loadGutter &&
+          other.units == units &&
+          other.typeScale == typeScale;
+
+  @override
+  int get hashCode => Object.hash(
+    dualRuler,
+    showRuSpan,
+    lifecycleBorders,
+    hatchPassive,
+    loadGutter,
+    units,
+    typeScale,
+  );
+
+  @override
+  String toString() =>
+      'RackSceneOptions(dualRuler: $dualRuler, showRuSpan: $showRuSpan, '
+      'lifecycleBorders: $lifecycleBorders, hatchPassive: $hatchPassive, '
+      'loadGutter: $loadGutter, units: ${units.name}, '
+      'typeScale: ${typeScale.factor})';
 }
 
 /// Builds the [RackScene] for [rack] + its [devices] on [face] at [lod].
@@ -90,8 +247,22 @@ final class RackScene {
 /// is injected (CR-081) and threaded to the layers. A device is drawn only
 /// when it is rail-mounted on [face] and occupies ≥ 1 U on that face —
 /// anything else is simply skipped (docs/04 §2.2's face is a coordinate,
-/// but this stage's face is a filter; rear-mirroring and dual-face
-/// occupancy are deferred, see the file docs of rack_layer/device_layer).
+/// but this stage's face is a filter; dual-face occupancy is deferred, see
+/// the file docs of rack_layer/device_layer).
+///
+/// ── REAR MIRRORING (docs/04 §2.2, CR-035, roadmap M1 item 3) ──────────
+/// On `Face.rear` the lateral span of every device is reflected about the
+/// opening's centre when `rack.mirrorRearElevation` is set — which it is
+/// by default. It is read from the RACK rather than passed in, because it
+/// is a per-rack property with a `SetRackPropertyCommand` behind it and a
+/// caller that could pass something else would be a second answer to a
+/// question the model already answers.
+///
+/// The reflection lives in `RackGeometry.deviceRect`, so it moves the
+/// LAYOUT and never the glyphs — see that method on why a canvas
+/// `scale(-1, 1)` is the wrong shape. A rack with the flag OFF draws
+/// unmirrored, and the sheet builder puts a `NOT MIRRORED` chip on it so
+/// the reader knows which convention they are looking at.
 RackScene buildRackScene({
   required Rack rack,
   required Iterable<DeviceInstance> devices,
@@ -100,17 +271,28 @@ RackScene buildRackScene({
   required LodLevel lod,
   required TextMeasurer measurer,
   RackPalette palette = const RackPalette(),
+  RackSceneOptions options = RackSceneOptions.screen,
 }) {
   final geo = RackGeometry(rack.heightU);
   final ops = <DiagramOp>[];
   final fragments = <String, IntRange>{};
   final hits = <HitRegion>[];
   final layouts = <DeviceLayout>[];
+  final unlabelled = <Uuid>[];
   var minText = double.infinity;
   var bounds = DBox.fromLtwh(0, 0, geo.rackWidth, geo.rackHeight);
+  final mirrored = face == Face.rear && rack.mirrorRearElevation;
 
   // ── chassis fragment (absolute, keyed by the rack id) ────────────────
-  final chassis = buildRackLayer(rack, geo, measurer, lod, palette);
+  final chassis = buildRackLayer(
+    rack,
+    geo,
+    measurer,
+    lod,
+    palette,
+    dualRuler: options.dualRuler,
+    typeScale: options.typeScale,
+  );
   ops.addAll(chassis.ops);
   fragments[rack.id.v] = IntRange(0, ops.length);
   minText = _min(minText, chassis.minTextPt);
@@ -134,6 +316,7 @@ RackScene buildRackScene({
       deviceH,
       startTwelfth: placement.startTwelfth,
       spanTwelfths: placement.spanTwelfths,
+      mirrored: mirrored,
     );
 
     final built = buildDeviceLayer(
@@ -145,6 +328,21 @@ RackScene buildRackScene({
       lod: lod,
       palette: palette,
       measurer: measurer,
+      // The span label needs `ruIndex`, which the device fragment's LOCAL
+      // coordinates deliberately do not carry — so it is resolved here,
+      // where the placement is in hand.
+      ruSpanLabel: options.showRuSpan
+          ? ruSpanLabel(placement.ruIndex, deviceH)
+          : null,
+      lifecycleBorder: options.lifecycleBorders,
+      // `TemplateBody.category` is the only AUTHORED signal that says
+      // "this is a blank, a vent or a shelf" — the seeded catalog puts
+      // exactly those three under `kCatPassive`. A user-authored blank
+      // panel filed under some other category simply does not hatch,
+      // which is graceful degradation rather than a guess about what the
+      // author meant. Recorded in the M1 log as a known partial.
+      hatched: options.hatchPassive && body.category == kCatPassive,
+      typeScale: options.typeScale,
     );
 
     ops
@@ -159,6 +357,7 @@ RackScene buildRackScene({
     // wrapping save/translate/restore stay in scene.ops for whole-scene
     // replay but are excluded from what RenderDeviceBox replays.
     fragments[device.id.v] = IntRange(localStart, localEnd);
+    if (built.labelDropped) unlabelled.add(device.id);
     hits.add(HitRegion(device.id.v, rect));
     layouts.add(
       DeviceLayout(
@@ -176,11 +375,36 @@ RackScene buildRackScene({
     );
   }
 
+  // ── load gutter (absolute, outside the chassis box) ──────────────────
+  //
+  // Composed here rather than being a second scene the sheet concatenates,
+  // so its Y positions come from the same `RackGeometry` the ruler does
+  // and one `OpTransform` scales the elevation and its readings together.
+  if (options.loadGutter) {
+    final gutter = buildRackLoadGutterLayer(
+      geo: geo,
+      profile: computeRackLoadProfile(
+        rack: rack,
+        devices: devices,
+        templates: templates,
+      ),
+      measurer: measurer,
+      units: options.units,
+      palette: palette,
+      typeScale: options.typeScale,
+    );
+    ops.addAll(gutter.ops);
+    minText = _min(minText, gutter.minTextPt);
+    bounds = _grow(bounds, gutter.inkBounds);
+  }
+
   final scene = DiagramScene(
     ops: ops,
     bounds: bounds,
     hits: hits,
-    minTextSizePt: minText.isFinite ? minText : RackTextSizes.ruler,
+    minTextSizePt: minText.isFinite
+        ? minText
+        : options.typeScale.size(RackTextSizes.ruler),
     fragments: fragments,
   );
 
@@ -189,6 +413,7 @@ RackScene buildRackScene({
     rackId: rack.id,
     devices: layouts,
     chassisBounds: DBox.fromLtwh(0, 0, geo.rackWidth, geo.rackHeight),
+    unlabelledDeviceIds: List.unmodifiable(unlabelled),
   );
 }
 
@@ -202,9 +427,32 @@ final class _VisibleDevice {
   final int deviceH;
 }
 
-/// Filters [devices] to those rail-mounted on [face] with a resolvable
-/// template and ≥ 1 U of occupancy on that face, sorted bottom-to-top by
-/// `ruIndex` (ties broken by id) for a deterministic op order.
+/// Filters [devices] to those rail-mounted in [rack] whose template gives
+/// them ≥ 1 U of occupancy ON [face], sorted bottom-to-top by `ruIndex`
+/// (ties broken by id) for a deterministic op order.
+///
+/// WHAT IS DRAWN IS DECIDED BY [elevationOccupancyU], not by a copy of it.
+/// The three lines it replaces existed here and, restated, in
+/// `rack_load_gutter.dart` — which counts what this skips so the sheet can
+/// SAY how many devices T6.30 lists in this rack and no elevation shows.
+/// Two spellings of one predicate would make that count describe a
+/// different set from the one actually left out.
+///
+/// ── OCCUPANCY DECIDES THE FACE, NOT THE MOUNT (docs/04 §2.2, CR-036) ──
+/// There used to be a `placement.face != face` line here as well, and it
+/// is why every shipped starter's T2.02 was an empty 42U frame: a device
+/// bolted to the FRONT rails with `{frontU: 3, rearU: 3, side: both}` — a
+/// UPS, a matrix, an amplifier — occupies rear U that a technician
+/// standing behind the rack can see and reach, and this dropped all of
+/// them. docs/04 §2.2: the face "selects a coordinate, not a filter".
+///
+/// A device's REAR block is bottom-anchored at the same `ruIndex` its
+/// front block is, and spans `rearU`. That is a derivation, not a stored
+/// fact (CR-006): the model carries one `ruIndex` per rail placement, and
+/// a chassis rests on the U it is screwed into whichever side you read it
+/// from. `frontU != rearU` (a deep chassis with a shallow front panel)
+/// therefore draws two different heights off one index, which is what the
+/// occupancy struct is for.
 List<_VisibleDevice> _visibleDevices(
   Rack rack,
   Iterable<DeviceInstance> devices,
@@ -216,16 +464,14 @@ List<_VisibleDevice> _visibleDevices(
     final placement = device.placement;
     if (placement is! RailPlacement) continue;
     if (placement.rackId != rack.id) continue;
-    if (placement.face != face) continue;
 
-    final snapshot = templates[_templateKey(device.templateRef)];
-    if (snapshot == null) continue;
-    final body = snapshot.body;
+    final body = templates[templateKeyFor(device.templateRef)]?.body;
+    final deviceH = elevationOccupancyU(device, body, face);
+    // Non-null only when the body resolved and gave ≥ 1 U on this face,
+    // which is exactly what makes the `body!` below safe.
+    if (deviceH == null) continue;
 
-    final deviceH = face == Face.front ? body.frontU : body.rearU;
-    if (deviceH <= 0) continue;
-
-    out.add(_VisibleDevice(device, body, placement, deviceH));
+    out.add(_VisibleDevice(device, body!, placement, deviceH));
   }
   out.sort((a, b) {
     final byRu = a.placement.ruIndex.compareTo(b.placement.ruIndex);
@@ -233,10 +479,6 @@ List<_VisibleDevice> _visibleDevices(
   });
   return out;
 }
-
-/// The `RackDocument.templates` key for [ref] — `"$templateId@$version"`
-/// (rack_document.dart / template.dart).
-String _templateKey(TemplateRef ref) => '${ref.templateId.v}@${ref.version}';
 
 String _semanticLabel(DeviceInstance device, TemplateBody body) {
   final type = body.displayName;
@@ -246,6 +488,15 @@ String _semanticLabel(DeviceInstance device, TemplateBody body) {
   if (type.isNotEmpty) buffer.write(', $type');
   return buffer.toString();
 }
+
+/// docs/08 §2.2's RU span label — `4U · 12–15` for a 4 U device at U12,
+/// `1U · 7` for a single-U one.
+///
+/// EN DASH for the range, matching §2.2's own spelling, and never a hyphen
+/// — `12-15` reads as an identifier.
+String ruSpanLabel(int ruIndex, int deviceH) => deviceH == 1
+    ? '1U · $ruIndex'
+    : '${deviceH}U · $ruIndex–${ruIndex + deviceH - 1}';
 
 double _min(double a, double b) => a < b ? a : b;
 

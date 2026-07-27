@@ -85,7 +85,7 @@ class RackCanvasScreen extends StatefulWidget {
   /// express, and faking it is better than not testing it.
   ///
   /// The case that forced it is §4.1's real-time shrink hatch. Its truthfulness
-  /// depends on occupants `railOccupantsOnFace` cannot model — a 0U-channel
+  /// depends on occupants `boltedOccupantsOnFace` cannot model — a 0U-channel
   /// device, or a rail device whose `templates['<id>@<version>']` snapshot is
   /// missing (see core's `DoomedKind`). Both are "reachable by loading a file
   /// and none by in-app authoring today", so no sequence of gestures against
@@ -1683,7 +1683,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// REAL TIME, so the collision is visible BEFORE release", which is only
   /// true if the preview and the commit agree on who the occupants ARE. They
   /// did not. This method used to run its own scan over
-  /// `railOccupantsOnFace`, and that primitive deliberately returns only
+  /// `boltedOccupantsOnFace`, and that primitive deliberately returns only
   /// rail-placed devices whose template snapshot resolves to a positive
   /// height on the face they claim — correct for the placement/collision
   /// callers it was factored out of, and wrong here. `planRackShrink` was

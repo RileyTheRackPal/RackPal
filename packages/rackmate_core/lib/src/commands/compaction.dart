@@ -34,8 +34,27 @@
 // shrink planner (rack_shrink.dart) calls this once per face and unions
 // the results. Neither caller is "the" caller; the parameter is required
 // so neither can drift into assuming the other's convention.
+//
+// AND IT IS THE BOLTED FACE, NOT THE DRAWN ONE. `catalog_placement.dart`
+// carries two scans on purpose: `elevationOccupantsOnFace` answers "what
+// occupies this elevation" (what the canvas draws, what the chip strip
+// counts, what `findBlockingOccupant` refuses to drop onto), and
+// `boltedOccupantsOnFace` answers "what is bolted to these rails". This
+// planner is one of exactly two callers that legitimately want the second
+// one, because its output is written straight back into a placement: a
+// `CompactionMove` becomes `MoveDeviceCommand(fromFace:, toFace:)` (see
+// [compactionCommands]), so planning the rear elevation by elevation
+// footprint would UNBOLT every front-mounted `side: both` device and
+// re-hang it on the rear rails — a far larger edit than "close the gaps",
+// out of a preview that showed only vertical movement.
+//
+// The consequence, stated rather than discovered: what this planner packs
+// AROUND is still the bolted set, so it does not yet anchor on a device
+// the other face bolted and this face merely draws. See
+// [_immovableAnchors].
 import 'package:rackmate_core/src/commands/catalog_placement.dart';
 import 'package:rackmate_core/src/commands/device_commands.dart';
+import 'package:rackmate_core/src/derived/device_loads.dart';
 import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/placement.dart';
 import 'package:rackmate_core/src/model/rack.dart';
@@ -201,13 +220,19 @@ CompactionPlan planCompaction({
   required CompactDirection direction,
 }) {
   final heightU = rack.heightU;
-  final occupants = railOccupantsOnFace(
+  // WHAT MOVES: only what is BOLTED to this face's rails. A move becomes a
+  // `MoveDeviceCommand(fromFace:, toFace:)` (see [compactionCommands]), so
+  // planning by elevation footprint instead would re-hang a front-bolted
+  // device on the rear rails the moment you compacted the rear view —
+  // a far larger edit than "close the gaps", and one the preview would
+  // not show. See `catalog_placement.dart`'s two scans.
+  final occupants = boltedOccupantsOnFace(
     rack: rack,
     devices: devices,
     face: face,
     templates: templates,
   );
-  final unmodelled = _unmodelledAnchors(
+  final immovable = _immovableAnchors(
     rack: rack,
     devices: devices,
     face: face,
@@ -218,7 +243,7 @@ CompactionPlan planCompaction({
   final locked = <(int, int)>[
     for (final o in occupants)
       if (o.locked) (o.ruIndex, o.ruIndex + o.deviceH - 1),
-    ...unmodelled,
+    ...immovable,
   ];
 
   final moves = <CompactionMove>[];
@@ -296,13 +321,14 @@ CompactionPlan planCompaction({
     direction: direction,
     face: face,
     moves: List.unmodifiable(moves),
-    freedU: _freedU(direction, occupants, targets, unmodelled),
+    freedU: _freedU(direction, occupants, targets, immovable),
   );
 }
 
-/// The U ranges of devices rail-placed on [face] of [rack] that
-/// [railOccupantsOnFace] cannot model — its template snapshot is missing,
-/// or it resolves to zero height on the face it claims to be mounted on.
+/// The U ranges of devices bolted to [face] of [rack] that
+/// [boltedOccupantsOnFace] cannot model — the template snapshot is
+/// missing, or it resolves to zero height on the face the device claims to
+/// be mounted on.
 ///
 /// TREATED EXACTLY LIKE A LOCKED ANCHOR, because that is what they are:
 /// something is bolted to those rails and this planner cannot move it.
@@ -313,10 +339,21 @@ CompactionPlan planCompaction({
 /// conflict. `deviceH` is unknowable without the template, so each anchor
 /// claims the single U it is certainly standing on: an under-claim that
 /// can still leave an overlap, but one that strictly beats pretending the
-/// rails are empty. The complete repair belongs in the shared scan itself
-/// (see `railOccupantsOnFace`), which would also close the same hole in
-/// `findLowestFreeRu` and `findBlockingOccupant`.
-List<(int, int)> _unmodelledAnchors({
+/// rails are empty. It anchors on the rails it is BOLTED to
+/// (`boltedRailFace`), the only thing about it the document states.
+///
+/// ── A KNOWN, NAMED GAP: THE OTHER FACE'S DEVICES ARE NOT ANCHORS YET
+/// A front-bolted device with `rearU > 0` IS drawn on the rear elevation
+/// (CR-036) and `findBlockingOccupant` now agrees it occupies rear U, but
+/// this planner does not anchor on it, so Compact Down on the rear can
+/// still propose a target that the drop evaluator would refuse. Closing
+/// that means anchoring on `elevationOccupantsOnFace`, which ALSO
+/// re-anchors every `side: both` device against its own twin on the other
+/// face and so changes what compaction proposes on ordinary racks — a
+/// planner behaviour change with its own preview, its own `freedU`
+/// arithmetic and its own test surface. It is deliberately not bundled
+/// into the occupancy-semantics repair; see the M1 log.
+List<(int, int)> _immovableAnchors({
   required Rack rack,
   required Iterable<DeviceInstance> devices,
   required Face face,
@@ -324,7 +361,7 @@ List<(int, int)> _unmodelledAnchors({
 }) {
   final modelled = <Uuid>{
     for (final f in Face.values)
-      for (final o in railOccupantsOnFace(
+      for (final o in boltedOccupantsOnFace(
         rack: rack,
         devices: devices,
         face: f,
@@ -335,11 +372,8 @@ List<(int, int)> _unmodelledAnchors({
   return [
     for (final d in devices)
       if (!modelled.contains(d.id))
-        if (d.placement case RailPlacement(
-          :final rackId,
-          :final ruIndex,
-          face: final placedFace,
-        ) when rackId == rack.id && placedFace == face)
+        if (d.placement case RailPlacement(:final rackId, :final ruIndex)
+            when rackId == rack.id && boltedRailFace(d) == face)
           (ruIndex, ruIndex),
   ];
 }
@@ -347,15 +381,16 @@ List<(int, int)> _unmodelledAnchors({
 /// [CompactionPlan.freedU]'s definition, kept beside the planner so the
 /// two cannot drift.
 ///
-/// [unmodelled] anchors never move, so they cap the run in both
+/// [immovable] anchors never move, so they cap the run in both
 /// directions: a rack whose highest thing is a device this planner cannot
-/// see has not gained the U above it just because everything it CAN see
-/// packed down below.
+/// see — or one it can see perfectly well and simply may not move, because
+/// it is bolted to the other rails — has not gained the U above it just
+/// because everything that DID move packed down below.
 int _freedU(
   CompactDirection direction,
   List<RailOccupant> occupants,
   Map<Uuid, int> targets,
-  List<(int, int)> unmodelled,
+  List<(int, int)> immovable,
 ) {
   switch (direction) {
     case CompactDirection.down:
@@ -367,7 +402,7 @@ int _freedU(
         if (before > topBefore) topBefore = before;
         if (after > topAfter) topAfter = after;
       }
-      for (final (_, hi) in unmodelled) {
+      for (final (_, hi) in immovable) {
         if (hi > topBefore) topBefore = hi;
         if (hi > topAfter) topAfter = hi;
       }
@@ -382,7 +417,7 @@ int _freedU(
         if (before < bottomBefore) bottomBefore = before;
         if (after < bottomAfter) bottomAfter = after;
       }
-      for (final (lo, _) in unmodelled) {
+      for (final (lo, _) in immovable) {
         if (lo < bottomBefore) bottomBefore = lo;
         if (lo < bottomAfter) bottomAfter = lo;
       }

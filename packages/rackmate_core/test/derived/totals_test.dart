@@ -153,7 +153,19 @@ void main() {
       expect(rear.face, Face.rear);
     });
 
-    test('a BOTH-sides device occupies its own height on each face', () {
+    test('a BOTH-sides device occupies its own height on each face — the '
+        'face is the ELEVATION, not the PLACEMENT', () {
+      // docs/04 §2.2: the face control "selects a coordinate, not a
+      // filter". This device is bolted to the FRONT rails and its template
+      // gives it 2U front / 1U rear, so both elevations draw it and both
+      // chips must count it.
+      //
+      // This assertion used to read `rear.ruUsed == 0`, with a comment
+      // saying its placement was on the front so it contributed nothing to
+      // the rear — the very rule the scene builder stopped applying. With
+      // the elevation honouring CR-036 and the strip still filtering on
+      // `placement.face`, `whole_house` rendered 19 device boxes on the
+      // rear canvas under a chip reading `RU rear 0/42`.
       final rack = _rack();
       final templates = {'x@1': _snapshot('x', _body(frontU: 2, rearU: 1))};
       final devices = [_device('x-1', templateId: 'x', placement: _rail(3))];
@@ -167,17 +179,51 @@ void main() {
         ).ruUsed,
         2,
       );
-      // Its PLACEMENT is on the front, so it contributes nothing to the
-      // rear elevation's occupancy even though the template has rearU.
-      expect(
-        computeRackRollups(
-          rack: rack,
-          devices: devices,
-          templates: templates,
-          face: Face.rear,
-        ).ruUsed,
-        0,
+      final rear = computeRackRollups(
+        rack: rack,
+        devices: devices,
+        templates: templates,
+        face: Face.rear,
       );
+      expect(rear.ruUsed, 1, reason: 'the rear elevation draws its 1U');
+      expect(
+        rear.ruUnknownCount,
+        0,
+        reason: 'the model states its rear height; nothing is unknown',
+      );
+    });
+
+    test('a device bolted to the FRONT rails with no front footprint is '
+        'counted on the REAR and is unknown on neither', () {
+      // The rear lacing bar screwed to the front rails: `frontU 0 /
+      // rearU 1`. `stackOccupancyU`s doc names this exact shape. Before
+      // the repair the front chip counted it as an UNKNOWN contributor
+      // (zero U on the face it claims to be mounted on) and the rear chip
+      // did not count it at all, so one 1U device managed to be missing
+      // from one elevation and a superscript on the other.
+      final rack = _rack();
+      final templates = {'bar@1': _snapshot('bar', _body(rearU: 1))};
+      final devices = [
+        _device('bar-1', templateId: 'bar', placement: _rail(4)),
+      ];
+
+      final front = computeRackRollups(
+        rack: rack,
+        devices: devices,
+        templates: templates,
+        face: Face.front,
+      );
+      final rear = computeRackRollups(
+        rack: rack,
+        devices: devices,
+        templates: templates,
+        face: Face.rear,
+      );
+
+      expect(front.ruUsed, 0);
+      expect(front.ruUnknownCount, 0, reason: 'zero front U is a MEASUREMENT');
+      expect(rear.ruUsed, 1);
+      expect(rear.ruUnknownCount, 0);
     });
 
     test('OVERLAPPING placements count a shared U once, not twice', () {

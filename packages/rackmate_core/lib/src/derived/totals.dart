@@ -26,7 +26,11 @@
 //  * **RU is per-face** — [computeRackRollups] takes the face being
 //    displayed and counts only that one. A caller MUST say which face its
 //    number belongs to, or the strip silently changes meaning when the
-//    user flips to the rear elevation.
+//    user flips to the rear elevation. "On this face" means OCCUPIES U
+//    there (`derived/device_loads.dart`'s `elevationOccupancyU`, CR-036),
+//    NOT "is bolted to those rails" — the same predicate the canvas under
+//    this strip draws by, because a strip that answers that question
+//    differently from the picture beneath it is worse than no strip.
 //  * **Weight, VA and outlets are rack-wide** — both faces, plus 0U
 //    channel occupants and shelf-hosted devices. A device loads the rack's
 //    weight capacity and draws from its circuits whichever face it is
@@ -37,6 +41,7 @@
 // `ProjectSettings.displayUnits` (CR-097) applied by the presentation
 // layer through `unit_formatter.dart`; nothing here converts.
 
+import 'package:rackmate_core/src/derived/device_loads.dart';
 import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/placement.dart';
 import 'package:rackmate_core/src/model/rack.dart';
@@ -109,13 +114,17 @@ final class RackRollups {
   /// that actually exist.
   final int ruUsed;
 
-  /// Devices rail-placed on [face] in this rack whose occupancy could not
-  /// be determined, so it is NOT in [ruUsed]. Two causes, both counted:
-  /// the template snapshot did not resolve (CR-054 says a `TemplateRef`
-  /// always does; a corrupt or hand-edited file says otherwise), or it
-  /// resolved and gives the device ZERO U on the face it claims to be
-  /// mounted on. Silently under-reporting RU in either case would be
-  /// exactly the fabricated number G4 forbids — see the scan itself.
+  /// Devices rail-placed in this rack whose occupancy could not be
+  /// determined ON ANY FACE, so it is NOT in [ruUsed]. Two causes, both
+  /// counted: the template snapshot did not resolve (CR-054 says a
+  /// `TemplateRef` always does; a corrupt or hand-edited file says
+  /// otherwise), or it resolved and gives the device ZERO U on BOTH faces.
+  /// Silently under-reporting RU in either case would be exactly the
+  /// fabricated number G4 forbids — see the scan itself.
+  ///
+  /// A device that simply does not appear on THIS elevation (a front-only
+  /// blank seen from the rear) is not unknown and is not counted: the
+  /// model states its rear height, and it is zero.
   final int ruUnknownCount;
 
   /// `ruCapacity - ruUsed`. Unaffected by [ruUnknownCount] on purpose: free
@@ -222,42 +231,60 @@ RackRollups computeRackRollups({
   var outletsUnknown = 0;
 
   for (final device in devices) {
-    if (!_belongsToRack(device, rack.id, byId)) continue;
+    // THE SHARED PREDICATE (`derived/device_loads.dart`), not a private
+    // copy. T6.30's equipment list calls the identical function, so a
+    // device can never be counted in one and missing from the other.
+    if (!belongsToRack(device, rack.id, byId)) continue;
 
-    final snapshot = templates[_templateKey(device.templateRef)];
-    final body = snapshot?.body;
+    final body = bodyFor(device, templates);
+    // THE SHARED RESOLUTION, likewise. See device_loads.dart's header for
+    // why a second `overrides.weight ?? body?.weight` spelling is the
+    // drift this file exists to prevent.
+    final loads = resolveDeviceLoads(device, body);
 
     // ── RU, on the displayed face only ───────────────────────────────
     final placement = device.placement;
-    if (placement is RailPlacement && placement.face == face) {
-      // TWO ways an occupant's RU is unknown, not one. The snapshot may
-      // fail to resolve (CR-054 says it never should; a hand-edited file
-      // says otherwise) — OR it may resolve and give the device ZERO U on
-      // the very face it claims to be mounted on. The second case used to
-      // fall into the `else`, where the loop below ran zero times and the
-      // device was silently counted as a KNOWN zero-occupancy contributor:
-      // the rear chip read `RU rear 0/12` with no superscript while a
-      // device was rail-placed at U3 on that face. That is the unknown
-      // contributor G4 forbids dropping.
-      //
-      // `rack_shrink.dart` already treats this exact shape as
-      // `DoomedKind.unmodelledRail` ("its height is not knowable, so claim
-      // the least it can possibly occupy") — this file reimplements the
-      // scan, so it has to reimplement that compensation too.
-      final deviceH = body == null
-          ? null
-          : (face == Face.front ? body.frontU : body.rearU);
-      if (deviceH == null || deviceH <= 0) {
-        ruUnknownCount++;
-      } else {
+    if (placement is RailPlacement) {
+      // THE SHARED PREDICATE AGAIN, and for the same reason: the CANVAS
+      // sitting directly under this chip strip draws by
+      // `elevationOccupancyU`, so the strip must count by it or the two
+      // surfaces of one screen answer "what is on this face" differently.
+      // They did. This used to require `placement.face == face` — the
+      // rails the device is BOLTED TO rather than the U it OCCUPIES — so
+      // after the elevation started honouring CR-036's occupancy struct
+      // the chip read `RU rear 0/42` on `whole_house` while 19
+      // `RenderDeviceBox`es rendered beneath it over 28 distinct rear U.
+      // docs/04 §2.2: the face control "selects a coordinate, not a
+      // filter".
+      final deviceH = elevationOccupancyU(device, body, face);
+      if (deviceH != null) {
         for (var u = placement.ruIndex; u < placement.ruIndex + deviceH; u++) {
           if (u >= 1 && u <= rack.heightU) occupiedRu.add(u);
         }
+      } else if (!isDrawnOnSomeElevation(device, body)) {
+        // UNKNOWN, not a measured zero. Something is bolted to this rack's
+        // rails and NO elevation can say how tall it is: the snapshot
+        // failed to resolve (CR-054 says it never should; a hand-edited
+        // file says otherwise), or it resolved to zero U on BOTH faces.
+        // This case used to fall through and be counted as a KNOWN
+        // zero-occupancy contributor — the rear chip read `RU rear 0/12`
+        // with no superscript while a device was rail-placed at U3. That
+        // is the unknown contributor G4 forbids dropping, and
+        // `rack_shrink.dart` treats the identical shape as
+        // `DoomedKind.unmodelledRail`.
+        //
+        // The `else` this does NOT take is the device that is drawn on the
+        // OTHER elevation: a front-only blank viewed from the rear, or a
+        // rear lace bar bolted to the front rails viewed from the front,
+        // occupies measurably ZERO U here. Counting those as unknown would
+        // put a superscript on every chip in a half-depth rack and say
+        // "we do not know" about the one thing the model states plainly.
+        ruUnknownCount++;
       }
     }
 
     // ── weight / VA / outlets, rack-wide ─────────────────────────────
-    final weight = device.overrides.weight ?? body?.weight;
+    final weight = loads.mass;
     if (weight == null) {
       weightUnknown++;
     } else {
@@ -265,7 +292,7 @@ RackRollups computeRackRollups({
       weightKnown++;
     }
 
-    final va = body?.power.apparentVA;
+    final va = loads.apparentVA;
     if (va == null) {
       vaUnknown++;
     } else {
@@ -284,7 +311,7 @@ RackRollups computeRackRollups({
     // Counted SEPARATELY per rollup, because a template may state one and
     // not the other, and a shared count would silently attribute one
     // rollup's ignorance to the other.
-    final consumed = body?.power.outletsConsumed;
+    final consumed = loads.outletsConsumed;
     if (consumed == null) {
       consumedUnknown++;
     } else {
@@ -292,7 +319,7 @@ RackRollups computeRackRollups({
       consumedKnown++;
     }
 
-    final provided = body?.power.outletsProvided;
+    final provided = loads.outletsProvided;
     if (provided == null) {
       providedUnknown++;
     } else {
@@ -343,35 +370,9 @@ T? _totalOrUnknown<T>(T sum, int knownCount, int unknownCount) {
   return unknownCount > 0 ? null : sum;
 }
 
-/// Whether [device] loads [rackId] — directly (rails, 0U channel) or
-/// through a chain of shelf hosts. [byId] resolves the chain; the visited
-/// set makes a corrupt file's `ShelfPlacement` cycle terminate rather than
-/// hang the UI thread.
-bool _belongsToRack(
-  DeviceInstance device,
-  Uuid rackId,
-  Map<Uuid, DeviceInstance> byId,
-) {
-  final visited = <Uuid>{};
-  var current = device;
-  while (visited.add(current.id)) {
-    final placement = current.placement;
-    switch (placement) {
-      case RailPlacement():
-        return placement.rackId == rackId;
-      case ZeroUPlacement():
-        return placement.rackId == rackId;
-      case ShelfPlacement():
-        final host = byId[placement.hostDeviceId];
-        if (host == null) return false;
-        current = host;
-      case OffRackPlacement():
-      case StagedPlacement():
-        return false;
-    }
-  }
-  return false;
-}
-
-/// The `RackDocument.templates` key for [ref] — `"$templateId@$version"`.
-String _templateKey(TemplateRef ref) => '${ref.templateId.v}@${ref.version}';
+// `_belongsToRack` and `_templateKey` USED TO LIVE HERE. They moved to
+// `derived/device_loads.dart` verbatim so the T6.30 equipment list, its
+// per-rack subtotals and the elevation's load gutter run the SAME scan
+// this file does — see that file's header, and
+// `equipment_list_test.dart`'s cross-check that the schedule's subtotal
+// equals this function's `weight` rollup on the same inputs.

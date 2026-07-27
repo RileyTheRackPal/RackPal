@@ -28,6 +28,25 @@ enum FillRule { nonZero, evenOdd }
 /// scaling (`scaleWithGeometry`) and how thin it is allowed to get before
 /// a floor is applied (`hairlineFloor`).
 ///
+/// ─────────────────────────────────────────────────────────────────────
+/// THE TWO KNOBS ARE ORTHOGONAL, AND SETTING ONE MEANS DECIDING BOTH
+/// ─────────────────────────────────────────────────────────────────────
+/// They were not always readable as orthogonal. Both backends used to
+/// branch on [hairlineFloor] alone for the WIDTH decision as well as the
+/// FLOOR decision, which left [scaleWithGeometry] with no readers and made
+/// `hairlineFloor: true` silently mean "and do not scale". Splitting them
+/// (`pdf_canvas.dart`'s `_applyStroke`, `flutter_canvas.dart`'s
+/// `_strokePaint`) changed the meaning of every stroke that had set one
+/// and inherited the other — in this repository, exactly one:
+/// `symbol_layer.dart`'s schematic header rule.
+///
+/// So `draw_source_gate_test.dart` requires every `Stroke(...)` in
+/// production code that names [hairlineFloor] to also name
+/// [scaleWithGeometry]. The flags stay independently MEANINGFUL; they stop
+/// being independently SETTABLE by accident. (`symbol_layer.dart`'s header
+/// rule — the one stroke in this repository that sets the two knobs
+/// differently — cites the same file by the same name.)
+///
 /// Every field participates in `==`/`hashCode` — see the file header for
 /// why that must not regress.
 @immutable

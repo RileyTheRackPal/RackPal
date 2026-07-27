@@ -49,6 +49,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:rackmate/src/session/autosave_scheduler.dart';
 import 'package:rackmate/src/session/document_session.dart';
+import 'package:rackmate/src/session/export_controller.dart';
 import 'package:rackmate/src/session/file_error_presenter.dart';
 import 'package:rackmate/src/session/file_picker.dart';
 import 'package:rackmate/src/session/session_controller.dart';
@@ -76,6 +77,7 @@ final class AppServices {
   AppServices({
     required this.session,
     required this.controller,
+    required this.export,
     required this.chrome,
     required this.autosave,
     required this.titleWriter,
@@ -85,6 +87,17 @@ final class AppServices {
 
   final DocumentSession session;
   final SessionController controller;
+
+  /// `File ▸ Export PDF…`.
+  ///
+  /// A SIBLING OF [controller], NOT A METHOD ON IT. The two share the
+  /// picker, the prompts and the writer, but nothing else: an export never
+  /// touches the dirty flag, the recovery snapshot, the recents list or the
+  /// baseline, and folding it into `SessionController` would put a
+  /// deliverable's failure paths next to the document's own. The seam is
+  /// also what lets the export be tested without a `DocumentStore`.
+  final ExportController export;
+
   final WindowChrome chrome;
   final AutosaveScheduler autosave;
 
@@ -191,6 +204,7 @@ Future<AppServices> buildAppServices({
   PeriodicTimerFactory periodicTimerFactory = productionPeriodicTimerFactory,
   Duration autosaveInterval = kAutosaveInterval,
   StarterAssetLoader starterLoader = loadStarterAssetFromBundle,
+  ExportFontLoader exportFontLoader = loadExportFontsFromBundle,
   p.Context? context,
   String? recoverySessionId,
   Duration pathProbeTimeout = kSessionPathProbeTimeout,
@@ -333,6 +347,21 @@ Future<AppServices> buildAppServices({
   services = AppServices(
     session: session,
     controller: controller,
+    export: ExportController(
+      session: session,
+      picker: picker,
+      prompts: prompts,
+      // THE SAME `AtomicWriter`, and therefore the same `SaveQueue`. An
+      // export that interleaved with an autosave over the same directory
+      // would be the interleaving the queue exists to make impossible.
+      writer: writer,
+      fontLoader: exportFontLoader,
+      clock: clock,
+      // The PDF dialog opens where the last document save did (§8.3's
+      // "the same MRU behaviour as document Save As, for free").
+      initialDirectory: controller.exportInitialDirectory,
+      context: ctx,
+    ),
     chrome: chrome,
     autosave: autosave,
     titleWriter: WindowTitleWriter(chrome),

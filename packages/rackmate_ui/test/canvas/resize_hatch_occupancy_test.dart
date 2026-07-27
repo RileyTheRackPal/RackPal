@@ -3,7 +3,7 @@
 // enumerate the SAME occupants the release will?
 //
 // WHY A FILE OF ITS OWN, and why it injects a document. The divergence only
-// exists for occupants `railOccupantsOnFace` deliberately cannot model — a
+// exists for occupants `boltedOccupantsOnFace` deliberately cannot model — a
 // rail device whose `templates['<id>@<version>']` snapshot is missing, or a
 // device mounted in a 0U channel (core's `DoomedKind`). Both are, in
 // rack_shrink_test.dart's own words, "reachable by loading a file and none by
@@ -16,7 +16,7 @@
 //
 // THE DEFECT THESE PIN. `planRackShrink` was fixed to enumerate those
 // occupants; `_doomedRectsFor` was not, and went on deriving the hatch from
-// `railOccupantsOnFace` alone. The top-edge drag therefore painted a clean,
+// `boltedOccupantsOnFace` alone. The top-edge drag therefore painted a clean,
 // unhatched preview and a bare "12U (-12)" chip for exactly the occupants the
 // planner dooms one event later, so §4.1's "the collision is visible BEFORE
 // release" was false in the only case where it mattered — and the modal that
@@ -204,7 +204,7 @@ void main() {
       findsOneWidget,
       reason: 'DEV-X sits at U20 and the rack top is coming down to U12. The '
           'preview must say so while the pointer is still down — this is the '
-          'assertion the old railOccupantsOnFace-only scan failed, showing a '
+          'assertion the old boltedOccupantsOnFace-only scan failed, showing a '
           'bare "12U (-12)" in tertiaryContainer with no warning line at all',
     );
 

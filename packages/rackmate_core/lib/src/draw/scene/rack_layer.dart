@@ -13,8 +13,26 @@
 // as a flat placeholder, not silently omitted:
 //   * real hole geometry and ear screws (docs/04 §2.1 ≥0.75 tier) — rails
 //     are a flat fill at every tier here;
-//   * the "dotted rail texture" of the 0.40–0.74 tier — also a flat fill;
-//   * rear-mirroring and the "NOT MIRRORED" chip (docs/04 §2.2).
+//   * the "dotted rail texture" of the 0.40–0.74 tier — also a flat fill.
+//
+// THE RU RULER ON BOTH EDGES (docs/08 §2.2). [buildRackLayer]'s
+// `dualRuler` draws a second ruler column to the RIGHT of the panel,
+// numbered from the same `_displayNumber` as the left one — so
+// `Rack.ruNumbering` (CR-026, display-only) governs both edges and they
+// cannot disagree. It is OFF by default: §2.2 is a requirement about the
+// PDF sheet, and the elevation sheet builder is what turns it on. The
+// screen keeps one edge, which is what docs/04 §2.1 describes.
+//
+// The right column is drawn OUTSIDE `RackGeometry.rackWidth` deliberately.
+// `rackWidth` is the chassis box that the rack's own layout and the
+// editing overlays are built on; growing it to accommodate an annotation
+// gutter would move every one of those. The column's ink instead reaches
+// `DiagramScene.bounds` through `inkBounds`, which is what the sheet's
+// scale-to-fit reads, so the ruler is measured for fit without being part
+// of the rack.
+//
+// REAR MIRRORING now exists — in `RackGeometry.deviceRect`, where it is a
+// layout reflection rather than a canvas flip. See that method.
 
 import 'package:rackmate_core/src/draw/bounds_canvas.dart';
 import 'package:rackmate_core/src/draw/geometry.dart';
@@ -50,15 +68,23 @@ typedef LayerBuild = ({List<DiagramOp> ops, double minTextPt, DBox? inkBounds});
 /// (AC-016/#13's "lodLevel explicit everywhere" companion — every builder
 /// takes the injected measurer even when, as here, anchor-based right
 /// alignment means no explicit width measurement is needed).
+///
+/// [dualRuler] adds the right-hand RU column docs/08 §2.2 requires of the
+/// elevation SHEETS; [typeScale] inflates the ruler figures so they clear
+/// §6.2's print floor at a reduced drawing scale. Both default to the
+/// screen's behaviour — see the file header.
 LayerBuild buildRackLayer(
   Rack rack,
   RackGeometry geo,
   TextMeasurer measurer,
   LodLevel lod,
-  RackPalette palette,
-) {
+  RackPalette palette, {
+  bool dualRuler = false,
+  RackTypeScale typeScale = const RackTypeScale.identity(),
+}) {
   final ops = <DiagramOp>[];
   var emittedText = false;
+  final rulerSize = typeScale.size(RackTextSizes.ruler);
 
   final rackHeight = geo.rackHeight;
   final rackWidth = geo.rackWidth;
@@ -118,25 +144,34 @@ LayerBuild buildRackLayer(
   for (var ruIndex = 1; ruIndex <= geo.heightU; ruIndex++) {
     final isMajor = ruIndex % 5 == 0;
     if (lod == LodLevel.block && !isMajor) continue;
+    // ONE `_displayNumber` FOR BOTH EDGES. `Rack.ruNumbering` is
+    // display-only (CR-026); two edges numbered by two expressions is two
+    // chances for one of them to be the stored index.
     final label = _displayNumber(ruIndex, geo.heightU, rack.ruNumbering);
     final centerY = (geo.yTopOfU(ruIndex) + geo.yBottomOfU(ruIndex)) / 2;
+    final argb = isMajor ? palette.rulerTextMajor : palette.rulerText;
     ops.add(
       OpText(
         '$label',
         DPt(RackGeometry.rulerWidth - 4, centerY),
-        rackText(
-          RackTextSizes.ruler,
-          isMajor ? palette.rulerTextMajor : palette.rulerText,
-          TextAnchor.midRight,
-        ),
+        rackText(rulerSize, argb, TextAnchor.midRight),
       ),
     );
+    if (dualRuler) {
+      ops.add(
+        OpText(
+          '$label',
+          DPt(rackWidth + 4, centerY),
+          rackText(rulerSize, argb, TextAnchor.midLeft),
+        ),
+      );
+    }
     emittedText = true;
   }
 
   return (
     ops: ops,
-    minTextPt: emittedText ? RackTextSizes.ruler : double.infinity,
+    minTextPt: emittedText ? rulerSize : double.infinity,
     inkBounds: inkBoundsOf(ops, measurer: measurer),
   );
 }

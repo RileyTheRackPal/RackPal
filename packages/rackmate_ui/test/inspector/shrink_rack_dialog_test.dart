@@ -173,7 +173,7 @@ void main() {
     test('CR-038: a height derived from an occupant that ALREADY overhangs '
         'the rack is clamped to 60U, and the summary stops claiming to fit '
         'what it cannot', () {
-      // `railOccupantsOnFace` deliberately does not clip occupants to the
+      // `boltedOccupantsOnFace` deliberately does not clip occupants to the
       // rack extent, and JSON decode is the non-validating path — so a
       // 60U rack can carry a 5U device at U58, whose top U is 62.
       final doc = _doc(60, [_at('A', 2, 1), _at('B', 58, 5)]);
@@ -611,7 +611,7 @@ void main() {
     RackDocument mixedDoc() {
       final doc = _doc(20, [_at('RAIL', 18, 2)]);
 
-      // Front-mounted, but the template is rear-only: `railOccupantsOnFace`
+      // Front-mounted, but the template is rear-only: `boltedOccupantsOnFace`
       // resolves 0U on the front and skips it, which is exactly the case
       // `unmodelledRail` exists for.
       doc.templates['tpl.rearonly@1'] = TemplateSnapshot(

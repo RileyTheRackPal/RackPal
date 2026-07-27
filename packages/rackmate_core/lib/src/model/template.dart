@@ -405,6 +405,23 @@ final class TemplateBody {
 /// defaults chosen below are the obviously-safe ones (unknown numeric
 /// facts stay null; booleans default false) and are not a claim about a
 /// real device's typical shape.
+///
+/// ─────────────────────────────────────────────────────────────────────────
+/// DRAW IS WHAT COMES IN. CAPACITY IS WHAT GOES OUT. THEY ARE NEVER THE
+/// SAME FIELD.
+/// ─────────────────────────────────────────────────────────────────────────
+/// [typicalWatts] and [apparentVA] are what this device pulls THROUGH ITS
+/// OWN INLET, and every rollup in `derived/` sums them as connected load.
+/// [outputCapacityVA] and [outputCapacityWatts] are what it can DELIVER to
+/// the gear plugged into it, and nothing sums them at all.
+///
+/// The distinction is load-bearing because the gear behind a UPS, a PDU or
+/// a conditioner is already in the document with its own draw. Authoring a
+/// through-rating as a draw counts that whole downstream load a SECOND
+/// time — the P03 UPS template once carried `apparentVA: 3000` (its
+/// nameplate output) and made `whole_house` print 5440 VA and 15979 BTU/hr
+/// for a rack drawing 2490 VA and 6920 BTU/hr, on the three sheets an
+/// integrator sizes a circuit and a fan from.
 final class PowerProfile {
   PowerProfile({
     this.nameplateWatts,
@@ -416,6 +433,8 @@ final class PowerProfile {
     this.isContinuousLoad = false,
     this.outletsProvided,
     this.outletsConsumed,
+    this.outputCapacityVA,
+    this.outputCapacityWatts,
     this.inletPlug,
     this.poeBudgetWatts,
     this.btuPerHourOverride,
@@ -425,16 +444,19 @@ final class PowerProfile {
   // retrofit (AC-013); see the note on TemplateBody above — edited via
   // the Device Builder, not the document command set.
 
-  /// UL thermal rating; advisory second line only.
+  /// UL thermal rating; advisory second line only. An INPUT figure, like
+  /// every other watt field here except [outputCapacityWatts].
   int? nameplateWatts;
 
-  /// The number circuit loading uses. NEVER auto-derived from nameplate
-  /// (AC-039).
+  /// What this device DRAWS, and the number circuit loading uses. NEVER
+  /// auto-derived from nameplate (AC-039) and never the rating of what it
+  /// can supply — see [outputCapacityWatts] and the class doc.
   int? typicalWatts;
   int? standbyWatts;
   int? nominalVolts;
 
-  /// Circuit loading is computed in VA (CR-056, AC-020).
+  /// Circuit loading is computed in VA (CR-056, AC-020). What this device
+  /// DRAWS; see [outputCapacityVA] and the class doc.
   int? apparentVA;
 
   /// Permille. 650 for a linear-supply amp.
@@ -463,6 +485,22 @@ final class PowerProfile {
   /// How many outlets this device CONSUMES, or null when unauthored. See
   /// [outletsProvided]; a redundant-PSU switch authors 2 (AC-020).
   int? outletsConsumed;
+
+  /// The rated OUTPUT this device can DELIVER — a UPS's "3000 VA", a
+  /// conditioner's branch rating. A CAPACITY, never a draw.
+  ///
+  /// `resolveDeviceLoads` does not read it and no rollup sums it, which is
+  /// the whole reason it is a separate field: CR-056's "UPS capacity is
+  /// checked VA against VA" needs a machine-readable rating, and the only
+  /// place that rating used to live was [apparentVA], where every rollup
+  /// in the project added it to the connected load. See the class doc.
+  int? outputCapacityVA;
+
+  /// The same rating in real power, when the label states both
+  /// ("3000 VA / 2700 W"). Kept so the W figure on the nameplate is not
+  /// lost, and kept SEPARATE so it can never be mistaken for
+  /// [typicalWatts] — which is what drives the BTU/hr on the elevations.
+  int? outputCapacityWatts;
   PlugType? inletPlug;
 
   /// `NET-001` depends on it (CR-056).

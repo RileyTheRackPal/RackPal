@@ -24,10 +24,17 @@ Rack _rack({int heightU = 12}) => Rack(
   meta: _meta(),
 );
 
-/// A minimal rack-mountable template: [frontU] on the front face, real
-/// occupancy (not the `notInRack` default), `rackEars`-mounted.
+/// A minimal rack-mountable template: [frontU] on the front face and
+/// [rearU] on the rear, real occupancy (not the `notInRack` default),
+/// `rackEars`-mounted.
+///
+/// [rearU] defaults to 0 — a half-depth, front-only device — so the tests
+/// that mean "occupies one face only" say so by construction. CR-036's
+/// `side: both` case is the one where the occupancy struct and the mount
+/// face diverge, and it has to be spelled out to be tested.
 TemplateBody _rackTemplate({
   required int frontU,
+  int rearU = 0,
   String model = 'test-device',
   String? typePrefix,
 }) => TemplateBody(
@@ -36,7 +43,10 @@ TemplateBody _rackTemplate({
   displayName: model,
   typePrefix: typePrefix ?? 'DEV',
   frontU: frontU,
-  side: OccupancySide.front,
+  rearU: rearU,
+  side: frontU > 0 && rearU > 0
+      ? OccupancySide.both
+      : (rearU > 0 ? OccupancySide.rear : OccupancySide.front),
   mountMethod: MountMethod.rackEars,
 );
 
@@ -76,6 +86,7 @@ DeviceInstance _place(
   required int ruIndex,
   Face face = Face.front,
   int frontU = 2,
+  int rearU = 0,
 }) {
   final device = DeviceInstance(
     id: id,
@@ -95,7 +106,7 @@ DeviceInstance _place(
     version: 1,
     contentHash: 'sha256:placed-$designator',
     capturedAt: _now,
-    body: _rackTemplate(frontU: frontU, model: designator),
+    body: _rackTemplate(frontU: frontU, rearU: rearU, model: designator),
   );
   doc.devices[id] = device;
   return device;
@@ -172,7 +183,11 @@ void main() {
       expect(blocker, isNull);
     });
 
-    test('devices on the OTHER face never block', () {
+    test('a device that occupies ONLY the other face never blocks', () {
+      // A genuinely rear-only patch panel: `frontU 0 / rearU 1`. Nothing
+      // of it is on the front elevation, so nothing of it is in the way
+      // there. This used to be spelled as "mounted on the rear rails",
+      // which is a DIFFERENT statement — see the test below.
       final rack = _rack();
       final doc = _docWithCatalog(rack, {});
       _place(
@@ -182,7 +197,8 @@ void main() {
         rack: rack,
         ruIndex: 5,
         face: Face.rear,
-        frontU: 1,
+        frontU: 0,
+        rearU: 1,
       );
 
       final blocker = findBlockingOccupant(
@@ -194,6 +210,102 @@ void main() {
         deviceH: 1,
       );
       expect(blocker, isNull);
+    });
+
+    test('a FRONT-mounted side:both device BLOCKS the rear range it is '
+        'drawn across (docs/04 §2.2, CR-036)', () {
+      // `whole_house` RK-1, exactly: UPS-1 is bolted to the FRONT rails at
+      // U1 with `frontU 3 / rearU 3 / side: both`, so the rear elevation
+      // draws it over rear U1-U3. The scan used to filter on
+      // `placement.face == face`, so `findLowestFreeRu(face: rear,
+      // deviceH: 1)` answered 1 and `findBlockingOccupant` reported the
+      // range free — the insertion caret sat on top of UPS-1's drawn
+      // block and a palette drop onto rear U1 was evaluated "not blocked",
+      // with no "Occupied by UPS-1 (U1-U3)" reason. Committing it put two
+      // device blocks in the same rear U on the canvas AND on T2.02.
+      final rack = _rack(heightU: 42);
+      final doc = _docWithCatalog(rack, {});
+      _place(
+        doc,
+        id: const Uuid('d1'),
+        designator: 'UPS-1',
+        rack: rack,
+        ruIndex: 1,
+        frontU: 3,
+        rearU: 3,
+      );
+
+      final blocker = findBlockingOccupant(
+        rack: rack,
+        devices: doc.devices.values,
+        face: Face.rear,
+        templates: doc.templates,
+        ruStart: 1,
+        deviceH: 1,
+      );
+      expect(blocker, isNotNull);
+      expect(blocker!.designator, 'UPS-1');
+
+      expect(
+        findLowestFreeRu(
+          rack: rack,
+          devices: doc.devices.values,
+          face: Face.rear,
+          templates: doc.templates,
+          deviceH: 1,
+        ),
+        4,
+        reason: 'rear U1-U3 is where UPS-1 is drawn; U4 is the first free '
+            'rear slot',
+      );
+
+      // The front face is unchanged by the repair: UPS-1 blocked front
+      // U1-U3 before and blocks it now.
+      expect(
+        findLowestFreeRu(
+          rack: rack,
+          devices: doc.devices.values,
+          face: Face.front,
+          templates: doc.templates,
+          deviceH: 1,
+        ),
+        4,
+      );
+    });
+
+    test('the caret-targeted quick-add path names the cross-face occupant '
+        'in its refusal', () {
+      // The same case one layer up: `buildPlaceFromCatalogCommand` with an
+      // explicit caret on rear U2 must FAIL with UPS-1's designator and
+      // range, not quietly succeed into occupied space.
+      final rack = _rack(heightU: 42);
+      final doc = _docWithCatalog(rack, {
+        'V1': _rackTemplate(frontU: 0, rearU: 1, model: 'rear blank'),
+      });
+      _place(
+        doc,
+        id: const Uuid('d1'),
+        designator: 'UPS-1',
+        rack: rack,
+        ruIndex: 1,
+        frontU: 3,
+        rearU: 3,
+      );
+
+      final result = buildPlaceFromCatalogCommand(
+        doc: doc,
+        catalogId: 'V1',
+        targetRack: rack,
+        now: _now,
+        actor: 'test',
+        explicitRuIndex: 2,
+      );
+
+      expect(result, isA<CatalogPlacementFailed>());
+      expect(
+        (result as CatalogPlacementFailed).reason,
+        'Occupied by UPS-1 (U1-U3).',
+      );
     });
   });
 

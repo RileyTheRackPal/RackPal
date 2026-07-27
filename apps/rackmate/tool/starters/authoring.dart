@@ -386,7 +386,7 @@ final class StarterAuthor {
   /// the rack elevation not at all."* `DeviceInstance.templateRef` is
   /// non-nullable, so the ref names the reserved `structure` id at
   /// version 1 and resolves to nothing — which every occupancy scan in
-  /// core already tolerates, because `railOccupantsOnFace` only ever
+  /// core already tolerates, because `elevationOccupantsOnFace` only ever
   /// looks at `RailPlacement`s and this device is off-rack.
   ///
   /// `starter_integrity_test.dart` exempts `DeviceKind.structure` from

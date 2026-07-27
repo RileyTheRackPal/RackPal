@@ -306,7 +306,8 @@ Map<String, TemplateBody> buildPowerCatalog() {
     description:
         'A 41.7 kg device instantly blows a wall-rack rating — the reason '
         'Rack.weightCapacity, the CG advisory and RCK-013 exist. UPS '
-        'capacity is checked VA against VA, never W against W (CR-056).',
+        'capacity is checked VA against VA, never W against W (CR-056) — '
+        'the 3000 VA is outputCapacityVA, not a draw.',
     category: kCatPower,
     typePrefix: 'UPS',
     tags: const ['ups', 'battery', 'placeLow'],
@@ -318,14 +319,40 @@ Map<String, TemplateBody> buildPowerCatalog() {
     connectorProjection: _mm(85),
     weight: _kg(41.7),
     maxUnsupportedMass: _kg(7),
+    // ── THE 3000 VA IS A THROUGH-RATING, NOT A DRAW ───────────────────
+    // This template used to author `apparentVA: 3000, typicalWatts: 2700`
+    // — the unit's rated OUTPUT. Every rollup in `derived/` sums those as
+    // CONNECTED LOAD, and the gear behind the UPS is already in the
+    // document with its own draw, so the whole downstream load was counted
+    // twice: `whole_house` RK-1 printed 5440 VA and 15979 BTU/hr on T6.30,
+    // T2.01 and T2.02 for a rack that draws ~2440 VA. That is the number an
+    // integrator sizes a branch circuit and a closet fan against.
+    //
+    // The rating now lives in `outputCapacityVA`/`outputCapacityWatts`,
+    // which nothing sums. What stays in the draw fields is what the UPS
+    // ITSELF pulls through its own inlet: conversion loss plus the battery
+    // charger. For a line-interactive unit of this size that is a
+    // tens-of-watts figure, and it is authored at the NO-LOAD value the way
+    // the sibling P01/P02 templates author their own idle draw (10 VA and
+    // 12 VA). The extra loss a UPS dissipates in proportion to the load
+    // riding on it is NOT modelled and is deliberately not invented here —
+    // there is no field for "a function of downstream draw", and a fan is
+    // sized off this number.
+    //
+    // `nameplateWatts` follows the same convention P01 and P02 already use
+    // for distribution gear: the unit's own maximum consumption, NOT the
+    // through-rating printed on its UL label. That label's 2700 W is
+    // `outputCapacityWatts`.
     power: PowerProfile(
-      nameplateWatts: 2700,
-      typicalWatts: 2700,
+      nameplateWatts: 50,
+      typicalWatts: 45,
       nominalVolts: 120,
-      apparentVA: 3000,
+      apparentVA: 50,
       powerFactor: 900,
       outletsProvided: 10,
       outletsConsumed: 1,
+      outputCapacityVA: 3000,
+      outputCapacityWatts: 2700,
       inletPlug: PlugType.hardwired,
     ),
     ports: p03.ports,

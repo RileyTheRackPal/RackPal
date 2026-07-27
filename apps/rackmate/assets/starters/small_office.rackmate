@@ -16150,7 +16150,7 @@
           "chassisWidthNm": 432000000,
           "connectorProjectionNm": 85000000,
           "containerVented": false,
-          "description": "A 41.7 kg device instantly blows a wall-rack rating — the reason Rack.weightCapacity, the CG advisory and RCK-013 exist. UPS capacity is checked VA against VA, never W against W (CR-056).",
+          "description": "A 41.7 kg device instantly blows a wall-rack rating — the reason Rack.weightCapacity, the CG advisory and RCK-013 exist. UPS capacity is checked VA against VA, never W against W (CR-056) — the 3000 VA is outputCapacityVA, not a draw.",
           "displayName": "UPS, 3000 VA",
           "frontU": 3,
           "isContainer": false,
@@ -16539,15 +16539,17 @@
             }
           ],
           "power": {
-            "apparentVA": 3000,
+            "apparentVA": 50,
             "inletPlug": "hardwired",
             "isContinuousLoad": false,
-            "nameplateWatts": 2700,
+            "nameplateWatts": 50,
             "nominalVolts": 120,
             "outletsConsumed": 1,
             "outletsProvided": 10,
+            "outputCapacityVA": 3000,
+            "outputCapacityWatts": 2700,
             "powerFactor": 900,
-            "typicalWatts": 2700
+            "typicalWatts": 45
           },
           "rearU": 3,
           "requiresClearanceAboveU": 0,

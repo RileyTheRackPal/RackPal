@@ -14,11 +14,47 @@
 // RenderDeviceBox.paint snippet (a bare fragment replay).
 //
 // SCOPE, stated honestly (this stage's task brief): body + designator +
-// name + type only. DEFERRED and NOT drawn: the rear port strip, weight
-// microtext, PDU outlet map, finding/lock/reversed badges, ⚡ amps, and the
-// 🔗 port-count chip (docs/04 §2.1 ≥0.75 / ≥1.50 tiers) — ports and wiring
-// are M2's job. `DeviceOverrides` (device_instance.dart) are also not
-// applied yet: the type name comes straight from the template body.
+// name + type + the three sheet features docs/08 §2.2 asks of a device
+// block — the RU span label, the `lifecycleStatus` border, and the hatch
+// band that marks a blank, a vent or a shelf. DEFERRED and NOT drawn: the
+// rear port strip, weight microtext, PDU outlet map, finding/lock/reversed
+// badges, ⚡ amps, and the 🔗 port-count chip (docs/04 §2.1 ≥0.75 / ≥1.50
+// tiers) — ports and wiring are M2's job. `DeviceOverrides`
+// (device_instance.dart) are still not applied to the type name, which
+// comes straight from the template body.
+//
+// ─────────────────────────────────────────────────────────────────────────
+// TEXT IS EMITTED ONLY WHEN IT FITS — AND THE DESIGNATOR IS DROPPED LAST
+// ─────────────────────────────────────────────────────────────────────────
+// At `LodLevel.full` the designator used to be emitted UNCONDITIONALLY
+// while the name and type were each guarded by a vertical fit check. That
+// was invisible while every caller drew at model scale, because a 1U body
+// is 22 units and an 11-unit designator with 4 units of padding always
+// fits. The PDF exporter inflates rack text (`RackTypeScale`) so it clears
+// §6.2's 6.0 pt print floor, which makes "the label is taller than the
+// block" reachable for the first time.
+//
+// THE FIRST FIX FOR THAT WAS A BLACKOUT, AND IT SHIPPED. Guarding the
+// designator with `_pad + designatorPt <= height - _pad` suppressed the
+// WHOLE label branch — designator, badge, name and type — for every 1U
+// device on any elevation drawn at 1:10 or smaller: at 1:10 the inflated
+// designator is 15.61 units and `4 + 15.61 <= 22 - 4` is false. A 58–60U
+// rack is legal (kMaxRackHeightU = 60, CR-038) and picks 1:10, so a user
+// could build one, export, and get elevations on which no device carried
+// a designator at all — the one string that joins a block to its T6.30
+// row — with nothing in the export summary saying so.
+//
+// So the guard is now a LADDER, dropped from the least important rung up:
+//
+//   1. type   — dropped first (it is also on T6.30, twice over)
+//   2. name   — dropped next
+//   3. the designator + RU-span badge line — dropped LAST, and only when
+//      the glyphs are literally taller than the body. Its vertical PAD
+//      shrinks to zero before the line is given up, because 4 units of
+//      whitespace is not worth a nameless rectangle.
+//
+// And when even rung 3 fails, [DeviceLayerBuild.labelDropped] says so, all
+// the way out to the export summary. "Never silently do nothing."
 
 import 'dart:math' as math;
 
@@ -35,13 +71,43 @@ import 'package:rackmate_core/src/model/template.dart' show TemplateBody;
 
 const double _pad = 4;
 
+/// A [LayerBuild] plus the one thing a device fragment can silently lose.
+///
+/// A distinct type rather than a fourth field on `LayerBuild`, because the
+/// chassis, the gutter and the symbol layer have no label to drop and a
+/// record they all had to fill in with `false` would say the wrong thing
+/// about them.
+typedef DeviceLayerBuild = ({
+  List<DiagramOp> ops,
+  double minTextPt,
+  DBox? inkBounds,
+
+  /// The body was drawn with NO designator: at this drawing scale the
+  /// inflated glyphs are taller than the block itself. See the file header
+  /// — this is what turns a blackout into a reported omission.
+  bool labelDropped,
+});
+
 /// Builds [device]'s local-coordinate fragment. [body] is the resolved
 /// template body, [deviceH] the U-height on the current face, and
 /// [width]/[height] the device's diagram-space extent (from
 /// [RackGeometry.deviceRect]). [measurer] is used at [LodLevel.block] to
 /// decide whether the designator actually fits (docs/04 §2.1: "designator
 /// only if ≥ 20 px wide").
-LayerBuild buildDeviceLayer(
+///
+/// The four sheet options — all off by default, so the screen is unchanged
+/// and the elevation sheet builder is what turns them on:
+///
+/// * [ruSpanLabel] replaces the plain `4U` badge with docs/08 §2.2's
+///   `4U · 12–15`. The caller supplies it because only the scene builder
+///   holds the `ruIndex` this fragment's LOCAL coordinates deliberately do
+///   not.
+/// * [lifecycleBorder] draws the body outline through
+///   [lifecycleStroke] — dash and weight, never hue (P4).
+/// * [hatched] fills the body with the 45° band docs/08 §2.2 asks for on
+///   blanks, vents and shelves.
+/// * [typeScale] inflates every label so it clears §6.2's print floor.
+DeviceLayerBuild buildDeviceLayer(
   DeviceInstance device,
   TemplateBody body, {
   required int deviceH,
@@ -50,13 +116,25 @@ LayerBuild buildDeviceLayer(
   required LodLevel lod,
   required RackPalette palette,
   required TextMeasurer measurer,
+  String? ruSpanLabel,
+  bool lifecycleBorder = false,
+  bool hatched = false,
+  RackTypeScale typeScale = const RackTypeScale.identity(),
 }) {
   final ops = <DiagramOp>[];
   final sizes = <double>[];
+  var labelDropped = false;
+
+  final designatorPt = typeScale.size(RackTextSizes.designator);
+  final namePt = typeScale.size(RackTextSizes.name);
+  final typePt = typeScale.size(RackTextSizes.type);
+  final badgePt = typeScale.size(RackTextSizes.badge);
 
   final rect = DBox.fromLtwh(0, 0, width, height);
   final fill = Fill(palette.deviceFill);
-  final stroke = Stroke(argb: palette.deviceStroke, widthPt: 1);
+  final stroke = lifecycleBorder
+      ? lifecycleStroke(device.lifecycleStatus, palette.deviceStroke)
+      : Stroke(argb: palette.deviceStroke, widthPt: 1);
 
   // Body: rounded at ≥0.75 zoom, a plain block below (docs/04 §2.1).
   if (lod == LodLevel.full || lod == LodLevel.detail) {
@@ -67,6 +145,8 @@ LayerBuild buildDeviceLayer(
     ops.add(OpRect(rect, fill: fill, stroke: stroke));
   }
 
+  if (hatched) ops.addAll(hatchBand(rect, palette.deviceType));
+
   final designator = device.designator;
   final name = device.name;
   final typeName = body.displayName;
@@ -75,72 +155,76 @@ LayerBuild buildDeviceLayer(
     // Solid block: designator centred, ONLY if it fits (measured) and the
     // body is at least 20 units wide.
     final style = rackText(
-      RackTextSizes.designator,
+      designatorPt,
       palette.deviceDesignator,
       TextAnchor.midCenter,
     );
     final m = measurer.measureText(designator, style);
     if (width >= 20 && m.advanceWidth <= width - 2 * _pad) {
       ops.add(OpText(designator, DPt(width / 2, height / 2), style));
-      sizes.add(RackTextSizes.designator);
+      sizes.add(designatorPt);
     }
+    // NOT reported as a dropped label: at `block` the docs/04 §2.1 tier
+    // itself says "designator only if it fits", the omission is a zoom
+    // affordance the user can undo by zooming in, and no sheet is ever
+    // drawn at this tier (`elevation_sheet.dart` pins `LodLevel.full`).
   } else {
-    // Designator (top-left) + U-height badge (top-right) on every tier at
-    // or above `badge`.
-    ops.add(
-      OpText(
-        designator,
-        const DPt(_pad, _pad),
-        rackText(
-          RackTextSizes.designator,
-          palette.deviceDesignator,
-          TextAnchor.topLeft,
+    // The top line — designator (top-left) + U-height badge (top-right) —
+    // on every tier at or above `badge`. Its vertical pad SHRINKS to keep
+    // the line rather than letting 8 units of whitespace cost a device its
+    // only identifier; the line is given up only when the glyphs are
+    // taller than the body. See the file header.
+    final pad = math.min(_pad, (height - designatorPt) / 2);
+    if (pad < 0) {
+      labelDropped = true;
+    } else {
+      ops.add(
+        OpText(
+          designator,
+          DPt(_pad, pad),
+          rackText(designatorPt, palette.deviceDesignator, TextAnchor.topLeft),
         ),
-      ),
-    );
-    sizes.add(RackTextSizes.designator);
+      );
+      sizes.add(designatorPt);
 
-    ops.add(
-      OpText(
-        '${deviceH}U',
-        DPt(width - _pad, _pad),
-        rackText(RackTextSizes.badge, palette.deviceBadge, TextAnchor.topRight),
-      ),
-    );
-    sizes.add(RackTextSizes.badge);
+      // docs/08 §2.2's `4U · 12–15` when the caller supplied it, the plain
+      // U-height badge otherwise. Same line, so it costs no extra height.
+      ops.add(
+        OpText(
+          ruSpanLabel ?? '${deviceH}U',
+          DPt(width - _pad, pad),
+          rackText(badgePt, palette.deviceBadge, TextAnchor.topRight),
+        ),
+      );
+      sizes.add(badgePt);
 
-    // full / detail: stack name then type below the designator, each only
-    // if it fits vertically (a 1U body has room for the designator only).
-    if (lod == LodLevel.full || lod == LodLevel.detail) {
-      var y = _pad + RackTextSizes.designator + 2;
-      if (y + RackTextSizes.name <= height - _pad) {
-        ops.add(
-          OpText(
-            name,
-            DPt(_pad, y),
-            rackText(
-              RackTextSizes.name,
-              palette.deviceName,
-              TextAnchor.topLeft,
+      // full / detail: stack name then type below the designator, each
+      // only if it fits vertically (a 1U body has room for the designator
+      // only). These are rungs 2 and 1 of the ladder — dropped before the
+      // line above them ever is.
+      if (lod == LodLevel.full || lod == LodLevel.detail) {
+        var y = pad + designatorPt + 2;
+        if (y + namePt <= height - pad) {
+          ops.add(
+            OpText(
+              name,
+              DPt(_pad, y),
+              rackText(namePt, palette.deviceName, TextAnchor.topLeft),
             ),
-          ),
-        );
-        sizes.add(RackTextSizes.name);
-        y += RackTextSizes.name + 2;
-      }
-      if (typeName.isNotEmpty && y + RackTextSizes.type <= height - _pad) {
-        ops.add(
-          OpText(
-            typeName,
-            DPt(_pad, y),
-            rackText(
-              RackTextSizes.type,
-              palette.deviceType,
-              TextAnchor.topLeft,
+          );
+          sizes.add(namePt);
+          y += namePt + 2;
+        }
+        if (typeName.isNotEmpty && y + typePt <= height - pad) {
+          ops.add(
+            OpText(
+              typeName,
+              DPt(_pad, y),
+              rackText(typePt, palette.deviceType, TextAnchor.topLeft),
             ),
-          ),
-        );
-        sizes.add(RackTextSizes.type);
+          );
+          sizes.add(typePt);
+        }
       }
     }
   }
@@ -149,5 +233,43 @@ LayerBuild buildDeviceLayer(
     ops: ops,
     minTextPt: sizes.isEmpty ? double.infinity : sizes.reduce(math.min),
     inkBounds: inkBoundsOf(ops, measurer: measurer),
+    labelDropped: labelDropped,
   );
+}
+
+/// Spacing between hatch lines, in diagram units.
+const double _kHatchPitch = 7;
+
+/// The 45° hatch band docs/08 §2.2 asks for on blanks, vents and shelves.
+///
+/// ─────────────────────────────────────────────────────────────────────
+/// NO NEW CANVAS METHOD (CR-088)
+/// ─────────────────────────────────────────────────────────────────────
+/// A hatch is the obvious place to reach for a pattern fill, an image or
+/// an alpha mask, and `DiagramCanvas` deliberately has none of those. It
+/// is drawn instead as a `clipRect` plus a run of `drawLine`s, both of
+/// which every backend already implements identically, so the band renders
+/// the same on screen, in the PDF and in `BoundsCanvas`.
+///
+/// The clip is scoped by the surrounding save/restore, matching §7.3's
+/// "clip is intersective and undone only by restore".
+List<DiagramOp> hatchBand(DBox body, int argb) {
+  final ops = <DiagramOp>[
+    const OpSave(),
+    OpClipRect(body),
+  ];
+  final stroke = Stroke(argb: argb, widthPt: 0.5);
+  // 45° lines running bottom-left to top-right. Starting the sweep at
+  // `-height` is what makes the band cover the whole rect rather than
+  // only its upper-right triangle.
+  for (var x = body.left - body.height; x < body.right; x += _kHatchPitch) {
+    ops.add(
+      OpLine(
+        DPt(x, body.bottom),
+        DPt(x + body.height, body.top),
+        stroke,
+      ),
+    );
+  }
+  return ops..add(const OpRestore());
 }

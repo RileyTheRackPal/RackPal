@@ -248,7 +248,7 @@ void main() {
       //
       // But nothing in this codebase ENFORCES that invariant: there is no
       // validation engine (explicitly out of scope this stage),
-      // `railOccupantsOnFace` returns raw model values with no checking,
+      // `elevationOccupantsOnFace` returns raw model values with no checking,
       // and an overlapping document is representable, loadable and
       // round-trippable. Given one, a cursor-only planner packs TALL
       // straight through the anchor and calls it a no-op. The explicit
@@ -440,12 +440,12 @@ void main() {
     });
   });
 
-  group('railOccupantsOnFace (the shared occupancy primitive)', () {
+  group('elevationOccupantsOnFace (the shared occupancy primitive)', () {
     test('returns raw, UNCLIPPED ruIndex/deviceH so an overflowing '
         'occupant is visible', () {
       final doc = _doc(12, [_at('OVER', 11, 4)]);
 
-      final occ = railOccupantsOnFace(
+      final occ = elevationOccupantsOnFace(
         rack: doc.racks[_rackId]!,
         devices: doc.devices.values,
         face: Face.front,
@@ -464,7 +464,7 @@ void main() {
         _at('B', 5, 1),
       ]);
 
-      final occ = railOccupantsOnFace(
+      final occ = elevationOccupantsOnFace(
         rack: doc.racks[_rackId]!,
         devices: doc.devices.values,
         face: Face.front,
@@ -497,7 +497,7 @@ void main() {
   // straight through it, out of a preview that showed no conflict at all.
   group('devices the scan cannot model are immovable anchors', () {
     /// Rail-placed on this rack, with no `templates[...]` entry — exactly
-    /// what a file load can produce and `railOccupantsOnFace` drops.
+    /// what a file load can produce and `elevationOccupantsOnFace` drops.
     void addOrphan(
       RackDocument doc,
       String d,
