@@ -2612,6 +2612,8 @@ are unowned rather than hard.
 | **D13** printer margins, colour management, greyscale beyond wires, no print test matrix | A "fit to printable area" vs "actual size" choice; greyscale rules extended to faceplate fills, tints and header bands; a **print test matrix on real hardware** — laser at ANSI B/A3, plotter at ANSI D, and a photocopy reproduction — because the entire dash-pattern argument is predicated on it. |
 | **D14** "degrade gracefully" has no design; no progress or cancel except on export | Documented limits with a soft warning at 1.5× and an open-read-only gate at 3×; progress and cancel on **every** operation over ~500 ms (open, save, full DRC sweep, CSV import, catalog load). |
 
+> **The D10 row's procurement schedule is superseded — see §12.9 and §11.6.** RackMate is an internal tool; signing is self-signed with a timestamp, Microsoft Trusted Signing is the named fallback at M8, and no OV/EV certificate is procured at any milestone. The rest of D10 — macOS notarisation, vendored pdfium (CR-100), the release pipeline with symbol archival — is **unaffected and still binding**.
+
 ### AC-059 · §E — the milestone plan
 
 **Accepted as the plan of record**, with the adjustments already stated (AC-017). In particular
@@ -2918,6 +2920,8 @@ build take weeks — is accepted and scheduled two milestones ahead of release (
 user-library migration half of D6 is accepted in full (AC-050/A8.2): `.rmdev` gets its own
 migration chain, because a user's forty hand-built templates are the asset they will not forgive
 you for breaking.
+
+> **The certificate half is superseded — see §12.9 and §11.6.** There is no OV/EV validation and no reputation build, so nothing here needs scheduling two milestones ahead. RJ-014's actual ruling — no in-app auto-update in v1, a signed installer plus a version-check ping — is **reaffirmed**, and the `.rmdev` migration-chain half (AC-050/A8.2) is untouched.
 
 ### RJ-015 · `critique-completeness.md` D13 — tagged / accessible PDF
 
@@ -4701,6 +4705,8 @@ Grouped by subsystem. The **Why** column names the filter or the ruling that put
 | SIL OFL 1.1 registered via `LicenseRegistry`; `showLicensePage` wired; licence model and EULA as named deliverables | AC-058 (D7) |
 | Windows code signing with certificate procurement started **two milestones early**; vendored pdfium; release pipeline with symbol archival | AC-058 (D10) |
 
+> **The code-signing row is superseded — see §12.9 and §11.6.** Read it as: Windows code signing **self-signed with a timestamp server**, no certificate procured early, Microsoft Trusted Signing as the named fallback at M8. Vendored pdfium and the release pipeline with symbol archival are **unchanged**.
+
 ### 7.3 v1.1 — the fast follow
 
 Everything here is **additive**: no format migration, no command-stack change, no re-derivation of
@@ -4978,6 +4984,8 @@ verified under deuteranopia and protanopia simulation and on a real greyscale la
 inspected and signed off (AC-058 D13). Requirement 7 is met. **All seven brief requirements are
 now met.** Windows OV/EV certificate procurement starts here, two milestones before release.
 
+> **The last sentence is superseded — see §12.9 and §11.6.** "Windows OV/EV certificate procurement starts here" is **deleted**. Every other clause of M6's exit criterion stands exactly as written.
+
 ### 9.8 M7 — Platform and access · **M**
 
 **Contents.** Mobile/tablet read-only on the three named surfaces, with an explicit statement for
@@ -5003,6 +5011,8 @@ and the open-read-only gate at 3×.
 **Exit criterion.** A signed installer runs on a clean Windows 11 machine with no SmartScreen
 warning, the app cold-starts within budget, a deliberately induced crash produces a local report
 containing no project content, and the documented limits behave as documented.
+
+> **The SmartScreen clause is superseded — see §11.6.2.** It splits into a build-side gate (signed, timestamped, valid publisher, **and the signature still validates after the certificate has expired**) and a distribution-side requirement that is documented rather than gated (Local Intranet UNC or Intune/GPO so Mark-of-the-Web is never applied; the ZIP trap stated explicitly). The other three clauses stand as written.
 
 ### 9.10 M9 — Beta hardening · **M**
 
@@ -5053,14 +5063,14 @@ rather than by drift:
 
 ## 10. Open questions
 
-**Five of these thirteen are now ANSWERED and binding** — 10.1, 10.2, 10.4, 10.6 and 10.7, by
-DR-001…DR-005 in §11 (indexed in §13). **The remaining eight are still open.** Everything in
-Parts 1–2 and §§7–9 is binding; the open entries below are deliberately the opposite — the calls
-that require a human judgement about what this product is for and who is going to buy it, which no
-amount of internal consistency can supply. The five answered entries are retained in full as the
-record of the argument, each marked where it stands.
+**Six of these thirteen are now ANSWERED and binding** — 10.1, 10.2, 10.4, 10.6 and 10.7 by
+DR-001…DR-005 in §11, and **10.3 mooted by DR-006** (indexed in §13). **The remaining seven are
+still open.** Everything in Parts 1–2 and §§7–9 is binding; the open entries below are deliberately
+the opposite — the calls that require a human judgement about what this product is for and who is
+going to use it, which no amount of internal consistency can supply. The six settled entries are
+retained in full as the record of the argument, each marked where it stands.
 
-> **Five of these thirteen are now ANSWERED — see §13.** 10.1 (DR-001), 10.2 (DR-002), 10.4 (DR-003), 10.6 (DR-005) and 10.7 (DR-004) are settled by the user's decisions in §11 and are **binding**, not open. The text below is retained as the record of the argument, per the Part 4 preamble.
+> **Six of these thirteen are now ANSWERED — see §13.** 10.1 (DR-001), 10.2 (DR-002), 10.4 (DR-003), 10.6 (DR-005) and 10.7 (DR-004) are settled by the user's decisions in §11 and are **binding**, not open; 10.3 is **moot** under DR-006, which rules that no commercial release is planned. The text below is retained as the record of the argument, per the Part 4 preamble.
 
 Each entry states the options, the honest trade-off, **what evidence would tip it**, and a
 **recommendation** — clearly labelled as a recommendation and carrying no normative weight. A
@@ -5174,6 +5184,8 @@ company — the answer changes the acceptable price by an order of magnitude.
 only, never on the pull sheet or termination schedule. It gets the tool into hands, it prices the
 deliverable rather than the software, and it does not require any of the licence-enforcement
 machinery that (a) and (b) do. This also affects M8's scope, so it wants deciding before M6.
+
+> **Moot — see §13 and §11.6, consequence 12.** DR-006 rules that no commercial release is planned, so there is nothing to price. This section is retained in full as the record of the argument: if DR-006 is ever reversed, §10.3 reopens exactly as written, watermark hazard included.
 
 ---
 
@@ -5393,17 +5405,22 @@ as a real release rather than as a foundation.
 # RackMate — Canonical Decision Record, Part 4. Amendments
 
 **Status:** NORMATIVE. Amends Parts 1, 2 and 3.
-**Authority:** these are the **user's own answers** to §10, given directly. §10 said a
-recommendation there "can be overruled without an amendment to this record"; the user overruled
-two of them, so this Part exists to write the overruling down rather than to leave the record
-disagreeing with the product.
+**Authority:** these are the **user's own decisions**, given directly. Five of them (DR-001…DR-005)
+are answers to §10; §10 said a recommendation there "can be overruled without an amendment to this
+record", and the user overruled two of them, so this Part exists to write the overruling down
+rather than to leave the record disagreeing with the product. **The sixth (DR-006) does not answer
+a §10 question at all** — it is a user decision about what this product *is* and how it reaches its
+users, and it supersedes a Part 2 acceptance criterion directly. Part 4 is therefore the home of
+every binding user decision, not only of the §10 answers.
 
 **Precedence, stated once and applying to every document in the repository:**
 
 1. **Part 4 (this Part)** — the user's decisions and everything derived from them.
 2. **Parts 1–3** — `CR-nnn` / `AC-nnn` / `RJ-nnn`, canonical naming, the model, the registry,
    the scope ruling, the milestone plan.
-3. The fourteen authored planning documents in `docs/`.
+3. The authored planning documents in `docs/` — fourteen at the time this Part was written,
+   fifteen since `docs/12-milestone-board.md` was added. The board is a **status** document, not a
+   scope document: it records what has been demonstrated and what has not, and it changes nothing.
 4. `docs/research/` — non-normative rationale.
 
 Where Part 4 and Parts 1–3 disagree, **Part 4 wins and Parts 1–3 are historical**. Parts 1–3
@@ -5412,7 +5429,7 @@ useful than a silently edited one, because the argument that produced it is stil
 you need if the decision is ever revisited. §12 is the index of every such supersession. If a
 ruling is not listed in §12, it stands exactly as written.
 
-The five decisions are numbered `DR-001` … `DR-005` (**D**ecided by the user, **R**uling). They
+The six decisions are numbered `DR-001` … `DR-006` (**D**ecided by the user, **R**uling). They
 are cited by that ID everywhere, in the same way `CR-nnn` is.
 
 ---
@@ -5427,10 +5444,16 @@ removes work, the removal is named as a specific subsystem and given a home (`v1
 `never`) so it cannot drift back across the line under R3 (scope drift). Where a consequence adds
 work, it is costed.
 
-Two of these five **reverse the record's own recommendation**. That is not a defect in the record
+Two of these six **reverse the record's own recommendation**. That is not a defect in the record
 — §10 exists precisely so that the calls requiring a human judgement about the market are made by
 the human and not by internal consistency. The reversals are DR-001 and DR-005. Neither is to be
 re-argued in any document; both are to be applied.
+
+**DR-006 is a third shape and is flagged here so it is not mis-filed.** It answers no §10 question;
+it supersedes a Part 2 acceptance criterion (AC-058/D10) outright, and it moots §10.3 as a side
+effect. Its consequences are enumerated under the same rule as the other five — concretely enough
+that an implementer never has to infer one — and its removals are given a named home in exactly the
+same way.
 
 ---
 
@@ -5742,9 +5765,186 @@ labels is a normal, professional, forty-year-old idiom — not a compromise.
 
 ---
 
+### 11.6 DR-006 · RackMate is an internal tool — self-signed distribution
+
+> **RULING — (a) INTERNAL TOOL. NO COMMERCIAL RELEASE IS PLANNED.** RackMate is distributed inside
+> the organisation that builds it. Code signing for that distribution is **self-signed**: a
+> code-signing certificate minted with PowerShell `New-SelfSignedCertificate`, applied with
+> `Set-AuthenticodeSignature` **and a timestamp server**, with the public `.cer` deployed to
+> `LocalMachine\Root` **and** `LocalMachine\TrustedPublisher` on every target machine, ideally by
+> Group Policy. **Microsoft Trusted Signing is the named fallback** if external distribution is ever
+> required — adoptable at M8, with **no earlier milestone needing to anticipate it**.
+
+**What it settles.** How this product reaches the people who use it. AC-058/D10 called distribution
+and code signing "the largest unowned area" in the corpus; it is also the only external dependency
+in the plan whose lead time nobody in this project controls.
+
+**DR-006 is the first ruling in this Part that is not an answer to a §10 question.** DR-001…DR-005
+are the user's answers to §10.1, §10.2, §10.4, §10.6 and §10.7. This one originates outside §10 and
+supersedes a Part 2 acceptance criterion directly. It does moot §10.3 as a side effect — consequence
+12 below.
+
+**What it supersedes.** **AC-058 (D10)**, in the half that schedules procurement:
+
+> Windows OV/EV certificate procurement **starts two milestones before release** because
+> reputation-building takes weeks
+
+**That lead time is real and it is specific to OV/EV.** It does not attach to either path DR-006
+names, so the schedule constraint it produced — and every downstream restatement of it, listed in
+§12.9 — goes with it. **The other half of D10 survives untouched**: macOS notarisation and stapling
+(if §10.10 ever resolves for macOS), vendored pdfium (CR-100), and a release pipeline with symbol
+archival are all still M8 deliverables. DR-006 removes a *purchasing lead time*, not the *release
+engineering*.
+
+**11.6.1 Why the two-milestone lead time does not survive the ruling.**
+
+Three distinct mechanisms were folded into "two milestones early". DR-006 removes all three:
+
+| Mechanism | Under OV/EV | Under DR-006 |
+|---|---|---|
+| **Identity verification** — weeks of external, out-of-team correspondence | The reason the lead time exists | Self-signed: none. Trusted Signing: an identity check exists, but it is a one-time onboarding and it does not gate any milestone before M8 |
+| **SmartScreen reputation ramp** — accrues over real download volume | The reason EV was preferred over OV (`RISK-07`'s mitigation column) | Self-signed never accrues reputation and is not distributed over the internet, so it never faces the ramp. Trusted Signing chains to Microsoft-operated roots and does not need one |
+| **Hardware token shipping** | Since the CA/Browser Forum's code-signing Baseline Requirements took effect on **1 June 2023**, **OV** private keys must live on a FIPS 140-2 Level 2 / CC EAL4+ hardware module — exactly as **EV** always did. A physical token is couriered, or a cloud HSM is provisioned | Neither path involves a shipped token |
+
+**11.6.2 M8's exit criterion, split.**
+
+M8's criterion currently reads *"A signed installer runs on a clean Windows 11 machine **with no
+SmartScreen warning**…"*. Self-signing cannot deliver that clause — **and neither can any
+build-side property whatsoever**. SmartScreen Application Reputation is evaluated on files carrying
+**Mark-of-the-Web**, the `Zone.Identifier` alternate data stream that a browser or other
+zone-aware downloader attaches. MOTW is a function of **how a file arrived on the machine**, not of
+what is inside it. A clause that mixes a build property and a delivery property cannot be a gate,
+because passing it depends on something the build does not do. So it splits.
+
+**BUILD-SIDE — a real gate, demonstrable in CI.** The installer and every binary it carries:
+
+1. are **signed**, `Get-AuthenticodeSignature` returning `Valid`;
+2. are **timestamped** against an RFC 3161 timestamp authority;
+3. show a **valid publisher** in the file's Properties ▸ Digital Signatures tab, matching the
+   declared subject;
+4. **and the signature still validates after the signing certificate has expired.**
+
+Clause 4 is the point of the whole gate. It is what proves the timestamp counter-signature is real
+rather than a flag somebody passed and nobody checked, and it is the part people discover too
+late — the day the certificate lapses, every previously shipped binary starts reporting
+`NotTimeValid` and there is no way to fix already-deployed files. **It is testable today without
+waiting a year**: mint a deliberately short-lived certificate (`New-SelfSignedCertificate
+-NotAfter (Get-Date).AddMinutes(5)`), sign two copies of the same binary — one with
+`-TimestampServer`, one without — wait out the window, and assert `Get-AuthenticodeSignature`
+reports `Valid` for the timestamped copy and a time-validity failure for the other. That is a test,
+not a hope.
+
+**DISTRIBUTION-SIDE — documented, not a build gate.** Deploy over a **Local Intranet UNC share** or
+via **Intune/GPO**, so MOTW is never applied and SmartScreen is never consulted. Deploying the
+public `.cer` to `LocalMachine\Root` and `LocalMachine\TrustedPublisher` by Group Policy is part of
+the same deployment note: `Root` is what makes the chain validate; `TrustedPublisher` is what makes
+the publisher trusted rather than merely known.
+
+> **THE ZIP TRAP — state it explicitly in the deployment note, every time.** Modern Windows
+> Explorer **propagates MOTW into extracted files**. A portable ZIP fetched over HTTP therefore
+> **re-arms SmartScreen for every binary inside it**, regardless of how well the binaries are
+> signed — and it does so silently, because the archive looked fine when it was downloaded. The
+> failure is invisible until a user on a fresh machine sees the blue full-screen prompt. A portable
+> build handed over HTTP is not the same artifact as the same bytes handed over `\\share\`, and any
+> document that offers a ZIP download must say so.
+
+**11.6.3 Derived consequences.**
+
+1. **No certificate purchase.** No CA relationship, no line item, no renewal calendar, no
+   procurement task in any milestone.
+2. **No hardware token.** See §11.6.1 — under the 2023 rules both OV and EV require keys on
+   hardware, and DR-006 avoids both.
+3. **The signing script is parameterised over certificate source and never hardcodes self-signed.**
+   One entry point taking the source as a parameter — self-signed from a named store thumbprint, a
+   `.pfx`, or Trusted Signing — with everything downstream (timestamping, hashing, the verification
+   step, the artifact list) identical across sources. **This is the only consequence that costs
+   anything now, and it is the one that must not be skipped**: it is the difference between the
+   named fallback being a config change and being a rewrite.
+4. **Every artifact a release produces signs with the same certificate and the same script** —
+   installer and unpacked/portable directory alike. One certificate, one script, N outputs; portable
+   and installed are the same signing problem, and consequence 3's parameterisation is what makes
+   that cheap. **This schedules no build into any milestone that does not already have one.** A
+   "portable build" occurs in exactly one place in the corpus — `docs/03-architecture.md:847`, which
+   observes that pinning `path_provider_windows` to a single call site *"keeps M2's portable build a
+   one-function change"*. That is an **architecture property**, not a deliverable: neither roadmap
+   §4 M2 nor §9.3 above lists any build, packaging or distribution item, and `portable` does not
+   occur in `docs/09-roadmap.md` or `docs/11-testing-and-quality.md` at all. **All
+   release-engineering deliverables remain at M8.** If a portable output is ever wanted earlier,
+   that is a scope edit under roadmap §8.3 and not something this consequence grants.
+5. **M6's exit clause "Windows OV/EV certificate procurement starts here" is deleted**, not moved.
+   M6's exit criterion is otherwise unchanged.
+6. **M8's exit criterion is split** per §11.6.2. Its size (`S`, 2–3 weeks) is unchanged as a
+   ruling; in practice it loses the procurement and EULA work and gains the timestamp-expiry test.
+7. **`RISK-07` (certificate lead time) is retired in its stated form.** It is replaced by a smaller,
+   wholly internal risk: **the public `.cer` is not present in the target machine's stores**, whose
+   early warning is a clean test machine showing "Unknown publisher" — and whose mitigation is a GPO
+   and a five-minute check, not a purchase order.
+8. **`RISK-08` (beta integrators) changes population, not shape.** Three integrators become three
+   internal users running three real jobs. **M9's exit criterion is unchanged** and is still
+   deliberately a judgement, not a metric.
+9. **AC-058/D7's licence deliverable shrinks but does not vanish.** SIL OFL 1.1 for the bundled font
+   and every other bundled licence must still be registered via `LicenseRegistry` and reachable from
+   `showLicensePage` — that obligation follows from **redistributing** the fonts, not from selling
+   the software. What goes is the commercial EULA and any licence-enforcement machinery. (Note in
+   passing that the shipped font is now Jost, not CR-080's IBM Plex, and that CR-080 carries no
+   amendment; that drift is recorded in `docs/12-milestone-board.md` §4.6 and is **not** ruled here.)
+10. **RJ-014 is reaffirmed and made cheaper.** No in-app auto-update in v1; a "Check for updates"
+    item and a version string. Internally that item can point at the same share the installer came
+    from, which is a link, not infrastructure.
+11. **macOS notarisation is unaffected.** §10.10 is still open, and if it ever resolves for macOS,
+    notarisation and stapling are a separate apparatus that DR-006 says nothing about — Apple's
+    Gatekeeper has no self-signed path.
+12. **§10.3 (pricing and licensing) is moot while DR-006 stands.** There is nothing to price. §13's
+    row and §13.1's row are updated accordingly. **If DR-006 is ever reversed, §10.3 reopens exactly
+    as written**, including its specific hazard — a watermark belongs on client-facing sheets only
+    and never on the Pull Sheet or Termination Schedule, because a watermarked pull sheet is worse
+    than useless in an attic (§11.5.3).
+13. **DR-005 is untouched, and must not be read as weakened.** DR-005 rules that **the sheet set** is
+    a client deliverable handed to a client, a GC and a job site. DR-006 rules that **the software**
+    is not commercially distributed. Those are different artifacts: an internal tool used by an
+    integrator still emits sheets that go to a job site. **Full sheet furniture remains a v1
+    deliverable and remains unavailable as a schedule lever** (§11.5.2/2). Cutting M6's furniture on
+    the authority of DR-006 would be citing a ruling that says nothing about it.
+
+**11.6.4 The measured registry fact, recorded because it bounds a claim.**
+
+RackMate's own code **writes no registry key**. Beside that, and measured against the shipped
+binary: **the shell writes values under ComDlg32 that RackMate does not control** — at minimum
+`LastVisitedPidlMRU` (this executable plus the last folder browsed) and `CIDSizeMRU` (this
+executable, written even when the user cancels the dialog), **measured examples and not an
+inventory** — and no supported option prevents them while the shell common dialog is the dialog.
+What *is* suppressed, via `FOS_DONTADDTORECENT`, is `OpenSavePidlMRU` and the `%APPDATA%\…\Recent`
+shortcut, so **no project file name reaches the host machine** (docs/03 §10.1).
+
+This is recorded in Part 4 because the internal-distribution story rests on it: **any portable
+build's no-trace claim is a bound, not a closed list.** Stating it as a closed list has been wrong
+four times running, which is why `apps/rackmate/test/session/registry_claim_test.dart` fails if the
+architecture document restates it as one. Any deployment note written for §11.6.2's
+distribution side **repeats the bound and does not enumerate keys**.
+
+**11.6.5 What DR-006 does not do.**
+
+- It does **not** authorise shipping unsigned. An unsigned internal binary is a worse trust story
+  than a self-signed one, and clause 4 of the build-side gate is the only thing that catches an
+  expiring-certificate failure before users do.
+- It does **not** claim a self-signed binary is trusted on a machine that has not received the
+  `.cer`. On such a machine the signature is present, the publisher is unknown, and — if the file
+  carries MOTW — SmartScreen behaves exactly as it would for an unsigned file.
+- It does **not** cut M7, M9, or any brief requirement. Nothing here touches confirmed product
+  decision 4.
+- It does **not** settle MSIX versus a plain signed installer. **VERIFY:** the `.rackmate`
+  file-association path differs between the two and drives the choice (docs/11 §11 already carries
+  this).
+- **VERIFY:** Microsoft Trusted Signing eligibility before relying on the fallback being available
+  on demand — it requires a verified identity, and organisation accounts have carried a minimum
+  legal-existence requirement. The fallback is named so that adopting it is a config change; it is
+  not asserted to be instantly available.
+
+---
+
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-005 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-006 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -5828,7 +6028,7 @@ branding in v1) stand.
 
 ### 12.6 Corrections ruled here so the record is self-consistent
 
-These are not consequences of DR-001…DR-005. They are internal contradictions inside Parts 1–3
+These are not consequences of DR-001…DR-006. They are internal contradictions inside Parts 1–3
 that the amendment sweep surfaced, and they are ruled here because leaving them would produce
 exactly the contradiction §12 exists to prevent.
 
@@ -5877,21 +6077,90 @@ pointer does not restate the new ruling; it names where the new ruling lives.
 | 7 | §7.2.3, wiring scope table | after line 4601 | `> **The router row is superseded — see §12.1.** v1 builds Sugiyama phases 0–3 plus a deterministic layer-ordered orthogonal staircase. Phase 4 is v1.2; phase 5 is not built. The remaining rows of this table stand, as amended by the §7.2.3 row already listed in §12.1.` |
 | 8 | §9.3, M2 contents | after line 4878 | ``> **Superseded — see §12.1 (§7.2.3 router row) and §11.1.3.** M2's router is phases 0–3 plus the orthogonal staircase, and M2 is sized `M` (4–7 weeks) — see §12.7.`` |
 | 9 | §9.11, "The honest total" | above the table at 4987 | ``> **Superseded — see §12.7.** M2 is `M` (4–7 weeks); the plan totals **42–65 weeks, 11–17 months**. The "41–69" figure below is additionally an arithmetic error against this section's own table, whose final cumulative row reads 45–69. Lever 2 is withdrawn by DR-003.`` |
-| 10 | §10 preamble | after line 5025 | `> **Five of these thirteen are now ANSWERED — see §13.** 10.1 (DR-001), 10.2 (DR-002), 10.4 (DR-003), 10.6 (DR-005) and 10.7 (DR-004) are settled by the user's decisions in §11 and are **binding**, not open. The text below is retained as the record of the argument, per the Part 4 preamble.` |
+| 10 | §10 preamble | after line 5025 | `> **Six of these thirteen are now ANSWERED — see §13.** 10.1 (DR-001), 10.2 (DR-002), 10.4 (DR-003), 10.6 (DR-005) and 10.7 (DR-004) are settled by the user's decisions in §11 and are **binding**, not open; 10.3 is **moot** under DR-006, which rules that no commercial release is planned. The text below is retained as the record of the argument, per the Part 4 preamble.` |
 | 11 | §10.13 | after the heading at 5336 | `> **Retired — see §13.** All three questions this section prioritises (10.1, 10.2, 10.4) are answered by DR-001, DR-002 and DR-003. Do not sequence work from this section.` |
+| 12 | AC-058, the **D10** row | after the gap table | `> **The D10 row's procurement schedule is superseded — see §12.9 and §11.6.** RackMate is an internal tool; signing is self-signed with a timestamp, Microsoft Trusted Signing is the named fallback at M8, and no OV/EV certificate is procured at any milestone. The rest of D10 — macOS notarisation, vendored pdfium (CR-100), the release pipeline with symbol archival — is **unaffected and still binding**.` |
+| 13 | RJ-014, the certificate sentence | after the RJ-014 body | `> **The certificate half is superseded — see §12.9 and §11.6.** There is no OV/EV validation and no reputation build, so nothing here needs scheduling two milestones ahead. RJ-014's actual ruling — no in-app auto-update in v1, a signed installer plus a version-check ping — is **reaffirmed**, and the `.rmdev` migration-chain half (AC-050/A8.2) is untouched.` |
+| 14 | §7.2.8, the code-signing row | after the table | `> **The code-signing row is superseded — see §12.9 and §11.6.** Read it as: Windows code signing **self-signed with a timestamp server**, no certificate procured early, Microsoft Trusted Signing as the named fallback at M8. Vendored pdfium and the release pipeline with symbol archival are **unchanged**.` |
+| 15 | §9.7, M6 exit criterion | after the exit paragraph | `> **The last sentence is superseded — see §12.9 and §11.6.** "Windows OV/EV certificate procurement starts here" is **deleted**. Every other clause of M6's exit criterion stands exactly as written.` |
+| 16 | §9.9, M8 exit criterion | after the exit paragraph | `> **The SmartScreen clause is superseded — see §11.6.2.** It splits into a build-side gate (signed, timestamped, valid publisher, **and the signature still validates after the certificate has expired**) and a distribution-side requirement that is documented rather than gated (Local Intranet UNC or Intune/GPO so Mark-of-the-Web is never applied; the ZIP trap stated explicitly). The other three clauses stand as written.` |
+| 17 | §10.3 recommendation | after the recommendation paragraph | `> **Moot — see §13 and §11.6, consequence 12.** DR-006 rules that no commercial release is planned, so there is nothing to price. This section is retained in full as the record of the argument: if DR-006 is ever reversed, §10.3 reopens exactly as written, watermark hazard included.` |
+
+---
+
+### 12.9 Superseded by DR-006 (internal tool, self-signed distribution)
+
+**A numbering note, stated so nobody renumbers.** This subsection is §12.9 and not §12.6, even
+though it breaks the DR-order of §12.1…§12.5, because **§12.6(a)–(d) are cited by those exact
+sub-letters** across this record and the authored documents (§12.6(b) sets the 27-rule count,
+§12.6(c) is PAL-1's ruling, §12.6(d) is the zone grid). Renumbering to keep the DR-order tidy would
+silently break every one of those citations, which is a worse outcome than an out-of-order heading.
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **AC-058 (D10)**, procurement half | "Windows OV/EV certificate procurement **starts two milestones before release** because reputation-building takes weeks." | **Superseded in part.** No OV/EV certificate is procured, at M6 or anywhere. Signing is **self-signed** — `New-SelfSignedCertificate`, `Set-AuthenticodeSignature` **with a timestamp server**, public `.cer` to `LocalMachine\Root` and `\TrustedPublisher`, ideally by GPO — with **Microsoft Trusted Signing as the named fallback**, adoptable at M8. The lead time D10 was defending against is specific to OV/EV identity verification, the SmartScreen reputation ramp and hardware-token logistics; §11.6.1 shows none of the three attaches to either path DR-006 names. **The rest of D10 stands**: macOS notarisation and stapling, vendored pdfium (CR-100), release pipeline with symbol archival. |
+| **§9.7 (M6)** exit criterion, last sentence | "Windows OV/EV certificate procurement starts here, two milestones before release." | **Deleted.** M6 has no distribution obligation of any kind. Every other clause of M6's exit criterion — the complete sheet set on all four starters, the deuteranopia/protanopia and greyscale verification, the ANSI B / ANSI D / photocopy sign-off (AC-058 D13), requirement 7 — is **unchanged**. |
+| **§9.9 (M8)** exit criterion, first clause | "A signed installer runs on a clean Windows 11 machine **with no SmartScreen warning**." | **Split — §11.6.2.** No build-side property can deliver "no SmartScreen warning": SmartScreen evaluates **Mark-of-the-Web**, which is a property of how a file arrived, not of the binary. The **build-side gate** is: signed, timestamped, valid publisher in file properties, **and the signature still validates after the signing certificate has expired**. The **distribution-side requirement** is documented and not gated: Local Intranet UNC or Intune/GPO, and the ZIP trap stated explicitly. M8's other three clauses — cold start within budget, an induced crash producing a report with no project content, documented limits behaving as documented — are **unchanged**. |
+| **§7.2.8**, code-signing row | "Windows code signing with certificate procurement started **two milestones early**; vendored pdfium; release pipeline with symbol archival." | **The procurement clause is superseded**; read the row as self-signed with a timestamp, no early procurement, Trusted Signing as the named fallback. **Vendored pdfium and the release pipeline are unaffected.** |
+| **`RISK-07`** (roadmap §7) | "Code-signing certificate lead time blocks a finished build … prefer EV to avoid the SmartScreen reputation ramp." | **Retired in this form.** Replaced by a smaller, wholly internal risk: the public `.cer` is not deployed to the target machine's stores. Likelihood low, impact minor, early warning "a clean test machine shows *Unknown publisher*", mitigation a GPO. |
+| **`RISK-08`** (roadmap §7) | "Beta integrators cannot be recruited in time for M9." | **Population changes; the risk does not disappear.** Three integrators become three internal users on three real jobs. **M9's exit criterion is unchanged** and is still a judgement, not a metric. |
+| **RJ-014**, certificate sentence | "The part that genuinely cannot wait — the code-signing certificate, whose OV/EV validation and reputation build take weeks — is accepted and scheduled two milestones ahead of release (AC-058/D10)." | **Superseded in that sentence only.** Nothing needs scheduling ahead. RJ-014's ruling — **no in-app auto-update in v1**, a signed installer plus a "Check for updates" item and a version string — is **reaffirmed**, and the `.rmdev` user-library migration half (AC-050/A8.2) is untouched. |
+| **§10.3** | Pricing and licensing model; recommendation (c), a free tier with a watermarked PDF. | **Moot while DR-006 stands** — there is nothing to price. Retained in full as the record of the argument. **If DR-006 is reversed, §10.3 reopens exactly as written**, watermark hazard included. Indexed at §13. |
+**Derived documents that now state a superseded ruling.** These are priority-3 documents
+(Part 4 preamble), not Parts 1–3, so they are **edited rather than pointered** — and the edits are
+**owed, not yet made**. Each is listed here so the debt is visible rather than discovered. **This
+table is the whole list; a site not on it is a defect in this table, not an exemption.**
+
+*Signing and distribution — the sites DR-006's ruling reaches directly:*
+
+| Document | Site | What it must become |
+|---|---|---|
+| `docs/11-testing-and-quality.md` §11 | Row 1, "Windows OV/EV certificate procurement — **starts at M6**" | Self-signed with a timestamp; no early procurement; Trusted Signing named as the M8 fallback |
+| `docs/11-testing-and-quality.md` §11 | Row 2, "Exit criterion: a signed installer runs … with **no SmartScreen warning**" | The split criterion of §11.6.2 |
+| `docs/09-roadmap.md` §4 | M6 exit criterion, last sentence | The sentence is deleted |
+| `docs/09-roadmap.md` §4 | M8 exit criterion, first clause; and M8 *Risks* ("This is a purchasing decision, made at M6") | The split criterion of §11.6.2; the purchasing decision no longer exists |
+| `docs/09-roadmap.md` §7 | `RISK-07` row | Retired in its stated form and replaced per consequence 7 |
+| `docs/09-roadmap.md` §7 | `RISK-08` row, mitigation column | Population is internal; the criterion is unchanged |
+
+*Decision counts and the §10.3 schedule — the sites DR-006 falsifies **arithmetically**, which is
+why a debt list built around signing missed them on first pass:*
+
+| Document | Site | What it now says | What it must become |
+|---|---|---|---|
+| `docs/09-roadmap.md` §8 | Item 7, at **:498** | "**Five are now answered — `DR-001` through `DR-005`**", and "pricing (§10.3) wants deciding before M6" | **Six** are settled — five answered, §10.3 **moot** (§11.6.3/12, §13). Pricing needs deciding neither before M6 nor at all while DR-006 stands. The macOS (§10.10) half of the sentence is unaffected |
+| `docs/10-decisions.md` | **:6** | "…and Part 4's binding user decisions `DR-001`–`DR-005`" | `DR-001`–`DR-006` |
+| `docs/10-decisions.md` | **:11**, and the DR table headed at **:37** with rows **:42-46** | "**the five user decisions `DR-001`–`DR-005`**", over a five-row table with no DR-006 row | Six decisions; a `DR-006` row reading *internal tool, self-signed distribution*, answering *nothing in §10 — moots §10.3*, with effect *no certificate procurement at any milestone; M8's criterion splits* |
+| `docs/00-overview.md` §11 | **:216** | "…and the binding user decisions `DR-001`–`DR-005`" | `DR-001`–`DR-006` |
+
+Until those edits land, **`docs/12-milestone-board.md` is the index that records the gap** — its
+M6 and M8 entries quote the roadmap verbatim and then state the DR-006 amendment beneath, which is
+the same pattern §12.8 uses inside this record, and its §4.11 carries both tables above.
+
+**Explicitly NOT superseded — listed here because they will otherwise be cut by association:**
+
+| Ruling | Status under DR-006 |
+|---|---|
+| **DR-005** | **Unaffected, and the confusion is foreseeable enough to name.** DR-005 is about **the sheet set**; DR-006 is about **the software**. An internal tool used by an integrator still emits sheets handed to a client, a GC and a job site. Full sheet furniture stays a v1 deliverable and stays unavailable as a schedule lever (§11.5.2/2). |
+| **CR-100** | **Unaffected.** pdfium is still vendored. A network-fetched binary in a signed release is a supply-chain and reproducibility problem whether the release is sold or not. |
+| **AC-058/D7** | **Shrinks, does not vanish.** SIL OFL 1.1 and every bundled licence still register via `LicenseRegistry` and stay reachable from `showLicensePage` — that follows from redistributing the fonts, not from selling the software. The commercial EULA and licence-enforcement machinery go. |
+| **CR-096, AC-058/D14, the M8 crash-report clause** | **Unaffected.** Local-first, opt-in remote, no project content in a report, recovery files never attached automatically. An internal user's project data is still a client's project data. |
+| **AC-056** | **Unaffected.** Mobile/tablet read-only on three named surfaces is a product decision, not a distribution one. |
+| **Confirmed product decision 4** | **Unaffected.** All seven brief requirements remain in v1. DR-006 removes a purchase, not a requirement. |
 
 ---
 
 ## 13. Resolved §10 questions
 
-§10 is no longer entirely open. Five of its thirteen entries are **ANSWERED**. The text of §10
-stays in place as the record of the argument; this section is the index of what was decided.
+§10 is no longer entirely open. **Six** of its thirteen entries are **ANSWERED** — five by the
+user's direct answers (DR-001…DR-005) and one, §10.3, **mooted by DR-006** rather than answered on
+its own terms. The text of §10 stays in place as the record of the argument; this section is the
+index of what was decided.
 
 | § | Question | Status | Answer |
 |---|---|---|---|
 | **10.1** | Draw every wire, or net labels by default — the fork | **ANSWERED — DR-001** | **(B) Net labels by default.** Drawn wires on domain filter, `Alt`-hover or focus. Reverses the record's recommendation. §11.1. |
 | **10.2** | Residential CI or commercial AV — the primary customer | **ANSWERED — DR-002** | **(a) Residential-primary, commercial-capable.** Commercial capability present, never fronted. Confirms the recommendation. §11.2. |
-| 10.3 | Pricing and licensing model | open | — |
+| **10.3** | Pricing and licensing model | **MOOT — DR-006** | **Nothing to price.** RackMate is an internal tool and no commercial release is planned, so no pricing or licensing model is chosen and none is needed. Retained in full as the record of the argument: **if DR-006 is reversed, §10.3 reopens exactly as written**, watermark hazard included. §11.6, consequence 12. |
 | **10.4** | Does the device builder have to be in v1 | **ANSWERED — DR-003** | **(a) Yes. M4 stays where it is.** Confirms the recommendation. §11.3. |
 | 10.5 | Metric or imperial default | open | — |
 | **10.6** | Is the schematic a client deliverable or an internal tool | **ANSWERED — DR-005** | **(a) Client deliverable — invest in drafting polish.** Reverses the record's recommendation. Orthogonal to 10.1. §11.5. |
@@ -5907,7 +6176,7 @@ stays in place as the record of the argument; this section is the index of what 
 
 | Remaining question | Effect |
 |---|---|
-| **10.3 — pricing** | **Sharper, not easier.** DR-005 makes the client-facing set larger and more valuable, which strengthens option (c)'s logic (price the deliverable, not the software) *and* raises the stakes on the watermark split: client-facing sheets only, never the Pull Sheet or Termination Schedule. Still needs deciding before M6. |
+| **10.3 — pricing** | **Moot under DR-006 — no longer a remaining question.** The row is kept because the reasoning survives its own mooting: DR-005 makes the client-facing set larger and more valuable, which would strengthen option (c)'s logic (price the deliverable, not the software) *and* raise the stakes on the watermark split — client-facing sheets only, never the Pull Sheet or Termination Schedule. That is the state §10.3 reopens in if DR-006 is ever reversed. It no longer needs deciding before M6, or at all. |
 | **10.5 — metric or imperial** | **Unchanged and still cheap.** DR-002 tilts it toward (a) imperial default, since North American residential is the stated primary market. One settings row either way. |
 | **10.8 — cloud-ready investment** | **Easier.** DR-004 removes multi-sheet, which was the largest remaining source of entity-graph churn. The conflict unit is more stable than it was, so (a) — spend nothing further, write the conflict-unit page down — is now the clear answer rather than the cautious one. |
 | **10.9 — real-SKU catalog** | **Better instrumented.** DR-003 keeps the builder, so the long tail has a first-class answer in v1 and the real-SKU question stops being urgent. Measure 7's miss rate now feeds this question instead of 10.4. |
@@ -6036,5 +6305,7 @@ allowlist of pairs — an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-005 are the user's decisions and are binding. §12 is the complete
-index of what they supersede. Anything not listed there stands as written in Parts 1–3.
+**End of Part 4.** DR-001…DR-006 are the user's decisions and are binding. §12 is the complete
+index of what they supersede — §12.1…§12.5 and §12.9 by ruling, §12.6 by internal correction, and
+§12.8 the list of Parts 1–3 sites carrying a pointer. Anything not listed there stands as written
+in Parts 1–3.
