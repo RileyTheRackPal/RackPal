@@ -1,9 +1,20 @@
 // Seed catalog — "Passive & Mechanical" (docs/catalog/seed-devices.md
-// §3.8). All three are zero-port, `mountMethod: rackEars`, and carry NO
-// `PowerProfile` at all — not zero watts, ABSENT, which is what keeps the
-// weight/VA rollup's unknown count honest (P5). One representative U
-// height is shipped per id (P4's parametric U-height variants are a
-// picker/Device-Builder concern, not three separate catalog entries).
+// §3.8). All three are zero-port, `mountMethod: rackEars`, and carry an
+// EMPTY `PowerProfile` — every field left unset, so watts, VA and outlet
+// counts alike come back null and the rollups count them as unknown
+// contributors rather than measured zeros (P5, G4). `TemplateBody.power`
+// is non-nullable, so "no PowerProfile at all" is not expressible; an
+// all-null one is the same statement and this comment now says which.
+//
+// That was only half true until `PowerProfile.outletsProvided` /
+// `outletsConsumed` stopped being non-nullable ints defaulting to 0:
+// watts and VA were correctly absent, but outlets read as a measured
+// `0/0` on the chip strip, superscript and all — the exact fabrication
+// this comment claimed the category was avoiding.
+//
+// One representative U height is shipped per id (P4's parametric
+// U-height variants are a picker/Device-Builder concern, not three
+// separate catalog entries).
 
 import 'package:rackmate_core/src/model/template.dart';
 import 'package:rackmate_core/src/units/len.dart';
@@ -11,8 +22,8 @@ import 'package:rackmate_core/src/units/mass.dart';
 
 const String kCatPassive = 'Passive & Mechanical';
 
-Len _mm(num v) => Len((v * 1_000_000).round());
-Mass _kg(num v) => Mass((v * 1_000_000).round());
+Len _mm(num v) => Len.fromMillimetres(v);
+Mass _kg(num v) => Mass.fromKilograms(v);
 
 Map<String, TemplateBody> buildPassiveCatalog() => {
   // X01 · Blank Panel, 1U.

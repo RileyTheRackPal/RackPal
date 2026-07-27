@@ -19,10 +19,22 @@ extension type const Len(int nm) {
     return Len(total);
   }
 
+  /// A length authored in MILLIMETRES, the unit a spec sheet is written in.
+  ///
+  /// Named for the same reason `Mass.fromKilograms` is: the seed catalog
+  /// used to carry nine copies of this conversion and nine copies of the
+  /// mass one side by side, and the mass copies were wrong by 1000x for
+  /// exactly as long as nobody could review the literal against its unit.
+  factory Len.fromMillimetres(num millimetres) =>
+      Len((millimetres * nmPerMillimetre).round());
+
   static const Len zero = Len(0);
 
   /// Exact nanometres per inch.
   static const int nmPerInch = 25_400_000;
+
+  /// Exact nanometres per millimetre.
+  static const int nmPerMillimetre = 1_000_000;
 
   Len operator +(Len other) => Len(nm + other.nm);
   Len operator -(Len other) => Len(nm - other.nm);

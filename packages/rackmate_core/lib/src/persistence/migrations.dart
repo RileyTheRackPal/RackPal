@@ -72,16 +72,17 @@ final class MalformedEnvelopeError implements Exception {
 /// Keyed by the schemaVersion each migration upgrades AWAY FROM (e.g. key
 /// `0` migrates a v0 document up to v1's shape).
 ///
-/// `kSchemaVersion` is `1` and there is no real v0 in production history
-/// — v1 is the first ship. The single entry below is a SYNTHETIC fixture
-/// built for this milestone's own exit criterion ("one v0->v1 migration
-/// fixture in the golden corpus"): it reenacts CR-094's real, documented
-/// `revision` -> `sequence` rename as if a v0 schema had shipped with the
-/// old name, to prove the chain machinery actually works end to end. A
-/// second, real migration lands here whenever `kSchemaVersion` actually
-/// bumps in a future milestone.
+/// There is no real v0 in production history — v1 was the first ship. The
+/// `0` entry below is a SYNTHETIC fixture built for this milestone's own
+/// exit criterion ("one v0->v1 migration fixture in the golden corpus"): it
+/// reenacts CR-094's real, documented `revision` -> `sequence` rename as if
+/// a v0 schema had shipped with the old name, to prove the chain machinery
+/// actually works end to end.
+///
+/// The `1` entry is the first REAL one — see [migrateV1ToV2].
 const Map<int, Migration> migrations = <int, Migration>{
   0: migrateV0ToV1,
+  1: migrateV1ToV2,
 };
 
 /// Synthetic v0 -> v1 migration (see [migrations]'s doc comment): v0
@@ -94,6 +95,60 @@ JsonMap migrateV0ToV1(JsonMap raw) {
     migrated[kKeySequence] = migrated.remove('revision');
   }
   migrated[kKeySchemaVersion] = 1;
+  return migrated;
+}
+
+/// v1 -> v2: the outlet-count keys became OMISSIBLE, so v2 files need a
+/// reader that tolerates their absence — and a v1 file needs re-stamping
+/// before this build can honestly write it back out.
+///
+/// WHAT CHANGED IN v2. `PowerProfile.outletsProvided`/`outletsConsumed`
+/// were non-nullable `int`s defaulting to `0`, and the encoder wrote both
+/// keys unconditionally. They are nullable now (CR-114, G4: an unauthored
+/// count is UNKNOWN, not a measured zero), and the encoder omits the key
+/// when there is no value — the format's absent-key-not-null rule. A v1
+/// READER meeting one of those documents calls
+/// `asInt(json['outletsProvided'], ...)` and throws
+/// `FormatException: Expected an int ... got: null`. That is the whole
+/// reason `kSchemaVersion` moved: a build that changed what it emits while
+/// leaving the version at 1 gives a version-gated migration nothing to gate
+/// on, and hands the user a corrupt-file error instead of a version error.
+///
+/// WHAT THIS FUNCTION THEREFORE DOES: it re-stamps the envelope, and it
+/// does not touch the payload.
+///
+///  * `schemaVersion` -> 2, as every migration must.
+///  * `minReaderVersion` -> at least [kMinReaderVersion]. NOT bookkeeping.
+///    A v1 file opened here will be written back out by THIS build, in v2
+///    form, with omitted outlet keys; leaving the stamp at 1 would ship
+///    those bytes under a promise that any v1 reader can open them, and
+///    that reader would throw rather than refuse. Raising it converts a
+///    crash into `NewerSchemaError`. Never lowered — `max`, not assignment
+///    — so a file that already demands more keeps demanding it.
+///
+/// WHAT IT DELIBERATELY DOES NOT DO, because the obvious rewrite is wrong.
+/// It is tempting to translate v1's explicit `"outletsProvided": 0` into
+/// v2's absent key, on the grounds that the old non-nullable default was
+/// `0` and every unauthored template wrote one. But v1's catalogs also
+/// authored `outletsProvided: 0` DELIBERATELY, on most of their entries
+/// (`catalog_audio.dart`, `catalog_control.dart`, `catalog_field.dart`,
+/// `catalog_rf.dart`, `catalog_sources.dart`), and that zero is a real
+/// measurement: an amplifier genuinely provides no outlets. A v1 file
+/// records no way to tell the two apart, so rewriting every `0` to
+/// "unknown" would destroy far more true measurements than it would
+/// recover fabricated ones — and inventing "this was never authored" is
+/// exactly as much a guess as inventing "this was measured" (G4 cuts both
+/// ways). Every key a v1 file contains is a valid v2 key with unchanged
+/// meaning; v2's difference is only in what it may LEAVE OUT. So the
+/// payload passes through untouched, and a v1 zero stays the measured zero
+/// the file actually says it is.
+JsonMap migrateV1ToV2(JsonMap raw) {
+  final migrated = JsonMap.of(raw);
+  migrated[kKeySchemaVersion] = 2;
+  final declared = migrated[kKeyMinReaderVersion];
+  if (declared is! int || declared < kMinReaderVersion) {
+    migrated[kKeyMinReaderVersion] = kMinReaderVersion;
+  }
   return migrated;
 }
 

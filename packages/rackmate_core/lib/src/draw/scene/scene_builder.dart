@@ -114,6 +114,12 @@ RackScene buildRackScene({
   ops.addAll(chassis.ops);
   fragments[rack.id.v] = IntRange(0, ops.length);
   minText = _min(minText, chassis.minTextPt);
+  // `bounds` is the scene's INK extent, not the union of its layout rects:
+  // it is what drives PDF scale-to-fit and the elevation tile count
+  // (ops.dart), and a layer is free to draw outside the rect it was sized
+  // to. The chassis frame's 1.2pt stroke straddles the rack box's edge and
+  // the RU ruler sits left of the rails, so even here the two differ.
+  bounds = _grow(bounds, chassis.inkBounds);
 
   // ── device fragments (local, wrapped in an absolute translate) ───────
   final visible = _visibleDevices(rack, devices, templates, face);
@@ -162,7 +168,12 @@ RackScene buildRackScene({
       ),
     );
     minText = _min(minText, built.minTextPt);
-    bounds = bounds.union(rect);
+    // The fragment's ink bounds are LOCAL, like its ops — shifted by the
+    // same translate the composed scene brackets them with.
+    bounds = _grow(
+      bounds.union(rect),
+      built.inkBounds?.shift(rect.left, rect.top),
+    );
   }
 
   final scene = DiagramScene(
@@ -237,3 +248,6 @@ String _semanticLabel(DeviceInstance device, TemplateBody body) {
 }
 
 double _min(double a, double b) => a < b ? a : b;
+
+/// [box] widened to include [ink], if the layer drew anything at all.
+DBox _grow(DBox box, DBox? ink) => ink == null ? box : box.union(ink);

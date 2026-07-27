@@ -7,8 +7,8 @@ import 'package:rackmate_core/src/units/mass.dart';
 
 const String kCatPower = 'Power';
 
-Len _mm(num v) => Len((v * 1_000_000).round());
-Mass _kg(num v) => Mass((v * 1_000_000).round());
+Len _mm(num v) => Len.fromMillimetres(v);
+Mass _kg(num v) => Mass.fromKilograms(v);
 
 Map<String, TemplateBody> buildPowerCatalog() {
   final out = <String, TemplateBody>{};
@@ -193,6 +193,8 @@ Map<String, TemplateBody> buildPowerCatalog() {
     bodyDepth: _mm(300),
     connectorProjection: _mm(65),
     weight: _kg(8.2),
+    // Over the 7 kg front-ear limit (AC-028) — see the same note on N01.
+    maxUnsupportedMass: _kg(7),
     power: PowerProfile(
       nameplateWatts: 12,
       typicalWatts: 12,

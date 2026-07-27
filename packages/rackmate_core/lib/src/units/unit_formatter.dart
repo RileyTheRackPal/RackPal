@@ -50,17 +50,27 @@ extension LenFormatting on Len {
 
 /// Display formatting for [Mass].
 extension MassFormatting on Mass {
+  /// The kilogram figure with NO unit suffix, e.g. `"1.00"`.
+  ///
+  /// Exists so a call site rendering docs/04-rack-editor.md §5's
+  /// `148/200 lb` — two masses sharing one trailing unit — does not have
+  /// to re-derive the µg→kg conversion, which is exactly how a magic
+  /// divisor gets copied into a widget and drifts.
+  String toKilogramsValue({int fractionDigits = 2}) =>
+      (ug / 1e9).toStringAsFixed(fractionDigits);
+
+  /// The pound figure with NO unit suffix, e.g. `"1.00"`. See
+  /// [toKilogramsValue].
+  String toPoundsValue({int fractionDigits = 2}) =>
+      (ug / Mass.ugPerPound).toStringAsFixed(fractionDigits);
+
   /// e.g. `"1.00 kg"`.
-  String toKilograms({int fractionDigits = 2}) {
-    final kg = ug / 1e9;
-    return '${kg.toStringAsFixed(fractionDigits)} kg';
-  }
+  String toKilograms({int fractionDigits = 2}) =>
+      '${toKilogramsValue(fractionDigits: fractionDigits)} kg';
 
   /// e.g. `"1.00 lb"`.
-  String toPounds({int fractionDigits = 2}) {
-    final lb = ug / Mass.ugPerPound;
-    return '${lb.toStringAsFixed(fractionDigits)} lb';
-  }
+  String toPounds({int fractionDigits = 2}) =>
+      '${toPoundsValue(fractionDigits: fractionDigits)} lb';
 }
 
 int _gcd(int a, int b) => b == 0 ? a : _gcd(b, a % b);

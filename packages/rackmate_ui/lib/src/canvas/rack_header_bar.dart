@@ -46,6 +46,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show SchedulerBinding;
+import 'package:rackmate_core/rackmate_core.dart' show kMaxRackHeightU;
 
 /// The actions the rack header's overflow menu offers.
 enum RackHeaderAction {
@@ -210,10 +211,20 @@ class RackHeaderBar extends StatelessWidget {
 ///
 /// The two buttons are DISABLED at CR-038's bounds rather than pressable-
 /// and-refused. A refused action must "shake and report" (§3.4), but a rack
-/// that is already at 60U being unable to grow is not a refusal — it is the
-/// control correctly describing the range it operates over, and shaking at a
-/// wall the user can see is noise. Every OTHER way a step can fail (an
-/// occupant in the way) is a real refusal and does reach the funnel.
+/// that is already at [kMaxRackHeightU] being unable to grow is not a
+/// refusal — it is the control correctly describing the range it operates
+/// over, and shaking at a wall the user can see is noise. Every OTHER way a
+/// step can fail (an occupant in the way) is a real refusal and does reach
+/// the funnel.
+///
+/// THE BOUNDS ARE READ FROM [kMaxRackHeightU], NOT TYPED AS `60`. They were
+/// typed as `60` — the same number the constant happens to hold — so the
+/// sentence above ("the control correctly describing the range it operates
+/// over") was true only by coincidence. Raise CR-038's ceiling to 72 and
+/// every actual height path (`rack_canvas_screen`'s funnel, this dialog's
+/// `_withinBounds`) would clamp to 72 while this `+` stayed dead at 60: a
+/// working capability behind a disabled control, which is the same class of
+/// lie as a fabricated number, told with a widget instead of a string.
 class _HeightStepper extends StatelessWidget {
   const _HeightStepper({required this.heightU, required this.onStep});
 
@@ -235,6 +246,9 @@ class _HeightStepper extends StatelessWidget {
           _HoldRepeatButton(
             icon: Icons.remove,
             tooltip: 'Shrink the rack by 1U (hold to repeat)',
+            // The floor stays a literal 1: every clamp in the system writes
+            // `.clamp(1, kMaxRackHeightU)`, so 1 is structural (a 0U rack is
+            // not a rack), while the ceiling is a policy number that moves.
             enabled: heightU > 1,
             onStep: () => onStep(-1),
           ),
@@ -256,7 +270,7 @@ class _HeightStepper extends StatelessWidget {
           _HoldRepeatButton(
             icon: Icons.add,
             tooltip: 'Grow the rack by 1U (hold to repeat)',
-            enabled: heightU < 60,
+            enabled: heightU < kMaxRackHeightU,
             onStep: () => onStep(1),
           ),
         ],

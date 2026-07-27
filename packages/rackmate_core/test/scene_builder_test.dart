@@ -310,6 +310,60 @@ void main() {
       final amp = result.devices.firstWhere((d) => d.deviceId.v == 'dev-amp');
       expect(amp.semanticLabel, 'AMP-1 — LR Amp, 16-channel amplifier');
     });
+
+    test('scene.bounds is the INK extent, not the union of layout rects — '
+        'it is what drives PDF scale-to-fit', () {
+      final result = buildRackScene(
+        rack: _rack(),
+        devices: devices,
+        templates: templates,
+        face: Face.front,
+        lod: LodLevel.full,
+        measurer: measurer,
+      );
+      final bounds = result.scene.bounds;
+      final chassis = result.chassisBounds;
+
+      // The enclosure frame is a 1.2pt stroke ON the chassis edge, so half
+      // of it lands outside — a `bounds` that stopped at the layout rect
+      // would clip it at the page margin.
+      expect(bounds.top, closeTo(-0.6, 1e-9));
+      expect(bounds.right, closeTo(chassis.right + 0.6, 1e-9));
+      expect(bounds.bottom, closeTo(chassis.bottom + 0.6, 1e-9));
+
+      // …and it still CONTAINS every device rect and the chassis, so the
+      // ink pass only ever grew the box.
+      expect(bounds.left, lessThanOrEqualTo(chassis.left));
+      for (final d in result.devices) {
+        expect(bounds.union(d.rect), bounds, reason: d.deviceId.v);
+      }
+    });
+
+    test('bounds grows to hold a fragment that draws outside its own rect', () {
+      // The property `symbol_layer` depends on, exercised through the one
+      // scene builder that exists: a layer's ink is unioned in AFTER being
+      // shifted by that fragment's translate, so ink that overhangs the
+      // layout rect is inside `bounds` wherever the fragment sits.
+      final result = buildRackScene(
+        rack: _rack(),
+        devices: devices,
+        templates: templates,
+        face: Face.front,
+        lod: LodLevel.full,
+        measurer: measurer,
+      );
+      for (final d in result.devices) {
+        final ink = inkBoundsOf(
+          result.scene.fragmentFor(d.deviceId.v).ops,
+          measurer: measurer,
+        )!.shift(d.rect.left, d.rect.top);
+        expect(
+          result.scene.bounds.union(ink),
+          result.scene.bounds,
+          reason: "${d.deviceId.v}'s ink escaped scene.bounds",
+        );
+      }
+    });
   });
 
   group('buildRackScene — front/rear face filter (docs/04 §2.2)', () {

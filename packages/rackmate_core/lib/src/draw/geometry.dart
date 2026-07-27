@@ -93,6 +93,12 @@ final class DBox {
   DBox inflate(double amount) =>
       DBox._(left - amount, top - amount, right + amount, bottom + amount);
 
+  /// The same box moved by [dx]/[dy] — what turns a fragment's LOCAL ink
+  /// bounds into absolute scene coordinates, alongside the `OpTransform`
+  /// translate that brackets the fragment's ops.
+  DBox shift(double dx, double dy) =>
+      DBox._(left + dx, top + dy, right + dx, bottom + dy);
+
   @override
   bool operator ==(Object other) =>
       other is DBox &&

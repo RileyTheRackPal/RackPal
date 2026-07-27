@@ -451,10 +451,43 @@ class _ShrinkRackDialogState extends State<ShrinkRackDialog> {
 }
 
 /// Rule 4's cost table: "designator, description, U range, and LINK COUNT".
+///
+/// AND [DoomedOccupant.kind], which this table used to drop on the floor.
+/// `rack_shrink.dart` exists partly so an occupant it cannot model is
+/// COUNTED rather than skipped: a rail device whose template resolves to
+/// zero height on its claimed face is emitted with `deviceH: 1` because
+/// that is "the least it can possibly occupy", and a 0U occupant is
+/// emitted spanning its CHANNEL (the whole rack, when the channel it names
+/// cannot be found). Both are deliberately conservative SUBSTITUTES.
+/// Printing them through the same `U3` / `U1–U42` formatter as a measured
+/// rail footprint hands the user a number the app does not actually know,
+/// in the one dialog whose entire job is to state the cost of a
+/// destructive-feeling action accurately. Every non-`rail` casualty is
+/// therefore marked, and the marker is explained under the table.
 class _CasualtyList extends StatelessWidget {
   const _CasualtyList({required this.plan});
 
   final RackShrinkPlan plan;
+
+  /// The footnote marker for [kind], or null when the range is measured.
+  static String? _marker(DoomedKind kind) => switch (kind) {
+    DoomedKind.rail => null,
+    DoomedKind.unmodelledRail => '†',
+    DoomedKind.zeroU => '‡',
+  };
+
+  static String _footnote(DoomedKind kind) => switch (kind) {
+    DoomedKind.rail => '',
+    DoomedKind.unmodelledRail =>
+      '†  Height not known. Nothing in the document says how tall this '
+          'device is on the face it claims, so the U range shows the LEAST '
+          'it can occupy. It may occupy more.',
+    DoomedKind.zeroU =>
+      "‡  0U occupant. The U range is its vertical channel's span — the "
+          "range that must survive for it to keep a home — not the device's "
+          'own height. A channel that cannot be found is shown as the whole '
+          'rack.',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -502,12 +535,23 @@ class _CasualtyList extends StatelessWidget {
                   ),
                 ),
                 SizedBox(
-                  width: 108,
-                  child: Text(
-                    '${_uRange(d)} ${d.face.name}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
+                  width: 124,
+                  child: Builder(
+                    builder: (context) {
+                      final marker = _marker(d.kind);
+                      final text = Text(
+                        '${_uRange(d)} ${d.face.name}'
+                        '${marker == null ? '' : ' $marker'}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      );
+                      if (marker == null) return text;
+                      return Tooltip(
+                        message: _footnote(d.kind),
+                        child: text,
+                      );
+                    },
                   ),
                 ),
                 SizedBox(
@@ -528,6 +572,19 @@ class _CasualtyList extends StatelessWidget {
               ],
             ),
           ),
+        // The legend, printed only for the markers actually on screen — in
+        // the enum's own order so it does not shuffle between plans.
+        for (final kind in DoomedKind.values)
+          if (kind != DoomedKind.rail && plan.doomed.any((d) => d.kind == kind))
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                _footnote(kind),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
       ],
     );
   }

@@ -189,18 +189,34 @@ final class IntRange {
   String toString() => 'IntRange($start, $end)';
 }
 
-/// A minimal geometric hit region: an entity id plus a bounding box.
+/// A minimal geometric hit region: an entity id, a bounding box, and
+/// optionally the sub-part of that entity the box belongs to.
 ///
 /// M1 SCOPE NOTE: a `DBox` is enough for point-in-region testing against
 /// device bodies and furniture. This will need to grow (segment lists for
 /// wire runs, etc.) once the schematic canvas's link hit-testing lands in
 /// M2 (docs/03-architecture.md §7.4, CR-084) — do not over-build it now.
+/// [partKey] is the first instalment of that growth: a schematic symbol
+/// needs its PINS in `DiagramScene.hits`, not only its body, and the
+/// alternative — a parallel symbol-only query type that no generic consumer
+/// of `hits` can see — is precisely what §7.4 rules out.
 @immutable
 final class HitRegion {
-  const HitRegion(this.entityId, this.bounds);
+  const HitRegion(this.entityId, this.bounds, {this.partKey});
 
+  /// The owning entity — a `DeviceInstance.id.v` in both the rack elevation
+  /// and the schematic. Selection, PDF annotations and anything else that
+  /// only cares "which device" can read this and ignore [partKey].
   final String entityId;
+
   final DBox bounds;
+
+  /// The sub-part of [entityId] this box covers, or `null` when the box IS
+  /// the entity (a device body). Currently only a schematic pin's
+  /// `SymbolPort.key` (the stable author-assigned join, CR-051 — never a
+  /// UUID), so a schematic-aware consumer can tell "the MTX-1" from "the
+  /// MTX-1's J07" while a generic one still resolves both to the device.
+  final String? partKey;
 
   bool contains(DPt p) => bounds.contains(p);
 
@@ -208,13 +224,15 @@ final class HitRegion {
   bool operator ==(Object other) =>
       other is HitRegion &&
       other.entityId == entityId &&
-      other.bounds == bounds;
+      other.bounds == bounds &&
+      other.partKey == partKey;
 
   @override
-  int get hashCode => Object.hash(entityId, bounds);
+  int get hashCode => Object.hash(entityId, bounds, partKey);
 
   @override
-  String toString() => 'HitRegion($entityId, $bounds)';
+  String toString() =>
+      'HitRegion($entityId${partKey == null ? '' : '#$partKey'}, $bounds)';
 }
 
 /// The output of `buildScene` (docs/03-architecture.md §7.2): a flat,

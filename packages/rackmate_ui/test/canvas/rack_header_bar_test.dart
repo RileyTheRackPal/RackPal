@@ -25,6 +25,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rackmate_core/rackmate_core.dart' show kMaxRackHeightU;
 import 'package:rackmate_ui/rackmate_ui.dart';
 
 /// The stepper's `-` button. `Icons.remove` is unique in this widget.
@@ -363,6 +364,65 @@ void main() {
         [-1, -1],
         reason: 'the post-frame clear re-opened the keyboard path',
       );
+    });
+  });
+
+  // ── the stepper's bounds ARE CR-038's bounds ──────────────────────────
+  //
+  // `+` was disabled at the literal `60` while every height path in the
+  // system clamps to `kMaxRackHeightU`. The two agree today only because
+  // the constant happens to be 60. These tests are written against the
+  // CONSTANT, so raising CR-038's ceiling moves the control with it instead
+  // of leaving a working capability behind a dead button.
+  group('the grow/shrink buttons describe the range they operate over', () {
+    Widget appAt(int heightU) => MaterialApp(
+      home: Scaffold(
+        body: Align(
+          alignment: Alignment.topLeft,
+          child: RackHeaderBar(
+            designator: 'RK-1',
+            name: 'Media Closet',
+            heightU: heightU,
+            onHeaderTap: () {},
+            onAction: (_) {},
+            onStep: (_) => true,
+          ),
+        ),
+      ),
+    );
+
+    bool enabled(WidgetTester tester, IconData icon) =>
+        tester
+            .widget<IconButton>(
+              find.ancestor(
+                of: find.byIcon(icon),
+                matching: find.byType(IconButton),
+              ),
+            )
+            .onPressed !=
+        null;
+
+    testWidgets('+ is live one below kMaxRackHeightU and dead at it', (
+      tester,
+    ) async {
+      await tester.pumpWidget(appAt(kMaxRackHeightU - 1));
+      expect(enabled(tester, Icons.add), isTrue);
+
+      await tester.pumpWidget(appAt(kMaxRackHeightU));
+      expect(
+        enabled(tester, Icons.add),
+        isFalse,
+        reason: 'the ceiling the funnel enforces is the ceiling the control '
+            'shows — read from the constant, not retyped as 60',
+      );
+    });
+
+    testWidgets('- is dead at 1U and live at 2U', (tester) async {
+      await tester.pumpWidget(appAt(1));
+      expect(enabled(tester, Icons.remove), isFalse);
+
+      await tester.pumpWidget(appAt(2));
+      expect(enabled(tester, Icons.remove), isTrue);
     });
   });
 }

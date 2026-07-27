@@ -168,8 +168,15 @@ class RackInspectorPanel extends StatelessWidget {
           onCommit: (v) {
             final parsed = int.tryParse(v.trim());
             if (parsed == null) return; // validate() already refused it.
-            if (parsed < 1 || parsed > 60) {
-              onRefuse('Height clamped to ${parsed.clamp(1, 60)}U (1–60).');
+            // CR-038's ceiling is read, not retyped: the guard, the clamp
+            // and the sentence the user reads must all move together when
+            // the constant does, or the refusal text starts naming a range
+            // the app no longer enforces.
+            if (parsed < 1 || parsed > kMaxRackHeightU) {
+              onRefuse(
+                'Height clamped to ${parsed.clamp(1, kMaxRackHeightU)}U '
+                '(1–$kMaxRackHeightU).',
+              );
             }
             onRequestHeight(parsed);
           },

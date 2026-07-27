@@ -53,7 +53,12 @@ final class RackDocument {
     required this.modifiedAt,
     required this.meta,
     this.schemaVersion = kSchemaVersion,
-    this.minReaderVersion = 1,
+    // Was a literal `1`, which stopped being true the moment the encoder
+    // began omitting `PowerProfile.outletsProvided`/`outletsConsumed`: a
+    // build claiming "any v1 reader can open me" while writing bytes that
+    // make a v1 reader throw is the missing version signal itself. See
+    // `kMinReaderVersion`.
+    this.minReaderVersion = kMinReaderVersion,
     this.sequence = 0,
     this.stateId = 0,
     ProjectInfo? info,

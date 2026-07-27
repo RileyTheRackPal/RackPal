@@ -103,11 +103,18 @@ void main() {
 
     test('every rackEars template heavier than 7 kg carries '
         'maxUnsupportedMass (feeds RCK-013, C12)', () {
+      // COUNTED, and the count is asserted. This test previously passed
+      // because the catalog stored every mass 1000x too small, so the
+      // `weightKg > 7` gate below never fired once and the assertion inside
+      // it had never run in the life of the suite. A gate with no proof it
+      // fires is not a test.
+      var overLimit = 0;
       for (final entry in catalog.entries) {
         final body = entry.value;
         if (body.mountMethod != MountMethod.rackEars) continue;
         final weightKg = (body.weight?.ug ?? 0) / 1e9;
         if (weightKg > 7) {
+          overLimit++;
           expect(
             body.maxUnsupportedMass,
             isNotNull,
@@ -116,6 +123,115 @@ void main() {
           );
         }
       }
+      expect(
+        overLimit,
+        greaterThanOrEqualTo(8),
+        reason: 'the >7 kg branch must actually execute — a catalog where '
+            'nothing clears 7 kg means the mass scale is wrong again, not '
+            'that the fleet got lighter',
+      );
+    });
+  });
+
+  // ── MASS SCALE ─────────────────────────────────────────────────────────
+  //
+  // `Mass` is int64 MICROGRAMS (CR-003): 1 kg = 1e9 µg. Nine catalog files
+  // each carried `Mass((v * 1_000_000).round())` — the factor that is right
+  // for the neighbouring `Len` millimetre helper and wrong by 1000x here —
+  // so all 48 shipped templates stored GRAMS. Nothing caught it: the only
+  // weight assertions in this file were `isNotNull`, and presence is exactly
+  // what a scale error survives.
+  //
+  // Everything below therefore pins MAGNITUDE, and pins it against numbers a
+  // human authored in the catalog source and in docs/catalog/seed-devices.md,
+  // not against whatever the code currently computes.
+  group('shipped weights are real kilograms, not grams (CR-003)', () {
+    Mass weightOf(String id) {
+      final body = catalog[id];
+      expect(body, isNotNull, reason: '$id is not in the catalog');
+      final weight = body!.weight;
+      expect(weight, isNotNull, reason: '$id has no weight');
+      return weight!;
+    }
+
+    test('P03 stores exactly the 41.7 kg its own description claims', () {
+      // catalog_power.dart's P03 description reads "A 41.7 kg device
+      // instantly blows a wall-rack rating". The stored integer must BE that
+      // sentence's number, to the microgram.
+      expect(weightOf('P03').ug, 41_700_000_000);
+    });
+
+    test('a human reads back the kilograms a human authored', () {
+      // The full loop the chip strip walks: authored kg -> stored µg ->
+      // `unit_formatter` -> the string on screen.
+      expect(weightOf('P03').toKilograms(fractionDigits: 1), '41.7 kg');
+      expect(weightOf('A01').toKilograms(fractionDigits: 1), '17.2 kg');
+      expect(weightOf('X01').toKilograms(), '0.45 kg');
+      final shelfCapacity = catalog['X03']!.containerWeightCapacity!;
+      expect(shelfCapacity.toKilograms(), '22.70 kg');
+      expect(weightOf('P03').toPounds(fractionDigits: 1), '91.9 lb');
+    });
+
+    test('the chip strip cannot render a stocked rack as 0 lb', () {
+      // The exact failure this scale error produced: `RackMetricsRow`
+      // formats pounds with `fractionDigits: 0`, so a 1000x-small catalog
+      // printed a confident "0 lb" for a 0.45 kg blank panel AND for a
+      // 17.2 kg amplifier. Neither may round to zero.
+      for (final id in ['X01', 'A01', 'P03', 'N01']) {
+        expect(
+          weightOf(id).toPoundsValue(fractionDigits: 0),
+          isNot('0'),
+          reason: '$id renders as a measured zero in the weight chip',
+        );
+      }
+    });
+
+    test('no rack-side template weighs less than 50 g, and the heaviest is '
+        'UPS-class', () {
+      var heaviest = Mass.zero;
+      for (final entry in catalog.entries) {
+        if (entry.value.category == kCatField) continue;
+        final ug = entry.value.weight!.ug;
+        expect(
+          ug,
+          greaterThan(50 * 1000 * 1000), // 50 g
+          reason: '${entry.key} weighs ${ug / 1e9} kg — nothing rack-mounted '
+              'is that light; the kg->µg factor is wrong',
+        );
+        if (ug > heaviest.ug) heaviest = Mass(ug);
+      }
+      // §3.7 ships a 41.7 kg UPS as the fleet's heaviest item, and the whole
+      // point of shipping it is that it "instantly blows a wall-rack rating".
+      expect(heaviest.ug, inInclusiveRange(30_000_000_000, 60_000_000_000));
+    });
+
+    test('maxUnsupportedMass is the documented 7 kg and is genuinely '
+        'exceeded (AC-028)', () {
+      var exceeded = 0;
+      for (final entry in catalog.entries) {
+        final limit = entry.value.maxUnsupportedMass;
+        if (limit == null) continue;
+        expect(
+          limit.ug,
+          7_000_000_000,
+          reason: '${entry.key}: docs/catalog/seed-devices.md §3 fixes the '
+              'rackEars front-ear limit at 7 kg',
+        );
+        if (entry.value.weight!.ug > limit.ug) exceeded++;
+      }
+      expect(
+        exceeded,
+        greaterThan(0),
+        reason: 'C12: RCK-013 needs at least one template that actually '
+            'trips its own limit',
+      );
+    });
+
+    test('Mass.fromKilograms is the only kg conversion and it is 1e9', () {
+      expect(Mass.ugPerKilogram, 1_000_000_000);
+      expect(Mass.fromKilograms(1).ug, 1_000_000_000);
+      expect(Mass.fromKilograms(0.001).ug, 1_000_000);
+      expect(Len.fromMillimetres(1).nm, 1_000_000);
     });
 
     test('every 3.5 mm IR port carries a cited pinoutVariant (C7, AC-052)', () {
@@ -358,6 +474,94 @@ void main() {
       expect(result, isA<CatalogPlacementFailed>());
       expect(doc.devices, isEmpty);
       expect(controller.undo.canUndo, isFalse);
+    });
+
+    // ── 0U-vertical never becomes a rail placement ────────────────────
+    //
+    // P01 is `frontU: 0, rearU: 0, side: zeroUVertical`. Both quick-add
+    // paths used to resolve `deviceH = 0` and commit a `RailPlacement`
+    // anyway, because every guard between here and the command is a
+    // range check that a zero-height device passes vacuously. The device
+    // was then never painted (`scene_builder.dart` skips `deviceH <= 0`),
+    // so the app announced a successful placement for something invisible
+    // and unclickable, on the face the user was not looking at.
+    test('a 0U-vertical template is refused at an explicit caret, not '
+        'silently rail-placed (AC-044)', () {
+      final r = rack();
+      final doc = docWithCatalog(r);
+      final result = buildPlaceFromCatalogCommand(
+        doc: doc,
+        catalogId: 'P01',
+        targetRack: r,
+        now: now,
+        actor: 'tester',
+        explicitRuIndex: 3,
+      );
+      expect(result, isA<CatalogPlacementFailed>());
+      final reason = (result as CatalogPlacementFailed).reason;
+      expect(reason, contains('0U occupant'));
+      expect(reason, contains('AC-044'));
+      // The refusal must not blame rack space for a missing feature.
+      expect(reason, isNot(contains('free')));
+      expect(doc.devices, isEmpty);
+    });
+
+    test('a 0U-vertical template is refused on the lowest-free-U path too, '
+        'and does not blame rack space', () {
+      final r = rack();
+      final doc = docWithCatalog(r);
+      final result = buildPlaceFromCatalogCommand(
+        doc: doc,
+        catalogId: 'P01',
+        targetRack: r,
+        now: now,
+        actor: 'tester',
+      );
+      expect(result, isA<CatalogPlacementFailed>());
+      final reason = (result as CatalogPlacementFailed).reason;
+      expect(reason, contains('0U occupant'));
+      expect(reason, isNot(contains('No 0U free')));
+    });
+
+    test('every template this factory DOES rail-place occupies at least 1U '
+        'on the face it lands on', () {
+      // The general invariant behind the P01 case: a `RailPlacement` this
+      // function emits must be a footprint `scene_builder` will actually
+      // draw, for every one of the 48 shipped templates — not just the one
+      // that was noticed.
+      final r = Rack(
+        id: const Uuid('rk-tall'),
+        name: 'Tall',
+        designator: 'RK-9',
+        heightU: 45,
+        order: const FracIndex('a0'),
+        meta: EntityMeta(createdAt: now, updatedAt: now, updatedBy: 'test'),
+      );
+      var railPlaced = 0;
+      for (final id in catalog.keys) {
+        final doc = docWithCatalog(r);
+        final result = buildPlaceFromCatalogCommand(
+          doc: doc,
+          catalogId: id,
+          targetRack: r,
+          now: now,
+          actor: 'tester',
+          explicitRuIndex: 1,
+        );
+        if (result is! CatalogPlacementReady) continue;
+        final placement = result.command.placement;
+        if (placement is! RailPlacement) continue;
+        railPlaced++;
+        final body = catalog[id]!;
+        final h = placement.face == Face.front ? body.frontU : body.rearU;
+        expect(
+          h,
+          greaterThan(0),
+          reason: '$id was rail-placed on the ${placement.face.name} face '
+              'where it occupies ${h}U — it would never be drawn',
+        );
+      }
+      expect(railPlaced, greaterThan(20), reason: 'the loop must do work');
     });
 
     test('placement round-trips through undo (device count restored)', () {

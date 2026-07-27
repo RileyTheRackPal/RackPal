@@ -131,9 +131,9 @@
   },
   "generator": "RackMate",
   "id": "0190e3c1-0000-7000-8000-000000000001",
-  "minReaderVersion": 1,
+  "minReaderVersion": 2,
   "modifiedAt": "2026-07-18T16:42:55.000Z",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "sequence": 0,
   "unknown": {}
 }

@@ -5,7 +5,8 @@
 // re-exported here so persistence/ call sites can get it from the
 // persistence-layer surface they're already importing.
 
-export 'package:rackmate_core/src/units/constants.dart' show kSchemaVersion;
+export 'package:rackmate_core/src/units/constants.dart'
+    show kMinReaderVersion, kSchemaVersion;
 
 /// The container format's magic generator tag (CR-092). A root
 /// `"generator"` key that is not exactly this string means the file is

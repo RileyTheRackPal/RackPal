@@ -2334,11 +2334,12 @@ PortPowerSpec _decodePortPowerSpec(JsonMap json) => PortPowerSpec(
 );
 
 JsonMap _encodePowerProfile(PowerProfile p) {
-  final json = <String, Object?>{
-    'isContinuousLoad': p.isContinuousLoad,
-    'outletsProvided': p.outletsProvided,
-    'outletsConsumed': p.outletsConsumed,
-  };
+  final json = <String, Object?>{'isContinuousLoad': p.isContinuousLoad};
+  // Omitted when unauthored, not written as 0: `outletsProvided: 0` is a
+  // measurement and must survive the round trip as one, while an absent key
+  // must come back absent so the rollups keep counting it unknown (CR-114).
+  putIfNotNull(json, 'outletsProvided', p.outletsProvided);
+  putIfNotNull(json, 'outletsConsumed', p.outletsConsumed);
   putIfNotNull(json, 'nameplateWatts', p.nameplateWatts);
   putIfNotNull(json, 'typicalWatts', p.typicalWatts);
   putIfNotNull(json, 'standbyWatts', p.standbyWatts);
@@ -2365,11 +2366,11 @@ PowerProfile _decodePowerProfile(JsonMap json) => PowerProfile(
     json['isContinuousLoad'],
     'PowerProfile.isContinuousLoad',
   ),
-  outletsProvided: asInt(
+  outletsProvided: asIntOrNull(
     json['outletsProvided'],
     'PowerProfile.outletsProvided',
   ),
-  outletsConsumed: asInt(
+  outletsConsumed: asIntOrNull(
     json['outletsConsumed'],
     'PowerProfile.outletsConsumed',
   ),

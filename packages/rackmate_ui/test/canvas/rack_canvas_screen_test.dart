@@ -367,6 +367,43 @@ void main() {
       expect(selected, hasLength(1));
     });
 
+    testWidgets('double-clicking the 0U-vertical PDU row adds NO device and '
+        'says why (AC-044)', (tester) async {
+      // P01 is `frontU: 0, rearU: 0, side: zeroUVertical`. The quick-add
+      // path used to resolve `deviceH = 0`, pass every range guard
+      // vacuously, commit a RailPlacement on the REAR face and announce
+      // "Placed PDU-1 at RK-1 U3, rear." — for a device `scene_builder`
+      // then declined to draw, so nothing appeared, nothing could be
+      // clicked, and the invisible device became the sole selection.
+      await tester.pumpWidget(_app());
+      await tester.pump();
+
+      final beforeCount = tester.widgetList(find.byType(DeviceBox)).length;
+
+      await tester.enterText(find.byType(TextField), 'Rack PDU');
+      await tester.pumpAndSettle();
+      final row = find.widgetWithText(
+        ListTile,
+        'Rack PDU, 0U vertical, 24-outlet',
+      );
+      expect(row, findsOneWidget);
+      await tester.tap(row);
+      await tester.pump(kDoubleTapMinTime);
+      await tester.tap(row);
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widgetList(find.byType(DeviceBox)).length,
+        beforeCount,
+        reason: 'no device may be placed for a template with no rail '
+            'footprint',
+      );
+      // "Never silently do nothing" — the refusal reaches the user, and it
+      // names the real reason rather than blaming rack space.
+      expect(find.textContaining('0U occupant'), findsWidgets);
+      expect(find.textContaining('No 0U free'), findsNothing);
+    });
+
     testWidgets('placing then undoing removes the placed device', (
       tester,
     ) async {
@@ -855,9 +892,36 @@ void main() {
       await gesture.moveBy(const Offset(0, 30)); // past slop, still in palette
       await tester.pump();
 
-      // Two "Blank Panel, 1U" texts now exist: the palette row's own title
-      // AND the floating cursor card's copy of the same display name.
-      expect(find.text('Blank Panel, 1U'), findsNWidgets(2));
+      // SCOPED, NOT COUNTED. This assertion used to read
+      // `findsNWidgets(2)` — the palette row's own title plus the floating
+      // cursor card's copy of the same display name — and it broke the
+      // moment the Staging Bin chip started rendering that string a third
+      // time. Relaxing it to 3 would have "fixed" it while proving strictly
+      // less: a bare count says nothing about WHICH widgets carry the name,
+      // so it passes just as happily when the cursor card stops showing it
+      // and some fourth surface starts. Each of the two the step actually
+      // claims is now asserted where it lives.
+      expect(
+        find.descendant(
+          of: find.byType(ListTile),
+          matching: find.text('Blank Panel, 1U'),
+        ),
+        findsOneWidget,
+        reason: 'the palette row keeps its title while its device is lifted',
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(kDragCursorCardKey),
+          matching: find.text('Blank Panel, 1U'),
+        ),
+        findsOneWidget,
+        reason: 'docs/04 §3.1 step 2: the cursor card names the device',
+      );
+      // The card floats AT the pointer, which is the other half of this
+      // test's own name and was never actually asserted.
+      final cardTopLeft = tester.getTopLeft(find.byKey(kDragCursorCardKey));
+      expect(cardTopLeft.dx, closeTo(rowCentre.dx + 16, 0.5));
+      expect(cardTopLeft.dy, closeTo(rowCentre.dy + 30 + 16, 0.5));
 
       final dimmed = tester
           .widgetList<Opacity>(

@@ -414,8 +414,8 @@ final class PowerProfile {
     this.apparentVA,
     this.powerFactor,
     this.isContinuousLoad = false,
-    this.outletsProvided = 0,
-    this.outletsConsumed = 0,
+    this.outletsProvided,
+    this.outletsConsumed,
     this.inletPlug,
     this.poeBudgetWatts,
     this.btuPerHourOverride,
@@ -440,8 +440,29 @@ final class PowerProfile {
   /// Permille. 650 for a linear-supply amp.
   int? powerFactor;
   bool isContinuousLoad;
-  int outletsProvided;
-  int outletsConsumed;
+
+  /// How many outlets this device PROVIDES, or null when the template was
+  /// never authored for outlets at all.
+  ///
+  /// NULLABLE, and the nullability is the point (CR-114, G4). These two
+  /// shipped as non-nullable `int`s defaulting to 0, which structurally
+  /// cannot tell "this device provides no outlets" from "nobody has told
+  /// us how many outlets this device provides". `derived/totals.dart`
+  /// therefore counted every unauthored template as a KNOWN zero, and the
+  /// chip strip rendered a confident `outlets 0/0` — with no unknown
+  /// superscript — on the app's own default document, which is the exact
+  /// fabrication the chip strip exists to prevent. docs/06-device-builder.md
+  /// already specified these as "all nullable `int` and all optional";
+  /// the implementation had followed docs/02-data-model.md's terser
+  /// `int outletsProvided, outletsConsumed;` line instead.
+  ///
+  /// A seeded template that genuinely has no outlets states `0` EXPLICITLY
+  /// (see `catalog_*.dart`) — that is a measurement, and it stays one.
+  int? outletsProvided;
+
+  /// How many outlets this device CONSUMES, or null when unauthored. See
+  /// [outletsProvided]; a redundant-PSU switch authors 2 (AC-020).
+  int? outletsConsumed;
   PlugType? inletPlug;
 
   /// `NET-001` depends on it (CR-056).

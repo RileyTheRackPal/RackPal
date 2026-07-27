@@ -16,6 +16,7 @@
 //   * the "dotted rail texture" of the 0.40–0.74 tier — also a flat fill;
 //   * rear-mirroring and the "NOT MIRRORED" chip (docs/04 §2.2).
 
+import 'package:rackmate_core/src/draw/bounds_canvas.dart';
 import 'package:rackmate_core/src/draw/geometry.dart';
 import 'package:rackmate_core/src/draw/ops.dart';
 import 'package:rackmate_core/src/draw/scene/rack_geometry.dart';
@@ -25,10 +26,23 @@ import 'package:rackmate_core/src/draw/text.dart';
 import 'package:rackmate_core/src/model/enums.dart' show RuNumbering;
 import 'package:rackmate_core/src/model/rack.dart';
 
-/// The result of building one scene layer: its ops plus the smallest text
-/// size it actually emitted (`double.infinity` when it drew no text), which
-/// scene_builder folds into `DiagramScene.minTextSizePt`.
-typedef LayerBuild = ({List<DiagramOp> ops, double minTextPt});
+/// The result of building one scene layer: its ops, the smallest text size
+/// it actually emitted (`double.infinity` when it drew no text, folded into
+/// `DiagramScene.minTextSizePt`), and the layer's INK BOUNDS.
+///
+/// `inkBounds` is the box the layer's ops actually cover, in the layer's own
+/// coordinate space (LOCAL for device/symbol fragments, absolute for the
+/// chassis), or `null` when the layer drew nothing. It is a field rather
+/// than something a caller re-derives from a layout rect because a layer is
+/// NOT obliged to stay inside the rect it was sized to: `device_layer`
+/// happens to, `symbol_layer` deliberately does not — its pins straddle the
+/// body edge and its top/bottom labels sit outside it entirely. A caller
+/// unioning layout rects alone therefore computes a `DiagramScene.bounds`
+/// that is too small, and `bounds` is what drives PDF scale-to-fit
+/// (ops.dart, "-> scale-to-fit, tile counts"), so "too small" means
+/// "clipped on the page". Every builder fills this in from
+/// [inkBoundsOf] — measured from the ops it emitted, never hand-maintained.
+typedef LayerBuild = ({List<DiagramOp> ops, double minTextPt, DBox? inkBounds});
 
 /// Builds the chassis fragment for [rack] using [geo], at [lod].
 ///
@@ -123,6 +137,7 @@ LayerBuild buildRackLayer(
   return (
     ops: ops,
     minTextPt: emittedText ? RackTextSizes.ruler : double.infinity,
+    inkBounds: inkBoundsOf(ops, measurer: measurer),
   );
 }
 

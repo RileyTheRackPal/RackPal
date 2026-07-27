@@ -264,6 +264,41 @@ CatalogPlacementResult buildPlaceFromCatalogCommand({
     final face = body.frontU > 0 ? Face.front : Face.rear;
     final deviceH = face == Face.front ? body.frontU : body.rearU;
 
+    // A TEMPLATE WITH NO RAIL FOOTPRINT NEVER GETS A `RailPlacement`.
+    //
+    // `side: zeroUVertical` (P01, the 0U PDU) is `frontU: 0, rearU: 0`, so
+    // `deviceH` resolves to 0. Everything downstream then quietly agrees
+    // that nothing happened: the overflow check `ru + 0 - 1 > heightU` is
+    // false for any caret, `findBlockingOccupant` loops zero times and
+    // returns null, and a `RailPlacement` was committed and announced as
+    // "Placed PDU-1 at RK-1 U3, rear." Meanwhile `scene_builder.dart`
+    // skips `deviceH <= 0`, so the device is never painted, cannot be
+    // clicked, cannot be selection-chromed, and landed on the REAR face
+    // while the user was looking at the front. A reported success for a
+    // device that does not exist on screen is the worst possible outcome
+    // of the three.
+    //
+    // The refusal names the actual reason. Before this guard, the
+    // no-caret path fell through to `findLowestFreeRu`, which returns null
+    // for `deviceH <= 0` and produced "No 0U free on RK-1 (rear) for P01."
+    // — blaming rack space for a feature that does not exist. P01's own
+    // description already states the truth (AC-044: 0U occupants are
+    // created and edited from the inspector in v1), and the drag path
+    // already honours it via its `mountable` guard; this is the
+    // double-click / row-Enter / search-Enter path catching up.
+    if (deviceH <= 0) {
+      final isZeroU =
+          body.side == OccupancySide.zeroUVertical ||
+          body.mountMethod == MountMethod.zeroU;
+      return CatalogPlacementFailed(
+        isZeroU
+            ? '$catalogId is a 0U occupant: it mounts in a vertical channel, '
+                  'not rail holes. Add it from the rack inspector (AC-044).'
+            : '$catalogId occupies 0U on the ${face.name} face — there is no '
+                  'rail footprint to place.',
+      );
+    }
+
     final int ruIndex;
     if (explicitRuIndex != null) {
       final overflow =

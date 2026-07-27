@@ -590,4 +590,164 @@ void main() {
       expectAllInside(doc);
     });
   });
+
+  // ── the casualty table tells the truth about its own U ranges ─────────
+  //
+  // `rack_shrink.dart` emits a SUBSTITUTE footprint for any occupant it
+  // cannot model, so the occupant is named rather than silently skipped:
+  // an unmodellable rail device gets `deviceH: 1` ("the least it can
+  // possibly occupy") and a 0U occupant gets its CHANNEL's span (the whole
+  // rack when the channel cannot be found). The table used to render all
+  // three kinds through the same `U3` / `U1–U20` formatter, so the user
+  // consented to displacing a device whose footprint the app had just told
+  // them it knew. `grep kind shrink_rack_dialog.dart` returned nothing.
+  group('the casualty table marks a substituted footprint as substituted', () {
+    /// A 20U rack holding one ordinary 2U device at U18, one rail device
+    /// whose template gives it ZERO U on the face it claims (the
+    /// `DoomedKind.unmodelledRail` shape — reachable in the shipped app by
+    /// quick-adding a 0U-vertical template onto the rails), and one 0U
+    /// occupant naming a channel the rack does not have
+    /// (`DoomedKind.zeroU`, reported as spanning the whole rack).
+    RackDocument mixedDoc() {
+      final doc = _doc(20, [_at('RAIL', 18, 2)]);
+
+      // Front-mounted, but the template is rear-only: `railOccupantsOnFace`
+      // resolves 0U on the front and skips it, which is exactly the case
+      // `unmodelledRail` exists for.
+      doc.templates['tpl.rearonly@1'] = TemplateSnapshot(
+        templateId: const TemplateId('tpl.rearonly'),
+        version: 1,
+        contentHash: 'sha256:tpl.rearonly',
+        capturedAt: DateTime.utc(2026),
+        body: TemplateBody(
+          manufacturer: 'Generic',
+          model: 'rearonly',
+          displayName: 'rearonly',
+          rearU: 1,
+          side: OccupancySide.rear,
+          mountMethod: MountMethod.rackEars,
+        ),
+      );
+      doc.devices[const Uuid('dev-GHOST')] = DeviceInstance(
+        id: const Uuid('dev-GHOST'),
+        kind: DeviceKind.rackDevice,
+        templateRef: const TemplateRef(
+          templateId: TemplateId('tpl.rearonly'),
+          version: 1,
+          contentHash: 'sha256:tpl.rearonly',
+        ),
+        designator: 'GHOST',
+        name: 'Unmodelled device',
+        placement: const RailPlacement(
+          rackId: _rackId,
+          ruIndex: 19,
+          face: Face.front,
+        ),
+        meta: _meta(),
+      );
+
+      doc.devices[const Uuid('dev-PDU')] = DeviceInstance(
+        id: const Uuid('dev-PDU'),
+        kind: DeviceKind.pdu,
+        templateRef: const TemplateRef(
+          templateId: TemplateId('tpl.rearonly'),
+          version: 1,
+          contentHash: 'sha256:tpl.rearonly',
+        ),
+        designator: 'PDU-1',
+        name: 'Vertical PDU',
+        placement: const ZeroUPlacement(
+          rackId: _rackId,
+          channelId: 'no-such-channel',
+          offsetFromChannelStart: Len.zero,
+          orientation: ZeroUOrientation.vertical,
+        ),
+        meta: _meta(),
+      );
+      return doc;
+    }
+
+    Future<void> open(WidgetTester tester, RackDocument doc) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ShrinkRackDialog(
+              doc: doc,
+              rackId: _rackId,
+              requestedHeightU: 12,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    /// Every string rendered by the dialog, so an assertion can be about
+    /// what the USER reads rather than about a widget key.
+    List<String> texts(WidgetTester tester) => tester
+        .widgetList<Text>(find.byType(Text))
+        .map((t) => t.data ?? '')
+        .toList();
+
+    testWidgets('the fixture really does produce all three kinds — otherwise '
+        'everything below is vacuous', (tester) async {
+      final plan = _plan(mixedDoc(), 12, TrimFrom.top);
+      expect(
+        plan.doomed.map((d) => d.kind).toSet(),
+        {DoomedKind.rail, DoomedKind.unmodelledRail, DoomedKind.zeroU},
+      );
+      expect(plan.hasUnmodelledOccupants, isTrue);
+    });
+
+    testWidgets('an unmodelled rail device is NOT shown as a plain 1U '
+        'occupant', (tester) async {
+      await open(tester, mixedDoc());
+
+      final rendered = texts(tester);
+      // The bug, stated as an assertion: `U19 front` with nothing else on
+      // it is indistinguishable from a genuinely 1U panel at U19.
+      expect(
+        rendered,
+        isNot(contains('U19 front')),
+        reason: 'a substituted 1U footprint must not read as a measured one',
+      );
+      expect(rendered, contains('U19 front †'));
+      // And the marker is explained, not left as decoration.
+      expect(
+        rendered.any((t) => t.startsWith('†') && t.contains('LEAST')),
+        isTrue,
+        reason: 'the dagger needs a legend saying the range is a floor',
+      );
+    });
+
+    testWidgets('a 0U occupant is NOT shown as a 20U-tall device', (
+      tester,
+    ) async {
+      await open(tester, mixedDoc());
+
+      final rendered = texts(tester);
+      expect(
+        rendered,
+        isNot(contains('U1–U20 front')),
+        reason: "the span is the CHANNEL's, not the device's height",
+      );
+      expect(rendered, contains('U1–U20 front ‡'));
+      expect(
+        rendered.any((t) => t.startsWith('‡') && t.contains('channel')),
+        isTrue,
+      );
+    });
+
+    testWidgets('a genuinely measured rail footprint carries NO marker and '
+        'NO legend', (tester) async {
+      // The guard on the guard: marking everything would be as useless as
+      // marking nothing.
+      await open(tester, _doc(20, [_at('RAIL', 18, 2)]));
+
+      final rendered = texts(tester);
+      expect(rendered, contains('U18–U19 front'));
+      expect(rendered.any((t) => t.contains('†')), isFalse);
+      expect(rendered.any((t) => t.contains('‡')), isFalse);
+    });
+  });
 }

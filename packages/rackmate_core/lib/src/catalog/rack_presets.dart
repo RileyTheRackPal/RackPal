@@ -86,9 +86,11 @@ const Len _in24 = Len(24 * Len.nmPerInch);
 const Len _in30 = Len(30 * Len.nmPerInch);
 const Len _in36 = Len(36 * Len.nmPerInch);
 
-/// Kilograms as exact micrograms (CR-003): 1 kg = 1e9 µg.
-const int _ugPerKg = 1000000000;
-Mass _kg(int kilograms) => Mass(kilograms * _ugPerKg);
+/// Kilograms as exact micrograms (CR-003): 1 kg = 1e9 µg. The factor now
+/// lives on [Mass] itself — this file used to be the only one in the
+/// catalog that had it right, which is precisely why nine local copies of
+/// the arithmetic is not a pattern worth keeping.
+Mass _kg(int kilograms) => Mass.fromKilograms(kilograms);
 
 /// The ELEVEN presets docs/04 §4 names, in the order the dropdown shows
 /// them: wall-mounted first, then floor, then the open frame, then the

@@ -20,10 +20,10 @@ Status legend: **Done** (built and tested) · **Partial** (some of the cited beh
 | 1 | `ViewportController` with wheel/trackpad/pan/zoom and the grid painter | **Done** |
 | 2 | `CanvasIntent` on top, no `PointerDeviceKind` branching | **Done** |
 | 3 | Hybrid `RenderRackCanvas`, device widgets, RU snapping, front/rear elevations with per-rack mirroring | **Partial** — RU snapping and front/rear filtering done; **mirroring not done** |
-| 4 | Quick-add by typing with the drop caret; the Staging Bin; shelves with auto-pack; 0U occupants from the inspector | **Partial** — quick-add by typing now places at the insertion caret (docs/04 §3.2/§3.4), see §3.2/§3.4 below; the Staging Bin, shelves-with-auto-pack, and 0U-from-the-inspector remain **not started** |
+| 4 | Quick-add by typing with the drop caret; the Staging Bin; shelves with auto-pack; 0U occupants from the inspector | **Partial** — quick-add by typing now places at the insertion caret (docs/04 §3.2/§3.4), see §3.2/§3.4 below; the Staging Bin, shelves-with-auto-pack, and 0U-from-the-inspector remain **not started**. §3.1's "release outside any rack" now shows an HONEST chip and reports its refusal instead of silently doing nothing, but it still creates no `StagedPlacement` — see §3c |
 | 5 | Compact Up/Down with preview-then-accept, and the shrink-rack dialog; locks | **Partial** — Compact Up/Down ship COMPLETE (planner + preview overlay + floating Apply/Cancel bar + `Enter`/`Esc`, see §3.6); the shrink-rack dialog is planner-only (see §4.1) and its modal is pass 3; locks are honoured as immovable anchors by the planner but there is still no `Ctrl+L` UI to SET one |
 | 6 | The full seeded catalog (incl. 18 field devices, `sources.md` provenance, connector-footprint CI assertion) | **Partial** — 48-template seed catalog (30 rack-side + 18 field) with `assets/catalog/sources.md` provenance and the connector-footprint CI assertion all landed, plus a device palette panel wired into `RackCanvasScreen` (search + categories, **click-to-add** via double-click/Enter, **and now drag-from-palette-to-rails** — see §3.1 below); the 4 hand-built demo devices remain as the rack's starting contents alongside the catalog |
-| 7 | Copy-on-place with `DeviceOverrides`; the chip strip (RU, weight, VA, outlets) with unknown counts | **Not started** |
+| 7 | Copy-on-place with `DeviceOverrides`; the chip strip (RU, weight, VA, outlets) with unknown counts | **Partial** — the **chip strip ships complete**, including the unknown counts (`rackmate_core/derived/totals.dart` + `rackmate_ui/canvas/rack_metrics_row.dart`, 54 new tests, see §5 below). Copy-on-place with `DeviceOverrides` remains **not started** — the rollup READS `DeviceOverrides.weight` where one exists, but nothing writes one |
 | 8 | `DiagramCanvas` + `SceneBuilder` + both backends + the baseline-Y parity test | **Done** — mutation-tested twice |
 | 9 | Minimal PDF exporter: front elevation, rear elevation, `T6.30`, title block, revision block | **Not started** |
 | 10 | Atomic save, autosave, recovery, recents, close interception; the outline tree; four starter projects | **Not started** |
@@ -499,10 +499,34 @@ coordination note below).
       merely filters, which is all CR-028 asks of it.
 
 ### §5 Derived readouts
-- [ ] Always-visible chip strip (RU, weight, VA, outlets, each with an unknown-count
-      superscript) — **not started**
+- [x] Always-visible chip strip (RU, weight, VA, outlets, each with an unknown-count
+      superscript) — **done, this stage**. `computeRackRollups` in
+      `rackmate_core/lib/src/derived/totals.dart` (the first file in `derived/`) is the pure
+      derivation; `rackmate_ui/canvas/rack_metrics_row.dart` renders it at §5's 20 px, in the
+      rack header, directly under `RackHeaderBar`. Reads
+      `RU front 5/12 · — lb⁽⁴⁾ · — VA⁽⁴⁾ · outlets 0/0` on the demo rack.
+      **What is deliberately different from §5's literal line, and why:**
+      * The RU chip **names its face** (`RU front 5/12`, not `RU 15/24`). §5's own rules track
+        front and rear separately "because 'how much room is left' genuinely has two answers",
+        and its Vitals panel shows two bars, so an unlabelled figure would change meaning
+        silently when the user flips the elevation. RU is per-face; weight, VA and outlets are
+        rack-wide (a device loads the frame whichever way it is bolted in), which is the same
+        split §5's Vitals panel draws.
+      * The trailing **`⚠2` findings rollup is absent**, not stubbed. No validation engine
+        exists (see the third bullet), so there is nothing to count and an inert `⚠0` would be
+        the fabricated number G4/CR-114 forbids.
+      * `PowerProfile.outletsProvided`/`outletsConsumed` are **non-nullable `int`s**, so
+        "unknown outlets" is structurally inexpressible today: only an unresolvable
+        `TemplateSnapshot` can make that rollup unknown. The unknown count is carried anyway,
+        so the chip starts telling the truth the moment those fields become nullable — which
+        they should, since a template nobody has authored outlets for is not a template that
+        provides none.
+      * VA sums `PowerProfile.apparentVA` **only** (CR-056/AC-020: circuit loading is computed
+        in VA). It is never derived from `typicalWatts` — AC-039's rejected "half of
+        nameplate" behaviour, restated as a test.
 - [ ] Collapsed Rack Vitals panel (space bars, weight bar, power bar, BTU/CG advisory) —
-      **not started**
+      **not started**. The derivation the panel needs now exists (`RackRollups` carries the
+      per-face RU split and the weight/VA/outlet rollups); what is missing is the panel.
 - [ ] Findings surfacing: device badge (shape+colour), rack-header `⚠n` rollup, validation
       drawer with select-and-zoom — **not started** (no validation rules run yet at all — that's
       `derived/validation.dart`, not built in any stage so far)
@@ -765,6 +789,230 @@ were exactly as load-bearing as flagged:
 
 ---
 
+## 3b. The Schematic and Schedule tabs — DELETED, and what stands in their place
+
+An off-discipline stage built an M2 schematic and schedule ahead of the roadmap, with **zero
+tests across 2 608 inserted lines**. This section records what was removed, what replaced it,
+and — because it is the part a future reader will otherwise re-litigate — the doc conflict the
+replacement resolves.
+
+**Deleted outright** (`git rm`, recoverable from history; nothing imported any of them except
+`apps/rackmate/lib/main.dart`):
+
+| File | Why |
+|---|---|
+| `rackmate_ui/canvas/schematic/schematic_canvas_screen.dart` (707 L) | Could only ever draw ONE anonymous placeholder box. See the two root causes below. |
+| `rackmate_ui/canvas/schematic/sugiyama.dart` (324 L) | Dead and crashing — `_phase1LayerAssign` mutates `queue` inside `for (final node in queue)`, so it throws `ConcurrentModificationError` on any graph with an edge. |
+| `rackmate_ui/canvas/schematic/wire_drawing.dart` | `WireConnection` is a stand-in for `Link`/`Service`/`Conductor`, which M2 defines properly (CR-008/010/011). Relocating a stand-in into `rackmate_core` would have inverted the discipline. |
+| `rackmate_ui/schedule/schedule_screen.dart` | Renders `document.links`, and no code path can create a `Link`. Its `_EmptyState` told the user to "Create links in the Schematic tab" — a tab that cannot create one. |
+
+**Relocated instead of deleted** (with 72 new tests, in the same stage — see
+`rackmate_core/test/symbol_layer_test.dart`, `symbol_hit_test_test.dart` and
+`rackmate_export/test/symbol_layer_pdf_test.dart`): `symbol.dart` →
+`rackmate_core/draw/scene/symbol_layer.dart` and `hit_test.dart` → `symbol_hit_test.dart`, per
+CR-071 and docs/05 §3's "drawn by `symbol_layer.dart` in `rackmate_core/draw/` and replayed by
+both backends". They are the only part of the deleted work that had salvage value, and the
+export-side test is the one that could not have been written before the move.
+
+**THE TWO ROOT CAUSES, recorded so nobody re-debugs them.** Twelve consecutive `fix:` commits
+went at this and none of them touched either path.
+
+1. *One placeholder symbol.* The document never reached the schematic. `main.dart` constructed
+   the scene inline with `fragments: {}` and `rackId: ''`, both hardcoded — there is no
+   app-level document, because `RackCanvasScreen` seeds and owns the only one privately.
+   `_autolayoutSymbols()` then branched on `scene.fragments.isEmpty` and MANUFACTURED a single
+   `RenderedSymbol` with dummy `in1`/`out1` ports, which `symbol.dart` drew as `'P${port.id}'`
+   — the literal `Pin1` / `Pout1` on screen. The else-branch was no better: it skipped keys
+   matching `startsWith('rack-')`, a prefix that matches nothing the scene builder emits, and
+   emitted the same dummy box for everything else. There was no code path in that file capable
+   of rendering a real device, so wiring a real scene in would still have shown grey boxes.
+2. *No toolbar.* `_RenderSchematicCanvas.paint(context, offset)` filled its background with
+   `DBox.fromLtwh(0, 0, size.width, size.height)` — ignoring `offset`, while threading it into
+   the symbol draw two lines later. The object opts out of its own layer
+   (`isRepaintBoundary => false`), so `context.canvas` is in the enclosing layer's space; the
+   `Column` paints the toolbar first and the canvas second at `offset ≈ (0, 48)`, and the grey
+   rect landed on top of the toolbar band. `render_rack_canvas.dart:225` has always done this
+   correctly, by pushing `Matrix4.translationValues(offset.dx, offset.dy, 0)` first.
+
+   Neither was a constraints problem, which is why `LayoutBuilder` wrapping and repeated
+   `setState` never converged. (`updateRenderObject` was also a structural no-op: every setter
+   guarded on `identical()` against the same instance the State passed on every build.)
+
+**What the tabs show now.** `UnbuiltView` (`rackmate_ui/src/shell/unbuilt_view.dart`) — a
+milestone badge, `Schematic — not built` / `Schedule — not built`, a sentence on what is
+absent, a sentence on why the tab is in the strip, and the governing docs. **No control of any
+kind**, enforced by two independent tests rather than by review.
+
+**THE DOC CONFLICT, and the ruling taken.** docs/09 M1 says "an empty Schedule tab that
+explains it is coming is a lie, so the tab does not exist yet"; docs/05 §12 line 780 says "The
+v1 tab strip shows three tabs: Rack, Schematic, Schedule". Read strictly against each other,
+one removes the tabs and the other requires them. **The strip keeps three tabs and the two
+unbuilt ones say they are not built.** The reasoning: what M1 forbids is a view that LOOKS
+finished and is empty — a zero-row schedule table asserts "you have not wired anything", which
+is false when the truth is "this build cannot wire anything". A tab whose first line is *not
+built* asserts nothing untrue. If the owner reads M1 strictly, the two tabs come out of the
+strip entirely and `UnbuiltView` goes with them; that is a one-line change in `main.dart` and
+the tests would need re-pointing, so it is worth an explicit ruling rather than a silent
+default.
+
+**Debug cruft removed in the same pass:** 8 `print()` calls (6 under `schematic/`, 2 in
+`main.dart`), the uncommitted `Container` wrapping `SchematicToolbar` commented "Debug border
+to verify toolbar visibility", its amber/orange decoration, and
+`print('LayoutBuilder received constraints: …')`. Two source-level gates now hold that line —
+`packages/rackmate_ui/test/no_print_test.dart` and `apps/rackmate/test/no_print_test.dart`, in
+the same shape as `rackmate_core`'s `no_flutter_import_test.dart`. `avoid_print` DID fire on
+all eight; it fires at INFO in a project that carries ~210 of those by design, so it was
+invisible.
+
+**Deliberately NOT done here, and honest about it:**
+
+* **The schematic does not render devices, and this stage did not try.** It cannot until an
+  app-level `DocumentController` exists that sibling tabs can read, and that belongs with
+  roadmap item #10 (atomic save, autosave, recovery, recents, the outline tree) — the stage
+  that follows. Doing it here would duplicate or pre-empt that work.
+* **`Ctrl+1` / `Ctrl+2` and the reserved `Ctrl+3` (docs/05 §12) are unbound.** No view-switching
+  keymap exists in this app in any view; binding two of three would read as a whole keymap.
+  Lands with §8's keymap pass.
+* **docs/05 §3's gu-denominated sizing is still not implemented** in `symbol_layer.dart` — the
+  20 gu minimum width, 6 gu header, 2 gu pin pitch and `kBankCollapseThreshold = 8`. The shape
+  of the formulas is honoured in caller-supplied units; converting `kGridUnit` to diagram
+  points needs a schematic scene builder's scale anchor, which does not exist. Flagged in that
+  file's header.
+* **`.clinerules/editing.md`** (added by the off-discipline stage, commit `6db8131`) still
+  instructs whoever reads it to "Make a commit after every task … just commit to the main
+  branch." It is almost certainly how 19 commits including 12 thrashing `fix:` commits landed
+  directly on `main`. It was not acted on and was not removed — that is the repo owner's call,
+  but it should be made.
+
+**Mutation testing, scoped honestly.** Deleting a file cannot be mutation-tested, so the
+discipline applies only to the honest-panel behaviour that replaced it. Ten mutations were run
+against it and **all ten were killed on the first pass**; the two worth recording are that
+drawing a single circle inside `UnbuiltView` fails
+`paintsExactlyCountTimes(#drawCircle, 0)` (proving that assertion is live rather than vacuous),
+and that a button wrapped in `ExcludeSemantics` is caught ONLY by the widget-subtree check —
+which is why both that check and the semantics check exist.
+
+---
+
+## 3c. The chip strip, the Staging Bin chip, and one repaired test
+
+Same off-discipline stage as §3b, different files: three M1 features that were worth keeping
+and shipped untested. All three now have tests; all three had real defects.
+
+### The chip strip (§5, roadmap item 7) — the number was never computed
+
+`RackMetricsRow` displayed `12/12U · 0 free` on a 12 U rack holding 5 U. The widget was not
+miscomputing: **its one call site passed the numbers as literals** —
+`ruFree: 0, // TODO(M1): wire to actual computed free RU`, and the same for weight, VA and
+outlets — and the widget derived USED from the FREE it was handed, so `ruFree: 0` printed the
+rack as completely full. Nothing anywhere computed free RU.
+
+What shipped instead:
+
+* **`rackmate_core/lib/src/derived/totals.dart`** — `computeRackRollups(rack, devices,
+  templates, face) -> RackRollups`, the first file in the `derived/` directory
+  docs/03-architecture.md reserves for it. Pure, argument-driven rather than
+  `RackDocument`-driven, so the persistence stage's `DocumentController` can arrive without
+  touching it. Counts DISTINCT occupied RU (overlapping placements — an `RCK-001` state the
+  model permits — count once) clamped to `[1, heightU]` (a device hanging past the top
+  contributes only the slots that exist). Membership follows shelf-host chains with a visited
+  set, so a corrupt file's cycle terminates instead of hanging the UI thread.
+* **`Rollup<T>`** carries `value` (`null` = unknown), `knownCount` and `unknownCount`. The rule,
+  in one place for all four rollups: a total is `null` **iff** at least one device contributed
+  and none supplied a value; a rack with no contributors at all reports a genuine zero, because
+  an empty rack really does weigh nothing extra. `T` is unbounded rather than `T extends Object`
+  because `Mass` is an extension type and its only supertype is `Object?`.
+* **`MassFormatting.toPoundsValue`/`toKilogramsValue`** (units/unit_formatter.dart) — the
+  unit-less forms, so the strip's `148/200 lb` does not re-derive the µg conversion. The
+  suffixed forms now delegate to them, so the two spellings cannot drift.
+* The strip **moved into the rack header**, per §5's "20 px, in the rack header" and §2.1's
+  "32 px header, sticky / 20 px chip strip". It was a `Positioned.fill` + `Align.bottomCenter`
+  36 px OPAQUE bar over the bottom of the canvas — absorbing every pointer event aimed at the
+  lowest RUs, which no test covered — and it had pushed the status-message stub from
+  `bottom: 12` to `bottom: 48` to get out of its way. Both undone. It is a SIBLING of
+  `RackHeaderBar` in the same `Positioned`, not a child of it, because that widget is flagged
+  mid-rework above and a fifth concern threaded through it would collide with the pending
+  `⚠n` rollup.
+* The widget now takes the whole `RackRollups` rather than four loose scalars. That is the
+  structural half of the fix: a widget that accepts loose numbers invites a call site to
+  invent them, which is exactly what happened.
+* Fixed on the way: every chip's text used `colorScheme.onPrimaryContainer` regardless of its
+  background, and any chip whose value was `0` was HIDDEN — so "this rack draws no power" and
+  "nobody has measured this rack" rendered identically.
+
+**Deviations from §5's literal line are listed in §2's §5 entry above**, not here, so they sit
+next to the requirement they depart from.
+
+### The Staging Bin chip (§3.1's escape hatch, roadmap item 4) — three defects, and a lie
+
+docs/04 §3.1 wants "Dragging outside any rack shows the ghost at 40 % with a `Release to add to
+Staging Bin` chip; dropping there creates a `StagedPlacement`". The overlay that shipped showed
+that chip. **Releasing there does nothing**, and still does: `StagedPlacement` is fully modelled
+and codec-round-tripped, but no command produces one and no surface lists the bin, so a device
+dropped there would vanish with no way to retrieve it — strictly worse than a refusal. Building
+the bin properly (a command, a query surface, the `↩ Return to RK-1 U21` chip of CR-032, and the
+shrink modal's option 2) is its own stage and was not in this one's scope.
+
+So the ruling for this stage is the same one §3b applies to the tabs: **mark it unfinished
+rather than half-fake it.** The chip now reads `Staging Bin — not in this build` /
+`Releasing here will not place <device>.`, and release reports the same refusal through
+`StatusMessageController` instead of silently doing nothing. **The shrink dialog's Staging Bin
+option stays DISABLED with its existing honest reason** — nothing about this stage makes it
+deliverable, and enabling it would re-introduce exactly the promise this chip stopped making.
+
+The three mechanical defects, all now tested:
+
+1. **A leaked `OverlayEntry`.** `RackCanvasScreen.dispose()` removed the palette-drag, move-drag
+   and resize overlays and not this one — the exact bug class the three comments beside them
+   were written to prevent. `_cancelPaletteDrag` (the `Esc` path) had the same hole. Note that
+   an assertion about the CHIP cannot catch the second one: `Esc` resets the controller, which
+   alone makes the builder return an empty box, so the test asserts `find.byType(
+   StagingBinOverlay)` is gone — the entry, not merely its output. The first version of that
+   test SURVIVED its mutation for precisely that reason and was strengthened.
+2. **No `Positioned`.** It was inserted into the root overlay unpositioned, so its `Material`
+   stretched to fill the window — a full-screen elevated panel flashing over the app on every
+   drag that left the canvas. The two constants meant to place it (`anchorX`/`anchorY`) were
+   computed and never used; the analyzer reported both. It is now anchored to the drag cursor,
+   below the `_CursorCard`.
+3. `Key? key`/`super(key: key)` instead of `super.key`.
+
+### The one test regression, repaired by SCOPING
+
+`rack_canvas_screen_test.dart`'s "the cursor card floats at the pointer before canvas entry"
+asserted `find.text('Blank Panel, 1U')` found exactly 2 widgets and found 3, because the new
+Staging Bin chip rendered `controller.displayName` a third time. Relaxing the count to 3 would
+have "fixed" it while proving strictly less: a bare count says nothing about WHICH widgets carry
+the name, and passes just as happily when the cursor card stops showing it and some fourth
+surface starts. Each copy the step actually claims is now asserted where it lives — one inside
+the palette `ListTile`, one inside the cursor card, located by the new public
+`kDragCursorCardKey` — plus the position assertion the test's own name promised and never made.
+The Staging Bin chip is asserted separately, in its own file, through
+`StagingBinOverlay.chipKey`.
+
+`rackmate_ui.dart` gained export lines for `rack_metrics_row.dart` and
+`staging_bin_overlay.dart`; both were previously reachable only by deep-importing
+`package:rackmate_ui/src/...`.
+
+### Test counts and mutation testing
+
+| Package | before | after |
+|---|---|---|
+| `rackmate_core` | 369 | 397 (+27 `derived/totals_test.dart`, +1 `units_test.dart`) |
+| `rackmate_ui` | 242 pass / **1 fail** | +27 `rack_metrics_row_test.dart`, +9 `staging_bin_overlay_test.dart`, the failure repaired |
+
+**26 mutations, 26 killed.** Two attempts were invalid rather than surviving and were replaced
+(one mutated a `Set` key in a way that still deduplicated; one renamed a constant the test
+imports, so it changed nothing). **One test genuinely survived its first pass and was
+strengthened** — the `Esc` case in defect 1 above. The mutations that matter most: `ruUsed` →
+`ruFree` in the RU chip (the original bug, killed by six assertions); unknown weight rendering
+`0` instead of `—`; a superscript on a fully known rollup; VA falling back to `typicalWatts`;
+`StagedPlacement` counted as loading a rack; the shelf-host chain not followed; removing the
+`_removeStagingBinOverlay()` call from `dispose` and from `_cancelPaletteDrag`; dropping the
+chip's `Positioned`; removing the release-refusal status message; and the cursor card losing
+either its name or its scoping key.
+
+---
+
 ## 4. Suggested next order
 
 Roughly in the order that unblocks the most subsequent work, not a commitment:
@@ -791,8 +1039,11 @@ Roughly in the order that unblocks the most subsequent work, not a commitment:
    the drag-the-top-edge gesture with its live "24U (+3)" readout and real-time red hatch, and
    the shrink-below-occupancy modal. Still needed before a user can create a rack that isn't
    hardcoded (multi-rack + the new-rack dialog are their own stage, see §3a).
-4. **Chip strip + Rack Vitals + validation rules** (§5) — the first of the 27 v1 DRC rules
-   (`derived/validation.dart` doesn't exist yet in any package).
+4. **~~Chip strip~~ + Rack Vitals + validation rules** (§5) — the **chip strip is done** (§3c);
+   what remains is the Vitals panel and the first of the 27 v1 DRC rules
+   (`derived/validation.dart` still doesn't exist in any package, and the rack header's `⚠n`
+   rollup waits on it). `derived/totals.dart` now exists and is the shape the rest of
+   `derived/` should follow: pure, argument-driven, and returning `null` for unknown.
 5. **Non-device occupants + shelves + 0U** (§6).
 6. ~~**Compaction** (§3.6).~~ **Done** — shipped with the rack-configuration stage (passes 1
    and 2), since the shrink modal's option 1 needs the planner anyway.

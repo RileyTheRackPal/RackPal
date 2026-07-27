@@ -1,7 +1,13 @@
 // CR-117: write(read(bytes)) == bytes, as an exact BYTE property, over
-// three fixtures of increasing complexity. Also persists each fixture's
+// four fixtures of increasing complexity. Also persists each fixture's
 // first-write bytes to test/fixtures/*.rackmate.json as real files on
 // disk — a later milestone's golden-fixture-corpus work builds on these.
+//
+// Fixture (d) is newer than the others and was added for a reason worth
+// stating: (a)-(c) contain no `TemplateSnapshot` at all, so the corpus had
+// nothing to say about `_encodePowerProfile` — and that is precisely where
+// the container format last moved (schemaVersion 1 -> 2). A golden corpus
+// that cannot see the encoder a change touched is not guarding it.
 import 'dart:convert';
 import 'dart:io';
 
@@ -292,6 +298,141 @@ RackDocument _fullerProjectFixture() {
   return doc;
 }
 
+/// (d) A project whose `templates` carry real `PowerProfile`s — one that
+/// authors its outlet counts, one that authors an explicit ZERO, and one
+/// that authors nothing at all.
+///
+/// WHY THIS FIXTURE HAD TO EXIST. Fixtures (a)-(c) contain no
+/// `TemplateSnapshot` whatsoever, so the golden corpus said nothing about
+/// `_encodePowerProfile` — and `_encodePowerProfile` is precisely where the
+/// container format last moved (v1 wrote `"outletsProvided": 0`
+/// unconditionally; v2 omits the key when the count is unauthored). A
+/// format change landed with the byte-level corpus structurally unable to
+/// notice it. All three shapes are here so the corpus pins the distinction
+/// the change is about: authored, authored-as-zero, and absent are three
+/// different things on disk.
+RackDocument _templatesAndPowerFixture() {
+  final meta = _meta(
+    createdAt: DateTime.utc(2026, 7, 18, 11),
+    updatedAt: DateTime.utc(2026, 7, 18, 11, 5),
+    localRevision: 1,
+  );
+
+  TemplateSnapshot snapshot(String id, TemplateBody body) => TemplateSnapshot(
+    templateId: TemplateId(id),
+    version: 1,
+    contentHash: 'sha256:$id',
+    body: body,
+    capturedAt: DateTime.utc(2026, 7, 18, 11),
+  );
+
+  const rackId = Uuid('0190e3c1-9c50-7d33-9e24-5b3f6da1c424');
+  final rack = Rack(
+    id: rackId,
+    name: 'Power Rack',
+    designator: 'RK-2',
+    heightU: 12,
+    order: const FracIndex('a0'),
+    meta: meta,
+  );
+
+  const pduId = Uuid('0190e3c1-ad60-7e44-8f35-6c407eb2d535');
+  final pdu = DeviceInstance(
+    id: pduId,
+    kind: DeviceKind.rackDevice,
+    templateRef: const TemplateRef(
+      templateId: TemplateId('tpl.demo.pdu'),
+      version: 1,
+      contentHash: 'sha256:tpl.demo.pdu',
+    ),
+    designator: 'PDU-1',
+    name: 'Rack PDU',
+    placement: const RailPlacement(
+      rackId: rackId,
+      ruIndex: 1,
+      face: Face.rear,
+    ),
+    meta: meta,
+  );
+
+  const blankId = Uuid('0190e3c1-ad60-7e44-8f35-6c407eb2d536');
+  final blank = DeviceInstance(
+    id: blankId,
+    kind: DeviceKind.rackDevice,
+    templateRef: const TemplateRef(
+      templateId: TemplateId('tpl.demo.blank'),
+      version: 1,
+      contentHash: 'sha256:tpl.demo.blank',
+    ),
+    designator: 'BLK-1',
+    name: 'Blank Panel',
+    placement: const RailPlacement(
+      rackId: rackId,
+      ruIndex: 4,
+      face: Face.front,
+    ),
+    meta: meta,
+  );
+
+  final doc = RackDocument(
+    id: const Uuid('0190e3c1-0000-7000-8000-000000000003'),
+    appVersion: '0.1.0+build.1',
+    createdAt: DateTime.utc(2026, 7, 18, 11),
+    modifiedAt: DateTime.utc(2026, 7, 18, 11, 5),
+    meta: meta,
+  );
+  doc.racks[rackId] = rack;
+  doc.devices[pduId] = pdu;
+  doc.devices[blankId] = blank;
+  doc.templates['tpl.demo.pdu@1'] = snapshot(
+    'tpl.demo.pdu',
+    TemplateBody(
+      manufacturer: 'Generic',
+      model: 'PDU 16',
+      displayName: 'Rack PDU, 16 outlet',
+      frontU: 1,
+      side: OccupancySide.rear,
+      mountMethod: MountMethod.rackEars,
+      power: PowerProfile(
+        apparentVA: 120,
+        outletsProvided: 16,
+        outletsConsumed: 1,
+        inletPlug: PlugType.c20,
+      ),
+    ),
+  );
+  // Authored AS ZERO — a measurement, and it must stay a key on disk.
+  doc.templates['tpl.demo.amp@1'] = snapshot(
+    'tpl.demo.amp',
+    TemplateBody(
+      manufacturer: 'Generic',
+      model: 'AMP 16',
+      displayName: '16-channel amplifier',
+      frontU: 2,
+      side: OccupancySide.front,
+      mountMethod: MountMethod.rackEars,
+      power: PowerProfile(
+        apparentVA: 840,
+        outletsProvided: 0,
+        outletsConsumed: 1,
+      ),
+    ),
+  );
+  // Authored NOT AT ALL — both keys must be ABSENT on disk.
+  doc.templates['tpl.demo.blank@1'] = snapshot(
+    'tpl.demo.blank',
+    TemplateBody(
+      manufacturer: 'Generic',
+      model: 'Blank 1U',
+      displayName: 'Blank Panel, 1U',
+      frontU: 1,
+      side: OccupancySide.front,
+      mountMethod: MountMethod.rackEars,
+    ),
+  );
+  return doc;
+}
+
 void _assertByteRoundTrip(String label, RackDocument fixture) {
   final bytes1 = _codec.write(fixture);
 
@@ -330,6 +471,63 @@ void main() {
     test('(c) link+services+conductors, structure+outlet, sheet, '
         'ackedFinding, unknown passthrough', () {
       _assertByteRoundTrip('c_fuller_project', _fullerProjectFixture());
+    });
+
+    test('(d) templates carrying power profiles — authored, authored-zero '
+        'and absent outlet counts', () {
+      _assertByteRoundTrip(
+        'd_templates_and_power',
+        _templatesAndPowerFixture(),
+      );
+    });
+  });
+
+  group('PowerProfile on disk: absent is not zero (CR-114, CR-117)', () {
+    // The three-way distinction fixture (d) exists for, asserted directly on
+    // the bytes rather than only through the round-trip property — a codec
+    // that wrote `0` for every unauthored count would round-trip perfectly
+    // and still be the fabrication `derived/totals.dart` refuses.
+    Map<String, Object?> powerOf(String templateKey) {
+      final text = utf8.decode(_codec.write(_templatesAndPowerFixture()));
+      final root = jsonDecode(text) as Map<String, Object?>;
+      final document = root['document']! as Map<String, Object?>;
+      final templates = document['templates']! as Map<String, Object?>;
+      final snapshot = templates[templateKey]! as Map<String, Object?>;
+      final body = snapshot['body']! as Map<String, Object?>;
+      return body['power']! as Map<String, Object?>;
+    }
+
+    test('an authored count is written', () {
+      final power = powerOf('tpl.demo.pdu@1');
+      expect(power['outletsProvided'], 16);
+      expect(power['outletsConsumed'], 1);
+    });
+
+    test('an authored ZERO is written as a zero, not omitted', () {
+      final power = powerOf('tpl.demo.amp@1');
+      expect(power.containsKey('outletsProvided'), isTrue);
+      expect(power['outletsProvided'], 0);
+    });
+
+    test('an unauthored count has NO key at all', () {
+      final power = powerOf('tpl.demo.blank@1');
+      expect(power.containsKey('outletsProvided'), isFalse);
+      expect(power.containsKey('outletsConsumed'), isFalse);
+    });
+
+    test('and THAT is why the file stamps a minReaderVersion a v1 build '
+        'refuses', () {
+      // The omission above is the breaking change. A v1 reader called
+      // `asInt(json['outletsProvided'], ...)` and threw a FormatException on
+      // it — a corrupt-file error for a file that is not corrupt. A v1
+      // build's `migrateToCurrent` refuses outright when
+      // `minReaderVersion > kSchemaVersion`, and ITS kSchemaVersion is 1, so
+      // this is the number that turns that crash into a refusal.
+      final text = utf8.decode(_codec.write(_templatesAndPowerFixture()));
+      final root = jsonDecode(text) as Map<String, Object?>;
+      expect(root['schemaVersion'], kSchemaVersion);
+      expect(root['minReaderVersion'], kMinReaderVersion);
+      expect(root['minReaderVersion']! as int, greaterThan(1));
     });
   });
 

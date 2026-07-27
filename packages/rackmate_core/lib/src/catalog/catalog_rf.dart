@@ -7,8 +7,8 @@ import 'package:rackmate_core/src/units/mass.dart';
 
 const String kCatRf = 'RF / Coax';
 
-Len _mm(num v) => Len((v * 1_000_000).round());
-Mass _kg(num v) => Mass((v * 1_000_000).round());
+Len _mm(num v) => Len.fromMillimetres(v);
+Mass _kg(num v) => Mass.fromKilograms(v);
 
 Map<String, TemplateBody> buildRfCatalog() {
   final out = <String, TemplateBody>{};
@@ -61,7 +61,12 @@ Map<String, TemplateBody> buildRfCatalog() {
     bodyDepth: _mm(120),
     connectorProjection: _mm(50),
     weight: _kg(0.9),
-    power: PowerProfile(nameplateWatts: 0, typicalWatts: 0, outletsConsumed: 0),
+    power: PowerProfile(
+      nameplateWatts: 0,
+      typicalWatts: 0,
+      outletsProvided: 0,
+      outletsConsumed: 0,
+    ),
     ports: r01.ports,
     banks: r01.banks,
   );
@@ -145,6 +150,7 @@ Map<String, TemplateBody> buildRfCatalog() {
       apparentVA: 24,
       powerFactor: 900,
       isContinuousLoad: true,
+      outletsProvided: 0,
       outletsConsumed: 1,
       inletPlug: PlugType.nema515p,
     ),

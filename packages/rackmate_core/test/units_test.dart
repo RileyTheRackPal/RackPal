@@ -124,7 +124,12 @@ void main() {
       expect(kPinPitch, equals(2));
       expect(kBankCollapseThreshold, equals(8));
       expect(kMaxRackHeightU, equals(60));
-      expect(kSchemaVersion, equals(1));
+      // 2, not 1: the encoder stopped writing an explicit
+      // `"outletsProvided": 0` for an unauthored outlet count and started
+      // omitting the key, which a v1 reader cannot survive. See
+      // `constants.dart`'s version history and `migrateV1ToV2`.
+      expect(kSchemaVersion, equals(2));
+      expect(kMinReaderVersion, equals(2));
     });
   });
 
@@ -142,6 +147,37 @@ void main() {
         const Mass(453_592_370).toPounds(fractionDigits: 3),
         equals('1.000 lb'),
       );
+    });
+
+    test('the unit-less value forms carry NO suffix, and are the exact '
+        'numeric prefix of the suffixed ones', () {
+      // docs/04 §5's chip strip renders `148/200 lb` — two masses, one
+      // trailing unit — so it needs the number without the unit. These
+      // must stay the exact numeric prefix of the suffixed forms, or the
+      // strip and the inspector would disagree about the same mass.
+      //
+      // EVERY EXPECTATION HERE IS A LITERAL. The last two used to read
+      // `expect(m.toPounds(...), '${m.toPoundsValue(...)} lb')`, which is
+      // `expect(s, s)` against an implementation that is literally
+      // `'${toPoundsValue(...)} lb'` — changing `Mass.ugPerPound` or the
+      // 1e9 kilogram divisor moved both sides together. Spelling the answer
+      // out is what makes the divisor a thing this test can disagree with.
+      expect(
+        const Mass(453_592_370).toPoundsValue(fractionDigits: 3),
+        equals('1.000'),
+      );
+      expect(const Mass(1_000_000_000).toKilogramsValue(), equals('1.00'));
+
+      // 90_718_474_000 µg is 200 lb exactly (200 * Mass.ugPerPound) and
+      // 90.718474 kg.
+      const twoHundredPounds = Mass(90_718_474_000);
+      expect(
+        twoHundredPounds.toPoundsValue(fractionDigits: 1),
+        equals('200.0'),
+      );
+      expect(twoHundredPounds.toPounds(fractionDigits: 1), equals('200.0 lb'));
+      expect(twoHundredPounds.toKilogramsValue(), equals('90.72'));
+      expect(twoHundredPounds.toKilograms(), equals('90.72 kg'));
     });
 
     test('UnitFormatter static entry points delegate to the extensions', () {

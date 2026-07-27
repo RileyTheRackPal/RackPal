@@ -1,0 +1,377 @@
+// packages/rackmate_core/lib/src/derived/totals.dart
+//
+// docs/03-architecture.md's `derived/ ... totals.dart`: the four rollups
+// docs/04-rack-editor.md §5's always-visible chip strip reads
+// (`RU 15/24 · 148/200 lb ⁽³⁾ · 1.24 kVA · outlets 14/16`).
+//
+// THE HONESTY RULES THIS FILE EXISTS TO ENFORCE (docs/04 §5, G4, CR-114):
+//
+//  1. **No fabricated numbers, ever.** A total is `null` when nothing
+//     known contributed to it — never `0`. `0` means "measured, and it is
+//     zero"; `null` means "we do not know". A non-nullable `int` field
+//     defaulting to `0` structurally cannot tell those apart, which is
+//     exactly how the chip strip came to read "12/12U · 0 free" on a rack
+//     with 5 U occupied.
+//  2. **Every rollup states its unknown count.** `Rollup.unknownCount` is
+//     how many contributing devices could not supply a value. A caller
+//     that renders a total without also rendering this number is showing
+//     a number that is quietly wrong by an unstated amount.
+//
+// FACE SEMANTICS, decided here and stated rather than left implicit.
+// docs/04 §5's one-line strip shows a single `RU 15/24` while its Vitals
+// panel shows Front and Rear as separate bars, and the same section rules
+// that "front and rear RU are tracked separately, because 'how much room
+// is left' genuinely has two answers". So:
+//
+//  * **RU is per-face** — [computeRackRollups] takes the face being
+//    displayed and counts only that one. A caller MUST say which face its
+//    number belongs to, or the strip silently changes meaning when the
+//    user flips to the rear elevation.
+//  * **Weight, VA and outlets are rack-wide** — both faces, plus 0U
+//    channel occupants and shelf-hosted devices. A device loads the rack's
+//    weight capacity and draws from its circuits whichever face it is
+//    bolted to; splitting those per face would invent a distinction the
+//    physical rack does not have.
+//
+// This file computes and never formats. Pounds vs kilograms is
+// `ProjectSettings.displayUnits` (CR-097) applied by the presentation
+// layer through `unit_formatter.dart`; nothing here converts.
+
+import 'package:rackmate_core/src/model/device_instance.dart';
+import 'package:rackmate_core/src/model/placement.dart';
+import 'package:rackmate_core/src/model/rack.dart';
+import 'package:rackmate_core/src/model/template.dart';
+import 'package:rackmate_core/src/units/ids.dart';
+import 'package:rackmate_core/src/units/mass.dart';
+
+/// One derived total, with the count of contributors that could not supply
+/// a value (docs/04 §5: "every rollup states its unknown count").
+///
+/// [value] is `null` **iff** at least one device contributed to this
+/// rollup and none of them supplied a known value — "we know nothing about
+/// this", which renders `—`. A rack with no contributors at all reports a
+/// genuine zero: an empty rack really does weigh nothing extra and really
+/// does provide no outlets, and that is a measurement, not a guess.
+/// [T] is deliberately UNBOUNDED rather than `T extends Object`: `Mass` is
+/// an extension type (units/mass.dart), and an extension type's only
+/// supertype is `Object?`, so an `Object` bound would exclude the one
+/// rollup that most needs exact integer arithmetic.
+final class Rollup<T> {
+  const Rollup({
+    required this.value,
+    required this.knownCount,
+    required this.unknownCount,
+  });
+
+  /// The total over the contributors that supplied a value, or `null` when
+  /// none did. NEVER a stand-in zero — see the class doc.
+  final T? value;
+
+  /// How many contributing devices supplied a value.
+  final int knownCount;
+
+  /// How many contributing devices did NOT — the superscript docs/04 §5
+  /// puts on the chip and expands on hover.
+  final int unknownCount;
+
+  /// True when the total itself is unknown. Distinct from
+  /// `unknownCount > 0`, which only says the total is INCOMPLETE.
+  bool get isUnknown => value == null;
+}
+
+/// docs/04 §5's four always-visible rollups for one rack, with RU counted
+/// on [face] and everything else counted rack-wide (see the file header).
+final class RackRollups {
+  const RackRollups({
+    required this.face,
+    required this.ruCapacity,
+    required this.ruUsed,
+    required this.ruUnknownCount,
+    required this.weight,
+    required this.weightCapacity,
+    required this.apparentVA,
+    required this.outletsConsumed,
+    required this.outletsProvided,
+    required this.outletsUnknownCount,
+  });
+
+  /// The face [ruUsed]/[ruFree] describe. Presentation MUST surface this;
+  /// an unlabelled `5/12` means something different on each elevation.
+  final Face face;
+
+  /// `Rack.heightU`.
+  final int ruCapacity;
+
+  /// Distinct RU slots in `[1, ruCapacity]` occupied on [face]. Overlapping
+  /// placements (an `RCK-001` error state, which the model permits and the
+  /// validation engine will one day file) count once, not twice, and a
+  /// device hanging past the top of the rack contributes only the slots
+  /// that actually exist.
+  final int ruUsed;
+
+  /// Devices rail-placed on [face] in this rack whose occupancy could not
+  /// be determined, so it is NOT in [ruUsed]. Two causes, both counted:
+  /// the template snapshot did not resolve (CR-054 says a `TemplateRef`
+  /// always does; a corrupt or hand-edited file says otherwise), or it
+  /// resolved and gives the device ZERO U on the face it claims to be
+  /// mounted on. Silently under-reporting RU in either case would be
+  /// exactly the fabricated number G4 forbids — see the scan itself.
+  final int ruUnknownCount;
+
+  /// `ruCapacity - ruUsed`. Unaffected by [ruUnknownCount] on purpose: free
+  /// space is measured from what is known to be occupied, and the unknown
+  /// count is what tells the reader the figure is optimistic.
+  int get ruFree => ruCapacity - ruUsed;
+
+  /// Σ of every contributor's resolved weight (`DeviceOverrides.weight`
+  /// falling back to `TemplateBody.weight`), rack-wide.
+  final Rollup<Mass> weight;
+
+  /// `Rack.weightCapacity` — the denominator in §5's `148/200 lb`. Null is
+  /// UNKNOWN, never zero (CR-114); it is not part of [weight] because it
+  /// is a fact about the rack, not a rollup over devices.
+  final Mass? weightCapacity;
+
+  /// Σ `PowerProfile.apparentVA`, rack-wide. VA and not watts because
+  /// circuit loading is computed in VA (CR-056, AC-020), and `typicalWatts`
+  /// is NEVER converted into a VA figure here — a power factor that was not
+  /// authored is not a power factor this file may assume (AC-039's
+  /// rejected "half of nameplate" behaviour, restated).
+  final Rollup<int> apparentVA;
+
+  /// Σ `PowerProfile.outletsConsumed`, rack-wide — the `14` of §5's
+  /// `outlets 14/16`.
+  final Rollup<int> outletsConsumed;
+
+  /// Σ `PowerProfile.outletsProvided`, rack-wide — the `16`.
+  final Rollup<int> outletsProvided;
+
+  /// How many contributing devices are missing from the COMBINED
+  /// `consumed/provided` figure — i.e. devices whose template stated
+  /// neither outlet count, or only one of the two.
+  ///
+  /// WHY THIS EXISTS AS ITS OWN FIELD, and is not a presentation concern.
+  /// docs/04 §5 renders `outlets 14/16` as ONE chip carrying ONE unknown
+  /// superscript, but that chip reads TWO rollups. Rule 2 of this file's
+  /// header ("every rollup states its unknown count") therefore obliges the
+  /// chip to state the unknown count of the thing it actually displays, and
+  /// that number is not recoverable from [outletsConsumed]`.unknownCount`
+  /// and [outletsProvided]`.unknownCount`:
+  ///
+  ///  * Either count ALONE drops the other rollup's ignorance. The chip
+  ///    used to take `outletsProvided.unknownCount` and nothing else, so a
+  ///    rack of one PDU (states `outletsProvided`, silent on consumed) and
+  ///    one amp (states `outletsConsumed`, silent on provided) rendered a
+  ///    complete-looking `outlets 1/24` with no superscript at all.
+  ///  * `max` of the two UNDER-counts that same rack: both counts are 1,
+  ///    but TWO devices are missing from the figure.
+  ///  * Their SUM OVER-counts the ordinary case: a device that states
+  ///    neither is one incomplete contributor, not two.
+  ///
+  /// The exact answer is `|A ∪ B|` over the two sets of silent devices, and
+  /// only the scan below sees the devices themselves. Guessing it in the
+  /// widget would be the fabricated number G4 forbids, so the scan reports
+  /// it.
+  final int outletsUnknownCount;
+}
+
+/// Computes docs/04 §5's chip-strip rollups for [rack] with the elevation
+/// showing [face].
+///
+/// Pure, total, and dependent on nothing but its arguments — deliberately
+/// taking `(rack, devices, templates, face)` rather than a `RackDocument`
+/// so it survives the arrival of a real `DocumentController` untouched, and
+/// so a test can state a scenario in four lines.
+///
+/// WHICH DEVICES CONTRIBUTE. Rail-placed and 0U-placed devices naming this
+/// rack, plus shelf-placed devices whose host chain lands in it — a
+/// component sitting on a rack shelf loads the rack exactly as much as the
+/// shelf does. Off-rack and staged (`StagedPlacement`, the Staging Bin —
+/// CR-032) devices contribute to no rack, which is the whole point of
+/// those variants.
+RackRollups computeRackRollups({
+  required Rack rack,
+  required Iterable<DeviceInstance> devices,
+  required Map<String, TemplateSnapshot> templates,
+  required Face face,
+}) {
+  final byId = <Uuid, DeviceInstance>{for (final d in devices) d.id: d};
+
+  final occupiedRu = <int>{};
+  var ruUnknownCount = 0;
+
+  var weightSum = Mass.zero;
+  var weightKnown = 0;
+  var weightUnknown = 0;
+
+  var vaSum = 0;
+  var vaKnown = 0;
+  var vaUnknown = 0;
+
+  var consumedSum = 0;
+  var consumedKnown = 0;
+  var consumedUnknown = 0;
+
+  var providedSum = 0;
+  var providedKnown = 0;
+  var providedUnknown = 0;
+
+  // Devices missing from the COMBINED `consumed/provided` figure — the
+  // union of the two silences, counted here because only this loop can see
+  // it (see `RackRollups.outletsUnknownCount`).
+  var outletsUnknown = 0;
+
+  for (final device in devices) {
+    if (!_belongsToRack(device, rack.id, byId)) continue;
+
+    final snapshot = templates[_templateKey(device.templateRef)];
+    final body = snapshot?.body;
+
+    // ── RU, on the displayed face only ───────────────────────────────
+    final placement = device.placement;
+    if (placement is RailPlacement && placement.face == face) {
+      // TWO ways an occupant's RU is unknown, not one. The snapshot may
+      // fail to resolve (CR-054 says it never should; a hand-edited file
+      // says otherwise) — OR it may resolve and give the device ZERO U on
+      // the very face it claims to be mounted on. The second case used to
+      // fall into the `else`, where the loop below ran zero times and the
+      // device was silently counted as a KNOWN zero-occupancy contributor:
+      // the rear chip read `RU rear 0/12` with no superscript while a
+      // device was rail-placed at U3 on that face. That is the unknown
+      // contributor G4 forbids dropping.
+      //
+      // `rack_shrink.dart` already treats this exact shape as
+      // `DoomedKind.unmodelledRail` ("its height is not knowable, so claim
+      // the least it can possibly occupy") — this file reimplements the
+      // scan, so it has to reimplement that compensation too.
+      final deviceH = body == null
+          ? null
+          : (face == Face.front ? body.frontU : body.rearU);
+      if (deviceH == null || deviceH <= 0) {
+        ruUnknownCount++;
+      } else {
+        for (var u = placement.ruIndex; u < placement.ruIndex + deviceH; u++) {
+          if (u >= 1 && u <= rack.heightU) occupiedRu.add(u);
+        }
+      }
+    }
+
+    // ── weight / VA / outlets, rack-wide ─────────────────────────────
+    final weight = device.overrides.weight ?? body?.weight;
+    if (weight == null) {
+      weightUnknown++;
+    } else {
+      weightSum += weight;
+      weightKnown++;
+    }
+
+    final va = body?.power.apparentVA;
+    if (va == null) {
+      vaUnknown++;
+    } else {
+      vaSum += va;
+      vaKnown++;
+    }
+
+    // `outletsProvided`/`outletsConsumed` ARE nullable now, and this is the
+    // reason. They shipped as non-nullable `int`s defaulting to 0, so a
+    // resolved-but-never-authored template (the app's own four demo
+    // templates; `catalog_passive.dart`'s three, whose header states in so
+    // many words that they carry no power data) was counted as a MEASURED
+    // zero and the chip strip read a confident `outlets 0/0` with no
+    // superscript — rule 2 of this file's header, broken on first launch.
+    //
+    // Counted SEPARATELY per rollup, because a template may state one and
+    // not the other, and a shared count would silently attribute one
+    // rollup's ignorance to the other.
+    final consumed = body?.power.outletsConsumed;
+    if (consumed == null) {
+      consumedUnknown++;
+    } else {
+      consumedSum += consumed;
+      consumedKnown++;
+    }
+
+    final provided = body?.power.outletsProvided;
+    if (provided == null) {
+      providedUnknown++;
+    } else {
+      providedSum += provided;
+      providedKnown++;
+    }
+
+    // ONE increment for a device that is silent about either half, which is
+    // the whole reason this is counted here rather than combined afterwards.
+    if (consumed == null || provided == null) outletsUnknown++;
+  }
+
+  return RackRollups(
+    face: face,
+    ruCapacity: rack.heightU,
+    ruUsed: occupiedRu.length,
+    ruUnknownCount: ruUnknownCount,
+    weight: Rollup(
+      value: _totalOrUnknown(weightSum, weightKnown, weightUnknown),
+      knownCount: weightKnown,
+      unknownCount: weightUnknown,
+    ),
+    weightCapacity: rack.weightCapacity,
+    apparentVA: Rollup(
+      value: _totalOrUnknown(vaSum, vaKnown, vaUnknown),
+      knownCount: vaKnown,
+      unknownCount: vaUnknown,
+    ),
+    outletsConsumed: Rollup(
+      value: _totalOrUnknown(consumedSum, consumedKnown, consumedUnknown),
+      knownCount: consumedKnown,
+      unknownCount: consumedUnknown,
+    ),
+    outletsProvided: Rollup(
+      value: _totalOrUnknown(providedSum, providedKnown, providedUnknown),
+      knownCount: providedKnown,
+      unknownCount: providedUnknown,
+    ),
+    outletsUnknownCount: outletsUnknown,
+  );
+}
+
+/// Rule 1 of the file header, in one place so all four rollups obey it
+/// identically: a sum nothing known contributed to is UNKNOWN when
+/// somebody failed to contribute, and a genuine zero when nobody was asked.
+T? _totalOrUnknown<T>(T sum, int knownCount, int unknownCount) {
+  if (knownCount > 0) return sum;
+  return unknownCount > 0 ? null : sum;
+}
+
+/// Whether [device] loads [rackId] — directly (rails, 0U channel) or
+/// through a chain of shelf hosts. [byId] resolves the chain; the visited
+/// set makes a corrupt file's `ShelfPlacement` cycle terminate rather than
+/// hang the UI thread.
+bool _belongsToRack(
+  DeviceInstance device,
+  Uuid rackId,
+  Map<Uuid, DeviceInstance> byId,
+) {
+  final visited = <Uuid>{};
+  var current = device;
+  while (visited.add(current.id)) {
+    final placement = current.placement;
+    switch (placement) {
+      case RailPlacement():
+        return placement.rackId == rackId;
+      case ZeroUPlacement():
+        return placement.rackId == rackId;
+      case ShelfPlacement():
+        final host = byId[placement.hostDeviceId];
+        if (host == null) return false;
+        current = host;
+      case OffRackPlacement():
+      case StagedPlacement():
+        return false;
+    }
+  }
+  return false;
+}
+
+/// The `RackDocument.templates` key for [ref] — `"$templateId@$version"`.
+String _templateKey(TemplateRef ref) => '${ref.templateId.v}@${ref.version}';

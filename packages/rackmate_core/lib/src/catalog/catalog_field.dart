@@ -10,7 +10,7 @@ import 'package:rackmate_core/src/units/mass.dart';
 
 const String kCatField = 'Field Devices';
 
-Mass _kg(num v) => Mass((v * 1_000_000).round());
+Mass _kg(num v) => Mass.fromKilograms(v);
 
 TemplateBody _field({
   required String model,
@@ -123,6 +123,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
       apparentVA: 126,
       powerFactor: 950,
       isContinuousLoad: true,
+      outletsProvided: 0,
       outletsConsumed: 1,
       inletPlug: PlugType.nema515p,
     ),
@@ -213,6 +214,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
       apparentVA: 295,
       powerFactor: 950,
       isContinuousLoad: true,
+      outletsProvided: 0,
       outletsConsumed: 1,
       inletPlug: PlugType.nema515p,
     ),
@@ -408,6 +410,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
       apparentVA: 231,
       powerFactor: 650,
       isContinuousLoad: true,
+      outletsProvided: 0,
       outletsConsumed: 1,
       inletPlug: PlugType.nema515p,
     ),
@@ -539,6 +542,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
       nameplateWatts: 12,
       typicalWatts: 8,
       nominalVolts: 48,
+      outletsProvided: 0,
       outletsConsumed: 0,
     ),
     ports: f09.ports,
@@ -612,6 +616,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
       apparentVA: 68,
       powerFactor: 950,
       isContinuousLoad: true,
+      outletsProvided: 0,
       outletsConsumed: 1,
       inletPlug: PlugType.c14,
       poeBudgetWatts: 120,
@@ -657,6 +662,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
       nameplateWatts: 30,
       typicalWatts: 18,
       nominalVolts: 48,
+      outletsProvided: 0,
       outletsConsumed: 0,
     ),
     ports: f11.ports,
@@ -706,6 +712,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
       nameplateWatts: 25,
       typicalWatts: 15,
       nominalVolts: 24,
+      outletsProvided: 0,
       outletsConsumed: 0,
     ),
     ports: f12.ports,
@@ -741,7 +748,12 @@ Map<String, TemplateBody> buildFieldCatalog() {
     typePrefix: 'KP',
     tags: const ['keypad', 'control', 'field'],
     weight: _kg(0.2),
-    power: PowerProfile(nameplateWatts: 3, typicalWatts: 2, outletsConsumed: 0),
+    power: PowerProfile(
+      nameplateWatts: 3,
+      typicalWatts: 2,
+      outletsProvided: 0,
+      outletsConsumed: 0,
+    ),
     ports: f13.ports,
     banks: f13.banks,
   );
@@ -902,6 +914,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
       nameplateWatts: 25,
       typicalWatts: 15,
       nominalVolts: 12,
+      outletsProvided: 0,
       outletsConsumed: 0,
     ),
     ports: f16.ports,

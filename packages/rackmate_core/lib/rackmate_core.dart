@@ -14,6 +14,13 @@
 /// `TextMeasurer`/`TextMetrics`/`TextStyleSpec`/`TextAnchor` cluster, the
 /// `DiagramCanvas` interface and the `DiagramOp`/`DiagramScene` display
 /// list (docs/03-architecture.md §7–8, docs/08-pdf-export.md §7, CR-086).
+/// The schematic's `symbol_layer`/`symbol_hit_test` join `scene/` here for
+/// the same reason the rack layers did: CR-071 and docs/05 §3 place the
+/// device symbol in `rackmate_core/draw/` so BOTH backends replay it — a
+/// symbol only `rackmate_ui` can draw is a symbol that cannot print.
+/// `derived/totals.dart` opens `derived/` (docs/03-architecture.md) with
+/// docs/04 §5's four chip-strip rollups, in core because a number the
+/// screen shows and the PDF prints must be computed exactly once.
 library;
 
 export 'src/catalog/rack_presets.dart';
@@ -34,7 +41,9 @@ export 'src/commands/set_rack_property_command.dart';
 export 'src/commands/simple_notifier.dart';
 export 'src/commands/transaction.dart';
 export 'src/commands/undo_stack.dart';
+export 'src/derived/totals.dart';
 export 'src/document_controller.dart';
+export 'src/draw/bounds_canvas.dart';
 export 'src/draw/canvas.dart';
 export 'src/draw/geometry.dart';
 export 'src/draw/hit_test.dart';
@@ -45,6 +54,8 @@ export 'src/draw/scene/rack_geometry.dart';
 export 'src/draw/scene/rack_layer.dart';
 export 'src/draw/scene/rack_style.dart';
 export 'src/draw/scene/scene_builder.dart';
+export 'src/draw/scene/symbol_hit_test.dart';
+export 'src/draw/scene/symbol_layer.dart';
 export 'src/draw/spec.dart';
 export 'src/draw/text.dart';
 export 'src/idformat/collision_policy.dart';

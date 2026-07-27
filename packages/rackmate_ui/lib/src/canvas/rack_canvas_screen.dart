@@ -4,7 +4,6 @@ import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-import '../canvas/rack_metrics_row.dart';
 import 'package:flutter/services.dart'
     show
         HardwareKeyboard,
@@ -14,7 +13,6 @@ import 'package:flutter/services.dart'
         SystemMouseCursors;
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/canvas/canvas_intent.dart';
-import 'package:rackmate_ui/src/canvas/staging_bin_overlay.dart';
 import 'package:rackmate_ui/src/canvas/compaction_preview_bar.dart';
 import 'package:rackmate_ui/src/canvas/compaction_preview_controller.dart';
 import 'package:rackmate_ui/src/canvas/drag_preview_controller.dart';
@@ -22,11 +20,13 @@ import 'package:rackmate_ui/src/canvas/editing_overlay_painter.dart';
 import 'package:rackmate_ui/src/canvas/grid_painter.dart';
 import 'package:rackmate_ui/src/canvas/insertion_caret.dart';
 import 'package:rackmate_ui/src/canvas/rack_header_bar.dart';
+import 'package:rackmate_ui/src/canvas/rack_metrics_row.dart';
 import 'package:rackmate_ui/src/canvas/render_device_box.dart';
 import 'package:rackmate_ui/src/canvas/render_rack_canvas.dart';
 import 'package:rackmate_ui/src/canvas/resize_preview_controller.dart';
 import 'package:rackmate_ui/src/canvas/selection_controller.dart';
 import 'package:rackmate_ui/src/canvas/shake_animation.dart';
+import 'package:rackmate_ui/src/canvas/staging_bin_overlay.dart';
 import 'package:rackmate_ui/src/canvas/status_message_controller.dart';
 import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
 import 'package:rackmate_ui/src/inspector/inspector_panel.dart';
@@ -486,6 +486,12 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _stopTrackingPalettePointer();
     _removePaletteEscHandler();
     _removePaletteDragOverlay();
+    // The Staging Bin overlay is a THIRD `OverlayEntry` this screen owns
+    // and it was the one this list forgot — a palette drag disposed while
+    // the pointer was outside the canvas left it in the root overlay
+    // forever, which is precisely the leak the three comments above were
+    // written to prevent.
+    _removeStagingBinOverlay();
     _paletteDrag
       ..removeListener(_onPaletteDragChanged)
       ..dispose();
@@ -2356,9 +2362,9 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // that same cancel — through the one path, at the moment it is true.)
     final body = _catalog[catalogId];
     if (body == null) return;
+    // Field devices: click/double-click-only, see above.
     final mountable = body.frontU > 0 || body.rearU > 0;
-    if (!mountable)
-      return; // field devices: click/double-click-only, see above.
+    if (!mountable) return;
 
     // THE EXCLUSIVITY RULE, asked rather than restated (see that section).
     // This subsumes the hand-written concurrent-arm guard that used to live
@@ -2570,11 +2576,25 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
 
     if (_paletteDrag.phase != DragPreviewPhase.dragging) {
       // Released while still armed/lifted — outside the canvas widget's
-      // bounds entirely. This is now handled by the Staging Bin: show an
-      // overlay indicating where items will be placed.
+      // bounds entirely. docs/04 §3.1's escape hatch wants this to create a
+      // `StagedPlacement`, and it CANNOT yet: no command produces one and
+      // no surface lists the bin, so a device dropped there would vanish
+      // with no way to get it back (docs/m1-implementation-log.md §4.2).
+      // So it stays a no-op — but a no-op that SAYS SO, per "never
+      // silently do nothing". The Staging Bin chip that was on screen a
+      // moment ago says the same thing while the pointer is still down;
+      // this is the same claim at the moment of release.
+      final name = _paletteDrag.displayName;
       _removePaletteDragOverlay();
       _removeStagingBinOverlay();
       _paletteDrag.reset();
+      _status.show(
+        name.isEmpty
+            ? 'Released outside the rack — nothing placed. '
+                  'The Staging Bin is not in this build.'
+            : 'Released outside the rack — $name was not placed. '
+                  'The Staging Bin is not in this build.',
+      );
       return;
     }
 
@@ -2665,6 +2685,10 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       return;
     }
     _removePaletteDragOverlay();
+    // Esc pressed while the pointer was OUTSIDE the canvas: the drag is
+    // over, so the Staging Bin chip must go with the ghost. Without this
+    // it survived the cancel and stayed on screen until the next drag.
+    _removeStagingBinOverlay();
     _stopTrackingPalettePointer();
     _blockedReleaseTimer?.cancel();
     _blockedReleaseTimer = null;
@@ -2703,11 +2727,14 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _paletteDragOverlayEntry = null;
   }
 
+  /// docs/04 §3.1's escape hatch, honestly: the chip that appears while a
+  /// palette drag is outside every rack. It says what releasing here will
+  /// actually do — see [StagingBinOverlay] and `_commitOrNoopPaletteDrag`.
+  ///
+  /// The overlay positions itself off `controller.cursorGlobal`, so it
+  /// needs nothing from the screen but the controller.
   void _insertStagingBinOverlay() {
     if (_stagingBinOverlayEntry != null) return;
-
-    // Staging bin only shows when phase == lifted (pointer outside canvas).
-    // No need to pass canvas size - the overlay checks controller.phase directly.
     _stagingBinOverlayEntry = OverlayEntry(
       builder: (context) => StagingBinOverlay(controller: _paletteDrag),
     );
@@ -3141,22 +3168,59 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
               // rack_header_bar.dart's header for why). Centred at the top,
               // between the zoom HUD on the left and the face toggle on the
               // right.
+              //
+              // §5's 20px CHIP STRIP SITS DIRECTLY UNDER IT, matching §2.1's
+              // "32px header, sticky / 20px chip strip" stack. It is a
+              // sibling here rather than a child of `RackHeaderBar` on
+              // purpose: docs/m1-implementation-log.md flags that widget as
+              // mid-rework (the hold-repeat stepper landed there; the `⚠n`
+              // findings rollup is still to come), and threading a fifth
+              // concern through it would collide with that. Stacking the two
+              // gets §5's placement without touching the header at all.
+              //
+              // It used to be a `Positioned.fill` + `Align.bottomCenter`
+              // 36px bar floating over the canvas, which put an OPAQUE
+              // container across the bottom of the rack — absorbing every
+              // pointer event aimed at the lowest RUs — and pushed the
+              // status-message stub from `bottom: 12` to `bottom: 48` to
+              // get out of its way. Both are undone here.
               Positioned(
                 top: 12,
                 left: 0,
                 right: 0,
                 child: Center(
-                  child: RackHeaderBar(
-                    designator: _rack.designator,
-                    name: _rack.name,
-                    heightU: _rack.heightU,
-                    onHeaderTap: _showRackInspector,
-                    compactionEnabled: !_compaction.isActive,
-                    onAction: _onRackHeaderAction,
-                    // docs/04 §4.1's first way to change height. Returns
-                    // whether the hold-repeat may continue — see
-                    // `_stepHeight`.
-                    onStep: _stepHeight,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      RackHeaderBar(
+                        designator: _rack.designator,
+                        name: _rack.name,
+                        heightU: _rack.heightU,
+                        onHeaderTap: _showRackInspector,
+                        compactionEnabled: !_compaction.isActive,
+                        onAction: _onRackHeaderAction,
+                        // docs/04 §4.1's first way to change height. Returns
+                        // whether the hold-repeat may continue — see
+                        // `_stepHeight`.
+                        onStep: _stepHeight,
+                      ),
+                      RackMetricsRow(
+                        // Derived, not asserted: `computeRackRollups` is the
+                        // one place these four numbers exist (see
+                        // rack_metrics_row.dart's header for the literal
+                        // `ruFree: 0` this replaces). Recomputed per build,
+                        // which is exactly as often as the rack's contents
+                        // can have changed — every structural edit already
+                        // rebuilds this screen through `_onEditorChanged`.
+                        rollups: computeRackRollups(
+                          rack: _rack,
+                          devices: _doc.devices.values,
+                          templates: _doc.templates,
+                          face: _face,
+                        ),
+                        units: _doc.settings.displayUnits,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -3177,21 +3241,9 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                   ),
                 ),
               ),
-              Positioned.fill(
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: RackMetricsRow(
-                    ruCount: _rack.heightU,
-                    ruFree: 0, // TODO(M1): wire to actual computed free RU
-                    weightKg: 0.0, // TODO(M1): wire to actual weight
-                    vaDraw: 0, // TODO(M1): wire to actual VA draw
-                    outletCount: 0, // TODO(M1): wire to actual outlets
-                  ),
-                ),
-              ),
               Positioned(
                 left: 12,
-                bottom: 48,
+                bottom: 12,
                 child: IgnorePointer(
                   // A minimal transient-message stub (docs/04 §3.4's
                   // "never silently stops"), NOT the full always-visible
@@ -3209,8 +3261,8 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                               'drag a selected device to move  ·  Del '
                               'removes  ·  Ctrl/Cmd+Z / +Shift+Z undo/redo  '
                               '·  ↑↓ nudge/caret, Home/End/PgUp/PgDn  ·  '
-                              'scroll or middle-drag to pan  ·  Ctrl/Cmd+'
-                              'scroll to zoom',
+                              'scroll or middle-drag to pan  ·  '
+                              'Ctrl/Cmd+scroll to zoom',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -3790,6 +3842,16 @@ class _DragPreviewOverlay extends StatelessWidget {
   }
 }
 
+/// A stable handle on the cursor card below.
+///
+/// Three widgets legitimately render the SAME device name during one
+/// palette drag — the palette row, this card, and the Staging Bin chip —
+/// so a test that counts occurrences of that string proves nothing about
+/// which three it found, and silently changes meaning every time a fourth
+/// surface starts showing it. Tests scope through this key instead
+/// (`StagingBinOverlay.chipKey` is its counterpart).
+const Key kDragCursorCardKey = ValueKey('drag-cursor-card');
+
 /// docs/04 §3.1 step 2: "A 180x40px cursor card (icon, name, '2U' badge)."
 class _CursorCard extends StatelessWidget {
   const _CursorCard({required this.displayName, required this.badge});
@@ -3801,6 +3863,7 @@ class _CursorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Material(
+      key: kDragCursorCardKey,
       elevation: 4,
       borderRadius: BorderRadius.circular(6),
       color: scheme.surfaceContainerHigh,

@@ -1,99 +1,132 @@
 // packages/rackmate_ui/lib/src/canvas/staging_bin_overlay.dart
 //
-// M2: Staging Bin overlay panel for palette drag outside canvas bounds.
-// When dragging from the palette and releasing outside any rack, items land
-// in the staging bin instead of being discarded.
+// docs/04-rack-editor.md §3.1's escape hatch: "Dragging outside any rack
+// shows the ghost at 40 % with a `Release to add to Staging Bin` chip;
+// dropping there creates a `StagedPlacement` (CR-031, CR-032)."
+//
+// THIS CHIP DOES NOT SAY THAT SENTENCE, AND THAT IS THE POINT.
+//
+// The Staging Bin is `StagedPlacement` (CR-032) — a query, not an entity —
+// and while the model and codec have carried it since M0, this build has:
+// no command that produces one, no panel or outline branch that lists the
+// devices in it, and no `↩ Return to RK-1 U21` chip. Releasing outside the
+// canvas is therefore a no-op (`RackCanvasScreen._commitOrNoopPaletteDrag`).
+// A chip reading "Release to add to Staging Bin" over a build where release
+// adds nothing is the exact failure docs/09-roadmap.md M1 names — "an empty
+// Schedule tab that explains it is coming is a lie" — so this one states
+// what will actually happen instead. When the bin ships, this widget's copy
+// changes and its position, lifecycle and tests do not.
+//
+// SHAPE NOTES, both of them defects this file shipped with:
+//  * It is a `Positioned` chip anchored to the drag cursor, sitting just
+//    below the `_CursorCard`. It used to be inserted into the ROOT overlay
+//    with no `Positioned` at all, so its `Material` stretched to fill the
+//    whole window — a full-screen elevated panel flashing over the app
+//    every time a drag left the canvas. The two `anchorX`/`anchorY`
+//    constants that were meant to place it were computed and never used
+//    (the analyzer reported both as `unused_local_variable`).
+//  * It listens to the controller for the cursor position, so it follows
+//    the pointer rather than sitting at a fixed corner.
 
 import 'package:flutter/material.dart';
 import 'package:rackmate_ui/src/canvas/drag_preview_controller.dart';
 
-/// An overlay that appears when a palette drag is outside the canvas bounds,
-/// indicating where the item will be placed (in the Staging Bin).
-///
-/// This is shown as a floating panel at the top of the canvas area.
+/// The chip shown while a palette drag is outside every rack (docs/04
+/// §3.1). Read the file header before changing its copy: the wording is
+/// load-bearing, not filler.
 class StagingBinOverlay extends StatelessWidget {
   /// Construct a staging bin overlay.
-  const StagingBinOverlay({
-    required this.controller,
-    Key? key,
-  }) : super(key: key);
+  const StagingBinOverlay({required this.controller, super.key});
+
+  /// A stable handle for tests and for anything that needs to distinguish
+  /// this chip's copy of the dragged device's name from the palette row's
+  /// and the cursor card's — three widgets legitimately render the same
+  /// string during one drag, and a bare text count cannot tell them apart.
+  static const Key chipKey = ValueKey('staging-bin-chip');
+
+  /// Offset from the drag cursor, clearing the 40px `_CursorCard` that
+  /// occupies `cursor + (16, 16)` during the same phase.
+  static const Offset cursorOffset = Offset(16, 64);
 
   /// The drag controller providing device details and position information.
   final DragPreviewController controller;
 
   @override
   Widget build(BuildContext context) {
-    // Show staging bin when phase is 'lifted' - this means the pointer is
-    // outside the canvas (drag entered canvas → phase becomes 'dragging',
-    // dragged back out → phase becomes 'lifted' again).
-    //
-    // The controller's phase == lifted implies we're outside canvas, so there's
-    // no need to check cursor position against canvas bounds.
-    if (!controller.isSourceEngaged ||
-        controller.phase != DragPreviewPhase.lifted) {
-      return const SizedBox.shrink();
-    }
-
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
     return IgnorePointer(
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, _) {
-          // Show the staging bin info near the top-left of canvas area
-          // Position is relative to canvas top-left since we only show when
-          // outside canvas bounds
-          const anchorX = 16.0;
-          const anchorY = 50.0;
+          // `lifted` is the phase that means "armed, past the 4px slop, and
+          // NOT over the canvas": a drag that enters the canvas becomes
+          // `dragging`, and one dragged back out returns to `lifted`. So
+          // the phase alone answers "is the pointer outside?" — there is no
+          // second bounds check to keep in sync with the screen's.
+          if (!controller.isSourceEngaged ||
+              controller.phase != DragPreviewPhase.lifted) {
+            return const SizedBox.shrink();
+          }
+          final cursor = controller.cursorGlobal;
+          if (cursor == null) return const SizedBox.shrink();
 
-          return Material(
-            elevation: 4,
-            borderRadius: BorderRadius.circular(8),
-            color: scheme.surfaceContainerHigh,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: scheme.tertiaryContainer,
-                      borderRadius: BorderRadius.circular(6),
+          final theme = Theme.of(context);
+          final scheme = theme.colorScheme;
+          final name = controller.displayName;
+
+          return Stack(
+            children: [
+              Positioned(
+                left: cursor.dx + cursorOffset.dx,
+                top: cursor.dy + cursorOffset.dy,
+                child: Material(
+                  key: chipKey,
+                  elevation: 4,
+                  borderRadius: BorderRadius.circular(8),
+                  color: scheme.surfaceContainerHigh,
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 260),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
                     ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      Icons.inventory_2,
-                      size: 18,
-                      color: scheme.onTertiaryContainer,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Staging Bin',
-                        style: theme.textTheme.labelMedium?.copyWith(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.inventory_2_outlined,
+                          size: 18,
                           color: scheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
                         ),
-                      ),
-                      if (controller.displayName.isNotEmpty)
-                        Text(
-                          controller.displayName,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: scheme.onSurface,
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Staging Bin — not in this build',
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (name.isNotEmpty)
+                                Text(
+                                  'Releasing here will not place $name.',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: scheme.onSurface,
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
-                    ],
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           );
         },
       ),

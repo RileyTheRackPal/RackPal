@@ -10,8 +10,8 @@ import 'package:rackmate_core/src/units/mass.dart';
 
 const String kCatNetwork = 'Network & Cabling Infrastructure';
 
-Len _mm(num v) => Len((v * 1_000_000).round());
-Mass _kg(num v) => Mass((v * 1_000_000).round());
+Len _mm(num v) => Len.fromMillimetres(v);
+Mass _kg(num v) => Mass.fromKilograms(v);
 
 PowerProfile _power({
   required int nameplate,
@@ -26,6 +26,7 @@ PowerProfile _power({
   apparentVA: (typical * 1000 / pf).round(),
   powerFactor: pf,
   isContinuousLoad: true,
+  outletsProvided: 0,
   outletsConsumed: outletsConsumed,
   inletPlug: PlugType.c14,
   poeBudgetWatts: poeBudget,
@@ -120,6 +121,12 @@ Map<String, TemplateBody> buildNetworkCatalog() {
     bodyDepth: _mm(300),
     connectorProjection: _mm(50),
     weight: _kg(7.7),
+    // 7.7 kg is over the 7 kg front-ear limit docs/catalog/seed-devices.md
+    // §3 states as the `rackEars` default (AC-028), so RCK-013 must have an
+    // object to fire on here. It was missing until the catalog's 1000x mass
+    // error was fixed: every template read as ~8 g, so seed_catalog_test's
+    // `weightKg > 7` gate never once ran.
+    maxUnsupportedMass: _kg(7),
     requiresClearanceAboveU: 1,
     power: _power(nameplate: 900, typical: 380, pf: 950, outletsConsumed: 2, poeBudget: 740),
     ports: n01.ports,

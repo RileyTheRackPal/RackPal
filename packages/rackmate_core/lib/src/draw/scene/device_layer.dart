@@ -22,6 +22,7 @@
 
 import 'dart:math' as math;
 
+import 'package:rackmate_core/src/draw/bounds_canvas.dart';
 import 'package:rackmate_core/src/draw/geometry.dart';
 import 'package:rackmate_core/src/draw/ops.dart';
 import 'package:rackmate_core/src/draw/scene/rack_geometry.dart';
@@ -147,5 +148,6 @@ LayerBuild buildDeviceLayer(
   return (
     ops: ops,
     minTextPt: sizes.isEmpty ? double.infinity : sizes.reduce(math.min),
+    inkBounds: inkBoundsOf(ops, measurer: measurer),
   );
 }

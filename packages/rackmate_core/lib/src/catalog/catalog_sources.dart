@@ -8,8 +8,8 @@ import 'package:rackmate_core/src/units/mass.dart';
 
 const String kCatSources = 'Sources';
 
-Len _mm(num v) => Len((v * 1_000_000).round());
-Mass _kg(num v) => Mass((v * 1_000_000).round());
+Len _mm(num v) => Len.fromMillimetres(v);
+Mass _kg(num v) => Mass.fromKilograms(v);
 
 Map<String, TemplateBody> buildSourcesCatalog() {
   final out = <String, TemplateBody>{};
@@ -143,6 +143,7 @@ Map<String, TemplateBody> buildSourcesCatalog() {
       apparentVA: 24,
       powerFactor: 900,
       isContinuousLoad: true,
+      outletsProvided: 0,
       outletsConsumed: 1,
       inletPlug: PlugType.nema515p,
     ),
@@ -265,6 +266,7 @@ Map<String, TemplateBody> buildSourcesCatalog() {
       apparentVA: 168,
       powerFactor: 950,
       isContinuousLoad: true,
+      outletsProvided: 0,
       outletsConsumed: 2,
       inletPlug: PlugType.c14,
     ),

@@ -8,8 +8,8 @@ import 'package:rackmate_core/src/units/mass.dart';
 
 const String kCatAudio = 'Audio';
 
-Len _mm(num v) => Len((v * 1_000_000).round());
-Mass _kg(num v) => Mass((v * 1_000_000).round());
+Len _mm(num v) => Len.fromMillimetres(v);
+Mass _kg(num v) => Mass.fromKilograms(v);
 
 PowerProfile _power({
   required int nameplate,
@@ -24,6 +24,7 @@ PowerProfile _power({
   apparentVA: (typical * 1000 / pf).round(),
   powerFactor: pf,
   isContinuousLoad: true,
+  outletsProvided: 0,
   outletsConsumed: 1,
   inletPlug: PlugType.nema515p,
 );
