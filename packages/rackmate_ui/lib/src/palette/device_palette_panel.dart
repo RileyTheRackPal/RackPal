@@ -111,7 +111,7 @@ class DevicePalettePanel extends StatefulWidget {
   final VoidCallback? onDismissSearch;
 
   /// Announces a refusal on the host's status line. Used when `Enter` in the
-  /// search box matches nothing — see [_submitQuery].
+  /// search box matches nothing.
   final void Function(String message)? onRefuse;
 
   /// Fired on a plain pointer-down anywhere on a row (docs/04 §3.1 step 1:

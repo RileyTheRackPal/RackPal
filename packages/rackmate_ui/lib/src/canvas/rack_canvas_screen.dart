@@ -660,8 +660,9 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       ..dispose();
     _gridCache.dispose();
     _canvasFocus.dispose();
-    _paletteSearchFocus.removeListener(_onFocusChanged);
-    _paletteSearchFocus.dispose();
+    _paletteSearchFocus
+      ..removeListener(_onFocusChanged)
+      ..dispose();
     _paletteSearchController.dispose();
     super.dispose();
   }
@@ -4240,7 +4241,7 @@ class _ApplyCompactionAction extends Action<_ApplyCompactionIntent> {
 /// `handled`. Only `isActionEnabled == false` yields `ignored` and lets the
 /// event continue up the chain. Verified by execution, both ways.
 ///
-/// [enabled] is a closure rather than a captured bool because
+/// The `enabled` predicate is a closure rather than a captured bool because
 /// `ShortcutManager` re-reads `isActionEnabled` on every keypress; a
 /// snapshot taken at build time would be stale the moment focus moved.
 class _GatedAction<T extends Intent> extends Action<T> {
