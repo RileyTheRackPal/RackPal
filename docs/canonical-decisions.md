@@ -6125,7 +6125,44 @@ sheet set (docs/08 §2.2) as `AUTO`, gated on any non-standard pinout existing. 
 that sheet a real second purpose and a reason to be `ON` far more often, but the sheet itself ships
 when the full sheet set does.
 
-**11.7.8 One question left open for the implementer, deliberately.**
+**11.7.8 The physical reference, and the three things it changes.**
+
+*Added 2026-07-28. The user supplied photographs of the real parts: keystone straps in 1, 2, 3, 4
+and 6 port, and Decora cover plates in 1, 2 and 3 gang.*
+
+**What it confirms.** §11.7.1's table is exactly right, part for part — 1, 2, 3, 4, 6, and **no
+five-port strap exists in the reference**, which is the prediction `W ∈ {1,2} × H ∈ {1,2,3}` makes.
+The 4- and 6-port parts are visibly two columns wide, so §11.7.2's claim that orientation is forced
+on 1-wide straps and free on 2-wide ones holds against the physical objects rather than against an
+argument. Nothing in §11.7.1–11.7.3 needs changing.
+
+**Change 1 — THE COVER PLATE IS A SEPARATE PART, AND A SEPARATE LINE ITEM.** The reference makes
+plain what §11.7.3's tree elides: a strap and a Decora plate are two distinct purchasable objects.
+The strap screws to the box and carries the keystones; the plate covers it and has its own gang
+count. So an `Outlet` with N gangs is **N straps plus exactly ONE N-gang cover plate**, and the
+plate's gang count is not free — it is `Outlet.gangs.length`, always. §11.7.4 already rules that
+blank inserts are occupants and therefore line items; the cover plate is the same argument one
+level up and was simply missed. The materials sheet owes both.
+
+**Change 2 — THE CELL GRID IS CENTRED IN THE OPENING, NOT ANCHORED TO AN EDGE.** In the reference,
+the 1- and 2-port straps do **not** fill their vertical span: the openings sit as a group with blank
+plastic above and below, symmetric about the centre. Only the 3-port fills it. A renderer that lays
+cells out from the top edge will draw a 1-port strap with its jack at the top, and that is simply
+not what the part looks like. `W × H` is the occupancy model and stays; the **placement** of that
+grid inside the plate opening is a separate fact and this is it.
+
+**Change 3 — one dimension is NOT settled and must be measured, not inferred.** Whether a cell on a
+2-wide strap is the same size as a cell on a 1-wide strap is **not** answerable from the reference.
+The 1-wide openings read as proportionally wider than the 2-wide ones, but these are product
+photographs at different scales and that appearance is as likely to be an artefact as a fact. The
+arithmetic permits a single uniform cell — a standard keystone is about 14.5 × 16.0 mm and a Decora
+opening about 33.3 × 66.7 mm, so 2 × 14.5 = 29 mm fits across and 3 × 16.0 = 48 mm fits down — but
+*permits* is not *is*. **One caliper measurement of a real 3-port and a real 6-port settles it**, and
+it must be taken before any dimensioned rendering, because a uniform-cell assumption that turns out
+false is wrong on every plate drawing at once. Recorded as an open measurement rather than resolved
+by the most convenient reading (G4).
+
+**11.7.9 One question left open for the implementer, deliberately.**
 
 `ProjectSettings.outletFieldLabelFormat` is `{ROOM_ABBR}-{SERVICE}-{SEQ}`. With N gangs, whether the
 gang appears in a drop's field label — and whether that needs a new `IdFormat` token — is **not**
