@@ -75,6 +75,8 @@ enum _StepKind {
   removeLink,
   setLinkJacketColor,
   setLinkPulledJacketColor,
+  setLinkClass,
+  clearLinkClassOverride,
 }
 
 /// The convention ids the generator draws from, plus `null` (clear) and
@@ -105,9 +107,7 @@ Command _buildSetRackProperty(_SequenceState s, Random rnd) {
 
   T pick<T>(List<T> options, T current) {
     final others = options.where((o) => o != current).toList();
-    return others.isEmpty
-        ? current
-        : others[rnd.nextInt(others.length)];
+    return others.isEmpty ? current : others[rnd.nextInt(others.length)];
   }
 
   SetRackPropertyCommand<T> make<T>(RackField<T> field, T to) =>
@@ -181,8 +181,7 @@ final class _SequenceState {
   /// `DateTime.now()` (this package's injectable-clock policy), and
   /// distinct per command so redo-vs-original-apply timestamp bugs
   /// would actually show up if introduced.
-  DateTime nextNow() =>
-      DateTime.utc(2026).add(Duration(seconds: _tick++));
+  DateTime nextNow() => DateTime.utc(2026).add(Duration(seconds: _tick++));
 
   List<_StepKind> availableKinds() => [
     _StepKind.addDevice,
@@ -196,6 +195,8 @@ final class _SequenceState {
     if (aliveLinkIds.isNotEmpty) _StepKind.removeLink,
     if (aliveLinkIds.isNotEmpty) _StepKind.setLinkJacketColor,
     if (aliveLinkIds.isNotEmpty) _StepKind.setLinkPulledJacketColor,
+    if (aliveLinkIds.isNotEmpty) _StepKind.setLinkClass,
+    if (aliveLinkIds.isNotEmpty) _StepKind.clearLinkClassOverride,
   ];
 }
 
@@ -296,6 +297,25 @@ Command _buildCommand(_StepKind kind, _SequenceState s, Random rnd, int step) {
         linkId: s.aliveLinkIds[rnd.nextInt(s.aliveLinkIds.length)],
         pulledId: _jacketColorIds[rnd.nextInt(_jacketColorIds.length)],
       );
+
+    case _StepKind.setLinkClass:
+      return SetLinkClassCommand(
+        linkId: s.aliveLinkIds[rnd.nextInt(s.aliveLinkIds.length)],
+        linkClass: LinkClass.values[rnd.nextInt(LinkClass.values.length)],
+      );
+
+    case _StepKind.clearLinkClassOverride:
+      // INTERLEAVED WITH `setLinkClass` ON PURPOSE. `linkClassLocked` is
+      // an ABSENT-WHEN-FALSE key (DR-008 §11.8.2), which is the whole
+      // reason the field could be added without moving `kSchemaVersion`.
+      // A set/clear pair must therefore leave the document byte-identical
+      // to one that never carried the key at all — and two different bugs
+      // show up here as a byte diff rather than as a passing unit test:
+      // an encoder that starts writing `false`, and a `revert()` that
+      // restores the class but not the lock.
+      return ClearLinkClassOverrideCommand(
+        linkId: s.aliveLinkIds[rnd.nextInt(s.aliveLinkIds.length)],
+      );
   }
 }
 
@@ -324,6 +344,8 @@ void _reconcileTrackingAfterCommit(
     case _StepKind.setRackProperty:
     case _StepKind.setLinkJacketColor:
     case _StepKind.setLinkPulledJacketColor:
+    case _StepKind.setLinkClass:
+    case _StepKind.clearLinkClassOverride:
     // Mutate entities already tracked; no alive-id bookkeeping needed.
   }
 }

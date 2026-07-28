@@ -39,4 +39,13 @@ enum LabelKey {
   // touches it), so the enum's ORDER carries no format meaning.
   setLinkJacketColor,
   setLinkPulledJacketColor,
+
+  // LINK CLASS OVERRIDE (commands/link_class_commands.dart), DR-008
+  // §11.8.2. Two entries for the same reason as the jacket pair: setting a
+  // class and handing it back to the classifier are different gestures and
+  // the Edit menu must name the one being undone. "Clear" in particular
+  // must not read as "Set" — undoing it restores an assertion, and a menu
+  // that says the wrong one there is worse than no label.
+  setLinkClass,
+  clearLinkClassOverride,
 }

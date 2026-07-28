@@ -224,4 +224,107 @@ void main() {
       expect(rackOfEndpoint(doc, const OpenEndpoint('J-hook')), isNull);
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DR-008 §11.8.2 — THE OVERRIDE, AND THE DISAGREEMENT IT MUST NOT HIDE
+  // ═══════════════════════════════════════════════════════════════════
+  group('DR-008 §11.8.2 — a user-set class outranks the classifier', () {
+    /// [link] with a person's assertion on it.
+    Link locked(Link link, LinkClass asserted) => link
+      ..linkClass = asserted
+      ..linkClassLocked = true;
+
+    test('unlocked, the classifier drives and the stored value is inert', () {
+      final doc = _doc({'a': _rackA, 'b': _rackA});
+      // Stored class deliberately disagrees, WITHOUT the lock. Nobody put
+      // it there, so it must carry no weight at all.
+      final link = _link(_port('a'), _port('b'))
+        ..linkClass = LinkClass.powerCord;
+      expect(effectiveLinkClassOf(doc, link), LinkClass.jumper);
+      expect(
+        linkClassDisagreementOf(doc, link),
+        isNull,
+        reason:
+            'an unlocked link cannot disagree with anything — there is no '
+            'human assertion for the classifier to contradict, so flagging '
+            'this would report a conflict between the classifier and a '
+            'default nobody chose',
+      );
+    });
+
+    test('unlocked and unresolvable is undetermined, not the stored '
+        'default', () {
+      final doc = _doc({});
+      final link = _link(_port('ghost'), _port('ghost2'));
+      expect(
+        effectiveLinkClassOf(doc, link),
+        isNull,
+        reason:
+            'G4: the stored default is fieldCable, and returning it here '
+            'would assert a pull nobody established',
+      );
+    });
+
+    test("locked, the USER'S value stands even though the classifier "
+        'disagrees', () {
+      // The ruling's core case: two devices in ONE rack, so the classifier
+      // says jumper — but a person has said this is a power cord.
+      final doc = _doc({'a': _rackA, 'b': _rackA});
+      final link = locked(
+        _link(_port('a'), _port('b')),
+        LinkClass.powerCord,
+      );
+      expect(linkClassOf(doc, link), LinkClass.jumper);
+      expect(
+        effectiveLinkClassOf(doc, link),
+        LinkClass.powerCord,
+        reason:
+            'the classifier is advisory; a document change must never '
+            'overwrite a human judgement',
+      );
+    });
+
+    test('THE DISAGREEMENT IS REPORTABLE — the half that makes the '
+        'override auditable', () {
+      // A person classed this jumper. The document then moved: the two
+      // devices are now in DIFFERENT racks, so it is really a pull.
+      final doc = _doc({'a': _rackA, 'b': _rackB});
+      final link = locked(_link(_port('a'), _port('b')), LinkClass.jumper);
+
+      expect(effectiveLinkClassOf(doc, link), LinkClass.jumper);
+      expect(
+        linkClassDisagreementOf(doc, link),
+        LinkClass.fieldCable,
+        reason:
+            'without this the override is a silent trap: the link stays off '
+            'the Pull Sheet as a jumper forever, and nothing anywhere can '
+            'say that the document stopped agreeing',
+      );
+    });
+
+    test('agreement is not a disagreement', () {
+      final doc = _doc({'a': _rackA, 'b': _rackA});
+      final link = locked(_link(_port('a'), _port('b')), LinkClass.jumper);
+      expect(linkClassDisagreementOf(doc, link), isNull);
+    });
+
+    test('UNDETERMINED IS NOT A DISAGREEMENT', () {
+      // The classifier cannot resolve either end, so it has no opinion —
+      // as opposed to a competing one. Reporting this as a conflict puts a
+      // warning on every link touching a staged or missing device, which
+      // teaches people to ignore the warning that matters.
+      final doc = _doc({});
+      final link = locked(
+        _link(_port('ghost'), _port('ghost2')),
+        LinkClass.jumper,
+      );
+      expect(linkClassOf(doc, link), isNull);
+      expect(effectiveLinkClassOf(doc, link), LinkClass.jumper);
+      expect(
+        linkClassDisagreementOf(doc, link),
+        isNull,
+        reason: 'failing to resolve an end is not forming a competing opinion',
+      );
+    });
+  });
 }

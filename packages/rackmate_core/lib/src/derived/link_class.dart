@@ -83,6 +83,55 @@ LinkClass? linkClassOf(RackDocument doc, Link link) {
   return LinkClass.fieldCable;
 }
 
+/// THE CLASS TO USE. A person's assertion when they have made one
+/// ([Link.linkClassLocked]), the classifier's answer otherwise.
+///
+/// DR-008 §11.8.2. This is the only function a consumer — the Pull Sheet,
+/// the schedule, a filter — should ask. Reading `Link.linkClass` directly
+/// gets the stored value whether or not anyone stood behind it; calling
+/// [linkClassOf] directly gets the classifier's opinion whether or not a
+/// person has overruled it. Both are right for their own narrow purpose
+/// and wrong for this one.
+///
+/// Still `null` for undetermined, and only via the classifier: a locked
+/// link always has an answer, because a person gave it one.
+LinkClass? effectiveLinkClassOf(RackDocument doc, Link link) =>
+    link.linkClassLocked ? link.linkClass : linkClassOf(doc, link);
+
+/// WHAT THE CLASSIFIER WOULD SAY, when a person has said otherwise —
+/// `null` when there is nothing to report.
+///
+/// This is the "and the disagreement stays visible" half of §11.8.2. The
+/// user's value stands ([effectiveLinkClassOf] returns it); this exists so
+/// that standing is not the same as hiding. A UI renders it as "you set
+/// jumper; this now looks like a field cable", and it is the only thing
+/// that makes an override auditable after the document moves under it.
+///
+/// AN UNDETERMINED CLASSIFIER IS NOT A DISAGREEMENT. When [linkClassOf]
+/// returns `null` it has failed to resolve an end — a missing device, an
+/// unmaterialised port, a shelf chain that never lands. It has not formed
+/// a competing opinion, so there is nothing for the user to be wrong
+/// about. Reporting those as conflicts would put a warning on every link
+/// touching a staged device, which trains people to ignore the warning
+/// that matters.
+LinkClass? linkClassDisagreementOf(RackDocument doc, Link link) {
+  if (!link.linkClassLocked) return null;
+  final derived = linkClassOf(doc, link);
+  // `derived == null` is DELIBERATELY REDUNDANT and is kept as a
+  // statement of intent. Dropping it changes no behaviour — `null` is not
+  // equal to any `LinkClass`, so control reaches `return derived`, which
+  // returns that same `null`. A mutation removing it therefore survives,
+  // and the survival is honest rather than a hole in the tests above.
+  //
+  // It stays because the equivalence is a coincidence of this return
+  // type, not a property of the rule. "Undetermined is not a
+  // disagreement" is a decision; give it back its own line and any later
+  // change here — a bool, a record, a reason string — starts from the
+  // rule instead of rediscovering it.
+  if (derived == null || derived == link.linkClass) return null;
+  return derived;
+}
+
 /// One resolved end.
 ///
 /// The nesting is the point, and it is why this is a type rather than a

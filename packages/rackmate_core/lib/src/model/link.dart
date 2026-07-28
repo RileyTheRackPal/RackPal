@@ -58,7 +58,8 @@ final class Link {
     required this.order,
     required this.meta,
     this.designatorLocked = false,
-    this.linkClass = LinkClass.fieldCable,
+    LinkClass linkClass = LinkClass.fieldCable,
+    bool linkClassLocked = false,
     List<Service>? services,
     List<Conductor>? conductors,
     List<Breakout>? breakouts,
@@ -88,6 +89,8 @@ final class Link {
        breakouts = breakouts ?? [],
        inlineAdapters = inlineAdapters ?? [],
        _designator = designator,
+       _linkClass = linkClass,
+       _linkClassLocked = linkClassLocked,
        _jacketColorId = jacketColorId,
        _jacketColorPulledId = jacketColorPulledId,
        _notes = notes;
@@ -169,13 +172,56 @@ final class Link {
   @internal
   set jacketColorPulledId(JacketColorId? v) => _jacketColorPulledId = v;
 
+  // ─────────────────────────────────────────────────────────────────
+  // LINK CLASS — TWO PIECES OF STATE, AND THE SECOND IS WHY.
+  // ─────────────────────────────────────────────────────────────────
+  // DR-008 §11.8.2. The classifier (`derived/link_class.dart`) is
+  // ADVISORY: it never writes here. When a person sets the class by
+  // hand that assertion is stored and kept, and if the document later
+  // changes so the classifier would say something else, THE USER'S
+  // VALUE STANDS AND THE DISAGREEMENT IS REPORTABLE.
+  //
+  // One field cannot express that. With only [linkClass] there is no
+  // way to tell "the classifier said jumper" from "a person said
+  // jumper", so moving a device either silently overwrites a human
+  // judgement or is silently ignored — with nothing able to say which
+  // happened. That is the same shape, for the same reason, as
+  // [jacketColorId] / [jacketColorPulledId] under CR-121, and the
+  // precedent is already on this class in [designatorLocked].
+
+  /// What this link IS, as stored. Only authoritative when
+  /// [linkClassLocked]; otherwise it is an inert leftover and
+  /// `effectiveLinkClassOf` ignores it in favour of the classifier.
+  ///
+  /// Defaults to [LinkClass.fieldCable] because a `Link` must decode to
+  /// something and the field is mandatory on the wire. Do NOT read that
+  /// default as a claim: an unlocked link's class is whatever
+  /// `linkClassOf` derives, up to and including `null` for undetermined.
+  LinkClass _linkClass;
+  LinkClass get linkClass => _linkClass;
+  @internal
+  set linkClass(LinkClass v) => _linkClass = v;
+
+  /// TRUE ONLY WHEN A PERSON SET THE CLASS. Never set by the classifier.
+  ///
+  /// ON THE WIRE THIS KEY IS ABSENT WHEN FALSE, per CR-117's
+  /// absent-key-is-not-null contract — false is overwhelmingly the normal
+  /// case, so every document that has never had a hand-set class encodes
+  /// BYTE-FOR-BYTE as it did before this field existed and
+  /// `kSchemaVersion` does not move. Note this deliberately does NOT
+  /// follow [designatorLocked], which is written unconditionally: adding
+  /// an always-written key here would rewrite every existing document.
+  bool _linkClassLocked;
+  bool get linkClassLocked => _linkClassLocked;
+  @internal
+  set linkClassLocked(bool v) => _linkClassLocked = v;
+
   // ACCESS CONTROL: fields below are plain mutable pending @internal
   // retrofit (AC-013). Converted as each is wired to a Command. See
   // internal_setter_grep_test.dart.
 
   /// Auto-set at `roughInStatus >= pulled` (AC-034/m22).
   bool designatorLocked;
-  LinkClass linkClass;
 
   /// 1..N (CR-010, AC-021).
   List<Service> services;

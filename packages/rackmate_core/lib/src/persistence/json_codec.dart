@@ -1617,6 +1617,17 @@ JsonMap _encodeLink(Link l) {
     'lifecycleStatus': encodeLifecycleStatus(l.lifecycleStatus),
     'roughInStatus': encodeEnumName(l.roughInStatus),
   };
+  // TRUE-ONLY, ABSENT OTHERWISE — DR-008 §11.8.2 requires it and CR-117's
+  // absent-key-is-not-null contract permits it. `false` is the normal case
+  // (nobody has hand-set this link's class), so every document written
+  // before this key existed still encodes BYTE-FOR-BYTE and
+  // `kSchemaVersion` does not move.
+  //
+  // Deliberately NOT the shape of `designatorLocked` six lines above,
+  // which is written unconditionally. Copying that here would add a key to
+  // every Link in every existing document — a rewrite of every file on
+  // disk to record something no one has said.
+  if (l.linkClassLocked) json['linkClassLocked'] = true;
   putIfNotNull(json, 'notes', l.notes);
   putIfNotNull(json, 'cableSpecId', l.cableSpecId);
   putIfNotNull(json, 'gaugeAwg', l.gaugeAwg);
@@ -1661,6 +1672,13 @@ Link _decodeLink(Uuid id, JsonMap json) => Link(
     LinkClass.values,
     asStr(json['linkClass'], 'Link.linkClass'),
     'Link.linkClass',
+  ),
+  // Absent means false — the key is written only when true. An older
+  // document simply has no opinion here, which is exactly "no one
+  // hand-set this class".
+  linkClassLocked: asBool(
+    json['linkClassLocked'] ?? false,
+    'Link.linkClassLocked',
   ),
   services: decodeObjectList(json['services'], 'Link.services', _decodeService),
   conductors: decodeObjectList(
