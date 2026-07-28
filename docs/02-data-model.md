@@ -572,6 +572,17 @@ final class Link {                        // ONE PHYSICAL CABLE. One W###. One s
   MediaTypeId media; String? cableSpecId;
   int? gaugeAwg; JacketRating? jacket; bool shielded, plenum;
 
+  // JACKET COLOUR — TWO FACTS, NEVER COLLAPSED. Both key into
+  // ProjectSettings.jacketColorConventions; neither is ever a bare Rgb.
+  JacketColorId? jacketColorId;        // WHAT THE RUN IS — the convention
+                                       // entry it follows. Drives the KEYSTONE.
+  JacketColorId? jacketColorPulledId;  // WHAT WAS ACTUALLY PULLED, set only
+                                       // when it differs. NULL IS NORMAL.
+                                       // NEVER drives the keystone.
+  // Derived, never stored: derived/jacket_color_resolution.dart answers
+  // "as-built colour", "is this an exception" and "keystone colour" (CR-107).
+  // Neither ever reaches a drawn wire's hue (CR-078/PAL-1).
+
   Len? routedLength, cutLength, terminatedLength;   // three fields, three columns. AC-024.
   Permille? slack;
   Uuid? pathwayId;                        // → Pathway

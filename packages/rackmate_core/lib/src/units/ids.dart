@@ -24,6 +24,15 @@ extension type const ConnectorTypeId(String v) {}
 /// e.g. "media.cat6a_futp".
 extension type const MediaTypeId(String v) {}
 
+/// e.g. "jc.blue" — a key into `ProjectSettings.jacketColorConventions`.
+///
+/// THE COLOUR OF THE SHEATH, which is neither of the two colour-ish facts
+/// it sits next to: `JacketRating` is the NEC fire rating and
+/// `Conductor.colorCode` is the pair colour inside the sheath. This type
+/// exists so the compiler can keep the three apart — a `MediaTypeId` and
+/// a `JacketColorId` are both bare strings on disk.
+extension type const JacketColorId(String v) {}
+
 /// e.g. "hdmi_out_3" — template-stable.
 extension type const PortKey(String v) {}
 

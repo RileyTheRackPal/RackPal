@@ -207,6 +207,22 @@ RackDocument _fullerProjectFixture() {
     designatorLocked: true,
     gaugeAwg: 23,
     jacket: JacketRating.cmr,
+    // A POPULATED value, not an absent one. The three colour-ish facts
+    // this cable carries are all here at once and all different: `cmr`
+    // is the NEC fire rating, `T568B` below is (mis)used as the pair
+    // record inside the sheath, and `jc.blue` is the colour of the
+    // jacket in the wall. A golden corpus that could not SEE a populated
+    // `jacketColorId` would not be guarding the encoder at all — that is
+    // the lesson fixture (d) already recorded.
+    jacketColorId: const JacketColorId('jc.blue'),
+    // AND THE EXCEPTION, populated. This run IS a control drop — its
+    // keystone will be blue, and its schedule row means "control" — but
+    // the crew ran out of blue and pulled yellow. Both facts on disk at
+    // once is the state the whole feature exists for, and a golden
+    // corpus that could not SEE a populated `jacketColorPulledId` would
+    // not be guarding the encoder against dropping it. Same lesson
+    // fixture (d) recorded about `_encodePowerProfile`.
+    jacketColorPulledId: const JacketColorId('jc.yellow'),
     shielded: true,
     roughInStatus: RoughInStatus.pulled,
     cutLength: const Len(19812000000),
@@ -284,6 +300,38 @@ RackDocument _fullerProjectFixture() {
     modifiedAt: DateTime.utc(2026, 7, 18, 16, 42, 55, 902, 310),
     meta: meta,
     sequence: 412,
+    // THREE convention entries for the three states that are not
+    // "absent": `jc.blue` is what the Link above IS (its convention),
+    // `jc.yellow` is what was actually PULLED into it (the exception),
+    // and `jc.white` is stocked but not pulled by anything in this
+    // document. `jc.white` also carries an EMPTY meaning, which is a
+    // value ("the user has not said") and must reach disk as `""`
+    // rather than being omitted.
+    //
+    // Both facts index this ONE map, which is what makes
+    // `BLU · CONTROL — PULLED YEL` printable from a single legend
+    // rather than needing a second vocabulary for exceptions.
+    settings: ProjectSettings(
+      jacketColorConventions: {
+        const JacketColorId('jc.blue'): const JacketColorDef(
+          displayName: 'Blue',
+          abbr: 'BLU',
+          color: Rgb(0x1F, 0x5F, 0xA8),
+          meaning: 'Control — touchscreen / IR balun / RS-232 balun',
+        ),
+        const JacketColorId('jc.yellow'): const JacketColorDef(
+          displayName: 'Yellow',
+          abbr: 'YEL',
+          color: Rgb(0xEF, 0xC8, 0x1E),
+          meaning: 'General data drops',
+        ),
+        const JacketColorId('jc.white'): const JacketColorDef(
+          displayName: 'White',
+          abbr: 'WHT',
+          color: Rgb(0xF2, 0xF2, 0xEF),
+        ),
+      },
+    ),
   );
   doc.racks[rackId] = rack;
   doc.devices[matrixDeviceId] = matrixDevice;
@@ -433,29 +481,90 @@ RackDocument _templatesAndPowerFixture() {
   return doc;
 }
 
+/// Set `UPDATE_GOLDENS=1` to REGENERATE the corpus instead of asserting
+/// against it. That is a deliberate, reviewed step of a format change —
+/// never something a test run does on its own. Regenerating and then
+/// committing the result is how a format change is proposed; the diff on
+/// those four files IS the review.
+final bool _updateGoldens =
+    Platform.environment['UPDATE_GOLDENS'] == '1';
+
+/// CR-117, asserted against the bytes ON DISK.
+///
+/// HISTORY, because this is the second spelling of this function and the
+/// first one could not fail. From `b94bd60` (M0) until this change it
+/// began by OVERWRITING `test/fixtures/$label.rackmate.json` with the
+/// bytes it was about to check, and then compared those bytes to
+/// themselves round-tripped. That proves
+/// `write(read(write(doc))) == write(doc)` — internal self-consistency —
+/// and says nothing whatever about the committed file. The golden was an
+/// OUTPUT, not an input, so ANY self-consistent format change passed and
+/// silently rewrote the corpus that was supposed to catch it. It did
+/// exactly that when `jacketColorConventions` became an unconditional key:
+/// every stored document's bytes moved, all four goldens were rewritten
+/// mid-run, and the suite stayed green.
+///
+/// CR-117 is stated in docs/03-architecture.md §9.1 as
+/// `write(read(bytes)) == bytes`, where `bytes` are bytes that already
+/// exist. M0's exit criterion names it. So this now asserts TWO distinct
+/// properties, and neither implies the other:
+///
+///   1. THE STORED-BYTES PROPERTY. Read the committed golden, write it
+///      back, and require the result to be byte-identical. This is CR-117
+///      literally, and it is what fails when the container format moves
+///      under a document a user already has on disk.
+///   2. THE GENERATOR PROPERTY. The in-memory fixture must encode to
+///      exactly those committed bytes, so the corpus cannot drift away
+///      from the code that claims to produce it.
+///
+/// Property 1 is the one that was missing for the whole of M0 and M1.
 void _assertByteRoundTrip(String label, RackDocument fixture) {
-  final bytes1 = _codec.write(fixture);
+  final file = File('test/fixtures/$label.rackmate.json');
+  final fresh = _codec.write(fixture);
 
-  final directory = Directory('test/fixtures');
-  if (!directory.existsSync()) {
-    directory.createSync(recursive: true);
+  if (_updateGoldens) {
+    final directory = Directory('test/fixtures');
+    if (!directory.existsSync()) {
+      directory.createSync(recursive: true);
+    }
+    file.writeAsBytesSync(fresh);
+    markTestSkipped('UPDATE_GOLDENS=1 — regenerated $label, asserted nothing');
+    return;
   }
-  File('test/fixtures/$label.rackmate.json').writeAsBytesSync(bytes1);
 
-  final decoded = _codec.read(bytes1);
-  expect(decoded, isA<Ok<RackDocument>>(), reason: 'read($label) failed');
-  final doc2 = (decoded as Ok<RackDocument>).value;
-
-  final bytes2 = _codec.write(doc2);
-
-  // A readable diff on failure (string compare) plus the literal CR-117
-  // byte property (list compare) — both must hold.
   expect(
-    utf8.decode(bytes2),
-    equals(utf8.decode(bytes1)),
-    reason: 'byte round trip failed for $label',
+    file.existsSync(),
+    isTrue,
+    reason:
+        'the golden test/fixtures/$label.rackmate.json is missing. It is a '
+        'checked-in INPUT, not an output — regenerate deliberately with '
+        'UPDATE_GOLDENS=1 and commit the diff.',
   );
-  expect(bytes2, equals(bytes1));
+  final stored = file.readAsBytesSync();
+
+  // (1) CR-117 against the bytes on disk.
+  final decoded = _codec.read(stored);
+  expect(decoded, isA<Ok<RackDocument>>(), reason: 'read($label) failed');
+  final reencoded = _codec.write((decoded as Ok<RackDocument>).value);
+  expect(
+    utf8.decode(reencoded),
+    equals(utf8.decode(stored)),
+    reason:
+        'CR-117 broken for $label: write(read(bytes)) != bytes. A document '
+        'already on disk does not survive a load-and-save unchanged.',
+  );
+  expect(reencoded, equals(stored));
+
+  // (2) The generator still produces exactly the committed corpus.
+  expect(
+    utf8.decode(fresh),
+    equals(utf8.decode(stored)),
+    reason:
+        'the $label fixture no longer encodes to its committed golden. If '
+        'this is an intended format change, regenerate with '
+        'UPDATE_GOLDENS=1 and review the diff — that diff is the change.',
+  );
+  expect(fresh, equals(stored));
 }
 
 void main() {

@@ -2,6 +2,7 @@ import 'package:rackmate_core/src/idformat/collision_policy.dart';
 import 'package:rackmate_core/src/idformat/id_format.dart';
 import 'package:rackmate_core/src/model/enums.dart'
     show RuNumbering, SheetNumbering, UnitSystem;
+import 'package:rackmate_core/src/model/jacket_color.dart';
 import 'package:rackmate_core/src/model/rule_override.dart';
 import 'package:rackmate_core/src/units/ids.dart';
 import 'package:rackmate_core/src/units/permille.dart';
@@ -36,6 +37,7 @@ final class ProjectSettings {
     this.designatorBlockSize = 100,
     Map<String, RuleOverride>? ruleOverrides,
     Map<SignalFamilyId, Rgb>? familyColorOverrides,
+    Map<JacketColorId, JacketColorDef>? jacketColorConventions,
     Map<String, Permille>? diversityFactorsByCategory,
     this.cableWasteFactor = const Permille(100),
     this.defaultNetworkMedia = const MediaTypeId('media.cat6a_futp'),
@@ -43,6 +45,7 @@ final class ProjectSettings {
     this.defaultLineVolts = 120,
   }) : ruleOverrides = ruleOverrides ?? {},
        familyColorOverrides = familyColorOverrides ?? {},
+       jacketColorConventions = jacketColorConventions ?? {},
        diversityFactorsByCategory = diversityFactorsByCategory ?? {};
 
   // ACCESS CONTROL: fields below are plain mutable pending @internal
@@ -83,6 +86,26 @@ final class ProjectSettings {
 
   /// Ships in v1 (AC-054).
   Map<SignalFamilyId, Rgb> familyColorOverrides;
+
+  /// THE SHOP'S CABLE-COLOUR CONVENTION. Document data, seeded on NEW
+  /// documents from `buildDefaultJacketColorConvention()` and fully
+  /// editable thereafter. Keyed the way `ruleOverrides` is: the map key
+  /// IS the id, so there is no id/key pair that can desynchronise.
+  ///
+  /// DEFAULTS TO EMPTY, DELIBERATELY, and this is the load-bearing part.
+  /// `ProjectSettings()` is what `RackDocument` falls back to and what
+  /// the codec builds from a file, so a constructor default of the seven
+  /// entries would make an OLD file — written before this feature
+  /// existed — decode carrying a convention its author never authored.
+  /// That is the fabrication `migrateV1ToV2` refuses. An old file's
+  /// convention is genuinely empty and must decode empty; a new document
+  /// gets the seed because a new document has an author choosing it.
+  ///
+  /// The format therefore expresses three distinct states: entries
+  /// present = a convention is in force; zero entries = this project has
+  /// none; an entry no `Link` references = a colour the shop stocks but
+  /// has not pulled.
+  Map<JacketColorId, JacketColorDef> jacketColorConventions;
 
   /// Amplifiers default 350 permille (AC-020).
   Map<String, Permille> diversityFactorsByCategory;

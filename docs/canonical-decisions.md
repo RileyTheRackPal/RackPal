@@ -1820,6 +1820,71 @@ survives intact; the reconciled sequence is Part 2's milestone plan.
 
 ---
 
+### CR-121 · Per-run jacket colour — one colour, or the convention plus the exception
+
+- **docs/01-domain.md and docs/08-pdf-export.md** both listed "jacket colour" as a Pull Sheet
+  extra column, and nothing in the model could populate it: `Link.jacket` is the NEC fire
+  rating and `Conductor.colorCode` is the pair colour inside the sheath. Neither is the colour
+  of the cable in the wall.
+- **The requesting integrator (2026-07)** asked for per-run colour to carry meaning — yellow
+  general data, blue control, green A/V, grey WAP, white camera/bridge/satellite, red external
+  and security/fire, black direct burial and patch — and then refined it: a run is sometimes
+  pulled in the *wrong* colour (ran out; prewire mistake), and that must be recordable
+  "WHILE KEEPING THE KEYSTONES FOLLOWING THE NORMAL CONVENTION".
+
+**Ruling — `Link` stores TWO nullable `JacketColorId`s, and the derived answers are computed,
+never stored.** `jacketColorId` is *what the run is* (a reference to a named convention entry;
+this is what a keystone follows). `jacketColorPulledId` is *what was actually pulled*, set only
+when it differs from the convention — null is the normal case. Collapsing them into one stored
+colour cannot express the user's sentence at all, and storing the resolved answers would create
+the second copy of one physical fact that CR-107 deleted `StructureDrop` for.
+
+Four consequences, each load-bearing:
+
+1. **The keystone follows the convention, alone.** `keystoneColorId => conventionId`; the
+   expression does not mention the override. That syntactic independence *is* the design — the
+   keystone is chosen weeks after the pull, out of the same box as every other control drop's,
+   and is routinely correct while the cable is not.
+2. **The exception is visible, never hidden.** A wrong-colour pull prints as two tokens
+   (`BLU→YEL`), never one. `isException` is a pure function of the `Link` plus the map, so
+   there is no flag anyone can forget to set. *Documentation of imperfections beats no
+   documentation at all.*
+3. **Colour is a NAMED ENTRY, not a bare `Rgb`.** The Installer export preset defaults to
+   greyscale, so a hex triple degrades to an indistinguishable grey — and was already
+   indistinguishable for the ~8 % of installers with a CVD. `abbr` survives greyscale, a
+   photocopy and a CVD. It also means one edit repaints a whole job, and an imported pull list's
+   `Colour` column (which carries words, not hex) has somewhere to land.
+4. **The convention is DATA, seeded per document, never hardcoded.** The seven above are ONE
+   shop's convention; there is no industry standard for category-cable jacket colour, and
+   TIA-606 standardises *administration label* colours, which is a different fact and must never
+   be cited as support. A project may delete all seven and author its own.
+
+**This does NOT touch the hue channel.** Jacket colour reaches the schedule, the label and the
+keystone, never a drawn wire — see CR-078 and PAL-1. The two are unrelated facts, and coupling
+them would substitute a shop's unvalidated reel colours for the Okabe–Ito palette chosen because
+it survives a CVD. `jacket_colour_is_not_hue_test.dart` enforces this by source scan over the
+drawing layer.
+
+**Format impact: none.** The override encodes with `putIfNotNull`, so a document that has never
+recorded a wrong-colour pull is byte-identical to before the key existed. `kSchemaVersion` stays
+2 and `kMinReaderVersion` stays 2 — an additive *optional* key is the opposite of v2's breaking
+omission of previously mandatory keys; an older reader never looks at it, so it neither throws
+nor degrades. No starter asset and no migration entry changes.
+
+> **Known limitation, flagged not fixed:** `Link` has no `unknown` passthrough map (`EntityMeta`,
+> `Port`, `SheetItem` and `RackDocument` all have one), so an older build that opens a newer file
+> and re-saves silently drops the override. Bumping the schema version would not help — it would
+> make the older build refuse the file outright, which is worse. Only adding `Link.unknown` fixes
+> it, and that changes every `Link`'s bytes. Already true of `jacketColorId`; the override adds
+> no new class of loss.
+
+> **Deliberately out of scope:** the keystone cannot record its *own* exception. A shop that
+> installs the wrong keystone colour has nowhere to put that. This matches the user's stated
+> scope, and the escape hatch is cheap and identical in shape — a third nullable
+> `JacketColorId` on the same object — so it is not pre-built.
+
+---
+
 ### Section 1 summary — the ten rulings with the widest blast radius
 
 | # | Ruling | Consequence if it had gone the other way |

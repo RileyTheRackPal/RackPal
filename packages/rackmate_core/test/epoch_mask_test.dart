@@ -146,6 +146,24 @@ void main() {
       _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'devices'});
     });
 
+    test('AddRackCommand', () {
+      final doc = _freshDoc();
+      const rackId = Uuid('rack-1');
+      doc.racks[rackId] = _rack(rackId);
+      final cmd = AddRackCommand(
+        name: 'Media Closet',
+        designator: 'RK-2',
+        heightU: 42,
+        order: const FracIndex('a1'),
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
+    });
+
     test('RemoveDeviceCommand', () {
       final doc = _freshDoc();
       const rackId = Uuid('rack-1');
@@ -397,6 +415,51 @@ void main() {
         actor: 'seed',
       )..apply(doc);
       final cmd = RemoveLinkCommand(id: add.id, netId: add.netId);
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'links'});
+    });
+
+    test('SetLinkJacketColorCommand', () {
+      final doc = _freshDoc();
+      final add = AddLinkCommand(
+        designator: 'W001',
+        media: const MediaTypeId('media.cat6a_futp'),
+        order: const FracIndex('a0'),
+        now: DateTime.utc(2026),
+        actor: 'seed',
+      )..apply(doc);
+      final cmd = SetLinkJacketColorCommand(
+        linkId: add.id,
+        conventionId: const JacketColorId('jc.blue'),
+      );
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'links'});
+    });
+
+    test('SetLinkPulledJacketColorCommand', () {
+      final doc = _freshDoc();
+      final add = AddLinkCommand(
+        designator: 'W001',
+        media: const MediaTypeId('media.cat6a_futp'),
+        order: const FracIndex('a0'),
+        now: DateTime.utc(2026),
+        actor: 'seed',
+      )..apply(doc);
+      // Set the convention FIRST, so the override below is a genuine
+      // exception rather than being normalised straight back to null —
+      // which would make this case assert that a no-op changed 'links'.
+      SetLinkJacketColorCommand(
+        linkId: add.id,
+        conventionId: const JacketColorId('jc.blue'),
+      ).apply(doc);
+      final cmd = SetLinkPulledJacketColorCommand(
+        linkId: add.id,
+        pulledId: const JacketColorId('jc.yellow'),
+      );
 
       final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
 

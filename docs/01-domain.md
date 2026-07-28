@@ -618,7 +618,29 @@ Moderate projects add Detailed Project Information, which is literally a specifi
 | Orientation | portrait | landscape |
 | Default sort | **room, then pathway** — the order the tech walks the house | **rack, then panel, then port** |
 | Rows | field cables only | all cables landing in the rack |
-| Extra columns | footage subtotals per room, jacket colour, `Pulled ☐ Terminated ☐ Tested ☐ Init ___` | T568A/B, punch position, polarity, conductor colour per role, pinout notes |
+| Extra columns | footage subtotals per room, jacket colour (see below), `Pulled ☐ Terminated ☐ Tested ☐ Init ___` | T568A/B, punch position, polarity, conductor colour per role, pinout notes |
+
+**Jacket colour is two facts, and the column prints both.** `Link.jacketColorId`
+names the convention entry the run FOLLOWS — what it is, which is what the
+keystone matches. `Link.jacketColorPulledId` is set only when the cable actually
+in the wall is a different colour (they ran out of blue; a prewire mistake). Null
+is the normal case. Both index the one named vocabulary in
+`ProjectSettings.jacketColorConventions`, so one legend explains the whole sheet.
+
+An exception therefore renders as **two tokens, never one** — `BLU→YEL`, or
+`BLU · CONTROL — PULLED YEL` where the row has width for it. Never silently
+yellow, never silently blue: *documentation of imperfections beats no
+documentation at all*. The four states the column distinguishes are `—`
+(nobody has said), `BLU` (normal), `BLU→YEL` (exception), and `—→YEL` (a jacket
+observed at prewire on a run whose purpose nobody has recorded — kept, because
+refusing it would discard an observed physical fact and promoting it to the
+convention side would guess the run's purpose, G4).
+
+The keystone column, when it exists, follows the CONVENTION alone and never the
+pull. The keystone is chosen weeks later out of the same box as every other
+control drop's and is routinely correct while the cable is not.
+`derived/jacket_color_resolution.dart` is the single definition of all of this;
+nothing stores a resolved answer (CR-107).
 
 Both carry, **on both ends**: location (`RK-1 / U14 / rear`; `Great Room / TV wall / WP-1`) and **both labels**. `Conductor.colorCode` prints. A multi-service cable prints one row with a services sub-line, which is exactly what the trim tech needs and cannot get anywhere else:
 

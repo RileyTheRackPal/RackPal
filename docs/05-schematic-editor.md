@@ -227,6 +227,43 @@ So RackMate uses **four independent encoding channels**, and hue is never one of
 | **Glyph + tag pill** | exact family | ✅ | ✅ | ✅ |
 
 > Rejected alternative: `SignalFamilyDef.color` per family — 43+ palette entries, which `design-data-model.md` simultaneously carried and argued against. `SignalDomainDef` was created in CR-078 to own the visual language; `SignalFamilyDef` keeps `domain` (FK), `shortTag`, and an optional `colorOverride` for the rare deliberate exception.
+>
+> **Doc/code drift, recorded rather than quietly fixed:** `SignalFamilyDef`
+> (`model/registries.dart`) has **no** `colorOverride` field today. The per-entity
+> hue overrides that actually exist are `Net.colorOverride`,
+> `DeviceInstance.colorOverride` and `ProjectSettings.familyColorOverrides`. The
+> sentence above describes an intent, not the shipped type.
+
+#### JACKET COLOUR IS NOT A HUE CHANNEL
+
+**A cable's jacket colour never reaches the hue channel, or any other drawing
+channel.** `Link.jacketColorId` (the convention the run follows) and
+`Link.jacketColorPulledId` (what was actually pulled, when it differs) describe
+the physical cable in the wall. Hue describes the signal domain. They are
+unrelated facts, and coupling them would be worse than useless: a blue control
+run and a blue A/V run would render identically, and a shop that repaints its
+convention would silently repaint its schematic.
+
+It would also break this section's own accessibility contract. The eight domain
+hues are Okabe–Ito *because* they survive a CVD; a shop's jacket colours are
+whatever was on the reel and carry no such guarantee, so feeding them to the
+drawing layer would substitute an unvalidated palette for a validated one — the
+exact failure CR-078 rejected, arriving through a different door.
+
+Jacket colour belongs on the **schedule, the label and the keystone**, never on
+the drawn wire. This is enforced, not merely documented:
+`packages/rackmate_core/test/jacket_colour_is_not_hue_test.dart` scans
+`lib/src/draw/` and `rackmate_export/lib/src/draw/` for every jacket-colour name
+— including the resolver's `asBuiltColorId`, the most tempting one to reach for
+("just draw the wire the colour it actually is") — and fails the build if one
+appears. The resolver deliberately lives in `derived/`, never in `draw/`.
+
+> **Known gap in that gate:** it scans the drawing layer only. A coupling
+> introduced in a `Command` or in `derived/` — writing a resolved jacket colour
+> into `Net.colorOverride`, `DeviceInstance.colorOverride` or
+> `ProjectSettings.familyColorOverrides` — would reach the renderer through the
+> back door untouched. Recorded here; widening the gate to ban those three sinks
+> is unowned work.
 
 ### 6.2 The eight domains — verbatim from canon §6.2.5
 

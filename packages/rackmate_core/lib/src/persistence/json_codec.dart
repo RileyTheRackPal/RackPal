@@ -45,6 +45,7 @@ import 'package:rackmate_core/src/model/conductor.dart';
 import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
 import 'package:rackmate_core/src/model/enums.dart';
+import 'package:rackmate_core/src/model/jacket_color.dart';
 import 'package:rackmate_core/src/model/link.dart';
 import 'package:rackmate_core/src/model/location.dart';
 import 'package:rackmate_core/src/model/net.dart';
@@ -215,6 +216,9 @@ Uuid _decodeUuid(Object? value, String context) => Uuid(asStr(value, context));
 
 Uuid? _decodeUuidOrNull(Object? value, String context) =>
     value == null ? null : Uuid(asStr(value, context));
+
+JacketColorId? _decodeJacketColorIdOrNull(Object? value, String context) =>
+    value == null ? null : JacketColorId(asStr(value, context));
 
 Len _decodeLen(Object? value, String context) => Len(asInt(value, context));
 
@@ -520,6 +524,25 @@ RuleOverride _decodeRuleOverride(JsonMap json) => RuleOverride(
   at: decodeDateTime(asStr(json['at'], 'RuleOverride.at')),
 );
 
+/// All four keys, always. Every field is non-NULLABLE, and an empty
+/// `meaning` is a VALUE — "the user has not said" — not an absence, so
+/// `putIfNotNull` would be the wrong tool and would erase the
+/// distinction on the way to disk.
+JsonMap _encodeJacketColorDef(JacketColorDef d) => {
+  'abbr': d.abbr,
+  'color': _encodeRgb(d.color),
+  'displayName': d.displayName,
+  'meaning': d.meaning,
+};
+
+JacketColorDef _decodeJacketColorDef(JsonMap json, String context) =>
+    JacketColorDef(
+      displayName: asStr(json['displayName'], '$context.displayName'),
+      abbr: asStr(json['abbr'], '$context.abbr'),
+      color: _decodeRgb(asStr(json['color'], '$context.color')),
+      meaning: asStr(json['meaning'], '$context.meaning'),
+    );
+
 JsonMap _encodeProjectSettings(ProjectSettings s) => {
   'displayUnits': encodeEnumName(s.displayUnits),
   'defaultRuNumbering': encodeEnumName(s.defaultRuNumbering),
@@ -543,6 +566,28 @@ JsonMap _encodeProjectSettings(ProjectSettings s) => {
     for (final e in s.familyColorOverrides.entries)
       e.key.v: _encodeRgb(e.value),
   },
+  // OMITTED WHEN EMPTY, and this is NOT the same call as the three maps
+  // around it. `ruleOverrides`, `familyColorOverrides` and
+  // `diversityFactorsByCategory` emit `{}` unconditionally because they
+  // have done so since v1 — that empty object is already a byte of every
+  // document ever written, so keeping it costs nothing. This key is NEW.
+  // Emitting it unconditionally moves the bytes of every `.rackmate` file
+  // that already exists on disk the moment it is loaded and saved, which
+  // is exactly the CR-117 property (`write(read(bytes)) == bytes`) that
+  // docs/03 §9.1 states and M0's exit criterion names. An empty map and an
+  // absent key mean the identical thing to the decoder here
+  // (`json['jacketColorConventions'] ?? {}`), so absent is the spelling
+  // that is also backward-compatible.
+  //
+  // This shipped unconditional and was caught only after
+  // `byte_roundtrip_test.dart` was repaired — until then that test
+  // overwrote its own goldens before comparing, so it could not see a
+  // format change to a stored document. See that file's history note.
+  if (s.jacketColorConventions.isNotEmpty)
+    'jacketColorConventions': {
+      for (final e in s.jacketColorConventions.entries)
+        e.key.v: _encodeJacketColorDef(e.value),
+    },
   'diversityFactorsByCategory': {
     for (final e in s.diversityFactorsByCategory.entries) e.key: e.value.v,
   },
@@ -629,6 +674,23 @@ ProjectSettings _decodeProjectSettings(JsonMap json) => ProjectSettings(
     ).entries)
       SignalFamilyId(e.key): _decodeRgb(
         asStr(e.value, 'ProjectSettings.familyColorOverrides[${e.key}]'),
+      ),
+  },
+  // THE `?? const {}` IS NOT DEFENSIVE PADDING. `asJsonMap(null, …)`
+  // throws, and every file written before this field existed — including
+  // the checked-in input golden `v1_templates_and_power.rackmate.json`,
+  // which is never regenerated — has no such key. The strict form would
+  // turn every already-shipped document into "damaged file". Same shape
+  // as `MediaTypeDef.jacketOptions` below. Mutation: drop the `??` and
+  // `migration_corpus_test.dart` goes red.
+  jacketColorConventions: {
+    for (final e in asJsonMap(
+      json['jacketColorConventions'] ?? const <String, Object?>{},
+      'ProjectSettings.jacketColorConventions',
+    ).entries)
+      JacketColorId(e.key): _decodeJacketColorDef(
+        asJsonMap(e.value, 'ProjectSettings.jacketColorConventions[${e.key}]'),
+        'ProjectSettings.jacketColorConventions[${e.key}]',
       ),
   },
   diversityFactorsByCategory: {
@@ -1542,6 +1604,18 @@ JsonMap _encodeLink(Link l) {
   putIfNotNull(json, 'cableSpecId', l.cableSpecId);
   putIfNotNull(json, 'gaugeAwg', l.gaugeAwg);
   if (l.jacket != null) json['jacket'] = encodeEnumName(l.jacket!);
+  putIfNotNull(json, 'jacketColorId', l.jacketColorId?.v);
+  // THE EXCEPTION, and it is ADDITIVE-OPTIONAL on purpose. `putIfNotNull`
+  // writes nothing when the value is null, and null is the normal case
+  // ("the cable matches the convention"), so every document that has
+  // never recorded a wrong-colour pull encodes BYTE-FOR-BYTE as it did
+  // before this key existed. That is why `kSchemaVersion` does not move:
+  // an older reader never looks at this key, so it neither throws nor
+  // degrades — the opposite of v2's breaking omission of previously
+  // mandatory outlet keys. Sorted-key adjacency to `jacketColorId` is
+  // deliberate: the pair reads as a pair when a human opens a
+  // `.rackmate`.
+  putIfNotNull(json, 'jacketColorPulledId', l.jacketColorPulledId?.v);
   putIfNotNull(json, 'routedLengthNm', l.routedLength?.nm);
   putIfNotNull(json, 'cutLengthNm', l.cutLength?.nm);
   putIfNotNull(json, 'terminatedLengthNm', l.terminatedLength?.nm);
@@ -1596,6 +1670,24 @@ Link _decodeLink(Uuid id, JsonMap json) => Link(
           asStr(json['jacket'], 'Link.jacket'),
           'Link.jacket',
         ),
+  // A DANGLING ID DECODES INTACT (G4). The codec does not resolve it
+  // against `settings.jacketColorConventions` and must not: dropping an
+  // id whose entry has been deleted would destroy the one record of what
+  // was actually pulled. Consumers count it as unknown.
+  jacketColorId: _decodeJacketColorIdOrNull(
+    json['jacketColorId'],
+    'Link.jacketColorId',
+  ),
+  // Same rule, and for a stronger reason: this id is the ONE record
+  // that a wrong colour went in the wall. `json['jacketColorPulledId']`
+  // is null in every file written before this key existed, so the field
+  // is null and behaviour is identical. No `?? const {}` guard is
+  // wanted here — that pattern exists only for MAPS, where
+  // `asJsonMap(null, …)` throws.
+  jacketColorPulledId: _decodeJacketColorIdOrNull(
+    json['jacketColorPulledId'],
+    'Link.jacketColorPulledId',
+  ),
   shielded: asBool(json['shielded'], 'Link.shielded'),
   plenum: asBool(json['plenum'], 'Link.plenum'),
   routedLength: _decodeLenOrNull(json['routedLengthNm'], 'Link.routedLengthNm'),

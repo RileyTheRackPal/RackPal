@@ -73,7 +73,20 @@ enum _StepKind {
   setRackProperty,
   addLink,
   removeLink,
+  setLinkJacketColor,
+  setLinkPulledJacketColor,
 }
+
+/// The convention ids the generator draws from, plus `null` (clear) and
+/// one id naming NO convention entry — a dangling id must round-trip as
+/// faithfully as a resolvable one, because it is the one record that a
+/// wrong colour went in the wall.
+const _jacketColorIds = <JacketColorId?>[
+  null,
+  JacketColorId('jc.blue'),
+  JacketColorId('jc.yellow'),
+  JacketColorId('jc.deleted_last_year'),
+];
 
 /// Builds a `SetRackPropertyCommand` for a randomly chosen field, with a
 /// randomly chosen NEW value of that field's own type.
@@ -181,6 +194,8 @@ final class _SequenceState {
     _StepKind.setRackProperty,
     _StepKind.addLink,
     if (aliveLinkIds.isNotEmpty) _StepKind.removeLink,
+    if (aliveLinkIds.isNotEmpty) _StepKind.setLinkJacketColor,
+    if (aliveLinkIds.isNotEmpty) _StepKind.setLinkPulledJacketColor,
   ];
 }
 
@@ -263,6 +278,24 @@ Command _buildCommand(_StepKind kind, _SequenceState s, Random rnd, int step) {
     case _StepKind.removeLink:
       final id = s.aliveLinkIds[rnd.nextInt(s.aliveLinkIds.length)];
       return RemoveLinkCommand(id: id, netId: s.linkNetIds[id]!);
+
+    case _StepKind.setLinkJacketColor:
+      return SetLinkJacketColorCommand(
+        linkId: s.aliveLinkIds[rnd.nextInt(s.aliveLinkIds.length)],
+        conventionId: _jacketColorIds[rnd.nextInt(_jacketColorIds.length)],
+      );
+
+    case _StepKind.setLinkPulledJacketColor:
+      // Interleaving this with `setLinkJacketColor` above is the point:
+      // the command NORMALISES an override equal to the run's current
+      // convention away, so a sequence that changes the convention
+      // between two identical override writes exercises a path where the
+      // same command value produces different stored state. `revert()`
+      // must still restore byte-exactly through all of it.
+      return SetLinkPulledJacketColorCommand(
+        linkId: s.aliveLinkIds[rnd.nextInt(s.aliveLinkIds.length)],
+        pulledId: _jacketColorIds[rnd.nextInt(_jacketColorIds.length)],
+      );
   }
 }
 
@@ -289,6 +322,8 @@ void _reconcileTrackingAfterCommit(
     case _StepKind.renameRack:
     case _StepKind.setRackHeight:
     case _StepKind.setRackProperty:
+    case _StepKind.setLinkJacketColor:
+    case _StepKind.setLinkPulledJacketColor:
     // Mutate entities already tracked; no alive-id bookkeeping needed.
   }
 }

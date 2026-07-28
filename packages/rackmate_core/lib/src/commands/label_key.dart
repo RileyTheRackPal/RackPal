@@ -22,4 +22,21 @@ enum LabelKey {
   compactRack,
   resizeRack,
   applyRackPreset,
+
+  // M1 §9's New-rack dialog (commands/rack_commands.dart). The exit
+  // criterion's "creates a 42U rack" had no command behind it at all until
+  // this one — see docs/12-milestone-board.md §3.2 clause 2.
+  addRack,
+
+  // PER-RUN JACKET COLOUR (commands/link_jacket_color_commands.dart).
+  // TWO entries, not one, because they are two facts recorded by two
+  // people at two times — the designer names the convention entry, the
+  // tech records the wrong-colour pull at prewire — so the Edit menu
+  // must be able to say which one is being undone.
+  //
+  // Appending here is always safe: `LabelKey` is never serialised
+  // (`undo_stack.dart` exposes only `.name`, and `json_codec.dart` never
+  // touches it), so the enum's ORDER carries no format meaning.
+  setLinkJacketColor,
+  setLinkPulledJacketColor,
 }
