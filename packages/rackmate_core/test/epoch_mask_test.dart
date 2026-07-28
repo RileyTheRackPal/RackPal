@@ -392,6 +392,7 @@ void main() {
       final doc = _freshDoc();
       final cmd = AddLinkCommand(
         designator: 'W001',
+        netName: 'N001',
         media: const MediaTypeId('media.cat6a_futp'),
         order: const FracIndex('a0'),
         now: DateTime.utc(2026, 1, 2),
@@ -409,6 +410,7 @@ void main() {
       final doc = _freshDoc();
       final add = AddLinkCommand(
         designator: 'W001',
+        netName: 'N001',
         media: const MediaTypeId('media.cat6a_futp'),
         order: const FracIndex('a0'),
         now: DateTime.utc(2026),
@@ -425,6 +427,7 @@ void main() {
       final doc = _freshDoc();
       final add = AddLinkCommand(
         designator: 'W001',
+        netName: 'N001',
         media: const MediaTypeId('media.cat6a_futp'),
         order: const FracIndex('a0'),
         now: DateTime.utc(2026),
@@ -444,6 +447,7 @@ void main() {
       final doc = _freshDoc();
       final add = AddLinkCommand(
         designator: 'W001',
+        netName: 'N001',
         media: const MediaTypeId('media.cat6a_futp'),
         order: const FracIndex('a0'),
         now: DateTime.utc(2026),

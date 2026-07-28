@@ -270,6 +270,12 @@ Command _buildCommand(_StepKind kind, _SequenceState s, Random rnd, int step) {
     case _StepKind.addLink:
       return AddLinkCommand(
         designator: 'W${step.toString().padLeft(3, '0')}',
+        // Real allocation, not a literal — so the byte property is checked
+        // against a name derived from the document's CURRENT nets. Removing
+        // a link frees its name, and the next add reuses it; a sequence
+        // that interleaves the two exercises the collision search rather
+        // than a constant.
+        netName: allocateNetNameFor(s.doc),
         media: const MediaTypeId('media.cat6a_futp'),
         order: const FracIndex('a0'),
         now: s.nextNow(),

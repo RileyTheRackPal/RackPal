@@ -40,3 +40,37 @@ String allocateDeviceDesignator({
     seq++;
   }
 }
+
+/// The name a NEW `Net` should receive — `N001`, then `N002`, … — rendered
+/// through `ProjectSettings.netNameFormat`.
+///
+/// IT IS `Net.name`, NOT `Net.designator`, AND THE MODEL READS BOTH WAYS.
+/// `Net.designator`'s doc comment says `"N012"` and `net.dart` describes
+/// `name` only as "generated, editable, never load-bearing", so the field
+/// to fill is not obvious from the code. CR-049 settles it, and its ruling
+/// is quoted rather than paraphrased: *"`Net.name` is auto-filled from
+/// `ProjectSettings.netNameFormat` and may be overridden"*. The `N012` on
+/// `designator` comes from `design-data-model.md §2.9`, one of the two
+/// SOURCES CR-049 was written to reconcile — not from the ruling that
+/// reconciled them.
+///
+/// `designatorPad` is deliberately NOT applied. It exists for the device
+/// pattern, whose default `{TYPE_PREFIX}{SEP}{SEQ}` carries no width of
+/// its own; `N{SEQ:3}` carries `:3`, so padding here would pad twice and
+/// turn `N001` into `N0001` on any project that set it.
+///
+/// Uniqueness is over the names already in use. CR-049 makes a duplicate
+/// cosmetic rather than corrupting — membership is always the FK
+/// `Service.netId` (CR-011) — so this avoids collisions to keep the
+/// generated sequence legible, not to protect connectivity.
+String allocateNetName({
+  required ProjectSettings settings,
+  required Set<String> usedNames,
+}) {
+  var seq = 1;
+  while (true) {
+    final candidate = settings.netNameFormat.render({'SEQ': seq});
+    if (!usedNames.contains(candidate)) return candidate;
+    seq++;
+  }
+}

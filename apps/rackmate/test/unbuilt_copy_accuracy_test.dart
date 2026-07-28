@@ -98,6 +98,7 @@ void main() {
       DocumentController(doc, clock: FixedClock(now)).run(
         AddLinkCommand(
           designator: 'W001',
+          netName: 'N001',
           media: const MediaTypeId('media.cat6'),
           order: const FracIndex('a0'),
           now: now,

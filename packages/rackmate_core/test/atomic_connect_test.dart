@@ -467,6 +467,7 @@ void main() {
         AtomicConnectCommand(
           plan: plan,
           designator: 'W001',
+          netName: 'N001',
           media: const MediaTypeId('media.cat6_utp'),
           order: const FracIndex('a0'),
           now: _when,

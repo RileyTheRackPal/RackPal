@@ -215,6 +215,7 @@ final class AtomicConnectCommand extends Command {
   AtomicConnectCommand({
     required this.plan,
     required this.designator,
+    required this.netName,
     required this.media,
     required this.order,
     required this.now,
@@ -228,6 +229,10 @@ final class AtomicConnectCommand extends Command {
   final Uuid id;
   final Uuid netId;
   final String designator;
+
+  /// The implicit `Net`'s generated name — see `AddLinkCommand.netName`
+  /// for why the caller allocates it rather than `apply()`.
+  final String netName;
   final MediaTypeId media;
   final FracIndex order;
   final DateTime now;
@@ -246,7 +251,7 @@ final class AtomicConnectCommand extends Command {
   void apply(RackDocument doc) {
     doc.nets[netId] = Net(
       id: netId,
-      name: '',
+      name: netName,
       signalFamily: const SignalFamilyId('structure.undetermined'),
       meta: EntityMeta(createdAt: now, updatedAt: now, updatedBy: actor),
     );

@@ -14,6 +14,7 @@
 // sequence rather than only after a device has been placed.
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/label_key.dart';
+import 'package:rackmate_core/src/idformat/designator_allocator.dart';
 import 'package:rackmate_core/src/model/conductor.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
 import 'package:rackmate_core/src/model/link.dart';
@@ -29,6 +30,7 @@ import 'package:rackmate_core/src/util/id_gen.dart';
 final class AddLinkCommand extends Command {
   AddLinkCommand({
     required this.designator,
+    required this.netName,
     required this.media,
     required this.order,
     required this.now,
@@ -41,6 +43,13 @@ final class AddLinkCommand extends Command {
   final Uuid id;
   final Uuid netId;
   final String designator;
+
+  /// The implicit `Net`'s generated name — `allocateNetName`'s answer,
+  /// computed by the CALLER before construction for the same reason the
+  /// ids are: `apply()` must be replayable. Allocating inside `apply()`
+  /// would let a redo see a different set of used names and mint a
+  /// different name than the original run.
+  final String netName;
   final MediaTypeId media;
   final FracIndex order;
   final DateTime now;
@@ -59,7 +68,7 @@ final class AddLinkCommand extends Command {
   void apply(RackDocument doc) {
     doc.nets[netId] = Net(
       id: netId,
-      name: '',
+      name: netName,
       signalFamily: const SignalFamilyId('structure.undetermined'),
       meta: EntityMeta(createdAt: now, updatedAt: now, updatedBy: actor),
     );
@@ -132,3 +141,20 @@ final class RemoveLinkCommand extends Command {
     doc.nets[netId] = net;
   }
 }
+
+/// The name the NEXT implicit `Net` in [doc] should carry — `N001`, then
+/// `N002`, … — rendered through the ONE format engine (CR-045/CR-049)
+/// rather than an `'N$n'` concatenation that would ignore a project's
+/// customised pattern.
+///
+/// Doc-aware companion to `allocateNetName`, placed here for the same
+/// reason `allocateRackDesignator` sits beside `AddRackCommand`: the pure
+/// function stays in `idformat/` depending only on `ProjectSettings`, and
+/// the document query lives with the command that needs it.
+///
+/// CALL THIS BEFORE CONSTRUCTING THE COMMAND, never inside `apply()` —
+/// see `AddLinkCommand.netName`.
+String allocateNetNameFor(RackDocument doc) => allocateNetName(
+  settings: doc.settings,
+  usedNames: {for (final n in doc.nets.values) n.name},
+);
