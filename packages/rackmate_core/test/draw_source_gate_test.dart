@@ -154,8 +154,7 @@ void main() {
   });
 
   group('RackSceneOptions.forPrint takes the receiver', () {
-    test('it is expressed as copyWith on `this`, never as a fresh value',
-        () {
+    test('it is expressed as copyWith on `this`, never as a fresh value', () {
       final source = _stripComments(
         File('lib/src/draw/scene/scene_builder.dart').readAsStringSync(),
       );
@@ -211,13 +210,36 @@ void main() {
       // source. `build/` and `.dart_tool/` are generated copies; matching
       // against them would let a citation stay "valid" after the file it
       // names was deleted.
+      // `ephemeral/` and `.plugin_symlinks/` are excluded for a sharper
+      // reason than the two above, and `followLinks: false` enforces it at
+      // the walk itself. Those directories are SYMLINKS INTO THE PUB CACHE,
+      // so without this the gate ingests ~30 third-party files and their
+      // basenames begin satisfying citations. A comment naming
+      // `path_provider_test.dart` — a file this repository does not contain
+      // — passed on a developer machine and FAILED on a fresh clone, because
+      // a clone has not run a Windows build and so has no symlinks to follow.
+      //
+      // That is exactly the "green locally, broken in a clone" failure this
+      // project spent a session fixing, sitting inside a gate whose stated
+      // purpose is that no source sends its reader to a file that is not
+      // there. It also explains the MAX_PATH crash when cloning to a deep
+      // directory: the walk was descending into long pub-cache paths that
+      // have nothing to do with this repository.
+      const generated = {
+        'build',
+        '.dart_tool',
+        'ephemeral',
+        '.plugin_symlinks',
+      };
       final existing = <String>{};
       final citations = <String, Set<String>>{};
       for (final area in const ['../../packages', '../../apps']) {
-        for (final entity in Directory(area).listSync(recursive: true)) {
+        for (final entity in Directory(
+          area,
+        ).listSync(recursive: true, followLinks: false)) {
           if (entity is! File || !entity.path.endsWith('.dart')) continue;
           final parts = entity.path.split(RegExp(r'[\\/]'));
-          if (parts.contains('build') || parts.contains('.dart_tool')) {
+          if (parts.any(generated.contains)) {
             continue;
           }
           existing.add(parts.last);
