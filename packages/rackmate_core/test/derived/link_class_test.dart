@@ -21,7 +21,7 @@ const _rackB = Uuid('rack-b');
 
 /// Two racks, and devices placed per [placements] — `null` means the device
 /// is off-rack. Each device gets exactly one port, keyed `<id>.p`.
-RackDocument _doc(Map<String, Uuid?> placements, {bool shelfChain = false}) {
+RackDocument _doc(Map<String, Uuid?> placements) {
   final doc = RackDocument(
     id: const Uuid('doc-lc'),
     appVersion: '0.1.0',
@@ -165,6 +165,54 @@ void main() {
   });
 
   group('rackOfEndpoint', () {
+    test('walks a SHELF CHAIN to the rack that ultimately hosts it', () {
+      // The two-hop case, and the reason `rackOfEndpoint` defers to
+      // `hostRackOf` instead of reading `placement.rackId` itself: a device
+      // on a shelf has no rack of its own, and its host may be shelved too.
+      // A one-hop implementation returns null here and the link silently
+      // becomes UNDETERMINED — dropping a real in-rack jumper into the
+      // "cannot classify" bucket.
+      final doc = _doc({'host': _rackA, 'mid': _rackA});
+      doc.devices[const Uuid('mid')] = DeviceInstance(
+        id: const Uuid('mid'),
+        kind: DeviceKind.rackDevice,
+        templateRef: const TemplateRef(
+          templateId: TemplateId('tpl.x'),
+          version: 1,
+          contentHash: 'sha256:tpl.x',
+        ),
+        designator: 'MID',
+        name: 'mid',
+        placement: const ShelfPlacement(
+          hostDeviceId: Uuid('host'),
+          order: FracIndex('a0'),
+        ),
+        meta: _meta(),
+      );
+      expect(rackOfEndpoint(doc, _port('mid')), _rackA);
+    });
+
+    test('a shelf chain that never reaches a rack resolves to null', () {
+      final doc = _doc({'orphan': null});
+      doc.devices[const Uuid('orphan')] = DeviceInstance(
+        id: const Uuid('orphan'),
+        kind: DeviceKind.rackDevice,
+        templateRef: const TemplateRef(
+          templateId: TemplateId('tpl.x'),
+          version: 1,
+          contentHash: 'sha256:tpl.x',
+        ),
+        designator: 'ORPHAN',
+        name: 'orphan',
+        placement: const ShelfPlacement(
+          hostDeviceId: Uuid('missing-host'),
+          order: FracIndex('a0'),
+        ),
+        meta: _meta(),
+      );
+      expect(rackOfEndpoint(doc, _port('orphan')), isNull);
+    });
+
     test('resolves a rail-placed port to its rack', () {
       final doc = _doc({'a': _rackB});
       expect(rackOfEndpoint(doc, _port('a')), _rackB);
