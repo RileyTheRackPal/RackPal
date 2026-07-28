@@ -5510,7 +5510,7 @@ useful than a silently edited one, because the argument that produced it is stil
 you need if the decision is ever revisited. §12 is the index of every such supersession. If a
 ruling is not listed in §12, it stands exactly as written.
 
-The six decisions are numbered `DR-001` … `DR-006` (**D**ecided by the user, **R**uling). They
+The seven decisions are numbered `DR-001` … `DR-007` (**D**ecided by the user, **R**uling). They
 are cited by that ID everywhere, in the same way `CR-nnn` is.
 
 ---
@@ -6021,11 +6021,122 @@ distribution side **repeats the bound and does not enumerate keys**.
   legal-existence requirement. The fallback is named so that adopting it is a config change; it is
   not asserted to be instantly available.
 
+### 11.7 DR-007 · Keystone strap geometry ships in M3, not v1.X
+
+> **RULING — THE LOW-VOLTAGE BOX'S INTERNAL GEOMETRY IS v1, BUILT IN M3.** An `Outlet` gains an
+> ordered list of **gangs**; each gang holds one **strap**, which is a **2D grid of keystone
+> positions**; each cell holds a keystone, a two-cell speaker terminal, or a blank insert. It is
+> built in **M3 — Structure and the field**, alongside the `Outlet` UI that milestone already
+> schedules, and **not** deferred to v1.X.
+
+**What it settles.** Where the internal geometry of a wall plate is built, and therefore whether
+the `Outlet` editor is built once or twice. The question arose because RackMate models field
+devices but cannot arrange them into low-voltage boxes for a wiring schedule, and a room-by-room
+visual guide of what should be where is the artefact an installer actually works from.
+
+**What it supersedes.** Nothing. **This is an addition to v1 scope**, made under roadmap §8.3
+(moving an item between v1, v1.1, v1.2, v2 and not-doing requires a new ruling ID). It **extends**
+CR-016 rather than replacing it: `Outlet` remains "ONE WALL PLATE / ONE CEILING LOCATION" and
+gains a gang list. Nothing about CR-047's location tree, CR-108's outlet templates, CR-112's
+Locations panel or AC-019's membership rule changes.
+
+**Why M3 and not v1.X — the argument that decided it.** M3 is *Structure and the field*; its exit
+criterion is a 60-drop whole-house rough-in producing a Pull Sheet sorted by room and pathway, and
+boxes **are** those drops' field ends. Three M3 checklist items already build the surface this
+geometry lives in: `Outlet`/`structureOrigin`/`PlaceEndpoint`/`OpenEndpoint` in the UI, the
+Structure editor with outlet templates and TIA-570-D presets, and the project-level Locations panel.
+Deferring the grid means **building the `Outlet` editor twice** — once without it, once with — and
+retrofitting a 2D grid into a shipped editor is worse work and a worse first UI than designing it in.
+
+**The cost, stated rather than hidden.** M3's exit criterion does **not** require strap geometry: a
+60-drop rough-in schedules and prints correctly without knowing which cell a keystone occupies. This
+ruling therefore **grows a milestone that already gates M4 through M9**. M3 stays `M`, at the upper
+end of that band. What is added is a model extension, its codec and migration, the strap editor
+inside the Structure editor, and plate rendering — not a new subsystem, because the packing problem
+is bounded at six cells.
+
+**11.7.1 The geometry, and why five ports do not exist.**
+
+A strap is exactly `W × H` with **W ∈ {1, 2}** and **H ∈ {1, 2, 3}**:
+
+| Ports | Grid |
+|---|---|
+| 1 | 1 × 1 |
+| 2 | 1 × 2 |
+| 3 | 1 × 3 |
+| 4 | 2 × 2 |
+| 6 | 2 × 3 |
+
+**5 is not expressible under those bounds, and that is why five-port straps do not exist.** It is to
+be encoded as a **derived constraint** falling out of `W × H`, never as a hardcoded exclusion list —
+a list would be a fact about a catalog, and this is a fact about geometry.
+
+**11.7.2 Speaker terminals, and orientation that is not a preference.**
+
+A speaker terminal occupies **two cells** and is orientable, but **orientation is constrained by
+strap width**: on a 1-wide strap (1 × 2, 1 × 3) it can only be vertical, there being no horizontal
+room; on a 2-wide strap (2 × 2, 2 × 3) either orientation fits. On half the shipped straps the
+orientation is therefore **forced, not chosen**. A refused placement must state *why* — "no
+horizontal room on a 1-wide strap" — under the standing rule that a refused action always reports
+and never silently does nothing.
+
+**11.7.3 The hierarchy: one `Outlet`, N gangs.**
+
+```
+Location (room)
+  └─ Outlet          = one wall plate / box     [EXISTS — CR-016]
+       └─ Gang × N   = one gang opening         [NEW]
+            └─ Strap = W × H cell grid          [NEW]
+                 └─ keystone | speaker terminal (2 cells) | blank
+```
+
+`Outlet` stays the plate and gains an **ordered** gang list. One-`Outlet`-per-gang was considered
+and rejected: it would lose the fact that two drops **share a box**, which is exactly the fact a
+room-by-room guide exists to show, and it would redefine a shipped ruling rather than extend one.
+
+**11.7.4 Blank inserts are occupants, not absence.**
+
+A six-port strap with four positions used needs **two blanks**, and those are purchasable line items
+that belong on the materials sheet. The precedent one scale up is exact: `X01 Blank Panel` is a
+catalog template, not a gap in a rack.
+
+**11.7.5 Keystone colour follows the convention, not the cable.**
+
+Consequent on **CR-121**. `Link.jacketColorId` — what the run *is* — drives the keystone;
+`Link.jacketColorPulledId` — what was actually pulled — does not. A run mis-pulled in the wrong
+colour still gets the keystone its service calls for, because the keystone is fitted weeks later out
+of the same box as every other drop of that service, and is routinely correct while the cable is not.
+`ResolvedJacketColor.keystoneColorId` already returns `conventionId` and mentions the override
+nowhere; that syntactic independence is the design and is mutation-tested.
+
+**11.7.6 A correction, recorded because it shaped an earlier plan.**
+
+An earlier note in this project's task record claimed "a keystone strap is structurally a tiny rack"
+and that the rack occupancy machinery — `findLowestFreeRu`, `findBlockingOccupant`, `planCompaction`,
+the shrink planner — would make this cheap. **That is wrong.** A rack is one-dimensional: an RU index
+plus a coarse lateral twelfth. A strap is a genuine 2D grid with orientable occupants, and none of
+that code applies. It remains cheap for a different reason — the grid is bounded at six cells, so
+exhaustive placement is trivial — and the cost is modelling, not algorithms.
+
+**11.7.7 What does not move.**
+
+The **printing** half stays at **M6**. `T5.01 Plate, Panel & Pinout Details` is already in the v1
+sheet set (docs/08 §2.2) as `AUTO`, gated on any non-standard pinout existing. Strap geometry gives
+that sheet a real second purpose and a reason to be `ON` far more often, but the sheet itself ships
+when the full sheet set does.
+
+**11.7.8 One question left open for the implementer, deliberately.**
+
+`ProjectSettings.outletFieldLabelFormat` is `{ROOM_ABBR}-{SERVICE}-{SEQ}`. With N gangs, whether the
+gang appears in a drop's field label — and whether that needs a new `IdFormat` token — is **not**
+settled here. The idformat engine has a grammar, a registry and a parser; a token is not to be
+invented silently to satisfy this feature.
+
 ---
 
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-006 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-007 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -6228,6 +6339,27 @@ the same pattern §12.8 uses inside this record, and its §4.11 carries both tab
 | **AC-056** | **Unaffected.** Mobile/tablet read-only on three named surfaces is a product decision, not a distribution one. |
 | **Confirmed product decision 4** | **Unaffected.** All seven brief requirements remain in v1. DR-006 removes a purchase, not a requirement. |
 
+### 12.10 DR-007 supersedes nothing (keystone strap geometry into M3)
+
+**No entry, and the absence is the record.** DR-007 is the first ruling in Part 4 that voids no
+Part 1–3 ruling. It is an **addition** to v1 scope made under roadmap §8.3, not a reversal, so a
+reader looking for its supersession list is not missing one.
+
+It **extends** two rulings without changing either. `Outlet` remains "ONE WALL PLATE / ONE CEILING
+LOCATION" (**CR-016**) and gains an ordered gang list — the alternative, one `Outlet` per gang,
+was rejected precisely because it would have redefined CR-016 rather than extended it.
+**CR-121**'s keystone rule is consumed as written: the keystone follows `jacketColorId`, never
+`jacketColorPulledId`. **CR-047** (the arbitrary-depth location tree), **CR-108** (outlet
+templates) and **CR-112** (the project-level Locations panel) are untouched and already carry M3
+checklist items.
+
+What DR-007 does change is a **cost**, and §12.7's re-costing should be read with it: M3 stays
+`M` but at the upper end, because its exit criterion — a 60-drop rough-in producing a Pull Sheet —
+does not itself require strap geometry. The ruling accepts that growth deliberately, on the ground
+that building the `Outlet` editor twice is worse work than building it once with the grid designed
+in. See §11.7.
+
+
 ---
 
 ## 13. Resolved §10 questions
@@ -6386,7 +6518,7 @@ allowlist of pairs — an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-006 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-007 are the user's decisions and are binding. §12 is the complete
 index of what they supersede — §12.1…§12.5 and §12.9 by ruling, §12.6 by internal correction, and
 §12.8 the list of Parts 1–3 sites carrying a pointer. Anything not listed there stands as written
 in Parts 1–3.
