@@ -12,9 +12,11 @@ a set on **2026-07-28** covering:
   the prediction `W ∈ {1,2} × H ∈ {1,2,3}` makes — DR-007 §11.7.1)
 * Decora cover plates — **1, 2 and 3 gang**
 
-Those images were supplied in conversation and are **not in this directory**.
-Drop the files here to make them durable; the findings drawn from them are
-already recorded in the canon and do not depend on the files surviving.
+A second batch followed on the same day covering the **occupants**: Cat6
+couplers, an F-type barrel, an HDMI right-angle coupler, a 3.5 mm/IR module,
+blank inserts, and a speaker binding post.
+
+All of it is now in this directory.
 
 ## What the reference settled, and what it did not
 
@@ -30,6 +32,23 @@ That last row is the one to be careful with. The arithmetic permits a single
 uniform cell size, but permitting is not being, and a uniform-cell assumption
 that turns out false is wrong on every plate drawing at once. **Measure a real
 3-port and a real 6-port before building any dimensioned rendering.**
+
+## Two things to be careful with
+
+**The speaker terminal contradicts the ruling.** The reference binding post is
+**one post per keystone** — two separate single-cell modules, red-banded and
+black-banded. DR-007 §11.7.2 rules that a speaker terminal spans **two cells
+and is orientable**. Both parts exist in the world; which one the shop uses
+decides whether the cell model needs multi-cell occupants at all. **Settle it
+by looking at the van, not by reading this.** DR-007 §11.7.9 A has the stakes.
+
+**The Cat6 colours mean nothing.** They are what one seller photographed. An
+earlier draft of §11.7.9 read green and grey being absent from that lineup as
+a catalog constraint and invented an availability-modelling requirement from
+it; that was wrong and is retracted in place. Keystones come in every colour
+the wire comes in (CR-121). Related: from the front — which is how a plate
+elevation draws — a punchdown jack and a coupler are the same object, so the
+renderer needs only `(connector type, colour)`.
 
 ## Related
 

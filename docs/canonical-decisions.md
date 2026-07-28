@@ -6162,7 +6162,69 @@ it must be taken before any dimensioned rendering, because a uniform-cell assump
 false is wrong on every plate drawing at once. Recorded as an open measurement rather than resolved
 by the most convenient reading (G4).
 
-**11.7.9 One question left open for the implementer, deliberately.**
+**11.7.9 The keystone modules themselves — and the one that contradicts §11.7.2.**
+
+*Added 2026-07-28, from the parts in `docs/reference/keystone/`.*
+
+The second batch of reference is the **occupants** rather than the straps: Cat6 couplers in six
+colours, an F-type barrel, an HDMI right-angle coupler, a 3.5 mm/IR module, blank inserts, and a
+speaker binding post. Four findings, in descending order of how much they change.
+
+**A. THE SPEAKER TERMINAL IS ONE POST PER KEYSTONE, WHICH CONTRADICTS §11.7.2.** The reference
+(`6148z2IDmeL...jpg`) shows **two separate single-post modules** — one red-banded, one black-banded
+— each occupying ONE cell, not one double-wide module spanning two. If that is the part in use,
+then **there is no two-cell occupant, and therefore no orientation to constrain**: a speaker pair is
+two ordinary 1×1 keystones that happen to belong together, and they can sit in any two cells,
+adjacent or not. §11.7.2's entire "orientation is forced on a 1-wide strap, free on a 2-wide one"
+argument would then be modelling a constraint that does not exist.
+
+**This is NOT resolved here, and must not be resolved by whoever reads it first.** Both parts are
+real: single-post modules like the reference, and dual-post modules that genuinely span two cells.
+The user's own earlier description — *"speaker terminals needing two units, which could be oriented
+horizontally or vertically depending on the strap being used"* — describes the dual-post part, and
+the photograph shows the single-post one. Either the shop uses both, or "two units" meant "two
+keystones" and the orientation was about which two cells you pick.
+
+The stakes are the shape of the whole cell model:
+
+| If | The model is |
+|---|---|
+| every occupant is 1×1 | a flat grid of independent cells, plus a "these belong together" grouping for the pair. **Much simpler**, and §11.7.2 shrinks to a note |
+| some occupants span 2 cells | multi-cell occupants with orientation, refusal reasons, and packing — §11.7.2 as written |
+
+Building the second when the first would do is the expensive error, and it is the one currently
+ruled. **Settle this before M3 starts, by looking at what is actually on the van.**
+
+**B. THE CELL RENDERS FROM THE FRONT, AND THE FRONT HIDES THE DIFFERENCES.** *(Corrected by the user
+on 2026-07-28; the first draft of this entry got it backwards and the error is instructive.)* A
+keystone is drawn face-on in a plate elevation, and face-on a punchdown jack and an inline coupler
+are **the same object**: a coloured bezel with a connector opening. The renderer therefore needs
+`(connector type, colour)` and nothing else — not the termination style, not the part number, not
+whether there is a punchdown block or a second socket behind it. That is a real simplification and
+it should be taken.
+
+The first draft instead read the Cat6 reference's colour lineup — red, blue, orange, yellow, white,
+black — as a **catalog constraint**, noted that green and grey were missing while both are CR-121
+conventions, and concluded that keystone colour availability had to be modelled as a per-catalog
+fact with an "unavailable in this colour" path on the materials sheet. **That was wrong, and it was
+wrong in a specific way worth naming: a stock photograph's colour lineup is what one seller
+photographed, not what the world stocks.** The user's position is unchanged and was stated when
+CR-121 was written — *"we can get keystones in every color we can get wire"*. §11.7.5 stands
+unqualified, no availability modelling is owed, and the six colours in that image carry no meaning
+at all.
+
+**C. Modules differ in depth and exit direction, which is a box-fill fact.** The HDMI reference is a
+**right-angle** coupler whose cable exits sideways; the F-type is a straight barrel; the speaker post
+is a binding post with a pigtail. Cell occupancy says nothing about any of this, and per B the front
+elevation will not show it either. Not M3 geometry — but it is the reason a 6-port strap can be
+electrically fine and still not close.
+
+**E. Minor, and it strengthens §11.7.8.** The 2-port strap (`images.jpg`) shows the centred grid
+plainly — blank plastic above, between and below. The 6-port strap's cells read as portrait, taller
+than wide, which is consistent with a uniform standard-keystone cell. That is support for the
+uniform-cell hypothesis, **not** a measurement, and §11.7.8's caliper is still owed.
+
+**11.7.10 One question left open for the implementer, deliberately.**
 
 `ProjectSettings.outletFieldLabelFormat` is `{ROOM_ABBR}-{SERVICE}-{SEQ}`. With N gangs, whether the
 gang appears in a drop's field label — and whether that needs a new `IdFormat` token — is **not**
