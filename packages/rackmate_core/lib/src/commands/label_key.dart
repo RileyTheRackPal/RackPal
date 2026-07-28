@@ -48,4 +48,9 @@ enum LabelKey {
   // that says the wrong one there is worse than no label.
   setLinkClass,
   clearLinkClassOverride,
+
+  // The atomicConnect gesture (commands/atomic_connect.dart), DR-008
+  // §11.8.3. ONE entry, deliberately: a five-conductor component run is
+  // one thing the user did, so the Edit menu offers one thing to undo.
+  atomicConnect,
 }
