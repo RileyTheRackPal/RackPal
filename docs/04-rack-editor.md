@@ -175,6 +175,13 @@ Lateral position is a `Width position` dropdown — `Full (0,12) | Left half (0,
 
 The caret is a first-class object — a 2 px accent line at a U boundary with a 6 px triangle at each rail and the ruler label highlighted. It exists whenever the canvas has focus and nothing is selected, and it is what makes keyboard-only placement work.
 
+Two amendments, both forced by the caret being invisible in practice for the whole of M1:
+
+* **The palette filter counts as canvas focus, and only the palette filter.** Read literally, "whenever the canvas has focus" makes §3.2's own flow self-defeating: `/` moves focus to the filter, extinguishing the caret that the placement about to happen is aimed at. The caret must survive the hand-off it exists to serve. The widening names that one field — *not* the whole column — because the inspector's text fields are in the same `Row` and typing a rack name is not a placement gesture.
+* **A device that was just quick-added does not count as a selection.** Every placement becomes the sole selection (§3.1 step 6), which switched the caret off at exactly the moment a keep-typing loop needs it to say where the *next* device goes. The transparency window the screen already computes for caret *targeting* applies to *activation* too.
+
+**The caret must also be ON SCREEN, which is a separate claim and was the one that actually failed.** The viewport opens at identity, and rack scene space is bottom-origin — `yBottomOfU(1) == rackHeight` — so on the default 42 U project U1 was drawn roughly 54 px below the visible canvas, along with the bottom of the rack. Two rules follow, and they are requirements on the *viewport*, not on the caret: U1 is visible on the first frame of any rack, and moving the caret pans the minimum distance needed to keep it inside. Zoom stays at §2.1's 1.0 in both cases; a tall rack is clipped at the top and scrolls into view, because U1 is where placement starts.
+
 | Key | With a selection | With no selection |
 |---|---|---|
 | `↑` / `↓` | nudge ±1U | move caret ±1U |
@@ -435,6 +442,16 @@ Rack-editor bindings only; the complete ~40-binding table is generated from the 
 | `F7` / `F8` / `Shift+F8` | re-check · next issue · previous issue | global |
 | `Space+drag`, `MMB` · `Ctrl+wheel` | pan · zoom about cursor | global |
 | `Esc` | cancel drag, exit mode, clear selection | global |
+
+**Every binding above is scoped, and "global" never means "including inside a text field."** A key pressed while a `TextField` holds focus belongs to that field, full stop. This is not a nicety: `RackCanvasScreen` mounts its `Shortcuts` above the whole palette + canvas + inspector `Row`, and Flutter dispatches key events **leaf → root** while `DefaultTextEditingShortcuts` — which is what turns `Backspace` into a character delete — is installed at the app root. A bare binding here is therefore consulted *before* text editing, not after, and swallows the key. For nine days that made the palette filter uncorrectable, and made `Backspace` in it delete the selected rack device instead.
+
+Concretely, for any binding in this table that is a bare key or a `Ctrl`/`Alt` chord a text field may want (`Del`, `Backspace`, arrows, `Home`, `End`, `PgUp`, `PgDn`, `Esc`, `Enter`, `/`, `Ctrl+Z`, `Ctrl+Y`, `Ctrl+Alt+U`, `Ctrl+Alt+N`):
+
+* it must be a real `Action` whose `isActionEnabled` is false when the key is not for it — a `CallbackAction` consumes its key regardless of what the body does, and `consumesKey => false` is **not** an equivalent escape hatch (it yields `skipRemainingHandlers`, which halts dispatch just as dead);
+* canvas keys gate on canvas focus, document-global keys (`Ctrl+Z`/`Ctrl+Y`) gate only on "no text field has focus", so undo still works from the palette and the inspector;
+* `Esc` inside a text field belongs to that field. In the palette filter it clears the query and returns focus to the canvas.
+
+`Ctrl+Alt` is `AltGr` on Windows, so `Ctrl+Alt+U`/`Ctrl+Alt+N` will collide with printable characters on layouts where `AltGr+U`/`AltGr+N` produce one. Gating them off inside text fields removes the collision where a character could be typed; the collision remains when the canvas has focus, and is accepted.
 
 **In v1 the tab strip shows three tabs — Rack, Schematic, Schedule.** `Ctrl+3` is reserved for the Rear Panel view and is an unbound no-op until v1.1 (CR-071); `Ctrl+4` is the Schedule in v1 and forever. Do not rebind the Schedule to `Ctrl+3` — `Ctrl+n` is a view identity, not an ordinal. The `Ctrl+1..4` row above is therefore written as the stable identity map, not as what the v1 strip renders.
 

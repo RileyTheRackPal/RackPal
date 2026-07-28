@@ -58,6 +58,12 @@ import 'package:rackmate_ui/src/shell/no_racks_view.dart';
 /// `ViewportController` listenable (docs/03 §7.3: "no setState in the canvas
 /// path"); the scene geometry is identical within a tier, so it is not
 /// rebuilt.
+/// Breathing room, in screen pixels, between the rack and the edge of the
+/// canvas column — used both when the viewport is first seeded and when the
+/// caret is scrolled back into view, so a caret that has just been chased
+/// onto the screen does not sit flush against the edge it came in from.
+const double _kViewportMargin = 24;
+
 class RackCanvasScreen extends StatefulWidget {
   const RackCanvasScreen({
     required this.measurer,
@@ -147,6 +153,16 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
 
   /// `/` focuses the palette search field (docs/04 §3.2, §8 keymap).
   final FocusNode _paletteSearchFocus = FocusNode(debugLabel: 'paletteSearch');
+
+  /// The palette filter's text, owned HERE rather than inside
+  /// `DevicePalettePanel`, for the same reason [_paletteSearchFocus] is:
+  /// the screen has keyboard obligations toward that field which it cannot
+  /// discharge without touching its content. `/` must be able to select the
+  /// existing query so the next keystroke replaces it, and `Esc` must be
+  /// able to empty it — both recovery paths out of a bad filter, and
+  /// neither expressible from outside the widget that holds the controller.
+  final TextEditingController _paletteSearchController =
+      TextEditingController();
 
   /// The insertion caret (docs/04 §3.4) — UI-owned, observed, sibling to
   /// [_selection] in every respect (see insertion_caret.dart's header).
@@ -573,7 +589,12 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // as one of its three inputs — a plain FocusNode is not itself a
     // ChangeNotifier the caret can merge into its own repaint listenable,
     // so the screen bridges it explicitly.
+    _caret.addListener(_ensureCaretVisible);
     _canvasFocus.addListener(_onFocusChanged);
+    // THE PALETTE FILTER COUNTS AS CANVAS FOCUS FOR THE CARET — see
+    // `_recomputeCaret`. Without this listener that widening would be inert,
+    // because nothing else fires when focus moves between the two.
+    _paletteSearchFocus.addListener(_onFocusChanged);
     // The palette drag's phase feeds the caret's `dragInProgress` input
     // AND the palette's own dimmed-row rendering — see the field's own
     // doc comment for why this is coarse-filtered rather than a repaint
@@ -607,6 +628,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _removeResizeOverlay();
     _resize.dispose();
     _inspectorFirstFieldFocus.dispose();
+    _caret.removeListener(_ensureCaretVisible);
     _canvasFocus.removeListener(_onFocusChanged);
     _caret.dispose();
     _shake.dispose();
@@ -638,7 +660,9 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       ..dispose();
     _gridCache.dispose();
     _canvasFocus.dispose();
+    _paletteSearchFocus.removeListener(_onFocusChanged);
     _paletteSearchFocus.dispose();
+    _paletteSearchController.dispose();
     super.dispose();
   }
 
@@ -661,6 +685,98 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// The canvas gained or lost Flutter focus — one of the caret's three
   /// activation inputs (docs/04 §3.4).
   void _onFocusChanged() => _recomputeCaret();
+
+  /// The rack this screen has already framed, so [_seedViewport] runs once
+  /// per rack rather than once per layout pass. Height is part of the key:
+  /// a 9U rack resized to 42U moves U1 by 726 scene units, which is off the
+  /// bottom of any window this app supports.
+  ({Uuid id, int heightU})? _seededFor;
+
+  /// Puts U1 ON SCREEN.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// WHY THIS EXISTS: THE CARET WAS NEVER MISSING, IT WAS BELOW THE FOLD
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `ViewportController` starts at `Matrix4.identity()` and, until now,
+  /// nothing ever moved it — the only `fitToContent` call in this file is
+  /// behind the HUD's manual Fit button. Scene space is bottom-origin for
+  /// racks: `yBottomOfU(1) == rackHeight`, so on the default Blank project's
+  /// 42U rack the insertion caret is drawn at scene y = 924 while the canvas
+  /// column is around 870px tall. The caret was active, and painting, ~54px
+  /// below the last visible row. So was the bottom of the rack.
+  ///
+  /// SCALE IS LEFT AT 1.0 rather than calling `fitToContent`, because
+  /// docs/04 §2.1 fixes "zoom 1.0 = 1U is 22px" and silently choosing 0.55
+  /// to make a 42U rack fit would trade a documented constant for an
+  /// undocumented one. A tall rack is clipped at the TOP and scrolls into
+  /// view, which is the conventional direction to clip a bottom-origin
+  /// object: U1 is where placement starts and where the caret seeds, so U1
+  /// is what must be visible.
+  ///
+  /// MINIMUM DELTA, VERTICAL ONLY, AND ONLY WHEN U1 IS ACTUALLY OFF-SCREEN.
+  /// The first version of this panned unconditionally — squaring the rack's
+  /// bottom edge against the viewport's and centring it horizontally — and
+  /// broke 79 tests, because scene (0,0) landing on the canvas's top-left
+  /// corner is an assumption that runs through most of this package's
+  /// pointer-coordinate helpers. It was also simply wrong on its own terms:
+  /// a rack that already fits has nothing to fix, and moving it anyway
+  /// means every 12U project opens somewhere other than where it did
+  /// before. Horizontal position was never part of the defect at all.
+  ///
+  /// Runs from `LayoutBuilder` but defers the mutation to a post-frame
+  /// callback: `ViewportController` is a `ChangeNotifier` and notifying
+  /// during layout would rebuild its listeners mid-pass.
+  void _seedViewport(Size viewportSize) {
+    if (viewportSize.isEmpty || _activeRack == null) return;
+    final key = (id: _rack.id, heightU: _rack.heightU);
+    if (_seededFor == key) return;
+    _seededFor = key;
+
+    final geo = _geo;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // `yBottomOfU(1) == rackHeight` — U1's bottom edge, the lowest thing
+      // the rack owns and the row the caret seeds on.
+      final y = _viewport.sceneToScreen(DPt(0, geo.rackHeight)).y;
+      // Tested against the RAW viewport, corrected to one margin inside it.
+      // Testing against the inset bound instead would nudge the view for a
+      // rack that is visible but merely close to the edge, which is motion
+      // with no cause.
+      if (y <= viewportSize.height) return;
+      _viewport.panBy(Offset(0, viewportSize.height - _kViewportMargin - y));
+    });
+  }
+
+  /// Keeps the caret inside the viewport as it moves.
+  ///
+  /// `CaretController.moveTo`/`moveBy` are pure model updates — they never
+  /// touch the viewport — so on a rack taller than the window the arrow keys
+  /// happily walk the caret straight off the top or bottom edge and the user
+  /// is then driving something they cannot see. Pans by the MINIMUM delta
+  /// that brings the caret line back inside, so an already-visible caret
+  /// never causes the canvas to jump.
+  void _ensureCaretVisible() {
+    final active = _caret.caret;
+    if (active == null) return;
+    final box = _canvasBoxKey.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.attached || box.size.isEmpty) return;
+
+    final y = _viewport
+        .sceneToScreen(DPt(0, _geo.yBottomOfU(active.ruIndex)))
+        .y;
+    // Raw bounds to DECIDE, inset bounds to CORRECT — see `_seedViewport`.
+    // Deciding on the inset bound would pan the canvas by a couple of
+    // pixels whenever the caret reached the top of a rack that fits
+    // perfectly well, which is motion with no cause and would have moved
+    // the coordinate frame under every pointer test in this package.
+    if (y >= 0 && y <= box.size.height) return;
+    _viewport.panBy(
+      Offset(
+        0,
+        y < 0 ? _kViewportMargin - y : box.size.height - _kViewportMargin - y,
+      ),
+    );
+  }
 
   /// Closes the keep-typing transparency window (see [_lastQuickAddId]) on
   /// the first selection change this screen did not itself make: a click, a
@@ -744,8 +860,29 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // compares `caret.rackId` to the rack it is handed.
     if (_activeRack == null) return;
     _caret.recompute(
-      selectionEmpty: _selection.isEmpty,
-      canvasHasFocus: _canvasFocus.hasFocus,
+      // A JUST-QUICK-ADDED DEVICE DOES NOT COUNT AS A SELECTION HERE.
+      // `_finalizeCatalogPlacement` makes every placement the sole
+      // selection (docs/04 §3.1 step 6), which switched the caret OFF at
+      // the exact moment the keep-typing loop needs it most: place, caret
+      // vanishes, type the next template, and there is no longer anything
+      // on screen saying where it will land. The screen already computes
+      // this transparency window for caret TARGETING
+      // (`_selectionIsLastQuickAdd`, read by `_placeFromCatalog`); it was
+      // simply never applied to caret ACTIVATION, so the caret aimed
+      // somewhere it refused to draw.
+      selectionEmpty: _selection.isEmpty || _selectionIsLastQuickAdd,
+      // THE PALETTE FILTER COUNTS. docs/04 §3.4 says "whenever the canvas
+      // has focus", written before `/` existed. Taken literally it makes
+      // the documented §3.2 flow self-defeating: `/` moves focus to the
+      // filter, which extinguishes the caret that the placement about to
+      // happen is aimed at. The caret must stay lit across the hand-off it
+      // is the whole point of.
+      //
+      // NARROW ON PURPOSE — this names one sibling node, rather than
+      // wrapping the `Row` in a `FocusScope` and asking whether focus is
+      // anywhere within it. The inspector's five text fields are in that
+      // `Row` too, and typing a rack name is not a placement gesture.
+      canvasHasFocus: _canvasFocus.hasFocus || _paletteSearchFocus.hasFocus,
       // EITHER drag suppresses the caret (docs/04 §3.4: the caret and an
       // in-flight drag are mutually exclusive) — in practice a move drag
       // already implies a non-empty selection, which suppresses it anyway,
@@ -1146,8 +1283,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
         return byOrder != 0 ? byOrder : a.id.v.compareTo(b.id.v);
       });
     return [
-      for (final r in racks)
-        (id: r.id, designator: r.designator, name: r.name),
+      for (final r in racks) (id: r.id, designator: r.designator, name: r.name),
     ];
   }
 
@@ -2183,7 +2319,45 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     return box.localToGlobal(local);
   }
 
+  /// Whether primary focus is inside a text field ANYWHERE — the palette
+  /// filter, one of the five `RackInspector` fields, or anything added
+  /// later.
+  ///
+  /// Asked of `FocusManager.instance.primaryFocus` rather than of any node
+  /// this screen owns, because the point is to catch fields this screen has
+  /// never heard of. `EditableText` builds its `Focus` as a DESCENDANT of
+  /// itself, so the focused node's context is inside the `EditableText`
+  /// subtree and the ancestor walk finds it; the `is EditableText` limb
+  /// covers the case where the focused context IS the `EditableText`
+  /// element.
+  ///
+  /// This is a read of live focus, not of widget identity, so it stays
+  /// correct for fields that do not exist yet — which is the property that
+  /// matters, since the defect it closes was introduced by adding a text
+  /// field to a subtree whose keymap predated it.
+  bool get _textFieldHasFocus {
+    final ctx = FocusManager.instance.primaryFocus?.context;
+    if (ctx == null) return false;
+    return ctx.widget is EditableText ||
+        ctx.findAncestorWidgetOfExactType<EditableText>() != null;
+  }
+
+  /// SECOND LINE OF DEFENCE, deliberately redundant with the
+  /// `isActionEnabled` gate on `_DeleteIntent`.
+  ///
+  /// This is the only keyboard action on the screen that DESTROYS DOCUMENT
+  /// STATE, and it was the only one with no focus guard at all while its
+  /// three siblings (`_dispatchVertical`, `_onHome`, `_onEnd`) each had
+  /// one. That asymmetry is exactly how a single `Backspace` typed into the
+  /// palette filter came to delete a device from the rack.
+  ///
+  /// The gate in the action map is what makes the KEY fall through to the
+  /// text field; this guard is what makes the COMMAND not run. They are not
+  /// the same mechanism (see `_GatedAction`'s doc on why a body guard alone
+  /// cannot save the key), and a refactor that drops one must not silently
+  /// drop both.
   void _deleteSelection() {
+    if (!_canvasFocus.hasFocus) return;
     final ids = _selection.ids.toList();
     if (ids.isEmpty) return;
     _controller.selection = _selection.snapshot(); // before = current selection
@@ -2261,14 +2435,36 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
 
   /// Up/Down (±1) and PgUp/PgDn (±10) share one dispatcher: move the caret
   /// when nothing is selected, else nudge the focused device by the same
-  /// delta. Guarded on canvas focus (see the OPEN RISK in this stage's
-  /// design/report): `Shortcuts`/`Actions` wraps the whole palette+canvas
-  /// `Row`, so a key event a focused palette widget doesn't claim (a bare
-  /// `Focus` node with no arrow-key handling) bubbles up to these
-  /// canvas-scoped actions even when the canvas itself lacks focus. The
-  /// palette SEARCH field needs no such guard — `EditableText`'s own key
-  /// handling consumes arrow keys as text-cursor movement before they ever
-  /// bubble this far.
+  /// delta.
+  ///
+  /// The real guard is the `isActionEnabled` gate in the action map; this
+  /// body check is kept as its second line of defence.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE SENTENCE THAT USED TO BE HERE WAS FALSE, AND IT COST A RELEASE
+  /// ═══════════════════════════════════════════════════════════════════
+  /// It read: "The palette SEARCH field needs no such guard —
+  /// `EditableText`'s own key handling consumes arrow keys as text-cursor
+  /// movement before they ever bubble this far."
+  ///
+  /// `EditableText` INSTALLS NO KEY HANDLER ON ITS FOCUS NODE. Nothing in
+  /// it inspects a `KeyEvent`. Text editing keys reach it as *Intents*
+  /// dispatched by `DefaultTextEditingShortcuts`, which `WidgetsApp`
+  /// installs at the ROOT of the app — an ANCESTOR of this screen. Since
+  /// `FocusManager` walks LEAF -> ROOT, text editing is the LAST thing
+  /// consulted, not the first. The sentence had the order exactly
+  /// backwards.
+  ///
+  /// What it licensed: fourteen bare bindings over a subtree containing six
+  /// text fields. `Backspace` in the palette filter deleted a rack device
+  /// instead of a character, `Ctrl+Z` rewound a document command instead of
+  /// the typing, `Home`/`End`/arrows/`PgUp`/`PgDn` went dead, and `/` could
+  /// not be typed at all. The filter box could not be corrected once
+  /// mistyped, which made the palette unusable for the rest of the session.
+  ///
+  /// The correct rule is stated in `_GatedAction`'s doc comment and,
+  /// independently and correctly, in `app_shell.dart`'s header for `Ctrl+S`
+  /// — cross-referenced deliberately so the two cannot drift apart again.
   void _dispatchVertical(int delta) {
     if (!_canvasFocus.hasFocus) return;
     if (_selection.isEmpty) {
@@ -2284,6 +2480,49 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   void _onArrowDown() => _dispatchVertical(-1);
   void _onPageUp() => _dispatchVertical(10);
   void _onPageDown() => _dispatchVertical(-10);
+
+  /// `/` (docs/04 §3.2 / §8) — focus the palette filter AND SELECT WHAT IS
+  /// ALREADY IN IT.
+  ///
+  /// The select-all is not a flourish. `/` used to call `requestFocus()`
+  /// alone, which meant that pressing it with a stale query already in the
+  /// box dropped the user into a field whose content they then had to clear
+  /// by hand — and during the period when `Backspace` was being eaten by
+  /// this screen's own keymap, BY HAND WAS NOT POSSIBLE. Selecting the
+  /// existing text makes the next keystroke replace it, so `/` is itself
+  /// the way out of a bad filter rather than another way into one.
+  ///
+  /// Retargeting the whole query is also simply what `/`-to-search does
+  /// everywhere else it exists: it means "start a new search", not "resume
+  /// editing the last one".
+  void _focusPaletteSearch() {
+    _paletteSearchFocus.requestFocus();
+    final text = _paletteSearchController.text;
+    if (text.isNotEmpty) {
+      _paletteSearchController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: text.length,
+      );
+    }
+  }
+
+  /// `Esc` inside the palette filter: clear the query and hand focus back to
+  /// the canvas.
+  ///
+  /// Field-local, and deliberately NOT routed through `_CancelDragIntent` —
+  /// that binding is gated OFF while a text field has focus, precisely so
+  /// `Esc` cannot reach across and clear the canvas selection out from under
+  /// someone who is typing. This is the other half of that decision: having
+  /// taken `Esc` away from the canvas here, the field owes the user
+  /// something for it, and "empty the filter, give the keyboard back" is the
+  /// action that makes the palette recoverable without the mouse.
+  ///
+  /// Returning focus to the canvas also re-lights the insertion caret for
+  /// free, through `_onFocusChanged`.
+  void _dismissPaletteSearch() {
+    _paletteSearchController.clear();
+    _canvasFocus.requestFocus();
+  }
 
   /// `Esc` (docs/04 §3.3 step 4): reverts an in-flight move drag — the
   /// source device returns to full opacity at its original U, the ghost and
@@ -2662,6 +2901,20 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // to sit here and why it was deleted.
     _selection.apply([command.id], SelectMode.replace);
     _lastQuickAddId = fromQuickAdd ? command.id : null;
+    // AND RECOMPUTE AGAIN, because the line above is what the caret's
+    // activation now depends on and it was assigned too late to be seen.
+    // The `_selection.apply` on the previous line notifies SYNCHRONOUSLY,
+    // so the `_recomputeCaret` it triggers has already run and observed
+    // `_lastQuickAddId` at its OLD value — null, or the previous
+    // placement's id. Without this second call the transparency window
+    // opens after the only reader of it has finished reading, and the
+    // caret stays dark for the whole keep-typing loop.
+    //
+    // The ordering above cannot simply be swapped: `_forgetQuickAddSelection`
+    // runs inside `apply` and clears `_lastQuickAddId`, so assigning first
+    // would have the apply wipe it. Hence a second recompute rather than a
+    // reordering.
+    _recomputeCaret();
 
     final prefix = caretRefusal == null ? '' : '$caretRefusal ';
     final placement = command.placement;
@@ -3349,84 +3602,111 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
         SingleActivator(LogicalKeyboardKey.enter): _ApplyCompactionIntent(),
       },
       child: Actions(
+        // EVERY ENTRY HERE IS GATED. Not one may be a `CallbackAction`: see
+        // `_GatedAction`'s doc comment for why a `CallbackAction` swallows
+        // its key even when its body declines to act, and why this screen's
+        // `Shortcuts` sits in front of six text fields rather than behind
+        // them. The three predicates in use, and the reason each binding
+        // gets the one it does:
+        //
+        //   `_canvasFocus.hasFocus`  — the key MEANS something about the
+        //       rack. Stricter than "no text field has focus", and it has
+        //       to be: from canvas focus, one `Tab` lands on a plain
+        //       (non-text) `FocusNode` in the palette, where a text-only
+        //       test would still let `Delete` destroy a device.
+        //
+        //   `!_textFieldHasFocus`    — the key is DOCUMENT-GLOBAL. Undo and
+        //       redo must keep working from the palette, the inspector and
+        //       the toolbar; scoping them to the canvas would reintroduce
+        //       the exact defect app_shell.dart's header post-mortems for
+        //       `Ctrl+S` ("The document is global; its keys have to be
+        //       too").
+        //
+        //   a mode test                — the key cancels or applies something
+        //       that is currently in flight, and is meaningless otherwise.
         actions: <Type, Action<Intent>>{
-          _DeleteIntent: CallbackAction<_DeleteIntent>(
-            onInvoke: (_) {
-              _deleteSelection();
-              return null;
-            },
+          // DESTRUCTIVE. Canvas focus, not merely "not a text field" — see
+          // the Tab case above. `_deleteSelection` repeats this guard in
+          // its own body as a deliberate second line of defence.
+          _DeleteIntent: _GatedAction<_DeleteIntent>(
+            () => _canvasFocus.hasFocus,
+            _deleteSelection,
           ),
-          _UndoIntent: CallbackAction<_UndoIntent>(
-            onInvoke: (_) {
-              _undo();
-              return null;
-            },
+          // Document-global: a rack rename typed in the inspector and an
+          // undo pressed from the palette are both legitimate.
+          _UndoIntent: _GatedAction<_UndoIntent>(
+            () => !_textFieldHasFocus,
+            _undo,
           ),
-          _RedoIntent: CallbackAction<_RedoIntent>(
-            onInvoke: (_) {
-              _redo();
-              return null;
-            },
+          _RedoIntent: _GatedAction<_RedoIntent>(
+            () => !_textFieldHasFocus,
+            _redo,
           ),
-          _FocusPaletteSearchIntent: CallbackAction<_FocusPaletteSearchIntent>(
-            onInvoke: (_) {
-              _paletteSearchFocus.requestFocus();
-              return null;
-            },
+          // NOT gated on canvas focus. `keyboard_only_placement_test.dart`
+          // presses `/` right after `receiveAction(done)` has unfocused the
+          // search field, at a moment when canvas focus is not guaranteed;
+          // `!_textFieldHasFocus` is the honest condition (the only thing
+          // `/` must never do is fail to type a slash into a field).
+          _FocusPaletteSearchIntent: _GatedAction<_FocusPaletteSearchIntent>(
+            () => !_textFieldHasFocus,
+            _focusPaletteSearch,
           ),
-          _ArrowUpIntent: CallbackAction<_ArrowUpIntent>(
-            onInvoke: (_) {
-              _onArrowUp();
-              return null;
-            },
+          // Each of these already tested `_canvasFocus.hasFocus` in its own
+          // body. The test MOVES to the gate — same condition, but now it
+          // releases the key instead of eating it, so a focused header
+          // stepper gets its own Up/Down and a text field gets its own
+          // Home/End.
+          _ArrowUpIntent: _GatedAction<_ArrowUpIntent>(
+            () => _canvasFocus.hasFocus,
+            _onArrowUp,
           ),
-          _ArrowDownIntent: CallbackAction<_ArrowDownIntent>(
-            onInvoke: (_) {
-              _onArrowDown();
-              return null;
-            },
+          _ArrowDownIntent: _GatedAction<_ArrowDownIntent>(
+            () => _canvasFocus.hasFocus,
+            _onArrowDown,
           ),
-          _HomeIntent: CallbackAction<_HomeIntent>(
-            onInvoke: (_) {
-              _onHome();
-              return null;
-            },
+          _HomeIntent: _GatedAction<_HomeIntent>(
+            () => _canvasFocus.hasFocus,
+            _onHome,
           ),
-          _EndIntent: CallbackAction<_EndIntent>(
-            onInvoke: (_) {
-              _onEnd();
-              return null;
-            },
+          _EndIntent: _GatedAction<_EndIntent>(
+            () => _canvasFocus.hasFocus,
+            _onEnd,
           ),
-          _PageUpIntent: CallbackAction<_PageUpIntent>(
-            onInvoke: (_) {
-              _onPageUp();
-              return null;
-            },
+          _PageUpIntent: _GatedAction<_PageUpIntent>(
+            () => _canvasFocus.hasFocus,
+            _onPageUp,
           ),
-          _PageDownIntent: CallbackAction<_PageDownIntent>(
-            onInvoke: (_) {
-              _onPageDown();
-              return null;
-            },
+          _PageDownIntent: _GatedAction<_PageDownIntent>(
+            () => _canvasFocus.hasFocus,
+            _onPageDown,
           ),
-          _CancelDragIntent: CallbackAction<_CancelDragIntent>(
-            onInvoke: (_) {
-              _onEscape();
-              return null;
-            },
+          // Esc is a MODE key first and a deselect key second, so canvas
+          // focus alone would be wrong: a compaction preview started from
+          // the rack header's overflow menu must still be cancellable while
+          // that menu holds focus. The palette-drag limb needs no clause
+          // here — that case is served by the raw `HardwareKeyboard` hook
+          // (`_onRawKeyDuringPaletteDrag`), which runs ahead of the focus
+          // chain and returns false for every key but Escape.
+          _CancelDragIntent: _GatedAction<_CancelDragIntent>(
+            () =>
+                _resize.isActive ||
+                _compaction.isActive ||
+                _moveDrag.isInProgress ||
+                (!_textFieldHasFocus && _canvasFocus.hasFocus),
+            _onEscape,
           ),
-          _RackSettingsIntent: CallbackAction<_RackSettingsIntent>(
-            onInvoke: (_) {
-              _showRackInspector(focusFirstField: true);
-              return null;
-            },
+          // `Ctrl+Alt` is `AltGr` on Windows, so on layouts where AltGr+U /
+          // AltGr+N is a printable character these bindings would eat it.
+          // Gating on `!_textFieldHasFocus` means the character survives
+          // wherever it could actually be typed. (The collision remains
+          // when the canvas has focus; see docs/04 §8.)
+          _RackSettingsIntent: _GatedAction<_RackSettingsIntent>(
+            () => !_textFieldHasFocus,
+            () => _showRackInspector(focusFirstField: true),
           ),
-          _NewRackIntent: CallbackAction<_NewRackIntent>(
-            onInvoke: (_) {
-              unawaited(_showNewRackDialog());
-              return null;
-            },
+          _NewRackIntent: _GatedAction<_NewRackIntent>(
+            () => !_textFieldHasFocus,
+            () => unawaited(_showNewRackDialog()),
           ),
           // NOT a `CallbackAction`. See the class's own doc comment: a
           // CallbackAction returning null still reports the key as HANDLED,
@@ -3443,6 +3723,9 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                 catalog: _catalog,
                 categoryOrder: kCatalogCategoryOrder,
                 searchFocusNode: _paletteSearchFocus,
+                searchController: _paletteSearchController,
+                onDismissSearch: _dismissPaletteSearch,
+                onRefuse: _status.show,
                 onPlace: _placeFromCatalog,
                 onArmDrag: _onPaletteArmDrag,
                 draggingCatalogId: _lastPaletteDragDimId,
@@ -3501,6 +3784,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     return LayoutBuilder(
       builder: (context, constraints) {
         final viewportSize = constraints.biggest;
+        _seedViewport(viewportSize);
         return ColoredBox(
           color: scheme.surface,
           child: Stack(
@@ -3902,19 +4186,74 @@ class _ApplyCompactionIntent extends Intent {
 ///
 /// Overriding [isActionEnabled] makes `ShortcutManager.handleKeypress`
 /// return `KeyEventResult.ignored` instead, so the key falls through to
-/// whatever else wants it. In practice the palette's own handlers sit BELOW
-/// this in the focus chain and claim `Enter` first anyway; this guarantees
-/// the fallback even when they do not (e.g. focus on the canvas itself).
+/// whatever else wants it.
+///
+/// This paragraph used to continue "In practice the palette's own handlers
+/// sit BELOW this in the focus chain and claim `Enter` first anyway". That
+/// is HALF FALSE and the false half is the dangerous one. It holds for
+/// `_PaletteRow`, which really does install `Focus(onKeyEvent:)`
+/// (device_palette_panel.dart). It does NOT hold for the SEARCH FIELD:
+/// `EditableText` installs no key handler at all, and its `Enter` arrives
+/// as `performAction` over the text-input connection rather than through
+/// the focus chain. The `isActionEnabled` override is not a belt-and-braces
+/// guarantee behind a handler that would have caught it — it is the ONLY
+/// thing standing between this binding and every `Enter` in the filter box.
 class _ApplyCompactionAction extends Action<_ApplyCompactionIntent> {
   _ApplyCompactionAction(this._state);
 
   final _RackCanvasScreenState _state;
 
   @override
-  bool get isActionEnabled => _state._compaction.isActive;
+  bool get isActionEnabled =>
+      _state._compaction.isActive && !_state._textFieldHasFocus;
 
   @override
   void invoke(_ApplyCompactionIntent intent) => _state._applyCompaction();
+}
+
+/// A real [Action] whose enablement is a predicate evaluated FRESH ON EVERY
+/// KEYPRESS — the general form of the mechanism [_ApplyCompactionAction]
+/// documents, applied to every other binding on this screen.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// WHY EVERY BINDING NEEDS THIS AND NOT JUST `Enter`
+/// ═════════════════════════════════════════════════════════════════════
+/// This screen's `Shortcuts` wraps the whole three-column `Row`, so the
+/// palette filter and the five `RackInspector` fields are all DESCENDANTS
+/// of it, while `DefaultTextEditingShortcuts` — the only thing in Flutter
+/// that turns `Backspace` into a `DeleteCharacterIntent` — is installed by
+/// `WidgetsApp` at the ROOT. Key events are dispatched LEAF -> ROOT
+/// (`FocusManager._dispatchKeyEvent`), so this screen's map is consulted
+/// FIRST and the text machinery LAST. Fourteen bare bindings therefore sat
+/// in front of six text fields.
+///
+/// A `CallbackAction` cannot fix it, and neither can returning early from
+/// the callback body: `Action.consumesKey` defaults to `true` and
+/// `toKeyEventResult` maps that to `KeyEventResult.handled` REGARDLESS OF
+/// WHAT THE CALLBACK RETURNS OR DOES. The key is consumed before the body
+/// runs, so `if (!_canvasFocus.hasFocus) return;` inside a handler stops
+/// the ACTION and still destroys the KEY.
+///
+/// Overriding `consumesKey => false` is ALSO not equivalent, which is the
+/// counter-intuitive part: `toKeyEventResult` then returns
+/// `skipRemainingHandlers`, which breaks the dispatch loop just as dead as
+/// `handled`. Only `isActionEnabled == false` yields `ignored` and lets the
+/// event continue up the chain. Verified by execution, both ways.
+///
+/// [enabled] is a closure rather than a captured bool because
+/// `ShortcutManager` re-reads `isActionEnabled` on every keypress; a
+/// snapshot taken at build time would be stale the moment focus moved.
+class _GatedAction<T extends Intent> extends Action<T> {
+  _GatedAction(this._enabled, this._run);
+
+  final bool Function() _enabled;
+  final VoidCallback _run;
+
+  @override
+  bool get isActionEnabled => _enabled();
+
+  @override
+  void invoke(T intent) => _run();
 }
 
 /// Routes the pointer-agnostic `CanvasIntent` sequence into the screen's

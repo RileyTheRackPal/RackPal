@@ -39,10 +39,9 @@ List<MapEntry<String, TemplateBody>> _sortedEntries(
   Map<String, TemplateBody> catalog,
   String category,
 ) {
-  final entries = catalog.entries
-      .where((e) => e.value.category == category)
-      .toList()
-    ..sort((a, b) => a.key.compareTo(b.key));
+  final entries =
+      catalog.entries.where((e) => e.value.category == category).toList()
+        ..sort((a, b) => a.key.compareTo(b.key));
   return entries;
 }
 
@@ -57,7 +56,8 @@ bool _matchesQuery(String query, String id, TemplateBody body) {
 }
 
 /// The first two characters of a type prefix, for the leading avatar.
-String _initials(String prefix) => prefix.length <= 2 ? prefix : prefix.substring(0, 2);
+String _initials(String prefix) =>
+    prefix.length <= 2 ? prefix : prefix.substring(0, 2);
 
 /// A short occupancy badge for the trailing chip — "3U", "0U" (0U-vertical
 /// PDU), or "Field" for a `notInRack` device, which has no RU badge at all.
@@ -77,6 +77,9 @@ class DevicePalettePanel extends StatefulWidget {
     required this.categoryOrder,
     required this.onPlace,
     this.searchFocusNode,
+    this.searchController,
+    this.onDismissSearch,
+    this.onRefuse,
     this.onArmDrag,
     this.draggingCatalogId,
     super.key,
@@ -95,6 +98,21 @@ class DevicePalettePanel extends StatefulWidget {
   /// Optional externally-owned focus node so the screen can bind `/` to
   /// focus the search field (docs/04 §3.2, §8 keymap).
   final FocusNode? searchFocusNode;
+
+  /// Optional externally-owned text controller, for the same reason as
+  /// [searchFocusNode]: the screen has keyboard obligations toward this
+  /// field — `/` selects the existing query so the next keystroke replaces
+  /// it — that cannot be met without reaching its contents.
+  final TextEditingController? searchController;
+
+  /// `Esc` in the search field. Null disables the binding, which is what a
+  /// standalone render test wants; `RackCanvasScreen` wires it to "clear the
+  /// query and give the keyboard back to the canvas".
+  final VoidCallback? onDismissSearch;
+
+  /// Announces a refusal on the host's status line. Used when `Enter` in the
+  /// search box matches nothing — see [_submitQuery].
+  final void Function(String message)? onRefuse;
 
   /// Fired on a plain pointer-down anywhere on a row (docs/04 §3.1 step 1:
   /// "Arm — pointer down on a palette row"). Null (the default) means
@@ -115,16 +133,60 @@ class DevicePalettePanel extends StatefulWidget {
 }
 
 class _DevicePalettePanelState extends State<DevicePalettePanel> {
-  final _searchController = TextEditingController();
+  late final TextEditingController _searchController =
+      widget.searchController ?? TextEditingController();
   late final FocusNode _searchFocusNode =
       widget.searchFocusNode ?? FocusNode(debugLabel: 'paletteSearch');
   String _query = '';
 
   @override
+  void initState() {
+    super.initState();
+    // The controller may be the SCREEN'S, and the screen writes to it —
+    // `/` select-all, `Esc` clear. `onChanged` only fires for edits made
+    // through the field itself, so without this listener an external clear
+    // would empty the box while the list below kept showing the old
+    // filtered results.
+    _searchController.addListener(_onControllerChanged);
+    _query = _searchController.text;
+  }
+
+  void _onControllerChanged() {
+    if (_searchController.text == _query) return;
+    setState(() => _query = _searchController.text);
+  }
+
+  @override
   void dispose() {
-    _searchController.dispose();
+    _searchController.removeListener(_onControllerChanged);
+    if (widget.searchController == null) _searchController.dispose();
     if (widget.searchFocusNode == null) _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  /// `Enter` in the search box (docs/04 §3.2's "type, press Enter -> the top
+  /// match places").
+  ///
+  /// A ZERO-MATCH SUBMIT IS ANNOUNCED, NOT SWALLOWED. This used to
+  /// `return` silently, so typing a template that does not exist and
+  /// pressing Enter was indistinguishable from the app being frozen — and
+  /// during the window where the filter could not be corrected, that was
+  /// the user's last signal before the palette became unusable. The rest of
+  /// this file family treats "a refused action always says why" as a
+  /// standing rule; this was the one path that did not.
+  void _submitQuery(String query) {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return; // "type, THEN Enter" — nothing typed yet.
+    final matches =
+        widget.catalog.entries
+            .where((e) => _matchesQuery(query, e.key, e.value))
+            .toList()
+          ..sort((a, b) => a.key.compareTo(b.key));
+    if (matches.isEmpty) {
+      widget.onRefuse?.call('No device matches "$trimmed".');
+      return;
+    }
+    widget.onPlace(matches.first.key);
   }
 
   @override
@@ -142,30 +204,59 @@ class _DevicePalettePanelState extends State<DevicePalettePanel> {
         children: [
           Padding(
             padding: const EdgeInsets.all(8),
-            child: TextField(
-              controller: _searchController,
-              focusNode: _searchFocusNode,
-              decoration: const InputDecoration(
-                isDense: true,
-                prefixIcon: Icon(Icons.search, size: 18),
-                hintText: 'Search devices…',
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (v) => setState(() => _query = v),
-              // docs/04 §3.2: "Type, press Enter -> the top match ...
-              // places". "Top match" reads as "the first row in the
-              // current filtered list" (no fuzzy-match ranking is in
-              // scope) — the SAME filter+sort `_SearchResults` below
-              // already uses, so the row that's on screen when Enter is
-              // pressed is exactly the row this places.
-              onSubmitted: (query) {
-                if (query.trim().isEmpty) return; // "type, then Enter"
-                final matches = widget.catalog.entries
-                    .where((e) => _matchesQuery(query, e.key, e.value))
-                    .toList()
-                  ..sort((a, b) => a.key.compareTo(b.key));
-                if (matches.isNotEmpty) widget.onPlace(matches.first.key);
+            // ESCAPE IS HANDLED HERE, AT THE FIELD, on purpose. The screen's
+            // `Esc` binding is deliberately gated OFF while a text field has
+            // focus, so that pressing it mid-word cannot clear the canvas
+            // selection out from under someone who is typing. Having taken
+            // the key away from the canvas in this context, the field owes
+            // the user something for it — and "empty the filter, hand the
+            // keyboard back" is the keyboard-only way out of a bad query.
+            //
+            // This is field-LOCAL behaviour, not a swallower: it claims
+            // exactly one key and returns `ignored` for everything else, so
+            // it cannot become the next thing that eats `Backspace`.
+            child: Focus(
+              onKeyEvent: (node, event) {
+                if (event is! KeyDownEvent) return KeyEventResult.ignored;
+                if (event.logicalKey != LogicalKeyboardKey.escape) {
+                  return KeyEventResult.ignored;
+                }
+                final dismiss = widget.onDismissSearch;
+                if (dismiss == null) return KeyEventResult.ignored;
+                dismiss();
+                return KeyEventResult.handled;
               },
+              child: TextField(
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                decoration: InputDecoration(
+                  isDense: true,
+                  prefixIcon: const Icon(Icons.search, size: 18),
+                  hintText: 'Search devices…',
+                  border: const OutlineInputBorder(),
+                  // THE MOUSE ESCAPE HATCH. Without it, a mistyped filter
+                  // was recoverable only from the keyboard — which is
+                  // precisely what was broken. Two independent ways out of
+                  // the same hole, so a regression in one does not strand
+                  // the palette again.
+                  suffixIcon: _query.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.clear, size: 18),
+                          tooltip: 'Clear search',
+                          onPressed:
+                              widget.onDismissSearch ?? _searchController.clear,
+                        ),
+                ),
+                onChanged: (v) => setState(() => _query = v),
+                // docs/04 §3.2: "Type, press Enter -> the top match ...
+                // places". "Top match" reads as "the first row in the
+                // current filtered list" (no fuzzy-match ranking is in
+                // scope) — the SAME filter+sort `_SearchResults` below
+                // already uses, so the row that's on screen when Enter is
+                // pressed is exactly the row this places.
+                onSubmitted: _submitQuery,
+              ),
             ),
           ),
           const Divider(height: 1),
@@ -255,10 +346,11 @@ class _SearchResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final matches = catalog.entries
-        .where((e) => _matchesQuery(query, e.key, e.value))
-        .toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
+    final matches =
+        catalog.entries
+            .where((e) => _matchesQuery(query, e.key, e.value))
+            .toList()
+          ..sort((a, b) => a.key.compareTo(b.key));
 
     if (matches.isEmpty) {
       return Padding(
@@ -326,7 +418,8 @@ class _PaletteRow extends StatelessWidget {
       child: GestureDetector(
         onDoubleTap: () => onPlace(catalogId),
         child: Semantics(
-          label: '${body.displayName}, $catalogId, double-tap to place in '
+          label:
+              '${body.displayName}, $catalogId, double-tap to place in '
               'the rack',
           child: ListTile(
             dense: true,
