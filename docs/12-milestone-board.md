@@ -100,7 +100,7 @@ issues, all info-level, **zero errors, zero warnings**. `flutter build windows -
 | # | Milestone | Size | Exit clauses demonstrated | Status — weakest mark | The short reason |
 |---|---|---|---|---|---|
 | **M0** | Foundations | `S` | **6 of 8** clause rows | **PARTIAL** — `VACUOUS` | `dart test` in `rackmate_core`, 886/0, discharges six clauses and they are good work. The `templates.keys` conjunct and the epoch-mask conjunct are true only because their subjects did not exist at M0 (§2.2) |
-| **M1** | Elevation release | `L` | **7 of 8** | **PARTIAL** — `REFUTED` | Rack creation now exists and is driven end-to-end by a test (clause 2), but the keyboard-only constraint is still refused — the user timed the drill under four minutes on 2026-07-27, with mouse and keyboard combined, and **only a person re-running it can move that mark**. The tape measure **passed**, checked by the user the same day |
+| **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET** — `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28. The drill's re-run **failed first** — the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5) — then passed against `616a301`. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **0 of 5** | **NOT STARTED** — `NOT BUILT` | Both tabs render `UnbuiltView`; the router was deleted at `b560a50` |
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED** — `NOT BUILT` | Model only. Hard-blocked on M2 |
 | **M4** | Device builder | `M` | **0 of 2** | **NOT STARTED** — `NOT BUILT` | No builder surface. **Its inputs are all present even though its formal gate is open** — §5.3 |
@@ -192,24 +192,25 @@ fact, not an M0 footnote. See §4.1.
 
 ---
 
-## 3. M1 — The elevation release · `L` · PARTIAL — weakest mark `REFUTED`
+## 3. M1 — The elevation release · `L` · CRITERION MET — weakest mark `CONFIRMED`
 
-The sole `L`, the critical path's centre of gravity (canon §11.1.5), and the only milestone whose
-work is mostly done. **One** of its eight exit clauses is undischarged — clause 3, the
-keyboard-only constraint — plus the goal line's "ships to real users". Clause 5, the physical
-tape measure, was **discharged by the user on 2026-07-27**; it is the one clause in this whole
-document that no test could ever have closed, and it is recorded with its human provenance in
-§3.2 because a human check is not a CI gate.
+The sole `L`, and the critical path's centre of gravity (canon §11.1.5). **All eight exit clauses
+are now discharged.** Two of them by a person rather than by a gate: clause 5 (the physical tape
+measure) on 2026-07-27, and clause 3 (the keyboard-only drill) on 2026-07-28. The goal line's
+*"and it ships to real users"* is a separate promise and is **not** met — see §3.4.
 
-**The weakest mark moved from `NOT BUILT` to `REFUTED`, and that is a smaller move than it
-looks.** Clause 2 was `NOT BUILT` on §0's own test for that mark — *"grep returns nothing"* — and
-that grep now returns `rack_commands.dart`, so the mark could not stay. It is `DEMONSTRATED`
-because §0's test for *that* mark is satisfied literally: a reader can run
-`packages/rackmate_ui/test/canvas/rack_creation_test.dart` and watch the cited path pass.
-**Clause 3 was not touched and must not be**, which is why the milestone is still `PARTIAL`: the
-code its remedy asked for was written, but `REFUTED` records an act that was performed and
-failed, and only the act being performed again — by a person, with a stopwatch — can move it.
-§3.4 item 2 is that act, and it is the only thing left between this milestone and its criterion.
+**Two clauses were closed by acts no agent can perform, and both are recorded with their human
+provenance in §3.2, because a human check is not a CI gate.** Neither is re-run by CI; neither
+survives a change to the subsystem under it. That is the price of a criterion that asks about
+paper and about wall-clock time, and it is stated rather than hidden.
+
+**The path clause 3 took is the most instructive thing in this document.** It went
+`NOT BUILT` → `REFUTED` → (remedy built, mark deliberately unchanged) → **the re-run found the
+path still impossible for two reasons the remedy had never named** → fixed → `CONFIRMED`. The
+discipline that kept it at `REFUTED` while its named remedy was already written is what made that
+second failure visible instead of assumed away. Had building the remedy been allowed to discharge
+the clause, M1 would have been marked complete over a build whose device palette could not be
+used at all. §3.5 records what was actually wrong.
 
 ### 3.1 The exit criterion, verbatim (roadmap §4, M1)
 
@@ -227,8 +228,8 @@ Its **goal** line carries a clause the criterion does not: *"The smallest genuin
 | # | Clause | Mark | Evidence / what is missing |
 |---|---|---|---|
 | 1 | A user opens the app | **DEMONSTRATED** | `flutter build windows --release` exit 0, `√ Built build\windows\x64\runner\Release\rackmate.exe`; `apps/rackmate/test/starters/starter_assets_test.dart` opens all four starters through the real store |
-| 2 | **…creates a 42U rack** | **DEMONSTRATED** | `AddRackCommand` and docs/04 §9's three-field dialog now exist, and the whole path is driven against the real screen: `packages/rackmate_ui/test/canvas/rack_creation_test.dart` presses `Ctrl+Alt+N`, types a name, commits with `Enter`, and asserts the header reads `RK-2` / `42U` — no pointer after the initial focus click. `packages/rackmate_core/test/rack_commands_test.dart` covers the command (designator allocation, order, preset-vs-typed height, undo/redo, byte round trip). **This is the CAPABILITY, not the drill.** The row it discharges is "creates a 42U rack"; the wall-clock, keyboard-only sequence is clause 3 and is still **REFUTED** — see there. *Was* **NOT BUILT**, on the grep for `AddRack`/`addRack`/`createRack` returning nothing; that grep now returns `packages/rackmate_core/lib/src/commands/rack_commands.dart:59`. `apps/rackmate/lib/src/session/blank_document.dart` still seeds `kBlankProjectRackHeightU = 42` for `Ctrl+N`, and `apps/rackmate/test/session/blank_document_test.dart` now pins that seeded rack field-for-field against what the dialog builds |
-| 3 | 20 devices **in under four minutes, keyboard only** | **REFUTED** — and it stays refuted until a person runs it again | **The user timed it this session (2026-07-27): under four minutes, but with mouse and keyboard combined, and reported no full keyboard path exists.** So the *speed* half is demonstrated and the *keyboard-only* half is refused — which matters, because the constraint is the point: it is what makes the tool faster than Visio for a populated rack, and it is load-bearing for M7's accessibility criterion. **The named fix has since been built, and building it does not discharge the clause.** REFUTED means the act was performed and failed; only the act being performed again can move it, and no agent can perform it. What landed: `Esc` now clears the selection (docs/04 §8's third limb, `rack_canvas_screen.dart`'s `_onEscape`); a quick-add that the loop itself is repeating keeps caret-targeting live (`_selectionIsLastQuickAdd`); a cycle whose caret lands on an occupied U falls back to lowest-free-U *and says so* rather than jamming; and a refused cycle hands focus back to the canvas instead of stranding it on the modal scope. The regression net is `packages/rackmate_ui/test/canvas/keyboard_only_placement_test.dart` (11 cases, each written to fail if one half of the fix is removed) and `rack_creation_test.dart`'s twenty-device drill, which drives the caret to U5 first so the caret path and the lowest-free-U fallback give different answers. The earlier citation in this row — `rack_canvas_screen.dart:2216-2229` for a gap the code documented *against itself* — is **dead**: that comment was replaced by the fix and no line range holds it any more. The user also reports the interface "feels quite good already though may need a bit of optimization" |
+| 2 | **…creates a 42U rack** | **DEMONSTRATED** | `AddRackCommand` and docs/04 §9's three-field dialog now exist, and the whole path is driven against the real screen: `packages/rackmate_ui/test/canvas/rack_creation_test.dart` presses `Ctrl+Alt+N`, types a name, commits with `Enter`, and asserts the header reads `RK-2` / `42U` — no pointer after the initial focus click. `packages/rackmate_core/test/rack_commands_test.dart` covers the command (designator allocation, order, preset-vs-typed height, undo/redo, byte round trip). **This is the CAPABILITY, not the drill.** The row it discharges is "creates a 42U rack"; the wall-clock, keyboard-only sequence is clause 3, which is **CONFIRMED** as of 2026-07-28 — see there. *Was* **NOT BUILT**, on the grep for `AddRack`/`addRack`/`createRack` returning nothing; that grep now returns `packages/rackmate_core/lib/src/commands/rack_commands.dart:59`. `apps/rackmate/lib/src/session/blank_document.dart` still seeds `kBlankProjectRackHeightU = 42` for `Ctrl+N`, and `apps/rackmate/test/session/blank_document_test.dart` now pins that seeded rack field-for-field against what the dialog builds |
+| 3 | 20 devices **in under four minutes, keyboard only** | **CONFIRMED** — by the user, 2026-07-28 | **Performed and passed on 2026-07-28.** The user ran the keyboard drill against the build carrying the `616a301` keyboard fix and reported it works. **What this row does NOT carry is a new wall-clock figure**: the user reported the drill succeeding, not a re-timed number, and inventing one would be exactly the fabrication §0 exists to prevent. The four-minute half was measured on 2026-07-27 (see the REFUTED history below) with mouse and keyboard combined; the keyboard-only half is what 2026-07-28 discharges. Anyone wanting a single timed keyboard-only figure should re-run it and replace this sentence. **A CONFIRMED mark is not a gate** — no CI job re-runs this, and it does not survive a change to the keymap; the regression net named below is what guards the mechanism between drills. — *Previous mark, kept because REFUTED records a measured fact and deleting it would erase why any of the remedy exists:* **the user timed it on 2026-07-27: under four minutes, but with mouse and keyboard combined, and reported no full keyboard path exists.** So the *speed* half is demonstrated and the *keyboard-only* half is refused — which matters, because the constraint is the point: it is what makes the tool faster than Visio for a populated rack, and it is load-bearing for M7's accessibility criterion. **The named fix has since been built, and building it does not discharge the clause.** REFUTED means the act was performed and failed; only the act being performed again can move it, and no agent can perform it. What landed: `Esc` now clears the selection (docs/04 §8's third limb, `rack_canvas_screen.dart`'s `_onEscape`); a quick-add that the loop itself is repeating keeps caret-targeting live (`_selectionIsLastQuickAdd`); a cycle whose caret lands on an occupied U falls back to lowest-free-U *and says so* rather than jamming; and a refused cycle hands focus back to the canvas instead of stranding it on the modal scope. The regression net is `packages/rackmate_ui/test/canvas/keyboard_only_placement_test.dart` (11 cases, each written to fail if one half of the fix is removed) and `rack_creation_test.dart`'s twenty-device drill, which drives the caret to U5 first so the caret path and the lowest-free-U fallback give different answers. The earlier citation in this row — `rack_canvas_screen.dart:2216-2229` for a gap the code documented *against itself* — is **dead**: that comment was replaced by the fix and no line range holds it any more. The user also reports the interface "feels quite good already though may need a bit of optimization". **THE FIRST ATTEMPT TO RE-RUN THE DRILL FOUND THE PATH STILL IMPOSSIBLE, FOR REASONS NOTHING ABOVE PREDICTED** — see §3.5. Neither of the two blockers was in the remedy list this row had been carrying, and both had been shipped since M1's earliest days; the drill could not have passed on any build before `616a301` |
 | 4 | Exports a **three-sheet** PDF | **DEMONSTRATED** | `packages/rackmate_core/lib/src/draw/sheet/sheet_def.dart` declares exactly `SheetRole.rackElevationFront` / `rackElevationRear` / `equipmentList`, and its header names the 2N+1 trap; `packages/rackmate_export/test/scale_notice_test.dart:141` `expect(out.sheetCount, 3)` |
 | 5 | Elevations dimensionally correct **against a physical tape measure** at true scale | **CONFIRMED** — by the user, 2026-07-27 | The one clause of this criterion that no test could discharge, because it asks about *paper*. Verified by the user against a printed sheet this session and reported correct. The in-repo evidence remains `packages/rackmate_export/test/elevation_true_scale_test.dart`, which composes real `q`/`Q`/`cm` into PDF user space, derives every expectation from the literals `44_450_000` / `25_400_000` / `72.0` / `482_600_000` / `450_850_000`, regexes the ratio *n* back out of the sheet's own `SCALE` field, and takes its 0.01 pt tolerance from `PdfNum.precision = 5` rather than tuning it — but that test is titled, in `docs/m1-implementation-log.md:1434`, *"how dimensionally correct against a tape measure is proved **without a printer**"*, and the print chain (driver scaling, fit-to-page, media stretch) is exactly what it cannot reach. **Provenance is a human check, not a gate**: it is not re-run by CI and does not survive a change to the fit engine. AC-058 D13's full print matrix — ANSI B laser, ANSI D plotter, photocopy — is still scheduled at M6 and has not run |
 | 6 | Equipment list matches rack contents **exactly** | **DEMONSTRATED** | `packages/rackmate_export/test/starters_export_test.dart` asserts a **bijection in both directions** over all four real starter files: designator multiset equality against the document, **plus** every designator recovered as actual text from a `T6.30` content stream |
@@ -263,18 +264,73 @@ In the order that makes each cheaper than the next:
    still not possible, deliberately: a removal has to answer what happens to the rack's occupants
    and docs/04 settles nothing about it (rack_commands.dart's header states the choice). Multi-rack
    *layout* is still unbuilt — the canvas edits one rack at a time and switches between them.
-2. **RUN AND TIME THE 20-DEVICE DRILL AGAIN.** This is now the only thing standing between the
-   repository and clause 3, and no agent can do it. The keyboard deselect the old text asked for
-   exists (`Esc`, docs/04 §8's third limb), the keep-typing loop it unblocks is covered by
-   `packages/rackmate_ui/test/canvas/keyboard_only_placement_test.dart`, and the gap comment the
-   old text cited at `rack_canvas_screen.dart:2216-2229` is gone with the defect. **A criterion
-   nobody has stopwatch-tested is a criterion nobody has met**, and tests passing is not a person
-   with a stopwatch.
+2. ~~**RUN AND TIME THE 20-DEVICE DRILL AGAIN.**~~ — **DONE, 2026-07-28, by the user.** Clause 3
+   is `CONFIRMED`. It took two attempts and the first one failed for reasons this list had never
+   named (§3.5). The sentence this item used to end on is worth keeping because it was right
+   twice over: **a criterion nobody has stopwatch-tested is a criterion nobody has met**, and
+   tests passing is not a person with a stopwatch. On 2026-07-28 the whole suite was green while
+   the palette filter could not be edited at all.
+   *Still open, and smaller:* no single re-timed keyboard-only figure was reported — the drill was
+   reported working, and the four-minute measurement dates from the mixed-input run of 2026-07-27.
 3. **Print one sheet and put a tape on it.** Ten minutes of physical work gating the claim the
    whole M1 story rests on. The emitted-byte test is excellent and is *not* the clause.
    *(Performed by the user on 2026-07-27 — see §3.2 clause 5, which is CONFIRMED. Kept here as the
    shape of the work, because AC-058 D13's full print matrix is still M6 and has not run.)*
-4. **The outline tree**, because it is M7's named mitigation and it is cheaper now.
+4. **The outline tree**, because it is M7's named mitigation and it is cheaper now. With clauses 3
+   and 5 both closed, this and *"ships to real users"* are what is actually left of M1 — neither
+   is an exit clause, and neither gates M2 or M4.
+
+### 3.5 What the drill's first re-run actually found
+
+Recorded at length because the board's marks are only worth what the evidence behind them is
+worth, and this is the clearest measurement anyone has of the gap between "the suite is green"
+and "the thing works". Both defects predate every remedy clause 3 had been carrying. Both were
+found by a person opening the app, not by any of 2206 passing tests. Fixed in `616a301`.
+
+**1. Every text field on the rack screen had its editing keys stolen.** `RackCanvasScreen` mounts
+its `Shortcuts` above the whole palette + canvas + inspector `Row`, so the palette filter and the
+five `RackInspector` fields are *descendants* of it, while `DefaultTextEditingShortcuts` — the
+only thing in Flutter that turns `Backspace` into a character delete — is installed by
+`WidgetsApp` at the *root*. Key events dispatch **leaf → root**, so the canvas keymap was
+consulted first and text editing last. Eleven keys: `Backspace`, `Delete`, `↑`, `↓`, `Home`,
+`End`, `PgUp`, `PgDn`, `Esc`, `/`, `Ctrl+Z`. A mistyped filter could not be corrected or cleared,
+which made the palette unusable for the rest of the session — and the drill's inner loop is
+`/ query ⏎`, so the drill was not merely slow, it was **impossible**. Worse and unreported:
+with a device selected, that same `Backspace` ran a real `RemoveDeviceCommand`.
+
+This was live from `5a2a2b6` (2026-07-18), which added the search field to a tree where `6bc5be0`
+had already bound `Backspace` — nine days, spanning every M1 assessment in this document.
+
+**2. The insertion caret was drawn below the visible canvas.** `ViewportController` opens at
+`Matrix4.identity()` and nothing seeded it. Rack scene space is bottom-origin
+(`yBottomOfU(1) == rackHeight`), so on the default 42U Blank project the caret sits at scene
+y = 924 against a canvas around 870 px tall. It was active and painting the whole time, ~54 px
+under the fold, along with the bottom of the rack. Two further causes compounded it: `/` moved
+focus to the filter, which extinguished the caret the ensuing placement was aimed at, and every
+placement became the sole selection, extinguishing it again exactly when the keep-typing loop
+needed it.
+
+**Why nothing caught either.** The suite was **structurally blind, not thin**. `tester.enterText`
+is `showKeyboard` + `testTextInput.enterText` and emits *no key events*; `receiveAction`
+likewise. Every `sendKeyEvent` in the repository fired while the *canvas* had focus. The
+intersection "real key event + text field focused" was **empty across the whole repository**, and
+`grep -rn backspace --include=*.dart` matched one production line and zero tests. Separately,
+every caret test asserted `CaretController.active` — a controller state — and none asked whether
+the resulting line landed inside the canvas rect.
+
+**What this cost the board, stated plainly.** §3.2 clause 3 spent this period listing a remedy
+that was real, was built, was mutation-tested, and **would not have made the drill passable**,
+because neither defect was in it. The mark stayed `REFUTED` on the rule that only a person can
+move it, and that rule is the only reason the error surfaced at all.
+
+**The gate that now exists.** `packages/rackmate_ui/test/canvas/palette_search_keys_test.dart`,
+13 cases, two-sided: gate-always-enabled kills T0/T1/T2/T3, gate-always-disabled (a fix that
+merely unbinds the keys) kills T2b/T3b, and removing both caret-visibility mechanisms kills
+C2/C2b. Its C2 case carries an **anti-vacuity guard** because the first version of that case
+passed with the fix deleted — the harness mounts no tab strip, so its canvas was taller than the
+real app's and the 42U rack already fitted. That near-miss is the fifth instance of this
+repository's signature defect and is why the guard is written as an assertion rather than a
+comment.
 
 ---
 
@@ -663,19 +719,23 @@ already renders `—` per unknown column with an accurate unknown count
 `packages/rackmate_ui/lib/src/canvas/rack_metrics_row.dart`). What is missing is any way to **author
 the template** that would exercise it.
 
-**Its gate is open, and saying otherwise would be the board contradicting itself.** Roadmap §5
-lists `M1→M4` among the hard blocks, and §3 of this file marks M1 **PARTIAL**. Under roadmap §8.1
-— *the exit criterion is the unit of truth* — an unmet criterion is an unmet gate, so **M4's gate
-is not discharged and this file does not claim it is.**
+**Its gate is now clear, and the reason is worth stating precisely.** Roadmap §5 lists `M1→M4`
+among the hard blocks, and §3 of this file now marks M1 **CRITERION MET** — all eight exit
+clauses discharged. Under roadmap §8.1 — *the exit criterion is the unit of truth* — the gate is
+the criterion and nothing else, so **M4's hard block is discharged.** What is NOT discharged is
+M1's goal line, *"and it ships to real users"*, and its six open checklist items (§3.3). Neither
+is an exit clause, so neither holds this gate; both are real work and are tracked where they
+belong. Sequencing M4 remains a priority judgement, not a blocked move.
 
 What is true is narrower and still useful. The artifact the roadmap's `M1→M4` arrow actually names
 is *"devices exist"*, and it does: `TemplateBody`/`PortDef`/`TemplateSnapshot` are in core, 48
-templates place into a rack, and the equipment list renders them. **M1's one open exit
-clause is not an input to a device builder** — clause 3 is a keyboard drill nobody has re-timed
-since it failed on 2026-07-27, and a stopwatch is not a template editor. (When this paragraph was
-written the list was three: rack creation, which has since been built; the drill, which has not
-been re-run; and a sheet nobody had printed, which the user printed and measured the same day.)
-So M4 is the one milestone whose **formal gate is open while its actual inputs are all
+templates place into a rack, and the equipment list renders them. **M1 has no open exit
+clause left, and the one that was open longest was never an input to a device builder** — clause
+3 was a keyboard drill, and a stopwatch is not a template editor. (When this paragraph was
+written the list was three: rack creation, since built; the drill, re-run and CONFIRMED on
+2026-07-28; and a sheet nobody had printed, which the user printed and measured on 2026-07-27.
+All three are now closed, so M4's formal gate is no longer held open by any of them.)
+So M4 is the milestone whose **gate is now clear and whose inputs are all
 present**, which is a different and weaker claim than "free to start", and it is the one the
 evidence supports.
 
@@ -846,7 +906,7 @@ exist, not because it is ungated, and the *Gated on* column says which.
 | 7 | **Propagate DR-006 into docs/09, docs/11, docs/10 and docs/00** | Nothing | **Nine** sites — the five signing sites plus four decision-count sites, all listed in §4.11 and in canon §12.9. Until they land, the roadmap tells the next reader to order a certificate and three documents tell them there are five user decisions |
 | 7a | **Delete the three root `test/fixtures/` copies** | Nothing | Five seconds (§4.12) |
 | 8 | **Finish M1** — ~~`AddRackCommand` + New-rack dialog~~ (built); ~~keyboard deselect~~ (built) **but time the drill**; ~~print a sheet~~ (done 2026-07-27); the outline tree | Nothing | One exit clause and one goal clause, and the exit clause needs a **person with a stopwatch**, not code (§3.4) |
-| 9 | **M4, the device builder** | **M1 — a hard block (roadmap §5) that is NOT discharged**, because §3 marks M1 `PARTIAL` | The only milestone whose formal gate is open while its actual inputs are all present: the arrow's named artifact (*"devices exist"*) is there, and M1's one open exit clause — clause 3's keyboard-only drill — is not a device-builder input (§5.3). Starting it is a judgement about an open gate, not a free move — which is why it sits below "finish M1" in this table |
+| 9 | **M4, the device builder** | **M1 — a hard block (roadmap §5), DISCHARGED 2026-07-28** | Its inputs were all present long before its gate opened: the arrow's named artifact (*"devices exist"*) is there, and clause 3's keyboard-only drill was never a device-builder input (§5.3). The gate is now clear on the criterion, which is the only thing §8.1 lets a gate depend on. It still sits below M2 here on ordering grounds, not blocking ones |
 | 10 | **A perf harness** (`@Tags(['perf'])`, op-count-per-layer) | Nothing | M2's exit criterion demands a measurement; there is no instrument (§5.1) |
 | 11 | **Recruit beta integrators** | Nothing but calendar | `RISK-08` lead time (§5.8) |
 
@@ -865,9 +925,9 @@ saving DR-006 buys.**
   │  not exist at M0 (§2.2, §4.5). One is cheap to close now;
   │  the other waits on M4 or copy-on-place (§2.4)
   ▼
- M1 ◑ PARTIAL — weakest mark REFUTED ───────┬────────────────► M4 ○ NOT STARTED
-  │  2 open: clause 3 (a person must re-run │                  gate OPEN (M1 is PARTIAL);
-  │  the drill) + "ships to real users";     │
+ M1 ● CRITERION MET — weakest CONFIRMED ────┬────────────────► M4 ○ NOT STARTED
+  │  8 of 8 clauses discharged; the GOAL     │                  gate CLEAR (M1 met);
+  │  line "ships to real users" is not;      │
   │  outline tree owed to M7                │                  inputs all PRESENT (§5.3);
   ▼                                         │                  DR-003 keeps it in v1
  M2 ○ not started                           │ DiagramCanvas IR + both backends
@@ -922,7 +982,7 @@ deferral costs. **It does not make the call.**
 | | Weeks (roadmap §6) | State |
 |---|---|---|
 | M0 | 2–3 | `PARTIAL` — 6 of 8 clause rows demonstrated; two vacuous clauses open (§2.4) |
-| M1 | 8–12 | `PARTIAL` — mostly done; clause 3 (a person must re-run the drill) + "ships to real users" + six checklist items open |
+| M1 | 8–12 | `CRITERION MET` 2026-07-28 — all 8 exit clauses discharged. Still open, and NOT exit clauses: "ships to real users" + six checklist items (§3.3) |
 | M2–M9 | 32–50 | `NOT STARTED` — zero demonstrated exit clauses anywhere, though M6 carries a real M1 slice (§5.5) |
 | **Remaining** | **32–50**, plus an uncosted M1 tail | The 32–50 is roadmap §6's M2–M9 rows summed exactly (4+4+5+4+5+4+2+4 = 32; 7+7+7+6+7+6+3+7 = 50). It excludes the M1 tail, which the roadmap never costed, and the cross-cutting work in §6.1 (CI, goldens, provenance gate), which the roadmap never costed either because it assumed CI existed from M0 |
 
