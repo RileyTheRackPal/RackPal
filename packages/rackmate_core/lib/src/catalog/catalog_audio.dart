@@ -33,10 +33,18 @@ Map<String, TemplateBody> buildAudioCatalog() {
   final out = <String, TemplateBody>{};
 
   // A01 · Multi-Zone Amplifier, 16-channel (P4 param 8/16; 16ch shown).
-  final a01 = PortBuilder()..set('src', 'Source pair', SetKind.stereoPair)
-    ..set('zone', 'Zone speaker pair', SetKind.speakerPair);
+  // ONE SET PER ZONE, DECLARED INSIDE THE LOOP. `PortBuilder.set` registers
+  // once per KEY, and these ports interpolate the zone number into their
+  // `setKey` — so declaring `src`/`zone` out here produced two sets that no
+  // port referenced while all thirty-two ports referenced sets that did not
+  // exist. See `test/catalog/port_set_integrity_test.dart` (C9) for what
+  // that cost: the atomicConnect gesture joins `setKey` to `PortSetDef.key`,
+  // so a dangling key is a stereo pair the gesture cannot see.
+  final a01 = PortBuilder();
   for (var zone = 1; zone <= 8; zone++) {
     a01
+      ..set('src$zone', 'Source $zone pair', SetKind.stereoPair)
+      ..set('zone$zone', 'Zone $zone speaker pair', SetKind.speakerPair)
       ..p(
         'src.$zone.l',
         'SRC $zone L',
@@ -178,9 +186,10 @@ Map<String, TemplateBody> buildAudioCatalog() {
   );
 
   // A02 · AV Receiver, 7.2-channel — hosted, the densest template.
-  final a02 = PortBuilder()
-    ..set('an', 'Analog stereo pair', SetKind.stereoPair)
-    ..set('spk', 'Speaker pair', SetKind.speakerPair);
+  // Declared per instance below, for the reason A01 states. `an`/`spk`
+  // out here matched nothing: the ports ask for `an1`..`an4` and
+  // `spkFL`..`spkSBR`.
+  final a02 = PortBuilder();
   for (var i = 1; i <= 7; i++) {
     a02.p(
       'hdmi.in.$i',
@@ -246,6 +255,7 @@ Map<String, TemplateBody> buildAudioCatalog() {
   }
   for (var i = 1; i <= 4; i++) {
     a02
+      ..set('an$i', 'Analog $i stereo pair', SetKind.stereoPair)
       ..p(
         'an.$i.l',
         'ANALOG IN $i L',
@@ -269,6 +279,10 @@ Map<String, TemplateBody> buildAudioCatalog() {
       );
   }
   a02
+    // NEVER DECLARED AT ALL until now — the other flavour of the same
+    // defect. Two ports claimed `phono` and no `set('phono', ...)` existed
+    // anywhere in this file.
+    ..set('phono', 'Phono stereo pair', SetKind.stereoPair)
     ..p(
       'phono.l',
       'PHONO L',
@@ -300,6 +314,7 @@ Map<String, TemplateBody> buildAudioCatalog() {
   const spkChannels = ['FL', 'FR', 'C', 'SL', 'SR', 'SBL', 'SBR'];
   for (final ch in spkChannels) {
     a02
+      ..set('spk$ch', 'Speaker pair $ch', SetKind.speakerPair)
       ..p(
         'spk.$ch.pos',
         '$ch +',
@@ -576,9 +591,11 @@ Map<String, TemplateBody> buildAudioCatalog() {
 
   // A04 · Stereo Power Amplifier, 2x200W.
   final a04 = PortBuilder()
-    ..set('bal', 'Balanced input pair', SetKind.stereoPair)
-    ..set('unbal', 'Unbalanced input pair', SetKind.stereoPair)
-    ..set('spk', 'Speaker pair', SetKind.speakerPair);
+    // `bal` and `unbal` are referenced verbatim by their ports and are
+    // correct here. `spk` was not — its ports interpolate the channel —
+    // so it moves into the loop below.
+    ..set('bal', 'Balanced input pair', SetKind.balancedPair)
+    ..set('unbal', 'Unbalanced input pair', SetKind.stereoPair);
   a04
     ..p(
       'bal.l',
@@ -625,6 +642,7 @@ Map<String, TemplateBody> buildAudioCatalog() {
     );
   for (final ch in ['L', 'R']) {
     a04
+      ..set('spk$ch', 'Speaker pair $ch', SetKind.speakerPair)
       ..p(
         'spk.$ch.pos',
         '$ch +',
@@ -808,10 +826,12 @@ Map<String, TemplateBody> buildAudioCatalog() {
   );
 
   // A06 · Multi-Zone Streaming Source, 4-stream.
-  final a06 = PortBuilder()..set('st', 'Stream pair', SetKind.stereoPair)
-    ..set('aux', 'Aux pair', SetKind.stereoPair);
+  // `aux` is referenced verbatim and is correct here; `st` was not — its
+  // ports interpolate the zone — so it is declared in the loop below.
+  final a06 = PortBuilder()..set('aux', 'Aux pair', SetKind.stereoPair);
   for (var zone = 1; zone <= 4; zone++) {
     a06
+      ..set('st$zone', 'Stream $zone pair', SetKind.stereoPair)
       ..p(
         'stream.$zone.l',
         'STREAM $zone L',

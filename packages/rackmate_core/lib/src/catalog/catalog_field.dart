@@ -274,9 +274,12 @@ Map<String, TemplateBody> buildFieldCatalog() {
   );
 
   // F04 · In-Ceiling Speaker Pair — the canonical atomicConnect (16/4) case.
-  final f04 = PortBuilder()..set('spk', 'Speaker pair', SetKind.speakerPair);
+  // Declared in the loop below — these ports interpolate the channel into
+  // `setKey`, so a single `spk` here matched none of them.
+  final f04 = PortBuilder();
   for (final ch in ['L', 'R']) {
     f04
+      ..set('spk$ch', 'Speaker pair $ch', SetKind.speakerPair)
       ..p(
         'spk.$ch.pos',
         '$ch +',

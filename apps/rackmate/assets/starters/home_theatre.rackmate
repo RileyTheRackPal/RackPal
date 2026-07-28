@@ -1247,15 +1247,99 @@
           "portSets": [
             {
               "atomicConnect": true,
-              "key": "src",
+              "key": "src1",
               "kind": "stereoPair",
-              "label": "Source pair"
+              "label": "Source 1 pair"
             },
             {
               "atomicConnect": true,
-              "key": "zone",
+              "key": "zone1",
               "kind": "speakerPair",
-              "label": "Zone speaker pair"
+              "label": "Zone 1 speaker pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "src2",
+              "kind": "stereoPair",
+              "label": "Source 2 pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone2",
+              "kind": "speakerPair",
+              "label": "Zone 2 speaker pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "src3",
+              "kind": "stereoPair",
+              "label": "Source 3 pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone3",
+              "kind": "speakerPair",
+              "label": "Zone 3 speaker pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "src4",
+              "kind": "stereoPair",
+              "label": "Source 4 pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone4",
+              "kind": "speakerPair",
+              "label": "Zone 4 speaker pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "src5",
+              "kind": "stereoPair",
+              "label": "Source 5 pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone5",
+              "kind": "speakerPair",
+              "label": "Zone 5 speaker pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "src6",
+              "kind": "stereoPair",
+              "label": "Source 6 pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone6",
+              "kind": "speakerPair",
+              "label": "Zone 6 speaker pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "src7",
+              "kind": "stereoPair",
+              "label": "Source 7 pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone7",
+              "kind": "speakerPair",
+              "label": "Zone 7 speaker pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "src8",
+              "kind": "stereoPair",
+              "label": "Source 8 pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone8",
+              "kind": "speakerPair",
+              "label": "Zone 8 speaker pair"
             }
           ],
           "ports": [
@@ -2520,15 +2604,75 @@
           "portSets": [
             {
               "atomicConnect": true,
-              "key": "an",
+              "key": "an1",
               "kind": "stereoPair",
-              "label": "Analog stereo pair"
+              "label": "Analog 1 stereo pair"
             },
             {
               "atomicConnect": true,
-              "key": "spk",
+              "key": "an2",
+              "kind": "stereoPair",
+              "label": "Analog 2 stereo pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "an3",
+              "kind": "stereoPair",
+              "label": "Analog 3 stereo pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "an4",
+              "kind": "stereoPair",
+              "label": "Analog 4 stereo pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "phono",
+              "kind": "stereoPair",
+              "label": "Phono stereo pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "spkFL",
               "kind": "speakerPair",
-              "label": "Speaker pair"
+              "label": "Speaker pair FL"
+            },
+            {
+              "atomicConnect": true,
+              "key": "spkFR",
+              "kind": "speakerPair",
+              "label": "Speaker pair FR"
+            },
+            {
+              "atomicConnect": true,
+              "key": "spkC",
+              "kind": "speakerPair",
+              "label": "Speaker pair C"
+            },
+            {
+              "atomicConnect": true,
+              "key": "spkSL",
+              "kind": "speakerPair",
+              "label": "Speaker pair SL"
+            },
+            {
+              "atomicConnect": true,
+              "key": "spkSR",
+              "kind": "speakerPair",
+              "label": "Speaker pair SR"
+            },
+            {
+              "atomicConnect": true,
+              "key": "spkSBL",
+              "kind": "speakerPair",
+              "label": "Speaker pair SBL"
+            },
+            {
+              "atomicConnect": true,
+              "key": "spkSBR",
+              "kind": "speakerPair",
+              "label": "Speaker pair SBR"
             }
           ],
           "ports": [
@@ -4710,7 +4854,7 @@
             {
               "atomicConnect": true,
               "key": "bal",
-              "kind": "stereoPair",
+              "kind": "balancedPair",
               "label": "Balanced input pair"
             },
             {
@@ -4721,9 +4865,15 @@
             },
             {
               "atomicConnect": true,
-              "key": "spk",
+              "key": "spkL",
               "kind": "speakerPair",
-              "label": "Speaker pair"
+              "label": "Speaker pair L"
+            },
+            {
+              "atomicConnect": true,
+              "key": "spkR",
+              "kind": "speakerPair",
+              "label": "Speaker pair R"
             }
           ],
           "ports": [
@@ -5373,15 +5523,33 @@
           "portSets": [
             {
               "atomicConnect": true,
-              "key": "st",
-              "kind": "stereoPair",
-              "label": "Stream pair"
-            },
-            {
-              "atomicConnect": true,
               "key": "aux",
               "kind": "stereoPair",
               "label": "Aux pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "st1",
+              "kind": "stereoPair",
+              "label": "Stream 1 pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "st2",
+              "kind": "stereoPair",
+              "label": "Stream 2 pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "st3",
+              "kind": "stereoPair",
+              "label": "Stream 3 pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "st4",
+              "kind": "stereoPair",
+              "label": "Stream 4 pair"
             }
           ],
           "ports": [
@@ -8285,9 +8453,15 @@
           "portSets": [
             {
               "atomicConnect": true,
-              "key": "spk",
+              "key": "spkL",
               "kind": "speakerPair",
-              "label": "Speaker pair"
+              "label": "Speaker pair L"
+            },
+            {
+              "atomicConnect": true,
+              "key": "spkR",
+              "kind": "speakerPair",
+              "label": "Speaker pair R"
             }
           ],
           "ports": [
