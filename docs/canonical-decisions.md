@@ -6456,6 +6456,106 @@ with D7 outstanding.
 
 ---
 
+### 11.10 DR-010 · The registries ship as a seeded Dart catalog, and the family gets its dash back
+
+> **RULING — settled by the user on 2026-07-28**, at the point M2-B became the first code in the
+> repository ever to read `doc.registries` and found every map empty in every document.
+
+**The finding that forced it.** `registries.dart:12` says the content "is catalog data shipped as
+`assets/catalog/registries.json` at M1". That file **does not exist**, is declared in no pubspec,
+and `SignalDomainDef`/`SignalFamilyDef` are constructed nowhere but the decoder. All four starter
+projects carry `signalDomains: {}` and `signalFamilies: {}` — as do all six fixtures, for all six
+maps. `buildSeedConnectorFootprints()` exists as a Dart seed and is **dead**, consumed only by its
+own test, which is why `connectors: 0` everywhere too.
+
+---
+
+**11.10.1 The master catalog is SEEDED DART, not a JSON asset. This amends
+`docs/02-data-model.md:834`.**
+
+That line says the full contents are "shipped as `assets/catalog/registries.json`". They are not,
+and they will not be.
+
+**`rackmate_core` imports no Flutter, so it cannot load an asset at all** — `rootBundle` is
+Flutter-only. A JSON master would have to be loaded by the app layer and injected through two
+packages, because `rackmate_export` drives core directly and may never import `rackmate_ui`. A
+seeded Dart catalog needs no seam, works in core's pure-Dart tests unchanged, and is what this
+repository already does four times: 48 templates (`buildSeedCatalog`), connector footprints,
+jacket-colour conventions, rack presets.
+
+The JSON form's one real advantage — editing the catalog without a rebuild — is an ANTI-FEATURE
+here. RackMate is an internal tool under DR-006 and the catalog is canon; a hand-edited registry
+that disagrees with `docs/catalog/seed-devices.md` is the drift `palette_parity.py` was written to
+catch after it "shipped four times".
+
+**`tools/pal1_check.py` REMAINS THE SINGLE AUTHORITY for the palette, and the Dart seed is gated
+against it.** Authoring 8 domains and 55 families into Dart by hand creates a fourth copy of data
+that already exists in three places, which is precisely the failure mode this repository has been
+bitten by. The seed is therefore checked against `pal1_check.py` by a parity gate in the same
+family as `palette_parity.py` — that tool proves the DOCS agree with the authority; the new one
+proves the CODE does.
+
+---
+
+**11.10.2 A document carries the registry subset it references, and that subset is written at
+DOCUMENT CREATION — never computed at save.**
+
+`docs/02:834`'s "the subset a document references is embedded in the file, which is what makes a
+`.rackmate` self-describing" **stands and is implemented**.
+
+**IT MUST NOT BE A CODEC TRANSFORM, and the reason is CR-117.** If `write()` recomputed the
+referenced subset, then reading a document carrying an entry nothing references and writing it
+back would DROP that entry — and `write(read(bytes)) == bytes` is the property the whole byte
+suite is built on. Elision at save turns a hand-edited or forward-version file into silent data
+loss. So a new document is seeded from the Dart master; thereafter the registries are ordinary
+stored data that round-trips verbatim, like every other entity.
+
+**`kSchemaVersion` does not move.** The `registries` key already exists and is written
+unconditionally; populating it is additive within a key every reader already parses.
+
+**Existing documents are not migrated.** A document with empty registries keeps them, and every
+unresolved id degrades to the `unknown(rawId)` placeholder §6.2's own acceptance rule already
+requires — "round-trips, renders grey with the raw id as its tag, and never throws". M2-B's
+unresolved COUNTS are that rule working, not a defect to be fixed by rewriting user files. The
+four starters ARE regenerated, deliberately, through `UPDATE_GOLDENS=1` with a reviewable diff,
+because they are shipped fixtures rather than user data.
+
+---
+
+**11.10.3 `SignalFamilyDef` regains the type-within-domain channel.**
+
+CR-078 moved COLOUR from the family to the domain, correctly: "no palette is CVD-safe past ~9
+categories". It is quoted as also leaving the family only `shortTag` and an optional
+`colorOverride` — and the model built from that has neither, plus no dash and no weight.
+
+**That reading makes AC-054 unimplementable.** `seed-devices.md` §4.4 states plainly that
+`dashOverride` "is the type-within-domain channel required by AC-054 and is what makes each of the
+brief's ten named types individually identifiable", and §4.4's own table gives a distinct dash and
+weight per family — `video.hdmi.1_4` solid 0.75×, `2_0` solid 1.00×, `2_1` solid 1.25×,
+`displayport` `18,4`, `sdi` `10,3`, `hdbaset` `14,4`. With the model as built, ALL EIGHT DIGITAL
+VIDEO FAMILIES DRAW AS ONE IDENTICAL SOLID LINE, and the dash channel — one of CR-078's four
+encoding channels, and the one that survives greyscale — carries nothing.
+
+So `SignalFamilyDef` gains `shortTag`, `dashOverride` and a weight override. **CR-078 is narrowed,
+not reversed**: hue stays on the domain, which is the ruling's actual load-bearing claim; dash and
+weight were never what "no palette is CVD-safe past ~9 categories" was arguing about.
+
+The new fields are **ADDITIVE AND OPTIONAL**, written only when present, so no existing document's
+bytes move — the `linkClassLocked` contract from §11.8.2, applied again.
+
+---
+
+**11.10.4 What this does not settle.**
+
+`SignalFamilyDef`'s corpus field list runs to some twenty entries — `typicalMedia`,
+`acceptedFamilies`, `adaptableTo`, `maxRunLengthPassive`, `nominalImpedanceOhms`,
+`requiresTermination`, `carriesPower` and more. The model's "M0 MINIMAL SHAPE" note stays true and
+those stay absent. Only the three fields AC-054's render actually needs are added here. The rest
+arrive when something needs them, and `LEN-001` — which §4.4 says exists for exactly the HDMI 2.1
+run-length cliff — will be the thing that needs `maxRunLengthPassive`.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-007 change or void, plus the small set of internal

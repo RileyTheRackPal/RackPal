@@ -8,9 +8,21 @@ import 'package:rackmate_core/src/units/rgb.dart';
 
 // The three orthogonal axes (docs/02-data-model.md §4.9): a connector, a
 // medium and a signal family are three different concepts that must never
-// collide on one enum (CR-008, §6.1). Full registry CONTENT is catalog
-// data shipped as assets/catalog/registries.json at M1 — this file only
-// defines the Dart types that content deserializes into.
+// collide on one enum (CR-008, §6.1). This file defines the Dart types
+// only; the CONTENT is seeded in `catalog/` beside the template catalog.
+//
+// THIS COMMENT USED TO SAY the content "is catalog data shipped as
+// assets/catalog/registries.json at M1". IT NEVER WAS. No such file has
+// ever existed, it was declared in no pubspec, and the types below were
+// constructed nowhere but the decoder — so every document ever written
+// carried six EMPTY registry maps, and the first code to read one
+// (`derived/schedule.dart`, M2-B) resolved nothing in any project.
+//
+// DR-010 (§11.10) settles it the other way: the master is a SEEDED DART
+// CATALOG, because `rackmate_core` imports no Flutter and therefore
+// cannot load an asset at all. `docs/02-data-model.md:834` is amended by
+// that ruling. `tools/pal1_check.py` remains the single authority for the
+// palette itself and the seed is gated against it.
 
 /// The visual language for one of the 8 fixed signal domains (CR-078):
 /// colour encodes domain, dash/weight/glyph encode type-within-domain.
