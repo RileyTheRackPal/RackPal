@@ -14,13 +14,21 @@
 // preference.
 //
 // ==================================================================
-// EXACTLY FOUR BINDINGS
+// TWO COMPLETE BINDING GROUPS
 // ==================================================================
-// Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+Shift+S. `Ctrl+1..4` and the rest of
-// docs/04 §8's ~40-binding table stay UNBOUND, consistent with the ruling
-// already recorded in this app's `main.dart`: a partial keymap reads as a
-// whole one, so the file bindings land as a group and the view-switching
-// keymap lands with the keymap pass.
+// The FILE group — Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+Shift+S — and the VIEW
+// group, `Ctrl+1..4`. The rest of docs/04 §8's ~40-binding table stays
+// UNBOUND, on the ruling recorded in this app's `main.dart`: a partial
+// keymap reads as a whole one, so a group lands only when it is complete.
+//
+// THE VIEW GROUP IS COMPLETE AT THREE ACTIVATORS, and that is a ruling
+// rather than an omission. docs/04 §8 (line 456) and docs/10 (:516):
+// "`Ctrl+3` is reserved for the Rear Panel view and is an unbound no-op
+// until v1.1 (CR-071); `Ctrl+4` is the Schedule in v1 and forever. Do not
+// rebind the Schedule to `Ctrl+3` — `Ctrl+n` is a view identity, not an
+// ordinal." So the strip is three tabs and the keys are 1, 2 and 4, with
+// 3 deliberately dead. Binding Schedule to `Ctrl+3` to close the gap
+// would break muscle memory twice: once now and once in v1.1.
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -56,6 +64,24 @@ final class SaveDocumentAsIntent extends Intent {
   const SaveDocumentAsIntent();
 }
 
+/// `Ctrl+1` / `Ctrl+2` / `Ctrl+4` — switch to a view by IDENTITY.
+///
+/// Carries the tab INDEX in the current strip, and [key] carries the
+/// digit the user pressed. The two are deliberately separate: docs/04
+/// §8's `Ctrl+n` names a view forever, while the index is whatever
+/// position that view happens to occupy in the v1 strip. Conflating them
+/// is exactly how the Schedule would drift onto `Ctrl+3` the first time
+/// somebody counted the tabs.
+final class SwitchViewIntent extends Intent {
+  const SwitchViewIntent({required this.key, required this.tabIndex});
+
+  /// The digit in `Ctrl+n` — 1, 2 or 4.
+  final int key;
+
+  /// Where that view sits in the v1 three-tab strip.
+  final int tabIndex;
+}
+
 /// The four file bindings.
 ///
 /// INSTALLED ON `MaterialApp`, NOT ON A WIDGET INSIDE IT, and that is a
@@ -74,6 +100,52 @@ kFileShortcuts = <ShortcutActivator, Intent>{
   SingleActivator(LogicalKeyboardKey.keyS, control: true, shift: true):
       SaveDocumentAsIntent(),
 };
+
+/// docs/04 §8's view switch, `Ctrl+1..4`, as the v1 strip renders it.
+///
+/// THREE ENTRIES, AND `Ctrl+3` IS NOT ONE OF THEM. See this file's header:
+/// CR-071 reserves `Ctrl+3` for the interactive Rear Panel view, which is
+/// v1.1, and docs/04 §8 line 456 forbids rebinding the Schedule onto it.
+/// An entry for `Ctrl+3` here would either advertise a view that does not
+/// exist or move the Schedule off the key it keeps "in v1 and forever".
+const Map<ShortcutActivator, Intent>
+kViewShortcuts = <ShortcutActivator, Intent>{
+  SingleActivator(LogicalKeyboardKey.digit1, control: true): SwitchViewIntent(
+    key: 1,
+    tabIndex: 0,
+  ),
+  SingleActivator(LogicalKeyboardKey.digit2, control: true): SwitchViewIntent(
+    key: 2,
+    tabIndex: 1,
+  ),
+  SingleActivator(LogicalKeyboardKey.digit4, control: true): SwitchViewIntent(
+    key: 4,
+    tabIndex: 2,
+  ),
+};
+
+/// The handler for [kViewShortcuts].
+///
+/// Takes the shell's `GlobalKey` rather than a `TabController`, because
+/// the controller belongs to a `State` that does not exist when the app's
+/// action map is built. [AppShellState] is already public for exactly
+/// this kind of reach — see its own doc.
+///
+/// INSTALLED AT THE APP ROOT, beside [buildFileActions] and for the same
+/// reason: `ShortcutManager` resolves an intent by looking up from the
+/// FOCUSED context, and on the Schedule tab nothing in the subtree need
+/// hold focus. An `Actions` widget inside the shell would therefore work
+/// on the Rack tab (whose canvas autofocuses) and silently do nothing on
+/// the other two — the exact bug [kFileShortcuts] documents.
+Map<Type, Action<Intent>> buildViewActions(GlobalKey<AppShellState> shell) =>
+    <Type, Action<Intent>>{
+      SwitchViewIntent: CallbackAction<SwitchViewIntent>(
+        onInvoke: (intent) {
+          shell.currentState?.switchToTab(intent.tabIndex);
+          return null;
+        },
+      ),
+    };
 
 /// The handlers for [kFileShortcuts], bound to one session.
 Map<Type, Action<Intent>> buildFileActions(SessionController controller) =>
@@ -234,6 +306,19 @@ final class AppShellState extends State<AppShell>
     await _services.geometry?.flush();
   }
 
+  /// docs/04 §8's `Ctrl+1..4`, landed. Public because the app's action map
+  /// is built above this `State` — see [buildViewActions].
+  ///
+  /// A NO-OP WHILE THE START CARD IS UP, and that is the same ruling the
+  /// hidden tab strip is built on: the three tabs are views of a document
+  /// and the user has not chosen one yet, so switching between them would
+  /// mean switching between views of a document nobody asked for.
+  void switchToTab(int index) {
+    if (_startCardVisible) return;
+    if (index < 0 || index >= _tabController.length) return;
+    _tabController.animateTo(index);
+  }
+
   // --- WindowChromeListener ---------------------------------------------
 
   @override
@@ -371,16 +456,15 @@ final class AppShellState extends State<AppShell>
                   Tab(icon: Icon(Icons.dashboard_outlined), text: 'Rack'),
                   // The construction glyph is the strip's own honest
                   // marker: the tab TEXT stays exactly as docs/05 §12
-                  // spells it, and the icon says which two do nothing
-                  // yet.
+                  // spells it, and the icon says which one does nothing
+                  // yet. The Schedule lost its glyph when it stopped
+                  // being unbuilt — leaving it there would be the mirror
+                  // image of the lie `UnbuiltView` exists to prevent.
                   Tab(
                     icon: Icon(Icons.construction_outlined),
                     text: 'Schematic',
                   ),
-                  Tab(
-                    icon: Icon(Icons.construction_outlined),
-                    text: 'Schedule',
-                  ),
+                  Tab(icon: Icon(Icons.table_rows_outlined), text: 'Schedule'),
                 ],
               ),
       ),
@@ -449,25 +533,26 @@ final class AppShellState extends State<AppShell>
                     'docs/05-schematic-editor.md · docs/09-roadmap.md '
                     'M2',
               ),
-              const UnbuiltView(
-                viewName: 'Schedule',
-                milestone: 'M2',
-                absent:
-                    'This is not an empty schedule; there is no '
-                    'schedule. Every row derives from a Link, and '
-                    'nothing in this build creates one — AddLinkCommand '
-                    'exists and is tested, but no surface calls it, and '
-                    'no code turns a Link into a row. A table with no '
-                    'rows would say you have not wired anything, when '
-                    'the truth is that this build gives you no way to '
-                    'wire anything.',
-                why:
-                    'The tab is in the strip because docs/05 §12 fixes '
-                    'the v1 strip at Rack / Schematic / Schedule. '
-                    'docs/09 M1 calls an empty Schedule tab that '
-                    'explains it is coming a lie; this one states that '
-                    'it is not built instead.',
-                reference: 'docs/09-roadmap.md M2 · CR-105, G1',
+              // THE SCHEDULE IS BUILT NOW, and the panel that used to sit
+              // here is gone rather than softened. Its copy said "no code
+              // turns a Link into a row", which was true when it was
+              // written and is false now that
+              // `rackmate_core/derived/schedule.dart` exists — and the
+              // one panel in the app whose entire purpose is accuracy
+              // about what exists must not be the last thing to hear.
+              //
+              // What survives is the sentence it was defending: a table
+              // with no rows must not read as "you have not wired
+              // anything". `ScheduleScreen`'s zero-row state says the
+              // DOCUMENT holds no cables and names the missing gesture —
+              // see `kNoCablesDetail`.
+              ScheduleScreen(
+                // KEYED ON THE CONTROLLER'S IDENTITY, as the rack tab is:
+                // replacing the document must reset the preset and the
+                // filter, because those are answers about a document and
+                // this is a different one.
+                key: ValueKey(session.controller),
+                document: session.document,
               ),
             ],
           ),

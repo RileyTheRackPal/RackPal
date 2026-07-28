@@ -240,7 +240,8 @@ void main() {
       expect(
         main,
         contains(handler),
-        reason: '$handler is one of the three, and all three are needed: '
+        reason:
+            '$handler is one of the three, and all three are needed: '
             'they catch different things',
       );
     }
@@ -433,26 +434,55 @@ final class AppServices {
     );
   });
 
-  test('RULE 14 — exactly four file keybindings are registered', () {
-    // docs/04 §8's ~40-binding table is NOT bound: a partial keymap reads
-    // as a whole one. The file group is complete on its own, so it lands;
-    // `Ctrl+1..4` and the rest wait for the keymap pass. This asserts the
-    // group has not quietly grown a fifth member without that decision
-    // being taken again.
+  test('RULE 14 — exactly two complete keybinding groups are registered', () {
+    // docs/04 §8's ~40-binding table is NOT bound wholesale: a partial
+    // keymap reads as a whole one, so a group lands only when it is
+    // complete. TWO are complete — the four FILE bindings, and the VIEW
+    // switch. This asserts neither has quietly grown a member without
+    // that decision being taken again.
     final shell = File('$_libSession/app_shell.dart').readAsStringSync();
     final activators = RegExp(
       r'SingleActivator\(\s*LogicalKeyboardKey\.\w+',
     ).allMatches(_stripComments(shell)).length;
-    // Four in `Shortcuts`, and the same four again on the menu items so
-    // the accelerators render — eight in total, and no more.
+    // Four file bindings in `kFileShortcuts`, the same four again on the
+    // menu items so the accelerators render, and three in
+    // `kViewShortcuts` — eleven in total, and no more.
     expect(
       activators,
-      8,
+      11,
       reason:
-          'the shell binds Ctrl+N / Ctrl+O / Ctrl+S / Ctrl+Shift+S and '
-          'declares the same four on the File menu. A ninth means either a '
-          'new binding or a menu item advertising a key nothing listens '
-          'for.',
+          'the shell binds Ctrl+N / Ctrl+O / Ctrl+S / Ctrl+Shift+S, '
+          'declares the same four on the File menu, and binds '
+          'Ctrl+1 / Ctrl+2 / Ctrl+4. A twelfth means either a new binding '
+          'or a menu item advertising a key nothing listens for.',
     );
+  });
+
+  test('RULE 14e — `Ctrl+3` is bound to NOTHING (CR-071)', () {
+    // docs/04 §8 line 456 and docs/10 :516: "`Ctrl+3` is reserved for the
+    // Rear Panel view and is an unbound no-op until v1.1 (CR-071);
+    // `Ctrl+4` is the Schedule in v1 and forever. Do not rebind the
+    // Schedule to `Ctrl+3` — `Ctrl+n` is a view identity, not an ordinal."
+    //
+    // The strip has three tabs and the keys are 1, 2 and 4, which reads
+    // like an off-by-one to anybody who has not read that ruling. This is
+    // the test that stops the "tidy-up" — moving Schedule onto Ctrl+3
+    // would break the same muscle memory twice, once now and once in v1.1
+    // when the Rear Panel arrives and takes its key back.
+    final shell = _stripComments(
+      File('$_libSession/app_shell.dart').readAsStringSync(),
+    );
+    expect(
+      shell,
+      isNot(contains('LogicalKeyboardKey.digit3')),
+      reason: 'Ctrl+3 belongs to the v1.1 Rear Panel view, not to Schedule',
+    );
+    for (final digit in ['digit1', 'digit2', 'digit4']) {
+      expect(
+        shell,
+        contains('LogicalKeyboardKey.$digit'),
+        reason: '$digit is one of the three the v1 strip needs',
+      );
+    }
   });
 }

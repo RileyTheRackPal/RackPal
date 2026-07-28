@@ -1,4 +1,5 @@
-// The app shell's three-tab strip, and what the two unbuilt tabs may show.
+// The app shell's three-tab strip, and what the ONE remaining unbuilt tab
+// may show.
 //
 // WHAT THIS FILE IS DEFENDING. The build that preceded it opened the
 // Schematic tab onto one hardcoded symbol — a grey box with ports labelled
@@ -6,9 +7,18 @@
 // under a toolbar whose `New Wire` button was wired to `setState(() {})`.
 // The Schedule tab showed `No connections yet · Create links in the
 // Schematic tab`, instructing the user to use a tab that cannot create a
-// link. Both are now `UnbuiltView`. These tests are what stops either from
-// coming back, and they are deliberately about the PROPERTY (nothing is
-// fabricated, nothing is offered) rather than about the current wording.
+// link. These tests are what stops either from coming back, and they are
+// deliberately about the PROPERTY (nothing is fabricated, nothing is
+// offered) rather than about the current wording.
+//
+// THE SCHEDULE HAS LEFT THIS FILE'S UNBUILT LOOP, and that is the point of
+// M2-B rather than a weakening of it. It now renders
+// `rackmate_core/derived/schedule.dart` — a tested derivation over the
+// document's real `Link`s — so it is entitled to draw a table, to show a
+// designator and to offer the two controls §3.1 and §3.6 specify. What it
+// is still NOT entitled to do is claim the user has not wired anything, and
+// `the Schedule tab is built now` group at the bottom holds that line
+// (plus the two deleted strings, which are lies wherever they are put).
 //
 // THE THREE INDEPENDENT PROOFS that the tab bodies fabricate nothing:
 //
@@ -40,6 +50,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
 import 'package:rackmate_core/rackmate_core.dart';
@@ -168,7 +179,10 @@ void main() {
     expect(find.bySemanticsLabel(RegExp('AMP-1')), findsOneWidget);
   });
 
-  for (final view in ['Schematic', 'Schedule']) {
+  // ONE view in this loop now, and the list is kept as a list on purpose:
+  // the Schematic is still unbuilt and every assertion below still applies
+  // to it unchanged.
+  for (final view in ['Schematic']) {
     testWidgets('the $view tab says it is not built, and names M2', (
       tester,
     ) async {
@@ -300,23 +314,99 @@ void main() {
     expect(_tabBody(), isNot(paintsExactlyCountTimes(#drawLine, 0)));
   });
 
-  testWidgets('the Schedule tab shows no table — it is not an empty '
-      'schedule, there is no schedule', (tester) async {
-    await openTab(tester, 'Schedule');
+  group('the Schedule tab is built now (M2-B, CR-105, AC-035)', () {
+    testWidgets('it is no longer an UnbuiltView, and the strip no longer '
+        'marks it under construction', (tester) async {
+      await openTab(tester, 'Schedule');
 
-    // docs/09 M1: "an empty Schedule tab that explains it is coming is a
-    // lie". A zero-row table is exactly that lie rendered in Material.
-    expect(find.byType(DataTable), findsNothing);
-    expect(find.byType(Table), findsNothing);
+      expect(find.byType(ScheduleScreen), findsOneWidget);
+      expect(find.byType(UnbuiltView), findsNothing);
 
-    // Searched over the WHOLE app, not just the panel: the two strings the
-    // deleted `_EmptyState` showed are lies wherever they are put, and the
-    // second one instructs the user to use a tab that cannot do it.
-    expect(find.textContaining('No connections yet'), findsNothing);
-    expect(find.textContaining('Create links in the'), findsNothing);
+      // Exactly ONE construction glyph left in the strip — the Schematic's.
+      // A tab that works while still wearing the "not built" marker is the
+      // same class of untruth as the panel this replaced, pointing the
+      // other way.
+      expect(find.byIcon(Icons.construction_outlined), findsOneWidget);
+    });
 
-    final texts = _textsUnder(tester, _body('Schedule')).join(' ');
-    expect(texts, contains('there is no schedule'));
+    testWidgets('at ZERO ROWS it names the columns and blames the document, '
+        'not the user', (tester) async {
+      // CR-105 wants the tab "populating live from an EMPTY project", and
+      // the demo document holds no Links. The header row is what makes an
+      // empty schedule readable rather than blank.
+      await openTab(tester, 'Schedule');
+
+      final texts = _textsUnder(tester, _tabBody());
+      expect(texts, contains('CABLE ID'));
+      expect(texts, contains('FIELD LABEL'));
+      expect(texts, contains('RACK LABEL'));
+      expect(texts, contains(kNoCablesHeadline));
+
+      // docs/09 M1: "an empty Schedule tab that explains it is coming is a
+      // lie". The zero-row copy states an absence in the DOCUMENT and
+      // names the missing gesture; it must not tell the user they have
+      // not wired anything, which is false when the build offers no way
+      // to wire anything.
+      final joined = texts.join(' ').toLowerCase();
+      for (final lie in [
+        'you have not wired',
+        'coming soon',
+        'no connections yet',
+        'create links in the',
+      ]) {
+        expect(joined, isNot(contains(lie)), reason: '"$lie" is not true');
+      }
+    });
+
+    testWidgets('the two strings the deleted placeholder showed appear '
+        'nowhere in the app', (tester) async {
+      // Searched over the WHOLE app rather than the tab: they are lies
+      // wherever they are put, and the second instructs the user to use a
+      // tab that cannot create a link.
+      await openTab(tester, 'Schedule');
+      expect(find.textContaining('No connections yet'), findsNothing);
+      expect(find.textContaining('Create links in the'), findsNothing);
+    });
+
+    testWidgets('it shows both of §3.1s presets and neither is invented '
+        'here', (tester) async {
+      await openTab(tester, 'Schedule');
+      // The sheet ids come from `SchedulePreset` in core, so the tab and
+      // the printed sheet cannot be given different names.
+      expect(find.textContaining('T6.10'), findsOneWidget);
+      expect(find.textContaining('T6.11'), findsOneWidget);
+    });
+
+    testWidgets('Ctrl+4 opens it, and Ctrl+3 does nothing (CR-071)', (
+      tester,
+    ) async {
+      await tester.pumpWidget((await buildTestApp(measurer)).app);
+      await tester.pumpAndSettle();
+      expect(find.byType(RackCanvasScreen), findsOneWidget);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+      expect(find.byType(ScheduleScreen), findsOneWidget);
+
+      // Ctrl+3 is the v1.1 Rear Panel view's key and is deliberately dead.
+      // If it ever switched tabs, the Schedule would have been rebound to
+      // an ordinal — see session_layering_test RULE 14e.
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit3);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+      expect(find.byType(ScheduleScreen), findsOneWidget);
+
+      // Ctrl+1 comes back to the Rack tab, which is what proves the key
+      // above did nothing rather than that nothing responds to keys.
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit1);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+      expect(find.byType(RackCanvasScreen), findsOneWidget);
+    });
   });
 
   testWidgets('leaving the rack editor and coming back leaves it working', (

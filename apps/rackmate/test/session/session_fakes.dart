@@ -590,6 +590,10 @@ Future<({RackMateApp app, TestSession session})> buildTestApp(
       measurer: measurer,
       services: session.services,
       navigatorKey: session.navigatorKey,
+      // The REAL wiring, not a stub: `Ctrl+1..4` resolves through this key
+      // in a test exactly as it does in `main`, so a broken view keymap is
+      // a red suite rather than something only a human notices.
+      shellKey: GlobalKey<AppShellState>(),
       runStartupRecovery: runStartupRecovery,
       showStartCard: showStartCard,
     ),

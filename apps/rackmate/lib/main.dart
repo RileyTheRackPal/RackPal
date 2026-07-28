@@ -37,13 +37,15 @@ import 'package:screen_retriever/screen_retriever.dart';
 // which is also where the document lives, because persistence is a
 // property of the DOCUMENT and not of one tab.
 //
-// `Ctrl+1`/`Ctrl+2` and the reserved `Ctrl+3` (docs/05 §12) are STILL NOT
-// bound: no view-switching keymap exists in this app, in any view.
-// Binding two of the three would be a partial keymap that reads as a
-// whole one. It lands with the keymap pass. The FOUR file bindings —
-// Ctrl+N / Ctrl+O / Ctrl+S / Ctrl+Shift+S — are bound, as a complete
-// group: unlike a partial view-switching row, "the file menu works" is a
-// whole promise that this build keeps.
+// `Ctrl+1` / `Ctrl+2` / `Ctrl+4` ARE BOUND NOW, as a complete group, and
+// `Ctrl+3` is DELIBERATELY DEAD: docs/04 §8 line 456 and docs/10 :516
+// reserve it for the interactive Rear Panel view (v1.1, CR-071) and
+// forbid rebinding the Schedule onto it, because `Ctrl+n` is a view
+// identity rather than an ordinal. Three activators for three tabs, with
+// the fourth key held open, is the whole promise; it is not the partial
+// keymap this comment used to describe. The FOUR file bindings —
+// Ctrl+N / Ctrl+O / Ctrl+S / Ctrl+Shift+S — are the other complete
+// group.
 //
 // STARTUP ORDER IS LOAD-BEARING and is explained in app_services.dart.
 // The one rule with a measurement behind it: nothing here stats a recent
@@ -145,6 +147,12 @@ Future<void> _run() async {
       measurer: measurer,
       services: services,
       navigatorKey: navigatorKey,
+      // Minted HERE and never inside `RackMateApp`, which is a
+      // `StatelessWidget`: a key created in a build would be a new key on
+      // every rebuild, and a new key on `AppShell` discards the shell's
+      // `State` — the tab controller, the dismissed-warning record and the
+      // start-card flag with it.
+      shellKey: GlobalKey<AppShellState>(),
     ),
   );
 
@@ -215,6 +223,7 @@ class RackMateApp extends StatelessWidget {
   const RackMateApp({
     required this.measurer,
     required this.services,
+    required this.shellKey,
     this.navigatorKey,
     this.runStartupRecovery = true,
     this.showStartCard = true,
@@ -239,6 +248,14 @@ class RackMateApp extends StatelessWidget {
   /// survives the awaits a save runs across.
   final GlobalKey<NavigatorState>? navigatorKey;
 
+  /// How `Ctrl+1..4` reaches the shell's `TabController`.
+  ///
+  /// REQUIRED, with no default, for the same reason [services] is: an
+  /// optional key would make the view keymap silently inert in any wiring
+  /// that forgot it, and "the shortcut does nothing" is precisely the
+  /// failure mode `kFileShortcuts` was already written to prevent once.
+  final GlobalKey<AppShellState> shellKey;
+
   /// Whether to run §9.4's recovery scan on the first frame. Off in the
   /// widget tests whose subject is something else, so they do not have to
   /// script an answer to a prompt they never wanted.
@@ -257,13 +274,19 @@ class RackMateApp extends StatelessWidget {
       // because the document is global. See `kFileShortcuts`. The
       // defaults are merged rather than replaced: dropping them would
       // take Tab traversal, Enter-activates and Esc-dismisses with them.
-      shortcuts: {...WidgetsApp.defaultShortcuts, ...kFileShortcuts},
+      shortcuts: {
+        ...WidgetsApp.defaultShortcuts,
+        ...kFileShortcuts,
+        ...kViewShortcuts,
+      },
       actions: {
         ...WidgetsApp.defaultActions,
         ...buildFileActions(services.controller),
+        ...buildViewActions(shellKey),
       },
       theme: ThemeData(colorSchemeSeed: Colors.blueGrey, useMaterial3: true),
       home: AppShell(
+        key: shellKey,
         services: services,
         measurer: measurer,
         runStartupRecovery: runStartupRecovery,

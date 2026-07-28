@@ -12,6 +12,15 @@
 // direction that costs the most: an engineer reading it concludes the data
 // model is unbuilt and rebuilds it.
 //
+// ONE TAB IS LEFT TO CHECK. The Schedule tab is built (M2-B) and its copy
+// went with the panel — the sentence "no code turns a Link into a row"
+// was true when it was written and stopped being true the moment
+// `rackmate_core/derived/schedule.dart` landed. That is this file's own
+// thesis applied to itself: the panel whose purpose is accuracy about
+// what exists must be the FIRST thing to change when something starts
+// existing, not the last. What the Schedule says at zero rows is now
+// asserted in `shell_tabs_test.dart`.
+//
 // `shell_tabs_test.dart` proves the unbuilt tabs FABRICATE nothing (no
 // pin, no wire, no designator, no tappable control). That is a property of
 // what is drawn. This file proves the complementary thing — that what is
@@ -141,7 +150,7 @@ void main() {
     testWidgets('neither tab denies that the wiring model exists', (
       tester,
     ) async {
-      for (final view in ['Schematic', 'Schedule']) {
+      for (final view in ['Schematic']) {
         final copy = (await _copyFor(tester, measurer, view)).toLowerCase();
         // The two sentences that shipped, and the shapes they generalise
         // to. Each is FALSE against the group above.
@@ -178,14 +187,37 @@ void main() {
       // rebuilds it.
       expect(schematic, contains('addlinkcommand'));
       expect(schematic, contains('symbol_layer.dart'));
+    });
 
-      final schedule = (await _copyFor(
-        tester,
-        measurer,
-        'Schedule',
-      )).toLowerCase();
-      expect(schedule, contains('nothing in this build creates one'));
-      expect(schedule, contains('no code turns a link into a row'));
+    testWidgets('the Schedule tab no longer has copy to be accurate '
+        'about — it has a schedule', (tester) async {
+      // The complement of the group above, and the reason the Schedule
+      // rows here were deleted rather than reworded: the panel is gone.
+      // Its last claim, "no code turns a Link into a row", is falsified
+      // by the two lines below.
+      await tester.pumpWidget((await buildTestApp(measurer)).app);
+      await tester.tap(find.text('Schedule'));
+      await tester.pumpAndSettle();
+      expect(find.byType(UnbuiltView), findsNothing);
+
+      final doc = emptyDoc();
+      DocumentController(doc, clock: FixedClock(now)).run(
+        AddLinkCommand(
+          designator: 'W001',
+          netName: 'N001',
+          media: const MediaTypeId('media.cat6'),
+          order: const FracIndex('a0'),
+          now: now,
+          actor: 'test',
+        ),
+      );
+      expect(
+        buildSchedule(doc).rowCount,
+        1,
+        reason:
+            'code turns a Link into a row now, so the copy that said '
+            'otherwise had to go',
+      );
     });
 
     testWidgets('no surface in the app calls AddLinkCommand — which is what '

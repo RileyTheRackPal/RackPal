@@ -9,12 +9,21 @@
 /// apps/rackmate) — `src/shell/` holds only shell-shaped WIDGETS the app
 /// composes, currently just `UnbuiltView`.
 ///
-/// There is no `src/canvas/schematic/` and no `src/schedule/`. Both were
-/// deleted rather than repaired: see `src/shell/unbuilt_view.dart`'s header
-/// for the ruling and docs/m1-implementation-log.md §3c for what went and
-/// why. The schematic drawing code that was worth keeping lives in
+/// There is no `src/canvas/schematic/`. It was deleted rather than
+/// repaired: see `src/shell/unbuilt_view.dart`'s header for the ruling and
+/// docs/m1-implementation-log.md §3c for what went and why. The schematic
+/// drawing code that was worth keeping lives in
 /// `rackmate_core/src/draw/scene/symbol_layer.dart` (CR-071, CR-086), where
 /// `rackmate_export` can also reach it.
+///
+/// `src/schedule/` IS BACK, and on different terms from the one that was
+/// deleted. The deleted one had no pipeline behind it and told the user
+/// "No connections yet · Create links in the Schematic tab" — a zero-row
+/// table pointing at a tab that cannot create a link. This one renders
+/// `rackmate_core`'s `derived/schedule.dart` (docs/08 §3), which is pure
+/// Dart, fully tested, and the same query the PDF exporter drives. The
+/// difference is not that the tab looks better; it is that there is now
+/// something true to show.
 library;
 
 export 'src/canvas/canvas_intent.dart';
@@ -41,6 +50,7 @@ export 'src/inspector/new_rack_dialog.dart';
 export 'src/inspector/rack_inspector_panel.dart';
 export 'src/inspector/shrink_rack_dialog.dart';
 export 'src/palette/device_palette_panel.dart';
+export 'src/schedule/schedule_screen.dart';
 // `src/shell/` — shell-shaped WIDGETS the app composes. Every one of the
 // persistence-stage additions below is PRESENTATIONAL: it takes a plain
 // value object and callbacks and returns an enum or an action id. None of

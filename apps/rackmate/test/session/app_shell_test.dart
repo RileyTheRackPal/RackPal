@@ -663,7 +663,12 @@ void main() {
       final t = await pump(tester, savePaths: [_target]);
       await tester.tap(find.text('Schedule'));
       await tester.pumpAndSettle();
-      expect(find.byType(UnbuiltView), findsOneWidget);
+      // The Schedule is a real view now (M2-B) — which makes this test
+      // STRONGER rather than weaker: the tab body holds focusable
+      // controls, so a Ctrl+S that resolved from the focused context
+      // rather than from the app root would have somewhere new to go
+      // wrong.
+      expect(find.byType(ScheduleScreen), findsOneWidget);
 
       await press(tester, LogicalKeyboardKey.keyS);
 

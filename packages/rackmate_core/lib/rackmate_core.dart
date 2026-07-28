@@ -51,6 +51,7 @@ export 'src/derived/equipment_list.dart';
 export 'src/derived/jacket_color_resolution.dart';
 export 'src/derived/link_class.dart';
 export 'src/derived/port_set_resolution.dart';
+export 'src/derived/schedule.dart';
 export 'src/derived/totals.dart';
 export 'src/document_controller.dart';
 export 'src/draw/bounds_canvas.dart';
