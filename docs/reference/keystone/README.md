@@ -35,12 +35,16 @@ that turns out false is wrong on every plate drawing at once. **Measure a real
 
 ## Two things to be careful with
 
-**The speaker terminal contradicts the ruling.** The reference binding post is
-**one post per keystone** — two separate single-cell modules, red-banded and
-black-banded. DR-007 §11.7.2 rules that a speaker terminal spans **two cells
-and is orientable**. Both parts exist in the world; which one the shop uses
-decides whether the cell model needs multi-cell occupants at all. **Settle it
-by looking at the van, not by reading this.** DR-007 §11.7.9 A has the stakes.
+**The speaker terminal already overturned a ruling.** The reference binding
+post is **one post per keystone**, and the user confirmed the shop uses
+single-post keystones, **one per conductor**. DR-007 §11.7.2 had ruled that a
+speaker terminal spans two cells and is orientable; it is superseded. **Every
+occupant is now 1 × 1** — no orientation, no packing, no refusal message.
+
+That ruling was written from a verbal description and picked the expensive
+branch of a fork it did not know it was on. The photograph is what caught it.
+Consequence worth knowing: a 16/4 speaker run is four conductors, so four
+posts, so **four cells** — it does not fit on a 1-, 2- or 3-port strap.
 
 **The Cat6 colours mean nothing.** They are what one seller photographed. An
 earlier draft of §11.7.9 read green and grey being absent from that lineup as

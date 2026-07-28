@@ -6025,7 +6025,8 @@ distribution side **repeats the bound and does not enumerate keys**.
 
 > **RULING — THE LOW-VOLTAGE BOX'S INTERNAL GEOMETRY IS v1, BUILT IN M3.** An `Outlet` gains an
 > ordered list of **gangs**; each gang holds one **strap**, which is a **2D grid of keystone
-> positions**; each cell holds a keystone, a two-cell speaker terminal, or a blank insert. It is
+> positions**; each cell holds **at most one keystone** — every occupant is 1 × 1, a speaker binding
+> post included (§11.7.2, revised 2026-07-28) — or a blank insert. It is
 > built in **M3 — Structure and the field**, alongside the `Outlet` UI that milestone already
 > schedules, and **not** deferred to v1.X.
 
@@ -6071,14 +6072,57 @@ A strap is exactly `W × H` with **W ∈ {1, 2}** and **H ∈ {1, 2, 3}**:
 be encoded as a **derived constraint** falling out of `W × H`, never as a hardcoded exclusion list —
 a list would be a fact about a catalog, and this is a fact about geometry.
 
-**11.7.2 Speaker terminals, and orientation that is not a preference.**
+**11.7.2 EVERY OCCUPANT IS 1 × 1. There are no multi-cell occupants and no orientation.**
 
-A speaker terminal occupies **two cells** and is orientable, but **orientation is constrained by
-strap width**: on a 1-wide strap (1 × 2, 1 × 3) it can only be vertical, there being no horizontal
-room; on a 2-wide strap (2 × 2, 2 × 3) either orientation fits. On half the shipped straps the
-orientation is therefore **forced, not chosen**. A refused placement must state *why* — "no
-horizontal room on a 1-wide strap" — under the standing rule that a refused action always reports
-and never silently does nothing.
+> **SUPERSEDED AND REPLACED 2026-07-28**, on the user's statement: *"We use single post keystones,
+> one per conductor."* The original text is preserved at the end of this subsection because a
+> ruling that was wrong is worth being able to find.
+
+A cell holds **at most one keystone**, and every keystone is exactly one cell. A speaker drop is not
+a two-cell occupant — it is **N single-post keystones**, one per conductor, each an ordinary 1 × 1
+occupant that may sit in any free cell. Two posts of a stereo pair need not be adjacent, need not be
+in the same column, and need not be in the same order on every plate.
+
+**What this deletes.** Orientation, in its entirety — there is nothing to rotate. The
+"forced on 1-wide, free on 2-wide" rule, and the refusal message it required. Packing, which
+§11.7.6 called *"trivial because the grid is bounded at six cells"*: with no occupant larger than a
+cell there is **no packing problem at all**, only a set of cells each holding zero or one keystone.
+The strap becomes the simplest possible container.
+
+**11.7.2.1 How many cells a field end needs — a function of TERMINATION, not of the cable.**
+
+The tempting generalisation from *"one per conductor"* is that cells always equal conductors. **That
+is false for the most common drop in the building.** A Cat6 run terminating in one RJ45 jack occupies
+**one** cell no matter how its conductors are modelled. The rule is:
+
+| Termination | Cells at that end |
+|---|---|
+| binding post / single post (speaker) | **one per `Conductor` landing there** — 16/2 → 2 cells, 16/4 → 4 cells |
+| modular jack (`keystone`, `fBarrel`, and the HDMI / 3.5 mm modules) | **one per `Link` end** |
+| `punchdown` | one per `Link` end |
+| `unterminated`, `fieldConnector` | **zero** — nothing is on the plate |
+
+`TerminationType` (`model/enums.dart:20`) already carries exactly this distinction and is the hook
+M3 should read; it does not yet name a binding-post case, and adding one is the smallest change that
+makes this table computable. `Conductor` already models the other half — `conductor.dart:44`,
+*"A 16/4 speaker cable is one `Link` with four `Conductor`s (RJ-016)"* — with `role` already ranging
+over `"L+"`, `"L-"`, `"+"`, `"-"`, which are precisely the per-post labels.
+
+**11.7.2.2 The consequence for a 16/4 run, stated because it is the case that bites.**
+
+Four conductors, four binding posts, **four cells**. A 16/4 speaker drop therefore does not fit on a
+1-, 2-, or 3-port strap at all; it needs a 4- or 6-port. That is a real constraint on plate
+selection and it falls straight out of the table above rather than being a rule anyone has to
+remember.
+
+> **THE SUPERSEDED TEXT, verbatim.** *"A speaker terminal occupies **two cells** and is orientable,
+> but **orientation is constrained by strap width**: on a 1-wide strap (1 × 2, 1 × 3) it can only be
+> vertical, there being no horizontal room; on a 2-wide strap (2 × 2, 2 × 3) either orientation fits.
+> On half the shipped straps the orientation is therefore **forced, not chosen**. A refused placement
+> must state why — 'no horizontal room on a 1-wide strap' — under the standing rule that a refused
+> action always reports and never silently does nothing."* This was written from a description of a
+> dual-post module. The photographed part is single-post, and the shop uses single-post. It was
+> ruling the expensive side of a fork it did not know it was on.
 
 **11.7.3 The hierarchy: one `Outlet`, N gangs.**
 
@@ -6114,9 +6158,15 @@ nowhere; that syntactic independence is the design and is mutation-tested.
 An earlier note in this project's task record claimed "a keystone strap is structurally a tiny rack"
 and that the rack occupancy machinery — `findLowestFreeRu`, `findBlockingOccupant`, `planCompaction`,
 the shrink planner — would make this cheap. **That is wrong.** A rack is one-dimensional: an RU index
-plus a coarse lateral twelfth. A strap is a genuine 2D grid with orientable occupants, and none of
-that code applies. It remains cheap for a different reason — the grid is bounded at six cells, so
-exhaustive placement is trivial — and the cost is modelling, not algorithms.
+plus a coarse lateral twelfth. A strap is a 2D grid, and none of that code applies to a 2D grid.
+
+**Both of that paragraph's other claims have since been overtaken, in the same direction.** It also
+called the occupants *"orientable"* and said placement was cheap only because *"the grid is bounded
+at six cells, so exhaustive placement is trivial"*. Under §11.7.2 as revised on 2026-07-28 there are
+**no orientable occupants and no placement problem whatsoever**: every occupant is 1 × 1, so a cell
+is free or taken and there is nothing to search. The conclusion outlived the argument and is now
+stronger than it — the rack machinery does not apply, the cost is modelling rather than algorithms,
+and the algorithm the hedge was written against turns out not to exist.
 
 **11.7.7 What does not move.**
 
@@ -6178,22 +6228,25 @@ two ordinary 1×1 keystones that happen to belong together, and they can sit in 
 adjacent or not. §11.7.2's entire "orientation is forced on a 1-wide strap, free on a 2-wide one"
 argument would then be modelling a constraint that does not exist.
 
-**This is NOT resolved here, and must not be resolved by whoever reads it first.** Both parts are
-real: single-post modules like the reference, and dual-post modules that genuinely span two cells.
-The user's own earlier description — *"speaker terminals needing two units, which could be oriented
-horizontally or vertically depending on the strap being used"* — describes the dual-post part, and
-the photograph shows the single-post one. Either the shop uses both, or "two units" meant "two
-keystones" and the orientation was about which two cells you pick.
+**ASKED, AND ANSWERED THE SAME DAY.** This entry was first written as an open fork — both parts
+exist in the world, the user's earlier description (*"speaker terminals needing two units, which
+could be oriented horizontally or vertically depending on the strap being used"*) described the
+dual-post module while the photograph showed the single-post one, and the two readings led to very
+different models. The user settled it directly: **"We use single post keystones, one per
+conductor."**
 
-The stakes are the shape of the whole cell model:
+So the flat model wins. §11.7.2 is rewritten accordingly and the original is preserved there.
 
-| If | The model is |
+| The fork, as it was posed | Outcome |
 |---|---|
-| every occupant is 1×1 | a flat grid of independent cells, plus a "these belong together" grouping for the pair. **Much simpler**, and §11.7.2 shrinks to a note |
-| some occupants span 2 cells | multi-cell occupants with orientation, refusal reasons, and packing — §11.7.2 as written |
+| every occupant is 1 × 1 — a flat grid plus a "these belong together" grouping | **THIS.** Simpler by a wide margin: no orientation, no refusal message, no packing |
+| some occupants span 2 cells — multi-cell occupants, orientation, packing | not the part in use; ruled out |
 
-Building the second when the first would do is the expensive error, and it is the one currently
-ruled. **Settle this before M3 starts, by looking at what is actually on the van.**
+**The lesson is worth more than the answer.** The ruling had already picked the expensive branch,
+from a verbal description, without knowing it was on a fork at all — and it would have shipped a
+packing-and-orientation subsystem for a problem that does not exist. Nothing in the corpus could
+have caught that; only the photograph did. **A physical reference is worth more than a careful
+reading of a description**, and DR-007 is now two-for-two on that (see also §11.7.8's cover plate).
 
 **B. THE CELL RENDERS FROM THE FRONT, AND THE FRONT HIDES THE DIFFERENCES.** *(Corrected by the user
 on 2026-07-28; the first draft of this entry got it backwards and the error is instructive.)* A
