@@ -73,5 +73,14 @@ RackDocument buildBlankDocument({
     );
   }
 
+  // The shop's cable-colour convention, copied in at CREATION rather than
+  // defaulted on `ProjectSettings` — a document decoded from an older
+  // file must come back with an EMPTY convention, because its author
+  // never authored one. A new document has an author who is choosing it.
+  // Every entry is ordinary editable data from this line onward.
+  doc.settings.jacketColorConventions.addAll(
+    buildDefaultJacketColorConvention(),
+  );
+
   return doc;
 }

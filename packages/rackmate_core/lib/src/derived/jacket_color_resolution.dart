@@ -55,7 +55,11 @@
 // signal domain's, via PAL-1's effective hue — eight Okabe-Ito values,
 // chosen because they survive a colour-vision deficiency, which a shop's
 // reel colours carry no guarantee of. `jacket_colour_is_not_hue_test.dart`
-// gates the drawing layer against every name defined here.
+// gates all four drawing roots against every COLOUR-CARRYING name defined
+// here — the types, the resolver and the `…ColorId` accessors. The bare
+// getters `keystone` and `asBuilt` are deliberately not banned by name
+// (both words are ordinary drawing vocabulary), and are unreachable from
+// a drawing source without naming something that is.
 import 'package:rackmate_core/src/model/jacket_color.dart';
 import 'package:rackmate_core/src/model/link.dart';
 import 'package:rackmate_core/src/units/ids.dart';
@@ -176,101 +180,28 @@ ResolvedJacketColor resolveJacketColor(
   );
 }
 
-/// A count of every jacket-colour state across a set of runs — the
-/// definition `T0.02 EXCEPTIONS` will consume when sheet roles beyond the
-/// three this build emits are built (`draw/sheet/sheet_def.dart`).
-///
-/// WHY THIS EXISTS BEFORE ITS RENDERER. A wrong-colour pull is exactly an
-/// exceptions-sheet row, and naming the landing site now is what stops
-/// the fact rotting between this stage and M6. It stores nothing and
-/// writes nothing — it is a pure function of its arguments, so it is not
-/// the "production field whose only writer was test code" smell this
-/// project has been bitten by. No renderer is built here; that is M6.
-final class JacketColorRollup {
-  const JacketColorRollup({
-    required this.perConventionCount,
-    required this.exceptionCount,
-    required this.pulledOnlyCount,
-    required this.unrecordedCount,
-    required this.unknownEntryCount,
-    required this.exceptionLinkIds,
-  });
-
-  /// How many runs claim each convention entry, keyed by the CONVENTION
-  /// id — what the run IS, not what went in the wall. A run pulled in
-  /// the wrong colour counts here under the colour it was SUPPOSED to
-  /// be, because that is what its keystone will be and what its legend
-  /// row means.
-  ///
-  /// Includes dangling ids: a run naming a deleted entry is still a run
-  /// claiming that entry, and dropping it would understate the job.
-  final Map<JacketColorId, int> perConventionCount;
-
-  /// Runs where [ResolvedJacketColor.isException] holds.
-  final int exceptionCount;
-
-  /// Runs carrying an override but NO convention — an observed jacket
-  /// nobody has said the purpose of. Counted separately from
-  /// [exceptionCount]'s ordinary case because the schedule reads
-  /// differently (`— / PULLED YEL`) and because it is the one state a
-  /// future DRC advisory would most want to chase down. These runs ARE
-  /// also in [exceptionCount]: `pulledId != null && pulledId != null`
-  /// holds when the convention is null.
-  final int pulledOnlyCount;
-
-  /// Runs with NEITHER id set — nobody has said. Reported rather than
-  /// treated as zero, because "no exceptions among 4 recorded runs" and
-  /// "no exceptions among 400 runs nobody coloured" are different facts
-  /// and a bare `exceptionCount: 0` cannot tell them apart.
-  final int unrecordedCount;
-
-  /// Runs where at least one stored id names no entry in the map (G4).
-  final int unknownEntryCount;
-
-  /// The runs an exceptions sheet lists, in iteration order. Ids, not
-  /// `Link`s — a rollup that held entities would keep them alive past a
-  /// document reload.
-  final List<Uuid> exceptionLinkIds;
-}
-
-/// Counts [links] into a [JacketColorRollup] against [convention].
-///
-/// One pass, one shared call to [resolveJacketColor] per link, so a run
-/// can never be counted as an exception by one question and a normal run
-/// by another.
-JacketColorRollup jacketColorRollup(
-  Iterable<Link> links,
-  Map<JacketColorId, JacketColorDef> convention,
-) {
-  final perConvention = <JacketColorId, int>{};
-  final exceptionLinkIds = <Uuid>[];
-  var exceptionCount = 0;
-  var pulledOnlyCount = 0;
-  var unrecordedCount = 0;
-  var unknownEntryCount = 0;
-
-  for (final link in links) {
-    final r = resolveJacketColor(link, convention);
-
-    final conventionId = r.conventionId;
-    if (conventionId != null) {
-      perConvention[conventionId] = (perConvention[conventionId] ?? 0) + 1;
-    }
-    if (r.conventionId == null && r.pulledId == null) unrecordedCount++;
-    if (r.pulledId != null && r.conventionId == null) pulledOnlyCount++;
-    if (r.isException) {
-      exceptionCount++;
-      exceptionLinkIds.add(link.id);
-    }
-    if (r.hasUnknownEntry) unknownEntryCount++;
-  }
-
-  return JacketColorRollup(
-    perConventionCount: perConvention,
-    exceptionCount: exceptionCount,
-    pulledOnlyCount: pulledOnlyCount,
-    unrecordedCount: unrecordedCount,
-    unknownEntryCount: unknownEntryCount,
-    exceptionLinkIds: exceptionLinkIds,
-  );
-}
+// ═════════════════════════════════════════════════════════════════════
+// WHAT IS DELIBERATELY NOT HERE: `JacketColorRollup`
+// ═════════════════════════════════════════════════════════════════════
+// A `jacketColorRollup(links, convention)` returning six counts
+// (`perConventionCount`, `exceptionCount`, `pulledOnlyCount`,
+// `unrecordedCount`, `unknownEntryCount`, `exceptionLinkIds`) shipped in
+// this file and was DELETED, because nothing outside its own four tests
+// ever called it. Its doc comment defended itself with the wrong
+// criterion — "it is a pure function of its arguments, so it is not the
+// 'production field whose only writer was test code' smell" — but that
+// smell is about who READS a value, and purity is irrelevant to it.
+// `resolveJacketColor` has the same purity AND a documented read path;
+// the rollup had four tests written by its only consumer, which was
+// itself.
+//
+// Its named landing site made it worse rather than better: `T0.02
+// EXCEPTIONS` is defined in docs/08 §3 as a DRC FINDINGS sheet ("every
+// open Finding with rule ID, severity and locus"), `SheetRole` has three
+// values and none of them is it, and a colour rollup is not a Finding.
+// That is a category mismatch, not deferred work.
+//
+// It comes back WITH ITS CONSUMER — the exceptions sheet, or the
+// Schedule tab's colour column — and reconstructing it is a fifteen-line
+// loop over [resolveJacketColor], which is the part that is actually
+// load-bearing and is fully tested. See docs/m1-implementation-log.md.

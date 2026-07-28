@@ -96,7 +96,27 @@ The schedule is the deliverable; the drawing is the receipt (G1). Effort and ris
 | Page | ANSI A **portrait**, usable 510 pt | ANSI A **landscape**, usable 690 pt |
 | Default sort | **room, then pathway** — the order the tech walks the house | **rack, then panel, then port** |
 | Rows | `Link.linkClass == fieldCable` only | every `Link` landing in a `Rack` |
-| Adds | per-room footage subtotals, jacket colour, `Pulled ☐ Terminated ☐ Tested ☐ Init ___` | T568A/B, punch position, polarity, `Conductor.colorCode` per role, pinout notes |
+| Adds | per-room footage subtotals, jacket colour (two tokens — see below), `Pulled ☐ Terminated ☐ Tested ☐ Init ___` | T568A/B, punch position, polarity, `Conductor.colorCode` per role, pinout notes |
+
+**The jacket-colour cell.** It reads two fields, not one: `Link.jacketColorId`
+(what the run IS — the convention entry, which the keystone follows) and
+`Link.jacketColorPulledId` (what was actually pulled, set only when it differs).
+A run pulled in the wrong colour prints **both tokens** — `BLU→YEL` at this
+column's width — never one. Resolution comes from
+`derived/jacket_color_resolution.dart`; the exporter formats, it does not decide.
+
+Two constraints this cell must respect. First, the abbreviation is load-bearing
+and the swatch is not: `ExportSpec.palette` ships `colour | greyscale | cmyk` and
+the Installer preset defaults to **greyscale**, so a swatch alone degrades to an
+indistinguishable grey — and was already indistinguishable for the ~8 % of
+installers with a colour-vision deficiency (§ docs/05 §6.1). `JacketColorDef.abbr`
+survives greyscale, a photocopy and a CVD. Second, a near-white or near-black
+swatch needs an outline to be visible on white paper; that rendering rule is
+recorded as debt in `catalog/jacket_color_convention.dart` and is still unowned.
+
+**This colour never reaches a drawn wire's hue** — see docs/05 §6.1 and
+`jacket_colour_is_not_hue_test.dart`, which gates the drawing layer by source
+scan.
 
 Both carry, **on both ends**, the location (`RK-1 / U14 / rear`, `Great Room / TV wall / WP-1`) and **both labels** — `StructureOrigin.fieldLabel` and `StructureOrigin.rackLabel` (CR-044, AC-047). The dual-label insight was correctly identified for structured wiring and then not applied to every cable; it now applies to every cable.
 

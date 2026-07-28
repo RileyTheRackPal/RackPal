@@ -39,6 +39,25 @@
 // estimate into a measurement. So only the fifteen TERMINATED runs carry
 // a length — the installer has walked them — and the twelve that are
 // merely planned or pulled carry null. Null means unknown (G4, CR-114).
+//
+// ==================================================================
+// JACKET COLOUR IS ASSIGNED FROM THE RUN'S PURPOSE, AND ONLY ON
+// CATEGORY CABLE
+// ==================================================================
+// The requesting integrator's convention is a convention about CATEGORY
+// CABLE: "we don't have this same issue with other cabling, as generally
+// speaking they aren't as universal in their functionality". So the
+// fifteen Cat6 runs carry a `jacketColorId` chosen from what each one
+// actually feeds — the touchpanel back box is blue because it is
+// control, the soffit camera is white because it is a camera, the
+// HDBaseT feed is green because it is A/V distribution — and the twelve
+// RG6, speaker and fibre runs carry NULL, because their colour is not a
+// convention and inventing one would be a fabrication (G4).
+//
+// Two of the seven seeded colours — red and black — are therefore
+// present in `settings.jacketColorConventions` and referenced by no
+// link. That is the third state the format is built to express: a colour
+// the shop stocks but has not pulled on this job.
 import 'package:rackmate_core/rackmate_core.dart';
 
 import 'authoring.dart';
@@ -435,6 +454,7 @@ RackDocument buildWholeHouseStarter() {
     required JacketRating jacket,
     required Uuid pathway,
     required RoughInStatus status,
+    JacketColorId? jacketColorId,
     int? gaugeAwg,
     Uuid? rackPort,
     String? rackLabel,
@@ -472,6 +492,7 @@ RackDocument buildWholeHouseStarter() {
       conductorRoles: conductorRoles,
       pathwayId: pathway,
       jacket: jacket,
+      jacketColorId: jacketColorId,
       gaugeAwg: gaugeAwg,
       routedLength: routedLength,
       roughInStatus: status,
@@ -507,6 +528,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'Great Room TV wall, keystone 1',
     where: great,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.yellow'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,
@@ -525,6 +547,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'Great Room TV wall, keystone 2',
     where: great,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.yellow'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,
@@ -614,6 +637,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'Great Room touchpanel back box',
     where: great,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.blue'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,
@@ -643,6 +667,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'Ground floor ceiling access point',
     where: great,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.grey'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,
@@ -673,6 +698,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'Kitchen display back box',
     where: kitchen,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.yellow'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,
@@ -744,6 +770,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'Study desk, keystone 1',
     where: study,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.yellow'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,
@@ -762,6 +789,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'Study desk, keystone 2',
     where: study,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.yellow'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,
@@ -792,6 +820,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'Driveway camera, soffit',
     where: garage,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.white'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,
@@ -822,6 +851,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'Front door camera, exterior wall',
     where: great,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.white'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,
@@ -852,6 +882,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'Media room projector, HDBaseT receiver feed',
     where: media,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.green'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,
@@ -869,6 +900,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'Media room projector, control spare',
     where: media,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.blue'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,
@@ -936,6 +968,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'Primary bedroom TV wall, keystone 1',
     where: primary,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.yellow'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,
@@ -954,6 +987,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'Primary bedroom TV wall, keystone 2',
     where: primary,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.yellow'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,
@@ -1039,6 +1073,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'First floor ceiling access point',
     where: primary,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.grey'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,
@@ -1068,6 +1103,7 @@ RackDocument buildWholeHouseStarter() {
     fieldDescription: 'Bedroom 2 desk wall',
     where: bed2,
     media: cat6,
+    jacketColorId: const JacketColorId('jc.yellow'),
     family: const SignalFamilyId('net.ethernet'),
     termination: TerminationType.keystone,
     jacket: JacketRating.cmr,

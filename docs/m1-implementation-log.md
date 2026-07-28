@@ -1713,6 +1713,179 @@ production comment, in any package, must exist somewhere in the repository.
 
 ---
 
+## 3h. Per-run jacket colour — the exception half (CR-121)
+
+**Model and core only. No UI shipped, and that is the point of the stage rather than an
+omission** — there is nowhere to hang a colour picker: M2 is NOT STARTED, both the Schematic
+and Schedule tabs render `UnbuiltView`, and there is no `Link`-creation surface at all.
+
+### What shipped
+
+A previous stage landed the **convention half**: `JacketColorId`, `JacketColorDef`,
+`ProjectSettings.jacketColorConventions`, `Link.jacketColorId`, full codec support, and
+`buildDefaultJacketColorConvention()` carrying the requesting integrator's seven colours as
+editable per-document data. This stage added the **exception half**:
+
+| Piece | Where |
+|---|---|
+| `Link.jacketColorPulledId` — what was actually pulled, null = matches convention | `model/link.dart` |
+| Both jacket fields converted to public getter + `@internal` setter (AC-013) | `model/link.dart` |
+| One `putIfNotNull` encode line + one decode line, both reusing existing helpers | `persistence/json_codec.dart` |
+| `ResolvedJacketColor` + `resolveJacketColor` — the three derived questions | `derived/jacket_color_resolution.dart` |
+| `SetLinkJacketColorCommand`, `SetLinkPulledJacketColorCommand` | `commands/link_jacket_color_commands.dart` |
+| The seven-entry convention seeded into all four starter assets, and fifteen authored `jacketColorId` values on `whole_house`'s Cat6 home runs | `tool/starters/`, `assets/starters/*.rackmate` |
+
+> **`JacketColorRollup` + `jacketColorRollup` shipped in this stage and have since been DELETED.**
+> The table above used to carry a row for them reading "the definition `T0.02 EXCEPTIONS` will
+> consume". Nothing outside their own four tests ever called them: no reader existed for
+> `perConventionCount`, `exceptionCount`, `pulledOnlyCount`, `unrecordedCount`,
+> `unknownEntryCount` or `exceptionLinkIds` in `rackmate_ui`, `rackmate_export` or
+> `apps/rackmate`. The doc comment defended itself with the wrong criterion — "it is a pure
+> function of its arguments, so it is not the 'production field whose only writer was test code'
+> smell" — but that smell is about who READS a value; `resolveJacketColor` has the same purity
+> *and* a documented read path, while the rollup's four tests were a spec written by its only
+> consumer, which was itself. This is the third instance of the shape in this project, after
+> `AppServices.prefs` (production field, sole writer in a test, "which is why the suite is
+> green") and `chooseDrawingScale` (seven tests asserting a property false of the shipped path).
+>
+> Its named landing site made the case worse rather than better: docs/08 defines `T0.02` as a DRC
+> **Findings** sheet ("every open Finding with rule ID, severity and locus"), `SheetRole` has
+> three values and none is it, there is no `Finding` class in the codebase, and a colour rollup
+> is not a Finding — a category mismatch, not deferred work. It comes back **with its consumer**;
+> reconstructing it is a fifteen-line loop over `resolveJacketColor`, which is the part that is
+> actually load-bearing and is fully tested. A prose note in
+> `derived/jacket_color_resolution.dart` records the same, next to where it lived.
+
+**`Link.jacketColorId` was NOT renamed** even though the refinement makes its name ambiguous:
+the key is already on disk in fixture (c) and in all four starter assets, and renaming would
+force regenerating them. Its doc comment was rewritten instead — it used to read "THE COLOUR OF
+THE SHEATH PULLED", which is now factually wrong; it is the CONVENTION reference.
+
+**Format: no existing USER document changes a byte.** `kSchemaVersion` stays 2,
+`kMinReaderVersion` stays 2, no migration entry. The override is absent-key-when-null, so every
+file that has never recorded a wrong-colour pull encodes exactly as before.
+
+**The four starters WERE regenerated, and this section used to say they were not.** Deliberate,
+and the reasoning is in CR-121: a starter is a document this build authors, `StarterAuthor
+.newDocument` seeds the convention at creation exactly as `buildBlankDocument` does, and a
+starter with no convention would be the only document the app produces without one. AC-052 has
+the starters doing triple duty as goldens, perf fixtures and screenshot source, so an empty
+convention would mean a golden that cannot catch a codec regression in the block and a
+screenshot showing the empty state forever. `whole_house` additionally carries fifteen authored
+`jacketColorId` values, assigned from each run's PURPOSE and never from its media (five distinct
+colours across one media type — the wrong shortcut would give all fifteen the same one), with
+`jc.red` and `jc.black` stocked and pulled by nothing so the third state is exercised on shipped
+bytes. `dart run tool/generate_starters.dart --check` reports all four unchanged. Reverting the
+assets while keeping the generator would leave `--check` reporting STALE forever, which is
+strictly worse than the diff.
+
+### Mutations run (each broken, confirmed RED, reverted)
+
+| Mutation | Killed by |
+|---|---|
+| `keystoneColorId` → `pulledId ?? conventionId` (keystone follows the pull) | 4 cases in `jacket_color_resolution_test` — the single most important gate in the change |
+| `isException` drops the `pulledId != null` limb | 3 cases (every ordinary run reported as an exception) |
+| `isException` drops the `pulledId != conventionId` limb | 1 case (the hand-edited-file / CSV-import path) |
+| `asBuiltColorId` → `conventionId ?? pulledId` | 2 cases (a takeoff would order the wrong colour) |
+| `apply()` drops the equal-ids normalisation | 3 cases in `link_jacket_color_commands_test` |
+| `revert()` stops restoring the prior override | `command_roundtrip_test` (the 1000-sequence fuzz) |
+| codec encode line deleted | 5 cases in `jacket_color_resolution_test` |
+| a banned name added to `lib/src/draw/` | `jacket_colour_is_not_hue_test` |
+| `.jacketColorPulledId =` written outside `src/commands/` | `internal_setter_grep_test` |
+
+Run again during the follow-up cleanup, on the repaired gate and the two behavioural fixes:
+
+| Mutation | Killed by |
+|---|---|
+| `asBuiltColorId` planted in a drawing file under **each of the four** scanned roots | `jacket_colour_is_not_hue_test` — all four reported by path |
+| `JacketColorId` (the id TYPE) planted in `rackmate_ui/lib/src/canvas/` | same — the spelling that used to pass |
+| `_decodeJacketColorDef` reverted to `asStr(json['meaning'], …)` | `jacket_color_test` — one absent OPTIONAL key made the whole document a `FormatException` |
+| a shipped starter carrying a dangling `jacketColorPulledId` | `starter_integrity` check 12 — `link W001 pulled jacket colour jc.deleted does not resolve` |
+
+> **A finding worth recording, SINCE FIXED: the golden fixture corpus did NOT kill the deleted
+> encode line.** `_assertByteRoundTrip` OVERWROTE `test/fixtures/*.rackmate.json` with whatever
+> the encoder currently produced, then asserted write→read→write stability — so the fixtures were
+> **records, not golden expectations**, and could not catch "the encoder stopped emitting a key".
+> That had been true since M0 (`b94bd60`). `b5a957f` repaired it: the test now compares against
+> the **committed** goldens and `UPDATE_GOLDENS=1` regenerates them deliberately, so a format
+> change to a stored document is a red test. Fixture (c) carries a populated override plus a
+> `jc.yellow` convention entry, so the corpus both contains the shape and now defends it.
+>
+> The per-key byte-level assertions live in `jacket_color_resolution_test.dart`'s
+> `THE FOUR STATES ON DISK` group. Its two `indexOf` "sorted adjacency" assertions were removed
+> as part of this cleanup: `encodeJsonTreeBytes` runs `deepSortKeys` over the whole tree before
+> encoding, so swapping the two `putIfNotNull` calls in `_encodeLink` left them green — they only
+> restated that `"jacketColorId" < "jacketColorPulledId" < "lifecycleStatus"` in ASCII. The
+> canonical sort is the repaired golden corpus's to guard; the two key NAMES are still asserted
+> directly.
+
+### Deferred, named rather than implied
+
+1. **The Pull Sheet jacket-colour swatch column (T6.10)** and **the Termination Schedule column
+   (T6.11)** — specified now (docs/01 §, docs/08 §3.2: two tokens, `BLU→YEL`, never one), drawn
+   later. `sheet_def.dart` emits three of eleven sheet roles; the other nine are M6 and most are
+   blocked on `Link`s.
+2. **`T0.02 EXCEPTIONS`** — the named, unbuilt sheet role a wrong-colour pull is a row of.
+   **Nothing ships for it.** `jacketColorRollup` was written as "its definition, so the fact
+   cannot rot", and was deleted for having no consumer — see the note in §What shipped. The
+   counting loop is fifteen lines over `resolveJacketColor` and belongs in the same change as the
+   renderer. (docs/08 in fact defines `T0.02` as a DRC **Findings** sheet, so the sheet role a
+   colour rollup lands on may not be this one at all.)
+3. **Keystone matching (task #9, v1.X)** — nothing stores a keystone colour and nothing should;
+   `keystoneColorId` derives it. There is no keystone entity: the wall-plate end is a
+   `StructureOrigin.terminationField` whose `TerminationType` may be `keystone`, and `Outlet`
+   carries no colour.
+4. **ALL M2 UI** — the inspector control that picks a convention entry and the "pulled a
+   different colour" control beside it. This is the surface that will actually let a user set
+   any of this; today only a test or an importer can.
+5. **The convention settings screen** (add / rename / recolour / delete entries) and its
+   Commands. The map is plain-mutable like `ruleOverrides`, so nothing blocks it structurally.
+6. **CSV import mapping for the override column** — the alias table in docs/07 §now lists it,
+   the importer does not implement it.
+7. **The white/black swatch-outline rendering rule** — a near-white swatch is invisible on white
+   paper without an outline. Already recorded as debt in `catalog/jacket_color_convention.dart`;
+   still unowned, and it belongs to the sheet consumer that does not exist.
+8. **Any DRC advisory** (e.g. "an override is set on a run still at `roughInStatus.planned`") —
+   M5, which is 0 of 27 rules. The model is deliberately NOT gated on `roughInStatus`: refusing
+   to record an observation because a status field is stale is the opposite of the principle
+   this feature exists for.
+9. **Widening the PAL-1 source gate beyond the drawing layer** — it scans drawing roots only, so
+   a coupling introduced in a Command or in `derived/` (writing a jacket colour into
+   `Net.colorOverride`, `DeviceInstance.colorOverride` or `ProjectSettings.familyColorOverrides`)
+   would reach the renderer through the back door. Recorded in docs/05 §6.1.
+
+   > **The gate itself shipped with two holes and has been repaired.** It scanned
+   > `rackmate_core/lib/src/draw` and `rackmate_export/lib/src/draw` but NOT
+   > `rackmate_ui/lib/src/draw` or `rackmate_ui/lib/src/canvas` — which are not future work:
+   > `flutter_canvas.dart` and the three `CustomPainter`s are what puts colour on screen today. A
+   > probe naming all nine banned names was dropped into `rackmate_ui/lib/src/draw` and the gate
+   > stayed green. Its `_bannedNames` also omitted `JacketColorId` (the id TYPE — the regex is
+   > case-sensitive, so the banned `jacketColorId` never matched it) and `asBuiltColorId`, the
+   > accessor its own adjacent comment called "the most tempting of these to reach for in a
+   > renderer"; `Rgb wireHueFor(JacketColorId id, …)` passed. Both lists are fixed and the
+   > CONFIGURATION is now itself under test three ways: every named root must EXIST (a skipped
+   > root is now red, not silent), every banned name must be a real symbol in `lib/` (a
+   > misspelled ban is vacuous), and the detector is run over a synthetic drawing source carrying
+   > the coupling, in the shape of `session_layering_test.dart` RULE 15b. Bare `keystone` and
+   > `asBuilt` are deliberately NOT banned: both are ordinary drawing vocabulary (a keystone
+   > termination symbol, an `AS-BUILT` title-block stamp), and a gate that cries wolf gets
+   > weakened.
+10. **`Link.unknown` passthrough map** — without it, an older build that opens a newer file and
+    re-saves silently drops the override. Pre-existing for `jacketColorId` too; fixing it would
+    change every `Link`'s bytes. Flagged in CR-121, not recommended now.
+
+### One judgement call the user should confirm
+
+**"Override set, convention unset" is ALLOWED.** A tech observed a yellow jacket at prewire but
+nobody recorded what the run is for. It is kept rather than refused, because refusing would make
+a CSV importer discard an observed physical fact and promoting it to the convention field would
+guess the run's purpose (G4). It resolves as `asBuilt = yellow`, `keystone = null`,
+`isException = true`, and reads on a schedule as `—→YEL`, which is admittedly awkward. If the
+user would rather forbid it, that is a one-line invariant plus a Command refusal — and per this
+project's rules, a refused action must report rather than silently drop.
+
+---
+
 ## 4. Suggested next order
 
 Roughly in the order that unblocks the most subsequent work, not a commitment:

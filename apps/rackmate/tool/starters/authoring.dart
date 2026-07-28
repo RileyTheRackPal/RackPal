@@ -149,6 +149,13 @@ final class StarterAuthor {
         body: entry.value,
       );
     }
+    // Same one line, and the same reason, as `buildBlankDocument`: the
+    // convention is seeded at CREATION, never defaulted on
+    // `ProjectSettings`, so an older file still decodes with none. A
+    // starter must not be a second-class document.
+    doc.settings.jacketColorConventions.addAll(
+      buildDefaultJacketColorConvention(),
+    );
     return doc;
   }
 
@@ -554,6 +561,12 @@ final class StarterAuthor {
     List<({String role, int? pairNumber, String colorCode})>? conductorRoles,
     Uuid? pathwayId,
     JacketRating? jacket,
+    // The colour of the SHEATH, which is not [jacket] (the NEC fire
+    // rating) and not a `Conductor.colorCode` (the pair colour inside
+    // it). Null means the run's colour was not recorded — the ordinary
+    // state for cabling that is not category cable, where a shop's
+    // colours carry no convention.
+    JacketColorId? jacketColorId,
     int? gaugeAwg,
     Len? routedLength,
     RoughInStatus roughInStatus = RoughInStatus.planned,
@@ -600,6 +613,7 @@ final class StarterAuthor {
       ],
       gaugeAwg: gaugeAwg,
       jacket: jacket,
+      jacketColorId: jacketColorId,
       plenum: plenum,
       routedLength: routedLength,
       pathwayId: pathwayId,

@@ -1869,7 +1869,23 @@ drawing layer.
 recorded a wrong-colour pull is byte-identical to before the key existed. `kSchemaVersion` stays
 2 and `kMinReaderVersion` stays 2 — an additive *optional* key is the opposite of v2's breaking
 omission of previously mandatory keys; an older reader never looks at it, so it neither throws
-nor degrades. No starter asset and no migration entry changes.
+nor degrades. No migration entry changes.
+
+**The four starter assets DO change, deliberately, and this record used to claim otherwise.** The
+sentence above originally ended "No starter asset and no migration entry changes", which was false
+in its own changeset: `StarterAuthor.newDocument` seeds the convention at document creation exactly
+as `buildBlankDocument` does, so all four assets gained the seven-entry block, and `whole_house`
+additionally gained fifteen authored `jacketColorId` values on its Cat6 home runs. That is kept
+rather than reverted. A starter is a document THIS BUILD authors; a starter with no convention
+would be the only document the app produces without one, and AC-052 makes the starters do triple
+duty as goldens, perf fixtures and screenshot source — a golden with an empty convention cannot
+catch a codec regression in the block, and a screenshot source shows the empty state forever. The
+fifteen colours are assigned from each run's PURPOSE, never from its media (five distinct colours
+across one media type), and `jc.red`/`jc.black` are stocked and pulled by nothing, which is the
+third state the format exists to express, exercised on shipped bytes. `dart run
+tool/generate_starters.dart --check` reports all four unchanged, so the assets are exactly what the
+checked-in generator produces; CR-117 (`write(read(bytes)) == bytes`) is a property of a STORED
+document under round trip, which this does not touch.
 
 > **Known limitation, flagged not fixed:** `Link` has no `unknown` passthrough map (`EntityMeta`,
 > `Port`, `SheetItem` and `RackDocument` all have one), so an older build that opens a newer file

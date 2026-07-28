@@ -36,23 +36,54 @@
 // `internal_setter_grep_test.dart`.
 //
 // ─────────────────────────────────────────────────────────────────────
-// EXTENDING IT IS ONE LINE
+// THE TWO HOLES THIS FILE SHIPPED WITH, AND THE THREE GUARDS THAT NOW
+// STOP THEM COMING BACK
 // ─────────────────────────────────────────────────────────────────────
-// [_roots] below is the whole configuration. When the domain palette is
-// ported and real hues start being drawn, `../rackmate_ui/lib/src/canvas`
-// and `../rackmate_export/lib/src/draw` join the list — do that rather
-// than concluding the gate has stopped applying. Missing roots are
-// skipped, not failed, so the list can name a directory that does not
-// exist yet.
+// It shipped scanning two roots and naming nine names, and BOTH lists
+// were wrong in the place it mattered:
+//
+//  * `packages/rackmate_ui/lib/src/draw` and `.../lib/src/canvas` were
+//    not scanned. They are not future work — `flutter_canvas.dart` and
+//    the three `CustomPainter`s in `canvas/` are what puts colour on the
+//    screen TODAY. A probe file naming all nine banned names was dropped
+//    into `lib/src/draw` and the gate stayed green.
+//  * `JacketColorId` (the id TYPE) and `asBuiltColorId` (the accessor
+//    the comment below already called the most tempting one) were not
+//    banned. `Rgb wireHueFor(JacketColorId id, …)` — the exact coupling
+//    CR-078 rejects — passed, because the regex is case-sensitive and
+//    `jacketColorId` does not match `JacketColorId`.
+//
+// So the configuration is now itself under test, three ways:
+//
+//  1. EVERY named root must EXIST. A skipped root is the failure that
+//     shipped; a renamed directory must be a red test, not a silent
+//     narrowing of the scan. (The old header invited naming a directory
+//     that did not exist yet — that permission is withdrawn: add the
+//     line when the directory lands.)
+//  2. EVERY banned name must be a REAL symbol in `lib/`. A typo — the
+//     British `jacketColourId`, a name that outlived its class — makes a
+//     ban silently vacuous, which is the same class of defect as an
+//     unscanned root.
+//  3. THE DETECTOR ITSELF MUST FIRE. `the gate itself can fail` below
+//     runs the real matcher over a synthetic drawing source carrying the
+//     coupling, in the spirit of `session_layering_test.dart` RULE 15b.
 import 'dart:io';
 
 import 'package:test/test.dart';
 
 /// The drawing surfaces jacket colour must never reach. Add a line when
-/// a new one appears; see the header.
+/// a new one appears; see the header. Every entry must exist — a missing
+/// root fails this suite rather than being skipped.
 const List<String> _roots = [
   'lib/src/draw',
   '../rackmate_export/lib/src/draw',
+  // The Flutter side. `draw/` holds the canvas adapter and `canvas/`
+  // holds the `CustomPainter`s (`editing_overlay_painter.dart`,
+  // `grid_painter.dart`, `render_device_box.dart`) that actually put
+  // colour on a screen in this build — which is why omitting them left
+  // the gate advertising a protection it did not provide.
+  '../rackmate_ui/lib/src/draw',
+  '../rackmate_ui/lib/src/canvas',
 ];
 
 /// The names that would carry the fact into the drawing layer.
@@ -61,19 +92,29 @@ const List<String> _roots = [
 /// (`jacketColorPulledId` and the resolver) added four, and leaving them
 /// out would have left the gate with a hole exactly where the newest —
 /// and therefore least-understood — code is.
+///
+/// NOT BANNED, DELIBERATELY: the bare words `keystone` and `asBuilt`.
+/// Both are ordinary drawing vocabulary — a keystone termination symbol
+/// on an elevation, an `AS-BUILT` stamp in a title block — so banning
+/// them would produce a false positive on legitimate drawing code, and a
+/// gate that cries wolf gets weakened. The `…ColorId` spellings below
+/// are the ones that actually carry a colour, and a drawing source can
+/// only reach `ResolvedJacketColor.keystone`/`.asBuilt` through a name
+/// that IS banned.
 const List<String> _bannedNames = [
   'jacketColorId',
   'jacketColorConventions',
+  'JacketColorId',
   'JacketColorDef',
   'buildDefaultJacketColorConvention',
   // The exception half. `asBuiltColorId` is the most tempting of these
   // to reach for in a renderer ("just draw the wire the colour it
   // actually is"), and it is exactly the coupling CR-078 rejected.
   'jacketColorPulledId',
+  'asBuiltColorId',
+  'keystoneColorId',
   'ResolvedJacketColor',
   'resolveJacketColor',
-  'JacketColorRollup',
-  'jacketColorRollup',
 ];
 
 /// Strips `//` and `/* */` comments, so prose DESCRIBING the rule — a
@@ -94,31 +135,111 @@ String _stripComments(String source) {
       .join('\n');
 }
 
+/// THE WHOLE DETECTOR, in one function so the suite can run it over a
+/// synthetic source as well as over the tree. [source] is raw; comment
+/// stripping happens here.
+List<String> _offendersIn(String path, String source) {
+  final stripped = _stripComments(source);
+  return [
+    for (final name in _bannedNames)
+      if (RegExp('(?<![\\w\$])$name(?![\\w\$])').hasMatch(stripped))
+        '$path: names $name',
+  ];
+}
+
 void main() {
-  test('no drawing-layer source names jacket colour (CR-078/PAL-1)', () {
-    final present = _roots.where((p) => Directory(p).existsSync()).toList();
+  test('every named drawing root EXISTS and is scanned', () {
+    // GUARD 1. The hole that shipped: `../rackmate_ui/lib/src/draw` was
+    // simply absent from the list, and the old header licensed absence
+    // by saying missing roots are skipped. A root that stops resolving
+    // must be loud.
+    final missing = _roots.where((p) => !Directory(p).existsSync()).toList();
     expect(
-      present,
-      contains('lib/src/draw'),
+      missing,
+      isEmpty,
       reason:
-          'this gate resolves its roots relative to the package root — '
-          'run this suite from packages/rackmate_core',
+          'a drawing root named here no longer resolves, so it is not '
+          'being scanned and this gate has quietly narrowed. Roots are '
+          'relative to the package root — run this suite from '
+          'packages/rackmate_core — and a directory that has genuinely '
+          'moved must be RENAMED in `_roots`, not dropped:\n'
+          '${missing.join('\n')}',
+    );
+  });
+
+  test('every banned name is a real symbol in lib/ (no vacuous ban)', () {
+    // GUARD 2. A misspelled ban matches nothing and reads as protection.
+    // Scoped to `lib/` of this package because every name in the list is
+    // declared here.
+    final sources = [
+      for (final f in Directory('lib')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.dart')))
+        f.readAsStringSync(),
+    ];
+    final undeclared = [
+      for (final name in _bannedNames)
+        if (!sources.any(
+          (s) => RegExp('(?<![\\w\$])$name(?![\\w\$])').hasMatch(s),
+        ))
+          name,
+    ];
+    expect(
+      undeclared,
+      isEmpty,
+      reason:
+          'these banned names do not exist in rackmate_core/lib, so they '
+          'ban nothing. Either the spelling is wrong or the symbol was '
+          'deleted and the line should go with it:\n${undeclared.join(', ')}',
+    );
+  });
+
+  test('the gate itself can fail', () {
+    // GUARD 3. RULE 15b's shape: the detector run over the exact source
+    // that got past the shipped version. If this ever passes empty, the
+    // green result below means nothing.
+    const planted = '''
+import 'package:rackmate_core/rackmate_core.dart';
+
+// A comment naming jacketColorId is fine and must not be flagged.
+Rgb wireHueFor(JacketColorId id, Map<JacketColorId, Rgb> reels) =>
+    reels[id] ?? const Rgb(0, 0, 0);
+
+Rgb hueFromResolved(ResolvedJacketColor r, Map<JacketColorId, Rgb> reels) =>
+    reels[r.asBuiltColorId!] ?? const Rgb(0, 0, 0);
+''';
+    expect(
+      _offendersIn('probe.dart', planted).map((o) => o.split('names ').last),
+      containsAll(<String>[
+        'JacketColorId',
+        'asBuiltColorId',
+        'ResolvedJacketColor',
+      ]),
+      reason:
+          'the two spellings that got past the shipped gate were the id '
+          'TYPE and `asBuiltColorId`. If they are not flagged here, the '
+          'clean result below is worth nothing.',
     );
 
+    // ...and the comment-stripping half still holds, or the gate would
+    // fire on prose explaining the rule.
+    expect(
+      _offendersIn('probe.dart', '// mentions jacketColorId in prose\n'),
+      isEmpty,
+    );
+  });
+
+  test('no drawing-layer source names jacket colour (CR-078/PAL-1)', () {
     var scanned = 0;
     final offenders = <String>[];
-    for (final root in present) {
+    for (final root in _roots) {
       for (final file in Directory(root)
           .listSync(recursive: true)
           .whereType<File>()
           .where((f) => f.path.endsWith('.dart'))) {
         scanned++;
-        final source = _stripComments(file.readAsStringSync());
-        for (final name in _bannedNames) {
-          if (RegExp('(?<![\\w\$])$name(?![\\w\$])').hasMatch(source)) {
-            offenders.add('${file.path}: names $name');
-          }
-        }
+        offenders.addAll(_offendersIn(file.path, file.readAsStringSync()));
       }
     }
 
@@ -126,11 +247,12 @@ void main() {
     // this into a test that passes by scanning nothing at all.
     expect(
       scanned,
-      greaterThan(10),
+      greaterThan(20),
       reason:
-          'the scanner found almost no drawing sources — `lib/src/draw/` '
-          'carries the canvas, the IR ops, the scene builders and the '
-          'sheet furniture, so the walk has stopped finding real code',
+          'the scanner found almost no drawing sources — the four roots '
+          'carry the canvas, the IR ops, the scene builders, the sheet '
+          'furniture, the PDF canvas and the Flutter painters, so the '
+          'walk has stopped finding real code',
     );
 
     expect(

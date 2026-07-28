@@ -526,6 +526,50 @@
       "displayUnits": "imperial",
       "diversityFactorsByCategory": {},
       "familyColorOverrides": {},
+      "jacketColorConventions": {
+        "jc.black": {
+          "abbr": "BLK",
+          "color": "#FF1A1A1A",
+          "displayName": "Black",
+          "meaning": "Direct burial and patch cables"
+        },
+        "jc.blue": {
+          "abbr": "BLU",
+          "color": "#FF1F5FA8",
+          "displayName": "Blue",
+          "meaning": "Control — touchscreen / IR balun / RS-232 balun"
+        },
+        "jc.green": {
+          "abbr": "GRN",
+          "color": "#FF1E8449",
+          "displayName": "Green",
+          "meaning": "A/V distribution drops"
+        },
+        "jc.grey": {
+          "abbr": "GRY",
+          "color": "#FF9AA0A6",
+          "displayName": "Grey",
+          "meaning": "Wireless access point drops"
+        },
+        "jc.red": {
+          "abbr": "RED",
+          "color": "#FFC0392B",
+          "displayName": "Red",
+          "meaning": "External feeds, security and fire"
+        },
+        "jc.white": {
+          "abbr": "WHT",
+          "color": "#FFF2F2EF",
+          "displayName": "White",
+          "meaning": "Camera / building bridge / satellite internet"
+        },
+        "jc.yellow": {
+          "abbr": "YEL",
+          "color": "#FFEFC81E",
+          "displayName": "Yellow",
+          "meaning": "General data drops"
+        }
+      },
       "linkDesignatorFormat": "W{SEQ:3}",
       "netNameFormat": "N{SEQ:3}",
       "outletFieldLabelFormat": "{ROOM_ABBR}-{SERVICE}-{SEQ}",

@@ -535,12 +535,29 @@ JsonMap _encodeJacketColorDef(JacketColorDef d) => {
   'meaning': d.meaning,
 };
 
+/// The three REQUIRED fields are strict; `meaning` is not.
+///
+/// `JacketColorDef.meaning` is the one field the model declares optional
+/// (`this.meaning = ''`), and its default is a VALUE — "the user has not
+/// said" (G4). `asStr(null, …)` THROWS, so requiring the key on disk made
+/// a field the model says is optional mandatory in the file, and one
+/// missing `"meaning"` — in a hand-edited `.rackmate`, or in the output
+/// of an importer that only knows a name and a swatch — turned a whole
+/// document into a "damaged file" dialog over a field whose absence and
+/// whose empty value mean exactly the same thing.
+///
+/// Same reasoning, same shape, as `?? const <String, Object?>{}` on
+/// `jacketColorConventions` below: absent and empty are indistinguishable
+/// here, so the lenient read is the one that does not throw away a file.
+/// The encoder still writes all four keys unconditionally, so nothing
+/// this build writes ever exercises the fallback and no stored bytes move
+/// (CR-117).
 JacketColorDef _decodeJacketColorDef(JsonMap json, String context) =>
     JacketColorDef(
       displayName: asStr(json['displayName'], '$context.displayName'),
       abbr: asStr(json['abbr'], '$context.abbr'),
       color: _decodeRgb(asStr(json['color'], '$context.color')),
-      meaning: asStr(json['meaning'], '$context.meaning'),
+      meaning: asStrOrNull(json['meaning'], '$context.meaning') ?? '',
     );
 
 JsonMap _encodeProjectSettings(ProjectSettings s) => {

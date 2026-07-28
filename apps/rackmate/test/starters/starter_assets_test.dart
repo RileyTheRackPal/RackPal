@@ -236,6 +236,121 @@ void main() {
     });
   });
 
+  group('jacket colour ships as real data, off real disk', () {
+    // THE VACUITY GUARD for check 12 in `starter_integrity.dart`. That
+    // check iterates `Link.jacketColorId` and would pass by iterating
+    // nothing at all, so the corpus has to be shown to actually contain
+    // the thing it guards. Three of the four starters carry zero links;
+    // `whole_house` carries all 27.
+    //
+    // EXPECTATIONS ARE LITERALS. Comparing against
+    // `buildDefaultJacketColorConvention()` would be the constant
+    // confirming itself — the self-referential shape this project has
+    // shipped before.
+    Future<RackDocument> read(String fileName) async {
+      final opened = await _diskStore().open(
+        '$kStarterAssetDirectory/$fileName',
+      );
+      return (opened as Ok<OpenedDocument>).value.document;
+    }
+
+    for (final source in kStarterSources) {
+      test(
+        '${source.fileName} carries the seven-entry seed convention',
+        () async {
+          final doc = await read(source.fileName);
+          expect(
+            doc.settings.jacketColorConventions.keys.map((k) => k.v).toSet(),
+            {
+              'jc.yellow',
+              'jc.blue',
+              'jc.green',
+              'jc.grey',
+              'jc.white',
+              'jc.red',
+              'jc.black',
+            },
+            reason:
+                'the convention is seeded at document CREATION. If it is '
+                'missing here, either the seeding line was dropped from '
+                '`StarterAuthor.newDocument` or the assets predate it.',
+          );
+          final blue =
+              doc.settings.jacketColorConventions[const JacketColorId(
+                'jc.blue',
+              )]!;
+          expect(blue.abbr, 'BLU');
+          expect(blue.displayName, 'Blue');
+        },
+      );
+    }
+
+    test('whole_house pulls colour on its category runs and NOT on the '
+        'others', () async {
+      final doc = await read('whole_house.rackmate');
+      final coloured = [
+        for (final l in doc.links.values)
+          if (l.jacketColorId != null) l,
+      ];
+      expect(
+        coloured,
+        hasLength(15),
+        reason:
+            'the fifteen Cat6 home runs each carry a jacket colour. If '
+            'this is zero, check 12 in starter_integrity.dart is '
+            'iterating an empty list and proving nothing.',
+      );
+      expect(
+        coloured.every((l) => l.media.v == 'media.cat6_utp'),
+        isTrue,
+        reason:
+            "the integrator's convention is about CATEGORY CABLE. A "
+            'coloured RG6, speaker or fibre run is an invented fact.',
+      );
+      expect(
+        doc.links.values.where((l) => l.jacketColorId == null),
+        hasLength(12),
+        reason:
+            'the twelve non-category runs must stay NULL — unknown, not '
+            'guessed (G4).',
+      );
+      // Set EQUALITY carries the "which five" question alone. Two
+      // `isNot(contains(…))` lines for red and black used to follow,
+      // reading as guards on the third state; they guarded nothing,
+      // because any state in which either appears has already failed the
+      // equality above.
+      final used = coloured.map((l) => l.jacketColorId!.v).toSet();
+      expect(used, {'jc.yellow', 'jc.blue', 'jc.green', 'jc.grey', 'jc.white'});
+      expect(
+        doc.settings.jacketColorConventions.keys.map((k) => k.v),
+        containsAll(<String>['jc.red', 'jc.black']),
+        reason:
+            'the third state the format exists to express: STOCKED but '
+            'not pulled. Both must be in the legend while no run claims '
+            'them — a convention pruned to what this job happens to use '
+            'would delete the shop’s convention.',
+      );
+    });
+
+    test('the colour of a run follows its PURPOSE, not its media', () async {
+      // Fifteen runs, one media type, five different colours. A build
+      // that derived colour from `media` — the obvious wrong shortcut —
+      // would give all fifteen the same one and still pass every
+      // referential check above.
+      final doc = await read('whole_house.rackmate');
+      String colourOf(String fieldLabel) => doc.links.values
+          .firstWhere((l) => l.structureOrigin?.fieldLabel == fieldLabel)
+          .jacketColorId!
+          .v;
+
+      expect(colourOf('GR-DATA-1'), 'jc.yellow'); // general data drop
+      expect(colourOf('GR-DATA-3'), 'jc.blue'); // touchpanel back box
+      expect(colourOf('GR-DATA-4'), 'jc.grey'); // ceiling access point
+      expect(colourOf('GAR-DATA-1'), 'jc.white'); // driveway camera
+      expect(colourOf('MED-DATA-1'), 'jc.green'); // HDBaseT distribution
+    });
+  });
+
   test('every device kind in a starter matches what the palette would '
       'have produced', () {
     // `starterDeviceKindFor` is a transcription of

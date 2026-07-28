@@ -108,7 +108,16 @@ Four regions. **Left** is the location tree, shown read-only with an inline "edi
 
 ### 4.1 Table columns
 
-Default columns are the ones a person needs to answer "what am I pulling and where does it land": field label, rack label, outlet, media, service, pathway, rack termination, rough-in status. **Optional columns**, off by default, added from `⚙ Columns`: jacket rating, jacket colour, conduit, `routedLength` / `cutLength` / `terminatedLength`, field termination, test result and certificate ID, installed by, notes, and any `unknown`-map columns preserved from a CSV import. Jacket colour and conduit were demoted from default to optional and reel ID was cut entirely (RJ-004).
+Default columns are the ones a person needs to answer "what am I pulling and where does it land": field label, rack label, outlet, media, service, pathway, rack termination, rough-in status. **Optional columns**, off by default, added from `⚙ Columns`: jacket rating, jacket colour (convention), **jacket colour pulled** (the exception), conduit, `routedLength` / `cutLength` / `terminatedLength`, field termination, test result and certificate ID, installed by, notes, and any `unknown`-map columns preserved from a CSV import. Jacket colour and conduit were demoted from default to optional and reel ID was cut entirely (RJ-004).
+
+Jacket colour is **two optional columns, not one**, because it is two facts.
+`Link.jacketColorId` says what the run IS (a control drop) and drives the
+keystone; `Link.jacketColorPulledId` says what was actually pulled and is set
+only when the two differ — null is the normal case. A tech at prewire fills the
+second column and leaves the first alone; clearing the first does not clear the
+second, because "a yellow jacket on a run nobody has classified" is a legal and
+useful state. Both are `Command`-backed (`SetLinkJacketColorCommand`,
+`SetLinkPulledJacketColorCommand`) so each undoes on its own.
 
 Grid operations are the device builder's, unchanged: fill-down, fill-series, multi-row edit, duplicate, delete, reorder, find/replace, TSV copy-paste, renumber. Inline editing is the primary path — a cell is one click and a keystroke, and every edit is a `Command` on the undo stack.
 
@@ -177,8 +186,22 @@ Header matching is case-, space-, underscore- and hyphen-insensitive. Every sour
 | rack-end termination → `PlaceEndpoint.intendedTermination` | `termination_rack`, `rack_end`, `panel`, `panel_port`, `head_end` | see note |
 | `terminationField` | `termination_field`, `device_end`, `field_end`, `far_end` | |
 | `roughInStatus` | `status`, `state`, `phase` | |
-| `jacket` / `jacketColor` | `jacket`, `color`, `colour`, `jacket_color` | |
+| `jacket` / `jacketColor` | `jacket`, `color`, `colour`, `jacket_color` | the CONVENTION side — what the run is |
+| `jacketColorPulled` | `color_pulled`, `colour_pulled`, `jacket_color_pulled`, `actual_color`, `as_pulled` | the EXCEPTION side; see note |
 | `notes` | `notes`, `comments`, `remarks`, `note` | |
+
+> **The two jacket-colour columns import independently, and a value naming no
+> convention entry is KEPT.** A contractor's pull list carries words (`BLU`,
+> `Blue`), which map to a `JacketColorId`; a colour with no matching entry is
+> imported as a dangling id and COUNTED as unknown
+> (`ResolvedJacketColor.hasUnknownEntry`), never dropped and never silently
+> mapped to the nearest entry — the id is the one record that a particular colour
+> went in a particular wall, and it must outlive the entry naming it. A row
+> carrying only an as-pulled colour, with nothing saying what the run is for, is
+> likewise imported as-is: promoting it to the convention column would assert a
+> purpose nobody stated (G4). An as-pulled value **equal** to the convention
+> value is not an exception and normalises to absent, so an exceptions count can
+> never be inflated by no-op imports.
 
 > There is no `terminationRack` field. `StructureDrop` is deleted and a home run *is* a `Link`
 > (CR-107, AC-019); `StructureOrigin` carries `terminationField` for the wall-plate end only. The

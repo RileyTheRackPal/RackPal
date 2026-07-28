@@ -67,14 +67,9 @@ EntityMeta _meta() => EntityMeta(
 
 const _linkId = Uuid('0190e3c1-cf80-75bb-96ac-d3b7ef294cab');
 
-Link _link({
-  JacketColorId? convention,
-  JacketColorId? pulled,
-  Uuid id = _linkId,
-  String designator = 'W001',
-}) => Link(
-  id: id,
-  designator: designator,
+Link _link({JacketColorId? convention, JacketColorId? pulled}) => Link(
+  id: _linkId,
+  designator: 'W001',
   media: const MediaTypeId('media.cat6_utp'),
   order: const FracIndex('a0'),
   meta: _meta(),
@@ -350,26 +345,20 @@ void main() {
       );
     });
 
-    test('state 3, both set and differing: TWO keys, adjacent and '
-        'sorted', () {
+    test('state 3, both set and differing: TWO keys', () {
       final json = _linkJson(_doc(convention: _blue, pulled: _yellow));
       expect(json['jacketColorId'], 'jc.blue');
       expect(json['jacketColorPulledId'], 'jc.yellow');
-
-      // Sorted-key adjacency is deliberate: the pair must read as a pair
-      // when a human opens a `.rackmate` in an editor.
-      final text = utf8.decode(_codec.write(_doc(
-        convention: _blue,
-        pulled: _yellow,
-      )));
-      expect(
-        text.indexOf('"jacketColorId"'),
-        lessThan(text.indexOf('"jacketColorPulledId"')),
-      );
-      expect(
-        text.indexOf('"jacketColorPulledId"'),
-        lessThan(text.indexOf('"lifecycleStatus"')),
-      );
+      // NO ORDERING ASSERTION HERE, deliberately. Two `indexOf`
+      // comparisons used to sit below, claiming the pair's adjacency in
+      // the file was "deliberate". They measured nothing this file owns:
+      // `encodeJsonTreeBytes` runs `deepSortKeys` over the whole tree
+      // before encoding, so swapping the two `putIfNotNull` calls in
+      // `_encodeLink` left them green — they restated that
+      // `"jacketColorId" < "jacketColorPulledId" < "lifecycleStatus"` in
+      // ASCII, a property of three string literals. The canonical sort
+      // is `byte_roundtrip_test.dart`'s to guard; the two key NAMES are
+      // guarded by the two assertions above.
     });
 
     test('state 4, override only: the override key alone, with NO '
@@ -422,15 +411,17 @@ void main() {
 
     test('a DANGLING override id decodes INTACT — the one record that a '
         'wrong colour went in the wall outlives the entry naming it', () {
+      // NO `containsKey(_ghost), isFalse` HERE. That assertion sat below
+      // and could not fail: `_decodeProjectSettings` builds the
+      // convention map solely from `json['jacketColorConventions']` and
+      // `_decodeLink` never receives it, so the two share no state and no
+      // decoder mutation can make a link's id manufacture an entry. The
+      // live property is that the ID SURVIVES the entry, which is what
+      // the two assertions here actually measure.
       final doc = _doc(convention: _blue, pulled: _ghost);
       final reread = _reread(doc);
 
       expect(reread.links[_linkId]!.jacketColorPulledId, _ghost);
-      expect(
-        reread.settings.jacketColorConventions.containsKey(_ghost),
-        isFalse,
-        reason: 'the decoder must not invent the entry the id names',
-      );
       expect(
         resolveJacketColor(
           reread.links[_linkId]!,
@@ -438,94 +429,6 @@ void main() {
         ).isException,
         isTrue,
       );
-    });
-  });
-
-  group('jacketColorRollup — the definition T0.02 EXCEPTIONS will '
-      'consume', () {
-    List<Link> corpus() => [
-      // Two ordinary control drops.
-      _link(convention: _blue, id: const Uuid('l1')),
-      _link(convention: _blue, id: const Uuid('l2'), designator: 'W002'),
-      // One control drop pulled in yellow — THE EXCEPTION.
-      _link(
-        convention: _blue,
-        pulled: _yellow,
-        id: const Uuid('l3'),
-        designator: 'W003',
-      ),
-      // An observed yellow jacket nobody has said the purpose of.
-      _link(pulled: _yellow, id: const Uuid('l4'), designator: 'W004'),
-      // Nobody has said anything at all.
-      _link(id: const Uuid('l5'), designator: 'W005'),
-      // An exception whose override names a deleted entry.
-      _link(
-        convention: _blue,
-        pulled: _ghost,
-        id: const Uuid('l6'),
-        designator: 'W006',
-      ),
-    ];
-
-    test('counts each state independently', () {
-      final r = jacketColorRollup(corpus(), _convention());
-
-      expect(r.exceptionCount, 3, reason: 'l3, l4 and l6');
-      expect(r.pulledOnlyCount, 1, reason: 'l4 alone');
-      expect(r.unrecordedCount, 1, reason: 'l5 alone');
-      expect(r.unknownEntryCount, 1, reason: 'l6 alone');
-      expect(r.exceptionLinkIds, [
-        const Uuid('l3'),
-        const Uuid('l4'),
-        const Uuid('l6'),
-      ]);
-    });
-
-    test('per-convention counts index WHAT THE RUN IS, not what went in '
-        'the wall', () {
-      // l3 is a CONTROL drop that happens to be yellow in the wall. It
-      // belongs to blue's count, because that is what its keystone will
-      // be and what its legend row means. MUTATION: count by
-      // `asBuiltColorId` instead and blue drops to 3 while yellow
-      // appears with 1.
-      final r = jacketColorRollup(corpus(), _convention());
-
-      expect(r.perConventionCount[_blue], 4, reason: 'l1, l2, l3, l6');
-      expect(
-        r.perConventionCount.containsKey(_yellow),
-        isFalse,
-        reason:
-            'nothing in this corpus IS a general data drop — l3 and l4 '
-            'are merely yellow in the wall',
-      );
-      expect(r.perConventionCount.containsKey(_grey), isFalse);
-    });
-
-    test('an empty corpus reports zeroes, not nulls', () {
-      final r = jacketColorRollup(const [], _convention());
-      expect(r.exceptionCount, 0);
-      expect(r.unrecordedCount, 0);
-      expect(r.perConventionCount, isEmpty);
-      expect(r.exceptionLinkIds, isEmpty);
-    });
-
-    test('a corpus of only-unrecorded runs is distinguishable from a '
-        'corpus with no exceptions in it', () {
-      // `exceptionCount: 0` alone cannot tell "4 recorded runs, none
-      // wrong" from "400 runs nobody coloured". That is why
-      // `unrecordedCount` is reported rather than inferred.
-      final silent = jacketColorRollup([
-        _link(id: const Uuid('s1')),
-        _link(id: const Uuid('s2')),
-      ], _convention());
-      final clean = jacketColorRollup([
-        _link(convention: _blue, id: const Uuid('c1')),
-        _link(convention: _blue, id: const Uuid('c2')),
-      ], _convention());
-
-      expect(silent.exceptionCount, clean.exceptionCount);
-      expect(silent.unrecordedCount, 2);
-      expect(clean.unrecordedCount, 0);
     });
   });
 }

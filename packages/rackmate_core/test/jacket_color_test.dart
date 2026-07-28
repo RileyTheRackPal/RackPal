@@ -145,29 +145,24 @@ void main() {
       );
       final link = _reread(doc).links[_linkId]!;
       expect(link.jacketColorId?.v, 'jc.nonexistent');
-      expect(
-        _reread(doc).settings.jacketColorConventions,
-        isNot(contains(const JacketColorId('jc.nonexistent'))),
-        reason:
-            'the decoder must not invent the entry the dangling id names '
-            '— unknown is counted, never manufactured',
-      );
-    });
-
-    test('and is not silently substituted with the first entry', () {
-      final link = _reread(
-        _docWithLink(
-          jacketColorId: const JacketColorId('jc.nonexistent'),
-          convention: {
-            const JacketColorId('jc.blue'): const JacketColorDef(
-              displayName: 'Blue',
-              abbr: 'BLU',
-              color: Rgb(0x1F, 0x5F, 0xA8),
-            ),
-          },
-        ),
-      ).links[_linkId]!;
-      expect(link.jacketColorId?.v, isNot('jc.blue'));
+      // WHAT IS NOT ASSERTED HERE, AND WHY. Two assertions used to
+      // follow: that the reread convention map does not CONTAIN
+      // `jc.nonexistent`, and — as a separate test — that the id is
+      // `isNot('jc.blue')`, guarding against substitution with the first
+      // entry. Neither could fail.
+      //
+      // `_decodeProjectSettings` builds the convention map solely from
+      // `json['jacketColorConventions']`, and `Link _decodeLink(Uuid,
+      // JsonMap)` never receives it — the two share no state, so no
+      // decoder mutation short of a signature change can make a link's
+      // id either manufacture an entry or resolve to one. And
+      // `isNot('jc.blue')` is satisfied by NULL, so the substitution
+      // test survived the very mutation it was written for (replacing
+      // `_decodeLink`'s `jacketColorId:` argument with a literal null),
+      // which the exact-equality assertion above kills outright.
+      //
+      // The live property is the one measured above: the id arrives
+      // INTACT. Fabrication risk lives in a future consumer, not here.
     });
   });
 
@@ -307,6 +302,97 @@ void main() {
       );
     });
 
+    test('an entry with NO meaning key decodes to the empty meaning, not '
+        'a damaged file', () {
+      // `meaning` is the ONE field `JacketColorDef` declares optional
+      // (`this.meaning = ''`), and the decoder required it: `asStr(null,
+      // …)` throws, so a single missing key made a whole document
+      // unopenable over a field whose absence and whose empty value are
+      // the same fact. A hand-edited `.rackmate` and an importer that
+      // knows only a name and a swatch both produce exactly this.
+      //
+      // MUTATION: put `asStr` back in `_decodeJacketColorDef` and this
+      // is a `FormatException` instead of an `Ok`.
+      final root =
+          jsonDecode(
+                utf8.decode(
+                  _codec.write(
+                    _docWithLink(
+                      convention: {
+                        const JacketColorId('jc.blue'): const JacketColorDef(
+                          displayName: 'Blue',
+                          abbr: 'BLU',
+                          color: Rgb(0x1F, 0x5F, 0xA8),
+                          meaning: 'Control',
+                        ),
+                      },
+                    ),
+                  ),
+                ),
+              )
+              as Map<String, Object?>;
+      final document = root['document']! as Map<String, Object?>;
+      final settings = document['settings']! as Map<String, Object?>;
+      final conventions =
+          settings['jacketColorConventions']! as Map<String, Object?>;
+      final blue = conventions['jc.blue']! as Map<String, Object?>;
+      expect(blue.remove('meaning'), 'Control', reason: 'the key was there');
+
+      final decoded = _codec.read(
+        Uint8List.fromList(utf8.encode(jsonEncode(root))),
+      );
+      expect(
+        decoded,
+        isA<Ok<RackDocument>>(),
+        reason:
+            'one absent OPTIONAL key must not cost the user the whole '
+            'document. Every other field of the entry is intact.',
+      );
+      final def = (decoded as Ok<RackDocument>)
+          .value
+          .settings
+          .jacketColorConventions[const JacketColorId('jc.blue')]!;
+      expect(def.meaning, '');
+      expect(def.abbr, 'BLU', reason: 'the rest of the entry survives');
+      expect(def.color, const Rgb(0x1F, 0x5F, 0xA8));
+    });
+
+    test('a MISSING required key is still a damaged file', () {
+      // Vacuity guard on the leniency above: `displayName`, `abbr` and
+      // `color` are `required` on the model and must stay strict, or the
+      // fix would have quietly turned the whole entry optional and let a
+      // half-written convention decode as blanks.
+      final root =
+          jsonDecode(
+                utf8.decode(
+                  _codec.write(
+                    _docWithLink(
+                      convention: {
+                        const JacketColorId('jc.blue'): const JacketColorDef(
+                          displayName: 'Blue',
+                          abbr: 'BLU',
+                          color: Rgb(0x1F, 0x5F, 0xA8),
+                        ),
+                      },
+                    ),
+                  ),
+                ),
+              )
+              as Map<String, Object?>;
+      final blue =
+          ((((root['document']! as Map<String, Object?>)['settings']!
+                          as Map<String, Object?>)['jacketColorConventions']!
+                      as Map<String, Object?>)['jc.blue']!
+                  as Map<String, Object?>)
+              ..remove('abbr');
+      expect(blue.containsKey('abbr'), isFalse);
+
+      expect(
+        _codec.read(Uint8List.fromList(utf8.encode(jsonEncode(root)))),
+        isNot(isA<Ok<RackDocument>>()),
+      );
+    });
+
     test('a bare ProjectSettings() carries no convention', () {
       // If the seven were a CONSTRUCTOR default, this would be seven —
       // and so would every decoded old file, because `_decodeProjectSettings`
@@ -396,8 +482,10 @@ void main() {
       final settings = _settingsJson(doc);
       final written =
           settings['jacketColorConventions']! as Map<String, Object?>;
+      // Set EQUALITY, not a containment pair. A `containsKey('jc.blue'),
+      // isFalse` line sat below and could never disagree with this: any
+      // state in which blue survived has already failed the equality.
       expect(written.keys.toSet(), {'jc.orange', 'jc.violet'});
-      expect(written.containsKey('jc.blue'), isFalse);
 
       final reread = _reread(doc);
       expect(reread.settings.jacketColorConventions, hasLength(2));

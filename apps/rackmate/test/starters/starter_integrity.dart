@@ -34,6 +34,8 @@
 //   11. `ruUnknownCount == 0` — every rail device's
 //       occupancy is KNOWN, so the chip strip's RU
 //       figure is complete rather than optimistic        (G4)
+//   12. every `Link.jacketColorId` names an entry the
+//       document itself carries                          (referential)
 //
 // ==================================================================
 // THE ONE EXEMPTION, AND WHY IT IS NAMED RATHER THAN BROAD
@@ -219,6 +221,35 @@ void _expectReferencesResolve(RackDocument doc, String of) {
         'link ${link.designator} pathway',
         ok: doc.pathways.containsKey(pathway),
       );
+    }
+    // A SHIPPED document may not carry a dangling jacket colour.
+    //
+    // The rule for a USER'S file is the opposite and deliberately so: a
+    // `jacketColorId` naming an entry that has since been deleted
+    // decodes intact and is COUNTED as unknown (G4), because the colour
+    // that was pulled is a fact about the building and dropping it
+    // would destroy the only record of it. But a document THIS BUILD
+    // authors and ships has no excuse for one — it is a legend entry
+    // somebody forgot to write, and every consumer of it will render
+    // `unknown` forever.
+    //
+    // BOTH STORED IDS, not just the convention one. `jacketColorPulledId`
+    // is the ONE record that a wrong colour went in the wall
+    // (jacket_color_resolution.dart, json_codec.dart), so a shipped
+    // starter carrying an override that names no legend entry would
+    // render `unknown` forever with nothing to fix it against. No starter
+    // sets the field today, which is exactly when the guard is cheapest
+    // to add and likeliest to be forgotten.
+    for (final (what, id) in <(String, JacketColorId?)>[
+      ('jacket colour', link.jacketColorId),
+      ('pulled jacket colour', link.jacketColorPulledId),
+    ]) {
+      if (id != null) {
+        resolves(
+          'link ${link.designator} $what ${id.v}',
+          ok: doc.settings.jacketColorConventions.containsKey(id),
+        );
+      }
     }
     final origin = link.structureOrigin;
     if (origin != null) {
