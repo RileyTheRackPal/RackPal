@@ -605,6 +605,38 @@ void main() {
       expect(find.text('Untitled contains no racks.'), findsOneWidget);
     });
 
+    testWidgets('…and the panel is no longer a dead end: New rack creates '
+        'one and the elevation opens on it', (tester) async {
+      final empty = RackDocument(
+        id: const Uuid('rackless-createable'),
+        appVersion: '0.1.0',
+        createdAt: DateTime.utc(2026),
+        modifiedAt: DateTime.utc(2026),
+        meta: EntityMeta(
+          createdAt: DateTime.utc(2026),
+          updatedAt: DateTime.utc(2026),
+          updatedBy: 'test',
+        ),
+      );
+      await pump(tester, document: empty);
+
+      await tester.tap(find.text('New rack…'));
+      await tester.pumpAndSettle();
+      expect(find.byType(NewRackDialog), findsOneWidget);
+
+      await tester.tap(find.text('Create'));
+      await tester.pumpAndSettle();
+
+      // The document gained the rack…
+      expect(empty.racks, hasLength(1));
+      expect(empty.racks.values.single.heightU, 42);
+      expect(empty.racks.values.single.designator, 'RK-1');
+      // …and the shell swapped the honest panel for the real editor,
+      // which is the whole point of the button.
+      expect(find.byType(NoRacksView), findsNothing);
+      expect(find.byType(RackCanvasScreen), findsOneWidget);
+    });
+
     testWidgets('the status line reports a successful save', (tester) async {
       await pump(tester, savePaths: [_target]);
       await press(tester, LogicalKeyboardKey.keyS);

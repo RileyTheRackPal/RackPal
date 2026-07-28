@@ -170,20 +170,28 @@ void main() {
   });
 
   group('NoRacksView', () {
-    testWidgets('names the document and offers nothing it cannot do', (
+    testWidgets('names the document, and its one button creates a rack', (
       tester,
     ) async {
+      var pressed = 0;
       await tester.pumpWidget(
-        const MaterialApp(home: NoRacksView(documentName: 'Smith Residence')),
+        MaterialApp(
+          home: NoRacksView(
+            documentName: 'Smith Residence',
+            onNewRack: () => pressed++,
+          ),
+        ),
       );
 
       expect(find.text('Smith Residence contains no racks.'), findsOneWidget);
-      // An empty rack canvas here would be the same lie the Schedule tab
-      // was rescued from: rails and a ruler for a rack that is not in the
-      // document.
-      expect(find.byType(ElevatedButton), findsNothing);
-      expect(find.byType(TextButton), findsNothing);
-      expect(find.byType(FilledButton), findsNothing);
+      expect(find.text(NoRacksView.detail), findsOneWidget);
+      // An empty rack canvas here would be the same lie the Schedule tab was
+      // rescued from: rails and a ruler for a rack that is not in the
+      // document. What the panel DOES offer is the one thing it can honour.
+      expect(find.byType(FilledButton), findsOneWidget);
+      await tester.tap(find.text('New rack…'));
+      await tester.pump();
+      expect(pressed, 1);
     });
   });
 }

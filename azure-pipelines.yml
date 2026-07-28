@@ -1,0 +1,495 @@
+# ======================================================================
+# RackMate CI — Azure DevOps, Windows.
+# ======================================================================
+#
+# ----------------------------------------------------------------------
+# WHAT IS VERIFIED AND WHAT IS NOT. READ THIS FIRST.
+# ----------------------------------------------------------------------
+# This file was written on a developer machine. NO AZURE DEVOPS RUN HAS
+# EVER EXECUTED IT. Saying otherwise would be the fifth time in this
+# project's history that a claim outran its evidence, so the two halves are
+# separated here and neither is dressed up as the other.
+#
+# VERIFIED — every command below was run on a Windows 11 machine with the
+# pinned toolchain (Flutter 3.44.4 stable, Dart 3.12.2), and the gate
+# scripts were mutation-tested, meaning each was deliberately broken and
+# observed to FAIL before being restored:
+#
+#   * tools/ci/analyze_gate.ps1 — reads 0 errors / 0 warnings / 195 infos
+#     and exits 0. Planting one long line in apps/rackmate made it read 196
+#     and exit 1; planting an unused local made it read a warning and exit 1;
+#     planting a type error made it read 2 errors and exit 1. Its
+#     `dart analyze --format=machine` output was also compared issue by
+#     issue against `flutter analyze` — 195 apiece, symmetric difference
+#     empty — so the gate and the command a developer types by hand agree.
+#   * tools/ci/run_suite.ps1 + tools/ci/junit_from_dart_test.py — run
+#     end to end against `dart test` and `flutter test`, with a real
+#     assertion failure, a real SKIP, and a real COMPILE failure, each of
+#     which produced a non-zero exit and a well-formed JUnit document
+#     carrying the diagnostic. The converter's case counts reproduce this
+#     repository's own published totals exactly for three of the five suites
+#     (rackmate_export 183, rackmate_text 1, apps/rackmate 664), which is
+#     what makes the non-vacuity floors below trustworthy numbers.
+#   * The non-vacuity floor — a floor of 500 over a genuinely-passing
+#     183-test suite failed with exit 1, so "everything passed" cannot by
+#     itself satisfy it. AND it counts NON-SKIPPED cases only: measured
+#     against a 3-test package with `skip:` on every test, the floor now
+#     fails where it previously passed, so silencing a flaky batch cannot
+#     buy a green run.
+#   * tools/ci/verify_tracked_sources.ps1 — exits 1 naming the two lib/
+#     sources of this changeset that git did not yet know about, and 0 once
+#     a lib/ tree is fully tracked. It is the local half of "would a clone
+#     of this commit even compile".
+#   * tools/ci/junit_converter_selftest.py — 13 mutants of the converter,
+#     13 caught, 0 survivors.
+#   * tools/ci/ensure_flutter.ps1 -VerifyOnly — passes against the real
+#     3.44.4 toolchain and exits 1 when told to require 3.45.0.
+#   * tools/ci/verify_windows_build.ps1 — passes against a real Release
+#     build; fails when a dartjni.dll is planted, when a plugin DLL is
+#     removed, when a packaged starter is CRLF-corrupted, and when the exe
+#     is missing.
+#   * python tools/pal1_check.py and python tools/palette_parity.py — exit 0.
+#   * All five suites and `flutter build windows --release` — green.
+#
+# NOT VERIFIED, and only the first real run can prove it:
+#
+#   * THE YAML SCHEMA ITSELF. It is well-formed YAML (parsed locally) and
+#     follows documented Azure Pipelines task shapes, but no Azure DevOps
+#     service has validated it. Expect to fix task-name or input typos on
+#     run 1.
+#   * THE FLUTTER SDK DOWNLOAD in tools/ci/ensure_flutter.ps1. The archive
+#     URL follows Google's long-standing pattern, but 3.44.4 postdates the
+#     author's knowledge and the URL was never fetched. If it 404s, the fix
+#     is one line in that script. THE MEASUREMENT AFTER IT IS THE POINT: a
+#     wrong SDK fails the build loudly rather than quietly.
+#   * THAT THE HOSTED IMAGE CAN BUILD DESKTOP WINDOWS. `windows-2022`
+#     carries the VS2022 C++ desktop workload, which `flutter build windows`
+#     needs. If the image has been retired or the workload moved, step
+#     "Build Windows release" is where it shows.
+#   * WALL-CLOCK TIME. The timeout below is an estimate, not a measurement.
+#   * PR VALIDATION. For an Azure Repos Git repository the `pr:` block below
+#     is IGNORED by the service — PR triggers come from a branch policy.
+#     Add "Build validation" on `main` pointing at this pipeline, or nothing
+#     here gates a pull request.
+#
+# ----------------------------------------------------------------------
+# GOLDENS ARE NOT IN THIS PIPELINE, AND THAT IS DELIBERATE.
+# ----------------------------------------------------------------------
+# The roadmap's per-milestone rule is "CI passes, goldens pass, the app
+# opens the four starter projects". This pipeline satisfies the FIRST limb
+# and no more, and it must not be read as satisfying the others.
+#
+#   * GOLDENS: there are zero. No `matchesGoldenFile`, no `goldens/`
+#     directory, no `@Tags(['golden'])`, and no `flutter_test_config.dart`
+#     for docs/11 section 3.1's FontLoader registration to live in
+#     (docs/12 section 4.3). Standing them up is a real piece of work —
+#     choosing the display-list-versus-pixel split, pinning the font
+#     environment, and generating a first corpus that somebody has actually
+#     read — and doing it inside a CI task would produce a corpus blessed by
+#     nobody, which is worse than none. IT IS ITS OWN TASK. There is
+#     deliberately no `--tags golden` step here, and deliberately no
+#     `--exclude-tags golden` either: the first golden somebody writes will
+#     run in the ordinary suites below rather than being silently skipped.
+#   * "THE APP OPENS THE FOUR STARTER PROJECTS": not runnable headless
+#     without an `integration_test` target this repository does not have.
+#     What IS checked is one step short of it and is labelled as such —
+#     tools/ci/verify_windows_build.ps1 asserts the four starters were
+#     PACKAGED into the shipped bundle and are byte-intact there.
+#
+# ----------------------------------------------------------------------
+# WHY WINDOWS, AND ONLY WINDOWS
+# ----------------------------------------------------------------------
+# `flutter build windows` is required, and several suites are Windows-
+# specific: the first-party IFileDialog channel in apps/rackmate/windows/
+# runner/, apps/rackmate/test/session/registry_claim_test.dart, and MAX_PATH
+# handling in the storage layer. docs/11 section 7 sketches a three-OS
+# matrix; that is a later question, and a green Linux job would not tell us
+# anything about the product, which ships as a Windows desktop application.
+#
+# ----------------------------------------------------------------------
+# A CLEAN CHECKOUT IS ITSELF A GATE
+# ----------------------------------------------------------------------
+# During the persistence stage `*.rackmate` matched no `.gitattributes`
+# rule, so a fresh clone on Windows would have checked the byte-exact
+# starter assets out as CRLF and failed CR-117 — a defect invisible on a
+# working tree that already had them right. `workspace: clean: all` plus
+# `checkout: clean: true` is what makes this pipeline test the CLONE and not
+# a leftover directory, and the "Checkout forensics" step records the
+# `core.autocrlf` the agent actually used, so the answer is in the log
+# rather than assumed.
+#
+# THE SAME CLASS BIT AGAIN, DIFFERENTLY, WHILE THIS FILE WAS BEING WRITTEN.
+# `packages/rackmate_core/lib/rackmate_core.dart` was committed carrying
+# `export 'src/commands/rack_commands.dart';` while that file was never
+# added to the index. Locally everything stayed green — the file is on the
+# disk, so the analyzer resolved it and all five suites passed — and a clone
+# of that commit gets an `export` of a URI that does not exist, which is an
+# analyzer ERROR and a compile failure in every package importing the
+# barrel. THAT is the failure this job's clean clone catches on run 1, and
+# it is why `tools/ci/verify_tracked_sources.ps1` now asks git the cheap
+# half of the question before a commit is made. Nothing in this job needs
+# that script (a clone has no untracked files by construction); it exists so
+# the answer arrives before the push rather than after it.
+# ======================================================================
+
+trigger:
+  branches:
+    include:
+      - main
+
+# IGNORED for Azure Repos Git — kept because it documents the intent and
+# becomes live if this repository is ever mirrored to GitHub. Real PR
+# validation is a branch policy. See the header.
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  # ==================================================================
+  # THE FLUTTER PIN. ONE PLACE. docs/03-architecture.md section 10.2.
+  # ==================================================================
+  # This resolves that section's standing VERIFY item. The corpus named two
+  # stable versions — design-architecture.md targets 3.44.4, the canvas
+  # research reported 3.41 — and the pin is load-bearing because a minor
+  # bump routinely shifts antialiasing by a pixel, so golden regeneration
+  # must be a deliberate, reviewed step of every upgrade. The local
+  # toolchain is 3.44.4 and design-architecture.md targets 3.44.4, so
+  # 3.44.4 is the resolution.
+  #
+  # CHANGING THIS NUMBER IS A REVIEWED ACT. When goldens exist, the same
+  # commit regenerates them and the diff gets read (docs/11 section 9,
+  # item 9).
+  flutterVersion: '3.44.4'
+  # The framework revision 3.44.4 resolved to on the machine this pipeline
+  # was written on. WARNED ABOUT, NOT ENFORCED, because there are no
+  # goldens for it to protect yet — see tools/ci/ensure_flutter.ps1, which
+  # says where to promote it to a hard failure.
+  flutterFrameworkRevision: 'ad70ec4617166f1c38e5d2bfd388af71fda14f06'
+
+  # Test streams and JUnit reports. Under build/ because that directory is
+  # gitignored AND is skipped by the repo sweep in
+  # apps/rackmate/test/gitattributes_byte_exactness_test.dart — writing CI
+  # output anywhere else makes that test report files no clone ever sees.
+  ciOutDir: '$(Build.SourcesDirectory)/build/ci'
+
+  # A known, cacheable location for the pub cache.
+  PUB_CACHE: '$(Pipeline.Workspace)/.pub-cache'
+
+jobs:
+  - job: windows_ci
+    displayName: 'Analyze, test, build (Windows)'
+    # An estimate. The five suites plus a cold Windows build have never been
+    # timed on a hosted agent; raise it if run 1 is cut off rather than
+    # assuming a hang.
+    timeoutInMinutes: 120
+
+    pool:
+      # NAMED EXPLICITLY, not `windows-latest`. A pipeline whose whole
+      # premise is that the toolchain is pinned should not sit on a moving
+      # image alias: `windows-latest` re-points itself to a new Windows and a
+      # new Visual Studio without anybody deciding to, which is the same
+      # class of silent drift the Flutter pin exists to prevent. If this
+      # image is retired the pipeline fails to START — loud, obvious, and one
+      # line to fix (the successor image is `windows-2025`), which is the
+      # trade being made here.
+      vmImage: 'windows-2022'
+
+    workspace:
+      # Delete the entire working directory before the job. THIS IS A GATE,
+      # not tidiness — see the header.
+      clean: all
+
+    steps:
+      - checkout: self
+        displayName: 'Checkout (clean clone)'
+        clean: true
+        fetchDepth: 1
+        fetchTags: false
+        persistCredentials: false
+
+      - pwsh: |
+          # NOTE ON SYNTAX: no `$(...)` subexpressions in this file's inline
+          # scripts. `$(foo)` is Azure Pipelines' own macro syntax and is
+          # substituted before PowerShell ever sees the line, so a PowerShell
+          # subexpression here is a collision waiting to confuse somebody.
+          Write-Host '== checkout forensics =='
+          $autocrlf = git config --get core.autocrlf
+          $eol = git config --get core.eol
+          $commit = git rev-parse HEAD
+          Write-Host "core.autocrlf : $autocrlf"
+          Write-Host "core.eol      : $eol"
+          Write-Host "commit        : $commit"
+          Write-Host ''
+          # The gate scripts assume `python` (3.7+, standard library only --
+          # tools/pal1_check.py already assumes it) and `pwsh` are on PATH on
+          # the hosted image. Recorded rather than pinned with
+          # UsePythonVersion, which would add a task that can fail for its own
+          # reasons; if either line below is empty, that is the explanation
+          # for whatever failed three steps later.
+          $pythonVersion = & python --version 2>&1
+          $pwshVersion = $PSVersionTable.PSVersion.ToString()
+          Write-Host "python        : $pythonVersion"
+          Write-Host "pwsh          : $pwshVersion"
+          Write-Host ''
+          Write-Host '-- how git resolved the byte-exact goldens --'
+          git check-attr text eol -- apps/rackmate/assets/starters/apartment.rackmate
+          git check-attr text eol -- packages/rackmate_core/test/fixtures/a_empty_project.rackmate.json
+          # Created here so the artifact-publish steps at the end always have
+          # a directory to point at, even when the run died before any suite
+          # wrote into it.
+          New-Item -ItemType Directory -Path '$(ciOutDir)' -Force | Out-Null
+        displayName: 'Checkout forensics'
+        # RECORDING, NOT GATING. The assertion lives in
+        # apps/rackmate/test/gitattributes_byte_exactness_test.dart, which
+        # runs in the apps/rackmate suite below and cross-checks its own
+        # reader against real `git check-attr`. This step exists so that when
+        # that test fails, the log already says what the agent's git was
+        # configured to do.
+        continueOnError: true
+
+      - task: Cache@2
+        displayName: 'Restore Flutter SDK cache'
+        inputs:
+          # Keyed on the exact version: a different pin is a different cache,
+          # never a stale one silently reused.
+          key: 'flutter | "$(Agent.OS)" | "$(flutterVersion)"'
+          path: '$(Agent.ToolsDirectory)/flutter'
+          cacheHitVar: FLUTTER_CACHE_RESTORED
+        # An optimisation only. A miss re-downloads; a CORRUPT restore is
+        # caught by the version measurement in the next step, which is why
+        # caching an SDK is safe here at all.
+        continueOnError: true
+
+      # ONE LINE ON PURPOSE. A PowerShell backtick continuation needs the
+      # backtick to be the last character on the line, and a YAML block
+      # scalar preserves trailing whitespace — so an invisible space added by
+      # an editor turns a continuation into a syntax error. Long beats
+      # fragile.
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/ensure_flutter.ps1 -Version '$(flutterVersion)' -ExpectedFrameworkRevision '$(flutterFrameworkRevision)' -InstallRoot '$(Agent.ToolsDirectory)'
+          exit $LASTEXITCODE
+        displayName: 'Install and VERIFY Flutter $(flutterVersion)'
+
+      - task: Cache@2
+        displayName: 'Restore pub cache'
+        inputs:
+          # pubspec.lock is gitignored in this repository, so it cannot be
+          # part of the key and CI resolves dependencies fresh on every run.
+          # That is a real reproducibility gap — a transitive dependency can
+          # move under a build nobody changed — but committing the lockfile
+          # is a project decision, not a CI one, so it is flagged here and
+          # not quietly changed. Keying on the pubspecs is the best available
+          # approximation.
+          key: 'pub | "$(Agent.OS)" | "$(flutterVersion)" | **/pubspec.yaml'
+          path: '$(PUB_CACHE)'
+        continueOnError: true
+
+      - pwsh: |
+          # The workspace root resolves every member (pubspec.yaml
+          # `workspace:`). `flutter pub get`, not `dart pub get`: two members
+          # depend on the Flutter SDK.
+          flutter pub get
+          exit $LASTEXITCODE
+        displayName: 'flutter pub get (workspace root)'
+
+      # ==================================================================
+      # GATE 1 — THE ANALYZER
+      # ==================================================================
+      # Zero errors, zero warnings, and a RATCHETED info count pinned in
+      # tools/ci/analyze_info_baseline.txt. The full argument for a ratchet
+      # rather than `--fatal-infos` is in the header of
+      # tools/ci/analyze_gate.ps1 and in the baseline file; the short version
+      # is that --fatal-infos would make main permanently red today (195
+      # infos) and an unbounded count is how 203 became 395 during the
+      # salvage.
+      #
+      # DELIBERATELY ABSENT: `dart format --set-exit-if-changed`. It exits 1
+      # on 88 files today. docs/12 section 4.1 records that as an open
+      # decision for the user — format the 88 files, or amend docs/11
+      # section 7 — and standing up CI should not pre-empt it. Adding it as a
+      # permanently-yellow advisory step would be worse: it trains people to
+      # ignore output, which is the exact argument docs/11 section 8 makes
+      # for strictness. When the decision is made, it is one step here.
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/analyze_gate.ps1
+          exit $LASTEXITCODE
+        displayName: 'Gate: analyzer (0 errors, 0 warnings, ratcheted infos)'
+        condition: succeededOrFailed()
+
+      # ==================================================================
+      # GATE 2 — THE PALETTE, which needs no Dart and no dependencies
+      # ==================================================================
+      # docs/11 section 7 marks pal1_check BLOCKING: exit 1 means a palette
+      # collision ships. PAL-1 was asserted "verified clear" three times
+      # against a palette holding fourteen collisions, each time by reading a
+      # table instead of enumerating the 385 in-band pairs. palette_parity
+      # is the second half — it proves the DOCUMENTS still agree with the
+      # registry — and its own docstring asks for both to run in CI.
+      - pwsh: |
+          python tools/pal1_check.py
+          exit $LASTEXITCODE
+        displayName: 'Gate: PAL-1 palette conformance'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          python tools/palette_parity.py
+          exit $LASTEXITCODE
+        displayName: 'Gate: palette docs/registry parity'
+        condition: succeededOrFailed()
+
+      # ==================================================================
+      # GATE 3 — THE REPORTING PATH ITSELF
+      # ==================================================================
+      # Before trusting anything the Tests tab says, prove the converter that
+      # fills it cannot report green over a red run. Runs before the suites
+      # so that a broken converter is a clearly-labelled failure rather than
+      # a suspiciously empty results page.
+      - pwsh: |
+          python tools/ci/junit_converter_selftest.py
+          exit $LASTEXITCODE
+        displayName: 'Gate: JUnit converter self-test'
+        condition: succeededOrFailed()
+
+      # ==================================================================
+      # THE FIVE SUITES
+      # ==================================================================
+      # EVERY suite, named one at a time. `dart test` at the workspace root
+      # would run nothing — the root package holds fixtures and no tests —
+      # so a single command here is not "all of them", it is silently none of
+      # them. Each step runs even if an earlier one failed
+      # (`succeededOrFailed`), because one red suite should not hide the
+      # state of the other four; the job still goes red.
+      #
+      # EACH SUITE ALSO HAS A NON-VACUITY FLOOR. A runner that discovers no
+      # tests exits 0 and prints a cheerful summary, so "all tests passed" is
+      # not by itself evidence that any ran. run_suite.ps1 counts the cases
+      # in the JUnit document — EXCLUDING skipped ones — and fails below the
+      # floor recorded for that suite name in `$SuiteFloors` in
+      # tools/ci/run_suite.ps1 — ONE place, so this file and
+      # tools/ci/run_local.ps1 cannot drift apart on the numbers. Floors as
+      # measured on the tree this file ships with: rackmate_core 976,
+      # rackmate_ui 382, apps/rackmate 664, rackmate_export 183,
+      # rackmate_text 1 = 2206. THE NUMBERS ARE NOT COPIED HERE TO BE
+      # AUTHORITATIVE — the script is — and they are restated only so a
+      # reader of this file knows the order of magnitude. Going ABOVE a
+      # floor is logged and nothing more; tests going up is the point, and a
+      # gate that nags on every good day is ignored on the bad one.
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackmate_core -Runner dart -Name rackmate_core -OutDir '$(ciOutDir)'
+          exit $LASTEXITCODE
+        displayName: 'Test: rackmate_core (pure Dart)'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackmate_text -Runner dart -Name rackmate_text -OutDir '$(ciOutDir)'
+          exit $LASTEXITCODE
+        displayName: 'Test: rackmate_text (pure Dart)'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackmate_export -Runner dart -Name rackmate_export -OutDir '$(ciOutDir)'
+          exit $LASTEXITCODE
+        displayName: 'Test: rackmate_export (pure Dart)'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackmate_ui -Runner flutter -Name rackmate_ui -OutDir '$(ciOutDir)'
+          exit $LASTEXITCODE
+        displayName: 'Test: rackmate_ui (Flutter)'
+        condition: succeededOrFailed()
+
+      # Carries the load-bearing source gates: the byte-exactness /
+      # .gitattributes gate, the bounded registry claim, session layering
+      # RULE 15, baseline parity (CR-081/CR-086), the starter byte-exactness
+      # assertions and the no-print gate.
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package apps/rackmate -Runner flutter -Name rackmate_app -OutDir '$(ciOutDir)'
+          exit $LASTEXITCODE
+        displayName: 'Test: apps/rackmate (Flutter)'
+        condition: succeededOrFailed()
+
+      # ==================================================================
+      # REPORTING
+      # ==================================================================
+      - task: PublishTestResults@2
+        displayName: 'Publish test results'
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: 'JUnit'
+          testResultsFiles: '**/*.junit.xml'
+          searchFolder: '$(ciOutDir)'
+          mergeTestResults: true
+          testRunTitle: 'RackMate — Windows — Flutter $(flutterVersion)'
+          # A SECOND, INDEPENDENT VERDICT. The suite steps above already
+          # failed the job on a non-zero runner exit; this fails it again if
+          # the published XML contains a failure the step somehow did not.
+          # The two disagreeing is itself information.
+          failTaskOnFailedTests: true
+          # If a suite crashed before writing anything, the absent file is a
+          # finding, not a shrug.
+          failTaskOnMissingResultsFile: true
+
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish raw test streams (forensics)'
+        condition: succeededOrFailed()
+        inputs:
+          targetPath: '$(ciOutDir)'
+          artifact: 'test-streams'
+          publishLocation: 'pipeline'
+
+      # ==================================================================
+      # THE WINDOWS RELEASE BUILD
+      # ==================================================================
+      # Runs even when a suite failed: whether the application still builds
+      # is independent information, and the artifact is what a reviewer wants
+      # in hand while reading the failure.
+      - pwsh: |
+          flutter build windows --release
+          $code = $LASTEXITCODE
+          if ($code -eq 0) {
+            # Consumed by the three steps below. WITHOUT IT they would run
+            # against a directory that does not exist and file a second,
+            # misleading failure ("no Release directory") on top of the real
+            # one, which is how a log stops being read.
+            Write-Host '##vso[task.setvariable variable=windowsBuildProduced]true'
+          }
+          exit $code
+        displayName: 'Build Windows release'
+        workingDirectory: 'apps/rackmate'
+        condition: succeededOrFailed()
+
+      # Asserts things about what the build ACTUALLY PRODUCED, which nothing
+      # in this repository has ever looked at —
+      # apps/rackmate/test/flutter_dependency_test.dart reads the dependency
+      # graph, the inputs. dartjni.dll shipped for weeks in the gap between
+      # the two.
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/verify_windows_build.ps1
+          exit $LASTEXITCODE
+        displayName: 'Gate: Windows release output'
+        condition: and(succeededOrFailed(), eq(variables['windowsBuildProduced'], 'true'))
+
+      - task: ArchiveFiles@2
+        displayName: 'Archive Windows release'
+        condition: and(succeededOrFailed(), eq(variables['windowsBuildProduced'], 'true'))
+        inputs:
+          # Absolute: task inputs are not all resolved against the same
+          # relative root, and this one is worth not guessing about.
+          rootFolderOrFile: '$(Build.SourcesDirectory)/apps/rackmate/build/windows/x64/runner/Release'
+          includeRootFolder: false
+          archiveType: 'zip'
+          archiveFile: '$(Build.ArtifactStagingDirectory)/rackmate-windows-x64-$(Build.BuildNumber).zip'
+          replaceExistingArchive: true
+
+      # THE FIRST STEP TOWARD THE M2 PORTABLE BUILD (task #5). This is a ZIP
+      # of the Release directory and nothing more: no installer, no signing,
+      # no portable-mode data root. It is a build artifact a human can
+      # download, not a release.
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish Windows release artifact'
+        condition: and(succeededOrFailed(), eq(variables['windowsBuildProduced'], 'true'))
+        inputs:
+          targetPath: '$(Build.ArtifactStagingDirectory)/rackmate-windows-x64-$(Build.BuildNumber).zip'
+          artifact: 'rackmate-windows-x64'
+          publishLocation: 'pipeline'

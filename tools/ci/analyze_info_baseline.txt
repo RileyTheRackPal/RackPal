@@ -1,0 +1,24 @@
+# THE ANALYZER INFO RATCHET. One integer; comments start with '#'.
+#
+# Read by tools/ci/analyze_gate.ps1. Errors and warnings are gated at ZERO
+# and are not ratcheted. Info-level issues are gated at the number below:
+# more than this fails the build, fewer than this passes with a warning
+# telling you to lower the pin.
+#
+# WHY A NUMBER AND NOT `--fatal-infos`. very_good_analysis 9.0.0 reports 195
+# infos on this tree today, so --fatal-infos would make main permanently red
+# on the first push, and docs/12 section 4.1 argues -- correctly -- that a
+# permanently red main is worse than no CI. Clearing the 195 and then
+# switching this gate to --fatal-infos is the destination. This is what stops
+# the number moving the wrong way in the meantime, after 203 became 395
+# during the salvage with nothing watching.
+#
+# MEASURED, not asserted: `dart analyze --format=machine .` at the repo root
+# on Flutter 3.44.4 / Dart 3.12.2, over all five workspace members. The count
+# includes apps/rackmate -- verified by planting one long line there and
+# watching this gate read 196 and exit 1, not by assuming the root sweep
+# reaches it.
+#
+# TO RAISE IT you must say why in the commit message. To lower it after
+# fixing infos: pwsh -File tools/ci/analyze_gate.ps1 -UpdateBaseline
+195

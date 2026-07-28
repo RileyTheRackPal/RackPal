@@ -100,7 +100,7 @@ issues, all info-level, **zero errors, zero warnings**. `flutter build windows -
 | # | Milestone | Size | Exit clauses demonstrated | Status — weakest mark | The short reason |
 |---|---|---|---|---|---|
 | **M0** | Foundations | `S` | **6 of 8** clause rows | **PARTIAL** — `VACUOUS` | `dart test` in `rackmate_core`, 886/0, discharges six clauses and they are good work. The `templates.keys` conjunct and the epoch-mask conjunct are true only because their subjects did not exist at M0 (§2.2) |
-| **M1** | Elevation release | `L` | **6 of 8** | **PARTIAL** — `NOT BUILT` | No rack-creation command exists at all, and the keyboard-only constraint is refused — the user timed the drill under four minutes on 2026-07-27, but with mouse and keyboard combined. The tape measure **passed**, checked by the user the same day |
+| **M1** | Elevation release | `L` | **7 of 8** | **PARTIAL** — `REFUTED` | Rack creation now exists and is driven end-to-end by a test (clause 2), but the keyboard-only constraint is still refused — the user timed the drill under four minutes on 2026-07-27, with mouse and keyboard combined, and **only a person re-running it can move that mark**. The tape measure **passed**, checked by the user the same day |
 | **M2** | Wiring + live schedule | `M` | **0 of 5** | **NOT STARTED** — `NOT BUILT` | Both tabs render `UnbuiltView`; the router was deleted at `b560a50` |
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED** — `NOT BUILT` | Model only. Hard-blocked on M2 |
 | **M4** | Device builder | `M` | **0 of 2** | **NOT STARTED** — `NOT BUILT` | No builder surface. **Its inputs are all present even though its formal gate is open** — §5.3 |
@@ -118,8 +118,9 @@ issues, all info-level, **zero errors, zero warnings**. `flutter build windows -
 Of its three limbs, exactly one is satisfiable today. **The app opens the four starter projects** —
 `apps/rackmate/test/starters/starter_assets_test.dart` opens each of
 `apps/rackmate/assets/starters/*.rackmate` through the real `DocumentStore`/`DartIoFileStore` path
-and asserts `Ok`, not read-only, no migration on open, 48 templates. **CI passes** is unsatisfiable:
-there is no CI (§4.1). **Goldens pass** is vacuous: there are no goldens (§4.3). So the roadmap's
+and asserts `Ok`, not read-only, no migration on open, 48 templates. **CI passes** is still
+unsatisfiable: a pipeline *definition* now exists and no service has ever executed it (§4.1).
+**Goldens pass** is vacuous: there are no goldens (§4.3). So the roadmap's
 own per-milestone green rule **has never been satisfiable for any milestone, including M0**. That
 is the single most consequential finding on this board and it is the subject of §4.
 
@@ -191,14 +192,24 @@ fact, not an M0 footnote. See §4.1.
 
 ---
 
-## 3. M1 — The elevation release · `L` · PARTIAL — weakest mark `NOT BUILT`
+## 3. M1 — The elevation release · `L` · PARTIAL — weakest mark `REFUTED`
 
 The sole `L`, the critical path's centre of gravity (canon §11.1.5), and the only milestone whose
-work is mostly done. **Two** of its eight exit clauses are undemonstrated — clause 2 (there is no
-rack-creation command) and clause 3 (the keyboard-only constraint) — plus the goal line's
-"ships to real users". Clause 5, the physical tape measure, was **discharged by the user on
-2026-07-27**; it is the one clause in this whole document that no test could ever have closed,
-and it is recorded with its human provenance in §3.2 because a human check is not a CI gate.
+work is mostly done. **One** of its eight exit clauses is undischarged — clause 3, the
+keyboard-only constraint — plus the goal line's "ships to real users". Clause 5, the physical
+tape measure, was **discharged by the user on 2026-07-27**; it is the one clause in this whole
+document that no test could ever have closed, and it is recorded with its human provenance in
+§3.2 because a human check is not a CI gate.
+
+**The weakest mark moved from `NOT BUILT` to `REFUTED`, and that is a smaller move than it
+looks.** Clause 2 was `NOT BUILT` on §0's own test for that mark — *"grep returns nothing"* — and
+that grep now returns `rack_commands.dart`, so the mark could not stay. It is `DEMONSTRATED`
+because §0's test for *that* mark is satisfied literally: a reader can run
+`packages/rackmate_ui/test/canvas/rack_creation_test.dart` and watch the cited path pass.
+**Clause 3 was not touched and must not be**, which is why the milestone is still `PARTIAL`: the
+code its remedy asked for was written, but `REFUTED` records an act that was performed and
+failed, and only the act being performed again — by a person, with a stopwatch — can move it.
+§3.4 item 2 is that act, and it is the only thing left between this milestone and its criterion.
 
 ### 3.1 The exit criterion, verbatim (roadmap §4, M1)
 
@@ -216,8 +227,8 @@ Its **goal** line carries a clause the criterion does not: *"The smallest genuin
 | # | Clause | Mark | Evidence / what is missing |
 |---|---|---|---|
 | 1 | A user opens the app | **DEMONSTRATED** | `flutter build windows --release` exit 0, `√ Built build\windows\x64\runner\Release\rackmate.exe`; `apps/rackmate/test/starters/starter_assets_test.dart` opens all four starters through the real store |
-| 2 | **…creates a 42U rack** | **NOT BUILT** | **The user cannot.** There is no rack-creation command anywhere: grep for `AddRack`/`addRack`/`createRack` across `packages/*/lib` and `apps/*/lib` returns nothing, and `racks[` is only ever read or mutated in place (rename / height / property / shrink). `apps/rackmate/lib/src/session/blank_document.dart:33` seeds `kBlankProjectRackHeightU = 42`, and that file's own header states: *"docs/04 §9 says … New rack is three fields — Name, Preset, Height. **THAT DIALOG DOES NOT EXIST YET.**"* The 42U rack is a default handed to the user by `Ctrl+N`, not something the user creates |
-| 3 | 20 devices **in under four minutes, keyboard only** | **REFUTED** — the time is met, the constraint is not | **The user timed it this session (2026-07-27): under four minutes, but with mouse and keyboard combined, and reported no full keyboard path exists.** So the *speed* half is demonstrated and the *keyboard-only* half is refused — which matters, because the constraint is the point: it is what makes the tool faster than Visio for a populated rack, and it is load-bearing for M7's accessibility criterion. The code agrees with the user's report. A keyboard path exists in pieces — `packages/rackmate_ui/lib/src/canvas/rack_canvas_screen.dart:2866` binds `/` to `_FocusPaletteSearchIntent`, search-box `Enter` reaches `_placeFromCatalog`, arrows/Home/End/PgUp/PgDn drive the insertion caret — but `:2216-2229` documents a **known gap against itself**: `final targetRu = _selection.isEmpty ? _caret.stickyCaret?.ruIndex : null`, and each placement makes the new device the sole selection, so *"two Enters back-to-back … will use the caret for the FIRST placement only; the second falls back to lowest-free-U … A true keep-typing loop needs a keyboard deselect this codebase doesn't have yet."* **The named fix is a keyboard deselect** (`Esc` while nothing is being dragged), which restores the keep-typing loop; the user also reports the interface "feels quite good already though may need a bit of optimization" |
+| 2 | **…creates a 42U rack** | **DEMONSTRATED** | `AddRackCommand` and docs/04 §9's three-field dialog now exist, and the whole path is driven against the real screen: `packages/rackmate_ui/test/canvas/rack_creation_test.dart` presses `Ctrl+Alt+N`, types a name, commits with `Enter`, and asserts the header reads `RK-2` / `42U` — no pointer after the initial focus click. `packages/rackmate_core/test/rack_commands_test.dart` covers the command (designator allocation, order, preset-vs-typed height, undo/redo, byte round trip). **This is the CAPABILITY, not the drill.** The row it discharges is "creates a 42U rack"; the wall-clock, keyboard-only sequence is clause 3 and is still **REFUTED** — see there. *Was* **NOT BUILT**, on the grep for `AddRack`/`addRack`/`createRack` returning nothing; that grep now returns `packages/rackmate_core/lib/src/commands/rack_commands.dart:59`. `apps/rackmate/lib/src/session/blank_document.dart` still seeds `kBlankProjectRackHeightU = 42` for `Ctrl+N`, and `apps/rackmate/test/session/blank_document_test.dart` now pins that seeded rack field-for-field against what the dialog builds |
+| 3 | 20 devices **in under four minutes, keyboard only** | **REFUTED** — and it stays refuted until a person runs it again | **The user timed it this session (2026-07-27): under four minutes, but with mouse and keyboard combined, and reported no full keyboard path exists.** So the *speed* half is demonstrated and the *keyboard-only* half is refused — which matters, because the constraint is the point: it is what makes the tool faster than Visio for a populated rack, and it is load-bearing for M7's accessibility criterion. **The named fix has since been built, and building it does not discharge the clause.** REFUTED means the act was performed and failed; only the act being performed again can move it, and no agent can perform it. What landed: `Esc` now clears the selection (docs/04 §8's third limb, `rack_canvas_screen.dart`'s `_onEscape`); a quick-add that the loop itself is repeating keeps caret-targeting live (`_selectionIsLastQuickAdd`); a cycle whose caret lands on an occupied U falls back to lowest-free-U *and says so* rather than jamming; and a refused cycle hands focus back to the canvas instead of stranding it on the modal scope. The regression net is `packages/rackmate_ui/test/canvas/keyboard_only_placement_test.dart` (11 cases, each written to fail if one half of the fix is removed) and `rack_creation_test.dart`'s twenty-device drill, which drives the caret to U5 first so the caret path and the lowest-free-U fallback give different answers. The earlier citation in this row — `rack_canvas_screen.dart:2216-2229` for a gap the code documented *against itself* — is **dead**: that comment was replaced by the fix and no line range holds it any more. The user also reports the interface "feels quite good already though may need a bit of optimization" |
 | 4 | Exports a **three-sheet** PDF | **DEMONSTRATED** | `packages/rackmate_core/lib/src/draw/sheet/sheet_def.dart` declares exactly `SheetRole.rackElevationFront` / `rackElevationRear` / `equipmentList`, and its header names the 2N+1 trap; `packages/rackmate_export/test/scale_notice_test.dart:141` `expect(out.sheetCount, 3)` |
 | 5 | Elevations dimensionally correct **against a physical tape measure** at true scale | **CONFIRMED** — by the user, 2026-07-27 | The one clause of this criterion that no test could discharge, because it asks about *paper*. Verified by the user against a printed sheet this session and reported correct. The in-repo evidence remains `packages/rackmate_export/test/elevation_true_scale_test.dart`, which composes real `q`/`Q`/`cm` into PDF user space, derives every expectation from the literals `44_450_000` / `25_400_000` / `72.0` / `482_600_000` / `450_850_000`, regexes the ratio *n* back out of the sheet's own `SCALE` field, and takes its 0.01 pt tolerance from `PdfNum.precision = 5` rather than tuning it — but that test is titled, in `docs/m1-implementation-log.md:1434`, *"how dimensionally correct against a tape measure is proved **without a printer**"*, and the print chain (driver scaling, fit-to-page, media stretch) is exactly what it cannot reach. **Provenance is a human check, not a gate**: it is not re-run by CI and does not survive a change to the fit engine. AC-058 D13's full print matrix — ANSI B laser, ANSI D plotter, photocopy — is still scheduled at M6 and has not run |
 | 6 | Equipment list matches rack contents **exactly** | **DEMONSTRATED** | `packages/rackmate_export/test/starters_export_test.dart` asserts a **bijection in both directions** over all four real starter files: designator multiset equality against the document, **plus** every designator recovered as actual text from a `T6.30` content stream |
@@ -234,7 +245,7 @@ Not exit clauses, but every one is scope that a later milestone now inherits.
 | Item | State | Citation | Who inherits it |
 |---|---|---|---|
 | **The outline tree** | **NOT BUILT** | No outline-tree surface anywhere in `lib/`: grep for `TreeView` and `Ctrl+Alt+3` across `packages/*/lib` and `apps/*/lib` returns nothing, and every `outline` hit is a drawing term (`packages/rackmate_core/lib/src/draw/scene/rack_style.dart:45`, `:51`, `:70` — enclosure, rail and device-body outlines) | **M7.** Roadmap §4 M7 *Risks* names "the outline tree shipping in M1" as its mitigation, and docs/04:455 names it as the primary AT surface. Retrofitting canvas accessibility late is precisely the structural risk that line warns about |
-| **The Staging Bin** | Model-only | `packages/rackmate_ui/lib/src/canvas/staging_bin_overlay.dart:107` renders the honest text *"Staging Bin — not in this build"*; `rack_canvas_screen.dart:2604` states no command produces a `StagedPlacement` | M1 tail |
+| **The Staging Bin** | Model-only | `packages/rackmate_ui/lib/src/canvas/staging_bin_overlay.dart:107` renders the honest text *"Staging Bin — not in this build"*; `rack_canvas_screen.dart:2981` states no command produces a `StagedPlacement` | M1 tail |
 | **Shelves with auto-pack** | **NOT BUILT** | No `ShelfPlacement` handling in any UI file; `rack_shrink.dart:276` — *"DEVICES ON A SHELF ARE DELIBERATELY ABSENT"* | M1 tail |
 | **0U occupants from the inspector** | **NOT BUILT** | No editing path | M1 tail |
 | **Locks** | Half-built | Honoured as immovable anchors by the compaction planner; **no `Ctrl+L`, no way to set `Placement.locked`** (docs/04:195) | M1 tail |
@@ -246,14 +257,23 @@ Not exit clauses, but every one is scope that a later milestone now inherits.
 
 In the order that makes each cheaper than the next:
 
-1. **An `AddRackCommand` and the New-rack dialog** (docs/04 §9: Name, Preset, Height). Clause 2 is
-   false as written until this exists, and every multi-rack scenario M6 needs is blocked behind it.
-   There is currently no way for a user to **create or delete** a rack.
-2. **A keyboard deselect**, closing the gap `rack_canvas_screen.dart:2216-2229` documents against
-   itself — then **actually run and time** the 20-device drill. A criterion nobody has
-   stopwatch-tested is a criterion nobody has met.
+1. ~~**An `AddRackCommand` and the New-rack dialog**~~ — **BUILT.** `packages/rackmate_core/lib/src/commands/rack_commands.dart` and
+   `packages/rackmate_ui/lib/src/inspector/new_rack_dialog.dart`, reached by `Ctrl+Alt+N`, by the
+   rack header's overflow menu, and by the rack-less panel's own button. **Deleting** a rack is
+   still not possible, deliberately: a removal has to answer what happens to the rack's occupants
+   and docs/04 settles nothing about it (rack_commands.dart's header states the choice). Multi-rack
+   *layout* is still unbuilt — the canvas edits one rack at a time and switches between them.
+2. **RUN AND TIME THE 20-DEVICE DRILL AGAIN.** This is now the only thing standing between the
+   repository and clause 3, and no agent can do it. The keyboard deselect the old text asked for
+   exists (`Esc`, docs/04 §8's third limb), the keep-typing loop it unblocks is covered by
+   `packages/rackmate_ui/test/canvas/keyboard_only_placement_test.dart`, and the gap comment the
+   old text cited at `rack_canvas_screen.dart:2216-2229` is gone with the defect. **A criterion
+   nobody has stopwatch-tested is a criterion nobody has met**, and tests passing is not a person
+   with a stopwatch.
 3. **Print one sheet and put a tape on it.** Ten minutes of physical work gating the claim the
    whole M1 story rests on. The emitted-byte test is excellent and is *not* the clause.
+   *(Performed by the user on 2026-07-27 — see §3.2 clause 5, which is CONFIRMED. Kept here as the
+   shape of the work, because AC-058 D13's full print matrix is still M6 and has not run.)*
 4. **The outline tree**, because it is M7's named mitigation and it is cheaper now.
 
 ---
@@ -263,11 +283,30 @@ In the order that makes each cheaper than the next:
 Read this section before trusting any other document in `docs/`. Each entry states the drift, the
 evidence, and which document sites are stale.
 
-### 4.1 There is no CI. There has never been any CI.
+### 4.1 There is a CI *file*. No CI service has ever run it.
 
-**Verified:** no `.github` directory (`ls -a` at the repo root); a maxdepth-3 search for
-`yml`/`yaml` returns eight files and no workflow among them — six `pubspec.yaml` (the workspace
-root and its five members), `analysis_options.yaml` and `dart_test.yaml`.
+**This row was "There is no CI. There has never been any CI.", verified by a maxdepth-3 search for
+`yml`/`yaml` returning eight files and no workflow among them. That search now returns a ninth:
+`azure-pipelines.yml` at the repository root.** The heading is corrected rather than deleted,
+because the thing it was really about has not changed.
+
+**What exists:** an Azure DevOps pipeline definition targeting a Windows agent — Flutter pinned to
+3.44.4 *and verified after install*, the analyzer gate, both palette gates, the JUnit converter
+self-test, all five suites with non-vacuity floors, `flutter build windows --release`, and a
+published release ZIP. Plus `tools/ci/` — `analyze_gate.ps1`, `run_suite.ps1`,
+`junit_from_dart_test.py`, `junit_converter_selftest.py`, `ensure_flutter.ps1`,
+`verify_windows_build.ps1`, `verify_tracked_sources.ps1` and `run_local.ps1`, all of which run on a
+developer machine and were mutation-tested there.
+
+**What does NOT exist, and this is the part that matters for every claim below:** a run. No Azure
+DevOps service has parsed the YAML, resolved a task name, fetched the pinned SDK archive, or built
+on a hosted image. The file's own header says so in capitals and lists the four things only run 1
+can prove. **Until a run number can be cited here, this row stays in section 4** — a pipeline
+nobody has executed is a plan, and this document exists to separate plans from measurements.
+`docs/11 §7`'s `.github/workflows/ci.yaml` job matrix is still a different, unbuilt thing.
+
+The pre-existing contradictions below are therefore **unchanged in substance**: the gates the
+corpus calls mechanical are still not mechanical on any server.
 
 This contradicts, directly:
 
@@ -280,10 +319,12 @@ This contradicts, directly:
   footprint gate, AC-052's provenance gate, AC-051's fixture-pair gate, docs/05:171's
   glyph-resolution test.
 
-**What is actually true:** every gate in this project is *a test somebody must remember to run*.
-The tests are real and mostly excellent; the enforcement is not mechanical. The roadmap's global
-per-milestone rule — *"EVERY MILESTONE ENDS GREEN: CI passes"* — has never been satisfiable for
-any milestone, M0 included.
+**What is actually true:** every gate in this project is still *a test somebody must remember to
+run* — the somebody now has one command (`pwsh -File tools/ci/run_local.ps1`) instead of six, which
+is an improvement in ergonomics and not in enforcement. The tests are real and mostly excellent;
+nothing rejects a push. The roadmap's global per-milestone rule — *"EVERY MILESTONE ENDS GREEN: CI
+passes"* — has never been satisfiable for any milestone, M0 included, and becomes satisfiable on
+the day a pipeline run number can be written into this section.
 
 **Two of the documented gates fail today**, so the CI shape as written in docs/11 §7 would go red
 on the first push:
@@ -299,6 +340,12 @@ on the first push:
 intended.** Standing up CI without deciding this produces a permanently red main branch, which is
 worse than no CI because it trains people to ignore it (docs/11 §8's own argument for
 `--fatal-infos`, turned around).
+
+**`azure-pipelines.yml` does not pre-empt that decision, and says so.** It runs neither of the two
+gates above as written: `dart format --set-exit-if-changed` is deliberately absent, and the
+analyzer gate is *zero errors, zero warnings, plus a ratcheted info count* pinned in
+`tools/ci/analyze_info_baseline.txt` rather than `--fatal-infos`. Both choices are argued in the
+file. The decision above is still open and still the user's.
 
 ### 4.2 The M2 detour is reconciled in code, not in the documents
 
@@ -541,11 +588,11 @@ it cares about.
 union, and `AddLinkCommand`/`RemoveLinkCommand` at
 `packages/rackmate_core/lib/src/commands/link_commands.dart:29` and `:100` — referenced from `lib/`
 code in **exactly two places, both of them the `UnbuiltView` copy strings**
-(`apps/rackmate/lib/src/session/app_shell.dart:435`, inside the Schematic tab's `absent:` text, and
-`:457`, inside the Schedule tab's).
+(`apps/rackmate/lib/src/session/app_shell.dart:436`, inside the Schematic tab's `absent:` text, and
+`:458`, inside the Schedule tab's).
 
 **A tested down payment does survive in core**: `packages/rackmate_core/lib/src/draw/scene/symbol_layer.dart`
-and `symbol_hit_test.dart`, exported from `rackmate_core.dart:60-61`, covered by
+and `symbol_hit_test.dart`, exported from `rackmate_core.dart:63-64`, covered by
 `packages/rackmate_core/test/{symbol_layer_test,symbol_hit_test_test}.dart` and
 `packages/rackmate_export/test/symbol_layer_pdf_test.dart` — **a symbol renderer and hit-tester
 that no screen consumes.**
@@ -580,8 +627,8 @@ The salvage episode is the argument: the schematic failed through eight consecut
 byte-round-tripped by the `c_fuller_project` fixture. Grepping `Outlet`/`StructureBody`/`Pathway`/
 `Location` across `packages/rackmate_ui/lib` and `apps/rackmate/lib` finds **no Structure UI at
 all** — only three **hard-coded demo Locations** at
-`packages/rackmate_ui/lib/src/canvas/rack_canvas_screen.dart:3580-3582` (Main House / Media Closet /
-Living Room), whose own comment at `:3576-3577` says *"the project Locations panel (CR-112) and the
+`packages/rackmate_ui/lib/src/canvas/rack_canvas_screen.dart:4030-4032` (Main House / Media Closet /
+Living Room), whose own comment at `:4026-4027` says *"the project Locations panel (CR-112) and the
 '+ New…' creation flow remain out of scope, so these are seeded rather than creatable"*, and a
 chip-strip `Outlets` label at `rack_metrics_row.dart:136`.
 
@@ -623,10 +670,12 @@ is not discharged and this file does not claim it is.**
 
 What is true is narrower and still useful. The artifact the roadmap's `M1→M4` arrow actually names
 is *"devices exist"*, and it does: `TemplateBody`/`PortDef`/`TemplateSnapshot` are in core, 48
-templates place into a rack, and the equipment list renders them. **None of M1's three open exit
-clauses is an input to a device builder** — no rack-creation command (a rack already exists by
-default, `blank_document.dart:33`), a keyboard drill nobody has timed, and a sheet nobody has
-printed. So M4 is the one milestone whose **formal gate is open while its actual inputs are all
+templates place into a rack, and the equipment list renders them. **M1's one open exit
+clause is not an input to a device builder** — clause 3 is a keyboard drill nobody has re-timed
+since it failed on 2026-07-27, and a stopwatch is not a template editor. (When this paragraph was
+written the list was three: rack creation, which has since been built; the drill, which has not
+been re-run; and a sheet nobody had printed, which the user printed and measured the same day.)
+So M4 is the one milestone whose **formal gate is open while its actual inputs are all
 present**, which is a different and weaker claim than "free to start", and it is the one the
 evidence supports.
 
@@ -714,7 +763,7 @@ milestone most exposed to slip anywhere upstream (roadmap §5).
 |---|---|---|
 | Tablet read-only surfaces | **NOT BUILT** | `apps/rackmate` has only a `windows/` platform directory — no `android`/`ios`/`macos`/`linux`, which `apps/rackmate/pubspec.yaml`'s `path_provider_windows` comment states as a deliberate fact. No explicit statement for the two unavailable surfaces either |
 | NVDA / VoiceOver matrix | **NOT BUILT** | And the connection-creation path it must pass on does not exist (M2) |
-| No keybinding bound twice **in the generated table** | **NOT BUILT — nothing generates a table** | Keybindings are hand-written `SingleActivator` maps in exactly two files: `apps/rackmate/lib/src/session/app_shell.dart:68-75` (`kFileShortcuts`, four file bindings at `:70`, `:71`, `:72` and `:73-74`, asserted at exactly four by `session_layering_test` RULE 14) and `packages/rackmate_ui/lib/src/canvas/rack_canvas_screen.dart:2853-2913` (the canvas `Shortcuts` map, **18** `SingleActivator` entries counted over that range). Nothing generates a table and nothing arbitrates collisions. CR-101's 16 collisions are unfixed because the ~40-binding keymap does not exist |
+| No keybinding bound twice **in the generated table** | **NOT BUILT — nothing generates a table** | Keybindings are hand-written `SingleActivator` maps in exactly two files: `apps/rackmate/lib/src/session/app_shell.dart:69-76` (`kFileShortcuts`, four file bindings at `:71`, `:72`, `:73` and `:74-75`, asserted at exactly four by `session_layering_test` RULE 14) and `packages/rackmate_ui/lib/src/canvas/rack_canvas_screen.dart:3278-3350` (the canvas `Shortcuts` map, **18** `SingleActivator` entries counted over that range — `Ctrl+Alt+N` for the New-rack dialog is the newest, and `Esc` is now bound to a ladder rather than a single cancel). Nothing generates a table and nothing arbitrates collisions. CR-101's 16 collisions are unfixed because the ~40-binding keymap does not exist |
 | Pseudo-locale build shows no hard-coded English | **NOT BUILT** | **No localisation at all**: `apps/rackmate/pubspec.yaml` has no `flutter_localizations` dependency, no `.arb` files, no `AppLocalizations` — so docs/11 §7's `flutter gen-l10n && git diff --exit-code` gate has nothing to run against |
 
 **Inherits an unpaid M1 debt:** roadmap §4 M7 *Risks* names the outline tree shipping in M1 as this
@@ -796,8 +845,8 @@ exist, not because it is ungated, and the *Gated on* column says which.
 | 6 | **Propagate the Jost and `kSchemaVersion`-2 drift** into docs/08, docs/11, docs/02, docs/03 and canon; amend CR-080 | Nothing | Roadmap §8.3 requires an amendment for a ruling change; CR-080 has none (§4.6, §4.7) |
 | 7 | **Propagate DR-006 into docs/09, docs/11, docs/10 and docs/00** | Nothing | **Nine** sites — the five signing sites plus four decision-count sites, all listed in §4.11 and in canon §12.9. Until they land, the roadmap tells the next reader to order a certificate and three documents tell them there are five user decisions |
 | 7a | **Delete the three root `test/fixtures/` copies** | Nothing | Five seconds (§4.12) |
-| 8 | **Finish M1** — `AddRackCommand` + New-rack dialog; keyboard deselect + time the drill; print a sheet; the outline tree | Nothing | Three exit clauses, cheap now and expensive later (§3.4) |
-| 9 | **M4, the device builder** | **M1 — a hard block (roadmap §5) that is NOT discharged**, because §3 marks M1 `PARTIAL` | The only milestone whose formal gate is open while its actual inputs are all present: the arrow's named artifact (*"devices exist"*) is there, and none of M1's three open exit clauses is a device-builder input (§5.3). Starting it is a judgement about an open gate, not a free move — which is why it sits below "finish M1" in this table |
+| 8 | **Finish M1** — ~~`AddRackCommand` + New-rack dialog~~ (built); ~~keyboard deselect~~ (built) **but time the drill**; ~~print a sheet~~ (done 2026-07-27); the outline tree | Nothing | One exit clause and one goal clause, and the exit clause needs a **person with a stopwatch**, not code (§3.4) |
+| 9 | **M4, the device builder** | **M1 — a hard block (roadmap §5) that is NOT discharged**, because §3 marks M1 `PARTIAL` | The only milestone whose formal gate is open while its actual inputs are all present: the arrow's named artifact (*"devices exist"*) is there, and M1's one open exit clause — clause 3's keyboard-only drill — is not a device-builder input (§5.3). Starting it is a judgement about an open gate, not a free move — which is why it sits below "finish M1" in this table |
 | 10 | **A perf harness** (`@Tags(['perf'])`, op-count-per-layer) | Nothing | M2's exit criterion demands a measurement; there is no instrument (§5.1) |
 | 11 | **Recruit beta integrators** | Nothing but calendar | `RISK-08` lead time (§5.8) |
 
@@ -816,8 +865,9 @@ saving DR-006 buys.**
   │  not exist at M0 (§2.2, §4.5). One is cheap to close now;
   │  the other waits on M4 or copy-on-place (§2.4)
   ▼
- M1 ◑ PARTIAL — weakest mark NOT BUILT ─────┬────────────────► M4 ○ NOT STARTED
-  │  3 exit clauses open, 6 checklist items │                  gate OPEN (M1 is PARTIAL);
+ M1 ◑ PARTIAL — weakest mark REFUTED ───────┬────────────────► M4 ○ NOT STARTED
+  │  2 open: clause 3 (a person must re-run │                  gate OPEN (M1 is PARTIAL);
+  │  the drill) + "ships to real users";     │
   │  outline tree owed to M7                │                  inputs all PRESENT (§5.3);
   ▼                                         │                  DR-003 keeps it in v1
  M2 ○ not started                           │ DiagramCanvas IR + both backends
@@ -872,7 +922,7 @@ deferral costs. **It does not make the call.**
 | | Weeks (roadmap §6) | State |
 |---|---|---|
 | M0 | 2–3 | `PARTIAL` — 6 of 8 clause rows demonstrated; two vacuous clauses open (§2.4) |
-| M1 | 8–12 | `PARTIAL` — mostly done; three exit clauses + six checklist items open |
+| M1 | 8–12 | `PARTIAL` — mostly done; clause 3 (a person must re-run the drill) + "ships to real users" + six checklist items open |
 | M2–M9 | 32–50 | `NOT STARTED` — zero demonstrated exit clauses anywhere, though M6 carries a real M1 slice (§5.5) |
 | **Remaining** | **32–50**, plus an uncosted M1 tail | The 32–50 is roadmap §6's M2–M9 rows summed exactly (4+4+5+4+5+4+2+4 = 32; 7+7+7+6+7+6+3+7 = 50). It excludes the M1 tail, which the roadmap never costed, and the cross-cutting work in §6.1 (CI, goldens, provenance gate), which the roadmap never costed either because it assumed CI existed from M0 |
 
@@ -909,7 +959,7 @@ have to be amended** — because roadmap §8.3 makes scope movement an amendment
 | **D · Defer M4 (device builder) to v1.1** | **5–7 weeks** — the single largest saving available | **Requires superseding DR-003**, which ruled the builder into v1 and explicitly withdrew this as a lever: *"If M4 is ever at risk, the lever is lever 1 or lever 3, not a partial builder."* It also defers **brief requirement 2**, whose builder half is what R2 actually asks for (DR-003/2). Product cost: the long tail is uncoverable — a user who meets a device the 48-template catalog lacks has no path at all | **DR-003.** This is a reversal of a user ruling, not a schedule decision |
 | **E · Trim M6's sheet set to what the internal job needs** | Up to ~**3 weeks** of the 5–7 | Requires deciding **which** of the eight missing slots an internal user genuinely needs. `T6.10` pull sheet and `T6.11` termination schedule are the field deliverables; `T0.00`/`T0.01`/`T0.02` are the client-facing ceremony. Cutting the latter is an amendment to DR-005 — and DR-005 was a **user reversal** of the record's own recommendation, made deliberately | **DR-005** |
 | **F · Pull the catalog lever — cut the catalog to 40 archetypes at full fidelity** | Removes catalog authoring weeks from M1's tail | **No cost to quality** — the provenance gate sets the count and 40 sourced templates beat 80 guessed ones (RJ-007). The catalog already ships at 48, so this lever is arguably **already pulled**. **Numbering caution:** this is **lever 2** as `docs/09-roadmap.md` §6 now reads, but canon §11.3/5 and §12.6 call it **lever 3** — they were written against an earlier §6 in which lever 2 was *"move M4 after M6"*, the lever DR-003 withdrew. One lever, two numbers; cite it by name | None. It is an available lever, stated in roadmap §6 |
-| **G · Pull roadmap lever 1 — ship M1 as an internal v0.9** | Converts remaining invisible work into evidence, immediately | **None** by the roadmap's own reckoning: *"M1 is a real product."* Under DR-006 this is easier than the roadmap assumed — an internal v0.9 needs a self-signed build on a share, not an installer and a certificate. The blocker is not distribution; it is the three open M1 exit clauses (§3.4) | None |
+| **G · Pull roadmap lever 1 — ship M1 as an internal v0.9** | Converts remaining invisible work into evidence, immediately | **None** by the roadmap's own reckoning: *"M1 is a real product."* Under DR-006 this is easier than the roadmap assumed — an internal v0.9 needs a self-signed build on a share, not an installer and a certificate. The blocker is not distribution; it is M1's one open exit clause — clause 3's keyboard drill, which needs a person and a stopwatch (§3.4) | None |
 
 ### 7.4 The three shapes those options compose into
 

@@ -90,6 +90,28 @@ dart test                       # pure-Dart tests in core / text / export
 flutter test                    # widget and golden tests in ui / app
 ```
 
+## Continuous integration
+
+> **NO AZURE DEVOPS RUN HAS EVER EXECUTED THIS PIPELINE.** `azure-pipelines.yml` was written and its gate scripts were mutation-tested on a developer machine; no CI service has parsed the YAML, resolved a task name, fetched the pinned SDK archive, or built on a hosted image. Until a run number can be cited, this section describes a **plan**, not a green build. The file's own header lists the four things only the first real run can prove — the YAML schema itself, the Flutter SDK download URL, whether the hosted image can build desktop Windows, and the wall-clock timeout — plus the fact that PR validation on Azure Repos comes from a branch policy and not from the `pr:` block. `docs/12-milestone-board.md` §4.1 carries the same caveat.
+
+What the file *defines*: a Windows agent, the Flutter version **pinned to 3.44.4 and verified after install** (docs/03 §10.2), the analyzer gate, the two palette gates, the JUnit converter self-test, all five suites with non-vacuity floors, `flutter build windows --release`, and publication of the test results and the release ZIP.
+
+What **is** verified, because it runs here: every gate script under `tools/ci/`. Run them the way the pipeline does:
+
+```text
+pwsh -File tools/ci/run_local.ps1                 # everything
+pwsh -File tools/ci/run_local.ps1 -SkipBuild      # skip the Windows build
+pwsh -File tools/ci/run_local.ps1 -SkipTests -SkipBuild   # fast gates only
+```
+
+Three things it does **not** cover, stated so none is mistaken for done:
+
+- **No goldens.** There are none in this repository, so the roadmap's *"goldens pass"* limb is not satisfied by a green pipeline and the pipeline deliberately does not pretend to run them.
+- **No clean checkout.** `run_local.ps1` runs against your working tree; the pipeline runs against a fresh clone, which is itself a gate (a `.gitattributes` defect in the byte-exact starter assets is only visible there). The cheap half of that is mechanised: `tools/ci/verify_tracked_sources.ps1` fails if any `lib/` Dart source is untracked, which is how a barrel `export` of a file no clone would receive gets caught before it is committed rather than on run 1.
+- **No run.** See the box above.
+
+The analyzer gate is **zero errors, zero warnings, and a ratcheted info count** pinned in `tools/ci/analyze_info_baseline.txt` — not `--fatal-infos`, which would make `main` permanently red at today's 195 infos. Each suite also has a non-vacuity floor counted over **non-skipped** cases, so neither a runner that discovers no tests nor a batch silenced with `skip:` can pass.
+
 ## Planned project layout
 
 Five packages, not one tree. The split is mechanically enforced by `no_flutter_import_test`, which bans `package:flutter/`, `dart:ui` **and** `package:pdf/` from `rackmate_core` (CR-083). Rejected alternative: a single `lib/` tree with the Flutter and PDF canvas backends in one directory — it puts a concrete font engine in the core package and breaks the isolate-safety guarantee within a month.

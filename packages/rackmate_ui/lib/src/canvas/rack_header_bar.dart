@@ -46,7 +46,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show SchedulerBinding;
-import 'package:rackmate_core/rackmate_core.dart' show kMaxRackHeightU;
+import 'package:rackmate_core/rackmate_core.dart' show Uuid, kMaxRackHeightU;
 
 /// The actions the rack header's overflow menu offers.
 enum RackHeaderAction {
@@ -59,7 +59,18 @@ enum RackHeaderAction {
   /// docs/04 §4's third inspector entry point: "the overflow menu -> Rack
   /// settings".
   rackSettings,
+
+  /// docs/04 §9's New-rack dialog. Also bound to `Ctrl+Alt+N` (§8's
+  /// keymap), which is what the menu item advertises — the item exists so
+  /// the capability is DISCOVERABLE, not because the keyboard path needs
+  /// it.
+  newRack,
 }
+
+/// One row of the rack switcher: enough to name a rack in a menu without
+/// this widget being handed the `Rack` itself (it renders strings and
+/// reports ids, like every other control in this file).
+typedef RackChoice = ({Uuid id, String designator, String name});
 
 /// One step of the height stepper: [delta] is `+1` or `-1`.
 ///
@@ -87,6 +98,9 @@ class RackHeaderBar extends StatelessWidget {
     required this.onAction,
     required this.onStep,
     this.compactionEnabled = true,
+    this.racks = const <RackChoice>[],
+    this.activeRackId,
+    this.onSelectRack,
     super.key,
   });
 
@@ -123,6 +137,26 @@ class RackHeaderBar extends StatelessWidget {
   /// second one mid-preview would silently discard the first. Disabled
   /// rather than hidden, so the menu does not change shape under the user.
   final bool compactionEnabled;
+
+  /// Every rack in the document, in the order the elevations will print
+  /// (`Rack.order`). Empty or single-entry means there is nothing to switch
+  /// between and the switcher does not render — an affordance that offers
+  /// exactly one choice, the one you already have, is noise.
+  ///
+  /// THE SWITCHER IS HERE BECAUSE THE CANVAS SHOWS ONE RACK AT A TIME. See
+  /// `rack_canvas_screen.dart`'s `_activeRackId` for why that is the scope
+  /// and what docs/04 §8/§9 would want instead once multi-rack LAYOUT
+  /// exists — this control is what makes a second rack reachable in the
+  /// meantime, not a substitute for that layout.
+  final List<RackChoice> racks;
+
+  /// Which of [racks] is on screen — checked in the switcher's menu.
+  final Uuid? activeRackId;
+
+  /// Null disables the switcher entirely (a host that has no concept of a
+  /// second rack), which is what every existing single-rack call site gets
+  /// by default.
+  final ValueChanged<Uuid>? onSelectRack;
 
   @override
   Widget build(BuildContext context) {
@@ -178,6 +212,25 @@ class RackHeaderBar extends StatelessWidget {
           // open the inspector.
           const SizedBox(width: 4),
           _HeightStepper(heightU: heightU, onStep: onStep),
+          if (onSelectRack != null && racks.length > 1) ...[
+            const SizedBox(width: 4),
+            PopupMenuButton<Uuid>(
+              tooltip: 'Switch rack',
+              icon: const Icon(Icons.view_agenda_outlined, size: 18),
+              onSelected: onSelectRack,
+              itemBuilder: (context) => [
+                for (final rack in racks)
+                  CheckedPopupMenuItem<Uuid>(
+                    value: rack.id,
+                    checked: rack.id == activeRackId,
+                    child: Text(
+                      '${rack.designator} · ${rack.name}',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(width: 4),
           PopupMenuButton<RackHeaderAction>(
             tooltip: 'Rack actions',
@@ -198,6 +251,10 @@ class RackHeaderBar extends StatelessWidget {
               const PopupMenuItem(
                 value: RackHeaderAction.rackSettings,
                 child: Text('Rack settings…'),
+              ),
+              const PopupMenuItem(
+                value: RackHeaderAction.newRack,
+                child: Text('New rack…  (Ctrl+Alt+N)'),
               ),
             ],
           ),

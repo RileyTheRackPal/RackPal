@@ -32,7 +32,8 @@ import 'package:rackmate/src/session/session_prompts.dart';
 import 'package:rackmate/src/session/starter_projects.dart';
 import 'package:rackmate/src/session/window_chrome.dart';
 import 'package:rackmate/src/storage/recents_store.dart';
-import 'package:rackmate_core/rackmate_core.dart' show TextMeasurer;
+import 'package:rackmate_core/rackmate_core.dart'
+    show TextMeasurer, buildRackPresets;
 import 'package:rackmate_ui/rackmate_ui.dart';
 
 /// `Ctrl+N`.
@@ -476,12 +477,38 @@ final class AppShellState extends State<AppShell>
     );
   }
 
+  /// docs/04 §9's New-rack dialog, opened from the rack-less panel.
+  ///
+  /// The SAME `showNewRack` the rack canvas's `Ctrl+Alt+N` calls, so there
+  /// is one rack-creation path in the app rather than two that can drift.
+  /// The shell needs no follow-up of its own: creating a rack makes
+  /// `racks.isEmpty` false, the session's own change notification rebuilds
+  /// this subtree, and `_rackTab` then returns the canvas — which opens on
+  /// `racks.keys.first`, the rack that was just created.
+  Future<void> _newRackFromEmptyPanel(DocumentSession session) async {
+    final outcome = await showNewRack(
+      context: context,
+      controller: session.controller,
+      presets: buildRackPresets(),
+    );
+    if (!mounted) return;
+    // Cancel is nothing at all. A refusal is not: it must not vanish.
+    if (outcome case NewRackRefused(:final reason)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(reason)));
+    }
+  }
+
   Widget _rackTab(DocumentSession session) {
     // A document with no racks is REACHABLE the moment the app can open a
     // file, and `RackCanvasScreen` reads `racks.values.first` while
     // building its state. An honest panel beats a crash on a valid file.
     if (session.document.racks.isEmpty) {
-      return NoRacksView(documentName: session.displayName);
+      return NoRacksView(
+        documentName: session.displayName,
+        onNewRack: () => unawaited(_newRackFromEmptyPanel(session)),
+      );
     }
     return RackCanvasScreen(
       // KEYED ON THE CONTROLLER'S IDENTITY. Replacing the document must

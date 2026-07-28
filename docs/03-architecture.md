@@ -861,9 +861,27 @@ Explicitly **not** used: any node-editor package (`vyuh_node_flow`, `fl_nodes`, 
 
 The node-editor rejection deserves its reason, because the best of them is genuinely good work: **RackMate is not a node graph.** Node editors model free-floating nodes in unconstrained 2D. RackMate's devices are constrained to integer RU indices in a fixed-width column, with a front/rear dimension no node editor has any concept of, and its "nodes" do not move in x at all. Adopting one means fighting its core layout assumption on every feature — and the canvas *is* the product, not a feature of it. Read their source for port-validation models and LOD thresholds; take the dependency on none of them.
 
-### 10.2 Two version facts to confirm before M0 closes
+### 10.2 Two version facts — the Flutter pin (resolved), Impeller (open)
 
-`VERIFY:` the corpus contains two different Flutter stable versions — `design-architecture.md` targets 3.44.4, while the canvas research reports 3.41 as current. The CI Flutter version is **pinned and load-bearing**, because a minor bump routinely shifts antialiasing by a pixel and golden regeneration must be a deliberate, reviewed step of every upgrade. Resolve to one number and pin it.
+**RESOLVED — the Flutter pin is `3.44.4`, and it lives in `azure-pipelines.yml`.**
+
+The original item read: *the corpus contains two different Flutter stable versions — `design-architecture.md` targets 3.44.4, while the canvas research reports 3.41 as current. The CI Flutter version is pinned and load-bearing, because a minor bump routinely shifts antialiasing by a pixel and golden regeneration must be a deliberate, reviewed step of every upgrade. Resolve to one number and pin it.*
+
+It is resolved to **3.44.4 stable**: that is what `design-architecture.md` targets and what the local toolchain runs (Dart 3.12.2, framework revision `ad70ec4617166f1c38e5d2bfd388af71fda14f06`, engine `a10d8ac38de835021c8d2f920dbf50a920ccc030`). The 3.41 figure was a research-date observation, not a second decision.
+
+**Where the pin lives, and what enforces it:**
+
+| | |
+|---|---|
+| The number | `flutterVersion: '3.44.4'` in `azure-pipelines.yml`, referenced by every step that needs it. One place. |
+| The install | `tools/ci/ensure_flutter.ps1` fetches that exact stable archive — no channel, no version range, no marketplace task resolving on its own. |
+| **The enforcement** | The same script then reads `flutter --version --machine` and **fails the build** if `frameworkVersion` is not exactly the pinned number, or the channel is not `stable`. A pipeline that *requests* a version and never checks what it got looks identical to one that works, right up until goldens flap. |
+| The revision | `frameworkRevision` is recorded in `azure-pipelines.yml` and **warned about, not enforced** — there are no goldens for it to protect yet (docs/12 §4.3). **Promote it to a hard failure on the day the first golden lands**; the script says so at its call site. |
+
+Two things this pin does **not** yet cover, stated so neither is mistaken for done:
+
+- **There are no goldens.** The whole antialiasing argument above is an argument about a corpus that does not exist. The pin is standing guard over the right door in advance; it is not evidence that pixel regressions are caught.
+- **`pubspec.lock` is gitignored**, so CI resolves the dependency graph fresh on every run. The Flutter SDK is pinned exactly and the package graph is not. Committing the lockfile is the fix and it is a project decision, not a CI one.
 
 `VERIFY:` Impeller is not the default on Windows as of the research date; desktop still renders through Skia. Budget frame costs against Skia and re-benchmark when Impeller lands — the `saveLayer` and path-stroking numbers will shift meaningfully.
 
@@ -1067,7 +1085,7 @@ Collected so none is lost in prose. Each is an API or environment claim the desi
 | 3 | `Printing.layoutPdf` on Windows does not itself require the fetched pdfium | CR-100 — whether the OS print dialog can ship at all |
 | 4 | `path_drawing.dashPath` cost under repeated re-synthesis; profile rather than assume the cache absorbs it | §8.3, frame budget |
 | 5 | Riverpod 3.3.2 `legacy` demotion of `ChangeNotifierProvider` | §4.2 — the hand-written adapter |
-| 6 | The pinned Flutter stable version (3.44.4 vs 3.41 in the corpus) | §10.2 — goldens do not survive Flutter bumps |
+| ~~6~~ | ~~The pinned Flutter stable version (3.44.4 vs 3.41 in the corpus)~~ — **RESOLVED: 3.44.4.** Pinned in `azure-pipelines.yml` and *enforced* by `tools/ci/ensure_flutter.ps1`, which measures `flutter --version --machine` and fails the build on any other version. See §10.2 | §10.2 — goldens do not survive Flutter bumps |
 | 7 | Impeller default status on Windows | §11 — all raster budgets are Skia numbers |
 | 8 | **Label-layer commit cost** on a real 300-link fixture — text-run count and commit time in `netLabels` mode, which is now the dominant term | §6.2 — DR-001 makes labels, not wires, the commit-path budget |
 

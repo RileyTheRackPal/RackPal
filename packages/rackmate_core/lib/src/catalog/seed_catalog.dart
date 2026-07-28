@@ -38,6 +38,11 @@ export 'package:rackmate_core/src/catalog/catalog_rf.dart' show kCatRf;
 export 'package:rackmate_core/src/catalog/catalog_sources.dart'
     show kCatSources;
 export 'package:rackmate_core/src/catalog/catalog_video.dart' show kCatVideo;
+// Not a template catalog — the shop's seed cable-colour convention, here
+// because it is the same kind of thing: pure seed data copied into a NEW
+// document by its constructor and editable from that moment on.
+export 'package:rackmate_core/src/catalog/jacket_color_convention.dart'
+    show buildDefaultJacketColorConvention;
 
 /// The category display order the palette groups by, matching
 /// docs/catalog/seed-devices.md §3's section order.

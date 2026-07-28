@@ -30,8 +30,10 @@ import 'package:rackmate_ui/src/canvas/staging_bin_overlay.dart';
 import 'package:rackmate_ui/src/canvas/status_message_controller.dart';
 import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
 import 'package:rackmate_ui/src/inspector/inspector_panel.dart';
+import 'package:rackmate_ui/src/inspector/new_rack_dialog.dart';
 import 'package:rackmate_ui/src/inspector/shrink_rack_dialog.dart';
 import 'package:rackmate_ui/src/palette/device_palette_panel.dart';
+import 'package:rackmate_ui/src/shell/no_racks_view.dart';
 
 /// The rack editor canvas: the pannable/zoomable grid (L0) with a real rack
 /// chassis (L1) and device bodies (L2) rendered on top, per CR-086 — the
@@ -330,7 +332,83 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
         clock: widget.clock,
       );
   RackDocument get _doc => _controller.doc;
-  late final Rack _rack = _doc.racks.values.first;
+
+  /// WHICH rack this canvas is editing — one at a time, deliberately.
+  ///
+  /// This was `late final Rack _rack = _doc.racks.values.first`, a field
+  /// that was correct for exactly as long as no surface could create a
+  /// second rack. `AddRackCommand` (docs/04 §9's New-rack dialog, wired to
+  /// `Ctrl+Alt+N` below) makes a second rack reachable, and a canvas pinned
+  /// to `values.first` would have answered that by drawing the OLD rack —
+  /// a Create button whose result is invisible, which is worse than no
+  /// button at all.
+  ///
+  /// ONE RACK AT A TIME IS THE SCOPE, AND IT IS NOT THE SPEC'S. docs/04 §8
+  /// binds `←`/`→` to "move selection to the adjacent rack" and §9 has
+  /// `Tab` moving "between racks", both of which presuppose a canvas that
+  /// LAYS OUT several racks side by side. That layout does not exist
+  /// (docs/12-milestone-board.md and docs/m1-implementation-log.md both
+  /// record multi-rack layout as unbuilt) and building it is not what the
+  /// M1 exit clause asks for. What is built here is an ACTIVE rack that the
+  /// user can change — via the header's overflow menu, and automatically
+  /// when they create one — so every rack in the document is reachable,
+  /// editable and exportable. `scene_builder.dart` already filters devices
+  /// by `placement.rackId`, `computeRackRollups` is already rack-scoped and
+  /// `SheetSet.forRacks` already emits 2N+1 sheets, so nothing downstream
+  /// had to be taught about the second rack; only this screen did.
+  /// Null means "whichever rack sorts first", which is the state this
+  /// screen mounts in and returns to when the rack it was showing goes
+  /// away. Never `late`: a rack-less document is a state this screen now
+  /// has to survive (see [_activeRack]), and `racks.keys.first` on one
+  /// throws before the first frame.
+  Uuid? _activeRackId;
+
+  /// The active rack, the first one when [_activeRackId] names a rack that
+  /// is no longer in the document, or NULL when the document holds no racks
+  /// at all.
+  ///
+  /// THE FALLBACK IS THE WHOLE MECHANISM, not a belt-and-braces second
+  /// one. Undoing an `AddRackCommand` deletes the very rack this screen is
+  /// showing; a `sequence` listener that repointed [_activeRackId] at that
+  /// moment was written first and then DELETED, because a mutation test
+  /// showed it changed nothing observable — this line already handles it,
+  /// and two mechanisms for one condition means one of them is untested by
+  /// construction. Leaving the id dangling is also better behaviour: `redo`
+  /// brings the rack back and the canvas returns to it, where a repoint
+  /// would have stranded the user on RK-1.
+  ///
+  /// NULL IS REACHABLE, AND THE COMMENT THAT SAID OTHERWISE WAS WRONG. It
+  /// used to read: *"`racks` cannot be empty here: the app shell renders
+  /// `NoRacksView` instead of this screen for a rack-less document, and the
+  /// only thing in this build that removes a rack is undoing an add, which
+  /// by construction leaves whatever was there before."* The second half is
+  /// exactly what this changeset falsified: `NoRacksView`'s new "New rack…"
+  /// button creates the FIRST rack of a rack-less document, so what was
+  /// "there before" is nothing, and `Ctrl+Z` then empties `racks` while this
+  /// screen is mounted and listening. The `rack` epoch listener fires
+  /// synchronously, before any ancestor can swap `NoRacksView` back in, so
+  /// there is no frame in which "the shell renders something else" protects
+  /// anything. Reproduced as `Bad state: No element`; pinned by
+  /// `rack_creation_test.dart`'s "undoing the creation of the ONLY rack".
+  Rack? get _activeRack {
+    final id = _activeRackId;
+    if (id != null) {
+      final named = _doc.racks[id];
+      if (named != null) return named;
+    }
+    return _doc.racks.isEmpty ? null : _doc.racks.values.first;
+  }
+
+  /// The active rack, for the code that only runs when there IS one.
+  ///
+  /// TWO GUARDS MAKE THIS TOTAL, and they are named rather than assumed.
+  /// [build] returns [_racklessPanel] when [_activeRack] is null, so the
+  /// canvas subtree — and with it every gesture handler, every `Shortcuts`
+  /// binding and every painter below — does not exist while the document
+  /// holds no racks. [_recomputeCaret] is the ONE reader that runs from a
+  /// listener rather than from that subtree, and it checks [_activeRack]
+  /// itself.
+  Rack get _rack => _activeRack!;
 
   /// Derived geometry for the CURRENT rack height, memoised on that height.
   ///
@@ -355,6 +433,24 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     final cached = _geoCache;
     if (cached != null && cached.heightU == _rack.heightU) return cached;
     return _geoCache = RackGeometry(_rack.heightU);
+  }
+
+  /// The device the LAST quick-add placed and auto-selected, while that
+  /// selection is still exactly what the placement left behind — docs/04
+  /// §9's keep-typing loop, and nothing wider.
+  ///
+  /// WHY A FIELD AND NOT A PREDICATE OVER THE SELECTION. "The selection is
+  /// one device that a quick-add once placed" is not the same question as
+  /// "the selection is still the one that quick-add made": a user who
+  /// clicks away and then clicks back has made a decision, and a rule that
+  /// could not tell the two apart would silently resume caret-targeting on
+  /// the strength of invisible history. So this is cleared by the first
+  /// selection change the screen did not itself cause.
+  Uuid? _lastQuickAddId;
+
+  bool get _selectionIsLastQuickAdd {
+    final id = _lastQuickAddId;
+    return id != null && _selection.length == 1 && _selection.contains(id);
   }
 
   Face _face = Face.front;
@@ -404,6 +500,11 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// and does unsubscribe outright.)
   bool _dragCancelled = false;
 
+  /// True for the remainder of the ONE key dispatch in which
+  /// `_onRawKeyDuringPaletteDrag` cancelled a palette drag — see that method
+  /// and `_onEscape` for why the two handlers both see the same `Esc`.
+  bool _escConsumedByPaletteDrag = false;
+
   /// Set when `_onBeginDrag` could not CLAIM the screen because another
   /// pointer-driven gesture was already live (a palette drag, armed from a
   /// sibling widget through a separate pointer route, is the only such case
@@ -445,7 +546,14 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // A committed structural edit (add/remove/move touches `structure`) and a
     // selection change both mean "rebuild the scene / repaint chrome"; both
     // fire at human speed, never on the pan/zoom hot path.
-    _selection.addListener(_onEditorChanged);
+    // `_forgetQuickAddSelection` is registered on `_selection` ONLY — not
+    // on the epochs — because it must react to selection changes and to
+    // nothing else. Folding it into `_onEditorChanged` would have closed
+    // the keep-typing window on the placement's own `structure` epoch bump,
+    // which fires before the selection is even set.
+    _selection
+      ..addListener(_onEditorChanged)
+      ..addListener(_forgetQuickAddSelection);
     _controller.epochs.structure.addListener(_onEditorChanged);
     // THE FIRST-EVER `rack` EPOCH SUBSCRIPTION. `SetRackHeightCommand` and
     // `SetRackPropertyCommand` both touch `EpochMask.rack`, and until this
@@ -486,6 +594,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       ..dispose();
     _selection
       ..removeListener(_onEditorChanged)
+      ..removeListener(_forgetQuickAddSelection)
       ..dispose();
     _controller.epochs.structure.removeListener(_onEditorChanged);
     _controller.epochs.rack.removeListener(_onEditorChanged);
@@ -553,6 +662,25 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// activation inputs (docs/04 §3.4).
   void _onFocusChanged() => _recomputeCaret();
 
+  /// Closes the keep-typing transparency window (see [_lastQuickAddId]) on
+  /// the first selection change this screen did not itself make: a click, a
+  /// Ctrl+click, a marquee, `Esc`, a Delete, or an undo restoring the
+  /// selection it captured. All of them are decisions about what is
+  /// selected, and docs/04 §3.4's "the caret conceptually doesn't exist
+  /// once something is selected" applies to every one of them.
+  /// NO LATCH FOR THE SCREEN'S OWN SELECTION WRITE. There was one — a
+  /// `_settingQuickAddSelection` bool raised around
+  /// `_finalizeCatalogPlacement`'s `_selection.apply(...)` so this listener
+  /// would not close the window that method was about to open. It was
+  /// DELETED because it could not be observed: `apply` notifies
+  /// synchronously, so this listener ran and cleared `_lastQuickAddId`
+  /// mid-`apply` — and the very next statement assigned `_lastQuickAddId`
+  /// again. Neutralising the guard changed nothing in 19 tests across the
+  /// two keyboard files. Dead state whose doc comment described a hazard
+  /// the statement order already precludes is worse than no state: it reads
+  /// as a mechanism somebody is relying on.
+  void _forgetQuickAddSelection() => _lastQuickAddId = null;
+
   /// THE STALE-STATE GUARD (docs/04 §3.6, and §3.3 step 4 by extension).
   ///
   /// EVERY preview on this screen holds positions captured against a
@@ -604,6 +732,17 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// caret and an in-flight palette drag are mutually exclusive, docs/04
   /// §3.1).
   void _recomputeCaret() {
+    // THE ONE READER THAT RUNS WITHOUT THE CANVAS SUBTREE. This is reached
+    // from the `rack`/`structure` epoch listeners and from the selection
+    // listener, all of which fire SYNCHRONOUSLY inside `controller.run` /
+    // `undo` — before any rebuild, therefore before [build] has had the
+    // chance to notice the document no longer has a rack. See [_activeRack]:
+    // undoing the creation of the FIRST rack is the case that gets here.
+    // Nothing to recompute against, and nothing on screen to recompute FOR
+    // (build renders [_racklessPanel]); the caret re-seeds itself against
+    // whatever rack appears next, because `CaretController.recompute`
+    // compares `caret.rackId` to the rack it is handed.
+    if (_activeRack == null) return;
     _caret.recompute(
       selectionEmpty: _selection.isEmpty,
       canvasHasFocus: _canvasFocus.hasFocus,
@@ -990,6 +1129,82 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
         _beginCompaction(CompactDirection.up);
       case RackHeaderAction.rackSettings:
         _showRackInspector();
+      case RackHeaderAction.newRack:
+        unawaited(_showNewRackDialog());
+    }
+  }
+
+  /// Every rack in the document, in the order the elevation sheets will
+  /// print them — `SheetSet.forRacks`' comparator exactly (`Rack.order`,
+  /// ties broken by id), restated here rather than approximated with map
+  /// iteration order so the switcher's list and the PDF's sheet order
+  /// cannot disagree.
+  List<RackChoice> get _rackChoices {
+    final racks = _doc.racks.values.toList()
+      ..sort((a, b) {
+        final byOrder = a.order.v.compareTo(b.order.v);
+        return byOrder != 0 ? byOrder : a.id.v.compareTo(b.id.v);
+      });
+    return [
+      for (final r in racks)
+        (id: r.id, designator: r.designator, name: r.name),
+    ];
+  }
+
+  // ── which rack is being edited (docs/04 §9's New-rack dialog) ─────────
+
+  /// Makes [id] the rack this canvas edits.
+  ///
+  /// EVERY LIVE PREVIEW DIES FIRST, for the same reason `_cycleFace` tears
+  /// them down: a compaction plan, a move drag and a resize drag all hold
+  /// positions captured against a DIFFERENT rack, and applying one after
+  /// the switch would move devices the user was shown no preview of. The
+  /// selection is cleared for the same reason it is not carried across a
+  /// face change — a selected device that is not on this elevation has no
+  /// chrome to draw and no nudge that means anything.
+  void _switchRack(Uuid id, {bool announce = true}) {
+    if (!_doc.racks.containsKey(id)) return;
+    final was = _activeRackId;
+    _invalidateLivePreviews();
+    _activeRackId = id;
+    _selection.clear();
+    // The caret re-seeds itself on a rack change (`CaretController.recompute`
+    // compares `caret.rackId` to the rack it is given), so this is the whole
+    // of the caret's migration.
+    _recomputeCaret();
+    _inspectorTarget = InspectorTarget.selection;
+    if (announce && was != id) {
+      _status.show('Editing ${_rack.designator} — ${_rack.name}.');
+    }
+    if (mounted) setState(() {});
+  }
+
+  /// docs/04 §9's New-rack dialog, reached by `Ctrl+Alt+N` (§8's keymap) or
+  /// the rack header's overflow menu.
+  ///
+  /// The command is built and run by [showNewRack] — the ONE rack-creation
+  /// path, shared with the app shell's rack-less panel. All this method
+  /// adds is what a CANVAS owes afterwards: show the rack that was just
+  /// created, because a Create that leaves the old rack on screen is a
+  /// button whose result is invisible.
+  Future<void> _showNewRackDialog() async {
+    final outcome = await showNewRack(
+      context: context,
+      controller: _controller,
+      presets: _presets,
+    );
+    if (!mounted) return;
+    switch (outcome) {
+      case NewRackCreated(:final command):
+        _switchRack(command.id, announce: false);
+        _status.show(
+          'Created ${command.designator} — ${command.name}, '
+          '${command.heightU}U.',
+        );
+      case NewRackCancelled():
+        break; // Cancel really is nothing at all.
+      case NewRackRefused(:final reason):
+        _status.show(reason);
     }
   }
 
@@ -2084,6 +2299,43 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// The two cannot both be live — `_beginCompaction` tears down any
   /// in-flight drag first — so the order below is for readability, not
   /// arbitration.
+  ///
+  /// ── AND, WITH NOTHING IN FLIGHT, IT CLEARS THE SELECTION ─────────────
+  ///
+  /// docs/04 §8's keymap has always said so — "`Esc` · cancel drag, exit
+  /// mode, **clear selection** · global" — and the third limb was the one
+  /// this file did not implement. Its absence is what
+  /// `docs/12-milestone-board.md` §3.2 clause 3 records as the reason the
+  /// keyboard-only drill fails: `_placeFromCatalog` suppresses caret
+  /// targeting while anything is selected, every placement selects what it
+  /// just placed, and there was no key that could un-select it. So a
+  /// keyboard user could reach the caret exactly once and then had to touch
+  /// the mouse to get back to it.
+  ///
+  /// LAST, not first. Esc is a cancel key before it is a deselect key: a
+  /// user with a device selected who starts a move drag and panics wants
+  /// the drag reverted, not their selection quietly emptied. The FOUR
+  /// in-flight cases below therefore each return, and this runs only when
+  /// none of them did.
+  ///
+  /// THE FOURTH IS THE PALETTE DRAG, and it is the one that does not look
+  /// like the others. It cancels through its own raw keyboard hook, whose
+  /// `return true` reads as "consumed" and is not — Flutter runs the raw
+  /// handlers and the `Shortcuts` dispatch for the SAME keypress and ORs
+  /// their verdicts (see `_onRawKeyDuringPaletteDrag`). So by the time this
+  /// method runs the drag has already been torn down and `_paletteDrag` is
+  /// reset, which is why the guard is a latch and not `_paletteDrag
+  /// .isInProgress`. Measured, not reasoned: a 2-device selection plus a
+  /// palette drag plus one `Esc` used to cancel the drag AND report
+  /// "Selection cleared (2 devices)."
+  ///
+  /// AND IT REPORTS (§3.4's "never silently do nothing"): clearing says so
+  /// on the status line — which `StatusMessageController` also pushes
+  /// through `SemanticsService.announce`, so a screen-reader user hears
+  /// the mode change rather than inferring it. Esc with nothing selected
+  /// and nothing in flight is the one silent case, and deliberately: a
+  /// cancel key that scolds you for having nothing to cancel is noise, and
+  /// unlike a refused ACTION nothing was asked for here.
   void _onEscape() {
     // A live top-edge drag goes first: it is the only one of the three whose
     // pointer may still be physically down while the OTHER two are provably
@@ -2099,9 +2351,33 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       _cancelCompaction();
       return;
     }
-    if (!_moveDrag.isInProgress) return;
-    _dragCancelled = true;
-    _cancelMoveDrag();
+    if (_moveDrag.isInProgress) {
+      _dragCancelled = true;
+      _cancelMoveDrag();
+      return;
+    }
+    if (_escConsumedByPaletteDrag) return;
+    _clearSelectionFromKeyboard();
+  }
+
+  /// docs/04 §8's third `Esc` limb. Separate from [_onEscape] so the rack
+  /// switcher and any future mode-exit can reuse it, and so the one thing
+  /// it must get right — reactivating the caret — is stated once.
+  ///
+  /// The caret comes back on its own: `_selection`'s listener runs
+  /// `_onEditorChanged`, which runs `_recomputeCaret`, whose activation
+  /// formula is `selection empty AND canvas focus AND no drag`. It comes
+  /// back AT ITS PREVIOUS POSITION, because the caret is sticky (see
+  /// `CaretController`) — which is precisely what makes the next
+  /// `/`-search-Enter land where the user left off rather than at
+  /// lowest-free-U.
+  void _clearSelectionFromKeyboard() {
+    if (_selection.isEmpty) return;
+    final n = _selection.length;
+    _selection.clear();
+    _status.show(
+      n == 1 ? 'Selection cleared.' : 'Selection cleared ($n devices).',
+    );
   }
 
   void _onHome() {
@@ -2213,37 +2489,112 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // conceptually doesn't exist once something is selected), which is
     // checked explicitly here rather than folded into `active`.
     //
-    // KNOWN GAP, stated honestly: because a freshly-placed device becomes
-    // the sole selection a few lines below (pre-existing behaviour, docs/04
-    // §3.1 step 6), `_selection.isEmpty` is false immediately after EVERY
-    // placement — so two Enters back-to-back with nothing in between
-    // (no click, no Delete, nothing that clears the selection) will use
-    // the caret for the FIRST placement only; the second falls back to
-    // lowest-free-U rather than the caret's just-advanced position, since
-    // by this reading a selection existing (even one this same method just
-    // created) suppresses caret-targeting. A true "keep typing, nothing
-    // else, and each Enter lands next to the last" loop needs a keyboard
-    // deselect this codebase doesn't have yet — noted as a real,
-    // scoped-out limitation rather than silently accepted; see this
-    // stage's final report.
-    final targetRu = _selection.isEmpty ? _caret.stickyCaret?.ruIndex : null;
+    // THE GAP THIS USED TO DOCUMENT AGAINST ITSELF, now closed. It read:
+    // because a freshly-placed device becomes the sole selection a few
+    // lines below (docs/04 §3.1 step 6), `_selection.isEmpty` is false
+    // immediately after EVERY placement — so two Enters back-to-back used
+    // the caret for the FIRST placement only and the second fell back to
+    // lowest-free-U. docs/12-milestone-board.md §3.2 clause 3 records that
+    // as the code naming its own defect, and the user's 2026-07-27 drill
+    // as the measurement of it.
+    //
+    // TWO THINGS FIXED IT, and they are separate. `Esc` now clears the
+    // selection (docs/04 §8's third limb — see `_onEscape`), which is what
+    // lets a keyboard user get BACK to the caret at all. And the rule
+    // below distinguishes a selection the USER made from one THIS METHOD
+    // just made: docs/04 §3.4's "the caret conceptually doesn't exist once
+    // something is selected" is about a user's selection — a device
+    // auto-selected by the placement the user is in the middle of
+    // repeating is not a decision to stop using the caret. Without that
+    // second half, §9's own measured path ("nine `/ query ⏎` cycles,
+    // roughly 25 seconds … `Enter` from palette search places at the caret
+    // and advances it") would need an `Esc` wedged into every cycle.
+    //
+    // `_lastQuickAddId` is cleared by the very next selection change this
+    // screen did not itself cause (`_forgetQuickAddSelection`), so a click,
+    // a Ctrl+click, an undo's selection restore or an `Esc` all end the
+    // transparency immediately — it can only ever describe the placement
+    // that is still, untouched, on screen.
+    // ── AND WHAT HAPPENS WHEN THE CARET'S U IS TAKEN ─────────────────────
+    //
+    // A LOOP THAT PLACES ONE DEVICE AND THEN JAMS IS NOT A LOOP. Measured
+    // on the demo rack (12U; UPS-1 U1-2, AMP-1 U4-5, SW-1 U7): four
+    // consecutive `/ query ⏎` cycles placed ONE device at U3 and then
+    // refused three times running, because the caret had advanced to U4 and
+    // caret-targeting stayed live for every subsequent cycle. That is
+    // strictly worse than the behaviour it replaced, which fell back to
+    // lowest-free-U on every cycle after the first and so placed four — and
+    // it is worse on exactly the everyday case, adding gear to a rack that
+    // already has some in it.
+    //
+    // So a caret-targeted quick-add INSIDE the keep-typing loop retries at
+    // docs/04 §3.2's "lowest fitting free U" — the same fallback the
+    // no-caret path has always used. It is not a silent redirect: the
+    // refusal that made it necessary is read out in front of the placement
+    // ("Occupied by AMP-1 (U4-U5). Placed BP-2 at RK-1 U6, front."), so the
+    // user is told both that the caret's slot was taken and where the device
+    // actually went, which is what §3.4's "never silently do nothing" asks
+    // for. The caret then advances past what was placed, so the cycle after
+    // this one aims somewhere real.
+    //
+    // ONLY INSIDE THE LOOP. When the user put the caret where it is —
+    // arrows, Home, End, PgUp/PgDn with nothing selected — an occupied
+    // target is an aimed shot that missed, and the honest answer is the
+    // loud refusal below, not a device somewhere they did not point at.
+    // `_selectionIsLastQuickAdd` is exactly the difference: it is true only
+    // while the selection is still the untouched result of THIS method's
+    // own previous placement, which is the only way the caret can be
+    // sitting where it is because the SCREEN advanced it.
+    final inKeepTypingLoop = _selectionIsLastQuickAdd;
+    final targetRu = (_selection.isEmpty || inKeepTypingLoop)
+        ? _caret.stickyCaret?.ruIndex
+        : null;
 
-    final result = buildPlaceFromCatalogCommand(
-      doc: _doc,
-      catalogId: catalogId,
-      targetRack: _rack,
-      now: _controller.clock.nowUtc(),
-      actor: _controller.actor,
-      explicitRuIndex: targetRu,
-    );
+    final now = _controller.clock.nowUtc();
+    CatalogPlacementResult attempt(int? explicitRuIndex) =>
+        buildPlaceFromCatalogCommand(
+          doc: _doc,
+          catalogId: catalogId,
+          targetRack: _rack,
+          now: now,
+          actor: _controller.actor,
+          explicitRuIndex: explicitRuIndex,
+        );
+
+    var result = attempt(targetRu);
+    String? caretRefusal;
+    if (result is CatalogPlacementFailed &&
+        targetRu != null &&
+        inKeepTypingLoop) {
+      final fallback = attempt(null);
+      if (fallback is CatalogPlacementReady) {
+        caretRefusal = result.reason;
+        result = fallback;
+      }
+      // A fallback that ALSO fails (the rack is full) leaves `result` as
+      // the caret refusal, which is the more specific of the two reasons.
+    }
+
     if (result is CatalogPlacementReady) {
       _finalizeCatalogPlacement(
         result.command,
         catalogId,
-        advanceCaret: targetRu != null,
+        fromQuickAdd: true,
+        caretRefusal: caretRefusal,
       );
     } else if (result is CatalogPlacementFailed) {
       _status.show(result.reason);
+      // FOCUS COMES BACK EVEN WHEN NOTHING WAS PLACED. The success path has
+      // always done this (`_finalizeCatalogPlacement`), and the refusal path
+      // did not — so a refused quick-add left primary focus on the route's
+      // modal scope, where the palette search box's `TextInputAction.done`
+      // had dropped it. From there NOTHING worked: `Esc` did not reach
+      // `_onEscape` at all (the `Shortcuts` subtree was out of the focus
+      // chain), arrows moved nothing, and Tab found nothing to land on;
+      // only a mouse click on the canvas restored the keyboard. A refusal
+      // that costs the user their keyboard is the clause-3 defect wearing a
+      // different hat.
+      _canvasFocus.requestFocus();
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -2261,17 +2612,37 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// selection, status bar announces" applies identically to both entry
   /// points, so this is the ONE place that does it.
   ///
-  /// [advanceCaret] is true only for a quick-add that actually consumed
-  /// the caret's position (see `_placeFromCatalog`'s own doc comment for
-  /// the caret-targeting rule) — a drag-from-palette commit never advances
-  /// the caret: dragging is a deliberate, explicit mouse-chosen position
-  /// unrelated to the caret's own keyboard-flow bookkeeping (docs/04 §3.1
-  /// says nothing about the caret at all), a deliberate scope choice
-  /// stated here rather than silently assumed.
+  /// [fromQuickAdd] separates §3.2's keyboard/click quick-add from §3.1's
+  /// drag-from-palette commit, and it governs two things.
+  ///
+  ///  * **The caret advances past what was placed** (docs/04 §3.2) for
+  ///    EVERY quick-add, including one that fell back to lowest-free-U.
+  ///    This used to be conditional on the caret having been CONSUMED, on
+  ///    the reasoning that a fallback placement "has nothing to do with
+  ///    where the caret sits". That was true one placement at a time and
+  ///    false as a loop: it left the caret pointing at wherever it had been
+  ///    before, so the placement after a fallback aimed somewhere unrelated
+  ///    to anything on screen. The caret's job is to say where the next one
+  ///    goes; after a placement, that is just past the placement.
+  ///  * **The transparency window opens** (see `_lastQuickAddId`).
+  ///
+  /// A drag commit does NEITHER: dragging is a deliberate, mouse-chosen
+  /// position unrelated to the caret's keyboard-flow bookkeeping (docs/04
+  /// §3.1 says nothing about the caret at all), and a drag is by definition
+  /// not a keep-typing loop. A deliberate scope choice, stated rather than
+  /// silently assumed.
+  ///
+  /// [caretRefusal] is the reason the caret's own U could not be used, when
+  /// the keep-typing loop fell back to lowest-free-U (see
+  /// `_placeFromCatalog`). It is READ OUT IN FRONT of the placement rather
+  /// than dropped, because a device that lands somewhere other than where
+  /// the caret was pointing is precisely the thing a user must not have to
+  /// notice for themselves.
   void _finalizeCatalogPlacement(
     AddDeviceCommand command,
     String catalogId, {
-    required bool advanceCaret,
+    required bool fromQuickAdd,
+    String? caretRefusal,
   }) {
     _controller.run(command);
     // Return focus to the canvas so the brand-new selection can
@@ -2282,8 +2653,17 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // The freshly-placed device becomes the sole selection (docs/04 §3.1
     // step 6) — a plain UI-selection update, not itself undoable (docs/03
     // §4.4: selection is observed, never document state).
+    //
+    // ORDER IS THE MECHANISM. `SelectionController.apply` notifies
+    // synchronously, so `_forgetQuickAddSelection` runs INSIDE the line
+    // below and clears `_lastQuickAddId`; the line after it is what opens
+    // the window. Assigning before applying would open a window the apply
+    // then closed. See `_forgetQuickAddSelection` for the latch that used
+    // to sit here and why it was deleted.
     _selection.apply([command.id], SelectMode.replace);
+    _lastQuickAddId = fromQuickAdd ? command.id : null;
 
+    final prefix = caretRefusal == null ? '' : '$caretRefusal ';
     final placement = command.placement;
     if (placement is RailPlacement) {
       final body = _doc.templates[catalogTemplateKey(catalogId)]?.body;
@@ -2292,19 +2672,16 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
           : (placement.face == Face.front ? body.frontU : body.rearU);
       final rangeEnd = placement.ruIndex + placedH - 1;
       _status.show(
-        'Placed ${command.designator} at ${_rack.designator} '
+        '${prefix}Placed ${command.designator} at ${_rack.designator} '
         'U${placement.ruIndex}'
         '${placedH > 1 ? '-U$rangeEnd' : ''}, ${placement.face.name}.',
       );
-      // "the caret advances past it" (docs/04 §3.2) — only when this
-      // placement actually consumed the caret's position; a
-      // lowest-free-U fallback placement (a selection was active) has
-      // nothing to do with where the caret sits.
-      if (advanceCaret) {
+      // "the caret advances past it" (docs/04 §3.2) — see [fromQuickAdd].
+      if (fromQuickAdd) {
         _caret.moveTo((placement.ruIndex + placedH).clamp(1, _rack.heightU));
       }
     } else {
-      _status.show('Placed ${command.designator}.');
+      _status.show('${prefix}Placed ${command.designator}.');
     }
   }
 
@@ -2660,7 +3037,11 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _paletteDrag.reset();
 
     if (result is CatalogPlacementReady) {
-      _finalizeCatalogPlacement(result.command, catalogId, advanceCaret: false);
+      _finalizeCatalogPlacement(
+        result.command,
+        catalogId,
+        fromQuickAdd: false,
+      );
     } else if (result is CatalogPlacementFailed) {
       // Unreachable in practice (this frame's own evaluation just said
       // valid) but handled honestly rather than assumed impossible — a
@@ -2674,9 +3055,36 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// "Esc cancels, ghost fades ... palette row restores"). Registered via
   /// `HardwareKeyboard.instance.addHandler` — see the section header for
   /// why a raw, focus-independent hook is needed here specifically.
+  ///
+  /// RETURNING `true` DOES NOT STOP THE `Shortcuts` BINDING. It reads like
+  /// it should, and it does not: `KeyEventManager` combines the two verdicts
+  /// with `handled = keyMessageHandler!(message) || handled`, so the raw
+  /// handlers and the focus-scoped dispatch BOTH run for the same keypress —
+  /// this one first, because `HardwareKeyboard.handleKeyEvent` is called
+  /// before `keyMessageHandler`. That is why the latch below exists: without
+  /// it, one `Esc` cancelled the drag AND fell through to `_onEscape`'s
+  /// deselect limb, emptying a selection the user had built before the drag
+  /// ever started.
   bool _onRawKeyDuringPaletteDrag(KeyEvent event) {
     if (event is! KeyDownEvent) return false;
     if (event.logicalKey != LogicalKeyboardKey.escape) return false;
+    // Latched only when there is genuinely a drag (or a lingering blocked
+    // release) to cancel — the SAME predicate `_cancelPaletteDrag` early-
+    // returns on, so the latch and the cancel can never disagree. A stale
+    // registration of this hook (the leak class `_removePaletteEscHandler`
+    // documents) would otherwise swallow one perfectly ordinary deselect.
+    _escConsumedByPaletteDrag =
+        _paletteDrag.subjectId != null || _paletteDrag.releaseLingering;
+    // Lowered by a microtask rather than by whoever reads it, so its
+    // lifetime is EXACTLY this one key event and cannot be extended by a
+    // reader that never runs. The whole key dispatch — this handler, then
+    // `Shortcuts`, then `_onEscape` — is synchronous inside one platform
+    // message, and microtasks drain after it, so the latch is up for the
+    // rest of this event and down before the next one. A latch cleared by
+    // `_onEscape` instead would stay up forever the moment an `Esc` cancels
+    // a drag while the canvas does not have focus, and would then silently
+    // swallow the NEXT deselect.
+    scheduleMicrotask(() => _escConsumedByPaletteDrag = false);
     _cancelPaletteDrag();
     return true;
   }
@@ -2822,8 +3230,25 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     }
   }
 
+  /// What this screen draws for a document with no racks in it.
+  ///
+  /// It is `NoRacksView` — the SAME panel the app shell shows, wired to the
+  /// SAME `showNewRack`, rather than a second empty state that could drift
+  /// from it. Reaching it at all is new: until the shell's rack-less panel
+  /// grew a Create button, no sequence of edits could take a mounted canvas
+  /// down to zero racks (see [_activeRack]).
+  ///
+  /// AN EMPTY RACK CANVAS HERE WOULD BE A LIE — rails and a ruler for a rack
+  /// that is not in the document, which is exactly what `no_racks_view.dart`
+  /// was written to avoid.
+  Widget _racklessPanel() => NoRacksView(
+    documentName: _doc.info.projectName,
+    onNewRack: () => unawaited(_showNewRackDialog()),
+  );
+
   @override
   Widget build(BuildContext context) {
+    if (_activeRack == null) return _racklessPanel();
     final scheme = Theme.of(context).colorScheme;
     final gridStyle = GridStyle(
       minorColor: scheme.outlineVariant.withValues(alpha: 0.55),
@@ -2891,15 +3316,27 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
         // handler-registration leak class those raw hooks live in, at the
         // cost of one deliberately-stated asymmetry.
         //
-        // Harmless when no drag is in flight: `_onEscape` finds nothing to
-        // cancel and does nothing. It is NOT a general deselect key (see
-        // docs/m1-implementation-log.md §3.2's known gap). Since this
-        // stage it ALSO cancels an open compaction preview (§3.6).
+        // WITH NOTHING IN FLIGHT IT CLEARS THE SELECTION — docs/04 §8's
+        // third limb, "cancel drag, exit mode, clear selection". This
+        // comment used to read "`_onEscape` finds nothing to cancel and does
+        // nothing. It is NOT a general deselect key", which was true of the
+        // build that wrote it and stopped being true in the same changeset
+        // that added the deselect; both sentences are replaced rather than
+        // left to rot, because a keymap comment that has quietly stopped
+        // describing the keymap is this repository's signature defect. It
+        // also cancels an open compaction preview (§3.6), and it does NOT
+        // deselect when the same keypress just cancelled a palette drag
+        // (see `_onEscape`).
         SingleActivator(LogicalKeyboardKey.escape): _CancelDragIntent(),
         // docs/04 §4 / §8's keymap: `Ctrl+Alt+U` opens the RackInspector —
         // the third of the section's three entry points.
         SingleActivator(LogicalKeyboardKey.keyU, control: true, alt: true):
             _RackSettingsIntent(),
+        // docs/04 §8's keymap, verbatim: "`Ctrl+Alt+U` / `Ctrl+Alt+N` —
+        // rack settings · new rack — rack". The second half had nothing
+        // behind it until docs/04 §9's dialog landed.
+        SingleActivator(LogicalKeyboardKey.keyN, control: true, alt: true):
+            _NewRackIntent(),
         // docs/04 §3.6: "Enter applies as one undo entry." Bound BARE, and
         // therefore inside the same subtree as the palette search box and
         // the focusable palette rows — see `_ApplyCompactionAction` for why
@@ -2982,6 +3419,12 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
           _RackSettingsIntent: CallbackAction<_RackSettingsIntent>(
             onInvoke: (_) {
               _showRackInspector(focusFirstField: true);
+              return null;
+            },
+          ),
+          _NewRackIntent: CallbackAction<_NewRackIntent>(
+            onInvoke: (_) {
+              unawaited(_showNewRackDialog());
               return null;
             },
           ),
@@ -3227,6 +3670,9 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                         // whether the hold-repeat may continue — see
                         // `_stepHeight`.
                         onStep: _stepHeight,
+                        racks: _rackChoices,
+                        activeRackId: _rack.id,
+                        onSelectRack: _switchRack,
                       ),
                       RackMetricsRow(
                         // Derived, not asserted: `computeRackRollups` is the
@@ -3431,6 +3877,10 @@ class _CancelDragIntent extends Intent {
 /// Open the `RackInspector` (`Ctrl+Alt+U`, docs/04 §4 and §8's keymap).
 class _RackSettingsIntent extends Intent {
   const _RackSettingsIntent();
+}
+
+class _NewRackIntent extends Intent {
+  const _NewRackIntent();
 }
 
 /// Apply an open compaction preview (`Enter`, docs/04 §3.6).
