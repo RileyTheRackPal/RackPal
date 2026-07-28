@@ -84,18 +84,20 @@ final class SetLinkJacketColorCommand extends Command {
 /// Records (or clears, with `null`) WHAT WAS ACTUALLY PULLED — the
 /// exception `Link.jacketColorPulledId` carries.
 ///
-/// NORMALISATION, STATED RATHER THAN HIDDEN. An override equal to the
-/// run's current convention id is stored as `null`, because pulling the
-/// convention colour is not an exception. This makes "no exception" have
-/// exactly ONE on-disk spelling, which CR-117's byte-exactness needs —
-/// two documents meaning the same thing would otherwise encode
-/// differently — and it stops an exceptions count being inflated by
-/// no-op overrides.
+/// STORED ABSOLUTELY — there is no normalisation, and its removal is the
+/// point. `pulledId` is a physical observation about a wall, so it is
+/// written exactly as given and never compared against the convention on
+/// the way in. Exception-ness is derived on READ by
+/// `ResolvedJacketColor.isException`, which is the only place that can get
+/// it right: the convention is mutable and the cable is not.
 ///
-/// It is deliberately the only cleverness in this command, and the
-/// resolver does NOT rely on it: `ResolvedJacketColor.isException`
-/// re-checks the inequality itself, because a hand-edited file or a CSV
-/// import never passed through here.
+/// Three distinct states, and the middle one did not exist before:
+///   * `null`                      — nobody has been out there yet
+///   * equal to `jacketColorId`    — SOMEBODY CHECKED AND IT MATCHES
+///   * different                   — the exception
+/// The earlier version collapsed the middle into the first, which made the
+/// confirming command a no-op and, once a run was re-designated, reported
+/// the new convention colour as as-built while counting zero exceptions.
 ///
 /// Does NOT touch `Link.jacketColorId`, and in particular never PROMOTES
 /// an override to the convention: doing so would assert what the run is
@@ -109,9 +111,8 @@ final class SetLinkPulledJacketColorCommand extends Command {
   /// The run being described.
   final Uuid linkId;
 
-  /// The colour actually pulled, or `null` to clear the exception. A
-  /// value equal to the run's convention id is normalised to `null` —
-  /// see the class doc.
+  /// The colour actually pulled, or `null` to clear the observation.
+  /// Stored verbatim; see the class doc.
   final JacketColorId? pulledId;
 
   JacketColorId? _previous;
@@ -132,11 +133,41 @@ final class SetLinkPulledJacketColorCommand extends Command {
     if (link == null) return;
     _previous = link.jacketColorPulledId;
     _applied = true;
-    // The normalisation. Note it reads the link's CURRENT convention id
-    // rather than a value captured in the constructor: the command
-    // records "the pulled colour is X", and whether that is an exception
-    // is a question about the document at the moment it is applied.
-    link.jacketColorPulledId = pulledId == link.jacketColorId ? null : pulledId;
+    // STORED ABSOLUTELY. `pulledId` is a PHYSICAL OBSERVATION — "the cable
+    // in this wall is blue" — and a physical observation does not change
+    // when a drawing is re-labelled. It is written exactly as given.
+    //
+    // This previously normalised `pulledId == link.jacketColorId ? null :
+    // pulledId`, storing the observation as a DELTA against the
+    // convention, with a comment arguing that "whether that is an
+    // exception is a question about the document at the moment it is
+    // applied". That is the defect stated as the design. Exception-ness is
+    // a question about the document at the moment it is READ, because the
+    // convention is mutable and the cable is not:
+    //
+    //   convention = jc.blue (control); tech records pulled = jc.blue
+    //     -> normalised to null, the observation is DISCARDED
+    //   weeks later the designer re-designates: convention = jc.green
+    //     -> the wall still holds BLUE cable, but asBuilt reports GREEN,
+    //        isException reports false, and the rollup counts zero
+    //        exceptions and zero unrecorded runs
+    //
+    // A real divergence, invisible to every accessor — the exact failure
+    // this feature exists to prevent. It was also ORDER-DEPENDENT: the
+    // identical real-world history recorded convention-last survived
+    // intact, so two identical histories produced two stored states, one
+    // of them lying.
+    //
+    // Storing absolutely also gives the third state the delta form could
+    // not express. `pulledId == jacketColorId` now means "SOMEBODY CHECKED
+    // AND IT MATCHES", which is distinct from `null` = "nobody has said".
+    // Under the old form the confirming command was a no-op.
+    //
+    // `ResolvedJacketColor.isException` already carries the inequality
+    // limb needed for this (`pulledId != null && pulledId != conventionId`)
+    // — it simply never fired, because the write path had pre-normalised
+    // every matching case away.
+    link.jacketColorPulledId = pulledId;
   }
 
   @override

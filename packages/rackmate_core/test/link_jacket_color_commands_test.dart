@@ -180,37 +180,84 @@ void main() {
     });
   });
 
-  group('NORMALISATION — pulling the convention colour is not an '
-      'exception', () {
-    test('an override EQUAL to the convention is stored as null', () {
-      // MUTATION: delete the `pulledId == link.jacketColorId ? null :`
-      // ternary in `apply()` and this fails. Without it, "no exception"
-      // would have TWO on-disk spellings (absent, and present-but-equal),
-      // which breaks CR-117's byte canonicality — two documents meaning
-      // the same thing would encode differently — and inflates any
-      // exceptions count with no-op overrides.
+  group('ABSOLUTE STORAGE — an observation is about the wall, not the '
+      'drawing', () {
+    test('an override EQUAL to the convention is STORED, not discarded — it '
+        'means "somebody checked", which null does not', () {
+      // This asserted the opposite until the delta-storage defect was
+      // found. Normalising a matching observation to null threw away the
+      // difference between "a tech confirmed the cable matches" and
+      // "nobody has been out there yet", and made the confirming command a
+      // no-op. The old comment justified it on CR-117 byte canonicality —
+      // but the two spellings do not mean the same thing, so collapsing
+      // them was not canonicalisation, it was data loss.
       final doc = _doc(convention: _blue);
       SetLinkPulledJacketColorCommand(
         linkId: _linkId,
         pulledId: _blue,
       ).apply(doc);
 
-      expect(_link(doc).jacketColorPulledId, isNull);
-    });
-
-    test('and the resolver agrees it is not an exception', () {
-      final doc = _doc(convention: _blue);
-      SetLinkPulledJacketColorCommand(
-        linkId: _linkId,
-        pulledId: _blue,
-      ).apply(doc);
-
+      expect(_link(doc).jacketColorPulledId, _blue);
       expect(
         resolveJacketColor(
           _link(doc),
           doc.settings.jacketColorConventions,
         ).isException,
         isFalse,
+        reason: 'it matches the convention TODAY, so it is not an exception '
+            'today — but the observation is on record',
+      );
+    });
+
+    test('RE-DESIGNATING the convention turns a confirmed-matching run into '
+        'an exception — the cable did not move', () {
+      // THE REGRESSION THIS GROUP EXISTS FOR, and the one the previous
+      // cross-check could not see. Under delta storage the observation was
+      // erased at write time, so this scenario silently reported the NEW
+      // convention colour as as-built, isException false, and zero
+      // exceptions in the rollup — a real divergence invisible to every
+      // accessor.
+      final doc = _doc(convention: _blue);
+      SetLinkPulledJacketColorCommand(linkId: _linkId, pulledId: _blue)
+          .apply(doc);
+      // Weeks later the designer re-designates the run. Nobody re-pulls it.
+      SetLinkJacketColorCommand(linkId: _linkId, conventionId: _yellow)
+          .apply(doc);
+
+      final r = resolveJacketColor(
+        _link(doc),
+        doc.settings.jacketColorConventions,
+      );
+      expect(r.asBuiltColorId, _blue, reason: 'the wall still holds BLUE');
+      expect(r.keystoneColorId, _yellow, reason: 'the keystone follows the '
+          'convention — it is fitted later, out of the yellow box');
+      expect(r.isException, isTrue);
+    });
+
+    test('the same real-world history recorded in EITHER ORDER yields the '
+        'same stored state', () {
+      // The delta form was order-dependent: convention-then-observation
+      // erased the observation, while observation-then-convention kept it.
+      // Two identical histories, two stored states, one of them lying.
+      final conventionFirst = _doc(convention: _blue);
+      SetLinkJacketColorCommand(linkId: _linkId, conventionId: _blue)
+          .apply(conventionFirst);
+      SetLinkPulledJacketColorCommand(linkId: _linkId, pulledId: _blue)
+          .apply(conventionFirst);
+
+      final observationFirst = _doc(convention: _blue);
+      SetLinkPulledJacketColorCommand(linkId: _linkId, pulledId: _blue)
+          .apply(observationFirst);
+      SetLinkJacketColorCommand(linkId: _linkId, conventionId: _blue)
+          .apply(observationFirst);
+
+      expect(
+        _link(conventionFirst).jacketColorPulledId,
+        _link(observationFirst).jacketColorPulledId,
+      );
+      expect(
+        _link(conventionFirst).jacketColorId,
+        _link(observationFirst).jacketColorId,
       );
     });
 
@@ -227,32 +274,47 @@ void main() {
       expect(_link(doc).jacketColorPulledId, _yellow);
     });
 
-    test('normalisation reads the CURRENT convention, so the same command '
-        'value is an exception on one run and not on another', () {
-      // Whether a pulled colour is an exception is a question about the
-      // document at the moment of application, not about the command.
+    test('the SAME observation stores the SAME value regardless of the '
+        'convention it lands on', () {
+      // This asserted the opposite, and the assertion WAS the defect: the
+      // write path read the link's convention and stored a delta, so an
+      // identical physical observation persisted differently depending on
+      // what the drawing happened to say at that moment. An observation is
+      // about the wall, not about the drawing.
       final onBlue = _doc(convention: _blue);
       final onYellow = _doc(convention: _yellow);
-      SetLinkPulledJacketColorCommand(
-        linkId: _linkId,
-        pulledId: _yellow,
-      ).apply(onBlue);
-      SetLinkPulledJacketColorCommand(
-        linkId: _linkId,
-        pulledId: _yellow,
-      ).apply(onYellow);
+      SetLinkPulledJacketColorCommand(linkId: _linkId, pulledId: _yellow)
+          .apply(onBlue);
+      SetLinkPulledJacketColorCommand(linkId: _linkId, pulledId: _yellow)
+          .apply(onYellow);
 
       expect(_link(onBlue).jacketColorPulledId, _yellow);
-      expect(_link(onYellow).jacketColorPulledId, isNull);
+      expect(_link(onYellow).jacketColorPulledId, _yellow);
+
+      // Exception-ness is derived at READ time, and there the two differ.
+      expect(
+        resolveJacketColor(
+          _link(onBlue),
+          onBlue.settings.jacketColorConventions,
+        ).isException,
+        isTrue,
+      );
+      expect(
+        resolveJacketColor(
+          _link(onYellow),
+          onYellow.settings.jacketColorConventions,
+        ).isException,
+        isFalse,
+      );
     });
 
-    test('revert after a normalised write restores the prior value', () {
+    test('revert restores the prior observation', () {
       final doc = _doc(convention: _blue, pulled: _yellow);
       final cmd = SetLinkPulledJacketColorCommand(
         linkId: _linkId,
         pulledId: _blue,
       )..apply(doc);
-      expect(_link(doc).jacketColorPulledId, isNull);
+      expect(_link(doc).jacketColorPulledId, _blue);
 
       cmd.revert(doc);
       expect(_link(doc).jacketColorPulledId, _yellow);
