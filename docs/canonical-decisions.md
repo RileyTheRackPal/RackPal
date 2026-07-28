@@ -6369,6 +6369,93 @@ for it**, and this paragraph is the record of that debt.
 
 ---
 
+### 11.9 DR-009 · macOS ships in v1
+
+> **RULING — settled by the user on 2026-07-28.** §10.10 asked the question and recommended
+> against; the user has ruled the other way. Recorded as an amendment with its own ID because
+> **§8.3 requires one**: moving anything between v1/v1.1/v1.2/v2 is an amendment, not a doc edit.
+
+**§10.10 offered two options.** (a) Windows only for v1. (b) Windows and macOS from v1. **Option
+(b) is taken.** §10.10 is closed, and its status in the open-questions table — `open`, *"ask before
+M7"* — is discharged. The question was asked and answered ahead of M7 rather than after it, which
+is what that line wanted.
+
+**The recommendation this overturns was explicitly not a ruling**, and its own reasoning is why
+overturning it is cheap rather than expensive. §10.10 argued that *"a visible slice of high-end
+residential AV design work happens on Macs, and a tool that cannot open there is simply invisible
+to those people"*, and set against that a bounded 3–5 weeks. It then recommended (a) on the
+strength of a desk survey it never ran.
+
+---
+
+**11.9.1 The debt register exists now, and it is a work list rather than a ledger.**
+
+§10.10's recommendation carried a condition: *"nothing in M0–M6 may take a Windows-only dependency
+without it being written down as a macOS debt item."* **That condition was never kept.** The
+sentence appears in three documents — `docs/10-decisions.md:72`, `:1036`, and §10.10 itself — and
+no register was ever created, so not one item was ever recorded.
+
+`docs/13-macos-debt-register.md` is that register, compiled against `0f83628` by direct
+inspection. Under this ruling it is not a deferral ledger: **its items are to be cleared.**
+
+**THE DEBT IS SMALLER THAN §10.10 ASSUMED, AND THE REGISTER SAYS WHY.** The seams macOS needs were
+already built, for other reasons: `Platform.isWindows` appears nowhere in Dart, the platform split
+is an injected `isWindows` flag whose own comment already reasons about macOS errno tables and the
+259-vs-4096 path limit, `FilePicker` is an `abstract interface class` with the Win32 dialog as one
+implementation, the metrics font is bundled rather than system, and `path_provider_windows` sits
+behind a single grep-enforced call site. §10.10's *"font availability"* cost item does not apply to
+this tree at all.
+
+**Two items carry lead time and neither is code**: Apple Developer enrolment and notarisation
+(D8), and a second physical print matrix for AC-054 (D11). Both should start early *because* they
+are not code.
+
+**One thing is genuinely unknown and is not being asserted away**: whether CR-117's byte-exactness
+gate survives a platform change. A platform-dependent float or font metric would surface there
+first. It is cheap to measure once a macOS CI job exists, and it is the only item that could turn
+a bounded port into a design question.
+
+---
+
+**11.9.2 Only the keyboard-modifier extraction (D7) is pulled into M2.**
+
+The rest of the register is scheduled by its own dependencies, not crammed into this milestone.
+D7 is the exception, and the reason is that **it is the only item that gets more expensive with
+every commit.**
+
+There are **22** hard-coded `SingleActivator` bindings today — four in `app_shell.dart:69-76`,
+eighteen in `rack_canvas_screen.dart:3278-3350` — and §10.10 prices the `Cmd`-vs-`Ctrl` work
+across *"~40 bindings"*. **M2-F adds the connection-creation keyboard path**, which moves the count
+toward that estimate. Extracting the modifier now is roughly half the edit it becomes after.
+
+It also pays two debts that were already owed and unrelated to macOS: M7's exit criterion requires
+*"no keybinding bound twice **in the generated table**"* and the milestone board records that
+**nothing generates a table**; CR-101's 16 collisions are unfixed for exactly that reason. One
+extraction discharges the macOS modifier, the generated table and the collision arbitration.
+
+**M2's exit expectation is amended accordingly.** This does not add a clause to the M2 exit
+criterion in the roadmap — it is scheduling, not a criterion — but M2 is not to be called done
+with D7 outstanding.
+
+---
+
+**11.9.3 What this does NOT change.**
+
+- **DR-006 stands unaltered.** RackMate is an internal tool and Windows distribution remains
+  self-signed with a timestamp, Microsoft Trusted Signing as the named fallback at M8. macOS
+  notarisation is **additive**, and it was never in doubt: §12.9 already records that the macOS
+  half of D10 is *"unaffected and still binding"* — it simply had no milestone to attach to.
+  DR-009 gives it one.
+- **No M0–M6 decision is reopened.** Every Windows-only dependency taken so far is recorded in
+  the register and cleared on its own schedule. Nothing already built is wrong.
+- **The milestone board is not re-stamped here.** `docs/12-milestone-board.md` is an audit pinned
+  to `0fa532d`; its M7 row reading *"Windows-only"* and its §5.6 note that `apps/rackmate` has no
+  `macos/` directory are **statements of fact at that commit and remain true**. They are
+  superseded as SCOPE by this ruling, not as observations. Re-stamping a pinned audit without
+  re-verifying its other claims would be worse than leaving it dated.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-007 change or void, plus the small set of internal
@@ -6615,7 +6702,7 @@ index of what was decided.
 | **10.7** | Multi-sheet timing | **ANSWERED — DR-004** | **(c) Never.** One `Sheet` plus domain filtering, permanently. The entity remains. §11.4. |
 | 10.8 | Cloud-ready investment | open | — |
 | 10.9 | Generic archetypes forever, or a real-SKU catalog | open | — |
-| 10.10 | macOS in v1 | open | — |
+| **10.10** | macOS in v1 | **ANSWERED — DR-009** | **(b) Windows and macOS from v1.** Reverses the record's recommendation, which was explicitly *"not a ruling"* and rested on a desk survey that was never run. The register §10.10 demanded and never received is `docs/13-macos-debt-register.md`. §11.9. |
 | 10.11 | What the beta gate actually is | open | — |
 | 10.12 | Small calls needing an owner | (d) settled; (a)(b)(c)(e)(f)(g) open | (d) three residential + one commercial starter project, settled by DR-002. |
 | 10.13 | The three to answer first | **retired** | All three — 10.1, 10.2, 10.4 — are answered. The section has served its purpose. |
@@ -6628,7 +6715,7 @@ index of what was decided.
 | **10.5 — metric or imperial** | **Unchanged and still cheap.** DR-002 tilts it toward (a) imperial default, since North American residential is the stated primary market. One settings row either way. |
 | **10.8 — cloud-ready investment** | **Easier.** DR-004 removes multi-sheet, which was the largest remaining source of entity-graph churn. The conflict unit is more stable than it was, so (a) — spend nothing further, write the conflict-unit page down — is now the clear answer rather than the cautious one. |
 | **10.9 — real-SKU catalog** | **Better instrumented.** DR-003 keeps the builder, so the long tail has a first-class answer in v1 and the real-SKU question stops being urgent. Measure 7's miss rate now feeds this question instead of 10.4. |
-| **10.10 — macOS in v1** | **Unchanged.** Independent of all five. Ask before M7. |
+| **10.10 — macOS in v1** | **ANSWERED by DR-009 — no longer a remaining question.** The row is kept, like 10.3's, because the reasoning survives being answered: the 3–5 week estimate and the cost list it rests on are what `docs/13` was checked against, and two of that list's items — font availability, and the `Cmd`/`Ctrl` spread across "~40 bindings" — turned out not to hold for this tree in the way §10.10 assumed. The first does not apply at all; the second is 22 bindings today and is being extracted in M2 before it reaches 40. |
 | **10.11 — the beta gate** | **Easier.** DR-005 makes M9's criterion sharper and more testable: "a sheet set they were willing to send out" now has a concrete bar — full sheet furniture, revision block populated, IFC stamp available. |
 | **10.12(a) undo depth, (b) autosave, (c) default rack height** | Unchanged. |
 | **10.12(e) telemetry** | **Easier.** Its only stated cost was that opt-in-only makes 10.4's miss-rate instrumentation manual. 10.4 is answered, so that objection is gone: opt-in, local-first crash reports only. |
