@@ -21,6 +21,13 @@
 /// `derived/totals.dart` opens `derived/` (docs/03-architecture.md) with
 /// docs/04 §5's four chip-strip rollups, in core because a number the
 /// screen shows and the PDF prints must be computed exactly once.
+/// M2 adds the schematic's LAYOUT half — `sugiyama.dart` (phases 0–3:
+/// cycle-break, layer, barycentre, coordinate assign) and
+/// `schematic_scene.dart`, which projects a document onto that graph and
+/// composes the symbol display list. Both are in core, and not in
+/// `rackmate_ui`, for CR-071/CR-086's reason and so `rackmate_export` can
+/// drive a schematic sheet. No router, no wires, no net labels: DR-001
+/// §11.1.3 keeps phases 4–6 out of this stage.
 library;
 
 export 'src/catalog/rack_presets.dart';
@@ -66,6 +73,8 @@ export 'src/draw/scene/rack_layer.dart';
 export 'src/draw/scene/rack_load_gutter.dart';
 export 'src/draw/scene/rack_style.dart';
 export 'src/draw/scene/scene_builder.dart';
+export 'src/draw/scene/schematic_scene.dart';
+export 'src/draw/scene/sugiyama.dart';
 export 'src/draw/scene/symbol_hit_test.dart';
 export 'src/draw/scene/symbol_layer.dart';
 export 'src/draw/sheet/drawing_scale.dart';

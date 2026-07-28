@@ -1,0 +1,23 @@
+# Tag declarations for this package's suite.
+#
+# WHY THIS EXISTS WHEN THE REPOSITORY ROOT ALREADY HAS ONE. `dart test`
+# reads `dart_test.yaml` from the directory it is invoked in, and
+# `tools/ci/run_suite.ps1` invokes it inside each package — so the root
+# file is never read by the suite that actually runs, and the first tagged
+# test in this package (`test/scene/schematic_perf_test.dart`, M2's
+# 300-connection budget) printed "A tag was used that wasn't specified in
+# dart_test.yaml" on every run. A warning nobody can act on is the thing
+# docs/11 section 8 says trains people to ignore output.
+#
+# The three tags below MIRROR the root file verbatim. Nothing here filters
+# anything: run_suite.ps1 deliberately does no tag filtering ("there are
+# zero tagged tests in this repository today"), and the perf budget is an
+# exit criterion, so it runs on every push like everything else.
+
+tags:
+  golden:
+    description: "Golden/screenshot tests; may need font-environment pinning"
+  slow:
+    description: "Property tests and large fixture sweeps"
+  perf:
+    description: "Benchmark-harness performance budget tests"

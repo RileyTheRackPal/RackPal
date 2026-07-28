@@ -1,0 +1,719 @@
+// rackmate_core/src/draw/scene/schematic_scene.dart — pure Dart.
+//
+// The document → schematic display list. It projects a `RackDocument` onto
+// the abstract graph `sugiyama.dart` lays out, then composes one
+// `DiagramScene` from `symbol_layer.dart`'s fragments — the schematic's
+// counterpart to `scene_builder.dart`, and it follows that file's
+// conventions deliberately: absolute hits, LOCAL per-entity fragments
+// bracketed by `OpSave`/`OpTransform`/`OpRestore`, ink bounds measured from
+// the ops actually emitted.
+//
+// ── WHAT IS IN THIS SCENE, AND WHAT IS NOT ──────────────────────────────
+// IN: the symbols. That is the whole of Sugiyama phases 0–3's product
+// (canon §11.1.3: "These place the SYMBOLS, and symbol placement is
+// required in both idioms").
+//
+// NOT IN, and none of it is an oversight:
+//   * NET-LABEL STUBS — docs/05 §10.2 phase 6, and under DR-001 the DEFAULT
+//     render. They are the next stage's work, not this one's; this stage is
+//     the layout half. A scene with no labels is an incomplete drawing and
+//     is said so here rather than discovered.
+//   * DRAWN WIRES — phase 4, `drawn` mode only (DR-001 §11.1.1). Reached by
+//     a domain filter, `Alt`-hover or focus, none of which exists yet.
+//   * CHANNEL ROUTING, THE CROSSING SWEEP, HOP ARCS, JUNCTION STAGGERING —
+//     out of v1 scope entirely (canon §11.1.3 items 1–5).
+//   * LOD TIERING, bank collapse to vector pins, connector glyphs, header
+//     metadata and badges — `symbol_layer.dart`'s own deferral list, which
+//     this file does not extend or work around.
+//
+// ── THE ONE SCALE ANCHOR, DERIVED AND NOT INVENTED ──────────────────────
+// `symbol_layer.dart` deliberately left `gu` unconverted, because
+// "converting gu to diagram points needs the sheet's scale anchor, which
+// the schematic scene builder has not been written yet". This is that
+// builder, so the anchor is settled here, once, and DERIVED through the
+// existing chain rather than as a new constant:
+//
+//   1 gu   = kGridUnit = Len(2_500_000) = 2.5 mm exactly   (CR-004)
+//   1 diagram unit = 1 PDF point = 1/72 in                 (CR-007)
+//   => [kSchematicUnitsPerGrid] = pointsForLen(kGridUnit)  ≈ 7.0866
+//
+// It goes through `units/print_units.dart` for the reason that file's own
+// header gives — "NOTHING ANYWHERE ELSE MAY HARDCODE 126 OR 72" — so a
+// change to `kGridUnit` moves the symbol, the pin pitch and the layout
+// gutter together instead of desynchronising them.
+//
+// THE SCHEMATIC IS THEREFORE DRAWN AT 1:1 PHYSICAL, unlike the rack
+// elevation's 22:126 reduction (`rack_geometry.dart`). That is not a second
+// convention smuggled in: docs/05 §3 states the symbol in millimetres —
+// "header band, height 6 gu", "DESIGNATOR (3.5 mm cap)" — so `gu` is a
+// physical pitch there in a way `22 units per RU` never was, and a sheet
+// that needs to fit is scaled by `draw/sheet/drawing_scale.dart`, which is
+// the one place a ratio may be applied.
+//
+// ── WHICH DEVICES GET A SYMBOL ──────────────────────────────────────────
+// A device is drawn iff its resolved `TemplateBody` declares at least one
+// `PortDef`. A symbol IS its pins (docs/05 §3: "A symbol is a body
+// rectangle with a header band and pins on its four edges"), and a device
+// with no ports — a blank panel, a vent, a shelf — can carry no Link, so a
+// pinless box on the wiring drawing would be furniture.
+//
+// THE TEST IS THE TEMPLATE, NOT `doc.ports`. Ports are LAZILY MATERIALISED
+// (AC-006): an AVR nobody has wired yet has zero rows in `doc.ports` and
+// must still appear on the schematic, or the drawing would show devices
+// appearing as they are cabled. Placement is not a filter either — a
+// `StagedPlacement` device with ports still wires, which is AC-018's
+// design-intent case.
+//
+// Devices that fail the test are COUNTED, in
+// [SchematicScene.unsymbolisedDeviceIds], never silently dropped — the same
+// discipline as `RackScene.unlabelledDeviceIds`.
+
+import 'dart:math' as math;
+
+import 'package:meta/meta.dart';
+import 'package:rackmate_core/src/derived/device_loads.dart'
+    show hostRackOf, templateKeyFor;
+import 'package:rackmate_core/src/draw/geometry.dart';
+import 'package:rackmate_core/src/draw/ops.dart';
+import 'package:rackmate_core/src/draw/scene/rack_style.dart';
+import 'package:rackmate_core/src/draw/scene/sugiyama.dart';
+import 'package:rackmate_core/src/draw/scene/symbol_hit_test.dart';
+import 'package:rackmate_core/src/draw/scene/symbol_layer.dart';
+import 'package:rackmate_core/src/draw/text.dart';
+import 'package:rackmate_core/src/model/conductor.dart';
+import 'package:rackmate_core/src/model/device_instance.dart';
+import 'package:rackmate_core/src/model/link.dart';
+import 'package:rackmate_core/src/model/placement.dart';
+import 'package:rackmate_core/src/model/rack_document.dart';
+import 'package:rackmate_core/src/model/sheet.dart';
+import 'package:rackmate_core/src/model/structure_body.dart' show SheetEdge;
+import 'package:rackmate_core/src/model/template.dart';
+import 'package:rackmate_core/src/units/constants.dart';
+import 'package:rackmate_core/src/units/ids.dart';
+import 'package:rackmate_core/src/units/print_units.dart';
+import 'package:rackmate_core/src/units/pt.dart';
+import 'package:vector_math/vector_math_64.dart';
+
+/// Diagram units (PDF points) per schematic grid unit — see the file
+/// header. Not a literal anywhere else in the repository.
+final double kSchematicUnitsPerGrid = pointsForLen(kGridUnit);
+
+/// The symbol figures docs/05 §3 states, in the grid units it states them
+/// in, plus the layout knobs.
+///
+/// EVERY FIELD HERE IS A CITATION EXCEPT [portSizeGu], which is called out
+/// as a choice below. Keeping them in `gu` rather than in diagram units is
+/// what lets [buildSchematicScene] size a symbol in exact integers and hand
+/// the SAME integers to the layout — a symbol that is 20 gu wide occupies
+/// 20 gu of the sheet, and the two cannot drift.
+@immutable
+final class SchematicMetrics {
+  const SchematicMetrics({
+    this.headerHeightGu = 6,
+    this.pinPitchGu = kPinPitch,
+    this.portSizeGu = 1,
+    this.minBodyWidthGu = 20,
+    this.minBodyHeightGu = 16,
+    this.headerTextPadGu = 8,
+    this.sideLabelPadGu = 12,
+    this.layout = const SugiyamaParams(),
+  });
+
+  /// docs/05 §3's ASCII figure: "header band, height 6 gu".
+  final int headerHeightGu;
+
+  /// §3: "Top and bottom pins distribute across the width at 2 gu pitch".
+  /// `kPinPitch` (units/constants.dart) is that 2.
+  final int pinPitchGu;
+
+  /// The pin circle's diameter. A STATED CHOICE — §3 draws the pin as a
+  /// connector glyph and gives it no size. 1 gu makes the circle straddle
+  /// the body edge by half a gu and leaves a clear gu between two pins at
+  /// the 2 gu pitch, which is the smallest value that keeps adjacent pins
+  /// visually separate. Recorded as a choice so it is not read as a figure
+  /// out of the corpus.
+  final int portSizeGu;
+
+  /// §3's sizing formula: `width = max(20gu, …)`.
+  final int minBodyWidthGu;
+
+  /// §3: `height = 6gu + (max(leftPins, rightPins) + 1) × 2gu`, minimum
+  /// 16 gu.
+  final int minBodyHeightGu;
+
+  /// §3: `textWidth(designator + name) + 8gu`.
+  final int headerTextPadGu;
+
+  /// §3: `maxLeftLabel + maxRightLabel + 12gu`.
+  final int sideLabelPadGu;
+
+  /// Phases 0–3's own knobs.
+  final SugiyamaParams layout;
+}
+
+/// The output of [buildSchematicScene].
+@immutable
+final class SchematicScene {
+  const SchematicScene({
+    required this.scene,
+    required this.symbols,
+    required this.positions,
+    required this.layers,
+    required this.unsymbolisedDeviceIds,
+    required this.reversedLinkIds,
+    required this.nonForwardLinkIds,
+    required this.crossings,
+  });
+
+  /// The one composed display list. `fragmentFor(deviceId.v)` → that
+  /// symbol's LOCAL fragment, exactly as `RackScene` does for a device.
+  final DiagramScene scene;
+
+  /// Every drawn symbol, positioned absolutely, in the scene's own op
+  /// order: by layer, then top to bottom within the layer. The display
+  /// list therefore reads the way the sheet does.
+  final List<RenderedSymbol> symbols;
+
+  /// Each drawn device's symbol origin in INTEGER grid units — what
+  /// `SheetItem.position` persists (CR-004, CR-012). Looked up, not
+  /// iterated; [layers] is the ordered view.
+  final Map<Uuid, Pt> positions;
+
+  /// Device ids by Sugiyama layer, each layer top to bottom.
+  final List<List<Uuid>> layers;
+
+  /// Devices this scene does NOT draw, because their template declares no
+  /// ports — see the file header. Empty is the normal case for a wired
+  /// project and non-empty is normal too (every rack has blanks).
+  ///
+  /// It exists so a caller can SAY so. A schematic that silently omits a
+  /// device is indistinguishable from one that lost it.
+  final List<Uuid> unsymbolisedDeviceIds;
+
+  /// Links phase 0 turned around to break a cycle (docs/05 §10.2: "Reversed
+  /// edges are flagged and still render their arrowhead at the true sink").
+  /// Nothing draws an arrowhead yet; the flag is produced now so the stage
+  /// that does is not re-deriving it.
+  final List<Uuid> reversedLinkIds;
+
+  /// Links that do not run left-to-right in the final layering because a
+  /// rule or a pin overrode the graph — see
+  /// [SugiyamaLayout.nonForwardEdgeIds].
+  final List<Uuid> nonForwardLinkIds;
+
+  /// Edge crossings in the chosen ordering. Phase 2's objective.
+  final int crossings;
+}
+
+/// Lays out [doc]'s schematic and builds its display list.
+///
+/// FULL DETERMINISTIC RECOMPUTE (CR-013 as amended by DR-001): there is no
+/// cache, no invalidation and no incremental path, because "full recompute
+/// is perfectly stable and the invalidation bookkeeping costs more than it
+/// saves" (docs/03 §5.2). Calling this twice on the same document produces
+/// byte-identical ops; so does calling it on a document whose entities were
+/// inserted in a different order. Both are asserted in
+/// `schematic_scene_test.dart`.
+///
+/// [measurer] is injected per CR-081/AC-016 #13 and does real work — docs/05
+/// §3's width formula is a text measurement, and nothing here guesses a
+/// width from a character count.
+SchematicScene buildSchematicScene({
+  required RackDocument doc,
+  required TextMeasurer measurer,
+  SchematicPalette palette = const SchematicPalette(),
+  SchematicMetrics metrics = const SchematicMetrics(),
+}) {
+  final upg = kSchematicUnitsPerGrid;
+  final pinned = _pinnedPositions(doc);
+
+  // ── which devices get a symbol (see the file header) ─────────────────
+  final candidates = doc.devices.values.toList()
+    ..sort((a, b) => a.id.v.compareTo(b.id.v));
+  // A LIST, not a map keyed by the device: this file's determinism rests
+  // on never iterating a hash container (see `sugiyama.dart`'s header,
+  // rule 2), and a `Map<DeviceInstance, …>` would be exactly that.
+  final drawable = <({DeviceInstance device, TemplateBody body})>[];
+  final unsymbolised = <Uuid>[];
+  for (final device in candidates) {
+    final body = doc.templates[templateKeyFor(device.templateRef)]?.body;
+    if (body == null || body.ports.isEmpty) {
+      unsymbolised.add(device.id);
+      continue;
+    }
+    drawable.add((device: device, body: body));
+  }
+
+  // ── the graph's edges ────────────────────────────────────────────────
+  //
+  // BEFORE the nodes, and that ordering is load-bearing: docs/05 §10.2
+  // phase 1 forces off-rack DESTINATIONS to the last layer, and whether a
+  // device is a destination is a fact about its links.
+  final deviceOfPort = <Uuid, Uuid>{};
+  final portDefOfPort = <Uuid, PortDef>{};
+  for (final port in doc.ports.values) {
+    deviceOfPort[port.id] = port.deviceId;
+    final key = port.templatePortKey;
+    if (key == null) continue;
+    final device = doc.devices[port.deviceId];
+    if (device == null) continue;
+    final body = doc.templates[templateKeyFor(device.templateRef)]?.body;
+    if (body == null) continue;
+    for (final def in body.ports) {
+      if (def.key == key) {
+        portDefOfPort[port.id] = def;
+        break;
+      }
+    }
+  }
+
+  final drawnIds = <String>{for (final d in drawable) d.device.id.v};
+  final links = doc.links.values.toList()
+    ..sort((a, b) {
+      final byOrder = a.order.v.compareTo(b.order.v);
+      return byOrder != 0 ? byOrder : a.id.v.compareTo(b.id.v);
+    });
+  final edges = <LayoutEdge>[];
+  final feeds = <String>{};
+  for (final link in links) {
+    final edge = _edgeFor(link, deviceOfPort, portDefOfPort, drawnIds);
+    if (edge == null) continue;
+    edges.add(edge);
+    feeds.add(edge.from);
+  }
+
+  // ── the graph's nodes ────────────────────────────────────────────────
+  final drawn = <_Candidate>[];
+  for (final entry in drawable) {
+    drawn.add(
+      _measureCandidate(
+        doc: doc,
+        device: entry.device,
+        body: entry.body,
+        measurer: measurer,
+        metrics: metrics,
+        pinnedAt: pinned[entry.device.id],
+        isDestination: !feeds.contains(entry.device.id.v),
+      ),
+    );
+  }
+
+  // ── phases 0–3 ───────────────────────────────────────────────────────
+  final layout = layoutSugiyama(
+    nodes: [for (final c in drawn) c.node],
+    edges: edges,
+    params: metrics.layout,
+  );
+
+  // ── the display list ─────────────────────────────────────────────────
+  final byId = <String, _Candidate>{for (final c in drawn) c.device.id.v: c};
+  final ops = <DiagramOp>[];
+  final fragments = <String, IntRange>{};
+  final symbols = <RenderedSymbol>[];
+  final layers = <List<Uuid>>[];
+  var minText = double.infinity;
+  DBox? bounds;
+
+  for (final layer in layout.layers) {
+    final row = <Uuid>[];
+    for (final id in layer) {
+      final candidate = byId[id]!;
+      final at = layout.positions[id]!;
+      final symbol = candidate.geometry.movedTo(
+        DPt(at.gx * upg, at.gy * upg),
+      );
+      final built = buildSymbolLayer(
+        symbol,
+        palette: palette,
+        measurer: measurer,
+      );
+
+      final origin = symbol.bodyRect.topLeft;
+      ops
+        ..add(const OpSave())
+        ..add(OpTransform(Matrix4.translationValues(origin.x, origin.y, 0)));
+      final localStart = ops.length;
+      ops.addAll(built.ops);
+      final localEnd = ops.length;
+      ops.add(const OpRestore());
+
+      // The fragment is the LOCAL ops only, exactly as `scene_builder`
+      // registers a device's: the wrapping translate stays in `scene.ops`
+      // for a whole-scene replay (a PDF page, `BoundsCanvas`) but a widget
+      // that positions the fragment itself must not re-apply it.
+      fragments[id] = IntRange(localStart, localEnd);
+      symbols.add(symbol);
+      row.add(candidate.device.id);
+      minText = math.min(minText, built.minTextPt);
+      final ink = built.inkBounds?.shift(origin.x, origin.y);
+      final box = ink == null ? symbol.bodyRect : symbol.bodyRect.union(ink);
+      bounds = bounds == null ? box : bounds.union(box);
+    }
+    layers.add(List<Uuid>.unmodifiable(row));
+  }
+
+  final scene = DiagramScene(
+    ops: ops,
+    bounds: bounds ?? const DBox.fromLtwh(0, 0, 0, 0),
+    hits: symbolHitRegions(symbols),
+    // `RackTextSizes.type` is the port label, the smallest size
+    // `buildSymbolLayer` can emit — the honest floor for an empty sheet.
+    minTextSizePt: minText.isFinite ? minText : RackTextSizes.type,
+    fragments: fragments,
+  );
+
+  return SchematicScene(
+    scene: scene,
+    symbols: List<RenderedSymbol>.unmodifiable(symbols),
+    positions: Map<Uuid, Pt>.unmodifiable(<Uuid, Pt>{
+      for (final c in drawn)
+        if (layout.positions[c.device.id.v] case final p?) c.device.id: p,
+    }),
+    layers: List<List<Uuid>>.unmodifiable(layers),
+    unsymbolisedDeviceIds: List<Uuid>.unmodifiable(unsymbolised),
+    reversedLinkIds: List<Uuid>.unmodifiable(<Uuid>[
+      for (final id in layout.reversedEdgeIds) Uuid(id),
+    ]),
+    nonForwardLinkIds: List<Uuid>.unmodifiable(<Uuid>[
+      for (final id in layout.nonForwardEdgeIds) Uuid(id),
+    ]),
+    crossings: layout.crossings,
+  );
+}
+
+/// One device that will be drawn, with its size resolved.
+@immutable
+final class _Candidate {
+  const _Candidate(this.device, this.geometry, this.node);
+
+  final DeviceInstance device;
+
+  /// Built at the ORIGIN. The absolute symbol is `geometry.movedTo(…)`
+  /// once the layout has spoken — the ops are local, so a move is free.
+  final RenderedSymbol geometry;
+
+  final LayoutNode node;
+}
+
+/// Sizes one symbol and turns it into a [LayoutNode].
+///
+/// docs/05 §3's sizing formula, evaluated in INTEGER grid units:
+///
+///   width  = max(20gu, textWidth(designator + name) + 8gu,
+///                maxLeftLabel + maxRightLabel + 12gu), rounded up to 2 gu
+///   height = 6gu + (max(leftPins, rightPins) + 1) × 2gu, minimum 16 gu
+///
+/// `buildSymbolGeometry` applies the pin terms itself in diagram units; the
+/// same terms are evaluated here in gu so that the box the layout reserves
+/// and the box the symbol draws are the same box. A test asserts they agree
+/// rather than trusting that the two transcriptions match.
+_Candidate _measureCandidate({
+  required RackDocument doc,
+  required DeviceInstance device,
+  required TemplateBody body,
+  required TextMeasurer measurer,
+  required SchematicMetrics metrics,
+  required Pt? pinnedAt,
+  required bool isDestination,
+}) {
+  final upg = kSchematicUnitsPerGrid;
+
+  // FIXED_ORDER (docs/05 §3): a device's ports are real hardware and the
+  // template's declared order is the drawing's order. `buildSymbolGeometry`
+  // requires them pre-sorted; the key breaks a duplicated `order`.
+  final ports = body.ports.toList()
+    ..sort((a, b) {
+      final byOrder = a.order.v.compareTo(b.order.v);
+      return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
+    });
+
+  final bankOf = <String, BankDef>{};
+  for (final bank in body.banks) {
+    // First use wins, matching `PortBuilder` and `buildSymbolGeometry`.
+    bankOf.putIfAbsent(bank.key, () => bank);
+  }
+
+  var left = 0;
+  var right = 0;
+  var top = 0;
+  var bottom = 0;
+  var widestLeftLabel = 0.0;
+  var widestRightLabel = 0.0;
+  final labelStyle = rackText(
+    RackTextSizes.type,
+    _measurePalette.portLabel,
+    TextAnchor.midLeft,
+  );
+  for (final port in ports) {
+    final key = port.bankKey;
+    final side = symbolSideForPort(
+      port,
+      bank: key == null ? null : bankOf[key],
+    );
+    final width = port.label.isEmpty
+        ? 0.0
+        : measurer.measureText(port.label, labelStyle).advanceWidth;
+    switch (side) {
+      case SymbolSide.left:
+        left++;
+        widestLeftLabel = math.max(widestLeftLabel, width);
+      case SymbolSide.right:
+        right++;
+        widestRightLabel = math.max(widestRightLabel, width);
+      case SymbolSide.top:
+        top++;
+      case SymbolSide.bottom:
+        bottom++;
+    }
+  }
+
+  final designatorWidth = measurer
+      .measureText(
+        device.designator,
+        rackText(
+          RackTextSizes.designator,
+          _measurePalette.designator,
+          TextAnchor.topLeft,
+        ),
+      )
+      .advanceWidth;
+  final nameWidth = device.name.isEmpty
+      ? 0.0
+      : measurer
+            .measureText(
+              device.name,
+              rackText(
+                RackTextSizes.name,
+                _measurePalette.name,
+                TextAnchor.topRight,
+              ),
+            )
+            .advanceWidth;
+
+  final widthGu = _roundUpToEven(
+    math.max(
+      metrics.minBodyWidthGu.toDouble(),
+      math.max(
+        (designatorWidth + nameWidth) / upg + metrics.headerTextPadGu,
+        math.max(
+          (widestLeftLabel + widestRightLabel) / upg + metrics.sideLabelPadGu,
+          ((math.max(top, bottom) + 1) * metrics.pinPitchGu).toDouble(),
+        ),
+      ),
+    ),
+  );
+  final heightGu = math.max(
+    metrics.minBodyHeightGu,
+    metrics.headerHeightGu + (math.max(left, right) + 1) * metrics.pinPitchGu,
+  );
+
+  final geometry = buildSymbolGeometry(
+    id: device.id.v,
+    designator: device.designator,
+    name: device.name,
+    ports: ports,
+    banks: body.banks,
+    headerHeight: metrics.headerHeightGu * upg,
+    portSize: metrics.portSizeGu * upg,
+    portPitch: metrics.pinPitchGu * upg,
+    minBodyWidth: widthGu * upg,
+    minBodyHeight: heightGu * upg,
+  );
+
+  return _Candidate(
+    device,
+    geometry,
+    LayoutNode(
+      id: device.id.v,
+      sortKey: _sortKeyFor(doc, device),
+      widthGu: widthGu,
+      heightGu: heightGu,
+      anchor: _anchorFor(doc, device, isDestination: isDestination),
+      pinnedAt: pinnedAt,
+    ),
+  );
+}
+
+/// The palette used ONLY to build a `TextStyleSpec` for measurement.
+///
+/// A measurement never depends on colour, and threading the caller's
+/// palette through the sizing pass would suggest it did. The specs the
+/// scene actually draws with are built inside `buildSymbolLayer` from the
+/// palette the caller passed.
+const _measurePalette = SchematicPalette();
+
+/// docs/05 §3: the width is "rounded up to 2 gu".
+int _roundUpToEven(double gu) {
+  final ceiling = gu.ceil();
+  return ceiling.isEven ? ceiling : ceiling + 1;
+}
+
+/// docs/05 §10.1/§10.2: "**Initial order and final tie-break are `ruIndex`,
+/// then UUID**", which "makes the schematic read roughly top-to-bottom in
+/// rack order, so cross-referencing between the elevation and the Schematic
+/// is near-automatic".
+///
+/// THREE READINGS ARE MADE EXPLICIT HERE rather than left to the next
+/// reader:
+///
+///   * DESCENDING `ruIndex`. A rack's U index counts from the BOTTOM
+///     (CR-025) and a sheet reads from the TOP, so "top-to-bottom in rack
+///     order" means U42 first. Sorting ascending would put the schematic in
+///     exactly the reverse of the elevation, which is the one thing the
+///     rule exists to prevent.
+///   * RACK FIRST. §10 says "rack order" and a project has several racks,
+///     so the rack's own `order` (its LexoRank, the sequence the elevation
+///     sheets print in) precedes the U index. Devices in no rack sort after
+///     every device in one — they are the off-rack destinations phase 1
+///     pushes to the last layer anyway.
+///   * A DEVICE WITH NO `ruIndex` — shelf-placed, 0U-channel, staged —
+///     sorts at the BOTTOM of its rack rather than being excluded. It has a
+///     rack but no rail position, and the bottom is where a shelf occupant
+///     reads.
+String _sortKeyFor(RackDocument doc, DeviceInstance device) {
+  final rackId = hostRackOf(device, doc.devices);
+  if (rackId == null) return '1|${device.id.v}';
+  final rack = doc.racks[rackId];
+  final rackKey = rack == null ? '' : rack.order.v;
+  final placement = device.placement;
+  final ru = placement is RailPlacement ? placement.ruIndex : 0;
+  // Fixed width, so the comparison is numeric in effect as well as
+  // lexicographic. `kMaxRackHeightU` is 60 (CR-038); five digits is room to
+  // spare and one place the padding is stated.
+  final descending = (99999 - ru).toString().padLeft(5, '0');
+  return '0|$rackKey|${rackId.v}|$descending|${device.id.v}';
+}
+
+/// docs/05 §10.2 phase 1's two forced placements.
+///
+/// A Structure device goes to layer 0, or to the LAST layer when its body
+/// says `sheetEdge == right` (CR-072) — it renders as a bank of off-page
+/// flags on that edge, which is what makes it obvious in the PDF which home
+/// runs are unused. Off-rack destinations — displays, speakers, keypads —
+/// go to the last layer.
+///
+/// A structure device whose `StructureBody` is missing from the document
+/// falls to the LEFT edge, which is `SheetEdge`'s own default (CR-072) and
+/// therefore not a guess about the missing body's contents.
+///
+/// ── "DESTINATION" IS A WORD WITH TEETH ──────────────────────────────────
+/// §10.2 forces off-rack DESTINATIONS right, and [isDestination] is what
+/// makes that more than a synonym for "off-rack": a wall plate that feeds a
+/// projector is off-rack and is not a destination, and pushing it to the
+/// last layer would drag every edge it sources backwards across the sheet.
+/// So an off-rack device that FEEDS something keeps its graph layer.
+///
+/// The Structure device's anchor is NOT conditioned that way, and the
+/// difference is deliberate: CR-072 is a ruling about one device, not an
+/// inference from its links, and a Structure device always feeds something
+/// — that is what a home-run field is. Conditioning it on out-degree would
+/// mean the rule never fired.
+LayerAnchor _anchorFor(
+  RackDocument doc,
+  DeviceInstance device, {
+  required bool isDestination,
+}) {
+  if (device.kind == DeviceKind.structure) {
+    final bodyId = device.structureBodyId;
+    final body = bodyId == null ? null : doc.structures[bodyId];
+    return body != null && body.sheetEdge == SheetEdge.right
+        ? LayerAnchor.last
+        : LayerAnchor.first;
+  }
+  if (device.placement is OffRackPlacement && isDestination) {
+    return LayerAnchor.last;
+  }
+  return LayerAnchor.none;
+}
+
+/// The pinned symbol positions on the document's schematic sheet.
+///
+/// ONLY `pinned` ITEMS ARE READ. Every `SheetItem` carries a `position`,
+/// but CR-068 makes only a pinned one immovable — an unpinned item's stored
+/// position is where auto-layout last put it, and honouring it would freeze
+/// the first layout the document ever received and make every recompute a
+/// no-op.
+///
+/// The schematic sheet is resolved as the lowest-id `SheetKind.schematic`
+/// entry. There is exactly one in practice (CR-073, DR-004, AC-037) and
+/// `Sheet` deliberately does not enforce that structurally, so the tie-break
+/// is stated rather than left to map order.
+Map<Uuid, Pt> _pinnedPositions(RackDocument doc) {
+  Sheet? chosen;
+  for (final sheet in doc.sheets.values) {
+    if (sheet.kind != SheetKind.schematic) continue;
+    if (chosen == null || sheet.id.v.compareTo(chosen.id.v) < 0) {
+      chosen = sheet;
+    }
+  }
+  if (chosen == null) return const <Uuid, Pt>{};
+
+  final items = chosen.items.values.toList()
+    ..sort((a, b) => a.id.v.compareTo(b.id.v));
+  final out = <Uuid, Pt>{};
+  for (final item in items) {
+    if (!item.pinned) continue;
+    // First pinned item wins if a document somehow carries two for one
+    // device: a stated rule beats whichever the map happened to yield.
+    out.putIfAbsent(item.targetId, () => item.position);
+  }
+  return out;
+}
+
+/// The directed edge [link] contributes, or `null` when it contributes
+/// none.
+///
+/// ── DIRECTION IS THE MODEL'S, NOT AN INFERENCE ──────────────────────────
+/// A `Link`'s direction is its first conductor's `from → to`. CR-014 fixes
+/// each conductor at exactly two ends and every conductor of one cable
+/// shares the same pair of physical ends, so the first conductor speaks for
+/// the link — the same reading `derived/link_class.dart` takes, and for the
+/// same reason. `PortDirection` is NOT consulted: it drives the ARROWHEAD
+/// in `symbol_layer.dart`, and a graph that re-derived direction from it
+/// would be a second answer to a question the model already answers through
+/// `Ctrl+Shift+R` (docs/05 §9's `Reverse direction`).
+///
+/// `null` in three cases, none of them an error:
+///   * an end that is not a `PortEndpoint`, or a port this document does not
+///     contain — a home run to the field has no device to lay out
+///     (AC-018's `PlaceEndpoint`/`OpenEndpoint`);
+///   * an end on a device with no symbol (see the file header);
+///   * both ends on ONE device — a loop-through is a real cable and says
+///     nothing whatever about layering.
+LayoutEdge? _edgeFor(
+  Link link,
+  Map<Uuid, Uuid> deviceOfPort,
+  Map<Uuid, PortDef> portDefOfPort,
+  Set<String> drawnIds,
+) {
+  if (link.conductors.isEmpty) return null;
+  final conductor = link.conductors.first;
+  final from = _portOf(conductor.from);
+  final to = _portOf(conductor.to);
+  if (from == null || to == null) return null;
+
+  final fromDevice = deviceOfPort[from];
+  final toDevice = deviceOfPort[to];
+  if (fromDevice == null || toDevice == null) return null;
+  if (fromDevice == toDevice) return null;
+  if (!drawnIds.contains(fromDevice.v)) return null;
+  if (!drawnIds.contains(toDevice.v)) return null;
+
+  // docs/05 §10.2 phase 0's bias: "the real cycles are AVR↔display eARC and
+  // matrix loop-throughs, so bias the heuristic to reverse edges whose
+  // family declares a return channel". `PortDef.returnChannel` is that
+  // declaration and it is the only field in the model that makes one.
+  final declaresReturn =
+      portDefOfPort[from]?.returnChannel != null ||
+      portDefOfPort[to]?.returnChannel != null;
+
+  return LayoutEdge(
+    id: link.id.v,
+    from: fromDevice.v,
+    to: toDevice.v,
+    preferReversed: declaresReturn,
+  );
+}
+
+Uuid? _portOf(Endpoint endpoint) =>
+    endpoint is PortEndpoint ? endpoint.portId : null;
