@@ -6286,6 +6286,89 @@ invented silently to satisfy this feature.
 
 ---
 
+### 11.8 DR-008 · The three wiring-model questions M2-A could not answer from the corpus
+
+> **RULING — settled by the user on 2026-07-28**, at the point M2-A needed each one and the
+> corpus did not contain it. Three unrelated questions, ruled together because they arose
+> together and each blocks a specific step of the same task.
+
+**Why a ruling rather than an implementer's choice.** All three change behaviour a document
+records, and two of them **narrow rulings already in Parts 1–3**. §8.3's rule is that scope does
+not move without an ID.
+
+---
+
+**11.8.1 A jumper is a Link with both ends in the same rack. Nothing else.**
+
+> Supersedes the multi-limb reading of **AC-026**. Length does not enter into it, and neither
+> does whether the cable was factory-assembled.
+
+AC-026 gives `fieldCable | jumper | powerCord | internal` as "auto-classified,
+user-overridable" and its supporting text gestures at a short run of factory-assembly media.
+**Both of those extra limbs are struck.** The rule is: resolve each end to a rack
+(`rackOfEndpoint`); if both resolve and are equal, `jumper`.
+
+**Three reasons, and the third is decisive.**
+
+1. **The corpus's own reference jumper fails the factory-assembly limb.** `docs/02-data-model.md`
+   shows W002 with `"linkClass": "jumper"` and `"media": "media.cat6"` — bulk box cable. Either
+   the reference fixture violates AC-026 or the limb was never a conjunct. It was never a
+   conjunct.
+2. **Nothing can evaluate the other two limbs.** `MediaTypeDef`'s field list, in the code
+   (`registries.dart`) *and* in this document's own §6.5, has no factory-assembly flag; and a
+   freshly-drawn link has all three of AC-024's lengths null, so a length test is unevaluable at
+   exactly the moment classification is supposed to happen.
+3. **Same-rack is the fact the schedule actually wants.** A jumper is excluded from the Pull
+   Sheet because *nobody pulls it through a wall* — that is a statement about where its ends are,
+   not about its length or its provenance. A 3 m service loop between two devices in one rack is
+   still not a pull; a 1 m run between two racks still is.
+
+`powerCord` and `internal` are untouched by this ruling.
+
+---
+
+**11.8.2 A user-set `linkClass` survives a document change that would re-classify it, and the
+disagreement is visible.**
+
+The classifier is **advisory**. When a user sets the class by hand, that assertion is stored and
+kept; if the document later changes so that the classifier would say something else, **the user's
+value stands and the divergence is reportable**.
+
+This needs **two pieces of state, not one** — the same shape, and for the same reason, as
+`Link.jacketColorId` / `jacketColorPulledId` under **CR-121**. With a single field there is no
+way to distinguish *"the classifier said `jumper`"* from *"a person said `jumper`"*, so moving a
+device either silently overwrites a human judgement or is silently ignored, with nothing able to
+tell you which happened. The precedent is already on this class: `Link.designatorLocked`.
+
+**The stored flag is `true`-only and absent otherwise**, per CR-117's absent-key-is-not-null
+contract, so no existing document's bytes move and `kSchemaVersion` does not change.
+
+---
+
+**11.8.3 `atomicConnect` on mismatched sets connects what fits, leaves the remainder open, and
+warns.**
+
+> Answers the sub-question **AC-053 names in its own diagnosis and does not resolve**: what
+> happens when a 3-member set is dragged onto a 2-member set.
+
+The gesture does **not** refuse. It creates the `Link`, pairs members in the set's declared
+order, and every unpaired member becomes a `Conductor` with an `OpenEndpoint`. The user is
+warned that the run is incomplete.
+
+**This is the user's call, made against a recommendation to refuse**, and the reasoning for
+taking it is worth recording: in the field a partially-landed run is a real state, and a gesture
+that refuses it forces the user to model the truth as a lie or not at all. `OpenEndpoint` exists
+precisely to represent "a coil left unterminated".
+
+**The cost is stated rather than discovered.** Validation does not exist until M5, so between now
+and then the warning has only the status line to appear on, and a half-connected run **will look
+complete on the schedule**. That is a real gap. It is acceptable because it is *derivable, not
+lost*: a `Link` carrying a conductor with an `OpenEndpoint` is a fact in the document, so M5's
+rule needs no new state and no migration — it reads what M2-A already writes. **M5 owes a rule
+for it**, and this paragraph is the record of that debt.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-007 change or void, plus the small set of internal
