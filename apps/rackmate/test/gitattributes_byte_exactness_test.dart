@@ -84,6 +84,14 @@ const List<String> kNotCommitted = <String>[
   '/.dart_tool/',
   '/ephemeral/',
   '/.plugin_symlinks/',
+  // NESTED WORKTREES. `git worktree add` puts a whole second checkout
+  // under `.claude/worktrees/`, and a sweep from the repo root walks
+  // straight into it — reporting every file twice from a path no clone
+  // has, and (before the pruning walk below) dying inside its build
+  // artifacts. Nothing under `.claude/` is committed: `git ls-files
+  // .claude` is empty and `.git/info/exclude` already lists
+  // `.claude/worktrees/`.
+  '/.claude/',
 ];
 
 // ======================================================================
@@ -189,26 +197,67 @@ String resolveCheckout(List<AttributeRule> rules, String path) {
 List<File> _filesUnder(String repoRelative) {
   final directory = Directory(p.join(kRepoRoot, repoRelative));
   if (!directory.existsSync()) return const <File>[];
-  return directory
-      .listSync(recursive: true)
-      .whereType<File>()
-      .where((f) => !_isSkipped(_repoPath(f)))
-      .toList(growable: false);
+  return _walk(directory);
 }
 
 /// Every file in the repository that a clone would receive, best effort.
-List<File> _allCommittedFiles() => Directory(kRepoRoot)
-    .listSync(recursive: true)
-    .whereType<File>()
-    .where((f) => !_isSkipped(_repoPath(f)))
-    .toList(growable: false);
+List<File> _allCommittedFiles() => _walk(Directory(kRepoRoot));
+
+/// Every file under [root], PRUNING a skipped directory DURING the walk
+/// instead of filtering it out afterwards.
+///
+/// `listSync(recursive: true)` cannot be used here, and the reason is a
+/// real failure rather than a preference. It enumerates EAGERLY, so it
+/// descends into `windows/flutter/ephemeral/.plugin_symlinks/` — symlinks
+/// into the pub cache, whose plugins carry macOS example projects with
+/// paths long enough to cross Windows' 260-character `MAX_PATH` — and
+/// throws `PathNotFoundException` for the whole sweep BEFORE [_isSkipped]
+/// is ever consulted. `/ephemeral/` and `/.plugin_symlinks/` were already
+/// in [kNotCommitted]; the filter simply never got the chance to apply,
+/// because a post-hoc `.where` cannot prevent a traversal that has already
+/// happened.
+///
+/// A DIRECTORY THAT CANNOT BE LISTED IS SKIPPED, NOT FATAL. The sweep's
+/// own docstring calls itself "best effort", and the alternative is what
+/// this function replaces: one unreadable path anywhere under the root
+/// takes down a gate that is checking something else entirely. The files
+/// this test actually asserts on are committed content, which is readable
+/// by construction.
+List<File> _walk(Directory root) {
+  final files = <File>[];
+  final pending = <Directory>[root];
+
+  while (pending.isNotEmpty) {
+    final List<FileSystemEntity> entries;
+    try {
+      entries = pending.removeLast().listSync();
+    } on FileSystemException {
+      // Unreadable, vanished mid-walk, or past MAX_PATH. Not this gate's
+      // question — see the docstring.
+      continue;
+    }
+
+    for (final entry in entries) {
+      final path = _repoPath(entry);
+      if (entry is Directory) {
+        // The trailing slash matters: [kNotCommitted]'s segments are
+        // written as `/build/`, and a bare directory path ends without
+        // one, so `/apps/rackmate/build` would not match `/build/`.
+        if (!_isSkipped('$path/')) pending.add(entry);
+      } else if (entry is File && !_isSkipped(path)) {
+        files.add(entry);
+      }
+    }
+  }
+  return files.toList(growable: false);
+}
 
 bool _isSkipped(String repoPath) =>
     kNotCommitted.any((segment) => '/$repoPath'.contains(segment));
 
 /// A file's path relative to the repository root, with forward slashes —
 /// the spelling `.gitattributes` patterns are written against.
-String _repoPath(File file) {
+String _repoPath(FileSystemEntity file) {
   final absolute = p.normalize(file.absolute.path);
   final root = p.normalize(Directory(kRepoRoot).absolute.path);
   return p.relative(absolute, from: root).replaceAll(r'\', '/');
@@ -219,7 +268,8 @@ List<AttributeRule> _rules() {
   expect(
     file.existsSync(),
     isTrue,
-    reason: 'run from the app root; $kRepoRoot/.gitattributes is the whole '
+    reason:
+        'run from the app root; $kRepoRoot/.gitattributes is the whole '
         'subject of this file',
   );
   return parseGitAttributes(file.readAsStringSync());
@@ -271,8 +321,10 @@ void main() {
       final path = _repoPath(file);
       final resolution = resolveCheckout(rules, path);
       if (!kByteSafeResolutions.contains(resolution)) {
-        unprotected.add('$path — resolves to "$resolution"; '
-            '${_fixFor(p.extension(path))}');
+        unprotected.add(
+          '$path — resolves to "$resolution"; '
+          '${_fixFor(p.extension(path))}',
+        );
       }
     }
     expect(
@@ -358,14 +410,18 @@ void main() {
         workingDirectory: kRepoRoot,
       );
     } on ProcessException catch (error) {
-      markTestSkipped('git could not be run, so the resolver in this file '
-          'is unverified against the real thing: $error');
+      markTestSkipped(
+        'git could not be run, so the resolver in this file '
+        'is unverified against the real thing: $error',
+      );
       return;
     }
     if (result.exitCode != 0) {
-      markTestSkipped('git check-attr failed (exit ${result.exitCode}), so '
-          'the resolver in this file is unverified against the real thing: '
-          '${result.stderr}');
+      markTestSkipped(
+        'git check-attr failed (exit ${result.exitCode}), so '
+        'the resolver in this file is unverified against the real thing: '
+        '${result.stderr}',
+      );
       return;
     }
 
@@ -460,8 +516,10 @@ void main() {
       // The near miss. `text` alone normalises going in and checks out
       // per core.autocrlf coming back — CRLF on a default Windows install.
       const halfDone = '* text=auto\n*.rackmate  text\n';
-      expect(resolveCheckout(parseGitAttributes(halfDone), starter),
-          'platform');
+      expect(
+        resolveCheckout(parseGitAttributes(halfDone), starter),
+        'platform',
+      );
     });
 
     test('...and an empty attributes file protects nothing', () {
