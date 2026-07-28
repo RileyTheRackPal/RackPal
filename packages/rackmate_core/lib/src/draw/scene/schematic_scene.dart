@@ -9,17 +9,24 @@
 // the ops actually emitted.
 //
 // ── WHAT IS IN THIS SCENE, AND WHAT IS NOT ──────────────────────────────
-// IN: the symbols. That is the whole of Sugiyama phases 0–3's product
-// (canon §11.1.3: "These place the SYMBOLS, and symbol placement is
-// required in both idioms").
+// IN: the symbols — the whole of Sugiyama phases 0–3's product (canon
+// §11.1.3: "These place the SYMBOLS, and symbol placement is required in
+// both idioms") — and, since M2-D, THE NET LABELS.
+//
+// The labels are not an addition to the drawing; under DR-001 they ARE the
+// drawing of a Link. Every Link renders by default as a pair of net labels,
+// one stub off each of its two pins, and a drawn orthogonal polyline is not
+// the default rendering of a Link on an unfiltered sheet (canon §11.1.1).
+// The geometry lives in `net_label_layer.dart`, which this file composes
+// exactly as it composes `symbol_layer.dart` — with one difference stated
+// where it is registered below: a SYMBOL fragment is local and bracketed by
+// a translate, a DOMAIN fragment is absolute and is not.
 //
 // NOT IN, and none of it is an oversight:
-//   * NET-LABEL STUBS — docs/05 §10.2 phase 6, and under DR-001 the DEFAULT
-//     render. They are the next stage's work, not this one's; this stage is
-//     the layout half. A scene with no labels is an incomplete drawing and
-//     is said so here rather than discovered.
 //   * DRAWN WIRES — phase 4, `drawn` mode only (DR-001 §11.1.1). Reached by
-//     a domain filter, `Alt`-hover or focus, none of which exists yet.
+//     a domain filter, `Alt`-hover or focus, none of which exists yet. The
+//     per-domain fragments this file registers are what let M2-E switch one
+//     domain to `drawn` without rebuilding the other seven.
 //   * CHANNEL ROUTING, THE CROSSING SWEEP, HOP ARCS, JUNCTION STAGGERING —
 //     out of v1 scope entirely (canon §11.1.3 items 1–5).
 //   * LOD TIERING, bank collapse to vector pins, connector glyphs, header
@@ -75,6 +82,7 @@ import 'package:rackmate_core/src/derived/device_loads.dart'
     show hostRackOf, templateKeyFor;
 import 'package:rackmate_core/src/draw/geometry.dart';
 import 'package:rackmate_core/src/draw/ops.dart';
+import 'package:rackmate_core/src/draw/scene/net_label_layer.dart';
 import 'package:rackmate_core/src/draw/scene/rack_style.dart';
 import 'package:rackmate_core/src/draw/scene/sugiyama.dart';
 import 'package:rackmate_core/src/draw/scene/symbol_hit_test.dart';
@@ -151,6 +159,32 @@ final class SchematicMetrics {
   final SugiyamaParams layout;
 }
 
+/// The fragment key under which [SchematicScene] registers one domain's
+/// net-label sub-picture — `domain:video.digital`.
+///
+/// NAMESPACED, because `DiagramScene.fragments` is one flat `Map<String,
+/// …>` shared with the per-device symbol fragments, whose keys are
+/// `DeviceInstance.id.v` UUIDs. A UUID contains no colon, so the prefix
+/// cannot collide with one; `schematic_scene_test.dart` asserts that
+/// rather than trusting it.
+String domainFragmentKey(SignalDomainId domain) => 'domain:${domain.v}';
+
+/// The fragment key for label ops whose domain did not resolve.
+///
+/// A KEY, BUT NOT A DOMAIN. It is registered in `DiagramScene.fragments`
+/// so that every op in the scene belongs to exactly one fragment — an
+/// invariant `schematic_scene_test.dart` asserts by arithmetic, and one a
+/// replay-by-fragment consumer needs in order to draw the whole sheet.
+/// It is deliberately NOT a ninth entry in
+/// [SchematicScene.domainFragments], which is typed by `SignalDomainId`:
+/// minting a fake id would put a ninth chip in the domain filter bar and
+/// a ninth swatch in the legend for something no `Service` can resolve
+/// to, which is the same mistake `seed_registries.dart` refused when it
+/// left PAL-2's reserved yellow out of the eight. `?` cannot collide with
+/// a real id — those are dotted lowercase — and cannot collide with a
+/// device UUID either.
+const String kUnresolvedDomainFragmentKey = 'domain:?';
+
 /// The output of [buildSchematicScene].
 @immutable
 final class SchematicScene {
@@ -159,7 +193,13 @@ final class SchematicScene {
     required this.symbols,
     required this.positions,
     required this.layers,
+    required this.netLabels,
+    required this.domainFragments,
+    required this.unresolvedDomainFragment,
     required this.unsymbolisedDeviceIds,
+    required this.unnamedLinkIds,
+    required this.unlabelledLinkIds,
+    required this.underGlyphedFamilyIds,
     required this.reversedLinkIds,
     required this.nonForwardLinkIds,
     required this.crossings,
@@ -182,6 +222,26 @@ final class SchematicScene {
   /// Device ids by Sugiyama layer, each layer top to bottom.
   final List<List<Uuid>> layers;
 
+  /// Every drawn net label, in the scene's own op order (by domain, then
+  /// by link). What M2-E's hover, focus and filter read instead of
+  /// re-deriving pennant geometry — see [RenderedNetLabel].
+  final List<RenderedNetLabel> netLabels;
+
+  /// Each signal domain's label sub-picture, as an op range into
+  /// `scene.ops`, and registered in `scene.fragments` under
+  /// [domainFragmentKey] so `fragmentFor` reaches it too.
+  ///
+  /// THE WHOLE REASON THE LABEL OPS ARE ORDERED THE WAY THEY ARE. A domain
+  /// filter switches ONE domain to `drawn` (DR-001 §11.1.1); with a
+  /// per-domain sub-picture it rebuilds that one and replays seven, and
+  /// without one it rebuilds all eight on every filter click.
+  final Map<SignalDomainId, IntRange> domainFragments;
+
+  /// The label ops whose domain did not resolve, or `null` when there are
+  /// none. Deliberately NOT a ninth entry in [domainFragments] — see
+  /// `NetLabelLayerBuild.unresolvedRange`.
+  final IntRange? unresolvedDomainFragment;
+
   /// Devices this scene does NOT draw, because their template declares no
   /// ports — see the file header. Empty is the normal case for a wired
   /// project and non-empty is normal too (every rack has blanks).
@@ -189,6 +249,21 @@ final class SchematicScene {
   /// It exists so a caller can SAY so. A schematic that silently omits a
   /// device is indistinguishable from one that lost it.
   final List<Uuid> unsymbolisedDeviceIds;
+
+  /// Links whose net name did not resolve, drawn with the unknown token.
+  /// See `NetLabelLayerBuild.unnamedLinkIds`.
+  final List<Uuid> unnamedLinkIds;
+
+  /// Links that got no label at either end. See
+  /// `NetLabelLayerBuild.unlabelledLinkIds`.
+  final List<Uuid> unlabelledLinkIds;
+
+  /// Families drawn with a glyph that may be the wrong one, because no
+  /// model field selects a domain's `glyph` from its `glyphAlt` and two
+  /// domains carry a third shape with nowhere to live at all. See
+  /// `signal_style.dart`'s header; DR-010 §11.10.4 keeps the fix out of
+  /// scope, so this is the count that keeps it from being silent (G4).
+  final List<SignalFamilyId> underGlyphedFamilyIds;
 
   /// Links phase 0 turned around to break a cycle (docs/05 §10.2: "Reversed
   /// edges are flagged and still render their arrowhead at the true sink").
@@ -218,11 +293,19 @@ final class SchematicScene {
 /// [measurer] is injected per CR-081/AC-016 #13 and does real work — docs/05
 /// §3's width formula is a text measurement, and nothing here guesses a
 /// width from a character count.
+/// [netLabelStyle] tunes the stubs. It has no `enabled` flag and there is
+/// no way to ask for a scene without them: DR-001 makes the labels the
+/// DEFAULT render of a Link, not an option over one, and a boolean here
+/// would be the "Draw all / Auto / Label all" toggle §11.5 deletes — "a
+/// global override that fights the filter is a second source of truth for
+/// the same question". `drawn` mode arrives as a FILTER SCOPE, not as a
+/// flag on this function.
 SchematicScene buildSchematicScene({
   required RackDocument doc,
   required TextMeasurer measurer,
   SchematicPalette palette = const SchematicPalette(),
   SchematicMetrics metrics = const SchematicMetrics(),
+  NetLabelStyle netLabelStyle = const NetLabelStyle(),
 }) {
   final upg = kSchematicUnitsPerGrid;
   final pinned = _pinnedPositions(doc);
@@ -298,11 +381,37 @@ SchematicScene buildSchematicScene({
     );
   }
 
+  // ── the gutter the LABELS need, before the layout that reserves it ───
+  //
+  // THE ONE PLACE M2-D REACHES BACK INTO M2-C'S LAYOUT, and it is not an
+  // optimisation: `SugiyamaParams.layerGutterGu`'s 12 gu was sized when
+  // the channel between two layers held nothing, and under DR-001 it holds
+  // the drawing. Two facing pennants run to roughly 28 gu on the shipped
+  // figures, so at 12 gu the two flags of every forward link would
+  // overprint — see `netLabelGutterGu`, which measures it rather than
+  // guessing, and `net_label_layer_test.dart`'s overlap assertion, which
+  // is what caught it.
+  //
+  // MAX, NEVER REPLACE. A caller who widened the gutter deliberately keeps
+  // their figure; the labels only ever ask for more.
+  final labelGutterGu = netLabelGutterGu(
+    doc: doc,
+    symbols: [for (final c in drawn) c.geometry],
+    measurer: measurer,
+    unitsPerGrid: upg,
+    style: netLabelStyle,
+  );
+
   // ── phases 0–3 ───────────────────────────────────────────────────────
   final layout = layoutSugiyama(
     nodes: [for (final c in drawn) c.node],
     edges: edges,
-    params: metrics.layout,
+    params: SugiyamaParams(
+      layerGutterGu: math.max(metrics.layout.layerGutterGu, labelGutterGu),
+      nodeGapGu: metrics.layout.nodeGapGu,
+      maxOrderingSweeps: metrics.layout.maxOrderingSweeps,
+      priorityIterations: metrics.layout.priorityIterations,
+    ),
   );
 
   // ── the display list ─────────────────────────────────────────────────
@@ -352,6 +461,54 @@ SchematicScene buildSchematicScene({
     layers.add(List<Uuid>.unmodifiable(row));
   }
 
+  // ── the net labels (DR-001's default render) ─────────────────────────
+  //
+  // AFTER every symbol, so a pennant is never overpainted by a body it
+  // sits beside — the display list is painted in order and there is no
+  // z-index in the IR. It also keeps the symbol fragments' ranges exactly
+  // where M2-C put them, so a caller holding `fragmentFor(deviceId)` sees
+  // no change from this stage.
+  final labelLayer = buildNetLabelLayer(
+    doc: doc,
+    symbols: symbols,
+    measurer: measurer,
+    palette: palette,
+    unitsPerGrid: upg,
+    style: netLabelStyle,
+  );
+  final labelBase = ops.length;
+  ops.addAll(labelLayer.ops);
+
+  // A DOMAIN FRAGMENT IS ABSOLUTE, unlike the symbol fragments above: its
+  // ops belong to many symbols at once, so there is no local frame they
+  // could share and no bracketing translate to exclude. The range is the
+  // ops themselves, shifted into scene coordinates by the symbol ops that
+  // precede them.
+  final domainFragments = <SignalDomainId, IntRange>{};
+  for (final entry in labelLayer.domainRanges.entries) {
+    final range = IntRange(
+      labelBase + entry.value.start,
+      labelBase + entry.value.end,
+    );
+    domainFragments[entry.key] = range;
+    fragments[domainFragmentKey(entry.key)] = range;
+  }
+  final unresolvedRange = labelLayer.unresolvedRange;
+  final unresolvedFragment = unresolvedRange == null
+      ? null
+      : IntRange(
+          labelBase + unresolvedRange.start,
+          labelBase + unresolvedRange.end,
+        );
+  if (unresolvedFragment != null) {
+    fragments[kUnresolvedDomainFragmentKey] = unresolvedFragment;
+  }
+
+  if (labelLayer.inkBounds case final ink?) {
+    bounds = bounds == null ? ink : bounds.union(ink);
+  }
+  minText = math.min(minText, labelLayer.minTextPt);
+
   final scene = DiagramScene(
     ops: ops,
     bounds: bounds ?? const DBox.fromLtwh(0, 0, 0, 0),
@@ -370,7 +527,15 @@ SchematicScene buildSchematicScene({
         if (layout.positions[c.device.id.v] case final p?) c.device.id: p,
     }),
     layers: List<List<Uuid>>.unmodifiable(layers),
+    netLabels: labelLayer.labels,
+    domainFragments: Map<SignalDomainId, IntRange>.unmodifiable(
+      domainFragments,
+    ),
+    unresolvedDomainFragment: unresolvedFragment,
     unsymbolisedDeviceIds: List<Uuid>.unmodifiable(unsymbolised),
+    unnamedLinkIds: labelLayer.unnamedLinkIds,
+    unlabelledLinkIds: labelLayer.unlabelledLinkIds,
+    underGlyphedFamilyIds: labelLayer.underGlyphedFamilyIds,
     reversedLinkIds: List<Uuid>.unmodifiable(<Uuid>[
       for (final id in layout.reversedEdgeIds) Uuid(id),
     ]),

@@ -292,7 +292,14 @@ void main() {
       final drawn = scene.symbols.map((s) => s.designator).toList();
       expect(drawn, isNot(contains('BLK-1')));
       expect(scene.unsymbolisedDeviceIds, hasLength(1));
-      expect(scene.scene.fragments.length, scene.symbols.length);
+      // One fragment per DRAWN device, and nothing else keyed by a device
+      // id. The other fragments are the per-domain label sub-pictures,
+      // which are namespaced (`domain:…`) precisely so this count stays
+      // countable — see `domainFragmentKey`.
+      final byDevice = scene.scene.fragments.keys
+          .where((k) => !k.startsWith('domain:'))
+          .toList();
+      expect(byDevice.length, scene.symbols.length);
     });
 
     test('every drawn device has exactly one fragment, and the fragment is '
@@ -461,22 +468,50 @@ void main() {
   });
 
   group('scope — DR-001 §11.1.3', () {
-    test('the scene draws SYMBOLS ONLY: no wires, no net labels, no hop '
-        'arcs', () {
-      final scene = _build(_document()).scene;
-      // A drawn wire would be an `OpPolyline`; a net-label stub would be a
-      // leader `OpLine` outside a symbol fragment. The symbol layer emits
-      // rects, circles, one header rule per symbol, arrow paths and text —
-      // and nothing else. If this list grows, DR-001's scope has moved and
-      // that has to be a deliberate act.
+    // THIS GROUP CHANGED AT M2-D AND THE CHANGE IS THE POINT. It used to
+    // assert "the scene draws SYMBOLS ONLY: no wires, no net labels, no
+    // hop arcs", which was M2-C's honest scope — the layout half. Net
+    // labels are now IN, because DR-001 makes them the default render of
+    // a Link rather than an addition to the drawing. What did NOT change
+    // is the other half of that claim: still no drawn wires, and still
+    // nothing from canon §11.1.3's exhaustive out-of-scope list.
+    test('a Link renders as a PAIR of net labels and NOT as a drawn wire '
+        '(DR-001 §11.1.1)', () {
+      final built = _build(_document());
+      final scene = built.scene;
+
+      // A drawn orthogonal polyline is the one thing DR-001 says is not
+      // the default rendering of a Link on an unfiltered sheet. Hop arcs
+      // and junction dots would be `OpPath` curves and `OpEllipse`; there
+      // are none, and there is no `OpRoundRect` tag pill either — that is
+      // `drawn` mode's furniture.
       expect(scene.ops.whereType<OpPolyline>(), isEmpty);
       expect(scene.ops.whereType<OpEllipse>(), isEmpty);
       expect(scene.ops.whereType<OpRoundRect>(), isEmpty);
-      final lines = scene.ops.whereType<OpLine>().length;
-      expect(lines, _build(_document()).symbols.length);
+
+      // TWO labels per link, one off each pin: exactly the pair DR-001
+      // describes, and every one of them names its link.
+      final linkable = _document().links.length;
+      expect(built.netLabels, hasLength(2 * linkable));
+      expect(built.unlabelledLinkIds, isEmpty);
+      for (final id in _document().links.keys) {
+        expect(
+          built.netLabels.where((l) => l.linkId == id),
+          hasLength(2),
+          reason: 'a Link renders as a PAIR of labels, never one',
+        );
+      }
+
+      // The only `OpLine`s are one header rule per symbol plus one leader
+      // per label. If this arithmetic breaks, either the symbol layer or
+      // the label layer has started drawing something else.
+      expect(
+        scene.ops.whereType<OpLine>().length,
+        built.symbols.length + built.netLabels.length,
+      );
     });
 
-    test('every op belongs to exactly one symbol fragment or to its own '
+    test('every op belongs to exactly one fragment or to a symbol’s own '
         'save/transform/restore bracket', () {
       final scene = _build(_document());
       var covered = 0;
@@ -484,7 +519,26 @@ void main() {
         covered += range.end - range.start;
       }
       // Three bracket ops per symbol; nothing else may be in the list.
+      // The label ops are covered by the per-domain fragments, which is
+      // the arithmetic that proves the sub-pictures partition them rather
+      // than merely indexing some of them.
       expect(covered + 3 * scene.symbols.length, scene.scene.ops.length);
+    });
+
+    test('a domain fragment key can never collide with a device fragment '
+        'key', () {
+      final scene = _build(_document());
+      final devices = <String>{for (final s in scene.symbols) s.id};
+      final domains = scene.scene.fragments.keys
+          .where((k) => k.startsWith('domain:'))
+          .toSet();
+      expect(domains, isNotEmpty, reason: 'nothing to check otherwise');
+      expect(domains.intersection(devices), isEmpty);
+      // …and the reason it cannot: a device key is a UUID, which carries
+      // no colon.
+      for (final id in devices) {
+        expect(id, isNot(contains(':')));
+      }
     });
   });
 

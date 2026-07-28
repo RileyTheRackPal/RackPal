@@ -271,6 +271,7 @@ final class SchematicPalette {
     this.designator = 0xFF0F172A,
     this.name = 0xFF334155,
     this.portLabel = 0xFF475569,
+    this.netLabelText = 0xFF0F172A,
   });
 
   /// Header band background. The pre-relocation code declared this and then
@@ -288,6 +289,19 @@ final class SchematicPalette {
   final int name;
   final int portLabel;
 
+  /// The NET NAME inside a net-label pennant (`net_label_layer.dart`).
+  ///
+  /// INK, NOT THE DOMAIN HUE, and that is the point of it being a palette
+  /// entry rather than a colour the label layer derives. Under DR-001 the
+  /// net name is the primary visual identity of a connection (canon
+  /// §11.1.5), it is what the reader is actually reading, and hue is
+  /// already carried by the leader, the pennant outline, the pennant fill
+  /// and the family token. Tinting the name as well would push the one run
+  /// that has to be legible off maximum contrast — `pwr` would print it at
+  /// `#000000` on white and `net` at `#009E73`, i.e. the same string
+  /// legible to different degrees depending on which domain it belongs to.
+  final int netLabelText;
+
   @override
   bool operator ==(Object other) =>
       other is SchematicPalette &&
@@ -299,7 +313,8 @@ final class SchematicPalette {
       other.portFill == portFill &&
       other.designator == designator &&
       other.name == name &&
-      other.portLabel == portLabel;
+      other.portLabel == portLabel &&
+      other.netLabelText == netLabelText;
 
   @override
   int get hashCode => Object.hashAll([
@@ -312,6 +327,7 @@ final class SchematicPalette {
     designator,
     name,
     portLabel,
+    netLabelText,
   ]);
 }
 
@@ -444,8 +460,9 @@ RenderedSymbol buildSymbolGeometry({
   };
   for (final port in ports) {
     final key = port.bankKey;
-    bySide[symbolSideForPort(port, bank: key == null ? null : byKey[key])]!
-        .add(port);
+    bySide[symbolSideForPort(port, bank: key == null ? null : byKey[key])]!.add(
+      port,
+    );
   }
 
   final nLeft = bySide[SymbolSide.left]!.length;

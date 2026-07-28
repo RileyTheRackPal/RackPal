@@ -24,10 +24,16 @@
 /// M2 adds the schematic's LAYOUT half — `sugiyama.dart` (phases 0–3:
 /// cycle-break, layer, barycentre, coordinate assign) and
 /// `schematic_scene.dart`, which projects a document onto that graph and
-/// composes the symbol display list. Both are in core, and not in
-/// `rackmate_ui`, for CR-071/CR-086's reason and so `rackmate_export` can
-/// drive a schematic sheet. No router, no wires, no net labels: DR-001
-/// §11.1.3 keeps phases 4–6 out of this stage.
+/// composes the symbol display list — and then its RENDER half:
+/// `signal_style.dart` resolves CR-078's four encoding channels (hue by
+/// domain, dash and weight by type, glyph plus tag by family) and
+/// `net_label_layer.dart` draws every Link as the pair of net labels
+/// DR-001 makes the default. Both are in core, and not in `rackmate_ui`,
+/// for CR-071/CR-086's reason and so `rackmate_export` can drive a
+/// schematic sheet. Still no router and no drawn wires: canon §11.1.3
+/// keeps channel routing, the crossing sweep and hop arcs out of v1
+/// entirely, and the `drawn` mode that does ship arrives with the domain
+/// filter that triggers it.
 library;
 
 export 'src/catalog/rack_presets.dart';
@@ -68,12 +74,14 @@ export 'src/draw/hit_test.dart';
 export 'src/draw/ops.dart';
 export 'src/draw/path.dart';
 export 'src/draw/scene/device_layer.dart';
+export 'src/draw/scene/net_label_layer.dart';
 export 'src/draw/scene/rack_geometry.dart';
 export 'src/draw/scene/rack_layer.dart';
 export 'src/draw/scene/rack_load_gutter.dart';
 export 'src/draw/scene/rack_style.dart';
 export 'src/draw/scene/scene_builder.dart';
 export 'src/draw/scene/schematic_scene.dart';
+export 'src/draw/scene/signal_style.dart';
 export 'src/draw/scene/sugiyama.dart';
 export 'src/draw/scene/symbol_hit_test.dart';
 export 'src/draw/scene/symbol_layer.dart';
