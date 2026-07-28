@@ -82,5 +82,14 @@ RackDocument buildBlankDocument({
     buildDefaultJacketColorConvention(),
   );
 
+  // The signal-domain, signal-family and connector registries, seeded at
+  // CREATION for the same reason and by DR-010 §11.10.2's explicit
+  // ruling. NOT a codec transform: if `write()` recomputed the referenced
+  // subset instead, a document carrying an entry nothing references would
+  // lose it on save and CR-117's `write(read(bytes)) == bytes` would
+  // fail. Assigned wholesale rather than `addAll`ed into the constructor's
+  // empty maps because a brand-new document has nothing to merge with.
+  doc.registries = buildSeedRegistries();
+
   return doc;
 }

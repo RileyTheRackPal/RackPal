@@ -48,7 +48,8 @@
 #     build; fails when a dartjni.dll is planted, when a plugin DLL is
 #     removed, when a packaged starter is CRLF-corrupted, and when the exe
 #     is missing.
-#   * python tools/pal1_check.py and python tools/palette_parity.py — exit 0.
+#   * python tools/pal1_check.py, tools/palette_parity.py and
+#     tools/registry_parity.py — exit 0.
 #   * All five suites and `flutter build windows --release` — green.
 #
 # NOT VERIFIED, and only the first real run can prove it:
@@ -336,6 +337,19 @@ jobs:
           python tools/palette_parity.py
           exit $LASTEXITCODE
         displayName: 'Gate: palette docs/registry parity'
+        condition: succeededOrFailed()
+
+      # The third half, added by DR-010 section 11.10.1. The registries now
+      # ship as a SEEDED DART CATALOG rather than the assets/catalog/
+      # registries.json that never existed, so the 8 hues and 55 dash/weight
+      # pairs live in Dart as well -- a fourth copy of the data that bit this
+      # project four times already. palette_parity proves the docs agree with
+      # the authority; this proves the code does. Still no Dart and no
+      # dependencies: it parses the seed source rather than running it.
+      - pwsh: |
+          python tools/registry_parity.py
+          exit $LASTEXITCODE
+        displayName: 'Gate: palette code/registry parity'
         condition: succeededOrFailed()
 
       # ==================================================================

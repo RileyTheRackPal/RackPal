@@ -1195,11 +1195,1282 @@
     },
     "registries": {
       "cableSpecs": {},
-      "connectors": {},
+      "connectors": {
+        "conn.3_5mm_trs": {
+          "aliases": [],
+          "displayName": "3.5 mm stereo (TRS)",
+          "footprintHeightNm": 7000000,
+          "footprintWidthNm": 7000000,
+          "id": "conn.3_5mm_trs"
+        },
+        "conn.3_5mm_ts": {
+          "aliases": [],
+          "displayName": "3.5 mm mono (TS)",
+          "footprintHeightNm": 7000000,
+          "footprintWidthNm": 7000000,
+          "id": "conn.3_5mm_ts"
+        },
+        "conn.6_35mm_trs": {
+          "aliases": [],
+          "displayName": "1/4 in TRS",
+          "footprintHeightNm": 10000000,
+          "footprintWidthNm": 10000000,
+          "id": "conn.6_35mm_trs"
+        },
+        "conn.banana": {
+          "aliases": [],
+          "displayName": "Banana plug",
+          "footprintHeightNm": 10000000,
+          "footprintWidthNm": 10000000,
+          "id": "conn.banana"
+        },
+        "conn.barrel_dc": {
+          "aliases": [
+            "dc"
+          ],
+          "displayName": "DC barrel",
+          "footprintHeightNm": 8000000,
+          "footprintWidthNm": 8000000,
+          "id": "conn.barrel_dc"
+        },
+        "conn.binding_post": {
+          "aliases": [
+            "bp"
+          ],
+          "displayName": "Binding post",
+          "footprintHeightNm": 12000000,
+          "footprintWidthNm": 12000000,
+          "id": "conn.binding_post"
+        },
+        "conn.bnc50": {
+          "aliases": [],
+          "displayName": "BNC 50 ohm",
+          "footprintHeightNm": 10000000,
+          "footprintWidthNm": 10000000,
+          "id": "conn.bnc50"
+        },
+        "conn.bnc75": {
+          "aliases": [],
+          "displayName": "BNC 75 ohm",
+          "footprintHeightNm": 10000000,
+          "footprintWidthNm": 10000000,
+          "id": "conn.bnc75"
+        },
+        "conn.de9": {
+          "aliases": [
+            "db9",
+            "232"
+          ],
+          "displayName": "DE-9 (DB9)",
+          "footprintHeightNm": 13000000,
+          "footprintWidthNm": 31000000,
+          "id": "conn.de9"
+        },
+        "conn.dp": {
+          "aliases": [],
+          "displayName": "DisplayPort",
+          "footprintHeightNm": 5000000,
+          "footprintWidthNm": 13000000,
+          "id": "conn.dp"
+        },
+        "conn.euroblock_2": {
+          "aliases": [],
+          "displayName": "Euroblock 2-pole",
+          "footprintHeightNm": 10000000,
+          "footprintWidthNm": 9000000,
+          "id": "conn.euroblock_2"
+        },
+        "conn.euroblock_3": {
+          "aliases": [
+            "euro3"
+          ],
+          "displayName": "Euroblock 3-pole",
+          "footprintHeightNm": 10000000,
+          "footprintWidthNm": 12500000,
+          "id": "conn.euroblock_3"
+        },
+        "conn.euroblock_5": {
+          "aliases": [],
+          "displayName": "Euroblock 5-pole",
+          "footprintHeightNm": 10000000,
+          "footprintWidthNm": 18000000,
+          "id": "conn.euroblock_5"
+        },
+        "conn.f_type": {
+          "aliases": [],
+          "displayName": "F-type",
+          "footprintHeightNm": 9500000,
+          "footprintWidthNm": 9500000,
+          "id": "conn.f_type"
+        },
+        "conn.hd15": {
+          "aliases": [],
+          "displayName": "HD-15 (VGA)",
+          "footprintHeightNm": 12000000,
+          "footprintWidthNm": 27000000,
+          "id": "conn.hd15"
+        },
+        "conn.hdmi_a": {
+          "aliases": [
+            "hdmi"
+          ],
+          "displayName": "HDMI Type A",
+          "footprintHeightNm": 5600000,
+          "footprintWidthNm": 15100000,
+          "id": "conn.hdmi_a"
+        },
+        "conn.hdmi_c": {
+          "aliases": [],
+          "displayName": "HDMI Type C (Mini)",
+          "footprintHeightNm": 4200000,
+          "footprintWidthNm": 11300000,
+          "id": "conn.hdmi_c"
+        },
+        "conn.hdmi_d": {
+          "aliases": [],
+          "displayName": "HDMI Type D (Micro)",
+          "footprintHeightNm": 3400000,
+          "footprintWidthNm": 9100000,
+          "id": "conn.hdmi_d"
+        },
+        "conn.iec_c13": {
+          "aliases": [
+            "c13"
+          ],
+          "displayName": "IEC C13",
+          "footprintHeightNm": 20000000,
+          "footprintWidthNm": 27000000,
+          "id": "conn.iec_c13"
+        },
+        "conn.iec_c14": {
+          "aliases": [
+            "c14"
+          ],
+          "displayName": "IEC C14",
+          "footprintHeightNm": 20000000,
+          "footprintWidthNm": 27000000,
+          "id": "conn.iec_c14"
+        },
+        "conn.iec_c19": {
+          "aliases": [
+            "c19"
+          ],
+          "displayName": "IEC C19",
+          "footprintHeightNm": 26000000,
+          "footprintWidthNm": 35000000,
+          "id": "conn.iec_c19"
+        },
+        "conn.iec_c20": {
+          "aliases": [
+            "c20"
+          ],
+          "displayName": "IEC C20",
+          "footprintHeightNm": 26000000,
+          "footprintWidthNm": 35000000,
+          "id": "conn.iec_c20"
+        },
+        "conn.jis_f05": {
+          "aliases": [
+            "toslink"
+          ],
+          "displayName": "JIS F05 (TOSLINK)",
+          "footprintHeightNm": 7000000,
+          "footprintWidthNm": 7000000,
+          "id": "conn.jis_f05"
+        },
+        "conn.keystone": {
+          "aliases": [],
+          "displayName": "Keystone jack",
+          "footprintHeightNm": 16000000,
+          "footprintWidthNm": 16000000,
+          "id": "conn.keystone"
+        },
+        "conn.knx_terminal": {
+          "aliases": [],
+          "displayName": "KNX bus terminal",
+          "footprintHeightNm": 10000000,
+          "footprintWidthNm": 9000000,
+          "id": "conn.knx_terminal"
+        },
+        "conn.lc_duplex": {
+          "aliases": [
+            "lc"
+          ],
+          "displayName": "LC duplex",
+          "footprintHeightNm": 9000000,
+          "footprintWidthNm": 12500000,
+          "id": "conn.lc_duplex"
+        },
+        "conn.mini_din4": {
+          "aliases": [],
+          "displayName": "Mini-DIN 4 (S-Video)",
+          "footprintHeightNm": 12000000,
+          "footprintWidthNm": 12000000,
+          "id": "conn.mini_din4"
+        },
+        "conn.mini_dp": {
+          "aliases": [],
+          "displayName": "Mini DisplayPort",
+          "footprintHeightNm": 4000000,
+          "footprintWidthNm": 8000000,
+          "id": "conn.mini_dp"
+        },
+        "conn.nema_5_15p": {
+          "aliases": [
+            "5-15p"
+          ],
+          "displayName": "NEMA 5-15P",
+          "footprintHeightNm": 27000000,
+          "footprintWidthNm": 34000000,
+          "id": "conn.nema_5_15p"
+        },
+        "conn.nema_5_15r": {
+          "aliases": [
+            "5-15r"
+          ],
+          "displayName": "NEMA 5-15R",
+          "footprintHeightNm": 27000000,
+          "footprintWidthNm": 34000000,
+          "id": "conn.nema_5_15r"
+        },
+        "conn.nema_5_20p": {
+          "aliases": [
+            "5-20p"
+          ],
+          "displayName": "NEMA 5-20P",
+          "footprintHeightNm": 27000000,
+          "footprintWidthNm": 34000000,
+          "id": "conn.nema_5_20p"
+        },
+        "conn.nema_5_20r": {
+          "aliases": [
+            "5-20r"
+          ],
+          "displayName": "NEMA 5-20R",
+          "footprintHeightNm": 27000000,
+          "footprintWidthNm": 34000000,
+          "id": "conn.nema_5_20r"
+        },
+        "conn.nema_l5_30p": {
+          "aliases": [
+            "l5-30p"
+          ],
+          "displayName": "NEMA L5-30P (twist-lock)",
+          "footprintHeightNm": 32000000,
+          "footprintWidthNm": 32000000,
+          "id": "conn.nema_l5_30p"
+        },
+        "conn.phoenix_4": {
+          "aliases": [],
+          "displayName": "Phoenix 4-pole (Cresnet)",
+          "footprintHeightNm": 10000000,
+          "footprintWidthNm": 18000000,
+          "id": "conn.phoenix_4"
+        },
+        "conn.punchdown_110": {
+          "aliases": [
+            "110"
+          ],
+          "displayName": "110 punchdown",
+          "footprintHeightNm": 10000000,
+          "footprintWidthNm": 20000000,
+          "id": "conn.punchdown_110"
+        },
+        "conn.rca": {
+          "aliases": [],
+          "displayName": "RCA",
+          "footprintHeightNm": 8400000,
+          "footprintWidthNm": 8400000,
+          "id": "conn.rca"
+        },
+        "conn.rca75": {
+          "aliases": [],
+          "displayName": "RCA 75 ohm",
+          "footprintHeightNm": 8400000,
+          "footprintWidthNm": 8400000,
+          "id": "conn.rca75"
+        },
+        "conn.rj45": {
+          "aliases": [
+            "rj45",
+            "hdbt"
+          ],
+          "displayName": "RJ45 (8P8C)",
+          "footprintHeightNm": 13000000,
+          "footprintWidthNm": 15000000,
+          "id": "conn.rj45"
+        },
+        "conn.sc": {
+          "aliases": [],
+          "displayName": "SC fibre",
+          "footprintHeightNm": 13000000,
+          "footprintWidthNm": 13000000,
+          "id": "conn.sc"
+        },
+        "conn.screw_terminal": {
+          "aliases": [],
+          "displayName": "Screw terminal",
+          "footprintHeightNm": 10000000,
+          "footprintWidthNm": 9000000,
+          "id": "conn.screw_terminal"
+        },
+        "conn.sfp_cage": {
+          "aliases": [
+            "sfp+"
+          ],
+          "displayName": "SFP/SFP+/SFP28 cage",
+          "footprintHeightNm": 9000000,
+          "footprintWidthNm": 14000000,
+          "id": "conn.sfp_cage"
+        },
+        "conn.speakon_nl4": {
+          "aliases": [],
+          "displayName": "SpeakON NL4",
+          "footprintHeightNm": 24000000,
+          "footprintWidthNm": 24000000,
+          "id": "conn.speakon_nl4"
+        },
+        "conn.st": {
+          "aliases": [],
+          "displayName": "ST fibre",
+          "footprintHeightNm": 10000000,
+          "footprintWidthNm": 10000000,
+          "id": "conn.st"
+        },
+        "conn.usb_c": {
+          "aliases": [],
+          "displayName": "USB-C",
+          "footprintHeightNm": 3500000,
+          "footprintWidthNm": 9000000,
+          "id": "conn.usb_c"
+        },
+        "conn.xlr3": {
+          "aliases": [
+            "xlr"
+          ],
+          "displayName": "XLR3",
+          "footprintHeightNm": 24000000,
+          "footprintWidthNm": 24000000,
+          "id": "conn.xlr3"
+        },
+        "conn.xlr5": {
+          "aliases": [],
+          "displayName": "XLR5",
+          "footprintHeightNm": 24000000,
+          "footprintWidthNm": 24000000,
+          "id": "conn.xlr5"
+        }
+      },
       "media": {},
       "outletTemplates": {},
-      "signalDomains": {},
-      "signalFamilies": {}
+      "signalDomains": {
+        "audio.analog": {
+          "color": "#FFE69F00",
+          "colorDark": "#FFF0B443",
+          "dashPattern": [
+            6000,
+            3000
+          ],
+          "displayName": "Analog Audio",
+          "glyph": "●",
+          "glyphAlt": "◐",
+          "id": "audio.analog",
+          "lineWeightPermille": 1000,
+          "tagPrefix": "AUD"
+        },
+        "audio.digital": {
+          "color": "#FFD55E00",
+          "colorDark": "#FFF07A33",
+          "dashPattern": [
+            6000,
+            3000,
+            1000,
+            3000
+          ],
+          "displayName": "Digital Audio",
+          "glyph": "◆",
+          "glyphAlt": "◇",
+          "id": "audio.digital",
+          "lineWeightPermille": 1000,
+          "tagPrefix": "DIG"
+        },
+        "ctl": {
+          "color": "#FFCC79A7",
+          "colorDark": "#FFE29CC3",
+          "dashPattern": [
+            1500,
+            3000
+          ],
+          "displayName": "Control",
+          "glyph": "✚",
+          "glyphAlt": "✳",
+          "id": "ctl",
+          "lineWeightPermille": 750,
+          "tagPrefix": "CTL"
+        },
+        "net": {
+          "color": "#FF009E73",
+          "colorDark": "#FF2FC79A",
+          "dashPattern": [],
+          "displayName": "Network",
+          "glyph": "■",
+          "glyphAlt": "□",
+          "id": "net",
+          "lineWeightPermille": 1500,
+          "tagPrefix": "NET"
+        },
+        "pwr": {
+          "color": "#FF000000",
+          "colorDark": "#FFE8E8E8",
+          "dashPattern": [
+            8000,
+            3000,
+            1500,
+            3000,
+            1500,
+            3000
+          ],
+          "displayName": "Power",
+          "glyph": "⬢",
+          "glyphAlt": "⬡",
+          "id": "pwr",
+          "lineWeightPermille": 2000,
+          "tagPrefix": "PWR"
+        },
+        "str": {
+          "color": "#FF999999",
+          "colorDark": "#FFA8A8A8",
+          "dashPattern": [
+            6000,
+            3000,
+            3000,
+            3000
+          ],
+          "displayName": "Structure",
+          "glyph": "★",
+          "glyphAlt": "☆",
+          "id": "str",
+          "lineWeightPermille": 750,
+          "tagPrefix": "STR"
+        },
+        "video.analog": {
+          "color": "#FF56B4E9",
+          "colorDark": "#FF8ACFF5",
+          "dashPattern": [
+            12000,
+            4000
+          ],
+          "displayName": "Analog Video & RF",
+          "glyph": "▼",
+          "glyphAlt": "▽",
+          "id": "video.analog",
+          "lineWeightPermille": 1000,
+          "tagPrefix": "RF"
+        },
+        "video.digital": {
+          "color": "#FF0072B2",
+          "colorDark": "#FF4DA6DD",
+          "dashPattern": [],
+          "displayName": "Digital Video",
+          "glyph": "▲",
+          "glyphAlt": "△",
+          "id": "video.digital",
+          "lineWeightPermille": 1000,
+          "tagPrefix": "VID"
+        }
+      },
+      "signalFamilies": {
+        "audio.aes3": {
+          "aliases": [],
+          "dashOverride": [
+            12000,
+            4000,
+            10000,
+            4000
+          ],
+          "defaultConnector": "conn.xlr3",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "AES/EBU (AES3, 110 Ω)",
+          "domain": "audio.digital",
+          "id": "audio.aes3",
+          "shortTag": "AES"
+        },
+        "audio.aes3id": {
+          "aliases": [],
+          "dashOverride": [
+            10000,
+            3000,
+            1000,
+            3000,
+            1000,
+            3000
+          ],
+          "defaultConnector": "conn.bnc75",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "AES3id (75 Ω BNC)",
+          "domain": "audio.digital",
+          "id": "audio.aes3id",
+          "shortTag": "AES75"
+        },
+        "audio.aes67": {
+          "aliases": [],
+          "dashOverride": [
+            6000,
+            3000,
+            1000,
+            3000,
+            1000,
+            3000
+          ],
+          "defaultConnector": "conn.rj45",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "star",
+          "displayName": "AES67",
+          "domain": "audio.digital",
+          "id": "audio.aes67",
+          "lineWeightPermilleOverride": 1500,
+          "shortTag": "A67"
+        },
+        "audio.avb": {
+          "aliases": [],
+          "dashOverride": [
+            8000,
+            3000,
+            1000,
+            3000
+          ],
+          "defaultConnector": "conn.rj45",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "star",
+          "displayName": "AVB / Milan",
+          "domain": "audio.digital",
+          "id": "audio.avb",
+          "lineWeightPermilleOverride": 1500,
+          "shortTag": "AVB"
+        },
+        "audio.dante": {
+          "aliases": [],
+          "defaultConnector": "conn.rj45",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "star",
+          "displayName": "Dante",
+          "domain": "audio.digital",
+          "id": "audio.dante",
+          "lineWeightPermilleOverride": 1500,
+          "shortTag": "DNT"
+        },
+        "audio.headphone": {
+          "aliases": [],
+          "dashOverride": [
+            3000,
+            3000
+          ],
+          "defaultConnector": "conn.6_35mm_trs",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "Headphone",
+          "domain": "audio.analog",
+          "id": "audio.headphone",
+          "lineWeightPermilleOverride": 750,
+          "shortTag": "HP"
+        },
+        "audio.line_bal": {
+          "aliases": [],
+          "dashOverride": [],
+          "defaultConnector": "conn.xlr3",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "Line level, balanced",
+          "domain": "audio.analog",
+          "id": "audio.line_bal",
+          "shortTag": "AUDB"
+        },
+        "audio.line_unbal": {
+          "aliases": [],
+          "defaultConnector": "conn.rca",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "Line level, unbalanced (RCA)",
+          "domain": "audio.analog",
+          "id": "audio.line_unbal",
+          "shortTag": "AUD"
+        },
+        "audio.mic": {
+          "aliases": [],
+          "dashOverride": [
+            4000,
+            3000
+          ],
+          "defaultConnector": "conn.xlr3",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "Mic level",
+          "domain": "audio.analog",
+          "id": "audio.mic",
+          "shortTag": "MIC"
+        },
+        "audio.phono": {
+          "aliases": [],
+          "dashOverride": [
+            4000,
+            3000,
+            1500,
+            3000
+          ],
+          "defaultConnector": "conn.rca",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "Phono / turntable",
+          "domain": "audio.analog",
+          "id": "audio.phono",
+          "shortTag": "PHNO"
+        },
+        "audio.spdif_coax": {
+          "aliases": [],
+          "dashOverride": [
+            12000,
+            4000,
+            3000,
+            4000
+          ],
+          "defaultConnector": "conn.rca75",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "S/PDIF, coaxial (75 Ω)",
+          "domain": "audio.digital",
+          "id": "audio.spdif_coax",
+          "shortTag": "SPD"
+        },
+        "audio.spdif_optical": {
+          "aliases": [],
+          "dashOverride": [
+            2000,
+            3000
+          ],
+          "defaultConnector": "conn.jis_f05",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "TOSLINK (optical S/PDIF)",
+          "domain": "audio.digital",
+          "id": "audio.spdif_optical",
+          "lineWeightPermilleOverride": 1250,
+          "shortTag": "OPT"
+        },
+        "audio.speaker_cv": {
+          "aliases": [],
+          "dashOverride": [
+            10000,
+            3000,
+            2000,
+            3000
+          ],
+          "defaultConnector": "conn.euroblock_2",
+          "defaultDirection": "source",
+          "defaultTopology": "multidrop",
+          "displayName": "Speaker, constant-voltage 70 / 100 / 25 V",
+          "domain": "audio.analog",
+          "id": "audio.speaker_cv",
+          "lineWeightPermilleOverride": 2000,
+          "shortTag": "70V"
+        },
+        "audio.speaker_lowz": {
+          "aliases": [],
+          "defaultConnector": "conn.binding_post",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "Speaker level, low-Z",
+          "domain": "audio.analog",
+          "id": "audio.speaker_lowz",
+          "lineWeightPermilleOverride": 2000,
+          "shortTag": "SPK"
+        },
+        "audio.sub": {
+          "aliases": [],
+          "dashOverride": [
+            8000,
+            3000
+          ],
+          "defaultConnector": "conn.rca",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "Subwoofer / LFE",
+          "domain": "audio.analog",
+          "id": "audio.sub",
+          "lineWeightPermilleOverride": 1250,
+          "shortTag": "SUB"
+        },
+        "ctl.contact": {
+          "aliases": [],
+          "dashOverride": [
+            1500,
+            3000,
+            4000,
+            3000
+          ],
+          "defaultConnector": "conn.euroblock_2",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "Contact closure / relay / GPIO",
+          "domain": "ctl",
+          "id": "ctl.contact",
+          "shortTag": "CC"
+        },
+        "ctl.cresnet": {
+          "aliases": [],
+          "dashOverride": [
+            10000,
+            3000,
+            1500,
+            3000
+          ],
+          "defaultConnector": "conn.phoenix_4",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "multidrop",
+          "displayName": "Cresnet",
+          "domain": "ctl",
+          "id": "ctl.cresnet",
+          "lineWeightPermilleOverride": 1000,
+          "shortTag": "CN"
+        },
+        "ctl.dali": {
+          "aliases": [],
+          "dashOverride": [
+            5000,
+            3000,
+            1500,
+            3000
+          ],
+          "defaultConnector": "conn.screw_terminal",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "multidrop",
+          "displayName": "DALI / DALI-2",
+          "domain": "ctl",
+          "id": "ctl.dali",
+          "lineWeightPermilleOverride": 1000,
+          "shortTag": "DALI"
+        },
+        "ctl.dmx512": {
+          "aliases": [],
+          "dashOverride": [
+            8000,
+            3000,
+            1500,
+            3000
+          ],
+          "defaultConnector": "conn.xlr5",
+          "defaultDirection": "source",
+          "defaultTopology": "multidrop",
+          "displayName": "DMX512-A",
+          "domain": "ctl",
+          "id": "ctl.dmx512",
+          "lineWeightPermilleOverride": 1000,
+          "shortTag": "DMX"
+        },
+        "ctl.ir_emitter": {
+          "aliases": [],
+          "defaultConnector": "conn.3_5mm_ts",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "IR emitter (flasher)",
+          "domain": "ctl",
+          "id": "ctl.ir_emitter",
+          "shortTag": "IR"
+        },
+        "ctl.ir_receiver": {
+          "aliases": [],
+          "dashOverride": [
+            4000,
+            3000,
+            1500,
+            3000
+          ],
+          "defaultConnector": "conn.3_5mm_trs",
+          "defaultDirection": "source",
+          "defaultTopology": "multidrop",
+          "displayName": "IR receiver",
+          "domain": "ctl",
+          "id": "ctl.ir_receiver",
+          "shortTag": "IRRX"
+        },
+        "ctl.knx": {
+          "aliases": [],
+          "dashOverride": [
+            7000,
+            3000,
+            1500,
+            3000
+          ],
+          "defaultConnector": "conn.knx_terminal",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "multidrop",
+          "displayName": "KNX TP1",
+          "domain": "ctl",
+          "id": "ctl.knx",
+          "lineWeightPermilleOverride": 1000,
+          "shortTag": "KNX"
+        },
+        "ctl.lutron_qs": {
+          "aliases": [],
+          "dashOverride": [
+            10000,
+            3000
+          ],
+          "defaultConnector": "conn.rj45",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "multidrop",
+          "displayName": "Lutron QS / HomeWorks link",
+          "domain": "ctl",
+          "id": "ctl.lutron_qs",
+          "lineWeightPermilleOverride": 1000,
+          "shortTag": "QS"
+        },
+        "ctl.rs232": {
+          "aliases": [],
+          "dashOverride": [
+            6000,
+            3000,
+            1500,
+            3000
+          ],
+          "defaultConnector": "conn.de9",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "p2p",
+          "displayName": "RS-232",
+          "domain": "ctl",
+          "id": "ctl.rs232",
+          "shortTag": "232"
+        },
+        "ctl.rs485": {
+          "aliases": [],
+          "dashOverride": [
+            6000,
+            3000
+          ],
+          "defaultConnector": "conn.euroblock_3",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "multidrop",
+          "displayName": "RS-485",
+          "domain": "ctl",
+          "id": "ctl.rs485",
+          "lineWeightPermilleOverride": 1000,
+          "shortTag": "485"
+        },
+        "ctl.trigger12v": {
+          "aliases": [],
+          "dashOverride": [
+            4000,
+            3000
+          ],
+          "defaultConnector": "conn.3_5mm_ts",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "12 V trigger",
+          "domain": "ctl",
+          "id": "ctl.trigger12v",
+          "shortTag": "TRG"
+        },
+        "net.dac": {
+          "aliases": [],
+          "dashOverride": [
+            8000,
+            3000
+          ],
+          "defaultConnector": "conn.sfp_cage",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "p2p",
+          "displayName": "Direct-attach copper (SFP+)",
+          "domain": "net",
+          "id": "net.dac",
+          "shortTag": "DAC"
+        },
+        "net.ethernet": {
+          "aliases": [],
+          "defaultConnector": "conn.rj45",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "star",
+          "displayName": "Ethernet (copper)",
+          "domain": "net",
+          "id": "net.ethernet",
+          "shortTag": "NET"
+        },
+        "net.fiber_mm": {
+          "aliases": [],
+          "dashOverride": [
+            16000,
+            4000
+          ],
+          "defaultConnector": "conn.lc_duplex",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "p2p",
+          "displayName": "Fibre, multimode (OM3 / OM4)",
+          "domain": "net",
+          "id": "net.fiber_mm",
+          "shortTag": "FIB"
+        },
+        "net.fiber_sm": {
+          "aliases": [],
+          "dashOverride": [
+            16000,
+            4000,
+            3000,
+            4000
+          ],
+          "defaultConnector": "conn.lc_duplex",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "p2p",
+          "displayName": "Fibre, singlemode (OS2)",
+          "domain": "net",
+          "id": "net.fiber_sm",
+          "shortTag": "FIBS"
+        },
+        "net.poe": {
+          "aliases": [],
+          "defaultConnector": "conn.rj45",
+          "defaultDirection": "source",
+          "defaultTopology": "star",
+          "displayName": "PoE / PoE+ / PoE++",
+          "domain": "net",
+          "id": "net.poe",
+          "lineWeightPermilleOverride": 2000,
+          "shortTag": "PoE"
+        },
+        "net.poh": {
+          "aliases": [],
+          "dashOverride": [
+            14000,
+            4000
+          ],
+          "defaultConnector": "conn.rj45",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "PoH (HDBaseT power)",
+          "domain": "net",
+          "id": "net.poh",
+          "lineWeightPermilleOverride": 2000,
+          "shortTag": "PoH"
+        },
+        "power.ac_branch": {
+          "aliases": [],
+          "defaultConnector": "conn.nema_5_15p",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "AC branch circuit",
+          "domain": "pwr",
+          "id": "power.ac_branch",
+          "shortTag": "PWR"
+        },
+        "power.ac_hardwired": {
+          "aliases": [],
+          "dashOverride": [
+            12000,
+            3000,
+            1500,
+            3000
+          ],
+          "defaultConnector": "conn.hardwired",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "Hardwired AC",
+          "domain": "pwr",
+          "id": "power.ac_hardwired",
+          "shortTag": "HW"
+        },
+        "power.ac_iec": {
+          "aliases": [],
+          "dashOverride": [
+            8000,
+            3000,
+            1500,
+            3000
+          ],
+          "defaultConnector": "conn.iec_c14",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "IEC device power (C13/C14, C19/C20)",
+          "domain": "pwr",
+          "id": "power.ac_iec",
+          "shortTag": "IEC"
+        },
+        "power.bonding": {
+          "aliases": [],
+          "dashOverride": [
+            4000,
+            3000
+          ],
+          "defaultConnector": "conn.ground_lug",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "star",
+          "displayName": "Bonding / grounding conductor",
+          "domain": "pwr",
+          "id": "power.bonding",
+          "lineWeightPermilleOverride": 1500,
+          "shortTag": "GND"
+        },
+        "power.dc_low": {
+          "aliases": [],
+          "dashOverride": [
+            6000,
+            3000,
+            1500,
+            3000
+          ],
+          "defaultConnector": "conn.barrel_dc",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "Low-voltage DC (12 / 24 V supply)",
+          "domain": "pwr",
+          "id": "power.dc_low",
+          "lineWeightPermilleOverride": 1500,
+          "shortTag": "DC"
+        },
+        "rf.catv": {
+          "aliases": [],
+          "defaultConnector": "conn.f_type",
+          "defaultDirection": "source",
+          "defaultTopology": "multidrop",
+          "displayName": "RF / CATV distribution",
+          "domain": "video.analog",
+          "id": "rf.catv",
+          "lineWeightPermilleOverride": 1500,
+          "shortTag": "RF"
+        },
+        "rf.modulated": {
+          "aliases": [],
+          "defaultConnector": "conn.f_type",
+          "defaultDirection": "source",
+          "defaultTopology": "multidrop",
+          "displayName": "RF modulated channel",
+          "domain": "video.analog",
+          "id": "rf.modulated",
+          "shortTag": "RFM"
+        },
+        "rf.ota": {
+          "aliases": [],
+          "dashOverride": [
+            16000,
+            4000
+          ],
+          "defaultConnector": "conn.f_type",
+          "defaultDirection": "source",
+          "defaultTopology": "multidrop",
+          "displayName": "OTA antenna",
+          "domain": "video.analog",
+          "id": "rf.ota",
+          "shortTag": "OTA"
+        },
+        "rf.satellite": {
+          "aliases": [],
+          "dashOverride": [
+            12000,
+            4000,
+            3000,
+            4000
+          ],
+          "defaultConnector": "conn.f_type",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "multidrop",
+          "displayName": "Satellite / SWM",
+          "domain": "video.analog",
+          "id": "rf.satellite",
+          "lineWeightPermilleOverride": 1500,
+          "shortTag": "SAT"
+        },
+        "structure.pathway": {
+          "aliases": [],
+          "dashOverride": [
+            1500,
+            3000,
+            1500,
+            9000
+          ],
+          "defaultConnector": "conn.unterminated",
+          "defaultDirection": "passive",
+          "defaultTopology": "p2p",
+          "displayName": "Pathway only (conduit / pull string)",
+          "domain": "str",
+          "id": "structure.pathway",
+          "shortTag": "PATH"
+        },
+        "structure.undetermined": {
+          "aliases": [],
+          "defaultConnector": "conn.unterminated",
+          "defaultDirection": "passive",
+          "defaultTopology": "p2p",
+          "displayName": "Undetermined home run",
+          "domain": "str",
+          "id": "structure.undetermined",
+          "shortTag": "STR"
+        },
+        "video.avoip": {
+          "aliases": [],
+          "dashOverride": [
+            14000,
+            4000,
+            2000,
+            4000
+          ],
+          "defaultConnector": "conn.rj45",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "star",
+          "displayName": "AV-over-IP (SDVoE / JPEG XS / NDI)",
+          "domain": "video.digital",
+          "id": "video.avoip",
+          "shortTag": "AVIP"
+        },
+        "video.component": {
+          "aliases": [],
+          "dashOverride": [
+            12000,
+            4000,
+            3000,
+            4000
+          ],
+          "defaultConnector": "conn.rca75",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "Component YPbPr",
+          "domain": "video.analog",
+          "id": "video.component",
+          "shortTag": "YPBPR"
+        },
+        "video.composite": {
+          "aliases": [],
+          "dashOverride": [
+            1500,
+            3000
+          ],
+          "defaultConnector": "conn.rca75",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "Composite (CVBS)",
+          "domain": "video.analog",
+          "id": "video.composite",
+          "shortTag": "CVBS"
+        },
+        "video.displayport": {
+          "aliases": [],
+          "dashOverride": [
+            18000,
+            4000
+          ],
+          "defaultConnector": "conn.dp",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "DisplayPort 1.4 / 2.1",
+          "domain": "video.digital",
+          "id": "video.displayport",
+          "shortTag": "DP"
+        },
+        "video.hdbaset": {
+          "aliases": [],
+          "dashOverride": [
+            14000,
+            4000
+          ],
+          "defaultConnector": "conn.rj45",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "HDBaseT (5Play)",
+          "domain": "video.digital",
+          "id": "video.hdbaset",
+          "lineWeightPermilleOverride": 1250,
+          "shortTag": "HBT"
+        },
+        "video.hdmi.1_4": {
+          "aliases": [],
+          "defaultConnector": "conn.hdmi_a",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "HDMI 1.4",
+          "domain": "video.digital",
+          "id": "video.hdmi.1_4",
+          "lineWeightPermilleOverride": 750,
+          "shortTag": "HD14"
+        },
+        "video.hdmi.2_0": {
+          "aliases": [],
+          "defaultConnector": "conn.hdmi_a",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "HDMI 2.0 (18 Gbps)",
+          "domain": "video.digital",
+          "id": "video.hdmi.2_0",
+          "shortTag": "HD20"
+        },
+        "video.hdmi.2_1": {
+          "aliases": [],
+          "defaultConnector": "conn.hdmi_a",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "HDMI 2.1 (48 Gbps)",
+          "domain": "video.digital",
+          "id": "video.hdmi.2_1",
+          "lineWeightPermilleOverride": 1250,
+          "shortTag": "HD21"
+        },
+        "video.sdi": {
+          "aliases": [],
+          "dashOverride": [
+            10000,
+            3000
+          ],
+          "defaultConnector": "conn.bnc75",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "SDI (HD / 3G / 6G / 12G)",
+          "domain": "video.digital",
+          "id": "video.sdi",
+          "shortTag": "SDI"
+        },
+        "video.svideo": {
+          "aliases": [],
+          "dashOverride": [
+            9000,
+            4000
+          ],
+          "defaultConnector": "conn.mini_din4",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "S-Video",
+          "domain": "video.analog",
+          "id": "video.svideo",
+          "shortTag": "SVID"
+        },
+        "video.usbc_dpalt": {
+          "aliases": [],
+          "dashOverride": [
+            6000,
+            2000
+          ],
+          "defaultConnector": "conn.usb_c",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "p2p",
+          "displayName": "USB-C DP Alt Mode",
+          "domain": "video.digital",
+          "id": "video.usbc_dpalt",
+          "shortTag": "UCV"
+        },
+        "video.vga": {
+          "aliases": [],
+          "dashOverride": [
+            12000,
+            4000,
+            3000,
+            4000,
+            3000,
+            4000
+          ],
+          "defaultConnector": "conn.hd15",
+          "defaultDirection": "source",
+          "defaultTopology": "p2p",
+          "displayName": "VGA / RGBHV",
+          "domain": "video.analog",
+          "id": "video.vga",
+          "shortTag": "VGA"
+        }
+      }
     },
     "revisionBlock": [
       {

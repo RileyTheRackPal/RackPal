@@ -2208,22 +2208,51 @@ SignalDomainDef _decodeSignalDomainDef(SignalDomainId id, JsonMap json) =>
 
 // SignalFamilyDef/ConnectorTypeDef/MediaTypeDef: the doc's worked JSON
 // example (§6.2 registries.signalFamilies/connectors/media) shows
-// materially different field sets (shortTag/topologyFree/
-// maxChannelLengthNm, contacts/genderApplies/matesWith,
-// conductorCount/isPathwayOnly/pairCount) that do not correspond to any
-// field these Dart classes actually declare. This codec serializes the
-// real Dart fields (id/displayName/domain/defaultConnector/
-// defaultDirection/defaultTopology/aliases, etc.), per this package's
-// drift-resolution instructions.
-JsonMap _encodeSignalFamilyDef(SignalFamilyDef d) => {
-  'id': d.id.v,
-  'displayName': d.displayName,
-  'domain': d.domain.v,
-  'defaultConnector': d.defaultConnector.v,
-  'defaultDirection': encodeEnumName(d.defaultDirection),
-  'defaultTopology': encodeEnumName(d.defaultTopology),
-  'aliases': d.aliases,
-};
+// materially different field sets (topologyFree/maxChannelLengthNm,
+// contacts/genderApplies/matesWith, conductorCount/isPathwayOnly/
+// pairCount) that do not correspond to any field these Dart classes
+// actually declare. This codec serializes the real Dart fields
+// (id/displayName/domain/defaultConnector/defaultDirection/
+// defaultTopology/aliases, etc.), per this package's drift-resolution
+// instructions.
+//
+// `shortTag` LEFT THAT LIST AT DR-010 (§11.10.3): the example's key and
+// a real Dart field now agree on both name and meaning, so it is written
+// under the doc's own name rather than a new one.
+JsonMap _encodeSignalFamilyDef(SignalFamilyDef d) {
+  final json = <String, Object?>{
+    'id': d.id.v,
+    'displayName': d.displayName,
+    'domain': d.domain.v,
+    'defaultConnector': d.defaultConnector.v,
+    'defaultDirection': encodeEnumName(d.defaultDirection),
+    'defaultTopology': encodeEnumName(d.defaultTopology),
+    'aliases': d.aliases,
+  };
+  // DR-010 §11.10.3's three fields, ADDITIVE AND OPTIONAL — written only
+  // when present, which is the `linkClassLocked` contract of §11.8.2
+  // applied again and NOT the shape of `designatorLocked`, whose
+  // unconditional write would add three keys to every family in every
+  // existing document. A family decoded from a document written before
+  // these keys existed re-encodes BYTE-FOR-BYTE, which is why
+  // `kSchemaVersion` does not move: the `registries` key itself already
+  // exists and every reader already parses it.
+  //
+  // `dashOverride` GOES THROUGH `putIfNotNull`, NOT AN `isEmpty` TEST.
+  // The empty list is a real, shipped value — `audio.line_bal` overrides
+  // to *solid* inside the dashed `audio.analog` domain — so "absent" and
+  // "[]" must stay distinguishable on the wire. Suppressing empties here
+  // would silently redraw that family with the domain's `6,3` dash on
+  // reopen, which is the collision §4.4 moved it off in the first place.
+  putIfNotNull(json, 'shortTag', d.shortTag);
+  putIfNotNull(json, 'dashOverride', d.dashOverride);
+  putIfNotNull(
+    json,
+    'lineWeightPermilleOverride',
+    d.lineWeightPermilleOverride,
+  );
+  return json;
+}
 
 SignalFamilyDef _decodeSignalFamilyDef(SignalFamilyId id, JsonMap json) =>
     SignalFamilyDef(
@@ -2250,6 +2279,23 @@ SignalFamilyDef _decodeSignalFamilyDef(SignalFamilyId id, JsonMap json) =>
         ))
           asStr(v, 'SignalFamilyDef.aliases[]'),
       ],
+      // ABSENT MEANS NULL, and null means "inherit the domain" — never
+      // an invented default. `?? const []` here would turn every family
+      // in an older document into an explicit solid override.
+      shortTag: asStrOrNull(json['shortTag'], 'SignalFamilyDef.shortTag'),
+      dashOverride: json['dashOverride'] == null
+          ? null
+          : [
+              for (final v in asJsonList(
+                json['dashOverride'],
+                'SignalFamilyDef.dashOverride',
+              ))
+                asInt(v, 'SignalFamilyDef.dashOverride[]'),
+            ],
+      lineWeightPermilleOverride: asIntOrNull(
+        json['lineWeightPermilleOverride'],
+        'SignalFamilyDef.lineWeightPermilleOverride',
+      ),
     );
 
 JsonMap _encodeConnectorTypeDef(ConnectorTypeDef d) {

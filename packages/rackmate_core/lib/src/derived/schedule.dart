@@ -79,11 +79,17 @@
 //    guessing from the shape of a value is the fabrication G4 forbids.
 //    A `Link.wiringStandard` field is owed.
 //  * **`SignalFamilyDef.shortTag`.** §3.2's `TYPE` column asks for
-//    "domain tag + family `shortTag`" and `SignalFamilyDef` has no such
-//    field (`registries.dart`). [ScheduleEntry.typeCell] prints the
-//    domain's `tagPrefix` with the family's `displayName`, and falls back
-//    to the raw `SignalFamilyId` when the registry does not resolve —
-//    never to an abbreviation this file invented.
+//    "domain tag + family `shortTag`". THE FIELD NOW EXISTS — DR-010
+//    §11.10.3 added it, and the seeded registry populates it on all 55
+//    families — but [ScheduleEntry.typeCell] still prints the domain's
+//    `tagPrefix` with the family's `displayName`, because switching it
+//    is a change to what the schedule RENDERS and belongs with the rest
+//    of the tag-pill work (AC-054, M2-D), not to the ruling that added
+//    the field. It is nullable, so the switch also owes a fallback for
+//    a family decoded from a document written before the key existed.
+//    The fall back to the raw `SignalFamilyId` when the registry does
+//    not resolve stays either way — never an abbreviation this file
+//    invented.
 //  * **§3.8's generated notes** — `NOT ETHERNET`, `VERIFY POLARITY`, the
 //    null-modem pin map. Those come from a rules pass over the connector
 //    and family model that does not exist. Three notes that ARE stated by
@@ -575,8 +581,11 @@ final class ScheduleEntry {
   ///
   /// `VID·HDMI` when the registry resolves both halves; the bare domain
   /// tag when only the domain does; the raw `SignalFamilyId` when neither
-  /// does, which is the state of every document today because no
-  /// `registries.json` ships (`registries.dart:12`). Never an
+  /// does. That last case used to be the state of EVERY document, because
+  /// the `registries.json` `registries.dart:12` cited never existed;
+  /// DR-010 §11.10 seeds NEW documents from a Dart master instead, so it
+  /// is now the honest degradation for a document saved before that
+  /// (§6.2's `unknown(rawId)` rule), not the universal case. Never an
   /// abbreviation this file made up — see the file header.
   String get typeCell {
     final family = signalFamily;
@@ -1388,9 +1397,10 @@ final class ScheduleView {
   /// Rows whose `MediaTypeId` names no registry entry.
   final int unresolvedMediaCount;
 
-  /// Rows whose `SignalFamilyId` names no registry entry — every row in
-  /// every document today, because no `registries.json` ships. Counted
-  /// rather than papered over.
+  /// Rows whose `SignalFamilyId` names no registry entry. This was every
+  /// row in every document until DR-010 §11.10 seeded the registries;
+  /// documents saved before it keep empty maps and are NOT migrated, so
+  /// the count stays meaningful. Counted rather than papered over.
   final int unresolvedSignalFamilyCount;
 
   /// §3.1's "both labels, on both ends" made checkable. A row missing one

@@ -156,6 +156,11 @@ final class StarterAuthor {
     doc.settings.jacketColorConventions.addAll(
       buildDefaultJacketColorConvention(),
     );
+    // And the same again for the registries (DR-010 §11.10.2). THE FOUR
+    // STARTERS ARE REGENERATED FOR THIS, deliberately: they are shipped
+    // fixtures rather than user data, so unlike a user's `.rackmate` they
+    // are rebuilt from the Dart master with a reviewable golden diff.
+    doc.registries = buildSeedRegistries();
     return doc;
   }
 

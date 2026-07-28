@@ -82,6 +82,12 @@ try {
     Invoke-Gate 'analyzer gate'       { pwsh -NoProfile -File (Join-Path $ci 'analyze_gate.ps1') }
     Invoke-Gate 'PAL-1 conformance'   { python tools/pal1_check.py }
     Invoke-Gate 'palette parity'      { python tools/palette_parity.py }
+    # The third of the family: pal1_check says the palette is legible,
+    # palette_parity says the DOCS agree with it, and this says the DART
+    # SEED does (DR-010 section 11.10.1). Added when the seeded registries
+    # made packages/rackmate_core/.../seed_registries.dart a fourth copy of
+    # the same 8 hues and 55 dash/weight pairs.
+    Invoke-Gate 'registry parity'     { python tools/registry_parity.py }
     Invoke-Gate 'JUnit converter self-test' {
         python (Join-Path $ci 'junit_converter_selftest.py')
     }

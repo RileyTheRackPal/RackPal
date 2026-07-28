@@ -43,6 +43,11 @@ export 'package:rackmate_core/src/catalog/catalog_video.dart' show kCatVideo;
 // document by its constructor and editable from that moment on.
 export 'package:rackmate_core/src/catalog/jacket_color_convention.dart'
     show buildDefaultJacketColorConvention;
+// Likewise: the 8 signal domains and 55 signal families (DR-010 §11.10).
+// Same contract again — seeded into a new document at CREATION, ordinary
+// stored data from that line onward, and NEVER recomputed at save.
+export 'package:rackmate_core/src/catalog/seed_registries.dart'
+    show buildSeedRegistries, buildSeedSignalDomains, buildSeedSignalFamilies;
 
 /// The category display order the palette groups by, matching
 /// docs/catalog/seed-devices.md §3's section order.

@@ -52,13 +52,19 @@ import 'starter_integrity.dart';
 /// The per-file ceiling, in bytes.
 ///
 /// WHERE THE NUMBER COMES FROM. An empty document carrying the 48-template
-/// seed catalog is ~661 KB, and every document this build writes carries
-/// it (see `StarterAuthor.newDocument` and `buildBlankDocument` for why).
-/// The largest starter's own content is a further ~150 KB. 1 MB leaves
-/// room for a starter to grow with each milestone — AC-052 requires
-/// exactly that — while still tripping long before the format itself is
-/// in question. `RISK-11`'s trigger is "a starter project crossing its
-/// asserted byte budget"; this is the assertion.
+/// seed catalog AND the seeded registries is ~698 KB, and every document
+/// this build writes carries both (see `StarterAuthor.newDocument` and
+/// `buildBlankDocument` for why). The largest starter's own content is a
+/// further ~158 KB. 1 MB leaves room for a starter to grow with each
+/// milestone — AC-052 requires exactly that — while still tripping long
+/// before the format itself is in question. `RISK-11`'s trigger is "a
+/// starter project crossing its asserted byte budget"; this is the
+/// assertion.
+///
+/// DR-010 §11.10 ADDED ~37 KB TO EACH OF THE FOUR, which is the 8 domains,
+/// 55 families and 46 connector footprints that every document had been
+/// carrying as three empty maps. The ceiling did not move for it: the
+/// largest starter went 819 KB → 856 KB, still 84 % of budget.
 const int kStarterByteCeiling = 1024 * 1024;
 
 /// The real read path over the real filesystem.
@@ -348,6 +354,112 @@ void main() {
       expect(colourOf('GR-DATA-4'), 'jc.grey'); // ceiling access point
       expect(colourOf('GAR-DATA-1'), 'jc.white'); // driveway camera
       expect(colourOf('MED-DATA-1'), 'jc.green'); // HDBaseT distribution
+    });
+  });
+
+  group('the signal registries ship as real data, off real disk', () {
+    // THE END-TO-END CLAIM DR-010 §11.10 EXISTS TO MAKE. M2-B was the
+    // first code ever to read `doc.registries` and found every map empty
+    // in every document — all six maps, all four starters, all six
+    // fixtures — because the `assets/catalog/registries.json` that
+    // `registries.dart` cited had never existed. Every unit test in
+    // `rackmate_core` could pass with the seeding line deleted from
+    // `StarterAuthor.newDocument`; only reading the shipped bytes back off
+    // the disk catches that, which is why this is here and not there.
+    Future<RackDocument> read(String fileName) async {
+      final opened = await _diskStore().open(
+        '$kStarterAssetDirectory/$fileName',
+      );
+      return (opened as Ok<OpenedDocument>).value.document;
+    }
+
+    for (final source in kStarterSources) {
+      test('${source.fileName} resolves its own families end to end', () async {
+        final doc = await read(source.fileName);
+        expect(
+          doc.registries.signalDomains.keys.map((k) => k.v).toSet(),
+          {
+            'video.digital',
+            'video.analog',
+            'audio.analog',
+            'audio.digital',
+            'net',
+            'ctl',
+            'pwr',
+            'str',
+          },
+          reason:
+              'the registries are seeded at document CREATION. If they '
+              'are missing here, either the seeding line was dropped '
+              'from `StarterAuthor.newDocument` or the assets predate it.',
+        );
+        expect(doc.registries.signalFamilies, hasLength(55));
+        expect(doc.registries.connectorTypes, isNotEmpty);
+
+        // EXPECTATIONS ARE LITERALS, for the same reason the jacket-colour
+        // group above says so: comparing against `buildSeedRegistries()`
+        // would be the constant confirming itself. These four are read
+        // off the disk and checked against §4.3/§4.4's printed values.
+        final ctl =
+            doc.registries.signalDomains[const SignalDomainId(
+              'ctl',
+            )]!;
+        expect(ctl.displayName, 'Control');
+        expect(ctl.tagPrefix, 'CTL');
+        expect(ctl.color.toHex(), '#CC79A7');
+        expect(ctl.dashPattern, [1500, 3000]);
+        expect(ctl.lineWeightPermille, 750);
+
+        // The type-within-domain channel, surviving a real save/load:
+        // three solid HDMI generations that separate on weight alone.
+        final vid =
+            doc.registries.signalDomains[const SignalDomainId(
+              'video.digital',
+            )]!;
+        int weightOf(String id) => doc
+            .registries
+            .signalFamilies[SignalFamilyId(id)]!
+            .effectiveLineWeightPermille(vid);
+        expect(weightOf('video.hdmi.1_4'), 750);
+        expect(weightOf('video.hdmi.2_0'), 1000);
+        expect(weightOf('video.hdmi.2_1'), 1250);
+      });
+    }
+
+    test('every family a starter actually USES resolves in its own '
+        'registries', () async {
+      // The vacuity guard, and the thing M2-B's unresolved counts were.
+      // `whole_house` is the only starter with links; a `Service` naming
+      // a family the file does not carry renders grey with the raw id as
+      // its tag (§6.2's `unknown(rawId)`), which is correct behaviour and
+      // the wrong outcome for a shipped fixture.
+      final doc = await read('whole_house.rackmate');
+      final used = {
+        for (final link in doc.links.values)
+          for (final service in link.services) service.signalFamily,
+      };
+      expect(
+        used,
+        isNotEmpty,
+        reason:
+            'no link carries a Service — this '
+            'assertion would prove nothing',
+      );
+      for (final id in used) {
+        final family = doc.registries.signalFamilies[id];
+        expect(
+          family,
+          isNotNull,
+          reason: '${id.v} is used by a link and resolves to nothing',
+        );
+        expect(
+          doc.registries.signalDomains.containsKey(family!.domain),
+          isTrue,
+          reason:
+              '${id.v} names domain ${family.domain.v}, which the '
+              'file does not carry',
+        );
+      }
     });
   });
 

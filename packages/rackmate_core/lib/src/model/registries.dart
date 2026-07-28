@@ -57,7 +57,22 @@ final class SignalDomainDef {
 /// Catalog-updated, not user-extensible in v1 (RJ-012).
 ///
 /// M0 MINIMAL SHAPE: full spec pending, see docs/02-data-model.md §4.9.
-/// Field list per this package's governing instructions.
+/// The corpus field list runs to some twenty entries (`typicalMedia`,
+/// `acceptedFamilies`, `maxRunLengthPassive`, `nominalImpedanceOhms`,
+/// `requiresTermination`, `carriesPower`, …) and those stay absent by
+/// DR-010 §11.10.4: only the fields AC-054's render actually needs are
+/// added, and the rest arrive when something needs them.
+///
+/// THE THREE FIELDS DR-010 §11.10.3 ADDED, AND WHY.
+/// CR-078 moved COLOUR from the family to the domain — correctly, since
+/// "no palette is CVD-safe past ~9 categories" — but the model built
+/// from that reading kept neither `shortTag` nor a dash nor a weight, and
+/// that made AC-054 unimplementable: docs/catalog/seed-devices.md §4.4
+/// gives every family its own dash and weight, so without the override
+/// channel ALL EIGHT DIGITAL-VIDEO FAMILIES DRAW AS ONE IDENTICAL SOLID
+/// LINE and the dash channel — the one of CR-078's four that survives
+/// greyscale and a photocopy — carries nothing. CR-078 is narrowed, not
+/// reversed: hue stays on the domain.
 final class SignalFamilyDef {
   const SignalFamilyDef({
     required this.id,
@@ -67,6 +82,9 @@ final class SignalFamilyDef {
     required this.defaultDirection,
     required this.defaultTopology,
     this.aliases = const [],
+    this.shortTag,
+    this.dashOverride,
+    this.lineWeightPermilleOverride,
   });
 
   final SignalFamilyId id;
@@ -76,6 +94,52 @@ final class SignalFamilyDef {
   final PortDirection defaultDirection;
   final PortTopology defaultTopology;
   final List<String> aliases;
+
+  /// The tag pill's type token — `HD20`, `SPK`, `232` (§4.4's `Tag`
+  /// column). The schedule's `TYPE` cell wants "domain tag + family
+  /// `shortTag`" (docs/08-pdf-export.md §3.2) and had to print
+  /// `displayName` instead because this field did not exist; see the
+  /// "what is deliberately not derived" note in `derived/schedule.dart`.
+  ///
+  /// NULLABLE, and null means UNKNOWN rather than empty (G4, CR-114): a
+  /// family decoded from a document written before this key existed has
+  /// no tag, and a caller must fall back rather than print `''`.
+  final String? shortTag;
+
+  /// The type-within-domain dash, in permille-points like
+  /// [SignalDomainDef.dashPattern]. Null inherits the domain's base dash.
+  ///
+  /// NULL AND EMPTY ARE DIFFERENT AND BOTH OCCUR. `null` is "inherit";
+  /// the EMPTY LIST is an explicit override to *solid*, which
+  /// `audio.line_bal` really does declare inside the dashed
+  /// `audio.analog` domain (§4.4: "This is the one place a `dashOverride`
+  /// reaches for `solid` inside a dashed domain"). A non-nullable
+  /// `List<int>` defaulting to `const []` could not express the
+  /// difference and would silently redraw every inheriting family solid.
+  final List<int>? dashOverride;
+
+  /// The type-within-domain line weight, permille of the base signal
+  /// weight (`1000` = 1×). Null inherits the domain's base weight.
+  ///
+  /// Load-bearing on its own, not a garnish: HDMI 1.4/2.0/2.1 are all
+  /// solid and separate ONLY here (750 / 1000 / 1250), and PAL-1's limb
+  /// (b) rescues a shared dash class only at a ratio ≥ 1.4.
+  final int? lineWeightPermilleOverride;
+
+  /// The dash this family actually draws, given its resolved [domain].
+  ///
+  /// The fallback rule lives here rather than at each call site because
+  /// PAL-1 is stated over EFFECTIVE values — "after any override, not
+  /// the domain base value" — and a renderer that reads `dashOverride`
+  /// directly draws the domain's families all alike. `tools/
+  /// registry_parity.py` checks the seed through exactly this rule.
+  List<int> effectiveDashPattern(SignalDomainDef resolvedDomain) =>
+      dashOverride ?? resolvedDomain.dashPattern;
+
+  /// The line weight this family actually draws at. See
+  /// [effectiveDashPattern] for why the rule is here.
+  int effectiveLineWeightPermille(SignalDomainDef resolvedDomain) =>
+      lineWeightPermilleOverride ?? resolvedDomain.lineWeightPermille;
 }
 
 /// What plugs into what, and whether gender applies. Aliases only,
