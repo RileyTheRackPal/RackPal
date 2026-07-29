@@ -1,5 +1,24 @@
 # Update Log
 
+## 2026-07-29
+
+* **Creation**: [DR-011 — the connect gesture](/decisions/dr-011-connect-gesture.md),
+  seven clauses scoping M2-F. Three findings forced it, and all three were
+  invisible from the API's own surface: NOTHING IN THE APP EVER MATERIALISES A
+  PORT (so the connect API shipped in M2-A returns a zero-conductor plan on the
+  document the exit criterion starts from), committing a link re-runs the
+  auto-layout and moves every symbol, and every link would have landed in the
+  Structure domain.
+* **Creation**: [One keymap registry](/practices/one-keymap-registry.md) —
+  M2-H's practice, INCLUDING THE HALF THAT WAS DONE WRONG. The ban is enforced
+  by a test that reads one named file; the package where most remaining UI work
+  lands has no layering test at all. A structural rule needs a structural gate.
+* **Update**: [DR-009](/decisions/dr-009-macos-in-v1.md)'s register revised —
+  two of its rows overstated the debt. `pdfium` is in no pubspec at all, and the
+  cross-platform PDF worry cited CR-117, which governs the `.rackmate` JSON and
+  not the PDF. Recorded because a register row that has stopped describing the
+  tree is worse than a missing one: it is trusted.
+
 ## 2026-07-28
 
 * **Update**: Caught the bundle up with M2-D (`e13fa68`) and M2-E (`219c0bf`),

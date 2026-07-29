@@ -10,10 +10,16 @@
 > register is therefore no longer a deferral ledger — it is the **work list**, and its items are
 > to be cleared, not merely tracked.
 
-**Compiled 2026-07-28** against `0f83628`, by direct inspection. Every claim below cites what was
-read. Where a number is an estimate rather than a measurement it says so — the distinction is the
-point, and §10.10's own 3–5 week figure is an estimate that has never been checked against this
-tree.
+**Compiled 2026-07-28** against `0f83628`, by direct inspection. **Revised 2026-07-29** against
+`b36c04c`: D7 cleared but its gate found incomplete (§3.1), D9 and the byte-exactness paragraph
+**corrected** (both overstated the debt), D13 and D14 added, and §3.5 added to cost M3 against this
+list. Every claim below cites what was read. Where a number is an estimate rather than a
+measurement it says so — the distinction is the point, and §10.10's own 3–5 week figure is an
+estimate that has never been checked against this tree.
+
+> **This register is live, not a dated audit.** Two of its rows were wrong within a day of being
+> written, in the direction of claiming more debt than exists. A row that has stopped describing
+> the tree is worse than a missing row, because it is trusted.
 
 ---
 
@@ -49,17 +55,41 @@ Cost column is an **estimate**, not a measurement, unless marked otherwise.
 | **D4** | **CI has one job, pinned to Windows.** `azure-pipelines.yml:180` `job: windows_ci`, `:196` `vmImage: 'windows-2022'`. Needs a macOS job. Note the pipeline's own comment at `:106` already anticipates a matrix: *"that is a later question"* — **it is now this question** | `azure-pipelines.yml` | days |
 | **D5** | **Gate scripts are PowerShell.** Six `.ps1` under `tools/ci/`. Likely runnable under `pwsh` on macOS unmodified — **verify before budgeting a rewrite** | `tools/ci/` | verify first |
 | **D6** | **`verify_windows_build.ps1`** is Windows-specific by name and purpose; needs a macOS counterpart | `tools/ci/` | hours |
-| **D7** | ~~KEYBOARD MODIFIERS~~ — **CLEARED.** Was 43 hard-coded `SingleActivator` bindings assuming `Ctrl`, across six files. Now a 35-row `kKeymap` registry whose primary modifier resolves once, in `KeyBinding.activatorFor(TargetPlatform)`, through `defaultTargetPlatform`. **Zero `SingleActivator` instances remain outside the registry**, and `session_layering_test` RULE 14 asserts `app_shell.dart` contains none — a hand-rolled binding would be invisible to the table and would re-hardcode `Ctrl`. See §3 | `packages/rackmate_ui/lib/src/keymap/keymap.dart` | **done** |
+| **D7** | ~~KEYBOARD MODIFIERS~~ — **CLEARED, GATE INCOMPLETE.** Was 43 hard-coded `SingleActivator` bindings assuming `Ctrl`, across six files. Now a 35-row `kKeymap` registry whose primary modifier resolves once, in `KeyBinding.activatorFor(TargetPlatform)`, through `defaultTargetPlatform`. **Zero `SingleActivator` instances remain outside the registry today** — but see §3.1: the ban is enforced in **one file**, and not in the package where M3 is built | `packages/rackmate_ui/lib/src/keymap/keymap.dart` | **done — gate owed** |
 | **D8** | **Code signing.** DR-006 rules Windows self-signing; macOS needs **notarisation and stapling**, which D10 names and §12.9 explicitly leaves *"unaffected and still binding"* | canon `:2696`, `:5875` | days + Apple Developer enrolment lead time |
-| **D9** | **pdfium is vendored per platform** (CR-100). A macOS binary must be vendored and verified | canon `:1517` | days |
+| **D9** | **pdfium is vendored per platform** (CR-100) — **but not yet, and not by anything shipped.** `printing`/pdfium is in **no pubspec in this tree**; PDF comes from pure-Dart `pdf ^3.13.0`. docs/03 §10.1 *plans* `printing ^5.15.0` *"behind an explicit 'Verify output' button only"* and docs/11:432 schedules vendored pdfium at **M8**. So D9 is triggered by the preview button, not by adding sheets: **adding a sheet role costs zero here** | canon `:1517`; every `pubspec.yaml`; docs/11:432 | days, **at M8** |
 | **D10** | **`window_manager` / `screen_retriever_windows`** for geometry restore. `window_manager` is cross-platform; the pinned `screen_retriever_windows` transitive is not | `pubspec.yaml:87` | hours |
 | **D11** | **A second print test matrix.** AC-054's greyscale laser check is a physical act on a physical printer, and no agent can perform it | §10.10 | manual |
 | **D12** | **Path-length semantics.** `exceedsWindowsMaxPath` is already gated behind `isWindows` (`atomic_writer.dart:464`), so the mechanism exists; macOS needs its own answer (4096 bytes, not 259 chars) | `atomic_writer.dart` | hours |
+| **D13** | **The file dialog takes no file-type filter.** `COMDLG_FILTERSPEC` is hard-coded to `.rackmate` and `SetDefaultExtension(L"rackmate")` fires on **both** dialogs, inside `ConfigureDialog`, which both branches call. The Dart interface passes only `confirmButtonText`, `suggestedName`, `initialDirectory`. **Add the filter argument BEFORE D2**, or D2 reimplements the narrow contract and then widens twice. **M3-F (CSV import) is what forces it** — see §5 | `file_dialog_channel.cpp:107-123, :216-218`; `file_picker.dart:156, :164` | hours, but **before D2** |
+| **D14** | **Locale-dependent sheet size.** docs/08:509 requires *"Non-US platform locale substitutes A4/A3"*. Unimplemented — `SheetSize` has two values, neither A4. **Not macOS-specific**: a Windows machine in a metric locale hits it, which is why it went unnoticed. Recorded here because it is the one genuinely platform-dependent input to PDF geometry, and §2's closing paragraph was worrying about floats and fonts while this sat unlisted | docs/08:509; `sheet_def.dart:38-45` | hours |
 
 **Not yet measured, and required before this register can be called complete:** whether the four
-starter projects open on macOS; whether the PDF export is byte-identical across platforms (CR-117
-is a byte gate, and a platform-dependent float or font metric would surface here first); and
-whether `pwsh` runs the gate suite unmodified (D5).
+starter projects open on macOS; whether the PDF export's **content streams** are identical across
+platforms; and whether `pwsh` runs the gate suite unmodified (D5).
+
+> **Correction, 2026-07-29.** This paragraph previously read *"whether the PDF export is
+> byte-identical across platforms (CR-117 is a byte gate…)"*. **That cited the wrong gate, and the
+> claim under it was already false on one platform.** CR-117 (canon `:1779-1782`) is
+> `write(read(bytes)) == bytes` for the **`.rackmate` JSON** — it constrains key ordering,
+> timestamp precision and integer formatting, and says nothing about PDFs. And PDF **file-level**
+> byte equality is impossible on the pinned library today, on Windows alone:
+> `export_determinism_test.dart:6-14` records that `PdfDocument.documentID` is
+> `sha256(DateTime.now() + Random.secure())` and `PdfInfo` hardcodes `/CreationDate: DateTime.now()`,
+> *"Neither is injectable."* The real gate is **content-stream** equality (`:147-159`) — and that
+> test compares two exports **in the same process**, so it cannot answer the cross-platform
+> question at all. Answering it means a new golden-bytes comparison **plus** D4. §4's "cheap to
+> answer" is true only after D1 and D4 exist.
+>
+> Two things reduce the worry the original sentence was expressing. Text metrics are **already
+> platform-independent**: `PdfFontMeasurer` is backed by `PdfFont.stringMetrics` over the bundled
+> `Jost-Regular.ttf`, imports only `dart:math`, `dart:typed_data`, `package:pdf` and
+> `rackmate_core`, and is injected into **every** `DiagramCanvas` backend including the Flutter one
+> (`pdf_font_measurer.dart:28-39`). No system font and no platform shaper is consulted. But
+> docs/08-pdf-export.md:509 — *"Non-US platform locale substitutes A4/A3"* — **is** a genuine
+> platform-dependent input to PDF geometry, it is unimplemented (`SheetSize` has two values, neither
+> A4), and it is **not macOS-specific**: a Windows machine in Germany hits it. It belongs on this
+> list and was missing from it.
 
 ---
 
@@ -92,6 +122,55 @@ D7** for undo alone. `arbitrate()` checks four conflict kinds across **every** `
 which is the only way a Windows machine sees a macOS-only collision — verified by injecting a
 duplicate and watching it fail with `duplicateInScope: Ctrl+S — openDocument vs saveDocument`.
 
+### 3.1 The gate does not reach where the next bindings will be written
+
+**Correction, 2026-07-29.** The D7 row above previously claimed *"`session_layering_test` RULE 14
+asserts `app_shell.dart` contains none"* as though that settled the enforcement question. **It is
+the whole enforcement, and it covers one file.**
+
+`session_layering_test.dart:503` reads `File('lib/src/session/app_shell.dart')` — relative to
+`apps/rackmate` — and asserts `isNot(contains('SingleActivator('))`. That is the entire ban.
+`packages/rackmate_ui/test/` has **no layering test at all**, and `keymap_arbitration_test.dart` is
+pure in-memory: it never reads a source file, so it cannot see a binding that never reached the
+table.
+
+**Every remaining M3 UI task writes into `packages/rackmate_ui/lib`** — M3-A, M3-C, M3-E and M3-H.
+A `SingleActivator(LogicalKeyboardKey.keyT, control: true)` in the new Structure editor compiles,
+ships, hard-codes `Ctrl` on macOS, and is invisible to `arbitrate()` and to M7's generated table.
+**Nothing fails.**
+
+That is the same shape as the defect D7 existed to remove, and §3's own thesis — that the count
+grew ~95% in one day of work on other tasks — is the reason to expect it to recur. M3-C is the
+largest binding surface left in v1.
+
+**The gate is owed in `packages/rackmate_ui/test/`, and it must ban the CONSTRUCTION rather than
+name a file** — a per-file ban is exactly what left this hole.
+
+---
+
+## 3.5 What M3 costs this register
+
+Checked 2026-07-29, task by task, against the roadmap and the tree. **No M3 task is blocked by any
+item here.** M3's only hard block is M2 (docs/12:697). Every debt item M3 comes near sits behind a
+seam that already has a working Windows implementation M3 extends rather than waits on — which is
+§1's thesis holding up a second time.
+
+| M3 task | Effect | Detail |
+|---|---|---|
+| **M3-A** Outlet / structureOrigin / endpoint kinds in UI | **touches D7** | New bindings must be `kKeymap` rows; §3.1's hole is the exposure |
+| **M3-B** Locations panel (CR-112) | none | Pure model + Flutter UI |
+| **M3-C** Structure editor | **touches D7** | The **largest remaining binding surface in v1**, in the ungated package. If D7 regresses anywhere, here |
+| **M3-D** dual labels, lengths, footage rollup | none | Grows neither D9 (see the D9 row) nor the cross-platform question (see §2's correction). It **does** straddle M6 — the Pull Sheet role is assigned to M6 by `sheet_def.dart:15-20` while M3's exit criterion demands exporting it. Not macOS debt; recorded so M3-D is not scoped from its one-line description |
+| **M3-E** Pathway, multiple Structure instances | none | |
+| **M3-F** CSV import | **GROWS D2 — the only growth in M3** | `pickOpen` already exists (`file_picker.dart:156`), so nothing is blocked. What is missing is a **file-type filter** anywhere in the stack — see **D13**. Hours on top of D2's days, once, and then it is done. **Not the D7 case**, which grew ~95% in a day because every commit added bindings |
+| **M3-G** 60-drop drill (AC-018) | none | **Specifically NOT D11.** D11 is a physical greyscale laser print for AC-054, an **M6** clause. M3-G's artifact is an exported file; AC-018's *"prints"* means "appears on the sheet" (canon `:2161`). Treating them as one would wrongly hang a printer-procurement dependency on M3 |
+| **M3-H** LV box / keystone plate (DR-007) | **touches D7** | Same ungated package |
+
+**Nothing in M3 adds a new `dart:io`, `path`, or platform-channel dependency.** CSV bytes are
+reachable through the existing `FileStore.readBytes` (`file_store.dart:164`), which satisfies
+storage RULE 1/1b and session RULE 10 unchanged. **The only native-surface change M3 asks for is
+D13's filter argument on the existing `rackmate/file_dialog` channel — no new channel.**
+
 ---
 
 ## 4. Honest summary
@@ -101,6 +180,15 @@ were built for other purposes and are already in place. The two items with real 
 **D8** (Apple Developer enrolment, notarisation) and **D11** (a physical print test) — neither is
 code, and both should be started early precisely because they are not.
 
-**What is genuinely unknown** is whether the byte-exactness gate survives a platform change. That
-is the one item that could turn a bounded port into a design question, and it is cheap to answer:
-run the export suite on a macOS agent once D1 and D4 exist.
+**What is genuinely unknown** is whether the PDF's **content streams** survive a platform change.
+That is the one item that could turn a bounded port into a design question — but §2's correction
+narrows it twice. It is **not** a CR-117 question (that gate is the `.rackmate` JSON), and it is
+**not cheap to answer**: the existing determinism test compares two exports in one process, so
+answering it means writing a golden-bytes comparison **and** having D4's macOS job to run it on.
+The text pipeline is already platform-independent by construction; the concrete risk that remains
+is **D14**, and that one is not even macOS-specific.
+
+**Two ordering consequences worth acting on before the big items.** **D13 before D2** — widening
+the dialog contract after the macOS implementation exists means writing it twice. And **the §3.1
+gate before M3-C**, which is the largest remaining binding surface in v1 and lands in the package
+the gate does not cover.

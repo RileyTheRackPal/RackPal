@@ -6556,6 +6556,158 @@ run-length cliff — will be the thing that needs `maxRunLengthPassive`.
 
 ---
 
+### 11.11 DR-011 · The connect gesture — pin-to-pin, ports materialised on connect, and the sheet holds still
+
+> **RULING — settled by the user on 2026-07-29**, at the point M2-F was scoped and the connect API
+> M2-A shipped was read against the document M2-F actually has to run on.
+
+**The three findings that forced it.** Each was verified by direct inspection, not inferred.
+
+1. **Nothing in the application ever materialises a `Port`.** The only `doc.ports[id] = Port(...)`
+   in the tree is `apps/rackmate/tool/starters/authoring.dart:463` — a **build tool**, not app
+   code. `resolvePortSet` fills `portId` only where `doc.ports` already contains the derived id
+   (`port_set_resolution.dart:121-123`), and `planAtomicConnect` skips any position where both
+   `portId`s are null (`atomic_connect.dart:150`). **On a document built by placing devices from
+   the palette — which is the document the M2 exit criterion starts from — every port set resolves
+   to all-null members and `planAtomicConnect` returns a plan with zero conductors.** The connect
+   API M2-A shipped could not have created a single conductor.
+2. **Committing a link re-runs Sugiyama and moves every symbol.**
+   `AtomicConnectCommand.touches => EpochMask.wires` (`atomic_connect.dart:245`); the schematic
+   subscribes to `epochs.wires` (`schematic_canvas_screen.dart:238`), bumps `_sceneEpoch` (`:273`),
+   misses the scene cache keyed on it (`:321-334`) and rebuilds — Sugiyama over the **new** edge
+   set. Only `SheetItem.pinned` items are exempt (`schematic_scene.dart:806-821`), and **no command
+   anywhere writes `EpochMask.sheet`** — the sole occurrence in the tree is the declaration at
+   `command.dart:69`. Nothing is ever pinned, so every commit can rearrange the sheet.
+3. **Every link the gesture creates would land in domain `str`.** `AtomicConnectCommand.apply`
+   hardcodes `SignalFamilyId('structure.undetermined')` on both the `Net` and the `Service`
+   (`atomic_connect.dart:255, 267`), which `seed_registries.dart:969-977` maps to domain `'str'`.
+
+---
+
+**11.11.1 Ports are materialised INSIDE the connect command's `apply()`.**
+
+Not at device placement — that contradicts AC-006's lazy design and inflates every saved file with
+ports nobody connected. Not as a sibling command inside a transaction either: `TxnScope.add` applies
+immediately (`document_controller.dart:30-33`), so a transaction that materialises and then bails
+leaves a history entry that did nothing the user can see, and `document_controller.dart:164`'s
+"no-op edits add no history" stops being true.
+
+Materialisation plans from `derivePortId` directly rather than requiring `doc.ports` to be
+pre-populated. It is **idempotent**, and `revert` removes exactly what that `apply` added and
+**never a port that already existed**.
+
+---
+
+**11.11.2 The gesture is PIN-TO-PIN. `atomicConnect` is the special case, not the general one.**
+
+`ConnectPortsCommand` — one `Link`, one `Conductor`, two `PortEndpoint`s — is the general path.
+`AtomicConnectCommand` is reserved for the case where the grabbed pin belongs to a `PortSetDef`
+flagged `atomicConnect: true`.
+
+**The evidence is arithmetic, not preference. 223 of the 257 catalog ports carry no `setKey` at
+all** — no HDMI, RJ45, IR or outlet port is reachable set-to-set, because `resolvePortSet` requires
+a declared `PortSetDef` (`port_set_resolution.dart:98-105`). The specifications were always
+pin-level: docs/05:477 snaps to *"a port's glyph centre"*, docs/05:490 is *"`Tab` to a port … `Enter`
+to commit"*, and `SymbolHitResult` returns a `portKey` (`symbol_hit_test.dart:149`). **Under a
+set-to-set-only gesture the M2 exit criterion's sixty connections are not merely hard, they are
+unreachable on the seed catalog.**
+
+This also makes `PortSetDef.atomicConnect` load-bearing for the first time. It is a persisted
+per-set opt-out that `planAtomicConnect` never reads (`template.dart:651, 662`); M2-F enforces it or
+the flag is decorative.
+
+---
+
+**11.11.3 The command carries the port's REAL signal family.**
+
+`ConnectPortsCommand` takes `signalFamily`, and `AtomicConnectCommand` is widened to take it too.
+The value is known at plan time from `PortDef.signalFamily` (`template.dart:572`) and is already on
+`SymbolPort.family` (`symbol_layer.dart:122`), so no document join is needed to compute it.
+
+The hardcode was not a small wrong default. **It contradicts DR-001 and the coach mark that teaches
+it**: AC-048 fires *"Filter to a domain to draw the wires"* (docs/04:468), and under the hardcode
+every wire the user had just drawn would appear under Structure and never under Digital Video. The
+render model and the commit path disagreed.
+
+---
+
+**11.11.4 Creating a link does NOT re-lay-out the sheet. Symbol positions freeze; wires and labels
+rebuild.**
+
+A `wires`-epoch bump reuses the existing node layout and rebuilds only the wire and label layers.
+
+This is not a new rule — it is docs/05-schematic-editor.md:747 as already written: *"Auto-layout
+never fires as a side effect."* What is new is that it is now **true**. Of the three shapes
+considered, this is the only one that adds nothing to the saved file: pinning every symbol on first
+layout would write a `SheetItem` per device into every document and grow the CR-117 byte surface to
+carry UI state, and accepting the reflow would break chain-draw specifically — the next source pin
+would have moved out from under the user between one link and the next.
+
+**Corollary, and it is a live defect either way:** `_framed` is a one-shot latch never reset
+(`schematic_canvas_screen.dart:621-623`), so any relayout that widens the sheet pushes content
+off-screen with no re-frame.
+
+---
+
+**11.11.5 T1 violations are refused outright. There is no `[ Connect anyway ]`.**
+
+The corpus contradicted itself: docs/02-data-model.md:854 gives T1's escape as *"None. There is
+nothing to escape to"*, while docs/05-schematic-editor.md:441-456 routes model-illegal drops into a
+spring-back box whose feedback line offers `[ Connect anyway ]`. **docs/02 governs.** M2 would
+otherwise ship a way to persist a topology violation two milestones before M5's validation exists to
+flag it.
+
+Every refusal carries the TOP rule id **and a user-facing sentence naming the real designators** —
+*"AVR-1 J03 already carries 1 of 1 connections"*, not a generic string. First-failure-wins in a
+fixed, documented order. **TOP-001…005 only**; the six T2 rules stay deferred to M5 per
+docs/09-roadmap.md:299.
+
+---
+
+**11.11.6 `Enter` commits on both canvases, under ONE label. The registry gets the retrofit, not a
+loophole.**
+
+docs/05:490 specifies `Enter` to commit a wire. **The M2-H registry as built cannot express that**:
+the rack scope owns bare `Enter` labelled *"Apply the compaction preview"* (`keymap.dart:729-736`),
+and `meaningDrift` compares label strings across scopes (`keymap.dart:1117-1134`), so a schematic
+bare `Enter` with any other label fails arbitration.
+
+Both scopes bind bare `Enter` under a **single shared label** — commit what is in flight — and
+`applyCompaction`'s label is retrofitted to match. The same treatment applies to `Tab` and the
+arrows against the caret rows (`keymap.dart:630-645`).
+
+The rejected alternative is worth recording: widening `meaningDrift` to permit per-scope labels
+would have been the smaller edit and is the wrong one. **`meaningDrift` exists precisely to stop one
+key meaning two things, and a keyboard-only user cannot see a scope boundary** — which is the
+population this clause is for.
+
+---
+
+**11.11.7 "Pinning on manual move" and "one Tidy sheet" are OUT of M2-F.**
+
+They share the M2 roadmap line with the wire gestures and have **zero model support**: there is no
+symbol-move gesture on the schematic, and no command touches `EpochMask.sheet`. They become their
+own task so the roadmap line does not silently stay open. Note the coupling — had §11.11.4 gone the
+other way, the `SheetItem` writer would have been pulled back in regardless.
+
+---
+
+**11.11.8 What this does not settle.** Three gesture rules remain underspecified in the corpus and
+are ruled when M2-F Phase 4 reaches them, not before: chain-draw's *"the sink device's matching
+output"* (docs/05:482) never defines *matching*; multi-draw's *"in rank order"* (docs/05:484) never
+defines *rank*, and multi-draw is N Links where `atomicConnect` is one Link with N Conductors, one
+line apart, which changes the schedule's row count if they are swapped; and *"type-weighted"* snap
+is never quantified, while its only example (docs/05:477) names **connector** types where
+compatibility is defined over **signalFamily** (:473) — weighting on the connector actively pushes
+toward SIG-001, since RJ45-carrying-`video.hdbaset` and RJ45-carrying-`net.ethernet` are the same
+connector and docs/05:145 calls them the two most dangerous ports in the taxonomy.
+
+Also unsettled: **where the AC-048 coach mark's "first" is persisted.** NOT FOUND in any normative
+document. Document state re-fires per file and puts UI chrome inside CR-117's byte-exact format;
+app-support prefs (docs/03:825) does not mention coach marks. It is decided in Phase 5.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-007 change or void, plus the small set of internal
