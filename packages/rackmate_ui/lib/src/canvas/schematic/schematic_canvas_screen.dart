@@ -48,26 +48,50 @@
 // sentence is asserted against the code, not asserted by a comment.
 //
 // ═════════════════════════════════════════════════════════════════════
-// THE EXCLUSIVITY RULE, AND WHY THIS SCREEN NEEDS NO ARBITER OF ITS OWN
+// THE EXCLUSIVITY RULE, TAKEN UP (M2-F PHASE 1)
 // ═════════════════════════════════════════════════════════════════════
-// `rack_canvas_screen.dart` carries a `_liveGesture` field because FOUR
-// preview-then-commit interactions coexist there and two of them arrive
-// through different pointer routes (a palette drag armed from a sibling
-// widget and tracked through the global `pointerRouter`, versus a canvas
-// drag delivered by `CanvasIntentDetector`). That file has been bitten
-// three separate times by a second entry point re-initialising state a
-// live interaction still owned.
-//
-// THIS SCREEN HAS EXACTLY ONE POINTER ROUTE — the detector's — and no
-// preview-then-commit interaction at all: nothing here mutates the
-// document. So the cross-route half of the rule has nothing to arbitrate,
-// and `CanvasIntentDetector` enforces the rest structurally (a second
-// canvas pointer never reaches `beginDrag`). That is stated rather than
-// left silent, because "this screen has no exclusivity guard" and "this
-// screen forgot its exclusivity guard" look identical from outside, and
-// the second is the bug that recurred three times next door. The moment
+// This section used to say that this screen needed no arbiter of its own,
+// because it has exactly ONE pointer route (the detector's) and no
+// preview-then-commit interaction at all — and it ended: "The moment
 // drag-to-connect lands here, this paragraph stops being true and the
-// arbiter has to arrive with it.
+// arbiter has to arrive with it."
+//
+// DR-011 (canon §11.11) scopes drag-to-connect into this file, so the
+// arbiter arrives NOW, one phase ahead of the gesture, rather than being
+// left as a promise a later phase has to remember. `_liveGesture`,
+// `_claimPointerGesture` and `_releasePointerGesture` below are ported
+// from `rack_canvas_screen.dart`'s "the exclusivity rule, in one place",
+// and they are LOAD-BEARING TODAY: the click/marquee path claims the
+// canvas on `beginDrag` and releases it on the terminal callback, so a
+// claim leaked by any future gesture refuses the next click and SAYS so
+// on the status line rather than deadening the sheet in silence.
+//
+// WHAT IS HONESTLY DIFFERENT FROM THE RACK, and it is stated so the next
+// reader does not mistake it for a port that lost something: the rack
+// arbitrates between TWO pointer ROUTES (a palette drag through the
+// global `pointerRouter` versus a canvas drag through the detector), and
+// its `_PointerGesture` has one value per route. This screen still has
+// one route, so the enum has one value and `_releasePointerGesture`'s
+// "no-op for a non-holder" cannot yet be exercised by two different
+// values. The rule it encodes — A REFUSED GESTURE'S TEARDOWN MUST NOT
+// FREE THE WINNER'S CLAIM — is therefore held on this screen by
+// `_SchematicClickHandler`'s `_owned` GESTURE TOKEN, which is where a
+// refusal is actually observable. Both mechanisms are kept: the identity
+// check becomes load-bearing the moment Phase 2 adds a second value, and a
+// screen inheriting a rule that was got wrong three times next door does
+// not get to rely on one mechanism.
+//
+// THAT TOKEN REPLACED A PAIR OF BOOLS, and the difference is not a tidy-up.
+// `CanvasIntentHandler` orders NOTHING between two gestures' terminal
+// callbacks, so a handler holding one bool for "I own the canvas" and one
+// for "a refusal is outstanding" has to GUESS which begin a bare
+// `commitDrag()` belongs to — and each possible guess loses either the
+// winner's click or the winner's claim, while neither can count past one
+// refusal. `CanvasGestureToken` (canvas_intent.dart) makes the caller mint
+// one identity per `beginDrag` and hand it back on every later call, so
+// attribution is an identity comparison instead. See that class's doc
+// comment for the three failures it retires, and `_owned`'s for why the
+// refusal latch it replaced is gone rather than fixed.
 //
 // ═════════════════════════════════════════════════════════════════════
 // WHAT THIS SCREEN DELIBERATELY DOES NOT DO
@@ -112,6 +136,7 @@ import 'package:rackmate_ui/src/canvas/schematic/render_schematic_canvas.dart';
 import 'package:rackmate_ui/src/canvas/schematic/schematic_filter.dart';
 import 'package:rackmate_ui/src/canvas/schematic/schematic_paint_plan.dart';
 import 'package:rackmate_ui/src/canvas/selection_controller.dart';
+import 'package:rackmate_ui/src/canvas/status_message_controller.dart';
 import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
 
@@ -185,6 +210,20 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// not shrink with zoom.
   static const double _clickSlopPx = 4;
 
+  /// docs/05 §11.6's magnetic-snap figure, in SCREEN pixels: "Within 12
+  /// screen px the band locks to a port's glyph centre". It is the only
+  /// quantified pin-proximity figure in the corpus, so it is also what a
+  /// pin's CLICK target uses — a pin you can snap to but not click would be
+  /// two different pins.
+  ///
+  /// SCREEN px, and that is the whole reason it is not handed to
+  /// `SymbolHitTestParams` as written: that field is in DIAGRAM UNITS
+  /// (`symbol_hit_test.dart`'s own doc), so the conversion is
+  /// `12 / viewport.scale`, recomputed whenever the zoom changes. A
+  /// constant would make the target 48 screen px wide at 4× and 3 px wide
+  /// at ¼×.
+  static const double _portHitTolerancePx = 12;
+
   final ViewportController _viewport = ViewportController();
   final GridCache _gridCache = GridCache();
 
@@ -194,6 +233,54 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   final SelectionController _selection = SelectionController();
 
   final FocusNode _canvasFocus = FocusNode(debugLabel: 'schematicCanvas');
+
+  /// Transient status text + `SemanticsService.announce` — the channel
+  /// docs/04 §3.4's "never silently stops" needs and this screen had none
+  /// of. `SemanticsService.announce` is called from exactly one place in
+  /// the repository (`status_message_controller.dart`), so without this
+  /// field the schematic has NO announcement channel at all — which is
+  /// what M2-F's "works end to end with screen-reader announcements"
+  /// clause is measured against.
+  final StatusMessageController _status = StatusMessageController();
+
+  /// Which POINTER-DRIVEN gesture currently owns the canvas, or null when
+  /// none does. THE one piece of state behind this screen's exclusivity
+  /// rule — see the file header, and `_claimPointerGesture` below.
+  _PointerGesture? _liveGesture;
+
+  /// The pointer-agnostic click handler, HOISTED OUT OF `build`.
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// THIS FIELD IS A BUG FIX, NOT A TIDY-UP
+  /// ═════════════════════════════════════════════════════════════════
+  /// It was constructed inline in `_canvas()`, which `build` calls, so
+  /// every rebuild produced a NEW handler. `CanvasIntentDetector` re-reads
+  /// `widget.handler` on every pointer event (`canvas_intent.dart:164,
+  /// 190, 201, 218, 233`) rather than capturing it at pointer-down — so a
+  /// rebuild BETWEEN press and release handed the release to an object
+  /// that had never seen the press. `commitDrag`'s first line is
+  /// `if (start == null …) return;`, so the click was silently swallowed:
+  /// no selection, no status line, nothing. `_onExit`'s `setState` and
+  /// every document epoch reach that window today; a stateful connect
+  /// gesture behind the same field (Phase 2) would lose a whole drag to
+  /// it.
+  ///
+  /// `late final`, so the four bindings below are resolved ONCE against
+  /// fields that are themselves `final` and never reassigned — `_viewport`
+  /// and `_canvasFocus` are the instances the detector and the `Focus`
+  /// widget use for the life of the `State`, and `_selectAt` /
+  /// `_claimPointerGesture` / `_releasePointerGesture` are tear-offs bound
+  /// to `this`. There is no captured build-time value here that a later
+  /// build could make stale, which is the failure mode a careless hoist
+  /// trades into.
+  late final _SchematicClickHandler _handler = _SchematicClickHandler(
+    viewport: _viewport,
+    slopPx: _clickSlopPx,
+    onClick: _selectAt,
+    requestFocus: _canvasFocus.requestFocus,
+    claim: () => _claimPointerGesture(_PointerGesture.canvasDrag),
+    release: () => _releasePointerGesture(_PointerGesture.canvasDrag),
+  );
 
   SchematicViewFilter _filter = const SchematicViewFilter();
 
@@ -218,6 +305,25 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
 
   SchematicScene? _scene;
   ({int epoch, SchematicPalette palette, SignalTheme theme})? _sceneKey;
+
+  /// The point query over [_scene]'s symbols, held BESIDE the cached scene
+  /// and rebuilt on exactly the two things it depends on: the scene, and
+  /// the zoom (which sets the pin tolerance — see [_portHitTolerancePx]).
+  ///
+  /// `SymbolHitTest` is `@immutable` and builds its `HitRegion`s once at
+  /// construction, so it cannot be re-tuned in place; a cache keyed on both
+  /// inputs is what keeps a hover from rebuilding every pin region at
+  /// pointer rate while still letting the tolerance track the zoom.
+  SymbolHitTest? _hitTest;
+  SchematicScene? _hitTestScene;
+  SymbolHitTestParams? _hitTestParams;
+
+  /// The BODY regions of [_scene]'s symbols alone — see [_deviceAt], which
+  /// ranks them before it asks the pin query anything. Keyed on the scene
+  /// only: unlike [_hitTest] they carry no tolerance, because a body is
+  /// ranked by strict containment at every zoom.
+  List<HitRegion>? _bodyRegions;
+  SchematicScene? _bodyRegionsScene;
 
   /// Whether the viewport has already been framed on this sheet.
   bool _framed = false;
@@ -263,29 +369,127 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       ..removeListener(_onSelectionChanged)
       ..dispose();
     _canvasFocus.dispose();
+    _status.dispose();
     _viewport.dispose();
     super.dispose();
   }
 
   void _onDocumentChanged() {
     if (!mounted) return;
+    String? cancelled;
     setState(() {
       _sceneEpoch++;
-      // A FOCUS SCOPE OUTLIVES THE DEVICE IT NAMES otherwise. Deleting a
-      // focused device would leave `F`'s scope pointing at an id no symbol
-      // carries, and the HUD would keep announcing a hop count for a
-      // device that is gone. Dropped rather than repaired: the user's
-      // question was about that device.
-      _focused = <String>{
-        for (final id in _focused)
-          if (_doc.devices.containsKey(Uuid(id))) id,
-      };
+      cancelled = _invalidateLivePreviews();
     });
+    // AFTER the `setState`, because `StatusMessageController.show` notifies
+    // its own listeners and would otherwise do so from inside a build.
+    final what = cancelled;
+    if (what != null) _status.show('$what cancelled — the document changed.');
   }
 
   void _onSelectionChanged() {
     if (!mounted) return;
     setState(() {});
+  }
+
+  // ── THE EXCLUSIVITY RULE, IN ONE PLACE ────────────────────────────────
+  //
+  // Ported from `rack_canvas_screen.dart`'s section of the same name (see
+  // this file's header for what is deliberately different). The rule is
+  // stated ONCE and every entry point ASKS instead of remembering:
+  //
+  //  1. AT MOST ONE POINTER-DRIVEN GESTURE, arbitrated by
+  //     [_claimPointerGesture] / [_releasePointerGesture] over the single
+  //     [_liveGesture] field. A second gesture is REFUSED, never queued:
+  //     the first pointer is still physically down and will keep delivering
+  //     events only its own live state can interpret, so preemption would
+  //     orphan that state permanently.
+  //
+  //  2. ONE TEARDOWN, [_invalidateLivePreviews], called from the one place
+  //     where every live thing on this sheet can stop being true at once —
+  //     a document change this screen did not cause (`_onDocumentChanged`).
+  //
+  // BELOW this, `CanvasIntentDetector` enforces its own half structurally:
+  // a second CANVAS pointer never reaches `beginDrag` at all (it is
+  // deferred and adopted when the route falls free). That is why this
+  // screen's own guard is not redundant with it rather than instead of it
+  // — the detector can only see pointers IT routes, and Phase 2's connect
+  // gesture is armed on a pin.
+
+  /// Claims the canvas for [gesture]. Returns false — and starts nothing —
+  /// when another pointer-driven gesture is already live.
+  ///
+  /// A REFUSAL IS REPORTED, never silent (docs/04 §3.4's "never silently do
+  /// nothing"): the user pressed something and got nothing back, which is
+  /// exactly the case that principle exists for. The wording is the rack's
+  /// verbatim, because a user who meets this on both canvases must not have
+  /// to learn that they are two different refusals.
+  bool _claimPointerGesture(_PointerGesture gesture) {
+    if (_liveGesture != null) {
+      _status.show('One drag at a time — finish the one in progress first.');
+      return false;
+    }
+    _liveGesture = gesture;
+    return true;
+  }
+
+  /// Releases [gesture]'s claim. A no-op when [gesture] is not the one
+  /// holding it, so a refused gesture running its own teardown can never
+  /// release the claim belonging to the gesture that refused it.
+  void _releasePointerGesture(_PointerGesture gesture) {
+    if (_liveGesture == gesture) _liveGesture = null;
+  }
+
+  /// THE ONE TEARDOWN for everything on this sheet whose premise a document
+  /// change can falsify. Returns a user-facing name for what it tore down,
+  /// or null when nothing was live — a scope vanishing with no explanation
+  /// would be the silent no-op §3.4 forbids, so the caller reports.
+  ///
+  /// WHAT IS LIVE ON THIS SHEET, and it is two view scopes rather than a
+  /// preview, because Phase 1 builds no preview: `_altHovered` and
+  /// `_focused` are DEVICE IDS held across frames, and an undo (or an edit
+  /// from another view) can delete the device either of them names. The
+  /// `_focused` limb used to be an inline comprehension in
+  /// `_onDocumentChanged` that dropped the id and said nothing; moving it
+  /// here is what gives it a voice, and `_altHovered` — which had no
+  /// pruning at all — is why it needed one: `resolveDrawnScope`'s headline
+  /// falls back to the raw id when `designatorOf` cannot resolve it, so a
+  /// deleted hover target used to be ANNOUNCED as a uuid.
+  ///
+  /// THE GESTURE LIMB IS NOT WRITTEN AS A STUB. Phase 1's canvas gesture
+  /// captures a scene POINT and a travel distance — neither names a
+  /// document entity, and `commitDrag` re-runs the hit test against the
+  /// live scene — so there is nothing here for a document change to make
+  /// stale, and inventing a branch for it would be a stub with no
+  /// behaviour behind it (the discipline `rack_canvas_screen.dart:2996`
+  /// states for the validation checks). Phase 2's connect preview, which
+  /// DOES capture a port id, hangs off `_liveGesture` here, and the rack's
+  /// own rule for it is already settled and must be copied rather than
+  /// re-derived: a sub-threshold press has no preview to cancel and STAYS A
+  /// CLICK (`rack_canvas_screen.dart:1041`) — cancelling it was that file's
+  /// over-correction, and it is the exact bug the handler-hoist above
+  /// fixes from the other end.
+  String? _invalidateLivePreviews() {
+    String? what;
+    final hovered = _altHovered;
+    if (hovered != null && !_doc.devices.containsKey(Uuid(hovered))) {
+      _altHovered = null;
+      what ??= 'Alt-hover';
+    }
+    // A FOCUS SCOPE OUTLIVES THE DEVICE IT NAMES otherwise. Deleting a
+    // focused device would leave `F`'s scope pointing at an id no symbol
+    // carries, and the HUD would keep announcing a hop count for a device
+    // that is gone. Dropped rather than repaired: the user's question was
+    // about that device.
+    final kept = <String>{
+      for (final id in _focused)
+        if (_doc.devices.containsKey(Uuid(id))) id,
+    };
+    if (kept.length != _focused.length) {
+      _focused = kept;
+      what ??= 'Focus';
+    }
+    return what;
   }
 
   /// `Alt` up or down over a stationary cursor — see [initState].
@@ -335,20 +539,120 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
 
   // ── input ─────────────────────────────────────────────────────────────
 
+  /// The point query over [scene]'s symbols at the CURRENT zoom.
+  ///
+  /// TWO PARAMETERS, AND BOTH ARE CITATIONS. `portHitTolerance` is docs/05
+  /// §11.6's 12 screen px converted into diagram units by the live scale
+  /// (see [_portHitTolerancePx]); `snapGridSize` is `kSchematicUnitsPerGrid`,
+  /// the sheet's own pitch, NEVER `SymbolHitTestParams`' default 20 — that
+  /// default is a generic figure for a caller with no grid of its own, and
+  /// a query that snapped to it would put a cursor hint between this
+  /// sheet's grid lines.
+  ///
+  /// Nothing consumes the snap yet (Phase 1 draws no rubber band), but the
+  /// parameter is not left at its default for that reason: `snapToGrid` is
+  /// public on `SymbolHitTest` precisely so the wire-draw state machine and
+  /// the cursor hint cannot derive it two ways, and a wrong pitch cached
+  /// here would be inherited by both.
+  SymbolHitTest _hitTestFor(SchematicScene scene) {
+    final params = SymbolHitTestParams(
+      portHitTolerance: _portHitTolerancePx / _viewport.scale,
+      snapGridSize: kSchematicUnitsPerGrid,
+    );
+    final cached = _hitTest;
+    if (cached != null &&
+        identical(_hitTestScene, scene) &&
+        _hitTestParams == params) {
+      return cached;
+    }
+    final built = SymbolHitTest(symbols: scene.symbols, params: params);
+    _hitTest = built;
+    _hitTestScene = scene;
+    _hitTestParams = params;
+    return built;
+  }
+
+  /// The BODY regions of [scene]'s symbols, cached — see [_bodyRegions].
+  ///
+  /// Built from `symbolHitRegions`, the same function `SymbolHitTest` builds
+  /// its own regions from, and filtered by the `partKey == null` test that
+  /// file uses to separate bodies from pins. Not a second derivation of a
+  /// symbol's rectangle: this screen must never be able to disagree with the
+  /// query beside it about where a body is.
+  List<HitRegion> _bodyRegionsFor(SchematicScene scene) {
+    final cached = _bodyRegions;
+    if (cached != null && identical(_bodyRegionsScene, scene)) return cached;
+    final built = symbolHitRegions(
+      scene.symbols,
+    ).where((r) => r.partKey == null).toList(growable: false);
+    _bodyRegions = built;
+    _bodyRegionsScene = scene;
+    return built;
+  }
+
   /// The device under [scenePoint], or null.
   ///
-  /// Walks `DiagramScene.hits` BACKWARDS, so the topmost region wins — the
-  /// hit list is in the scene's own paint order, and a pin region sits
-  /// after the body it belongs to. Both resolve to the same `entityId`
-  /// (`HitRegion.partKey` is the pin's key, `null` for a body), so this
-  /// answers "which device" for either, which is what both `Alt`-hover and
-  /// selection ask.
+  /// A REAL HIT TEST NOW — `SymbolHitTest`, the query `rackmate_core` ships
+  /// beside the painter that draws these pins, rather than a reverse walk
+  /// over `DiagramScene.hits`. Two things change and both matter:
+  ///
+  ///  * PINS ARE HITTABLE. The reverse walk was written under a doc comment
+  ///    claiming "a pin region sits after the body it belongs to", which is
+  ///    BACKWARDS: `symbolHitRegions` emits every pin FIRST and the body
+  ///    LAST (`symbol_hit_test.dart:190-201`), so walking backwards found
+  ///    the body first and no pin was ever reachable. The comment has been
+  ///    deleted rather than corrected. `SymbolHitTest` ranks pins and
+  ///    bodies in two passes for exactly this reason — a pin sits ON its
+  ///    body's edge, so a body that could win would make edge pins
+  ///    unclickable.
+  ///  * IT IS `contains`, NOT NEAREST, that went. The walk returned the
+  ///    first region containing the point; `hitTestRegions` returns the
+  ///    NEAREST qualifier, which is the ruling `draw/hit_test.dart` states
+  ///    and which the rack elevation has always used.
+  ///
+  /// This answers "WHICH DEVICE", which is all `Alt`-hover and selection
+  /// ask, and Phase 1 changes neither answer. `SymbolHitResult` carries the
+  /// `portKey`, the pin centre and the side as well — that is what Phase 2
+  /// and 3 grab, and it is reachable through [_hitTestFor] without this
+  /// method growing a second caller it does not have yet.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// CONTAINMENT FIRST, AND WHY `testPoint` ALONE IS THE WRONG QUERY HERE
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `SymbolHitTest.testPoint`'s pin-beats-body precedence is GLOBAL: it
+  /// ranks EVERY pin on the sheet with `portHitTolerance` of slop before it
+  /// looks at any body, and bodies are ranked with none
+  /// (`symbol_hit_test.dart:290-320`). Since the tolerance is docs/05
+  /// §11.6's 12 SCREEN px divided by the live scale, it grows without bound
+  /// as the user zooms out — 31 diagram units two scroll notches out of the
+  /// framed view, 240 at `kMinScale` — so a NEIGHBOUR's pin outranks the
+  /// body the pointer is literally inside. Measured on this repo's own
+  /// fixture: a point one unit above AMP-1's bottom edge and well inside its
+  /// x-span resolved to DIS-1, whose nearest pin was 26 units away, because
+  /// AMP-1's own nearest pin was 39 away and lost the pin pass. At
+  /// `kMinScale` the tolerance is wider than every symbol in the fixture and
+  /// body containment is never consulted at all.
+  ///
+  /// So the two questions are separated rather than the ruling weakened. The
+  /// pin pass exists so an EDGE PIN IS REACHABLE AS A PIN — half of a pin's
+  /// circle lies outside its own body, and a body that could win would make
+  /// that half unclickable, which is Phase 2's whole gesture. It does not
+  /// exist so that a device fifty units away can win a click that landed
+  /// inside a different device. A containing body therefore answers first,
+  /// ranked by `hitTestRegions` with the default zero tolerance — the same
+  /// nearest-hit ranking `SymbolHitTest` uses for its own body pass, so
+  /// overlapping bodies still resolve to the one the cursor is most centred
+  /// on — and the global pin pass answers only when the point is inside no
+  /// body at all.
+  ///
+  /// The pin pass keeps every case it was added for: `symbol_hit_test.dart`
+  /// asserts a pin is hittable AT ITS DRAWN CENTRE, and a centre on a body
+  /// edge is not strictly inside it, so those queries still take the pin
+  /// path here.
   String? _deviceAt(SchematicScene scene, DPt scenePoint) {
-    final hits = scene.scene.hits;
-    for (var i = hits.length - 1; i >= 0; i--) {
-      if (hits[i].contains(scenePoint)) return hits[i].entityId;
-    }
-    return null;
+    final body = hitTestRegions(_bodyRegionsFor(scene), scenePoint);
+    if (body != null) return body.entityId;
+    return _hitTestFor(scene).testPoint(scenePoint).nodeId;
   }
 
   void _onHover(PointerHoverEvent event) {
@@ -411,6 +715,29 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   }
 
   // ── keyboard (docs/05 §14) ────────────────────────────────────────────
+
+  /// Whether a `TextField` currently holds focus — `rack_canvas_screen.dart`'s
+  /// own getter, verbatim, and it is a read of LIVE FOCUS rather than of
+  /// widget identity precisely so it stays correct for fields that do not
+  /// exist yet.
+  ///
+  /// THAT IS WHY IT IS HERE ON A SCREEN WITH NO TEXT FIELD. docs/04 §8's
+  /// rule is "'global' never means 'including inside a text field'", and
+  /// the defect it was written for was introduced by ADDING a text field to
+  /// a subtree whose keymap predated it. A filter-bar search box, a net-name
+  /// edit, an inspector — any of them lands inside this `Shortcuts`, and
+  /// eight bare digits and three bare letters are sitting in front of it.
+  bool get _textFieldHasFocus {
+    final ctx = FocusManager.instance.primaryFocus?.context;
+    if (ctx == null) return false;
+    return ctx.widget is EditableText ||
+        ctx.findAncestorWidgetOfExactType<EditableText>() != null;
+  }
+
+  /// The gate for keys that MEAN SOMETHING ABOUT THIS SHEET — `1`–`8`,
+  /// `` ` ``, `F`. Not merely "no text field has focus": the key is only for
+  /// this screen when this screen has focus.
+  bool get _canvasKeysEnabled => !_textFieldHasFocus && _canvasFocus.hasFocus;
 
   void _soloByIndex(int oneBased) {
     final order = schematicDomainOrder(_doc.registries);
@@ -497,30 +824,48 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     return Shortcuts(
       shortcuts: keymapShortcuts(KeyScope.schematic),
       child: Actions(
+        // EVERY ENTRY HERE IS GATED, and none of them may go back to being
+        // a `CallbackAction`. `Action.consumesKey` defaults to true and
+        // `toKeyEventResult` maps that to `KeyEventResult.handled`
+        // REGARDLESS of what the callback returns or does — so the four
+        // `CallbackAction`s that stood here consumed `1`–`8`, `` ` ``, `F`
+        // and `Esc` even on the frame where their bodies declined to act.
+        // Overriding `consumesKey => false` is not the escape hatch either
+        // (it yields `skipRemainingHandlers`, which halts dispatch just as
+        // dead); only `isActionEnabled == false` yields `ignored`. See
+        // `_GatedAction`'s doc comment, docs/04:450, and
+        // `keymap_arbitration_test.dart`, which already lists
+        // `schematicCancel` among the bindings that MUST be a real gated
+        // `Action` and would have failed the moment anything else in the
+        // app claimed `Esc`.
+        //
+        // THE `Esc` GATE IS THE ONE THAT CHANGES BEHAVIOUR TODAY, and it is
+        // the reason this item is Phase 1 rather than Phase 2. `Esc` is a
+        // LAYERED key (docs/04 §8: "cancel drag, exit mode, clear
+        // selection"), and a layer can only decline it by being disabled.
+        // With nothing focused and nothing selected this screen has no
+        // meaning for `Esc`, so it must fall through to whatever is behind
+        // it — a dialog, the shell — instead of being eaten. Phase 2's
+        // connect mode joins that ladder ABOVE these two limbs by widening
+        // this one predicate.
         actions: <Type, Action<Intent>>{
-          SoloDomainIntent: CallbackAction<SoloDomainIntent>(
-            onInvoke: (intent) {
-              _soloByIndex(intent.index);
-              return null;
-            },
+          SoloDomainIntent: _GatedAction<SoloDomainIntent>(
+            () => _canvasKeysEnabled,
+            (intent) => _soloByIndex(intent.index),
           ),
-          ShowAllDomainsIntent: CallbackAction<ShowAllDomainsIntent>(
-            onInvoke: (_) {
-              _showAllDomains();
-              return null;
-            },
+          ShowAllDomainsIntent: _GatedAction<ShowAllDomainsIntent>(
+            () => _canvasKeysEnabled,
+            (_) => _showAllDomains(),
           ),
-          FocusSelectionIntent: CallbackAction<FocusSelectionIntent>(
-            onInvoke: (_) {
-              _toggleFocus();
-              return null;
-            },
+          FocusSelectionIntent: _GatedAction<FocusSelectionIntent>(
+            () => _canvasKeysEnabled,
+            (_) => _toggleFocus(),
           ),
-          SchematicCancelIntent: CallbackAction<SchematicCancelIntent>(
-            onInvoke: (_) {
-              _onEscape();
-              return null;
-            },
+          SchematicCancelIntent: _GatedAction<SchematicCancelIntent>(
+            () =>
+                _canvasKeysEnabled &&
+                (_focused.isNotEmpty || _selection.isNotEmpty),
+            (_) => _onEscape(),
           ),
         },
         child: Focus(
@@ -569,12 +914,11 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
             onExit: _onExit,
             child: CanvasIntentDetector(
               viewport: _viewport,
-              handler: _SchematicClickHandler(
-                viewport: _viewport,
-                slopPx: _clickSlopPx,
-                onClick: _selectAt,
-                requestFocus: _canvasFocus.requestFocus,
-              ),
+              // THE FIELD, NOT A FRESH INSTANCE. See `_handler`'s own doc
+              // comment: the detector re-reads this on every pointer event,
+              // so constructing one here handed the release to an object
+              // that had never seen the press.
+              handler: _handler,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -595,6 +939,36 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
                     plan: plan,
                     viewport: _viewport,
                     measurer: widget.measurer,
+                  ),
+                  // The transient status line, where the rack canvas puts
+                  // its own (`rack_canvas_screen.dart`'s bottom-left
+                  // `IgnorePointer`/`AnimatedBuilder` pair). NO static help
+                  // text under it: the rack's slot doubles as a keymap
+                  // reminder, and this screen already states what it is not
+                  // showing in `_SchematicStatusStrip` — a second permanent
+                  // sentence over the sheet would be chrome, not feedback.
+                  //
+                  // `IgnorePointer`, so the line can never intercept a
+                  // press meant for the canvas underneath it — which on a
+                  // screen whose whole subject is a refused gesture would be
+                  // a memorable way to refuse one.
+                  Positioned(
+                    left: 12,
+                    bottom: 12,
+                    child: IgnorePointer(
+                      child: AnimatedBuilder(
+                        animation: _status,
+                        builder: (context, _) {
+                          final text = _status.text;
+                          if (text == null) return const SizedBox.shrink();
+                          return Text(
+                            text,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: scheme.onSurfaceVariant),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -687,12 +1061,17 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
 /// GIVEN the source kinds and deliberately ignores them; the slop is the
 /// same 4 px for a mouse, a finger and a stylus, because a click means the
 /// same thing however it was made.
+/// ONE INSTANCE PER `State`, held in `_handler` and NEVER constructed in
+/// `build` — the per-drag state below is why. See that field's doc comment
+/// for the defect that made the hoist a fix rather than a tidy-up.
 final class _SchematicClickHandler implements CanvasIntentHandler {
   _SchematicClickHandler({
     required this.viewport,
     required this.slopPx,
     required this.onClick,
     required this.requestFocus,
+    required this.claim,
+    required this.release,
   });
 
   final ViewportController viewport;
@@ -700,11 +1079,74 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
   final void Function(DPt scenePoint) onClick;
   final VoidCallback requestFocus;
 
+  /// Asks the screen's arbiter for the canvas; false means another
+  /// pointer-driven gesture is already live and this one starts NOTHING.
+  /// The refusal is reported by the arbiter, not swallowed here.
+  final bool Function() claim;
+
+  /// Gives the claim back. Called on exactly the paths that took it.
+  final VoidCallback release;
+
   DPt? _start;
   double _travelPx = 0;
 
+  /// The ONE gesture whose [beginDrag] this handler GRANTED and whose
+  /// terminal callback has not arrived yet — "the gesture the claim is
+  /// being held for" — or null when the handler holds no claim.
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// THE WHOLE ARBITRATION IS THIS FIELD, AND IT IS A TOKEN, NOT A BOOL
+  /// ═════════════════════════════════════════════════════════════════
+  /// A refused begin is still a begin as far as the caller is concerned, so
+  /// `CanvasIntentHandler`'s "exactly one of commitDrag/cancel PER
+  /// beginDrag" owes it a terminal callback too — and that callback must
+  /// not be mistaken for the WINNER's, or it clears [_start] and calls
+  /// [release], handing the canvas away from a pointer that is still
+  /// physically down. That is the "a refused gesture's teardown frees the
+  /// winner's claim" failure `_releasePointerGesture`'s identity check
+  /// exists to prevent, arriving through the one door that check cannot see
+  /// (both gestures carry the same `_PointerGesture` value while this
+  /// screen has one route).
+  ///
+  /// THIS WAS TWO BOOLS — `_owns` plus a `_refusedPending` latch — and two
+  /// bools cannot answer the question. `_owns` said THAT a gesture was live
+  /// but never WHICH, so with a refusal outstanding a bare `commitDrag()`
+  /// had to be GUESSED at, and each guess lost something the other kept:
+  /// spending the latch first ate the winner's own release (its click
+  /// vanished and its claim leaked), checking ownership first freed the
+  /// winner's claim on the refused gesture's teardown instead, and a bool
+  /// cannot count, so a second simultaneous refusal fell through whichever
+  /// branch was left and ran [_reset] under the live winner. Nothing in
+  /// `CanvasIntentHandler` orders two gestures' terminals, so no ordering
+  /// rule could have been right.
+  ///
+  /// With one token per begin (`CanvasGestureToken`, minted by the caller)
+  /// the question stops being "which of my outstanding gestures is this?"
+  /// and becomes "is this THE one holding the claim?" — an identity
+  /// comparison with no ordering and no counting in it. Every other token
+  /// is a callback this handler owes a NO-OP: a refused begin's, a repeat,
+  /// or one from a detector that was unmounted and replaced mid-press.
+  /// A REFUSAL THEREFORE NEEDS NO LATCH AT ALL, which is why there is none
+  /// here — the state a latch would have had to be cleared out of
+  /// (`rack_canvas_screen.dart:1743`'s `_dragRefused = false`, whose
+  /// omission let a refusal outlive its own gesture) does not exist.
+  CanvasGestureToken? _owned;
+
   @override
-  void beginDrag(DPt sceneStart, Set<PointerDeviceKind> sourceKinds) {
+  void beginDrag(
+    DPt sceneStart,
+    Set<PointerDeviceKind> sourceKinds, {
+    required CanvasGestureToken gesture,
+  }) {
+    if (!claim()) {
+      // NOTHING IS TOUCHED, and nothing is remembered either. `_start` and
+      // `_travelPx` belong to the gesture that owns the canvas and is still
+      // mid-flight; re-initialising them here is verbatim the defect that bit
+      // `rack_canvas_screen.dart` three times. This gesture is still owed a
+      // terminal callback, and [_owned] is what will decline it.
+      return;
+    }
+    _owned = gesture;
     // The keyboard bindings above are focus-scoped, so a click on the
     // sheet has to bring focus with it or `1`–`8` would work only until
     // the user touched a filter-bar button.
@@ -714,7 +1156,16 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
   }
 
   @override
-  void updateDrag(DPt sceneCurrent, DPt sceneDelta) {
+  void updateDrag(
+    DPt sceneCurrent,
+    DPt sceneDelta, {
+    required CanvasGestureToken gesture,
+  }) {
+    // THE TOKEN, not `_owned != null`: a refused gesture's own moves would
+    // otherwise be added to the WINNER's travel and turn its click into a
+    // drag — the same misattribution as the terminal callbacks, arriving
+    // once per frame instead of once per gesture.
+    if (gesture != _owned) return;
     // Accumulated in SCREEN pixels — `slopPx` is a screen figure, and
     // comparing it against a scene delta would make the threshold 20×
     // stricter at 20× zoom.
@@ -725,18 +1176,91 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
   }
 
   @override
-  void commitDrag(DPt sceneEnd) {
+  void commitDrag(DPt sceneEnd, {required CanvasGestureToken gesture}) {
+    // ONE COMPARISON, AND IT IS ORDER-INDEPENDENT. A terminal for the gesture
+    // holding the claim is acted on whenever it arrives — before or after any
+    // number of refused gestures' own teardowns — and a terminal for anything
+    // else is the no-op it is owed. See [_owned].
+    if (gesture != _owned) return;
     final start = _start;
-    _start = null;
-    if (start == null || _travelPx > slopPx) return;
+    final travelled = _travelPx;
+    // BEFORE the click, so the claim's life is exactly the pointer's. The
+    // click mutates only the (non-undoable) selection, and
+    // `CanvasIntentDetector` adopts any deferred pointer strictly after
+    // this method returns — so a second finger inherits a canvas that is
+    // already free.
+    _reset();
+    if (start == null || travelled > slopPx) return;
     onClick(sceneEnd);
   }
 
   @override
-  void cancel() {
+  void cancel({required CanvasGestureToken gesture}) {
+    if (gesture != _owned) return; // see `commitDrag`.
+    _reset();
+  }
+
+  void _reset() {
     _start = null;
     _travelPx = 0;
+    _owned = null;
+    release();
   }
+}
+
+/// The pointer-driven gestures this screen arbitrates between (see the
+/// "exclusivity rule" section in `_SchematicCanvasScreenState`).
+///
+/// ONE VALUE TODAY, and the file header says why that is a statement about
+/// this phase rather than about the mechanism: the rack's two values are
+/// its two pointer ROUTES, and this screen still has one. Phase 2's connect
+/// gesture is armed on a pin and tracked separately, which is the second
+/// value — and the moment it exists `_releasePointerGesture`'s identity
+/// check starts doing work no latch in the handler can do for it.
+enum _PointerGesture {
+  /// The press/click (and, when it lands, the marquee) delivered by
+  /// `CanvasIntentDetector`.
+  canvasDrag,
+}
+
+/// A real [Action] whose enablement is a predicate evaluated FRESH ON EVERY
+/// KEYPRESS — `rack_canvas_screen.dart`'s `_GatedAction`, ported.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// WHY A `CallbackAction` CANNOT DO THIS
+/// ═════════════════════════════════════════════════════════════════════
+/// `Action.consumesKey` defaults to `true` and `toKeyEventResult` maps that
+/// to `KeyEventResult.handled` REGARDLESS OF WHAT THE CALLBACK RETURNS OR
+/// DOES. The key is consumed before the body runs, so an early `return`
+/// inside a handler stops the ACTION and still destroys the KEY.
+///
+/// Overriding `consumesKey => false` is ALSO not equivalent, which is the
+/// counter-intuitive part: `toKeyEventResult` then returns
+/// `skipRemainingHandlers`, which breaks the dispatch loop just as dead as
+/// `handled`. Only `isActionEnabled == false` yields `ignored` and lets the
+/// event continue up the chain — which is the ONE mechanism by which a key
+/// can be LAYERED, i.e. by which this screen can decline `Esc` and let the
+/// layer behind it answer.
+///
+/// The `enabled` predicate is a closure rather than a captured bool because
+/// `ShortcutManager` re-reads `isActionEnabled` on every keypress; a
+/// snapshot taken at build time would be stale the moment focus moved.
+///
+/// THE ONE DIFFERENCE FROM THE RACK'S COPY: its runner is a `VoidCallback`,
+/// because every intent it gates is payload-free. `SoloDomainIntent` is
+/// not — it carries the digit that was pressed — so the runner here takes
+/// the intent. Nothing else about the shape moves.
+class _GatedAction<T extends Intent> extends Action<T> {
+  _GatedAction(this._enabled, this._run);
+
+  final bool Function() _enabled;
+  final void Function(T intent) _run;
+
+  @override
+  bool get isActionEnabled => _enabled();
+
+  @override
+  void invoke(T intent) => _run(intent);
 }
 
 /// The honest-absence panel, shared by the two empty sheets.

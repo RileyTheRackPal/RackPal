@@ -35,21 +35,45 @@ class _RecordingHandler implements CanvasIntentHandler {
   final List<String> log = <String>[];
   Set<PointerDeviceKind>? lastKinds;
 
+  /// Every token this handler has been handed, in call order — so a test can
+  /// assert that a gesture's `update`/`commit`/`cancel` carry the SAME token
+  /// its `beginDrag` did, and that a later gesture carries a different one.
+  /// That is the property `CanvasGestureToken` exists for; without it an
+  /// arbitrating handler cannot tell whose terminal callback it just got.
+  final List<CanvasGestureToken> tokens = <CanvasGestureToken>[];
+
   @override
-  void beginDrag(DPt sceneStart, Set<PointerDeviceKind> sourceKinds) {
+  void beginDrag(
+    DPt sceneStart,
+    Set<PointerDeviceKind> sourceKinds, {
+    required CanvasGestureToken gesture,
+  }) {
     lastKinds = sourceKinds;
+    tokens.add(gesture);
     log.add('begin(${_f(sceneStart)})');
   }
 
   @override
-  void updateDrag(DPt sceneCurrent, DPt sceneDelta) =>
-      log.add('update(${_f(sceneCurrent)}|${_f(sceneDelta)})');
+  void updateDrag(
+    DPt sceneCurrent,
+    DPt sceneDelta, {
+    required CanvasGestureToken gesture,
+  }) {
+    tokens.add(gesture);
+    log.add('update(${_f(sceneCurrent)}|${_f(sceneDelta)})');
+  }
 
   @override
-  void commitDrag(DPt sceneEnd) => log.add('commit(${_f(sceneEnd)})');
+  void commitDrag(DPt sceneEnd, {required CanvasGestureToken gesture}) {
+    tokens.add(gesture);
+    log.add('commit(${_f(sceneEnd)})');
+  }
 
   @override
-  void cancel() => log.add('cancel');
+  void cancel({required CanvasGestureToken gesture}) {
+    tokens.add(gesture);
+    log.add('cancel');
+  }
 
   static String _f(DPt p) =>
       '${p.x.toStringAsFixed(1)},${p.y.toStringAsFixed(1)}';
@@ -280,6 +304,53 @@ void main() {
     await a.up();
 
     expect(handler.log, <String>['begin(100.0,100.0)', 'commit(100.0,100.0)']);
+  });
+
+  testWidgets('every call of ONE gesture carries ONE token, and the next '
+      'gesture carries a different one', (tester) async {
+    // THE PROPERTY AN ARBITRATING HANDLER STANDS ON. `CanvasIntentHandler`
+    // orders nothing between two gestures' terminal callbacks, so a handler
+    // that can REFUSE a begin (the schematic's, while another route holds the
+    // canvas) is owed teardowns for both the begin it took and the begin it
+    // refused — and with no identity on the callback it has to guess which is
+    // which. Every guess loses something: a pending-refusal latch eats the
+    // winner's own release, an owner-first latch frees the winner's claim
+    // under a pointer that is still down, and a bool cannot count past one.
+    //
+    // So this asserts what the detector owes: one token per `beginDrag`,
+    // repeated verbatim on that gesture's `updateDrag` and its terminal, and
+    // never reused by the next gesture.
+    final vp = ViewportController();
+    addTearDown(vp.dispose);
+    final handler = _RecordingHandler();
+    await tester.pumpWidget(_host(vp, handler));
+
+    final a = await tester.startGesture(const Offset(100, 100));
+    await a.moveBy(const Offset(20, 0));
+    await a.up();
+    expect(handler.log, hasLength(3));
+    final first = handler.tokens.toSet();
+    expect(
+      first,
+      hasLength(1),
+      reason: 'begin, update and commit are one gesture and must be told '
+          'apart from any other by ONE identity',
+    );
+
+    final b = await tester.startGesture(const Offset(300, 300));
+    await b.up();
+    expect(handler.log, hasLength(5));
+    expect(
+      handler.tokens.sublist(3).toSet(),
+      hasLength(1),
+      reason: 'the second gesture is also internally consistent',
+    );
+    expect(
+      handler.tokens.sublist(3).first,
+      isNot(same(first.single)),
+      reason: 'a token is minted per gesture — a reused one would let a '
+          "stale terminal be mistaken for the live gesture's",
+    );
   });
 
   testWidgets('plain mouse wheel pans the viewport', (tester) async {

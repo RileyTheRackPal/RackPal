@@ -4176,24 +4176,43 @@ class _GatedAction<T extends Intent> extends Action<T> {
 /// select / move logic (docs/03 §4.4). A thin adapter: it holds no state of
 /// its own and never branches on `PointerDeviceKind` (the editing-semantics
 /// rule), forwarding each call to the `State` that owns the controllers.
+///
+/// THE `gesture` TOKEN IS DROPPED HERE, and that is a statement about this
+/// screen rather than about the token. `CanvasGestureToken` exists so a
+/// handler serving MORE THAN ONE CALLER can attribute a terminal callback to
+/// the begin it belongs to; this screen has exactly one caller for this
+/// interface — `CanvasIntentDetector`, which routes one pointer at a time —
+/// so at most one begin is ever outstanding and `_dragRefused` (a bool
+/// cleared as the first line of `_onBeginDrag`) is sufficient. The rack's
+/// SECOND pointer route, the palette drag, goes through the global
+/// `pointerRouter` and never reaches this class at all, which is why its
+/// refusals arrive here strictly one at a time.
 class _RackCanvasHandler implements CanvasIntentHandler {
   _RackCanvasHandler(this._state);
 
   final _RackCanvasScreenState _state;
 
   @override
-  void beginDrag(DPt sceneStart, Set<PointerDeviceKind> sourceKinds) =>
-      _state._onBeginDrag(sceneStart, sourceKinds);
+  void beginDrag(
+    DPt sceneStart,
+    Set<PointerDeviceKind> sourceKinds, {
+    required CanvasGestureToken gesture,
+  }) => _state._onBeginDrag(sceneStart, sourceKinds);
 
   @override
-  void updateDrag(DPt sceneCurrent, DPt sceneDelta) =>
-      _state._onUpdateDrag(sceneCurrent, sceneDelta);
+  void updateDrag(
+    DPt sceneCurrent,
+    DPt sceneDelta, {
+    required CanvasGestureToken gesture,
+  }) => _state._onUpdateDrag(sceneCurrent, sceneDelta);
 
   @override
-  void commitDrag(DPt sceneEnd) => _state._onCommitDrag(sceneEnd);
+  void commitDrag(DPt sceneEnd, {required CanvasGestureToken gesture}) =>
+      _state._onCommitDrag(sceneEnd);
 
   @override
-  void cancel() => _state._onCancelDrag();
+  void cancel({required CanvasGestureToken gesture}) =>
+      _state._onCancelDrag();
 }
 
 // ── temporary demo data (see the field comment above) ─────────────────────

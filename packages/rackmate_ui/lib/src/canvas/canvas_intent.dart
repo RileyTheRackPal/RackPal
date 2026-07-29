@@ -12,6 +12,43 @@ import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
 /// land exactly where you started.
 const double kZoomPerScrollUnit = 0.002;
 
+/// The identity of ONE `beginDrag → update* → (commitDrag|cancel)` sequence.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// WHY A TOKEN AND NOT A LATCH IN THE HANDLER
+/// ═══════════════════════════════════════════════════════════════════════
+/// A handler that ARBITRATES — one that can refuse a gesture because some
+/// other gesture already owns the canvas — is owed a terminal callback for
+/// the begin it refused as well as for the begin it accepted
+/// ([CanvasIntentHandler.commitDrag]'s "exactly one per beginDrag"). With no
+/// identity on the callback, an arbitrating handler has to GUESS which of
+/// its outstanding begins a bare `commitDrag()`/`cancel()` belongs to, and
+/// every possible guess is wrong somewhere:
+///
+///  * "a pending refusal eats the next terminal" swallows the WINNER's own
+///    release when the winner's pointer happens to lift first — its click
+///    vanishes and its claim leaks;
+///  * "the owner's terminal wins" releases the winner's claim the moment a
+///    REFUSED gesture tears down, handing the canvas to a new gesture while
+///    the winner's pointer is still physically down;
+///  * a bool cannot count, so two outstanding refusals collapse into one and
+///    the second falls through whichever branch is left.
+///
+/// The ordering is not the handler's to fix: nothing in this interface orders
+/// two gestures' terminals, and a `bool`/counter is a property of the OBJECT
+/// where the question is about the GESTURE. So the caller mints one token per
+/// [CanvasIntentHandler.beginDrag] and hands the same token back on every
+/// later call for that gesture, and attribution becomes a lookup instead of a
+/// guess.
+///
+/// IDENTITY, NOT VALUE: two tokens are equal only when they are the same
+/// object, so a token can be neither forged nor collided with — including by
+/// a test that mints its own to stand in for a second pointer route.
+final class CanvasGestureToken {
+  /// A fresh, unequal-to-everything token. One per `beginDrag`.
+  CanvasGestureToken();
+}
+
 /// The pointer-agnostic editing intent, built FIRST (AC-016 #23, docs/03 §4.4
 /// and docs/04 §3). Every future editor gesture — move a device, marquee,
 /// drag-to-connect — is expressed as this begin/update/commit/cancel sequence.
@@ -24,21 +61,37 @@ const double kZoomPerScrollUnit = 0.002;
 abstract interface class CanvasIntentHandler {
   /// A drag has started at [sceneStart] (scene coordinates). [sourceKinds] is
   /// informational only (see class doc).
-  void beginDrag(DPt sceneStart, Set<PointerDeviceKind> sourceKinds);
+  ///
+  /// [gesture] is this sequence's identity, minted fresh by the caller and
+  /// repeated on every subsequent call for it — see [CanvasGestureToken].
+  void beginDrag(
+    DPt sceneStart,
+    Set<PointerDeviceKind> sourceKinds, {
+    required CanvasGestureToken gesture,
+  });
 
   /// The drag moved to [sceneCurrent]; [sceneDelta] is the scene-space step
   /// since the previous update.
-  void updateDrag(DPt sceneCurrent, DPt sceneDelta);
+  void updateDrag(
+    DPt sceneCurrent,
+    DPt sceneDelta, {
+    required CanvasGestureToken gesture,
+  });
 
   /// The drag ended at [sceneEnd]. Exactly one of [commitDrag]/[cancel] fires
-  /// per [beginDrag], and a second [beginDrag] never arrives before one of
-  /// them has — see [CanvasIntentDetector]'s own single-gesture guarantee,
-  /// which is what makes a handler's per-drag state safe to (re)initialise
-  /// in [beginDrag] without a concurrency check of its own.
-  void commitDrag(DPt sceneEnd);
+  /// per [beginDrag], carrying that begin's own [gesture] token.
+  ///
+  /// A SINGLE CALLER never interleaves two: [CanvasIntentDetector] routes one
+  /// pointer at a time and its own single-gesture guarantee is what makes a
+  /// handler's per-drag state safe to (re)initialise in [beginDrag] without a
+  /// concurrency check of its own. The token is what makes that safe for a
+  /// handler serving MORE than one caller — a screen whose arbiter can refuse
+  /// a begin while another route holds the canvas — where nothing orders the
+  /// two gestures' terminals at all.
+  void commitDrag(DPt sceneEnd, {required CanvasGestureToken gesture});
 
   /// The drag was aborted (pointer cancelled, e.g. Esc/app switch upstream).
-  void cancel();
+  void cancel({required CanvasGestureToken gesture});
 }
 
 /// Wraps a `Listener` and turns raw pointer traffic into either
@@ -132,6 +185,11 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
   int? _dragPointer;
   DPt? _lastDragScene;
 
+  /// The routed drag's identity, minted in [_beginDragFor] and repeated on
+  /// every `updateDrag`/`commitDrag`/`cancel` for it — see
+  /// [CanvasGestureToken]. Null exactly when [_dragPointer] is.
+  CanvasGestureToken? _dragGesture;
+
   /// Pointers that went down while [_dragPointer] was already routed, keyed
   /// by pointer id and carrying the LATEST local position each has reported
   /// (so an adoption starts from where the finger is, not from where it
@@ -189,16 +247,18 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
     final handler = widget.handler;
     if (handler == null) return;
     _dragPointer = pointer;
+    final gesture = CanvasGestureToken();
+    _dragGesture = gesture;
     final scene = _toScene(local);
     _lastDragScene = scene;
-    handler.beginDrag(scene, {kind});
+    handler.beginDrag(scene, {kind}, gesture: gesture);
   }
 
   void _onPointerMove(PointerMoveEvent event) {
     if (event.pointer == _dragPointer) {
       final scene = _toScene(event.localPosition);
       final last = _lastDragScene ?? scene;
-      widget.handler!.updateDrag(scene, scene - last);
+      widget.handler!.updateDrag(scene, scene - last, gesture: _dragGesture!);
       _lastDragScene = scene;
     } else if (event.pointer == _panPointer) {
       _vp.panBy(event.delta);
@@ -215,7 +275,10 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
 
   void _onPointerUp(PointerUpEvent event) {
     if (event.pointer == _dragPointer) {
-      widget.handler!.commitDrag(_toScene(event.localPosition));
+      widget.handler!.commitDrag(
+        _toScene(event.localPosition),
+        gesture: _dragGesture!,
+      );
       _endDrag();
     } else if (event.pointer == _panPointer) {
       _panPointer = null;
@@ -230,7 +293,7 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
 
   void _onPointerCancel(PointerCancelEvent event) {
     if (event.pointer == _dragPointer) {
-      widget.handler!.cancel();
+      widget.handler!.cancel(gesture: _dragGesture!);
       _endDrag();
     } else if (event.pointer == _panPointer) {
       _panPointer = null;
@@ -241,6 +304,7 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
 
   void _endDrag() {
     _dragPointer = null;
+    _dragGesture = null;
     _lastDragScene = null;
     _adoptDeferredPointer();
   }
