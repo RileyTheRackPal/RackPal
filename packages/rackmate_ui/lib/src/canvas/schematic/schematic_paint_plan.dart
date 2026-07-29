@@ -1,0 +1,233 @@
+// rackmate_ui/src/canvas/schematic/schematic_paint_plan.dart
+//
+// ONE FRAME OF THE SCHEMATIC, AS ONE DISPLAY LIST.
+//
+// ═════════════════════════════════════════════════════════════════════
+// WHY EVERYTHING GOES THROUGH ONE LIST, INCLUDING THE BACKGROUND
+// ═════════════════════════════════════════════════════════════════════
+// The schematic canvas that was deleted at `b560a50` painted its
+// background fill IGNORING its own paint offset while the symbols DID get
+// offset — so the sheet ground covered the toolbar and one box appeared to
+// float over it. Twelve consecutive `fix:` commits never touched that line,
+// because a background drawn beside the content does not look like part of
+// the content until you compare their transforms.
+//
+// The structural answer taken here is not "remember the offset in two
+// places". It is that THERE IS ONLY ONE PLACE: the sheet ground is
+// [SchematicPaintPlan.ops]`.first`, an ordinary `OpRect` in the same
+// display list as every symbol and every wire, replayed by the same
+// `replay()` call inside the same transform. A background that ignored the
+// paint offset is not a bug this file can have; it would have to be drawn
+// by code that does not exist. `render_schematic_canvas_test.dart` asserts
+// both halves — that the ground is op zero, and that the one transform
+// carries the offset.
+//
+// ═════════════════════════════════════════════════════════════════════
+// THE PERFORMANCE CONTRACT M2-D WROTE DOWN, HONOURED LITERALLY
+// ═════════════════════════════════════════════════════════════════════
+// `net_label_layer.dart`'s header: "M2-E replays seven domains' label runs
+// unchanged and rebuilds only the eighth." That is not a metaphor here.
+// Every out-of-scope domain contributes `scene.fragmentFor('domain:<id>')`
+// — a `sublist` of the ALREADY BUILT `DiagramScene.ops`, whose elements are
+// the identical `DiagramOp` INSTANCES M2-D emitted. No op is copied, no
+// text is re-measured, no colour is re-resolved. `schematic_paint_plan_test
+// .dart` asserts it with `identical`, because "we did not rebuild it" is
+// exactly the kind of claim that rots into a comment.
+//
+// Only the soloed domain's run is replaced, by `wire_trace.dart`'s
+// staircases. `Alt`-hover and focus do not replace anything at all — see
+// `DrawnScope.replacesDomainRun`.
+//
+// ═════════════════════════════════════════════════════════════════════
+// A SYMBOL FRAGMENT IS LOCAL; A DOMAIN FRAGMENT IS ABSOLUTE
+// ═════════════════════════════════════════════════════════════════════
+// M2-D's distinction, and the one thing a composer of these fragments has
+// to get right. `schematic_scene.dart` brackets each symbol's ops with
+// `OpSave`/`OpTransform(translate)`/`OpRestore` in the WHOLE-scene op list,
+// but `fragmentFor(deviceId)` deliberately hands back the LOCAL ops
+// without that bracket, "so a widget that positions the fragment itself
+// must not re-apply it". This file positions them itself, from the
+// published `RenderedSymbol.bodyRect.topLeft`, and re-emits the bracket. A
+// domain run carries sheet coordinates already and gets none.
+
+import 'package:meta/meta.dart';
+import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/canvas/schematic/schematic_filter.dart';
+import 'package:rackmate_ui/src/canvas/schematic/wire_trace.dart';
+import 'package:vector_math/vector_math_64.dart';
+
+/// Clear space, in grid units, between the outermost ink and the edge of
+/// the painted sheet ground. A stated choice: enough that a pennant or a
+/// tag pill at the extreme edge is not flush against the paper.
+const double kSheetGroundMarginGu = 8;
+
+/// One frame's replay list, plus what the screen has to be able to SAY
+/// about it.
+///
+/// Immutable and rebuilt whole on every change. That is deliberate and it
+/// is the second half of the `b560a50` post-mortem: the deleted canvas
+/// guarded every render-object setter with `identical()` against a `final
+/// List` that was mutated in place, so `updateRenderObject` could never
+/// mark anything needing paint and no `setState` reached the screen. A
+/// value that is never mutated makes `identical` mean what the setter
+/// assumes it means.
+@immutable
+final class SchematicPaintPlan {
+  const SchematicPaintPlan({
+    required this.ops,
+    required this.mode,
+    required this.scope,
+    required this.replayedDomainRuns,
+    required this.rebuiltDomainRuns,
+    required this.hiddenDomainRuns,
+    required this.drawnWires,
+    required this.unroutableLinkIds,
+    required this.ground,
+  });
+
+  /// The whole frame, ground first. Replayed by exactly one `replay()`.
+  final List<DiagramOp> ops;
+
+  /// canon §11.1.1's derived value for the sheet as a whole: `drawn` when
+  /// any scope is in `drawn`, `netLabels` otherwise.
+  final SheetRenderMode mode;
+
+  /// The one live scope, or null on an unfiltered sheet with no hover and
+  /// no focus.
+  final DrawnScope? scope;
+
+  /// How many domain label runs were replayed BYTE-FOR-BYTE out of the
+  /// already-built scene. The number M2-D's contract is about.
+  final int replayedDomainRuns;
+
+  /// How many were replaced by drawn wires. Zero or one, never more —
+  /// `drawn` needs "exactly one" domain (§11.1.1).
+  final int rebuiltDomainRuns;
+
+  /// How many were dropped by the filter — see `schematic_filter.dart`'s
+  /// header on Hide versus the unmeasured Ghost.
+  final int hiddenDomainRuns;
+
+  final List<DrawnWire> drawnWires;
+
+  /// Links in scope that could not be routed. See
+  /// [DrawnWireLayer.unroutableLinkIds].
+  final List<Uuid> unroutableLinkIds;
+
+  /// The painted sheet ground, in scene coordinates — what the viewport is
+  /// framed against on first layout.
+  final DBox ground;
+}
+
+/// Composes one frame.
+///
+/// PURE, and takes no `BuildContext`, no viewport and no widget: it is the
+/// whole of "what does this sheet look like right now", so it can be
+/// asserted on directly instead of through pixels. `[groundArgb]` and
+/// `[palette]` arrive from the theme, which is the only reason this
+/// function knows a colour at all.
+SchematicPaintPlan buildSchematicPaintPlan({
+  required SchematicScene scene,
+  required RackDocument doc,
+  required SchematicViewFilter filter,
+  required DrawnScope? scope,
+  required TextMeasurer measurer,
+  required SchematicPalette palette,
+  required int groundArgb,
+  SchematicWireStyle wireStyle = const SchematicWireStyle(),
+}) {
+  final ops = <DiagramOp>[];
+
+  // ── the sheet ground, op ZERO ────────────────────────────────────────
+  //
+  // See the file header. It is in the list, not beside it.
+  final margin = kSheetGroundMarginGu * kSchematicUnitsPerGrid;
+  final ground = scene.scene.bounds.inflate(margin);
+  ops.add(OpRect(ground, fill: Fill(groundArgb)));
+
+  // ── the symbols, each from its own LOCAL fragment ────────────────────
+  //
+  // In `scene.symbols` order, which is the scene's own op order — by
+  // Sugiyama layer, then top to bottom within the layer — so the sheet
+  // paints in the order it reads.
+  for (final symbol in scene.symbols) {
+    if (!scene.scene.fragments.containsKey(symbol.id)) continue;
+    final origin = symbol.bodyRect.topLeft;
+    ops
+      ..add(const OpSave())
+      ..add(OpTransform(Matrix4.translationValues(origin.x, origin.y, 0)))
+      ..addAll(scene.scene.fragmentFor(symbol.id).ops)
+      ..add(const OpRestore());
+  }
+
+  // ── the label runs, one contiguous sub-picture per domain ────────────
+  //
+  // Ascending domain id — `schematicDomainOrder`'s order and M2-D's — so
+  // the n-th chip in the bar governs the n-th run.
+  var replayed = 0;
+  var rebuilt = 0;
+  var hidden = 0;
+  final replacedDomain = scope != null && scope.replacesDomainRun
+      ? filter.soloedDomain
+      : null;
+
+  for (final domain in schematicDomainOrder(doc.registries)) {
+    final range = scene.domainFragments[domain];
+    if (range == null) continue; // no link of this domain on the sheet.
+    if (domain == replacedDomain) {
+      rebuilt++;
+      continue; // its wires are appended below, in place of its labels.
+    }
+    if (!filter.shows(domain)) {
+      hidden++;
+      continue;
+    }
+    // THE REPLAY. `fragmentFor` sublists the built scene; the elements are
+    // M2-D's own op instances. Nothing here rebuilds a label.
+    ops.addAll(scene.scene.fragmentFor(domainFragmentKey(domain)).ops);
+    replayed++;
+  }
+
+  // The stubs whose family did not resolve to a domain. Not a ninth chip —
+  // see `SchematicViewFilter.showsUnresolved`.
+  if (filter.showsUnresolved &&
+      scene.scene.fragments.containsKey(kUnresolvedDomainFragmentKey)) {
+    ops.addAll(scene.scene.fragmentFor(kUnresolvedDomainFragmentKey).ops);
+  }
+
+  // ── the wires, last ──────────────────────────────────────────────────
+  //
+  // AFTER every label run, for the reason M2-D put the labels after every
+  // symbol: the display list is painted in order and there is no z-index in
+  // the IR, so the thing the user asked to see has to be emitted last. For
+  // an `Alt`-hover or a focus that is the whole mechanism — the wires light
+  // up ON TOP of a sheet that has not otherwise changed.
+  var wires = const DrawnWireLayer(
+    ops: <DiagramOp>[],
+    wires: <DrawnWire>[],
+    unroutableLinkIds: <Uuid>[],
+  );
+  if (scope != null && scope.linkIds.isNotEmpty) {
+    wires = buildDrawnWireLayer(
+      scene: scene,
+      doc: doc,
+      linkIds: scope.linkIds,
+      measurer: measurer,
+      palette: palette,
+      style: wireStyle,
+    );
+    ops.addAll(wires.ops);
+  }
+
+  return SchematicPaintPlan(
+    ops: List<DiagramOp>.unmodifiable(ops),
+    mode: scope == null ? SheetRenderMode.netLabels : SheetRenderMode.drawn,
+    scope: scope,
+    replayedDomainRuns: replayed,
+    rebuiltDomainRuns: rebuilt,
+    hiddenDomainRuns: hidden,
+    drawnWires: wires.wires,
+    unroutableLinkIds: wires.unroutableLinkIds,
+    ground: ground,
+  );
+}

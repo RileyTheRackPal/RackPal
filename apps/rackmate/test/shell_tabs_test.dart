@@ -1,5 +1,18 @@
-// The app shell's three-tab strip, and what the ONE remaining unbuilt tab
-// may show.
+// The app shell's three-tab strip, and what each tab may show.
+//
+// NO TAB IS UNBUILT ANY MORE. The Schedule left this file's unbuilt loop at
+// M2-B and the Schematic leaves it at M2-E, so `UnbuiltView` no longer
+// appears anywhere in the app. The properties this file defends did not
+// leave with it — they changed direction, and the change is the point:
+//
+//   * the unbuilt Schematic had to draw NO device from the document;
+//   * the built one has to draw THE DOCUMENT'S devices AND NOTHING ELSE.
+//
+// The `Pin1`/`Pout1` half is unchanged in both worlds and stays asserted
+// verbatim: the deleted canvas manufactured those labels because
+// `main.dart` handed it a hardcoded EMPTY scene, and a tab that draws a
+// port belonging to no device is the same lie whether or not the tab is
+// finished. `the Schematic tab is built now` below is where that lives.
 //
 // WHAT THIS FILE IS DEFENDING. The build that preceded it opened the
 // Schematic tab onto one hardcoded symbol — a grey box with ports labelled
@@ -20,39 +33,46 @@
 // `the Schedule tab is built now` group at the bottom holds that line
 // (plus the two deleted strings, which are lies wherever they are put).
 //
-// THE THREE INDEPENDENT PROOFS that the tab bodies fabricate nothing:
+// ── WHAT THE THREE PROOFS BECAME AT M2-E, AND WHY ─────────────────────────
+// This file used to carry three independent proofs that the unbuilt tab
+// bodies FABRICATE NOTHING. Two survive with their direction reversed and
+// one is deliberately retired, which is the honest bookkeeping for a tab
+// that started existing:
 //
-//   1. RECORDED CANVAS OPS. `paintsExactlyCountTimes(#drawCircle, 0)` and
-//      the same for `#drawPath`/`#drawLine` over the tab body's real paint
-//      — the WHOLE tab body (`_tabBody`), which is the difference between
-//      this proof working and this proof being a guaranteed pass; see that
-//      function's own comment. A symbol's pins are circles and Béziers and
-//      a wire is a path, so a re-added drawing fails here even though it is
-//      not a widget and has no text. This is the assertion that survives a
-//      rewrite, and `THE CONTROL for the three op counts` proves the same
-//      scope and matcher do see those ops on a tab that draws.
-//   2. RENDERED TEXT. No string under the tab body may read as a device
-//      designator or as a port label, which pins the exact `Pin1`/`Pout1`
-//      regression by name as well as by shape.
-//   3. NOTHING TAPPABLE. No widget in the tab body is a button, a field or
-//      a gesture detector, and no node in the PANEL's semantics subtree
-//      offers `SemanticsAction.tap` — two scopes because `getSemantics`
-//      cannot be pointed at a `TabBarView` (it owns no semantics node, so
-//      the search reaches the Scaffold's and picks up the tab strip). So
-//      the tab cannot grow an affordance that does nothing.
+//   1. RECORDED CANVAS OPS — RETIRED. It asserted
+//      `paintsExactlyCountTimes(#drawCircle, 0)` over the tab body,
+//      because a symbol's pins are circles and every wire is a path. The
+//      built Schematic draws both ON PURPOSE, so a zero count is no longer
+//      a property of anything; keeping it would have meant keeping the
+//      Schematic incapable of drawing. Its replacement is stronger and
+//      lives one layer down: `rackmate_ui`'s
+//      `render_schematic_canvas_test.dart` asserts what the canvas paints
+//      op by op, against a real document.
+//   2. RENDERED TEXT — KEPT, INVERTED. No string on the tab may read as a
+//      port label in the deleted placeholder's shape (`Pin1`/`Pout1`), and
+//      on a document that HAS ports the tab must show that document's own
+//      designators. Read off the DISPLAY LIST rather than the widget tree,
+//      because a schematic designator is an `OpText` and not a `Text` —
+//      see the test's own note.
+//   3. NOTHING TAPPABLE — KEPT, INVERTED. The rule was "no control,
+//      because a control that does nothing is a promise". The built tab
+//      offers §11.2's filter bar, so the rule becomes "every control it
+//      offers does something", asserted by clicking one and watching the
+//      sheet change.
 //
 // The tab STRIP itself keeps three tabs spelled exactly as
 // docs/05-schematic-editor.md §12 (line 780) spells them; that is a
-// separate test, and it is the reason the unbuilt tabs exist at all rather
-// than being removed as docs/09 M1 read alone would have them.
+// separate test, and it is the reason the tabs existed at all while they
+// were unbuilt rather than being removed as docs/09 M1 read alone would
+// have them.
 
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
+import 'package:rackmate/src/session/starter_projects.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_text/rackmate_text.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
@@ -60,7 +80,13 @@ import 'package:rackmate_ui/rackmate_ui.dart';
 import 'session/session_fakes.dart';
 
 /// The demo seed's designators (`rack_canvas_screen.dart`'s
-/// `_buildDemoDocument`). None of them may appear on an unbuilt tab.
+/// `_buildDemoDocument`).
+///
+/// None of them may appear on the Schematic OF THAT DOCUMENT, and the
+/// reason is a fact about the fixture rather than about the tab: those four
+/// templates declare no `PortDef`, and docs/05 §3 makes a symbol its pins.
+/// A document that DOES declare ports has its designators asserted PRESENT
+/// instead — see `on a document that HAS ports`.
 final _designator = RegExp(r'\b(AMP-1|UPS-1|SW-1|PP-1|demo-rack)\b');
 
 /// Port labels in the shape the deleted placeholder emitted — `Pin1`,
@@ -87,20 +113,13 @@ List<String> _textsUnder(WidgetTester tester, Finder root) {
   return out;
 }
 
-List<SemanticsNode> _semanticsSubtree(SemanticsNode root) {
-  final out = <SemanticsNode>[root];
-  root.visitChildren((child) {
-    out.addAll(_semanticsSubtree(child));
-    return true;
-  });
-  return out;
-}
-
-/// The `UnbuiltView` currently on screen for [viewName].
-Finder _body(String viewName) => find.ancestor(
-  of: find.text('$viewName — not built'),
-  matching: find.byType(UnbuiltView),
-);
+// `_semanticsSubtree` and `_body` LIVED HERE and went with the unbuilt
+// Schematic panel at M2-E. Both existed to walk an `UnbuiltView` — one
+// asserting no node in it offered `SemanticsAction.tap`, the other finding
+// the panel by its own heading — and the app no longer renders one. They
+// are deleted rather than kept for a future unbuilt view, because a helper
+// with no caller is a helper nobody notices has stopped working; the
+// widget itself is still exported and still has its own test.
 
 /// THE TAB BODY — everything the open tab puts on screen, not just the
 /// panel inside it.
@@ -112,16 +131,16 @@ Finder _body(String viewName) => find.ancestor(
 /// proof of the laziness: with `Schematic` open, `AMP-1` — which the Rack
 /// tab renders — is not in the tree at all.
 ///
-/// WHY NOT `_body(view)`. The three recorded-op assertions below used to be
-/// scoped to the `UnbuiltView`, which renders an `Icon`, some `Text` and a
-/// `DecoratedBox` border — those lower to `drawParagraph` and `drawRRect`,
-/// so `#drawCircle` / `#drawPath` / `#drawLine` were guaranteed to be 0 for
-/// any implementation of the panel and for anything else the tab might
-/// paint. A `CustomPaint` added as a SIBLING of the panel, drawing a circle,
-/// a line and a path — the exact fabricated-drawing regression the header
-/// above says these tests defend against — passed all fifteen tests in this
-/// file. Measuring the tab body is the difference between "the panel draws
-/// no pins" (which it structurally cannot) and "the TAB draws no pins".
+/// WHY THE WHOLE BODY AND NOT THE PANEL INSIDE IT. The recorded-op
+/// assertions this scope was written for are retired (see the header,
+/// proof 1), but the reasoning survives for the TEXT assertions that
+/// remain: scoping them to one panel measured a subtree that could not
+/// contain the regression. A `CustomPaint` added as a SIBLING of the panel,
+/// drawing a circle, a line and a path — the exact fabricated-drawing
+/// regression this file defends against — once passed all fifteen tests
+/// here. Measuring the tab body is the difference between "the panel
+/// fabricates nothing" (which it structurally cannot) and "the TAB
+/// fabricates nothing".
 Finder _tabBody() => find.byType(TabBarView);
 
 void main() {
@@ -179,56 +198,39 @@ void main() {
     expect(find.bySemanticsLabel(RegExp('AMP-1')), findsOneWidget);
   });
 
-  // ONE view in this loop now, and the list is kept as a list on purpose:
-  // the Schematic is still unbuilt and every assertion below still applies
-  // to it unchanged.
-  for (final view in ['Schematic']) {
-    testWidgets('the $view tab says it is not built, and names M2', (
-      tester,
-    ) async {
-      await openTab(tester, view);
+  group('the Schematic tab is built now (M2-E, DR-001)', () {
+    testWidgets('it is no longer an UnbuiltView, and NO tab in the strip '
+        'still wears the construction glyph', (tester) async {
+      await openTab(tester, 'Schematic');
 
-      expect(_body(view), findsOneWidget);
-      expect(
-        find.descendant(of: _body(view), matching: find.text('NOT BUILT · M2')),
-        findsOneWidget,
-      );
+      expect(find.byType(SchematicCanvasScreen), findsOneWidget);
+      expect(find.byType(UnbuiltView), findsNothing);
+      // Both marked tabs have now been built, so the marker is gone
+      // entirely. A tab that works while still wearing "not built" is the
+      // same class of untruth as the panel this replaced, pointing the
+      // other way.
+      expect(find.byIcon(Icons.construction_outlined), findsNothing);
+      expect(find.text('NOT BUILT · M2'), findsNothing);
     });
 
-    testWidgets('the $view tab paints no pin and no wire — zero circles, '
-        "zero paths, zero lines in the TAB BODY's recorded ops", (
-      tester,
-    ) async {
-      await openTab(tester, view);
-
-      // Scoped to the whole tab body (see `_tabBody`), so a drawing added
-      // beside the panel is counted rather than stepped around. A symbol pin
-      // is a circle; a Bézier pin and every wire are paths. Nothing on an
-      // unbuilt tab may draw one.
-      expect(_tabBody(), paintsExactlyCountTimes(#drawCircle, 0));
-      expect(_tabBody(), paintsExactlyCountTimes(#drawPath, 0));
-      expect(_tabBody(), paintsExactlyCountTimes(#drawLine, 0));
-
-      // The panel really is inside the scope that was just measured — a
-      // zero count over a tab body that turned out not to contain the tab
-      // would prove nothing.
-      expect(
-        find.descendant(of: _tabBody(), matching: _body(view)),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('the $view tab renders no device from the document and no '
-        'port label', (tester) async {
-      await openTab(tester, view);
+    testWidgets('the demo document declares no ports anywhere, so the sheet '
+        'says so instead of drawing a symbol nothing owns', (tester) async {
+      // `buildDemoRackDocument`'s four hand-built templates carry no
+      // `PortDef`, and docs/05 §3 makes a symbol ITS PINS — so there is
+      // genuinely nothing to draw here, and the honest answer is to say
+      // which fact is missing. This is the case that would have caught the
+      // deleted canvas: it filled exactly this hole by manufacturing a box
+      // with `Pin1`/`Pout1` ports.
+      await openTab(tester, 'Schematic');
 
       final texts = _textsUnder(tester, _tabBody());
-      expect(texts, isNotEmpty);
-
+      expect(texts.join(' '), contains(kNoSymbolsHeadline));
       expect(
         texts.where(_designator.hasMatch),
         isEmpty,
-        reason: 'an unbuilt tab must not show a device that is in a rack',
+        reason:
+            'no device in the demo document can carry a cable, so none '
+            'of them belongs on this sheet',
       );
       expect(
         texts.where((t) => _portLabel.hasMatch(t.trim())),
@@ -236,82 +238,98 @@ void main() {
         reason: 'the deleted placeholder drew ports labelled Pin1 / Pout1',
       );
 
-      // THE CONTROL, without which the two assertions above would pass on
-      // an app that renders nothing anywhere: the devices those patterns
-      // look for do exist, one tab over.
+      // THE CONTROL, without which the assertion above would pass on an app
+      // that renders nothing anywhere: those devices do exist, one tab over.
       await tester.tap(find.text('Rack'));
       await tester.pumpAndSettle();
       expect(find.bySemanticsLabel(RegExp('AMP-1')), findsOneWidget);
     });
 
-    testWidgets('the $view tab offers no control', (tester) async {
-      final handle = tester.ensureSemantics();
-      await openTab(tester, view);
+    testWidgets('on a document that HAS ports, the sheet draws that '
+        "document's own devices", (tester) async {
+      // THE `b560a50` DEFECT AT THE LAYER IT ACTUALLY LIVED IN. It was not
+      // the canvas that was wrong first — it was `main.dart`, which passed
+      // a hardcoded empty `DiagramScene`. This test goes through the real
+      // app shell, so it exercises the same seam.
+      final bytes = File(kStarterProjects.first.assetPath).readAsBytesSync();
+      final read = const JsonDocumentCodec().read(bytes);
+      final starter = (read as Ok<RackDocument>).value;
+      expect(starter.devices, isNotEmpty);
 
-      // SEMANTICS over the panel, deliberately and not by oversight.
-      // `tester.getSemantics` walks UP to the nearest render object that
-      // owns a node, and `TabBarView` does not own one — the search reaches
-      // the Scaffold's, which contains the tab STRIP, whose three tabs are
-      // legitimately tappable. So this half is scoped to the panel, where a
-      // suppressed-widget control would still surface an action, and the
-      // widget-tree half below carries the whole tab body.
-      final tappable = _semanticsSubtree(tester.getSemantics(_body(view)))
-          .where((n) => n.getSemanticsData().hasAction(SemanticsAction.tap))
-          .map((n) => n.getSemanticsData().label)
+      await tester.pumpWidget(
+        (await buildTestApp(measurer, document: starter)).app,
+      );
+      await tester.tap(find.text('Schematic'));
+      await tester.pumpAndSettle();
+
+      // READ OFF THE DISPLAY LIST, not off the widget tree. A schematic
+      // designator is an `OpText` in the shared IR, not a Flutter `Text`
+      // — which is exactly why `_textsUnder` sees nothing here and why a
+      // test that used it would pass on an empty canvas.
+      final texts = tester
+          .renderObject<RenderSchematicCanvas>(
+            find.byType(SchematicCanvasBody),
+          )
+          .plan
+          .ops
+          .whereType<OpText>()
+          .map((t) => t.text)
+          .toSet();
+      final drawn = starter.devices.values
+          .where((d) => texts.contains(d.designator))
           .toList();
-
       expect(
-        tappable,
-        isEmpty,
-        reason: 'a control on an unbuilt tab is a promise; found: $tappable',
+        drawn,
+        isNotEmpty,
+        reason:
+            'the document did not reach the canvas — this is the '
+            'hardcoded-empty-scene failure, at the shell',
       );
-
-      // The same claim through the WIDGET tree, over the TAB BODY: this is
-      // the half that sees a control added BESIDE the panel rather than
-      // inside it.
-      final offenders = <String>[];
-      void visit(Element element) {
-        final w = element.widget;
-        if (w is ButtonStyleButton ||
-            w is IconButton ||
-            w is MaterialButton ||
-            w is InkResponse ||
-            w is GestureDetector ||
-            w is EditableText ||
-            w is TextField ||
-            w is Switch ||
-            w is Checkbox ||
-            w is Slider) {
-          offenders.add(w.runtimeType.toString());
-        }
-        element.visitChildren(visit);
-      }
-
-      tester.element(_tabBody()).visitChildren(visit);
       expect(
-        offenders,
+        texts.where((t) => _portLabel.hasMatch(t.trim())),
         isEmpty,
-        reason: 'an unbuilt tab must contain no control; found: $offenders',
+        reason: 'the deleted placeholder drew ports labelled Pin1 / Pout1',
       );
-      handle.dispose();
     });
-  }
 
-  testWidgets('THE CONTROL for the three op counts: the same tab-body scope, '
-      'on the Rack tab, records the ops it counts as zero elsewhere', (
-    tester,
-  ) async {
-    // Without this, `paintsExactlyCountTimes(#drawCircle, 0)` on an unbuilt
-    // tab could be measuring a scope that is incapable of seeing a circle —
-    // which is exactly what it WAS doing when it was scoped to the
-    // `UnbuiltView` panel. Here the identical finder, identical matcher and
-    // a tab that really draws proves the instrument works.
-    await tester.pumpWidget((await buildTestApp(measurer)).app);
-    await tester.pumpAndSettle();
+    testWidgets('every control the tab offers does something — the filter '
+        'bar is real, and it is the only thing offered', (tester) async {
+      // The unbuilt tab's rule was "no control at all, because a control
+      // that does nothing is a promise". The built tab inherits the SPIRIT
+      // rather than the letter: the controls it offers are §11.2's filter
+      // bar, and clicking one has to change the sheet.
+      //
+      // ON A STARTER, not on the demo document, and the difference is a
+      // fact worth stating: `buildDemoRackDocument` predates DR-010 and
+      // carries EMPTY registries, so it has no signal domains and the bar
+      // honestly has nothing to offer. A document with the seeded
+      // registries has eight.
+      final bytes = File(kStarterProjects.first.assetPath).readAsBytesSync();
+      final starter =
+          (const JsonDocumentCodec().read(bytes) as Ok<RackDocument>).value;
+      expect(starter.registries.signalDomains, hasLength(8));
 
-    expect(find.byType(RackCanvasScreen), findsOneWidget);
-    expect(_tabBody(), isNot(paintsExactlyCountTimes(#drawPath, 0)));
-    expect(_tabBody(), isNot(paintsExactlyCountTimes(#drawLine, 0)));
+      await tester.pumpWidget(
+        (await buildTestApp(measurer, document: starter)).app,
+      );
+      await tester.tap(find.text('Schematic'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DomainFilterBar), findsOneWidget);
+      final bar = tester.widget<DomainFilterBar>(find.byType(DomainFilterBar));
+      expect(bar.chips, hasLength(8), reason: 'docs/05 §11.2: eight chips');
+
+      await tester.tap(find.text('None'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<DomainFilterBar>(find.byType(DomainFilterBar))
+            .chips
+            .where((c) => c.visible),
+        isEmpty,
+        reason: '[None] did nothing',
+      );
+    });
   });
 
   group('the Schedule tab is built now (M2-B, CR-105, AC-035)', () {
@@ -322,11 +340,12 @@ void main() {
       expect(find.byType(ScheduleScreen), findsOneWidget);
       expect(find.byType(UnbuiltView), findsNothing);
 
-      // Exactly ONE construction glyph left in the strip — the Schematic's.
-      // A tab that works while still wearing the "not built" marker is the
-      // same class of untruth as the panel this replaced, pointing the
-      // other way.
-      expect(find.byIcon(Icons.construction_outlined), findsOneWidget);
+      // NO construction glyph left in the strip at all. This read
+      // `findsOneWidget` — "the Schematic's" — until M2-E built that tab
+      // too. A tab that works while still wearing the "not built" marker
+      // is the same class of untruth as the panel this replaced, pointing
+      // the other way.
+      expect(find.byIcon(Icons.construction_outlined), findsNothing);
     });
 
     testWidgets('at ZERO ROWS it names the columns and blames the document, '

@@ -1,5 +1,5 @@
-// The `UnbuiltView` copy is a factual claim about this codebase, so it is
-// tested against this codebase.
+// The app's honest-absence copy is a factual claim about this codebase, so
+// it is tested against this codebase.
 //
 // THE DEFECT THIS FILE EXISTS FOR. The Schematic tab told its reader that
 // "the Link / Service / Conductor / Net model the schematic reads does not
@@ -12,22 +12,25 @@
 // direction that costs the most: an engineer reading it concludes the data
 // model is unbuilt and rebuilds it.
 //
-// ONE TAB IS LEFT TO CHECK. The Schedule tab is built (M2-B) and its copy
-// went with the panel — the sentence "no code turns a Link into a row"
-// was true when it was written and stopped being true the moment
-// `rackmate_core/derived/schedule.dart` landed. That is this file's own
-// thesis applied to itself: the panel whose purpose is accuracy about
-// what exists must be the FIRST thing to change when something starts
-// existing, not the last. What the Schedule says at zero rows is now
-// asserted in `shell_tabs_test.dart`.
+// NO TAB IS LEFT TO CHECK — AND THAT IS WHY THIS FILE STILL EXISTS. The
+// Schedule's panel went at M2-B and the Schematic's at M2-E, each time
+// because a sentence in it had stopped being true. This file's own thesis
+// applied to itself: the surface whose purpose is accuracy about what
+// exists must be the FIRST thing to change when something starts existing,
+// not the last.
 //
-// `shell_tabs_test.dart` proves the unbuilt tabs FABRICATE nothing (no
-// pin, no wire, no designator, no tappable control). That is a property of
-// what is drawn. This file proves the complementary thing — that what is
-// WRITTEN is true — and it does so by exercising the code the copy talks
-// about in the same test, so the two cannot drift apart silently. A test
-// that only grepped the strings would pass forever after somebody deleted
-// `AddLinkCommand`.
+// WHAT SURVIVED BOTH DELETIONS IS ONE CLAUSE, and it is the load-bearing
+// one: NOTHING IN THIS BUILD CREATES A CONNECTION. The Schematic panel
+// said it; `SchematicCanvasScreen`'s `kNoLinksDetail` says it now, on the
+// sheet, where the reader who needs it is. So the group below no longer
+// reads an `UnbuiltView`'s fields — it reads that constant, and it still
+// proves the claim against the SOURCE of both UI packages and this app
+// rather than against a comment. A test that only grepped the strings
+// would pass forever after somebody deleted `AddLinkCommand`.
+//
+// `shell_tabs_test.dart` proves the complementary thing about what is
+// DRAWN: that no tab fabricates a device, a port label or a control that
+// does nothing.
 
 import 'dart:io';
 
@@ -40,26 +43,13 @@ import 'package:rackmate_ui/rackmate_ui.dart';
 
 import 'session/session_fakes.dart';
 
-/// Opens [viewName]'s tab in a freshly pumped shell and returns the full
-/// copy of the [UnbuiltView] the app builds for it.
+/// The Schematic sheet's own honest-absence copy, as the user reads it.
 ///
-/// The tab has to be OPENED: `TabBarView` builds its children lazily, so a
-/// shell that has only ever shown the Rack tab has no `UnbuiltView` in its
-/// tree at all — a version of this helper that just searched the tree
-/// found nothing and would have "passed" every `isNot(contains(...))`
-/// assertion below without reading a single character of the copy.
-Future<String> _copyFor(
-  WidgetTester tester,
-  TextMeasurer measurer,
-  String viewName,
-) async {
-  await tester.pumpWidget((await buildTestApp(measurer)).app);
-  await tester.tap(find.text(viewName));
-  await tester.pumpAndSettle();
-  final view = tester.widget<UnbuiltView>(find.byType(UnbuiltView));
-  expect(view.viewName, viewName);
-  return '${view.absent}\n${view.why}';
-}
+/// Taken from the CONSTANTS rather than scraped off the screen, because
+/// the sentence is only shown when the document holds no cable and this
+/// file's subject is whether the sentence is TRUE, not when it appears.
+/// `shell_tabs_test.dart` covers the appearing.
+String get _schematicCopy => '$kNoLinksHeadline $kNoLinksDetail';
 
 void main() {
   late TextMeasurer measurer;
@@ -146,47 +136,62 @@ void main() {
     });
   });
 
-  group('what the two unbuilt tabs claim', () {
-    testWidgets('neither tab denies that the wiring model exists', (
-      tester,
-    ) async {
-      for (final view in ['Schematic']) {
-        final copy = (await _copyFor(tester, measurer, view)).toLowerCase();
-        // The two sentences that shipped, and the shapes they generalise
-        // to. Each is FALSE against the group above.
-        for (final lie in [
-          'model the schematic reads does not exist',
-          'no link can exist',
-          'links do not exist',
-          'there is no link model',
-        ]) {
-          expect(
-            copy,
-            isNot(contains(lie)),
-            reason:
-                '$view claims "$lie", which the wiring-model tests in '
-                'this file disprove',
-          );
-        }
+  group('what the Schematic sheet claims about itself', () {
+    test('it does not deny that the wiring model exists', () {
+      final copy = _schematicCopy.toLowerCase();
+      // The sentences that shipped, and the shapes they generalise to.
+      // Each is FALSE against the group above.
+      for (final lie in [
+        'model the schematic reads does not exist',
+        'no link can exist',
+        'links do not exist',
+        'there is no link model',
+      ]) {
+        expect(
+          copy,
+          isNot(contains(lie)),
+          reason:
+              'the sheet claims "$lie", which the wiring-model tests in '
+              'this file disprove',
+        );
       }
     });
 
-    testWidgets('each tab names the thing that is ACTUALLY missing', (
-      tester,
-    ) async {
-      final schematic = (await _copyFor(
-        tester,
-        measurer,
-        'Schematic',
-      )).toLowerCase();
-      // The true statements: no view creates a connection, and nothing
-      // builds a schematic scene.
-      expect(schematic, contains('nothing in this build creates a connection'));
-      expect(schematic, contains('no sheet is laid out'));
-      // And it must not understate what IS there, or the next reader
-      // rebuilds it.
-      expect(schematic, contains('addlinkcommand'));
-      expect(schematic, contains('symbol_layer.dart'));
+    test('it no longer claims the four things M2-C and M2-E built', () {
+      // THE COPY THAT EXPIRED. The retired panel said "No sheet is laid
+      // out, no symbol is placed on one, no wire is routed between two
+      // pins and no net label is drawn". All four are now false — M2-C
+      // lays the sheet out, M2-D draws the labels, M2-E routes a wire on
+      // a filter — and a replacement that repeated any of them would be
+      // the same defect this file was written for, pointing the other
+      // way.
+      final copy = _schematicCopy.toLowerCase();
+      for (final expired in [
+        'no sheet is laid out',
+        'no symbol is placed',
+        'no net label is drawn',
+        'the gap is the view',
+      ]) {
+        expect(
+          copy,
+          isNot(contains(expired)),
+          reason: '"$expired" stopped being true at M2-C/M2-D/M2-E',
+        );
+      }
+    });
+
+    test('it names the thing that is ACTUALLY missing, and does not '
+        'understate what is there', () {
+      final copy = _schematicCopy.toLowerCase();
+      // The one clause of the retired panel that is still true, carried
+      // across verbatim in meaning and proved by the last test in this
+      // file.
+      expect(copy, contains('no surface in this build creates a link'));
+      expect(copy, contains('the gap is the gesture'));
+      // And it says what IS built, or the next reader rebuilds it.
+      expect(copy, contains('laid out from your document'));
+      expect(copy, contains('net labels'));
+      expect(copy, contains('domain filter'));
     });
 
     testWidgets('the Schedule tab no longer has copy to be accurate '

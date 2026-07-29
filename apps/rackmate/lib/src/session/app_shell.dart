@@ -454,16 +454,15 @@ final class AppShellState extends State<AppShell>
                 controller: _tabController,
                 tabs: const [
                   Tab(icon: Icon(Icons.dashboard_outlined), text: 'Rack'),
-                  // The construction glyph is the strip's own honest
-                  // marker: the tab TEXT stays exactly as docs/05 §12
-                  // spells it, and the icon says which one does nothing
-                  // yet. The Schedule lost its glyph when it stopped
-                  // being unbuilt — leaving it there would be the mirror
-                  // image of the lie `UnbuiltView` exists to prevent.
-                  Tab(
-                    icon: Icon(Icons.construction_outlined),
-                    text: 'Schematic',
-                  ),
+                  // NO CONSTRUCTION GLYPH ON ANY TAB NOW. The marker said
+                  // which view did nothing yet; the Schedule lost it at
+                  // M2-B and the Schematic loses it at M2-E, because "a
+                  // tab that works while still wearing the 'not built'
+                  // marker is the same class of untruth as the panel this
+                  // replaced, pointing the other way"
+                  // (shell_tabs_test.dart). The tab TEXT stays exactly as
+                  // docs/05 §12 spells it.
+                  Tab(icon: Icon(Icons.polyline_outlined), text: 'Schematic'),
                   Tab(icon: Icon(Icons.table_rows_outlined), text: 'Schedule'),
                 ],
               ),
@@ -506,32 +505,35 @@ final class AppShellState extends State<AppShell>
             controller: _tabController,
             children: [
               _rackTab(session),
-              const UnbuiltView(
-                viewName: 'Schematic',
-                milestone: 'M2',
-                absent:
-                    'Nothing here is derived from your document. No '
-                    'sheet is laid out, no symbol is placed on one, no '
-                    'wire is routed between two pins and no net label '
-                    'is drawn — and nothing in this build creates a '
-                    'connection, so a document edited here holds zero '
-                    'Links. The gap is the view, not the data: Link, '
-                    'Service, Conductor, Net, Sheet and SheetItem are '
-                    'real models on RackDocument, AddLinkCommand '
-                    'already mints a Link with its Service, Conductor '
-                    'and implicit Net, and rackmate_core already turns '
-                    "a template's ports into a pinned symbol "
-                    '(draw/scene/symbol_layer.dart, exercised by the '
-                    'PDF backend). None of it is wired to a canvas.',
-                why:
-                    'The tab is in the strip because docs/05 §12 fixes '
-                    'the v1 strip at Rack / Schematic / Schedule. It is '
-                    'empty rather than populated with sample content, '
-                    'because a symbol on this canvas that is in no rack '
-                    'would be a fabrication (G4).',
-                reference:
-                    'docs/05-schematic-editor.md · docs/09-roadmap.md '
-                    'M2',
+              // THE SCHEMATIC IS BUILT NOW (M2-E), and the `UnbuiltView`
+              // that stood here is gone rather than softened — the same
+              // move, for the same reason, as the Schedule's one tab over.
+              //
+              // ITS COPY WAS READ BEFORE IT WAS REPLACED, and four of its
+              // five clauses had become false: a sheet IS laid out (M2-C's
+              // Sugiyama phases 0–3), symbols ARE placed on it, net labels
+              // ARE drawn (M2-D, DR-001's default render) and a wire IS
+              // routed once a domain is soloed, hovered with `Alt`, or
+              // focused. Its own summary — "The gap is the view, not the
+              // data" — was the sentence that expired first.
+              //
+              // THE ONE CLAUSE THAT IS STILL TRUE was carried across
+              // rather than dropped: "nothing in this build creates a
+              // connection, so a document edited here holds zero Links".
+              // It now lives on the sheet itself as
+              // `kNoLinksHeadline`/`kNoLinksDetail`, where the reader who
+              // needs it is, and `unbuilt_copy_accuracy_test.dart` still
+              // proves it against the source of both UI packages and this
+              // app rather than against a comment.
+              SchematicCanvasScreen(
+                // KEYED ON THE CONTROLLER'S IDENTITY, as both siblings
+                // are: replacing the document must reset the domain
+                // filter, the selection, the focus scope and the framed
+                // viewport, because every one of them is an answer about
+                // a document and this is a different one.
+                key: ValueKey(session.controller),
+                measurer: widget.measurer,
+                controller: session.controller,
               ),
               // THE SCHEDULE IS BUILT NOW, and the panel that used to sit
               // here is gone rather than softened. Its copy said "no code

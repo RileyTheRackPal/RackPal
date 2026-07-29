@@ -19,6 +19,16 @@
 // fixes is the strip. So the strip keeps three tabs and the two unbuilt
 // ones say, in the first line the user reads, that they are not built.
 //
+// NO TAB RENDERS THIS ANY MORE, AND IT IS KEPT ANYWAY. The Schedule
+// stopped being unbuilt at M2-B and the Schematic at M2-E, so the app has
+// no `UnbuiltView` on screen. It is kept because the RULING below is what
+// this file is, not the widget: the next view that ships before its
+// pipeline does — CR-071's Rear Panel is the named candidate, and it is
+// v1.1 — says so through this, rather than through a fresh panel that
+// re-decides whether an empty view may carry a button.
+// `test/shell/unbuilt_view_test.dart` still holds the line on that
+// question, so the widget is exercised rather than merely present.
+//
 // THIS IS THE G4 RULE APPLIED TO A WHOLE VIEW. "Never fabricate data. Show
 // `unknown`" (G4, CR-114) is normally about a weight or a VA draw. The same
 // rule decides this: the view that shipped before this panel drew ONE

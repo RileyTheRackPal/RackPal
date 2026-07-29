@@ -9,12 +9,29 @@
 /// apps/rackmate) — `src/shell/` holds only shell-shaped WIDGETS the app
 /// composes, currently just `UnbuiltView`.
 ///
-/// There is no `src/canvas/schematic/`. It was deleted rather than
-/// repaired: see `src/shell/unbuilt_view.dart`'s header for the ruling and
-/// docs/m1-implementation-log.md §3c for what went and why. The schematic
-/// drawing code that was worth keeping lives in
-/// `rackmate_core/src/draw/scene/symbol_layer.dart` (CR-071, CR-086), where
-/// `rackmate_export` can also reach it.
+/// `src/canvas/schematic/` IS BACK (M2-E), and on the same terms the
+/// Schedule came back on. The one that was deleted at `b560a50` had no
+/// pipeline behind it: `main.dart` handed it a hardcoded EMPTY
+/// `DiagramScene`, so it manufactured a symbol with `Pin1`/`Pout1` ports
+/// that corresponded to no device in any document. This one derives its
+/// sheet from the live `RackDocument` through `rackmate_core`'s
+/// `buildSchematicScene` — M2-C's Sugiyama phases 0–3 and M2-D's net-label
+/// layer, both pure Dart and both driven identically by the PDF exporter —
+/// and takes no scene parameter at all, so there is nothing for a caller to
+/// pass wrongly. See `src/canvas/schematic/schematic_canvas_screen.dart`'s
+/// header for the full post-mortem and what structurally prevents each of
+/// its three defects. The geometry that was salvaged out of the deleted
+/// canvas still lives in `rackmate_core/src/draw/scene/symbol_layer.dart`
+/// (CR-071, CR-086), where `rackmate_export` can also reach it.
+///
+/// WHAT IS IN THIS PACKAGE RATHER THAN IN CORE, AND THE COST OF THAT.
+/// `wire_trace.dart` — canon §11.1.3's "whole v1 router" — is a Flutter
+/// package's file, so `rackmate_export` cannot drive it. §11.1.2 says every
+/// exported interconnect sheet `T6.01…` "is a domain filter by
+/// construction and therefore renders `drawn`", so the exporter WILL need
+/// it. It is pure geometry over `rackmate_core` types and moving it is a
+/// file move; it is here because M2-D owns `draw/scene/` and M2-E may not
+/// reach into it.
 ///
 /// `src/schedule/` IS BACK, and on different terms from the one that was
 /// deleted. The deleted one had no pipeline behind it and told the user
@@ -39,6 +56,12 @@ export 'src/canvas/rack_metrics_row.dart';
 export 'src/canvas/render_device_box.dart';
 export 'src/canvas/render_rack_canvas.dart';
 export 'src/canvas/resize_preview_controller.dart';
+export 'src/canvas/schematic/domain_filter_bar.dart';
+export 'src/canvas/schematic/render_schematic_canvas.dart';
+export 'src/canvas/schematic/schematic_canvas_screen.dart';
+export 'src/canvas/schematic/schematic_filter.dart';
+export 'src/canvas/schematic/schematic_paint_plan.dart';
+export 'src/canvas/schematic/wire_trace.dart';
 export 'src/canvas/selection_controller.dart';
 export 'src/canvas/shake_animation.dart';
 export 'src/canvas/staging_bin_overlay.dart';
