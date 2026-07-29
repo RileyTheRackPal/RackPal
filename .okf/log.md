@@ -2,6 +2,22 @@
 
 ## 2026-07-28
 
+* **Update**: Caught the bundle up with M2-D (`e13fa68`) and M2-E (`219c0bf`),
+  which had landed after it was written. Batching that catch-up was itself the
+  drift this bundle exists to prevent — maintain as changes land, not after.
+* **Creation**: [CR-078 — four encoding channels](/invariants/four-encoding-channels.md),
+  recording that the GLYPH CHANNEL CURRENTLY CARRIES NOTHING: there is no `tier`
+  field, so `glyphAlt` is unreachable for all eight domains and all 55 families.
+* **Creation**: [Diagnose before fixing](/practices/diagnose-before-fixing.md) —
+  the salvage post-mortem, where twelve consecutive fix commits touched neither
+  cause because a third defect made the surface unable to change at all.
+* **Update**: [DR-001](/decisions/dr-001-net-labels-by-default.md) is now BUILT,
+  with the measured cost against M2-C's baseline: 4155 -> 6555 ops, the label
+  layer 19% of a frame with ~4x headroom.
+* **Update**: [Package layering](/invariants/package-layering.md) records a
+  violation in waiting — `wire_trace.dart` sits in `rackmate_ui`, which
+  `rackmate_export` may never import, so the exporter cannot draw a wire and
+  M6's interconnect sheets are unbuildable until it moves.
 * **Creation**: Scaffolded the RackMate bundle with `okf_init.py`.
 * **Creation**: Established the bundle's spine — the ruling to spec to
   implementation to test chain — in [getting started](/getting-started.md).

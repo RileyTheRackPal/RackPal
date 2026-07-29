@@ -3,10 +3,10 @@ type: Design Ruling
 title: DR-001 — net labels by default
 description: Every Link renders as a pair of net labels, not a drawn wire. Deletes channel routing, the crossing sweep, hop arcs and junction staggering from v1.
 tags: [ruling, schematic, m2, dr-001]
-timestamp: 2026-07-28T00:00:00Z
+timestamp: 2026-07-28T12:00:00Z
 ruling_id: DR-001
 canon_section: "11.1"
-status: binding
+status: built
 ---
 
 Every `Link` renders **by default** as a pair of net labels — a short stub off
@@ -49,6 +49,24 @@ M2-C's perf test therefore records its symbol-layer op count but deliberately do
 **not** claim the exit criterion's label-layer clause — that is still owed by
 M2-D, and the recorded count is the baseline it should be stated as a delta
 against.
+
+# Built, and what it cost
+
+M2-D shipped the render (`e13fa68`) and M2-E the canvas and domain filter
+(`219c0bf`). The measured delta against M2-C's symbol-only baseline:
+
+| | ops | best of 15 |
+|---|---|---|
+| M2-C, symbols only | 4155 | 3.052 ms |
+| M2-D, with net labels | **6555** (+57.8%) | 4.05 ms |
+
+The label layer alone is 2400 ops / 0.79 ms — about 19% of the frame, against
+a 16.67 ms budget. Roughly 4x headroom.
+
+The op order is **grouped by domain**, one contiguous run each, registered as
+`DiagramScene` fragments. That is load-bearing rather than tidy: it is what
+lets M2-E's filter replay seven domains unchanged and rebuild only the eighth,
+asserted with `identical` op-for-op.
 
 # Citations
 

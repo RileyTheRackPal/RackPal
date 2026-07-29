@@ -3,7 +3,7 @@ type: Invariant
 title: Package layering — what may import what
 description: rackmate_core imports no Flutter; rackmate_export never imports rackmate_ui. Both are enforced by tests, and both shape where new code goes.
 tags: [invariant, architecture, layering]
-timestamp: 2026-07-28T00:00:00Z
+timestamp: 2026-07-28T12:00:00Z
 status: enforced
 ---
 
@@ -31,6 +31,17 @@ The layering is not bookkeeping — it has settled real design questions:
 - **It shapes every derivation.** A number the screen shows and the PDF prints
   must be computed exactly once, in core — which is why the schedule derivation
   lives in `core/derived/` and both the tab and the sheet builders consume it.
+
+# A violation in waiting
+
+`wire_trace.dart` — the deterministic per-link orthogonal staircase — sits in
+`rackmate_ui` because M2-D owned `core/draw/scene/` when M2-E needed it. It is
+pure geometry over core types.
+
+**But §11.1.2 says every exported interconnect sheet renders `drawn` by
+construction, and `rackmate_export` may never import `rackmate_ui`.** So as
+things stand *the exporter cannot draw a wire*, and M6's sheets are unbuildable
+until it moves. Recorded before M6 starts rather than discovered during it.
 
 # Enforcement
 
