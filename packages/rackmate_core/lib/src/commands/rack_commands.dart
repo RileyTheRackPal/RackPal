@@ -156,19 +156,28 @@ const String _fracAlphabet =
     '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
 /// A [FracIndex] that sorts strictly AFTER every index in [existing] —
-/// "append at the end", the only insertion position a New-rack dialog with
+/// "append at the end", the only insertion position a creation dialog with
 /// no reorder UI can mean.
+///
+/// ENTITY-AGNOSTIC ON PURPOSE. This shipped as `nextRackOrder` and stayed
+/// rack-shaped only for as long as racks were the one entity a command
+/// created at the end of an ordered list. `Link.order` is the second
+/// (DR-011.2's `ConnectPortsCommand`), and the rule — take the largest
+/// index, bump or extend it — never mentioned a rack. A second copy over
+/// `doc.links` would be the same eleven lines written twice, which is the
+/// shape that produced this project's 1000x mass error.
 ///
 /// NOT a general LexoRank `between(a, b)`. Fractional indices exist so an
 /// item can be inserted BETWEEN two others without renumbering, and this
-/// codebase has no surface that reorders racks; writing the general form
-/// now would be untested generality. The rule here is small enough to state
-/// in full: take the largest existing index, and either bump its last
-/// character to the next one in [_fracAlphabet], or — when it is already the
-/// last character — append `'0'`. Both produce a strictly greater string
-/// under `compareTo` (a greater character at the same position, or a proper
-/// extension of the same prefix), which is the entire postcondition.
-FracIndex nextRackOrder(Iterable<FracIndex> existing) {
+/// codebase has no surface that reorders racks or links; writing the
+/// general form now would be untested generality. The rule here is small
+/// enough to state in full: take the largest existing index, and either
+/// bump its last character to the next one in [_fracAlphabet], or — when
+/// it is already the last character — append `'0'`. Both produce a
+/// strictly greater string under `compareTo` (a greater character at the
+/// same position, or a proper extension of the same prefix), which is the
+/// entire postcondition.
+FracIndex nextOrder(Iterable<FracIndex> existing) {
   var max = '';
   for (final index in existing) {
     if (index.v.compareTo(max) > 0) max = index.v;
@@ -184,6 +193,12 @@ FracIndex nextRackOrder(Iterable<FracIndex> existing) {
     max.substring(0, max.length - 1) + _fracAlphabet[lastAt + 1],
   );
 }
+
+/// [nextOrder] over rack orders. Kept as a named entry point rather than
+/// inlined at the two call sites so `rack_commands_test.dart`'s existing
+/// coverage — including its randomised total-order property — keeps
+/// naming the thing it is actually about.
+FracIndex nextRackOrder(Iterable<FracIndex> existing) => nextOrder(existing);
 
 /// The outcome of [buildAddRackCommand] — a ready command or the reason
 /// there is none, in the shape `CatalogPlacementResult` already establishes,

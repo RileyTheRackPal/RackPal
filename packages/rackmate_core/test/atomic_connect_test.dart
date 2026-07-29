@@ -138,13 +138,26 @@ RackDocument _doc() => RackDocument(
   meta: _meta(),
 );
 
-AtomicConnectPlan? _plan(RackDocument doc) => planAtomicConnect(
+AtomicConnectResult? _result(RackDocument doc) => planAtomicConnect(
   doc,
   fromDeviceId: _devA,
   fromSetKey: 'sa',
   toDeviceId: _devB,
   toSetKey: 'sb',
 );
+
+/// [_result], asserting the gesture was not refused — null still means
+/// "one of the sets does not resolve".
+AtomicConnectPlan? _plan(RackDocument doc) {
+  final result = _result(doc);
+  if (result == null) return null;
+  expect(
+    result,
+    isA<AtomicConnectReady>(),
+    reason: 'refused: ${result is AtomicConnectRefused ? result.verdict : ''}',
+  );
+  return (result as AtomicConnectReady).plan;
+}
 
 Uuid _portOf(Uuid device, String key) => derivePortId(device, PortKey(key));
 
@@ -462,12 +475,132 @@ void main() {
     });
   });
 
+  group('planAtomicConnect — the tier-1 rules refuse it too', () {
+    test('A SET DRAGGED ONTO ITSELF IS TOP-001, NOT TWO SELF-CONDUCTORS', () {
+      // `resolvePortSet` is deterministic in (deviceId, setKey), so both
+      // sides return the SAME port ids and the position loop paired every
+      // member with itself. That wrote `Conductor(PortEndpoint(p),
+      // PortEndpoint(p))` once per member: TOP-001 violated twice over,
+      // and TOP-003 twice again (portConductorCount counts ENDS, so a
+      // self-looped conductor consumes a max-1 pin twice). The
+      // zero-conductor guard cannot catch it — there are two conductors,
+      // they are just not conductors.
+      final doc = _doc();
+      _addDevice(doc, _devA, 'tpl.a', _body('sa', [('p', '+'), ('n', '-')]));
+
+      final result = planAtomicConnect(
+        doc,
+        fromDeviceId: _devA,
+        fromSetKey: 'sa',
+        toDeviceId: _devA,
+        toSetKey: 'sa',
+      );
+
+      expect(result, isA<AtomicConnectRefused>());
+      final refused = result! as AtomicConnectRefused;
+      expect(refused.ruleId, 'TOP-001');
+      expect(
+        refused.message,
+        contains('DEV-A'),
+        reason:
+            'DR-011.5: the sentence names the real designators, because it '
+            "is the whole of the user's recourse",
+      );
+      expect(refused.message, endsWith('.'));
+    });
+
+    test('a full pin refuses the WHOLE gesture — TOP-003', () {
+      // One Link is one user action. There is no "connect the other three
+      // members" outcome §11.8.3 offers, and DR-011.5 gives T1 no
+      // [ Connect anyway ] to fall back to.
+      final doc = _doc();
+      _addDevice(doc, _devA, 'tpl.a', _body('sa', [('l', 'L'), ('r', 'R')]));
+      _addDevice(doc, _devB, 'tpl.b', _body('sb', [('l', 'L'), ('r', 'R')]));
+
+      // B.r is already occupied by an existing run.
+      doc.links[const Uuid('lnk-existing')] = Link(
+        id: const Uuid('lnk-existing'),
+        designator: 'W009',
+        media: const MediaTypeId('media.cat6_utp'),
+        order: const FracIndex('a0'),
+        meta: _meta(),
+        services: [
+          Service(
+            id: 'svc-1',
+            signalFamily: const SignalFamilyId('audio.line_unbal'),
+            netId: const Uuid('net-x'),
+          ),
+        ],
+        conductors: [
+          Conductor(
+            from: PortEndpoint(_portOf(_devB, 'r')),
+            to: const OpenEndpoint('elsewhere'),
+          ),
+        ],
+      );
+
+      final result = _result(doc);
+      expect(result, isA<AtomicConnectRefused>());
+      final refused = result! as AtomicConnectRefused;
+      expect(refused.ruleId, 'TOP-003');
+      expect(refused.message, contains('1 of 1'));
+      expect(
+        doc.links,
+        hasLength(1),
+        reason: 'planning writes nothing, refused or not',
+      );
+    });
+
+    test('a device that has LEFT the document refuses — TOP-004', () {
+      final doc = _doc();
+      _addDevice(doc, _devA, 'tpl.a', _body('sa', [('l', 'L')]));
+      _addDevice(doc, _devB, 'tpl.b', _body('sb', [('l', 'L')]));
+      // The ports survive `RemoveDeviceCommand` (it removes the device
+      // only — device_commands.dart's own TODO says so), so the set still
+      // resolves and only TOP-004 stands between this and a Link whose
+      // endpoint names a device that is gone.
+      final removed = doc.devices[_devB]!;
+      RemoveDeviceCommand(id: _devB).apply(doc);
+      expect(resolvePortSet(doc, _devB, 'sb'), isNull);
+
+      // Put it back and tombstone the port instead — the other TOP-004
+      // limb, on a document whose sets still resolve.
+      doc.devices[_devB] = removed;
+      doc.tombstones[_portOf(_devB, 'l')] = Tombstone(
+        deletedAt: _when,
+        entityType: 'Port',
+        by: 'test',
+      );
+      final result = _result(doc);
+      expect(result, isA<AtomicConnectRefused>());
+      expect((result! as AtomicConnectRefused).ruleId, 'TOP-004');
+    });
+
+    test('an UNPAIRED position is not put through the rules', () {
+      // An open end lands on no jack: TOP-004 exempts it by construction
+      // (AC-018) and TOP-003 has no pin to count. A rule evaluated
+      // against it would refuse the "connect what fits" case §11.8.3 was
+      // decided to allow.
+      final doc = _doc();
+      _addDevice(doc, _devA, 'tpl.a', _body('sa', [('l', 'L'), ('r', 'R')]));
+      _addDevice(doc, _devB, 'tpl.b', _body('sb', [('l', 'L')]));
+
+      final plan = _plan(doc)!;
+      expect(plan.openCount, 1);
+      expect(plan.conductors[1].to, isA<OpenEndpoint>());
+    });
+  });
+
   group('AtomicConnectCommand — one gesture, one undo entry', () {
     AtomicConnectCommand command(AtomicConnectPlan plan) =>
         AtomicConnectCommand(
           plan: plan,
           designator: 'W001',
           netName: 'N001',
+          // DR-011.3: the set's OWN family. `_body` declares every port
+          // as `audio.line_unbal`, so that is what a caller reading
+          // `PortDef.signalFamily` off the resolved set would hand over.
+          signalFamily: const SignalFamilyId('audio.line_unbal'),
           media: const MediaTypeId('media.cat6_utp'),
           order: const FracIndex('a0'),
           now: _when,
@@ -592,6 +725,84 @@ void main() {
       expect(cmd.label, LabelKey.atomicConnect);
       expect(cmd.touches, EpochMask.wires);
       expect(cmd.affects, [const Uuid('lnk-1'), const Uuid('net-1')]);
+    });
+
+    test('DR-011.3: the REAL family reaches the Net and the Service', () {
+      // This command hardcoded `structure.undetermined` in BOTH places,
+      // so every component run, stereo pair and speaker pair it created
+      // landed in the `str` domain — and CR-078 keys all four encoding
+      // channels (hue, dash, weight, glyph/tag) off the family, so every
+      // one of them drew as structure.
+      final doc = threeOntoTwo();
+      command(_plan(doc)!).apply(doc);
+
+      final net = doc.nets[const Uuid('net-1')]!;
+      final service = doc.links[const Uuid('lnk-1')]!.services.single;
+      expect(net.signalFamily, const SignalFamilyId('audio.line_unbal'));
+      expect(service.signalFamily, const SignalFamilyId('audio.line_unbal'));
+      expect(
+        net.signalFamily,
+        isNot(const SignalFamilyId('structure.undetermined')),
+        reason: 'the hardcode this parameter replaced',
+      );
+      expect(
+        service.signalFamily,
+        isNot(const SignalFamilyId('structure.undetermined')),
+      );
+    });
+
+    test('REFUSES to be constructed with a zero-conductor plan', () {
+      // `planAtomicConnect` returns an empty plan when neither set has a
+      // materialised member — which, before DR-011.1, was every plan on
+      // every document built from the palette. Writing it produces a
+      // `Link` with a designator, a pull-sheet row and nothing
+      // electrical on it at all.
+      final doc = _doc();
+      _addDevice(
+        doc,
+        _devA,
+        'tpl.a',
+        _body('sa', [('l', 'L')]),
+        unmaterialised: {'l'},
+      );
+      _addDevice(
+        doc,
+        _devB,
+        'tpl.b',
+        _body('sb', [('l', 'L')]),
+        unmaterialised: {'l'},
+      );
+
+      final plan = _plan(doc)!;
+      expect(
+        plan.conductors,
+        isEmpty,
+        reason: 'guards the assertion below against passing vacuously',
+      );
+      expect(() => command(plan), throwsArgumentError);
+      expect(doc.links, isEmpty);
+      expect(doc.nets, isEmpty);
+    });
+
+    test('REFUSES a hand-built plan carrying a self-conductor', () {
+      // `planAtomicConnect` refuses this with a TOP-001 sentence, which is
+      // what a user should get. This is what a CALLER gets for a plan
+      // that never went through it — the same guard
+      // `ConnectPortsCommand` carries, over N conductors instead of one.
+      final doc = threeOntoTwo();
+      final self = PortEndpoint(_portOf(_devA, 'y'));
+      expect(
+        () => command(
+          AtomicConnectPlan(
+            conductors: [Conductor(from: self, to: self)],
+            pairedCount: 1,
+            openCount: 0,
+            roleMismatches: const [],
+          ),
+        ),
+        throwsArgumentError,
+      );
+      expect(doc.links, isEmpty);
     });
   });
 }

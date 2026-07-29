@@ -158,3 +158,17 @@ String allocateNetNameFor(RackDocument doc) => allocateNetName(
   settings: doc.settings,
   usedNames: {for (final n in doc.nets.values) n.name},
 );
+
+/// The designator the NEXT `Link` in [doc] should carry — `W001`, then
+/// `W002`, … — through the same one format engine, and for the same
+/// reason, as [allocateNetNameFor] above it.
+///
+/// Uniqueness is PROJECT-WIDE, unlike a port's: one `W###` is one physical
+/// cable and one schedule row (G1), so two links sharing a designator are
+/// two rows an installer cannot tell apart.
+///
+/// CALL THIS BEFORE CONSTRUCTING THE COMMAND, never inside `apply()`.
+String allocateLinkDesignatorFor(RackDocument doc) => allocateLinkDesignator(
+  settings: doc.settings,
+  usedDesignators: {for (final l in doc.links.values) l.designator},
+);

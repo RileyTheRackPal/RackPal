@@ -53,4 +53,14 @@ enum LabelKey {
   // §11.8.3. ONE entry, deliberately: a five-conductor component run is
   // one thing the user did, so the Edit menu offers one thing to undo.
   atomicConnect,
+
+  // The PIN-TO-PIN connect gesture (commands/connect_commands.dart),
+  // DR-011.2. A SECOND entry beside `atomicConnect`, not a rename of it:
+  // the two are different gestures on different targets — one pin onto
+  // one pin, versus one whole port set onto another — and DR-011.2 keeps
+  // both, because 223 of the catalog's 257 ports carry no `setKey` and
+  // are therefore unreachable set-to-set. The Edit menu must be able to
+  // say which of the two is being undone; a shared label would offer
+  // "Undo atomic connect" for a gesture that connected one RJ45.
+  connectPorts,
 }

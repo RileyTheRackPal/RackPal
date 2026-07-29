@@ -34,6 +34,16 @@
 /// keeps channel routing, the crossing sweep and hop arcs out of v1
 /// entirely, and the `drawn` mode that does ship arrives with the domain
 /// filter that triggers it.
+/// M2-F adds the CONNECT half of the schematic: `derived/connect_target
+/// .dart` joins a device and a port key into the one pin DR-011.2's
+/// pin-to-pin gesture acts on, `derived/connect_rules.dart` evaluates
+/// tier-1 topology (`TOP-001`..`TOP-005`, docs/02 §5.1 — the only rules
+/// that may refuse an edit, with no `[ Connect anyway ]`), and
+/// `commands/connect_commands.dart` writes the result: one `Link`, one
+/// `Conductor`, two `PortEndpoint`s and one `Net`, materialising either
+/// pin the document does not hold yet (DR-011.1) and removing on revert
+/// exactly what it added. The six tier-2 spring-back rules stay deferred
+/// to M5.
 library;
 
 export 'src/catalog/rack_presets.dart';
@@ -43,6 +53,7 @@ export 'src/commands/catalog_placement.dart';
 export 'src/commands/clock.dart';
 export 'src/commands/command.dart';
 export 'src/commands/compaction.dart';
+export 'src/commands/connect_commands.dart';
 export 'src/commands/device_commands.dart';
 export 'src/commands/label_key.dart';
 export 'src/commands/link_class_commands.dart';
@@ -58,6 +69,8 @@ export 'src/commands/set_rack_property_command.dart';
 export 'src/commands/simple_notifier.dart';
 export 'src/commands/transaction.dart';
 export 'src/commands/undo_stack.dart';
+export 'src/derived/connect_rules.dart';
+export 'src/derived/connect_target.dart';
 export 'src/derived/device_loads.dart';
 export 'src/derived/endpoint_resolution.dart';
 export 'src/derived/equipment_list.dart';
