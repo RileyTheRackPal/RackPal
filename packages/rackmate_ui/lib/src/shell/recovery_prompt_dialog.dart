@@ -23,7 +23,7 @@
 // field — or that could not record one — yields null, and the prompt then
 // says "unsaved changes" with no number rather than inventing one.
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:rackmate_ui/src/keymap/keymap.dart';
 
 /// What the user chose at the recovery prompt.
 enum RecoveryChoice {
@@ -89,11 +89,14 @@ final class RecoveryPromptDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CallbackShortcuts(
-      bindings: <ShortcutActivator, VoidCallback>{
-        // Esc is "not now", never "throw it away".
-        const SingleActivator(LogicalKeyboardKey.escape): () =>
-            Navigator.of(context).pop(RecoveryChoice.keepForLater),
-      },
+      // Esc is "not now", never "throw it away" — the conservative answer,
+      // which is what `KeyBindingId.dialogDismiss` means in all three
+      // dialogs even though all three pop a different VALUE. The key comes
+      // from the registry; the answer stays here, because only this dialog
+      // knows which of its outcomes cannot lose work.
+      bindings: dialogDismissShortcut(
+        () => Navigator.of(context).pop(RecoveryChoice.keepForLater),
+      ),
       child: AlertDialog(
         title: const Text('Unsaved work was found'),
         content: Column(

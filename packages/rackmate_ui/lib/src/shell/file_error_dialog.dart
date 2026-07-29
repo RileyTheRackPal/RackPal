@@ -21,7 +21,7 @@
 // their three network shares is down. The two surfaces have different
 // rules and the difference is deliberate.
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:rackmate_ui/src/keymap/keymap.dart';
 
 /// One button on a [FileErrorDialog].
 @immutable
@@ -122,10 +122,13 @@ final class FileErrorDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final reassurance = view.reassurance;
     return CallbackShortcuts(
-      bindings: <ShortcutActivator, VoidCallback>{
-        const SingleActivator(LogicalKeyboardKey.escape): () =>
-            Navigator.of(context).pop(view.dismissActionId),
-      },
+      // Esc dismisses, and the VIEW says what dismissing means — an error
+      // with a `Retry` and a `Cancel` must not have `Esc` retry. The key
+      // itself is `KeyBindingId.dialogDismiss`, shared with the other two
+      // dialogs so all three are one row in the generated table.
+      bindings: dialogDismissShortcut(
+        () => Navigator.of(context).pop(view.dismissActionId),
+      ),
       child: AlertDialog(
         title: Text(view.title),
         content: Column(

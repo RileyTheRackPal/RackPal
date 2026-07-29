@@ -113,6 +113,7 @@ import 'package:rackmate_ui/src/canvas/schematic/schematic_filter.dart';
 import 'package:rackmate_ui/src/canvas/schematic/schematic_paint_plan.dart';
 import 'package:rackmate_ui/src/canvas/selection_controller.dart';
 import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
+import 'package:rackmate_ui/src/keymap/keymap.dart';
 
 /// The headline shown when the document draws symbols but holds no cable.
 ///
@@ -475,47 +476,47 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       groundArgb: _argbOfColor(scheme.surfaceContainerLowest),
     );
 
+    // THE KEYS ARE DECLARED IN `keymap.dart`, NOT HERE. Eleven
+    // `SingleActivator` literals stood in this map; they are eleven rows in
+    // `kKeymap` under `KeyScope.schematic`, which is what lets the
+    // generated table and the collision arbitration see them at all
+    // (CR-101, M7's exit criterion). None of them carries a modifier, so
+    // the macOS half of the extraction (debt D7) changes nothing here —
+    // but the ARBITRATION half does, and it is what now holds two claims
+    // this map used to make in a comment:
+    //
+    //   * "there is no `Ctrl+1` collision with the app's view switch,
+    //     because `SingleActivator` matches modifiers exactly" — a bare
+    //     `1` and a `primary+1` are different chords, and
+    //     `KeymapConflictKind.shadowsGlobal` is what fails if a `primary`
+    //     ever appears on one of these rows;
+    //   * "`Shift+F` (Isolate) is deliberately absent, and `F` is unbound
+    //     in the rack" — canon §1.10 principle (c), now held by
+    //     `KeymapConflictKind.letterCollision` rather than by two file
+    //     headers agreeing with each other.
     return Shortcuts(
-      shortcuts: const <ShortcutActivator, Intent>{
-        // §11.2 / §14: "`1`–`8` solo by index; `` ` `` shows all". Bare
-        // activators, so any modifier combination falls through — there is
-        // no `Ctrl+1` collision with the app's view switch, because
-        // `SingleActivator` matches modifiers exactly.
-        SingleActivator(LogicalKeyboardKey.digit1): _SoloDomainIntent(1),
-        SingleActivator(LogicalKeyboardKey.digit2): _SoloDomainIntent(2),
-        SingleActivator(LogicalKeyboardKey.digit3): _SoloDomainIntent(3),
-        SingleActivator(LogicalKeyboardKey.digit4): _SoloDomainIntent(4),
-        SingleActivator(LogicalKeyboardKey.digit5): _SoloDomainIntent(5),
-        SingleActivator(LogicalKeyboardKey.digit6): _SoloDomainIntent(6),
-        SingleActivator(LogicalKeyboardKey.digit7): _SoloDomainIntent(7),
-        SingleActivator(LogicalKeyboardKey.digit8): _SoloDomainIntent(8),
-        SingleActivator(LogicalKeyboardKey.backquote): _ShowAllDomainsIntent(),
-        // §11.4's Focus. `Shift+F` (Isolate) is deliberately absent — see
-        // the file header.
-        SingleActivator(LogicalKeyboardKey.keyF): _FocusSelectionIntent(),
-        SingleActivator(LogicalKeyboardKey.escape): _SchematicEscapeIntent(),
-      },
+      shortcuts: keymapShortcuts(KeyScope.schematic),
       child: Actions(
         actions: <Type, Action<Intent>>{
-          _SoloDomainIntent: CallbackAction<_SoloDomainIntent>(
+          SoloDomainIntent: CallbackAction<SoloDomainIntent>(
             onInvoke: (intent) {
               _soloByIndex(intent.index);
               return null;
             },
           ),
-          _ShowAllDomainsIntent: CallbackAction<_ShowAllDomainsIntent>(
+          ShowAllDomainsIntent: CallbackAction<ShowAllDomainsIntent>(
             onInvoke: (_) {
               _showAllDomains();
               return null;
             },
           ),
-          _FocusSelectionIntent: CallbackAction<_FocusSelectionIntent>(
+          FocusSelectionIntent: CallbackAction<FocusSelectionIntent>(
             onInvoke: (_) {
               _toggleFocus();
               return null;
             },
           ),
-          _SchematicEscapeIntent: CallbackAction<_SchematicEscapeIntent>(
+          SchematicCancelIntent: CallbackAction<SchematicCancelIntent>(
             onInvoke: (_) {
               _onEscape();
               return null;
@@ -659,25 +660,20 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   }
 }
 
-/// The four `Intent`s this screen binds. Private: they are this view's
-/// vocabulary and nothing outside it may dispatch them.
-final class _SoloDomainIntent extends Intent {
-  const _SoloDomainIntent(this.index);
-
-  final int index;
-}
-
-final class _ShowAllDomainsIntent extends Intent {
-  const _ShowAllDomainsIntent();
-}
-
-final class _FocusSelectionIntent extends Intent {
-  const _FocusSelectionIntent();
-}
-
-final class _SchematicEscapeIntent extends Intent {
-  const _SchematicEscapeIntent();
-}
+// THE FOUR `Intent`s THIS SCREEN BINDS ARE IN `keymap.dart` NOW. They used
+// to be declared here and to carry the note "Private: they are this view's
+// vocabulary and nothing outside it may dispatch them", which was a good
+// rule for one file and was precisely what CR-101 rules against for the
+// application: "one arbitrated table, generated from one `Intent`
+// registry". A vocabulary no registry can name is a vocabulary no table
+// can print.
+//
+// Nothing outside this screen dispatches them today, and nothing has to:
+// an `Actions` map is keyed by intent TYPE and this is still the only
+// screen that installs one for these four. What changed is that the
+// arbitration can now SEE that `Esc` means the same thing here as it does
+// in the rack and in the three dialogs — which is canon §1.10's principle
+// (b), and was unverifiable while each view kept its own private copy.
 
 /// Turns a pointer press-and-release into a click, and nothing else.
 ///

@@ -8,7 +8,11 @@
 // one nobody tests.
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show TargetPlatform;
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rackmate/src/session/app_shell.dart' show kViewKeyToTabIndex;
+import 'package:rackmate_ui/rackmate_ui.dart';
 
 const _libSession = 'lib/src/session';
 const _testSession = 'test/session';
@@ -434,27 +438,86 @@ final class AppServices {
     );
   });
 
+  // ======================================================================
+  // RULE 14 — THE GLOBAL BINDING GROUPS HAVE NOT GROWN A MEMBER
+  // ======================================================================
+  // WHAT THIS RULE USED TO BE, AND WHY IT IS NOT THAT ANY MORE. It counted
+  // `SingleActivator(LogicalKeyboardKey.…)` literals in `app_shell.dart`
+  // with a regex and asserted EXACTLY ELEVEN: four in `kFileShortcuts`, the
+  // same four again on the File menu items so the accelerators would
+  // render, and three in `kViewShortcuts`. The number was doing two jobs —
+  // "the file group has not gained a fifth binding" and "no menu item
+  // advertises a key nothing listens for" — and it did both by counting
+  // text in one file.
+  //
+  // M2-H moved every binding into `kKeymap` (macOS debt D7: the eleven
+  // literals all hard-coded `control: true`, and macOS needs `Cmd`), so
+  // that count is now ZERO and the regex would pass vacuously forever. The
+  // rule MOVES rather than relaxes, and it keeps both jobs:
+  //
+  //   (i)  the global scope is EXACTLY the seven bindings named below —
+  //        the same property the eleven was pinning, asserted against the
+  //        declaration instead of against its spelling. A new global key
+  //        fails here, and so does a deleted one;
+  //   (ii) `app_shell.dart` may not construct a `SingleActivator` AT ALL.
+  //        A hand-rolled binding beside the registry is invisible to the
+  //        generated table and to arbitration — which is precisely the
+  //        state M2-H existed to end — and it would re-hard-code `Ctrl`;
+  //   (iii) the File menu still declares exactly four accelerators across
+  //        five items, so `Export PDF…` has none. docs/08 §8.1 gives it
+  //        `Ctrl+P` and that binding is not built.
+  //
+  // (iii) is weaker than it was and says so: with `shortcut:` now naming a
+  // `KeyBindingId`, a menu item CANNOT advertise a key nothing listens for
+  // — the row it names is the binding. What is left to catch is an
+  // accelerator appearing on the export item, or one vanishing from a file
+  // item, and that is a count.
   test('RULE 14 — exactly two complete keybinding groups are registered', () {
     // docs/04 §8's ~40-binding table is NOT bound wholesale: a partial
     // keymap reads as a whole one, so a group lands only when it is
     // complete. TWO are complete — the four FILE bindings, and the VIEW
-    // switch. This asserts neither has quietly grown a member without
-    // that decision being taken again.
-    final shell = File('$_libSession/app_shell.dart').readAsStringSync();
-    final activators = RegExp(
-      r'SingleActivator\(\s*LogicalKeyboardKey\.\w+',
-    ).allMatches(_stripComments(shell)).length;
-    // Four file bindings in `kFileShortcuts`, the same four again on the
-    // menu items so the accelerators render, and three in
-    // `kViewShortcuts` — eleven in total, and no more.
+    // switch.
     expect(
-      activators,
-      11,
+      keyBindingsIn(KeyScope.global).map((b) => b.id),
+      orderedEquals(<KeyBindingId>[
+        KeyBindingId.newDocument,
+        KeyBindingId.openDocument,
+        KeyBindingId.saveDocument,
+        KeyBindingId.saveDocumentAs,
+        KeyBindingId.switchViewRack,
+        KeyBindingId.switchViewSchematic,
+        KeyBindingId.switchViewSchedule,
+      ]),
       reason:
-          'the shell binds Ctrl+N / Ctrl+O / Ctrl+S / Ctrl+Shift+S, '
-          'declares the same four on the File menu, and binds '
-          'Ctrl+1 / Ctrl+2 / Ctrl+4. A twelfth means either a new binding '
-          'or a menu item advertising a key nothing listens for.',
+          'the app binds Ctrl/Cmd+N / +O / +S / +Shift+S and '
+          'Ctrl/Cmd+1 / +2 / +4, and nothing else above the root focus '
+          'scope. An eighth is either a new binding or a group that grew '
+          'without the decision being taken again.',
+    );
+
+    final shell = _stripComments(
+      File('$_libSession/app_shell.dart').readAsStringSync(),
+    );
+    expect(
+      shell,
+      isNot(contains('SingleActivator(')),
+      reason:
+          'a binding declared here instead of in kKeymap is invisible to '
+          'the generated table and to the collision arbitration, and it '
+          'hard-codes Ctrl on a platform that may want Cmd. Add a row to '
+          'kKeymap and read it back with keymapActivator.',
+    );
+
+    final menuItems = RegExp(r'MenuItemButton\(').allMatches(shell).length;
+    final accelerators = RegExp('shortcut:').allMatches(shell).length;
+    expect(
+      [menuItems, accelerators],
+      [5, 4],
+      reason:
+          'five File-menu items — New, Open…, Save, Save As…, Export PDF… '
+          '— and four accelerators, because Export PDF has none. docs/08 '
+          '§8.1 gives export Ctrl+P; the dialog is not built and neither '
+          'is the binding.',
     );
   });
 
@@ -469,20 +532,67 @@ final class AppServices {
     // the test that stops the "tidy-up" — moving Schedule onto Ctrl+3
     // would break the same muscle memory twice, once now and once in v1.1
     // when the Rear Panel arrives and takes its key back.
-    final shell = _stripComments(
-      File('$_libSession/app_shell.dart').readAsStringSync(),
+    //
+    // IT ASKS THE REGISTRY NOW, AND ASKS A STRICTER QUESTION. The old
+    // version grepped `app_shell.dart` for `LogicalKeyboardKey.digit3`,
+    // which could only ever speak about one file — and the schematic
+    // legitimately binds a BARE `3` to solo domain 3, so a repo-wide grep
+    // for the same string would have been wrong. The claim is about the
+    // CHORD, `primary+3`, and it is checked across every binding in the
+    // application and on every platform: on macOS the chord is `Cmd+3`,
+    // and a registry that only refused `Ctrl+3` would let it in there.
+    //
+    // The reference row is built rather than written out, so "the chord
+    // Ctrl+3 resolves to" is computed by the same code the app resolves
+    // its own bindings with. A `renderChord` of `Ctrl+3` here and `Cmd+3`
+    // on macOS is the proof that the sweep is per-platform and not a
+    // three-times-identical loop.
+    const rearPanelChord = KeyBinding(
+      id: KeyBindingId.switchViewSchedule, // any id; only the chord is read
+      scope: KeyScope.global,
+      trigger: LogicalKeyboardKey.digit3,
+      primary: true,
+      label: 'the v1.1 Rear Panel view',
+      intent: SwitchViewIntent(3),
+      source: 'CR-071',
     );
-    expect(
-      shell,
-      isNot(contains('LogicalKeyboardKey.digit3')),
-      reason: 'Ctrl+3 belongs to the v1.1 Rear Panel view, not to Schedule',
-    );
-    for (final digit in ['digit1', 'digit2', 'digit4']) {
+    for (final platform in TargetPlatform.values) {
+      final claimants = kKeymap.where(
+        (b) => b.chordOn(platform) == rearPanelChord.chordOn(platform),
+      );
       expect(
-        shell,
-        contains('LogicalKeyboardKey.$digit'),
-        reason: '$digit is one of the three the v1 strip needs',
+        claimants,
+        isEmpty,
+        reason:
+            '${rearPanelChord.renderChord(platform)} on ${platform.name} is '
+            'claimed by ${claimants.map((b) => b.id.name).join(', ')}. It '
+            'is reserved for the v1.1 Rear Panel view and is an unbound '
+            'no-op until then; the Schedule is Ctrl+4 in v1 and forever.',
       );
     }
+
+    // The three the v1 strip DOES need, so this cannot pass by the
+    // registry being empty.
+    final viewSwitches = <int, KeyBindingId>{
+      1: KeyBindingId.switchViewRack,
+      2: KeyBindingId.switchViewSchematic,
+      4: KeyBindingId.switchViewSchedule,
+    };
+    for (final entry in viewSwitches.entries) {
+      final binding = keyBindingFor(entry.value);
+      expect(
+        binding.trigger.keyLabel,
+        '${entry.key}',
+        reason: '${entry.value.name} is the digit-${entry.key} view',
+      );
+      expect(binding.primary, isTrue);
+    }
+
+    // AND THE ORDINAL IS SEPARATE FROM THE IDENTITY, which is the other
+    // half of the ruling and the half a registry could quietly undo. The
+    // Schedule is the third TAB and the fourth KEY; a map that sent key 3
+    // anywhere, or sent key 4 to index 3, would be the conflation docs/04
+    // §8 forbids.
+    expect(kViewKeyToTabIndex, {1: 0, 2: 1, 4: 2});
   });
 }

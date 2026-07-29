@@ -9,9 +9,27 @@
 // top, and closing the window while dirty must prompt regardless of where
 // focus is. So the `WindowChromeListener` and the autosave timer live
 // above the `TabBarView`, and the four file bindings live above the whole
-// app — see [kFileShortcuts] for why "above the whole app" and not
+// app — see `KeyScope.global` for why "above the whole app" and not
 // "above the tab view" is a correctness requirement rather than a
 // preference.
+//
+// ==================================================================
+// THE KEYS ARE NOT DECLARED IN THIS FILE ANY MORE (macOS debt D7)
+// ==================================================================
+// Eleven `SingleActivator` literals used to live here — four in
+// `kFileShortcuts`, the same four again on the File menu items so the
+// accelerators would render, and three in `kViewShortcuts` — and every
+// one of them hard-coded `control: true`. macOS needs `Cmd`.
+//
+// They are seven rows in `kKeymap` now, under `KeyScope.global`, and the
+// primary modifier resolves per platform through `defaultTargetPlatform`.
+// SEVEN AND NOT ELEVEN because the menu no longer declares a second copy:
+// `MenuItemButton.shortcut` reads the same registry row the binding does,
+// so a menu that advertises a key nothing listens for is no longer a thing
+// this file can express. That was half of what
+// `session_layering_test.dart` RULE 14 was written to catch by counting
+// activators; the rule now asserts the structure that makes it impossible,
+// and still pins the group at exactly seven so it cannot quietly grow.
 //
 // ==================================================================
 // TWO COMPLETE BINDING GROUPS
@@ -29,10 +47,12 @@
 // ordinal." So the strip is three tabs and the keys are 1, 2 and 4, with
 // 3 deliberately dead. Binding Schedule to `Ctrl+3` to close the gap
 // would break muscle memory twice: once now and once in v1.1.
+//
+// The absence now lives in the registry (there is no `Ctrl+3` row) and
+// the ordinal lives in [kViewKeyToTabIndex]. RULE 14e checks both.
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:rackmate/src/session/app_services.dart';
 import 'package:rackmate/src/session/document_session.dart';
 import 'package:rackmate/src/session/session_controller.dart';
@@ -44,87 +64,28 @@ import 'package:rackmate_core/rackmate_core.dart'
     show TextMeasurer, buildRackPresets;
 import 'package:rackmate_ui/rackmate_ui.dart';
 
-/// `Ctrl+N`.
-final class NewDocumentIntent extends Intent {
-  const NewDocumentIntent();
-}
-
-/// `Ctrl+O`.
-final class OpenDocumentIntent extends Intent {
-  const OpenDocumentIntent();
-}
-
-/// `Ctrl+S`.
-final class SaveDocumentIntent extends Intent {
-  const SaveDocumentIntent();
-}
-
-/// `Ctrl+Shift+S`.
-final class SaveDocumentAsIntent extends Intent {
-  const SaveDocumentAsIntent();
-}
-
-/// `Ctrl+1` / `Ctrl+2` / `Ctrl+4` — switch to a view by IDENTITY.
+/// Which tab of the v1 strip each `Ctrl/Cmd+n` view identity renders as.
 ///
-/// Carries the tab INDEX in the current strip, and [key] carries the
-/// digit the user pressed. The two are deliberately separate: docs/04
-/// §8's `Ctrl+n` names a view forever, while the index is whatever
-/// position that view happens to occupy in the v1 strip. Conflating them
-/// is exactly how the Schedule would drift onto `Ctrl+3` the first time
-/// somebody counted the tabs.
-final class SwitchViewIntent extends Intent {
-  const SwitchViewIntent({required this.key, required this.tabIndex});
-
-  /// The digit in `Ctrl+n` — 1, 2 or 4.
-  final int key;
-
-  /// Where that view sits in the v1 three-tab strip.
-  final int tabIndex;
-}
-
-/// The four file bindings.
+/// THE ORDINAL LIVES HERE AND NOWHERE ELSE, and that placement is the
+/// ruling rather than a convenience. docs/04 §8 line 456 and docs/10 :516:
+/// "`Ctrl+n` is a view identity, not an ordinal." The identity is
+/// permanent and belongs in the keymap registry; the index is whatever
+/// position that view happens to occupy in the strip THIS milestone
+/// renders, and it belongs in the file that builds the strip. They used to
+/// travel together inside `SwitchViewIntent`, which meant a shared,
+/// platform-level registry would have carried one milestone's tab order —
+/// the conflation the ruling forbids, written into the one place it would
+/// outlive every strip.
 ///
-/// INSTALLED ON `MaterialApp`, NOT ON A WIDGET INSIDE IT, and that is a
-/// correctness fix rather than a tidy-up. Flutter dispatches a key event
-/// up the FOCUS chain: a `Shortcuts` widget below the app's root focus
-/// scope only ever sees keys pressed while focus is inside its own
-/// subtree. The rack canvas autofocuses, so Ctrl+S appeared to work — and
-/// silently did nothing on the Schematic and Schedule tabs, where nothing
-/// in the subtree holds focus. The document is global; its keys have to
-/// be too.
-const Map<ShortcutActivator, Intent>
-kFileShortcuts = <ShortcutActivator, Intent>{
-  SingleActivator(LogicalKeyboardKey.keyN, control: true): NewDocumentIntent(),
-  SingleActivator(LogicalKeyboardKey.keyO, control: true): OpenDocumentIntent(),
-  SingleActivator(LogicalKeyboardKey.keyS, control: true): SaveDocumentIntent(),
-  SingleActivator(LogicalKeyboardKey.keyS, control: true, shift: true):
-      SaveDocumentAsIntent(),
-};
+/// THREE ENTRIES, AND `4` MAPS TO INDEX 2. That is not an off-by-one: the
+/// strip is Rack · Schematic · Schedule and CR-071 reserves `Ctrl+3` for
+/// the v1.1 Rear Panel, so the Schedule is the third TAB and the fourth
+/// KEY, permanently. See this file's header, and
+/// `session_layering_test.dart` RULE 14e — the test that exists to stop
+/// the tidy-up.
+const Map<int, int> kViewKeyToTabIndex = <int, int>{1: 0, 2: 1, 4: 2};
 
-/// docs/04 §8's view switch, `Ctrl+1..4`, as the v1 strip renders it.
-///
-/// THREE ENTRIES, AND `Ctrl+3` IS NOT ONE OF THEM. See this file's header:
-/// CR-071 reserves `Ctrl+3` for the interactive Rear Panel view, which is
-/// v1.1, and docs/04 §8 line 456 forbids rebinding the Schedule onto it.
-/// An entry for `Ctrl+3` here would either advertise a view that does not
-/// exist or move the Schedule off the key it keeps "in v1 and forever".
-const Map<ShortcutActivator, Intent>
-kViewShortcuts = <ShortcutActivator, Intent>{
-  SingleActivator(LogicalKeyboardKey.digit1, control: true): SwitchViewIntent(
-    key: 1,
-    tabIndex: 0,
-  ),
-  SingleActivator(LogicalKeyboardKey.digit2, control: true): SwitchViewIntent(
-    key: 2,
-    tabIndex: 1,
-  ),
-  SingleActivator(LogicalKeyboardKey.digit4, control: true): SwitchViewIntent(
-    key: 4,
-    tabIndex: 2,
-  ),
-};
-
-/// The handler for [kViewShortcuts].
+/// The handler for the registry's view-switch bindings.
 ///
 /// Takes the shell's `GlobalKey` rather than a `TabController`, because
 /// the controller belongs to a `State` that does not exist when the app's
@@ -136,18 +97,25 @@ kViewShortcuts = <ShortcutActivator, Intent>{
 /// FOCUSED context, and on the Schedule tab nothing in the subtree need
 /// hold focus. An `Actions` widget inside the shell would therefore work
 /// on the Rack tab (whose canvas autofocuses) and silently do nothing on
-/// the other two — the exact bug [kFileShortcuts] documents.
+/// the other two — the exact bug `KeyScope.global` documents.
 Map<Type, Action<Intent>> buildViewActions(GlobalKey<AppShellState> shell) =>
     <Type, Action<Intent>>{
       SwitchViewIntent: CallbackAction<SwitchViewIntent>(
         onInvoke: (intent) {
-          shell.currentState?.switchToTab(intent.tabIndex);
+          // An UNMAPPED view key does nothing, and does it silently. The
+          // registry may name a view this build does not render — that is
+          // exactly what `Ctrl+3` will be when the Rear Panel lands in the
+          // registry ahead of the tab — and "switch to a view that is not
+          // in the strip" has no honest answer but to decline.
+          final index = kViewKeyToTabIndex[intent.viewKey];
+          if (index != null) shell.currentState?.switchToTab(index);
           return null;
         },
       ),
     };
 
-/// The handlers for [kFileShortcuts], bound to one session.
+/// The handlers for the registry's four file bindings, bound to one
+/// session.
 Map<Type, Action<Intent>> buildFileActions(SessionController controller) =>
     <Type, Action<Intent>>{
       NewDocumentIntent: CallbackAction<NewDocumentIntent>(
@@ -377,9 +345,9 @@ final class AppShellState extends State<AppShell>
   ///
   /// §8.1's full `Ctrl+P` dialog — presets, the sheet checklist, palette,
   /// live preview — is not built this stage, and neither is the binding:
-  /// [kFileShortcuts] is exactly four, `session_layering_test.dart` RULE
-  /// 14 asserts it, and that rule exists so a fifth cannot arrive without
-  /// the decision being taken again.
+  /// the registry's global scope is exactly four file bindings,
+  /// `session_layering_test.dart` RULE 14 asserts it, and that rule exists
+  /// so a fifth cannot arrive without the decision being taken again.
   Future<void> _exportPdf() async {
     await _services.export.exportPdf();
   }
@@ -648,18 +616,12 @@ final class _FileMenu extends StatelessWidget {
           onOpen: () => unawaited(onOpenMenu()),
           menuChildren: [
             MenuItemButton(
-              shortcut: const SingleActivator(
-                LogicalKeyboardKey.keyN,
-                control: true,
-              ),
+              shortcut: keymapActivator(KeyBindingId.newDocument),
               onPressed: () => unawaited(onNew()),
               child: const Text('New'),
             ),
             MenuItemButton(
-              shortcut: const SingleActivator(
-                LogicalKeyboardKey.keyO,
-                control: true,
-              ),
+              shortcut: keymapActivator(KeyBindingId.openDocument),
               onPressed: () => unawaited(onOpen()),
               child: const Text('Open…'),
             ),
@@ -688,30 +650,27 @@ final class _FileMenu extends StatelessWidget {
               child: const Text('Open Recent'),
             ),
             MenuItemButton(
-              shortcut: const SingleActivator(
-                LogicalKeyboardKey.keyS,
-                control: true,
-              ),
+              shortcut: keymapActivator(KeyBindingId.saveDocument),
               onPressed: () => unawaited(onSave()),
               child: const Text('Save'),
             ),
             MenuItemButton(
-              shortcut: const SingleActivator(
-                LogicalKeyboardKey.keyS,
-                control: true,
-                shift: true,
-              ),
+              shortcut: keymapActivator(KeyBindingId.saveDocumentAs),
               onPressed: () => unawaited(onSaveAs()),
               child: const Text('Save As…'),
             ),
             // NO `shortcut:` — and that is a decision, not an omission.
             // docs/08 §8.1 gives export `Ctrl+P`, but
-            // `session_layering_test.dart` RULE 14 asserts exactly four
-            // bindings and eight activators precisely so the file group
-            // cannot grow a fifth member without that being re-taken.
-            // Declaring one here would ALSO advertise a key nothing
-            // listens for, which is the other half of what that rule
-            // protects.
+            // `session_layering_test.dart` RULE 14 asserts the global
+            // group at exactly four file bindings precisely so it cannot
+            // grow a fifth member without that being re-taken.
+            //
+            // THE OTHER HALF OF WHAT THAT RULE PROTECTED is now
+            // structural: a `shortcut:` here would have to name a
+            // `KeyBindingId`, and naming one that is not bound is not
+            // possible — the registry row IS the binding. What is left to
+            // assert is that this item still has no accelerator at all,
+            // which is a count RULE 14 keeps.
             MenuItemButton(
               onPressed: () => unawaited(onExportPdf()),
               child: const Text('Export PDF…'),

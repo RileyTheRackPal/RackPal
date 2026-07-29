@@ -30,7 +30,7 @@
 // `rackmate_ui` free of the native file dialog, `window_manager` and
 // `dart:io`.
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:rackmate_ui/src/keymap/keymap.dart';
 
 /// What the user chose at the close-while-dirty prompt.
 enum UnsavedChangesChoice {
@@ -73,14 +73,20 @@ final class UnsavedChangesDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CallbackShortcuts(
-      bindings: <ShortcutActivator, VoidCallback>{
-        // Esc is Cancel, everywhere, always. Bound explicitly rather than
-        // left to the route's own pop, because a bare pop returns null
-        // and a null here would have to be interpreted — and the only
-        // safe interpretation IS cancel, so it is said out loud.
-        const SingleActivator(LogicalKeyboardKey.escape): () =>
-            Navigator.of(context).pop(UnsavedChangesChoice.cancel),
-      },
+      // "Esc is Cancel, EVERYWHERE, ALWAYS" is what this comment said, in
+      // three dialogs, three times. It is one declaration now
+      // (`KeyBindingId.dialogDismiss`), so the sentence is enforced rather
+      // than repeated — and the row is in the generated table, where
+      // arbitration can check that `Esc` means the same thing here as it
+      // does on both canvases (canon §1.10 principle (b)).
+      //
+      // STILL BOUND EXPLICITLY rather than left to the route's own pop,
+      // and that half is unchanged: a bare pop returns null, a null here
+      // would have to be interpreted, and the only safe interpretation IS
+      // cancel — so it is said out loud.
+      bindings: dialogDismissShortcut(
+        () => Navigator.of(context).pop(UnsavedChangesChoice.cancel),
+      ),
       child: AlertDialog(
         title: Text('Save changes to $documentName?'),
         content: Text(bodyText(editCount)),

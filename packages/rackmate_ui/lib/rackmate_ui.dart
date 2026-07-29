@@ -72,6 +72,12 @@ export 'src/inspector/inspector_panel.dart';
 export 'src/inspector/new_rack_dialog.dart';
 export 'src/inspector/rack_inspector_panel.dart';
 export 'src/inspector/shrink_rack_dialog.dart';
+// `src/keymap/` — THE ONE KEYMAP REGISTRY (macOS debt D7, M7's generated
+// table, CR-101's arbitration). Exported rather than kept private because
+// the app layer binds the global scope on `MaterialApp` and renders the
+// File menu's accelerators from it: a registry only half the application
+// can read is two registries.
+export 'src/keymap/keymap.dart';
 export 'src/palette/device_palette_panel.dart';
 export 'src/schedule/schedule_screen.dart';
 // `src/shell/` — shell-shaped WIDGETS the app composes. Every one of the

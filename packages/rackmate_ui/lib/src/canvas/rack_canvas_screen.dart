@@ -32,6 +32,7 @@ import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
 import 'package:rackmate_ui/src/inspector/inspector_panel.dart';
 import 'package:rackmate_ui/src/inspector/new_rack_dialog.dart';
 import 'package:rackmate_ui/src/inspector/shrink_rack_dialog.dart';
+import 'package:rackmate_ui/src/keymap/keymap.dart';
 import 'package:rackmate_ui/src/palette/device_palette_panel.dart';
 import 'package:rackmate_ui/src/shell/no_racks_view.dart';
 
@@ -2344,7 +2345,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   }
 
   /// SECOND LINE OF DEFENCE, deliberately redundant with the
-  /// `isActionEnabled` gate on `_DeleteIntent`.
+  /// `isActionEnabled` gate on `DeleteSelectionIntent`.
   ///
   /// This is the only keyboard action on the screen that DESTROYS DOCUMENT
   /// STATE, and it was the only one with no focus guard at all while its
@@ -2510,7 +2511,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// `Esc` inside the palette filter: clear the query and hand focus back to
   /// the canvas.
   ///
-  /// Field-local, and deliberately NOT routed through `_CancelDragIntent` —
+  /// Field-local, and deliberately NOT routed through `RackCancelIntent` —
   /// that binding is gated OFF while a text field has focus, precisely so
   /// `Esc` cannot reach across and clear the canvas selection out from under
   /// someone who is typing. This is the other half of that decision: having
@@ -3529,79 +3530,30 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // (delete the selection) and Ctrl/Cmd+Z / Ctrl/Cmd+Shift+Z / Ctrl+Y
     // (undo/redo). SingleActivator's exact-modifier match keeps Ctrl+Z and
     // Ctrl+Shift+Z mutually exclusive, so redo never also fires undo.
+    //
+    // ══════════════════════════════════════════════════════════════════
+    // THE KEYS ARE DECLARED IN `keymap.dart`, NOT HERE (macOS debt D7)
+    // ══════════════════════════════════════════════════════════════════
+    // Eighteen `SingleActivator` literals used to sit in this map, five of
+    // them hard-coding `control: true`. They are now sixteen rows in
+    // `kKeymap` under `KeyScope.rack`, and `keymapShortcuts` resolves the
+    // primary modifier per platform — `Ctrl` on Windows, `Cmd` on macOS —
+    // through `defaultTargetPlatform`.
+    //
+    // SIXTEEN, NOT EIGHTEEN, and the two that went are the point of the
+    // exercise rather than a loss. This map carried BOTH
+    // `SingleActivator(keyZ, control: true)` and
+    // `SingleActivator(keyZ, meta: true)` (and the same pair with
+    // `shift`), because somebody had already anticipated macOS and paid
+    // for it in duplicate literals — a per-file, hand-rolled D7. One
+    // `primary` row now says what two said. See `kKeymap`'s undo entry for
+    // what that removes on Windows and why nothing else moves.
+    //
+    // WHAT THIS FILE STILL OWNS is the `Actions` map below: the registry
+    // declares what a key MEANS, this screen decides when it is ALLOWED
+    // to mean it. That division is load-bearing — see `_GatedAction`.
     return Shortcuts(
-      shortcuts: const <ShortcutActivator, Intent>{
-        SingleActivator(LogicalKeyboardKey.delete): _DeleteIntent(),
-        SingleActivator(LogicalKeyboardKey.backspace): _DeleteIntent(),
-        SingleActivator(LogicalKeyboardKey.keyZ, control: true): _UndoIntent(),
-        SingleActivator(LogicalKeyboardKey.keyZ, meta: true): _UndoIntent(),
-        SingleActivator(LogicalKeyboardKey.keyZ, control: true, shift: true):
-            _RedoIntent(),
-        SingleActivator(LogicalKeyboardKey.keyZ, meta: true, shift: true):
-            _RedoIntent(),
-        SingleActivator(LogicalKeyboardKey.keyY, control: true): _RedoIntent(),
-        // docs/04 §3.2 / §8: "/" focuses the palette search field — the
-        // fastest path to populating a rack.
-        SingleActivator(LogicalKeyboardKey.slash): _FocusPaletteSearchIntent(),
-        // docs/04 §3.4: the insertion caret (no selection) / keyboard nudge
-        // (a selection exists). Every activator here is BARE (no
-        // modifiers) — SingleActivator's exact-modifier match means
-        // Shift/Ctrl/Alt+Up/Down simply do not trigger these, which is the
-        // deferral mechanism for the out-of-scope modified variants (see
-        // the dispatcher methods' doc comment for exactly what's deferred
-        // and why).
-        SingleActivator(LogicalKeyboardKey.arrowUp): _ArrowUpIntent(),
-        SingleActivator(LogicalKeyboardKey.arrowDown): _ArrowDownIntent(),
-        SingleActivator(LogicalKeyboardKey.home): _HomeIntent(),
-        SingleActivator(LogicalKeyboardKey.end): _EndIntent(),
-        SingleActivator(LogicalKeyboardKey.pageUp): _PageUpIntent(),
-        SingleActivator(LogicalKeyboardKey.pageDown): _PageDownIntent(),
-        // docs/04 §3.3 step 4: "`Esc` mid-drag reverts."
-        //
-        // WHY THE `Shortcuts` LAYER HERE, when the PALETTE drag needed a raw
-        // `HardwareKeyboard.instance.addHandler` hook instead (see
-        // `_onRawKeyDuringPaletteDrag`): that hook exists because a palette
-        // drag is armed from a sibling widget while Flutter focus may be
-        // anywhere (or nowhere), so no focus-scoped binding could be trusted
-        // to hear the key. A move drag has the opposite guarantee —
-        // `_onBeginDrag` calls `_canvasFocus.requestFocus()` as its very
-        // first statement, so the canvas provably owns focus for the whole
-        // gesture. Using the ordinary binding here keeps this out of the
-        // handler-registration leak class those raw hooks live in, at the
-        // cost of one deliberately-stated asymmetry.
-        //
-        // WITH NOTHING IN FLIGHT IT CLEARS THE SELECTION — docs/04 §8's
-        // third limb, "cancel drag, exit mode, clear selection". This
-        // comment used to read "`_onEscape` finds nothing to cancel and does
-        // nothing. It is NOT a general deselect key", which was true of the
-        // build that wrote it and stopped being true in the same changeset
-        // that added the deselect; both sentences are replaced rather than
-        // left to rot, because a keymap comment that has quietly stopped
-        // describing the keymap is this repository's signature defect. It
-        // also cancels an open compaction preview (§3.6), and it does NOT
-        // deselect when the same keypress just cancelled a palette drag
-        // (see `_onEscape`).
-        SingleActivator(LogicalKeyboardKey.escape): _CancelDragIntent(),
-        // docs/04 §4 / §8's keymap: `Ctrl+Alt+U` opens the RackInspector —
-        // the third of the section's three entry points.
-        SingleActivator(LogicalKeyboardKey.keyU, control: true, alt: true):
-            _RackSettingsIntent(),
-        // docs/04 §8's keymap, verbatim: "`Ctrl+Alt+U` / `Ctrl+Alt+N` —
-        // rack settings · new rack — rack". The second half had nothing
-        // behind it until docs/04 §9's dialog landed.
-        SingleActivator(LogicalKeyboardKey.keyN, control: true, alt: true):
-            _NewRackIntent(),
-        // docs/04 §3.6: "Enter applies as one undo entry." Bound BARE, and
-        // therefore inside the same subtree as the palette search box and
-        // the focusable palette rows — see `_ApplyCompactionAction` for why
-        // that is safe (a real `Action` whose `isActionEnabled` is false
-        // when no preview is open, so the key falls through unhandled).
-        //
-        // `Ctrl+B` is deliberately ABSENT: §3.6/AC-045 keep it RESERVED AND
-        // UNBOUND in v1. Compact Up/Down are reachable from the rack
-        // header's overflow menu instead.
-        SingleActivator(LogicalKeyboardKey.enter): _ApplyCompactionIntent(),
-      },
+      shortcuts: keymapShortcuts(KeyScope.rack),
       child: Actions(
         // EVERY ENTRY HERE IS GATED. Not one may be a `CallbackAction`: see
         // `_GatedAction`'s doc comment for why a `CallbackAction` swallows
@@ -3629,17 +3581,26 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
           // DESTRUCTIVE. Canvas focus, not merely "not a text field" — see
           // the Tab case above. `_deleteSelection` repeats this guard in
           // its own body as a deliberate second line of defence.
-          _DeleteIntent: _GatedAction<_DeleteIntent>(
+          DeleteSelectionIntent: _GatedAction<DeleteSelectionIntent>(
             () => _canvasFocus.hasFocus,
             _deleteSelection,
           ),
           // Document-global: a rack rename typed in the inspector and an
           // undo pressed from the palette are both legitimate.
-          _UndoIntent: _GatedAction<_UndoIntent>(
+          //
+          // "Document-global" DESCRIBES THE GATE, NOT THE REACH, and the
+          // registry now says so out loud (`kKeymap`'s undo note). The
+          // `Shortcuts` these bindings live in is this screen's, so the
+          // gate lets undo through from the palette and the inspector —
+          // and `Ctrl+Z` still reaches nothing at all on the Schematic and
+          // Schedule tabs. Widening the scope is a rebinding and belongs
+          // to a ruling; the note exists so it is a decision somebody
+          // takes rather than a fact nobody noticed.
+          UndoIntent: _GatedAction<UndoIntent>(
             () => !_textFieldHasFocus,
             _undo,
           ),
-          _RedoIntent: _GatedAction<_RedoIntent>(
+          RedoIntent: _GatedAction<RedoIntent>(
             () => !_textFieldHasFocus,
             _redo,
           ),
@@ -3648,7 +3609,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
           // search field, at a moment when canvas focus is not guaranteed;
           // `!_textFieldHasFocus` is the honest condition (the only thing
           // `/` must never do is fail to type a slash into a field).
-          _FocusPaletteSearchIntent: _GatedAction<_FocusPaletteSearchIntent>(
+          FocusPaletteSearchIntent: _GatedAction<FocusPaletteSearchIntent>(
             () => !_textFieldHasFocus,
             _focusPaletteSearch,
           ),
@@ -3657,27 +3618,27 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
           // releases the key instead of eating it, so a focused header
           // stepper gets its own Up/Down and a text field gets its own
           // Home/End.
-          _ArrowUpIntent: _GatedAction<_ArrowUpIntent>(
+          CaretUpIntent: _GatedAction<CaretUpIntent>(
             () => _canvasFocus.hasFocus,
             _onArrowUp,
           ),
-          _ArrowDownIntent: _GatedAction<_ArrowDownIntent>(
+          CaretDownIntent: _GatedAction<CaretDownIntent>(
             () => _canvasFocus.hasFocus,
             _onArrowDown,
           ),
-          _HomeIntent: _GatedAction<_HomeIntent>(
+          CaretHomeIntent: _GatedAction<CaretHomeIntent>(
             () => _canvasFocus.hasFocus,
             _onHome,
           ),
-          _EndIntent: _GatedAction<_EndIntent>(
+          CaretEndIntent: _GatedAction<CaretEndIntent>(
             () => _canvasFocus.hasFocus,
             _onEnd,
           ),
-          _PageUpIntent: _GatedAction<_PageUpIntent>(
+          CaretPageUpIntent: _GatedAction<CaretPageUpIntent>(
             () => _canvasFocus.hasFocus,
             _onPageUp,
           ),
-          _PageDownIntent: _GatedAction<_PageDownIntent>(
+          CaretPageDownIntent: _GatedAction<CaretPageDownIntent>(
             () => _canvasFocus.hasFocus,
             _onPageDown,
           ),
@@ -3688,7 +3649,24 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
           // here — that case is served by the raw `HardwareKeyboard` hook
           // (`_onRawKeyDuringPaletteDrag`), which runs ahead of the focus
           // chain and returns false for every key but Escape.
-          _CancelDragIntent: _GatedAction<_CancelDragIntent>(
+          //
+          // WHY A `Shortcuts` BINDING SUFFICES FOR THE MOVE DRAG when the
+          // PALETTE drag needed that raw hook, since the asymmetry reads
+          // like an inconsistency: a palette drag is armed from a sibling
+          // widget while Flutter focus may be anywhere (or nowhere), so no
+          // focus-scoped binding could be trusted to hear the key. A move
+          // drag has the opposite guarantee — `_onBeginDrag` calls
+          // `_canvasFocus.requestFocus()` as its very first statement, so
+          // the canvas provably owns focus for the whole gesture. Using the
+          // ordinary binding here keeps this out of the
+          // handler-registration leak class those raw hooks live in, at the
+          // cost of one deliberately-stated asymmetry.
+          //
+          // WITH NOTHING IN FLIGHT IT CLEARS THE SELECTION — docs/04 §8's
+          // third limb, "cancel drag, exit mode, clear selection" — and it
+          // does NOT deselect when the same keypress just cancelled a
+          // palette drag (see `_onEscape`).
+          RackCancelIntent: _GatedAction<RackCancelIntent>(
             () =>
                 _resize.isActive ||
                 _compaction.isActive ||
@@ -3701,11 +3679,11 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
           // Gating on `!_textFieldHasFocus` means the character survives
           // wherever it could actually be typed. (The collision remains
           // when the canvas has focus; see docs/04 §8.)
-          _RackSettingsIntent: _GatedAction<_RackSettingsIntent>(
+          RackSettingsIntent: _GatedAction<RackSettingsIntent>(
             () => !_textFieldHasFocus,
             () => _showRackInspector(focusFirstField: true),
           ),
-          _NewRackIntent: _GatedAction<_NewRackIntent>(
+          NewRackIntent: _GatedAction<NewRackIntent>(
             () => !_textFieldHasFocus,
             () => unawaited(_showNewRackDialog()),
           ),
@@ -3713,7 +3691,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
           // CallbackAction returning null still reports the key as HANDLED,
           // which would swallow every `Enter` in the palette search box and
           // on every focusable palette row.
-          _ApplyCompactionIntent: _ApplyCompactionAction(this),
+          ApplyCompactionIntent: _ApplyCompactionAction(this),
         },
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -4098,80 +4076,17 @@ enum _HeightOutcome {
   deferredToModal,
 }
 
-// ── keyboard intents + the pointer-agnostic editing handler ────────────────
-
-/// Delete the current selection (`Del` / `Backspace`).
-class _DeleteIntent extends Intent {
-  const _DeleteIntent();
-}
-
-/// Undo the last committed transaction (`Ctrl/Cmd+Z`).
-class _UndoIntent extends Intent {
-  const _UndoIntent();
-}
-
-/// Redo the last undone transaction (`Ctrl/Cmd+Shift+Z`, `Ctrl+Y`).
-class _RedoIntent extends Intent {
-  const _RedoIntent();
-}
-
-/// Focus the palette search field (`/`).
-class _FocusPaletteSearchIntent extends Intent {
-  const _FocusPaletteSearchIntent();
-}
-
-/// Move the caret up 1U, or nudge the focused selection up 1U (`↑`).
-class _ArrowUpIntent extends Intent {
-  const _ArrowUpIntent();
-}
-
-/// Move the caret down 1U, or nudge the focused selection down 1U (`↓`).
-class _ArrowDownIntent extends Intent {
-  const _ArrowDownIntent();
-}
-
-/// Caret to U1, or nudge the focused selection to its lowest fitting
-/// position (`Home`).
-class _HomeIntent extends Intent {
-  const _HomeIntent();
-}
-
-/// Caret to the top U, or nudge the focused selection to its highest
-/// fitting position (`End`).
-class _EndIntent extends Intent {
-  const _EndIntent();
-}
-
-/// Move the caret up 10U, or nudge the focused selection up 10U (`PgUp`).
-class _PageUpIntent extends Intent {
-  const _PageUpIntent();
-}
-
-/// Move the caret down 10U, or nudge the focused selection down 10U
-/// (`PgDn`).
-class _PageDownIntent extends Intent {
-  const _PageDownIntent();
-}
-
-/// Revert an in-flight move drag, or cancel an open compaction preview
-/// (`Esc`, docs/04 §3.3 step 4 and §3.6).
-class _CancelDragIntent extends Intent {
-  const _CancelDragIntent();
-}
-
-/// Open the `RackInspector` (`Ctrl+Alt+U`, docs/04 §4 and §8's keymap).
-class _RackSettingsIntent extends Intent {
-  const _RackSettingsIntent();
-}
-
-class _NewRackIntent extends Intent {
-  const _NewRackIntent();
-}
-
-/// Apply an open compaction preview (`Enter`, docs/04 §3.6).
-class _ApplyCompactionIntent extends Intent {
-  const _ApplyCompactionIntent();
-}
+// ── keyboard actions + the pointer-agnostic editing handler ────────────────
+//
+// THE INTENTS THAT USED TO BE DECLARED HERE ARE IN `keymap.dart`.
+// Fourteen private classes stood at this point in the file —
+// `_DeleteIntent`, `_UndoIntent`, `_ArrowUpIntent` and eleven siblings —
+// and their privacy was exactly what made CR-101's "one `Intent` registry"
+// impossible: an intent a registry cannot name is a binding a generated
+// table cannot list. They are public now, declared beside the keys they
+// answer to, and this file keeps what is genuinely local to it — the
+// ACTIONS, and the gating that decides when each key is allowed to mean
+// what the registry says it means.
 
 /// `Enter` -> apply the compaction preview, IF one is open.
 ///
@@ -4199,7 +4114,7 @@ class _ApplyCompactionIntent extends Intent {
 /// the focus chain. The `isActionEnabled` override is not a belt-and-braces
 /// guarantee behind a handler that would have caught it — it is the ONLY
 /// thing standing between this binding and every `Enter` in the filter box.
-class _ApplyCompactionAction extends Action<_ApplyCompactionIntent> {
+class _ApplyCompactionAction extends Action<ApplyCompactionIntent> {
   _ApplyCompactionAction(this._state);
 
   final _RackCanvasScreenState _state;
@@ -4209,7 +4124,7 @@ class _ApplyCompactionAction extends Action<_ApplyCompactionIntent> {
       _state._compaction.isActive && !_state._textFieldHasFocus;
 
   @override
-  void invoke(_ApplyCompactionIntent intent) => _state._applyCompaction();
+  void invoke(ApplyCompactionIntent intent) => _state._applyCompaction();
 }
 
 /// A real [Action] whose enablement is a predicate evaluated FRESH ON EVERY

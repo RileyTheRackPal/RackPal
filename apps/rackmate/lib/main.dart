@@ -16,6 +16,7 @@ import 'package:rackmate/src/storage/io_file_store.dart';
 import 'package:rackmate/src/storage/prefs_store.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_text/rackmate_text.dart';
+import 'package:rackmate_ui/rackmate_ui.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 
 // M1: the rack editor canvas plus the file lifecycle. The viewport
@@ -270,14 +271,20 @@ class RackMateApp extends StatelessWidget {
     return MaterialApp(
       title: 'RackMate',
       navigatorKey: navigatorKey,
-      // THE FILE BINDINGS GO HERE, above the app's root focus scope,
-      // because the document is global. See `kFileShortcuts`. The
+      // THE FILE AND VIEW BINDINGS GO HERE, above the app's root focus
+      // scope, because the document is global. See `KeyScope.global`. The
       // defaults are merged rather than replaced: dropping them would
       // take Tab traversal, Enter-activates and Esc-dismisses with them.
+      //
+      // ONE CALL WHERE TWO CONST MAPS USED TO BE. `keymapShortcuts`
+      // resolves the primary modifier for this platform — `Ctrl` here,
+      // `Cmd` on macOS (debt D7) — so this is the only line in the app
+      // that has to know a `MaterialApp` exists, and none that has to know
+      // which key `Save` is on. It is memoised per (scope, platform), so
+      // rebuilding this widget does not rebuild the map.
       shortcuts: {
         ...WidgetsApp.defaultShortcuts,
-        ...kFileShortcuts,
-        ...kViewShortcuts,
+        ...keymapShortcuts(KeyScope.global),
       },
       actions: {
         ...WidgetsApp.defaultActions,

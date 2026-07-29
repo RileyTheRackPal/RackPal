@@ -49,7 +49,7 @@ Cost column is an **estimate**, not a measurement, unless marked otherwise.
 | **D4** | **CI has one job, pinned to Windows.** `azure-pipelines.yml:180` `job: windows_ci`, `:196` `vmImage: 'windows-2022'`. Needs a macOS job. Note the pipeline's own comment at `:106` already anticipates a matrix: *"that is a later question"* — **it is now this question** | `azure-pipelines.yml` | days |
 | **D5** | **Gate scripts are PowerShell.** Six `.ps1` under `tools/ci/`. Likely runnable under `pwsh` on macOS unmodified — **verify before budgeting a rewrite** | `tools/ci/` | verify first |
 | **D6** | **`verify_windows_build.ps1`** is Windows-specific by name and purpose; needs a macOS counterpart | `tools/ci/` | hours |
-| **D7** | **KEYBOARD MODIFIERS — the time-sensitive item.** 22 hard-coded `SingleActivator` bindings assume `Ctrl`: 4 in `app_shell.dart:69-76` (`kFileShortcuts`, asserted at exactly four by `session_layering_test` RULE 14) and 18 in `rack_canvas_screen.dart:3278-3350`. macOS needs `Cmd`. §10.10 prices this across *"~40 bindings"* — the count grows toward that with M2-F. **See §3** | milestone board §5.6 | **do early** |
+| **D7** | ~~KEYBOARD MODIFIERS~~ — **CLEARED.** Was 43 hard-coded `SingleActivator` bindings assuming `Ctrl`, across six files. Now a 35-row `kKeymap` registry whose primary modifier resolves once, in `KeyBinding.activatorFor(TargetPlatform)`, through `defaultTargetPlatform`. **Zero `SingleActivator` instances remain outside the registry**, and `session_layering_test` RULE 14 asserts `app_shell.dart` contains none — a hand-rolled binding would be invisible to the table and would re-hardcode `Ctrl`. See §3 | `packages/rackmate_ui/lib/src/keymap/keymap.dart` | **done** |
 | **D8** | **Code signing.** DR-006 rules Windows self-signing; macOS needs **notarisation and stapling**, which D10 names and §12.9 explicitly leaves *"unaffected and still binding"* | canon `:2696`, `:5875` | days + Apple Developer enrolment lead time |
 | **D9** | **pdfium is vendored per platform** (CR-100). A macOS binary must be vendored and verified | canon `:1517` | days |
 | **D10** | **`window_manager` / `screen_retriever_windows`** for geometry restore. `window_manager` is cross-platform; the pinned `screen_retriever_windows` transitive is not | `pubspec.yaml:87` | hours |
@@ -69,15 +69,28 @@ whether `pwsh` runs the gate suite unmodified (D5).
 *"the one to design first, not last"* — because M1's equivalent clause was **REFUTED by the user
 on 2026-07-27** for exactly the reason a late keyboard pass produces.
 
-The binding count is **22 today** against §10.10's **~40** estimate. Extracting the modifier now is
-roughly half the edit it becomes after M2-F, and it is independently owed: M7's exit criterion
-requires *"no keybinding bound twice **in the generated table**"*, and the milestone board records
-that **nothing generates a table** — the ~40-binding keymap does not exist, which is why CR-101's
-16 collisions are unfixed.
+The binding count was **22 when this register was compiled**, against §10.10's **~40** estimate.
+Extracting the modifier then was roughly half the edit it becomes after M2-F, and it was
+independently owed: M7's exit criterion requires *"no keybinding bound twice **in the generated
+table**"*, and the milestone board recorded that **nothing generates a table**.
 
-So D7 pays three debts at once — macOS modifiers, M7's generated table, CR-101's collisions — and
-gets more expensive with every binding added. **Nothing else in this register has that property**,
-which is why nothing else is being pulled into M2.
+So D7 paid three debts at once — macOS modifiers, M7's generated table, CR-101's collisions — and
+got more expensive with every binding added. **Nothing else in this register has that property**,
+which is why nothing else was pulled into M2.
+
+**THE ESTIMATE WAS BEATEN BY REALITY WHILE THE REGISTER WAS BEING WRITTEN.** By the time D7 was
+built, the count was **43**, not 22 — M2-D and M2-E added twenty-one bindings between the
+compilation of this register and the extraction. §10.10's "~40" was already exceeded. Recorded
+because it is the register's own thesis demonstrated: this was the one item whose cost grew with
+every commit, and it grew by ~95% in a single day of work on other tasks.
+
+**Cleared 2026-07-28.** 43 instances across six files became a 35-row registry: the File menu's
+four accelerators were a *second copy* of four bindings and now read one row, three dialogs each
+declaring "Esc is Cancel, everywhere, always" became one, and `Ctrl+Z`/`Cmd+Z` plus
+`Ctrl+Shift+Z`/`Cmd+Shift+Z` turned out to be **four literals where someone had already hand-rolled
+D7** for undo alone. `arbitrate()` checks four conflict kinds across **every** `TargetPlatform`,
+which is the only way a Windows machine sees a macOS-only collision — verified by injecting a
+duplicate and watching it fail with `duplicateInScope: Ctrl+S — openDocument vs saveDocument`.
 
 ---
 
