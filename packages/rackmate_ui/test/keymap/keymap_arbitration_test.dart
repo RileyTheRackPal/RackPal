@@ -115,11 +115,18 @@ void main() {
       //   * the three dialogs' three became one, because all three bind
       //     `Esc` to the same meaning and each supplies only its own
       //     conservative return value.
+      //
+      // M2-F ADDS EIGHT SCHEMATIC ROWS, and they are not an extraction —
+      // they are docs/05 §7's keyboard route, which had no bindings at all
+      // because nothing could create a connection. `W` to arm, `Enter` to
+      // commit, `Tab`/`Shift+Tab` to cycle candidates, and four arrows to
+      // move the pin caret. DR-011's "the order that matters" is why they
+      // arrive with the gesture rather than after it.
       expect(keyBindingsIn(KeyScope.global), hasLength(7));
       expect(keyBindingsIn(KeyScope.rack), hasLength(16));
-      expect(keyBindingsIn(KeyScope.schematic), hasLength(11));
+      expect(keyBindingsIn(KeyScope.schematic), hasLength(19));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(35));
+      expect(kKeymap, hasLength(43));
     });
   });
 
@@ -452,7 +459,7 @@ void main() {
   });
 
   group('the framework defaults this app takes keys away from', () {
-    testWidgets('are exactly these eight, and no more', (tester) async {
+    testWidgets('are exactly these fifteen, and no more', (tester) async {
       // A REPORT WITH TEETH, NOT A FAILURE. `WidgetsApp` installs `Enter`
       // -> ActivateIntent, `Esc` -> DismissIntent, the arrows ->
       // DirectionalFocusIntent and the page keys -> ScrollIntent at the
@@ -460,11 +467,24 @@ void main() {
       // that key off the framework for its whole subtree.
       //
       // Each one is deliberate and each is argued where it is handled —
-      // this is the rack canvas's caret, its compaction Enter and the
-      // universal cancel. What must not happen is a NINTH arriving
-      // unnoticed: an ungated binding on a framework chord does not merely
-      // shadow a default, it took `Backspace` away from six text fields
-      // for nine days (see `_GatedAction`).
+      // the rack canvas's caret, its compaction Enter, the universal
+      // cancel, and since M2-F the schematic's whole keyboard connect
+      // route. What must not happen is a SIXTEENTH arriving unnoticed: an
+      // ungated binding on a framework chord does not merely shadow a
+      // default, it took `Backspace` away from six text fields for nine
+      // days (see `_GatedAction`).
+      //
+      // THE SEVEN M2-F ADDS ARE THE EXPENSIVE ONES, because two of them
+      // are `Tab`. docs/05 §7 gives the keyboard route as "`Tab` to a
+      // port, `W` to begin a wire, `Tab`/arrow to a candidate port" — and
+      // `Tab` is how a keyboard-only user LEAVES a canvas that autofocuses.
+      // Both `Tab` rows are therefore gated on a wire actually being in
+      // flight, so an idle sheet hands the key straight back to focus
+      // traversal. That is not a narrowing of the spec; it is the only
+      // reading of it under which AC-058/D11's keyboard requirement and
+      // M7's screen-reader matrix can both hold. The four arrows and the
+      // commit `Enter` are gated on canvas focus like their rack
+      // counterparts.
       //
       // A `testWidgets` rather than a `test` because
       // `WidgetsApp.defaultShortcuts` is read through the binding, and
@@ -482,6 +502,14 @@ void main() {
           KeyBindingId.schematicCancel,
           KeyBindingId.dialogDismiss,
           KeyBindingId.applyCompaction,
+          // M2-F, docs/05 §7 — see the note above.
+          KeyBindingId.commitWire,
+          KeyBindingId.nextCandidatePin,
+          KeyBindingId.previousCandidatePin,
+          KeyBindingId.pinCaretUp,
+          KeyBindingId.pinCaretDown,
+          KeyBindingId.pinCaretLeft,
+          KeyBindingId.pinCaretRight,
         ]),
         reason:
             'a binding that shadows a WidgetsApp default must be gated on '

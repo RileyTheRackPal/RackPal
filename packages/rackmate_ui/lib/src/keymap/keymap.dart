@@ -82,7 +82,13 @@ import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter/widgets.dart'
-    show Intent, ShortcutActivator, SingleActivator, VoidCallback, WidgetsApp;
+    show
+        AxisDirection,
+        Intent,
+        ShortcutActivator,
+        SingleActivator,
+        VoidCallback,
+        WidgetsApp;
 
 /// Where a binding is installed, and therefore where it must be unique.
 ///
@@ -164,6 +170,14 @@ enum KeyBindingId {
   showAllDomains,
   focusSelection,
   schematicCancel,
+  beginWire,
+  commitWire,
+  nextCandidatePin,
+  previousCandidatePin,
+  pinCaretUp,
+  pinCaretDown,
+  pinCaretLeft,
+  pinCaretRight,
 
   // --- dialog ---------------------------------------------------------
   dialogDismiss,
@@ -320,6 +334,64 @@ final class FocusSelectionIntent extends Intent {
 /// Drop the focus set, then the selection (`Esc`, docs/05 §11.4).
 final class SchematicCancelIntent extends Intent {
   const SchematicCancelIntent();
+}
+
+/// Begin a wire from the pin under the caret (`W`, docs/05 §7 and §14).
+final class BeginWireIntent extends Intent {
+  const BeginWireIntent();
+}
+
+/// Commit the wire in flight (`Enter`, docs/05 §7's keyboard path).
+///
+/// A SIBLING OF [ApplyCompactionIntent], NOT A REPLACEMENT FOR IT, and
+/// DR-011.6 is why they are two types under ONE label. `Esc` already has
+/// three intents and one label for the same reason: three surfaces handle
+/// it, so three `Actions` maps need three keys, but it MEANS one thing and
+/// [KeymapConflictKind.meaningDrift] is what holds that true.
+///
+/// The rejected alternative is the interesting one. Widening `meaningDrift`
+/// to permit per-scope labels was the smaller edit and is the wrong one:
+/// that rule exists to stop one key meaning two things, and A KEYBOARD-ONLY
+/// USER CANNOT SEE A SCOPE BOUNDARY — which is precisely the population
+/// docs/05's keyboard path is for.
+final class CommitWireIntent extends Intent {
+  const CommitWireIntent();
+}
+
+/// Move the pin caret to the next/previous candidate while a wire is in
+/// flight (`Tab` / `Shift+Tab`, docs/05 §7).
+///
+/// GATED ON A WIRE BEING ARMED, and that is a decision worth recording
+/// rather than a limitation. docs/05 §7 gives the keyboard route as "`Tab`
+/// to a port, `W` to begin a wire, `Tab`/arrow to a candidate port"; a
+/// schematic that owned bare `Tab` UNCONDITIONALLY would take it from focus
+/// traversal, and the canvas autofocuses — so a keyboard-only user could
+/// enter the sheet and never leave it. AC-058/D11 makes the keyboard route
+/// a v1 requirement and M7's exit criterion is a screen-reader matrix; a
+/// canvas that traps `Tab` fails both. So `Tab` cycles CANDIDATES while
+/// armed and falls through to traversal when idle, and the ARROWS (below)
+/// are what reach a pin in the first place.
+final class NextCandidatePinIntent extends Intent {
+  const NextCandidatePinIntent();
+}
+
+/// See [NextCandidatePinIntent].
+final class PreviousCandidatePinIntent extends Intent {
+  const PreviousCandidatePinIntent();
+}
+
+/// Move the pin caret one pin in [direction] (docs/05 §7's "`Tab`/arrow to
+/// a candidate port").
+///
+/// GEOMETRIC, NOT ORDINAL. The caret goes to the nearest pin in the pressed
+/// direction rather than to the next one in a flat list, because the user is
+/// looking at a sheet and not at an ordering — and because the flat walk
+/// already has a key (`Tab`, while armed). "Nearest in direction" is defined
+/// in `schematic_canvas_screen.dart`, where the geometry is.
+final class MovePinCaretIntent extends Intent {
+  const MovePinCaretIntent(this.direction);
+
+  final AxisDirection direction;
 }
 
 /// A single declared binding: what key, in what scope, meaning what.
@@ -627,21 +699,37 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
   // `SingleActivator`'s exact-modifier match is the deferral mechanism for
   // the out-of-scope modified variants (`Shift+↑↓` extend, `Ctrl+↑↓` next
   // free, `Alt+↑↓` swap): they simply do not trigger these.
+  // THE ↑/↓ LABELS ARE SHARED WITH THE SCHEMATIC'S PIN CARET (DR-011.6),
+  // and the wording is the union `Esc` already models: one chord, one
+  // meaning, stated as everything it does in the scopes that bind it. The
+  // rack's "1U" figure moved into the note rather than being deleted —
+  // canon §1.10 principle (b) is about MEANING, and "move the caret" is
+  // the meaning in both views; the step size is a rack detail that would
+  // simply be false on a sheet.
+  //
+  // The rejected alternative was widening `meaningDrift` to permit
+  // per-scope labels. It is the smaller edit and the wrong one: the rule
+  // exists to stop one key meaning two things, and a keyboard-only user
+  // cannot see a scope boundary.
   KeyBinding(
     id: KeyBindingId.caretUp,
     scope: KeyScope.rack,
     trigger: LogicalKeyboardKey.arrowUp,
-    label: 'Caret up 1U · nudge the selection up 1U',
+    label: 'Caret up · nudge the selection up',
     intent: CaretUpIntent(),
-    source: 'docs/04 §3.4 · §8',
+    source: 'docs/04 §3.4 · §8 · canon §11.11.6',
+    note:
+        'In the rack the step is 1U. Shared verbatim with the schematic '
+        'pin caret so meaningDrift stays green — see DR-011.6.',
   ),
   KeyBinding(
     id: KeyBindingId.caretDown,
     scope: KeyScope.rack,
     trigger: LogicalKeyboardKey.arrowDown,
-    label: 'Caret down 1U · nudge the selection down 1U',
+    label: 'Caret down · nudge the selection down',
     intent: CaretDownIntent(),
-    source: 'docs/04 §3.4 · §8',
+    source: 'docs/04 §3.4 · §8 · canon §11.11.6',
+    note: 'In the rack the step is 1U. See caretUp.',
   ),
   KeyBinding(
     id: KeyBindingId.caretHome,
@@ -730,9 +818,15 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     id: KeyBindingId.applyCompaction,
     scope: KeyScope.rack,
     trigger: LogicalKeyboardKey.enter,
-    label: 'Apply the compaction preview',
+    label: 'Commit what is in flight',
     intent: ApplyCompactionIntent(),
-    source: 'docs/04 §3.6',
+    source: 'docs/04 §3.6 · canon §11.11.6',
+    note:
+        "The label is DR-011.6's retrofit: it used to read 'Apply the "
+        "compaction preview', which the schematic's Enter (commit the "
+        'wire) could not share, and meaningDrift compares labels across '
+        'scopes. Here the thing in flight is the compaction preview; on '
+        'the sheet it is the wire.',
   ),
 
   // ── schematic ────────────────────────────────────────────────────────
@@ -833,6 +927,110 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     label: 'Cancel · dismiss · clear the selection',
     intent: SchematicCancelIntent(),
     source: 'docs/05 §11.4 · docs/04 §8',
+    note:
+        'M2-F adds a rung ABOVE the two it had: a wire in flight is what '
+        'Esc cancels first (docs/05 §7). Same binding, same label, one '
+        'more limb in the gate — which is exactly what layering a key '
+        'means when only isActionEnabled can decline one.',
+  ),
+
+  // ── the connect gesture's keyboard route (DR-011.6, docs/05 §7 · §14) ──
+  //
+  // BUILT AND DRIVEN FIRST, NOT LAST. DR-011's "the order that matters":
+  // M1's equivalent clause was REFUTED by the user, who hit the time target
+  // but needed a mouse, because each placement made the new device the sole
+  // selection and the caret was consulted only when the selection was
+  // empty — so back-to-back Enters used the caret once and then fell back.
+  // The caret here is therefore AUTHORITATIVE once it exists and the
+  // selection only seeds it, and a commit leaves it on the pin the user
+  // just landed on so the next `W` starts from there.
+  KeyBinding(
+    id: KeyBindingId.beginWire,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.keyW,
+    label: 'Begin a wire from the pin under the caret',
+    intent: BeginWireIntent(),
+    source: 'docs/05 §7 · §14',
+    note:
+        'W is UNBOUND IN THE RACK, which KeymapConflictKind.letterCollision '
+        'keeps true — canon §1.10 principle (c).',
+  ),
+  KeyBinding(
+    id: KeyBindingId.commitWire,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.enter,
+    label: 'Commit what is in flight',
+    intent: CommitWireIntent(),
+    source: 'docs/05 §7 · canon §11.11.6',
+    note:
+        "ONE LABEL WITH THE RACK'S applyCompaction, per DR-011.6. Two "
+        'intents because two surfaces handle it; one label because it is '
+        'one meaning, and meaningDrift is what fails if either moves.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.nextCandidatePin,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.tab,
+    label: 'Next candidate pin for the wire in flight',
+    intent: NextCandidatePinIntent(),
+    source: 'docs/05 §7',
+    note:
+        'GATED ON A WIRE BEING ARMED, so an idle sheet lets Tab do focus '
+        'traversal. The canvas autofocuses; a schematic that owned bare '
+        'Tab unconditionally would be a surface a keyboard-only user '
+        'could enter and never leave, which fails the very requirement '
+        '(AC-058/D11) this route exists to meet.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.previousCandidatePin,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.tab,
+    shift: true,
+    label: 'Previous candidate pin for the wire in flight',
+    intent: PreviousCandidatePinIntent(),
+    source: 'docs/05 §7',
+    note: 'See nextCandidatePin: armed only.',
+  ),
+  // THE ARROWS ARE HOW A PIN IS REACHED AT ALL, armed or not, and they are
+  // geometric rather than ordinal — see [MovePinCaretIntent]. ↑/↓ carry the
+  // rack caret rows' labels verbatim (DR-011.6); ←/→ are schematic-only and
+  // so have no cross-scope label to match.
+  KeyBinding(
+    id: KeyBindingId.pinCaretUp,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.arrowUp,
+    label: 'Caret up · nudge the selection up',
+    intent: MovePinCaretIntent(AxisDirection.up),
+    source: 'docs/05 §7 · canon §11.11.6',
+    note:
+        'Shared label with the rack caret row. Nothing is nudged on the '
+        'sheet — M2-F builds no symbol-move gesture (§11.11.7) — so the '
+        "label is the union of the two scopes, exactly as Esc's is.",
+  ),
+  KeyBinding(
+    id: KeyBindingId.pinCaretDown,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.arrowDown,
+    label: 'Caret down · nudge the selection down',
+    intent: MovePinCaretIntent(AxisDirection.down),
+    source: 'docs/05 §7 · canon §11.11.6',
+    note: 'See pinCaretUp.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.pinCaretLeft,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.arrowLeft,
+    label: 'Caret to the pin on the left',
+    intent: MovePinCaretIntent(AxisDirection.left),
+    source: 'docs/05 §7',
+  ),
+  KeyBinding(
+    id: KeyBindingId.pinCaretRight,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.arrowRight,
+    label: 'Caret to the pin on the right',
+    intent: MovePinCaretIntent(AxisDirection.right),
+    source: 'docs/05 §7',
   ),
 
   // ── dialog ───────────────────────────────────────────────────────────

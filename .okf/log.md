@@ -1,5 +1,38 @@
 # Update Log
 
+## 2026-07-31
+
+* **Update**: [DR-011](/decisions/dr-011-connect-gesture.md) — clauses .1 to .6
+  are BUILT (M2-F phases 1B, 2A and 2B). **The connection is made from the
+  keyboard, and that is the whole of the ruling's "order that matters"**: the
+  pointer path is Phase 3 and has not been written yet. Three findings came out
+  of building it, and none was visible from the ruling:
+  * **the defect Phase 1A tracked was described backwards.** "A widget
+    unmounted mid-press never delivers its terminal and the claim leaks" — in
+    fact `GestureBinding` caches the hit test at pointer-DOWN and keeps
+    dispatching down the cached path, so the gesture did not stall, it
+    COMMITTED out of a widget that had left the tree. Measured: `[begin,
+    update]` at the unmount, `[begin, update, update, commit]` at the release.
+    The leaked claim was never seen because the stale commit released it;
+  * **DR-011.4's first implementation silently did nothing.**
+    `ConnectPortsCommand.touches` is `wires | meta`, and the meta bump advanced
+    the scene epoch past the stamp the wires listener had just written. Every
+    symbol still moved, on the very commit the clause is about;
+  * **`unbuilt_copy_accuracy_test.dart` had drifted into a hole shaped like
+    this change.** Its scan named `AddLinkCommand` alone, so a schematic wiring
+    through `ConnectPortsCommand` would have left it green while the sheet's own
+    copy told the user nothing could create a cable. See
+    [diagnose before fixing](/practices/diagnose-before-fixing.md) — all three
+    are the same shape: a mechanism that reads as working because of what it
+    was checked against.
+* **Creation**: `kUnstatedMedia` records that **no document can say what cable a
+  connect makes**. `Registries.mediaTypes` is empty in every seeded document,
+  `SignalFamilyDef` carries no `typicalMedia`, and a `PortDef` names a connector
+  rather than a cable — so the alternatives are all fabrications, and
+  `ProjectSettings.defaultNetworkMedia` on an HDMI run would put a wrong spec on
+  the sheet an installer buys from. [G4](/invariants/g4-unknowns-are-counted.md),
+  in the one place it is expensive.
+
 ## 2026-07-29
 
 * **Creation**: [DR-011 — the connect gesture](/decisions/dr-011-connect-gesture.md),

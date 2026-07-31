@@ -135,6 +135,7 @@ SchematicPaintPlan buildSchematicPaintPlan({
   required SchematicPalette palette,
   required int groundArgb,
   SchematicWireStyle wireStyle = const SchematicWireStyle(),
+  List<DiagramOp> overlayOps = const <DiagramOp>[],
 }) {
   final ops = <DiagramOp>[];
 
@@ -218,6 +219,21 @@ SchematicPaintPlan buildSchematicPaintPlan({
     );
     ops.addAll(wires.ops);
   }
+
+  // ── the gesture in flight, after absolutely everything ───────────────
+  //
+  // LAST, for the reason the wires are last and the labels are last: the
+  // display list is painted in order, there is no z-index in the IR, and
+  // the thing the user is DOING right now has to be on top of the thing
+  // they are doing it to. A caret ring behind a symbol body is a cursor
+  // the user cannot see.
+  //
+  // PASSED IN, NOT BUILT HERE, and that is deliberate. This function is a
+  // pure projection of (scene, doc, filter, scope); the connect overlay is
+  // a projection of the SCREEN's transient state — a caret, an armed pin —
+  // which has no business in this signature. `schematic_canvas_screen.dart`
+  // builds it and hands over the ops.
+  ops.addAll(overlayOps);
 
   return SchematicPaintPlan(
     ops: List<DiagramOp>.unmodifiable(ops),

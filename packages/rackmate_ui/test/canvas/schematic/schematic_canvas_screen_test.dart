@@ -480,14 +480,22 @@ void main() {
     });
   });
 
-  group('the sheet is a projection, never an editor', () {
-    testWidgets('no interaction on this screen changes the document', (
-      tester,
-    ) async {
-      // M2's checklist item 3 — drag-to-connect, pinning on manual move,
-      // `Tidy sheet` — is a different item, and `kNoLinksDetail` states as
-      // a FACT that no surface in this build creates a Link. This is the
-      // half of that claim the screen itself can prove.
+  group('the sheet edits ONLY through the connect gesture', () {
+    testWidgets('filtering, selecting, focusing and cancelling change '
+        'NOTHING in the document', (tester) async {
+      // THIS GROUP'S TITLE USED TO READ "the sheet is a projection, never
+      // an editor", and M2-F is what retired it: `_commitWire` runs a
+      // `ConnectPortsCommand`. What survives — and is worth more now than
+      // when nothing here could write at all — is that the VIEW controls
+      // are still inert. A domain filter, a selection, a focus scope and a
+      // cancel are all observed-never-persisted state (docs/03 §4.4), and
+      // a filter click that dirtied the file would be a save prompt for
+      // looking at something.
+      //
+      // The keys that DO write are exercised in
+      // `schematic_keyboard_connect_test.dart`; deliberately none of them
+      // appears below, so this stays a statement about the view controls
+      // rather than a list that has to be edited every time one is added.
       await pump(tester);
       final before = controller.doc.sequence;
 

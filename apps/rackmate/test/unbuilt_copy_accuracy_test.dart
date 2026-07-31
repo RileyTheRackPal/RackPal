@@ -19,14 +19,21 @@
 // exists must be the FIRST thing to change when something starts existing,
 // not the last.
 //
-// WHAT SURVIVED BOTH DELETIONS IS ONE CLAUSE, and it is the load-bearing
-// one: NOTHING IN THIS BUILD CREATES A CONNECTION. The Schematic panel
-// said it; `SchematicCanvasScreen`'s `kNoLinksDetail` says it now, on the
-// sheet, where the reader who needs it is. So the group below no longer
-// reads an `UnbuiltView`'s fields — it reads that constant, and it still
-// proves the claim against the SOURCE of both UI packages and this app
-// rather than against a comment. A test that only grepped the strings
-// would pass forever after somebody deleted `AddLinkCommand`.
+// WHAT SURVIVED BOTH DELETIONS WAS ONE CLAUSE — NOTHING IN THIS BUILD
+// CREATES A CONNECTION — AND M2-F HAS NOW KILLED THAT TOO. The Schematic
+// panel said it; `kNoLinksDetail` inherited it; `SchematicCanvasScreen`'s
+// `_commitWire` runs a `ConnectPortsCommand` and made it false. The
+// constant is rewritten and the group below asserts the new claim the same
+// way it asserted the old one: against the SOURCE of both UI packages and
+// this app, never against a comment.
+//
+// AND THE SCAN ITSELF HAD DRIFTED, which is the sharpest lesson this file
+// has produced about itself. It grepped for `AddLinkCommand(` alone — one
+// of four commands that mint a `Link` — so a schematic wiring through
+// `ConnectPortsCommand` would have left it green while the copy it guards
+// told the user nothing could create a cable. A guard that names one of
+// the things it is guarding against is a guard with a hole in exactly the
+// shape of the next change.
 //
 // `shell_tabs_test.dart` proves the complementary thing about what is
 // DRAWN: that no tab fabricates a device, a port label or a control that
@@ -180,18 +187,42 @@ void main() {
       }
     });
 
-    test('it names the thing that is ACTUALLY missing, and does not '
-        'understate what is there', () {
+    test('the LAST clause has expired too, and the copy no longer claims '
+        'nothing creates a Link', () {
+      // M2-F IS WHAT KILLED IT. "No surface in this build creates a Link,
+      // so there is nothing to label. The gap is the gesture, not the
+      // view." was the one sentence of the retired panel that survived
+      // M2-C, M2-D and M2-E — and `SchematicCanvasScreen._commitWire` runs
+      // a `ConnectPortsCommand`, so it is now false in the direction this
+      // file cares about most: it understates what the build can do, and a
+      // user reading it concludes there is no way to wire their project.
       final copy = _schematicCopy.toLowerCase();
-      // The one clause of the retired panel that is still true, carried
-      // across verbatim in meaning and proved by the last test in this
-      // file.
-      expect(copy, contains('no surface in this build creates a link'));
-      expect(copy, contains('the gap is the gesture'));
-      // And it says what IS built, or the next reader rebuilds it.
+      for (final expired in [
+        'no surface in this build creates a link',
+        'the gap is the gesture',
+        'there is nothing to label',
+      ]) {
+        expect(
+          copy,
+          isNot(contains(expired)),
+          reason: '"$expired" stopped being true at M2-F',
+        );
+      }
+    });
+
+    test('it says what IS built, and now how to use it', () {
+      final copy = _schematicCopy.toLowerCase();
+      // Still says what is there, or the next reader rebuilds it.
       expect(copy, contains('laid out from your document'));
       expect(copy, contains('net labels'));
       expect(copy, contains('domain filter'));
+      // AND THE GESTURE, because this panel is on screen exactly when the
+      // user has nothing wired and needs to know how to start. docs/05 §7's
+      // keyboard route is the one that exists; AC-048's coach mark, which
+      // would teach it in passing, is Phase 5.
+      expect(copy, contains('press w'));
+      expect(copy, contains('enter to commit'));
+      expect(copy, contains('esc cancels'));
     });
 
     testWidgets('the Schedule tab no longer has copy to be accurate '
@@ -225,10 +256,28 @@ void main() {
       );
     });
 
-    testWidgets('no surface in the app calls AddLinkCommand — which is what '
-        'lets the copy say so', (tester) async {
-      // The copy's load-bearing claim is "no surface calls it". Proven
-      // against the source of both UI packages and the app, not asserted.
+    testWidgets('a surface DOES create a Link now, and the scan looks for '
+        'every command that can', (tester) async {
+      // ═══════════════════════════════════════════════════════════════
+      // THE SCAN WAS ABOUT TO PASS FOR THE WRONG REASON
+      // ═══════════════════════════════════════════════════════════════
+      // It grepped for `AddLinkCommand(` alone, and M2-F creates cables
+      // through `ConnectPortsCommand` — so the moment the schematic
+      // started wiring, this test would have gone on reporting "no surface
+      // creates a Link" forever while the copy said the same thing and
+      // both were wrong. That is EXACTLY the drift this file exists to
+      // catch, arriving through the file itself.
+      //
+      // So the scan now names every command that mints a `Link`, and the
+      // assertion is INVERTED: at least one surface must call one of them,
+      // because the copy no longer claims otherwise. If a later milestone
+      // deletes the gesture, this fails and the copy has to change back.
+      const linkMinting = <String>[
+        'AddLinkCommand(',
+        'ConnectPortsCommand(',
+        'buildConnectPortsCommand(',
+        'AtomicConnectCommand(',
+      ];
       final roots = [
         Directory('lib'),
         Directory('../../packages/rackmate_ui/lib'),
@@ -237,17 +286,23 @@ void main() {
       for (final root in roots) {
         for (final entity in root.listSync(recursive: true)) {
           if (entity is! File || !entity.path.endsWith('.dart')) continue;
-          if (entity.readAsStringSync().contains('AddLinkCommand(')) {
-            callers.add(entity.path);
-          }
+          final source = entity.readAsStringSync();
+          if (linkMinting.any(source.contains)) callers.add(entity.path);
         }
       }
       expect(
         callers,
-        isEmpty,
+        isNotEmpty,
         reason:
-            'a UI now creates Links; the unbuilt tabs must stop saying '
-            'nothing does',
+            'the Schematic sheet tells the user to press W to draw a '
+            'cable; if no surface calls a link-minting command, that '
+            'sentence is a lie',
+      );
+      expect(
+        callers.any((p) => p.contains('schematic_canvas_screen')),
+        isTrue,
+        reason: 'and it is the SHEET that does it — the surface whose copy '
+            'makes the promise',
       );
     });
   });

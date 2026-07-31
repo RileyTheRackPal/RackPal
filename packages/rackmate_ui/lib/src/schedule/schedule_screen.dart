@@ -58,19 +58,30 @@ import 'package:rackmate_core/rackmate_core.dart';
 /// singles out.
 const String kNoCablesHeadline = 'This document holds no cables.';
 
-/// The second line: why the table is empty and where the gap is.
+/// The second line: why the table is empty, and where the cables come
+/// from.
 ///
-/// It is checked against the code it describes —
-/// `apps/rackmate/test/unbuilt_copy_accuracy_test.dart` scans both UI
-/// packages and the app for a caller of `AddLinkCommand` and fails if one
-/// appears, which is what lets this sentence be stated as fact rather
-/// than as a guess.
+/// ═════════════════════════════════════════════════════════════════════
+/// THIS SENTENCE EXPIRED AT M2-F, AND IT IS THE SECOND ONE TO DO SO
+/// ═════════════════════════════════════════════════════════════════════
+/// It used to end "no surface in this build creates one yet, so there is
+/// nothing to derive from. The gap is the drawing gesture, not the
+/// schedule." `SchematicCanvasScreen`'s keyboard connect route makes that
+/// false, and a Schedule tab that goes on telling the user nothing can
+/// create a cable — while the Schematic tab one keystroke away tells them
+/// how — is the exact defect `unbuilt_copy_accuracy_test.dart` was written
+/// for, pointing at a different tab.
+///
+/// It now says where cables come from instead of claiming there are none
+/// to be had, which is CR-105's own mitigation restated: the Schedule is
+/// the second tab precisely so "the deliverable is visible from minute one
+/// rather than discovered at export", and an empty one should point at the
+/// surface that fills it.
 const String kNoCablesDetail =
     'Every row of this schedule derives from a Link. The derivation is '
     'built and running — the columns above are live and this table fills '
-    'the moment a Link exists — but no surface in this build creates one '
-    'yet, so there is nothing to derive from. The gap is the drawing '
-    'gesture, not the schedule.';
+    'the moment a cable exists. Cables are drawn on the Schematic tab: put '
+    'the caret on a pin, press W, reach the other end, and press Enter.';
 
 /// What the summary strip says when every cable was filtered out.
 const String kAllRowsFilteredHeadline =

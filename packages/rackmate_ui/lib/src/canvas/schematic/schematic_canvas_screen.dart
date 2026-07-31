@@ -131,6 +131,7 @@ import 'package:flutter/services.dart'
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/canvas/canvas_intent.dart';
 import 'package:rackmate_ui/src/canvas/grid_painter.dart';
+import 'package:rackmate_ui/src/canvas/schematic/connect_overlay.dart';
 import 'package:rackmate_ui/src/canvas/schematic/domain_filter_bar.dart';
 import 'package:rackmate_ui/src/canvas/schematic/render_schematic_canvas.dart';
 import 'package:rackmate_ui/src/canvas/schematic/schematic_filter.dart';
@@ -148,20 +149,35 @@ import 'package:rackmate_ui/src/keymap/keymap.dart';
 /// which is exactly the case docs/09 M1 singles out as a lie.
 const String kNoLinksHeadline = 'This document holds no cables.';
 
-/// Why the sheet shows symbols and no wires, and where the gap actually is.
+/// Why the sheet shows symbols and no wires — and, now, how to draw one.
 ///
-/// This is the one clause of the retired `UnbuiltView` panel that is still
-/// true (see the file header), restated for a tab that now draws. It is
-/// checked against the code it describes: `unbuilt_copy_accuracy_test.dart`
-/// scans both UI packages and the app for a caller of `AddLinkCommand` and
-/// fails if one appears.
+/// ═════════════════════════════════════════════════════════════════════
+/// THE LAST CLAUSE OF THE RETIRED `UnbuiltView` PANEL HAS EXPIRED TOO
+/// ═════════════════════════════════════════════════════════════════════
+/// This constant used to end "no surface in this build creates a Link, so
+/// there is nothing to label. The gap is the gesture, not the view." That
+/// was the one sentence of the panel that survived M2-C, M2-D and M2-E, and
+/// M2-F is what makes it false: `_commitWire` runs a `ConnectPortsCommand`.
+///
+/// Rewritten rather than softened, on the rule that retired the panel
+/// itself and the Schedule's before it — THE ONE SURFACE IN THE APP WHOSE
+/// PURPOSE IS ACCURACY ABOUT WHAT EXISTS MUST BE THE FIRST THING TO CHANGE
+/// WHEN SOMETHING STARTS EXISTING. `unbuilt_copy_accuracy_test.dart` holds
+/// it to that: it scans both UI packages and the app for a caller of the
+/// connect commands, and now fails if the copy claims nothing creates a
+/// Link while something does.
+///
+/// It is also the only place the keyboard route is written down for the
+/// user, which is deliberate. The gesture is `W`, and a coach mark that
+/// teaches it is AC-048's, decided in Phase 5 — until then the panel that
+/// explains an empty sheet is exactly the right place for the sentence,
+/// because it is on screen precisely when the user has nothing wired.
 const String kNoLinksDetail =
     'Every symbol above is laid out from your document and every cable '
-    'would render as a pair of net labels the moment one existed — the '
-    'layout, the labels and the domain filter are built and running. What '
-    'is missing is the drawing gesture: no surface in this build creates a '
-    'Link, so there is nothing to label. The gap is the gesture, not the '
-    'view.';
+    'renders as a pair of net labels — the layout, the labels and the '
+    'domain filter are built and running. To draw one: use the arrow keys '
+    'to put the caret on a pin, press W to start a cable, arrows or Tab to '
+    'reach the other end, and Enter to commit. Esc cancels.';
 
 /// What the sheet says when no device in the document can carry a cable.
 const String kNoSymbolsHeadline =
@@ -223,6 +239,18 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// constant would make the target 48 screen px wide at 4× and 3 px wide
   /// at ¼×.
   static const double _portHitTolerancePx = 12;
+
+  /// How much a pin's PERPENDICULAR offset counts against it when an arrow
+  /// key picks the next caret pin — see [_movePinCaret].
+  ///
+  /// A STATED CHOICE, and the corpus gives no figure: docs/05 §7 says
+  /// "`Tab`/arrow to a candidate port" and nothing about how an arrow
+  /// chooses. 0.5 makes the pressed axis worth twice the other, so a pin
+  /// directly right of the caret beats one that is equally far right but
+  /// half a sheet up, while a pin slightly off-axis is still reachable
+  /// without hunting. Recorded here as a choice so it is not read as a
+  /// number out of the specifications.
+  static const double _kCaretCrossAxisWeight = 0.5;
 
   final ViewportController _viewport = ViewportController();
   final GridCache _gridCache = GridCache();
@@ -328,6 +356,80 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// Whether the viewport has already been framed on this sheet.
   bool _framed = false;
 
+  // ── the connect gesture's keyboard state (DR-011.2, docs/05 §7) ───────
+
+  /// The pin under the caret, or null before the user has reached one.
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// THE CARET IS AUTHORITATIVE. THE SELECTION ONLY SEEDS IT.
+  /// ═════════════════════════════════════════════════════════════════
+  /// DR-011's "the order that matters" records why this is written down
+  /// rather than left to whichever read happens first. M1's equivalent
+  /// keyboard clause was REFUTED by the user: they hit the time target but
+  /// needed a mouse, because each placement made the new device the sole
+  /// selection and the caret was consulted ONLY when the selection was
+  /// empty — so back-to-back `Enter`s used the caret once and then fell
+  /// back to the selection forever. The mechanism read as working because
+  /// its first invocation did.
+  ///
+  /// So: once this is non-null NOTHING re-derives it from the selection.
+  /// [_seedCaret] is the only place the selection is consulted, and it runs
+  /// only when this is null.
+  PinRef? _pinCaret;
+
+  /// The pin a wire is armed from — docs/05 §7's `WIRE_STICKY` — or null
+  /// when no wire is in flight.
+  PinRef? _wireFrom;
+
+  /// The pins a conductor from [_wireFrom] may legally land on, in sheet
+  /// order. Empty when no wire is armed.
+  ///
+  /// COMPUTED ONCE AT ARM TIME, not per keystroke. `evaluateConnect` reads
+  /// the live conductor count off every link for every candidate, which is
+  /// O(pins x links) — fine once, wasteful sixty times a second. It is safe
+  /// to cache for exactly as long as the document does not move, and the
+  /// moment it does [_invalidateLivePreviews] tears the whole gesture down
+  /// and says so. That teardown is not a nicety here; it is what makes the
+  /// cache correct.
+  List<PinRef> _candidates = const <PinRef>[];
+
+  /// The positions the LAST built scene laid its symbols out at, and the
+  /// `_sceneEpoch` those positions must be held for — DR-011.4.
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// A WIRES BUMP HOLDS THE LAYOUT; EVERY OTHER EPOCH DOES NOT
+  /// ═════════════════════════════════════════════════════════════════
+  /// DR-011.4: "creating a link does NOT re-lay-out the sheet. Symbol
+  /// positions freeze; wires and labels rebuild." The defect it rules out
+  /// is mechanical — a connect touches `EpochMask.wires`, this screen bumps
+  /// [_sceneEpoch], the scene cache misses and `buildSchematicScene` runs
+  /// Sugiyama over the NEW edge set, moving every symbol.
+  ///
+  /// The hold is scoped to the `wires` epoch precisely BECAUSE the ruling
+  /// is. docs/05:747's broader rule ("auto-layout never fires as a side
+  /// effect of an unrelated edit") would hold positions across every epoch,
+  /// and that is a bigger change than DR-011.4 makes — a rename moves a
+  /// symbol's WIDTH through §3's sizing formula, and freezing that is a
+  /// decision nobody has taken. So: `wires` advanced ⇒ hold. Anything else
+  /// ⇒ lay out as before.
+  ///
+  /// A LATCH CONSUMED BY THE NEXT SCENE BUILD, and the first draft of this
+  /// was an epoch stamp that did not survive its own first test.
+  /// `ConnectPortsCommand.touches` is `wires | meta` — `meta` because
+  /// materialisation MINTS A DESIGNATOR — so `DocEpochs.bump` fires the
+  /// wires listener, which stamped "hold for epoch 1", and then fires the
+  /// meta listener, which advanced the epoch to 2. The stamp no longer
+  /// matched, the hold silently did not apply, and every symbol moved on
+  /// the very commit the ruling is about.
+  ///
+  /// A latch has no such window. Several epochs can bump in one
+  /// transaction, every listener runs before any `build`, and the scene is
+  /// rebuilt lazily in [_sceneFor] — so "some wires bump happened since the
+  /// last layout" is exactly the question, and it is answered once and
+  /// cleared where it is used.
+  Map<Uuid, Pt> _heldPositions = const <Uuid, Pt>{};
+  bool _holdLayoutOnNextBuild = false;
+
   RackDocument get _doc => widget.controller.doc;
 
   @override
@@ -341,7 +443,10 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     // colour overrides. Missing any one of them would leave the sheet a
     // commit behind in a way no test that only edits devices could see.
     widget.controller.epochs.structure.addListener(_onDocumentChanged);
-    widget.controller.epochs.wires.addListener(_onDocumentChanged);
+    // `wires` gets its OWN callback, and that is DR-011.4 — see
+    // [_holdLayoutForEpoch]. It is the one epoch whose bump must not move
+    // a symbol.
+    widget.controller.epochs.wires.addListener(_onWiresChanged);
     widget.controller.epochs.meta.addListener(_onDocumentChanged);
     widget.controller.epochs.sheet.addListener(_onDocumentChanged);
     widget.controller.epochs.style.addListener(_onDocumentChanged);
@@ -361,7 +466,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_onRawKey);
     widget.controller.epochs.structure.removeListener(_onDocumentChanged);
-    widget.controller.epochs.wires.removeListener(_onDocumentChanged);
+    widget.controller.epochs.wires.removeListener(_onWiresChanged);
     widget.controller.epochs.meta.removeListener(_onDocumentChanged);
     widget.controller.epochs.sheet.removeListener(_onDocumentChanged);
     widget.controller.epochs.style.removeListener(_onDocumentChanged);
@@ -372,6 +477,16 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     _status.dispose();
     _viewport.dispose();
     super.dispose();
+  }
+
+  /// A `wires` bump: the same rebuild as any other, plus DR-011.4's freeze.
+  ///
+  /// Sets the latch and gets out of the way — see [_holdLayoutOnNextBuild]
+  /// for why this may not try to name the epoch it is holding for.
+  void _onWiresChanged() {
+    if (!mounted) return;
+    _holdLayoutOnNextBuild = true;
+    _onDocumentChanged();
   }
 
   void _onDocumentChanged() {
@@ -456,21 +571,49 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// falls back to the raw id when `designatorOf` cannot resolve it, so a
   /// deleted hover target used to be ANNOUNCED as a uuid.
   ///
-  /// THE GESTURE LIMB IS NOT WRITTEN AS A STUB. Phase 1's canvas gesture
-  /// captures a scene POINT and a travel distance — neither names a
-  /// document entity, and `commitDrag` re-runs the hit test against the
-  /// live scene — so there is nothing here for a document change to make
-  /// stale, and inventing a branch for it would be a stub with no
-  /// behaviour behind it (the discipline `rack_canvas_screen.dart:2996`
-  /// states for the validation checks). Phase 2's connect preview, which
-  /// DOES capture a port id, hangs off `_liveGesture` here, and the rack's
-  /// own rule for it is already settled and must be copied rather than
-  /// re-derived: a sub-threshold press has no preview to cancel and STAYS A
-  /// CLICK (`rack_canvas_screen.dart:1041`) — cancelling it was that file's
-  /// over-correction, and it is the exact bug the handler-hoist above
-  /// fixes from the other end.
+  /// THE POINTER GESTURE STILL HAS NO LIMB HERE, and that is not an
+  /// omission. Phase 1's canvas gesture captures a scene POINT and a travel
+  /// distance — neither names a document entity, and `commitDrag` re-runs
+  /// the hit test against the live scene — so there is nothing for a
+  /// document change to make stale, and inventing a branch for it would be
+  /// a stub with no behaviour behind it (the discipline
+  /// `rack_canvas_screen.dart:2996` states for the validation checks).
+  ///
+  /// THE CONNECT GESTURE IS THE OPPOSITE CASE, which is why it has two
+  /// limbs below. It captures PIN IDENTITIES that the document can delete
+  /// out from under it, and — worse — [_candidates] is a set of verdicts
+  /// computed against a document state that no longer exists. A stale
+  /// candidate list is not merely wrong, it is wrong in the direction that
+  /// says yes: a pin that filled up while the wire was armed would still be
+  /// offered, and `buildConnectPortsCommand` would then refuse it at commit
+  /// time with a rule id the user cannot connect to anything they did.
+  /// Tearing the whole gesture down is the honest answer, and saying so is
+  /// what stops it being the silent no-op docs/04 §3.4 forbids.
   String? _invalidateLivePreviews() {
     String? what;
+    // THE WIRE FIRST, because it is the one the user is actively holding.
+    // Dropped whole rather than repaired: re-deriving the candidates
+    // against the new document would silently continue a gesture whose
+    // premise — "these are the pins you may land on" — the user was shown
+    // and can no longer trust.
+    if (_wireFrom != null) {
+      _wireFrom = null;
+      _candidates = const <PinRef>[];
+      what ??= 'Wire';
+    }
+    // A caret over a pin that has gone. ASKED OF THE DOCUMENT, NOT OF THE
+    // SCENE, and the difference is a real bug avoided: this runs inside
+    // `_onDocumentChanged`'s `setState`, where `_scene` is still the
+    // PREVIOUS frame's — the rebuild is lazy, in `_sceneFor`, during
+    // `build`. A scene query here would happily find a pin on a device the
+    // command just deleted. `resolveConnectTarget` covers both shapes at
+    // once: the device left the document, and the device stayed but its
+    // template no longer declares the port.
+    final caret = _pinCaret;
+    if (caret != null && !_pinStillExists(caret)) {
+      _pinCaret = null;
+      what ??= 'Pin caret';
+    }
     final hovered = _altHovered;
     if (hovered != null && !_doc.devices.containsKey(Uuid(hovered))) {
       _altHovered = null;
@@ -531,9 +674,23 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       measurer: widget.measurer,
       palette: palette,
       netLabelStyle: NetLabelStyle(theme: theme),
+      // DR-011.4 — see [_holdLayoutOnNextBuild]. A hold is a layout INPUT
+      // and never a document write, which is the whole reason the ruling
+      // chose this shape over pinning every symbol into CR-117's byte
+      // surface.
+      holdAt: _holdLayoutOnNextBuild ? _heldPositions : const <Uuid, Pt>{},
     );
+    // Cleared HERE and not in the listener: a cache hit is not a layout,
+    // and a latch cleared on a frame that reused the previous scene would
+    // lose the hold before the rebuild it was set for ever happened.
+    _holdLayoutOnNextBuild = false;
     _scene = built;
     _sceneKey = key;
+    // Whatever this layout decided becomes what the NEXT wires bump holds.
+    // Read off the scene rather than recomputed from `bodyRect`: the map
+    // is what `layoutSugiyama` actually produced, and a second derivation
+    // is how a hold drifts half a grid unit from the thing it froze.
+    _heldPositions = built.positions;
     return built;
   }
 
@@ -762,16 +919,367 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
 
   /// §11.4's `Esc`, and docs/04 §8's third limb ("clear selection").
   ///
-  /// FOCUS FIRST, THEN THE SELECTION. A user in focus mode who presses
-  /// `Esc` is leaving the mode; also clearing the selection in the same
-  /// keystroke would take away the thing they were looking at, and the
-  /// second `Esc` is free.
+  /// THE WIRE FIRST, THEN FOCUS, THEN THE SELECTION — outermost thing in
+  /// flight first. docs/05 §7 gives `Esc` as the wire's cancel, and a user
+  /// holding a half-drawn cable who pressed it and lost their FOCUS SCOPE
+  /// instead would have to redo the more expensive of the two.
+  ///
+  /// Each rung is a separate keystroke and that is the point: also clearing
+  /// the selection while cancelling a wire would take away the thing the
+  /// wire was being drawn from, and the second `Esc` is free.
   void _onEscape() {
+    if (_wireFrom != null) {
+      _cancelWire();
+      return;
+    }
     if (_focused.isNotEmpty) {
       setState(() => _focused = const <String>{});
       return;
     }
     if (_selection.isNotEmpty) _selection.clear();
+  }
+
+  // ── the connect gesture, by keyboard (docs/05 §7, DR-011) ─────────────
+  //
+  // BUILT AND DRIVEN FIRST, NOT LAST. DR-011's "the order that matters":
+  // M1's equivalent clause was refuted by the user, who hit the time target
+  // and still needed a mouse. The failure was not that the keyboard path
+  // was missing — it was there — but that the caret was subordinate to the
+  // selection, so it worked once and then quietly stopped. Everything below
+  // is arranged so the caret is the thing that moves and the selection is
+  // never consulted after it exists.
+  //
+  // WHAT IS NOT HERE, and belongs to the phase that has a pointer:
+  // magnetic snap (docs/05 §7.6 is a POINTER figure — "within 12 screen px
+  // the band locks"; a caret is already exactly on a pin), the 35% canvas
+  // dim, compatible-port illumination, and auto-pan. A keyboard user's
+  // equivalent of illumination is that `Tab` only ever reaches a candidate,
+  // which is stronger: it cannot land on a pin that would refuse.
+
+  /// Whether [ref] still names a pin this document has.
+  ///
+  /// `resolveConnectTarget` and not a scene lookup — see
+  /// [_invalidateLivePreviews], which calls this while `_scene` is still
+  /// the previous frame's.
+  bool _pinStillExists(PinRef ref) =>
+      resolveConnectTarget(
+        _doc,
+        deviceId: Uuid(ref.deviceId),
+        portKey: ref.portKey,
+      ) !=
+      null;
+
+  ConnectTarget? _targetFor(PinRef ref) => resolveConnectTarget(
+    _doc,
+    deviceId: Uuid(ref.deviceId),
+    portKey: ref.portKey,
+  );
+
+  /// How a sentence names a pin — "AVR-1 J03 HDMI IN 2".
+  ///
+  /// `ConnectTarget.citation` is the designator pair CR-042 fixes, and the
+  /// PortDef's own label is the silkscreen a person can find on the back of
+  /// the box. Both, because a screen reader is the only view some users
+  /// have of this sheet and "AVR-1 J03" alone does not say what kind of
+  /// jack it is.
+  String _saying(PinRef ref) {
+    final target = _targetFor(ref);
+    if (target == null) return '${ref.deviceId} ${ref.portKey}';
+    final label = target.def.label.trim();
+    return label.isEmpty ? target.citation : '${target.citation} $label';
+  }
+
+  /// The caret, seeded if it has none — the ONLY place the selection is
+  /// consulted (see [_pinCaret]).
+  ///
+  /// The selection's focused device first, then any selected device, then
+  /// the first pin on the sheet. A sheet with symbols always yields
+  /// something, so an arrow key never does nothing on a drawn sheet.
+  PinRef? _seedCaret(SchematicScene scene) {
+    final existing = _pinCaret;
+    if (existing != null) return existing;
+    final pins = locatePins(scene);
+    if (pins.isEmpty) return null;
+    final preferred = <String>[
+      if (_selection.focus case final id?) id.v,
+      for (final id in _selection.ids) id.v,
+    ];
+    for (final deviceId in preferred) {
+      for (final pin in pins) {
+        if (pin.ref.deviceId == deviceId) return pin.ref;
+      }
+    }
+    return pins.first.ref;
+  }
+
+  /// Moves the caret one pin in [direction] — docs/05 §7's "arrow to a
+  /// candidate port".
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// NEAREST IN DIRECTION, NOT NEXT IN A LIST
+  /// ═══════════════════════════════════════════════════════════════════
+  /// The user is looking at a sheet, so an arrow has to mean the thing an
+  /// arrow means on a sheet. A pin qualifies when it lies strictly on the
+  /// pressed side of the caret along that axis, and the winner is the one
+  /// whose distance — dominant axis first, then the perpendicular — is
+  /// least. The perpendicular term is what stops a pin four symbols away
+  /// but perfectly level from beating the pin immediately right of the
+  /// caret, and it is weighted lower than the primary axis so "right" does
+  /// not silently become "nearest in any direction".
+  ///
+  /// WHILE A WIRE IS ARMED THE POOL IS THE CANDIDATES, so an arrow cannot
+  /// land on a pin that would be refused. That is the keyboard's form of
+  /// docs/05 §7's "compatible ports illuminate": a sighted user is shown
+  /// which pins are reachable, and a keyboard user simply cannot reach the
+  /// others.
+  void _movePinCaret(AxisDirection direction) {
+    final scene = _scene;
+    if (scene == null) return;
+    final seeded = _seedCaret(scene);
+    if (seeded == null) {
+      _status.show('This sheet draws no pin to put a caret on.');
+      return;
+    }
+    if (seeded != _pinCaret) {
+      // The seeding press itself lands the caret rather than also moving
+      // it: the user has not seen where it is yet.
+      setState(() => _pinCaret = seeded);
+      _announceCaret();
+      return;
+    }
+
+    final pool = _wireFrom == null
+        ? locatePins(scene)
+        : <LocatedPin>[
+            for (final ref in _candidates)
+              if (locatePin(scene, ref) case final pin?) pin,
+          ];
+    final from = locatePin(scene, seeded);
+    if (from == null || pool.isEmpty) return;
+
+    LocatedPin? best;
+    var bestCost = double.infinity;
+    for (final pin in pool) {
+      if (pin.ref == seeded) continue;
+      final dx = pin.centre.x - from.centre.x;
+      final dy = pin.centre.y - from.centre.y;
+      final (along, across) = switch (direction) {
+        AxisDirection.left => (-dx, dy),
+        AxisDirection.right => (dx, dy),
+        AxisDirection.up => (-dy, dx),
+        AxisDirection.down => (dy, dx),
+      };
+      if (along <= 0) continue; // not on the pressed side.
+      final cost = along + across.abs() * _kCaretCrossAxisWeight;
+      if (cost < bestCost) {
+        bestCost = cost;
+        best = pin;
+      }
+    }
+
+    if (best == null) {
+      // NEVER SILENT (docs/04 §3.4). The edge of the sheet in one
+      // direction is a perfectly ordinary place to be, and a key that
+      // did nothing without saying so is the defect that rule exists for.
+      _status.show(
+        _wireFrom == null
+            ? 'No pin that way — ${_saying(seeded)} is the last one.'
+            : 'No candidate pin that way from ${_saying(seeded)}.',
+      );
+      return;
+    }
+    setState(() => _pinCaret = best!.ref);
+    _announceCaret();
+  }
+
+  /// Cycles the caret through [_candidates] — `Tab` / `Shift+Tab`.
+  void _cycleCandidate({required int step}) {
+    if (_wireFrom == null || _candidates.isEmpty) return;
+    final at = _candidates.indexOf(_pinCaret ?? _candidates.first);
+    final next =
+        (at < 0 ? 0 : (at + step) % _candidates.length + _candidates.length) %
+        _candidates.length;
+    setState(() => _pinCaret = _candidates[next]);
+    _announceCaret();
+  }
+
+  /// docs/05 §7.9's live resolution line, spoken.
+  ///
+  /// `MTX-1 J09 HDMI OUT 3 → AVR-1 J03 HDMI IN 2 · OK` is the corpus's own
+  /// example; the length estimate it also shows needs a `Link` to measure
+  /// and there is none yet, so it is left off rather than invented (G4).
+  void _announceCaret() {
+    final caret = _pinCaret;
+    if (caret == null) return;
+    final from = _wireFrom;
+    if (from == null) {
+      _status.show(_saying(caret));
+      return;
+    }
+    _status.show(
+      '${_saying(from)} → ${_saying(caret)} · OK · '
+      'Enter to commit, Esc to cancel',
+    );
+  }
+
+  /// `W` — arm a wire from the pin under the caret (docs/05 §14).
+  void _beginWire() {
+    final scene = _scene;
+    if (scene == null) return;
+    final caret = _seedCaret(scene);
+    if (caret == null) {
+      _status.show('This sheet draws no pin to start a cable from.');
+      return;
+    }
+    final from = _targetFor(caret);
+    if (from == null) {
+      _status.show('That pin is no longer in this document.');
+      return;
+    }
+
+    // EVERY OTHER PIN ON THE SHEET, RUN THROUGH THE REAL RULES. Not a
+    // compatibility guess: `evaluateConnect` is TOP-001..005 and nothing
+    // else, because docs/02 §5's tier table defers all six T2 rules
+    // (SIG-001, DIR-001, CON-001 …) to M5 and canon §5 opens with "a rule
+    // not listed here does not exist". A pin that is merely a BAD idea —
+    // an HDMI output into an RJ45 jack — is therefore a candidate here,
+    // and that is correct for M2: G2 and CR-017 rule that a model which
+    // cannot draw a mistake cannot document reality.
+    final candidates = <PinRef>[];
+    for (final pin in locatePins(scene)) {
+      if (pin.ref == caret) continue;
+      final to = _targetFor(pin.ref);
+      if (to == null) continue;
+      if (evaluateConnect(_doc, from, to) is ConnectAllowed) {
+        candidates.add(pin.ref);
+      }
+    }
+
+    if (candidates.isEmpty) {
+      // ARMING WITH NOTHING TO AIM AT IS A MODE WITH NO EXIT BUT `Esc`.
+      // Refused, with the reason, rather than entered — and the sentence
+      // names the pin, per DR-011.5's rule for refusals.
+      _status.show(
+        'No pin on this sheet can take a cable from ${_saying(caret)}.',
+      );
+      return;
+    }
+
+    setState(() {
+      _pinCaret = caret;
+      _wireFrom = caret;
+      _candidates = List<PinRef>.unmodifiable(candidates);
+    });
+    _status.show(
+      'Wire from ${_saying(caret)} — ${candidates.length} '
+      '${candidates.length == 1 ? 'pin' : 'pins'} can take it. '
+      'Arrows or Tab to choose, Enter to commit, Esc to cancel.',
+    );
+  }
+
+  /// `Esc` while a wire is in flight — docs/05 §7's cancel.
+  ///
+  /// "All three abort with no model mutation and no undo entry" (docs/05
+  /// §7). Nothing has been written, so there is nothing to undo; the caret
+  /// stays where it is, because the user's next act is usually to aim
+  /// somewhere else from the same place.
+  void _cancelWire() {
+    if (_wireFrom == null) return;
+    final from = _wireFrom!;
+    setState(() {
+      _wireFrom = null;
+      _candidates = const <PinRef>[];
+    });
+    _status.show('Cable from ${_saying(from)} cancelled.');
+  }
+
+  /// `Enter` — commit the wire in flight (docs/05 §7, DR-011.6).
+  void _commitWire() {
+    final from = _wireFrom;
+    final to = _pinCaret;
+    if (from == null || to == null) return;
+    final fromTarget = _targetFor(from);
+    final toTarget = _targetFor(to);
+    if (fromTarget == null || toTarget == null) {
+      _cancelWire();
+      _status.show("That cable's pins are no longer in this document.");
+      return;
+    }
+
+    // ═════════════════════════════════════════════════════════════════
+    // THE BUILDER THROWS ON PURPOSE, AND A KEYSTROKE MAY NOT CRASH
+    // ═════════════════════════════════════════════════════════════════
+    // `allocatePortDesignatorFor`'s own doc: it "THROWS where
+    // `ConnectTarget.plannedDesignator` falls back to null", because a
+    // `Port` written with a fabricated or blank designator is a wrong
+    // identifier on a termination schedule (G4) and there is no weaker
+    // answer that is safe. That is right for core and it makes this call
+    // site the one that has to catch.
+    //
+    // IT IS REACHABLE FROM A FILE, not only from a bug.
+    // `ProjectSettings.portDesignatorFormat` is a persisted, user-editable
+    // pattern with three live failure modes — canon's own commercial
+    // `{DEV_BLOCK}{PORT_SEQ:2}` preset throws because reserve-block
+    // allocation is not implemented, a hand-edited file can carry a
+    // syntactically broken pattern, and one with no sequence token
+    // exhausts. Every one of those is a problem with a SETTING, and none
+    // of them is a reason a `W`-arrows-`Enter` should take the app down.
+    //
+    // Reported, never swallowed: the sentence says which setting, because
+    // that is the only thing the user can act on.
+    final ConnectPortsResult result;
+    try {
+      result = buildConnectPortsCommand(
+        doc: _doc,
+        from: fromTarget,
+        to: toTarget,
+        // DR-011.4's sibling ruling, argued in `connect_commands.dart`:
+        // nothing in this document can say what cable this is, and G4
+        // forbids guessing one from the signal family.
+        media: kUnstatedMedia,
+        now: widget.controller.clock.nowUtc(),
+        actor: widget.controller.actor,
+      );
+    } on Exception catch (error) {
+      _cancelWire();
+      _status.show(
+        "This project's port designator format cannot number "
+        '${fromTarget.citation} or ${toTarget.citation}, so the cable was '
+        'not made: $error',
+      );
+      return;
+    }
+
+    switch (result) {
+      case ConnectPortsRefused(:final ruleId, :final message):
+        // DR-011.5: T1 refuses OUTRIGHT — there is no [ Connect anyway ],
+        // because docs/02:854 gives T1's escape as "None. There is nothing
+        // to escape to", and M2 would otherwise ship a way to persist a
+        // topology violation two milestones before M5's validation exists
+        // to flag it. The rule id AND a sentence naming real designators,
+        // both, because "TOP-003" alone is a log line.
+        _status.show('$ruleId — $message');
+      case ConnectPortsReady(:final command, :final roleMismatch):
+        widget.controller.run(command);
+        // THE CARET STAYS ON THE SINK. This is the M1 refutation's lesson
+        // applied: the next `W` starts from where the user is looking, so
+        // back-to-back cables are W-arrows-Enter, W-arrows-Enter with no
+        // round trip through a selection.
+        setState(() {
+          _wireFrom = null;
+          _candidates = const <PinRef>[];
+        });
+        final warning = roleMismatch == null
+            ? ''
+            : ' — but ${fromTarget.citation} is the '
+                  '"${roleMismatch.fromRole}" leg and ${toTarget.citation} '
+                  'is the "${roleMismatch.toRole}" leg, so this cable '
+                  'carries no role';
+        _status.show(
+          '${command.designator} connected ${fromTarget.citation} to '
+          '${toTarget.citation}$warning.',
+        );
+    }
   }
 
   // ── build ─────────────────────────────────────────────────────────────
@@ -793,6 +1301,16 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       focusedDeviceIds: _focused,
       designatorOf: (id) => _doc.devices[Uuid(id)]?.designator ?? id,
     );
+    // The gesture in flight, resolved against the scene that is about to
+    // be painted — never against a remembered geometry. A caret ring that
+    // is one frame behind the symbol it is on is a cursor that lies.
+    final overlay = buildConnectOverlay(
+      scene: scene,
+      style: _connectOverlayStyle(scheme),
+      scale: _viewport.scale,
+      caret: _pinCaret,
+      source: _wireFrom,
+    );
     final plan = buildSchematicPaintPlan(
       scene: scene,
       doc: _doc,
@@ -801,6 +1319,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       measurer: widget.measurer,
       palette: palette,
       groundArgb: _argbOfColor(scheme.surfaceContainerLowest),
+      overlayOps: overlay.ops,
     );
 
     // THE KEYS ARE DECLARED IN `keymap.dart`, NOT HERE. Eleven
@@ -862,10 +1381,49 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
             (_) => _toggleFocus(),
           ),
           SchematicCancelIntent: _GatedAction<SchematicCancelIntent>(
+            // THE WIRE IS THE NEW TOP RUNG, and this predicate is the whole
+            // of how it joins the ladder — exactly as Phase 1 predicted it
+            // would ("Phase 2's connect mode joins that ladder ABOVE these
+            // two limbs by widening this one predicate"). With nothing in
+            // flight, nothing focused and nothing selected, `Esc` still has
+            // no meaning here and must fall through to the layer behind it.
             () =>
                 _canvasKeysEnabled &&
-                (_focused.isNotEmpty || _selection.isNotEmpty),
+                (_wireFrom != null ||
+                    _focused.isNotEmpty ||
+                    _selection.isNotEmpty),
             (_) => _onEscape(),
+          ),
+          BeginWireIntent: _GatedAction<BeginWireIntent>(
+            // Re-arming from a different pin mid-flight would silently
+            // discard the cable in hand; `Esc` first is one keystroke and
+            // is the documented cancel.
+            () => _canvasKeysEnabled && _wireFrom == null,
+            (_) => _beginWire(),
+          ),
+          CommitWireIntent: _GatedAction<CommitWireIntent>(
+            // `Enter` is a framework chord (`ActivateIntent`) and the rack
+            // owns it too, so this must decline it whenever there is no
+            // cable to commit — a consumed `Enter` on an idle sheet is a
+            // button somewhere that stopped working.
+            () => _canvasKeysEnabled && _wireFrom != null && _pinCaret != null,
+            (_) => _commitWire(),
+          ),
+          NextCandidatePinIntent: _GatedAction<NextCandidatePinIntent>(
+            // ARMED ONLY — see the binding's note. An idle sheet hands
+            // `Tab` back to focus traversal, or a keyboard-only user could
+            // enter this canvas and never leave it.
+            () => _canvasKeysEnabled && _wireFrom != null,
+            (_) => _cycleCandidate(step: 1),
+          ),
+          PreviousCandidatePinIntent:
+              _GatedAction<PreviousCandidatePinIntent>(
+                () => _canvasKeysEnabled && _wireFrom != null,
+                (_) => _cycleCandidate(step: -1),
+              ),
+          MovePinCaretIntent: _GatedAction<MovePinCaretIntent>(
+            () => _canvasKeysEnabled,
+            (intent) => _movePinCaret(intent.direction),
           ),
         },
         child: Focus(
@@ -1396,6 +1954,24 @@ final class _SchematicStatusStrip extends StatelessWidget {
     );
   }
 }
+
+/// The connect gesture's chrome colours, from the theme.
+///
+/// THEME ROLES, NOT THE SIGNAL PALETTE. docs/05 §7 gives the illumination
+/// figures in fixed hex — `#F0E442` for a compatible port, `#E69F00` for
+/// one that would spring back — and those are PAL-1 colours belonging to
+/// the signal taxonomy, resolved by `pal1_check.py` and the registry parity
+/// gate. This overlay is a CURSOR: it is not a signal, it is not printed,
+/// and borrowing a family hue for it would put chrome inside the one
+/// palette three gates exist to keep honest. `primary` and `tertiary` move
+/// with the user's own theme and read in both brightnesses, which is what a
+/// caret needs.
+ConnectOverlayStyle _connectOverlayStyle(ColorScheme scheme) =>
+    ConnectOverlayStyle(
+      caretArgb: _argbOfColor(scheme.primary),
+      sourceArgb: _argbOfColor(scheme.tertiary),
+      bandArgb: _argbOfColor(scheme.primary),
+    );
 
 /// The theme-derived symbol palette.
 ///

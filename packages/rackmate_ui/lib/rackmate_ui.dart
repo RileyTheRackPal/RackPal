@@ -56,6 +56,7 @@ export 'src/canvas/rack_metrics_row.dart';
 export 'src/canvas/render_device_box.dart';
 export 'src/canvas/render_rack_canvas.dart';
 export 'src/canvas/resize_preview_controller.dart';
+export 'src/canvas/schematic/connect_overlay.dart';
 export 'src/canvas/schematic/domain_filter_bar.dart';
 export 'src/canvas/schematic/render_schematic_canvas.dart';
 export 'src/canvas/schematic/schematic_canvas_screen.dart';
