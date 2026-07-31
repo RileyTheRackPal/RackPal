@@ -515,6 +515,54 @@ void main() {
     });
   });
 
+  group('kUnstatedMedia — the cable type the document cannot state', () {
+    test('the seeded registries carry NO media type at all, so no id a '
+        'connect could pick would resolve', () {
+      // THE PREMISE, ASSERTED RATHER THAN QUOTED. `seed_registries.dart`'s
+      // header says `mediaTypes` stays empty (docs/02 §5.3's table was out
+      // of DR-010's scope); this fails if that ever changes, which is
+      // exactly when the connect path should start offering a real choice
+      // instead of writing nothing.
+      expect(buildSeedRegistries().mediaTypes, isEmpty);
+    });
+
+    test('a link built with it reaches the schedule as an UNRESOLVED media '
+        '— counted, not invented', () {
+      // G4 in the one place it is expensive to get wrong: the termination
+      // schedule is what an installer buys cable from. `ProjectSettings
+      // .defaultNetworkMedia` is `media.cat6a_futp`, and writing that on
+      // an HDMI run would put a plausible — and wrong — cable spec in
+      // front of them, which reads as data rather than as a guess.
+      final doc = _pair();
+      _built(doc, _out(doc), _in(doc), media: kUnstatedMedia).apply(doc);
+
+      final row = buildSchedule(doc).rows.single;
+      expect(row.mediaId, kUnstatedMedia);
+      expect(
+        row.media,
+        isNull,
+        reason: 'ScheduleRow.media is the nullable registry entry, whose '
+            'own doc reads "counted, never invented" — an unstated cable '
+            'lands in that arm',
+      );
+    });
+
+    test('it round-trips byte-for-byte — an empty id is a value, not a '
+        'hole', () {
+      // CR-117 over the one field this constant touches. `Link.media` is
+      // encoded as a bare string, so the risk was never the empty value
+      // itself but a reader that treated `''` as absent and dropped it.
+      final doc = _pair();
+      _built(doc, _out(doc), _in(doc), media: kUnstatedMedia).apply(doc);
+      final bytes = _codec.write(doc);
+      final again = _codec.read(bytes);
+      expect(again, isA<Ok<RackDocument>>());
+      final reread = (again as Ok<RackDocument>).value;
+      expect(reread.links.values.single.media, kUnstatedMedia);
+      expect(_codec.write(reread), bytes);
+    });
+  });
+
   group('buildConnectPortsCommand — allocation and refusal', () {
     test('a refusal produces NO command and NO document change', () {
       // DR-011.5: a T1 rule refuses outright, so there must be nothing to

@@ -467,6 +467,163 @@ void main() {
     });
   });
 
+  group('DR-011.4 — creating a link does not re-lay-out the sheet', () {
+    /// The same document plus one more link, between two pins that already
+    /// carry none — the shape a connect gesture produces.
+    RackDocument withOneMoreLink(RackDocument doc) {
+      final hub = doc.devices.values.firstWhere((d) => d.designator == 'HUB-1');
+      final snk = doc.devices.values.firstWhere((d) => d.designator == 'SNK-1');
+      Port materialise(DeviceInstance device, String key) {
+        final id = derivePortId(device.id, PortKey(key));
+        return doc.ports[id] ??= Port(
+          id: id,
+          deviceId: device.id,
+          designator: key,
+          templatePortKey: PortKey(key),
+        );
+      }
+
+      const id = Uuid('0190f107-0000-7000-8000-000000000001');
+      doc.links[id] = Link(
+        id: id,
+        designator: 'W900',
+        media: const MediaTypeId('media.cat6'),
+        order: const FracIndex('a900'),
+        meta: _meta(),
+        conductors: [
+          Conductor(
+            from: PortEndpoint(materialise(hub, 'out3').id),
+            to: PortEndpoint(materialise(snk, 'in1').id),
+          ),
+        ],
+      );
+      return doc;
+    }
+
+    test('a new link MOVES symbols when the layout is left to itself — the '
+        'premise, so the freeze below is not asserting nothing', () {
+      // THE HALF THAT MAKES THE OTHER HALF MEAN SOMETHING. DR-011.4 exists
+      // because `AtomicConnectCommand.touches => EpochMask.wires` makes the
+      // screen rebuild its scene, and a rebuild re-runs Sugiyama over the
+      // NEW edge set. If a new link happened not to move anything, the
+      // freeze test would pass on a document that could never have shown
+      // the defect.
+      final before = _build(_document());
+      final after = _build(withOneMoreLink(_document()));
+      expect(
+        after.positions,
+        isNot(before.positions),
+        reason: 'an added edge changes the layering and the barycentre '
+            'sweep, which is exactly the reflow the ruling forbids',
+      );
+    });
+
+    test('holding the previous positions freezes EVERY symbol, to the '
+        'unit', () {
+      final before = _build(_document());
+      final after = buildSchematicScene(
+        doc: withOneMoreLink(_document()),
+        measurer: _Measurer(),
+        holdAt: before.positions,
+      );
+
+      expect(
+        after.positions,
+        before.positions,
+        reason: 'DR-011.4: "symbol positions freeze; wires and labels '
+            'rebuild" — the positions are the whole claim',
+      );
+      // And the DRAWING agrees with the map, rather than the map being a
+      // record of an intent the geometry did not follow.
+      for (final symbol in after.symbols) {
+        final at = after.positions[Uuid(symbol.id)]!;
+        expect(symbol.bodyRect.left, at.gx * kSchematicUnitsPerGrid);
+        expect(symbol.bodyRect.top, at.gy * kSchematicUnitsPerGrid);
+      }
+    });
+
+    test('the labels DO rebuild — a frozen sheet is not a stale one', () {
+      // The other half of the ruling's sentence. Freezing positions must
+      // not freeze the drawing: the new link's two net labels have to
+      // appear, or "the sheet holds still" would have been implemented as
+      // "the sheet stops updating".
+      final before = _build(_document());
+      final after = buildSchematicScene(
+        doc: withOneMoreLink(_document()),
+        measurer: _Measurer(),
+        holdAt: before.positions,
+      );
+      expect(after.netLabels.length, greaterThan(before.netLabels.length));
+      expect(digestScene(after.scene), isNot(digestScene(before.scene)));
+    });
+
+    test('a device the hold does not name is still laid out — a freeze is '
+        'not a refusal to place anything new', () {
+      // A hold map is whatever the caller had on screen last frame. A
+      // device added in the same transaction as a link is in the document
+      // and NOT in that map, and it must still get a position.
+      final before = _build(_document());
+      final doc = withOneMoreLink(_document());
+      final extra = doc.devices.values.firstWhere(
+        (d) => d.designator == 'SNK-2',
+      );
+      final held = Map<Uuid, Pt>.from(before.positions)..remove(extra.id);
+
+      final after = buildSchematicScene(
+        doc: doc,
+        measurer: _Measurer(),
+        holdAt: held,
+      );
+      expect(after.positions[extra.id], isNotNull);
+      for (final entry in held.entries) {
+        expect(after.positions[entry.key], entry.value);
+      }
+    });
+
+    test('a PINNED SheetItem beats a hold — the document outranks a memory '
+        'of the last frame', () {
+      // `SheetItem.pinned` is authored state the user saved (CR-068); a
+      // hold is transient UI. Where both name a device the document wins,
+      // so a caller cannot strand a symbol away from where its own file
+      // says it belongs.
+      const at = Pt(96, 40);
+      final free = _build(_document());
+      final snk = free.symbols.firstWhere((s) => s.designator == 'SNK-1');
+      final elsewhere = <Uuid, Pt>{
+        ...free.positions,
+        Uuid(snk.id): const Pt(4, 4),
+      };
+
+      final scene = buildSchematicScene(
+        doc: _document(pinAt: at),
+        measurer: _Measurer(),
+        holdAt: elsewhere,
+      );
+      expect(scene.positions[Uuid(snk.id)], at);
+    });
+
+    test('a hold adds NOTHING to the document — DR-011.4 rejected pinning '
+        'every symbol precisely because it would', () {
+      // The ruling's own argument: of the three shapes considered, this is
+      // "the only one that adds nothing to the saved file", because
+      // pinning every symbol on first layout would write a `SheetItem` per
+      // device into CR-117's byte-exact surface to carry UI state.
+      final doc = _document();
+      final before = _build(doc);
+      buildSchematicScene(
+        doc: doc,
+        measurer: _Measurer(),
+        holdAt: before.positions,
+      );
+      expect(
+        doc.sheets,
+        isEmpty,
+        reason: 'a hold is a layout INPUT, never a document write',
+      );
+      expect(const JsonDocumentCodec().write(doc), isNotEmpty);
+    });
+  });
+
   group('scope — DR-001 §11.1.3', () {
     // THIS GROUP CHANGED AT M2-D AND THE CHANGE IS THE POINT. It used to
     // assert "the scene draws SYMBOLS ONLY: no wires, no net labels, no

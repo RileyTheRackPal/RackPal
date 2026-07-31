@@ -58,6 +58,48 @@ import 'package:rackmate_core/src/model/service.dart';
 import 'package:rackmate_core/src/units/ids.dart';
 import 'package:rackmate_core/src/util/id_gen.dart';
 
+/// The `MediaTypeId` a connect gesture writes when the document cannot say
+/// what cable this run is — which today is EVERY connect made in the app.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// EMPTY IS THE HONEST ANSWER, AND IT IS G4, NOT LAZINESS
+/// ═════════════════════════════════════════════════════════════════════
+/// `Link.media` is required and non-nullable, so a connect must write
+/// SOMETHING. Nothing in the tree knows what:
+///
+///   * `Registries.mediaTypes` IS EMPTY in every seeded document —
+///     `seed_registries.dart`'s header says so outright ("`cableSpecs`,
+///     `.mediaTypes` and `.outletTemplates` STAY EMPTY"), because docs/02
+///     §5.3's `MediaTypeDef` table was kept out of DR-010's scope. There
+///     is no id to pick that would resolve;
+///   * `SignalFamilyDef` carries no `typicalMedia` — DR-010 §11.10.4
+///     keeps the twenty-odd corpus fields absent until something needs
+///     them, and this is not that;
+///   * `PortDef` names a CONNECTOR, and a connector is not a cable. RJ45
+///     carries `net.ethernet` and `video.hdbaset` over different cable
+///     grades, which docs/05:145 calls the two most dangerous ports in
+///     the taxonomy.
+///
+/// So the alternatives are all fabrications. `ProjectSettings
+/// .defaultNetworkMedia` is `media.cat6a_futp` and writing it on an HDMI
+/// run puts a wrong cable spec on a termination schedule an installer
+/// buys from — which is precisely what G4 forbids, and the failure is
+/// silent because a plausible cable type looks like data rather than like
+/// a guess.
+///
+/// AN UNRESOLVED MEDIA IS ALREADY A MODELLED STATE, which is why this
+/// costs nothing downstream: `ScheduleRow.media` is a nullable
+/// `MediaTypeDef?` documented as "the registry entry for `mediaId`, or
+/// null when the document's `Registries` does not carry one. Counted,
+/// never invented." An empty id lands in that arm exactly as any
+/// unresolvable id would, and it round-trips (`Link.media` is encoded as
+/// a bare string).
+///
+/// WHEN THIS STOPS BEING RIGHT: the moment `mediaTypes` is seeded and a
+/// family can name its typical cable, the connect path should offer that
+/// and this constant should be deleted rather than defaulted around.
+const MediaTypeId kUnstatedMedia = MediaTypeId('');
+
 /// Everything [ConnectPortsCommand.apply] needs to materialise one pin —
 /// and nothing else.
 ///

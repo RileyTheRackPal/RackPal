@@ -300,15 +300,20 @@ final class SchematicScene {
 /// global override that fights the filter is a second source of truth for
 /// the same question". `drawn` mode arrives as a FILTER SCOPE, not as a
 /// flag on this function.
+/// [holdAt] freezes the listed devices where a PREVIOUS layout put them —
+/// DR-011.4's "creating a link does not re-lay-out the sheet". See its own
+/// doc below; a caller that passes nothing gets exactly the behaviour this
+/// function has always had.
 SchematicScene buildSchematicScene({
   required RackDocument doc,
   required TextMeasurer measurer,
   SchematicPalette palette = const SchematicPalette(),
   SchematicMetrics metrics = const SchematicMetrics(),
   NetLabelStyle netLabelStyle = const NetLabelStyle(),
+  Map<Uuid, Pt> holdAt = const <Uuid, Pt>{},
 }) {
   final upg = kSchematicUnitsPerGrid;
-  final pinned = _pinnedPositions(doc);
+  final pinned = _holdOrPin(doc, holdAt);
 
   // ── which devices get a symbol (see the file header) ─────────────────
   final candidates = doc.devices.values.toList()
@@ -803,6 +808,38 @@ LayerAnchor _anchorFor(
 /// entry. There is exactly one in practice (CR-073, DR-004, AC-037) and
 /// `Sheet` deliberately does not enforce that structurally, so the tie-break
 /// is stated rather than left to map order.
+/// [_pinnedPositions] widened by [holdAt] — DR-011.4's freeze, expressed in
+/// the mechanism the layout already has.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A HOLD IS NOT A PIN, AND THE DIFFERENCE IS WHERE IT LIVES
+/// ═══════════════════════════════════════════════════════════════════════
+/// `SheetItem.pinned` is AUTHORED STATE: the user moved a symbol, the
+/// document records it, and it survives save/load (CR-068). [holdAt] is a
+/// caller's own memory of where this very function put those symbols last
+/// time — it is never written anywhere and never leaves the session.
+///
+/// That distinction is the whole of DR-011.4's argument. Of the three
+/// shapes considered for "creating a link must not move every symbol",
+/// pinning each symbol on first layout was rejected precisely because it
+/// would write a `SheetItem` per device into every saved file and grow
+/// [CR-117]'s byte-exact surface to carry UI state. Feeding the previous
+/// positions back in as a LAYOUT INPUT gets the identical geometry and
+/// adds nothing to the document — `write(read(bytes)) == bytes` cannot
+/// notice this parameter exists.
+///
+/// THE DOCUMENT WINS ON A CONFLICT. A pinned symbol is a decision the user
+/// made and saved; a held position is the last thing that happened to be on
+/// screen. Where both name a device, the pin governs — which also means a
+/// caller cannot accidentally strand a symbol away from the place its own
+/// document says it belongs.
+Map<Uuid, Pt> _holdOrPin(RackDocument doc, Map<Uuid, Pt> holdAt) {
+  final pinned = _pinnedPositions(doc);
+  if (holdAt.isEmpty) return pinned;
+  if (pinned.isEmpty) return holdAt;
+  return <Uuid, Pt>{...holdAt, ...pinned};
+}
+
 Map<Uuid, Pt> _pinnedPositions(RackDocument doc) {
   Sheet? chosen;
   for (final sheet in doc.sheets.values) {
