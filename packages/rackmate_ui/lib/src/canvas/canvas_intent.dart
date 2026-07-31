@@ -158,6 +158,12 @@ abstract interface class CanvasIntentHandler {
 /// Adoption is FIFO across multiple deferred pointers (three-finger contact
 /// is the only way to get there), so which one inherits the route is a
 /// property of the code rather than of `Map` iteration luck.
+///
+/// AND THE ROUTE IS GIVEN BACK WHEN THIS WIDGET GOES AWAY UNDER A LIVE
+/// POINTER — see [_CanvasIntentDetectorState.dispose]. Every rule above is
+/// about a gesture that ENDS; a detector that is unmounted mid-press ends
+/// none of them, and the handler is left holding state for a gesture whose
+/// terminal callback can never arrive.
 class CanvasIntentDetector extends StatefulWidget {
   const CanvasIntentDetector({
     required this.viewport,
@@ -354,6 +360,98 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
 
   void _onPanZoomEnd(PointerPanZoomEndEvent event) {
     _panZoomLastScale = 1;
+  }
+
+  /// THE TERMINAL A DISPOSED DETECTOR OWES — AND THE ONE IT MUST STOP THE
+  /// ENGINE FROM DELIVERING BEHIND ITS BACK.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// AN UNMOUNTED DETECTOR IS NOT SILENT. IT IS WORSE THAN SILENT.
+  /// ═══════════════════════════════════════════════════════════════════
+  /// The obvious reading — "a `Listener` that has left the tree receives
+  /// no more pointer events, so the gesture stalls with its terminal
+  /// never delivered" — IS WRONG, and it is worth stating because it is
+  /// the reading this fix was first scoped under.
+  ///
+  /// `GestureBinding` caches the hit-test result AT POINTER-DOWN
+  /// (`_hitTests[pointer]`) and dispatches that pointer's every later
+  /// move, up and cancel against the cached path — it does not re-test,
+  /// and it does not care that the render object on that path has since
+  /// been detached and disposed. The `onPointerUp` closure is still a
+  /// live Dart object pointing at this `State`. Measured on this class
+  /// before the fix: `[begin, update]` at the moment of unmount, and
+  /// `[begin, update, update, commit]` once the finger came up.
+  ///
+  /// SO THE GESTURE DID NOT STALL, IT COMMITTED — from a widget that had
+  /// left the tree, into a handler whose screen has since replaced the
+  /// canvas underneath it. That is also why the leaked exclusivity claim
+  /// this fix was first written for was never observed in practice: the
+  /// stale `commitDrag` released it on its way past.
+  ///
+  /// What it costs is a commit the user did not make on the surface they
+  /// were looking at. On the schematic, `_selectAt` runs against the
+  /// CURRENT scene at a scene point the user last saw on a different
+  /// sheet. On the rack, the stale `updateDrag` re-arms a move preview
+  /// from `_dragStartScene` — which `_resetDrag` does not clear — and the
+  /// `commitDrag` behind it clicks or commits. With M2-F Phase 3's
+  /// connect gesture behind the same field it is a `ConnectPortsCommand`:
+  /// a document mutation, with an undo entry, for a drop on a canvas that
+  /// does not exist.
+  ///
+  /// IT IS REACHABLE, and not only in a test that pumps a new tree. The
+  /// schematic swaps its whole canvas subtree for the empty-sheet panel
+  /// the moment `scene.symbols` goes empty (`schematic_canvas_screen
+  /// .dart`'s `_canvas` vs `_EmptySheet`), which an undo or an edit from
+  /// another view can do while a pointer is down.
+  ///
+  /// THE FIX IS BOTH HALVES OF [_cancelRoutedGesture] AND NEITHER ALONE.
+  /// Clearing `_dragPointer` is what makes the engine's stale events
+  /// match no branch and reach nobody; delivering `cancel` is what stops
+  /// the handler being left holding per-drag state for a gesture that,
+  /// having been unrouted, now genuinely will never speak again.
+  ///
+  /// `cancel`, NEVER `commitDrag`. A commit means "the user released
+  /// here", and here no longer exists. The gesture was aborted by the
+  /// tree, which is what `cancel` is for.
+  @override
+  void dispose() {
+    _cancelRoutedGesture();
+    super.dispose();
+  }
+
+  /// Hands the routed gesture (if any) its `cancel`, and hands the
+  /// deferred pointers nothing.
+  ///
+  /// DEFERRED POINTERS ARE OWED NOTHING, on `_onPointerUp`'s own rule: the
+  /// contract is "exactly one of commitDrag/cancel PER beginDrag", not one
+  /// per pointer, and a deferred pointer never received a `beginDrag`.
+  /// Delivering for them here would invent terminals for gestures the
+  /// handler has never heard of — and on an arbitrating handler each one
+  /// is a token it does not recognise, so they would be silently dropped
+  /// anyway. Cleared rather than delivered.
+  ///
+  /// THE STATE IS CLEARED BEFORE THE CALL, and that ordering is the whole
+  /// safety of this method. `handler.cancel` runs arbitrary screen code —
+  /// it releases claims, tears down previews and removes overlay entries —
+  /// and a detector that still looked "routing" while that ran could be
+  /// re-entered. Clearing first also makes the double-delivery impossible
+  /// by construction rather than by a flag, and means [_adoptDeferredPointer]
+  /// has nothing left to adopt even if something did reach it.
+  void _cancelRoutedGesture() {
+    final gesture = _dragGesture;
+    _deferred.clear();
+    if (gesture == null) return;
+    // Re-read, exactly as every other callback in this class does. A
+    // handler that was swapped mid-drag gets a terminal for a begin it
+    // never saw — which is precisely what the token makes safe: the
+    // identity does not match anything it owns, so it declines it. The
+    // alternative (capturing the handler at `beginDrag`) would call into
+    // an object the tree has already replaced.
+    final handler = widget.handler;
+    _dragPointer = null;
+    _dragGesture = null;
+    _lastDragScene = null;
+    handler?.cancel(gesture: gesture);
   }
 
   @override

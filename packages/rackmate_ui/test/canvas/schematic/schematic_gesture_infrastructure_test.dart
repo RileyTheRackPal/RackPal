@@ -700,6 +700,103 @@ void main() {
     });
   });
 
+  group('2c — the canvas subtree goes away under a live pointer', () {
+    testWidgets('a press whose canvas is unmounted under it does NOT commit '
+        'when the finger comes up — and the sheet is not deadened either', (
+      tester,
+    ) async {
+      // THE DEFECT PHASE 1 TRACKED, WITH THE MECHANISM IT GOT WRONG.
+      // `CanvasIntentDetector` had no `dispose`, and that was written up as
+      // "a widget unmounted mid-press never delivers its terminal, so the
+      // claim leaks". `GestureBinding` caches the hit-test result at
+      // POINTER-DOWN and keeps dispatching that pointer's move/up down the
+      // cached path forever — a detached, disposed `RenderPointerListener`
+      // still holds a live closure onto its `State`. So the terminal DID
+      // arrive: measured, `[begin, update, update, commit]`. The claim was
+      // released by that stale commit, which is exactly why nobody ever saw
+      // it leak.
+      //
+      // What the user got instead was a COMMIT on a canvas that no longer
+      // existed — here a selection at a scene point on a sheet that had
+      // been replaced and put back, and with Phase 3's connect gesture
+      // behind the same field a `ConnectPortsCommand` with an undo entry.
+      //
+      // IT IS NOT A TEST-ONLY PATH, which is why the unmount here is driven
+      // by a document edit rather than by pumping a new tree. This screen
+      // swaps its whole canvas subtree for `_EmptySheet` the moment
+      // `scene.symbols` goes empty, and an undo — or an edit from another
+      // view — can empty it while a pointer is down. One transaction, so it
+      // is ONE undo entry and one call puts the sheet back.
+      await pump(tester);
+      final symbolBearing = kFixtureDesignators
+          .where((d) => d != kFixturePortlessDesignator)
+          .map((d) => deviceNamed(doc, d).id)
+          .toList();
+
+      final press = await tester.startGesture(
+        toScreen(tester, centreOf('MTX-1')),
+      );
+      await tester.pump();
+
+      controller.transact(LabelKey.removeDevice, (tx) {
+        for (final id in symbolBearing) {
+          tx.add(RemoveDeviceCommand(id: id));
+        }
+      });
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byType(CanvasIntentDetector),
+        findsNothing,
+        reason: 'the premise: with no symbol left the sheet shows the empty '
+            'panel and the detector really has left the tree — without '
+            'this the test would be asserting nothing',
+      );
+
+      // The sheet comes back, and with it a DIFFERENT detector, which never
+      // saw the press. The pointer has been physically down throughout.
+      controller.undoLast();
+      await tester.pumpAndSettle();
+      expect(find.byType(CanvasIntentDetector), findsOneWidget);
+
+      await press.up();
+      await tester.pumpAndSettle();
+
+      // THE ASSERTION THAT MATTERS. The release lands on the same scene
+      // point MTX-1 occupies, so a stale commit selects it and `F` draws its
+      // four links. It must select NOTHING: that gesture was ended when its
+      // canvas was, and this pointer is no longer routed anywhere.
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.pumpAndSettle();
+      expect(
+        wiresDrawn(tester),
+        0,
+        reason: 'the press was cancelled when the sheet it was made on went '
+            'away — the up that follows is not a click on the sheet that '
+            'came back',
+      );
+
+      // AND THE SHEET IS NOT DEADENED. The other half of the fix: the
+      // handler was told the gesture ended, so it is not still holding the
+      // canvas for a pointer that is now unrouted. An ordinary click works.
+      await tester.tapAt(toScreen(tester, centreOf('MTX-1')));
+      await tester.pump();
+      expect(
+        find.textContaining('One drag at a time'),
+        findsNothing,
+        reason: 'the unmounted detector gave the route back rather than '
+            'holding it for a gesture nothing can end',
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.pumpAndSettle();
+      expect(
+        wiresDrawn(tester),
+        4,
+        reason: 'a fresh click selects MTX-1 and `F` focuses its four links',
+      );
+    });
+  });
+
   group('3 — the actions are gated, so a declined key falls through', () {
     testWidgets('`Esc` with nothing to cancel reaches the layer ABOVE this '
         'screen; with something to cancel it does not', (tester) async {

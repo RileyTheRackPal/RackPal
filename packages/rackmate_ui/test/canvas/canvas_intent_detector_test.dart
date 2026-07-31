@@ -353,6 +353,142 @@ void main() {
     );
   });
 
+  group('unmounted under a live pointer', () {
+    // AN UNMOUNTED DETECTOR IS NOT SILENT — IT IS WORSE THAN SILENT, and
+    // the obvious reading of this defect is the wrong one.
+    //
+    // "A `Listener` that has left the tree receives no more events, so the
+    // gesture stalls with its terminal never delivered" is how this was
+    // first written up. `GestureBinding` caches the hit-test result AT
+    // POINTER-DOWN and dispatches every later move/up/cancel for that
+    // pointer against the cached path — it never re-tests, and a detached,
+    // disposed render object on that path still holds a live closure onto
+    // the `State`. Measured before the fix: `[begin, update]` at the
+    // unmount, and `[begin, update, update, commit]` once the finger came
+    // up. The gesture did not stall. It COMMITTED, out of a widget that
+    // had left the tree.
+    //
+    // That is also why the leaked exclusivity claim this was first scoped
+    // for is not what these tests assert: the stale `commitDrag` released
+    // it on the way past, which is exactly why nobody ever saw it.
+    //
+    // Reachable without a test harness: the schematic swaps its whole
+    // canvas subtree for the empty-sheet panel when `scene.symbols` goes
+    // empty, which an undo from another view can do under a live pointer.
+    // `schematic_gesture_infrastructure_test.dart` drives exactly that.
+
+    testWidgets("the routed gesture gets its cancel, and the engine's stale "
+        'move and up reach NOBODY', (tester) async {
+      // BOTH HALVES, AND NEITHER IS SUFFICIENT ALONE. Delivering `cancel`
+      // without unrouting the pointer leaves the stale `commitDrag` to
+      // arrive after it; unrouting without delivering `cancel` leaves the
+      // handler holding per-drag state for a gesture that now really will
+      // never speak again.
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      final handler = _RecordingHandler();
+      await tester.pumpWidget(_host(vp, handler));
+
+      final a = await tester.startGesture(const Offset(100, 100));
+      await a.moveBy(const Offset(20, 0));
+      expect(handler.log, <String>[
+        'begin(100.0,100.0)',
+        'update(120.0,100.0|20.0,0.0)',
+      ]);
+
+      // The detector leaves the tree with the pointer still down.
+      await tester.pumpWidget(const SizedBox.shrink());
+
+      expect(handler.log, <String>[
+        'begin(100.0,100.0)',
+        'update(120.0,100.0|20.0,0.0)',
+        'cancel',
+      ]);
+      expect(
+        handler.tokens.last,
+        same(handler.tokens.first),
+        reason: 'the terminal is attributed to the begin it belongs to, or '
+            "an arbitrating handler cannot tell it from another gesture's",
+      );
+
+      // THE ASSERTION THE PROBE ABOVE IS ABOUT. The engine keeps dispatching
+      // this pointer down its cached hit path; not one of those events may
+      // reach the handler, because the gesture is over.
+      await a.moveBy(const Offset(30, 0));
+      await a.up();
+      await tester.pump();
+      expect(
+        handler.log,
+        hasLength(3),
+        reason: 'an unrouted pointer matches no branch: no second update, '
+            'and above all no commit for a release on a canvas that is gone',
+      );
+    });
+
+    testWidgets('a DEFERRED pointer is owed nothing — the contract is one '
+        'terminal per beginDrag, not per pointer', (tester) async {
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      final handler = _RecordingHandler();
+      await tester.pumpWidget(_host(vp, handler));
+
+      final a = await tester.startGesture(const Offset(100, 100), pointer: 1);
+      // B is refused a `beginDrag` and merely remembered (the deferral map).
+      final b = await tester.startGesture(const Offset(500, 400), pointer: 2);
+      await b.moveBy(const Offset(10, 10));
+      expect(handler.log.where((e) => e.startsWith('begin')), hasLength(1));
+
+      await tester.pumpWidget(const SizedBox.shrink());
+
+      expect(
+        handler.log,
+        <String>['begin(100.0,100.0)', 'cancel'],
+        reason: 'exactly ONE cancel — B never received a beginDrag, so it '
+            'is owed no terminal and inventing one would describe a '
+            'gesture the handler has never heard of',
+      );
+
+      await a.up();
+      await b.up();
+      await tester.pump();
+      expect(handler.log, hasLength(2));
+    });
+
+    testWidgets('an idle detector owes nothing, and neither does one whose '
+        'gesture already ended', (tester) async {
+      // THE OTHER HALF, and the one a careless "always cancel on dispose"
+      // gets wrong: a second terminal for a gesture that already committed
+      // reaches a handler which has torn its state down and — on the rack,
+      // whose adapter drops the token — would run that teardown a second
+      // time against whatever gesture came next.
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      final handler = _RecordingHandler();
+      await tester.pumpWidget(_host(vp, handler));
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(handler.log, isEmpty);
+
+      final vp2 = ViewportController();
+      addTearDown(vp2.dispose);
+      final handler2 = _RecordingHandler();
+      await tester.pumpWidget(_host(vp2, handler2));
+      final a = await tester.startGesture(const Offset(100, 100));
+      await a.up();
+      expect(handler2.log, <String>[
+        'begin(100.0,100.0)',
+        'commit(100.0,100.0)',
+      ]);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(
+        handler2.log,
+        hasLength(2),
+        reason: 'the gesture ended on its own terms; the unmount adds no '
+            'second terminal to it',
+      );
+    });
+  });
+
   testWidgets('plain mouse wheel pans the viewport', (tester) async {
     final vp = ViewportController();
     addTearDown(vp.dispose);
