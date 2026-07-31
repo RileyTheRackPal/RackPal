@@ -308,6 +308,22 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     requestFocus: _canvasFocus.requestFocus,
     claim: () => _claimPointerGesture(_PointerGesture.canvasDrag),
     release: () => _releasePointerGesture(_PointerGesture.canvasDrag),
+    // ── the connect gesture's four seams (Phase 3) ──────────────────
+    //
+    // THE HANDLER ASKS, IT DOES NOT DECIDE. Every one of these is a
+    // tear-off onto the `State`, for the same reason `onClick` is: the
+    // handler owns per-DRAG state (a start point, a travel distance) and
+    // the screen owns per-SHEET state (the scene, the caret, the
+    // candidates, the arbiter). A handler that reached into the scene
+    // would be a second place that knows where a pin is.
+    pinAt: _pinAt,
+    claimConnect: () => _claimPointerGesture(_PointerGesture.connectDrag),
+    releaseConnect: () =>
+        _releasePointerGesture(_PointerGesture.connectDrag),
+    onConnectBegin: _beginWireAt,
+    onConnectUpdate: _dragWireTo,
+    onConnectCommit: _releaseWireAt,
+    onConnectCancel: _cancelWire,
   );
 
   SchematicViewFilter _filter = const SchematicViewFilter();
@@ -392,6 +408,13 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// and says so. That teardown is not a nicety here; it is what makes the
   /// cache correct.
   List<PinRef> _candidates = const <PinRef>[];
+
+  /// Where a POINTER drag's band currently ends when the magnet has not
+  /// caught a pin — the raw cursor, in scene space. Null whenever
+  /// [_pinCaret] is the band's target, which is always true of the
+  /// keyboard route: a caret is already exactly on a pin, so there is no
+  /// unsnapped state for it to be in.
+  DPt? _freeEnd;
 
   /// The positions the LAST built scene laid its symbols out at, and the
   /// `_sceneEpoch` those positions must be held for — DR-011.4.
@@ -1131,10 +1154,23 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       _status.show('This sheet draws no pin to start a cable from.');
       return;
     }
+    setState(() => _pinCaret = caret);
+    _armWireFrom(caret);
+  }
+
+  /// Arms a wire from [caret], or says why it cannot. THE ONE ARMING PATH
+  /// — `W` and a pointer press both land here, so the two drivers cannot
+  /// disagree about what a legal start is or about what the user is told
+  /// when there is none.
+  ///
+  /// Returns whether a wire is now in flight.
+  bool _armWireFrom(PinRef caret) {
+    final scene = _scene;
+    if (scene == null) return false;
     final from = _targetFor(caret);
     if (from == null) {
       _status.show('That pin is no longer in this document.');
-      return;
+      return false;
     }
 
     // EVERY OTHER PIN ON THE SHEET, RUN THROUGH THE REAL RULES. Not a
@@ -1162,19 +1198,195 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       _status.show(
         'No pin on this sheet can take a cable from ${_saying(caret)}.',
       );
-      return;
+      return false;
     }
 
     setState(() {
-      _pinCaret = caret;
       _wireFrom = caret;
       _candidates = List<PinRef>.unmodifiable(candidates);
     });
     _status.show(
       'Wire from ${_saying(caret)} — ${candidates.length} '
       '${candidates.length == 1 ? 'pin' : 'pins'} can take it. '
-      'Arrows or Tab to choose, Enter to commit, Esc to cancel.',
+      'Drag or Tab to choose, release or Enter to commit, Esc to cancel.',
     );
+    return true;
+  }
+
+  // ── the connect gesture, by pointer (docs/05 §7's WIRE_DRAG) ──────────
+  //
+  // THE SAME STATE, A SECOND DRIVER. `_wireFrom`, `_pinCaret` and
+  // `_candidates` are exactly the fields the keyboard route sets; the
+  // pointer sets them from a press, a move and a release instead of from
+  // `W`, arrows and `Enter`. That is the whole reason the keyboard was
+  // built first: it forced the state to be a model of the GESTURE rather
+  // than a model of the mouse, so this phase adds a driver and not a
+  // parallel implementation.
+  //
+  // WHAT DOCS/05 §7 ASKS FOR THAT THIS DOES NOT BUILD, each with its
+  // reason, because a list of unbuilt items is worth more than silence:
+  //
+  //  * THE 35% CANVAS DIM (§7.1). It is a recolouring of every symbol op,
+  //    and this file's own header already rules on that class: "all three
+  //    are recolourings of SYMBOL ops, and a recolour is a rebuild of the
+  //    very fragments M2-D publishes so they can be replayed untouched.
+  //    They want a palette-level mechanism, not a per-frame op rewrite on
+  //    the path §11.2 bans `saveLayer` from." The dim is the fourth member
+  //    of that family and takes the same answer.
+  //  * THE AMBER "would spring back" RING (§7.3). There is no spring-back
+  //    tier in M2 — see `ConnectOverlayStyle.candidateArgb`.
+  //  * TYPE-WEIGHTED SNAP (§7.6). DR-011.8, unruled — see [snapToPin].
+  //  * AUTO-PAN (§7.7) and COLLAPSED-BANK EXPANSION (§7.8). No bank
+  //    collapse exists to expand, and auto-pan is a comfort on a gesture
+  //    that can already be driven entirely from the keyboard.
+
+  /// The pin under [scenePoint] within the live snap radius, or null.
+  ///
+  /// Used for the PRESS — "did this drag start on a pin?" — where the pool
+  /// is every pin on the sheet, unlike the magnet during the drag, whose
+  /// pool is the candidates.
+  PinRef? _pinAt(DPt scenePoint) {
+    final scene = _scene;
+    if (scene == null) return null;
+    return snapToPin(
+      scene,
+      scenePoint,
+      tolerance: _portHitTolerancePx / _viewport.scale,
+      among: [for (final pin in locatePins(scene)) pin.ref],
+    )?.ref;
+  }
+
+  /// A press landed on [ref]: arm a wire from it, exactly as `W` does.
+  ///
+  /// Returns false when nothing armed — an already-full pin, or one no
+  /// cable can leave — so the handler can fall back to treating the press
+  /// as an ordinary click rather than starting a drag with nothing in it.
+  bool _beginWireAt(PinRef ref) {
+    setState(() => _pinCaret = ref);
+    return _armWireFrom(ref);
+  }
+
+  /// How far from a pin the band still locks onto it, in DIAGRAM UNITS.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `Ctrl` SUPPRESSES THE MAGNET — AND IT GOVERNS THE DROP TOO
+  /// ═══════════════════════════════════════════════════════════════════
+  /// docs/05 §14: "Ctrl held during draw | Suppress magnetic snap". Read
+  /// as affecting only the PREVIEW it would be a decoration: the band
+  /// would stop jumping while the release still went wherever the magnet
+  /// said, so the one gesture the modifier exists for — aiming at a pin
+  /// that has a neighbour 3 px away — would still land on the neighbour.
+  /// So the suppressed radius is used by the drag and the release alike.
+  ///
+  /// SUPPRESSED IS NOT ZERO. A magnet-less drop still has to hit
+  /// something, and the honest target is the pin's own drawn glyph: what
+  /// you are literally on, rather than what is merely nearest. The radius
+  /// is READ OFF THE SCENE (`SymbolPort.size`, the circle the painter
+  /// actually drew) instead of being restated as a constant — the
+  /// painter/hit-tester desync `symbol_layer.dart`'s header records began
+  /// as exactly that kind of second copy.
+  ///
+  /// Unsuppressed it is docs/05 §11.6's 12 SCREEN px, converted by the
+  /// live scale for the reason [_portHitTolerancePx] gives.
+  double _snapTolerance(SchematicScene scene) {
+    final suppressed =
+        HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isMetaPressed;
+    if (!suppressed) return _portHitTolerancePx / _viewport.scale;
+    for (final symbol in scene.symbols) {
+      for (final port in symbol.allPorts) {
+        return port.size / 2;
+      }
+    }
+    return 0;
+  }
+
+  /// The pointer moved to [scenePoint] while a wire is armed.
+  void _dragWireTo(DPt scenePoint) {
+    final scene = _scene;
+    if (scene == null || _wireFrom == null) return;
+    final snapped = snapToPin(
+      scene,
+      scenePoint,
+      tolerance: _snapTolerance(scene),
+      among: _candidates,
+    );
+    if (snapped?.ref == _pinCaret && _freeEnd == null) return;
+    setState(() {
+      _pinCaret = snapped?.ref;
+      _freeEnd = snapped == null ? scenePoint : null;
+    });
+    if (snapped != null) _announceCaret();
+  }
+
+  /// The pointer came up at [scenePoint].
+  ///
+  /// THREE OUTCOMES, AND ALL THREE ARE docs/05 §7's OWN. Released on a
+  /// candidate: commit. Released on a pin the rules refuse: the refusal,
+  /// with its id and its sentence, and nothing written. Released on empty
+  /// canvas: cancel — "`Esc`, right-click, or a click on empty canvas.
+  /// All three abort with no model mutation and no undo entry."
+  void _releaseWireAt(DPt scenePoint, {required bool moved}) {
+    final scene = _scene;
+    final from = _wireFrom;
+    if (scene == null || from == null) return;
+    setState(() => _freeEnd = null);
+
+    // ═════════════════════════════════════════════════════════════════
+    // A TAP ON A PIN IS NOT A CABLE. IT IS PICKING ONE UP AND PUTTING IT
+    // BACK DOWN.
+    // ═════════════════════════════════════════════════════════════════
+    // Without this, a press-and-release inside the 4 px click slop
+    // committed — and to a NEIGHBOUR, because the source pin is not in its
+    // own candidate set and the magnet's radius is wider than the 2 gu pin
+    // pitch at the framed zoom. So a single click on a jack silently
+    // cabled it to the pin above it. Measured, not theorised: the first
+    // run of this phase's suite produced "W006 connected MTX-1 J05 to
+    // MTX-1 J05" from one `tapAt`.
+    //
+    // The rack's own rule for the mirror case is the authority — "a
+    // sub-threshold press has no preview to cancel and STAYS A CLICK"
+    // (`rack_canvas_screen.dart:1041`) — and this is its other half: a
+    // sub-threshold press that DID arm a preview cancels it, because the
+    // user never dragged anywhere.
+    if (!moved) {
+      _cancelWire();
+      return;
+    }
+
+    final tolerance = _snapTolerance(scene);
+    final onCandidate = snapToPin(
+      scene,
+      scenePoint,
+      tolerance: tolerance,
+      among: _candidates,
+    );
+    if (onCandidate != null) {
+      setState(() => _pinCaret = onCandidate.ref);
+      _commitWire();
+      return;
+    }
+
+    // Not a candidate — but was it a PIN? The difference matters to the
+    // user: dropping on a jack that cannot take the cable deserves the
+    // rule that says why, and dropping on the paper is just a cancel.
+    final onAnyPin = snapToPin(
+      scene,
+      scenePoint,
+      tolerance: tolerance,
+      among: [for (final pin in locatePins(scene)) pin.ref],
+    );
+    final target = onAnyPin == null ? null : _targetFor(onAnyPin.ref);
+    final source = _targetFor(from);
+    if (target != null && source != null) {
+      final verdict = evaluateConnect(_doc, source, target);
+      if (verdict is ConnectRefused) {
+        _clearWire();
+        _status.show('${verdict.ruleId} — ${verdict.message}');
+        return;
+      }
+    }
+    _cancelWire();
   }
 
   /// `Esc` while a wire is in flight — docs/05 §7's cancel.
@@ -1186,11 +1398,19 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   void _cancelWire() {
     if (_wireFrom == null) return;
     final from = _wireFrom!;
+    _clearWire();
+    _status.show('Cable from ${_saying(from)} cancelled.');
+  }
+
+  /// Drops the in-flight wire WITHOUT a message — for the callers that
+  /// have a more specific thing to say (a refusal, a commit) and would
+  /// otherwise overwrite it with a generic one.
+  void _clearWire() {
     setState(() {
       _wireFrom = null;
       _candidates = const <PinRef>[];
+      _freeEnd = null;
     });
-    _status.show('Cable from ${_saying(from)} cancelled.');
   }
 
   /// `Enter` — commit the wire in flight (docs/05 §7, DR-011.6).
@@ -1269,15 +1489,33 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
           _wireFrom = null;
           _candidates = const <PinRef>[];
         });
+        // ═══════════════════════════════════════════════════════════
+        // THE DESIGNATORS THE COMMAND WROTE, NOT THE ONES RESOLVE-TIME
+        // GUESSED
+        // ═══════════════════════════════════════════════════════════
+        // `ConnectTarget.plannedDesignator` is computed per target, each
+        // against the document as it stands — so TWO unmaterialised pins
+        // on ONE device both plan the same next free J-number, and a
+        // sentence built from the two citations reported "W006 connected
+        // MTX-1 J05 to MTX-1 J05" for a perfectly good loopback between
+        // two different jacks. Only the builder resolves that, by passing
+        // the first end's answer as `alsoUsed` to the second.
+        //
+        // So the message reads `PortMaterialisation.designator`, which is
+        // what `apply()` actually stamped on the port. The planned value
+        // keeps its job — naming a pin in a REFUSAL, where no command was
+        // built and there is nothing better to say.
+        final fromSaid = '${fromTarget.deviceDesignator} '
+            '${command.from.designator}';
+        final toSaid = '${toTarget.deviceDesignator} '
+            '${command.to.designator}';
         final warning = roleMismatch == null
             ? ''
-            : ' — but ${fromTarget.citation} is the '
-                  '"${roleMismatch.fromRole}" leg and ${toTarget.citation} '
-                  'is the "${roleMismatch.toRole}" leg, so this cable '
-                  'carries no role';
+            : ' — but $fromSaid is the "${roleMismatch.fromRole}" leg and '
+                  '$toSaid is the "${roleMismatch.toRole}" leg, so this '
+                  'cable carries no role';
         _status.show(
-          '${command.designator} connected ${fromTarget.citation} to '
-          '${toTarget.citation}$warning.',
+          '${command.designator} connected $fromSaid to $toSaid$warning.',
         );
     }
   }
@@ -1310,6 +1548,8 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       scale: _viewport.scale,
       caret: _pinCaret,
       source: _wireFrom,
+      freeEnd: _freeEnd,
+      candidates: _candidates,
     );
     final plan = buildSchematicPaintPlan(
       scene: scene,
@@ -1607,7 +1847,30 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
 // in the rack and in the three dialogs — which is canon §1.10's principle
 // (b), and was unverifiable while each view kept its own private copy.
 
-/// Turns a pointer press-and-release into a click, and nothing else.
+/// Turns a pointer press into either a CLICK or a CABLE, decided once at
+/// the press by what is under it.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// THE BRANCH IS AT `beginDrag`, AND IT CANNOT BE ANYWHERE ELSE
+/// ═════════════════════════════════════════════════════════════════════
+/// A press on a pin draws a cable; a press anywhere else selects. Deciding
+/// that at RELEASE — "did this end on a pin?" — would mean every drag
+/// across the sheet was potentially a cable, so nothing could be previewed
+/// until it was already over, which is the one thing a rubber band is for.
+/// Deciding it per-move would let one gesture change identity under the
+/// user's finger.
+///
+/// So the decision is made once, from the press point, and the gesture
+/// keeps that identity for its whole life — which is also what lets the
+/// two paths take SEPARATE claims from the screen's arbiter
+/// (`_PointerGesture.canvasDrag` vs `.connectDrag`) rather than sharing
+/// one and having to remember which they are.
+///
+/// A PIN THAT CANNOT ARM FALLS BACK TO A CLICK. [onConnectBegin] returns
+/// false for a full pin or one no cable can leave, and the press then
+/// behaves exactly as it did before Phase 3 — it selects the device. The
+/// alternative, a dead press that does nothing because it landed 3 px
+/// inside a jack, is the silent no-op docs/04 §3.4 forbids.
 ///
 /// THE HANDLER EXISTS SO THAT A DRAG DOES NOT PAN. `CanvasIntentDetector`
 /// pans on a primary drag when no handler is supplied; on this sheet a
@@ -1630,12 +1893,40 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     required this.requestFocus,
     required this.claim,
     required this.release,
+    required this.pinAt,
+    required this.claimConnect,
+    required this.releaseConnect,
+    required this.onConnectBegin,
+    required this.onConnectUpdate,
+    required this.onConnectCommit,
+    required this.onConnectCancel,
   });
 
   final ViewportController viewport;
   final double slopPx;
   final void Function(DPt scenePoint) onClick;
   final VoidCallback requestFocus;
+
+  /// Which pin a press landed on, or null for body/empty canvas. THE
+  /// BRANCH POINT of this whole class — see [beginDrag].
+  final PinRef? Function(DPt scenePoint) pinAt;
+
+  /// The arbiter, for the connect gesture's own claim. SEPARATE FROM
+  /// [claim] because they are separate gestures: a connect that is refused
+  /// must not release a click's claim, and `_PointerGesture`'s two values
+  /// are what make that an identity comparison rather than a guess.
+  final bool Function() claimConnect;
+  final VoidCallback releaseConnect;
+
+  /// Arms a cable from [PinRef]; false when nothing armed (a full pin, or
+  /// one no cable can leave), in which case the press stays a click.
+  final bool Function(PinRef ref) onConnectBegin;
+  final void Function(DPt scenePoint) onConnectUpdate;
+
+  /// `moved` is whether the gesture ever left the click slop — see
+  /// `_releaseWireAt`, where a tap on a pin is a cancel and not a cable.
+  final void Function(DPt scenePoint, {required bool moved}) onConnectCommit;
+  final VoidCallback onConnectCancel;
 
   /// Asks the screen's arbiter for the canvas; false means another
   /// pointer-driven gesture is already live and this one starts NOTHING.
@@ -1690,13 +1981,24 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
   /// omission let a refusal outlive its own gesture) does not exist.
   CanvasGestureToken? _owned;
 
+  /// Whether the gesture [_owned] names is a CABLE rather than a click.
+  ///
+  /// Set once in [beginDrag] and read by the other three callbacks, so a
+  /// gesture cannot change identity halfway through — see the class doc.
+  bool _connecting = false;
+
   @override
   void beginDrag(
     DPt sceneStart,
     Set<PointerDeviceKind> sourceKinds, {
     required CanvasGestureToken gesture,
   }) {
-    if (!claim()) {
+    // THE PIN QUESTION IS ASKED BEFORE EITHER CLAIM, because the answer
+    // decides WHICH claim to ask for. It reads the scene and nothing else,
+    // so it is safe to ask while another gesture holds the canvas.
+    final pin = pinAt(sceneStart);
+    final wantsConnect = pin != null;
+    if (!(wantsConnect ? claimConnect() : claim())) {
       // NOTHING IS TOUCHED, and nothing is remembered either. `_start` and
       // `_travelPx` belong to the gesture that owns the canvas and is still
       // mid-flight; re-initialising them here is verbatim the defect that bit
@@ -1711,6 +2013,27 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     requestFocus();
     _start = sceneStart;
     _travelPx = 0;
+    _connecting = false;
+
+    if (!wantsConnect) return;
+    if (onConnectBegin(pin)) {
+      _connecting = true;
+      return;
+    }
+    // THE PIN REFUSED TO ARM — full, or nothing on the sheet can take a
+    // cable from it. The press is not wasted: it hands the claim back and
+    // takes the ordinary one, so it still selects on release exactly as a
+    // press on the device body would. Two claims are never held at once,
+    // because this runs before any pointer movement can arrive.
+    releaseConnect();
+    if (!claim()) {
+      // Vanishingly unlikely (nothing else can have taken the canvas
+      // between two synchronous lines) but not impossible to write, and a
+      // gesture that proceeded without a claim is the leak this whole
+      // arbiter exists to prevent.
+      _owned = null;
+      _start = null;
+    }
   }
 
   @override
@@ -1731,6 +2054,11 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     _travelPx +=
         math.sqrt(sceneDelta.x * sceneDelta.x + sceneDelta.y * sceneDelta.y) *
         scale;
+    // NO SLOP ON THE BAND. A click's 4 px threshold exists so that a press
+    // that wobbles is still a click; a cable is already committed to being
+    // a cable by where it started, and holding its band still for the
+    // first 4 px would read as the gesture not having begun.
+    if (_connecting) onConnectUpdate(sceneCurrent);
   }
 
   @override
@@ -1742,43 +2070,73 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     if (gesture != _owned) return;
     final start = _start;
     final travelled = _travelPx;
-    // BEFORE the click, so the claim's life is exactly the pointer's. The
-    // click mutates only the (non-undoable) selection, and
+    final connecting = _connecting;
+    // BEFORE the outcome, so the claim's life is exactly the pointer's.
     // `CanvasIntentDetector` adopts any deferred pointer strictly after
     // this method returns — so a second finger inherits a canvas that is
     // already free.
     _reset();
-    if (start == null || travelled > slopPx) return;
+    if (start == null) return;
+    if (connecting) {
+      // THE SAME SLOP THE CLICK USES, handed on rather than re-derived:
+      // one threshold decides whether a press was a drag at all, and two
+      // copies of it is how a tap becomes a cable on one path and a click
+      // on the other.
+      onConnectCommit(sceneEnd, moved: travelled > slopPx);
+      return;
+    }
+    if (travelled > slopPx) return;
     onClick(sceneEnd);
   }
 
   @override
   void cancel({required CanvasGestureToken gesture}) {
     if (gesture != _owned) return; // see `commitDrag`.
+    final connecting = _connecting;
     _reset();
+    // A POINTER-CANCEL, NOT A RELEASE: nothing was dropped anywhere, so
+    // there is nothing to evaluate and nothing to write. docs/05 §7's
+    // cancel, reached through the third of its doors.
+    if (connecting) onConnectCancel();
   }
 
   void _reset() {
     _start = null;
     _travelPx = 0;
     _owned = null;
-    release();
+    if (_connecting) {
+      releaseConnect();
+    } else {
+      release();
+    }
+    _connecting = false;
   }
 }
 
 /// The pointer-driven gestures this screen arbitrates between (see the
 /// "exclusivity rule" section in `_SchematicCanvasScreenState`).
 ///
-/// ONE VALUE TODAY, and the file header says why that is a statement about
-/// this phase rather than about the mechanism: the rack's two values are
-/// its two pointer ROUTES, and this screen still has one. Phase 2's connect
-/// gesture is armed on a pin and tracked separately, which is the second
-/// value — and the moment it exists `_releasePointerGesture`'s identity
-/// check starts doing work no latch in the handler can do for it.
+/// TWO VALUES SINCE PHASE 3, WHICH IS WHEN THE IDENTITY CHECK STARTED
+/// EARNING ITS KEEP. Phase 1's version of this enum had one value and its
+/// own comment said so: "the rack's two values are its two pointer ROUTES,
+/// and this screen still has one. Phase 2's connect gesture is armed on a
+/// pin and tracked separately, which is the second value — and the moment
+/// it exists `_releasePointerGesture`'s identity check starts doing work no
+/// latch in the handler can do for it."
+///
+/// That moment is now. A connect drag and a click/marquee drag are two
+/// different claims on one canvas, so `_releasePointerGesture`'s "a no-op
+/// when the gesture is not the one holding it" is no longer a rule about a
+/// case that cannot arise — it is what stops a refused connect's teardown
+/// from freeing the claim a live click is holding, and vice versa.
 enum _PointerGesture {
   /// The press/click (and, when it lands, the marquee) delivered by
   /// `CanvasIntentDetector`.
   canvasDrag,
+
+  /// A press that landed ON A PIN and armed a cable — docs/05 §7's
+  /// `WIRE_DRAG`.
+  connectDrag,
 }
 
 /// A real [Action] whose enablement is a predicate evaluated FRESH ON EVERY
@@ -1971,6 +2329,9 @@ ConnectOverlayStyle _connectOverlayStyle(ColorScheme scheme) =>
       caretArgb: _argbOfColor(scheme.primary),
       sourceArgb: _argbOfColor(scheme.tertiary),
       bandArgb: _argbOfColor(scheme.primary),
+      // Quieter than the caret on purpose: a hundred of these can be on
+      // screen at once and they are a FIELD, not a cursor.
+      candidateArgb: _argbOfColor(scheme.primary.withValues(alpha: 0.45)),
     );
 
 /// The theme-derived symbol palette.

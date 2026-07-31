@@ -44,6 +44,8 @@
 // takes the base escape. That is a statement about there being one of it,
 // not a simplification of the trace.
 
+import 'dart:math' as math;
+
 import 'package:meta/meta.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/canvas/schematic/wire_trace.dart';
@@ -158,9 +160,11 @@ final class ConnectOverlayStyle {
     required this.caretArgb,
     required this.sourceArgb,
     required this.bandArgb,
+    required this.candidateArgb,
     this.caretRadiusPx = 7,
     this.ringWidthPx = 2,
     this.bandWidthPx = 1.5,
+    this.candidateRadiusPx = 3.5,
   });
 
   final int caretArgb;
@@ -169,6 +173,36 @@ final class ConnectOverlayStyle {
   final double caretRadiusPx;
   final double ringWidthPx;
   final double bandWidthPx;
+
+  /// The ring on a pin the armed cable MAY land on.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// ONE RING, NOT TWO, AND THE MISSING ONE IS A RULING NOT AN OMISSION
+  /// ═══════════════════════════════════════════════════════════════════
+  /// docs/05 §7 asks for two: `#F0E442` for a compatible port and amber
+  /// `#E69F00` for one that "would spring back", the latter "droppable —
+  /// the chip and `[ Connect anyway ]` are what handles them". Neither
+  /// half of that is expressible in M2.
+  ///
+  /// DR-011.5 deletes `[ Connect anyway ]`: docs/02:854 gives T1's escape
+  /// as "None. There is nothing to escape to", and docs/02 governs. And
+  /// the spring-back tier IS the six T2 rules — `SIG-001`, `DIR-001`,
+  /// `CON-001` and the rest — every one of them deferred to M5
+  /// (docs/09:299). So this build knows exactly two states for a pin: the
+  /// cable may land on it, or a tier-1 rule refuses it outright. Drawing
+  /// an amber "you may drop here but it will spring back" ring would be
+  /// inventing a verdict the model cannot compute, which is the same
+  /// fabrication G4 forbids for a value.
+  ///
+  /// The second ring arrives with M5's validation, and with a colour taken
+  /// from the same place the first tier's is.
+  final int candidateArgb;
+
+  /// Candidate rings are drawn INSIDE the pin's own glyph, not around it,
+  /// so a sheet with a hundred reachable pins does not turn into a field
+  /// of halos. Smaller than [caretRadiusPx] on purpose: the caret has to
+  /// win the eye against them.
+  final double candidateRadiusPx;
 }
 
 /// The overlay's display list, plus what the screen has to be able to SAY
@@ -208,12 +242,21 @@ final class ConnectOverlay {
 /// (an untouched sheet), a caret alone (navigating), a source alone (armed,
 /// with the caret gone because the document deleted the pin it named), and
 /// both (the ordinary in-flight state).
+/// [freeEnd] is where the band ends when a pointer drag has not snapped to
+/// a pin — the raw cursor, in scene space. Ignored when [caret] resolves,
+/// because a snapped band ends on the pin and not near it.
+///
+/// [candidates] are the pins the armed cable may legally land on. They are
+/// drawn only while [source] is armed: a ring on every reachable pin of an
+/// IDLE sheet would be permanent chrome answering a question nobody asked.
 ConnectOverlay buildConnectOverlay({
   required SchematicScene scene,
   required ConnectOverlayStyle style,
   required double scale,
   PinRef? caret,
   PinRef? source,
+  DPt? freeEnd,
+  List<PinRef> candidates = const <PinRef>[],
   SchematicWireStyle wireStyle = const SchematicWireStyle(),
 }) {
   final caretPin = caret == null ? null : locatePin(scene, caret);
@@ -237,9 +280,55 @@ ConnectOverlay buildConnectOverlay({
   final ops = <DiagramOp>[];
   var band = const <DPt>[];
 
-  // The band FIRST, so the two rings sit on top of their own wire rather
+  // THE CANDIDATE RINGS FIRST, UNDER EVERYTHING. They are the field the
+  // gesture is played on; the band and the two live rings are the gesture
+  // itself and have to read over them.
+  if (sourcePin != null && candidates.isNotEmpty) {
+    final radius = style.candidateRadiusPx / scale;
+    final stroke = Stroke(
+      argb: style.candidateArgb,
+      widthPt: style.ringWidthPx,
+      scaleWithGeometry: false,
+    );
+    for (final ref in candidates) {
+      // Skip the one the caret is on: it gets the caret's own, larger ring
+      // a few lines below, and two concentric circles on one pin reads as
+      // a target rather than as a cursor.
+      if (ref == caret) continue;
+      final pin = locatePin(scene, ref);
+      if (pin == null) continue;
+      ops.add(OpCircle(pin.centre, radius, stroke: stroke));
+    }
+  }
+
+  // The band next, so the two rings sit on top of their own wire rather
   // than under it — the rings are what say "here", and a band drawn over
   // them would obscure the one pin the user is aiming at.
+  if (sourcePin != null && caretPin == null && freeEnd != null) {
+    // AN UNSNAPPED POINTER DRAG. The band still leaves the source along
+    // its own edge — that half is a fact about the pin and does not
+    // depend on where the cable is going — but the far end is a cursor,
+    // not a jack, so there is no edge to arrive along and the trace is
+    // taken as far as the escape and then run straight. Inventing a side
+    // for a point in empty space would draw a corner the committed cable
+    // would not have.
+    final escape = wireStyle.escapeGu * kSchematicUnitsPerGrid;
+    band = <DPt>[
+      sourcePin.centre,
+      _escapeFrom(sourcePin, escape),
+      freeEnd,
+    ];
+    ops.add(
+      OpPolyline(
+        band,
+        Stroke(
+          argb: style.bandArgb,
+          widthPt: style.bandWidthPx,
+          scaleWithGeometry: false,
+        ),
+      ),
+    );
+  }
   if (sourcePin != null && caretPin != null) {
     // `escapeGu` WITHOUT THE COMB STEP — see the file header. It is also
     // the same 3 gu a net-label leader uses, so the band leaves the pin at
@@ -298,4 +387,63 @@ ConnectOverlay buildConnectOverlay({
     source: sourcePin,
     band: band,
   );
+}
+
+/// [pin]'s escape point — [distance] straight out along its own edge.
+///
+/// The same rule `wire_trace.dart`'s private `_escapePoint` applies, and
+/// deliberately not a call to it: that one is private to the router, and
+/// the point here is that an UNSNAPPED band has only one real end. When
+/// both ends are pins the band goes through `orthogonalTrace` instead, so
+/// there is exactly one place a two-ended trace is derived.
+DPt _escapeFrom(LocatedPin pin, double distance) => switch (pin.side) {
+  SymbolSide.left => DPt(pin.centre.x - distance, pin.centre.y),
+  SymbolSide.right => DPt(pin.centre.x + distance, pin.centre.y),
+  SymbolSide.top => DPt(pin.centre.x, pin.centre.y - distance),
+  SymbolSide.bottom => DPt(pin.centre.x, pin.centre.y + distance),
+};
+
+/// The pin nearest [scenePoint] within [tolerance], or null.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// docs/05 §11.6's MAGNET, AND WHAT IT DELIBERATELY IS NOT YET
+/// ═══════════════════════════════════════════════════════════════════════
+/// "Within 12 screen px the band locks to a port's glyph centre." That
+/// figure is the corpus's only quantified pin-proximity number, and it is
+/// the same one the screen already converts for its click target — a pin
+/// you can snap to but not click would be two different pins.
+///
+/// SNAP IS NOT TYPE-WEIGHTED HERE, and that is one of DR-011.8's three
+/// open questions rather than a shortcut. docs/05 §7.6 says an HDMI band
+/// should prefer an HDMI port "even if an RJ45 port is 3 px nearer" — but
+/// its example weights the CONNECTOR while compatibility is defined over
+/// `signalFamily` (:473), and weighting the connector actively pushes
+/// toward `SIG-001`, because RJ45-carrying-`video.hdbaset` and
+/// RJ45-carrying-`net.ethernet` are the same connector and docs/05:145
+/// calls them the two most dangerous ports in the taxonomy. Guessing which
+/// axis it meant would bake that hazard into the gesture users perform
+/// sixty times an hour.
+///
+/// [among] is the candidate set, so the magnet cannot pull the band onto a
+/// pin the cable may not land on — which is the pointer's version of the
+/// keyboard's "Tab only reaches a candidate".
+LocatedPin? snapToPin(
+  SchematicScene scene,
+  DPt scenePoint, {
+  required double tolerance,
+  required List<PinRef> among,
+}) {
+  LocatedPin? best;
+  var bestDistance = double.infinity;
+  for (final ref in among) {
+    final pin = locatePin(scene, ref);
+    if (pin == null) continue;
+    final dx = pin.centre.x - scenePoint.x;
+    final dy = pin.centre.y - scenePoint.y;
+    final distance = math.sqrt(dx * dx + dy * dy);
+    if (distance > tolerance || distance >= bestDistance) continue;
+    bestDistance = distance;
+    best = pin;
+  }
+  return best;
 }
