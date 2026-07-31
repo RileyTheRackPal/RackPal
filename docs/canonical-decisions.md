@@ -6706,6 +6706,109 @@ Also unsettled: **where the AC-048 coach mark's "first" is persisted.** NOT FOUN
 document. Document state re-fires per file and puts UI chrome inside CR-117's byte-exact format;
 app-support prefs (docs/03:825) does not mention coach marks. It is decided in Phase 5.
 
+> **All four are now ruled — see §11.12 (DR-012).**
+
+---
+
+### 11.12 DR-012 · The four gesture rules DR-011.8 deferred
+
+> **RULING — settled by the user on 2026-07-31**, at the point M2-F Phases 0–3 had shipped and
+> Phase 4 could not start without them. DR-011.8 named three and said they would be "ruled when
+> M2-F Phase 4 reaches them, not before"; the fourth is the coach-mark question the same clause
+> sent to Phase 5.
+
+**The evidence that decided three of the four is the same evidence, and it is arithmetic.** Three
+`PortDef` fields that look purpose-built for these questions are declared, round-trip through the
+codec, and are **populated on none of the 727 seed catalog ports**: `acceptedFamilies`,
+`channelIndex` and (per DR-011's own §11.11 finding) `maxConnections`. `seed_registries.dart:394`
+says the first one outright — *"The exclusion list is not on the M0 class yet; the family separation
+is."* A rule written against an empty field is a rule that does nothing on every real document,
+which is the trap `effectiveMaxConnections` was introduced to escape in Phase 0 and which these
+clauses escape the same way.
+
+---
+
+**11.12.1 Chain-draw's "matching output" means THE SAME `signalFamily`, in template order.**
+
+docs/05:482 re-arms from *"the sink device's matching output"*, and its own worked example rules out
+the reading that sounds most natural: `ATV-1 → MTX-1 IN1` then `MTX-1 OUT1 → DA-1`. **A matrix
+switcher has no pairing between IN1 and OUT1** — that is what makes it a matrix — so *matching*
+cannot mean "the output paired with that input". Nothing in the model pairs them either.
+
+So it is the first free output whose `signalFamily` equals the family of the cable just committed,
+tie-broken by `PortDef.order` then `key`. **That tiebreak is not a new ordering**: it is the sort
+`_seqIn` already uses for `PORT_SEQ`, whose own comment records why — two orderings of one port list
+is how a pin ends up with one number on the schedule and a different one in the set that wires it.
+
+The rejected alternative is weighting on the CONNECTOR, and it is rejected for §11.12.3's reason.
+Where no such output exists the chain ENDS and says so; a chain that silently stopped would be the
+no-op docs/04 §3.4 forbids, arriving at the end of a gesture the user thought was continuing.
+
+---
+
+**11.12.2 Multi-draw's "rank" is `PortDef.order` then `key` — and it stays N `Link`s.**
+
+Two halves, and only the first was genuinely open.
+
+**Rank** is the template's declared order, the same sort as §11.12.1 and for the same reason.
+`channelIndex` is the field that looks purpose-built for this and is **undocumented, nullable and
+set on no seed port**, so a rule reading it would fall through to this answer on every real document
+with an extra branch nothing could test.
+
+**The N-Links half was never actually ambiguous, and is ruled here so it cannot drift.** docs/05:484
+says multi-draw creates *"N `Link`s"*; the very next paragraph says an `atomicConnect` set is *"one
+gesture producing one `Link` with N `Conductor`s"* (AC-053). DR-011.8's concern was that the two sit
+one line apart and swapping them changes the schedule's row count — eight `Link`s on the pull sheet
+versus one cable with eight conductors is a different bill of materials. The distinction is
+**deliberate and preserved**: multi-draw is N cables the installer pulls separately; an atomic set
+is one cable whose conductors happen to be countable.
+
+---
+
+**11.12.3 Type-weighted snap weights `signalFamily`, and the preference is ABSOLUTE inside the snap
+radius.**
+
+docs/05:477's example names **connector** types — "an HDMI band prefers an HDMI port even if an RJ45
+port is 3 px nearer" — while :473 defines compatibility over **`signalFamily`**. Weighting the
+connector is not a harmless simplification: RJ45-carrying-`video.hdbaset` and
+RJ45-carrying-`net.ethernet` are the SAME CONNECTOR, docs/05:145 calls them the two most dangerous
+ports in the taxonomy, and `seed_registries.dart:394` records that patching an HDBaseT output into a
+switch does not work and its 100 W PoH can damage the switch. A magnet that steered toward that
+would be the product's own worst mistake, made sixty times an hour.
+
+So the axis is the family, read through an `effectiveAcceptsFamily` in the shape
+`effectiveMaxConnections` established: `PortDef.acceptedFamilies` when it is non-empty, exact family
+equality when it is empty — which is every seed port today.
+
+**The weight is absolute rather than a number**, because the corpus gives no number (only "more than
+3 px") and inventing one would be a second unquantified figure. A family match beats a non-match
+anywhere inside docs/05 §11.6's 12 screen px radius, which already bounds the effect. `Ctrl`
+suppresses the magnet entirely (docs/05 §14) and is the documented way to insist on the other pin —
+a mechanism M2-F Phase 3 already built, and which governs the drop as well as the preview.
+
+---
+
+**11.12.4 The AC-048 coach mark's "first" is persisted in APP-SUPPORT PREFS.**
+
+Not document state: it would re-fire for every new file, and it would put UI chrome inside CR-117's
+byte-exact surface — the identical objection that decided §11.11.4 against pinning every symbol.
+
+Not unpersisted either: a mark that returns every launch until dismissed is a nag, not a coach mark.
+
+App-support prefs is an addition to a store that already exists —
+`productionApplicationSupportDirectory` (one call site, `data_root.dart`) — rather than a new
+mechanism. docs/03:825 does not mention coach marks, which is why this needed a ruling and not a
+lookup. Persisting per USER rather than per PROJECT is also what "first time" means to the person
+reading it: the second project is not the first time they have seen the app.
+
+---
+
+**11.12.5 What this does not settle.** The T2 compatibility matrix is still absent —
+`acceptedFamilies` is declared and empty, and `SIG-001` does not exist until M5. §11.12.3 is
+therefore an ordering heuristic over pins the tier-1 rules have ALREADY allowed, and it is not
+validation and must not be read as any. When M5 populates the matrix, §11.12.3's
+`effectiveAcceptsFamily` is the seam it lands on.
+
 ---
 
 ## 12. Superseded rulings

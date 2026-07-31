@@ -2,6 +2,27 @@
 
 ## 2026-07-31
 
+* **Creation**: [DR-012 — the four gesture rules DR-011.8 deferred](/decisions/dr-012-deferred-gesture-rules.md),
+  taken before Phase 4 started rather than during it. **Three of the four were
+  decided by one piece of arithmetic**: `acceptedFamilies`, `channelIndex` and
+  `maxConnections` are all declared on `PortDef`, all round-trip, and all are
+  populated on NONE of the 727 seed catalog ports — so every rule that would
+  have read them does nothing on every real document. That is the third time
+  this shape has appeared in M2-F (see
+  [diagnose before fixing](/practices/diagnose-before-fixing.md)); the first
+  was `effectiveMaxConnections` in Phase 0.
+* **Update**: [DR-011](/decisions/dr-011-connect-gesture.md) §11.8's four open
+  questions now point at DR-012. The sharpest of them was chain-draw's
+  *"matching output"*, which docs/05's OWN worked example refutes: it chains
+  `MTX-1 IN1` to `MTX-1 OUT1`, and **a matrix switcher has no pairing between
+  them — that is what makes it a matrix.**
+* **Note**: a licensing sweep found the dependency tree clean for a possible
+  GPLv3 release — 81 packages, 58 BSD / 18 MIT / 5 Apache-2.0, zero copyleft;
+  Jost ships its OFL-1.1 text; the seed catalog is all `Generic` archetypes so
+  there is no third-party SKU data. `pdf` being Apache-2.0 means GPLv2 is
+  closed and GPLv3 is the only copyleft option. Recorded here because a future
+  dependency choice can quietly foreclose it. Not a ruling: the business model
+  is §10.3's open question and would need one.
 * **Update**: [DR-011](/decisions/dr-011-connect-gesture.md) — clauses .1 to .6
   are BUILT (M2-F phases 1B, 2A and 2B). **The connection is made from the
   keyboard, and that is the whole of the ruling's "order that matters"**: the

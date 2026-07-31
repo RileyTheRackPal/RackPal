@@ -8,6 +8,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` �
 * [DR-009 — macOS ships in v1](dr-009-macos-in-v1.md) - closes §10.10 against its own recommendation, and creates the debt register it asked for.
 * [DR-010 — the registries seed in Dart](dr-010-seeded-registries.md) - the master is Dart not JSON; the subset is written at creation; SignalFamilyDef regains its dash.
 * [DR-011 — the connect gesture](dr-011-connect-gesture.md) - pin-to-pin, not set-to-set; ports materialise on connect; the sheet holds still; T1 refuses outright.
+* [DR-012 — the four gesture rules DR-011.8 deferred](dr-012-deferred-gesture-rules.md) - chain-draw matches on family, snap weights family not connector, and three fields that look purpose-built are empty on all 727 seed ports.
 
 # Not yet written up
 
