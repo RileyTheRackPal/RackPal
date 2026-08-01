@@ -409,6 +409,23 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// cache correct.
   List<PinRef> _candidates = const <PinRef>[];
 
+  /// The `PortSetDef` key the armed gesture is connecting AS A SET, or
+  /// null when the gesture is the ordinary pin-to-pin one.
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// WHICH GESTURE YOU GET IS DECIDED BY THE PIN YOU GRABBED
+  /// ═════════════════════════════════════════════════════════════════
+  /// DR-011.2: "`AtomicConnectCommand` is reserved for the case where the
+  /// grabbed pin belongs to a `PortSetDef` flagged `atomicConnect: true`."
+  /// So this is not a mode the user enters; it is a property of the jack
+  /// under the cursor, and 34 of the catalog's 257 ports have it — the
+  /// stereo, speaker and balanced pairs.
+  ///
+  /// A pin in a set that opted OUT is an ordinary pin, not an error: the
+  /// template author said this grouping is not one cable, and the
+  /// pin-to-pin gesture is the one that applies.
+  String? _wireFromSetKey;
+
   /// The candidates that carry the SOURCE PIN'S OWN FAMILY — DR-012.3's
   /// magnet preference, as a set the snap can test in O(1).
   ///
@@ -665,6 +682,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     // and, to a screen reader, the last thing said before the success.
     if (_wireFrom != null && !_committingWire) {
       _wireFrom = null;
+      _wireFromSetKey = null;
       _candidates = const <PinRef>[];
       _preferred = const <PinRef>{};
       what ??= 'Wire';
@@ -1190,6 +1208,159 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     );
   }
 
+  /// The ATOMIC set [ref] belongs to, or null when it belongs to none or
+  /// to one that has opted out.
+  ///
+  /// Null is the overwhelmingly normal answer: DR-011.2's arithmetic is
+  /// that 223 of the catalog's 257 ports carry no `setKey` at all, which
+  /// is why the gesture is pin-to-pin and this is the special case.
+  ResolvedPortSet? _atomicSetFor(PinRef ref) {
+    final target = _targetFor(ref);
+    final key = target?.setKey;
+    if (target == null || key == null) return null;
+    final set = resolvePortSet(_doc, target.deviceId, key);
+    if (set == null || !set.def.atomicConnect) return null;
+    return set;
+  }
+
+  /// Arms a SET gesture from [caret]'s set — one cable, N conductors.
+  ///
+  /// Candidates are every pin belonging to a set that `planAtomicConnect`
+  /// says this one may join. A pin PER MEMBER rather than one per set, so
+  /// dropping on any member of the target pair works — which is what a
+  /// user aiming at a stereo pair will do.
+  bool _armSetFrom(PinRef caret, ResolvedPortSet from, {bool announce = true}) {
+    final scene = _scene;
+    if (scene == null) return false;
+
+    final candidates = <PinRef>[];
+    for (final pin in locatePins(scene)) {
+      final to = _atomicSetFor(pin.ref);
+      if (to == null) continue;
+      if (to.deviceId == from.deviceId && to.def.key == from.def.key) continue;
+      final planned = planAtomicConnect(
+        _doc,
+        fromDeviceId: from.deviceId,
+        fromSetKey: from.def.key,
+        toDeviceId: to.deviceId,
+        toSetKey: to.def.key,
+      );
+      if (planned is AtomicConnectReady) candidates.add(pin.ref);
+    }
+
+    if (candidates.isEmpty) {
+      if (announce) {
+        _status.show(
+          'No set on this sheet can take the ${from.def.label} from '
+          '${_saying(caret)}.',
+        );
+      }
+      return false;
+    }
+
+    setState(() {
+      _wireFrom = caret;
+      _wireFromSetKey = from.def.key;
+      _candidates = List<PinRef>.unmodifiable(candidates);
+      // NO FAMILY PREFERENCE ON A SET GESTURE. DR-012.3's magnet orders
+      // PINS by the family the cable carries; a set connects as a whole
+      // and its members' families are the set's, so there is no second
+      // group to prefer. Left empty rather than filled with everything,
+      // which would read as a preference that happens to be universal.
+      _preferred = const <PinRef>{};
+    });
+    if (announce) {
+      _status.show(
+        '${from.def.label} from ${_saying(caret)} — one cable, '
+        '${from.members.length} conductors. '
+        '${candidates.length} target '
+        '${candidates.length == 1 ? 'pin' : 'pins'}. '
+        'Enter or release to commit, Esc to cancel.',
+      );
+    }
+    return true;
+  }
+
+  /// Commits the armed SET gesture — AC-053's "one gesture producing one
+  /// `Link` with N `Conductor`s".
+  void _commitSet(PinRef from, PinRef to, String fromSetKey) {
+    final fromTarget = _targetFor(from);
+    final toSet = _atomicSetFor(to);
+    if (fromTarget == null || toSet == null) {
+      _cancelWire();
+      return;
+    }
+    final result = planAtomicConnect(
+      _doc,
+      fromDeviceId: fromTarget.deviceId,
+      fromSetKey: fromSetKey,
+      toDeviceId: toSet.deviceId,
+      toSetKey: toSet.def.key,
+    );
+
+    switch (result) {
+      case null:
+        _clearWire();
+        _status.show('That set is no longer in this document.');
+      case AtomicConnectRefused(:final ruleId, :final message):
+        // DR-011.5, identically to the pin path: T1 refuses outright and
+        // nothing is written.
+        _clearWire();
+        _status.show('$ruleId — $message');
+      case AtomicConnectNotAtomic(:final setKey):
+        // NOT A REFUSAL, and it must not read like one — no rule was
+        // broken. The template author said this grouping is not one
+        // cable, so the answer is what the user should do instead.
+        _clearWire();
+        _status.show(
+          'The "$setKey" group wires one pin at a time — put the caret on '
+          'a pin and press W.',
+        );
+      case AtomicConnectReady(:final plan):
+        final command = buildAtomicConnectCommand(
+          doc: _doc,
+          plan: plan,
+          // DR-011.3: the SET'S OWN family, from the pin the user grabbed.
+          signalFamily: fromTarget.signalFamily,
+          media: kUnstatedMedia,
+          now: widget.controller.clock.nowUtc(),
+          actor: widget.controller.actor,
+        );
+        _committingWire = true;
+        try {
+          widget.controller.run(command);
+        } finally {
+          _committingWire = false;
+        }
+        setState(() {
+          _pinCaret = to;
+          _wireFrom = null;
+          _wireFromSetKey = null;
+          _candidates = const <PinRef>[];
+          _preferred = const <PinRef>{};
+        });
+        // OPEN ENDS ARE SAID OUT LOUD. §11.8.3 chose "connect what fits
+        // and warn" against a recommendation to refuse, and recorded the
+        // cost: validation does not exist until M5, so a half-connected
+        // run LOOKS COMPLETE on the schedule. This sentence is the warn.
+        final open = plan.openCount == 0
+            ? ''
+            : ' — ${plan.openCount} of its '
+                  '${plan.conductors.length} conductors has no partner and '
+                  'ends open';
+        final roles = plan.roleMismatches.isEmpty
+            ? ''
+            : ' — and ${plan.roleMismatches.length} pair declares opposite '
+                  'roles, so check polarity';
+        _status.show(
+          '${command.designator} connected ${toSet.def.label}: one cable, '
+          '${plan.pairedCount} paired '
+          '${plan.pairedCount == 1 ? 'conductor' : 'conductors'}'
+          '$open$roles.',
+        );
+    }
+  }
+
   /// `W` — arm a wire from the pin under the caret (docs/05 §14).
   void _beginWire() {
     final scene = _scene;
@@ -1217,6 +1388,13 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       if (announce) _status.show('That pin is no longer in this document.');
       return false;
     }
+
+    // THE BRANCH DR-011.2 RULES, and it is decided by the jack rather than
+    // by a mode: a pin in a set flagged `atomicConnect: true` arms the
+    // whole set. Everything else — 223 of the catalog's 257 ports — is
+    // pin-to-pin.
+    final set = _atomicSetFor(caret);
+    if (set != null) return _armSetFrom(caret, set, announce: announce);
 
     // EVERY OTHER PIN ON THE SHEET, RUN THROUGH THE REAL RULES. Not a
     // compatibility guess: `evaluateConnect` is TOP-001..005 and nothing
@@ -1475,6 +1653,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   void _clearWire() {
     setState(() {
       _wireFrom = null;
+      _wireFromSetKey = null;
       _candidates = const <PinRef>[];
       _preferred = const <PinRef>{};
       _freeEnd = null;
@@ -1486,6 +1665,11 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     final from = _wireFrom;
     final to = _pinCaret;
     if (from == null || to == null) return;
+    final setKey = _wireFromSetKey;
+    if (setKey != null) {
+      _commitSet(from, to, setKey);
+      return;
+    }
     final fromTarget = _targetFor(from);
     final toTarget = _targetFor(to);
     if (fromTarget == null || toTarget == null) {
@@ -1563,6 +1747,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
         setState(() {
           _pinCaret = to;
           _wireFrom = null;
+          _wireFromSetKey = null;
           _candidates = const <PinRef>[];
           _preferred = const <PinRef>{};
         });
