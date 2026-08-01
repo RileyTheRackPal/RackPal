@@ -1,15 +1,18 @@
 # RackMate
 
-RackMate is a desktop application for designing A/V equipment racks for custom-integration work — **residential-CI-first, commercial-capable** (DR-002): you enter a rack height in rack units, populate the rack from a seeded catalog of generic archetypes, wire the gear together on a schematic canvas, and export a PDF sheet set containing both the drawing and the cable schedule. This repository currently holds **planning documents only** — the canonical decision record, twelve specification documents derived from it, and the raw working papers they were adjudicated from. There is no Dart code, no `pubspec.yaml`, and no runnable application yet.
+RackMate is a desktop application for designing A/V equipment racks for custom-integration work — **residential-CI-first, commercial-capable** (DR-002): you enter a rack height in rack units, populate the rack from a seeded catalog of generic archetypes, wire the gear together on a schematic canvas, and export a PDF sheet set containing both the drawing and the cable schedule. The repository holds the specification — the canonical decision record, twelve documents derived from it, and the working papers they were adjudicated from — **and a Flutter application that builds and runs on Windows**.
 
-## Status: PLANNING
+## Status: IN BUILD — M0 and M1 shipped, M2 partial
 
 | | |
 |---|---|
-| Phase | Specification complete, implementation not started |
-| Code in repo | None |
-| Next step | M0 — Foundations (see [Roadmap](docs/09-roadmap.md)) |
+| Phase | M0 (foundations) and M1 (the elevation release) shipped; M2 (wiring and the live schedule) is **PARTIAL** — four of five exit clauses discharged |
+| Platform | Windows. macOS ships in v1 (DR-009) and is not built yet; the debt is enumerated in [docs/13](docs/13-macos-debt-register.md) |
+| Tests | 2 832 passing, 0 failing across five packages, behind **thirteen local gates** (`tools/ci/run_local.ps1`) including a pinned analyzer ratchet |
+| Next step | M3 — Structure and the field (see [Roadmap](docs/09-roadmap.md)) |
 | Estimated effort to v1 | 42–65 weeks of implementation; 11–17 months to a shipped v1 with normal overhead |
+
+**The status above is a summary, not the evidence.** [docs/12 — the milestone board](docs/12-milestone-board.md) is the audit: it marks every exit clause of every milestone with what was *run* rather than what is believed, cites the file or test that would have to be wrong for the mark to be wrong, and records where those citations have gone stale. Read it before trusting any claim on this page. In particular it records that **no CI service has ever executed the pipeline definition** — the gates are local, and "CI passes" is not yet a thing this project can say.
 
 The estimate above is the record's own honest number, not a target. It is stated rather than softened because a detailed design with no cost attached stalls, and one with a *wrong* cost attached stalls while also destroying trust in the plan.
 
@@ -137,7 +140,10 @@ RackMate/
 ├─ assets/
 │  └─ catalog/            seeded templates + sources.md (a cited source for
 │                         every numeric field in every shipped template)
-└─ docs/                  this planning set + research/
+├─ tools/ci/              the thirteen gates, runnable locally
+├─ .okf/                  the knowledge bundle — rulings, invariants, gates
+│                         and practices, maintained as changes land
+└─ docs/                  the specification set + research/
 ```
 
 `rackmate_export` and `rackmate_ui` are siblings that cannot see each other. That is what makes the PDF path isolate-safe, and it is a build-time invariant rather than a convention.
@@ -152,10 +158,12 @@ Five principles decide most of the close calls in the decision record. Where a r
 4. **Never fabricate data; show `unknown`** (G4). A missing weight contributes nothing to a rollup and the rollup reports its unknown count. `typicalWatts` never silently defaults to half of nameplate. `null` means unknown everywhere and renders `—`.
 5. **Cut features, never foundations** (G5). Units, UUIDv7 identity, tombstones, per-entity metadata, fractional indices, the command stack and the drawing IR all ship in v1 even where their UI does not. Anything expensive to retrofit is done now; this produces the "model ships, gesture defers" pattern that appears eleven times in the scope ruling.
 
-Alongside the five, one ruling acts as the binding validation frame: **the gesture may hesitate; the document may not lie** (CR-017). An invalid connection attempt gets spring-back — a reason chip and a `[ Connect anyway ]` button — not a refusal. The user knows things the software does not.
+Alongside the five, one ruling acts as the binding validation frame: **the gesture may hesitate; the document may not lie** (CR-017). The user knows things the software does not, so a rule that merely disagrees with them springs the gesture back with a reason rather than refusing it — **but the five tier-1 topology rules refuse outright and offer nothing to escape to** (DR-011.5, superseding this page's earlier claim of a `[ Connect anyway ]` button on every refusal; docs/02 §5's own tier table gives T1's escape as *"None. There is nothing to escape to."*). Spring-back belongs to the tier-2 rules, which land with validation at M5.
 
 One concept has one name everywhere — Dart identifier, JSON key, UI label, prose, commit message and PDF column header all derive from one glossary entry (N1). `Connection`, `CableType`, `PhysicalLink`, `bottomU`, `refDes` and the rest of [canon §4.7](docs/canonical-decisions.md#47-banned-names) are banned in code *and* in comments.
 
 ## Licence
 
-TBD. A licence model and EULA are named deliverables of M8 (AC-058 D7). Third-party licences are registered via `LicenseRegistry` and surfaced through `showLicensePage`; the shipped fonts — IBM Plex Sans, Sans Condensed and Mono, with Noto Sans Symbols 2 as fallback — are SIL OFL 1.1 (CR-080).
+TBD. A licence model and EULA are named deliverables of M8 (AC-058 D7); **a GPLv3 release is under consideration and this line is deliberately not rewritten until that question is ruled** (§10.3). A dependency sweep on 2026-07-31 found the tree clean for it — 81 packages, 58 BSD / 18 MIT / 5 Apache-2.0, zero copyleft — with the Apache-2.0 members closing GPLv2 but not GPLv3.
+
+Third-party licences are registered via `LicenseRegistry` and surfaced through `showLicensePage`. **The shipped font is Jost, SIL OFL 1.1** — it supersedes CR-080's IBM Plex, which the ruling has not yet been amended for (docs/12 §4.6).

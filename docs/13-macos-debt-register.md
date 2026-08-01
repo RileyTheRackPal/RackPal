@@ -13,8 +13,10 @@
 **Compiled 2026-07-28** against `0f83628`, by direct inspection. **Revised 2026-07-29** against
 `b36c04c`: D7 cleared but its gate found incomplete (§3.1), D9 and the byte-exactness paragraph
 **corrected** (both overstated the debt), D13 and D14 added, and §3.5 added to cost M3 against this
-list. Every claim below cites what was read. Where a number is an estimate rather than a
-measurement it says so — the distinction is the point, and §10.10's own 3–5 week figure is an
+list. **Re-read 2026-08-01** against `91cd487`, after M2-F — see §2.1: every row still describes the
+tree, three citations have drifted by a line or two and are corrected in place, and **§3.1's hole
+grew by nine bindings**. Every claim below cites what was read. Where a number is an estimate rather
+than a measurement it says so — the distinction is the point, and §10.10's own 3–5 week figure is an
 estimate that has never been checked against this tree.
 
 > **This register is live, not a dated audit.** Two of its rows were wrong within a day of being
@@ -52,17 +54,50 @@ Cost column is an **estimate**, not a measurement, unless marked otherwise.
 | **D1** | **No `macos/` platform directory.** `apps/rackmate` has `windows/` only | `ls apps/rackmate/` | hours |
 | **D2** | **Native file dialog.** RackMate drives `IFileDialog` itself from `windows/runner/file_dialog_channel.cpp` + `.h` — deliberately, `file_selector` was removed on purpose (`pubspec.yaml:8-20`). macOS needs an `NSOpenPanel`/`NSSavePanel` channel behind the existing `FilePicker` interface | `windows/runner/` | **largest item** — days |
 | **D3** | **`path_provider_windows`** must gain a macOS answer at the one call site | `pubspec.yaml:70` | hours |
-| **D4** | **CI has one job, pinned to Windows.** `azure-pipelines.yml:180` `job: windows_ci`, `:196` `vmImage: 'windows-2022'`. Needs a macOS job. Note the pipeline's own comment at `:106` already anticipates a matrix: *"that is a later question"* — **it is now this question** | `azure-pipelines.yml` | days |
+| **D4** | **CI has one job, pinned to Windows.** `azure-pipelines.yml:181` `job: windows_ci`, `:197` `vmImage: 'windows-2022'`. Needs a macOS job. Note the pipeline's own comment at `:106` already anticipates a matrix: *"that is a later question"* — **it is now this question** | `azure-pipelines.yml` | days |
 | **D5** | **Gate scripts are PowerShell.** Six `.ps1` under `tools/ci/`. Likely runnable under `pwsh` on macOS unmodified — **verify before budgeting a rewrite** | `tools/ci/` | verify first |
 | **D6** | **`verify_windows_build.ps1`** is Windows-specific by name and purpose; needs a macOS counterpart | `tools/ci/` | hours |
-| **D7** | ~~KEYBOARD MODIFIERS~~ — **CLEARED, GATE INCOMPLETE.** Was 43 hard-coded `SingleActivator` bindings assuming `Ctrl`, across six files. Now a 35-row `kKeymap` registry whose primary modifier resolves once, in `KeyBinding.activatorFor(TargetPlatform)`, through `defaultTargetPlatform`. **Zero `SingleActivator` instances remain outside the registry today** — but see §3.1: the ban is enforced in **one file**, and not in the package where M3 is built | `packages/rackmate_ui/lib/src/keymap/keymap.dart` | **done — gate owed** |
+| **D7** | ~~KEYBOARD MODIFIERS~~ — **CLEARED, GATE INCOMPLETE.** Was 43 hard-coded `SingleActivator` bindings assuming `Ctrl`, across six files. Now a 35-row `kKeymap` registry whose primary modifier resolves once, in `KeyBinding.activatorFor(TargetPlatform)`, through `defaultTargetPlatform`. **Zero `SingleActivator` instances remain outside the registry today** — but see §3.1 and §2.1: the ban is enforced in **one file**, and not in the package where M3 is built, and M2-F added **nine** more rows to that ungated package (35 → 44) | `packages/rackmate_ui/lib/src/keymap/keymap.dart` | **done — gate owed** |
 | **D8** | **Code signing.** DR-006 rules Windows self-signing; macOS needs **notarisation and stapling**, which D10 names and §12.9 explicitly leaves *"unaffected and still binding"* | canon `:2696`, `:5875` | days + Apple Developer enrolment lead time |
 | **D9** | **pdfium is vendored per platform** (CR-100) — **but not yet, and not by anything shipped.** `printing`/pdfium is in **no pubspec in this tree**; PDF comes from pure-Dart `pdf ^3.13.0`. docs/03 §10.1 *plans* `printing ^5.15.0` *"behind an explicit 'Verify output' button only"* and docs/11:432 schedules vendored pdfium at **M8**. So D9 is triggered by the preview button, not by adding sheets: **adding a sheet role costs zero here** | canon `:1517`; every `pubspec.yaml`; docs/11:432 | days, **at M8** |
-| **D10** | **`window_manager` / `screen_retriever_windows`** for geometry restore. `window_manager` is cross-platform; the pinned `screen_retriever_windows` transitive is not | `pubspec.yaml:87` | hours |
+| **D10** | **`window_manager` / `screen_retriever_windows`** for geometry restore. `window_manager` is cross-platform; the pinned `screen_retriever_windows` transitive is not | `pubspec.yaml:98`, `:106` | hours |
 | **D11** | **A second print test matrix.** AC-054's greyscale laser check is a physical act on a physical printer, and no agent can perform it | §10.10 | manual |
 | **D12** | **Path-length semantics.** `exceedsWindowsMaxPath` is already gated behind `isWindows` (`atomic_writer.dart:464`), so the mechanism exists; macOS needs its own answer (4096 bytes, not 259 chars) | `atomic_writer.dart` | hours |
 | **D13** | **The file dialog takes no file-type filter.** `COMDLG_FILTERSPEC` is hard-coded to `.rackmate` and `SetDefaultExtension(L"rackmate")` fires on **both** dialogs, inside `ConfigureDialog`, which both branches call. The Dart interface passes only `confirmButtonText`, `suggestedName`, `initialDirectory`. **Add the filter argument BEFORE D2**, or D2 reimplements the narrow contract and then widens twice. **M3-F (CSV import) is what forces it** — see §5 | `file_dialog_channel.cpp:107-123, :216-218`; `file_picker.dart:156, :164` | hours, but **before D2** |
 | **D14** | **Locale-dependent sheet size.** docs/08:509 requires *"Non-US platform locale substitutes A4/A3"*. Unimplemented — `SheetSize` has two values, neither A4. **Not macOS-specific**: a Windows machine in a metric locale hits it, which is why it went unnoticed. Recorded here because it is the one genuinely platform-dependent input to PDF geometry, and §2's closing paragraph was worrying about floats and fonts while this sat unlisted | docs/08:509; `sheet_def.dart:38-45` | hours |
+
+### 2.1 Re-read against `91cd487` (2026-08-01, after M2-F)
+
+**No row was found overstating the debt this time**, which is the outcome the 2026-07-29 revision
+was checking for and did not get. What did move:
+
+| Row | Finding |
+|---|---|
+| **D1** | Unchanged. `ls apps/rackmate/` still shows `windows/` and no `macos/` |
+| **D3** | Unchanged, citation still exact — `path_provider_windows: ^2.3.0` at `pubspec.yaml:70` |
+| **D4** | Unchanged, **citation drifted**: `job: windows_ci` is `azure-pipelines.yml:181` and `vmImage: 'windows-2022'` is `:197`, not `:180`/`:196` |
+| **D5** | Unchanged — still exactly six `.ps1` under `tools/ci/`, still unverified under `pwsh` on macOS |
+| **D7** | Still `done — gate owed`, and the gate is owed **more** than it was: see below |
+| **D9** | Unchanged and still the corrected reading — `printing`/pdfium is in no pubspec in this tree |
+| **D10** | Unchanged, **citation drifted**: `screen_retriever: ^0.2.0` is `pubspec.yaml:98` and `window_manager: ^0.5.2` is `:106`; `:87` is now a comment line |
+| **D14** | Unchanged. `SheetSize` still has exactly two values, `ansiBPortrait` and `ansiALandscape`, neither A4 |
+
+**§3.1's hole grew, and M2-F is what grew it.** The register's D7 row says the ban on
+`SingleActivator` outside the registry *"is enforced in one file, and not in the package where M3 is
+built"*. That is still literally true — `apps/rackmate/test/session/session_layering_test.dart`'s
+RULE 14 asserts `isNot(contains('SingleActivator('))` against `app_shell.dart` alone, and
+`packages/rackmate_ui/test/keymap/keymap_arbitration_test.dart` arbitrates the registry's CONTENT
+without ever reading `rackmate_ui/lib` for literals. Meanwhile **M2-F added nine schematic rows**
+(`kKeymap` is 44 rows now, was 35), every one of them in the ungated package.
+
+So §3.5's warning — *"the largest remaining binding surface in v1, in the ungated package; if D7
+regresses anywhere, here"* — has had one milestone slice's worth of practice run against it with
+nothing watching. Nothing regressed; the register records that it was not being checked.
+
+**The gate D7 owes is one source scan in `rackmate_ui`'s own suite**, the same shape RULE 14
+already runs one package over.
+
+---
 
 **Not yet measured, and required before this register can be called complete:** whether the four
 starter projects open on macOS; whether the PDF export's **content streams** are identical across
