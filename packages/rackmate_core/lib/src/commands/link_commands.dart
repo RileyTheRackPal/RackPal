@@ -115,6 +115,30 @@ final class RemoveLinkCommand extends Command {
   Link? _removedLink;
   Net? _removedNet;
 
+  /// Whether [apply] has run — which is NOT the same question as "did it
+  /// remove anything", and conflating the two is the defect DR-013's
+  /// cascade exposed.
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// A NULLABLE FIELD CANNOT ANSWER BOTH QUESTIONS
+  /// ═════════════════════════════════════════════════════════════════
+  /// This used to read `if (link == null || net == null) throw`, taking a
+  /// null capture to mean "revert before apply" — a programming error
+  /// worth shouting about. That was sound while `RemoveLinkCommand` was
+  /// the ONLY way a `Link` could leave the document.
+  ///
+  /// DR-013 §11.13.1 makes `RemoveDeviceCommand` cascade, so a link can
+  /// now disappear because the device at one end did. Removing that
+  /// device and then reverting a `RemoveLinkCommand` that legitimately
+  /// found nothing threw `StateError` out of undo. `command_roundtrip
+  /// _test`'s thousand random sequences found it on the first run after
+  /// the cascade landed.
+  ///
+  /// "Apply ran and there was nothing to remove" is a legal outcome and
+  /// its revert is a no-op. "Revert without apply" is still a bug and
+  /// still throws. One flag, two answers.
+  bool _applied = false;
+
   @override
   LabelKey get label => LabelKey.removeLink;
 
@@ -128,17 +152,24 @@ final class RemoveLinkCommand extends Command {
   void apply(RackDocument doc) {
     _removedLink = doc.links.remove(id);
     _removedNet = doc.nets.remove(netId);
+    _applied = true;
   }
 
   @override
   void revert(RackDocument doc) {
-    final link = _removedLink;
-    final net = _removedNet;
-    if (link == null || net == null) {
+    if (!_applied) {
       throw StateError('RemoveLinkCommand.revert called before apply().');
     }
-    doc.links[id] = link;
-    doc.nets[netId] = net;
+    // EACH HALF INDEPENDENTLY. The link and the net are separate
+    // removals and either can find nothing — a net shared with a
+    // surviving link is not this command's to have taken.
+    final link = _removedLink;
+    if (link != null) doc.links[id] = link;
+    final net = _removedNet;
+    if (net != null) doc.nets[netId] = net;
+    _removedLink = null;
+    _removedNet = null;
+    _applied = false;
   }
 }
 

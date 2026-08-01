@@ -77,6 +77,7 @@ export 'src/commands/undo_stack.dart';
 export 'src/derived/connect_rules.dart';
 export 'src/derived/connect_target.dart';
 export 'src/derived/device_loads.dart';
+export 'src/derived/device_removal.dart';
 export 'src/derived/endpoint_resolution.dart';
 export 'src/derived/equipment_list.dart';
 export 'src/derived/jacket_color_resolution.dart';

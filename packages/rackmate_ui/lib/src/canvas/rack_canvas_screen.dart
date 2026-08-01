@@ -30,6 +30,7 @@ import 'package:rackmate_ui/src/canvas/shake_animation.dart';
 import 'package:rackmate_ui/src/canvas/staging_bin_overlay.dart';
 import 'package:rackmate_ui/src/canvas/status_message_controller.dart';
 import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
+import 'package:rackmate_ui/src/inspector/delete_device_dialog.dart';
 import 'package:rackmate_ui/src/inspector/inspector_panel.dart';
 import 'package:rackmate_ui/src/inspector/new_rack_dialog.dart';
 import 'package:rackmate_ui/src/inspector/shrink_rack_dialog.dart';
@@ -2458,20 +2459,53 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// the same mechanism (see `_GatedAction`'s doc on why a body guard alone
   /// cannot save the key), and a refactor that drops one must not silently
   /// drop both.
-  void _deleteSelection() {
+  Future<void> _deleteSelection() async {
     if (!_canvasFocus.hasFocus) return;
-    final ids = _selection.ids.toList();
+    final ids = _selection.ids.where(_doc.devices.containsKey).toList();
     if (ids.isEmpty) return;
+
+    // ═════════════════════════════════════════════════════════════════
+    // DR-013 §11.13.2 — ASK BEFORE DESTROYING WORK THE USER CANNOT SEE
+    // ═════════════════════════════════════════════════════════════════
+    // The plans are computed HERE and handed to the dialog, then thrown
+    // away: `RemoveDeviceCommand.apply` re-plans against the document it
+    // is applied to, which is the only thing that can be right if
+    // anything moved while the dialog was open. What the plan is used for
+    // here is the SENTENCE — and both come from `planDeviceRemoval`, so
+    // the number the user agreed to is the number the command removes.
+    //
+    // A device carrying nothing shows no dialog at all
+    // (`confirmDeviceRemoval` returns true without building one), so the
+    // ordinary delete of an unwired device is exactly as immediate as it
+    // was before this ruling.
+    final plans = <DeviceRemovalPlan>[
+      for (final id in ids) planDeviceRemoval(_doc, id),
+    ];
+    final proceed = await confirmDeviceRemoval(
+      context,
+      plans: plans,
+      designators: <Uuid, String>{
+        for (final id in ids) id: _doc.devices[id]?.designator ?? id.v,
+      },
+    );
+    if (!proceed || !mounted) return;
+
+    // RE-READ AFTER THE AWAIT. The document is not frozen while a dialog
+    // is open — an autosave cannot change it, but an undo from a menu or
+    // a second window could — so the ids are filtered again rather than
+    // trusted across the suspension point.
+    final live = ids.where(_doc.devices.containsKey).toList();
+    if (live.isEmpty) return;
+
     _controller.selection = _selection.snapshot(); // before = current selection
     // One transaction so a multi-device delete is a SINGLE undo entry, not N
-    // (docs/04 §3.5: "undo restores device and links as one command"). Links
-    // are not modelled on these demo devices yet; a real delete will also
-    // carry each device's Links in this same transaction (deferred).
+    // (docs/04 §3.5: "undo restores device and links as one command").
+    // EACH COMMAND NOW CARRIES ITS OWN LINKS: DR-013 §11.13.1 makes the
+    // cascade part of `RemoveDeviceCommand` itself, which is what the
+    // "deferred" note that used to sit here was waiting for.
     _controller.transact(LabelKey.removeDevice, (tx) {
-      for (final id in ids) {
-        if (_doc.devices.containsKey(id)) {
-          tx.add(RemoveDeviceCommand(id: id));
-        }
+      for (final id in live) {
+        tx.add(RemoveDeviceCommand(id: id));
       }
       // Post-delete the selection is empty; capture it so undo restores the
       // pre-delete selection and redo restores empty.

@@ -4,9 +4,13 @@
 // `Face` (placement.dart's naming-drift note).
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/label_key.dart';
+import 'package:rackmate_core/src/derived/device_removal.dart';
 import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
+import 'package:rackmate_core/src/model/link.dart';
+import 'package:rackmate_core/src/model/net.dart';
 import 'package:rackmate_core/src/model/placement.dart';
+import 'package:rackmate_core/src/model/port.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/model/template.dart' show TemplateRef;
 import 'package:rackmate_core/src/units/ids.dart';
@@ -80,11 +84,51 @@ final class AddDeviceCommand extends Command {
   }
 }
 
-/// Removes an existing [DeviceInstance]. Holds the removed object itself
-/// (not a field-by-field copy) across the apply/revert boundary — unlike
-/// a move or rename, undoing a removal must reconstruct the WHOLE
-/// entity, and the object [apply] pulls out of `doc.devices` already IS
-/// that whole entity, unchanged.
+/// Removes an existing [DeviceInstance] **and every cable that terminates
+/// on it** — DR-013 §11.13.1.
+///
+/// Holds the removed objects themselves (not field-by-field copies) across
+/// the apply/revert boundary — unlike a move or rename, undoing a removal
+/// must reconstruct the WHOLE entity, and the objects [apply] pulls out of
+/// the document already ARE those entities, unchanged.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// THE CASCADE, AND THE DEFECT IT CLOSES
+/// ═════════════════════════════════════════════════════════════════════
+/// This command carried a `TODO(post-M0)`: it removed the device and left
+/// its materialised `Port`s and every `Link` terminating on it. That was
+/// **inert for every milestone up to M2-F**, because nothing in the
+/// application wrote `doc.ports` — and DR-011.1 made it live in the same
+/// commit that fixed the finding it came from. From that point a delete
+/// produced a schedule row citing a device that is not in the document,
+/// which is exactly what CR-017's *"the gesture may hesitate; the
+/// document may not lie"* forbids.
+///
+/// AC-018's `OpenEndpoint` demotion was the recommendation and was
+/// REJECTED (§11.13.1). It is not wrong about the model — `OpenEndpoint`
+/// genuinely expresses "a cable whose far end is unbound" — but it would
+/// leave a pull sheet full of half-cables nobody asked for, on a document
+/// the user believes they simplified, and M5's validation (where "this
+/// run ends nowhere" becomes visible) does not exist yet. **A cable to a
+/// device that has been deleted is not a design intent; it is debris.**
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// THE COUNT COMES FROM `planDeviceRemoval`, NOT FROM HERE
+/// ═════════════════════════════════════════════════════════════════════
+/// §11.13.2's dialog states how many cables are about to go, and it has to
+/// state it BEFORE this runs. Rather than derive the set twice — once for
+/// the sentence and once for the edit, which is how the two drift — this
+/// command calls the same function the dialog does. `device_removal.dart`
+/// is the one source.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// WHAT IS STILL DEFERRED, AND IT IS NOT A LIE
+/// ═════════════════════════════════════════════════════════════════════
+/// §11.13.5: the `TemplateSnapshot` refcount half of the same TODO is
+/// untouched. An unreferenced snapshot is INERT — AC-006's lazy design
+/// already leaves snapshots in files for devices that were never placed —
+/// so it is file size rather than correctness, and it stays deferred
+/// rather than being folded in here because it is a different question.
 final class RemoveDeviceCommand extends Command {
   RemoveDeviceCommand({required this.id});
 
@@ -92,31 +136,93 @@ final class RemoveDeviceCommand extends Command {
 
   DeviceInstance? _removed;
 
+  /// Everything the cascade took, keyed by id so [revert] puts each back
+  /// where it was. **The SAME ids, not equivalent objects** — §11.13.4,
+  /// and the discipline `ConnectPortsCommand` already holds for the ports
+  /// it materialises. Anything less makes delete-then-undo a lossy round
+  /// trip through the one entity CR-117's byte gate is about.
+  final Map<Uuid, Link> _removedLinks = <Uuid, Link>{};
+  final Map<Uuid, Port> _removedPorts = <Uuid, Port>{};
+  final Map<Uuid, Net> _removedNets = <Uuid, Net>{};
+
+  /// Whether [apply] has run — see `RemoveLinkCommand._applied` for the
+  /// full argument. "Apply ran and the device was already gone" is a
+  /// legal outcome whose revert is a no-op; "revert without apply" is a
+  /// bug and still throws.
+  bool _applied = false;
+
   @override
   LabelKey get label => LabelKey.removeDevice;
 
+  /// `wires` JOINS THE MASK, and it has to: this command now removes
+  /// `Link`s. Before the cascade it touched structure alone, and a
+  /// schematic that did not rebuild after a delete would keep drawing
+  /// cables to a symbol that is gone.
   @override
-  EpochMask get touches => EpochMask.structure | EpochMask.meta;
+  EpochMask get touches =>
+      EpochMask.structure | EpochMask.wires | EpochMask.meta;
 
   @override
   Iterable<Uuid> get affects => [id];
 
   @override
   void apply(RackDocument doc) {
+    // Cleared, not appended to: `apply` runs again on every redo and each
+    // run must describe THAT run rather than the union of all of them —
+    // `ConnectPortsCommand._materialised`'s rule, for the same reason.
+    _removedLinks.clear();
+    _removedPorts.clear();
+    _removedNets.clear();
+
+    // PLANNED BEFORE ANYTHING MOVES. Every question the plan asks — which
+    // ports are this device's, which links land on them, which nets no
+    // survivor still carries — is a question about the document as it is
+    // now, and half of them become unanswerable once the device is gone.
+    final plan = planDeviceRemoval(doc, id);
+
+    for (final linkId in plan.linkIds) {
+      final link = doc.links.remove(linkId);
+      if (link != null) _removedLinks[linkId] = link;
+    }
+    for (final portId in plan.portIds) {
+      final port = doc.ports.remove(portId);
+      if (port != null) _removedPorts[portId] = port;
+    }
+    for (final netId in plan.netIds) {
+      final net = doc.nets.remove(netId);
+      if (net != null) _removedNets[netId] = net;
+    }
     _removed = doc.devices.remove(id);
-    // TODO(post-M0): AC-015 — this does not yet decrement any
-    // TemplateSnapshot refcount, nor clean up orphaned `Port`/`Link`
-    // references to this device. Deferred per this package's M0 scoping
-    // instructions; noted rather than silently incomplete.
+    _applied = true;
+    // TODO(post-M0): AC-015 — this still does not decrement a
+    // TemplateSnapshot refcount. Deferred deliberately by DR-013 §11.13.5,
+    // which is a ruling rather than an omission: an unreferenced snapshot
+    // is inert, so it is file size and not correctness.
   }
 
   @override
   void revert(RackDocument doc) {
-    final removed = _removed;
-    if (removed == null) {
+    if (!_applied) {
       throw StateError('RemoveDeviceCommand.revert called before apply().');
     }
-    doc.devices[id] = removed;
+    final removed = _removed;
+    if (removed != null) doc.devices[id] = removed;
+    // THE SAME OBJECTS, UNDER THE SAME IDS. Map insertion order changes —
+    // these go to the end — and that is harmless because `deepSortKeys`
+    // canonicalises every map before encoding, so the byte round trip
+    // CR-117 gates depends on the ids and the values, never on the order
+    // they were put back in.
+    _removedPorts
+      ..forEach((portId, port) => doc.ports[portId] = port)
+      ..clear();
+    _removedNets
+      ..forEach((netId, net) => doc.nets[netId] = net)
+      ..clear();
+    _removedLinks
+      ..forEach((linkId, link) => doc.links[linkId] = link)
+      ..clear();
+    _removed = null;
+    _applied = false;
   }
 }
 
