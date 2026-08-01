@@ -57,7 +57,7 @@ Cost column is an **estimate**, not a measurement, unless marked otherwise.
 | **D4** | **CI has one job, pinned to Windows.** `azure-pipelines.yml:181` `job: windows_ci`, `:197` `vmImage: 'windows-2022'`. Needs a macOS job. Note the pipeline's own comment at `:106` already anticipates a matrix: *"that is a later question"* — **it is now this question** | `azure-pipelines.yml` | days |
 | **D5** | **Gate scripts are PowerShell.** Six `.ps1` under `tools/ci/`. Likely runnable under `pwsh` on macOS unmodified — **verify before budgeting a rewrite** | `tools/ci/` | verify first |
 | **D6** | **`verify_windows_build.ps1`** is Windows-specific by name and purpose; needs a macOS counterpart | `tools/ci/` | hours |
-| **D7** | ~~KEYBOARD MODIFIERS~~ — **CLEARED, GATE INCOMPLETE.** Was 43 hard-coded `SingleActivator` bindings assuming `Ctrl`, across six files. Now a 35-row `kKeymap` registry whose primary modifier resolves once, in `KeyBinding.activatorFor(TargetPlatform)`, through `defaultTargetPlatform`. **Zero `SingleActivator` instances remain outside the registry today** — but see §3.1 and §2.1: the ban is enforced in **one file**, and not in the package where M3 is built, and M2-F added **nine** more rows to that ungated package (35 → 44) | `packages/rackmate_ui/lib/src/keymap/keymap.dart` | **done — gate owed** |
+| **D7** | ~~KEYBOARD MODIFIERS~~ — **CLEARED, GATE INCOMPLETE.** Was 43 hard-coded `SingleActivator` bindings assuming `Ctrl`, across six files. Now a 35-row `kKeymap` registry whose primary modifier resolves once, in `KeyBinding.activatorFor(TargetPlatform)`, through `defaultTargetPlatform`. **Zero `SingleActivator` instances remain outside the registry today** — but see §3.1 and §2.1: the ban is enforced in **one file**, and not in the package where M3 is built, and M2-F added **nine** more rows to that ungated package (35 → 44) — **~~gate owed~~ PAID at #94, §2.2: `keymap_source_ban_test.dart` scans all of `rackmate_ui/lib`, comments stripped, three constructors banned, mutation-verified** | `packages/rackmate_ui/lib/src/keymap/keymap.dart` | **done** |
 | **D8** | **Code signing.** DR-006 rules Windows self-signing; macOS needs **notarisation and stapling**, which D10 names and §12.9 explicitly leaves *"unaffected and still binding"* | canon `:2696`, `:5875` | days + Apple Developer enrolment lead time |
 | **D9** | **pdfium is vendored per platform** (CR-100) — **but not yet, and not by anything shipped.** `printing`/pdfium is in **no pubspec in this tree**; PDF comes from pure-Dart `pdf ^3.13.0`. docs/03 §10.1 *plans* `printing ^5.15.0` *"behind an explicit 'Verify output' button only"* and docs/11:432 schedules vendored pdfium at **M8**. So D9 is triggered by the preview button, not by adding sheets: **adding a sheet role costs zero here** | canon `:1517`; every `pubspec.yaml`; docs/11:432 | days, **at M8** |
 | **D10** | **`window_manager` / `screen_retriever_windows`** for geometry restore. `window_manager` is cross-platform; the pinned `screen_retriever_windows` transitive is not | `pubspec.yaml:98`, `:106` | hours |
@@ -77,7 +77,7 @@ was checking for and did not get. What did move:
 | **D3** | Unchanged, citation still exact — `path_provider_windows: ^2.3.0` at `pubspec.yaml:70` |
 | **D4** | Unchanged, **citation drifted**: `job: windows_ci` is `azure-pipelines.yml:181` and `vmImage: 'windows-2022'` is `:197`, not `:180`/`:196` |
 | **D5** | Unchanged — still exactly six `.ps1` under `tools/ci/`, still unverified under `pwsh` on macOS |
-| **D7** | Still `done — gate owed`, and the gate is owed **more** than it was: see below |
+| **D7** | ~~Still `done — gate owed`~~ — **GATE PAID at board #94, 2026-08-02. See §2.2.** The paragraph below is the state that made it owed, retained as the record |
 | **D9** | Unchanged and still the corrected reading — `printing`/pdfium is in no pubspec in this tree |
 | **D10** | Unchanged, **citation drifted**: `screen_retriever: ^0.2.0` is `pubspec.yaml:98` and `window_manager: ^0.5.2` is `:106`; `:87` is now a comment line |
 | **D14** | Unchanged. `SheetSize` still has exactly two values, `ansiBPortrait` and `ansiALandscape`, neither A4 |
@@ -96,6 +96,34 @@ nothing watching. Nothing regressed; the register records that it was not being 
 
 **The gate D7 owes is one source scan in `rackmate_ui`'s own suite**, the same shape RULE 14
 already runs one package over.
+
+### 2.2 The gate is PAID — `packages/rackmate_ui/test/keymap/keymap_source_ban_test.dart` (board #94, 2026-08-02)
+
+**D7 moves from `done — gate owed` to `done`.** The scan walks every `.dart` under
+`packages/rackmate_ui/lib`, strips comments, and fails on `SingleActivator(`, `CharacterActivator(`
+or `LogicalKeySet(` anywhere outside `lib/src/keymap/`. It landed **before M3-C**, which §3.5 names
+as the largest remaining binding surface — a gate added after the bindings land tells you what you
+already shipped.
+
+**Comment stripping is load-bearing, and that is measured rather than precautionary.** A naive grep
+over this package fails TODAY on correct code: there are **20 mentions of the type across `lib/`
+and exactly ONE constructor call** — the legitimate one in `keymap.dart` — because
+`rack_canvas_screen.dart` explains the framework's exact-modifier semantics in prose and writes
+`SingleActivator(keyZ, control: true)` inside a comment to do it. A fourth test asserts that trap is
+still present, so tidying the stripper away fails there rather than turning the canvas into a false
+positive.
+
+**Three constructors, not one.** The board item asked for `SingleActivator(`; the property being
+defended is *no binding exists that the generated table and `arbitrate()` cannot see*, and
+`CharacterActivator` and the older `LogicalKeySet` have it too. Neither is used in this package —
+measured — so naming them now is free.
+
+**Two assertions guard the gate itself**, because a source scan that looks nowhere passes silently
+forever: the corpus size is asserted before the ban is (`>30` sources, canvases present), and
+`keymap.dart` must still CONTAIN a `SingleActivator(` — if `activatorFor` ever stops building one,
+`primary` has stopped resolving per platform and D7 has regressed in the one place the ban does not
+look. **Mutation-verified**: a constructor planted in `rack_canvas_screen.dart` fails the gate with
+the file named.
 
 ---
 
