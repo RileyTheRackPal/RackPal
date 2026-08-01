@@ -49,6 +49,22 @@ test/**/failures/
 *.rackmate.bak
 *.rackmate.autosave
 
+# Release staging (tools/release/make_portable.ps1)
+dist/
+
+# SIGNING KEY MATERIAL -- NEVER COMMIT ANY OF THIS.
+# DR-006 self-signs, which makes the private key cheap to re-mint and
+# therefore tempting to check in "just for the build agent". Do not. A
+# committed key is a key every clone can sign as, and a self-signed
+# publisher the org has told its machines to TRUST (LocalMachine\
+# TrustedPublisher) is exactly the certificate you least want loose.
+# The public .cer is the half that gets distributed, and it is deployed by
+# GPO rather than from this repository.
+*.pfx
+*.p12
+*.snk
+*.key
+
 # Python (tools/)
 __pycache__/
 *.pyc
