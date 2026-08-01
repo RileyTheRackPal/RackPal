@@ -38,6 +38,7 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/canvas/port_chip.dart';
 import 'package:rackmate_ui/src/canvas/shake_animation.dart';
 import 'package:rackmate_ui/src/draw/flutter_canvas.dart';
 
@@ -54,6 +55,8 @@ class DeviceBox extends StatefulWidget {
     required this.semanticLabel,
     required this.palette,
     this.selected = false,
+    this.portChip,
+    this.portChipStyle,
     this.fadeOpacity,
     this.shake,
     super.key,
@@ -78,6 +81,20 @@ class DeviceBox extends StatefulWidget {
   /// selected chrome state. Defaults false so non-editing hosts (and the
   /// render tests) need not supply it.
   final bool selected;
+
+  /// CR-105's port-count chip, or null to draw none.
+  ///
+  /// NULL IS THE SCREEN'S DECISION, NOT THIS WIDGET'S. `RackCanvasScreen`
+  /// decides which devices are signposted — those with unwired pins, and
+  /// only when a host is listening for the click — so the rule lives in
+  /// one place and this render object draws exactly what it is handed.
+  /// See `port_chip.dart`.
+  final PortFill? portChip;
+
+  /// Colours for [portChip]. Required in practice whenever [portChip] is
+  /// non-null; nullable so the many hosts that pass neither need not
+  /// invent one.
+  final PortChipStyle? portChipStyle;
 
   /// The alpha this device composites at IN PLACE, or null (the default)
   /// for full opacity. Two callers today, both from `RackCanvasScreen`:
@@ -144,6 +161,8 @@ class _DeviceBoxState extends State<DeviceBox> {
         hovered: _hovered,
         focused: _focused,
         selected: widget.selected,
+        portChip: widget.portChip,
+        portChipStyle: widget.portChipStyle,
         fadeOpacity: widget.fadeOpacity,
         shake: widget.shake,
       ),
@@ -161,6 +180,8 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
     required this.hovered,
     required this.focused,
     required this.selected,
+    required this.portChip,
+    required this.portChipStyle,
     required this.fadeOpacity,
     required this.shake,
   });
@@ -173,6 +194,8 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
   final bool hovered;
   final bool focused;
   final bool selected;
+  final PortFill? portChip;
+  final PortChipStyle? portChipStyle;
   final double? fadeOpacity;
   final ShakeController? shake;
 
@@ -186,6 +209,8 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
     hovered: hovered,
     focused: focused,
     selected: selected,
+    portChip: portChip,
+    portChipStyle: portChipStyle,
     fadeOpacity: fadeOpacity,
     shake: shake,
   );
@@ -201,6 +226,8 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
       ..hovered = hovered
       ..focused = focused
       ..selected = selected
+      ..portChip = portChip
+      ..portChipStyle = portChipStyle
       ..fadeOpacity = fadeOpacity
       ..shake = shake;
   }
@@ -221,6 +248,8 @@ class RenderDeviceBox extends RenderBox {
     bool hovered = false,
     bool focused = false,
     bool selected = false,
+    PortFill? portChip,
+    PortChipStyle? portChipStyle,
     double? fadeOpacity,
     ShakeController? shake,
   }) : _scene = scene,
@@ -231,6 +260,8 @@ class RenderDeviceBox extends RenderBox {
        _hovered = hovered,
        _focused = focused,
        _selected = selected,
+       _portChip = portChip,
+       _portChipStyle = portChipStyle,
        _fadeOpacity = fadeOpacity,
        _shake = shake;
 
@@ -295,6 +326,24 @@ class RenderDeviceBox extends RenderBox {
   set selected(bool value) {
     if (_selected == value) return;
     _selected = value;
+    markNeedsPaint();
+  }
+
+  /// CR-105's chip. See [DeviceBox.portChip] for why null is the screen's
+  /// decision rather than this object's.
+  PortFill? _portChip;
+  PortFill? get portChip => _portChip;
+  set portChip(PortFill? value) {
+    if (_portChip == value) return;
+    _portChip = value;
+    markNeedsPaint();
+  }
+
+  PortChipStyle? _portChipStyle;
+  PortChipStyle? get portChipStyle => _portChipStyle;
+  set portChipStyle(PortChipStyle? value) {
+    if (identical(_portChipStyle, value)) return;
+    _portChipStyle = value;
     markNeedsPaint();
   }
 
@@ -419,6 +468,13 @@ class RenderDeviceBox extends RenderBox {
       ..save()
       ..translate(paintOffset.dx, paintOffset.dy);
     _scene.fragmentFor(_deviceId).replay(canvas);
+    // CR-105's chip, drawn in the SAME local frame the fragment just
+    // replayed in and through the same canvas — so its geometry and the
+    // rect `RackCanvasScreen` hit-tests are the same numbers from the same
+    // function, and its text is measured by the measurer that laid the
+    // device's own labels out. It is emitted here rather than into the
+    // scene because the scene prints (see `port_chip.dart`'s header).
+    _paintChip(canvas);
     canvas.restore();
 
     if (_focused || _hovered) {
@@ -441,6 +497,20 @@ class RenderDeviceBox extends RenderBox {
         ..color = Color(_palette.selection);
       context.canvas.drawRect((paintOffset & size).deflate(1.5), outline);
     }
+  }
+
+  void _paintChip(FlutterDiagramCanvas canvas) {
+    final fill = _portChip;
+    final style = _portChipStyle;
+    if (fill == null || style == null) return;
+    final rect = portChipRect(
+      deviceWidth: size.width,
+      deviceHeight: size.height,
+      label: fill.label,
+      measurer: _measurer,
+    );
+    if (rect == null) return;
+    paintPortChip(canvas, rect, fill.label, style);
   }
 
   @override

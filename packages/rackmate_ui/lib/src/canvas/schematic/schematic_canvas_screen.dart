@@ -136,6 +136,7 @@ import 'package:rackmate_ui/src/canvas/schematic/domain_filter_bar.dart';
 import 'package:rackmate_ui/src/canvas/schematic/render_schematic_canvas.dart';
 import 'package:rackmate_ui/src/canvas/schematic/schematic_filter.dart';
 import 'package:rackmate_ui/src/canvas/schematic/schematic_paint_plan.dart';
+import 'package:rackmate_ui/src/canvas/schematic/schematic_reveal.dart';
 import 'package:rackmate_ui/src/canvas/selection_controller.dart';
 import 'package:rackmate_ui/src/canvas/status_message_controller.dart';
 import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
@@ -198,6 +199,7 @@ final class SchematicCanvasScreen extends StatefulWidget {
   const SchematicCanvasScreen({
     required this.measurer,
     required this.controller,
+    this.reveal,
     super.key,
   });
 
@@ -214,6 +216,11 @@ final class SchematicCanvasScreen extends StatefulWidget {
   /// record; this screen was written after the app shell owned the
   /// document, so it has exactly one source and cannot be given a second.
   final DocumentController controller;
+
+  /// CR-105's arrival: the elevation's chip parks a device here and this
+  /// screen selects and frames it. Null in every host that has no rack tab
+  /// to be sent from. See `schematic_reveal.dart`.
+  final SchematicRevealController? reveal;
 
   @override
   State<SchematicCanvasScreen> createState() => _SchematicCanvasScreenState();
@@ -371,6 +378,10 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
 
   /// Whether the viewport has already been framed on this sheet.
   bool _framed = false;
+
+  /// The canvas column's size as of the last layout, or null before the
+  /// first. [_revealNow] frames against it — see [_frameOnce].
+  Size? _lastViewportSize;
 
   // ── the connect gesture's keyboard state (DR-011.2, docs/05 §7) ───────
 
@@ -540,11 +551,19 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     // screen.dart` names: it is removed in `dispose` on the one exit path
     // this screen has.
     HardwareKeyboard.instance.addHandler(_onRawKey);
+    // CR-105's arrival. The listener catches a chip clicked while this
+    // screen is already mounted; the post-frame drain catches the case
+    // that made a controller necessary in the first place — a chip
+    // clicked on a tab whose sibling had not been built yet, so the
+    // notification had no listener at all. See `schematic_reveal.dart`.
+    widget.reveal?.addListener(_onRevealRequested);
+    if (widget.reveal?.pending != null) _onRevealRequested();
   }
 
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_onRawKey);
+    widget.reveal?.removeListener(_onRevealRequested);
     widget.controller.epochs.structure.removeListener(_onDocumentChanged);
     widget.controller.epochs.wires.removeListener(_onWiresChanged);
     widget.controller.epochs.meta.removeListener(_onDocumentChanged);
@@ -930,6 +949,96 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
         : _deviceAt(scene, point);
     if (next == _altHovered) return;
     setState(() => _altHovered = next);
+  }
+
+  /// CR-105's arrival: select the device the elevation's chip pointed at,
+  /// and put it on screen.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// DEFERRED A FRAME, BECAUSE THE SHEET MAY NOT EXIST YET
+  /// ═══════════════════════════════════════════════════════════════════
+  /// This runs from `initState` as well as from the controller's
+  /// notification, and in the `initState` case `_scene` is null — nothing
+  /// has laid a symbol out. It also runs while the SHELL is mid-`setState`
+  /// switching tabs, and `_selection.apply` notifies synchronously
+  /// (`selection_controller.dart`), which would call `setState` during
+  /// another widget's build. One post-frame hop answers both.
+  ///
+  /// A DEVICE WITH NO SYMBOL IS SAID OUT LOUD rather than silently
+  /// ignored. docs/05's sheet draws a symbol only for a device whose
+  /// template declares at least one port (`kNoSymbolsDetail`), and a
+  /// device with no ports has no chip either — so this is unreachable from
+  /// the elevation today and is still handled, because "the click did
+  /// nothing" is the one outcome a navigation affordance may never
+  /// produce.
+  void _onRevealRequested() {
+    final id = widget.reveal?.take();
+    if (id == null) return;
+    // `ensureVisualUpdate` IS LOAD-BEARING, not belt-and-braces.
+    // `addPostFrameCallback` QUEUES a callback; it does not schedule the
+    // frame that would run it. Reaching here from the controller's
+    // notification rather than from `initState` means no build is in
+    // flight and nothing has called `setState`, so with no frame pending
+    // the callback waits for whatever happens to schedule one next — in
+    // production the shell's own tab switch, which is real but is
+    // somebody else's `setState` and not a contract. Measured: every
+    // reveal driven through the controller did nothing at all until this
+    // line existed, while the `initState` path (inside a frame already)
+    // worked, which is the shape of a defect that survives to production
+    // and fires intermittently.
+    WidgetsBinding.instance
+      ..addPostFrameCallback((_) {
+        if (!mounted) return;
+        _revealNow(id);
+      })
+      ..ensureVisualUpdate();
+  }
+
+  void _revealNow(Uuid id) {
+    final scene = _scene;
+    final device = _doc.devices[id];
+    if (device == null) {
+      _status.show('That device is no longer in this document.');
+      return;
+    }
+
+    _selection.apply(<Uuid>[id], SelectMode.replace);
+    _canvasFocus.requestFocus();
+
+    final symbol = scene?.symbols.where((s) => s.id == id.v).firstOrNull;
+    if (symbol == null) {
+      _status.show(
+        '${device.designator} carries no ports, so it is not drawn on '
+        'this sheet.',
+      );
+      return;
+    }
+
+    // Centred rather than zoomed to fit: the user came here to WIRE this
+    // device, and a viewport filled by one symbol hides every pin they
+    // might reach for. `fitToContent` over a box inflated by the symbol's
+    // own size keeps its neighbours on screen, which is the frame docs/05
+    // §11 opens the sheet at, applied to one device instead of the sheet.
+    final size = _lastViewportSize;
+    if (size != null && !size.isEmpty) {
+      final pad = symbol.bodyRect.width;
+      _viewport.fitToContent(
+        Box.fromCorners(
+          Pt(
+            (symbol.bodyRect.left - pad).floor(),
+            (symbol.bodyRect.top - pad).floor(),
+          ),
+          Pt(
+            (symbol.bodyRect.right + pad).ceil(),
+            (symbol.bodyRect.bottom + pad).ceil(),
+          ),
+        ),
+        size,
+      );
+    }
+    _status.show(
+      '${device.designator} selected — press W on a pin to draw a cable.',
+    );
   }
 
   void _selectAt(DPt scenePoint) {
@@ -2112,6 +2221,9 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// `ChangeNotifier` and notifying during layout would rebuild its
   /// listeners mid-pass.
   void _frameOnce(SchematicPaintPlan plan, Size viewportSize) {
+    // Recorded on every layout, not only the first: [_revealNow] needs a
+    // viewport to frame against and runs long after `_framed` is true.
+    _lastViewportSize = viewportSize;
     if (_framed || viewportSize.isEmpty) return;
     if (plan.ground.width <= 0 || plan.ground.height <= 0) return;
     _framed = true;

@@ -19,6 +19,7 @@ import 'package:rackmate_ui/src/canvas/drag_preview_controller.dart';
 import 'package:rackmate_ui/src/canvas/editing_overlay_painter.dart';
 import 'package:rackmate_ui/src/canvas/grid_painter.dart';
 import 'package:rackmate_ui/src/canvas/insertion_caret.dart';
+import 'package:rackmate_ui/src/canvas/port_chip.dart';
 import 'package:rackmate_ui/src/canvas/rack_header_bar.dart';
 import 'package:rackmate_ui/src/canvas/rack_metrics_row.dart';
 import 'package:rackmate_ui/src/canvas/render_device_box.dart';
@@ -71,6 +72,7 @@ class RackCanvasScreen extends StatefulWidget {
     this.clock = const SystemClock(),
     this.document,
     this.controller,
+    this.onRevealInSchematic,
     super.key,
   });
 
@@ -122,6 +124,24 @@ class RackCanvasScreen extends StatefulWidget {
   /// passes a `ValueKey` over the controller so Ctrl+N / Ctrl+O construct
   /// a fresh `State` rather than leaving stale derived data behind.
   final DocumentController? controller;
+
+  /// CR-105's signpost, taken by whoever owns the view strip: "clicking it
+  /// switches to the schematic with that device selected."
+  ///
+  /// ══════════════════════════════════════════════════════════════════
+  /// NULL SUPPRESSES THE CHIP ENTIRELY, AND THAT IS THE HONEST DEFAULT
+  /// ══════════════════════════════════════════════════════════════════
+  /// This screen cannot switch tabs; only the shell can. A chip drawn
+  /// without a listener would be a control that answers a click by doing
+  /// nothing — the exact failure mode `unbuilt_view.dart` and the
+  /// Schedule's retired panel were both written against. So a host that
+  /// has nowhere to send the user gets no signpost, which is true rather
+  /// than merely quiet.
+  ///
+  /// It is also why the chip is not simply "information about port
+  /// occupancy": CR-105 defines it as the affordance, and the count is
+  /// what the affordance is labelled with.
+  final void Function(Uuid deviceId)? onRevealInSchematic;
 
   @override
   State<RackCanvasScreen> createState() => _RackCanvasScreenState();
@@ -479,6 +499,15 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// the pointer-agnostic `CanvasIntentHandler` interface.
   RackScene? _rackScene;
 
+  /// CR-105's chip content for every device, as of the last [build].
+  ///
+  /// CACHED FOR THE SAME REASON `_rackScene` IS: the pointer path decides
+  /// whether a press landed on a chip, and it must answer against the
+  /// counts the frame actually drew. Recomputing from `_doc` at press time
+  /// would be the same numbers today and the first thing to diverge the
+  /// moment anything defers a rebuild.
+  Map<Uuid, PortFill> _portFill = const <Uuid, PortFill>{};
+
   late final _RackCanvasHandler _handler = _RackCanvasHandler(this);
 
   // ── per-drag scratch state (one primary pointer at a time) ────────────
@@ -487,6 +516,14 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   double _dragStartScale = 1;
   bool _dragModifierToggle = false; // Ctrl/Cmd held at beginDrag → toggle
   bool _dragMoved = false; // crossed the click→drag threshold
+
+  /// The device whose CR-105 chip this gesture pressed on, or null.
+  ///
+  /// Decided ONCE at `beginDrag`, exactly like `_dragPlacement` and for
+  /// the same reason its doc gives: the press and the release must be
+  /// governed by one condition rather than two that can drift. A press on
+  /// a chip followed by a drag is not a click and reveals nothing.
+  Uuid? _dragChipDeviceId;
   int _dragDeviceHeightU = 0; // hit device's U height (0 if none)
   double _dragDeviceStartTopY = 0; // hit device's scene-space top edge
 
@@ -1772,8 +1809,16 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       _dragDeviceId = null;
       _dragDeviceHeightU = 0;
       _dragPlacement = null;
+      _dragChipDeviceId = null;
       return; // skip the hit-test entirely.
     }
+
+    // CR-105's chip, tested before the device hit-test — see [_chipAt].
+    // It does NOT return early: the press still selects the device it sits
+    // on, because the chip is a corner of that device and a click there
+    // that left the selection alone would read as the rack forgetting
+    // what was just pressed.
+    _dragChipDeviceId = _chipAt(sceneStart);
 
     final scene = _rackScene?.scene;
     // Nearest-hit against the CURRENT scene (draw/hit_test.dart) — device
@@ -1901,6 +1946,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// claim is released.
   void _resetDrag() {
     _dragDeviceId = null;
+    _dragChipDeviceId = null;
     _dragDeviceHeightU = 0;
     _dragMoved = false;
     _dragCancelled = false;
@@ -1911,6 +1957,21 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   }
 
   void _handleClick(String? deviceId) {
+    // CR-105, and it runs BEFORE the selection branches below rather than
+    // instead of them: the chip is a corner of a device, so pressing it
+    // selects that device AND signposts the schematic. The reveal is last
+    // because the host may replace this screen's tab on the spot, and a
+    // selection applied after that would land on a `State` that is on its
+    // way out.
+    final chip = _dragChipDeviceId;
+    if (chip != null) {
+      _selection.apply([chip], SelectMode.replace);
+      if (_inspectorTarget != InspectorTarget.selection) {
+        setState(() => _inspectorTarget = InspectorTarget.selection);
+      }
+      widget.onRevealInSchematic?.call(chip);
+      return;
+    }
     if (deviceId == null) {
       _selection.clear(); // click on empty canvas clears the selection
       // docs/04 §4's SECOND inspector entry point: "click the rack header or
@@ -1975,6 +2036,45 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   // doomed rects are valid as drawn. The candidate top-edge line is the one
   // thing drawn at the NEW height, and `RackGeometry.yOfBoundary` expresses
   // it against the current geometry without needing a second `RackGeometry`.
+
+  /// The device whose CR-105 chip contains the scene point [p], or null.
+  ///
+  /// ══════════════════════════════════════════════════════════════════
+  /// THE SAME `portChipRect` THE FRAME PAINTED THROUGH
+  /// ══════════════════════════════════════════════════════════════════
+  /// `RenderDeviceBox` draws the pill from this function in the device's
+  /// LOCAL frame; this reads it back in SCENE space by adding the layout's
+  /// top-left. Nothing here re-derives the rectangle, which is why a chip
+  /// that is suppressed for not fitting (`portChipRect` returns null) is
+  /// also not clickable, with no second condition to keep in step.
+  ///
+  /// It is tested BEFORE the device hit-test in [_onBeginDrag], the same
+  /// precedence `_isTopEdgeGrab` takes and for a sharper reason: the chip
+  /// sits inside its own device's body, so a device hit-test that ran
+  /// first would swallow every press on it.
+  Uuid? _chipAt(DPt p) {
+    if (widget.onRevealInSchematic == null) return null;
+    for (final layout in _rackScene?.devices ?? const <DeviceLayout>[]) {
+      final fill = _portFill[layout.deviceId];
+      if (fill == null || !fill.hasUnconnected) continue;
+      final local = portChipRect(
+        deviceWidth: layout.rect.width,
+        deviceHeight: layout.rect.height,
+        label: fill.label,
+        measurer: widget.measurer,
+      );
+      if (local == null) continue;
+      final left = layout.rect.left + local.left;
+      final top = layout.rect.top + local.top;
+      if (p.x >= left &&
+          p.x <= left + local.width &&
+          p.y >= top &&
+          p.y <= top + local.height) {
+        return layout.deviceId;
+      }
+    }
+    return null;
+  }
 
   /// Whether [p] lands in §4.1's 8px grab band on the rack's top edge.
   ///
@@ -3526,6 +3626,14 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     );
     _rackScene = rackScene;
 
+    // CR-105's counts, computed once per build beside the scene and for
+    // the same reason: the pointer path reads them back, so they have to
+    // be the ones this frame drew. Cheap next to `buildRackScene` — one
+    // pass over the conductors plus a set lookup per pin (`port_fill.dart`).
+    _portFill = widget.onRevealInSchematic == null
+        ? const <Uuid, PortFill>{}
+        : portFillByDevice(_doc);
+
     // Shortcuts/Actions + an autofocused Focus give the canvas Del/Backspace
     // (delete the selection) and Ctrl/Cmd+Z / Ctrl/Cmd+Shift+Z / Ctrl+Y
     // (undo/redo). SingleActivator's exact-modifier match keeps Ctrl+Z and
@@ -3753,6 +3861,68 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     );
   }
 
+  /// CR-105's chip for [id], or null when this device is not signposted.
+  ///
+  /// [PortFill.hasUnconnected] is the whole rule: a device with every pin
+  /// wired has nothing to point at, and one with no pins at all is
+  /// furniture rather than "unwired" (a blank panel, a vent, a shelf —
+  /// `kNoSymbolsDetail` already says the schematic will not draw it).
+  PortFill? _chipFor(Uuid id) {
+    final fill = _portFill[id];
+    return fill != null && fill.hasUnconnected ? fill : null;
+  }
+
+  /// Chip colours from the theme rather than from `RackPalette` — see
+  /// `port_chip.dart`'s header for why they must not join the type the
+  /// PDF backend reads.
+  PortChipStyle _portChipStyle(ColorScheme scheme) => PortChipStyle(
+    fillArgb: scheme.secondaryContainer.toARGB32(),
+    strokeArgb: scheme.outline.toARGB32(),
+    textArgb: scheme.onSecondaryContainer.toARGB32(),
+  );
+
+  Widget _deviceBox(
+    DeviceLayout d,
+    RackScene rackScene,
+    RackPalette palette,
+    ColorScheme scheme,
+  ) {
+    final chip = _chipFor(d.deviceId);
+    return DeviceBox(
+      scene: rackScene.scene,
+      deviceId: d.deviceId.v,
+      measurer: widget.measurer,
+      // CR-105's count reaches a screen reader through the LABEL rather
+      // than through a semantic action — see `portChipSemantics` for why
+      // a fake action would be worse than the gap it papers over. It is
+      // appended only when the chip is drawn, so what is announced and
+      // what is on screen say the same thing.
+      semanticLabel: chip == null
+          ? d.semanticLabel
+          : '${d.semanticLabel} — ${portChipSemantics(chip)}',
+      palette: palette,
+      selected: _selection.contains(d.deviceId),
+      portChip: chip,
+      portChipStyle: _portChipStyle(scheme),
+      // Two in-place fades, one knob (see `RenderDeviceBox.fadeOpacity`):
+      //  * §3.3 step 1 — the device being move-dragged drops to 30 %,
+      //    "showing the vacated U", while its full-opacity ghost follows
+      //    the cursor;
+      //  * §3.6 — while a compaction preview is open, every device it
+      //    proposes to move dims to 25 % at its CURRENT position, with
+      //    the solid ghost at the proposed one.
+      // Mutually exclusive by the screen's preview-exclusivity invariant
+      // (opening either cancels the other), so the order below is
+      // readability, not arbitration.
+      fadeOpacity: _lastMoveDragSourceId == d.deviceId.v
+          ? RenderDeviceBox.dragSourceOpacity
+          : (_compaction.moves(d.deviceId.v)
+                ? RenderDeviceBox.compactionSourceOpacity
+                : null),
+      shake: _shake,
+    );
+  }
+
   Widget _buildCanvas(
     BuildContext context,
     ColorScheme scheme,
@@ -3799,37 +3969,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                               key: ValueKey(d.deviceId.v),
                               sceneOffset: Offset(d.rect.left, d.rect.top),
                               sceneSize: Size(d.rect.width, d.rect.height),
-                              child: DeviceBox(
-                                scene: rackScene.scene,
-                                deviceId: d.deviceId.v,
-                                measurer: widget.measurer,
-                                semanticLabel: d.semanticLabel,
-                                palette: palette,
-                                selected: _selection.contains(d.deviceId),
-                                // Two in-place fades, one knob (see
-                                // `RenderDeviceBox.fadeOpacity`):
-                                //  * §3.3 step 1 — the device being
-                                //    move-dragged drops to 30 %, "showing
-                                //    the vacated U", while its full-opacity
-                                //    ghost follows the cursor;
-                                //  * §3.6 — while a compaction preview is
-                                //    open, every device it proposes to move
-                                //    dims to 25 % at its CURRENT position,
-                                //    with the solid ghost at the proposed
-                                //    one.
-                                // Mutually exclusive by the screen's
-                                // preview-exclusivity invariant (opening
-                                // either cancels the other), so the order
-                                // below is readability, not arbitration.
-                                fadeOpacity:
-                                    _lastMoveDragSourceId == d.deviceId.v
-                                    ? RenderDeviceBox.dragSourceOpacity
-                                    : (_compaction.moves(d.deviceId.v)
-                                          ? RenderDeviceBox
-                                                .compactionSourceOpacity
-                                          : null),
-                                shake: _shake,
-                              ),
+                              child: _deviceBox(d, rackScene, palette, scheme),
                             ),
                         ],
                       ),

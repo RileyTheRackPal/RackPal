@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portable Markdown Reader</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #24292f;
+            --link-color: #0969da;
+            --code-bg: #f6f8fa;
+            --border-color: #d0d7de;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            word-wrap: break-word;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+        /* Top Navigation Bar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: #24292f;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        .navbar h1 {
+            font-size: 16px;
+            margin: 0;
+            font-weight: 600;
+        }
+        .file-btn {
+            background: #2c974b;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .file-btn:hover { background: #2c8a46; }
+        #file-input { display: none; }
+
+        /* Reading Area (GitHub Style Layout) */
+        .content-wrapper {
+            max-width: 850px;
+            margin: 80px auto 40px auto;
+            padding: 0 20px;
+        }
+        .drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 6px;
+            padding: 40px;
+            text-align: center;
+            color: #57606a;
+            background: var(--code-bg);
+            cursor: pointer;
+        }
+        
+        /* Markdown Elements Styling */
+        .markdown-body h1, .markdown-body h2 { border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+        .markdown-body h1 { font-size: 2em; margin-top: 0; }
+        .markdown-body h2 { font-size: 1.5em; margin-top: 24px; }
+        .markdown-body h3 { font-size: 1.25em; }
+        .markdown-body a { color: var(--link-color); text-decoration: none; }
+        .markdown-body a:hover { text-decoration: underline; }
+        .markdown-body p, .markdown-body ul, .markdown-body ol { margin-top: 0; margin-bottom: 16px; }
+        .markdown-body li { margin-top: 0.25em; }
+        .markdown-body code { background-color: rgba(175,184,193,0.2); padding: 0.2em 0.4em; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace; font-size: 85%; }
+        .markdown-body pre { background-color: var(--code-bg); padding: 16px; overflow: auto; border-radius: 6px; margin-bottom: 16px; }
+        .markdown-body pre code { background-color: transparent; padding: 0; font-size: 100%; word-break: normal; }
+        .markdown-body blockquote { padding: 0 1em; color: #57606a; border-left: 0.25em solid var(--border-color); margin: 0 0 16px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <h1 id="doc-title">Portable Markdown Reader</h1>
+        <label class="file-btn" for="file-input">Open File</label>
+        <input type="file" id="file-input" accept=".md,.txt">
+    </div>
+
+    <div class="content-wrapper">
+        <div id="viewer" class="markdown-body">
+            <div class="drop-zone" id="drop-zone">
+                <p style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">Drag & Drop an .md file here</p>
+                <p style="margin: 0; font-size: 14px;">or click the "Open File" button above</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Structural Multiline Parser
+        function parseMarkdown(md) {
+            let html = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            // Fenced Code Blocks (```code```)
+            html = html.replace(/```(?:[a-zA-Z0-9-]*)\n([\s\S]*?)\n```/g, '<pre><code>\$1</code></pre>');
+            
+            const lines = html.split('\n');
+            let processed = [];
+            let inList = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+
+                if (line.trim() === '```' || line.startsWith('<pre><code>') || line.endsWith('</code></pre>')) {
+                    processed.push(line);
+                    continue;
+                }
+
+                // Headers
+                if (/^#{1,6} /.test(line)) {
+                    const lvl = line.match(/^#+/)[0].length;
+                    line = `<h${lvl}>${line.replace(/^#+\s+/, '')}</h${lvl}>`;
+                }
+                // Blockquotes
+                else if (/^>\s+/.test(line)) {
+                    line = `<blockquote>${line.replace(/^>\s+/, '')}</blockquote>`;
+                }
+                // Unordered Lists
+                else if (/^[\-*]\s+/.test(line)) {
+                    const text = line.replace(/^[\-*]\s+/, '');
+                    line = !inList ? `<ul>\n<li>${text}</li>` : `<li>${text}</li>`;
+                    inList = true;
+                } 
+                // Regular Text / Empty Space
+                else {
+                    if (inList) { processed.push('</ul>'); inList = false; }
+                    if (line.trim() !== '' && !line.startsWith('<')) {
+                        line = `<p>${line}</p>`;
+                    }
+                }
+                processed.push(line);
+            }
+            if (inList) processed.push('</ul>');
+
+            let finalHtml = processed.join('\n');
+            
+            // Inline Styles (Bold, Italic, Inline Code)
+            finalHtml = finalHtml.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                 .replace(/__(.*?)__/g, '<strong>$1</strong>')
+                                 .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                                 .replace(/_(.*?)_/g, '<em>$1</em>')
+                                 .replace(/`([^`\n]+)`/g, '<code>$1</code>');
+            return finalHtml;
+        }
+
+        // File Handler Utility
+        function loadFile(file) {
+            if (!file) return;
+            document.getElementById('doc-title').textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('viewer').innerHTML = parseMarkdown(e.target.result);
+            };
+            reader.readAsText(file);
+        }
+
+        // DOM Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('file-input');
+            const dropZone = document.getElementById('drop-zone');
+
+            fileInput.addEventListener('change', (e) => loadFile(e.target.files[0]));
+            
+            // Drag and Drop Logic
+            window.addEventListener('dragover', (e) => e.preventDefault());
+            window.addEventListener('drop', (e) => {
+                e.preventDefault();
+                loadFile(e.dataTransfer.files[0]);
+            });
+            dropZone.addEventListener('click', () => fileInput.click());
+        });
+    </script>
+</body>
+</html>
