@@ -550,6 +550,32 @@ final class AppShellState extends State<AppShell>
         Expanded(
           child: TabBarView(
             controller: _tabController,
+            // ═════════════════════════════════════════════════════════
+            // THE VIEW IS NOT A THING YOU SCROLL TO — #96, from the field
+            // ═════════════════════════════════════════════════════════
+            // `TabBarView` is a `PageView` and takes page-scroll physics by
+            // default, so a horizontal wheel or a two-finger sideways
+            // trackpad swipe drags the whole view sideways. On a phone that
+            // is the affordance; here it is a collision, because BOTH
+            // canvases already claim exactly that gesture for panning —
+            // `CanvasIntentDetector._onPointerSignal` pans by the full
+            // scroll delta, `dx` included, and `_onPanZoomUpdate` does the
+            // same for a native trackpad pan.
+            //
+            // So one sideways scroll moved the sheet AND dragged the page,
+            // which then settled back to the nearest tab: the "jumps around
+            // erratically" the user reported. Nothing was ever designed to
+            // switch views this way — the affordance is the tab bar and
+            // `Ctrl+1/2/4` (CR-071), and canon §1.10 principle (a) makes
+            // view-switching a GLOBAL command rather than a canvas gesture.
+            //
+            // THIS DOES NOT DISABLE PROGRAMMATIC SWITCHING.
+            // `TabController.animateTo` is unaffected, so the tab bar, the
+            // keymap and `switchToTab` all still work — see
+            // `.okf/practices/defer-past-the-gesture.md` for the separate
+            // hazard of switching mid-click, which this neither fixes nor
+            // reintroduces.
+            physics: const NeverScrollableScrollPhysics(),
             children: [
               _rackTab(session),
               // THE SCHEMATIC IS BUILT NOW (M2-E), and the `UnbuiltView`

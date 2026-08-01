@@ -68,6 +68,7 @@
 
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -441,5 +442,142 @@ void main() {
     expect(find.byType(RackCanvasScreen), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('AMP-1')), findsOneWidget);
     expect(find.text('100%'), findsOneWidget);
+  });
+
+  // ── #96 — a sideways scroll is a PAN, not a view switch ────────────────
+  //
+  // Reported from the field: horizontal wheel and two-finger sideways swipe
+  // switched tabs, and using either to navigate made "the entire page jump
+  // around erratically". `TabBarView` is a `PageView` and takes page-scroll
+  // physics by default, so it was claiming the same gesture BOTH canvases
+  // already use for panning — `CanvasIntentDetector._onPointerSignal` pans
+  // by the full scroll delta, `dx` included. One gesture, two consumers, and
+  // the page settling back to the nearest tab is the jump.
+  //
+  // canon §1.10 principle (a) is the authority for which one wins:
+  // view-switching is a GLOBAL command, not a canvas gesture. The
+  // affordances are the tab strip and `Ctrl+1/2/4` (CR-071), both asserted
+  // still working below — a fix that disabled the gesture by disabling the
+  // `TabBarView` would pass the first two tests and break the product.
+  group('a horizontal gesture over the canvas never changes the view', () {
+    int tabIndex(WidgetTester tester) =>
+        tester.widget<TabBarView>(find.byType(TabBarView)).controller!.index;
+
+    /// The `TabBarView`'s own scroll offset.
+    ///
+    /// ═══════════════════════════════════════════════════════════════════
+    /// THE INDEX IS THE WRONG THING TO ASSERT, AND SAYING SO IS THE POINT
+    /// ═══════════════════════════════════════════════════════════════════
+    /// A `PageView` under default physics SETTLES BACK to the nearest page,
+    /// so a 240 px wheel scroll on a 1400 px-wide page moves the view a
+    /// quarter of the way, springs back, and leaves `TabController.index`
+    /// exactly where it was. The first draft of these tests asserted the
+    /// index, passed with the fix REMOVED, and would have shipped as
+    /// decoration.
+    ///
+    /// The user's report is about the movement, not the destination —
+    /// *"the entire page jumps around erratically"* — so the claim is that
+    /// the page does not move AT ALL. `NeverScrollableScrollPhysics` makes
+    /// `pixels` unable to leave its page offset; default physics does not.
+    /// `.first` because the TAB CONTENT has scrollables of its own (the
+    /// palette list, the inspector). Descendant order is outside-in, so the
+    /// first is the `PageView`'s — the one the tab strip rides on and the
+    /// only one this group is about.
+    double pageOffset(WidgetTester tester) => tester
+        .state<ScrollableState>(
+          find
+              .descendant(
+                of: find.byType(TabBarView),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        )
+        .position
+        .pixels;
+
+    testWidgets('a sideways drag across the sheet does not move the page', (
+      tester,
+    ) async {
+      // A GUARD, NOT THE REPRODUCTION, and the difference is measured
+      // rather than assumed: this one passes with the fix REMOVED. A
+      // primary-button drag goes through the gesture arena, and the canvas
+      // wins it, so the `PageView` never sees the drag at all. The wheel
+      // below is the case that actually broke, because
+      // `Listener.onPointerSignal` does not enter the arena — the canvas
+      // and the `Scrollable` both act on the same event.
+      //
+      // Kept anyway: it is the assertion that the arena outcome does not
+      // silently invert, which is the shape half this file's history is
+      // about. It is not evidence the fix works.
+      await openTab(tester, 'Schematic');
+      final settled = pageOffset(tester);
+
+      // BOTH DIRECTIONS, because a `PageView` at index 1 has a neighbour
+      // either way — at index 0 a leftward drag has nowhere to go.
+      await tester.drag(_tabBody(), const Offset(-600, 0));
+      await tester.pumpAndSettle();
+      expect(pageOffset(tester), settled);
+      expect(tabIndex(tester), 1);
+
+      await tester.drag(_tabBody(), const Offset(600, 0));
+      await tester.pumpAndSettle();
+      expect(pageOffset(tester), settled);
+      expect(tabIndex(tester), 1);
+    });
+
+    testWidgets('a horizontal wheel scroll does not move the page', (
+      tester,
+    ) async {
+      await openTab(tester, 'Schematic');
+      final settled = pageOffset(tester);
+      final at = tester.getCenter(_tabBody());
+
+      // THE POINTER-SIGNAL CHANNEL, and THIS is the one that broke.
+      // `Listener.onPointerSignal` does not enter the gesture arena, so the
+      // canvas pans by the full delta (`dx` included) AND the `PageView`'s
+      // `Scrollable` takes the same event. Measured with the fix removed:
+      // one 240 px scroll left the page at 1360 of 1600 — STRANDED between
+      // the Schematic and the Rack, with `pumpAndSettle` unable to recover
+      // it, because a pointer-signal scroll on a `PageView` jumps the
+      // offset without running the settle animation a drag would.
+      //
+      // That is the user's "jumps around erratically" exactly: not a tab
+      // switch, a view left half-way between two tabs.
+      //
+      // Asserted BETWEEN the two scrolls rather than only at the end: the
+      // second would otherwise undo the first, and a test that only looked
+      // afterwards would call that "did not move".
+      for (final dx in <double>[-240, 240]) {
+        final pointer = TestPointer(1, PointerDeviceKind.mouse)..hover(at);
+        await tester.sendEventToBinding(pointer.scroll(Offset(dx, 0)));
+        await tester.pump();
+        expect(pageOffset(tester), settled, reason: 'dx=$dx');
+        await tester.pumpAndSettle();
+        expect(pageOffset(tester), settled, reason: 'dx=$dx, settled');
+      }
+      expect(tabIndex(tester), 1);
+    });
+
+    testWidgets('and the two affordances that DO switch still switch', (
+      tester,
+    ) async {
+      // The guard on the fix. `NeverScrollableScrollPhysics` stops the
+      // gesture and leaves `TabController.animateTo` untouched; a change
+      // that took the controller away instead would strand the user on
+      // whichever tab opened first.
+      await openTab(tester, 'Schematic');
+      expect(tabIndex(tester), 1);
+
+      await tester.tap(find.text('Schedule'));
+      await tester.pumpAndSettle();
+      expect(tabIndex(tester), 2);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit1);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+      expect(tabIndex(tester), 0);
+      expect(find.byType(RackCanvasScreen), findsOneWidget);
+    });
   });
 }
