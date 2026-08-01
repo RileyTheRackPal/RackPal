@@ -385,6 +385,45 @@ final class ConnectPortsRefused extends ConnectPortsResult {
   String get message => verdict.message;
 }
 
+/// Everything one GESTURE has already allocated against an unmutated
+/// document, so the next command it builds does not mint the same names.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// IT IS MUTATED BY [buildConnectPortsCommand], AND THAT IS THE POINT
+/// ═══════════════════════════════════════════════════════════════════════
+/// Every allocator reads the DOCUMENT to decide what is taken. Correct for
+/// one command; silently wrong for N built together and applied together,
+/// which is exactly what multi-draw is (DR-012.2 — N `Link`s, one undo
+/// entry). Without a reservation all N allocate `W006`, all N allocate
+/// `N006`, and two pairs landing on one device are handed the same
+/// `J`-number.
+///
+/// Handing the caller three separate sets to thread would make forgetting
+/// one a live defect that nothing catches — link designators are
+/// PROJECT-WIDE unique and a duplicate is two schedule rows an installer
+/// cannot tell apart. So the builder records what it took, and a caller
+/// that passes the same accumulator to every call in the gesture cannot get
+/// it wrong.
+///
+/// A caller building ONE command passes nothing and pays nothing.
+final class ConnectAllocations {
+  /// `W###` values this gesture has minted.
+  final Set<String> linkDesignators = <String>{};
+
+  /// `N###` values this gesture has minted.
+  final Set<String> netNames = <String>{};
+
+  /// Port designators minted, PER DEVICE — a port designator is unique
+  /// within its device (CR-042), not project-wide.
+  final Map<Uuid, Set<String>> portDesignators = <Uuid, Set<String>>{};
+
+  /// Sort indices minted, so N links do not all land on one order.
+  final List<FracIndex> orders = <FracIndex>[];
+
+  Set<String> _portsOn(Uuid deviceId) =>
+      portDesignators.putIfAbsent(deviceId, () => <String>{});
+}
+
 /// Builds the [ConnectPortsCommand] for a pin-to-pin gesture from [from]
 /// to [to], or the refusal that stops it.
 ///
@@ -404,19 +443,49 @@ ConnectPortsResult buildConnectPortsCommand({
   required MediaTypeId media,
   required DateTime now,
   required String actor,
+  ConnectAllocations? reserve,
 }) {
   final verdict = evaluateConnect(doc, from, to);
   if (verdict is ConnectRefused) return ConnectPortsRefused(verdict);
 
   // Both ends may be pins on the SAME device (a loopback between two of
   // its own jacks is legal — only connecting a pin to ITSELF is not), so
-  // the second allocation must see the first one's answer.
-  final fromDesignator = allocatePortDesignatorFor(doc, from);
+  // the second allocation must see the first one's answer — and, when a
+  // gesture is building several commands at once, every EARLIER command's
+  // answers too. See [ConnectAllocations].
+  final fromReserved = reserve?._portsOn(from.deviceId) ?? <String>{};
+  final fromDesignator = allocatePortDesignatorFor(
+    doc,
+    from,
+    alsoUsed: fromReserved,
+  );
+  fromReserved.add(fromDesignator);
+  final toReserved = reserve?._portsOn(to.deviceId) ?? <String>{};
   final toDesignator = allocatePortDesignatorFor(
     doc,
     to,
-    alsoUsed: from.deviceId == to.deviceId ? {fromDesignator} : const {},
+    alsoUsed: from.deviceId == to.deviceId
+        ? {fromDesignator, ...toReserved}
+        : toReserved,
   );
+  toReserved.add(toDesignator);
+
+  final linkDesignator = allocateLinkDesignatorFor(
+    doc,
+    alsoUsed: reserve?.linkDesignators ?? const {},
+  );
+  final netName = allocateNetNameFor(
+    doc,
+    alsoUsed: reserve?.netNames ?? const {},
+  );
+  final order = nextOrder([
+    ...doc.links.values.map((l) => l.order),
+    ...?reserve?.orders,
+  ]);
+  reserve
+    ?..linkDesignators.add(linkDesignator)
+    ..netNames.add(netName)
+    ..orders.add(order);
 
   // The two ends' declared roles. A null and an empty string both mean
   // "this pin declares no role" — `Conductor.role`'s own doc gives `""`
@@ -431,15 +500,15 @@ ConnectPortsResult buildConnectPortsCommand({
     ConnectPortsCommand(
       from: PortMaterialisation.of(from, designator: fromDesignator),
       to: PortMaterialisation.of(to, designator: toDesignator),
-      designator: allocateLinkDesignatorFor(doc),
-      netName: allocateNetNameFor(doc),
+      designator: linkDesignator,
+      netName: netName,
       // DR-011.3: the pin's REAL family. The `from` end supplies it —
       // it is the end the user grabbed, and where the two disagree that
       // disagreement is `SIG-002`'s to report (tier 2, deferred to M5),
       // not this builder's to arbitrate by picking the other one.
       signalFamily: from.signalFamily,
       media: media,
-      order: nextOrder(doc.links.values.map((l) => l.order)),
+      order: order,
       now: now,
       actor: actor,
       // See `ConnectPortsCommand.role`: a role is a claim about the whole

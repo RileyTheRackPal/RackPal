@@ -64,6 +64,7 @@ export 'src/commands/link_class_commands.dart';
 export 'src/commands/link_commands.dart';
 export 'src/commands/link_count.dart';
 export 'src/commands/link_jacket_color_commands.dart';
+export 'src/commands/multi_draw.dart';
 export 'src/commands/rack_commands.dart';
 export 'src/commands/rack_shrink.dart';
 export 'src/commands/rename_entity_command.dart';

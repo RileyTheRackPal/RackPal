@@ -63,4 +63,13 @@ enum LabelKey {
   // say which of the two is being undone; a shared label would offer
   // "Undo atomic connect" for a gesture that connected one RJ45.
   connectPorts,
+
+  // MULTI-DRAW (commands/multi_draw.dart), DR-012.2. A THIRD entry beside
+  // the other two, and the reason is the one DR-012.2 is about: this
+  // gesture makes N `Link`s where `atomicConnect` makes one `Link` with N
+  // `Conductor`s. Eight cables and one eight-conductor cable are different
+  // bills of materials, so "Undo multi-draw" and "Undo atomic connect"
+  // must not be the same words — the Edit menu is where a user finds out
+  // which of the two they just did.
+  multiDraw,
 }

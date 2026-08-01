@@ -154,9 +154,12 @@ final class RemoveLinkCommand extends Command {
 ///
 /// CALL THIS BEFORE CONSTRUCTING THE COMMAND, never inside `apply()` —
 /// see `AddLinkCommand.netName`.
-String allocateNetNameFor(RackDocument doc) => allocateNetName(
+String allocateNetNameFor(
+  RackDocument doc, {
+  Set<String> alsoUsed = const {},
+}) => allocateNetName(
   settings: doc.settings,
-  usedNames: {for (final n in doc.nets.values) n.name},
+  usedNames: {for (final n in doc.nets.values) n.name, ...alsoUsed},
 );
 
 /// The designator the NEXT `Link` in [doc] should carry — `W001`, then
@@ -168,7 +171,31 @@ String allocateNetNameFor(RackDocument doc) => allocateNetName(
 /// two rows an installer cannot tell apart.
 ///
 /// CALL THIS BEFORE CONSTRUCTING THE COMMAND, never inside `apply()`.
-String allocateLinkDesignatorFor(RackDocument doc) => allocateLinkDesignator(
+String allocateLinkDesignatorFor(
+  RackDocument doc, {
+  Set<String> alsoUsed = const {},
+}) => allocateLinkDesignator(
   settings: doc.settings,
-  usedDesignators: {for (final l in doc.links.values) l.designator},
+  usedDesignators: {
+    for (final l in doc.links.values) l.designator,
+    ...alsoUsed,
+  },
 );
+
+// ═══════════════════════════════════════════════════════════════════════
+// WHY BOTH GAINED AN `alsoUsed`, AND THE DEFECT IT EXISTS TO STOP
+// ═══════════════════════════════════════════════════════════════════════
+// Both read the DOCUMENT to decide what is taken. That is correct for one
+// command and silently wrong for N built in one gesture: multi-draw
+// (DR-012.2) builds N `ConnectPortsCommand`s against an unmutated document
+// and applies them together, so without a reservation every one of them
+// allocates `W006`, every one allocates `N006`, and the schedule gets N
+// rows an installer cannot tell apart — with link-designator uniqueness
+// being PROJECT-WIDE, which is the whole point of the paragraph above.
+//
+// `allocatePortDesignatorFor` has carried the same parameter since M2-F
+// Phase 0, for the loopback case (two jacks on one box), and
+// `buildAtomicConnectCommand` accumulates it across a set. This is that
+// discipline extended from ports to the two project-wide names.
+// `ConnectAllocations` in `connect_commands.dart` is what carries all
+// three together, so a caller cannot remember one and forget another.
