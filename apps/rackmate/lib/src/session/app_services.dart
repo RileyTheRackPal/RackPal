@@ -83,6 +83,7 @@ final class AppServices {
     required this.titleWriter,
     required this.prefs,
     required this.startupWarning,
+    this.prefsStore,
   }) : degradedWarning = ValueNotifier<String?>(startupWarning);
 
   final DocumentSession session;
@@ -127,6 +128,23 @@ final class AppServices {
   /// diverge from the file. This one is read exactly once, by
   /// [restoreWindowGeometry] in `main()`, before the window is shown.
   final AppPrefs prefs;
+
+  /// The LIVE preferences, or null in the degraded session.
+  ///
+  /// NULL IS A REAL STATE AND NOT A TEST HOOK: a read-only USB stick or a
+  /// locked-down profile produces a `DataRootUnusable`, there is no
+  /// `prefs.json` to write, and the shell's answer is then to show
+  /// AC-048's coach mark once per SESSION rather than once per user. That
+  /// is the least-bad reading of DR-012.4 when the store it names does
+  /// not exist — a session-scoped dismissal is not a nag, and refusing to
+  /// teach the domain filter at all because a folder is read-only would
+  /// be worse.
+  ///
+  /// It is the [PrefsStore] rather than an `AppPrefs` snapshot because
+  /// `prefs.json` has several independent writers doing load-modify-write
+  /// and only the store holds a cache that cannot go stale — the defect
+  /// [prefs]'s own doc comment records.
+  final PrefsStore? prefsStore;
 
   /// The persistent status-bar warning, or null when persistence is
   /// healthy RIGHT NOW.
@@ -366,6 +384,7 @@ Future<AppServices> buildAppServices({
     autosave: autosave,
     titleWriter: WindowTitleWriter(chrome),
     prefs: prefs,
+    prefsStore: stores?.prefs,
     startupWarning: unusable == null
         ? null
         : describeDegradedPersistence(portable: unusable.portable),

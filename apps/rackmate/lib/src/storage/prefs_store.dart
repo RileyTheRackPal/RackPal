@@ -154,6 +154,7 @@ final class AppPrefs {
     this.maximized = false,
     this.displayId,
     this.lastSaveDirectory,
+    this.coachMarksSeen = const <String>{},
   });
 
   /// Parses `prefs.json`'s decoded root, defaulting anything missing or
@@ -164,14 +165,26 @@ final class AppPrefs {
     final window = raw['window'];
     final lastSaveDirectory = raw['lastSaveDirectory'];
     final lastDir = lastSaveDirectory is String ? lastSaveDirectory : null;
-    if (window is! Map) return AppPrefs(lastSaveDirectory: lastDir);
+    final seen = _coachMarksFromJson(raw['coachMarksSeen']);
+    if (window is! Map) {
+      return AppPrefs(lastSaveDirectory: lastDir, coachMarksSeen: seen);
+    }
     final displayId = window['displayId'];
     return AppPrefs(
       window: WindowBounds.fromJson(window),
       maximized: window['maximized'] == true,
       displayId: displayId is String ? displayId : null,
       lastSaveDirectory: lastDir,
+      coachMarksSeen: seen,
     );
+  }
+
+  static Set<String> _coachMarksFromJson(Object? raw) {
+    if (raw is! List) return const <String>{};
+    return <String>{
+      for (final id in raw)
+        if (id is String && id.isNotEmpty) id,
+    };
   }
 
   /// The restore-down rectangle. `null` means "never saved" and the app
@@ -189,16 +202,52 @@ final class AppPrefs {
   /// Seeds the next Save As dialog.
   final String? lastSaveDirectory;
 
+  /// The one-time coach marks this USER has already been shown —
+  /// DR-012.4 (canon §11.12.4).
+  ///
+  /// ══════════════════════════════════════════════════════════════════
+  /// HERE, AND NOT IN THE DOCUMENT
+  /// ══════════════════════════════════════════════════════════════════
+  /// §11.12.4 rules both alternatives out by name. Document state "would
+  /// re-fire for every new file, and it would put UI chrome inside
+  /// CR-117's byte-exact surface — the identical objection that decided
+  /// §11.11.4 against pinning every symbol". Unpersisted "is a nag, not a
+  /// coach mark". Per USER rather than per project is also what "first
+  /// time" means to the person reading it: the second project is not the
+  /// first time they have seen the app.
+  ///
+  /// A SET OF IDS RATHER THAN A BOOLEAN, because docs/04:468 names THREE
+  /// marks — "one on first placement, one on first finding, and one on
+  /// the first rack→schematic switch". One ships (`rackmate_ui`'s
+  /// `kCoachMarkSchematicFilter`); the other two cost nothing to store
+  /// when they land, and no schema version when they do.
+  ///
+  /// ADD-ONLY, which is why [copyWith]'s `??` is safe on it: a mark is
+  /// never un-seen. `prefs.json` is a convenience file the user may
+  /// delete, and deleting it is the (undocumented, unsupported) way to
+  /// see the marks again — the same recourse they already have for a
+  /// window position on an unplugged monitor.
+  final Set<String> coachMarksSeen;
+
+  /// Whether [id] has already been shown to this user.
+  bool hasSeenCoachMark(String id) => coachMarksSeen.contains(id);
+
+  /// This, plus [id] marked as seen.
+  AppPrefs withCoachMarkSeen(String id) =>
+      copyWith(coachMarksSeen: <String>{...coachMarksSeen, id});
+
   AppPrefs copyWith({
     WindowBounds? window,
     bool? maximized,
     String? displayId,
     String? lastSaveDirectory,
+    Set<String>? coachMarksSeen,
   }) => AppPrefs(
     window: window ?? this.window,
     maximized: maximized ?? this.maximized,
     displayId: displayId ?? this.displayId,
     lastSaveDirectory: lastSaveDirectory ?? this.lastSaveDirectory,
+    coachMarksSeen: coachMarksSeen ?? this.coachMarksSeen,
   );
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -209,8 +258,13 @@ final class AppPrefs {
       if (displayId != null) 'displayId': displayId,
     },
     if (lastSaveDirectory != null) 'lastSaveDirectory': lastSaveDirectory,
+    // SORTED, so two runs that saw the same marks in a different order
+    // write the same bytes. `prefs.json` is not under CR-117 and nothing
+    // diffs it today, but a file that churns for no reason is a file
+    // whose diffs nobody reads.
+    if (coachMarksSeen.isNotEmpty)
+      'coachMarksSeen': coachMarksSeen.toList()..sort(),
   };
-
 }
 
 /// Reads and writes `prefs.json`.

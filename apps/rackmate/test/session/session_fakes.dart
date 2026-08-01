@@ -575,6 +575,13 @@ Future<({RackMateApp app, TestSession session})> buildTestApp(
   StarterAssetLoader? starterLoader,
   bool runStartupRecovery = false,
   bool showStartCard = false,
+
+  /// Forwarded so a widget test can mount the app over a data root that
+  /// does NOT work — the degraded session, where there is no `prefs.json`
+  /// to record a coach mark in. It was reachable at the controller level
+  /// and not at the widget level, which is exactly the half where
+  /// DR-012.4's "no store" branch lives.
+  DataRoot? dataRoot,
 }) async {
   final session = await buildTestSession(
     document: document ?? buildDemoRackDocument(),
@@ -583,6 +590,7 @@ Future<({RackMateApp app, TestSession session})> buildTestApp(
     savePaths: savePaths,
     prompts: prompts,
     starterLoader: starterLoader,
+    dataRoot: dataRoot,
     useRealDialogs: true,
   );
   return (

@@ -141,6 +141,7 @@ import 'package:rackmate_ui/src/canvas/selection_controller.dart';
 import 'package:rackmate_ui/src/canvas/status_message_controller.dart';
 import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
+import 'package:rackmate_ui/src/shell/coach_mark.dart';
 
 /// The headline shown when the document draws symbols but holds no cable.
 ///
@@ -200,6 +201,8 @@ final class SchematicCanvasScreen extends StatefulWidget {
     required this.measurer,
     required this.controller,
     this.reveal,
+    this.showFilterCoachMark = false,
+    this.onDismissFilterCoachMark,
     super.key,
   });
 
@@ -221,6 +224,19 @@ final class SchematicCanvasScreen extends StatefulWidget {
   /// screen selects and frames it. Null in every host that has no rack tab
   /// to be sent from. See `schematic_reveal.dart`.
   final SchematicRevealController? reveal;
+
+  /// Whether AC-048's coach mark is showing under the domain filter bar.
+  ///
+  /// DECIDED BY THE HOST, NOT HERE, and that is DR-012.4: the mark's
+  /// "first" is persisted in APP-SUPPORT PREFS, per user rather than per
+  /// project, and this screen has no store and no business having one.
+  /// It renders what it is told and reports the dismissal back.
+  final bool showFilterCoachMark;
+
+  /// Called when the user dismisses the mark — from its own button, or by
+  /// doing the thing it teaches. One callback for both, so there is a
+  /// single definition of "seen".
+  final VoidCallback? onDismissFilterCoachMark;
 
   @override
   State<SchematicCanvasScreen> createState() => _SchematicCanvasScreenState();
@@ -325,8 +341,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     // would be a second place that knows where a pin is.
     pinAt: _pinAt,
     claimConnect: () => _claimPointerGesture(_PointerGesture.connectDrag),
-    releaseConnect: () =>
-        _releasePointerGesture(_PointerGesture.connectDrag),
+    releaseConnect: () => _releasePointerGesture(_PointerGesture.connectDrag),
     onConnectBegin: _beginWireAt,
     onConnectUpdate: _dragWireTo,
     onConnectCommit: _releaseWireAt,
@@ -1039,6 +1054,17 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     _status.show(
       '${device.designator} selected — press W on a pin to draw a cable.',
     );
+  }
+
+  /// Reports AC-048's mark as seen, once.
+  ///
+  /// Guarded on `showFilterCoachMark` so the filter chips do not write a
+  /// preference on every click for the rest of the product's life — the
+  /// store's write is atomic but it is still a file, and this is a
+  /// keyboard-rate control.
+  void _dismissCoachMark() {
+    if (!widget.showFilterCoachMark) return;
+    widget.onDismissFilterCoachMark?.call();
   }
 
   void _selectAt(DPt scenePoint) {
@@ -1876,9 +1902,11 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
         // what `apply()` actually stamped on the port. The planned value
         // keeps its job — naming a pin in a REFUSAL, where no command was
         // built and there is nothing better to say.
-        final fromSaid = '${fromTarget.deviceDesignator} '
+        final fromSaid =
+            '${fromTarget.deviceDesignator} '
             '${command.from.designator}';
-        final toSaid = '${toTarget.deviceDesignator} '
+        final toSaid =
+            '${toTarget.deviceDesignator} '
             '${command.to.designator}';
         final warning = roleMismatch == null
             ? ''
@@ -2086,11 +2114,10 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
             () => _canvasKeysEnabled && _wireFrom != null,
             (_) => _cycleCandidate(step: 1),
           ),
-          PreviousCandidatePinIntent:
-              _GatedAction<PreviousCandidatePinIntent>(
-                () => _canvasKeysEnabled && _wireFrom != null,
-                (_) => _cycleCandidate(step: -1),
-              ),
+          PreviousCandidatePinIntent: _GatedAction<PreviousCandidatePinIntent>(
+            () => _canvasKeysEnabled && _wireFrom != null,
+            (_) => _cycleCandidate(step: -1),
+          ),
           MovePinCaretIntent: _GatedAction<MovePinCaretIntent>(
             () => _canvasKeysEnabled,
             (intent) => _movePinCaret(intent.direction),
@@ -2104,11 +2131,35 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
               DomainFilterBar(
                 chips: _chips(scene, signalTheme),
                 headline: scope?.headline,
-                onSolo: (id) => setState(() => _filter = _filter.solo(id)),
-                onToggle: (id) => setState(() => _filter = _filter.toggle(id)),
-                onShowAll: _showAllDomains,
-                onShowNone: () => setState(() => _filter = _filter.showNone()),
+                // EVERY FILTER GESTURE RETIRES THE MARK, not just the
+                // `Got it` button: a user who narrows a domain without
+                // reading the hint has learnt the thing it teaches, and
+                // showing it to them again on the next project would make
+                // it a nag — which is the half of DR-012.4 that ruled out
+                // leaving it unpersisted.
+                onSolo: (id) {
+                  _dismissCoachMark();
+                  setState(() => _filter = _filter.solo(id));
+                },
+                onToggle: (id) {
+                  _dismissCoachMark();
+                  setState(() => _filter = _filter.toggle(id));
+                },
+                onShowAll: () {
+                  _dismissCoachMark();
+                  _showAllDomains();
+                },
+                onShowNone: () {
+                  _dismissCoachMark();
+                  setState(() => _filter = _filter.showNone());
+                },
               ),
+              if (widget.showFilterCoachMark)
+                CoachMark(
+                  headline: kCoachMarkSchematicFilterText,
+                  detail: kCoachMarkSchematicFilterDetail,
+                  onDismiss: _dismissCoachMark,
+                ),
               const Divider(height: 1),
               Expanded(
                 child: scene.symbols.isEmpty

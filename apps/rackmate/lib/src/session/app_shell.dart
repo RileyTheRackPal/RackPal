@@ -61,7 +61,7 @@ import 'package:rackmate/src/session/starter_projects.dart';
 import 'package:rackmate/src/session/window_chrome.dart';
 import 'package:rackmate/src/storage/recents_store.dart';
 import 'package:rackmate_core/rackmate_core.dart'
-    show TextMeasurer, buildRackPresets;
+    show TextMeasurer, Uuid, buildRackPresets;
 import 'package:rackmate_ui/rackmate_ui.dart';
 
 /// Which tab of the v1 strip each `Ctrl/Cmd+n` view identity renders as.
@@ -84,6 +84,15 @@ import 'package:rackmate_ui/rackmate_ui.dart';
 /// `session_layering_test.dart` RULE 14e — the test that exists to stop
 /// the tidy-up.
 const Map<int, int> kViewKeyToTabIndex = <int, int>{1: 0, 2: 1, 4: 2};
+
+/// Where the Schematic sits in THIS milestone's strip.
+///
+/// READ OUT OF [kViewKeyToTabIndex] rather than written as `1`, because
+/// that map is the file's own statement that the ordinal is a property of
+/// the strip and not of the view. CR-105's chip and AC-048's coach mark
+/// both need to name this tab; neither may hard-code a position that
+/// CR-071's `Ctrl+3` Rear Panel will move in v1.1.
+final int _kSchematicTabIndex = kViewKeyToTabIndex[2]!;
 
 /// The handler for the registry's view-switch bindings.
 ///
@@ -182,6 +191,28 @@ final class AppShellState extends State<AppShell>
   late final TabController _tabController;
   final MenuController _fileMenu = MenuController();
 
+  /// CR-105's signpost, carried across the strip.
+  ///
+  /// THE SHELL OWNS IT BECAUSE THE SHELL IS THE ONLY THING THAT CAN. The
+  /// elevation raises "show me this device"; only this class can change
+  /// tabs; the schematic answers it. Neither tab may reach the other, and
+  /// `rackmate_ui` deliberately contains no shell.
+  final SchematicRevealController _reveal = SchematicRevealController();
+
+  /// Whether AC-048's coach mark should be showing on the Schematic tab.
+  ///
+  /// ══════════════════════════════════════════════════════════════════
+  /// "FIRST" IS DECIDED HERE, AND PERSISTED IN APP-SUPPORT PREFS
+  /// ══════════════════════════════════════════════════════════════════
+  /// DR-012.4 (canon §11.12.4). docs/04:468 gives the trigger — "it is
+  /// taught the first time the Schematic is opened rather than discovered
+  /// later" — and this class is where "the Schematic is opened" exists as
+  /// an event at all: it is the tab controller changing to index 1.
+  ///
+  /// Held as state rather than read from the store on every build so the
+  /// mark cannot flicker back while the dismissal write is in flight.
+  bool _showFilterCoachMark = false;
+
   List<RecentEntry> _recents = const [];
   Map<String, RecentEntryState> _recentStates = const {};
 
@@ -200,7 +231,8 @@ final class AppShellState extends State<AppShell>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 3, vsync: this)
+      ..addListener(_onTabChanged);
     _services.session.addListener(_onSessionChanged);
     // Persistence can fail at any point in the session, not only at
     // startup — see app_services.dart's header.
@@ -223,8 +255,55 @@ final class AppShellState extends State<AppShell>
     _services.degradedWarning.removeListener(_onWarningChanged);
     _services.autosave.stop();
     _services.geometry?.cancel();
-    _tabController.dispose();
+    _tabController
+      ..removeListener(_onTabChanged)
+      ..dispose();
+    _reveal.dispose();
     super.dispose();
+  }
+
+  /// docs/04:468's trigger for AC-048's third coach mark.
+  ///
+  /// THE INDEX, NOT THE JOURNEY. docs/09:259 calls it "the coach mark at
+  /// the first rack→schematic switch" and docs/04:468 calls it "the first
+  /// time the Schematic is opened"; the second is implemented, because
+  /// the app opens on the Rack tab so every first arrival here came from
+  /// it anyway, and because what a user experiences is the sheet
+  /// appearing, not which tab they left.
+  ///
+  /// NOT ON A SHEET WITH NOTHING TO FILTER. The mark teaches how to SEE
+  /// wires; a document with no cables has none to see, and spending a
+  /// once-per-user hint on an empty sheet spends it where it cannot mean
+  /// anything. The Schematic's own `kNoLinksDetail` is what speaks there.
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    if (_tabController.index != _kSchematicTabIndex) return;
+    if (_showFilterCoachMark) return;
+    if (_services.session.document.links.isEmpty) return;
+    final store = _services.prefsStore;
+    // A degraded session has no store: show it once per session, which is
+    // not a nag, rather than not at all. See `AppServices.prefsStore`.
+    if (store != null &&
+        store.current.hasSeenCoachMark(kCoachMarkSchematicFilter)) {
+      return;
+    }
+    setState(() => _showFilterCoachMark = true);
+  }
+
+  /// Records AC-048's mark as seen — from its `Got it` button, or from the
+  /// user filtering a domain without reading it.
+  void _dismissFilterCoachMark() {
+    if (!_showFilterCoachMark) return;
+    setState(() => _showFilterCoachMark = false);
+    final store = _services.prefsStore;
+    if (store == null) return;
+    // LOAD-MODIFY-WRITE THROUGH THE STORE'S OWN CACHE, exactly as
+    // `WindowGeometryRecorder` does, so this cannot revert
+    // `lastSaveDirectory` or the window geometry — the defect
+    // `AppServices.prefs` documents at length.
+    unawaited(
+      store.save(store.current.withCoachMarkSeen(kCoachMarkSchematicFilter)),
+    );
   }
 
   Future<void> _startup() async {
@@ -502,6 +581,9 @@ final class AppShellState extends State<AppShell>
                 key: ValueKey(session.controller),
                 measurer: widget.measurer,
                 controller: session.controller,
+                reveal: _reveal,
+                showFilterCoachMark: _showFilterCoachMark,
+                onDismissFilterCoachMark: _dismissFilterCoachMark,
               ),
               // THE SCHEDULE IS BUILT NOW, and the panel that used to sit
               // here is gone rather than softened. Its copy said "no code
@@ -574,7 +656,42 @@ final class AppShellState extends State<AppShell>
       key: ValueKey(session.controller),
       measurer: widget.measurer,
       controller: session.controller,
+      // CR-105, joined up. Supplying this callback is ALSO what makes the
+      // chip appear at all (`RackCanvasScreen.onRevealInSchematic`): the
+      // elevation refuses to draw a signpost nobody is listening to, and
+      // this shell is the only listener that can exist.
+      onRevealInSchematic: _revealInSchematic,
     );
+  }
+
+  /// The elevation's chip, answered: park the request, then switch tabs.
+  ///
+  /// PARK FIRST, SWITCH SECOND, and the order is the whole of why this is
+  /// two steps. `TabBarView` builds its pages lazily, so the schematic
+  /// may not be mounted when the chip is clicked; the controller holds
+  /// the request as STATE and the screen drains it on its first frame.
+  /// Notifying after the switch would work too — and would break the
+  /// first time Flutter changed when that page is built.
+  void _revealInSchematic(Uuid deviceId) {
+    _reveal.reveal(deviceId);
+    // ═════════════════════════════════════════════════════════════════
+    // THE SWITCH IS DEFERRED PAST THE CLICK THAT ASKED FOR IT
+    // ═════════════════════════════════════════════════════════════════
+    // `TabBarView` is a `PageView`, and a `PageView` SETTLES TO THE
+    // NEAREST PAGE when the pointer it is watching goes up. The click on
+    // the chip is that pointer: switching inside it moves
+    // `TabController.index` to 1 while the page position is still at 0,
+    // and the settle then puts page 0 straight back into the controller.
+    // Measured: `index` read 1 the instant `switchToTab` returned and 0
+    // once the frame settled, so a user would have seen the Schematic
+    // flash and the Rack come back.
+    //
+    // One post-frame hop puts the switch after the gesture has resolved.
+    // The reveal request is parked FIRST and unconditionally, so the
+    // schematic gets it whichever frame it is built on.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) switchToTab(_kSchematicTabIndex);
+    });
   }
 }
 
