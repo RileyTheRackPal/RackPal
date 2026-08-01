@@ -6,7 +6,7 @@ tags: [ruling, m2, wiring, gesture, snap, coach-mark, dr-012]
 timestamp: 2026-07-31T00:00:00Z
 ruling_id: DR-012
 canon_section: "11.12"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-07-31, at the point M2-F Phases 0–3 had shipped
@@ -67,6 +67,22 @@ document state — it re-fires per file and puts UI chrome inside
 objection that decided §11.11.4 against pinning every symbol. Not unpersisted —
 a mark that returns every launch is a nag. Per USER, not per project: the
 second project is not the first time they have seen the app.
+
+# What shipped
+
+**Three of the four are built as of `ea0af6d`.** §11.12.1's chain-draw is
+`chainOutputFor` in `derived/connect_rules.dart` — placed there rather than
+beside its own type because it has to ask whether a candidate output is FULL,
+and `portConductorCount` lives there; the dependency between rules and targets
+runs one way on purpose. §11.12.3's magnet is a lexicographic order (family
+group first, distance within group) inside `snapToPin`, with `Ctrl` collapsing
+the tolerance to the port's own half-size. §11.12.4's coach mark is
+`AppPrefs.coachMarksSeen`, a SET rather than a bool because docs/04:468 names
+three marks and one ships.
+
+**§11.12.2's multi-draw is the deferred one**, split into its own board item
+rather than built — the ranking is ruled and waiting, and the ruling is the part
+that was worth having.
 
 # What it leaves unruled
 

@@ -6,7 +6,7 @@ tags: [ruling, m2, wiring, gesture, keyboard, accessibility, dr-011]
 timestamp: 2026-07-29T00:00:00Z
 ruling_id: DR-011
 canon_section: "11.11"
-status: in-progress
+status: built
 ---
 
 Settled by the user on 2026-07-29, at the point M2-F was scoped and the connect
@@ -96,6 +96,32 @@ count. And *"type-weighted"* snap is unquantified, with its only example naming
 weighting on the connector pushes toward SIG-001, since RJ45-carrying-HDBaseT
 and RJ45-carrying-Ethernet are the same connector and the corpus calls them the
 two most dangerous ports in the taxonomy.
+
+# What shipped, and the two claims that died on the way
+
+**All seven clauses are built as of `ea0af6d`** (M2-F, six phases). §11.11.1's
+port materialisation is in `ConnectPortsCommand.apply` AND — from Phase 4C — in
+`AtomicConnectCommand.apply`, which is where the finding above had SURVIVED:
+Phase 0 added a guard against the symptom whose own comment described the
+disease, so the set path still could not have created a conductor on a
+palette-built document. §11.11.4's layout hold is a LATCH consumed at build
+time, not an epoch stamp: the first implementation silently did nothing,
+because `ConnectPortsCommand.touches` is `wires | meta` and the meta bump
+advanced the scene epoch past the stamp the wires listener had just written.
+
+**Two defects surfaced that no existing test could see**, both worth recording
+because the shape recurs (see
+[diagnose before fixing](/practices/diagnose-before-fixing.md)):
+
+* **Every successful commit announced "Wire cancelled" to a screen reader**
+  before announcing success — invisible to `find.text`, because the status line
+  only ever shows the last message. Caught by intercepting
+  `SystemChannels.accessibility` rather than by reading the widget tree.
+* **A tap on a pin silently created a cable** from that pin to itself, because
+  a connect that never left the click slop still committed.
+
+**§11.11.7's Tidy/pinning task and multi-draw are the two things M2-F did not
+do**, both tracked rather than dropped.
 
 # The order that matters
 

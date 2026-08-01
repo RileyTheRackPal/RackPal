@@ -1,5 +1,32 @@
 # Update Log
 
+## 2026-08-01
+
+* **Update**: [DR-011](/decisions/dr-011-connect-gesture.md) is **BUILT** — all
+  seven clauses, across M2-F's six phases. Two of its findings had SURVIVED the
+  phase that was supposed to close them: `AtomicConnectCommand` still never
+  materialised a port (Phase 0 had added a guard against the symptom whose own
+  comment described the disease), and §11.11.4's layout hold silently did
+  nothing because `touches` is `wires | meta` and the meta bump advanced the
+  scene epoch past the stamp the wires listener had just written.
+* **Update**: [DR-012](/decisions/dr-012-deferred-gesture-rules.md) is **BUILT**
+  for three of its four clauses. §11.12.2's multi-draw is deferred to its own
+  board item — the ranking is ruled and waiting, which was the part worth
+  having.
+* **Creation**: [A deferred action needs a frame](/practices/defer-past-the-gesture.md)
+  — two defects one phase apart, both invisible to every unit test at both ends:
+  `addPostFrameCallback` queues a callback but does not schedule the frame that
+  runs it, and a `TabBarView` settles its page under a tab switch made inside
+  the click that asked for it.
+* **Note**: CR-105's elevation signposting and AC-048's coach mark shipped with
+  M2-F Phase 5. The chip is SCREEN CHROME and not scene: `buildRackScene` feeds
+  the PDF as well as the screen (CR-086), so a chip emitted into the scene would
+  print on the customer's elevation sheet.
+* **Note**: `docs/12-milestone-board.md` §5.1 re-audited at `ea0af6d`. M2 moves
+  from `NOT STARTED` to **PARTIAL**, four of five exit clauses cited; the open
+  one is the sixty-connection drill, which needs a person. Every other row on
+  that board is still as of `0fa532d` and says so.
+
 ## 2026-07-31
 
 * **Creation**: [DR-012 — the four gesture rules DR-011.8 deferred](/decisions/dr-012-deferred-gesture-rules.md),

@@ -93,18 +93,26 @@ reason** column says so; the headline still tracks the criterion.
 ## 1. The board at a glance
 
 Verified against the working tree at `0fa532d`, by reading code rather than checkboxes. Suite
-counts from this session: `rackmate_core` 886, `rackmate_ui` 351, `apps/rackmate` 651,
+counts from that session: `rackmate_core` 886, `rackmate_ui` 351, `apps/rackmate` 651,
 `rackmate_export` 183, `rackmate_text` 1 — **2072 passing, 0 failing**. `flutter analyze`: 195
 issues, all info-level, **zero errors, zero warnings**. `flutter build windows --release`: exit 0.
+
+**M2's row alone was re-audited at `ea0af6d`** (M2-F complete), against the thirteen local gates:
+`rackmate_core` 1377, `rackmate_ui` 581, `apps/rackmate` 690, `rackmate_export` 183, `rackmate_text`
+1 — **2832 passing, 0 failing**, analyzer pinned at exactly 194 infos by
+`tools/ci/analyze_info_baseline.txt`. **Every other row is still as of `0fa532d`** and carries
+whatever drift the intervening milestones introduced; a row this file has not re-read is a row it
+does not vouch for, and saying so is cheaper than a footnote per row that would go stale the same
+way. Board item #92 is the scheduled full sweep.
 
 | # | Milestone | Size | Exit clauses demonstrated | Status — weakest mark | The short reason |
 |---|---|---|---|---|---|
 | **M0** | Foundations | `S` | **6 of 8** clause rows | **PARTIAL** — `VACUOUS` | `dart test` in `rackmate_core`, 886/0, discharges six clauses and they are good work. The `templates.keys` conjunct and the epoch-mask conjunct are true only because their subjects did not exist at M0 (§2.2) |
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET** — `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first** — the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5) — then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
-| **M2** | Wiring + live schedule | `M` | **0 of 5** | **NOT STARTED** — `NOT BUILT` | Both tabs render `UnbuiltView`; the router was deleted at `b560a50` |
-| **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED** — `NOT BUILT` | Model only. Hard-blocked on M2 |
+| **M2** | Wiring + live schedule | `M` | **4 of 5** | **PARTIAL** — `UNPERFORMED` | Re-audited at `ea0af6d` after M2-A…M2-F. The schedule derivation, Sugiyama 0–3, net labels, the connect gestures, the perf instrument and CR-105/AC-048's signposting are all built and cited (§5.1). The open clause is **the drill**: nobody has made sixty connections. Multi-draw is the one deferred gesture (#93) |
+| **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED** — `NOT BUILT` | Model only. **Its M2 block has lifted**: the gate was M2 putting `Link` + `Endpoint` in the UI, and M2-F did (§5.1). Row otherwise as of `0fa532d` |
 | **M4** | Device builder | `M` | **0 of 2** | **NOT STARTED** — `NOT BUILT` | No builder surface. **Its inputs are all present even though its formal gate is open** — §5.3 |
-| **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED** — `NOT BUILT` | 0 of 27 rules. Hard-blocked on M2 |
+| **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED** — `NOT BUILT` | 0 of 27 rules. **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED** — `NOT BUILT` | 3 of 11 sheet slots ship and are real work — but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5) |
 | **M7** | Platform + access | `M` | **0 of 4** | **NOT STARTED** — `NOT BUILT` | Windows-only; no `Intent` registry; no l10n at all |
 | **M8** | Release engineering | `S` | **0 of 4** | **NOT STARTED** — `NOT BUILT` | No installer, no signing, no crash reporter. **Re-scoped by DR-006** |
@@ -627,7 +635,15 @@ it cares about.
 
 ## 5. M2 → M9 — the unstarted, and where real work sits inside them
 
-### 5.1 M2 — Wiring and the live schedule · `M` · NOT STARTED — weakest mark `NOT BUILT`
+### 5.1 M2 — Wiring and the live schedule · `M` · PARTIAL — weakest mark `UNPERFORMED`
+
+> **Re-audited at `ea0af6d`, after M2-A…M2-F.** Everything below the exit criterion was rewritten
+> against the tree rather than edited: the previous revision of this section marked all five clauses
+> `NOT BUILT` and said *"no drag-to-connect gesture, no magnetic snap, no chain-draw"*, *"no schedule
+> tab and no schedule derivation"*, *"no perf test and no CI to run one in"*. Four of the five are
+> now discharged and the fifth names a human act. **The paragraph this board is proudest of is the
+> one that says a claim stopped covering the thing it named** — so the old text is not softened
+> here, it is superseded, and what replaced each clause is cited.
 
 > **Exit criterion, verbatim.** Starting from the M1 output, a user creates 60 connections without
 > touching a menu; the schedule tab shows 60 correctly-sorted rows with both labels on both ends and
@@ -639,43 +655,53 @@ it cares about.
 
 | Clause | Mark | Why |
 |---|---|---|
-| 60 connections without touching a menu | **NOT BUILT** | No drag-to-connect gesture, no magnetic snap, no chain-draw, no multi-draw, no `atomicConnect` |
-| Schedule shows 60 sorted rows, both labels both ends, conductor colours | **NOT BUILT** | No schedule tab and **no schedule derivation** — nothing exists behind the clause |
-| Deterministic re-layout ⇒ byte-identical display list | **NOT BUILT** | `sugiyama.dart` was deleted at `b560a50`. Phases 0–3 are **unwritten work, not a resurrection** |
-| 300-connection fixture within one frame; **label-layer cost measured and recorded** | **NOT BUILT — no instrument** | Grep for `@Tags` / `Tags([` across every Dart file returns **nothing**. There is no perf test and no CI to run one in. `RISK-02`/`RISK-05`/`RISK-06` all name op-count-per-layer as the instrument |
-| Keyboard path + screen-reader announcements | **NOT BUILT** | No path to create a connection at all |
+| 60 connections without touching a menu | **UNPERFORMED** | Every gesture the clause needs now exists and is tested; **nobody has sat down and made sixty**. This is the same shape as M1's keyboard-only drill (§3.5), which is exactly why that one is `CONFIRMED` and this one is not — see the note below the table |
+| Schedule shows 60 sorted rows, both labels both ends, conductor colours | **DEMONSTRATED** | `packages/rackmate_core/test/derived/schedule_test.dart:806`, a test named for this clause and asserting it verbatim: sixty rows fed in deliberately out of room order so the sort has to do the work, AC-025's room-then-pathway ordering, both labels on both ends, and `['red', 'black']` off a real speaker pair's conductors |
+| Deterministic re-layout ⇒ byte-identical display list | **DEMONSTRATED** | `packages/rackmate_core/test/scene/schematic_perf_test.dart:150` and `:158` — the same 300-link document twice, and **a separately decoded copy of the same bytes**, both through `op_digest.dart`, which is the instrument written for this clause's word *byte-identical*. `sugiyama_test.dart:470` holds the layer beneath it |
+| 300-connection fixture within one frame; **label-layer cost measured and recorded** | **DEMONSTRATED** | `schematic_perf_test.dart:173` and `:182`. The grep this row used to fail on now returns that file: it is `@Tags(['perf'])` and **deliberately not excluded** — `tools/ci/run_suite.ps1` does no tag filtering, so the number is defended on every push rather than recorded once. The label-layer delta is stated against M2-C's recorded symbol-layer baseline (4,155 ops / 3.052 ms) and **timed again in-process**, because a millisecond taken on another day in another process is not a delta |
+| Keyboard path + screen-reader announcements | **DEMONSTRATED — at the channel, not with a screen reader** | `packages/rackmate_ui/test/canvas/schematic/schematic_keyboard_connect_test.dart:151` walks arrows → `W` → `Enter` to one `Link`, and `:639` intercepts `SystemChannels.accessibility` to assert a commit is announced **once** and never as a cancellation. The limit is stated rather than assumed: what is verified is the platform message, not NVDA reading it aloud, and M7's accessibility criterion is where a real reader meets this |
 
-**What exists.** Model only, inherited from M0: `Link`/`Service`/`Conductor`/`Net`, the `Endpoint`
-union, and `AddLinkCommand`/`RemoveLinkCommand` at
-`packages/rackmate_core/lib/src/commands/link_commands.dart:29` and `:100` — referenced from `lib/`
-code in **exactly two places, both of them the `UnbuiltView` copy strings**
-(`apps/rackmate/lib/src/session/app_shell.dart:436`, inside the Schematic tab's `absent:` text, and
-`:458`, inside the Schedule tab's).
+**Why clause 1 is `UNPERFORMED` and not `DEMONSTRATED`.** Every mechanism it names is built and
+covered: the keyboard route (`schematic_keyboard_connect_test.dart`), drag-to-connect with the 12
+screen-px magnetic snap (`schematic_drag_connect_test.dart`), chain-draw and DR-012.3's
+family-weighted magnet, and `atomicConnect` for the multi-conductor sets
+(`schematic_atomic_set_test.dart`). **Multi-draw is the one gesture of RJ-001's four that is not
+built** — split out under DR-012.2 as board item #93, because N `Link`s and one `Link` with N
+`Conductor`s are different bills of materials and the ruling that separates them is worth more than
+the gesture. None of that is the clause. The clause says *a user creates 60 connections*, and this
+board's whole discipline is that a person doing a thing is a different mark from a test proving they
+could — the distinction M1 paid for on 2026-07-27 and 2026-07-28, when the tape measure passed and
+the keyboard drill failed. **Somebody has to make sixty connections and time it.**
 
-**A tested down payment does survive in core**: `packages/rackmate_core/lib/src/draw/scene/symbol_layer.dart`
-and `symbol_hit_test.dart`, exported from `rackmate_core.dart:63-64`, covered by
-`packages/rackmate_core/test/{symbol_layer_test,symbol_hit_test_test}.dart` and
-`packages/rackmate_export/test/symbol_layer_pdf_test.dart` — **a symbol renderer and hit-tester
-that no screen consumes.**
+**What was `NOT BUILT` in the previous revision and is not now**, since a status document that
+silently improves is the failure mode this file is written against:
 
-**Also absent:** net-label rendering, the domain filter bar, hue-by-domain styling, the CR-104 coach
-mark, and the `Ctrl+1..4` tab bindings that `app_shell.dart:19` explicitly notes are deferred.
+- the schedule derivation (`packages/rackmate_core/lib/src/derived/schedule.dart`) and the Schedule
+  tab that renders it — CR-105/AC-035's *live from an empty project* is `schedule_test.dart:254`;
+- Sugiyama phases 0–3 (`draw/scene/sugiyama.dart`) and the schematic scene builder;
+- net labels as the default render (DR-001), the domain filter bar, hue-by-domain styling
+  (`signal_style.dart`, PAL-1 gated), and `wire_trace.dart`'s drawn mode;
+- the connect commands, tier-1 topology (`TOP-001`…`TOP-005`) and DR-011's pin-to-pin gesture;
+- `Ctrl+1..4` — `app_shell.dart`'s `kViewKeyToTabIndex`, with `Ctrl+3` deliberately dead per CR-071;
+- **CR-105's signposting and AC-048's coach mark**, which M2-F's last phase landed: a port-count
+  chip on every device with unwired pins, clicking it switches to the Schematic with that device
+  selected (`packages/rackmate_ui/test/canvas/port_chip_test.dart`,
+  `apps/rackmate/test/session/signposting_test.dart`), and the domain-filter coach mark fires on the
+  first sheet, persisted per USER in app-support prefs under DR-012.4.
 
-**Three things M2 needs before a line of feature code:**
+**Two claims in this section that were wrong and are corrected rather than deleted.** The old text
+said `AddLinkCommand`/`RemoveLinkCommand` were *"referenced from `lib/` code in exactly two places,
+both of them the `UnbuiltView` copy strings"*. That was true and is not: four link-minting commands
+now have real callers, and `apps/rackmate/test/unbuilt_copy_accuracy_test.dart` was widened during
+M2-F precisely because it scanned for `AddLinkCommand(` alone and would have stayed green while both
+copies lied. The old text also called `symbol_layer.dart` *"a symbol renderer and hit-tester that no
+screen consumes"* — `schematic_canvas_screen.dart` consumes both.
 
-1. **A router from scratch.** Sugiyama phases 0–3 plus the deterministic layer-ordered orthogonal
-   trace (canon §11.1.3).
-2. **A perf harness before the feature.** The exit criterion demands the label-layer commit cost
-   *measured and recorded*; building the schematic first and measuring after is how the budget gets
-   missed.
-3. **The schedule derivation, and `Ctrl+1..4`.** CR-105 requires the schedule to populate live from
-   an **empty** project — that is a design constraint on the derivation, not a polish item.
+**What M2 still owes, beyond the drill.** Multi-draw (#93). The six tier-2 spring-back rules are
+**not** M2's — canon defers them to M5 (§11.12.5), and implementing one as a tier-1 refusal would
+make the product unable to draw a mistake, which CR-017 and G2 exist to prevent.
 
-The salvage episode is the argument: the schematic failed through eight consecutive `fix:` commits
-— ten across the eighteen-commit detour (§4.2) — because no pipeline existed behind the canvas.
-**Build the derivation and the router before the canvas.**
-
-### 5.2 M3 — Structure and the field · `M` · NOT STARTED — weakest mark `NOT BUILT` · hard-blocked on M2
+### 5.2 M3 — Structure and the field · `M` · NOT STARTED — weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** A 60-drop whole-house rough-in is entered in under fifteen minutes,
 > produces 60 `Link`s each with one `fieldLabel` and one `rackLabel`, and exports a Pull Sheet
@@ -694,7 +720,7 @@ Living Room), whose own comment at `:4026-4027` says *"the project Locations pan
 chip-strip `Outlets` label at `rack_metrics_row.dart:136`.
 
 The AC-018 clause is **unreachable by construction**: nothing schedules and nothing prints a `W`
-number. Hard-blocked on M2 putting `Link` + `Endpoint` in the UI.
+number. That M2 block — `Link` + `Endpoint` reaching the UI — is discharged as of `ea0af6d` (§5.1).
 
 ### 5.3 M4 — The device builder · `M` · NOT STARTED — weakest mark `NOT BUILT`
 
@@ -749,7 +775,7 @@ evidence supports.
 need the device-property editing `inspector_panel.dart:21` explicitly defers. Both are M1 debt that
 M4 pays.
 
-### 5.4 M5 — Validation · `M` · NOT STARTED — weakest mark `NOT BUILT` · hard-blocked on M2
+### 5.4 M5 — Validation · `M` · NOT STARTED — weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **27** rules has a known-bad fixture producing
 > exactly that finding and a known-good near-miss producing none — **no rule ships without its pair**
@@ -912,7 +938,7 @@ exist, not because it is ungated, and the *Gated on* column says which.
 | 7a | **Delete the three root `test/fixtures/` copies** | Nothing | Five seconds (§4.12) |
 | 8 | **Finish M1** — ~~`AddRackCommand` + New-rack dialog~~ (built); ~~keyboard deselect~~ (built) **but time the drill**; ~~print a sheet~~ (done 2026-07-27); the outline tree | Nothing | One exit clause and one goal clause, and the exit clause needs a **person with a stopwatch**, not code (§3.4) |
 | 9 | **M4, the device builder** | **M1 — a hard block (roadmap §5), DISCHARGED 2026-07-28** | Its inputs were all present long before its gate opened: the arrow's named artifact (*"devices exist"*) is there, and clause 3's keyboard-only drill was never a device-builder input (§5.3). The gate is now clear on the criterion, which is the only thing §8.1 lets a gate depend on. It still sits below M2 here on ordering grounds, not blocking ones |
-| 10 | **A perf harness** (`@Tags(['perf'])`, op-count-per-layer) | Nothing | M2's exit criterion demands a measurement; there is no instrument (§5.1) |
+| 10 | ~~**A perf harness** (`@Tags(['perf'])`, op-count-per-layer)~~ — **BUILT** | Nothing | Was: *"M2's exit criterion demands a measurement; there is no instrument"*. `packages/rackmate_core/test/scene/schematic_perf_test.dart` is that instrument, tagged and unexcluded so it runs on every push (§5.1) |
 | 11 | **Recruit beta integrators** | Nothing but calendar | `RISK-08` lead time (§5.8) |
 
 **Removed from this list by DR-006:** *"order the Windows OV/EV certificate now"*, which the
