@@ -175,6 +175,41 @@ final class ConnectTarget {
 
   bool get isMaterialised => materialisedPort != null;
 
+  /// Whether this pin will carry [family] — DR-012.3's axis.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// "EFFECTIVE" AGAIN, AND FOR THE THIRD TIME THE FIELD IS EMPTY
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `PortDef.acceptedFamilies` is declared, round-trips through the codec
+  /// — and is populated on NONE of the 727 seed catalog ports.
+  /// `seed_registries.dart:394` says so outright, about the one case that
+  /// matters most: *"The exclusion list is not on the M0 class yet; the
+  /// family separation is."* So a rule that simply read the list would be
+  /// a rule that answers "no" to everything on every real document.
+  ///
+  /// This is the same shape as [effectiveMaxConnections] — where not one
+  /// seed port declares `maxConnections` — and as `channelIndex`, which
+  /// DR-012.2 declined to read for the identical reason. Three fields,
+  /// one pattern, and the pattern is why these are `effective*` getters
+  /// rather than field reads.
+  ///
+  /// So: the declared list when there IS one, exact family equality when
+  /// there is not. **A port always accepts its own family**, declared list
+  /// or not — a template that excluded its own `signalFamily` would be
+  /// describing a jack that cannot carry what it is, and honouring that
+  /// literally would break the pin for no stated reason.
+  ///
+  /// WHAT THIS IS NOT. It is not `SIG-001` and not validation of any kind.
+  /// The tier-2 rules are deferred to M5 (docs/09:299) and canon §5 opens
+  /// with *"a rule not listed here does not exist"*. DR-012.3 uses this to
+  /// ORDER pins the tier-1 rules have already allowed — a magnet, not a
+  /// gate — and DR-012.5 says so explicitly. When M5 populates the matrix,
+  /// this is the seam it lands on.
+  bool acceptsFamily(SignalFamilyId family) {
+    if (signalFamily == family) return true;
+    return def.acceptedFamilies.contains(family);
+  }
+
   /// What a sentence should CALL this pin.
   ///
   /// ═══════════════════════════════════════════════════════════════════

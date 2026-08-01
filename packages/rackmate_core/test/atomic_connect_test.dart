@@ -35,13 +35,22 @@ const _devB = Uuid('dev-b');
 /// A body declaring one set whose members are `(portKey, setRole)` in the
 /// order given — `order` is assigned ascending, so declared order IS list
 /// order.
-TemplateBody _body(String setKey, List<(String, String?)> members) =>
+TemplateBody _body(
+  String setKey,
+  List<(String, String?)> members, {
+  bool atomic = true,
+}) =>
     TemplateBody(
       manufacturer: 'Acme',
       model: 'T',
       displayName: 'T',
       portSets: [
-        PortSetDef(key: setKey, label: '$setKey set', kind: SetKind.stereoPair),
+        PortSetDef(
+          key: setKey,
+          label: '$setKey set',
+          kind: SetKind.stereoPair,
+          atomicConnect: atomic,
+        ),
       ],
       ports: [
         for (var i = 0; i < members.length; i++)
@@ -803,6 +812,123 @@ void main() {
         throwsArgumentError,
       );
       expect(doc.links, isEmpty);
+    });
+  });
+
+  group('DR-011.2 — PortSetDef.atomicConnect stops being decorative', () {
+    // "This also makes `PortSetDef.atomicConnect` load-bearing for the
+    // first time. It is a persisted per-set opt-out that
+    // `planAtomicConnect` never reads; M2-F enforces it or the flag is
+    // decorative." — DR-011.2, and this group is the enforcement.
+
+    test('the SEED CATALOG has no opt-out, so this arm is unreachable from '
+        'shipped data — it exists for M4-authored templates', () {
+      // Stated as an assertion rather than a comment because it is the
+      // reason the enforcement could sit unnoticed: nothing in the
+      // catalog would ever have exercised it.
+      final catalog = buildSeedCatalog();
+      final optedOut = <String>[];
+      for (final entry in catalog.entries) {
+        for (final set in entry.value.portSets) {
+          if (!set.atomicConnect) optedOut.add('${entry.key}/${set.key}');
+        }
+      }
+      expect(optedOut, isEmpty);
+    });
+
+    test('a set that opted out is NOT planned, and NOT reported as a rule '
+        'refusal', () {
+      final doc = _doc();
+      _addDevice(doc, _devA, 'A-1', _body('s', [('l', 'L'), ('r', 'R')],
+          atomic: false));
+      _addDevice(doc, _devB, 'B-1', _body('s', [('l', 'L'), ('r', 'R')]));
+
+      final result = planAtomicConnect(
+        doc,
+        fromDeviceId: _devA,
+        fromSetKey: 's',
+        toDeviceId: _devB,
+        toSetKey: 's',
+      );
+      expect(result, isA<AtomicConnectNotAtomic>());
+      expect(
+        result,
+        isNot(isA<AtomicConnectRefused>()),
+        reason: 'no tier-1 rule was broken, and canon §5 forbids inventing '
+            'a TOP id for something that is not in the catalogue',
+      );
+      expect((result! as AtomicConnectNotAtomic).setKey, 's');
+      expect((result as AtomicConnectNotAtomic).deviceId, _devA);
+    });
+
+    test('EITHER end disqualifies it — a cable cannot be one object at one '
+        'end and N at the other', () {
+      final doc = _doc();
+      _addDevice(doc, _devA, 'A-1', _body('s', [('l', 'L'), ('r', 'R')]));
+      _addDevice(doc, _devB, 'B-1', _body('s', [('l', 'L'), ('r', 'R')],
+          atomic: false));
+
+      final result = planAtomicConnect(
+        doc,
+        fromDeviceId: _devA,
+        fromSetKey: 's',
+        toDeviceId: _devB,
+        toSetKey: 's',
+      );
+      expect(result, isA<AtomicConnectNotAtomic>());
+      expect(
+        (result! as AtomicConnectNotAtomic).deviceId,
+        _devB,
+        reason: 'the TO end is the one that opted out, and the answer names '
+            'which',
+      );
+    });
+
+    test('it is told apart from "no such set" (null) and from an EMPTY '
+        'plan — the three the file header warns not to collapse', () {
+      final doc = _doc();
+      _addDevice(doc, _devA, 'A-1', _body('s', [('l', 'L'), ('r', 'R')],
+          atomic: false));
+      _addDevice(doc, _devB, 'B-1', _body('s', [('l', 'L'), ('r', 'R')]));
+
+      expect(
+        planAtomicConnect(
+          doc,
+          fromDeviceId: _devA,
+          fromSetKey: 'nope',
+          toDeviceId: _devB,
+          toSetKey: 's',
+        ),
+        isNull,
+        reason: "a typo'd set key is still null, not the opt-out",
+      );
+      expect(
+        planAtomicConnect(
+          doc,
+          fromDeviceId: _devA,
+          fromSetKey: 's',
+          toDeviceId: _devB,
+          toSetKey: 's',
+        ),
+        isA<AtomicConnectNotAtomic>(),
+      );
+    });
+
+    test('both ends atomic still plans, so the check did not break the '
+        'normal path', () {
+      final doc = _doc();
+      _addDevice(doc, _devA, 'A-1', _body('s', [('l', 'L'), ('r', 'R')]));
+      _addDevice(doc, _devB, 'B-1', _body('s', [('l', 'L'), ('r', 'R')]));
+      expect(
+        planAtomicConnect(
+          doc,
+          fromDeviceId: _devA,
+          fromSetKey: 's',
+          toDeviceId: _devB,
+          toSetKey: 's',
+        ),
+        isA<AtomicConnectReady>(),
+      );
     });
   });
 }

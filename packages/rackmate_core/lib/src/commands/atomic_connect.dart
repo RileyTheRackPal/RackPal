@@ -167,6 +167,43 @@ final class AtomicConnectRefused extends AtomicConnectResult {
   String get message => verdict.message;
 }
 
+/// The set exists and is legal, but it has **opted out of being connected
+/// as a set** — `PortSetDef.atomicConnect == false`.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// A FOURTH ANSWER, BECAUSE IT IS A FOURTH QUESTION
+/// ═════════════════════════════════════════════════════════════════════
+/// This is NOT a refusal and must not be reported as one. No tier-1 rule
+/// was broken and canon §5 opens with *"a rule not listed here does not
+/// exist"*, so there is no `TOP-` id to carry and inventing one would be
+/// exactly the fabrication DR-011.5 forbids. It is also not `null` ("there
+/// is no such set") and not an empty [AtomicConnectReady] ("nothing in
+/// either set is materialised") — this file's own header warns that a
+/// caller which collapses those cannot tell a typo from a rule.
+///
+/// WHAT IT MEANS TO THE USER: these pins are wired one at a time. The
+/// author of the template said this grouping is presentational or
+/// otherwise not a single cable, and the pin-to-pin gesture (DR-011.2) is
+/// the one that applies.
+///
+/// **THE FLAG WAS DECORATIVE UNTIL NOW.** DR-011.2 records it: a persisted
+/// per-set opt-out that `planAtomicConnect` never read. Every one of the
+/// 17 sets in the seed catalog takes the `true` default and not one passes
+/// `atomic: false`, so this arm is unreachable from the shipped catalog —
+/// it exists for templates authored in M4's device builder, and it is
+/// enforced now so the flag means something the first time somebody sets
+/// it rather than being discovered to be inert.
+@immutable
+final class AtomicConnectNotAtomic extends AtomicConnectResult {
+  const AtomicConnectNotAtomic(this.setKey, this.deviceId);
+
+  /// The set that opted out. When BOTH ends did, this is the `from` end —
+  /// first failure wins, in argument order, matching `evaluateConnect`'s
+  /// own first-failure-wins discipline.
+  final String setKey;
+  final Uuid deviceId;
+}
+
 /// Plans a connection between two devices' port sets, or `null` when
 /// either set does not resolve.
 ///
@@ -186,6 +223,26 @@ AtomicConnectResult? planAtomicConnect(
   final from = resolvePortSet(doc, fromDeviceId, fromSetKey);
   final to = resolvePortSet(doc, toDeviceId, toSetKey);
   if (from == null || to == null) return null;
+
+  // THE OPT-OUT, READ AT LAST — see [AtomicConnectNotAtomic]. DR-011.2:
+  // "This also makes `PortSetDef.atomicConnect` load-bearing for the first
+  // time. It is a persisted per-set opt-out that `planAtomicConnect` never
+  // reads; M2-F enforces it or the flag is decorative."
+  //
+  // BEFORE ANY RULE RUNS, because it is not a rule. A set that has opted
+  // out is not model-illegal and evaluating TOP-001..005 against it would
+  // produce a refusal sentence about the wrong thing entirely.
+  //
+  // EITHER END DISQUALIFIES THE GESTURE. Connecting an atomic set to a
+  // non-atomic one is not "half a cable" — the whole point of an atomic
+  // set is that the N conductors are ONE cable, and a cable cannot be one
+  // object at one end and N at the other.
+  if (!from.def.atomicConnect) {
+    return AtomicConnectNotAtomic(fromSetKey, fromDeviceId);
+  }
+  if (!to.def.atomicConnect) {
+    return AtomicConnectNotAtomic(toSetKey, toDeviceId);
+  }
 
   final conductors = <Conductor>[];
   final mismatches = <RoleMismatch>[];

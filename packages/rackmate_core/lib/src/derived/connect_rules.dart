@@ -40,6 +40,9 @@ import 'package:rackmate_core/src/derived/device_loads.dart' show bodyFor;
 import 'package:rackmate_core/src/model/conductor.dart';
 import 'package:rackmate_core/src/model/placement.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
+// `PortDirection` — `chainOutputFor` skips the two directions where a
+// signal STOPS (see its own note on why `busNode` is not one of them).
+import 'package:rackmate_core/src/model/template.dart' show PortDirection;
 import 'package:rackmate_core/src/units/ids.dart';
 
 /// The five model-level illegality rules a connect gesture can meet, IN
@@ -187,6 +190,95 @@ int portConductorCount(RackDocument doc, Uuid portId) {
 /// (AC-018/B1) — neither consumes a connection on any port.
 bool _landsOn(Endpoint e, Uuid portId) =>
     e is PortEndpoint && e.portId == portId;
+
+// ─────────────────────────────────────────────────────────────────────
+// CHAIN-DRAW'S NEXT OUTPUT (DR-012.1)
+// ─────────────────────────────────────────────────────────────────────
+// IT LIVES HERE RATHER THAN IN `connect_target.dart`, WHERE IT WOULD
+// READ MORE NATURALLY, for one mechanical reason: it has to ask whether
+// a candidate output is FULL, and [portConductorCount] is here. Putting
+// it beside its own type would make the two files import each other,
+// and the dependency between them runs one way on purpose — rules read
+// targets, targets never read rules.
+//
+// It is also not as foreign to this file as it first looks: "which
+// output could take the next cable" is a `TOP-003` question with a
+// search in front of it.
+
+/// The output on [deviceId] that chain-draw should re-arm from after a
+/// cable of [family] landed there — DR-012.1 — or null when the chain ends.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// "MATCHING" CANNOT MEAN "THE PAIRED OUTPUT", AND docs/05 PROVES IT
+/// ═══════════════════════════════════════════════════════════════════════
+/// docs/05:482 re-arms from *"the sink device's matching output"* and gives
+/// its own worked example: `ATV-1 → MTX-1 IN1`, then `MTX-1 OUT1 → DA-1`.
+/// **A matrix switcher has no pairing between IN1 and OUT1** — routing any
+/// input to any output is what makes it a matrix — so the reading that
+/// sounds most natural is refuted by the example that introduces it.
+/// Nothing in the model pairs them either: `PortDef` has no field that
+/// relates an input to an output.
+///
+/// So *matching* is the SIGNAL FAMILY, through
+/// [ConnectTarget.acceptsFamily], and among the pins that qualify the
+/// first FREE one wins.
+///
+/// THE ORDER IS `PortDef.order` THEN `key`, WHICH IS NOT A NEW ORDERING.
+/// It is the sort `connect_target.dart`'s `_seqIn` already uses for
+/// `PORT_SEQ`, and that function's
+/// own comment records the reason: two orderings of one port list is how a
+/// pin ends up with one number on the schedule and a different one in the
+/// set that wires it. DR-012.2 ranks multi-draw on the same sort.
+///
+/// FREE MEANS `TOP-003` WOULD ALLOW IT, asked through
+/// [ConnectTarget.effectiveMaxConnections] rather than by counting to one —
+/// a bus tap is unbounded and stays available, which is the whole point of
+/// that getter.
+///
+/// Returning null is an ORDINARY ANSWER, not a failure: a device with no
+/// free output of that family is where a chain legitimately stops. The
+/// caller is expected to say so rather than stop silently (docs/04 §3.4).
+ConnectTarget? chainOutputFor(
+  RackDocument doc, {
+  required Uuid deviceId,
+  required SignalFamilyId family,
+}) {
+  final device = doc.devices[deviceId];
+  if (device == null) return null;
+  final body = bodyFor(device, doc.templates);
+  if (body == null) return null;
+
+  final ordered = [...body.ports]..sort((a, b) {
+    final byOrder = a.order.v.compareTo(b.order.v);
+    return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
+  });
+
+  for (final def in ordered) {
+    // A SOURCE, OR SOMETHING THAT CAN ACT AS ONE. `bidirectional` and
+    // `busNode` both leave a device carrying signal onward — an IR
+    // distribution block's bus taps and an RS-485 thru are exactly the
+    // chain the gesture is for — while `sink` and `passive` are where a
+    // signal stops. Reading `source` alone would end the chain at every
+    // bus device in the catalog.
+    if (def.direction == PortDirection.sink ||
+        def.direction == PortDirection.passive) {
+      continue;
+    }
+    final target = resolveConnectTarget(
+      doc,
+      deviceId: deviceId,
+      portKey: def.key.v,
+    );
+    if (target == null) continue;
+    if (!target.acceptsFamily(family)) continue;
+    final max = target.effectiveMaxConnections;
+    if (max != null && portConductorCount(doc, target.portId) + 1 > max) {
+      continue;
+    }
+    return target;
+  }
+  return null;
+}
 
 /// Evaluates `TOP-001`..`TOP-005` for connecting [from] to [to] in [doc],
 /// returning the FIRST refusal in [ConnectRule.values] order, or

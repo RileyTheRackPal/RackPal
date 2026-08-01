@@ -1156,4 +1156,206 @@ void main() {
       );
     });
   });
+
+  group('DR-012.3 — acceptsFamily, and the third empty field', () {
+    test('a pin always accepts its OWN family, declared list or not', () {
+      final doc = _doc();
+      _addDevice(doc, _avr, 'AVR-1', _body([_port('out', family: 'a.b')]));
+      final t = resolveConnectTarget(doc, deviceId: _avr, portKey: 'out')!;
+      expect(t.acceptsFamily(const SignalFamilyId('a.b')), isTrue);
+      expect(t.acceptsFamily(const SignalFamilyId('c.d')), isFalse);
+    });
+
+    test('NOT ONE seed catalog port declares acceptedFamilies, which is '
+        'why this is an effective* getter and not a field read', () {
+      // The same arithmetic that produced effectiveMaxConnections in
+      // Phase 0 and that DR-012 records for channelIndex. If this ever
+      // fails, the catalog has started declaring exclusions and the
+      // fallback below stops being the only branch real data reaches.
+      final catalog = buildSeedCatalog();
+      final declaring = <String>[];
+      for (final entry in catalog.entries) {
+        for (final port in entry.value.ports) {
+          if (port.acceptedFamilies.isNotEmpty) {
+            declaring.add('${entry.key}/${port.key.v}');
+          }
+        }
+      }
+      expect(declaring, isEmpty);
+    });
+
+    test('a DECLARED list widens the pin, and never narrows it below its '
+        'own family', () {
+      final doc = _doc();
+      _addDevice(
+        doc,
+        _avr,
+        'AVR-1',
+        _body([
+          PortDef(
+            key: const PortKey('out'),
+            label: 'OUT',
+            connector: const ConnectorTypeId('conn.rj45'),
+            signalFamily: const SignalFamilyId('video.hdbaset'),
+            face: Face.rear,
+            position: _pos,
+            order: const FracIndex('a0'),
+            // The exclusion case seed_registries.dart:394 describes,
+            // authored the other way round: a pin that also takes IR.
+            acceptedFamilies: const [SignalFamilyId('ctl.ir')],
+          ),
+        ]),
+      );
+      final t = resolveConnectTarget(doc, deviceId: _avr, portKey: 'out')!;
+      expect(t.acceptsFamily(const SignalFamilyId('ctl.ir')), isTrue);
+      expect(
+        t.acceptsFamily(const SignalFamilyId('video.hdbaset')),
+        isTrue,
+        reason: 'a template that excluded its own signalFamily would be '
+            'describing a jack that cannot carry what it is',
+      );
+      expect(t.acceptsFamily(const SignalFamilyId('net.ethernet')), isFalse);
+    });
+  });
+
+  group('DR-012.1 — chainOutputFor, the "matching output"', () {
+    RackDocument withChainDevice({
+      int maxConnections = 1,
+      String outFamily = 'video.hdmi.2_1',
+    }) {
+      final doc = _doc();
+      _addDevice(
+        doc,
+        _avr,
+        'MTX-1',
+        _body([
+          _port('in.1', direction: PortDirection.sink),
+          _port(
+            'out.1',
+            direction: PortDirection.source,
+            order: 'a1',
+            family: outFamily,
+            maxConnections: maxConnections,
+          ),
+          _port(
+            'out.2',
+            direction: PortDirection.source,
+            order: 'a2',
+            family: outFamily,
+          ),
+        ]),
+      );
+      return doc;
+    }
+
+    test('it is the first FREE output of the SAME family, in template '
+        'order', () {
+      final doc = withChainDevice();
+      final next = chainOutputFor(
+        doc,
+        deviceId: _avr,
+        family: const SignalFamilyId('video.hdmi.2_1'),
+      );
+      expect(next!.portKey.v, 'out.1');
+    });
+
+    test('a FULL output is skipped and the next one wins — the chain does '
+        'not stop at an occupied jack', () {
+      final doc = withChainDevice();
+      _link(
+        doc,
+        'W1',
+        PortEndpoint(derivePortId(_avr, const PortKey('out.1'))),
+        const OpenEndpoint('to the field'),
+      );
+      expect(
+        chainOutputFor(
+          doc,
+          deviceId: _avr,
+          family: const SignalFamilyId('video.hdmi.2_1'),
+        )!.portKey.v,
+        'out.2',
+      );
+    });
+
+    test('a SINK is never the answer, however well its family matches', () {
+      // The whole point of "output": a chain that re-armed from an input
+      // would draw a cable back the way it came.
+      final doc = withChainDevice();
+      _link(
+        doc,
+        'W1',
+        PortEndpoint(derivePortId(_avr, const PortKey('out.1'))),
+        const OpenEndpoint('to the field'),
+      );
+      _link(
+        doc,
+        'W2',
+        PortEndpoint(derivePortId(_avr, const PortKey('out.2'))),
+        const OpenEndpoint('to the field'),
+      );
+      expect(
+        chainOutputFor(
+          doc,
+          deviceId: _avr,
+          family: const SignalFamilyId('video.hdmi.2_1'),
+        ),
+        isNull,
+        reason: 'both outputs are full and in.1 is a sink, so the chain '
+            'ends rather than turning round',
+      );
+    });
+
+    test('a different family ends the chain rather than proposing a jack '
+        'that cannot carry it', () {
+      final doc = withChainDevice();
+      expect(
+        chainOutputFor(
+          doc,
+          deviceId: _avr,
+          family: const SignalFamilyId('audio.speaker'),
+        ),
+        isNull,
+      );
+    });
+
+    test('a BUS NODE is a valid chain output — reading `source` alone '
+        'would end the chain at every bus device in the catalog', () {
+      final doc = _doc();
+      _addDevice(
+        doc,
+        _avr,
+        'IRB-1',
+        _body([
+          _port(
+            'bus.1',
+            direction: PortDirection.busNode,
+            family: 'ctl.ir',
+          ),
+        ]),
+      );
+      final next = chainOutputFor(
+        doc,
+        deviceId: _avr,
+        family: const SignalFamilyId('ctl.ir'),
+      );
+      expect(next, isNotNull);
+      expect(
+        next!.effectiveMaxConnections,
+        isNull,
+        reason: 'and it stays available, because a bus tap is unbounded',
+      );
+    });
+
+    test('a device that is not in the document is null, not a throw', () {
+      expect(
+        chainOutputFor(
+          _doc(),
+          deviceId: _avr,
+          family: const SignalFamilyId('video.hdmi.2_1'),
+        ),
+        isNull,
+      );
+    });
+  });
 }

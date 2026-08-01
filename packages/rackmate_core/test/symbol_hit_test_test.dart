@@ -664,4 +664,98 @@ void main() {
       expect(r.nodeId, isNull);
     });
   });
+
+  group('SymbolPort.bankKey — published for multi-draw (DR-012.2)', () {
+    test("a pin's bank survives into the rendered symbol", () {
+      // It did not before M2-F Phase 4. `bankKey` was read ONCE, by
+      // `symbolSideForPort`, to choose an edge — and then discarded, so a
+      // caller holding a `RenderedSymbol` could not ask which bank a pin
+      // was in. docs/05:484's multi-draw is "with N ports selected in ONE
+      // BANK", which that surface could not express.
+      final symbol = _symbol(
+        ports: [
+          PortDef(
+            key: const PortKey('in.1'),
+            label: 'IN 1',
+            connector: const ConnectorTypeId('test'),
+            signalFamily: const SignalFamilyId('video.hdmi.2_0'),
+            face: Face.rear,
+            position: _kZeroPosition,
+            order: const FracIndex('a0'),
+            direction: PortDirection.sink,
+            bankKey: 'inputs',
+          ),
+          _out('out.1'),
+        ],
+      );
+      final banked = symbol.allPorts.firstWhere((p) => p.key == 'in.1');
+      final unbanked = symbol.allPorts.firstWhere((p) => p.key == 'out.1');
+      expect(banked.bankKey, 'inputs');
+      expect(
+        unbanked.bankKey,
+        isNull,
+        reason: 'a pin in no bank says so, rather than being lumped with '
+            'the last one that had a key',
+      );
+    });
+
+    test('the seed catalog really does populate banks, so the gesture has '
+        'data to work with', () {
+      // The counterpart to DR-012's three EMPTY fields. Banks are the one
+      // grouping the catalog actually declares — 257 ports carry one —
+      // which is why multi-draw is buildable where a rule reading
+      // `channelIndex` would not have been.
+      final catalog = buildSeedCatalog();
+      var banked = 0;
+      var total = 0;
+      for (final body in catalog.values) {
+        for (final port in body.ports) {
+          total++;
+          if (port.bankKey != null) banked++;
+        }
+      }
+      expect(total, greaterThan(0));
+      expect(
+        banked,
+        greaterThan(total ~/ 2),
+        reason: 'most catalog ports declare a bank; if that ever stops '
+            'being true, multi-draw loses its selection unit',
+      );
+    });
+
+    test('bankKey participates in equality — two pins alike but for their '
+        'bank are not the same pin', () {
+      const a = SymbolPort(
+        key: 'p',
+        label: 'P',
+        side: SymbolSide.left,
+        offset: 1,
+        size: 2,
+        direction: PortDirection.sink,
+        family: SignalFamilyId('f'),
+        bankKey: 'one',
+      );
+      const b = SymbolPort(
+        key: 'p',
+        label: 'P',
+        side: SymbolSide.left,
+        offset: 1,
+        size: 2,
+        direction: PortDirection.sink,
+        family: SignalFamilyId('f'),
+        bankKey: 'two',
+      );
+      expect(a, isNot(b));
+      expect(a, SymbolPort(
+        key: a.key,
+        label: a.label,
+        side: a.side,
+        offset: a.offset,
+        size: a.size,
+        direction: a.direction,
+        family: a.family,
+        bankKey: a.bankKey,
+      ));
+    });
+  });
 }

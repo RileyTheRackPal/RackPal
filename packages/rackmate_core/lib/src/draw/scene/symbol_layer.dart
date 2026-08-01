@@ -104,6 +104,7 @@ final class SymbolPort {
     required this.size,
     required this.direction,
     required this.family,
+    this.bankKey,
   });
 
   /// `PortDef.key.v` — the stable author-assigned join (CR-051), never a
@@ -121,6 +122,26 @@ final class SymbolPort {
   final PortDirection direction;
   final SignalFamilyId family;
 
+  /// `PortDef.bankKey` — the PRESENTATION grouping this pin belongs to
+  /// (CR-055), or null when it belongs to none.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// PUBLISHED BECAUSE A GESTURE NEEDS IT, NOT BECAUSE THE PAINTER DOES
+  /// ═══════════════════════════════════════════════════════════════════
+  /// Nothing here draws a bank. Bank COLLAPSE — the vector pin with a
+  /// bracketed `IN[1..8]` label — is on this file's own deferral list and
+  /// on `schematic_scene.dart`'s, and it stays there. The one thing
+  /// `bankKey` was used for was choosing a pin's EDGE
+  /// ([symbolSideForPort]), and that consumed the bank without ever
+  /// letting a caller see it.
+  ///
+  /// docs/05:484's multi-draw is "with N ports selected in ONE BANK,
+  /// dragging to a target bank" — so a surface that cannot ask which bank
+  /// a pin is in cannot offer the gesture at all. 257 of the catalog's
+  /// ports declare a bank, so the data is there; only the answer was
+  /// missing.
+  final String? bankKey;
+
   @override
   bool operator ==(Object other) =>
       other is SymbolPort &&
@@ -130,11 +151,12 @@ final class SymbolPort {
       other.offset == offset &&
       other.size == size &&
       other.direction == direction &&
-      other.family == family;
+      other.family == family &&
+      other.bankKey == bankKey;
 
   @override
   int get hashCode =>
-      Object.hash(key, label, side, offset, size, direction, family);
+      Object.hash(key, label, side, offset, size, direction, family, bankKey);
 
   @override
   String toString() =>
@@ -502,6 +524,7 @@ RenderedSymbol buildSymbolGeometry({
           size: portSize,
           direction: def.direction,
           family: def.signalFamily,
+          bankKey: def.bankKey,
         ),
       );
     }
