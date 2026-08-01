@@ -109,7 +109,7 @@ way. Board item #92 is the scheduled full sweep.
 |---|---|---|---|---|---|
 | **M0** | Foundations | `S` | **6 of 8** clause rows | **PARTIAL** — `VACUOUS` | `dart test` in `rackmate_core`, 886/0, discharges six clauses and they are good work. The `templates.keys` conjunct and the epoch-mask conjunct are true only because their subjects did not exist at M0 (§2.2) |
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET** — `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first** — the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5) — then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
-| **M2** | Wiring + live schedule | `M` | **4 of 5** | **PARTIAL** — `UNPERFORMED` | Re-audited at `ea0af6d` after M2-A…M2-F. The schedule derivation, Sugiyama 0–3, net labels, the connect gestures, the perf instrument and CR-105/AC-048's signposting are all built and cited (§5.1). The open clause is **the drill**: nobody has made sixty connections. Multi-draw is the one deferred gesture (#93) |
+| **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET** — `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate — **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone — no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED** — `NOT BUILT` | Model only. **Its M2 block has lifted**: the gate was M2 putting `Link` + `Endpoint` in the UI, and M2-F did (§5.1). Row otherwise as of `0fa532d` |
 | **M4** | Device builder | `M` | **0 of 2** | **NOT STARTED** — `NOT BUILT` | No builder surface. **Its inputs are all present even though its formal gate is open** — §5.3 |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED** — `NOT BUILT` | 0 of 27 rules. **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
@@ -635,7 +635,7 @@ it cares about.
 
 ## 5. M2 → M9 — the unstarted, and where real work sits inside them
 
-### 5.1 M2 — Wiring and the live schedule · `M` · PARTIAL — weakest mark `UNPERFORMED`
+### 5.1 M2 — Wiring and the live schedule · `M` · CRITERION MET — weakest mark `CONFIRMED`
 
 > **Re-audited at `ea0af6d`, after M2-A…M2-F.** Everything below the exit criterion was rewritten
 > against the tree rather than edited: the previous revision of this section marked all five clauses
@@ -644,6 +644,10 @@ it cares about.
 > now discharged and the fifth names a human act. **The paragraph this board is proudest of is the
 > one that says a claim stopped covering the thing it named** — so the old text is not softened
 > here, it is superseded, and what replaced each clause is cited.
+>
+> **Updated 2026-08-01 at `bc0c3d4`.** The fifth clause was performed by the user and passed, and
+> M2-G measured the half of clause 4 that `rackmate_core` structurally could not reach. **M2's
+> headline moves to CRITERION MET.**
 
 > **Exit criterion, verbatim.** Starting from the M1 output, a user creates 60 connections without
 > touching a menu; the schedule tab shows 60 correctly-sorted rows with both labels on both ends and
@@ -655,7 +659,7 @@ it cares about.
 
 | Clause | Mark | Why |
 |---|---|---|
-| 60 connections without touching a menu | **UNPERFORMED** | Every gesture the clause needs now exists and is tested; **nobody has sat down and made sixty**. This is the same shape as M1's keyboard-only drill (§3.5), which is exactly why that one is `CONFIRMED` and this one is not — see the note below the table |
+| 60 connections without touching a menu | **CONFIRMED** — by the user, 2026-08-01 | **Performed and passed: sixty connections, roughly 5–7 minutes, reported against this clause and therefore under its own menu-free constraint.** THE OPERATOR'S CONDITION IS PART OF THE MEASUREMENT AND IS RECORDED RATHER THAN DROPPED, as M1's clause 3 records its own: *"after a bit of practice"*. **The clause carries no time bound** — it asks for sixty connections without a menu, and 5–7 minutes is a data point rather than a threshold met, so nothing here is graded against a number the criterion does not state. **It was done WITHOUT multi-draw**, which is still unbuilt (#93): the figure is what the pin-to-pin, chain-draw and atomic-set gestures deliver on their own, and it is therefore a floor. **A CONFIRMED mark is not a gate** — no CI job re-runs this and it does not survive a change to the keymap; the regression net named below is what guards the mechanism between drills |
 | Schedule shows 60 sorted rows, both labels both ends, conductor colours | **DEMONSTRATED** | `packages/rackmate_core/test/derived/schedule_test.dart:806`, a test named for this clause and asserting it verbatim: sixty rows fed in deliberately out of room order so the sort has to do the work, AC-025's room-then-pathway ordering, both labels on both ends, and `['red', 'black']` off a real speaker pair's conductors |
 | Deterministic re-layout ⇒ byte-identical display list | **DEMONSTRATED** | `packages/rackmate_core/test/scene/schematic_perf_test.dart:150` and `:158` — the same 300-link document twice, and **a separately decoded copy of the same bytes**, both through `op_digest.dart`, which is the instrument written for this clause's word *byte-identical*. `sugiyama_test.dart:470` holds the layer beneath it |
 | 300-connection fixture within one frame; **label-layer cost measured and recorded** | **DEMONSTRATED — on both halves, as of M2-G** | `schematic_perf_test.dart:173`/`:182` for the COMMIT path (`@Tags(['perf'])` and deliberately not excluded — `run_suite.ps1` does no tag filtering, so the number is defended on every push), and `packages/rackmate_ui/test/draw/paint_budget_test.dart` for the PAINT path. **The paint half was unmeasured when this row was first marked, and measuring it found 64 ms — nearly four frames.** See the note below the table: the mark stood on a scene build of ~3 ms while the thing that put it on screen took twenty times longer, which no reading of "within one frame at commit" survives. It is 10.6 ms now |
@@ -687,17 +691,21 @@ a good number for the opposite reason to the one given, and the prescribed KEY �
 diagram units and the zoom is applied to the canvas, so scale is not a term at all
 (`text_run_cache_test.dart` measures that: the same run at two zooms is one layout).
 
-**Why clause 1 is `UNPERFORMED` and not `DEMONSTRATED`.** Every mechanism it names is built and
-covered: the keyboard route (`schematic_keyboard_connect_test.dart`), drag-to-connect with the 12
-screen-px magnetic snap (`schematic_drag_connect_test.dart`), chain-draw and DR-012.3's
-family-weighted magnet, and `atomicConnect` for the multi-conductor sets
-(`schematic_atomic_set_test.dart`). **Multi-draw is the one gesture of RJ-001's four that is not
-built** — split out under DR-012.2 as board item #93, because N `Link`s and one `Link` with N
-`Conductor`s are different bills of materials and the ruling that separates them is worth more than
-the gesture. None of that is the clause. The clause says *a user creates 60 connections*, and this
-board's whole discipline is that a person doing a thing is a different mark from a test proving they
-could — the distinction M1 paid for on 2026-07-27 and 2026-07-28, when the tape measure passed and
-the keyboard drill failed. **Somebody has to make sixty connections and time it.**
+**What guards clause 1 between drills.** A `CONFIRMED` mark discharges the clause and guards
+nothing, so the mechanism it rests on is covered separately: the keyboard route
+(`schematic_keyboard_connect_test.dart`), drag-to-connect with the 12 screen-px magnetic snap
+(`schematic_drag_connect_test.dart`), chain-draw and DR-012.3's family-weighted magnet, and
+`atomicConnect` for the multi-conductor sets (`schematic_atomic_set_test.dart`). **Multi-draw is the
+one gesture of RJ-001's four that is not built** — split out under DR-012.2 as board item #93,
+because N `Link`s and one `Link` with N `Conductor`s are different bills of materials and the ruling
+that separates them is worth more than the gesture. **The drill passed without it**, which is the
+useful thing the run established beyond the mark: multi-draw is a throughput improvement on a clause
+that is already met, not a requirement of it.
+
+**What the run does NOT establish.** A first-run operator's time — the report says *"after a bit of
+practice"*, and M1's clause 3 carries the same caveat for the same reason. This board does not lean
+on that figure anywhere, and unlike M1's keyboard-only drill no later milestone's criterion rests on
+it, so no follow-up run is owed.
 
 **What was `NOT BUILT` in the previous revision and is not now**, since a status document that
 silently improves is the failure mode this file is written against:
@@ -723,9 +731,12 @@ M2-F precisely because it scanned for `AddLinkCommand(` alone and would have sta
 copies lied. The old text also called `symbol_layer.dart` *"a symbol renderer and hit-tester that no
 screen consumes"* — `schematic_canvas_screen.dart` consumes both.
 
-**What M2 still owes, beyond the drill.** Multi-draw (#93). The six tier-2 spring-back rules are
-**not** M2's — canon defers them to M5 (§11.12.5), and implementing one as a tier-1 refusal would
-make the product unable to draw a mistake, which CR-017 and G2 exist to prevent.
+**What M2 still carries, with its criterion met.** Multi-draw (#93) and the portable build (#13).
+Neither is named by the exit criterion, which is why neither holds the headline — roadmap §8.1: *the
+exit criterion is the unit of truth*, and grading a milestone against work-in-the-milestone rather
+than against its criterion is the substitution §5.5 refuses for M6. The six tier-2 spring-back rules
+are **not** M2's at all — canon defers them to M5 (§11.12.5), and implementing one as a tier-1
+refusal would make the product unable to draw a mistake, which CR-017 and G2 exist to prevent.
 
 ### 5.2 M3 — Structure and the field · `M` · NOT STARTED — weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 

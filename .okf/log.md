@@ -2,6 +2,14 @@
 
 ## 2026-08-01
 
+* **Note**: **M2's criterion is MET.** The user performed the sixty-connection
+  drill on 2026-08-01 — roughly 5–7 minutes, after a bit of practice — which
+  discharges the last of its five exit clauses. The clause carries no time
+  bound, so that figure is a data point rather than a threshold met. **It was
+  done without multi-draw**, which is still unbuilt: the gesture is a
+  throughput improvement on a clause that is already met, not a requirement of
+  it. `CONFIRMED` is not a gate — nothing re-runs a drill, and the gesture
+  tests are what guard the mechanism between runs.
 * **Note**: M2-G — the paint half of M2's budget was **never measured**, and
   measuring it found the 300-link fixture taking **63.9 ms to replay against a
   16.7 ms frame**, beside a scene build of ~3 ms that a green test had been
