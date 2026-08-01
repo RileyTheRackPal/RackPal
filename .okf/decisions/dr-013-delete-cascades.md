@@ -6,7 +6,7 @@ tags: [ruling, m2, delete, undo, schedule, dr-013]
 timestamp: 2026-08-01T00:00:00Z
 ruling_id: DR-013
 canon_section: "11.13"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-01, closing the one item on the post-M3 review
@@ -64,6 +64,35 @@ place in the product where an ordinary edit is blocked by a condition the user
 can see and disagree with, and CR-017 reserves refusal for the five tier-1
 topology rules, whose escape docs/02 §5 gives as *"None. There is nothing to
 escape to."* Wanting a device gone is not that.
+
+# Built at `48f1198` (board #95), and what building it found
+
+`derived/device_removal.dart` computes the plan; `RemoveDeviceCommand` consumes
+the SAME function so the dialog's number and the edit cannot drift;
+`inspector/delete_device_dialog.dart` is §11.13.2's confirmation, in the shape
+`ShrinkRackDialog` already uses. 18 core tests, 10 widget tests.
+
+**The cascade made a latent defect reachable, and the property suite found it
+immediately.** A `Link` can now disappear WITHOUT `RemoveLinkCommand` doing it —
+the device at one end went. So "apply ran and found nothing" became a legal
+outcome, and the nullable-capture guard conflated it with "revert before apply":
+undo threw `StateError`. `command_roundtrip_test`'s thousand random sequences
+caught it on the first run after the cascade landed. Both commands now carry an
+explicit `_applied` flag — one flag, two questions — and "revert without apply"
+still throws, because that one is still a bug.
+
+**The far end's ports STAY, and that is the ruling rather than an oversight.**
+§11.13.1 removes the device's own materialised ports. A jack on a device that
+still exists is not a lie because nothing is plugged into it; DR-011.1 makes a
+port appear when a cable reaches it and says nothing about un-materialising, and
+`RemoveLinkCommand` does not strip ports either. The first draft of the test
+asserted the opposite and was wrong — the code was not.
+
+**The byte-identity test applies and reverts the command directly**, which is
+how `command_roundtrip_test` states the same property. Going through the
+controller advances `doc.sequence`, envelope bookkeeping that is supposed to
+move; comparing bytes across that would assert an edit leaves the envelope
+untouched, and the only way to pass it would be to stop the counter.
 
 # What it leaves unruled
 

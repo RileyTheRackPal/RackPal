@@ -769,6 +769,18 @@ than against its criterion is the substitution §5.5 refuses for M6. The six tie
 are **not** M2's at all — canon defers them to M5 (§11.12.5), and implementing one as a tier-1
 refusal would make the product unable to draw a mistake, which CR-017 and G2 exist to prevent.
 
+**DR-013 is built (#95, `48f1198`), and D7's gate is paid (#94, `7c2ac49`).**
+Deleting a wired device now cascades — its cables, its materialised ports and any net no survivor
+still carries — after a confirmation naming the count, with an undo that restores every one under
+its own id. The `TODO(post-M0)` that DR-011.1 turned from inert into a live defect is closed: a
+schedule can no longer print a row citing a device the document does not have (CR-017). Building it
+made a **latent defect reachable**, which the property suite caught immediately — a `Link` can now
+vanish without `RemoveLinkCommand` doing it, so *"apply ran and found nothing"* became a legal state
+that the nullable-capture guard was reporting as *"revert before apply"*, throwing out of undo.
+Separately, `keymap_source_ban_test.dart` closes the hole §4's own D7 discussion named: the
+`SingleActivator` ban now covers `rackmate_ui`, the package every binding surface except the File
+menu lives in, and it landed **before** M3-C rather than after.
+
 **The portable build (#13), and why it is not M8 arriving early.** `docs/14-deployment.md` and
 `tools/release/`. **It is a scope edit and is recorded as one**: DR-006 consequence 4 says outright
 that a portable output before M8 is *"a scope edit under roadmap §8.3 and not something this

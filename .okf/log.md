@@ -2,6 +2,39 @@
 
 ## 2026-08-02
 
+* **Update**: [DR-013](/decisions/dr-013-delete-cascades.md) is **BUILT**
+  (`48f1198`, board #95). The `TODO(post-M0)` that DR-011.1 turned from inert
+  into a live defect is closed: deleting a wired device now takes its cables,
+  ports and orphaned nets with it, after a confirmation that states the count,
+  and undo puts every one of them back under the same id.
+* **Note**: the cascade made a LATENT DEFECT REACHABLE, and the property suite
+  found it on the first run. A `Link` can now vanish without
+  `RemoveLinkCommand` doing it, so "apply ran and found nothing" became a legal
+  outcome — and the nullable-capture guard was reading that as "revert before
+  apply" and throwing `StateError` out of undo. One explicit `_applied` flag
+  now answers the two questions separately. **The general shape: a nullable
+  field standing in for "has this run" stops working the moment something else
+  can produce the same emptiness.**
+* **Note**: the far end's ports STAY when a device is deleted, and the first
+  draft of the test asserted otherwise. §11.13.1 removes the device's OWN
+  materialised ports; a jack on a device that still exists is not a lie because
+  nothing is plugged into it. The code was right and the test was wrong, which
+  is worth recording because it is the less common direction.
+* **Update**: **D7's owed gate is PAID** (board #94, `7c2ac49`). The
+  `SingleActivator` ban was enforced over one file in the app package while
+  every binding surface except the File menu lives in `rackmate_ui`.
+  `keymap_source_ban_test.dart` now scans that whole package with comments
+  stripped — which is load-bearing and measured: 20 mentions of the type across
+  `lib/` and exactly ONE constructor call, because the rack canvas explains the
+  framework's semantics in prose. Landed BEFORE M3-C, which docs/13 §3.5 names
+  as the largest remaining binding surface.
+* **Note**: `registry_claim_test` fired TWICE this session on new prose, both
+  times correctly — once on markdown backticks breaking its exact-phrase match
+  in `docs/14-deployment.md`, once on the phrase "leaves no trace" inside a
+  comment that was DENYING it. The gate is blunt on purpose (canon §11.6.4:
+  each of those absolutes was shipped and each was measured false), and out of
+  context in a grep the denial reads exactly like the claim. Both fixed by
+  rewording, neither by relaxing the gate.
 * **Creation**: [DR-006](/decisions/dr-006-self-signed-distribution.md), written
   up now because board #13 built the first part of it. **The portable build
   ships** (`580cb2a`, `1e45cf6`, `bee96bd`): `tools/release/` stages, signs and
