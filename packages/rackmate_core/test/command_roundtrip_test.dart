@@ -390,7 +390,12 @@ Command? _buildCommand(_StepKind kind, _SequenceState s, Random rnd, int step) {
 
     case _StepKind.removeLink:
       final id = s.aliveLinkIds[rnd.nextInt(s.aliveLinkIds.length)];
-      return RemoveLinkCommand(id: id, netId: s.linkNetIds[id]!);
+      // NO `!` SINCE #96 — `netId` is nullable now, so a link the generator
+      // has no net for passes null and the command removes the link alone.
+      // That is the right shape here rather than a lucky one: the map is
+      // this generator's own bookkeeping, and a bang on it would assert
+      // that bookkeeping is complete, which is not what this suite is for.
+      return RemoveLinkCommand(id: id, netId: s.linkNetIds[id]);
 
     case _StepKind.setLinkJacketColor:
       return SetLinkJacketColorCommand(

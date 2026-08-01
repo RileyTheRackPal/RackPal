@@ -133,6 +133,7 @@ import 'package:rackmate_ui/src/canvas/canvas_intent.dart';
 import 'package:rackmate_ui/src/canvas/grid_painter.dart';
 import 'package:rackmate_ui/src/canvas/schematic/connect_overlay.dart';
 import 'package:rackmate_ui/src/canvas/schematic/domain_filter_bar.dart';
+import 'package:rackmate_ui/src/canvas/schematic/link_hit_test.dart';
 import 'package:rackmate_ui/src/canvas/schematic/pin_selection.dart';
 import 'package:rackmate_ui/src/canvas/schematic/render_schematic_canvas.dart';
 import 'package:rackmate_ui/src/canvas/schematic/schematic_filter.dart';
@@ -354,6 +355,26 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// §11.4's `F`. Device ids, not `Uuid`s, because that is the key
   /// `RenderedNetLabel.deviceId` and `HitRegion.entityId` both use.
   Set<String> _focused = const <String>{};
+
+  /// The cable the user has picked, or null — #96's first field finding.
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// A FOURTH SELECTION, AND THE THIRD ONE'S DOC EXPLAINS WHY IT IS ONE
+  /// ═════════════════════════════════════════════════════════════════
+  /// [_pins] already argues this screen's case for holding more than one
+  /// kind of "selected": [_selection] names DEVICES and is shared with the
+  /// rack and the inspector, [_pinCaret] is a CURSOR rather than a
+  /// selection, and [_pins] names jacks. This names a `Link`, which is none
+  /// of those and cannot be folded into any of them — `SelectionController`
+  /// is keyed by device id and a link is not a device, so putting one in
+  /// there would hand the inspector an id it would resolve to nothing.
+  ///
+  /// A `Uuid` AND NOT A `Link`. Holding the object would be a second place
+  /// the document lives, and this one is held ACROSS FRAMES: an undo, or an
+  /// edit from another view, can delete the link it names.
+  /// [_invalidateLivePreviews] drops it when that happens, which is the same
+  /// discipline [_focused] and `_altHovered` are already under.
+  Uuid? _selectedLink;
 
   /// The symbol under an `Alt`-held cursor, or null. TRANSIENT BY
   /// CONSTRUCTION — §11.4: "No click, no mode, no state". It is cleared by
@@ -820,6 +841,22 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       _focused = kept;
       what ??= 'Focus';
     }
+    // A SELECTED CABLE THAT IS NO LONGER IN THE DOCUMENT. Reachable three
+    // ways and none of them is a bug: an undo takes back the connect that
+    // made it, another view deletes a device at one end and DR-013's cascade
+    // takes the cable with it, or a redo re-runs a removal.
+    //
+    // THE ONE ROUTE THAT DOES *NOT* REACH HERE is this screen's own delete,
+    // and that is arranged rather than lucky — [_deleteSelectedLink] clears
+    // the field BEFORE running the command, so this limb finds nothing and
+    // stays silent. Otherwise the teardown's sentence would land on top of
+    // the delete's own, and the last thing a screen reader announced after a
+    // successful delete would be "Cable selection was dropped".
+    final selectedLink = _selectedLink;
+    if (selectedLink != null && !_doc.links.containsKey(selectedLink)) {
+      _selectedLink = null;
+      what ??= 'Cable selection';
+    }
     return what;
   }
 
@@ -1138,6 +1175,38 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   void _selectAt(DPt scenePoint) {
     final scene = _scene;
     if (scene == null) return;
+    // ═════════════════════════════════════════════════════════════════
+    // THE PENNANT IS ASKED FIRST, BECAUSE IT IS DRAWN LAST
+    // ═════════════════════════════════════════════════════════════════
+    // Net labels are emitted after every symbol (`schematic_paint_plan
+    // .dart`'s ordering rule) and there is no z-index in the IR, so a
+    // pennant overlapping a symbol body is the thing the user can SEE at
+    // that point. Testing the body first would select the device through a
+    // flag sitting on top of it — the pointer equivalent of the painter /
+    // hit-tester desync `symbol_layer.dart`'s header records.
+    //
+    // NO MODIFIER BRANCH, and that is a ruling rather than an omission.
+    // docs/04 §3.5's additive click model is about a SET (devices, where
+    // "add to the selection" means something); a cable selection is exactly
+    // one link, because the only thing it feeds today is a delete and
+    // "delete these four cables" is a counted-confirmation gesture DR-013
+    // rules for devices and nothing rules for cables. A `Ctrl`+click that
+    // silently behaved like a plain one would be worse than one that reads
+    // as plain, so the modifier is not consulted at all.
+    final cable = linkAtPoint(
+      scene,
+      scenePoint,
+      tolerance: _portHitTolerancePx / _viewport.scale,
+    );
+    if (cable != null) {
+      _selectCable(cable);
+      return;
+    }
+    // A CLICK OFF EVERY PENNANT DROPS THE CABLE, on the same principle a
+    // click off every symbol drops the device selection below: the sheet is
+    // one surface and clicking empty paper means "nothing", not "keep what
+    // you had and also nothing".
+    if (_selectedLink != null) setState(() => _selectedLink = null);
     final hit = _deviceAt(scene, scenePoint);
     // A MODIFIER CHECK, NOT A DEVICE-KIND CHECK (AC-016 #23). docs/04 §3.5's
     // click model: plain click replaces, Ctrl/Cmd+click adds or subtracts
@@ -1158,6 +1227,135 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       <Uuid>[id],
       _selection.contains(id) ? SelectMode.subtract : SelectMode.add,
     );
+  }
+
+  // ── removing a cable (#96) ────────────────────────────────────────────
+  //
+  // THE COMMAND EXISTED AND NOTHING COULD REACH IT. `RemoveLinkCommand` has
+  // been in core since M0 with a lossless revert and a thousand random
+  // sequences of `command_roundtrip_test` over it, and the string appeared
+  // in no file of this package — so the only way to remove a cable was to
+  // delete a device at one end and let DR-013's cascade take it. That is a
+  // hole rather than a ruling: nothing in the corpus says a cable is
+  // permanent, and docs/05 §7 gives the connect gesture a cancel precisely
+  // because a user who draws the wrong thing must be able to say so.
+
+  /// Selects [linkId] and says what was picked.
+  void _selectCable(Uuid linkId) {
+    setState(() => _selectedLink = linkId);
+    _status.show('${_cableSaying(linkId)} selected — Del removes it.');
+  }
+
+  /// How a sentence should NAME a cable.
+  ///
+  /// The designator first, because that is what the schedule prints and
+  /// what an installer reads off a label. Then its two ends in CR-042's
+  /// citation shape, so "W004" is anchored to something the user can see on
+  /// the sheet rather than being a bare identifier.
+  ///
+  /// THE CONDUCTOR COUNT IS SAID WHENEVER IT IS NOT ONE, and that is the
+  /// clause this method exists for. An atomic set — a stereo pair, a
+  /// speaker pair, a component run — is ONE `Link` carrying N conductors
+  /// across N pins, and `net_label_layer.dart` draws a pennant for
+  /// `conductors.first` alone. So a user deleting what looks like the cable
+  /// on `L` is also deleting the one on `R`, and the sheet has not told
+  /// them. Until the bracket lands, this sentence is the only place that
+  /// fact is stated.
+  String _cableSaying(Uuid linkId) {
+    final link = _doc.links[linkId];
+    if (link == null) return 'That cable';
+    final ends = <String>[];
+    if (link.conductors.isNotEmpty) {
+      final first = link.conductors.first;
+      for (final end in <Endpoint>[first.from, first.to]) {
+        if (end is! PortEndpoint) continue;
+        final port = _doc.ports[end.portId];
+        if (port == null) continue;
+        final device = _doc.devices[port.deviceId];
+        if (device == null) continue;
+        ends.add('${device.designator} ${port.designator}');
+      }
+    }
+    final where = ends.length == 2 ? ' (${ends[0]} to ${ends[1]})' : '';
+    final n = link.conductors.length;
+    final wide = n > 1 ? ', $n conductors' : '';
+    return '${link.designator}$where$wide';
+  }
+
+  /// The cable on the pin under the caret, or null.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// ASKED OF THE DOCUMENT, NOT OF THE SCENE
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `RenderedNetLabel` carries a `linkId` beside a device and a port key,
+  /// so the scene could answer this without a document query — and it would
+  /// be wrong on exactly the pin a user is most likely to be standing on
+  /// when they reach for `Del`. The label layer draws `conductors.first`
+  /// only, so the `R` of an atomically-connected stereo pair has a
+  /// conductor in it and NO PENNANT: a scene lookup reports it free and the
+  /// keyboard route would decline to delete a cable that is really there.
+  /// [linksOnPort] walks conductors, so it does not care what was drawn.
+  ///
+  /// Null when the caret is nowhere, when the pin carries nothing, or when
+  /// it carries MORE THAN ONE — a bus tap can, and picking one of them for
+  /// the user is a guess about which cable they meant. The caller says so.
+  Uuid? _cableOnCaret() {
+    final caret = _pinCaret;
+    if (caret == null) return null;
+    final links = linksOnPort(
+      _doc,
+      derivePortId(Uuid(caret.deviceId), PortKey(caret.portKey)),
+    );
+    return links.length == 1 ? links.first : null;
+  }
+
+  /// `Del` / `Backspace` on the sheet — DR-013's sibling for one cable.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// NO CONFIRMATION, AND DR-013 IS WHY RATHER THAN WHY NOT
+  /// ═══════════════════════════════════════════════════════════════════
+  /// §11.13.2 wants a counted dialog for a device delete because it
+  /// *"destroys work the user cannot see all of"* — the cables go with it
+  /// and none of them is what was clicked. A cable delete is the opposite:
+  /// the user picked the cable, it is one row on the schedule, and the
+  /// ruling's own last sentence is that *"a device carrying nothing prompts
+  /// not at all"*. A dialog here is the nag that teaches people to click
+  /// through dialogs, which is the cost DR-013 names.
+  ///
+  /// What discharges §3.4 instead is the SENTENCE: what went, and that one
+  /// keystroke brings it back.
+  void _deleteSelectedLink() {
+    final id = _selectedLink ?? _cableOnCaret();
+    if (id == null) {
+      // NOT A SILENT NO-OP (docs/04 §3.4). Three different nothings, and
+      // the user can act on each: pick a flag, move the caret onto a wired
+      // pin, or disambiguate a jack carrying several cables.
+      final caret = _pinCaret;
+      if (caret == null) {
+        _status.show('Nothing selected. Click a net flag to pick a cable.');
+        return;
+      }
+      final links = linksOnPort(
+        _doc,
+        derivePortId(Uuid(caret.deviceId), PortKey(caret.portKey)),
+      );
+      _status.show(
+        links.isEmpty
+            ? '${_saying(caret)} carries no cable.'
+            : '${_saying(caret)} carries ${links.length} cables — click the '
+                  'net flag of the one to remove.',
+      );
+      return;
+    }
+    final saying = _cableSaying(id);
+    // BEFORE THE COMMAND, so `_invalidateLivePreviews` finds nothing to
+    // prune and does not narrate this delete as a teardown over the top of
+    // the sentence below. See its own limb for the other half of this.
+    setState(() => _selectedLink = null);
+    widget.controller.run(
+      RemoveLinkCommand(id: id, netId: netToRemoveWith(_doc, id)),
+    );
+    _status.show('$saying removed. Ctrl+Z puts it back.');
   }
 
   // ── keyboard (docs/05 §14) ────────────────────────────────────────────
@@ -1234,6 +1432,16 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
             ? 'Jack deselected.'
             : '$count selected jacks deselected.',
       );
+      return;
+    }
+    // THE CABLE SELECTION, BELOW THE PIN RUN AND ABOVE THE FOCUS SCOPE.
+    // Same rule as the two rungs around it — most recent and cheapest to
+    // rebuild goes first. A cable selection is one click to put back; a run
+    // of sixteen jacks is sixteen, and an `F` scope is a navigation.
+    if (_selectedLink != null) {
+      final saying = _cableSaying(_selectedLink!);
+      setState(() => _selectedLink = null);
+      _status.show('$saying deselected.');
       return;
     }
     if (_focused.isNotEmpty) {
@@ -2525,6 +2733,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       candidates: _candidates,
       selected: _pins.refs,
       pairs: _multiDrawBands(),
+      selectedLink: _selectedLink,
     );
     final plan = buildSchematicPaintPlan(
       scene: scene,
@@ -2606,9 +2815,30 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
                 _canvasKeysEnabled &&
                 (_wireFrom != null ||
                     !_pins.isEmpty ||
+                    _selectedLink != null ||
                     _focused.isNotEmpty ||
                     _selection.isNotEmpty),
             (_) => _onEscape(),
+          ),
+          DeleteSelectionIntent: _GatedAction<DeleteSelectionIntent>(
+            // ENABLED WHENEVER THERE IS A CARET, not only when a cable is
+            // selected, and the difference is the keyboard route: a user who
+            // has never touched the mouse has no selected cable and is
+            // standing on a pin. `_deleteSelectedLink` reads the caret when
+            // the selection is empty, so gating on the selection alone would
+            // make `Del` a mouse-only key on a canvas whose whole connect
+            // gesture was built keyboard-first (DR-011.6).
+            //
+            // CONSUMING IT WITH NOTHING TO DELETE IS SAFE HERE, which is not
+            // true of most keys on this screen: `rack` is a SIBLING scope
+            // rather than an ancestor and `global` binds no `Delete`, so
+            // there is nothing behind this to fall through to. And it is not
+            // silent — every one of the three nothings gets a sentence,
+            // which is what docs/04 §3.4 asks for.
+            () =>
+                _canvasKeysEnabled &&
+                (_selectedLink != null || _pinCaret != null),
+            (_) => _deleteSelectedLink(),
           ),
           BeginWireIntent: _GatedAction<BeginWireIntent>(
             // Re-arming from a different pin mid-flight would silently

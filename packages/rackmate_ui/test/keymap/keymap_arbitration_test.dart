@@ -139,11 +139,19 @@ void main() {
       // where a reader learns how big the keymap is allowed to get, and
       // "two rows nothing asked for" deserves to be visible at that
       // number.
+      //
+      // #96 ADDS TWO MORE, and unlike #93's pair these ARE in the corpus —
+      // docs/04 §8's `Del`/`Backspace` row, which the rack has held since
+      // M1 and the schematic did not. That asymmetry was the finding: the
+      // sheet could make a cable and had no gesture that could remove one.
+      // Same chord, same intent and the same LABEL as the rack's, which is
+      // what `KeymapConflictKind.meaningDrift` requires of one key across
+      // two scopes and is asserted in its own right below.
       expect(keyBindingsIn(KeyScope.global), hasLength(7));
       expect(keyBindingsIn(KeyScope.rack), hasLength(16));
-      expect(keyBindingsIn(KeyScope.schematic), hasLength(22));
+      expect(keyBindingsIn(KeyScope.schematic), hasLength(24));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(46));
+      expect(kKeymap, hasLength(48));
     });
   });
 

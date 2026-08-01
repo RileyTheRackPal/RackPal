@@ -82,6 +82,7 @@ export 'src/derived/endpoint_resolution.dart';
 export 'src/derived/equipment_list.dart';
 export 'src/derived/jacket_color_resolution.dart';
 export 'src/derived/link_class.dart';
+export 'src/derived/link_lookup.dart';
 export 'src/derived/port_fill.dart';
 export 'src/derived/port_set_resolution.dart';
 export 'src/derived/schedule.dart';

@@ -110,7 +110,31 @@ final class RemoveLinkCommand extends Command {
   RemoveLinkCommand({required this.id, required this.netId});
 
   final Uuid id;
-  final Uuid netId;
+
+  /// The implicit `Net` to take with the link, or NULL to take none.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// NULL IS "ANOTHER LINK STILL NEEDS IT", NOT "I DID NOT LOOK"
+  /// ═══════════════════════════════════════════════════════════════════
+  /// The paired-net assumption above holds for every net this application
+  /// creates — `AddLinkCommand`, `ConnectPortsCommand` and
+  /// `AtomicConnectCommand` each mint exactly one — so the ordinary caller
+  /// passes `link.services.first.netId` and this reads as it always did.
+  ///
+  /// It does NOT hold for a hand-edited or imported file, where two links
+  /// can name one net. Removing it there would leave the surviving link's
+  /// `Service` pointing at nothing: the same lie `device_removal.dart`'s
+  /// header describes arriving through the tidy-up, and the reason
+  /// `planDeviceRemoval` asks the SURVIVORS which nets may go. A caller
+  /// that cannot promise exclusivity passes null and removes the link
+  /// alone; an orphaned net is inert, and a dangling `netId` is not.
+  ///
+  /// NULLABLE RATHER THAN A SECOND COMMAND, and rather than a sentinel id
+  /// that happens to match no row: a caller reading `netId: someUnusedId`
+  /// three years from now has no way to tell a deliberate skip from a bug,
+  /// and `revert` would restore the same nothing either way without
+  /// anybody having said so.
+  final Uuid? netId;
 
   Link? _removedLink;
   Net? _removedNet;
@@ -146,12 +170,13 @@ final class RemoveLinkCommand extends Command {
   EpochMask get touches => EpochMask.wires;
 
   @override
-  Iterable<Uuid> get affects => [id, netId];
+  Iterable<Uuid> get affects => [id, if (netId case final n?) n];
 
   @override
   void apply(RackDocument doc) {
     _removedLink = doc.links.remove(id);
-    _removedNet = doc.nets.remove(netId);
+    final net = netId;
+    _removedNet = net == null ? null : doc.nets.remove(net);
     _applied = true;
   }
 
@@ -166,7 +191,9 @@ final class RemoveLinkCommand extends Command {
     final link = _removedLink;
     if (link != null) doc.links[id] = link;
     final net = _removedNet;
-    if (net != null) doc.nets[netId] = net;
+    // `_removedNet` is non-null only where `netId` was, so the bang is
+    // carried by the same condition rather than by an assumption.
+    if (net != null) doc.nets[netId!] = net;
     _removedLink = null;
     _removedNet = null;
     _applied = false;

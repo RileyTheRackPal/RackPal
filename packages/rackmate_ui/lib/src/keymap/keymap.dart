@@ -181,6 +181,8 @@ enum KeyBindingId {
   pinCaretRight,
   extendPinSelectionUp,
   extendPinSelectionDown,
+  deleteCable,
+  deleteCableBackspace,
 
   // --- dialog ---------------------------------------------------------
   dialogDismiss,
@@ -971,6 +973,41 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         'Esc cancels first (docs/05 §7). Same binding, same label, one '
         'more limb in the gate — which is exactly what layering a key '
         'means when only isActionEnabled can decline one.',
+  ),
+
+  // ── removing a cable (#96, the field's first finding) ─────────────────
+  //
+  // THE SAME CHORD, THE SAME INTENT AND THE SAME LABEL AS THE RACK'S, which
+  // is not laziness but the rule: `KeymapConflictKind.meaningDrift` holds
+  // canon §1.10 principle (b) — *"a key means the same thing in every
+  // view"* — by failing on one chord carrying two labels across two scopes.
+  // `Delete` means "delete the selection" on both canvases; WHAT is
+  // selectable differs, and that is a property of the view rather than of
+  // the key.
+  //
+  // TWO ROWS BECAUSE THE RACK HAS TWO. `Backspace` is the same meaning for
+  // the keyboard that has no `Delete`, and a schematic that bound only
+  // `Delete` would be the laptop user's cable that cannot be removed.
+  //
+  // `letterCollision` does not apply and is worth saying so nobody adds a
+  // note claiming it does: that rule governs UNMODIFIED SINGLE LETTERS
+  // carried between two canvases one tab apart, and neither of these is a
+  // letter.
+  KeyBinding(
+    id: KeyBindingId.deleteCable,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.delete,
+    label: 'Delete the selection',
+    intent: DeleteSelectionIntent(),
+    source: 'docs/04 §8 · docs/05 §7',
+  ),
+  KeyBinding(
+    id: KeyBindingId.deleteCableBackspace,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.backspace,
+    label: 'Delete the selection',
+    intent: DeleteSelectionIntent(),
+    source: 'docs/04 §8 · docs/05 §7',
   ),
 
   // ── the connect gesture's keyboard route (DR-011.6, docs/05 §7 · §14) ──

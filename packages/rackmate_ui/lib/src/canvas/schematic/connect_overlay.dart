@@ -229,6 +229,7 @@ final class ConnectOverlay {
     required this.band,
     this.selected = const <LocatedPin>[],
     this.bands = const <List<DPt>>[],
+    this.selectedLinkPennants = const <DBox>[],
   });
 
   /// Appended AFTER every other op in the frame — see
@@ -259,6 +260,15 @@ final class ConnectOverlay {
   /// gesture, where [band] is the one that matters.
   final List<List<DPt>> bands;
 
+  /// The selected cable's pennant boxes, as the label layer measured them.
+  ///
+  /// USUALLY TWO, sometimes one (a home run to the field — AC-018 leaves the
+  /// far end open and it lands on no pin) and sometimes ZERO with a cable
+  /// still selected, when the domain filter is hiding its family. Published
+  /// so a test can assert that both ends are marked rather than counting
+  /// ops, and so the zero case is observable as itself.
+  final List<DBox> selectedLinkPennants;
+
   bool get isEmpty => ops.isEmpty;
 }
 
@@ -286,6 +296,12 @@ final class ConnectOverlay {
 /// has no one band, and drawing an extra one from whichever pin the user
 /// happened to grab would put a cable on the sheet that the commit will
 /// not make.
+///
+/// [selectedLink] is the cable the user has picked (#96). Like [selected]
+/// and unlike [candidates] it is drawn on an IDLE sheet, because it is a
+/// thing the user chose rather than an affordance derived from a gesture in
+/// flight — and unlike either it is marked on PENNANTS rather than pins,
+/// which is what DR-001 makes the visible representation of a link.
 ConnectOverlay buildConnectOverlay({
   required SchematicScene scene,
   required ConnectOverlayStyle style,
@@ -296,6 +312,7 @@ ConnectOverlay buildConnectOverlay({
   List<PinRef> candidates = const <PinRef>[],
   List<PinRef> selected = const <PinRef>[],
   List<(PinRef, PinRef)> pairs = const <(PinRef, PinRef)>[],
+  Uuid? selectedLink,
   SchematicWireStyle wireStyle = const SchematicWireStyle(),
 }) {
   final caretPin = caret == null ? null : locatePin(scene, caret);
@@ -304,7 +321,21 @@ ConnectOverlay buildConnectOverlay({
     for (final ref in selected)
       if (locatePin(scene, ref) case final pin?) pin,
   ];
-  if (caretPin == null && sourcePin == null && selectedPins.isEmpty) {
+  // EMPTY IS REACHABLE WITH A LINK STILL SELECTED, and it is not a fault:
+  // the domain filter can hide the cable's whole family, and both its
+  // devices can be off a focused sub-graph. The selection SURVIVES that —
+  // showing the domain again brings the mark back — which is why this
+  // resolves to a list here rather than the screen dropping the id when it
+  // cannot draw it.
+  final selectedLinkPennants = <DBox>[
+    if (selectedLink != null)
+      for (final label in scene.netLabels)
+        if (label.linkId == selectedLink) label.pennant,
+  ];
+  if (caretPin == null &&
+      sourcePin == null &&
+      selectedPins.isEmpty &&
+      selectedLinkPennants.isEmpty) {
     return const ConnectOverlay(
       ops: <DiagramOp>[],
       caret: null,
@@ -322,6 +353,44 @@ ConnectOverlay buildConnectOverlay({
 
   final ops = <DiagramOp>[];
   var band = const <DPt>[];
+
+  // THE SELECTED CABLE'S FLAGS, UNDER EVERYTHING — the most persistent mark
+  // this overlay draws, so the bottom of its stack for the same reason the
+  // pin selection sits under the candidates.
+  //
+  // ═══════════════════════════════════════════════════════════════════
+  // A BOX, BECAUSE A PENNANT IS WHAT THERE IS TO POINT AT
+  // ═══════════════════════════════════════════════════════════════════
+  // Under DR-001 a committed link's default mark is a pair of net-label
+  // pennants and NOT a wire — a wire exists only inside a hovered or
+  // filtered scope (canon §11.1.1). So the honest selection mark is drawn
+  // around what the user actually clicked and can actually see. Outlining
+  // the WIRE would leave a selected cable with no mark at all on the
+  // unfiltered sheet that is the product's normal state.
+  //
+  // BOTH FLAGS, WHICH IS §11.5's OWN RULE: *"both flags of a net show the
+  // identical string and highlight together on hover"*. A selection that
+  // lit one end would say the cable is half-picked.
+  //
+  // `pennant` IS READ, NOT REMEASURED. It is the box `net_label_layer.dart`
+  // drew, apex included — see `link_hit_test.dart` on why this file and the
+  // hit test both read it rather than deriving a second opinion that would
+  // agree only by inspection.
+  if (selectedLinkPennants.isNotEmpty) {
+    final stroke = Stroke(
+      argb: style.selectionArgb,
+      widthPt: style.ringWidthPx,
+      scaleWithGeometry: false,
+    );
+    // Outside the flag rather than on its outline: the pennant already has
+    // a stroke of its own in the family hue, and a selection ring drawn
+    // exactly on top of it would read as that stroke having changed colour
+    // instead of as a mark around it.
+    final pad = style.candidateRadiusPx / scale;
+    for (final pennant in selectedLinkPennants) {
+      ops.add(OpRect(pennant.inflate(pad), stroke: stroke));
+    }
+  }
 
   // THE SELECTION RINGS FIRST, UNDER EVEN THE CANDIDATES. The selection is
   // the most persistent of the four things drawn here — it outlives the
@@ -489,6 +558,7 @@ ConnectOverlay buildConnectOverlay({
     band: band,
     selected: List<LocatedPin>.unmodifiable(selectedPins),
     bands: List<List<DPt>>.unmodifiable(bands),
+    selectedLinkPennants: List<DBox>.unmodifiable(selectedLinkPennants),
   );
 }
 
