@@ -725,6 +725,7 @@ LayerBuild buildSymbolLayer(
             RackTextSizes.type,
             palette.portLabel,
             _labelAnchor(port.side),
+            rotationRad: _labelRotation(port.side),
           ),
         ),
       );
@@ -736,12 +737,22 @@ LayerBuild buildSymbolLayer(
   // `device_layer`, a symbol deliberately draws OUTSIDE the rect it was
   // sized to. Every pin circle is centred ON the body edge, so it hangs
   // `port.size / 2` past it on all four sides, and top/bottom port labels
-  // sit `_kPortLabelGap` plus a text ascent beyond that. A composer that
+  // sit `_kPortLabelGap` plus a whole TEXT RUN beyond that. A composer that
   // unioned `bodyRect` alone would compute a page box several units too
   // small on each side and scale-to-fit would then clip half of every
   // outermost pin and the whole of the top/bottom labels. Measured from the
   // ops actually emitted (`BoundsCanvas`), so it cannot drift out of step
   // with what is drawn.
+  //
+  // A TEXT RUN, WHERE IT USED TO SAY AN ASCENT, and the change is #96-A
+  // rather than a correction: before the quarter turn a top/bottom label
+  // reached one ASCENT past the gap, and now it reaches its full ADVANCE
+  // WIDTH — "AUD OUT 12" instead of about eight units. This sentence is the
+  // only place that figure is described, but it is not the place it is
+  // COMPUTED: `inkBoundsOf` measures the rotated hull through
+  // `BoundsCanvas`, which multiplies the run's box by the same rotation the
+  // backends apply. So the symbol grew a lot taller and nothing here had to
+  // learn by how much.
   return (
     ops: ops,
     minTextPt: sizes.isEmpty ? double.infinity : sizes.reduce(math.min),
@@ -783,9 +794,62 @@ DPt _labelPoint(DPt centre, SymbolSide side) => switch (side) {
   SymbolSide.bottom => DPt(centre.x, centre.y + _kPortLabelGap),
 };
 
+/// How far [side]'s pin label is turned — #96-A.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// TOP AND BOTTOM LABELS RAN INTO EACH OTHER, AND THE GEOMETRY SAYS WHY
+/// ═══════════════════════════════════════════════════════════════════════
+/// Pins on the top and bottom edges are spaced along X, one `portPitch`
+/// apart ([buildSymbolGeometry]: `start + (i + 0.5) * portPitch`). Their
+/// labels ran along X too, so any label WIDER THAN ONE PITCH overlapped its
+/// neighbour — and "AUD OUT 12" at `RackTextSizes.type` is several pitches
+/// wide. The left and right edges were never affected, and not by luck:
+/// there the pins are spaced along Y while the text runs along X, so the
+/// two axes are perpendicular and the labels cannot collide however long
+/// they get.
+///
+/// Turning the top/bottom labels a quarter turn restores exactly that
+/// perpendicularity. It is the fix the user proposed on finding the defect,
+/// and it is the same fix the geometry implies.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// BOTH EDGES TURN THE SAME WAY, WHICH IS NOT THE SAME AS SYMMETRICALLY
+/// ═══════════════════════════════════════════════════════════════════════
+/// Both get `-pi / 2`, so both READ BOTTOM-TO-TOP — the drafting convention
+/// for vertical lettering, and the reason a reader tilts their head once for
+/// a sheet rather than once per edge. Mirroring the bottom edge to `+pi / 2`
+/// would make its labels read top-to-bottom and put two reading directions
+/// on one symbol.
+///
+/// The two edges still differ, but in the ANCHOR rather than the angle: see
+/// [_labelAnchor], where `midLeft` and `midRight` are what send each edge's
+/// text AWAY from the body while both keep the one reading direction.
+///
+/// `-pi / 2` and not `+pi / 2`: positive is clockwise in a Y-down frame, so
+/// the negative quarter turn is the one that climbs. `text_rotation_test
+/// .dart` pins that on `BoundsCanvas` and `pdf_text_rotation_test.dart` on
+/// paper, both in the commit before this one.
+double _labelRotation(SymbolSide side) => switch (side) {
+  SymbolSide.left || SymbolSide.right => 0,
+  SymbolSide.top || SymbolSide.bottom => -math.pi / 2,
+};
+
+/// Which end of the run sits at [_labelPoint].
+///
+/// LEFT AND RIGHT are unchanged: the label reads INTO the body from its pin,
+/// so a left-edge pin anchors the run's left end and a right-edge pin its
+/// right end.
+///
+/// TOP AND BOTTOM read in the rotated frame, where the run advances UP the
+/// page (see [_labelRotation]). A top-edge label must extend further up,
+/// away from the body below it, so the anchor is the run's START —
+/// `midLeft`. A bottom-edge label must extend further DOWN, so with the same
+/// upward reading direction the anchor has to be the run's END —
+/// `midRight`. One angle, two anchors, and both labels point away from the
+/// symbol.
 TextAnchor _labelAnchor(SymbolSide side) => switch (side) {
   SymbolSide.left => TextAnchor.midLeft,
   SymbolSide.right => TextAnchor.midRight,
-  SymbolSide.top => TextAnchor.bottomCenter,
-  SymbolSide.bottom => TextAnchor.topCenter,
+  SymbolSide.top => TextAnchor.midLeft,
+  SymbolSide.bottom => TextAnchor.midRight,
 };

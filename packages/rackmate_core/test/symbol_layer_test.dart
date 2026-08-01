@@ -734,10 +734,27 @@ void main() {
       expect(byText['R']!.$3.anchor, TextAnchor.midRight);
       // Top pin is at y = 0; its label sits ABOVE (outside).
       expect(byText['T']!.$2.y, lessThan(0));
-      expect(byText['T']!.$3.anchor, TextAnchor.bottomCenter);
       // Bottom pin is at y = height; its label sits BELOW (outside).
       expect(byText['B']!.$2.y, greaterThan(s.bodyRect.height));
-      expect(byText['B']!.$3.anchor, TextAnchor.topCenter);
+
+      // ── #96-A: the top/bottom anchors changed with the quarter turn ──
+      //
+      // They were `bottomCenter` / `topCenter`, which put the run's MIDDLE
+      // over the pin and let it spread sideways into its neighbours — the
+      // overlap the field found. Turned `-pi/2` the run climbs the page, so
+      // the anchor picks which END sits at the pin, and that is what sends
+      // each edge's text away from the body: `midLeft` starts the run at a
+      // top pin and carries it further up, `midRight` ends it at a bottom
+      // pin so it reaches further down. One angle, two anchors, one reading
+      // direction. See `_labelRotation` and `port_label_overlap_test.dart`.
+      expect(byText['T']!.$3.anchor, TextAnchor.midLeft);
+      expect(byText['T']!.$3.rotationRad, closeTo(-math.pi / 2, 1e-12));
+      expect(byText['B']!.$3.anchor, TextAnchor.midRight);
+      expect(byText['B']!.$3.rotationRad, closeTo(-math.pi / 2, 1e-12));
+      // And the side labels are NOT turned — they never overlapped, because
+      // there the pins are spaced along Y and the text runs along X.
+      expect(byText['L']!.$3.rotationRad, 0);
+      expect(byText['R']!.$3.rotationRad, 0);
     });
 
     test('every drawn circle sits ON the body edge its pin belongs to, at '
@@ -1035,19 +1052,38 @@ void main() {
 
     test('a TOP port label lands entirely outside the body, and the ink '
         'bounds contain it', () {
-      // The label sits `_kPortLabelGap` (5) above the pin centre, anchored
-      // bottomCenter, so its own box adds another ascent+descent (8pt text
-      // -> 8 units) above that.
+      // ── #96-A CHANGED THE ARITHMETIC, NOT THE CLAIM ──────────────────
+      // The label still sits `_kPortLabelGap` (5) above the pin centre. What
+      // moved is how far its own box then reaches: unturned it added one
+      // ascent+descent (8 units for 8 pt text); turned `-pi/2` it climbs by
+      // its full ADVANCE WIDTH instead, because the run's long axis is now
+      // vertical.
+      //
+      // DERIVED FROM THE MEASURER rather than restated as a literal. The old
+      // `-13` was a hand-computed constant, and hand-computing this one would
+      // have to be redone every time the label text or `_emPerChar` changed
+      // — which is exactly how a constant stops describing the code.
+      const label = 'LAN';
       final s = _symbol([
         _port(
           'lan',
           family: 'net.ethernet',
           direction: PortDirection.sink,
-          label: 'LAN',
+          label: label,
         ),
       ]);
+      final width = const _FakeMeasurer()
+          .measureText(
+            label,
+            rackText(RackTextSizes.type, 0, TextAnchor.midLeft),
+          )
+          .advanceWidth;
       final ink = built(s).inkBounds!;
-      expect(ink.top, -13, reason: 'pin centre 0, gap 5, text box 8');
+      expect(
+        ink.top,
+        closeTo(-(5 + width), 0.001),
+        reason: 'pin centre 0, gap 5, then the whole turned run',
+      );
       expect(
         ink.top,
         lessThan(-4.5),
@@ -1056,16 +1092,25 @@ void main() {
     });
 
     test('a BOTTOM port label lands below the body', () {
+      const label = 'IEC C14';
       final s = _symbol([
         _port(
           'iec',
           family: 'power.ac_iec',
           direction: PortDirection.sink,
-          label: 'IEC C14',
+          label: label,
         ),
       ]);
-      final s2 = s;
-      expect(built(s).inkBounds!.bottom, s2.bodyRect.height + 13);
+      final width = const _FakeMeasurer()
+          .measureText(
+            label,
+            rackText(RackTextSizes.type, 0, TextAnchor.midRight),
+          )
+          .advanceWidth;
+      expect(
+        built(s).inkBounds!.bottom,
+        closeTo(s.bodyRect.height + 5 + width, 0.001),
+      );
     });
 
     test('the docs/05 §3.1 MTX-1 fixture overruns its body on all four '
