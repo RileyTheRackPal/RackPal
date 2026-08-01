@@ -113,29 +113,56 @@ void main() {
     return null;
   }
 
-  /// Puts the caret on a FREE pin of [designator].
+  /// How many of [designator]'s pins, counting down from the top of its
+  /// first edge, the fixture has already filled.
   ///
-  /// TWO PRESSES, AND THE SECOND ONE IS THE POINT. Selecting the device and
+  /// MEASURED, BECAUSE THE HARD-CODED VERSION WAS WRONG THE MOMENT THE
+  /// CATALOG WAS FIXED. This was `steps = 1` with a paragraph explaining
+  /// that MTX-1's first pin is wired and the second is free. That was true
+  /// only because `PortDef.order` was SCRAMBLED: `PortBuilder` emitted
+  /// `a0 … a9, a10 …` into a `FracIndex` that sorts as a string, so the
+  /// matrix's left edge was drawn `hdmi.in.1, hdmi.in.10, hdmi.in.11 …`
+  /// and the pin below the wired one happened to be `hdmi.in.10`, free.
+  /// With the order corrected the edge reads `1, 2, 3, 4 …` and the
+  /// fixture's four MTX-1 cables fill a contiguous run at the top.
+  ///
+  /// The old comment said this arrangement was "not a workaround for the
+  /// fixture; it is the behaviour under test" and that a fixture change
+  /// should "fail loudly instead of quietly aiming somewhere else". It did
+  /// fail loudly, which is the good half. The lesson is the other half: a
+  /// number derived from the document cannot go stale, and a literal `1`
+  /// standing for "how many pins the fixture wired" always can.
+  int wiredRunOn(String designator) {
+    final device = deviceNamed(doc, designator);
+    final symbol = reference.symbols.firstWhere((s) => s.id == device.id.v);
+    var n = 0;
+    for (final port in symbol.allPorts) {
+      final id = derivePortId(device.id, PortKey(port.key));
+      if (portConductorCount(doc, id) == 0) break;
+      n++;
+    }
+    return n;
+  }
+
+  /// Puts the caret on the first FREE pin of [designator].
+  ///
+  /// THE FIRST PRESS SEEDS, THE REST STEP. Selecting the device and
   /// pressing an arrow SEEDS the caret onto that device's first pin — the
   /// only place the selection is allowed to influence the caret at all —
-  /// and on this fixture that first pin is one the fixture has already
-  /// wired. `hdmi.in.1` carries a cable and its `maxConnections` defaults
-  /// to 1, so a wire armed from it has no legal target anywhere and the
-  /// screen correctly refuses to arm. The second press steps one pin down
-  /// the same edge, to the first FREE one.
-  ///
-  /// That is not a workaround for the fixture; it is the behaviour under
-  /// test, and `armed from a free pin` below asserts which pin was reached
-  /// so a fixture change fails loudly instead of quietly aiming somewhere
-  /// else.
+  /// and on this fixture that pin heads a run the fixture has already
+  /// wired. Each of those carries a cable and `maxConnections` defaults to
+  /// 1, so a wire armed from one has no legal target anywhere and the
+  /// screen correctly refuses to arm. The remaining presses step past the
+  /// run, to the first free pin below it.
   Future<void> caretOnto(
     WidgetTester tester,
     String designator, {
-    int steps = 1,
+    int? steps,
   }) async {
+    final count = steps ?? wiredRunOn(designator);
     await tester.tapAt(toScreen(tester, centreOf(designator)));
     await tester.pumpAndSettle();
-    for (var i = 0; i <= steps; i++) {
+    for (var i = 0; i <= count; i++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
       await tester.pumpAndSettle();
     }

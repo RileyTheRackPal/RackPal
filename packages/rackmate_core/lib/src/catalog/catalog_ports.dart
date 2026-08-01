@@ -39,7 +39,43 @@ final class PortBuilder {
   final Set<String> _setKeys = {};
   int _n = 0;
 
-  FracIndex _next() => FracIndex('a${_n++}');
+  /// The next `order`, ZERO-PADDED — and the padding is the whole point.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `FracIndex` SORTS AS A STRING, SO `a10` CAME BEFORE `a2`
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `FracIndex` is `extension type const FracIndex(String v)` with no
+  /// comparison operator, so every consumer orders it with
+  /// `a.order.v.compareTo(b.order.v)` — a raw string compare. This
+  /// counter emitted `a0 … a9, a10 …`, so from the TENTH declaration
+  /// onward a template's ports sorted into an order that was neither
+  /// declaration order nor anything else: measured at #93, **29 of the 45
+  /// seed templates with ports were scrambled, 678 of 727 ports**.
+  ///
+  /// It was not a cosmetic defect and it was not multi-draw's. Four
+  /// separate rules read this field, and all four were wrong on those 678
+  /// ports:
+  ///
+  ///   * FIXED_ORDER (docs/05 §3) — `buildSymbolGeometry` draws pins in
+  ///     this order, so `A01`'s zone outputs were DRAWN scrambled;
+  ///   * `PORT_SEQ` — the schedule's per-device port sequence;
+  ///   * `chainOutputFor` (DR-012.1) — chain-draw's "next free output";
+  ///   * `portsInBank` (DR-012.2) — multi-draw's rank, which is what
+  ///     found it.
+  ///
+  /// Four digits because the largest seed template declares 56 ports plus
+  /// its banks, and because a width that can be outgrown is this same bug
+  /// with a higher threshold. `catalog_order_test.dart` asserts declared
+  /// order and ranked order agree for EVERY seed template, which is the
+  /// gate that keeps it fixed.
+  ///
+  /// EXISTING SAVED DOCUMENTS ARE NOT MIGRATED, and correctly so: a
+  /// `TemplateSnapshot` is a snapshot (docs/02 §6), and rewriting the
+  /// order values inside one would change a device the user placed
+  /// months ago to match a catalog they never re-picked from. They keep
+  /// the order they were captured with; anything placed from the catalog
+  /// after this fix gets the right one.
+  FracIndex _next() => FracIndex('a${(_n++).toString().padLeft(4, '0')}');
 
   void _bank(String key, String label, SymbolSide side) {
     if (_bankOrder.containsKey(key)) return;

@@ -19147,7 +19147,7 @@
               "collapseInSymbol": false,
               "key": "srcIn",
               "label": "Source Inputs",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             },
             {
@@ -19155,7 +19155,7 @@
               "collapseInSymbol": false,
               "key": "zoneOut",
               "label": "Zone Speaker Outputs",
-              "order": "a3",
+              "order": "a0003",
               "symbolSide": "left"
             },
             {
@@ -19163,7 +19163,7 @@
               "collapseInSymbol": false,
               "key": "control",
               "label": "Control",
-              "order": "a6",
+              "order": "a0006",
               "symbolSide": "left"
             },
             {
@@ -19171,7 +19171,7 @@
               "collapseInSymbol": false,
               "key": "subOut",
               "label": "Sub Outputs",
-              "order": "a43",
+              "order": "a0043",
               "symbolSide": "left"
             },
             {
@@ -19179,7 +19179,7 @@
               "collapseInSymbol": false,
               "key": "power",
               "label": "Power",
-              "order": "a50",
+              "order": "a0050",
               "symbolSide": "bottom"
             }
           ],
@@ -19310,7 +19310,7 @@
               "key": "src.1.l",
               "label": "SRC 1 L",
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -19334,7 +19334,7 @@
               "key": "src.1.r",
               "label": "SRC 1 R",
               "maxConnections": 1,
-              "order": "a2",
+              "order": "a0002",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -19359,7 +19359,7 @@
               "key": "zone.1.pos",
               "label": "ZONE 1 +",
               "maxConnections": 1,
-              "order": "a4",
+              "order": "a0004",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -19385,7 +19385,7 @@
               "key": "zone.1.neg",
               "label": "ZONE 1 -",
               "maxConnections": 1,
-              "order": "a5",
+              "order": "a0005",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -19410,7 +19410,7 @@
               "key": "zone.1.ir",
               "label": "ZONE 1 IR",
               "maxConnections": 1,
-              "order": "a7",
+              "order": "a0007",
               "pinoutVariant": "xantech-stereo",
               "position": {
                 "ruOffset": 0,
@@ -19433,7 +19433,7 @@
               "key": "src.2.l",
               "label": "SRC 2 L",
               "maxConnections": 1,
-              "order": "a8",
+              "order": "a0008",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -19457,7 +19457,7 @@
               "key": "src.2.r",
               "label": "SRC 2 R",
               "maxConnections": 1,
-              "order": "a9",
+              "order": "a0009",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -19482,7 +19482,7 @@
               "key": "zone.2.pos",
               "label": "ZONE 2 +",
               "maxConnections": 1,
-              "order": "a10",
+              "order": "a0010",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -19508,7 +19508,7 @@
               "key": "zone.2.neg",
               "label": "ZONE 2 -",
               "maxConnections": 1,
-              "order": "a11",
+              "order": "a0011",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -19533,7 +19533,7 @@
               "key": "zone.2.ir",
               "label": "ZONE 2 IR",
               "maxConnections": 1,
-              "order": "a12",
+              "order": "a0012",
               "pinoutVariant": "xantech-stereo",
               "position": {
                 "ruOffset": 0,
@@ -19556,7 +19556,7 @@
               "key": "src.3.l",
               "label": "SRC 3 L",
               "maxConnections": 1,
-              "order": "a13",
+              "order": "a0013",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -19580,7 +19580,7 @@
               "key": "src.3.r",
               "label": "SRC 3 R",
               "maxConnections": 1,
-              "order": "a14",
+              "order": "a0014",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -19605,7 +19605,7 @@
               "key": "zone.3.pos",
               "label": "ZONE 3 +",
               "maxConnections": 1,
-              "order": "a15",
+              "order": "a0015",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -19631,7 +19631,7 @@
               "key": "zone.3.neg",
               "label": "ZONE 3 -",
               "maxConnections": 1,
-              "order": "a16",
+              "order": "a0016",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -19656,7 +19656,7 @@
               "key": "zone.3.ir",
               "label": "ZONE 3 IR",
               "maxConnections": 1,
-              "order": "a17",
+              "order": "a0017",
               "pinoutVariant": "xantech-stereo",
               "position": {
                 "ruOffset": 0,
@@ -19679,7 +19679,7 @@
               "key": "src.4.l",
               "label": "SRC 4 L",
               "maxConnections": 1,
-              "order": "a18",
+              "order": "a0018",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -19703,7 +19703,7 @@
               "key": "src.4.r",
               "label": "SRC 4 R",
               "maxConnections": 1,
-              "order": "a19",
+              "order": "a0019",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -19728,7 +19728,7 @@
               "key": "zone.4.pos",
               "label": "ZONE 4 +",
               "maxConnections": 1,
-              "order": "a20",
+              "order": "a0020",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -19754,7 +19754,7 @@
               "key": "zone.4.neg",
               "label": "ZONE 4 -",
               "maxConnections": 1,
-              "order": "a21",
+              "order": "a0021",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -19779,7 +19779,7 @@
               "key": "zone.4.ir",
               "label": "ZONE 4 IR",
               "maxConnections": 1,
-              "order": "a22",
+              "order": "a0022",
               "pinoutVariant": "xantech-stereo",
               "position": {
                 "ruOffset": 0,
@@ -19802,7 +19802,7 @@
               "key": "src.5.l",
               "label": "SRC 5 L",
               "maxConnections": 1,
-              "order": "a23",
+              "order": "a0023",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -19826,7 +19826,7 @@
               "key": "src.5.r",
               "label": "SRC 5 R",
               "maxConnections": 1,
-              "order": "a24",
+              "order": "a0024",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -19851,7 +19851,7 @@
               "key": "zone.5.pos",
               "label": "ZONE 5 +",
               "maxConnections": 1,
-              "order": "a25",
+              "order": "a0025",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -19877,7 +19877,7 @@
               "key": "zone.5.neg",
               "label": "ZONE 5 -",
               "maxConnections": 1,
-              "order": "a26",
+              "order": "a0026",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -19902,7 +19902,7 @@
               "key": "zone.5.ir",
               "label": "ZONE 5 IR",
               "maxConnections": 1,
-              "order": "a27",
+              "order": "a0027",
               "pinoutVariant": "xantech-stereo",
               "position": {
                 "ruOffset": 0,
@@ -19925,7 +19925,7 @@
               "key": "src.6.l",
               "label": "SRC 6 L",
               "maxConnections": 1,
-              "order": "a28",
+              "order": "a0028",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -19949,7 +19949,7 @@
               "key": "src.6.r",
               "label": "SRC 6 R",
               "maxConnections": 1,
-              "order": "a29",
+              "order": "a0029",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -19974,7 +19974,7 @@
               "key": "zone.6.pos",
               "label": "ZONE 6 +",
               "maxConnections": 1,
-              "order": "a30",
+              "order": "a0030",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -20000,7 +20000,7 @@
               "key": "zone.6.neg",
               "label": "ZONE 6 -",
               "maxConnections": 1,
-              "order": "a31",
+              "order": "a0031",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -20025,7 +20025,7 @@
               "key": "zone.6.ir",
               "label": "ZONE 6 IR",
               "maxConnections": 1,
-              "order": "a32",
+              "order": "a0032",
               "pinoutVariant": "xantech-stereo",
               "position": {
                 "ruOffset": 0,
@@ -20048,7 +20048,7 @@
               "key": "src.7.l",
               "label": "SRC 7 L",
               "maxConnections": 1,
-              "order": "a33",
+              "order": "a0033",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20072,7 +20072,7 @@
               "key": "src.7.r",
               "label": "SRC 7 R",
               "maxConnections": 1,
-              "order": "a34",
+              "order": "a0034",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20097,7 +20097,7 @@
               "key": "zone.7.pos",
               "label": "ZONE 7 +",
               "maxConnections": 1,
-              "order": "a35",
+              "order": "a0035",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -20123,7 +20123,7 @@
               "key": "zone.7.neg",
               "label": "ZONE 7 -",
               "maxConnections": 1,
-              "order": "a36",
+              "order": "a0036",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -20148,7 +20148,7 @@
               "key": "zone.7.ir",
               "label": "ZONE 7 IR",
               "maxConnections": 1,
-              "order": "a37",
+              "order": "a0037",
               "pinoutVariant": "xantech-stereo",
               "position": {
                 "ruOffset": 0,
@@ -20171,7 +20171,7 @@
               "key": "src.8.l",
               "label": "SRC 8 L",
               "maxConnections": 1,
-              "order": "a38",
+              "order": "a0038",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20195,7 +20195,7 @@
               "key": "src.8.r",
               "label": "SRC 8 R",
               "maxConnections": 1,
-              "order": "a39",
+              "order": "a0039",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20220,7 +20220,7 @@
               "key": "zone.8.pos",
               "label": "ZONE 8 +",
               "maxConnections": 1,
-              "order": "a40",
+              "order": "a0040",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -20246,7 +20246,7 @@
               "key": "zone.8.neg",
               "label": "ZONE 8 -",
               "maxConnections": 1,
-              "order": "a41",
+              "order": "a0041",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -20271,7 +20271,7 @@
               "key": "zone.8.ir",
               "label": "ZONE 8 IR",
               "maxConnections": 1,
-              "order": "a42",
+              "order": "a0042",
               "pinoutVariant": "xantech-stereo",
               "position": {
                 "ruOffset": 0,
@@ -20294,7 +20294,7 @@
               "key": "sub.1",
               "label": "SUB OUT 1",
               "maxConnections": 1,
-              "order": "a44",
+              "order": "a0044",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20316,7 +20316,7 @@
               "key": "sub.2",
               "label": "SUB OUT 2",
               "maxConnections": 1,
-              "order": "a45",
+              "order": "a0045",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20338,7 +20338,7 @@
               "key": "lan",
               "label": "LAN",
               "maxConnections": 1,
-              "order": "a46",
+              "order": "a0046",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20360,7 +20360,7 @@
               "key": "rs232",
               "label": "RS-232",
               "maxConnections": 1,
-              "order": "a47",
+              "order": "a0047",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20383,7 +20383,7 @@
               "label": "TRIGGER IN",
               "maxConnections": 1,
               "maxCurrentMa": 100,
-              "order": "a48",
+              "order": "a0048",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20406,7 +20406,7 @@
               "label": "TRIGGER OUT",
               "maxConnections": 1,
               "maxCurrentMa": 100,
-              "order": "a49",
+              "order": "a0049",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20428,7 +20428,7 @@
               "key": "ac.in",
               "label": "AC (captive cord)",
               "maxConnections": 1,
-              "order": "a51",
+              "order": "a0051",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20481,7 +20481,7 @@
               "collapseInSymbol": false,
               "key": "hdmiIn",
               "label": "HDMI Inputs",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             },
             {
@@ -20489,7 +20489,7 @@
               "collapseInSymbol": false,
               "key": "hdmiOut",
               "label": "HDMI Outputs",
-              "order": "a9",
+              "order": "a0009",
               "symbolSide": "left"
             },
             {
@@ -20497,7 +20497,7 @@
               "collapseInSymbol": false,
               "key": "digitalIn",
               "label": "Digital Audio In",
-              "order": "a13",
+              "order": "a0013",
               "symbolSide": "left"
             },
             {
@@ -20505,7 +20505,7 @@
               "collapseInSymbol": false,
               "key": "analogIn",
               "label": "Analog Audio In",
-              "order": "a18",
+              "order": "a0018",
               "symbolSide": "left"
             },
             {
@@ -20513,7 +20513,7 @@
               "collapseInSymbol": false,
               "key": "spkOut",
               "label": "Speaker Outputs",
-              "order": "a30",
+              "order": "a0030",
               "symbolSide": "left"
             },
             {
@@ -20521,7 +20521,7 @@
               "collapseInSymbol": false,
               "key": "tuner",
               "label": "Tuner",
-              "order": "a47",
+              "order": "a0047",
               "symbolSide": "left"
             },
             {
@@ -20529,7 +20529,7 @@
               "collapseInSymbol": false,
               "key": "control",
               "label": "Control",
-              "order": "a49",
+              "order": "a0049",
               "symbolSide": "left"
             },
             {
@@ -20537,7 +20537,7 @@
               "collapseInSymbol": false,
               "key": "power",
               "label": "Power",
-              "order": "a57",
+              "order": "a0057",
               "symbolSide": "bottom"
             }
           ],
@@ -20643,7 +20643,7 @@
               "key": "hdmi.in.1",
               "label": "HDMI IN 1",
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20665,7 +20665,7 @@
               "key": "hdmi.in.2",
               "label": "HDMI IN 2",
               "maxConnections": 1,
-              "order": "a2",
+              "order": "a0002",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20687,7 +20687,7 @@
               "key": "hdmi.in.3",
               "label": "HDMI IN 3",
               "maxConnections": 1,
-              "order": "a3",
+              "order": "a0003",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20709,7 +20709,7 @@
               "key": "hdmi.in.4",
               "label": "HDMI IN 4",
               "maxConnections": 1,
-              "order": "a4",
+              "order": "a0004",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20731,7 +20731,7 @@
               "key": "hdmi.in.5",
               "label": "HDMI IN 5",
               "maxConnections": 1,
-              "order": "a5",
+              "order": "a0005",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20753,7 +20753,7 @@
               "key": "hdmi.in.6",
               "label": "HDMI IN 6",
               "maxConnections": 1,
-              "order": "a6",
+              "order": "a0006",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20775,7 +20775,7 @@
               "key": "hdmi.in.7",
               "label": "HDMI IN 7",
               "maxConnections": 1,
-              "order": "a7",
+              "order": "a0007",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20797,7 +20797,7 @@
               "key": "hdmi.in.front",
               "label": "HDMI FRONT",
               "maxConnections": 1,
-              "order": "a8",
+              "order": "a0008",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20819,7 +20819,7 @@
               "key": "hdmi.out.main",
               "label": "HDMI OUT MAIN",
               "maxConnections": 1,
-              "order": "a10",
+              "order": "a0010",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20842,7 +20842,7 @@
               "key": "hdmi.out.zone.1",
               "label": "HDMI OUT ZONE 1",
               "maxConnections": 1,
-              "order": "a11",
+              "order": "a0011",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20864,7 +20864,7 @@
               "key": "hdmi.out.zone.2",
               "label": "HDMI OUT ZONE 2",
               "maxConnections": 1,
-              "order": "a12",
+              "order": "a0012",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20886,7 +20886,7 @@
               "key": "optical.in.1",
               "label": "OPTICAL IN 1",
               "maxConnections": 1,
-              "order": "a14",
+              "order": "a0014",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20908,7 +20908,7 @@
               "key": "optical.in.2",
               "label": "OPTICAL IN 2",
               "maxConnections": 1,
-              "order": "a15",
+              "order": "a0015",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20931,7 +20931,7 @@
               "key": "coax.in.1",
               "label": "COAX IN 1",
               "maxConnections": 1,
-              "order": "a16",
+              "order": "a0016",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20954,7 +20954,7 @@
               "key": "coax.in.2",
               "label": "COAX IN 2",
               "maxConnections": 1,
-              "order": "a17",
+              "order": "a0017",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -20976,7 +20976,7 @@
               "key": "an.1.l",
               "label": "ANALOG IN 1 L",
               "maxConnections": 1,
-              "order": "a19",
+              "order": "a0019",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21000,7 +21000,7 @@
               "key": "an.1.r",
               "label": "ANALOG IN 1 R",
               "maxConnections": 1,
-              "order": "a20",
+              "order": "a0020",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21024,7 +21024,7 @@
               "key": "an.2.l",
               "label": "ANALOG IN 2 L",
               "maxConnections": 1,
-              "order": "a21",
+              "order": "a0021",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21048,7 +21048,7 @@
               "key": "an.2.r",
               "label": "ANALOG IN 2 R",
               "maxConnections": 1,
-              "order": "a22",
+              "order": "a0022",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21072,7 +21072,7 @@
               "key": "an.3.l",
               "label": "ANALOG IN 3 L",
               "maxConnections": 1,
-              "order": "a23",
+              "order": "a0023",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21096,7 +21096,7 @@
               "key": "an.3.r",
               "label": "ANALOG IN 3 R",
               "maxConnections": 1,
-              "order": "a24",
+              "order": "a0024",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21120,7 +21120,7 @@
               "key": "an.4.l",
               "label": "ANALOG IN 4 L",
               "maxConnections": 1,
-              "order": "a25",
+              "order": "a0025",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21144,7 +21144,7 @@
               "key": "an.4.r",
               "label": "ANALOG IN 4 R",
               "maxConnections": 1,
-              "order": "a26",
+              "order": "a0026",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21168,7 +21168,7 @@
               "key": "phono.l",
               "label": "PHONO L",
               "maxConnections": 1,
-              "order": "a27",
+              "order": "a0027",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21192,7 +21192,7 @@
               "key": "phono.r",
               "label": "PHONO R",
               "maxConnections": 1,
-              "order": "a28",
+              "order": "a0028",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21216,7 +21216,7 @@
               "key": "phono.gnd",
               "label": "PHONO GND",
               "maxConnections": 1,
-              "order": "a29",
+              "order": "a0029",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21239,7 +21239,7 @@
               "key": "spk.FL.pos",
               "label": "FL +",
               "maxConnections": 1,
-              "order": "a31",
+              "order": "a0031",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -21265,7 +21265,7 @@
               "key": "spk.FL.neg",
               "label": "FL -",
               "maxConnections": 1,
-              "order": "a32",
+              "order": "a0032",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -21291,7 +21291,7 @@
               "key": "spk.FR.pos",
               "label": "FR +",
               "maxConnections": 1,
-              "order": "a33",
+              "order": "a0033",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -21317,7 +21317,7 @@
               "key": "spk.FR.neg",
               "label": "FR -",
               "maxConnections": 1,
-              "order": "a34",
+              "order": "a0034",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -21343,7 +21343,7 @@
               "key": "spk.C.pos",
               "label": "C +",
               "maxConnections": 1,
-              "order": "a35",
+              "order": "a0035",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -21369,7 +21369,7 @@
               "key": "spk.C.neg",
               "label": "C -",
               "maxConnections": 1,
-              "order": "a36",
+              "order": "a0036",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -21395,7 +21395,7 @@
               "key": "spk.SL.pos",
               "label": "SL +",
               "maxConnections": 1,
-              "order": "a37",
+              "order": "a0037",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -21421,7 +21421,7 @@
               "key": "spk.SL.neg",
               "label": "SL -",
               "maxConnections": 1,
-              "order": "a38",
+              "order": "a0038",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -21447,7 +21447,7 @@
               "key": "spk.SR.pos",
               "label": "SR +",
               "maxConnections": 1,
-              "order": "a39",
+              "order": "a0039",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -21473,7 +21473,7 @@
               "key": "spk.SR.neg",
               "label": "SR -",
               "maxConnections": 1,
-              "order": "a40",
+              "order": "a0040",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -21499,7 +21499,7 @@
               "key": "spk.SBL.pos",
               "label": "SBL +",
               "maxConnections": 1,
-              "order": "a41",
+              "order": "a0041",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -21525,7 +21525,7 @@
               "key": "spk.SBL.neg",
               "label": "SBL -",
               "maxConnections": 1,
-              "order": "a42",
+              "order": "a0042",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -21551,7 +21551,7 @@
               "key": "spk.SBR.pos",
               "label": "SBR +",
               "maxConnections": 1,
-              "order": "a43",
+              "order": "a0043",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -21577,7 +21577,7 @@
               "key": "spk.SBR.neg",
               "label": "SBR -",
               "maxConnections": 1,
-              "order": "a44",
+              "order": "a0044",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -21602,7 +21602,7 @@
               "key": "sub.pre.1",
               "label": "SUB PRE OUT 1",
               "maxConnections": 1,
-              "order": "a45",
+              "order": "a0045",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21624,7 +21624,7 @@
               "key": "sub.pre.2",
               "label": "SUB PRE OUT 2",
               "maxConnections": 1,
-              "order": "a46",
+              "order": "a0046",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21647,7 +21647,7 @@
               "key": "fm.ant",
               "label": "FM ANTENNA",
               "maxConnections": 1,
-              "order": "a48",
+              "order": "a0048",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21669,7 +21669,7 @@
               "key": "lan",
               "label": "LAN",
               "maxConnections": 1,
-              "order": "a50",
+              "order": "a0050",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21691,7 +21691,7 @@
               "key": "ir.in",
               "label": "IR IN",
               "maxConnections": 1,
-              "order": "a51",
+              "order": "a0051",
               "pinoutVariant": "xantech-stereo",
               "position": {
                 "ruOffset": 0,
@@ -21715,7 +21715,7 @@
               "label": "TRIGGER OUT 1",
               "maxConnections": 1,
               "maxCurrentMa": 100,
-              "order": "a52",
+              "order": "a0052",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21738,7 +21738,7 @@
               "label": "TRIGGER OUT 2",
               "maxConnections": 1,
               "maxCurrentMa": 100,
-              "order": "a53",
+              "order": "a0053",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21760,7 +21760,7 @@
               "key": "rs232",
               "label": "RS-232",
               "maxConnections": 1,
-              "order": "a54",
+              "order": "a0054",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21782,7 +21782,7 @@
               "key": "usb",
               "label": "USB",
               "maxConnections": 1,
-              "order": "a55",
+              "order": "a0055",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21804,7 +21804,7 @@
               "key": "phones",
               "label": "PHONES",
               "maxConnections": 1,
-              "order": "a56",
+              "order": "a0056",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21826,7 +21826,7 @@
               "key": "ac.in",
               "label": "AC (captive cord)",
               "maxConnections": 1,
-              "order": "a58",
+              "order": "a0058",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21880,7 +21880,7 @@
               "collapseInSymbol": false,
               "key": "network",
               "label": "Network",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             },
             {
@@ -21888,7 +21888,7 @@
               "collapseInSymbol": false,
               "key": "serial",
               "label": "Serial",
-              "order": "a3",
+              "order": "a0003",
               "symbolSide": "left"
             },
             {
@@ -21896,7 +21896,7 @@
               "collapseInSymbol": false,
               "key": "irOut",
               "label": "IR Outputs",
-              "order": "a12",
+              "order": "a0012",
               "symbolSide": "left"
             },
             {
@@ -21904,7 +21904,7 @@
               "collapseInSymbol": false,
               "key": "digitalIn",
               "label": "Digital Inputs",
-              "order": "a21",
+              "order": "a0021",
               "symbolSide": "left"
             },
             {
@@ -21912,7 +21912,7 @@
               "collapseInSymbol": false,
               "key": "relays",
               "label": "Relays",
-              "order": "a30",
+              "order": "a0030",
               "symbolSide": "left"
             },
             {
@@ -21920,7 +21920,7 @@
               "collapseInSymbol": false,
               "key": "bus",
               "label": "Control Bus",
-              "order": "a35",
+              "order": "a0035",
               "symbolSide": "left"
             },
             {
@@ -21928,7 +21928,7 @@
               "collapseInSymbol": false,
               "key": "power",
               "label": "Power",
-              "order": "a38",
+              "order": "a0038",
               "symbolSide": "left"
             }
           ],
@@ -21961,7 +21961,7 @@
               "key": "lan.1",
               "label": "LAN 1",
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -21983,7 +21983,7 @@
               "key": "lan.2",
               "label": "LAN 2",
               "maxConnections": 1,
-              "order": "a2",
+              "order": "a0002",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22005,7 +22005,7 @@
               "key": "com.1",
               "label": "COM 1",
               "maxConnections": 1,
-              "order": "a4",
+              "order": "a0004",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22027,7 +22027,7 @@
               "key": "com.2",
               "label": "COM 2",
               "maxConnections": 1,
-              "order": "a5",
+              "order": "a0005",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22049,7 +22049,7 @@
               "key": "com.3",
               "label": "COM 3",
               "maxConnections": 1,
-              "order": "a6",
+              "order": "a0006",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22071,7 +22071,7 @@
               "key": "com.4",
               "label": "COM 4",
               "maxConnections": 1,
-              "order": "a7",
+              "order": "a0007",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22093,7 +22093,7 @@
               "key": "com.5",
               "label": "COM 5",
               "maxConnections": 1,
-              "order": "a8",
+              "order": "a0008",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22115,7 +22115,7 @@
               "key": "com.6",
               "label": "COM 6",
               "maxConnections": 1,
-              "order": "a9",
+              "order": "a0009",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22137,7 +22137,7 @@
               "key": "com.7",
               "label": "COM 7",
               "maxConnections": 1,
-              "order": "a10",
+              "order": "a0010",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22159,7 +22159,7 @@
               "key": "com.8",
               "label": "COM 8",
               "maxConnections": 1,
-              "order": "a11",
+              "order": "a0011",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22181,7 +22181,7 @@
               "key": "ir.1",
               "label": "IR/SERIAL 1",
               "maxConnections": 1,
-              "order": "a13",
+              "order": "a0013",
               "pinoutVariant": "mono-tip-sleeve",
               "position": {
                 "ruOffset": 0,
@@ -22204,7 +22204,7 @@
               "key": "ir.2",
               "label": "IR/SERIAL 2",
               "maxConnections": 1,
-              "order": "a14",
+              "order": "a0014",
               "pinoutVariant": "mono-tip-sleeve",
               "position": {
                 "ruOffset": 0,
@@ -22227,7 +22227,7 @@
               "key": "ir.3",
               "label": "IR/SERIAL 3",
               "maxConnections": 1,
-              "order": "a15",
+              "order": "a0015",
               "pinoutVariant": "mono-tip-sleeve",
               "position": {
                 "ruOffset": 0,
@@ -22250,7 +22250,7 @@
               "key": "ir.4",
               "label": "IR/SERIAL 4",
               "maxConnections": 1,
-              "order": "a16",
+              "order": "a0016",
               "pinoutVariant": "mono-tip-sleeve",
               "position": {
                 "ruOffset": 0,
@@ -22273,7 +22273,7 @@
               "key": "ir.5",
               "label": "IR/SERIAL 5",
               "maxConnections": 1,
-              "order": "a17",
+              "order": "a0017",
               "pinoutVariant": "mono-tip-sleeve",
               "position": {
                 "ruOffset": 0,
@@ -22296,7 +22296,7 @@
               "key": "ir.6",
               "label": "IR/SERIAL 6",
               "maxConnections": 1,
-              "order": "a18",
+              "order": "a0018",
               "pinoutVariant": "mono-tip-sleeve",
               "position": {
                 "ruOffset": 0,
@@ -22319,7 +22319,7 @@
               "key": "ir.7",
               "label": "IR/SERIAL 7",
               "maxConnections": 1,
-              "order": "a19",
+              "order": "a0019",
               "pinoutVariant": "mono-tip-sleeve",
               "position": {
                 "ruOffset": 0,
@@ -22342,7 +22342,7 @@
               "key": "ir.8",
               "label": "IR/SERIAL 8",
               "maxConnections": 1,
-              "order": "a20",
+              "order": "a0020",
               "pinoutVariant": "mono-tip-sleeve",
               "position": {
                 "ruOffset": 0,
@@ -22365,7 +22365,7 @@
               "key": "din.1",
               "label": "DIGITAL IN 1",
               "maxConnections": 1,
-              "order": "a22",
+              "order": "a0022",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22387,7 +22387,7 @@
               "key": "din.2",
               "label": "DIGITAL IN 2",
               "maxConnections": 1,
-              "order": "a23",
+              "order": "a0023",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22409,7 +22409,7 @@
               "key": "din.3",
               "label": "DIGITAL IN 3",
               "maxConnections": 1,
-              "order": "a24",
+              "order": "a0024",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22431,7 +22431,7 @@
               "key": "din.4",
               "label": "DIGITAL IN 4",
               "maxConnections": 1,
-              "order": "a25",
+              "order": "a0025",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22453,7 +22453,7 @@
               "key": "din.5",
               "label": "DIGITAL IN 5",
               "maxConnections": 1,
-              "order": "a26",
+              "order": "a0026",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22475,7 +22475,7 @@
               "key": "din.6",
               "label": "DIGITAL IN 6",
               "maxConnections": 1,
-              "order": "a27",
+              "order": "a0027",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22497,7 +22497,7 @@
               "key": "din.7",
               "label": "DIGITAL IN 7",
               "maxConnections": 1,
-              "order": "a28",
+              "order": "a0028",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22519,7 +22519,7 @@
               "key": "din.8",
               "label": "DIGITAL IN 8",
               "maxConnections": 1,
-              "order": "a29",
+              "order": "a0029",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22541,7 +22541,7 @@
               "key": "relay.1",
               "label": "RELAY 1",
               "maxConnections": 1,
-              "order": "a31",
+              "order": "a0031",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22563,7 +22563,7 @@
               "key": "relay.2",
               "label": "RELAY 2",
               "maxConnections": 1,
-              "order": "a32",
+              "order": "a0032",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22585,7 +22585,7 @@
               "key": "relay.3",
               "label": "RELAY 3",
               "maxConnections": 1,
-              "order": "a33",
+              "order": "a0033",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22607,7 +22607,7 @@
               "key": "relay.4",
               "label": "RELAY 4",
               "maxConnections": 1,
-              "order": "a34",
+              "order": "a0034",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22629,7 +22629,7 @@
               "key": "cresnet",
               "label": "CRESNET",
               "maxConnections": 1,
-              "order": "a36",
+              "order": "a0036",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22651,7 +22651,7 @@
               "key": "setup",
               "label": "SETUP",
               "maxConnections": 1,
-              "order": "a37",
+              "order": "a0037",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22673,7 +22673,7 @@
               "key": "ac.in",
               "label": "AC IN",
               "maxConnections": 1,
-              "order": "a39",
+              "order": "a0039",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22726,7 +22726,7 @@
               "collapseInSymbol": false,
               "key": "video",
               "label": "Video",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             },
             {
@@ -22734,7 +22734,7 @@
               "collapseInSymbol": false,
               "key": "audio",
               "label": "Audio",
-              "order": "a5",
+              "order": "a0005",
               "symbolSide": "left"
             },
             {
@@ -22742,7 +22742,7 @@
               "collapseInSymbol": false,
               "key": "control",
               "label": "Control",
-              "order": "a7",
+              "order": "a0007",
               "symbolSide": "left"
             },
             {
@@ -22750,7 +22750,7 @@
               "collapseInSymbol": false,
               "key": "power",
               "label": "Power",
-              "order": "a11",
+              "order": "a0011",
               "symbolSide": "left"
             }
           ],
@@ -22781,7 +22781,7 @@
               "key": "hdmi.1",
               "label": "HDMI 1",
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22804,7 +22804,7 @@
               "key": "hdmi.2",
               "label": "HDMI 2",
               "maxConnections": 1,
-              "order": "a2",
+              "order": "a0002",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22826,7 +22826,7 @@
               "key": "hdmi.3",
               "label": "HDMI 3",
               "maxConnections": 1,
-              "order": "a3",
+              "order": "a0003",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22848,7 +22848,7 @@
               "key": "hdmi.4",
               "label": "HDMI 4",
               "maxConnections": 1,
-              "order": "a4",
+              "order": "a0004",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22870,7 +22870,7 @@
               "key": "optical.out",
               "label": "OPTICAL OUT",
               "maxConnections": 1,
-              "order": "a6",
+              "order": "a0006",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22892,7 +22892,7 @@
               "key": "lan",
               "label": "LAN",
               "maxConnections": 1,
-              "order": "a8",
+              "order": "a0008",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22914,7 +22914,7 @@
               "key": "rs232",
               "label": "RS-232",
               "maxConnections": 1,
-              "order": "a9",
+              "order": "a0009",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -22936,7 +22936,7 @@
               "key": "ir",
               "label": "IR",
               "maxConnections": 1,
-              "order": "a10",
+              "order": "a0010",
               "pinoutVariant": "xantech-stereo",
               "position": {
                 "ruOffset": 0,
@@ -22959,7 +22959,7 @@
               "key": "ac.in",
               "label": "AC (captive cord)",
               "maxConnections": 1,
-              "order": "a12",
+              "order": "a0012",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -23012,7 +23012,7 @@
               "collapseInSymbol": false,
               "key": "terminals",
               "label": "Terminals",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             }
           ],
@@ -23057,7 +23057,7 @@
               "key": "spk.L.pos",
               "label": "L +",
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -23083,7 +23083,7 @@
               "key": "spk.L.neg",
               "label": "L -",
               "maxConnections": 1,
-              "order": "a2",
+              "order": "a0002",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -23109,7 +23109,7 @@
               "key": "spk.R.pos",
               "label": "R +",
               "maxConnections": 1,
-              "order": "a3",
+              "order": "a0003",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -23135,7 +23135,7 @@
               "key": "spk.R.neg",
               "label": "R -",
               "maxConnections": 1,
-              "order": "a4",
+              "order": "a0004",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -23181,7 +23181,7 @@
               "collapseInSymbol": false,
               "key": "terminals",
               "label": "Terminals",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             }
           ],
@@ -23220,7 +23220,7 @@
               "key": "spk.pos",
               "label": "+",
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -23246,7 +23246,7 @@
               "key": "spk.neg",
               "label": "-",
               "maxConnections": 1,
-              "order": "a2",
+              "order": "a0002",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -23292,7 +23292,7 @@
               "collapseInSymbol": false,
               "key": "network",
               "label": "Network",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             },
             {
@@ -23300,7 +23300,7 @@
               "collapseInSymbol": false,
               "key": "control",
               "label": "Control",
-              "order": "a2",
+              "order": "a0002",
               "symbolSide": "left"
             },
             {
@@ -23308,7 +23308,7 @@
               "collapseInSymbol": false,
               "key": "power",
               "label": "Power",
-              "order": "a4",
+              "order": "a0004",
               "symbolSide": "left"
             }
           ],
@@ -23340,7 +23340,7 @@
               "label": "LAN",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "poe": {
                 "class": 3,
                 "role": "pd",
@@ -23367,7 +23367,7 @@
               "key": "alarm.io",
               "label": "ALARM I/O",
               "maxConnections": 1,
-              "order": "a3",
+              "order": "a0003",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -23390,7 +23390,7 @@
               "label": "12V DC IN (opt)",
               "maxConnections": 1,
               "nominalVoltage": 12,
-              "order": "a5",
+              "order": "a0005",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -23441,7 +23441,7 @@
               "collapseInSymbol": false,
               "key": "network",
               "label": "Network",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             },
             {
@@ -23449,7 +23449,7 @@
               "collapseInSymbol": false,
               "key": "power",
               "label": "Power",
-              "order": "a2",
+              "order": "a0002",
               "symbolSide": "left"
             }
           ],
@@ -23481,7 +23481,7 @@
               "label": "LAN / PoE",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "poe": {
                 "class": 4,
                 "role": "pd",
@@ -23509,7 +23509,7 @@
               "label": "48V DC IN (opt)",
               "maxConnections": 1,
               "nominalVoltage": 48,
-              "order": "a3",
+              "order": "a0003",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -23560,7 +23560,7 @@
               "collapseInSymbol": false,
               "key": "network",
               "label": "Network",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             },
             {
@@ -23568,7 +23568,7 @@
               "collapseInSymbol": false,
               "key": "bus",
               "label": "Control Bus",
-              "order": "a2",
+              "order": "a0002",
               "symbolSide": "left"
             },
             {
@@ -23576,7 +23576,7 @@
               "collapseInSymbol": false,
               "key": "power",
               "label": "Power",
-              "order": "a4",
+              "order": "a0004",
               "symbolSide": "left"
             }
           ],
@@ -23608,7 +23608,7 @@
               "label": "LAN / PoE",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "poe": {
                 "class": 3,
                 "role": "pd",
@@ -23635,7 +23635,7 @@
               "key": "cresnet",
               "label": "CRESNET (24V)",
               "maxConnections": 1,
-              "order": "a3",
+              "order": "a0003",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -23658,7 +23658,7 @@
               "label": "24V DC IN (opt)",
               "maxConnections": 1,
               "nominalVoltage": 24,
-              "order": "a5",
+              "order": "a0005",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -23709,7 +23709,7 @@
               "collapseInSymbol": false,
               "key": "bus",
               "label": "Control Bus",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             }
           ],
@@ -23740,7 +23740,7 @@
               "key": "cresnet",
               "label": "CRESNET",
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -23762,7 +23762,7 @@
               "key": "qs.link",
               "label": "QS LINK (alt)",
               "maxConnections": 1,
-              "order": "a2",
+              "order": "a0002",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -23809,7 +23809,7 @@
               "collapseInSymbol": false,
               "key": "input",
               "label": "Input",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             },
             {
@@ -23817,7 +23817,7 @@
               "collapseInSymbol": false,
               "key": "output",
               "label": "Output",
-              "order": "a3",
+              "order": "a0003",
               "symbolSide": "left"
             }
           ],
@@ -23861,7 +23861,7 @@
               "key": "in.pos",
               "label": "IN +",
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -23886,7 +23886,7 @@
               "key": "in.neg",
               "label": "IN -",
               "maxConnections": 1,
-              "order": "a2",
+              "order": "a0002",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -23911,7 +23911,7 @@
               "key": "out.pos",
               "label": "OUT +",
               "maxConnections": 1,
-              "order": "a4",
+              "order": "a0004",
               "polarity": "positive",
               "position": {
                 "ruOffset": 0,
@@ -23936,7 +23936,7 @@
               "key": "out.neg",
               "label": "OUT -",
               "maxConnections": 1,
-              "order": "a5",
+              "order": "a0005",
               "polarity": "negative",
               "position": {
                 "ruOffset": 0,
@@ -23982,7 +23982,7 @@
               "collapseInSymbol": false,
               "key": "access",
               "label": "Access Ports",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             },
             {
@@ -23990,7 +23990,7 @@
               "collapseInSymbol": false,
               "key": "uplinks",
               "label": "Uplinks",
-              "order": "a49",
+              "order": "a0049",
               "symbolSide": "left"
             },
             {
@@ -23998,7 +23998,7 @@
               "collapseInSymbol": false,
               "key": "mgmt",
               "label": "Management",
-              "order": "a54",
+              "order": "a0054",
               "symbolSide": "left"
             },
             {
@@ -24006,7 +24006,7 @@
               "collapseInSymbol": false,
               "key": "power",
               "label": "Power",
-              "order": "a57",
+              "order": "a0057",
               "symbolSide": "left"
             }
           ],
@@ -24041,7 +24041,7 @@
               "label": "01",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24068,7 +24068,7 @@
               "label": "02",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a2",
+              "order": "a0002",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24095,7 +24095,7 @@
               "label": "03",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a3",
+              "order": "a0003",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24122,7 +24122,7 @@
               "label": "04",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a4",
+              "order": "a0004",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24149,7 +24149,7 @@
               "label": "05",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a5",
+              "order": "a0005",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24176,7 +24176,7 @@
               "label": "06",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a6",
+              "order": "a0006",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24203,7 +24203,7 @@
               "label": "07",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a7",
+              "order": "a0007",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24230,7 +24230,7 @@
               "label": "08",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a8",
+              "order": "a0008",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24257,7 +24257,7 @@
               "label": "09",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a9",
+              "order": "a0009",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24284,7 +24284,7 @@
               "label": "10",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a10",
+              "order": "a0010",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24311,7 +24311,7 @@
               "label": "11",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a11",
+              "order": "a0011",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24338,7 +24338,7 @@
               "label": "12",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a12",
+              "order": "a0012",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24365,7 +24365,7 @@
               "label": "13",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a13",
+              "order": "a0013",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24392,7 +24392,7 @@
               "label": "14",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a14",
+              "order": "a0014",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24419,7 +24419,7 @@
               "label": "15",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a15",
+              "order": "a0015",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24446,7 +24446,7 @@
               "label": "16",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a16",
+              "order": "a0016",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24473,7 +24473,7 @@
               "label": "17",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a17",
+              "order": "a0017",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24500,7 +24500,7 @@
               "label": "18",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a18",
+              "order": "a0018",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24527,7 +24527,7 @@
               "label": "19",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a19",
+              "order": "a0019",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24554,7 +24554,7 @@
               "label": "20",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a20",
+              "order": "a0020",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24581,7 +24581,7 @@
               "label": "21",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a21",
+              "order": "a0021",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24608,7 +24608,7 @@
               "label": "22",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a22",
+              "order": "a0022",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24635,7 +24635,7 @@
               "label": "23",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a23",
+              "order": "a0023",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24662,7 +24662,7 @@
               "label": "24",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a24",
+              "order": "a0024",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24689,7 +24689,7 @@
               "label": "25",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a25",
+              "order": "a0025",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24716,7 +24716,7 @@
               "label": "26",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a26",
+              "order": "a0026",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24743,7 +24743,7 @@
               "label": "27",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a27",
+              "order": "a0027",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24770,7 +24770,7 @@
               "label": "28",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a28",
+              "order": "a0028",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24797,7 +24797,7 @@
               "label": "29",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a29",
+              "order": "a0029",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24824,7 +24824,7 @@
               "label": "30",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a30",
+              "order": "a0030",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24851,7 +24851,7 @@
               "label": "31",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a31",
+              "order": "a0031",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24878,7 +24878,7 @@
               "label": "32",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a32",
+              "order": "a0032",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24905,7 +24905,7 @@
               "label": "33",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a33",
+              "order": "a0033",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24932,7 +24932,7 @@
               "label": "34",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a34",
+              "order": "a0034",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24959,7 +24959,7 @@
               "label": "35",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a35",
+              "order": "a0035",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -24986,7 +24986,7 @@
               "label": "36",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a36",
+              "order": "a0036",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -25013,7 +25013,7 @@
               "label": "37",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a37",
+              "order": "a0037",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -25040,7 +25040,7 @@
               "label": "38",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a38",
+              "order": "a0038",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -25067,7 +25067,7 @@
               "label": "39",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a39",
+              "order": "a0039",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -25094,7 +25094,7 @@
               "label": "40",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a40",
+              "order": "a0040",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -25121,7 +25121,7 @@
               "label": "41",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a41",
+              "order": "a0041",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -25148,7 +25148,7 @@
               "label": "42",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a42",
+              "order": "a0042",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -25175,7 +25175,7 @@
               "label": "43",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a43",
+              "order": "a0043",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -25202,7 +25202,7 @@
               "label": "44",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a44",
+              "order": "a0044",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -25229,7 +25229,7 @@
               "label": "45",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a45",
+              "order": "a0045",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -25256,7 +25256,7 @@
               "label": "46",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a46",
+              "order": "a0046",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -25283,7 +25283,7 @@
               "label": "47",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a47",
+              "order": "a0047",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -25310,7 +25310,7 @@
               "label": "48",
               "linkSpeedMbps": 1000,
               "maxConnections": 1,
-              "order": "a48",
+              "order": "a0048",
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
@@ -25337,7 +25337,7 @@
               "label": "SFP28 1",
               "linkSpeedMbps": 25000,
               "maxConnections": 1,
-              "order": "a50",
+              "order": "a0050",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25361,7 +25361,7 @@
               "label": "SFP28 2",
               "linkSpeedMbps": 25000,
               "maxConnections": 1,
-              "order": "a51",
+              "order": "a0051",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25385,7 +25385,7 @@
               "label": "SFP28 3",
               "linkSpeedMbps": 25000,
               "maxConnections": 1,
-              "order": "a52",
+              "order": "a0052",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25409,7 +25409,7 @@
               "label": "SFP28 4",
               "linkSpeedMbps": 25000,
               "maxConnections": 1,
-              "order": "a53",
+              "order": "a0053",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25432,7 +25432,7 @@
               "key": "mgmt.oob",
               "label": "OOB MGMT",
               "maxConnections": 1,
-              "order": "a55",
+              "order": "a0055",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25454,7 +25454,7 @@
               "key": "console",
               "label": "CONSOLE",
               "maxConnections": 1,
-              "order": "a56",
+              "order": "a0056",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25476,7 +25476,7 @@
               "key": "psu.a",
               "label": "PSU A",
               "maxConnections": 1,
-              "order": "a58",
+              "order": "a0058",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25501,7 +25501,7 @@
               "key": "psu.b",
               "label": "PSU B",
               "maxConnections": 1,
-              "order": "a59",
+              "order": "a0059",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25555,7 +25555,7 @@
               "collapseInSymbol": false,
               "key": "front",
               "label": "Front Jacks",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             },
             {
@@ -25563,7 +25563,7 @@
               "collapseInSymbol": false,
               "key": "rear",
               "label": "Rear Punchdown",
-              "order": "a2",
+              "order": "a0002",
               "symbolSide": "left"
             }
           ],
@@ -25716,7 +25716,7 @@
               "key": "front.1",
               "label": "01",
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25738,7 +25738,7 @@
               "key": "rear.1",
               "label": "01",
               "maxConnections": 1,
-              "order": "a3",
+              "order": "a0003",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25760,7 +25760,7 @@
               "key": "front.2",
               "label": "02",
               "maxConnections": 1,
-              "order": "a4",
+              "order": "a0004",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25782,7 +25782,7 @@
               "key": "rear.2",
               "label": "02",
               "maxConnections": 1,
-              "order": "a5",
+              "order": "a0005",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25804,7 +25804,7 @@
               "key": "front.3",
               "label": "03",
               "maxConnections": 1,
-              "order": "a6",
+              "order": "a0006",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25826,7 +25826,7 @@
               "key": "rear.3",
               "label": "03",
               "maxConnections": 1,
-              "order": "a7",
+              "order": "a0007",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25848,7 +25848,7 @@
               "key": "front.4",
               "label": "04",
               "maxConnections": 1,
-              "order": "a8",
+              "order": "a0008",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25870,7 +25870,7 @@
               "key": "rear.4",
               "label": "04",
               "maxConnections": 1,
-              "order": "a9",
+              "order": "a0009",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25892,7 +25892,7 @@
               "key": "front.5",
               "label": "05",
               "maxConnections": 1,
-              "order": "a10",
+              "order": "a0010",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25914,7 +25914,7 @@
               "key": "rear.5",
               "label": "05",
               "maxConnections": 1,
-              "order": "a11",
+              "order": "a0011",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25936,7 +25936,7 @@
               "key": "front.6",
               "label": "06",
               "maxConnections": 1,
-              "order": "a12",
+              "order": "a0012",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25958,7 +25958,7 @@
               "key": "rear.6",
               "label": "06",
               "maxConnections": 1,
-              "order": "a13",
+              "order": "a0013",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -25980,7 +25980,7 @@
               "key": "front.7",
               "label": "07",
               "maxConnections": 1,
-              "order": "a14",
+              "order": "a0014",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26002,7 +26002,7 @@
               "key": "rear.7",
               "label": "07",
               "maxConnections": 1,
-              "order": "a15",
+              "order": "a0015",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26024,7 +26024,7 @@
               "key": "front.8",
               "label": "08",
               "maxConnections": 1,
-              "order": "a16",
+              "order": "a0016",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26046,7 +26046,7 @@
               "key": "rear.8",
               "label": "08",
               "maxConnections": 1,
-              "order": "a17",
+              "order": "a0017",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26068,7 +26068,7 @@
               "key": "front.9",
               "label": "09",
               "maxConnections": 1,
-              "order": "a18",
+              "order": "a0018",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26090,7 +26090,7 @@
               "key": "rear.9",
               "label": "09",
               "maxConnections": 1,
-              "order": "a19",
+              "order": "a0019",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26112,7 +26112,7 @@
               "key": "front.10",
               "label": "10",
               "maxConnections": 1,
-              "order": "a20",
+              "order": "a0020",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26134,7 +26134,7 @@
               "key": "rear.10",
               "label": "10",
               "maxConnections": 1,
-              "order": "a21",
+              "order": "a0021",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26156,7 +26156,7 @@
               "key": "front.11",
               "label": "11",
               "maxConnections": 1,
-              "order": "a22",
+              "order": "a0022",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26178,7 +26178,7 @@
               "key": "rear.11",
               "label": "11",
               "maxConnections": 1,
-              "order": "a23",
+              "order": "a0023",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26200,7 +26200,7 @@
               "key": "front.12",
               "label": "12",
               "maxConnections": 1,
-              "order": "a24",
+              "order": "a0024",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26222,7 +26222,7 @@
               "key": "rear.12",
               "label": "12",
               "maxConnections": 1,
-              "order": "a25",
+              "order": "a0025",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26244,7 +26244,7 @@
               "key": "front.13",
               "label": "13",
               "maxConnections": 1,
-              "order": "a26",
+              "order": "a0026",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26266,7 +26266,7 @@
               "key": "rear.13",
               "label": "13",
               "maxConnections": 1,
-              "order": "a27",
+              "order": "a0027",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26288,7 +26288,7 @@
               "key": "front.14",
               "label": "14",
               "maxConnections": 1,
-              "order": "a28",
+              "order": "a0028",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26310,7 +26310,7 @@
               "key": "rear.14",
               "label": "14",
               "maxConnections": 1,
-              "order": "a29",
+              "order": "a0029",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26332,7 +26332,7 @@
               "key": "front.15",
               "label": "15",
               "maxConnections": 1,
-              "order": "a30",
+              "order": "a0030",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26354,7 +26354,7 @@
               "key": "rear.15",
               "label": "15",
               "maxConnections": 1,
-              "order": "a31",
+              "order": "a0031",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26376,7 +26376,7 @@
               "key": "front.16",
               "label": "16",
               "maxConnections": 1,
-              "order": "a32",
+              "order": "a0032",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26398,7 +26398,7 @@
               "key": "rear.16",
               "label": "16",
               "maxConnections": 1,
-              "order": "a33",
+              "order": "a0033",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26420,7 +26420,7 @@
               "key": "front.17",
               "label": "17",
               "maxConnections": 1,
-              "order": "a34",
+              "order": "a0034",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26442,7 +26442,7 @@
               "key": "rear.17",
               "label": "17",
               "maxConnections": 1,
-              "order": "a35",
+              "order": "a0035",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26464,7 +26464,7 @@
               "key": "front.18",
               "label": "18",
               "maxConnections": 1,
-              "order": "a36",
+              "order": "a0036",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26486,7 +26486,7 @@
               "key": "rear.18",
               "label": "18",
               "maxConnections": 1,
-              "order": "a37",
+              "order": "a0037",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26508,7 +26508,7 @@
               "key": "front.19",
               "label": "19",
               "maxConnections": 1,
-              "order": "a38",
+              "order": "a0038",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26530,7 +26530,7 @@
               "key": "rear.19",
               "label": "19",
               "maxConnections": 1,
-              "order": "a39",
+              "order": "a0039",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26552,7 +26552,7 @@
               "key": "front.20",
               "label": "20",
               "maxConnections": 1,
-              "order": "a40",
+              "order": "a0040",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26574,7 +26574,7 @@
               "key": "rear.20",
               "label": "20",
               "maxConnections": 1,
-              "order": "a41",
+              "order": "a0041",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26596,7 +26596,7 @@
               "key": "front.21",
               "label": "21",
               "maxConnections": 1,
-              "order": "a42",
+              "order": "a0042",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26618,7 +26618,7 @@
               "key": "rear.21",
               "label": "21",
               "maxConnections": 1,
-              "order": "a43",
+              "order": "a0043",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26640,7 +26640,7 @@
               "key": "front.22",
               "label": "22",
               "maxConnections": 1,
-              "order": "a44",
+              "order": "a0044",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26662,7 +26662,7 @@
               "key": "rear.22",
               "label": "22",
               "maxConnections": 1,
-              "order": "a45",
+              "order": "a0045",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26684,7 +26684,7 @@
               "key": "front.23",
               "label": "23",
               "maxConnections": 1,
-              "order": "a46",
+              "order": "a0046",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26706,7 +26706,7 @@
               "key": "rear.23",
               "label": "23",
               "maxConnections": 1,
-              "order": "a47",
+              "order": "a0047",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26728,7 +26728,7 @@
               "key": "front.24",
               "label": "24",
               "maxConnections": 1,
-              "order": "a48",
+              "order": "a0048",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26750,7 +26750,7 @@
               "key": "rear.24",
               "label": "24",
               "maxConnections": 1,
-              "order": "a49",
+              "order": "a0049",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26792,7 +26792,7 @@
               "collapseInSymbol": false,
               "key": "inlet",
               "label": "Inlet",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             },
             {
@@ -26800,7 +26800,7 @@
               "collapseInSymbol": false,
               "key": "seqOutlets",
               "label": "Sequenced Outlets",
-              "order": "a2",
+              "order": "a0002",
               "symbolSide": "left"
             },
             {
@@ -26808,7 +26808,7 @@
               "collapseInSymbol": false,
               "key": "control",
               "label": "Control",
-              "order": "a19",
+              "order": "a0019",
               "symbolSide": "left"
             }
           ],
@@ -26842,7 +26842,7 @@
               "key": "ac.in",
               "label": "AC IN (captive cord)",
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26868,7 +26868,7 @@
               "label": "STEP 1 OUT 1",
               "maxConnections": 1,
               "notes": "Sequence step 1, delay 0 ms",
-              "order": "a3",
+              "order": "a0003",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26894,7 +26894,7 @@
               "label": "STEP 1 OUT 2",
               "maxConnections": 1,
               "notes": "Sequence step 1, delay 0 ms",
-              "order": "a4",
+              "order": "a0004",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26920,7 +26920,7 @@
               "label": "STEP 1 OUT 3",
               "maxConnections": 1,
               "notes": "Sequence step 1, delay 0 ms",
-              "order": "a5",
+              "order": "a0005",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26946,7 +26946,7 @@
               "label": "STEP 1 OUT 4",
               "maxConnections": 1,
               "notes": "Sequence step 1, delay 0 ms",
-              "order": "a6",
+              "order": "a0006",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26972,7 +26972,7 @@
               "label": "STEP 2 OUT 1",
               "maxConnections": 1,
               "notes": "Sequence step 2, delay 1000 ms",
-              "order": "a7",
+              "order": "a0007",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -26998,7 +26998,7 @@
               "label": "STEP 2 OUT 2",
               "maxConnections": 1,
               "notes": "Sequence step 2, delay 1000 ms",
-              "order": "a8",
+              "order": "a0008",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27024,7 +27024,7 @@
               "label": "STEP 2 OUT 3",
               "maxConnections": 1,
               "notes": "Sequence step 2, delay 1000 ms",
-              "order": "a9",
+              "order": "a0009",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27050,7 +27050,7 @@
               "label": "STEP 2 OUT 4",
               "maxConnections": 1,
               "notes": "Sequence step 2, delay 1000 ms",
-              "order": "a10",
+              "order": "a0010",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27076,7 +27076,7 @@
               "label": "STEP 3 OUT 1",
               "maxConnections": 1,
               "notes": "Sequence step 3, delay 2000 ms",
-              "order": "a11",
+              "order": "a0011",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27102,7 +27102,7 @@
               "label": "STEP 3 OUT 2",
               "maxConnections": 1,
               "notes": "Sequence step 3, delay 2000 ms",
-              "order": "a12",
+              "order": "a0012",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27128,7 +27128,7 @@
               "label": "STEP 3 OUT 3",
               "maxConnections": 1,
               "notes": "Sequence step 3, delay 2000 ms",
-              "order": "a13",
+              "order": "a0013",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27154,7 +27154,7 @@
               "label": "STEP 3 OUT 4",
               "maxConnections": 1,
               "notes": "Sequence step 3, delay 2000 ms",
-              "order": "a14",
+              "order": "a0014",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27180,7 +27180,7 @@
               "label": "STEP 4 OUT 1",
               "maxConnections": 1,
               "notes": "Sequence step 4, delay 3000 ms",
-              "order": "a15",
+              "order": "a0015",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27206,7 +27206,7 @@
               "label": "STEP 4 OUT 2",
               "maxConnections": 1,
               "notes": "Sequence step 4, delay 3000 ms",
-              "order": "a16",
+              "order": "a0016",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27232,7 +27232,7 @@
               "label": "STEP 4 OUT 3",
               "maxConnections": 1,
               "notes": "Sequence step 4, delay 3000 ms",
-              "order": "a17",
+              "order": "a0017",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27258,7 +27258,7 @@
               "label": "STEP 4 OUT 4",
               "maxConnections": 1,
               "notes": "Sequence step 4, delay 3000 ms",
-              "order": "a18",
+              "order": "a0018",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27283,7 +27283,7 @@
               "key": "remote.on",
               "label": "REMOTE ON",
               "maxConnections": 1,
-              "order": "a20",
+              "order": "a0020",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27306,7 +27306,7 @@
               "label": "TRIGGER IN",
               "maxConnections": 1,
               "maxCurrentMa": 100,
-              "order": "a21",
+              "order": "a0021",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27329,7 +27329,7 @@
               "label": "TRIGGER OUT",
               "maxConnections": 1,
               "maxCurrentMa": 100,
-              "order": "a22",
+              "order": "a0022",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27351,7 +27351,7 @@
               "key": "lan",
               "label": "LAN",
               "maxConnections": 1,
-              "order": "a23",
+              "order": "a0023",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27373,7 +27373,7 @@
               "key": "rs232",
               "label": "RS-232",
               "maxConnections": 1,
-              "order": "a24",
+              "order": "a0024",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27423,7 +27423,7 @@
               "collapseInSymbol": false,
               "key": "rf",
               "label": "RF",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             },
             {
@@ -27431,7 +27431,7 @@
               "collapseInSymbol": false,
               "key": "video",
               "label": "Video",
-              "order": "a3",
+              "order": "a0003",
               "symbolSide": "left"
             },
             {
@@ -27439,7 +27439,7 @@
               "collapseInSymbol": false,
               "key": "audio",
               "label": "Audio",
-              "order": "a5",
+              "order": "a0005",
               "symbolSide": "left"
             },
             {
@@ -27447,7 +27447,7 @@
               "collapseInSymbol": false,
               "key": "control",
               "label": "Control",
-              "order": "a10",
+              "order": "a0010",
               "symbolSide": "left"
             },
             {
@@ -27455,7 +27455,7 @@
               "collapseInSymbol": false,
               "key": "power",
               "label": "Power",
-              "order": "a14",
+              "order": "a0014",
               "symbolSide": "left"
             }
           ],
@@ -27496,7 +27496,7 @@
               "key": "rf.in",
               "label": "RF IN",
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27519,7 +27519,7 @@
               "key": "rf.loop",
               "label": "RF OUT (loop)",
               "maxConnections": 1,
-              "order": "a2",
+              "order": "a0002",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27541,7 +27541,7 @@
               "key": "hdmi.out",
               "label": "HDMI OUT",
               "maxConnections": 1,
-              "order": "a4",
+              "order": "a0004",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27563,7 +27563,7 @@
               "key": "audio.l",
               "label": "AUDIO OUT L",
               "maxConnections": 1,
-              "order": "a6",
+              "order": "a0006",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27587,7 +27587,7 @@
               "key": "audio.r",
               "label": "AUDIO OUT R",
               "maxConnections": 1,
-              "order": "a7",
+              "order": "a0007",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27612,7 +27612,7 @@
               "key": "coax.digital",
               "label": "COAX DIGITAL",
               "maxConnections": 1,
-              "order": "a8",
+              "order": "a0008",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27634,7 +27634,7 @@
               "key": "optical",
               "label": "OPTICAL",
               "maxConnections": 1,
-              "order": "a9",
+              "order": "a0009",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27656,7 +27656,7 @@
               "key": "lan",
               "label": "LAN",
               "maxConnections": 1,
-              "order": "a11",
+              "order": "a0011",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27678,7 +27678,7 @@
               "key": "usb",
               "label": "USB",
               "maxConnections": 1,
-              "order": "a12",
+              "order": "a0012",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27700,7 +27700,7 @@
               "key": "ir.in",
               "label": "IR IN",
               "maxConnections": 1,
-              "order": "a13",
+              "order": "a0013",
               "pinoutVariant": "xantech-stereo",
               "position": {
                 "ruOffset": 0,
@@ -27723,7 +27723,7 @@
               "key": "ac.in",
               "label": "AC (captive cord)",
               "maxConnections": 1,
-              "order": "a15",
+              "order": "a0015",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27776,7 +27776,7 @@
               "collapseInSymbol": false,
               "key": "hdmiIn",
               "label": "HDMI Inputs",
-              "order": "a0",
+              "order": "a0000",
               "symbolSide": "left"
             },
             {
@@ -27784,7 +27784,7 @@
               "collapseInSymbol": false,
               "key": "hdmiOut",
               "label": "HDMI Outputs",
-              "order": "a17",
+              "order": "a0017",
               "symbolSide": "left"
             },
             {
@@ -27792,7 +27792,7 @@
               "collapseInSymbol": false,
               "key": "audOut",
               "label": "De-embedded Audio",
-              "order": "a34",
+              "order": "a0034",
               "symbolSide": "left"
             },
             {
@@ -27800,7 +27800,7 @@
               "collapseInSymbol": false,
               "key": "control",
               "label": "Control",
-              "order": "a51",
+              "order": "a0051",
               "symbolSide": "left"
             },
             {
@@ -27808,7 +27808,7 @@
               "collapseInSymbol": false,
               "key": "power",
               "label": "Power",
-              "order": "a55",
+              "order": "a0055",
               "symbolSide": "left"
             }
           ],
@@ -27842,7 +27842,7 @@
               "key": "hdmi.in.1",
               "label": "HDMI IN 01",
               "maxConnections": 1,
-              "order": "a1",
+              "order": "a0001",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27864,7 +27864,7 @@
               "key": "hdmi.in.2",
               "label": "HDMI IN 02",
               "maxConnections": 1,
-              "order": "a2",
+              "order": "a0002",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27886,7 +27886,7 @@
               "key": "hdmi.in.3",
               "label": "HDMI IN 03",
               "maxConnections": 1,
-              "order": "a3",
+              "order": "a0003",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27908,7 +27908,7 @@
               "key": "hdmi.in.4",
               "label": "HDMI IN 04",
               "maxConnections": 1,
-              "order": "a4",
+              "order": "a0004",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27930,7 +27930,7 @@
               "key": "hdmi.in.5",
               "label": "HDMI IN 05",
               "maxConnections": 1,
-              "order": "a5",
+              "order": "a0005",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27952,7 +27952,7 @@
               "key": "hdmi.in.6",
               "label": "HDMI IN 06",
               "maxConnections": 1,
-              "order": "a6",
+              "order": "a0006",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27974,7 +27974,7 @@
               "key": "hdmi.in.7",
               "label": "HDMI IN 07",
               "maxConnections": 1,
-              "order": "a7",
+              "order": "a0007",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -27996,7 +27996,7 @@
               "key": "hdmi.in.8",
               "label": "HDMI IN 08",
               "maxConnections": 1,
-              "order": "a8",
+              "order": "a0008",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28018,7 +28018,7 @@
               "key": "hdmi.in.9",
               "label": "HDMI IN 09",
               "maxConnections": 1,
-              "order": "a9",
+              "order": "a0009",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28040,7 +28040,7 @@
               "key": "hdmi.in.10",
               "label": "HDMI IN 10",
               "maxConnections": 1,
-              "order": "a10",
+              "order": "a0010",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28062,7 +28062,7 @@
               "key": "hdmi.in.11",
               "label": "HDMI IN 11",
               "maxConnections": 1,
-              "order": "a11",
+              "order": "a0011",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28084,7 +28084,7 @@
               "key": "hdmi.in.12",
               "label": "HDMI IN 12",
               "maxConnections": 1,
-              "order": "a12",
+              "order": "a0012",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28106,7 +28106,7 @@
               "key": "hdmi.in.13",
               "label": "HDMI IN 13",
               "maxConnections": 1,
-              "order": "a13",
+              "order": "a0013",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28128,7 +28128,7 @@
               "key": "hdmi.in.14",
               "label": "HDMI IN 14",
               "maxConnections": 1,
-              "order": "a14",
+              "order": "a0014",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28150,7 +28150,7 @@
               "key": "hdmi.in.15",
               "label": "HDMI IN 15",
               "maxConnections": 1,
-              "order": "a15",
+              "order": "a0015",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28172,7 +28172,7 @@
               "key": "hdmi.in.16",
               "label": "HDMI IN 16",
               "maxConnections": 1,
-              "order": "a16",
+              "order": "a0016",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28194,7 +28194,7 @@
               "key": "hdmi.out.1",
               "label": "HDMI OUT 01",
               "maxConnections": 1,
-              "order": "a18",
+              "order": "a0018",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28216,7 +28216,7 @@
               "key": "hdmi.out.2",
               "label": "HDMI OUT 02",
               "maxConnections": 1,
-              "order": "a19",
+              "order": "a0019",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28238,7 +28238,7 @@
               "key": "hdmi.out.3",
               "label": "HDMI OUT 03",
               "maxConnections": 1,
-              "order": "a20",
+              "order": "a0020",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28260,7 +28260,7 @@
               "key": "hdmi.out.4",
               "label": "HDMI OUT 04",
               "maxConnections": 1,
-              "order": "a21",
+              "order": "a0021",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28282,7 +28282,7 @@
               "key": "hdmi.out.5",
               "label": "HDMI OUT 05",
               "maxConnections": 1,
-              "order": "a22",
+              "order": "a0022",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28304,7 +28304,7 @@
               "key": "hdmi.out.6",
               "label": "HDMI OUT 06",
               "maxConnections": 1,
-              "order": "a23",
+              "order": "a0023",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28326,7 +28326,7 @@
               "key": "hdmi.out.7",
               "label": "HDMI OUT 07",
               "maxConnections": 1,
-              "order": "a24",
+              "order": "a0024",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28348,7 +28348,7 @@
               "key": "hdmi.out.8",
               "label": "HDMI OUT 08",
               "maxConnections": 1,
-              "order": "a25",
+              "order": "a0025",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28370,7 +28370,7 @@
               "key": "hdmi.out.9",
               "label": "HDMI OUT 09",
               "maxConnections": 1,
-              "order": "a26",
+              "order": "a0026",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28392,7 +28392,7 @@
               "key": "hdmi.out.10",
               "label": "HDMI OUT 10",
               "maxConnections": 1,
-              "order": "a27",
+              "order": "a0027",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28414,7 +28414,7 @@
               "key": "hdmi.out.11",
               "label": "HDMI OUT 11",
               "maxConnections": 1,
-              "order": "a28",
+              "order": "a0028",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28436,7 +28436,7 @@
               "key": "hdmi.out.12",
               "label": "HDMI OUT 12",
               "maxConnections": 1,
-              "order": "a29",
+              "order": "a0029",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28458,7 +28458,7 @@
               "key": "hdmi.out.13",
               "label": "HDMI OUT 13",
               "maxConnections": 1,
-              "order": "a30",
+              "order": "a0030",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28480,7 +28480,7 @@
               "key": "hdmi.out.14",
               "label": "HDMI OUT 14",
               "maxConnections": 1,
-              "order": "a31",
+              "order": "a0031",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28502,7 +28502,7 @@
               "key": "hdmi.out.15",
               "label": "HDMI OUT 15",
               "maxConnections": 1,
-              "order": "a32",
+              "order": "a0032",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28524,7 +28524,7 @@
               "key": "hdmi.out.16",
               "label": "HDMI OUT 16",
               "maxConnections": 1,
-              "order": "a33",
+              "order": "a0033",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28547,7 +28547,7 @@
               "key": "aud.out.1",
               "label": "AUD OUT 01",
               "maxConnections": 1,
-              "order": "a35",
+              "order": "a0035",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28570,7 +28570,7 @@
               "key": "aud.out.2",
               "label": "AUD OUT 02",
               "maxConnections": 1,
-              "order": "a36",
+              "order": "a0036",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28593,7 +28593,7 @@
               "key": "aud.out.3",
               "label": "AUD OUT 03",
               "maxConnections": 1,
-              "order": "a37",
+              "order": "a0037",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28616,7 +28616,7 @@
               "key": "aud.out.4",
               "label": "AUD OUT 04",
               "maxConnections": 1,
-              "order": "a38",
+              "order": "a0038",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28639,7 +28639,7 @@
               "key": "aud.out.5",
               "label": "AUD OUT 05",
               "maxConnections": 1,
-              "order": "a39",
+              "order": "a0039",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28662,7 +28662,7 @@
               "key": "aud.out.6",
               "label": "AUD OUT 06",
               "maxConnections": 1,
-              "order": "a40",
+              "order": "a0040",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28685,7 +28685,7 @@
               "key": "aud.out.7",
               "label": "AUD OUT 07",
               "maxConnections": 1,
-              "order": "a41",
+              "order": "a0041",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28708,7 +28708,7 @@
               "key": "aud.out.8",
               "label": "AUD OUT 08",
               "maxConnections": 1,
-              "order": "a42",
+              "order": "a0042",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28731,7 +28731,7 @@
               "key": "aud.out.9",
               "label": "AUD OUT 09",
               "maxConnections": 1,
-              "order": "a43",
+              "order": "a0043",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28754,7 +28754,7 @@
               "key": "aud.out.10",
               "label": "AUD OUT 10",
               "maxConnections": 1,
-              "order": "a44",
+              "order": "a0044",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28777,7 +28777,7 @@
               "key": "aud.out.11",
               "label": "AUD OUT 11",
               "maxConnections": 1,
-              "order": "a45",
+              "order": "a0045",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28800,7 +28800,7 @@
               "key": "aud.out.12",
               "label": "AUD OUT 12",
               "maxConnections": 1,
-              "order": "a46",
+              "order": "a0046",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28823,7 +28823,7 @@
               "key": "aud.out.13",
               "label": "AUD OUT 13",
               "maxConnections": 1,
-              "order": "a47",
+              "order": "a0047",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28846,7 +28846,7 @@
               "key": "aud.out.14",
               "label": "AUD OUT 14",
               "maxConnections": 1,
-              "order": "a48",
+              "order": "a0048",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28869,7 +28869,7 @@
               "key": "aud.out.15",
               "label": "AUD OUT 15",
               "maxConnections": 1,
-              "order": "a49",
+              "order": "a0049",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28892,7 +28892,7 @@
               "key": "aud.out.16",
               "label": "AUD OUT 16",
               "maxConnections": 1,
-              "order": "a50",
+              "order": "a0050",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28914,7 +28914,7 @@
               "key": "lan",
               "label": "LAN",
               "maxConnections": 1,
-              "order": "a52",
+              "order": "a0052",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28936,7 +28936,7 @@
               "key": "rs232",
               "label": "RS-232",
               "maxConnections": 1,
-              "order": "a53",
+              "order": "a0053",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
@@ -28958,7 +28958,7 @@
               "key": "ir.in",
               "label": "IR IN",
               "maxConnections": 1,
-              "order": "a54",
+              "order": "a0054",
               "pinoutVariant": "xantech-stereo",
               "position": {
                 "ruOffset": 0,
@@ -28981,7 +28981,7 @@
               "key": "ac.in",
               "label": "AC IN",
               "maxConnections": 1,
-              "order": "a56",
+              "order": "a0056",
               "position": {
                 "ruOffset": 0,
                 "xFineNm": 0,
