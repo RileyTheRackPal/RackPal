@@ -43,7 +43,11 @@
 /// `Conductor`, two `PortEndpoint`s and one `Net`, materialising either
 /// pin the document does not hold yet (DR-011.1) and removing on revert
 /// exactly what it added. The six tier-2 spring-back rules stay deferred
-/// to M5.
+/// to M5. Its last phase adds `derived/port_fill.dart`, which is the
+/// arithmetic behind CR-105's elevation chip — how many of a device's
+/// declared pins carry a conductor — computed here rather than in the
+/// screen because a signpost that disagreed with the schedule would be
+/// worse than no signpost.
 library;
 
 export 'src/catalog/rack_presets.dart';
@@ -76,6 +80,7 @@ export 'src/derived/endpoint_resolution.dart';
 export 'src/derived/equipment_list.dart';
 export 'src/derived/jacket_color_resolution.dart';
 export 'src/derived/link_class.dart';
+export 'src/derived/port_fill.dart';
 export 'src/derived/port_set_resolution.dart';
 export 'src/derived/schedule.dart';
 export 'src/derived/totals.dart';
