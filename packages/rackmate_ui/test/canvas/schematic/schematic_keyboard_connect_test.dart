@@ -605,4 +605,220 @@ void main() {
       expect(doc.links, hasLength(links));
     });
   });
+
+  group('7 — what a SCREEN READER actually hears', () {
+    /// Every `SemanticsService.announce` this screen makes, in order.
+    ///
+    /// M2-F's clause is "works end to end WITH SCREEN-READER
+    /// ANNOUNCEMENTS", and `find.text` cannot measure that: the status
+    /// line shows the LAST message, while a screen reader hears EVERY
+    /// one. A message that is instantly overwritten on screen is still
+    /// spoken in full.
+    List<String> spoken(WidgetTester tester) {
+      final out = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockDecodedMessageHandler<
+        Object?
+      >(SystemChannels.accessibility, (message) async {
+        if (message is Map && message['type'] == 'announce') {
+          final data = message['data'] as Map?;
+          final text = data?['message'];
+          if (text is String) out.add(text);
+        }
+        return null;
+      });
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger
+            .setMockDecodedMessageHandler<Object?>(
+              SystemChannels.accessibility,
+              null,
+            ),
+      );
+      return out;
+    }
+
+    testWidgets('a successful commit is announced ONCE, and never as a '
+        'cancellation', (tester) async {
+      await pump(tester);
+      await caretOnto(tester, 'MTX-1');
+      await press(tester, LogicalKeyboardKey.keyW);
+
+      final heard = spoken(tester);
+      await press(tester, LogicalKeyboardKey.tab);
+      await press(tester, LogicalKeyboardKey.enter);
+
+      expect(doc.links, hasLength(6), reason: 'the premise: it committed');
+      expect(
+        heard.where((s) => s.contains('cancelled')),
+        isEmpty,
+        reason: "the commit's OWN document change must not be reported to "
+            'the user as the edit that cancelled their wire — they are '
+            'told it succeeded and, one message earlier, that it was '
+            'thrown away',
+      );
+      expect(heard.where((s) => s.contains('connected')), hasLength(1));
+    });
+
+    testWidgets('a cancellation caused by SOMEBODY ELSE is still '
+        'announced', (tester) async {
+      // The other half, and the reason the fix is a latch rather than
+      // deleting the teardown message: an edit from another view really
+      // does invalidate the wire, and saying nothing would be the silent
+      // no-op docs/04 §3.4 forbids.
+      await pump(tester);
+      await caretOnto(tester, 'MTX-1');
+      await press(tester, LogicalKeyboardKey.keyW);
+
+      final heard = spoken(tester);
+      controller.run(RemoveDeviceCommand(id: deviceNamed(doc, 'SW-1').id));
+      await tester.pumpAndSettle();
+
+      expect(heard.where((s) => s.contains('cancelled')), hasLength(1));
+    });
+  });
+
+  group('8 — chain-draw (docs/05:482, DR-012.1)', () {
+    /// Commits with `Shift` held — docs/05:483's "Shift held at commit".
+    /// A SEPARATE keymap row from bare Enter, because `SingleActivator`
+    /// matches modifiers exactly and the bare row would not fire.
+    Future<void> chainCommit(WidgetTester tester) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pumpAndSettle();
+    }
+
+    /// Tabs through the candidate ring until the live resolution line
+    /// names [designator] as the TARGET.
+    ///
+    /// Needed because "which pin is candidate #1" is a property of the
+    /// fixture's layout, and the first draft of these tests aimed at
+    /// whatever came first — which was SW-1, a network switch with no
+    /// HDMI output, so every chain correctly ENDED and no test ever
+    /// exercised one continuing.
+    Future<bool> tabUntilTarget(
+      WidgetTester tester,
+      String designator,
+    ) async {
+      for (var i = 0; i < 60; i++) {
+        await press(tester, LogicalKeyboardKey.tab);
+        final now = statusOf(tester);
+        if (now != null && now.contains('→ $designator')) return true;
+      }
+      return false;
+    }
+
+    testWidgets('Shift at commit RE-ARMS from the sink device, so the next '
+        'cable needs no W at all', (tester) async {
+      // "ATV-1 -> MTX-1 IN1, MTX-1 OUT1 -> DA-1 IN, DA-1 OUT1 -> TV is
+      // three gestures with no round trip through IDLE" (docs/05:482). The
+      // assertion is that the SECOND cable commits without pressing W.
+      await pump(tester);
+      await caretOnto(tester, 'MTX-1');
+      await press(tester, LogicalKeyboardKey.keyW);
+      // AIMED AT MTX-1 ITSELF, deliberately. A chain can only continue
+      // where the SINK has a free output of the same family, and on this
+      // fixture the matrix is the device that does — a loopback between
+      // two of its own jacks is legal (only pin-to-ITSELF is not) and is
+      // the deterministic way to reach a sink that chains.
+      expect(await tabUntilTarget(tester, 'MTX-1'), isTrue);
+      await chainCommit(tester);
+
+      expect(doc.links, hasLength(6), reason: 'the first cable landed');
+      expect(
+        statusOf(tester),
+        contains('Chained'),
+        reason: 'and the same sentence says the gesture continued',
+      );
+
+      // NO `W`. Straight to choosing and committing again.
+      await press(tester, LogicalKeyboardKey.tab);
+      await press(tester, LogicalKeyboardKey.enter);
+      expect(
+        doc.links,
+        hasLength(7),
+        reason: 'the second cable was drawn without re-arming by hand — '
+            'which is the whole of the gesture',
+      );
+    });
+
+    testWidgets('a PLAIN commit does not chain, so Shift is what asks for '
+        'it', (tester) async {
+      await pump(tester);
+      await caretOnto(tester, 'MTX-1');
+      await press(tester, LogicalKeyboardKey.keyW);
+      await press(tester, LogicalKeyboardKey.tab);
+      await press(tester, LogicalKeyboardKey.enter);
+
+      expect(statusOf(tester), isNot(contains('Chained')));
+      await press(tester, LogicalKeyboardKey.enter);
+      expect(doc.links, hasLength(6), reason: 'nothing was armed to commit');
+    });
+
+    testWidgets('the re-arm is on the device the cable just REACHED', (
+      tester,
+    ) async {
+      await pump(tester);
+      await caretOnto(tester, 'MTX-1');
+      await press(tester, LogicalKeyboardKey.keyW);
+      expect(await tabUntilTarget(tester, 'MTX-1'), isTrue);
+
+      final aimed = statusOf(tester)!;
+      final sink = aimed.split('→').last.trim().split(' ').first;
+      await chainCommit(tester);
+      final said = statusOf(tester)!;
+
+      expect(said, contains('Chained'));
+      expect(
+        said.substring(said.indexOf('Chained')),
+        contains(sink),
+        reason: 'chain-draw re-arms from the SINK, which is what makes a '
+            'chain a chain rather than a repeat',
+      );
+    });
+
+    testWidgets('a chained commit is ONE announcement, not three', (
+      tester,
+    ) async {
+      // The commit, the teardown and the re-arm are three internal events
+      // and ONE user action. `_committingWire` suppresses the teardown's
+      // message and `announce: false` suppresses the re-arm's, leaving a
+      // single sentence that covers all of it.
+      final heard = <String>[];
+      tester.binding.defaultBinaryMessenger
+          .setMockDecodedMessageHandler<Object?>(SystemChannels.accessibility, (
+            message,
+          ) async {
+            if (message is Map && message['type'] == 'announce') {
+              final data = message['data'] as Map?;
+              final text = data?['message'];
+              if (text is String) heard.add(text);
+            }
+            return null;
+          });
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger
+            .setMockDecodedMessageHandler<Object?>(
+              SystemChannels.accessibility,
+              null,
+            ),
+      );
+
+      await pump(tester);
+      await caretOnto(tester, 'MTX-1');
+      await press(tester, LogicalKeyboardKey.keyW);
+      await press(tester, LogicalKeyboardKey.tab);
+      heard.clear();
+      await chainCommit(tester);
+      // Either outcome is one sentence; which one depends on the sink.
+
+      expect(heard, hasLength(1));
+      expect(heard.single, contains('connected'));
+      expect(
+        heard.single,
+        anyOf(contains('Chained'), contains('chain ends')),
+      );
+      expect(heard.single, isNot(contains('cancelled')));
+    });
+  });
 }

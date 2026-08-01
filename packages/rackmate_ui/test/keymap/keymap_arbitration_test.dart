@@ -116,17 +116,24 @@ void main() {
       //     `Esc` to the same meaning and each supplies only its own
       //     conservative return value.
       //
-      // M2-F ADDS EIGHT SCHEMATIC ROWS, and they are not an extraction —
+      // M2-F ADDS NINE SCHEMATIC ROWS, and they are not an extraction —
       // they are docs/05 §7's keyboard route, which had no bindings at all
       // because nothing could create a connection. `W` to arm, `Enter` to
-      // commit, `Tab`/`Shift+Tab` to cycle candidates, and four arrows to
-      // move the pin caret. DR-011's "the order that matters" is why they
-      // arrive with the gesture rather than after it.
+      // commit, `Shift+Enter` to commit AND chain, `Tab`/`Shift+Tab` to
+      // cycle candidates, and four arrows to move the pin caret. DR-011's
+      // "the order that matters" is why they arrive with the gesture
+      // rather than after it.
+      //
+      // `Shift+Enter` is a SEPARATE ROW carrying the same intent and the
+      // same label as bare `Enter`, and that is a fact about
+      // `SingleActivator` rather than a second meaning: it matches
+      // modifiers exactly, so docs/05:483's "Shift held at commit" would
+      // do nothing at all without a row of its own.
       expect(keyBindingsIn(KeyScope.global), hasLength(7));
       expect(keyBindingsIn(KeyScope.rack), hasLength(16));
-      expect(keyBindingsIn(KeyScope.schematic), hasLength(19));
+      expect(keyBindingsIn(KeyScope.schematic), hasLength(20));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(43));
+      expect(kKeymap, hasLength(44));
     });
   });
 

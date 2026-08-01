@@ -172,6 +172,7 @@ enum KeyBindingId {
   schematicCancel,
   beginWire,
   commitWire,
+  commitWireChained,
   nextCandidatePin,
   previousCandidatePin,
   pinCaretUp,
@@ -966,6 +967,27 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         "ONE LABEL WITH THE RACK'S applyCompaction, per DR-011.6. Two "
         'intents because two surfaces handle it; one label because it is '
         'one meaning, and meaningDrift is what fails if either moves.',
+  ),
+  // CHAIN-DRAW NEEDS ITS OWN ROW, and that is a fact about
+  // `SingleActivator` rather than a second meaning. It matches modifiers
+  // EXACTLY, so the bare `Enter` above does not fire while `Shift` is
+  // held — docs/05:483's "Shift held at commit" would simply do nothing
+  // without this row. Same intent, same handler, same label; the screen
+  // reads the live modifier to decide whether to re-arm.
+  KeyBinding(
+    id: KeyBindingId.commitWireChained,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.enter,
+    shift: true,
+    label: 'Commit what is in flight',
+    intent: CommitWireIntent(),
+    source: 'docs/05 §7 · §14 · canon §11.12.1',
+    note:
+        'Shift+Enter is the keyboard half of chain-draw: commit, then '
+        're-arm from the sink device’s matching output (DR-012.1). It '
+        'carries the SAME label and intent as the bare Enter row, because '
+        'it is the same meaning with a modifier that changes what happens '
+        'after — not a second key.',
   ),
   KeyBinding(
     id: KeyBindingId.nextCandidatePin,

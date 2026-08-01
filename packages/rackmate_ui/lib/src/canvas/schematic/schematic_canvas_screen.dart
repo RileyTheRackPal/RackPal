@@ -409,6 +409,16 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// cache correct.
   List<PinRef> _candidates = const <PinRef>[];
 
+  /// The candidates that carry the SOURCE PIN'S OWN FAMILY — DR-012.3's
+  /// magnet preference, as a set the snap can test in O(1).
+  ///
+  /// A SUBSET OF [_candidates], never a second list of pins: everything in
+  /// here is already legal, and the family only decides which of two legal
+  /// pins the band reaches for. That distinction is the whole of DR-012.5 —
+  /// this is an ordering heuristic, not `SIG-001`, and the tier-2 rules
+  /// that WOULD refuse an incompatible pair do not exist until M5.
+  Set<PinRef> _preferred = const <PinRef>{};
+
   /// Where a POINTER drag's band currently ends when the magnet has not
   /// caught a pin — the raw cursor, in scene space. Null whenever
   /// [_pinCaret] is the band's target, which is always true of the
@@ -452,6 +462,36 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// cleared where it is used.
   Map<Uuid, Pt> _heldPositions = const <Uuid, Pt>{};
   bool _holdLayoutOnNextBuild = false;
+
+  /// True only while THIS screen's own connect command is being applied.
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// A GESTURE'S OWN COMMIT IS NOT AN EDIT THAT INVALIDATED IT
+  /// ═════════════════════════════════════════════════════════════════
+  /// `controller.run` bumps the epochs synchronously, so
+  /// `_onDocumentChanged` — and with it [_invalidateLivePreviews] — runs
+  /// INSIDE the commit, while `_wireFrom` is still set. The teardown
+  /// therefore fired on every successful cable and announced "Wire
+  /// cancelled — the document changed" a beat before "W006 connected …".
+  ///
+  /// IT WAS INVISIBLE TO EVERY `find.text` ASSERTION, because the status
+  /// LINE shows only the last message while a screen READER hears both.
+  /// It shipped in Phase 2B and was caught by a test that intercepts
+  /// `SystemChannels.accessibility` — the population docs/05 §7's keyboard
+  /// path exists for is exactly the one that was being told its work had
+  /// been thrown away.
+  ///
+  /// The rack states the same rule for the same reason
+  /// (`rack_canvas_screen.dart`'s `_dragCommitting`): "the stale-state
+  /// guard must not read a gesture's own successful commit as the edit
+  /// that invalidated it". `try`/`finally` for its reason too — a command
+  /// that throws must not leave the latch stuck true and the teardown
+  /// permanently off.
+  ///
+  /// SCOPED TO THE WIRE LIMB ALONE. An edit from anywhere else must still
+  /// tear the gesture down and say so; that is not a nicety, it is what
+  /// makes the cached `_candidates` correct.
+  bool _committingWire = false;
 
   RackDocument get _doc => widget.controller.doc;
 
@@ -619,9 +659,14 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     // against the new document would silently continue a gesture whose
     // premise — "these are the pins you may land on" — the user was shown
     // and can no longer trust.
-    if (_wireFrom != null) {
+    // ...UNLESS THIS SCREEN IS THE ONE EDITING. See [_committingWire]: a
+    // cable's own commit reaches here before the gesture has been cleared,
+    // and reporting that as "the document changed under you" is both wrong
+    // and, to a screen reader, the last thing said before the success.
+    if (_wireFrom != null && !_committingWire) {
       _wireFrom = null;
       _candidates = const <PinRef>[];
+      _preferred = const <PinRef>{};
       what ??= 'Wire';
     }
     // A caret over a pin that has gone. ASKED OF THE DOCUMENT, NOT OF THE
@@ -1164,12 +1209,12 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// when there is none.
   ///
   /// Returns whether a wire is now in flight.
-  bool _armWireFrom(PinRef caret) {
+  bool _armWireFrom(PinRef caret, {bool announce = true}) {
     final scene = _scene;
     if (scene == null) return false;
     final from = _targetFor(caret);
     if (from == null) {
-      _status.show('That pin is no longer in this document.');
+      if (announce) _status.show('That pin is no longer in this document.');
       return false;
     }
 
@@ -1181,13 +1226,23 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     // an HDMI output into an RJ45 jack — is therefore a candidate here,
     // and that is correct for M2: G2 and CR-017 rule that a model which
     // cannot draw a mistake cannot document reality.
+    //
+    // AND THE SAME WALK COMPUTES DR-012.3's PREFERRED SET, because the
+    // question — does this pin carry the source's family? — needs
+    // `ConnectTarget.acceptsFamily`, which reads `PortDef.acceptedFamilies`
+    // and therefore needs the DOCUMENT. `SymbolPort` carries only the
+    // declared `family`, so the magnet could not answer it from the scene.
+    // Computed once here for the same reason the candidates are: it is
+    // O(pins x links) and the document cannot move while the wire is armed.
     final candidates = <PinRef>[];
+    final preferred = <PinRef>{};
     for (final pin in locatePins(scene)) {
       if (pin.ref == caret) continue;
       final to = _targetFor(pin.ref);
       if (to == null) continue;
       if (evaluateConnect(_doc, from, to) is ConnectAllowed) {
         candidates.add(pin.ref);
+        if (to.acceptsFamily(from.signalFamily)) preferred.add(pin.ref);
       }
     }
 
@@ -1195,21 +1250,31 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       // ARMING WITH NOTHING TO AIM AT IS A MODE WITH NO EXIT BUT `Esc`.
       // Refused, with the reason, rather than entered — and the sentence
       // names the pin, per DR-011.5's rule for refusals.
-      _status.show(
-        'No pin on this sheet can take a cable from ${_saying(caret)}.',
-      );
+      if (announce) {
+        _status.show(
+          'No pin on this sheet can take a cable from ${_saying(caret)}.',
+        );
+      }
       return false;
     }
 
     setState(() {
       _wireFrom = caret;
       _candidates = List<PinRef>.unmodifiable(candidates);
+      _preferred = Set<PinRef>.unmodifiable(preferred);
     });
-    _status.show(
-      'Wire from ${_saying(caret)} — ${candidates.length} '
-      '${candidates.length == 1 ? 'pin' : 'pins'} can take it. '
-      'Drag or Tab to choose, release or Enter to commit, Esc to cancel.',
-    );
+    // SILENT WHEN A CHAIN RE-ARMS IT. The chain composes ONE sentence
+    // covering the commit and the re-arm; announcing here as well would
+    // put two messages on the accessibility channel for one keystroke —
+    // the same defect [_committingWire] exists to stop, arriving through
+    // the other door.
+    if (announce) {
+      _status.show(
+        'Wire from ${_saying(caret)} — ${candidates.length} '
+        '${candidates.length == 1 ? 'pin' : 'pins'} can take it. '
+        'Drag or Tab to choose, release or Enter to commit, Esc to cancel.',
+      );
+    }
     return true;
   }
 
@@ -1310,6 +1375,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       scenePoint,
       tolerance: _snapTolerance(scene),
       among: _candidates,
+      preferred: _preferred,
     );
     if (snapped?.ref == _pinCaret && _freeEnd == null) return;
     setState(() {
@@ -1360,6 +1426,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       scenePoint,
       tolerance: tolerance,
       among: _candidates,
+      preferred: _preferred,
     );
     if (onCandidate != null) {
       setState(() => _pinCaret = onCandidate.ref);
@@ -1409,6 +1476,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     setState(() {
       _wireFrom = null;
       _candidates = const <PinRef>[];
+      _preferred = const <PinRef>{};
       _freeEnd = null;
     });
   }
@@ -1480,14 +1548,23 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
         // both, because "TOP-003" alone is a log line.
         _status.show('$ruleId — $message');
       case ConnectPortsReady(:final command, :final roleMismatch):
-        widget.controller.run(command);
+        // See [_committingWire]. `try`/`finally` because a command that
+        // throws must not leave the latch stuck true.
+        _committingWire = true;
+        try {
+          widget.controller.run(command);
+        } finally {
+          _committingWire = false;
+        }
         // THE CARET STAYS ON THE SINK. This is the M1 refutation's lesson
         // applied: the next `W` starts from where the user is looking, so
         // back-to-back cables are W-arrows-Enter, W-arrows-Enter with no
         // round trip through a selection.
         setState(() {
+          _pinCaret = to;
           _wireFrom = null;
           _candidates = const <PinRef>[];
+          _preferred = const <PinRef>{};
         });
         // ═══════════════════════════════════════════════════════════
         // THE DESIGNATORS THE COMMAND WROTE, NOT THE ONES RESOLVE-TIME
@@ -1514,10 +1591,69 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
             : ' — but $fromSaid is the "${roleMismatch.fromRole}" leg and '
                   '$toSaid is the "${roleMismatch.toRole}" leg, so this '
                   'cable carries no role';
+        final chained = _chainOnFrom(toTarget, command.signalFamily);
         _status.show(
-          '${command.designator} connected $fromSaid to $toSaid$warning.',
+          '${command.designator} connected $fromSaid to $toSaid$warning.'
+          '$chained',
         );
     }
+  }
+
+  /// docs/05:482's CHAIN-DRAW: `Shift` held at commit re-arms the gesture
+  /// from the sink device's matching output, so `ATV-1 → MTX-1`,
+  /// `MTX-1 → DA-1`, `DA-1 → TV` is three gestures with no round trip
+  /// through idle. docs/05 calls it "the highest-throughput gesture in the
+  /// editor".
+  ///
+  /// Returns the CLAUSE to append to the commit announcement, so a screen
+  /// reader hears one sentence rather than two — "…connected AVR-1 J03,
+  /// and re-armed from MTX-1 J07" is what happened; two messages, the
+  /// second overwriting the first on the status line, is not.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// AFTER THE COMMIT AND AFTER THE TEARDOWN, WHICH IS THE ONLY ORDER
+  /// THAT WORKS
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `controller.run` bumps the epochs synchronously, so the scene is
+  /// rebuilt and [_candidates] is invalidated during the commit. Re-arming
+  /// BEFORE that would compute a candidate set against a document that is
+  /// one cable out of date — and the pin it just filled would still be in
+  /// it.
+  ///
+  /// "MATCHING" IS DR-012.1, AND ITS DEFINITION IS IN CORE, not here:
+  /// [chainOutputFor] is the same-family, first-free, template-ordered
+  /// query, and it is a document question rather than a screen one.
+  String _chainOnFrom(ConnectTarget sink, SignalFamilyId family) {
+    if (!HardwareKeyboard.instance.isShiftPressed) return '';
+    final next = chainOutputFor(
+      _doc,
+      deviceId: sink.deviceId,
+      family: family,
+    );
+    if (next == null) {
+      // THE CHAIN ENDS, AND IT SAYS SO. DR-012.1: a device with no free
+      // output of that family is where a chain legitimately stops, and a
+      // `Shift` that silently did nothing would be the no-op docs/04 §3.4
+      // forbids — arriving at the end of a gesture the user believed was
+      // continuing.
+      return ' The chain ends: ${sink.deviceDesignator} has no free '
+          'output for this signal.';
+    }
+    final ref = PinRef(
+      deviceId: next.deviceId.v,
+      portKey: next.portKey.v,
+    );
+    setState(() => _pinCaret = ref);
+    // Through the ONE arming path, so a chained re-arm cannot disagree
+    // with `W` about what a legal start is or about what the candidates
+    // are. It reports its own failure if the new source has no target.
+    if (!_armWireFrom(ref, announce: false)) {
+      return ' The chain ends: nothing on this sheet can take a cable from '
+          '${_saying(ref)}.';
+    }
+    return ' Chained: now drawing from ${_saying(ref)}, '
+        '${_candidates.length} '
+        '${_candidates.length == 1 ? 'pin' : 'pins'} can take it.';
   }
 
   // ── build ─────────────────────────────────────────────────────────────

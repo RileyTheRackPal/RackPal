@@ -222,4 +222,98 @@ void main() {
       }
     });
   });
+
+  group('DR-012.3 — the magnet prefers the FAMILY, absolutely', () {
+    test('a preferred pin beats a nearer unpreferred one, anywhere inside '
+        'the radius', () {
+      // docs/05 §7.6: an HDMI band prefers an HDMI port "even if an RJ45
+      // port is 3 px nearer". DR-012.3 rules the axis is signalFamily —
+      // its example names CONNECTORS, and RJ45-carrying-hdbaset and
+      // RJ45-carrying-ethernet are the same connector, which docs/05:145
+      // calls the two most dangerous ports in the taxonomy.
+      final pins = locatePins(scene);
+      final near = pins[0];
+      final far = pins[1];
+      expect(near.centre, isNot(far.centre));
+
+      // A point sitting exactly ON the near pin: distance 0 versus
+      // whatever `far` is away.
+      const huge = 10000.0;
+      final unweighted = snapToPin(
+        scene,
+        near.centre,
+        tolerance: huge,
+        among: [near.ref, far.ref],
+      );
+      expect(
+        unweighted!.ref,
+        near.ref,
+        reason: 'without a preference the nearest wins — the premise',
+      );
+
+      final weighted = snapToPin(
+        scene,
+        near.centre,
+        tolerance: huge,
+        among: [near.ref, far.ref],
+        preferred: {far.ref},
+      );
+      expect(
+        weighted!.ref,
+        far.ref,
+        reason: 'the preference is ABSOLUTE inside the radius: the corpus '
+            'gives no number (only "more than 3 px"), so weighting it as '
+            'a distance would invent a second unquantified figure',
+      );
+    });
+
+    test('among two PREFERRED pins the nearer still wins', () {
+      final pins = locatePins(scene);
+      final near = pins[0];
+      final far = pins[1];
+      final got = snapToPin(
+        scene,
+        near.centre,
+        tolerance: 10000,
+        among: [near.ref, far.ref],
+        preferred: {near.ref, far.ref},
+      );
+      expect(
+        got!.ref,
+        near.ref,
+        reason: 'the family decides between GROUPS; distance decides '
+            'within one',
+      );
+    });
+
+    test('the preference never reaches outside the tolerance — Ctrl still '
+        'means Ctrl', () {
+      // The radius is the bound on how far the preference can pull, which
+      // is why DR-012.3 needs no number of its own. Ctrl collapses the
+      // tolerance to the pin glyph, and a preferred pin outside it must
+      // stay unreachable.
+      final pins = locatePins(scene);
+      final near = pins[0];
+      final far = pins[1];
+      final got = snapToPin(
+        scene,
+        near.centre,
+        tolerance: 0.5,
+        among: [near.ref, far.ref],
+        preferred: {far.ref},
+      );
+      expect(got!.ref, near.ref);
+    });
+
+    test('no preference at all behaves exactly as before', () {
+      final pins = locatePins(scene);
+      final got = snapToPin(
+        scene,
+        pins[3].centre,
+        tolerance: 10000,
+        among: [for (final p in pins.take(6)) p.ref],
+      );
+      expect(got!.ref, pins[3].ref);
+    });
+  });
 }

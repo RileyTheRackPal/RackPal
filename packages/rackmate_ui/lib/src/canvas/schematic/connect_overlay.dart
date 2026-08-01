@@ -427,22 +427,54 @@ DPt _escapeFrom(LocatedPin pin, double distance) => switch (pin.side) {
 /// [among] is the candidate set, so the magnet cannot pull the band onto a
 /// pin the cable may not land on — which is the pointer's version of the
 /// keyboard's "Tab only reaches a candidate".
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// [preferred] IS DR-012.3, AND THE PREFERENCE IS ABSOLUTE
+/// ═══════════════════════════════════════════════════════════════════════
+/// docs/05 §7.6 wants an HDMI band to prefer an HDMI port "even if an RJ45
+/// port is 3 px nearer", and DR-012.3 rules that the axis is the SIGNAL
+/// FAMILY rather than the connector its example names — because
+/// RJ45-carrying-`video.hdbaset` and RJ45-carrying-`net.ethernet` are the
+/// same connector, and steering a user toward that pair is the worst
+/// mistake this product can make (docs/05:145; the seed registry records
+/// that the 100 W PoH can damage the switch).
+///
+/// The corpus gives no NUMBER — only "more than 3 px" — so rather than
+/// invent a second unquantified figure the preference is lexicographic: a
+/// preferred pin beats an unpreferred one ANYWHERE inside [tolerance], and
+/// distance decides only within each group. The 12 screen px radius
+/// already bounds how far that can reach, and `Ctrl` (which collapses
+/// [tolerance] to the pin's own glyph) is the documented way to insist on
+/// the other pin.
+///
+/// [preferred] is computed ONCE at arm time by the screen, because
+/// deciding it needs `ConnectTarget.acceptsFamily` — which reads
+/// `PortDef.acceptedFamilies`, a field the SCENE does not carry.
 LocatedPin? snapToPin(
   SchematicScene scene,
   DPt scenePoint, {
   required double tolerance,
   required List<PinRef> among,
+  Set<PinRef> preferred = const <PinRef>{},
 }) {
   LocatedPin? best;
   var bestDistance = double.infinity;
+  var bestPreferred = false;
   for (final ref in among) {
     final pin = locatePin(scene, ref);
     if (pin == null) continue;
     final dx = pin.centre.x - scenePoint.x;
     final dy = pin.centre.y - scenePoint.y;
     final distance = math.sqrt(dx * dx + dy * dy);
-    if (distance > tolerance || distance >= bestDistance) continue;
+    if (distance > tolerance) continue;
+    final isPreferred = preferred.contains(ref);
+    // Lexicographic: the family first, the distance only within a group.
+    if (best != null) {
+      if (bestPreferred && !isPreferred) continue;
+      if (bestPreferred == isPreferred && distance >= bestDistance) continue;
+    }
     bestDistance = distance;
+    bestPreferred = isPreferred;
     best = pin;
   }
   return best;
