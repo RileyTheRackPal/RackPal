@@ -453,6 +453,23 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// pin-to-pin gesture is the one that applies.
   String? _wireFromSetKey;
 
+  /// The bank a MULTI-DRAW is armed from, or null when the armed gesture
+  /// is not one. The third value of the same three-way branch
+  /// [_wireFromSetKey] holds the second of.
+  String? _wireFromBankKey;
+
+  /// What the armed multi-draw would do on every target bank the sheet
+  /// draws, keyed by `(deviceId, bankKey)`.
+  ///
+  /// COMPUTED ONCE AT ARM TIME, for [_candidates]' reason and more so:
+  /// `planMultiDraw` walks the run against a bank's every jack running
+  /// `evaluateConnect`, so doing it per pointer-move would be O(pins x
+  /// sources x links) sixty times a second. It is safe to cache for
+  /// exactly as long as the document does not move, and
+  /// [_invalidateLivePreviews] tears the gesture down the moment it does.
+  Map<(String, String), MultiDrawPlan> _multiPlans =
+      const <(String, String), MultiDrawPlan>{};
+
   /// The candidates that carry the SOURCE PIN'S OWN FAMILY — DR-012.3's
   /// magnet preference, as a set the snap can test in O(1).
   ///
@@ -740,6 +757,13 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     if (_wireFrom != null && !_committingWire) {
       _wireFrom = null;
       _wireFromSetKey = null;
+      // THE PLANS GO WITH IT, and they are the sharpest case for this
+      // whole teardown: a `MultiDrawPlan` is N verdicts computed against
+      // a document state that no longer exists, and committing a stale
+      // one would write cables onto jacks that filled while the run was
+      // in the air.
+      _wireFromBankKey = null;
+      _multiPlans = const <(String, String), MultiDrawPlan>{};
       _candidates = const <PinRef>[];
       _preferred = const <PinRef>{};
       what ??= 'Wire';
@@ -1443,6 +1467,20 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// pin-to-pin press would be noise on the one gesture users perform
   /// sixty times an hour.
   bool _anchorPinSelection(PinRef ref) {
+    // ═════════════════════════════════════════════════════════════════
+    // A PRESS ON A PIN ALREADY IN THE RUN KEEPS THE RUN
+    // ═════════════════════════════════════════════════════════════════
+    // That press IS how a multi-draw drag begins — the pointer has to
+    // grab the run somewhere — so re-anchoring here would destroy the
+    // selection the gesture is about before the gesture could read it.
+    // The whole of #93 arrived stillborn on this line: the run was built,
+    // the press dropped it to one pin, `isMultiple` went false, and every
+    // drag fell through to an ordinary pin-to-pin cable. Found by the
+    // suite, not by reading — every unit test at both ends was green.
+    //
+    // It is also what every selection UI does: pressing a selected item
+    // drags the selection, and only a press OUTSIDE it replaces.
+    if (_pins.contains(ref)) return true;
     final bank = _bankKeyOf(ref);
     if (bank == null) {
       if (!_pins.isEmpty) setState(() => _pins = PinSelection.none);
@@ -1537,6 +1575,213 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     _status.show(
       '${sel.length} jacks selected in ${_bankSaying(sel)} — drag them onto '
       'another bank to draw ${sel.length} cables at once.',
+    );
+  }
+
+  // ── #93's multi-draw gesture (docs/05:484, DR-012.2) ──────────────────
+
+  /// Arms a MULTI-DRAW from the run in [_pins] — N cables, one undo entry.
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// EVERY TARGET BANK IS PLANNED HERE, NOT ON THE DROP
+  /// ═════════════════════════════════════════════════════════════════
+  /// The pointer needs to know which pins it may land on BEFORE it moves
+  /// — that is what [_candidates] is for on every other gesture — and for
+  /// multi-draw "may land on" is a question about a BANK, not a pin. So
+  /// each bank the sheet draws is planned once, and a pin is a candidate
+  /// exactly when its bank's plan would make at least one cable. The
+  /// plans are then reused for the live preview and for the commit, so
+  /// what the user is SHOWN and what is WRITTEN come from one object
+  /// rather than from two runs of the same function.
+  ///
+  /// NO DR-012.3 FAMILY PREFERENCE, for the reason `_armSetFrom` gives
+  /// for the set gesture: the magnet orders PINS by the family the cable
+  /// carries, and a run of N pins is not one cable with one family.
+  bool _armMultiDrawFrom(PinRef caret, {bool announce = true}) {
+    final scene = _scene;
+    final sel = _pins;
+    if (scene == null || !sel.isMultiple) return false;
+
+    final plans = <(String, String), MultiDrawPlan>{};
+    final candidates = <PinRef>[];
+    for (final pin in locatePins(scene)) {
+      final bank = _bankKeyOf(pin.ref);
+      if (bank == null) continue;
+      // THE SOURCE BANK IS NOT A TARGET. `planMultiDraw` would happily
+      // pair a run against its own bank's free jacks — every TOP rule it
+      // consults is about a PAIR of pins, and none of them says "not the
+      // bank you came from". Excluded here rather than there because it
+      // is a fact about this gesture, not about the plan.
+      if (pin.ref.deviceId == sel.deviceId && bank == sel.bankKey) continue;
+      final key = (pin.ref.deviceId, bank);
+      final plan = plans.putIfAbsent(
+        key,
+        () => planMultiDraw(
+          _doc,
+          fromDeviceId: Uuid(sel.deviceId!),
+          fromBankKey: sel.bankKey!,
+          sources: sel.portKeys,
+          toDeviceId: Uuid(pin.ref.deviceId),
+          toBankKey: bank,
+        ),
+      );
+      if (!plan.isEmpty) candidates.add(pin.ref);
+    }
+
+    if (candidates.isEmpty) {
+      if (announce) {
+        _status.show(
+          'No bank on this sheet can take ${sel.length} cables from '
+          '${_bankSaying(sel)}.',
+        );
+      }
+      return false;
+    }
+
+    setState(() {
+      _wireFrom = caret;
+      _wireFromBankKey = sel.bankKey;
+      _candidates = List<PinRef>.unmodifiable(candidates);
+      _preferred = const <PinRef>{};
+      _multiPlans = Map<(String, String), MultiDrawPlan>.unmodifiable(plans);
+    });
+    if (announce) {
+      // ONE SENTENCE, COMPOSED — never two `show` calls. Every `show`
+      // is a `SemanticsService.announce`, so a second one here would put
+      // two messages on the accessibility channel for one keystroke,
+      // which is the defect `_committingWire` exists to prevent arriving
+      // through another door (see `_armWireFrom`'s note on the chain).
+      //
+      // The set clause is the disclosure the branch order owes: see
+      // `_armWireFrom`, where multi-draw is ruled to beat DR-011.2's
+      // atomic set because an explicit selection outranks a property of
+      // the jack — on condition that the cost is said out loud.
+      final sets = <PinRef>[
+        for (final ref in sel.refs)
+          if (_atomicSetFor(ref) != null) ref,
+      ];
+      final note = sets.isEmpty
+          ? ''
+          : ' Note: ${sets.length} of these jacks are declared as cable '
+                'SETS, and multi-draw makes one separate cable per jack.';
+      _status.show(
+        '${sel.length} cables from ${_bankSaying(sel)} — drop on a target '
+        'bank. Enter or release to commit, Esc to cancel.$note',
+      );
+    }
+    return true;
+  }
+
+  /// The plan for the bank [ref] is in, or null when it is in none or its
+  /// bank was not planned.
+  MultiDrawPlan? _planFor(PinRef ref) {
+    final bank = _bankKeyOf(ref);
+    if (bank == null) return null;
+    return _multiPlans[(ref.deviceId, bank)];
+  }
+
+  /// docs/05:484's "all N bands", as pin pairs the overlay can trace.
+  ///
+  /// Empty whenever the caret is not over a planned bank, which INCLUDES
+  /// an unsnapped pointer drag over empty paper. Sixteen bands converging
+  /// on a cursor would be sixteen cables to a place no jack is; the
+  /// selection rings already say what is in hand.
+  List<(PinRef, PinRef)> _multiDrawBands() {
+    if (_wireFromBankKey == null) return const <(PinRef, PinRef)>[];
+    final caret = _pinCaret;
+    if (caret == null) return const <(PinRef, PinRef)>[];
+    final plan = _planFor(caret);
+    if (plan == null) return const <(PinRef, PinRef)>[];
+    return <(PinRef, PinRef)>[
+      for (final pair in plan.pairs)
+        (
+          PinRef(
+            deviceId: pair.from.deviceId.v,
+            portKey: pair.from.def.key.v,
+          ),
+          PinRef(deviceId: pair.to.deviceId.v, portKey: pair.to.def.key.v),
+        ),
+    ];
+  }
+
+  /// Commits the armed multi-draw onto [to]'s bank — N `Link`s, ONE undo
+  /// entry (docs/05:484).
+  void _commitMultiDraw(PinRef to) {
+    final plan = _planFor(to);
+    if (plan == null || plan.isEmpty) {
+      _clearWire();
+      _status.show('That bank can take none of these cables.');
+      return;
+    }
+    final commands = buildMultiDrawCommands(
+      doc: _doc,
+      plan: plan,
+      media: kUnstatedMedia,
+      now: widget.controller.clock.nowUtc(),
+      actor: widget.controller.actor,
+    );
+    if (commands.isEmpty) {
+      _clearWire();
+      _status.show('That bank can take none of these cables.');
+      return;
+    }
+
+    // ONE `transact`, WHICH IS HOW "ONE UNDO ENTRY" HAPPENS.
+    // `buildMultiDrawCommands` returns a LIST and not a `Transaction`
+    // deliberately — core does not know what is selected, and a
+    // `Transaction` carries the selection before and after. This is the
+    // seam its doc comment names.
+    _committingWire = true;
+    try {
+      widget.controller.transact(LabelKey.multiDraw, (tx) {
+        for (final command in commands) {
+          tx.add(command);
+        }
+      });
+    } finally {
+      _committingWire = false;
+    }
+
+    final targetBank = bankLabelFor(
+      _doc,
+      deviceId: Uuid(to.deviceId),
+      bankKey: _bankKeyOf(to)!,
+    );
+    final designators = <String>[
+      for (final c in commands)
+        if (c is ConnectPortsCommand) c.designator,
+    ];
+    final named = designators.isEmpty
+        ? ''
+        : designators.length == 1
+        ? '${designators.first} '
+        : '${designators.first}–${designators.last} ';
+    // THE RUN IS SPENT. Those jacks now carry cables, and leaving them
+    // selected would invite the same gesture again onto a bank that has
+    // just filled — a second undo entry the user did not mean to make.
+    setState(() {
+      _pinCaret = to;
+      _wireFrom = null;
+      _wireFromBankKey = null;
+      _candidates = const <PinRef>[];
+      _preferred = const <PinRef>{};
+      _multiPlans = const <(String, String), MultiDrawPlan>{};
+      _pins = PinSelection.none;
+    });
+    // THE UNPAIRED ARE SAID OUT LOUD, and they were WRITTEN NOWHERE —
+    // `multi_draw.dart`'s header rules that a multi-draw surplus mints
+    // nothing, because an unpaired source would be a whole `Link` with
+    // its own `W` number pulled to nowhere. So this sentence is the only
+    // record the user gets, exactly as §11.8.3's open-end warning is.
+    final left = plan.unpaired.isEmpty
+        ? ''
+        : ' — ${plan.unpaired.length} '
+              '${plan.unpaired.length == 1 ? 'jack' : 'jacks'} found no '
+              'free partner and ${plan.unpaired.length == 1 ? 'was' : 'were'} '
+              'left unwired';
+    _status.show(
+      '$named connected ${plan.linkCount} '
+      '${plan.linkCount == 1 ? 'cable' : 'cables'} to $targetBank$left.',
     );
   }
 
@@ -1719,6 +1964,42 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     if (from == null) {
       if (announce) _status.show('That pin is no longer in this document.');
       return false;
+    }
+
+    // ═════════════════════════════════════════════════════════════════
+    // THREE GESTURES, ONE ARMING PATH, AND THE ORDER IS A RULING
+    // ═════════════════════════════════════════════════════════════════
+    // MULTI-DRAW FIRST, and it beats the atomic set. DR-011.2 decides
+    // between set and pin-to-pin BY THE JACK — a property of the
+    // hardware, which the user did not choose. A run of N selected jacks
+    // is the opposite: an explicit act, performed with a modifier, on
+    // pins the user picked one at a time. An explicit choice outranks an
+    // implicit one.
+    //
+    // WHAT THAT COSTS, STATED RATHER THAN HIDDEN. A run made of
+    // `atomicConnect` pins — A01's `srcIn` is sixteen such, eight stereo
+    // pairs — will be drawn as N SEPARATE `Link`s where the template
+    // author declared each pair to be one cable. That is a different bill
+    // of materials, which is the exact distinction DR-012.2 exists to
+    // keep. It is allowed, because the alternative is a press that
+    // refuses a gesture the user explicitly asked for and leaves them no
+    // way to perform it; and it is ANNOUNCED, because a silent choice
+    // between two bills of materials is the harm the ruling names. Undo
+    // is one keystroke.
+    //
+    // THIS PAIRING IS NOT IN THE CORPUS. docs/05:484 says nothing about a
+    // run of set pins, and the sentence below is a consequence of two
+    // existing rulings rather than a third. If it ever needs arguing
+    // with, it wants a DR of its own.
+    //
+    // A run that can reach no bank FALLS THROUGH to the ordinary gestures
+    // rather than dead-ending: the caret is still on a pin, and a
+    // pin-to-pin cable from it is very likely what the user wants next.
+    // `_armMultiDrawFrom` has already said why the run could not go.
+    if (_pins.isMultiple &&
+        _pins.contains(caret) &&
+        _armMultiDrawFrom(caret, announce: announce)) {
+      return true;
     }
 
     // THE BRANCH DR-011.2 RULES, and it is decided by the jack rather than
@@ -2015,6 +2296,8 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     setState(() {
       _wireFrom = null;
       _wireFromSetKey = null;
+      _wireFromBankKey = null;
+      _multiPlans = const <(String, String), MultiDrawPlan>{};
       _candidates = const <PinRef>[];
       _preferred = const <PinRef>{};
       _freeEnd = null;
@@ -2026,6 +2309,12 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     final from = _wireFrom;
     final to = _pinCaret;
     if (from == null || to == null) return;
+    // The same three-way branch [_armWireFrom] took, read back off the
+    // field each limb set. Multi-draw first, for the reason stated there.
+    if (_wireFromBankKey != null) {
+      _commitMultiDraw(to);
+      return;
+    }
     final setKey = _wireFromSetKey;
     if (setKey != null) {
       _commitSet(from, to, setKey);
@@ -2235,6 +2524,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       freeEnd: _freeEnd,
       candidates: _candidates,
       selected: _pins.refs,
+      pairs: _multiDrawBands(),
     );
     final plan = buildSchematicPaintPlan(
       scene: scene,

@@ -228,6 +228,7 @@ final class ConnectOverlay {
     required this.source,
     required this.band,
     this.selected = const <LocatedPin>[],
+    this.bands = const <List<DPt>>[],
   });
 
   /// Appended AFTER every other op in the frame — see
@@ -252,6 +253,12 @@ final class ConnectOverlay {
   /// held but off-sheet".
   final List<LocatedPin> selected;
 
+  /// Every multi-draw band's corner list, in the plan's rank order —
+  /// docs/05:484's "all N bands", published so a test can count them and
+  /// assert their PATHS rather than count ops. Empty for a single-cable
+  /// gesture, where [band] is the one that matters.
+  final List<List<DPt>> bands;
+
   bool get isEmpty => ops.isEmpty;
 }
 
@@ -273,6 +280,12 @@ final class ConnectOverlay {
 /// [selected] is the multi-draw selection (#93). Unlike [candidates] it is
 /// drawn on an IDLE sheet too, because it is not a derived affordance —
 /// it is a thing the user built and can come back to.
+///
+/// [pairs] is docs/05:484's **"live preview shows all N bands"**. When it
+/// is non-empty it REPLACES the single [source]→[caret] band: a multi-draw
+/// has no one band, and drawing an extra one from whichever pin the user
+/// happened to grab would put a cable on the sheet that the commit will
+/// not make.
 ConnectOverlay buildConnectOverlay({
   required SchematicScene scene,
   required ConnectOverlayStyle style,
@@ -282,6 +295,7 @@ ConnectOverlay buildConnectOverlay({
   DPt? freeEnd,
   List<PinRef> candidates = const <PinRef>[],
   List<PinRef> selected = const <PinRef>[],
+  List<(PinRef, PinRef)> pairs = const <(PinRef, PinRef)>[],
   SchematicWireStyle wireStyle = const SchematicWireStyle(),
 }) {
   final caretPin = caret == null ? null : locatePin(scene, caret);
@@ -355,10 +369,61 @@ ConnectOverlay buildConnectOverlay({
     }
   }
 
-  // The band next, so the two rings sit on top of their own wire rather
-  // than under it — the rings are what say "here", and a band drawn over
-  // them would obscure the one pin the user is aiming at.
-  if (sourcePin != null && caretPin == null && freeEnd != null) {
+  // ═══════════════════════════════════════════════════════════════════
+  // docs/05:484's N BANDS — "live preview shows all N bands"
+  // ═══════════════════════════════════════════════════════════════════
+  // Each pair is drawn with `orthogonalTrace`, the same function the
+  // committed wire layer routes with and the same one the single band
+  // uses, for the reason this file's header gives: a preview that took a
+  // different path from the wire it previews is a desync waiting to be
+  // noticed by a user rather than by a test.
+  //
+  // NO COMB INDEX, EVEN THOUGH THERE ARE N OF THEM. `buildDrawnWireLayer`
+  // escapes the i-th link on a side i steps further out so committed
+  // cables do not overprint. These do not get that, and the reason is
+  // that they are N bands from N DIFFERENT PINS: the comb exists for N
+  // links leaving ONE pin's side at one x, and a multi-draw's bands each
+  // leave their own pin at their own y. Adding a comb step here would
+  // fan them apart at a spacing the committed cables will not have.
+  final bandStroke = Stroke(
+    argb: style.bandArgb,
+    widthPt: style.bandWidthPx,
+    scaleWithGeometry: false,
+  );
+  final bands = <List<DPt>>[];
+  if (pairs.isNotEmpty) {
+    final escape = wireStyle.escapeGu * kSchematicUnitsPerGrid;
+    for (final (fromRef, toRef) in pairs) {
+      final from = locatePin(scene, fromRef);
+      final to = locatePin(scene, toRef);
+      if (from == null || to == null) continue;
+      final trace = orthogonalTrace(
+        fromPin: from.centre,
+        fromSide: from.side,
+        fromEscape: escape,
+        toPin: to.centre,
+        toSide: to.side,
+        toEscape: escape,
+      );
+      ops.add(OpPolyline(trace, bandStroke));
+      bands.add(trace);
+      // THE LAST PAIR'S TRACE IS ALSO PUBLISHED AS `band`, so the one
+      // field a test reads to assert a PATH keeps meaning "the band drawn
+      // last" in both modes. [ConnectOverlay.bands] is what a multi-draw
+      // test should read instead.
+      band = trace;
+    }
+  }
+
+  // The single band next, so the two rings sit on top of their own wire
+  // rather than under it — the rings are what say "here", and a band drawn
+  // over them would obscure the one pin the user is aiming at.
+  //
+  // SUPPRESSED ENTIRELY WHILE [pairs] IS NON-EMPTY: a multi-draw's source
+  // is a RUN, and a band from the one pin the pointer happens to be over
+  // would draw a cable the commit does not make.
+  if (pairs.isEmpty && sourcePin != null && caretPin == null &&
+      freeEnd != null) {
     // AN UNSNAPPED POINTER DRAG. The band still leaves the source along
     // its own edge — that half is a fact about the pin and does not
     // depend on where the cable is going — but the far end is a cursor,
@@ -372,16 +437,7 @@ ConnectOverlay buildConnectOverlay({
       _escapeFrom(sourcePin, escape),
       freeEnd,
     ];
-    ops.add(
-      OpPolyline(
-        band,
-        Stroke(
-          argb: style.bandArgb,
-          widthPt: style.bandWidthPx,
-          scaleWithGeometry: false,
-        ),
-      ),
-    );
+    ops.add(OpPolyline(band, bandStroke));
   }
   if (sourcePin != null && caretPin != null) {
     // `escapeGu` WITHOUT THE COMB STEP — see the file header. It is also
@@ -396,16 +452,7 @@ ConnectOverlay buildConnectOverlay({
       toSide: caretPin.side,
       toEscape: escape,
     );
-    ops.add(
-      OpPolyline(
-        band,
-        Stroke(
-          argb: style.bandArgb,
-          widthPt: style.bandWidthPx,
-          scaleWithGeometry: false,
-        ),
-      ),
-    );
+    ops.add(OpPolyline(band, bandStroke));
   }
 
   if (sourcePin != null) {
@@ -441,6 +488,7 @@ ConnectOverlay buildConnectOverlay({
     source: sourcePin,
     band: band,
     selected: List<LocatedPin>.unmodifiable(selectedPins),
+    bands: List<List<DPt>>.unmodifiable(bands),
   );
 }
 
