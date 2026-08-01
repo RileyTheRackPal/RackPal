@@ -2,6 +2,14 @@
 
 ## 2026-08-01
 
+* **Creation**: [DR-013 — deleting a wired device cascades](/decisions/dr-013-delete-cascades.md).
+  The `TODO(post-M0)` in `RemoveDeviceCommand` was **inert for every milestone
+  up to M2-F** — nothing wrote `doc.ports`, so there was nothing to orphan —
+  and DR-011.1 made it live in the same commit that fixed the finding it came
+  from. The recommended option (demote the far end to `OpenEndpoint`, which
+  AC-018 models as first-class) was **rejected**: a cable to a device that has
+  been deleted is not a design intent, it is debris, and M5's validation is not
+  there to flag it.
 * **Update**: [DR-011](/decisions/dr-011-connect-gesture.md) is **BUILT** — all
   seven clauses, across M2-F's six phases. Two of its findings had SURVIVED the
   phase that was supposed to close them: `AtomicConnectCommand` still never

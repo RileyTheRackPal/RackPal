@@ -6811,6 +6811,56 @@ validation and must not be read as any. When M5 populates the matrix, §11.12.3'
 
 ---
 
+## 11.13 DR-013 · Deleting a wired device cascades, after a warning that counts the cost
+
+**The question.** `RemoveDeviceCommand.apply` carries a `TODO(post-M0)`: it removes the
+`DeviceInstance` and *"does not yet decrement any TemplateSnapshot refcount, nor clean up orphaned
+`Port`/`Link` references to this device"*. That was **inert while nothing in the application wrote
+`doc.ports`** — the finding DR-011 opens with. §11.11.1 makes the connect command materialise ports
+inside `apply()`, so from M2-F the note describes a live defect: deleting a wired device leaves
+`Link`s whose `PortEndpoint`s name ports that no longer exist, and the schedule prints a row citing
+a device that is not in the document. **"The gesture may hesitate; the document may not lie"
+(CR-017)** is exactly what that breaks.
+
+**Ruling — cascade, with a confirmation that names the count, and an undo that puts the cables
+back.** Settled by the user on 2026-08-01.
+
+**11.13.1 Removing a device removes every `Link` that terminates on it, and its materialised
+`Port`s, in ONE undoable command.** Not orphaning (the document would lie), not a refusal
+(§11.13.3), and not AC-018's `OpenEndpoint` demotion — which was the recommendation and was
+rejected. The rejection is worth recording, because the recommendation was not wrong about the
+model: `OpenEndpoint` genuinely does express "a cable whose far end is unbound", and demotion would
+have kept every row and every `W` number on the pull sheet. What it would ALSO have kept is a pull
+sheet full of half-cables nobody asked for, on a document the user believes they simplified — and
+M5's validation, which is where "this run ends nowhere" becomes a visible finding, does not exist
+yet. **A cable to a device that has been deleted is not a design intent; it is debris.**
+
+**11.13.2 The confirmation states the count before anything is removed**, in the shape docs/04
+§4.1's shrink dialog already uses for the same class of question: this is the second place in the
+product where one gesture destroys work the user cannot see all of. A delete that silently drops a
+dozen rows off the schedule is the failure G1 makes most expensive — **the schedule is the
+deliverable** — so the count is the whole point of the dialog and a bare "Are you sure?" does not
+discharge this clause. A device carrying nothing is deleted with no prompt at all.
+
+**11.13.3 Refusal was considered and rejected.** *"Unwire it first"* is cheap and honest, and it is
+the only place in the product where an ordinary edit would be blocked by a condition the user can
+see and disagree with. CR-017 reserves refusal for the five tier-1 topology rules, whose escape
+docs/02 §5 gives as *"None. There is nothing to escape to."* Wanting a device gone is not that.
+
+**11.13.4 Undo restores the cables, not just the device.** `revert` must put back every `Link`,
+`Service`, `Conductor`, `Net` and `Port` that `apply` removed, with the SAME ids — the discipline
+`ConnectPortsCommand` already holds for the ports it materialises (§11.11.1: *"removing on revert
+exactly what it added"*). Anything less makes delete-then-undo a lossy round trip through the one
+entity CR-117's byte gate is about.
+
+**11.13.5 What this does not settle.** The `TemplateSnapshot` refcount half of the same `TODO` is
+untouched: `RemoveDeviceCommand` still does not drop a template snapshot that nothing references
+any more. It is not a lie in the document — an unreferenced snapshot is inert, and AC-006's lazy
+design means files carry snapshots for devices that were never placed — so it is file size, not
+correctness, and it stays deferred.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-007 change or void, plus the small set of internal
