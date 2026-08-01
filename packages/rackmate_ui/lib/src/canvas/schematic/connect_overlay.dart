@@ -161,6 +161,7 @@ final class ConnectOverlayStyle {
     required this.sourceArgb,
     required this.bandArgb,
     required this.candidateArgb,
+    required this.selectionArgb,
     this.caretRadiusPx = 7,
     this.ringWidthPx = 2,
     this.bandWidthPx = 1.5,
@@ -203,6 +204,18 @@ final class ConnectOverlayStyle {
   /// of halos. Smaller than [caretRadiusPx] on purpose: the caret has to
   /// win the eye against them.
   final double candidateRadiusPx;
+
+  /// The ring on a pin held in the multi-draw selection (#93, docs/05:484's
+  /// "N ports selected in one bank").
+  ///
+  /// A THIRD RING, AND THE THIRD IS EARNED WHERE THE AMBER ONE WAS NOT.
+  /// [candidateArgb]'s doc refuses a second ring because it would encode a
+  /// verdict the model cannot compute. This one encodes a fact the user
+  /// themselves supplied — these are the pins they picked — so there is
+  /// nothing to fabricate. It is drawn whether or not a cable is armed,
+  /// because unlike a candidate set the selection SURVIVES the gesture: it
+  /// is what the next `W` or the next press will draw from.
+  final int selectionArgb;
 }
 
 /// The overlay's display list, plus what the screen has to be able to SAY
@@ -214,6 +227,7 @@ final class ConnectOverlay {
     required this.caret,
     required this.source,
     required this.band,
+    this.selected = const <LocatedPin>[],
   });
 
   /// Appended AFTER every other op in the frame — see
@@ -232,6 +246,12 @@ final class ConnectOverlay {
   /// so a test can assert the PATH rather than count ops.
   final List<DPt> band;
 
+  /// The multi-draw selection, resolved against the sheet and in the order
+  /// it was given. Pins the sheet no longer draws are absent — which is
+  /// how a test tells "the selection was dropped" from "the selection is
+  /// held but off-sheet".
+  final List<LocatedPin> selected;
+
   bool get isEmpty => ops.isEmpty;
 }
 
@@ -249,6 +269,10 @@ final class ConnectOverlay {
 /// [candidates] are the pins the armed cable may legally land on. They are
 /// drawn only while [source] is armed: a ring on every reachable pin of an
 /// IDLE sheet would be permanent chrome answering a question nobody asked.
+///
+/// [selected] is the multi-draw selection (#93). Unlike [candidates] it is
+/// drawn on an IDLE sheet too, because it is not a derived affordance —
+/// it is a thing the user built and can come back to.
 ConnectOverlay buildConnectOverlay({
   required SchematicScene scene,
   required ConnectOverlayStyle style,
@@ -257,11 +281,16 @@ ConnectOverlay buildConnectOverlay({
   PinRef? source,
   DPt? freeEnd,
   List<PinRef> candidates = const <PinRef>[],
+  List<PinRef> selected = const <PinRef>[],
   SchematicWireStyle wireStyle = const SchematicWireStyle(),
 }) {
   final caretPin = caret == null ? null : locatePin(scene, caret);
   final sourcePin = source == null ? null : locatePin(scene, source);
-  if (caretPin == null && sourcePin == null) {
+  final selectedPins = <LocatedPin>[
+    for (final ref in selected)
+      if (locatePin(scene, ref) case final pin?) pin,
+  ];
+  if (caretPin == null && sourcePin == null && selectedPins.isEmpty) {
     return const ConnectOverlay(
       ops: <DiagramOp>[],
       caret: null,
@@ -280,7 +309,32 @@ ConnectOverlay buildConnectOverlay({
   final ops = <DiagramOp>[];
   var band = const <DPt>[];
 
-  // THE CANDIDATE RINGS FIRST, UNDER EVERYTHING. They are the field the
+  // THE SELECTION RINGS FIRST, UNDER EVEN THE CANDIDATES. The selection is
+  // the most persistent of the four things drawn here — it outlives the
+  // gesture, where a candidate set and a band are both born and destroyed
+  // inside one — so it is the bottom of the stack and everything transient
+  // reads over it.
+  if (selectedPins.isNotEmpty) {
+    final stroke = Stroke(
+      argb: style.selectionArgb,
+      widthPt: style.ringWidthPx,
+      scaleWithGeometry: false,
+    );
+    for (final pin in selectedPins) {
+      // THE CARET'S OWN RING IS SKIPPED, exactly as a candidate's is and
+      // for a sharper version of the same reason: this ring and the
+      // caret's are the SAME RADIUS, so drawing both puts two coincident
+      // circles on one pin and the caret — drawn last — hides the one
+      // underneath. The op would cost a pixel of nothing. A run is still
+      // legible without it, because the caret is by definition ON the pin
+      // the user is looking at and the other N-1 rings say where the run
+      // reaches.
+      if (pin.ref == caret) continue;
+      ops.add(OpCircle(pin.centre, radius, stroke: stroke));
+    }
+  }
+
+  // THE CANDIDATE RINGS NEXT, UNDER THE GESTURE. They are the field the
   // gesture is played on; the band and the two live rings are the gesture
   // itself and have to read over them.
   if (sourcePin != null && candidates.isNotEmpty) {
@@ -386,6 +440,7 @@ ConnectOverlay buildConnectOverlay({
     caret: caretPin,
     source: sourcePin,
     band: band,
+    selected: List<LocatedPin>.unmodifiable(selectedPins),
   );
 }
 

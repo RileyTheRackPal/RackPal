@@ -26,6 +26,7 @@ void main() {
     sourceArgb: 0xFF00FF00,
     bandArgb: 0xFF0000FF,
     candidateArgb: 0x800000FF,
+    selectionArgb: 0xFFFF00FF,
   );
 
   PinRef pinOn(String designator, {int index = 0}) {

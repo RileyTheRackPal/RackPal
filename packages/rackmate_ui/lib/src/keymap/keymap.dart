@@ -179,6 +179,8 @@ enum KeyBindingId {
   pinCaretDown,
   pinCaretLeft,
   pinCaretRight,
+  extendPinSelectionUp,
+  extendPinSelectionDown,
 
   // --- dialog ---------------------------------------------------------
   dialogDismiss,
@@ -393,6 +395,42 @@ final class MovePinCaretIntent extends Intent {
   const MovePinCaretIntent(this.direction);
 
   final AxisDirection direction;
+}
+
+/// Grow or shrink the multi-draw pin selection by one place in the bank's
+/// rank order (#93, docs/05:484's "N ports selected in one bank").
+///
+/// ORDINAL, WHERE [MovePinCaretIntent] IS GEOMETRIC, and the two are on
+/// the same arrow keys one `Shift` apart — so the difference is worth
+/// stating. A bare arrow moves a cursor over a PICTURE and "nearest in
+/// direction" is the only meaning that matches what the user is looking
+/// at. `Shift` extends a RANGE, and a range in this gesture is defined by
+/// DR-012.2's rank (`PortDef.order` then `key`) because that is the order
+/// `planMultiDraw` pairs sources against sinks in. A geometric extension
+/// could select pins in an order the commit would then ignore, which is
+/// exactly the "two orderings of one bank" defect `multi_draw.dart` is
+/// written against.
+///
+/// ON A LEFT- OR RIGHT-EDGE BANK — which is where the seed catalog puts
+/// essentially all of them — rank order runs down the edge, so the two
+/// readings agree and `Shift+Down` does the obvious thing. On a top or
+/// bottom edge they part company, and the LABEL is what is honest about
+/// it: it promises the selection, not a direction on screen.
+///
+/// THE CORPUS SPECIFIES ONLY THE POINTER GESTURE. docs/05:484 is
+/// "dragging to a target bank", and no keyboard route for multi-draw is
+/// written down anywhere. This pair is added for parity rather than
+/// transcribed, on the grounds that a gesture reachable only with a mouse
+/// is an accessibility hole in the one gesture that saves the most time
+/// (AC-058/D11, M7's criterion). `Shift+arrow` is the convention every
+/// range selection in every application uses, and docs/04 §3.4's own
+/// comment already reserves `Shift+↑↓` for "extend" in the rack — so this
+/// takes a meaning that was already spoken for rather than inventing one.
+final class ExtendPinSelectionIntent extends Intent {
+  const ExtendPinSelectionIntent(this.step);
+
+  /// +1 towards the end of the bank, -1 towards its start.
+  final int step;
 }
 
 /// A single declared binding: what key, in what scope, meaning what.
@@ -1053,6 +1091,36 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     label: 'Caret to the pin on the right',
     intent: MovePinCaretIntent(AxisDirection.right),
     source: 'docs/05 §7',
+  ),
+  // #93's SELECTION HALF. `Shift` is the last modifier this canvas has
+  // spare — `Ctrl` is docs/05 §14's magnet suppressor and `Alt` is
+  // DR-001's drawn-wire hover — which is why the selection is a
+  // contiguous RUN and not an arbitrary set. `pin_selection.dart`'s
+  // header carries that arithmetic.
+  KeyBinding(
+    id: KeyBindingId.extendPinSelectionDown,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.arrowDown,
+    shift: true,
+    label: 'Extend the pin selection along the bank',
+    intent: ExtendPinSelectionIntent(1),
+    source: 'docs/05:484 · DR-012.2',
+    note:
+        'ORDINAL, not geometric — the bare arrow one Shift away is the '
+        'geometric one. See ExtendPinSelectionIntent. The corpus writes '
+        'multi-draw as a pointer gesture only; this pair is the keyboard '
+        'route added for parity, on the chord docs/04 §3.4 already '
+        'reserves for "extend".',
+  ),
+  KeyBinding(
+    id: KeyBindingId.extendPinSelectionUp,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.arrowUp,
+    shift: true,
+    label: 'Extend the pin selection along the bank',
+    intent: ExtendPinSelectionIntent(-1),
+    source: 'docs/05:484 · DR-012.2',
+    note: 'See extendPinSelectionDown.',
   ),
 
   // ── dialog ───────────────────────────────────────────────────────────

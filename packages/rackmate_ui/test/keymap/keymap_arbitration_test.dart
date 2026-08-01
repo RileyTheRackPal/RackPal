@@ -129,11 +129,21 @@ void main() {
       // `SingleActivator` rather than a second meaning: it matches
       // modifiers exactly, so docs/05:483's "Shift held at commit" would
       // do nothing at all without a row of its own.
+      //
+      // #93 ADDS TWO MORE, and they are the first rows in this registry
+      // that the CORPUS DOES NOT CONTAIN. docs/05:484 writes multi-draw
+      // as a pointer gesture — "dragging to a target bank" — and gives no
+      // keyboard route for it; `Shift+↑↓` is added for parity, on the
+      // chord docs/04 §3.4's own comment already reserves for "extend".
+      // Recorded here rather than in the row alone because this count is
+      // where a reader learns how big the keymap is allowed to get, and
+      // "two rows nothing asked for" deserves to be visible at that
+      // number.
       expect(keyBindingsIn(KeyScope.global), hasLength(7));
       expect(keyBindingsIn(KeyScope.rack), hasLength(16));
-      expect(keyBindingsIn(KeyScope.schematic), hasLength(20));
+      expect(keyBindingsIn(KeyScope.schematic), hasLength(22));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(44));
+      expect(kKeymap, hasLength(46));
     });
   });
 

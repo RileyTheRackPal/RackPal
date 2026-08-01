@@ -133,6 +133,7 @@ import 'package:rackmate_ui/src/canvas/canvas_intent.dart';
 import 'package:rackmate_ui/src/canvas/grid_painter.dart';
 import 'package:rackmate_ui/src/canvas/schematic/connect_overlay.dart';
 import 'package:rackmate_ui/src/canvas/schematic/domain_filter_bar.dart';
+import 'package:rackmate_ui/src/canvas/schematic/pin_selection.dart';
 import 'package:rackmate_ui/src/canvas/schematic/render_schematic_canvas.dart';
 import 'package:rackmate_ui/src/canvas/schematic/schematic_filter.dart';
 import 'package:rackmate_ui/src/canvas/schematic/schematic_paint_plan.dart';
@@ -469,6 +470,28 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// unsnapped state for it to be in.
   DPt? _freeEnd;
 
+  /// #93's multi-draw selection — "N ports selected in one bank"
+  /// (docs/05:484), or [PinSelection.none], which is nearly always.
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// A THIRD SELECTION ON ONE SCREEN, AND WHY IT IS NOT [_selection]
+  /// ═════════════════════════════════════════════════════════════════
+  /// This screen already has [_selection] (devices, `SelectionController`,
+  /// shared with the rack and the inspector) and [_pinCaret] (one pin, a
+  /// CURSOR rather than a selection — see its own doc on why the two must
+  /// not be confused). This is neither. It names PINS, which
+  /// `SelectionController` cannot hold — it is keyed by `Uuid` and a pin
+  /// is a device plus a `PortKey` (CR-051), because DR-011.1 means the
+  /// `Port` entity does not exist until a cable is drawn to it. There is
+  /// nothing to select by id.
+  ///
+  /// IT DOES NOT SUBSTITUTE FOR THE CARET EITHER, which is the mistake
+  /// [_pinCaret]'s doc records M1 being refuted by. The caret stays
+  /// authoritative: it is what the arrows move and what a commit lands
+  /// on, and this is read only by the gestures that are ABOUT a run of
+  /// pins.
+  PinSelection _pins = PinSelection.none;
+
   /// The positions the LAST built scene laid its symbols out at, and the
   /// `_sceneEpoch` those positions must be held for — DR-011.4.
   ///
@@ -720,6 +743,27 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       _candidates = const <PinRef>[];
       _preferred = const <PinRef>{};
       what ??= 'Wire';
+    }
+    // THE PIN RUN NEXT, AND AHEAD OF THE CARET — the ordering matters
+    // because only the FIRST thing torn down is named ("what ??=", and
+    // `_onDocumentChanged` shows one sentence). A run of sixteen jacks is
+    // the more expensive thing to have lost and the one a user needs told
+    // about; the caret is one keystroke to put back.
+    //
+    // A selection that outlived one of its pins would hand `planMultiDraw`
+    // a source that resolves to nothing, and core would drop it in silence
+    // — "sixteen cables" quietly becoming fifteen, which is the same class
+    // of failure as a stale candidate list and takes the same answer.
+    // `prunedAgainst` drops the WHOLE run rather than the missing pin, for
+    // the reason stated there.
+    if (!_pins.isEmpty) {
+      final pruned = _pins.prunedAgainst(
+        _bankRank(deviceId: _pins.deviceId!, bankKey: _pins.bankKey!),
+      );
+      if (pruned.isEmpty) {
+        _pins = PinSelection.none;
+        what ??= 'Jack selection';
+      }
     }
     // A caret over a pin that has gone. ASKED OF THE DOCUMENT, NOT OF THE
     // SCENE, and the difference is a real bug avoided: this runs inside
@@ -1153,6 +1197,21 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       _cancelWire();
       return;
     }
+    // THE PIN RUN IS THE SECOND RUNG, ABOVE THE FOCUS SCOPE. Innermost
+    // first, which is the rule this ladder already follows: a run of jacks
+    // is what the user built most recently and most locally, and a `F`
+    // scope is the more expensive of the two to rebuild — the same
+    // argument that puts the wire above both.
+    if (!_pins.isEmpty) {
+      final count = _pins.length;
+      setState(() => _pins = PinSelection.none);
+      _status.show(
+        count == 1
+            ? 'Jack deselected.'
+            : '$count selected jacks deselected.',
+      );
+      return;
+    }
     if (_focused.isNotEmpty) {
       setState(() => _focused = const <String>{});
       return;
@@ -1340,6 +1399,144 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     _status.show(
       '${_saying(from)} → ${_saying(caret)} · OK · '
       'Enter to commit, Esc to cancel',
+    );
+  }
+
+  // ── #93's pin selection (docs/05:484, DR-012.2) ───────────────────────
+
+  /// The bank [ref] is in, or null when its `PortDef` declares none.
+  ///
+  /// ASKED OF THE DOCUMENT, NOT OF THE SCENE, for [_pinStillExists]'s
+  /// reason: this runs from `_invalidateLivePreviews` where [_scene] is
+  /// still the previous frame's. `SymbolPort` carries a `bankKey` too and
+  /// it is the right source for a scene-only consumer — this screen simply
+  /// is not one.
+  String? _bankKeyOf(PinRef ref) => _targetFor(ref)?.def.bankKey;
+
+  /// [bankKey]'s port keys in DR-012.2 rank order.
+  ///
+  /// `portsInBank` and never a sort written here — `multi_draw.dart`
+  /// exports it precisely so the gesture and the commit cannot disagree
+  /// about what "the next pin" means.
+  List<String> _bankRank({required String deviceId, required String bankKey}) =>
+      <String>[
+        for (final t in portsInBank(
+          _doc,
+          deviceId: Uuid(deviceId),
+          bankKey: bankKey,
+        ))
+          t.def.key.v,
+      ];
+
+  /// What a sentence calls the bank a selection is in.
+  String _bankSaying(PinSelection sel) => bankLabelFor(
+    _doc,
+    deviceId: Uuid(sel.deviceId!),
+    bankKey: sel.bankKey!,
+  );
+
+  /// Starts a run at [ref] — the anchor a later `Shift` extends from.
+  ///
+  /// Returns false when the pin is in no bank, which is the one pin a run
+  /// cannot start on. Silent on that path: this is called from the press
+  /// on EVERY pin, and a sentence about banks on every ordinary
+  /// pin-to-pin press would be noise on the one gesture users perform
+  /// sixty times an hour.
+  bool _anchorPinSelection(PinRef ref) {
+    final bank = _bankKeyOf(ref);
+    if (bank == null) {
+      if (!_pins.isEmpty) setState(() => _pins = PinSelection.none);
+      return false;
+    }
+    setState(() => _pins = PinSelection.at(ref, bankKey: bank));
+    return true;
+  }
+
+  /// `Shift`+click — extend the run from its anchor to [ref].
+  void _extendPinSelectionTo(PinRef ref) {
+    final bank = _bankKeyOf(ref);
+    if (bank == null) {
+      _status.show(
+        '${_saying(ref)} is in no bank, so there is no run to select along.',
+      );
+      return;
+    }
+    final rank = _bankRank(deviceId: ref.deviceId, bankKey: bank);
+    setState(() {
+      _pins = _pins.extendTo(ref, bankKey: bank, rank: rank);
+      _pinCaret = ref;
+    });
+    _announcePinSelection();
+  }
+
+  /// `Shift`+↑/↓ — the keyboard half of [_extendPinSelectionTo].
+  ///
+  /// Seeds from the caret when there is no run yet, so the gesture is
+  /// reachable without a prior click: arrows to a jack, `Shift`+↓ seven
+  /// times, and the matrix's eight outputs are selected.
+  void _extendPinSelection({required int by}) {
+    final scene = _scene;
+    if (scene == null) return;
+    final caret = _seedCaret(scene);
+    if (caret == null) {
+      _status.show('This sheet draws no pin to select.');
+      return;
+    }
+    var from = _pins;
+    if (from.isEmpty || !from.contains(caret)) {
+      final bank = _bankKeyOf(caret);
+      if (bank == null) {
+        _status.show(
+          '${_saying(caret)} is in no bank, so there is no run to select '
+          'along.',
+        );
+        return;
+      }
+      from = PinSelection.at(caret, bankKey: bank);
+    }
+    final rank = _bankRank(deviceId: from.deviceId!, bankKey: from.bankKey!);
+    final next = from.step(by: by, rank: rank);
+    // NOT A SILENT NO-OP (docs/04 §3.4). `step` refuses to wrap, so the
+    // ends of a bank are reachable states a user will sit in, and a key
+    // that did nothing and said nothing there is the failure that rule
+    // names.
+    if (identical(next, from) && !from.isEmpty) {
+      setState(() {
+        _pins = from;
+        _pinCaret = PinRef(deviceId: from.deviceId!, portKey: from.head!);
+      });
+      _status.show(
+        'That is the ${by > 0 ? 'last' : 'first'} jack in '
+        '${_bankSaying(from)}.',
+      );
+      return;
+    }
+    setState(() {
+      _pins = next;
+      _pinCaret = PinRef(deviceId: next.deviceId!, portKey: next.head!);
+    });
+    _announcePinSelection();
+  }
+
+  /// Says what the run is, and what can be done with it.
+  ///
+  /// THE ONE-PIN SENTENCE TEACHES THE GESTURE, which is the only place
+  /// multi-draw is discoverable at all: it has no button, no menu item and
+  /// no coach mark. AC-048's mark was spent on the domain filter (DR-012.4)
+  /// and adding a second one to the same sheet would make the first a nag.
+  void _announcePinSelection() {
+    final sel = _pins;
+    if (sel.isEmpty) return;
+    if (!sel.isMultiple) {
+      _status.show(
+        '${_saying(sel.refs.first)} — Shift+click or Shift+↑↓ to select a '
+        'run of ${_bankSaying(sel)}.',
+      );
+      return;
+    }
+    _status.show(
+      '${sel.length} jacks selected in ${_bankSaying(sel)} — drag them onto '
+      'another bank to draw ${sel.length} cables at once.',
     );
   }
 
@@ -1640,7 +1837,25 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// cable can leave — so the handler can fall back to treating the press
   /// as an ordinary click rather than starting a drag with nothing in it.
   bool _beginWireAt(PinRef ref) {
+    // ═════════════════════════════════════════════════════════════════
+    // `Shift` ON THE PRESS IS A SELECTION, NOT A CABLE — #93
+    // ═════════════════════════════════════════════════════════════════
+    // Returning false hands the press back to the ordinary click claim,
+    // which is exactly right: extending a run is a click-shaped act with
+    // no drag in it, and treating it as a refused arm reuses the path
+    // `beginDrag` already has for "this pin cannot start a cable".
+    if (HardwareKeyboard.instance.isShiftPressed) {
+      _extendPinSelectionTo(ref);
+      return false;
+    }
     setState(() => _pinCaret = ref);
+    // THE ANCHOR IS SET BY THE ORDINARY PRESS, before anything is armed.
+    // Without it `Shift`+click has nothing to extend FROM, and there is
+    // no second gesture that could set one — a modifier-free press on a
+    // pin is the only thing a user does before reaching for `Shift`.
+    // It costs an unarmed press nothing: a selection of one is not a
+    // multi-draw (`PinSelection.isMultiple`).
+    _anchorPinSelection(ref);
     return _armWireFrom(ref);
   }
 
@@ -1728,8 +1943,19 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     // (`rack_canvas_screen.dart:1041`) — and this is its other half: a
     // sub-threshold press that DID arm a preview cancels it, because the
     // user never dragged anywhere.
+    //
+    // AND SINCE #93 THE TAP ALSO MEANS SOMETHING, which changes what is
+    // said here. `_beginWireAt` set the anchor on the way in, so the
+    // gesture that just happened was "pick this jack" — reporting a
+    // cancelled cable would name the one thing the user did NOT do and
+    // stay silent about the one they did.
     if (!moved) {
-      _cancelWire();
+      _clearWire();
+      if (_pins.isEmpty) {
+        _status.show('Cable from ${_saying(from)} cancelled.');
+      } else {
+        _announcePinSelection();
+      }
       return;
     }
 
@@ -2008,6 +2234,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       source: _wireFrom,
       freeEnd: _freeEnd,
       candidates: _candidates,
+      selected: _pins.refs,
     );
     final plan = buildSchematicPaintPlan(
       scene: scene,
@@ -2088,6 +2315,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
             () =>
                 _canvasKeysEnabled &&
                 (_wireFrom != null ||
+                    !_pins.isEmpty ||
                     _focused.isNotEmpty ||
                     _selection.isNotEmpty),
             (_) => _onEscape(),
@@ -2121,6 +2349,17 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
           MovePinCaretIntent: _GatedAction<MovePinCaretIntent>(
             () => _canvasKeysEnabled,
             (intent) => _movePinCaret(intent.direction),
+          ),
+          ExtendPinSelectionIntent: _GatedAction<ExtendPinSelectionIntent>(
+            // NOT gated on a wire, and not gated on a run existing: this
+            // is how a run is STARTED from the keyboard, and gating it on
+            // its own output is the "worked once then quietly stopped"
+            // shape DR-011 records M1 being refuted by. It is gated while
+            // a cable is in flight, though — extending the source run
+            // under an armed wire would change what the wire is drawn
+            // from without redrawing its band or its candidates.
+            () => _canvasKeysEnabled && _wireFrom == null,
+            (intent) => _extendPinSelection(by: intent.step),
           ),
         },
         child: Focus(
@@ -2816,6 +3055,12 @@ ConnectOverlayStyle _connectOverlayStyle(ColorScheme scheme) =>
       // Quieter than the caret on purpose: a hundred of these can be on
       // screen at once and they are a FIELD, not a cursor.
       candidateArgb: _argbOfColor(scheme.primary.withValues(alpha: 0.45)),
+      // The DEVICE selection's own colour, because a run of jacks is a
+      // selection and reads as one — the same role `scheme.secondary`
+      // plays for a selected symbol. Deliberately not the caret's
+      // `primary` or the source's `tertiary`: a selected pin is neither
+      // the cursor nor the thing a cable is currently leaving.
+      selectionArgb: _argbOfColor(scheme.secondary),
     );
 
 /// The theme-derived symbol palette.

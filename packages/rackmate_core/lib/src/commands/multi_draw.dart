@@ -181,7 +181,7 @@ MultiDrawPlan planMultiDraw(
     bankKey: toBankKey,
   );
 
-  final bankLabel = _bankLabel(doc, deviceId: toDeviceId, bankKey: toBankKey);
+  final bankLabel = bankLabelFor(doc, deviceId: toDeviceId, bankKey: toBankKey);
   final pairs = <MultiDrawPair>[];
   final unpaired = <MultiDrawUnpaired>[];
   final consumed = <Uuid>{};
@@ -230,7 +230,13 @@ MultiDrawPlan planMultiDraw(
 }
 
 /// A bank's human label, falling back to its key.
-String _bankLabel(
+///
+/// PUBLIC BECAUSE THE SCREEN SAYS THIS WORD TOO. The status line has to
+/// name the bank a run was selected in and the bank a drop would land on,
+/// and a second lookup in `rackmate_ui` would be a second answer to
+/// "what is this bank called" — the shape of drift this file's header
+/// already refuses for ORDER. One function, one name, both surfaces.
+String bankLabelFor(
   RackDocument doc, {
   required Uuid deviceId,
   required String bankKey,

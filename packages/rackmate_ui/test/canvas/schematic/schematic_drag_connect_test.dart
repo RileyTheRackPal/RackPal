@@ -134,6 +134,9 @@ void main() {
           data.contains('Wire from') ||
           data.contains('No pin') ||
           data.contains('One drag at a time') ||
+          // #93's anchor sentence, which is what a sub-threshold press on
+          // a pin now says instead of "cancelled".
+          data.contains('Shift+click') ||
           data.startsWith('TOP-')) {
         return data;
       }
@@ -306,29 +309,54 @@ void main() {
       // onto a full jack and then refuse it on release, which teaches the
       // user that the affordance lies.
       //
-      // THE ASSERTION IS ABOUT THE BAND'S END, NOT ABOUT THE STATUS LINE,
-      // and the first draft got that wrong. At the framed zoom the 12
-      // screen px magnet is WIDER than the 2 gu pin pitch, so the cursor
-      // sitting on a full pin is still inside the radius of its free
-      // neighbours — and snapping to one of those is correct. What must
-      // never happen is the band ending on the full pin itself.
+      // THE ASSERTION MOVED TO THE RELEASE, AND THE OLD ONE COULD NOT SEE
+      // WHAT IT CLAIMED TO. It read `bandOf(tester).last, isNot(full
+      // .centre)` — but an UNSNAPPED band is `[source, escape, freeEnd]`
+      // and `freeEnd` is the raw cursor, which this test puts exactly on
+      // the full pin. So `band.last == full.centre` means either "the
+      // magnet locked onto a full jack" (the defect) or "the magnet
+      // correctly found nothing and the cursor is simply there" (the
+      // desired behaviour). The two are geometrically identical and the
+      // assertion passed only while a FREE neighbour happened to sit
+      // inside the 12 px radius and win the snap.
+      //
+      // The catalog order fix removed that neighbour — AMP-1's srcIn bank
+      // now reads src.1.l, src.1.r, src.2.l … instead of a scrambled
+      // order, and the fixture's three cables fill a contiguous run — so
+      // the coincidence stopped holding and the test failed on correct
+      // behaviour. What it always meant to assert is that a full jack is
+      // not in the candidate pool, and the observable that says so
+      // WITHOUT a geometric coincidence is the release: if the magnet had
+      // locked on, letting go would commit.
       await pump(tester);
       final from = freePin('MTX-1');
       final full = fullPin('AMP-1');
+      final linksBefore = doc.links.length;
 
       final drag = await tester.startGesture(toScreen(tester, from.centre));
       await tester.pump();
       await drag.moveTo(toScreen(tester, full.centre));
       await tester.pump();
+      await drag.up();
+      await tester.pumpAndSettle();
 
       expect(
-        bandOf(tester).last,
-        isNot(full.centre),
+        doc.links,
+        hasLength(linksBefore),
         reason: 'the magnet may prefer a neighbouring CANDIDATE, but it '
-            'may never lock onto a jack that is already full',
+            'may never lock onto a jack that is already full — and a '
+            'release on a locked-on pin is exactly what commits',
       );
-      await drag.cancel();
-      await tester.pumpAndSettle();
+      final fullPortId = derivePortId(
+        Uuid(full.ref.deviceId),
+        PortKey(full.ref.portKey),
+      );
+      expect(
+        portConductorCount(doc, fullPortId),
+        1,
+        reason: 'the full jack carries the one cable it started with, and '
+            'no second one arrived on it',
+      );
     });
   });
 
@@ -442,7 +470,20 @@ void main() {
         hasLength(5),
         reason: 'a click is not a drag, and a cable needs a drag',
       );
-      expect(statusOf(tester), contains('cancelled'));
+      // WHAT IS SAID CHANGED AT #93, AND THE OLD SENTENCE WAS THE WRONG
+      // ONE. This assertion read `contains('cancelled')`. Since multi-draw
+      // the tap also SETS THE ANCHOR a Shift+click extends from — so the
+      // press has an outcome, and reporting a cancelled cable would name
+      // the one thing the user did not do while staying silent about the
+      // one they did. The substance above is untouched: still no link.
+      expect(statusOf(tester), contains('MTX-1'));
+      expect(
+        statusOf(tester),
+        contains('Shift+click'),
+        reason: 'the tap left an anchor, and this sentence is the only '
+            'place multi-draw is discoverable — it has no button, no menu '
+            'item and no coach mark of its own',
+      );
     });
   });
 
