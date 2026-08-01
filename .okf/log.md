@@ -2,6 +2,43 @@
 
 ## 2026-08-02
 
+* **Creation**: [DR-006](/decisions/dr-006-self-signed-distribution.md), written
+  up now because board #13 built the first part of it. **The portable build
+  ships** (`580cb2a`, `1e45cf6`, `bee96bd`): `tools/release/` stages, signs and
+  gates a portable Windows folder, documented in `docs/14-deployment.md`.
+  **M2's headline does not move** — the portable build is not named by M2's
+  exit criterion, and M8's four clauses are untouched.
+* **Note**: this is a **scope edit and is recorded as one**. DR-006 consequence
+  4 says outright that a portable output before M8 is *"a scope edit under
+  roadmap §8.3 and not something this consequence grants"*. One was wanted
+  early, for the team to test with.
+* **Note**: the APP half needed no code. `data_root.dart` has been the portable
+  seam since M0, and docs/03:847's claim that pinning `path_provider_windows`
+  to one call site "keeps M2's portable build a one-function change" held
+  exactly. Verified by running the staged tree, which wrote
+  `RackMateData\sessions\<uuid>.lease` beside the executable rather than under
+  AppData.
+* **Creation**: [the release signature gate](/gates/release-signature.md), and
+  with it a correction to the ruling it implements. **DR-006 §11.6.2's
+  expiry recipe has an unstated precondition**: run as written on a normal
+  build machine it is INCONCLUSIVE, because a self-signed root is untrusted
+  there and the chain engine reports `UntrustedRoot` before reaching the time
+  check — so both the timestamped and the untimestamped copy come back
+  identical. The gate uses `X509Chain` with an explicit `VerificationTime`
+  instead, and states which half is observed and which is modelled.
+* **Note**: a second correction, this one to consequence 4's wording. **"Every
+  artifact a release produces" is not "every file it ships."** The first
+  signing run replaced Microsoft's signature on the three redistributable VC++
+  DLLs with a self-signed one — trading a chain that validates on every Windows
+  machine for one that validates only where the GPO has landed. Binaries
+  already signed by another publisher are now skipped.
+* **Creation**: [the ZIP trap](/practices/the-zip-trap.md). Explorer propagates
+  Mark-of-the-Web into extracted files, so a portable ZIP fetched over HTTP
+  re-arms SmartScreen on every binary inside it however well signed — silently,
+  until somebody on a fresh machine sees the prompt. The general shape is that
+  **a property living in the channel cannot be gated at the source**, which is
+  why M8's clause had to be split rather than tightened.
+
 * **Update**: [DR-012](/decisions/dr-012-deferred-gesture-rules.md) §11.12.2 —
   **multi-draw is BUILT** (`8876261`, `4840307`, `e078c0b`), which completes
   all four of RJ-001's gestures. N `Link`s in rank order under one undo entry,

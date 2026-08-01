@@ -4,6 +4,7 @@ Numbered decisions that settle a question the corpus could not answer on its own
 Each requires a user decision and is recorded in `docs/canonical-decisions.md` §11.
 
 * [DR-001 — net labels by default](dr-001-net-labels-by-default.md) - every Link renders as net labels, not a drawn wire; deletes 4-5 weeks of routing work from v1.
+* [DR-006 — internal tool, self-signed distribution](dr-006-self-signed-distribution.md) - no CA, no hardware token, no reputation ramp; the signing script is parameterised over certificate source, and M8's SmartScreen clause splits because no build can deliver it.
 * [DR-008 — the three wiring-model questions](dr-008-wiring-model.md) - a jumper is both ends in one rack; a hand-set class outranks the classifier; atomicConnect connects what fits.
 * [DR-009 — macOS ships in v1](dr-009-macos-in-v1.md) - closes §10.10 against its own recommendation, and creates the debt register it asked for.
 * [DR-010 — the registries seed in Dart](dr-010-seeded-registries.md) - the master is Dart not JSON; the subset is written at creation; SignalFamilyDef regains its dash.

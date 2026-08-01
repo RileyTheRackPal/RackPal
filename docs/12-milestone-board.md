@@ -761,13 +761,36 @@ M2-F precisely because it scanned for `AddLinkCommand(` alone and would have sta
 copies lied. The old text also called `symbol_layer.dart` *"a symbol renderer and hit-tester that no
 screen consumes"* — `schematic_canvas_screen.dart` consumes both.
 
-**What M2 still carries, with its criterion met.** ~~Multi-draw (#93) and~~ the portable build
-(#13). Multi-draw landed at `e078c0b`; the portable build is what is left. Neither was named by the
-exit criterion, which is why neither held the headline — roadmap §8.1: *the exit criterion is the
-unit of truth*, and grading a milestone against work-in-the-milestone rather than against its
-criterion is the substitution §5.5 refuses for M6. The six tier-2 spring-back rules
+**What M2 still carries, with its criterion met.** ~~Multi-draw (#93) and the portable build
+(#13).~~ **Both are done** — multi-draw at `e078c0b`, the portable build at `bee96bd`. Neither was
+named by the exit criterion, which is why neither held the headline — roadmap §8.1: *the exit
+criterion is the unit of truth*, and grading a milestone against work-in-the-milestone rather
+than against its criterion is the substitution §5.5 refuses for M6. The six tier-2 spring-back rules
 are **not** M2's at all — canon defers them to M5 (§11.12.5), and implementing one as a tier-1
 refusal would make the product unable to draw a mistake, which CR-017 and G2 exist to prevent.
+
+**The portable build (#13), and why it is not M8 arriving early.** `docs/14-deployment.md` and
+`tools/release/`. **It is a scope edit and is recorded as one**: DR-006 consequence 4 says outright
+that a portable output before M8 is *"a scope edit under roadmap §8.3 and not something this
+consequence grants"*, and one was wanted early so the team has something to test with. What it
+delivers is a signed, timestamped portable folder — nothing else. **M8's four exit clauses are
+untouched**: no installer, no crash reporter, no cold-start budget, no documented limits, and §5.7's
+marks do not move. The app half needed no code at all: `data_root.dart` has been the portable seam
+since M0, and docs/03:847's claim that pinning `path_provider_windows` to one call site *"keeps M2's
+portable build a one-function change"* held exactly — **verified by running the staged tree, which
+wrote `RackMateData\sessions\<uuid>.lease` beside the executable rather than under AppData**.
+
+**Two findings from building it, both recorded because they are corrections to the corpus and not
+to the code.** First, **DR-006 §11.6.2's expiry recipe has an unstated precondition**: run as
+written on a normal build machine it is INCONCLUSIVE, because a self-signed root is untrusted there
+and the chain engine reports `UntrustedRoot` before it ever reaches the time check — so *both* the
+timestamped and the untimestamped copy come back identical and the difference the clause exists to
+prove is masked. `verify_signatures.ps1` takes the verdict from `X509Chain` with an explicit
+`VerificationTime` instead, and states plainly which half is observed and which is modelled. Second,
+**"every artifact a release produces" is not "every file it ships"**: the first signing run replaced
+Microsoft's signature on the three redistributable VC++ DLLs with a self-signed one, trading a chain
+that validates on every Windows machine for one that validates only where the GPO has landed.
+Binaries already signed by another publisher are now skipped.
 
 ### 5.2 M3 — Structure and the field · `M` · NOT STARTED — weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
