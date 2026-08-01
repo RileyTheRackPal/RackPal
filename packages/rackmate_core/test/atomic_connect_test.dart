@@ -310,12 +310,26 @@ void main() {
     });
   });
 
-  group('planAtomicConnect — a hole is an open end, NOT a shift', () {
-    test('AN UNMATERIALISED MEMBER DOES NOT SLIDE ITS SUCCESSOR UP', () {
-      // `l` is declared on device A but never materialised. If the
-      // implementation filters unmaterialised members before zipping, `r`
-      // becomes index 0 and gets wired to device B's `l` — the right cable
-      // on the wrong pin, with nothing downstream able to notice.
+  group('planAtomicConnect — position is the contract', () {
+    test('AN UNMATERIALISED MEMBER IS NOW MATERIALISED, not left open', () {
+      // ═══════════════════════════════════════════════════════════════
+      // THIS TEST ASSERTED THE OPPOSITE UNTIL M2-F PHASE 4C, AND IT WAS
+      // RIGHT TO, UNDER THE BEHAVIOUR OF THE TIME.
+      // ═══════════════════════════════════════════════════════════════
+      // It used to require `conductors[0].from` to be an `OpenEndpoint`
+      // when device A's `l` was declared but unmaterialised. That was the
+      // honest answer while nothing could CREATE a port — but DR-011.1
+      // rules that ports are materialised inside the connect command's
+      // apply(), and Phase 0 implemented it for `ConnectPortsCommand`
+      // ONLY. The set path kept the old answer, so a stereo pair dragged
+      // on a palette-built document produced a cable with two open ends
+      // and no electrical path at all.
+      //
+      // The old behaviour conflated two different things, and this is the
+      // separation: "this position has no PARTNER" is a size mismatch and
+      // is still an open end (see below), while "this port has not been
+      // CREATED yet" was an artefact of AC-006's laziness and is now
+      // simply planned.
       final doc = _doc();
       _addDevice(
         doc,
@@ -328,16 +342,42 @@ void main() {
 
       final plan = _plan(doc)!;
       expect(plan.conductors, hasLength(2));
+      expect(
+        (plan.conductors[0].from as PortEndpoint).portId,
+        _portOf(_devA, 'l'),
+        reason: 'the id is DERIVED, so it is knowable before the port is',
+      );
+      expect(
+        plan.neededPorts.map((n) => n.portId),
+        contains(_portOf(_devA, 'l')),
+        reason: 'and the plan says it must be created',
+      );
+      expect(plan.pairedCount, 2);
+      expect(plan.openCount, 0);
+    });
 
-      // Position 0: A's `l` is missing, so that end is open — B's `l` is
-      // NOT stolen by A's `r`.
-      expect(plan.conductors[0].from, isA<OpenEndpoint>());
+    test('AN UNMATERIALISED MEMBER STILL DOES NOT SLIDE ITS SUCCESSOR UP',
+        () {
+      // THE INVARIANT THE OLD TEST WAS REALLY PROTECTING, and it survives
+      // the change unaltered: if the implementation filtered unmaterialised
+      // members before zipping, `r` would become index 0 and be wired to
+      // device B's `l` — the right cable on the wrong pin, with nothing
+      // downstream able to notice. Position is the contract.
+      final doc = _doc();
+      _addDevice(
+        doc,
+        _devA,
+        'tpl.a',
+        _body('sa', [('l', 'L'), ('r', 'R')]),
+        unmaterialised: {'l'},
+      );
+      _addDevice(doc, _devB, 'tpl.b', _body('sb', [('l', 'L'), ('r', 'R')]));
+
+      final plan = _plan(doc)!;
       expect(
         (plan.conductors[0].to as PortEndpoint).portId,
         _portOf(_devB, 'l'),
       );
-
-      // Position 1: the pin that matters.
       expect(
         (plan.conductors[1].from as PortEndpoint).portId,
         _portOf(_devA, 'r'),
@@ -349,37 +389,41 @@ void main() {
             'A.r must land on B.r. A filtered zip lands it on B.l and every '
             'sheet agrees with the mis-wiring',
       );
-      expect(plan.pairedCount, 1);
-      expect(plan.openCount, 1);
     });
 
-    test('a position where NEITHER end materialises records no conductor', () {
+    test('a SIZE mismatch is still an open end — connect-what-fits is '
+        'untouched', () {
+      // The distinction the rewrite above turns on. §11.8.3's ruling is
+      // about SIZE, and a position with no partner on one side has no
+      // second pin to derive an id for: there is nothing to materialise
+      // and the end stays open.
       final doc = _doc();
       _addDevice(
         doc,
         _devA,
         'tpl.a',
-        _body('sa', [('l', 'L'), ('r', 'R')]),
-        unmaterialised: {'r'},
+        _body('sa', [('y', 'Y'), ('pb', 'Pb'), ('pr', 'Pr')]),
+        unmaterialised: {'y', 'pb', 'pr'},
       );
       _addDevice(
         doc,
         _devB,
         'tpl.b',
         _body('sb', [('l', 'L'), ('r', 'R')]),
-        unmaterialised: {'r'},
+        unmaterialised: {'l', 'r'},
       );
 
       final plan = _plan(doc)!;
+      expect(plan.conductors, hasLength(3));
+      expect(plan.pairedCount, 2);
+      expect(plan.openCount, 1, reason: 'the third member has no partner');
+      expect(plan.conductors[2].to, isA<OpenEndpoint>());
       expect(
-        plan.conductors,
-        hasLength(1),
-        reason:
-            'a conductor with two open ends asserts a cable nobody drew — '
-            'there is no electrical path to record',
+        plan.neededPorts,
+        hasLength(5),
+        reason: 'every pin the plan lands on is planned, including the '
+            'one whose partner is missing',
       );
-      expect(plan.openCount, 0);
-      expect(plan.pairedCount, 1);
     });
   });
 
@@ -604,6 +648,7 @@ void main() {
     AtomicConnectCommand command(AtomicConnectPlan plan) =>
         AtomicConnectCommand(
           plan: plan,
+          materialisations: const [],
           designator: 'W001',
           netName: 'N001',
           // DR-011.3: the set's OWN family. `_body` declares every port
@@ -732,8 +777,18 @@ void main() {
       final doc = threeOntoTwo();
       final cmd = command(_plan(doc)!);
       expect(cmd.label, LabelKey.atomicConnect);
-      expect(cmd.touches, EpochMask.wires);
-      expect(cmd.affects, [const Uuid('lnk-1'), const Uuid('net-1')]);
+      expect(
+        cmd.touches,
+        EpochMask.wires | EpochMask.meta,
+        reason: 'meta since Phase 4C, because materialisation MINTS A '
+            'DESIGNATOR — the same pair ConnectPortsCommand declares. A '
+            'surface subscribed only to wires would draw the new run '
+            'against a pin whose identifier it has never read.',
+      );
+      expect(
+        cmd.affects,
+        containsAll(<Uuid>[const Uuid('lnk-1'), const Uuid('net-1')]),
+      );
     });
 
     test('DR-011.3: the REAL family reaches the Net and the Service', () {
@@ -761,26 +816,20 @@ void main() {
     });
 
     test('REFUSES to be constructed with a zero-conductor plan', () {
-      // `planAtomicConnect` returns an empty plan when neither set has a
-      // materialised member — which, before DR-011.1, was every plan on
-      // every document built from the palette. Writing it produces a
-      // `Link` with a designator, a pull-sheet row and nothing
-      // electrical on it at all.
+      // THE GUARD SURVIVES, BUT ITS REACHABLE CASE HAS MOVED. It used to
+      // fire whenever neither set had a MATERIALISED member — "which,
+      // before DR-011.1, was every plan on every document built from the
+      // palette". Phase 4C makes those plans real, so the only route to
+      // an empty plan now is a set with no MEMBERS at all: a declared
+      // `PortSetDef` that no port joins, which
+      // `port_set_integrity_test.dart` records as the state 72 of 90
+      // catalog references were once in.
+      //
+      // Writing it would produce a `Link` with a designator, a pull-sheet
+      // row and nothing electrical on it at all.
       final doc = _doc();
-      _addDevice(
-        doc,
-        _devA,
-        'tpl.a',
-        _body('sa', [('l', 'L')]),
-        unmaterialised: {'l'},
-      );
-      _addDevice(
-        doc,
-        _devB,
-        'tpl.b',
-        _body('sb', [('l', 'L')]),
-        unmaterialised: {'l'},
-      );
+      _addDevice(doc, _devA, 'tpl.a', _body('sa', []));
+      _addDevice(doc, _devB, 'tpl.b', _body('sb', []));
 
       final plan = _plan(doc)!;
       expect(
@@ -929,6 +978,167 @@ void main() {
         ),
         isA<AtomicConnectReady>(),
       );
+    });
+  });
+
+  group('DR-011.1 on the SET path — the half Phase 0 did not do', () {
+    // DR-011's finding #1 was that nothing in the application ever
+    // materialises a `Port`, so "on a document built by placing devices
+    // from the palette — the document the M2 exit criterion starts from —
+    // every port set resolves to all-null members and planAtomicConnect
+    // returns a plan with zero conductors". Phase 0 fixed that for
+    // `ConnectPortsCommand`. This group is the same fix for the gesture
+    // the finding was literally written about.
+
+    RackDocument palette() {
+      // NOTHING MATERIALISED — exactly what dropping two devices out of
+      // the palette produces.
+      final doc = _doc();
+      _addDevice(
+        doc,
+        _devA,
+        'tpl.a',
+        _body('sa', [('l', 'L'), ('r', 'R')]),
+        unmaterialised: {'l', 'r'},
+      );
+      _addDevice(
+        doc,
+        _devB,
+        'tpl.b',
+        _body('sb', [('l', 'L'), ('r', 'R')]),
+        unmaterialised: {'l', 'r'},
+      );
+      return doc;
+    }
+
+    AtomicConnectCommand built(RackDocument doc) =>
+        buildAtomicConnectCommand(
+          doc: doc,
+          plan: _plan(doc)!,
+          signalFamily: const SignalFamilyId('audio.line_unbal'),
+          media: kUnstatedMedia,
+          now: _when,
+          actor: 'test',
+        );
+
+    test('a palette-built document now yields a REAL plan, not a '
+        'zero-conductor one', () {
+      final plan = _plan(palette())!;
+      expect(
+        plan.conductors,
+        hasLength(2),
+        reason: 'this was ZERO before Phase 4C — the exact defect DR-011 '
+            'was created to record',
+      );
+      expect(plan.pairedCount, 2);
+      expect(plan.neededPorts, hasLength(4));
+    });
+
+    test('applying it CREATES the four ports, with allocated designators', () {
+      final doc = palette();
+      expect(doc.ports, isEmpty, reason: 'the premise');
+      built(doc).apply(doc);
+
+      expect(doc.ports, hasLength(4));
+      for (final conductor in doc.links.values.single.conductors) {
+        for (final end in [conductor.from, conductor.to]) {
+          expect(end, isA<PortEndpoint>());
+          expect(
+            doc.ports.containsKey((end as PortEndpoint).portId),
+            isTrue,
+            reason: 'a conductor end must land on a port the document has',
+          );
+        }
+      }
+    });
+
+    test('the two designators on ONE device are DIFFERENT — the allocator '
+        'sees its own previous answer', () {
+      // `buildConnectPortsCommand` reserves the first end's designator
+      // when both pins are on one device. A set has N pins on one device,
+      // so the reservation has to accumulate across all of them or a
+      // stereo pair gets J01 twice and CR-042's per-device uniqueness is
+      // broken by the command that created both.
+      final doc = palette();
+      built(doc).apply(doc);
+
+      final onA = [
+        for (final port in doc.ports.values)
+          if (port.deviceId == _devA) port.designator,
+      ];
+      expect(onA, hasLength(2));
+      expect(onA.toSet(), hasLength(2), reason: 'CR-042: unique per device');
+    });
+
+    test('revert removes EXACTLY what apply created, and nothing that was '
+        'already there', () {
+      final doc = _doc();
+      _addDevice(
+        doc,
+        _devA,
+        'tpl.a',
+        _body('sa', [('l', 'L'), ('r', 'R')]),
+        unmaterialised: {'r'},
+      );
+      _addDevice(
+        doc,
+        _devB,
+        'tpl.b',
+        _body('sb', [('l', 'L'), ('r', 'R')]),
+        unmaterialised: {'l', 'r'},
+      );
+      // A.l is the ONLY pre-materialised pin: A.r and both of B's are not.
+      // So the command creates three and must give back exactly three.
+      final preexisting = doc.ports.keys.toSet();
+      expect(preexisting, {_portOf(_devA, 'l')});
+
+      final cmd = built(doc)..apply(doc);
+      expect(doc.ports.length, greaterThan(preexisting.length));
+
+      cmd.revert(doc);
+      expect(
+        doc.ports.keys.toSet(),
+        preexisting,
+        reason: "a port the user's document already owned is not this "
+            "command's to remove — its designator, notes and every "
+            'conductor landing on it would go with it',
+      );
+      expect(doc.links, isEmpty);
+      expect(doc.nets, isEmpty);
+    });
+
+    test('apply is IDEMPOTENT over an existing port — it keeps the '
+        "document's own designator", () {
+      final doc = _doc();
+      _addDevice(doc, _devA, 'tpl.a', _body('sa', [('l', 'L'), ('r', 'R')]));
+      _addDevice(
+        doc,
+        _devB,
+        'tpl.b',
+        _body('sb', [('l', 'L'), ('r', 'R')]),
+        unmaterialised: {'l', 'r'},
+      );
+      final kept = doc.ports[_portOf(_devA, 'l')]!.designator;
+
+      built(doc).apply(doc);
+      expect(
+        doc.ports[_portOf(_devA, 'l')]!.designator,
+        kept,
+        reason: 'CR-048: a designator is evaluated once at creation and '
+            'stored; a connect never rewrites project state',
+      );
+    });
+
+    test('apply/revert/apply lands in the identical state — the Command '
+        'contract, over a data-dependent revert', () {
+      final doc = palette();
+      final cmd = built(doc)..apply(doc);
+      final once = doc.ports.keys.toSet();
+      cmd
+        ..revert(doc)
+        ..apply(doc);
+      expect(doc.ports.keys.toSet(), once);
+      expect(doc.links, hasLength(1));
     });
   });
 }

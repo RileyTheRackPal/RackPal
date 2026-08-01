@@ -68,7 +68,12 @@
 // swapped pair land unremarked. Surfacing it is the caller's job.
 import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/commands/command.dart';
+import 'package:rackmate_core/src/commands/connect_commands.dart'
+    show PortMaterialisation;
 import 'package:rackmate_core/src/commands/label_key.dart';
+import 'package:rackmate_core/src/commands/link_commands.dart'
+    show allocateLinkDesignatorFor, allocateNetNameFor;
+import 'package:rackmate_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackmate_core/src/derived/connect_rules.dart';
 import 'package:rackmate_core/src/derived/connect_target.dart';
 import 'package:rackmate_core/src/derived/port_set_resolution.dart';
@@ -76,6 +81,7 @@ import 'package:rackmate_core/src/model/conductor.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
 import 'package:rackmate_core/src/model/link.dart';
 import 'package:rackmate_core/src/model/net.dart';
+import 'package:rackmate_core/src/model/port.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/model/service.dart';
 import 'package:rackmate_core/src/units/ids.dart';
@@ -100,6 +106,28 @@ final class RoleMismatch {
   final String toRole;
 }
 
+/// A pin an [AtomicConnectPlan] will land on that the document does not
+/// hold yet — the plan's half of DR-011.1.
+///
+/// `PortMaterialisation` minus the designator, and the missing field is
+/// the whole distinction: that one is an ALLOCATION and belongs to the
+/// builder, this one is a DERIVATION (`derivePortId` over the device and
+/// key) and is the same on every peer and every replay.
+@immutable
+final class PlannedPort {
+  const PlannedPort({
+    required this.deviceId,
+    required this.portKey,
+    required this.portId,
+  });
+
+  final Uuid deviceId;
+  final PortKey portKey;
+
+  /// `derivePortId(deviceId, portKey)`.
+  final Uuid portId;
+}
+
 /// What an atomicConnect gesture will do, computed before it does it.
 ///
 /// A PLAN, in the shape `planCompaction`/`planRackShrink` already
@@ -115,6 +143,7 @@ final class AtomicConnectPlan {
     required this.pairedCount,
     required this.openCount,
     required this.roleMismatches,
+    this.neededPorts = const <PlannedPort>[],
   });
 
   /// In declared order. One per position that lands at least one end.
@@ -131,6 +160,26 @@ final class AtomicConnectPlan {
   /// normal case; see the file header for why this is reported and not
   /// acted on.
   final List<RoleMismatch> roleMismatches;
+
+  /// Every pin this plan lands on that the document does NOT hold yet —
+  /// DR-011.1, extended to the set path in M2-F Phase 4C.
+  ///
+  /// The pin-to-pin command has carried its equivalent since Phase 0; this
+  /// one did not, so `AtomicConnectCommand` could only ever write
+  /// conductors onto ports something else had already created. On a
+  /// document built by dropping devices from the palette — the document
+  /// the M2 exit criterion starts from — that was none of them.
+  ///
+  /// NO DESIGNATORS, DELIBERATELY. A designator is an ALLOCATION against
+  /// the document's current contents, and this is a pure plan: two calls
+  /// on one unchanged document must agree, which an allocator cannot
+  /// promise across a redo. [buildAtomicConnectCommand] turns these into
+  /// `PortMaterialisation`s, allocating each in turn with the previous
+  /// answers reserved — the same caller-side rule `AddLinkCommand.netName`
+  /// established.
+  ///
+  /// EMPTY IS NORMAL, and means every member was already materialised.
+  final List<PlannedPort> neededPorts;
 
   /// Whether every position landed both ends.
   bool get isComplete => openCount == 0;
@@ -258,8 +307,15 @@ AtomicConnectResult? planAtomicConnect(
     final a = i < from.members.length ? from.members[i] : null;
     final b = i < to.members.length ? to.members[i] : null;
 
-    final aId = a?.portId;
-    final bId = b?.portId;
+    // THE DERIVED ID, NOT THE MATERIALISED ONE — DR-011.1, extended to
+    // this path in Phase 4C. Reading `portId` here is what made every
+    // plan on every palette-built document a zero-conductor plan: ports
+    // are lazily materialised (AC-006), so a device dropped from the
+    // palette has none, and the pairing loop skipped every position.
+    // `derivePortId` is deterministic, so the id a member WILL have is
+    // knowable before the port exists — see `PortSetMember.derivedPortId`.
+    final aId = a?.derivedPortId;
+    final bId = b?.derivedPortId;
 
     // Neither end landed: there is no electrical path to record, and a
     // conductor with two open ends would assert a cable nobody drew.
@@ -324,9 +380,36 @@ AtomicConnectResult? planAtomicConnect(
     );
   }
 
+  // EVERY PIN THE PLAN LANDS ON THAT THE DOCUMENT DOES NOT HOLD YET.
+  // Walked in the same declared order as the conductors, so the
+  // designators a caller allocates for these come out in a stable
+  // sequence; `landedIds` is what keeps an open end's single pin in the
+  // list and an unlanded position out of it.
+  final needed = <PlannedPort>[];
+  void note(ResolvedPortSet set, PortSetMember m) {
+    if (m.isMaterialised) return;
+    if (needed.any((n) => n.portId == m.derivedPortId)) return;
+    needed.add(
+      PlannedPort(
+        deviceId: set.deviceId,
+        portKey: m.portKey,
+        portId: m.derivedPortId,
+      ),
+    );
+  }
+
+  for (var i = 0; i < n; i++) {
+    final a = i < from.members.length ? from.members[i] : null;
+    final b = i < to.members.length ? to.members[i] : null;
+    if (a == null && b == null) continue;
+    if (a != null) note(from, a);
+    if (b != null) note(to, b);
+  }
+
   return AtomicConnectReady(
     AtomicConnectPlan(
       conductors: conductors,
+      neededPorts: List<PlannedPort>.unmodifiable(needed),
       pairedCount: paired,
       openCount: open,
       roleMismatches: mismatches,
@@ -379,6 +462,7 @@ ConnectRefused? _tier1(
 final class AtomicConnectCommand extends Command {
   AtomicConnectCommand({
     required this.plan,
+    required this.materialisations,
     required this.designator,
     required this.netName,
     required this.signalFamily,
@@ -443,6 +527,13 @@ final class AtomicConnectCommand extends Command {
   }
 
   final AtomicConnectPlan plan;
+
+  /// The ports to create, with the designators the CALLER allocated —
+  /// [AtomicConnectPlan.neededPorts] resolved by
+  /// [buildAtomicConnectCommand]. Empty when every member of both sets is
+  /// already materialised, which on a palette-built document is none of
+  /// them (DR-011.1).
+  final List<PortMaterialisation> materialisations;
   final Uuid id;
   final Uuid netId;
   final String designator;
@@ -472,17 +563,58 @@ final class AtomicConnectCommand extends Command {
   final DateTime now;
   final String actor;
 
+  /// The ports THIS apply() created, in creation order. Empty until
+  /// `apply()` runs, and empty again after `revert()`.
+  final List<Uuid> _materialised = [];
+
   @override
   LabelKey get label => LabelKey.atomicConnect;
 
+  /// `wires` for the `Link`/`Conductor`/`Service`/`Net`, and `meta`
+  /// because materialisation MINTS A DESIGNATOR — the same pair
+  /// `ConnectPortsCommand` declares, and for the reason stated there:
+  /// `Port.designator` is what the termination schedule prints in its
+  /// terminal column and what CR-042 cites as `MTX-1:J09`, so a surface
+  /// subscribed only to `wires` would draw the new run against a pin
+  /// whose identifier it has never read.
+  ///
+  /// `meta` was NOT here before Phase 4C, correctly — this command
+  /// created no ports and therefore minted no designators. It does now.
   @override
-  EpochMask get touches => EpochMask.wires;
+  EpochMask get touches => EpochMask.wires | EpochMask.meta;
 
   @override
-  Iterable<Uuid> get affects => [id, netId];
+  Iterable<Uuid> get affects => [
+    id,
+    netId,
+    for (final spec in materialisations) spec.portId,
+  ];
 
   @override
   void apply(RackDocument doc) {
+    // ═══════════════════════════════════════════════════════════════
+    // THE PINS FIRST — DR-011.1, and the same idempotent shape
+    // `ConnectPortsCommand` has carried since Phase 0.
+    // ═══════════════════════════════════════════════════════════════
+    // Cleared rather than appended to: `apply` runs again on every redo
+    // and this must describe THIS run, not the union of all of them.
+    // Recorded rather than recomputed, because "did this command create
+    // that port" is unanswerable from the document afterwards — the port
+    // looks identical either way — and getting it wrong deletes a port
+    // the user's document already owned, with its designator, notes and
+    // every conductor that lands on it left dangling.
+    _materialised.clear();
+    for (final spec in materialisations) {
+      if (doc.ports.containsKey(spec.portId)) continue;
+      doc.ports[spec.portId] = Port(
+        id: spec.portId,
+        deviceId: spec.deviceId,
+        designator: spec.designator,
+        templatePortKey: spec.portKey,
+      );
+      _materialised.add(spec.portId);
+    }
+
     doc.nets[netId] = Net(
       id: netId,
       name: netName,
@@ -507,5 +639,81 @@ final class AtomicConnectCommand extends Command {
   void revert(RackDocument doc) {
     doc.links.remove(id);
     doc.nets.remove(netId);
+    // ONLY what this apply added. A port that was already in the document
+    // when this command ran is not this command's to remove.
+    for (final portId in _materialised) {
+      doc.ports.remove(portId);
+    }
+    _materialised.clear();
   }
+}
+
+
+/// Builds the [AtomicConnectCommand] for [plan], allocating everything an
+/// allocation must be allocated for — CALLER-SIDE.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE SET PATH HAD NO BUILDER, AND THAT IS WHY IT COULD NOT MATERIALISE
+/// ═══════════════════════════════════════════════════════════════════════
+/// `buildConnectPortsCommand` has existed since M2-F Phase 0 and does
+/// exactly this for the pin-to-pin gesture: run the rules, then allocate
+/// the link designator, the net name, the sort order and every port
+/// designator BEFORE constructing the command, "because an allocation
+/// performed inside `apply()` would see a different set of used values on
+/// a redo and mint a different answer than the original run".
+///
+/// The set path had no equivalent, so a caller had to allocate by hand —
+/// and the one thing nobody hand-allocated was the PORT DESIGNATORS,
+/// because the command did not create ports at all. That is the shape
+/// DR-011's finding #1 describes, surviving in the half of the gesture
+/// Phase 0 did not touch.
+///
+/// The allocator's `alsoUsed` reservation accumulates ACROSS the plan's
+/// ports, so two members of one
+/// set on one device cannot be handed the same `J`-number — the same
+/// reservation `buildConnectPortsCommand` makes for a loopback between two
+/// jacks on one box, extended from two ports to N.
+AtomicConnectCommand buildAtomicConnectCommand({
+  required RackDocument doc,
+  required AtomicConnectPlan plan,
+  required SignalFamilyId signalFamily,
+  required MediaTypeId media,
+  required DateTime now,
+  required String actor,
+}) {
+  // PER DEVICE, per CR-042 — a designator is unique within its device, so
+  // the reservation is keyed by device and not by the whole plan.
+  final reserved = <Uuid, Set<String>>{};
+  final materialisations = <PortMaterialisation>[];
+  for (final port in plan.neededPorts) {
+    final target = resolveConnectTarget(
+      doc,
+      deviceId: port.deviceId,
+      portKey: port.portKey.v,
+    );
+    if (target == null) continue;
+    final used = reserved.putIfAbsent(port.deviceId, () => <String>{});
+    final designator = allocatePortDesignatorFor(doc, target, alsoUsed: used);
+    used.add(designator);
+    materialisations.add(
+      PortMaterialisation(
+        portId: port.portId,
+        deviceId: port.deviceId,
+        portKey: port.portKey,
+        designator: designator,
+      ),
+    );
+  }
+
+  return AtomicConnectCommand(
+    plan: plan,
+    materialisations: List<PortMaterialisation>.unmodifiable(materialisations),
+    designator: allocateLinkDesignatorFor(doc),
+    netName: allocateNetNameFor(doc),
+    signalFamily: signalFamily,
+    media: media,
+    order: nextOrder(doc.links.values.map((l) => l.order)),
+    now: now,
+    actor: actor,
+  );
 }

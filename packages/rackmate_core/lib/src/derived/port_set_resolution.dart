@@ -29,6 +29,7 @@ final class PortSetMember {
     required this.portKey,
     required this.role,
     required this.portId,
+    required this.derivedPortId,
   });
 
   /// The template's key for this port.
@@ -42,12 +43,31 @@ final class PortSetMember {
   /// The materialised `Port`, or NULL when the template declares this
   /// member but the document holds no port for it.
   ///
-  /// Null is a real state, not a defect to assert away: `derivePortId` is
-  /// deterministic, so a missing entry means the device's ports were never
-  /// materialised, or were materialised from a different template version.
-  /// A caller that treats null as "connect it anyway" invents a port id
-  /// that resolves to nothing.
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THIS IS "DOES THE DOCUMENT HOLD ONE TODAY", NOT "WHICH ID IS IT"
+  /// ═══════════════════════════════════════════════════════════════════
+  /// The two questions look like one and are not — `connect_target.dart`'s
+  /// header argues the same split at length for the pin-to-pin path, where
+  /// conflating them "either refuses every legal connect or writes a
+  /// `PortEndpoint` at an id nothing resolves".
+  ///
+  /// A caller PLANNING a connection wants [derivedPortId], which is always
+  /// known because `derivePortId` is a pure UUIDv5 over `(deviceId,
+  /// portKey)` (CR-116, AC-006). A caller asking whether the port already
+  /// carries project state wants THIS.
+  ///
+  /// Reading this one as the planning id is what left `planAtomicConnect`
+  /// returning a zero-conductor plan on every palette-built document —
+  /// DR-011's finding #1, fixed for `ConnectPortsCommand` in M2-F Phase 0
+  /// and for this path in Phase 4C.
   final Uuid? portId;
+
+  /// The id this member HAS or WILL have — `derivePortId(deviceId,
+  /// portKey)`, never null.
+  ///
+  /// Set by [resolvePortSet] for every declared member regardless of
+  /// materialisation. See [portId] for why both exist.
+  final Uuid derivedPortId;
 
   /// Whether this member can carry a conductor end.
   bool get isMaterialised => portId != null;
@@ -118,6 +138,7 @@ ResolvedPortSet? resolvePortSet(
         PortSetMember(
           portKey: p.key,
           role: p.setRole,
+          derivedPortId: derivePortId(deviceId, p.key),
           portId: doc.ports.containsKey(derivePortId(deviceId, p.key))
               ? derivePortId(deviceId, p.key)
               : null,
