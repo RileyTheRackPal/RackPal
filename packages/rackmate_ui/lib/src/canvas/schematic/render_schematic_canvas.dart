@@ -55,6 +55,7 @@ import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/canvas/schematic/schematic_paint_plan.dart';
 import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
 import 'package:rackmate_ui/src/draw/flutter_canvas.dart';
+import 'package:rackmate_ui/src/draw/text_run_cache.dart';
 
 /// scene → screen: a render object's PAINT OFFSET, then the viewport.
 ///
@@ -230,14 +231,28 @@ final class RenderSchematicCanvas extends RenderBox {
 
   void _paintScene(PaintingContext context, Offset offset) {
     // `offset` is Offset.zero here; the canvas is in scene space.
-    final canvas = FlutterDiagramCanvas(context.canvas, measurer: _measurer);
+    final canvas = FlutterDiagramCanvas(
+      context.canvas,
+      measurer: _measurer,
+      runs: _runs,
+    );
     for (final op in _plan.ops) {
       op.replay(canvas);
     }
   }
 
+  /// M2-G's laid-out-run cache, owned here rather than by the canvas.
+  ///
+  /// THE BIGGEST OF THE THREE, and the one the measurement was taken for:
+  /// `schematic_perf_test.dart`'s M2-G census counts 2 374 text runs over a
+  /// working set of 703 on the 300-link fixture, so a pan — which
+  /// re-records this picture on every frame — repeats 1 671 layouts it
+  /// already did. See `text_run_cache.dart`.
+  final TextRunCache _runs = TextRunCache();
+
   @override
   void dispose() {
+    _runs.clear();
     _clipLayer.layer = null;
     _transformLayer.layer = null;
     super.dispose();

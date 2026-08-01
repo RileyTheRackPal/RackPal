@@ -41,6 +41,7 @@ import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/canvas/port_chip.dart';
 import 'package:rackmate_ui/src/canvas/shake_animation.dart';
 import 'package:rackmate_ui/src/draw/flutter_canvas.dart';
+import 'package:rackmate_ui/src/draw/text_run_cache.dart';
 
 /// The widget that owns a device's interactive behaviour. Wraps the leaf
 /// [RenderDeviceBox] in a [FocusableActionDetector] (focus + hover + mouse
@@ -397,6 +398,20 @@ class RenderDeviceBox extends RenderBox {
     markNeedsPaint();
   }
 
+  /// M2-G's laid-out-run cache, owned here rather than by the canvas.
+  ///
+  /// A `FlutterDiagramCanvas` is built once per paint, so a cache held
+  /// there would never survive to be hit. This one lives as long as the
+  /// render object repainting through it, and is released in [dispose] —
+  /// see `text_run_cache.dart` for the measurement that sized it.
+  final TextRunCache _runs = TextRunCache();
+
+  @override
+  void dispose() {
+    _runs.clear();
+    super.dispose();
+  }
+
   @override
   void attach(PipelineOwner owner) {
     super.attach(owner);
@@ -464,9 +479,10 @@ class RenderDeviceBox extends RenderBox {
     // local-coordinate fragment, and the shake.
     final shakeOffset = _shake?.offsetFor(Uuid(_deviceId)) ?? Offset.zero;
     final paintOffset = offset + shakeOffset;
-    final canvas = FlutterDiagramCanvas(context.canvas, measurer: _measurer)
-      ..save()
-      ..translate(paintOffset.dx, paintOffset.dy);
+    final canvas =
+        FlutterDiagramCanvas(context.canvas, measurer: _measurer, runs: _runs)
+          ..save()
+          ..translate(paintOffset.dx, paintOffset.dy);
     _scene.fragmentFor(_deviceId).replay(canvas);
     // CR-105's chip, drawn in the SAME local frame the fragment just
     // replayed in and through the same canvas — so its geometry and the

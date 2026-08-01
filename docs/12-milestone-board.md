@@ -97,9 +97,9 @@ counts from that session: `rackmate_core` 886, `rackmate_ui` 351, `apps/rackmate
 `rackmate_export` 183, `rackmate_text` 1 — **2072 passing, 0 failing**. `flutter analyze`: 195
 issues, all info-level, **zero errors, zero warnings**. `flutter build windows --release`: exit 0.
 
-**M2's row alone was re-audited at `ea0af6d`** (M2-F complete), against the thirteen local gates:
-`rackmate_core` 1377, `rackmate_ui` 581, `apps/rackmate` 690, `rackmate_export` 183, `rackmate_text`
-1 — **2832 passing, 0 failing**, analyzer pinned at exactly 194 infos by
+**M2's row alone was re-audited at `ea0af6d`** (M2-F) and again after M2-G, against the thirteen
+local gates: `rackmate_core` 1380, `rackmate_ui` 592, `apps/rackmate` 690, `rackmate_export` 183,
+`rackmate_text` 1 — **2846 passing, 0 failing**, analyzer pinned at exactly 194 infos by
 `tools/ci/analyze_info_baseline.txt`. **Every other row is still as of `0fa532d`** and carries
 whatever drift the intervening milestones introduced; a row this file has not re-read is a row it
 does not vouch for, and saying so is cheaper than a footnote per row that would go stale the same
@@ -658,8 +658,34 @@ it cares about.
 | 60 connections without touching a menu | **UNPERFORMED** | Every gesture the clause needs now exists and is tested; **nobody has sat down and made sixty**. This is the same shape as M1's keyboard-only drill (§3.5), which is exactly why that one is `CONFIRMED` and this one is not — see the note below the table |
 | Schedule shows 60 sorted rows, both labels both ends, conductor colours | **DEMONSTRATED** | `packages/rackmate_core/test/derived/schedule_test.dart:806`, a test named for this clause and asserting it verbatim: sixty rows fed in deliberately out of room order so the sort has to do the work, AC-025's room-then-pathway ordering, both labels on both ends, and `['red', 'black']` off a real speaker pair's conductors |
 | Deterministic re-layout ⇒ byte-identical display list | **DEMONSTRATED** | `packages/rackmate_core/test/scene/schematic_perf_test.dart:150` and `:158` — the same 300-link document twice, and **a separately decoded copy of the same bytes**, both through `op_digest.dart`, which is the instrument written for this clause's word *byte-identical*. `sugiyama_test.dart:470` holds the layer beneath it |
-| 300-connection fixture within one frame; **label-layer cost measured and recorded** | **DEMONSTRATED** | `schematic_perf_test.dart:173` and `:182`. The grep this row used to fail on now returns that file: it is `@Tags(['perf'])` and **deliberately not excluded** — `tools/ci/run_suite.ps1` does no tag filtering, so the number is defended on every push rather than recorded once. The label-layer delta is stated against M2-C's recorded symbol-layer baseline (4,155 ops / 3.052 ms) and **timed again in-process**, because a millisecond taken on another day in another process is not a delta |
+| 300-connection fixture within one frame; **label-layer cost measured and recorded** | **DEMONSTRATED — on both halves, as of M2-G** | `schematic_perf_test.dart:173`/`:182` for the COMMIT path (`@Tags(['perf'])` and deliberately not excluded — `run_suite.ps1` does no tag filtering, so the number is defended on every push), and `packages/rackmate_ui/test/draw/paint_budget_test.dart` for the PAINT path. **The paint half was unmeasured when this row was first marked, and measuring it found 64 ms — nearly four frames.** See the note below the table: the mark stood on a scene build of ~3 ms while the thing that put it on screen took twenty times longer, which no reading of "within one frame at commit" survives. It is 10.6 ms now |
 | Keyboard path + screen-reader announcements | **DEMONSTRATED — at the channel, not with a screen reader** | `packages/rackmate_ui/test/canvas/schematic/schematic_keyboard_connect_test.dart:151` walks arrows → `W` → `Enter` to one `Link`, and `:639` intercepts `SystemChannels.accessibility` to assert a commit is announced **once** and never as a cancellation. The limit is stated rather than assumed: what is verified is the platform message, not NVDA reading it aloud, and M7's accessibility criterion is where a real reader meets this |
+
+**The paint half of clause 4, and why this row was half-right for a week.**
+When M2-F re-audited this section it marked clause 4 `DEMONSTRATED` and cited
+`schematic_perf_test.dart`. That test is real and it measures the clause's own words —
+*"the label-layer commit cost"* — but `rackmate_core` is a pure-Dart package and **cannot touch a
+`ui.Canvas`**, so what was demonstrated was the display list being BUILT, not the display list being
+PAINTED. M2-G measured the second half and found the 300-link fixture taking **63.9 ms to replay,
+against a 16.7 ms frame** — while the build it was cited beside took about 3 ms. On any reading of
+*"within one frame at commit"* that includes getting the sheet onto the screen, the clause was
+false and the citation could not see it.
+
+**83 % of that paint was repeated text layout.** `FlutterDiagramCanvas.drawText` built a fresh
+`TextPainter` — and a native `ui.Paragraph` — on every call, and a pan re-records the picture, so
+the 300-link sheet laid out 2 374 runs per frame over a working set of 703. With M2-G's cache the
+same replay is **10.6 ms**, inside the budget. The figures are recorded by
+`paint_budget_test.dart`, which states plainly that `flutter test` does not register the shipped
+Jost so the absolute milliseconds are the test font's — the RATIO is font-independent and is what
+the row now rests on.
+
+**The roadmap's own sizing for that cache did not survive the measurement either.** docs/09's M2
+risk paragraph says the cache "must be sized for" ~10,000 runs and warns that "a 2,000-entry LRU
+against ~10,000 runs thrashes". The census counts a working set of **703**. The prescribed 2,000 is
+a good number for the opposite reason to the one given, and the prescribed KEY —
+`(text, styleId, quantisedScale)` — would have caused the thrash it feared, because `sizePt` is in
+diagram units and the zoom is applied to the canvas, so scale is not a term at all
+(`text_run_cache_test.dart` measures that: the same run at two zooms is one layout).
 
 **Why clause 1 is `UNPERFORMED` and not `DEMONSTRATED`.** Every mechanism it names is built and
 covered: the keyboard route (`schematic_keyboard_connect_test.dart`), drag-to-connect with the 12

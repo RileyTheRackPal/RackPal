@@ -39,6 +39,7 @@ import 'package:flutter/painting.dart';
 import 'package:meta/meta.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/draw/text_run_cache.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 /// The Flutter backend of [DiagramCanvas] (CR-086): replays a
@@ -50,7 +51,7 @@ import 'package:vector_math/vector_math_64.dart';
 /// diagram space (docs/08-pdf-export.md §7.4/§7.6 divergence #1), so this
 /// constructor pushes a plain identity matrix rather than a flip.
 final class FlutterDiagramCanvas implements DiagramCanvas {
-  FlutterDiagramCanvas(this._c, {required TextMeasurer measurer})
+  FlutterDiagramCanvas(this._c, {required TextMeasurer measurer, this.runs})
     : _measurer = measurer {
     _stack.add(Matrix4.identity());
   }
@@ -58,6 +59,27 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
   final ui.Canvas _c;
   final TextMeasurer _measurer;
   final List<Matrix4> _stack = [];
+
+  /// M2-G's laid-out-run cache, or null to lay every run out afresh.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// OWNED BY THE RENDER OBJECT, NOT BY THIS CLASS AND NOT BY A `static`
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A `FlutterDiagramCanvas` is built once PER PAINT (docs/08 §7.8's
+  /// `RenderDeviceBox.paint`), so a cache held here would be born and
+  /// discarded on the frame it was meant to survive. A `static` one — the
+  /// shape `_dashCache` takes — would survive, and would also outlive every
+  /// document, hold native `ui.Paragraph`s for a project the user closed an
+  /// hour ago, and leak between widget tests in a way no test could see.
+  ///
+  /// So the render object owns it and passes it in: the cache then lives
+  /// exactly as long as the thing that repaints through it, and
+  /// `detach()` is a real disposal point.
+  ///
+  /// NULL IS A SUPPORTED MODE, and it is what every test that measures the
+  /// uncached path uses. It is also correct: the cache changes how often a
+  /// run is laid out and nothing about what is drawn.
+  final TextRunCache? runs;
 
   /// Cache of already-dashed paths, keyed on (source geometry, dash
   /// pattern) -- see [_PathKey]/[_DashKey]. `static` so every
@@ -85,7 +107,8 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
       ..strokeWidth = w
       ..strokeCap = _cap(s.cap)
       ..strokeJoin = _join(s.join)
-      ..strokeMiterLimit = s.miterLimit // 10.0 to match PDF, not Flutter's
+      ..strokeMiterLimit = s
+          .miterLimit // 10.0 to match PDF, not Flutter's
       // default of 4 -- divergence #10.
       ..isAntiAlias = true;
   }
@@ -358,11 +381,11 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
   TextMetrics measureText(String t, TextStyleSpec s) =>
       _measurer.measureText(t, s); // <- NOT TextPainter
 
-  @override
-  void drawText(String text, DPt at, TextStyleSpec s) {
-    final m = measureText(text, s); // PDF-sourced metrics
-    final o = anchorOffset(s.anchor, m); // the SAME shared helper
-
+  /// Lays one run out. The ONE place the font, the feature flags and the
+  /// leading distribution are decided — [TextRunCache] calls back into this
+  /// rather than building a painter of its own, so a cached run and an
+  /// uncached one can never be laid out differently.
+  TextRun _layOut(String text, TextStyleSpec s) {
     final tp = TextPainter(
       text: TextSpan(
         text: text,
@@ -383,10 +406,6 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
       textDirection: ui.TextDirection.ltr,
       textScaler: TextScaler.noScaling,
     )..layout();
-
-    _c.save();
-    _c.translate(at.x, at.y);
-    if (s.rotationRad != 0) _c.rotate(s.rotationRad);
     // ADAPTATION NOTE: docs/08-pdf-export.md §7.7's verbatim snippet writes
     // `computeDistanceToActualBaseline(...)!` as if the method were
     // nullable. On the installed Flutter 3.44.4 SDK it returns a
@@ -394,10 +413,32 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
     // flutter/packages/flutter/lib/src/painting/text_painter.dart), so the
     // `!` is dropped -- keeping it is flagged as a genuine
     // `unnecessary_non_null_assertion`, not just a style nit.
-    final baselineOffset = tp.computeDistanceToActualBaseline(
-      ui.TextBaseline.alphabetic,
+    return TextRun(
+      tp,
+      tp.computeDistanceToActualBaseline(ui.TextBaseline.alphabetic),
     );
-    tp.paint(_c, ui.Offset(o.x, o.y - baselineOffset));
+  }
+
+  @override
+  void drawText(String text, DPt at, TextStyleSpec s) {
+    final m = measureText(text, s); // PDF-sourced metrics
+    final o = anchorOffset(s.anchor, m); // the SAME shared helper
+
+    // THE KEY IS THE WHOLE `TextStyleSpec`, which means `rotationRad` and
+    // `anchor` are in it even though neither changes the layout — rotation
+    // is applied to the CANVAS below and the anchor only decides where the
+    // laid-out run is painted. The cost is one duplicate entry for a run
+    // that appears both rotated and upright, and it is paid deliberately:
+    // the alternative is a second identity (docs/09's `styleId`) that would
+    // have to be kept in step with `TextStyleSpec.==` by hand, and a key
+    // that drifts from the spec is a run painted in the wrong colour.
+    final run =
+        runs?.runFor(text, s, () => _layOut(text, s)) ?? _layOut(text, s);
+
+    _c.save();
+    _c.translate(at.x, at.y);
+    if (s.rotationRad != 0) _c.rotate(s.rotationRad);
+    run.painter.paint(_c, ui.Offset(o.x, o.y - run.baselineOffset));
     _c.restore();
   }
 }

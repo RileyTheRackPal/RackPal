@@ -2,6 +2,24 @@
 
 ## 2026-08-01
 
+* **Note**: M2-G — the paint half of M2's budget was **never measured**, and
+  measuring it found the 300-link fixture taking **63.9 ms to replay against a
+  16.7 ms frame**, beside a scene build of ~3 ms that a green test had been
+  citing. `FlutterDiagramCanvas.drawText` built a fresh `TextPainter` — and a
+  native `ui.Paragraph` — on every call, and a pan re-records the picture, so
+  2 374 runs were laid out per frame over a working set of 703. With the cache
+  the same replay is **10.6 ms**.
+* **Note**: the roadmap's sizing for that cache did not survive either. docs/09
+  says it "must be sized for" ~10,000 runs and warns a 2,000-entry LRU would
+  thrash; the measured working set is **703**. Worse, its prescribed key
+  `(text, styleId, quantisedScale)` would have CAUSED the thrash it feared —
+  `sizePt` is in diagram units and the zoom is applied to the canvas, so the
+  same run lays out identically at every zoom and scale is not a term.
+* **Note**: docs/12 §5.1's clause-4 row is corrected in place rather than
+  rewritten. It was marked `DEMONSTRATED` on a citation that measured the
+  display list being BUILT — `rackmate_core` is pure Dart and cannot touch a
+  `ui.Canvas` — which is the exact failure shape that board's opening table
+  collects: an assertion that quietly stopped covering the thing it named.
 * **Creation**: [DR-013 — deleting a wired device cascades](/decisions/dr-013-delete-cascades.md).
   The `TODO(post-M0)` in `RemoveDeviceCommand` was **inert for every milestone
   up to M2-F** — nothing wrote `doc.ports`, so there was nothing to orphan —

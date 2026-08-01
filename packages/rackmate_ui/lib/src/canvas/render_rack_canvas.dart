@@ -24,6 +24,7 @@ import 'package:flutter/widgets.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/canvas/viewport_controller.dart';
 import 'package:rackmate_ui/src/draw/flutter_canvas.dart';
+import 'package:rackmate_ui/src/draw/text_run_cache.dart';
 
 /// Parent data for a device child: its scene-space size (which becomes its
 /// tight layout constraints) and scene-space offset (where the parent paints
@@ -235,8 +236,17 @@ class RenderRackCanvas extends RenderBox
     );
   }
 
+  /// M2-G's laid-out-run cache, owned here rather than by the canvas.
+  ///
+  /// A `FlutterDiagramCanvas` is built once per paint, so a cache held
+  /// there would never survive to be hit. This one lives as long as the
+  /// render object repainting through it, and is released in [dispose] —
+  /// see `text_run_cache.dart` for the measurement that sized it.
+  final TextRunCache _runs = TextRunCache();
+
   @override
   void dispose() {
+    _runs.clear();
     _clipLayer.layer = null;
     _transformLayer.layer = null;
     super.dispose();
@@ -246,7 +256,11 @@ class RenderRackCanvas extends RenderBox
     // `offset` is Offset.zero here; the canvas is in scene space.
     // L1 — chassis: replay its absolute fragment as the background.
     if (_scene.fragments.containsKey(_rackId)) {
-      final canvas = FlutterDiagramCanvas(context.canvas, measurer: _measurer);
+      final canvas = FlutterDiagramCanvas(
+        context.canvas,
+        measurer: _measurer,
+        runs: _runs,
+      );
       _scene.fragmentFor(_rackId).replay(canvas);
     }
     // L2 — device children, each painted at its scene offset (the device's

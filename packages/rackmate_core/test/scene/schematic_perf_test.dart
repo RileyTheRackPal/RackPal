@@ -233,6 +233,121 @@ void main() {
       _measure(doc, 'AUGMENTED (300 nets, seeded registries)');
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // M2-G — HOW MANY TEXT RUNS IS THE PAINT PATH ACTUALLY ASKED FOR?
+  // ═══════════════════════════════════════════════════════════════════════
+  // The roadmap's M2 risk paragraph sizes a cache against an assumption:
+  // "two net labels per Link puts ~300 additional text runs on a
+  // 150-connection project on top of the ~10,000 the cache must be sized
+  // for", and warns that "a 2,000-entry LRU against ~10,000 runs thrashes,
+  // and a thrashing LRU is worse than none because eviction disposes a
+  // native `ui.Paragraph` in the paint path."
+  //
+  // THAT FIGURE HAS NEVER BEEN CHECKED AGAINST THIS TREE. Sizing a cache
+  // from it would be the same class of move as the budget this whole file
+  // exists to stop being assumed, so the count is taken FIRST, here, before
+  // `FlutterDiagramCanvas` gains a cache at all.
+  //
+  // WHAT IS COUNTED, and why the distinction is the whole measurement:
+  //   * TOTAL runs is how many times `drawText` is called on one paint —
+  //     the work a cache has to eliminate.
+  //   * DISTINCT `(text, style)` pairs is the WORKING SET — the number of
+  //     entries a cache must hold to eliminate it. A cache smaller than
+  //     this thrashes; a cache larger is only memory.
+  // The ratio between them is the hit rate a perfect cache would get, and
+  // it is the number that says whether a cache is worth having at all.
+  //
+  // COUNTED OFF THE DISPLAY LIST, not off a real paint, and deliberately:
+  // `OpText` carries the exact `(text, TextStyleSpec)` pair `drawText`
+  // receives, so this is the same key at one remove, and it costs no
+  // Flutter binding in a pure-Dart package.
+  group('M2-G — the text-run census', () {
+    test('the schematic, in the TEXT-BOUND case DR-001 made the default', () {
+      final doc = _withNetsAndRegistries();
+      final scene = buildSchematicScene(doc: doc, measurer: _Measurer());
+      _census(
+        'schematic, augmented (300 nets, seeded registries)',
+        scene.scene.ops,
+      );
+    });
+
+    test('the schematic as committed — the floor', () {
+      final scene = buildSchematicScene(
+        doc: readSchematicFixture(),
+        measurer: _Measurer(),
+      );
+      _census('schematic, as committed', scene.scene.ops);
+    });
+
+    test('the rack elevations, both faces of every rack in the fixture', () {
+      // The OTHER surface that paints text on every frame, and the one
+      // M2-G's cache lives in front of just as much as the schematic:
+      // `device_layer.dart` emits a designator, a name, a type line and a
+      // U-height badge per device, and the ruler emits one figure per U.
+      final doc = readSchematicFixture();
+      final ops = <DiagramOp>[];
+      for (final rack in doc.racks.values) {
+        for (final face in Face.values) {
+          ops.addAll(
+            buildRackScene(
+              rack: rack,
+              devices: doc.devices.values,
+              templates: doc.templates,
+              face: face,
+              lod: LodLevel.full,
+              measurer: _Measurer(),
+            ).scene.ops,
+          );
+        }
+      }
+      _census('rack elevations, ${doc.racks.length} racks x 2 faces', ops);
+    });
+  });
+}
+
+/// Counts the text runs in [ops] and PRINTS the census.
+///
+/// `print` rather than `printOnFailure`, for this file's stated reason: a
+/// number that only appears when the test fails is recorded nowhere.
+///
+/// It asserts almost nothing on purpose. This is an INSTRUMENT, and the
+/// figure it produces is an input to a decision that has not been taken
+/// yet — pinning a count here would freeze the fixture rather than measure
+/// it. The one assertion is that there is something to count, because a
+/// census of zero runs would silently agree with any cache size at all.
+void _census(String label, List<DiagramOp> ops) {
+  final texts = ops.whereType<OpText>().toList(growable: false);
+  final distinct = <(String, TextStyleSpec)>{};
+  final byStyle = <TextStyleSpec, int>{};
+  var chars = 0;
+  for (final t in texts) {
+    distinct.add((t.text, t.style));
+    byStyle[t.style] = (byStyle[t.style] ?? 0) + 1;
+    chars += t.text.length;
+  }
+
+  expect(
+    texts,
+    isNotEmpty,
+    reason: 'a census of zero runs agrees with every cache size',
+  );
+
+  final ratio = distinct.isEmpty
+      ? 0.0
+      : (texts.length / distinct.length * 100).round() / 100;
+  // A census that only appears when the test FAILS is a census nobody
+  // reads — this file's own rule, applied to its newest number.
+  // ignore: avoid_print
+  print(
+    'M2-G text census [$label]:\n'
+    '  total runs      ${texts.length}  (drawText calls per paint)\n'
+    '  distinct pairs  ${distinct.length}  (the working set)\n'
+    '  reuse factor    ${ratio}x  (a perfect cache saves '
+    '${texts.length - distinct.length} layouts)\n'
+    '  styles          ${byStyle.length}\n'
+    '  characters      $chars',
+  );
 }
 
 /// Times [doc] end to end, times the label layer alone in the same
