@@ -80,9 +80,26 @@ the tolerance to the port's own half-size. §11.12.4's coach mark is
 `AppPrefs.coachMarksSeen`, a SET rather than a bool because docs/04:468 names
 three marks and one ships.
 
-**§11.12.2's multi-draw is the deferred one**, split into its own board item
-rather than built — the ranking is ruled and waiting, and the ruling is the part
-that was worth having.
+~~**§11.12.2's multi-draw is the deferred one**, split into its own board item
+rather than built~~ — **built on 2026-08-01 across `8876261`, `4840307` and
+`e078c0b`.** The ranking was ruled and waiting, and the ruling turned out to be
+the part that was worth having twice over: the census taken to check that
+`bankKey` was reachable is what found
+[the catalog order defect](/gates/catalog-port-order.md), and the rank the
+ruling names is what the fixed catalog now produces.
+
+**The gesture needed one pairing the corpus does not contain.**
+docs/05:484 says nothing about a run made of `atomicConnect` pins — A01's
+`srcIn` is sixteen of them, eight stereo pairs — so `_armWireFrom` had to
+decide which of two gestures a press claims. **Multi-draw wins**, because
+DR-011.2 decides set-vs-pin BY THE JACK (a property of the hardware the user
+did not choose) while a selected run is an explicit act performed with a
+modifier. The cost is that those pairs become N separate `Link`s where the
+template author declared each to be one cable — the exact bill-of-materials
+distinction §11.12.2 exists to keep — so the arming sentence **names it out
+loud**, in one composed message rather than two announcements. This is a
+consequence of two existing rulings rather than a third; if it is ever argued
+with, it wants a DR of its own.
 
 # What it leaves unruled
 

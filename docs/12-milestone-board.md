@@ -631,6 +631,34 @@ are referenced by nothing, and will rot silently — and
 `apps/rackmate/test/gitattributes_byte_exactness_test.dart:66` even lists `test/fixtures` as a path
 it cares about.
 
+### 4.13 Closed at `d8aedca` — 678 of 727 seed ports were in the wrong order
+
+**Recorded because it was shipped, not because it is still open.** `PortBuilder._next` emitted
+`a0 … a9, a10 …` into a `FracIndex`, which is `extension type const FracIndex(String v)` with **no
+comparison operator** — so every consumer sorts it with `a.order.v.compareTo(b.order.v)`, a raw
+string compare, and `'a10'.compareTo('a2')` is negative. From the **tenth declaration onward** an
+affected template's ports sorted into an order that was neither declaration order nor anything else.
+
+**Measured: 29 of the 45 seed templates with ports, 678 of 727 ports.** Four rules read that field
+and all four were wrong on those ports — FIXED_ORDER (docs/05 §3, which is what
+`buildSymbolGeometry` DRAWS, so `A01`'s zone speaker outputs were drawn out of sequence on the
+sheet), `PORT_SEQ` on the schedule, `chainOutputFor` (DR-012.1), and `portsInBank` (DR-012.2).
+
+**Nothing in the suite compared a template's declared order with its ranked order**, so nothing
+could see it. It was found by a measurement taken for something else — #93 printing the fixture's
+banks to choose a test target, and reading `A01` as `src.1.l src.3.l src.3.r src.4.l … src.1.r`.
+`packages/rackmate_core/test/catalog/catalog_order_test.dart` is now that comparison over the whole
+catalog, with a coverage assertion that the catalog still crosses the tenth declaration (**29 of
+45**) so the gate cannot become vacuous by the catalog shrinking.
+
+**What it cost to fix, stated because a status document that silently improves is this file's own
+failure mode.** One line in `catalog_ports.dart` and two regenerated golden sets — the 300-link perf
+fixture (405 changed lines) and the four starter projects (881 each). **Every changed line is an
+`"order"` value**: no id, key, link or timestamp moved, which is what makes the regeneration a
+data-only change rather than a golden quietly re-baselined. **Existing saved documents are NOT
+migrated**, and correctly so: a `TemplateSnapshot` is a snapshot (docs/02 §6), and rewriting the
+order values inside one would silently change a device the user placed months ago.
+
 ---
 
 ## 5. M2 → M9 — the unstarted, and where real work sits inside them
@@ -695,12 +723,14 @@ diagram units and the zoom is applied to the canvas, so scale is not a term at a
 nothing, so the mechanism it rests on is covered separately: the keyboard route
 (`schematic_keyboard_connect_test.dart`), drag-to-connect with the 12 screen-px magnetic snap
 (`schematic_drag_connect_test.dart`), chain-draw and DR-012.3's family-weighted magnet, and
-`atomicConnect` for the multi-conductor sets (`schematic_atomic_set_test.dart`). **Multi-draw is the
-one gesture of RJ-001's four that is not built** — split out under DR-012.2 as board item #93,
-because N `Link`s and one `Link` with N `Conductor`s are different bills of materials and the ruling
-that separates them is worth more than the gesture. **The drill passed without it**, which is the
-useful thing the run established beyond the mark: multi-draw is a throughput improvement on a clause
-that is already met, not a requirement of it.
+`atomicConnect` for the multi-conductor sets (`schematic_atomic_set_test.dart`). ~~**Multi-draw is
+the one gesture of RJ-001's four that is not built**~~ — **built at `e078c0b`, board item #93**;
+`multi_draw_test.dart`, `pin_selection_test.dart`, `schematic_pin_selection_test.dart` and
+`schematic_multi_draw_test.dart` are its four suites, the last of which is one group per claim in
+docs/05:484. All four of RJ-001's gestures now exist. **The drill passed WITHOUT it**, which is the
+useful thing the run established beyond the mark and which does not change now that it is built:
+multi-draw is a throughput improvement on a clause that was already met, not a requirement of it,
+and no re-run is owed.
 
 **What the run does NOT establish.** A first-run operator's time — the report says *"after a bit of
 practice"*, and M1's clause 3 carries the same caveat for the same reason. This board does not lean
@@ -731,10 +761,11 @@ M2-F precisely because it scanned for `AddLinkCommand(` alone and would have sta
 copies lied. The old text also called `symbol_layer.dart` *"a symbol renderer and hit-tester that no
 screen consumes"* — `schematic_canvas_screen.dart` consumes both.
 
-**What M2 still carries, with its criterion met.** Multi-draw (#93) and the portable build (#13).
-Neither is named by the exit criterion, which is why neither holds the headline — roadmap §8.1: *the
-exit criterion is the unit of truth*, and grading a milestone against work-in-the-milestone rather
-than against its criterion is the substitution §5.5 refuses for M6. The six tier-2 spring-back rules
+**What M2 still carries, with its criterion met.** ~~Multi-draw (#93) and~~ the portable build
+(#13). Multi-draw landed at `e078c0b`; the portable build is what is left. Neither was named by the
+exit criterion, which is why neither held the headline — roadmap §8.1: *the exit criterion is the
+unit of truth*, and grading a milestone against work-in-the-milestone rather than against its
+criterion is the substitution §5.5 refuses for M6. The six tier-2 spring-back rules
 are **not** M2's at all — canon defers them to M5 (§11.12.5), and implementing one as a tier-1
 refusal would make the product unable to draw a mistake, which CR-017 and G2 exist to prevent.
 

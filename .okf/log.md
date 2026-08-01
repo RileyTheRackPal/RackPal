@@ -1,5 +1,44 @@
 # Update Log
 
+## 2026-08-02
+
+* **Update**: [DR-012](/decisions/dr-012-deferred-gesture-rules.md) §11.12.2 —
+  **multi-draw is BUILT** (`8876261`, `4840307`, `e078c0b`), which completes
+  all four of RJ-001's gestures. N `Link`s in rank order under one undo entry,
+  a live preview of all N bands, driven identically from pointer and keyboard.
+  **M2's headline does not move**: it was already `CRITERION MET`, the
+  sixty-connection drill passed WITHOUT multi-draw, and roadmap §8.1 grades a
+  milestone against its exit criterion rather than against work inside it.
+* **Note**: the gesture needed **one pairing the corpus does not contain** —
+  what a press does when the selected run is made of `atomicConnect` pins.
+  Multi-draw wins over DR-011.2's set branch, because the set branch is decided
+  by the JACK while a run is an explicit act with a modifier. The cost is that
+  such pairs become N separate `Link`s where the template says one cable, so
+  the arming sentence names it out loud. Recorded as a consequence of two
+  rulings rather than a third; it wants a DR if it is ever argued with.
+* **Creation**: [catalog port order](/gates/catalog-port-order.md). `FracIndex`
+  is a string-ordered extension type with no comparison operator, and
+  `PortBuilder` emitted `a0 … a9, a10 …` — so **678 of 727 seed ports, across
+  29 of 45 templates, were in the wrong order**, and had been through every
+  milestone. `A01`'s zone speaker outputs were DRAWN out of sequence.
+  FIXED_ORDER, `PORT_SEQ`, `chainOutputFor` and `portsInBank` all read that
+  field and all four were wrong. Fixed at `d8aedca`; the regenerated goldens
+  diff to `"order"` values and nothing else.
+* **Creation**: [census before building](/practices/census-before-building.md).
+  The catalog defect was found by a measurement taken for something else, which
+  is now the third time the same habit has paid — an empty field (DR-012), an
+  unmeasured cost (M2-G), and an ordering nobody had ever compared (#93). The
+  shape is one shape: a value never compared against anything cannot be wrong,
+  and tests written from the code's own assumption inherit it.
+* **Note**: one defect the suite caught that reading did not —
+  `_anchorPinSelection` reset the pin run on every modifier-free press,
+  including the press that STARTS the multi-draw drag. The run was built, the
+  press dropped it to one pin, and every drag fell through to an ordinary
+  pin-to-pin cable. Multi-draw arrived stillborn on that line with every unit
+  test at both ends green, which is the composition-level blindness
+  [defer past the gesture](/practices/defer-past-the-gesture.md) already
+  collects.
+
 ## 2026-08-01
 
 * **Note**: **M2's criterion is MET.** The user performed the sixty-connection
