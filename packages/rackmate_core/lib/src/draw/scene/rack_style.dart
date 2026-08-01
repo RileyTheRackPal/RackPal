@@ -180,8 +180,27 @@ abstract final class RackTextSizes {
 /// Builds a [TextStyleSpec] with [kRackFont] at [sizePt]/[argb]/[anchor].
 /// One helper so every rack label anchors consistently and no caller
 /// hand-rolls a spec.
-TextStyleSpec rackText(double sizePt, int argb, TextAnchor anchor) =>
-    TextStyleSpec(font: kRackFont, sizePt: sizePt, argb: argb, anchor: anchor);
+/// [rotationRad] is `TextStyleSpec`'s own convention — POSITIVE IS
+/// CLOCKWISE, matching `DiagramCanvas.rotate` — and rotation happens about
+/// the ANCHOR POINT on every backend, which is what makes an anchor plus an
+/// angle a complete description of where a run lands.
+///
+/// It defaulted to zero for the whole of M0–M2 because nothing drew rotated
+/// text, and `design-pdf-export.md`'s open-questions list says exactly what
+/// that cost: *"Sign errors here are invisible until someone rotates a
+/// label."* `text_rotation_test.dart` is the gate that closes it.
+TextStyleSpec rackText(
+  double sizePt,
+  int argb,
+  TextAnchor anchor, {
+  double rotationRad = 0,
+}) => TextStyleSpec(
+  font: kRackFont,
+  sizePt: sizePt,
+  argb: argb,
+  anchor: anchor,
+  rotationRad: rotationRad,
+);
 
 /// A multiplier applied to every [RackTextSizes] value before it is
 /// emitted.
