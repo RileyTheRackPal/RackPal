@@ -117,9 +117,36 @@
 //    accordingly and `net_label_layer_test.dart` asserts the product
 //    against `kPinPitch × kSchematicUnitsPerGrid` rather than against a
 //    transcribed number.
-//  * TOP/BOTTOM PINS GET A COMB. Their pennants are horizontal but their
-//    pins are 2 gu apart HORIZONTALLY, and a pennant is far wider than
-//    2 gu, so the i-th pin on a side is pushed i steps further out. The
+//  * TOP/BOTTOM PINS GET A COMB, IN A BOUNDED NUMBER OF LANES. Their
+//    pennants are horizontal but their pins are 2 gu apart HORIZONTALLY,
+//    and a pennant is far wider than 2 gu, so neighbouring flags must be
+//    pushed to different depths or they overprint.
+//
+//    THE STEP USED TO BE `i`, UNBOUNDED, and it is `i % lanes` now. The
+//    field reported the difference as a picture: the i-th pin got a leader
+//    i pennant-heights long, so A01's twelve top pins drew a twelve-step
+//    diagonal staircase climbing off the sheet, a 48-port switch would have
+//    drawn a 48-step one, and the fans crossed whatever devices lay under
+//    them. The sheet was mostly whitespace holding up a comb.
+//
+//    `lanes` IS COMPUTED, NOT PICKED, because the unbounded version was
+//    buying something real and a magic number would have quietly stopped
+//    buying it. What makes two flags collide is a pennant wider than the
+//    pin pitch, so the lane count that separates them is exactly
+//    `ceil(widestPennantOnThisEdge / pitch)` — after which same-lane
+//    neighbours are `lanes * pitch` apart, which is at least one pennant
+//    width by construction. On the shipped catalog that is three to five
+//    lanes rather than forty-eight, and the no-overlap guarantee is the
+//    same one, held for the same reason.
+//
+//    MEASURED PER EDGE AND PER SYMBOL, from the stubs that actually land
+//    there. A device whose only wired top pin carries a short net name gets
+//    one lane; the matrix next to it gets five. Sizing every edge by the
+//    widest label in the DOCUMENT would put the matrix's comb on the
+//    two-port switch.
+//
+//    The
+
 //    alternative — rotating the pennant to run along its stub — is not
 //    taken: `TextStyleSpec.rotationRad` exists but how an anchor composes
 //    with a rotation is unspecified in the corpus and unpinned by any
@@ -430,18 +457,6 @@ NetLabelLayerBuild buildNetLabelLayer({
     };
   }
 
-  // The i-th pin on a top/bottom edge, for the comb — see the file
-  // header. Computed once per symbol rather than searched per stub.
-  final combIndex = <String, int>{};
-  for (final symbol in symbols) {
-    for (final side in const [SymbolSide.top, SymbolSide.bottom]) {
-      final ports = symbol.ports[side] ?? const <SymbolPort>[];
-      for (var i = 0; i < ports.length; i++) {
-        combIndex[_pinKey(symbol.id, ports[i].key)] = i;
-      }
-    }
-  }
-
   final links = doc.links.values.toList()
     ..sort((a, b) {
       final byOrder = a.order.v.compareTo(b.order.v);
@@ -508,12 +523,57 @@ NetLabelLayerBuild buildNetLabelLayer({
     ..sort();
   if (buckets.containsKey(_kUnresolvedBucket)) keys.add(_kUnresolvedBucket);
 
+  // ── the comb, in a bounded number of lanes ───────────────────────────
+  //
+  // AFTER the buckets and not before, which is the whole reason this moved:
+  // the lane count depends on the WIDEST PENNANT THAT ACTUALLY LANDS on an
+  // edge, and that is not knowable until the stubs are resolved and a
+  // `_Sizer` exists to measure them. The old index needed nothing but the
+  // port list, which is exactly why it could only count.
+  final sizer = _Sizer(
+    measurer: measurer,
+    style: style,
+    unitsPerGrid: unitsPerGrid,
+  );
+
+  final widestOnEdge = <String, double>{};
+  for (final bucket in buckets.values) {
+    for (final stub in bucket) {
+      final side = stub.port.side;
+      if (side != SymbolSide.top && side != SymbolSide.bottom) continue;
+      final key = _edgeKey(stub.symbol.id, side);
+      // `horizontal: false` — a vertical stub lays its pennant ACROSS
+      // itself, so the extent that can collide with the next pin's flag is
+      // the pennant's WIDTH. `emit` reads the same measurement for the same
+      // reason; taking a different one here is how a comb comes to be sized
+      // for a pennant nobody draws.
+      final width = sizer.pennantWidth(
+        stub.style.familyToken,
+        stub.netName,
+        horizontal: false,
+      );
+      final prev = widestOnEdge[key];
+      if (prev == null || width > prev) widestOnEdge[key] = width;
+    }
+  }
+
+  final combIndex = <String, int>{};
+  for (final symbol in symbols) {
+    for (final side in const [SymbolSide.top, SymbolSide.bottom]) {
+      final ports = symbol.ports[side] ?? const <SymbolPort>[];
+      if (ports.isEmpty) continue;
+      final lanes = _laneCount(
+        ports: ports,
+        widest: widestOnEdge[_edgeKey(symbol.id, side)] ?? 0,
+      );
+      for (var i = 0; i < ports.length; i++) {
+        combIndex[_pinKey(symbol.id, ports[i].key)] = i % lanes;
+      }
+    }
+  }
+
   final emitter = _Emitter(
-    sizer: _Sizer(
-      measurer: measurer,
-      style: style,
-      unitsPerGrid: unitsPerGrid,
-    ),
+    sizer: sizer,
     palette: palette,
     style: style,
     combIndex: combIndex,
@@ -755,6 +815,44 @@ int netLabelGutterGu({
 /// author-assigned (CR-051) and may contain a space, so the separator is
 /// a character no author can type into one.
 String _pinKey(String deviceId, String portKey) => '$deviceId\u0000$portKey';
+
+/// One symbol's one edge — the scope a comb's lane count is measured over.
+String _edgeKey(String deviceId, SymbolSide side) =>
+    '$deviceId ${side.index}';
+
+/// How many depths [ports]' pennants must be spread across so that no two
+/// on this edge overprint.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE NUMBER IS DERIVED, WHICH IS WHY THIS IS A FUNCTION AND NOT A FIELD
+/// ═══════════════════════════════════════════════════════════════════════
+/// Two flags on one edge collide when the pennant is wider than the gap
+/// between the pins carrying them. Put the i-th pin in lane `i % lanes` and
+/// the nearest same-lane neighbour moves from one pitch away to `lanes`
+/// pitches away — so the smallest lane count that separates them is
+/// `ceil(widest / pitch)`, and any larger number only pushes flags further
+/// out for nothing.
+///
+/// [widest] is the widest pennant that ACTUALLY LANDS on this edge, not the
+/// widest the document holds: sizing every edge by the document's worst
+/// case would give a two-port switch the matrix's comb.
+///
+/// THE PITCH IS READ OFF THE PORTS, not off `SchematicMetrics`. This layer
+/// receives laid-out symbols and never sees the metrics that produced them,
+/// and a second copy of the pitch is precisely the painter/hit-tester
+/// desync `symbol_layer.dart`'s header records. Consecutive ports on one
+/// edge are one pitch apart by construction ([buildSymbolGeometry]).
+///
+/// RETURNS 1 — a flat comb — when there is nothing to separate: fewer than
+/// two pins on the edge, an edge whose stubs measured to nothing, or a
+/// degenerate pitch. One lane is the no-op, and it is the honest answer
+/// rather than a guard that would have to invent a spread.
+int _laneCount({required List<SymbolPort> ports, required double widest}) {
+  if (ports.length < 2 || widest <= 0) return 1;
+  final pitch = (ports[1].offset - ports[0].offset).abs();
+  if (pitch <= 0 || !pitch.isFinite) return 1;
+  return math.max(1, (widest / pitch).ceil());
+}
 
 /// THE ONE PLACE A STUB'S SIZE IS DECIDED, shared by the emitter and by
 /// [netLabelGutterGu].
