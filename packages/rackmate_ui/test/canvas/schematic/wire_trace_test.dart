@@ -489,6 +489,58 @@ void main() {
       }
     });
 
+    test('and the PILL clears the body too, which its anchor alone cannot '
+        'tell you', () {
+      // ── THE OTHER HALF OF THE FIELD'S SCREENSHOT ────────────────────
+      // The test above asserts a POINT is outside the body, and passed
+      // while the pill hanging from that point painted over the port
+      // label: `escapeGu` is 3 gu and `W053 · VID·HD21` is several times
+      // that wide, so a pill CENTRED on the escape put its inner half
+      // back inside the symbol — and pills are flushed last, so it won.
+      // `HDMI IN 1` read as `MI IN 1`.
+      //
+      // A point cannot see that; only the box can. The pill now hangs
+      // OUTBOARD of its anchor, the rule `net_label_layer` already uses
+      // for the pennant at the end of a leader (DR-001: two renderings of
+      // one Link put the flag naming it in the same place).
+      final layer = layerFor(doc.links.keys.toSet());
+      final boxes = layer.ops.whereType<OpRoundRect>().toList();
+      expect(boxes, isNotEmpty);
+      var at = 0;
+      for (final wire in layer.wires) {
+        for (final end
+            in scene.netLabels.where((l) => l.linkId == wire.linkId)) {
+          final symbol = scene.symbols.firstWhere(
+            (s) => s.id == end.deviceId,
+          );
+          final box = boxes[at++].r;
+          expect(
+            box.intersects(symbol.bodyRect),
+            isFalse,
+            reason:
+                'the ${end.side.name} pin of ${symbol.designator} put its '
+                'tag pill at $box, overlapping its own body '
+                '${symbol.bodyRect}',
+          );
+          // AND THE PILL IS WIDE ENOUGH FOR THE DISTINCTION TO EXIST. A
+          // pill narrower than the escape distance would clear the body
+          // however it was anchored, and this assertion would then be
+          // passing for a reason that has nothing to do with the fix.
+          expect(
+            box.width,
+            greaterThan(const SchematicWireStyle().escapeGu * 2),
+            reason: 'a pill this narrow cannot straddle an edge, so the '
+                'assertion above proves nothing about where it hangs',
+          );
+        }
+      }
+      expect(
+        at,
+        boxes.length,
+        reason: 'every pill drawn belongs to a wire that was walked',
+      );
+    });
+
     test('each escape point sits on the far side of its own pin', () {
       // The direction stated as a sign rather than as an inequality
       // against a box, so a symbol that happened to be narrow could not

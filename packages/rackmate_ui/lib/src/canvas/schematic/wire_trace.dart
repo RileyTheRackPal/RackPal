@@ -227,9 +227,10 @@ final class DrawnWire {
   /// consecutive pair is axis-aligned.
   final List<DPt> points;
 
-  /// The escape point at each end — where the wire has cleared its pin and
-  /// the tag pill is centred. One entry for a one-ended link (AC-018's
-  /// home runs to the field), two otherwise.
+  /// The escape point at each end — where the wire has cleared its pin, and
+  /// where the tag pill is ANCHORED. Not where the pill is centred: it
+  /// hangs outboard from here, `_PillSizer.pillOps` says why. One entry for
+  /// a one-ended link (AC-018's home runs to the field), two otherwise.
   final List<DPt> ends;
 
   /// The number of corners in [points]. Never above [kMaxTraceBends].
@@ -595,6 +596,7 @@ DrawnWireLayer buildDrawnWireLayer({
     final signal = ends.first.style;
     final List<DPt> points;
     final List<DPt> pillAt;
+    final List<SymbolSide> pillSide;
     if (ends.length == 1) {
       // ONE END IS STILL A WIRE. A home run to the field (AC-018's
       // `PlaceEndpoint`/`OpenEndpoint`) has one pin and one direction, and
@@ -604,6 +606,7 @@ DrawnWireLayer buildDrawnWireLayer({
       final tail = _escapePoint(end.pinCentre, end.side, escapeOf(end));
       points = <DPt>[end.pinCentre, tail];
       pillAt = <DPt>[tail];
+      pillSide = <SymbolSide>[end.side];
     } else {
       final a = ends[0];
       final b = ends[1];
@@ -625,6 +628,7 @@ DrawnWireLayer buildDrawnWireLayer({
         _escapePoint(a.pinCentre, a.side, escapeOf(a)),
         _escapePoint(b.pinCentre, b.side, escapeOf(b)),
       ];
+      pillSide = <SymbolSide>[a.side, b.side];
     }
 
     // THE FOUR CHANNELS ON ONE STROKE: hue is `argb`, dash is `dash`,
@@ -663,9 +667,15 @@ DrawnWireLayer buildDrawnWireLayer({
     );
 
     // §11.1.1: "an orthogonal polyline with a tag pill at each end".
-    for (final at in pillAt) {
+    for (var i = 0; i < pillAt.length; i++) {
       pills.addAll(
-        sizer.pillOps(_tagTextFor(link, signal), at, signal, palette),
+        sizer.pillOps(
+          _tagTextFor(link, signal),
+          pillAt[i],
+          pillSide[i],
+          signal,
+          palette,
+        ),
       );
     }
 
@@ -792,9 +802,32 @@ final class _PillSizer {
   final SchematicWireStyle style;
   final double unitsPerGrid;
 
+  /// [anchor] is the escape point, and the pill hangs OUTBOARD of it along
+  /// [side] rather than being centred on it.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// CENTRED ON THE ESCAPE PUT HALF THE PILL BACK INSIDE THE SYMBOL
+  /// ═══════════════════════════════════════════════════════════════════
+  /// [SchematicWireStyle.escapeGu] is 3 gu and a pill reading
+  /// `W053 · VID·HD21` is several times that wide, so a pill centred on the
+  /// escape point straddled the body edge and painted its inner half over
+  /// the port label — and it is painted LAST, so it won. The field's
+  /// screenshot showed `HDMI IN 1` reading as `MI IN 1`.
+  ///
+  /// Anchoring the pill's NEAR EDGE at the escape point is the rule
+  /// `net_label_layer._pennantBox` already uses for the pennant at the end
+  /// of a leader, and taking the same one here is DR-001's point rather
+  /// than a coincidence: `drawn` and `netLabels` are two renderings of ONE
+  /// Link, so the flag naming it belongs in the same place in both.
+  ///
+  /// THE EXTENT IS PER-AXIS because the pill is always horizontal: it is
+  /// the WIDTH that runs along a left/right escape and the HEIGHT that runs
+  /// along a top/bottom one. Using width for all four would push a
+  /// top-edge pill a whole text run clear of a symbol it was never near.
   List<DiagramOp> pillOps(
     String text,
-    DPt centre,
+    DPt anchor,
+    SymbolSide side,
     SignalStyle signal,
     SchematicPalette palette,
   ) {
@@ -811,6 +844,12 @@ final class _PillSizer {
     // to their font tables, and a pill that is a different height on screen
     // than on paper is a screen/print parity defect.
     final height = style.tagSizePt + pad * 2;
+    final centre = switch (side) {
+      SymbolSide.left => DPt(anchor.x - width / 2, anchor.y),
+      SymbolSide.right => DPt(anchor.x + width / 2, anchor.y),
+      SymbolSide.top => DPt(anchor.x, anchor.y - height / 2),
+      SymbolSide.bottom => DPt(anchor.x, anchor.y + height / 2),
+    };
     final box = DBox.fromLtwh(
       centre.x - width / 2,
       centre.y - height / 2,
