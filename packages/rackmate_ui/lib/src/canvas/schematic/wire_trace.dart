@@ -60,6 +60,43 @@
 // crossovers" — not defects this file failed to catch.
 //
 // ═════════════════════════════════════════════════════════════════════
+// THE DETOUR, WHICH IS ALSO NOT CHANNEL ALLOCATION
+// ═════════════════════════════════════════════════════════════════════
+// The staircase's corridor is the MIDPOINT of the two escape points, and a
+// midpoint lies outside both bodies only while the two ends escape TOWARDS
+// each other — a source on a right edge feeding a sink on a left edge
+// further right. That is what Sugiyama's layering produces and it is what
+// the three cases in [orthogonalTrace] were written against.
+//
+// A BACKWARD EDGE breaks the assumption, and there is nothing exotic about
+// one: an AVR's HDMI input fed by a matrix that sits to its RIGHT is a
+// backward edge, and so is its output feeding something to its left. The
+// field sent a screenshot of what that drew. The corridor landed BETWEEN
+// the two escapes instead of beyond them, so the wire left its pin, turned
+// straight back around and ran across the face of its own symbol — over the
+// header band, over the pin labels that had just been moved inside for
+// exactly this reason, and out the other side. Two of them on one pin row
+// read as one line drawn through the device.
+//
+// So a route that would cut a body it TERMINATES ON is replaced by one that
+// goes around it: out to the escape, along a lane clear of both bodies, and
+// back in. Which side the lane runs down is the shorter of the two, ties to
+// the near side; a mixed pair gets no choice at all, because the vertical
+// end has to be met along its own edge.
+//
+// IT IS STILL A PURE FUNCTION OF ONE LINK, and that is the whole of why it
+// is not item 1 or 2 above. The only new inputs are THE TWO BODIES THIS
+// LINK'S OWN ENDS SIT ON. No third symbol is consulted, no other link is
+// compared, nothing is reserved — two backward links can still pick the
+// same lane and run along it together, exactly as two forward links can
+// still share a corridor. Stopping THAT is what channel allocation is for,
+// and it is v1.2.
+//
+// THE BUDGET DOES NOT MOVE, because the lane REPLACES the corridor rather
+// than being added to it: two escapes and two turns, which is the four the
+// staircase already spends in its own worst case.
+//
+// ═════════════════════════════════════════════════════════════════════
 // THE BEND BUDGET IS FIXED AT FOUR, AND [maxBends] IS THE ASSERTION
 // ═════════════════════════════════════════════════════════════════════
 // Two escapes plus at most two turns. `wire_trace_test.dart` asserts it
@@ -248,6 +285,15 @@ final class DrawnWireLayer {
 /// Collinear runs are collapsed by [_simplify], so a straight connection is
 /// two points rather than six sitting on one line — a difference the eye
 /// cannot see and a golden can.
+///
+/// ── AND THE FOURTH SHAPE, WHICH IS NOT A FOURTH CASE ────────────────────
+/// All three above put their corridor at the MIDPOINT of the two escapes,
+/// which is beyond both of them on a forward edge and BETWEEN them on a
+/// backward one — see the file header. Pass [fromBody] and [toBody] and a
+/// route that would cut either of them is replaced by the detour: the same
+/// staircase with its corridor moved out past both bodies instead of split
+/// between them. Omit them and the caller gets the bare staircase, which is
+/// what a drag preview over a free-floating cursor has to have.
 List<DPt> orthogonalTrace({
   required DPt fromPin,
   required SymbolSide fromSide,
@@ -255,30 +301,162 @@ List<DPt> orthogonalTrace({
   required DPt toPin,
   required SymbolSide toSide,
   required double toEscape,
+  DBox? fromBody,
+  DBox? toBody,
 }) {
   final p = _escapePoint(fromPin, fromSide, fromEscape);
   final q = _escapePoint(toPin, toSide, toEscape);
+
+  final direct = _simplify(<DPt>[
+    fromPin,
+    p,
+    ..._staircase(p, fromSide, q, toSide),
+    q,
+    toPin,
+  ]);
+  if (fromBody == null || toBody == null) return direct;
+  if (!_cutsEither(direct, fromBody, toBody)) return direct;
+
+  final around = _simplify(<DPt>[
+    fromPin,
+    p,
+    ..._detour(
+      p,
+      fromSide,
+      q,
+      toSide,
+      hull: fromBody.union(toBody),
+      // AT LEAST AS FAR OUT AS EITHER ESCAPE, which is not decoration. A
+      // lane INSIDE one end's own escape point would be met by that end
+      // travelling back inward, and the whole defect being fixed here is a
+      // wire that travels back inward. Taking the larger of the two also
+      // carries the comb into the lane, so two backward links off different
+      // pins detour at different heights — the same way, and for the same
+      // reason, that the corridor inherits it.
+      clearance: math.max(fromEscape, toEscape),
+    ),
+    q,
+    toPin,
+  ]);
+  // THE DETOUR IS NOT ALWAYS AVAILABLE: two symbols that overlap in the
+  // lane's own axis can leave every route through one of them. Falling back
+  // to the direct staircase draws the shorter of two flawed wires rather
+  // than the longer one, and says so here instead of pretending the case
+  // cannot arise.
+  return _cutsEither(around, fromBody, toBody) ? direct : around;
+}
+
+/// The three cases of the doc comment above, and nothing else.
+List<DPt> _staircase(DPt p, SymbolSide fromSide, DPt q, SymbolSide toSide) {
+  final pHorizontal = _isHorizontal(fromSide);
+  final qHorizontal = _isHorizontal(toSide);
+  if (pHorizontal && qHorizontal) {
+    final mx = (p.x + q.x) / 2;
+    return <DPt>[DPt(mx, p.y), DPt(mx, q.y)];
+  }
+  if (!pHorizontal && !qHorizontal) {
+    final my = (p.y + q.y) / 2;
+    return <DPt>[DPt(p.x, my), DPt(q.x, my)];
+  }
+  // MIXED: the one corner that lets each end arrive along its own axis.
+  final corner = pHorizontal ? DPt(q.x, p.y) : DPt(p.x, q.y);
+  return <DPt>[corner];
+}
+
+/// The same staircase with its corridor moved clear of [hull] — the union
+/// of the two bodies this link terminates on.
+///
+/// ── THE MIXED PAIR IS THE ONE WORTH READING TWICE ───────────────────────
+/// It comes out of the two-horizontal formula unchanged, which does not
+/// look right until you follow it: `[(p.x, lane), (q.x, lane)]` reaches the
+/// VERTICAL end along its own column and the HORIZONTAL end along the
+/// lane, and the horizontal end's last leg is then its own escape stub,
+/// which runs the right way by construction. So the L becomes a Z rather
+/// than a fourth shape, and [_simplify] takes it back to three bends
+/// because the vertical end's escape point now sits ON its own column.
+List<DPt> _detour(
+  DPt p,
+  SymbolSide fromSide,
+  DPt q,
+  SymbolSide toSide, {
+  required DBox hull,
+  required double clearance,
+}) {
   final pHorizontal = _isHorizontal(fromSide);
   final qHorizontal = _isHorizontal(toSide);
 
-  final middle = <DPt>[];
-  if (pHorizontal && qHorizontal) {
-    final mx = (p.x + q.x) / 2;
-    middle
-      ..add(DPt(mx, p.y))
-      ..add(DPt(mx, q.y));
-  } else if (!pHorizontal && !qHorizontal) {
-    final my = (p.y + q.y) / 2;
-    middle
-      ..add(DPt(p.x, my))
-      ..add(DPt(q.x, my));
-  } else if (pHorizontal) {
-    middle.add(DPt(q.x, p.y));
-  } else {
-    middle.add(DPt(p.x, q.y));
+  if (!pHorizontal && !qHorizontal) {
+    final lane = _nearerLane(
+      hull.left - clearance,
+      hull.right + clearance,
+      p.x,
+      q.x,
+    );
+    return <DPt>[DPt(lane, p.y), DPt(lane, q.y)];
   }
 
-  return _simplify(<DPt>[fromPin, p, ...middle, q, toPin]);
+  final double lane;
+  if (pHorizontal && qHorizontal) {
+    lane = _nearerLane(
+      hull.top - clearance,
+      hull.bottom + clearance,
+      p.y,
+      q.y,
+    );
+  } else {
+    // NO CHOICE HERE: the vertical end escapes to one side of its own body
+    // and can only be met from that side, so the lane is decided by the pin
+    // rather than by cost.
+    //
+    // AND [_nearerLane] WOULD ALMOST ALWAYS AGREE, said out loud so nobody
+    // reads a test as proving more than it does. The cost of the wrong lane
+    // carries the whole hull's span in the vertical end's own term, which
+    // the horizontal end's term cannot make up; the two rules come apart
+    // only when the OTHER body overhangs the vertical end's escape side,
+    // and that is the shape where no four-bend route is clean anyway. The
+    // provable rule is used because it is provable — not because a cost
+    // comparison was measured and found wanting.
+    lane = (pHorizontal ? toSide : fromSide) == SymbolSide.top
+        ? hull.top - clearance
+        : hull.bottom + clearance;
+  }
+  return <DPt>[DPt(p.x, lane), DPt(q.x, lane)];
+}
+
+/// Whichever of [a]/[b] the two ends travel less to reach.
+///
+/// Ties go to [a] — the low side — so the answer is a total order on two
+/// doubles and the display list stays byte-identical across builds.
+double _nearerLane(double a, double b, double from, double to) {
+  final costA = (from - a).abs() + (to - a).abs();
+  final costB = (from - b).abs() + (to - b).abs();
+  return costA <= costB ? a : b;
+}
+
+/// Whether any segment of [points] passes through the INTERIOR of either
+/// body.
+bool _cutsEither(List<DPt> points, DBox a, DBox b) {
+  for (var i = 1; i < points.length; i++) {
+    if (_cuts(points[i - 1], points[i], a)) return true;
+    if (_cuts(points[i - 1], points[i], b)) return true;
+  }
+  return false;
+}
+
+/// Whether the axis-aligned segment [a]–[b] enters [body]'s interior.
+///
+/// STRICTLY the interior, and the strictness is load-bearing rather than
+/// fussy: every pin sits exactly ON its body's edge (`symbolPortCentre`),
+/// so a wire's own escape stub runs along that edge line and would count as
+/// a crossing under any inclusive test — which would send every wire on the
+/// sheet down the detour path.
+bool _cuts(DPt a, DPt b, DBox body) {
+  if (a.y == b.y) {
+    if (a.y <= body.top || a.y >= body.bottom) return false;
+    return math.max(a.x, b.x) > body.left && math.min(a.x, b.x) < body.right;
+  }
+  if (a.x <= body.left || a.x >= body.right) return false;
+  return math.max(a.y, b.y) > body.top && math.min(a.y, b.y) < body.bottom;
 }
 
 /// Builds the `drawn`-mode layer for [linkIds] over [scene]'s published
@@ -433,9 +611,15 @@ DrawnWireLayer buildDrawnWireLayer({
         fromPin: a.pinCentre,
         fromSide: a.side,
         fromEscape: escapeOf(a),
+        // THE BODIES THIS LINK'S OWN ENDS SIT ON, and no others — the file
+        // header on why that keeps the detour a per-link function. Null is
+        // reachable and means the same thing it means everywhere else here:
+        // the sheet does not draw that symbol, so route without it.
+        fromBody: symbolOf[a.deviceId]?.bodyRect,
         toPin: b.pinCentre,
         toSide: b.side,
         toEscape: escapeOf(b),
+        toBody: symbolOf[b.deviceId]?.bodyRect,
       );
       pillAt = <DPt>[
         _escapePoint(a.pinCentre, a.side, escapeOf(a)),

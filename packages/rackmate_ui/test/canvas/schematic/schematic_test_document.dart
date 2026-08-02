@@ -62,7 +62,11 @@ const List<String> kFixtureDomains = <String>[
 /// Builds the fixture. Every id is derived from a counter and every
 /// timestamp is a fixed UTC instant, so two calls produce documents that
 /// lay out identically — which is what the determinism assertions need.
-RackDocument buildSchematicTestDocument() {
+///
+/// [feedback] adds a SIXTH link closing the graph into a cycle, and is off
+/// by default so the shape every other test in this directory reads stays
+/// exactly as it was. See its own note at the call site.
+RackDocument buildSchematicTestDocument({bool feedback = false}) {
   final catalog = buildSeedCatalog();
   final at = DateTime.utc(2026, 7, 28, 9);
   EntityMeta meta() =>
@@ -219,6 +223,29 @@ RackDocument buildSchematicTestDocument() {
   // midpoint anyway. A mutation that deleted the comb survived until this
   // row existed.
   wire('MTX-1', 'AMP-1', 'audio.spdif_coax');
+
+  // ═══════════════════════════════════════════════════════════════════
+  // THE CYCLE, AND THE ONE ROUTING SHAPE THE FIVE ABOVE CANNOT REACH
+  // ═══════════════════════════════════════════════════════════════════
+  // The five links already produce BACKWARD EDGES, which is worth saying
+  // plainly because it is easy to assume a DAG produces none: `claim` hands
+  // out the next unused TEMPLATE port, so a link's two ends can both land
+  // on left edges, and then their escapes point away from each other and
+  // the staircase's midpoint corridor lands between them — inside a body.
+  // W001, W003 and W005 are all like that, and they are what makes
+  // `wire_trace_test.dart`'s "no wire crosses a body it terminates on"
+  // able to fail on the default fixture.
+  //
+  // What five acyclic links cannot produce is a backward MIXED pair — one
+  // end on a side edge, the other on a top or bottom edge — because on a
+  // DAG the layering puts every top-pin end on the forward side of its
+  // partner. This closes the graph, AMP-1 back to SW-1, so the layering has
+  // to break a cycle and the edge it picks is drawn against the layer
+  // order. That is the real shape (an AVR's output feeding a matrix
+  // upstream of it), not a contrivance, and it is the only thing here that
+  // reaches `_detour`'s mixed branch through the whole layer rather than
+  // through a hand-built box.
+  if (feedback) wire('AMP-1', 'SW-1', 'net.ethernet');
 
   return doc;
 }

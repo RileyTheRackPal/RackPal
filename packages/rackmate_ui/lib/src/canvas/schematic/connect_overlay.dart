@@ -470,9 +470,11 @@ ConnectOverlay buildConnectOverlay({
         fromPin: from.centre,
         fromSide: from.side,
         fromEscape: escape,
+        fromBody: from.symbol.bodyRect,
         toPin: to.centre,
         toSide: to.side,
         toEscape: escape,
+        toBody: to.symbol.bodyRect,
       );
       ops.add(OpPolyline(trace, bandStroke));
       bands.add(trace);
@@ -517,9 +519,15 @@ ConnectOverlay buildConnectOverlay({
       fromPin: sourcePin.centre,
       fromSide: sourcePin.side,
       fromEscape: escape,
+      // BOTH BODIES, so a band aimed at a device BEHIND the source previews
+      // the detour the committed cable will take rather than the straight
+      // line through the symbol it used to. The free-end band above still
+      // passes none, and cannot: an unsnapped pointer has no body.
+      fromBody: sourcePin.symbol.bodyRect,
       toPin: caretPin.centre,
       toSide: caretPin.side,
       toEscape: escape,
+      toBody: caretPin.symbol.bodyRect,
     );
     ops.add(OpPolyline(band, bandStroke));
   }
