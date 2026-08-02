@@ -1,5 +1,47 @@
 # Update Log
 
+## 2026-08-03
+
+* **Update**: [DR-014](/decisions/dr-014-splitting-a-set.md) is **BUILT**
+  (`acdae02` core, `0e5c568` sheet, board #110). A wire drawn from an
+  already-wired set member to a **different device** splits the set. It closes
+  the field report *"the Right analog audio channels can't have connections
+  made once the left channel is made"* — which was `atomicConnect` working
+  correctly against a pair that had already become one cable, and the product
+  having no way to say *this half goes somewhere else now*.
+* **Note**: the ruling spends NO input vocabulary, and that was forced rather
+  than elegant. #110's costing found no free single modifier — `Ctrl` is the
+  magnet suppressor and additive selection, `Alt` is DR-001's drawn-wire hover,
+  `Shift` is multi-draw's run-selection — so a chord, a scarce unmodified
+  letter, a keyboard-less double-click and a re-ruling of §11.11.2 were the
+  four options on the board. **A gesture with nothing to bind gets parity with
+  the keyboard for free and has nothing to discover.**
+* **Note**: the load-bearing condition is *never lift the LAST conductor out of
+  a link*. Every other condition refuses a gesture that would have been refused
+  anyway — the user sees `TOP-003` where they used to see `TOP-003` — but that
+  one separates a split from a **silent delete**: a link with no conductor is a
+  `W` number and a schedule row for a cable that connects nothing, and the loss
+  is invisible until the sheet is printed. Re-routing a single run by dragging
+  its end is a real gesture and wants its own ruling; it must not arrive by
+  accident.
+* **Note**: `ConductorRef` is a `(linkId, index)` PAIR and not a new persisted
+  id. A `Conductor` is a child of its `Link` (CR-014) and has never needed
+  identity; minting one would put a field on the wire — `kSchemaVersion`,
+  CR-117's byte gate — to serve a gesture that resolves and consumes it inside
+  one unmutated document. **Position rather than an endpoint search**, because
+  a link may legitimately carry two conductors across the same ordered pair and
+  a search collapses them.
+* **Note**: two splits on ONE link have to be applied HIGHEST INDEX FIRST.
+  Usually they name two links and order is irrelevant, but CR-014 lets one
+  `Link` reach more than two devices through a `Breakout`, so one cable can
+  hold the conductor occupying each end of the drag. Ascending, the second
+  removal takes its neighbour — the user asks one leg to move and two move.
+* **Note**: `TOP-003` now takes a `freeing` set rather than letting callers
+  decide for themselves whether a pin has room. The tempting shape re-implements
+  `effectiveMaxConnections`'s bus-tap reading, which is the half everybody gets
+  wrong: under a declared-is-effective reading every Cresnet drop and 70 V tap
+  in the catalog reads as full. **Same discipline as CR-081's one measurer.**
+
 ## 2026-08-02
 
 * **Update**: [DR-013](/decisions/dr-013-delete-cascades.md) is **BUILT**

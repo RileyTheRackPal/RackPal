@@ -769,6 +769,19 @@ than against its criterion is the substitution §5.5 refuses for M6. The six tie
 are **not** M2's at all — canon defers them to M5 (§11.12.5), and implementing one as a tier-1
 refusal would make the product unable to draw a mistake, which CR-017 and G2 exist to prevent.
 
+**DR-014 is built (#110, `acdae02` + `0e5c568`).** A wire drawn from an already-wired set member to
+a **different device** now splits the set automatically — no modifier, no mode letter, no dialog,
+because #110's own costing found no free single modifier to bind one to (`Ctrl` is the magnet
+suppressor and additive selection, `Alt` is DR-001's hover, `Shift` is multi-draw's run-selection).
+It closes the field report *"the Right analog audio channels can't have connections made once the
+left channel is made"*, which was `atomicConnect` working correctly against a pair that had already
+become one cable. **§11.11.2 is amended, not overturned**: the branch is still decided by the jack,
+and what changed is that a set which is already one cable has no legal set gesture left, so a full
+member arms the pin-to-pin path. Four conditions keep the split from firing where the gesture could
+mean anything else, and the third — never lift the LAST conductor out of a link — is what stops a
+split from being a silent delete of a cable the user cannot see. The announcement names the
+conductor counts on both cables, per DR-012.2, and the Edit menu says `splitSet`.
+
 **DR-013 is built (#95, `48f1198`), and D7's gate is paid (#94, `7c2ac49`).**
 Deleting a wired device now cascades — its cables, its materialised ports and any net no survivor
 still carries — after a confirmation naming the count, with an undo that restores every one under

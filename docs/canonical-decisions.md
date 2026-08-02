@@ -6861,6 +6861,69 @@ correctness, and it stays deferred.
 
 ---
 
+## 11.14 DR-014 · Drawing a wired set member at a different device splits the set
+
+**The question.** §11.8.3's `atomicConnect` makes a stereo pair ONE `Link` with two
+`Conductor`s. Both jacks are then full, so `TOP-003` refuses every later cable from either of
+them — reported from the field as *"the Right analog audio channels can't have connections made
+once the left channel is made."* The document was correct; the product had no way to express the
+one thing the user meant, which is *this half goes somewhere else now*. Board item #110 costed four
+ways to say it and found that **no free single modifier exists**: `Ctrl` is the magnet suppressor
+and additive selection (docs/04 §3.5), `Alt` is DR-001's drawn-wire hover, `Shift` is multi-draw's
+run-selection (#93). Every option was a chord, a scarce unmodified letter, a pointer gesture with
+no keyboard equivalent (breaking §11.11.6's parity), or a re-ruling of §11.11.2.
+
+**Ruling — the drag says it. Splitting is automatic when a wire is drawn to a DIFFERENT device.**
+Settled by the user on 2026-08-01, against all four costed options.
+
+**11.14.1 No new input vocabulary is spent.** There is no modifier, no mode letter, no
+double-click and no dialog. This is what makes §11.11.6's keyboard/pointer parity free rather than
+argued — there is no chord to reach on a keyboard — and it means there is nothing to discover: the
+drag the user already tried IS the gesture.
+
+**11.14.2 A split fires only where the gesture cannot mean anything else — four conditions, all
+required.** (1) the pin is FULL, so a connect that TOP-003 would allow never splits; (2) EXACTLY
+ONE conductor end lands on it, because "which of these did you mean to displace" has no derivable
+answer; (3) its `Link` carries MORE THAN ONE conductor; (4) that conductor's far end is not already
+on the device being drawn to. An `OpenEndpoint` or `PlaceEndpoint` far end splits — neither names a
+device to be the same as — while an UNRESOLVABLE `PortEndpoint` does not, because *"I cannot tell
+which device that is"* is not *"it is a different one"*.
+
+**11.14.3 Condition 3 is the one with teeth, and it is what keeps a split from being a delete.**
+Lifting the only conductor out of a `Link` leaves a `W` number and a schedule row for a cable with
+no electrical path — which `ConnectPortsCommand`'s own zero-conductor guard calls *"no conductor at
+all"* and throws over. Re-routing a single run by dragging its end is a real gesture and a
+reasonable thing to want; it is **not this one**, and it must not happen by accident to a user who
+was aiming at a stereo pair. G1 makes that failure the most expensive kind: the schedule is the
+deliverable and the loss is invisible until it is printed.
+
+**11.14.4 The announcement names the bill of materials, per §11.12.2.** A split moves one conductor
+across the line between *one cable with N conductors* and *N cables* — the pull sheet gains a row
+and an existing row loses a path — and a silent choice between those two is the harm DR-012.2
+exists to prevent. Naming the `W` number alone does not discharge this: the sentence states the
+COUNT, as *"…split out of W001, which now carries 1 conductor instead of 2."* The Edit menu label is
+`splitSet`, not `connectPorts`, for the same reason.
+
+**11.14.5 A refusal writes nothing, splits included.** §11.11.5 gives tier 1 no `[ Connect anyway ]`.
+A gesture refused after having nonetheless lifted a conductor would be the worst outcome available —
+the user is told nothing happened and their stereo pair is now a mono cable — so the rules are
+evaluated ONCE, against the document as the splits will leave it, and nothing is applied in order
+to plan.
+
+**11.14.6 §11.11.2 is amended, not overturned.** The branch is still decided BY THE JACK. What
+changes is that a set which is ALREADY ONE CABLE has no legal set gesture left — every member is
+full — so a full member arms the pin-to-pin path instead. An unwired member still arms the whole
+set. A set is one cable the first time and splittable afterwards.
+
+**11.14.7 What this does not settle.** Dragging FROM an unwired set member ONTO a wired one still
+arms the set gesture and still finds the target set unavailable. Splitting a WHOLE target set out of
+its cable is a materially larger action than lifting one member and was not ruled on; the reported
+gesture — grab the member that is already wired — is the direction that works. Deferred with #111
+(the set bracket, which must now distinguish a set that is one cable from one that has been split)
+and #112 (stereo pairs for de-embedded zone audio).
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-007 change or void, plus the small set of internal
