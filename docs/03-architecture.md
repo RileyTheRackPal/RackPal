@@ -99,7 +99,7 @@ RackMate/
 │  │     ├─ persistence/              codec.dart (DocumentCodec, sniffs PK\x03\x04) ·
 │  │     │                            json_codec.dart (hand-written) · schema.dart ·
 │  │     │                            migrations.dart (append-only, Outcome<T>) — CR-091..093
-│  │     ├─ library/                  catalog load + validate; .rmdev codec + its own chain
+│  │     ├─ library/                  catalog load + validate; .rmdx codec + its own chain
 │  │     └─ util/outcome.dart         sealed Outcome<T> — expected outcomes are values
 │  │  └─ test/                        migration_corpus_test · command_roundtrip_test ·
 │  │                                  epoch_mask_test (AC-014) · byte_roundtrip_test (CR-117) ·
@@ -285,7 +285,7 @@ Every `Command` declares `EpochMask get touches`. This one mechanism drives **th
 
 ### 4.4 Selection, viewport, tool mode, interaction
 
-**Selection** is observed, not owned by the document. It is never persisted to `.rackmate` and never bumps `sequence` — selecting a device must not mark the file dirty. But every `Transaction` captures `selectionBefore` / `selectionAfter`, so undo restores it; without that, undoing a delete leaves the caret on an entity that no longer exists.
+**Selection** is observed, not owned by the document. It is never persisted to `.rmpj` and never bumps `sequence` — selecting a device must not mark the file dirty. But every `Transaction` captures `selectionBefore` / `selectionAfter`, so undo restores it; without that, undoing a delete leaves the caret on an entity that no longer exists.
 
 ```dart
 class SelectionController extends ChangeNotifier {
@@ -742,7 +742,7 @@ Full field-level detail is in [the file format](02-data-model.md#6-the-rackmate-
 
 ### 9.1 Container and envelope
 
-`.rackmate` is **plain, pretty-printed, key-sorted UTF-8 JSON** (**CR-091**). The zip alternative existed only to carry per-face device images, and images are cut from v1 (**AC-057**), so the container question resolves to what the confirmed product decisions already specified. `DocumentCodec` ships from commit one and **sniffs `PK\x03\x04` on read**, so a v2 zip container is a non-event and the extension never changes.
+`.rmpj` is **plain, pretty-printed, key-sorted UTF-8 JSON** (**CR-091**). The zip alternative existed only to carry per-face device images, and images are cut from v1 (**AC-057**), so the container question resolves to what the confirmed product decisions already specified. `DocumentCodec` ships from commit one and **sniffs `PK\x03\x04` on read**, so a v2 zip container is a non-event and the extension never changes.
 
 ```dart
 abstract class DocumentCodec {
@@ -797,22 +797,22 @@ Migration returns `Outcome<T>` and never throws (**CR-093**) — expected outcom
 
 ```text
 1. Serialize in Isolate.run (AC-006: at the corrected ~600 KB, keep the UI thread clean).
-2. Write bytes to <target>.rackmate.tmp in the SAME directory (same volume ⇒ atomic rename).
+2. Write bytes to <target>.rmpj.tmp in the SAME directory (same volume ⇒ atomic rename).
 3. flush() + close().
 4. If <target> exists → rename it to <target>.bak (overwriting the previous .bak).
-5. rename(<target>.rackmate.tmp → <target>.rackmate).
+5. rename(<target>.rmpj.tmp → <target>.rmpj).
 6. _savedStateId = doc.stateId;                        → isDirty goes false
 7. Delete this document's recovery snapshot.
 8. Push to recent files; update the window title.
 ```
 
-A crash at any step leaves either the previous good file, or the previous good file plus a `.tmp`. There is **one** `.bak` sibling and **no `.history/` folder** (**CR-098**) — the confirmed product decision is a local single-file project, so the user's folder gains nothing but the file they asked for and one backup. Pre-update snapshots go to `getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rackmate`, pruned to the last 10.
+A crash at any step leaves either the previous good file, or the previous good file plus a `.tmp`. There is **one** `.bak` sibling and **no `.history/` folder** (**CR-098**) — the confirmed product decision is a local single-file project, so the user's folder gains nothing but the file they asked for and one backup. Pre-update snapshots go to `getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rmpj`, pruned to the last 10.
 
 ### 9.4 Dirty tracking, autosave, recovery
 
 `isDirty == doc.stateId != savedStateId`, per **CR-094**. Never document equality — that is `O(document)` per keystroke and gets subtly wrong the moment a float survives into the model (which, per the persistence contract, it must not).
 
-- Every **30 s** and on **window blur**, if dirty, write a recovery snapshot to `getApplicationSupportDirectory()/recovery/<docUuid>.rackmate` plus a sidecar `{realPath, sequence, savedAt, displayName}`.
+- Every **30 s** and on **window blur**, if dirty, write a recovery snapshot to `getApplicationSupportDirectory()/recovery/<docUuid>.rmpj` plus a sidecar `{realPath, sequence, savedAt, displayName}`.
 - **Never autosave over the user's file.** CAD users expect explicit saves and will file a bug the first time an autosave clobbers something.
 - Autosave serialization runs in `Isolate.run` — nobody is waiting, so the transfer cost is free and the UI must not hitch (**CR-099**: `Isolate.run` is correct precisely where neither progress nor cancellation is wanted).
 - Delete the snapshot on clean save and on clean exit. On startup, scan the recovery directory; any survivor produces *"RackMate closed unexpectedly. Recover Smith Residence (12 unsaved changes)?"* with Recover / Discard / Keep for later.
@@ -847,7 +847,7 @@ Recent files are a JSON list in application support (`{path, displayName, lastOp
 | `path_provider_windows` | `^2.3.0` | app | `getApplicationSupportPath()` for recovery, snapshots, recents, logs, prefs. Called from **exactly one function** — `productionApplicationSupportDirectory` in `lib/src/storage/data_root.dart` — and a grep test asserts that single call site, which is what keeps M2's portable build a one-function change. **The platform package directly, NOT the `path_provider` umbrella:** on Windows the umbrella forwards to precisely this class, so the resolved path is identical, but it also drags `path_provider_android` in, and that package pulls the `jni` FFI plugin — which put `dartjni.dll` in the Release output beside `rackmate.exe`. Dart-only, no native plugin, no extra DLL. | none | the umbrella, if a second desktop platform ever needs one; then re-check the Release output for `dartjni.dll` (`flutter_dependency_test.dart` asserts it is absent) |
 | `path` | `^1.9.0` | app | Cross-platform joining. Never string-concatenate paths on Windows. | none | — |
 | `printing` | `^5.15.0` | app | **Behind an explicit "Verify output" button only.** `PdfPreview`; `layoutPdf` is v1.1. | `PdfPreview`/`raster` need **pdfium**, which the plugin's CMake downloads at build time — a fresh or network-restricted machine fails `flutter build windows` | **Binaries are vendored into the repo (CR-100)**; a network-fetched binary in a signed release is a supply-chain and reproducibility problem, not just a CI one. Degrade to export + "Open in system viewer", which needs no pdfium |
-| `desktop_drop` | `^0.6.0` | app | Drag a `.rackmate` onto the window. | 0.x, low activity | a nicety — degrade to File ▸ Open. Alternative `super_drag_and_drop` |
+| `desktop_drop` | `^0.6.0` | app | Drag a `.rmpj` onto the window. | 0.x, low activity | a nicety — degrade to File ▸ Open. Alternative `super_drag_and_drop` |
 | `logging` | `^1.3.0` | app | Structured, level-based, zero-dependency. Sinks are ours. | none | — |
 | `intl` | `^0.20.0` | app | Number/date/unit formatting; the runtime half of ARB localization. | none | — |
 | `flutter_localizations` | sdk | app | Locale resolution, `MaterialLocalizations`, `Directionality`. | — | — |
@@ -899,7 +899,7 @@ Two things this pin does **not** yet cover, stated so neither is mistaken for do
 | Ports (mostly unmaterialised — AC-006) | 2 000 | 6 000 |
 | `Link` | 1 000 | 3 000 |
 | Undo history | 200 entries | — |
-| `.rackmate` file size | ~600 KB | 3 MB |
+| `.rmpj` file size | ~600 KB | 3 MB |
 | Distinct text runs | ~10 000 | ~30 000 |
 
 The file-size figure is the **corrected** one. The original 500 KB budget was 3–6× optimistic because it materialised every port as a document entity with its own `EntityMeta` (~450–500 B each pretty-printed, so ~1 MB for ports alone at target). Lazy port materialisation plus `EntityMeta` off sub-objects (**AC-006**, **CR-095**) is what makes the plain-JSON decision survive its own arithmetic.
@@ -1058,7 +1058,7 @@ Reconciled from the two conflicting orders in the corpus (**CR-120**). The five 
 1. **Reconciliation** — this document set. Not compressible into the first coding milestone: CR-001, CR-008, CR-017, CR-051, CR-081 and CR-083 each cost a rewrite of everything downstream if guessed wrong.
 2. **The six API spikes**, including `PdfTtfFont` cold-start cost against the 1.2 s budget.
 3. **`units/` + `Pt`/`Box`**, with the two discriminating tests written **before any other code**: exact 1/32-in clearance, and zero accumulated error across a 45U stack (**AC-001**).
-4. **`.rackmate` envelope + hand-written codec + migration harness + the first golden fixture + the byte-round-trip test.** The format is the durable asset.
+4. **`.rmpj` envelope + hand-written codec + migration harness + the first golden fixture + the byte-round-trip test.** The format is the durable asset.
 5. **`Command` / `Transaction` / `UndoStack` / `DocumentController`**, with `@internal` setters, the apply∘revert property test, and the epoch-mask coverage test. Retrofitting undo is the single most painful refactor available.
 6. **`DiagramCanvas` + `TextMeasurer` + `DiagramScene` + both backends + the baseline-Y parity test, together and early.** If parity does not hold, stop — every hour spent on layout before parity is an hour that may need redoing.
 7. **`CanvasIntent`, `ViewportController`, wheel/trackpad input, grid painter.** Pan and zoom must feel right before anything sits on them.

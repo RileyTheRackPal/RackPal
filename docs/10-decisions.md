@@ -114,14 +114,27 @@ not binary", and a zip carrying `project.json` plus `assets/`. The zip existed s
 
 | Extension | Contents |
 |---|---|
-| `.rackmate` | One project. **Plain, pretty-printed, key-sorted UTF-8 JSON**, `document` wrapper. |
-| `.rmdev` | One device template. Plain JSON, **same unit regime** — `depthNm`, `weightUg`, `xNm` (CR-063). Own migration chain. |
-| `.bak` | The single sibling backup of a `.rackmate`. No `.history/` folder (CR-098). |
-| `.rmlib` | **Cut from v1** (AC-042). Signatures and provenance chains go with it. |
+| `.rmpj` | One project. **Plain, pretty-printed, key-sorted UTF-8 JSON**, `document` wrapper. |
+| `.rmdx` | One device template. Plain JSON, **same unit regime** — `depthNm`, `weightUg`, `xNm` (CR-063). Own migration chain. |
+| `.rmda` | Many device templates in one file, same regime, same chain. |
+| `.bak` | The single sibling backup of a `.rmpj`. No `.history/` folder (CR-098). |
 
 Device images are cut (AC-057), which is what dissolves the zip requirement. `DocumentCodec`
 nevertheless **sniffs `PK\x03\x04` on read from commit one**, so a v2 zip container is a
 non-event rather than a format break.
+
+> **Renamed by DR-015 (canon §11.15), which is a naming decision and not a format one** — no byte
+> inside any of these files moved and `schemaVersion` did not advance. The three rows above were
+> `.rackmate`, `.rmdev` and `.rmlib`. **`.rackmate` is still opened and still saved in place**;
+> it is accepted, never written, and never migrated underneath the user (§11.15.2).
+>
+> **`.rmda` also un-cuts AC-042's library pack**, which is a scope edit under roadmap §8.3 rather
+> than a rename. It carries neither the `signature` field nor the `provenance` chain — AC-042's
+> cut kept `contentHash` and threw away the cryptographic apparatus, and an archive needs only the
+> half that was kept. **It is a single JSON file rather than the zip `.rmlib` specified**, for
+> exactly the reason stated two paragraphs up: the zip existed to carry device images, images are
+> cut, and D8's zip-slip / entry-count / decompression-bomb surface is bought for nothing. The
+> trade is compression, on a file people email once.
 
 **Consequences.** Projects diff and merge in git, are greppable, and are debuggable by hand — a
 real advantage while the format is young. Files are larger than a zip and there is no place to

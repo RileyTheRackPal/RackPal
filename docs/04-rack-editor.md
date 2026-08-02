@@ -49,7 +49,7 @@ Single window, one document (RJ-013). Three resizable regions between a fixed to
 | Validation drawer | 28 px | 28 / 320 | Auto-expands to 180 px once, on the first *error* per session, never again. |
 | Status bar | 24 px | fixed | Cursor context · zoom · selection rollup · project counts. |
 
-Panels are collapsible and resizable but **not floatable or re-dockable** in v1; rejected alternative — a full dock manager, near-zero payoff for a three-panel app. Each panel sits behind a `PanelHost` keyed by `PanelId` so a dock manager is a swap, not a rewrite. Widths persist in app settings, never in the `.rackmate` file. Below 1080 logical px the shell collapses to the read-only tablet viewer (AC-056): canvas fills, inspector becomes a three-detent bottom sheet, palette is unavailable, and the app states that mobile is read-only rather than shipping a squeezed editor.
+Panels are collapsible and resizable but **not floatable or re-dockable** in v1; rejected alternative — a full dock manager, near-zero payoff for a three-panel app. Each panel sits behind a `PanelHost` keyed by `PanelId` so a dock manager is a swap, not a rewrite. Widths persist in app settings, never in the `.rmpj` file. Below 1080 logical px the shell collapses to the read-only tablet viewer (AC-056): canvas fills, inspector becomes a three-detent bottom sheet, palette is unavailable, and the app states that mobile is read-only rather than shipping a squeezed editor.
 
 ---
 
@@ -461,7 +461,7 @@ Deleted bindings and why: `F`/`Shift+F` are unbound here (they mean Focus/Isolat
 
 ## 9. Empty state, first run, accessibility
 
-**First launch** shows a start card, not an empty canvas: `Blank project` plus the four starter projects, which are authored as **real `.rackmate` files** doing triple duty as goldens, perf fixtures and screenshot source (AC-052). A user who picks "Home theater" is editing a populated, finding-clean 24U rack in two seconds, which is a far lower-effort mode than creating one.
+**First launch** shows a start card, not an empty canvas: `Blank project` plus the four starter projects, which are authored as **real `.rmpj` files** doing triple duty as goldens, perf fixtures and screenshot source (AC-052). A user who picks "Home theater" is editing a populated, finding-clean 24U rack in two seconds, which is a far lower-effort mode than creating one.
 
 **New rack** is three fields — Name, Preset, Height — and `Enter` commits. The `Location` combobox is **removed from this dialog** (AC-048): an empty required-looking dropdown on field two of the very first dialog was the first cliff in the corpus, and location is set later from the rack inspector or the Locations panel.
 

@@ -6924,6 +6924,95 @@ and #112 (stereo pairs for de-embedded zone audio).
 
 ---
 
+## 11.15 DR-015 · The `rm` extension family, and what a device archive is
+
+**The question.** The product's three user-visible file kinds were named in three different
+idioms — `.rackmate` for a project, `.rmdev` for a device template, `.rmlib` for a library pack —
+and only the first has ever existed. The owner chose one family: **`.rmpj` project, `.rmdx`
+device, `.rmda` device archive.**
+
+**11.15.1 The ruling.**
+
+| Extension | Contents | Status |
+|---|---|---|
+| `.rmpj` | One project. Plain, pretty-printed, key-sorted UTF-8 JSON, `document` wrapper. **Renames `.rackmate`.** | Built (`dc22ddc`) |
+| `.rmdx` | One device template. Plain JSON, same unit regime (CR-063), own migration chain. **Renames `.rmdev`.** | Spec only — nothing constructs one (docs/12 §5.3) |
+| `.rmda` | Many device templates in one file. **Renames `.rmlib` and un-cuts it.** | Not built, not scheduled — §11.15.4 |
+| `.bak` | The single sibling backup of a `.rmpj`. No `.history/` folder. | Unchanged (CR-098) |
+
+**NOT ONE BYTE INSIDE A FILE MOVES.** CR-091's container ruling stands verbatim, `schemaVersion`
+does not advance, and the migration chain is not involved. This is a rename, and calling it
+anything more would put a format change in the record that did not happen.
+
+**11.15.2 `.rackmate` is still opened, and still saved in place.** Not deprecated, not migrated
+on open, not renamed underneath the user. `kDocumentExtensions` lists both spellings; the path
+normaliser appends the first and treats every entry as already-correct. The consequence that
+forced this shape: `SessionController.save()` runs the ALREADY-OPEN path back through that
+normaliser, so a single-entry list would turn a team's `Smith.rackmate` into
+`Smith.rackmate.rmpj` on `Ctrl+S` — a second file, the first left holding older bytes and still
+in the recents list, and nothing looking wrong until they open the wrong one. **Save As and a
+never-saved document still reach for `.rmpj`, so the old spelling is accepted and never
+propagated.**
+
+The same rule governs the app's own files. A snapshot and a recovery pair ARE ordinary documents
+(§9.4), so both carry the project extension and both had to learn the old one — see docs/12 §5.1
+for the two silent-loss paths that fell out of that and were closed with it.
+
+**11.15.3 The device archive is not a new idea; it is AC-042's cut, re-opened.** The corpus
+already specifies this file. It is `.rmlib`, and AC-042 cut it from v1 together with the
+`signature` field and the `provenance`/`derivedFrom` chain. So `.rmda` is a **rename plus a scope
+edit under roadmap §8.3**, and it is recorded as one rather than as a naming decision that
+happened to add a feature.
+
+What AC-042 cut and what it kept is worth restating, because the two halves are separable and the
+cut was argued as one thing. It kept `contentHash` — "three lines, and it is what makes the
+embedded-snapshot argument true". It cut the cryptographic apparatus. **`.rmda` needs neither.**
+A library pack that carries no signature and no provenance chain is exactly the `contentHash`-only
+object the surviving half already describes, N times over. Nothing in AC-042's reasoning argues
+against the container; it argues against the trust machinery that was bolted to it.
+
+**11.15.4 `.rmda` IS A SINGLE JSON FILE, NOT A ZIP, and this is the ruling's one real content.**
+
+`.rmlib` was specified as a zip. That is what makes it expensive, and the expense is documented:
+docs/research/critique-completeness.md D8 lists **zip-slip protection, entry-count limits,
+uncompressed-size limits (zip bomb) and image-decode bounds** as needed-and-absent for it, and
+separately warns that `RulePredicate` — "an evaluated program" — could arrive inside one.
+
+**The zip buys nothing here.** It existed to carry per-face device images, and images are cut
+(AC-057). A device template is inert JSON with no binary member. So the container question
+resolves exactly as it did for the project file — and it is the SAME argument, made once already
+by CR-091: *"The zip alternative existed only to carry per-face device images, and images are cut
+from v1, so the container question resolves to what the confirmed product decisions already
+specified."* Applying it a second time is consistency, not a new call.
+
+A `.rmda` is therefore **one JSON file holding a manifest and an array of `TemplateBody`**, in the
+`.rmdx` regime, with the `.rmdx` migration chain reused rather than a second one invented. It
+inherits AC-058/D8's existing JSON depth and size limits and introduces **no new attack surface at
+all** — no path traversal, no decompression bomb, no entry count. It also stays diffable, which a
+zip of JSON is not, and `.gitattributes` can protect it byte-exactly the way it protects the other
+two.
+
+The cost, stated plainly so nobody discovers it later: **no compression.** A pack of 500 templates
+is a few MB of JSON where a zip would be a few hundred KB. That is the entire trade, it is
+measured in a file people email once, and it is the right side of it.
+
+**11.15.5 What `.rmda` still does not have, and why it is not scheduled here.** The file format is
+the small half. The owner's stated goal is *"multiple device libraries loaded into the device
+palette and filtered as needed"*, and none of that exists: there is no library directory service,
+no import/export surface, no notion of a template's SOURCE library, and no palette filter keyed
+to one. docs/research/critique-completeness.md A8.2 says the same thing about the whole template
+lifecycle — *"no implementation home"*. Ruling the format now and building the subsystem later is
+deliberate: the format is what other decisions have to be consistent with, and it is decidable
+today. The subsystem is M4 work and is tracked on the board.
+
+**11.15.6 What this does not settle.** File-type REGISTRATION — double-click-to-open, the shell
+icon, the MSIX `FileTypeAssociation` — is not ruled here and does not exist for any extension,
+old or new (critique-completeness: *"No file-type registration for `.rackmate` / `.rmdev` /
+`.rmlib` on Windows/macOS"*). It is now cheaper to do, because there is one coherent family to
+register instead of three idioms, and it belongs with the MSIX epic where the manifest is.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-007 change or void, plus the small set of internal

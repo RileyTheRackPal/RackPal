@@ -2,6 +2,42 @@
 
 ## 2026-08-03
 
+* **Creation**: [DR-015 — the rm extension
+  family](/decisions/dr-015-extension-family.md). `.rmpj` project, `.rmdx`
+  device, `.rmda` device archive. The project half is built (`dc22ddc`);
+  `.rmdx` renames a spec nothing implements; `.rmda` is ruled and not built.
+* **Note**: **not a format change**, and saying so precisely matters — no
+  byte inside a document moves, `schemaVersion` does not advance, the
+  migration chain is not involved. A rename recorded as a format break is
+  a fiction the next reader has to disprove.
+* **Note**: `.rackmate` is **accepted and never written**. The shape was
+  forced by one call site: `SessionController.save()` runs the
+  ALREADY-OPEN path back through the extension normaliser, so a list
+  holding only `.rmpj` would turn a team's `Smith.rackmate` into
+  `Smith.rackmate.rmpj` on Ctrl+S — a second file, the first left with
+  older bytes and still in their recents, **nothing looking wrong until
+  they open the wrong one**.
+* **Note**: the rename exposed two silent-loss paths, both the same
+  mistake — REBUILDING A FILENAME YOU ALREADY HAVE — and neither found by
+  a failing test. Snapshot prune would have counted legacy snapshots
+  against the cap and then failed to delete them, silently, because a
+  snapshot that will not delete is deliberately swallowed. Recovery scan
+  would have orphaned a legacy sidecar, and `scan` deletes orphans without
+  a word — losing a crash recovery in exactly the window the feature
+  exists for.
+* **Note**: **`.rmda` is not a new idea.** The corpus already specifies it
+  as `.rmlib` and AC-042 cut it. That cut argued one thing but made two —
+  it KEPT `contentHash` and threw away the cryptographic apparatus — and
+  an archive needs only the half that was kept. Re-opening it is a scope
+  edit under roadmap §8.3, recorded as one.
+* **Note**: the archive is **one JSON file, not a zip**, and this is
+  CR-091's argument applied a second time rather than a new call: the zip
+  existed to carry per-face device images, images are cut (AC-057), and a
+  zip of pure JSON buys compression at the price of the entire D8 surface
+  — zip-slip, entry counts, decompression bombs — that
+  critique-completeness already lists as needed-and-absent for `.rmlib`.
+  Cost stated: no compression, on a file people email once.
+
 * **Update**: the `drawn`-mode router is caught up with six field reports
   (`38baed1` … `5d53512`, board #96). docs/05 §10 phase 4 carries the
   corrected rule; docs/12 §5.1 carries the evidence.

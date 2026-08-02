@@ -40,9 +40,9 @@ Grouped by subsystem; the **Why** column names the governing ruling. See [Data m
 | `Len` = int64 nanometres, `Mass` = int64 micrograms, `Permille`, one `UnitFormatter`; `Money` deleted | CR-001, CR-003, AC-001 |
 | `Pt{int gx, int gy}` in 2.5 mm grid units, no sub-grid | CR-004 |
 | 1 diagram unit = 1 PDF point at the canvas boundary, `double`, converted in exactly one function | CR-007 |
-| UUIDv7 identity, tombstones, `EntityMeta`, flat maps, `FracIndex` ordering everywhere including `.rmdev` | CR-027, CR-095, G5 |
+| UUIDv7 identity, tombstones, `EntityMeta`, flat maps, `FracIndex` ordering everywhere including `.rmdx` | CR-027, CR-095, G5 |
 | `revision` (dirty-tracking, non-monotonic) **and** `sequence` (monotonic sync cursor) as two counters | CR-094, AC-004 |
-| Plain pretty JSON `.rackmate`, single file, `schemaVersion`, hand-written codecs, migration chain + golden corpus | Confirmed decision 3 |
+| Plain pretty JSON `.rmpj`, single file, `schemaVersion`, hand-written codecs, migration chain + golden corpus | Confirmed decision 3 |
 | Unconnected ports **not materialised** as entities; key-join from the template snapshot | AC-006 — this is what makes the file-size budget real rather than 3–6× wrong |
 | `Command` / `Transaction` / `UndoStack` / `DocumentController` as the single mutation gate | AC-014. The most expensive retrofit in the project |
 | Epoch counters; three-tier derived pipeline; `lodLevel` in every scene-builder signature and cache key | AC-016 (#13) |
@@ -57,7 +57,7 @@ Grouped by subsystem; the **Why** column names the governing ruling. See [Data m
 
 **Structure and the field** — `Outlet` as the creation atom (CR-016); `StructureDrop` deleted, a home run is a `Link` with `structureOrigin` (AC-019, CR-107); dual labels, both always printing on every cable (CR-044, AC-025, AC-047); the Structure editor opening in **table mode** with the matrix as a tab (AC-048); outlet templates with TIA-570-D presets (CR-108); the project-level Locations panel (CR-047, CR-112); multiple Structure instances (CR-113); CSV import with synonym mapping (RJ-004); 18 field-device templates (AC-031).
 
-**Device builder and catalog** — three required fields, then ports, then done (AC-049, CR-114); the port grid in full — fill-down, TSV paste, multi-row edit, archetype generators, the pattern DSL (the grid was never the barrier); banks vs `PortSetDef` (CR-055); `PortDef.key` + `renamedFrom` as the migration join (CR-051); the three doors (CR-054); typed overrides (CR-053, AC-012); copy-on-place with a passive stale-template badge (AC-041); `contentHash` as a warning, never a load failure (AC-042); single `.rmdev` export/import; full catalog at **full fidelity with cited provenance** (RJ-007, AC-052); the connector footprint table complete for every shipped connector with a CI assertion (AC-050).
+**Device builder and catalog** — three required fields, then ports, then done (AC-049, CR-114); the port grid in full — fill-down, TSV paste, multi-row edit, archetype generators, the pattern DSL (the grid was never the barrier); banks vs `PortSetDef` (CR-055); `PortDef.key` + `renamedFrom` as the migration join (CR-051); the three doors (CR-054); typed overrides (CR-053, AC-012); copy-on-place with a passive stale-template badge (AC-041); `contentHash` as a warning, never a load failure (AC-042); single `.rmdx` export/import; full catalog at **full fidelity with cited provenance** (RJ-007, AC-052); the connector footprint table complete for every shipped connector with a CI assertion (AC-050).
 
 **Validation** — rules as **Dart functions** in a registry (CR-024, AC-011); **27 rules** listed once in [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers) (AC-040, canon §12.6(b)); `error | warning | advisory | off` with `RuleOverride` (CR-018, CR-019); one dismissal mechanism, `AckedFinding`, and **errors are acknowledgeable** (CR-019, RJ-006); only `TOP-001..005` and placement coherence are model-illegal (CR-017); nothing blocks export (CR-022); the DRC fixture corpus (AC-051).
 
@@ -121,7 +121,7 @@ Each changes what the product *is* and should be decided with evidence from v1 u
 | **Tagged / accessible PDF (PDF/UA)** | RJ-015. The accessibility budget buys the outline tree, the keyboard connection path and the NVDA matrix instead |
 | **An in-app update mechanism in v1** | RJ-014. Signed installer plus a version-check ping; auto-update is a security surface before there are users |
 | **Device images** | AC-057. Resolves the container question, removes the image-decode import surface, removes ~1 MB per template |
-| **`.rmlib` packs, signatures, `provenance`/`derivedFrom` chains** | AC-042. `contentHash` survives; the cryptographic apparatus does not |
+| **Signatures and `provenance`/`derivedFrom` chains** | AC-042. `contentHash` survives; the cryptographic apparatus does not. **The library pack came back** as `.rmda` (DR-015 §11.15.3) — a scope edit under §8.3, ruled and not yet built, and it needs neither of the two things still cut here |
 | **Cable dressing, floor plans, 3D, thermal simulation** | Out of the brief |
 | **`blockExportOnErrors`** | CR-022. Not deferred — deleted. No setting, no equivalent, no exceptions |
 | **`Money`, `cost`, `supplier`, `purchaseOrder`** | AC-055 |
@@ -141,7 +141,7 @@ Ranked by engineering weeks removed, using `critique-feasibility.md`'s own sizin
 | 6 | `SignalRoute` and layers | v2 | 2 |
 | 7 | 0U interactions, shelf free-positioning, half-rack drag, manual conductor authoring | v1.1 | 1.5–2 |
 | 8 | The rules-as-data interpreter | Not doing | 1.5–2 |
-| 9 | `.rmlib`, signatures, device images, priced BOM | Not doing / v2 | 1.5 |
+| 9 | Signatures, device images, priced BOM | Not doing / v2 | 1.5 |
 | 10 | Buses, `Trace`, search DSL, the interactive Rear Panel view | v1.1 / v1.2 | 1.5 |
 
 Roughly **25–31 weeks removed** from a 62–83 week bottom-up estimate, before counting the reduction inside the schematic milestone from RJ-001's accepted half. Cut 1 lists **zone grids nowhere**: the zone grid is kept by CR-073, the schedule's `REF` column depends on it, and DR-005 confirms it as a v1 deliverable (canon §12.6(d)). Cut 2 is DR-001's, and it is the reason M2 is now `M`.
@@ -283,7 +283,8 @@ Two further sequencing constraints are binding, from AC-059:
 - [ ] The three-required-field form, everything else optional with a visible `unknown` state
 - [ ] The virtualised port grid: fill-down, TSV paste, multi-row edit, archetype generators, the pattern DSL with autocomplete and designed parse errors
 - [ ] Banks and `PortSetDef`; the three doors (CR-054); typed `PortOverrides`
-- [ ] `.rmdev` single-file export/import with `contentHash` as a warning-level check
+- [ ] `.rmdx` single-file export/import with `contentHash` as a warning-level check
+- [ ] `.rmda` device archives: the codec, the library directory service, import/export, and the palette filter that makes more than one library usable (DR-015 §11.15.5 — the format is ruled; none of the subsystem exists)
 - [ ] The stripped field-device form; the media-type editor and connector aliases; undo throughout the builder (CR-106)
 
 **Exit criterion.** A 16×16 matrix template is authored from scratch **in under three minutes by a user who has seen the tool once**, and a template saved with exactly three fields plus ports places into a rack and appears correctly in the equipment list with `—` in every unknown column and an accurate unknown count in the rollup. See [Device builder](06-device-builder.md).
@@ -331,7 +332,7 @@ Two further sequencing constraints are binding, from AC-059:
 - [ ] The in-app glossary; the error-message catalogue in one voice; the eight empty states; the full file-layer error surface
 - [ ] Progress and cancel on every operation over 500 ms; localisation plumbing verified end to end with a pseudo-locale
 
-**Exit criterion.** A reviewer opens a `.rackmate` file on a tablet and reads the elevation, the schedule and the PDF; the NVDA matrix passes on the elevation, the schedule and the connection-creation path; no keybinding is bound twice in the generated table; the pseudo-locale build shows no hard-coded English in the primary surfaces.
+**Exit criterion.** A reviewer opens a `.rmpj` file on a tablet and reads the elevation, the schedule and the PDF; the NVDA matrix passes on the elevation, the schedule and the connection-creation path; no keybinding is bound twice in the generated table; the pseudo-locale build shows no hard-coded English in the primary surfaces.
 
 **Risks.** Accessibility work discovered this late tends to surface structural problems in the canvas surfaces. The outline tree shipping in M1 is the mitigation — it is the only honest accessibility story a canvas app has, and it exists from the first release.
 

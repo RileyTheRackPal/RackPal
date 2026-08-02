@@ -233,7 +233,7 @@ A virtualised data grid, rows grouped by bank under sticky collapsible headers. 
 
 Reorder is semantic: it drives symbol pin order and panel auto-layout. Because `order` is a `FracIndex`, dragging one row rewrites one row.
 
-**Passthrough pairing.** With `isPassthrough` on, the grid gains the `Paired port` column and a **Pair front↔rear by order** action, and both write `TemplateBody.passthroughPairs: [{frontKey, rearKey, sameNet}]` — which now exists in `.rmdev` (CR-057). A passthrough template whose pairs are missing is a **load warning, not an error**. Paired ports share a net, so a trace resolves `Living Room jack → PP-1 F12 → PP-1 R12 → SW-1 P04` as one logical path.
+**Passthrough pairing.** With `isPassthrough` on, the grid gains the `Paired port` column and a **Pair front↔rear by order** action, and both write `TemplateBody.passthroughPairs: [{frontKey, rearKey, sameNet}]` — which now exists in `.rmdx` (CR-057). A passthrough template whose pairs are missing is a **load warning, not an error**. Paired ports share a net, so a trace resolves `Living Room jack → PP-1 F12 → PP-1 R12 → SW-1 P04` as one logical path.
 
 **Live validation** puts a severity dot in the row gutter — duplicate designator in-template, passthrough port with no pair, an RCA carrying `audio.spdif_coax` without impedance 75, an IR 3.5 mm port with no `pinoutVariant`. None of it blocks saving. `pinoutVariant` is safety-adjacent and must therefore carry a cited source before the template ships in the catalog (AC-052).
 
@@ -287,7 +287,7 @@ Both the symbol and the panel are produced by real scene builders (`symbol_layer
 
 ### 7.1 Library, categorise, tag, search, favourite
 
-Storage is the app catalog directory (seeded, read-only) plus the user library directory (writable), plus per-project embedded snapshots. **`.rmlib` library packs are cut from v1** (AC-042), along with the `signature` field and the cryptographic provenance chain; `contentHash` survives because it is three lines and it is what makes the embedded-snapshot argument true.
+Storage is the app catalog directory (seeded, read-only) plus the user library directory (writable), plus per-project embedded snapshots. The `signature` field and the cryptographic provenance chain are **cut from v1** (AC-042); `contentHash` survives because it is three lines and it is what makes the embedded-snapshot argument true. **Library packs are no longer cut with them** — DR-015 §11.15.3 separates the two halves AC-042 argued as one, renames the pack `.rmda`, and makes it a single JSON file rather than a zip. It is ruled, not built, and it is what makes "multiple device libraries loaded into the palette and filtered as needed" expressible at all.
 
 - **Browser:** grid or list, the rack elevation strip as the card thumbnail. Sidebar: category tree, then filter chips — RU height, mount method, "has HDMI", "has PoE", "is passthrough", "container", "used in this project", "drafts".
 - **Search:** fuzzy over name, manufacturer, model, tags, description **and port signal families**. Typing `hdbaset` surfaces every template with an HDBaseT port even when the word is absent from its name; typing `16x16` matches the model string.
@@ -312,7 +312,7 @@ Templates are immutable versioned records. Editing a published template does not
 
 - **Duplicate** — new `templateId`, `version 1`, name + " copy", `derivedFrom` recorded. Offered directly from every catalog card as `Duplicate & edit`; this is the intended path for building on the archetypes.
 - **Seeded templates are read-only.** Editing one silently performs Duplicate → edit the copy with a one-line notice. The consequence that no document previously surfaced is now handled: a fork records `derivedFrom{templateId, version}`, and when the catalog later revises the source the fork shows a **passive badge** — *"Based on catalog 'HDMI Matrix 8×8' v1 — the catalog version has since been corrected (v3). Compare…"*. No action is forced (CR-062).
-- **Export / import** — single **`.rmdev`**, plain UTF-8 JSON, LF, 2-space indent, keys sorted. Templates are inert data with no executable content, and the import dialog says so. `.rmdev` obeys the same unit regime as `.rackmate`: `depthNm`, `weightUg`, `xNm` — **no floating-point millimetres** (CR-063), because the template file is part of the persisted model and there is no second unit regime. Every import path enforces JSON depth and size limits (AC-058 / D8).
+- **Export / import** — single **`.rmdx`**, plain UTF-8 JSON, LF, 2-space indent, keys sorted. Templates are inert data with no executable content, and the import dialog says so. `.rmdx` obeys the same unit regime as `.rmpj`: `depthNm`, `weightUg`, `xNm` — **no floating-point millimetres** (CR-063), because the template file is part of the persisted model and there is no second unit regime. Every import path enforces JSON depth and size limits (AC-058 / D8).
 - **Hash mismatch is a warning plus a badge on the affected devices, never a load failure** (AC-042). *Rejected alternative:* I-8's hard load error — refusing to open a project because a snapshot was hand-edited is a data-loss event dressed as a safety feature.
 
 ```json
@@ -350,7 +350,7 @@ Note also what is **absent rather than null**: `typicalWatts` and `apparentVA` a
 
 ### 8.1 v1 is copy-on-place
 
-Every `DeviceInstance` holds a `TemplateRef{templateId, version, contentHash}` that **always** resolves to an embedded `TemplateSnapshot` in `RackDocument.templates`, keyed `"$templateId@$version"`. A `.rackmate` file is therefore self-contained: the recipient does not need your library.
+Every `DeviceInstance` holds a `TemplateRef{templateId, version, contentHash}` that **always** resolves to an embedded `TemplateSnapshot` in `RackDocument.templates`, keyed `"$templateId@$version"`. A `.rmpj` file is therefore self-contained: the recipient does not need your library.
 
 > **Ruling (AC-041): v1 is copy-on-place.** Editing a library template does not touch placed instances. v1 shows a passive "based on an older catalog template" badge and offers **Fork to a new template**. The full **Update Manager** — opt-in migration, safe/additive/breaking grouping, per-cable remapping — is **v1.2**.
 

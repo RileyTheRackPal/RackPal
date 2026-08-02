@@ -440,7 +440,7 @@ Bottom-right, 396 × 115 pt on ANSI B and larger; on ANSI A a full-width 690 × 
 │  RK-1  MASTER RACK  ·  42U                                                 │
 ├──────────────┬──────────────┬──────────────┬───────────────┬───────────────┤
 │ DRAWN   J.S. │ SCALE  1:8   │ SIZE   B     │ DATE 2026-07-18│ REV       C  │
-│ CHK'D    —   │ PROJ 25-1183 │ DISC   T     │ FILE smith.rackmate│SHEET 5/14│
+│ CHK'D    —   │ PROJ 25-1183 │ DISC   T     │ FILE smith.rmpj│SHEET 5/14│
 ├──────────────┴──────────────┴──────────────┴───────────────┴───────────────┤
 │  NBS INTEGRATION LLC  ·  (503) 555-0142  ·  OR CCB #219884                 │
 │  SYMBOL LEGEND: SEE SHEET T0.01          SHEET NO.  T6.01                  │
@@ -1042,7 +1042,7 @@ Every primitive above brackets itself in `saveContext`/`restoreContext`, which e
 ║ ☑ T6.10 Pull sheet    │ PALETTE                       │                           ║
 ║ ☑ T6.11 Termination   │ ◉ Colour ○ Greyscale ○ CMYK   │                           ║
 ║ ☑ T6.20 Unused runs   │ ☐ ISSUED FOR CONSTRUCTION  ⚠  │                           ║
-║ ☑ T6.30 Equipment     │ ☐ Embed .rackmate source      │                           ║
+║ ☑ T6.30 Equipment     │ ☐ Embed .rmpj source      │                           ║
 ║ ☐ T5.01 Pinout detail │                               │                           ║
 ╠═══════════════════════╧═══════════════════════════════╧═══════════════════════════╣
 ║  Est. 14 sheets · ~420 KB               [ Verify output ] [ Cancel ]  [ Export ]   ║
@@ -1102,7 +1102,7 @@ Progress is weighted by phase, not a spinner, and is shown inline in the dialog.
 
 Two preview levels. The **sheet preview** is primary, is the screen backend, and has no native dependency. **Output verification** — rendering the actual bytes — sits behind an explicit `Verify output` button, and the pdfium binaries it needs are **vendored into the repo** rather than downloaded at build time, because a network-fetched binary in a signed release is a supply-chain and reproducibility problem, not just a CI problem. **v1 ships Export-to-PDF plus "Open in system viewer"; the OS print dialog is v1.1**, pending a spike confirming that `Printing.layoutPdf` on Windows does not itself require fetched pdfium (CR-100).
 
-Saving uses **the app's own save dialog**, `lib/src/session/file_picker.dart` over `windows/runner/file_dialog_channel.cpp` — *not* `file_selector`, which was removed from the project because it cannot set `FOS_DONTADDTORECENT` (docs/03 §10.1; `session_layering_test.dart` RULE 14d fails the build if it comes back). The PDF path gets the same dialog, the same `.rackmate`-style filter mechanics and the same MRU behaviour as document Save As, for free. Default filename `{project-slug}_{rack-or-SET}_rev{REV}_{yyyy-MM-dd}.pdf` → `smith-residence_SET_revC_2026-07-18.pdf`. The revision in the filename is not optional; it is the only thing that stops the wrong PDF being on site. A deliverable is never silently written to `getApplicationDocumentsDirectory()`.
+Saving uses **the app's own save dialog**, `lib/src/session/file_picker.dart` over `windows/runner/file_dialog_channel.cpp` — *not* `file_selector`, which was removed from the project because it cannot set `FOS_DONTADDTORECENT` (docs/03 §10.1; `session_layering_test.dart` RULE 14d fails the build if it comes back). The PDF path gets the same dialog, the same `.rmpj`-style filter mechanics and the same MRU behaviour as document Save As, for free. Default filename `{project-slug}_{rack-or-SET}_rev{REV}_{yyyy-MM-dd}.pdf` → `smith-residence_SET_revC_2026-07-18.pdf`. The revision in the filename is not optional; it is the only thing that stops the wrong PDF being on site. A deliverable is never silently written to `getApplicationDocumentsDirectory()`.
 
 | Target | Save | Print | Share |
 |---|---|---|---|
@@ -1118,7 +1118,7 @@ Afterwards, a completion strip rather than a modal: `Exported 14 sheets · 438 K
 
 Two exports of an unmodified project differ only in the date field. That means stable iteration order everywhere — sort by UUID, never rely on `Map` order — no `DateTime.now()` outside the one date field, and no random identifiers in the PDF. This is what makes golden-file testing possible and makes "did anything actually change between rev B and rev C?" answerable with `diff`. It is also downstream of P5: designators are stored at allocation, so they cannot drift between exports.
 
-Document metadata is set (`title`, `author`, `creator`, `subject`, `keywords`) so the file is findable in a client's DMS. **Embedding the source** — attaching the `.rackmate` inside the PDF via PDF/A-3b — is offered as a checkbox: the drawing then carries its own editable source, so a client or a successor integrator receives one file containing both the deliverable and the project. Costs almost nothing; worth having.
+Document metadata is set (`title`, `author`, `creator`, `subject`, `keywords`) so the file is findable in a client's DMS. **Embedding the source** — attaching the `.rmpj` inside the PDF via PDF/A-3b — is offered as a checkbox: the drawing then carries its own editable source, so a client or a successor integrator receives one file containing both the deliverable and the project. Costs almost nothing; worth having.
 
 ---
 

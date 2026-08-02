@@ -1,6 +1,6 @@
 # Data Model and File Format
 
-This is the authoritative specification of RackMate's domain model, its on-disk `.rackmate` format, and the rules that decide whether a document is coherent. It is derived from [the canonical decision record](canonical-decisions.md) §4 (canonical naming), §5 (canonical data model summary) and §6 (registry), and from the §1.2 and §1.3 rulings on the wiring entity model and validation philosophy. Where any raw working paper in [docs/research/](research/) disagrees with this document, this document wins; where this document disagrees with the canonical decision record, the record wins and this document is defective. Every non-obvious statement below cites the ruling that adjudicated it, so any reader can trace a field back to the argument that put it there.
+This is the authoritative specification of RackMate's domain model, its on-disk `.rmpj` format, and the rules that decide whether a document is coherent. It is derived from [the canonical decision record](canonical-decisions.md) §4 (canonical naming), §5 (canonical data model summary) and §6 (registry), and from the §1.2 and §1.3 rulings on the wiring entity model and validation philosophy. Where any raw working paper in [docs/research/](research/) disagrees with this document, this document wins; where this document disagrees with the canonical decision record, the record wins and this document is defective. Every non-obvious statement below cites the ruling that adjudicated it, so any reader can trace a field back to the argument that put it there.
 
 **Companion documents:** [Overview](00-overview.md) · [Domain](01-domain.md) · [Architecture](03-architecture.md) · [Rack editor](04-rack-editor.md) · [Schematic editor](05-schematic-editor.md) · [Device builder](06-device-builder.md) · [Structure device](07-structure-device.md) · [PDF export](08-pdf-export.md) · [Roadmap](09-roadmap.md) · [Decisions](10-decisions.md) · [Testing and quality](11-testing-and-quality.md) · [Seed catalog](catalog/seed-devices.md)
 
@@ -397,7 +397,7 @@ final class TemplateBody {
   Len? containerUsableDepth, containerUsableWidth; bool containerVented;
 
   bool isPassthrough;
-  List<PassthroughPairDef> passthroughPairs;   // now in .rmdev. CR-057.
+  List<PassthroughPairDef> passthroughPairs;   // now in .rmdx. CR-057.
 
   PowerProfile power;
   List<PortDef>    ports;
@@ -831,7 +831,7 @@ The single most expensive mistake available in this domain is one `CableType` en
 
 `SignalDomainDef` is new in CR-078 and owns the **visual language** — `{id, displayName, tagPrefix, color, colorDark, dashPattern, lineWeightPermille, glyph, glyphAlt}` — which deleted the 43-entry per-family palette that the source design simultaneously carried and argued against. Colour encodes **domain** (8 entries, Okabe–Ito), not type, because no categorical palette is colour-vision-deficiency-safe past 8–9 categories. Dash pattern, line weight and glyph carry type-within-domain, and the tag pill (`W042 · HDMI · 25 ft`, drawn at both ends of every run) is the encoding that never fails. Requirement 4 of the brief — "colour-coded by cable type" — is met by the **legend**, which prints one row per named cable type in colour and greyscale side by side (AC-054). Dash patterns are stored as `List<int>` of permille-points so the file stays integral: `6,3` is `[6000, 3000]` (CR-079).
 
-Registry IDs are `lower.dotted.snake` and reverse-hierarchical — `video.hdmi.2_1`, `conn.rj45`, `media.cat6a_futp` — with bare trade names carried as `aliases: List<String>` (CR-058). Full contents are specified in canonical §6 and shipped as `assets/catalog/registries.json`; the subset a document references is **embedded in the file**, which is what makes a `.rackmate` self-describing.
+Registry IDs are `lower.dotted.snake` and reverse-hierarchical — `video.hdmi.2_1`, `conn.rj45`, `media.cat6a_futp` — with bare trade names carried as `aliases: List<String>` (CR-058). Full contents are specified in canonical §6 and shipped as `assets/catalog/registries.json`; the subset a document references is **embedded in the file**, which is what makes a `.rmpj` self-describing.
 
 Unresolvable registry IDs degrade to an `unknown(rawId)` placeholder that round-trips, renders in grey with the raw id as its tag, and never throws (I-46).
 
@@ -921,7 +921,7 @@ Rules are **Dart functions** in a registry keyed by `ruleId`; the **catalogue** 
 
 ---
 
-## 6. The `.rackmate` file format
+## 6. The `.rmpj` file format
 
 This section **is** the file-format specification; `docs/file-format.md` is not created and every citation of it points here.
 
@@ -934,9 +934,9 @@ This section **is** the file-format specification; `docs/file-format.md` is not 
 | Envelope | Format metadata at the root; all entity maps under `"document"`. | CR-092 |
 | Round trip | **Byte** round trip: `write(read(bytes)) == bytes`, asserted over files RackMate wrote — an explicit `null` in a hand-edited file reads as absent and re-emits as absent. | CR-117 |
 | Unknown values | Written as an **absent key**, never an explicit `null`. `weightUg` and `bodyDepthNm` are the two that most often go missing. | CR-114, G4 |
-| Saves | Atomic: write `foo.rackmate.tmp` in the same directory → `flush()` → `rename()`. One sibling `.bak`. **No `.history/` folder** in the user's directory. | CR-098 |
-| Snapshots | `getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rackmate`, last 10. | CR-098 |
-| Floats | **None**, in any persisted model, including `.rmdev`. | CR-001, CR-063, I-1 |
+| Saves | Atomic: write `foo.rmpj.tmp` in the same directory → `flush()` → `rename()`. One sibling `.bak`. **No `.history/` folder** in the user's directory. | CR-098 |
+| Snapshots | `getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rmpj`, last 10. | CR-098 |
+| Floats | **None**, in any persisted model, including `.rmdx`. | CR-001, CR-063, I-1 |
 | Enums | Strings, never ordinals. Unknown values fall back to an `unknown(raw)` variant that round-trips rather than throwing. | §4.3 |
 | Derived values | **Never serialized**: `portIds`, `Outlet.roughInStatus`, `templateUpdateAvailable`, `Link.dominantSignalFamily`, elevation X/Y, circuit membership, `continuousLimitAmps`. | CR-115, CR-006 |
 | IDs | UUIDv7 for entities; `uuidv5(deviceId, portKey)` for template-derived ports. Normative examples use real UUIDs. | CR-116, AC-006 |
@@ -948,7 +948,7 @@ Two container decisions and their rejected alternatives. **Plain JSON over zip (
 
 A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel, one Structure body with one outlet, and four Links — one home run still `structure.undetermined` at rough-in, one patch jumper, one multi-service Cat5e, and one design-intent HDMI run to a device that does not exist yet.
 
-**Presentation note.** The codec key-sorts every object, which would place the enormous `document` value between `createdAt` and `generator`. It is shown last here so the envelope reads as a unit. Port arrays inside templates are elided with an explicit sentinel string. This listing is therefore *derived from* `test/fixtures/v1_sample.rackmate` and is not itself byte-identical to it.
+**Presentation note.** The codec key-sorts every object, which would place the enormous `document` value between `createdAt` and `generator`. It is shown last here so the envelope reads as a unit. Port arrays inside templates are elided with an explicit sentinel string. This listing is therefore *derived from* `test/fixtures/v1_sample.rmpj` and is not itself byte-identical to it.
 
 ```json
 {
@@ -1688,9 +1688,11 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
 | `tombstones` non-empty | Ships in v1 (CR-095, G5). |
 | `registries` embedded, elided to the referenced subset | Requirement-4 colour lives on `signalDomains`, not on 43 families (CR-078). |
 
-### 6.4 `.rmdev` — the single-template file
+### 6.4 `.rmdx` — the single-template file
 
-A `.rmdev` is one `TemplateBody` plus its identity, in plain JSON, under the **same unit regime** as `.rackmate` — `depthNm`, `weightUg`, integers throughout (CR-063). Its `identity.` / `physical.` / `power.` sections are a **file layout only**; the codec flattens them onto `TemplateBody` (CR-053). It has its own migration chain (AC-050/A8.2). `.rmlib` library packs, the `signature` field and the provenance chain are **cut from v1** (AC-042); single `.rmdev` export and import stay, because that is the unit people email each other.
+A `.rmdx` is one `TemplateBody` plus its identity, in plain JSON, under the **same unit regime** as `.rmpj` — `depthNm`, `weightUg`, integers throughout (CR-063). Its `identity.` / `physical.` / `power.` sections are a **file layout only**; the codec flattens them onto `TemplateBody` (CR-053). It has its own migration chain (AC-050/A8.2). The `signature` field and the provenance chain are **cut from v1** (AC-042); single `.rmdx` export and import stay, because that is the unit people email each other.
+
+**`.rmda` — the device archive.** Many `TemplateBody` in one file: a manifest plus an array, in the `.rmdx` unit regime, reusing the `.rmdx` migration chain rather than inventing a second one. **A single JSON file, not a zip** — DR-015 §11.15.4 has the argument, and it is CR-091's argument applied a second time: the zip in the original `.rmlib` spec existed to carry per-face device images, images are cut (AC-057), and a zip of pure JSON buys compression at the cost of the whole zip-slip / entry-count / decompression-bomb surface D8 lists as needed-and-absent. It carries **neither `signature` nor `provenance`**: AC-042 kept `contentHash` and cut the cryptographic apparatus, and an archive needs only the half that was kept. **This renames `.rmlib` and re-opens the part of AC-042 that cut it** — a scope edit under roadmap §8.3, ruled in DR-015 and not yet built.
 
 ---
 
@@ -1748,7 +1750,7 @@ Five commitments made on day one:
 
 1. **Migrations are pure functions on raw `Map<String, Object?>`, never on typed objects.** Migrate the map fully, *then* deserialize. Typed migration requires keeping every historical class shape alive in the codebase forever.
 2. **`schemaVersion` + `minReaderVersion` together** give both directions — forward-readable and explicitly-refused — rather than one blunt gate.
-3. **Golden fixture corpus.** `test/fixtures/v1_sample.rackmate`, `v2_sample.rackmate`, … Every release, one test opens *every* historical fixture and asserts it migrates to a valid current document. A fixture is added the day each version ships. Highest value-per-line test in the project; see [Testing and quality](11-testing-and-quality.md).
+3. **Golden fixture corpus.** `test/fixtures/v1_sample.rmpj`, `v2_sample.rmpj`, … Every release, one test opens *every* historical fixture and asserts it migrates to a valid current document. A fixture is added the day each version ships. Highest value-per-line test in the project; see [Testing and quality](11-testing-and-quality.md).
 4. **Enums are strings, never ordinals.** `"rackEars"`, not `3`. Unknown enum values fall back to an `unknown(raw)` variant that round-trips rather than throwing.
 5. **Additive-only within a major.** Deprecate, never remove or rename. Unknown keys are routed to `unknown` on read and re-emitted verbatim on write, so a v1.0 app opening a v1.4 file round-trips without destroying newer data.
 

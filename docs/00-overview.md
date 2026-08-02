@@ -173,7 +173,7 @@ Rationale: the authoring surface is a canvas with a keyboard-driven quick-add, a
 **2. A device builder PLUS a seeded catalog of generic archetypes.**
 Rationale: the Visio-stencil complaint is unambiguous — coverage is always incomplete, commercial libraries are overpriced, everyone ends up rolling their own. The catalog handles the common case and makes the first session fast; the builder handles the long tail, which is exactly where a professional discovers a tool cannot represent their job. Generic archetypes avoid the permanent staffed cost of SKU maintenance. The count is set by the **provenance gate** — every numeric field cited in `assets/catalog/sources.md`, and a template with uncited safety-adjacent fields does not ship — not by a target number (CR-061, AC-052). *Rejected alternative:* shipping the catalog at lower fidelity to halve authoring effort (RJ-007) — that trades the honesty guarantee for weeks, and honesty is the wedge.
 
-**3. Local single-file `.rackmate` projects (JSON), cloud-ready.**
+**3. Local single-file `.rmpj` projects (JSON), cloud-ready.**
 Rationale: integrators own their files, and a diffable text project is a differentiator no competitor offers. Plain, pretty-printed, key-sorted UTF-8 JSON with a `document` wrapper; UUIDv7 identity; `schemaVersion` + `minReaderVersion`; tombstones, `EntityMeta` and `FracIndex` ordering all ship in v1 even where their UI does not, because they are the retrofits that cost 10× later (G5, CR-095, CR-027). `DocumentCodec` sniffs `PK\x03\x04` from commit one, so a v2 zip container is a non-event (CR-091). *Rejected alternative:* zip-from-the-start, unnecessary once device images were cut (AC-057).
 
 **4. All seven core requirements are represented in v1.**

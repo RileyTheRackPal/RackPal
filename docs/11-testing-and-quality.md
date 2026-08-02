@@ -89,20 +89,20 @@ The v1 catalogue is **27 rules** — 8 tier-1, 6 tier-2, 13 tier-3, with `PLC-00
 
 ```text
 packages/rackmate_core/test/fixtures/drc/
-  DIR-003.bad.rackmate      # output driven into output — the rule that describes hardware damage
-  DIR-003.near.rackmate     # bidirectional port pair, superficially identical, must be silent
-  SIG-001.bad.rackmate      SIG-001.near.rackmate
-  PWR-001.bad.rackmate      PWR-001.near.rackmate
-  PLC-001.bad.rackmate      PLC-001.near.rackmate    # ratified tier-1, canon §12.6(b)
-  PLC-002.bad.rackmate      PLC-002.near.rackmate
-  PLC-003.bad.rackmate      PLC-003.near.rackmate
+  DIR-003.bad.rmpj      # output driven into output — the rule that describes hardware damage
+  DIR-003.near.rmpj     # bidirectional port pair, superficially identical, must be silent
+  SIG-001.bad.rmpj      SIG-001.near.rmpj
+  PWR-001.bad.rmpj      PWR-001.near.rmpj
+  PLC-001.bad.rmpj      PLC-001.near.rmpj    # ratified tier-1, canon §12.6(b)
+  PLC-002.bad.rmpj      PLC-002.near.rmpj
+  PLC-003.bad.rmpj      PLC-003.near.rmpj
   ...
   expectations.json         # ruleId -> {bad: [findingId...], near: []}
 ```
 
 One table-driven test walks `expectations.json`: the `.bad` document must produce **exactly** that finding — not merely include it — and the `.near` document must produce **none** from that rule. A near-miss that is one field away from the bad case is what stops a rule from being written as `return true`. Three further assertions ride along: every `ruleId` in [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers) resolves to a registered function and vice versa (a rule not in the catalogue does not exist, CR-021); every rule's severity is one of the CR-018 vocabulary with `Severity.info` absent; and **no rule at any severity prevents a PDF from being written to disk** (CR-022, G3), asserted by exporting each `.bad` fixture and checking the file exists.
 
-Fixtures are `.rackmate` files, not Dart builders, so a domain expert can open one in the app during the M5 sign-off review (AC-051) without reading code.
+Fixtures are `.rmpj` files, not Dart builders, so a domain expert can open one in the app during the M5 sign-off review (AC-051) without reading code.
 
 ### 2.4 Routing determinism
 
@@ -119,18 +119,18 @@ The migration corpus is the highest-value directory in the repository: it is wha
 
 ```text
 packages/rackmate_core/test/fixtures/schema/
-  v1_minimal.rackmate         # one empty 42U rack
-  v1_full.rackmate            # every entity type, every connector, every media type
-  v1_unicode.rackmate         # Ω ° ± µ → × ≈ — " " plus an accented client name
-  v1_unknown_fields.rackmate  # hand-edited with future keys at three nesting depths
-  v2_*.rackmate               # added the day v2 ships. NEVER edited afterwards.
+  v1_minimal.rmpj         # one empty 42U rack
+  v1_full.rmpj            # every entity type, every connector, every media type
+  v1_unicode.rmpj         # Ω ° ± µ → × ≈ — " " plus an accented client name
+  v1_unknown_fields.rmpj  # hand-edited with future keys at three nesting depths
+  v2_*.rmpj               # added the day v2 ships. NEVER edited afterwards.
 ```
 
-Assertions per fixture: it migrates to a valid current document; unknown fields survive the round-trip and are re-emitted in their original position (`unknown` on every persisted object, §4.4); `minReaderVersion > kSchemaVersion` ⇒ `Err(NewerSchema(refuse))`; `schemaVersion > kSchemaVersion` with a readable `minReaderVersion` ⇒ `Ok(doc, openReadOnly: true)` (CR-093, defect fixed). `.rmdev` has its own parallel chain and its own corpus (CR-063).
+Assertions per fixture: it migrates to a valid current document; unknown fields survive the round-trip and are re-emitted in their original position (`unknown` on every persisted object, §4.4); `minReaderVersion > kSchemaVersion` ⇒ `Err(NewerSchema(refuse))`; `schemaVersion > kSchemaVersion` with a readable `minReaderVersion` ⇒ `Ok(doc, openReadOnly: true)` (CR-093, defect fixed). `.rmdx` has its own parallel chain and its own corpus (CR-063).
 
 The **byte round-trip** is the contract, not the semantic one (CR-117): `write(read(bytes)) == bytes`. This is what constrains key ordering — including inside nested `unknown` maps — timestamp precision, and integer formatting, and those are exactly the things that otherwise produce spurious git diffs and a lying dirty flag. Rejected alternative: `read(write(read(x))) == read(x)`, which passes while the file churns.
 
-The four starter projects (AC-052) are real `.rackmate` files and do triple duty: golden corpus, performance fixtures, screenshot source. At least one exercises the Structure device and at least one exports a full sheet set.
+The four starter projects (AC-052) are real `.rmpj` files and do triple duty: golden corpus, performance fixtures, screenshot source. At least one exercises the Structure device and at least one exports a full sheet set.
 
 ### 2.6 Registry and catalog assertions
 
@@ -303,7 +303,7 @@ Render pages with poppler's `pdftoppm` in the Linux job and image-diff against r
 
 **Widget tests** cover the surfaces where state and UI meet: inspector panels binding typed `DeviceOverrides` (CR-053); the device-builder port grid with fill-down and TSV paste; menu enablement (Undo disabled at sequence 0, enabled after one command, with the correct label); the spring-back reason chip and its `[ Connect anyway ]` affordance (CR-017); the Staging Bin return affordance (CR-032). **Leak tests** via `leak_tracker_flutter_testing` run on every canvas widget test, targeting undisposed `TextPainter` and `ui.Picture` — with a 12,000-entry label cache (AC-009) that is not optional.
 
-**Integration tests** (`integration_test`, desktop) cover the file lifecycle end to end: new → place devices → connect → save → close → reopen → assert a **byte-identical** document; the unsaved-changes close interception; the crash-recovery path (kill mid-edit, relaunch, assert the recovery prompt, accept, assert the document matches); open a `.rackmate` with a newer `minReaderVersion` and assert the refuse path, then one with a newer `schemaVersion` only and assert the read-only banner (CR-093). Two error-surface cases from AC-058/D3 are integration tests because nothing else catches them: **target PDF open in Acrobat** — the most common Windows export failure — and two app instances on one file.
+**Integration tests** (`integration_test`, desktop) cover the file lifecycle end to end: new → place devices → connect → save → close → reopen → assert a **byte-identical** document; the unsaved-changes close interception; the crash-recovery path (kill mid-edit, relaunch, assert the recovery prompt, accept, assert the document matches); open a `.rmpj` with a newer `minReaderVersion` and assert the refuse path, then one with a newer `schemaVersion` only and assert the read-only banner (CR-093). Two error-surface cases from AC-058/D3 are integration tests because nothing else catches them: **target PDF open in Acrobat** — the most common Windows export failure — and two app instances on one file.
 
 The keyboard connection path (AC-058/D11) is asserted at both levels: a widget test drives select port → `W` → `Tab`/`Shift+Tab` across all ports → `Enter` and asserts one `Link` results; the NVDA/VoiceOver announcement matrix is manual and gated at M7.
 
@@ -434,7 +434,7 @@ Named here so it is not rediscovered, and scheduled in [Roadmap](09-roadmap.md) 
 | Reproducible signed builds | Post-v1 | A signed release is a supply-chain and reproducibility problem, not only a CI one |
 | In-app auto-update | **Not doing in v1** (RJ-014) | Signed installer plus a version-check ping. Auto-update is a security surface and a support burden before there are users |
 
-VERIFY: MSIX packaging versus a plain signed installer for a desktop app that registers a `.rackmate` file association — the file-association path differs between the two and drives the choice.
+VERIFY: MSIX packaging versus a plain signed installer for a desktop app that registers a `.rmpj` file association — the file-association path differs between the two and drives the choice.
 
 ---
 

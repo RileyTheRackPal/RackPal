@@ -8,7 +8,7 @@ The Schematic is the wiring authoring view (`Ctrl+2`) and **the only place a `Li
 
 Three commitments, each of which is a ruling rather than a preference.
 
-**1.1 — Connectivity is stored; geometry is derived.** The document stores `Link` → `Service` → `Conductor` and a stored `Net` (per CR-008, CR-010, CR-011). **Symbol placement is persisted** as `SheetItem.position`; **wire geometry is never persisted** (per CR-012). The router is a pure deterministic function of the model. `RouteWaypoint`, `waypointsBySheet` and `routeOverrides` do not exist — they are banned names. If a polyline is being written to a `.rackmate`, that is a defect.
+**1.1 — Connectivity is stored; geometry is derived.** The document stores `Link` → `Service` → `Conductor` and a stored `Net` (per CR-008, CR-010, CR-011). **Symbol placement is persisted** as `SheetItem.position`; **wire geometry is never persisted** (per CR-012). The router is a pure deterministic function of the model. `RouteWaypoint`, `waypointsBySheet` and `routeOverrides` do not exist — they are banned names. If a polyline is being written to a `.rmpj`, that is a defect.
 
 > Rejected alternative: `design-ux-schematic.md §2.3`'s waypoints and pinned routes, which its own §0.1 forbids three pages earlier. Manual rerouting returns in v1.1 as `routeConstraintsBySheet` — an ordered list of grid points the router must pass through — never as geometry.
 
