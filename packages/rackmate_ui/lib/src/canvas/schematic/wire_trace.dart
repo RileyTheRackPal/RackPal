@@ -137,7 +137,6 @@ final class SchematicWireStyle {
     this.tagPadGu = 0.5,
     this.fillAlpha = 31,
     this.outlineWidthPt = kMinSignalStrokePt,
-    this.maxCombLanes = 6,
   });
 
   /// How far a wire leaves its pin before it may turn.
@@ -178,34 +177,6 @@ final class SchematicWireStyle {
   /// weight too would say the same thing twice.
   final double outlineWidthPt;
 
-  /// The hard ceiling on the escape comb — how many corridors one edge may
-  /// spread its wires across, however many pins it has.
-  ///
-  /// ═══════════════════════════════════════════════════════════════════
-  /// SIX, WHICH IS `NetLabelStyle.maxCombLanes`, AND THE SAME JUDGEMENT
-  /// ═══════════════════════════════════════════════════════════════════
-  /// The file header's comb was UNBOUNDED: the i-th pin escaped i steps,
-  /// for any i. That is fine on the eight-link example it was written
-  /// against and unreadable on a 30-port switch, where the field found it
-  /// — a staircase two dozen steps tall climbing off the sheet, which is
-  /// the identical defect `NetLabelStyle.maxCombLanes` capped for the
-  /// label comb and which survived here because the cap was written where
-  /// the report came from rather than where the pattern was.
-  ///
-  /// THE FIGURE IS COPIED DELIBERATELY, not derived. The two combs measure
-  /// different things — that one stacks pennants against the pin pitch,
-  /// this one spaces corridors — so there is no formula to share, only the
-  /// judgement about how tall a staircase a person will follow. Two
-  /// renderings of one `Link` (DR-001) climbing to different heights would
-  /// be the modes disagreeing about the drawing, which is the thing
-  /// [escapeGu] is already kept equal to `leaderGu` to prevent.
-  ///
-  /// AND IT COSTS SOMETHING, stated rather than hidden: pins six apart
-  /// share a corridor, so two wires can run parallel on the same line for
-  /// part of their path. The header already accepts that for two links
-  /// leaving different symbols; this extends it to one symbol's wide edge,
-  /// and the wires stay tellable apart by hue, dash and weight.
-  final int maxCombLanes;
 }
 
 /// One link's drawn rendering: where the wire runs, and what encodes it.
@@ -598,42 +569,59 @@ DrawnWireLayer buildDrawnWireLayer({
     symbolOf[symbol.id] = symbol;
     for (final side in SymbolSide.values) {
       final ports = symbol.ports[side] ?? const <SymbolPort>[];
-      // ═══════════════════════════════════════════════════════════════
-      // WRAPPED, NOT UNBOUNDED — and it was unbounded until the field
-      // sent a screenshot of it.
-      // ═══════════════════════════════════════════════════════════════
-      // This read `= i`, so the i-th pin escaped i comb steps. On a
-      // 30-port switch with 24 cables that is a staircase 24 steps tall,
-      // climbing clear of the symbol and off the top of the sheet — the
-      // exact defect `net_label_layer` had capped at six two commits
-      // earlier, sitting untouched in the OTHER layer because the cap was
-      // written where the defect had been reported rather than where the
-      // rule lived.
+      // ══════════════════════════════════════════════════════════════
+      // ONE CORRIDOR PER PIN PER DIRECTION, MIRRORED ABOUT THE MIDDLE
+      // ══════════════════════════════════════════════════════════════
+      // This read `i % lanes` against a ceiling of six, so a 24-cable edge
+      // put FOUR wires on every corridor. Two wires sharing a corridor
+      // share the long horizontal run out of the symbol as well: they
+      // leave from different pins, converge on one line and stay there.
+      // The sheet showed six lines where it had twenty-four cables, and
+      // the field reported it. It is not a defect hue and dash can paper
+      // over — the wires are collinear, not merely close.
       //
-      // THE CEILING IS SHARED; THE DERIVATION IS NOT, and the difference is
-      // worth stating because reaching for `combLaneCount` here is the
-      // obvious move and it is wrong. That function derives how many lanes
-      // an edge NEEDS from how wide a pennant is against the pin pitch —
-      // `ceil((widest + gap) / pitch)`. An escape distance has no width to
-      // compare: every wire leaving this edge is one stroke, so that
-      // formula returns 1 and puts every wire on one corridor. What this
-      // edge needs is one lane per pin, bounded. Only the BOUND is common,
-      // and `NetLabelStyle.maxCombLanes` is where the figure is argued.
+      // THE CEILING WAS THERE FOR A REASON THAT HAS SINCE BEEN FIXED. It
+      // was capped because an unbounded staircase "climbed off the top of
+      // the sheet", which was true when it was written: the sheet ground
+      // was sized from the label scene and did not know the wires existed.
+      // It does now (`DrawnWireLayer.inkBounds`), so a taller comb grows
+      // the paper under it instead of walking off the edge — and the cap
+      // has since been costing readability to prevent something that can
+      // no longer happen.
       //
-      // THE COST, STATED. Pins six apart now share an escape lane, so two
-      // wires can run parallel on the same corridor for part of their
-      // path. That is the accepted v1 behaviour this file's header already
-      // names — "two links leaving DIFFERENT symbols in one layer can
-      // still share a corridor and overlap" — extended to two links on one
-      // symbol, and it is the trade the ceiling buys: a shared corridor is
-      // two wires you can still follow by hue and dash, and a 24-step
-      // staircase is a sheet you cannot read at all.
-      final lanes = math.min(
-        style.maxCombLanes,
-        math.max(1, ports.length),
-      );
+      // MIRRORED, WHICH IS WHAT KEEPS IT BOUNDED ANYWAY. `_prefersLowLane`
+      // sends the near half of an edge one way and the far half the other,
+      // so two pins reflected about the middle leave in OPPOSITE
+      // directions: their runs are on opposite sides of the body and
+      // cannot overlap however close their corridors sit. The two halves
+      // therefore reuse one set of heights, and a 48-port switch climbs 24
+      // corridors rather than 48.
+      //
+      // THE SPLIT IS READ OFF THE PIN, not off the index, and deliberately.
+      // `_prefersLowLane` decides direction geometrically — the pin's own
+      // centre against its body's middle — and an index-based split would
+      // agree with it only while pins are distributed evenly. Sharing the
+      // one test is what stops the comb disagreeing with the router about
+      // which half a pin is in.
+      //
+      // WHAT THIS DOES NOT PROMISE, said plainly. `_prefersLowLane` lets
+      // the WIDER body win when the two ends disagree, so a pin can be
+      // routed against its own half by a partner on a bigger symbol, and it
+      // then shares a corridor with the pin mirroring it. That costs little
+      // where it happens: the symbol losing that vote is the narrow one,
+      // and a narrow symbol has few cables to stack.
+      final horizontal = side == SymbolSide.left || side == SymbolSide.right;
+      final middle = horizontal
+          ? symbol.bodyRect.height / 2
+          : symbol.bodyRect.width / 2;
+      var near = 0;
+      for (final port in ports) {
+        final centre = symbolPortCentreLocal(symbol, port);
+        if ((horizontal ? centre.y : centre.x) < middle) near++;
+      }
       for (var i = 0; i < ports.length; i++) {
-        combIndex['${symbol.id} ${ports[i].key}'] = i % lanes;
+        combIndex['${symbol.id} ${ports[i].key}'] =
+            i < near ? i : ports.length - 1 - i;
       }
     }
   }

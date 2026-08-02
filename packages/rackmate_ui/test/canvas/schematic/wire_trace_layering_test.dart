@@ -130,13 +130,14 @@ void main() {
   late DrawnWireLayer layer;
 
   setUpAll(() {
-    final f = _fixture(wired: 24);
+    final f = _fixture(wired: 48);
     doc = f.doc;
     expect(
       f.topPortCount,
-      greaterThanOrEqualTo(24),
-      reason: 'the catalog changed; this fixture needs a wide top edge or '
-          'every assertion below is vacuous',
+      greaterThanOrEqualTo(48),
+      reason: 'the catalog changed; this fixture needs a top edge wide '
+          'enough to have TWO HALVES, or the mirroring assertion below is '
+          'vacuous and the corridor assertion is only half a test',
     );
     scene = buildSchematicScene(doc: doc, measurer: const FakeMeasurer());
     layer = buildDrawnWireLayer(
@@ -148,52 +149,90 @@ void main() {
     );
   });
 
-  group('1 — the escape comb is BOUNDED', () {
-    test('24 cables off one edge use at most six corridors, not 24', () {
-      // THE MEASUREMENT IS THE ESCAPE DISTANCE, taken as the length of the
-      // first segment of each wire — the run from the pin to the corner,
-      // which IS the comb offset. Counting distinct values is what tells a
-      // wrapped comb from an unbounded one; the uncapped version produced
-      // one value per pin.
-      final escapes = <String>{};
+  group('1 — no two cables share a corridor in the same direction', () {
+    /// Every cable's escape distance at SW-1, paired with the half of that
+    /// symbol its pin sits in. The escape IS the comb offset, and the half
+    /// is the same test `_prefersLowLane` makes to pick a detour side — so
+    /// this reads the two things the comb has to keep in step.
+    (List<String> low, List<String> high) escapesByHalf() {
+      final symbol = scene.symbols.firstWhere((s) => s.designator == 'SW-1');
+      final middle = symbol.bodyRect.left + symbol.bodyRect.width / 2;
+      final low = <String>[];
+      final high = <String>[];
       for (final wire in layer.wires) {
-        final a = wire.points[0];
-        final b = wire.points[1];
-        final run = (a.x - b.x).abs() + (a.y - b.y).abs();
-        escapes.add(run.toStringAsFixed(4));
+        final ends = scene.netLabels
+            .where((l) => l.linkId == wire.linkId)
+            .toList();
+        for (var i = 0; i < ends.length; i++) {
+          if (ends[i].deviceId != symbol.id) continue;
+          final pin = ends[i].pinCentre;
+          final escape =
+              (wire.ends[i].x - pin.x).abs() + (wire.ends[i].y - pin.y).abs();
+          (pin.x < middle ? low : high).add(escape.toStringAsFixed(4));
+        }
       }
+      return (low, high);
+    }
+
+    test('every pin in one half of an edge gets a corridor of its own', () {
+      // ── THE ASSERTION INVERTED, AND THE REASON IS ON THE OTHER SIDE ──
+      // This required AT MOST SIX corridors, because an unbounded comb
+      // "walked off the top of the sheet". That was true when it was
+      // written: the ground was sized from the label scene and did not
+      // know the wires existed. It does now (`DrawnWireLayer.inkBounds`),
+      // so a taller comb grows the paper under it instead of running off
+      // the edge — and what the cap bought in the meantime was FOUR cables
+      // per corridor. Cables sharing a corridor share the long run out of
+      // the symbol too, so a 24-cable edge drew six lines. The field
+      // reported it, and collinear wires are not something hue and dash
+      // can separate.
+      final (low, high) = escapesByHalf();
       expect(
-        escapes.length,
-        lessThanOrEqualTo(const SchematicWireStyle().maxCombLanes),
-        reason: 'the comb climbed to ${escapes.length} corridors. Unbounded '
-            'it reaches one per pin, which is the staircase that walked off '
-            'the top of the sheet',
+        low.length + high.length,
+        layer.wires.length,
+        reason: 'every cable must have exactly one end on SW-1',
       );
-      // AND IT STILL SPREADS. A cap that collapsed to one lane would pass
-      // the assertion above and put every wire on one corridor, which is
-      // the defect the comb exists to prevent.
       expect(
-        escapes.length,
+        low.length,
         greaterThan(1),
-        reason: 'a comb of one lane is no comb',
+        reason: 'the fixture must wire BOTH halves of the edge or the '
+            'mirroring test below is vacuous and this one is half a test',
+      );
+      expect(high.length, greaterThan(1), reason: 'as above, other half');
+      expect(
+        low.toSet().length,
+        low.length,
+        reason: '${low.length} cables leave the near half sharing only '
+            '${low.toSet().length} corridors, so some are drawn on one line',
+      );
+      expect(
+        high.toSet().length,
+        high.length,
+        reason: '${high.length} cables leave the far half sharing only '
+            '${high.toSet().length} corridors, so some are drawn on one line',
       );
     });
 
-    test('the furthest escape is a small multiple of the nearest', () {
-      final runs = <double>[
-        for (final wire in layer.wires)
-          (wire.points[0].x - wire.points[1].x).abs() +
-              (wire.points[0].y - wire.points[1].y).abs(),
-      ]..sort();
-      // Stated as a RATIO rather than a distance so the figure survives a
-      // change to `escapeGu` or `combStepGu`, and so it cannot become the
-      // tautology `net_label_comb_test`'s first draft was.
+    test('and the two halves MIRROR, so the comb climbs half the edge', () {
+      // The bound is no longer a ceiling on the count. It is that the two
+      // halves leave in OPPOSITE directions (`_prefersLowLane`), so their
+      // runs are on opposite sides of the body and can reuse one set of
+      // heights: 48 cables climb 24 corridors, not 48.
+      //
+      // ASSERTED AS SET EQUALITY, which is the strongest form available and
+      // the one that cannot be satisfied by accident — two halves that
+      // merely happened to climb the same DISTANCE would still fail it.
+      final (low, high) = escapesByHalf();
       expect(
-        runs.last / runs.first,
-        lessThan(6),
-        reason: 'nearest ${runs.first}, furthest ${runs.last} — an '
-            'unbounded comb on this fixture reaches about 16x',
+        low.toSet(),
+        high.toSet(),
+        reason: 'the halves climb different corridors, so the comb is '
+            'twice as tall as it needs to be',
       );
+      // AND IT REALLY DOES CLIMB — a comb collapsed to one lane satisfies
+      // nothing above but is worth ruling out where the heights are in hand.
+      final runs = low.map(double.parse).toList()..sort();
+      expect(runs.last, greaterThan(runs.first));
     });
   });
 
