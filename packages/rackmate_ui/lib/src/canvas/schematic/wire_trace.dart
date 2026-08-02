@@ -244,6 +244,7 @@ final class DrawnWireLayer {
     required this.ops,
     required this.wires,
     required this.unroutableLinkIds,
+    this.inkBounds,
   });
 
   /// ABSOLUTE-coordinate ops. Unlike a symbol fragment these carry sheet
@@ -260,6 +261,30 @@ final class DrawnWireLayer {
   /// silently omits a connection is indistinguishable from one that lost
   /// it.
   final List<Uuid> unroutableLinkIds;
+
+  /// Everything this layer paints — every trace corner and every pill box —
+  /// or null when it paints nothing.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// PUBLISHED BECAUSE THE SHEET GROUND WAS BEING SIZED WITHOUT IT
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `buildSchematicPaintPlan` sizes its ground off `scene.bounds`, which
+  /// is the NET-LABEL scene's ink and knows nothing about a layer built
+  /// after it. That was survivable while every wire ran between two
+  /// escape points and stayed well inside the pennants' envelope. It stopped
+  /// being survivable when wires started routing AROUND bodies and pills
+  /// started hanging outboard of their anchors: on the 300-link fixture,
+  /// 26 wires reached past the ground and were painted on the margin
+  /// outside the paper, which is what the field reported as wires going off
+  /// the canvas.
+  ///
+  /// GEOMETRY, NOT STROKED INK, and the difference is stated rather than
+  /// left to be discovered. `BoundsCanvas` would add half a stroke width to
+  /// every shape and re-measure every pill's text to do it — a second full
+  /// pass over the ops, sixty times a second, to gain a quarter of a point.
+  /// The consumer inflates this by `kSheetGroundMarginGu`, eight grid units,
+  /// which is two orders of magnitude more than the widest stroke here.
+  final DBox? inkBounds;
 }
 
 /// The orthogonal staircase between two pins.
@@ -581,6 +606,11 @@ DrawnWireLayer buildDrawnWireLayer({
   final unroutable = <Uuid>[];
   final sizer = _PillSizer(measurer: measurer, style: style, unitsPerGrid: upg);
 
+  // Accumulated as the ops are made, never by walking them afterwards —
+  // see [DrawnWireLayer.inkBounds].
+  DBox? ink;
+  void grow(DBox box) => ink = ink == null ? box : ink!.union(box);
+
   for (final link in scoped) {
     final ends = endsOf[link.id] ?? const <RenderedNetLabel>[];
     if (ends.isEmpty) {
@@ -666,17 +696,26 @@ DrawnWireLayer buildDrawnWireLayer({
       ),
     );
 
+    for (final point in points) {
+      grow(DBox.fromCorners(point, point));
+    }
+
     // §11.1.1: "an orthogonal polyline with a tag pill at each end".
     for (var i = 0; i < pillAt.length; i++) {
-      pills.addAll(
-        sizer.pillOps(
-          _tagTextFor(link, signal),
-          pillAt[i],
-          pillSide[i],
-          signal,
-          palette,
-        ),
+      final pillRun = sizer.pillOps(
+        _tagTextFor(link, signal),
+        pillAt[i],
+        pillSide[i],
+        signal,
+        palette,
       );
+      pills.addAll(pillRun);
+      // The pill's own box, read back off the op rather than re-derived:
+      // its text is anchored `midCenter` INSIDE that box, so the box is the
+      // whole of what a pill contributes.
+      for (final op in pillRun) {
+        if (op is OpRoundRect) grow(op.r);
+      }
     }
 
     wires.add(
@@ -696,6 +735,7 @@ DrawnWireLayer buildDrawnWireLayer({
     ops: List<DiagramOp>.unmodifiable(ops),
     wires: List<DrawnWire>.unmodifiable(wires),
     unroutableLinkIds: List<Uuid>.unmodifiable(unroutable),
+    inkBounds: ink,
   );
 }
 

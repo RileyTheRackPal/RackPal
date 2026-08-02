@@ -244,6 +244,66 @@ void main() {
         );
       }
     });
+
+    test('the ground contains every mark the sheet PAINTS, wires included', () {
+      // ── WIRES WERE BEING PAINTED ON THE MARGIN, OFF THE PAPER ───────
+      // The test above walks SYMBOLS, which is what the sheet was made of
+      // when it was written. The ground is sized from `scene.bounds` — the
+      // NET-LABEL scene's ink — and the drawn-wire layer is built after
+      // that and knows nothing about it. While every wire ran between two
+      // escape points, inside the envelope the pennants had already staked
+      // out, nothing showed. Wires that route AROUND bodies and pills that
+      // hang outboard of their anchors both reach further, and then the
+      // ink is simply outside the paper: on the 300-link fixture, 26 wires.
+      //
+      // ASSERTED OVER THE OPS, not over the symbols, because "every mark"
+      // is the property and a list of the mark KINDS anyone thought of is
+      // what let this through the first time. `BoundsCanvas` is the
+      // codebase's own definition of what a display list covers.
+      //
+      // AND THE SECOND HALF IS THE GUARD, as in `wire_trace_test.dart`:
+      // the same ink is measured against a ground sized the OLD way, and
+      // at least one domain is REQUIRED to overshoot it. Without that line
+      // this test passes on any sheet whose wires happen to sit inside the
+      // pennants, which is most of them.
+      final margin = kSheetGroundMarginGu * kSchematicUnitsPerGrid;
+      final oldWay = scene.scene.bounds.inflate(margin);
+      var wouldHaveEscaped = 0;
+      for (final domain in domains) {
+        final plan = planFor(
+          SchematicViewFilter(
+            visibleDomains: <SignalDomainId>{domain},
+            explicit: true,
+          ),
+        );
+        expect(plan.drawnWires, isNotEmpty, reason: '${domain.v} drew no wire');
+
+        // op 0 IS the ground; measuring it would make this circular.
+        final canvas = BoundsCanvas(measurer: const FakeMeasurer());
+        for (final op in plan.ops.skip(1)) {
+          op.replay(canvas);
+        }
+        final ink = canvas.bounds!;
+        expect(
+          plan.ground.contains(ink.topLeft) &&
+              plan.ground.contains(ink.bottomRight),
+          isTrue,
+          reason:
+              'with ${domain.v} soloed the sheet paints $ink, which reaches '
+              'outside its own ground ${plan.ground}',
+        );
+        final fitOldWay =
+            oldWay.contains(ink.topLeft) && oldWay.contains(ink.bottomRight);
+        if (!fitOldWay) wouldHaveEscaped++;
+      }
+      expect(
+        wouldHaveEscaped,
+        greaterThan(0),
+        reason:
+            'every domain of this fixture fits inside a ground sized from '
+            'the label scene alone, so the assertion above is about nothing',
+      );
+    });
   });
 
   group('symbols', () {

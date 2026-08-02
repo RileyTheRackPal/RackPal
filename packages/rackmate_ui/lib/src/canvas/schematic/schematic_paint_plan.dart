@@ -139,11 +139,52 @@ SchematicPaintPlan buildSchematicPaintPlan({
 }) {
   final ops = <DiagramOp>[];
 
+  // ── the wires, BUILT FIRST AND EMITTED LATER ─────────────────────────
+  //
+  // ═══════════════════════════════════════════════════════════════════
+  // THE GROUND HAS TO KNOW HOW BIG THE DRAWING IS BEFORE IT IS PAINTED
+  // ═══════════════════════════════════════════════════════════════════
+  // Built here, appended further down in paint order (see the note there,
+  // which is about WHERE they land in the list and is unchanged). The
+  // split exists because the ground is op ZERO and was sized from
+  // `scene.bounds` alone — the NET-LABEL scene's ink, which knows nothing
+  // about a layer built after it.
+  //
+  // That held while every wire ran between two escape points, inside the
+  // envelope the pennants had already staked out. It stopped holding when
+  // wires began routing AROUND bodies and pills began hanging outboard of
+  // their anchors: on the 300-link fixture 26 wires reached past the
+  // ground and were painted on the margin outside the paper. The field
+  // reported it as wires going off the canvas, and that is exactly what it
+  // was — ink with no sheet under it.
+  //
+  // A PLAN THAT PAINTS A MARK OUTSIDE ITS OWN GROUND IS THE BUG, not the
+  // mark. The router places wires where they are legible; the paper is
+  // what has to accommodate them.
+  var wires = const DrawnWireLayer(
+    ops: <DiagramOp>[],
+    wires: <DrawnWire>[],
+    unroutableLinkIds: <Uuid>[],
+  );
+  if (scope != null && scope.linkIds.isNotEmpty) {
+    wires = buildDrawnWireLayer(
+      scene: scene,
+      doc: doc,
+      linkIds: scope.linkIds,
+      measurer: measurer,
+      palette: palette,
+      style: wireStyle,
+    );
+  }
+
   // ── the sheet ground, op ZERO ────────────────────────────────────────
   //
   // See the file header. It is in the list, not beside it.
   final margin = kSheetGroundMarginGu * kSchematicUnitsPerGrid;
-  final ground = scene.scene.bounds.inflate(margin);
+  final ink = wires.inkBounds == null
+      ? scene.scene.bounds
+      : scene.scene.bounds.union(wires.inkBounds!);
+  final ground = ink.inflate(margin);
   ops.add(OpRect(ground, fill: Fill(groundArgb)));
 
   // ── the symbols, each from its own LOCAL fragment ────────────────────
@@ -202,22 +243,11 @@ SchematicPaintPlan buildSchematicPaintPlan({
   // knockout halo, and adding one would be a real design (it has to be
   // deterministic to survive the byte-identical exit criterion) rather
   // than a tweak.
-  var wires = const DrawnWireLayer(
-    ops: <DiagramOp>[],
-    wires: <DrawnWire>[],
-    unroutableLinkIds: <Uuid>[],
-  );
-  if (scope != null && scope.linkIds.isNotEmpty) {
-    wires = buildDrawnWireLayer(
-      scene: scene,
-      doc: doc,
-      linkIds: scope.linkIds,
-      measurer: measurer,
-      palette: palette,
-      style: wireStyle,
-    );
-    ops.addAll(wires.ops);
-  }
+  //
+  // BUILT ABOVE, WHERE THE GROUND CAN SEE ITS SIZE — only the append is
+  // here. That is the one thing this note used to be able to assume and
+  // now cannot: build order and paint order are different questions.
+  ops.addAll(wires.ops);
 
   // ── the label runs, one contiguous sub-picture per domain ────────────
   //
