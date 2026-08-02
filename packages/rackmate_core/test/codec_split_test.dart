@@ -26,7 +26,7 @@ const _fixtures = <String>[
 ];
 
 Uint8List _readFixture(String label) =>
-    File('test/fixtures/$label.rackmate.json').readAsBytesSync();
+    File('test/fixtures/$label.rmpj.json').readAsBytesSync();
 
 void main() {
   group('the halves compose back into the whole, byte for byte', () {

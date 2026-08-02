@@ -3,7 +3,7 @@
 //
 // docs/04 §9: *"First launch shows a start card, not an empty canvas."*
 // Everything here drives the shipping `AppShell` — the real
-// `SessionController`, the real dialogs, the real four `.rackmate` files
+// `SessionController`, the real dialogs, the real four `.rmpj` files
 // read off disk — against a fake filesystem, a fake window and a fake
 // file dialog. Nothing calls a controller method directly; every
 // assertion goes through a tap or a key event.
@@ -145,7 +145,7 @@ void main() {
     final built = await buildTestApp(
       measurer,
       showStartCard: true,
-      savePaths: [r'C:\jobs\My Cinema.rackmate'],
+      savePaths: [r'C:\jobs\My Cinema.rmpj'],
     );
     await tester.pumpWidget(built.app);
     await tester.pumpAndSettle();
@@ -163,10 +163,10 @@ void main() {
     );
     expect(
       built.session.services.session.filePath,
-      r'C:\jobs\My Cinema.rackmate',
+      r'C:\jobs\My Cinema.rmpj',
     );
     expect(
-      built.session.fs.exists(r'C:\jobs\My Cinema.rackmate'),
+      built.session.fs.exists(r'C:\jobs\My Cinema.rmpj'),
       completion(isTrue),
     );
   });
@@ -180,7 +180,7 @@ void main() {
     final built = await buildTestApp(
       measurer,
       showStartCard: true,
-      savePaths: [r'C:\jobs\Copy.rackmate'],
+      savePaths: [r'C:\jobs\Copy.rmpj'],
     );
     await tester.pumpWidget(built.app);
     await tester.pumpAndSettle();
@@ -191,7 +191,7 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    final written = await built.session.fs.readBytes(r'C:\jobs\Copy.rackmate');
+    final written = await built.session.fs.readBytes(r'C:\jobs\Copy.rmpj');
     final reread = const JsonDocumentCodec().read(written);
     expect(reread, isA<Ok<RackDocument>>());
     final document = (reread as Ok<RackDocument>).value;

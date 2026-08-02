@@ -1,6 +1,6 @@
 // CR-117: write(read(bytes)) == bytes, as an exact BYTE property, over
 // four fixtures of increasing complexity. Also persists each fixture's
-// first-write bytes to test/fixtures/*.rackmate.json as real files on
+// first-write bytes to test/fixtures/*.rmpj.json as real files on
 // disk — a later milestone's golden-fixture-corpus work builds on these.
 //
 // Fixture (d) is newer than the others and was added for a reason worth
@@ -493,7 +493,7 @@ final bool _updateGoldens =
 ///
 /// HISTORY, because this is the second spelling of this function and the
 /// first one could not fail. From `b94bd60` (M0) until this change it
-/// began by OVERWRITING `test/fixtures/$label.rackmate.json` with the
+/// began by OVERWRITING `test/fixtures/$label.rmpj.json` with the
 /// bytes it was about to check, and then compared those bytes to
 /// themselves round-tripped. That proves
 /// `write(read(write(doc))) == write(doc)` — internal self-consistency —
@@ -519,7 +519,7 @@ final bool _updateGoldens =
 ///
 /// Property 1 is the one that was missing for the whole of M0 and M1.
 void _assertByteRoundTrip(String label, RackDocument fixture) {
-  final file = File('test/fixtures/$label.rackmate.json');
+  final file = File('test/fixtures/$label.rmpj.json');
   final fresh = _codec.write(fixture);
 
   if (_updateGoldens) {
@@ -536,7 +536,7 @@ void _assertByteRoundTrip(String label, RackDocument fixture) {
     file.existsSync(),
     isTrue,
     reason:
-        'the golden test/fixtures/$label.rackmate.json is missing. It is a '
+        'the golden test/fixtures/$label.rmpj.json is missing. It is a '
         'checked-in INPUT, not an output — regenerate deliberately with '
         'UPDATE_GOLDENS=1 and commit the diff.',
   );

@@ -6,8 +6,36 @@ import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 import 'package:rackmate/src/storage/file_store.dart';
 
-/// The `.rackmate` extension, including the dot, lower-case.
-const String kDocumentExtension = '.rackmate';
+/// The project extension, including the dot, lower-case (DR-015).
+const String kDocumentExtension = '.rmpj';
+
+/// What this app wrote before DR-015.
+///
+/// ═══════════════════════════════════════════════════════════════════
+/// STILL OPENED, AND STILL SAVED IN PLACE
+/// ═══════════════════════════════════════════════════════════════════
+/// The bytes did not change — DR-015 renamed the extension and nothing
+/// else — so a `.rackmate` written by any earlier build is a valid
+/// project and refusing it would be a data-loss event dressed as tidiness,
+/// which is the reasoning AC-042 already applied to `contentHash`.
+///
+/// It is listed in [kDocumentExtensions] rather than special-cased, which
+/// is what makes **Save keep the name it opened**: a team that is mid-job
+/// on `Smith.rackmate` presses `Ctrl+S` and gets `Smith.rackmate`, not
+/// `Smith.rackmate.rmpj`. Only Save As and a never-saved document reach
+/// for [kDocumentExtension]. Nothing renames a file the user did not ask
+/// to rename.
+const String kLegacyDocumentExtension = '.rackmate';
+
+/// Every extension a project may already carry, **the one to append
+/// first**.
+///
+/// [SavePaths.forTarget] appends `.first` when the chosen path ends in
+/// none of these, and leaves the path alone when it ends in any of them.
+const List<String> kDocumentExtensions = <String>[
+  kDocumentExtension,
+  kLegacyDocumentExtension,
+];
 
 /// The extension an exported PDF gets, including the dot, lower-case.
 const String kPdfExtension = '.pdf';
@@ -46,24 +74,33 @@ final class SavePaths {
   /// when the user types `Smith`, and a project saved as an extensionless
   /// file will not reopen by double-click and will not be found by the
   /// open dialog's filter. Appending is done rather than replacing, so a
-  /// deliberate `Smith.v2` becomes `Smith.v2.rackmate` and nothing the
-  /// user typed is thrown away.
+  /// deliberate `Smith.v2` becomes `Smith.v2.rmpj` and nothing the user
+  /// typed is thrown away.
   ///
-  /// [extension] EXISTS SO THE PDF EXPORT SHARES THIS NORMALISATION rather
-  /// than growing its own. The rule — "append unless it is already there,
-  /// compared case-insensitively" — is the same rule for a `.pdf` as for a
-  /// `.rackmate`, and it is exactly the kind of thing that drifts once
-  /// there are two copies of it. The default keeps every existing caller
-  /// unchanged.
+  /// [extensions] EXISTS SO THE PDF EXPORT SHARES THIS NORMALISATION
+  /// rather than growing its own. The rule — "append unless one is already
+  /// there, compared case-insensitively" — is the same rule for a `.pdf`
+  /// as for a project, and it is exactly the kind of thing that drifts
+  /// once there are two copies of it.
+  ///
+  /// A LIST RATHER THAN ONE STRING, and the difference is DR-015's whole
+  /// back-compat story. `.first` is what gets appended; **every** entry
+  /// counts as already-correct. So `Smith.rackmate` passes through
+  /// untouched and `Ctrl+S` saves it where it lives, while a new document
+  /// gets `.rmpj`. The PDF path passes a single-entry list and is
+  /// therefore unaffected by the project's legacy spelling — which it
+  /// would not be if this took one extension plus a shared "also accept"
+  /// set.
   factory SavePaths.forTarget(
     String chosen, {
     p.Context? context,
-    String extension = kDocumentExtension,
+    List<String> extensions = kDocumentExtensions,
   }) {
     final ctx = context ?? p.context;
-    final target = ctx.extension(chosen).toLowerCase() == extension
+    final has = ctx.extension(chosen).toLowerCase();
+    final target = extensions.contains(has)
         ? chosen
-        : '$chosen$extension';
+        : '$chosen${extensions.first}';
     return SavePaths(
       target: target,
       // SAME DIRECTORY, always. Same directory means same volume, and
@@ -96,7 +133,7 @@ final class SavePaths {
     );
   }
 
-  /// `<dir>/<stem>.rackmate` — the file the user knows about.
+  /// `<dir>/<stem>.rmpj` — the file the user knows about.
   final String target;
 
   /// `<target>.tmp` — where the new bytes land before they are promoted.

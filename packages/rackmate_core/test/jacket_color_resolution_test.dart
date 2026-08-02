@@ -237,7 +237,7 @@ void main() {
       // MUTATION: drop `pulledId != conventionId` from `isException` and
       // this fails. The Command normalises this away on the WRITE path,
       // but this input never passed through a Command — it is what a
-      // hand-edited `.rackmate` or a CSV import produces, and an
+      // hand-edited `.rmpj` or a CSV import produces, and an
       // exceptions sheet must not print a `BLU — PULLED BLU` row.
       final r = resolveJacketColor(
         _link(convention: _blue, pulled: _blue),

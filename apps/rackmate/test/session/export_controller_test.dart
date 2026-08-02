@@ -503,13 +503,13 @@ void main() {
   });
 
   group('SavePaths shares ONE extension normalisation', () {
-    test('the .pdf and .rackmate rules are the same rule', () {
+    test('the .pdf and .rmpj rules are the same rule', () {
       final ctx = p.Context(style: p.Style.windows);
       expect(
         SavePaths.forTarget(
           r'C:\jobs\smith',
           context: ctx,
-          extension: kPdfExtension,
+          extensions: const <String>[kPdfExtension],
         ).target,
         r'C:\jobs\smith.pdf',
       );
@@ -518,7 +518,7 @@ void main() {
         SavePaths.forTarget(
           r'C:\jobs\smith.PDF',
           context: ctx,
-          extension: kPdfExtension,
+          extensions: const <String>[kPdfExtension],
         ).target,
         r'C:\jobs\smith.PDF',
       );
@@ -528,14 +528,14 @@ void main() {
         SavePaths.forTarget(
           r'C:\jobs\smith.v2',
           context: ctx,
-          extension: kPdfExtension,
+          extensions: const <String>[kPdfExtension],
         ).target,
         r'C:\jobs\smith.v2.pdf',
       );
       // The default is unchanged for every existing caller.
       expect(
         SavePaths.forTarget(r'C:\jobs\smith', context: ctx).target,
-        r'C:\jobs\smith.rackmate',
+        r'C:\jobs\smith.rmpj',
       );
     });
   });

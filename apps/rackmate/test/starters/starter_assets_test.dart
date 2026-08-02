@@ -6,7 +6,7 @@
 // screenshot source at once, and every milestone must open all four."*
 //
 // This file is that rule. It does NOT construct documents in memory and
-// check them: it reads the four `.rackmate` files off the disk they ship
+// check them: it reads the four `.rmpj` files off the disk they ship
 // on, through `DocumentStore` over `DartIoFileStore` — the same class,
 // the same codec, the same error classification a user's own file goes
 // through — and then, separately, through the PRODUCTION `rootBundle`
@@ -293,7 +293,7 @@ void main() {
 
     test('whole_house pulls colour on its category runs and NOT on the '
         'others', () async {
-      final doc = await read('whole_house.rackmate');
+      final doc = await read('whole_house.rmpj');
       final coloured = [
         for (final l in doc.links.values)
           if (l.jacketColorId != null) l,
@@ -343,7 +343,7 @@ void main() {
       // that derived colour from `media` — the obvious wrong shortcut —
       // would give all fifteen the same one and still pass every
       // referential check above.
-      final doc = await read('whole_house.rackmate');
+      final doc = await read('whole_house.rmpj');
       String colourOf(String fieldLabel) => doc.links.values
           .firstWhere((l) => l.structureOrigin?.fieldLabel == fieldLabel)
           .jacketColorId!
@@ -433,7 +433,7 @@ void main() {
       // a family the file does not carry renders grey with the raw id as
       // its tag (§6.2's `unknown(rawId)`), which is correct behaviour and
       // the wrong outcome for a shipped fixture.
-      final doc = await read('whole_house.rackmate');
+      final doc = await read('whole_house.rmpj');
       final used = {
         for (final link in doc.links.values)
           for (final service in link.services) service.signalFamily,
@@ -528,7 +528,7 @@ void main() {
   test('two copies of the same starter never share a document id', () async {
     // The property `DocumentStore.decodeBytes`'s `asNewDocumentId` exists
     // for: a shared id means a shared recovery snapshot path
-    // (`recovery/<docUuid>.rackmate`), so recovering one copy would offer
+    // (`recovery/<docUuid>.rmpj`), so recovering one copy would offer
     // the other's work.
     final bytes = await loadStarterAssetFromBundle(
       kStarterProjects.first.assetPath,

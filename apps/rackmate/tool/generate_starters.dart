@@ -1,4 +1,4 @@
-// Regenerates `assets/starters/*.rackmate`.
+// Regenerates `assets/starters/*.rmpj`.
 //
 //     dart run tool/generate_starters.dart          # from apps/rackmate
 //     dart run tool/generate_starters.dart --check  # CI-style, no writes

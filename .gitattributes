@@ -40,9 +40,19 @@
 *.bat    text eol=crlf
 
 # BYTE-EXACT GOLDENS — read the block above before changing these.
-# `.rackmate` is a project (CR-091); `.rmdev` is a single device template
-# in the same JSON regime (CR-063), covered now so the first one committed
-# is already protected.
+# `.rmpj` is a project (CR-091, renamed by DR-015); `.rmdx` is a single
+# device template in the same JSON regime (CR-063), covered now so the
+# first one committed is already protected. `.rmda` is the device archive
+# DR-015 names and nothing writes yet — listed for the same reason.
+#
+# THE PRE-DR-015 SPELLINGS STAY LISTED. This app still opens a `.rackmate`
+# and still saves one in place, so one arriving through a checkout must
+# survive it byte-for-byte exactly as before; dropping the line the day
+# the extension changed would corrupt precisely the files the back-compat
+# path exists to protect.
+*.rmpj      text eol=lf
+*.rmdx      text eol=lf
+*.rmda      text eol=lf
 *.rackmate  text eol=lf
 *.rmdev     text eol=lf
 

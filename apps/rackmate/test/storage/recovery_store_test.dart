@@ -103,13 +103,13 @@ void main() {
       () async {
         final made = _make();
         final result = await made.store.write(
-          sidecar: _sidecar('doc-1', realPath: r'C:\jobs\Smith.rackmate'),
+          sidecar: _sidecar('doc-1', realPath: r'C:\jobs\Smith.rmpj'),
           documentBytes: _doc(64),
         );
 
         expect(result, isA<Ok<void>>());
         expect(
-          made.fs.state.files.containsKey(r'C:\data\recovery\doc-1.rackmate'),
+          made.fs.state.files.containsKey(r'C:\data\recovery\doc-1.rmpj'),
           isTrue,
         );
         expect(
@@ -132,7 +132,7 @@ void main() {
       final document = _doc(64);
 
       await made.store.write(
-        sidecar: _sidecar('doc-1', realPath: r'C:\jobs\Smith.rackmate'),
+        sidecar: _sidecar('doc-1', realPath: r'C:\jobs\Smith.rmpj'),
         documentBytes: document,
       );
 
@@ -149,7 +149,7 @@ void main() {
       // ...and the raw file agrees, so this is not an artefact of the
       // read path handing back what the write path remembered.
       expect(
-        await made.fs.readBytes(r'C:\data\recovery\doc-1.rackmate'),
+        await made.fs.readBytes(r'C:\data\recovery\doc-1.rmpj'),
         orderedEquals(document),
       );
     });
@@ -174,7 +174,7 @@ void main() {
       );
 
       final snapshotAt = made.fs.journal.indexWhere(
-        (op) => op is Renamed && op.to == r'C:\data\recovery\doc-1.rackmate',
+        (op) => op is Renamed && op.to == r'C:\data\recovery\doc-1.rmpj',
       );
       final sidecarAt = made.fs.journal.indexWhere(
         (op) => op is Renamed && op.to == r'C:\data\recovery\doc-1.json',
@@ -197,7 +197,7 @@ void main() {
         final state = made.fs.replayPrefix(k);
         final sidecar = state.files[r'C:\data\recovery\doc-1.json'];
         if (sidecar is Bytes && sidecar.value.isNotEmpty) {
-          final snapshot = state.files[r'C:\data\recovery\doc-1.rackmate'];
+          final snapshot = state.files[r'C:\data\recovery\doc-1.rmpj'];
           expect(
             snapshot,
             isA<Bytes>(),
@@ -220,16 +220,16 @@ void main() {
       // users expect explicit saves and will file a bug the first time an
       // autosave clobbers something.
       final made = _make(
-        files: {r'C:\jobs\Smith.rackmate': _doc(8)},
+        files: {r'C:\jobs\Smith.rmpj': _doc(8)},
         dirs: {r'C:\jobs'},
       );
       await made.store.write(
-        sidecar: _sidecar('doc-1', realPath: r'C:\jobs\Smith.rackmate'),
+        sidecar: _sidecar('doc-1', realPath: r'C:\jobs\Smith.rmpj'),
         documentBytes: _doc(999),
       );
 
       expect(
-        (made.fs.state.files[r'C:\jobs\Smith.rackmate']! as Bytes).value,
+        (made.fs.state.files[r'C:\jobs\Smith.rmpj']! as Bytes).value,
         orderedEquals(_doc(8)),
         reason: "the user's file must be byte-for-byte untouched",
       );
@@ -283,7 +283,7 @@ void main() {
         expect(
           made.fs.state.files.keys.toSet(),
           {
-            r'C:\data\recovery\doc-1.rackmate',
+            r'C:\data\recovery\doc-1.rmpj',
             r'C:\data\recovery\doc-1.json',
           },
           reason: 'exactly the pair, and nothing else',
@@ -365,7 +365,7 @@ void main() {
         await made.store.write(
           sidecar: _sidecar(
             'doc-1',
-            realPath: r'C:\jobs\A.rackmate',
+            realPath: r'C:\jobs\A.rmpj',
             unsavedEditCount: 3,
           ),
           documentBytes: _doc(64),
@@ -404,7 +404,7 @@ void main() {
       Future<void> writeSecondAutosave(RecoveryStore store) => store.write(
         sidecar: _sidecar(
           'doc-1',
-          realPath: r'C:\jobs\B.rackmate',
+          realPath: r'C:\jobs\B.rmpj',
           unsavedEditCount: 47,
           minute: 60,
         ),
@@ -466,7 +466,7 @@ void main() {
           (op) => op is Deleted && op.path == r'C:\data\recovery\doc-1.json',
         );
         final snapshotPromoted = made.fs.journal.indexWhere(
-          (op) => op is Renamed && op.to == r'C:\data\recovery\doc-1.rackmate',
+          (op) => op is Renamed && op.to == r'C:\data\recovery\doc-1.rmpj',
         );
 
         expect(
@@ -492,13 +492,70 @@ void main() {
         expect(scan.orphanedSnapshots, 0);
         expect(scan.orphanedSidecars, 0);
         expect(scan.survivors.single.sidecar.unsavedEditCount, 47);
-        expect(scan.survivors.single.sidecar.realPath, r'C:\jobs\B.rackmate');
+        expect(scan.survivors.single.sidecar.realPath, r'C:\jobs\B.rmpj');
         expect(
           await made.store.readSnapshot(scan.survivors.single),
           orderedEquals(_doc(96)),
           reason: "the SECOND autosave's document, not the first",
         );
       });
+    });
+  });
+
+  group('a snapshot written before DR-015 (#170)', () {
+    // ── THE ONE WINDOW THIS FEATURE EXISTS FOR IS THE ONE THE RENAME
+    //    BREAKS ────────────────────────────────────────────────────
+    // A recovery pair is only on disk across a crash. So a `.rackmate`
+    // snapshot meets a `.rmpj` build in exactly one situation: the user's
+    // previous build died with unsaved work and they installed this one
+    // before reopening. Recognise only the current spelling and the
+    // sidecar becomes an orphan — which `scan` deletes SILENTLY, taking
+    // the crash recovery with it and saying nothing.
+    ({RecoveryStore store, FakeFileStore fs}) legacyPair() => _make(
+      files: {
+        r'C:\data\recovery\doc-1.rackmate': _doc(64),
+        r'C:\data\recovery\doc-1.json': Uint8List.fromList(
+          utf8.encode(jsonEncode(_sidecar('doc-1').toJson())),
+        ),
+      },
+      dirs: {_recoveryDir},
+    );
+
+    test('is offered, and offered with the path it ACTUALLY has', () async {
+      final made = legacyPair();
+      final scan = await made.store.scan();
+      expect(
+        scan.survivors,
+        hasLength(1),
+        reason: 'a crash survivor written by the previous build was '
+            'dropped by the build the user upgraded to',
+      );
+      expect(
+        scan.survivors.single.snapshotPath,
+        r'C:\data\recovery\doc-1.rackmate',
+        reason: 'the path was REBUILT from the current extension, so '
+            'Recover would read a file that is not there',
+      );
+      // And its bytes are reachable, which the path alone does not prove.
+      expect(
+        await made.store.readSnapshot(scan.survivors.single),
+        isNotNull,
+      );
+    });
+
+    test('and DISCARD really removes it, so the prompt stops', () async {
+      // `delete` rebuilding the name would leave the pair half-deleted:
+      // sidecar gone, snapshot behind. The next launch sees an orphaned
+      // snapshot and sweeps it, so the user is not re-prompted forever —
+      // but the failure is still a Discard that did not discard, and the
+      // sweep only tidies because the sidecar happened to go first.
+      final made = legacyPair();
+      await made.store.delete('doc-1');
+      expect(
+        made.fs.state.files.keys.where((k) => k.contains('doc-1')),
+        isEmpty,
+        reason: 'Discard left part of the pair on disk',
+      );
     });
   });
 
@@ -509,7 +566,7 @@ void main() {
       // indistinguishable, and one of those two deserves to be offered.
       final made = _make(
         files: {
-          r'C:\data\recovery\doc-1.rackmate': _doc(64),
+          r'C:\data\recovery\doc-1.rmpj': _doc(64),
           r'C:\data\recovery\doc-1.json': Uint8List.fromList(
             utf8.encode(jsonEncode(_sidecar('doc-1').toJson())),
           ),
@@ -521,7 +578,7 @@ void main() {
       final deletes = made.fs.journal.whereType<Deleted>().toList();
       expect(deletes.map((d) => d.path), [
         r'C:\data\recovery\doc-1.json',
-        r'C:\data\recovery\doc-1.rackmate',
+        r'C:\data\recovery\doc-1.rmpj',
       ]);
     });
 
@@ -552,8 +609,9 @@ void main() {
       );
       expect(
         made.fs.calls.where((c) => c == 'exists'),
-        hasLength(2),
-        reason: 'one existence check per file of the pair, and no delete',
+        hasLength(1 + kSnapshotExtensions.length),
+        reason: 'one existence check for the sidecar and one for each '
+            'spelling a snapshot may have (DR-015), and no delete',
       );
       expect(made.fs.journal, isEmpty);
     });
@@ -571,16 +629,16 @@ void main() {
 
         // B has twenty minutes of unsaved work behind a snapshot.
         await b.write(
-          sidecar: _sidecar('doc-1', realPath: r'C:\jobs\Smith.rackmate'),
+          sidecar: _sidecar('doc-1', realPath: r'C:\jobs\Smith.rmpj'),
           documentBytes: _doc(600),
         );
 
-        // A saves Smith.rackmate — a save with nothing to do with B — and
+        // A saves Smith.rmpj — a save with nothing to do with B — and
         // step 7 asks the recovery store to retire the snapshot.
         await made.store.delete('doc-1');
 
         expect(
-          made.fs.state.files.containsKey(r'C:\data\recovery\doc-1.rackmate'),
+          made.fs.state.files.containsKey(r'C:\data\recovery\doc-1.rmpj'),
           isTrue,
           reason:
               "twenty minutes of B's work, with no safety net at all and "
@@ -626,7 +684,7 @@ void main() {
         // the startup prompt would fire forever.
         final made = _make(
           files: {
-            r'C:\data\recovery\doc-1.rackmate': _doc(64),
+            r'C:\data\recovery\doc-1.rmpj': _doc(64),
             r'C:\data\recovery\doc-1.json': Uint8List.fromList(
               utf8.encode(
                 jsonEncode(
@@ -702,7 +760,7 @@ void main() {
     test('a complete pair is a survivor with its sidecar intact', () async {
       final made = _make(dirs: {_recoveryDir});
       await made.store.write(
-        sidecar: _sidecar('doc-1', realPath: r'C:\jobs\Smith.rackmate'),
+        sidecar: _sidecar('doc-1', realPath: r'C:\jobs\Smith.rmpj'),
         documentBytes: _doc(64),
       );
 
@@ -710,7 +768,7 @@ void main() {
       expect(result.survivors, hasLength(1));
       final survivor = result.survivors.single;
       expect(survivor.sidecar.displayName, 'Smith Residence');
-      expect(survivor.sidecar.realPath, r'C:\jobs\Smith.rackmate');
+      expect(survivor.sidecar.realPath, r'C:\jobs\Smith.rmpj');
       expect(survivor.sidecar.unsavedEditCount, 12);
       expect(await made.store.readSnapshot(survivor), orderedEquals(_doc(64)));
     });
@@ -720,7 +778,7 @@ void main() {
       // construction either incomplete or unattributable, so there is
       // nothing to ask the user about.
       final made = _make(
-        files: {r'C:\data\recovery\orphan.rackmate': _doc(64)},
+        files: {r'C:\data\recovery\orphan.rmpj': _doc(64)},
         dirs: {_recoveryDir},
       );
 
@@ -728,7 +786,7 @@ void main() {
       expect(result.survivors, isEmpty);
       expect(result.orphanedSnapshots, 1);
       expect(
-        made.fs.state.files.containsKey(r'C:\data\recovery\orphan.rackmate'),
+        made.fs.state.files.containsKey(r'C:\data\recovery\orphan.rmpj'),
         isFalse,
       );
     });
@@ -757,7 +815,7 @@ void main() {
       // describe its snapshot, so the pair cannot be offered.
       final made = _make(
         files: {
-          r'C:\data\recovery\bad.rackmate': _doc(64),
+          r'C:\data\recovery\bad.rmpj': _doc(64),
           r'C:\data\recovery\bad.json': Uint8List.fromList(
             utf8.encode('{ not json'),
           ),
@@ -904,7 +962,7 @@ void main() {
       // exactly like an interrupted write. A concurrent launch used to
       // delete it and call that housekeeping.
       final made = _make(
-        files: {r'C:\data\recovery\shared-doc~sess-B.rackmate': _doc(64)},
+        files: {r'C:\data\recovery\shared-doc~sess-B.rmpj': _doc(64)},
         dirs: {_recoveryDir},
       );
       await liveInstance(made.fs);
@@ -914,7 +972,7 @@ void main() {
       expect(scan.orphanedSnapshots, 0);
       expect(
         made.fs.state.files.containsKey(
-          r'C:\data\recovery\shared-doc~sess-B.rackmate',
+          r'C:\data\recovery\shared-doc~sess-B.rmpj',
         ),
         isTrue,
       );
@@ -995,7 +1053,7 @@ void main() {
     test('a dead session’s interrupted write is swept', () async {
       final made = _make(
         files: {
-          r'C:\data\recovery\dead-doc~sess-dead.rackmate.tmp': _doc(600),
+          r'C:\data\recovery\dead-doc~sess-dead.rmpj.tmp': _doc(600),
           r'C:\data\recovery\dead-doc~sess-dead.json.tmp': _doc(40),
         },
         dirs: {_recoveryDir},
@@ -1011,10 +1069,10 @@ void main() {
     });
 
     test('a stray is NOT mistaken for a snapshot or a sidecar', () async {
-      // `<slot>.rackmate.tmp` classified as a snapshot would be counted as
+      // `<slot>.rmpj.tmp` classified as a snapshot would be counted as
       // an orphan and would drag its real pair's bookkeeping with it.
       final made = _make(
-        files: {r'C:\data\recovery\dead~sess-dead.rackmate.tmp': _doc(8)},
+        files: {r'C:\data\recovery\dead~sess-dead.rmpj.tmp': _doc(8)},
         dirs: {_recoveryDir},
       );
 
@@ -1027,7 +1085,7 @@ void main() {
 
     test('a LIVE instance’s in-flight tmp is left alone', () async {
       final made = _make(
-        files: {r'C:\data\recovery\shared~sess-B.rackmate.tmp': _doc(600)},
+        files: {r'C:\data\recovery\shared~sess-B.rmpj.tmp': _doc(600)},
         dirs: {_recoveryDir},
       );
       final b = _storeOver(made.fs, sessionId: 'sess-B');
@@ -1038,7 +1096,7 @@ void main() {
       expect(scan.sweptStrays, 0);
       expect(
         made.fs.state.files.containsKey(
-          r'C:\data\recovery\shared~sess-B.rackmate.tmp',
+          r'C:\data\recovery\shared~sess-B.rmpj.tmp',
         ),
         isTrue,
         reason:
@@ -1066,14 +1124,14 @@ void main() {
 
   group('the sidecar carries what the prompt actually needs', () {
     test('round-trips through JSON', () {
-      final original = _sidecar('doc-1', realPath: r'C:\jobs\Smith.rackmate');
+      final original = _sidecar('doc-1', realPath: r'C:\jobs\Smith.rmpj');
       final parsed = RecoverySidecar.fromJson(
         jsonDecode(jsonEncode(original.toJson())),
       );
 
       expect(parsed, isNotNull);
       expect(parsed!.docId, 'doc-1');
-      expect(parsed.realPath, r'C:\jobs\Smith.rackmate');
+      expect(parsed.realPath, r'C:\jobs\Smith.rmpj');
       expect(parsed.displayName, 'Smith Residence');
       expect(parsed.sequence, 412);
       expect(parsed.unsavedEditCount, 12);

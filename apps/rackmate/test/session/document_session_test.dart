@@ -1,7 +1,7 @@
 // The window title, the display name, and the dirty bit that both read.
 //
 // ALL PURE, so `*Smith Residence — RackMate` is checked without a window
-// manager and `C:\jobs\Smith.rackmate` is checked on a Linux CI runner.
+// manager and `C:\jobs\Smith.rmpj` is checked on a Linux CI runner.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:rackmate/src/session/blank_document.dart';
@@ -59,7 +59,7 @@ void main() {
       expect(
         displayNameFor(
           projectName: 'Smith Residence',
-          filePath: r'C:\jobs\smith-v3.rackmate',
+          filePath: r'C:\jobs\smith-v3.rmpj',
           context: _windows,
         ),
         'Smith Residence',
@@ -70,7 +70,7 @@ void main() {
       expect(
         displayNameFor(
           projectName: '   ',
-          filePath: r'C:\jobs\smith-v3.rackmate',
+          filePath: r'C:\jobs\smith-v3.rmpj',
           context: _windows,
         ),
         'smith-v3',
@@ -190,7 +190,7 @@ void main() {
     test('requiresSaveAs when there is no path', () {
       expect(_session().requiresSaveAs, isTrue);
       expect(
-        _session(filePath: r'C:\jobs\Smith.rackmate').requiresSaveAs,
+        _session(filePath: r'C:\jobs\Smith.rmpj').requiresSaveAs,
         isFalse,
       );
     });
@@ -200,7 +200,7 @@ void main() {
       // A file this build only partly understands must not be overwritten
       // by it — but the user must never be blocked from keeping work.
       final session = _session(
-        filePath: r'C:\jobs\Smith.rackmate',
+        filePath: r'C:\jobs\Smith.rmpj',
         openReadOnly: true,
       );
       expect(session.requiresSaveAs, isTrue);
@@ -209,18 +209,18 @@ void main() {
     test('recordSave clears read-only, because the bytes on disk are now '
         'ours', () {
       final session = _session(
-        filePath: r'C:\jobs\Smith.rackmate',
+        filePath: r'C:\jobs\Smith.rmpj',
         openReadOnly: true,
       );
       expect(session.requiresSaveAs, isTrue);
 
       session.recordSave(
-        SavedFileFixture.at(r'C:\jobs\Copy.rackmate'),
+        SavedFileFixture.at(r'C:\jobs\Copy.rmpj'),
         status: 'Saved.',
       );
 
       expect(session.openReadOnly, isFalse);
-      expect(session.filePath, r'C:\jobs\Copy.rackmate');
+      expect(session.filePath, r'C:\jobs\Copy.rmpj');
       expect(session.status, 'Saved.');
     });
 
@@ -245,7 +245,7 @@ void main() {
 
       session.adopt(
         controller: replacement,
-        filePath: r'C:\jobs\Jones.rackmate',
+        filePath: r'C:\jobs\Jones.rmpj',
         openReadOnly: false,
         baseline: FileBaseline.absent,
       );
@@ -287,7 +287,7 @@ void main() {
       expect(
         displayNameFor(
           projectName: kDefaultProjectName,
-          filePath: r'C:\jobs\Smith.rackmate',
+          filePath: r'C:\jobs\Smith.rmpj',
           context: _windows,
         ),
         'Smith',
@@ -307,10 +307,10 @@ void main() {
   });
 
   group('copySuggestionFor', () {
-    test('a read-only document saves as "<name> (copy).rackmate"', () {
+    test('a read-only document saves as "<name> (copy).rmpj"', () {
       expect(
         copySuggestionFor('Smith Residence'),
-        'Smith Residence (copy).rackmate',
+        'Smith Residence (copy).rmpj',
       );
     });
   });

@@ -103,7 +103,7 @@ void main() {
       rack: sheet.role.perRack ? _rack() : null,
       revisions: revisions,
       scale: scale ?? DrawingScale.standard(8),
-      fileName: 'smith.rackmate',
+      fileName: 'smith.rmpj',
       issuedAt: issuedAt ?? DateTime.utc(2026, 7, 18),
       measurer: measurer,
     );
@@ -255,7 +255,7 @@ void main() {
           '25-1183',
           'DISC',
           'FILE',
-          'smith.rackmate',
+          'smith.rmpj',
           'NBS INTEGRATION LLC',
           'SHEET 1 OF 3',
           'SHEET NO.  T2.01',

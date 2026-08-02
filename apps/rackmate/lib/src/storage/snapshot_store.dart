@@ -58,9 +58,9 @@ final class SnapshotStore {
   String directoryFor(String docId) => context.join(root, docId);
 
   String pathFor(String docId, int sequence) =>
-      context.join(directoryFor(docId), '$sequence.rackmate');
+      context.join(directoryFor(docId), '$sequence$kDocumentExtension');
 
-  /// Stores [bytes] as `<docId>/<sequence>.rackmate`, then prunes.
+  /// Stores [bytes] as `<docId>/<sequence>.rmpj`, then prunes.
   ///
   /// Failure is reported but is NEVER fatal to the operation that
   /// triggered it: a snapshot that could not be taken is a lost safety
@@ -105,7 +105,20 @@ final class SnapshotStore {
   /// Sorted NUMERICALLY, not lexically. A lexical sort makes `10` sort
   /// before `9`, so the prune would delete the newest snapshot and keep
   /// the oldest — precisely inverting the feature.
-  Future<List<int>> sequencesFor(String docId) async {
+  Future<List<int>> sequencesFor(String docId) async =>
+      [for (final e in await _entriesFor(docId)) e.sequence];
+
+  /// The snapshots stored for [docId] with the path each ACTUALLY has,
+  /// ascending by sequence.
+  ///
+  /// THE PATH IS CARRIED RATHER THAN REBUILT, and after DR-015 it has to
+  /// be. A snapshot written by an earlier build is `<sequence>.rackmate`;
+  /// `pathFor` now spells `.rmpj`. A prune that rebuilt the name would
+  /// COUNT the old file and then fail to delete it — so the ten-per-
+  /// document cap would apply to the new files only, the old ones would
+  /// sit in AppData forever, and the failure would be silent because a
+  /// snapshot that will not delete is deliberately swallowed.
+  Future<List<({int sequence, String path})>> _entriesFor(String docId) async {
     final directory = directoryFor(docId);
     if (!await fs.exists(directory)) return const [];
     final List<String> entries;
@@ -117,29 +130,38 @@ final class SnapshotStore {
     } catch (_) {
       return const [];
     }
-    final sequences = <int>[];
+    final found = <({int sequence, String path})>[];
     for (final entry in entries) {
       final name = context.basename(entry);
-      if (!name.endsWith('.rackmate')) continue;
+      // EVERY SPELLING THIS APP HAS EVER WRITTEN (DR-015), because a
+      // snapshot IS an ordinary document and the rename did not touch a
+      // byte inside one.
+      final ext = kDocumentExtensions.firstWhere(
+        name.endsWith,
+        orElse: () => '',
+      );
+      if (ext.isEmpty) continue;
       final parsed = int.tryParse(
-        name.substring(0, name.length - '.rackmate'.length),
+        name.substring(0, name.length - ext.length),
       );
       // A file whose stem is not an integer is not one of ours; leave it.
-      if (parsed != null) sequences.add(parsed);
+      if (parsed != null) {
+        found.add((sequence: parsed, path: context.join(directory, name)));
+      }
     }
-    return sequences..sort();
+    return found..sort((a, b) => a.sequence.compareTo(b.sequence));
   }
 
   /// Deletes all but the newest [maxPerDocument] snapshots for [docId].
   /// Returns how many were removed.
   Future<int> prune(String docId) async {
-    final sequences = await sequencesFor(docId);
-    if (sequences.length <= maxPerDocument) return 0;
-    final excess = sequences.take(sequences.length - maxPerDocument);
+    final stored = await _entriesFor(docId);
+    if (stored.length <= maxPerDocument) return 0;
+    final excess = stored.take(stored.length - maxPerDocument);
     var removed = 0;
-    for (final sequence in excess) {
+    for (final entry in excess) {
       try {
-        await fs.delete(pathFor(docId, sequence));
+        await fs.delete(entry.path);
         removed++;
         // A snapshot that will not delete is disk clutter, not a failure
         // of the operation that asked for the prune.

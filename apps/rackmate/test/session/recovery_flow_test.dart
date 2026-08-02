@@ -41,13 +41,13 @@ final String _survivorSlot = recoverySlotFor(
   documentId: _crashedId,
   sessionId: _crashedSessionId,
 );
-final _snapshot = '$_recoveryDir\\$_survivorSlot.rackmate';
+final _snapshot = '$_recoveryDir\\$_survivorSlot.rmpj';
 final _sidecar = '$_recoveryDir\\$_survivorSlot.json';
 
 /// Where THIS session would file its own snapshot of the same document.
 final String _liveSnapshot = testSnapshotPath(_crashedId);
 
-const _realPath = r'C:\jobs\Smith.rackmate';
+const _realPath = r'C:\jobs\Smith.rmpj';
 
 Uint8List _snapshotBytes({String projectName = 'Smith Residence'}) {
   final doc = buildBlankDocument(
@@ -178,7 +178,7 @@ void main() {
       // again — so one partial document of up to ~600 KB was left behind
       // per crash-during-snapshot-write, growing without bound inside the
       // data root, which in portable mode is the user's USB stick.
-      const stray = r'C:\data\recovery\dead-doc~sess-dead.rackmate.tmp';
+      const stray = r'C:\data\recovery\dead-doc~sess-dead.rmpj.tmp';
       const straySidecar = r'C:\data\recovery\dead-doc~sess-dead.json.tmp';
       final fs = FakeFileStore(
         initialDirectories: {kTestDataRoot, kTestJobsDir, _recoveryDir, 'C:'},
@@ -213,7 +213,7 @@ void main() {
       // been written to their file and must not read as though it had.
       expect(t.services.session.isDirty, isTrue);
       expect(t.services.session.status, contains('Recovered from'));
-      expect(t.services.session.status, contains('Smith.rackmate'));
+      expect(t.services.session.status, contains('Smith.rmpj'));
     });
 
     test('the snapshot SURVIVES the recovery and dies only at the next '
@@ -316,7 +316,7 @@ void main() {
       // \\officenas\jobs\… , carried to a machine without that share, made
       // startup wait on it — `exists` on a dead UNC path was measured at
       // 1261 ms and `DartIoFileStore.exists` probes File then Directory.
-      const onDeadShare = r'\\officenas\jobs\Smith.rackmate';
+      const onDeadShare = r'\\officenas\jobs\Smith.rmpj';
       final fs = FakeFileStore(
         initialDirectories: {kTestDataRoot, kTestJobsDir, _recoveryDir, 'C:'},
         initialFiles: {
@@ -489,10 +489,10 @@ void main() {
       documentId: _crashedId,
       sessionId: liveSession,
     );
-    final liveSnapshot = '$_recoveryDir\\$liveSlot.rackmate';
+    final liveSnapshot = '$_recoveryDir\\$liveSlot.rmpj';
     final liveSidecar = '$_recoveryDir\\$liveSlot.json';
 
-    /// Instance B: open Smith.rackmate, make unsaved changes, autosave —
+    /// Instance B: open Smith.rmpj, make unsaved changes, autosave —
     /// and KEEP RUNNING. No `cleanShutdown`, and no `releaseAllLeases`,
     /// because this process has not died.
     Future<TestSession> runningWithUnsavedWork(FakeFileStore fs) async {
@@ -678,7 +678,7 @@ void main() {
       /// number does.
       int? crashedEditCount;
 
-      /// Session one: open Smith.rackmate, work on it, autosave, then die
+      /// Session one: open Smith.rmpj, work on it, autosave, then die
       /// without a clean shutdown. Returns the disk it left behind.
       Future<FakeFileStore> crashDuringWork() async {
         final fs = FakeFileStore(
@@ -763,7 +763,7 @@ void main() {
         final fs = await crashDuringWork();
         final two = await relaunchAndKeepForLater(fs);
 
-        // The user opens Smith.rackmate to look at it. It carries the
+        // The user opens Smith.rmpj to look at it. It carries the
         // SAME document id as the survivor, because it is the same
         // project — that is the entire trap.
         expect(await two.services.controller.openPath(_realPath), isTrue);
@@ -865,7 +865,7 @@ void main() {
         initialFiles: {
           _snapshot: _snapshotBytes(),
           _sidecar: _sidecarBytes(),
-          r'C:\data\recovery\older-doc.rackmate': _snapshotBytes(),
+          r'C:\data\recovery\older-doc.rmpj': _snapshotBytes(),
           r'C:\data\recovery\older-doc.json': Uint8List.fromList(
             utf8.encode(
               jsonEncode({
@@ -908,7 +908,7 @@ void main() {
           initialFiles: {
             _snapshot: _snapshotBytes(),
             _sidecar: _sidecarBytes(realPath: null),
-            r'C:\data\recovery\older-doc.rackmate': _snapshotBytes(),
+            r'C:\data\recovery\older-doc.rmpj': _snapshotBytes(),
             r'C:\data\recovery\older-doc.json': Uint8List.fromList(
               utf8.encode(
                 jsonEncode({
@@ -932,7 +932,7 @@ void main() {
 
         expect(t.prompts.recoveries, hasLength(1));
         expect(
-          fs.state.files.containsKey(r'C:\data\recovery\older-doc.rackmate'),
+          fs.state.files.containsKey(r'C:\data\recovery\older-doc.rmpj'),
           isTrue,
         );
       },

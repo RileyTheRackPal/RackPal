@@ -111,7 +111,7 @@ void main() {
       ExportRequest(
         documentJson: const JsonDocumentCodec().write(_document()),
         fontBytes: <FontRef, Uint8List>{_font: fontBytes},
-        fileName: 'fixture.rackmate',
+        fileName: 'fixture.rmpj',
         issuedAt: issuedAt,
       ),
     );
@@ -217,7 +217,7 @@ void main() {
           ExportRequest(
             documentJson: const JsonDocumentCodec().write(_document()),
             fontBytes: const <FontRef, Uint8List>{},
-            fileName: 'fixture.rackmate',
+            fileName: 'fixture.rmpj',
             issuedAt: DateTime.utc(2026, 7, 18),
           ),
         ),
@@ -243,7 +243,7 @@ void main() {
         ExportRequest(
           documentJson: const JsonDocumentCodec().write(rackless),
           fontBytes: <FontRef, Uint8List>{_font: fontBytes},
-          fileName: 'empty.rackmate',
+          fileName: 'empty.rmpj',
           issuedAt: DateTime.utc(2026, 7, 18),
         ),
       );
@@ -259,7 +259,7 @@ void main() {
         ExportRequest(
           documentJson: Uint8List.fromList('not json'.codeUnits),
           fontBytes: <FontRef, Uint8List>{_font: fontBytes},
-          fileName: 'junk.rackmate',
+          fileName: 'junk.rmpj',
           issuedAt: DateTime.utc(2026, 7, 18),
         ),
       );

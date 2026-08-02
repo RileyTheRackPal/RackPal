@@ -11,21 +11,21 @@ import 'package:rackmate_ui/rackmate_ui.dart';
 
 const _entries = [
   RecentEntryView(
-    id: r'C:\jobs\Smith.rackmate',
+    id: r'C:\jobs\Smith.rmpj',
     displayName: 'Smith Residence',
-    subtitle: r'C:\jobs\Smith.rackmate',
+    subtitle: r'C:\jobs\Smith.rmpj',
     status: RecentEntryStatus.ok,
   ),
   RecentEntryView(
-    id: r'\\NAS\jobs\Jones.rackmate',
+    id: r'\\NAS\jobs\Jones.rmpj',
     displayName: 'Jones Loft',
-    subtitle: r'\\NAS\jobs\Jones.rackmate',
+    subtitle: r'\\NAS\jobs\Jones.rmpj',
     status: RecentEntryStatus.checking,
   ),
   RecentEntryView(
-    id: r'D:\gone\Brown.rackmate',
+    id: r'D:\gone\Brown.rmpj',
     displayName: 'Brown Cottage',
-    subtitle: r'D:\gone\Brown.rackmate',
+    subtitle: r'D:\gone\Brown.rmpj',
     status: RecentEntryStatus.unreachable,
   ),
 ];
@@ -69,7 +69,7 @@ void main() {
     final opened = await _mount(tester, _entries);
 
     expect(
-      find.text(r'\\NAS\jobs\Jones.rackmate · checking…'),
+      find.text(r'\\NAS\jobs\Jones.rmpj · checking…'),
       findsOneWidget,
     );
     await tester.tap(find.text('Jones Loft'));
@@ -77,7 +77,7 @@ void main() {
 
     // A slow network share is not a broken entry. Disabling the row would
     // turn a 600 ms wait into a permanently unreachable file.
-    expect(opened, [r'\\NAS\jobs\Jones.rackmate']);
+    expect(opened, [r'\\NAS\jobs\Jones.rmpj']);
   });
 
   testWidgets('an unreachable row says so and STAYS CLICKABLE', (
@@ -86,7 +86,7 @@ void main() {
     final opened = await _mount(tester, _entries);
 
     expect(
-      find.text(r'D:\gone\Brown.rackmate · not available'),
+      find.text(r'D:\gone\Brown.rmpj · not available'),
       findsOneWidget,
     );
     await tester.tap(find.text('Brown Cottage'));
@@ -94,12 +94,12 @@ void main() {
 
     // Clicking it is the ONLY thing that can ever evict it — the open
     // has to be attempted before the failure can be judged definitive.
-    expect(opened, [r'D:\gone\Brown.rackmate']);
+    expect(opened, [r'D:\gone\Brown.rmpj']);
   });
 
   testWidgets('an ok row carries no state suffix', (tester) async {
     await _mount(tester, _entries);
-    expect(find.text(r'C:\jobs\Smith.rackmate'), findsOneWidget);
+    expect(find.text(r'C:\jobs\Smith.rmpj'), findsOneWidget);
   });
 
   testWidgets('an empty list says "No recent files" and disables it', (

@@ -12,7 +12,7 @@
 // covers the codec fixtures — and everything else fell through to
 // `* text=auto` with `eol` unspecified, so on Windows it checks out with
 // whatever `core.autocrlf` says. The four starters are
-// `assets/starters/*.rackmate`, matched no rule, and were UNTRACKED: the
+// `assets/starters/*.rmpj`, matched no rule, and were UNTRACKED: the
 // moment they were committed, the next clone on a Windows machine would
 // have received them CRLF-normalised and the byte-exact suite would have
 // failed on a clean checkout while staying green for everyone who already
@@ -482,12 +482,12 @@ void main() {
   // are not in the repository — including the exact one this task was
   // raised against.
   group('the rule itself can fail', () {
-    const starter = 'apps/rackmate/assets/starters/apartment.rackmate';
+    const starter = 'apps/rackmate/assets/starters/apartment.rmpj';
     const shipping = '''
 * text=auto
 *.dart   text eol=lf
 *.json   text eol=lf
-*.rackmate  text eol=lf
+*.rmpj  text eol=lf
 *.png    binary
 ''';
 
@@ -495,7 +495,7 @@ void main() {
       expect(resolveCheckout(parseGitAttributes(shipping), starter), 'lf');
     });
 
-    test('THE DEFECT: no rule for .rackmate falls through to text=auto', () {
+    test('THE DEFECT: no rule for .rmpj falls through to text=auto', () {
       // Verbatim the state this task was raised against: `*.json` pinned,
       // the starters matching nothing but `* text=auto`. `git check-attr`
       // reported exactly this — "text: auto, eol: unspecified".
@@ -515,7 +515,7 @@ void main() {
     test('...and so does `text` without an `eol`', () {
       // The near miss. `text` alone normalises going in and checks out
       // per core.autocrlf coming back — CRLF on a default Windows install.
-      const halfDone = '* text=auto\n*.rackmate  text\n';
+      const halfDone = '* text=auto\n*.rmpj  text\n';
       expect(
         resolveCheckout(parseGitAttributes(halfDone), starter),
         'platform',
@@ -545,41 +545,41 @@ void main() {
           starter,
         ),
         'lf',
-        reason: '`assets/*` does not reach `assets/starters/x.rackmate`',
+        reason: '`assets/*` does not reach `assets/starters/x.rmpj`',
       );
       // ...but this one is not, and last-match-wins is why it has to be
       // the whole file that is read and not the first hit.
-      const clobbered = '$shipping\n*.rackmate  text eol=crlf\n';
+      const clobbered = '$shipping\n*.rmpj  text eol=crlf\n';
       expect(resolveCheckout(parseGitAttributes(clobbered), starter), 'crlf');
       expect(kByteSafeResolutions.contains('crlf'), isFalse);
     });
 
     test('`binary` is read as the macro it is', () {
-      const binary = '* text=auto\n*.rackmate  binary\n';
+      const binary = '* text=auto\n*.rmpj  binary\n';
       expect(resolveCheckout(parseGitAttributes(binary), starter), 'binary');
     });
 
     test('a slashless pattern matches at any depth; an anchored one does '
         'not', () {
-      expect(patternMatches('*.rackmate', 'deep/nested/x.rackmate'), isTrue);
-      expect(patternMatches('*.rackmate', 'x.rackmate'), isTrue);
-      expect(patternMatches('assets/*.rackmate', 'assets/x.rackmate'), isTrue);
+      expect(patternMatches('*.rmpj', 'deep/nested/x.rmpj'), isTrue);
+      expect(patternMatches('*.rmpj', 'x.rmpj'), isTrue);
+      expect(patternMatches('assets/*.rmpj', 'assets/x.rmpj'), isTrue);
       expect(
-        patternMatches('assets/*.rackmate', 'apps/assets/x.rackmate'),
+        patternMatches('assets/*.rmpj', 'apps/assets/x.rmpj'),
         isFalse,
         reason: 'a pattern with a slash is anchored to the repository root',
       );
       expect(
-        patternMatches('assets/*.rackmate', 'assets/deep/x.rackmate'),
+        patternMatches('assets/*.rmpj', 'assets/deep/x.rmpj'),
         isFalse,
         reason: '`*` does not cross a separator in an anchored pattern',
       );
-      expect(patternMatches('*.json', 'x.rackmate'), isFalse);
+      expect(patternMatches('*.json', 'x.rmpj'), isFalse);
     });
 
     test('comments and blank lines are not rules', () {
       const noisy = '''
-# *.rackmate  text eol=lf
+# *.rmpj  text eol=lf
    # indented, still a comment
 
 * text=auto

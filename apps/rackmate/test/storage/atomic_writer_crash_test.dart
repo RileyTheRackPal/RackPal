@@ -83,7 +83,7 @@ void expectSaveInvariant(
       target,
       isNotNull,
       reason:
-          'I1 violated at $where: <target>.rackmate DOES NOT EXIST. '
+          'I1 violated at $where: <target>.rmpj DOES NOT EXIST. '
           'A hard kill here leaves the user opening Explorer to find '
           'their job gone.',
     );
@@ -116,7 +116,7 @@ void expectSaveInvariant(
   }
 
   // --- I4: exactly four names, ever. (CR-098) --------------------------
-  const allowed = {'Smith.rackmate'};
+  const allowed = {'Smith.rmpj'};
   for (final path in state.files.keys) {
     final name = _windows.basename(path);
     final stem = name
@@ -257,7 +257,7 @@ void main() {
       // exactly where a save that never fsyncs hides: NTFS journals the
       // directory entry the promote produces while the tmp's data extents
       // are still only in the cache, so the rename lands on blocks nobody
-      // ever wrote. `Smith.rackmate` is then torn — I1 violated — and the
+      // ever wrote. `Smith.rmpj` is then torn — I1 violated — and the
       // `.bak` beside it holds the version from BEFORE the save that
       // appeared to succeed.
       for (final firstSave in [false, true]) {
@@ -683,7 +683,7 @@ void main() {
       // keepBackup: false. Measuring `.bak.tmp` for them refuses eight
       // characters early — and per the mid-session finding, a recovery
       // snapshot that never writes tells nobody.
-      final stem = 'x' * (255 - r'C:\jobs\'.length - '.rackmate'.length);
+      final stem = 'x' * (255 - r'C:\jobs\'.length - '.rmpj'.length);
       final tight = SavePaths.forTarget(
         r'C:\jobs\'
         '$stem',

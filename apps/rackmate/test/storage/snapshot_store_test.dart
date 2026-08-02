@@ -1,7 +1,7 @@
 // Pre-update snapshots, pruned to the last ten.
 //
 // The assertion worth stating up front is the NUMERIC sort. Sorting
-// `<sequence>.rackmate` names lexically makes "10" sort before "9", so
+// `<sequence>.rmpj` names lexically makes "10" sort before "9", so
 // the prune would delete the NEWEST snapshot and keep the oldest —
 // precisely inverting the feature, and silently, because ten files would
 // still be there afterwards.
@@ -18,7 +18,7 @@ import 'fake_file_store.dart';
 
 final _windows = p.Context(style: p.Style.windows);
 const _dataRoot = r'C:\data';
-const _first = r'C:\data\snapshots\doc-1\1.rackmate';
+const _first = r'C:\data\snapshots\doc-1\1.rmpj';
 
 ({SnapshotStore store, FakeFileStore fs}) _make({
   Map<String, Uint8List>? files,
@@ -52,7 +52,7 @@ Uint8List _bytes(int n, {int fill = 1}) =>
     Uint8List.fromList(List<int>.filled(n, fill));
 
 void main() {
-  test('a snapshot lands at snapshots/<docId>/<sequence>.rackmate', () async {
+  test('a snapshot lands at snapshots/<docId>/<sequence>.rmpj', () async {
     final made = _make();
     final result = await made.store.write(
       docId: 'doc-1',
@@ -63,10 +63,10 @@ void main() {
     expect(result, isA<Ok<String>>());
     expect(
       (result as Ok<String>).value,
-      r'C:\data\snapshots\doc-1\412.rackmate',
+      r'C:\data\snapshots\doc-1\412.rmpj',
     );
     expect(
-      made.fs.state.files.containsKey(r'C:\data\snapshots\doc-1\412.rackmate'),
+      made.fs.state.files.containsKey(r'C:\data\snapshots\doc-1\412.rmpj'),
       isTrue,
     );
   });
@@ -81,6 +81,63 @@ void main() {
     final remaining = await made.store.sequencesFor('doc-1');
     expect(remaining, hasLength(kMaxSnapshotsPerDocument));
     expect(remaining, [3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  });
+
+  test('snapshots written before DR-015 are still counted AND still '
+      'pruned (#170)', () async {
+    // ── A CAP THAT ONLY APPLIES TO NEW FILES IS NOT A CAP ────────────
+    // `pathFor` now spells `.rmpj`. A prune that rebuilt the name from it
+    // would COUNT the ten `.rackmate` snapshots an earlier build left —
+    // so the cap reads as already-met — and then fail to delete them,
+    // silently, because a snapshot that will not delete is deliberately
+    // swallowed. The old files would sit in AppData forever and the new
+    // ones would pile up behind them.
+    final made = _make(
+      files: {
+        for (var i = 1; i <= 10; i++)
+          p.Context(style: p.Style.windows).join(
+                _dataRoot,
+                'snapshots',
+                'doc-1',
+                '$i.rackmate',
+              ):
+              _bytes(4),
+      },
+      dirs: {
+        p.Context(
+          style: p.Style.windows,
+        ).join(_dataRoot, 'snapshots', 'doc-1'),
+      },
+    );
+
+    expect(
+      await made.store.sequencesFor('doc-1'),
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      reason: 'legacy snapshots are invisible to the cap',
+    );
+
+    // Two more in the CURRENT spelling takes it to twelve, so the prune
+    // must remove the two oldest — both of which are legacy files.
+    for (final sequence in [11, 12]) {
+      await made.store.write(
+        docId: 'doc-1',
+        sequence: sequence,
+        bytes: _bytes(4),
+      );
+    }
+
+    expect(
+      await made.store.sequencesFor('doc-1'),
+      [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      reason: 'the two oldest were legacy-spelled, and the prune rebuilt '
+          'their paths with the new extension instead of using the one '
+          'it found on disk',
+    );
+    expect(
+      made.fs.state.files.keys.where((k) => k.endsWith('1.rackmate')),
+      isEmpty,
+      reason: 'they are gone from disk, not merely from the listing',
+    );
   });
 
   test('THE SORT IS NUMERIC — sequencesFor returns ascending INTEGERS, '
@@ -144,8 +201,8 @@ void main() {
       'alone', () async {
     final made = _make(
       files: {
-        r'C:\data\snapshots\doc-1\notes.rackmate': _bytes(4),
-        r'C:\data\snapshots\doc-1\1.rackmate': _bytes(4),
+        r'C:\data\snapshots\doc-1\notes.rmpj': _bytes(4),
+        r'C:\data\snapshots\doc-1\1.rmpj': _bytes(4),
       },
       dirs: {r'C:\data\snapshots', r'C:\data\snapshots\doc-1'},
     );
@@ -154,7 +211,7 @@ void main() {
     await made.store.prune('doc-1');
     expect(
       made.fs.state.files.containsKey(
-        r'C:\data\snapshots\doc-1\notes.rackmate',
+        r'C:\data\snapshots\doc-1\notes.rmpj',
       ),
       isTrue,
     );

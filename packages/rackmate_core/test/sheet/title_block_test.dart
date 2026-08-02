@@ -25,7 +25,7 @@ TitleBlockFields fieldsFor({
   bool noRack = false,
   List<RevisionEntry> revisions = const <RevisionEntry>[],
   DrawingScale? scale,
-  String fileName = 'smith.rackmate',
+  String fileName = 'smith.rmpj',
   DateTime? issuedAt,
 }) {
   final set = oneRackSheetSet();
@@ -122,8 +122,8 @@ void main() {
     });
 
     test('the only free-form String is the file name of the document', () {
-      final fields = fieldsFor(fileName: 'smith-residence.rackmate');
-      expect(valueOf(fields, 'FILE'), 'smith-residence.rackmate');
+      final fields = fieldsFor(fileName: 'smith-residence.rmpj');
+      expect(valueOf(fields, 'FILE'), 'smith-residence.rmpj');
     });
   });
 

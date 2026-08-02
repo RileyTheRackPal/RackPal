@@ -114,7 +114,7 @@ void main() {
       ExportRequest(
         documentJson: const JsonDocumentCodec().write(doc),
         fontBytes: <FontRef, Uint8List>{_font: font},
-        fileName: 'notice.rackmate',
+        fileName: 'notice.rmpj',
         issuedAt: DateTime.utc(2026, 7, 18),
       ),
     );

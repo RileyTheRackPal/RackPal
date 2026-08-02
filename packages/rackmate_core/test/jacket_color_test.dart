@@ -176,7 +176,7 @@ void main() {
       // `familyColorOverrides` and `diversityFactorsByCategory` for a
       // reason that does NOT transfer: those three have emitted `{}` since
       // v1, so that empty object is already in the bytes of every
-      // `.rackmate` ever written. `jacketColorConventions` is NEW.
+      // `.rmpj` ever written. `jacketColorConventions` is NEW.
       // Emitting it unconditionally moved the bytes of every stored
       // document the instant it was loaded and saved, which is precisely
       // the property docs/03 §9.1 states as CR-117 and M0's exit criterion
@@ -308,7 +308,7 @@ void main() {
       // (`this.meaning = ''`), and the decoder required it: `asStr(null,
       // …)` throws, so a single missing key made a whole document
       // unopenable over a field whose absence and whose empty value are
-      // the same fact. A hand-edited `.rackmate` and an importer that
+      // the same fact. A hand-edited `.rmpj` and an importer that
       // knows only a name and a swatch both produce exactly this.
       //
       // MUTATION: put `asStr` back in `_decodeJacketColorDef` and this

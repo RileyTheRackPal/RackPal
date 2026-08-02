@@ -4,7 +4,7 @@
 // WHY THIS IS BUILD-TIME CODE AND NOT `lib/`
 // ==================================================================
 // docs/04-rack-editor.md §9 and AC-052 require the starters to be REAL
-// `.rackmate` FILES — "goldens, perf fixtures and screenshot source". A
+// `.rmpj` FILES — "goldens, perf fixtures and screenshot source". A
 // document rebuilt from Dart on every launch is none of those three: a
 // golden that regenerates itself cannot detect a codec regression, and a
 // perf fixture that never touches a disk does not measure the thing that
@@ -158,7 +158,7 @@ final class StarterAuthor {
     );
     // And the same again for the registries (DR-010 §11.10.2). THE FOUR
     // STARTERS ARE REGENERATED FOR THIS, deliberately: they are shipped
-    // fixtures rather than user data, so unlike a user's `.rackmate` they
+    // fixtures rather than user data, so unlike a user's `.rmpj` they
     // are rebuilt from the Dart master with a reviewable golden diff.
     doc.registries = buildSeedRegistries();
     return doc;

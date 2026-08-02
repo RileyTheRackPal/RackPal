@@ -23,14 +23,14 @@ import 'package:rackmate_ui/rackmate_ui.dart';
 import '../storage/fake_file_store.dart';
 import 'session_fakes.dart';
 
-const _target = r'C:\jobs\Smith.rackmate';
+const _target = r'C:\jobs\Smith.rmpj';
 
-const _other = r'C:\jobs\Jones.rackmate';
+const _other = r'C:\jobs\Jones.rmpj';
 
 /// `recents.json` inside the fake data root.
 const _recentsPath = r'C:\data\recents.json';
 
-/// A real, decodable `.rackmate` on the fake disk.
+/// A real, decodable `.rmpj` on the fake disk.
 Uint8List _documentBytes({String projectName = 'Jones Loft'}) {
   final doc = buildBlankDocument(
     now: DateTime.utc(2026),
@@ -161,10 +161,10 @@ void main() {
       expect(t.services.session.filePath, _other);
     });
 
-    test('the suggested name is "<name>.rackmate"', () async {
+    test('the suggested name is "<name>.rmpj"', () async {
       final t = await _session(savePaths: [_target]);
       await t.services.controller.save();
-      expect(t.picker.suggestedNames.single, 'Untitled.rackmate');
+      expect(t.picker.suggestedNames.single, 'Untitled.rmpj');
     });
 
     test('a second save writes the same path with no dialog', () async {
@@ -245,14 +245,14 @@ void main() {
         initialDirectories: {kTestDataRoot, 'C:', r'C:\other'},
       );
       final t = await _session(
-        savePaths: [_target, r'C:\other\Smith.rackmate'],
+        savePaths: [_target, r'C:\other\Smith.rmpj'],
         fs: fs,
         prompts: ScriptedPrompts(errorActions: [FileErrorActionId.saveAs]),
       );
 
       expect(await t.services.controller.save(), isTrue);
       expect(t.picker.saveCalls, 2);
-      expect(t.services.session.filePath, r'C:\other\Smith.rackmate');
+      expect(t.services.session.filePath, r'C:\other\Smith.rmpj');
     });
   });
 
@@ -449,7 +449,7 @@ void main() {
       // eviction call was a no-op whatever the rule said — inverting
       // `shouldEvictOnOpenFailure(OpenUnreachable)` to `true` left it
       // green. The mutation sweep found that; reading it did not.
-      const onDeadShare = r'\\NAS\jobs\Smith.rackmate';
+      const onDeadShare = r'\\NAS\jobs\Smith.rmpj';
       final fs = _diskWithRecent(onDeadShare);
       final t = await _session(fs: fs);
       expect(await t.services.controller.loadRecents(), hasLength(1));
@@ -472,7 +472,7 @@ void main() {
       final fs = FakeFileStore(
         initialDirectories: {kTestDataRoot, kTestJobsDir, 'C:'},
         initialFiles: {
-          r'C:\jobs\photos.rackmate': Uint8List.fromList(
+          r'C:\jobs\photos.rmpj': Uint8List.fromList(
             utf8.encode('{"generator":"Blender"}'),
           ),
         },
@@ -480,7 +480,7 @@ void main() {
       final t = await _session(fs: fs);
 
       expect(
-        await t.services.controller.openPath(r'C:\jobs\photos.rackmate'),
+        await t.services.controller.openPath(r'C:\jobs\photos.rmpj'),
         isFalse,
       );
       expect(
@@ -741,7 +741,7 @@ void main() {
     /// `session.document.sequence` at call time, which is the live value:
     /// it moves on every commit, so a v1 original preserved from a
     /// document the user had edited three times was filed as
-    /// `3.rackmate`, a name that describes neither its content nor its
+    /// `3.rmpj`, a name that describes neither its content nor its
     /// schema version. `SnapshotStore.prune` sorts numerically on exactly
     /// that stem, so the "last 10" window was ordered by a number that
     /// identified nothing.
@@ -788,10 +788,10 @@ void main() {
 
     test('...and it is filed under the sequence ITS OWN BYTES carry, not '
         'the live document’s', () async {
-      // `<sequence>.rackmate` is a claim about content. The bytes are the
+      // `<sequence>.rmpj` is a claim about content. The bytes are the
       // PRE-migration original; the live sequence advances on every commit
       // and had already moved by the time the save ran. Filing a v1
-      // original as `3.rackmate` names a state that never existed at that
+      // original as `3.rmpj` names a state that never existed at that
       // version — and `SnapshotStore.prune` orders the "last 10" window by
       // exactly this stem.
       final fs = diskWithV1();
@@ -1133,7 +1133,7 @@ void main() {
   group('read-only documents', () {
     test('Ctrl+S on a newer-schema file routes to Save As with a "(copy)" '
         'name', () async {
-      final t = await _session(savePaths: [r'C:\jobs\Smith (copy).rackmate']);
+      final t = await _session(savePaths: [r'C:\jobs\Smith (copy).rmpj']);
       t.services.session.adopt(
         controller: t.services.session.controller,
         filePath: _target,
@@ -1144,7 +1144,7 @@ void main() {
       expect(await t.services.controller.save(), isTrue);
 
       expect(t.picker.saveCalls, 1);
-      expect(t.picker.suggestedNames.single, 'Smith (copy).rackmate');
+      expect(t.picker.suggestedNames.single, 'Smith (copy).rmpj');
       // No longer read-only, because these bytes are ours.
       expect(t.services.session.openReadOnly, isFalse);
     });
@@ -1300,7 +1300,7 @@ void main() {
       );
       final t = await _session(
         fs: fs,
-        savePaths: [r'C:\jobs\A.rackmate', r'C:\jobs\B.rackmate'],
+        savePaths: [r'C:\jobs\A.rmpj', r'C:\jobs\B.rmpj'],
       );
 
       expect(await t.services.controller.saveAs(), isTrue);
@@ -1334,7 +1334,7 @@ void main() {
       );
       final t = await _session(
         fs: fs,
-        savePaths: [r'C:\jobs\A.rackmate'],
+        savePaths: [r'C:\jobs\A.rmpj'],
         openPaths: [null],
       );
 
@@ -1364,7 +1364,7 @@ void main() {
           ),
         },
       );
-      final t = await _session(fs: fs, savePaths: [r'C:\jobs\A.rackmate']);
+      final t = await _session(fs: fs, savePaths: [r'C:\jobs\A.rmpj']);
 
       /// `prefs.json` READ AS BYTES, never through `PrefsStore.load`.
       ///
@@ -1399,7 +1399,7 @@ void main() {
     test('nothing on the startup path stats an entry', () async {
       // `exists` on a dead UNC path was measured at 1261 ms. Ten of those
       // is ten times the whole cold-start budget.
-      const dead = r'\\NAS\jobs\Ghost.rackmate';
+      const dead = r'\\NAS\jobs\Ghost.rmpj';
       final fs = FakeFileStore(
         initialDirectories: {kTestDataRoot, kTestJobsDir, 'C:'},
         initialFiles: {
@@ -1430,7 +1430,7 @@ void main() {
 
     test('the menu-open probe reports `checking` for a hung entry rather '
         'than removing it', () async {
-      const dead = r'\\NAS\jobs\Ghost.rackmate';
+      const dead = r'\\NAS\jobs\Ghost.rmpj';
       final fs = FakeFileStore(
         initialDirectories: {kTestDataRoot, kTestJobsDir, 'C:'},
         hangingPaths: {dead},

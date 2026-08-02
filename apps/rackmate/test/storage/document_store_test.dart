@@ -170,7 +170,7 @@ void main() {
       // a sleeping NAS silently costs the user their recents entry.
       final made = _make();
       final result = await made.store.open(
-        r'\\NAS\jobs\Smith.rackmate',
+        r'\\NAS\jobs\Smith.rmpj',
       );
 
       final error = (result as Err<OpenedDocument>).error;

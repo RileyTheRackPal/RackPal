@@ -101,11 +101,18 @@ HRESULT ConfigureDialog(IFileDialog* dialog, const EncodableMap* args,
     return hr;
   }
 
-  // `.rackmate` has no registered UTI and no MIME type, so the filter is
-  // the extension and a label. The pattern carries the `*.`; the DEFAULT
+  // `.rmpj` has no registered UTI and no MIME type, so the filter is the
+  // extension and a label. The pattern carries the `*.`; the DEFAULT
   // extension does not — that difference is what the two calls below want.
+  //
+  // BOTH SPELLINGS IN ONE ENTRY, semicolon-separated, and one entry rather
+  // than two on purpose (DR-015). Two entries would make a user who has
+  // `.rackmate` files from an earlier build switch the filter combo to see
+  // them, which is a discoverability cliff for the exact people least
+  // likely to know the extension changed. One entry shows both in Open,
+  // and `SetDefaultExtension` below still decides what a Save gets.
   COMDLG_FILTERSPEC filter[] = {
-      {L"RackMate project", L"*.rackmate"},
+      {L"RackMate project", L"*.rmpj;*.rackmate"},
       {L"All files", L"*.*"},
   };
   hr = dialog->SetFileTypes(ARRAYSIZE(filter), filter);
@@ -116,11 +123,13 @@ HRESULT ConfigureDialog(IFileDialog* dialog, const EncodableMap* args,
   if (FAILED(hr)) {
     return hr;
   }
-  // So a user who types `Smith` gets `Smith.rackmate`. Dart's
+  // So a user who types `Smith` gets `Smith.rmpj`. Dart's
   // `SavePaths.forTarget` normalises the result anyway, in one place, and
   // still has to: the "All files" filter above lets the dialog hand back a
-  // bare name.
-  hr = dialog->SetDefaultExtension(L"rackmate");
+  // bare name. It also leaves a `.rackmate` the user is saving over
+  // exactly where it is — the default extension applies to a name that has
+  // none, not to one this app still recognises.
+  hr = dialog->SetDefaultExtension(L"rmpj");
   if (FAILED(hr)) {
     return hr;
   }

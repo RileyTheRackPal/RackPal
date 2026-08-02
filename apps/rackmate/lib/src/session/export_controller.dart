@@ -195,7 +195,7 @@ final class ExportController {
       SavePaths.forTarget(
         chosen,
         context: context,
-        extension: kPdfExtension,
+        extensions: const <String>[kPdfExtension],
       ),
       exported,
     );

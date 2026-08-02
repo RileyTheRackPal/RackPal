@@ -23,11 +23,11 @@ import 'package:rackmate_ui/rackmate_ui.dart' show FileErrorView;
 
 final _windows = p.Context(style: p.Style.windows);
 final _paths = SavePaths.forTarget(
-  r'C:\jobs\Smith.rackmate',
+  r'C:\jobs\Smith.rmpj',
   context: _windows,
 );
 final _unc = SavePaths.forTarget(
-  r'\\NAS\jobs\Smith.rackmate',
+  r'\\NAS\jobs\Smith.rmpj',
   context: _windows,
 );
 // LOCAL times, deliberately: `describeBackupTime` renders a wall clock,
@@ -36,7 +36,7 @@ final _unc = SavePaths.forTarget(
 // runner's timezone, which is exactly the kind of test nobody trusts.
 final _now = DateTime(2026, 7, 26, 16);
 final _backup = BackupFacts(
-  path: r'C:\jobs\Smith.rackmate.bak',
+  path: r'C:\jobs\Smith.rmpj.bak',
   modified: DateTime(2026, 7, 26, 14, 7),
   size: 4096,
 );
@@ -85,17 +85,17 @@ final List<SaveError> _allSaveErrors = [
 
 /// One instance of every `OpenError` variant.
 final List<OpenError> _allOpenErrors = [
-  const OpenNotFound(r'C:\jobs\Smith.rackmate'),
-  OpenNotFound(r'C:\jobs\Smith.rackmate', backup: _backup),
-  const OpenUnreachable(r'\\NAS\jobs\Smith.rackmate'),
-  const OpenPermissionDenied(r'C:\jobs\Smith.rackmate'),
+  const OpenNotFound(r'C:\jobs\Smith.rmpj'),
+  OpenNotFound(r'C:\jobs\Smith.rmpj', backup: _backup),
+  const OpenUnreachable(r'\\NAS\jobs\Smith.rmpj'),
+  const OpenPermissionDenied(r'C:\jobs\Smith.rmpj'),
   const OpenTooLarge(
-    r'C:\jobs\huge.rackmate',
+    r'C:\jobs\huge.rmpj',
     bytes: 199229440,
     limit: 67108864,
   ),
   const OpenTooDeeplyNested(
-    r'C:\jobs\deep.rackmate',
+    r'C:\jobs\deep.rmpj',
     depth: 100000,
     limit: 64,
   ),
@@ -103,20 +103,20 @@ final List<OpenError> _allOpenErrors = [
     r'C:\photos\holiday-photos.json',
     generator: 'Blender',
   ),
-  const OpenZipContainer(r'C:\jobs\archive.rackmate'),
+  const OpenZipContainer(r'C:\jobs\archive.rmpj'),
   const OpenNewerSchema(
-    r'C:\jobs\Smith.rackmate',
+    r'C:\jobs\Smith.rmpj',
     minReaderVersion: 3,
     supportedSchemaVersion: 2,
   ),
-  const OpenCorrupt(r'C:\jobs\Smith.rackmate', detail: 'unexpected token'),
+  const OpenCorrupt(r'C:\jobs\Smith.rmpj', detail: 'unexpected token'),
   OpenCorrupt(
-    r'C:\jobs\Smith.rackmate',
+    r'C:\jobs\Smith.rmpj',
     detail: 'unexpected token',
     backup: _backup,
   ),
   const OpenUnexpected(
-    r'C:\jobs\Smith.rackmate',
+    r'C:\jobs\Smith.rmpj',
     cause: 'boom',
     stackTrace: StackTrace.empty,
   ),
@@ -163,7 +163,7 @@ void main() {
   group('case 1 — a disconnected network drive', () {
     test('names the location and offers Save As / Try again / Cancel', () {
       final view = _save(SaveUnreachable(paths: _unc, step: 3));
-      expect(view.title, contains(r'\\NAS\jobs\Smith.rackmate'));
+      expect(view.title, contains(r'\\NAS\jobs\Smith.rmpj'));
       expect(view.title, contains('not available right now'));
       expect(_ids(view), [
         FileErrorActionId.saveAs,
@@ -173,7 +173,7 @@ void main() {
     });
 
     test('and on OPEN it says the recents entry was kept', () {
-      final view = _open(const OpenUnreachable(r'\\NAS\jobs\Smith.rackmate'));
+      final view = _open(const OpenUnreachable(r'\\NAS\jobs\Smith.rmpj'));
       expect(view.detail, contains('LEFT in your recent list'));
     });
   });
@@ -181,7 +181,7 @@ void main() {
   group('case 2 — a read-only file', () {
     test('says so, and deliberately offers NO "clear the flag" button', () {
       final view = _save(SaveReadOnlyTarget(_paths));
-      expect(view.title, contains('Smith.rackmate is read-only'));
+      expect(view.title, contains('Smith.rmpj is read-only'));
       // Silently clearing the read-only attribute on a file somebody
       // marked protected is not ours to do.
       expect(_ids(view), [FileErrorActionId.saveAs, FileErrorActionId.cancel]);
@@ -216,7 +216,7 @@ void main() {
     test('states both versions and offers NO escape hatch', () {
       final view = _open(
         const OpenNewerSchema(
-          r'C:\jobs\Smith.rackmate',
+          r'C:\jobs\Smith.rmpj',
           minReaderVersion: 3,
           supportedSchemaVersion: 2,
         ),
@@ -243,7 +243,7 @@ void main() {
     });
 
     test('a zip archive gets its own, more useful sentence', () {
-      final view = _open(const OpenZipContainer(r'C:\jobs\archive.rackmate'));
+      final view = _open(const OpenZipContainer(r'C:\jobs\archive.rmpj'));
       expect(view.title, contains('zip archive'));
     });
   });
@@ -252,7 +252,7 @@ void main() {
     test('WITH a backup, offers to open it and states when it was made', () {
       final view = _open(
         OpenCorrupt(
-          r'C:\jobs\Smith.rackmate',
+          r'C:\jobs\Smith.rmpj',
           detail: 'unexpected token',
           backup: _backup,
         ),
@@ -268,7 +268,7 @@ void main() {
 
     test('WITHOUT a backup, says so rather than offering a dead button', () {
       final view = _open(
-        const OpenCorrupt(r'C:\jobs\Smith.rackmate', detail: 'bad'),
+        const OpenCorrupt(r'C:\jobs\Smith.rmpj', detail: 'bad'),
       );
       expect(_ids(view), [FileErrorActionId.ok]);
       expect(view.detail, contains('no backup'));
@@ -278,7 +278,7 @@ void main() {
   group('case 9 — the file is gone but the backup is not', () {
     test('offers the backup', () {
       final view = _open(
-        OpenNotFound(r'C:\jobs\Smith.rackmate', backup: _backup),
+        OpenNotFound(r'C:\jobs\Smith.rmpj', backup: _backup),
       );
       expect(view.title, contains('not there any more'));
       expect(_ids(view), [
@@ -290,7 +290,7 @@ void main() {
     test('without one, states that the entry was removed and why — WHEN '
         'it was', () {
       final view = _open(
-        const OpenNotFound(r'C:\jobs\Smith.rackmate'),
+        const OpenNotFound(r'C:\jobs\Smith.rmpj'),
         recentEntryRemoved: true,
       );
       expect(view.detail, contains('removed it from the recent list'));
@@ -305,7 +305,7 @@ void main() {
       // failed, because `RecentsStore.save` discards its `Outcome`. A
       // claim about the user's data that is casually untrue is how a user
       // learns to disbelieve the messages that matter.
-      final view = _open(const OpenNotFound(r'C:\jobs\Smith.rackmate'));
+      final view = _open(const OpenNotFound(r'C:\jobs\Smith.rmpj'));
       expect(view.detail, isNot(contains('recent list')));
       // The part that is true regardless still has to be there.
       expect(view.detail, contains('moved, renamed or deleted'));
@@ -388,22 +388,22 @@ void main() {
   group('offersBackup / backupOf', () {
     test('only the two cases a backup can help with', () {
       expect(
-        offersBackup(OpenNotFound(r'C:\a.rackmate', backup: _backup)),
+        offersBackup(OpenNotFound(r'C:\a.rmpj', backup: _backup)),
         isTrue,
       );
       expect(
         offersBackup(
-          OpenCorrupt(r'C:\a.rackmate', detail: 'x', backup: _backup),
+          OpenCorrupt(r'C:\a.rmpj', detail: 'x', backup: _backup),
         ),
         isTrue,
       );
-      expect(offersBackup(const OpenNotFound(r'C:\a.rackmate')), isFalse);
+      expect(offersBackup(const OpenNotFound(r'C:\a.rmpj')), isFalse);
       expect(
-        offersBackup(const OpenUnreachable(r'C:\a.rackmate')),
+        offersBackup(const OpenUnreachable(r'C:\a.rmpj')),
         isFalse,
       );
       expect(
-        backupOf(OpenCorrupt(r'C:\a.rackmate', detail: 'x', backup: _backup)),
+        backupOf(OpenCorrupt(r'C:\a.rmpj', detail: 'x', backup: _backup)),
         same(_backup),
       );
     });

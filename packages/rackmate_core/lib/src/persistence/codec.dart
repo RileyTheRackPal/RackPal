@@ -32,7 +32,7 @@ final class UnsupportedZipContainerError implements Exception {
   @override
   String toString() =>
       'UnsupportedZipContainerError: this file begins with the ZIP magic '
-      r'number (PK\x03\x04). A zip-based .rackmate container may arrive '
+      r'number (PK\x03\x04). A zip-based project container may arrive '
       "in a later milestone; this build's DocumentCodec only reads plain "
       'JSON (CR-091).';
 }

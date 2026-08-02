@@ -23,7 +23,7 @@ import 'package:rackmate_ui/rackmate_ui.dart';
 import '../storage/fake_file_store.dart';
 import 'session_fakes.dart';
 
-const _target = r'C:\jobs\Smith.rackmate';
+const _target = r'C:\jobs\Smith.rmpj';
 
 void main() {
   late TextMeasurer measurer;
@@ -170,7 +170,7 @@ void main() {
     ) async {
       final t = await pump(
         tester,
-        savePaths: [_target, r'C:\jobs\Copy.rackmate'],
+        savePaths: [_target, r'C:\jobs\Copy.rmpj'],
       );
       await press(tester, LogicalKeyboardKey.keyS);
       expect(t.picker.saveCalls, 1);
@@ -178,7 +178,7 @@ void main() {
       await press(tester, LogicalKeyboardKey.keyS, shift: true);
 
       expect(t.picker.saveCalls, 2);
-      expect(t.services.session.filePath, r'C:\jobs\Copy.rackmate');
+      expect(t.services.session.filePath, r'C:\jobs\Copy.rmpj');
     });
 
     testWidgets('Ctrl+N replaces the document with a blank one', (
@@ -454,7 +454,7 @@ void main() {
           'C:',
         },
         initialFiles: {
-          r'C:\data\recovery\crashed.rackmate': const JsonDocumentCodec().write(
+          r'C:\data\recovery\crashed.rmpj': const JsonDocumentCodec().write(
             crashed,
           ),
           r'C:\data\recovery\crashed.json': Uint8List.fromList(
@@ -499,7 +499,7 @@ void main() {
         'Save a copy', (tester) async {
       final t = await pump(
         tester,
-        savePaths: [r'C:\jobs\Smith (copy).rackmate'],
+        savePaths: [r'C:\jobs\Smith (copy).rmpj'],
       );
       t.services.session.adopt(
         controller: t.services.session.controller,
@@ -516,7 +516,7 @@ void main() {
       await tester.tap(find.text('Save a copy…'));
       await tester.pumpAndSettle();
 
-      expect(t.picker.suggestedNames.single, 'Smith (copy).rackmate');
+      expect(t.picker.suggestedNames.single, 'Smith (copy).rmpj');
     });
 
     testWidgets('autosave failing MID-SESSION puts a warning on screen', (

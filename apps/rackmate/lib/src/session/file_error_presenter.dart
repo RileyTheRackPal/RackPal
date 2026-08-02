@@ -326,7 +326,7 @@ FileErrorView describeOpenError(
       detail:
           'The file begins with the ZIP signature. RackMate projects are '
           'plain JSON. If the project is inside the archive, extract it '
-          'first and open the `.rackmate` file.',
+          'first and open the `.rmpj` file.',
       actions: const [_ok],
     ),
 

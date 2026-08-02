@@ -104,7 +104,7 @@ ElevationSheet _build({
     info: fullProjectInfo(),
     settings: ProjectSettings(),
     revisions: revisions,
-    fileName: 'smith.rackmate',
+    fileName: 'smith.rmpj',
     issuedAt: DateTime.utc(2026, 7, 18),
     measurer: FakeMeasurer(),
   );

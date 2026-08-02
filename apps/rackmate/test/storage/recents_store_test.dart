@@ -86,18 +86,18 @@ void main() {
             'version': 1,
             'entries': [
               {
-                'path': r'C:\a.rackmate',
+                'path': r'C:\a.rmpj',
                 'displayName': 'A',
                 'lastOpened': _at.toIso8601String(),
               },
               {'displayName': 'no path at all'},
               {
-                'path': r'C:\b.rackmate',
+                'path': r'C:\b.rmpj',
                 'displayName': 'B',
                 'lastOpened': _at.toIso8601String(),
               },
               {
-                'path': r'C:\c.rackmate',
+                'path': r'C:\c.rmpj',
                 'displayName': 'C',
                 'lastOpened': 'not a date',
               },
@@ -119,7 +119,7 @@ void main() {
             'entries': [
               for (var i = 0; i < 10; i++)
                 {
-                  'path': '\\\\\\\\NAS\\\\jobs\\\\p$i.rackmate',
+                  'path': '\\\\\\\\NAS\\\\jobs\\\\p$i.rmpj',
                   'displayName': 'P$i',
                   'lastOpened': _at.toIso8601String(),
                 },
@@ -142,11 +142,11 @@ void main() {
   group('push', () {
     test('puts the newest at the top', () async {
       final made = _make();
-      await made.store.push(_entry(r'C:\jobs\A.rackmate'));
-      final list = await made.store.push(_entry(r'C:\jobs\B.rackmate'));
+      await made.store.push(_entry(r'C:\jobs\A.rmpj'));
+      final list = await made.store.push(_entry(r'C:\jobs\B.rmpj'));
       expect(list.map((e) => e.path), [
-        r'C:\jobs\B.rackmate',
-        r'C:\jobs\A.rackmate',
+        r'C:\jobs\B.rmpj',
+        r'C:\jobs\A.rmpj',
       ]);
     });
 
@@ -154,19 +154,19 @@ void main() {
       // C:\Jobs and c:\jobs are the same directory there. Showing both
       // would be a bug the user cannot explain.
       final made = _make();
-      await made.store.push(_entry(r'C:\Jobs\Smith.rackmate'));
+      await made.store.push(_entry(r'C:\Jobs\Smith.rmpj'));
       final list = await made.store.push(
-        _entry(r'c:\jobs\smith.RACKMATE', name: 'Smith'),
+        _entry(r'c:\jobs\smith.RMPJ', name: 'Smith'),
       );
       expect(list, hasLength(1));
-      expect(list.single.path, r'c:\jobs\smith.RACKMATE');
+      expect(list.single.path, r'c:\jobs\smith.RMPJ');
     });
 
     test('normalises away . and .. before comparing', () async {
       final made = _make();
-      await made.store.push(_entry(r'C:\jobs\Smith.rackmate'));
+      await made.store.push(_entry(r'C:\jobs\Smith.rmpj'));
       final list = await made.store.push(
-        _entry(r'C:\jobs\other\..\Smith.rackmate', name: 'Smith'),
+        _entry(r'C:\jobs\other\..\Smith.rmpj', name: 'Smith'),
       );
       expect(list, hasLength(1));
     });
@@ -174,12 +174,12 @@ void main() {
     test('caps at ten, dropping the oldest', () async {
       final made = _make();
       for (var i = 0; i < 14; i++) {
-        await made.store.push(_entry('C:\\jobs\\p$i.rackmate', minute: i));
+        await made.store.push(_entry('C:\\jobs\\p$i.rmpj', minute: i));
       }
       final list = await made.store.load();
       expect(list, hasLength(kMaxRecentEntries));
-      expect(list.first.path, r'C:\jobs\p13.rackmate');
-      expect(list.last.path, r'C:\jobs\p4.rackmate');
+      expect(list.first.path, r'C:\jobs\p13.rmpj');
+      expect(list.last.path, r'C:\jobs\p4.rmpj');
     });
 
     group('the file it writes is atomic', () {
@@ -197,7 +197,7 @@ void main() {
       test('recents.json is never partially written at any instant', ()
           async {
         final made = _make();
-        await made.store.push(_entry(r'C:\jobs\A.rackmate'));
+        await made.store.push(_entry(r'C:\jobs\A.rmpj'));
 
         expectAtomicWrite(
           made.fs,
@@ -210,12 +210,12 @@ void main() {
 
       test('and neither is the SECOND push, which overwrites it', () async {
         final made = _make();
-        await made.store.push(_entry(r'C:\jobs\A.rackmate'));
+        await made.store.push(_entry(r'C:\jobs\A.rmpj'));
         final previous = await made.fs.readBytes(_recents);
         // Re-base: the replay below is the second write alone.
         made.fs.resetJournal();
 
-        await made.store.push(_entry(r'C:\jobs\B.rackmate', minute: 5));
+        await made.store.push(_entry(r'C:\jobs\B.rmpj', minute: 5));
 
         expectAtomicWrite(
           made.fs,
@@ -228,10 +228,10 @@ void main() {
 
       test('NO .bak — and this fixture can actually tell', () async {
         final made = _make();
-        await made.store.push(_entry(r'C:\jobs\A.rackmate'));
+        await made.store.push(_entry(r'C:\jobs\A.rmpj'));
         // The target exists now, so step 4 would run if the flag allowed
         // it.
-        await made.store.push(_entry(r'C:\jobs\B.rackmate', minute: 5));
+        await made.store.push(_entry(r'C:\jobs\B.rmpj', minute: 5));
 
         expect(
           made.fs.state.files.keys.where((f) => f.endsWith('.bak')),
@@ -246,7 +246,7 @@ void main() {
 
     test('the persisted shape is stable and versioned', () async {
       final made = _make();
-      await made.store.push(_entry(r'C:\jobs\Smith.rackmate', name: 'Smith'));
+      await made.store.push(_entry(r'C:\jobs\Smith.rmpj', name: 'Smith'));
 
       final raw =
           jsonDecode(
@@ -266,7 +266,7 @@ void main() {
         kRecentsRelativeKey,
         kRecentsAnchorVolumeKey,
       ]);
-      expect(first['path'], r'C:\jobs\Smith.rackmate');
+      expect(first['path'], r'C:\jobs\Smith.rmpj');
       expect(first[kRecentsAnchorVolumeKey], r'C:\');
     });
   });
@@ -308,7 +308,7 @@ void main() {
 
     test('an entry on the stick survives the remount', () async {
       final wrote = storeRootedAt(onE);
-      await wrote.store.push(_entry(r'E:\Jobs\Smith.rackmate', name: 'Smith'));
+      await wrote.store.push(_entry(r'E:\Jobs\Smith.rmpj', name: 'Smith'));
       final bytes = await wrote.fs.readBytes(
         _windows.join(onE, kRecentsFileName),
       );
@@ -320,13 +320,13 @@ void main() {
       );
       final loaded = await read.store.load();
 
-      expect(loaded.single.path, r'F:\Jobs\Smith.rackmate');
+      expect(loaded.single.path, r'F:\Jobs\Smith.rmpj');
       expect(loaded.single.displayName, 'Smith');
     });
 
     test('an entry on the HOST is left absolute — it did not move', () async {
       final wrote = storeRootedAt(onE);
-      await wrote.store.push(_entry(r'C:\Users\alice\Smith.rackmate'));
+      await wrote.store.push(_entry(r'C:\Users\alice\Smith.rmpj'));
       final bytes = await wrote.fs.readBytes(
         _windows.join(onE, kRecentsFileName),
       );
@@ -350,7 +350,7 @@ void main() {
       );
       expect(
         (await read.store.load()).single.path,
-        r'C:\Users\alice\Smith.rackmate',
+        r'C:\Users\alice\Smith.rmpj',
         reason:
             'a project that lives on some other machine stays exactly as '
             'unreachable as it was — that part was already right',
@@ -360,7 +360,7 @@ void main() {
     test('NOTHING changes when the volume did not change — the installed '
         'build is untouched', () async {
       final wrote = storeRootedAt(onE);
-      await wrote.store.push(_entry(r'E:\Jobs\Smith.rackmate'));
+      await wrote.store.push(_entry(r'E:\Jobs\Smith.rmpj'));
       final bytes = await wrote.fs.readBytes(
         _windows.join(onE, kRecentsFileName),
       );
@@ -369,12 +369,12 @@ void main() {
         onE,
         files: {_windows.join(onE, kRecentsFileName): bytes},
       );
-      expect((await read.store.load()).single.path, r'E:\Jobs\Smith.rackmate');
+      expect((await read.store.load()).single.path, r'E:\Jobs\Smith.rmpj');
     });
 
     test('drive-letter case is not a move', () async {
       final wrote = storeRootedAt(onE);
-      await wrote.store.push(_entry(r'E:\Jobs\Smith.rackmate'));
+      await wrote.store.push(_entry(r'E:\Jobs\Smith.rmpj'));
       final bytes = await wrote.fs.readBytes(
         _windows.join(onE, kRecentsFileName),
       );
@@ -387,7 +387,7 @@ void main() {
       );
       expect(
         (await read.store.load()).single.path,
-        r'E:\Jobs\Smith.rackmate',
+        r'E:\Jobs\Smith.rmpj',
         reason: r'E:\ and e:\ are one drive on Windows',
       );
     });
@@ -403,7 +403,7 @@ void main() {
             'version': 1,
             'entries': [
               {
-                'path': r'E:\Jobs\Smith.rackmate',
+                'path': r'E:\Jobs\Smith.rmpj',
                 'displayName': 'Smith',
                 'lastOpened': _at.toIso8601String(),
               },
@@ -411,13 +411,13 @@ void main() {
           }),
         },
       );
-      expect((await read.store.load()).single.path, r'E:\Jobs\Smith.rackmate');
+      expect((await read.store.load()).single.path, r'E:\Jobs\Smith.rmpj');
     });
   });
 
   group('the bounded probe — run on MENU OPEN, never at startup', () {
     test('a hung UNC entry does not block, and is NOT removed', () async {
-      const dead = r'\\NAS\jobs\Smith.rackmate';
+      const dead = r'\\NAS\jobs\Smith.rmpj';
       final made = _make(
         files: {
           _recents: _json({
@@ -429,13 +429,13 @@ void main() {
                 'lastOpened': _at.toIso8601String(),
               },
               {
-                'path': r'C:\jobs\Local.rackmate',
+                'path': r'C:\jobs\Local.rmpj',
                 'displayName': 'Local',
                 'lastOpened': _at.toIso8601String(),
               },
             ],
           }),
-          r'C:\jobs\Local.rackmate': Uint8List(4),
+          r'C:\jobs\Local.rmpj': Uint8List(4),
         },
         hangingPaths: {dead},
       );
@@ -452,7 +452,7 @@ void main() {
             'a probe that never answered is UNKNOWN — dimmed but '
             'still clickable, never a verdict',
       );
-      expect(states[r'C:\jobs\Local.rackmate'], RecentEntryState.ok);
+      expect(states[r'C:\jobs\Local.rmpj'], RecentEntryState.ok);
 
       // NOTHING was removed. The probe has no side effect on the stored
       // list at all — that is the structural half of "a temporarily
@@ -462,7 +462,7 @@ void main() {
 
     test('ten dead entries all resolve, none removed', () async {
       final dead = {
-        for (var i = 0; i < 10; i++) '\\\\\\\\NAS\\\\p$i.rackmate',
+        for (var i = 0; i < 10; i++) '\\\\\\\\NAS\\\\p$i.rmpj',
       };
       final made = _make(
         files: {
@@ -496,7 +496,7 @@ void main() {
             'version': 1,
             'entries': [
               {
-                'path': r'C:\jobs\Deleted.rackmate',
+                'path': r'C:\jobs\Deleted.rmpj',
                 'displayName': 'D',
                 'lastOpened': _at.toIso8601String(),
               },
@@ -505,7 +505,7 @@ void main() {
         },
       );
       final states = await made.store.probe(await made.store.load());
-      expect(states[r'C:\jobs\Deleted.rackmate'], RecentEntryState.unreachable);
+      expect(states[r'C:\jobs\Deleted.rmpj'], RecentEntryState.unreachable);
       expect(
         await made.store.load(),
         hasLength(1),
@@ -521,7 +521,7 @@ void main() {
       // `OpenNotFound` is only ever constructed after the DIRECTORY was
       // confirmed reachable, which is what makes it definitive.
       expect(
-        shouldEvictOnOpenFailure(const OpenNotFound(r'C:\a.rackmate')),
+        shouldEvictOnOpenFailure(const OpenNotFound(r'C:\a.rmpj')),
         isTrue,
       );
     });
@@ -529,7 +529,7 @@ void main() {
     test('an unreachable location does NOT evict — the unmounted-drive '
         'rule', () {
       expect(
-        shouldEvictOnOpenFailure(const OpenUnreachable(r'\\NAS\a.rackmate')),
+        shouldEvictOnOpenFailure(const OpenUnreachable(r'\\NAS\a.rmpj')),
         isFalse,
       );
     });
@@ -564,10 +564,10 @@ void main() {
 
   test('remove drops exactly one entry, case-insensitively', () async {
     final made = _make();
-    await made.store.push(_entry(r'C:\jobs\A.rackmate'));
-    await made.store.push(_entry(r'C:\jobs\B.rackmate'));
+    await made.store.push(_entry(r'C:\jobs\A.rmpj'));
+    await made.store.push(_entry(r'C:\jobs\B.rmpj'));
 
-    final list = await made.store.remove(r'c:\JOBS\a.RACKMATE');
-    expect(list.map((e) => e.path), [r'C:\jobs\B.rackmate']);
+    final list = await made.store.remove(r'c:\JOBS\a.RMPJ');
+    expect(list.map((e) => e.path), [r'C:\jobs\B.rmpj']);
   });
 }

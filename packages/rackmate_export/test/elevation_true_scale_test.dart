@@ -305,7 +305,7 @@ void main() {
       ExportRequest(
         documentJson: const JsonDocumentCodec().write(document),
         fontBytes: <FontRef, Uint8List>{_font: fontBytes},
-        fileName: 'scale.rackmate',
+        fileName: 'scale.rmpj',
         issuedAt: DateTime.utc(2026, 7, 18),
       ),
     );

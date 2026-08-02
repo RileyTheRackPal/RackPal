@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
 const _view = FileErrorView(
-  title: 'Could not save Smith.rackmate',
+  title: 'Could not save Smith.rmpj',
   detail: r'The folder \\NAS\jobs is not available right now.',
   reassurance: 'Your changes are safe and still open.',
   actions: [
@@ -50,7 +50,7 @@ void main() {
       tester,
     ) async {
       await _open(tester);
-      expect(find.text('Could not save Smith.rackmate'), findsOneWidget);
+      expect(find.text('Could not save Smith.rmpj'), findsOneWidget);
       expect(
         find.text(r'The folder \\NAS\jobs is not available right now.'),
         findsOneWidget,

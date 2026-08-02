@@ -54,7 +54,7 @@ const double _oneFrameMs = 1000 / 60;
 /// `rackmate_core`'s committed 300-link golden, reached across the package
 /// boundary. See the file header for why it is not rebuilt here.
 const String _fixturePath =
-    '../rackmate_core/test/fixtures/e_three_hundred_links.rackmate.json';
+    '../rackmate_core/test/fixtures/e_three_hundred_links.rmpj.json';
 
 void main() {
   late PdfFontMeasurer measurer;

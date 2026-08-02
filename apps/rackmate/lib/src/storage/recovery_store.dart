@@ -104,7 +104,20 @@ const String kLeaseExtension = '.lease';
 
 /// Snapshots carry the ordinary document extension because they ARE
 /// ordinary documents — a recovered file must open in any build.
-const String kSnapshotExtension = '.rackmate';
+///
+/// Which means DR-015 renamed this too, and that the SCAN has to know
+/// both spellings. A recovery pair exists only across a crash, so the one
+/// window in which a `.rackmate` snapshot meets a `.rmpj` build is exactly
+/// the window this feature exists for: the user's last build died with
+/// unsaved work and they installed this one before reopening. Recognising
+/// only the current spelling would orphan the sidecar, and `scan` deletes
+/// orphans silently — a crash recovery lost without a word, which is the
+/// failure mode AC-042 calls a data-loss event dressed as tidiness.
+const String kSnapshotExtension = kDocumentExtension;
+
+/// Every spelling a snapshot on disk may have. Written as
+/// [kSnapshotExtension]; recognised as any of these.
+const List<String> kSnapshotExtensions = kDocumentExtensions;
 
 /// The sidecar's extension.
 const String kSidecarExtension = '.json';
@@ -651,7 +664,13 @@ final class RecoveryStore {
     // half-finished write also has — indistinguishable, and one of them
     // would deserve to be offered.
     await _deleteIfPresent(sidecarPathFor(docId));
-    await _deleteIfPresent(snapshotPathFor(docId));
+    // EVERY SPELLING, not just the one this build writes (DR-015).
+    // "Discard" that left a legacy snapshot behind would re-offer the
+    // same crash at every launch, and the user would have no way to make
+    // the prompt stop.
+    for (final ext in kSnapshotExtensions) {
+      await _deleteIfPresent(context.join(directory, '$docId$ext'));
+    }
   }
 
   /// Scans the recovery directory, pairs sidecars with snapshots, deletes
@@ -698,19 +717,26 @@ final class RecoveryStore {
       );
     }
 
-    final snapshotIds = <String>{};
+    // SLOT → THE PATH THE SNAPSHOT ACTUALLY HAS. Not rebuilt from
+    // `snapshotPathFor`, because after DR-015 a snapshot on disk may be
+    // spelled `.rackmate` while this build writes `.rmpj` — and a scan
+    // that rebuilt the name would offer a survivor whose bytes it cannot
+    // read, then fail to delete it on Discard.
+    final snapshotPaths = <String, String>{};
     final sidecarIds = <String>{};
     final strays = <String>[];
     for (final entry in entries) {
       final name = context.basename(entry);
-      // `.tmp` FIRST: `<slot>.rackmate.tmp` is not a snapshot, and
+      // `.tmp` FIRST: `<slot>.rmpj.tmp` is not a snapshot, and
       // classifying it as one would delete a live write in progress.
+      final snapshotExt = name.endsWith(kTempSuffix)
+          ? ''
+          : kSnapshotExtensions.firstWhere(name.endsWith, orElse: () => '');
       if (name.endsWith(kTempSuffix)) {
         strays.add(entry);
-      } else if (name.endsWith(kSnapshotExtension)) {
-        snapshotIds.add(
-          name.substring(0, name.length - kSnapshotExtension.length),
-        );
+      } else if (snapshotExt.isNotEmpty) {
+        snapshotPaths[name.substring(0, name.length - snapshotExt.length)] =
+            entry;
       } else if (name.endsWith(kSidecarExtension)) {
         sidecarIds.add(
           name.substring(0, name.length - kSidecarExtension.length),
@@ -723,7 +749,7 @@ final class RecoveryStore {
     var skippedLive = 0;
 
     var orphanedSnapshots = 0;
-    for (final id in snapshotIds.difference(sidecarIds)) {
+    for (final id in snapshotPaths.keys.toSet().difference(sidecarIds)) {
       // NOT NECESSARILY AN INTERRUPTED WRITE. `write` retires the previous
       // sidecar BEFORE it moves the snapshot, so a live instance in the
       // middle of a snapshot looks exactly like this from outside. Before
@@ -733,7 +759,7 @@ final class RecoveryStore {
         skippedLive++;
         continue;
       }
-      await _deleteIfPresent(snapshotPathFor(id));
+      await _deleteIfPresent(snapshotPaths[id]!);
       orphanedSnapshots++;
     }
 
@@ -753,7 +779,7 @@ final class RecoveryStore {
         skippedLive++;
         continue;
       }
-      if (!snapshotIds.contains(id)) {
+      if (!snapshotPaths.containsKey(id)) {
         await _deleteIfPresent(sidecarPathFor(id));
         orphanedSidecars++;
         continue;
@@ -788,7 +814,7 @@ final class RecoveryStore {
       survivors.add(
         RecoverySurvivor(
           sidecar: claimed,
-          snapshotPath: snapshotPathFor(id),
+          snapshotPath: snapshotPaths[id]!,
         ),
       );
     }
@@ -905,11 +931,15 @@ final class RecoveryStore {
     return slot.substring(i + 1);
   }
 
-  /// The slot a recovery FILE belongs to: `<slot>.rackmate.tmp` and
+  /// The slot a recovery FILE belongs to: `<slot>.rmpj.tmp` and
   /// `<slot>.json.tmp` both answer `<slot>`.
   String _slotOfArtifact(String path) {
     var name = context.basename(path);
-    for (final suffix in [kTempSuffix, kSnapshotExtension, kSidecarExtension]) {
+    for (final suffix in [
+      kTempSuffix,
+      ...kSnapshotExtensions,
+      kSidecarExtension,
+    ]) {
       if (name.endsWith(suffix)) {
         name = name.substring(0, name.length - suffix.length);
       }

@@ -45,7 +45,7 @@ const String kTestJobsDir = r'C:\jobs';
 /// The recovery session id every fake session runs under.
 ///
 /// FIXED, so a test can name the slot it is asserting on:
-/// `recovery/<docId>~sess-a.rackmate`. Production mints a fresh uuid per
+/// `recovery/<docId>~sess-a.rmpj`. Production mints a fresh uuid per
 /// launch — see `recoverySlotFor`.
 const String kTestSessionId = 'sess-a';
 
@@ -62,7 +62,7 @@ String testSnapshotPath(String documentId, {String? sessionId}) =>
     '${recoverySlotFor(
       documentId: documentId,
       sessionId: sessionId ?? kTestSessionId,
-    )}.rackmate';
+    )}.rmpj';
 
 /// The sidecar path for a document in the default fake session.
 String testSidecarPath(String documentId, {String? sessionId}) =>
@@ -433,7 +433,7 @@ final class TestSession {
 ///
 /// WINDOWS-SHAPED PATHS ON EVERY PLATFORM: the injected
 /// `p.Context(style: p.Style.windows)` is what lets a test assert
-/// `C:\jobs\Smith.rackmate.tmp` on a Linux CI runner.
+/// `C:\jobs\Smith.rmpj.tmp` on a Linux CI runner.
 ///
 /// `inlineSerializer`/`inlineDeserializer` rather than the isolate pair:
 /// spawning an isolate per save across a widget suite is slow and flaky,

@@ -5,7 +5,7 @@
 // WHY THIS IS THE STRUCTURE STARTER
 // ==================================================================
 // docs/07-structure-device.md §10: *"One of the four starter projects
-// authored as real `.rackmate` files exercises Structure end to end,
+// authored as real `.rmpj` files exercises Structure end to end,
 // doing triple duty as a golden, a perf fixture and a screenshot source
 // (AC-052)."* A whole-house rough-in IS that document's own worked
 // scenario, so it lands here rather than being sprinkled across four

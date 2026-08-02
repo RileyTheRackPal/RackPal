@@ -25,7 +25,7 @@
 //      from a T6.30 page's content stream.
 //
 // The starters are the right fixture precisely because they are real files
-// that the app itself opens (`apps/rackmate/assets/starters/*.rackmate`),
+// that the app itself opens (`apps/rackmate/assets/starters/*.rmpj`),
 // authored by `tool/generate_starters.dart` and used as goldens elsewhere
 // -- so a regression here is a regression a user would meet.
 
@@ -57,7 +57,7 @@ void main() {
   });
 
   Uint8List starterBytes(String name) => File(
-    '../../apps/rackmate/assets/starters/$name.rackmate',
+    '../../apps/rackmate/assets/starters/$name.rmpj',
   ).readAsBytesSync();
 
   RackDocument documentOf(String name) =>
@@ -70,7 +70,7 @@ void main() {
       ExportRequest(
         documentJson: starterBytes(name),
         fontBytes: <FontRef, Uint8List>{_font: fontBytes},
-        fileName: '$name.rackmate',
+        fileName: '$name.rmpj',
         issuedAt: DateTime.utc(2026, 7, 18),
       ),
     );
@@ -94,7 +94,7 @@ void main() {
   }
 
   for (final name in _starters) {
-    group('$name.rackmate', () {
+    group('$name.rmpj', () {
       test('exports without refusing', () async {
         final exported = await exportOf(name);
         final doc = documentOf(name);

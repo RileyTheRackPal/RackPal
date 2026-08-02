@@ -35,7 +35,7 @@ import 'package:rackmate_core/rackmate_core.dart';
 import '../storage/fake_file_store.dart';
 import 'session_fakes.dart';
 
-const _target = r'C:\jobs\Smith.rackmate';
+const _target = r'C:\jobs\Smith.rmpj';
 
 void _edit(DocumentController controller) {
   final rack = controller.doc.racks.values.first;
@@ -84,7 +84,7 @@ void main() {
       _edit(t.services.session.controller);
       expect(await t.services.autosave.snapshot(), AutosaveOutcome.written);
 
-      // The ONLY writer of <target>.rackmate is an explicit Save or Save
+      // The ONLY writer of <target>.rmpj is an explicit Save or Save
       // As. Not the timer, not blur, not close, not recovery.
       expect(await t.fs.readBytes(_target), saved);
       expect(t.fs.state.files.containsKey(_snapshot), isTrue);
@@ -476,7 +476,7 @@ void main() {
                   catalog: const {},
                 ),
               ),
-              filePath: r'C:\jobs\B.rackmate',
+              filePath: r'C:\jobs\B.rmpj',
               openReadOnly: false,
               baseline: FileBaseline.absent,
             );
