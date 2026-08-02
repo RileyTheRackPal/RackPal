@@ -283,63 +283,137 @@ void main() {
       expect(lowest, greaterThan(to.bottom));
     });
 
-    test('the lane goes round the side the cable is HEADED, so swapping '
-        'source and sink turns it the other way', () {
-      // ── WHY THE SIDE IS NOT SIMPLY THE SHORTER ONE ──────────────────
-      // It was, and "shorter" is unreadable at scale: on a 48-port switch
-      // the two lanes cost within a few per cent of each other, so the
-      // choice flipped between adjacent ports on nothing but where each
-      // one's partner happened to sit. Cables that plainly belonged
-      // together left in opposite directions and met head-on along a
-      // shared comb lane, which is what the field photographed.
+    test('two pins in opposite halves of ONE body leave by opposite '
+        'sides', () {
+      // ── THE RULE, AND THE TWO IT REPLACED ──────────────────────
+      // FIRST the lane was the SHORTER of the two, and at scale the two
+      // costs sit within a few per cent of each other — so the choice
+      // flipped between adjacent ports on nothing but where each one's
+      // partner happened to sit, and cables that plainly belonged together
+      // left in opposite directions and met head-on along a shared lane.
       //
-      // The side follows the SIGNAL now — `buildDrawnWireLayer` reads a
-      // link's ends in conductor order, from then to, so the lane goes on
-      // the side the cable is travelling towards. Two cables flowing the
-      // same way therefore leave the same way, with nothing having compared
-      // them to each other.
+      // THEN it was the direction of FLOW, source towards sink. That fixed
+      // the flipping and broke the other way: Sugiyama lays sources left of
+      // sinks, so every run off one switch turned the SAME way and the ones
+      // on the far side dragged a wire across the whole 48-port body.
       //
-      // ASSERTED BY REVERSAL, which is the only way to see it. A single
-      // route is just a list of corners and any rule can be fitted to it;
-      // the same two pins with source and sink exchanged must come back on
-      // the OTHER side, and no cost-based rule does that — cost is
-      // symmetric in the two ends.
-      const from = DBox.fromLtwh(0, 0, 100, 100);
-      const to = DBox.fromLtwh(300, 200, 100, 100);
-      const upper = DPt(0, 50);
-      const lower = DPt(400, 250);
+      // Both were rules about the PAIR. This one is about the PIN: a port
+      // leaves by the nearest corner of its OWN body, so the fan splits down
+      // the middle of the symbol and nothing crosses more than half of it.
+      //
+      // THE FIXTURE IS A WIDE SYMBOL, deliberately — the defect only exists
+      // on a body wide enough for "which half" to be a real question, and a
+      // 100-unit box would let a broken rule pass by being too small to
+      // show the difference.
+      const switchBody = DBox.fromLtwh(0, 0, 1000, 100);
+      const field = DBox.fromLtwh(400, 400, 100, 100);
+      const bodies = <DBox>[switchBody, field];
+      const sink = DPt(450, 400);
 
-      List<DPt> route(DPt source, SymbolSide sourceSide, DBox sourceBody,
-              DPt sink, SymbolSide sinkSide, DBox sinkBody) =>
+      List<DPt> fromPort(double x) => orthogonalTrace(
+        fromPin: DPt(x, 0),
+        fromSide: SymbolSide.top,
+        fromEscape: 10,
+        fromBody: switchBody,
+        toPin: sink,
+        toSide: SymbolSide.top,
+        toEscape: 10,
+        toBody: field,
+      );
+
+      final nearLeft = fromPort(100);
+      final nearRight = fromPort(900);
+      for (final route in <List<DPt>>[nearLeft, nearRight]) {
+        expectOrthogonal(route, 'half-rule detour');
+        expect(routeCuts(route, bodies), isFalse);
+        expect(route.length - 2, lessThanOrEqualTo(kMaxTraceBends));
+      }
+
+      // The port in the LEFT half leaves to the left of the whole body…
+      expect(
+        nearLeft.map((p) => p.x).reduce((a, b) => a < b ? a : b),
+        lessThan(switchBody.left),
+      );
+      // …and the one in the RIGHT half leaves to the right of it.
+      expect(
+        nearRight.map((p) => p.x).reduce((a, b) => a > b ? a : b),
+        greaterThan(switchBody.right),
+      );
+      // NEITHER WRAPS THE FAR END OF THE SWITCH, which is the property the
+      // whole change is for and the one the flow rule lost. Asserting only
+      // that the two differ would pass on a rule that sent BOTH of them the
+      // long way round, which is exactly what the field photographed.
+      expect(
+        nearLeft.map((p) => p.x).reduce((a, b) => a > b ? a : b),
+        lessThan(switchBody.right),
+        reason: 'a left-half port reached round the far right of its own body',
+      );
+      expect(
+        nearRight.map((p) => p.x).reduce((a, b) => a < b ? a : b),
+        greaterThan(switchBody.left),
+        reason: 'a right-half port reached round the far left of its own body',
+      );
+    });
+
+    test('the WIDER body decides when the two pins want opposite sides, '
+        'and flow breaks a true tie', () {
+      // One lane serves both ends, so two pins in opposite halves cannot
+      // both be satisfied. The wider body wins, because spanning more of
+      // the axis is what makes going the wrong way expensive — a 48-port
+      // switch outvotes a two-port field device.
+      const wide = DBox.fromLtwh(0, 0, 1000, 100);
+      const narrow = DBox.fromLtwh(400, 400, 100, 100);
+      final decided = orthogonalTrace(
+        // LEFT half of the wide body — wants the left lane.
+        fromPin: const DPt(100, 0),
+        fromSide: SymbolSide.top,
+        fromEscape: 10,
+        fromBody: wide,
+        // RIGHT half of the narrow one — wants the right lane.
+        toPin: const DPt(480, 400),
+        toSide: SymbolSide.top,
+        toEscape: 10,
+        toBody: narrow,
+      );
+      expect(routeCuts(decided, const <DBox>[wide, narrow]), isFalse);
+      expect(
+        decided.map((p) => p.x).reduce((a, b) => a < b ? a : b),
+        lessThan(wide.left),
+        reason: 'the narrow body outvoted the wide one',
+      );
+
+      // AND WHEN THE SPANS ARE EQUAL there is no nearer corner to appeal
+      // to, so the tie falls through to the direction the cable FLOWS —
+      // which is why reversing source and sink flips it. No rule based on
+      // the pins' positions alone can do that, those being unchanged by the
+      // swap.
+      const a = DBox.fromLtwh(0, 0, 100, 100);
+      const b = DBox.fromLtwh(300, 400, 100, 100);
+      const inA = DPt(25, 0); // left half of A
+      const inB = DPt(375, 400); // right half of B
+      List<DPt> flow(DPt source, DBox sourceBody, DPt sink, DBox sinkBody) =>
           orthogonalTrace(
             fromPin: source,
-            fromSide: sourceSide,
+            fromSide: SymbolSide.top,
             fromEscape: 10,
             fromBody: sourceBody,
             toPin: sink,
-            toSide: sinkSide,
+            toSide: SymbolSide.top,
             toEscape: 10,
             toBody: sinkBody,
           );
-
-      final downstream =
-          route(upper, SymbolSide.left, from, lower, SymbolSide.right, to);
-      final upstream =
-          route(lower, SymbolSide.right, to, upper, SymbolSide.left, from);
-
-      // Flowing DOWN the sheet, the lane is below both bodies…
+      final downstream = flow(inA, a, inB, b);
+      final upstream = flow(inB, b, inA, a);
       expect(
-        downstream.map((p) => p.y).reduce((a, b) => a > b ? a : b),
-        greaterThan(to.bottom),
+        downstream.map((p) => p.x).reduce((x, y) => x > y ? x : y),
+        greaterThan(b.right),
       );
-      // …and flowing UP it, the same two pins get the lane above them.
       expect(
-        upstream.map((p) => p.y).reduce((a, b) => a < b ? a : b),
-        lessThan(from.top),
+        upstream.map((p) => p.x).reduce((x, y) => x < y ? x : y),
+        lessThan(a.left),
       );
-      // Neither is allowed to buy its direction with a crossing.
-      expect(routeCuts(downstream, const <DBox>[from, to]), isFalse);
-      expect(routeCuts(upstream, const <DBox>[from, to]), isFalse);
+      expect(routeCuts(downstream, const <DBox>[a, b]), isFalse);
+      expect(routeCuts(upstream, const <DBox>[a, b]), isFalse);
     });
 
     test('a backward MIXED pair is met along its own edge, from outside', () {

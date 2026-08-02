@@ -80,11 +80,12 @@
 //
 // So a route that would cut a body it TERMINATES ON is replaced by one that
 // goes around it: out to the escape, along a lane clear of both bodies, and
-// back in. WHICH SIDE THE LANE RUNS DOWN IS THE SIDE THE CABLE IS HEADED —
-// source towards sink, the direction the signal flows ([_laneDownstream],
-// which carries the measured cost of that choice over taking the shorter
-// side). A mixed pair gets no choice at all, because a top or bottom pin
-// can only be met from the side it escapes to.
+// back in. WHICH SIDE THE LANE RUNS DOWN IS THE HALF OF ITS OWN BODY THE PIN
+// SITS IN — port 01 of a switch leaves by the left, port 48 by the right, so
+// the fan is symmetric and no cable crosses more than half the symbol it is
+// leaving ([_prefersLowLane], which records the two rules that came before
+// it and why each failed). A mixed pair gets no choice at all, because a top
+// or bottom pin can only be met from the side it escapes to.
 //
 // IT IS STILL A PURE FUNCTION OF ONE LINK, and that is the whole of why it
 // is not item 1 or 2 above. The only new inputs are THE TWO BODIES THIS
@@ -351,9 +352,10 @@ List<DPt> orthogonalTrace({
     ..._detour(
       p,
       fromSide,
+      fromBody,
       q,
       toSide,
-      hull: fromBody.union(toBody),
+      toBody,
       // AT LEAST AS FAR OUT AS EITHER ESCAPE, which is not decoration. A
       // lane INSIDE one end's own escape point would be met by that end
       // travelling back inward, and the whole defect being fixed here is a
@@ -391,8 +393,8 @@ List<DPt> _staircase(DPt p, SymbolSide fromSide, DPt q, SymbolSide toSide) {
   return <DPt>[corner];
 }
 
-/// The same staircase with its corridor moved clear of [hull] — the union
-/// of the two bodies this link terminates on.
+/// The same staircase with its corridor moved clear of BOTH bodies this
+/// link terminates on.
 ///
 /// ── THE MIXED PAIR IS THE ONE WORTH READING TWICE ───────────────────────
 /// It comes out of the two-horizontal formula unchanged, which does not
@@ -405,31 +407,41 @@ List<DPt> _staircase(DPt p, SymbolSide fromSide, DPt q, SymbolSide toSide) {
 List<DPt> _detour(
   DPt p,
   SymbolSide fromSide,
+  DBox fromBody,
   DPt q,
-  SymbolSide toSide, {
-  required DBox hull,
+  SymbolSide toSide,
+  DBox toBody, {
   required double clearance,
 }) {
+  final hull = fromBody.union(toBody);
   final pHorizontal = _isHorizontal(fromSide);
   final qHorizontal = _isHorizontal(toSide);
 
   if (!pHorizontal && !qHorizontal) {
-    final lane = _laneDownstream(
-      hull.left - clearance,
-      hull.right + clearance,
-      p.x,
-      q.x,
+    final lane = _nearerHalf(
+      low: hull.left - clearance,
+      high: hull.right + clearance,
+      pAt: p.x,
+      pMid: (fromBody.left + fromBody.right) / 2,
+      pSpan: fromBody.width,
+      qAt: q.x,
+      qMid: (toBody.left + toBody.right) / 2,
+      qSpan: toBody.width,
     );
     return <DPt>[DPt(lane, p.y), DPt(lane, q.y)];
   }
 
   final double lane;
   if (pHorizontal && qHorizontal) {
-    lane = _laneDownstream(
-      hull.top - clearance,
-      hull.bottom + clearance,
-      p.y,
-      q.y,
+    lane = _nearerHalf(
+      low: hull.top - clearance,
+      high: hull.bottom + clearance,
+      pAt: p.y,
+      pMid: (fromBody.top + fromBody.bottom) / 2,
+      pSpan: fromBody.height,
+      qAt: q.y,
+      qMid: (toBody.top + toBody.bottom) / 2,
+      qSpan: toBody.height,
     );
   } else {
     // NO CHOICE HERE: the vertical end escapes to one side of its own body
@@ -442,39 +454,84 @@ List<DPt> _detour(
   return <DPt>[DPt(p.x, lane), DPt(q.x, lane)];
 }
 
-/// The lane on the side the cable is HEADED — [a] when the sink lies below
-/// the source on this axis, [b] when it lies above.
+/// Whether the lane belongs on the LOW side of the two bodies — left when
+/// they are compared across x, top when across y.
 ///
 /// ═════════════════════════════════════════════════════════════════════
-/// THE SIDE FOLLOWS THE SIGNAL, WHICH IS WHY THE ARGUMENT ORDER MATTERS
+/// A PIN LEAVES BY ITS OWN NEAREST CORNER, AND THAT IS THE WHOLE RULE
 /// ═════════════════════════════════════════════════════════════════════
-/// [from] and [to] are not interchangeable and must not be made so.
-/// `buildDrawnWireLayer` reads a link's two ends "in the order M2-D emitted
-/// them — conductor order, from then to", so this compares the SINK against
-/// the SOURCE and puts the lane on the side the cable is travelling towards.
-/// Swap the two and every backward wire on the sheet turns the other way.
+/// Port 01 of a 48-port switch goes round the left; port 48 goes round the
+/// right. The fan is symmetric, no cable crosses more than half the symbol
+/// it is leaving, and the answer is stable per pin — it depends on that
+/// pin's own position in its own body and on nothing else, so two adjacent
+/// ports cannot disagree however their partners are placed.
 ///
-/// ── WHAT THIS REPLACED, AND WHAT IT COST ───────────────────────────────
-/// The first version took whichever lane the two ends travelled LESS to
-/// reach, which works out to "go round whichever side the pair's mean
-/// position is nearer". That is the shorter route and it is unreadable at
-/// scale: on a 48-port switch the two costs are within a few per cent of
-/// each other, so the choice flips between adjacent ports on nothing more
-/// than where each one's partner happens to sit, and cables that plainly
-/// belong together leave in opposite directions and meet head-on along a
-/// shared comb lane. The field sent a screenshot of that.
+/// ── TWO RULES CAME BEFORE THIS AND BOTH FAILED IN THE FIELD ──────────
+/// FIRST, the shorter lane: whichever the two ends travelled less to reach,
+/// which works out to "go round whichever side the pair's mean position is
+/// nearer". At scale the two costs sit within a few per cent of each other,
+/// so the choice flipped between adjacent ports on nothing but where each
+/// one's partner happened to sit. Cables that plainly belonged together
+/// left in opposite directions and met head-on along a shared comb lane.
 ///
-/// Following the signal costs ink and the figure is measured rather than
-/// waved at: on the 300-link fixture, total wire length goes from 1.063x
-/// the undetoured ideal to 1.092x, and the worst single wire from 1.69x to
-/// 1.87x. Nothing crosses 2x. That is the price of a sheet whose cables all
-/// point the way they flow, and it is worth it.
+/// SECOND, the direction of flow: source towards sink. That fixed the
+/// flip-flopping — Sugiyama lays sources left of sinks, so a family's cables
+/// came out unanimous — and unanimous was the next defect. Every run off the
+/// switch turned the SAME way, so the ones on the far side dragged a wire
+/// across the whole 48-port body to get there. The field sent a screenshot
+/// of each of these in turn.
 ///
-/// A CABLE WITH NO DIRECTION ON THIS AXIS — source and sink at the same
-/// coordinate — takes [b]. It is a tie, it needs a total order to stay
-/// byte-identical, and either answer is as good as the other.
-double _laneDownstream(double a, double b, double from, double to) =>
-    to < from ? a : b;
+/// Both were rules about the PAIR. This one is about the PIN, which is why
+/// it splits the fan where the others aligned it.
+///
+/// ── WHEN THE TWO PINS DISAGREE ──────────────────────────────────
+/// One lane serves both ends, so two pins in opposite halves of their own
+/// bodies cannot both be satisfied. THE WIDER BODY WINS: spanning more of
+/// this axis is exactly what makes going the wrong way expensive, and the
+/// big symbol is the one whose fan a reader is trying to follow. A 48-port
+/// switch therefore decides against a two-port field device every time.
+///
+/// Equal spans fall through to the direction the cable FLOWS — source
+/// towards sink, `pAt` and `qAt` being read in conductor order. Flow is the
+/// tie-break rather than the rule now, and it is still the right tie-break:
+/// two symmetrical symbols have no nearer corner to offer and the signal
+/// does.
+bool _prefersLowLane({
+  required double pAt,
+  required double pMid,
+  required double pSpan,
+  required double qAt,
+  required double qMid,
+  required double qSpan,
+}) {
+  final pLow = pAt < pMid;
+  final qLow = qAt < qMid;
+  if (pLow == qLow) return pLow;
+  if (pSpan != qSpan) return pSpan > qSpan ? pLow : qLow;
+  return qAt < pAt;
+}
+
+/// [_prefersLowLane] resolved to the lane coordinate itself.
+double _nearerHalf({
+  required double low,
+  required double high,
+  required double pAt,
+  required double pMid,
+  required double pSpan,
+  required double qAt,
+  required double qMid,
+  required double qSpan,
+}) =>
+    _prefersLowLane(
+      pAt: pAt,
+      pMid: pMid,
+      pSpan: pSpan,
+      qAt: qAt,
+      qMid: qMid,
+      qSpan: qSpan,
+    )
+    ? low
+    : high;
 
 /// Whether any segment of [points] passes through the INTERIOR of either
 /// body.
