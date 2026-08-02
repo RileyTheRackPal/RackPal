@@ -154,7 +154,7 @@ void main() {
       expect(plan.rebuiltDomainRuns, 0);
     });
 
-    test('Alt-hover draws its wires OVER an untouched label layer, and '
+    test('Alt-hover draws its wires UNDER an untouched label layer, and '
         'rebuilds no run at all', () {
       // The asymmetry `DrawnScope.replacesDomainRun` states: a soloed
       // domain's every link is in scope so its whole run can be replaced,
@@ -173,6 +173,51 @@ void main() {
       for (final domain in domains) {
         final range = scene.domainFragments[domain]!;
         expect(_indexOfRun(plan.ops, scene.scene.ops, range), isNotNull);
+      }
+    });
+
+    test('and the ordering is asserted, not just the presence: every label '
+        'run is emitted AFTER the last wire op', () {
+      // ═══════════════════════════════════════════════════════════════
+      // THE TITLE ABOVE USED TO SAY "OVER" AND NOTHING CHECKED IT
+      // ═══════════════════════════════════════════════════════════════
+      // The sibling test asserts that each run is PRESENT and that some
+      // polyline exists. Both hold whichever way round they are emitted,
+      // so the claim in the title was carried by the title alone — and
+      // when the order was deliberately reversed, nothing failed.
+      //
+      // ALT-HOVER IS THE CASE THAT CAN SEE IT. A soloed domain REPLACES
+      // its own run, so its wires cross no flags of their own; a hover
+      // replays every run and draws wires as well, which is the only
+      // arrangement where both kinds of mark are on the sheet at once.
+      //
+      // `OpPolyline` IS THE WIRE. A pennant is an `OpPath`, its leader an
+      // `OpLine`, its text an `OpText` — the netLabels-mode test two above
+      // asserts `whereType<OpPolyline>()` is EMPTY, which is what makes
+      // this identification a checked fact rather than an assumption.
+      final mtx = deviceNamed(doc, 'MTX-1');
+      final plan = planFor(
+        const SchematicViewFilter(),
+        altHovered: mtx.id.v,
+      );
+
+      var lastWire = -1;
+      for (var i = 0; i < plan.ops.length; i++) {
+        if (plan.ops[i] is OpPolyline) lastWire = i;
+      }
+      expect(lastWire, greaterThanOrEqualTo(0), reason: 'wires were drawn');
+
+      for (final domain in domains) {
+        final range = scene.domainFragments[domain]!;
+        final at = _indexOfRun(plan.ops, scene.scene.ops, range);
+        expect(at, isNotNull, reason: '$domain run is on the sheet');
+        expect(
+          at,
+          greaterThan(lastWire),
+          reason:
+              "$domain's flags are emitted before the wires, so a wire "
+              'paints over their outlines and their net names',
+        );
       }
     });
   });

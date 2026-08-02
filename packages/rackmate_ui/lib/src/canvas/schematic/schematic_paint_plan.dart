@@ -161,10 +161,6 @@ SchematicPaintPlan buildSchematicPaintPlan({
       ..add(const OpRestore());
   }
 
-  // ── the label runs, one contiguous sub-picture per domain ────────────
-  //
-  // Ascending domain id — `schematicDomainOrder`'s order and M2-D's — so
-  // the n-th chip in the bar governs the n-th run.
   var replayed = 0;
   var rebuilt = 0;
   var hidden = 0;
@@ -172,6 +168,61 @@ SchematicPaintPlan buildSchematicPaintPlan({
       ? filter.soloedDomain
       : null;
 
+  // ── the wires, BEFORE the labels ─────────────────────────────────────
+  //
+  // ═══════════════════════════════════════════════════════════════════
+  // THIS ORDER IS THE REVERSE OF THE ONE M2-E SHIPPED, AND ON PURPOSE
+  // ═══════════════════════════════════════════════════════════════════
+  // The wires used to be emitted last, on the reasoning that "the thing
+  // the user asked to see has to be emitted last" — which reads well and
+  // is wrong about WHICH marks it puts a wire on top of.
+  //
+  // A SCOPED DOMAIN'S WIRES REPLACE ITS OWN LABELS (see `replacedDomain`
+  // below: that run is skipped, not drawn under). So a wire can never
+  // cross the flags of the cable it belongs to. The only pennants in its
+  // path belong to the OTHER seven domains — marks the user did not ask
+  // to change and still has to read.
+  //
+  // Text on top is the drafting convention and it is the right way round
+  // here for a legibility reason rather than a stylistic one: a wire
+  // interrupted by a small flag is still obviously a wire, and a flag with
+  // a line through its net name is not readable at all. One of those
+  // failures costs nothing and the other costs the name.
+  //
+  // THE HIGHLIGHT STILL HIGHLIGHTS. Alt-hover and focus work because the
+  // wires are INK THAT WAS NOT THERE, not because they are topmost; a
+  // handful of small pennants over a long staircase does not stop it
+  // reading as new.
+  //
+  // WHAT THIS DOES NOT DO, so nobody reads more into it than it does: the
+  // pennant fill is `NetLabelStyle.fillAlpha` = 31/255, about 12%, so a
+  // wire still shows THROUGH a flag's body. What the reorder guarantees is
+  // that the flag's OUTLINE and its TEXT — both opaque — land on top of
+  // the wire rather than under it. That is the legibility win. It is not a
+  // knockout halo, and adding one would be a real design (it has to be
+  // deterministic to survive the byte-identical exit criterion) rather
+  // than a tweak.
+  var wires = const DrawnWireLayer(
+    ops: <DiagramOp>[],
+    wires: <DrawnWire>[],
+    unroutableLinkIds: <Uuid>[],
+  );
+  if (scope != null && scope.linkIds.isNotEmpty) {
+    wires = buildDrawnWireLayer(
+      scene: scene,
+      doc: doc,
+      linkIds: scope.linkIds,
+      measurer: measurer,
+      palette: palette,
+      style: wireStyle,
+    );
+    ops.addAll(wires.ops);
+  }
+
+  // ── the label runs, one contiguous sub-picture per domain ────────────
+  //
+  // Ascending domain id — `schematicDomainOrder`'s order and M2-D's — so
+  // the n-th chip in the bar governs the n-th run.
   for (final domain in schematicDomainOrder(doc.registries)) {
     final range = scene.domainFragments[domain];
     if (range == null) continue; // no link of this domain on the sheet.
@@ -196,35 +247,11 @@ SchematicPaintPlan buildSchematicPaintPlan({
     ops.addAll(scene.scene.fragmentFor(kUnresolvedDomainFragmentKey).ops);
   }
 
-  // ── the wires, last ──────────────────────────────────────────────────
-  //
-  // AFTER every label run, for the reason M2-D put the labels after every
-  // symbol: the display list is painted in order and there is no z-index in
-  // the IR, so the thing the user asked to see has to be emitted last. For
-  // an `Alt`-hover or a focus that is the whole mechanism — the wires light
-  // up ON TOP of a sheet that has not otherwise changed.
-  var wires = const DrawnWireLayer(
-    ops: <DiagramOp>[],
-    wires: <DrawnWire>[],
-    unroutableLinkIds: <Uuid>[],
-  );
-  if (scope != null && scope.linkIds.isNotEmpty) {
-    wires = buildDrawnWireLayer(
-      scene: scene,
-      doc: doc,
-      linkIds: scope.linkIds,
-      measurer: measurer,
-      palette: palette,
-      style: wireStyle,
-    );
-    ops.addAll(wires.ops);
-  }
-
   // ── the gesture in flight, after absolutely everything ───────────────
   //
-  // LAST, for the reason the wires are last and the labels are last: the
-  // display list is painted in order, there is no z-index in the IR, and
-  // the thing the user is DOING right now has to be on top of the thing
+  // LAST, for the reason the labels are last and the wires are under them:
+  // the display list is painted in order, there is no z-index in the IR,
+  // and the thing the user is DOING right now has to be on top of the thing
   // they are doing it to. A caret ring behind a symbol body is a cursor
   // the user cannot see.
   //
