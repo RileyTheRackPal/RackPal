@@ -266,15 +266,39 @@ void main() {
       // at least one domain is REQUIRED to overshoot it. Without that line
       // this test passes on any sheet whose wires happen to sit inside the
       // pennants, which is most of them.
+      //
+      // ON THE CYCLIC FIXTURE, and the swap is itself evidence. The plain
+      // five-link sheet used to overshoot and stopped once the detour lane
+      // started following the signal instead of taking the shorter side —
+      // fewer wires now double back past the drawing's edge, which is the
+      // rule working. The guard below is what SAID so, by failing rather
+      // than passing quietly, and the cyclic fixture is the smallest one
+      // that still has something for this to catch.
+      final cyclicDoc = buildSchematicTestDocument(feedback: true);
+      final cyclicScene = buildFixtureScene(cyclicDoc);
       final margin = kSheetGroundMarginGu * kSchematicUnitsPerGrid;
-      final oldWay = scene.scene.bounds.inflate(margin);
+      final oldWay = cyclicScene.scene.bounds.inflate(margin);
       var wouldHaveEscaped = 0;
-      for (final domain in domains) {
-        final plan = planFor(
-          SchematicViewFilter(
-            visibleDomains: <SignalDomainId>{domain},
-            explicit: true,
+      for (final domain in schematicDomainOrder(cyclicDoc.registries)) {
+        if (!cyclicScene.domainFragments.containsKey(domain)) continue;
+        final filter = SchematicViewFilter(
+          visibleDomains: <SignalDomainId>{domain},
+          explicit: true,
+        );
+        final plan = buildSchematicPaintPlan(
+          scene: cyclicScene,
+          doc: cyclicDoc,
+          filter: filter,
+          scope: resolveDrawnScope(
+            scene: cyclicScene,
+            filter: filter,
+            altHoveredDeviceId: null,
+            focusedDeviceIds: const <String>{},
+            designatorOf: (id) => cyclicDoc.devices[Uuid(id)]?.designator ?? id,
           ),
+          measurer: const FakeMeasurer(),
+          palette: const SchematicPalette(),
+          groundArgb: 0xFFFFFFFF,
         );
         expect(plan.drawnWires, isNotEmpty, reason: '${domain.v} drew no wire');
 

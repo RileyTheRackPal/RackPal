@@ -227,14 +227,19 @@ void main() {
 
     test('a backward pair takes a lane clear of both bodies instead of '
         'running back through them', () {
-      // Two symbols side by side; the link joins the pin on the LEFT
-      // one's left edge to the pin on the RIGHT one's right edge. Both
-      // escapes point outward, away from each other, so their midpoint
-      // lands squarely inside both. This is the screenshot's shape.
+      // Two symbols; the link joins the pin on the UPPER one's left edge to
+      // the pin on the LOWER one's right edge. Both escapes point outward,
+      // away from each other, so their midpoint lands squarely inside both.
+      // This is the screenshot's shape.
+      //
+      // THE SINK IS PUT BELOW THE SOURCE ON PURPOSE. With both pins on one
+      // row the cable has no direction along the lane's axis, the lane is
+      // decided by a documented tie-break, and this test would be asserting
+      // the tie-break rather than the rule.
       const from = DBox.fromLtwh(0, 0, 100, 100);
-      const to = DBox.fromLtwh(300, 0, 100, 100);
+      const to = DBox.fromLtwh(300, 200, 100, 100);
       const fromPin = DPt(0, 50);
-      const toPin = DPt(400, 50);
+      const toPin = DPt(400, 250);
       const bodies = <DBox>[from, to];
 
       final bare = orthogonalTrace(
@@ -273,9 +278,68 @@ void main() {
       // THE LANE CLEARS THE UNION, not one body. A lane derived from the
       // near end alone would leave the far end's approach crossing its own
       // partner, which is the same defect one symbol along.
-      final highest = around.map((p) => p.y).reduce((a, b) => a < b ? a : b);
-      expect(highest, lessThan(from.top));
-      expect(highest, lessThan(to.top));
+      final lowest = around.map((p) => p.y).reduce((a, b) => a > b ? a : b);
+      expect(lowest, greaterThan(from.bottom));
+      expect(lowest, greaterThan(to.bottom));
+    });
+
+    test('the lane goes round the side the cable is HEADED, so swapping '
+        'source and sink turns it the other way', () {
+      // ── WHY THE SIDE IS NOT SIMPLY THE SHORTER ONE ──────────────────
+      // It was, and "shorter" is unreadable at scale: on a 48-port switch
+      // the two lanes cost within a few per cent of each other, so the
+      // choice flipped between adjacent ports on nothing but where each
+      // one's partner happened to sit. Cables that plainly belonged
+      // together left in opposite directions and met head-on along a
+      // shared comb lane, which is what the field photographed.
+      //
+      // The side follows the SIGNAL now — `buildDrawnWireLayer` reads a
+      // link's ends in conductor order, from then to, so the lane goes on
+      // the side the cable is travelling towards. Two cables flowing the
+      // same way therefore leave the same way, with nothing having compared
+      // them to each other.
+      //
+      // ASSERTED BY REVERSAL, which is the only way to see it. A single
+      // route is just a list of corners and any rule can be fitted to it;
+      // the same two pins with source and sink exchanged must come back on
+      // the OTHER side, and no cost-based rule does that — cost is
+      // symmetric in the two ends.
+      const from = DBox.fromLtwh(0, 0, 100, 100);
+      const to = DBox.fromLtwh(300, 200, 100, 100);
+      const upper = DPt(0, 50);
+      const lower = DPt(400, 250);
+
+      List<DPt> route(DPt source, SymbolSide sourceSide, DBox sourceBody,
+              DPt sink, SymbolSide sinkSide, DBox sinkBody) =>
+          orthogonalTrace(
+            fromPin: source,
+            fromSide: sourceSide,
+            fromEscape: 10,
+            fromBody: sourceBody,
+            toPin: sink,
+            toSide: sinkSide,
+            toEscape: 10,
+            toBody: sinkBody,
+          );
+
+      final downstream =
+          route(upper, SymbolSide.left, from, lower, SymbolSide.right, to);
+      final upstream =
+          route(lower, SymbolSide.right, to, upper, SymbolSide.left, from);
+
+      // Flowing DOWN the sheet, the lane is below both bodies…
+      expect(
+        downstream.map((p) => p.y).reduce((a, b) => a > b ? a : b),
+        greaterThan(to.bottom),
+      );
+      // …and flowing UP it, the same two pins get the lane above them.
+      expect(
+        upstream.map((p) => p.y).reduce((a, b) => a < b ? a : b),
+        lessThan(from.top),
+      );
+      // Neither is allowed to buy its direction with a crossing.
+      expect(routeCuts(downstream, const <DBox>[from, to]), isFalse);
+      expect(routeCuts(upstream, const <DBox>[from, to]), isFalse);
     });
 
     test('a backward MIXED pair is met along its own edge, from outside', () {
