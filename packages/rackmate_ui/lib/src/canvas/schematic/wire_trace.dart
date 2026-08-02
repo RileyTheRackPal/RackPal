@@ -626,59 +626,49 @@ DrawnWireLayer buildDrawnWireLayer({
     for (final side in SymbolSide.values) {
       final ports = symbol.ports[side] ?? const <SymbolPort>[];
       // ══════════════════════════════════════════════════════════════
-      // ONE CORRIDOR PER PIN PER DIRECTION, MIRRORED ABOUT THE MIDDLE
+      // ONE CORRIDOR PER PIN ON AN EDGE, AND NO PIN SHARES WITH ANY OTHER
       // ══════════════════════════════════════════════════════════════
-      // This read `i % lanes` against a ceiling of six, so a 24-cable edge
-      // put FOUR wires on every corridor. Two wires sharing a corridor
-      // share the long horizontal run out of the symbol as well: they
-      // leave from different pins, converge on one line and stay there.
-      // The sheet showed six lines where it had twenty-four cables, and
-      // the field reported it. It is not a defect hue and dash can paper
-      // over — the wires are collinear, not merely close.
+      // Two wires sharing a corridor share the long run out of the symbol
+      // as well: they leave from different pins, converge on one line and
+      // stay there. It is not a defect hue and dash can paper over — the
+      // wires are collinear, not merely close — and the field has now
+      // reported it twice, against two different ways of sharing.
       //
-      // THE CEILING WAS THERE FOR A REASON THAT HAS SINCE BEEN FIXED. It
-      // was capped because an unbounded staircase "climbed off the top of
-      // the sheet", which was true when it was written: the sheet ground
-      // was sized from the label scene and did not know the wires existed.
-      // It does now (`DrawnWireLayer.inkBounds`), so a taller comb grows
-      // the paper under it instead of walking off the edge — and the cap
-      // has since been costing readability to prevent something that can
-      // no longer happen.
+      // FIRST IT WAS A CEILING. `i % lanes` against a maximum of six put
+      // FOUR wires on every corridor of a 24-cable edge, and the sheet drew
+      // six lines where it had twenty-four cables. The cap was there
+      // because an unbounded comb "climbed off the top of the sheet", which
+      // was true when it was written: the ground was sized from the label
+      // scene and did not know the wires existed. It does now
+      // (`DrawnWireLayer.inkBounds`), so a taller comb grows the paper
+      // under it instead of walking off the edge.
       //
-      // MIRRORED, WHICH IS WHAT KEEPS IT BOUNDED ANYWAY. `_prefersLowLane`
-      // sends the near half of an edge one way and the far half the other,
-      // so two pins reflected about the middle leave in OPPOSITE
-      // directions: their runs are on opposite sides of the body and
-      // cannot overlap however close their corridors sit. The two halves
-      // therefore reuse one set of heights, and a 48-port switch climbs 24
-      // corridors rather than 48.
+      // THEN IT WAS THE MIRROR, and that one is worth recording because it
+      // was a reasoned choice that was simply false. The two halves of an
+      // edge reused one set of heights, on the argument that
+      // `_prefersLowLane` sends the near half one way and the far half the
+      // other — so two pins reflected about the middle run on opposite
+      // sides of the body and cannot overlap however close their corridors
+      // sit. That is true of the DETOUR's side lane, which is where
+      // `_prefersLowLane` is consulted. It is the last resort. The ordinary
+      // staircase never asks: two top pins both escape UPWARD whichever
+      // half they sit in, so every mirrored pair ran its long horizontal on
+      // one line. Measured on a 48-cable edge: 24 collinear pairs, a fifth
+      // of all the ink on the sheet drawn twice.
       //
-      // THE SPLIT IS READ OFF THE PIN, not off the index, and deliberately.
-      // `_prefersLowLane` decides direction geometrically — the pin's own
-      // centre against its body's middle — and an index-based split would
-      // agree with it only while pins are distributed evenly. Sharing the
-      // one test is what stops the comb disagreeing with the router about
-      // which half a pin is in.
+      // SO THE INDEX IS THE PIN'S OWN INDEX, and the comb is exactly as
+      // tall as the edge is wide. That falls out of `combStepGu` being the
+      // pin pitch: corridor i sits i steps out while pin i sits i steps
+      // along, so the fan leaves at 45° and stays a fan however many
+      // cables land on the edge.
       //
-      // WHAT THIS DOES NOT PROMISE, said plainly. `_prefersLowLane` lets
-      // the WIDER body win when the two ends disagree, so a pin can be
-      // routed against its own half by a partner on a bigger symbol, and it
-      // then shares a corridor with the pin mirroring it. That costs little
-      // where it happens: the symbol losing that vote is the narrow one,
-      // and a narrow symbol has few cables to stack.
-      final horizontal = side == SymbolSide.left || side == SymbolSide.right;
-      final middle = horizontal
-          ? symbol.bodyRect.height / 2
-          : symbol.bodyRect.width / 2;
-      var near = 0;
-      for (final port in ports) {
-        final centre = symbolPortCentreLocal(symbol, port);
-        if ((horizontal ? centre.y : centre.x) < middle) near++;
-      }
+      // WHAT THIS DOES NOT PROMISE, said plainly so nobody reads more into
+      // it: two links leaving DIFFERENT symbols can still share a corridor,
+      // and two links on ONE pin still escape identically. Both are the
+      // accepted v1 behaviour — "crossings render as plain crossovers" —
+      // and separating them is channel allocation, which is v1.2.
       for (var i = 0; i < ports.length; i++) {
-        combIndex['${symbol.id} ${ports[i].key}'] = i < near
-            ? i
-            : ports.length - 1 - i;
+        combIndex['${symbol.id} ${ports[i].key}'] = i;
       }
     }
   }

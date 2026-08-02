@@ -17,6 +17,13 @@
 // or what covers what. A layer needs assertions about its output ORDER and
 // its EXTENT, not only about its geometry.
 //
+// AND ABOUT ITS INK, which is the third thing and the one added last.
+// Group 1 counted CORRIDORS for two revisions of the comb, and a count is
+// a proxy: the second revision satisfied it per half of the edge while the
+// sheet drew 24 doubled cables, because wires do not know about halves.
+// Measuring the overlap between the drawn segments themselves is the
+// assertion that cannot be satisfied by a rule that merely sounds right.
+//
 // ═════════════════════════════════════════════════════════════════════
 // N03 IS THE SYMBOL, BECAUSE THE DEFECT NEEDS A WIDE EDGE
 // ═════════════════════════════════════════════════════════════════════
@@ -38,8 +45,12 @@ EntityMeta _meta() =>
 const _a = Uuid('dev-a');
 const _b = Uuid('dev-b');
 
-/// Two N03 switches, `wired` cables between their top edges pin for pin.
-({RackDocument doc, int topPortCount}) _fixture({required int wired}) {
+/// Two N03 switches, `wired` cables between their top edges pin for pin —
+/// or, with [crossed], pin 01 to pin 48 and pin 02 to pin 47.
+({RackDocument doc, int topPortCount}) _fixture({
+  required int wired,
+  bool crossed = false,
+}) {
   final body = buildSeedCatalog()['N03']!;
   final doc = RackDocument(
     id: const Uuid('doc-wt'),
@@ -88,14 +99,18 @@ const _b = Uuid('dev-b');
 
   for (var n = 0; n < wired; n++) {
     final key = PortKey(topKeys[n]);
+    final far = PortKey(topKeys[crossed ? wired - 1 - n : n]);
     final pa = derivePortId(_a, key);
-    final pb = derivePortId(_b, key);
-    for (final (dev, pid) in <(Uuid, Uuid)>[(_a, pa), (_b, pb)]) {
+    final pb = derivePortId(_b, far);
+    for (final (dev, pid, k) in <(Uuid, Uuid, PortKey)>[
+      (_a, pa, key),
+      (_b, pb, far),
+    ]) {
       doc.ports[pid] = Port(
         id: pid,
         deviceId: dev,
         designator: 'J${n + 1}',
-        templatePortKey: key,
+        templatePortKey: k,
       );
     }
     final netId = Uuid('net-$n');
@@ -135,9 +150,9 @@ void main() {
     expect(
       f.topPortCount,
       greaterThanOrEqualTo(48),
-      reason: 'the catalog changed; this fixture needs a top edge wide '
-          'enough to have TWO HALVES, or the mirroring assertion below is '
-          'vacuous and the corridor assertion is only half a test',
+      reason: 'the catalog changed; this fixture needs an edge wide enough '
+          'for a comb to have somewhere to go wrong, and below about seven '
+          'cables every rule this file has ever held looks alike',
     );
     scene = buildSchematicScene(doc: doc, measurer: const FakeMeasurer());
     layer = buildDrawnWireLayer(
@@ -149,16 +164,12 @@ void main() {
     );
   });
 
-  group('1 — no two cables share a corridor in the same direction', () {
-    /// Every cable's escape distance at SW-1, paired with the half of that
-    /// symbol its pin sits in. The escape IS the comb offset, and the half
-    /// is the same test `_prefersLowLane` makes to pick a detour side — so
-    /// this reads the two things the comb has to keep in step.
-    (List<String> low, List<String> high) escapesByHalf() {
+  group('1 — no two cables are drawn along one line', () {
+    /// Every cable's escape distance at SW-1. The escape IS the comb
+    /// offset, so this is the comb read back off the shipped layer.
+    List<String> escapes() {
       final symbol = scene.symbols.firstWhere((s) => s.designator == 'SW-1');
-      final middle = symbol.bodyRect.left + symbol.bodyRect.width / 2;
-      final low = <String>[];
-      final high = <String>[];
+      final out = <String>[];
       for (final wire in layer.wires) {
         final ends = scene.netLabels
             .where((l) => l.linkId == wire.linkId)
@@ -166,73 +177,173 @@ void main() {
         for (var i = 0; i < ends.length; i++) {
           if (ends[i].deviceId != symbol.id) continue;
           final pin = ends[i].pinCentre;
-          final escape =
-              (wire.ends[i].x - pin.x).abs() + (wire.ends[i].y - pin.y).abs();
-          (pin.x < middle ? low : high).add(escape.toStringAsFixed(4));
+          out.add(
+            ((wire.ends[i].x - pin.x).abs() + (wire.ends[i].y - pin.y).abs())
+                .toStringAsFixed(4),
+          );
         }
       }
-      return (low, high);
+      return out;
     }
 
-    test('every pin in one half of an edge gets a corridor of its own', () {
-      // ── THE ASSERTION INVERTED, AND THE REASON IS ON THE OTHER SIDE ──
-      // This required AT MOST SIX corridors, because an unbounded comb
-      // "walked off the top of the sheet". That was true when it was
-      // written: the ground was sized from the label scene and did not
-      // know the wires existed. It does now (`DrawnWireLayer.inkBounds`),
-      // so a taller comb grows the paper under it instead of running off
-      // the edge — and what the cap bought in the meantime was FOUR cables
-      // per corridor. Cables sharing a corridor share the long run out of
-      // the symbol too, so a 24-cable edge drew six lines. The field
-      // reported it, and collinear wires are not something hue and dash
-      // can separate.
-      final (low, high) = escapesByHalf();
+    test('every pin on an edge gets a corridor of its own', () {
+      // ── THIS ASSERTION HAS NOW BEEN WRONG TWICE, IN OPPOSITE WAYS ────
+      // FIRST it required AT MOST SIX corridors, because an unbounded comb
+      // "walked off the top of the sheet". That was true when written: the
+      // ground was sized from the label scene and did not know the wires
+      // existed. It does now (`DrawnWireLayer.inkBounds`), so a taller comb
+      // grows the paper under it — and what the cap bought meanwhile was
+      // four cables per corridor.
+      //
+      // THEN it required the two halves of the edge to reuse ONE set of
+      // heights, on the argument that `_prefersLowLane` sends them round
+      // opposite sides of the body. That is true of the detour's side lane
+      // and false of the ordinary staircase, which is what almost every
+      // cable takes — so the assertion was enforcing the very collinearity
+      // it was written to forbid, and the group below is what caught it.
+      final all = escapes();
       expect(
-        low.length + high.length,
+        all.length,
         layer.wires.length,
         reason: 'every cable must have exactly one end on SW-1',
       );
       expect(
-        low.length,
-        greaterThan(1),
-        reason: 'the fixture must wire BOTH halves of the edge or the '
-            'mirroring test below is vacuous and this one is half a test',
+        all.toSet().length,
+        all.length,
+        reason: '${all.length} cables leave SW-1 sharing only '
+            '${all.toSet().length} corridors, so some are drawn on one line',
       );
-      expect(high.length, greaterThan(1), reason: 'as above, other half');
+      // AND THE COMB REALLY DOES CLIMB — 48 identical escapes would fail
+      // the line above, but a fixture that somehow produced one lane per
+      // cable at one height would not, and is worth ruling out where the
+      // heights are already in hand.
+      final runs = all.map(double.parse).toList()..sort();
+      expect(runs.last, greaterThan(runs.first));
+    });
+
+    test('and NO cable shares ink with another, which is the property the '
+        'corridor count is only a proxy for', () {
+      // ── WHAT THE FIELD ACTUALLY SEES ────────────────────────────
+      // Distinct corridors is the mechanism; two wires never drawn along
+      // one line is the thing being bought, and the two came apart once
+      // already. The mirrored comb gave every pin a corridor "of its own"
+      // WITHIN its half and the sheet still drew 24 doubled cables,
+      // because the test above was counting per half and the wires do not
+      // know about halves.
+      //
+      // So this measures the drawing: total length of collinear overlap
+      // between the segments of any two different wires. Zero, on a
+      // fixture of 48 cables leaving one edge — which is the densest thing
+      // the seed catalog can build and the shape of the screenshot.
+      double overlap(DPt a1, DPt a2, DPt b1, DPt b2) {
+        double lo(double x, double y) => x < y ? x : y;
+        double hi(double x, double y) => x > y ? x : y;
+        final along = a1.y == a2.y && b1.y == b2.y && a1.y == b1.y;
+        final down = a1.x == a2.x && b1.x == b2.x && a1.x == b1.x;
+        if (!along && !down) return 0;
+        final (pa, pb, qa, qb) = along
+            ? (a1.x, a2.x, b1.x, b2.x)
+            : (a1.y, a2.y, b1.y, b2.y);
+        final left = hi(lo(pa, pb), lo(qa, qb));
+        final right = lo(hi(pa, pb), hi(qa, qb));
+        return right > left ? right - left : 0;
+      }
+
+      var doubled = 0.0;
+      final worst = <String>[];
+      for (var i = 0; i < layer.wires.length; i++) {
+        for (var j = i + 1; j < layer.wires.length; j++) {
+          final a = layer.wires[i].points;
+          final b = layer.wires[j].points;
+          var here = 0.0;
+          for (var m = 1; m < a.length; m++) {
+            for (var n = 1; n < b.length; n++) {
+              here += overlap(a[m - 1], a[m], b[n - 1], b[n]);
+            }
+          }
+          if (here <= 0) continue;
+          doubled += here;
+          if (worst.length < 5) {
+            worst.add(
+              '${doc.links[layer.wires[i].linkId]!.designator}/'
+              '${doc.links[layer.wires[j].linkId]!.designator} '
+              '${here.toStringAsFixed(0)}',
+            );
+          }
+        }
+      }
       expect(
-        low.toSet().length,
-        low.length,
-        reason: '${low.length} cables leave the near half sharing only '
-            '${low.toSet().length} corridors, so some are drawn on one line',
+        doubled,
+        0,
+        reason: 'cables are drawn along each other for '
+            '${doubled.toStringAsFixed(0)} units: ${worst.join(', ')}',
       );
-      expect(
-        high.toSet().length,
-        high.length,
-        reason: '${high.length} cables leave the far half sharing only '
-            '${high.toSet().length} corridors, so some are drawn on one line',
+    });
+  });
+
+  group('1b — a CROSSED patch does not collapse onto one corridor', () {
+    // ── THE CASE THE COMB CHANGE COULD HAVE REINTRODUCED ────────────
+    // Port 01 to port 48, port 02 to port 47 — a panel patched in reverse,
+    // which every install has somewhere. One corridor per pin means the
+    // two ends of such a cable sit at OPPOSITE ends of the comb, so their
+    // escape distances always ADD UP to the same total. A corridor placed
+    // at the midpoint of the two escapes therefore lands in the same place
+    // for all 48, and the sheet draws one line.
+    //
+    // The mirrored comb this replaced happened to be immune, because it
+    // gave both ends of a crossed cable the SAME index — so this fixture
+    // could not have found the defect before the comb changed, and it is
+    // added with the comb rather than with the corridor rule for that
+    // reason.
+    late DrawnWireLayer crossed;
+    setUpAll(() {
+      final f = _fixture(wired: 48, crossed: true);
+      crossed = buildDrawnWireLayer(
+        scene: buildSchematicScene(doc: f.doc, measurer: const FakeMeasurer()),
+        doc: f.doc,
+        linkIds: f.doc.links.keys.toSet(),
+        measurer: const FakeMeasurer(),
+        palette: const SchematicPalette(),
       );
     });
 
-    test('and the two halves MIRROR, so the comb climbs half the edge', () {
-      // The bound is no longer a ceiling on the count. It is that the two
-      // halves leave in OPPOSITE directions (`_prefersLowLane`), so their
-      // runs are on opposite sides of the body and can reuse one set of
-      // heights: 48 cables climb 24 corridors, not 48.
-      //
-      // ASSERTED AS SET EQUALITY, which is the strongest form available and
-      // the one that cannot be satisfied by accident — two halves that
-      // merely happened to climb the same DISTANCE would still fail it.
-      final (low, high) = escapesByHalf();
+    test('no corridor carries more than two cables, and the midpoint rule '
+        'would put all 48 on one', () {
+      // ── COUNTED OFF THE HORIZONTAL RUNS, NOT OFF THE TOPMOST POINT ──
+      // The first version of this test keyed on each route's lowest y and
+      // the midpoint mutation survived it, because a midpoint route still
+      // reaches its far ESCAPE — it just doubles back afterwards. The
+      // topmost point was therefore distinct per cable while all 48 long
+      // runs sat on one row. What overlaps is the run, so the run is what
+      // gets counted.
+      final carried = <String, int>{};
+      for (final wire in crossed.wires) {
+        for (var i = 1; i < wire.points.length; i++) {
+          if (wire.points[i].y != wire.points[i - 1].y) continue;
+          final row = wire.points[i].y.toStringAsFixed(4);
+          carried[row] = (carried[row] ?? 0) + 1;
+        }
+      }
+      expect(crossed.wires, hasLength(48));
+      final busiest = carried.values.reduce((a, b) => a > b ? a : b);
       expect(
-        low.toSet(),
-        high.toSet(),
-        reason: 'the halves climb different corridors, so the comb is '
-            'twice as tall as it needs to be',
+        busiest,
+        lessThanOrEqualTo(2),
+        reason: 'one corridor carries $busiest of the 48 cables: $carried',
       );
-      // AND IT REALLY DOES CLIMB — a comb collapsed to one lane satisfies
-      // nothing above but is worth ruling out where the heights are in hand.
-      final runs = low.map(double.parse).toList()..sort();
-      expect(runs.last, greaterThan(runs.first));
+      // TWO IS THE HONEST ANSWER, NOT ONE, and saying so here is better
+      // than letting a reader assume the bound is tight. Cable n and cable
+      // 47−n are mirror images in every quantity a per-link router is
+      // allowed to see — same pair of escape distances, same pair of
+      // bodies, opposite pins — so nothing this file may consult can put
+      // them on different rows. Separating them is channel allocation,
+      // which canon §11.1.3 defers to v1.2.
+      expect(
+        carried.values.where((n) => n > 1),
+        isNotEmpty,
+        reason: 'the pairing stopped being symmetric, so this group is no '
+            'longer testing the case it was built for',
+      );
     });
   });
 
