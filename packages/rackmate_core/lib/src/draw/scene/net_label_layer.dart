@@ -1400,7 +1400,9 @@ final class _Emitter {
     _pennants.add(
       OpPath(
         _pennantPath(anchor, side, width),
-        fill: Fill(_over(stub.style.argb, style.fillAlpha, palette.bodyFill)),
+        fill: Fill(
+          compositeOver(stub.style.argb, style.fillAlpha, palette.bodyFill),
+        ),
         stroke: Stroke(
           argb: stub.style.argb,
           widthPt: style.outlineWidthPt,
@@ -1610,7 +1612,13 @@ DPt _along(DPt from, DPt unit, double distance) =>
 /// NOT A COLOUR POLICY. This composites two colours the caller already
 /// chose; it picks neither. `signal_style.dart` remains the one place a hue
 /// is resolved.
-int _over(int src, int alpha, int dst) {
+///
+/// PUBLIC BECAUSE THERE IS A SECOND CALLER. `wire_trace.dart`'s tag pill had
+/// the identical defect and needs the identical blend, and a second
+/// transcription of source-over is exactly the shape of mistake #124 was:
+/// two places computing what should be one number, agreeing until they do
+/// not.
+int compositeOver(int src, int alpha, int dst) {
   final a = alpha / 255.0;
   int mix(int shift) {
     final s = (src >> shift) & 0xFF;

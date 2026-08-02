@@ -97,6 +97,7 @@ final class SchematicWireStyle {
     this.tagPadGu = 0.5,
     this.fillAlpha = 31,
     this.outlineWidthPt = kMinSignalStrokePt,
+    this.maxCombLanes = 6,
   });
 
   /// How far a wire leaves its pin before it may turn.
@@ -136,6 +137,35 @@ final class SchematicWireStyle {
   /// carried by the wire itself, and outlining the pill at the family's
   /// weight too would say the same thing twice.
   final double outlineWidthPt;
+
+  /// The hard ceiling on the escape comb — how many corridors one edge may
+  /// spread its wires across, however many pins it has.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// SIX, WHICH IS `NetLabelStyle.maxCombLanes`, AND THE SAME JUDGEMENT
+  /// ═══════════════════════════════════════════════════════════════════
+  /// The file header's comb was UNBOUNDED: the i-th pin escaped i steps,
+  /// for any i. That is fine on the eight-link example it was written
+  /// against and unreadable on a 30-port switch, where the field found it
+  /// — a staircase two dozen steps tall climbing off the sheet, which is
+  /// the identical defect `NetLabelStyle.maxCombLanes` capped for the
+  /// label comb and which survived here because the cap was written where
+  /// the report came from rather than where the pattern was.
+  ///
+  /// THE FIGURE IS COPIED DELIBERATELY, not derived. The two combs measure
+  /// different things — that one stacks pennants against the pin pitch,
+  /// this one spaces corridors — so there is no formula to share, only the
+  /// judgement about how tall a staircase a person will follow. Two
+  /// renderings of one `Link` (DR-001) climbing to different heights would
+  /// be the modes disagreeing about the drawing, which is the thing
+  /// [escapeGu] is already kept equal to `leaderGu` to prevent.
+  ///
+  /// AND IT COSTS SOMETHING, stated rather than hidden: pins six apart
+  /// share a corridor, so two wires can run parallel on the same line for
+  /// part of their path. The header already accepts that for two links
+  /// leaving different symbols; this extends it to one symbol's wide edge,
+  /// and the wires stay tellable apart by hue, dash and weight.
+  final int maxCombLanes;
 }
 
 /// One link's drawn rendering: where the wire runs, and what encodes it.
@@ -290,8 +320,42 @@ DrawnWireLayer buildDrawnWireLayer({
     symbolOf[symbol.id] = symbol;
     for (final side in SymbolSide.values) {
       final ports = symbol.ports[side] ?? const <SymbolPort>[];
+      // ═══════════════════════════════════════════════════════════════
+      // WRAPPED, NOT UNBOUNDED — and it was unbounded until the field
+      // sent a screenshot of it.
+      // ═══════════════════════════════════════════════════════════════
+      // This read `= i`, so the i-th pin escaped i comb steps. On a
+      // 30-port switch with 24 cables that is a staircase 24 steps tall,
+      // climbing clear of the symbol and off the top of the sheet — the
+      // exact defect `net_label_layer` had capped at six two commits
+      // earlier, sitting untouched in the OTHER layer because the cap was
+      // written where the defect had been reported rather than where the
+      // rule lived.
+      //
+      // THE CEILING IS SHARED; THE DERIVATION IS NOT, and the difference is
+      // worth stating because reaching for `combLaneCount` here is the
+      // obvious move and it is wrong. That function derives how many lanes
+      // an edge NEEDS from how wide a pennant is against the pin pitch —
+      // `ceil((widest + gap) / pitch)`. An escape distance has no width to
+      // compare: every wire leaving this edge is one stroke, so that
+      // formula returns 1 and puts every wire on one corridor. What this
+      // edge needs is one lane per pin, bounded. Only the BOUND is common,
+      // and `NetLabelStyle.maxCombLanes` is where the figure is argued.
+      //
+      // THE COST, STATED. Pins six apart now share an escape lane, so two
+      // wires can run parallel on the same corridor for part of their
+      // path. That is the accepted v1 behaviour this file's header already
+      // names — "two links leaving DIFFERENT symbols in one layer can
+      // still share a corridor and overlap" — extended to two links on one
+      // symbol, and it is the trade the ceiling buys: a shared corridor is
+      // two wires you can still follow by hue and dash, and a 24-step
+      // staircase is a sheet you cannot read at all.
+      final lanes = math.min(
+        style.maxCombLanes,
+        math.max(1, ports.length),
+      );
       for (var i = 0; i < ports.length; i++) {
-        combIndex['${symbol.id} ${ports[i].key}'] = i;
+        combIndex['${symbol.id} ${ports[i].key}'] = i % lanes;
       }
     }
   }
@@ -313,6 +377,27 @@ DrawnWireLayer buildDrawnWireLayer({
     });
 
   final ops = <DiagramOp>[];
+  // ═══════════════════════════════════════════════════════════════════
+  // THE PILLS ARE HELD BACK UNTIL EVERY WIRE IS DRAWN
+  // ═══════════════════════════════════════════════════════════════════
+  // They used to be appended inside the loop, right after their own wire —
+  // so link N+1's TRACE landed after link N's PILL and painted over it.
+  // With one wire per link and two pills each that is a line through a net
+  // name on almost every flag of a busy sheet, which is what the field
+  // reported as labels rendering under the wires.
+  //
+  // It is 96-I's defect exactly, in the other layer and for the same
+  // reason: ops appended per-item paint in item order, and per-item order
+  // is not paint order. `net_label_layer` answered it by holding leaders,
+  // pennants and text in three lists and flushing them in paint order;
+  // this is the same answer with two.
+  //
+  // NO DOMAIN FLUSH IS NEEDED HERE, and that is the one difference worth
+  // naming. A drawn-wire layer is built for ONE scope and appended whole
+  // by `buildSchematicPaintPlan`; it is not sliced into per-domain
+  // `IntRange`s the filter replays, so holding ops to the end of the
+  // layer cannot break a fragment the way it would there.
+  final pills = <DiagramOp>[];
   final wires = <DrawnWire>[];
   final unroutable = <Uuid>[];
   final sizer = _PillSizer(measurer: measurer, style: style, unitsPerGrid: upg);
@@ -395,7 +480,9 @@ DrawnWireLayer buildDrawnWireLayer({
 
     // §11.1.1: "an orthogonal polyline with a tag pill at each end".
     for (final at in pillAt) {
-      ops.addAll(sizer.pillOps(_tagTextFor(link, signal), at, signal, palette));
+      pills.addAll(
+        sizer.pillOps(_tagTextFor(link, signal), at, signal, palette),
+      );
     }
 
     wires.add(
@@ -407,6 +494,9 @@ DrawnWireLayer buildDrawnWireLayer({
       ),
     );
   }
+
+  // EVERY TRACE, THEN EVERY PILL. See the declaration of `pills`.
+  ops.addAll(pills);
 
   return DrawnWireLayer(
     ops: List<DiagramOp>.unmodifiable(ops),
@@ -551,7 +641,9 @@ final class _PillSizer {
       OpRoundRect(
         box,
         Radii.circular(radius),
-        fill: Fill(_withAlpha(signal.argb, style.fillAlpha)),
+        fill: Fill(
+          compositeOver(signal.argb, style.fillAlpha, palette.bodyFill),
+        ),
         stroke: Stroke(
           argb: signal.argb,
           widthPt: style.outlineWidthPt,
@@ -571,11 +663,3 @@ final class _PillSizer {
     ];
   }
 }
-
-/// [argb] with its alpha replaced — the 12% fill, BAKED INTO THE COLOUR.
-///
-/// Never a `saveLayer`: docs/05 §11.2 bans an opacity layer on this path by
-/// name, and the drawn wires are the one thing on the sheet that is rebuilt
-/// when a filter changes.
-int _withAlpha(int argb, int alpha) =>
-    (math.max(0, math.min(255, alpha)) << 24) | (argb & 0x00FFFFFF);
