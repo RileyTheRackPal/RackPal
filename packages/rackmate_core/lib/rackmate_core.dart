@@ -72,6 +72,7 @@ export 'src/commands/selection.dart';
 export 'src/commands/set_rack_height_command.dart';
 export 'src/commands/set_rack_property_command.dart';
 export 'src/commands/simple_notifier.dart';
+export 'src/commands/split_commands.dart';
 export 'src/commands/transaction.dart';
 export 'src/commands/undo_stack.dart';
 export 'src/derived/connect_rules.dart';

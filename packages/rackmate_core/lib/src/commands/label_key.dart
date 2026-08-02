@@ -72,4 +72,14 @@ enum LabelKey {
   // must not be the same words — the Edit menu is where a user finds out
   // which of the two they just did.
   multiDraw,
+
+  // SPLITTING A SET (commands/split_commands.dart), DR-014. A FOURTH entry
+  // in the connect family, and the reason is DR-012.2's again from the
+  // other direction: this gesture turns one `Link` with N `Conductor`s
+  // into one with N-1 plus a new single-conductor `Link`. That is the bill
+  // of materials changing, so the Edit menu must not offer "Undo connect"
+  // for it — a user who reads that and takes it at its word expects one
+  // cable to disappear, not a lifted conductor to go back into the cable
+  // it came out of.
+  splitSet,
 }

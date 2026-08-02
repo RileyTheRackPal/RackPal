@@ -436,6 +436,12 @@ final class ConnectAllocations {
 /// The rules run BEFORE any of it. A refusal returns no command, so a
 /// refused gesture leaves neither a document change nor an undo entry
 /// (DR-011.1).
+///
+/// [freeing] is DR-014's pending split, forwarded to `evaluateConnect` so
+/// `TOP-003` counts the pins as this gesture will leave them. A caller that
+/// passes it MUST also run the split — see `buildSplitConnectCommands`,
+/// which is the one place that does both and the only thing that should
+/// pass this.
 ConnectPortsResult buildConnectPortsCommand({
   required RackDocument doc,
   required ConnectTarget from,
@@ -444,8 +450,9 @@ ConnectPortsResult buildConnectPortsCommand({
   required DateTime now,
   required String actor,
   ConnectAllocations? reserve,
+  Set<ConductorRef> freeing = const <ConductorRef>{},
 }) {
-  final verdict = evaluateConnect(doc, from, to);
+  final verdict = evaluateConnect(doc, from, to, freeing: freeing);
   if (verdict is ConnectRefused) return ConnectPortsRefused(verdict);
 
   // Both ends may be pins on the SAME device (a loopback between two of

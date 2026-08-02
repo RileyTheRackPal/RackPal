@@ -38,6 +38,9 @@ import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/derived/connect_target.dart';
 import 'package:rackmate_core/src/derived/device_loads.dart' show bodyFor;
 import 'package:rackmate_core/src/model/conductor.dart';
+// `Link` — DR-014's `planSetSplit` reads the link a conductor sits in, to
+// refuse a split that would leave it with none.
+import 'package:rackmate_core/src/model/link.dart' show Link;
 import 'package:rackmate_core/src/model/placement.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 // `PortDirection` — `chainOutputFor` skips the two directions where a
@@ -174,10 +177,32 @@ final class ConnectRefused extends ConnectVerdict {
 /// consumes the pin twice over. `TOP-001` makes that state unreachable
 /// through a command, but a hand-edited or imported file can carry one
 /// and this must not under-count it into looking legal.
-int portConductorCount(RackDocument doc, Uuid portId) {
+/// [freeing] names conductors a gesture is ABOUT TO LIFT OUT and that are
+/// therefore not counted — DR-014's split, asked here so `TOP-003` keeps
+/// living in exactly one place.
+///
+/// THE ALTERNATIVE WAS A SECOND COPY OF THE RULE. A caller that planned a
+/// split and then decided for itself whether the pin had room would be
+/// re-implementing `_withinMaxConnections` — including
+/// [ConnectTarget.effectiveMaxConnections]'s bus-tap reading, which is the
+/// half everybody gets wrong. One parameter here beats a second answer
+/// somewhere else, for the same reason `connect_target.dart`'s `_seqIn`
+/// refuses to sort the port list a second way.
+///
+/// EMPTY IS THE NORMAL CASE and costs one set lookup per conductor.
+int portConductorCount(
+  RackDocument doc,
+  Uuid portId, {
+  Set<ConductorRef> freeing = const <ConductorRef>{},
+}) {
   var count = 0;
-  for (final link in doc.links.values) {
-    for (final c in link.conductors) {
+  for (final entry in doc.links.entries) {
+    final conductors = entry.value.conductors;
+    for (var i = 0; i < conductors.length; i++) {
+      if (freeing.isNotEmpty && freeing.contains(ConductorRef(entry.key, i))) {
+        continue;
+      }
+      final c = conductors[i];
       if (_landsOn(c.from, portId)) count++;
       if (_landsOn(c.to, portId)) count++;
     }
@@ -280,6 +305,163 @@ ConnectTarget? chainOutputFor(
   return null;
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// DR-014 — SPLITTING A SET BY DRAWING ONE MEMBER SOMEWHERE ELSE
+// ─────────────────────────────────────────────────────────────────────
+// HERE FOR `chainOutputFor`'S REASON, WHICH IS STATED ABOVE AND HOLDS
+// TWICE OVER: this asks whether a pin is FULL, which is
+// [portConductorCount] plus [ConnectTarget.effectiveMaxConnections], and
+// putting it in a file of its own would make that file and this one
+// import each other. The dependency runs one way on purpose — rules read
+// targets, targets never read rules.
+//
+// It is a `TOP-003` question with a REMEDY behind it rather than a search,
+// which is the only thing that distinguishes it from its neighbour.
+
+/// One conductor a gesture will lift out of a multi-conductor `Link` so the
+/// pin it occupies can take a new cable — DR-014.
+///
+/// EVERY FIELD IS CAPTURED, NOT RE-READ. A caller announces this AFTER the
+/// commands have run, when the link has already lost the conductor and
+/// asking the document again would report the state the sentence is trying
+/// to describe the change TO.
+@immutable
+final class SetSplit {
+  const SetSplit({
+    required this.conductor,
+    required this.linkDesignator,
+    required this.conductorsBefore,
+    required this.role,
+  });
+
+  /// Which conductor, in which link.
+  final ConductorRef conductor;
+
+  /// The link's `W` number — "W001". What the sentence has to name, because
+  /// a user who is about to see one cable become two needs to know which
+  /// row on the schedule changed.
+  final String linkDesignator;
+
+  /// How many conductors the link carried BEFORE the lift. Always >= 2 —
+  /// see [planSetSplit] on why a one-conductor link is never split.
+  final int conductorsBefore;
+
+  /// The lifted conductor's role — `"R"`, `"-"` — or `''` when it declares
+  /// none. Carried for the sentence only; the new cable takes its role from
+  /// its own two pins through `buildConnectPortsCommand`, which is the only
+  /// thing entitled to decide it (see `ConnectPortsCommand.role`).
+  final String role;
+
+  int get conductorsAfter => conductorsBefore - 1;
+}
+
+/// The conductor to lift so [target] can take a cable to [towardsDeviceId],
+/// or `null` when this gesture is not a split.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// FOUR CONDITIONS, AND EVERY ONE OF THEM IS A REFUSAL TO GUESS
+/// ═══════════════════════════════════════════════════════════════════════
+/// DR-014 rules that drawing a wire from an already-wired member of a set
+/// to a DIFFERENT device splits the set automatically. There is no
+/// modifier, no mode and no dialog, so this function is the whole of the
+/// decision — and a gesture that acts without being asked has to be sure.
+/// It answers `null` unless all four hold:
+///
+///   1. **The pin is FULL.** If `TOP-003` would let the cable land, there
+///      is nothing to free and nothing to split. This is what keeps the
+///      rule inert on the 223 catalog ports that carry no `setKey` and on
+///      every unwired pin in the document — which is almost all of them.
+///
+///   2. **EXACTLY ONE conductor end lands on it.** A pin carrying two is a
+///      bus tap or a hand-edited file, and "which of these did you mean to
+///      displace" is a question with no derivable answer. A conductor
+///      looped from the pin BACK to the same pin counts twice here and is
+///      excluded by the same clause — `TOP-001` makes it unreachable
+///      through a command, and lifting half of it is not a thing.
+///
+///   3. **Its link carries MORE THAN ONE conductor.** This is the clause
+///      that keeps a split from being a DELETE. Lifting the only conductor
+///      out of a one-conductor link leaves a `Link` that asserts nothing —
+///      a `W` number and a schedule row for a cable with no electrical
+///      path, which `ConnectPortsCommand`'s own zero-conductor guard calls
+///      "no conductor at all" and throws over. Re-routing a single cable by
+///      dragging its end is a real gesture and a reasonable thing to want;
+///      it is not this one, and it must not happen by accident to a user
+///      who was aiming at a stereo pair.
+///
+///   4. **The far end is not already on [towardsDeviceId].** This is the
+///      user's own wording — *"when another wire is drawn to a DIFFERENT
+///      device"* — and it is load-bearing rather than decorative. Drawing
+///      `R` at the box it is already wired to is far more likely a
+///      misaimed drag than a request to re-plug, and the honest answer
+///      there is the `TOP-003` refusal the pin has always given.
+///
+/// AN OPEN OR PLACED FAR END SPLITS. Neither names a device, so condition 4
+/// has nothing to compare and cannot be violated: an `OpenEndpoint` is a
+/// coil left unterminated (AC-018/B1) and a `PlaceEndpoint` is a location
+/// with no device yet. A pin held by a conductor that goes nowhere is held
+/// by the weakest claim in the model, and the user pointing it at a real
+/// jack is unambiguous.
+///
+/// AN UNRESOLVABLE FAR END DOES NOT. `doc.ports` holds every port a connect
+/// command lands on (DR-011.1), so a `PortEndpoint` naming no row is a
+/// hand-edited or imported file. "I cannot tell which device that end is
+/// on" is not the same as "it is a different one", and only the second
+/// licenses a split.
+SetSplit? planSetSplit(
+  RackDocument doc, {
+  required ConnectTarget target,
+  required Uuid towardsDeviceId,
+}) {
+  // (1) FULL. Asked through the same getter `TOP-003` asks through, so a
+  // bus tap — unbounded, `null` — is never "full" and never splits.
+  final max = target.effectiveMaxConnections;
+  if (max == null || max <= 0) return null;
+  if (portConductorCount(doc, target.portId) + 1 <= max) return null;
+
+  // (2) EXACTLY ONE.
+  ConductorRef? found;
+  Link? foundLink;
+  for (final entry in doc.links.entries) {
+    final conductors = entry.value.conductors;
+    for (var i = 0; i < conductors.length; i++) {
+      final c = conductors[i];
+      final ends =
+          (_landsOn(c.from, target.portId) ? 1 : 0) +
+          (_landsOn(c.to, target.portId) ? 1 : 0);
+      if (ends == 0) continue;
+      // A second occupant, or one conductor occupying the pin twice.
+      if (ends > 1 || found != null) return null;
+      found = ConductorRef(entry.key, i);
+      foundLink = entry.value;
+    }
+  }
+  final ref = found;
+  final link = foundLink;
+  // Unreachable while (1) holds — a full pin has an occupant — and kept so
+  // the function is total rather than relying on that agreement.
+  if (ref == null || link == null) return null;
+
+  // (3) NOT THE LAST CONDUCTOR.
+  if (link.conductors.length < 2) return null;
+
+  // (4) NOT ALREADY THERE.
+  final c = link.conductors[ref.index];
+  final far = _landsOn(c.from, target.portId) ? c.to : c.from;
+  if (far is PortEndpoint) {
+    final farPort = doc.ports[far.portId];
+    if (farPort == null) return null;
+    if (farPort.deviceId == towardsDeviceId) return null;
+  }
+
+  return SetSplit(
+    conductor: ref,
+    linkDesignator: link.designator,
+    conductorsBefore: link.conductors.length,
+    role: c.role,
+  );
+}
+
 /// Evaluates `TOP-001`..`TOP-005` for connecting [from] to [to] in [doc],
 /// returning the FIRST refusal in [ConnectRule.values] order, or
 /// [ConnectAllowed].
@@ -299,11 +481,21 @@ ConnectTarget? chainOutputFor(
 /// re-pull left in place) model-ILLEGAL with no escape, and inventing a
 /// tier-1 rule is precisely what canon §5's opening line forbids: *"a rule
 /// not listed here does not exist"*.
+///
+/// [freeing] is DR-014's pending split — conductors this same gesture will
+/// lift out before it writes, so `TOP-003` must count the pin as they will
+/// leave it rather than as it stands. It reaches `TOP-003` and NOTHING
+/// ELSE, because nothing else it could reach is affected: `TOP-004` and
+/// `TOP-005` ask about devices and shelves, `TOP-001` compares the two
+/// pins the user picked, and `TOP-002` is unreachable without an
+/// `ontoLink`. Threading it into all five would be five places for a
+/// future rule to be wrong.
 ConnectVerdict evaluateConnect(
   RackDocument doc,
   ConnectTarget from,
   ConnectTarget to, {
   Uuid? ontoLink,
+  Set<ConductorRef> freeing = const <ConductorRef>{},
 }) {
   for (final rule in ConnectRule.values) {
     // Exhaustive over the enum, so a sixth rule cannot be declared
@@ -319,7 +511,12 @@ ConnectVerdict evaluateConnect(
         to,
         ontoLink,
       ),
-      ConnectRule.withinMaxConnections => _withinMaxConnections(doc, from, to),
+      ConnectRule.withinMaxConnections => _withinMaxConnections(
+        doc,
+        from,
+        to,
+        freeing,
+      ),
     };
     if (refusal != null) return refusal;
   }
@@ -463,6 +660,7 @@ ConnectRefused? _withinMaxConnections(
   RackDocument doc,
   ConnectTarget from,
   ConnectTarget to,
+  Set<ConductorRef> freeing,
 ) {
   for (final t in [from, to]) {
     final max = t.effectiveMaxConnections;
@@ -481,7 +679,7 @@ ConnectRefused? _withinMaxConnections(
         '${t.citation} accepts no connections.',
       );
     }
-    final live = portConductorCount(doc, t.portId);
+    final live = portConductorCount(doc, t.portId, freeing: freeing);
     if (live + 1 > max) {
       return ConnectRefused(
         ConnectRule.withinMaxConnections,

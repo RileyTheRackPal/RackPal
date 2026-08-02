@@ -1,3 +1,4 @@
+import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/model/enums.dart' show TerminationType;
 import 'package:rackmate_core/src/units/ids.dart';
 import 'package:rackmate_core/src/units/len.dart';
@@ -61,6 +62,63 @@ final class Conductor {
 
   /// "blue/white" — PRINTS on the termination schedule.
   final String? colorCode;
+}
+
+/// ONE conductor, cited by the `Link` that holds it and its POSITION in
+/// that link's `conductors` list.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A CONDUCTOR HAS NO ID, AND THAT IS NOT AN OVERSIGHT
+/// ═══════════════════════════════════════════════════════════════════════
+/// CR-014 makes a `Conductor` a CHILD of its `Link` — one cable, N
+/// electrical paths — and nothing in the corpus gives the child an
+/// identity of its own. It has never needed one: every consumer walks a
+/// link's list and reads what it finds.
+///
+/// DR-014 is the first gesture that has to name ONE path inside a cable
+/// and act on it alone, so it needs a citation. This is that citation, and
+/// it is deliberately the smallest thing that works — a pair, not a new
+/// persisted id. Minting an id would put a field on the wire (CR-117's
+/// byte gate, `kSchemaVersion`) to serve a gesture that resolves and
+/// consumes it inside one unmutated document.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// POSITION, NOT A SEARCH ON ENDPOINTS
+/// ═══════════════════════════════════════════════════════════════════════
+/// "The conductor between these two pins" is not a unique description. A
+/// `Link` may legitimately carry two conductors across the same ordered
+/// pair — `TOP-002` is scoped to ONE link and only fires when a caller
+/// names an `ontoLink` (connect_rules.dart), and canon rejected the
+/// stricter project-wide reading outright. A search would collapse the two
+/// and lift the wrong one.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A REFERENCE, NOT A HANDLE. IT GOES STALE THE MOMENT THE LIST MOVES.
+/// ═══════════════════════════════════════════════════════════════════════
+/// Removing or inserting a conductor renumbers every position after it, so
+/// a `ConductorRef` describes the document it was resolved from and no
+/// other. That is the same contract `ConnectTarget` states for itself — a
+/// SNAPSHOT, not a live view — and the same discipline every plan in
+/// `commands/` already keeps: resolve, decide, and write within one
+/// document state.
+@immutable
+final class ConductorRef {
+  const ConductorRef(this.linkId, this.index);
+
+  final Uuid linkId;
+
+  /// 0-based position in the link's `conductors` list.
+  final int index;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ConductorRef && other.linkId == linkId && other.index == index;
+
+  @override
+  int get hashCode => Object.hash(linkId, index);
+
+  @override
+  String toString() => 'ConductorRef(${linkId.v}, $index)';
 }
 
 /// A fan-out point on a `Link` — a single cable that physically reaches
