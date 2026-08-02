@@ -176,6 +176,13 @@ void main() {
         readSchematicFixture(),
         'AS COMMITTED (no nets, no '
         'registries)',
+        // FOUR, AND THAT IS #124's FALLBACK BEING EXERCISED. This document
+        // seeds no registries, so no family resolves, so `SignalStyle
+        // .glyph` is empty and there is no shape to draw — channel 4 stays
+        // the single measured run it has always been. The augmented case
+        // below is the same fixture with the registries added and is where
+        // the glyph becomes geometry.
+        opsPerFlag: 4,
       );
     });
 
@@ -230,7 +237,7 @@ void main() {
         ),
       );
 
-      _measure(doc, 'AUGMENTED (300 nets, seeded registries)');
+      _measure(doc, 'AUGMENTED (300 nets, seeded registries)', opsPerFlag: 5);
     });
   });
 
@@ -353,7 +360,7 @@ void _census(String label, List<DiagramOp> ops) {
 /// Times [doc] end to end, times the label layer alone in the same
 /// process, and PRINTS both. docs/12 §5.1 asks for the commit cost to be
 /// measured and recorded, and a green test records nothing.
-void _measure(RackDocument doc, String label) {
+void _measure(RackDocument doc, String label, {required int opsPerFlag}) {
   final measurer = _Measurer();
 
   // Warm up: the first call on the VM pays JIT compilation for the whole
@@ -425,15 +432,28 @@ void _measure(RackDocument doc, String label) {
         'nice-to-have.',
   );
   // The op delta is the machine-independent half of the record, so it is
-  // asserted rather than only printed: four ops per flag — leader,
-  // pennant, family token, net name — and two flags per link.
+  // asserted rather than only printed: FIVE ops per flag — leader,
+  // pennant, family glyph, family tag, net name — and two flags per link.
   //
-  // IT WENT TO FIVE AND CAME BACK, which is why this number is worth
-  // watching. Making the flag opaque was first done with a second
-  // `OpPath` behind the tint, at +600 ops on this fixture; compositing
-  // the two colours at build time gives identical pixels in one op. The
-  // budget above never moved, and neither did this.
-  expect(labelOps, 4 * labels);
+  // IT WENT TO FIVE, CAME BACK TO FOUR, AND HAS GONE TO FIVE AGAIN FOR A
+  // DIFFERENT REASON, which is why this number is worth watching.
+  //
+  //   * the first five was ACCIDENTAL: making the flag opaque with a
+  //     second `OpPath` behind the tint. Compositing the two colours at
+  //     build time gives identical pixels in one op, so that one was given
+  //     back (`ff712d2`);
+  //   * this five is STRUCTURAL (#124). Channel 4 used to be one text run
+  //     carrying a glyph the app's font does not have — measured near-zero
+  //     by Jost and painted full width by the screen's fallback face, which
+  //     is what put the net name on top of the token. The glyph is geometry
+  //     now, so channel 4 is a path plus a shorter run. There is no
+  //     arithmetic that gives this one back: the fix is that the two are
+  //     separate objects.
+  //
+  // A flag whose family glyph has no shape stays at FOUR — the defined
+  // fallback to the measured run. Every family in this fixture resolves,
+  // which is what makes the figure a single number here.
+  expect(labelOps, opsPerFlag * labels);
   expect(ops, _kM2cOps + labelOps);
 }
 

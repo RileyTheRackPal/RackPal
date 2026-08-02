@@ -183,6 +183,9 @@ import 'package:rackmate_core/src/derived/equipment_list.dart'
 import 'package:rackmate_core/src/draw/geometry.dart';
 import 'package:rackmate_core/src/draw/ops.dart';
 import 'package:rackmate_core/src/draw/path.dart';
+// #124 — channel 4a as geometry, and the ONE width both this file's sizer
+// and its emitter read for it.
+import 'package:rackmate_core/src/draw/scene/family_glyph.dart';
 import 'package:rackmate_core/src/draw/scene/rack_style.dart';
 import 'package:rackmate_core/src/draw/scene/signal_style.dart';
 import 'package:rackmate_core/src/draw/scene/symbol_layer.dart';
@@ -609,7 +612,7 @@ NetLabelLayerBuild buildNetLabelLayer({
       // reason; taking a different one here is how a comb comes to be sized
       // for a pennant nobody draws.
       final width = sizer.pennantWidth(
-        stub.style.familyToken,
+        stub.style,
         stub.netName,
         horizontal: false,
       );
@@ -867,7 +870,7 @@ int netLabelGutterGu({
       final key = _pinKey(end.symbol.id, end.port.key);
       final at =
           (consumed[key] ?? 0) +
-          sizer.stubExtent(signal.familyToken, name, horizontal: true);
+          sizer.stubExtent(signal, name, horizontal: true);
       consumed[key] = at;
       if (at > worst) worst = at;
     }
@@ -963,11 +966,7 @@ int netLabelNodeGapGu({
       if (side != SymbolSide.top && side != SymbolSide.bottom) continue;
       stubs.add((end: end, signal: signal, name: name));
       final key = _edgeKey(end.symbol.id, side);
-      final w = sizer.pennantWidth(
-        signal.familyToken,
-        name,
-        horizontal: false,
-      );
+      final w = sizer.pennantWidth(signal, name, horizontal: false);
       final prev = widest[key];
       if (prev == null || w > prev) widest[key] = w;
     }
@@ -1007,7 +1006,7 @@ int netLabelNodeGapGu({
     final at =
         (consumed[key] ?? 0) +
         comb +
-        sizer.stubExtent(stub.signal.familyToken, stub.name, horizontal: false);
+        sizer.stubExtent(stub.signal, stub.name, horizontal: false);
     consumed[key] = at;
     if (at > worst) worst = at;
   }
@@ -1073,6 +1072,41 @@ int _laneCount({
   return math.min(maxLanes, math.max(1, ((widest + gap) / pitch).ceil()));
 }
 
+/// Channel 4's width for [signal] — the figure a pennant reserves for it,
+/// and the offset the emitter places the net name at.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// TWO ROUTES, AND THE SPLIT IS #124's WHOLE FIX
+/// ═══════════════════════════════════════════════════════════════════════
+/// When the domain glyph has a SHAPE (`family_glyph.dart`) the glyph is
+/// GEOMETRY and only the tag is measured. The glyph's contribution is
+/// [familyGlyphAdvance] — a pure function of the type size, which the
+/// emitter reads too — so the width reserved and the width drawn cannot
+/// disagree however the running font behaves.
+///
+/// When it does not, the whole `'glyph tag'` run is measured exactly as it
+/// always was: the defined fallback, correct whenever the font DOES carry
+/// the character, and never silently nothing.
+///
+/// PUBLIC BECAUSE THE DEFECT WAS THE ABSENCE OF A GATE. Nothing compared
+/// what channel 4 measured with what it painted, so a glyph that measured
+/// near-zero and painted full width shipped. `family_glyph_test.dart`
+/// drives this function under a measurer that returns zero for every
+/// string — the pathological case Jost actually produced — and the
+/// geometry route is the only one that still reserves a width there.
+double netLabelTokenWidth(
+  SignalStyle signal, {
+  required TextMeasurer measurer,
+  required NetLabelStyle style,
+}) {
+  double measure(String text) => measurer
+      .measureText(text, rackText(style.tokenSizePt, 0, TextAnchor.midLeft))
+      .advanceWidth;
+  return familyGlyphFor(signal.glyph) == null
+      ? measure(signal.familyToken)
+      : familyGlyphAdvance(style.tokenSizePt) + measure(signal.tag);
+}
+
 /// THE ONE PLACE A STUB'S SIZE IS DECIDED, shared by the emitter and by
 /// [netLabelGutterGu].
 ///
@@ -1124,11 +1158,15 @@ final class _Sizer {
   final Map<String, double> _tokenWidth = <String, double>{};
   final Map<String, double> _nameWidth = <String, double>{};
 
-  double tokenWidth(String token) => _tokenWidth.putIfAbsent(
-    token,
-    () => measurer
-        .measureText(token, rackText(style.tokenSizePt, 0, TextAnchor.midLeft))
-        .advanceWidth,
+  /// [netLabelTokenWidth], memoised.
+  ///
+  /// THE MEMO KEY IS `familyToken` ON BOTH ROUTES. It is one of ~55
+  /// strings and is unique per family, so it keys the geometry route and
+  /// the fallback route without a second map; the glyph half of the
+  /// geometry route contributes a constant.
+  double tokenWidth(SignalStyle signal) => _tokenWidth.putIfAbsent(
+    signal.familyToken,
+    () => netLabelTokenWidth(signal, measurer: measurer, style: style),
   );
 
   double nameWidth(String name) => _nameWidth.putIfAbsent(
@@ -1141,18 +1179,26 @@ final class _Sizer {
   /// The pennant's width. The point costs WIDTH only on a horizontal stub;
   /// on a top/bottom stub the pennant lies across its leader and the point
   /// is vertical.
-  double pennantWidth(String token, String name, {required bool horizontal}) {
-    final content = tokenWidth(token) + gap + nameWidth(name);
+  double pennantWidth(
+    SignalStyle signal,
+    String name, {
+    required bool horizontal,
+  }) {
+    final content = tokenWidth(signal) + gap + nameWidth(name);
     return horizontal ? tip + pad + content + pad : pad + content + pad;
   }
 
   /// How far one stub reaches out from its pin's edge, INCLUDING the gap
   /// that separates it from the next stub on the same pin. The emitter's
   /// `_consumed` step and the gutter's reservation are this one figure.
-  double stubExtent(String token, String name, {required bool horizontal}) =>
+  double stubExtent(
+    SignalStyle signal,
+    String name, {
+    required bool horizontal,
+  }) =>
       leader +
       (horizontal
-          ? pennantWidth(token, name, horizontal: true)
+          ? pennantWidth(signal, name, horizontal: true)
           : height + tip) +
       gap;
 
@@ -1208,8 +1254,17 @@ final class _Emitter {
   // CONTIGUOUS `IntRange`, which is what lets the filter replay seven runs
   // and rebuild the eighth. Holding ops past a domain boundary would
   // interleave two runs and silently destroy that.
+  //
+  // FOUR SINCE #124, and the fourth sits where it does for the same
+  // reason the other three do. A family glyph drawn as geometry is ink
+  // INSIDE a pennant, so it has to land after every fill in its run —
+  // appending it to [_pennants] would put one flag's glyph under the next
+  // flag's fill on a combed edge, which is this defect again with a
+  // different shape. It goes before the texts because it is the same
+  // channel as the tag beside it and nothing decides between them.
   final List<DiagramOp> _leaders = <DiagramOp>[];
   final List<DiagramOp> _pennants = <DiagramOp>[];
+  final List<DiagramOp> _glyphs = <DiagramOp>[];
   final List<DiagramOp> _texts = <DiagramOp>[];
 
   /// Appends this domain's held ops, leaders first and text last.
@@ -1220,9 +1275,11 @@ final class _Emitter {
     ops
       ..addAll(_leaders)
       ..addAll(_pennants)
+      ..addAll(_glyphs)
       ..addAll(_texts);
     _leaders.clear();
     _pennants.clear();
+    _glyphs.clear();
     _texts.clear();
   }
   final List<RenderedNetLabel> labels = <RenderedNetLabel>[];
@@ -1250,9 +1307,9 @@ final class _Emitter {
     final horizontal = side == SymbolSide.left || side == SymbolSide.right;
 
     final token = stub.style.familyToken;
-    final tokenW = sizer.tokenWidth(token);
+    final tokenW = sizer.tokenWidth(stub.style);
     final width = sizer.pennantWidth(
-      token,
+      stub.style,
       stub.netName,
       horizontal: horizontal,
     );
@@ -1363,17 +1420,51 @@ final class _Emitter {
         : side == SymbolSide.top
         ? box.bottom - _height / 2
         : box.top + _height / 2;
-    _texts
-      ..add(
-        OpText(
-          token,
+    // ═══════════════════════════════════════════════════════════════
+    // CHANNEL 4a IS GEOMETRY WHEN THE GLYPH HAS A SHAPE — #124
+    // ═══════════════════════════════════════════════════════════════
+    // See `family_glyph.dart`. The glyph is a path whose width is
+    // COMPUTED, so no font can measure it short and draw it wide; the tag
+    // beside it is ASCII plus `·` and stays a measured run. Where the
+    // glyph has no shape — a registry a user authored in M4, or a domain
+    // that did not resolve — the whole token is one text run exactly as
+    // before, which is right whenever the font does carry it.
+    //
+    // THE GLYPH GOES IN ITS OWN TIER, between the pennants and the texts.
+    // It is ink INSIDE the flag, so it must land after the fill that would
+    // otherwise cover it and before nothing in particular — but the tier
+    // has to exist, because `_pennants` is flushed as a block and appending
+    // a glyph there would put one flag's glyph under the next flag's fill
+    // on a combed edge, which is 96-I's defect arriving through a new door.
+    final shape = familyGlyphFor(stub.style.glyph);
+    if (shape == null) {
+      _texts.add(
+        OpText(token, DPt(textLeft, midY), _tokenStyle(stub.style.argb)),
+      );
+    } else {
+      _glyphs.add(
+        familyGlyphOp(
+          shape,
           DPt(textLeft, midY),
+          style.tokenSizePt,
+          stub.style.argb,
+          // The pennant outline's width, for the same reason it is a
+          // hairline there: the WEIGHT channel is the leader's, and a
+          // hollow glyph stroked at the family's weight would say it twice.
+          hollowWidthPt: style.outlineWidthPt,
+        ),
+      );
+      _texts.add(
+        OpText(
+          stub.style.tag,
+          DPt(textLeft + familyGlyphAdvance(style.tokenSizePt), midY),
           _tokenStyle(stub.style.argb),
         ),
-      )
-      ..add(
-        OpText(stub.netName, DPt(textLeft + tokenW + _gap, midY), _nameStyle),
       );
+    }
+    _texts.add(
+      OpText(stub.netName, DPt(textLeft + tokenW + _gap, midY), _nameStyle),
+    );
 
     labels.add(
       RenderedNetLabel(

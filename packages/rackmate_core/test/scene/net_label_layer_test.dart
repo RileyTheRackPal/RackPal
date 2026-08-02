@@ -462,17 +462,34 @@ void main() {
 
     test('the family token is drawn on every pennant, so no label is '
         'hue-only', () {
+      // § 6.1's glyph+tag is ONE channel and it must reach every flag,
+      // because hue alone is the one thing that section forbids. Since
+      // #124 it reaches in TWO ops rather than one — the glyph as a path
+      // whose width is computed, the tag as a measured run — so the claim
+      // is asserted over both halves. Asserting only the text would pass
+      // with the glyph silently dropped, which is the failure mode the
+      // whole four-channel design exists to prevent.
       final doc = _document();
       final built = _build(doc);
       final style = _styleOf(doc, 'video.hdmi.2_0');
       final texts = built.scene.ops.whereType<OpText>().map((t) => t.text);
       expect(style.familyToken, '▲ VID·HD20');
-      expect(texts, contains(style.familyToken));
-      // Two labels per link and one token run each.
+      expect(style.tag, 'VID·HD20');
+      expect(texts, contains(style.tag));
+      // Two labels per link and one tag run each.
       expect(
-        built.scene.ops.whereType<OpText>().where(
-          (t) => t.text == style.familyToken,
-        ),
+        built.scene.ops.whereType<OpText>().where((t) => t.text == style.tag),
+        hasLength(2),
+      );
+      // AND THE GLYPH, AS GEOMETRY. The raw character must NOT be drawn
+      // anywhere — that is the defect: Jost measures it near-zero and the
+      // screen falls back to a face that paints it full width.
+      expect(texts, isNot(contains(style.familyToken)));
+      expect(texts.where((t) => t.contains(style.glyph)), isEmpty);
+      final range =
+          built.domainFragments[const SignalDomainId('video.digital')]!;
+      expect(
+        _glyphPaths(built.scene.ops.sublist(range.start, range.end)),
         hasLength(2),
       );
     });
@@ -506,10 +523,9 @@ void main() {
       final style = _styleOf(doc, 'video.hdmi.2_0');
       final range =
           built.domainFragments[const SignalDomainId('video.digital')]!;
-      final pennants = built.scene.ops
-          .sublist(range.start, range.end)
-          .whereType<OpPath>()
-          .toList();
+      final pennants = _pennantPaths(
+        built.scene.ops.sublist(range.start, range.end),
+      );
       expect(pennants, hasLength(2));
 
       // ── THE FILL IS OPAQUE, AND STILL THE 12% COLOUR ───────────────
@@ -886,14 +902,33 @@ void main() {
                 'drawn after a pennant is the defect this fixes',
           );
         }
-        // One leader and one pennant per flag, two texts per flag.
+        // One leader per flag; TWO `OpPath`s — the pennant and, since
+        // #124, the family glyph drawn as geometry; two texts — the
+        // family tag and the net name.
+        //
+        // THE GLYPH IS INSIDE THE SAME KIND AS THE PENNANT and that is not
+        // a coincidence to paper over: it has to paint after every fill in
+        // its run, so ranking it with the pennants is what keeps the
+        // non-decreasing check above meaningful for it. `_glyphPaths`
+        // separates the two where a test needs one or the other.
         final leaders = kindOf.where((k) => k == 0).length;
-        expect(kindOf.where((k) => k == 1).length, leaders);
+        expect(kindOf.where((k) => k == 1).length, 2 * leaders);
         expect(kindOf.where((k) => k == 2).length, 2 * leaders);
+        // ...and every glyph lands AFTER every pennant, which the kind
+        // ranking cannot see because they share a kind.
+        final paths = run.whereType<OpPath>().toList();
+        final firstGlyph = paths.indexWhere(_isGlyphPath);
+        final lastPennant = paths.lastIndexWhere((p) => !_isGlyphPath(p));
+        expect(
+          firstGlyph,
+          greaterThan(lastPennant),
+          reason: "a glyph drawn before another flag's fill is covered by "
+              'it — 96-I again, wearing a different shape',
+        );
       }
       expect(
         built.scene.ops.length,
-        _symbolOps(built) + 4 * built.netLabels.length,
+        _symbolOps(built) + 5 * built.netLabels.length,
       );
     });
 
@@ -913,11 +948,16 @@ void main() {
       final built = _build(_document());
       final base = _symbolOps(built);
       // BY KIND, NOT BY STRIDE. The run is layered now — every leader, then
-      // every pennant, then every text — so `base + 4 * i + 1` no longer
-      // names a pennant. Pennants are the only `OpPath` the layer emits and
-      // they keep emission order within a domain, and domains are appended
-      // in order, so the i-th one still belongs to `netLabels[i]`.
-      final paths = built.scene.ops.skip(base).whereType<OpPath>().toList();
+      // every pennant, then every glyph, then every text — so
+      // `base + 4 * i + 1` no longer names a pennant. Pennants keep
+      // emission order within a domain and domains are appended in order,
+      // so the i-th one still belongs to `netLabels[i]`.
+      //
+      // NOT `whereType<OpPath>()` ALONE any more: since #124 the family
+      // glyph is an `OpPath` too. `_pennantPaths` is the discriminator and
+      // it reads a real structural fact rather than a position — a pennant
+      // is the only path carrying BOTH a fill and a stroke.
+      final paths = _pennantPaths(built.scene.ops.skip(base));
       expect(paths, hasLength(built.netLabels.length));
       for (var i = 0; i < built.netLabels.length; i++) {
         final label = built.netLabels[i];
@@ -1062,6 +1102,31 @@ void main() {
     });
   });
 }
+
+/// Whether [op] is a family GLYPH rather than a pennant.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A STRUCTURAL FACT, NOT A POSITION
+/// ═══════════════════════════════════════════════════════════════════════
+/// Since #124 the layer emits two kinds of `OpPath`, and every test that
+/// wanted "the pennants" used to get them with a bare `whereType<OpPath>()`
+/// — which now silently picks up glyphs and would let a test claiming to
+/// check a pentagon check a triangle instead.
+///
+/// The discriminator is the emitter's own construction and is pinned by
+/// `a pennant is the only path carrying both a fill and a stroke` below:
+/// a pennant is a tinted card WITH an outline, a filled glyph has a fill
+/// and no stroke, a hollow glyph has a stroke and no fill. Exactly one
+/// side of that is ever true at a time.
+bool _isGlyphPath(OpPath op) => op.fill == null || op.stroke == null;
+
+/// The pennants among [ops], in emission order.
+List<OpPath> _pennantPaths(Iterable<DiagramOp> ops) =>
+    ops.whereType<OpPath>().where((p) => !_isGlyphPath(p)).toList();
+
+/// The family glyphs among [ops], in emission order.
+List<OpPath> _glyphPaths(Iterable<DiagramOp> ops) =>
+    ops.whereType<OpPath>().where(_isGlyphPath).toList();
 
 /// How many ops the SYMBOL half of [scene] emitted — everything before the
 /// first label op. Derived from the fragments rather than assumed, so it
