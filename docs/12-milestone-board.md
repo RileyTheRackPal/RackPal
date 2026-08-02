@@ -784,6 +784,32 @@ the sizer and the emitter, so no font can put them out of step. Cost, stated: fi
 where a family resolves, up from four, and unlike `ff712d2`'s accidental fifth this one is
 structural and does not come back.
 
+**DR-015 renamed the project file, and the rename found two silent-loss paths that had nothing to
+do with naming.** `.rmpj` ships at `dc22ddc`; `.rackmate` is still opened and still saved in place.
+Both defects are the same mistake — **rebuilding a filename you already have** — and neither was
+found by a failing test. They were found by asking what the app's own files are called.
+
+**The snapshot prune** rebuilt its path from `pathFor`, which now spells `.rmpj`. Ten `.rackmate`
+snapshots left by an earlier build would therefore be **counted** — so the ten-per-document cap
+reads as already met — and then **fail to delete, silently**, because a snapshot that will not
+delete is deliberately swallowed as disk clutter rather than a failure. The old files would sit in
+AppData forever and the new ones would pile up behind them. `_entriesFor` now carries the path each
+file actually has.
+
+**The recovery scan** classified snapshots by the current extension only. A recovery pair exists
+*only across a crash*, so the one window in which a `.rackmate` snapshot meets a `.rmpj` build is
+exactly the window the feature exists for: the previous build died with unsaved work and the user
+installed this one before reopening. The sidecar would have been left an orphan — and `scan`
+deletes orphans **silently**, so a crash recovery would have gone without a word.
+
+**Neither is about extensions**, which is why they are recorded here rather than left in the commit.
+A path that is derived twice is a path that can disagree with itself, and `symbol_layer.dart`'s
+header already records what that cost the last time (*"the painter and the hit-tester each computed
+a pin centre and disagreed by half a pin for as long as nobody compared them"*). The rename did not
+create these; it made an existing derivation visible by changing one of its inputs. Five tests now
+pin the back-compat promise and every one of them dies if the legacy spelling is dropped from
+`kDocumentExtensions`.
+
 **The `drawn`-mode router took six field reports in a row, and what they were all reports of is one
 decision.** `38baed1` … `5d53512`, against #96. A staircase is out of one pin, along a corridor,
 into the other; **where that corridor sits on its own axis is the only free variable in the router**,

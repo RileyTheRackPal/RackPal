@@ -284,7 +284,7 @@ Two further sequencing constraints are binding, from AC-059:
 - [ ] The virtualised port grid: fill-down, TSV paste, multi-row edit, archetype generators, the pattern DSL with autocomplete and designed parse errors
 - [ ] Banks and `PortSetDef`; the three doors (CR-054); typed `PortOverrides`
 - [ ] `.rmdx` single-file export/import with `contentHash` as a warning-level check
-- [ ] `.rmda` device archives: the codec, the library directory service, import/export, and the palette filter that makes more than one library usable (DR-015 §11.15.5 — the format is ruled; none of the subsystem exists)
+- [ ] `.rmda` device archives: the codec, the library directory service, import/export, and the palette filter that makes more than one library usable (DR-015 §11.15.5 — the format is ruled; none of the subsystem exists). Board #170
 - [ ] The stripped field-device form; the media-type editor and connector aliases; undo throughout the builder (CR-106)
 
 **Exit criterion.** A 16×16 matrix template is authored from scratch **in under three minutes by a user who has seen the tool once**, and a template saved with exactly three fields plus ports places into a rack and appears correctly in the equipment list with `—` in every unknown column and an accurate unknown count in the rollup. See [Device builder](06-device-builder.md).
