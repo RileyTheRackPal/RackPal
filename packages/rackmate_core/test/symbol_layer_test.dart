@@ -366,20 +366,25 @@ void main() {
     });
 
     test('width grows with the busiest TOP/BOTTOM edge', () {
-      // 6 control ports on top: (6 + 1) * 16 = 112 < minBodyWidth 140.
+      // 6 control ports on top: (6 + 2) * 16 = 128 < minBodyWidth 140.
       final narrow = _symbol([
         for (var i = 0; i < 6; i++)
           _port('c$i', family: 'ctl.contact', direction: PortDirection.sink),
       ]);
       expect(narrow.bodyRect.width, 140);
 
-      // 12 control ports: (12 + 1) * 16 = 208 > 140, so the body grows.
+      // 12 control ports: (12 + 2) * 16 = 224 > 140, so the body grows.
+      //
+      // `+ 2` RATHER THAN docs/05 SS3's `+ 1` since
+      // `kPinRunInsetPitches`: a whole clear pitch at each end of the
+      // run instead of half, so the outermost pin of a full edge is not
+      // almost on the corner with its label against the outline.
       _order = 0;
       final wide = _symbol([
         for (var i = 0; i < 12; i++)
           _port('c$i', family: 'ctl.contact', direction: PortDirection.sink),
       ]);
-      expect(wide.bodyRect.width, 208);
+      expect(wide.bodyRect.width, 224);
     });
 
     test('side pins sit one pitch apart, centred in their slot', () {
@@ -690,7 +695,7 @@ void main() {
       expect(canvas.texts.map((t) => t.$1), ['MTX-1']);
     });
 
-    test('side labels are drawn INSIDE the body, top/bottom OUTSIDE it', () {
+    test('EVERY port label is drawn INSIDE the body', () {
       final s = _symbol([
         _port(
           'in',
@@ -732,24 +737,26 @@ void main() {
       // Right pin is at x = width; its label must be to the LEFT (inside).
       expect(byText['R']!.$2.x, lessThan(s.bodyRect.width));
       expect(byText['R']!.$3.anchor, TextAnchor.midRight);
-      // Top pin is at y = 0; its label sits ABOVE (outside).
-      expect(byText['T']!.$2.y, lessThan(0));
-      // Bottom pin is at y = height; its label sits BELOW (outside).
-      expect(byText['B']!.$2.y, greaterThan(s.bodyRect.height));
+      // Top pin is at y = 0; its label sits BELOW it, inside the body.
+      expect(byText['T']!.$2.y, greaterThan(0));
+      // Bottom pin is at y = height; its label sits ABOVE it, inside.
+      expect(byText['B']!.$2.y, lessThan(s.bodyRect.height));
 
-      // ── #96-A: the top/bottom anchors changed with the quarter turn ──
+      // ── the turn, and which way it now runs ──────────────────
       //
-      // They were `bottomCenter` / `topCenter`, which put the run's MIDDLE
-      // over the pin and let it spread sideways into its neighbours — the
-      // overlap the field found. Turned `-pi/2` the run climbs the page, so
-      // the anchor picks which END sits at the pin, and that is what sends
-      // each edge's text away from the body: `midLeft` starts the run at a
-      // top pin and carries it further up, `midRight` ends it at a bottom
-      // pin so it reaches further down. One angle, two anchors, one reading
-      // direction. See `_labelRotation` and `port_label_overlap_test.dart`.
+      // #96-A turned these a quarter turn so they stopped colliding with
+      // each other, and sent them OUTWARD — into the strip a net-label
+      // pennant, its leader and a drawn wire all occupy. They run INWARD
+      // now, into the body, where nothing else draws at all.
+      //
+      // ONE ANCHOR, TWO ANGLES, where it used to be one angle and two
+      // anchors. The anchor pins the run's START at the pin on both
+      // edges; the SIGN of the rotation is what sends a top run down the
+      // page and a bottom run up it. Read either function alone and it
+      // says what it does — the old pair only made sense together.
       expect(byText['T']!.$3.anchor, TextAnchor.midLeft);
-      expect(byText['T']!.$3.rotationRad, closeTo(-math.pi / 2, 1e-12));
-      expect(byText['B']!.$3.anchor, TextAnchor.midRight);
+      expect(byText['T']!.$3.rotationRad, closeTo(math.pi / 2, 1e-12));
+      expect(byText['B']!.$3.anchor, TextAnchor.midLeft);
       expect(byText['B']!.$3.rotationRad, closeTo(-math.pi / 2, 1e-12));
       // And the side labels are NOT turned — they never overlapped, because
       // there the pins are spaced along Y and the text runs along X.
@@ -1050,19 +1057,25 @@ void main() {
       expect(built(s).inkBounds!.right, s.bodyRect.width + 4.5);
     });
 
-    test('a TOP port label lands entirely outside the body, and the ink '
-        'bounds contain it', () {
-      // ── #96-A CHANGED THE ARITHMETIC, NOT THE CLAIM ──────────────────
-      // The label still sits `_kPortLabelGap` (5) above the pin centre. What
-      // moved is how far its own box then reaches: unturned it added one
-      // ascent+descent (8 units for 8 pt text); turned `-pi/2` it climbs by
-      // its full ADVANCE WIDTH instead, because the run's long axis is now
-      // vertical.
+    test('a TOP port label runs DOWN into the body, not up out of it', () {
+      // ── THE CLAIM INVERTED, AND THAT IS THE POINT ───────────────
+      // This asserted that the label lands OUTSIDE the body and that
+      // `inkBounds` grew to contain it. Both were true and the first is
+      // no longer wanted: outside the top edge is where a net-label
+      // pennant, its leader and a drawn wire all land, and the pin label
+      // is the mark that loses that contest — smallest type on the
+      // sheet, and the only one of the four a reader cannot identify by
+      // its shape.
       //
-      // DERIVED FROM THE MEASURER rather than restated as a literal. The old
-      // `-13` was a hand-computed constant, and hand-computing this one would
-      // have to be redone every time the label text or `_emPerChar` changed
-      // — which is exactly how a constant stops describing the code.
+      // So it runs DOWN into the body, and the body reserves the strip
+      // (`RenderedSymbol.labelBandTop`). This fixture builds geometry
+      // directly and passes no band, so what is asserted here is the
+      // DIRECTION; the band's sizing is `schematic_scene_test.dart`'s.
+      //
+      // DERIVED FROM THE MEASURER rather than restated as a literal, for
+      // the reason the old note gave: a hand-computed constant has to be
+      // redone every time the text or `_emPerChar` moves, which is how a
+      // constant stops describing the code.
       const label = 'LAN';
       final s = _symbol([
         _port(
@@ -1078,20 +1091,22 @@ void main() {
             rackText(RackTextSizes.type, 0, TextAnchor.midLeft),
           )
           .advanceWidth;
-      final ink = built(s).inkBounds!;
+      final at = _replay(
+        built(s).ops,
+      ).texts.firstWhere((t) => t.$1 == label);
       expect(
-        ink.top,
-        closeTo(-(5 + width), 0.001),
-        reason: 'pin centre 0, gap 5, then the whole turned run',
+        at.$2.y,
+        closeTo(kPortLabelGap, 0.001),
+        reason: 'the run starts one gap BELOW the pin, inside the body',
       );
       expect(
-        ink.top,
-        lessThan(-4.5),
-        reason: 'the label reaches further out than the pin circle does',
+        at.$2.y + width,
+        lessThanOrEqualTo(s.bodyRect.height),
+        reason: 'and the whole of it, $width units, stays within the body',
       );
     });
 
-    test('a BOTTOM port label lands below the body', () {
+    test('a BOTTOM port label runs UP into the body, not below it', () {
       const label = 'IEC C14';
       final s = _symbol([
         _port(
@@ -1104,12 +1119,21 @@ void main() {
       final width = const _FakeMeasurer()
           .measureText(
             label,
-            rackText(RackTextSizes.type, 0, TextAnchor.midRight),
+            rackText(RackTextSizes.type, 0, TextAnchor.midLeft),
           )
           .advanceWidth;
+      final at = _replay(
+        built(s).ops,
+      ).texts.firstWhere((t) => t.$1 == label);
       expect(
-        built(s).inkBounds!.bottom,
-        closeTo(s.bodyRect.height + 5 + width, 0.001),
+        at.$2.y,
+        closeTo(s.bodyRect.height - kPortLabelGap, 0.001),
+        reason: 'one gap ABOVE the bottom edge',
+      );
+      expect(
+        at.$2.y - width,
+        greaterThanOrEqualTo(0),
+        reason: 'and it runs up, staying inside',
       );
     });
 
@@ -1138,10 +1162,22 @@ void main() {
       expect(ink.bottom, greaterThan(s.bodyRect.bottom));
     });
 
-    test('inkBounds is measured from the ops, so it moves when the ops do',
-        () {
-      // Deleting the labels shrinks the reported box: proof the value is
-      // derived, not a hand-maintained constant that happens to be roomy.
+    test('a label no longer grows the ink box — only the pins escape the '
+        'body now', () {
+      // ── THE PROPERTY THIS TEST EXISTS FOR SURVIVED; ITS EVIDENCE DID NOT
+      // It asserted that adding a LABEL pushed `inkBounds.top` higher,
+      // which proved the box was derived from the ops rather than
+      // hand-maintained. That evidence only worked while a top label drew
+      // OUTSIDE the body. Every label is inside now, so the labelled and
+      // bare symbols report the same top and the old assertion compares
+      // -4.5 with -4.5 — which would still PASS as `lessThanOrEqualTo`,
+      // and is why it is rewritten rather than relaxed.
+      //
+      // What is asserted instead is the fact the move actually bought, and
+      // it is a stronger one: the ink box is the body plus the PIN CIRCLES
+      // and nothing else. The old box reached a whole text run past the
+      // edge on two sides, so scale-to-fit shrank every sheet to make room
+      // for labels that are now inside the symbols.
       final labelled = built(
         _symbol([
           _port(
@@ -1163,7 +1199,19 @@ void main() {
           ),
         ]),
       ).inkBounds!;
-      expect(labelled.top, lessThan(bare.top));
+      expect(
+        labelled,
+        bare,
+        reason: 'a label is inside the body and cannot move the box',
+      );
+
+      // AND IT IS STILL DERIVED, NOT A CONSTANT. The pin is the one mark
+      // that does escape — it is centred ON the edge, so it hangs out by
+      // its own radius — and a symbol with no pins at all must report a
+      // tighter box than one with them.
+      _order = 0;
+      final pinless = built(_symbol(const <PortDef>[])).inkBounds!;
+      expect(pinless.top, greaterThan(labelled.top));
     });
 
     test('LOCAL like the ops: a moved symbol reports the same box', () {

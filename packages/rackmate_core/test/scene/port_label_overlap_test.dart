@@ -277,13 +277,26 @@ void main() {
     });
   });
 
-  group('3 — a turned label points AWAY from the body', () {
-    test('top labels sit above their pin and bottom labels below theirs', () {
-      // The anchor half of the fix. One angle for both edges keeps the
-      // reading direction consistent; `midLeft` vs `midRight` is what sends
-      // each edge's run outward. Swap them and the labels read across the
-      // symbol body instead — which no overlap test would notice, because
-      // they would still not overlap EACH OTHER.
+  group('3 — a turned label points INTO the body', () {
+    test('top labels hang below their pin and bottom labels above theirs', () {
+      // ── THE DIRECTION REVERSED, AND THE REASON IS ON THE OTHER SIDE ──
+      // #96-A sent these OUTWARD, and outward is the strip a net-label
+      // pennant occupies, where its leader runs, and where a drawn wire
+      // escapes. Four kinds of ink competing for one band, and the pin
+      // label is the one that loses: the smallest type on the sheet and
+      // the only one of the four a reader cannot identify from its shape.
+      // The field sent a screenshot of exactly that.
+      //
+      // Inside the body nothing else draws at all, so the strip is
+      // uncontested by construction. The body reserves it —
+      // `RenderedSymbol.labelBandTop` — and the header band sits below it.
+      //
+      // THE ROTATION HALF OF THE FIX, and it is what this test guards. The
+      // anchor is `midLeft` on both edges now; the SIGN of the rotation is
+      // what sends a top run down and a bottom run up. Flip either sign and
+      // the labels read back out across the wires again — which no overlap
+      // test would notice, because they would still not overlap EACH
+      // OTHER.
       const measurer = _Measurer();
       for (final side in <SymbolSide>[SymbolSide.top, SymbolSide.bottom]) {
         final template = withPinsOn(side).first;
@@ -295,15 +308,17 @@ void main() {
           final box = _boxOf(op, measurer);
           if (side == SymbolSide.top) {
             expect(
-              box.bottom,
-              lessThanOrEqualTo(centre.y),
-              reason: '${template.key} ${port.label} reaches into the body',
+              box.top,
+              greaterThanOrEqualTo(centre.y),
+              reason: '${template.key} ${port.label} reaches out of the body, '
+                  'into the net-label band',
             );
           } else {
             expect(
-              box.top,
-              greaterThanOrEqualTo(centre.y),
-              reason: '${template.key} ${port.label} reaches into the body',
+              box.bottom,
+              lessThanOrEqualTo(centre.y),
+              reason: '${template.key} ${port.label} reaches out of the body, '
+                  'into the net-label band',
             );
           }
         }

@@ -633,6 +633,12 @@ _Candidate _measureCandidate({
   var bottom = 0;
   var widestLeftLabel = 0.0;
   var widestRightLabel = 0.0;
+  // The top/bottom edges' widest label is the DEPTH of the strip the body
+  // must reserve inside itself, because those labels are turned a quarter
+  // turn (#96-A) and now read INWARD (RenderedSymbol.labelBandTop). Their
+  // advance width therefore runs down the page, not across it.
+  var widestTopLabel = 0.0;
+  var widestBottomLabel = 0.0;
   final labelStyle = rackText(
     RackTextSizes.type,
     _measurePalette.portLabel,
@@ -656,8 +662,10 @@ _Candidate _measureCandidate({
         widestRightLabel = math.max(widestRightLabel, width);
       case SymbolSide.top:
         top++;
+        widestTopLabel = math.max(widestTopLabel, width);
       case SymbolSide.bottom:
         bottom++;
+        widestBottomLabel = math.max(widestBottomLabel, width);
     }
   }
 
@@ -691,15 +699,40 @@ _Candidate _measureCandidate({
         (designatorWidth + nameWidth) / upg + metrics.headerTextPadGu,
         math.max(
           (widestLeftLabel + widestRightLabel) / upg + metrics.sideLabelPadGu,
-          ((math.max(top, bottom) + 1) * metrics.pinPitchGu).toDouble(),
+          // `+ 2`, matching `buildSymbolGeometry`'s
+          // `maxEdge + 2 * kPinRunInsetPitches` — a whole clear pitch at
+          // each end of the run rather than §3's half. The two
+          // transcriptions are asserted to agree; see this function's
+          // header.
+          ((math.max(top, bottom) + 2) * metrics.pinPitchGu).toDouble(),
         ),
       ),
     ),
   );
-  final heightGu = math.max(
+  // ONE GAP, ONE RUN, ONE GAP — the leading gap `_labelPoint` leaves before
+  // the text, the run itself, and the same gap again so the deepest label
+  // does not finish flush against the header band below it. Zero for an
+  // edge with no labelled pins, which is most edges.
+  double band(double widest) =>
+      widest <= 0 ? 0.0 : widest + 2 * kPortLabelGap;
+  final bandTop = band(widestTopLabel);
+  final bandBottom = band(widestBottomLabel);
+
+  // THE LAYOUT NODE HAS TO KNOW TOO. `heightGu` is what Sugiyama reserves
+  // and `buildSymbolGeometry` is what draws; a band added to one and not
+  // the other is a symbol overlapping its neighbour by exactly the strip
+  // it just reserved. This function's own header says the two
+  // transcriptions are asserted to agree.
+  final baseHeightGu = math.max(
     metrics.minBodyHeightGu,
     metrics.headerHeightGu + (math.max(left, right) + 1) * metrics.pinPitchGu,
   );
+  // CEILED, and the direction matters: `LayoutNode.heightGu` is a whole
+  // number of grid units, so the reserved box rounds UP to at least the
+  // drawn one. Rounding down would let Sugiyama pack two symbols a
+  // fraction of a unit closer than they draw, which is an overlap nothing
+  // reports.
+  final heightGu = baseHeightGu + ((bandTop + bandBottom) / upg).ceil();
 
   final geometry = buildSymbolGeometry(
     id: device.id.v,
@@ -711,7 +744,12 @@ _Candidate _measureCandidate({
     portSize: metrics.portSizeGu * upg,
     portPitch: metrics.pinPitchGu * upg,
     minBodyWidth: widthGu * upg,
-    minBodyHeight: heightGu * upg,
+    // The bands are added by `buildSymbolGeometry` on TOP of this floor —
+    // see its own note on why they are not absorbed into it — so the floor
+    // handed over here is the header-and-side-pins part alone.
+    minBodyHeight: baseHeightGu * upg,
+    labelBandTop: bandTop,
+    labelBandBottom: bandBottom,
   );
 
   return _Candidate(

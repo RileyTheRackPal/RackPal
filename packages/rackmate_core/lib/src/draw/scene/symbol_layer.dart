@@ -75,7 +75,13 @@ import 'package:rackmate_core/src/units/ids.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 /// Gap (diagram units) between a pin's centre and its label.
-const double _kPortLabelGap = 5;
+///
+/// PUBLIC because the body has to RESERVE what the label then occupies:
+/// `schematic_scene.dart` sizes [RenderedSymbol.labelBandTop] as this gap,
+/// plus the widest measured run, plus this gap again. A second figure there
+/// is a strip that is a few units short of the text it was reserved for,
+/// which looks like a rendering bug and is an arithmetic one.
+const double kPortLabelGap = 5;
 
 /// Inset (diagram units) of the header's designator from the body edge.
 /// Matches `device_layer.dart`'s `_pad` so the two layers' text insets do
@@ -84,6 +90,18 @@ const double _kHeaderPad = 4;
 
 /// Fraction of a pin's size used for its direction arrowhead.
 const double _kArrowScale = 0.3;
+
+/// Clear pitches at EACH END of a top/bottom pin run, before the first pin
+/// and after the last.
+///
+/// docs/05 §3 sizes a symbol at `(maxEdge + 1) * pitch`, which is one
+/// SPARE pitch spread over two ends — half a pitch of clearance each, so
+/// the outermost pin of a full edge sits almost on the corner with its
+/// label hard against the outline. A whole pitch each side is the stated
+/// choice; §3 gives the formula and no reason to read its `+ 1` as a
+/// minimum rather than as an exact figure, so this is recorded as a change
+/// to it rather than as an interpretation of it.
+const double _kPinRunInsetPitches = 1;
 
 // ── the symbol's resolved geometry ───────────────────────────────────────
 
@@ -177,6 +195,8 @@ final class RenderedSymbol {
     required this.bodyRect,
     required this.headerHeight,
     required this.ports,
+    this.labelBandTop = 0,
+    this.labelBandBottom = 0,
   });
 
   /// The owning entity's id (a device `Uuid.v` in practice), used as the
@@ -193,8 +213,35 @@ final class RenderedSymbol {
   /// Absolute body rect on the sheet.
   final DBox bodyRect;
 
-  /// Height of the header band, measured down from [bodyRect]'s top edge.
+  /// Height of the header band, measured down from the bottom of
+  /// [labelBandTop].
   final double headerHeight;
+
+  /// Clear strip INSIDE the body, below the top edge, reserved for the
+  /// top-edge pins' rotated labels — and the same at the bottom.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE LABELS MOVED INSIDE BECAUSE OUTSIDE IS WHERE THE WIRES ARE
+  /// ═══════════════════════════════════════════════════════════════════
+  /// #96-A turned the top/bottom pin labels a quarter turn so they stopped
+  /// colliding with each other. They still ran OUTWARD from the edge — into
+  /// exactly the band where a net-label pennant sits, where its leader
+  /// runs, and where a drawn wire escapes. Three kinds of ink competing for
+  /// one strip, and the pin label is the one that loses: it is the smallest
+  /// type on the sheet and the only one of the three a reader cannot
+  /// identify from its shape.
+  ///
+  /// So the label runs INWARD now, into the body, and the body reserves the
+  /// room. Nothing else on the sheet draws inside a symbol body, so the
+  /// strip is uncontested by construction rather than by luck.
+  ///
+  /// MEASURED BY THE CALLER, like every other text-derived figure here:
+  /// [buildSymbolGeometry] takes no `TextMeasurer` and must not start
+  /// (`schematic_scene.dart` has one and already measures the left/right
+  /// label widths for the body width). Zero is the honest default and is
+  /// what an edge with no labelled pins gets.
+  final double labelBandTop;
+  final double labelBandBottom;
 
   /// Pins grouped by the edge they landed on. Every [SymbolSide] key is
   /// present (possibly with an empty list) so callers never null-check.
@@ -240,6 +287,8 @@ final class RenderedSymbol {
     ),
     headerHeight: headerHeight,
     ports: ports,
+    labelBandTop: labelBandTop,
+    labelBandBottom: labelBandBottom,
   );
 
   /// Value equality, like every other type in this pair ([SymbolPort],
@@ -254,6 +303,8 @@ final class RenderedSymbol {
       other.name == name &&
       other.bodyRect == bodyRect &&
       other.headerHeight == headerHeight &&
+      other.labelBandTop == labelBandTop &&
+      other.labelBandBottom == labelBandBottom &&
       _portsEquality.equals(other.ports, ports);
 
   @override
@@ -263,6 +314,8 @@ final class RenderedSymbol {
     name,
     bodyRect,
     headerHeight,
+    labelBandTop,
+    labelBandBottom,
     _portsEquality.hash(ports),
   );
 
@@ -470,6 +523,8 @@ RenderedSymbol buildSymbolGeometry({
   Iterable<BankDef> banks = const [],
   double minBodyWidth = 0,
   double minBodyHeight = 0,
+  double labelBandTop = 0,
+  double labelBandBottom = 0,
   DPt origin = const DPt(0, 0),
 }) {
   final byKey = <String, BankDef>{};
@@ -495,11 +550,22 @@ RenderedSymbol buildSymbolGeometry({
   final maxSide = math.max(nLeft, nRight);
   final maxEdge = math.max(nTop, nBottom);
 
-  final height = math.max(
-    minBodyHeight,
-    headerHeight + (maxSide + 1) * portPitch,
+  // THE BANDS ARE ADDED, NOT ABSORBED. A caller's `minBodyHeight` is a
+  // floor on the part of the body that holds the header and the side pins;
+  // folding the label strips into it would let a tall symbol silently eat
+  // the room its own top labels need.
+  final height =
+      labelBandTop +
+      math.max(minBodyHeight, headerHeight + (maxSide + 1) * portPitch) +
+      labelBandBottom;
+  // `+ 1` pitch of slack was one HALF pitch at each end, which put the
+  // outermost pin of a full edge almost on the corner and its label
+  // hard against the body outline. `_kPinRunInsetPitches` widens that to a
+  // whole pitch each side.
+  final width = math.max(
+    minBodyWidth,
+    (maxEdge + 2 * _kPinRunInsetPitches) * portPitch,
   );
-  final width = math.max(minBodyWidth, (maxEdge + 1) * portPitch);
 
   final resolved = <SymbolSide, List<SymbolPort>>{
     for (final side in SymbolSide.values) side: <SymbolPort>[],
@@ -536,6 +602,8 @@ RenderedSymbol buildSymbolGeometry({
     name: name,
     bodyRect: DBox.fromLtwh(origin.x, origin.y, width, height),
     headerHeight: headerHeight,
+    labelBandTop: labelBandTop,
+    labelBandBottom: labelBandBottom,
     // Frozen, map and lists both — see [RenderedSymbol.ports] on why an
     // aliased growable list would re-open the painter/hit-tester desync.
     ports: Map<SymbolSide, List<SymbolPort>>.unmodifiable({
@@ -550,9 +618,14 @@ RenderedSymbol buildSymbolGeometry({
 DPt symbolPortCentreLocal(RenderedSymbol symbol, SymbolPort port) {
   final w = symbol.bodyRect.width;
   final h = symbol.bodyRect.height;
+  // The side pins hang below the header, and the header now hangs below
+  // the top label band — so the band is in this sum too. One place, so a
+  // symbol that reserved a strip and a hit test that did not cannot
+  // disagree by exactly that strip.
+  final sideTop = symbol.labelBandTop + symbol.headerHeight;
   return switch (port.side) {
-    SymbolSide.left => DPt(0, symbol.headerHeight + port.offset),
-    SymbolSide.right => DPt(w, symbol.headerHeight + port.offset),
+    SymbolSide.left => DPt(0, sideTop + port.offset),
+    SymbolSide.right => DPt(w, sideTop + port.offset),
     SymbolSide.top => DPt(port.offset, 0),
     SymbolSide.bottom => DPt(port.offset, h),
   };
@@ -588,7 +661,12 @@ LayerBuild buildSymbolLayer(
   final width = symbol.bodyRect.width;
   final height = symbol.bodyRect.height;
   final body = DBox.fromLtwh(0, 0, width, height);
-  final header = DBox.fromLtwh(0, 0, width, symbol.headerHeight);
+  final header = DBox.fromLtwh(
+    0,
+    symbol.labelBandTop,
+    width,
+    symbol.headerHeight,
+  );
 
   // Body fill first, then the header band over it, so the band reads as
   // part of one rectangle rather than a floating strip.
@@ -648,7 +726,7 @@ LayerBuild buildSymbolLayer(
   ops.add(
     OpText(
       symbol.designator,
-      const DPt(_kHeaderPad, _kHeaderPad),
+      DPt(_kHeaderPad, symbol.labelBandTop + _kHeaderPad),
       designatorStyle,
     ),
   );
@@ -668,7 +746,11 @@ LayerBuild buildSymbolLayer(
     // with a pad's gap. Otherwise it is dropped rather than overprinted.
     if (designatorWidth + _kHeaderPad + nameWidth <= width - 2 * _kHeaderPad) {
       ops.add(
-        OpText(symbol.name, DPt(width - _kHeaderPad, _kHeaderPad), nameStyle),
+        OpText(
+          symbol.name,
+          DPt(width - _kHeaderPad, symbol.labelBandTop + _kHeaderPad),
+          nameStyle,
+        ),
       );
       sizes.add(RackTextSizes.name);
     }
@@ -737,7 +819,7 @@ LayerBuild buildSymbolLayer(
   // `device_layer`, a symbol deliberately draws OUTSIDE the rect it was
   // sized to. Every pin circle is centred ON the body edge, so it hangs
   // `port.size / 2` past it on all four sides, and top/bottom port labels
-  // sit `_kPortLabelGap` plus a whole TEXT RUN beyond that. A composer that
+  // sit `kPortLabelGap` plus a whole TEXT RUN beyond that. A composer that
   // unioned `bodyRect` alone would compute a page box several units too
   // small on each side and scale-to-fit would then clip half of every
   // outermost pin and the whole of the top/bottom labels. Measured from the
@@ -782,16 +864,24 @@ double? _arrowAngle(SymbolPort port) {
 
 /// Where [side]'s pin label sits relative to the pin centre.
 ///
-/// Side labels go INSIDE the body and top/bottom labels OUTSIDE it, which
-/// is what docs/05 §3's worked 16-port figure draws: `J01  IN 1 ‹ATV-1›`
-/// reads inside the left wall while `J17`/`J18` sit above the top edge and
-/// `J20  IEC C14` below the bottom one. The pre-relocation code put the
-/// side labels outside, i.e. in the gutter the router needs for wires.
+/// EVERY label is inside the body now — see [RenderedSymbol.labelBandTop].
+///
+/// The side labels always were: docs/05 §3's worked 16-port figure reads
+/// `J01  IN 1 ‹ATV-1›` inside the left wall, and the pre-relocation code
+/// put them outside, in the gutter the router needs for wires.
+///
+/// §3's SAME FIGURE DRAWS `J17`/`J18` ABOVE THE TOP EDGE, and that is the
+/// part this changes. It is a figure drawn before DR-001 made net labels
+/// the DEFAULT render of a Link — so in §3 the strip above a top pin was
+/// empty, and it is now where the pennant, its leader and a drawn wire all
+/// land. Of the four marks competing for it the pin label is the one that
+/// loses: smallest type on the sheet, and the only one a reader cannot
+/// identify by its shape. Inside the body nothing else draws at all.
 DPt _labelPoint(DPt centre, SymbolSide side) => switch (side) {
-  SymbolSide.left => DPt(centre.x + _kPortLabelGap, centre.y),
-  SymbolSide.right => DPt(centre.x - _kPortLabelGap, centre.y),
-  SymbolSide.top => DPt(centre.x, centre.y - _kPortLabelGap),
-  SymbolSide.bottom => DPt(centre.x, centre.y + _kPortLabelGap),
+  SymbolSide.left => DPt(centre.x + kPortLabelGap, centre.y),
+  SymbolSide.right => DPt(centre.x - kPortLabelGap, centre.y),
+  SymbolSide.top => DPt(centre.x, centre.y + kPortLabelGap),
+  SymbolSide.bottom => DPt(centre.x, centre.y - kPortLabelGap),
 };
 
 /// How far [side]'s pin label is turned — #96-A.
@@ -831,7 +921,14 @@ DPt _labelPoint(DPt centre, SymbolSide side) => switch (side) {
 /// paper, both in the commit before this one.
 double _labelRotation(SymbolSide side) => switch (side) {
   SymbolSide.left || SymbolSide.right => 0,
-  SymbolSide.top || SymbolSide.bottom => -math.pi / 2,
+  // OPPOSITE SIGNS, because the two edges run their labels in opposite
+  // directions: a top label starts under its pin and reads DOWNWARD into
+  // the body, a bottom label starts above its pin and reads UPWARD. Both
+  // therefore read away from the edge the pin is on, which is the ordinary
+  // drafting convention for opposite edges and the only arrangement in
+  // which neither run crosses its own pin.
+  SymbolSide.top => math.pi / 2,
+  SymbolSide.bottom => -math.pi / 2,
 };
 
 /// Which end of the run sits at [_labelPoint].
@@ -850,6 +947,9 @@ double _labelRotation(SymbolSide side) => switch (side) {
 TextAnchor _labelAnchor(SymbolSide side) => switch (side) {
   SymbolSide.left => TextAnchor.midLeft,
   SymbolSide.right => TextAnchor.midRight,
-  SymbolSide.top => TextAnchor.midLeft,
-  SymbolSide.bottom => TextAnchor.midRight,
+  // BOTH `midLeft` now. The run's start is anchored at the pin and its
+  // direction is [_labelRotation]'s job — which is why the bottom edge no
+  // longer needs `midRight` to reverse it, and why the two functions are
+  // now readable independently instead of only in combination.
+  SymbolSide.top || SymbolSide.bottom => TextAnchor.midLeft,
 };
