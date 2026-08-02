@@ -760,28 +760,63 @@ void main() {
       }
     });
 
-    test('a stub is FOUR ops in one order — leader, pennant, family token, '
-        'net name', () {
-      // The op layout is not an implementation detail: the per-domain
-      // fragment is an `IntRange`, so anything that reads a sub-picture
-      // reads this ordering. It is also what makes the perf test able to
-      // assert `labelOps == 4 * labels` rather than only print it.
+    test('a domain run is LAYERED — every leader, then every pennant, then '
+        'every text', () {
+      // ═══════════════════════════════════════════════════════════════
+      // THIS USED TO ASSERT FOUR OPS PER STUB, INTERLEAVED, AND THAT WAS
+      // THE DEFECT
+      // ═══════════════════════════════════════════════════════════════
+      // Each stub emitted leader, pennant, text in sequence, so stub N's
+      // LEADER landed after stub N-1's PENNANT and painted over it. A
+      // leader carries the family hue, dash and weight — it looks like a
+      // wire — so on a combed edge, where the outermost flag's leader runs
+      // past every inner flag, the field reported it as labels drawing
+      // under the wires.
       //
-      // IT WENT TO FIVE AND CAME BACK. Making the flag opaque was first
-      // done with a second `OpPath` — an opaque backing under the tint —
-      // which cost 600 extra ops on the 300-link fixture. Compositing the
-      // two colours at build time gives the same pixels in one op, so the
-      // count is four again and the rise was given back rather than
-      // absorbed into the budget.
+      // The op COUNT is unchanged at four per flag; only the grouping
+      // moved, and the grouping is now the claim. `schematic_perf_test`
+      // still asserts the count.
+      //
+      // PER DOMAIN RUN, NOT PER SHEET. Each run must stay one contiguous
+      // `IntRange` for the filter to replay it, so the layering is
+      // asserted INSIDE a run — which is also the honest limit of the
+      // fix: a later domain's leader can still cross an earlier domain's
+      // pennant, and no ordering that keeps the ranges contiguous can
+      // prevent that.
       final built = _build(_document());
-      final base = _symbolOps(built);
-      for (var i = 0; i < built.netLabels.length; i++) {
-        expect(built.scene.ops[base + 4 * i], isA<OpLine>());
-        expect(built.scene.ops[base + 4 * i + 1], isA<OpPath>());
-        expect(built.scene.ops[base + 4 * i + 2], isA<OpText>());
-        expect(built.scene.ops[base + 4 * i + 3], isA<OpText>());
+      for (final range in built.domainFragments.values) {
+        final run = built.scene.ops.sublist(range.start, range.end);
+        expect(run, isNotEmpty);
+
+        final kindOf = <int>[
+          for (final op in run)
+            switch (op) {
+              OpLine() => 0,
+              OpPath() => 1,
+              OpText() => 2,
+              _ => -1,
+            },
+        ];
+        expect(kindOf, isNot(contains(-1)), reason: 'unexpected op kind');
+        // Non-decreasing IS the layering: any leader after a pennant, or
+        // any pennant after a text, breaks it.
+        for (var i = 1; i < kindOf.length; i++) {
+          expect(
+            kindOf[i],
+            greaterThanOrEqualTo(kindOf[i - 1]),
+            reason: 'op $i of this run is out of layer order — a leader '
+                'drawn after a pennant is the defect this fixes',
+          );
+        }
+        // One leader and one pennant per flag, two texts per flag.
+        final leaders = kindOf.where((k) => k == 0).length;
+        expect(kindOf.where((k) => k == 1).length, leaders);
+        expect(kindOf.where((k) => k == 2).length, 2 * leaders);
       }
-      expect(built.scene.ops.length, base + 4 * built.netLabels.length);
+      expect(
+        built.scene.ops.length,
+        _symbolOps(built) + 4 * built.netLabels.length,
+      );
     });
 
     test('the pennant’s apex points AWAY from its pin, and its attach '
@@ -799,9 +834,16 @@ void main() {
       // passed every other test in this suite.
       final built = _build(_document());
       final base = _symbolOps(built);
+      // BY KIND, NOT BY STRIDE. The run is layered now — every leader, then
+      // every pennant, then every text — so `base + 4 * i + 1` no longer
+      // names a pennant. Pennants are the only `OpPath` the layer emits and
+      // they keep emission order within a domain, and domains are appended
+      // in order, so the i-th one still belongs to `netLabels[i]`.
+      final paths = built.scene.ops.skip(base).whereType<OpPath>().toList();
+      expect(paths, hasLength(built.netLabels.length));
       for (var i = 0; i < built.netLabels.length; i++) {
         final label = built.netLabels[i];
-        final path = built.scene.ops[base + 4 * i + 1] as OpPath;
+        final path = paths[i];
         final xs = <double>[];
         final ys = <double>[];
         for (final c in path.p.commands) {

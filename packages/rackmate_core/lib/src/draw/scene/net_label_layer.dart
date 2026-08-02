@@ -616,6 +616,13 @@ NetLabelLayerBuild buildNetLabelLayer({
     for (final stub in buckets[key]!) {
       emitter.emit(stub);
     }
+    // INSIDE THE LOOP, so this run is contiguous. `emit` holds its ops back
+    // by kind — leaders, pennants, text — and this appends all three at
+    // once, which is what stops one stub's leader painting over the flag
+    // its neighbour just drew. Flushing after the loop over `keys` instead
+    // would interleave every domain into one run and destroy the
+    // fragment ranges the filter replays.
+    emitter.flushDomain();
     final range = IntRange(start, emitter.ops.length);
     if (key == _kUnresolvedBucket) {
       unresolvedRange = range;
@@ -1136,6 +1143,49 @@ final class _Emitter {
   final NetLabelStyle style;
 
   final List<DiagramOp> ops = <DiagramOp>[];
+
+  // ── the three kinds, held back until the domain is done ──────────────
+  //
+  // ═══════════════════════════════════════════════════════════════════
+  // A LEADER LOOKS LIKE A WIRE, AND USED TO CROSS ITS NEIGHBOURS' FLAGS
+  // ═══════════════════════════════════════════════════════════════════
+  // [emit] used to append leader, pennant and text straight to [ops], one
+  // stub after another — so stub N's LEADER landed after stub N-1's
+  // PENNANT and drew over it. On a combed edge that is exactly where the
+  // crossings are: the outermost flag sits up to `maxCombLanes` out and
+  // its leader is a long line passing every inner flag on the way. Inner
+  // flags got crossed, outer ones did not, which is what the field
+  // reported as labels drawing under the wires — the leader IS drawn in
+  // the family hue with the family dash and weight, so it reads as one.
+  //
+  // ONLY THE OUTPUT ORDER MOVES. The geometry pass is untouched: `emit`
+  // still runs once per stub, in bucket order, and `_consumed` still
+  // accumulates per pin as it did — where a flag LANDS is identical. What
+  // changed is which list each op goes into, and [flushDomain] then
+  // appends all three in the order they must paint.
+  //
+  // FLUSHED PER DOMAIN, NEVER ACROSS DOMAINS, and that is a hard
+  // constraint rather than a preference: a domain's fragment is ONE
+  // CONTIGUOUS `IntRange`, which is what lets the filter replay seven runs
+  // and rebuild the eighth. Holding ops past a domain boundary would
+  // interleave two runs and silently destroy that.
+  final List<DiagramOp> _leaders = <DiagramOp>[];
+  final List<DiagramOp> _pennants = <DiagramOp>[];
+  final List<DiagramOp> _texts = <DiagramOp>[];
+
+  /// Appends this domain's held ops, leaders first and text last.
+  ///
+  /// CALLED ONCE PER DOMAIN RUN by the caller, immediately after its last
+  /// stub — see the note above on why it may not be deferred further.
+  void flushDomain() {
+    ops
+      ..addAll(_leaders)
+      ..addAll(_pennants)
+      ..addAll(_texts);
+    _leaders.clear();
+    _pennants.clear();
+    _texts.clear();
+  }
   final List<RenderedNetLabel> labels = <RenderedNetLabel>[];
   DBox? bounds;
 
@@ -1185,7 +1235,7 @@ final class _Emitter {
     _consumed[pinKey] = base + _leader + comb + extent + _gap;
 
     // ── channel 1/2/3: the leader ────────────────────────────────────
-    ops.add(
+    _leaders.add(
       OpLine(
         start,
         anchor,
@@ -1251,7 +1301,7 @@ final class _Emitter {
     // 12%" is still exactly what the flag looks like; what changed is
     // that it no longer depends on what happens to be underneath it,
     // which is the whole of the field's complaint.
-    ops.add(
+    _pennants.add(
       OpPath(
         _pennantPath(anchor, side, width),
         fill: Fill(_over(stub.style.argb, style.fillAlpha, palette.bodyFill)),
@@ -1274,7 +1324,7 @@ final class _Emitter {
         : side == SymbolSide.top
         ? box.bottom - _height / 2
         : box.top + _height / 2;
-    ops
+    _texts
       ..add(
         OpText(
           token,
