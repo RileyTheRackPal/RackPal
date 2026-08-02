@@ -738,13 +738,15 @@ String? _netNameOf(Link link, RackDocument doc) {
 /// [symbols] may be the PRE-LAYOUT geometries built at the origin: this
 /// reads sides, pin keys and text, never a position.
 ///
-/// WHAT IT DELIBERATELY DOES NOT RESERVE, said here rather than
-/// discovered: the vertical room a top/bottom comb needs between two
-/// symbols stacked in ONE layer (`SugiyamaParams.nodeGapGu`). A comb grows
+/// THE VERTICAL HALF NOW EXISTS, AND ITS REASON FOR NOT EXISTING IS GONE.
+/// This doc used to end here, deferring the top/bottom comb's room between
+/// two symbols stacked in ONE layer, on a stated ground: *"a comb grows
 /// with the pin count on an edge, so reserving for the worst case would
 /// push a 4 gu node gap into the tens on a device with eight control
-/// ports — a layout trade with a legibility cost of its own, and not one
-/// to make silently inside a size query.
+/// ports"*. That was correct when written and is obsolete now — #96-H
+/// bounds the comb at `ceil(widest / pitch)` lanes, so the reservation is
+/// bounded by the same number and a 48-port switch asks for no more room
+/// than a 5-port one. See [netLabelNodeGapGu], which is the other half.
 int netLabelGutterGu({
   required RackDocument doc,
   required Iterable<RenderedSymbol> symbols,
@@ -808,6 +810,139 @@ int netLabelGutterGu({
   // which is order-independent, and `consumed` accumulates per pin by
   // addition, which is too. Nothing about the result depends on which link
   // came first.
+  return (2 * worst / unitsPerGrid).ceil();
+}
+
+/// The clear space, in GRID UNITS, that two stacked symbols' top/bottom
+/// combs need between them.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE VERTICAL TWIN OF [netLabelGutterGu], AND IT ONLY BECAME POSSIBLE AT
+/// #96-H
+/// ═══════════════════════════════════════════════════════════════════════
+/// `SugiyamaParams.nodeGapGu` is 4 gu of clear space between two symbols in
+/// one layer, and it was sized when that space held air. It holds combs. A
+/// symbol stacked below another was being placed into the room the one
+/// above was labelling — which is what the field reported as *"netlabels
+/// draw directly over devices"*.
+///
+/// The reservation could not be made while the comb was UNBOUNDED: a
+/// 48-port switch would have asked for 48 lanes of clearance and pushed
+/// every node gap on the sheet into the hundreds. [netLabelGutterGu]'s doc
+/// carried exactly that objection. #96-H caps the comb at
+/// `ceil(widest / pitch)` lanes — three to five on the shipped catalog —
+/// so the worst case is now a small number and the objection is spent.
+///
+/// TWO FLAGS FACE EACH OTHER ACROSS THIS GAP, hence the doubling: the upper
+/// symbol's BOTTOM comb grows down into it and the lower symbol's TOP comb
+/// grows up. Same reasoning, same factor, as the layer gutter.
+///
+/// ONE LANE COUNT, from [_laneCount], and one stub size, from [_Sizer] —
+/// the same two the emitter draws with. A reservation computed from a
+/// second copy of either is a reservation that is one lane short exactly
+/// when it matters.
+///
+/// [symbols] may be the PRE-LAYOUT geometries built at the origin: this
+/// reads sides, pin keys and text, never a position.
+int netLabelNodeGapGu({
+  required RackDocument doc,
+  required Iterable<RenderedSymbol> symbols,
+  required TextMeasurer measurer,
+  required double unitsPerGrid,
+  NetLabelStyle style = const NetLabelStyle(),
+}) {
+  final sizer = _Sizer(
+    measurer: measurer,
+    style: style,
+    unitsPerGrid: unitsPerGrid,
+  );
+  final symbolById = <String, RenderedSymbol>{
+    for (final symbol in symbols) symbol.id: symbol,
+  };
+  final pinsOf = <String, Map<String, SymbolPort>>{
+    for (final symbol in symbols)
+      symbol.id: <String, SymbolPort>{
+        for (final port in symbol.allPorts) port.key: port,
+      },
+  };
+
+  // PASS 1 — collect the vertical stubs and, with them, the widest pennant
+  // landing on each edge. That width is what sets the lane count, and it
+  // cannot be known before the stubs are resolved.
+  final styleOf = <String, SignalStyle>{};
+  final widest = <String, double>{};
+  final stubs = <({_End end, SignalStyle signal, String name})>[];
+  for (final link in doc.links.values) {
+    final ends = _endsOf(link, doc, symbolById, pinsOf);
+    if (ends.isEmpty) continue;
+    final family = _familyOf(link, ends);
+    final signal = styleOf.putIfAbsent(
+      family.v,
+      () => resolveSignalStyle(
+        family: family,
+        registries: doc.registries,
+        colorOverrides: doc.settings.familyColorOverrides,
+        theme: style.theme,
+      ),
+    );
+    final name = _netNameOf(link, doc) ?? kUnknownCell;
+    for (final end in ends) {
+      final side = end.port.side;
+      // Only the vertical stubs grow into a NODE gap; a left/right pennant
+      // grows along the other axis entirely and is the layer gutter's.
+      if (side != SymbolSide.top && side != SymbolSide.bottom) continue;
+      stubs.add((end: end, signal: signal, name: name));
+      final key = _edgeKey(end.symbol.id, side);
+      final w = sizer.pennantWidth(
+        signal.familyToken,
+        name,
+        horizontal: false,
+      );
+      final prev = widest[key];
+      if (prev == null || w > prev) widest[key] = w;
+    }
+  }
+  // NO VERTICAL STUBS, NO CLAIM. Returning zero rather than a floor leaves
+  // the caller's own `nodeGapGu` untouched — see its `math.max`.
+  if (stubs.isEmpty) return 0;
+
+  // PASS 2 — which lane each pin sits in, by the emitter's own rule.
+  final lane = <String, int>{};
+  for (final symbol in symbols) {
+    for (final side in const [SymbolSide.top, SymbolSide.bottom]) {
+      final ports = symbol.ports[side] ?? const <SymbolPort>[];
+      if (ports.isEmpty) continue;
+      final lanes = _laneCount(
+        ports: ports,
+        widest: widest[_edgeKey(symbol.id, side)] ?? 0,
+      );
+      for (var i = 0; i < ports.length; i++) {
+        lane[_pinKey(symbol.id, ports[i].key)] = i % lanes;
+      }
+    }
+  }
+
+  // PASS 3 — the reach, accumulated PER PIN exactly as the emitter
+  // accumulates: several links on one multidrop tap march outward and the
+  // gap has to clear the whole run, not its widest member. The comb is
+  // added once, on the first stub, which is the emitter's rule too.
+  final consumed = <String, double>{};
+  var worst = 0.0;
+  for (final stub in stubs) {
+    final key = _pinKey(stub.end.symbol.id, stub.end.port.key);
+    final first = !consumed.containsKey(key);
+    final comb = first ? (lane[key] ?? 0) * sizer.combStep : 0.0;
+    final at =
+        (consumed[key] ?? 0) +
+        comb +
+        sizer.stubExtent(stub.signal.familyToken, stub.name, horizontal: false);
+    consumed[key] = at;
+    if (at > worst) worst = at;
+  }
+
+  // Iterated in map order, which is SAFE for the same reason it is in
+  // [netLabelGutterGu]: this reduces to a maximum over per-pin sums, and
+  // both operations are order-independent.
   return (2 * worst / unitsPerGrid).ceil();
 }
 
@@ -929,6 +1064,15 @@ final class _Sizer {
           ? pennantWidth(token, name, horizontal: true)
           : height + tip) +
       gap;
+
+  /// One lane of the top/bottom comb — how much further out a flag sits per
+  /// lane index.
+  ///
+  /// HERE RATHER THAN IN THE EMITTER, because two things now read it: the
+  /// emitter that draws the comb and [netLabelNodeGapGu] that reserves room
+  /// for it. Two copies of this expression is how a reservation comes to be
+  /// one lane short of the drawing.
+  double get combStep => height + tip + gap;
 }
 
 /// Places and draws stubs, carrying the running state a stub needs from
@@ -986,7 +1130,7 @@ final class _Emitter {
     final pinKey = _pinKey(stub.symbol.id, stub.port.key);
     final first = !_consumed.containsKey(pinKey);
     final comb = first && !horizontal
-        ? (combIndex[pinKey] ?? 0) * (_height + _tip + _gap)
+        ? (combIndex[pinKey] ?? 0) * sizer.combStep
         : 0.0;
     final base = _consumed[pinKey] ?? 0.0;
     final edge = stub.port.size / 2;

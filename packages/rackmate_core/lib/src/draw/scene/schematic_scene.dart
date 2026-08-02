@@ -407,13 +407,37 @@ SchematicScene buildSchematicScene({
     style: netLabelStyle,
   );
 
+  // ── and the room the VERTICAL combs need (#96-H) ─────────────────────
+  //
+  // THE SAME REACH-BACK, ON THE OTHER AXIS, and it closes the half the
+  // gutter above deliberately left open. `nodeGapGu`'s 4 gu was sized when
+  // the space between two stacked symbols held air; a top/bottom comb grows
+  // into it, so a symbol below another was being placed into the room the
+  // one above was labelling. That is what the field reported as net labels
+  // drawing over devices.
+  //
+  // IT COULD NOT BE DONE UNTIL THE COMB WAS BOUNDED. `netLabelGutterGu`'s
+  // doc carried the objection: an unbounded comb would have made a 48-port
+  // switch ask for 48 lanes of clearance and pushed every node gap on the
+  // sheet into the hundreds. #96-H caps it at `ceil(widest / pitch)`, so
+  // the worst case is a small number and the trade is worth making.
+  //
+  // MAX, NEVER REPLACE — the same rule as the gutter, for the same reason.
+  final labelNodeGapGu = netLabelNodeGapGu(
+    doc: doc,
+    symbols: [for (final c in drawn) c.geometry],
+    measurer: measurer,
+    unitsPerGrid: upg,
+    style: netLabelStyle,
+  );
+
   // ── phases 0–3 ───────────────────────────────────────────────────────
   final layout = layoutSugiyama(
     nodes: [for (final c in drawn) c.node],
     edges: edges,
     params: SugiyamaParams(
       layerGutterGu: math.max(metrics.layout.layerGutterGu, labelGutterGu),
-      nodeGapGu: metrics.layout.nodeGapGu,
+      nodeGapGu: math.max(metrics.layout.nodeGapGu, labelNodeGapGu),
       maxOrderingSweeps: metrics.layout.maxOrderingSweeps,
       priorityIterations: metrics.layout.priorityIterations,
     ),

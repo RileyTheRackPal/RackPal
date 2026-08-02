@@ -36,7 +36,14 @@ final _when = DateTime.utc(2026, 8, 2);
 EntityMeta _meta() =>
     EntityMeta(createdAt: _when, updatedAt: _when, updatedBy: 'test');
 
+/// TWO SWITCHES, AND THE SECOND ONE IS NOT DECORATION. They carry no link
+/// between them, so Sugiyama puts both in layer 0 and STACKS them — which
+/// is the only arrangement in which `SugiyamaParams.nodeGapGu` is the thing
+/// separating two symbols, and therefore the only one where a comb can
+/// reach a neighbour's body. With one device the over-a-body assertion
+/// passes trivially, because a flag escapes outward from its own pin.
 const _dev = Uuid('dev-switch');
+const _dev2 = Uuid('dev-switch-2');
 
 final class _Measurer implements TextMeasurer {
   const _Measurer();
@@ -80,19 +87,23 @@ final class _Measurer implements TextMeasurer {
     capturedAt: _when,
     body: body,
   );
-  doc.devices[_dev] = DeviceInstance(
-    id: _dev,
-    kind: DeviceKind.rackDevice,
-    templateRef: const TemplateRef(
-      templateId: TemplateId('n03'),
-      version: 1,
-      contentHash: 'sha256:n03',
-    ),
-    designator: 'SW-1',
-    name: body.displayName,
-    placement: const OffRackPlacement(),
-    meta: _meta(),
-  );
+  var designator = 0;
+  for (final id in <Uuid>[_dev, _dev2]) {
+    designator++;
+    doc.devices[id] = DeviceInstance(
+      id: id,
+      kind: DeviceKind.rackDevice,
+      templateRef: const TemplateRef(
+        templateId: TemplateId('n03'),
+        version: 1,
+        contentHash: 'sha256:n03',
+      ),
+      designator: 'SW-$designator',
+      name: body.displayName,
+      placement: const OffRackPlacement(),
+      meta: _meta(),
+    );
+  }
 
   // Which ports land on the top edge is `symbolSideForPort`'s answer, read
   // rather than assumed — the families that go there are catalog data.
@@ -108,43 +119,45 @@ final class _Measurer implements TextMeasurer {
   ];
 
   var n = 0;
-  for (final key in topKeys) {
-    n++;
-    final portId = derivePortId(_dev, PortKey(key));
-    doc.ports[portId] = Port(
-      id: portId,
-      deviceId: _dev,
-      designator: 'J${n.toString().padLeft(2, '0')}',
-      templatePortKey: PortKey(key),
-    );
-    final netId = Uuid('net-$n');
-    doc.nets[netId] = Net(
-      id: netId,
-      name: 'N${n.toString().padLeft(3, '0')}',
-      signalFamily: const SignalFamilyId('net.ethernet'),
-      meta: _meta(),
-    );
-    final linkId = Uuid('link-$n');
-    doc.links[linkId] = Link(
-      id: linkId,
-      designator: 'W${n.toString().padLeft(3, '0')}',
-      media: const MediaTypeId('media.cat6'),
-      order: FracIndex('a${n.toString().padLeft(4, '0')}'),
-      meta: _meta(),
-      conductors: [
-        Conductor(
-          from: PortEndpoint(portId),
-          to: const OpenEndpoint('field'),
-        ),
-      ],
-      services: [
-        Service(
-          id: 'svc-$n',
-          signalFamily: const SignalFamilyId('net.ethernet'),
-          netId: netId,
-        ),
-      ],
-    );
+  for (final device in <Uuid>[_dev, _dev2]) {
+    for (final key in topKeys) {
+      n++;
+      final portId = derivePortId(device, PortKey(key));
+      doc.ports[portId] = Port(
+        id: portId,
+        deviceId: device,
+        designator: 'J${n.toString().padLeft(2, '0')}',
+        templatePortKey: PortKey(key),
+      );
+      final netId = Uuid('net-$n');
+      doc.nets[netId] = Net(
+        id: netId,
+        name: 'N${n.toString().padLeft(3, '0')}',
+        signalFamily: const SignalFamilyId('net.ethernet'),
+        meta: _meta(),
+      );
+      final linkId = Uuid('link-$n');
+      doc.links[linkId] = Link(
+        id: linkId,
+        designator: 'W${n.toString().padLeft(3, '0')}',
+        media: const MediaTypeId('media.cat6'),
+        order: FracIndex('a${n.toString().padLeft(4, '0')}'),
+        meta: _meta(),
+        conductors: [
+          Conductor(
+            from: PortEndpoint(portId),
+            to: const OpenEndpoint('field'),
+          ),
+        ],
+        services: [
+          Service(
+            id: 'svc-$n',
+            signalFamily: const SignalFamilyId('net.ethernet'),
+            netId: netId,
+          ),
+        ],
+      );
+    }
   }
 
   return (doc: doc, topPortKeys: topKeys);
@@ -237,6 +250,32 @@ void main() {
             'the innermost across ${topKeys.length} pins — the comb is '
             'still growing with the pin count',
       );
+    });
+
+    test('and no flag lands on a device body, which is what the gap is '
+        'for', () {
+      // ═══════════════════════════════════════════════════════════════
+      // THE USER'S ACTUAL SENTENCE, AS AN ASSERTION
+      // ═══════════════════════════════════════════════════════════════
+      // "make sure netlabels don't draw directly over devices". Bounding
+      // the comb shortened the fans; it did not by itself stop them
+      // reaching a neighbour, because nothing reserved vertical room —
+      // SugiyamaParams.nodeGapGu stayed at 4 gu however far a comb grew,
+      // so a symbol stacked below another was placed into the space the
+      // one above was labelling. `netLabelNodeGapGu` is what reserves it.
+      //
+      // EVERY BODY, INCLUDING THE FLAG'S OWN. A pennant escapes outward
+      // from its pin, so it should clear the symbol it belongs to as well
+      // as every other one. Exempting its own would hide the case where a
+      // comb is drawn inward.
+      final hits = <String>[];
+      for (final label in scene.netLabels) {
+        for (final symbol in scene.symbols) {
+          if (!label.pennant.intersects(symbol.bodyRect)) continue;
+          hits.add('${label.netName} over ${symbol.designator}');
+        }
+      }
+      expect(hits, isEmpty, reason: 'flags over bodies: ${hits.take(8)}');
     });
 
     test('the number of DISTINCT depths is bounded, and well under the pin '
