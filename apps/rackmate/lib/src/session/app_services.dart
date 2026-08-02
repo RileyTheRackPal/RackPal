@@ -70,7 +70,23 @@ import 'package:rackmate_core/rackmate_core.dart';
 
 /// This build's version, recorded in recovery sidecars and in new
 /// documents.
-const String kAppVersion = '0.1.0';
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// IT IS A SECOND TRANSCRIPTION OF `pubspec.yaml`, AND THAT IS GATED
+/// ═══════════════════════════════════════════════════════════════════════
+/// Dart cannot read its own `pubspec.yaml` at compile time, so a shipped
+/// constant is the only way this string reaches a `RackDocument`. Two
+/// copies of one fact is exactly the drift this project gates elsewhere
+/// (`registry parity`, `palette parity`), and the failure here is quiet
+/// and durable: every document and every recovery sidecar written by a
+/// release would carry the PREVIOUS version number, permanently, in a
+/// file a user keeps. `version_parity_test.dart` compares this against
+/// every `pubspec.yaml` in the workspace.
+///
+/// THE SCHEME (docs/14 §14.0): `0.EPIC.TASK`. The leading `0` holds until
+/// the first public release, the middle number is the milestone epic under
+/// development, and the last increments per major task completed in it.
+const String kAppVersion = '0.2.0';
 
 /// Everything the shell is handed.
 final class AppServices {

@@ -14,6 +14,36 @@
 
 ---
 
+## 14.0 Versioning — `0.EPIC.TASK`
+
+**Set by the user on 2026-08-03, at the `v0.2.0` tag.** Three numbers, and none of them is semver:
+
+| Position | Means | Moves when |
+|---|---|---|
+| **major** | `0` until the first **public** release | the product ships publicly. Not before, whatever the feature set |
+| **minor** | the **milestone epic** under development | work moves to the next epic — M2 ⇒ `2`, M3 ⇒ `3` |
+| **patch** | major tasks completed **within that epic** | a major task closes |
+
+**It is deliberately not semver, and the difference matters when reading it.** Semver's minor
+promises backward compatibility and its patch promises a bug fix; neither is claimed here. The
+middle number says *where in the plan this build came from*, which is the question actually being
+asked of an internal alpha handed to a tester — "is this the one with the schematic work in it" —
+and it maps straight onto the board's epics (`docs/12-milestone-board.md` §5), so a version answers
+it without a changelog lookup.
+
+**`v0.2.0` is M2's baseline**, tagged with the milestone's criterion met rather than at its last
+commit; M2's completed work (#93, #13, #94, #95 and the #96 field-test items) is inside it. M3's
+first task lands as `v0.3.1`.
+
+**The number is written in six places and gated in one.** `apps/rackmate/pubspec.yaml`, the four
+library `pubspec.yaml`s, and `kAppVersion` in `app_services.dart` — which is the one that matters,
+because it is stamped into `RackDocument.appVersion` on every new document and into every recovery
+sidecar. A release that bumps the pubspec and forgets the constant writes the PREVIOUS version
+permanently into files the user keeps, and nothing about running the app looks wrong.
+`apps/rackmate/test/version_parity_test.dart` compares all six and asserts the leading `0`.
+
+---
+
 ## 14.1 The three commands
 
 ```powershell

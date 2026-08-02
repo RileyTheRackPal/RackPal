@@ -22,6 +22,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rackmate/src/session/app_services.dart';
 import 'package:rackmate/src/session/autosave_scheduler.dart';
 import 'package:rackmate/src/session/blank_document.dart';
 import 'package:rackmate/src/storage/data_root.dart';
@@ -239,7 +240,18 @@ void main() {
       // §9.4's four specified fields — after a crash there is no undo
       // stack left to consult.
       expect(raw['unsavedEditCount'], 1);
-      expect(raw['appVersion'], '0.1.0');
+      // THE BUILD'S VERSION, NOT THE DOCUMENT'S — and the difference is
+      // the point of the field. `buildBlankDocument` above is given
+      // '0.1.0' deliberately, so a literal here that happened to match it
+      // would pass while asserting the wrong thing. A recovery sidecar
+      // records WHICH BUILD WROTE IT, because that is what a future
+      // version needs in order to know how to read it.
+      //
+      // Read from `kAppVersion` rather than transcribed, for the reason
+      // `version_parity_test.dart` exists: this literal was '0.1.0' and
+      // broke on the first release bump, which is a test failing over a
+      // fact that had not changed.
+      expect(raw['appVersion'], kAppVersion);
       expect(raw['schemaVersion'], kSchemaVersion);
       expect(raw['savedAt'], t.clock.nowUtc().toIso8601String());
       // Never saved, so no realPath — which is what makes a recovered
