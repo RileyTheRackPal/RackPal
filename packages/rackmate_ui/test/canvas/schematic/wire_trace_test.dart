@@ -162,6 +162,117 @@ void main() {
     });
   });
 
+  group('the corridor — the one position this router chooses', () {
+    // Two symbols side by side, both wired through TOP pins, so the two
+    // ends escape THE SAME WAY and the corridor is a horizontal row above
+    // them. Bodies are withheld throughout: this group is about where the
+    // corridor goes when nothing is in the way, which is the case the
+    // detour never sees and the case almost every wire on a sheet is in.
+    const a = DBox.fromLtwh(0, 0, 100, 100);
+    const b = DBox.fromLtwh(300, 0, 100, 100);
+    const pinA = DPt(50, 0);
+    const pinB = DPt(350, 0);
+
+    List<DPt> pair(double escapeA, double escapeB) => orthogonalTrace(
+      fromPin: pinA,
+      fromSide: SymbolSide.top,
+      fromEscape: escapeA,
+      toPin: pinB,
+      toSide: SymbolSide.top,
+      toEscape: escapeB,
+    );
+
+    test('a same-way pair meets PAST the further escape, so neither end '
+        'doubles back to reach it', () {
+      // ── THE SPIKE, WHICH NO ASSERTION ABOUT BODIES CAN SEE ──────────
+      // The corridor was the MIDPOINT of the two escape points. Between
+      // two ends facing each other that is right and it is what the three
+      // cases were written for. Between two ends facing THE SAME WAY it is
+      // a point they are both trying to get past: the near end overshoots
+      // to it, and the far end — already beyond it — has to come back
+      // inward to meet it, then turn round again for its own pin. The
+      // result is a spike hanging off the far jack. It crosses nothing, it
+      // is perfectly orthogonal, and it stays inside the bend budget, so
+      // every property this file asserted about routes passed over it.
+      final route = pair(10, 200);
+      expectOrthogonal(route, 'same-way corridor');
+      expect(route.length - 2, lessThanOrEqualTo(2));
+
+      // Walking back from EACH pin, while the route is still in that pin's
+      // own column, every corner must be further out than the last — the
+      // approach only ever closes.
+      for (final (pin, corners) in <(DPt, List<DPt>)>[
+        (pinA, route),
+        (pinB, route.reversed.toList()),
+      ]) {
+        var previous = 0.0;
+        for (var i = corners.length - 2; i >= 0; i--) {
+          if (corners[i].x != pin.x) break;
+          final away = (corners[i].y - pin.y).abs();
+          expect(
+            away,
+            greaterThan(previous),
+            reason: 'the route reaches ${corners[i]} and then turns back '
+                'towards the pin at $pin: $route',
+          );
+          previous = away;
+        }
+      }
+      // The corridor really is past the FURTHER of the two escapes, which
+      // is the whole rule; `min` of the two would satisfy the walk above
+      // for one end and strand the other inside its own body.
+      expect(route.map((p) => p.y).reduce((x, y) => x < y ? x : y), -200);
+      expect(routeCuts(route, const <DBox>[a, b]), isFalse);
+    });
+
+    test('two links whose escapes merely SUM alike still get different '
+        'corridors', () {
+      // ── THE REVERSE-WIRED PATCH PANEL ───────────────────────────
+      // The midpoint tracks the SUM of the two combs, not either comb. Any
+      // two links whose two escape distances add up alike therefore share
+      // a corridor however far apart their pins are — and a panel patched
+      // in reverse, port 01 to port 48 and port 02 to port 47, makes every
+      // one of its cables such a pair. Forty-eight wires, one line.
+      //
+      // This is the assertion the comb's own tests cannot make: they vary
+      // ONE pin's index against a partner whose index moves with it, so
+      // the sum moves too and a midpoint looks like it is tracking the
+      // comb. It is the crossed pairing that separates the two rules.
+      final crossed = pair(10, 90);
+      final straight = pair(50, 50);
+      double corridorOf(List<DPt> route) =>
+          route.map((p) => p.y).reduce((x, y) => x < y ? x : y);
+      expect(
+        corridorOf(crossed),
+        isNot(corridorOf(straight)),
+        reason: 'both pairs of escapes sum to 100, so a corridor at their '
+            'midpoint puts these two cables on one line',
+      );
+    });
+
+    test('a pair facing EACH OTHER still meets in the middle', () {
+      // The forward edge — a right edge feeding a left edge further right,
+      // which is what Sugiyama's layering produces and what the great
+      // majority of a sheet is. Both ends reach the midpoint travelling the
+      // way they left, so it stays the answer, and the rule above must not
+      // have quietly moved it.
+      final route = orthogonalTrace(
+        fromPin: const DPt(0, 0),
+        fromSide: SymbolSide.right,
+        fromEscape: 10,
+        toPin: const DPt(400, 100),
+        toSide: SymbolSide.left,
+        toEscape: 30,
+      );
+      expectOrthogonal(route, 'forward corridor');
+      // Escapes at x=10 and x=370; the corridor is their midpoint, which
+      // lies BETWEEN them — the one thing a same-way pair cannot have.
+      expect(route[1].x, (10 + 370) / 2);
+      expect(route[1].x, greaterThan(10));
+      expect(route[1].x, lessThan(370));
+    });
+  });
+
   group('a wire goes AROUND a body, never across its face', () {
     test('no wire crosses a body it terminates on, and the fixture really '
         'contains routes that would', () {
@@ -355,37 +466,45 @@ void main() {
       );
     });
 
-    test('a pair escaping the SAME way pushes its corridor out, and does '
-        'not go round the side at all', () {
+    test('a pair escaping the SAME way runs its corridor PAST both, and '
+        'does not go round the side at all', () {
       // ── THE BRACKETS THE FIELD PHOTOGRAPHED ───────────────────
       // A patch panel at the bottom of a sheet, feeding a device far
-      // above, both through TOP-edge pins. `_staircase` runs its corridor
-      // across the escape axis — a horizontal row between two top pins —
-      // and puts it at the midpoint, which lands inside the device above
-      // and has to be moved. Moving it OUT, past both bodies, keeps the
-      // shape: up, across, down. Two dozen of those are a comb.
+      // above, both through TOP-edge pins. The corridor runs across the
+      // escape axis — a horizontal row between two top pins — and putting
+      // it at the MIDPOINT lands it inside the device above. Running it
+      // past the further of the two escapes instead keeps the shape the
+      // reader already knows: up, across, down. Two dozen of those are a
+      // comb.
       //
-      // What the detour did instead was turn the moment it cleared the
-      // pin and go round the OUTSIDE of the pair, which against a
-      // 1000-unit-wide panel is a bracket enclosing the whole drawing. The
-      // field sent a picture of two dozen of them nested inside each other.
+      // What the router did instead was turn the moment it cleared the pin
+      // and go round the OUTSIDE of the pair, which against a 1000-unit-wide
+      // panel is a bracket enclosing the whole drawing. The field sent a
+      // picture of two dozen of them nested inside each other.
       const panel = DBox.fromLtwh(0, 800, 1000, 100);
       const above = DBox.fromLtwh(600, 0, 200, 100);
       const bodies = <DBox>[panel, above];
 
-      final bare = orthogonalTrace(
-        fromPin: const DPt(100, 800),
-        fromSide: SymbolSide.top,
-        fromEscape: 10,
-        toPin: const DPt(700, 0),
-        toSide: SymbolSide.top,
-        toEscape: 10,
-      );
+      // ── THE FIXTURE IS ONE THE MIDPOINT GETS WRONG ──────────────────
+      // Asserted by building the midpoint route BY HAND rather than by
+      // asking `orthogonalTrace` for an undetoured one, which is what this
+      // guard used to do. It cannot any more: the corridor rule lives in
+      // the staircase now, so the routed and unrouted answers here are the
+      // same route and the old guard was comparing a thing to itself.
+      const mid = DPt(100, (790 + -10) / 2);
       expect(
-        routeCuts(bare, bodies),
+        routeCuts(
+          <DPt>[
+            const DPt(100, 800),
+            mid,
+            DPt(700, mid.y),
+            const DPt(700, 0),
+          ],
+          bodies,
+        ),
         isTrue,
-        reason: 'the midpoint corridor must land inside a body here, or '
-            'nothing below is about a detour',
+        reason: 'a corridor at the midpoint of the two escapes must land '
+            'inside a body here, or nothing below is about the rule',
       );
 
       final route = orthogonalTrace(

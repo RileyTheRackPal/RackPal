@@ -60,23 +60,36 @@
 // crossovers" — not defects this file failed to catch.
 //
 // ═════════════════════════════════════════════════════════════════════
+// WHERE THE CORRIDOR GOES, WHICH IS THE ROUTER'S ONE REAL DECISION
+// ═════════════════════════════════════════════════════════════════════
+// A staircase is: out of the first pin, along a corridor, into the second.
+// The corridor's position along its own axis is the only free variable in
+// the whole file, and BOTH of the field's routing reports were that variable
+// being set wrong. [_corridor] holds the rule and the argument for it.
+//
+// The short form: a corridor is only reachable if each end gets to it
+// travelling the way it left its pin. A pair facing EACH OTHER — a right
+// edge feeding a left edge further right, which is what Sugiyama's layering
+// produces — can meet anywhere between them, and the midpoint is the
+// obvious choice. A pair facing the SAME way — two top pins, two right pins
+// — cannot meet between them at all; it has to meet PAST the further of the
+// two. Using the midpoint for both is what drew a spike off every far jack
+// and what made a reverse-wired patch panel put all forty-eight of its
+// cables on one line.
+//
+// ═════════════════════════════════════════════════════════════════════
 // THE DETOUR, WHICH IS ALSO NOT CHANNEL ALLOCATION
 // ═════════════════════════════════════════════════════════════════════
-// The staircase's corridor is the MIDPOINT of the two escape points, and a
-// midpoint lies outside both bodies only while the two ends escape TOWARDS
-// each other — a source on a right edge feeding a sink on a left edge
-// further right. That is what Sugiyama's layering produces and it is what
-// the three cases in [orthogonalTrace] were written against.
-//
-// A BACKWARD EDGE breaks the assumption, and there is nothing exotic about
-// one: an AVR's HDMI input fed by a matrix that sits to its RIGHT is a
-// backward edge, and so is its output feeding something to its left. The
-// field sent a screenshot of what that drew. The corridor landed BETWEEN
-// the two escapes instead of beyond them, so the wire left its pin, turned
-// straight back around and ran across the face of its own symbol — over the
-// header band, over the pin labels that had just been moved inside for
-// exactly this reason, and out the other side. Two of them on one pin row
-// read as one line drawn through the device.
+// One pairing has no reachable corridor at all: two ends escaping in
+// opposite directions with their BACKS to each other. There is nothing
+// exotic about it — an AVR's HDMI input fed by a matrix that sits to its
+// RIGHT is a backward edge, and so is its output feeding something to its
+// left. The field sent a screenshot of what that drew. The corridor landed
+// between the two escapes instead of beyond them, so the wire left its pin,
+// turned straight back around and ran across the face of its own symbol —
+// over the header band, over the pin labels that had just been moved inside
+// for exactly this reason, and out the other side. Two of them on one pin
+// row read as one line drawn through the device.
 //
 // So a route that would cut a body it TERMINATES ON is replaced by one that
 // goes around it: out to the escape, along a lane clear of both bodies, and
@@ -272,12 +285,10 @@ final class DrawnWireLayer {
 /// HORIZONTALLY, top/bottom pins VERTICALLY (`symbol_layer.dart`'s edge
 /// rule). That gives exactly three shapes, and no fourth is reachable:
 ///
-///   * BOTH HORIZONTAL — a Z with a vertical corridor at the x-midpoint of
-///     the two escape points. The midpoint is arithmetic, not allocated:
-///     it moves with the comb, so two links off adjacent pins get two
-///     corridors without anything having compared them.
-///   * BOTH VERTICAL — the same shape rotated: a horizontal corridor at
-///     the y-midpoint.
+///   * BOTH HORIZONTAL — a Z with a vertical corridor between the two
+///     escape points. Where on that axis it sits is [_corridor]'s answer
+///     and the one thing about this file worth reading twice.
+///   * BOTH VERTICAL — the same shape rotated: a horizontal corridor.
 ///   * MIXED — an L. One corner, at the intersection of the horizontal
 ///     end's row and the vertical end's column, which is the only corner
 ///     that lets each end arrive along its own axis.
@@ -287,13 +298,13 @@ final class DrawnWireLayer {
 /// cannot see and a golden can.
 ///
 /// ── AND THE FOURTH SHAPE, WHICH IS NOT A FOURTH CASE ────────────────────
-/// All three above put their corridor at the MIDPOINT of the two escapes,
-/// which is beyond both of them on a forward edge and BETWEEN them on a
-/// backward one — see the file header. Pass [fromBody] and [toBody] and a
-/// route that would cut either of them is replaced by the detour: the same
-/// staircase with its corridor moved out past both bodies instead of split
-/// between them. Omit them and the caller gets the bare staircase, which is
-/// what a drag preview over a free-floating cursor has to have.
+/// A corridor can only be placed where BOTH ends reach it travelling the way
+/// they left, and for one pairing — two ends escaping in opposite directions
+/// with their backs to each other — no such place exists. Pass [fromBody]
+/// and [toBody] and a route that would cut either of them is replaced by the
+/// detour, which goes round the outside of both instead
+/// ([_detourCandidates]). Omit them and the caller gets the bare staircase,
+/// which is what a drag preview over a free-floating cursor has to have.
 List<DPt> orthogonalTrace({
   required DPt fromPin,
   required SymbolSide fromSide,
@@ -317,8 +328,7 @@ List<DPt> orthogonalTrace({
   if (fromBody == null || toBody == null) return direct;
   if (!_cutsEither(direct, fromBody, toBody)) return direct;
 
-  // EVERY CANDIDATE IN TURN, FIRST CLEAN ONE WINS. See
-  // [_detourCandidates] for the order and why it is that order.
+  // EVERY CANDIDATE IN TURN, FIRST CLEAN ONE WINS.
   for (final middle in _detourCandidates(
     p,
     fromSide,
@@ -326,13 +336,13 @@ List<DPt> orthogonalTrace({
     q,
     toSide,
     toBody,
-    // AT LEAST AS FAR OUT AS EITHER ESCAPE, which is not decoration. A
-    // corridor INSIDE one end's own escape point would be met by that end
-    // travelling back inward, and the whole defect being fixed here is a
-    // wire that travels back inward. Taking the larger of the two also
-    // carries the comb into the corridor, so two detouring links off
+    // AT LEAST AS FAR OUT AS EITHER ESCAPE, which is not decoration. A lane
+    // INSIDE one end's own escape point would be met by that end travelling
+    // back inward, and a wire that travels back inward is the whole family
+    // of defect this file keeps having to fix. Taking the larger of the two
+    // also carries the comb into the lane, so two detouring links off
     // different pins run at different offsets — the same way, and for the
-    // same reason, that the midpoint corridor inherits it.
+    // same reason, that [_corridor] carries it into the corridor.
     clearance: math.max(fromEscape, toEscape),
   )) {
     final route = _simplify(<DPt>[fromPin, p, ...middle, q, toPin]);
@@ -351,50 +361,83 @@ List<DPt> _staircase(DPt p, SymbolSide fromSide, DPt q, SymbolSide toSide) {
   final pHorizontal = _isHorizontal(fromSide);
   final qHorizontal = _isHorizontal(toSide);
   if (pHorizontal && qHorizontal) {
-    final mx = (p.x + q.x) / 2;
-    return <DPt>[DPt(mx, p.y), DPt(mx, q.y)];
+    final x = _corridor(p.x, fromSide, q.x, toSide);
+    return <DPt>[DPt(x, p.y), DPt(x, q.y)];
   }
   if (!pHorizontal && !qHorizontal) {
-    final my = (p.y + q.y) / 2;
-    return <DPt>[DPt(p.x, my), DPt(q.x, my)];
+    final y = _corridor(p.y, fromSide, q.y, toSide);
+    return <DPt>[DPt(p.x, y), DPt(q.x, y)];
   }
   // MIXED: the one corner that lets each end arrive along its own axis.
   final corner = pHorizontal ? DPt(q.x, p.y) : DPt(p.x, q.y);
   return <DPt>[corner];
 }
 
+/// Where the corridor crosses, given the two escape coordinates along its
+/// own axis and the edges their pins left by.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// THE MIDPOINT IS RIGHT FOR A PAIR FACING EACH OTHER AND WRONG FOR A
+/// PAIR FACING THE SAME WAY
+/// ═════════════════════════════════════════════════════════════════════
+/// A right-edge pin feeding a left-edge pin further right — the forward
+/// edge Sugiyama's layering produces, and the shape all three cases were
+/// written against — has its two ends escaping TOWARDS each other, so the
+/// average of the two lies between them and both ends reach it travelling
+/// the way they left. That is the case the midpoint was chosen for and it
+/// keeps it.
+///
+/// TWO TOP PINS ESCAPE THE SAME WAY, and then the average lies BETWEEN two
+/// points that are both trying to get past it. The nearer end overshoots to
+/// the corridor and the further end has already gone beyond it and must
+/// come back — a spike hanging off the far jack — and, worse, the corridor
+/// stops tracking either comb. It tracks the SUM of the two combs, so a
+/// patch panel wired in reverse (port 01 to port 48, port 02 to port 47)
+/// gives every one of its cables the SAME sum and therefore the SAME
+/// corridor: forty-eight wires drawn along one line. The field photographed
+/// the milder version of this.
+///
+/// So a pair facing the same way takes the FURTHER of the two escapes
+/// instead of the mean. The wire goes out, across, and in — the shape the
+/// staircase already had — and the corridor inherits `max` of the two combs
+/// rather than their average, which is a per-link function of the same two
+/// numbers and moves when either pin moves.
+double _corridor(double a, SymbolSide aSide, double b, SymbolSide bSide) {
+  final outward = _outwardSign(aSide);
+  if (outward != _outwardSign(bSide)) return (a + b) / 2;
+  return outward < 0 ? math.min(a, b) : math.max(a, b);
+}
+
 /// The detour routes worth trying for this pair, best first.
 ///
 /// ════════════════════════════════════════════════════════════════════
-/// PUSHING THE CORRIDOR OUT IS NOT THE SAME AS GOING ROUND THE SIDE
+/// THE SIDE LANE, WHICH IS EVERYTHING THIS FUNCTION STILL OFFERS
 /// ════════════════════════════════════════════════════════════════════
-/// [orthogonalTrace]'s own doc has always described the detour as "the same
-/// staircase with its corridor moved out past both bodies instead of split
-/// between them". Only one of the two shapes below actually IS that, and
-/// for a long time this function returned the other one.
+/// A detour turns the moment it clears the pin and goes round the OUTSIDE of
+/// both bodies. It is a bracket, not a staircase, and against a wide symbol
+/// it is an enormous one — the field sent a picture of two dozen of them
+/// nested around a whole sheet.
 ///
-/// A — THE CORRIDOR, PUSHED OUT. [_staircase] runs a corridor ACROSS the
-/// escape axis — a row between two top pins, a column between two side pins
-/// — and puts it at the midpoint. Moving that same row or column out past
-/// both bodies keeps the shape the reader already knows and keeps the wire
-/// travelling the way it left. Two top pins feeding a device far above then
-/// go straight up, across, and straight down: parallel runs at one offset
-/// each, which is a comb.
+/// SO IT IS THE LAST RESORT, and the reason it can be is that the ordinary
+/// staircase now reaches every case that does not need a bracket.
+/// [_corridor] sends a pair escaping the SAME way (two top pins, two right
+/// pins) past the FURTHER of their two escapes rather than between them, and
+/// an escape point is by construction outside its own body — so that
+/// corridor is always clear of both, and a route that still cuts is one
+/// whose PIN COLUMN has to climb past the other symbol. No corridor
+/// placement fixes that; only going round does.
 ///
-/// B — THE SIDE LANE, which turns the moment it clears the pin and goes
-/// round the outside. It is a bracket, not a staircase, and against a wide
-/// symbol it is an enormous one — the field sent a picture of two dozen of
-/// them nested around a whole sheet. It is still needed: a pair whose two
-/// ends escape in OPPOSITE directions along the corridor's axis (a left-edge
-/// pin feeding a right-edge pin) has no row or column that both ends can
-/// reach from outside, and B is the only shape that connects them.
+/// There WAS a candidate here that moved the corridor out past both bodies
+/// instead, and it is gone rather than kept for safety: the staircase's own
+/// corridor is never further out than that one, so the pushed-out version
+/// could not clear a column the staircase failed to clear, and it could
+/// never win. Keeping it would have been keeping a branch no input reaches.
 ///
-/// SO A IS OFFERED FIRST AND ONLY WHEN IT EXISTS — when both ends escape the
-/// SAME way along the corridor's axis, which is exactly the condition for
-/// both of them to be able to reach a corridor placed on that side. The
-/// caller takes the first candidate that cuts nothing, so B remains the
-/// answer wherever A is unavailable or blocked, and neither shape had to be
-/// weakened to make room for the other.
+/// WHAT REMAINS IS THE CASE A CORRIDOR CANNOT SERVE: a pair whose two ends
+/// escape in OPPOSITE directions along the corridor's axis, a left-edge pin
+/// feeding a right-edge pin behind it, has no row or column that both ends
+/// can reach travelling the way they left. The bracket is the only shape
+/// that connects them.
 List<List<DPt>> _detourCandidates(
   DPt p,
   SymbolSide fromSide,
@@ -409,20 +452,6 @@ List<List<DPt>> _detourCandidates(
   final qHorizontal = _isHorizontal(toSide);
   final out = <List<DPt>>[];
 
-  // ── A: the midpoint corridor, moved outside ────────────────────
-  if (pHorizontal == qHorizontal &&
-      _outwardSign(fromSide) == _outwardSign(toSide)) {
-    final outward = _outwardSign(fromSide);
-    if (pHorizontal) {
-      final x = outward < 0 ? hull.left - clearance : hull.right + clearance;
-      out.add(<DPt>[DPt(x, p.y), DPt(x, q.y)]);
-    } else {
-      final y = outward < 0 ? hull.top - clearance : hull.bottom + clearance;
-      out.add(<DPt>[DPt(p.x, y), DPt(q.x, y)]);
-    }
-  }
-
-  // ── B: the side lane ───────────────────────────────────
   if (!pHorizontal && !qHorizontal) {
     final low = _prefersLowLane(
       pAt: p.x,
@@ -647,8 +676,9 @@ DrawnWireLayer buildDrawnWireLayer({
         if ((horizontal ? centre.y : centre.x) < middle) near++;
       }
       for (var i = 0; i < ports.length; i++) {
-        combIndex['${symbol.id} ${ports[i].key}'] =
-            i < near ? i : ports.length - 1 - i;
+        combIndex['${symbol.id} ${ports[i].key}'] = i < near
+            ? i
+            : ports.length - 1 - i;
       }
     }
   }
