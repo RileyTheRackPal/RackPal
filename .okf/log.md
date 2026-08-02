@@ -2,6 +2,48 @@
 
 ## 2026-08-03
 
+* **Update**: **#124 is BUILT** (`b128a42`). The family glyph is drawn as
+  GEOMETRY, so the pennant's channel 4 no longer asks a font how wide a
+  character is. Closes the field report of pennants reading `NET-NEN006` —
+  the family token and the net name printed on top of each other.
+* **Note**: the cause is worth keeping because it is a whole CLASS. The
+  glyph was a character in a text run measured by `PdfFontMeasurer` over
+  **Jost**, which carries none of the four Unicode blocks these symbols
+  live in, so it returned a near-zero advance; on screen the same run went
+  through a `TextPainter`, which fell back to a system face and drew it at
+  full width. **Measured short, drawn wide.** The error is the glyph's real
+  width — a constant — which is why em-scaling the inset (`09d7538`) did
+  nothing.
+* **Note**: **CR-081 has a blind spot and this found it.** *"Both backends
+  share this one measurer"* is true of the MEASURER and says nothing about
+  the FONT FALLBACK behind it. Every gate compared the two backends' ops
+  and the ops were identical; what differed was what a `TextPainter` did
+  with one of them. The PDF path embeds the subset it measures with, so
+  export was self-consistent and only the screen lied. **A parity claim
+  stated over the shared component does not cover what is downstream of
+  it.**
+* **Note**: the fix's real content is that a shape's width is COMPUTED —
+  `familyGlyphAdvance(sizePt)`, read by both the sizer and the emitter — so
+  no running font can put them out of step and no backend can substitute a
+  face for a path. Geometry is not the point; **removing the font from the
+  question** is.
+* **Note**: the mapping covers SIXTEEN codepoints, not eight — both halves
+  of every domain's `glyph`/`glyphAlt` pair. Only the native half is drawn
+  today (`signal_style.dart` explains why no model field selects the tier),
+  and mapping only what is drawn today is how a file comes to be quietly
+  wrong the moment that changes.
+* **Note**: the board's enumeration said "Geometric Shapes"; five of eight
+  are. `✚` is Dingbats, `⬢` is Miscellaneous Symbols and Arrows, `★` is
+  Miscellaneous Symbols. It does not change the diagnosis — Jost carries
+  none of the four blocks — but recorded because a note naming the wrong
+  block sends the next reader to the wrong place.
+* **Note**: a five-pointed star's top point reaches the full radius while
+  its bottom vertices stop at `r·cos 36°`, so one placed by its
+  circumcircle centre sits visibly high. `_polygon` re-centres EVERY shape
+  on its own bounding box rather than special-casing the star, so a shape
+  added later cannot inherit the defect by being constructed the same
+  obvious way.
+
 * **Update**: [DR-014](/decisions/dr-014-splitting-a-set.md) is **BUILT**
   (`acdae02` core, `0e5c568` sheet, board #110). A wire drawn from an
   already-wired set member to a **different device** splits the set. It closes

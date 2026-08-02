@@ -769,6 +769,21 @@ than against its criterion is the substitution §5.5 refuses for M6. The six tie
 are **not** M2's at all — canon defers them to M5 (§11.12.5), and implementing one as a tier-1
 refusal would make the product unable to draw a mistake, which CR-017 and G2 exist to prevent.
 
+**#124 is built (`b128a42`), and it exposes a gap in CR-081 worth recording.** The pennant's family
+glyph is drawn as GEOMETRY rather than as a character, because as a character it was measured by
+`PdfFontMeasurer` over Jost — which carries none of the four Unicode blocks these symbols live in,
+so it returned a near-zero advance — and painted on screen by a `TextPainter` that fell back to a
+system face and drew it full width. The net name landed on top of the token, and the field read
+`NET-NEN006`. **CR-081's *"both backends share this one measurer"* is true of the MEASURER and says
+nothing about the FONT FALLBACK behind it**: every gate compared the two backends' ops and the ops
+were identical; what differed was what a `TextPainter` did with one of them, and the PDF path
+embeds the subset it measures with, so export was self-consistent and only the screen lied. A
+parity claim stated over a shared component does not cover what is downstream of it. The fix's
+content is not the geometry but that the width is now COMPUTED from the type size and read by both
+the sizer and the emitter, so no font can put them out of step. Cost, stated: five ops per flag
+where a family resolves, up from four, and unlike `ff712d2`'s accidental fifth this one is
+structural and does not come back.
+
 **DR-014 is built (#110, `acdae02` + `0e5c568`).** A wire drawn from an already-wired set member to
 a **different device** now splits the set automatically — no modifier, no mode letter, no dialog,
 because #110's own costing found no free single modifier to bind one to (`Ctrl` is the magnet
