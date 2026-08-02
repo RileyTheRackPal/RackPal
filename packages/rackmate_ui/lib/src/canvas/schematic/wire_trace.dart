@@ -317,34 +317,33 @@ List<DPt> orthogonalTrace({
   if (fromBody == null || toBody == null) return direct;
   if (!_cutsEither(direct, fromBody, toBody)) return direct;
 
-  final around = _simplify(<DPt>[
-    fromPin,
+  // EVERY CANDIDATE IN TURN, FIRST CLEAN ONE WINS. See
+  // [_detourCandidates] for the order and why it is that order.
+  for (final middle in _detourCandidates(
     p,
-    ..._detour(
-      p,
-      fromSide,
-      fromBody,
-      q,
-      toSide,
-      toBody,
-      // AT LEAST AS FAR OUT AS EITHER ESCAPE, which is not decoration. A
-      // lane INSIDE one end's own escape point would be met by that end
-      // travelling back inward, and the whole defect being fixed here is a
-      // wire that travels back inward. Taking the larger of the two also
-      // carries the comb into the lane, so two backward links off different
-      // pins detour at different heights — the same way, and for the same
-      // reason, that the corridor inherits it.
-      clearance: math.max(fromEscape, toEscape),
-    ),
+    fromSide,
+    fromBody,
     q,
-    toPin,
-  ]);
-  // THE DETOUR IS NOT ALWAYS AVAILABLE: two symbols that overlap in the
-  // lane's own axis can leave every route through one of them. Falling back
-  // to the direct staircase draws the shorter of two flawed wires rather
-  // than the longer one, and says so here instead of pretending the case
-  // cannot arise.
-  return _cutsEither(around, fromBody, toBody) ? direct : around;
+    toSide,
+    toBody,
+    // AT LEAST AS FAR OUT AS EITHER ESCAPE, which is not decoration. A
+    // corridor INSIDE one end's own escape point would be met by that end
+    // travelling back inward, and the whole defect being fixed here is a
+    // wire that travels back inward. Taking the larger of the two also
+    // carries the comb into the corridor, so two detouring links off
+    // different pins run at different offsets — the same way, and for the
+    // same reason, that the midpoint corridor inherits it.
+    clearance: math.max(fromEscape, toEscape),
+  )) {
+    final route = _simplify(<DPt>[fromPin, p, ...middle, q, toPin]);
+    if (!_cutsEither(route, fromBody, toBody)) return route;
+  }
+  // NO DETOUR IS AVAILABLE: two symbols that overlap on every axis can
+  // leave every route through one of them. Falling back to the direct
+  // staircase draws the shorter of two flawed wires rather than the
+  // longer one, and says so here instead of pretending the case cannot
+  // arise.
+  return direct;
 }
 
 /// The three cases of the doc comment above, and nothing else.
@@ -364,18 +363,39 @@ List<DPt> _staircase(DPt p, SymbolSide fromSide, DPt q, SymbolSide toSide) {
   return <DPt>[corner];
 }
 
-/// The same staircase with its corridor moved clear of BOTH bodies this
-/// link terminates on.
+/// The detour routes worth trying for this pair, best first.
 ///
-/// ── THE MIXED PAIR IS THE ONE WORTH READING TWICE ───────────────────────
-/// It comes out of the two-horizontal formula unchanged, which does not
-/// look right until you follow it: `[(p.x, lane), (q.x, lane)]` reaches the
-/// VERTICAL end along its own column and the HORIZONTAL end along the
-/// lane, and the horizontal end's last leg is then its own escape stub,
-/// which runs the right way by construction. So the L becomes a Z rather
-/// than a fourth shape, and [_simplify] takes it back to three bends
-/// because the vertical end's escape point now sits ON its own column.
-List<DPt> _detour(
+/// ════════════════════════════════════════════════════════════════════
+/// PUSHING THE CORRIDOR OUT IS NOT THE SAME AS GOING ROUND THE SIDE
+/// ════════════════════════════════════════════════════════════════════
+/// [orthogonalTrace]'s own doc has always described the detour as "the same
+/// staircase with its corridor moved out past both bodies instead of split
+/// between them". Only one of the two shapes below actually IS that, and
+/// for a long time this function returned the other one.
+///
+/// A — THE CORRIDOR, PUSHED OUT. [_staircase] runs a corridor ACROSS the
+/// escape axis — a row between two top pins, a column between two side pins
+/// — and puts it at the midpoint. Moving that same row or column out past
+/// both bodies keeps the shape the reader already knows and keeps the wire
+/// travelling the way it left. Two top pins feeding a device far above then
+/// go straight up, across, and straight down: parallel runs at one offset
+/// each, which is a comb.
+///
+/// B — THE SIDE LANE, which turns the moment it clears the pin and goes
+/// round the outside. It is a bracket, not a staircase, and against a wide
+/// symbol it is an enormous one — the field sent a picture of two dozen of
+/// them nested around a whole sheet. It is still needed: a pair whose two
+/// ends escape in OPPOSITE directions along the corridor's axis (a left-edge
+/// pin feeding a right-edge pin) has no row or column that both ends can
+/// reach from outside, and B is the only shape that connects them.
+///
+/// SO A IS OFFERED FIRST AND ONLY WHEN IT EXISTS — when both ends escape the
+/// SAME way along the corridor's axis, which is exactly the condition for
+/// both of them to be able to reach a corridor placed on that side. The
+/// caller takes the first candidate that cuts nothing, so B remains the
+/// answer wherever A is unavailable or blocked, and neither shape had to be
+/// weakened to make room for the other.
+List<List<DPt>> _detourCandidates(
   DPt p,
   SymbolSide fromSide,
   DBox fromBody,
@@ -387,11 +407,24 @@ List<DPt> _detour(
   final hull = fromBody.union(toBody);
   final pHorizontal = _isHorizontal(fromSide);
   final qHorizontal = _isHorizontal(toSide);
+  final out = <List<DPt>>[];
 
+  // ── A: the midpoint corridor, moved outside ────────────────────
+  if (pHorizontal == qHorizontal &&
+      _outwardSign(fromSide) == _outwardSign(toSide)) {
+    final outward = _outwardSign(fromSide);
+    if (pHorizontal) {
+      final x = outward < 0 ? hull.left - clearance : hull.right + clearance;
+      out.add(<DPt>[DPt(x, p.y), DPt(x, q.y)]);
+    } else {
+      final y = outward < 0 ? hull.top - clearance : hull.bottom + clearance;
+      out.add(<DPt>[DPt(p.x, y), DPt(q.x, y)]);
+    }
+  }
+
+  // ── B: the side lane ───────────────────────────────────
   if (!pHorizontal && !qHorizontal) {
-    final lane = _nearerHalf(
-      low: hull.left - clearance,
-      high: hull.right + clearance,
+    final low = _prefersLowLane(
       pAt: p.x,
       pMid: (fromBody.left + fromBody.right) / 2,
       pSpan: fromBody.width,
@@ -399,14 +432,18 @@ List<DPt> _detour(
       qMid: (toBody.left + toBody.right) / 2,
       qSpan: toBody.width,
     );
-    return <DPt>[DPt(lane, p.y), DPt(lane, q.y)];
+    // BOTH SIDES, PREFERRED ONE FIRST. Drawing through a body is worse
+    // than leaving by the far corner, so the second side is offered rather
+    // than falling straight back to a route that cuts.
+    for (final l in <bool>[low, !low]) {
+      final x = l ? hull.left - clearance : hull.right + clearance;
+      out.add(<DPt>[DPt(x, p.y), DPt(x, q.y)]);
+    }
+    return out;
   }
 
-  final double lane;
   if (pHorizontal && qHorizontal) {
-    lane = _nearerHalf(
-      low: hull.top - clearance,
-      high: hull.bottom + clearance,
+    final low = _prefersLowLane(
       pAt: p.y,
       pMid: (fromBody.top + fromBody.bottom) / 2,
       pSpan: fromBody.height,
@@ -414,16 +451,28 @@ List<DPt> _detour(
       qMid: (toBody.top + toBody.bottom) / 2,
       qSpan: toBody.height,
     );
-  } else {
-    // NO CHOICE HERE: the vertical end escapes to one side of its own body
-    // and can only be met from that side, so the lane is decided by the pin
-    // rather than by anything else.
-    lane = (pHorizontal ? toSide : fromSide) == SymbolSide.top
-        ? hull.top - clearance
-        : hull.bottom + clearance;
+    for (final l in <bool>[low, !low]) {
+      final y = l ? hull.top - clearance : hull.bottom + clearance;
+      out.add(<DPt>[DPt(p.x, y), DPt(q.x, y)]);
+    }
+    return out;
   }
-  return <DPt>[DPt(p.x, lane), DPt(q.x, lane)];
+
+  // MIXED. No choice at all: the vertical end escapes to one side of its
+  // own body and can only be met from that side, so the pin decides.
+  final y = (pHorizontal ? toSide : fromSide) == SymbolSide.top
+      ? hull.top - clearance
+      : hull.bottom + clearance;
+  out.add(<DPt>[DPt(p.x, y), DPt(q.x, y)]);
+  return out;
 }
+
+/// -1 for an edge whose pins escape towards lower coordinates, +1 for one
+/// whose pins escape towards higher — the sign of [_escapePoint]'s step.
+int _outwardSign(SymbolSide side) => switch (side) {
+  SymbolSide.left || SymbolSide.top => -1,
+  SymbolSide.right || SymbolSide.bottom => 1,
+};
 
 /// Whether the lane belongs on the LOW side of the two bodies — left when
 /// they are compared across x, top when across y.
@@ -481,28 +530,6 @@ bool _prefersLowLane({
   if (pSpan != qSpan) return pSpan > qSpan ? pLow : qLow;
   return qAt < pAt;
 }
-
-/// [_prefersLowLane] resolved to the lane coordinate itself.
-double _nearerHalf({
-  required double low,
-  required double high,
-  required double pAt,
-  required double pMid,
-  required double pSpan,
-  required double qAt,
-  required double qMid,
-  required double qSpan,
-}) =>
-    _prefersLowLane(
-      pAt: pAt,
-      pMid: pMid,
-      pSpan: pSpan,
-      qAt: qAt,
-      qMid: qMid,
-      qSpan: qSpan,
-    )
-    ? low
-    : high;
 
 /// Whether any segment of [points] passes through the INTERIOR of either
 /// body.

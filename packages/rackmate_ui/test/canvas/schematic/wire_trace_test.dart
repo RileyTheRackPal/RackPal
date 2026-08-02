@@ -355,23 +355,96 @@ void main() {
       );
     });
 
+    test('a pair escaping the SAME way pushes its corridor out, and does '
+        'not go round the side at all', () {
+      // ── THE BRACKETS THE FIELD PHOTOGRAPHED ───────────────────
+      // A patch panel at the bottom of a sheet, feeding a device far
+      // above, both through TOP-edge pins. `_staircase` runs its corridor
+      // across the escape axis — a horizontal row between two top pins —
+      // and puts it at the midpoint, which lands inside the device above
+      // and has to be moved. Moving it OUT, past both bodies, keeps the
+      // shape: up, across, down. Two dozen of those are a comb.
+      //
+      // What the detour did instead was turn the moment it cleared the
+      // pin and go round the OUTSIDE of the pair, which against a
+      // 1000-unit-wide panel is a bracket enclosing the whole drawing. The
+      // field sent a picture of two dozen of them nested inside each other.
+      const panel = DBox.fromLtwh(0, 800, 1000, 100);
+      const above = DBox.fromLtwh(600, 0, 200, 100);
+      const bodies = <DBox>[panel, above];
+
+      final bare = orthogonalTrace(
+        fromPin: const DPt(100, 800),
+        fromSide: SymbolSide.top,
+        fromEscape: 10,
+        toPin: const DPt(700, 0),
+        toSide: SymbolSide.top,
+        toEscape: 10,
+      );
+      expect(
+        routeCuts(bare, bodies),
+        isTrue,
+        reason: 'the midpoint corridor must land inside a body here, or '
+            'nothing below is about a detour',
+      );
+
+      final route = orthogonalTrace(
+        fromPin: const DPt(100, 800),
+        fromSide: SymbolSide.top,
+        fromEscape: 10,
+        fromBody: panel,
+        toPin: const DPt(700, 0),
+        toSide: SymbolSide.top,
+        toEscape: 10,
+        toBody: above,
+      );
+      expectOrthogonal(route, 'pushed-out corridor');
+      expect(routeCuts(route, bodies), isFalse);
+
+      // IT NEVER STEPS OUTSIDE THE PAIR SIDEWAYS, which is the whole
+      // difference between a staircase and a bracket. The side lane would
+      // put a corner a clearance beyond `panel.left` and come back.
+      expect(
+        route.map((p) => p.x).reduce((a, b) => a < b ? a : b),
+        greaterThanOrEqualTo(panel.left),
+        reason: 'the wire went round the outside instead of over the top: '
+            '$route',
+      );
+      // The corridor is ABOVE both bodies, which is the side both ends
+      // escape towards — the only side either of them could reach.
+      expect(
+        route.map((p) => p.y).reduce((a, b) => a < b ? a : b),
+        lessThan(above.top),
+      );
+      // AND IT IS CHEAPER IN CORNERS, not just in ink: up, across, down.
+      expect(
+        route.length - 2,
+        lessThanOrEqualTo(2),
+        reason: 'a pushed-out corridor is two bends; $route',
+      );
+    });
+
     test('the WIDER body decides when the two pins want opposite sides, '
         'and flow breaks a true tie', () {
-      // One lane serves both ends, so two pins in opposite halves cannot
-      // both be satisfied. The wider body wins, because spanning more of
-      // the axis is what makes going the wrong way expensive — a 48-port
-      // switch outvotes a two-port field device.
+      // ── A TOP PIN AND A BOTTOM PIN, WHICH IS NOT AN ARBITRARY CHOICE ──
+      // The side lane is only REACHED when the pushed-out corridor is
+      // unavailable, and it is unavailable exactly when the two ends
+      // escape in opposite directions along the corridor's axis — no row
+      // outside both bodies can be met from above by one end and from
+      // below by the other. So a pair of top pins never gets here at all,
+      // and a fixture built from one would be asserting the corridor's
+      // behaviour while claiming to test the lane's.
       const wide = DBox.fromLtwh(0, 0, 1000, 100);
       const narrow = DBox.fromLtwh(400, 400, 100, 100);
       final decided = orthogonalTrace(
-        // LEFT half of the wide body — wants the left lane.
+        // LEFT half of the wide body, escaping UP — wants the left lane.
         fromPin: const DPt(100, 0),
         fromSide: SymbolSide.top,
         fromEscape: 10,
         fromBody: wide,
-        // RIGHT half of the narrow one — wants the right lane.
-        toPin: const DPt(480, 400),
-        toSide: SymbolSide.top,
+        // RIGHT half of the narrow one, escaping DOWN — wants the right.
+        toPin: const DPt(480, 500),
+        toSide: SymbolSide.bottom,
         toEscape: 10,
         toBody: narrow,
       );
@@ -385,25 +458,45 @@ void main() {
       // AND WHEN THE SPANS ARE EQUAL there is no nearer corner to appeal
       // to, so the tie falls through to the direction the cable FLOWS —
       // which is why reversing source and sink flips it. No rule based on
-      // the pins' positions alone can do that, those being unchanged by the
-      // swap.
+      // the pins' positions alone can do that, those being unchanged by
+      // the swap.
       const a = DBox.fromLtwh(0, 0, 100, 100);
       const b = DBox.fromLtwh(300, 400, 100, 100);
-      const inA = DPt(25, 0); // left half of A
-      const inB = DPt(375, 400); // right half of B
-      List<DPt> flow(DPt source, DBox sourceBody, DPt sink, DBox sinkBody) =>
-          orthogonalTrace(
-            fromPin: source,
-            fromSide: SymbolSide.top,
-            fromEscape: 10,
-            fromBody: sourceBody,
-            toPin: sink,
-            toSide: SymbolSide.top,
-            toEscape: 10,
-            toBody: sinkBody,
-          );
-      final downstream = flow(inA, a, inB, b);
-      final upstream = flow(inB, b, inA, a);
+      const topOfA = DPt(25, 0); // left half of A, escaping up
+      const underB = DPt(375, 500); // right half of B, escaping down
+      List<DPt> flow(
+        DPt source,
+        SymbolSide sourceSide,
+        DBox sourceBody,
+        DPt sink,
+        SymbolSide sinkSide,
+        DBox sinkBody,
+      ) => orthogonalTrace(
+        fromPin: source,
+        fromSide: sourceSide,
+        fromEscape: 10,
+        fromBody: sourceBody,
+        toPin: sink,
+        toSide: sinkSide,
+        toEscape: 10,
+        toBody: sinkBody,
+      );
+      final downstream = flow(
+        topOfA,
+        SymbolSide.top,
+        a,
+        underB,
+        SymbolSide.bottom,
+        b,
+      );
+      final upstream = flow(
+        underB,
+        SymbolSide.bottom,
+        b,
+        topOfA,
+        SymbolSide.top,
+        a,
+      );
       expect(
         downstream.map((p) => p.x).reduce((x, y) => x > y ? x : y),
         greaterThan(b.right),
