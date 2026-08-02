@@ -2214,8 +2214,33 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     // by a mode: a pin in a set flagged `atomicConnect: true` arms the
     // whole set. Everything else — 223 of the catalog's 257 ports — is
     // pin-to-pin.
+    //
+    // ═════════════════════════════════════════════════════════════════
+    // UNLESS THE PIN IS ALREADY SPOKEN FOR. DR-014.
+    // ═════════════════════════════════════════════════════════════════
+    // A set that is already ONE CABLE cannot be connected as a set again —
+    // every member is full, so `planAtomicConnect` meets `TOP-003` at the
+    // grabbed position for every candidate and `_armSetFrom` finds nothing
+    // to aim at. That is what the field report was: *"the Right analog
+    // audio channels can't have connections made once the left channel is
+    // made."* The document was right and the gesture had no way to say
+    // "this half goes somewhere else now".
+    //
+    // So a FULL member falls through to pin-to-pin, where DR-014's split
+    // lives. Nothing is lost by falling through: the set gesture had no
+    // legal outcome from this pin, and `isPortFull` is exactly the
+    // predicate `planSetSplit`'s first condition uses — asked through core
+    // rather than counted here, because a surface that compared conductor
+    // counts to `maxConnections` itself would report every bus tap in the
+    // catalog as full (`effectiveMaxConnections`).
+    //
+    // AN UNWIRED MEMBER STILL ARMS THE SET, which is DR-011.2 untouched
+    // and is the overwhelmingly normal case. A set is one cable the first
+    // time and splittable afterwards.
     final set = _atomicSetFor(caret);
-    if (set != null) return _armSetFrom(caret, set, announce: announce);
+    if (set != null && !isPortFull(_doc, from)) {
+      return _armSetFrom(caret, set, announce: announce);
+    }
 
     // EVERY OTHER PIN ON THE SHEET, RUN THROUGH THE REAL RULES. Not a
     // compatibility guess: `evaluateConnect` is TOP-001..005 and nothing
@@ -2233,13 +2258,24 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     // declared `family`, so the magnet could not answer it from the scene.
     // Computed once here for the same reason the candidates are: it is
     // O(pins x links) and the document cannot move while the wire is armed.
+    //
+    // AND THE SPLIT IS ASKED PER CANDIDATE, NOT ONCE — DR-014's fourth
+    // condition is "a DIFFERENT device", so whether this pin can be freed
+    // depends on which pin is being aimed at. One answer computed for the
+    // caret and reused would either offer a pin the commit then refuses,
+    // or hide one it would have taken. Same complexity class as the walk
+    // already had (O(pins x links)), and `planSplitsFor` allocates
+    // nothing — which is why the commit builder is not called here.
     final candidates = <PinRef>[];
     final preferred = <PinRef>{};
     for (final pin in locatePins(scene)) {
       if (pin.ref == caret) continue;
       final to = _targetFor(pin.ref);
       if (to == null) continue;
-      if (evaluateConnect(_doc, from, to) is ConnectAllowed) {
+      final freeing = <ConductorRef>{
+        for (final split in planSplitsFor(_doc, from, to)) split.conductor,
+      };
+      if (evaluateConnect(_doc, from, to, freeing: freeing) is ConnectAllowed) {
         candidates.add(pin.ref);
         if (to.acceptsFamily(from.signalFamily)) preferred.add(pin.ref);
       }
@@ -2557,9 +2593,14 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     //
     // Reported, never swallowed: the sentence says which setting, because
     // that is the only thing the user can act on.
-    final ConnectPortsResult result;
+    final SplitConnectResult result;
     try {
-      result = buildConnectPortsCommand(
+      // DR-014: the same builder for both, because from the user's side
+      // there is one gesture. `buildSplitConnectCommands` plans the splits
+      // (usually none) and returns a plain connect when there are none, so
+      // the ordinary cable is unchanged in behaviour, in undo label and in
+      // what it writes.
+      result = buildSplitConnectCommands(
         doc: _doc,
         from: fromTarget,
         to: toTarget,
@@ -2581,20 +2622,46 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     }
 
     switch (result) {
-      case ConnectPortsRefused(:final ruleId, :final message):
+      case SplitConnectRefused(:final ruleId, :final message):
         // DR-011.5: T1 refuses OUTRIGHT — there is no [ Connect anyway ],
         // because docs/02:854 gives T1's escape as "None. There is nothing
         // to escape to", and M2 would otherwise ship a way to persist a
         // topology violation two milestones before M5's validation exists
         // to flag it. The rule id AND a sentence naming real designators,
         // both, because "TOP-003" alone is a log line.
+        //
+        // DR-014 does not soften this. A refusal here has already been
+        // evaluated WITH whatever splits were available, so the pin really
+        // is full and no conductor was lifted — `buildSplitConnectCommands`
+        // returns no commands at all on this arm, splits included.
         _status.show('$ruleId — $message');
-      case ConnectPortsReady(:final command, :final roleMismatch):
+      case SplitConnectReady(
+        :final commands,
+        :final connect,
+        :final splits,
+        :final roleMismatch,
+      ):
+        final command = connect;
         // See [_committingWire]. `try`/`finally` because a command that
         // throws must not leave the latch stuck true.
         _committingWire = true;
         try {
-          widget.controller.run(command);
+          // ONE UNDO ENTRY EITHER WAY, AND TWO DIFFERENT LABELS.
+          // A plain connect keeps `LabelKey.connectPorts` and its single
+          // `run`, so nothing about the ordinary cable moved. A split is a
+          // `transact` under `LabelKey.splitSet` — the Edit menu must not
+          // offer "Undo connect" for a gesture that also took a conductor
+          // out of an existing cable, because a user who reads that and
+          // takes it at its word expects one cable to disappear.
+          if (splits.isEmpty) {
+            widget.controller.run(command);
+          } else {
+            widget.controller.transact(LabelKey.splitSet, (tx) {
+              for (final child in commands) {
+                tx.add(child);
+              }
+            });
+          }
         } finally {
           _committingWire = false;
         }
@@ -2638,10 +2705,39 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
                   'cable carries no role';
         final chained = _chainOnFrom(toTarget, command.signalFamily);
         _status.show(
-          '${command.designator} connected $fromSaid to $toSaid$warning.'
-          '$chained',
+          '${command.designator} connected $fromSaid to $toSaid'
+          '${_splitSaying(splits)}$warning.$chained',
         );
     }
+  }
+
+  /// The clause naming what DR-014 just took apart, or `''` when nothing
+  /// was split — which is every ordinary cable.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// IT NAMES THE BILL OF MATERIALS, BECAUSE DR-012.2 SAYS IT MUST
+  /// ═══════════════════════════════════════════════════════════════════
+  /// One `Link` with N `Conductor`s and N `Link`s are DIFFERENT BILLS OF
+  /// MATERIALS — DR-012.2's whole subject — and a split moves one
+  /// conductor across that line: the installer's pull sheet gains a row
+  /// and an existing row loses a path. A silent choice between the two is
+  /// the harm that ruling exists to prevent, so the count is the point of
+  /// the sentence and "split from W001" alone does not discharge it.
+  ///
+  /// ONE CLAUSE, NOT A SECOND MESSAGE. `_status.show` overwrites, so two
+  /// calls would leave a screen reader having heard only the last — the
+  /// same defect `_chainOnFrom` composes its clause to avoid, and for the
+  /// same reason.
+  String _splitSaying(List<SetSplit> splits) {
+    if (splits.isEmpty) return '';
+    String one(SetSplit split) {
+      final after = split.conductorsAfter;
+      return '${split.linkDesignator}, which now carries $after '
+          '${after == 1 ? 'conductor' : 'conductors'} instead of '
+          '${split.conductorsBefore}';
+    }
+
+    return ', split out of ${splits.map(one).join(' and out of ')}';
   }
 
   /// docs/05:482's CHAIN-DRAW: `Shift` held at commit re-arms the gesture

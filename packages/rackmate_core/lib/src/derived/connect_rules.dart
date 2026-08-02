@@ -355,6 +355,72 @@ final class SetSplit {
   int get conductorsAfter => conductorsBefore - 1;
 }
 
+/// Whether `TOP-003` would refuse another cable on [target]'s pin.
+///
+/// ONE PIN, NOT A PAIR — which is what makes it a different question from
+/// [evaluateConnect], and the question a SURFACE has to ask before it knows
+/// which gesture the user is starting. A schematic deciding between the
+/// set gesture and the pin-to-pin one needs to know whether the grabbed pin
+/// is already spoken for, and it has no second pin yet to ask about.
+///
+/// EXPORTED SO THE ARITHMETIC IS NOT COPIED. A caller that counted
+/// conductors and compared to `maxConnections` itself would miss
+/// [ConnectTarget.effectiveMaxConnections] — where a bus tap's declared
+/// default of `1` becomes unbounded — and would report every Cresnet drop
+/// and 70 V tap in the catalog as full.
+///
+/// `true` for a pin declaring ZERO connections, which is "not a socket"
+/// rather than "full". The distinction matters to the SENTENCE, which is
+/// `_withinMaxConnections`' to write, and not to this predicate: neither
+/// pin can take the cable.
+bool isPortFull(
+  RackDocument doc,
+  ConnectTarget target, {
+  Set<ConductorRef> freeing = const <ConductorRef>{},
+}) {
+  final max = target.effectiveMaxConnections;
+  if (max == null) return false;
+  if (max <= 0) return true;
+  return portConductorCount(doc, target.portId, freeing: freeing) + 1 > max;
+}
+
+/// Every split DR-014 performs for a connect from [from] to [to], in plan
+/// order — the `from` end's first. EMPTY IS THE NORMAL CASE.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// BOTH ENDS, SYMMETRICALLY, BECAUSE THE GESTURE IS SYMMETRIC
+/// ═══════════════════════════════════════════════════════════════════════
+/// Dragging the `R` of one stereo pair onto the `R` of another is one
+/// gesture and two full pins. Planning only the grabbed end would refuse
+/// exactly that — the commonest thing anybody does with two amplifiers —
+/// with a `TOP-003` sentence about the pin they were aiming AT, which
+/// reads as a rule about the target rather than as a limit of the code.
+///
+/// Each end is planned against the OTHER end's device, which is what makes
+/// [planSetSplit]'s fourth condition mean what DR-014 says: *different*
+/// means different from where THIS conductor already goes.
+///
+/// HERE RATHER THAN INSIDE THE BUILDER because a surface needs the same
+/// answer without building anything: the candidate walk that decides which
+/// pins may be aimed at asks it once per pin, and allocating a designator
+/// per candidate to find out would mint hundreds of names it throws away.
+List<SetSplit> planSplitsFor(
+  RackDocument doc,
+  ConnectTarget from,
+  ConnectTarget to,
+) {
+  final fromSplit = planSetSplit(
+    doc,
+    target: from,
+    towardsDeviceId: to.deviceId,
+  );
+  final toSplit = planSetSplit(doc, target: to, towardsDeviceId: from.deviceId);
+  return <SetSplit>[
+    if (fromSplit != null) fromSplit,
+    if (toSplit != null) toSplit,
+  ];
+}
+
 /// The conductor to lift so [target] can take a cable to [towardsDeviceId],
 /// or `null` when this gesture is not a split.
 ///
@@ -413,11 +479,13 @@ SetSplit? planSetSplit(
   required ConnectTarget target,
   required Uuid towardsDeviceId,
 }) {
-  // (1) FULL. Asked through the same getter `TOP-003` asks through, so a
-  // bus tap — unbounded, `null` — is never "full" and never splits.
+  // (1) FULL. Through [isPortFull], so a bus tap — unbounded, `null` — is
+  // never "full" and never splits. The extra `max <= 0` guard is not
+  // redundant with it: a pin declaring zero connections IS full, and
+  // freeing a conductor would not make it a socket.
   final max = target.effectiveMaxConnections;
   if (max == null || max <= 0) return null;
-  if (portConductorCount(doc, target.portId) + 1 <= max) return null;
+  if (!isPortFull(doc, target)) return null;
 
   // (2) EXACTLY ONE.
   ConductorRef? found;

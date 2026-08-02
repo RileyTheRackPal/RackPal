@@ -201,18 +201,8 @@ final class SplitConnectRefused extends SplitConnectResult {
 /// Builds the commands for a pin-to-pin connect from [from] to [to],
 /// splitting either end out of its cable first where DR-014 says so.
 ///
-/// ═══════════════════════════════════════════════════════════════════════
-/// BOTH ENDS, SYMMETRICALLY, BECAUSE THE GESTURE IS SYMMETRIC
-/// ═══════════════════════════════════════════════════════════════════════
-/// Dragging the `R` of one stereo pair onto the `R` of another is one
-/// gesture and two full pins. Planning only the grabbed end would refuse
-/// exactly that — the commonest thing a user does with two amplifiers —
-/// with a `TOP-003` sentence about the pin they were aiming AT, which
-/// reads as a rule about the target rather than a limit of the code.
-///
-/// Each end is planned against the OTHER end's device, which is what makes
-/// `planSetSplit`'s fourth condition mean what DR-014 says: "a different
-/// device" is different from where THIS conductor already goes.
+/// Both ends are planned, symmetrically — see [planSplitsFor], which a
+/// surface calls directly to decide which pins may be aimed at.
 ///
 /// ═══════════════════════════════════════════════════════════════════════
 /// THE RULES ARE RUN ONCE, AGAINST THE DOCUMENT AS THE SPLITS WILL LEAVE IT
@@ -239,16 +229,7 @@ SplitConnectResult buildSplitConnectCommands({
   required String actor,
   ConnectAllocations? reserve,
 }) {
-  final fromSplit = planSetSplit(
-    doc,
-    target: from,
-    towardsDeviceId: to.deviceId,
-  );
-  final toSplit = planSetSplit(doc, target: to, towardsDeviceId: from.deviceId);
-  final splits = <SetSplit>[
-    if (fromSplit != null) fromSplit,
-    if (toSplit != null) toSplit,
-  ];
+  final splits = planSplitsFor(doc, from, to);
 
   final result = buildConnectPortsCommand(
     doc: doc,
