@@ -215,6 +215,7 @@ final class NetLabelStyle {
     this.tipGu = 0.5,
     this.heightFactor = 1.5,
     this.fillAlpha = 31,
+    this.maxCombLanes = 6,
     this.nameSizePt = RackTextSizes.name,
     this.tokenSizePt = RackTextSizes.type,
     this.outlineWidthPt = kMinSignalStrokePt,
@@ -249,6 +250,32 @@ final class NetLabelStyle {
   /// path (§11.2), and this is one.
   final int fillAlpha;
 
+  /// The hard ceiling on comb depth — how many lanes a top/bottom edge may
+  /// spread its flags across, however wide they are.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A CEILING OVER A DERIVED NUMBER, AND IT CAN COST AN OVERLAP
+  /// ═══════════════════════════════════════════════════════════════════
+  /// [_laneCount] derives what it NEEDS — `ceil((widest + gap) / pitch)` —
+  /// and that number is bounded but not small: a long net name against a
+  /// 2 gu pin pitch asks for a dozen lanes or more, which is a staircase
+  /// tall enough that the field reported it twice.
+  ///
+  /// So the derived figure is capped. **Six is a judgement, not a
+  /// measurement**, and unlike everything else in this file it buys its
+  /// tidiness with a real cost: on an edge that needed more, two same-lane
+  /// flags now sit closer than one flag is wide and OVERPRINT. That is
+  /// accepted rather than hidden — the flags are opaque, so the nearer one
+  /// wins cleanly instead of the two blending into an unreadable smear,
+  /// and a reader who needs the covered name can hover or solo the domain
+  /// to draw the wire instead.
+  ///
+  /// The honest alternative, deferred rather than dismissed: shorten the
+  /// pennant on a crowded edge (abbreviate the net name, or drop the
+  /// family token) so the lane count it needs comes down on its own. That
+  /// is a legibility trade of its own and wants its own decision.
+  final int maxCombLanes;
+
   /// The net name's size. `RackTextSizes.name` — the net name is the
   /// primary visual identity of a connection under DR-001 (§11.1.5), so
   /// it takes the secondary-label size rather than the smallest one.
@@ -276,6 +303,7 @@ final class NetLabelStyle {
       other.tipGu == tipGu &&
       other.heightFactor == heightFactor &&
       other.fillAlpha == fillAlpha &&
+      other.maxCombLanes == maxCombLanes &&
       other.nameSizePt == nameSizePt &&
       other.tokenSizePt == tokenSizePt &&
       other.outlineWidthPt == outlineWidthPt;
@@ -289,6 +317,7 @@ final class NetLabelStyle {
     tipGu,
     heightFactor,
     fillAlpha,
+    maxCombLanes,
     nameSizePt,
     tokenSizePt,
     outlineWidthPt,
@@ -565,6 +594,8 @@ NetLabelLayerBuild buildNetLabelLayer({
       final lanes = _laneCount(
         ports: ports,
         widest: widestOnEdge[_edgeKey(symbol.id, side)] ?? 0,
+        gap: sizer.gap,
+        maxLanes: style.maxCombLanes,
       );
       for (var i = 0; i < ports.length; i++) {
         combIndex[_pinKey(symbol.id, ports[i].key)] = i % lanes;
@@ -915,6 +946,8 @@ int netLabelNodeGapGu({
       final lanes = _laneCount(
         ports: ports,
         widest: widest[_edgeKey(symbol.id, side)] ?? 0,
+        gap: sizer.gap,
+        maxLanes: style.maxCombLanes,
       );
       for (var i = 0; i < ports.length; i++) {
         lane[_pinKey(symbol.id, ports[i].key)] = i % lanes;
@@ -982,11 +1015,23 @@ String _edgeKey(String deviceId, SymbolSide side) =>
 /// two pins on the edge, an edge whose stubs measured to nothing, or a
 /// degenerate pitch. One lane is the no-op, and it is the honest answer
 /// rather than a guard that would have to invent a spread.
-int _laneCount({required List<SymbolPort> ports, required double widest}) {
+int _laneCount({
+  required List<SymbolPort> ports,
+  required double widest,
+  required double gap,
+  required int maxLanes,
+}) {
   if (ports.length < 2 || widest <= 0) return 1;
   final pitch = (ports[1].offset - ports[0].offset).abs();
   if (pitch <= 0 || !pitch.isFinite) return 1;
-  return math.max(1, (widest / pitch).ceil());
+  // `widest + gap`, NOT `widest`. Bare `widest` makes same-lane neighbours
+  // EXACTLY TOUCH in the worst case — `lanes * pitch >= widest` is
+  // satisfied by equality — so two full-width flags met edge to edge and
+  // read as one smear. The field called it "overlap a bit", which is
+  // precisely what a zero-clearance fit looks like once antialiasing has
+  // had its say. One gap between flags is the same clearance the emitter
+  // already leaves between two stubs on one pin.
+  return math.min(maxLanes, math.max(1, ((widest + gap) / pitch).ceil()));
 }
 
 /// THE ONE PLACE A STUB'S SIZE IS DECIDED, shared by the emitter and by
@@ -1189,23 +1234,33 @@ final class _Emitter {
     // (`_schematicPalette`), so it inverts correctly in a dark theme
     // without a second entry to keep in parity. The flag reads as a
     // small card, which is what a net-label flag is.
-    // ONE `DiagramPath`, DRAWN TWICE. The backing and the pennant are the
-    // same pentagon by construction, so a mutation that moved one and not
-    // the other is not expressible — and the second `OpPath` replays a
-    // shape that has already been built rather than building another.
-    final path = _pennantPath(anchor, side, width);
-    ops
-      ..add(OpPath(path, fill: Fill(palette.bodyFill)))
-      ..add(
-        OpPath(
-          path,
-          fill: Fill(_withAlpha(stub.style.argb, style.fillAlpha)),
-          stroke: Stroke(
-            argb: stub.style.argb,
-            widthPt: style.outlineWidthPt,
-          ),
+    // ONE OPAQUE FILL, COMPOSITED — not a translucent tint over a backing.
+    //
+    // ═══════════════════════════════════════════════════════════════
+    // THE COLOUR IS THE SAME; THE ALPHA IS NOT
+    // ═══════════════════════════════════════════════════════════════
+    // The previous commit drew an opaque backing and laid the 12% tint on
+    // top, which made the flag opaque in TWO ops. `_over` does the same
+    // composite arithmetically and emits ONE: the hue at
+    // `style.fillAlpha` over `palette.bodyFill`, resolved to a single
+    // fully-opaque colour.
+    //
+    // Same pixels over bare sheet, same pixels over a wire, and the op
+    // count returns to four per flag — so the 25% rise in the label term
+    // the backing cost is given back. docs/05 §11.5's "domain colour at
+    // 12%" is still exactly what the flag looks like; what changed is
+    // that it no longer depends on what happens to be underneath it,
+    // which is the whole of the field's complaint.
+    ops.add(
+      OpPath(
+        _pennantPath(anchor, side, width),
+        fill: Fill(_over(stub.style.argb, style.fillAlpha, palette.bodyFill)),
+        stroke: Stroke(
+          argb: stub.style.argb,
+          widthPt: style.outlineWidthPt,
         ),
-      );
+      ),
+    );
 
     // ── channel 4, then the identity ─────────────────────────────────
     //
@@ -1349,7 +1404,39 @@ DPt _outward(SymbolSide side) => switch (side) {
 DPt _along(DPt from, DPt unit, double distance) =>
     DPt(from.x + unit.x * distance, from.y + unit.y * distance);
 
-/// [argb] with its alpha replaced. docs/05 §11.5's 12% pennant fill is
-/// BAKED INTO THE COLOUR — never an opacity layer (§11.2's `saveLayer`
-/// ban), and `Fill` carries no separate alpha to set instead.
-int _withAlpha(int argb, int alpha) => (alpha << 24) | (argb & 0x00FFFFFF);
+/// [src] at [alpha]/255 composited over an opaque [dst], as one OPAQUE
+/// colour.
+///
+/// REPLACES `_withAlpha`, which set the pennant's alpha and let the painter
+/// composite. docs/05 §11.5's 12% is still BAKED INTO THE COLOUR — never an
+/// opacity layer, per §11.2's `saveLayer` ban — but it is baked all the way
+/// now, against a known surface instead of against whatever the painter
+/// finds underneath.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// SOURCE-OVER, RESOLVED AT BUILD TIME RATHER THAN AT PAINT TIME
+/// ═══════════════════════════════════════════════════════════════════════
+/// The pennant is specified as "the domain colour at 12%" (docs/05 §11.5),
+/// and for the whole of M2 that was emitted literally — a translucent fill,
+/// which composites against WHATEVER IS BEHIND IT. On bare sheet that is
+/// the sheet, which is what §11.5 means. Once M2-E put drawn wires under
+/// the flags it was also the wire, and 12% of a hue over a wire is a wire
+/// you can still read straight through the label.
+///
+/// Doing the blend here makes the result independent of what is behind.
+/// The arithmetic is ordinary source-over per channel; [dst] is assumed
+/// opaque, which every `SchematicPalette` surface is, so the result is too.
+///
+/// NOT A COLOUR POLICY. This composites two colours the caller already
+/// chose; it picks neither. `signal_style.dart` remains the one place a hue
+/// is resolved.
+int _over(int src, int alpha, int dst) {
+  final a = alpha / 255.0;
+  int mix(int shift) {
+    final s = (src >> shift) & 0xFF;
+    final d = (dst >> shift) & 0xFF;
+    return (s * a + d * (1 - a)).round().clamp(0, 255);
+  }
+
+  return 0xFF000000 | (mix(16) << 16) | (mix(8) << 8) | mix(0);
+}
