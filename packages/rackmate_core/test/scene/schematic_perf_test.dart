@@ -425,9 +425,19 @@ void _measure(RackDocument doc, String label) {
         'nice-to-have.',
   );
   // The op delta is the machine-independent half of the record, so it is
-  // asserted rather than only printed: four ops per flag — leader,
-  // pennant, family token, net name — and two flags per link.
-  expect(labelOps, 4 * labels);
+  // asserted rather than only printed: FIVE ops per flag — leader, opaque
+  // backing, pennant, family token, net name — and two flags per link.
+  //
+  // FOUR BECAME FIVE when the backing landed, and the cost is stated here
+  // rather than absorbed: +600 ops on this fixture, a 25% rise in the
+  // label term. THE TIME BUDGET ABOVE IS UNCHANGED AND STILL PASSES,
+  // which is the number that decides whether the rise is affordable — an
+  // extra `OpPath` replaying an already-built `DiagramPath` costs a fill
+  // and no measurement, and the label term is text-bound (§11.1.5). If
+  // this ever has to come back down, the honest lever is drawing the
+  // backing ONLY where a wire is in scope, not making the flag
+  // transparent again.
+  expect(labelOps, 5 * labels);
   expect(ops, _kM2cOps + labelOps);
 }
 

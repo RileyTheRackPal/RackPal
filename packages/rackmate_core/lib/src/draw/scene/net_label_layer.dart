@@ -1153,16 +1153,59 @@ final class _Emitter {
     );
 
     final box = _pennantBox(anchor, side, width);
-    ops.add(
-      OpPath(
-        _pennantPath(anchor, side, width),
-        fill: Fill(_withAlpha(stub.style.argb, style.fillAlpha)),
-        stroke: Stroke(
-          argb: stub.style.argb,
-          widthPt: style.outlineWidthPt,
+
+    // ── the backing, under the tint ──────────────────────────────────
+    //
+    // ═══════════════════════════════════════════════════════════════
+    // THIS DOES NOT CHANGE THE 12% FIGURE, AND THAT IS THE POINT
+    // ═══════════════════════════════════════════════════════════════
+    // docs/05 §11.5 states the pennant exactly: *"Fill is the domain
+    // colour at 12% with a full-strength outline."* [NetLabelStyle
+    // .fillAlpha] is that 12%, and it is a CITATION rather than a knob —
+    // so the field's report that flags are hard to read over a wire
+    // could not be answered by raising it without contradicting the
+    // corpus, and raising it would have been wrong anyway: the family
+    // token inside the pennant is inked in the SAME domain hue, so a
+    // strongly-tinted fill takes the token down with it.
+    //
+    // What §11.5 specifies is the FILL. It says nothing about the
+    // pennant being TRANSPARENT TO WHAT IS BEHIND IT, and until DR-001
+    // there was nothing behind it — a pennant sat on bare paper, where
+    // 12% over paper is all 12% can mean. DR-001 made labels the default
+    // render and M2-E put drawn wires on the same sheet, so a flag now
+    // has a staircase running under it and 12% of a hue over a wire is a
+    // wire you can still see.
+    //
+    // So the tint stays at 12% and an OPAQUE BACKING goes under it.
+    // Over bare sheet the composite is 12% domain over an opaque surface
+    // — which is what §11.5 describes and what the sheet has always
+    // looked like. Over a wire, the wire is masked. The specified
+    // appearance is preserved exactly where it was ever specified, and
+    // the case it did not anticipate is the only one that changes.
+    //
+    // `bodyFill` RATHER THAN A NEW PALETTE ENTRY: it is already "the
+    // opaque surface a mark sits on", it is derived from the theme's
+    // `ColorScheme.surface` at the one place the two colour regimes meet
+    // (`_schematicPalette`), so it inverts correctly in a dark theme
+    // without a second entry to keep in parity. The flag reads as a
+    // small card, which is what a net-label flag is.
+    // ONE `DiagramPath`, DRAWN TWICE. The backing and the pennant are the
+    // same pentagon by construction, so a mutation that moved one and not
+    // the other is not expressible — and the second `OpPath` replays a
+    // shape that has already been built rather than building another.
+    final path = _pennantPath(anchor, side, width);
+    ops
+      ..add(OpPath(path, fill: Fill(palette.bodyFill)))
+      ..add(
+        OpPath(
+          path,
+          fill: Fill(_withAlpha(stub.style.argb, style.fillAlpha)),
+          stroke: Stroke(
+            argb: stub.style.argb,
+            widthPt: style.outlineWidthPt,
+          ),
         ),
-      ),
-    );
+      );
 
     // ── channel 4, then the identity ─────────────────────────────────
     //

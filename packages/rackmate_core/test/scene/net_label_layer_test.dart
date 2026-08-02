@@ -506,17 +506,54 @@ void main() {
       final style = _styleOf(doc, 'video.hdmi.2_0');
       final range =
           built.domainFragments[const SignalDomainId('video.digital')]!;
-      final pennants = built.scene.ops
+      final paths = built.scene.ops
           .sublist(range.start, range.end)
           .whereType<OpPath>()
           .toList();
+
+      // ── TWO PATHS PER FLAG SINCE THE BACKING LANDED ────────────────
+      // An opaque backing is drawn first and the tinted, outlined pennant
+      // over it — see the emitter's own note on why that preserves §11.5
+      // rather than departing from it. The STROKED one is the pennant;
+      // the backing carries no outline, which is what tells them apart
+      // without counting on their order.
+      final pennants = paths.where((p) => p.stroke != null).toList();
+      final backings = paths.where((p) => p.stroke == null).toList();
       expect(pennants, hasLength(2));
+      expect(backings, hasLength(2));
+
       for (final pennant in pennants) {
         expect(pennant.stroke!.argb, style.argb);
         // 12% of 255 = 30.6 ⇒ 31, baked into the colour and never an
-        // opacity layer.
+        // opacity layer. STILL 31: the backing made the flag opaque
+        // WITHOUT touching the figure docs/05 §11.5 states.
         expect(pennant.fill!.argb >> 24, 31);
         expect(pennant.fill!.argb & 0x00FFFFFF, style.argb & 0x00FFFFFF);
+      }
+      for (final backing in backings) {
+        // FULLY OPAQUE, or it masks nothing and the whole point is lost.
+        expect(backing.fill!.argb >> 24, 0xFF);
+        expect(backing.fill!.argb, const SchematicPalette().bodyFill);
+      }
+    });
+
+    test('the backing is drawn UNDER its own pennant, never over it', () {
+      // Order is the entire mechanism — there is no z-index in the IR. A
+      // backing emitted second would paint an opaque shape over the tint,
+      // the outline and, one op later, nothing else: the flag would go
+      // blank rather than opaque.
+      final doc = _document();
+      final built = _build(doc);
+      final range =
+          built.domainFragments[const SignalDomainId('video.digital')]!;
+      final ops = built.scene.ops.sublist(range.start, range.end);
+      for (var i = 0; i < ops.length; i++) {
+        final op = ops[i];
+        if (op is! OpPath || op.stroke != null) continue;
+        // The backing. The very next path must be its stroked pennant.
+        final next = ops.skip(i + 1).whereType<OpPath>().first;
+        expect(next.stroke, isNotNull, reason: 'backing at $i is not under a '
+            'pennant');
       }
     });
 
@@ -737,21 +774,34 @@ void main() {
       }
     });
 
-    test('a stub is FOUR ops in one order — leader, pennant, family token, '
-        'net name', () {
+    test('a stub is FIVE ops in one order — leader, backing, pennant, '
+        'family token, net name', () {
       // The op layout is not an implementation detail: the per-domain
       // fragment is an `IntRange`, so anything that reads a sub-picture
       // reads this ordering. It is also what makes the perf test able to
-      // assert `labelOps == 4 * labels` rather than only print it.
+      // assert a count rather than only print it.
+      //
+      // FOUR BECAME FIVE when the opaque backing landed, and the number is
+      // stated in the title so the cost is visible where the layout is:
+      // one extra `OpPath` per flag, which on the 300-link fixture is 600
+      // more ops in the commit path. `schematic_perf_test` carries the
+      // budget that says whether that is affordable; this says what it is.
       final built = _build(_document());
       final base = _symbolOps(built);
       for (var i = 0; i < built.netLabels.length; i++) {
-        expect(built.scene.ops[base + 4 * i], isA<OpLine>());
-        expect(built.scene.ops[base + 4 * i + 1], isA<OpPath>());
-        expect(built.scene.ops[base + 4 * i + 2], isA<OpText>());
-        expect(built.scene.ops[base + 4 * i + 3], isA<OpText>());
+        expect(built.scene.ops[base + 5 * i], isA<OpLine>());
+        // The backing, then the pennant — two paths, and the ORDER is the
+        // whole mechanism, since the IR has no z-index.
+        final backing = built.scene.ops[base + 5 * i + 1];
+        final pennant = built.scene.ops[base + 5 * i + 2];
+        expect(backing, isA<OpPath>());
+        expect((backing as OpPath).stroke, isNull);
+        expect(pennant, isA<OpPath>());
+        expect((pennant as OpPath).stroke, isNotNull);
+        expect(built.scene.ops[base + 5 * i + 3], isA<OpText>());
+        expect(built.scene.ops[base + 5 * i + 4], isA<OpText>());
       }
-      expect(built.scene.ops.length, base + 4 * built.netLabels.length);
+      expect(built.scene.ops.length, base + 5 * built.netLabels.length);
     });
 
     test('the pennant’s apex points AWAY from its pin, and its attach '
@@ -771,7 +821,10 @@ void main() {
       final base = _symbolOps(built);
       for (var i = 0; i < built.netLabels.length; i++) {
         final label = built.netLabels[i];
-        final path = built.scene.ops[base + 4 * i + 1] as OpPath;
+        // +2, THE PENNANT — +1 is now its opaque backing. Both carry the
+        // same path, so this assertion would pass on either; it reads the
+        // pennant because that is the shape §11.5 is about.
+        final path = built.scene.ops[base + 5 * i + 2] as OpPath;
         final xs = <double>[];
         final ys = <double>[];
         for (final c in path.p.commands) {
