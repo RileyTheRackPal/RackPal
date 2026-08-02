@@ -784,6 +784,49 @@ the sizer and the emitter, so no font can put them out of step. Cost, stated: fi
 where a family resolves, up from four, and unlike `ff712d2`'s accidental fifth this one is
 structural and does not come back.
 
+**The `drawn`-mode router took six field reports in a row, and what they were all reports of is one
+decision.** `38baed1` … `5d53512`, against #96. A staircase is out of one pin, along a corridor,
+into the other; **where that corridor sits on its own axis is the only free variable in the router**,
+and five of the six reports were that variable being set wrong. docs/05 §10 phase 4 now carries
+the corrected rule; what belongs here is the evidence, and three things in it generalise.
+
+**First, the spec's own mechanism was channel allocation wearing a different name, and nobody
+noticed for as long as nobody built it.** Phase 4 read *"offset within the gutter by the link's rank
+in a total order terminating in UUID"* in the same paragraph as *"no channel allocation"*. A rank in
+a total order over links **is** a comparison between links. The built answer — the i-th pin on an
+edge escapes i steps further out — is a pure function of one pin's own index, which is what makes
+canon §11.1.3's *"same input ⇒ byte-identical display list"* structural rather than maintained. A
+contradiction inside one paragraph survived every review this corpus has had; it did not survive
+someone trying to write the code.
+
+**Second, two of the six fixes were in the wrong place, and both were *plausible* in the wrong
+place.** `ebee4c2` added a detour candidate that pushed the corridor out past both bodies — correct
+behaviour, correct measurements, closed the report. It was later provably dead: the staircase's own
+corridor is never further out than that candidate, so it could never clear a pin column the
+staircase failed to clear. It had been compensating one layer late for a corridor placed wrong
+upstream, and it fired in exactly the cases where its answer and the staircase's coincided. **A fix
+that closes the report is not evidence the fix is at the cause** — `diagnose-before-fixing` again,
+in the form where the measurements agree with you.
+
+**Third, and the one worth carrying: a test that counts the mechanism will certify the defect it
+was written to forbid.** `wire_trace_layering_test.dart` group 1 asserted *distinct corridors per
+pin*, which is the mechanism. What the reader sees is *no two cables drawn along one line*, which is
+the artifact. `b48e96c` let the two halves of an edge reuse one set of comb heights, on the argument
+that the detour sends them round opposite sides of the body — true of the detour, which is the last
+resort, and false of the ordinary staircase, which is what nearly every cable takes. The test
+counted corridors **per half**, passed, and the sheet drew 24 collinear pairs: **10885 units, a
+fifth of all the ink on a 48-cable edge, painted twice.** The test was not weak, it was *precise
+about the wrong quantity*. It now measures collinear overlap between the drawn segments themselves
+and reports zero. The same trap caught the replacement mid-flight — a first version of the
+crossed-patch test keyed on each route's topmost point, and the mutation it existed to kill survived
+it, because a wrongly-placed corridor still *reaches* its far escape and only doubles back
+afterwards. Counting the horizontal runs kills it with `one corridor carries 48 of the 48 cables`.
+
+**What is not claimed.** Two cables per corridor on a reverse-patched panel is the floor, not a
+defect left in: cable n and cable 47−n are mirror images in every quantity a per-link router is
+allowed to consult, so nothing this file may look at can separate them. That is channel allocation,
+§11.1.3 item 2, v1.2. Two links leaving *different* symbols can still share a corridor, unchanged.
+
 **DR-014 is built (#110, `acdae02` + `0e5c568`).** A wire drawn from an already-wired set member to
 a **different device** now splits the set automatically — no modifier, no mode letter, no dialog,
 because #110's own costing found no free single modifier to bind one to (`Ctrl` is the magnet
@@ -905,6 +948,30 @@ evidence supports.
 `DeviceOverrides`**, which M1 left unbuilt (nothing writes one), and **typed `PortOverrides`**, which
 need the device-property editing `inspector_panel.dart:21` explicitly defers. Both are M1 debt that
 M4 pays.
+
+**M4 is also the trigger for end-user documentation (#169), and the reason is a property of the
+milestone list rather than a preference.** The four surfaces a user spends time in arrive one per
+milestone — the elevation (M1), the schematic (M2), Structure and the field (M3), the device builder
+(M4). **Every milestone after M4 adds behaviour to a surface that already exists**: findings (M5),
+sheets (M6), platform and access (M7), release engineering (M8), hardening (M9). So M4 is the first
+point at which documenting the interface is not documenting a moving target, and it is still four
+milestones ahead of anyone outside the team needing it. Writing earlier pays for the same page twice
+— screenshots and step lists are the most perishable artifact in a doc set. Writing later means
+writing during M9, which is the milestone that puts the product in front of people who are not the
+team, and documentation discovered as a release blocker gets written by whoever is least busy rather
+than by whoever knows the answer.
+
+**#169 is not parented to this epic, and that is the same call §5.5 makes for M6.** Roadmap §8.1
+makes the exit criterion the unit of truth; hanging documentation off M4 would put work M4's
+criterion does not name into M4's rollup and make the milestone read incomplete for a reason that is
+not its own. The post-M2 bug hunt (#96) is unparented for the identical reason. **Its first task is
+scoping, not writing** — the one thing already known is that the *vocabulary* is the comprehension
+barrier rather than the gestures: domain, family, net, link, service, conductor, endpoint and
+template all leak from the model into the UI, several of them narrower here than in trade usage, and
+a user who has not been given them cannot read the filter bar. **And the corpus is the source of
+truth for that document, never the source of text** — docs/00–14 argue, cite rulings and record what
+was rejected, which is the builder's genre; lifting prose from it is how a project ships a
+specification with screenshots pasted in.
 
 ### 5.4 M5 — Validation · `M` · NOT STARTED — weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 

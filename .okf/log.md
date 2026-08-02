@@ -2,6 +2,51 @@
 
 ## 2026-08-03
 
+* **Update**: the `drawn`-mode router is caught up with six field reports
+  (`38baed1` … `5d53512`, board #96). docs/05 §10 phase 4 carries the
+  corrected rule; docs/12 §5.1 carries the evidence.
+* **Note**: **five of the six reports were one decision set wrong.** A
+  staircase is out of one pin, along a corridor, into the other, and where
+  that corridor sits is the router's only free variable. A corridor is
+  reachable only if each end gets to it travelling the way it left its pin —
+  which the midpoint satisfies for a pair facing EACH OTHER and fails for a
+  pair facing the SAME way. Two top pins are both trying to get past it.
+* **Note**: the midpoint's worse property is that it tracks **neither comb —
+  it tracks their SUM**. Any two links whose escape distances add up alike
+  share a corridor however far apart their pins sit, so a patch panel wired
+  in reverse drew all 48 cables on one line. A rule can be per-link, pure and
+  deterministic and still be globally degenerate.
+* **Note**: **docs/05 phase 4 specified channel allocation inside the
+  paragraph that forbids it.** *"Offset within the gutter by the link's rank
+  in a total order terminating in UUID"* is a comparison between links, which
+  §11.1.3 defers to v1.2, and the same sentence said *"no channel
+  allocation"*. The contradiction survived every review this corpus has had
+  and did not survive someone trying to write the code.
+* **Note**: two of the six fixes were at the wrong layer and **the
+  measurements agreed with them**. `ebee4c2` added a detour candidate that
+  pushed the corridor past both bodies — right behaviour, right numbers,
+  closed the report — and was later provably dead, because the staircase's
+  own corridor is never further out and so it could never clear a column the
+  staircase failed to clear. It fired only where its answer coincided with
+  the one it was correcting. [Diagnose before
+  fixing](/practices/diagnose-before-fixing.md) in its hardest form.
+* **Creation**: [Assert the artifact, not the
+  mechanism](/practices/assert-the-artifact-not-the-mechanism.md). The
+  layering test asserted *distinct corridors per pin* — the mechanism —
+  counted them **per half**, passed, and the sheet painted 10885 units, a
+  fifth of a 48-cable edge's ink, twice. The test was not weak; it was
+  precise about the wrong quantity, which reads as rigour. It now measures
+  collinear overlap between the drawn segments and reports zero.
+* **Note**: the same trap caught the replacement mid-flight. A first
+  crossed-patch test keyed on each route's topmost point and the mutation it
+  existed to kill survived it — a wrongly-placed corridor still REACHES its
+  far escape and only doubles back afterwards. Counting the horizontal runs
+  kills it with `one corridor carries 48 of the 48 cables`.
+* **Note**: what is NOT claimed, recorded so nobody reads the zero as
+  universal. Two cables per corridor on a reverse-patched panel is the floor:
+  cable n and cable 47−n are mirror images in every quantity a per-link
+  router may consult. Separating them is §11.1.3 item 2, v1.2.
+
 * **Update**: **#124 is BUILT** (`b128a42`). The family glyph is drawn as
   GEOMETRY, so the pennant's channel 4 no longer asks a font how wide a
   character is. Closes the field report of pennants reading `NET-NEN006` —
