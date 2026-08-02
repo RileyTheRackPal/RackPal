@@ -700,8 +700,17 @@ LayerBuild buildSymbolLayer(
     // may legitimately print finer than the 0.5 pt signal floor.
     ..add(
       OpLine(
-        DPt(0, symbol.headerHeight),
-        DPt(width, symbol.headerHeight),
+        // `header.bottom`, NOT `symbol.headerHeight`. Those were the same
+        // number until the header band moved down below the top label band,
+        // and then this line stayed where it was — a stray rule floating in
+        // the label strip with the band detached below it. The field saw it
+        // as "a grey line to remove"; it is §3's rule, drawn in the wrong
+        // place.
+        //
+        // Read off the BOX rather than recomputed from its parts, so the
+        // rule cannot come adrift from the band a second time.
+        DPt(0, header.bottom),
+        DPt(width, header.bottom),
         Stroke(
           argb: palette.headerRule,
           widthPt: 1,

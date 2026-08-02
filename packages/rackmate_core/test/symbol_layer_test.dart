@@ -575,6 +575,56 @@ void main() {
       expect(rule.b, const DPt(140, 24));
     });
 
+    test('the hairline rule stays UNDER the header band when a label band '
+        'pushes the band down', () {
+      // ── THE ONE THE WHOLE SUITE MISSED ──────────────────────────────
+      // The rule was emitted at `symbol.headerHeight`, and the band was
+      // emitted at y = 0 — the same number, so the two agreed by accident
+      // rather than by construction. Moving the band to `labelBandTop` left
+      // the rule where it was: a stray grey line floating in the label
+      // strip with the band detached below it, which is what the field
+      // reported.
+      //
+      // 1483 tests stayed green through that, because the test above builds
+      // a symbol with NO PORTS — `labelBandTop` is zero there, and zero is
+      // exactly the value that makes the two spellings agree. A default
+      // that hides the difference is a fixture that cannot see the defect.
+      const band = 40.0;
+      final s = buildSymbolGeometry(
+        id: 'sw',
+        designator: 'SW-1',
+        ports: const <PortDef>[],
+        headerHeight: 24,
+        portSize: 5,
+        portPitch: 16,
+        minBodyWidth: 140,
+        minBodyHeight: 90,
+        labelBandTop: band,
+      );
+      final built = buildSymbolLayer(
+        s,
+        palette: const SchematicPalette(),
+        measurer: const _FakeMeasurer(),
+      );
+      final header = built.ops.whereType<OpRect>().toList()[1].r;
+      expect(header.top, band, reason: 'the band sits below the label strip');
+
+      final rule = built.ops.whereType<OpLine>().single;
+      expect(
+        rule.a.y,
+        header.bottom,
+        reason: 'the rule is UNDER the header band (docs/05 SS3), not '
+            'wherever `headerHeight` alone happens to land',
+      );
+      expect(rule.b.y, header.bottom);
+      expect(
+        rule.a.y,
+        isNot(s.headerHeight),
+        reason: 'and the two spellings are genuinely different here, which '
+            'is what makes this fixture able to tell them apart',
+      );
+    });
+
     test('the header band uses headerFill, not the body fill', () {
       // The pre-relocation painter declared `headerFill` and then filled the
       // header with `deviceFill`, making the band invisible.
