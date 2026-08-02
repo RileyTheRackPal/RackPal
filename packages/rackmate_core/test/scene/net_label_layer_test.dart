@@ -543,6 +543,84 @@ void main() {
       }
     });
 
+    test('the inset GROWS WITH THE TYPE, so bigger text is not tighter '
+        'against its own outline', () {
+      // ═══════════════════════════════════════════════════════════════
+      // THE PROPERTY, NOT THE NUMBER
+      // ═══════════════════════════════════════════════════════════════
+      // A constant inset is the defect: the pennant's CONTENT is measured
+      // text, so it scales with the type, while a fixed padGu does not —
+      // the glyphs creep toward the outline until the mark reads as one
+      // smear. Asserting a width in units would freeze today's type size
+      // into the test and say nothing about that. Asserting the RELATION
+      // is what has to hold.
+      //
+      // The measured content is held EQUAL across the two builds (same
+      // token, same net name, same measurer), so the whole of any width
+      // difference is inset.
+      final doc = _document();
+      final small = buildNetLabelLayer(
+        doc: doc,
+        symbols: _build(doc).symbols,
+        measurer: _Measurer(),
+        palette: const SchematicPalette(),
+        unitsPerGrid: kSchematicUnitsPerGrid,
+        style: const NetLabelStyle(nameSizePt: 8),
+      );
+      final large = buildNetLabelLayer(
+        doc: doc,
+        symbols: _build(doc).symbols,
+        measurer: _Measurer(),
+        palette: const SchematicPalette(),
+        unitsPerGrid: kSchematicUnitsPerGrid,
+        style: const NetLabelStyle(nameSizePt: 24),
+      );
+
+      expect(small.labels, hasLength(large.labels.length));
+      var grew = 0;
+      for (var i = 0; i < small.labels.length; i++) {
+        final a = small.labels[i].pennant;
+        final b = large.labels[i].pennant;
+        final along = small.labels[i].side == SymbolSide.left ||
+                small.labels[i].side == SymbolSide.right
+            ? (a.width, b.width)
+            : (a.width, b.width);
+        if (along.$2 > along.$1) grew++;
+      }
+      expect(
+        grew,
+        small.labels.length,
+        reason: 'every flag must widen when its type does; a constant inset '
+            'widens none of them beyond the text itself',
+      );
+    });
+
+    test('and the grid figure survives as a FLOOR, not as the answer', () {
+      // padGu stops a very small type collapsing the inset to nothing. The
+      // two are a max, so a tiny `nameSizePt` must still leave the grid
+      // inset intact rather than scaling below it.
+      final doc = _document();
+      NetLabelLayerBuild at(double pt, double padGu) => buildNetLabelLayer(
+        doc: doc,
+        symbols: _build(doc).symbols,
+        measurer: _Measurer(),
+        palette: const SchematicPalette(),
+        unitsPerGrid: kSchematicUnitsPerGrid,
+        style: NetLabelStyle(nameSizePt: pt, padGu: padGu),
+      );
+      // At 1 pt the em inset is a fraction of a unit, so the floor decides —
+      // and a wider floor must therefore produce a wider flag.
+      final tight = at(1, 0.5);
+      final roomy = at(1, 4);
+      for (var i = 0; i < tight.labels.length; i++) {
+        expect(
+          roomy.labels[i].pennant.width,
+          greaterThan(tight.labels[i].pennant.width),
+          reason: 'padGu stopped acting as a floor',
+        );
+      }
+    });
+
     test('the NET NAME is drawn in ink, not in the domain hue', () {
       // The one run the reader is actually reading stays at maximum
       // contrast; hue is already on the other four marks. See

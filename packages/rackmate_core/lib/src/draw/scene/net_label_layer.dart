@@ -216,6 +216,7 @@ final class NetLabelStyle {
     this.heightFactor = 1.5,
     this.fillAlpha = 31,
     this.maxCombLanes = 6,
+    this.padEm = 0.55,
     this.nameSizePt = RackTextSizes.name,
     this.tokenSizePt = RackTextSizes.type,
     this.outlineWidthPt = kMinSignalStrokePt,
@@ -228,8 +229,37 @@ final class NetLabelStyle {
   /// Length of the leader between a pin's edge and its pennant.
   final double leaderGu;
 
-  /// Inset of the pennant's text from its own outline.
+  /// Inset of the pennant's text from its own outline, as a FLOOR in grid
+  /// units. See [padEm], which is usually the one that wins.
   final double padGu;
+
+  /// The same inset expressed as a multiple of the NET NAME'S OWN SIZE, and
+  /// the larger of the two figures is what the pennant uses.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// PADDING THAT DOES NOT KNOW THE TYPE SIZE IS PADDING THAT RUNS OUT
+  /// ═══════════════════════════════════════════════════════════════════
+  /// [padGu] is 0.5 gu — a fixed distance on the sheet, chosen against the
+  /// type size the pennant happened to carry when it was written. The
+  /// pennant's CONTENT scales with the text (it is a measured token plus a
+  /// measured name), so as soon as the type moves, a constant inset stops
+  /// being an inset and starts being a rounding error: the glyphs reach
+  /// closer and closer to the outline until the two read as one mark and
+  /// the names of two neighbouring flags appear to run together. That is
+  /// what the field reported.
+  ///
+  /// Expressing it in EM makes the inset a property of the text rather
+  /// than of the sheet, which is the ordinary typographic rule and the one
+  /// a reader's eye is calibrated for. [padGu] survives as a FLOOR so a
+  /// very small type size cannot collapse the inset to nothing — the two
+  /// are a max, not an override.
+  ///
+  /// AGAINST THE NAME, NOT THE TOKEN. They are different sizes
+  /// ([nameSizePt] vs [tokenSizePt]) and the name is both the larger and
+  /// the run the reader is actually reading (`SchematicPalette
+  /// .netLabelText`). Sizing the inset off the smaller one would leave the
+  /// bigger run tighter than the smaller, which is the wrong way round.
+  final double padEm;
 
   /// Gap between the family token and the net name inside a pennant, and
   /// between one pennant and the next when a pin carries several.
@@ -304,6 +334,7 @@ final class NetLabelStyle {
       other.heightFactor == heightFactor &&
       other.fillAlpha == fillAlpha &&
       other.maxCombLanes == maxCombLanes &&
+      other.padEm == padEm &&
       other.nameSizePt == nameSizePt &&
       other.tokenSizePt == tokenSizePt &&
       other.outlineWidthPt == outlineWidthPt;
@@ -318,6 +349,7 @@ final class NetLabelStyle {
     heightFactor,
     fillAlpha,
     maxCombLanes,
+    padEm,
     nameSizePt,
     tokenSizePt,
     outlineWidthPt,
@@ -1058,7 +1090,14 @@ final class _Sizer {
     required this.style,
     required double unitsPerGrid,
   }) : leader = style.leaderGu * unitsPerGrid,
-       pad = style.padGu * unitsPerGrid,
+       // A MAX, NOT AN OVERRIDE — see [NetLabelStyle.padEm]. The grid
+       // figure is the floor that stops a small type size collapsing the
+       // inset; the em figure is what makes the inset grow with the text
+       // it is insetting, which a constant cannot do.
+       pad = math.max(
+         style.padGu * unitsPerGrid,
+         style.nameSizePt * style.padEm,
+       ),
        gap = style.gapGu * unitsPerGrid,
        tip = style.tipGu * unitsPerGrid,
        height = style.nameSizePt * style.heightFactor;
