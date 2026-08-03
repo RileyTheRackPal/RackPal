@@ -13,14 +13,22 @@
 // the app's own data root under a uuid name, and nothing else.
 //
 // ==================================================================
-// TWO TRIGGERS, ONE DEBOUNCE
+// TWO TRIGGERS, AND A SUPPRESSION THAT IS NOT A TIMER
 // ==================================================================
 // §9.4: every 30 s AND on window blur. The two coincide constantly — a
 // user who alt-tabs at second 29 would otherwise write ~600 KB twice in
-// under a second — so a snapshot is skipped when one was already written
-// at THIS `stateId` less than 2 s ago. Keying on the state id as well as
-// the clock matters: the second of two blurs a minute apart with no edit
-// in between has nothing new to write either.
+// under a second — so a snapshot is skipped when one was ALREADY WRITTEN
+// AT THIS `stateId`, however long ago.
+//
+// IT USED TO EXPIRE AFTER 2 SECONDS, AND THAT WAS A DEFECT. The dirty
+// check cannot help here: a recovery snapshot is not a save, so a
+// document left dirty stays dirty against disk forever. A user who
+// edited and then walked away therefore had the SAME ~600 KB snapshot
+// rewritten on every 30 s tick, indefinitely, for as long as the app was
+// open. §10.12(b) rules autosave to run when the user is working and not
+// when they are idle; keying on the state id alone is what makes that
+// true, and it still covers the blur-plus-tick case the 2 s window was
+// written for.
 //
 // ==================================================================
 // SERIALIZATION IS OFF-THREAD (CR-099), AND SINGLE-FLIGHT
@@ -56,12 +64,10 @@ import 'package:rackmate_core/rackmate_core.dart';
 /// §9.4: "Every 30 s".
 const Duration kAutosaveInterval = Duration(seconds: 30);
 
-/// How recently a snapshot at the same `stateId` suppresses another.
-///
-/// Chosen here rather than specified: blur and the timer coincide
-/// constantly, and alt-tabbing must not thrash a ~600 KB write. Stated so
-/// it can be argued with.
-const Duration kAutosaveDebounce = Duration(seconds: 2);
+// `kAutosaveDebounce` (2 s) USED TO LIVE HERE AND IS DELETED. Suppression
+// now keys on the state id alone, which is time-independent and strictly
+// stronger — see `_snapshot`. A duration that no longer gates anything is
+// the stored-and-ignored config this codebase keeps finding and removing.
 
 /// Why a snapshot did not happen. Returned rather than logged-and-
 /// forgotten so the tests can assert the skip REASON, not merely that a
@@ -75,7 +81,9 @@ enum AutosaveOutcome {
   /// The document matches what is on disk. Nothing to protect.
   notDirty,
 
-  /// A snapshot at this same `stateId` was written moments ago.
+  /// Nothing has changed since the last snapshot: it was taken at this
+  /// exact `stateId`, so another would be byte-identical. Time-independent
+  /// — an idle document never re-writes the same bytes.
   debounced,
 
   /// An explicit save is in flight. It will make the snapshot redundant.
@@ -98,7 +106,6 @@ final class AutosaveScheduler {
     this.clock = const SystemClock(),
     this.periodicTimerFactory = productionPeriodicTimerFactory,
     this.interval = kAutosaveInterval,
-    this.debounce = kAutosaveDebounce,
     this.isQueueBusy,
     this.onOutcome,
   });
@@ -117,7 +124,6 @@ final class AutosaveScheduler {
 
   final PeriodicTimerFactory periodicTimerFactory;
   final Duration interval;
-  final Duration debounce;
 
   /// Whether an explicit save is in flight. Null means "cannot tell",
   /// which is treated as not busy.
@@ -154,7 +160,6 @@ final class AutosaveScheduler {
   Future<AutosaveOutcome> get pending => _pending;
   Future<AutosaveOutcome> _pending = Future.value(AutosaveOutcome.notDirty);
 
-  DateTime? _lastSnapshotAt;
   int? _lastSnapshotStateId;
   bool _running = false;
 
@@ -209,11 +214,24 @@ final class AutosaveScheduler {
     if (!force && (isQueueBusy?.call() ?? false)) return AutosaveOutcome.busy;
 
     final now = clock.nowUtc();
-    final last = _lastSnapshotAt;
-    if (!force &&
-        last != null &&
-        _lastSnapshotStateId == session.document.stateId &&
-        now.difference(last) < debounce) {
+    // NOTHING NEW TO PROTECT: the last snapshot was taken at this exact
+    // `stateId`, so a second one would be byte-identical.
+    //
+    // THE ELAPSED-TIME CLAUSE THAT USED TO BE HERE WAS THE BUG. It read
+    // `_lastSnapshotStateId == stateId && now.difference(last) < debounce`,
+    // so the suppression EXPIRED after 2 s while the reason for it did
+    // not. A document left dirty and idle — the user edits, then goes to
+    // lunch — therefore re-wrote the SAME ~600 KB snapshot on every 30 s
+    // tick, indefinitely. The dirty check above cannot catch it: a
+    // recovery snapshot is not a save, so the document stays dirty
+    // against disk forever.
+    //
+    // Keying on the state id ALONE is strictly stronger and still covers
+    // the case the 2 s window was written for — blur and the timer
+    // coinciding, which must not thrash a large write. `force` continues
+    // to bypass this (the close prompt, where the user may sit in a modal
+    // for an hour), and it still cannot bypass the dirty check.
+    if (!force && _lastSnapshotStateId == session.document.stateId) {
       return AutosaveOutcome.debounced;
     }
 
@@ -261,7 +279,6 @@ final class AutosaveScheduler {
         documentBytes: snapshot.bytes,
       );
       if (result case Err()) return AutosaveOutcome.failed;
-      _lastSnapshotAt = now;
       _lastSnapshotStateId = snapshot.stateId;
       _snapshotCount++;
       return AutosaveOutcome.written;
@@ -277,11 +294,10 @@ final class AutosaveScheduler {
     }
   }
 
-  /// Forgets the debounce state. Called when the document is replaced, so
-  /// a new document's first snapshot is not suppressed by the previous
-  /// one's timing.
+  /// Forgets the suppression state. Called when the document is replaced,
+  /// so a new document's first snapshot is not suppressed by the previous
+  /// one's state id.
   void reset() {
-    _lastSnapshotAt = null;
     _lastSnapshotStateId = null;
   }
 }

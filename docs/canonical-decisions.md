@@ -5298,6 +5298,13 @@ back low, take (c) and reclaim the weeks with the deviation written down.
 
 ### 10.5 Metric or imperial as the shipped default
 
+> **ANSWERED 2026-08-03 — imperial default, with one obvious toggle. Confirms the recommendation
+> below.** `ProjectSettings.displayUnits` already defaults to `UnitSystem.imperial` and four
+> surfaces read it as authoritative. **The toggle does not exist**: nothing in the tree writes
+> `displayUnits` except the constructor default and the decoder, so the setting is currently
+> unreachable by a user. That is owed work — board #562 — and it is the whole of what this answer
+> costs.
+
 **Options.** (a) Imperial default, metric available. (b) Locale-derived default. (c) Ask on first
 run.
 
@@ -5454,9 +5461,9 @@ touches it. Recommendations only.
 
 | # | Question | Recommendation | Needed by |
 |---|---|---|---|
-| a | Undo depth — the cap is 200 with a status-bar signal (AC-058 D5). Is 200 right? | Keep 200; make it a setting; revisit if anyone hits it | M0 |
-| b | Autosave interval and whether recovery is silent or prompted | 30 s, prompt on recovery — a silent restore of a file the user thought they abandoned is its own data-loss event | M1 |
-| c | Default rack height in the new-rack dialog | 42U; it is the modal answer and wrong-but-adjustable beats blank | M1 |
+| a | Undo depth — the cap is 200 with a status-bar signal (AC-058 D5). Is 200 right? | **ANSWERED 2026-08-03: keep 200, and make it a setting.** Confirms the recommendation. The cap is already 200 (`undo_stack.dart`'s `maxEntries`) but is a **constructor parameter, not a user setting** — exposing it is owed work, board #560 | M0 |
+| b | Autosave interval and whether recovery is silent or prompted | **ANSWERED 2026-08-03, and it revises the recommendation: autosave runs while the user is WORKING, never while they are idle.** The 30 s interval stands; what changes is that a tick with nothing new to protect must write nothing. **This exposed a live defect** — suppression carried a 2 s expiry, so a document left dirty and idle rewrote an identical ~600 KB snapshot every 30 s indefinitely (the dirty check cannot catch it: a recovery snapshot is not a save, so the document stays dirty against disk forever). Suppression now keys on `stateId` alone. **The prompt-on-recovery half is UNCHANGED and still stands** — a silent restore of a file the user thought they had abandoned is its own data-loss event | M1 |
+| c | Default rack height in the new-rack dialog | **ANSWERED 2026-08-03, and it supersedes the recommendation rather than confirming it: the starting racks become EDITABLE PRESETS the user tailors to their own inventory.** 42U remains the shipped default, so the recommendation's substance survives as a seed value; what changes is that the preset set stops being fixed. This is a **scope addition under §8.3** and is ruled as **DR-016**. `rack_presets.dart` already anticipates it in so many words — *"a future editable-presets UI has the same shape to hang off"* — and presets are deliberately **not persisted on `Rack`** (no `presetRef`), so a user-authored preset store is a new writable location and not a document-format change. Board #561 | M1 |
 | d | Whether the four starter projects are residential-only | Three residential, one small commercial — they double as the domain-coverage argument for 10.2 | M1 |
 | e | Telemetry at all, and if so opt-in or opt-out | Opt-in, local-first crash reports only (CR-096), no usage telemetry in v1 — and accept that this makes 10.4's miss-rate instrumentation a manual user-interview exercise rather than a dashboard | M8 |
 | f | Product name and branding investment | Defer; RJ-017 already rejects branding as a v1 requirement | M8 |
@@ -7260,7 +7267,7 @@ in. See §11.7.
 
 ## 13. Resolved §10 questions
 
-§10 is no longer entirely open. **Six** of its thirteen entries are **ANSWERED** — five by the
+§10 is no longer entirely open. **Seven** of its thirteen entries are **ANSWERED** — five by the
 user's direct answers (DR-001…DR-005) and one, §10.3, **mooted by DR-006** rather than answered on
 its own terms. The text of §10 stays in place as the record of the argument; this section is the
 index of what was decided.
@@ -7271,14 +7278,14 @@ index of what was decided.
 | **10.2** | Residential CI or commercial AV — the primary customer | **ANSWERED — DR-002** | **(a) Residential-primary, commercial-capable.** Commercial capability present, never fronted. Confirms the recommendation. §11.2. |
 | **10.3** | Pricing and licensing model | **MOOT — DR-006** | **Nothing to price.** RackMate is an internal tool and no commercial release is planned, so no pricing or licensing model is chosen and none is needed. Retained in full as the record of the argument: **if DR-006 is reversed, §10.3 reopens exactly as written**, watermark hazard included. §11.6, consequence 12. |
 | **10.4** | Does the device builder have to be in v1 | **ANSWERED — DR-003** | **(a) Yes. M4 stays where it is.** Confirms the recommendation. §11.3. |
-| 10.5 | Metric or imperial default | open | — |
+| **10.5** | Metric or imperial default | **ANSWERED 2026-08-03** | **Imperial default, one obvious toggle.** Confirms the recommendation. The default is already in the code; the toggle is owed (#562). §10.5. |
 | **10.6** | Is the schematic a client deliverable or an internal tool | **ANSWERED — DR-005** | **(a) Client deliverable — invest in drafting polish.** Reverses the record's recommendation. Orthogonal to 10.1. §11.5. |
 | **10.7** | Multi-sheet timing | **ANSWERED — DR-004** | **(c) Never.** One `Sheet` plus domain filtering, permanently. The entity remains. §11.4. |
 | 10.8 | Cloud-ready investment | open | — |
 | 10.9 | Generic archetypes forever, or a real-SKU catalog | open | — |
 | **10.10** | macOS in v1 | **ANSWERED — DR-009** | **(b) Windows and macOS from v1.** Reverses the record's recommendation, which was explicitly *"not a ruling"* and rested on a desk survey that was never run. The register §10.10 demanded and never received is `docs/13-macos-debt-register.md`. §11.9. |
 | 10.11 | What the beta gate actually is | open | — |
-| 10.12 | Small calls needing an owner | (d) settled; (a)(b)(c)(e)(f)(g) open | (d) three residential + one commercial starter project, settled by DR-002. |
+| 10.12 | Small calls needing an owner | **(a)(b)(c)(d) settled; (e)(f)(g) open** | (d) three residential + one commercial starter, by DR-002. **(a)** keep 200, make it a setting (#560). **(b)** autosave while working, never while idle — and it exposed a live defect, now fixed. **(c)** editable rack presets — **DR-016**, a scope addition under §8.3 (#561). |
 | 10.13 | The three to answer first | **retired** | All three — 10.1, 10.2, 10.4 — are answered. The section has served its purpose. |
 
 ### 13.1 What the answers make easier or moot

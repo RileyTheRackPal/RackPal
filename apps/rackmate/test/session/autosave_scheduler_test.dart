@@ -149,19 +149,14 @@ void main() {
       );
     });
 
-    test('the blur/timer debounce is TWO SECONDS', () {
-      // Never asserted numerically anywhere: the two tests that exercise
-      // it advance 0 s and 3 s, which leaves the real value free to be
-      // anything in (0 s, 3 s]. At 3 s it would start suppressing genuine
-      // timer ticks; at 1 ms it stops coalescing blur with the tick and
-      // alt-tabbing writes ~600 KB twice in a second, which is the cost
-      // the constant exists to avoid.
-      expect(kAutosaveDebounce, const Duration(seconds: 2));
-      expect(
-        kAutosaveDebounce,
-        lessThan(kAutosaveInterval),
-        reason: 'a debounce at or above the interval suppresses the timer',
-      );
+    test('there is NO time-based debounce constant to get wrong', () {
+      // This used to assert `kAutosaveDebounce == 2 s`, pinning a value
+      // whose entire job was to expire — and expiring is what let an idle
+      // dirty document rewrite itself every 30 s. Suppression now keys on
+      // the state id alone, so there is no duration to tune, and the
+      // group above proves the behaviour directly rather than by pinning
+      // a number that stands in for it.
+      expect(kAutosaveInterval, const Duration(seconds: 30));
     });
   });
 
@@ -193,15 +188,36 @@ void main() {
     });
 
     test(
-      '...and the same state is written again once 2 s have passed',
+      '...and an IDLE dirty document never re-writes the same bytes, '
+      'however long it sits (§10.12b)',
       () async {
         final t = await _session();
         _edit(t.services.session.controller);
-        await t.services.autosave.snapshot();
-
-        t.clock.advance(const Duration(seconds: 3));
-
         expect(await t.services.autosave.snapshot(), AutosaveOutcome.written);
+
+        // THE REGRESSION THIS GUARDS. This test used to assert the
+        // OPPOSITE — "the same state is written again once 2 s have
+        // passed" — because suppression carried an elapsed-time clause
+        // that expired while the reason for it did not. The dirty check
+        // cannot catch this: a recovery snapshot is not a save, so the
+        // document stays dirty against disk forever. The user edits, goes
+        // to lunch, and the 30 s timer rewrites an identical ~600 KB
+        // snapshot every tick for an hour.
+        for (var tick = 0; tick < 120; tick++) {
+          t.clock.advance(kAutosaveInterval);
+          expect(
+            await t.services.autosave.snapshot(),
+            AutosaveOutcome.debounced,
+            reason: 'tick $tick rewrote an unchanged document',
+          );
+        }
+        expect(t.services.autosave.snapshotCount, 1);
+
+        // ...and real work still lands immediately, so the suppression
+        // has not simply been turned into a mute.
+        _edit(t.services.session.controller);
+        expect(await t.services.autosave.snapshot(), AutosaveOutcome.written);
+        expect(t.services.autosave.snapshotCount, 2);
       },
     );
 
