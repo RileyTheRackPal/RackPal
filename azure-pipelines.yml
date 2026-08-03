@@ -15,13 +15,28 @@
 # scripts were mutation-tested, meaning each was deliberately broken and
 # observed to FAIL before being restored:
 #
-#   * tools/ci/analyze_gate.ps1 — reads 0 errors / 0 warnings / 195 infos
-#     and exits 0. Planting one long line in apps/rackmate made it read 196
-#     and exit 1; planting an unused local made it read a warning and exit 1;
-#     planting a type error made it read 2 errors and exit 1. Its
-#     `dart analyze --format=machine` output was also compared issue by
-#     issue against `flutter analyze` — 195 apiece, symmetric difference
-#     empty — so the gate and the command a developer types by hand agree.
+#   * tools/ci/analyze_gate.ps1 — read 0 errors / 0 warnings / 195 infos and
+#     exited 0 when this was written. Planting one long line in apps/rackmate
+#     made it read 196 and exit 1; planting an unused local made it read a
+#     warning and exit 1; planting a type error made it read 2 errors and
+#     exit 1. Its `dart analyze --format=machine` output was also compared
+#     issue by issue against `flutter analyze` — 195 apiece, symmetric
+#     difference empty — so the gate and the command a developer types by
+#     hand agree. THE COUNT HAS SINCE MOVED, twice and downward: to 194, then
+#     to 173 when the tree was formatted on 2026-08-03 and 21 long-line infos
+#     stopped existing. The pin lives in tools/ci/analyze_info_baseline.txt,
+#     which is the number to trust; 195 is left here because it is what the
+#     mutation test was run against and rewriting it would falsify the
+#     evidence rather than update it.
+#   * `dart format --output=none --set-exit-if-changed .` — GATE 1b, added
+#     2026-08-03, and mutation-tested to the same standard as the rest.
+#     Observed to exit 1 against the unformatted tree, naming 124 of 426
+#     files, and 0 immediately after the sweep. Then, wired into
+#     run_local.ps1, a planted `return   DeviceKind.rackDevice ;` in
+#     catalog_placement.dart made it read FAIL (1) while the other eight fast
+#     gates stayed green, and green again on restore. The gate and its own
+#     remedy are the same command, which is the property no other gate here
+#     has.
 #   * tools/ci/run_suite.ps1 + tools/ci/junit_from_dart_test.py — run
 #     end to end against `dart test` and `flutter test`, with a real
 #     assertion failure, a real SKIP, and a real COMPILE failure, each of
@@ -305,17 +320,34 @@ jobs:
       # infos) and an unbounded count is how 203 became 395 during the
       # salvage.
       #
-      # DELIBERATELY ABSENT: `dart format --set-exit-if-changed`. It exits 1
-      # on 88 files today. docs/12 section 4.1 records that as an open
-      # decision for the user — format the 88 files, or amend docs/11
-      # section 7 — and standing up CI should not pre-empt it. Adding it as a
-      # permanently-yellow advisory step would be worse: it trains people to
-      # ignore output, which is the exact argument docs/11 section 8 makes
-      # for strictness. When the decision is made, it is one step here.
+      # `dart format --set-exit-if-changed` is GATE 1b below, as of
+      # 2026-08-03. It was deliberately absent until then: docs/12 section 4.1
+      # recorded the choice as the user's, and standing up CI should not
+      # pre-empt it. The answer was adopt the formatter AND keep this ratchet,
+      # so the two live side by side rather than one replacing the other.
       - pwsh: |
           pwsh -NoProfile -File tools/ci/analyze_gate.ps1
           exit $LASTEXITCODE
         displayName: 'Gate: analyzer (0 errors, 0 warnings, ratcheted infos)'
+        condition: succeededOrFailed()
+
+      # ==================================================================
+      # GATE 1b — THE FORMATTER
+      # ==================================================================
+      # Ruled 2026-08-03, answering docs/12 section 4.1. The tree was
+      # formatted in one mechanical commit (b6ff394, 124 of 426 files) and
+      # this keeps it that way. It is a gate rather than an advisory step on
+      # purpose: a permanently-yellow step trains people to ignore output,
+      # which is the exact argument docs/11 section 8 makes for strictness.
+      #
+      # The count in the decision aged badly while the question sat open --
+      # docs/12 section 4.1 and this file's own earlier comment both say 88
+      # files, and it was 124 by the time it was paid. That is the argument
+      # for gating a mechanical thing immediately rather than scheduling it.
+      - pwsh: |
+          dart format --output=none --set-exit-if-changed .
+          exit $LASTEXITCODE
+        displayName: 'Gate: dart format'
         condition: succeededOrFailed()
 
       # ==================================================================

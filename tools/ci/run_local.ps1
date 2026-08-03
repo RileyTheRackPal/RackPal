@@ -80,6 +80,16 @@ try {
     }
     Invoke-Gate 'flutter pub get (workspace root)' { flutter pub get }
     Invoke-Gate 'analyzer gate'       { pwsh -NoProfile -File (Join-Path $ci 'analyze_gate.ps1') }
+    # Added 2026-08-03, when the user answered docs/12 section 4.1's open
+    # question: adopt the formatter, keep the info ratchet. It was absent for
+    # months because turning it on before the tree was formatted would have
+    # made main permanently red, which is the same argument the ratchet rests
+    # on. The tree was formatted in b6ff394; this is what stops it drifting
+    # back. Unlike every other gate here it needs no argument about what it
+    # measures -- `dart format` is the definition of the answer.
+    Invoke-Gate 'formatter' {
+        dart format --output=none --set-exit-if-changed .
+    }
     Invoke-Gate 'PAL-1 conformance'   { python tools/pal1_check.py }
     Invoke-Gate 'palette parity'      { python tools/palette_parity.py }
     # The third of the family: pal1_check says the palette is legible,

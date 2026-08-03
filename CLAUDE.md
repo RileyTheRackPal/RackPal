@@ -9,12 +9,15 @@ schedules, PDF sheet set. Windows-first, macOS ruled in for v1 (DR-009).
 pwsh -File tools/ci/run_local.ps1 -SkipBuild
 ```
 
-Thirteen gates. All must pass before a commit. Notes that cost real time:
+Fourteen gates. All must pass before a commit. Notes that cost real time:
 
 - **Analyzer is a ratchet pinned to an exact number** in
-  `tools/ci/analyze_info_baseline.txt` (currently 194 infos). Errors and warnings
+  `tools/ci/analyze_info_baseline.txt` (currently 173 infos). Errors and warnings
   are gated at **zero** and are not ratcheted. Going *under* the pin passes with a
   warning; going over fails.
+- **`dart format` is a gate** as of 2026-08-03. Run `dart format .` before
+  committing. It is not `--fatal-infos`: the two were separate questions and the
+  ruling took the formatter and kept the ratchet.
 - **Anything you leave in `packages/*/tool/` is analyzed.** Scratch scripts inflate
   the info count and fail the gate. Delete them before committing, or keep them in
   the scratchpad.
