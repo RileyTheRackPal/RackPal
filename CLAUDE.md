@@ -1,0 +1,125 @@
+# RackMate
+
+Flutter desktop app for AV/low-voltage rack design: elevations, wiring schematic,
+schedules, PDF sheet set. Windows-first, macOS ruled in for v1 (DR-009).
+
+## Verify before you claim anything
+
+```bash
+pwsh -File tools/ci/run_local.ps1 -SkipBuild
+```
+
+Thirteen gates. All must pass before a commit. Notes that cost real time:
+
+- **Analyzer is a ratchet pinned to an exact number** in
+  `tools/ci/analyze_info_baseline.txt` (currently 194 infos). Errors and warnings
+  are gated at **zero** and are not ratcheted. Going *under* the pin passes with a
+  warning; going over fails.
+- **Anything you leave in `packages/*/tool/` is analyzed.** Scratch scripts inflate
+  the info count and fail the gate. Delete them before committing, or keep them in
+  the scratchpad.
+- **Test floors** (`tools/ci/run_suite.ps1`): core 976, text 1, export 183, ui 382,
+  app 664. Lowering one must be a visible line in a diff.
+- **Run suites from the package directory**, not the repo root. Several tests read
+  files relative to CWD and fail spuriously otherwise.
+- **Stale `build/unit_test_assets` and `build/flutter_assets` cause phantom asset
+  failures.** Delete both if a rootBundle test fails for no reason.
+
+## The corpus, and which document wins
+
+| Document | Role |
+|---|---|
+| `docs/canonical-decisions.md` | **Normative.** `CR-nnn`, `AC-nnn`, `RJ-nnn`, `DR-nnn`. §11 is user decisions, §12 is supersessions, §10 is open questions, §13 indexes what §10 answered. |
+| `docs/10-decisions.md` | Short-form ADR summary. Where it and a ruling differ, **the ruling wins and docs/10 is wrong**. |
+| `docs/12-milestone-board.md` | Evidence and reasoning. Milestone marks, what is actually built, why a number is what it is. |
+| `docs/00`–`docs/09`, `docs/11`, `docs/13`, `docs/14` | Derived, priority-3. Edited to match rulings rather than pointered. |
+
+**Canon §12 lists derived-document edits that are owed but unmade.** Read the
+ruling, not only the derived sentence. A stale sentence in `docs/09` once produced
+a board task instructing weeks of work that a ruling had abolished.
+
+## Process rules (roadmap §8)
+
+- **§8.1** The milestone is the unit of planning; the **exit criterion is the unit
+  of truth**. Done means demonstrated, not checklist-ticked.
+- **§8.2** Every issue and PR **cites a ruling ID**. No citation means either an
+  unadjudicated decision or a re-litigated one.
+- **§8.3** Scope changes are **amendments** with a new ruling ID, in their own
+  commit. There is one scope list and it is roadmap §2.
+- **§8.8** A closed task **names the commit that closed it**. Forward-only from
+  2026-08-03; do not backfill.
+
+## Invariants that bite
+
+- **G4 / CR-114: null is unknown, never estimated.** `0` means measured zero.
+  Unknown serializes as an **absent key**, never an explicit `null`. Every rollup
+  reports its unknown count rather than fabricating a total.
+- **AC-039**: `typicalWatts` is never derived from `nameplateWatts`.
+- **CR-001**: integer units only. `Len` = int64 nanometres, `Mass` = int64
+  micrograms, `Permille` for fractions. **No floating-point millimetres**, in the
+  model or in any file format.
+- **CR-117**: byte round-trip. `write(read(bytes)) == bytes`, keys sorted.
+- **Package layering**: `rackmate_core` has **zero Flutter imports** (gated).
+  `rackmate_export` may never import `rackmate_ui`.
+- **Determinism**: same document, same display list, same exported bytes. Sort
+  comparators must be **total** (Dart's `List.sort` is not stable), so every chain
+  ends in a unique id.
+- **CR-078**: colour lives on the signal **domain**, never the family. PAL-1
+  (canon §14) is a CI gate over rendered greyscale values.
+
+## Workspace
+
+- `packages/rackmate_core` model, commands, derived, persistence, draw scene, catalog
+- `packages/rackmate_ui` Flutter widgets, canvas, inspector, palette
+- `packages/rackmate_export` PDF backend
+- `packages/rackmate_text` text metrics
+- `apps/rackmate` shell, session, storage
+
+## Goldens
+
+- Starters: `cd apps/rackmate && dart run tool/generate_starters.dart`
+  (`--check` for CI-style verification). They are checked in and do triple duty as
+  goldens, perf fixtures and screenshot source.
+- Perf/scene fixtures: `UPDATE_GOLDENS=1 flutter test <path>`. The op-count
+  baselines in `schematic_perf_test.dart` are M2-C's record; regenerate content
+  only when you mean to invalidate them.
+- File shape gotcha: in a `.rmpj`, `registries` is nested under `document`, and
+  `Registries.connectorTypes` serializes under the wire name **`connectors`**.
+
+## Board (Azure DevOps)
+
+Hierarchy is **Epic → Issue → Task**. Org `https://{org}.visualstudio.com`,
+project `RackMate`, area and iteration `RackMate`, tags `rackmate-sync; task`.
+States: `To Do`, `Doing`, `Done` (there is no `Removed`).
+
+The board mirrors **structure**; the reasoning lives in `docs/12` and `docs/13`.
+
+`az` CLI quirks, each learned the hard way:
+
+- **Pass descriptions via `@file`, never inline.** `az` runs through `cmd.exe`, and
+  `subprocess.list2cmdline` only quotes arguments containing spaces, so a
+  space-free HTML string like `<p>AC-024.</p>` has its `<p>` parsed as a file
+  redirect. Symptom: "The system cannot find the file specified".
+- `--fields` truncates at the first newline.
+- `@project` in WIQL returns empty with exit 0. Name the project literally.
+
+## Committing
+
+- **Atomic commits**: one logical change each, every one gated green, push every
+  commit. Green wins over small.
+- Message body explains **why**, and names the mechanism when a bug is fixed.
+- End with:
+
+```
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+```
+
+## House style
+
+Tests **assert the artifact, not the mechanism**. A test that pins an intermediate
+value survives the behaviour it was protecting; more than one test in this repo has
+been found asserting a defect as intended behaviour. When a comment explains why a
+branch exists, keep it, and update it when the branch changes.
+
+Prose in `docs/` uses em dashes heavily. **New prose should not.** A sweep to remove
+them is scheduled with the next code review.
