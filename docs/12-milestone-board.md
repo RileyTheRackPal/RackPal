@@ -118,6 +118,44 @@ way. Board item #92 is the scheduled full sweep.
 | **M8** | Release engineering | `S` | **0 of 4** | **NOT STARTED** — `NOT BUILT` | No installer, no signing, no crash reporter. **Re-scoped by DR-006** |
 | **M9** | Beta hardening | `M` | **0 of 1** | **NOT STARTED** — `UNPERFORMED` | Nothing is installable, so nothing is testable by anyone outside this machine |
 
+**Every epic on the board is now decomposed to task level — 2026-08-03.** 12 epics, **141 issues,
+354 tasks**, no orphans. M3 and M4 were already decomposed; M5–M9 gained a work layer beside the
+exit-clause rows they already had; M0, M1 and M2 gained a **retrospective** layer, and every row in
+it says so in its own description, because a task reconstructed after the fact that looks
+contemporaneous is a costume rather than a record. Roadmap §8.8 — a closed task names the commit
+that closed it — is **forward-only from this date** by explicit decision; nothing was backfilled.
+
+**Read the far milestones' decompositions with the right expectation, and this is the honest caveat
+on the whole exercise.** Decomposition normally happens at a milestone's start (§5's practice, and
+board `#71`), and it earns its keep by being read against the tree as it actually is: M4's
+decomposition found that `Command` is hard-typed to `RackDocument`, that `ConnectorTypeDef.pitch`
+does not exist, and that `derivedFrom` appears nowhere — none of which is inferable from the
+specification. **M5's and M6's decompositions are grounded in the same way** (the 27-rule catalogue
+and the sheet table are both real, present artifacts). **M8's and M9's are substantially spec
+restatement**, because the tree they will run against does not exist yet. Re-read them before
+starting rather than trusting them; that is what the `Mn-0` rows now say.
+
+**Three things the sweep found, none of them decomposition:**
+
+- **macOS debt `D14` had no board item at all**, and it is the one row in docs/13 that **is not
+  about macOS** — docs/08:509 requires a non-US platform locale to substitute A4/A3, `SheetSize`
+  has exactly two values and neither is A4, so **a Windows machine in a metric locale has the
+  problem today**. Now `#453`, and sequenced with M6 where page setup is actually built, rather
+  than with the macOS work where it would be found late because it is filed under the wrong heading.
+- **`D13`'s register text is stale in one detail** — it says the dialog filter is hard-coded to
+  `.rackmate`; DR-015 made that `*.rmpj;*.rackmate` at `dc22ddc`. The hard-coding is unchanged, only
+  the strings moved. The work itself is M4's (`#234`), so `#453`'s sibling row just points there.
+- **`D7` is closed on the board**, matching docs/13 §2.2 — the debt cleared and its owed gate was
+  paid at `#94` on 2026-08-02. The board had still read `To Do`.
+
+**One drift this file should not paper over:** M0's and M1's exit-clause rows still read `To Do` on
+the board while §3 of this file records **M1 as `CRITERION MET`, all eight clauses discharged**. The
+board was not mass-updated to match, because M0 carries two clauses that are true only `VACUOUS`ly
+(§2.2) and M1's goal line — *"and it ships to real users"* — is genuinely not met. **Those are
+judgements this file already makes carefully, and a bulk state change would have flattened them into
+a tick.** The rows are wrong in the direction of understatement, which is the safe direction, but
+they are wrong.
+
 **The global rule the roadmap sets for every milestone** (§4, verbatim):
 
 > **Every milestone ends green**: CI passes, goldens pass, the app opens the four starter projects.

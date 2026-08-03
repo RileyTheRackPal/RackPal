@@ -1,5 +1,41 @@
 # Update Log
 
+## 2026-08-03 (later)
+
+* **Update**: **every epic on the board is decomposed** — 12 epics, 141 issues,
+  354 tasks, no orphans. M5–M9 gained a work layer beside the exit-clause rows
+  they already carried; M0, M1 and M2 gained a **retrospective** layer whose
+  every row says so in its own text. A task reconstructed after the fact that
+  looks contemporaneous is a costume, not a record.
+* **Creation**: roadmap §8.8 — **a closed task names the commit that closed
+  it**. §8.2 makes every issue cite the ruling it implements; this is the other
+  end of the same join, so a board row points backwards to WHY and forwards to
+  WHAT SHIPPED. **Forward-only from 2026-08-03** by explicit decision: a hash
+  reconstructed by archaeology months later is a guess in the costume of a
+  record. Appended as item 8 rather than renumbered — `§8.1` and `§8.3` are
+  cited across docs/12 and the canon.
+* **Note**: **the caveat matters more than the count.** Decomposition earns its
+  keep by being read against the tree as it IS — M4's found `Command` hard-typed
+  to `RackDocument`, `ConnectorTypeDef.pitch` absent, `derivedFrom` nowhere in
+  `packages/`, none of it inferable from the spec. M5 and M6 are grounded the
+  same way (the 27-rule catalogue and the sheet table are real present
+  artifacts). **M8 and M9 are substantially spec restatement**, because the tree
+  they run against does not exist. The `Mn-0` rows now say so.
+* **Note**: the sweep found **macOS `D14` had no board item**, and it is the one
+  row in the register that **is not about macOS** — docs/08:509 wants A4/A3 on a
+  non-US locale, `SheetSize` has two values and neither is A4, so a WINDOWS
+  machine in a metric locale has it today. Filed under the wrong heading is how
+  a live defect reads as future platform work.
+* **Note**: `D13`'s register text is stale in one detail — the filter is
+  `*.rmpj;*.rackmate` since `dc22ddc`, not `.rackmate`. The hard-coding is
+  unchanged; only the strings moved. And `D7` is now closed on the board to
+  match docs/13 §2.2, where the gate was recorded PAID at `#94`.
+* **Note**: M0's and M1's clause rows still read `To Do` while docs/12 §3
+  records M1 `CRITERION MET`. **Deliberately not mass-updated**: M0 has two
+  clauses true only `VACUOUS`ly and M1's goal line is genuinely unmet, and a
+  bulk state change would flatten judgements this corpus makes carefully into a
+  tick. Wrong in the direction of understatement, but wrong.
+
 ## 2026-08-03
 
 * **Creation**: [DR-015 — the rm extension
