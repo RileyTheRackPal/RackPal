@@ -433,6 +433,20 @@ nothing rejects a push. The roadmap's global per-milestone rule — *"EVERY MILE
 passes"* — has never been satisfiable for any milestone, M0 included, and becomes satisfiable on
 the day a pipeline run number can be written into this section.
 
+> **RESOLVED 2026-08-03. The user ruled: adopt `dart format` as a gate, keep the analyzer's info
+> ratchet.** Closed by three commits. `b6ff394` formatted the tree, **124** files rather than the 88
+> recorded below, and lowered the info pin 194 to 173 because 21 of the 22 long-line infos existed
+> only because nobody had run the formatter. `ecdf3b2` added `dart format --set-exit-if-changed` to
+> `azure-pipelines.yml` and `tools/ci/run_local.ps1` as **gate 1b**, mutation-tested by planting a
+> formatting defect and watching it read FAIL (1) with the other eight fast gates green. The docs/11
+> §7 half of the choice was paid too: that section described a **GitHub Actions** workflow with a
+> three-OS matrix, and the pipeline has been Azure DevOps on one Windows agent for months, so §7 is
+> rewritten against `azure-pipelines.yml` with a labelled list of what is designed and not built.
+>
+> **The number in this section aged while the question sat open**, which is the argument against
+> deferring a mechanical decision: 88 files when it was written, 124 when it was paid. The analysis
+> below is left as written, because it is what produced the answer.
+
 **Two of the documented gates fail today**, so the CI shape as written in docs/11 §7 would go red
 on the first push:
 
@@ -452,7 +466,9 @@ worse than no CI because it trains people to ignore it (docs/11 §8's own argume
 gates above as written: `dart format --set-exit-if-changed` is deliberately absent, and the
 analyzer gate is *zero errors, zero warnings, plus a ratcheted info count* pinned in
 `tools/ci/analyze_info_baseline.txt` rather than `--fatal-infos`. Both choices are argued in the
-file. The decision above is still open and still the user's.
+file. **That was written while the decision was open. It is now made** (see the block at the head of
+this section): the analyzer gate stayed a ratchet and the format gate was added beside it, so
+`azure-pipelines.yml` runs both and neither was pre-empted by the other.
 
 ### 4.2 The M2 detour is reconciled in code, not in the documents
 
@@ -1245,13 +1261,13 @@ exist, not because it is ungated, and the *Gated on* column says which.
 
 | # | Work | Gated on | Why it is first |
 |---|---|---|---|
-| 1 | **Stand up CI at all** | Nothing | There is none (§4.1). Every "CI assertion" in the corpus is currently a test somebody must remember to run |
-| 2 | **Decide the two failing gates** — format the 88 files and clear the 195 infos, **or** amend docs/11 §7 | Nothing — but it is a **user decision**, not an engineering one | Standing up CI without deciding produces a permanently red main branch (§4.1) |
+| 1 | **Stand up CI at all** — **WRITTEN, NOT RUN** | Nothing | `azure-pipelines.yml` and `tools/ci/run_local.ps1` are **fourteen gates** in the same order, so green locally and green on the agent would mean the same thing. **The row does not close**, by this section's own standard: no Azure DevOps service has executed the YAML, so nothing yet rejects a push. Closes when a run number can be cited (§4.1) |
+| 2 | ~~**Decide the two failing gates** — format the files and clear the infos, **or** amend docs/11 §7~~ — **DECIDED 2026-08-03** | Nothing — it was a **user decision**, not an engineering one | **Both, split by gate.** `dart format` adopted absolutely (`b6ff394` formatted 124 files, `ecdf3b2` gated it); the analyzer kept its ratchet, pin lowered 194 → 173; docs/11 §7 amended, having described a GitHub Actions workflow the project does not use. The predicted failure did not occur: main was never red (§4.1) |
 | 3 | **First goldens + `flutter_test_config.dart` registering Jost** | Nothing | Makes *"goldens pass"* stop being a clause with nothing behind it (§4.3) |
 | 4 | **Mechanise the `sources.md` provenance gate** | Nothing | AC-052 is prose today; `RISK-04`'s early warning is unmeasurable (§4.4) |
 | 5 | **Extend `epoch_mask_test.dart` to the derived pipeline** | Nothing | The drift is live and grows with every derived consumer (§4.5) |
 | 6 | **Propagate the Jost and `kSchemaVersion`-2 drift** into docs/08, docs/11, docs/02, docs/03 and canon; amend CR-080 | Nothing | Roadmap §8.3 requires an amendment for a ruling change; CR-080 has none (§4.6, §4.7) |
-| 7 | **Propagate DR-006 into docs/09, docs/11, docs/10 and docs/00** | Nothing | **Nine** sites — the five signing sites plus four decision-count sites, all listed in §4.11 and in canon §12.9. Until they land, the roadmap tells the next reader to order a certificate and three documents tell them there are five user decisions |
+| 7 | ~~**Propagate DR-006 into docs/09, docs/11, docs/10 and docs/00**~~ — **PAID `e0941f6`** | Nothing | Was **nine** sites, the five signing sites plus four decision-count sites, listed in §4.11 and canon §12.9. The decision-count class recurred within days and was paid again at `69aa82d`, which found six more stale counts including a docs/09 §8.7 sentence listing four already-closed questions as open. **A count in prose is a maintenance liability**, and this is now the second sweep for it |
 | 7a | **Delete the three root `test/fixtures/` copies** | Nothing | Five seconds (§4.12) |
 | 8 | **Finish M1** — ~~`AddRackCommand` + New-rack dialog~~ (built); ~~keyboard deselect~~ (built) **but time the drill**; ~~print a sheet~~ (done 2026-07-27); the outline tree | Nothing | One exit clause and one goal clause, and the exit clause needs a **person with a stopwatch**, not code (§3.4) |
 | 9 | **M4, the device builder** | **M1 — a hard block (roadmap §5), DISCHARGED 2026-07-28** | Its inputs were all present long before its gate opened: the arrow's named artifact (*"devices exist"*) is there, and clause 3's keyboard-only drill was never a device-builder input (§5.3). The gate is now clear on the criterion, which is the only thing §8.1 lets a gate depend on. It still sits below M2 here on ordering grounds, not blocking ones |

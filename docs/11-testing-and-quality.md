@@ -336,42 +336,39 @@ A three-item manual checklist catches what nothing automated will: `debugRepaint
 
 ## 7. CI
 
-```yaml
-# .github/workflows/ci.yaml — shape, not a full listing
-jobs:
-  analyze-and-test:
-    strategy: { fail-fast: false, matrix: { os: [ubuntu-latest, windows-latest, macos-latest] } }
-    steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with: { flutter-version: '3.44.4', channel: stable, cache: true }   # PINNED (goldens)
-      - uses: actions/cache@v4                      # ~/.pub-cache keyed on pubspec.lock
-      - run: dart pub get                           # workspace root resolves all members
-      - run: dart analyze --fatal-infos --fatal-warnings
-      - run: dart format --output=none --set-exit-if-changed .
-      - run: dart test                              # core + text + export, all 3 OSes
-      - run: flutter gen-l10n && git diff --exit-code    # AC-058/D12: generated l10n is current
-      - run: flutter test --exclude-tags golden
-      - run: flutter build windows --release        # if: windows
-  pal1:
-    runs-on: ubuntu-latest                          # no Dart, no deps: a Dart refactor cannot break it
-    steps:
-      - uses: actions/checkout@v4
-      - run: python tools/pal1_check.py             # BLOCKING. exit 1 = a palette collision ships
-  goldens:
-    runs-on: ubuntu-latest                          # ONE platform only, see §3.1
-    steps: [ ..., run: flutter test --tags golden ]
-  perf-budget:
-    runs-on: ubuntu-latest
-    steps: [ ..., run: dart test --tags perf ]      # warn-only for the first 3 months
-  nightly-pdf-pixels:
-    if: github.event_name == 'schedule'
-    steps: [ ..., run: sudo apt-get install -y poppler-utils, run: dart test --tags pdf-pixel ]
-```
+> **Rewritten 2026-08-03**, when the user ruled on the open decision [docs/12 §4.1](12-milestone-board.md) recorded: **adopt `dart format` as a gate, keep the analyzer's info ratchet.** What stood here until then was a GitHub Actions workflow running `dart analyze --fatal-infos` and a three-OS matrix, none of which existed. The pipeline is Azure DevOps, on one agent, and had been for months. A CI section describing a provider the project does not use is not a specification, it is a trap: docs/12 §4.1 caught it only because somebody ran both and compared.
 
-Caching: the Flutter SDK via `flutter-action`'s `cache: true`, and `~/.pub-cache` keyed on `pubspec.lock`. Do not cache `build/` — a stale plugin registrant costs more debugging time than a cold build costs wall time.
+**What runs today.** One job, `windows_ci`, on `windows-2022`, defined in [`azure-pipelines.yml`](../azure-pipelines.yml). Fourteen gates, in this order, each reproducible locally with `pwsh -File tools/ci/run_local.ps1`:
 
-Artifacts uploaded on every run: failed golden `*_testImage.png`/`*_masterImage.png` pairs, the generated PDFs from the structural-assertion job (a reviewer looking at the actual sheet resolves most export failures in seconds), the perf JSON so the baseline curve can be plotted over time, and on tagged builds the Windows installer plus its symbols. The Flutter version pin is load-bearing and lives in exactly one place, referenced by every job.
+| # | Gate | Fails when |
+|---|---|---|
+| 1 | `tools/ci/ensure_flutter.ps1 -VerifyOnly` | The agent is not on the pinned 3.44.4 / framework revision `ad70ec4` |
+| 2 | `tools/ci/verify_tracked_sources.ps1` | A `lib/` source is untracked, so a clone would not compile |
+| 3 | `flutter pub get` at the workspace root | Resolution fails for any member |
+| 4 | `tools/ci/analyze_gate.ps1` | Any error, any warning, or **more infos than the pin** in `tools/ci/analyze_info_baseline.txt` (**173**) |
+| 5 | `dart format --output=none --set-exit-if-changed .` | Any file is unformatted |
+| 6 | `python tools/pal1_check.py` | A palette collision ships. **Blocking**, and it needs no Dart, so a Dart refactor cannot break it |
+| 7 | `python tools/palette_parity.py` | The documented dashes and weights disagree with the checker |
+| 8 | `python tools/registry_parity.py` | The Dart seed disagrees with either (DR-010) |
+| 9 | `tools/ci/junit_converter_selftest.py` | The JUnit converter regresses. 13 mutants, 13 caught |
+| 10–14 | Five suites via `tools/ci/run_suite.ps1` | Any test fails, **or** a suite falls below its non-vacuity floor: core 976, text 1, export 183, ui 382, app 664. The floor counts **non-skipped** cases, so silencing a flaky batch cannot buy a green run |
+| + | `flutter build windows --release`, then `tools/ci/verify_windows_build.ps1` | The build fails, or the release output has a plugin DLL removed, the exe missing, a packaged starter CRLF-corrupted, or a `dartjni.dll` **planted** (it must not be there) |
+
+**Two gates here are not `--fatal-infos`, deliberately.** Gate 4 is a ratchet rather than `--fatal-infos` because 195 infos on the day CI was stood up would have made `main` permanently red, and a permanently red `main` trains people to ignore output. Gate 5 is absolute because formatting is mechanical: it has one correct answer and the gate's own remedy is the same command. The two were separate questions and the 2026-08-03 ruling took one and kept the other. Clearing the remaining 173 and switching gate 4 to `--fatal-infos` stays available and is nobody's scheduled work.
+
+**Caching.** The Flutter SDK and `~/.pub-cache`, keyed on `pubspec.lock`. Do not cache `build/`: a stale plugin registrant costs more debugging time than a cold build costs wall time.
+
+**Artifacts.** The raw `dart test` JSON streams and the converted JUnit documents on every run, for forensics, plus the archived Windows release on a successful build.
+
+**Designed and NOT built.** Kept here because they are the intent, and marked because the section above is a claim about what exists:
+
+- **A goldens job.** There are zero goldens: no `matchesGoldenFile`, no `goldens/` directory, no `@Tags(['golden'])`, no `flutter_test_config.dart` registering Jost. §3.1's one-platform rule applies the day the first one is written. The pipeline deliberately has neither a `--tags golden` step nor an `--exclude-tags golden` one, so the first golden somebody writes runs immediately rather than being silently skipped.
+- **Linux and macOS agents.** DR-009 puts macOS in v1; [docs/13](13-macos-debt-register.md) is the work list. Today the pipeline is Windows only.
+- **`flutter gen-l10n && git diff --exit-code`** (AC-058/D12). There is no `l10n/` and no generated Dart in the tree at all.
+- **A `--tags perf` job.** The perf harness exists and is *unexcluded*, so `schematic_perf_test.dart` runs inside the core suite on every push rather than in a job of its own. Warn-only was the design; blocking-inside-core is what shipped, which is stricter, not looser.
+- **A nightly `--tags pdf-pixel` job** needing `poppler-utils`.
+
+The Flutter version pin is load-bearing and lives in exactly one place.
 
 ---
 
@@ -381,7 +378,7 @@ Artifacts uploaded on every run: failed golden `*_testImage.png`/`*_masterImage.
 
 Project additions on top of the base set:
 
-- `--fatal-infos --fatal-warnings` in CI. An info-level lint that nobody fixes is a lint that trains people to ignore output.
+- **Errors and warnings gated at zero; infos ratcheted, not `--fatal-infos`.** The principle below is unchanged and is why the ratchet exists at all: an info-level lint that nobody fixes is a lint that trains people to ignore output. What the 2026-08-03 ruling changed is the enforcement, because switching on `--fatal-infos` against a 195-info tree would have made `main` red on the first push and taught the same lesson faster. The pin only moves down. See §7 gate 4 and `tools/ci/analyze_info_baseline.txt`.
 - `public_member_api_docs` **on for `rackmate_core` only**. The core is the shared vocabulary; the UI package is not.
 - Generated code (`*.g.dart`, `l10n/`) excluded; nothing else is.
 - Custom naming is enforced by test rather than by lint, because no analyzer rule expresses it: N3 (types `UpperCamelCase`, JSON keys `lowerCamelCase`, registry IDs `lower.dotted.snake`, tokens `UPPER_SNAKE`, rule IDs `AAA-000`) and N4 (a serialized `weight` or `length` without a unit suffix or a unit type is a defect) are asserted over the codec layer in `naming_conventions_test.dart`.
@@ -394,7 +391,7 @@ VERIFY: `very_good_analysis` 9.x rule set against Dart 3.12 before pinning.
 
 A change is done when all of the following are true. This list is the PR checklist and it is short on purpose.
 
-1. `dart analyze --fatal-infos --fatal-warnings` and `dart format` are clean.
+1. `pwsh -File tools/ci/run_local.ps1` is green: fourteen gates, including zero analyzer errors and warnings, an info count at or under the pin, and `dart format` clean.
 2. New behaviour has a test at the **lowest tier that can express it** — a rule gets fixtures, not a widget test; a layout change gets a display-list golden, not a screenshot.
 3. A new DRC rule ships with its `.bad`/`.near` fixture pair (AC-051). No exceptions; this is the gate that holds the v1 catalogue at 27, and it now covers 27 fixture pairs.
 4. A new command declares its `touches` mask and passes the epoch-coverage test (AC-014), and participates in the round-trip property test.
