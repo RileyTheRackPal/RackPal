@@ -472,10 +472,25 @@ it, so `azure-pipelines.yml` runs both and neither was pre-empted by the other.
 
 **The sentence above this one still stands, and is the reason this section does not close.** Every
 gate is still a test somebody must remember to run, because the pipeline has never executed.
-**Run 1 is scheduled for M5** (user, 2026-08-03), which puts it alongside canon §10.11's beta-gate
-answer, also held to M5. That is a coherent pairing rather than a coincidence: M5 is the first
-point at which the product is stable enough that both "what does green mean" and "what would you
-judge a beta on" are answerable against something real instead of against a plan.
+
+**Run 1 is scheduled for M5** (user, 2026-08-03), and the stated reason is a workload argument, not
+a tidiness one: **M5 is where most of the design locks in, and it is the milestone made of frequent
+small edits** — 27 rules, each landing with a known-bad and a known-good near-miss (AC-051). That
+is precisely the shape of work where *a test somebody must remember to run* fails. A gate skipped
+once in fifty small commits is a gate that was not enforcing anything, and it will be skipped on
+the commit that matters.
+
+**There is a hard dependency here that neither section had drawn.** **M5-G4** (board #302) is
+*"the CI gate — a registered rule without its pair fails the build"*, and its own description says
+**enforced by CI, not by review** (roadmap §8.6). Board #298 goes further: the fixture-pair gate is
+*"the schedule control, not a quality nicety"*, and `RISK-03` names it as the mechanism that blocks
+scope drift **mechanically**. **All of that is false while the pipeline has never run.** Wired into
+`run_local.ps1` alone, M5-G4 is a convention, and a convention is exactly what `RISK-03` says will
+not hold against *"just one more obvious rule"*. **Run 1 is therefore a prerequisite of M5-G4
+meaning what it claims**, not merely convenient company for it.
+
+It also lands beside canon §10.11's beta-gate answer, likewise held to M5, which by then is less a
+coincidence than a pattern: M5 is where this project stops deciding against a plan.
 
 ### 4.2 The M2 detour is reconciled in code, not in the documents
 

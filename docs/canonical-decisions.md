@@ -2444,10 +2444,17 @@ to be confidently wrong about a system the user knows better than the app does. 
 `critique-domain-realism.md` adds five rules of its own, three of which (`RCK-012`, `CODE-001`,
 `CODE-002`) protect the user from real money.
 
-**Change: v1 ships 22 rules**, listed once in `docs/rules.md`:
-`TOP-001..005` (blocking) · `SIG-001` · `SIG-002` · `DIR-001` · `DIR-003` · `CON-001` ·
+**Change: v1 ships 27 rules**, listed once in **canon §5**:
+`TOP-001..005` (blocking) · `PLC-001` · `PLC-002` · `PLC-003` (blocking) · `SIG-001` · `SIG-002` ·
+`DIR-001` · `DIR-003` · `CON-001` ·
 `ELE-003` · `ELE-006` · `NET-001` · `PWR-001` · `PWR-003` · `LEN-001` · `RCK-001` · `RCK-002` ·
 `RCK-003` · `RCK-012` · `RCK-013` · `CODE-001` · `CODE-002` · `LNK-020`.
+
+> **Amended per §12.6(b), paid 2026-08-03.** This paragraph read *"22 rules, listed once in
+> `docs/rules.md`"* over an enumeration of **24** ids. The enumeration governs and "22" was an
+> arithmetic error; `PLC-001..003` are ratified as distinct tier-1 rules, giving **27**. The home is
+> **canon §5**, not `docs/rules.md`: that file deliberately does not exist, because CR-021 rules
+> that a rule not in the catalogue does not exist and §5 *is* the catalogue (§10.12(g)).
 Everything else moves to v1.2 behind a fixture corpus (AC-051). The acknowledgement machinery is
 **kept** (RJ-006).
 
@@ -2591,7 +2598,7 @@ entire wedge.
 **Change:** a **DRC fixture corpus** — for every shipped rule, at least one known-bad design that
 must produce exactly that finding and one known-good near-miss that must not. The corpus is a
 directory of `.rackmate` files and an assertion table. **No rule ships without its pair**, which
-is also the gate that keeps the v1 catalogue at 22 (AC-040). A domain-expert review of the
+is also the gate that keeps the v1 catalogue at **27** (AC-040, corrected by §12.6(b)). A domain-expert review of the
 shipped rules and of the catalog data is a named milestone exit criterion.
 
 ### AC-052 · §C36 / §D2 — catalog data provenance and sample projects
@@ -2862,7 +2869,7 @@ for minute 10 of someone's first session, where it presents as 'type an essay to
 yellow triangle.'"
 
 **Rejected.** The first half of cut #7 — 60 rules down to a shippable few — is accepted (AC-040,
-at 22). The acknowledgement machinery is the thing that makes the reduced rule set *safe*:
+at **27**; §12.6(b)). The acknowledgement machinery is the thing that makes the reduced rule set *safe*:
 because errors are acknowledgeable (CR-019), nothing has to block (CR-022), which is what makes
 G3 implementable. Delete acknowledgement and the only remaining ways to handle a rule the user
 disagrees with are to block them or to silence the rule globally — and the design correctly
@@ -4027,8 +4034,9 @@ final class AckedFinding {
 Only five rules are model-level illegal — `TOP-001..005` (self-connection, duplicate ordered pair
 on one link, over `maxConnections`, dangling endpoint, container cycle) — plus placement
 coherence: `ruIndex` within the rack, host is a container, no containment cycle (CR-017).
-v1 ships **22 rules**, listed once in `docs/rules.md`, each with a known-bad and a known-good
-fixture. **No rule ships without its pair** (AC-040, AC-051).
+v1 ships **27 rules**, listed once in **§5** of this record, each with a known-bad and a known-good
+fixture. **No rule ships without its pair** (AC-040, AC-051). *(Was "22 rules ... `docs/rules.md`";
+corrected per §12.6(b) and §10.12(g), paid 2026-08-03.)*
 
 ### 5.9 Persistence contract
 
@@ -4750,12 +4758,12 @@ Grouped by subsystem. The **Why** column names the filter or the ruling that put
 | Item | Why |
 |---|---|
 | Rules are **Dart functions** in a registry; the catalogue metadata is data; the connector × signal-family compatibility matrix stays a lookup table | CR-024, AC-011 |
-| **22 rules**, listed once in `docs/rules.md` | AC-040 |
+| **27 rules**, listed once in **§5** of this record | AC-040, corrected by §12.6(b); home per §10.12(g) |
 | `error \| warning \| advisory \| off`; per-project `RuleOverride{severity, reason, by, at}` | CR-018, CR-019 |
 | One dismissal mechanism, `AckedFinding`, at two scopes; **errors are acknowledgeable** | CR-019, RJ-006 |
 | Only `TOP-001..005` and placement coherence are model-illegal; Class A becomes spring-back with a reason chip and `[ Connect anyway ]` | CR-017 |
 | Nothing blocks export; `ExportSpec.issuedForConstruction` is the only thing errors gate | CR-022, AC-035 |
-| **DRC fixture corpus — no rule ships without a known-bad and a known-good near-miss** | AC-051. This is also the gate that holds the catalogue at 22 |
+| **DRC fixture corpus — no rule ships without a known-bad and a known-good near-miss** | AC-051. This is also the gate that holds the catalogue at **27** (§12.6(b)) |
 
 #### 7.2.7 Export
 
@@ -5042,13 +5050,18 @@ accurate unknown count in the rollup. Requirement 2 is met in full.
 ### 9.6 M5 — Validation · **M**
 
 **Contents.** The rule registry as Dart functions, the catalogue metadata as data, the compat
-matrix as a lookup table. All 22 rules. Findings, severities, `AckedFinding` at both scopes,
+matrix as a lookup table. **All 27 rules** (§12.6(b)). Findings, severities, `AckedFinding` at both scopes,
 project-wide mutes with reasons. Spring-back with reason chips and remedy chips, each with
 `[ Connect anyway ]`. The `[Why?]` rationale viewer. **The DRC fixture corpus.**
 
-**Exit criterion.** Every one of the 22 rules has a known-bad fixture that produces exactly that
+**Exit criterion.** Every one of the **27** rules has a known-bad fixture that produces exactly that
 finding and a known-good near-miss that produces none — no rule ships without its pair (AC-051).
-A domain-expert review of the 22 rules and of the catalog data is signed off. No rule, at any
+
+> **This exit criterion read "22" until 2026-08-03**, five rules short of the count §12.6(b) ruled,
+> and it is the site where the arithmetic slip cost the most: an exit criterion is the unit of truth
+> under roadmap §8.1, so M5 could have been declared met with `PLC-001..003` and two others
+> unfixtured. Corrected per §12.6(b), which directs the replacement in **every** document.
+A domain-expert review of the **27** rules and of the catalog data is signed off. No rule, at any
 severity, prevents a PDF from being written to disk.
 
 ### 9.7 M6 — The full sheet set · **M**
