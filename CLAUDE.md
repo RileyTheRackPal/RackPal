@@ -15,9 +15,9 @@ Fourteen gates. All must pass before a commit. Notes that cost real time:
   `tools/ci/analyze_info_baseline.txt` (currently 173 infos). Errors and warnings
   are gated at **zero** and are not ratcheted. Going *under* the pin passes with a
   warning; going over fails.
-- **`dart format` is a gate** as of 2026-08-03. Run `dart format .` before
-  committing. It is not `--fatal-infos`: the two were separate questions and the
-  ruling took the formatter and kept the ratchet.
+- **`dart format` is a gate** (DR-017) as of 2026-08-03. Run `dart format .`
+  before committing. It is not `--fatal-infos`: the two were separate questions
+  and DR-017 took the formatter and kept the ratchet.
 - **Anything you leave in `packages/*/tool/` is analyzed.** Scratch scripts inflate
   the info count and fail the gate. Delete them before committing, or keep them in
   the scratchpad.

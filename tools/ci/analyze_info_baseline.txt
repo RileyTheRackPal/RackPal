@@ -12,8 +12,9 @@
 # stops the number moving the wrong way meanwhile, after 203 became 395 during
 # the salvage with nothing watching.
 #
-# THE USER RULED ON THIS 2026-08-03 and the ratchet is the settled answer, not
-# a holding position: adopt `dart format` as a gate, because formatting is
+# DR-017 (canon section 11.16) RULED ON THIS 2026-08-03 and the ratchet is the
+# settled answer, not a holding position: adopt `dart format` as a gate,
+# because formatting is
 # mechanical and settles permanently, and keep the ratchet for infos rather
 # than switching to --fatal-infos, because the remainder are style opinions the
 # ratchet already prevents growing. Clearing them all remains available and is

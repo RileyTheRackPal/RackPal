@@ -336,7 +336,7 @@ A three-item manual checklist catches what nothing automated will: `debugRepaint
 
 ## 7. CI
 
-> **Rewritten 2026-08-03**, when the user ruled on the open decision [docs/12 §4.1](12-milestone-board.md) recorded: **adopt `dart format` as a gate, keep the analyzer's info ratchet.** What stood here until then was a GitHub Actions workflow running `dart analyze --fatal-infos` and a three-OS matrix, none of which existed. The pipeline is Azure DevOps, on one agent, and had been for months. A CI section describing a provider the project does not use is not a specification, it is a trap: docs/12 §4.1 caught it only because somebody ran both and compared.
+> **Rewritten 2026-08-03 under [DR-017](canonical-decisions.md)**, which answered the open decision [docs/12 §4.1](12-milestone-board.md) recorded: **adopt `dart format` as a gate, keep the analyzer's info ratchet.** What stood here until then was a GitHub Actions workflow running `dart analyze --fatal-infos` and a three-OS matrix, none of which existed. The pipeline is Azure DevOps, on one agent, and had been for months. A CI section describing a provider the project does not use is not a specification, it is a trap: docs/12 §4.1 caught it only because somebody ran both and compared.
 
 **What runs today.** One job, `windows_ci`, on `windows-2022`, defined in [`azure-pipelines.yml`](../azure-pipelines.yml). Fourteen gates, in this order, each reproducible locally with `pwsh -File tools/ci/run_local.ps1`:
 
@@ -354,7 +354,7 @@ A three-item manual checklist catches what nothing automated will: `debugRepaint
 | 10–14 | Five suites via `tools/ci/run_suite.ps1` | Any test fails, **or** a suite falls below its non-vacuity floor: core 976, text 1, export 183, ui 382, app 664. The floor counts **non-skipped** cases, so silencing a flaky batch cannot buy a green run |
 | + | `flutter build windows --release`, then `tools/ci/verify_windows_build.ps1` | The build fails, or the release output has a plugin DLL removed, the exe missing, a packaged starter CRLF-corrupted, or a `dartjni.dll` **planted** (it must not be there) |
 
-**Two gates here are not `--fatal-infos`, deliberately.** Gate 4 is a ratchet rather than `--fatal-infos` because 195 infos on the day CI was stood up would have made `main` permanently red, and a permanently red `main` trains people to ignore output. Gate 5 is absolute because formatting is mechanical: it has one correct answer and the gate's own remedy is the same command. The two were separate questions and the 2026-08-03 ruling took one and kept the other. Clearing the remaining 173 and switching gate 4 to `--fatal-infos` stays available and is nobody's scheduled work.
+**Gates 4 and 5 differ deliberately, and [DR-017](canonical-decisions.md) is why.** Gate 4 is a ratchet rather than `--fatal-infos` because 195 infos on the day CI was stood up would have made `main` permanently red, and a permanently red `main` trains people to ignore output. Gate 5 is absolute because formatting is mechanical: it has one correct answer and the gate's own remedy is the same command. Documenting the two as one question was this section's original error. Clearing the remaining 173 and switching gate 4 to `--fatal-infos` stays available and is nobody's scheduled work (DR-017 §11.16.4).
 
 **Caching.** The Flutter SDK and `~/.pub-cache`, keyed on `pubspec.lock`. Do not cache `build/`: a stale plugin registrant costs more debugging time than a cold build costs wall time.
 

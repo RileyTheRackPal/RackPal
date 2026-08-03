@@ -334,7 +334,7 @@ jobs:
       # ==================================================================
       # GATE 1b — THE FORMATTER
       # ==================================================================
-      # Ruled 2026-08-03, answering docs/12 section 4.1. The tree was
+      # DR-017 (canon section 11.16), answering docs/12 section 4.1. The tree was
       # formatted in one mechanical commit (b6ff394, 124 of 426 files) and
       # this keeps it that way. It is a gate rather than an advisory step on
       # purpose: a permanently-yellow step trains people to ignore output,

@@ -433,8 +433,8 @@ nothing rejects a push. The roadmap's global per-milestone rule — *"EVERY MILE
 passes"* — has never been satisfiable for any milestone, M0 included, and becomes satisfiable on
 the day a pipeline run number can be written into this section.
 
-> **RESOLVED 2026-08-03. The user ruled: adopt `dart format` as a gate, keep the analyzer's info
-> ratchet.** Closed by three commits. `b6ff394` formatted the tree, **124** files rather than the 88
+> **RESOLVED 2026-08-03 by DR-017 (canon §11.16): adopt `dart format` as a gate, keep the
+> analyzer's info ratchet.** Closed by three commits. `b6ff394` formatted the tree, **124** files rather than the 88
 > recorded below, and lowered the info pin 194 to 173 because 21 of the 22 long-line infos existed
 > only because nobody had run the formatter. `ecdf3b2` added `dart format --set-exit-if-changed` to
 > `azure-pipelines.yml` and `tools/ci/run_local.ps1` as **gate 1b**, mutation-tested by planting a
@@ -466,9 +466,16 @@ worse than no CI because it trains people to ignore it (docs/11 §8's own argume
 gates above as written: `dart format --set-exit-if-changed` is deliberately absent, and the
 analyzer gate is *zero errors, zero warnings, plus a ratcheted info count* pinned in
 `tools/ci/analyze_info_baseline.txt` rather than `--fatal-infos`. Both choices are argued in the
-file. **That was written while the decision was open. It is now made** (see the block at the head of
-this section): the analyzer gate stayed a ratchet and the format gate was added beside it, so
-`azure-pipelines.yml` runs both and neither was pre-empted by the other.
+file. **That was written while the decision was open. It is now made, as `DR-017`** (see the block at
+the head of this section): the analyzer gate stayed a ratchet and the format gate was added beside
+it, so `azure-pipelines.yml` runs both and neither was pre-empted by the other.
+
+**The sentence above this one still stands, and is the reason this section does not close.** Every
+gate is still a test somebody must remember to run, because the pipeline has never executed.
+**Run 1 is scheduled for M5** (user, 2026-08-03), which puts it alongside canon §10.11's beta-gate
+answer, also held to M5. That is a coherent pairing rather than a coincidence: M5 is the first
+point at which the product is stable enough that both "what does green mean" and "what would you
+judge a beta on" are answerable against something real instead of against a plan.
 
 ### 4.2 The M2 detour is reconciled in code, not in the documents
 
@@ -1261,8 +1268,8 @@ exist, not because it is ungated, and the *Gated on* column says which.
 
 | # | Work | Gated on | Why it is first |
 |---|---|---|---|
-| 1 | **Stand up CI at all** — **WRITTEN, NOT RUN** | Nothing | `azure-pipelines.yml` and `tools/ci/run_local.ps1` are **fourteen gates** in the same order, so green locally and green on the agent would mean the same thing. **The row does not close**, by this section's own standard: no Azure DevOps service has executed the YAML, so nothing yet rejects a push. Closes when a run number can be cited (§4.1) |
-| 2 | ~~**Decide the two failing gates** — format the files and clear the infos, **or** amend docs/11 §7~~ — **DECIDED 2026-08-03** | Nothing — it was a **user decision**, not an engineering one | **Both, split by gate.** `dart format` adopted absolutely (`b6ff394` formatted 124 files, `ecdf3b2` gated it); the analyzer kept its ratchet, pin lowered 194 → 173; docs/11 §7 amended, having described a GitHub Actions workflow the project does not use. The predicted failure did not occur: main was never red (§4.1) |
+| 1 | **Stand up CI at all** — **WRITTEN, NOT RUN** · **scheduled M5** | Nothing blocks it; it is **deferred by choice**, not gated | `azure-pipelines.yml` and `tools/ci/run_local.ps1` are **fourteen gates** in the same order (`DR-017`), so green locally and green on the agent would mean the same thing. **The row does not close**, by this section's own standard: no Azure DevOps service has executed the YAML, so nothing yet rejects a push. **The user scheduled run 1 for M5, 2026-08-03.** Distinguish the two words carefully: this work is *unblocked* and *unscheduled-until-M5*, which is not the same as gated, and it does not belong in §6.2. Closes when a run number can be cited here (§4.1). Board #567 |
+| 2 | ~~**Decide the two failing gates** — format the files and clear the infos, **or** amend docs/11 §7~~ — **DECIDED 2026-08-03, `DR-017`** | Nothing — it was a **user decision**, not an engineering one | **Both, split by gate.** `dart format` adopted absolutely (`b6ff394` formatted 124 files, `ecdf3b2` gated it); the analyzer kept its ratchet, pin lowered 194 → 173; docs/11 §7 amended, having described a GitHub Actions workflow the project does not use. The predicted failure did not occur: main was never red (§4.1). Board #566 |
 | 3 | **First goldens + `flutter_test_config.dart` registering Jost** | Nothing | Makes *"goldens pass"* stop being a clause with nothing behind it (§4.3) |
 | 4 | **Mechanise the `sources.md` provenance gate** | Nothing | AC-052 is prose today; `RISK-04`'s early warning is unmeasurable (§4.4) |
 | 5 | **Extend `epoch_mask_test.dart` to the derived pipeline** | Nothing | The drift is live and grows with every derived consumer (§4.5) |

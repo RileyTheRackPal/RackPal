@@ -213,7 +213,7 @@ Cost, stated honestly rather than comfortably: **44–67 weeks of implementation
 | [Structure device](07-structure-device.md) | Outlets, home runs, dual labels, the location tree |
 | [PDF export](08-pdf-export.md) | The sheet set, the schedule presets, the export contract |
 | [Roadmap](09-roadmap.md) | v1 / v1.1 / v1.2 / v2, the ten milestones, the honest total |
-| [Canonical decisions](canonical-decisions.md) | **Normative.** 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`, canonical naming, the model, the registry, the scope ruling, the milestone plan, and the binding user decisions `DR-001`–`DR-016` |
+| [Canonical decisions](canonical-decisions.md) | **Normative.** 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`, canonical naming, the model, the registry, the scope ruling, the milestone plan, and the binding user decisions `DR-001`–`DR-017` |
 | [Decisions (ADR log)](10-decisions.md) | The sixteen ADRs and canon §10's questions, none of which is open, summarising the record above |
 | [Testing and quality](11-testing-and-quality.md) | The DRC fixture corpus, goldens, the print test matrix |
 | [Seed devices](catalog/seed-devices.md) | The archetype catalog and its provenance |

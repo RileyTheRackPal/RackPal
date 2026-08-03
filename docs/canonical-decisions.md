@@ -5578,9 +5578,10 @@ you need if the decision is ever revisited. §12 is the index of every such supe
 ruling is not listed in §12, it stands exactly as written.
 
 The decisions are numbered `DR-nnn` (**D**ecided by the user, **R**uling) and are cited by that id
-everywhere, in the same way `CR-nnn` is. **There are sixteen, `DR-001` through `DR-016`.** Fifteen
-have their own §11 subsection; `DR-016` alone is ruled inside §10.12(c), because that is where the
-scope addition it makes was argued. *(This sentence read "the seven decisions are numbered DR-001 …
+everywhere, in the same way `CR-nnn` is. **There are seventeen, `DR-001` through `DR-017`.** All
+but one have their own §11 subsection; `DR-016` alone is ruled inside §10.12(c), because that is
+where the scope addition it makes was argued. **`DR-017` is the first that is about process rather
+than product**, and it exists because §8.2 requires a citable id and a board item had none. *(This sentence read "the seven decisions are numbered DR-001 …
 DR-007" until 2026-08-03, and had been wrong since DR-008. A count in a preamble is exactly the
 kind of sentence nobody re-reads, so it is now written as a range that has to be maintained
 alongside the section list rather than as a word.)*
@@ -6883,7 +6884,7 @@ validation and must not be read as any. When M5 populates the matrix, §11.12.3'
 
 ---
 
-## 11.13 DR-013 · Deleting a wired device cascades, after a warning that counts the cost
+### 11.13 DR-013 · Deleting a wired device cascades, after a warning that counts the cost
 
 **The question.** `RemoveDeviceCommand.apply` carries a `TODO(post-M0)`: it removes the
 `DeviceInstance` and *"does not yet decrement any TemplateSnapshot refcount, nor clean up orphaned
@@ -6933,7 +6934,7 @@ correctness, and it stays deferred.
 
 ---
 
-## 11.14 DR-014 · Drawing a wired set member at a different device splits the set
+### 11.14 DR-014 · Drawing a wired set member at a different device splits the set
 
 **The question.** §11.8.3's `atomicConnect` makes a stereo pair ONE `Link` with two
 `Conductor`s. Both jacks are then full, so `TOP-003` refuses every later cable from either of
@@ -6996,7 +6997,7 @@ and #112 (stereo pairs for de-embedded zone audio).
 
 ---
 
-## 11.15 DR-015 · The `rm` extension family, and what a device archive is
+### 11.15 DR-015 · The `rm` extension family, and what a device archive is
 
 **The question.** The product's three user-visible file kinds were named in three different
 idioms — `.rackmate` for a project, `.rmdev` for a device template, `.rmlib` for a library pack —
@@ -7085,9 +7086,60 @@ register instead of three idioms, and it belongs with the MSIX epic where the ma
 
 ---
 
+### 11.16 DR-017 · `dart format` is a gate; the analyzer stays a ratchet
+
+**Ruled 2026-08-03.** The first `DR` that is about **process rather than product**. It is numbered
+because roadmap §8.2 requires every issue and PR to cite a ruling id, and the board item
+implementing this decision (#566) had nothing to cite. A binding user decision without an id is
+indistinguishable, to §8.2's reader, from an unadjudicated one.
+
+**11.16.1 What was asked.** `docs/12` §4.1 recorded an open decision and marked it the user's
+rather than an engineer's: `docs/11` §7 documented two gates, `dart analyze --fatal-infos
+--fatal-warnings` and `dart format --output=none --set-exit-if-changed .`, and **neither ran**. Both
+failed on the tree as it stood. The choice was to make the tree satisfy the documented gates, or to
+amend `docs/11` §7 to the gates actually intended. Standing up CI without deciding would have
+produced a permanently red `main`, which trains people to ignore output and is worse than no CI.
+
+**11.16.2 The ruling: both, split by gate.**
+
+1. **`dart format --output=none --set-exit-if-changed .` is a gate, absolutely.** It is **gate 1b**
+   in `azure-pipelines.yml` and in `tools/ci/run_local.ps1`. The local gate count is **fourteen**.
+2. **The analyzer keeps its ratchet.** Zero errors and zero warnings, gated; infos pinned to an
+   exact number in `tools/ci/analyze_info_baseline.txt`. **Not `--fatal-infos`.**
+3. **`docs/11` §7 is amended** to describe the pipeline that exists.
+
+**11.16.3 Why the two halves differ, since they were documented as one.** Formatting is mechanical:
+it has exactly one correct answer, the gate's own remedy is the same command a developer types, and
+once paid it stays paid. Analyzer infos are not that. They are style opinions with real
+disagreement in them, clearing them is judgement work rather than a command, and gating them
+absolutely against a 195-info tree would have made `main` red on the first push. The ratchet gets
+the property that matters, which is that the number cannot grow, without the property that would
+have made the gate ignored. **Treating the two as one question was the error `docs/11` §7 encoded.**
+
+**11.16.4 What it does not rule.** Clearing the remaining infos and switching gate 4 to
+`--fatal-infos` is **not** foreclosed and is **not** scheduled. It stays available at any time. This
+ruling declines to make it a milestone's problem, nothing more.
+
+**11.16.5 Scope.** **None.** This changes no item's place in v1, v1.1, v1.2, v2 or not-doing, so
+§8.3 does not apply and roadmap §2 is untouched. It changes the **definition of done**: `docs/11`
+§9 clause 1 now reads as the fourteen-gate local run.
+
+**11.16.6 What it cost, and the general lesson.** The decision sat open long enough for its own
+premise to drift: `docs/12` §4.1 and `azure-pipelines.yml` both record **88** unformatted files,
+measured when they were written, and it was **124** when the sweep was finally run. The analyzer
+pin moved 195, then 194, then 173 across the same period. **A deferred mechanical decision does not
+hold still**, which is the argument for gating this class immediately rather than scheduling it.
+
+**11.16.7 Landed.** `b6ff394` (the sweep, 124 files, pin 194 to 173), `ecdf3b2` (the gate, in both
+lists, mutation-tested), `c6408cb` (`docs/11` §7 rewritten; it had specified a **GitHub Actions**
+workflow at `.github/workflows/ci.yaml` with a three-OS matrix, a directory this project has never
+had), `50ba327` (three derived sites the first sweep missed). Board **#566**, closed.
+
+---
+
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-016 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-017 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -7490,7 +7542,7 @@ allowlist of pairs — an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-016 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-017 are the user's decisions and are binding. §12 is the complete
 index of what they supersede — §12.1…§12.5 and §12.9 by ruling, §12.6 by internal correction, and
 §12.8 the list of Parts 1–3 sites carrying a pointer. Anything not listed there stands as written
 in Parts 1–3.

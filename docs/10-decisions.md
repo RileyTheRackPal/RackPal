@@ -3,12 +3,12 @@
 **This file is not the normative record.** The normative record is
 [docs/canonical-decisions.md](canonical-decisions.md) — 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`,
 canonical naming, the model, the registry, the scope ruling, the milestone plan, and Part 4's
-binding user decisions `DR-001`–`DR-016`. This file is a sixteen-ADR summary of it. Where an ADR
+binding user decisions `DR-001`–`DR-017`. This file is a sixteen-ADR summary of it. Where an ADR
 and a ruling appear to differ, the ruling wins and this file is wrong.
 
 What follows is the short-form decision log for RackMate: sixteen ADRs covering the choices that
 shape the codebase, each traced back to its adjudication in the canonical decision record; then
-**the sixteen user decisions `DR-001`–`DR-016`**, which are binding and override the recommendations
+**the seventeen user decisions `DR-001`–`DR-017`**, which are binding and override the recommendations
 they answer; then the questions of canon §10, **none of which is open any longer**: ten are
 answered, 10.3 is moot under DR-006, 10.13 is retired, and 10.11 alone is deferred, to M5 rather
 than indefinitely. An ADR here is a summary with a pointer, not a new ruling. Open questions carry no
@@ -35,14 +35,16 @@ overruled is marked as void where it stands.
 | [015](#adr-015-the-five-package-split) | The five-package split | Accepted | CR-083, CR-084 |
 | [016](#adr-016-density-management--one-sheet-net-labels-filter) | Density management — one sheet, net labels, filter | Accepted | CR-073, CR-103, AC-037, **DR-001**, **DR-004** |
 
-**The sixteen user decisions**, binding and overriding any recommendation they answer. Full text in
+**The seventeen user decisions**, binding and overriding any recommendation they answer. Full text in
 canon §11; the supersession index is canon §12.
 
 > **This table listed only `DR-001`–`DR-005` until 2026-08-03**, an owed edit canon §12.9 recorded
 > against DR-006 and which then went ten rulings further out of date. Seven of the sixteen answer a
 > canon §10 question and say which; the rest are rulings the work itself raised, which is why their
 > `Answers` column is empty. `DR-016` is the only one ruled inside a §10 entry rather than in its
-> own §11 subsection, because §10.12(c) is where the scope addition was made.
+> own §11 subsection, because §10.12(c) is where the scope addition was made. **`DR-017` is the
+> first about process rather than product**: it exists because roadmap §8.2 requires a citable
+> ruling id and the board item implementing it had none.
 
 | DR | Decision | Answers | Effect here |
 |---|---|---|---|
@@ -62,6 +64,7 @@ canon §11; the supersession index is canon §12.
 | DR-014 | **Drawing a wired set member at a different device splits the set** | — | Board #96-C |
 | DR-015 | **The `rm` extension family** — `.rmpj`, `.rmdx`, `.rmda` | — | A rename, **not** a format change. Re-opens AC-042's library pack as a single JSON file, not a zip. ADR-003's container table is superseded |
 | DR-016 | **The starting racks become editable presets** the user tailors to their own inventory | §10.12(c) | A **scope addition under roadmap §8.3**. 42U survives as the shipped seed value; the preset **set** stops being fixed. Presets stay unpersisted on `Rack` (no `presetRef`), so this is a new writable store, not a format change. Board #561 |
+| DR-017 | **`dart format` is a gate; the analyzer stays a ratchet** | — *(answers docs/12 §4.1, not a §10 entry)* | **Process, not product; no scope change.** Gate 1b in `azure-pipelines.yml` and `run_local.ps1`, so the local count is **fourteen**. Infos stay pinned in `analyze_info_baseline.txt` (**173**) rather than `--fatal-infos`, because formatting has one correct answer and style infos do not. docs/11 §7 amended; §9 clause 1 is now the fourteen-gate run. Board #566 |
 
 See also [Canonical decisions](canonical-decisions.md) — normative — plus
 [Overview](00-overview.md), [Data model](02-data-model.md),
