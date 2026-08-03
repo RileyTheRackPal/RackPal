@@ -18,10 +18,11 @@ void main() {
     );
 
     final setterNames = <String>{};
-    for (final f in modelDir
-        .listSync(recursive: true)
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.dart'))) {
+    for (final f
+        in modelDir
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.dart'))) {
       final contents = f.readAsStringSync();
       for (final m in internalSetterPattern.allMatches(contents)) {
         setterNames.add(m.group(1)!);
@@ -74,8 +75,7 @@ void main() {
         .where((f) => f.path.endsWith('.dart'))
         .where((f) {
           final p = f.path.replaceAll(r'\', '/');
-          return !p.contains('/src/model/') &&
-              !p.contains('/src/commands/');
+          return !p.contains('/src/model/') && !p.contains('/src/commands/');
         })
         .toList();
 
@@ -95,8 +95,9 @@ void main() {
           final eqIndex = contents.indexOf('=', m.start);
           final before = contents.substring(0, eqIndex);
           final trimmed = before.trimRight();
-          final precedingChar =
-              trimmed.isEmpty ? '' : trimmed[trimmed.length - 1];
+          final precedingChar = trimmed.isEmpty
+              ? ''
+              : trimmed[trimmed.length - 1];
           const compoundOps = {
             '+',
             '-',
@@ -122,8 +123,8 @@ void main() {
           // line 194), so an explicit `this.x = v` in a method body is a
           // lint failure and cannot exist here. Were that lint ever
           // disabled, this exclusion would start hiding real call sites.
-          if (contents.startsWith('this', m.start - 4 < 0 ? 0 : m.start - 4)
-              && m.start >= 4) {
+          if (contents.startsWith('this', m.start - 4 < 0 ? 0 : m.start - 4) &&
+              m.start >= 4) {
             continue;
           }
           fail(

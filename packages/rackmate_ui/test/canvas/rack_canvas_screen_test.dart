@@ -161,15 +161,17 @@ void main() {
   // Every gesture in this file is already expressed relative to
   // `_canvasOrigin`, so widening the window changes no expectation.
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -395,7 +397,8 @@ void main() {
       expect(
         tester.widgetList(find.byType(DeviceBox)).length,
         beforeCount,
-        reason: 'no device may be placed for a template with no rail '
+        reason:
+            'no device may be placed for a template with no rail '
             'footprint',
       );
       // "Never silently do nothing" — the refusal reaches the user, and it
@@ -469,7 +472,8 @@ void main() {
       expect(
         matchingU6,
         hasLength(1),
-        reason: "the newly placed device should sit at U6, the caret's "
+        reason:
+            "the newly placed device should sit at U6, the caret's "
             'moved-to position',
       );
 

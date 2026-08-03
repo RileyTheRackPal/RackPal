@@ -156,7 +156,8 @@ void main() {
       expect(
         find.text('This also deletes 3 cables.'),
         findsOneWidget,
-        reason: 'the count is the whole point of the dialog — a delete '
+        reason:
+            'the count is the whole point of the dialog — a delete '
             'that silently drops rows off the schedule is the failure G1 '
             'makes most expensive',
       );
@@ -196,8 +197,9 @@ void main() {
   });
 
   group('confirmDeviceRemoval — when it asks and when it does not', () {
-    testWidgets('a device carrying NOTHING shows no dialog and returns true',
-        (tester) async {
+    testWidgets('a device carrying NOTHING shows no dialog and returns true', (
+      tester,
+    ) async {
       // §11.13.2's last sentence, and the reason it matters: a prompt for
       // a consequence-free delete is the nag that teaches people to click
       // through prompts, including this one on the day it counts.
@@ -308,8 +310,9 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('deleting an UNWIRED device is as immediate as it ever was',
-        (tester) async {
+    testWidgets('deleting an UNWIRED device is as immediate as it ever was', (
+      tester,
+    ) async {
       final doc = _document();
       await pump(tester, doc);
       await selectAndDelete(tester, _bare.v);
@@ -354,7 +357,8 @@ void main() {
       expect(
         linksBefore - doc.links.length,
         3,
-        reason: 'ONE NUMBER, ONE SOURCE — the dialog and the command both '
+        reason:
+            'ONE NUMBER, ONE SOURCE — the dialog and the command both '
             'read planDeviceRemoval',
       );
       // And the far end survives, with its own ports.

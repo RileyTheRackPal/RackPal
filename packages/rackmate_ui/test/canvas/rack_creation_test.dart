@@ -135,15 +135,17 @@ Future<void> _cycle(WidgetTester tester, {String? query}) async {
 
 void main() {
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -188,7 +190,8 @@ void main() {
     expect(
       tester.allRenderObjects.whereType<RenderDeviceBox>(),
       isEmpty,
-      reason: 'a device placed in RK-1 must not appear on RK-2 — '
+      reason:
+          'a device placed in RK-1 must not appear on RK-2 — '
           'scene_builder.dart filters on placement.rackId',
     );
   });
@@ -350,8 +353,9 @@ void main() {
       );
     });
 
-    testWidgets('lists racks in the order the elevation sheets print them',
-        (tester) async {
+    testWidgets('lists racks in the order the elevation sheets print them', (
+      tester,
+    ) async {
       await tester.pumpWidget(_app());
       await tester.pump();
       await _focusCanvas(tester);

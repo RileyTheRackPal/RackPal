@@ -19,7 +19,8 @@ String _classBody(String source, String className) {
   expect(
     decl,
     isNotNull,
-    reason: 'no `class $className` in the source — this test reads the '
+    reason:
+        'no `class $className` in the source — this test reads the '
         'declaration itself, so a rename silently blinds it',
   );
   final open = source.indexOf('{', decl!.end);
@@ -144,7 +145,8 @@ void main() {
           expect(
             p.hingeSide,
             isNull,
-            reason: '${p.id} is not a swing frame yet names a hinge side — '
+            reason:
+                '${p.id} is not a swing frame yet names a hinge side — '
                 'the inspector renders that dropdown disabled and dashed, '
                 'so a value here would be invisible state',
           );
@@ -179,8 +181,7 @@ void main() {
       );
     });
 
-    test('the two presets §4 spells with a depth carry that exact depth',
-        () {
+    test('the two presets §4 spells with a depth carry that exact depth', () {
       final byId = buildRackPresets();
       expect(byId['wallBox6U']!.usableDepth, const Len(12 * Len.nmPerInch));
       expect(
@@ -200,15 +201,18 @@ void main() {
       // type with its own revert.
       final keys = {for (final f in RackField.all) f.key};
 
-      expect(keys, containsAll(<String>{
-        'formFactor',
-        'widthClass',
-        'railType',
-        'usableDepth',
-        'weightCapacity',
-        'isSwingFrame',
-        'hingeSide',
-      }));
+      expect(
+        keys,
+        containsAll(<String>{
+          'formFactor',
+          'widthClass',
+          'railType',
+          'usableDepth',
+          'weightCapacity',
+          'isSwingFrame',
+          'hingeSide',
+        }),
+      );
       // heightU is the exception, and deliberately so: it routes through
       // the pre-existing SetRackHeightCommand (and therefore through the
       // shrink-below-occupancy path) rather than through RackField.
@@ -262,7 +266,8 @@ void main() {
           'isSwingFrame',
           'hingeSide',
         },
-        reason: 'RackPreset gained or lost a field. If it GAINED one, ask '
+        reason:
+            'RackPreset gained or lost a field. If it GAINED one, ask '
             'whether "apply preset" should really be writing it — this '
             'test exists because identity (name/designator/location) and '
             'display preferences (ruNumbering/mirrorRearElevation) must '
@@ -294,8 +299,13 @@ void main() {
 
     expect(order, hasLength(11));
     expect(order.toSet(), buildRackPresets().keys.toSet());
-    expect(order.first, 'wallBox6U', reason: 'wall-mounted archetypes '
-        'first, per the ordering the file itself states');
+    expect(
+      order.first,
+      'wallBox6U',
+      reason:
+          'wall-mounted archetypes '
+          'first, per the ordering the file itself states',
+    );
   });
 
   test('each call returns a fresh map — no shared singleton a caller '

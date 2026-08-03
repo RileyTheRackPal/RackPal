@@ -85,8 +85,7 @@ const double _grabInset = 4;
 /// pressing the SAME x twice with only the y differing.
 const double _probeX = 220;
 
-Offset _topEdgeGrab(WidgetTester tester) =>
-    _scene(tester, _probeX, _grabInset);
+Offset _topEdgeGrab(WidgetTester tester) => _scene(tester, _probeX, _grabInset);
 
 /// Where the pointer must be for the top edge to imply [heightU].
 ///
@@ -167,15 +166,17 @@ void main() {
   // the 8px band then hits the header's `+` stepper button instead of the
   // canvas, which grows the rack and looks exactly like a band-test failure.
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -262,13 +263,15 @@ void main() {
       expect(
         await armsAt(8.5),
         isFalse,
-        reason: '8.5px below the edge is outside an 8px band — if this arms, '
+        reason:
+            '8.5px below the edge is outside an 8px band — if this arms, '
             'the band got wider than §4.1 says',
       );
       expect(
         await armsAt(-7.5),
         isTrue,
-        reason: '7.5px ABOVE the edge is inside a band CENTRED on it. A band '
+        reason:
+            '7.5px ABOVE the edge is inside a band CENTRED on it. A band '
             'that only reached downward would fail here, and a user aiming '
             'at the boundary does not know which side of it they are on',
       );

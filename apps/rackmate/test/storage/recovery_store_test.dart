@@ -437,8 +437,9 @@ void main() {
             // the two documents here differ in content as well as size,
             // and a sidecar attached to the wrong bytes is the whole
             // subject of this group.
-            final expected =
-                survivor.sidecar.unsavedEditCount == 47 ? _doc(96) : _doc(64);
+            final expected = survivor.sidecar.unsavedEditCount == 47
+                ? _doc(96)
+                : _doc(64);
             expect(
               bytes,
               orderedEquals(expected),
@@ -454,51 +455,55 @@ void main() {
         }
       });
 
-      test('the previous sidecar is retired BEFORE the snapshot moves',
-          () async {
-        // The direct ordering assertion, so the property above cannot be
-        // satisfied by luck.
-        final seed = await afterFirstAutosave();
-        final made = secondAutosaveStore(seed);
-        await writeSecondAutosave(made.store);
+      test(
+        'the previous sidecar is retired BEFORE the snapshot moves',
+        () async {
+          // The direct ordering assertion, so the property above cannot be
+          // satisfied by luck.
+          final seed = await afterFirstAutosave();
+          final made = secondAutosaveStore(seed);
+          await writeSecondAutosave(made.store);
 
-        final sidecarRetired = made.fs.journal.indexWhere(
-          (op) => op is Deleted && op.path == r'C:\data\recovery\doc-1.json',
-        );
-        final snapshotPromoted = made.fs.journal.indexWhere(
-          (op) => op is Renamed && op.to == r'C:\data\recovery\doc-1.rmpj',
-        );
+          final sidecarRetired = made.fs.journal.indexWhere(
+            (op) => op is Deleted && op.path == r'C:\data\recovery\doc-1.json',
+          );
+          final snapshotPromoted = made.fs.journal.indexWhere(
+            (op) => op is Renamed && op.to == r'C:\data\recovery\doc-1.rmpj',
+          );
 
-        expect(
-          sidecarRetired,
-          greaterThanOrEqualTo(0),
-          reason:
-              'the old sidecar describes bytes the promote below is about '
-              'to destroy, so it is a lie from that instant on',
-        );
-        expect(snapshotPromoted, greaterThan(sidecarRetired));
-      });
+          expect(
+            sidecarRetired,
+            greaterThanOrEqualTo(0),
+            reason:
+                'the old sidecar describes bytes the promote below is about '
+                'to destroy, so it is a lie from that instant on',
+          );
+          expect(snapshotPromoted, greaterThan(sidecarRetired));
+        },
+      );
 
-      test('a clean second write still ends with a matched, CURRENT pair',
-          () async {
-        // Guards the guard: retiring the sidecar must not have turned the
-        // happy path into a permanent orphan.
-        final seed = await afterFirstAutosave();
-        final made = secondAutosaveStore(seed);
-        await writeSecondAutosave(made.store);
+      test(
+        'a clean second write still ends with a matched, CURRENT pair',
+        () async {
+          // Guards the guard: retiring the sidecar must not have turned the
+          // happy path into a permanent orphan.
+          final seed = await afterFirstAutosave();
+          final made = secondAutosaveStore(seed);
+          await writeSecondAutosave(made.store);
 
-        final scan = await made.store.scan();
-        expect(scan.survivors, hasLength(1));
-        expect(scan.orphanedSnapshots, 0);
-        expect(scan.orphanedSidecars, 0);
-        expect(scan.survivors.single.sidecar.unsavedEditCount, 47);
-        expect(scan.survivors.single.sidecar.realPath, r'C:\jobs\B.rmpj');
-        expect(
-          await made.store.readSnapshot(scan.survivors.single),
-          orderedEquals(_doc(96)),
-          reason: "the SECOND autosave's document, not the first",
-        );
-      });
+          final scan = await made.store.scan();
+          expect(scan.survivors, hasLength(1));
+          expect(scan.orphanedSnapshots, 0);
+          expect(scan.orphanedSidecars, 0);
+          expect(scan.survivors.single.sidecar.unsavedEditCount, 47);
+          expect(scan.survivors.single.sidecar.realPath, r'C:\jobs\B.rmpj');
+          expect(
+            await made.store.readSnapshot(scan.survivors.single),
+            orderedEquals(_doc(96)),
+            reason: "the SECOND autosave's document, not the first",
+          );
+        },
+      );
     });
   });
 
@@ -527,13 +532,15 @@ void main() {
       expect(
         scan.survivors,
         hasLength(1),
-        reason: 'a crash survivor written by the previous build was '
+        reason:
+            'a crash survivor written by the previous build was '
             'dropped by the build the user upgraded to',
       );
       expect(
         scan.survivors.single.snapshotPath,
         r'C:\data\recovery\doc-1.rackmate',
-        reason: 'the path was REBUILT from the current extension, so '
+        reason:
+            'the path was REBUILT from the current extension, so '
             'Recover would read a file that is not there',
       );
       // And its bytes are reachable, which the path alone does not prove.
@@ -610,7 +617,8 @@ void main() {
       expect(
         made.fs.calls.where((c) => c == 'exists'),
         hasLength(1 + kSnapshotExtensions.length),
-        reason: 'one existence check for the sidecar and one for each '
+        reason:
+            'one existence check for the sidecar and one for each '
             'spelling a snapshot may have (DR-015), and no delete',
       );
       expect(made.fs.journal, isEmpty);
@@ -673,8 +681,10 @@ void main() {
 
         await made.store.delete('doc-1');
 
-        expect(made.fs.state.files.keys.where((f) => f.contains('doc-1')),
-            isEmpty);
+        expect(
+          made.fs.state.files.keys.where((f) => f.contains('doc-1')),
+          isEmpty,
+        );
       });
 
       test('an UNOWNED pair — written by a build with no owner field — is '
@@ -698,8 +708,10 @@ void main() {
 
         await made.store.delete('doc-1');
 
-        expect(made.fs.state.files.keys.where((f) => f.contains('doc-1')),
-            isEmpty);
+        expect(
+          made.fs.state.files.keys.where((f) => f.contains('doc-1')),
+          isEmpty,
+        );
       });
 
       test("the user's Discard still works on another session's pair, "
@@ -726,8 +738,10 @@ void main() {
 
         await made.store.delete(scan.survivors.single.sidecar.docId);
 
-        expect(made.fs.state.files.keys.where((f) => f.contains('doc-1')),
-            isEmpty);
+        expect(
+          made.fs.state.files.keys.where((f) => f.contains('doc-1')),
+          isEmpty,
+        );
       });
 
       test('claiming is a no-op when the pair is already ours', () async {
@@ -927,7 +941,8 @@ void main() {
       expect(
         made.fs.state.files.keys.where((f) => f.contains('shared-doc')),
         isEmpty,
-        reason: "B's own save and clean shutdown must still be able to "
+        reason:
+            "B's own save and clean shutdown must still be able to "
             'retire the pair B wrote',
       );
     });
@@ -978,8 +993,7 @@ void main() {
       );
     });
 
-    test('a crashed run that left no pair still has its lease swept',
-        () async {
+    test('a crashed run that left no pair still has its lease swept', () async {
       // Nothing else would ever ask about that session: it crashed with a
       // clean document, so there is no snapshot, no sidecar and no stray
       // naming it. Without this sweep the sessions directory grows by one
@@ -1105,8 +1119,7 @@ void main() {
       );
     });
 
-    test('anything that is not a .tmp is still left strictly alone',
-        () async {
+    test('anything that is not a .tmp is still left strictly alone', () async {
       final made = _make(
         files: {r'C:\data\recovery\README.txt': _doc(4)},
         dirs: {_recoveryDir},
@@ -1205,8 +1218,9 @@ void main() {
     // The grep half of the guarantee — that the recovery DIRECTORY is
     // named in exactly one file — is RULE 3 in storage_layering_test.dart.
 
-    final source = File('lib/src/storage/recovery_store.dart')
-        .readAsStringSync();
+    final source = File(
+      'lib/src/storage/recovery_store.dart',
+    ).readAsStringSync();
 
     test('RecoveryStore has exactly these public members', () {
       expect(

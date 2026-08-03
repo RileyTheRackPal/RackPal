@@ -179,7 +179,8 @@ void main() {
       expect(
         rack.meta.localRevision,
         beforeRev,
-        reason: 'a revision left one higher than before apply is exactly '
+        reason:
+            'a revision left one higher than before apply is exactly '
             'what breaks CR-117 byte identity',
       );
     });
@@ -202,13 +203,13 @@ void main() {
       expect(
         _rack(thrice).meta.localRevision,
         _rack(once).meta.localRevision,
-        reason: 'the meta triple must land identically too, or CR-117 '
+        reason:
+            'the meta triple must land identically too, or CR-117 '
             'byte identity fails on any sequence containing a redo',
       );
     });
 
-    test('a nullable field round-trips through null in both directions',
-        () {
+    test('a nullable field round-trips through null in both directions', () {
       final doc = _doc();
       final setIt = _cmd<Len?>(
         RackField.usableDepth,
@@ -222,7 +223,8 @@ void main() {
       expect(
         _rack(doc).usableDepth,
         isNull,
-        reason: 'unset must survive a round trip as unset, not as zero '
+        reason:
+            'unset must survive a round trip as unset, not as zero '
             '(CR-114)',
       );
 
@@ -255,8 +257,7 @@ void main() {
       final first = _cmd(RackField.designator, 'RK-1', 'RK-2');
       final second = _cmd(RackField.designator, 'RK-2', 'RK-3');
 
-      final merged =
-          first.mergeWith(second)! as SetRackPropertyCommand<String>;
+      final merged = first.mergeWith(second)! as SetRackPropertyCommand<String>;
 
       expect(merged.from, 'RK-1');
       expect(merged.to, 'RK-3');
@@ -274,7 +275,8 @@ void main() {
       expect(
         _rack(doc).meta.localRevision,
         0,
-        reason: 'the merged command must carry the meta snapshot captured '
+        reason:
+            'the merged command must carry the meta snapshot captured '
             'by the FIRST command forward, not the second one',
       );
     });
@@ -353,7 +355,8 @@ void main() {
           actor: 't',
         ),
         isNull,
-        reason: 'a no-op must be distinguishable from a real edit so the '
+        reason:
+            'a no-op must be distinguishable from a real edit so the '
             'caller does not push an empty undo entry',
       );
     });

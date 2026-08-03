@@ -96,11 +96,11 @@ void main() {
           size: const PdfPoint(_boxW, _boxH),
           painter: (PdfGraphics graphics, PdfPoint size) {
             PdfDiagramCanvas(
-              graphics: graphics,
-              boxHeight: size.y, // size.y, NOT page height -- §7.4
-              fonts: fonts,
-              measurer: measurer,
-            )
+                graphics: graphics,
+                boxHeight: size.y, // size.y, NOT page height -- §7.4
+                fonts: fonts,
+                measurer: measurer,
+              )
               ..save()
               ..drawRect(
                 const DBox.fromLtwh(10, 10, 50, 20),
@@ -175,9 +175,7 @@ void main() {
       // A rounded rect lowers to `m`/`l`/`c` and emits no `re` at all, so
       // it is identified by its 17-point path rather than by its size —
       // which `drawRect` above shares.
-      final rounded = page.paths
-          .where((p) => p.pointCount == 17)
-          .toList();
+      final rounded = page.paths.where((p) => p.pointCount == 17).toList();
       expect(rounded, hasLength(1), reason: 'fill only, so one paint');
 
       final r = rounded.single;

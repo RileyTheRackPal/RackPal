@@ -1428,9 +1428,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       final count = _pins.length;
       setState(() => _pins = PinSelection.none);
       _status.show(
-        count == 1
-            ? 'Jack deselected.'
-            : '$count selected jacks deselected.',
+        count == 1 ? 'Jack deselected.' : '$count selected jacks deselected.',
       );
       return;
     }

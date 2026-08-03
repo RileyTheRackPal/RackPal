@@ -409,7 +409,8 @@ String _cppCode() {
   expect(
     file.existsSync(),
     isTrue,
-    reason: 'run from the app root; $_cppPath is where the truth is derived '
+    reason:
+        'run from the app root; $_cppPath is where the truth is derived '
         'from',
   );
   return stripComments(file.readAsStringSync());
@@ -895,7 +896,9 @@ constexpr FILEOPENDIALOGOPTIONS kSharedOptions =
         isNotEmpty,
       );
       expect(
-        registryWritesIn("import 'package:win32_registry/win32_registry.dart';"),
+        registryWritesIn(
+          "import 'package:win32_registry/win32_registry.dart';",
+        ),
         isNotEmpty,
       );
       expect(
@@ -932,8 +935,10 @@ constexpr FILEOPENDIALOGOPTIONS kSharedOptions =
         isEmpty,
       );
       expect(registryWritesIn('RegQueryValueExW(key, name, ...);'), isEmpty);
-      expect(registryWritesIn('RegOpenKeyExW(root, path, 0, KEY_READ, &k);'),
-          isEmpty);
+      expect(
+        registryWritesIn('RegOpenKeyExW(root, path, 0, KEY_READ, &k);'),
+        isEmpty,
+      );
     });
 
     test('a registry call hidden in a comment is not a registry call', () {
@@ -969,7 +974,8 @@ The two ComDlg32 keys are the only value the shell leaves, and that is all
         expect(
           hits.any((h) => h.endsWith(why)),
           isTrue,
-          reason: '/${pattern.pattern}/ ($why) matches nothing in the '
+          reason:
+              '/${pattern.pattern}/ ($why) matches nothing in the '
               'wording it was written to ban',
         );
       }

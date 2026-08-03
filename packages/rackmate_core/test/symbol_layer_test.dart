@@ -613,14 +613,16 @@ void main() {
       expect(
         rule.a.y,
         header.bottom,
-        reason: 'the rule is UNDER the header band (docs/05 SS3), not '
+        reason:
+            'the rule is UNDER the header band (docs/05 SS3), not '
             'wherever `headerHeight` alone happens to land',
       );
       expect(rule.b.y, header.bottom);
       expect(
         rule.a.y,
         isNot(s.headerHeight),
-        reason: 'and the two spellings are genuinely different here, which '
+        reason:
+            'and the two spellings are genuinely different here, which '
             'is what makes this fixture able to tell them apart',
       );
     });

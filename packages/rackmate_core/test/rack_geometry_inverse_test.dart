@@ -174,13 +174,15 @@ void main() {
       expect(
         identical(held, rebuilt),
         isFalse,
-        reason: 'if these were canonicalised, the next assertion would '
+        reason:
+            'if these were canonicalised, the next assertion would '
             'prove nothing about value equality',
       );
       expect(
         held != rebuilt,
         isFalse,
-        reason: 'a value type without == turns a targeted repaint into an '
+        reason:
+            'a value type without == turns a targeted repaint into an '
             'unconditional one',
       );
     });

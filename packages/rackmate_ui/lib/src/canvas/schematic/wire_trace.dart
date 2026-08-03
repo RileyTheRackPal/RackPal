@@ -189,7 +189,6 @@ final class SchematicWireStyle {
   /// carried by the wire itself, and outlining the pill at the family's
   /// weight too would say the same thing twice.
   final double outlineWidthPt;
-
 }
 
 /// One link's drawn rendering: where the wire runs, and what encodes it.

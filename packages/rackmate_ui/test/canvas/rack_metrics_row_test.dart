@@ -85,7 +85,9 @@ Future<void> _pumpStrip(
 }) => tester.pumpWidget(
   MaterialApp(
     home: Scaffold(
-      body: Center(child: RackMetricsRow(rollups: rollups, units: units)),
+      body: Center(
+        child: RackMetricsRow(rollups: rollups, units: units),
+      ),
     ),
   ),
 );
@@ -320,15 +322,17 @@ void main() {
 
   group('wired into RackCanvasScreen (the regression this fixes)', () {
     setUp(() {
-      TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-          .implicitView!
+      TestWidgetsFlutterBinding.ensureInitialized()
+            .platformDispatcher
+            .implicitView!
         ..physicalSize = const Size(1600, 1000)
         ..devicePixelRatio = 1;
     });
 
     tearDown(() {
-      TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-          .implicitView!
+      TestWidgetsFlutterBinding.ensureInitialized()
+            .platformDispatcher
+            .implicitView!
         ..resetPhysicalSize()
         ..resetDevicePixelRatio();
     });
@@ -483,15 +487,17 @@ void main() {
   // direction fails here.
   group('the RU chip agrees with the boxes rendered beneath it', () {
     setUp(() {
-      TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-          .implicitView!
+      TestWidgetsFlutterBinding.ensureInitialized()
+            .platformDispatcher
+            .implicitView!
         ..physicalSize = const Size(1600, 1200)
         ..devicePixelRatio = 1;
     });
 
     tearDown(() {
-      TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-          .implicitView!
+      TestWidgetsFlutterBinding.ensureInitialized()
+            .platformDispatcher
+            .implicitView!
         ..resetPhysicalSize()
         ..resetDevicePixelRatio();
     });
@@ -658,7 +664,8 @@ void main() {
       expect(
         find.text('RU rear ${renderedRu(tester).length}/12'),
         findsOneWidget,
-        reason: 'the strip read "RU rear 1/12" — PP-1 alone — while the '
+        reason:
+            'the strip read "RU rear 1/12" — PP-1 alone — while the '
             'canvas beneath it drew UPS-1 across rear U1-U3 and SW-1 at '
             'rear U5',
       );

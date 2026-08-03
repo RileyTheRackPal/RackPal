@@ -88,11 +88,29 @@ void main() {
     // Without this, a `stripComments` that returned the empty string, or a
     // pattern that matched nothing at all, would make both gates above
     // pass on any repository whatsoever.
-    expect(callsPrint('void main() { ${'pri' 'nt'}(1); }'), isTrue);
-    expect(callsExpect('test("x", () { ${'expe' 'ct'}(1, 1); });'), isTrue);
+    expect(
+      callsPrint(
+        'void main() { ${'pri'
+            'nt'}(1); }',
+      ),
+      isTrue,
+    );
+    expect(
+      callsExpect(
+        'test("x", () { ${'expe'
+            'ct'}(1, 1); });',
+      ),
+      isTrue,
+    );
     // ...and they are not so eager that an identifier trips them.
     expect(callsPrint('final _printCall = 1;'), isFalse);
-    expect(callsPrint('// a comment that says ${'pri' 'nt'}(x)'), isFalse);
+    expect(
+      callsPrint(
+        '// a comment that says ${'pri'
+            'nt'}(x)',
+      ),
+      isFalse,
+    );
     expect(callsExpect('final unexpected = 1;'), isFalse);
     // The gate file this package needed and did not have is itself scanned
     // by the two tests above, so it must survive its own rules.

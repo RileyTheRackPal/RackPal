@@ -71,9 +71,7 @@ final class PinRef {
 
   @override
   bool operator ==(Object other) =>
-      other is PinRef &&
-      other.deviceId == deviceId &&
-      other.portKey == portKey;
+      other is PinRef && other.deviceId == deviceId && other.portKey == portKey;
 
   @override
   int get hashCode => Object.hash(deviceId, portKey);
@@ -493,7 +491,9 @@ ConnectOverlay buildConnectOverlay({
   // SUPPRESSED ENTIRELY WHILE [pairs] IS NON-EMPTY: a multi-draw's source
   // is a RUN, and a band from the one pin the pointer happens to be over
   // would draw a cable the commit does not make.
-  if (pairs.isEmpty && sourcePin != null && caretPin == null &&
+  if (pairs.isEmpty &&
+      sourcePin != null &&
+      caretPin == null &&
       freeEnd != null) {
     // AN UNSNAPPED POINTER DRAG. The band still leaves the source along
     // its own edge — that half is a fact about the pin and does not

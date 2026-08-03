@@ -150,7 +150,8 @@ void main() {
     expect(
       f.topPortCount,
       greaterThanOrEqualTo(48),
-      reason: 'the catalog changed; this fixture needs an edge wide enough '
+      reason:
+          'the catalog changed; this fixture needs an edge wide enough '
           'for a comb to have somewhere to go wrong, and below about seven '
           'cables every rule this file has ever held looks alike',
     );
@@ -210,7 +211,8 @@ void main() {
       expect(
         all.toSet().length,
         all.length,
-        reason: '${all.length} cables leave SW-1 sharing only '
+        reason:
+            '${all.length} cables leave SW-1 sharing only '
             '${all.toSet().length} corridors, so some are drawn on one line',
       );
       // AND THE COMB REALLY DOES CLIMB — 48 identical escapes would fail
@@ -275,7 +277,8 @@ void main() {
       expect(
         doubled,
         0,
-        reason: 'cables are drawn along each other for '
+        reason:
+            'cables are drawn along each other for '
             '${doubled.toStringAsFixed(0)} units: ${worst.join(', ')}',
       );
     });
@@ -341,7 +344,8 @@ void main() {
       expect(
         carried.values.where((n) => n > 1),
         isNotEmpty,
-        reason: 'the pairing stopped being symmetric, so this group is no '
+        reason:
+            'the pairing stopped being symmetric, so this group is no '
             'longer testing the case it was built for',
       );
     });
@@ -360,7 +364,8 @@ void main() {
       expect(
         lastTrace,
         lessThan(firstPill),
-        reason: 'op $lastTrace is a trace and op $firstPill is a pill — a '
+        reason:
+            'op $lastTrace is a trace and op $firstPill is a pill — a '
             'wire drawn after a flag is a line through its net name',
       );
     });
@@ -392,7 +397,8 @@ void main() {
         expect(
           argb >> 24 & 0xFF,
           255,
-          reason: '0x${argb.toRadixString(16)} is translucent; a wire under '
+          reason:
+              '0x${argb.toRadixString(16)} is translucent; a wire under '
               'the flag body still shows through it',
         );
       }
@@ -400,7 +406,8 @@ void main() {
       expect(
         fills,
         isNot(contains(hue)),
-        reason: 'an opaque fill at the FULL domain hue would be a solid '
+        reason:
+            'an opaque fill at the FULL domain hue would be a solid '
             'blob, not the 12% tint of docs/05 §11.5 against paper',
       );
     });

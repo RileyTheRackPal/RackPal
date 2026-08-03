@@ -222,8 +222,7 @@ void main() {
       expect(plan.freedU, 2); // highest before 9, after 7
     });
 
-    test('a device too tall to clear an anchor stays exactly where it is',
-        () {
+    test('a device too tall to clear an anchor stays exactly where it is', () {
       // 3U device at U8; anchor holds U2. The only run below the anchor is
       // U1 alone, so the 3U device cannot pack down past it and must stay.
       final doc = _doc(12, [
@@ -261,8 +260,13 @@ void main() {
 
       final plan = _plan(doc, CompactDirection.down);
 
-      expect(_targets(plan), {'TALL': 4}, reason: 'TALL must move UP to '
-          'the lowest run that clears the anchor, not sit on it');
+      expect(
+        _targets(plan),
+        {'TALL': 4},
+        reason:
+            'TALL must move UP to '
+            'the lowest run that clears the anchor, not sit on it',
+      );
       expect(
         plan.moves.map((m) => m.designator),
         isNot(contains('ANCHOR')),
@@ -411,10 +415,13 @@ void main() {
       for (final c in cmds) {
         c.apply(doc);
       }
-      expect({
-        for (final d in doc.devices.values)
-          d.designator: (d.placement as RailPlacement).ruIndex,
-      }, {'A': 1, 'B': 2, 'C': 4});
+      expect(
+        {
+          for (final d in doc.devices.values)
+            d.designator: (d.placement as RailPlacement).ruIndex,
+        },
+        {'A': 1, 'B': 2, 'C': 4},
+      );
 
       for (var i = cmds.length - 1; i >= 0; i--) {
         cmds[i].revert(doc);
@@ -425,8 +432,7 @@ void main() {
       }, before);
     });
 
-    test('an empty plan emits no commands — "nothing to do" stays nothing',
-        () {
+    test('an empty plan emits no commands — "nothing to do" stays nothing', () {
       final doc = _doc(12, [_at('A', 1, 1)]);
 
       expect(
@@ -453,8 +459,13 @@ void main() {
       );
 
       expect(occ.single.ruIndex, 11);
-      expect(occ.single.deviceH, 4, reason: 'clipping to the rack extent '
-          'here would hide exactly the case the shrink planner exists for');
+      expect(
+        occ.single.deviceH,
+        4,
+        reason:
+            'clipping to the rack extent '
+            'here would hide exactly the case the shrink planner exists for',
+      );
     });
 
     test('is ascending by ruIndex and carries the locked flag', () {
@@ -519,20 +530,23 @@ void main() {
       );
     }
 
-    test('Compact Down packs AROUND an unmodelled device, never through it',
-        () {
-      final doc = _doc(12, [_at('A', 8, 2)]);
-      addOrphan(doc, 'ORPHAN', 2);
+    test(
+      'Compact Down packs AROUND an unmodelled device, never through it',
+      () {
+        final doc = _doc(12, [_at('A', 8, 2)]);
+        addOrphan(doc, 'ORPHAN', 2);
 
-      final plan = _plan(doc, CompactDirection.down);
+        final plan = _plan(doc, CompactDirection.down);
 
-      expect(
-        _targets(plan),
-        {'A': 3},
-        reason: 'U1-U2 is the lowest free run only if U2 is empty, and it '
-            'is not — ORPHAN is standing on it',
-      );
-    });
+        expect(
+          _targets(plan),
+          {'A': 3},
+          reason:
+              'U1-U2 is the lowest free run only if U2 is empty, and it '
+              'is not — ORPHAN is standing on it',
+        );
+      },
+    );
 
     test('Compact Up packs AROUND one too', () {
       final doc = _doc(12, [_at('A', 2, 2)]);

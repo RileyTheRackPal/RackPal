@@ -143,8 +143,7 @@ void main() {
       out.notices,
       contains(
         predicate<String>(
-          (n) =>
-              n.startsWith('T2.01: ') && n.contains('past the drawing area'),
+          (n) => n.startsWith('T2.01: ') && n.contains('past the drawing area'),
         ),
       ),
       reason: 'Notices: ${out.notices}',

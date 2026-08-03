@@ -21,13 +21,15 @@ import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
 void main() {
-  test('the blank project seeds the height the New-rack dialog defaults to',
-      () {
-    expect(kBlankProjectRackHeightU, NewRackDialog.defaultHeightU);
-    // Stated as a literal too, because "they match each other" is also
-    // true of two constants that have both drifted to 24.
-    expect(kBlankProjectRackHeightU, 42);
-  });
+  test(
+    'the blank project seeds the height the New-rack dialog defaults to',
+    () {
+      expect(kBlankProjectRackHeightU, NewRackDialog.defaultHeightU);
+      // Stated as a literal too, because "they match each other" is also
+      // true of two constants that have both drifted to 24.
+      expect(kBlankProjectRackHeightU, 42);
+    },
+  );
 
   test('and the rack it seeds is the same shape the dialog would build with '
       'no preset chosen', () {

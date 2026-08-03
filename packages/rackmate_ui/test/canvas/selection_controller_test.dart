@@ -69,23 +69,25 @@ void main() {
   });
 
   group('snapshot / restore round-trip (undo/redo path)', () {
-    test('snapshot captures ids+focus; restore reinstates them and notifies',
-        () {
-      final sel = SelectionController()..apply([_a, _b], SelectMode.replace);
-      final snap = sel.snapshot();
-      expect(snap.ids, {_a, _b});
-      expect(snap.focus, _b);
+    test(
+      'snapshot captures ids+focus; restore reinstates them and notifies',
+      () {
+        final sel = SelectionController()..apply([_a, _b], SelectMode.replace);
+        final snap = sel.snapshot();
+        expect(snap.ids, {_a, _b});
+        expect(snap.focus, _b);
 
-      // Move on, then restore the earlier snapshot (what undo does).
-      var notified = 0;
-      sel
-        ..apply([_c], SelectMode.replace)
-        ..addListener(() => notified++)
-        ..restore(snap);
-      expect(sel.ids, {_a, _b});
-      expect(sel.focus, _b);
-      expect(notified, 1);
-    });
+        // Move on, then restore the earlier snapshot (what undo does).
+        var notified = 0;
+        sel
+          ..apply([_c], SelectMode.replace)
+          ..addListener(() => notified++)
+          ..restore(snap);
+        expect(sel.ids, {_a, _b});
+        expect(sel.focus, _b);
+        expect(notified, 1);
+      },
+    );
 
     test('snapshot is independent — later mutation does not alias it', () {
       final sel = SelectionController()..apply([_a], SelectMode.replace);

@@ -131,7 +131,8 @@ void main() {
       expect(
         _link(doc).jacketColorId,
         _blue,
-        reason: 'recording what went in the wall must not rewrite what '
+        reason:
+            'recording what went in the wall must not rewrite what '
             'the run is FOR',
       );
     });
@@ -204,7 +205,8 @@ void main() {
           doc.settings.jacketColorConventions,
         ).isException,
         isFalse,
-        reason: 'it matches the convention TODAY, so it is not an exception '
+        reason:
+            'it matches the convention TODAY, so it is not an exception '
             'today — but the observation is on record',
       );
     });
@@ -218,19 +220,28 @@ void main() {
       // exceptions in the rollup — a real divergence invisible to every
       // accessor.
       final doc = _doc(convention: _blue);
-      SetLinkPulledJacketColorCommand(linkId: _linkId, pulledId: _blue)
-          .apply(doc);
+      SetLinkPulledJacketColorCommand(
+        linkId: _linkId,
+        pulledId: _blue,
+      ).apply(doc);
       // Weeks later the designer re-designates the run. Nobody re-pulls it.
-      SetLinkJacketColorCommand(linkId: _linkId, conventionId: _yellow)
-          .apply(doc);
+      SetLinkJacketColorCommand(
+        linkId: _linkId,
+        conventionId: _yellow,
+      ).apply(doc);
 
       final r = resolveJacketColor(
         _link(doc),
         doc.settings.jacketColorConventions,
       );
       expect(r.asBuiltColorId, _blue, reason: 'the wall still holds BLUE');
-      expect(r.keystoneColorId, _yellow, reason: 'the keystone follows the '
-          'convention — it is fitted later, out of the yellow box');
+      expect(
+        r.keystoneColorId,
+        _yellow,
+        reason:
+            'the keystone follows the '
+            'convention — it is fitted later, out of the yellow box',
+      );
       expect(r.isException, isTrue);
     });
 
@@ -240,16 +251,24 @@ void main() {
       // erased the observation, while observation-then-convention kept it.
       // Two identical histories, two stored states, one of them lying.
       final conventionFirst = _doc(convention: _blue);
-      SetLinkJacketColorCommand(linkId: _linkId, conventionId: _blue)
-          .apply(conventionFirst);
-      SetLinkPulledJacketColorCommand(linkId: _linkId, pulledId: _blue)
-          .apply(conventionFirst);
+      SetLinkJacketColorCommand(
+        linkId: _linkId,
+        conventionId: _blue,
+      ).apply(conventionFirst);
+      SetLinkPulledJacketColorCommand(
+        linkId: _linkId,
+        pulledId: _blue,
+      ).apply(conventionFirst);
 
       final observationFirst = _doc(convention: _blue);
-      SetLinkPulledJacketColorCommand(linkId: _linkId, pulledId: _blue)
-          .apply(observationFirst);
-      SetLinkJacketColorCommand(linkId: _linkId, conventionId: _blue)
-          .apply(observationFirst);
+      SetLinkPulledJacketColorCommand(
+        linkId: _linkId,
+        pulledId: _blue,
+      ).apply(observationFirst);
+      SetLinkJacketColorCommand(
+        linkId: _linkId,
+        conventionId: _blue,
+      ).apply(observationFirst);
 
       expect(
         _link(conventionFirst).jacketColorPulledId,
@@ -283,10 +302,14 @@ void main() {
       // about the wall, not about the drawing.
       final onBlue = _doc(convention: _blue);
       final onYellow = _doc(convention: _yellow);
-      SetLinkPulledJacketColorCommand(linkId: _linkId, pulledId: _yellow)
-          .apply(onBlue);
-      SetLinkPulledJacketColorCommand(linkId: _linkId, pulledId: _yellow)
-          .apply(onYellow);
+      SetLinkPulledJacketColorCommand(
+        linkId: _linkId,
+        pulledId: _yellow,
+      ).apply(onBlue);
+      SetLinkPulledJacketColorCommand(
+        linkId: _linkId,
+        pulledId: _yellow,
+      ).apply(onYellow);
 
       expect(_link(onBlue).jacketColorPulledId, _yellow);
       expect(_link(onYellow).jacketColorPulledId, _yellow);

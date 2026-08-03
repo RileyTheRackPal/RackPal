@@ -41,7 +41,9 @@ Map<String, TemplateBody> buildRfCatalog() {
       // plain human-readable string here — a typed `requiresPowerPassing
       // Port` field is not yet in this package's `PortDef` shape (M0
       // MINIMAL SHAPE gap, same pattern as the type's other TODO fields).
-      notes: i == 1 ? 'Passes DC toward the LNB/dish (power-passing leg)' : null,
+      notes: i == 1
+          ? 'Passes DC toward the LNB/dish (power-passing leg)'
+          : null,
     );
   }
   out['R01'] = TemplateBody(

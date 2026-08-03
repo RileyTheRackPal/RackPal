@@ -95,7 +95,8 @@ void main() {
       expect(
         controller.isDirty,
         isTrue,
-        reason: 'undone PAST the save point — the document really does '
+        reason:
+            'undone PAST the save point — the document really does '
             'differ from the bytes on disk',
       );
 
@@ -175,7 +176,8 @@ void main() {
       expect(
         controller.editsSinceSave,
         isNull,
-        reason: 'the history that knew the number is gone; the UI must '
+        reason:
+            'the history that knew the number is gone; the UI must '
             'omit the count rather than invent one',
       );
     });
@@ -221,7 +223,8 @@ void main() {
       expect(
         controller.isDirty,
         isTrue,
-        reason: 'dev-b was never written; marking it saved would let a '
+        reason:
+            'dev-b was never written; marking it saved would let a '
             'crash take it with no recovery snapshot',
       );
       expect(controller.editsSinceSave, 1);

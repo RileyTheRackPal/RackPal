@@ -425,9 +425,7 @@ List<_Occupant> _rackOccupants(RackDocument doc, Rack rack) {
           deviceH: channel == null
               ? rack.heightU
               : _channelTop(channel) - _channelBottom(channel) + 1,
-          face: channel == null
-              ? Face.front
-              : _faceOfChannelSide(channel.side),
+          face: channel == null ? Face.front : _faceOfChannelSide(channel.side),
           kind: DoomedKind.zeroU,
         ));
       case _:
@@ -481,8 +479,7 @@ bool _diesUnderPlainTrim(
   // `ZeroUChannel`, so leaving it addressed to a U range the rack no
   // longer numbers the same way is exactly the silent stranding this
   // planner exists to prevent.
-  TrimFrom.bottom =>
-    removed > 0 && (!_shiftable(o) || o.ruIndex - removed < 1),
+  TrimFrom.bottom => removed > 0 && (!_shiftable(o) || o.ruIndex - removed < 1),
 };
 
 DoomedOccupant _doom(RackDocument doc, _Occupant o) => DoomedOccupant(

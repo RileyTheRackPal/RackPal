@@ -37,101 +37,113 @@ void main() {
       expect(counts.values.reduce((a, b) => a + b), 48);
     });
 
-    test('rack-side ids are V/A/N/C/S/R/P/X-prefixed, field ids are F01-F18', () {
-      final fieldIds = catalog.entries
-          .where((e) => e.value.category == kCatField)
-          .map((e) => e.key)
-          .toSet();
-      expect(fieldIds, {
-        for (var i = 1; i <= 18; i++) 'F${i.toString().padLeft(2, '0')}',
-      });
-    });
+    test(
+      'rack-side ids are V/A/N/C/S/R/P/X-prefixed, field ids are F01-F18',
+      () {
+        final fieldIds = catalog.entries
+            .where((e) => e.value.category == kCatField)
+            .map((e) => e.key)
+            .toSet();
+        expect(fieldIds, {
+          for (var i = 1; i <= 18; i++) 'F${i.toString().padLeft(2, '0')}',
+        });
+      },
+    );
   });
 
-  group('provenance-adjacent invariants (docs/catalog/seed-devices.md §7.2)', () {
-    test('every manufacturer is "Generic" — no real SKU ships (DR-002, P1)', () {
-      for (final entry in catalog.entries) {
-        expect(
-          entry.value.manufacturer,
-          'Generic',
-          reason: '${entry.key} must not claim a real manufacturer',
-        );
-      }
-    });
-
-    test('no typePrefix collides with another template\'s or a system '
-        'prefix (C4, CR-043)', () {
-      final seen = <String, String>{};
-      for (final entry in catalog.entries) {
-        final prefix = entry.value.typePrefix;
-        expect(prefix, isNotNull, reason: '${entry.key} has no typePrefix');
-        expect(
-          _kSystemPrefixes.contains(prefix),
-          isFalse,
-          reason: '${entry.key} typePrefix "$prefix" collides with a '
-              'system prefix',
-        );
-        // Extender/endpoint role halves (TX/RX, ENC/DEC) and multi-model
-        // families (SPK, AMP) legitimately share a prefix across ids —
-        // that is the designator series a user actually wants (AMP-1,
-        // AMP-2, …), so this only asserts against the *system* set above,
-        // matching C4's own scope.
-        seen[prefix!] = entry.key;
-      }
-    });
-
-    test('every field device is frontU/rearU 0, side none, notInRack, no '
-        'body depth (C14)', () {
-      for (final entry in catalog.entries) {
-        if (entry.value.category != kCatField) continue;
-        final body = entry.value;
-        expect(body.frontU, 0, reason: entry.key);
-        expect(body.rearU, 0, reason: entry.key);
-        expect(body.side, OccupancySide.none, reason: entry.key);
-        expect(body.mountMethod, MountMethod.notInRack, reason: entry.key);
-        expect(body.bodyDepth, isNull, reason: entry.key);
-      }
-    });
-
-    test('every rack-side template declares a body depth and a weight', () {
-      for (final entry in catalog.entries) {
-        if (entry.value.category == kCatField) continue;
-        expect(entry.value.bodyDepth, isNotNull, reason: entry.key);
-        expect(entry.value.weight, isNotNull, reason: entry.key);
-      }
-    });
-
-    test('every rackEars template heavier than 7 kg carries '
-        'maxUnsupportedMass (feeds RCK-013, C12)', () {
-      // COUNTED, and the count is asserted. This test previously passed
-      // because the catalog stored every mass 1000x too small, so the
-      // `weightKg > 7` gate below never fired once and the assertion inside
-      // it had never run in the life of the suite. A gate with no proof it
-      // fires is not a test.
-      var overLimit = 0;
-      for (final entry in catalog.entries) {
-        final body = entry.value;
-        if (body.mountMethod != MountMethod.rackEars) continue;
-        final weightKg = (body.weight?.ug ?? 0) / 1e9;
-        if (weightKg > 7) {
-          overLimit++;
-          expect(
-            body.maxUnsupportedMass,
-            isNotNull,
-            reason: '${entry.key} at ${weightKg}kg needs maxUnsupportedMass '
-                'for RCK-013 to have an object to fire on',
-          );
-        }
-      }
-      expect(
-        overLimit,
-        greaterThanOrEqualTo(8),
-        reason: 'the >7 kg branch must actually execute — a catalog where '
-            'nothing clears 7 kg means the mass scale is wrong again, not '
-            'that the fleet got lighter',
+  group(
+    'provenance-adjacent invariants (docs/catalog/seed-devices.md §7.2)',
+    () {
+      test(
+        'every manufacturer is "Generic" — no real SKU ships (DR-002, P1)',
+        () {
+          for (final entry in catalog.entries) {
+            expect(
+              entry.value.manufacturer,
+              'Generic',
+              reason: '${entry.key} must not claim a real manufacturer',
+            );
+          }
+        },
       );
-    });
-  });
+
+      test('no typePrefix collides with another template\'s or a system '
+          'prefix (C4, CR-043)', () {
+        final seen = <String, String>{};
+        for (final entry in catalog.entries) {
+          final prefix = entry.value.typePrefix;
+          expect(prefix, isNotNull, reason: '${entry.key} has no typePrefix');
+          expect(
+            _kSystemPrefixes.contains(prefix),
+            isFalse,
+            reason:
+                '${entry.key} typePrefix "$prefix" collides with a '
+                'system prefix',
+          );
+          // Extender/endpoint role halves (TX/RX, ENC/DEC) and multi-model
+          // families (SPK, AMP) legitimately share a prefix across ids —
+          // that is the designator series a user actually wants (AMP-1,
+          // AMP-2, …), so this only asserts against the *system* set above,
+          // matching C4's own scope.
+          seen[prefix!] = entry.key;
+        }
+      });
+
+      test('every field device is frontU/rearU 0, side none, notInRack, no '
+          'body depth (C14)', () {
+        for (final entry in catalog.entries) {
+          if (entry.value.category != kCatField) continue;
+          final body = entry.value;
+          expect(body.frontU, 0, reason: entry.key);
+          expect(body.rearU, 0, reason: entry.key);
+          expect(body.side, OccupancySide.none, reason: entry.key);
+          expect(body.mountMethod, MountMethod.notInRack, reason: entry.key);
+          expect(body.bodyDepth, isNull, reason: entry.key);
+        }
+      });
+
+      test('every rack-side template declares a body depth and a weight', () {
+        for (final entry in catalog.entries) {
+          if (entry.value.category == kCatField) continue;
+          expect(entry.value.bodyDepth, isNotNull, reason: entry.key);
+          expect(entry.value.weight, isNotNull, reason: entry.key);
+        }
+      });
+
+      test('every rackEars template heavier than 7 kg carries '
+          'maxUnsupportedMass (feeds RCK-013, C12)', () {
+        // COUNTED, and the count is asserted. This test previously passed
+        // because the catalog stored every mass 1000x too small, so the
+        // `weightKg > 7` gate below never fired once and the assertion inside
+        // it had never run in the life of the suite. A gate with no proof it
+        // fires is not a test.
+        var overLimit = 0;
+        for (final entry in catalog.entries) {
+          final body = entry.value;
+          if (body.mountMethod != MountMethod.rackEars) continue;
+          final weightKg = (body.weight?.ug ?? 0) / 1e9;
+          if (weightKg > 7) {
+            overLimit++;
+            expect(
+              body.maxUnsupportedMass,
+              isNotNull,
+              reason:
+                  '${entry.key} at ${weightKg}kg needs maxUnsupportedMass '
+                  'for RCK-013 to have an object to fire on',
+            );
+          }
+        }
+        expect(
+          overLimit,
+          greaterThanOrEqualTo(8),
+          reason:
+              'the >7 kg branch must actually execute — a catalog where '
+              'nothing clears 7 kg means the mass scale is wrong again, not '
+              'that the fleet got lighter',
+        );
+      });
+    },
+  );
 
   // ── MASS SCALE ─────────────────────────────────────────────────────────
   //
@@ -195,7 +207,8 @@ void main() {
         expect(
           ug,
           greaterThan(50 * 1000 * 1000), // 50 g
-          reason: '${entry.key} weighs ${ug / 1e9} kg — nothing rack-mounted '
+          reason:
+              '${entry.key} weighs ${ug / 1e9} kg — nothing rack-mounted '
               'is that light; the kg->µg factor is wrong',
         );
         if (ug > heaviest.ug) heaviest = Mass(ug);
@@ -214,7 +227,8 @@ void main() {
         expect(
           limit.ug,
           7_000_000_000,
-          reason: '${entry.key}: docs/catalog/seed-devices.md §3 fixes the '
+          reason:
+              '${entry.key}: docs/catalog/seed-devices.md §3 fixes the '
               'rackEars front-ear limit at 7 kg',
         );
         if (entry.value.weight!.ug > limit.ug) exceeded++;
@@ -222,7 +236,8 @@ void main() {
       expect(
         exceeded,
         greaterThan(0),
-        reason: 'C12: RCK-013 needs at least one template that actually '
+        reason:
+            'C12: RCK-013 needs at least one template that actually '
             'trips its own limit',
       );
     });
@@ -237,13 +252,15 @@ void main() {
     test('every 3.5 mm IR port carries a cited pinoutVariant (C7, AC-052)', () {
       for (final entry in catalog.entries) {
         for (final port in entry.value.ports) {
-          final isIr = port.signalFamily == const SignalFamilyId('ctl.ir_emitter') ||
+          final isIr =
+              port.signalFamily == const SignalFamilyId('ctl.ir_emitter') ||
               port.signalFamily == const SignalFamilyId('ctl.ir_receiver');
           if (!isIr) continue;
           expect(
             port.pinoutVariant,
             isNotNull,
-            reason: '${entry.key}:${port.key.v} is an IR port with no '
+            reason:
+                '${entry.key}:${port.key.v} is an IR port with no '
                 'pinoutVariant — the destructive-pinout hazard is uncaught',
           );
         }
@@ -255,10 +272,18 @@ void main() {
       for (final entry in catalog.entries) {
         for (final port in entry.value.ports) {
           if (port.signalFamily == const SignalFamilyId('audio.spdif_coax')) {
-            expect(port.impedanceOhms, 75, reason: '${entry.key}:${port.key.v}');
+            expect(
+              port.impedanceOhms,
+              75,
+              reason: '${entry.key}:${port.key.v}',
+            );
           }
           if (port.signalFamily == const SignalFamilyId('audio.aes3')) {
-            expect(port.impedanceOhms, 110, reason: '${entry.key}:${port.key.v}');
+            expect(
+              port.impedanceOhms,
+              110,
+              reason: '${entry.key}:${port.key.v}',
+            );
           }
         }
       }
@@ -315,7 +340,8 @@ void main() {
         expect(
           def,
           isNotNull,
-          reason: '$id is referenced by shipped templates and must resolve '
+          reason:
+              '$id is referenced by shipped templates and must resolve '
               'in the connector registry',
         );
         expect(def!.footprintWidth, isNull, reason: '$id: §5.1 states none');
@@ -440,22 +466,26 @@ void main() {
       final doc = docWithCatalog(r);
       final controller = DocumentController(doc, clock: FixedClock(now));
 
-      final first = buildPlaceFromCatalogCommand(
-        doc: doc,
-        catalogId: 'V02',
-        targetRack: r,
-        now: now,
-        actor: 'tester',
-      ) as CatalogPlacementReady;
+      final first =
+          buildPlaceFromCatalogCommand(
+                doc: doc,
+                catalogId: 'V02',
+                targetRack: r,
+                now: now,
+                actor: 'tester',
+              )
+              as CatalogPlacementReady;
       controller.run(first.command);
 
-      final second = buildPlaceFromCatalogCommand(
-        doc: doc,
-        catalogId: 'V02',
-        targetRack: r,
-        now: now,
-        actor: 'tester',
-      ) as CatalogPlacementReady;
+      final second =
+          buildPlaceFromCatalogCommand(
+                doc: doc,
+                catalogId: 'V02',
+                targetRack: r,
+                now: now,
+                actor: 'tester',
+              )
+              as CatalogPlacementReady;
       expect(second.command.designator, 'MTX-2');
       final placement = second.command.placement as RailPlacement;
       // V02 is 1U front; the first instance occupies U1, so the second
@@ -466,13 +496,15 @@ void main() {
     test('a field device places off-rack, not onto the rack rails', () {
       final r = rack();
       final doc = docWithCatalog(r);
-      final result = buildPlaceFromCatalogCommand(
-        doc: doc,
-        catalogId: 'F01',
-        targetRack: r,
-        now: now,
-        actor: 'tester',
-      ) as CatalogPlacementReady;
+      final result =
+          buildPlaceFromCatalogCommand(
+                doc: doc,
+                catalogId: 'F01',
+                targetRack: r,
+                now: now,
+                actor: 'tester',
+              )
+              as CatalogPlacementReady;
       expect(result.command.placement, isA<OffRackPlacement>());
       expect(result.command.designator, 'DISP-1');
     });
@@ -583,7 +615,8 @@ void main() {
         expect(
           h,
           greaterThan(0),
-          reason: '$id was rail-placed on the ${placement.face.name} face '
+          reason:
+              '$id was rail-placed on the ${placement.face.name} face '
               'where it occupies ${h}U — it would never be drawn',
         );
       }
@@ -594,13 +627,15 @@ void main() {
       final r = rack();
       final doc = docWithCatalog(r);
       final controller = DocumentController(doc, clock: FixedClock(now));
-      final ready = buildPlaceFromCatalogCommand(
-        doc: doc,
-        catalogId: 'X01',
-        targetRack: r,
-        now: now,
-        actor: 'tester',
-      ) as CatalogPlacementReady;
+      final ready =
+          buildPlaceFromCatalogCommand(
+                doc: doc,
+                catalogId: 'X01',
+                targetRack: r,
+                now: now,
+                actor: 'tester',
+              )
+              as CatalogPlacementReady;
       controller.run(ready.command);
       expect(doc.devices, hasLength(1));
       controller.undoLast();

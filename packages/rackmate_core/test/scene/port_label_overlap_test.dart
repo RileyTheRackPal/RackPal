@@ -121,9 +121,9 @@ List<(SymbolPort, OpText)> _labelledPins(
 /// Measured through `BoundsCanvas` rather than derived here: a test that
 /// computed its own rotated box could agree with a broken layer, and the
 /// whole question is where the ink lands.
-DBox _boxOf(OpText op, TextMeasurer measurer) =>
-    (BoundsCanvas(measurer: measurer)..drawText(op.text, op.at, op.style))
-        .bounds!;
+DBox _boxOf(OpText op, TextMeasurer measurer) => (BoundsCanvas(
+  measurer: measurer,
+)..drawText(op.text, op.at, op.style)).bounds!;
 
 Map<SymbolSide, List<DBox>> _labelBoxesByEdge(
   TemplateBody body, {
@@ -310,14 +310,16 @@ void main() {
             expect(
               box.top,
               greaterThanOrEqualTo(centre.y),
-              reason: '${template.key} ${port.label} reaches out of the body, '
+              reason:
+                  '${template.key} ${port.label} reaches out of the body, '
                   'into the net-label band',
             );
           } else {
             expect(
               box.bottom,
               lessThanOrEqualTo(centre.y),
-              reason: '${template.key} ${port.label} reaches out of the body, '
+              reason:
+                  '${template.key} ${port.label} reaches out of the body, '
                   'into the net-label band',
             );
           }

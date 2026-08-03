@@ -405,14 +405,14 @@ void main() {
               'NOT DRAWN HERE  ${profile.undrawnOn(face)} OF '
               '${profile.contributingCount} ',
             ),
-            reason: '$face: the leading count is what the reader checks '
+            reason:
+                '$face: the leading count is what the reader checks '
                 'against the blocks in front of them',
           );
         }
       });
 
-      test('the count is exactly what buildRackScene leaves out, per face',
-          () {
+      test('the count is exactly what buildRackScene leaves out, per face', () {
         // A SECOND, INDEPENDENT DERIVATION: it comes out of the scene the
         // sheet actually draws, so the gutter's arithmetic cannot agree
         // with it by construction.
@@ -442,7 +442,7 @@ void main() {
             Face.front,
           ).singleWhere((l) => l.startsWith('NOT DRAWN')),
           'NOT DRAWN HERE  4 OF 6 — 1 ON REAR, 3 ONLY ON T6.30; '
-              '2 COUNTED AT TOP',
+          '2 COUNTED AT TOP',
         );
         // Rear: 5 missing, 2 of which the FRONT elevation draws — saying
         // only "5 not drawn" would send a reader hunting for rows that
@@ -454,7 +454,7 @@ void main() {
             Face.rear,
           ).singleWhere((l) => l.startsWith('NOT DRAWN')),
           'NOT DRAWN HERE  5 OF 6 — 2 ON FRONT, 3 ONLY ON T6.30; '
-              '2 COUNTED AT TOP',
+          '2 COUNTED AT TOP',
         );
       });
     });

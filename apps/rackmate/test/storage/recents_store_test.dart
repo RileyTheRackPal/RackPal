@@ -194,8 +194,7 @@ void main() {
       // `backupAttempted = keepBackup && targetExisted` is false whatever
       // the flag says.
 
-      test('recents.json is never partially written at any instant', ()
-          async {
+      test('recents.json is never partially written at any instant', () async {
         final made = _make();
         await made.store.push(_entry(r'C:\jobs\A.rmpj'));
 

@@ -17,7 +17,8 @@ Map<String, TemplateBody> buildSourcesCatalog() {
   // S01 · Cable/Satellite Set-Top Box — the archetype every consumer source
   // forks from (a streaming player, disc player or console is a Device
   // Builder "Mirror bank" job from here — P3).
-  final s01 = PortBuilder()..set('an', 'Analog stereo pair', SetKind.stereoPair);
+  final s01 = PortBuilder()
+    ..set('an', 'Analog stereo pair', SetKind.stereoPair);
   s01
     ..p(
       'rf.in',

@@ -115,15 +115,17 @@ Future<void> _cycle(WidgetTester tester, {String? query}) async {
 
 void main() {
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -152,7 +154,8 @@ void main() {
         expect(
           _devicesAt(tester, ru),
           1,
-          reason: 'cycle ${ru - 7} should have landed at U$ru — the caret '
+          reason:
+              'cycle ${ru - 7} should have landed at U$ru — the caret '
               'position after ${ru - 8} advance(s)',
         );
       }
@@ -186,7 +189,8 @@ void main() {
       expect(
         afterSecond,
         1,
-        reason: 'the second cycle is the one that used to fall back — see '
+        reason:
+            'the second cycle is the one that used to fall back — see '
             'docs/12-milestone-board.md §3.2 clause 3',
       );
     });
@@ -297,7 +301,8 @@ void main() {
       expect(
         _devicesAt(tester, 6),
         1,
-        reason: 'the cycle must place, not jam: U6 is the lowest free 1U '
+        reason:
+            'the cycle must place, not jam: U6 is the lowest free 1U '
             'once U3 is taken',
       );
 
@@ -369,7 +374,8 @@ void main() {
       expect(
         _devicesAt(tester, 8),
         1,
-        reason: 'caret U4 + 4 = U8, reached with the keyboard alone after '
+        reason:
+            'caret U4 + 4 = U8, reached with the keyboard alone after '
             'the refusal',
       );
     });
@@ -435,7 +441,8 @@ void main() {
       expect(
         _devicesAt(tester, 8),
         1,
-        reason: 'the caret is sticky, so Esc restores it at U8 — not at the '
+        reason:
+            'the caret is sticky, so Esc restores it at U8 — not at the '
             'smart default and not at lowest-free-U',
       );
       expect(_devicesAt(tester, 3), 0);
@@ -491,8 +498,10 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pump();
       expect(_render(tester, 'dev-amp').selected, isFalse);
-      expect(find.textContaining('Selection cleared (2 devices)'),
-          findsWidgets);
+      expect(
+        find.textContaining('Selection cleared (2 devices)'),
+        findsWidgets,
+      );
       await tester.pump(kDoubleTapTimeout + const Duration(milliseconds: 50));
     });
 

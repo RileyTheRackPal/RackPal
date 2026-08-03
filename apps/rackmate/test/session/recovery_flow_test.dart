@@ -170,8 +170,7 @@ void main() {
   });
 
   group('interrupted snapshot writes', () {
-    test('a crashed session’s .tmp files do not accumulate forever',
-        () async {
+    test('a crashed session’s .tmp files do not accumulate forever', () async {
       // Nothing in the app swept these. `AtomicWriter` removes only the
       // temps of the write it is performing, and once a pair is keyed on
       // `<docId>~<sessionId>` a dead session's paths are never written
@@ -236,36 +235,38 @@ void main() {
       expect(fs.state.files.containsKey(_sidecar), isFalse);
     });
 
-    test('a snapshot that CANNOT BE READ says so, and keeps the pair',
-        () async {
-      // The one branch of the recovery flow that reported nothing. The
-      // user presses "Recover" — the moment they are most anxious about
-      // their work — and the app returned false with a log line: no
-      // dialog, no explanation, back to the start card. Its two siblings
-      // in the same file both raise something.
-      final fs = _crashedDisk();
-      final t = await _session(
-        fs: fs,
-        prompts: ScriptedPrompts(recoveryChoices: [RecoveryChoice.recover]),
-      );
-      // The scan runs first and reads the sidecar; the throw has to land
-      // on the snapshot read that `_acceptRecovery` does. Deleting the
-      // snapshot between scan and read is the real-world shape of this —
-      // an AV scanner, a permissions change, a stick pulled.
-      t.prompts.onBeforeRecoveryAnswer = () => fs.delete(_snapshot);
+    test(
+      'a snapshot that CANNOT BE READ says so, and keeps the pair',
+      () async {
+        // The one branch of the recovery flow that reported nothing. The
+        // user presses "Recover" — the moment they are most anxious about
+        // their work — and the app returned false with a log line: no
+        // dialog, no explanation, back to the start card. Its two siblings
+        // in the same file both raise something.
+        final fs = _crashedDisk();
+        final t = await _session(
+          fs: fs,
+          prompts: ScriptedPrompts(recoveryChoices: [RecoveryChoice.recover]),
+        );
+        // The scan runs first and reads the sidecar; the throw has to land
+        // on the snapshot read that `_acceptRecovery` does. Deleting the
+        // snapshot between scan and read is the real-world shape of this —
+        // an AV scanner, a permissions change, a stick pulled.
+        t.prompts.onBeforeRecoveryAnswer = () => fs.delete(_snapshot);
 
-      expect(await t.services.controller.runStartupRecovery(), isFalse);
+        expect(await t.services.controller.runStartupRecovery(), isFalse);
 
-      expect(t.prompts.errors, hasLength(1));
-      expect(t.prompts.errors.single.title, contains('could not be read'));
-      expect(
-        t.prompts.errors.single.detail,
-        contains('Nothing has been deleted'),
-      );
-      // The document on screen is untouched: a failed recovery is not an
-      // opened one.
-      expect(t.services.session.documentId, 'fresh-doc');
-    });
+        expect(t.prompts.errors, hasLength(1));
+        expect(t.prompts.errors.single.title, contains('could not be read'));
+        expect(
+          t.prompts.errors.single.detail,
+          contains('Nothing has been deleted'),
+        );
+        // The document on screen is untouched: a failed recovery is not an
+        // opened one.
+        expect(t.services.session.documentId, 'fresh-doc');
+      },
+    );
 
     test('a stat that does not answer records UNKNOWN, so the next save is '
         'not refused', () async {
@@ -545,8 +546,7 @@ void main() {
       );
     });
 
-    test('...so Discard at that prompt cannot delete its snapshot',
-        () async {
+    test('...so Discard at that prompt cannot delete its snapshot', () async {
       // The loss itself, verbatim: the prompt never appears, so the
       // scripted "Discard" is never reached and B's pair is still on disk
       // with B's own owner stamp on it.

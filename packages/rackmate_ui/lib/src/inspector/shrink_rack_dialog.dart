@@ -414,7 +414,7 @@ class _ShrinkRackDialogState extends State<ShrinkRackDialog> {
               // same thing without the boundary ambiguity.
               ? 'Removes ${rescue.freedU}U of gaps. '
                     '${rescue.rescued.length == 1 ? 'It fits' : 'All '
-                        '${rescue.rescued.length} fit'} within '
+                              '${rescue.rescued.length} fit'} within '
                     '${plan.toHeightU}U.'
               // The spec's own partial label is "2 of 3 fit — 1 goes to
               // Staging Bin", which this build cannot honour (see the file

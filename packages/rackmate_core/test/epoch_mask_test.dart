@@ -100,21 +100,24 @@ void _expectTouchesCoversChanges(
   expect(
     changed,
     containsAll(expectAtLeast),
-    reason: '${cmd.runtimeType} applied but expected key(s) $expectAtLeast '
+    reason:
+        '${cmd.runtimeType} applied but expected key(s) $expectAtLeast '
         'did not change (changed: $changed) — the test itself would be '
         'vacuous.',
   );
   expect(
     changed.difference(_knownMutableKeys),
     isEmpty,
-    reason: '${cmd.runtimeType} changed unexpected top-level key(s) '
+    reason:
+        '${cmd.runtimeType} changed unexpected top-level key(s) '
         '${changed.difference(_knownMutableKeys)}.',
   );
   for (final key in changed) {
     expect(
       _epochPlausiblyCovers(cmd.touches, key),
       isTrue,
-      reason: '${cmd.runtimeType}.touches (${cmd.touches.bits}) does not '
+      reason:
+          '${cmd.runtimeType}.touches (${cmd.touches.bits}) does not '
           'cover changed key "$key".',
     );
   }

@@ -51,8 +51,9 @@ void main() {
   late SchematicScene reference;
 
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
     doc = buildSchematicTestDocument();
@@ -64,8 +65,9 @@ void main() {
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -258,7 +260,8 @@ void main() {
       expect(
         handlerOf(tester),
         same(before),
-        reason: 'the detector must still be pointing at the object that '
+        reason:
+            'the detector must still be pointing at the object that '
             'received `beginDrag` — a handler built in `build()` is a new '
             'object here, and the release below would find `_start == null`',
       );
@@ -273,7 +276,8 @@ void main() {
       expect(
         wiresDrawn(tester),
         4,
-        reason: 'the press+release was a click on MTX-1 and must have '
+        reason:
+            'the press+release was a click on MTX-1 and must have '
             'selected it — a swallowed click leaves nothing for `F` to focus',
       );
     });
@@ -314,7 +318,8 @@ void main() {
       expect(
         find.textContaining('One drag at a time'),
         findsOneWidget,
-        reason: 'a refusal is REPORTED, never silent (docs/04 §3.4) — the '
+        reason:
+            'a refusal is REPORTED, never silent (docs/04 §3.4) — the '
             'user pressed something and got nothing back',
       );
 
@@ -344,7 +349,8 @@ void main() {
       expect(
         find.textContaining('One drag at a time'),
         findsOneWidget,
-        reason: "the winner still holds the canvas: a refused gesture's "
+        reason:
+            "the winner still holds the canvas: a refused gesture's "
             'teardown may not release a claim it never took',
       );
       handler.cancel(gesture: c);
@@ -359,7 +365,8 @@ void main() {
       expect(
         wiresDrawn(tester),
         4,
-        reason: 'MTX-1 has four links and AMP-1 has three — a refused '
+        reason:
+            'MTX-1 has four links and AMP-1 has three — a refused '
             'gesture that had re-pointed the live one would show three',
       );
     });
@@ -404,7 +411,8 @@ void main() {
       expect(
         wiresDrawn(tester),
         4,
-        reason: "the winner's press+release was a click on MTX-1 and must "
+        reason:
+            "the winner's press+release was a click on MTX-1 and must "
             'have selected it — a refusal latch eats it instead',
       );
 
@@ -427,7 +435,8 @@ void main() {
       expect(
         find.textContaining('One drag at a time'),
         findsNothing,
-        reason: 'a claim left set by a swallowed terminal refuses every '
+        reason:
+            'a claim left set by a swallowed terminal refuses every '
             'later press for the rest of the session',
       );
       await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
@@ -490,7 +499,8 @@ void main() {
       expect(
         find.textContaining('One drag at a time'),
         findsOneWidget,
-        reason: "two refused teardowns must not add up to the winner's "
+        reason:
+            "two refused teardowns must not add up to the winner's "
             'release — its pointer is still down',
       );
       handler.cancel(gesture: third);
@@ -504,7 +514,8 @@ void main() {
       expect(
         wiresDrawn(tester),
         4,
-        reason: 'MTX-1 was clicked and selected; a reset run by the second '
+        reason:
+            'MTX-1 was clicked and selected; a reset run by the second '
             'refused teardown would have thrown that click away',
       );
     });
@@ -555,7 +566,8 @@ void main() {
       expect(
         wiresDrawn(tester),
         3,
-        reason: 'AMP-1 has three links — a stale refusal that ate this '
+        reason:
+            'AMP-1 has three links — a stale refusal that ate this '
             "click's `commitDrag` leaves nothing selected and nothing to "
             'focus',
       );
@@ -606,7 +618,8 @@ void main() {
       expect(
         wiresDrawn(tester),
         4,
-        reason: "the winner's pointer never moved, so its release is a click "
+        reason:
+            "the winner's pointer never moved, so its release is a click "
             'on MTX-1 — travel belongs to the gesture that travelled',
       );
     });
@@ -635,7 +648,8 @@ void main() {
       expect(
         wiresDrawn(tester),
         3,
-        reason: 'the SECOND click really selected AMP-1 (three links) — a '
+        reason:
+            'the SECOND click really selected AMP-1 (three links) — a '
             'leaked claim would have refused it and left MTX-1 selected',
       );
     });
@@ -688,13 +702,15 @@ void main() {
       expect(
         wiresDrawn(tester),
         0,
-        reason: 'the scope named a device that is gone, so it is dropped '
+        reason:
+            'the scope named a device that is gone, so it is dropped '
             'rather than repaired — the question was about that device',
       );
       expect(
         find.textContaining('Focus cancelled'),
         findsOneWidget,
-        reason: 'the teardown NAMES what it took away (the habit '
+        reason:
+            'the teardown NAMES what it took away (the habit '
             "`rack_canvas_screen.dart`'s own teardown has)",
       );
     });
@@ -748,7 +764,8 @@ void main() {
       expect(
         find.byType(CanvasIntentDetector),
         findsNothing,
-        reason: 'the premise: with no symbol left the sheet shows the empty '
+        reason:
+            'the premise: with no symbol left the sheet shows the empty '
             'panel and the detector really has left the tree — without '
             'this the test would be asserting nothing',
       );
@@ -771,7 +788,8 @@ void main() {
       expect(
         wiresDrawn(tester),
         0,
-        reason: 'the press was cancelled when the sheet it was made on went '
+        reason:
+            'the press was cancelled when the sheet it was made on went '
             'away — the up that follows is not a click on the sheet that '
             'came back',
       );
@@ -784,7 +802,8 @@ void main() {
       expect(
         find.textContaining('One drag at a time'),
         findsNothing,
-        reason: 'the unmounted detector gave the route back rather than '
+        reason:
+            'the unmounted detector gave the route back rather than '
             'holding it for a gesture nothing can end',
       );
       await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
@@ -823,7 +842,8 @@ void main() {
       expect(
         outer,
         1,
-        reason: 'a disabled action yields `ignored` and the event continues '
+        reason:
+            'a disabled action yields `ignored` and the event continues '
             'up the chain',
       );
 
@@ -841,7 +861,8 @@ void main() {
       expect(
         outer,
         1,
-        reason: 'THIS Esc was for the screen and must NOT also fire the '
+        reason:
+            'THIS Esc was for the screen and must NOT also fire the '
             'layer below — a key that reaches two rungs is as wrong as a '
             'key that reaches none',
       );
@@ -858,7 +879,8 @@ void main() {
       expect(
         outer,
         2,
-        reason: 'the selection was cleared by the previous Esc, so this one '
+        reason:
+            'the selection was cleared by the previous Esc, so this one '
             "is no longer the screen's",
       );
     });
@@ -936,13 +958,15 @@ void main() {
       expect(
         await altHoverWires(tester, pointer, outsideBy(tester, 10)),
         4,
-        reason: "10 screen px from the pin is inside docs/05 §11.6's 12 px, "
+        reason:
+            "10 screen px from the pin is inside docs/05 §11.6's 12 px, "
             'so MTX-1 is hit and Alt-hover draws its four links',
       );
       expect(
         await altHoverWires(tester, pointer, outsideBy(tester, 22)),
         0,
-        reason: '22 screen px is outside the tolerance — the sheet is empty '
+        reason:
+            '22 screen px is outside the tolerance — the sheet is empty '
             'there and nothing may be hit',
       );
 
@@ -953,7 +977,8 @@ void main() {
       expect(
         zoomed / framed,
         greaterThan(3),
-        reason: 'the second half of this test is meaningless unless the zoom '
+        reason:
+            'the second half of this test is meaningless unless the zoom '
             'really moved',
       );
 
@@ -965,7 +990,8 @@ void main() {
       expect(
         await altHoverWires(tester, pointer, outsideBy(tester, 22)),
         0,
-        reason: '22 screen px is ${(22 / zoomed).toStringAsFixed(1)} diagram '
+        reason:
+            '22 screen px is ${(22 / zoomed).toStringAsFixed(1)} diagram '
             'units at this zoom — well inside a constant 12-unit tolerance, '
             'which would wrongly report a hit',
       );
@@ -1055,7 +1081,8 @@ void main() {
       expect(
         tolerance,
         greaterThan(30),
-        reason: 'the test is vacuous unless the pin tolerance is wide enough '
+        reason:
+            'the test is vacuous unless the pin tolerance is wide enough '
             'to reach a neighbouring symbol',
       );
 
@@ -1066,7 +1093,8 @@ void main() {
         expect(
           await altHoverHeadline(tester, pointer, toScreen(tester, probe)),
           contains(designator),
-          reason: 'the pointer is strictly inside the body of $designator, '
+          reason:
+              'the pointer is strictly inside the body of $designator, '
               'so $designator is the device under it at every zoom — the pin '
               'pass exists so an EDGE PIN stays reachable, not so a '
               'neighbour ${tolerance.toStringAsFixed(0)} units away wins a '

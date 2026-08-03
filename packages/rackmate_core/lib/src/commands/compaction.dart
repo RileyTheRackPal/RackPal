@@ -372,8 +372,10 @@ List<(int, int)> _immovableAnchors({
   return [
     for (final d in devices)
       if (!modelled.contains(d.id))
-        if (d.placement case RailPlacement(:final rackId, :final ruIndex)
-            when rackId == rack.id && boltedRailFace(d) == face)
+        if (d.placement case RailPlacement(
+          :final rackId,
+          :final ruIndex,
+        ) when rackId == rack.id && boltedRailFace(d) == face)
           (ruIndex, ruIndex),
   ];
 }

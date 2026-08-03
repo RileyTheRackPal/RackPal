@@ -85,11 +85,15 @@ void main() {
       // small one and off-centre in the big one, so the small one is picked.
       const big = HitRegion('big', DBox.fromLtwh(0, 0, 40, 40));
       const small = HitRegion('small', DBox.fromLtwh(8, 8, 8, 8));
-      expect(hitTest(_sceneWith([big, small]), const DPt(12, 12))?.entityId,
-          'small');
+      expect(
+        hitTest(_sceneWith([big, small]), const DPt(12, 12))?.entityId,
+        'small',
+      );
       // Order-independent.
-      expect(hitTest(_sceneWith([small, big]), const DPt(12, 12))?.entityId,
-          'small');
+      expect(
+        hitTest(_sceneWith([small, big]), const DPt(12, 12))?.entityId,
+        'small',
+      );
     });
 
     test('exact ties fall back to list order (deterministic)', () {

@@ -299,8 +299,7 @@ class _Chip extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(text, style: valueStyle),
-        if (unknownCount > 0)
-          Text(_superscript(unknownCount), style: dimStyle),
+        if (unknownCount > 0) Text(_superscript(unknownCount), style: dimStyle),
       ],
     );
     final message = tooltip;

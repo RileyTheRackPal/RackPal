@@ -28,8 +28,9 @@ void main() {
   late SchematicScene reference;
 
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
     doc = buildSchematicTestDocument();
@@ -41,8 +42,9 @@ void main() {
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -147,7 +149,8 @@ void main() {
       expect(
         said,
         contains('conductors'),
-        reason: 'the announcement is about a CABLE with N conductors, not '
+        reason:
+            'the announcement is about a CABLE with N conductors, not '
             'about one pin — that is the whole difference from DR-011.2’s '
             'general path',
       );
@@ -191,7 +194,8 @@ void main() {
       expect(
         doc.links,
         hasLength(before + 1),
-        reason: 'ONE Link. N Links is multi-draw (board #93) and is a '
+        reason:
+            'ONE Link. N Links is multi-draw (board #93) and is a '
             'different bill of materials on the pull sheet',
       );
       final link = doc.links.values.last;
@@ -258,7 +262,8 @@ void main() {
       expect(
         doc.ports.length,
         buildSchematicTestDocument().ports.length,
-        reason: 'and the ports it created went back with it — revert '
+        reason:
+            'and the ports it created went back with it — revert '
             'removes exactly what apply added',
       );
     });

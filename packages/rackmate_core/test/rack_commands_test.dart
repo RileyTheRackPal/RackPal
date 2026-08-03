@@ -68,46 +68,48 @@ Map<String, Object?> _rackJson(RackDocument doc, Uuid id) =>
 
 void main() {
   group('AddRackCommand', () {
-    test('apply inserts the rack; revert removes it (CR-117 byte identity)',
-        () {
-      final doc = _docWithOneRack();
-      final before = _bytes(doc);
+    test(
+      'apply inserts the rack; revert removes it (CR-117 byte identity)',
+      () {
+        final doc = _docWithOneRack();
+        final before = _bytes(doc);
 
-      final cmd = AddRackCommand(
-        name: 'Media Closet',
-        designator: 'RK-2',
-        heightU: 42,
-        order: const FracIndex('a1'),
-        now: _now,
-        actor: 'local',
-      )..apply(doc);
+        final cmd = AddRackCommand(
+          name: 'Media Closet',
+          designator: 'RK-2',
+          heightU: 42,
+          order: const FracIndex('a1'),
+          now: _now,
+          actor: 'local',
+        )..apply(doc);
 
-      expect(doc.racks, hasLength(2));
-      final created = doc.racks[cmd.id]!;
-      expect(created.heightU, 42);
-      expect(created.name, 'Media Closet');
-      expect(created.designator, 'RK-2');
-      final afterFirstApply = _bytes(doc);
+        expect(doc.racks, hasLength(2));
+        final created = doc.racks[cmd.id]!;
+        expect(created.heightU, 42);
+        expect(created.name, 'Media Closet');
+        expect(created.designator, 'RK-2');
+        final afterFirstApply = _bytes(doc);
 
-      cmd.revert(doc);
-      expect(doc.racks, hasLength(1));
-      expect(
-        _bytes(doc),
-        before,
-        reason: 'apply; revert must restore the exact bytes (CR-117)',
-      );
+        cmd.revert(doc);
+        expect(doc.racks, hasLength(1));
+        expect(
+          _bytes(doc),
+          before,
+          reason: 'apply; revert must restore the exact bytes (CR-117)',
+        );
 
-      // The trailing `apply` half of `apply; revert; apply`. The id was
-      // minted in the constructor, so this recreates the identical entity
-      // rather than a second rack under a new id.
-      cmd.apply(doc);
-      expect(doc.racks.keys, contains(cmd.id));
-      expect(
-        _bytes(doc),
-        afterFirstApply,
-        reason: 'redo must be byte-identical to the original apply',
-      );
-    });
+        // The trailing `apply` half of `apply; revert; apply`. The id was
+        // minted in the constructor, so this recreates the identical entity
+        // rather than a second rack under a new id.
+        cmd.apply(doc);
+        expect(doc.racks.keys, contains(cmd.id));
+        expect(
+          _bytes(doc),
+          afterFirstApply,
+          reason: 'redo must be byte-identical to the original apply',
+        );
+      },
+    );
 
     test('stamps EntityMeta from its own `now`/`actor`, not the clock', () {
       final doc = _docWithOneRack();
@@ -126,8 +128,7 @@ void main() {
       expect(meta.updatedBy, 'unit-test');
     });
 
-    test('declares rack|meta, affects its own id, and is labelled addRack',
-        () {
+    test('declares rack|meta, affects its own id, and is labelled addRack', () {
       final cmd = AddRackCommand(
         name: 'Media Closet',
         designator: 'RK-2',
@@ -192,8 +193,7 @@ void main() {
       expect(rack.usableDepth, preset.usableDepth);
     });
 
-    test("with no preset, every non-dialog field keeps Rack's own default",
-        () {
+    test("with no preset, every non-dialog field keeps Rack's own default", () {
       final doc = _docWithOneRack();
       final cmd =
           (buildAddRackCommand(
@@ -327,8 +327,7 @@ void main() {
       expect(nextRackOrder(const [FracIndex('az')]).v, 'az0');
     });
 
-    test('an unrecognised trailing character extends rather than throwing',
-        () {
+    test('an unrecognised trailing character extends rather than throwing', () {
       expect(nextRackOrder(const [FracIndex('a~')]).v, 'a~0');
     });
 

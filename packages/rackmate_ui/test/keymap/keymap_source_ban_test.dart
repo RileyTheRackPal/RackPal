@@ -116,7 +116,8 @@ void main() {
       expect(
         sources.length,
         greaterThan(30),
-        reason: 'rackmate_ui had ~60 lib sources when this was written; a '
+        reason:
+            'rackmate_ui had ~60 lib sources when this was written; a '
             'count this low means the walk is not reaching them',
       );
       final canvases = sources
@@ -126,7 +127,8 @@ void main() {
       expect(
         canvases,
         isNotEmpty,
-        reason: 'the rack and schematic canvases are the two largest '
+        reason:
+            'the rack and schematic canvases are the two largest '
             'binding surfaces in the product and must be in scope',
       );
     });
@@ -166,7 +168,8 @@ void main() {
       expect(
         code,
         contains('SingleActivator('),
-        reason: 'KeyBinding.activatorFor is the ONE place primary becomes '
+        reason:
+            'KeyBinding.activatorFor is the ONE place primary becomes '
             'a keystroke. A ban with nothing left to permit means the '
             'resolution went somewhere this gate is not looking.',
       );
@@ -180,18 +183,21 @@ void main() {
       // asserts the trap is still present, so that if somebody "tidies"
       // the stripper away the gate fails here rather than starting to
       // report the canvas as a violation.
-      final canvas = File('lib/src/canvas/rack_canvas_screen.dart')
-          .readAsStringSync();
+      final canvas = File(
+        'lib/src/canvas/rack_canvas_screen.dart',
+      ).readAsStringSync();
       expect(
         canvas,
         contains('SingleActivator('),
-        reason: 'the prose that makes comment-stripping load-bearing has '
+        reason:
+            'the prose that makes comment-stripping load-bearing has '
             'moved; if it is genuinely gone, this test can go too',
       );
       expect(
         _stripComments(canvas),
         isNot(contains('SingleActivator(')),
-        reason: 'the stripper is what tells prose from code, and this is '
+        reason:
+            'the stripper is what tells prose from code, and this is '
             'the file that proves it has to',
       );
     });

@@ -59,9 +59,9 @@ void main() {
       // and a test name a pin by index. `scene.symbols` is by Sugiyama
       // layer then top-to-bottom; `allPorts` walks edges in order.
       final once = locatePins(scene).map((p) => p.ref).toList();
-      final twice = locatePins(buildFixtureScene(doc))
-          .map((p) => p.ref)
-          .toList();
+      final twice = locatePins(
+        buildFixtureScene(doc),
+      ).map((p) => p.ref).toList();
       expect(twice, once);
     });
 
@@ -148,7 +148,8 @@ void main() {
         expect(
           a.x == b.x || a.y == b.y,
           isTrue,
-          reason: 'segment $i is diagonal; the band previews the path the '
+          reason:
+              'segment $i is diagonal; the band previews the path the '
               'cable will take and the router only turns at right angles',
         );
       }
@@ -174,7 +175,8 @@ void main() {
       expect(
         horizontal ? first.y == second.y : first.x == second.x,
         isTrue,
-        reason: 'a ${from.side.name}-edge pin escapes '
+        reason:
+            'a ${from.side.name}-edge pin escapes '
             '${horizontal ? 'horizontally' : 'vertically'}',
       );
     });
@@ -262,7 +264,8 @@ void main() {
       expect(
         weighted!.ref,
         far.ref,
-        reason: 'the preference is ABSOLUTE inside the radius: the corpus '
+        reason:
+            'the preference is ABSOLUTE inside the radius: the corpus '
             'gives no number (only "more than 3 px"), so weighting it as '
             'a distance would invent a second unquantified figure',
       );
@@ -282,7 +285,8 @@ void main() {
       expect(
         got!.ref,
         near.ref,
-        reason: 'the family decides between GROUPS; distance decides '
+        reason:
+            'the family decides between GROUPS; distance decides '
             'within one',
       );
     });

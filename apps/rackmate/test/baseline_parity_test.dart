@@ -102,14 +102,12 @@ void main() {
     // The measurer's PdfFont only needs SOME PdfDocument to exist (metrics
     // are document-independent); it is shared verbatim by both backends.
     final metricsDoc = PdfDocument();
-    final metricsFont =
-        PdfTtfFont(metricsDoc, ByteData.sublistView(fontBytes));
+    final metricsFont = PdfTtfFont(metricsDoc, ByteData.sublistView(fontBytes));
     measurer = PdfFontMeasurer(<FontRef, PdfFont>{_kFont: metricsFont});
   });
 
   group('precondition — the shared measurement seam is genuinely shared', () {
-    test('both backends return byte-identical TextMetrics (same instance)',
-        () {
+    test('both backends return byte-identical TextMetrics (same instance)', () {
       // If this ever fails, the interesting parity assertion below is
       // meaningless, so it is asserted first as a guard (task step 6).
       const style = TextStyleSpec(
@@ -179,18 +177,30 @@ void main() {
           // The global Y-flip must actually be present and correct (CR-085):
           // construction cm is `1 0 0 -1 0 boxHeight`, i.e. d == -1 about
           // boxHeight. Read from real bytes, not assumed.
-          expect(pdf.constructionCm[3], closeTo(-1.0, 1e-6),
-              reason: 'global Y-flip (d) missing/wrong in emitted cm');
-          expect(pdf.constructionCm[5], closeTo(_kBoxHeight, 1e-4),
-              reason: 'global flip must be about boxHeight (§7.4)');
+          expect(
+            pdf.constructionCm[3],
+            closeTo(-1.0, 1e-6),
+            reason: 'global Y-flip (d) missing/wrong in emitted cm',
+          );
+          expect(
+            pdf.constructionCm[5],
+            closeTo(_kBoxHeight, 1e-4),
+            reason: 'global flip must be about boxHeight (§7.4)',
+          );
 
           // The PDF backend must place the baseline at the shared-contract
           // point `at + anchorOffset` — this pins it to the contract so a
           // regression that moved BOTH backends in lockstep is still caught.
-          expect(pdf.baselineDiagramY, closeTo(_kAt.y + o.y, 1e-3),
-              reason: 'PDF baseline Y != at.y + anchorOffset.y');
-          expect(pdf.baselineDiagramX, closeTo(_kAt.x + o.x, 1e-3),
-              reason: 'PDF baseline X != at.x + anchorOffset.x');
+          expect(
+            pdf.baselineDiagramY,
+            closeTo(_kAt.y + o.y, 1e-3),
+            reason: 'PDF baseline Y != at.y + anchorOffset.y',
+          );
+          expect(
+            pdf.baselineDiagramX,
+            closeTo(_kAt.x + o.x, 1e-3),
+            reason: 'PDF baseline X != at.x + anchorOffset.x',
+          );
 
           // ── Flutter backend: recover the baseline it actually placed ──
           final flt = _renderFlutterText(
@@ -206,17 +216,25 @@ void main() {
           // visible rather than a bare pass/fail.
           final diff = (pdf.baselineDiagramY - flt.baselineDiagramY).abs();
           final tol = 0.005 * m.lineHeight;
-          expect(diff, lessThanOrEqualTo(tol),
-              reason: 'baseline Y disagreement ${diff.toStringAsFixed(5)}pt '
-                  'exceeds 0.5% of line height (${tol.toStringAsFixed(5)}pt): '
-                  'pdf=${pdf.baselineDiagramY}, '
-                  'flutter=${flt.baselineDiagramY}');
+          expect(
+            diff,
+            lessThanOrEqualTo(tol),
+            reason:
+                'baseline Y disagreement ${diff.toStringAsFixed(5)}pt '
+                'exceeds 0.5% of line height (${tol.toStringAsFixed(5)}pt): '
+                'pdf=${pdf.baselineDiagramY}, '
+                'flutter=${flt.baselineDiagramY}',
+          );
 
           // X parity too (the anchor's horizontal resolution).
           final diffX = (pdf.baselineDiagramX - flt.baselineDiagramX).abs();
-          expect(diffX, lessThanOrEqualTo(0.005 * m.lineHeight),
-              reason: 'baseline X disagreement: pdf=${pdf.baselineDiagramX}, '
-                  'flutter=${flt.baselineDiagramX}');
+          expect(
+            diffX,
+            lessThanOrEqualTo(0.005 * m.lineHeight),
+            reason:
+                'baseline X disagreement: pdf=${pdf.baselineDiagramX}, '
+                'flutter=${flt.baselineDiagramX}',
+          );
 
           // For baselineLeft, dy MUST be exactly 0 on both — a stricter,
           // unambiguous check that no descent/ascent leaked in.
@@ -233,11 +251,15 @@ void main() {
           // in on "AV/Wa/To/Ty", this diverges by 1-3% and fails.
           final widthErr =
               (flt.lineWidth - m.advanceWidth).abs() / m.advanceWidth;
-          expect(widthErr, lessThan(0.01),
-              reason: 'Skia line width ${flt.lineWidth} disagrees with '
-                  'stringMetrics advance ${m.advanceWidth} by '
-                  '${(widthErr * 100).toStringAsFixed(2)}% — wrong font '
-                  'loaded, or kerning not disabled (§7.6 #7)');
+          expect(
+            widthErr,
+            lessThan(0.01),
+            reason:
+                'Skia line width ${flt.lineWidth} disagrees with '
+                'stringMetrics advance ${m.advanceWidth} by '
+                '${(widthErr * 100).toStringAsFixed(2)}% — wrong font '
+                'loaded, or kerning not disabled (§7.6 #7)',
+          );
         });
       }
     }
@@ -253,29 +275,33 @@ void main() {
       expect(w, closeTo(0.5, 1e-6));
     });
 
-    test('PDF clamps a sub-floor furniture stroke to the 0.25pt floor',
-        () async {
-      final w = await _renderPdfLineWidth(
-        stroke: const Stroke(
-          argb: 0xFF000000,
-          widthPt: 0.001,
-          hairlineFloor: true,
-        ),
-        fontBytes: fontBytes,
-        measurer: measurer,
-      );
-      expect(w, closeTo(0.25, 1e-6));
-    });
+    test(
+      'PDF clamps a sub-floor furniture stroke to the 0.25pt floor',
+      () async {
+        final w = await _renderPdfLineWidth(
+          stroke: const Stroke(
+            argb: 0xFF000000,
+            widthPt: 0.001,
+            hairlineFloor: true,
+          ),
+          fontBytes: fontBytes,
+          measurer: measurer,
+        );
+        expect(w, closeTo(0.25, 1e-6));
+      },
+    );
 
-    test('PDF leaves an above-floor stroke unchanged (clamp only floors)',
-        () async {
-      final w = await _renderPdfLineWidth(
-        stroke: const Stroke(argb: 0xFF000000, widthPt: 2),
-        fontBytes: fontBytes,
-        measurer: measurer,
-      );
-      expect(w, closeTo(2, 1e-6));
-    });
+    test(
+      'PDF leaves an above-floor stroke unchanged (clamp only floors)',
+      () async {
+        final w = await _renderPdfLineWidth(
+          stroke: const Stroke(argb: 0xFF000000, widthPt: 2),
+          fontBytes: fontBytes,
+          measurer: measurer,
+        );
+        expect(w, closeTo(2, 1e-6));
+      },
+    );
 
     test('Flutter clamps a sub-floor stroke to the 0.5pt signal floor', () {
       final rec = _RecordingCanvas();
@@ -288,8 +314,7 @@ void main() {
       expect(rec.lastStrokeWidth, closeTo(0.5, 1e-6));
     });
 
-    test('Flutter clamps a sub-floor furniture stroke to the 0.25pt floor',
-        () {
+    test('Flutter clamps a sub-floor furniture stroke to the 0.25pt floor', () {
       final rec = _RecordingCanvas();
       FlutterDiagramCanvas(rec, measurer: measurer).drawLine(
         const DPt(10, 10),
@@ -331,8 +356,10 @@ void main() {
       // shipped export compresses; what is under test here is the wiring,
       // and the wiring emits the same operators either way.
       final doc = pw.Document(compress: false);
-      final pageFont =
-          PdfTtfFont(doc.document, ByteData.sublistView(fontBytes));
+      final pageFont = PdfTtfFont(
+        doc.document,
+        ByteData.sublistView(fontBytes),
+      );
       final scene = DiagramScene(
         ops: ops,
         bounds: const DBox.fromLtwh(0, 0, usableWidth, usableHeight),
@@ -363,34 +390,36 @@ void main() {
           mustContain: ' cm',
         );
 
-    test('the scene is REPLAYED — its ops reach the page as operators',
-        () async {
-      // Deleting `scene.replay(canvas)` leaves a perfectly valid document
-      // of the same order of size. It does not leave a `BT`.
-      final stream = await renderPageStream(
-        ops: const <DiagramOp>[OpText(_kFixtureText, _kAt, style)],
-      );
+    test(
+      'the scene is REPLAYED — its ops reach the page as operators',
+      () async {
+        // Deleting `scene.replay(canvas)` leaves a perfectly valid document
+        // of the same order of size. It does not leave a `BT`.
+        final stream = await renderPageStream(
+          ops: const <DiagramOp>[OpText(_kFixtureText, _kAt, style)],
+        );
 
-      expect(stream, contains('BT'), reason: 'the scene was never replayed');
-      expect(_tdRe.hasMatch(stream), isTrue);
+        expect(stream, contains('BT'), reason: 'the scene was never replayed');
+        expect(_tdRe.hasMatch(stream), isTrue);
 
-      // ==================================================================
-      // AND THE CONTROL, WHICH IS WHY THE OLD ASSERTIONS PROVED NOTHING.
-      // ==================================================================
-      // The identical wiring with an EMPTY scene produces a document with
-      // NO page content stream whatsoever — and it still clears both of
-      // the assertions this test used to consist of. Stated as an
-      // executable fact rather than as a paragraph, so nobody has to take
-      // it on trust that `length > 2000` was not a threshold.
-      final empty = await renderPageBytes(ops: const <DiagramOp>[]);
-      expect(empty, isNotEmpty);
-      expect(empty.length, greaterThan(2000));
-      expect(
-        () => _operatorStream(empty, mustContain: ' cm'),
-        throwsStateError,
-        reason: 'a page that draws nothing has no operators to find',
-      );
-    });
+        // ==================================================================
+        // AND THE CONTROL, WHICH IS WHY THE OLD ASSERTIONS PROVED NOTHING.
+        // ==================================================================
+        // The identical wiring with an EMPTY scene produces a document with
+        // NO page content stream whatsoever — and it still clears both of
+        // the assertions this test used to consist of. Stated as an
+        // executable fact rather than as a paragraph, so nobody has to take
+        // it on trust that `length > 2000` was not a threshold.
+        final empty = await renderPageBytes(ops: const <DiagramOp>[]);
+        expect(empty, isNotEmpty);
+        expect(empty.length, greaterThan(2000));
+        expect(
+          () => _operatorStream(empty, mustContain: ' cm'),
+          throwsStateError,
+          reason: 'a page that draws nothing has no operators to find',
+        );
+      },
+    );
 
     test('boxHeight is size.y — the WIDGET box, NOT the page height '
         '(§7.4)', () async {
@@ -408,8 +437,10 @@ void main() {
       );
 
       final btIdx = stream.indexOf('BT');
-      final cms =
-          _cmRe.allMatches(stream).where((m) => m.end <= btIdx).toList();
+      final cms = _cmRe
+          .allMatches(stream)
+          .where((m) => m.end <= btIdx)
+          .toList();
       expect(
         cms.length,
         greaterThanOrEqualTo(2),
@@ -426,7 +457,8 @@ void main() {
       expect(
         construction[5],
         closeTo(usableHeight, 1e-9),
-        reason: 'f is boxHeight: it must be size.y (300), not the page '
+        reason:
+            'f is boxHeight: it must be size.y (300), not the page '
             'height (A4 is 841.89)',
       );
     });
@@ -441,8 +473,10 @@ void main() {
       );
 
       final btIdx = stream.indexOf('BT');
-      final cms =
-          _cmRe.allMatches(stream).where((m) => m.end <= btIdx).toList();
+      final cms = _cmRe
+          .allMatches(stream)
+          .where((m) => m.end <= btIdx)
+          .toList();
       final m = _sixNums(cms.last);
       final td = _tdRe.firstMatch(
         RegExp('BT(.*?)ET', dotAll: true).firstMatch(stream)!.group(1)!,
@@ -511,11 +545,11 @@ Future<_PdfBaseline> _renderPdfText({
   // The REAL backend call under test, then dispose() to balance the
   // constructor's saveContext.
   PdfDiagramCanvas(
-    graphics: page.getGraphics(),
-    boxHeight: boxHeight,
-    fonts: <FontRef, PdfFont>{style.font: font},
-    measurer: measurer,
-  )
+      graphics: page.getGraphics(),
+      boxHeight: boxHeight,
+      fonts: <FontRef, PdfFont>{style.font: font},
+      measurer: measurer,
+    )
     ..drawText(text, at, style)
     ..dispose();
 
@@ -523,8 +557,7 @@ Future<_PdfBaseline> _renderPdfText({
   final stream = _operatorStream(bytes, mustContain: 'BT');
 
   final btIdx = stream.indexOf('BT');
-  final cms =
-      _cmRe.allMatches(stream).where((mt) => mt.end <= btIdx).toList();
+  final cms = _cmRe.allMatches(stream).where((mt) => mt.end <= btIdx).toList();
   if (cms.length < 2) {
     throw StateError(
       'expected the construction flip cm and the text cm before BT, found '
@@ -538,8 +571,10 @@ Future<_PdfBaseline> _renderPdfText({
   final gCm = _sixNums(cms[cms.length - 2]);
   final mCm = _sixNums(cms.last);
 
-  final textBlock =
-      RegExp('BT(.*?)ET', dotAll: true).firstMatch(stream)!.group(1)!;
+  final textBlock = RegExp(
+    'BT(.*?)ET',
+    dotAll: true,
+  ).firstMatch(stream)!.group(1)!;
   final tdM = _tdRe.firstMatch(textBlock);
   if (tdM == null) {
     throw StateError('no Td text-position operator found in:\n$textBlock');
@@ -581,11 +616,11 @@ Future<double> _renderPdfLineWidth({
   // No transforms applied, so the CTM scale k == 1 and the emitted width is
   // the clamped width directly.
   PdfDiagramCanvas(
-    graphics: page.getGraphics(),
-    boxHeight: 500,
-    fonts: <FontRef, PdfFont>{_kFont: font},
-    measurer: measurer,
-  )
+      graphics: page.getGraphics(),
+      boxHeight: 500,
+      fonts: <FontRef, PdfFont>{_kFont: font},
+      measurer: measurer,
+    )
     ..drawLine(const DPt(50, 50), const DPt(300, 50), stroke)
     ..dispose();
 
@@ -686,13 +721,16 @@ class _RecordingCanvas implements ui.Canvas {
 
 const String _numPat = r'[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?';
 
-final RegExp _cmRe = RegExp('($_numPat)\\s+($_numPat)\\s+($_numPat)\\s+'
-    '($_numPat)\\s+($_numPat)\\s+($_numPat)\\s+cm');
+final RegExp _cmRe = RegExp(
+  '($_numPat)\\s+($_numPat)\\s+($_numPat)\\s+'
+  '($_numPat)\\s+($_numPat)\\s+($_numPat)\\s+cm',
+);
 final RegExp _tdRe = RegExp('($_numPat)\\s+($_numPat)\\s+Td');
 final RegExp _lineWidthRe = RegExp('($_numPat)\\s+w(?=\\s)');
 
-List<double> _sixNums(RegExpMatch m) =>
-    <double>[for (var i = 1; i <= 6; i++) double.parse(m.group(i)!)];
+List<double> _sixNums(RegExpMatch m) => <double>[
+  for (var i = 1; i <= 6; i++) double.parse(m.group(i)!),
+];
 
 /// Returns the (uncompressed) content-operator stream containing
 /// [mustContain]. Picks the SMALLEST matching `stream…endstream` body so the

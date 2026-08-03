@@ -158,7 +158,10 @@ void main() {
 
       await tester.enterText(find.byType(TextField), 'HDMI/HDBaseT Matrix 8x8');
       await tester.pumpAndSettle();
-      final draggingRow = find.widgetWithText(ListTile, 'HDMI/HDBaseT Matrix 8x8');
+      final draggingRow = find.widgetWithText(
+        ListTile,
+        'HDMI/HDBaseT Matrix 8x8',
+      );
       expect(draggingRow, findsOneWidget);
       // The dimmed row sits inside an Opacity(0.40) ancestor; a plain row
       // (searched for below) has no such ancestor.

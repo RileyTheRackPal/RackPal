@@ -204,7 +204,8 @@ void main() {
       expect(
         drag.isShowingGhost,
         isFalse,
-        reason: 'dragging but nothing evaluated yet -- there is no ruIndex '
+        reason:
+            'dragging but nothing evaluated yet -- there is no ruIndex '
             'to draw a ghost at',
       );
       drag.updateEvaluation(

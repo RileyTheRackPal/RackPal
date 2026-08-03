@@ -177,8 +177,12 @@ void main() {
         for (final floor in <bool>[true, false]) {
           expect(
             widthOnCanvas(
-              Stroke(argb: 0xFF000000, widthPt: width, hairlineFloor: floor),
-            ) *
+                  Stroke(
+                    argb: 0xFF000000,
+                    widthPt: width,
+                    hairlineFloor: floor,
+                  ),
+                ) *
                 _k,
             greaterThanOrEqualTo(0.25 - 1e-9),
             reason: 'width $width, hairlineFloor $floor',

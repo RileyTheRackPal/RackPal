@@ -61,8 +61,7 @@ bool _colorsMatch(ui.Color x, ui.Color y) {
 
 void main() {
   group('pure geometry helpers', () {
-    test("insertionLineY(ruIndex) is the U's bottom edge (bottom-origin)",
-        () {
+    test("insertionLineY(ruIndex) is the U's bottom edge (bottom-origin)", () {
       const geo = RackGeometry(12);
       // U1's bottom edge is the rack's own bottom, at Y == rackHeight.
       expect(insertionLineY(geo, 1), geo.rackHeight);
@@ -106,8 +105,7 @@ void main() {
       recorder.endRecording().dispose();
     });
 
-    test('paints without throwing across the whole zoom range once active',
-        () {
+    test('paints without throwing across the whole zoom range once active', () {
       final vp = ViewportController();
       addTearDown(vp.dispose);
       final rack = _rack();
@@ -293,7 +291,8 @@ void main() {
       expect(
         errorLines.length,
         greaterThan(4),
-        reason: 'expected several dashed-border line segments in the '
+        reason:
+            'expected several dashed-border line segments in the '
             'error color, plus the snap-line',
       );
 
@@ -365,7 +364,8 @@ void main() {
           _style.caretColor,
         ),
         isTrue,
-        reason: 'the border should be in the caret color, not the error '
+        reason:
+            'the border should be in the caret color, not the error '
             'color',
       );
 
@@ -408,8 +408,7 @@ void main() {
         );
 
       const vsync = TestVSync();
-      final shake = ShakeController(vsync: vsync)
-        ..trigger(kDragGhostShakeId);
+      final shake = ShakeController(vsync: vsync)..trigger(kDragGhostShakeId);
       addTearDown(shake.dispose);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 30));
@@ -553,7 +552,8 @@ void main() {
         expect(
           strokedRects,
           hasLength(1),
-          reason: 'the live source must be found at index '
+          reason:
+              'the live source must be found at index '
               '${previews.indexOf(live)}',
         );
         final drawn =
@@ -931,14 +931,13 @@ void main() {
       required int from,
       required int to,
       List<DBox> doomed = const [],
-    }) =>
-        ResizePreviewController()
-          ..begin(from)
-          ..update(
-            candidateHeightU: to,
-            cursorGlobal: Offset.zero,
-            doomedRects: doomed,
-          );
+    }) => ResizePreviewController()
+      ..begin(from)
+      ..update(
+        candidateHeightU: to,
+        cursorGlobal: Offset.zero,
+        doomedRects: doomed,
+      );
 
     /// Every `drawLine` whose paint matches [color], as its two endpoints.
     List<(ui.Offset, ui.Offset)> linesIn(
@@ -1021,7 +1020,8 @@ void main() {
       expect(
         start.dy,
         isNot(closeTo(geo.yOfBoundary(12), 0.001)),
-        reason: 'the line marks where the top edge WOULD land, not where it '
+        reason:
+            'the line marks where the top edge WOULD land, not where it '
             'is now',
       );
       expect(start.dx, closeTo(-EditingOverlayPainter.lineOverhang, 0.001));

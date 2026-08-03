@@ -147,8 +147,7 @@ final class DocumentSession extends ChangeNotifier {
     bool openReadOnly = false,
     FileBaseline? baseline,
     bool recoveryEnabled = true,
-  }) :
-       // THE FOUR IGNORES BELOW ARE ONE DECISION, NOT FOUR. Every one of
+  }) : // THE FOUR IGNORES BELOW ARE ONE DECISION, NOT FOUR. Every one of
        // these fields is PRIVATE because nothing outside this class may
        // reassign it — `adopt`, `recordSave` and `setStatus` are the only
        // ways they move, and each of those has an invariant to keep.

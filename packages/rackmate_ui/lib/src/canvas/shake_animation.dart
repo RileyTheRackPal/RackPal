@@ -57,9 +57,10 @@ class ShakeController extends ChangeNotifier {
   /// blocked" rather than a silently truncated animation.
   void trigger(Uuid id) {
     _targetId = id;
-    final controller =
-        _controller ??= AnimationController(vsync: _vsync, duration: duration)
-          ..addListener(notifyListeners);
+    final controller = _controller ??= AnimationController(
+      vsync: _vsync,
+      duration: duration,
+    )..addListener(notifyListeners);
     controller
       ..stop()
       ..forward(from: 0);

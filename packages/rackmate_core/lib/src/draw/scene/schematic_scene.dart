@@ -713,8 +713,7 @@ _Candidate _measureCandidate({
   // the text, the run itself, and the same gap again so the deepest label
   // does not finish flush against the header band below it. Zero for an
   // edge with no labelled pins, which is most edges.
-  double band(double widest) =>
-      widest <= 0 ? 0.0 : widest + 2 * kPortLabelGap;
+  double band(double widest) => widest <= 0 ? 0.0 : widest + 2 * kPortLabelGap;
   final bandTop = band(widestTopLabel);
   final bandBottom = band(widestBottomLabel);
 

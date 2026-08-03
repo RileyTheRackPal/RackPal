@@ -218,5 +218,4 @@ final class Win32FilePicker implements FilePicker {
 const String kRackMateFilterLabel = 'RackMate project';
 
 /// The default suggested name for a document that has never been saved.
-String defaultSaveName(String displayName) =>
-    '$displayName$kDocumentExtension';
+String defaultSaveName(String displayName) => '$displayName$kDocumentExtension';

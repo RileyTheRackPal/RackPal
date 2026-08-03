@@ -105,9 +105,12 @@ void main() {
       // numbers §9.4 specifies" below and repeated here so that this test
       // notices a scheduler that installs some OTHER duration too.
       expect(t.periodicTimers.pending.single.duration, kAutosaveInterval);
-      expect(t.periodicTimers.pending.single.duration, const Duration(
-        seconds: 30,
-      ));
+      expect(
+        t.periodicTimers.pending.single.duration,
+        const Duration(
+          seconds: 30,
+        ),
+      );
 
       t.periodicTimers.tick();
       expect(await t.services.autosave.pending, AutosaveOutcome.written);
@@ -539,8 +542,8 @@ void main() {
   group('single flight', () {
     /// A session whose FIRST serialize blocks until the returned completer
     /// is completed \u2014 the isolate round-trip, held open.
-    Future<({TestSession t, Completer<void> gate})> sessionWithHeldSerialize()
-    async {
+    Future<({TestSession t, Completer<void> gate})>
+    sessionWithHeldSerialize() async {
       final gate = Completer<void>();
       var held = false;
       final t = await buildTestSession(

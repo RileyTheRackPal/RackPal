@@ -61,10 +61,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
-    show
-        FilteringTextInputFormatter,
-        KeyDownEvent,
-        LogicalKeyboardKey;
+    show FilteringTextInputFormatter, KeyDownEvent, LogicalKeyboardKey;
 import 'package:rackmate_core/rackmate_core.dart';
 
 /// §4's `RackInspector`. Stateless in its own right; the mutable buffers
@@ -248,8 +245,7 @@ class RackInspectorPanel extends StatelessWidget {
         _InspectorCheckbox(
           label: 'Mirror rear elevation',
           value: rack.mirrorRearElevation,
-          onChanged: (v) =>
-              onSetProperty(RackField.mirrorRearElevation, v),
+          onChanged: (v) => onSetProperty(RackField.mirrorRearElevation, v),
         ),
 
         const _SectionHeader('Circuits'),
@@ -281,8 +277,7 @@ String railTypeLabel(RailType v) => switch (v) {
   RailType.m6 => 'M6',
 };
 
-String hingeSideLabel(HingeSide v) =>
-    v == HingeSide.left ? 'Left' : 'Right';
+String hingeSideLabel(HingeSide v) => v == HingeSide.left ? 'Left' : 'Right';
 
 /// docs/04 §4's Mount radio is a TWO-way control over an EIGHT-value
 /// `RackFormFactor`. This is the mapping, stated explicitly because the
@@ -599,8 +594,10 @@ class _NullableMassField extends StatelessWidget {
         }
         final kg = double.tryParse(raw.trim());
         if (kg == null || kg < 0) {
-          onRefuse('Weight capacity must be a positive number of kg, or '
-              'empty.');
+          onRefuse(
+            'Weight capacity must be a positive number of kg, or '
+            'empty.',
+          );
           return;
         }
         onCommit(Mass((kg * 1e9).round()));
@@ -949,8 +946,7 @@ class _PresetField extends StatelessWidget {
       label: 'Preset',
       value: current,
       values: [null, ...presets.keys],
-      labelOf: (id) =>
-          id == null ? 'Custom' : presets[id]?.displayName ?? id,
+      labelOf: (id) => id == null ? 'Custom' : presets[id]?.displayName ?? id,
       onChanged: (id) {
         // Selecting "Custom" is not an edit — it is the display state that
         // means "this rack matches no preset". Applying it would have no
@@ -985,10 +981,9 @@ class _CircuitsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final circuits = doc.circuits.values
-        .where((c) => c.rackId == rack.id)
-        .toList()
-      ..sort((a, b) => a.designator.compareTo(b.designator));
+    final circuits =
+        doc.circuits.values.where((c) => c.rackId == rack.id).toList()
+          ..sort((a, b) => a.designator.compareTo(b.designator));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

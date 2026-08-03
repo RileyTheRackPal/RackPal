@@ -160,8 +160,7 @@ void main() {
 
     test('every OTHER heading is unit-free in both systems', () {
       for (final column in EquipmentColumn.values) {
-        if (column == EquipmentColumn.mass ||
-            column == EquipmentColumn.draw) {
+        if (column == EquipmentColumn.mass || column == EquipmentColumn.draw) {
           continue;
         }
         for (final units in UnitSystem.values) {

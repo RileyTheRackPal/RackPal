@@ -553,8 +553,10 @@ void main() {
           final hi = hue < base ? base : hue;
           expect(got, inInclusiveRange(lo, hi));
           // 12% of the way from paper toward the hue, +-1 for rounding.
-          expect((got - (hue * 31 / 255 + base * (1 - 31 / 255))).abs(),
-              lessThanOrEqualTo(1));
+          expect(
+            (got - (hue * 31 / 255 + base * (1 - 31 / 255))).abs(),
+            lessThanOrEqualTo(1),
+          );
         }
       }
     });
@@ -597,7 +599,8 @@ void main() {
       for (var i = 0; i < small.labels.length; i++) {
         final a = small.labels[i].pennant;
         final b = large.labels[i].pennant;
-        final along = small.labels[i].side == SymbolSide.left ||
+        final along =
+            small.labels[i].side == SymbolSide.left ||
                 small.labels[i].side == SymbolSide.right
             ? (a.width, b.width)
             : (a.width, b.width);
@@ -606,7 +609,8 @@ void main() {
       expect(
         grew,
         small.labels.length,
-        reason: 'every flag must widen when its type does; a constant inset '
+        reason:
+            'every flag must widen when its type does; a constant inset '
             'widens none of them beyond the text itself',
       );
     });
@@ -898,7 +902,8 @@ void main() {
           expect(
             kindOf[i],
             greaterThanOrEqualTo(kindOf[i - 1]),
-            reason: 'op $i of this run is out of layer order — a leader '
+            reason:
+                'op $i of this run is out of layer order — a leader '
                 'drawn after a pennant is the defect this fixes',
           );
         }
@@ -922,7 +927,8 @@ void main() {
         expect(
           firstGlyph,
           greaterThan(lastPennant),
-          reason: "a glyph drawn before another flag's fill is covered by "
+          reason:
+              "a glyph drawn before another flag's fill is covered by "
               'it — 96-I again, wearing a different shape',
         );
       }

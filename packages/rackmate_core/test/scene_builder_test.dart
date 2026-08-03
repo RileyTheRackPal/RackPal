@@ -523,8 +523,7 @@ void main() {
       typeScale: RackTypeScale(2),
     );
 
-    test('copyWith carries EVERY field — the property forPrint stands on',
-        () {
+    test('copyWith carries EVERY field — the property forPrint stands on', () {
       // Every field non-default, so a field that `copyWith` forgets comes
       // back as its default and fails here.
       expect(custom.copyWith(), custom);
@@ -550,8 +549,7 @@ void main() {
       );
     });
 
-    test('forPrint forces the five treatment flags AND the two arguments',
-        () {
+    test('forPrint forces the five treatment flags AND the two arguments', () {
       final printed = RackSceneOptions.screen.forPrint(
         typeScale: const RackTypeScale(3),
         units: UnitSystem.metric,

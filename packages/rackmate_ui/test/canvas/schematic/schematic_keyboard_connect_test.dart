@@ -32,8 +32,9 @@ void main() {
   late SchematicScene reference;
 
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
     doc = buildSchematicTestDocument();
@@ -45,8 +46,9 @@ void main() {
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -186,13 +188,15 @@ void main() {
       expect(
         statusOf(tester),
         contains('Wire from MTX-1'),
-        reason: "arming NAMES the pin it armed from (DR-011.5's habit, "
+        reason:
+            "arming NAMES the pin it armed from (DR-011.5's habit, "
             'applied to the affordance and not only to the refusal)',
       );
       expect(
         statusOf(tester),
         contains('can take it'),
-        reason: 'and it says how many pins can take the cable, so the '
+        reason:
+            'and it says how many pins can take the cable, so the '
             'user knows the mode is worth being in',
       );
 
@@ -239,7 +243,8 @@ void main() {
       expect(
         doc.ports.length,
         greaterThan(before),
-        reason: 'a connect to an unmaterialised pin has to create it, or '
+        reason:
+            'a connect to an unmaterialised pin has to create it, or '
             'the conductor lands on an id nothing resolves',
       );
       final link = doc.links.values.last;
@@ -265,7 +270,8 @@ void main() {
       expect(
         family,
         isNot(const SignalFamilyId('structure.undetermined')),
-        reason: 'the hardcode put every wire the user drew into the '
+        reason:
+            'the hardcode put every wire the user drew into the '
             'Structure domain, under a coach mark (AC-048) that teaches '
             'them to filter by domain',
       );
@@ -387,7 +393,8 @@ void main() {
       expect(
         said,
         contains('MTX-1'),
-        reason: 'DR-011.5: a sentence naming real designators, never a '
+        reason:
+            'DR-011.5: a sentence naming real designators, never a '
             "generic string — the user's next action depends on WHICH "
             'pin is full',
       );
@@ -431,7 +438,8 @@ void main() {
         expect(
           doc.links,
           hasLength(6),
-          reason: 'round $round chose candidate #$round, and a pin that was '
+          reason:
+              'round $round chose candidate #$round, and a pin that was '
               'OFFERED was then refused',
         );
         expect(statusOf(tester), contains('connected'));
@@ -525,7 +533,8 @@ void main() {
       expect(
         statusOf(tester),
         contains('MTX-1'),
-        reason: 'the wire is still from MTX-1; the selection is not the '
+        reason:
+            'the wire is still from MTX-1; the selection is not the '
             'caret and must never become it',
       );
     });
@@ -580,7 +589,8 @@ void main() {
       expect(
         controller.undo.canUndo,
         before,
-        reason: 'docs/05 §7: cancel aborts "with no model mutation and no '
+        reason:
+            'docs/05 §7: cancel aborts "with no model mutation and no '
             'undo entry"',
       );
     });
@@ -622,7 +632,8 @@ void main() {
       expect(
         find.textContaining('Wire cancelled'),
         findsOneWidget,
-        reason: 'a scope vanishing with no explanation is the silent no-op '
+        reason:
+            'a scope vanishing with no explanation is the silent no-op '
             'docs/04 §3.4 forbids',
       );
 
@@ -643,16 +654,17 @@ void main() {
     /// spoken in full.
     List<String> spoken(WidgetTester tester) {
       final out = <String>[];
-      tester.binding.defaultBinaryMessenger.setMockDecodedMessageHandler<
-        Object?
-      >(SystemChannels.accessibility, (message) async {
-        if (message is Map && message['type'] == 'announce') {
-          final data = message['data'] as Map?;
-          final text = data?['message'];
-          if (text is String) out.add(text);
-        }
-        return null;
-      });
+      tester.binding.defaultBinaryMessenger
+          .setMockDecodedMessageHandler<Object?>(SystemChannels.accessibility, (
+            message,
+          ) async {
+            if (message is Map && message['type'] == 'announce') {
+              final data = message['data'] as Map?;
+              final text = data?['message'];
+              if (text is String) out.add(text);
+            }
+            return null;
+          });
       addTearDown(
         () => tester.binding.defaultBinaryMessenger
             .setMockDecodedMessageHandler<Object?>(
@@ -677,7 +689,8 @@ void main() {
       expect(
         heard.where((s) => s.contains('cancelled')),
         isEmpty,
-        reason: "the commit's OWN document change must not be reported to "
+        reason:
+            "the commit's OWN document change must not be reported to "
             'the user as the edit that cancelled their wire — they are '
             'told it succeeded and, one message earlier, that it was '
             'thrown away',
@@ -764,7 +777,8 @@ void main() {
       expect(
         doc.links,
         hasLength(7),
-        reason: 'the second cable was drawn without re-arming by hand — '
+        reason:
+            'the second cable was drawn without re-arming by hand — '
             'which is the whole of the gesture',
       );
     });
@@ -799,7 +813,8 @@ void main() {
       expect(
         said.substring(said.indexOf('Chained')),
         contains(sink),
-        reason: 'chain-draw re-arms from the SINK, which is what makes a '
+        reason:
+            'chain-draw re-arms from the SINK, which is what makes a '
             'chain a chain rather than a repeat',
       );
     });

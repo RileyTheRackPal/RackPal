@@ -96,12 +96,13 @@ void main() {
       files: {
         for (var i = 1; i <= 10; i++)
           p.Context(style: p.Style.windows).join(
-                _dataRoot,
-                'snapshots',
-                'doc-1',
-                '$i.rackmate',
-              ):
-              _bytes(4),
+            _dataRoot,
+            'snapshots',
+            'doc-1',
+            '$i.rackmate',
+          ): _bytes(
+            4,
+          ),
       },
       dirs: {
         p.Context(
@@ -129,7 +130,8 @@ void main() {
     expect(
       await made.store.sequencesFor('doc-1'),
       [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      reason: 'the two oldest were legacy-spelled, and the prune rebuilt '
+      reason:
+          'the two oldest were legacy-spelled, and the prune rebuilt '
           'their paths with the new extension instead of using the one '
           'it found on disk',
     );
@@ -242,19 +244,21 @@ void main() {
     // existed BEFORE an irreversible schema migration became tearable by
     // any interruption. See `atomicity.dart`.
 
-    test('a FIRST snapshot is never partially written at any instant', ()
-        async {
-      final made = _make();
-      await made.store.write(docId: 'doc-1', sequence: 1, bytes: _bytes(32));
+    test(
+      'a FIRST snapshot is never partially written at any instant',
+      () async {
+        final made = _make();
+        await made.store.write(docId: 'doc-1', sequence: 1, bytes: _bytes(32));
 
-      expectAtomicWrite(
-        made.fs,
-        target: _first,
-        expected: _bytes(32),
-        what: 'the pre-update snapshot',
-      );
-      expectNoWorkingFiles(made.fs, target: _first);
-    });
+        expectAtomicWrite(
+          made.fs,
+          target: _first,
+          expected: _bytes(32),
+          what: 'the pre-update snapshot',
+        );
+        expectNoWorkingFiles(made.fs, target: _first);
+      },
+    );
 
     test('and neither is an OVERWRITE — the previous snapshot is never a '
         'gap and never half-replaced', () async {

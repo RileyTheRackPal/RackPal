@@ -102,10 +102,15 @@ void main() {
     });
 
     test('extending onto ANOTHER DEVICE replaces, never mixes', () {
-      final sel = PinSelection.at(
-        _pin('out.1'),
-        bankKey: 'out',
-      ).extendTo(_pin('out.4', device: 'amp'), bankKey: 'out', rank: _rank);
+      final sel =
+          PinSelection.at(
+            _pin('out.1'),
+            bankKey: 'out',
+          ).extendTo(
+            _pin('out.4', device: 'amp'),
+            bankKey: 'out',
+            rank: _rank,
+          );
       expect(sel.deviceId, 'amp');
       expect(sel.portKeys, ['out.4']);
     });
@@ -131,9 +136,10 @@ void main() {
     });
 
     test('reversing past the anchor SHRINKS then grows the other way', () {
-      var sel = PinSelection.at(_pin('out.3'), bankKey: 'out')
-          .step(by: 1, rank: _rank)
-          .step(by: 1, rank: _rank);
+      var sel = PinSelection.at(
+        _pin('out.3'),
+        bankKey: 'out',
+      ).step(by: 1, rank: _rank).step(by: 1, rank: _rank);
       expect(sel.portKeys, ['out.3', 'out.4', 'out.5']);
       sel = sel.step(by: -1, rank: _rank);
       expect(sel.portKeys, ['out.3', 'out.4']);

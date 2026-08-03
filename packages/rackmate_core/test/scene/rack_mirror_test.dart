@@ -204,8 +204,9 @@ void main() {
       // model string backwards. This is the check that separates the two
       // implementations, so it reads the composed scene's actual
       // transforms rather than trusting the design.
-      final transforms =
-          rearScene().scene.ops.whereType<OpTransform>().toList();
+      final transforms = rearScene().scene.ops
+          .whereType<OpTransform>()
+          .toList();
 
       expect(transforms, isNotEmpty, reason: 'nothing to check');
       for (final op in transforms) {

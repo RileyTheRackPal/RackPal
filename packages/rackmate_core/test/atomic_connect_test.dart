@@ -39,34 +39,33 @@ TemplateBody _body(
   String setKey,
   List<(String, String?)> members, {
   bool atomic = true,
-}) =>
-    TemplateBody(
-      manufacturer: 'Acme',
-      model: 'T',
-      displayName: 'T',
-      portSets: [
-        PortSetDef(
-          key: setKey,
-          label: '$setKey set',
-          kind: SetKind.stereoPair,
-          atomicConnect: atomic,
-        ),
-      ],
-      ports: [
-        for (var i = 0; i < members.length; i++)
-          PortDef(
-            key: PortKey(members[i].$1),
-            label: members[i].$1,
-            connector: const ConnectorTypeId('conn.rca'),
-            signalFamily: const SignalFamilyId('audio.line_unbal'),
-            face: Face.rear,
-            position: _pos,
-            order: FracIndex('a$i'),
-            setKey: setKey,
-            setRole: members[i].$2,
-          ),
-      ],
-    );
+}) => TemplateBody(
+  manufacturer: 'Acme',
+  model: 'T',
+  displayName: 'T',
+  portSets: [
+    PortSetDef(
+      key: setKey,
+      label: '$setKey set',
+      kind: SetKind.stereoPair,
+      atomicConnect: atomic,
+    ),
+  ],
+  ports: [
+    for (var i = 0; i < members.length; i++)
+      PortDef(
+        key: PortKey(members[i].$1),
+        label: members[i].$1,
+        connector: const ConnectorTypeId('conn.rca'),
+        signalFamily: const SignalFamilyId('audio.line_unbal'),
+        face: Face.rear,
+        position: _pos,
+        order: FracIndex('a$i'),
+        setKey: setKey,
+        setRole: members[i].$2,
+      ),
+  ],
+);
 
 /// A body whose ports are LISTED in one order and ORDERED in another, so
 /// a test can tell which one the resolver actually uses.
@@ -356,8 +355,7 @@ void main() {
       expect(plan.openCount, 0);
     });
 
-    test('AN UNMATERIALISED MEMBER STILL DOES NOT SLIDE ITS SUCCESSOR UP',
-        () {
+    test('AN UNMATERIALISED MEMBER STILL DOES NOT SLIDE ITS SUCCESSOR UP', () {
       // THE INVARIANT THE OLD TEST WAS REALLY PROTECTING, and it survives
       // the change unaltered: if the implementation filtered unmaterialised
       // members before zipping, `r` would become index 0 and be wired to
@@ -421,7 +419,8 @@ void main() {
       expect(
         plan.neededPorts,
         hasLength(5),
-        reason: 'every pin the plan lands on is planned, including the '
+        reason:
+            'every pin the plan lands on is planned, including the '
             'one whose partner is missing',
       );
     });
@@ -780,7 +779,8 @@ void main() {
       expect(
         cmd.touches,
         EpochMask.wires | EpochMask.meta,
-        reason: 'meta since Phase 4C, because materialisation MINTS A '
+        reason:
+            'meta since Phase 4C, because materialisation MINTS A '
             'DESIGNATOR — the same pair ConnectPortsCommand declares. A '
             'surface subscribed only to wires would draw the new run '
             'against a pin whose identifier it has never read.',
@@ -888,8 +888,12 @@ void main() {
     test('a set that opted out is NOT planned, and NOT reported as a rule '
         'refusal', () {
       final doc = _doc();
-      _addDevice(doc, _devA, 'A-1', _body('s', [('l', 'L'), ('r', 'R')],
-          atomic: false));
+      _addDevice(
+        doc,
+        _devA,
+        'A-1',
+        _body('s', [('l', 'L'), ('r', 'R')], atomic: false),
+      );
       _addDevice(doc, _devB, 'B-1', _body('s', [('l', 'L'), ('r', 'R')]));
 
       final result = planAtomicConnect(
@@ -903,7 +907,8 @@ void main() {
       expect(
         result,
         isNot(isA<AtomicConnectRefused>()),
-        reason: 'no tier-1 rule was broken, and canon §5 forbids inventing '
+        reason:
+            'no tier-1 rule was broken, and canon §5 forbids inventing '
             'a TOP id for something that is not in the catalogue',
       );
       expect((result! as AtomicConnectNotAtomic).setKey, 's');
@@ -914,8 +919,12 @@ void main() {
         'end and N at the other', () {
       final doc = _doc();
       _addDevice(doc, _devA, 'A-1', _body('s', [('l', 'L'), ('r', 'R')]));
-      _addDevice(doc, _devB, 'B-1', _body('s', [('l', 'L'), ('r', 'R')],
-          atomic: false));
+      _addDevice(
+        doc,
+        _devB,
+        'B-1',
+        _body('s', [('l', 'L'), ('r', 'R')], atomic: false),
+      );
 
       final result = planAtomicConnect(
         doc,
@@ -928,7 +937,8 @@ void main() {
       expect(
         (result! as AtomicConnectNotAtomic).deviceId,
         _devB,
-        reason: 'the TO end is the one that opted out, and the answer names '
+        reason:
+            'the TO end is the one that opted out, and the answer names '
             'which',
       );
     });
@@ -936,8 +946,12 @@ void main() {
     test('it is told apart from "no such set" (null) and from an EMPTY '
         'plan — the three the file header warns not to collapse', () {
       final doc = _doc();
-      _addDevice(doc, _devA, 'A-1', _body('s', [('l', 'L'), ('r', 'R')],
-          atomic: false));
+      _addDevice(
+        doc,
+        _devA,
+        'A-1',
+        _body('s', [('l', 'L'), ('r', 'R')], atomic: false),
+      );
       _addDevice(doc, _devB, 'B-1', _body('s', [('l', 'L'), ('r', 'R')]));
 
       expect(
@@ -1011,15 +1025,14 @@ void main() {
       return doc;
     }
 
-    AtomicConnectCommand built(RackDocument doc) =>
-        buildAtomicConnectCommand(
-          doc: doc,
-          plan: _plan(doc)!,
-          signalFamily: const SignalFamilyId('audio.line_unbal'),
-          media: kUnstatedMedia,
-          now: _when,
-          actor: 'test',
-        );
+    AtomicConnectCommand built(RackDocument doc) => buildAtomicConnectCommand(
+      doc: doc,
+      plan: _plan(doc)!,
+      signalFamily: const SignalFamilyId('audio.line_unbal'),
+      media: kUnstatedMedia,
+      now: _when,
+      actor: 'test',
+    );
 
     test('a palette-built document now yields a REAL plan, not a '
         'zero-conductor one', () {
@@ -1027,7 +1040,8 @@ void main() {
       expect(
         plan.conductors,
         hasLength(2),
-        reason: 'this was ZERO before Phase 4C — the exact defect DR-011 '
+        reason:
+            'this was ZERO before Phase 4C — the exact defect DR-011 '
             'was created to record',
       );
       expect(plan.pairedCount, 2);
@@ -1099,7 +1113,8 @@ void main() {
       expect(
         doc.ports.keys.toSet(),
         preexisting,
-        reason: "a port the user's document already owned is not this "
+        reason:
+            "a port the user's document already owned is not this "
             "command's to remove — its designator, notes and every "
             'conductor landing on it would go with it',
       );
@@ -1124,7 +1139,8 @@ void main() {
       expect(
         doc.ports[_portOf(_devA, 'l')]!.designator,
         kept,
-        reason: 'CR-048: a designator is evaluated once at creation and '
+        reason:
+            'CR-048: a designator is evaluated once at creation and '
             'stored; a connect never rewrites project state',
       );
     });

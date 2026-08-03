@@ -34,8 +34,9 @@ void main() {
   late SchematicScene reference;
 
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
     doc = buildSchematicTestDocument();
@@ -47,8 +48,9 @@ void main() {
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -173,7 +175,8 @@ void main() {
       expect(
         statusOf(tester),
         contains('Source Inputs'),
-        reason: "the bank is named by core's bankLabelFor, so the screen "
+        reason:
+            "the bank is named by core's bankLabelFor, so the screen "
             'and the plan cannot disagree about what it is called',
       );
     });
@@ -271,7 +274,8 @@ void main() {
       expect(
         statusOf(tester),
         contains('Shift+click'),
-        reason: 'a run cannot span two banks, so the second bank starts a '
+        reason:
+            'a run cannot span two banks, so the second bank starts a '
             'fresh anchor rather than growing the first',
       );
       expect(statusOf(tester), contains('Zone Speaker Outputs'));
@@ -348,7 +352,8 @@ void main() {
         // skips because the two rings are the same radius and would be
         // exactly coincident — PLUS the caret's own.
         idle + 4,
-        reason: 'three selection rings and one caret ring, with no '
+        reason:
+            'three selection rings and one caret ring, with no '
             'coincident pair',
       );
     });
@@ -370,7 +375,8 @@ void main() {
       expect(
         rings(tester),
         idle + 1,
-        reason: 'every selection ring is gone and the caret stays — the '
+        reason:
+            'every selection ring is gone and the caret stays — the '
             'user is still there, exactly as after a cancelled cable',
       );
     });
@@ -400,7 +406,8 @@ void main() {
       expect(
         statusOf(tester),
         'Jack selection cancelled — the document changed.',
-        reason: 'the teardown is announced, and the RUN is what gets named '
+        reason:
+            'the teardown is announced, and the RUN is what gets named '
             'rather than the caret: `_onDocumentChanged` shows one '
             'sentence, so the order of the limbs decides which loss the '
             'user hears about, and sixteen jacks cost more to rebuild '

@@ -541,7 +541,8 @@ void main() {
       expect(
         row.media,
         isNull,
-        reason: 'ScheduleRow.media is the nullable registry entry, whose '
+        reason:
+            'ScheduleRow.media is the nullable registry entry, whose '
             'own doc reads "counted, never invented" — an unstated cable '
             'lands in that arm',
       );

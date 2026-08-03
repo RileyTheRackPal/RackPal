@@ -215,7 +215,8 @@ void main() {
       expect(
         f.doc.ports.values.where((p) => p.deviceId == _src),
         isEmpty,
-        reason: 'a Port belongs to exactly one device and that device is '
+        reason:
+            'a Port belongs to exactly one device and that device is '
             'gone',
       );
       expect(f.doc.devices.containsKey(_sink), isTrue);
@@ -252,7 +253,8 @@ void main() {
             expect(
               f.doc.ports.containsKey(end.portId),
               isTrue,
-              reason: 'link ${link.designator} terminates on a port the '
+              reason:
+                  'link ${link.designator} terminates on a port the '
                   'document no longer has',
             );
           }
@@ -363,7 +365,8 @@ void main() {
       expect(
         utf8.decode(codec.write(f.doc)),
         before,
-        reason: 'anything less makes delete-then-undo a lossy round trip '
+        reason:
+            'anything less makes delete-then-undo a lossy round trip '
             "through the one entity CR-117's byte gate is about",
       );
     });

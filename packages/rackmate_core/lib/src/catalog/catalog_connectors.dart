@@ -99,17 +99,35 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
     _c('conn.6_35mm_trs', '1/4 in TRS', 10.0, 10.0),
     _c('conn.xlr3', 'XLR3', 24.0, 24.0, aliases: const ['xlr']),
     _c('conn.xlr5', 'XLR5', 24.0, 24.0),
-    _c('conn.jis_f05', 'JIS F05 (TOSLINK)', 7.0, 7.0, aliases: const ['toslink']),
+    _c(
+      'conn.jis_f05',
+      'JIS F05 (TOSLINK)',
+      7.0,
+      7.0,
+      aliases: const ['toslink'],
+    ),
     // -- Network -----------------------------------------------------------
     _c('conn.rj45', 'RJ45 (8P8C)', 15.0, 13.0, aliases: const ['rj45', 'hdbt']),
     _c('conn.lc_duplex', 'LC duplex', 12.5, 9.0, aliases: const ['lc']),
     _c('conn.sc', 'SC fibre', 13.0, 13.0),
     _c('conn.st', 'ST fibre', 10.0, 10.0),
-    _c('conn.sfp_cage', 'SFP/SFP+/SFP28 cage', 14.0, 9.0, aliases: const ['sfp+']),
+    _c(
+      'conn.sfp_cage',
+      'SFP/SFP+/SFP28 cage',
+      14.0,
+      9.0,
+      aliases: const ['sfp+'],
+    ),
     // -- Control -------------------------------------------------------------
     _c('conn.de9', 'DE-9 (DB9)', 31.0, 13.0, aliases: const ['db9', '232']),
     _c('conn.euroblock_2', 'Euroblock 2-pole', 9.0, 10.0),
-    _c('conn.euroblock_3', 'Euroblock 3-pole', 12.5, 10.0, aliases: const ['euro3']),
+    _c(
+      'conn.euroblock_3',
+      'Euroblock 3-pole',
+      12.5,
+      10.0,
+      aliases: const ['euro3'],
+    ),
     _c('conn.euroblock_5', 'Euroblock 5-pole', 18.0, 10.0),
     _c('conn.phoenix_4', 'Phoenix 4-pole (Cresnet)', 18.0, 10.0),
     _c('conn.screw_terminal', 'Screw terminal', 9.0, 10.0),
@@ -118,7 +136,13 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
     _c('conn.binding_post', 'Binding post', 12.0, 12.0, aliases: const ['bp']),
     _c('conn.banana', 'Banana plug', 10.0, 10.0),
     _c('conn.speakon_nl4', 'SpeakON NL4', 24.0, 24.0),
-    _c('conn.punchdown_110', '110 punchdown', 20.0, 10.0, aliases: const ['110']),
+    _c(
+      'conn.punchdown_110',
+      '110 punchdown',
+      20.0,
+      10.0,
+      aliases: const ['110'],
+    ),
     _c('conn.keystone', 'Keystone jack', 16.0, 16.0),
     // -- Power -----------------------------------------------------------
     _c('conn.iec_c13', 'IEC C13', 27.0, 20.0, aliases: const ['c13']),
@@ -129,7 +153,13 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
     _c('conn.nema_5_15r', 'NEMA 5-15R', 34.0, 27.0, aliases: const ['5-15r']),
     _c('conn.nema_5_20p', 'NEMA 5-20P', 34.0, 27.0, aliases: const ['5-20p']),
     _c('conn.nema_5_20r', 'NEMA 5-20R', 34.0, 27.0, aliases: const ['5-20r']),
-    _c('conn.nema_l5_30p', 'NEMA L5-30P (twist-lock)', 32.0, 32.0, aliases: const ['l5-30p']),
+    _c(
+      'conn.nema_l5_30p',
+      'NEMA L5-30P (twist-lock)',
+      32.0,
+      32.0,
+      aliases: const ['l5-30p'],
+    ),
     _c('conn.barrel_dc', 'DC barrel', 8.0, 8.0, aliases: const ['dc']),
     // -- No panel cutout (§5.1 states their footprint column as "no") -----
     //

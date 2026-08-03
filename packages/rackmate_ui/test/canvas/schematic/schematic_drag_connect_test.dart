@@ -32,8 +32,9 @@ void main() {
   late SchematicScene reference;
 
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
     doc = buildSchematicTestDocument();
@@ -45,8 +46,9 @@ void main() {
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -255,7 +257,8 @@ void main() {
       expect(
         circles(tester),
         idle + 1,
-        reason: 'every candidate ring is gone — a ring on each reachable '
+        reason:
+            'every candidate ring is gone — a ring on each reachable '
             'pin would be permanent furniture answering a question nobody '
             'asked — and the ONE that stays is the caret. The press put it '
             'on that pin and cancelling a cable does not un-put it: the '
@@ -282,7 +285,8 @@ void main() {
       expect(
         statusOf(tester),
         contains('→'),
-        reason: 'the band snapped onto a pin, so the status line resolves '
+        reason:
+            'the band snapped onto a pin, so the status line resolves '
             'both ends (docs/05 §7.9)',
       );
       expect(statusOf(tester), contains('AMP-1'));
@@ -294,7 +298,8 @@ void main() {
       expect(
         bandOf(tester).last,
         isNot(to.centre),
-        reason: 'docs/05 §14: "Ctrl held during draw | Suppress magnetic '
+        reason:
+            'docs/05 §14: "Ctrl held during draw | Suppress magnetic '
             'snap" — the band ends at the cursor, not on the pin',
       );
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
@@ -343,7 +348,8 @@ void main() {
       expect(
         doc.links,
         hasLength(linksBefore),
-        reason: 'the magnet may prefer a neighbouring CANDIDATE, but it '
+        reason:
+            'the magnet may prefer a neighbouring CANDIDATE, but it '
             'may never lock onto a jack that is already full — and a '
             'release on a locked-on pin is exactly what commits',
       );
@@ -354,7 +360,8 @@ void main() {
       expect(
         portConductorCount(doc, fullPortId),
         1,
-        reason: 'the full jack carries the one cable it started with, and '
+        reason:
+            'the full jack carries the one cable it started with, and '
             'no second one arrived on it',
       );
     });
@@ -421,7 +428,8 @@ void main() {
       expect(
         doc.links,
         hasLength(5),
-        reason: 'DR-011.5: a T1 rule refuses OUTRIGHT — there is no '
+        reason:
+            'DR-011.5: a T1 rule refuses OUTRIGHT — there is no '
             '[ Connect anyway ] and nothing is written',
       );
     });
@@ -480,7 +488,8 @@ void main() {
       expect(
         statusOf(tester),
         contains('Shift+click'),
-        reason: 'the tap left an anchor, and this sentence is the only '
+        reason:
+            'the tap left an anchor, and this sentence is the only '
             'place multi-draw is discoverable — it has no button, no menu '
             'item and no coach mark of its own',
       );
@@ -557,7 +566,8 @@ void main() {
       expect(
         find.textContaining('One drag at a time'),
         findsNothing,
-        reason: 'the connect claim was released on the terminal callback, '
+        reason:
+            'the connect claim was released on the terminal callback, '
             'not leaked',
       );
     });

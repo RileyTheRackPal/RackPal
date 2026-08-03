@@ -84,9 +84,9 @@ final class PortBuilder {
       BankDef(
         key: key,
         label: label,
-        abbr: label.length <= 4 ? label.toUpperCase() : label
-            .substring(0, 4)
-            .toUpperCase(),
+        abbr: label.length <= 4
+            ? label.toUpperCase()
+            : label.substring(0, 4).toUpperCase(),
         order: _next(),
         symbolSide: side,
       ),
@@ -96,7 +96,9 @@ final class PortBuilder {
   /// Declares a [PortSetDef] (electrical grouping, CR-055) once per [key].
   void set(String key, String label, SetKind kind, {bool atomic = true}) {
     if (_setKeys.add(key)) {
-      portSets.add(PortSetDef(key: key, label: label, kind: kind, atomicConnect: atomic));
+      portSets.add(
+        PortSetDef(key: key, label: label, kind: kind, atomicConnect: atomic),
+      );
     }
   }
 

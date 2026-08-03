@@ -61,8 +61,7 @@ void main() {
   ).readAsBytesSync();
 
   RackDocument documentOf(String name) =>
-      (const JsonDocumentCodec().read(starterBytes(name))
-              as Ok<RackDocument>)
+      (const JsonDocumentCodec().read(starterBytes(name)) as Ok<RackDocument>)
           .value;
 
   Future<ExportedDocument> exportOf(String name) async {

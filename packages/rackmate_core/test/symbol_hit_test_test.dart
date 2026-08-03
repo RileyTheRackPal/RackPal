@@ -312,9 +312,9 @@ void main() {
       // The same distance taken straight along an axis DOES hit, so the
       // rejection above is about the shape of the target, not its size.
       expect(
-        SymbolHitTest(symbols: [s])
-            .testPoint(DPt(centre.x - 15, centre.y))
-            .portKey,
+        SymbolHitTest(
+          symbols: [s],
+        ).testPoint(DPt(centre.x - 15, centre.y)).portKey,
         'J01',
       );
     });
@@ -694,7 +694,8 @@ void main() {
       expect(
         unbanked.bankKey,
         isNull,
-        reason: 'a pin in no bank says so, rather than being lumped with '
+        reason:
+            'a pin in no bank says so, rather than being lumped with '
             'the last one that had a key',
       );
     });
@@ -718,7 +719,8 @@ void main() {
       expect(
         banked,
         greaterThan(total ~/ 2),
-        reason: 'most catalog ports declare a bank; if that ever stops '
+        reason:
+            'most catalog ports declare a bank; if that ever stops '
             'being true, multi-draw loses its selection unit',
       );
     });
@@ -746,16 +748,19 @@ void main() {
         bankKey: 'two',
       );
       expect(a, isNot(b));
-      expect(a, SymbolPort(
-        key: a.key,
-        label: a.label,
-        side: a.side,
-        offset: a.offset,
-        size: a.size,
-        direction: a.direction,
-        family: a.family,
-        bankKey: a.bankKey,
-      ));
+      expect(
+        a,
+        SymbolPort(
+          key: a.key,
+          label: a.label,
+          side: a.side,
+          offset: a.offset,
+          size: a.size,
+          direction: a.direction,
+          family: a.family,
+          bankKey: a.bankKey,
+        ),
+      );
     });
   });
 }

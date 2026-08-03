@@ -4385,8 +4385,7 @@ class _RackCanvasHandler implements CanvasIntentHandler {
       _state._onCommitDrag(sceneEnd);
 
   @override
-  void cancel({required CanvasGestureToken gesture}) =>
-      _state._onCancelDrag();
+  void cancel({required CanvasGestureToken gesture}) => _state._onCancelDrag();
 }
 
 // ── temporary demo data (see the field comment above) ─────────────────────

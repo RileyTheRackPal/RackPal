@@ -294,7 +294,8 @@ void main() {
       expect(
         r.keystone,
         isNull,
-        reason: 'a keystone colour nobody can name is not the first entry '
+        reason:
+            'a keystone colour nobody can name is not the first entry '
             'in the map',
       );
     });

@@ -305,8 +305,7 @@ void runFileStoreContract(
     // later looks exactly like one that is still running — so the answer
     // comes from a lock the kernel releases when a process ends. These
     // four assertions are the whole contract the scan relies on.
-    test('a lease can be taken, and is exclusive while it is held',
-        () async {
+    test('a lease can be taken, and is exclusive while it is held', () async {
       final first = await fs.acquireLease(at('a.lease'));
       expect(first, isNotNull);
 
@@ -345,25 +344,27 @@ void runFileStoreContract(
       await again!.release();
     });
 
-    test('a lease CREATES its file, and does not truncate an existing one',
-        () async {
-      await fs.writeBytes(at('d.lease'), _b([1, 2, 3]));
-      final lease = await fs.acquireLease(at('d.lease'));
-      expect(lease, isNotNull);
-      await lease!.release();
+    test(
+      'a lease CREATES its file, and does not truncate an existing one',
+      () async {
+        await fs.writeBytes(at('d.lease'), _b([1, 2, 3]));
+        final lease = await fs.acquireLease(at('d.lease'));
+        expect(lease, isNotNull);
+        await lease!.release();
 
-      expect(
-        await fs.readBytes(at('d.lease')),
-        _b([1, 2, 3]),
-        reason:
-            'truncating is a write into another process’s state for no '
-            'benefit — the handle exists only to carry the lock',
-      );
-      expect(await fs.exists(at('e.lease')), isFalse);
-      final made = await fs.acquireLease(at('e.lease'));
-      await made!.release();
-      expect(await fs.exists(at('e.lease')), isTrue);
-    });
+        expect(
+          await fs.readBytes(at('d.lease')),
+          _b([1, 2, 3]),
+          reason:
+              'truncating is a write into another process’s state for no '
+              'benefit — the handle exists only to carry the lock',
+        );
+        expect(await fs.exists(at('e.lease')), isFalse);
+        final made = await fs.acquireLease(at('e.lease'));
+        await made!.release();
+        expect(await fs.exists(at('e.lease')), isTrue);
+      },
+    );
 
     test('a lease in a directory that does not exist is REFUSED, not '
         'thrown', () async {

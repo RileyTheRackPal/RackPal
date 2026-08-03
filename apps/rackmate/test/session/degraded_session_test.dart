@@ -137,8 +137,7 @@ void main() {
   });
 
   group('RecoveryStore.enabled', () {
-    test('a disabled store takes no lease and creates no directory',
-        () async {
+    test('a disabled store takes no lease and creates no directory', () async {
       final fs = FakeFileStore(initialDirectories: {'C:'});
       final store = _degradedStore(fs, dataRoot: '');
       final before = fs.state;
@@ -151,8 +150,7 @@ void main() {
       expect(store.sessionsDirectory, 'sessions');
     });
 
-    test('...and endSession over it is a no-op rather than a throw',
-        () async {
+    test('...and endSession over it is a no-op rather than a throw', () async {
       final fs = FakeFileStore(initialDirectories: {'C:'});
       final store = _degradedStore(fs, dataRoot: '');
       final before = fs.state;
@@ -227,7 +225,8 @@ void main() {
     expect(
       touched.directories,
       contains(_windows.join(kTestDataRoot, 'sessions')),
-      reason: 'the healthy session announces itself, or the tests above '
+      reason:
+          'the healthy session announces itself, or the tests above '
           'are measuring a fixture that does nothing',
     );
     expect(

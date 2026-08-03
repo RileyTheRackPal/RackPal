@@ -159,7 +159,8 @@ void main() {
       expect(
         jsonDecode(deep),
         isA<Map<String, Object?>>(),
-        reason: "Dart's JSON parser is iterative. If this ever starts "
+        reason:
+            "Dart's JSON parser is iterative. If this ever starts "
             'throwing, the depth cap gains a second justification — but '
             'it does not have this one today.',
       );
@@ -187,13 +188,15 @@ void main() {
       expect(
         caughtAsException,
         isFalse,
-        reason: 'this is the crux: every `on Exception catch` guard in '
+        reason:
+            'this is the crux: every `on Exception catch` guard in '
             'the persistence layer walks straight past it',
       );
       expect(
         caughtAsError,
         isTrue,
-        reason: 'StackOverflowError, thrown from inside a write() that '
+        reason:
+            'StackOverflowError, thrown from inside a write() that '
             'is documented as non-fallible and catches nothing',
       );
     });
@@ -205,7 +208,8 @@ void main() {
       expect(
         (outcome as Err<JsonMap>).error,
         isA<JsonTooDeeplyNestedError>(),
-        reason: 'one sentence the user can act on, an hour before the '
+        reason:
+            'one sentence the user can act on, an hour before the '
             'save that would otherwise have died',
       );
     });

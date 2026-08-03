@@ -513,7 +513,8 @@ void main() {
       expect(
         after.positions,
         isNot(before.positions),
-        reason: 'an added edge changes the layering and the barycentre '
+        reason:
+            'an added edge changes the layering and the barycentre '
             'sweep, which is exactly the reflow the ruling forbids',
       );
     });
@@ -530,7 +531,8 @@ void main() {
       expect(
         after.positions,
         before.positions,
-        reason: 'DR-011.4: "symbol positions freeze; wires and labels '
+        reason:
+            'DR-011.4: "symbol positions freeze; wires and labels '
             'rebuild" — the positions are the whole claim',
       );
       // And the DRAWING agrees with the map, rather than the map being a

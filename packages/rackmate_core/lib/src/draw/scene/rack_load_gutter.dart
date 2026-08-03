@@ -526,7 +526,6 @@ List<String> rackLoadSummaryLines(
   ];
 }
 
-String _capacity(Mass capacity, UnitSystem units) =>
-    units == UnitSystem.metric
+String _capacity(Mass capacity, UnitSystem units) => units == UnitSystem.metric
     ? capacity.toKilograms(fractionDigits: 1)
     : capacity.toPounds(fractionDigits: 1);

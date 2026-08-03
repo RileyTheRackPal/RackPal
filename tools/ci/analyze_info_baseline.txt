@@ -5,13 +5,19 @@
 # more than this fails the build, fewer than this passes with a warning
 # telling you to lower the pin.
 #
-# WHY A NUMBER AND NOT `--fatal-infos`. very_good_analysis 9.0.0 reports 195
-# infos on this tree today, so --fatal-infos would make main permanently red
-# on the first push, and docs/12 section 4.1 argues -- correctly -- that a
-# permanently red main is worse than no CI. Clearing the 195 and then
-# switching this gate to --fatal-infos is the destination. This is what stops
-# the number moving the wrong way in the meantime, after 203 became 395
-# during the salvage with nothing watching.
+# WHY A NUMBER AND NOT `--fatal-infos`. very_good_analysis 9.0.0 reported 195
+# infos when this gate was written, so --fatal-infos would have made main
+# permanently red on the first push, and docs/12 section 4.1 argues --
+# correctly -- that a permanently red main is worse than no CI. This is what
+# stops the number moving the wrong way meanwhile, after 203 became 395 during
+# the salvage with nothing watching.
+#
+# THE USER RULED ON THIS 2026-08-03 and the ratchet is the settled answer, not
+# a holding position: adopt `dart format` as a gate, because formatting is
+# mechanical and settles permanently, and keep the ratchet for infos rather
+# than switching to --fatal-infos, because the remainder are style opinions the
+# ratchet already prevents growing. Clearing them all remains available and is
+# nobody's scheduled work.
 #
 # MEASURED, not asserted: `dart analyze --format=machine .` at the repo root
 # on Flutter 3.44.4 / Dart 3.12.2, over all five workspace members. The count
@@ -21,4 +27,17 @@
 #
 # TO RAISE IT you must say why in the commit message. To lower it after
 # fixing infos: pwsh -File tools/ci/analyze_gate.ps1 -UpdateBaseline
-194
+#
+# 194 -> 173 on 2026-08-03, when the tree was formatted and `dart format
+# --set-exit-if-changed` became a gate. This was not a lint-fixing pass: 21 of
+# the 22 LINES_LONGER_THAN_80_CHARS infos were long because nobody had run the
+# formatter, and the formatter split them. The one survivor is a string
+# interpolation the formatter cannot break (file_error_presenter.dart:266).
+#
+# The sweep also CREATED one info and it was fixed rather than pinned: joining
+# a long single-line `if (...) return x;` onto two lines turned a long-line
+# info into a CURLY_BRACES_IN_FLOW_CONTROL_STRUCTURES one
+# (catalog_placement.dart), so the braces were added. Formatting does not
+# reduce the info count for free, and a ratchet that absorbs what the last
+# mechanical sweep introduced is a ratchet nobody is reading.
+173

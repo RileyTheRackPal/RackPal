@@ -195,15 +195,17 @@ Future<void> _tapTile(WidgetTester tester, String text) async {
 
 void main() {
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -254,8 +256,9 @@ void main() {
       expect(find.byType(RackInspectorPanel), findsOneWidget);
     });
 
-    testWidgets('the overflow menu opens it via "Rack settings…"',
-        (tester) async {
+    testWidgets('the overflow menu opens it via "Rack settings…"', (
+      tester,
+    ) async {
       await tester.pumpWidget(_app());
       await tester.pump();
 
@@ -287,8 +290,9 @@ void main() {
   });
 
   group('Identity', () {
-    testWidgets('Designator commits on Enter, runs ONE command, and undoes',
-        (tester) async {
+    testWidgets('Designator commits on Enter, runs ONE command, and undoes', (
+      tester,
+    ) async {
       await tester.pumpWidget(_app());
       await tester.pump();
       await _openInspector(tester);
@@ -304,8 +308,9 @@ void main() {
       expect(_rack(tester).designator, 'RK-1');
     });
 
-    testWidgets('Name commits on BLUR (not only on Enter) and undoes',
-        (tester) async {
+    testWidgets('Name commits on BLUR (not only on Enter) and undoes', (
+      tester,
+    ) async {
       await tester.pumpWidget(_app());
       await tester.pump();
       await _openInspector(tester);
@@ -358,8 +363,9 @@ void main() {
   });
 
   group('Form factor', () {
-    testWidgets('Width class writes through a command and undoes',
-        (tester) async {
+    testWidgets('Width class writes through a command and undoes', (
+      tester,
+    ) async {
       await tester.pumpWidget(_app());
       await tester.pump();
       await _openInspector(tester);
@@ -372,8 +378,9 @@ void main() {
       expect(_rack(tester).widthClass, RackWidthClass.eia19);
     });
 
-    testWidgets('Rail type writes through a command and undoes',
-        (tester) async {
+    testWidgets('Rail type writes through a command and undoes', (
+      tester,
+    ) async {
       await tester.pumpWidget(_app());
       await tester.pump();
       await _openInspector(tester);
@@ -421,8 +428,9 @@ void main() {
     });
 
     testWidgets('two edits to the SAME field INSIDE the merge window '
-        'coalesce into one undo entry (mergeKey is per-property)',
-        (tester) async {
+        'coalesce into one undo entry (mergeKey is per-property)', (
+      tester,
+    ) async {
       // The other half of the same mechanism: typing 600 then correcting it
       // to 700 should not cost the user two undos.
       //
@@ -476,7 +484,8 @@ void main() {
       expect(
         _rack(tester).usableDepth,
         const Len(600000000),
-        reason: '500ms is outside the 400ms window, so the second edit is '
+        reason:
+            '500ms is outside the 400ms window, so the second edit is '
             'its own undo entry',
       );
       await _undo(tester);
@@ -594,8 +603,9 @@ void main() {
   });
 
   group('Display', () {
-    testWidgets('RU numbering is display-only but still command-routed',
-        (tester) async {
+    testWidgets('RU numbering is display-only but still command-routed', (
+      tester,
+    ) async {
       await tester.pumpWidget(_app());
       await tester.pump();
       await _openInspector(tester);
@@ -608,8 +618,9 @@ void main() {
       expect(_rack(tester).ruNumbering, RuNumbering.bottomUpFromOne);
     });
 
-    testWidgets('Mirror rear elevation toggles through a command',
-        (tester) async {
+    testWidgets('Mirror rear elevation toggles through a command', (
+      tester,
+    ) async {
       await tester.pumpWidget(_app());
       await tester.pump();
       await _openInspector(tester);
@@ -624,8 +635,9 @@ void main() {
   });
 
   group('Height (docs/04 §4.1, way two of three)', () {
-    testWidgets('GROWING is always safe and commits one command',
-        (tester) async {
+    testWidgets('GROWING is always safe and commits one command', (
+      tester,
+    ) async {
       await tester.pumpWidget(_app());
       await tester.pump();
       await _openInspector(tester);
@@ -640,8 +652,9 @@ void main() {
       expect(_rack(tester).heightU, 12);
     });
 
-    testWidgets('shrinking to a height that still fits everyone works',
-        (tester) async {
+    testWidgets('shrinking to a height that still fits everyone works', (
+      tester,
+    ) async {
       await tester.pumpWidget(_app());
       await tester.pump();
       await _openInspector(tester);
@@ -737,8 +750,9 @@ void main() {
     });
 
     testWidgets('an option that resolves to the CURRENT height pushes NO '
-        'undo entry — Apply must not dirty a document it did not change',
-        (tester) async {
+        'undo entry — Apply must not dirty a document it did not change', (
+      tester,
+    ) async {
       // UPS-1 sits at U1, so under a BOTTOM trim the smallest lossless
       // height is `12 - (1-1)` = 12 — the height the rack already has. The
       // Apply path used to add `SetRackHeightCommand(12 -> 12)`
@@ -772,7 +786,8 @@ void main() {
       expect(
         _rack(tester).name,
         'Media Closet',
-        reason: 'the ONE Ctrl+Z must reach the rename — if Apply had pushed '
+        reason:
+            'the ONE Ctrl+Z must reach the rename — if Apply had pushed '
             'a phantom SetRackHeightCommand(12 -> 12), this undo would have '
             'been spent popping it and the name would still be "Closet A"',
       );
@@ -852,7 +867,8 @@ void main() {
       expect(
         rack.usableDepth,
         isNull,
-        reason: 'ATOMIC OR NOTHING: the other fields must not land either — '
+        reason:
+            'ATOMIC OR NOTHING: the other fields must not land either — '
             'a "Wall box 6U" rack sitting at 12U is worse than no change '
             'at all',
       );
@@ -947,8 +963,9 @@ void main() {
   });
 
   group('Circuits', () {
-    testWidgets('a real empty state, and NO [+ Add circuit] affordance',
-        (tester) async {
+    testWidgets('a real empty state, and NO [+ Add circuit] affordance', (
+      tester,
+    ) async {
       // No command anywhere in this codebase creates a Circuit, so a button
       // would be inert — the "silently does nothing" trap §3.4 forbids. One
       // caption line states the situation instead.

@@ -322,7 +322,8 @@ void main() {
       expect(
         popped.moves,
         isEmpty,
-        reason: '"Nothing is moved" is a promise about the decision, not '
+        reason:
+            '"Nothing is moved" is a promise about the decision, not '
             'just about the tile text',
       );
       expect(popped.summary, contains('Kept RK-1 at 19U'));
@@ -432,10 +433,8 @@ void main() {
       for (final d in doc.devices.values) {
         if (d.placement case final RailPlacement p) {
           final ref = d.templateRef;
-          final h = doc
-              .templates['${ref.templateId.v}@${ref.version}']!
-              .body
-              .frontU;
+          final h =
+              doc.templates['${ref.templateId.v}@${ref.version}']!.body.frontU;
           expect(
             p.ruIndex,
             greaterThanOrEqualTo(1),
@@ -444,7 +443,8 @@ void main() {
           expect(
             p.ruIndex + h - 1,
             lessThanOrEqualTo(rack.heightU),
-            reason: '${d.designator} (U${p.ruIndex}, ${h}U) is outside a '
+            reason:
+                '${d.designator} (U${p.ruIndex}, ${h}U) is outside a '
                 '${rack.heightU}U rack',
           );
         }
@@ -473,7 +473,8 @@ void main() {
           expect(
             doc.racks[_rackId]!.heightU,
             decision.toHeightU,
-            reason: 'the document must reach the height the tile showed '
+            reason:
+                'the document must reach the height the tile showed '
                 '($choice / $trim)',
           );
           expectAllInside(doc);
@@ -559,7 +560,8 @@ void main() {
       expect(
         () => expectAllInside(doc),
         throwsA(isA<TestFailure>()),
-        reason: 'this is the corruption keepSmallest avoids; if this ever '
+        reason:
+            'this is the corruption keepSmallest avoids; if this ever '
             'stops throwing, expectAllInside has gone blind and every '
             'assertion above it is worthless',
       );

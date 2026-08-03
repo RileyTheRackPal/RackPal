@@ -1211,7 +1211,8 @@ void main() {
       expect(
         t.acceptsFamily(const SignalFamilyId('video.hdbaset')),
         isTrue,
-        reason: 'a template that excluded its own signalFamily would be '
+        reason:
+            'a template that excluded its own signalFamily would be '
             'describing a jack that cannot carry what it is',
       );
       expect(t.acceptsFamily(const SignalFamilyId('net.ethernet')), isFalse);
@@ -1301,7 +1302,8 @@ void main() {
           family: const SignalFamilyId('video.hdmi.2_1'),
         ),
         isNull,
-        reason: 'both outputs are full and in.1 is a sink, so the chain '
+        reason:
+            'both outputs are full and in.1 is a sink, so the chain '
             'ends rather than turning round',
       );
     });

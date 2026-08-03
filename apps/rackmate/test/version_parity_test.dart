@@ -62,7 +62,8 @@ void main() {
     expect(
       kAppVersion,
       _versionOf(app),
-      reason: 'a release that bumps one and not the other stamps the wrong '
+      reason:
+          'a release that bumps one and not the other stamps the wrong '
           'version into every document and recovery sidecar it writes, '
           'permanently, and nothing about running it looks wrong',
     );
@@ -84,7 +85,8 @@ void main() {
     expect(
       parts.first,
       '0',
-      reason: 'the leading 0 holds until the first PUBLIC release. Changing '
+      reason:
+          'the leading 0 holds until the first PUBLIC release. Changing '
           'it is a decision about the product, so it should arrive as a '
           'deliberate edit to this test and not as a version bump',
     );

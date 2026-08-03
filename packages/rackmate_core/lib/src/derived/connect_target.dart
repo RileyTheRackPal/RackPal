@@ -405,10 +405,11 @@ int templatePortSeq(RackDocument doc, ConnectTarget target) {
 /// ends up with one number on the schedule and a different one in the set
 /// that wires it.
 int _seqIn(TemplateBody body, PortKey key) {
-  final ordered = [...body.ports]..sort((a, b) {
-    final byOrder = a.order.v.compareTo(b.order.v);
-    return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
-  });
+  final ordered = [...body.ports]
+    ..sort((a, b) {
+      final byOrder = a.order.v.compareTo(b.order.v);
+      return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
+    });
   final at = ordered.indexWhere((p) => p.key.v == key.v);
   return at < 0 ? 1 : at + 1;
 }

@@ -20,10 +20,10 @@ void main() {
 
       var bakes = 0;
       ui.Picture obtain(String key) => cache.obtain(
-            key,
-            const ui.Rect.fromLTRB(0, 0, 10, 10),
-            (_) => bakes++,
-          );
+        key,
+        const ui.Rect.fromLTRB(0, 0, 10, 10),
+        (_) => bakes++,
+      );
 
       final a = obtain('k1');
       final b = obtain('k1');

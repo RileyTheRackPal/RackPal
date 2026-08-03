@@ -101,200 +101,215 @@ RailPlacement _rail(
 }) => RailPlacement(rackId: Uuid(rack), ruIndex: ruIndex, face: face);
 
 void main() {
-  group('RU on the ACTIVE FACE (docs/04 §5: front and rear are two answers)', () {
-    test('counts distinct occupied U and reports the rest free', () {
-      final rack = _rack();
-      final templates = {
-        'a@1': _snapshot('a', _body(frontU: 2)),
-        'b@1': _snapshot('b', _body(frontU: 1)),
-      };
-      final devices = [
-        _device('d1', templateId: 'a', placement: _rail(1)), // U1-U2
-        _device('d2', templateId: 'b', placement: _rail(7)), // U7
-      ];
+  group(
+    'RU on the ACTIVE FACE (docs/04 §5: front and rear are two answers)',
+    () {
+      test('counts distinct occupied U and reports the rest free', () {
+        final rack = _rack();
+        final templates = {
+          'a@1': _snapshot('a', _body(frontU: 2)),
+          'b@1': _snapshot('b', _body(frontU: 1)),
+        };
+        final devices = [
+          _device('d1', templateId: 'a', placement: _rail(1)), // U1-U2
+          _device('d2', templateId: 'b', placement: _rail(7)), // U7
+        ];
 
-      final r = computeRackRollups(
-        rack: rack,
-        devices: devices,
-        templates: templates,
-        face: Face.front,
-      );
-
-      expect(r.ruCapacity, 12);
-      expect(r.ruUsed, 3);
-      expect(r.ruFree, 9);
-      expect(r.face, Face.front);
-    });
-
-    test('a REAR-only device does not consume FRONT RU, and vice versa', () {
-      final rack = _rack();
-      final templates = {'pp@1': _snapshot('pp', _body(rearU: 1))};
-      final devices = [
-        _device('pp-1', templateId: 'pp', placement: _rail(9, face: Face.rear)),
-      ];
-
-      final front = computeRackRollups(
-        rack: rack,
-        devices: devices,
-        templates: templates,
-        face: Face.front,
-      );
-      final rear = computeRackRollups(
-        rack: rack,
-        devices: devices,
-        templates: templates,
-        face: Face.rear,
-      );
-
-      expect(front.ruUsed, 0, reason: 'a rear patch panel occupies no front U');
-      expect(front.ruFree, 12);
-      expect(rear.ruUsed, 1);
-      expect(rear.ruFree, 11);
-      expect(rear.face, Face.rear);
-    });
-
-    test('a BOTH-sides device occupies its own height on each face — the '
-        'face is the ELEVATION, not the PLACEMENT', () {
-      // docs/04 §2.2: the face control "selects a coordinate, not a
-      // filter". This device is bolted to the FRONT rails and its template
-      // gives it 2U front / 1U rear, so both elevations draw it and both
-      // chips must count it.
-      //
-      // This assertion used to read `rear.ruUsed == 0`, with a comment
-      // saying its placement was on the front so it contributed nothing to
-      // the rear — the very rule the scene builder stopped applying. With
-      // the elevation honouring CR-036 and the strip still filtering on
-      // `placement.face`, `whole_house` rendered 19 device boxes on the
-      // rear canvas under a chip reading `RU rear 0/42`.
-      final rack = _rack();
-      final templates = {'x@1': _snapshot('x', _body(frontU: 2, rearU: 1))};
-      final devices = [_device('x-1', templateId: 'x', placement: _rail(3))];
-
-      expect(
-        computeRackRollups(
+        final r = computeRackRollups(
           rack: rack,
           devices: devices,
           templates: templates,
           face: Face.front,
-        ).ruUsed,
-        2,
-      );
-      final rear = computeRackRollups(
-        rack: rack,
-        devices: devices,
-        templates: templates,
-        face: Face.rear,
-      );
-      expect(rear.ruUsed, 1, reason: 'the rear elevation draws its 1U');
-      expect(
-        rear.ruUnknownCount,
-        0,
-        reason: 'the model states its rear height; nothing is unknown',
-      );
-    });
+        );
 
-    test('a device bolted to the FRONT rails with no front footprint is '
-        'counted on the REAR and is unknown on neither', () {
-      // The rear lacing bar screwed to the front rails: `frontU 0 /
-      // rearU 1`. `stackOccupancyU`s doc names this exact shape. Before
-      // the repair the front chip counted it as an UNKNOWN contributor
-      // (zero U on the face it claims to be mounted on) and the rear chip
-      // did not count it at all, so one 1U device managed to be missing
-      // from one elevation and a superscript on the other.
-      final rack = _rack();
-      final templates = {'bar@1': _snapshot('bar', _body(rearU: 1))};
-      final devices = [
-        _device('bar-1', templateId: 'bar', placement: _rail(4)),
-      ];
+        expect(r.ruCapacity, 12);
+        expect(r.ruUsed, 3);
+        expect(r.ruFree, 9);
+        expect(r.face, Face.front);
+      });
 
-      final front = computeRackRollups(
-        rack: rack,
-        devices: devices,
-        templates: templates,
-        face: Face.front,
-      );
-      final rear = computeRackRollups(
-        rack: rack,
-        devices: devices,
-        templates: templates,
-        face: Face.rear,
-      );
+      test('a REAR-only device does not consume FRONT RU, and vice versa', () {
+        final rack = _rack();
+        final templates = {'pp@1': _snapshot('pp', _body(rearU: 1))};
+        final devices = [
+          _device(
+            'pp-1',
+            templateId: 'pp',
+            placement: _rail(9, face: Face.rear),
+          ),
+        ];
 
-      expect(front.ruUsed, 0);
-      expect(front.ruUnknownCount, 0, reason: 'zero front U is a MEASUREMENT');
-      expect(rear.ruUsed, 1);
-      expect(rear.ruUnknownCount, 0);
-    });
+        final front = computeRackRollups(
+          rack: rack,
+          devices: devices,
+          templates: templates,
+          face: Face.front,
+        );
+        final rear = computeRackRollups(
+          rack: rack,
+          devices: devices,
+          templates: templates,
+          face: Face.rear,
+        );
 
-    test('OVERLAPPING placements count a shared U once, not twice', () {
-      // An RCK-001 error state the model permits; the rollup must not
-      // report 4 U used out of a 12U rack when only 3 slots are taken.
-      final rack = _rack();
-      final templates = {'a@1': _snapshot('a', _body(frontU: 2))};
-      final devices = [
-        _device('d1', templateId: 'a', placement: _rail(1)), // U1-U2
-        _device('d2', templateId: 'a', placement: _rail(2)), // U2-U3
-      ];
+        expect(
+          front.ruUsed,
+          0,
+          reason: 'a rear patch panel occupies no front U',
+        );
+        expect(front.ruFree, 12);
+        expect(rear.ruUsed, 1);
+        expect(rear.ruFree, 11);
+        expect(rear.face, Face.rear);
+      });
 
-      final r = computeRackRollups(
-        rack: rack,
-        devices: devices,
-        templates: templates,
-        face: Face.front,
-      );
+      test('a BOTH-sides device occupies its own height on each face — the '
+          'face is the ELEVATION, not the PLACEMENT', () {
+        // docs/04 §2.2: the face control "selects a coordinate, not a
+        // filter". This device is bolted to the FRONT rails and its template
+        // gives it 2U front / 1U rear, so both elevations draw it and both
+        // chips must count it.
+        //
+        // This assertion used to read `rear.ruUsed == 0`, with a comment
+        // saying its placement was on the front so it contributed nothing to
+        // the rear — the very rule the scene builder stopped applying. With
+        // the elevation honouring CR-036 and the strip still filtering on
+        // `placement.face`, `whole_house` rendered 19 device boxes on the
+        // rear canvas under a chip reading `RU rear 0/42`.
+        final rack = _rack();
+        final templates = {'x@1': _snapshot('x', _body(frontU: 2, rearU: 1))};
+        final devices = [_device('x-1', templateId: 'x', placement: _rail(3))];
 
-      expect(r.ruUsed, 3);
-      expect(r.ruFree, 9);
-    });
+        expect(
+          computeRackRollups(
+            rack: rack,
+            devices: devices,
+            templates: templates,
+            face: Face.front,
+          ).ruUsed,
+          2,
+        );
+        final rear = computeRackRollups(
+          rack: rack,
+          devices: devices,
+          templates: templates,
+          face: Face.rear,
+        );
+        expect(rear.ruUsed, 1, reason: 'the rear elevation draws its 1U');
+        expect(
+          rear.ruUnknownCount,
+          0,
+          reason: 'the model states its rear height; nothing is unknown',
+        );
+      });
 
-    test('a device hanging past the top counts only the U that exist', () {
-      final rack = _rack(heightU: 4);
-      final templates = {'tall@1': _snapshot('tall', _body(frontU: 3))};
-      final devices = [
-        _device('t-1', templateId: 'tall', placement: _rail(3)), // U3-U5
-      ];
+      test('a device bolted to the FRONT rails with no front footprint is '
+          'counted on the REAR and is unknown on neither', () {
+        // The rear lacing bar screwed to the front rails: `frontU 0 /
+        // rearU 1`. `stackOccupancyU`s doc names this exact shape. Before
+        // the repair the front chip counted it as an UNKNOWN contributor
+        // (zero U on the face it claims to be mounted on) and the rear chip
+        // did not count it at all, so one 1U device managed to be missing
+        // from one elevation and a superscript on the other.
+        final rack = _rack();
+        final templates = {'bar@1': _snapshot('bar', _body(rearU: 1))};
+        final devices = [
+          _device('bar-1', templateId: 'bar', placement: _rail(4)),
+        ];
 
-      final r = computeRackRollups(
-        rack: rack,
-        devices: devices,
-        templates: templates,
-        face: Face.front,
-      );
+        final front = computeRackRollups(
+          rack: rack,
+          devices: devices,
+          templates: templates,
+          face: Face.front,
+        );
+        final rear = computeRackRollups(
+          rack: rack,
+          devices: devices,
+          templates: templates,
+          face: Face.rear,
+        );
 
-      expect(r.ruUsed, 2, reason: 'U3 and U4 exist; U5 does not');
-      expect(r.ruFree, 2);
-    });
+        expect(front.ruUsed, 0);
+        expect(
+          front.ruUnknownCount,
+          0,
+          reason: 'zero front U is a MEASUREMENT',
+        );
+        expect(rear.ruUsed, 1);
+        expect(rear.ruUnknownCount, 0);
+      });
 
-    test('an unresolvable template is COUNTED as unknown, never as free', () {
-      final rack = _rack();
-      final devices = [
-        _device('ghost', templateId: 'missing', placement: _rail(1)),
-      ];
+      test('OVERLAPPING placements count a shared U once, not twice', () {
+        // An RCK-001 error state the model permits; the rollup must not
+        // report 4 U used out of a 12U rack when only 3 slots are taken.
+        final rack = _rack();
+        final templates = {'a@1': _snapshot('a', _body(frontU: 2))};
+        final devices = [
+          _device('d1', templateId: 'a', placement: _rail(1)), // U1-U2
+          _device('d2', templateId: 'a', placement: _rail(2)), // U2-U3
+        ];
 
-      final r = computeRackRollups(
-        rack: rack,
-        devices: devices,
-        templates: const {},
-        face: Face.front,
-      );
+        final r = computeRackRollups(
+          rack: rack,
+          devices: devices,
+          templates: templates,
+          face: Face.front,
+        );
 
-      expect(r.ruUsed, 0);
-      expect(r.ruUnknownCount, 1);
-    });
+        expect(r.ruUsed, 3);
+        expect(r.ruFree, 9);
+      });
 
-    test('an empty rack is 0 used / all free, with nothing unknown', () {
-      final r = computeRackRollups(
-        rack: _rack(),
-        devices: const [],
-        templates: const {},
-        face: Face.front,
-      );
+      test('a device hanging past the top counts only the U that exist', () {
+        final rack = _rack(heightU: 4);
+        final templates = {'tall@1': _snapshot('tall', _body(frontU: 3))};
+        final devices = [
+          _device('t-1', templateId: 'tall', placement: _rail(3)), // U3-U5
+        ];
 
-      expect(r.ruUsed, 0);
-      expect(r.ruFree, 12);
-      expect(r.ruUnknownCount, 0);
-    });
-  });
+        final r = computeRackRollups(
+          rack: rack,
+          devices: devices,
+          templates: templates,
+          face: Face.front,
+        );
+
+        expect(r.ruUsed, 2, reason: 'U3 and U4 exist; U5 does not');
+        expect(r.ruFree, 2);
+      });
+
+      test('an unresolvable template is COUNTED as unknown, never as free', () {
+        final rack = _rack();
+        final devices = [
+          _device('ghost', templateId: 'missing', placement: _rail(1)),
+        ];
+
+        final r = computeRackRollups(
+          rack: rack,
+          devices: devices,
+          templates: const {},
+          face: Face.front,
+        );
+
+        expect(r.ruUsed, 0);
+        expect(r.ruUnknownCount, 1);
+      });
+
+      test('an empty rack is 0 used / all free, with nothing unknown', () {
+        final r = computeRackRollups(
+          rack: _rack(),
+          devices: const [],
+          templates: const {},
+          face: Face.front,
+        );
+
+        expect(r.ruUsed, 0);
+        expect(r.ruFree, 12);
+        expect(r.ruUnknownCount, 0);
+      });
+    },
+  );
 
   group('membership: which devices load THIS rack', () {
     test('a device in ANOTHER rack contributes nothing', () {
@@ -665,7 +680,11 @@ void main() {
         'pp@1': _snapshot('pp', _body(rearU: 1, apparentVA: 60)),
       };
       final devices = [
-        _device('pp-1', templateId: 'pp', placement: _rail(9, face: Face.rear)),
+        _device(
+          'pp-1',
+          templateId: 'pp',
+          placement: _rail(9, face: Face.rear),
+        ),
       ];
 
       final r = computeRackRollups(
@@ -702,7 +721,11 @@ void main() {
       final devices = [
         _device('d1', templateId: 'pdu', placement: _rail(1)),
         _device('d2', templateId: 'amp', placement: _rail(3)),
-        _device('d3', templateId: 'pp', placement: _rail(9, face: Face.rear)),
+        _device(
+          'd3',
+          templateId: 'pp',
+          placement: _rail(9, face: Face.rear),
+        ),
       ];
 
       final r = computeRackRollups(

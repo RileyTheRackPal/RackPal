@@ -259,9 +259,10 @@ void main() {
           },
         ),
       ).settings;
-      final def = settings.jacketColorConventions[const JacketColorId(
-        'jc.grey',
-      )]!;
+      final def =
+          settings.jacketColorConventions[const JacketColorId(
+            'jc.grey',
+          )]!;
       expect(def.displayName, 'Grey');
       expect(def.abbr, 'GRY');
       expect(def.meaning, 'Wireless access point drops');
@@ -381,10 +382,10 @@ void main() {
               as Map<String, Object?>;
       final blue =
           ((((root['document']! as Map<String, Object?>)['settings']!
-                          as Map<String, Object?>)['jacketColorConventions']!
-                      as Map<String, Object?>)['jc.blue']!
-                  as Map<String, Object?>)
-              ..remove('abbr');
+                        as Map<String, Object?>)['jacketColorConventions']!
+                    as Map<String, Object?>)['jc.blue']!
+                as Map<String, Object?>)
+            ..remove('abbr');
       expect(blue.containsKey('abbr'), isFalse);
 
       expect(
@@ -430,15 +431,18 @@ void main() {
           'jc.black': 'Direct burial and patch cables',
         },
       );
-      expect({for (final e in seed.entries) e.key.v: e.value.abbr}, {
-        'jc.yellow': 'YEL',
-        'jc.blue': 'BLU',
-        'jc.green': 'GRN',
-        'jc.grey': 'GRY',
-        'jc.white': 'WHT',
-        'jc.red': 'RED',
-        'jc.black': 'BLK',
-      });
+      expect(
+        {for (final e in seed.entries) e.key.v: e.value.abbr},
+        {
+          'jc.yellow': 'YEL',
+          'jc.blue': 'BLU',
+          'jc.green': 'GRN',
+          'jc.grey': 'GRY',
+          'jc.white': 'WHT',
+          'jc.red': 'RED',
+          'jc.black': 'BLK',
+        },
+      );
     });
 
     test('each call returns a FRESH map — editing one project cannot '
@@ -490,9 +494,12 @@ void main() {
       final reread = _reread(doc);
       expect(reread.settings.jacketColorConventions, hasLength(2));
       expect(
-        reread.settings.jacketColorConventions[const JacketColorId(
-          'jc.orange',
-        )]!.meaning,
+        reread
+            .settings
+            .jacketColorConventions[const JacketColorId(
+              'jc.orange',
+            )]!
+            .meaning,
         'Fibre to the head end',
       );
       expect(reread.links[_linkId]!.jacketColorId?.v, 'jc.orange');
@@ -503,13 +510,14 @@ void main() {
         jacketColorId: const JacketColorId('jc.blue'),
         convention: buildDefaultJacketColorConvention(),
       );
-      doc.settings.jacketColorConventions[const JacketColorId('jc.blue')] =
-          const JacketColorDef(
-            displayName: 'Navy',
-            abbr: 'NVY',
-            color: Rgb(0x0B, 0x2E, 0x5C),
-            meaning: 'Building automation only — this shop, this GC',
-          );
+      doc.settings.jacketColorConventions[const JacketColorId(
+        'jc.blue',
+      )] = const JacketColorDef(
+        displayName: 'Navy',
+        abbr: 'NVY',
+        color: Rgb(0x0B, 0x2E, 0x5C),
+        meaning: 'Building automation only — this shop, this GC',
+      );
 
       final def = _reread(
         doc,

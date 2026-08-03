@@ -172,10 +172,11 @@ void main() {
     // Scoped to `lib/` of this package because every name in the list is
     // declared here.
     final sources = [
-      for (final f in Directory('lib')
-          .listSync(recursive: true)
-          .whereType<File>()
-          .where((f) => f.path.endsWith('.dart')))
+      for (final f
+          in Directory('lib')
+              .listSync(recursive: true)
+              .whereType<File>()
+              .where((f) => f.path.endsWith('.dart')))
         f.readAsStringSync(),
     ];
     final undeclared = [
@@ -234,10 +235,11 @@ Rgb hueFromResolved(ResolvedJacketColor r, Map<JacketColorId, Rgb> reels) =>
     var scanned = 0;
     final offenders = <String>[];
     for (final root in _roots) {
-      for (final file in Directory(root)
-          .listSync(recursive: true)
-          .whereType<File>()
-          .where((f) => f.path.endsWith('.dart'))) {
+      for (final file
+          in Directory(root)
+              .listSync(recursive: true)
+              .whereType<File>()
+              .where((f) => f.path.endsWith('.dart'))) {
         scanned++;
         offenders.addAll(_offendersIn(file.path, file.readAsStringSync()));
       }

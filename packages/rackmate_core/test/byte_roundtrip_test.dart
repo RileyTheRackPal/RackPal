@@ -73,7 +73,8 @@ RackDocument _rackAndDeviceFixture() {
     templateRef: const TemplateRef(
       templateId: TemplateId('tpl.generic.hdmi_matrix_4x4'),
       version: 2,
-      contentHash: 'sha256:1f4c8b2e9a0d4471bc35e6f708a19d2c'
+      contentHash:
+          'sha256:1f4c8b2e9a0d4471bc35e6f708a19d2c'
           '5b4e37f10a9c8d6e2b1f0a3c7d5e9b04',
     ),
     designator: 'MTX-1',
@@ -120,7 +121,8 @@ RackDocument _fullerProjectFixture() {
     templateRef: const TemplateRef(
       templateId: TemplateId('tpl.generic.hdmi_matrix_4x4'),
       version: 2,
-      contentHash: 'sha256:1f4c8b2e9a0d4471bc35e6f708a19d2c'
+      contentHash:
+          'sha256:1f4c8b2e9a0d4471bc35e6f708a19d2c'
           '5b4e37f10a9c8d6e2b1f0a3c7d5e9b04',
     ),
     designator: 'MTX-1',
@@ -141,7 +143,8 @@ RackDocument _fullerProjectFixture() {
     templateRef: const TemplateRef(
       templateId: TemplateId('tpl.system.structure'),
       version: 1,
-      contentHash: 'sha256:0d5e91af73c2b846e10f7d3a95c6b280'
+      contentHash:
+          'sha256:0d5e91af73c2b846e10f7d3a95c6b280'
           'e4f1a7d93b05c8e26af14d7302b9c651',
     ),
     designator: 'STR-1',
@@ -486,8 +489,7 @@ RackDocument _templatesAndPowerFixture() {
 /// never something a test run does on its own. Regenerating and then
 /// committing the result is how a format change is proposed; the diff on
 /// those four files IS the review.
-final bool _updateGoldens =
-    Platform.environment['UPDATE_GOLDENS'] == '1';
+final bool _updateGoldens = Platform.environment['UPDATE_GOLDENS'] == '1';
 
 /// CR-117, asserted against the bytes ON DISK.
 ///

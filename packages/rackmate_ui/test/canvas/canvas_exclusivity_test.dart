@@ -116,15 +116,17 @@ final Finder _compactionBar = find.widgetWithText(FilledButton, 'Apply');
 
 void main() {
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -177,8 +179,7 @@ void main() {
       expect(
         _topOf(tester, 'dev-ups'),
         closeTo(
-          _canvasOrigin(tester).dy +
-              const RackGeometry(9).deviceRect(1, 2).top,
+          _canvasOrigin(tester).dy + const RackGeometry(9).deviceRect(1, 2).top,
           0.5,
         ),
       );
@@ -273,7 +274,8 @@ void main() {
       expect(
         _topOf(tester, 'dev-amp'),
         closeTo(_expectedTop(tester, 10, 2), 0.5),
-        reason: 'the canvas is still alive after the palette drag released '
+        reason:
+            'the canvas is still alive after the palette drag released '
             'its claim',
       );
       await _settleDoubleTap(tester);
@@ -374,15 +376,17 @@ void main() {
       expect(
         _topOf(tester, 'dev-ups'),
         closeTo(_expectedTop(tester, 11, 2), 0.5),
-        reason: 'the second gesture is a real gesture once the first has '
+        reason:
+            'the second gesture is a real gesture once the first has '
             'properly ended — the single-gesture rule is about not running '
             'two AT ONCE, not about blackholing the second one forever',
       );
     });
 
     testWidgets('...and the deferral did not reopen the original hole: a '
-        'second pointer landing mid-move still cannot steal the drag',
-        (tester) async {
+        'second pointer landing mid-move still cannot steal the drag', (
+      tester,
+    ) async {
       // THE PIN AGAINST THE FIX ABOVE. These two requirements press on each
       // other: adopt too eagerly and the second contact re-initialises
       // `_dragPlacement`/`_dragDeviceId` out from under the FIRST pointer's
@@ -481,7 +485,8 @@ void main() {
       expect(
         _topOf(tester, 'dev-sw'),
         closeTo(_expectedTop(tester, 7, 1), 0.5),
-        reason: 'the release must commit nothing: the captured fromRuIndex '
+        reason:
+            'the release must commit nothing: the captured fromRuIndex '
             'no longer describes the document',
       );
     });
@@ -530,7 +535,8 @@ void main() {
       expect(
         _topOf(tester, 'dev-sw'),
         closeTo(_expectedTop(tester, 7, 1), 0.5),
-        reason: 'the gesture must not arm — let alone commit — from a '
+        reason:
+            'the gesture must not arm — let alone commit — from a '
             'placement captured before the undo',
       );
     });
@@ -586,7 +592,8 @@ void main() {
       expect(
         _render(tester, 'dev-amp').selected,
         isTrue,
-        reason: 'the press never became a drag, so it is a click, and a click '
+        reason:
+            'the press never became a drag, so it is a click, and a click '
             'selects — `_handleClick` reads only `_dragDeviceId` and '
             '`_dragStartScene` and writes only the non-undoable selection, so '
             'it has no captured fromRuIndex to fabricate',
@@ -600,8 +607,9 @@ void main() {
     });
 
     testWidgets('a mid-drag Ctrl+Z cancels the top-edge resize, and the '
-        'release does not re-apply the height the undo just removed',
-        (tester) async {
+        'release does not re-apply the height the undo just removed', (
+      tester,
+    ) async {
       // THE STALE BASELINE, exercised against the command that actually
       // makes it stale. `_resize.originalHeightU` is captured at
       // `_armResizePreview`; undoing a PRIOR `SetRackHeightCommand` mid-drag
@@ -651,7 +659,8 @@ void main() {
       expect(
         find.text('12U'),
         findsWidgets,
-        reason: 'the release must commit NOTHING: both the 9U it was showing '
+        reason:
+            'the release must commit NOTHING: both the 9U it was showing '
             'and the 10U baseline it would fall back to are measured against '
             'a rack that no longer exists',
       );
@@ -706,7 +715,8 @@ void main() {
       expect(
         find.text('U10-U11'),
         findsNothing,
-        reason: 'the drag is already gone, and the compaction code has not '
+        reason:
+            'the drag is already gone, and the compaction code has not '
             'run — the route push cancelled the pointer',
       );
 
@@ -749,7 +759,8 @@ void main() {
       expect(
         find.textContaining('Compact Down — '),
         findsOneWidget,
-        reason: 'still the FIRST preview — Compact Up never ran, so '
+        reason:
+            'still the FIRST preview — Compact Up never ran, so '
             '`_beginCompaction` was never re-entered over a live preview',
       );
       expect(find.textContaining('Compact Up — '), findsNothing);

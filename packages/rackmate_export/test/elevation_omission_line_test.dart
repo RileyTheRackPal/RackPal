@@ -102,11 +102,11 @@ void main() {
 
   /// The racks in the order `SheetSet.forRacks` puts them in, so
   /// `T2.{2i+1}` / `T2.{2i+2}` can be mapped back to a rack.
-  List<Rack> orderedRacks(RackDocument doc) => doc.racks.values.toList()
-    ..sort((a, b) {
-      final byOrder = a.order.v.compareTo(b.order.v);
-      return byOrder != 0 ? byOrder : a.id.v.compareTo(b.id.v);
-    });
+  List<Rack> orderedRacks(RackDocument doc) =>
+      doc.racks.values.toList()..sort((a, b) {
+        final byOrder = a.order.v.compareTo(b.order.v);
+        return byOrder != 0 ? byOrder : a.id.v.compareTo(b.id.v);
+      });
 
   TemplateBody? bodyOf(RackDocument doc, DeviceInstance device) => doc
       .templates['${device.templateRef.templateId.v}@'
@@ -119,8 +119,9 @@ void main() {
   /// rails carry its ears).
   Set<String> shouldBeDrawn(RackDocument doc, Rack rack, Face face) => <String>{
     for (final device in doc.devices.values)
-      if (device.placement case RailPlacement(rackId: final id) when id ==
-          rack.id)
+      if (device.placement case RailPlacement(
+        rackId: final id,
+      ) when id == rack.id)
         if (bodyOf(doc, device) case final body?)
           if ((face == Face.front ? body.frontU : body.rearU) > 0)
             device.designator,
@@ -173,8 +174,7 @@ void main() {
         }
       });
 
-      test('the omission sentence states what THIS sheet is missing',
-          () async {
+      test('the omission sentence states what THIS sheet is missing', () async {
         final doc = documentOf(name);
         final sheets = elevationTexts((await exportOf(name)).bytes);
         final racks = orderedRacks(doc);
@@ -220,62 +220,65 @@ void main() {
         }
       });
 
-      test('DRAW and HEAT carry the unknown counts the TEMPLATES imply',
-          () async {
-        final doc = documentOf(name);
-        final byId = <Uuid, DeviceInstance>{
-          for (final d in doc.devices.values) d.id: d,
-        };
-        final sheets = elevationTexts((await exportOf(name)).bytes);
-        final racks = orderedRacks(doc);
+      test(
+        'DRAW and HEAT carry the unknown counts the TEMPLATES imply',
+        () async {
+          final doc = documentOf(name);
+          final byId = <Uuid, DeviceInstance>{
+            for (final d in doc.devices.values) d.id: d,
+          };
+          final sheets = elevationTexts((await exportOf(name)).bytes);
+          final racks = orderedRacks(doc);
 
-        for (var i = 0; i < racks.length; i++) {
-          final rack = racks[i];
-          final members = doc.devices.values.where(
-            (d) => hostRackOf(d, byId) == rack.id,
-          );
-          // Straight off the authored fields. `apparentVA` has no
-          // override, and BTU/hr is `btuPerHourOverride ?? watts` and
-          // NEVER derived from VA or nameplate (AC-039).
-          final vaUnknown = members
-              .where((d) => bodyOf(doc, d)?.power.apparentVA == null)
-              .length;
-          final btuUnknown = members.where((d) {
-            final power = bodyOf(doc, d)?.power;
-            return power?.btuPerHourOverride == null &&
-                (d.overrides.typicalWatts ?? power?.typicalWatts) == null;
-          }).length;
-
-          for (final offset in <int>[1, 2]) {
-            final id = 'T2.${(i * 2 + offset).toString().padLeft(2, '0')}';
-            final runs = sheets[id]!;
-            final draw = runs.singleWhere((t) => t.startsWith('DRAW  '));
-            final heat = runs.singleWhere((t) => t.startsWith('HEAT  '));
-
-            expect(
-              draw,
-              vaUnknown == 0
-                  ? isNot(contains('unknown'))
-                  : contains('($vaUnknown unknown)'),
-              reason: '$id DRAW',
+          for (var i = 0; i < racks.length; i++) {
+            final rack = racks[i];
+            final members = doc.devices.values.where(
+              (d) => hostRackOf(d, byId) == rack.id,
             );
-            expect(
-              heat,
-              btuUnknown == 0
-                  ? isNot(contains('unknown'))
-                  : contains('($btuUnknown unknown)'),
-              reason: '$id HEAT',
-            );
+            // Straight off the authored fields. `apparentVA` has no
+            // override, and BTU/hr is `btuPerHourOverride ?? watts` and
+            // NEVER derived from VA or nameplate (AC-039).
+            final vaUnknown = members
+                .where((d) => bodyOf(doc, d)?.power.apparentVA == null)
+                .length;
+            final btuUnknown = members.where((d) {
+              final power = bodyOf(doc, d)?.power;
+              return power?.btuPerHourOverride == null &&
+                  (d.overrides.typicalWatts ?? power?.typicalWatts) == null;
+            }).length;
+
+            for (final offset in <int>[1, 2]) {
+              final id = 'T2.${(i * 2 + offset).toString().padLeft(2, '0')}';
+              final runs = sheets[id]!;
+              final draw = runs.singleWhere((t) => t.startsWith('DRAW  '));
+              final heat = runs.singleWhere((t) => t.startsWith('HEAT  '));
+
+              expect(
+                draw,
+                vaUnknown == 0
+                    ? isNot(contains('unknown'))
+                    : contains('($vaUnknown unknown)'),
+                reason: '$id DRAW',
+              );
+              expect(
+                heat,
+                btuUnknown == 0
+                    ? isNot(contains('unknown'))
+                    : contains('($btuUnknown unknown)'),
+                reason: '$id HEAT',
+              );
+            }
           }
-        }
-      });
+        },
+      );
 
       test('nothing in the note band reached the paper truncated', () async {
         // Every sentence above is only true if it is whole:
         // `elevation_sheet.dart`'s `_band` gives each column
         // `area.width / 2 - 8` = 337 pt and ellipsises what does not fit.
-        for (final entry in elevationTexts((await exportOf(name)).bytes)
-            .entries) {
+        for (final entry in elevationTexts(
+          (await exportOf(name)).bytes,
+        ).entries) {
           for (final run in entry.value) {
             expect(
               run,
@@ -317,17 +320,20 @@ void main() {
     test('...and T2.02 now carries all 19 of them', () async {
       final doc = documentOf('whole_house');
       final rack = orderedRacks(doc).single;
-      final runs = elevationTexts((await exportOf('whole_house')).bytes)
-          ['T2.02']!;
+      final runs = elevationTexts(
+        (await exportOf('whole_house')).bytes,
+      )['T2.02']!;
 
       for (final designator in shouldBeDrawn(doc, rack, Face.rear)) {
         expect(runs, contains(designator));
       }
       // The eight front-only ones are NOT on it — the sheet is a rear
       // elevation, not a copy of T2.01.
-      final frontOnly =
-          shouldBeDrawn(doc, rack, Face.front)
-              .difference(shouldBeDrawn(doc, rack, Face.rear));
+      final frontOnly = shouldBeDrawn(
+        doc,
+        rack,
+        Face.front,
+      ).difference(shouldBeDrawn(doc, rack, Face.rear));
       expect(frontOnly, hasLength(8));
       for (final designator in frontOnly) {
         expect(runs, isNot(contains(designator)));

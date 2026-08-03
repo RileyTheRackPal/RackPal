@@ -184,7 +184,7 @@ void main() {
     RackDocument openStampedAt(int schemaVersion, int minReaderVersion) {
       final root =
           jsonDecode(utf8.decode(_readFixture('b_rack_and_device')))!
-              as Map<String, Object?>
+                as Map<String, Object?>
             ..['schemaVersion'] = schemaVersion
             ..['minReaderVersion'] = minReaderVersion;
       final outcome = readFromJsonTree(root);

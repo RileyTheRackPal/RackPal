@@ -84,18 +84,17 @@ Map<String, TemplateBody> buildVideoCatalog() {
       balanced: true,
     );
   }
-  v01
-    ..p(
-      'ir.in',
-      'IR IN',
-      connector: 'conn.3_5mm_trs',
-      family: 'ctl.ir_receiver',
-      dir: PortDirection.sink,
-      bank: 'control',
-      bankLabel: 'Control',
-      bankSide: SymbolSide.top,
-      pinout: 'xantech-stereo',
-    );
+  v01..p(
+    'ir.in',
+    'IR IN',
+    connector: 'conn.3_5mm_trs',
+    family: 'ctl.ir_receiver',
+    dir: PortDirection.sink,
+    bank: 'control',
+    bankLabel: 'Control',
+    bankSide: SymbolSide.top,
+    pinout: 'xantech-stereo',
+  );
   for (var i = 1; i <= 8; i++) {
     v01.p(
       'ir.out.$i',

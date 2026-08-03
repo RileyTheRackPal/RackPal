@@ -101,11 +101,11 @@ void main() {
           size: const PdfPoint(_boxW, _boxH),
           painter: (PdfGraphics graphics, PdfPoint size) {
             PdfDiagramCanvas(
-              graphics: graphics,
-              boxHeight: size.y,
-              fonts: fonts,
-              measurer: measurer,
-            )
+                graphics: graphics,
+                boxHeight: size.y,
+                fonts: fonts,
+                measurer: measurer,
+              )
               ..save()
               ..drawText(_flat, _at, _style(0))
               ..drawText(_ccw, _at, _style(-math.pi / 2))
@@ -190,9 +190,9 @@ void main() {
       // clipping read; the PDF is what prints. A label that climbed on one
       // and descended on the other would scale-to-fit correctly and then
       // print into the symbol body.
-      final ink = (BoundsCanvas(measurer: _CoreMeasurer())
-            ..drawText(_ccw, _at, _style(-math.pi / 2)))
-          .bounds!;
+      final ink = (BoundsCanvas(
+        measurer: _CoreMeasurer(),
+      )..drawText(_ccw, _at, _style(-math.pi / 2))).bounds!;
       // Diagram space: "up" is a SMALLER y, and the ink must reach above
       // the anchor.
       expect(ink.top, lessThan(_at.y));

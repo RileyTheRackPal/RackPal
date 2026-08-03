@@ -128,7 +128,13 @@ Map<String, TemplateBody> buildNetworkCatalog() {
     // `weightKg > 7` gate never once ran.
     maxUnsupportedMass: _kg(7),
     requiresClearanceAboveU: 1,
-    power: _power(nameplate: 900, typical: 380, pf: 950, outletsConsumed: 2, poeBudget: 740),
+    power: _power(
+      nameplate: 900,
+      typical: 380,
+      pf: 950,
+      outletsConsumed: 2,
+      poeBudget: 740,
+    ),
     ports: n01.ports,
     banks: n01.banks,
   );

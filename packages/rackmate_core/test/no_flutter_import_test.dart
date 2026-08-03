@@ -88,10 +88,11 @@ void main() {
 
     final offenders = <String>[];
     var scanned = 0;
-    for (final f in lib
-        .listSync(recursive: true)
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.dart'))) {
+    for (final f
+        in lib
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.dart'))) {
       scanned++;
       for (final uri in bannedUris(f.readAsStringSync())) {
         offenders.add('${f.path} pulls in $uri');

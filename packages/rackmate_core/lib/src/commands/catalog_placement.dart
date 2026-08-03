@@ -321,7 +321,8 @@ CatalogPlacementResult buildPlaceFromCatalogCommand({
   final body = snapshot.body;
 
   final Placement placement;
-  if (body.side == OccupancySide.none || body.mountMethod == MountMethod.notInRack) {
+  if (body.side == OccupancySide.none ||
+      body.mountMethod == MountMethod.notInRack) {
     placement = const OffRackPlacement();
   } else {
     final face = body.frontU > 0 ? Face.front : Face.rear;
@@ -408,7 +409,11 @@ CatalogPlacementResult buildPlaceFromCatalogCommand({
       }
       ruIndex = lowest;
     }
-    placement = RailPlacement(rackId: targetRack.id, ruIndex: ruIndex, face: face);
+    placement = RailPlacement(
+      rackId: targetRack.id,
+      ruIndex: ruIndex,
+      face: face,
+    );
   }
 
   final typePrefix = body.typePrefix ?? catalogId;
@@ -447,6 +452,8 @@ DeviceKind _kindFor(String catalogId, TemplateBody body) {
     case 'P03':
       return DeviceKind.ups;
   }
-  if (body.mountMethod == MountMethod.notInRack) return DeviceKind.offRackPassive;
+  if (body.mountMethod == MountMethod.notInRack) {
+    return DeviceKind.offRackPassive;
+  }
   return DeviceKind.rackDevice;
 }

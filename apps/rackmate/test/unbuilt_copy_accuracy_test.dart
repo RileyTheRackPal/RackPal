@@ -301,7 +301,8 @@ void main() {
       expect(
         callers.any((p) => p.contains('schematic_canvas_screen')),
         isTrue,
-        reason: 'and it is the SHEET that does it — the surface whose copy '
+        reason:
+            'and it is the SHEET that does it — the surface whose copy '
             'makes the promise',
       );
     });

@@ -400,39 +400,42 @@ import 'package:pdf/pdf.dart';
     },
   );
 
-  test('every pin is FILLED with portFill and STROKED with portStroke — the '
-      'two are not interchangeable and a swap is visible on the page', //
-      () async {
-    // A pin's fill and its stroke lower to the SAME four Bézier segments, so
-    // every count-based assertion in this file — total bytes, `c` operators,
-    // `re` operators — survives exchanging the two colours, and the page
-    // then renders 19 pins inside out. This reads the colours themselves.
-    const palette = SchematicPalette(
-      portFill: 0xFFFF0000, // red — the symbol uses it nowhere else
-      portStroke: 0xFF00FF00, // green — likewise
-    );
-    final pdf = await _render(
-      buildSymbolLayer(_mtx1(), palette: palette, measurer: _measurer()).ops,
-    );
+  test(
+    'every pin is FILLED with portFill and STROKED with portStroke — the '
+    'two are not interchangeable and a swap is visible on the page', //
+    () async {
+      // A pin's fill and its stroke lower to the SAME four Bézier segments, so
+      // every count-based assertion in this file — total bytes, `c` operators,
+      // `re` operators — survives exchanging the two colours, and the page
+      // then renders 19 pins inside out. This reads the colours themselves.
+      const palette = SchematicPalette(
+        portFill: 0xFFFF0000, // red — the symbol uses it nowhere else
+        portStroke: 0xFF00FF00, // green — likewise
+      );
+      final pdf = await _render(
+        buildSymbolLayer(_mtx1(), palette: palette, measurer: _measurer()).ops,
+      );
 
-    // `PdfGraphics.setColor` emits the non-stroking colour (`rg`), which is
-    // what a fill is; `setStrokeColor` emits `RG`.
-    expect(
-      _count(pdf, '1 0 0 rg'),
-      19,
-      reason: 'the 19 pin circles were not filled with portFill',
-    );
-    // portStroke appears as a FILL exactly 19 times and no more: the
-    // direction arrowheads, which are deliberately solid in the pin's
-    // stroke colour. Swapping the circle's fill and stroke turns this into
-    // 38 (and the assertion above into 0).
-    expect(
-      _count(pdf, '0 1 0 rg'),
-      19,
-      reason: 'portStroke reached the page as a pin FILL — the two are '
-          'swapped, or an arrowhead changed colour',
-    );
-  });
+      // `PdfGraphics.setColor` emits the non-stroking colour (`rg`), which is
+      // what a fill is; `setStrokeColor` emits `RG`.
+      expect(
+        _count(pdf, '1 0 0 rg'),
+        19,
+        reason: 'the 19 pin circles were not filled with portFill',
+      );
+      // portStroke appears as a FILL exactly 19 times and no more: the
+      // direction arrowheads, which are deliberately solid in the pin's
+      // stroke colour. Swapping the circle's fill and stroke turns this into
+      // 38 (and the assertion above into 0).
+      expect(
+        _count(pdf, '0 1 0 rg'),
+        19,
+        reason:
+            'portStroke reached the page as a pin FILL — the two are '
+            'swapped, or an arrowhead changed colour',
+      );
+    },
+  );
 
   test('the export path receives the symbol INK bounds, and they reach past '
       'the body on every side', () {

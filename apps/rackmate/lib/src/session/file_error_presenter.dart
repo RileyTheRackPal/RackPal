@@ -200,8 +200,7 @@ FileErrorView describeSaveError(
     ),
 
     SaveLocked(:final paths) => FileErrorView(
-      title:
-          '${_name(paths.target, context)} is in use by another program.',
+      title: '${_name(paths.target, context)} is in use by another program.',
       detail:
           'Antivirus, a backup agent or a second copy of RackMate is '
           'holding the file open. RackMate already retried three times. '
@@ -212,8 +211,7 @@ FileErrorView describeSaveError(
     ),
 
     SavePermissionDenied(:final paths) => FileErrorView(
-      title:
-          'Windows refused to write ${_name(paths.target, context)}.',
+      title: 'Windows refused to write ${_name(paths.target, context)}.',
       detail:
           'You do not have permission to write to ${paths.directory}. '
           'Save somewhere you own, or ask whoever administers this '
@@ -257,29 +255,30 @@ FileErrorView describeOpenError(
     // Case 9 of the error surface: the residual hard-kill window, and the
     // user who deleted the wrong file. WITHOUT THIS BRANCH THE `.bak` IS
     // DECORATION — it exists and nothing ever offers it.
-    OpenNotFound(:final path, :final backup) => backup == null
-        ? FileErrorView(
-            title: '${_name(path, context)} is not there any more.',
-            detail:
-                'Nothing is at $path. It may have been moved, renamed or '
-                'deleted.'
-                '${recentEntryRemoved ? ' RackMate has removed it from the '
-                      'recent list, because the folder it was in answered '
-                      'and the file is genuinely gone.' : ''}',
-            actions: const [_ok],
-          )
-        : FileErrorView(
-            title:
-                '${_name(path, context)} is not there any more, but a '
-                'backup is.',
-            detail:
-                'RackMate keeps one backup beside every saved file. The '
-                'one for this project was saved at '
-                '${describeBackupTime(backup.modified, now: now)}. '
-                'Opening it loads that version; it is not written back '
-                'until you save.',
-            actions: const [_openBackup, _cancel],
-          ),
+    OpenNotFound(:final path, :final backup) =>
+      backup == null
+          ? FileErrorView(
+              title: '${_name(path, context)} is not there any more.',
+              detail:
+                  'Nothing is at $path. It may have been moved, renamed or '
+                  'deleted.'
+                  '${recentEntryRemoved ? ' RackMate has removed it from the '
+                            'recent list, because the folder it was in answered '
+                            'and the file is genuinely gone.' : ''}',
+              actions: const [_ok],
+            )
+          : FileErrorView(
+              title:
+                  '${_name(path, context)} is not there any more, but a '
+                  'backup is.',
+              detail:
+                  'RackMate keeps one backup beside every saved file. The '
+                  'one for this project was saved at '
+                  '${describeBackupTime(backup.modified, now: now)}. '
+                  'Opening it loads that version; it is not written back '
+                  'until you save.',
+              actions: const [_openBackup, _cancel],
+            ),
 
     OpenUnreachable(:final path) => FileErrorView(
       title: 'That location is not available right now.',
@@ -321,7 +320,8 @@ FileErrorView describeOpenError(
     // Its own case with its own copy, because "that is a zip archive" is
     // a far more useful sentence than "that is not a RackMate file".
     OpenZipContainer(:final path) => FileErrorView(
-      title: '${_name(path, context)} is a zip archive, not a RackMate '
+      title:
+          '${_name(path, context)} is a zip archive, not a RackMate '
           'project.',
       detail:
           'The file begins with the ZIP signature. RackMate projects are '
@@ -360,30 +360,31 @@ FileErrorView describeOpenError(
       ),
 
     // Case 8. THIS is where the `.bak` earns its existence.
-    OpenCorrupt(:final path, :final backup) => backup == null
-        ? FileErrorView(
-            title:
-                '${_name(path, context)} could not be read — the file '
-                'appears to be damaged.',
-            detail:
-                'The file is there and RackMate could read its bytes, but '
-                'they are not a complete RackMate project. There is no '
-                'backup beside it to fall back on.',
-            actions: const [_ok],
-          )
-        : FileErrorView(
-            title:
-                '${_name(path, context)} could not be read — the file '
-                'appears to be damaged.',
-            detail:
-                'A backup saved at '
-                '${describeBackupTime(backup.modified, now: now)} is '
-                'available. Opening it loads that version as this '
-                'project, marked unsaved — your next Save writes it back '
-                'over the damaged file, so nothing is replaced until you '
-                'say so.',
-            actions: const [_openBackup, _cancel],
-          ),
+    OpenCorrupt(:final path, :final backup) =>
+      backup == null
+          ? FileErrorView(
+              title:
+                  '${_name(path, context)} could not be read — the file '
+                  'appears to be damaged.',
+              detail:
+                  'The file is there and RackMate could read its bytes, but '
+                  'they are not a complete RackMate project. There is no '
+                  'backup beside it to fall back on.',
+              actions: const [_ok],
+            )
+          : FileErrorView(
+              title:
+                  '${_name(path, context)} could not be read — the file '
+                  'appears to be damaged.',
+              detail:
+                  'A backup saved at '
+                  '${describeBackupTime(backup.modified, now: now)} is '
+                  'available. Opening it loads that version as this '
+                  'project, marked unsaved — your next Save writes it back '
+                  'over the damaged file, so nothing is replaced until you '
+                  'say so.',
+              actions: const [_openBackup, _cancel],
+            ),
 
     OpenUnexpected(:final path) => FileErrorView(
       title: 'Could not open ${_name(path, context)}.',

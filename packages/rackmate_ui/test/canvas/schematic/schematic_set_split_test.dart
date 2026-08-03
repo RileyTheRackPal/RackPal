@@ -39,8 +39,9 @@ void main() {
   late SchematicScene reference;
 
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
     doc = buildSchematicTestDocument();
@@ -52,8 +53,9 @@ void main() {
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -109,11 +111,14 @@ void main() {
   DPt nthPinOfSet(String designator, String setKey, int n) {
     final device = deviceNamed(doc, designator);
     final body = doc.templates[templateKeyFor(device.templateRef)]!.body;
-    final ports = [for (final p in body.ports) if (p.setKey == setKey) p]
-      ..sort((a, b) {
-        final byOrder = a.order.v.compareTo(b.order.v);
-        return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
-      });
+    final ports =
+        [
+          for (final p in body.ports)
+            if (p.setKey == setKey) p,
+        ]..sort((a, b) {
+          final byOrder = a.order.v.compareTo(b.order.v);
+          return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
+        });
     final symbol = reference.symbols.firstWhere((s) => s.id == device.id.v);
     final sym = symbol.allPorts.firstWhere((p) => p.key == ports[n].key.v);
     return symbolPortCentre(symbol, sym);
@@ -122,11 +127,14 @@ void main() {
   Uuid portIdOfSet(String designator, String setKey, int n) {
     final device = deviceNamed(doc, designator);
     final body = doc.templates[templateKeyFor(device.templateRef)]!.body;
-    final ports = [for (final p in body.ports) if (p.setKey == setKey) p]
-      ..sort((a, b) {
-        final byOrder = a.order.v.compareTo(b.order.v);
-        return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
-      });
+    final ports =
+        [
+          for (final p in body.ports)
+            if (p.setKey == setKey) p,
+        ]..sort((a, b) {
+          final byOrder = a.order.v.compareTo(b.order.v);
+          return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
+        });
     return derivePortId(device.id, ports[n].key);
   }
 
@@ -243,7 +251,8 @@ void main() {
       expect(
         (set.conductors.single.from as PortEndpoint).portId,
         portIdOfSet('AMP-1', 'src5', 0),
-        reason: 'and it is the L leg that stayed — lifting index 0 would '
+        reason:
+            'and it is the L leg that stayed — lifting index 0 would '
             'move the wrong half of the pair',
       );
 
@@ -321,7 +330,8 @@ void main() {
       expect(
         (set.conductors[1].from as PortEndpoint).portId,
         portIdOfSet('AMP-1', 'src5', 1),
-        reason: 'AT ITS OWN INDEX. Appending would put R before L on a '
+        reason:
+            'AT ITS OWN INDEX. Appending would put R before L on a '
             'later replay, and planAtomicConnect pairs BY POSITION',
       );
     });

@@ -105,8 +105,9 @@ final class SnapshotStore {
   /// Sorted NUMERICALLY, not lexically. A lexical sort makes `10` sort
   /// before `9`, so the prune would delete the newest snapshot and keep
   /// the oldest — precisely inverting the feature.
-  Future<List<int>> sequencesFor(String docId) async =>
-      [for (final e in await _entriesFor(docId)) e.sequence];
+  Future<List<int>> sequencesFor(String docId) async => [
+    for (final e in await _entriesFor(docId)) e.sequence,
+  ];
 
   /// The snapshots stored for [docId] with the path each ACTUALLY has,
   /// ascending by sequence.

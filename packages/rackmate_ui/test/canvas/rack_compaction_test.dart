@@ -82,15 +82,17 @@ Future<void> _undo(WidgetTester tester) async {
 
 void main() {
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -233,8 +235,9 @@ void main() {
     expect(_topOf(tester, 'dev-amp'), closeTo(ampBefore, 0.5));
   });
 
-  testWidgets('Compact Up packs toward the top and frees the bottom run',
-      (tester) async {
+  testWidgets('Compact Up packs toward the top and frees the bottom run', (
+    tester,
+  ) async {
     await tester.pumpWidget(_app());
     await tester.pump();
 
@@ -314,7 +317,8 @@ void main() {
     expect(
       _barFinder,
       findsNothing,
-      reason: 'a plan computed against a since-changed document must not '
+      reason:
+          'a plan computed against a since-changed document must not '
           'stay applicable',
     );
     expect(find.textContaining('preview cancelled'), findsOneWidget);
@@ -394,7 +398,8 @@ void main() {
     expect(
       enterReachedAncestor,
       1,
-      reason: 'with no preview open the Apply action must be DISABLED, so '
+      reason:
+          'with no preview open the Apply action must be DISABLED, so '
           'the key falls through to whatever else wants it',
     );
 
@@ -420,9 +425,7 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pump();
 
-    final before = tester.allRenderObjects
-        .whereType<RenderDeviceBox>()
-        .length;
+    final before = tester.allRenderObjects.whereType<RenderDeviceBox>().length;
 
     await tester.tapAt(_canvasOrigin(tester) + const Offset(300, 500));
     await tester.pump();

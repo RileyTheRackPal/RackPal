@@ -654,7 +654,8 @@ void main() {
       expect(
         doc.ports,
         isEmpty,
-        reason: 'both pins were this apply()s to mint, so both are its to '
+        reason:
+            'both pins were this apply()s to mint, so both are its to '
             'remove',
       );
       expect(doc.links, isEmpty);
@@ -684,13 +685,17 @@ void main() {
       final afterFirst = _codec.write(doc);
       expect(doc.ports.keys.toSet(), {aPin, bPin});
 
-      final second =
-          _connect(doc, _devA, _devC, at.add(const Duration(seconds: 1)))
-            ..apply(doc);
+      final second = _connect(
+        doc,
+        _devA,
+        _devC,
+        at.add(const Duration(seconds: 1)),
+      )..apply(doc);
       expect(
         doc.ports.keys.toSet(),
         {aPin, bPin, cPin},
-        reason: 'the second connect mints C and leaves A exactly as it '
+        reason:
+            'the second connect mints C and leaves A exactly as it '
             'found it (materialisation is idempotent)',
       );
 
@@ -715,7 +720,8 @@ void main() {
       expect(
         doc.ports,
         isEmpty,
-        reason: 'and undoing the first one does take A and B, because that '
+        reason:
+            'and undoing the first one does take A and B, because that '
             'is the apply() that put them there',
       );
       expect(_codec.write(doc), empty);

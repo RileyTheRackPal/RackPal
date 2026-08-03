@@ -273,10 +273,11 @@ ConnectTarget? chainOutputFor(
   final body = bodyFor(device, doc.templates);
   if (body == null) return null;
 
-  final ordered = [...body.ports]..sort((a, b) {
-    final byOrder = a.order.v.compareTo(b.order.v);
-    return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
-  });
+  final ordered = [...body.ports]
+    ..sort((a, b) {
+      final byOrder = a.order.v.compareTo(b.order.v);
+      return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
+    });
 
   for (final def in ordered) {
     // A SOURCE, OR SOMETHING THAT CAN ACT AS ONE. `bidirectional` and

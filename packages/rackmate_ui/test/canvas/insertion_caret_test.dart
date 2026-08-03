@@ -63,8 +63,7 @@ void main() {
       expect(caret.caret, isNotNull);
     });
 
-    test('notifies listeners exactly when activation or position changes',
-        () {
+    test('notifies listeners exactly when activation or position changes', () {
       final caret = CaretController();
       final rack = _rack();
       var notifications = 0;
@@ -127,8 +126,7 @@ void main() {
       expect(caret.caret!.ruIndex, 8);
     });
 
-    test('falls back to U1 when smartDefaultRuIndex is null (full rack)',
-        () {
+    test('falls back to U1 when smartDefaultRuIndex is null (full rack)', () {
       final caret = CaretController();
       final rack = _rack();
       caret.recompute(
@@ -168,8 +166,7 @@ void main() {
   });
 
   group('sticky position across activation loss/regain', () {
-    test('moveTo survives a focus loss and returns unchanged on regain',
-        () {
+    test('moveTo survives a focus loss and returns unchanged on regain', () {
       final caret = CaretController();
       final rack = _rack();
       caret.recompute(

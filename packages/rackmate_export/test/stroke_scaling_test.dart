@@ -364,25 +364,27 @@ void main() {
         expect(await widthOnPaper(rule), isNot(closeTo(1 / _k, 1e-3)));
       });
 
-      test('and hairlineFloor is what lets it go under 0.5 pt at all',
-          () async {
-        // 1 pt at 1:32 is 0.086 pt, clamped to the 0.25 pt PRINT floor
-        // rather than the 0.5 pt signal floor. Without `hairlineFloor`
-        // this rule would be twice as heavy on a small-ratio sheet.
-        const small = 126 / (22 * 32);
-        final onPaper = await widthOnPaper(headerRule(), scale: small);
-        expect(onPaper, closeTo(0.25, 1e-4));
-        // And a stroke WITHOUT the print floor clamps to 0.5 instead —
-        // the assertion that makes the line above about `hairlineFloor`
-        // rather than about the clamp existing.
-        expect(
-          await widthOnPaper(
-            const Stroke(argb: 0xFF000000, widthPt: 1),
-            scale: small,
-          ),
-          closeTo(0.5, 1e-4),
-        );
-      });
+      test(
+        'and hairlineFloor is what lets it go under 0.5 pt at all',
+        () async {
+          // 1 pt at 1:32 is 0.086 pt, clamped to the 0.25 pt PRINT floor
+          // rather than the 0.5 pt signal floor. Without `hairlineFloor`
+          // this rule would be twice as heavy on a small-ratio sheet.
+          const small = 126 / (22 * 32);
+          final onPaper = await widthOnPaper(headerRule(), scale: small);
+          expect(onPaper, closeTo(0.25, 1e-4));
+          // And a stroke WITHOUT the print floor clamps to 0.5 instead —
+          // the assertion that makes the line above about `hairlineFloor`
+          // rather than about the clamp existing.
+          expect(
+            await widthOnPaper(
+              const Stroke(argb: 0xFF000000, widthPt: 1),
+              scale: small,
+            ),
+            closeTo(0.5, 1e-4),
+          );
+        },
+      );
     });
   });
 }
@@ -487,9 +489,7 @@ RackScene _rackScene({required bool lifecycleBorders}) {
 /// palette colour it is drawn in rather than by its position in the list.
 Stroke _deviceBodyStroke({required bool lifecycleBorders}) {
   const palette = RackPalette();
-  final strokes = _rackScene(lifecycleBorders: lifecycleBorders)
-      .scene
-      .ops
+  final strokes = _rackScene(lifecycleBorders: lifecycleBorders).scene.ops
       .whereType<OpRoundRect>()
       .map((o) => o.stroke)
       .whereType<Stroke>()
@@ -507,9 +507,7 @@ Stroke _deviceBodyStroke({required bool lifecycleBorders}) {
 /// The chassis frame outline `rack_layer.dart` emitted.
 Stroke _chassisFrameStroke() {
   const palette = RackPalette();
-  final strokes = _rackScene(lifecycleBorders: false)
-      .scene
-      .ops
+  final strokes = _rackScene(lifecycleBorders: false).scene.ops
       .whereType<OpRect>()
       .map((o) => o.stroke)
       .whereType<Stroke>()

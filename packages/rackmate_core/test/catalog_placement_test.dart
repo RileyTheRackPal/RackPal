@@ -117,8 +117,22 @@ void main() {
     test('findLowestFreeRu finds a gap between two occupants', () {
       final rack = _rack();
       final doc = _docWithCatalog(rack, {});
-      _place(doc, id: const Uuid('d1'), designator: 'A', rack: rack, ruIndex: 1, frontU: 2);
-      _place(doc, id: const Uuid('d2'), designator: 'B', rack: rack, ruIndex: 5, frontU: 2);
+      _place(
+        doc,
+        id: const Uuid('d1'),
+        designator: 'A',
+        rack: rack,
+        ruIndex: 1,
+        frontU: 2,
+      );
+      _place(
+        doc,
+        id: const Uuid('d2'),
+        designator: 'B',
+        rack: rack,
+        ruIndex: 5,
+        frontU: 2,
+      );
 
       final ru = findLowestFreeRu(
         rack: rack,
@@ -134,7 +148,14 @@ void main() {
     test('findBlockingOccupant returns null for a genuinely free range', () {
       final rack = _rack();
       final doc = _docWithCatalog(rack, {});
-      _place(doc, id: const Uuid('d1'), designator: 'A', rack: rack, ruIndex: 1, frontU: 2);
+      _place(
+        doc,
+        id: const Uuid('d1'),
+        designator: 'A',
+        rack: rack,
+        ruIndex: 1,
+        frontU: 2,
+      );
 
       final blocker = findBlockingOccupant(
         rack: rack,
@@ -151,7 +172,14 @@ void main() {
         'range', () {
       final rack = _rack();
       final doc = _docWithCatalog(rack, {});
-      _place(doc, id: const Uuid('d1'), designator: 'AMP-1', rack: rack, ruIndex: 4, frontU: 2);
+      _place(
+        doc,
+        id: const Uuid('d1'),
+        designator: 'AMP-1',
+        rack: rack,
+        ruIndex: 4,
+        frontU: 2,
+      );
 
       final blocker = findBlockingOccupant(
         rack: rack,
@@ -169,7 +197,14 @@ void main() {
       final rack = _rack();
       final doc = _docWithCatalog(rack, {});
       final id = const Uuid('d1');
-      _place(doc, id: id, designator: 'SW-1', rack: rack, ruIndex: 7, frontU: 1);
+      _place(
+        doc,
+        id: id,
+        designator: 'SW-1',
+        rack: rack,
+        ruIndex: 7,
+        frontU: 1,
+      );
 
       final blocker = findBlockingOccupant(
         rack: rack,
@@ -255,7 +290,8 @@ void main() {
           deviceH: 1,
         ),
         4,
-        reason: 'rear U1-U3 is where UPS-1 is drawn; U4 is the first free '
+        reason:
+            'rear U1-U3 is where UPS-1 is drawn; U4 is the first free '
             'rear slot',
       );
 
@@ -337,7 +373,14 @@ void main() {
       final rack = _rack();
       final catalog = {'V1': _rackTemplate(frontU: 2)};
       final doc = _docWithCatalog(rack, catalog);
-      _place(doc, id: const Uuid('d1'), designator: 'AMP-1', rack: rack, ruIndex: 9, frontU: 2);
+      _place(
+        doc,
+        id: const Uuid('d1'),
+        designator: 'AMP-1',
+        rack: rack,
+        ruIndex: 9,
+        frontU: 2,
+      );
       // AMP-1 occupies U9-U10 on a 12U rack; target U10 overlaps it.
       final result = buildPlaceFromCatalogCommand(
         doc: doc,
@@ -395,12 +438,18 @@ void main() {
       );
     });
 
-    test('omitting explicitRuIndex is unchanged: still the lowest free U',
-        () {
+    test('omitting explicitRuIndex is unchanged: still the lowest free U', () {
       final rack = _rack();
       final catalog = {'V1': _rackTemplate(frontU: 1)};
       final doc = _docWithCatalog(rack, catalog);
-      _place(doc, id: const Uuid('d1'), designator: 'A', rack: rack, ruIndex: 1, frontU: 1);
+      _place(
+        doc,
+        id: const Uuid('d1'),
+        designator: 'A',
+        rack: rack,
+        ruIndex: 1,
+        frontU: 1,
+      );
 
       final result = buildPlaceFromCatalogCommand(
         doc: doc,

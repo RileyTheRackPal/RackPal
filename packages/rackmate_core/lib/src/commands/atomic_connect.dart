@@ -648,7 +648,6 @@ final class AtomicConnectCommand extends Command {
   }
 }
 
-
 /// Builds the [AtomicConnectCommand] for [plan], allocating everything an
 /// allocation must be allocated for — CALLER-SIDE.
 ///

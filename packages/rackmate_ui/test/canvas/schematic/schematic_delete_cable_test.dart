@@ -32,8 +32,9 @@ void main() {
   late SchematicScene reference;
 
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
     doc = buildSchematicTestDocument();
@@ -45,8 +46,9 @@ void main() {
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -90,9 +92,8 @@ void main() {
       .join(' | ');
 
   /// The link the fixture calls [designator].
-  Uuid linkNamed(String designator) => doc.links.entries
-      .firstWhere((e) => e.value.designator == designator)
-      .key;
+  Uuid linkNamed(String designator) =>
+      doc.links.entries.firstWhere((e) => e.value.designator == designator).key;
 
   /// A point inside one of [linkId]'s pennants.
   DPt pennantOf(Uuid linkId) {

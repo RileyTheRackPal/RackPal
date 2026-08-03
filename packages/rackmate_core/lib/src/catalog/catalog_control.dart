@@ -11,18 +11,21 @@ const String kCatControl = 'Control';
 Len _mm(num v) => Len.fromMillimetres(v);
 Mass _kg(num v) => Mass.fromKilograms(v);
 
-PowerProfile _power({required int nameplate, required int typical, required int pf}) =>
-    PowerProfile(
-      nameplateWatts: nameplate,
-      typicalWatts: typical,
-      nominalVolts: 120,
-      apparentVA: (typical * 1000 / pf).round(),
-      powerFactor: pf,
-      isContinuousLoad: true,
-      outletsProvided: 0,
-      outletsConsumed: 1,
-      inletPlug: PlugType.c14,
-    );
+PowerProfile _power({
+  required int nameplate,
+  required int typical,
+  required int pf,
+}) => PowerProfile(
+  nameplateWatts: nameplate,
+  typicalWatts: typical,
+  nominalVolts: 120,
+  apparentVA: (typical * 1000 / pf).round(),
+  powerFactor: pf,
+  isContinuousLoad: true,
+  outletsProvided: 0,
+  outletsConsumed: 1,
+  inletPlug: PlugType.c14,
+);
 
 Map<String, TemplateBody> buildControlCatalog() {
   final out = <String, TemplateBody>{};

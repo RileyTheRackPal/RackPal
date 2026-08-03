@@ -345,18 +345,20 @@ void main() {
       expect(await t.services.controller.loadRecents(), isEmpty);
     });
 
-    test('...and the dialog only CLAIMS the removal when it happened',
-        () async {
-      final fs = _diskWithRecent(_other);
-      final t = await _session(fs: fs);
+    test(
+      '...and the dialog only CLAIMS the removal when it happened',
+      () async {
+        final fs = _diskWithRecent(_other);
+        final t = await _session(fs: fs);
 
-      await t.services.controller.openPath(_other);
+        await t.services.controller.openPath(_other);
 
-      expect(
-        t.prompts.errors.single.detail,
-        contains('removed it from the recent list'),
-      );
-    });
+        expect(
+          t.prompts.errors.single.detail,
+          contains('removed it from the recent list'),
+        );
+      },
+    );
 
     test('nor when the removal DID NOT REACH DISK', () async {
       // `RecentsStore.remove` returns the list it COMPUTED: it awaits
@@ -613,8 +615,7 @@ void main() {
         );
       });
 
-      test('a stat that does not answer records UNKNOWN, not ABSENT',
-          () async {
+      test('a stat that does not answer records UNKNOWN, not ABSENT', () async {
         // `FileBaseline.of(null)` is `absent`, which is a POSITIVE CLAIM
         // that there is no file. The file was just READ — it is damaged,
         // not missing — so a stat that throws (a network hiccup, an AV
@@ -852,8 +853,7 @@ void main() {
       );
     });
 
-    test('a FAILURE is reported to the user, not logged and dropped',
-        () async {
+    test('a FAILURE is reported to the user, not logged and dropped', () async {
       final readOnly = <String>{};
       final fs = diskWithV1(readOnly: readOnly);
       final t = await _session(fs: fs);
@@ -878,62 +878,66 @@ void main() {
       expect(t.services.session.status, contains('Older versions'));
     });
 
-    test('...and the NEXT save retries it, because the bytes were kept',
-        () async {
-      final readOnly = <String>{};
-      final fs = diskWithV1(readOnly: readOnly);
-      final t = await _session(fs: fs);
-      await t.services.controller.openPath(_target);
-      final atOpen = t.services.session.document.sequence;
-      _edit(t.services.session.controller);
-      await lock(fs, readOnly, snapshotPathFor(t, atOpen), t.context);
-      await t.services.controller.save();
+    test(
+      '...and the NEXT save retries it, because the bytes were kept',
+      () async {
+        final readOnly = <String>{};
+        final fs = diskWithV1(readOnly: readOnly);
+        final t = await _session(fs: fs);
+        await t.services.controller.openPath(_target);
+        final atOpen = t.services.session.document.sequence;
+        _edit(t.services.session.controller);
+        await lock(fs, readOnly, snapshotPathFor(t, atOpen), t.context);
+        await t.services.controller.save();
 
-      // The stick is unlocked / space is freed.
-      readOnly.clear();
-      _edit(t.services.session.controller);
-      // THE SAME PATH AS THE FIRST ATTEMPT. The retry preserves the same
-      // bytes, so it must name them the same way — a retry that moved to
-      // the live sequence would leave the failed attempt's read-only
-      // placeholder behind and file the original under a second, equally
-      // wrong number.
-      final retried = snapshotPathFor(t, atOpen);
-      expect(await t.services.controller.save(), isTrue);
+        // The stick is unlocked / space is freed.
+        readOnly.clear();
+        _edit(t.services.session.controller);
+        // THE SAME PATH AS THE FIRST ATTEMPT. The retry preserves the same
+        // bytes, so it must name them the same way — a retry that moved to
+        // the live sequence would leave the failed attempt's read-only
+        // placeholder behind and file the original under a second, equally
+        // wrong number.
+        final retried = snapshotPathFor(t, atOpen);
+        expect(await t.services.controller.save(), isTrue);
 
-      expect(t.services.session.status, 'Saved.');
-      // The bytes really are the PRE-migration original, not a re-encode
-      // of what is in memory now — which is the whole point of holding
-      // them rather than clearing the pending state on failure.
-      final kept =
-          jsonDecode(utf8.decode(await fs.readBytes(retried)))
-              as Map<String, Object?>;
-      expect(kept['schemaVersion'], 1);
-      expect(kept['minReaderVersion'], 1);
-    });
+        expect(t.services.session.status, 'Saved.');
+        // The bytes really are the PRE-migration original, not a re-encode
+        // of what is in memory now — which is the whole point of holding
+        // them rather than clearing the pending state on failure.
+        final kept =
+            jsonDecode(utf8.decode(await fs.readBytes(retried)))
+                as Map<String, Object?>;
+        expect(kept['schemaVersion'], 1);
+        expect(kept['minReaderVersion'], 1);
+      },
+    );
 
-    test('the DEGRADED session says so too, on the save it applies to',
-        () async {
-      // `describeDegradedPersistence` is written once at startup and
-      // cannot know that a document opened later would need migrating.
-      final fs = diskWithV1();
-      final t = await buildTestSession(
-        fs: fs,
-        dataRoot: const DataRootUnusable(
-          attemptedPath: r'D:\RackMate\RackMateData',
-          portable: true,
-          cause: 'read-only',
-        ),
-      );
-      await t.services.controller.openPath(_target);
-      _edit(t.services.session.controller);
+    test(
+      'the DEGRADED session says so too, on the save it applies to',
+      () async {
+        // `describeDegradedPersistence` is written once at startup and
+        // cannot know that a document opened later would need migrating.
+        final fs = diskWithV1();
+        final t = await buildTestSession(
+          fs: fs,
+          dataRoot: const DataRootUnusable(
+            attemptedPath: r'D:\RackMate\RackMateData',
+            portable: true,
+            cause: 'read-only',
+          ),
+        );
+        await t.services.controller.openPath(_target);
+        _edit(t.services.session.controller);
 
-      expect(await t.services.controller.save(), isTrue);
+        expect(await t.services.controller.save(), isTrue);
 
-      expect(
-        t.services.session.status,
-        contains('could not keep a copy of this file as it was'),
-      );
-    });
+        expect(
+          t.services.session.status,
+          contains('could not keep a copy of this file as it was'),
+        );
+      },
+    );
 
     test('an ORDINARY save says nothing about it at all', () async {
       // The control: a document that was never migrated must not carry a
@@ -1163,8 +1167,8 @@ void main() {
     // never looked at a byte.
     test('a Save As copy does NOT carry the newer build’s unmodelled '
         'keys — and the banner no longer says it does', () async {
-      final future = jsonDecode(utf8.decode(_documentBytes()))
-          as Map<String, Object?>;
+      final future =
+          jsonDecode(utf8.decode(_documentBytes())) as Map<String, Object?>;
       // A newer build's file: same schema version this build reads, plus
       // a root key it has never heard of.
       future['siteSurvey'] = {'photos': 12, 'notes': 'north wall'};

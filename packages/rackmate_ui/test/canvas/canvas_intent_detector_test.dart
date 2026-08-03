@@ -178,7 +178,8 @@ void main() {
     expect(
       handler.log,
       <String>['begin(100.0,100.0)', 'update(120.0,100.0|20.0,0.0)'],
-      reason: 'the second pointer contributed nothing at all — not a begin, '
+      reason:
+          'the second pointer contributed nothing at all — not a begin, '
           'not an update, not a commit',
     );
 
@@ -224,7 +225,8 @@ void main() {
         'update(120.0,100.0|20.0,0.0)',
         'update(130.0,100.0|10.0,0.0)',
       ],
-      reason: "B is deferred, not routed: A's updates are contiguous and "
+      reason:
+          "B is deferred, not routed: A's updates are contiguous and "
           'B contributed none of them',
     );
 
@@ -333,7 +335,8 @@ void main() {
     expect(
       first,
       hasLength(1),
-      reason: 'begin, update and commit are one gesture and must be told '
+      reason:
+          'begin, update and commit are one gesture and must be told '
           'apart from any other by ONE identity',
     );
 
@@ -348,7 +351,8 @@ void main() {
     expect(
       handler.tokens.sublist(3).first,
       isNot(same(first.single)),
-      reason: 'a token is minted per gesture — a reused one would let a '
+      reason:
+          'a token is minted per gesture — a reused one would let a '
           "stale terminal be mistaken for the live gesture's",
     );
   });
@@ -407,7 +411,8 @@ void main() {
       expect(
         handler.tokens.last,
         same(handler.tokens.first),
-        reason: 'the terminal is attributed to the begin it belongs to, or '
+        reason:
+            'the terminal is attributed to the begin it belongs to, or '
             "an arbitrating handler cannot tell it from another gesture's",
       );
 
@@ -420,7 +425,8 @@ void main() {
       expect(
         handler.log,
         hasLength(3),
-        reason: 'an unrouted pointer matches no branch: no second update, '
+        reason:
+            'an unrouted pointer matches no branch: no second update, '
             'and above all no commit for a release on a canvas that is gone',
       );
     });
@@ -443,7 +449,8 @@ void main() {
       expect(
         handler.log,
         <String>['begin(100.0,100.0)', 'cancel'],
-        reason: 'exactly ONE cancel — B never received a beginDrag, so it '
+        reason:
+            'exactly ONE cancel — B never received a beginDrag, so it '
             'is owed no terminal and inventing one would describe a '
             'gesture the handler has never heard of',
       );
@@ -483,7 +490,8 @@ void main() {
       expect(
         handler2.log,
         hasLength(2),
-        reason: 'the gesture ended on its own terms; the unmount adds no '
+        reason:
+            'the gesture ended on its own terms; the unmount adds no '
             'second terminal to it',
       );
     });

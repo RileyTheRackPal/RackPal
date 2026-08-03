@@ -212,7 +212,8 @@ void main() {
           expect(
             away,
             greaterThan(previous),
-            reason: 'the route reaches ${corners[i]} and then turns back '
+            reason:
+                'the route reaches ${corners[i]} and then turns back '
                 'towards the pin at $pin: $route',
           );
           previous = away;
@@ -245,7 +246,8 @@ void main() {
       expect(
         corridorOf(crossed),
         isNot(corridorOf(straight)),
-        reason: 'both pairs of escapes sum to 100, so a corridor at their '
+        reason:
+            'both pairs of escapes sum to 100, so a corridor at their '
             'midpoint puts these two cables on one line',
       );
     });
@@ -503,7 +505,8 @@ void main() {
           bodies,
         ),
         isTrue,
-        reason: 'a corridor at the midpoint of the two escapes must land '
+        reason:
+            'a corridor at the midpoint of the two escapes must land '
             'inside a body here, or nothing below is about the rule',
       );
 
@@ -526,7 +529,8 @@ void main() {
       expect(
         route.map((p) => p.x).reduce((a, b) => a < b ? a : b),
         greaterThanOrEqualTo(panel.left),
-        reason: 'the wire went round the outside instead of over the top: '
+        reason:
+            'the wire went round the outside instead of over the top: '
             '$route',
       );
       // The corridor is ABOVE both bodies, which is the side both ends
@@ -676,7 +680,8 @@ void main() {
       expect(
         last.y,
         greaterThan(toPin.y),
-        reason: 'a bottom pin met from ABOVE has been met through its own '
+        reason:
+            'a bottom pin met from ABOVE has been met through its own '
             'body',
       );
     });
@@ -858,8 +863,9 @@ void main() {
       expect(boxes, isNotEmpty);
       var at = 0;
       for (final wire in layer.wires) {
-        for (final end
-            in scene.netLabels.where((l) => l.linkId == wire.linkId)) {
+        for (final end in scene.netLabels.where(
+          (l) => l.linkId == wire.linkId,
+        )) {
           final symbol = scene.symbols.firstWhere(
             (s) => s.id == end.deviceId,
           );
@@ -879,7 +885,8 @@ void main() {
           expect(
             box.width,
             greaterThan(const SchematicWireStyle().escapeGu * 2),
-            reason: 'a pill this narrow cannot straddle an edge, so the '
+            reason:
+                'a pill this narrow cannot straddle an edge, so the '
                 'assertion above proves nothing about where it hangs',
           );
         }

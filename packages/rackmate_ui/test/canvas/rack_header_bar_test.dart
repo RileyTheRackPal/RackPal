@@ -136,7 +136,8 @@ void main() {
     expect(
       firedAtMs,
       hasLength(3),
-      reason: 'a held stepper produced ${firedAtMs.length} repeats in '
+      reason:
+          'a held stepper produced ${firedAtMs.length} repeats in '
           '${horizonMs}ms (at $firedAtMs). Either the repeat never armed, '
           'or its period is far longer than §4.1 allows',
     );
@@ -155,13 +156,15 @@ void main() {
     expect(
       delayMs,
       400,
-      reason: 'the hold-repeat began ${delayMs}ms after pointer-down; §4.1 '
+      reason:
+          'the hold-repeat began ${delayMs}ms after pointer-down; §4.1 '
           'says 400ms. Steps landed at $firedAtMs',
     );
     expect(
       periodMs,
       125,
-      reason: 'the repeat ran at ${1000 / periodMs}/s; §4.1 says 8/s. '
+      reason:
+          'the repeat ran at ${1000 / periodMs}/s; §4.1 says 8/s. '
           'Steps landed at $firedAtMs',
     );
     expect(rec.steps, [-1, -1, -1, -1]);
@@ -282,7 +285,8 @@ void main() {
       expect(
         rec.steps,
         hasLength(4),
-        reason: 'the repeat stopped dead at the first tick that could not '
+        reason:
+            'the repeat stopped dead at the first tick that could not '
             'proceed, and a still-held finger does not resurrect it',
       );
 
@@ -412,7 +416,8 @@ void main() {
       expect(
         enabled(tester, Icons.add),
         isFalse,
-        reason: 'the ceiling the funnel enforces is the ceiling the control '
+        reason:
+            'the ceiling the funnel enforces is the ceiling the control '
             'shows — read from the constant, not retyped as 60',
       );
     });

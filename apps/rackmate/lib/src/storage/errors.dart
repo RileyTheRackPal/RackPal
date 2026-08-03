@@ -125,17 +125,20 @@ StorageFailure osErrorToCategory(
 }) {
   if (isWindows) {
     return switch (errno) {
-      kWinErrorFileNotFound => parentDirExists
-          ? StorageFailure.fileMissing
-          : StorageFailure.directoryMissing,
-      kWinErrorPathNotFound => parentDirExists
-          // The directory is right there, so "path not found" cannot mean
-          // what it says. On Windows the remaining meaning is length.
-          ? StorageFailure.pathTooLong
-          : StorageFailure.directoryMissing,
-      kWinErrorAccessDenied => targetIsReadOnly
-          ? StorageFailure.readOnlyTarget
-          : StorageFailure.permissionDenied,
+      kWinErrorFileNotFound =>
+        parentDirExists
+            ? StorageFailure.fileMissing
+            : StorageFailure.directoryMissing,
+      kWinErrorPathNotFound =>
+        parentDirExists
+            // The directory is right there, so "path not found" cannot mean
+            // what it says. On Windows the remaining meaning is length.
+            ? StorageFailure.pathTooLong
+            : StorageFailure.directoryMissing,
+      kWinErrorAccessDenied =>
+        targetIsReadOnly
+            ? StorageFailure.readOnlyTarget
+            : StorageFailure.permissionDenied,
       kWinErrorSharingViolation => StorageFailure.locked,
       kWinErrorBadNetPath ||
       kWinErrorNetNameDeleted ||
@@ -145,12 +148,14 @@ StorageFailure osErrorToCategory(
     };
   }
   return switch (errno) {
-    kPosixEnoent => parentDirExists
-        ? StorageFailure.fileMissing
-        : StorageFailure.directoryMissing,
-    kPosixEacces || kPosixErofs => targetIsReadOnly
-        ? StorageFailure.readOnlyTarget
-        : StorageFailure.permissionDenied,
+    kPosixEnoent =>
+      parentDirExists
+          ? StorageFailure.fileMissing
+          : StorageFailure.directoryMissing,
+    kPosixEacces || kPosixErofs =>
+      targetIsReadOnly
+          ? StorageFailure.readOnlyTarget
+          : StorageFailure.permissionDenied,
     kPosixEnospc => StorageFailure.diskFull,
     kPosixEnametoolong => StorageFailure.pathTooLong,
     kPosixEstale => StorageFailure.unreachable,

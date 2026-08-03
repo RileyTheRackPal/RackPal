@@ -85,8 +85,7 @@ class DeleteDeviceDialog extends StatelessWidget {
   /// looks like it has lost track.
   final int totalDevices;
 
-  int get _cableTotal =>
-      plans.fold(0, (sum, plan) => sum + plan.cableCount);
+  int get _cableTotal => plans.fold(0, (sum, plan) => sum + plan.cableCount);
 
   String _nameOf(DeviceRemovalPlan plan) =>
       designators[plan.deviceId] ?? plan.deviceId.v;

@@ -356,8 +356,7 @@ void main() {
       expect((root as DataRootUnusable).cause, isA<StateError>());
     });
 
-    test('a failing PORTABLE probe still never consults the profile',
-        () async {
+    test('a failing PORTABLE probe still never consults the profile', () async {
       // The portable branch already had a guard; this pins that widening
       // the non-portable one did not accidentally add a fallback.
       final fs = FakeFileStore(

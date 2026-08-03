@@ -134,9 +134,7 @@ final class _RecentEntryRow extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: base.copyWith(
-              color: dimmed
-                  ? base.color?.withValues(alpha: 0.6)
-                  : base.color,
+              color: dimmed ? base.color?.withValues(alpha: 0.6) : base.color,
             ),
           ),
           Text(

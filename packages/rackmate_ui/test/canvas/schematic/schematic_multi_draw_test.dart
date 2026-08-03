@@ -34,8 +34,9 @@ void main() {
   late SchematicScene reference;
 
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
     doc = buildSchematicTestDocument();
@@ -47,8 +48,9 @@ void main() {
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -186,7 +188,8 @@ void main() {
         expect(
           link.conductors,
           hasLength(1),
-          reason: 'DR-012.2: multi-draw is N Links. One Link with N '
+          reason:
+              'DR-012.2: multi-draw is N Links. One Link with N '
               'conductors is atomicConnect, and the two are different '
               'bills of materials',
         );
@@ -314,7 +317,8 @@ void main() {
       expect(
         doc.links,
         hasLength(before),
-        reason: 'docs/05:484 — "N Links in rank order under ONE undo '
+        reason:
+            'docs/05:484 — "N Links in rank order under ONE undo '
             'entry". Four entries would make the user press it four times',
       );
 
@@ -372,7 +376,8 @@ void main() {
       expect(
         bandsOf(tester).length - armed,
         4,
-        reason: 'docs/05:484 — "Live preview shows all N bands." Four '
+        reason:
+            'docs/05:484 — "Live preview shows all N bands." Four '
             'cables, four bands, and no fifth band from the pin the '
             'pointer happens to be on',
       );
@@ -399,7 +404,8 @@ void main() {
       expect(
         doc.links,
         hasLength(before),
-        reason: 'docs/05 §7 — cancel aborts "with no model mutation and '
+        reason:
+            'docs/05 §7 — cancel aborts "with no model mutation and '
             'no undo entry"',
       );
     });
@@ -459,7 +465,8 @@ void main() {
       expect(
         statusOf(tester),
         contains('left unwired'),
-        reason: 'the surplus is the only record the user gets, because '
+        reason:
+            'the surplus is the only record the user gets, because '
             'nothing was written for it',
       );
     });
@@ -485,7 +492,8 @@ void main() {
       expect(
         status,
         contains('cable SETS'),
-        reason: 'DR-012.2 makes N Links and one Link with N conductors '
+        reason:
+            'DR-012.2 makes N Links and one Link with N conductors '
             'different bills of materials, so choosing between them in '
             'silence is the harm the ruling names',
       );

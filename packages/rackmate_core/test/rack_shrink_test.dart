@@ -254,8 +254,13 @@ void main() {
       expect(casualty.topRu, 21);
       expect(casualty.deviceH, 2);
       expect(casualty.face, Face.front);
-      expect(casualty.linkCount, 0, reason: 'a TRUE zero — no links exist '
-          'in this document — not a stub or an unknown');
+      expect(
+        casualty.linkCount,
+        0,
+        reason:
+            'a TRUE zero — no links exist '
+            'in this document — not a stub or an unknown',
+      );
     });
 
     test('renumbers nobody: a top trim produces no shift moves', () {
@@ -435,7 +440,8 @@ void main() {
         expect(
           top <= rescue.achievableHeightU,
           isTrue,
-          reason: '${entry.key} would end at U$top, above the '
+          reason:
+              '${entry.key} would end at U$top, above the '
               '${rescue.achievableHeightU}U the plan claims to reach — a '
               'device silently pushed out of the rack (rule 3)',
         );
@@ -475,7 +481,8 @@ void main() {
       expect(
         rescue.moves.map((m) => m.face).toSet(),
         {Face.front, Face.rear},
-        reason: 'the rescue must plan both faces, not just the displayed '
+        reason:
+            'the rescue must plan both faces, not just the displayed '
             'one',
       );
       expect(_targets(rescue.moves), {'F1': 1, 'F2': 2, 'R1': 1, 'R2': 2});
@@ -499,13 +506,13 @@ void main() {
       expect(
         rescue.moves.map((m) => m.deviceId).toSet().length,
         rescue.moves.length,
-        reason: 'one net move per device, not a compaction hop plus a '
+        reason:
+            'one net move per device, not a compaction hop plus a '
             'shift hop',
       );
     });
 
-    test('freedU is reported so the label can say "Removes NU of gaps"',
-        () {
+    test('freedU is reported so the label can say "Removes NU of gaps"', () {
       final doc = _doc(24, [_at('A', 4, 1), _at('B', 20, 1)]);
 
       final plan = planRackShrink(doc: doc, rackId: _rackId, toHeightU: 12);
@@ -538,7 +545,8 @@ void main() {
       expect(
         rescue.freedU,
         3,
-        reason: 'summing the faces would report 6U of gaps removed from a '
+        reason:
+            'summing the faces would report 6U of gaps removed from a '
             'rack whose usable top only came down 3U',
       );
       expect(plan.smallestFittingHeightU, 6);
@@ -565,8 +573,7 @@ void main() {
       expect(rescue.isFull, isTrue);
     });
 
-    test('one 1U device per face at U20 of a 24U rack frees 19U, not 38U',
-        () {
+    test('one 1U device per face at U20 of a 24U rack frees 19U, not 38U', () {
       final doc = _doc(24, [
         _at('F', 20, 1),
         _at('R', 20, 1, face: Face.rear),
@@ -578,8 +585,7 @@ void main() {
       expect(plan.rescue!.freedU, 19);
     });
 
-    test('a bottom trim mirrors: the run is the rise of the rack floor',
-        () {
+    test('a bottom trim mirrors: the run is the rise of the rack floor', () {
       // Compact UP in a 24U rack: A@2 -> U23, B@10 -> U24. The lowest
       // occupied U rises from 2 to 23, so 21U of floor comes free. The
       // per-face fold would be the same 21 here (one face), which is
@@ -624,7 +630,8 @@ void main() {
           expect(
             rescue.achievableHeightU,
             h > floorAfter ? h : floorAfter,
-            reason: 'h=$h trim=$trim: freedU=${rescue.freedU} against '
+            reason:
+                'h=$h trim=$trim: freedU=${rescue.freedU} against '
                 'smallest=${plan.smallestFittingHeightU} implies a floor '
                 'of $floorAfter, but the plan claims to reach '
                 '${rescue.achievableHeightU}U',
@@ -689,7 +696,8 @@ void main() {
       expect(
         reached,
         greaterThan(0),
-        reason: 'no height produced a rescue, so nothing above ran: this '
+        reason:
+            'no height produced a rescue, so nothing above ran: this '
             'fixture no longer reaches the clamp it exists to defend',
       );
     });
@@ -712,7 +720,8 @@ void main() {
       expect(
         plan.hasCasualties,
         isTrue,
-        reason: 'a false here is the whole bug: the screen applies the '
+        reason:
+            'a false here is the whole bug: the screen applies the '
             'height with no modal at all',
       );
       expect(_names(plan.doomed), {'PDU0U'});
@@ -781,11 +790,17 @@ void main() {
       expect(
         rescue.achievableHeightU,
         18,
-        reason: 'the channel top is immovable, so option 1 stops there — '
+        reason:
+            'the channel top is immovable, so option 1 stops there — '
             'and stops LOSSLESSLY, which is the only way it may be offered',
       );
-      expect(rescue.freedU, 2, reason: 'U20 -> U18, not the 19U the front '
-          'face alone reclaimed');
+      expect(
+        rescue.freedU,
+        2,
+        reason:
+            'U20 -> U18, not the 19U the front '
+            'face alone reclaimed',
+      );
     });
 
     test('a 0U device whose channelId resolves to nothing is treated as '
@@ -846,7 +861,8 @@ void main() {
       expect(
         orphan.deviceH,
         1,
-        reason: 'nothing in the document says how tall it is, so claim the '
+        reason:
+            'nothing in the document says how tall it is, so claim the '
             'least it can possibly occupy',
       );
       expect(plan.smallestFittingHeightU, 20);
@@ -909,43 +925,45 @@ void main() {
       expect(plan.smallestFittingHeightU, 2);
     });
 
-    test('off-rack, staged and shelf-hosted devices are not rack occupants',
-        () {
-      // A shelf child holds no rack U of its own: it rides its host, and
-      // the host IS enumerated. There is no invisible casualty here, so
-      // naming the child would be inventing one.
-      final doc = _doc(24, [_at('HOST', 1, 1)]);
-      for (final (name, placement) in <(String, Placement)>[
-        ('OFF', const OffRackPlacement()),
-        ('STAGED', const StagedPlacement()),
-        (
-          'ONSHELF',
-          const ShelfPlacement(
-            hostDeviceId: Uuid('dev-HOST'),
-            order: FracIndex('a0'),
+    test(
+      'off-rack, staged and shelf-hosted devices are not rack occupants',
+      () {
+        // A shelf child holds no rack U of its own: it rides its host, and
+        // the host IS enumerated. There is no invisible casualty here, so
+        // naming the child would be inventing one.
+        final doc = _doc(24, [_at('HOST', 1, 1)]);
+        for (final (name, placement) in <(String, Placement)>[
+          ('OFF', const OffRackPlacement()),
+          ('STAGED', const StagedPlacement()),
+          (
+            'ONSHELF',
+            const ShelfPlacement(
+              hostDeviceId: Uuid('dev-HOST'),
+              order: FracIndex('a0'),
+            ),
           ),
-        ),
-      ]) {
-        doc.devices[Uuid('dev-$name')] = DeviceInstance(
-          id: Uuid('dev-$name'),
-          kind: DeviceKind.rackDevice,
-          templateRef: const TemplateRef(
-            templateId: TemplateId('tpl.missing'),
-            version: 7,
-            contentHash: 'sha256:tpl.missing',
-          ),
-          designator: name,
-          name: 'Device $name',
-          placement: placement,
-          meta: _meta(),
-        );
-      }
+        ]) {
+          doc.devices[Uuid('dev-$name')] = DeviceInstance(
+            id: Uuid('dev-$name'),
+            kind: DeviceKind.rackDevice,
+            templateRef: const TemplateRef(
+              templateId: TemplateId('tpl.missing'),
+              version: 7,
+              contentHash: 'sha256:tpl.missing',
+            ),
+            designator: name,
+            name: 'Device $name',
+            placement: placement,
+            meta: _meta(),
+          );
+        }
 
-      final plan = planRackShrink(doc: doc, rackId: _rackId, toHeightU: 1);
+        final plan = planRackShrink(doc: doc, rackId: _rackId, toHeightU: 1);
 
-      expect(plan.hasCasualties, isFalse);
-      expect(plan.hasUnmodelledOccupants, isFalse);
-    });
+        expect(plan.hasCasualties, isFalse);
+        expect(plan.hasUnmodelledOccupants, isFalse);
+      },
+    );
 
     test('option 3 stays lossless with unmodelled occupants present: no '
         'height at or above it reports a casualty', () {
@@ -966,7 +984,8 @@ void main() {
             expect(
               plan.hasCasualties,
               isFalse,
-              reason: 'h=$h trim=$trim sits at or above the smallest '
+              reason:
+                  'h=$h trim=$trim sits at or above the smallest '
                   'fitting height ${plan.smallestFittingHeightU} yet names '
                   '${_names(plan.doomed)}',
             );
@@ -1001,8 +1020,7 @@ void main() {
   });
 
   group('purity — rule 3 holds structurally', () {
-    test('planning removes no device and mutates no placement or height',
-        () {
+    test('planning removes no device and mutates no placement or height', () {
       final doc = _doc(24, [
         _at('A', 4, 1),
         _at('B', 14, 1),
@@ -1051,19 +1069,26 @@ void main() {
             expect(
               plan.hasCasualties,
               isFalse,
-              reason: 'h=$h trim=$trim is at or above the smallest '
+              reason:
+                  'h=$h trim=$trim is at or above the smallest '
                   'fitting height ${plan.smallestFittingHeightU} yet '
                   'reports casualties',
             );
           }
           final rescue = plan.rescue;
           if (rescue != null) {
-            expect(rescue.rescued, isNotEmpty, reason: 'a rescue that '
-                'rescues nobody must be null (rule 1), h=$h trim=$trim');
+            expect(
+              rescue.rescued,
+              isNotEmpty,
+              reason:
+                  'a rescue that '
+                  'rescues nobody must be null (rule 1), h=$h trim=$trim',
+            );
             expect(
               rescue.achievableHeightU,
               greaterThanOrEqualTo(h),
-              reason: 'a rescue can never claim to reach BELOW the '
+              reason:
+                  'a rescue can never claim to reach BELOW the '
                   'requested height, h=$h trim=$trim',
             );
           }
@@ -1093,10 +1118,13 @@ void main() {
       for (final c in cmds) {
         c.apply(doc);
       }
-      expect({
-        for (final d in doc.devices.values)
-          d.designator: (d.placement as RailPlacement).ruIndex,
-      }, {'A': 1, 'B': 2, 'C': 3});
+      expect(
+        {
+          for (final d in doc.devices.values)
+            d.designator: (d.placement as RailPlacement).ruIndex,
+        },
+        {'A': 1, 'B': 2, 'C': 3},
+      );
 
       for (var i = cmds.length - 1; i >= 0; i--) {
         cmds[i].revert(doc);

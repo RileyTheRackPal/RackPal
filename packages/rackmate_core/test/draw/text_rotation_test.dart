@@ -182,8 +182,11 @@ void main() {
   group('rackText carries the angle through', () {
     test('it defaults to zero and passes what it is given', () {
       expect(
-        rackText(RackTextSizes.type, 0xFF000000, TextAnchor.midLeft)
-            .rotationRad,
+        rackText(
+          RackTextSizes.type,
+          0xFF000000,
+          TextAnchor.midLeft,
+        ).rotationRad,
         0,
       );
       expect(

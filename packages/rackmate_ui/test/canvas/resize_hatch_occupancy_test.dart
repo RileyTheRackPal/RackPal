@@ -162,8 +162,7 @@ Widget _app(RackDocument doc) => MaterialApp(
 /// top edge and the viewport starts at identity (see
 /// canvas_exclusivity_test.dart's own copy).
 Offset _topEdgeGrab(WidgetTester tester) =>
-    tester.getTopLeft(find.byType(CanvasIntentDetector)) +
-    const Offset(200, 2);
+    tester.getTopLeft(find.byType(CanvasIntentDetector)) + const Offset(200, 2);
 
 /// Drags the top edge from 24U down to 12U, leaving the pointer DOWN so the
 /// live preview can be inspected.
@@ -176,15 +175,17 @@ Future<TestGesture> _dragTopEdgeTo12U(WidgetTester tester) async {
 
 void main() {
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..physicalSize = const Size(1600, 1000)
       ..devicePixelRatio = 1;
   });
 
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
-        .implicitView!
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
       ..resetPhysicalSize()
       ..resetDevicePixelRatio();
   });
@@ -202,7 +203,8 @@ void main() {
     expect(
       find.text('1 device would lose its U'),
       findsOneWidget,
-      reason: 'DEV-X sits at U20 and the rack top is coming down to U12. The '
+      reason:
+          'DEV-X sits at U20 and the rack top is coming down to U12. The '
           'preview must say so while the pointer is still down — this is the '
           'assertion the old boltedOccupantsOnFace-only scan failed, showing a '
           'bare "12U (-12)" in tertiaryContainer with no warning line at all',
@@ -233,7 +235,8 @@ void main() {
     expect(
       find.text('1 device would lose its U'),
       findsOneWidget,
-      reason: "PDU-1's channel spans U1-U24, so a 12U rack cannot hold it — "
+      reason:
+          "PDU-1's channel spans U1-U24, so a 12U rack cannot hold it — "
           'and `scene_builder` draws nothing for it, which is precisely why '
           'the hatch has to come from the document rather than the layouts',
     );

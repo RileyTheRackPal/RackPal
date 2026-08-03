@@ -593,12 +593,11 @@ void main() {
         expect(ink.bottom, lessThanOrEqualTo(height + 1e-9));
       });
 
-      test('type is dropped before name, and name before the designator',
-          () {
+      test('type is dropped before name, and name before the designator', () {
         // Rungs 1, 2, 3 — each height keeps strictly more than the last.
-        List<String> textsAt(double height) =>
-            build(height: height).ops.whereType<OpText>().map((o) => o.text)
-                .toList();
+        List<String> textsAt(double height) => build(
+          height: height,
+        ).ops.whereType<OpText>().map((o) => o.text).toList();
 
         expect(textsAt(60), containsAll(<String>['AMP-1', '1U', 'Amp', 'T']));
         expect(textsAt(35), containsAll(<String>['AMP-1', '1U', 'Amp']));
@@ -911,8 +910,9 @@ void main() {
     });
 
     test('the rear sheet points at the front one rather than crying wolf', () {
-      final omission = _texts(sheetFor(SheetRole.rackElevationRear))
-          .singleWhere((t) => t.startsWith('NOT DRAWN'));
+      final omission = _texts(
+        sheetFor(SheetRole.rackElevationRear),
+      ).singleWhere((t) => t.startsWith('NOT DRAWN'));
       expect(omission, contains('1 ON FRONT'));
       expect(omission, isNot(contains('ONLY ON')));
     });
