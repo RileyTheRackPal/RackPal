@@ -36,6 +36,11 @@ Len _mm(num value) => Len((value * _nmPerMm).round());
 /// Connector ids with no panel-cutout footprint by design (§5.1) — a
 /// shipped template may reference these without tripping the
 /// connector-footprint CI assertion.
+///
+/// EXEMPT FROM A FOOTPRINT, NOT FROM THE REGISTRY. They carry a
+/// `ConnectorTypeDef` with null dimensions like any other connector; what
+/// is exempt is the requirement to state a cutout. See the entries at the
+/// end of [buildSeedConnectorFootprints].
 const Set<String> kFootprintExemptConnectors = {
   'conn.hardwired',
   'conn.ground_lug',
@@ -54,6 +59,18 @@ ConnectorTypeDef _c(
   aliases: aliases,
   footprintWidth: _mm(widthMm),
   footprintHeight: _mm(heightMm),
+);
+
+/// A registry entry for a connector that has no panel cutout to author.
+/// Both dimensions stay null — unknown is never estimated (G4).
+ConnectorTypeDef _cNoFootprint(
+  String id,
+  String name, {
+  List<String> aliases = const [],
+}) => ConnectorTypeDef(
+  id: ConnectorTypeId(id),
+  displayName: name,
+  aliases: aliases,
 );
 
 /// Builds the seeded `ConnectorTypeDef` registry — every connector id the
@@ -114,6 +131,28 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
     _c('conn.nema_5_20r', 'NEMA 5-20R', 34.0, 27.0, aliases: const ['5-20r']),
     _c('conn.nema_l5_30p', 'NEMA L5-30P (twist-lock)', 32.0, 32.0, aliases: const ['l5-30p']),
     _c('conn.barrel_dc', 'DC barrel', 8.0, 8.0, aliases: const ['dc']),
+    // -- No panel cutout (§5.1 states their footprint column as "no") -----
+    //
+    // NULL FOOTPRINTS, NOT ABSENT ENTRIES, and the distinction is the
+    // whole point. These three shipped as absent while this function was
+    // only a footprint table, which was coherent. DR-010 then wired it in
+    // as `Registries.connectorTypes` — the connector registry itself —
+    // and absence silently changed meaning from "has no panel cutout" to
+    // "IS NOT A CONNECTOR". 35 seeded ports across 8 templates and four
+    // signal families (`power.ac_hardwired`, `power.bonding`,
+    // `structure.undetermined`, `structure.pathway`) name these ids, so
+    // every one of those references dangled — in the seed, and in the
+    // `connectors` map of every document written since, including the
+    // four shipped starters.
+    //
+    // `footprintWidth`/`footprintHeight` are nullable precisely for this
+    // (registries.dart: "Both null means no footprint has been authored
+    // yet — never estimated"), so the honest encoding is a real
+    // `ConnectorTypeDef` carrying null dimensions. G4 is satisfied by the
+    // nulls; resolution is satisfied by the entries existing.
+    _cNoFootprint('conn.hardwired', 'Hardwired lead', aliases: const ['hw']),
+    _cNoFootprint('conn.ground_lug', 'Ground lug', aliases: const ['gnd']),
+    _cNoFootprint('conn.unterminated', 'Unterminated'),
   ];
   return {for (final c in all) c.id: c};
 }

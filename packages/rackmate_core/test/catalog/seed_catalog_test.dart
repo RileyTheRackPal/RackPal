@@ -300,17 +300,43 @@ void main() {
       );
     });
 
-    test('the exempt connectors truly carry no footprint (so the '
+    test('the exempt connectors RESOLVE but carry no footprint (so the '
         'assertion above is not vacuous)', () {
+      // This used to assert `def == null` — "no ConnectorTypeDef at all".
+      // That was coherent while this map was only a footprint table, and
+      // it stopped being coherent when DR-010 wired the same function in
+      // as `Registries.connectorTypes`: it then asserted that three
+      // connectors named by 35 seeded ports and four signal families were
+      // absent from the connector registry entirely. Resolving with null
+      // dimensions is the strictly stronger non-vacuity guarantee — it
+      // pins the footprint AND the entry.
       for (final id in kFootprintExemptConnectors) {
         final def = footprints[ConnectorTypeId(id)];
         expect(
           def,
-          isNull,
-          reason: '$id should have no ConnectorTypeDef at all (§5.1: no '
-              'panel cutout applies)',
+          isNotNull,
+          reason: '$id is referenced by shipped templates and must resolve '
+              'in the connector registry',
         );
+        expect(def!.footprintWidth, isNull, reason: '$id: §5.1 states none');
+        expect(def.footprintHeight, isNull, reason: '$id: §5.1 states none');
+        expect(def.displayName, isNotEmpty);
       }
+    });
+
+    test('every connector a shipped port names resolves in the registry', () {
+      // The gap the footprint assertion above cannot see: it SKIPS the
+      // exempt ids, so a port naming one that is not in the registry at
+      // all passed both tests. That is exactly what happened.
+      final unresolved = <String>{};
+      for (final entry in catalog.entries) {
+        for (final port in entry.value.ports) {
+          if (!footprints.containsKey(port.connector)) {
+            unresolved.add('${entry.key}:${port.key.v} -> ${port.connector.v}');
+          }
+        }
+      }
+      expect(unresolved, isEmpty, reason: 'unresolved connectors: $unresolved');
     });
 
     test('the exempt set is reachable — at least one shipped port actually '

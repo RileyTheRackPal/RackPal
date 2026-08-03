@@ -91,15 +91,20 @@ void main() {
       // (AC-050/A2.2), applied to the family registry: a family whose
       // default connector names nothing would hand the Quick Add DSL and
       // the rear-panel renderer an id neither can resolve.
+      // The `|| kFootprintExemptConnectors.contains(id)` escape hatch that
+      // used to be here was the workaround that hid the defect: the four
+      // families defaulting to an exempt connector really did name an id
+      // that resolved to nothing. Now every family's default resolves, so
+      // membership is required outright and footprint-ness is checked
+      // separately in seed_catalog_test.dart.
       for (final f in families.values) {
         final id = f.defaultConnector.v;
         expect(
-          footprints.containsKey(f.defaultConnector) ||
-              kFootprintExemptConnectors.contains(id),
+          footprints.containsKey(f.defaultConnector),
           isTrue,
           reason:
-              '${f.id.v} defaults to connector "$id", which has no '
-              'footprint entry and is not exempt',
+              '${f.id.v} defaults to connector "$id", which does not '
+              'resolve in the connector registry',
         );
       }
     });

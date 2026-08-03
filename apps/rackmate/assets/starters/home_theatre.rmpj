@@ -1179,6 +1179,20 @@
           "footprintWidthNm": 9500000,
           "id": "conn.f_type"
         },
+        "conn.ground_lug": {
+          "aliases": [
+            "gnd"
+          ],
+          "displayName": "Ground lug",
+          "id": "conn.ground_lug"
+        },
+        "conn.hardwired": {
+          "aliases": [
+            "hw"
+          ],
+          "displayName": "Hardwired lead",
+          "id": "conn.hardwired"
+        },
         "conn.hd15": {
           "aliases": [],
           "displayName": "HD-15 (VGA)",
@@ -1412,6 +1426,11 @@
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 10000000,
           "id": "conn.st"
+        },
+        "conn.unterminated": {
+          "aliases": [],
+          "displayName": "Unterminated",
+          "id": "conn.unterminated"
         },
         "conn.usb_c": {
           "aliases": [],
