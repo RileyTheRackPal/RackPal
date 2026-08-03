@@ -289,7 +289,7 @@ Two further sequencing constraints are binding, from AC-059:
 
 **Exit criterion.** A 16×16 matrix template is authored from scratch **in under three minutes by a user who has seen the tool once**, and a template saved with exactly three fields plus ports places into a rack and appears correctly in the equipment list with `—` in every unknown column and an accurate unknown count in the rollup. See [Device builder](06-device-builder.md).
 
-**Risks.** The pattern DSL is the scope hazard, not the grid. Ship the documented subset with designed parse errors and resist generalising it.
+**Risks.** The pattern DSL is the scope hazard, not the grid. Ship the documented subset with designed parse errors and resist generalising it. **The `M` in §6 predates the `.rmda` line above and has not moved** — the library directory service, template provenance in the palette, import/export and the palette filter are all uncounted, and the number is re-derived when M4 is decomposed, not guessed now (docs/12 §5.3).
 
 ### M5 — Validation · M
 

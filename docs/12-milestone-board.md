@@ -975,6 +975,36 @@ evidence supports.
 need the device-property editing `inspector_panel.dart:21` explicitly defers. Both are M1 debt that
 M4 pays.
 
+**Device libraries (#170) are M4 scope and are parented to epic #22 — the opposite call from #169
+two paragraphs down, and the difference is structural rather than a preference.** Roadmap §M4's
+checklist names `.rmda` device archives as a line item, added under DR-015 §11.15.5; end-user
+documentation appears on no milestone's checklist at all. Under §8.1 the exit criterion is the unit
+of truth for *doneness* and the checklist is the unit of *scope*, so an item on M4's checklist
+belongs in M4's rollup and an item on nobody's does not.
+
+**The criterion is not amended to name libraries, and that is deliberate.** M4's criterion is a
+demonstration — three minutes, three fields, a place into a rack — and it names none of the pattern
+DSL, the media-type editor or undo throughout the builder either, all of which sit on that same
+checklist. A criterion that grew a clause per checklist line would stop being a demonstration and
+become a second scope list, and §8.3 says there is exactly one of those.
+
+**Why "from the getgo" is an argument rather than a preference.** The builder's output is a template,
+and until a writable library directory exists a template's only home is the project that placed it —
+docs/06 §7.1 names three storage locations and only the seeded catalog and the per-project embedded
+snapshots are built. So requirement 2's actual promise, *author the long tail once and use it
+everywhere*, is not delivered by the builder alone. Shipping the builder and deferring the library
+ships a version in which a user's second project re-authors the first project's devices, and a
+builder is judged on the second project rather than the first.
+
+**The uncounted cost, stated here rather than discovered during M4.** §6 still sizes M4 at `M`, 5–7
+weeks, and that figure predates the DR-015 scope edit — nothing moved it. Of the five things #170
+enumerates, the `.rmdx` codec is already its own checklist line and therefore already inside the
+number; the library directory service, template provenance in the palette model, the import/export
+surface and the palette filter are not, and neither is parameterising the Windows file dialog, which
+#170 sequences before the codec. **The re-derivation belongs to M4's decomposition (#71)**, where
+the tasks exist to count against; replacing a stale figure with a guessed one here would cost the
+row the only property it still has, which is that it is traceable to something.
+
 **M4 is also the trigger for end-user documentation (#169), and the reason is a property of the
 milestone list rather than a preference.** The four surfaces a user spends time in arrive one per
 milestone — the elevation (M1), the schematic (M2), Structure and the field (M3), the device builder

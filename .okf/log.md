@@ -37,6 +37,27 @@
   — zip-slip, entry counts, decompression bombs — that
   critique-completeness already lists as needed-and-absent for `.rmlib`.
   Cost stated: no compression, on a file people email once.
+* **Update**: device libraries are **M4 scope**, not a follow-on — board
+  #170 is now parented to epic #22, where #169 (end-user documentation)
+  deliberately is not. The rule that separates them is roadmap §8.1: the
+  exit criterion is the unit of DONENESS and the checklist is the unit of
+  SCOPE, so a checklist line rolls up and an item on nobody's checklist
+  does not. The criterion is NOT amended to name libraries — it names
+  neither the pattern DSL nor undo either, and a criterion that grew a
+  clause per checklist line would become the second scope list §8.3 says
+  there is not one of.
+* **Note**: the argument for "from the getgo" is that the builder's output
+  has nowhere to live without it. docs/06 §7.1 names three storage
+  locations and the WRITABLE one is the missing one, so until the library
+  exists a template's only home is the project that placed it — and
+  requirement 2's promise is *author the long tail once and use it
+  everywhere*. Deferring the library ships a version whose second project
+  re-authors the first project's devices.
+* **Note**: **M4's `M` in roadmap §6 predates the DR-015 scope edit and
+  never moved.** Four of #170's five items are uncounted, and so is
+  parameterising the Windows file dialog. Recorded as a gap rather than
+  patched with a new letter: the re-derivation belongs to M4's
+  decomposition (#71), where there are tasks to count against.
 
 * **Update**: the `drawn`-mode router is caught up with six field reports
   (`38baed1` … `5d53512`, board #96). docs/05 §10 phase 4 carries the
