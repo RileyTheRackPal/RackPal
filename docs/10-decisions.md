@@ -3,13 +3,13 @@
 **This file is not the normative record.** The normative record is
 [docs/canonical-decisions.md](canonical-decisions.md) — 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`,
 canonical naming, the model, the registry, the scope ruling, the milestone plan, and Part 4's
-binding user decisions `DR-001`–`DR-005`. This file is a sixteen-ADR summary of it. Where an ADR
+binding user decisions `DR-001`–`DR-015`. This file is a sixteen-ADR summary of it. Where an ADR
 and a ruling appear to differ, the ruling wins and this file is wrong.
 
 What follows is the short-form decision log for RackMate: sixteen ADRs covering the choices that
 shape the codebase, each traced back to its adjudication in the canonical decision record; then
-**the five user decisions `DR-001`–`DR-005`**, which are binding and override the recommendations
-they answer; then the open questions, of which five are now closed and the rest are still the
+**the fifteen user decisions `DR-001`–`DR-015`**, which are binding and override the recommendations
+they answer; then the open questions, of which six are now settled and the rest are still the
 user's to call. An ADR here is a summary with a pointer, not a new ruling. Open questions carry no
 normative weight at all: each states its options, the honest trade-off, the evidence that would
 settle it, and a recommendation explicitly labelled as such — and a recommendation the user has
@@ -34,8 +34,13 @@ overruled is marked as void where it stands.
 | [015](#adr-015-the-five-package-split) | The five-package split | Accepted | CR-083, CR-084 |
 | [016](#adr-016-density-management--one-sheet-net-labels-filter) | Density management — one sheet, net labels, filter | Accepted | CR-073, CR-103, AC-037, **DR-001**, **DR-004** |
 
-**The five user decisions**, binding and overriding any recommendation they answer. Full text in
+**The fifteen user decisions**, binding and overriding any recommendation they answer. Full text in
 canon §11; the supersession index is canon §12.
+
+> **This table listed only `DR-001`–`DR-005` until 2026-08-03**, an owed edit canon §12.9 recorded
+> against DR-006 and which then went ten rulings further out of date. Only `DR-001`–`DR-005` answer
+> a canon §10 question; `DR-006` onward are rulings the work itself raised, which is why they have
+> no `Answers` entry.
 
 | DR | Decision | Answers | Effect here |
 |---|---|---|---|
@@ -44,6 +49,16 @@ canon §11; the supersession index is canon §12.
 | [DR-003](#dr-003--the-device-builder-ships-in-v1) | **The device builder ships in v1**; M4 stays | §10.4 | Confirms the recommendation. The roadmap's "move M4 after M6" lever is withdrawn |
 | [DR-004](#dr-004--multi-sheet-splitting-is-never-built) | **Multi-sheet splitting is never built** | §10.7 | One `Sheet` plus domain filtering, permanently. The `Sheet` **entity** stays (AC-037) |
 | [DR-005](#dr-005--the-schematic-is-a-client-deliverable) | **Client deliverable — invest in drafting polish** | §10.6 | Reverses the recommendation. Full sheet furniture in v1, revision clouds included. **Orthogonal to DR-001** |
+| DR-006 | **Internal tool, self-signed distribution** — no commercial release planned | *nothing in §10 — **moots** §10.3* | **No certificate procurement at any milestone.** M8's criterion splits into a build-side gate and a documented distribution-side requirement (canon §11.6.2). RISK-07 retired in its stated form |
+| DR-007 | **Low-voltage box / keystone plate is an entity**, in M3 | — | Every occupant is 1×1, superseding the 2-slot speaker constraint the original request assumed |
+| DR-008 | **The wiring model** — `Link`/`Service`/`Conductor` | — | The M2 spine |
+| DR-009 | **Windows and macOS from v1** | §10.10 | Reverses a recommendation that was explicitly *"not a ruling"*. The register it demanded is `docs/13-macos-debt-register.md` |
+| DR-010 | **The registries ship as a seeded Dart catalog**, and the family gets its dash back | — | 8 domains, 55 families, seeded at document creation, ordinary stored data thereafter |
+| DR-011 | **The connect gesture** — pin-to-pin, ports materialised on connect, the sheet holds still | — | M2-F's spine; §11.11.8 deferred four rules to DR-012 |
+| DR-012 | **The four gesture rules DR-011.8 deferred** | — | Phase 4 could not start without them |
+| DR-013 | **Deleting a wired device cascades**, after a warning that counts the cost | — | Lossless undo; board #95 |
+| DR-014 | **Drawing a wired set member at a different device splits the set** | — | Board #96-C |
+| DR-015 | **The `rm` extension family** — `.rmpj`, `.rmdx`, `.rmda` | — | A rename, **not** a format change. Re-opens AC-042's library pack as a single JSON file, not a zip. ADR-003's container table is superseded |
 
 See also [Canonical decisions](canonical-decisions.md) — normative — plus
 [Overview](00-overview.md), [Data model](02-data-model.md),
