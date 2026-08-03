@@ -8,9 +8,10 @@ and a ruling appear to differ, the ruling wins and this file is wrong.
 
 What follows is the short-form decision log for RackMate: sixteen ADRs covering the choices that
 shape the codebase, each traced back to its adjudication in the canonical decision record; then
-**the fifteen user decisions `DR-001`–`DR-015`**, which are binding and override the recommendations
-they answer; then the open questions, of which six are now settled and the rest are still the
-user's to call. An ADR here is a summary with a pointer, not a new ruling. Open questions carry no
+**the sixteen user decisions `DR-001`–`DR-016`**, which are binding and override the recommendations
+they answer; then the questions of canon §10, **none of which is open any longer**: ten are
+answered, 10.3 is moot under DR-006, 10.13 is retired, and 10.11 alone is deferred, to M5 rather
+than indefinitely. An ADR here is a summary with a pointer, not a new ruling. Open questions carry no
 normative weight at all: each states its options, the honest trade-off, the evidence that would
 settle it, and a recommendation explicitly labelled as such — and a recommendation the user has
 overruled is marked as void where it stands.
@@ -34,13 +35,14 @@ overruled is marked as void where it stands.
 | [015](#adr-015-the-five-package-split) | The five-package split | Accepted | CR-083, CR-084 |
 | [016](#adr-016-density-management--one-sheet-net-labels-filter) | Density management — one sheet, net labels, filter | Accepted | CR-073, CR-103, AC-037, **DR-001**, **DR-004** |
 
-**The fifteen user decisions**, binding and overriding any recommendation they answer. Full text in
+**The sixteen user decisions**, binding and overriding any recommendation they answer. Full text in
 canon §11; the supersession index is canon §12.
 
 > **This table listed only `DR-001`–`DR-005` until 2026-08-03**, an owed edit canon §12.9 recorded
-> against DR-006 and which then went ten rulings further out of date. Only `DR-001`–`DR-005` answer
-> a canon §10 question; `DR-006` onward are rulings the work itself raised, which is why they have
-> no `Answers` entry.
+> against DR-006 and which then went ten rulings further out of date. Seven of the sixteen answer a
+> canon §10 question and say which; the rest are rulings the work itself raised, which is why their
+> `Answers` column is empty. `DR-016` is the only one ruled inside a §10 entry rather than in its
+> own §11 subsection, because §10.12(c) is where the scope addition was made.
 
 | DR | Decision | Answers | Effect here |
 |---|---|---|---|
@@ -59,6 +61,7 @@ canon §11; the supersession index is canon §12.
 | DR-013 | **Deleting a wired device cascades**, after a warning that counts the cost | — | Lossless undo; board #95 |
 | DR-014 | **Drawing a wired set member at a different device splits the set** | — | Board #96-C |
 | DR-015 | **The `rm` extension family** — `.rmpj`, `.rmdx`, `.rmda` | — | A rename, **not** a format change. Re-opens AC-042's library pack as a single JSON file, not a zip. ADR-003's container table is superseded |
+| DR-016 | **The starting racks become editable presets** the user tailors to their own inventory | §10.12(c) | A **scope addition under roadmap §8.3**. 42U survives as the shipped seed value; the preset **set** stops being fixed. Presets stay unpersisted on `Rack` (no `presetRef`), so this is a new writable store, not a format change. Board #561 |
 
 See also [Canonical decisions](canonical-decisions.md) — normative — plus
 [Overview](00-overview.md), [Data model](02-data-model.md),
@@ -798,16 +801,16 @@ recommendation is marked **void**. Read this table before the arguments below it
 |---|---|---|---|
 | **10.1** | Draw every wire, or net labels by default — the fork | **ANSWERED — DR-001** | **(B) Net labels by default.** Drawn wires on domain filter, `Alt`-hover or focus. **Reverses** the recommendation |
 | **10.2** | Residential CI or commercial AV — the primary customer | **ANSWERED — DR-002** | **(a) Residential-primary, commercial-capable.** Confirms the recommendation |
-| 10.3 | Pricing and licensing model | open | — (sharper under DR-005; wants deciding before M6) |
+| **10.3** | Pricing and licensing model | **MOOT — DR-006** | **Nothing to price.** RackMate is an internal tool; no commercial release is planned. Retained as the record of the argument: if DR-006 is ever reversed, 10.3 reopens exactly as written |
 | **10.4** | Does the device builder have to be in v1 | **ANSWERED — DR-003** | **(a) Yes. M4 stays where it is.** Confirms the recommendation |
-| 10.5 | Metric or imperial default | open | — (DR-002 tilts it toward imperial) |
+| **10.5** | Metric or imperial default | **ANSWERED 2026-08-03** | **Imperial default, one obvious toggle.** Confirms the recommendation. The default is already in the code; the toggle is owed (board #562) |
 | **10.6** | Is the schematic a client deliverable or an internal tool | **ANSWERED — DR-005** | **(a) Client deliverable — invest in drafting polish.** **Reverses** the recommendation. Orthogonal to 10.1 |
 | **10.7** | Multi-sheet timing | **ANSWERED — DR-004** | **(c) Never.** One `Sheet` plus domain filtering, permanently. The entity remains |
-| 10.8 | Cloud-ready investment | open | — (easier under DR-004; (a) is now the clear answer) |
-| 10.9 | Generic archetypes forever, or a real-SKU catalog | open | — (better instrumented under DR-003) |
-| 10.10 | macOS in v1 | open | — (independent of all five; ask before M7) |
-| 10.11 | What the beta gate actually is | open | — (sharper under DR-005) |
-| 10.12 | Small calls needing an owner | (d) settled; the rest open | (d) three residential + one small commercial, settled by DR-002 |
+| **10.8** | Cloud-ready investment | **ANSWERED 2026-08-03** | **(a). Spend nothing further; RackMate is a local application.** Confirms the recommendation. The six cloud-ready properties are retained in full; [02 §8](02-data-model.md#8-cloud-readiness-properties) is ratified as the conflict-unit page. Update checks and API-key publishing to PM services are **not v1 scope** |
+| **10.9** | Generic archetypes forever, or a real-SKU catalog | **ANSWERED 2026-08-03** | **Shipped catalog stays generic; user templates may carry real SKUs.** Archetypes must be editable; DR-015's `.rmda` is the sharing mechanism. `T6.30` stays an equipment list, not a BOM (AC-055) |
+| **10.10** | macOS in v1 | **ANSWERED — DR-009** | **(b) Windows and macOS from v1.** **Reverses** the recommendation, which was explicitly not a ruling. The register it demanded is [13-macos-debt-register.md](13-macos-debt-register.md) |
+| 10.11 | What the beta gate actually is | **DEFERRED, with a trigger** | Held until M5 lands and the UI is largely frozen. **Must be answered before the M6-J5 recruiting ask**, not before M9 |
+| **10.12** | Small calls needing an owner | **ALL SEVEN SETTLED 2026-08-03** | (d) by DR-002. (a) keep 200, make it a setting (#560). (b) autosave while working, never while idle. (c) editable rack presets, **DR-016**, a scope addition under §8.3 (#561). (e) opt-in local crash log only. (f) RackMate, with a mascot and three scoped surfaces (#563–#565). (g) user-visible, and it is 27 rules |
 | 10.13 | The three to answer first | **retired** | All three are answered |
 
 They are ordered by blast radius, and the first one was a fork in what the product fundamentally
@@ -1006,6 +1009,20 @@ argument about drawn wires, and there are no drawn wires by default.
 re-decide once §10.1 resolved. §10.1 resolved, and the answer was **(c) never**, not v1.2.
 
 ## 10.8 How much to invest now in the cloud-ready model
+
+> **ANSWERED 2026-08-03: (a). Spend nothing further; RackMate is a local application.** Confirms
+> the recommendation. Three clauses, and the first is the one that gets misread.
+>
+> 1. **The six cloud-ready properties stay, in full.** *Local only* describes what the app does, not
+>    licence to strip the model. Option (c) was never available and is not taken now.
+> 2. **[02-data-model.md §8](02-data-model.md#8-cloud-readiness-properties) is RATIFIED** as the
+>    conflict-unit and merge-story page the recommendation asked for. It was written before the
+>    question was answered, so this ruling adopts a page rather than commissioning one.
+> 3. **An update check and API-key publishing to project-management services** are the only
+>    contemplated network uses. Both are outbound or advisory, neither is document sync, and
+>    **neither is v1 scope**: adding either is a scope addition under roadmap §8.3.
+>
+> Reopens only if a user asks twice for two people in one project.
 
 **Options.** (a) Keep exactly what is ruled — stable UUIDs, `schemaVersion`, no positional
 identity, tombstones, `sequence` — and spend nothing further. (b) Add sync cursor plumbing,

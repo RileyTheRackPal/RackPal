@@ -1792,7 +1792,9 @@ The design win worth stating plainly: by making templates and registries immutab
 
 Sync-hostile constructs deliberately avoided: auto-incrementing integer keys anywhere; "the first element of the list is special" semantics; any entity whose identity is a composite of mutable fields; derived data persisted as authoritative (CR-115). Designators (`MTX-1`, `W042`) are **unique but not identity** — two peers can independently allocate `W042`, and renumbering on merge is a cosmetic fix-up command, not data loss.
 
-Whether to invest further before sync exists is [open question 10.8](canonical-decisions.md) and is deliberately not answered here.
+**How much further to invest was [question 10.8](canonical-decisions.md), and it is ANSWERED (2026-08-03): (a), spend nothing further. RackMate is a local application.** No sync cursor plumbing, no conflict-resolution implementation, nothing beyond the six properties above, until a user asks twice for two people in one project.
+
+**This section is the page that answer ratifies.** §10.8's recommendation asked for one page stating the intended conflict unit and merge story, so that AC-006's device-plus-ports assumption was recorded rather than folkloric. This is it, and the ruling adopts it as the canonical statement rather than commissioning a new one. Two consequences follow. First, **the six properties are retained in full**: option (c), drop the cloud-ready constraint and simplify, was never available and was not taken, so nothing above is dead weight to be pruned on the grounds that the product is local. Second, the tables above are now load-bearing, and a change to any conflict-unit row is a change to a ruled position, not an edit to derived prose.
 
 ---
 

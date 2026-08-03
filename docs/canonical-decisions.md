@@ -5144,14 +5144,17 @@ rather than by drift:
 
 ## 10. Open questions
 
-**Six of these thirteen are now ANSWERED and binding** — 10.1, 10.2, 10.4, 10.6 and 10.7 by
-DR-001…DR-005 in §11, and **10.3 mooted by DR-006** (indexed in §13). **The remaining seven are
-still open.** Everything in Parts 1–2 and §§7–9 is binding; the open entries below are deliberately
-the opposite — the calls that require a human judgement about what this product is for and who is
-going to use it, which no amount of internal consistency can supply. The six settled entries are
-retained in full as the record of the argument, each marked where it stands.
+**Nothing in this section is open. See §13 for the index.** Ten of the thirteen are **ANSWERED and
+binding**, 10.3 is **moot** under DR-006, 10.13 is **retired**, and 10.11 alone is **deferred**,
+with a trigger that fires before the M6-J5 recruiting ask. Everything in Parts 1–2 and §§7–9 is
+binding; these entries were deliberately the opposite, the calls requiring a human judgement about
+what this product is for and who is going to use it, which no amount of internal consistency can
+supply. That judgement has now been given. Every entry is **retained in full as the record of the
+argument**, each marked where it stands.
 
-> **Six of these thirteen are now ANSWERED — see §13.** 10.1 (DR-001), 10.2 (DR-002), 10.4 (DR-003), 10.6 (DR-005) and 10.7 (DR-004) are settled by the user's decisions in §11 and are **binding**, not open; 10.3 is **moot** under DR-006, which rules that no commercial release is planned. The text below is retained as the record of the argument, per the Part 4 preamble.
+> **Do not read an entry's body as an open question.** Where an entry carries an `ANSWERED` block,
+> that block governs and the options, trade-off and recommendation beneath it are history. A
+> recommendation that the answer overruled says so in its own text.
 
 Each entry states the options, the honest trade-off, **what evidence would tip it**, and a
 **recommendation** — clearly labelled as a recommendation and carrying no normative weight. A
@@ -5369,6 +5372,38 @@ resolves — these two questions should be answered in the same sitting, from th
 
 ### 10.8 How much to invest now in the cloud-ready model
 
+> **ANSWERED 2026-08-03: (a). Keep exactly what Part 1 rules and spend nothing further.** RackMate
+> is a local application. This confirms the recommendation and answers its *what tips it* clause
+> directly: nobody has asked for two people in one project, and the product is not being built for
+> it.
+>
+> **1. The six cloud-ready properties are retained in full.** This is the clause most likely to be
+> misread later, so it is stated first. *Local only* describes what the application does; it is not
+> permission to strip the model. Flat entity maps, `FracIndex` ordering (CR-027), `EntityMeta` on
+> conflict units (CR-095), UUIDv7 entity ids with deterministic UUIDv5 for template-derived ports,
+> tombstones (CR-095) and `sequence` as the monotonic cursor (CR-094) all stand exactly as ruled.
+> **Option (c), drop the constraint and simplify, was never available and is not taken now.**
+> Tombstones especially: docs/02 §8 names them as the one property that genuinely cannot be
+> retrofitted, and a local-only product is not a reason to spend that.
+>
+> **2. `docs/02-data-model.md` §8 is ratified as the conflict-unit and merge-story page.** The
+> recommendation asked for one page recording AC-006's device-plus-ports assumption rather than
+> leaving it folkloric. That page was written before the question was answered: §8 carries the six
+> properties, the per-entity conflict-unit table, the structurally-cannot-conflict set and the
+> sync-hostile constructs list. It is **ratified, not commissioned**, and it is the canonical
+> statement. Its closing sentence deferred to this question and is replaced by this answer. Note
+> the precedence consequence: §8 is a priority-3 derived document, so what binds is this ruling,
+> and §8 is the place the reasoning is written down.
+>
+> **3. Two network uses are contemplated, and neither is v1 scope.** The user names an update check
+> and outbound publishing to project-management services that expose an API key. Both are outbound
+> or advisory, neither is document sync, and neither touches the conflict model. They are recorded
+> so a later reader does not read this answer as *no network, ever*, and they are **not scheduled**:
+> adding either is a scope addition under §8.3 and needs its own ruling id.
+>
+> **What would reopen this.** A user asking twice for two people in one project, which is the
+> original recommendation's own trigger. Nothing else.
+
 **Options.** (a) Keep exactly what Part 1 rules — stable UUIDs, `schemaVersion`, no positional
 identity, tombstones, `sequence` — and spend nothing further. (b) Add the sync cursor plumbing,
 per-entity LWW, and a conflict-resolution design now while the model is small. (c) Drop the
@@ -5540,8 +5575,13 @@ useful than a silently edited one, because the argument that produced it is stil
 you need if the decision is ever revisited. §12 is the index of every such supersession. If a
 ruling is not listed in §12, it stands exactly as written.
 
-The seven decisions are numbered `DR-001` … `DR-007` (**D**ecided by the user, **R**uling). They
-are cited by that ID everywhere, in the same way `CR-nnn` is.
+The decisions are numbered `DR-nnn` (**D**ecided by the user, **R**uling) and are cited by that id
+everywhere, in the same way `CR-nnn` is. **There are sixteen, `DR-001` through `DR-016`.** Fifteen
+have their own §11 subsection; `DR-016` alone is ruled inside §10.12(c), because that is where the
+scope addition it makes was argued. *(This sentence read "the seven decisions are numbered DR-001 …
+DR-007" until 2026-08-03, and had been wrong since DR-008. A count in a preamble is exactly the
+kind of sentence nobody re-reads, so it is now written as a range that has to be maintained
+alongside the section list rather than as a word.)*
 
 ---
 
@@ -7045,7 +7085,7 @@ register instead of three idioms, and it belongs with the MSIX epic where the ma
 
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-007 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-016 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -7290,10 +7330,14 @@ in. See §11.7.
 
 ## 13. Resolved §10 questions
 
-§10 is no longer entirely open. **Seven** of its thirteen entries are **ANSWERED** — five by the
-user's direct answers (DR-001…DR-005) and one, §10.3, **mooted by DR-006** rather than answered on
-its own terms. The text of §10 stays in place as the record of the argument; this section is the
+**§10 has no open entries left.** Of its thirteen: **ten are ANSWERED**, one (§10.3) is **MOOT**
+under DR-006 rather than answered on its own terms, one (§10.11) is **DEFERRED with a trigger**
+that fires before M6-J5, and one (§10.13) is **retired** because the three questions it prioritised
+are all answered. The text of §10 stays in place as the record of the argument; this section is the
 index of what was decided.
+
+Closed as of 2026-08-03. §10.11 is the only entry still owing an answer, and it owes it to M5, not
+to now.
 
 | § | Question | Status | Answer |
 |---|---|---|---|
@@ -7304,7 +7348,7 @@ index of what was decided.
 | **10.5** | Metric or imperial default | **ANSWERED 2026-08-03** | **Imperial default, one obvious toggle.** Confirms the recommendation. The default is already in the code; the toggle is owed (#562). §10.5. |
 | **10.6** | Is the schematic a client deliverable or an internal tool | **ANSWERED — DR-005** | **(a) Client deliverable — invest in drafting polish.** Reverses the record's recommendation. Orthogonal to 10.1. §11.5. |
 | **10.7** | Multi-sheet timing | **ANSWERED — DR-004** | **(c) Never.** One `Sheet` plus domain filtering, permanently. The entity remains. §11.4. |
-| 10.8 | Cloud-ready investment | open | — |
+| **10.8** | Cloud-ready investment | **ANSWERED 2026-08-03** | **(a). Spend nothing further; RackMate is a local application.** Confirms the recommendation. The six cloud-ready properties are **retained in full** and option (c) is not taken. `docs/02` §8 is **ratified** as the conflict-unit and merge-story page the recommendation asked for, rather than commissioned. An update check and API-key publishing to project-management services are the only contemplated network uses and are **not v1 scope** (§8.3 applies to either). §10.8. |
 | **10.9** | Generic archetypes forever, or a real-SKU catalog | **ANSWERED 2026-08-03** | **Shipped catalog stays generic; user templates may carry real SKUs.** Archetypes must be editable (docs/06 §7.3's `Duplicate & edit`), and DR-015's `.rmda` is the sharing mechanism. AC-052/DR-002 bind the SEED only. `T6.30` stays an equipment list, not a BOM (AC-055). §10.9. |
 | **10.10** | macOS in v1 | **ANSWERED — DR-009** | **(b) Windows and macOS from v1.** Reverses the record's recommendation, which was explicitly *"not a ruling"* and rested on a desk survey that was never run. The register §10.10 demanded and never received is `docs/13-macos-debt-register.md`. §11.9. |
 | 10.11 | What the beta gate actually is | **DEFERRED 2026-08-03, with a trigger** | Held until M5 (Validation) lands and the UI is largely frozen, on the ground that the bar is easier to state against a product than against a plan. **It must be answered before the M6 recruiting ask (M6-J5)**, not before M9 — you cannot ask three people to commit real jobs without saying what you will judge. |
@@ -7317,7 +7361,7 @@ index of what was decided.
 |---|---|
 | **10.3 — pricing** | **Moot under DR-006 — no longer a remaining question.** The row is kept because the reasoning survives its own mooting: DR-005 makes the client-facing set larger and more valuable, which would strengthen option (c)'s logic (price the deliverable, not the software) *and* raise the stakes on the watermark split — client-facing sheets only, never the Pull Sheet or Termination Schedule. That is the state §10.3 reopens in if DR-006 is ever reversed. It no longer needs deciding before M6, or at all. |
 | **10.5 — metric or imperial** | **Unchanged and still cheap.** DR-002 tilts it toward (a) imperial default, since North American residential is the stated primary market. One settings row either way. |
-| **10.8 — cloud-ready investment** | **Easier.** DR-004 removes multi-sheet, which was the largest remaining source of entity-graph churn. The conflict unit is more stable than it was, so (a) — spend nothing further, write the conflict-unit page down — is now the clear answer rather than the cautious one. |
+| **10.8 — cloud-ready investment** | **ANSWERED 2026-08-03 — no longer a remaining question.** The row is kept because the reasoning is what produced the answer: DR-004 removed multi-sheet, the largest remaining source of entity-graph churn, which made the conflict unit stable enough that (a) became the clear answer rather than the cautious one. The second half of that recommendation, *write the conflict-unit page down*, turned out to be already paid: `docs/02` §8 existed and was ratified rather than written. |
 | **10.9 — real-SKU catalog** | **Better instrumented.** DR-003 keeps the builder, so the long tail has a first-class answer in v1 and the real-SKU question stops being urgent. Measure 7's miss rate now feeds this question instead of 10.4. |
 | **10.10 — macOS in v1** | **ANSWERED by DR-009 — no longer a remaining question.** The row is kept, like 10.3's, because the reasoning survives being answered: the 3–5 week estimate and the cost list it rests on are what `docs/13` was checked against, and two of that list's items — font availability, and the `Cmd`/`Ctrl` spread across "~40 bindings" — turned out not to hold for this tree in the way §10.10 assumed. The first does not apply at all; the second is 22 bindings today and is being extracted in M2 before it reaches 40. |
 | **10.11 — the beta gate** | **Easier.** DR-005 makes M9's criterion sharper and more testable: "a sheet set they were willing to send out" now has a concrete bar — full sheet furniture, revision block populated, IFC stamp available. |
@@ -7444,7 +7488,7 @@ allowlist of pairs — an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-007 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-016 are the user's decisions and are binding. §12 is the complete
 index of what they supersede — §12.1…§12.5 and §12.9 by ruling, §12.6 by internal correction, and
 §12.8 the list of Parts 1–3 sites carrying a pointer. Anything not listed there stands as written
 in Parts 1–3.
