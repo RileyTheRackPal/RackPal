@@ -19144,7 +19144,7 @@
           "banks": [
             {
               "abbr": "SOUR",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "srcIn",
               "label": "Source Inputs",
               "order": "a0000",
@@ -19152,7 +19152,7 @@
             },
             {
               "abbr": "ZONE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "zoneOut",
               "label": "Zone Speaker Outputs",
               "order": "a0003",
@@ -19160,7 +19160,7 @@
             },
             {
               "abbr": "CONT",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "control",
               "label": "Control",
               "order": "a0006",
@@ -19168,7 +19168,7 @@
             },
             {
               "abbr": "SUB ",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "subOut",
               "label": "Sub Outputs",
               "order": "a0043",
@@ -19176,7 +19176,7 @@
             },
             {
               "abbr": "POWE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "power",
               "label": "Power",
               "order": "a0050",
@@ -20478,7 +20478,7 @@
           "banks": [
             {
               "abbr": "HDMI",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "hdmiIn",
               "label": "HDMI Inputs",
               "order": "a0000",
@@ -20486,7 +20486,7 @@
             },
             {
               "abbr": "HDMI",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "hdmiOut",
               "label": "HDMI Outputs",
               "order": "a0009",
@@ -20494,7 +20494,7 @@
             },
             {
               "abbr": "DIGI",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "digitalIn",
               "label": "Digital Audio In",
               "order": "a0013",
@@ -20502,7 +20502,7 @@
             },
             {
               "abbr": "ANAL",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "analogIn",
               "label": "Analog Audio In",
               "order": "a0018",
@@ -20510,7 +20510,7 @@
             },
             {
               "abbr": "SPEA",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "spkOut",
               "label": "Speaker Outputs",
               "order": "a0030",
@@ -20518,7 +20518,7 @@
             },
             {
               "abbr": "TUNE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "tuner",
               "label": "Tuner",
               "order": "a0047",
@@ -20526,7 +20526,7 @@
             },
             {
               "abbr": "CONT",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "control",
               "label": "Control",
               "order": "a0049",
@@ -20534,7 +20534,7 @@
             },
             {
               "abbr": "POWE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "power",
               "label": "Power",
               "order": "a0057",
@@ -21877,7 +21877,7 @@
           "banks": [
             {
               "abbr": "NETW",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "network",
               "label": "Network",
               "order": "a0000",
@@ -21885,7 +21885,7 @@
             },
             {
               "abbr": "SERI",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "serial",
               "label": "Serial",
               "order": "a0003",
@@ -21893,7 +21893,7 @@
             },
             {
               "abbr": "IR O",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "irOut",
               "label": "IR Outputs",
               "order": "a0012",
@@ -21901,7 +21901,7 @@
             },
             {
               "abbr": "DIGI",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "digitalIn",
               "label": "Digital Inputs",
               "order": "a0021",
@@ -21909,7 +21909,7 @@
             },
             {
               "abbr": "RELA",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "relays",
               "label": "Relays",
               "order": "a0030",
@@ -21917,7 +21917,7 @@
             },
             {
               "abbr": "CONT",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "bus",
               "label": "Control Bus",
               "order": "a0035",
@@ -21925,7 +21925,7 @@
             },
             {
               "abbr": "POWE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "power",
               "label": "Power",
               "order": "a0038",
@@ -22723,7 +22723,7 @@
           "banks": [
             {
               "abbr": "VIDE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "video",
               "label": "Video",
               "order": "a0000",
@@ -22731,7 +22731,7 @@
             },
             {
               "abbr": "AUDI",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "audio",
               "label": "Audio",
               "order": "a0005",
@@ -22739,7 +22739,7 @@
             },
             {
               "abbr": "CONT",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "control",
               "label": "Control",
               "order": "a0007",
@@ -22747,7 +22747,7 @@
             },
             {
               "abbr": "POWE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "power",
               "label": "Power",
               "order": "a0011",
@@ -23009,7 +23009,7 @@
           "banks": [
             {
               "abbr": "TERM",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "terminals",
               "label": "Terminals",
               "order": "a0000",
@@ -23178,7 +23178,7 @@
           "banks": [
             {
               "abbr": "TERM",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "terminals",
               "label": "Terminals",
               "order": "a0000",
@@ -23289,7 +23289,7 @@
           "banks": [
             {
               "abbr": "NETW",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "network",
               "label": "Network",
               "order": "a0000",
@@ -23297,7 +23297,7 @@
             },
             {
               "abbr": "CONT",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "control",
               "label": "Control",
               "order": "a0002",
@@ -23305,7 +23305,7 @@
             },
             {
               "abbr": "POWE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "power",
               "label": "Power",
               "order": "a0004",
@@ -23438,7 +23438,7 @@
           "banks": [
             {
               "abbr": "NETW",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "network",
               "label": "Network",
               "order": "a0000",
@@ -23446,7 +23446,7 @@
             },
             {
               "abbr": "POWE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "power",
               "label": "Power",
               "order": "a0002",
@@ -23557,7 +23557,7 @@
           "banks": [
             {
               "abbr": "NETW",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "network",
               "label": "Network",
               "order": "a0000",
@@ -23565,7 +23565,7 @@
             },
             {
               "abbr": "CONT",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "bus",
               "label": "Control Bus",
               "order": "a0002",
@@ -23573,7 +23573,7 @@
             },
             {
               "abbr": "POWE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "power",
               "label": "Power",
               "order": "a0004",
@@ -23706,7 +23706,7 @@
           "banks": [
             {
               "abbr": "CONT",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "bus",
               "label": "Control Bus",
               "order": "a0000",
@@ -23806,7 +23806,7 @@
           "banks": [
             {
               "abbr": "INPU",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "input",
               "label": "Input",
               "order": "a0000",
@@ -23814,7 +23814,7 @@
             },
             {
               "abbr": "OUTP",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "output",
               "label": "Output",
               "order": "a0003",
@@ -23979,7 +23979,7 @@
           "banks": [
             {
               "abbr": "ACCE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "access",
               "label": "Access Ports",
               "order": "a0000",
@@ -23987,7 +23987,7 @@
             },
             {
               "abbr": "UPLI",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "uplinks",
               "label": "Uplinks",
               "order": "a0049",
@@ -23995,7 +23995,7 @@
             },
             {
               "abbr": "MANA",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "mgmt",
               "label": "Management",
               "order": "a0054",
@@ -24003,7 +24003,7 @@
             },
             {
               "abbr": "POWE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "power",
               "label": "Power",
               "order": "a0057",
@@ -25552,7 +25552,7 @@
           "banks": [
             {
               "abbr": "FRON",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "front",
               "label": "Front Jacks",
               "order": "a0000",
@@ -25560,7 +25560,7 @@
             },
             {
               "abbr": "REAR",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "rear",
               "label": "Rear Punchdown",
               "order": "a0002",
@@ -26789,7 +26789,7 @@
           "banks": [
             {
               "abbr": "INLE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "inlet",
               "label": "Inlet",
               "order": "a0000",
@@ -26797,7 +26797,7 @@
             },
             {
               "abbr": "SEQU",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "seqOutlets",
               "label": "Sequenced Outlets",
               "order": "a0002",
@@ -26805,7 +26805,7 @@
             },
             {
               "abbr": "CONT",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "control",
               "label": "Control",
               "order": "a0019",
@@ -27420,7 +27420,7 @@
           "banks": [
             {
               "abbr": "RF",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "rf",
               "label": "RF",
               "order": "a0000",
@@ -27428,7 +27428,7 @@
             },
             {
               "abbr": "VIDE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "video",
               "label": "Video",
               "order": "a0003",
@@ -27436,7 +27436,7 @@
             },
             {
               "abbr": "AUDI",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "audio",
               "label": "Audio",
               "order": "a0005",
@@ -27444,7 +27444,7 @@
             },
             {
               "abbr": "CONT",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "control",
               "label": "Control",
               "order": "a0010",
@@ -27452,7 +27452,7 @@
             },
             {
               "abbr": "POWE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "power",
               "label": "Power",
               "order": "a0014",
@@ -27773,7 +27773,7 @@
           "banks": [
             {
               "abbr": "HDMI",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "hdmiIn",
               "label": "HDMI Inputs",
               "order": "a0000",
@@ -27781,7 +27781,7 @@
             },
             {
               "abbr": "HDMI",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "hdmiOut",
               "label": "HDMI Outputs",
               "order": "a0017",
@@ -27789,7 +27789,7 @@
             },
             {
               "abbr": "DE-E",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "audOut",
               "label": "De-embedded Audio",
               "order": "a0034",
@@ -27797,7 +27797,7 @@
             },
             {
               "abbr": "CONT",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "control",
               "label": "Control",
               "order": "a0051",
@@ -27805,7 +27805,7 @@
             },
             {
               "abbr": "POWE",
-              "collapseInSymbol": false,
+              "collapseInSymbol": true,
               "key": "power",
               "label": "Power",
               "order": "a0055",

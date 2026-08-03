@@ -5393,6 +5393,29 @@ else until a user asks twice.
 
 ### 10.9 Generic archetypes forever, or a real-SKU catalog eventually
 
+> **ANSWERED 2026-08-03 — the SHIPPED catalog stays generic archetypes; the USER's own templates may
+> carry real SKUs.** Two clauses, and the second is the one that matters commercially.
+>
+> **1. Archetypes must be editable, not a wall.** A user who meets a device differing from a seeded
+> archetype by a few ports must edit the archetype, never re-author it from scratch. This is already
+> the specified behaviour and needs building rather than deciding: docs/06 §7.3's `Duplicate & edit`
+> is *"the intended path for building on the archetypes"*, and seeded templates are read-only such
+> that editing one **silently duplicates first** with a one-line notice. M4 owes the surface.
+>
+> **2. A user-authored template may state a real manufacturer and model, and that is what makes the
+> equipment list accurate.** AC-052's provenance gate and DR-002's generic-archetypes rule bind the
+> **SEEDED** catalog — they are about what *this project* ships and can cite. They do not reach a
+> template a user authored about hardware they are actually installing, where the SKU is a fact the
+> user holds and the project does not.
+>
+> **The sharing mechanism is already ruled and needs nothing further: DR-015's `.rmda`.** A curated
+> SKU library is a device archive, authored by whoever owns the SKUs and shared as a file.
+>
+> **One boundary to keep, because the word invites the fields:** an accurate manufacturer and model
+> make `T6.30` a correct *equipment list*, not a BOM. `Money`, `cost`, `supplier` and
+> `purchaseOrder` remain deleted from v1 (AC-055), and the sheet is still never called a BOM.
+> Reversing that is a separate decision this one does not make.
+
 **Options.** (a) Generic archetypes only, permanently. (b) Generic archetypes in v1, a real-SKU
 library later. (c) A community-contributed library.
 
@@ -5465,9 +5488,9 @@ touches it. Recommendations only.
 | b | Autosave interval and whether recovery is silent or prompted | **ANSWERED 2026-08-03, and it revises the recommendation: autosave runs while the user is WORKING, never while they are idle.** The 30 s interval stands; what changes is that a tick with nothing new to protect must write nothing. **This exposed a live defect** — suppression carried a 2 s expiry, so a document left dirty and idle rewrote an identical ~600 KB snapshot every 30 s indefinitely (the dirty check cannot catch it: a recovery snapshot is not a save, so the document stays dirty against disk forever). Suppression now keys on `stateId` alone. **The prompt-on-recovery half is UNCHANGED and still stands** — a silent restore of a file the user thought they had abandoned is its own data-loss event | M1 |
 | c | Default rack height in the new-rack dialog | **ANSWERED 2026-08-03, and it supersedes the recommendation rather than confirming it: the starting racks become EDITABLE PRESETS the user tailors to their own inventory.** 42U remains the shipped default, so the recommendation's substance survives as a seed value; what changes is that the preset set stops being fixed. This is a **scope addition under §8.3** and is ruled as **DR-016**. `rack_presets.dart` already anticipates it in so many words — *"a future editable-presets UI has the same shape to hang off"* — and presets are deliberately **not persisted on `Rack`** (no `presetRef`), so a user-authored preset store is a new writable location and not a document-format change. Board #561 | M1 |
 | d | Whether the four starter projects are residential-only | Three residential, one small commercial — they double as the domain-coverage argument for 10.2 | M1 |
-| e | Telemetry at all, and if so opt-in or opt-out | Opt-in, local-first crash reports only (CR-096), no usage telemetry in v1 — and accept that this makes 10.4's miss-rate instrumentation a manual user-interview exercise rather than a dashboard | M8 |
-| f | Product name and branding investment | Defer; RJ-017 already rejects branding as a v1 requirement | M8 |
-| g | Whether `docs/rules.md` is user-visible documentation or internal | User-visible, in-app, linked from every finding — it is the honesty surface for the 22 rules | M5 |
+| e | Telemetry at all, and if so opt-in or opt-out | **ANSWERED 2026-08-03: opt-in, local crash log only. Telemetry is POST-v1.** Confirms the recommendation. Accepted consequence: 10.4's miss-rate instrumentation is a manual user-interview exercise, not a dashboard | M8 |
+| f | Product name and branding investment | **ANSWERED 2026-08-03, and it OVERRULES the recommendation to defer.** The name is **RackMate**, settled. Branding is a Protogen mascot, **Riley the RackMate** — neutral warm white with greys, so the mascot never competes with the eight signal-domain hues. Three surfaces follow, and **they are scope, not styling**: an opt-in Clippy-style in-app assistant; a first-run onboarding flow; and user-customisable UI accent colours. RJ-017 rejected branding as a v1 *requirement* and is not reversed — this schedules the work, and where it lands is a sequencing call. Board #563, #564, #565 | M8 |
+| g | Whether `docs/rules.md` is user-visible documentation or internal | **ANSWERED 2026-08-03: user-visible, in-app, linked from every finding.** Confirms the recommendation. **Note the file deliberately does not exist** — canon §5 IS the catalogue and CR-021 says so, so this is *publish that section*, not *write a new file*. And it is **27** rules, not the 22 this row inherited from AC-040's arithmetic slip. Feeds M5-F3's `[Why?]` viewer | M5 |
 
 ---
 
@@ -7282,10 +7305,10 @@ index of what was decided.
 | **10.6** | Is the schematic a client deliverable or an internal tool | **ANSWERED — DR-005** | **(a) Client deliverable — invest in drafting polish.** Reverses the record's recommendation. Orthogonal to 10.1. §11.5. |
 | **10.7** | Multi-sheet timing | **ANSWERED — DR-004** | **(c) Never.** One `Sheet` plus domain filtering, permanently. The entity remains. §11.4. |
 | 10.8 | Cloud-ready investment | open | — |
-| 10.9 | Generic archetypes forever, or a real-SKU catalog | open | — |
+| **10.9** | Generic archetypes forever, or a real-SKU catalog | **ANSWERED 2026-08-03** | **Shipped catalog stays generic; user templates may carry real SKUs.** Archetypes must be editable (docs/06 §7.3's `Duplicate & edit`), and DR-015's `.rmda` is the sharing mechanism. AC-052/DR-002 bind the SEED only. `T6.30` stays an equipment list, not a BOM (AC-055). §10.9. |
 | **10.10** | macOS in v1 | **ANSWERED — DR-009** | **(b) Windows and macOS from v1.** Reverses the record's recommendation, which was explicitly *"not a ruling"* and rested on a desk survey that was never run. The register §10.10 demanded and never received is `docs/13-macos-debt-register.md`. §11.9. |
-| 10.11 | What the beta gate actually is | open | — |
-| 10.12 | Small calls needing an owner | **(a)(b)(c)(d) settled; (e)(f)(g) open** | (d) three residential + one commercial starter, by DR-002. **(a)** keep 200, make it a setting (#560). **(b)** autosave while working, never while idle — and it exposed a live defect, now fixed. **(c)** editable rack presets — **DR-016**, a scope addition under §8.3 (#561). |
+| 10.11 | What the beta gate actually is | **DEFERRED 2026-08-03, with a trigger** | Held until M5 (Validation) lands and the UI is largely frozen, on the ground that the bar is easier to state against a product than against a plan. **It must be answered before the M6 recruiting ask (M6-J5)**, not before M9 — you cannot ask three people to commit real jobs without saying what you will judge. |
+| 10.12 | Small calls needing an owner | **ALL SEVEN SETTLED 2026-08-03** | (d) three residential + one commercial starter, by DR-002. **(a)** keep 200, make it a setting (#560). **(b)** autosave while working, never while idle — and it exposed a live defect, now fixed. **(c)** editable rack presets — **DR-016**, a scope addition under §8.3 (#561). |
 | 10.13 | The three to answer first | **retired** | All three — 10.1, 10.2, 10.4 — are answered. The section has served its purpose. |
 
 ### 13.1 What the answers make easier or moot

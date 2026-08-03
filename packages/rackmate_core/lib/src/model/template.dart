@@ -626,7 +626,7 @@ final class BankDef {
     required this.abbr,
     required this.order,
     this.symbolSide = SymbolSide.left,
-    this.collapseInSymbol = false,
+    this.collapseInSymbol = true,
   });
 
   final String key;
@@ -637,7 +637,23 @@ final class BankDef {
   String abbr;
   SymbolSide symbolSide;
 
-  /// Collapses above `kBankCollapseThreshold` (8).
+  /// Whether this bank MAY collapse in the symbol. `kBankCollapseThreshold`
+  /// (8) decides whether it actually does — this flag is the per-bank
+  /// opt-OUT for a bank that must always show every pin.
+  ///
+  /// **DEFAULTS TO `true`, and it used to default to `false`** (board 96-L).
+  /// docs/06 §6 rules that banks over 8 ports collapse to a vector pin with
+  /// a count badge **by default** — *"which is what keeps a 48-port switch
+  /// legible"* — so a `false` default contradicted the specification it was
+  /// implementing. It went unnoticed because bank collapse is still on
+  /// `symbol_layer.dart`'s deferral list (CR-103) and **nothing reads this
+  /// field yet**, so 22 seeded banks above the threshold had quietly
+  /// accumulated the value that means *never collapse*: N01's 48-port
+  /// access bank, N03's two 24s, P01's 24 outlets, V03's three 16s.
+  /// Whoever implements CR-103 would have had to choose between honouring
+  /// the flag (defeating the feature) and honouring the threshold (making
+  /// 22 stored values a lie). Fixed while the field was still inert and the
+  /// fix was one line rather than a migration.
   bool collapseInSymbol;
   FracIndex order;
 }

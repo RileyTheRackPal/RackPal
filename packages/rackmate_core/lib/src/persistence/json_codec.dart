@@ -2893,8 +2893,12 @@ BankDef _decodeBankDef(JsonMap json) => BankDef(
     asStr(json['symbolSide'] ?? 'left', 'BankDef.symbolSide'),
     'BankDef.symbolSide',
   ),
+  // Absent-key default tracks `BankDef`'s own (`true`, board 96-L). The
+  // encoder always writes the key, so this only governs a hand-edited or
+  // forward-version file — and for those, the specification's default is
+  // the honest reading.
   collapseInSymbol: asBool(
-    json['collapseInSymbol'] ?? false,
+    json['collapseInSymbol'] ?? true,
     'BankDef.collapseInSymbol',
   ),
 );
