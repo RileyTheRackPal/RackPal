@@ -111,7 +111,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET** — `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first** — the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5) — then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET** — `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate — **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone — no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED** — `NOT BUILT` | Model only. **Its M2 block has lifted**: the gate was M2 putting `Link` + `Endpoint` in the UI, and M2-F did (§5.1). Row otherwise as of `0fa532d` |
-| **M4** | Device builder | `M` | **0 of 2** | **NOT STARTED** — `NOT BUILT` | No builder surface. **Its inputs are all present even though its formal gate is open** — §5.3 |
+| **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **NOT STARTED** — `NOT BUILT` | No builder surface. **Its inputs are all present even though its formal gate is open** — §5.3. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED** — `NOT BUILT` | 0 of 27 rules. **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED** — `NOT BUILT` | 3 of 11 sheet slots ship and are real work — but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5) |
 | **M7** | Platform + access | `M` | **0 of 4** | **NOT STARTED** — `NOT BUILT` | Windows-only; no `Intent` registry; no l10n at all |
@@ -996,14 +996,39 @@ everywhere*, is not delivered by the builder alone. Shipping the builder and def
 ships a version in which a user's second project re-authors the first project's devices, and a
 builder is judged on the second project rather than the first.
 
-**The uncounted cost, stated here rather than discovered during M4.** §6 still sizes M4 at `M`, 5–7
-weeks, and that figure predates the DR-015 scope edit — nothing moved it. Of the five things #170
-enumerates, the `.rmdx` codec is already its own checklist line and therefore already inside the
-number; the library directory service, template provenance in the palette model, the import/export
-surface and the palette filter are not, and neither is parameterising the Windows file dialog, which
-#170 sequences before the codec. **The re-derivation belongs to M4's decomposition (#71)**, where
-the tasks exist to count against; replacing a stale figure with a guessed one here would cost the
-row the only property it still has, which is that it is traceable to something.
+**The uncounted cost — since resolved, and the paragraph is kept because the resolution is the
+interesting part.** §6 sized M4 at `M`, 5–7 weeks, and that figure predated the DR-015 scope edit;
+nothing had moved it. Of the five things #170 enumerates, the `.rmdx` codec was already its own
+checklist line and therefore already inside the number; the library directory service, template
+provenance in the palette model, the import/export surface and the palette filter were not, and
+neither was parameterising the Windows file dialog, which #170 sequences before the codec. The
+re-derivation was deferred to M4's decomposition (#71) on the grounds that it is the first moment
+there are tasks to count against.
+
+**M4 was decomposed on 2026-08-02 — 17 issues, 63 tasks, `#172`–`#251` under epic `#22` — and the
+row is now `L`, 7–9 weeks.** The +2 is exactly the DR-015 subsystem: library directory service,
+`.rmda` codec, import/export, provenance, palette filter, library browser, file dialog. Roadmap §6
+and canon §12.7 move with it, and the plan total goes 42–65 → **44–67 weeks**.
+
+**Decomposition surfaced two costs that no estimate had ever held, and neither is a library.**
+First, **`Command` is hard-typed to `RackDocument`** — `undo_stack.dart`'s own header records this
+as deferred M0 debt and says to revisit it when the builder's stack is built. CR-106 requires that
+stack, so ~24 command files move, and doing it after the builder UI exists means rewriting the
+builder's commands too (`#172`). Second, **`ConnectorTypeDef.pitch` does not exist**;
+`footprintWidth`/`footprintHeight` do, and `json_codec.dart:2209` records pitch and `genderApplies`
+among fields the documents show and the Dart never declared. **Step 2 of docs/06 §5's auto-layout
+algorithm — *flow left → right at `ConnectorTypeDef.pitch`* — cannot be written today** (`#173`).
+A third, smaller one: `derivedFrom` appears nowhere in `packages/`, though the fork chain, CR-062's
+stale-fork badge and `.rmdx`'s own worked example all reference it (`#174`).
+
+**The number that was NOT adopted, recorded because hiding it would make the adopted one look
+better than it is.** Summing all 17 issues bottom-up gives roughly **10–15 weeks**, against the
+7–9 written into §6. Only ~1.5–2 of that gap is DR-015; the remainder says the pre-DR-015 base of
+5–7 was already optimistic. That is a different claim requiring a different kind of evidence —
+velocity against real tasks, which this project has for M1 and M2 and not for a builder — so it is
+**flagged for the first M4 task to answer with data rather than written in on the strength of a
+bottom-up sum, which is the estimating method most reliably biased upward.** If M4's early issues
+land near their estimates, §6 moves again and this paragraph is the receipt.
 
 **M4 is also the trigger for end-user documentation (#169), and the reason is a property of the
 milestone list rather than a preference.** The four surfaces a user spends time in arrive one per
@@ -1255,8 +1280,8 @@ M1 slice (§5.5).
 
 ## 7. The decision the user has to make
 
-Roadmap §3 states the cost deliberately — **42–65 weeks of implementation, 11–17 months to a shipped
-v1** — on AC-017's ground that *"a detailed design set with no cost attached reliably stalls at
+Roadmap §6 states the cost deliberately — **44–67 weeks of implementation, 11–18 months to a shipped
+v1** (42–65 / 11–17 before M4's decomposition moved it, §5.3) — on AC-017's ground that *"a detailed design set with no cost attached reliably stalls at
 40%"*. That number was written for a **commercial** v1. **DR-006 (canon §11.6) rules that RackMate
 is an internal tool with no commercial release planned**, which changes the calculus on several
 milestones and on none of the others. This section lays out what could move to v1.1 and what each
@@ -1301,7 +1326,7 @@ have to be amended** — because roadmap §8.3 makes scope movement an amendment
 | **B · Defer M7 (platform + access) to v1.1** | **4–6 weeks** | Tablet read-only is the clause with the clearest internal value — a reviewer reading an elevation on a job site is a real workflow. The a11y half is the risk: roadmap §4 M7 *Risks* says accessibility work discovered late *"tends to surface structural problems in the canvas surfaces"*, and the outline tree that was supposed to mitigate that **already slipped once** (§3.3). Deferring compounds a debt that is already overdue | AC-056 (mobile read-only on three surfaces); AC-058 D11 (keyboard path, WCAG AA, NVDA matrix) |
 | **B′ · Defer only the l10n plumbing and the pseudo-locale** | ~**1 week** | An internal English-only tool arguably never needs it. But AC-058 D12 exists because **retrofitting localisation across a shipped UI is the expensive direction**, and the one-locale plumbing is the cheap direction. This is a G5 bet: cheap now, ruinous later | AC-058 (D12) |
 | **C · Defer M9 (beta hardening) to v1.1** | **4–7 weeks** | This is the option that **destroys the evidence**. M9's criterion is the only one that asks whether any of this was true. Under DR-006 the beta population is internal and available, so the recruiting risk that justified deferring it is largely gone — which makes this the **cheapest milestone to keep** and the most expensive to skip | Roadmap §4 M9; measure 8 in docs/00 §9 |
-| **D · Defer M4 (device builder) to v1.1** | **5–7 weeks** — the single largest saving available | **Requires superseding DR-003**, which ruled the builder into v1 and explicitly withdrew this as a lever: *"If M4 is ever at risk, the lever is lever 1 or lever 3, not a partial builder."* It also defers **brief requirement 2**, whose builder half is what R2 actually asks for (DR-003/2). Product cost: the long tail is uncoverable — a user who meets a device the 48-template catalog lacks has no path at all | **DR-003.** This is a reversal of a user ruling, not a schedule decision |
+| **D · Defer M4 (device builder) to v1.1** | **7–9 weeks** *(was 5–7 — re-derived at M4's decomposition, §5.3)* — the single largest saving available, and by a wider margin than before | **Requires superseding DR-003**, which ruled the builder into v1 and explicitly withdrew this as a lever: *"If M4 is ever at risk, the lever is lever 1 or lever 3, not a partial builder."* It also defers **brief requirement 2**, whose builder half is what R2 actually asks for (DR-003/2). Product cost: the long tail is uncoverable — a user who meets a device the 48-template catalog lacks has no path at all | **DR-003.** This is a reversal of a user ruling, not a schedule decision |
 | **E · Trim M6's sheet set to what the internal job needs** | Up to ~**3 weeks** of the 5–7 | Requires deciding **which** of the eight missing slots an internal user genuinely needs. `T6.10` pull sheet and `T6.11` termination schedule are the field deliverables; `T0.00`/`T0.01`/`T0.02` are the client-facing ceremony. Cutting the latter is an amendment to DR-005 — and DR-005 was a **user reversal** of the record's own recommendation, made deliberately | **DR-005** |
 | **F · Pull the catalog lever — cut the catalog to 40 archetypes at full fidelity** | Removes catalog authoring weeks from M1's tail | **No cost to quality** — the provenance gate sets the count and 40 sourced templates beat 80 guessed ones (RJ-007). The catalog already ships at 48, so this lever is arguably **already pulled**. **Numbering caution:** this is **lever 2** as `docs/09-roadmap.md` §6 now reads, but canon §11.3/5 and §12.6 call it **lever 3** — they were written against an earlier §6 in which lever 2 was *"move M4 after M6"*, the lever DR-003 withdrew. One lever, two numbers; cite it by name | None. It is an available lever, stated in roadmap §6 |
 | **G · Pull roadmap lever 1 — ship M1 as an internal v0.9** | Converts remaining invisible work into evidence, immediately | **None** by the roadmap's own reckoning: *"M1 is a real product."* Under DR-006 this is easier than the roadmap assumed — an internal v0.9 needs a self-signed build on a share, not an installer and a certificate. The blocker is not distribution; it is M1's one open exit clause — clause 3's keyboard drill, which needs a person and a stopwatch (§3.4) | None |
@@ -1312,8 +1337,8 @@ Not recommendations. Three coherent points on the same axis, so the trade is vis
 
 | Shape | Contents | Remaining weeks | What you give up |
 |---|---|---|---|
-| **Full v1 as written** | Everything, DR-006's savings applied | **31–49** | Nothing. The longest calendar |
-| **Requirements-complete v1** | All seven brief requirements met (M2, M3, M4, M6 kept); **A′** tier-1-only validation, **B** M7 to v1.1, keep M9 | **24–39** | Rule coverage and accessibility. Confirmed product decision 4 (*all seven requirements in v1*) is **preserved** — which matters, because it is a constraint, not an input (canon §0.2) |
+| **Full v1 as written** | Everything, DR-006's savings applied | **33–51** | Nothing. The longest calendar |
+| **Requirements-complete v1** | All seven brief requirements met (M2, M3, M4, M6 kept); **A′** tier-1-only validation, **B** M7 to v1.1, keep M9 | **26–41** | Rule coverage and accessibility. Confirmed product decision 4 (*all seven requirements in v1*) is **preserved** — which matters, because it is a constraint, not an input (canon §0.2) |
 | **Internal-minimum v1** | M2 + M3 + M6, plus **D** (M4 → v1.1), **A**, **B**, keep M9 | **18–30** | Brief requirement 2. **Requires superseding DR-003 and is the only shape that breaks confirmed product decision 4** |
 
 **The arithmetic, shown so it can be checked rather than believed.** Every figure is roadmap §6's
@@ -1323,10 +1348,14 @@ than 2–3 per §7.2, and M5 taken as **1–2** under A′. None of the three in
 
 | Shape | M2 | M3 | M4 | M5 | M6 | M7 | M8 | M9 | Total |
 |---|---|---|---|---|---|---|---|---|---|
-| Roadmap §6 | 4–7 | 4–7 | 5–7 | 4–6 | 5–7 | 4–6 | 2–3 | 4–7 | 32–50 |
-| **Full v1** | 4–7 | 4–7 | 5–7 | 4–6 | 5–7 | 4–6 | **1–2** | 4–7 | **31–49** |
-| **Requirements-complete** | 4–7 | 4–7 | 5–7 | **1–2** | 5–7 | **0** | 1–2 | 4–7 | **24–39** |
+| Roadmap §6 | 4–7 | 4–7 | **7–9** | 4–6 | 5–7 | 4–6 | 2–3 | 4–7 | 34–52 |
+| **Full v1** | 4–7 | 4–7 | **7–9** | 4–6 | 5–7 | 4–6 | **1–2** | 4–7 | **33–51** |
+| **Requirements-complete** | 4–7 | 4–7 | **7–9** | **1–2** | 5–7 | **0** | 1–2 | 4–7 | **26–41** |
 | **Internal-minimum** | 4–7 | 4–7 | **0** | **0** | 5–7 | **0** | 1–2 | 4–7 | **18–30** |
+
+**M4's column moved from 5–7 to 7–9 on 2026-08-02**, at that milestone's decomposition (§5.3). Only
+the internal-minimum row is unaffected, and only because option **D** zeroes M4 there — which is the
+same fact as option D's saving growing, and both are consequences of one number, not two findings.
 
 An earlier draft of this table gave **~31–50 / ~24–39 / ~15–26**. The first and third do not survive
 the sum; the internal-minimum shape was understated by three to four weeks, which is the direction

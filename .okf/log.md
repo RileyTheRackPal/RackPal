@@ -58,6 +58,32 @@
   parameterising the Windows file dialog. Recorded as a gap rather than
   patched with a new letter: the re-derivation belongs to M4's
   decomposition (#71), where there are tasks to count against.
+* **Update**: **M4 is decomposed** — 17 issues and 63 tasks, `#172`–`#251`
+  under epic `#22`, and `#71` is closed. The gap above is now closed too:
+  **M4 is `L`, 7–9 weeks**, the plan totals **44–67 weeks**, and roadmap §6,
+  canon §12.7, docs/00, and docs/12's milestone table and four shape rows
+  all move together. Fixing one and leaving four is worse than fixing none,
+  because a corpus that disagrees with itself about a schedule teaches the
+  reader to trust none of it.
+* **Note**: decomposition found **three costs no estimate had ever held, and
+  none of them is a library.** `Command` is HARD-TYPED to `RackDocument` —
+  `undo_stack.dart`'s own header records this as deferred M0 debt and says
+  to revisit when the builder's stack is built, which CR-106 requires — so
+  ~24 command files move, and doing it after the builder UI exists means
+  rewriting the builder's commands too. `ConnectorTypeDef.pitch` DOES NOT
+  EXIST, so step 2 of docs/06 §5's auto-layout algorithm cannot be written;
+  `json_codec.dart:2209` already records it and `genderApplies` as fields
+  the documents show and the Dart never declared. And `derivedFrom` appears
+  NOWHERE in `packages/`, though the fork chain, CR-062's stale-fork badge
+  and `.rmdx`'s own worked example all reference it.
+* **Note**: **the bottom-up sum was ~10–15 weeks and was NOT adopted.** Only
+  the ~2 weeks DR-015 accounts for went into §6. The rest says the
+  pre-DR-015 base was already optimistic — a different claim needing
+  velocity evidence rather than a bigger sum, and bottom-up estimating is
+  the method most reliably biased upward. Written down instead of written
+  in, so the first M4 issues can settle it with data.
+* **Note**: the sweep also corrected a citation docs/12 had carried — the
+  cost lives in roadmap **§6**, not §3, which is the walking skeleton.
 
 * **Update**: the `drawn`-mode router is caught up with six field reports
   (`38baed1` … `5d53512`, board #96). docs/05 §10 phase 4 carries the

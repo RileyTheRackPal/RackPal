@@ -196,7 +196,7 @@ Ordered from cheapest to hardest. The last one is deliberately a judgement, not 
 | 7 | **Catalog miss rate** | Instrumented from M1: how often a user hits a device the catalog does not have. §10.4 is answered — the device builder ships in v1 (DR-003) — so this is no longer a scope trigger. It is catalog-coverage evidence feeding canon §10.9 and the sizing of the catalog lever. |
 | 8 | **Beta gate** | **Three integrators have each produced a sheet set they were willing to send to a client or a job site, and none of the three needed to leave the app to fix something.** (M9 exit) |
 
-Cost, stated honestly rather than comfortably: **42–65 weeks of implementation, 11–17 months to a shipped v1** for one experienced engineer. That is better than the 16–22 months the unreduced design was priced at, and it is not the 5–6 months a proposed cut table promised — because that table cut a brief requirement (RJ-008). Two explicit levers exist if the number is unacceptable, and they are to be pulled deliberately rather than by drift; see [Roadmap](09-roadmap.md).
+Cost, stated honestly rather than comfortably: **44–67 weeks of implementation, 11–18 months to a shipped v1** for one experienced engineer — 42–65 / 11–17 until M4's decomposition re-derived that milestone on 2026-08-02 (DR-015's library subsystem was never inside its estimate). That is better than the 16–22 months the unreduced design was priced at, and it is not the 5–6 months a proposed cut table promised — because that table cut a brief requirement (RJ-008). Two explicit levers exist if the number is unacceptable, and they are to be pulled deliberately rather than by drift; see [Roadmap](09-roadmap.md).
 
 ---
 

@@ -7035,6 +7035,12 @@ Each entry gives the ID, what it said, and what now governs.
 | **§9.11** "The honest total" | Sized M2 as `L` and totalled "41–69 weeks; 12–18 months", against a table whose own final cumulative row reads 45–69. | **Superseded by §12.7.** M2 is **`M` (4–7 weeks)**; the plan totals **42–65 weeks, 11–17 months**; M1 is the only `L` and the sole long pole. The "41–69" prose figure was additionally an arithmetic error against §9.11's own table (45–69) and should not be quoted even as the historical number. **Lever 2** ("move M4 after M6") is **withdrawn by DR-003**; levers 1 (ship M1 as a public v0.9) and 3 (cut the catalog to 40 archetypes at full fidelity) survive. §9.11's lever 1 also mis-states M1 as "10–15 weeks of invisible work" — 10–15 is M1's *cumulative* position; its *duration* is 8–12 — and claims shipping M1 "would resolve half of §10", which Part 4 has since resolved directly (see §13). |
 | **§10.1** recommendation | "(A) draw every wire as the default, with (B) as an automatic degradation." | **Void.** DR-001. Not to be re-argued. |
 
+> **Two rows above state a total and a "sole long pole" that DR-001 made true and a later ruling
+> moved.** They are DR-001's record and keep its words. **The live figures are §12.7's: M4 is `L`,
+> 7–9 weeks, the plan totals 44–67 weeks / 11–18 months, and M1 and M4 are both `L`.** M4's row was
+> re-derived on 2026-08-02 at that milestone's decomposition, because DR-015 put the device-library
+> subsystem on its checklist and the earlier `M`/5–7 predated it (docs/12 §5.3).
+
 **Explicitly NOT superseded — listed here because they will otherwise be cut by association:**
 
 | Ruling | Status under DR-001 |
@@ -7112,7 +7118,7 @@ exactly the contradiction §12 exists to prevent.
 
 ### 12.7 The plan, re-costed
 
-DR-001 removes 4–5 weeks from M2; DR-005 adds 0.5–1 week to M6. Nothing else moves.
+DR-001 removes 4–5 weeks from M2; DR-005 adds 0.5–1 week to M6; **DR-015 adds 2 weeks to M4**.
 
 | Milestone | Size | Weeks | Cumulative |
 |---|---|---|---|
@@ -7120,15 +7126,26 @@ DR-001 removes 4–5 weeks from M2; DR-005 adds 0.5–1 week to M6. Nothing else
 | M1 Elevation release | **`L`** | 8–12 | 10–15 |
 | M2 Wiring and the live schedule | **`M`** *(was `L`)* | 4–7 | 14–22 |
 | M3 Structure and the field | `M` | 4–7 | 18–29 |
-| M4 Device builder | `M` | 5–7 | 23–36 |
-| M5 Validation | `M` | 4–6 | 27–42 |
-| M6 Full sheet set | `M` | 5–7 | 32–49 |
-| M7 Platform and access | `M` | 4–6 | 36–55 |
-| M8 Release engineering | `S` | 2–3 | 38–58 |
-| M9 Beta hardening | `M` | 4–7 | 42–65 |
+| M4 Device builder | **`L`** *(was `M`)* | **7–9** *(was 5–7)* | 25–38 |
+| M5 Validation | `M` | 4–6 | 29–44 |
+| M6 Full sheet set | `M` | 5–7 | 34–51 |
+| M7 Platform and access | `M` | 4–6 | 38–57 |
+| M8 Release engineering | `S` | 2–3 | 40–60 |
+| M9 Beta hardening | `M` | 4–7 | 44–67 |
 
-**42–65 weeks of implementation; 11–17 months to a shipped v1** for one experienced engineer.
-**M1 is the only `L` milestone and the sole long pole.** Two schedule levers remain (ship M1 as a
+**44–67 weeks of implementation; 11–18 months to a shipped v1** for one experienced engineer.
+**M1 and M4 are the two `L` milestones.**
+
+> **M4's row moved on 2026-08-02, at that milestone's decomposition and not before.** DR-015 put the
+> device-library subsystem onto M4's checklist — the library directory service, the `.rmda` codec and
+> its import/export, template provenance, the palette filter, the library browser, and parameterising
+> the Windows file dialog — and the `M`/5–7 predated all of it. The re-derivation was deferred to
+> decomposition deliberately, because that is the first moment there are tasks to count against
+> (roadmap §8.1; #71). **The bottom-up sum over M4's 17 issues came to ~10–15 weeks; only the ~2 weeks
+> DR-015 accounts for are adopted here**, since re-pricing the base needs velocity evidence that does
+> not exist yet. The gap is recorded in docs/12 §5.3 rather than absorbed silently, because a schedule
+> that quietly grows is the one nobody can audit. This supersedes the "sole long pole" reading above
+> for M4 only; every other row is unchanged. Two schedule levers remain (ship M1 as a
 public v0.9; cut the catalog to 40 archetypes at full fidelity); lever 2 is withdrawn by DR-003.
 
 ### 12.8 Part 1–3 sites carrying a supersession pointer

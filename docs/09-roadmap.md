@@ -289,7 +289,7 @@ Two further sequencing constraints are binding, from AC-059:
 
 **Exit criterion.** A 16×16 matrix template is authored from scratch **in under three minutes by a user who has seen the tool once**, and a template saved with exactly three fields plus ports places into a rack and appears correctly in the equipment list with `—` in every unknown column and an accurate unknown count in the rollup. See [Device builder](06-device-builder.md).
 
-**Risks.** The pattern DSL is the scope hazard, not the grid. Ship the documented subset with designed parse errors and resist generalising it. **The `M` in §6 predates the `.rmda` line above and has not moved** — the library directory service, template provenance in the palette, import/export and the palette filter are all uncounted, and the number is re-derived when M4 is decomposed, not guessed now (docs/12 §5.3).
+**Risks.** The pattern DSL is the scope hazard, not the grid. Ship the documented subset with designed parse errors and resist generalising it. **§6 was re-derived at this milestone's decomposition and M4 is now `L`, 7–9 weeks** — the `M`/5–7 predated DR-015 putting the library subsystem on the checklist above. Two further items decomposition surfaced and no estimate had ever held: making `Command` generic so the builder can own an undo stack (CR-106), which touches every command in `commands/`, and authoring `ConnectorTypeDef.pitch`, without which §5's auto-layout algorithm cannot be written at all (docs/12 §5.3).
 
 ### M5 — Validation · M
 
@@ -438,7 +438,7 @@ The two structural facts in that graph: **M4 is not on the critical path** — i
 
 ## 6. The honest total
 
-Re-costed per canon §12.7. DR-001 removes 4–5 weeks from M2; DR-005 adds 0.5–1 week to M6. Nothing else moves.
+Re-costed per canon §12.7. DR-001 removes 4–5 weeks from M2; DR-005 adds 0.5–1 week to M6; **DR-015 adds 2 weeks to M4**, counted at that milestone's decomposition (#71) and not before.
 
 | Milestone | Size | Weeks | Cumulative |
 |---|---|---|---|
@@ -446,14 +446,16 @@ Re-costed per canon §12.7. DR-001 removes 4–5 weeks from M2; DR-005 adds 0.5�
 | M1 Elevation release | **`L`** | 8–12 | 10–15 |
 | M2 Wiring and the live schedule | **`M`** *(was `L`)* | 4–7 | 14–22 |
 | M3 Structure and the field | `M` | 4–7 | 18–29 |
-| M4 Device builder | `M` | 5–7 | 23–36 |
-| M5 Validation | `M` | 4–6 | 27–42 |
-| M6 Full sheet set | `M` | 5–7 | 32–49 |
-| M7 Platform and access | `M` | 4–6 | 36–55 |
-| M8 Release engineering | `S` | 2–3 | 38–58 |
-| M9 Beta hardening | `M` | 4–7 | 42–65 |
+| M4 Device builder | **`L`** *(was `M`)* | **7–9** *(was 5–7)* | 25–38 |
+| M5 Validation | `M` | 4–6 | 29–44 |
+| M6 Full sheet set | `M` | 5–7 | 34–51 |
+| M7 Platform and access | `M` | 4–6 | 38–57 |
+| M8 Release engineering | `S` | 2–3 | 40–60 |
+| M9 Beta hardening | `M` | 4–7 | 44–67 |
 
-**42–65 weeks of implementation; 11–17 months to a shipped v1 with normal overhead.** The reduction from the previously stated 45–69 / 12–18 is DR-001's removal of the channel router, the crossing sweep and the hop arcs from M2, partly offset by DR-005's revision clouds in M6. (The pre-DR-001 figure is **45–69**, the final cumulative row of canon §9.11's own table; the "41–69" that section's prose quotes is an arithmetic slip against that table and is not the historical number.) Better than the 16–22 months `critique-feasibility.md` priced the unreduced design at, and not the 5–6 months its cut table promised — because that table cut a requirement (RJ-008). **M1 is the only `L` milestone and the sole long pole.**
+**44–67 weeks of implementation; 11–18 months to a shipped v1 with normal overhead.** The reduction from the previously stated 45–69 / 12–18 is DR-001's removal of the channel router, the crossing sweep and the hop arcs from M2, partly offset by DR-005's revision clouds in M6. (The pre-DR-001 figure is **45–69**, the final cumulative row of canon §9.11's own table; the "41–69" that section's prose quotes is an arithmetic slip against that table and is not the historical number.) Better than the 16–22 months `critique-feasibility.md` priced the unreduced design at, and not the 5–6 months its cut table promised — because that table cut a requirement (RJ-008). **M1 and M4 are the two `L` milestones.** M4 became one when DR-015 put the device-library subsystem on its checklist; the +2 is the library directory service, the `.rmda` codec and its import/export, template provenance, the palette filter, the library browser and the file-dialog parameterisation, none of which the 5–7 ever contained.
+
+> **The bottom-up sum came out higher than this, and the difference is on the record rather than buried in it.** Summing the 17 issues M4 decomposed into gives roughly **10–15 weeks**, and the part of that attributable to DR-015 is only ~1.5–2. The rest says the pre-DR-015 base of 5–7 was already optimistic. **Only the DR-015 delta is adopted above**, because it is the one change with a ruling behind it; re-pricing the base needs velocity evidence this project does not yet have, and swapping a stale number for a differently-invented one buys nothing. Flagged in docs/12 §5.3 as an open question for the first M4 task to answer with real data.
 
 **Two levers exist if that number is unacceptable.** Pull them explicitly rather than by drift.
 
