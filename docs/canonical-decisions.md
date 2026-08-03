@@ -5564,9 +5564,11 @@ every binding user decision, not only of the §10 answers.
 1. **Part 4 (this Part)** — the user's decisions and everything derived from them.
 2. **Parts 1–3** — `CR-nnn` / `AC-nnn` / `RJ-nnn`, canonical naming, the model, the registry,
    the scope ruling, the milestone plan.
-3. The authored planning documents in `docs/` — fourteen at the time this Part was written,
-   fifteen since `docs/12-milestone-board.md` was added. The board is a **status** document, not a
-   scope document: it records what has been demonstrated and what has not, and it changes nothing.
+3. The authored planning documents in `docs/`, **`docs/00` through `docs/14`**. Fourteen when this
+   Part was written; `docs/12-milestone-board.md`, `docs/13-macos-debt-register.md` and
+   `docs/14-deployment.md` have been added since, and the range is written as a range so the next
+   addition does not make this sentence wrong. `docs/12` is a **status** document, not a scope
+   document: it records what has been demonstrated and what has not, and it changes nothing.
 4. `docs/research/` — non-normative rationale.
 
 Where Part 4 and Parts 1–3 disagree, **Part 4 wins and Parts 1–3 are historical**. Parts 1–3

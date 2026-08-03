@@ -3,7 +3,7 @@
 **This file is not the normative record.** The normative record is
 [docs/canonical-decisions.md](canonical-decisions.md) — 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`,
 canonical naming, the model, the registry, the scope ruling, the milestone plan, and Part 4's
-binding user decisions `DR-001`–`DR-015`. This file is a sixteen-ADR summary of it. Where an ADR
+binding user decisions `DR-001`–`DR-016`. This file is a sixteen-ADR summary of it. Where an ADR
 and a ruling appear to differ, the ruling wins and this file is wrong.
 
 What follows is the short-form decision log for RackMate: sixteen ADRs covering the choices that
@@ -1100,19 +1100,21 @@ customer waiting. If there is, (b) or (c) is going to happen whether or not it i
 the metric exists only to prevent shipping something that passes the judgement gate for three
 friendly users and falls over on the fourth.
 
-## 10.12 Small calls that need an owner, not an essay
+## 10.12 Small calls that need an owner, not an essay — ALL SEVEN SETTLED
 
-Each needs a human answer before the milestone that touches it. Recommendations only.
+> **ANSWERED 2026-08-03, all seven.** This table showed recommendations until then. **Three of the
+> seven answers did not confirm the recommendation** and are marked, because a reader skimming the
+> old column would have got them wrong: (b) revised, (c) superseded, (f) overruled.
 
-| # | Question | Recommendation | Needed by |
+| # | Question | Answer | Where |
 |---|---|---|---|
-| a | Undo depth — the cap is 200 with a status-bar signal (AC-058 D5). Is 200 right? | Keep 200; make it a setting; revisit if anyone hits it | M0 |
-| b | Autosave interval, and whether recovery is silent or prompted | 30 s, **prompt** on recovery — a silent restore of a file the user thought they had abandoned is its own data-loss event | M1 |
-| c | Default rack height in the new-rack dialog | 42U; it is the modal answer, and wrong-but-adjustable beats blank | M1 |
-| d | Are the four starter projects residential-only? | **SETTLED by DR-002: three residential, one small commercial** — they double as the domain-coverage argument for residential-primary, commercial-capable | M1 |
-| e | Telemetry at all, and if so opt-in or opt-out | Opt-in, local-first crash reports only (CR-096), no usage telemetry in v1. Its only stated cost was making §10.4's miss-rate manual; §10.4 is answered (DR-003), so that objection is gone | M8 |
-| f | Product name and branding investment | Defer; RJ-017 already rejects branding as a v1 requirement | M8 |
-| g | Is [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers) user-visible documentation or internal? | **User-visible, in-app, linked from every finding** — it is the honesty surface for the 27 rules. The answer stands; only the catalogue's home changed, from a separate `docs/rules.md` to §5 of the data model | M5 |
+| a | Undo depth — the cap is 200 with a status-bar signal (AC-058 D5). Is 200 right? | **Keep 200, and make it a setting.** Confirms the recommendation. The cap is already 200 (`undo_stack.dart`'s `maxEntries`) but is a **constructor parameter, not a user setting**; exposing it is owed work | Board #560 |
+| b | Autosave interval, and whether recovery is silent or prompted | **REVISES the recommendation: autosave runs while the user is WORKING, never while they are idle.** The 30 s interval stands; a tick with nothing new to protect must write nothing. This **exposed a live defect**, since fixed. **The prompt-on-recovery half is unchanged** | `be23d89` |
+| c | Default rack height in the new-rack dialog | **SUPERSEDES the recommendation: the starting racks become EDITABLE PRESETS.** 42U survives as the shipped seed, so the recommendation's substance lives on; what changes is that the preset set stops being fixed. A **scope addition under roadmap §8.3**, ruled as **DR-016** | Board #561 |
+| d | Are the four starter projects residential-only? | **Three residential, one small commercial.** Settled by implication of DR-002; they double as the domain-coverage argument for residential-primary, commercial-capable | DR-002 |
+| e | Telemetry at all, and if so opt-in or opt-out | **Opt-in, local crash log only. Telemetry is POST-v1.** Confirms the recommendation. Accepted consequence: §10.4's miss-rate instrumentation is a manual user-interview exercise, not a dashboard | CR-096 |
+| f | Product name and branding investment | **OVERRULES the recommendation to defer.** The name is **RackMate**. Branding is a Protogen mascot, **Riley the RackMate**, in neutral warm white and greys so it never competes with the eight domain hues. Three surfaces follow and **they are scope, not styling**: an opt-in in-app assistant, a first-run onboarding flow, and user-customisable UI accent colours. RJ-017 rejected branding as a v1 *requirement* and is not reversed; this schedules the work | Board #563–#565 |
+| g | Is [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers) user-visible documentation or internal? | **User-visible, in-app, linked from every finding.** Confirms the recommendation. **The file deliberately does not exist**: canon §5 *is* the catalogue and CR-021 says so, so this is *publish that section*, not *write a new file*. And it is **27** rules, not the 22 this row inherited from AC-040's arithmetic slip | Feeds M5-F3 |
 
 ## 10.13 The three to answer first — RETIRED
 
