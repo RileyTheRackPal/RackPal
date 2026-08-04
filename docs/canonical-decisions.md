@@ -7225,9 +7225,77 @@ scheduled. No board item.
 
 ---
 
+### 11.18 DR-019 · The plan container is JSON-or-zip by sniff; v1 owes a passthrough, not a carrier
+
+**Ruled 2026-08-04.** Answers the question DR-018 §11.17.4 left open and **corrects the premise it
+left it open on**. The correction is the more useful half of this ruling and is stated first.
+
+**11.18.1 DR-018 §11.17.4 was wrong about why the decision was urgent.** It said the raster carrier
+was owed before M3 closes because G5 applies: omitting it would cost a format migration. **It would
+not.** The format already absorbs this addition. `looksLikeZip` returns a typed
+`UnsupportedZipContainerError` rather than crashing, `minReaderVersion` signals forward-incompat
+honestly, `PlanUnderlay` would be an absent entity map and a pin an absent key (G4, CR-114), and no
+existing plain-JSON file would change a byte. The reasoning was assumed from the shape of the
+question rather than checked against `persistence/`, and the check is what this ruling ran.
+
+**There is a real G5 item, and it is a different and much smaller one.** `unknown` passthrough
+exists on exactly four things in this tree: the root envelope, `EntityMeta`, `Port` and `SheetItem`.
+**`Placement` has none.** `json_codec.dart` decodes `OffRackPlacement` as exactly `locationId` and
+`mountNote` and re-encodes exactly those two, so a build that predates the Plan view, opening a file
+that has plan pins, **silently drops them on save**. Under DR-006 this is an internal tool whose
+users share files, so mixed-version editing of one project is an ordinary Tuesday rather than an
+edge case, and silent field loss is precisely what G4's discipline forbids.
+
+**11.18.2 The ruling.**
+
+1. **The container shape is `.rmpj` = plain pretty JSON with no binary member, zip container with
+   one.** The existing `PK\x03\x04` sniff becomes the discriminator it was already shaped to be.
+   CR-091's single-file property survives; a document with no underlay writes bytes identical to
+   today's.
+2. **The zip writer owes stated determinism**, because CR-117 requires `write(read(bytes)) ==
+   bytes` and zip is nondeterministic by default: entries sorted by member name, a constant
+   timestamp rather than the wall clock, one compression method, no extra fields. Member layout is
+   `document.json` plus `underlays/<uuid>.<ext>`, and the JSON member is byte-for-byte what the
+   plain path would have written, so one encoder serves both.
+3. **Base64-in-JSON and a sidecar file are both rejected**, with reasons, in docs/15 §2. They are
+   the obvious alternatives and the record should show they were considered rather than missed.
+4. **Raster in, PDF out.** PNG and JPEG are read; PDF is not. `pdf` writes documents and does not
+   import pages, so PDF import means PDFium or WinRT, and either adds a multi-megabyte native binary
+   to a self-signed portable distribution (DR-006) or owes a `docs/13` entry against DR-009. PDF
+   import stays available later and changes no stored format when it comes.
+5. **What v1 owes is the passthrough, not the carrier.** An `unknown` map on the `Placement` union
+   and on `Outlet`, matching the pattern `Port`, `SheetItem` and `EntityMeta` already use. It lands
+   in **M3**, it is days rather than weeks, and it protects every future placement field rather than
+   only this one. **The container itself is built with the Plan view, not in M3.**
+6. **DR-018's condition is discharged, and the Plan view is v1.1 unconditionally.** Roadmap §2.2's
+   membership criterion forbids a format *migration*; the shape ruled in (1) migrates nothing, since
+   every existing file stays plain JSON and stays readable. So the criterion is satisfied on its own
+   terms rather than by exception.
+
+**11.18.3 What it does not rule.** Whether the Plan view is pulled into v1 as an `M3.5`. That stays
+available, stays a §8.3 amendment, and is better taken after M3 has been used than before it is
+built. DR-018 §11.17.2 clause 5 is unchanged: the trigger is running ahead of §12.7's position,
+nothing else.
+
+**11.18.4 Scope.** **v1 grows by one item**, the §11.18.2(5) passthrough, which is why this is a
+§8.3 amendment and not a note. Roadmap §2.1 gains it. No milestone is re-costed: it is days inside
+M3's existing `M`, and it adds no clause to M3's exit criterion, because the criterion is a 60-drop
+rough-in producing a Pull Sheet and a forward-compat guard neither helps nor hinders that.
+
+**11.18.5 The general lesson, since this is the second one this week.** DR-018 §11.17.4 asserted a
+migration cost from the shape of the question. DR-017 §11.16.6 recorded a premise that drifted while
+its decision sat open. **Both are the same failure**: a claim about the codebase that was reasoned
+rather than read. The remedy is not more caution, it is `grep`, and the cost of skipping it here
+would have been a v1 scope addition of several weeks in place of one of several days.
+
+**11.18.6 Landed.** Ruling, scope list and the design document `docs/15-plan-view.md`, this commit
+and the two beside it. The passthrough is not implemented; it is M3's. No board item.
+
+---
+
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-018 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-019 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -7487,6 +7555,25 @@ in. See §11.7.
 | **AC-056**, §2.4 mobile | **Unaffected.** v1 mobile stays read-only and mobile editing stays v2. DR-018 does not reach the tablet workflow that motivated the request. |
 | **§12.7**, the plan's totals | **Unaffected.** §12.7 costs v1. Nothing DR-018 places is in v1, so no row and no total moves. |
 
+### 12.12 Superseded by DR-019 (container shape; the passthrough replaces the carrier)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-018 §11.17.4** | The raster carrier decision is owed before M3 closes, **because G5 applies: omitting it converts a later additive change into a migration over user data.** | **Superseded, and the stated reason was wrong.** Omitting the carrier costs **no migration**: the zip sniff already returns a typed error, `minReaderVersion` signals forward-incompat, and an absent entity map and an absent key are how this format expresses "not present" (G4, CR-114). The real G5 item is narrower — **`Placement` has no `unknown` passthrough**, so an older build silently drops plan pins on save. That passthrough is what v1 owes and what lands in M3; the container is built with the feature. §11.18.1, §11.18.2(5). |
+| **DR-018 §11.17.2** clauses 2 and 3 | The v1.1 placement is **conditional**: v1.2 unless the underlay carrier ships in v1. Nothing is added to v1. | **Both discharged, in opposite directions.** The container shape ruled at §11.18.2(1) migrates nothing, so roadmap §2.2's additive criterion is satisfied on its own terms and **the Plan view is v1.1 unconditionally**. Clause 3 no longer holds either: **v1 grows by one item**, the §11.18.2(5) passthrough. |
+| **CR-091**, the container half | Plain pretty JSON `.rmpj`, single file; a zip container is a v2 possibility that "costs nothing to add without touching call sites". | **Extended exactly as it anticipated, not superseded.** `.rmpj` is plain JSON with no binary member and zip with one. The single-file property is **unchanged and is the reason the sidecar alternative was rejected**. `DocumentCodec`'s abstraction is what makes this cheap, which is the property CR-091 bought it for. |
+
+**Explicitly NOT superseded:**
+
+| Ruling | Status under DR-019 |
+|---|---|
+| **CR-117** | **Unaffected and it constrains the writer.** Zip is nondeterministic by default, so §11.18.2(2) fixes entry order, timestamps, compression method and extra fields. The plain-JSON path's existing round-trip and golden corpus are untouched, because a document without an underlay writes identical bytes. |
+| **AC-057** | **Unaffected.** No image member reaches `.rmdev`/`.rmdx`, and device images stay cut. What DR-019 opens is a *project* container, which is a different file and a different question. |
+| **RJ-017** | **Unaffected.** `DiagramCanvas` still gains no `drawImage` by any ruling to date. docs/15 §7 records that adding one is part of building the Plan view and names what it touches. |
+| **AC-040**, the count of 27 | **Unaffected.** The four `PLN-*` advisories in docs/15 §9 ship with the Plan view in its own band and are not v1 rules. Any document quoting a rule total says which band it counts. |
+| **AC-024** | **Unaffected and extended, not replaced.** `Location.estimatedRunLengthFromRack` remains tier 3 of docs/15 §4's four tiers and remains the answer for every room without a plan. |
+| **G4 / CR-114** | **Unaffected, and it is the reason §11.18.1's correction matters.** Silent field loss on save is the same class of failure as a fabricated number: the document stops saying what it knows. |
+
 ---
 
 ## 13. Resolved §10 questions
@@ -7649,7 +7736,8 @@ allowlist of pairs — an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-018 are the user's decisions and are binding. §12 is the complete
-index of what they supersede — §12.1…§12.5, §12.9 and §12.11 by ruling, §12.6 by internal
-correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. Anything not listed there stands as written
+**End of Part 4.** DR-001…DR-019 are the user's decisions and are binding. §12 is the complete
+index of what they supersede — §12.1…§12.5, §12.9, §12.11 and §12.12 by ruling, §12.6 by internal
+correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **§12.12 is the only entry
+that supersedes another DR**, and it supersedes DR-018's stated reasoning as well as its ruling. Anything not listed there stands as written
 in Parts 1–3.
