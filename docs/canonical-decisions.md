@@ -4861,6 +4861,11 @@ users rather than now.
 | **`Money`, `cost`, `supplier`, `purchaseOrder`** | AC-055 |
 | **Silent estimated values** | G4, AC-039. `typicalWatts` never defaults to half of nameplate. Unknown is null, null renders `—`, and every rollup reports its unknown count. Not a scope item — a standing prohibition |
 
+> **Superseded in part — see §12.11 (DR-018).** **Floor plans leave the cable-dressing row** and
+> are v1.1, conditionally: v1.2 unless the underlay carrier ships in v1 (roadmap §2.2's additive
+> membership criterion). Cable dressing, 3D and thermal simulation are unaffected and stay out. The
+> row's rationale had only ever argued cable dressing.
+
 ### 7.7 The nine cuts that account for most of the saving
 
 Ranked by engineering weeks removed. Everything in this table is either deferred with a named
@@ -7150,9 +7155,79 @@ had), `50ba327` (three derived sites the first sweep missed). Board **#566**, cl
 
 ---
 
+### 11.17 DR-018 · The Plan view moves from not-doing to v1.1, conditionally
+
+**Ruled 2026-08-04.** A **scope amendment under roadmap §8.3**, and the second after DR-016. It
+moves one item out of the not-doing table, adds nothing to v1, and changes no milestone's contents
+or cost.
+
+**11.17.1 What was asked.** A "Plan" view that accepts an uploaded floorplan, allows field devices
+to be placed on it, and drives the pull schedule and diagram set from those placements. The stated
+motivation is that the system designer currently marks device locations as coloured dots in the iOS
+Notes app, and work is inevitably done incorrectly against them. The feasibility study is
+`docs/research/feasibility-plan-view.md`, written against the tree at `ff61aa7`; this ruling cites
+it rather than restating it.
+
+**11.17.2 The ruling.**
+
+1. **The Plan view is v1.1, not not-doing.** The §7.6 row is amended: `Cable dressing, 3D, thermal
+   simulation` remain out of the brief; **floor plans leave that row**. Roadmap §2.5 is amended
+   identically, and roadmap §2.2 gains the item. This is the one scope list (§8.3).
+2. **The v1.1 placement is conditional, and the condition is stated.** Roadmap §2.2's membership
+   criterion is *additive: no format migration, no command-stack change, no re-derivation of user
+   data*. A stored floorplan raster is a format change under every available design. **If the
+   underlay carrier does not ship in v1, the Plan view is v1.2**, by §2.2's own rule and without
+   further argument.
+3. **Nothing is added to v1 by this ruling.** The carrier decision named in 11.17.4 is owed, not
+   granted. DR-018 does not put a byte of it in v1 on its own authority.
+4. **The Plan view does not displace M3.** It is a better front end for what M3 builds and is not a
+   substitute for it. `T6.10` remains the answer to the motivating problem.
+5. **Reevaluation is scheduled by condition, not by date.** If the plan runs ahead of its
+   §12.7 position, the placement is reconsidered. Nothing else triggers it.
+
+**11.17.3 Why the old ruling moved so cheaply.** It should be recorded that §7.6's floor-plan row
+was never argued. Four unrelated items share one table cell, and the rationale attached to it
+(*"The brief says the plan ignores cable dressing, and it is right to"*) defends the first item
+only. DR-005 §11.5.3 independently describes floor plans as *"remain out (v1.1 / v2)"*, a deferral
+with a named home rather than a prohibition, which is a different thing from DR-004's *never*. The
+amendment reconciles the two statements in favour of the one that was reasoned.
+
+**11.17.4 The decision this ruling does NOT make, and when it is owed.** How a raster is stored is
+**open**. The candidates are base64 inside the pretty JSON, or the zip container CR-091 parked for
+v2, and the feasibility study §3.2 costs both. It is owed **before M3 closes**, because M3 is the
+milestone that first puts field devices into user files and roadmap §2.1's filter 2 (G5) says a
+decision of this shape ships its model in v1 even when its UI does not. Deferring it past M3 turns
+an additive change into a migration over user data, which is the precise failure G5 names.
+
+Two facts belong with that decision when it is made. **AC-057 cut device images specifically to
+close the container question** and named removing the image-decode import surface as a benefit;
+§11.15 records the same observation from the other side. Reopening it is a real cost and is not to
+be presented as free. And **`docs/13` gains an entry** if the chosen import path is a Windows-only
+rasterizer, because DR-009 puts macOS in v1.
+
+**11.17.5 What it does not rule, beyond 11.17.4.** It does not add `drawImage`/`ImageRef` to
+`DiagramCanvas`; **RJ-017 stands** and the interface's own amendment clause still governs. It does
+not add `T6.40`, `T6.50`, riser diagrams or reflected ceiling plans, which stay where DR-005
+§11.5.3 left them. It does not weaken **G4**: a plan yields a measured horizontal distance, never a
+route, and a plan-derived length stays tagged as an estimate under AC-024 unless a human marks it
+measured. It does not reverse **AC-024**, which keeps its per-room number as the source that ships.
+It does not touch **mobile editing**, which is v2 (§2.4) and read-only in v1 (AC-056). The
+feasibility study §7 records that the motivating workflow is a tablet one and that this feature
+does not reach it.
+
+**11.17.6 Cost, for the record and not for scheduling.** 5–7 weeks minimum viable, **7–10
+recommended** (raster import only, zip container), 9–13 with PDF rasterization on both platforms.
+Feasibility study §6 carries the phase breakdown. **This does not enter §12.7's totals**, which
+cost v1, and none of it is v1.
+
+**11.17.7 Landed.** Ruling and scope list, this commit. Nothing is implemented and nothing is
+scheduled. No board item.
+
+---
+
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-017 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-018 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -7310,6 +7385,7 @@ pointer does not restate the new ruling; it names where the new ruling lives.
 | 15 | §9.7, M6 exit criterion | after the exit paragraph | `> **The last sentence is superseded — see §12.9 and §11.6.** "Windows OV/EV certificate procurement starts here" is **deleted**. Every other clause of M6's exit criterion stands exactly as written.` |
 | 16 | §9.9, M8 exit criterion | after the exit paragraph | `> **The SmartScreen clause is superseded — see §11.6.2.** It splits into a build-side gate (signed, timestamped, valid publisher, **and the signature still validates after the certificate has expired**) and a distribution-side requirement that is documented rather than gated (Local Intranet UNC or Intune/GPO so Mark-of-the-Web is never applied; the ZIP trap stated explicitly). The other three clauses stand as written.` |
 | 17 | §10.3 recommendation | after the recommendation paragraph | `> **Moot — see §13 and §11.6, consequence 12.** DR-006 rules that no commercial release is planned, so there is nothing to price. This section is retained in full as the record of the argument: if DR-006 is ever reversed, §10.3 reopens exactly as written, watermark hazard included.` |
+| 18 | §7.6, cable-dressing row | after the table | `> **Superseded in part — see §12.11 (DR-018).** **Floor plans leave the cable-dressing row** and are v1.1, conditionally: v1.2 unless the underlay carrier ships in v1 (roadmap §2.2's additive membership criterion). Cable dressing, 3D and thermal simulation are unaffected and stay out. The row's rationale had only ever argued cable dressing.` |
 
 ---
 
@@ -7392,6 +7468,24 @@ does not itself require strap geometry. The ruling accepts that growth deliberat
 that building the `Outlet` editor twice is worse work than building it once with the grid designed
 in. See §11.7.
 
+### 12.11 Superseded by DR-018 (the Plan view moves to v1.1, conditionally)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **§7.6**, cable-dressing row | `Cable dressing, floor plans, 3D, thermal simulation \| Out of the brief. The brief says the plan ignores cable dressing, and it is right to` | **Superseded in part.** Floor plans leave the row and become **v1.1 (roadmap §2.2), conditionally**: v1.2 unless the underlay carrier ships in v1, because a stored raster is a format migration and §2.2's membership criterion is additive. Cable dressing, 3D and thermal simulation are **unaffected** and stay out of the brief. The rationale sentence had only ever argued cable dressing; the other three shared its cell without an argument of their own. §11.17. |
+
+**Explicitly NOT superseded:**
+
+| Ruling | Status under DR-018 |
+|---|---|
+| **RJ-017** | **Unaffected and still binding.** `DiagramCanvas` gains no `drawImage`/`ImageRef` by this ruling, and `draw/canvas.dart`'s own amendment clause still governs any attempt to add one. |
+| **AC-057** | **Unaffected as written**, and its reasoning is preserved rather than waived: cutting device images closed the container question and removed the image-decode import surface. DR-018 §11.17.4 records that a Plan view **reopens both**, and requires that cost to be stated when the carrier decision is made. `.rmdev`/`.rmdx` gain no image member. |
+| **AC-024** | **Unaffected and still the shipping mechanism.** `Location.estimatedRunLengthFromRack` stays the v1 length source. A plan measurement, if one ever exists, feeds the same field. |
+| **G4** | **Unaffected, and DR-018 §11.17.5 restates it against this specific temptation.** A plan yields a measured horizontal distance, never a route. A plan-derived length stays tagged as an estimate unless a human marks it measured. |
+| **DR-005** §11.5.3 | **Consumed, not contradicted.** It said floor plans *"remain out (v1.1 / v2)"*, which is the deferral DR-018 acts on. Riser diagrams, reflected ceiling plans, `T6.40` and `T6.50` stay exactly where it left them. |
+| **DR-009** | **Unaffected, and it constrains the import path.** macOS is v1, so a Windows-only rasterizer would owe a `docs/13` entry. |
+| **AC-056**, §2.4 mobile | **Unaffected.** v1 mobile stays read-only and mobile editing stays v2. DR-018 does not reach the tablet workflow that motivated the request. |
+| **§12.7**, the plan's totals | **Unaffected.** §12.7 costs v1. Nothing DR-018 places is in v1, so no row and no total moves. |
 
 ---
 
@@ -7555,7 +7649,7 @@ allowlist of pairs — an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-017 are the user's decisions and are binding. §12 is the complete
-index of what they supersede — §12.1…§12.5 and §12.9 by ruling, §12.6 by internal correction, and
-§12.8 the list of Parts 1–3 sites carrying a pointer. Anything not listed there stands as written
+**End of Part 4.** DR-001…DR-018 are the user's decisions and are binding. §12 is the complete
+index of what they supersede — §12.1…§12.5, §12.9 and §12.11 by ruling, §12.6 by internal
+correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. Anything not listed there stands as written
 in Parts 1–3.

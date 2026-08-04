@@ -79,6 +79,7 @@ Membership criterion is **additive**: no format migration, no command-stack chan
 | `Trace` through pass-throughs, and the search DSL | AC-040 | Both are navigation, not correctness |
 | Manual reroute stored as `routeConstraintsBySheet` — ordered grid points, never a polyline | CR-012 | The router is deterministic; the itch is aesthetic |
 | Registry editor beyond media types and connector aliases | AC-050 | The two extensibility paths users actually hit already ship |
+| The **Plan view** — floorplan underlay, field devices placed on it, plan-measured run lengths, a plan sheet in the set | DR-018 | `Location.estimatedRunLengthFromRack` (AC-024) is the length source meanwhile, and it is already tagged as an estimate. **This is the one row that does not yet satisfy the criterion above**: a stored raster is a format migration, so it is v1.1 only if the underlay carrier ships in v1, and v1.2 otherwise. That decision is owed before M3 closes (DR-018 §11.17.4, G5). Feasibility and cost: `docs/research/feasibility-plan-view.md` |
 
 ### 2.3 v1.2 — the second release
 
@@ -122,7 +123,7 @@ Each changes what the product *is* and should be decided with evidence from v1 u
 | **An in-app update mechanism in v1** | RJ-014. Signed installer plus a version-check ping; auto-update is a security surface before there are users |
 | **Device images** | AC-057. Resolves the container question, removes the image-decode import surface, removes ~1 MB per template |
 | **Signatures and `provenance`/`derivedFrom` chains** | AC-042. `contentHash` survives; the cryptographic apparatus does not. **The library pack came back** as `.rmda` (DR-015 §11.15.3) — a scope edit under §8.3, ruled and not yet built, and it needs neither of the two things still cut here |
-| **Cable dressing, floor plans, 3D, thermal simulation** | Out of the brief |
+| **Cable dressing, 3D, thermal simulation** | Out of the brief. **Floor plans left this row at DR-018** and are §2.2, conditionally. The row's rationale had only ever argued cable dressing; the other three rode along in the same cell |
 | **`blockExportOnErrors`** | CR-022. Not deferred — deleted. No setting, no equivalent, no exceptions |
 | **`Money`, `cost`, `supplier`, `purchaseOrder`** | AC-055 |
 | **Silent estimated values** | G4, AC-039. A standing prohibition, not a scope item: unknown is null, null renders `—`, every rollup reports its unknown count |
