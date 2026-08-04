@@ -708,7 +708,8 @@ Full professional CI deliverable sets also contain floor plans, reflected ceilin
 | Fact | Ruling |
 |---|---|
 | Cable dressing, service loops as geometry, lacing | Out of the brief — the plan ignores cable dressing, and it is right to (§7.6) |
-| Floor plans, 3D, thermal simulation | Out of the brief (§7.6) |
+| 3D, thermal simulation | Out of the brief (§7.6) |
+| Floor plans (the **Plan view**) | **Not v1; v1.1, conditionally.** DR-018 moved it out of §7.6's cable-dressing row, which had only ever argued cable dressing. It is v1.1 if the underlay carrier ships in v1 and v1.2 otherwise, because a stored raster is a format migration and roadmap §2.2's membership criterion is additive (canon §11.17, §12.11) |
 | Grounding and bonding beyond a drawable conductor | Minimum viable version only: an F-type ground block template, `power.bonding`, `Rack.groundBarPresent`. Full commercial bonding detail is v1.2 (RJ-010, AC-034/m21) |
 | Bays (grouped adjacent racks) | Cut from v1, **not reserved**. Returns as `Bay{id, name, order, rackIds}` — a pure addition (CR-033) |
 | RF cascade loss budget | Per-device insertion loss ships as data (a 2-way splitter ≈ 3.5 dB); the cascade rule is v1.2 |

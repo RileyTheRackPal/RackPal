@@ -8,7 +8,7 @@ and a ruling appear to differ, the ruling wins and this file is wrong.
 
 What follows is the short-form decision log for RackMate: sixteen ADRs covering the choices that
 shape the codebase, each traced back to its adjudication in the canonical decision record; then
-**the seventeen user decisions `DR-001`–`DR-017`**, which are binding and override the recommendations
+**the eighteen user decisions `DR-001`–`DR-018`**, which are binding and override the recommendations
 they answer; then the questions of canon §10, **none of which is open any longer**: ten are
 answered, 10.3 is moot under DR-006, 10.13 is retired, and 10.11 alone is deferred, to M5 rather
 than indefinitely. An ADR here is a summary with a pointer, not a new ruling. Open questions carry no
@@ -35,16 +35,19 @@ overruled is marked as void where it stands.
 | [015](#adr-015-the-five-package-split) | The five-package split | Accepted | CR-083, CR-084 |
 | [016](#adr-016-density-management--one-sheet-net-labels-filter) | Density management — one sheet, net labels, filter | Accepted | CR-073, CR-103, AC-037, **DR-001**, **DR-004** |
 
-**The seventeen user decisions**, binding and overriding any recommendation they answer. Full text in
+**The eighteen user decisions**, binding and overriding any recommendation they answer. Full text in
 canon §11; the supersession index is canon §12.
 
 > **This table listed only `DR-001`–`DR-005` until 2026-08-03**, an owed edit canon §12.9 recorded
-> against DR-006 and which then went ten rulings further out of date. Seven of the sixteen answer a
+> against DR-006 and which then went ten rulings further out of date. Seven of the eighteen answer a
 > canon §10 question and say which; the rest are rulings the work itself raised, which is why their
-> `Answers` column is empty. `DR-016` is the only one ruled inside a §10 entry rather than in its
-> own §11 subsection, because §10.12(c) is where the scope addition was made. **`DR-017` is the
-> first about process rather than product**: it exists because roadmap §8.2 requires a citable
-> ruling id and the board item implementing it had none.
+> `Answers` column is empty. (**The count in this note read "sixteen" against a heading that read
+> "seventeen"** until DR-018's sweep; a written-out count drifts every time a ruling lands, which is
+> why the rulings that change one now grep for it.) `DR-016` is the only one ruled inside a §10
+> entry rather than in its own §11 subsection, because §10.12(c) is where the scope addition was
+> made. **`DR-017` is the first about process rather than product**: it exists because roadmap §8.2
+> requires a citable ruling id and the board item implementing it had none. **`DR-018` is the second
+> scope amendment after `DR-016`**, and the only one so far that places an item **conditionally**.
 
 | DR | Decision | Answers | Effect here |
 |---|---|---|---|
@@ -65,6 +68,7 @@ canon §11; the supersession index is canon §12.
 | DR-015 | **The `rm` extension family** — `.rmpj`, `.rmdx`, `.rmda` | — | A rename, **not** a format change. Re-opens AC-042's library pack as a single JSON file, not a zip. ADR-003's container table is superseded |
 | DR-016 | **The starting racks become editable presets** the user tailors to their own inventory | §10.12(c) | A **scope addition under roadmap §8.3**. 42U survives as the shipped seed value; the preset **set** stops being fixed. Presets stay unpersisted on `Rack` (no `presetRef`), so this is a new writable store, not a format change. Board #561 |
 | DR-017 | **`dart format` is a gate; the analyzer stays a ratchet** | — *(answers docs/12 §4.1, not a §10 entry)* | **Process, not product; no scope change.** Gate 1b in `azure-pipelines.yml` and `run_local.ps1`, so the local count is **fourteen**. Infos stay pinned in `analyze_info_baseline.txt` (**173**) rather than `--fatal-infos`, because formatting has one correct answer and style infos do not. docs/11 §7 amended; §9 clause 1 is now the fourteen-gate run. Board #566 |
+| DR-018 | **The Plan view moves from not-doing to v1.1, conditionally** | — | A **scope amendment under roadmap §8.3**, the second after DR-016. Floor plans leave canon §7.6's cable-dressing row (which had only ever argued cable dressing) and land in roadmap §2.2. **The condition is §2.2's own additive membership criterion**: a stored raster is a format migration, so this is v1.1 only if the underlay carrier ships in v1, and **v1.2 otherwise**. That carrier decision is owed **before M3 closes** (G5). **Nothing is added to v1 and no §12.7 total moves.** RJ-017, AC-024, AC-057 and G4 all stand. Feasibility and cost: `docs/research/feasibility-plan-view.md`. No board item |
 
 See also [Canonical decisions](canonical-decisions.md) — normative — plus
 [Overview](00-overview.md), [Data model](02-data-model.md),

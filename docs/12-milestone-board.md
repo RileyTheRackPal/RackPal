@@ -998,6 +998,17 @@ chip-strip `Outlets` label at `rack_metrics_row.dart:136`.
 The AC-018 clause is **unreachable by construction**: nothing schedules and nothing prints a `W`
 number. That M2 block — `Link` + `Endpoint` reaching the UI — is discharged as of `ea0af6d` (§5.1).
 
+**One decision is owed before M3 closes, and it is not an M3 exit clause.** DR-018 (2026-08-04)
+places the Plan view in v1.1 conditionally and leaves **how a floorplan raster is stored**
+deliberately open: base64 inside the pretty JSON, or the zip container CR-091 parked for v2. It is
+owed at M3 rather than at the feature, because M3 is the milestone that first puts field devices
+into user files, and roadmap §2.1's filter 2 (G5) says a decision of this shape ships its **model**
+in v1 even when its **UI** does not. Deferring it past M3 converts a later additive change into a
+migration over user data. It is also what decides the Plan view's own band: v1.1 if the carrier
+ships in v1, v1.2 otherwise, per roadmap §2.2's additive membership criterion. **This adds no clause
+to M3's exit criterion and no week to its `M`** — the sizing question it answers is the Plan view's,
+not M3's. Cost and options: `docs/research/feasibility-plan-view.md` §3.2, §5. Canon §11.17.4.
+
 ### 5.3 M4 — The device builder · `M` · NOT STARTED — weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three
