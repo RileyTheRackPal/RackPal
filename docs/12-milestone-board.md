@@ -998,16 +998,23 @@ chip-strip `Outlets` label at `rack_metrics_row.dart:136`.
 The AC-018 clause is **unreachable by construction**: nothing schedules and nothing prints a `W`
 number. That M2 block — `Link` + `Endpoint` reaching the UI — is discharged as of `ea0af6d` (§5.1).
 
-**One decision is owed before M3 closes, and it is not an M3 exit clause.** DR-018 (2026-08-04)
-places the Plan view in v1.1 conditionally and leaves **how a floorplan raster is stored**
-deliberately open: base64 inside the pretty JSON, or the zip container CR-091 parked for v2. It is
-owed at M3 rather than at the feature, because M3 is the milestone that first puts field devices
-into user files, and roadmap §2.1's filter 2 (G5) says a decision of this shape ships its **model**
-in v1 even when its **UI** does not. Deferring it past M3 converts a later additive change into a
-migration over user data. It is also what decides the Plan view's own band: v1.1 if the carrier
-ships in v1, v1.2 otherwise, per roadmap §2.2's additive membership criterion. **This adds no clause
-to M3's exit criterion and no week to its `M`** — the sizing question it answers is the Plan view's,
-not M3's. Cost and options: `docs/research/feasibility-plan-view.md` §3.2, §5. Canon §11.17.4.
+**M3 owes one small thing that is not an exit clause, and it is not the one first recorded here.**
+DR-018 §11.17.4 put the *raster carrier* on M3 on the ground that omitting it would cost a format
+migration. **DR-019 read `persistence/` and that ground did not hold**: the zip sniff already returns
+a typed error, `minReaderVersion` signals forward-incompat, and an absent entity map and an absent
+key are how this format says "not present" (G4, CR-114). No existing file would migrate. The
+container is therefore built with the Plan view, not here.
+
+What M3 does owe is narrower and real. **`Placement` carries no `unknown` passthrough** — `Port`,
+`SheetItem`, `EntityMeta` and the root envelope all do, and `json_codec.dart` decodes
+`OffRackPlacement` as exactly `locationId` and `mountNote`. A build predating a later placement field
+therefore **drops it silently on save**, and under DR-006 this is an internal tool whose users share
+files. That is days of work, it protects every future placement field rather than only the Plan
+view's pin, and it is roadmap §2.1's newest v1 row (DR-019 §11.18.2(5)).
+
+**It adds no clause to M3's exit criterion and no week to its `M`.** The criterion is a 60-drop
+rough-in producing a Pull Sheet; a forward-compat guard neither helps nor hinders it. Design:
+[Plan view](15-plan-view.md). Canon §11.18, §12.12.
 
 ### 5.3 M4 — The device builder · `M` · NOT STARTED — weakest mark `NOT BUILT`
 
