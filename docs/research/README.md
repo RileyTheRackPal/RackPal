@@ -67,6 +67,16 @@ from multiple message blocks and may read choppily at block boundaries.
 | [design-ux-device-builder.md](design-ux-device-builder.md) | Device builder, seed catalog, Structure device |
 | [design-pdf-export.md](design-pdf-export.md) | PDF sheets, wiring schedule, shared screen/PDF renderer |
 
+### Feasibility studies
+
+Written **after** the original passes, against code that exists rather than against a plan. The
+caveats above about unverified factual claims do not apply in the same way: these cite files and
+lines in this repository, and those citations were read.
+
+| File | Subject | Written |
+| --- | --- | --- |
+| [feasibility-plan-view.md](feasibility-plan-view.md) | A floorplan underlay with field devices placed on it, driving the pull schedule. Feasibility, cost and the two risks. Ruled at DR-018 | 2026-08-04, against `ff61aa7` |
+
 ### Critiques
 
 | File | Lens |
