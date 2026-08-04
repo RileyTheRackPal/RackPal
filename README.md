@@ -48,11 +48,12 @@ Read [00-overview](docs/00-overview.md) first, then [canonical-decisions](docs/c
 | [docs/07-structure-device.md](docs/07-structure-device.md) | Structured wiring entering the rack: outlets, home runs, dual labels |
 | [docs/08-pdf-export.md](docs/08-pdf-export.md) | The sheet set, schedule presets, the PDF backend, greyscale and print tests |
 | [docs/09-roadmap.md](docs/09-roadmap.md) | M0–M9, exit criteria, the honest total, v1.1 / v1.2 / v2 buckets |
-| [docs/canonical-decisions.md](docs/canonical-decisions.md) | **Normative.** The full decision record — 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`, canonical naming, the data model, the registry, the scope ruling, the milestone plan, and Part 4's binding user decisions `DR-001`–`DR-005`. Every other document defers to this one |
+| [docs/15-plan-view.md](docs/15-plan-view.md) | **v1.1, not built.** Floorplan underlay, pins, two-point calibration, the four-tier length model, the `T1.01` plan sheet |
+| [docs/canonical-decisions.md](docs/canonical-decisions.md) | **Normative.** The full decision record — 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`, canonical naming, the data model, the registry, the scope ruling, the milestone plan, and Part 4's binding user decisions `DR-001`–`DR-019`. Every other document defers to this one |
 | [docs/10-decisions.md](docs/10-decisions.md) | Short-form ADR log — sixteen ADRs summarising the record for readers who want the shape without the adjudication, plus the open questions. A summary with a pointer, not a ruling |
 | [docs/11-testing-and-quality.md](docs/11-testing-and-quality.md) | Fixture corpora, golden files, parity tests, performance budgets, accessibility |
 | [docs/catalog/seed-devices.md](docs/catalog/seed-devices.md) | The seeded archetypes. **The only place a template count is stated** (CR-061) |
-| [docs/research/](docs/research/) | The raw working papers — four research briefs, six design documents, four critiques. **Non-normative rationale.** They explain *why*, and they are wrong wherever [canonical-decisions](docs/canonical-decisions.md) contradicts them |
+| [docs/research/](docs/research/) | The raw working papers — four research briefs, six design documents, four critiques, one feasibility study. **Non-normative rationale.** They explain *why*, and they are wrong wherever [canonical-decisions](docs/canonical-decisions.md) contradicts them |
 
 ## Target platforms
 

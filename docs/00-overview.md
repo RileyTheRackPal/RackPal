@@ -133,7 +133,7 @@ Not omissions — rulings (canon §7.6). Each has been argued and closed.
 | Real-SKU manufacturer catalog | Stencil and SKU coverage is *always* incomplete, and maintaining it is a permanent staffed cost. A seeded catalog can only ever cover archetypes, and generic archetypes at full fidelity with cited provenance beat a larger set of guessed ones. | RJ-007, AC-052 |
 | Device images, 3D racks, photorealistic front panels | Cosmetic, ~1 MB per template, an image-decode import surface, and already a source of competitor complaints. 2D vector elevations with accurate RU geometry are what get printed. | AC-057 |
 | Cable dressing, bend radius, tie-downs, thermal simulation | Out of the brief, correctly. `Pathway` groups cables organisationally and does **not** affect tracing — the NetBox precedent. | brief; CR-016, AC-027 |
-| Floor plans (the **Plan view**) | **Not v1, and no longer "not doing".** DR-018 moves it to v1.1, conditionally: a stored floorplan raster is a format migration, so it is v1.1 only if the underlay carrier ships in v1 and v1.2 otherwise. Nothing about v1 changes. `Location.estimatedRunLengthFromRack` remains the length source and is already tagged as an estimate. | DR-018; AC-024 |
+| Floor plans (the **Plan view**) | **Not v1, and no longer "not doing".** DR-018 moves it to v1.1 and DR-019 makes that placement unconditional: `.rmpj` stays plain JSON with no binary member and becomes a zip container with one, so nothing migrates. v1 gains one small thing from it, an `unknown` passthrough on `Placement`. `Location.estimatedRunLengthFromRack` remains the length source meanwhile and is already tagged as an estimate. Design: [Plan view](15-plan-view.md). | DR-018, DR-019; AC-024 |
 | Cloud sync, multi-user, accounts, an in-app updater | The model is already cloud-ready (stable UUIDs, `schemaVersion`, tombstones, `sequence`). Nothing more is spent until someone asks. Auto-update is a security surface before there are users. | v2; RJ-014 |
 | Multi-document tabs | One window, one document, multiple windows if you want two. | RJ-013 |
 | Tagged / accessible PDF (PDF/UA) | The accessibility budget buys the outline tree, the keyboard connection path and the NVDA matrix — all of which help a real user. A tagged schematic helps nobody who could not already read the schedule. | RJ-015 |
@@ -213,8 +213,9 @@ Cost, stated honestly rather than comfortably: **44–67 weeks of implementation
 | [Device builder](06-device-builder.md) | Three required fields, the port grid, the three doors |
 | [Structure device](07-structure-device.md) | Outlets, home runs, dual labels, the location tree |
 | [PDF export](08-pdf-export.md) | The sheet set, the schedule presets, the export contract |
+| [Plan view](15-plan-view.md) | **v1.1.** The floorplan underlay, pins, calibration, the four-tier length model, `T1.01` |
 | [Roadmap](09-roadmap.md) | v1 / v1.1 / v1.2 / v2, the ten milestones, the honest total |
-| [Canonical decisions](canonical-decisions.md) | **Normative.** 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`, canonical naming, the model, the registry, the scope ruling, the milestone plan, and the binding user decisions `DR-001`–`DR-017` |
+| [Canonical decisions](canonical-decisions.md) | **Normative.** 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`, canonical naming, the model, the registry, the scope ruling, the milestone plan, and the binding user decisions `DR-001`–`DR-019` |
 | [Decisions (ADR log)](10-decisions.md) | The sixteen ADRs and canon §10's questions, none of which is open, summarising the record above |
 | [Testing and quality](11-testing-and-quality.md) | The DRC fixture corpus, goldens, the print test matrix |
 | [Seed devices](catalog/seed-devices.md) | The archetype catalog and its provenance |
