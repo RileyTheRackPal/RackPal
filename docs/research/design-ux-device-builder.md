@@ -1,4 +1,4 @@
-# RackMate — Device Builder, Seeded Catalog & Structure Device
+# RackMate: Device Builder, Seeded Catalog & Structure Device
 ## Design Specification v1
 
 ---
@@ -11,15 +11,15 @@ Three findings from the research drive every decision below:
 2. **Reference designators are first-class.** XTEN-AV's users are on record complaining they cannot uniquely name devices. `refdesPrefix` is a required field on every template, not an afterthought.
 3. **Connector, signal family, and direction are three orthogonal fields, never one enum.** RJ45 is a connector; Ethernet, HDBaseT, Dante, and Cresnet are signal families that share it. Collapsing them makes the highest-value validation in the product (HDBaseT-into-a-switch) impossible.
 
-A fourth, specific to this document: **the I/O editor is a spreadsheet, not a form.** Integrators live in Excel. Every ergonomic they already know — fill-down, multi-select, paste TSV, Tab/Enter navigation — must work. Any interaction that costs one click per port is a design failure.
+A fourth, specific to this document: **the I/O editor is a spreadsheet, not a form.** Integrators live in Excel. Every ergonomic they already know (fill-down, multi-select, paste TSV, Tab/Enter navigation) must work. Any interaction that costs one click per port is a design failure.
 
 ---
 
-## 1. Device Builder — Structure & Metadata
+## 1. Device Builder: Structure & Metadata
 
 ### 1.1 Shell layout
 
-Full-window editor (not a modal — a modal cannot host a 48-row grid). Three panes, persistent:
+Full-window editor (not a modal, a modal cannot host a 48-row grid). Three panes, persistent:
 
 - **Left rail (200 px):** section nav + bank tree. The bank tree is the primary navigation once you're in the I/O section.
 - **Center (flex):** the active section's editor.
@@ -33,18 +33,18 @@ Sections in the left rail, in order:
 | 2 | Physical & Mounting | Yes (RU / occupancy, mount method) |
 | 3 | Power & Thermal | No (warns if a powered category has no inlet) |
 | 4 | **Ports (I/O)** | No (blank panels legitimately have zero) |
-| 5 | Panel Layout | No — progressive disclosure, see §2.6 |
+| 5 | Panel Layout | No: progressive disclosure, see §2.6 |
 | 6 | Appearance | No (colour defaults from category) |
 | 7 | Notes, Docs & Publish | No |
 
 A template can be saved incomplete at any point; it enters the library flagged **Draft** and is excluded from search unless "Include drafts" is on.
 
-### 1.2 Section 1 — Identity & Classification
+### 1.2 Section 1: Identity & Classification
 
 | Field | Type | Notes |
 |---|---|---|
 | `name` | text, required | "HDMI Matrix 8×8" |
-| `manufacturer` | text | Defaults to "Generic". Seeded catalog uses "Generic" throughout — the confirmed decision to avoid SKU libraries. |
+| `manufacturer` | text | Defaults to "Generic". Seeded catalog uses "Generic" throughout, the confirmed decision to avoid SKU libraries. |
 | `model` | text | |
 | `category` | enum, required | Video Distribution · Audio · Network · Control · Sources · RF/Coax · Power · Passive & Mechanical · Structure (reserved) |
 | `subcategory` | enum, filtered by category | Matrix, Splitter, Extender, Amplifier, Switch, Patch Panel… |
@@ -54,7 +54,7 @@ A template can be saved incomplete at any point; it enters the library flagged *
 | `templateId` | UUID, read-only | Generated on create; **stable across all versions**. |
 | `version` | `major.minor.patch`, read-only | See §4.2. |
 
-### 1.3 Section 2 — Physical & Mounting
+### 1.3 Section 2: Physical & Mounting
 
 Height is **never a float**. Store integer U; derive drawn height as `44.45n − 0.79 mm` for dimensioned output only.
 
@@ -64,19 +64,19 @@ Height is **never a float**. Store integer U; derive drawn height as `44.45n −
 | `occupancy.rearU` | int ≥ 0 | A 2U patch panel is `{front:2, rear:2}`; a rear lacing bar is `{front:0, rear:1}`; a 0U PDU is `{0,0}` |
 | `occupancy.side` | enum | `front` · `rear` · `both` · `zeroU_vertical` |
 | `mountMethod` | enum, required | `rackEars` · `shelf` · `zeroU` · `sideMount` · `rearRail` · `furniture` · `hosted` · `notInRack` |
-| `widthClass` | enum | `full` · `half` · `third` · `custom` (+ `customWidthMm`). **Never** "0.5 rack width" — half-rack is genuinely unstandardized (9.5 / 10 / 10.4 / 10.5 in all ship). |
+| `widthClass` | enum | `full` · `half` · `third` · `custom` (+ `customWidthMm`). **Never** "0.5 rack width", half-rack is genuinely unstandardized (9.5 / 10 / 10.4 / 10.5 in all ship). |
 | `depthMm` | number | Chassis depth |
 | `depthWithConnectorsMm` | number | Auto-suggests `depthMm + 75 mm`; used against rack usable depth |
 | `weightKg` / `weightLb` | number, dual-unit | Unit follows the app-level preference; both stored |
 | `isContainer` | bool | Shelves and drawers. Reveals: |
-| ↳ `shelfCapacityKg` | number | 25 / 35 / 50 lb are the real numbers — low enough to matter |
+| ↳ `shelfCapacityKg` | number | 25 / 35 / 50 lb are the real numbers: low enough to matter |
 | ↳ `shelfUsableDepthMm` | number | 10 in shelves are shallow; many STBs exceed them |
 | `hostedHeightU` | int, only when `mountMethod: shelf/hosted` | Advisory height so the shelf picker can warn ("this 4U-tall AVR needs a 4U clear space above its 1U shelf") |
-| `requiresClearanceAboveU` | int | Differentiating validation — few tools model it |
+| `requiresClearanceAboveU` | int | Differentiating validation: few tools model it |
 | `requiresClearanceBelowU` | int | |
 | `isPassthrough` | bool | Patch panels. Reveals front↔rear port pairing in the I/O editor (§2.5) |
 
-### 1.4 Section 3 — Power & Thermal
+### 1.4 Section 3: Power & Thermal
 
 | Field | Notes |
 |---|---|
@@ -86,21 +86,21 @@ Height is **never a float**. Store integer U; derive drawn height as `44.45n −
 | `power.isContinuousLoad` | Default **true** for anything in an A/V rack (3 h+ runtime). Drives the NEC 80% derate: 12 A on a 15 A circuit, 16 A on a 20 A circuit |
 | `power.voltage`, `power.phase` | |
 | `heat.btuPerHour` | **Derived: `typicalWatts × 3.412`.** Read-only with an override toggle |
-| `outletsProvided` | Read-only — counted from ports with `power.role: outlet` |
-| `outletsConsumed` | Read-only — counted from `power.role: inlet`. **External power bricks count.** A 4×4 matrix with a 12 V barrel jack still eats a PDU outlet; this is a real and frequently-missed planning error |
+| `outletsProvided` | Read-only: counted from ports with `power.role: outlet` |
+| `outletsConsumed` | Read-only: counted from `power.role: inlet`. **External power bricks count.** A 4×4 matrix with a 12 V barrel jack still eats a PDU outlet; this is a real and frequently-missed planning error |
 
 A yellow banner appears if `category` is not `Passive & Mechanical` and the template has no inlet port: *"No power inlet defined. Add one, or mark this device as passive."*
 
-### 1.5 Section 6 — Appearance
+### 1.5 Section 6: Appearance
 
 Deliberately minimal. Research says photorealistic panels and per-device photography are a scope trap and already generate complaints elsewhere.
 
-- `faceColor` — hex, defaults from category (video = deep blue-grey, audio = warm charcoal, network = slate, power = near-black, passive = light grey)
-- `accentColor` — used for the front-panel LED strip / branding bar in the elevation
-- `glyph` — pick from a built-in icon set (matrix, amp, switch, disc, battery, fan, blank…) rendered on the elevation strip
-- `frontImage` / `rearImage` — optional PNG/SVG, **capped at 512 KB each**, with an explicit warning that images inflate the template file and are not needed for correct output
+- `faceColor`, hex, defaults from category (video = deep blue-grey, audio = warm charcoal, network = slate, power = near-black, passive = light grey)
+- `accentColor`, used for the front-panel LED strip / branding bar in the elevation
+- `glyph`, pick from a built-in icon set (matrix, amp, switch, disc, battery, fan, blank…) rendered on the elevation strip
+- `frontImage` / `rearImage`, optional PNG/SVG, **capped at 512 KB each**, with an explicit warning that images inflate the template file and are not needed for correct output
 
-### 1.6 Section 7 — Notes, Docs & Publish
+### 1.6 Section 7: Notes, Docs & Publish
 
 Free notes, an optional documentation URL, an optional "installer notes" block that flows into the PDF appendix for every placed instance, and the **Publish** action (Draft → Published, which assigns version `1.0.0`).
 
@@ -108,7 +108,7 @@ Free notes, an optional documentation URL, an optional "installer notes" block t
 
 ## 2. The I/O Editor
 
-This is the product. Everything here is optimized so that an 8×8 matrix — 16 signal ports plus a dozen ancillaries — takes under 30 seconds.
+This is the product. Everything here is optimized so that an 8×8 matrix, 16 signal ports plus a dozen ancillaries, takes under 30 seconds.
 
 ### 2.1 Layout
 
@@ -124,7 +124,7 @@ The Quick Add strip is **docked, always visible, never a modal**, and focus retu
 
 Two input modes on one control:
 - **Command mode (default, focus lands here on entering the section).** A single text field with a permissive mini-DSL and inline autocomplete.
-- **Field mode.** The same parameters as discrete controls, for discoverability. The two are bound bidirectionally — typing in command mode updates the fields live, so the DSL teaches itself.
+- **Field mode.** The same parameters as discrete controls, for discoverability. The two are bound bidirectionally, typing in command mode updates the fields live, so the DSL teaches itself.
 
 ### 2.2 The Quick Add DSL
 
@@ -135,14 +135,14 @@ Grammar (all parts except qty and connector are optional and order-insensitive):
       ["<label pattern>"] [@<bank>] [poe:at] [z:75] [dte] [tap:10w]
 ```
 
-**Aliases resolve aggressively.** `hdmi` → connector `HDMI-A`, signal `hdmi20`, direction defaults to `in`. `rj45` → `RJ45` + `ethernet`. `hdbt` → `RJ45` + `hdbaset` (a *different* signal on the same connector — this is the whole point). `xlr` → `XLR3` + `line-bal`, gender inferred from direction (male = out, female = in). `euro3` → 3-pole Euroblock. `spdif` → `RCA` + `spdif-coax` + `impedance 75`. `toslink` → `JIS-F05` + `spdif-optical`. `bp` → binding post + `speaker-lowz`.
+**Aliases resolve aggressively.** `hdmi` → connector `HDMI-A`, signal `hdmi20`, direction defaults to `in`. `rj45` → `RJ45` + `ethernet`. `hdbt` → `RJ45` + `hdbaset` (a *different* signal on the same connector; this is the whole point). `xlr` → `XLR3` + `line-bal`, gender inferred from direction (male = out, female = in). `euro3` → 3-pole Euroblock. `spdif` → `RCA` + `spdif-coax` + `impedance 75`. `toslink` → `JIS-F05` + `spdif-optical`. `bp` → binding post + `speaker-lowz`.
 
 Examples that each produce a complete bank in one keystroke sequence:
 
 | Typed | Result |
 |---|---|
 | `8 hdmi in` | 8 × HDMI-A / hdmi20 / sink / rear, labelled `HDMI IN 1…8`, bank auto-named "HDMI Inputs" |
-| `16 euro2 out "ZONE {n@2} {L,R}"` | ZONE 1 L, ZONE 1 R, ZONE 2 L … ZONE 8 R — an entire 16-channel amp output bank |
+| `16 euro2 out "ZONE {n@2} {L,R}"` | ZONE 1 L, ZONE 1 R, ZONE 2 L … ZONE 8 R: an entire 16-channel amp output bank |
 | `24 rj45 poe:at @Ports "{n:2}"` | 01…24, PSE, 802.3at |
 | `24 rj45 pass both "{n:2}"` | 48 ports: 24 front + 24 rear, auto-paired as a passthrough patch panel |
 | `8 f out "SAT OUT {n}" dcpass:1` | 8 F-type outputs, port 1 flagged DC-passing |
@@ -170,9 +170,9 @@ Examples that each produce a complete bank in one keystroke sequence:
 
 Above Quick Add, three buttons that emit whole port topologies:
 
-- **Matrix I/O…** — asks *N inputs × M outputs*, connector for each side, and offers checkboxes for the usual companions: mirrored outputs, per-output audio de-embed, per-output IR, control (LAN + RS-232), AC inlet. Emits 4–7 banks in one action. This alone builds V01–V03 of the seeded catalog.
-- **Switch ports…** — *N access ports* + *M uplinks*, PoE standard and per-port class, SFP form factor, management port, redundant PSU.
-- **Paste from spreadsheet** — paste TSV/CSV; a column-mapping sheet appears (same engine as the Structure CSV import, §6.4). Integrators already have port lists in Excel.
+- **Matrix I/O…**: asks *N inputs × M outputs*, connector for each side, and offers checkboxes for the usual companions: mirrored outputs, per-output audio de-embed, per-output IR, control (LAN + RS-232), AC inlet. Emits 4–7 banks in one action. This alone builds V01–V03 of the seeded catalog.
+- **Switch ports…**: *N access ports* + *M uplinks*, PoE standard and per-port class, SFP form factor, management port, redundant PSU.
+- **Paste from spreadsheet**: paste TSV/CSV; a column-mapping sheet appears (same engine as the Structure CSV import, §6.4). Integrators already have port lists in Excel.
 
 ### 2.5 The port grid
 
@@ -193,7 +193,7 @@ A virtualized data grid. Rows grouped by bank with sticky collapsible group head
 | `Group` | combo + role | For component video (Y/Pb/Pr), stereo pairs (L/R), RGBHV, speaker ± |
 | `Notes` | text | |
 
-**Column packs**, toggled from a `⚙ Columns` menu — and **auto-revealed** when the current bank's dominant signal family calls for them:
+**Column packs**, toggled from a `⚙ Columns` menu, and **auto-revealed** when the current bank's dominant signal family calls for them:
 
 | Pack | Columns |
 |---|---|
@@ -218,7 +218,7 @@ Column pack visibility is remembered per *category*, so opening any switch templ
 | Multi-row edit | select N rows, edit any cell | Applies to every selected row. Right dock switches to the batch inspector; mixed values render as `—` and are left untouched unless set |
 | Duplicate | `Ctrl+J` | Clones selection below with labels auto-incremented past the highest existing index |
 | Delete | `Del` | Undoable; warns if the port is referenced by a passthrough pair |
-| Reorder | drag, or `Alt+↑/↓` | Order is **semantic** — it drives symbol pin order and panel auto-layout |
+| Reorder | drag, or `Alt+↑/↓` | Order is **semantic**: it drives symbol pin order and panel auto-layout |
 | Renumber… | `Ctrl+R` | Re-applies a label pattern to the selection **in current display order** |
 | Find & replace | `Ctrl+H` | Scoped to labels, designators, or notes; regex opt-in |
 | Change type… | `Ctrl+T` | Bulk connector/signal change on the selection, with an impact preview |
@@ -233,18 +233,18 @@ Column pack visibility is remembered per *category*, so opening any switch templ
 - error: duplicate designator in-template; passthrough port with no pair; power outlet on a device with no inlet
 - warn: RCA carrying `spdif-coax` without impedance 75; XLR carrying `aes3` without impedance 110; IR 3.5 mm port with no `pinoutVariant` set; a bank whose connectors physically cannot fit the panel width at this U height (uses the connector footprint table)
 
-**Footer readout** — always visible, one line:
+**Footer readout**: always visible, one line:
 `58 ports · 3 banks · 16 HDMI · 24 RJ45 (PoE+ ×24, 370 W budget) · 8 F · 1 C14 · Rear 56 / Front 2 · Panel fill R: 71%`
 
-### 2.6 Panel layout — and whether it ships in v1
+### 2.6 Panel layout: and whether it ships in v1
 
 **Recommendation: ship the auto-layout in v1; ship the manual override in v1, gated behind a toggle; never make either a prerequisite for anything.**
 
 The argument in three parts:
 
-**Against manual x/y authoring as a required step.** It is precisely the "click 16 times" failure the brief is trying to eliminate, multiplied — a 48-port patch panel would need 48 placements. Ports connect by *identity*, not position; the netlist, the cable schedule, and the PDF are all complete without a single coordinate. Making layout required would gate the product's actual output behind cosmetic work. This also matches the research directive not to build photorealistic panels.
+**Against manual x/y authoring as a required step.** It is precisely the "click 16 times" failure the brief is trying to eliminate, multiplied, a 48-port patch panel would need 48 placements. Ports connect by *identity*, not position; the netlist, the cable schedule, and the PDF are all complete without a single coordinate. Making layout required would gate the product's actual output behind cosmetic work. This also matches the research directive not to build photorealistic panels.
 
-**For auto-layout being in v1 regardless.** The rear elevation is where nearly all connections live, so the rear view is the *default* wiring view — it has to look like something. And the geometry is free: every connector type has a real footprint, so a layout engine can place ports without any user input:
+**For auto-layout being in v1 regardless.** The rear elevation is where nearly all connections live, so the rear view is the *default* wiring view; it has to look like something. And the geometry is free: every connector type has a real footprint, so a layout engine can place ports without any user input:
 
 | Connector | Footprint (mm) | Pitch |
 |---|---|---|
@@ -264,7 +264,7 @@ The argument in three parts:
 
 Algorithm: banks in tree order; within a bank, ports in grid order; flow left→right at the pitch; wrap to a new row when the 482.6 mm panel width is exhausted; vertical rows distributed within `44.45n − 0.79 mm`; power inlets pinned to the far right, network/control to the far left, signal banks centered. This produces a recognizably correct rear panel for every one of the 58 seeded templates with zero authoring.
 
-**For the manual override existing but being hidden.** Some devices genuinely have layouts worth capturing (a matrix where outputs are stacked in two rows, a UPS with outlets in two banks). The override is a toggle — `☐ Customize panel layout` — that reveals a canvas **pre-populated from the auto-layout**, so the interaction is nudging, not placing. Snap-to-grid at 1 mm, arrow-key nudge, align/distribute, and a "Reset to auto" button. Cheap to build because the hard part (footprints and initial placement) already exists.
+**For the manual override existing but being hidden.** Some devices genuinely have layouts worth capturing (a matrix where outputs are stacked in two rows, a UPS with outlets in two banks). The override is a toggle, `☐ Customize panel layout`, that reveals a canvas **pre-populated from the auto-layout**, so the interaction is nudging, not placing. Snap-to-grid at 1 mm, arrow-key nudge, align/distribute, and a "Reset to auto" button. Cheap to build because the hard part (footprints and initial placement) already exists.
 
 **Non-negotiable constraint:** a template with no layout data is not "incomplete." The Panel Layout section shows a green "Auto" badge and is skippable forever.
 
@@ -272,9 +272,9 @@ Algorithm: banks in tree order; within a bank, ports in grid order; flow left→
 
 Three stacked previews, each collapsible, all updating on every keystroke:
 
-1. **Rack elevation strip** — 19 in wide at true aspect, correct `44.45n − 0.79` height, front/rear toggle, faceplate colour + glyph + name + `refdesPrefix-1` placeholder. This is what actually gets printed.
-2. **Schematic symbol** — auto-generated in the KiCad/Q-SYS idiom: a rectangle with refdes top-left, name centered, model in small type below; pin stubs grouped by bank. Default sides: inputs left, outputs right, control top, power bottom — each bank overridable. Pin **shape** encodes connector class (circle = analog audio, square = control, triangle = speaker, HDMI glyph, USB glyph, hexagon = RF); pin **colour** encodes domain from the Okabe-Ito mapping (digital video `#0072B2`, analog video/RF `#56B4E9`, analog audio `#E69F00`, digital audio `#D55E00`, network `#009E73`, control `#CC79A7`, power `#000000`). Banks over 8 ports render **collapsed as a bus stub with a count badge** by default, expandable — this is what keeps a 48-port switch symbol legible.
-3. **Rear panel render** — the auto-layout output, drawn to scale, with a panel-fill percentage.
+1. **Rack elevation strip**: 19 in wide at true aspect, correct `44.45n − 0.79` height, front/rear toggle, faceplate colour + glyph + name + `refdesPrefix-1` placeholder. This is what actually gets printed.
+2. **Schematic symbol**: auto-generated in the KiCad/Q-SYS idiom: a rectangle with refdes top-left, name centered, model in small type below; pin stubs grouped by bank. Default sides: inputs left, outputs right, control top, power bottom, each bank overridable. Pin **shape** encodes connector class (circle = analog audio, square = control, triangle = speaker, HDMI glyph, USB glyph, hexagon = RF); pin **colour** encodes domain from the Okabe-Ito mapping (digital video `#0072B2`, analog video/RF `#56B4E9`, analog audio `#E69F00`, digital audio `#D55E00`, network `#009E73`, control `#CC79A7`, power `#000000`). Banks over 8 ports render **collapsed as a bus stub with a count badge** by default, expandable; this is what keeps a 48-port switch symbol legible.
+3. **Rear panel render**: the auto-layout output, drawn to scale, with a panel-fill percentage.
 
 ---
 
@@ -358,10 +358,10 @@ Plain JSON for the single-template case is deliberate: it is the unit people ema
 ### 4.1 Library, search, favourites
 
 - **Storage:** app library dir (seeded catalog, read-only-by-default) + user library dir (writable) + per-project embedded snapshots. A `.rmlib` can be mounted as an additional read-only source (this is how a firm shares a house style, and how a manufacturer could ship a pack later without RackMate maintaining it).
-- **Browser:** grid or list, with the rack elevation strip as the card thumbnail. Left sidebar: category tree, then filter chips — RU height, mount method, "has HDMI", "has PoE", "is passthrough", "container", "used in this project", "drafts".
+- **Browser:** grid or list, with the rack elevation strip as the card thumbnail. Left sidebar: category tree, then filter chips, RU height, mount method, "has HDMI", "has PoE", "is passthrough", "container", "used in this project", "drafts".
 - **Search:** fuzzy over name, manufacturer, model, tags, description, **and port signal families**. Typing `hdbaset` surfaces every template with an HDBaseT port even if the word isn't in the name. Typing `8x8` matches `MTX-8x8-HDBT`.
 - **Favourites:** star toggle; favourites pin to the top of the browser and to a dedicated palette in the rack editor.
-- **Recently used** and **Used in this project** are always the first two smart folders — in practice they satisfy 80% of lookups.
+- **Recently used** and **Used in this project** are always the first two smart folders, in practice they satisfy 80% of lookups.
 
 ### 4.2 Versioning
 
@@ -375,16 +375,16 @@ Version bump is **computed from the diff, not chosen by the user** (the user may
 | **Additive** | minor | New port, new bank, new column data on existing ports (PoE class, impedance), new clearance requirement |
 | **Breaking** | major | Port **deleted**; port `direction` reversed; port `connector` or `signalFamily` changed to something incompatible; `isPassthrough` toggled; occupancy `frontU` changed; passthrough pairing altered |
 
-A **Version diff view** opens before saving: two-column, colour-coded, grouped by change class, with a plain-English header — *"3 safe changes, 1 additive, 0 breaking → 1.2.0 → 1.3.0. Safe to auto-apply to all 4 projects using this template."*
+A **Version diff view** opens before saving: two-column, colour-coded, grouped by change class, with a plain-English header, *"3 safe changes, 1 additive, 0 breaking → 1.2.0 → 1.3.0. Safe to auto-apply to all 4 projects using this template."*
 
 Version history is kept in the library as a chain of `.rmdev` files under the templateId; "Revert to 1.1.0" creates `1.4.0` with 1.1.0's content rather than rewriting history.
 
 ### 4.3 Duplicate, fork, import, export
 
-- **Duplicate** — new `templateId`, `version 1.0.0`, name + " copy", `derivedFrom` recorded. This is the intended path for building on the seeded catalog and is offered directly from every catalog card ("Duplicate & edit").
-- **Fork from an instance** — from a placed device: *"Save this instance as a new template."* Captures the instance's overrides into a fresh template. This is the most common real workflow, because the seeded catalog is archetypes and the real device is never quite the archetype.
-- **Export** — `.rmdev`, or multi-select → `.rmlib`. Templates are **inert data, no executable content**; the import dialog says so explicitly, which is what makes file-based sharing safe enough to encourage.
-- **Import** — collision handling on `templateId`: if the incoming ID exists at a *lower* version, offer Update; at the *same* version with a different `contentHash`, offer "Import as copy (new ID)"; at a *higher* version, offer Update with the standard diff view.
+- **Duplicate**: new `templateId`, `version 1.0.0`, name + " copy", `derivedFrom` recorded. This is the intended path for building on the seeded catalog and is offered directly from every catalog card ("Duplicate & edit").
+- **Fork from an instance**: from a placed device: *"Save this instance as a new template."* Captures the instance's overrides into a fresh template. This is the most common real workflow, because the seeded catalog is archetypes and the real device is never quite the archetype.
+- **Export**: `.rmdev`, or multi-select → `.rmlib`. Templates are **inert data, no executable content**; the import dialog says so explicitly, which is what makes file-based sharing safe enough to encourage.
+- **Import**: collision handling on `templateId`: if the incoming ID exists at a *lower* version, offer Update; at the *same* version with a different `contentHash`, offer "Import as copy (new ID)"; at a *higher* version, offer Update with the standard diff view.
 
 ---
 
@@ -407,7 +407,7 @@ PlacedDevice {
 }
 ```
 
-Two consequences worth stating: a `.rackmate` file is **self-contained and shareable** — the recipient does not need your library. And an override is a *diff against the template*, so template updates and user customizations compose rather than collide.
+Two consequences worth stating: a `.rackmate` file is **self-contained and shareable**: the recipient does not need your library. And an override is a *diff against the template*, so template updates and user customizations compose rather than collide.
 
 ### 5.2 Three verbs, never ambiguous
 
@@ -415,9 +415,9 @@ Right-clicking a placed device offers exactly three edit paths, worded to be unm
 
 | Verb | Effect | Scope badge shown while editing |
 |---|---|---|
-| **Edit this device only** | Writes to `overrides`. Template untouched. Device gets a small ✎ badge in the elevation and a "(modified)" suffix in the BOM | Amber — *"Editing MTX-1 only. 3 other devices use this template and will not change."* |
-| **Edit the template** | Opens the device builder on the template. Produces a new version. Existing instances are **not** auto-updated | Blue — *"Editing template 'HDMI Matrix 8×8'. Used by 4 devices across 2 projects."* |
-| **Detach into a new template** | Forks: new `templateId`, seeded from snapshot + overrides, this instance rebinds to the fork, overrides cleared | Green — *"MTX-1 will use a new independent template."* |
+| **Edit this device only** | Writes to `overrides`. Template untouched. Device gets a small ✎ badge in the elevation and a "(modified)" suffix in the BOM | Amber: *"Editing MTX-1 only. 3 other devices use this template and will not change."* |
+| **Edit the template** | Opens the device builder on the template. Produces a new version. Existing instances are **not** auto-updated | Blue: *"Editing template 'HDMI Matrix 8×8'. Used by 4 devices across 2 projects."* |
+| **Detach into a new template** | Forks: new `templateId`, seeded from snapshot + overrides, this instance rebinds to the fork, overrides cleared | Green: *"MTX-1 will use a new independent template."* |
 
 Plus a fourth, on the template side: **Detach instance** (`templateRef → null`), for a genuine one-off that should never receive updates.
 
@@ -425,7 +425,7 @@ Plus a fourth, on the template side: **Detach instance** (`templateRef → null`
 
 **Nothing auto-updates. Ever.** Updates are opt-in, reviewed, and per-instance-reversible.
 
-Trigger points: on project open (a non-modal toast — *"3 devices have template updates available"*), from the device inspector, or from **Project → Template Updates…**.
+Trigger points: on project open (a non-modal toast, *"3 devices have template updates available"*), from the device inspector, or from **Project → Template Updates…**.
 
 **The Update Manager:**
 
@@ -457,14 +457,14 @@ Trigger points: on project open (a non-modal toast — *"3 devices have template
 
 Rules that make this work:
 
-1. **`portId` is the join key**, not label or index. A port can be renamed, reordered, moved between banks, or retyped and still resolve — cables survive.
+1. **`portId` is the join key**, not label or index. A port can be renamed, reordered, moved between banks, or retyped and still resolve, cables survive.
 2. **Only deletion and incompatible retyping break a cable.** Both are surfaced with the exact affected cables, and **nothing is ever silently dropped.** Remap offers a dropdown of surviving ports on the same device filtered to compatible ones, ranked by similarity (same bank, same connector, nearest order index).
 3. **Overrides survive updates by default.** If the template changes a field the user has overridden, that specific field appears in the Conflicts group with "Keep mine" preselected.
 4. **The whole apply is one undo step**, and a pre-update snapshot of `project.json` is written to the project's `.history/` folder.
 
 ### 5.4 The seeded catalog and updates
 
-Seeded templates ship read-only. Editing one silently performs **Duplicate → edit the copy**, with a one-line notice: *"Catalog templates are read-only. Editing your copy 'HDMI Matrix 8×8 (custom)'."* This keeps app-update semantics simple — RackMate can ship catalog v2 without ever clobbering user work — and it makes the correct workflow (fork the archetype) the default one.
+Seeded templates ship read-only. Editing one silently performs **Duplicate → edit the copy**, with a one-line notice: *"Catalog templates are read-only. Editing your copy 'HDMI Matrix 8×8 (custom)'."* This keeps app-update semantics simple, RackMate can ship catalog v2 without ever clobbering user work, and it makes the correct workflow (fork the archetype) the default one.
 
 ---
 
@@ -472,20 +472,20 @@ Seeded templates ship read-only. Editing one silently performs **Duplicate → e
 
 ### 6.1 Why it needs a different editor
 
-A rack device is a *thing with ports*. The Structure device is *a list of home runs organized by room*. Its natural entry axis is **room × media type × quantity**, not port-by-port. Forcing it through the device builder would be a category error — you would be adding 62 ports one bank at a time when what the integrator actually has in hand is a pull list.
+A rack device is a *thing with ports*. The Structure device is *a list of home runs organized by room*. Its natural entry axis is **room × media type × quantity**, not port-by-port. Forcing it through the device builder would be a category error; you would be adding 62 ports one bank at a time when what the integrator actually has in hand is a pull list.
 
-The Structure device is: zero RU, zero weight, no rack position, `mountMethod: notInRack`, variable user-defined port list, rendered at the drawing boundary as a bank of off-page connector flags — the schematic idiom for signals entering from elsewhere.
+The Structure device is: zero RU, zero weight, no rack position, `mountMethod: notInRack`, variable user-defined port list, rendered at the drawing boundary as a bank of off-page connector flags, the schematic idiom for signals entering from elsewhere.
 
 ### 6.2 Editor layout
 
 Four regions:
 
-- **Left — Location tree.** `Site → Building → Floor → Room → Outlet/plate`. Drag-reorderable, inline-renamable. **This tree is the project's canonical location vocabulary** — the same one the rack editor and the PDF use. Renaming "Study" to "Office" here repropagates to every label, schedule row, and diagram callout. This directly answers the documented failure where the plan says "Study", the homeowner says "Office", and the label says "Room 3". Each room carries an editable `abbr` (Living Room → `LR`), auto-derived on creation.
-- **Top — dual-mode bulk entry.** Matrix mode or command mode (§6.3).
-- **Center — the drop table** (§6.5).
-- **Right — inspector / batch inspector**, identical ergonomics to the device builder.
+- **Left: Location tree.** `Site → Building → Floor → Room → Outlet/plate`. Drag-reorderable, inline-renamable. **This tree is the project's canonical location vocabulary**: the same one the rack editor and the PDF use. Renaming "Study" to "Office" here repropagates to every label, schedule row, and diagram callout. This directly answers the documented failure where the plan says "Study", the homeowner says "Office", and the label says "Room 3". Each room carries an editable `abbr` (Living Room → `LR`), auto-derived on creation.
+- **Top: dual-mode bulk entry.** Matrix mode or command mode (§6.3).
+- **Center: the drop table** (§6.5).
+- **Right: inspector / batch inspector**, identical ergonomics to the device builder.
 
-### 6.3 Bulk entry — two modes on one control
+### 6.3 Bulk entry: two modes on one control
 
 **Matrix mode (the default, and the fast one.)** Rooms down the left, media types across the top, integer spinners at the intersections. Changing a cell from 0 to 2 instantly materializes two drops with auto-generated labels. This is Dante Controller's grid reapplied to structured wiring, and it is the only way 60+ drops get entered in under two minutes.
 
@@ -514,13 +514,13 @@ Exterior: 6x Cat6 @service=camera @status=planned
 Kitchen: 2x Cat6 + 1x RG6 as bundle "KIT-TV-1"
 ```
 
-The `as bundle "…"` suffix is how a multi-media single run gets created in one line — one bundle containing three drops.
+The `as bundle "…"` suffix is how a multi-media single run gets created in one line, one bundle containing three drops.
 
 ### 6.4 CSV / spreadsheet import
 
-Accepts a pull list in either **long** shape (one row per drop) or **wide** shape (rooms as rows, media as numeric columns — because that is how pull lists actually look). Shape is auto-detected: if ≥2 column headers resolve to media synonyms *and* their cells are numeric, wide mode is offered.
+Accepts a pull list in either **long** shape (one row per drop) or **wide** shape (rooms as rows, media as numeric columns, because that is how pull lists actually look). Shape is auto-detected: if ≥2 column headers resolve to media synonyms *and* their cells are numeric, wide mode is offered.
 
-Import is never fail-fast. A **column-mapping sheet** shows every source header, RackMate's best guess, and a dropdown to correct it. Unmapped columns are **preserved into a `custom` map and surfaced as optional grid columns** — user data is never discarded.
+Import is never fail-fast. A **column-mapping sheet** shows every source header, RackMate's best guess, and a dropdown to correct it. Unmapped columns are **preserved into a `custom` map and surfaced as optional grid columns**: user data is never discarded.
 
 **Accepted columns** (matching is case-, space-, underscore-, and hyphen-insensitive):
 
@@ -546,7 +546,7 @@ Import is never fail-fast. A **column-mapping sheet** shows every source header,
 
 **Media synonym table** (extensible, ships with these): `cat6 / cat-6 / cat 6 / c6 / cat6 utp` → **Cat6**; `cat6a / c6a / cat6 shielded / f/utp` → **Cat6a**; `cat5e / c5e / cat5` → **Cat5e**; `rg6 / rg-6 / coax / coaxial` → **RG6**; `rg6q / rg6 quad / quad shield` → **RG6 Quad**; `rg11` → **RG11**; `16/2 / 16-2 / 16ga 2c / spkr 16/2` → **16/2 Speaker**; `16/4 / 14/4 / 14-4` → **16/4 · 14/4 Speaker**; `22/4 / 22-4 / control / keypad` → **22/4 Control**; `os2 / smf / single mode` → **Fiber OS2**; `om3 / om4 / mmf` → **Fiber MMF**; `conduit / smurf / ent` → **Conduit (empty)**.
 
-Unmatched media values are **not** rejected — they are created as new user media types with a confirmation chip.
+Unmatched media values are **not** rejected; they are created as new user media types with a confirmation chip.
 
 Preview grid shows the parsed result with per-row validation before commit. Duplicate labels are flagged, not blocked.
 
@@ -567,7 +567,7 @@ One row per drop; bundles render as collapsible parent rows.
 | `Rack termination` | Patch panel port · F barrel · Punchdown · Euroblock · Binding post · Unterminated coil · **(auto-fills when connected)** |
 | `Field termination` | RJ45 jack · F jack · Speaker binding · Bare · Device pigtail |
 | `Length (ft)` | |
-| `Jacket` | colour swatch — pull lists carry it and installers use it |
+| `Jacket` | colour swatch: pull lists carry it and installers use it |
 | `Conduit` | |
 | `Status` | Planned · Pulled · Terminated · Tested · **In use** · **Spare** · Abandoned |
 | `Connected to` | read-only; the rack-side port this drop lands on, if any |
@@ -584,7 +584,7 @@ Bundle { bundleId, label, locationId, conduitId?, lengthFt?, notes,
          members: [dropId] }
 ```
 
-**Purely organisational** — NetBox's explicit precedent, and exactly right for the confirmed "no cable dressing" decision. A bundle does not affect tracing, connectivity, or the netlist. It affects two things only: how the run is *drawn* (one trunk that fans out at each end rather than five parallel lines) and how it is *grouped* in the schedule.
+**Purely organisational**: NetBox's explicit precedent, and exactly right for the confirmed "no cable dressing" decision. A bundle does not affect tracing, connectivity, or the netlist. It affects two things only: how the run is *drawn* (one trunk that fans out at each end rather than five parallel lines) and how it is *grouped* in the schedule.
 
 Created three ways: select rows → **Group into bundle**; the `as bundle "…"` command suffix; or automatically on CSV import when rows share a `bundle` value.
 
@@ -598,11 +598,11 @@ The Structure device **never renders as a rectangle with 62 pins.** Five mechani
 2. **Room grouping with headers.** Flags are grouped under a rule bearing the room name and abbreviation. Room order follows the location tree.
 3. **Unused collapse (default on).** Only *connected* drops render individually. Unconnected drops per room collapse into a single summary flag: `Living Room · 3 spare (2× Cat6, 1× RG6)`, click to expand. This makes the drawing show the system, and it produces a genuinely valuable byproduct: **an "Unused home runs" page in the PDF**, which is a deliverable integrators currently don't get from anything.
 4. **Bundle trunks.** A bundle draws as one thick trunk from the Structure boundary toward the rack, fanning to individual ports only at the destination. Six-drop bundles become one line for 90% of their length.
-5. **Named-net mode.** Any drop can be switched from *drawn* to *named*: a flag at the Structure and a matching flag at the destination port, with the label as the join — no line crosses the sheet. This is Q-SYS's signal-names escape hatch and it is what makes a 100-run house diagrammable at all. Q-SYS's rule is adopted verbatim: duplicate *source* names prohibited, duplicate *destination* names permitted.
+5. **Named-net mode.** Any drop can be switched from *drawn* to *named*: a flag at the Structure and a matching flag at the destination port, with the label as the join, no line crosses the sheet. This is Q-SYS's signal-names escape hatch and it is what makes a 100-run house diagrammable at all. Q-SYS's rule is adopted verbatim: duplicate *source* names prohibited, duplicate *destination* names permitted.
 
 Plus: room-level isolate/filter in both the editor and the diagram view, and automatic **sheet paging by room group** when a Structure exceeds a configurable flag count per sheet (default 40).
 
-### 6.8 Labelling — TIA-606 and the human name, both
+### 6.8 Labelling: TIA-606 and the human name, both
 
 Both identifiers are generated for every drop. Both print on the schedule. The diagram shows the preferred one with the other as a secondary tag. This is deliberate: the standards-compliant ID satisfies the documentation requirement, and the human-readable one satisfies the person holding the cable.
 
@@ -618,23 +618,23 @@ Shipped presets:
 | **Residential CI** (default) | `{roomAbbr}-{service}-{seq}` | `LR-TV-1`, `MBR-KEY-2`, `EXT-CAM-4` |
 | **Room + media** | `{roomAbbr}-{media}-{seq:2}` | `LR-CAT6-01` |
 
-Label uniqueness is enforced **project-wide**, not per-Structure — labels get printed on physical cable and must not collide across panels. Collisions raise a warning with a one-click "renumber the later one."
+Label uniqueness is enforced **project-wide**, not per-Structure, labels get printed on physical cable and must not collide across panels. Collisions raise a warning with a one-click "renumber the later one."
 
-### 6.9 Multiple Structure devices — yes
+### 6.9 Multiple Structure devices: yes
 
 Explicitly supported and encouraged. A rack fed from a garage structured-media enclosure *plus* a separate exterior/camera panel *plus* a utility/service feed is a normal residential job, and one monolithic node is less useful than three named ones.
 
 Each Structure instance carries its own name, `refdesPrefix` (default `STR`, so `STR-1`, `STR-2`), its own location subtree scope, and its own label template. Constraints:
 
 - Drop labels unique **project-wide** across all Structures.
-- A room may appear under more than one Structure (a bedroom with data from the media panel and a camera from the exterior panel) — the location tree is shared, the drops are not.
+- A room may appear under more than one Structure (a bedroom with data from the media panel and a camera from the exterior panel), the location tree is shared, the drops are not.
 - Each Structure renders as its own flag column, at the left edge by default; a Structure can be pinned to the right edge instead (useful for a utility/service entrance drawn on the opposite side).
 
 A Structure with zero drops is valid and shows a friendly empty state pointing at the three entry paths (matrix, command, CSV import).
 
 ---
 
-## 7. The Seeded Catalog — 58 Templates
+## 7. The Seeded Catalog: 58 Templates
 
 **Notation.** Each bank is one line:
 
@@ -642,8 +642,8 @@ A Structure with zero drops is valid and shows a friendly empty state pointing a
 QTY×CONNECTOR:signal:DIR[:SIDE]  "label pattern"          ← bank name
 ```
 
-- `DIR` — `i` sink/input · `o` source/output · `b` bidirectional · `p` passive/bus node
-- `SIDE` — `R` rear (default, omitted) · `F` front · `FR` paired front+rear
+- `DIR`, `i` sink/input · `o` source/output · `b` bidirectional · `p` passive/bus node
+- `SIDE`, `R` rear (default, omitted) · `F` front · `FR` paired front+rear
 - Modifiers in brackets: `[z75]` impedance Ω · `[poe:at/c4]` PoE std/class · `[dte]` serial role · `[dcpass]` DC-passing · `[seq:1]` sequencer step · `[ups]` UPS-backed
 - Power figures are `nameplate W / typical W`; weight in lb.
 
@@ -651,9 +651,9 @@ Where a template is marked **parametric**, the same definition ships with a buil
 
 ---
 
-### 7.1 Video Distribution & Switching — 10
+### 7.1 Video Distribution & Switching: 10
 
-**V01 · HDMI Matrix 4×4** — `MTX` · 1U · 12 lb · 30/18 W · 14 in deep
+**V01 · HDMI Matrix 4×4**: `MTX` · 1U · 12 lb · 30/18 W · 14 in deep
 ```
 4×HDMI-A:hdmi20:i        "HDMI IN {n}"            ← HDMI Inputs
 4×HDMI-A:hdmi20:o        "HDMI OUT {n}"           ← HDMI Outputs
@@ -664,7 +664,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×DC-2.1:dc-12v:i        "12V DC IN"              ← Power  ⚠ external brick — consumes a PDU outlet
 ```
 
-**V02 · HDMI/HDBaseT Matrix 8×8** — `MTX` · 3U · 16 lb · 90/55 W · 13 in
+**V02 · HDMI/HDBaseT Matrix 8×8**: `MTX` · 3U · 16 lb · 90/55 W · 13 in
 ```
 8×HDMI-A:hdmi20:i          "HDMI IN {n}"           ← HDMI Inputs
 8×RJ45:hdbaset:o           "HDBT OUT {n}"          ← HDBaseT Outputs   ⚠ never patch to a switch
@@ -677,7 +677,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×C14:ac-inlet:i           "AC IN"                 ← Power
 ```
 
-**V03 · HDMI Matrix 16×16** — `MTX` · 4U · 31 lb · 180/110 W · 17 in
+**V03 · HDMI Matrix 16×16**: `MTX` · 4U · 31 lb · 180/110 W · 17 in
 ```
 16×HDMI-A:hdmi20:i         "HDMI IN {n:2}"         ← HDMI Inputs
 16×HDMI-A:hdmi20:o         "HDMI OUT {n:2}"        ← HDMI Outputs
@@ -688,21 +688,21 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×C14:ac-inlet:i           "AC IN"                 ← Power
 ```
 
-**V04 · HDMI Splitter 1×4** — `DA` · 1U · 4 lb · 15/9 W · 6 in
+**V04 · HDMI Splitter 1×4**: `DA` · 1U · 4 lb · 15/9 W · 6 in
 ```
 1×HDMI-A:hdmi20:i   "HDMI IN"
 4×HDMI-A:hdmi20:o   "HDMI OUT {n}"
 1×DC-2.1:dc-12v:i   "12V DC IN"     ⚠ external brick
 ```
 
-**V05 · HDMI Splitter 1×8** — `DA` · 1U · 5 lb · 25/15 W · 7 in
+**V05 · HDMI Splitter 1×8**: `DA` · 1U · 5 lb · 25/15 W · 7 in
 ```
 1×HDMI-A:hdmi20:i   "HDMI IN"
 8×HDMI-A:hdmi20:o   "HDMI OUT {n}"
 1×DC-2.1:dc-12v:i   "12V DC IN"
 ```
 
-**V06 · Presentation Switcher / Scaler 4×1** — `SCL` · 1U · 8 lb · 45/28 W · 9 in
+**V06 · Presentation Switcher / Scaler 4×1**: `SCL` · 1U · 8 lb · 45/28 W · 9 in
 ```
 3×HDMI-A:hdmi20:i          "HDMI IN {n}"          ← Video Inputs
 1×USB-C:dp-alt:i           "USB-C IN"
@@ -717,7 +717,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×C14:ac-inlet:i           "AC IN"                ← Power
 ```
 
-**V07 · HDBaseT Transmitter** — `TX` · 0U hosted (½-rack, `hostedHeightU 1`) · 1.2 lb · 12/8 W · 4 in
+**V07 · HDBaseT Transmitter**: `TX` · 0U hosted (½-rack, `hostedHeightU 1`) · 1.2 lb · 12/8 W · 4 in
 ```
 1×HDMI-A:hdmi20:i        "HDMI IN"
 1×HDMI-A:hdmi20:o        "HDMI LOOP OUT"
@@ -728,7 +728,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×DC-2.1:dc-12v:i        "12V DC IN"
 ```
 
-**V08 · HDBaseT Receiver** — `RX` · `notInRack` (lives at the display) · 1.2 lb · 0/0 W (PoH-powered)
+**V08 · HDBaseT Receiver**: `RX` · `notInRack` (lives at the display) · 1.2 lb · 0/0 W (PoH-powered)
 ```
 1×RJ45:hdbaset:i[poh-pd] "HDBT IN"
 1×HDMI-A:hdmi20:o        "HDMI OUT"
@@ -738,7 +738,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×DC-2.1:dc-12v:i        "12V DC IN (opt)"
 ```
 
-**V09 · AVoIP Encoder** — `ENC` · 0U hosted (½-rack) · 1.5 lb · 12/9 W (802.3af PD) · 5 in
+**V09 · AVoIP Encoder**: `ENC` · 0U hosted (½-rack) · 1.5 lb · 12/9 W (802.3af PD) · 5 in
 ```
 1×HDMI-A:hdmi20:i         "HDMI IN"
 1×HDMI-A:hdmi20:o         "HDMI LOOP OUT"
@@ -750,7 +750,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×DC-2.1:dc-12v:i         "12V DC IN (opt)"
 ```
 
-**V10 · AVoIP Decoder** — `DEC` · 0U hosted (½-rack) · 1.5 lb · 12/9 W (802.3af PD) · 5 in
+**V10 · AVoIP Decoder**: `DEC` · 0U hosted (½-rack) · 1.5 lb · 12/9 W (802.3af PD) · 5 in
 ```
 1×RJ45:avoip:b[poe:af/c3-pd]  "NETWORK"
 1×HDMI-A:hdmi20:o         "HDMI OUT"
@@ -762,9 +762,9 @@ Where a template is marked **parametric**, the same definition ships with a buil
 
 ---
 
-### 7.2 Audio — 8
+### 7.2 Audio: 8
 
-**A01 · Multi-Zone Amplifier, 8-channel (4 stereo zones)** — `AMP` · 2U · 22 lb · 400/180 W · 15 in · `clearanceAbove: 1U`
+**A01 · Multi-Zone Amplifier, 8-channel (4 stereo zones)**: `AMP` · 2U · 22 lb · 400/180 W · 15 in · `clearanceAbove: 1U`
 ```
 8×RCA:line-unbal:i         "SRC {n@2} {L,R}"      ← Source Inputs
 8×Euroblock-2:speaker-lowz:o "ZONE {n@2} {L,R}"   ← Zone Speaker Outputs  [polarity +/−]
@@ -777,7 +777,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×NEMA5-15P:ac-inlet:i     "AC (captive cord)"    ← Power
 ```
 
-**A02 · Multi-Zone Amplifier, 16-channel (8 stereo zones)** — `AMP` · 3U · 38 lb · 800/340 W · 16 in · `clearanceAbove: 1U`
+**A02 · Multi-Zone Amplifier, 16-channel (8 stereo zones)**: `AMP` · 3U · 38 lb · 800/340 W · 16 in · `clearanceAbove: 1U`
 ```
 16×RCA:line-unbal:i          "SRC {n@2} {L,R}"     ← Source Inputs
 16×Euroblock-2:speaker-lowz:o "ZONE {n@2} {L,R}"   ← Zone Speaker Outputs
@@ -789,7 +789,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×NEMA5-20P:ac-inlet:i       "AC (captive cord)"   ← Power  ⚠ 20 A plug
 ```
 
-**A03 · AV Receiver, 7.2 channel** — `AVR` · shelf-mounted, `hostedHeightU 4` · 26 lb · 750/280 W · 15 in
+**A03 · AV Receiver, 7.2 channel**: `AVR` · shelf-mounted, `hostedHeightU 4` · 26 lb · 750/280 W · 15 in
 ```
 7×HDMI-A:hdmi21:i          "HDMI IN {n}"          ← HDMI Inputs
 1×HDMI-A:hdmi20:i:F        "HDMI FRONT"
@@ -812,7 +812,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×NEMA5-15P:ac-inlet:i     "AC (captive cord)"    ← Power
 ```
 
-**A04 · Surround Preamp / Processor** — `PRE` · 3U · 24 lb · 120/70 W · 16 in
+**A04 · Surround Preamp / Processor**: `PRE` · 3U · 24 lb · 120/70 W · 16 in
 ```
 8×HDMI-A:hdmi21:i          "HDMI IN {n}"          ← HDMI Inputs
 2×HDMI-A:hdmi21:o          "HDMI OUT {n}"         ← HDMI Outputs
@@ -829,7 +829,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×C14:ac-inlet:i           "AC IN"                ← Power
 ```
 
-**A05 · DSP Audio Processor (8×8 + Dante)** — `DSP` · 1U · 9 lb · 60/35 W · 12 in
+**A05 · DSP Audio Processor (8×8 + Dante)**: `DSP` · 1U · 9 lb · 60/35 W · 12 in
 ```
 8×Euroblock-3:mic-line:i   "IN {n}"               ← Analog Inputs  [phantom-capable]
 8×Euroblock-3:line-bal:o   "OUT {n}"              ← Analog Outputs
@@ -842,7 +842,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×C14:ac-inlet:i           "AC IN"                ← Power
 ```
 
-**A06 · Multi-Zone Streaming Source (4 stream)** — `STR` · 1U · 7 lb · 35/20 W · 11 in
+**A06 · Multi-Zone Streaming Source (4 stream)**: `STR` · 1U · 7 lb · 35/20 W · 11 in
 ```
 8×RCA:line-unbal:o         "STREAM {n@2} {L,R}"   ← Analog Outputs
 4×RCA:spdif-coax:o[z75]    "DIGITAL OUT {n}"      ← Digital Outputs
@@ -853,7 +853,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×C14:ac-inlet:i           "AC IN"                ← Power
 ```
 
-**A07 · 70V/100V Commercial Amplifier, 2×250 W** — `AMP` · 2U · 28 lb · 700/300 W · 15 in · `clearanceAbove: 1U`
+**A07 · 70V/100V Commercial Amplifier, 2×250 W**: `AMP` · 2U · 28 lb · 700/300 W · 15 in · `clearanceAbove: 1U`
 ```
 2×Euroblock-3:line-bal:i   "IN {A,B}"             ← Line Inputs
 2×Euroblock-3:line-bal:o   "LINK OUT {A,B}"       ← Link Thru
@@ -863,7 +863,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×NEMA5-20P:ac-inlet:i     "AC (captive cord)"    ← Power
 ```
 
-**A08 · Stereo Power Amplifier, 2×200 W** — `AMP` · 2U · 34 lb · 900/380 W · 17 in · `clearanceAbove: 1U`
+**A08 · Stereo Power Amplifier, 2×200 W**: `AMP` · 2U · 34 lb · 900/380 W · 17 in · `clearanceAbove: 1U`
 ```
 2×XLR3-F:line-bal:i        "BAL IN {L,R}"         ← Inputs
 2×RCA:line-unbal:i         "UNBAL IN {L,R}"
@@ -874,9 +874,9 @@ Where a template is marked **parametric**, the same definition ships with a buil
 
 ---
 
-### 7.3 Network & Cabling Infrastructure — 10
+### 7.3 Network & Cabling Infrastructure: 10
 
-**N01 · PoE Switch, 8-port** — `SW` · 1U · 6 lb · 150/60 W · 10 in · **PoE budget 130 W**
+**N01 · PoE Switch, 8-port**: `SW` · 1U · 6 lb · 150/60 W · 10 in · **PoE budget 130 W**
 ```
 8×RJ45:ethernet:b[poe:at/pse]  "{n}"              ← Access Ports  [1G]
 2×SFP:ethernet:b               "SFP {n}"          ← Uplinks       [1G]
@@ -884,7 +884,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×C14:ac-inlet:i               "AC IN"            ← Power
 ```
 
-**N02 · PoE Switch, 24-port** — `SW` · 1U · 11 lb · 450/190 W · 14 in · **PoE budget 370 W**
+**N02 · PoE Switch, 24-port**: `SW` · 1U · 11 lb · 450/190 W · 14 in · **PoE budget 370 W**
 ```
 24×RJ45:ethernet:b[poe:at/pse] "{n:2}"            ← Access Ports  [1G]
 4×SFP+:ethernet:b              "SFP+ {n}"         ← Uplinks       [10G]
@@ -893,7 +893,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×C14:ac-inlet:i               "AC IN"            ← Power
 ```
 
-**N03 · PoE Switch, 48-port** — `SW` · 1U · 17 lb · 900/380 W · 17 in · **PoE budget 740 W** · `clearanceAbove: 1U`
+**N03 · PoE Switch, 48-port**: `SW` · 1U · 17 lb · 900/380 W · 17 in · **PoE budget 740 W** · `clearanceAbove: 1U`
 ```
 48×RJ45:ethernet:b[poe:bt-t3/pse] "{n:2}"         ← Access Ports  [1G, 60 W Type 3]
 4×SFP28:ethernet:b             "SFP28 {n}"        ← Uplinks       [25G]
@@ -902,7 +902,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 2×C14:ac-inlet:i               "PSU {A,B}"        ← Power (redundant)
 ```
 
-**N04 · 10G Aggregation Switch** — `SW` · 1U · 12 lb · 250/120 W · 15 in
+**N04 · 10G Aggregation Switch**: `SW` · 1U · 12 lb · 250/120 W · 15 in
 ```
 8×SFP+:ethernet:b     "SFP+ {n}"                  ← 10G Fiber   [10G]
 4×RJ45:ethernet:b     "10GBASE-T {n}"             ← 10G Copper  [10G]
@@ -910,7 +910,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 2×C14:ac-inlet:i      "PSU {A,B}"                 ← Power
 ```
 
-**N05 · Router / Firewall** — `FW` · 1U · 9 lb · 120/55 W · 13 in
+**N05 · Router / Firewall**: `FW` · 1U · 9 lb · 120/55 W · 13 in
 ```
 2×RJ45:ethernet:b     "WAN {n}"                   ← WAN
 8×RJ45:ethernet:b     "LAN {n}"                   ← LAN  [1G]
@@ -920,33 +920,33 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×C14:ac-inlet:i      "AC IN"                     ← Power
 ```
 
-**N06 · Wireless Controller / Site Gateway** — `WLC` · 0U hosted (½-rack) · 1 lb · 12/7 W
+**N06 · Wireless Controller / Site Gateway**: `WLC` · 0U hosted (½-rack) · 1 lb · 12/7 W
 ```
 1×RJ45:ethernet:b[poe:af/pd] "LAN"
 1×USB-A:usb2:b        "USB"
 1×DC-2.1:dc-12v:i     "12V DC IN (opt)"
 ```
 
-**N07 · Patch Panel, 12-port** — `PP` · 1U · 2 lb · 0 W · **passthrough** · parametric
+**N07 · Patch Panel, 12-port**: `PP` · 1U · 2 lb · 0 W · **passthrough** · parametric
 ```
 12×RJ45:ethernet:p:F  "{n:2}"                     ← Front Jacks
 12×IDC-110:ethernet:p:R "{n:2}"                   ← Rear Punchdown   [paired 1:1 with front]
 ```
 
-**N08 · Patch Panel, 24-port** — `PP` · 1U · 3 lb · 0 W · **passthrough** · parametric
+**N08 · Patch Panel, 24-port**: `PP` · 1U · 3 lb · 0 W · **passthrough** · parametric
 ```
 24×RJ45:ethernet:p:F  "{n:2}"                     ← Front Jacks
 24×IDC-110:ethernet:p:R "{n:2}"                   ← Rear Punchdown   [paired 1:1]
 ```
 > ⚠ 24-port panels ship as both 1U and 2U in the real world. Height is a template field, **never derived from port count**. The 2U variant ships as a parametric option, not a separate entry.
 
-**N09 · Patch Panel, 48-port** — `PP` · 2U · 5 lb · 0 W · **passthrough** · parametric
+**N09 · Patch Panel, 48-port**: `PP` · 2U · 5 lb · 0 W · **passthrough** · parametric
 ```
 48×RJ45:ethernet:p:F  "{n:2}"                     ← Front Jacks
 48×IDC-110:ethernet:p:R "{n:2}"                   ← Rear Punchdown   [paired 1:1]
 ```
 
-**N10 · Fiber Enclosure / LIU, 24-fiber** — `LIU` · 1U · 6 lb · 0 W · **passthrough**
+**N10 · Fiber Enclosure / LIU, 24-fiber**: `LIU` · 1U · 6 lb · 0 W · **passthrough**
 ```
 12×LC-Duplex:fiber:p:F "LC {n:2}"                 ← Front Adapters   [OS2]
 24×Splice:fiber:p:R    "SPL {n:2}"                ← Rear Splice Tray
@@ -954,9 +954,9 @@ Where a template is marked **parametric**, the same definition ships with a buil
 
 ---
 
-### 7.4 Control — 6
+### 7.4 Control: 6
 
-**C01 · Control Processor** — `CTL` · 1U · 7 lb · 60/30 W · 11 in
+**C01 · Control Processor**: `CTL` · 1U · 7 lb · 60/30 W · 11 in
 ```
 2×RJ45:ethernet:b          "LAN {n}"              ← Network
 8×Euroblock-3:rs232:b[dte] "COM {n}"              ← Serial   [also RS-422/485 selectable]
@@ -968,7 +968,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×C14:ac-inlet:i           "AC IN"                ← Power
 ```
 
-**C02 · IR Distribution Block** — `IRB` · 1U · 2 lb · 12/6 W · 5 in
+**C02 · IR Distribution Block**: `IRB` · 1U · 2 lb · 12/6 W · 5 in
 ```
 1×3.5mm:ir-rx:i        "IR IN (from processor)"   ← Source
 4×3.5mm:ir-rx:i        "IR RX {n}"                ← Receiver Inputs  [pinout: xantech-stereo, +12 V on sleeve]
@@ -977,7 +977,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 ```
 > ⚠ Receiver and emitter jacks are **not** interchangeable. Plugging an emitter into a receiver jack destroys the emitter and can damage the supply. `pinoutVariant` on each bank is what makes RackMate catch this at drag time.
 
-**C03 · Relay / I-O Module** — `IO` · 1U · 4 lb · 25/12 W · 8 in
+**C03 · Relay / I-O Module**: `IO` · 1U · 4 lb · 25/12 W · 8 in
 ```
 8×Euroblock-3:relay:o   "RELAY {n}"               ← Relays  [NO/COM/NC]
 8×Euroblock-2:contact:i "INPUT {n}"               ← Digital Inputs
@@ -986,7 +986,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×C14:ac-inlet:i        "AC IN"                   ← Power
 ```
 
-**C04 · RS-232 / IP Gateway, 8-port** — `SER` · 1U · 5 lb · 30/15 W · 8 in
+**C04 · RS-232 / IP Gateway, 8-port**: `SER` · 1U · 5 lb · 30/15 W · 8 in
 ```
 8×DE-9:rs232:b[dte]  "COM {n}"                    ← Serial Ports
 1×RJ45:ethernet:b    "LAN"                        ← Network
@@ -994,7 +994,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×C14:ac-inlet:i     "AC IN"                      ← Power
 ```
 
-**C05 · DMX / Lighting Gateway, 4 universe** — `DMX` · 1U · 4 lb · 25/12 W · 8 in
+**C05 · DMX / Lighting Gateway, 4 universe**: `DMX` · 1U · 4 lb · 25/12 W · 8 in
 ```
 4×XLR5-F:dmx512:o    "DMX OUT {A}"                ← DMX Outputs  [bus, 32 unit loads/universe, 120 Ω term at far end]
 1×XLR5-M:dmx512:i    "DMX IN"
@@ -1002,7 +1002,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×C14:ac-inlet:i     "AC IN"                      ← Power
 ```
 
-**C06 · Control Bus Power Supply, 75 W** — `PSU` · 1U · 6 lb · 90/45 W · 8 in
+**C06 · Control Bus Power Supply, 75 W**: `PSU` · 1U · 6 lb · 90/45 W · 8 in
 ```
 4×Euroblock-4:cresnet:o  "NET {n}"                ← Bus Outputs  [24 V; 18 AWG @20 W ⇒ 333 ft limit]
 1×C14:ac-inlet:i         "AC IN"                  ← Power
@@ -1010,9 +1010,9 @@ Where a template is marked **parametric**, the same definition ships with a buil
 
 ---
 
-### 7.5 Sources — 5
+### 7.5 Sources: 5
 
-**S01 · Cable / Satellite Set-Top Box** — `STB` · 0U hosted, `hostedHeightU 1` · 3 lb · 35/22 W · 10 in
+**S01 · Cable / Satellite Set-Top Box**: `STB` · 0U hosted, `hostedHeightU 1` · 3 lb · 35/22 W · 10 in
 ```
 1×F:rf-catv:i[z75]      "RF IN"
 1×F:rf-catv:o[z75]      "RF OUT (loop)"
@@ -1026,7 +1026,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×NEMA5-15P:ac-inlet:i  "AC (captive cord)"
 ```
 
-**S02 · Streaming Media Player** — `SMP` · 0U hosted · 0.5 lb · 8/5 W · 4 in
+**S02 · Streaming Media Player**: `SMP` · 0U hosted · 0.5 lb · 8/5 W · 4 in
 ```
 1×HDMI-A:hdmi21:o     "HDMI OUT"
 1×RJ45:ethernet:b     "LAN"
@@ -1034,7 +1034,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×USB-C:dc-5v:i       "USB-C POWER"     ⚠ still consumes a PDU outlet
 ```
 
-**S03 · UHD Disc Player** — `BDP` · 0U hosted, `hostedHeightU 2` · 8 lb · 45/28 W · 12 in
+**S03 · UHD Disc Player**: `BDP` · 0U hosted, `hostedHeightU 2` · 8 lb · 45/28 W · 12 in
 ```
 1×HDMI-A:hdmi21:o        "HDMI OUT (A/V)"
 1×HDMI-A:hdmi20:o        "HDMI OUT (audio only)"
@@ -1045,7 +1045,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×NEMA5-15P:ac-inlet:i   "AC (captive cord)"
 ```
 
-**S04 · Media Server / NAS** — `NAS` · 2U · 30 lb · 350/160 W · 22 in
+**S04 · Media Server / NAS**: `NAS` · 2U · 30 lb · 350/160 W · 22 in
 ```
 2×RJ45:ethernet:b   "LAN {n}"        ← Network  [1G]
 2×SFP+:ethernet:b   "SFP+ {n}"       [10G]
@@ -1054,7 +1054,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 2×C14:ac-inlet:i    "PSU {A,B}"      ← Power (redundant)
 ```
 
-**S05 · Network Tuner, 4-tuner OTA/QAM** — `TUN` · 0U hosted · 1 lb · 15/9 W · 5 in
+**S05 · Network Tuner, 4-tuner OTA/QAM**: `TUN` · 0U hosted · 1 lb · 15/9 W · 5 in
 ```
 1×F:rf-ota:i[z75]           "ANTENNA IN"
 1×RJ45:ethernet:b[poe:af/pd] "LAN"
@@ -1063,16 +1063,16 @@ Where a template is marked **parametric**, the same definition ships with a buil
 
 ---
 
-### 7.6 RF / Coax — 4
+### 7.6 RF / Coax: 4
 
-**R01 · RF Splitter Panel, 8-way** — `SPL` · 1U · 2 lb · **0 W passive**
+**R01 · RF Splitter Panel, 8-way**: `SPL` · 1U · 2 lb · **0 W passive**
 ```
 1×F:rf-catv:p[z75]           "IN"
 8×F:rf-catv:p[z75]           "OUT {n}"    ← port 1 flagged [dcpass]
 ```
 > Loss budget is the design: an 8-way is ≈ −11 dB per port. Exactly **one** output passes DC toward the source — mis-wire it and a satellite LNB never powers.
 
-**R02 · RF Distribution Amplifier** — `RFA` · 1U · 4 lb · 25/14 W · 7 in
+**R02 · RF Distribution Amplifier**: `RFA` · 1U · 4 lb · 25/14 W · 7 in
 ```
 1×F:rf-catv:i[z75]     "RF IN"
 8×F:rf-catv:o[z75]     "RF OUT {n}"       ← directional; blocks the return path
@@ -1080,7 +1080,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×NEMA5-15P:ac-inlet:i "AC (captive cord)"
 ```
 
-**R03 · RF Modulator, 2-ch HDMI → QAM** — `MOD` · 1U · 7 lb · 40/24 W · 11 in
+**R03 · RF Modulator, 2-ch HDMI → QAM**: `MOD` · 1U · 7 lb · 40/24 W · 11 in
 ```
 2×HDMI-A:hdmi20:i   "HDMI IN {n}"
 2×HDMI-A:hdmi20:o   "HDMI LOOP {n}"
@@ -1090,7 +1090,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×C14:ac-inlet:i    "AC IN"
 ```
 
-**R04 · Satellite Multiswitch (SWM-16)** — `SWM` · 1U · 5 lb · 30/22 W · 9 in
+**R04 · Satellite Multiswitch (SWM-16)**: `SWM` · 1U · 5 lb · 30/22 W · 9 in
 ```
 4×F:rf-sat:i[z75]        "SAT IN {n}"       ← LNB Inputs  [DC-passing to LNB]
 1×F:rf-ota:i[z75]        "OTA IN"
@@ -1101,9 +1101,9 @@ Where a template is marked **parametric**, the same definition ships with a buil
 
 ---
 
-### 7.7 Power — 8
+### 7.7 Power: 8
 
-**P01 · Rack PDU, 1U, 8-outlet** — `PDU` · 1U · 7 lb · 5 W (own draw) · 20 A / 120 V
+**P01 · Rack PDU, 1U, 8-outlet**: `PDU` · 1U · 7 lb · 5 W (own draw) · 20 A / 120 V
 ```
 1×NEMA5-20P:ac-inlet:i   "AC IN (captive cord)"
 8×NEMA5-15R:ac-outlet:o  "OUT {n}"      [mode: unswitched]
@@ -1111,7 +1111,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×Breaker:—:—:F          "20A BREAKER"
 ```
 
-**P02 · Rack PDU, 2U, 16-outlet** — `PDU` · 2U · 12 lb · 8 W · 20 A / 120 V
+**P02 · Rack PDU, 2U, 16-outlet**: `PDU` · 2U · 12 lb · 8 W · 20 A / 120 V
 ```
 1×NEMA5-20P:ac-inlet:i     "AC IN (captive cord)"
 12×NEMA5-15R:ac-outlet:o:R "REAR {n:2}"
@@ -1119,7 +1119,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×RJ45:ethernet:b          "MGMT"
 ```
 
-**P03 · Vertical PDU, 0U, 24-outlet** — `PDU` · **0U** (`zeroU_vertical`) · 14 lb · 10 W · 30 A / 120 V
+**P03 · Vertical PDU, 0U, 24-outlet**: `PDU` · **0U** (`zeroU_vertical`) · 14 lb · 10 W · 30 A / 120 V
 ```
 1×NEMA-L5-30P:ac-inlet:i  "AC IN (captive cord)"
 20×C13:ac-outlet:o        "C13 {n:2}"     [mode: unswitched]
@@ -1128,7 +1128,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 ```
 > Occupies rear vertical channel; `{frontU:0, rearU:0, side:zeroU_vertical}`. Delivers 24 outlets where a 1U horizontal gives 8 — the single best RU-saving move in a dense rack.
 
-**P04 · Power Conditioner, 1U, 8-outlet** — `PWC` · 1U · 14 lb · 10 W · 15 A / 120 V
+**P04 · Power Conditioner, 1U, 8-outlet**: `PWC` · 1U · 14 lb · 10 W · 15 A / 120 V
 ```
 1×NEMA5-15P:ac-inlet:i    "AC IN (captive cord)"
 2×NEMA5-15R:ac-outlet:o   "HIGH CURRENT {n}"   [mode: unswitched]
@@ -1137,7 +1137,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×RJ45:ethernet:b         "MGMT"
 ```
 
-**P05 · Power Sequencer, 2U, 16-outlet** — `SEQ` · 2U · 18 lb · 12 W · 20 A / 120 V
+**P05 · Power Sequencer, 2U, 16-outlet**: `SEQ` · 2U · 18 lb · 12 W · 20 A / 120 V
 ```
 1×NEMA5-20P:ac-inlet:i    "AC IN (captive cord)"
 4×NEMA5-15R:ac-outlet:o   "STEP 1 OUT {n}"   [seq:1, delay 0 ms]
@@ -1151,7 +1151,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×DE-9:rs232:b[dte]       "RS-232"
 ```
 
-**P06 · UPS, 1U, 1000 VA / 900 W** — `UPS` · 1U · 30 lb · 15 A / 120 V · **place low in the rack**
+**P06 · UPS, 1U, 1000 VA / 900 W**: `UPS` · 1U · 30 lb · 15 A / 120 V · **place low in the rack**
 ```
 1×NEMA5-15P:ac-inlet:i   "AC IN (captive cord)"
 4×NEMA5-15R:ac-outlet:o  "UPS OUT {n}"     [backing: ups]
@@ -1161,7 +1161,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×DE-9:rs232:b[dce]      "RS-232"
 ```
 
-**P07 · UPS, 2U, 1500 VA / 1350 W** — `UPS` · 2U · 48 lb · 15 A / 120 V · **place low**
+**P07 · UPS, 2U, 1500 VA / 1350 W**: `UPS` · 2U · 48 lb · 15 A / 120 V · **place low**
 ```
 1×NEMA5-15P:ac-inlet:i   "AC IN (captive cord)"
 6×NEMA5-15R:ac-outlet:o  "UPS OUT {n}"     [backing: ups]
@@ -1172,7 +1172,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 1×BattConn:dc-batt:b     "BATTERY EXPANSION"
 ```
 
-**P08 · UPS, 3U, 3000 VA / 2700 W** — `UPS` · 3U · 92 lb · 30 A / 120 V · **place at the very bottom**
+**P08 · UPS, 3U, 3000 VA / 2700 W**: `UPS` · 3U · 92 lb · 30 A / 120 V · **place at the very bottom**
 ```
 1×NEMA-L5-30P:ac-inlet:i "AC IN (captive cord)"
 6×C13:ac-outlet:o        "C13 OUT {n}"     [backing: ups]
@@ -1187,7 +1187,7 @@ Where a template is marked **parametric**, the same definition ships with a buil
 
 ---
 
-### 7.8 Passive & Mechanical — 11
+### 7.8 Passive & Mechanical: 11
 
 All zero-power, zero-port unless noted. All are `category: passive-mechanical`.
 
@@ -1230,7 +1230,7 @@ Every template above carries realistic weight, depth, nameplate and typical watt
 
 ## 8. Text Wireframes
 
-### 8.1 Device Builder — I/O section (the primary screen)
+### 8.1 Device Builder: I/O section (the primary screen)
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -1275,7 +1275,7 @@ Every template above carries realistic weight, depth, nameplate and typical watt
   Ctrl+D fill down · Ctrl+J duplicate · Ctrl+R renumber · Ctrl+T change type · Ctrl+M move to bank
 ```
 
-### 8.2 Device Builder — Identity & Physical section
+### 8.2 Device Builder: Identity & Physical section
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -1309,7 +1309,7 @@ Every template above carries realistic weight, depth, nameplate and typical watt
 └──────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 8.3 Structure Editor — matrix bulk entry
+### 8.3 Structure Editor: matrix bulk entry
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -1340,7 +1340,7 @@ Every template above carries realistic weight, depth, nameplate and typical watt
 └──────────────────┴───────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 8.4 Structure Editor — drop table
+### 8.4 Structure Editor: drop table
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -1368,7 +1368,7 @@ Every template above carries realistic weight, depth, nameplate and typical watt
 └──────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 8.5 Structure Editor — how it renders in the diagram
+### 8.5 Structure Editor: how it renders in the diagram
 
 ```
         STR-1  Media Panel — Garage
@@ -1396,14 +1396,14 @@ Every template above carries realistic weight, depth, nameplate and typical watt
 
 ### 8.6 Template Update Manager
 
-See §5.3 — the wireframe there is the shipping design.
+See §5.3, the wireframe there is the shipping design.
 
 ---
 
 ## 9. Open Decisions Flagged for the Build
 
-1. **Panel layout manual editor** — recommended for v1 *only if* the auto-layout engine lands early. It has no downstream dependents, so it is the safest thing to cut.
-2. **Template signing** — the `signature` field is reserved but unimplemented. Templates are inert JSON with no executable content, so the risk is impersonation, not code execution. Defer.
-3. **Media type table extensibility** — the Structure editor lets users add media types freely. If a project-local media type later needs to become global, that is a library-promotion flow not designed here.
+1. **Panel layout manual editor**: recommended for v1 *only if* the auto-layout engine lands early. It has no downstream dependents, so it is the safest thing to cut.
+2. **Template signing**: the `signature` field is reserved but unimplemented. Templates are inert JSON with no executable content, so the risk is impersonation, not code execution. Defer.
+3. **Media type table extensibility**: the Structure editor lets users add media types freely. If a project-local media type later needs to become global, that is a library-promotion flow not designed here.
 4. **`hostedHeightU`** is introduced in this spec (§1.3) and is not in the source research. It exists because a 4U-tall AVR on a 1U shelf needs 4U of clear space and nothing else in the occupancy model expresses that. Worth confirming against the rack-editor design before it hardens.
-5. **Half-rack pairing on a shelf** — two half-rack devices sharing one 1U shelf is the most common real arrangement and needs a lateral-position field on the hosted relationship. Specified here as a device-builder concern only (`widthClass`); the placement UI belongs to the rack editor spec.
+5. **Half-rack pairing on a shelf**: two half-rack devices sharing one 1U shelf is the most common real arrangement and needs a lateral-position field on the hosted relationship. Specified here as a device-builder concern only (`widthClass`); the placement UI belongs to the rack editor spec.

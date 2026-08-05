@@ -16,7 +16,7 @@ amendment, not a doc edit.
 # What it overturns
 
 §10.10 offered (a) Windows only for v1, or (b) Windows and macOS from v1. It
-recommended (a) — explicitly *"not a ruling"* — on the strength of a desk survey
+recommended (a), explicitly *"not a ruling"*, on the strength of a desk survey
 it never ran. **Option (b) is taken.**
 
 # The condition §10.10 attached was never kept
@@ -41,16 +41,16 @@ The seams macOS needs were already built, for other reasons:
 
 # What has lead time, and is not code
 
-- **D8** — Apple Developer enrolment, notarisation and stapling. D10's macOS half
+- **D8**: Apple Developer enrolment, notarisation and stapling. D10's macOS half
   was always binding; it simply had no milestone to attach to.
-- **D11** — a second physical print matrix for AC-054. A human act on a real printer.
+- **D11**: a second physical print matrix for AC-054. A human act on a real printer.
 
 Start both early *because* they are not code.
 
 # Only D7 is pulled into M2
 
 The keyboard-modifier extraction is the **only register item that gets more
-expensive with every commit** — 22 hard-coded `SingleActivator` bindings today
+expensive with every commit**: 22 hard-coded `SingleActivator` bindings today
 against §10.10's ~40 estimate, and M2-F adds the connection keyboard path. It
 also discharges M7's *"no keybinding bound twice in the generated table"* clause
 (nothing generates a table) and CR-101's 16 unfixed collisions.

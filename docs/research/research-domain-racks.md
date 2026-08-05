@@ -1,10 +1,10 @@
-I'll research this thoroughly. Let me load the web tools first.Let me dig into the primary sources and parallel topics.# Rack & Rack-Mount A/V Domain Facts — RackMate
+I'll research this thoroughly. Let me load the web tools first.Let me dig into the primary sources and parallel topics.# Rack & Rack-Mount A/V Domain Facts, RackMate
 
 Compiled from standards references and manufacturer data. Numbers marked **[verified]** appear consistently across ≥2 independent sources. Disagreements flagged inline with ⚠.
 
 ---
 
-## 1. Core geometry — EIA-310-D / IEC 60297 / DIN 41494
+## 1. Core geometry: EIA-310-D / IEC 60297 / DIN 41494
 
 These three are functionally the same standard, harmonized; IEC/DIN express it in mm, EIA in inches. IEC 60297-3-100 is the "basic panel dimensions" part.
 
@@ -17,7 +17,7 @@ These three are functionally the same standard, harmonized; IEC/DIN express it i
 | Mounting post width (each) | 0.625 | 15.88 | |
 | Threaded rail thickness (Middle Atlantic RRF) | 0.125 (1/8") | 3 | |
 
-### 1.1 Panel height is NOT n × 1.75 — critical for a layout tool
+### 1.1 Panel height is NOT n × 1.75: critical for a layout tool
 
 Equipment panels are **1/32 in (0.031 in / 0.79 mm) shorter** than their nominal U height, to give installation clearance between adjacent units.
 
@@ -30,19 +30,19 @@ Equipment panels are **1/32 in (0.031 in / 0.79 mm) shorter** than their nominal
 | 3U | 5.250 / 133.35 | 5.219 / 132.56 |
 | 4U | 7.000 / 177.80 | 6.969 / 177.01 |
 
-**Modeling implication:** store device height as an **integer U count**, and derive drawn height as `44.45n − 0.79` mm only for dimensioned/PDF output. Never store a float height. Real-world panels vary slightly below spec (a "3.50 in" 2U panel may measure 3.44 in) — do not use measured height to infer U.
+**Modeling implication:** store device height as an **integer U count**, and derive drawn height as `44.45n − 0.79` mm only for dimensioned/PDF output. Never store a float height. Real-world panels vary slightly below spec (a "3.50 in" 2U panel may measure 3.44 in), do not use measured height to infer U.
 
-### 1.2 Vertical hole pattern — three holes per U
+### 1.2 Vertical hole pattern: three holes per U
 
 Center-to-center spacing repeats **0.500 / 0.625 / 0.625 in** (12.70 / 15.88 / 15.88 mm) = 1.750 in **[verified]**.
 
-**Hole positions relative to the U boundary:** holes are centered at **0.25, 0.875, and 1.50 in (6.35, 22.23, 38.10 mm)** from the boundary of the U. The **U boundary falls at the midpoint of the 0.5-in gap** — i.e. in the middle of the narrowest metal web between two holes, *not* at a hole center. **[verified]**
+**Hole positions relative to the U boundary:** holes are centered at **0.25, 0.875, and 1.50 in (6.35, 22.23, 38.10 mm)** from the boundary of the U. The **U boundary falls at the midpoint of the 0.5-in gap**: i.e. in the middle of the narrowest metal web between two holes, *not* at a hole center. **[verified]**
 
 This matters: a rack-position ruler drawn in RackMate should place the U division lines through the tight 0.5-in pair, and a 1U device's two ears land on the outer holes of its U (0.25 and 1.50), with the center hole (0.875) usually unused on 1U gear and used by 2U+ gear.
 
 Note "universal" or "full-hole" rail = every EIA hole present. Some cheap rails omit holes; Middle Atlantic markets "full-hole rackrail" (RRF series) explicitly.
 
-### 1.3 ⚠ Sources disagree — horizontal hole spacing
+### 1.3 ⚠ Sources disagree: horizontal hole spacing
 
 - Most vendor references and EIA-310 itself: **18.312 in (465.1 mm)** exact.
 - Wikipedia gives a **range: 18.28–18.34 in (464.2–465.8 mm)** center-to-center.
@@ -53,12 +53,12 @@ Reconciliation: 465.1 mm is nominal; the range reflects manufacturing tolerance 
 
 Three rail styles exist; a rack in RackMate should carry a `railType` enum because it constrains what hardware the integrator buys, not what fits geometrically:
 
-1. **Tapped/threaded round holes** — screws thread directly into the rail.
-   - **10-32** — the de-facto standard in pro A/V. Middle Atlantic RRF rackrail is "tapped for 10-32 threads." **[verified]**
-   - **12-24** — older/telecom and some Middle Atlantic wall racks (e.g. CWR-12-17PD ships "with 12-24 threaded rack rail"). ⚠ Vendor mix; both are current.
+1. **Tapped/threaded round holes**: screws thread directly into the rail.
+   - **10-32**: the de-facto standard in pro A/V. Middle Atlantic RRF rackrail is "tapped for 10-32 threads." **[verified]**
+   - **12-24**: older/telecom and some Middle Atlantic wall racks (e.g. CWR-12-17PD ships "with 12-24 threaded rack rail"). ⚠ Vendor mix; both are current.
    - Downside: threads strip with repeated equipment changes.
-2. **Square holes + cage nuts** — dominant in IT/data-center racks. Cage nut = square nut in a spring-steel cage that snaps into the square hole. Replaceable; preferred where gear is swapped often.
-3. **Unthreaded round clearance holes** — used with clip nuts.
+2. **Square holes + cage nuts**: dominant in IT/data-center racks. Cage nut = square nut in a spring-steel cage that snaps into the square hole. Replaceable; preferred where gear is swapped often.
+3. **Unthreaded round clearance holes**: used with clip nuts.
 
 Common screw sizes across all: **10-32, 12-24, M6**.
 
@@ -76,7 +76,7 @@ Common screw sizes across all: **10-32, 12-24, M6**.
 | 23-inch | 23 in / 584 mm | Telecom/broadcast |
 | ETSI | 535 mm external | European telecom |
 
-### ⚠ Half-rack is genuinely unstandardized — design for it
+### ⚠ Half-rack is genuinely unstandardized: design for it
 
 Sources are explicit: *"there is no standard for half-width rack mount equipment, and there is no official 9.5 inch standard width."* Manufacturers ship 9.5, 10, 10.4, and 10.5 in. One source cites ½-rack ear hole centers at 244 mm (9.60 in). Vertical U dimension is unchanged across all widths.
 
@@ -105,9 +105,9 @@ Sources are explicit: *"there is no standard for half-width rack mount equipment
 
 - Middle Atlantic **ERK floor enclosure: 2,500 lb** capacity.
 - Middle Atlantic **SGR / 12RS swing gate wall rack: 100 lb** chassis capacity.
-- Middle Atlantic **EWR pivoting wall cabinet (10U): up to 150 lb**. ⚠ One source describes it as "17-inch wide"; that is almost certainly a typo for 17-in *deep* — 19-in rail spacing is fixed. Treat with caution.
+- Middle Atlantic **EWR pivoting wall cabinet (10U): up to 150 lb**. ⚠ One source describes it as "17-inch wide"; that is almost certainly a typo for 17-in *deep*, 19-in rail spacing is fixed. Treat with caution.
 
-**Wall-mount weight capacity is the single most binding constraint in residential CI** — a 12U wall rack rated 100 lb will hit its limit long before it runs out of RU if it holds a UPS and an amp. RackMate should surface a `rackWeightCapacityLb` field and warn on exceedance.
+**Wall-mount weight capacity is the single most binding constraint in residential CI**: a 12U wall rack rated 100 lb will hit its limit long before it runs out of RU if it holds a UPS and an amp. RackMate should surface a `rackWeightCapacityLb` field and warn on exceedance.
 
 ### Swing-gate / swing-frame implication for the wiring planner
 
@@ -117,7 +117,7 @@ Swing racks rotate 90° on a hinge. Rear-panel cabling must have **service loop 
 
 ---
 
-## 4. Non-device rack occupants — RU-consuming vs zero-U
+## 4. Non-device rack occupants: RU-consuming vs zero-U
 
 This is the taxonomy RackMate's object model needs. **Occupancy is a property of the mount, not the object class.**
 
@@ -128,7 +128,7 @@ This is the taxonomy RackMate's object model needs. **Occupancy is a property of
 | **Blank panel** | 1, 2, 3, 4U | none | Solid; blocks air bypass, aesthetics |
 | **Vent panel** | 1, 2, 3, 4U (Middle Atlantic VT/VTF/VTB) | none | VT series ≈ **64% open area**; VTF = tight perforation pattern; VTB = light-blocking |
 | **Fan panel** | 1–3U | **power inlet** | Active; draws power, adds to load and to noise budget |
-| **Rack shelf** (fixed/vented) | 1U, 2U, 3U, 4U | none itself | Carries non-rackmount gear — see §7 |
+| **Rack shelf** (fixed/vented) | 1U, 2U, 3U, 4U | none itself | Carries non-rackmount gear: see §7 |
 | **Rack drawer** | 2–4U | none | Storage |
 | **Patch panel** | 12-port→1U; 24-port→1U or 2U; 48-port→2U (1U in high-density) | **many, both sides** | ⚠ 24-port ships as both 1U and 2U depending on vendor |
 | **Horizontal cable manager** | 1U or 2U | none | Finger duct / D-ring |
@@ -146,7 +146,7 @@ This is the taxonomy RackMate's object model needs. **Occupancy is a property of
 | **Side-mount / rear-rail brackets, cable trays** | Rear or side |
 | **Rack-side power supply / wall-wart shelf** | Rear rail |
 
-### ⚠ Lacing bars — genuinely ambiguous, model it explicitly
+### ⚠ Lacing bars: genuinely ambiguous, model it explicitly
 
 Middle Atlantic **LBP-series L-shaped lace bars (LBP-1A / -2A / -4A / -6A, with 1 / 2 / 4 / 6 in offsets)** bolt into **rack rail holes at the rear**. They consume **rear rail holes** but **no front panel space**. Vertical **LACE** perforated strips are truly zero-U.
 
@@ -162,7 +162,7 @@ occupancy: {
 }
 ```
 
-A 1U blank = `{frontU:1, rearU:0}`. A rear LBP lace bar = `{frontU:0, rearU:1}`. A 0U PDU = `{frontU:0, rearU:0, side:zeroU_vertical}`. A 2U patch panel = `{frontU:2, rearU:2}`. This single change is what lets RackMate correctly answer "how many U do I have left?" — which is *different for front and rear*.
+A 1U blank = `{frontU:1, rearU:0}`. A rear LBP lace bar = `{frontU:0, rearU:1}`. A 0U PDU = `{frontU:0, rearU:0, side:zeroU_vertical}`. A 2U patch panel = `{frontU:2, rearU:2}`. This single change is what lets RackMate correctly answer "how many U do I have left?", which is *different for front and rear*.
 
 **Sources:** [Middle Atlantic VT1 vent panel](https://www.rackmountsolutions.net/middle-atlantic-vt1-1u-steel-rack-vent-panel/) · [VTB-2 (64% open)](https://www.performanceaudio.com/products/middle-atlantic-vtb-2-light-blocking-rack-vent-panel-2u) · [VTF1 tight-pattern](https://www.bhphotovideo.com/c/product/418871-REG/Middle_Atlantic_VTF1_VTF1_1U_Tight_Pattern_Vented.html) · [LBP lace bars at CDW](https://www.cdw.com/product/middle-atlantic-lbp-horizontal-rack-cable-management-lace-bar-l-shaped/794426) · [LACE-23-OP strips](https://matrixsolutionsinc.com/middle-atlantic-products-lace-23-op-rack-accessory-cable-lacing-bar) · [Vertical vs horizontal PDUs (Enconnex)](https://www.enconnex.com/vertical-pdus-vs-horizontal-pdus/) · [Eaton/Tripp Lite PDU buying guide](https://tripplite.eaton.com/products/pdu-buying-guide) · [Tripp Lite 24-port 1U keystone panel](https://tripplite.eaton.com/24-port-1u-rack-mount-unshielded-blank-keystone-multimedia-patch-panel-rj45-ethernet-usb-hdmi-cat5e-cat6~N062024KJSH) vs [24-port 2U](https://tripplite.eaton.com/24-port-2u-rack-mount-unshielded-blank-keystone-multimedia-patch-panel~N062024KJ)
 
@@ -174,28 +174,28 @@ These are the fields that make RackMate a *tool* rather than a drawing program. 
 
 ### 5.1 Weight & weight distribution
 - Per-device `weightLb/kg`; rack rollup vs `rackCapacity`.
-- **Heaviest items at the bottom** — UPS, battery packs, amplifiers. Documented failure mode: a UPS installed at the top of a 42U rack caused the rack to lean forward within days; relocating it to the bottom resolved it.
+- **Heaviest items at the bottom**: UPS, battery packs, amplifiers. Documented failure mode: a UPS installed at the top of a 42U rack caused the rack to lean forward within days; relocating it to the bottom resolved it.
 - Avoid heavy gear on slide rails (cantilever stress).
 - Anchor to floor/wall in seismic zones.
 - **Useful RackMate feature:** center-of-gravity height indicator + "top-heavy" warning, and a wall-rack "over capacity" hard warning (100 lb limits are easy to blow past).
 
 ### 5.2 Power
 - Per-device: `watts`, `amps`, `voltage`, `isContinuousLoad`, `plugType`, `outletsProvided`, `outletsConsumed`.
-- **NEC continuous-load rule (210.19(A)(1)):** a load running **3 hours or more** is continuous; OCPD must be rated ≥ **125%** of the continuous load — equivalently, **limit continuous load to 80% of circuit rating**.
+- **NEC continuous-load rule (210.19(A)(1)):** a load running **3 hours or more** is continuous; OCPD must be rated ≥ **125%** of the continuous load, equivalently, **limit continuous load to 80% of circuit rating**.
   - **15 A circuit → 12 A max continuous**
   - **20 A circuit → 16 A max continuous**
 - Exception: assemblies listed for 100% operation (rare in CI).
-- **RackMate feature:** model **circuits** as a first-class object; assign PDUs/devices to circuits; show per-circuit amps against 12 A / 16 A thresholds. Also track outlet count balance (outlets provided by PDUs vs consumed by devices) — running out of outlets is as common as running out of RU.
+- **RackMate feature:** model **circuits** as a first-class object; assign PDUs/devices to circuits; show per-circuit amps against 12 A / 16 A thresholds. Also track outlet count balance (outlets provided by PDUs vs consumed by devices), running out of outlets is as common as running out of RU.
 - Nameplate vs actual: equipment typically draws **30–70% of rated** power. Offer both `nameplateWatts` and `typicalWatts`; do heat math on typical, breaker math on nameplate.
 
 ### 5.3 Heat load & ventilation
 - **BTU/hr = watts × 3.412** (precisely 3.41214; derived as 3600 s/h ÷ 1055 J/BTU). **[verified]**
 - Sanity anchors: 7 kW rack ≈ **24,000 BTU/hr**; 15 kW ≈ **51,000 BTU/hr**. Residential A/V racks are typically **300 W – 2 kW** (≈ 1,000–6,800 BTU/hr).
 - Rule of thumb: every watt consumed in the room becomes a watt of heat in the room.
-- Cooling regime by density: passive/room-level up to ~10 kW/rack, in-row to ~20 kW, liquid beyond. CI racks are nowhere near this — but a sealed credenza absolutely is thermally limited, hence Salamander's passive louvers + optional active cooling.
+- Cooling regime by density: passive/room-level up to ~10 kW/rack, in-row to ~20 kW, liquid beyond. CI racks are nowhere near this, but a sealed credenza absolutely is thermally limited, hence Salamander's passive louvers + optional active cooling.
 
 ### 5.4 Airspace / adjacency rules
-Trade guidance (blog-level consensus, not a standard — ⚠ flag as heuristic, not spec):
+Trade guidance (blog-level consensus, not a standard, ⚠ flag as heuristic, not spec):
 - Put a **1U spacer/vent panel between amplifiers** and other high-heat gear.
 - Don't stack amps, PoE switches, and UPS units adjacent.
 - Put **heat-sensitive gear low** (cool intake air); heat rises.
@@ -203,7 +203,7 @@ Trade guidance (blog-level consensus, not a standard — ⚠ flag as heuristic, 
 - Budget **1U–2U between heat generators** and **1U–2U for cable managers**.
 - **Reserve 15–25% spare RU** before finalizing a design.
 
-**RackMate feature:** per-device `requiresClearanceAboveU` / `requiresClearanceBelowU` integers, validated as an occupancy conflict. This is a genuinely differentiating feature — most rack tools don't model it.
+**RackMate feature:** per-device `requiresClearanceAboveU` / `requiresClearanceBelowU` integers, validated as an occupancy conflict. This is a genuinely differentiating feature, most rack tools don't model it.
 
 ### 5.5 Depth clearance
 - Track `deviceDepthMm` and `rackUsableDepthMm`. A 20-in-deep device does not fit a 15-in-deep rack.
@@ -216,7 +216,7 @@ Trade guidance (blog-level consensus, not a standard — ⚠ flag as heuristic, 
 
 ---
 
-## 6. Front vs rear panel reality — port SIDE is mandatory
+## 6. Front vs rear panel reality: port SIDE is mandatory
 
 **The overwhelming majority of rack A/V I/O is on the rear.** But front-panel I/O is common enough that a side-agnostic model will produce wrong diagrams:
 
@@ -224,19 +224,19 @@ Trade guidance (blog-level consensus, not a standard — ⚠ flag as heuristic, 
 
 **Front (real cases):** front USB (media playback, service/firmware), headphone jack (AVR/preamp), front-panel HDMI input (AVR "front input", camcorder/game input), front SD card slot, front mic input, front-panel controls and displays, front IR receiver window, front reset/setup buttons, front-accessible patch panel ports.
 
-**Both sides:** patch panels are the canonical case — punch-down/trunk termination on the **rear**, RJ-45 patch jacks on the **front**. Some installations deliberately run one panel at the front and one at the rear to shorten patch leads and ease tracing. Feed-through/keystone panels are literally front-and-rear paired ports.
+**Both sides:** patch panels are the canonical case, punch-down/trunk termination on the **rear**, RJ-45 patch jacks on the **front**. Some installations deliberately run one panel at the front and one at the rear to shorten patch leads and ease tracing. Feed-through/keystone panels are literally front-and-rear paired ports.
 
 **Modeling requirements:**
 - Every port carries `side: front | rear` (and, for a rack, front/rear elevation views).
-- Patch panels need **paired ports** — a front port and rear port that are electrically the same net. This is a distinct topology from a normal device and worth a `passthrough: true` flag with a front↔rear port mapping, so the netlist collapses correctly rather than showing a spurious two-hop connection.
+- Patch panels need **paired ports**: a front port and rear port that are electrically the same net. This is a distinct topology from a normal device and worth a `passthrough: true` flag with a front↔rear port mapping, so the netlist collapses correctly rather than showing a spurious two-hop connection.
 - The wiring diagram should default to the **rear elevation** since that's where nearly all connections live, with a front elevation for the physical layout / customer-facing view.
-- IR is directional and asymmetric (emitter out vs receiver in) — model port `direction: in | out | bidirectional`, which you need anyway for the netlist and for validating "output→input" connections.
+- IR is directional and asymmetric (emitter out vs receiver in), model port `direction: in | out | bidirectional`, which you need anyway for the netlist and for validating "output→input" connections.
 
 **Sources:** [Guide to patch panels](https://hwp24.com/articles/guide_to_patch_panels/) · [Front-to-back patch panels](https://myworldofit.net/?p=9069) · [Patch panel vs keystone jack](https://rackit.com/blogs/news/patch-panel-vs-keystone-jack-when-to-use-each-in-mdfs-and-idfs)
 
 ---
 
-## 7. Non-rack-mountable devices — shelves and shared U
+## 7. Non-rack-mountable devices: shelves and shared U
 
 A large fraction of residential CI gear has **no rack ears at all**: streaming boxes (Apple TV, Roku), cable/satellite STBs, small network appliances, control processors, wireless mic receivers, Blu-ray players, small amps, power supplies/wall warts. These get **shelf-mounted**.
 
@@ -249,7 +249,7 @@ A large fraction of residential CI gear has **no rack ears at all**: streaming b
 | **U2** | 2U | **14.43 in** | **50 lb** | Solid |
 | **U2V** | 2U | **14.75 in** | **50 lb** | Vented bottom + sides; 3 rear brackets |
 
-### Multiple devices sharing one shelf — the model
+### Multiple devices sharing one shelf: the model
 
 This is a **container relationship**, and it is the right abstraction:
 
@@ -260,11 +260,11 @@ Shelf (occupies N U, has depth + weight capacity)
 
 Rules RackMate should encode:
 - A shelf consumes its own RU; **hosted devices consume zero additional RU**.
-- **Sum of hosted device weights ≤ shelf weight capacity** (25/35/50 lb are low — two STBs and a wall wart get there fast).
+- **Sum of hosted device weights ≤ shelf weight capacity** (25/35/50 lb are low, two STBs and a wall wart get there fast).
 - **Each hosted device's depth ≤ shelf usable depth** (10 in shelves are shallow; many STBs exceed it).
-- Hosted devices should have an optional **lateral position** on the shelf (left/center/right, or an x-offset) so the front elevation renders honestly — two half-rack units side by side on a 1U shelf is the single most common arrangement.
+- Hosted devices should have an optional **lateral position** on the shelf (left/center/right, or an x-offset) so the front elevation renders honestly, two half-rack units side by side on a 1U shelf is the single most common arrangement.
 - Hosted devices' **ports still participate fully in the netlist and wiring schedule**, and still carry front/rear side.
-- Some devices are **shelf-only** (`mountMethod: shelf`), some are **ear-mount** (`rackEars`), some are **either** (many half-rack units ship with optional rack-ear kits — model as a device property with a default).
+- Some devices are **shelf-only** (`mountMethod: shelf`), some are **ear-mount** (`rackEars`), some are **either** (many half-rack units ship with optional rack-ear kits, model as a device property with a default).
 
 **Recommended `mountMethod` enum:** `rackEars | shelf | zeroU | sideMount | rearRail | furniture | hosted`.
 
@@ -272,21 +272,21 @@ Rules RackMate should encode:
 
 ---
 
-## 8. The "Structure" device — structured wiring entering the rack
+## 8. The "Structure" device: structured wiring entering the rack
 
 Your requirement #6. Real-world grounding for what this pseudo-device represents:
 
 - Residential low-voltage home runs terminate in a **structured media enclosure** (Leviton "Structured Media Center", Legrand/On-Q "structured wiring enclosure") or directly at the rack's patch panels.
 - Standard enclosure sizes: **14", 21", 28", 42"** (metal); wireless/ABS variants at 14"×13.7", 28"×13.7", 42"×13.7". Recessed between studs on **16-in centers**, or surface mounted.
-- These terminate **home-run wires from wall outlets** and act as the distribution point for **voice, data, and video** — plus, in modern CI, speaker runs, HDMI/HDBaseT runs, IR, RS-232, coax, and camera/PoE runs.
+- These terminate **home-run wires from wall outlets** and act as the distribution point for **voice, data, and video**, plus, in modern CI, speaker runs, HDMI/HDBaseT runs, IR, RS-232, coax, and camera/PoE runs.
 - In commercial CI the analogue is the **MDF/IDF** and the building's horizontal cabling.
 
-**Modeling recommendation:** the Structure device should be a **first-class device with a variable, user-defined port list** — because it *is* just "the building," and every project's building is different. It should support:
-- Ports grouped by **destination/room label** (e.g. "Living Room — TV wall", "Bedroom 2 — ceiling speaker L"), since the integrator thinks in rooms, not port numbers.
+**Modeling recommendation:** the Structure device should be a **first-class device with a variable, user-defined port list**, because it *is* just "the building," and every project's building is different. It should support:
+- Ports grouped by **destination/room label** (e.g. "Living Room (TV wall", "Bedroom 2) ceiling speaker L"), since the integrator thinks in rooms, not port numbers.
 - The same connector-type taxonomy as real devices (RG6, Cat6, 14/2 speaker, IR, fiber).
-- A **reference designator** distinct from rack devices (schematic convention: treat it like an off-page connector / edge connector on a board diagram — this maps beautifully onto your requirement #5's electronics-schematic inspiration).
-- **Zero RU, zero weight, no rack position** — it lives outside the rack outline in the diagram, typically as a bus/edge terminal at the drawing boundary.
-- Possibly **multiple Structure instances** (e.g. "Rough-in — first floor", "Rough-in — exterior/cameras", "Utility feed"), which is more useful than one giant node.
+- A **reference designator** distinct from rack devices (schematic convention: treat it like an off-page connector / edge connector on a board diagram, this maps beautifully onto your requirement #5's electronics-schematic inspiration).
+- **Zero RU, zero weight, no rack position**: it lives outside the rack outline in the diagram, typically as a bus/edge terminal at the drawing boundary.
+- Possibly **multiple Structure instances** (e.g. "Rough-in (first floor", "Rough-in) exterior/cameras", "Utility feed"), which is more useful than one giant node.
 
 **Sources:** [Leviton metal structured media enclosures](https://leviton.com/products/residential/networking/structured-media-centers/metal-enclosures) · [Leviton 28"/42" spec sheet (PDF)](https://leviton.com/content/dam/leviton/network-solutions/product_documents/product_specification/Leviton-Spec-47605-28x-47605-42x-Metal-Structured-Media-Enclosures.pdf) · [Legrand structured wiring enclosures](https://www.legrand.us/audio-visual/structured-wiring-enclosures/c/lgnd011400)
 
@@ -316,7 +316,7 @@ Your requirement #6. Real-world grounding for what this pseudo-device represents
 3. **Ports carry `side` (front/rear) and `direction` (in/out/bidir).** Rear is the default; the wiring view should default to the rear elevation.
 4. **Patch panels are pass-through devices** with paired front/rear ports sharing one net.
 5. **Shelves are containers.** Hosted devices have zero own-RU, a lateral position, and are validated against shelf weight + depth.
-6. **Zero-U is a real mount class**, not a height of 0 — vertical PDUs and lacer strips need rear-channel placement, not rail placement.
+6. **Zero-U is a real mount class**, not a height of 0, vertical PDUs and lacer strips need rear-channel placement, not rail placement.
 7. **Circuits are first-class.** Devices → PDU outlets → circuits, validated at 12 A (15 A ckt) / 16 A (20 A ckt) continuous.
 8. **Rollups per rack:** total weight vs capacity, CG height, total watts, total BTU/hr (watts × 3.412), outlets used/available, front RU used/free, rear RU used/free, deepest device vs usable depth.
 9. **Clearance rules** (`requiresClearanceAboveU`/`BelowU`) are a differentiating validation few tools implement.

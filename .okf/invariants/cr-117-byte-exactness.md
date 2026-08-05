@@ -8,7 +8,7 @@ ruling_id: CR-117
 status: enforced
 ---
 
-**`write(read(bytes)) == bytes`.** Not a semantic comparison — the literal byte
+**`write(read(bytes)) == bytes`.** Not a semantic comparison, the literal byte
 property. A document read and written back must be identical on disk.
 
 # What it forbids, and what that has already prevented
@@ -30,7 +30,7 @@ A new field may be added **without moving `kSchemaVersion`** if it is written
 document written before the field existed still encodes byte-for-byte.
 
 The pattern to copy is `jacketColorPulledId` and `linkClassLocked`. The pattern
-**not** to copy is `designatorLocked`, which is written unconditionally — and sits
+**not** to copy is `designatorLocked`, which is written unconditionally, and sits
 three lines away in the same codec function, which is exactly why it gets copied
 by mistake.
 

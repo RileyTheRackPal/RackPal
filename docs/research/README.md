@@ -1,9 +1,17 @@
 # Working papers
 
-Raw source material behind the RackMate plan. These are the unedited outputs of the research,
-design, and critique passes that produced [the plan documents](../). They are kept in version
-control so the reasoning behind each decision stays auditable; you can trace any ruling in
+Raw source material behind the RackMate plan. These are the outputs of the research, design and
+critique passes that produced [the plan documents](../), unedited in substance. They are kept in
+version control so the reasoning behind each decision stays auditable; you can trace any ruling in
 [10-decisions.md](../10-decisions.md) back to the material it came from.
+
+**One mechanical edit has been made to them, on 2026-08-04.** The em-dash sweep that
+[CLAUDE.md](../../CLAUDE.md)'s house style requires ran over this directory too, converting 2,164
+dashes to ordinary punctuation. **No word, claim, number or judgement changed**, and the sweeper's
+post-conditions enforce that: brackets, backticks, emphasis markers and line count all come out
+identical, and quoted material inside blockquotes was skipped entirely. This paragraph exists
+because the sentence above used to read *"the unedited outputs"*, and a claim of untouchedness
+that is no longer exactly true is worse than a stated exception.
 
 ## Status of this material
 

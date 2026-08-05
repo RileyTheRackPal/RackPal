@@ -40,18 +40,18 @@ field passes it. PAL-1 is stated over post-override values for the same reason.
 
 Two conversions bite: `effectiveDashPattern` returns `[]` for solid while
 `Stroke.dash` spells solid `null`; and weight is `0.7 × permille/1000`
-**exactly**, not rounded to a display column — PAL-1's limb (b) is a ratio
+**exactly**, not rounded to a display column, PAL-1's limb (b) is a ratio
 evaluated on permille, so rounding puts 1.286 on paper where the authority
 cleared 1.25.
 
 # THE GLYPH CHANNEL IS CURRENTLY NON-FUNCTIONAL
 
-`docs/05:206`: *"Shape encodes domain; **fill encodes tier** — filled = the
+`docs/05:206`: *"Shape encodes domain; **fill encodes tier**: filled = the
 domain's native carrier, hollow = the transported, extended or networked
 variant."*
 
 `SignalDomainDef` stores `glyph` and `glyphAlt`. **There is no `tier` field
-anywhere**, so nothing can ever select `glyphAlt` — it is seeded, stored,
+anywhere**, so nothing can ever select `glyphAlt`; it is seeded, stored,
 round-tripped and unreachable. This is true for **all eight domains and all 55
 families**, not merely the two whose docs list a third shape.
 
@@ -61,7 +61,7 @@ identically to native HDMI. One of the four channels carries nothing.
 The fix is already named in the corpus: `seed-devices.md` §4.4's field list
 includes **`glyphOverride?`**, and its Glyph column already holds the per-family
 data. [DR-010](/decisions/dr-010-seeded-registries.md) §11.10.3 added
-`shortTag`, `dashOverride` and a weight override — and not this one.
+`shortTag`, `dashOverride` and a weight override, and not this one.
 
 Until then, affected families are **counted** in
 `SchematicScene.underGlyphedFamilyIds` and the two worst are pinned by name in a
@@ -70,7 +70,7 @@ test, so they are known-wrong rather than silently wrong
 
 # Do not couple jacket colour to hue
 
-`Link.jacketColorId` is the sheath that was pulled — a physical fact about a
+`Link.jacketColorId` is the sheath that was pulled, a physical fact about a
 building. It is not the hue a wire draws in. Coupling them would make a blue
 control run and a blue A/V run render identically, and would substitute a shop's
 unvalidated reel colours for a CVD-validated palette.
@@ -79,5 +79,5 @@ unvalidated reel colours for a CVD-validated palette.
 # Citations
 
 [1] `docs/05-schematic-editor.md` §6.1–6.4
-[2] `tools/pal1_check.py` — the authority
+[2] `tools/pal1_check.py`, the authority
 [3] `packages/rackmate_core/lib/src/draw/scene/signal_style.dart`

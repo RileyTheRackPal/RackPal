@@ -1,4 +1,4 @@
-# RackMate — Rack Elevation Editor Specification
+# RackMate: Rack Elevation Editor Specification
 
 **Document scope:** the view where a user creates racks, sets RU height, and places occupants. Wiring/schematic view is out of scope except where the elevation must expose connection state.
 
@@ -127,18 +127,18 @@ v1 tablet is **read-only review**, so the collapse is a viewer, not a squeezed e
 **The RU ruler** (28 px wide, left of the left rail; mirrored to the right side when `Both` view is active so the two elevations share a center ruler):
 
 - One label per U, right-aligned, 11 px tabular-figure font, `onSurfaceVariant`.
-- Division lines drawn **at the U boundary**, which per EIA-310 falls at the **midpoint of the 0.500 in gap** — i.e. through the narrow web between hole pairs, *not* through a hole. Boundary line = 1 px hairline at 30% opacity; every 5th U boundary = 1 px at 60% with a bolder label.
+- Division lines drawn **at the U boundary**, which per EIA-310 falls at the **midpoint of the 0.500 in gap**: i.e. through the narrow web between hole pairs, *not* through a hole. Boundary line = 1 px hairline at 30% opacity; every 5th U boundary = 1 px at 60% with a bolder label.
 - Numbering direction is a per-rack setting, `uNumbering: bottomUp | topDown`, **default `bottomUp`** (U1 at bottom, EIA/NetBox convention). Top-down is offered because a meaningful slice of A/V integrators count from the top; the setting is on the rack, not the app, because a project can legitimately mix (a retrofit rack labelled by the previous integrator).
 - The ruler is the **primary occupancy indicator**: a U's label cell gets a 3 px left accent bar when occupied front, a 3 px right bar when occupied rear. At a glance you can see front/rear occupancy without switching faces.
 
 **The rails** (20 px each at z1.0):
 
 - Rail body: 1 px border, fill `surfaceContainerHigh`.
-- **Three holes per U**, centered at 0.25, 0.875, 1.50 in from the U boundary. At zoom ≥ 0.75 these are drawn as real circles (`r = 1.6 px` at z1.0, square 3×3 px for square-hole racks, per `rack.railType`). Below 0.75 the rail is drawn as a repeating 1 px dotted texture — a single cached `Picture` tiled, not 126 individual circles.
+- **Three holes per U**, centered at 0.25, 0.875, 1.50 in from the U boundary. At zoom ≥ 0.75 these are drawn as real circles (`r = 1.6 px` at z1.0, square 3×3 px for square-hole racks, per `rack.railType`). Below 0.75 the rail is drawn as a repeating 1 px dotted texture, a single cached `Picture` tiled, not 126 individual circles.
 - Devices with rack ears draw **ear screws**: filled dots at the outer two hole positions of the device's first and last U, at zoom ≥ 0.75. This is the visual cue that separates an ear-mounted device from a shelf-hosted one at a glance.
 - `railType` (`tapped10-32 | tapped12-24 | square | clearance`) changes hole rendering and appears in the BOM as required hardware. It does **not** gate placement.
 
-**Rendering architecture** (per the canvas research): rails + holes + ruler are **Tier-1 cache** — one `ui.Picture` per rack, invalidated only on `(rackId, ru, railType, zoomDecade)`. At zoom < 0.5 the grid picture is additionally promoted with `Picture.toImageSync()` and re-baked per zoom decade. Device bodies are **real widgets** as children of `RenderRackCanvas`, laid out with tight constraints from their own model size so dragging one never dirties another's layout. Selection chrome, drag ghosts, snap indicators and the insertion caret are **Tier-3 overlay**, never cached.
+**Rendering architecture** (per the canvas research): rails + holes + ruler are **Tier-1 cache**: one `ui.Picture` per rack, invalidated only on `(rackId, ru, railType, zoomDecade)`. At zoom < 0.5 the grid picture is additionally promoted with `Picture.toImageSync()` and re-baked per zoom decade. Device bodies are **real widgets** as children of `RenderRackCanvas`, laid out with tight constraints from their own model size so dragging one never dirties another's layout. Selection chrome, drag ghosts, snap indicators and the insertion caret are **Tier-3 overlay**, never cached.
 
 ### 2.2 Level of detail
 
@@ -155,24 +155,24 @@ Text scale is **quantised to a ladder** `{0.5, 0.75, 1.0, 1.5, 2.0, 3.0}` with t
 
 Three modes on the toolbar segmented control, plus `F` and `Shift+F`:
 
-1. **Front** (default for layout work) — single column.
-2. **Rear** — single column, drawn **mirrored** (left rail on screen = the rail that is on your left when standing behind the rack). Mirroring is physically honest and it is what an installer standing behind the rack sees. A per-project setting `mirrorRearElevation` (default `true`) can disable it, because some shops document rear elevations unmirrored to match front drawings; when disabled a persistent `NOT MIRRORED` chip appears in the rack header so the drawing never lies about itself.
-3. **Both** — front and rear side by side, 16 px apart, sharing a single center ruler, each with a 16 px caption bar (`FRONT` / `REAR`). Rack cell width roughly doubles; the canvas auto-fits on mode change.
+1. **Front** (default for layout work), single column.
+2. **Rear**: single column, drawn **mirrored** (left rail on screen = the rail that is on your left when standing behind the rack). Mirroring is physically honest and it is what an installer standing behind the rack sees. A per-project setting `mirrorRearElevation` (default `true`) can disable it, because some shops document rear elevations unmirrored to match front drawings; when disabled a persistent `NOT MIRRORED` chip appears in the rack header so the drawing never lies about itself.
+3. **Both**: front and rear side by side, 16 px apart, sharing a single center ruler, each with a 16 px caption bar (`FRONT` / `REAR`). Rack cell width roughly doubles; the canvas auto-fits on mode change.
 
-Face is **not** a filter, it is a coordinate. A device carries an occupancy struct, and a 2U patch panel with `{frontU: 2, rearU: 2}` renders in both. A rear-rail lace bar `{frontU: 0, rearU: 1}` renders only in rear. When you're in Front mode, rear-only occupants are shown as a **4 px hatched strip** in the ruler's right accent bar — present but not clickable — so you never place a device into a U that is rear-blocked without knowing.
+Face is **not** a filter, it is a coordinate. A device carries an occupancy struct, and a 2U patch panel with `{frontU: 2, rearU: 2}` renders in both. A rear-rail lace bar `{frontU: 0, rearU: 1}` renders only in rear. When you're in Front mode, rear-only occupants are shown as a **4 px hatched strip** in the ruler's right accent bar, present but not clickable, so you never place a device into a U that is rear-blocked without knowing.
 
 Switching face **preserves selection** (a device selected in front stays selected in rear if it appears there) and **preserves the insertion caret's U**.
 
 ### 2.4 Multiple racks
 
-Racks lay out **left to right in a single row**, in explicit `bayOrder`, with a 48 px gutter. Vertical alignment: bottoms aligned (racks sit on the floor). Wall-mount racks get a `mountHeightIn` field and are drawn offset upward with a hatched wall-line beneath — visually distinguishing a 12U wall box from a 12U floor rack matters when the drawing is handed to an installer.
+Racks lay out **left to right in a single row**, in explicit `bayOrder`, with a 48 px gutter. Vertical alignment: bottoms aligned (racks sit on the floor). Wall-mount racks get a `mountHeightIn` field and are drawn offset upward with a hatched wall-line beneath, visually distinguishing a 12U wall box from a 12U floor rack matters when the drawing is handed to an installer.
 
 - **Reorder racks:** drag the rack header horizontally; other racks slide with a 150 ms ease; a 3 px accent insertion bar shows the landing slot.
-- **Bays:** select 2+ adjacent racks → `Group as bay`. A bay draws shared side rails, a bracket above with the bay name, and rolls up vitals for the whole bay. Purely organisational (the NetBox "bundles" precedent) — it does not change geometry or occupancy.
+- **Bays:** select 2+ adjacent racks → `Group as bay`. A bay draws shared side rails, a bracket above with the bay name, and rolls up vitals for the whole bay. Purely organisational (the NetBox "bundles" precedent); it does not change geometry or occupancy.
 - **Focus mode** (`Ctrl+F`): dims all racks but the focused one to 25% and fits it to viewport. `Esc` exits.
 - `Alt+1..9` jumps focus to rack N. `Tab` / `Shift+Tab` cycles racks.
 
-**Staging Bin** — a persistent, per-project holding strip pinned below the rack row. It holds devices that exist in the project with full identity, RefDes and **all their wiring intact**, but have no rack position. It is fed by rack shrink (§4.3), by `Ctrl+X`-style "unrack", and by importing a device list. It renders as a horizontal chip strip with an amber left border. A non-empty bin always produces a validation **warning**, never an error — it is a legitimate intermediate state.
+**Staging Bin**: a persistent, per-project holding strip pinned below the rack row. It holds devices that exist in the project with full identity, RefDes and **all their wiring intact**, but have no rack position. It is fed by rack shrink (§4.3), by `Ctrl+X`-style "unrack", and by importing a device list. It renders as a horizontal chip strip with an amber left border. A non-empty bin always produces a validation **warning**, never an error; it is a legitimate intermediate state.
 
 ---
 
@@ -182,10 +182,10 @@ Racks lay out **left to right in a single row**, in explicit `bayOrder`, with a 
 
 | Target | Cursor | Visual on hover |
 |---|---|---|
-| Empty canvas | `basic` | — |
+| Empty canvas | `basic` |: |
 | Empty U inside a rack | `basic` | That U's ruler cell brightens to `surfaceContainerHighest`; 1 px dotted accent lines at both its boundaries; tooltip after 600 ms: `U14 — free (front) · 4U contiguous free above` |
 | Placed device body | `grab` | 1.5 px accent outline inset 1 px; elevation shadow 2; badges fade in over 90 ms; tooltip after 700 ms with full vitals card |
-| Placed device, `Ctrl` held | `copy` | outline turns to dashed accent — signals drag-to-duplicate |
+| Placed device, `Ctrl` held | `copy` | outline turns to dashed accent: signals drag-to-duplicate |
 | Locked device | `basic` + 🔒 badge | outline is 1.5 px `outline` colour, not accent |
 | Rack top edge (8 px band) | `resizeUpDown` | 3 px accent bar spanning rail-to-rail; floating readout `24U` follows cursor |
 | Rack header | `basic` | reveals `⌄ 24U ⌃` stepper and `⋮` menu button (hidden until hover to keep the header quiet) |
@@ -194,19 +194,19 @@ Racks lay out **left to right in a single row**, in explicit `bayOrder`, with a 
 | Splitter | `resizeLeftRight` | 2 px accent line after 120 ms delay |
 | Space held, anywhere | `grabbing` | pan mode |
 
-Hover hit-testing is **throttled to one query per frame** via a dirty flag on a `Ticker` — raw `onHover` fires far above frame rate on 1000 Hz mice and a spatial query per event is pure waste.
+Hover hit-testing is **throttled to one query per frame** via a dirty flag on a `Ticker`, raw `onHover` fires far above frame rate on 1000 Hz mice and a spatial query per event is pure waste.
 
 ### 3.2 Drag from palette → drop
 
-The whole gesture is hand-rolled on `Listener`. **`Draggable`/`DragTarget` are not used** — they hand off in widget space, and we need scene coordinates with live RU snapping and a proper undo entry.
+The whole gesture is hand-rolled on `Listener`. **`Draggable`/`DragTarget` are not used**: they hand off in widget space, and we need scene coordinates with live RU snapping and a proper undo entry.
 
-**Phase 1 — arm (pointer down on palette item):** no visual change until the pointer moves 4 px (drag threshold), so a click still means "select template / show details".
+**Phase 1: arm (pointer down on palette item):** no visual change until the pointer moves 4 px (drag threshold), so a click still means "select template / show details".
 
-**Phase 2 — lift:** the palette row gets a 1 px accent inset outline and drops to 40% opacity in place (it does not vanish — the source stays legible). A **cursor-attached card** appears: 180×40 px, 6 px radius, elevation 8, showing the type icon, name, and `2U` badge. Cursor `grabbing`.
+**Phase 2: lift:** the palette row gets a 1 px accent inset outline and drops to 40% opacity in place (it does not vanish, the source stays legible). A **cursor-attached card** appears: 180×40 px, 6 px radius, elevation 8, showing the type icon, name, and `2U` badge. Cursor `grabbing`.
 
-**Phase 3 — enter canvas:** the cursor card cross-fades over 100 ms into a **scene-accurate ghost** — a rectangle at true rack width and true U height, fill `accent @ 12%`, border 1.5 px solid accent, with the device name centered. Because there is no grab offset from a palette drag, the ghost is centered vertically on the cursor.
+**Phase 3: enter canvas:** the cursor card cross-fades over 100 ms into a **scene-accurate ghost**: a rectangle at true rack width and true U height, fill `accent @ 12%`, border 1.5 px solid accent, with the device name centered. Because there is no grab offset from a palette drag, the ghost is centered vertically on the cursor.
 
-**Phase 4 — snap.** Vertical position is **hard-quantised, always**. There is no free-placement mode; racks are quantised by nature and offering sub-U placement would only create invalid data.
+**Phase 4: snap.** Vertical position is **hard-quantised, always**. There is no free-placement mode; racks are quantised by nature and offering sub-U placement would only create invalid data.
 
 ```
 bottomU = clamp(
@@ -222,7 +222,7 @@ Snap feedback, all in the Tier-3 overlay:
 - A **U-range chip** pinned to the ghost's top-right: `U19–U20`.
 - The ghost snaps with no animation (instant), because interpolating a quantised value reads as lag.
 
-**Phase 5 — validity.** Evaluated every frame, first failing reason wins:
+**Phase 5: validity.** Evaluated every frame, first failing reason wins:
 
 | # | Check | Message |
 |---|---|---|
@@ -234,13 +234,13 @@ Snap feedback, all in the Tier-3 overlay:
 | 6 | Mount method compatible | `Shelf-only device — drop it on a shelf` |
 | 7 | Width class fits (half-rack onto rails without a kit) | `Half-rack: needs an ear kit or a shelf` |
 
-Checks 1–4 and 6–7 **block**. Check 5 permits the drop and files a warning — heuristics from trade guidance must never hard-block, and this is exactly where a tool earns or loses trust.
+Checks 1–4 and 6–7 **block**. Check 5 permits the drop and files a warning, heuristics from trade guidance must never hard-block, and this is exactly where a tool earns or loses trust.
 
 **Invalid-drop rendering:** ghost fill → `error @ 12%`, border → 1.5 px **dashed** error (4-4 dash), the conflicting occupant gets a 45° hatch overlay at 4 px pitch in `error @ 25%`, cursor → `forbidden`, and a **reason chip** (28 px tall, 8 px radius, `errorContainer`, offset +16/+16 from cursor) states the message. Releasing while invalid is a **no-op** with a 120 ms shake (±3 px horizontal, 2 cycles) and the reason chip persisting 1.2 s before fading.
 
-**Phase 6 — commit:** on pointer-up over a valid target, one `PlaceDeviceCommand` is pushed to the undo stack. The new device animates in: 120 ms scale 0.96→1.0 + opacity 0→1, then a 400 ms accent outline pulse that decays. It becomes the sole selection, the inspector focuses its RefDes field's *label* (not editing), and the status bar announces `Placed AMP-2 at Rack A U19–U20` (also fired as a `SemanticsService.announce`).
+**Phase 6: commit:** on pointer-up over a valid target, one `PlaceDeviceCommand` is pushed to the undo stack. The new device animates in: 120 ms scale 0.96→1.0 + opacity 0→1, then a 400 ms accent outline pulse that decays. It becomes the sole selection, the inspector focuses its RefDes field's *label* (not editing), and the status bar announces `Placed AMP-2 at Rack A U19–U20` (also fired as a `SemanticsService.announce`).
 
-**Escape hatches during drag:** `Esc` cancels (ghost fades over 100 ms, palette row restores). Dragging outside any rack shows the ghost at 40% with a `Release to add to Staging Bin` chip — dropping there is valid and creates an unracked device. This matters: it lets a user dump gear into the project fast and place it later.
+**Escape hatches during drag:** `Esc` cancels (ghost fades over 100 ms, palette row restores). Dragging outside any rack shows the ghost at 40% with a `Release to add to Staging Bin` chip, dropping there is valid and creates an unracked device. This matters: it lets a user dump gear into the project fast and place it later.
 
 ### 3.3 Alternate placement paths (faster than dragging)
 
@@ -267,22 +267,22 @@ Dragging is not the fastest path and shouldn't be the only one.
 
 The **insertion caret** is a first-class object: a 2 px accent line at a U boundary with a 6 px triangle at each rail and the U label highlighted in the ruler. It exists whenever the canvas has focus and nothing is selected. It is what makes keyboard-only placement work.
 
-- `↑` / `↓` — with a selection: move selection by 1U. With no selection: move the caret by 1U.
-- `Shift+↑/↓` — extend selection to the adjacent device (not by U — by occupant, which is what you mean).
-- `Ctrl+↑/↓` — move selection to the **next free slot** in that direction, skipping over occupied space. This is the "get out of my way" nudge.
-- `Alt+↑/↓` — **swap with the adjacent occupant**, regardless of relative heights (the two exchange, and if heights differ the stack re-packs from the lower of the two positions). This is the reorder gesture.
-- `Home` / `End` — move to the lowest/highest position that fits.
-- `PgUp` / `PgDn` — ±10U.
+- `↑` / `↓`, with a selection: move selection by 1U. With no selection: move the caret by 1U.
+- `Shift+↑/↓`, extend selection to the adjacent device (not by U, by occupant, which is what you mean).
+- `Ctrl+↑/↓`, move selection to the **next free slot** in that direction, skipping over occupied space. This is the "get out of my way" nudge.
+- `Alt+↑/↓`, **swap with the adjacent occupant**, regardless of relative heights (the two exchange, and if heights differ the stack re-packs from the lower of the two positions). This is the reorder gesture.
+- `Home` / `End`, move to the lowest/highest position that fits.
+- `PgUp` / `PgDn`, ±10U.
 - Nudges **coalesce into one undo entry** if consecutive within 500 ms on the same axis, so holding `↓` and releasing is a single undo, not fourteen.
 - A nudge that would collide **does not silently stop**. The selection shakes 3 px and the status bar reads `Blocked by SW-1`. Silent no-ops in a nudge are the most common source of "the app is broken" reports.
 
 ### 3.6 Selection
 
-- Click = replace selection. `Ctrl/Cmd+click` = toggle. `Shift+click` = **range select by U** — every occupant between the anchor and the clicked device in that rack, inclusive.
+- Click = replace selection. `Ctrl/Cmd+click` = toggle. `Shift+click` = **range select by U**: every occupant between the anchor and the clicked device in that rack, inclusive.
 - **Marquee** on empty canvas: press-drag draws a 1 px accent rect with `accent @ 8%` fill. Following CAD muscle memory: **left→right drag selects only fully-contained occupants; right→left selects anything intersecting**. The marquee border is solid for containment mode, dashed for intersection mode, and a tiny corner label reads `WINDOW` / `CROSS`. This costs one `if` and reads as expertise.
 - `Shift` during marquee = add, `Alt` = subtract.
 - `Ctrl+A` = select all in the focused rack; pressing again = select all in project.
-- Multi-select visual: each member gets a 2 px accent outline; a **combined bracket** is drawn in the ruler gutter spanning the union of their U ranges; the status bar reads `3 selected · 5U · 62 lb · 780 W` — a rollup of the selection is genuinely useful when planning a move.
+- Multi-select visual: each member gets a 2 px accent outline; a **combined bracket** is drawn in the ruler gutter spanning the union of their U ranges; the status bar reads `3 selected · 5U · 62 lb · 780 W`, a rollup of the selection is genuinely useful when planning a move.
 - Selection is the unit for: move, nudge, delete, copy, duplicate, face change, lock, and inspector multi-edit (fields with differing values show `—` and editing applies to all).
 
 ### 3.7 Copy / paste / duplicate / delete
@@ -292,9 +292,9 @@ The **insertion caret** is a first-class object: a 2 px accent line at a U bound
 | `Ctrl+C` | Copies selection to an internal clipboard **and** as JSON to the system clipboard (so it pastes into another RackMate window, and is inspectable/diffable). Relative U offsets within the selection are preserved. |
 | `Ctrl+X` | Cut. Removes from rack; **wiring is preserved on the clipboard** and restored on paste. |
 | `Ctrl+V` | Pastes into the focused rack at the **insertion caret**, or if no caret, at the lowest free region that fits the whole group. If the group cannot fit contiguously, paste offers `Place what fits (3 of 5) — remainder to Staging Bin` in a toast with an `Undo` action. |
-| `Ctrl+Shift+V` | **Paste in place** — same U positions as the source, into the focused rack. Invalid if occupied; the toast names the blockers. |
+| `Ctrl+Shift+V` | **Paste in place**: same U positions as the source, into the focused rack. Invalid if occupied; the toast names the blockers. |
 | `Ctrl+D` | Duplicate: places the copy **immediately above** the original if space exists, else the nearest free region above, else below, else Staging Bin. RefDes auto-increments. |
-| `Del` / `Backspace` | Deletes. If the selection has ≥1 connection, a **non-modal confirm bar** slides into the status area: `Delete AMP-1 and its 6 connections?  [Delete] [Cancel]` with `Enter`/`Esc` bound. If zero connections, delete immediately (with undo) — never prompt for a consequence-free action. |
+| `Del` / `Backspace` | Deletes. If the selection has ≥1 connection, a **non-modal confirm bar** slides into the status area: `Delete AMP-1 and its 6 connections?  [Delete] [Cancel]` with `Enter`/`Esc` bound. If zero connections, delete immediately (with undo), never prompt for a consequence-free action. |
 
 Delete always removes attached wires, and undo restores device *and* wires as one command. Never orphan a wire.
 
@@ -306,9 +306,9 @@ Nothing in this group ever applies silently. Each opens a **preview overlay**: p
 |---|---|
 | **Compact Down** (`Ctrl+Shift+C`) | Remove all gaps, packing toward U1. Preserves relative order. Respects locked devices as immovable anchors. |
 | **Compact Up** | Same, packing toward the top. |
-| **Fill gaps with blanks** (`Ctrl+B`) | Every free front-U run gets blank panels chosen greedily from available sizes (4U, 3U, 2U, 1U) — a 7U gap becomes 4U+2U+1U, not seven 1U blanks. Vent panels are used instead of blanks for any gap **directly above a device whose `thermalClass` is `high`**. |
+| **Fill gaps with blanks** (`Ctrl+B`) | Every free front-U run gets blank panels chosen greedily from available sizes (4U, 3U, 2U, 1U), a 7U gap becomes 4U+2U+1U, not seven 1U blanks. Vent panels are used instead of blanks for any gap **directly above a device whose `thermalClass` is `high`**. |
 | **Insert blank** (`B`) | One blank matching the current selection's height, above the selection. |
-| **Auto-arrange** | The opinionated one. Sorts by: heaviest to the bottom (CG rule — a top-mounted UPS is a documented rack-tipping failure), then thermally sensitive gear low, then high-heat gear with 1U spacing between units, then vent panels above heat sources, then patch panels and cable managers at the top. Reserves 15% spare RU. **Every rule it applies is listed in the preview bar** (`Applied: heavy-low, amp spacing, vent-above-heat`) with per-rule checkboxes, because these are trade heuristics, not standards, and integrators have strong and differing opinions about them. |
+| **Auto-arrange** | The opinionated one. Sorts by: heaviest to the bottom (CG rule, a top-mounted UPS is a documented rack-tipping failure), then thermally sensitive gear low, then high-heat gear with 1U spacing between units, then vent panels above heat sources, then patch panels and cable managers at the top. Reserves 15% spare RU. **Every rule it applies is listed in the preview bar** (`Applied: heavy-low, amp spacing, vent-above-heat`) with per-rule checkboxes, because these are trade heuristics, not standards, and integrators have strong and differing opinions about them. |
 
 ---
 
@@ -358,13 +358,13 @@ Three entry points to the same `RackInspector` panel (which replaces the Selecti
 ### 4.2 Setting RU height
 
 Three ways, all producing one `ResizeRackCommand`:
-1. **Stepper** in the header (`⌄ 24U ⌃`) — ±1U per click, hold to repeat at 8/s after 400 ms.
-2. **Numeric field** in the inspector — commits on blur or `Enter`, range 1–58.
-3. **Drag the rack's top edge** — 8 px grab band, `resizeUpDown` cursor, snaps to whole U, live readout chip follows the cursor showing `24U (+3)`. While dragging *smaller*, any U about to be removed that is occupied is drawn with a red 45° hatch **in real time**, so the user sees the collision building before they release.
+1. **Stepper** in the header (`⌄ 24U ⌃`), ±1U per click, hold to repeat at 8/s after 400 ms.
+2. **Numeric field** in the inspector, commits on blur or `Enter`, range 1–58.
+3. **Drag the rack's top edge**: 8 px grab band, `resizeUpDown` cursor, snaps to whole U, live readout chip follows the cursor showing `24U (+3)`. While dragging *smaller*, any U about to be removed that is occupied is drawn with a red 45° hatch **in real time**, so the user sees the collision building before they release.
 
 Growing a rack is always safe: new U appear at the top (bottom-up numbering) or the numbering shifts (top-down), existing devices keep their physical position.
 
-### 4.3 The shrink failure case — designed explicitly
+### 4.3 The shrink failure case: designed explicitly
 
 **Principle: never destroy, never silently move, always name the casualties.**
 
@@ -400,14 +400,14 @@ Design notes on this dialog, because it is the most important error state in the
 - **Option 1 is offered only if compaction actually succeeds**, and its label states the result (`All 3 fit below U12 ✓`). If compaction gets you partway, the label reads `2 of 3 fit — 1 goes to Staging Bin` and option 1 is still selectable.
 - **Option 1 is preselected when it fully succeeds; otherwise option 2 is preselected.** Never preselect the destructive-feeling one when a clean one exists.
 - **Deletion is not an option in this dialog.** If the user wants those devices gone they can delete them explicitly; conflating "the rack got smaller" with "delete my equipment" is how tools lose data.
-- **Wire counts are shown** because that is the real cost signal — losing a 24-wire patch panel's position is a bigger deal than losing a blank.
+- **Wire counts are shown** because that is the real cost signal, losing a 24-wire patch panel's position is a bigger deal than losing a blank.
 - **Trim from Top/Bottom** matters for retrofits: trimming from the bottom shifts every occupant down by the removed U count and renumbers, which is occasionally what you want when a rack's base plinth changes.
 - Apply produces **one undo entry** covering the resize and every displacement. `Ctrl+Z` fully restores.
 - A device sent to the Staging Bin keeps `lastRackId` and `lastBottomU`, so the bin chip offers `Return to Rack A U21` once space exists.
 
 ### 4.4 Other geometry changes
 
-- **Reducing usable depth** below a placed device's depth does not displace anything — it files a **depth error** on each offending device (`SW-1 is 18.0 in in a 12.0 in rack`). Depth is a fit problem discovered at install time, so surfacing it as a persistent error is correct; forcing displacement would be theatre.
+- **Reducing usable depth** below a placed device's depth does not displace anything, it files a **depth error** on each offending device (`SW-1 is 18.0 in in a 12.0 in rack`). Depth is a fit problem discovered at install time, so surfacing it as a persistent error is correct; forcing displacement would be theatre.
 - **Changing width class** (19 in → 10 in) files errors on full-width occupants rather than moving them.
 - **Reducing weight capacity** below current load files a weight warning immediately (§5).
 
@@ -417,7 +417,7 @@ Design notes on this dialog, because it is the most important error state in the
 
 ### 5.1 Three tiers of visibility
 
-**Tier A — rack header chip strip** (always visible, 20 px, no interaction required):
+**Tier A: rack header chip strip** (always visible, 20 px, no interaction required):
 
 ```
 RU 15/24 · 148/200 lb · 1.24 kW · 4,231 BTU/h · ⚠2
@@ -425,7 +425,7 @@ RU 15/24 · 148/200 lb · 1.24 kW · 4,231 BTU/h · ⚠2
 
 Each chip turns amber at its warning threshold and red at its error threshold, with an icon change as well as a colour change (never colour alone). Clicking a chip scrolls the Vitals panel to that section.
 
-**Tier B — Rack Vitals panel** (pinned bottom of the right dock, 200 px, collapsible):
+**Tier B: Rack Vitals panel** (pinned bottom of the right dock, 200 px, collapsible):
 
 ```
 ┌ RACK A VITALS ────────────────────────────┐
@@ -460,7 +460,7 @@ Specifics that matter:
 - **Circuits are first-class objects** on the rack. PDUs are assigned to a circuit; devices are assigned to a PDU outlet. Unassigned devices roll into a pseudo-circuit `Unassigned` shown in grey. Continuous-load limits are per NEC 210.19(A)(1): **15 A → 12 A, 20 A → 16 A**.
 - **Centre of gravity** is a small sparkline of the weight distribution by U plus the CG height as both a U value and a % of rack height. It turns amber above 55%.
 
-**Tier C — Validation drawer** (bottom, collapsible). The KiCad ERC pattern: a flat navigable list, grouped by severity, each row clickable to select and zoom-to the subject.
+**Tier C: Validation drawer** (bottom, collapsible). The KiCad ERC pattern: a flat navigable list, grouped by severity, each row clickable to select and zoom-to the subject.
 
 ```
 ┌ VALIDATION ── [All ▾] [Errors 0] [Warnings 3] [Info 2] ── [Re-check] [×] ┐
@@ -482,7 +482,7 @@ Three levels, and the distinction is principled: **Error = the physical world sa
 | Device deeper than rack usable depth | Error | `device.depth > rack.usableDepth` |
 | Duplicate RefDes | Error | uniqueness violated in scope |
 | Device extends past rack extent | Error | data-import case |
-| Over weight capacity | **Warning** | `Σ weight > rack.capacity` — amber at 85%, red at 100% |
+| Over weight capacity | **Warning** | `Σ weight > rack.capacity`: amber at 85%, red at 100% |
 | Shelf over its weight capacity | Warning | `Σ hosted weight > shelf.capacity` |
 | Circuit over continuous limit | Warning | `Σ nameplate amps > 0.8 × breaker` |
 | Outlets oversubscribed | Warning | `Σ outletsConsumed > Σ outletsProvided` |
@@ -495,7 +495,7 @@ Three levels, and the distinction is principled: **Error = the physical world sa
 | Spare RU outside 15–25% | Info | planning heuristic |
 | Wall rack over 80% weight | Warning | wall mounts are the documented failure mode |
 
-Every **Info** row has a per-rule `ⓧ` dismiss and a per-project "don't show this rule again" in settings. **Warnings are dismissible per-instance with a required reason note** (which then appears in the PDF export appendix — an integrator who overrides a circuit warning should have that override documented). **Errors are not dismissible.**
+Every **Info** row has a per-rule `ⓧ` dismiss and a per-project "don't show this rule again" in settings. **Warnings are dismissible per-instance with a required reason note** (which then appears in the PDF export appendix, an integrator who overrides a circuit warning should have that override documented). **Errors are not dismissible.**
 
 Recomputation is incremental: each rack keeps a `VitalsSnapshot` recomputed on any command touching that rack, on a microtask so a multi-device drag computes once. Full project re-check is `F7`.
 
@@ -505,7 +505,7 @@ Warnings must be visible where the problem is, not only in a drawer:
 
 - A device with any issue gets a **badge** on its top-right corner: 14×14 px, triangle for warning, octagon for error, circle for info. Hover shows the message.
 - The rack header's `⚠2` chip is the rack rollup.
-- The **clearance rule gets special rendering**: when a device declares `requiresClearanceAboveU: 1`, the U above it is drawn with a light diagonal hatch and a small `↑1U` marker whenever that device is selected or hovered — so the user sees the requested airspace as a spatial thing, not a text warning. If that U is occupied, the hatch turns amber.
+- The **clearance rule gets special rendering**: when a device declares `requiresClearanceAboveU: 1`, the U above it is drawn with a light diagonal hatch and a small `↑1U` marker whenever that device is selected or hovered, so the user sees the requested airspace as a spatial thing, not a text warning. If that U is occupied, the hatch turns amber.
 
 ---
 
@@ -523,7 +523,7 @@ class Occupancy {
 }
 ```
 
-So blank panels, vent panels, fan panels, patch panels and shelves are **not special cases** — they are device templates with particular occupancy and port sets. This keeps the editor's placement code uniform.
+So blank panels, vent panels, fan panels, patch panels and shelves are **not special cases**: they are device templates with particular occupancy and port sets. This keeps the editor's placement code uniform.
 
 | Occupant | Occupancy | Ports | Editor notes |
 |---|---|---|---|
@@ -531,7 +531,7 @@ So blank panels, vent panels, fan panels, patch panels and shelves are **not spe
 | Vent panel | `{front:n, rear:0}` | none | Perforation dot pattern at zoom ≥ 0.75; `openAreaPct` field (VT ≈ 64%). Feeds the thermal heuristic. |
 | Fan panel | `{front:n, rear:0}` | 1 power inlet | Draws power, counts toward load, has `cfm` and `dBA`. |
 | Horizontal cable manager | `{front:n, rear:0}` | none | Drawn as a finger-duct texture. |
-| Patch panel | `{front:n, rear:n}` | paired front/rear, `passthrough: true` | Renders port grid at zoom ≥ 1.5 on both faces. Occupies rear U — this is the most common cause of a "why can't I place this" moment, hence the ruler's rear accent bar. |
+| Patch panel | `{front:n, rear:n}` | paired front/rear, `passthrough: true` | Renders port grid at zoom ≥ 1.5 on both faces. Occupies rear U; this is the most common cause of a "why can't I place this" moment, hence the ruler's rear accent bar. |
 | Rackmount PDU | `{front:1..2, rear:0..2}` | outlets | Outlet map rendered at zoom ≥ 1.5; assigned outlets filled, free hollow. |
 | UPS | `{front:n, rear:n}` | inlet + outlets | Usually the heaviest item; drives CG. |
 | **Rear lace bar (LBP)** | `{front:0, rear:1}` | none | Visible **only** in rear elevation, drawn as a 6 px bar with its offset depth annotated (`LBP-2A · 2 in`). In front elevation it appears only as the ruler's rear hatch. |
@@ -539,7 +539,7 @@ So blank panels, vent panels, fan panels, patch panels and shelves are **not spe
 | Vertical lacer strip (LACE) | `{front:0, rear:0, side: zeroUVertical}` | none | 0U gutter. |
 | **Shelf** | `{front:n, rear:0}` + container | none itself | §6.1. |
 
-### 6.1 Shelves as containers — the three-devices-on-a-shelf case
+### 6.1 Shelves as containers: the three-devices-on-a-shelf case
 
 A shelf is a **container**, and hosted devices consume **zero additional RU**.
 
@@ -581,7 +581,7 @@ U7 │ ││ Cable box│ │ Cable box│ │ Apple TV   │  ░ 4.1in ░  �
 - **Dropping onto a shelf.** When a drag ghost enters a shelf's bounds and the dragged device's `mountMethod` includes `hosted`, the shelf tray lightens and a **vertical insertion caret** (2 px accent, full tray height) appears at the nearest gap between hosted devices. The ghost shrinks to the device's true lateral width. Drop inserts at that lateral index; subsequent devices shift right.
 - **Lateral drag within a shelf.** Grab a hosted device, drag horizontally; the caret shows the reorder position; other hosts slide with a 120 ms ease. Vertical drag out of the tray beyond 20 px converts the gesture back to a rack-placement drag (the device leaves the shelf).
 - **Free-position mode.** Default is auto-packed left-to-right with even gaps. `Alt`-drag within the shelf enables **free lateral positioning** (snapped to 1 mm), for representing a real install where a box sits centered. A shelf in free mode shows a small `↔ free` chip.
-- **Capacity feedback, live during drag.** The shelf header shows `38/50 lb` and a 3 px capacity bar. As a ghost hovers, the bar shows the projected value in a lighter accent. Exceeding capacity **does not block the drop** — it files a warning — because an integrator may legitimately be documenting an existing install that's over spec. But the bar goes red immediately and the header reads `62/50 lb ⚠`.
+- **Capacity feedback, live during drag.** The shelf header shows `38/50 lb` and a 3 px capacity bar. As a ghost hovers, the bar shows the projected value in a lighter accent. Exceeding capacity **does not block the drop**, it files a warning, because an integrator may legitimately be documenting an existing install that's over spec. But the bar goes red immediately and the header reads `62/50 lb ⚠`.
 - **Lateral overflow does block.** If the device's width exceeds remaining tray width, the caret turns red and the reason chip reads `Needs 7.0 in, 4.1 in free on shelf`.
 - **Depth check per host:** `host.depth > shelf.usableDepth` → warning badge on that host (`10.4 in shelf, 12.0 in device — overhangs`). Overhang is common and survivable, so warning not error.
 - **Hosted devices are full devices.** They get RefDes, appear in the outline tree indented under the shelf, appear in the BOM, their ports participate fully in the netlist and the wiring schedule, and their ports carry front/rear side. The only thing they lack is an independent rack U.
@@ -612,7 +612,7 @@ Every occupant carries three distinct strings, and conflating them is the mistak
 | `name` | `Living Room Amp` | user, free text, need not be unique | yes, `Ctrl+F2` |
 | `typeName` | `16-channel amplifier` | from the device template | via template only |
 
-`refDes` is the join key for every schedule row, label and diagram callout. **Uniqueness is enforced, not suggested** — this is the single loudest gap in the competing tools, where a rack with three identical amps cannot produce a correct cable schedule.
+`refDes` is the join key for every schedule row, label and diagram callout. **Uniqueness is enforced, not suggested**: this is the single loudest gap in the competing tools, where a rack with three identical amps cannot produce a correct cable schedule.
 
 ### 7.2 Auto-assignment
 
@@ -621,15 +621,15 @@ On placement, RefDes = `{prefix}-{n}` where `prefix` comes from the template's `
 Seed prefixes: `AMP` amplifier · `SW` network switch · `RTR` router · `MTX` matrix switch · `AVR` receiver · `DISP` display · `PROJ` projector · `STB` set-top box · `MP` media player · `NVR` recorder · `CAM` camera · `PP` patch panel · `PDU` power distribution · `UPS` UPS · `PWR` power conditioner · `CTL` control processor · `KP` keypad · `SHF` shelf · `BLK` blank panel · `VNT` vent panel · `FAN` fan panel · `CM` cable manager · `LB` lace bar · `STR` structure.
 
 **Scope** is a project setting:
-- `project` (default) — `AMP-1`, `AMP-2` across all racks.
-- `perRack` — `R1-AMP-1`, `R2-AMP-1`. Uses the rack's own `refDes` prefix (`R1`).
+- `project` (default), `AMP-1`, `AMP-2` across all racks.
+- `perRack`, `R1-AMP-1`, `R2-AMP-1`. Uses the rack's own `refDes` prefix (`R1`).
 
 Changing scope opens the renumber preview (§7.4) rather than silently rewriting every label.
 
 ### 7.3 Overriding
 
-- `F2` (or double-click the RefDes zone on the device body — the top-left 60×14 px region, which shows a text-edit cursor on hover) opens **inline editing**: the RefDes renders as an editable field in place, text pre-selected, monospace.
-- Live validation as you type: a duplicate turns the field's border red with a chip `AMP-1 is used by Living Room Amp  [Swap] [Go to]`. **`Swap` is the good affordance here** — it exchanges the two RefDes values in one command, which is what the user wants 90% of the time they hit a collision.
+- `F2` (or double-click the RefDes zone on the device body, the top-left 60×14 px region, which shows a text-edit cursor on hover) opens **inline editing**: the RefDes renders as an editable field in place, text pre-selected, monospace.
+- Live validation as you type: a duplicate turns the field's border red with a chip `AMP-1 is used by Living Room Amp  [Swap] [Go to]`. **`Swap` is the good affordance here**: it exchanges the two RefDes values in one command, which is what the user wants 90% of the time they hit a collision.
 - Empty is rejected; `Esc` reverts; `Enter` or blur commits.
 - Committing a manual edit sets `refDesLocked = true` on that occupant. A small 🔒 appears in the RefDes chip's corner at zoom ≥ 1.0.
 
@@ -659,9 +659,9 @@ This is presented as a **diff**, because renumbering rewrites labels on schedule
 
 ### 7.5 Location vocabulary
 
-`Location` is not free text — it is a **project-level vocabulary** (`Locations: Basement, Media Closet, Living Room, Primary Bedroom…`) with a combobox that permits inline creation. Racks have a location; devices inherit their rack's location and can override; Structure ports carry a location per port group.
+`Location` is not free text; it is a **project-level vocabulary** (`Locations: Basement, Media Closet, Living Room, Primary Bedroom…`) with a combobox that permits inline creation. Racks have a location; devices inherit their rack's location and can override; Structure ports carry a location per port group.
 
-This directly addresses the documented failure where drawings say "Study", the homeowner says "Office", and the labels say "Room 3". **Renaming a location propagates everywhere** — every label, every schedule row, every PDF callout — in one undo-able command.
+This directly addresses the documented failure where drawings say "Study", the homeowner says "Office", and the labels say "Room 3". **Renaming a location propagates everywhere** (every label, every schedule row, every PDF callout) in one undo-able command.
 
 ### 7.6 Body label rendering
 
@@ -709,7 +709,7 @@ A **Labels** toolbar cycle (`L`) rotates the primary label through `RefDes` → 
 | `Ctrl+9` | Zoom to fit focused rack |
 | `Ctrl+=` / `Ctrl+-` | Zoom in / out about viewport center |
 | `Ctrl+wheel` | Zoom about cursor |
-| `wheel` | Pan vertical (preference: zoom — set on first run) |
+| `wheel` | Pan vertical (preference: zoom: set on first run) |
 | `Shift+wheel` | Pan horizontal |
 | `Space+drag` / `MMB drag` | Pan |
 | `F` | Flip face (Front ⇄ Rear) |
@@ -756,7 +756,7 @@ A **Labels** toolbar cycle (`L`) rotates the primary label through `RefDes` → 
 | `Ctrl+R` | Renumber dialog |
 | `Ctrl+Alt+U` | Rack settings |
 | `Ctrl+Alt+N` | New rack |
-| `Ctrl+Alt+D` | Duplicate rack (with or without contents — asks) |
+| `Ctrl+Alt+D` | Duplicate rack (with or without contents: asks) |
 
 ### Modifiers held during drag
 | Modifier | Effect |
@@ -805,7 +805,7 @@ No project. A centered start card, not an empty canvas:
 └──────────────────────────────────────────────────────────────┘
 ```
 
-**Starter projects are the fastest path and they should be first-class**, not a footnote. A user who picks "Home theater" is looking at a populated, warning-clean 24U rack in under two seconds, and can then edit rather than create — which is a far lower-effort mode.
+**Starter projects are the fastest path and they should be first-class**, not a footnote. A user who picks "Home theater" is looking at a populated, warning-clean 24U rack in under two seconds, and can then edit rather than create, which is a far lower-effort mode.
 
 ### 9.2 New rack dialog
 
@@ -845,7 +845,7 @@ Everything else (depth, capacity, rail type) comes from the preset and is tunabl
      └──────────────────────────────────┘
 ```
 
-The rails, holes and ruler render at full fidelity even when empty — the rack should look like a rack immediately, so the user sees the tool understands the domain. The hint card sits at 40% opacity and fades out entirely on the first pointer-down anywhere in the rack.
+The rails, holes and ruler render at full fidelity even when empty, the rack should look like a rack immediately, so the user sees the tool understands the domain. The hint card sits at 40% opacity and fades out entirely on the first pointer-down anywhere in the rack.
 
 ### 9.4 The measured fastest path
 
@@ -864,14 +864,14 @@ Enter (Blank project)  →  Enter (New rack: defaults)  →  canvas, caret at U1
 Ctrl+B           fills remaining gaps with blanks (preview → ⏎)
 ```
 
-**Nine search-and-enter cycles, roughly 25 seconds.** This works because `Enter` from palette search places at the caret and advances it — a single design decision that makes the whole editor keyboard-fluent. It is worth protecting in every future change.
+**Nine search-and-enter cycles, roughly 25 seconds.** This works because `Enter` from palette search places at the caret and advances it, a single design decision that makes the whole editor keyboard-fluent. It is worth protecting in every future change.
 
 ### 9.5 Progressive disclosure
 
 No tour, no modal walkthrough. Instead, three one-time contextual coach marks fired by the relevant event and dismissed permanently on interaction:
 1. On first successful placement: `Drag to move · ↑↓ to nudge · F2 to rename` (anchored to the device, 4 s auto-dismiss).
 2. On first warning: `Warnings live here — click to jump to the cause` (anchored to the validation drawer).
-3. On first rack shrink attempt: nothing — the dialog explains itself.
+3. On first rack shrink attempt: nothing, the dialog explains itself.
 
 ---
 
@@ -879,13 +879,13 @@ No tour, no modal walkthrough. Instead, three one-time contextual coach marks fi
 
 ### 10.1 Keyboard-only operation
 
-The editor is fully operable without a pointer. This is not a compliance checkbox — it is the same mechanism that makes it fast for power users, which is why §9.4 works.
+The editor is fully operable without a pointer. This is not a compliance checkbox; it is the same mechanism that makes it fast for power users, which is why §9.4 works.
 
 **Focus regions.** `F6` / `Shift+F6` cycle: Toolbar → Palette → Canvas → Inspector → Validation → Status. Each region shows a 2 px focus ring on its container. `Ctrl+F6` returns to canvas from anywhere.
 
 **Within the canvas**, focus has two levels:
-1. **Rack level** — `Tab`/`Shift+Tab` moves between racks. The focused rack gets a 2 px accent border and its header announces.
-2. **Occupant level** — `Enter` descends into the focused rack, placing the **insertion caret** at U1. `↑`/`↓` move the caret one U at a time, and the caret **announces every U it passes**: `U14, free` / `U19 to U20, AMP-1, 16-channel amplifier`. `Esc` ascends back to rack level.
+1. **Rack level**: `Tab`/`Shift+Tab` moves between racks. The focused rack gets a 2 px accent border and its header announces.
+2. **Occupant level**: `Enter` descends into the focused rack, placing the **insertion caret** at U1. `↑`/`↓` move the caret one U at a time, and the caret **announces every U it passes**: `U14, free` / `U19 to U20, AMP-1, 16-channel amplifier`. `Esc` ascends back to rack level.
 
 From the caret:
 - `Enter` on a free U → quick-insert popover (a real `TextField` + `ListView`, fully AT-navigable).
@@ -897,13 +897,13 @@ From the caret:
 **Every keyboard action produces a spoken result**, via `SemanticsService.announce` on a polite live region:
 - Success: `Placed AMP-2, 2U, Rack A, U19 to U20, front.`
 - Blocked: `Cannot move down. U18 occupied by PP-1.`
-- Derived change: `Rack A now 17 of 24 U used, 176 of 200 pounds.` (throttled to one vitals announcement per 2 s, and only when a threshold is crossed — not on every nudge).
+- Derived change: `Rack A now 17 of 24 U used, 176 of 200 pounds.` (throttled to one vitals announcement per 2 s, and only when a threshold is crossed, not on every nudge).
 
 **No pointer-only affordance exists.** Everything reachable by hover reveal (the header `⋮`, the rack resize band, the shelf lateral drag) has a keyboard equivalent: `Ctrl+Alt+U` for rack settings, the RU stepper field, `←`/`→` within a shelf.
 
 ### 10.2 Screen-reader semantics
 
-Because device bodies are **real widgets** in the hybrid render architecture, they carry semantics natively — this is a substantial and under-appreciated argument for the hybrid over pure-canvas.
+Because device bodies are **real widgets** in the hybrid render architecture, they carry semantics natively; this is a substantial and under-appreciated argument for the hybrid over pure-canvas.
 
 Each occupant widget:
 
@@ -925,9 +925,9 @@ Semantics(
 
 The rack container exposes `label: 'Rack A, Media Closet, 24U'`, `value: '15 of 24 U used, 2 warnings'`, and a `SemanticsSortKey` ordering children by U so AT traversal matches physical order (top-to-bottom or bottom-to-top per the rack's `uNumbering`).
 
-For **canvas-painted** content (rails, ruler, 0U bars, snap overlays), `CustomPainter.semanticsBuilder` emits `CustomPainterSemantics` only for the 0U occupants and the insertion caret. Rails and the ruler are decorative and get `excludeSemantics`. Critically, `shouldRebuildSemantics` is overridden to compare a `topologyVersion` rather than delegating to `shouldRepaint` — otherwise every pan rebuilds the entire semantics tree for no reason.
+For **canvas-painted** content (rails, ruler, 0U bars, snap overlays), `CustomPainter.semanticsBuilder` emits `CustomPainterSemantics` only for the 0U occupants and the insertion caret. Rails and the ruler are decorative and get `excludeSemantics`. Critically, `shouldRebuildSemantics` is overridden to compare a `topologyVersion` rather than delegating to `shouldRepaint`, otherwise every pan rebuilds the entire semantics tree for no reason.
 
-### 10.3 The outline tree — the primary AT surface
+### 10.3 The outline tree: the primary AT surface
 
 A canvas is inherently visual, and heroic canvas semantics are a poor substitute for a real structure. RackMate ships a **Rack Outline** panel (`Ctrl+Alt+3`, a real Flutter `TreeView` of standard widgets) that is a complete, editable, screen-reader-native mirror of the model:
 
@@ -958,13 +958,13 @@ Every editing command works from the tree. Selection is bidirectional with the c
 - **No information is conveyed by colour alone.** Cable/category colours are always paired with a text label or an icon; warning severity uses shape (triangle / octagon / circle) as well as colour; the occupancy accent bars in the ruler are paired with the hatch pattern for rear.
 - Contrast: all text ≥ 4.5:1 against its background in both themes; device outlines ≥ 3:1.
 - **Respects `MediaQuery.textScaler`** up to 2.0. Device bodies clamp their internal text at large scales and drop to RefDes-only rather than overflowing; the ruler switches to labelling every 5th U.
-- **Respects `MediaQuery.disableAnimations`** — all the eases, pulses and shakes described above become instant state changes. The shake-on-invalid-drop is replaced by a persistent red border, since a motion cue with motion disabled communicates nothing.
+- **Respects `MediaQuery.disableAnimations`**: all the eases, pulses and shakes described above become instant state changes. The shake-on-invalid-drop is replaced by a persistent red border, since a motion cue with motion disabled communicates nothing.
 - **High contrast mode** thickens all outlines to 2 px and removes fills in favour of outlines + patterns.
 - Minimum hit target is **24×24 px** for mouse and **44×44 px** for touch; the RefDes edit zone, the rack resize band and the stepper arrows are all explicitly padded to meet this even though their visual footprint is smaller.
 
 ---
 
-## Appendix — model surface this editor requires
+## Appendix: model surface this editor requires
 
 ```dart
 class Rack {

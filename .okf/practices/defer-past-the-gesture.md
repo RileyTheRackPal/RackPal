@@ -9,17 +9,17 @@ status: adopted
 
 M2-F Phase 5 wired CR-105's elevation chip to the schematic. Both ends were
 built, unit-tested and correct. Neither worked, for two different reasons, and
-**every test at both ends stayed green** — which is the whole reason this is
+**every test at both ends stayed green**, which is the whole reason this is
 written down.
 
 # One: `addPostFrameCallback` queues, it does not schedule
 
-`SchematicCanvasScreen` defers its reveal by one frame — it has to, because the
+`SchematicCanvasScreen` defers its reveal by one frame; it has to, because the
 selection controller notifies synchronously and the shell is mid-`setState`.
 The deferral was written as a bare `addPostFrameCallback`.
 
-**Reveals driven through the controller did nothing at all** — no selection, no
-scroll, no status line — while the identical code path reached from `initState`
+**Reveals driven through the controller did nothing at all** (no selection, no
+scroll, no status line) while the identical code path reached from `initState`
 worked perfectly. The difference is that `initState` runs INSIDE a frame, so a
 callback queued there is drained at the end of that same frame. A callback
 queued from a listener, with no `setState` anywhere and no frame pending, waits
@@ -52,7 +52,7 @@ Both are the same class as the
 [salvage post-mortem](/practices/diagnose-before-fixing.md)'s finding: **a
 mechanism that reads as working because one of its invocations does.** The unit
 tests at each end were true and the composition was false, which is what
-`apps/rackmate/test/session/signposting_test.dart` exists for — it is the only
+`apps/rackmate/test/session/signposting_test.dart` exists for; it is the only
 place that can observe the two halves being wired to each other.
 
 # How to catch it next time
@@ -60,7 +60,7 @@ place that can observe the two halves being wired to each other.
 * When a widget defers work it did not itself schedule a frame for, pair
   `addPostFrameCallback` with `ensureVisualUpdate`.
 * When an action taken during a pointer event changes something a scrollable
-  owns — a page, a scroll offset, a route — defer it past the gesture.
+  owns (a page, a scroll offset, a route) defer it past the gesture.
 * **Drive the composition, not just the ends.** A test that asserts a callback
   fires and a test that asserts a request is honoured can both pass while
   nothing connects them.

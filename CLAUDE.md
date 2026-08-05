@@ -124,14 +124,21 @@ value survives the behaviour it was protecting; more than one test in this repo 
 been found asserting a defect as intended behaviour. When a comment explains why a
 branch exists, keep it, and update it when the branch changes.
 
-**Do not use em dashes in prose.** The sweep this rule used to schedule has run:
-3,361 sites across 21 authored documents became a colon, a comma, a semicolon or a
-pair of parentheses, chosen by what followed the dash.
+**Do not use em dashes in prose.** The sweep this rule used to schedule has run over
+every tracked markdown file: **5,883 sites** became a colon, a comma, a semicolon or a
+pair of parentheses, chosen by what followed the dash. `docs/research/`,
+`docs/m1-implementation-log.md`, `.okf/` and `assets/catalog/sources.md` are all
+included; `research/README.md` carries the exception this created to its own
+"unedited outputs" claim.
 
-Three classes were deliberately left alone, and a later sweep should leave them alone
-too. **Code** keeps them, fenced or inline, because there the dash is data rather than
+Three classes are deliberately left alone, and a later sweep should leave them alone.
+**Code** keeps them, fenced or inline, because there the dash is data rather than
 punctuation: `—` is what G4 prints for an unknown. **Blockquotes** keep them, because
 canon quotes rulings and critiques word for word and editing a quotation falsifies the
-record. **`docs/research/` and `docs/m1-implementation-log.md`** keep them, because
-`research/README.md` calls those papers the unedited outputs of the design passes, and
-a dated log is a record rather than a document.
+record. **YAML frontmatter** keeps them, because a `title: DR-001 — …` rewritten with a
+colon is a parse error, and OKF puts ruling titles in exactly that field.
+
+A future sweep should reuse the post-conditions rather than trust a spot-check:
+brackets, backticks and emphasis markers must balance, and the **line count must not
+change**, since the corpus is hard-wrapped and a swallowed newline reflows a paragraph.
+Pair detection has to run over the paragraph rather than the line, for the same reason.

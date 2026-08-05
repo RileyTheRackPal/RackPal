@@ -1,7 +1,7 @@
 # CI gates
 
 `pwsh -File tools/ci/run_local.ps1 -SkipBuild` runs the full set. Each concept
-below records what its gate defends **and what it deliberately does not** — a
+below records what its gate defends **and what it deliberately does not**: a
 gate's blind spot is as worth knowing as its coverage.
 
 * [Analyzer info ratchet](analyzer-baseline.md) - 0 errors, 0 warnings, and an exactly pinned info count. Scans tests too.

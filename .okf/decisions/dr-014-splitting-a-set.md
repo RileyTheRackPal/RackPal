@@ -24,7 +24,7 @@ connections made once the left channel is made."*
 **Both halves of that were true, and the document was the honest one.** `R`
 really did carry a conductor. What the product lacked was any way to say the one
 thing the user meant: *this half goes somewhere else now.* The user's own case
-is not exotic — a pair of 16-zone amplifiers handling each audio channel across
+is not exotic, a pair of 16-zone amplifiers handling each audio channel across
 32 zones needs exactly this, and so does an HDMI matrix whose de-embedded
 output is a 3.5 mm breakout into two unbalanced jacks.
 
@@ -41,8 +41,8 @@ modifier exists**:
 
 So every option was a chord, a scarce unmodified letter (canon §1.10's
 `letterCollision` governs those, and the budget is nearly spent), a pointer
-gesture with no keyboard equivalent — which breaks §11.11.6's parity, the clause
-M1 was REFUTED for lacking — or a re-ruling of §11.11.2's *"the jack decides"*.
+gesture with no keyboard equivalent (which breaks §11.11.6's parity, the clause
+M1 was REFUTED for lacking) or a re-ruling of §11.11.2's *"the jack decides"*.
 
 # The ruling
 
@@ -67,7 +67,7 @@ A gesture that acts without being asked has to be sure. `planSetSplit` answers
    derivable answer. A conductor looped back to the same pin counts twice and is
    excluded by the same clause.
 3. **Its `Link` carries MORE THAN ONE conductor.**
-4. **The far end is not already on the device being drawn to** — the user's own
+4. **The far end is not already on the device being drawn to**: the user's own
    wording, and load-bearing rather than decorative.
 
 An `OpenEndpoint` or `PlaceEndpoint` far end **does** split: neither names a
@@ -77,7 +77,7 @@ device to be the same as. An unresolvable `PortEndpoint` **does not**, because
 # Condition 3 is what stops a split from being a delete
 
 Lift the only conductor out of a `Link` and the cable becomes a `W` number and a
-schedule row with no electrical path — the state
+schedule row with no electrical path, the state
 `ConnectPortsCommand`'s own zero-conductor guard calls *"no conductor at all"*
 and throws over.
 
@@ -89,7 +89,7 @@ schedule is the deliverable, and the loss is invisible until it is printed.
 # The bill of materials is named out loud
 
 A split moves one conductor across the line between *one cable with N
-conductors* and *N cables* — the pull sheet gains a row and an existing row
+conductors* and *N cables*, the pull sheet gains a row and an existing row
 loses a path. A silent choice between those two is precisely the harm
 [DR-012](/decisions/dr-012-deferred-gesture-rules.md) §11.12.2 exists to
 prevent, so naming the `W` number is not enough on its own. The sentence states
@@ -105,7 +105,7 @@ disappear, not a lifted conductor to go back where it came from.
 # §11.11.2 is amended, not overturned
 
 The branch is still decided BY THE JACK. What changes is that a set which is
-**already one cable** has no legal set gesture left — every member is full, so
+**already one cable** has no legal set gesture left, every member is full, so
 `planAtomicConnect` meets `TOP-003` at the grabbed position against every
 candidate and the gesture arms with nothing to aim at. That was the report. A
 full member therefore arms the pin-to-pin path, where the split lives.

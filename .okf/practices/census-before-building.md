@@ -28,7 +28,7 @@ evidence.
 
 M2's exit criterion asks for a 300-link fixture "within one frame at commit",
 and the clause was marked `DEMONSTRATED` against a test measuring the display
-list being BUILT — 3 ms. Counting the actual paint found **63.9 ms against a
+list being BUILT, 3 ms. Counting the actual paint found **63.9 ms against a
 16.7 ms frame**, 83 % of it repeated text layout.
 
 The same census refuted the roadmap's own sizing twice: it prescribes a cache
@@ -37,8 +37,8 @@ key would have caused the thrash it warned about.
 
 # Three: the ordering was wrong and nothing had ever compared it (#93)
 
-Checking that `bankKey` was reachable from the shipped catalog — the DR-012
-habit, applied — meant printing each bank's ports in rank order. `A01` came
+Checking that `bankKey` was reachable from the shipped catalog (the DR-012
+habit, applied) meant printing each bank's ports in rank order. `A01` came
 out as `src.1.l src.3.l src.3.r src.4.l … src.1.r`, which is not an order at
 all.
 
@@ -52,8 +52,8 @@ other perfectly; the two orderings had never been put side by side.
 The three failures are the same failure. **A value that is never compared
 against anything cannot be wrong**, because there is nothing for it to
 disagree with. Tests written from the same assumption as the code inherit the
-assumption. A census breaks that by introducing a second source — the corpus
-itself — and reading it with human eyes rather than an `expect`.
+assumption. A census breaks that by introducing a second source, the corpus
+itself, and reading it with human eyes rather than an `expect`.
 
 **Do it before, not after.** All three of these were caught before shipping the
 rule that would have depended on them, which is the whole margin: the same

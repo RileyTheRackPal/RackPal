@@ -1,4 +1,4 @@
-# RackMate — Domain & Persistence Data Model
+# RackMate: Domain & Persistence Data Model
 
 **Status:** design spec, v1 schema. Opinionated throughout. Every rejected alternative is named.
 
@@ -8,13 +8,13 @@ Three vocabulary changes from the brief, made deliberately and argued in §3.5:
 |---|---|---|
 | `Connection` | **`Link`** (physical, exactly 2 ends) + **`Net`** (logical N-way) + **`SignalRoute`** (transport-independent flow) | "Connection" is three different things in this domain and conflating them is the single most expensive mistake available here |
 | `CableType` / `SignalType` | **`SignalFamily`** + **`ConnectorType`** + **`MediaType`**, three orthogonal registries | RJ45 is a connector, not a signal; Cat6a is a medium, not a signal |
-| `RackSlot` | **`Placement`** (sealed union) | Slots don't exist for 0U gear, shelf-hosted gear, or off-rack gear, and "slot" implies an array index — the thing we must never use as identity |
+| `RackSlot` | **`Placement`** (sealed union) | Slots don't exist for 0U gear, shelf-hosted gear, or off-rack gear, and "slot" implies an array index, the thing we must never use as identity |
 
 ---
 
 ## 0. The shape, in one paragraph
 
-The document is a **flat set of UUID-keyed entity maps** (never a tree), mutated **only** through undoable `Command`s. Physical facts live on **immutable, versioned `DeviceTemplate` snapshots embedded in the file**; project facts live on `DeviceInstance`. Ports are **first-class entities with stable string keys** so template revisions are a key-join, not a re-index. Wiring is **two layers**: `Link` = one cable = one schedule row = one `W###` designator; `Net` = one electrical/logical equivalence class = one bus trunk on the drawing. Validation **never blocks the pen** — it emits `Finding`s the user can acknowledge with a rationale. Everything is **integers**: RU counts, nanometres, schematic grid units. There is not a single float in the persisted model.
+The document is a **flat set of UUID-keyed entity maps** (never a tree), mutated **only** through undoable `Command`s. Physical facts live on **immutable, versioned `DeviceTemplate` snapshots embedded in the file**; project facts live on `DeviceInstance`. Ports are **first-class entities with stable string keys** so template revisions are a key-join, not a re-index. Wiring is **two layers**: `Link` = one cable = one schedule row = one `W###` designator; `Net` = one electrical/logical equivalence class = one bus trunk on the drawing. Validation **never blocks the pen**: it emits `Finding`s the user can acknowledge with a rationale. Everything is **integers**: RU counts, nanometres, schematic grid units. There is not a single float in the persisted model.
 
 ---
 
@@ -77,9 +77,9 @@ Project ────────────────────────
 **Cardinality notes that matter:**
 
 - `Port` is owned by `DeviceInstance` **and never shared**. A patch panel's front and rear jacks are two `Port`s bound by a `PassthroughPair`, not one port.
-- `Link.Conductor` is 1:N — a 16/4 speaker cable is **one Link with four Conductors**, not four Links. One cable = one row on the pull sheet = one physical thing a human pulls.
+- `Link.Conductor` is 1:N, a 16/4 speaker cable is **one Link with four Conductors**, not four Links. One cable = one row on the pull sheet = one physical thing a human pulls.
 - `Net` is **stored, not derived** (§3.5).
-- `TemplateSnapshot` is referenced by `(templateId, version)` and is immutable — it can never be a sync conflict and never a dangling edit.
+- `TemplateSnapshot` is referenced by `(templateId, version)` and is immutable; it can never be a sync conflict and never a dangling edit.
 
 ---
 
@@ -296,7 +296,7 @@ final class ZeroUChannel {
 }
 ```
 
-### 2.4 Placement — the `RackSlot` replacement
+### 2.4 Placement: the `RackSlot` replacement
 
 ```dart
 /// Sealed union. `switch` over it is exhaustive at compile time.
@@ -699,7 +699,7 @@ final class StructureDrop {
 }
 ```
 
-### 2.9 Net, Link, SignalRoute — the wiring model
+### 2.9 Net, Link, SignalRoute: the wiring model
 
 ```dart
 /// The LOGICAL equivalence class. One net = one bus trunk on the schematic,
@@ -815,7 +815,7 @@ final class Circuit {
 }
 ```
 
-### 2.10 Registries — `CableType` / `SignalType` replacement
+### 2.10 Registries: `CableType` / `SignalType` replacement
 
 ```dart
 /// Embedded in the document: the SUBSET actually referenced, at the version used.
@@ -982,17 +982,17 @@ final class Tombstone {
 | RU occupancy (front/rear/side), width class, mount methods | Placement (rack, RU, face, twelfths) |
 | Depth, weight, clearance requirements, thermal class | Serial, asset tag, MAC, firmware, install date, cost |
 | Power profile (nameplate/typical/standby, outlets provided/consumed) | Circuit assignment, actual PoE negotiation, outlet assignment |
-| Complete `PortDef` list — connector, signal, direction, side, panel position, gender, capability metadata | `Port` overrides, designators, IP/hostname/VLAN, bus address, DMX universe, 70 V tap, terminator flag |
+| Complete `PortDef` list: connector, signal, direction, side, panel position, gender, capability metadata | `Port` overrides, designators, IP/hostname/VLAN, bus address, DMX universe, 70 V tap, terminator flag |
 | Manufacturer, model, category, type prefix, faceplate art | Designator, name, status (existing/new/future), notes, colour |
 | Container capacity (shelves), passthrough pairs | Container membership (`hostDeviceId`) |
 
 The dividing line: **if two identical units in two different projects would disagree about it, it belongs on the instance.** A 70 V transformer tap is per-installation → instance. Panel width is per-model → template.
 
-**Propagation.** `DeviceInstance.templateRef` pins `(templateId, version, contentHash)` to an **immutable `TemplateSnapshot` embedded in the project file**. Template edits do **not** propagate. Instead, on open, RackMate compares each snapshot version to the library and sets `templateUpdateAvailable`. The user sees *"3 devices use an outdated version of 8×8 HDMI Matrix — Review update."* Applying it is a single undoable `MigrateTemplateCommand` producing a diff report.
+**Propagation.** `DeviceInstance.templateRef` pins `(templateId, version, contentHash)` to an **immutable `TemplateSnapshot` embedded in the project file**. Template edits do **not** propagate. Instead, on open, RackMate compares each snapshot version to the library and sets `templateUpdateAvailable`. The user sees *"3 devices use an outdated version of 8×8 HDMI Matrix, Review update."* Applying it is a single undoable `MigrateTemplateCommand` producing a diff report.
 
-**Rejected — live reference to a mutable library template.** This is what most tools do and it is wrong for a deliverable-producing app. Consequences: (a) the project file is not self-contained — opening it on the installer's laptop, whose library differs, silently changes the drawing; (b) a template edit can delete a port that has three connections, mid-project, with no undo scope; (c) an issued-for-construction PDF stops being reproducible from its own file. Deliverable integrity beats convenience.
+**Rejected: live reference to a mutable library template.** This is what most tools do and it is wrong for a deliverable-producing app. Consequences: (a) the project file is not self-contained, opening it on the installer's laptop, whose library differs, silently changes the drawing; (b) a template edit can delete a port that has three connections, mid-project, with no undo scope; (c) an issued-for-construction PDF stops being reproducible from its own file. Deliverable integrity beats convenience.
 
-**Rejected — copy-on-place with no linkage.** You lose the ability to fix a wrong port count across 12 instances, and you lose the "update available" affordance that makes a library worth having.
+**Rejected: copy-on-place with no linkage.** You lose the ability to fix a wrong port count across 12 instances, and you lose the "update available" affordance that makes a library worth having.
 
 **When the user edits a template a placed device uses,** the UI presents exactly two doors:
 
@@ -1041,28 +1041,28 @@ Three-level identity, and it matters that they are three:
 6. Present the diff BEFORE committing. One transaction, one undo entry.
 ```
 
-**Rejected — index identity (`ports[3]`).** The canonical failure. Inserting a port at position 2 reassigns every downstream connection.
+**Rejected: index identity (`ports[3]`).** The canonical failure. Inserting a port at position 2 reassigns every downstream connection.
 
-**Rejected — label identity (`"HDMI OUT 3"`).** Labels are user-facing, get corrected for typos, and get localized. A rename must not be a rewire.
+**Rejected: label identity (`"HDMI OUT 3"`).** Labels are user-facing, get corrected for typos, and get localized. A rename must not be a rewire.
 
-**Rejected — deleting orphaned ports and their links.** Data loss on a routine operation. Orphaning is recoverable; deletion is not. The orphan badge is also *useful information* — it tells the user exactly what the template change cost them.
+**Rejected: deleting orphaned ports and their links.** Data loss on a routine operation. Orphaning is recoverable; deletion is not. The orphan badge is also *useful information*, it tells the user exactly what the template change cost them.
 
 ### 3.4 The port type system: data-driven registry, embedded, user-extensible
 
 **Decision:** `SignalFamily`, `ConnectorType` and `MediaType` are **three independent string-keyed registries**, seeded with a built-in catalog, extensible by the user, and **embedded (the used subset) in every project file**. Compatibility rules are **registry data**, not Dart code.
 
-**Why not an enum.** Dart enums give exhaustive `switch` and compile-time safety, which is genuinely valuable — and it is the wrong trade here for three reasons:
+**Why not an enum.** Dart enums give exhaustive `switch` and compile-time safety, which is genuinely valuable, and it is the wrong trade here for three reasons:
 
 1. **Growth rate.** The taxonomy has 43+ families today and gains entries with every new transport (SDVoE, HDMI 2.2, DP80, PoE Type 5). Each addition would be an app release.
 2. **Forward compatibility is impossible.** A v1.0 app reading a v1.4 file that references `video.hdmi.2_2` must either crash, silently coerce, or drop the value. An enum cannot round-trip an unknown member. A registry can (I-24).
-3. **Rules would live in code.** The most valuable feature in the whole app — "HDBaseT patched into a switch" — is a *rule*, and rules that live in code can't be shipped as a catalog update, can't be authored by a user for a proprietary Cresnet variant, and can't be inspected by the user to understand why the app is complaining.
+3. **Rules would live in code.** The most valuable feature in the whole app, "HDBaseT patched into a switch", is a *rule*, and rules that live in code can't be shipped as a catalog update, can't be authored by a user for a proprietary Cresnet variant, and can't be inspected by the user to understand why the app is complaining.
 
 **Why not free-text user-extensible.** No colour mapping, no rules, no legend, no DRC. Garbage in.
 
 **The registry design specifically:**
 
 - IDs are reverse-hierarchical strings: `"video.hdmi.2_1"`, `"net.ethernet"`, `"ctl.rs232"`. Hierarchical prefixes give cheap domain grouping and cheap prefix-matching in rules.
-- `extension type SignalFamilyId(String)` gives type safety at the call site with zero allocation — you cannot pass a `ConnectorTypeId` where a `SignalFamilyId` is expected, and there is no wrapper object at runtime.
+- `extension type SignalFamilyId(String)` gives type safety at the call site with zero allocation; you cannot pass a `ConnectorTypeId` where a `SignalFamilyId` is expected, and there is no wrapper object at runtime.
 - Custom entries carry `custom: true` + `basedOn`. A user's `"ctl.cresnet.hp"` inherits every rule from `"ctl.cresnet"` unless it overrides one.
 - **Embedding the used subset in the file** is the same argument as template snapshots: the file must render identically in 2031 on an app whose built-in catalog has moved on. On open, the app reconciles: identical id + identical hash → use built-in; id present but hash differs → use the *embedded* one and badge it "this project pins an older definition of Cat6a".
 
@@ -1075,9 +1075,9 @@ carriedProtocols: [video.hdbaset, ctl.rs232, ctl.ir, net.ethernet_100]
 media (on Link):  media.cat6a_futp   ← what you actually pull
 ```
 
-An RJ45 jack is an RJ45 jack whether it carries Ethernet, HDBaseT, Dante, DMX-over-Cat, or Cresnet. Collapsing these makes the single most damaging real-world error — patching HDBaseT into a switch, which delivers PoH into a switch port — *undetectable*.
+An RJ45 jack is an RJ45 jack whether it carries Ethernet, HDBaseT, Dante, DMX-over-Cat, or Cresnet. Collapsing these makes the single most damaging real-world error (patching HDBaseT into a switch, which delivers PoH into a switch port) *undetectable*.
 
-**Colour is on the `SignalDomain` (7 values), not the family (43+).** No palette is CVD-safe past ~9 categories. Colour carries domain; **dash pattern, line weight, glyph and text tag** carry the specific type. Okabe-Ito hues mapped near trade convention (blue video / warm audio / green network / purple control / black power). Two collision pairs exist in greyscale luminance (sky blue 0.401 vs orange 0.416) — which is *why* dash + tag are mandatory, not decorative. Ship `greyscaleSafeExport` that drops hue entirely; it will be the setting most installers actually use. And keep TIA-606 termination-class colour as a **second, independently assignable dimension** — it conflicts with signal colour and both belong in the legend.
+**Colour is on the `SignalDomain` (7 values), not the family (43+).** No palette is CVD-safe past ~9 categories. Colour carries domain; **dash pattern, line weight, glyph and text tag** carry the specific type. Okabe-Ito hues mapped near trade convention (blue video / warm audio / green network / purple control / black power). Two collision pairs exist in greyscale luminance (sky blue 0.401 vs orange 0.416), which is *why* dash + tag are mandatory, not decorative. Ship `greyscaleSafeExport` that drops hue entirely; it will be the setting most installers actually use. And keep TIA-606 termination-class colour as a **second, independently assignable dimension**: it conflicts with signal colour and both belong in the legend.
 
 ### 3.5 Connection validity: never block the pen
 
@@ -1094,7 +1094,7 @@ User  →  may Acknowledge a Finding with a written reason
 Link  →  may declare an InlineAdapter, which SATISFIES a rule outright (no ack needed)
 ```
 
-So the three tiers are: **error** (red, listed in DRC, **blocks export sign-off** if `blockExportOnErrors`), **warning** (yellow, listed), **advisory** (informational). And a fourth state — **acknowledged** — that only a human can produce, and that produces a printed audit line: *"W042 — HDBaseT on Cat6 patched via SW-1 port 12. Reason: existing condition, to be corrected in Phase 2. — R. Riley, 2026-07-18."*
+So the three tiers are: **error** (red, listed in DRC, **blocks export sign-off** if `blockExportOnErrors`), **warning** (yellow, listed), **advisory** (informational). And a fourth state, **acknowledged**, that only a human can produce, and that produces a printed audit line: *"W042, HDBaseT on Cat6 patched via SW-1 port 12. Reason: existing condition, to be corrected in Phase 2., R. Riley, 2026-07-18."*
 
 **Only five rules block creation** (`blocksCreation: true`). These are rules whose violation makes the *model itself* incoherent, not rules about the physical world:
 
@@ -1111,82 +1111,82 @@ Everything else is drawable.
 **The rule catalogue.** Grouped, with default severities.
 
 *Direction & topology*
-- `DIR-001` **error** — source→source or sink→sink. Exception: both ports declare `returnChannel` (eARC), or the net is `passiveSplit`.
-- `DIR-002` **warning** — bidirectional port connected to a `busNode` outside a declared bus net.
-- `DIR-003` **error** — IR emitter output plugged into an IR *receiver* jack. Damages hardware; the `pinoutVariant` field exists solely to make this detectable.
-- `DIR-004` **warning** — contact-closure *sense* input wired to another sense input (no drive).
+- `DIR-001` **error**: source→source or sink→sink. Exception: both ports declare `returnChannel` (eARC), or the net is `passiveSplit`.
+- `DIR-002` **warning**: bidirectional port connected to a `busNode` outside a declared bus net.
+- `DIR-003` **error**: IR emitter output plugged into an IR *receiver* jack. Damages hardware; the `pinoutVariant` field exists solely to make this detectable.
+- `DIR-004` **warning**: contact-closure *sense* input wired to another sense input (no drive).
 
 *Connector*
-- `CON-001` **error** — connector types do not mate, no `InlineAdapter` declared. Satisfied by declaring one.
-- `CON-002` **warning** — genders both male or both female on a gendered family (XLR, DE-9, IEC).
-- `CON-003` **advisory** — connector mates but is atypical for the signal family (BNC carrying analog audio).
+- `CON-001` **error**: connector types do not mate, no `InlineAdapter` declared. Satisfied by declaring one.
+- `CON-002` **warning**: genders both male or both female on a gendered family (XLR, DE-9, IEC).
+- `CON-003` **advisory**: connector mates but is atypical for the signal family (BNC carrying analog audio).
 
 *Signal*
-- `SIG-001` **error** — **HDBaseT port connected to an `net.ethernet` switch port.** The flagship rule. PoH into a switch port.
-- `SIG-002` **error** — sink's `acceptedFamilies` excludes the link's `signalFamily`, no adapter declared.
-- `SIG-003` **warning** — non-Ethernet-over-Cat (DMX-over-Cat, Cresnet-over-Cat, analog balun, RS-485-on-RJ45) terminating on a switch.
-- `SIG-004` **advisory** — Structure drop still `signal.undetermined` after a link assigns it a family → auto-offer to promote the drop's family. Retroactive validation then runs.
-- `SIG-005` **warning** — TOSLINK carrying a family flagged `requiresHighBandwidth` (no lossless multichannel over optical S/PDIF).
+- `SIG-001` **error**: **HDBaseT port connected to an `net.ethernet` switch port.** The flagship rule. PoH into a switch port.
+- `SIG-002` **error**: sink's `acceptedFamilies` excludes the link's `signalFamily`, no adapter declared.
+- `SIG-003` **warning**: non-Ethernet-over-Cat (DMX-over-Cat, Cresnet-over-Cat, analog balun, RS-485-on-RJ45) terminating on a switch.
+- `SIG-004` **advisory**: Structure drop still `signal.undetermined` after a link assigns it a family → auto-offer to promote the drop's family. Retroactive validation then runs.
+- `SIG-005` **warning**: TOSLINK carrying a family flagged `requiresHighBandwidth` (no lossless multichannel over optical S/PDIF).
 
 *Electrical*
-- `ELE-001` **warning** — impedance mismatch (S/PDIF into 50 Ω BNC; AES3 on 110 Ω vs mic cable; 75 Ω video on a 50 Ω path).
-- `ELE-002` **warning** — unbalanced source → balanced sink or vice versa without a declared adapter/DI.
-- `ELE-003` **error** — speaker polarity inverted between the two ends of a conductor pair (`+`→`−`).
-- `ELE-004` **error** — parallel low-Z speakers drop the amplifier's load below its rated minimum impedance.
-- `ELE-005` **warning** — Σ of 70 V/100 V `tapWatts` on a net > 80% of the amp channel rating.
-- `ELE-006` **error** — constant-voltage speaker on a low-Z amp output, or vice versa.
-- `ELE-007` **error** — satellite splitter net with no DC-passing port toward the LNB.
-- `ELE-008` **warning** — RF cascade insertion loss exceeds the budget from source to the worst drop.
+- `ELE-001` **warning**: impedance mismatch (S/PDIF into 50 Ω BNC; AES3 on 110 Ω vs mic cable; 75 Ω video on a 50 Ω path).
+- `ELE-002` **warning**: unbalanced source → balanced sink or vice versa without a declared adapter/DI.
+- `ELE-003` **error**: speaker polarity inverted between the two ends of a conductor pair (`+`→`−`).
+- `ELE-004` **error**: parallel low-Z speakers drop the amplifier's load below its rated minimum impedance.
+- `ELE-005` **warning**: Σ of 70 V/100 V `tapWatts` on a net > 80% of the amp channel rating.
+- `ELE-006` **error**: constant-voltage speaker on a low-Z amp output, or vice versa.
+- `ELE-007` **error**: satellite splitter net with no DC-passing port toward the LNB.
+- `ELE-008` **warning**: RF cascade insertion loss exceeds the budget from source to the worst drop.
 
 *Length*
-- `LEN-001` **error** — Ethernet channel > 100 m (90 m horizontal + 10 m patch).
-- `LEN-002` **warning** — passive HDMI 2.1 run > 4.5 m at 48 Gbps.
-- `LEN-003` **warning** — 12G-SDI coax > 45 m; 6G > 80 m; 3G > 100 m.
-- `LEN-004` **warning** — unbalanced line-level run > 6 m.
-- `LEN-005` **warning** — RS-232 > 15 m at the declared baud.
-- `LEN-006` **warning** — media's `maxChannelLength` exceeded for the assigned family.
+- `LEN-001` **error**: Ethernet channel > 100 m (90 m horizontal + 10 m patch).
+- `LEN-002` **warning**: passive HDMI 2.1 run > 4.5 m at 48 Gbps.
+- `LEN-003` **warning**: 12G-SDI coax > 45 m; 6G > 80 m; 3G > 100 m.
+- `LEN-004` **warning**: unbalanced line-level run > 6 m.
+- `LEN-005` **warning**: RS-232 > 15 m at the declared baud.
+- `LEN-006` **warning**: media's `maxChannelLength` exceeded for the assigned family.
 
 *Bus*
-- `BUS-001` **warning** — RS-485/DMX segment > 32 unit loads.
-- `BUS-002` **warning** — bus net missing a 120 Ω terminator at one or both ends.
-- `BUS-003` **error** — DMX universe > 512 channels allocated.
-- `BUS-004` **error** — DALI line > 64 devices, or > 300 m.
-- `BUS-005` **warning** — Cresnet run exceeds *either* the 3000 ft data limit *or* the 24 V power-drop limit (18 AWG @ 20 W ⇒ 333 ft). Two independent limits, two findings.
-- `BUS-006` **warning** — RS-485 wired as a star rather than a daisy chain. Suppressed for `ctl.lutron_qs` and `ctl.dali`, which are topology-free.
-- `BUS-007` **error** — duplicate bus address within a segment.
+- `BUS-001` **warning**: RS-485/DMX segment > 32 unit loads.
+- `BUS-002` **warning**: bus net missing a 120 Ω terminator at one or both ends.
+- `BUS-003` **error**: DMX universe > 512 channels allocated.
+- `BUS-004` **error**: DALI line > 64 devices, or > 300 m.
+- `BUS-005` **warning**: Cresnet run exceeds *either* the 3000 ft data limit *or* the 24 V power-drop limit (18 AWG @ 20 W ⇒ 333 ft). Two independent limits, two findings.
+- `BUS-006` **warning**: RS-485 wired as a star rather than a daisy chain. Suppressed for `ctl.lutron_qs` and `ctl.dali`, which are topology-free.
+- `BUS-007` **error**: duplicate bus address within a segment.
 
 *Serial*
-- `SER-001` **warning** — DTE↔DTE or DCE↔DCE without `crossover: nullModem`.
-- `SER-002` **advisory** — baud/parity/stop mismatch between the two ports.
+- `SER-001` **warning**: DTE↔DTE or DCE↔DCE without `crossover: nullModem`.
+- `SER-002` **advisory**: baud/parity/stop mismatch between the two ports.
 
 *Network*
-- `NET-001` **error** — Σ PD class draw on a switch > the switch's PoE budget.
-- `NET-002` **warning** — Type-4 PD on a Type-2 PSE.
-- `NET-003` **error** — Dante/AES67 endpoints with no network path between them.
-- `NET-004` **error** — AVB endpoints traversing a non-AVB/TSN switch.
-- `NET-005` **warning** — Dante and AVoIP sharing a VLAN with no QoS declared.
-- `NET-006` **advisory** — duplicate IP address in the project.
-- `NET-007` **warning** — fiber pair without declared A/B polarity.
+- `NET-001` **error**: Σ PD class draw on a switch > the switch's PoE budget.
+- `NET-002` **warning**: Type-4 PD on a Type-2 PSE.
+- `NET-003` **error**: Dante/AES67 endpoints with no network path between them.
+- `NET-004` **error**: AVB endpoints traversing a non-AVB/TSN switch.
+- `NET-005` **warning**: Dante and AVoIP sharing a VLAN with no QoS declared.
+- `NET-006` **advisory**: duplicate IP address in the project.
+- `NET-007` **warning**: fiber pair without declared A/B polarity.
 
 *Power*
-- `PWR-001` **error** — Σ continuous nameplate amps on a circuit > 80% of breaker (12 A / 15 A; 16 A / 20 A).
-- `PWR-002` **warning** — Σ outlet draw > PDU rating.
-- `PWR-003` **error** — outlets consumed > outlets provided in the rack.
-- `PWR-004` **warning** — 12 V trigger fan-out > 100 mA.
-- `PWR-005` **warning** — UPS-backed load exceeds UPS capacity.
+- `PWR-001` **error**: Σ continuous nameplate amps on a circuit > 80% of breaker (12 A / 15 A; 16 A / 20 A).
+- `PWR-002` **warning**: Σ outlet draw > PDU rating.
+- `PWR-003` **error**: outlets consumed > outlets provided in the rack.
+- `PWR-004` **warning**: 12 V trigger fan-out > 100 mA.
+- `PWR-005` **warning**: UPS-backed load exceeds UPS capacity.
 
 *Rack (not link rules, but same engine)*
-- `RCK-001` **error** — RU overlap on the same face.
-- `RCK-002` **error** — device extends past `heightU`.
-- `RCK-003` **error** — Σ device weight > `Rack.weightCapacity`. Wall racks at 100 lb hit this constantly.
-- `RCK-004` **warning** — centre of gravity above 50% of rack height ("top-heavy").
-- `RCK-005` **warning** — `bodyDepth + connectorProjection` > `usableDepth − 50 mm`.
-- `RCK-006` **warning** — `requiresClearanceAboveU`/`BelowU` violated by an adjacent device.
-- `RCK-007` **advisory** — two high-heat devices adjacent with no vent/blank between.
-- `RCK-008` **advisory** — < 15% spare front RU.
-- `RCK-009` **error** — Σ hosted-device weight > shelf capacity.
-- `RCK-010` **error** — hosted device depth > shelf usable depth.
-- `RCK-011` **error** — lateral twelfths overlap within one RU.
+- `RCK-001` **error**: RU overlap on the same face.
+- `RCK-002` **error**: device extends past `heightU`.
+- `RCK-003` **error**: Σ device weight > `Rack.weightCapacity`. Wall racks at 100 lb hit this constantly.
+- `RCK-004` **warning**: centre of gravity above 50% of rack height ("top-heavy").
+- `RCK-005` **warning**: `bodyDepth + connectorProjection` > `usableDepth − 50 mm`.
+- `RCK-006` **warning**: `requiresClearanceAboveU`/`BelowU` violated by an adjacent device.
+- `RCK-007` **advisory**: two high-heat devices adjacent with no vent/blank between.
+- `RCK-008` **advisory**: < 15% spare front RU.
+- `RCK-009` **error**: Σ hosted-device weight > shelf capacity.
+- `RCK-010` **error**: hosted device depth > shelf usable depth.
+- `RCK-011` **error**: lateral twelfths overlap within one RU.
 
 **The real-world "wrong is right" cases, and how each resolves without an escape hatch:**
 
@@ -1197,20 +1197,20 @@ Everything else is drawable.
 | IR over Cat5 | A `MediaTypeDef` for `media.cat5e` lists `ctl.ir` in `supports`. No finding. |
 | Unbalanced → balanced, short run, no DI | `ELE-002` warning → user acknowledges: *"3 ft, same rack, same circuit."* Reason prints. |
 | Analog audio on a spare Cat6 pair | `SIG-003` warning, acknowledged with the balun model, or an adapter declared. |
-| Existing miswired system being documented | Every finding acknowledged with reason *"existing condition"*. The DRC list becomes the remediation scope — a deliverable in itself. |
+| Existing miswired system being documented | Every finding acknowledged with reason *"existing condition"*. The DRC list becomes the remediation scope, a deliverable in itself. |
 
 ### 3.6 One-to-many: `Link` is a point-to-point edge; `Net` is the hypergraph above it
 
 **Decision: two layers, both stored.**
 
-- **`Link`** — exactly two device ends. One physical cable. One `W###`. One row on the pull sheet. One length, one jacket rating, one test result. **1..N `Conductor`s inside it.**
-- **`Net`** — a stored, named, N-endpoint equivalence class over links. One colour, one bus trunk, one name on the schematic.
+- **`Link`**: exactly two device ends. One physical cable. One `W###`. One row on the pull sheet. One length, one jacket rating, one test result. **1..N `Conductor`s inside it.**
+- **`Net`**: a stored, named, N-endpoint equivalence class over links. One colour, one bus trunk, one name on the schematic.
 
-**Rejected — pure edge list.** Cannot express "these six drops are one RF cascade" or "these four speakers share one 70 V line". You get six disconnected edges with no shared identity, no shared loss budget, and no way to draw a bus trunk. Every one of the bus rules (`BUS-*`, `ELE-005`, `ELE-008`) is unimplementable.
+**Rejected: pure edge list.** Cannot express "these six drops are one RF cascade" or "these four speakers share one 70 V line". You get six disconnected edges with no shared identity, no shared loss budget, and no way to draw a bus trunk. Every one of the bus rules (`BUS-*`, `ELE-005`, `ELE-008`) is unimplementable.
 
-**Rejected — pure hypergraph (a `Connection` with N endpoints).** Destroys the pull sheet. A net with six endpoints does not tell an installer what to pull: how many cables, of what length, terminated how. The cable schedule is the primary deliverable; it needs a two-ended row.
+**Rejected: pure hypergraph (a `Connection` with N endpoints).** Destroys the pull sheet. A net with six endpoints does not tell an installer what to pull: how many cables, of what length, terminated how. The cable schedule is the primary deliverable; it needs a two-ended row.
 
-**Rejected — derived-only nets (union-find over links at read time).** Tempting and wrong. A derived structure cannot carry the user's net name, colour override, notes, universe number, or terminator assignment, and cannot be a sync conflict unit. It also makes labels flicker: connect a link, and every net downstream renumbers. Nets are stored; the union-find is used only to *propose* merges, which the commands then apply explicitly and undoably.
+**Rejected: derived-only nets (union-find over links at read time).** Tempting and wrong. A derived structure cannot carry the user's net name, colour override, notes, universe number, or terminator assignment, and cannot be a sync conflict unit. It also makes labels flicker: connect a link, and every net downstream renumbers. Nets are stored; the union-find is used only to *propose* merges, which the commands then apply explicitly and undoably.
 
 **How each hard case lands:**
 
@@ -1219,34 +1219,34 @@ Everything else is drawable.
 | 16/4 speaker cable, one run, stereo pair to one location | **1 Link, 4 Conductors** (`L+`,`L−`,`R+`,`R−`). One row, one length, one pull. |
 | Component video (3× RCA sold as one cable) | **1 Link, 3 Conductors** (`Y`,`Pb`,`Pr`). Endpoints resolve through `PortGroup`s, so the UI connects all three in one gesture. |
 | RG6 splitter feeding 4 drops | Splitter is a real `DeviceInstance` (`kind: offRackPassive`, `frontU: 0`, `mountMethod: notInRack`) with 1 input + 4 output ports. **5 Links, 1 Net.** Loss budget walks the net through the splitter's declared insertion loss. |
-| IR bus, connecting block, 6 emitters | Block is a device with 1 input + 6 outputs. **7 Links.** Net optional — usually 1 net so the schematic draws a trunk. |
-| Network switch port = shared segment | It is *not* a shared segment at the physical layer. Each device→switch run is **1 Link, 1 Net (implicit)**. The shared-ness is `SignalRoute` — a Dante flow from A to B lists `transportLinkIds: [A→SW, SW→B]`. This is why `SignalRoute` exists as a third entity. |
+| IR bus, connecting block, 6 emitters | Block is a device with 1 input + 6 outputs. **7 Links.** Net optional, usually 1 net so the schematic draws a trunk. |
+| Network switch port = shared segment | It is *not* a shared segment at the physical layer. Each device→switch run is **1 Link, 1 Net (implicit)**. The shared-ness is `SignalRoute`, a Dante flow from A to B lists `transportLinkIds: [A→SW, SW→B]`. This is why `SignalRoute` exists as a third entity. |
 | 70 V speaker line, 6 speakers daisy-chained | **6 Links, 1 Net** (`topology: daisyChain`, `nominalVoltage: 70`). Each speaker's input `Port.tapWatts` is per-installation. `ELE-005` sums the net. |
 | Patch panel front↔rear | `PassthroughPairDef` with `sameNet: true`. The netlist collapses the two-hop into one logical connection while both physical links remain schedulable. |
 | eARC | One Link. The display's HDMI port declares `returnChannel`. `DIR-001` is suppressed; a `SignalRoute` in the opposite direction carries the audio. |
 | Matrix crosspoint (which input reaches which output) | `SignalRoute` with `isDerived: true`, computed from the matrix's configuration. Zero physical cables involved. |
 
-`Net` is auto-created as an implicit singleton for every new link (`isImplicit: true`, no name). It becomes explicit — and gains a name and a `N###` designator — the moment a second link joins it or the user names it. This keeps the common case free of ceremony.
+`Net` is auto-created as an implicit singleton for every new link (`isImplicit: true`, no name). It becomes explicit, and gains a name and a `N###` designator, the moment a second link joins it or the user names it. This keeps the common case free of ceremony.
 
 ### 3.7 Units and precision: no floats, anywhere, ever
 
-**Rack geometry.** Height and position are **integer RU**. Never a float, never a millimetre. Panel height (`44.45n − 0.79 mm`) is a **render-time derivation** for the PDF only, never stored — real panels measure below spec and inferring U from a measurement is a bug factory.
+**Rack geometry.** Height and position are **integer RU**. Never a float, never a millimetre. Panel height (`44.45n − 0.79 mm`) is a **render-time derivation** for the PDF only, never stored, real panels measure below spec and inferring U from a measurement is a bug factory.
 
 **Physical dimensions.** `Len` = **int64 nanometres.**
 
-Why nanometres specifically: 1 in = 25 400 000 nm exactly, so *every* imperial fraction down to 1/1000 in is an exact integer — including the EIA 1/32-in inter-panel clearance (793 750 nm) and 1/16-in hardware dimensions (1 587 500 nm). Metric catalog values in mm are exact by construction. int64 covers 9.2 × 10⁹ m.
+Why nanometres specifically: 1 in = 25 400 000 nm exactly, so *every* imperial fraction down to 1/1000 in is an exact integer, including the EIA 1/32-in inter-panel clearance (793 750 nm) and 1/16-in hardware dimensions (1 587 500 nm). Metric catalog values in mm are exact by construction. int64 covers 9.2 × 10⁹ m.
 
-**Rejected — micrometres.** Reads better in JSON (`508000` vs `508000000`) but 1/32 in = 793.75 µm and 1/16 in = 1587.5 µm are *not* integral. You would round, and the rounding shows up as a half-micron seam in a dimensioned PDF and as an unstable JSON round-trip. Losing readability of a number no human reads is a cheap price.
+**Rejected: micrometres.** Reads better in JSON (`508000` vs `508000000`) but 1/32 in = 793.75 µm and 1/16 in = 1587.5 µm are *not* integral. You would round, and the rounding shows up as a half-micron seam in a dimensioned PDF and as an unstable JSON round-trip. Losing readability of a number no human reads is a cheap price.
 
-**Rejected — floating-point millimetres.** The obvious choice and the wrong one. Three concrete failures: (a) `0.1 + 0.2` in snap accumulation produces positions that fail equality tests, breaking the *"apply then revert must produce a byte-identical document"* undo property test; (b) `toJson`→`fromJson`→`toJson` is not bit-stable, so the file diffs spuriously in git and the dirty flag lies; (c) accumulated drift across a 40-device stack is visible at print scale.
+**Rejected: floating-point millimetres.** The obvious choice and the wrong one. Three concrete failures: (a) `0.1 + 0.2` in snap accumulation produces positions that fail equality tests, breaking the *"apply then revert must produce a byte-identical document"* undo property test; (b) `toJson`→`fromJson`→`toJson` is not bit-stable, so the file diffs spuriously in git and the dirty flag lies; (c) accumulated drift across a 40-device stack is visible at print scale.
 
 **Canvas positions: a different space entirely, and integer.**
 
 There are **two coordinate spaces**, and conflating them is a category error:
 
-1. **Rack elevation space is not stored.** A device's X/Y in the elevation is a pure function of `(Placement, Rack.railType, Rack.widthClass, face)`. There is nothing to persist. Storing elevation coordinates would let them diverge from the RU index — the classic "the drawing says RU 7 but it's drawn at RU 8" bug. Elevation is a **projection**, computed fresh, always correct by construction.
+1. **Rack elevation space is not stored.** A device's X/Y in the elevation is a pure function of `(Placement, Rack.railType, Rack.widthClass, face)`. There is nothing to persist. Storing elevation coordinates would let them diverge from the RU index, the classic "the drawing says RU 7 but it's drawn at RU 8" bug. Elevation is a **projection**, computed fresh, always correct by construction.
 
-2. **Schematic space is stored, as integer grid units.** `Pt{int gx, gy, int sx, sy}` where 1 gu ≡ 2.54 mm (0.1 in) nominal schematic pitch, and `sx`/`sy` are 1/64-gu sub-offsets for annotation nudging. Rationale: a schematic is not a scale drawing — it is a diagram on a pitch, exactly like a board schematic. Integer grid units make snapping, orthogonal routing, jog insertion, and crossing/hop detection **exact integer arithmetic**: deterministic, diff-stable, unit-testable without tolerance epsilons, and immune to zoom-dependent drift. Zoom is a *view transform* applied at paint time and never written back.
+2. **Schematic space is stored, as integer grid units.** `Pt{int gx, gy, int sx, sy}` where 1 gu ≡ 2.54 mm (0.1 in) nominal schematic pitch, and `sx`/`sy` are 1/64-gu sub-offsets for annotation nudging. Rationale: a schematic is not a scale drawing; it is a diagram on a pitch, exactly like a board schematic. Integer grid units make snapping, orthogonal routing, jog insertion, and crossing/hop detection **exact integer arithmetic**: deterministic, diff-stable, unit-testable without tolerance epsilons, and immune to zoom-dependent drift. Zoom is a *view transform* applied at paint time and never written back.
 
 **Rotation is `int rotationQuarterTurns` (0–3).** No arbitrary angles in v1. Schematics are orthogonal; free rotation buys nothing and costs float geometry throughout the router.
 
@@ -1275,9 +1275,9 @@ Modelled as a first-class `DeviceInstance` with `kind: structure`, `frontU: 0`, 
 
 **Termination into the rack is a normal `Link`.** `StructureDrop.terminatesAtPortId` is a denormalized convenience cache; the source of truth is a Link from the drop's Port to the patch panel's rear Port. No special case, no second connection mechanism, and the drop-to-panel run appears in the cable schedule like everything else.
 
-**Multiple Structure instances are expected and encouraged.** "Rough-In — First Floor", "Rough-In — Exterior/Cameras", "Utility Service Entrance", "Tie to Rack 2". One giant node is unreadable; four labelled edge banks match how the installer thinks.
+**Multiple Structure instances are expected and encouraged.** "Rough-In (First Floor", "Rough-In) Exterior/Cameras", "Utility Service Entrance", "Tie to Rack 2". One giant node is unreadable; four labelled edge banks match how the installer thinks.
 
-**`RoughInStatus` is not decorative.** `planned → pulled → dressed → terminated → tested → issued`, plus `TestResult` with headroom dB and certifier report ID. This is exactly what converts the design PDF into the as-built PDF that AVIXA D401.01 calls essential, and it's what makes the "unused home runs" view — a genuinely valuable deliverable — fall out for free.
+**`RoughInStatus` is not decorative.** `planned → pulled → dressed → terminated → tested → issued`, plus `TestResult` with headroom dB and certifier report ID. This is exactly what converts the design PDF into the as-built PDF that AVIXA D401.01 calls essential, and it's what makes the "unused home runs" view, a genuinely valuable deliverable, fall out for free.
 
 ### 3.9 Identifier format engine (not a hardcoded scheme)
 
@@ -1881,7 +1881,7 @@ No CRDT now. Rack design is overwhelmingly single-user-at-a-time and no Dart CRD
 
 ### 5.1 Flat entity maps, never a nested tree
 
-`Map<Uuid, DeviceInstance>` and `Map<Uuid, Port>` side by side — `Port` carries `deviceId`, it is not nested inside the device. This single decision simultaneously enables:
+`Map<Uuid, DeviceInstance>` and `Map<Uuid, Port>` side by side, `Port` carries `deviceId`, it is not nested inside the device. This single decision simultaneously enables:
 
 - **per-entity sync** (an entity is a addressable sync unit);
 - **cheap commands** (a command touches one map entry);
@@ -1892,36 +1892,36 @@ Nested trees make all four hard, and retrofitting flatness later is a rewrite of
 
 ### 5.2 No positional index is ever identity
 
-Ordering — device stacking on the schematic, port display order, sheet order, sibling locations, link z-order — uses a **fractional index string** (LexoRank / Figma style: `"a0"`, `"a0V"`, `"a1"`). Inserting between two items is a purely local edit that cannot collide. An integer `sortOrder` requires renumbering neighbours, and neighbour-renumbering is precisely the operation that makes sync impossible to retrofit.
+Ordering (device stacking on the schematic, port display order, sheet order, sibling locations, link z-order) uses a **fractional index string** (LexoRank / Figma style: `"a0"`, `"a0V"`, `"a1"`). Inserting between two items is a purely local edit that cannot collide. An integer `sortOrder` requires renumbering neighbours, and neighbour-renumbering is precisely the operation that makes sync impossible to retrofit.
 
-The `portIds` list on `DeviceInstance` is a **derived convenience index**, sorted by `Port.order`, and is explicitly *not* authoritative — rebuildable from the ports map at any time (I-11).
+The `portIds` list on `DeviceInstance` is a **derived convenience index**, sorted by `Port.order`, and is explicitly *not* authoritative, rebuildable from the ports map at any time (I-11).
 
 ### 5.3 Per-entity LWW metadata from day one
 
-Every entity carries `EntityMeta { createdAt, updatedAt, updatedBy, localRevision }`. This *is* the last-write-wins tuple. Adding it later means a migration that cannot backfill honest values — every existing entity gets a lie for `updatedAt`, and the first sync resolves conflicts wrongly.
+Every entity carries `EntityMeta { createdAt, updatedAt, updatedBy, localRevision }`. This *is* the last-write-wins tuple. Adding it later means a migration that cannot backfill honest values, every existing entity gets a lie for `updatedAt`, and the first sync resolves conflicts wrongly.
 
 `Project.revision` is a document-level monotonic counter, already required for dirty-tracking, and doubles as the sync cursor.
 
 **UUID v7** for every entity ID. Over v4 this buys: time-ordered IDs (log reading and debugging become sane), a free stable creation-order sort without a separate field, and index locality if these ever land in a database.
 
-### 5.4 Tombstones — the one thing that genuinely cannot be retrofitted
+### 5.4 Tombstones: the one thing that genuinely cannot be retrofitted
 
-Deletions are the retrofit-killer. With hard deletes, a later sync cannot distinguish *"the peer deleted this"* from *"the peer never had it"* — and the second interpretation resurrects deleted devices on every sync. `Map<Uuid, Tombstone>` costs a few dozen bytes per delete, makes delete commands trivially invertible for undo, and powers the history panel ("Deleted AVR-01"). Do it now or accept that sync is a rewrite.
+Deletions are the retrofit-killer. With hard deletes, a later sync cannot distinguish *"the peer deleted this"* from *"the peer never had it"*, and the second interpretation resurrects deleted devices on every sync. `Map<Uuid, Tombstone>` costs a few dozen bytes per delete, makes delete commands trivially invertible for undo, and powers the history panel ("Deleted AVR-01"). Do it now or accept that sync is a rewrite.
 
 Prune policy: tombstones older than the last-synced watermark (or 1 year for local-only files) are compacted on save.
 
-### 5.5 Conflict units — and which entities can never conflict
+### 5.5 Conflict units: and which entities can never conflict
 
 | Entity | Conflict unit? | Reasoning |
 |---|---|---|
-| `Project` (settings, metadata) | **yes** — field-level LWW | Small, rarely edited concurrently |
-| `Rack` | **yes** — whole entity | Coarse is fine; racks change rarely |
-| `DeviceInstance` **including its `Port`s** | **yes** — as one unit | A port has no meaning without its device; template migration rewrites all ports atomically; splitting them would let a sync produce a device whose port set matches neither side |
-| `Link` **including its `Conductor`s** | **yes** — whole entity | A conductor list is meaningless split |
+| `Project` (settings, metadata) | **yes**: field-level LWW | Small, rarely edited concurrently |
+| `Rack` | **yes**: whole entity | Coarse is fine; racks change rarely |
+| `DeviceInstance` **including its `Port`s** | **yes**: as one unit | A port has no meaning without its device; template migration rewrites all ports atomically; splitting them would let a sync produce a device whose port set matches neither side |
+| `Link` **including its `Conductor`s** | **yes**: whole entity | A conductor list is meaningless split |
 | `Net` | **yes** | Merging two nets is a command, not a field write; concurrent merges conflict honestly |
-| `StructureBundle` **including its `StructureDrop`s** | **yes** — as one unit | Same argument as device+ports; a bundle is the specification atom |
-| `Sheet` + its `SheetItem`s | **yes** — as one unit | Layout is holistic |
-| `Note`, `Circuit`, `AckedFinding`, `RevisionEntry`, `Location` | **yes** — whole entity | Small and independent |
+| `StructureBundle` **including its `StructureDrop`s** | **yes**: as one unit | Same argument as device+ports; a bundle is the specification atom |
+| `Sheet` + its `SheetItem`s | **yes**: as one unit | Layout is holistic |
+| `Note`, `Circuit`, `AckedFinding`, `RevisionEntry`, `Location` | **yes**: whole entity | Small and independent |
 | `TemplateSnapshot` | **never conflicts** | Immutable + content-addressed. Two peers adding the same `(templateId, version)` produce byte-identical objects; a hash mismatch is a hard error, not a merge |
 | Registry entries | **never conflicts** | Same reasoning. Custom entries get UUID-suffixed ids to avoid namespace collision |
 | `Tombstone` | **never conflicts** | Append-only, idempotent |
@@ -1942,7 +1942,7 @@ Prune policy: tombstones older than the last-synced watermark (or 1 year for loc
 
 ## 6. Invariants and validation rules the model must enforce
 
-Split into **structural invariants** (I-*, the model is corrupt if violated — assert on load, refuse or repair) and **DRC rules** (§3.5, the *design* is questionable — surface, never corrupt).
+Split into **structural invariants** (I-*, the model is corrupt if violated, assert on load, refuse or repair) and **DRC rules** (§3.5, the *design* is questionable, surface, never corrupt).
 
 ### Structural invariants
 
@@ -1998,17 +1998,17 @@ Split into **structural invariants** (I-*, the model is corrupt if violated — 
 ### Sheet, note & finding invariants
 
 40. `Sheet.number` is unique project-wide and matches `^[A-Z]{1,2}\d\.\d{2}$` (NCS `[Discipline][Type][Seq]`).
-41. **Every sheet with `carriesLegend == false` has a non-empty `legendLocationNote`.** (J-STD-710 §3.6.1 — a sheet lacking the legend must state where it is.) Blocks PDF export.
+41. **Every sheet with `carriesLegend == false` has a non-empty `legendLocationNote`.** (J-STD-710 §3.6.1, a sheet lacking the legend must state where it is.) Blocks PDF export.
 42. `SheetItem.targetId` resolves and is of a kind the sheet's `viewKind` can display.
 43. `SheetItem.rotationQuarterTurns ∈ {0,1,2,3}`.
 44. `Note.sheetId`, when non-null, resolves; when null, the note appears on every sheet showing its anchor.
-45. `AckedFinding.ruleId` resolves in `registries.rules`, and its `targetFingerprint` is recomputable — a stale acknowledgement (fingerprint no longer produced by any current finding) is garbage-collected on load with a log entry, so acknowledgements cannot silently suppress a *different* problem than the one the user reviewed.
+45. `AckedFinding.ruleId` resolves in `registries.rules`, and its `targetFingerprint` is recomputable, a stale acknowledgement (fingerprint no longer produced by any current finding) is garbage-collected on load with a log entry, so acknowledgements cannot silently suppress a *different* problem than the one the user reviewed.
 
 ### Registry invariants
 
 46. Every `SignalFamilyId` / `ConnectorTypeId` / `MediaTypeId` referenced anywhere resolves in the embedded registries. Unresolvable ids degrade to an `unknown(rawId)` placeholder that **round-trips**, renders in grey with the raw id as its tag, and never throws.
 47. A custom registry entry's `basedOn`, when non-null, resolves and is not itself the entry (no cycles).
-48. `Circuit.continuousLimitAmps == breakerAmps * 4 ~/ 5` — derived, never stored, so the NEC 80% rule cannot drift out of sync with the breaker rating.
+48. `Circuit.continuousLimitAmps == breakerAmps * 4 ~/ 5`, derived, never stored, so the NEC 80% rule cannot drift out of sync with the breaker rating.
 
 ---
 
@@ -2024,4 +2024,4 @@ Split into **structural invariants** (I-*, the model is corrupt if violated — 
 | 6 | Structure = device → bundle → drop → port, `undetermined` is legal | Ad-hoc drop list on the project | Loses the rough-in→assign→revalidate workflow that is the actual value |
 | 7 | Integers everywhere; `Len` in nm; elevation derived, schematic in grid units | float mm; stored elevation coords | Unstable round-trips, failing undo property tests, drawing/RU divergence |
 | 8 | Flat UUID-v7 maps, fractional indices, per-entity LWW meta, tombstones | Nested tree, integer sort order, hard deletes | Sync is a rewrite instead of a weekend |
-| 9 | Hand-written JSON codecs, `schemaVersion` + `minReaderVersion`, frozen append-only migrations, golden corpus, unknown-field preservation | Generated codecs coupled to class shape | The file format — the product's most durable asset — breaks on every refactor |
+| 9 | Hand-written JSON codecs, `schemaVersion` + `minReaderVersion`, frozen append-only migrations, golden corpus, unknown-field preservation | Generated codecs coupled to class shape | The file format, the product's most durable asset, breaks on every refactor |

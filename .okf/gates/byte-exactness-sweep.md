@@ -15,7 +15,7 @@ is that guarantee; this gate proves the rule is present and correct.
 # The failure it was written after
 
 `*.json` was pinned, and everything else fell through to `* text=auto` with `eol`
-unspecified — so on Windows it checked out per `core.autocrlf`. The four starters
+unspecified, so on Windows it checked out per `core.autocrlf`. The four starters
 are `assets/starters/*.rackmate`, matched no rule, and were untracked. The moment
 they were committed, the next Windows clone would have received them
 CRLF-normalised and the byte-exact suite would have failed **on a clean checkout
@@ -28,9 +28,9 @@ the byte-exact roots, not from a list somebody must remember to extend.
 
 The sweep originally used `listSync(recursive: true)` and then filtered through a
 skip list. That order is the bug: **`listSync(recursive: true)` enumerates
-eagerly**, so it descended into `windows/flutter/ephemeral/.plugin_symlinks/` —
+eagerly**, so it descended into `windows/flutter/ephemeral/.plugin_symlinks/`, 
 symlinks into the pub cache whose plugins carry macOS example projects past
-Windows' 260-character `MAX_PATH` — and threw for the entire sweep *before* the
+Windows' 260-character `MAX_PATH`, and threw for the entire sweep *before* the
 filter ran. `/ephemeral/` was already in the skip list. A post-hoc `.where` cannot
 prevent a traversal that has already happened.
 
@@ -40,7 +40,7 @@ and died in its build artifacts.
 
 **The fix is a walk that prunes during traversal and treats an unlistable
 directory as skipped rather than fatal.** Any other repo-root sweep should be
-written the same way — the general lesson is that a filter applied after
+written the same way, the general lesson is that a filter applied after
 enumeration does not protect the enumeration.
 
 # Citations

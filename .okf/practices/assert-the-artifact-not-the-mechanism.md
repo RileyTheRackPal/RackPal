@@ -9,7 +9,7 @@ status: adopted
 
 `wire_trace_layering_test.dart` group 1 asserted **distinct escape corridors
 per pin**. That is the *mechanism* the comb uses. What a reader sees is **no two
-cables drawn along one line** — the *artifact*. For two revisions of the comb
+cables drawn along one line**: the *artifact*. For two revisions of the comb
 the two came apart, and the test certified the defect it was written to forbid.
 
 # What happened
@@ -24,7 +24,7 @@ ordinary staircase, which is what nearly every cable takes: two top pins both
 escape upward whichever half they sit in.
 
 The test counted corridors **per half**. Every pin had one "of its own" within
-its half, so it passed — while the sheet drew **24 collinear pairs, 10885
+its half, so it passed, while the sheet drew **24 collinear pairs, 10885
 units, a fifth of all the ink on a 48-cable edge, painted twice.** The field
 reported it as *"still getting a few overlapping wires"*.
 
@@ -35,12 +35,12 @@ harder failure to spot, because precision reads as rigour.
 
 The replacement measures collinear overlap between the drawn segments and
 asserts zero. Writing it, a companion test for the crossed-patch case keyed on
-each route's **topmost point** — and the mutation it existed to kill *survived*
+each route's **topmost point**, and the mutation it existed to kill *survived*
 it. A wrongly-placed corridor still reaches its far escape; it only doubles
 back afterwards. So the topmost point was distinct per cable while all 48 long
 runs sat on one row.
 
-Counting the **horizontal runs** — the segments that actually overlap — kills
+Counting the **horizontal runs**, the segments that actually overlap, kills
 the mutation with `one corridor carries 48 of the 48 cables`.
 
 **The proxy is seductive twice**: once when the rule is written, and again when
@@ -65,11 +65,11 @@ pairs and the units, so a regression arrives already diagnosed.
 An artifact-level assertion is not always available, and inventing a bad one is
 worse than a good proxy. The test for the comb's *determinism* is still an op
 comparison, because "byte-identical display list" is itself the artifact. The
-rule is to prefer the quantity the report is phrased in — not to avoid
+rule is to prefer the quantity the report is phrased in, not to avoid
 mechanisms on principle.
 
 # Citations
 
-[1] `packages/rackmate_ui/test/canvas/schematic/wire_trace_layering_test.dart` — group 1, and its own header recording both wrong versions
-[2] `docs/12-milestone-board.md` §5.1 — the six field reports this came out of
+[1] `packages/rackmate_ui/test/canvas/schematic/wire_trace_layering_test.dart` (group 1, and its own header recording both wrong versions
+[2] `docs/12-milestone-board.md` §5.1) the six field reports this came out of
 [3] Commits `b48e96c` (the mirrored comb), `5d53512` (the measurement that replaced the count)

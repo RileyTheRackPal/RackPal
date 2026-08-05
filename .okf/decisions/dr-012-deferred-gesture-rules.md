@@ -19,37 +19,37 @@ coach-mark question the same clause sent to Phase 5.
 
 **Three `PortDef` fields that look purpose-built for these questions are
 declared, round-trip through the codec, and are populated on NONE of the 727
-seed catalog ports**: `acceptedFamilies`, `channelIndex`, and — per DR-011's
-own finding — `maxConnections`. `seed_registries.dart:394` says the first one
+seed catalog ports**: `acceptedFamilies`, `channelIndex`, and, per DR-011's
+own finding, `maxConnections`. `seed_registries.dart:394` says the first one
 outright: *"The exclusion list is not on the M0 class yet; the family
 separation is."*
 
 A rule written against an empty field does nothing on every real document.
 That is the trap `effectiveMaxConnections` was introduced to escape in M2-F
-Phase 0, and these clauses escape it the same way — which is why the shape
+Phase 0, and these clauses escape it the same way, which is why the shape
 recurs rather than being coincidence.
 
 # The clauses
 
-**§11.12.1 — chain-draw's "matching output" is the same `signalFamily`.** The
+**§11.12.1: chain-draw's "matching output" is the same `signalFamily`.** The
 reading that sounds most natural is ruled out by docs/05:482's OWN worked
 example: `ATV-1 → MTX-1 IN1` then `MTX-1 OUT1 → DA-1`. **A matrix switcher has
-no pairing between IN1 and OUT1** — that is what makes it a matrix — so
+no pairing between IN1 and OUT1**, that is what makes it a matrix, so
 *matching* cannot mean "the output paired with that input", and nothing in the
 model pairs them. First free output of the same family, tie-broken by
 `PortDef.order` then `key`: the sort `PORT_SEQ` already uses, because two
 orderings of one port list is how a pin gets one number on the schedule and
 another in the set that wires it. No such output ⇒ the chain ENDS and says so.
 
-**§11.12.2 — multi-draw's "rank" is that same order, and it stays N `Link`s.**
+**§11.12.2: multi-draw's "rank" is that same order, and it stays N `Link`s.**
 `channelIndex` is undocumented, nullable and set nowhere, so a rule reading it
 falls through to this answer on every real document with a branch nothing can
-test. The N-Links half was never truly ambiguous — docs/05:484 says "N `Link`s"
+test. The N-Links half was never truly ambiguous, docs/05:484 says "N `Link`s"
 and the next paragraph says an atomic set is "one `Link` with N `Conductor`s"
-— and is ruled so it cannot drift: **eight cables on the pull sheet is a
+, and is ruled so it cannot drift: **eight cables on the pull sheet is a
 different bill of materials from one cable with eight conductors.**
 
-**§11.12.3 — type-weighted snap weights the FAMILY, absolutely.** docs/05:477's
+**§11.12.3: type-weighted snap weights the FAMILY, absolutely.** docs/05:477's
 example names connector types while :473 defines compatibility over
 `signalFamily`, and the difference is the product's worst available mistake:
 RJ45-carrying-`video.hdbaset` and RJ45-carrying-`net.ethernet` are the same
@@ -61,17 +61,17 @@ number** because the corpus gives none (only "more than 3 px"), and the 12
 screen px snap radius already bounds it; `Ctrl` is the documented override and
 was built in Phase 3.
 
-**§11.12.4 — the AC-048 coach mark's "first" lives in app-support prefs.** Not
-document state — it re-fires per file and puts UI chrome inside
+**§11.12.4: the AC-048 coach mark's "first" lives in app-support prefs.** Not
+document state, it re-fires per file and puts UI chrome inside
 [CR-117](/invariants/cr-117-byte-exactness.md)'s byte surface, the identical
-objection that decided §11.11.4 against pinning every symbol. Not unpersisted —
+objection that decided §11.11.4 against pinning every symbol. Not unpersisted,
 a mark that returns every launch is a nag. Per USER, not per project: the
 second project is not the first time they have seen the app.
 
 # What shipped
 
 **Three of the four are built as of `ea0af6d`.** §11.12.1's chain-draw is
-`chainOutputFor` in `derived/connect_rules.dart` — placed there rather than
+`chainOutputFor` in `derived/connect_rules.dart`, placed there rather than
 beside its own type because it has to ask whether a candidate output is FULL,
 and `portConductorCount` lives there; the dependency between rules and targets
 runs one way on purpose. §11.12.3's magnet is a lexicographic order (family
@@ -81,7 +81,7 @@ the tolerance to the port's own half-size. §11.12.4's coach mark is
 three marks and one ships.
 
 ~~**§11.12.2's multi-draw is the deferred one**, split into its own board item
-rather than built~~ — **built on 2026-08-01 across `8876261`, `4840307` and
+rather than built~~, **built on 2026-08-01 across `8876261`, `4840307` and
 `e078c0b`.** The ranking was ruled and waiting, and the ruling turned out to be
 the part that was worth having twice over: the census taken to check that
 `bankKey` was reachable is what found
@@ -89,14 +89,14 @@ the part that was worth having twice over: the census taken to check that
 ruling names is what the fixed catalog now produces.
 
 **The gesture needed one pairing the corpus does not contain.**
-docs/05:484 says nothing about a run made of `atomicConnect` pins — A01's
-`srcIn` is sixteen of them, eight stereo pairs — so `_armWireFrom` had to
+docs/05:484 says nothing about a run made of `atomicConnect` pins (A01's
+`srcIn` is sixteen of them, eight stereo pairs) so `_armWireFrom` had to
 decide which of two gestures a press claims. **Multi-draw wins**, because
 DR-011.2 decides set-vs-pin BY THE JACK (a property of the hardware the user
 did not choose) while a selected run is an explicit act performed with a
 modifier. The cost is that those pairs become N separate `Link`s where the
-template author declared each to be one cable — the exact bill-of-materials
-distinction §11.12.2 exists to keep — so the arming sentence **names it out
+template author declared each to be one cable, the exact bill-of-materials
+distinction §11.12.2 exists to keep, so the arming sentence **names it out
 loud**, in one composed message rather than two announcements. This is a
 consequence of two existing rulings rather than a third; if it is ever argued
 with, it wants a DR of its own.
@@ -106,7 +106,7 @@ with, it wants a DR of its own.
 **The T2 compatibility matrix is still absent.** `acceptedFamilies` is declared
 and empty and `SIG-001` does not exist until M5, so §11.12.3 is an ORDERING
 HEURISTIC over pins the tier-1 rules have already allowed. It is not validation
-and must not be read as any — see
+and must not be read as any, see
 [DR-011](/decisions/dr-011-connect-gesture.md) §11.5, which refuses T1 outright
 and leaves every T2 rule to M5. When M5 populates the matrix,
 `effectiveAcceptsFamily` is the seam it lands on.
@@ -116,5 +116,5 @@ and leaves every T2 rule to M5. When M5 populates the matrix,
 [1] canonical-decisions.md §11.12 (`docs/canonical-decisions.md`)
 [2] `docs/05-schematic-editor.md` :473, :477, :482, :484, :145, §11.6, §14
 [3] `packages/rackmate_core/lib/src/catalog/seed_registries.dart:394`
-[4] `packages/rackmate_core/lib/src/derived/connect_target.dart` —
+[4] `packages/rackmate_core/lib/src/derived/connect_target.dart`,
     `effectiveMaxConnections`, the shape §11.12.3 reuses

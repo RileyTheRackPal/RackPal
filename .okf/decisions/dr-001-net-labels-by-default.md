@@ -9,8 +9,8 @@ canon_section: "11.1"
 status: built
 ---
 
-Every `Link` renders **by default** as a pair of net labels — a short stub off
-each pin carrying the generated net name — **not** as a drawn wire. Drawn wires
+Every `Link` renders **by default** as a pair of net labels, a short stub off
+each pin carrying the generated net name, **not** as a drawn wire. Drawn wires
 are a transient mode (Alt-hover, focus) and the export's interconnect sheets.
 
 Canon §11.1 states this is **"not to be re-argued in any document"**. It reverses
@@ -40,13 +40,13 @@ stopped at phases 0–3 as a result.
 # What it moves rather than removes
 
 The cost does not vanish, it changes shape: net labels are **text**, and text is
-the dominant commit-path term. The roadmap is explicit — two net labels per Link
+the dominant commit-path term. The roadmap is explicit, two net labels per Link
 puts ~300 additional text runs on a 150-connection project on top of the ~10,000
 the cache must be sized for. That is why M2-G exists and why the text cache is
 keyed on `(text, styleId, quantisedScale)` rather than a raw double.
 
 M2-C's perf test therefore records its symbol-layer op count but deliberately does
-**not** claim the exit criterion's label-layer clause — that is still owed by
+**not** claim the exit criterion's label-layer clause; that is still owed by
 M2-D, and the recorded count is the baseline it should be stated as a delta
 against.
 
@@ -60,7 +60,7 @@ M2-D shipped the render (`e13fa68`) and M2-E the canvas and domain filter
 | M2-C, symbols only | 4155 | 3.052 ms |
 | M2-D, with net labels | **6555** (+57.8%) | 4.05 ms |
 
-The label layer alone is 2400 ops / 0.79 ms — about 19% of the frame, against
+The label layer alone is 2400 ops / 0.79 ms, about 19% of the frame, against
 a 16.67 ms budget. Roughly 4x headroom.
 
 The op order is **grouped by domain**, one contiguous run each, registered as
@@ -72,4 +72,4 @@ asserted with `identical` op-for-op.
 
 [1] canonical-decisions.md §11.1 (`docs/canonical-decisions.md`)
 [2] `docs/05-schematic-editor.md`
-[3] `packages/rackmate_core/lib/src/draw/scene/sugiyama.dart` — phases 0–3 only
+[3] `packages/rackmate_core/lib/src/draw/scene/sugiyama.dart`, phases 0–3 only

@@ -2,11 +2,11 @@
 okf_version: '0.1'
 ---
 
-# RackMate — knowledge bundle
+# RackMate: knowledge bundle
 
 A Flutter desktop tool for designing A/V racks: elevations, a wiring schematic,
 and the schedules an installer works from. This bundle captures the *reasoning*
-behind the code — the rulings, invariants and gates that are load-bearing and
+behind the code, the rulings, invariants and gates that are load-bearing and
 would otherwise live only in a long document, or in whoever last touched the area.
 
 * [Getting started](getting-started.md) - how this project makes decisions, and the chain connecting them to code.

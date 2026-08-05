@@ -1,4 +1,4 @@
-# RackMate — Software Architecture
+# RackMate: Software Architecture
 
 **Target:** Dart 3.12.2 / Flutter 3.44.4 stable, Windows-first desktop.
 **Repo:** `C:\Users\riley\Documents\Projects\Vibecoding\RackMate` (currently empty except `.editorconfig`, `.gitattributes`, `.gitignore`, `docs/`).
@@ -13,7 +13,7 @@ Stated up front so the rest of the document can reference them.
 |---|---|---|
 | **D1** | **Monorepo, 3 pure-Dart packages + 1 Flutter app**, joined by pub workspaces. `rackmate_core` must not import `dart:ui` or `package:flutter`. | Model, undo, routing, validation, and the scene builder all test in `dart test` in <1s, and run inside a background isolate for PDF export. |
 | **D2** | **One mutable document aggregate, mutated only through `Command`s.** No immutable-tree + `copyWith`. Change detection by **epoch counters**, not equality. | Undo is free and exact; repaint invalidation is exact; no deep-copy churn on drag. |
-| **D3** | **Geometry stored as `int` in hundredths of a millimetre (10 µm).** Never `double`, never device pixels. | 1U = **4445** exactly, 19″ rail = **48260** exactly. No float drift in the file format, clean diffs, sync-safe. *(Note: tenths-of-mm — a plausible first choice — is **not** exact: 44.45 mm = 444.5 tenths. Use hundredths.)* |
+| **D3** | **Geometry stored as `int` in hundredths of a millimetre (10 µm).** Never `double`, never device pixels. | 1U = **4445** exactly, 19″ rail = **48260** exactly. No float drift in the file format, clean diffs, sync-safe. *(Note: tenths-of-mm, a plausible first choice, is **not** exact: 44.45 mm = 444.5 tenths. Use hundredths.)* |
 | **D4** | **A display list (`DiagramScene`) is the single drawing IR.** Screen and PDF are two interpreters of it. | Screen and print cannot diverge. Also gives hit-test regions, bounds for scale-to-fit, and a deterministic golden-test artifact for free. |
 | **D5** | **Pointer drags never touch the document.** Ephemeral drag state lives in an overlay-only `Listenable`; `onPointerUp` emits exactly one `Command`. | 60 fps during drag with zero document-layer repaints, and one undo entry per gesture without any coalescing logic. |
 
@@ -25,7 +25,7 @@ Stated up front so the rest of the document can reference them.
 
 **Not a single Flutter app.** Three concrete forcing functions make the split pay for itself immediately, not speculatively:
 
-1. **PDF export must run in a background isolate.** A background isolate has no `rootBundle`, no plugins, no `BuildContext` — and critically, code that touches `dart:ui` types drags in Flutter binding assumptions. The scene builder therefore *must* be free of `dart:ui`. A package boundary is the only way to enforce that mechanically; a folder convention will be violated within a month by an `Offset` that "was just easier."
+1. **PDF export must run in a background isolate.** A background isolate has no `rootBundle`, no plugins, no `BuildContext`, and critically, code that touches `dart:ui` types drags in Flutter binding assumptions. The scene builder therefore *must* be free of `dart:ui`. A package boundary is the only way to enforce that mechanically; a folder convention will be violated within a month by an `Offset` that "was just easier."
 2. **Test-loop economics.** The wire router, the DRC, the migration chain, and the command apply/revert property tests are where the bugs live and where you will iterate hundreds of times. `dart test` on a pure package is ~600 ms cold. `flutter test` on an app is 8–20 s. Over a multi-year project this difference is measured in days.
 3. **The `pdf` package is a single-maintainer dependency on a headline feature.** Isolating it behind `rackmate_export` + the `DiagramCanvas` interface means replacing it is one package, not a rewrite.
 
@@ -201,8 +201,8 @@ Note `rackmate_export` and `rackmate_ui` are **siblings that cannot see each oth
 
 ### 2.3 Three rules that carry most of the weight
 
-1. **`rackmate_core` must not import `package:flutter` or `dart:ui`** — not for `Offset`, not for `Color`, not for `Rect`. Define `Pt`, `Box`, and store colours as `int` ARGB. Adapters live in `rackmate_ui`.
-2. **The document is mutated only via `DocumentController.run(Command)`.** No widget, service, or painter ever calls a setter on a `RackDevice`. Enforced by making entity fields private with library-private setters (`part of` the commands library) — Dart's library privacy is the right tool here.
+1. **`rackmate_core` must not import `package:flutter` or `dart:ui`**: not for `Offset`, not for `Color`, not for `Rect`. Define `Pt`, `Box`, and store colours as `int` ARGB. Adapters live in `rackmate_ui`.
+2. **The document is mutated only via `DocumentController.run(Command)`.** No widget, service, or painter ever calls a setter on a `RackDevice`. Enforced by making entity fields private with library-private setters (`part of` the commands library), Dart's library privacy is the right tool here.
 3. **Nothing in Domain or Application may be `async`.** The document is a synchronous, single-threaded data structure. All `Future`s live in Infrastructure and Presentation. This eliminates an entire class of interleaved-mutation bugs and makes every core test synchronous.
 
 ### 2.4 Mechanical enforcement
@@ -223,7 +223,7 @@ void main() {
 }
 ```
 
-Plus: `rackmate_core`'s pubspec declares `environment: {sdk: ^3.12.0}` with **no `flutter:` key at all**, so a stray Flutter import is also a hard compile error under `dart test`. Belt and braces — the pubspec catches it at build, the test catches it in review with a readable message.
+Plus: `rackmate_core`'s pubspec declares `environment: {sdk: ^3.12.0}` with **no `flutter:` key at all**, so a stray Flutter import is also a hard compile error under `dart test`. Belt and braces, the pubspec catches it at build, the test catches it in review with a readable message.
 
 ---
 
@@ -233,7 +233,7 @@ Plus: `rackmate_core`'s pubspec declares `environment: {sdk: ^3.12.0}` with **no
 
 > **Riverpod 3.x, codegen-free, used strictly as a DI and lifetime container. The document is *not* in Riverpod. It lives in a plain-Dart `DocumentController` owned by a provider.**
 
-**Reasoning.** A rack document is one large, long-lived, mutable object graph — ~200 devices, ~2000 ports, ~1000 connections, ~500 KB of JSON. Every general-purpose Flutter state solution (Bloc, `Notifier<T>`, signals) is built on *replace the state object to signal change*. That premise is wrong here twice over: replacing a 500 KB graph on every pointer-adjacent event is pure waste, and more importantly a whole-object replacement carries no information about *what* changed, which is exactly the information the repaint system needs.
+**Reasoning.** A rack document is one large, long-lived, mutable object graph, ~200 devices, ~2000 ports, ~1000 connections, ~500 KB of JSON. Every general-purpose Flutter state solution (Bloc, `Notifier<T>`, signals) is built on *replace the state object to signal change*. That premise is wrong here twice over: replacing a 500 KB graph on every pointer-adjacent event is pure waste, and more importantly a whole-object replacement carries no information about *what* changed, which is exactly the information the repaint system needs.
 
 Riverpod still earns its place for four things it is genuinely best-in-class at, none of which is holding the document:
 
@@ -244,7 +244,7 @@ Riverpod still earns its place for four things it is genuinely best-in-class at,
 
 **Why not `signals`.** Its selling point is automatic fine-grained tracking of *widget* rebuilds. The canvas hot path deliberately bypasses widget rebuilds entirely (§3.6), so you'd take real ecosystem risk for a benefit already engineered around.
 
-**Why not Bloc.** Event-sourcing a canvas means an event object per interaction tick. Its genuinely good idea — an explicit, replayable event log — you are building by hand as the command stack, with better ergonomics (labels for the Edit menu, inversion for undo).
+**Why not Bloc.** Event-sourcing a canvas means an event object per interaction tick. Its genuinely good idea (an explicit, replayable event log), you are building by hand as the command stack, with better ergonomics (labels for the Edit menu, inversion for undo).
 
 **Codegen-free**, per D-consistency with §8: the project ships **zero `build_runner`**. Riverpod 3 makes codegen optional; use plain `NotifierProvider` / `Provider`.
 
@@ -264,7 +264,7 @@ ProviderScope                                    ← one per open document
 └── interactionControllerProvider: InteractionController  ephemeral drag state (D5)
 ```
 
-### 3.3 The document — epochs, not equality
+### 3.3 The document: epochs, not equality
 
 ```dart
 /// Bit flags a Command declares; the controller bumps matching epochs on commit.
@@ -301,7 +301,7 @@ Every `Command` declares `EpochMask get touches`. This single mechanism drives *
 
 `ValueNotifier<int>` is chosen over a bespoke `Listenable` because it composes directly with `Listenable.merge` and drops straight into `CustomPainter(repaint:)`.
 
-### 3.4 Selection — observed, not owned by the document
+### 3.4 Selection: observed, not owned by the document
 
 ```dart
 class SelectionController extends ChangeNotifier {
@@ -317,19 +317,19 @@ class SelectionController extends ChangeNotifier {
 }
 ```
 
-Selection is **not persisted** to `.rackmate` and does not bump `revision` (selecting a device must not mark the file dirty). But every `Transaction` captures `selectionBefore`/`selectionAfter`, so undo restores it — without which undoing a delete leaves the caret pointing at a device that no longer exists, and undoing a move leaves nothing highlighted. That is the single most-noticed undo polish detail.
+Selection is **not persisted** to `.rackmate` and does not bump `revision` (selecting a device must not mark the file dirty). But every `Transaction` captures `selectionBefore`/`selectionAfter`, so undo restores it, without which undoing a delete leaves the caret pointing at a device that no longer exists, and undoing a move leaves nothing highlighted. That is the single most-noticed undo polish detail.
 
 ### 3.5 Viewport, tool mode
 
 `ViewportController extends ChangeNotifier` owns a `Matrix4`, a **cached inverse** invalidated in every mutator, and zoom-at-cursor / fit-to-content. It is hand-rolled (~150 lines); `InteractiveViewer` is rejected because it never receives `PointerScrollEvent` (so wheel-zoom-to-cursor is unimplementable inside it), it installs its own `ScaleGestureRecognizer` that fights marquee-select and wire-drawing in the gesture arena, and its `boundaryMargin` model doesn't match an infinite canvas.
 
-Critical detail in the implementation: pan deltas arrive in **screen** space and must be applied with `leftTranslate` (pre-multiply); the zoom pivot uses right-multiplied `translate` in scene space. Reversing these produces pan whose speed varies with zoom — the classic hand-rolled-viewport bug.
+Critical detail in the implementation: pan deltas arrive in **screen** space and must be applied with `leftTranslate` (pre-multiply); the zoom pivot uses right-multiplied `translate` in scene space. Reversing these produces pan whose speed varies with zoom, the classic hand-rolled-viewport bug.
 
-**The viewport must not be `watch`ed by any widget.** It is passed to painters as a repaint `Listenable`. The one exception is the status-bar zoom readout, which subscribes through a **10 Hz throttling adapter** — otherwise a 1000 Hz mouse rebuilds a `Text` widget 1000 times a second to change "150%" to "151%".
+**The viewport must not be `watch`ed by any widget.** It is passed to painters as a repaint `Listenable`. The one exception is the status-bar zoom readout, which subscribes through a **10 Hz throttling adapter**: otherwise a 1000 Hz mouse rebuilds a `Text` widget 1000 times a second to change "150%" to "151%".
 
 `ToolMode` is a sealed class (`Select`, `PlaceDevice(template)`, `DrawWire(cableType)`, `Pan`, `Measure`) in a small `NotifierProvider`. It changes at human speed, so ordinary widget rebuilds are correct and cheap. It parameterises the hit-test policy, the cursor, and which overlay affordances draw.
 
-### 3.6 Derived data — three tiers
+### 3.6 Derived data: three tiers
 
 Covered fully in §5. In brief: totals and occupancy are **synchronous epoch-keyed memos**; routed wire geometry is a **synchronous incremental cache** keyed per-connection; full-document validation is **incremental synchronously**, with a **debounced isolate full-sweep** reserved for load, pre-export, and explicit re-check.
 
@@ -337,7 +337,7 @@ Covered fully in §5. In brief: totals and occupancy are **synchronous epoch-key
 
 Three rules, applied together, are the entire answer.
 
-**Rule 1 — the canvas never watches a provider.** It reads controllers once at construction and subscribes painters to narrow `Listenable`s:
+**Rule 1: the canvas never watches a provider.** It reads controllers once at construction and subscribes painters to narrow `Listenable`s:
 
 ```dart
 CustomPaint(
@@ -351,7 +351,7 @@ CustomPaint(
 
 `CustomPainter(repaint:)` triggers a repaint **while skipping build and layout entirely**. That is the escape hatch that makes 60 fps achievable irrespective of what wraps the canvas.
 
-**Rule 2 — D5: drags never touch the document.** During a device drag or a wire pull, deltas go into `InteractionController`, which only the overlay layer listens to:
+**Rule 2: D5: drags never touch the document.** During a device drag or a wire pull, deltas go into `InteractionController`, which only the overlay layer listens to:
 
 ```dart
 class InteractionController extends ChangeNotifier {
@@ -365,7 +365,7 @@ class InteractionController extends ChangeNotifier {
 
 Three things fall out for free: the device and wire layers do not repaint during the drag, the gesture produces exactly one undo entry with no coalescing logic, and there is zero allocation churn in the document graph per frame.
 
-**Rule 3 — layer the canvas, each with its own repaint source.**
+**Rule 3: layer the canvas, each with its own repaint source.**
 
 | Layer | Repaints on | Typical frequency |
 |---|---|---|
@@ -373,7 +373,7 @@ Three things fall out for free: the device and wire layers do not repaint during
 | Rack chassis / RU ruler | `epochs.rack`, theme | ~never |
 | Device faceplates | `epochs.structure`, `epochs.style` | rare |
 | Wires (settled) | `epochs.wires`, `epochs.structure` | rare |
-| Wires (active — the ≤8 attached to the dragged device) | every frame during drag | 60–144 Hz, tiny |
+| Wires (active: the ≤8 attached to the dragged device) | every frame during drag | 60–144 Hz, tiny |
 | Overlay (selection, marquee, guides, live wire) | `interaction`, `selection` | 60–144 Hz, tiny |
 | Screen-space HUD (ruler labels, minimap) | throttled viewport | 10 Hz |
 
@@ -412,7 +412,7 @@ abstract base class Command {
 Design notes worth defending:
 
 - **`apply`/`revert`, not `undo`/`redo`.** Redo is just `apply` again. A command must be *idempotent under alternation*: `apply; revert; apply` must land in the identical state as a single `apply`. This is the invariant the property test in §9.2 checks.
-- **Commands store before-values, not the whole entity.** `MoveDeviceCommand` holds `{id, fromRu, toRu, fromFace, toFace}` — ~40 bytes. A 500-entry history is single-digit MB.
+- **Commands store before-values, not the whole entity.** `MoveDeviceCommand` holds `{id, fromRu, toRu, fromFace, toFace}`, ~40 bytes. A 500-entry history is single-digit MB.
 - **Commands never allocate IDs at `apply` time.** `AddDeviceCommand` generates its UUID in its *constructor*, so redo re-creates the entity with the identical ID and any commands stacked on top of it still resolve. This is the most common command-pattern bug and it is invisible until someone does add → connect → undo → undo → redo → redo.
 
 ### 4.2 A concrete command
@@ -454,7 +454,7 @@ final class MoveDeviceCommand extends Command {
 }
 ```
 
-Note `touches` includes `wires` even though no `Connection` object changes — the *routed geometry* of every wire touching this device is invalidated. Getting these masks right is the discipline that makes the whole invalidation system honest; when in doubt, over-declare (a spurious repaint is cheap, a stale wire is a bug report).
+Note `touches` includes `wires` even though no `Connection` object changes, the *routed geometry* of every wire touching this device is invalidated. Getting these masks right is the discipline that makes the whole invalidation system honest; when in doubt, over-declare (a spurious repaint is cheap, a stale wire is a bug report).
 
 ### 4.3 Transactions
 
@@ -523,11 +523,11 @@ class UndoStack {
 }
 ```
 
-**Coalescing policy.** Merge iff `mergeKey` matches **and** the delta is under 400 ms. Used for: property-inspector typing (renaming a device is one undo entry), arrow-key nudge repeats, and slider drags in the inspector. It is deliberately **not** used for canvas drags — D5's "gesture-end commits once" already collapses those, and doing both would risk merging two genuinely distinct drags a user performed quickly.
+**Coalescing policy.** Merge iff `mergeKey` matches **and** the delta is under 400 ms. Used for: property-inspector typing (renaming a device is one undo entry), arrow-key nudge repeats, and slider drags in the inspector. It is deliberately **not** used for canvas drags, D5's "gesture-end commits once" already collapses those, and doing both would risk merging two genuinely distinct drags a user performed quickly.
 
 **Cap.** 200 entries. At ~100 bytes/command this is trivial memory; the cap exists to bound the pathological case (a script-driven bulk import), not to save RAM.
 
-### 4.5 `DocumentController` — the single mutation gate
+### 4.5 `DocumentController`: the single mutation gate
 
 ```dart
 class DocumentController {
@@ -604,7 +604,7 @@ final class SnapshotCommand extends Command {
 }
 ```
 
-It snapshots **only the affected entities'** JSON, not the document. For a 200-device auto-arrange that's ~60 KB — pay it, get correctness immediately. Reserve precise commands for the high-frequency operations where the memory and clarity actually matter.
+It snapshots **only the affected entities'** JSON, not the document. For a 200-device auto-arrange that's ~60 KB, pay it, get correctness immediately. Reserve precise commands for the high-frequency operations where the memory and clarity actually matter.
 
 ### 4.7 Integration with the state solution
 
@@ -634,7 +634,7 @@ Menu items, toolbar buttons, and keyboard shortcuts all dispatch the *same* `Int
 
 Three tiers, assigned by cost and staleness tolerance.
 
-### 5.1 Tier 1 — synchronous epoch-keyed memo (cheap, must be exact)
+### 5.1 Tier 1: synchronous epoch-keyed memo (cheap, must be exact)
 
 Totals (RU used/free, power draw in W, heat in BTU/hr, weight, port counts by connector), RU occupancy map, and the wiring schedule rows.
 
@@ -655,13 +655,13 @@ class Derived<T> {
 }
 ```
 
-Cost at 200 devices / 1000 connections: totals ≈ 40 µs, occupancy ≈ 25 µs, schedule ≈ 900 µs (it sorts and formats). All comfortably under one frame, all recomputed at most once per commit because commits happen at human speed. **Do not debounce these** — debouncing exact, cheap data buys nothing and introduces visible lag in the totals panel.
+Cost at 200 devices / 1000 connections: totals ≈ 40 µs, occupancy ≈ 25 µs, schedule ≈ 900 µs (it sorts and formats). All comfortably under one frame, all recomputed at most once per commit because commits happen at human speed. **Do not debounce these**: debouncing exact, cheap data buys nothing and introduces visible lag in the totals panel.
 
 The schedule derivation is shared verbatim between the on-screen `DataTable` and the PDF table. There must be exactly one function that turns a document into schedule rows, or the printed schedule will eventually disagree with the screen.
 
-### 5.2 Tier 2 — incremental per-entity cache (expensive, must be exact)
+### 5.2 Tier 2: incremental per-entity cache (expensive, must be exact)
 
-Routed wire geometry. Full re-route of 1000 orthogonal traces with obstacle avoidance is ~15–40 ms — too slow to do per commit, and catastrophic if it ever landed in a drag frame.
+Routed wire geometry. Full re-route of 1000 orthogonal traces with obstacle avoidance is ~15–40 ms, too slow to do per commit, and catastrophic if it ever landed in a drag frame.
 
 ```dart
 class RouteCache {
@@ -689,7 +689,7 @@ The refinement that matters: `_commit` hands the cache the *set of entity IDs th
 
 **Never in an isolate.** Routing is on the paint path; a round-trip through an isolate would introduce a frame of visible lag on every edit, which is far worse than 0.4 ms of synchronous work.
 
-### 5.3 Tier 3 — debounced background sweep (expensive, staleness tolerable)
+### 5.3 Tier 3: debounced background sweep (expensive, staleness tolerable)
 
 Full-document validation / DRC: connector compatibility, direction sanity (out→in), duplicate port use, orphaned connections, RU collisions, power budget overrun, unresolved Structure home-runs, cable-length warnings, unlabelled ports.
 
@@ -723,7 +723,7 @@ void scheduleSweep() {
 }
 ```
 
-**The isolate payload is a projection, not the document.** `ValidationInput` carries only the graph — IDs, connector types, directions, RU spans, power ratings — as flat typed lists. ~30 KB at 200 devices versus ~500 KB for full JSON, and it's cheaply sendable. This is only possible because `rackmate_core` is Flutter-free (§2.2).
+**The isolate payload is a projection, not the document.** `ValidationInput` carries only the graph (IDs, connector types, directions, RU spans, power ratings) as flat typed lists. ~30 KB at 200 devices versus ~500 KB for full JSON, and it's cheaply sendable. This is only possible because `rackmate_core` is Flutter-free (§2.2).
 
 ### 5.4 Invalidation summary
 
@@ -757,7 +757,7 @@ RackDocument
    └─ replay → PdfDiagramCanvas(PdfGraphics)         → vector PDF page content
 ```
 
-The overlay layer is rebuilt fresh every frame — but it's ~30 ops (a selection halo, a marquee rect, three snap guides, one live wire), so building and replaying it costs single-digit microseconds. It is never cached and never goes to PDF.
+The overlay layer is rebuilt fresh every frame, but it's ~30 ops (a selection halo, a marquee rect, three snap guides, one live wire), so building and replaying it costs single-digit microseconds. It is never cached and never goes to PDF.
 
 ### 6.2 Layer stack
 
@@ -773,7 +773,7 @@ Bottom to top, inside one `RenderRackCanvas` (a `MultiChildRenderObjectWidget`):
 | L4 | Overlay: selection halo, marquee, snap guides, live wire, hover highlight | never cached, ~30 ops | `interaction`, `selection` |
 | L5 | Screen-space HUD: RU ruler numbers, zoom badge, minimap, off-screen indicators | painted **outside** the scene transform | throttled viewport |
 
-**Why hybrid rather than pure-canvas.** Devices are real widgets, so text layout, hover states, focus, right-click targets, and — importantly — **accessibility semantics** all come for free. A pure `CustomPainter` for a device *builder* means hand-rolling text layout and hit-testing for every port label on every device. Meanwhile wires must not be widgets: 1000 wire widgets means 1000 × (build + layout + paint) per frame, and since each wire's position depends on two devices, any drag dirties layout across the whole tree.
+**Why hybrid rather than pure-canvas.** Devices are real widgets, so text layout, hover states, focus, right-click targets, and, importantly, **accessibility semantics** all come for free. A pure `CustomPainter` for a device *builder* means hand-rolling text layout and hit-testing for every port label on every device. Meanwhile wires must not be widgets: 1000 wire widgets means 1000 × (build + layout + paint) per frame, and since each wire's position depends on two devices, any drag dirties layout across the whole tree.
 
 The load-bearing detail in `performLayout`:
 
@@ -813,18 +813,18 @@ class LayerCache {
 }
 ```
 
-`ui.Picture` caches **drawing instructions, not pixels** — replaying still costs GPU time proportional to content, but it eliminates the Dart-side command building and the scene walk. For the grid specifically, where rasterisation rather than command-building dominates, promote to a texture with `Picture.toImageSync()` and re-bake per zoom decade. Do **not** do that for wires: they must stay crisp at any zoom.
+`ui.Picture` caches **drawing instructions, not pixels**: replaying still costs GPU time proportional to content, but it eliminates the Dart-side command building and the scene walk. For the grid specifically, where rasterisation rather than command-building dominates, promote to a texture with `Picture.toImageSync()` and re-bake per zoom decade. Do **not** do that for wires: they must stay crisp at any zoom.
 
-`RepaintBoundary` and `Picture` are complementary, not alternatives. Wrap the canvas widget as a whole and the side panels in `RepaintBoundary` so canvas repaints never touch the inspector. Do **not** wrap individual device widgets — 200 compositing layers costs more than it saves.
+`RepaintBoundary` and `Picture` are complementary, not alternatives. Wrap the canvas widget as a whole and the side panels in `RepaintBoundary` so canvas repaints never touch the inspector. Do **not** wrap individual device widgets, 200 compositing layers costs more than it saves.
 
 ### 6.4 Repaint strategy and hard rules
 
 - **No `setState` in the canvas path, ever.** Pan, zoom, drag, hover, and marquee all repaint via `repaint:` listenables or `markNeedsPaint()`.
-- **Zero `saveLayer`.** It costs ~1 ms worst case; three of them eats a fifth of the frame budget. It is triggered implicitly by opacity on a subtree, by blend modes, and by antialiased `clipPath` + save. To dim unselected wires, **bake alpha into `Paint.color`** — never wrap in an opacity layer. Run `checkerboardOffscreenLayers` in DevTools and drive it to zero, and keep that as a manual pre-release check.
+- **Zero `saveLayer`.** It costs ~1 ms worst case; three of them eats a fifth of the frame budget. It is triggered implicitly by opacity on a subtree, by blend modes, and by antialiased `clipPath` + save. To dim unselected wires, **bake alpha into `Paint.color`**: never wrap in an opacity layer. Run `checkerboardOffscreenLayers` in DevTools and drive it to zero, and keep that as a manual pre-release check.
 - **Batch by style.** Build one `Path` per cable-type colour class, not per wire. 11 cable types means ~11 `drawPath` calls for 1000 wires instead of 1000.
 - **Zoom-invariant chrome.** Anything the user *touches or reads* is constant in screen pixels; anything representing *physical reality* scales. Inside a transformed canvas that means `strokeWidth = 2.0 / viewport.scale` for UI strokes, and unmodified widths for physical features. Hit slop follows the same rule.
 - **Level of detail.** Below ~0.4× scale, drop port labels and draw ports as coloured ticks. Below ~0.2×, draw devices as filled RU blocks with no internal detail. This is both a legibility and a large performance win.
-- **Text.** `TextPainter.layout` is ~100× the cost of `TextPainter.paint`. At 200 devices × 8 port labels = 1600 labels, cold layout is 0.5–1.6 **seconds**. An LRU `LabelCache` (≈2000 entries, keyed on text + style + maxWidth) is non-negotiable, and `TextPainter` instances **must be disposed** on eviction — they hold a native `ui.Paragraph` the Dart GC will not reclaim. Quantise the text scale to a ladder (`0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0`) with the residual applied as a local canvas scale; otherwise every zoom frame is a total cache miss *and* a glyph-atlas miss.
+- **Text.** `TextPainter.layout` is ~100× the cost of `TextPainter.paint`. At 200 devices × 8 port labels = 1600 labels, cold layout is 0.5–1.6 **seconds**. An LRU `LabelCache` (≈2000 entries, keyed on text + style + maxWidth) is non-negotiable, and `TextPainter` instances **must be disposed** on eviction, they hold a native `ui.Paragraph` the Dart GC will not reclaim. Quantise the text scale to a ladder (`0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0`) with the residual applied as a local canvas scale; otherwise every zoom frame is a total cache miss *and* a glyph-atlas miss.
 
 ### 6.5 Hit-testing
 
@@ -833,7 +833,7 @@ Two things worth stating because they contradict plausible assumptions:
 - **`Path.contains()` does not work on strokes.** It only works on closed paths, so a stroked polyline returns false everywhere. Flutter exposes no stroke-to-fill-path API (Skia's `getFillPath` is not in `dart:ui`, and Impeller now strokes by iterating the curve rather than materialising an outline, so it is unlikely ever to be exposed). Wire hit-testing is **closed-form point-to-segment distance**, which is trivial for orthogonal polylines and far faster than the alternatives anyway.
 - **Return the *nearest* hit, not the first.** In a schematic-styled diagram wires cross constantly; first-hit picks arbitrarily and feels broken.
 
-Start with brute force plus an AABB reject (`if (!w.bounds.inflate(tol).contains(p)) continue;` kills ~95% of candidates). At 1000 wires × 4 segments that's ~64 µs — fine for click. Add a **uniform spatial hash** (~120 lines, `Map<int, List<int>>` keyed by grid cell) only if *hover* shows up in the DevTools timeline, since hover fires at up to 1000 Hz on gaming mice. Throttle hover hit-tests to one per frame regardless. Do not import an R-tree; they earn their complexity at 10⁵ objects, and you have 10³.
+Start with brute force plus an AABB reject (`if (!w.bounds.inflate(tol).contains(p)) continue;` kills ~95% of candidates). At 1000 wires × 4 segments that's ~64 µs, fine for click. Add a **uniform spatial hash** (~120 lines, `Map<int, List<int>>` keyed by grid cell) only if *hover* shows up in the DevTools timeline, since hover fires at up to 1000 Hz on gaming mice. Throttle hover hit-tests to one per frame regardless. Do not import an R-tree; they earn their complexity at 10⁵ objects, and you have 10³.
 
 ### 6.6 How the shared drawing abstraction plugs in
 
@@ -857,14 +857,14 @@ abstract interface class DiagramCanvas {
 }
 ```
 
-**Units contract, stated once and enforced everywhere:** geometry coordinates are **document units (hundredths-mm, as doubles at this boundary)**; stroke widths and font sizes are in **typographic points**, with an explicit `scaleWithGeometry` flag on `StrokeSpec`. Each backend applies its own unit transform — screen uses px/mm × zoom, PDF uses 72/25.4 pt per mm. This keeps the IR exact and backend-neutral, and makes "hairlines must not shrink when scaled to fit" a first-class concept rather than an afterthought.
+**Units contract, stated once and enforced everywhere:** geometry coordinates are **document units (hundredths-mm, as doubles at this boundary)**; stroke widths and font sizes are in **typographic points**, with an explicit `scaleWithGeometry` flag on `StrokeSpec`. Each backend applies its own unit transform, screen uses px/mm × zoom, PDF uses 72/25.4 pt per mm. This keeps the IR exact and backend-neutral, and makes "hairlines must not shrink when scaled to fit" a first-class concept rather than an afterthought.
 
 Two mismatches the adapter must absorb, both of which will otherwise produce screen/print divergence bugs:
 
 1. **Dashes.** `PdfGraphics.setLineDashPattern` is native; **`dart:ui Canvas` has no dashing at all.** Without handling this, dashed cable types render solid on screen and dashed in the PDF. The Flutter backend synthesizes via `path_drawing`'s `dashPath`, and caches the dashed `ui.Path` per (geometry, dash) pair since it re-synthesizes on every paint.
-2. **Y-axis and rect anchor.** PDF is Y-up with `drawRect` anchored at the *bottom* edge. Use per-coordinate flipping (`double _y(double y) => _h - y;`) rather than a global `scale(1,-1)` transform — the global flip renders every `drawString` mirrored and requires a counter-flip around each text run, which in a label-dense schematic is a great many chances to get it wrong.
+2. **Y-axis and rect anchor.** PDF is Y-up with `drawRect` anchored at the *bottom* edge. Use per-coordinate flipping (`double _y(double y) => _h - y;`) rather than a global `scale(1,-1)` transform, the global flip renders every `drawString` mirrored and requires a counter-flip around each text run, which in a label-dense schematic is a great many chances to get it wrong.
 
-One more constraint that follows: **restrict the diagram visual language to flat fills, strokes, dashes, and text.** No gradients, no shadows, no blurs — PDF's graphics model can't express them (only `PdfGraphicState(opacity:)`). This is not a hardship; it *is* the schematic aesthetic, and it guarantees the two backends agree pixel-for-vector.
+One more constraint that follows: **restrict the diagram visual language to flat fills, strokes, dashes, and text.** No gradients, no shadows, no blurs, PDF's graphics model can't express them (only `PdfGraphicState(opacity:)`). This is not a hardship; it *is* the schematic aesthetic, and it guarantees the two backends agree pixel-for-vector.
 
 Defining every connector symbol once as an SVG path `d` string is what eliminates most remaining duplication risk: `PdfGraphics.drawShape(d)` consumes it natively, and `parseSvgPathData(d)` gives a `ui.Path` on the Flutter side.
 
@@ -902,7 +902,7 @@ Root keys, all four mandatory:
 
 The `schemaVersion` + `minReaderVersion` pair is what gets you both directions of compatibility: an old app can open a newer file read-only-with-warning unless the newer file declares a breaking change.
 
-**Hand-written `toJson`/`fromJson`. No `json_serializable`, no freezed JSON, no `build_runner`.** Generated codecs couple the on-disk format to the Dart class shape, so every class refactor silently changes the file format. For a format that must open in 2033, that coupling *is* the bug. Hand-written codecs make the wire format an explicit, reviewable, diffable artifact — and the format is this product's most durable asset. Cost is ~300 lines written once. (Generated codecs are the right answer for ephemeral API DTOs; a document format is the opposite case.)
+**Hand-written `toJson`/`fromJson`. No `json_serializable`, no freezed JSON, no `build_runner`.** Generated codecs couple the on-disk format to the Dart class shape, so every class refactor silently changes the file format. For a format that must open in 2033, that coupling *is* the bug. Hand-written codecs make the wire format an explicit, reviewable, diffable artifact, and the format is this product's most durable asset. Cost is ~300 lines written once. (Generated codecs are the right answer for ephemeral API DTOs; a document format is the opposite case.)
 
 Two rules inside the codec:
 
@@ -937,9 +937,9 @@ Outcome<JsonMap> migrateToCurrent(JsonMap raw) {
 }
 ```
 
-**Migrate the raw map before any typed deserialization.** Never migrate typed objects — that requires keeping historical Dart class shapes alive forever.
+**Migrate the raw map before any typed deserialization.** Never migrate typed objects; that requires keeping historical Dart class shapes alive forever.
 
-### 7.3 Save path — atomic, always
+### 7.3 Save path: atomic, always
 
 ```
 1. Serialize on the main isolate (~15 ms at 500 KB — acceptable, and avoids
@@ -961,15 +961,15 @@ A crash at any step leaves either the previous good file or the previous good fi
 bool get isDirty => epochs.revision.value != _lastSavedRevision;
 ```
 
-Revision counters, never document equality — equality is O(document) on every keystroke and gets subtly wrong with any float that survives into the model.
+Revision counters, never document equality, equality is O(document) on every keystroke and gets subtly wrong with any float that survives into the model.
 
-**Deliberate decision on undo-to-saved-state:** `undoOne()` and `redoOne()` **restore** the revision they were recorded at rather than incrementing it, so undoing back to the save point marks the document clean again. This matches user intuition ("I undid my changes, there's nothing to save"). Implementation: each `_Entry` records `revisionAfter`, and undo sets `epochs.revision.value = entry.revisionBefore`. This means `revision` is not strictly monotonic — which is fine for dirty tracking, so a **separate strictly-monotonic `sequence` counter** is kept for the future sync cursor.
+**Deliberate decision on undo-to-saved-state:** `undoOne()` and `redoOne()` **restore** the revision they were recorded at rather than incrementing it, so undoing back to the save point marks the document clean again. This matches user intuition ("I undid my changes, there's nothing to save"). Implementation: each `_Entry` records `revisionAfter`, and undo sets `epochs.revision.value = entry.revisionBefore`. This means `revision` is not strictly monotonic, which is fine for dirty tracking, so a **separate strictly-monotonic `sequence` counter** is kept for the future sync cursor.
 
 ### 7.5 Autosave and crash recovery
 
 - Every **30 s** and on **window blur**, if dirty, write a recovery snapshot to `getApplicationSupportDirectory()/recovery/<docUuid>.rackmate`, plus a sidecar JSON `{realPath, revision, savedAt, displayName}`.
 - **Never autosave over the user's file.** CAD users expect explicit saves and will file a bug the first time an autosave clobbers something.
-- Autosave serialization runs in `Isolate.run` — unlike explicit save, nobody is waiting, so the transfer cost is free and the UI must not hitch.
+- Autosave serialization runs in `Isolate.run`, unlike explicit save, nobody is waiting, so the transfer cost is free and the UI must not hitch.
 - Delete the snapshot on clean save and clean exit.
 - On startup, scan the recovery dir. Any survivor ⇒ `"RackMate closed unexpectedly. Recover Smith Residence Rack 2 (12 unsaved changes)?"` with Recover / Discard / Keep for later.
 - Recovery files are also the crash-report attachment (§11).
@@ -983,21 +983,21 @@ await windowManager.setPreventClose(true);
 //   else → three-button dialog: Save / Don't Save / Cancel.  Never two buttons.
 ```
 
-**Recent files** = a JSON list in app-support (`{path, displayName, lastOpened, thumbnailPath}`), not `shared_preferences` — you want a thumbnail and structured metadata, and prefs is the wrong shape. Prune missing files **lazily** (a network drive that's temporarily unmounted must not evict the entry).
+**Recent files** = a JSON list in app-support (`{path, displayName, lastOpened, thumbnailPath}`), not `shared_preferences`, you want a thumbnail and structured metadata, and prefs is the wrong shape. Prune missing files **lazily** (a network drive that's temporarily unmounted must not evict the entry).
 
-**Window state** (size, position, monitor, maximized) persists in the same app-support prefs file. Set a minimum window size — a rack editor below ~1000 px wide is unusable.
+**Window state** (size, position, monitor, maximized) persists in the same app-support prefs file. Set a minimum window size, a rack editor below ~1000 px wide is unusable.
 
 ---
 
 ## 8. Dependency list
 
-### 8.1 `rackmate_core` — pure Dart, deliberately tiny
+### 8.1 `rackmate_core`: pure Dart, deliberately tiny
 
 | Package | Constraint | Why |
 |---|---|---|
 | `meta` | `^1.16.0` | `@immutable`, `@internal`, `@useResult` annotations. Zero runtime cost. |
 | `collection` | `^1.19.0` | `UnmodifiableSetView`, `IterableExtension.firstWhereOrNull`, deep equality helpers. |
-| `uuid` | `^4.6.0` | **UUID v7** for all entity IDs — time-ordered (readable logs, natural creation-order sort with no extra field, index locality if these ever hit a DB). No downside vs v4. |
+| `uuid` | `^4.6.0` | **UUID v7** for all entity IDs: time-ordered (readable logs, natural creation-order sort with no extra field, index locality if these ever hit a DB). No downside vs v4. |
 
 That is the entire production dependency set for the layer where 80% of the logic lives. No `build_runner`, no `freezed`, no `json_serializable`.
 
@@ -1007,14 +1007,14 @@ That is the entire production dependency set for the layer where 80% of the logi
 
 | Package | Constraint | Why |
 |---|---|---|
-| `pdf` | `^3.13.0` | The only real option. Pure Dart (no Flutter dep ⇒ isolate-safe), Apache-2.0, `pw.Widget` layout for the schedule, `PdfGraphics` for vector diagram output. Requires Dart ≥3.12.0 — matches this SDK exactly. |
+| `pdf` | `^3.13.0` | The only real option. Pure Dart (no Flutter dep ⇒ isolate-safe), Apache-2.0, `pw.Widget` layout for the schedule, `PdfGraphics` for vector diagram output. Requires Dart ≥3.12.0, matches this SDK exactly. |
 
 ### 8.3 `rackmate_ui`
 
 | Package | Constraint | Why |
 |---|---|---|
-| `flutter` | sdk | — |
-| `path_drawing` | `^1.0.1` | `dashPath()` — synthesizes dashes that `dart:ui` cannot do natively (§6.6). Small, stable, single-purpose. |
+| `flutter` | sdk |: |
+| `path_drawing` | `^1.0.1` | `dashPath()`: synthesizes dashes that `dart:ui` cannot do natively (§6.6). Small, stable, single-purpose. |
 | `vector_math` | `^2.2.0` | `Matrix4` for the viewport. Transitively available via Flutter; pin it explicitly since core geometry code touches it. |
 
 ### 8.4 `apps/rackmate`
@@ -1022,7 +1022,7 @@ That is the entire production dependency set for the layer where 80% of the logi
 | Package | Constraint | Why |
 |---|---|---|
 | `flutter_riverpod` | `^3.3.2` | DI + per-document lifetime scoping + chrome read-models (§3). Codegen-free usage. |
-| `file_selector` | `^1.1.0` | **flutter.dev verified**, federated, calls native OS dialogs. Chosen over `file_picker` (3rd-party, shells out on macOS/Linux, has had desktop `saveFile` regressions) — desktop is exactly where that difference bites. |
+| `file_selector` | `^1.1.0` | **flutter.dev verified**, federated, calls native OS dialogs. Chosen over `file_picker` (3rd-party, shells out on macOS/Linux, has had desktop `saveFile` regressions), desktop is exactly where that difference bites. |
 | `window_manager` | `^0.5.2` | Title with dirty marker, size/position restore, minimum size, and critically `setPreventClose` for the save prompt. De-facto standard, ~500 k downloads. |
 | `path_provider` | `^2.1.5` | `getApplicationSupportDirectory()` for recovery, recents, logs, prefs. flutter.dev. |
 | `path` | `^1.9.0` | Cross-platform path joining. Never string-concatenate paths on Windows. |
@@ -1050,12 +1050,12 @@ Explicitly **not** used: any node-editor package (`vyuh_node_flow`, `fl_nodes`, 
 | Package | Risk | Fallback |
 |---|---|---|
 | **`pdf` / `printing`** | Single maintainer (DavBfr) on a headline feature. Highest-consequence dependency in the project. | The `DiagramCanvas` abstraction (§6.6) *is* the hedge: swapping backends is one file. Failing that, emitting PDF 1.7 content streams for pure vector + Type0 font embedding is ~2 k lines of well-specified work, or route through SVG (`SvgDiagramCanvas` → external converter). |
-| **`printing`** (specifically) | `Printing.raster` / `PdfPreview` need **pdfium**; the plugin's CMake downloads binaries at build time. A fresh machine or a network-restricted CI runner fails `flutter build windows`. Also affected by Android 16 KB page sizes for the mobile review mode. | Vendor the pdfium binaries into the repo and point CMake at them. Or drop in-app preview entirely and rely on `file_selector` save + the OS PDF viewer — `layoutPdf` and file saving do not need pdfium. |
+| **`printing`** (specifically) | `Printing.raster` / `PdfPreview` need **pdfium**; the plugin's CMake downloads binaries at build time. A fresh machine or a network-restricted CI runner fails `flutter build windows`. Also affected by Android 16 KB page sizes for the mobile review mode. | Vendor the pdfium binaries into the repo and point CMake at them. Or drop in-app preview entirely and rely on `file_selector` save + the OS PDF viewer, `layoutPdf` and file saving do not need pdfium. |
 | **`window_manager`** | 0.x, single maintainer. | The only truly load-bearing API is `setPreventClose` + the close event. That's ~80 lines of Win32 platform channel if it ever breaks. `bitsdojo_window` is a worse-maintained alternative; don't plan on it. |
 | **`desktop_drop`** | 0.x, low activity. | Drag-drop-to-open is a nicety, not a requirement. Degrade to File ▸ Open. Alternative: `super_drag_and_drop`. |
 | **`very_good_analysis`** | Third-party lint set; a major bump can suddenly fail CI on existing code. | Pin exactly (`9.0.0`, not `^9.0.0`) and bump deliberately. Fallback `flutter_lints`. |
 | **`path_drawing`** | Low activity, but tiny and stable. | ~60 lines to implement dash synthesis over `PathMetrics` directly. |
-| **Flutter desktop multi-window** | Not shipping; Canonical's work is still under engine review with no committed version. | Ship single-window with in-app document tabs. One `ProviderScope` per document means the model is already correct in-process; multi-window becomes mechanical when the API lands. Do **not** use `desktop_multi_window` — each window is a separate engine with no shared memory, which is fatal for a shared document. |
+| **Flutter desktop multi-window** | Not shipping; Canonical's work is still under engine review with no committed version. | Ship single-window with in-app document tabs. One `ProviderScope` per document means the model is already correct in-process; multi-window becomes mechanical when the API lands. Do **not** use `desktop_multi_window`, each window is a separate engine with no shared memory, which is fatal for a shared document. |
 
 ---
 
@@ -1063,7 +1063,7 @@ Explicitly **not** used: any node-editor package (`vyuh_node_flow`, `fl_nodes`, 
 
 Ordered by value per line of test code.
 
-### 9.1 The migration golden corpus — highest value in the repo
+### 9.1 The migration golden corpus: highest value in the repo
 
 ```
 packages/rackmate_core/test/fixtures/
@@ -1093,9 +1093,9 @@ test('apply ∘ revert == identity, over 2000 random (doc, command) pairs', () {
 
 Plus the alternation invariant: `apply; revert; apply` must equal a single `apply`. This one pair of tests catches nearly every undo bug you would otherwise ship, and it is only expressible this cheaply because core is pure Dart and synchronous.
 
-Hand-roll the generator with a seeded `math.Random` rather than importing a property-testing package — you need domain-aware generation (valid RU spans, compatible connectors) that a generic shrinker can't produce, and a failing seed number is a perfectly good repro.
+Hand-roll the generator with a seeded `math.Random` rather than importing a property-testing package, you need domain-aware generation (valid RU spans, compatible connectors) that a generic shrinker can't produce, and a failing seed number is a perfectly good repro.
 
-### 9.3 Display-list goldens — the primary painter regression net
+### 9.3 Display-list goldens: the primary painter regression net
 
 **Do not pixel-diff the canvas as the first line of defence, and do not byte-diff the PDF.**
 
@@ -1114,10 +1114,10 @@ Pixel goldens then serve a narrower purpose: verifying the two *backends* are fa
 
 ### 9.4 Widget and pixel goldens
 
-- `matchesGoldenFile` via plain `flutter_test`. **No `golden_toolkit`** (effectively unmaintained since Very Good Ventures stepped back); no `alchemist` either — the value-add over a good `flutter_test_config.dart` is small and the maintenance risk is real.
+- `matchesGoldenFile` via plain `flutter_test`. **No `golden_toolkit`** (effectively unmaintained since Very Good Ventures stepped back); no `alchemist` either, the value-add over a good `flutter_test_config.dart` is small and the maintenance risk is real.
 - **Font determinism** (the thing that breaks goldens across platforms): register the bundled TTFs in `flutter_test_config.dart` via `FontLoader`, and assert that no golden scene uses a family other than `RackBody`/`RackMono`. This removes the system-font variable entirely.
 - `debugDisableShadows = true`, fixed `Random` seeds, no animations, fixed `Size`.
-- Golden the *device faceplate renderer* and the *wire layer* **separately**. Never golden the whole canvas — one pixel of change anywhere fails everything and reviewers start rubber-stamping.
+- Golden the *device faceplate renderer* and the *wire layer* **separately**. Never golden the whole canvas, one pixel of change anywhere fails everything and reviewers start rubber-stamping.
 - Tag them: `@Tags(['golden'])`, declared in `dart_test.yaml`, so non-Linux CI jobs skip them.
 
 ### 9.5 PDF verification
@@ -1125,7 +1125,7 @@ Pixel goldens then serve a narrower purpose: verifying the two *backends* are fa
 Three levels:
 
 1. **Structural assertions** (every PR): generate a document, assert page count, page sizes, that fonts are embedded and subset, that no page is empty, that the schedule row count equals the connection count, that `maxPages` was not hit.
-2. **Display-list goldens** (every PR, §9.3) — covers the diagram content.
+2. **Display-list goldens** (every PR, §9.3), covers the diagram content.
 3. **Pixel diff** (nightly only): render pages via poppler's `pdftoppm` (installed in the Linux CI job) and image-diff against references. Nightly rather than per-PR because it's slow and mildly flaky. Note that PDF **bytes** are not deterministic (creation timestamps, object ordering), so never hash the file.
 
 ### 9.6 Widget, integration, and leak tests
@@ -1168,7 +1168,7 @@ jobs:
     steps: [ ..., run: dart test --tags perf ]   # warn-only for the first 3 months
 ```
 
-**Golden strategy that survives platform font differences:** goldens run on **Linux only**, with a pinned Flutter version and bundled fonts registered in `flutter_test_config.dart`. Windows and macOS jobs run `--exclude-tags golden`. This is the only approach that actually holds — attempts to maintain per-platform golden sets collapse under maintenance cost within a few months. The pinned Flutter version is load-bearing: a Flutter minor bump routinely shifts antialiasing by a pixel, so treat golden regeneration as a deliberate, reviewed step of every Flutter upgrade.
+**Golden strategy that survives platform font differences:** goldens run on **Linux only**, with a pinned Flutter version and bundled fonts registered in `flutter_test_config.dart`. Windows and macOS jobs run `--exclude-tags golden`. This is the only approach that actually holds, attempts to maintain per-platform golden sets collapse under maintenance cost within a few months. The pinned Flutter version is load-bearing: a Flutter minor bump routinely shifts antialiasing by a pixel, so treat golden regeneration as a deliberate, reviewed step of every Flutter upgrade.
 
 ---
 
@@ -1183,7 +1183,7 @@ jobs:
 | Devices | 200 | 500 |
 | Ports | 2 000 | 6 000 |
 | Connections | 1 000 | 3 000 |
-| Undo history | 200 entries | — |
+| Undo history | 200 entries |: |
 | `.rackmate` file size | 500 KB | 3 MB |
 
 ### 10.2 Time budgets
@@ -1209,11 +1209,11 @@ jobs:
 
 Three mechanisms, all in CI or one command away:
 
-1. **`packages/rackmate_core/test/perf/` — `benchmark_harness` benchmarks over synthetic documents at 50 / 200 / 500 devices.** Pure Dart, deterministic, runs headless in CI under the `perf` tag. Thresholds are asserted, but the job is **warn-only for the first three months** — establish the baseline curve on CI hardware before it can fail a build, or you will spend that time chasing runner variance instead of writing the app.
+1. **`packages/rackmate_core/test/perf/`: `benchmark_harness` benchmarks over synthetic documents at 50 / 200 / 500 devices.** Pure Dart, deterministic, runs headless in CI under the `perf` tag. Thresholds are asserted, but the job is **warn-only for the first three months**: establish the baseline curve on CI hardware before it can fail a build, or you will spend that time chasing runner variance instead of writing the app.
 2. **DevTools timeline in `--profile` mode**, driven by a scripted interaction (`integration_test` performing a fixed 30-second pan/zoom/drag script), with `flutter drive --profile --trace-startup` producing a timeline JSON. Assert on `frame_build_times` p95 and `frame_rasterizer_times` p95 from `TimelineSummary`. This runs on demand, not per-PR (desktop CI runners have no GPU worth trusting).
-3. **Manual pre-release checklist**, three items, each of which catches a class of regression nothing automated will: `debugRepaintRainbowEnabled` (assert only the overlay flickers during a drag), `checkerboardOffscreenLayers` (must be **zero** — any `saveLayer` is a bug per §6.4), and dragging the window between a 4K and a 1080p monitor (mixed-DPI breaks naive viewport implementations, and Windows users genuinely run this configuration).
+3. **Manual pre-release checklist**, three items, each of which catches a class of regression nothing automated will: `debugRepaintRainbowEnabled` (assert only the overlay flickers during a drag), `checkerboardOffscreenLayers` (must be **zero**: any `saveLayer` is a bug per §6.4), and dragging the window between a 4K and a 1080p monitor (mixed-DPI breaks naive viewport implementations, and Windows users genuinely run this configuration).
 
-**A note on the arithmetic that justifies the architecture:** 1000 wires × ~4 µs per stroked polyline ≈ 4 ms of raster time — about a quarter of the 16.6 ms budget for wires *alone*, if drawn naively every frame. That number is why L3a is a cached `ui.Picture` and why the drag path re-records only the ~8 active wires. And `saveLayer` at ~1 ms means three of them costs more than the entire wire layer; hence the zero-`saveLayer` rule.
+**A note on the arithmetic that justifies the architecture:** 1000 wires × ~4 µs per stroked polyline ≈ 4 ms of raster time, about a quarter of the 16.6 ms budget for wires *alone*, if drawn naively every frame. That number is why L3a is a cached `ui.Picture` and why the drag path re-records only the ~8 active wires. And `saveLayer` at ~1 ms means three of them costs more than the entire wire layer; hence the zero-`saveLayer` rule.
 
 ---
 
@@ -1301,24 +1301,24 @@ Poisoning the stack rather than pretending is the honest behaviour: a user who k
 
 `package:logging` with two sinks:
 
-- **Rotating file** in `getApplicationSupportDirectory()/logs/` — 5 files × 2 MB, `INFO` and above in release, `FINE` in debug. Rotation is ours (~40 lines); don't add a logging framework for it.
+- **Rotating file** in `getApplicationSupportDirectory()/logs/`, 5 files × 2 MB, `INFO` and above in release, `FINE` in debug. Rotation is ours (~40 lines); don't add a logging framework for it.
 - **In-memory ring buffer** (last 2000 records) backing the Help ▸ **Copy Diagnostics** command, which puts a redacted bundle on the clipboard.
 
-**Redaction policy, enforced by convention and a lint-style test:** log entity **UUIDs**, never device names, client names, project addresses, or file paths above `FINE`. A rack drawing for a private residence contains the client's name and address; those must not end up in a log the user pastes into a public issue tracker. The diagnostics bundle includes: app/Flutter/OS versions, document *statistics* (device count, connection count, schema version), the last 200 log records, and the current epoch/revision values — never document content.
+**Redaction policy, enforced by convention and a lint-style test:** log entity **UUIDs**, never device names, client names, project addresses, or file paths above `FINE`. A rack drawing for a private residence contains the client's name and address; those must not end up in a log the user pastes into a public issue tracker. The diagnostics bundle includes: app/Flutter/OS versions, document *statistics* (device count, connection count, schema version), the last 200 log records, and the current epoch/revision values, never document content.
 
 ### 11.5 Crash reporting: local-first, opt-in remote
 
 **No telemetry by default.** This is a locally-installed professional tool handling client project data; silent network egress is a trust violation and, for some commercial CI clients, a contractual one.
 
 - On an uncaught error, write `crashes/<timestamp>.json` (redacted bundle + stack) to app-support.
-- On next launch, if crash files exist: *"RackMate encountered a problem last session. Send a report?"* with **View report** (shows the exact JSON — no hidden payload), **Send**, and **Never ask again**.
-- Only if the user opts in does anything leave the machine, and then to a self-hosted Sentry (`sentry_flutter`) — deliberately **not added as a dependency in v1**, because until there's a place to send reports, it's dead weight and an extra native surface on every platform.
+- On next launch, if crash files exist: *"RackMate encountered a problem last session. Send a report?"* with **View report** (shows the exact JSON, no hidden payload), **Send**, and **Never ask again**.
+- Only if the user opts in does anything leave the machine, and then to a self-hosted Sentry (`sentry_flutter`), deliberately **not added as a dependency in v1**, because until there's a place to send reports, it's dead weight and an extra native surface on every platform.
 
 ---
 
 ## 12. Internationalisation and theming readiness
 
-### 12.1 i18n — do the plumbing now, one locale
+### 12.1 i18n: do the plumbing now, one locale
 
 **Now (non-negotiable, cheap):**
 - `flutter_localizations` + `intl` + `gen-l10n` with `app_en.arb`. All user-facing strings go through `AppLocalizations` from the first commit. Retrofitting this across a mature app is a multi-week grind that never quite finishes, and the incremental cost per string today is ~15 seconds.
@@ -1327,14 +1327,14 @@ Poisoning the stack rather than pretending is the honest behaviour: a user who k
 - `Directionality` respected throughout the chrome.
 
 **Later (v1.2+):**
-- Additional locale ARBs. German and Spanish are the likely first asks in CI; German is also the best stress test — its compound nouns will break every fixed-width label you have, which is itself a useful forcing function to design flexible layouts now.
-- Localized PDF output (the schedule headers and title block), which needs a locale parameter threaded into the export request — design the signature for it now, pass `Locale('en')` for a year.
+- Additional locale ARBs. German and Spanish are the likely first asks in CI; German is also the best stress test, its compound nouns will break every fixed-width label you have, which is itself a useful forcing function to design flexible layouts now.
+- Localized PDF output (the schedule headers and title block), which needs a locale parameter threaded into the export request, design the signature for it now, pass `Locale('en')` for a year.
 
 **Explicit non-goals:** the **canvas stays LTR** even under an RTL locale. Electrical schematics are LTR by universal convention, and mirroring a rack elevation would be actively wrong. Say so in the code so nobody "fixes" it. Complex-script shaping in PDF is also known-imperfect in `dart_pdf` (no HarfBuzz-class shaper); if Arabic or Devanagari localization is ever requested, that needs its own investigation.
 
-### 12.2 Units — a separate axis from locale
+### 12.2 Units: a separate axis from locale
 
-Rack dimensions are a mess of mixed units and this trips people up: racks are 19″ and measured in **U**, but depths and cable lengths are quoted in **mm** in most of the world and **inches/feet** in the US — and US integrators routinely use both in the same drawing.
+Rack dimensions are a mess of mixed units and this trips people up: racks are 19″ and measured in **U**, but depths and cable lengths are quoted in **mm** in most of the world and **inches/feet** in the US, and US integrators routinely use both in the same drawing.
 
 - **Storage is always metric integer** (hundredths-mm, D3). Never store display units.
 - **Display units are a user preference independent of locale**, with three settings: RU (always, vertical), and metric/imperial for depths, cable lengths, and weights. A German integrator working a US-spec commercial job needs imperial output regardless of their system locale.
@@ -1344,13 +1344,13 @@ Rack dimensions are a mess of mixed units and this trips people up: racks are 19
 
 **Now:**
 - **`ThemeExtension<RackMateTheme>`** carrying every canvas colour, stroke width, corner radius, and font size. The painters read from the theme extension; **no hard-coded colours anywhere below the widget layer.** In `rackmate_core` colours are `int` ARGB in a `CablePalette` value object; `rackmate_ui` adapts to `ui.Color`.
-- **Three palettes from day one**, all derived from one `CablePalette` abstraction: `screenDark` (the default — this is a pro tool used in equipment rooms and dark UIs are the genre convention), `screenLight`, and **`print`**. The print palette is genuinely different, not a tint: dark-theme wire colours print as muddy pastels on white, so print gets darker, more saturated values and a white background. Shipping the print palette in v1 costs almost nothing and prevents the "why does my PDF look wrong" bug class entirely.
-- **Cable type is never encoded by colour alone.** Every cable type carries `(colour, dashPattern, abbreviation)`, and the diagram renders all three. This is required for: the ~8% of male users with colour-vision deficiency, black-and-white laser printing (extremely common for job-site copies), and photocopied/faxed drawings (still real in construction). Validate the palette against deuteranopia/protanopia simulation before locking it — and note that the dash pattern requirement is what makes §6.6's dash-parity gotcha load-bearing rather than cosmetic.
-- **Fonts bundled, not system.** `Inter-Regular`, `Inter-SemiBold`, `JetBrainsMono-Regular` in `apps/rackmate/assets/fonts/`, declared **twice** in `pubspec.yaml` — under `fonts:` (for Flutter's text engine) *and* under `assets:` (so `rootBundle.load()` works for `pw.Font.ttf`). Missing the second entry is an easy and confusing bug. Bundling the *same TTF file* for screen and PDF is what makes text metrics agree between the two, without which every label's measured width differs and leader lines / callout boxes / collision avoidance diverge between screen and print. A monospace face for reference designators, port numbers, and cable IDs is worth it — column alignment reads far better and it matches the schematic aesthetic.
+- **Three palettes from day one**, all derived from one `CablePalette` abstraction: `screenDark` (the default; this is a pro tool used in equipment rooms and dark UIs are the genre convention), `screenLight`, and **`print`**. The print palette is genuinely different, not a tint: dark-theme wire colours print as muddy pastels on white, so print gets darker, more saturated values and a white background. Shipping the print palette in v1 costs almost nothing and prevents the "why does my PDF look wrong" bug class entirely.
+- **Cable type is never encoded by colour alone.** Every cable type carries `(colour, dashPattern, abbreviation)`, and the diagram renders all three. This is required for: the ~8% of male users with colour-vision deficiency, black-and-white laser printing (extremely common for job-site copies), and photocopied/faxed drawings (still real in construction). Validate the palette against deuteranopia/protanopia simulation before locking it, and note that the dash pattern requirement is what makes §6.6's dash-parity gotcha load-bearing rather than cosmetic.
+- **Fonts bundled, not system.** `Inter-Regular`, `Inter-SemiBold`, `JetBrainsMono-Regular` in `apps/rackmate/assets/fonts/`, declared **twice** in `pubspec.yaml`, under `fonts:` (for Flutter's text engine) *and* under `assets:` (so `rootBundle.load()` works for `pw.Font.ttf`). Missing the second entry is an easy and confusing bug. Bundling the *same TTF file* for screen and PDF is what makes text metrics agree between the two, without which every label's measured width differs and leader lines / callout boxes / collision avoidance diverge between screen and print. A monospace face for reference designators, port numbers, and cable IDs is worth it, column alignment reads far better and it matches the schematic aesthetic.
 - Bundling also means **never ship default Helvetica in the PDF**: the standard-14 Type1 fonts are WinAnsi single-byte and throw on any non-Latin-1 codepoint. A/V documentation routinely contains `Ω`, `°`, `±`, `µ`, `→`, `×`, `—`, and smart quotes pasted from a proposal. Set `fontFallback` on the PDF theme as a safety net even when you think you don't need it.
 
 **Later:**
-- User-customisable cable colours (the data model already supports it — `style` epoch and per-entity overrides exist from day one; only the settings UI is missing).
+- User-customisable cable colours (the data model already supports it, `style` epoch and per-entity overrides exist from day one; only the settings UI is missing).
 - High-contrast theme.
 - Company branding in the PDF title block (logo asset + colour), which is a straightforward extension once `.rackmate` moves to the zip container.
 
@@ -1360,7 +1360,7 @@ Rack dimensions are a mess of mixed units and this trips people up: racks are 19
 
 The sequencing matters, because two of these are painful to retrofit and cheap to do early.
 
-1. **`ViewportController` + wheel/trackpad input + grid painter.** Get pan/zoom feeling *right* first — everything sits on it and it's cheapest to iterate on when nothing else exists.
+1. **`ViewportController` + wheel/trackpad input + grid painter.** Get pan/zoom feeling *right* first; everything sits on it and it's cheapest to iterate on when nothing else exists.
 2. **Integer unit model + `.rackmate` schema + codec + migration harness + the first golden fixture.** The format is the durable asset; establish it before anything depends on its shape.
 3. **`Command` / `Transaction` / `UndoStack` / `DocumentController`.** ← **Do this before the feature surface grows.** Retrofitting undo is one of the genuinely painful refactors, and every feature built without it will need rewriting.
 4. **`RenderRackCanvas` hybrid + device widgets + RU snapping.**

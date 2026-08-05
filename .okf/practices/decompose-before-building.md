@@ -12,16 +12,16 @@ Decompose before building; put the breakdown on the board.
 
 # Why, with the evidence
 
-On 2026-07-28 the session driving M2 died mid-flight. The work was recoverable —
+On 2026-07-28 the session driving M2 died mid-flight. The work was recoverable,
 and the reason was M2's task breakdown, written as the first act on the
 milestone.
 
 The tasks still held:
 
-- *"a previous Sugiyama implementation was deleted in `b560a50` — do not restore
+- *"a previous Sugiyama implementation was deleted in `b560a50`, do not restore
   it from history"*, with the two specific defects it carried
 - *"read a link's class through `effectiveLinkClassOf`, never `Link.linkClass`"*
-- [DR-001](/decisions/dr-001-net-labels-by-default.md)'s scope reduction — do not
+- [DR-001](/decisions/dr-001-net-labels-by-default.md)'s scope reduction, do not
   build channel routing
 
 **None of that existed anywhere else.** Not in the code, not in the commit
@@ -32,7 +32,7 @@ milestone whose knowledge lives only in whoever is currently holding it.
 # The rule that makes it work
 
 **A task's description carries its constraints and traps, not just its title.**
-A title-only breakdown would not have survived — "M2-C: Sugiyama layout" tells a
+A title-only breakdown would not have survived, "M2-C: Sugiyama layout" tells a
 fresh context nothing about the broken implementation sitting in git history that
 looks exactly like a gift.
 
@@ -52,4 +52,4 @@ never copied.
 # Citations
 
 [1] `docs/12-milestone-board.md`
-[2] The M2 breakdown — M2-A … M2-H
+[2] The M2 breakdown, M2-A … M2-H

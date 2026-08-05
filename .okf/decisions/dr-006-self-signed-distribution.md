@@ -10,7 +10,7 @@ status: partially-built
 ---
 
 RackMate is distributed inside the organisation that builds it. Signing is
-self-signed — `New-SelfSignedCertificate`, applied with
+self-signed, `New-SelfSignedCertificate`, applied with
 `Set-AuthenticodeSignature` **and a timestamp server**, with the public
 `.cer` deployed to `LocalMachine\Root` **and** `LocalMachine\TrustedPublisher`
 by Group Policy. Microsoft Trusted Signing is the named fallback if external
@@ -21,8 +21,8 @@ distribution is ever required.
 It removes a **purchasing lead time**, not the release engineering. AC-058/D10
 scheduled OV/EV certificate procurement two milestones before release, for
 three mechanisms that all vanish: identity verification, the SmartScreen
-reputation ramp, and — since the CA/Browser Forum's 2023 Baseline Requirements
-— a hardware token for the private key. macOS notarisation, vendored pdfium
+reputation ramp, and, since the CA/Browser Forum's 2023 Baseline Requirements
+, a hardware token for the private key. macOS notarisation, vendored pdfium
 (CR-100) and symbol archival are all still M8's.
 
 # M8's SmartScreen clause splits, because no build can deliver it
@@ -31,18 +31,18 @@ SmartScreen fires on **Mark-of-the-Web**, which is a function of how a file
 ARRIVED, not of what is in it. A clause mixing a build property and a delivery
 property cannot be a gate. So:
 
-**Build side** — a real gate: signed, timestamped against an RFC 3161
+**Build side**: a real gate: signed, timestamped against an RFC 3161
 authority, valid publisher, **and the signature still validates after the
 certificate expires**. See [the signature gate](/gates/release-signature.md).
 
-**Distribution side** — documented, not gated: deploy over a Local Intranet UNC
+**Distribution side**: documented, not gated: deploy over a Local Intranet UNC
 share or Intune/GPO so MOTW is never applied.
 [The ZIP trap](/practices/the-zip-trap.md) is the part that must be repeated
 every time.
 
 # What is built, and what is not
 
-**Built (board #13, 2026-08-02):** `tools/release/` — staging, the
+**Built (board #13, 2026-08-02):** `tools/release/`, staging, the
 parameterised signing entry point, and the build-side gate. Documented in
 `docs/14-deployment.md`.
 
@@ -52,7 +52,7 @@ something this consequence grants"*. One was wanted early, for the team to
 test with. The edit was made deliberately rather than smuggled in under a
 ruling that declines to authorise it.
 
-**Not built:** everything else in M8 — installer or MSIX (consequence: the
+**Not built:** everything else in M8, installer or MSIX (consequence: the
 `.rackmate` association path differs between them and drives the choice),
 crash reporter, cold-start budget, documented limits.
 
@@ -63,8 +63,8 @@ hardcodes self-signed… This is the only consequence that costs anything now,
 and it is the one that must not be skipped: it is the difference between the
 named fallback being a config change and being a rewrite."*
 
-`sign_artifacts.ps1` resolves the source — store thumbprint, `.pfx`, or Trusted
-Signing — in ONE function; timestamping, hashing, verification and the artifact
+`sign_artifacts.ps1` resolves the source (store thumbprint, `.pfx`, or Trusted
+Signing) in ONE function; timestamping, hashing, verification and the artifact
 list are identical downstream. Adding a fourth source is a branch there and
 nothing else. The Trusted Signing path **fails loudly** when signtool or the
 dlib is absent rather than falling back to self-signed: a silent downgrade of
@@ -80,6 +80,6 @@ BOTH copies come back identical. See
 
 **"Every artifact a release produces" is not "every file it ships."**
 Consequence 4's wording, applied literally, re-signed Microsoft's three
-redistributable VC++ DLLs — replacing a chain that validates on every Windows
+redistributable VC++ DLLs, replacing a chain that validates on every Windows
 machine with one that validates only where the GPO landed. We do not *produce*
 `MSVCP140.dll`. Binaries already signed by another publisher are skipped.

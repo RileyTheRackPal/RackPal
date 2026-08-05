@@ -16,11 +16,11 @@ That chain is what this bundle indexes.
 
 | Prefix | Meaning | Lives in |
 |---|---|---|
-| `DR-nnn` | Design Ruling — settles a question the corpus could not answer. Requires a user decision. | `docs/canonical-decisions.md` §11 |
-| `CR-nnn` | Corpus Ruling — reconciles two sources that disagree. | `docs/canonical-decisions.md` |
+| `DR-nnn` | Design Ruling: settles a question the corpus could not answer. Requires a user decision. | `docs/canonical-decisions.md` §11 |
+| `CR-nnn` | Corpus Ruling: reconciles two sources that disagree. | `docs/canonical-decisions.md` |
 | `AC-nnn` | Acceptance Criterion. | the roadmap and specs |
 | `G-n` | A global principle, e.g. [G4](/invariants/g4-unknowns-are-counted.md). | throughout |
-| `RJ-nnn` | Rejected critique — kept so the argument is not re-run. | `docs/canonical-decisions.md` §3 |
+| `RJ-nnn` | Rejected critique: kept so the argument is not re-run. | `docs/canonical-decisions.md` §3 |
 
 # The rule that generates the rest
 
@@ -35,7 +35,7 @@ asserts, you are probably making a ruling.** Stop and record it.
 
 # Reading a contradiction
 
-The corpus contains real disagreements — sources written at different times
+The corpus contains real disagreements, sources written at different times
 against a model that did not yet exist. The convention is to **flag them in code,
 in place**, never resolve them silently:
 
@@ -49,7 +49,7 @@ more than a clean-looking file that picked one at random.
 
 `docs/12-milestone-board.md` is an **audit**, not a plan. Its value is the
 per-clause record: who performed a check, when, under what conditions, and what
-remains unproven. It is deliberately not duplicated — not into this bundle, not
+remains unproven. It is deliberately not duplicated, not into this bundle, not
 into the tracker. One authority, linked from everywhere else.
 
 # Start with

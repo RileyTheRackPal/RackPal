@@ -40,10 +40,10 @@ silently passes when its input disappears is worse than no gate.
 # Its blind spot, stated
 
 It is deliberately blind to `displayName`, `shortTag`, `defaultConnector`,
-`defaultDirection`, `defaultTopology` and `glyph` — because `pal1_check.py`, the
+`defaultDirection`, `defaultTopology` and `glyph`, because `pal1_check.py`, the
 authority, carries none of those.
 
-**Those fields are pinned only by the starter goldens** — and a golden failure
+**Those fields are pinned only by the starter goldens**, and a golden failure
 reads as *"regenerate the asset"*, which is what a developer would do, laundering
 a typo into the shipped starters. The numeric half of the palette is gated; the
 descriptive half has a tripwire whose signal invites the wrong fix. Recorded as
@@ -52,5 +52,5 @@ open work rather than left as a surprise.
 # Citations
 
 [1] `tools/registry_parity.py`
-[2] `tools/pal1_check.py` — the authority
+[2] `tools/pal1_check.py`, the authority
 [3] `packages/rackmate_core/lib/src/catalog/seed_registries.dart`

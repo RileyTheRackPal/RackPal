@@ -30,19 +30,19 @@ out of room footage subtotals so an unestablished run's length cannot join one.
 with no known contributor is `null`, **not `0`**. Zero is a claim; null is not.
 
 **Connector footprints.** Both dimensions null means no footprint has been
-authored — never estimated. A shipped catalog template must not reference such a
+authored, never estimated. A shipped catalog template must not reference such a
 connector, and CI asserts it.
 
 **Registry ids.** An id that resolves to nothing degrades to `unknown(rawId)`:
 round-trips, renders grey with the raw id as its tag, never throws. M2-B's
-`unresolvedSignalFamilyCount` equalling its row count was this rule *working* —
+`unresolvedSignalFamilyCount` equalling its row count was this rule *working*,
 and the standing alarm that surfaced
 [DR-010](/decisions/dr-010-seeded-registries.md).
 
 # The test shape that enforces it
 
 A mutation that replaces `null` with a plausible default must fail a named test.
-In practice that means asserting the **count**, not just the rendered value —
+In practice that means asserting the **count**, not just the rendered value,
 because a defaulted value looks perfectly reasonable in isolation. The assertions
 that catch it are of the form "this was counted as unknown", not "this printed
 correctly".

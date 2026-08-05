@@ -1,4 +1,4 @@
-# RackMate — PDF Export Design
+# RackMate: PDF Export Design
 
 **Status:** design spec, v1 target. Nothing implemented yet (`RackMate/` currently holds only `.editorconfig`, `.gitattributes`, `.gitignore`, and an empty `docs/`).
 
@@ -12,10 +12,10 @@ Five rules that the rest of the design follows from. Each one is a constraint I'
 
 | # | Rule | Enforced by |
 |---|---|---|
-| P1 | **One renderer.** Every mark on a diagram sheet — traces, device blocks, symbols, borders, title block, zone grid, legend swatches — is produced by exactly one body of code targeting an abstract `DiagramCanvas`. | §6. Test: the PDF backend and the screen backend replay the same `DiagramScene`. |
+| P1 | **One renderer.** Every mark on a diagram sheet (traces, device blocks, symbols, borders, title block, zone grid, legend swatches) is produced by exactly one body of code targeting an abstract `DiagramCanvas`. | §6. Test: the PDF backend and the screen backend replay the same `DiagramScene`. |
 | P2 | **True vector, always.** No `RepaintBoundary`, no `toImage`, no PNG-in-PDF for anything the user reads. Raster appears only as an embedded client logo and as a project-browser thumbnail. | §5.6 does the DPI math. |
 | P3 | **The renderer must compile without Flutter.** `dart test` (not `flutter test`) must be able to import `scene_builder.dart` and build a full document. | §6.1. This single guardrail is what makes isolate export (§7.3) and any future server-side export possible. |
-| P4 | **Colour is never the only encoding.** Every signal domain is encoded three ways — hue, dash pattern, text tag — so the document survives greyscale, photocopying, and colour-vision deficiency. | §2.5, §4.4. |
+| P4 | **Colour is never the only encoding.** Every signal domain is encoded three ways (hue, dash pattern, text tag) so the document survives greyscale, photocopying, and colour-vision deficiency. | §2.5, §4.4. |
 | P5 | **Emitted IDs are facts about the physical world.** Once a cable ID is rendered into a PDF that someone printed, it exists on a label in a wall. IDs are stored, not recomputed. | §3.6. |
 
 ---
@@ -29,9 +29,9 @@ Sheet numbering follows the U.S. National CAD Standard Uniform Drawing System: `
 | Order | Sheet | No. | Default | Contents |
 |---|---|---|---|---|
 | 1 | **Cover & drawing index** | `T0.00` | **ON** | Project name, address, client, integrator block (firm, contact, licence no.), project number, issue date, current revision, scope narrative (1 paragraph, user-editable), **drawing index listing only the sheets actually emitted**, rack summary strip (per rack: designator, RU height, devices, populated RU, total weight, total draw). Optional client logo. |
-| 2 | **Legend, symbols & general notes** | `T0.01` | **ON** | Signal-domain key rendered twice — colour and greyscale — each row showing the actual line as drawn (weight + dash) with tag prefix; connector symbol table; device-block anatomy callout; status hatching (new / existing / future / demo); reference-designator convention (`J`/`P`/`W`); cable-ID format in force with a worked example; abbreviations; general notes; revision-cloud convention. |
-| 3 | **Rack elevation — front** | `T2.01` | **ON** | See §1.3. |
-| 4 | **Rack elevation — rear** | `T2.02` | **ON** | Same frame, rear faces, connector fields drawn. This is the sheet installers actually hold. |
+| 2 | **Legend, symbols & general notes** | `T0.01` | **ON** | Signal-domain key rendered twice, colour and greyscale, each row showing the actual line as drawn (weight + dash) with tag prefix; connector symbol table; device-block anatomy callout; status hatching (new / existing / future / demo); reference-designator convention (`J`/`P`/`W`); cable-ID format in force with a worked example; abbreviations; general notes; revision-cloud convention. |
+| 3 | **Rack elevation: front** | `T2.01` | **ON** | See §1.3. |
+| 4 | **Rack elevation: rear** | `T2.02` | **ON** | Same frame, rear faces, connector fields drawn. This is the sheet installers actually hold. |
 | 5..n | **Interconnect / signal-flow** | `T6.01`… | **ON** | One sheet per net partition (§5.4). Default partition: Video · Audio · Network · Control · Power · Structure. |
 | n+1 | **Wiring schedule** | `T6.10` | **ON** | §2. |
 | n+2 | **Structured wiring / drop schedule** | `T6.20` | **auto** | On iff a Structure device exists with ≥1 drop. |
@@ -39,10 +39,10 @@ Sheet numbering follows the U.S. National CAD Standard Uniform Drawing System: `
 | n+4 | **Power schedule** | `T6.40` | **auto** | On iff ≥1 PDU/UPS/sequencer with ≥1 power connection. |
 | n+5 | **Network / IP schedule** | `T6.50` | **auto** | On iff ≥1 device has an assigned IP or MAC. |
 | n+6 | **Plate, panel & pinout details** | `T5.01` | **auto** | On iff any custom plate or non-standard pinout (null-modem RS-232, IR pinout variant, Euroblock wiring) exists in the project. |
-| n+7 | **Field pull sheet** | — | OFF | Wiring schedule filtered to rough-in runs, status/test/initials columns blank, zebra off, greyscale on. A separate deliverable, not part of the design set. |
-| n+8 | **Datasheet appendix** | — | OFF | Concatenated PDFs attached to device templates. v2 (needs PDF merge; the `pdf` package writes, it doesn't import pages). |
+| n+7 | **Field pull sheet** |: | OFF | Wiring schedule filtered to rough-in runs, status/test/initials columns blank, zebra off, greyscale on. A separate deliverable, not part of the design set. |
+| n+8 | **Datasheet appendix** |: | OFF | Concatenated PDFs attached to device templates. v2 (needs PDF merge; the `pdf` package writes, it doesn't import pages). |
 
-### 1.2 Default-on vs optional — the actual argument
+### 1.2 Default-on vs optional: the actual argument
 
 The static default/optional split is the wrong frame. Three better rules:
 
@@ -54,7 +54,7 @@ The static default/optional split is the wrong frame. Three better rules:
 
 | Preset | Sheets | Overrides |
 |---|---|---|
-| **Full set** (default) | all resolved sheets | — |
+| **Full set** (default) | all resolved sheets |: |
 | **Installer set** | all + field pull sheet | greyscale ON, status/test columns ON, zebra OFF, rear elevation forced ON |
 | **Client set** | cover, legend, front elevation, system-level interconnect (single sheet, blocks only, no port stubs), equipment list | colour ON, cable IDs hidden on diagram, notes column hidden |
 | **Single sheet** | the sheet currently open | furniture unchanged |
@@ -64,9 +64,9 @@ Presets are the default UI; the per-sheet checkbox list is behind a disclosure t
 
 **Hard rule from J-STD-710 §3.6.1:** every sheet that does not itself carry the legend must carry a note stating which sheet does. Implement as a fixed title-block field: `SYMBOL LEGEND: SEE SHEET T0.01`. Two lines of code, and it is exactly the kind of detail that signals the document was made by someone who has read the standards.
 
-### 1.3 Rack elevation sheet — contents
+### 1.3 Rack elevation sheet: contents
 
-Per rack, front and rear on separate sheets (side-by-side on one sheet only when both fit at ≥1:10 — see §5.5).
+Per rack, front and rear on separate sheets (side-by-side on one sheet only when both fit at ≥1:10, see §5.5).
 
 **Frame:** RU ruler down both edges, numbered, **1 at the bottom counting up** (project setting; bottom-up default because that's how EIA-310 rails are punched). Rack designator centred above. Overall H×W×D dimension string beneath. Depth bar on the rear elevation.
 
@@ -74,7 +74,7 @@ Per rack, front and rear on separate sheets (side-by-side on one sheet only when
 
 **Rear elevation additionally:** connector fields drawn to scale where the template defines them, each port labelled with its designator and the ID of the cable landing on it. This is what makes the rear elevation the terminate-and-test sheet.
 
-**Gutters:** running totals — cumulative weight from the bottom up (so you can see the load at any mounting point), total draw, total heat (BTU/hr = W × 3.412), and required airflow.
+**Gutters:** running totals, cumulative weight from the bottom up (so you can see the load at any mounting point), total draw, total heat (BTU/hr = W × 3.412), and required airflow.
 
 **Blank/vent/shelf** rows render as hatched RU bands, not device blocks.
 
@@ -84,7 +84,7 @@ Per rack, front and rear on separate sheets (side-by-side on one sheet only when
 
 ### 2.1 Sheet setup
 
-**ANSI A landscape** (792 × 612 pt) by default — the schedule is the sheet most likely to be reprinted, marked up, and faxed from a job site, and it must come out of an ordinary office printer without shrink-to-fit. Diagram sheets are ANSI B landscape (§5.2); mixed page sizes within one PDF are legal, universally supported, and correct here.
+**ANSI A landscape** (792 × 612 pt) by default, the schedule is the sheet most likely to be reprinted, marked up, and faxed from a job site, and it must come out of an ordinary office printer without shrink-to-fit. Diagram sheets are ANSI B landscape (§5.2); mixed page sizes within one PDF are legal, universally supported, and correct here.
 
 ```
 Page             792 × 612 pt
@@ -99,7 +99,7 @@ Header row       18 pt
 Rows per page    ⌊(479 − 18) / 15⌋ = 30    (≈24 with heavy notes)
 ```
 
-### 2.2 Columns — default set
+### 2.2 Columns: default set
 
 Widths sum to exactly 690 pt.
 
@@ -112,13 +112,13 @@ Widths sum to exactly 690 pt.
 | 5 | `TO DEVICE` | 88 | left | sans 7.5 | |
 | 6 | `TO PORT` | 58 | left | mono 7.5 | |
 | 7 | `CABLE / MEDIA` | 86 | left | sans 7 | `Cat6A F/UTP` |
-| 8 | `LEN` | 32 | **right** | mono 7.5 | `78′` — right-justified because it's a magnitude you scan-compare |
-| 9 | `REF` | 40 | centre | mono 7 | `6.01/B3` — sheet + zone |
+| 8 | `LEN` | 32 | **right** | mono 7.5 | `78′`: right-justified because it's a magnitude you scan-compare |
+| 9 | `REF` | 40 | centre | mono 7 | `6.01/B3`: sheet + zone |
 | 10 | `NOTES` | 106 | left | sans 6.5 | wraps to 2 lines max, then ellipsis |
 
 **Rule weights** (grouping without colspan, which `pw.Table` cannot do):
 
-- 0.8 pt vertical rule between col 2|3, col 6|7, col 9|10 — the block boundaries (identity ┃ from ┃ to ┃ spec ┃ ref ┃ notes)
+- 0.8 pt vertical rule between col 2|3, col 6|7, col 9|10, the block boundaries (identity ┃ from ┃ to ┃ spec ┃ ref ┃ notes)
 - 0.35 pt between all other columns
 - 0.35 pt horizontal between rows; 0.8 pt above and below the header
 - No outer border on the table itself; the drawing border supplies it
@@ -131,7 +131,7 @@ Toggled per export. Widths are taken from `NOTES` first, then from `CABLE / MEDI
 
 | Header | Width | Just. | Enabled by |
 |---|---|---|---|
-| `#` | 22 | right | "Number rows" — field ticking |
+| `#` | 22 | right | "Number rows": field ticking |
 | `ROOM / ZONE` | 56 | left | any endpoint has a room |
 | `BUNDLE` | 46 | left | any bundled drop |
 | `TERM` | 54 | left | any non-default termination (T568A/B, LC/SC, punch) |
@@ -141,9 +141,9 @@ Toggled per export. Widths are taken from `NOTES` first, then from `CABLE / MEDI
 | `INIT` | 34 | centre | Field pull sheet (blank box) |
 | `☐` | 20 | centre | Field pull sheet (blank tick box) |
 
-**Overflow rule:** if `Σ fixed widths > usable − 60`, promote the schedule to ANSI B landscape (usable 1128 pt) and emit a non-blocking notice in the export summary: *"Wiring schedule promoted to ANSI B (11×17) — 14 columns selected."* Never silently shrink text below 6 pt.
+**Overflow rule:** if `Σ fixed widths > usable − 60`, promote the schedule to ANSI B landscape (usable 1128 pt) and emit a non-blocking notice in the export summary: *"Wiring schedule promoted to ANSI B (11×17), 14 columns selected."* Never silently shrink text below 6 pt.
 
-### 2.4 The TYPE chip — how colour reads in greyscale
+### 2.4 The TYPE chip: how colour reads in greyscale
 
 The chip is **not** a solid colour swatch. It is a 16 × 9 pt box containing a 1.5 pt horizontal line drawn with **the exact colour, weight and dash pattern used for that domain on the diagram sheets**, over an 18 % tint of the domain colour.
 
@@ -177,7 +177,7 @@ The chip is **not** a solid colour swatch. It is a 16 × 9 pt box containing a 1
 Three consequences:
 
 1. **The schedule and the diagram cross-reference visually with no legend lookup.** You find `━━━` in the chip, you look for `━━━` on the drawing.
-2. **Greyscale works by construction.** Drop the hue and the tint and the dash pattern still discriminates all eight domains. This matters: computing WCAG relative luminance on the Okabe-Ito palette shows Sky Blue (0.401) and Orange (0.416) are 1.5 % apart — *indistinguishable* in greyscale, and Vermillion/Green/Purple sit in a 0.07 band. The common claim that Okabe-Ito is greyscale-safe is false. The dash layer is load-bearing, not decoration.
+2. **Greyscale works by construction.** Drop the hue and the tint and the dash pattern still discriminates all eight domains. This matters: computing WCAG relative luminance on the Okabe-Ito palette shows Sky Blue (0.401) and Orange (0.416) are 1.5 % apart, *indistinguishable* in greyscale, and Vermillion/Green/Purple sit in a 0.07 band. The common claim that Okabe-Ito is greyscale-safe is false. The dash layer is load-bearing, not decoration.
 3. **The tag text is the third layer** and never fails: `VID`, `AUD`, `NET`, `CTL`, `PWR`, `RF`, `DIG`, `STR`, with the specific type printed after it (`VID·HDMI`, `CTL·232`).
 
 **Greyscale export mode** replaces the tint with white, the colour with black at domain-specific weight, and is the default for the Installer preset.
@@ -188,9 +188,9 @@ Three consequences:
 
 | Key | Use |
 |---|---|
-| **Cable ID** (default) | Reference lookup — someone reads a label in a rack and wants the row |
+| **Cable ID** (default) | Reference lookup; someone reads a label in a rack and wants the row |
 | Signal domain, then type, then ID | Pull-by-trade: all the Cat6, then all the speaker wire |
-| From device, then from port | Terminate one device at a time — the most common working order at the rack |
+| From device, then from port | Terminate one device at a time: the most common working order at the rack |
 | To device, then to port | Terminate at the far end |
 | Room / zone | Rough-in and trim by room |
 | Length descending | Reel planning and cut lists |
@@ -203,7 +203,7 @@ Three consequences:
 ```
 14 pt tall, 12 % grey fill, 2 pt leading rule in the domain colour, bold sans 8, with a count and a length subtotal right-aligned. At a page break the band repeats with ` (cont.)` appended.
 
-Group bands force **hand-rolled pagination** rather than letting `MultiPage` flow a single table (§2.6) — which is fine, because you want that control anyway.
+Group bands force **hand-rolled pagination** rather than letting `MultiPage` flow a single table (§2.6), which is fine, because you want that control anyway.
 
 ### 2.6 Pagination
 
@@ -243,7 +243,7 @@ List<pw.Widget> buildSchedulePages(ScheduleModel m, ScheduleLayout L) {
 
 Each page becomes one `pw.Table` inside a `MultiPage`, separated by `pw.NewPage()`. Benefits:
 
-- **Header repetition is explicit** — every page's table carries its own header row. This sidesteps the open question of whether `Table.headerCount` actually repeats per page fragment in `pdf` 3.13.0 (flagged as unverified in the research; not worth betting the schedule on).
+- **Header repetition is explicit**: every page's table carries its own header row. This sidesteps the open question of whether `Table.headerCount` actually repeats per page fragment in `pdf` 3.13.0 (flagged as unverified in the research; not worth betting the schedule on).
 - Group continuation bands work.
 - `Widget won't fit into the page` overflow (dart_pdf #114) becomes structurally impossible.
 - Deterministic row counts → the progress reporter can quote an exact page count up front.
@@ -301,7 +301,7 @@ Same data as a plain table:
 |---|---|---|---|---|---|---|---|---|---|
 | W001 | ▤ VID·HDMI | ATV-1 Apple TV 4K | HDMI OUT | MTX-1 8×8 Matrix | IN 1 | HDMI 2.1 48G passive | 6′ | 6.01/B3 | 4K120 HDR10+; passive OK <4.5 m |
 | W002 | ▤ VID·HDMI | MTX-1 | OUT 1 | TX-1 HDBaseT TX | HDMI IN | HDMI 2.0 18G | 3′ | 6.01/B4 | |
-| W014 | ▤ VID·HBT | TX-1 HDBaseT TX | LINK OUT | PP-1 Patch Panel 24 | A03 | Cat6A F/UTP solid | 4′ | 6.01/C1 | **NOT ETHERNET** — do not patch to SW-1. PoH 100 W |
+| W014 | ▤ VID·HBT | TX-1 HDBaseT TX | LINK OUT | PP-1 Patch Panel 24 | A03 | Cat6A F/UTP solid | 4′ | 6.01/C1 | **NOT ETHERNET**: do not patch to SW-1. PoH 100 W |
 | W015 | ▨ STR | PP-1 | A03 | STR-1 Structure | LR-TV-1 | Cat6A F/UTP CMR | 78′ | 6.06/A2 | home run; Grade 2 bundle B-LR-01 |
 | W031 | ▬ NET | SW-1 24-pt PoE | P07 | PP-1 | A07 | Cat6 patch | 1′ | 6.03/C2 | VLAN 20; PoE Class 4 |
 | W040 | ▥ AUD | AVR-1 Denon | ZONE2 PRE OUT L/R | AMP-1 16-ch Amp | IN 3/4 | 2C shielded 22 AWG | 4′ | 6.02/B2 | balanced pair; L=3 R=4 |
@@ -311,7 +311,7 @@ Same data as a plain table:
 | W070 | ▧ RF | STR-1 Structure | ANT-ROOF | SPL-1 4-way splitter | IN | RG6 quad, swept 3 GHz | 44′ | 6.01/A4 | OTA; preamp power injected at SPL-1 |
 | W080 | █ PWR | PDU-1 Sequenced PDU | C13 OUT 4 | AVR-1 | IEC INLET | C13→C14 1 m 15 A | 3′ | 6.05/B2 | seq step 3 (+4 s); UPS-backed |
 
-Note what the NOTES column is doing: it is carrying the output of the validation engine. `NOT ETHERNET`, `NULL-MODEM`, `VERIFY POLARITY`, `not receiver jack` — these are auto-generated from the port model, not typed by the user. That is the single highest-value thing this schedule does that a spreadsheet can't.
+Note what the NOTES column is doing: it is carrying the output of the validation engine. `NOT ETHERNET`, `NULL-MODEM`, `VERIFY POLARITY`, `not receiver jack`; these are auto-generated from the port model, not typed by the user. That is the single highest-value thing this schedule does that a spreadsheet can't.
 
 ---
 
@@ -319,7 +319,7 @@ Note what the NOTES column is doing: it is carrying the output of the validation
 
 ### 3.1 The core decision
 
-TIA-606-C is explicit: *the format is not mandated, but must be consistent and unique.* So RackMate ships an **identifier format engine** — a token template with presets — not a hardcoded scheme. Anything else will be wrong for half the userbase.
+TIA-606-C is explicit: *the format is not mandated, but must be consistent and unique.* So RackMate ships an **identifier format engine**, a token template with presets, not a hardcoded scheme. Anything else will be wrong for half the userbase.
 
 ### 3.2 Token grammar
 
@@ -356,7 +356,7 @@ filter    := 'upper' | 'lower' | 'first' digits | 'nz'   // nz = strip leading z
 | **Domain sequential** | `{DOM}-{Nd:3}` | `VID-001` `NET-014` `PWR-006` | Installers pull by trade. Sorting by ID gives you the pull order for free. |
 | **Rack-scoped** | `{RACK}-{DOM}{Nd:3}` | `RK1-VID001` | Multi-rack jobs; keeps racks independently renumberable. |
 | **Endpoint descriptive** | `{SRC} {SRCPORT} > {DST} {DSTPORT}` | `MTX-1 OUT 3 > DISP-LR IN 1` | This is literally AVIXA F501.01's worked example (`VDA2 Out 3 to PROJ Input A`). It's what belongs on the *physical label*, because the label's job is to say where the cable goes. Long for a schedule column, perfect for a label file (§8.4). |
-| **AV block numbering** | `{SRCIDX:2}{SRCPORTIDX:2}` | `2301`…`2316` inputs, `2401`…`2416` outputs | The widespread AV matrix convention. Its virtue is that it **reserves IDs for unpopulated ports**, so adding a source next year doesn't renumber the rack. Requires ports to be first-class entities with IDs whether connected or not — which the model already does. |
+| **AV block numbering** | `{SRCIDX:2}{SRCPORTIDX:2}` | `2301`…`2316` inputs, `2401`…`2416` outputs | The widespread AV matrix convention. Its virtue is that it **reserves IDs for unpopulated ports**, so adding a source next year doesn't renumber the rack. Requires ports to be first-class entities with IDs whether connected or not, which the model already does. |
 | **TIA-606-C horizontal link** | `{FLOOR}{SPACE}-{PANEL}{PORT:2}` | `2A-A12` | The standard's `fs-an` form verbatim: `f` floor, `s` space, `a` panel, `n` 2–4 digit port. Commercial jobs where a spec cites 606. |
 | **TIA-606-C backbone** | `{FLOOR1}{SPACE1}/{FLOOR2}{SPACE2}-{N}` | `1A/3B-2` | `fs1/fs2-n`. |
 | **Residential type-room-direction** | `{TYPE}-{ROOM}[-{DIR}][-{N}]` | `ET-FAM-W-11` `SP-FAM-SL` `DS-SUN-E` | The dominant residential prewire scheme. Room and type code tables are user-editable. |
@@ -380,7 +380,7 @@ class CableIdScheme {
 
 **Uniqueness** is validated project-wide on every mutation, not at export. A duplicate ID is a hard error that blocks export, with a "resolve duplicates" action that suffixes.
 
-**Renumber** is an explicit command, never implicit. It shows a before/after diff and refuses to touch any run whose status is ≥ `Pulled` when `lockAfterStatus` is set — because that ID exists on a label in a wall (P5).
+**Renumber** is an explicit command, never implicit. It shows a before/after diff and refuses to touch any run whose status is ≥ `Pulled` when `lockAfterStatus` is set, because that ID exists on a label in a wall (P5).
 
 ### 3.5 Two IDs per endpoint
 
@@ -430,7 +430,7 @@ Origin, numbering direction, and letter direction are a project setting; default
 
 > ⚠ Both the lower-right and upper-right origin conventions are in live use and I would not swear to which ASME Y14.1 mandates. It is a two-line config constant — set the default, expose the toggle, and confirm against Y14.1 Table 1 before shipping.
 
-Zone references are what the `REF` column in the schedule and the off-sheet connectors point at, so the assignment must be computed from the *final* placed geometry, after layout — see §5.4.
+Zone references are what the `REF` column in the schedule and the off-sheet connectors point at, so the assignment must be computed from the *final* placed geometry, after layout, see §5.4.
 
 ### 4.2 Title block
 
@@ -463,20 +463,20 @@ Bottom-right, **396 × 115 pt** (5.5 × 1.6 in) on ANSI B and larger. On ANSI A 
 | Rack designator + name + RU | current rack | `—` on non-rack sheets |
 | Sheet title | sheet definition | required |
 | Sheet number | NCS assignment (§1.1) | required |
-| Sheet n of m | `ctx.pageNumber` / `ctx.pagesCount` | — |
+| Sheet n of m | `ctx.pageNumber` / `ctx.pagesCount` |: |
 | Date | issue date (export-time or pinned revision date) | today |
 | Revision | current revision letter | `—` |
 | Drawn by | `project.drawnBy` | user initials from prefs |
 | Checked by | `project.checkedBy` | `—` |
 | Scale | computed per sheet, `1:8` or `NTS` | `NTS` |
-| Size | page format short name | — |
-| Discipline | `T` | — |
+| Size | page format short name |: |
+| Discipline | `T` |: |
 | Project number | `project.number` | collapses |
-| File name | source filename | — |
+| File name | source filename |: |
 | Integrator block | app preferences (firm, phone, licence) | collapses |
 | Legend reference | fixed `SEE SHEET T0.01` | required by J-STD-710 §3.6.1 |
 
-**Scale is computed, not typed.** Once §5.5 picks `k`, the title block reports the nearest standard ratio if `|k − 1/n| < 2 %` for `n ∈ {1,2,4,8,10,16,20,24,32,48,64,96}`, otherwise `NTS`. Never print `1:8` on a sheet drawn at 1:8.34 — someone will scale off it.
+**Scale is computed, not typed.** Once §5.5 picks `k`, the title block reports the nearest standard ratio if `|k − 1/n| < 2 %` for `n ∈ {1,2,4,8,10,16,20,24,32,48,64,96}`, otherwise `NTS`. Never print `1:8` on a sheet drawn at 1:8.34; someone will scale off it.
 
 ### 4.3 Revision block
 
@@ -488,18 +488,18 @@ Directly above the title block, same 396 pt width, header row adjacent to the ti
 
 Because the data model already carries stable UUIDs and change-tracking-friendly structure, **the revision block is generated from project history**, not hand-entered. A firm re-issuing a rack drawing after a change order gets `C · 2026-07-18 · Added AMP-2, 4 speaker runs to Zone 3 · JS` automatically. That is a real differentiator over every diagramming tool in this space, and AVIXA D401.01 §6.1 makes a formal change record mandatory, so it also earns a conformance claim.
 
-**Revision clouds** (v1.1): for `As-built` export, draw a scalloped closed path around the bounding box of every element whose `lastModifiedRev` equals the current revision, with a triangular delta tag carrying the rev letter. Cheap once you have `DiagramPath` — a cloud is an arc-chain along a rectangle's perimeter.
+**Revision clouds** (v1.1): for `As-built` export, draw a scalloped closed path around the bounding box of every element whose `lastModifiedRev` equals the current revision, with a triangular delta tag carrying the rev letter. Cheap once you have `DiagramPath`, a cloud is an arc-chain along a rectangle's perimeter.
 
 ### 4.4 Legend sheet (`T0.01`)
 
 Six blocks on one ANSI B landscape sheet:
 
-1. **Signal domain key** — one row per domain: colour sample line (as drawn), *greyscale sample line beside it*, domain name, tag prefix, member signal types. Printing both renditions side by side is what makes the greyscale export trustworthy.
-2. **Connector symbol table** — every connector glyph used in the set, at drawing scale, with name. Glyphs are the `DiagramPath` SVG `d` constants from `symbols.dart`, so the legend can never drift from the drawing.
-3. **Device block anatomy** — one annotated example block: designator position, name, model, port stub, port label, RU span, status border.
-4. **Status & convention key** — new / existing / future / demolish borders; junction dot vs. crossing hop; bus trunk vs. point-to-point; off-sheet connector flag; home-run vs. local tag shape (J-STD-710 sanctions this, *provided the rule is stated in the legend* — so state it).
-5. **Cable ID format** — the active template, expanded, with a worked example decomposed field by field.
-6. **Abbreviations & general notes** — user-editable free text with a seeded default list.
+1. **Signal domain key**: one row per domain: colour sample line (as drawn), *greyscale sample line beside it*, domain name, tag prefix, member signal types. Printing both renditions side by side is what makes the greyscale export trustworthy.
+2. **Connector symbol table**: every connector glyph used in the set, at drawing scale, with name. Glyphs are the `DiagramPath` SVG `d` constants from `symbols.dart`, so the legend can never drift from the drawing.
+3. **Device block anatomy**: one annotated example block: designator position, name, model, port stub, port label, RU span, status border.
+4. **Status & convention key**: new / existing / future / demolish borders; junction dot vs. crossing hop; bus trunk vs. point-to-point; off-sheet connector flag; home-run vs. local tag shape (J-STD-710 sanctions this, *provided the rule is stated in the legend*, so state it).
+5. **Cable ID format**: the active template, expanded, with a worked example decomposed field by field.
+6. **Abbreviations & general notes**: user-editable free text with a seeded default list.
 
 J-STD-710 geometry is worth honouring for the symbols: distinctive shapes fit inside a 3/8 in (10 mm) circle, circles 0.35 in (9 mm), squares 0.25 in (6.35 mm), **all line weights 0.014 in (0.35 mm / 1 pt)**, attribute text ≥ 3/32 in (2.5 mm). These become constants in `symbols.dart`.
 
@@ -536,7 +536,7 @@ const isoA1 = PdfPageFormat(594*_mm, 841*_mm, marginAll: 10*_mm);  // 1684 × 23
 const isoA0 = PdfPageFormat(841*_mm,1189*_mm, marginAll: 10*_mm);  // 2384 × 3370
 ```
 
-Margins are then overridden per sheet role: `EdgeInsets.fromLTRB(54, 36, 36, 36)` — the wider left edge is the binding margin, and it is what makes a bound set readable.
+Margins are then overridden per sheet role: `EdgeInsets.fromLTRB(54, 36, 36, 36)`, the wider left edge is the binding margin, and it is what makes a bound set readable.
 
 ### 5.2 Defaults
 
@@ -544,7 +544,7 @@ Margins are then overridden per sheet role: `EdgeInsets.fromLTRB(54, 36, 36, 36)
 |---|---|---|---|
 | Cover, legend | ANSI B | landscape | matches the set |
 | **Interconnect diagrams** | **ANSI B (11 × 17)** | **landscape** | Largest size that comes out of an ordinary office MFP, plots cheaply anywhere, **folds exactly to letter** for a job binder, and is the de facto residential-CI documentation size. |
-| **Rack elevations** | **ANSI B** | **portrait** | A 45 RU rack is 45 × 1.75 = 78.75 in tall. At 1:8 that's 9.84 in — fits ANSI B portrait with room for the RU rulers and gutters. Elevations are tall; forcing them landscape wastes half the sheet. |
+| **Rack elevations** | **ANSI B** | **portrait** | A 45 RU rack is 45 × 1.75 = 78.75 in tall. At 1:8 that's 9.84 in, fits ANSI B portrait with room for the RU rulers and gutters. Elevations are tall; forcing them landscape wastes half the sheet. |
 | **Schedules** | **ANSI A** | **landscape** | Reprinted and marked up on job-site printers. §2.1. |
 | Details | ANSI B | landscape | |
 
@@ -552,7 +552,7 @@ Locale default: `A4/A3` substituted for `ANSI A/ANSI B` when the platform locale
 
 ### 5.3 The two options for an oversized schematic
 
-**Option A — geometric tiling with match lines.** Split the diagram into an overlapping grid of windows, one per sheet.
+**Option A: geometric tiling with match lines.** Split the diagram into an overlapping grid of windows, one per sheet.
 
 ```dart
 final tileW   = sheet.availableWidth  / scale;      // diagram units per sheet
@@ -562,9 +562,9 @@ final cols = ((bounds.width  - overlap) / (tileW - overlap)).ceil();
 final rows = ((bounds.height - overlap) / (tileH - overlap)).ceil();
 ```
 
-Each sheet carries: `MATCH LINE — SEE SHEET T6.0n` along each shared edge, feature lines terminating exactly at the match line, and a **key plan** in the corner — a 1.5 in outline of the whole diagram with the current tile hatched. The key plan is what makes a tiled set navigable, and it is nearly free: replay the same `DiagramScene` at tiny scale with stroke-only specs into a 1.5 in box.
+Each sheet carries: `MATCH LINE — SEE SHEET T6.0n` along each shared edge, feature lines terminating exactly at the match line, and a **key plan** in the corner, a 1.5 in outline of the whole diagram with the current tile hatched. The key plan is what makes a tiled set navigable, and it is nearly free: replay the same `DiagramScene` at tiny scale with stroke-only specs into a 1.5 in box.
 
-**Option B — partition by net / subsystem with off-sheet connectors.** Each sheet holds one signal domain at full scale; nets that leave a sheet terminate in a pentagon flag carrying the net name and a `→ T6.03 / C2` reference, with a mirrored inbound flag on the destination sheet pointing back.
+**Option B: partition by net / subsystem with off-sheet connectors.** Each sheet holds one signal domain at full scale; nets that leave a sheet terminate in a pentagon flag carrying the net name and a `→ T6.03 / C2` reference, with a mirrored inbound flag on the destination sheet pointing back.
 
 ### 5.4 Recommendation for v1: **Option B, net partition**
 
@@ -573,7 +573,7 @@ Reasons, in order of weight:
 1. **It's what schematic capture actually does.** Altium, KiCad, OrCAD do not tile geometrically; they partition by subsystem and use off-sheet connectors. The stated design brief is "visual inspiration from electronics board diagrams and schematics." This *is* that idiom.
 2. **Nothing shrinks.** Every sheet is drawn at full scale, so text never approaches the legibility floor and line weights stay honest. Tiling forces a global scale that must satisfy the worst sheet.
 3. **It matches how installers work.** They pull all the Cat6, then all the speaker wire, then terminate. A sheet per domain is a work packet.
-4. **It makes the colour coding an organising principle instead of a rainbow.** One dominant hue per sheet, with cross-domain nets appearing as flags — far more legible than eight interleaved colours on one sheet.
+4. **It makes the colour coding an organising principle instead of a rainbow.** One dominant hue per sheet, with cross-domain nets appearing as flags, far more legible than eight interleaved colours on one sheet.
 5. **The Structure device falls out naturally.** Home runs are, definitionally, signals arriving from off-sheet. Rendering the Structure device as a bank of off-sheet connector flags on the left edge of `T6.06` is both the schematic convention and the TIA-570-D reality. It also makes **unused home runs visually obvious**, which is a genuinely valuable deliverable.
 
 Default partition, in sheet order:
@@ -587,7 +587,7 @@ Default partition, in sheet order:
 | `T6.05` | Power | branch circuits, PDU, UPS, sequencer, IEC |
 | `T6.06` | Structure | all structured-wiring home runs, grouped by room |
 
-The partition is user-editable — merge Audio+Video into "AV", split Control into "Control" and "Lighting", whatever the job wants. A net whose domain has zero connections produces no sheet.
+The partition is user-editable, merge Audio+Video into "AV", split Control into "Control" and "Lighting", whatever the job wants. A net whose domain has zero connections produces no sheet.
 
 **Off-sheet connector geometry:**
 
@@ -613,7 +613,7 @@ double fitScale(Box content, Box avail) =>
 
 Two things this must get right:
 
-**Line weights must not scale.** A 0.5 pt hairline at k = 0.3 becomes 0.15 pt — below what most RIPs render meaningfully. `Stroke.hairlineFloor` tells the backend to divide the width by the current uniform scale so the mark holds a **0.25 pt floor**. Applied to: drawing border, zone grid, title block rules, key plan. *Not* applied to cable traces, which should scale — a de-emphasised trace at small scale is correct.
+**Line weights must not scale.** A 0.5 pt hairline at k = 0.3 becomes 0.15 pt, below what most RIPs render meaningfully. `Stroke.hairlineFloor` tells the backend to divide the width by the current uniform scale so the mark holds a **0.25 pt floor**. Applied to: drawing border, zone grid, title block rules, key plan. *Not* applied to cable traces, which should scale, a de-emphasised trace at small scale is correct.
 
 **Text must stay legible, and this is the tiling trigger, not a user decision.** The user's real question is "can I read this", not "how many sheets do I want":
 
@@ -629,9 +629,9 @@ if (k * scene.minTextSizePt < kMinPrintPt) {
 }
 ```
 
-Report the outcome in the export summary: *"Video nets exceeded one sheet at legible scale — split into T6.01 and T6.01a by source device."*
+Report the outcome in the export summary: *"Video nets exceeded one sheet at legible scale, split into T6.01 and T6.01a by source device."*
 
-### 5.6 Why raster is disqualified — the arithmetic
+### 5.6 Why raster is disqualified: the arithmetic
 
 For the record, so nobody proposes it again:
 
@@ -644,7 +644,7 @@ For the record, so nobody proposes it again:
 
 - `pixelRatio` for 300 dpi is `300/72 = 4.167`.
 - The decoded `ui.Image` is 64 MiB; PNG encoding needs a second buffer → **~135 MB peak for one sheet**, multiplied by sheet count.
-- **5100 px exceeds the 4096 max texture dimension** on a large installed base (older Intel iGPUs, many Android devices). Flutter silently clamps — flutter/flutter #118024, #116957, #21269. You get a quietly blurry sheet with no error, which is the worst possible failure mode for a deliverable.
+- **5100 px exceeds the 4096 max texture dimension** on a large installed base (older Intel iGPUs, many Android devices). Flutter silently clamps, flutter/flutter #118024, #116957, #21269. You get a quietly blurry sheet with no error, which is the worst possible failure mode for a deliverable.
 - 6 pt schematic text at 300 dpi is 25 px tall, antialiased into mush.
 - **You lose text selection and search.** An installer who can't `Ctrl+F` a cable ID in a 3-page schedule has a materially worse document.
 - Vector rack diagram ≈ 80–400 KB. 300 dpi PNG-in-PDF ≈ 3–15 MB **per sheet**.
@@ -735,7 +735,7 @@ final class Radii {
 }
 ```
 
-**Transform currency is `vector_math_64.Matrix4`** — pure Dart, already a transitive dependency of `pdf`, accepted directly by `PdfGraphics.setTransform(Matrix4)`, and `Matrix4.storage` is exactly the column-major `Float64List(16)` that `ui.Canvas.transform` wants. Zero conversion on either side. Do not hand-roll a `Mat3`.
+**Transform currency is `vector_math_64.Matrix4`**: pure Dart, already a transitive dependency of `pdf`, accepted directly by `PdfGraphics.setTransform(Matrix4)`, and `Matrix4.storage` is exactly the column-major `Float64List(16)` that `ui.Canvas.transform` wants. Zero conversion on either side. Do not hand-roll a `Mat3`.
 
 ```dart
 // diagram/style.dart — pure Dart
@@ -865,7 +865,7 @@ final class DiagramPath {
 }
 ```
 
-`symbols.dart` then holds the connector iconography as SVG `d` constants parsed once into `DiagramPath` at startup — legible in source, identical on both backends, and matching J-STD-710's geometry constants.
+`symbols.dart` then holds the connector iconography as SVG `d` constants parsed once into `DiagramPath` at startup, legible in source, identical on both backends, and matching J-STD-710's geometry constants.
 
 ### 6.4 The interface
 
@@ -918,7 +918,7 @@ final class RendererCaps {
 
 Notes on shape:
 
-- **`fill` and `stroke` are both optional and both may be present.** `dart:ui` needs two passes with two `Paint`s; PDF needs the path built once and painted with `B` (fill-then-stroke) — or, more portably given `PdfGraphics`'s API surface, built twice. The adapter absorbs this; callers never think about it.
+- **`fill` and `stroke` are both optional and both may be present.** `dart:ui` needs two passes with two `Paint`s; PDF needs the path built once and painted with `B` (fill-then-stroke), or, more portably given `PdfGraphics`'s API surface, built twice. The adapter absorbs this; callers never think about it.
 - **`drawPolyline` is separate from `drawPath`** because orthogonal traces are the single hottest primitive in this app and they deserve a path that skips `DiagramPath` allocation entirely.
 - **No gradients, no shadows, no blurs, no blend modes, no shaders.** `PdfGraphics` supports none of them meaningfully, and the schematic aesthetic doesn't want them. Constraining the visual language to flat fills, strokes, dashes and text is what makes the two backends agree *exactly* rather than approximately. This is a feature.
 
@@ -926,15 +926,15 @@ Notes on shape:
 
 PDF user space is bottom-left origin, Y-up. Our diagram space is top-left, Y-down. Two strategies:
 
-**(a) Per-coordinate flip** — `_y(y) => h - y` at every call site inside the adapter. Ten lines, no global transform, and text stays upright for free.
+**(a) Per-coordinate flip**: `_y(y) => h - y` at every call site inside the adapter. Ten lines, no global transform, and text stays upright for free.
 
-**(b) Global flip** — push `Matrix4(1,0,0,-1, 0,h)` once at the top; every subsequent coordinate passes through verbatim.
+**(b) Global flip**: push `Matrix4(1,0,0,-1, 0,h)` once at the top; every subsequent coordinate passes through verbatim.
 
-**Take (b).** The reason is that the interface exposes `rotate()` and `transform()`. Under (a), a caller's rotation composes with the flip incorrectly — `_y()` is applied to the *pre-transform* coordinates while the CTM is applied by PDF afterwards, so any non-translation transform silently produces mirrored or displaced geometry. That's an entire class of bug that appears only when someone finally rotates a label 90° for a vertical rack rail, and it will be diagnosed as "the PDF is wrong" three months after the code was written.
+**Take (b).** The reason is that the interface exposes `rotate()` and `transform()`. Under (a), a caller's rotation composes with the flip incorrectly, `_y()` is applied to the *pre-transform* coordinates while the CTM is applied by PDF afterwards, so any non-translation transform silently produces mirrored or displaced geometry. That's an entire class of bug that appears only when someone finally rotates a label 90° for a vertical rack rail, and it will be diagnosed as "the PDF is wrong" three months after the code was written.
 
-Under (b), transforms compose naturally and correctly, and the flip's only cost is that `drawString` renders mirrored — which is handled in **exactly one method**. Text already needs a `save`/`restore` for rotation anyway, so the marginal cost is a matrix multiply per text run, not a new q/Q pair.
+Under (b), transforms compose naturally and correctly, and the flip's only cost is that `drawString` renders mirrored, which is handled in **exactly one method**. Text already needs a `save`/`restore` for rotation anyway, so the marginal cost is a matrix multiply per text run, not a new q/Q pair.
 
-The global flip also has a pleasant side effect: `PdfGraphics.drawRect(x, y, w, h)` normally wants the *bottom* edge, but under the flip, passing `(r.left, r.top, r.width, r.height)` produces a rectangle spanning `top … top+height` in flipped coordinates — i.e. exactly our `Box`, verbatim, with no `y' = H − top − height` arithmetic anywhere.
+The global flip also has a pleasant side effect: `PdfGraphics.drawRect(x, y, w, h)` normally wants the *bottom* edge, but under the flip, passing `(r.left, r.top, r.width, r.height)` produces a rectangle spanning `top … top+height` in flipped coordinates, i.e. exactly our `Box`, verbatim, with no `y' = H − top − height` arithmetic anywhere.
 
 **One gotcha that will eat an afternoon if missed.** `pw.CustomPaint` pre-translates the canvas to the *widget box's bottom-left* before calling your painter:
 
@@ -945,7 +945,7 @@ context.canvas..saveContext()..setTransform(mat);
 painter(canvas, size);
 ```
 
-So the height you flip about is **`size.y` — the widget's height — not the page height.** Getting this wrong offsets every diagram vertically by the margin, and the result looks plausible enough to ship.
+So the height you flip about is **`size.y`, the widget's height, not the page height.** Getting this wrong offsets every diagram vertically by the margin, and the result looks plausible enough to ship.
 
 ### 6.6 Divergences and how each is reconciled
 
@@ -955,34 +955,34 @@ So the height you flip about is **`size.y` — the widget's height — not the p
 | 2 | Paint model | immutable `Paint` per call | stateful setters + `strokePath()` | Adapter owns the state; interface stays immediate-mode. |
 | 3 | Path model | build `Path`, `drawPath(path, paint)` | stateful `moveTo`/`lineTo` + `fillPath()` | Adapter replays `DiagramPath` verbs into whichever shape the backend wants. |
 | 4 | Fill **and** stroke | one `Paint`, two `drawPath` calls | build path twice, or `B` operator | Adapter emits the path twice. Costs bytes, not correctness; §6.9 mitigates. |
-| 5 | **Dash** | **none — `dart:ui` has no dashing at all** | native `setLineDashPattern` | Flutter side synthesises with `path_drawing`'s `dashPath`. **Cache the dashed `ui.Path` per (geometry, dash) pair** — regenerating on every frame for a few hundred dashed traces is a real frame-budget problem. Keep `dashPhase` at 0 for parity: PDF's phase is an offset into the pattern, `dashPath` restarts per sub-path. |
+| 5 | **Dash** | **none: `dart:ui` has no dashing at all** | native `setLineDashPattern` | Flutter side synthesises with `path_drawing`'s `dashPath`. **Cache the dashed `ui.Path` per (geometry, dash) pair**: regenerating on every frame for a few hundred dashed traces is a real frame-budget problem. Keep `dashPhase` at 0 for parity: PDF's phase is an offset into the pattern, `dashPath` restarts per sub-path. |
 | 6 | **Text metrics** | `TextPainter`, full shaping + kerning | `PdfFont.stringMetrics`, unkerned advances | **Use `PdfFont.stringMetrics` as the single source of truth on both backends** (§6.7). |
 | 7 | **Kerning / ligatures** | Skia applies GPOS kerning and `liga` | dart_pdf applies neither | Disable them on the Flutter side: `fontFeatures: [FontFeature.disable('kern'), FontFeature.disable('liga')]`. Without this, screen text is 1–3 % narrower than print text and every leader line, callout box and collision-avoidance calculation disagrees between the two. |
 | 8 | **Colour space** | `ui.Color`, sRGB, 8-bit ARGB | `PdfColor`, 4 × double 0…1, **DeviceRGB** | `PdfColor.fromInt(argb)`. DeviceRGB is unmanaged: most viewers assume sRGB, but a print house's RIP may shift it. Mitigations: (a) offer a **CMYK export** using `PdfColorCmyk` for offset/plotter work, with pure black as `0,0,0,1` not rich black; (b) offer greyscale export using explicit grey values, not luminance-converted RGB; (c) v1.1, embed an sRGB `OutputIntent`. For v1, DeviceRGB is correct and the palette is chosen to be robust to modest shifts. |
 | 9 | **Alpha** | per-`Paint` alpha channel | no per-paint alpha; needs `ExtGState` | Adapter detects `argb >>> 24 != 0xFF` and emits `setGraphicState(PdfGraphicState(fillOpacity:, strokeOpacity:))`, bracketed by save/restore. **Better: don't use alpha in the diagram.** Use pre-composited tints (18 % of a colour over white, computed at palette definition time) instead. Alpha in PDF also interacts badly with some plotters. Reserve alpha for on-screen selection highlight only, which never reaches the PDF. ⚠ Verify `setGraphicState` / `PdfGraphicState` field names on 3.13.0. |
-| 10 | **Line join & miter limit** | `StrokeJoin`, `strokeMiterLimit` default **4** | `setLineJoin`, PDF default miter limit **10**, and `PdfGraphics` may not expose a setter | Set `strokeMiterLimit = 10` on the Flutter side to match PDF's default rather than the reverse. In practice this is invisible for orthogonal traces — a 90° miter ratio is √2 ≈ 1.414, far below either limit — but symbol paths with acute angles will spike differently, and matching the defaults costs one line. |
+| 10 | **Line join & miter limit** | `StrokeJoin`, `strokeMiterLimit` default **4** | `setLineJoin`, PDF default miter limit **10**, and `PdfGraphics` may not expose a setter | Set `strokeMiterLimit = 10` on the Flutter side to match PDF's default rather than the reverse. In practice this is invisible for orthogonal traces (a 90° miter ratio is √2 ≈ 1.414, far below either limit) but symbol paths with acute angles will spike differently, and matching the defaults costs one line. |
 | 11 | Line cap | `StrokeCap`, default butt | `setLineCap(PdfLineCap)`, default butt | 1:1. Note round caps + dashes change apparent dash length on both; keep butt for dashed traces. |
-| 12 | Transform | `Canvas.transform(Float64List)` concatenates | `setTransform(Matrix4)` **concatenates** (emits `cm`) despite the name | 1:1 — both concatenate. `Matrix4.storage` feeds `Canvas.transform` directly. Always bracket with save/restore. |
+| 12 | Transform | `Canvas.transform(Float64List)` concatenates | `setTransform(Matrix4)` **concatenates** (emits `cm`) despite the name | 1:1: both concatenate. `Matrix4.storage` feeds `Canvas.transform` directly. Always bracket with save/restore. |
 | 13 | Clip | part of save/restore, intersective | `clipPath()` consumes the *current path*, intersective, undone only by `restoreContext` | Adapter builds the path then calls `clipPath`. Semantics match; no "unclip" on either side. |
 | 14 | Zero-width strokes | `strokeWidth = 0` → 1 device pixel hairline | width 0 → thinnest device line (invisible on a 2400 dpi imagesetter) | **Never emit width 0.** Clamp to 0.25 pt in `_applyStroke` on both backends. |
-| 15 | Winding under flip | — | the global flip reverses winding direction | Only matters for `evenOdd` vs `nonZero` on nested subpaths. Symbol paths avoid nesting; `addEllipse` emits a consistent direction. Note it and move on. |
-| 16 | Text wrapping | `TextPainter` wraps and shapes | `drawString` is single-line, baseline-origin, no wrap | The interface has no wrapping. Multi-line text is the caller's job: measure, split, emit N `drawText` calls at a computed leading. Correct — layout belongs in the scene builder, not the backend. |
+| 15 | Winding under flip |: | the global flip reverses winding direction | Only matters for `evenOdd` vs `nonZero` on nested subpaths. Symbol paths avoid nesting; `addEllipse` emits a consistent direction. Note it and move on. |
+| 16 | Text wrapping | `TextPainter` wraps and shapes | `drawString` is single-line, baseline-origin, no wrap | The interface has no wrapping. Multi-line text is the caller's job: measure, split, emit N `drawText` calls at a computed leading. Correct, layout belongs in the scene builder, not the backend. |
 | 17 | Images | `Canvas.drawImage`, full formats | `PdfImage`, JPEG/PNG, pre-decoded | `ImageRef` is an opaque handle resolved per backend from the same `Uint8List`. Only used for the logo. |
 | 18 | Antialiasing | on by default | resolution-independent, N/A | No action. |
 
-### 6.7 Text metrics — the single most important reconciliation
+### 6.7 Text metrics: the single most important reconciliation
 
 The trap: measure with `TextPainter` on screen and with `stringMetrics` in the PDF, and every measured width differs, so leader lines, callout boxes, port-label collision avoidance, and centred text all disagree between screen and print. It will be reported as "the PDF doesn't match the preview" and it will be miserable to chase.
 
 **The fix is to eliminate `TextPainter` from the layout path entirely.**
 
-`PdfFont` / `PdfTtfFont` is **pure Dart** — it lives in the `pdf` package, which has no Flutter dependency. So it can be loaded and queried on the screen side, in the scene builder, and inside an isolate, identically. Therefore:
+`PdfFont` / `PdfTtfFont` is **pure Dart**: it lives in the `pdf` package, which has no Flutter dependency. So it can be loaded and queried on the screen side, in the scene builder, and inside an isolate, identically. Therefore:
 
 1. Bundle the TTF once, as **both** a Flutter font asset **and** a raw asset (§9.3).
-2. Load it into a `PdfTtfFont` in every context — main isolate, background isolate, screen renderer.
+2. Load it into a `PdfTtfFont` in every context, main isolate, background isolate, screen renderer.
 3. Inject a `TextMeasurer` into the scene builder, backed by `PdfFont.stringMetrics`.
 4. `DiagramCanvas.measureText` delegates to that same measurer on **every** backend, including the Flutter one.
-5. `FlutterDiagramCanvas.drawText` still uses `TextPainter` to *rasterise* the glyphs — Skia is far better at that than anything you'd write — but it **anchors using the injected metrics**, not `TextPainter`'s. Combined with kerning disabled (divergence #7), the two agree to sub-point.
+5. `FlutterDiagramCanvas.drawText` still uses `TextPainter` to *rasterise* the glyphs, Skia is far better at that than anything you'd write, but it **anchors using the injected metrics**, not `TextPainter`'s. Combined with kerning disabled (divergence #7), the two agree to sub-point.
 
 ```dart
 // diagram/text.dart — pure Dart
@@ -1013,7 +1013,7 @@ final class PdfFontMeasurer implements TextMeasurer {
 }
 ```
 
-Cache aggressively — a rack sheet re-measures the same designators hundreds of times.
+Cache aggressively, a rack sheet re-measures the same designators hundreds of times.
 
 **Anchor resolution** (shared by both backends, so it lives in one pure-Dart helper):
 
@@ -1502,9 +1502,9 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
 }
 ```
 
-Note `textScaler: TextScaler.noScaling`. Without it, a user with OS-level text scaling at 125 % sees a diagram whose labels are 25 % larger than the PDF's — and blames the PDF.
+Note `textScaler: TextScaler.noScaling`. Without it, a user with OS-level text scaling at 125 % sees a diagram whose labels are 25 % larger than the PDF's, and blames the PDF.
 
-### 6.9 The display list — the fourth implementation, and why it earns its place
+### 6.9 The display list: the fourth implementation, and why it earns its place
 
 The interface is implemented twice for output. A third implementation, a **recorder**, costs ~60 lines and buys four things you need regardless:
 
@@ -1544,14 +1544,14 @@ final class DiagramScene {
 }
 ```
 
-1. **`bounds`** — you cannot compute scale-to-fit, tile counts, or a key plan without the diagram's true extent. A `BoundsCanvas` that only accumulates is another 40 lines.
-2. **Hit-testing** — the editor needs to know what's under the cursor; a geometric op list gives it to you.
+1. **`bounds`**: you cannot compute scale-to-fit, tile counts, or a key plan without the diagram's true extent. A `BoundsCanvas` that only accumulates is another 40 lines.
+2. **Hit-testing**: the editor needs to know what's under the cursor; a geometric op list gives it to you.
 3. **Golden tests on pure data.** Assert on the op list with no Flutter binding, no PDF bytes, no pixel comparison. `expect(scene.ops.whereType<OpText>().map((o) => o.text), contains('RK-1'))`. This is an enormous testability win over golden-image diffing, which is flaky and platform-dependent.
 4. **A fourth backend costs one file.** SVG export (§8.3) is ~120 lines on top of an architecture you already have.
 
 ### 6.10 Content-stream size, and the state cache
 
-Every primitive above brackets itself in `saveContext`/`restoreContext`, emitting a `q`/`Q` pair per op plus a full set of `RG`/`w`/`d`/`J`/`j` operators. For a diagram with 10 000 ops that's real bloat — maybe 1.5 MB of content stream where 300 KB would do.
+Every primitive above brackets itself in `saveContext`/`restoreContext`, emitting a `q`/`Q` pair per op plus a full set of `RG`/`w`/`d`/`J`/`j` operators. For a diagram with 10 000 ops that's real bloat, maybe 1.5 MB of content stream where 300 KB would do.
 
 The fix, once you have value equality on `Stroke`/`Fill` (§6.2), is a graphics-state cache:
 
@@ -1568,7 +1568,7 @@ void _applyStroke(Stroke s) {
 }
 ```
 
-…dropping the per-primitive `saveContext`/`restoreContext` and invalidating `_lastStroke`/`_lastFill` on `save`/`restore`. Then, in `scene_builder`, **sort the display list by style within each z-layer** and the state changes collapse to roughly one per unique style — under twenty for a typical sheet.
+…dropping the per-primitive `saveContext`/`restoreContext` and invalidating `_lastStroke`/`_lastFill` on `save`/`restore`. Then, in `scene_builder`, **sort the display list by style within each z-layer** and the state changes collapse to roughly one per unique style, under twenty for a typical sheet.
 
 Premature for v1. Keep the hook (the equality operators, the `_last*` fields) so it's a one-day change later, and don't do it until a real project produces a file you'd be embarrassed to email.
 
@@ -1576,7 +1576,7 @@ Premature for v1. Keep the hook (the equality operators, the `_last*` fields) so
 
 Cheap to confirm empirically, expensive to discover late. Write a 30-line spike that exercises all five and prints the results.
 
-1. `PdfFont.stringMetrics(String)` exact signature, and whether the `PdfFontMetrics * double` operator exists in 3.13.0. Everything in §6.7 funnels through one wrapper method, so a fix is localised — but confirm before building on it.
+1. `PdfFont.stringMetrics(String)` exact signature, and whether the `PdfFontMetrics * double` operator exists in 3.13.0. Everything in §6.7 funnels through one wrapper method, so a fix is localised, but confirm before building on it.
 2. Whether `Table.headerCount` actually repeats the header on each page fragment. §2.6 sidesteps this by paginating manually; confirm anyway so you know whether the workaround is necessary.
 3. `PageTheme.buildBackground` / `buildForeground` parameter names on 3.13.0.
 4. `PdfGraphics.setGraphicState` and `PdfGraphicState`'s field names (`opacity` / `fillOpacity` / `strokeOpacity`).
@@ -1635,7 +1635,7 @@ Design notes:
 
 - **Presets first, checkboxes second.** Selecting a preset checks the sheets and flips the option switches; touching any switch moves the radio to `Custom…`.
 - **Notices are surfaced before export, not after.** Validation warnings from the signal model (`DTE↔DTE without null-modem`, `passive HDMI 2.1 run > 4.5 m`, `Σ PoE draw > switch budget`) appear in the preview pane with a jump-to-sheet link. Exporting a drawing set with known errors is a choice the user should make deliberately.
-- **The live preview is rendered by the screen backend, not by pdfium.** Same `DiagramScene`, same furniture, same fonts, same metrics — so it is pixel-faithful by construction, instant, and needs no native dependency. This is the payoff for §6 and it should be the headline preview.
+- **The live preview is rendered by the screen backend, not by pdfium.** Same `DiagramScene`, same furniture, same fonts, same metrics, so it is pixel-faithful by construction, instant, and needs no native dependency. This is the payoff for §6 and it should be the headline preview.
 - Size and page-count estimates come from a dry-run pass over the resolved sheet list; they cost ~10 ms.
 
 ### 7.2 Progress
@@ -1654,7 +1654,7 @@ Sheet 8 of 14 — T6.10 Wiring schedule (page 2 of 3)
                                                           [ Cancel ]
 ```
 
-Show it inline in the dialog, not as a modal overlay. Under 400 ms, don't show it at all — flashing a progress bar for a 3-sheet export looks worse than a brief pause.
+Show it inline in the dialog, not as a modal overlay. Under 400 ms, don't show it at all, flashing a progress bar for a 3-sheet export looks worse than a brief pause.
 
 ### 7.3 Isolate generation
 
@@ -1678,7 +1678,7 @@ final projectJson = jsonEncode(project.toJson());   // sendable, immutable
 final specJson    = jsonEncode(spec.toJson());
 ```
 
-**Progress out of the isolate.** `Isolate.run` returns a single value — but `SendPort` *is* sendable, so it can be captured in the closure:
+**Progress out of the isolate.** `Isolate.run` returns a single value, but `SendPort` *is* sendable, so it can be captured in the closure:
 
 ```dart
 final rx = ReceivePort();
@@ -1699,7 +1699,7 @@ final iso = await Isolate.spawn(_exportEntry, _ExportRequest(tx, projectJson, sp
 _cancelButton.onPressed = () => iso.kill(priority: Isolate.immediate);
 ```
 
-There is no partial-result recovery — an aborted export produces nothing, which is correct.
+There is no partial-result recovery, an aborted export produces nothing, which is correct.
 
 **Do not use `compute()` in a loop.** flutter/flutter #43623 documents leaks with repeated `compute` calls; one `Isolate.run`/`Isolate.spawn` per export is the right granularity, and don't pool.
 
@@ -1709,12 +1709,12 @@ There is no partial-result recovery — an aborted export produces nothing, whic
 
 Two levels, both worth having:
 
-1. **Sheet preview (primary)** — the screen backend replaying the same scenes with the same furniture. Instant, no native deps, hot-reloadable in dev, faithful by construction. This is what's in the dialog's right column and what most users will ever look at.
-2. **Output verification (secondary)** — `PdfPreview(build: (format) => bytes)` from `printing`, rendering the *actual bytes*. Behind a "Verify output" button, because it needs pdfium and takes a moment.
+1. **Sheet preview (primary)**: the screen backend replaying the same scenes with the same furniture. Instant, no native deps, hot-reloadable in dev, faithful by construction. This is what's in the dialog's right column and what most users will ever look at.
+2. **Output verification (secondary)**: `PdfPreview(build: (format) => bytes)` from `printing`, rendering the *actual bytes*. Behind a "Verify output" button, because it needs pdfium and takes a moment.
 
 > **pdfium build caveat:** `printing`'s `PdfPreview` and `Printing.raster` require pdfium on Windows and Linux, and the plugin's CMake downloads binaries at build time. The first `flutter build windows` on a fresh machine or a locked-down CI runner **will fail without network access**. Budget for it and consider vendoring the binaries into the repo.
 
-Making the *primary* preview independent of pdfium means the core export flow has no native dependency at all — worth the design effort on its own.
+Making the *primary* preview independent of pdfium means the core export flow has no native dependency at all, worth the design effort on its own.
 
 ### 7.5 Save and share
 
@@ -1736,19 +1736,19 @@ Future<void> save(Uint8List bytes, String suggested) async {
 }
 ```
 
-Default filename: `{project-slug}_{rack-or-SET}_rev{REV}_{yyyy-MM-dd}.pdf` → `smith-residence_SET_revC_2026-07-18.pdf`. Revision in the filename is not optional — it is the only thing that stops the wrong PDF being on site.
+Default filename: `{project-slug}_{rack-or-SET}_rev{REV}_{yyyy-MM-dd}.pdf` → `smith-residence_SET_revC_2026-07-18.pdf`. Revision in the filename is not optional; it is the only thing that stops the wrong PDF being on site.
 
 | Target | Save | Print | Share |
 |---|---|---|---|
 | Windows / macOS / Linux | `getSaveLocation` + `XFile.saveTo` | `Printing.layoutPdf` | `Printing.sharePdf` (good on macOS, weak on Win/Linux) |
-| iOS / Android | `Printing.sharePdf`, or `path_provider` + `share_plus` | `Printing.layoutPdf` | `Printing.sharePdf` — **`bounds:` is required in practice on iPad**; omit it and the popover misplaces or throws |
+| iOS / Android | `Printing.sharePdf`, or `path_provider` + `share_plus` | `Printing.layoutPdf` | `Printing.sharePdf`: **`bounds:` is required in practice on iPad**; omit it and the popover misplaces or throws |
 | Web | `Printing.sharePdf` → browser download; prefer a **Blob URL over a `data:` URL** for a multi-sheet set (data URLs hit length limits) | `Printing.layoutPdf` | download |
 
 Other printing gotchas worth encoding now:
 
-- `dynamicLayout: true` re-invokes `onLayout` whenever the user changes paper size in the print dialog — your callback must honour the `PdfPageFormat` it receives. §5.5's fit code already does. Set `false` to force your sheet size.
+- `dynamicLayout: true` re-invokes `onLayout` whenever the user changes paper size in the print dialog, your callback must honour the `PdfPageFormat` it receives. §5.5's fit code already does. Set `false` to force your sheet size.
 - **11×17 on Windows often needs `forceCustomPrintPaper: true`** to reach the driver correctly. Directly relevant here.
-- `usePrinterSettings: true` takes paper size from the driver instead of your format — almost never what you want for a drawing set.
+- `usePrinterSettings: true` takes paper size from the driver instead of your format, almost never what you want for a drawing set.
 - Never silently write a deliverable to `getApplicationDocumentsDirectory()`. `path_provider` is for temp scratch only.
 - **Web first-run is dramatically slower** (dart_pdf #748) from font/wasm warmup. Pre-warm on idle if you ship web.
 
@@ -1760,7 +1760,7 @@ A completion strip, not a modal: `Exported 14 sheets · 438 KB · 3.1 s` with **
 
 Two exports of an unmodified project should differ only in the date field. That means: stable iteration order everywhere (sort by UUID, never rely on `Map` order), no `DateTime.now()` outside the one date field, no random IDs in the PDF. It makes golden-file testing possible and it makes "did anything actually change between rev B and rev C?" answerable with `diff`.
 
-Set the document metadata too — it populates Acrobat's Document Properties and makes the file findable in a client's DMS:
+Set the document metadata too, it populates Acrobat's Document Properties and makes the file findable in a client's DMS:
 
 ```dart
 final doc = pw.Document(
@@ -1772,7 +1772,7 @@ final doc = pw.Document(
 );
 ```
 
-**Embed the source.** With PDF/A-3b (supported since `pdf` 3.11.2) you can attach the `.rackmate` file inside the PDF. The drawing then carries its own editable source — hand a client or a successor integrator one file and they have both the deliverable and the project. That is a genuinely good feature and it costs almost nothing.
+**Embed the source.** With PDF/A-3b (supported since `pdf` 3.11.2) you can attach the `.rackmate` file inside the PDF. The drawing then carries its own editable source, hand a client or a successor integrator one file and they have both the deliverable and the project. That is a genuinely good feature and it costs almost nothing.
 
 ---
 
@@ -1780,25 +1780,25 @@ final doc = pw.Document(
 
 | Export | Cost given §6 | Value | Ship in |
 |---|---|---|---|
-| **CSV — wiring schedule** | **trivial** | high | v1 |
-| **CSV — drop schedule** | trivial | high | v1 |
-| **CSV — BOM** | trivial | high | v1 |
-| **CSV — cable label file** | trivial | **very high** | v1 |
-| **SVG — one sheet** | ~120 lines (fourth backend) | high | v1.1 |
-| **PNG — one sheet** | ~40 lines, with a size cap | medium | v1.1 |
-| **XLSX — schedule + BOM** | one dependency, ~200 lines | medium | v1.1 |
+| **CSV: wiring schedule** | **trivial** | high | v1 |
+| **CSV: drop schedule** | trivial | high | v1 |
+| **CSV: BOM** | trivial | high | v1 |
+| **CSV: cable label file** | trivial | **very high** | v1 |
+| **SVG: one sheet** | ~120 lines (fourth backend) | high | v1.1 |
+| **PNG: one sheet** | ~40 lines, with a size cap | medium | v1.1 |
+| **XLSX: schedule + BOM** | one dependency, ~200 lines | medium | v1.1 |
 | **JSON netlist** | trivial (it's the model) | medium | v1.1 |
-| **DXF — rack elevation** | ~400 lines, new geometry mapping | low | not planned |
+| **DXF: rack elevation** | ~400 lines, new geometry mapping | low | not planned |
 
 ### 8.1 CSV
 
 The schedule and BOM are already `List<List<String>>` by the time they reach `TableHelper` (§2). CSV is that same array with quoting. Genuinely a few dozen lines.
 
-Two things to get right: emit a **UTF-8 BOM** (`\uFEFF`) so Excel on Windows doesn't mangle `Ω` and `′`, and **quote every field** rather than conditionally — device model strings contain commas.
+Two things to get right: emit a **UTF-8 BOM** (`\uFEFF`) so Excel on Windows doesn't mangle `Ω` and `′`, and **quote every field** rather than conditionally, device model strings contain commas.
 
-### 8.2 CSV — cable label file
+### 8.2 CSV: cable label file
 
-The highest value-per-line export in the list. Brady, DYMO Rhino, Brother P-touch, and Panduit label software all import CSV. Emit one row per **label**, not per cable — two labels per cable end, four per run, per residential practice (two labels 2–4 ft apart on each end so one survives re-termination):
+The highest value-per-line export in the list. Brady, DYMO Rhino, Brother P-touch, and Panduit label software all import CSV. Emit one row per **label**, not per cable, two labels per cable end, four per run, per residential practice (two labels 2–4 ft apart on each end so one survives re-termination):
 
 ```csv
 label_text,line2,line3,cable_id,end,copy
@@ -1817,7 +1817,7 @@ Note line 2/3 follow AVIXA F501.01: the label states **where the cable connects*
 - `save`/`restore` → `<g>` open/close
 - transforms → `transform="matrix(a,b,c,d,e,f)"` on the `<g>`
 - `Stroke` → `stroke`, `stroke-width`, `stroke-dasharray`, `stroke-linecap`, `stroke-linejoin`, `stroke-miterlimit`
-- `drawText` → `<text x y transform="rotate(…)" text-anchor="start|middle|end" dominant-baseline="…">` — and **use `textLength` with the measured advance width** so an SVG consumer with different font metrics doesn't reflow your labels
+- `drawText` → `<text x y transform="rotate(…)" text-anchor="start|middle|end" dominant-baseline="…">`, and **use `textLength` with the measured advance width** so an SVG consumer with different font metrics doesn't reflow your labels
 - `DiagramPath` → `<path d="…">` (the verb list serialises directly)
 - **Y-down is native to SVG**, so there is no flip at all. It's the easiest of the three backends.
 
@@ -1843,25 +1843,25 @@ Future<Uint8List> exportPng(DiagramScene scene, Box sheet, {double dpi = 150}) a
 }
 ```
 
-The 4096 check is not optional — Flutter silently clamps or fails above it on a large installed base, producing a quietly blurry image with no error.
+The 4096 check is not optional, Flutter silently clamps or fails above it on a large installed base, producing a quietly blurry image with no error.
 
-Note this uses `PictureRecorder`, **not `RepaintBoundary`** — no widget tree, no layout pass, and it works at any scale independent of what's on screen.
+Note this uses `PictureRecorder`, **not `RepaintBoundary`**: no widget tree, no layout pass, and it works at any scale independent of what's on screen.
 
 ### 8.5 XLSX
 
-Needs a package (`excel`, or Syncfusion's commercially-licensed XlsIO). The honest assessment: CSV covers 90 % of the need at 2 % of the cost, and integrators live in Excel but open CSV in Excel without complaint. Ship CSV in v1. Add XLSX in v1.1 only if users ask — and when they do, what they'll actually want is *formatting* (frozen header, autofilter, colour-coded TYPE column, column widths), which is the part CSV can't do and the reason to bother.
+Needs a package (`excel`, or Syncfusion's commercially-licensed XlsIO). The honest assessment: CSV covers 90 % of the need at 2 % of the cost, and integrators live in Excel but open CSV in Excel without complaint. Ship CSV in v1. Add XLSX in v1.1 only if users ask, and when they do, what they'll actually want is *formatting* (frozen header, autofilter, colour-coded TYPE column, column widths), which is the part CSV can't do and the reason to bother.
 
 ### 8.6 What's cheap because of §6
 
 Worth stating plainly, because it's the return on the architecture:
 
-- **SVG export** — one file, no new geometry code, no new text handling.
-- **PNG export** — the screen backend already exists.
-- **Live preview** — free, and faithful by construction.
-- **Key plans and thumbnails** — replay the same scene at a different scale.
-- **Golden tests** — assert on `DiagramScene.ops`, no pixels involved.
-- **Future: server-side export** — the renderer is already Flutter-free (P3).
-- **Future: web export** — same, plus a canvas backend if you want client-side rendering.
+- **SVG export**: one file, no new geometry code, no new text handling.
+- **PNG export**: the screen backend already exists.
+- **Live preview**: free, and faithful by construction.
+- **Key plans and thumbnails**: replay the same scene at a different scale.
+- **Golden tests**: assert on `DiagramScene.ops`, no pixels involved.
+- **Future: server-side export**: the renderer is already Flutter-free (P3).
+- **Future: web export**: same, plus a canvas backend if you want client-side rendering.
 
 None of that is free if the diagram is drawn twice.
 
@@ -1871,15 +1871,15 @@ None of that is free if the diagram is drawn twice.
 
 ### 9.1 Why not the built-ins
 
-The 14 standard Type1 fonts (Helvetica ×4, Times ×4, Courier ×4, Symbol, ZapfDingbats) embed nothing — zero file cost — but they are single-byte **WinAnsiEncoding**, and any codepoint outside Latin-1 throws:
+The 14 standard Type1 fonts (Helvetica ×4, Times ×4, Courier ×4, Symbol, ZapfDingbats) embed nothing, zero file cost, but they are single-byte **WinAnsiEncoding**, and any codepoint outside Latin-1 throws:
 
 ```
 Exception: Helvetica has no Unicode support
 ```
 
-This is the single most-reported issue in dart_pdf (#76, #196, #252, #384, #405, #810, #1538), and **for RackMate it is not theoretical**. A/V documentation routinely contains `Ω` (speaker impedance), `°`, `±`, `µ`, `→`, `×`, `≈`, `Ø`, `′`/`″` (feet/inches), `—`, and smart quotes pasted out of a proposal — plus client and street names with accents. Never ship default Helvetica.
+This is the single most-reported issue in dart_pdf (#76, #196, #252, #384, #405, #810, #1538), and **for RackMate it is not theoretical**. A/V documentation routinely contains `Ω` (speaker impedance), `°`, `±`, `µ`, `→`, `×`, `≈`, `Ø`, `′`/`″` (feet/inches), `—`, and smart quotes pasted out of a proposal, plus client and street names with accents. Never ship default Helvetica.
 
-`PdfGoogleFonts` from `printing` is also out: it does a **network round-trip**, so it cannot run in a background isolate (§7.3) and fails offline — which is precisely the rack room with no Wi-Fi where someone re-exports a drawing.
+`PdfGoogleFonts` from `printing` is also out: it does a **network round-trip**, so it cannot run in a background isolate (§7.3) and fails offline, which is precisely the rack room with no Wi-Fi where someone re-exports a drawing.
 
 ### 9.2 Recommendation: **IBM Plex**
 
@@ -1895,11 +1895,11 @@ This is the single most-reported issue in dart_pdf (#76, #196, #252, #384, #405,
 
 Why IBM Plex specifically:
 
-1. **SIL Open Font License 1.1** — free for commercial use, embeddable in PDFs without restriction, redistributable, no attribution required in the output document. The only OFL obligation that matters is that you can't sell the fonts themselves, which you aren't. Clean.
+1. **SIL Open Font License 1.1**: free for commercial use, embeddable in PDFs without restriction, redistributable, no attribution required in the output document. The only OFL obligation that matters is that you can't sell the fonts themselves, which you aren't. Clean.
 2. **One coherent superfamily.** Plex Sans, Plex Sans Condensed, and Plex Mono share design DNA, x-height and vertical metrics. A schedule mixing condensed sans headers with mono IDs looks designed rather than assembled.
-3. **Plex Mono is a genuinely good technical mono** — unambiguous `0`/`O`, `1`/`l`/`I`, `5`/`S`, `8`/`B`. In a document whose entire purpose is transcribing identifiers correctly onto physical labels, that is a safety property, not an aesthetic one. `W014` vs `WO14` is a real failure mode.
+3. **Plex Mono is a genuinely good technical mono**: unambiguous `0`/`O`, `1`/`l`/`I`, `5`/`S`, `8`/`B`. In a document whose entire purpose is transcribing identifiers correctly onto physical labels, that is a safety property, not an aesthetic one. `W014` vs `WO14` is a real failure mode.
 4. **Plex Sans Condensed buys ~12 % column width** in the schedule, which is the difference between a 10-column and a 12-column table on ANSI A landscape.
-5. **Coverage:** Latin, Greek (so `Ω`, `µ`, `Δ`), Cyrillic, and the common technical punctuation(`°`, `±`, `×`, `′`, `″`, `–`, `—`, `“”`). Arrows (`→`, `↔`) and box-drawing are **not** in Plex — hence the fallback.
+5. **Coverage:** Latin, Greek (so `Ω`, `µ`, `Δ`), Cyrillic, and the common technical punctuation(`°`, `±`, `×`, `′`, `″`, `–`, `—`, `“”`). Arrows (`→`, `↔`) and box-drawing are **not** in Plex, hence the fallback.
 
 6. **It is not Helvetica or Arial**, which read as "made in a word processor." Plex reads as engineering documentation, which is what this is.
 
@@ -1929,7 +1929,7 @@ flutter:
     - assets/fonts/          # ← REQUIRED as well, for rootBundle.load()
 ```
 
-`FontRef` maps to `RackBody` / `RackCond` / `RackMono` on the Flutter side and to the corresponding `PdfTtfFont` on the PDF side — **the same file both times** (§6.7).
+`FontRef` maps to `RackBody` / `RackCond` / `RackMono` on the Flutter side and to the corresponding `PdfTtfFont` on the PDF side, **the same file both times** (§6.7).
 
 ### 9.4 Theme and fallback chain
 
@@ -1943,7 +1943,7 @@ final theme = pw.ThemeData.withFont(
 );
 ```
 
-`fontFallback` is per-glyph and is the safety net for a stray `→` in a user's note field. Set it even when you're sure you don't need it — the cost is one line and the failure mode without it is a thrown exception mid-export.
+`fontFallback` is per-glyph and is the safety net for a stray `→` in a user's note field. Set it even when you're sure you don't need it, the cost is one line and the failure mode without it is a thrown exception mid-export.
 
 Belt and braces, add a sanitiser on all user-supplied strings that maps unrepresentable codepoints to ASCII rather than throwing:
 
@@ -1956,7 +1956,7 @@ const _substitutions = {
 String sanitizeForPdf(String s, PdfFont font, List<PdfFont> fallback) { /* … */ }
 ```
 
-Run it in the scene builder, not in the backend — so the screen shows exactly what the PDF will show.
+Run it in the scene builder, not in the backend, so the screen shows exactly what the PDF will show.
 
 ### 9.5 Size cost, honestly
 
@@ -2025,20 +2025,20 @@ Because the interesting risk is all in §6, front-load it.
 |---|---|---|
 | 1 | The five verification spikes (§6.11) in a throwaway `bin/spike.dart` | The `pdf` API behaves as assumed |
 | 2 | `geometry`, `style`, `path`, `text`, `canvas`, `ops` + `PdfDiagramCanvas` + a hardcoded 20-op scene → one PDF | The flip, the transform stack, text anchoring |
-| 3 | `FlutterDiagramCanvas` + `canvas_parity_test` overlaying both backends' output for a fixture scene | **Screen/print parity** — the thing that's expensive to fix late |
+| 3 | `FlutterDiagramCanvas` + `canvas_parity_test` overlaying both backends' output for a fixture scene | **Screen/print parity**: the thing that's expensive to fix late |
 | 4 | `furniture.dart` + `PageTheme.buildBackground` → a bordered, title-blocked blank sheet | Furniture path, `FullPage(ignoreMargins:)` |
-| 5 | `headless/document_build_test.dart` under `dart test` | **P3** — isolate and future server export are possible |
+| 5 | `headless/document_build_test.dart` under `dart test` | **P3**: isolate and future server export are possible |
 | 6 | `scene_builder` for one interconnect sheet from a real fixture project | The renderer |
 | 7 | `schedule_table` with manual pagination, 200-row fixture | Pagination, header repeat, long-token safety |
 | 8 | `elevation_builder` | The tall-sheet case |
 | 9 | `cable_id.dart` + presets | §3 |
-| 10 | `layout.dart` net partition + `cross_refs.dart` | §5.4 — needs steps 6 and 8 done |
+| 10 | `layout.dart` net partition + `cross_refs.dart` | §5.4: needs steps 6 and 8 done |
 | 11 | `isolate_runner` + progress + cancel | §7.3 |
-| 12 | `export_dialog` + live preview | §7.1 — trivially, because step 3 already gave you the preview renderer |
+| 12 | `export_dialog` + live preview | §7.1: trivially, because step 3 already gave you the preview renderer |
 | 13 | CSV + label export | §8.1, §8.2 |
-| 14 | `svg_canvas.dart` | §8.3 — one file, on top of everything above |
+| 14 | `svg_canvas.dart` | §8.3: one file, on top of everything above |
 
-Steps 1–5 are roughly a week and de-risk the entire feature. If step 3 doesn't produce parity, stop and fix it before writing a single scene builder — every hour spent on layout before parity is established is an hour that may need redoing.
+Steps 1–5 are roughly a week and de-risk the entire feature. If step 3 doesn't produce parity, stop and fix it before writing a single scene builder, every hour spent on layout before parity is established is an hour that may need redoing.
 
 ---
 
@@ -2048,16 +2048,16 @@ Steps 1–5 are roughly a week and de-risk the entire feature. If step 3 doesn't
 |---|---|---|
 | 1 | 8 sheet types default-on/auto, NCS `T`-discipline numbering, presets over checkboxes | §1 |
 | 2 | 10 default + 9 optional schedule columns, ANSI A landscape, 30 rows/page, manual pagination | §2 |
-| 3 | TYPE chip is a **sample of the actual drawn line** — colour + dash + tag, greyscale-safe by construction | §2.4 |
+| 3 | TYPE chip is a **sample of the actual drawn line**: colour + dash + tag, greyscale-safe by construction | §2.4 |
 | 4 | Token-template cable ID engine, 9 presets, `W{N:3}` default, IDs materialised and locked past `Pulled` | §3 |
 | 5 | Furniture drawn through the shared renderer, revision block generated from project history | §4 |
 | 6 | ANSI B landscape diagrams / ANSI A landscape schedules / ANSI B portrait elevations | §5.2 |
 | 7 | **Net partition + off-sheet connectors** for v1; geometric tiling as fallback | §5.4 |
 | 8 | Legibility, not user preference, triggers multi-sheet: `k × minTextPt < 6.0` | §5.5 |
 | 9 | **One `DiagramCanvas` interface, four implementations**, display list in between | §6 |
-| 10 | Global Y-flip in the PDF adapter, not per-coordinate — because the interface exposes `rotate`/`transform` | §6.5 |
+| 10 | Global Y-flip in the PDF adapter, not per-coordinate, because the interface exposes `rotate`/`transform` | §6.5 |
 | 11 | **`PdfFont.stringMetrics` is the single source of truth for text metrics on both backends**, with Skia kerning disabled to match | §6.7 |
-| 12 | No gradients, shadows, blurs, blend modes, or shaders — flat fills, strokes, dashes, text only | §6.4 |
+| 12 | No gradients, shadows, blurs, blend modes, or shaders, flat fills, strokes, dashes, text only | §6.4 |
 | 13 | Whole export in an isolate; fonts pre-loaded to `Uint8List`; progress via captured `SendPort`; cancel via `Isolate.kill` | §7.3 |
 | 14 | Primary preview uses the **screen** renderer, so the core flow has zero native dependencies | §7.4 |
 | 15 | `file_selector`, not `file_picker` | §7.5 |
@@ -2065,4 +2065,4 @@ Steps 1–5 are roughly a week and de-risk the entire feature. If step 3 doesn't
 | 17 | IBM Plex Sans / Sans Condensed / Mono, SIL OFL 1.1, ~1.0 MB bundled, ~8–25 KB embedded per PDF | §9 |
 | 18 | Declare fonts under **both** `fonts:` and `assets:` in pubspec | §9.3 |
 
-**The one thing to get right:** §6.7 and §6.11 item 5. Text metric parity and the text rotation sign are the two failures that produce a PDF which is subtly, unfixably different from the preview — and both are cheap to lock down with a parity test on day three and ruinous to chase on day ninety.
+**The one thing to get right:** §6.7 and §6.11 item 5. Text metric parity and the text rotation sign are the two failures that produce a PDF which is subtly, unfixably different from the preview, and both are cheap to lock down with a parity test on day three and ruinous to chase on day ninety.
