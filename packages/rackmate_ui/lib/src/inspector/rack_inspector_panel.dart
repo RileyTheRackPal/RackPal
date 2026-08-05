@@ -812,8 +812,19 @@ class _LocationField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ORDER THEN ID, because `order` alone is not a total order.
+    // `Location.order` is a plain mutable `FracIndex` that nothing
+    // enforces the uniqueness of: racks and links get theirs from
+    // `nextOrder`, locations are authored directly, so two can collide in
+    // a decoded document. `List.sort` is not stable, so a bare `order`
+    // comparison lets colliding entries swap places between rebuilds of an
+    // unchanged document. Every other `order` sort in the tree ends in an
+    // id or key; this one was the exception.
     final locations = doc.locations.values.toList()
-      ..sort((a, b) => a.order.v.compareTo(b.order.v));
+      ..sort((a, b) {
+        final byOrder = a.order.v.compareTo(b.order.v);
+        return byOrder != 0 ? byOrder : a.id.v.compareTo(b.id.v);
+      });
     return _InspectorDropdown<Uuid?>(
       label: 'Location',
       // A locationId pointing at a location that no longer exists would
