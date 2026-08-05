@@ -7293,9 +7293,83 @@ and the two beside it. The passthrough is not implemented; it is M3's. No board 
 
 ---
 
+### 11.19 DR-020 · A plan may not predict a route; the length column's job is the as-built tally
+
+**Ruled 2026-08-04.** A **scope amendment under roadmap §8.3** and the first ruling in this record
+whose evidence is the trade rather than the corpus. It corrects `docs/15-plan-view.md` §4 one
+commit after that document was written.
+
+**11.19.1 What the trade said, and why it overturns §4's first draft.** `docs/15` §4 specified a
+**route polyline** the designer would draw at design time on the plan, a project-level
+`routingFactor` and a `slackAllowance`, and treated the sum as a *measured* length. The user's
+correction:
+
+> Structural elements — LVLs, concrete beams, heavy purlin usage — regularly force a run through a
+> crawlspace instead of the attic, and which of those happens is not knowable when the plan is
+> drawn. There may be no need to pre-plan exact runs at all.
+
+**The route is discovered, not designed.** Two drops in the same room to the same wall can take
+paths differing by tens of feet, decided by framing nobody has opened up yet. A design-time
+polyline therefore stores a guess wearing the visual authority of a measurement, which is G4's
+central prohibition, and it is *worse* than the per-room estimate it would have replaced because it
+looks specific. **§4's first draft is void and is not to be re-argued from.**
+
+**11.19.2 The ruling, five parts.**
+
+1. **The Plan view predicts no routes.** The route polyline, `routingFactor` and `slackAllowance`
+   are **deleted**. The plan's only length contribution is **`planLowerBound`**: the calibrated
+   straight line from rack pin to device pin, plus the location's `riseAllowance` if one is set.
+   It is one new value on the **existing** `ScheduleLengthSource` enum, not a new mechanism.
+2. **A bound is not an estimate, and the distinction is load-bearing.** `planLowerBound` prints
+   italic and **prefixed `≥`**, and **never enters the footage rollup as a quantity** — a bound
+   cannot be summed into "how much Cat6 to order" without making a claim it is not entitled to
+   make. Its value is the asymmetry: **a plan can prove a length violation and can never prove
+   compliance**, because if the bound already exceeds the limit no path can rescue it.
+3. **`Link.spliceCount: int?` ships in v1, in M3.** Null is unknown, `0` is confirmed none
+   (G4, CR-114). A splice is a real as-built fact with real consequences: on Cat6 it breaks the
+   channel and fails certification, on coax it is loss, on fibre it is normal and engineered.
+   `Link.notes` already exists and carries the why.
+4. **`LEN-002` ships in v1, and the catalogue becomes 28.** *A run's known length exceeds the
+   declared maximum for its media type.* One generic rule reading a **new `maxLength` on the media
+   registry** rather than one rule per medium: one AC-051 fixture pair instead of three or ten, and
+   a new medium's limit costs a registry row rather than an amendment. Tier 3.
+   **The v1 catalogue is 28 rules: 8 tier-1 + 6 tier-2 + 14 tier-3.** AC-051's gate is unchanged
+   and now applies to 28 pairs.
+5. **The as-built tally surface ships in M3**, with the Structure editor, reusing its bulk-entry
+   ergonomics (AC-048). An installer closing out sixty runs needs one table with a length column
+   they tab down, not sixty inspector visits.
+
+**11.19.3 Why most of this was already built, which is why it is cheap.** `Link` already carries
+`routedLength`, `cutLength`, `terminatedLength` (AC-024), `roughInStatus{planned, pulled, dressed,
+terminated, tested}` and `TestResult{pass, headroom, certificateId}`. `derived/schedule.dart`
+already projects `terminatedLength` and `roughInStatus` into every `ScheduleEntry`, and
+`ScheduleLengthSource` already tiers provenance as `cut | outletNominal | roomEstimate | none`.
+M3's checklist already owns *"the three length fields"*. **The as-built story was 80 % modelled and
+0 % reachable**, which is the gap this ruling closes. `docs/15` §4's first draft did not notice the
+enum existed and invented a parallel four-tier scheme; that is the second time in this record a
+design was written without reading the code it duplicates (§11.18.5).
+
+**11.19.4 What it does not rule.** Whether `PathwayKind` gains `attic` and `crawlspace` alongside
+`conduit | jhook | tray | plenumSpace | riser | directBury | exterior`. Both carry consequences an
+integrator acts on (temperature rating, rodent, moisture) in the way `plenumSpace` carries a code
+consequence, but both are *spaces* and the location tree already models spaces. **Owed at M3**, when
+`Pathway` gets its editor. It also does not add length rules per medium beyond `LEN-002`; AC-040's
+deferral of the remaining ~40 rules to v1.2 stands.
+
+**11.19.5 Scope.** **v1 grows by three items**: `Link.spliceCount`, `LEN-002` plus its registry
+`maxLength`, and the as-built tally surface. **v1.1 shrinks by one**: the Plan view's route
+polyline. **M3 grows for the second time** (DR-007 was the first) and stays `M` at its upper end;
+the tally surface is a column on a table the milestone already builds, not a new screen. M5 gains
+one rule and one fixture pair. Roadmap §2.1, §2.2 and M3's checklist are amended.
+
+**11.19.6 Landed.** Ruling, scope list, `docs/15` §4 rewritten, and the 28-rule sweep across ten
+documents. Nothing implemented. No board item.
+
+---
+
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-019 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-020 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -7574,6 +7648,25 @@ in. See §11.7.
 | **AC-024** | **Unaffected and extended, not replaced.** `Location.estimatedRunLengthFromRack` remains tier 3 of docs/15 §4's four tiers and remains the answer for every room without a plan. |
 | **G4 / CR-114** | **Unaffected, and it is the reason §11.18.1's correction matters.** Silent field loss on save is the same class of failure as a fabricated number: the document stops saying what it knows. |
 
+### 12.13 Superseded by DR-020 (no predicted routes; the catalogue becomes 28)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **§12.6(b)**, the rule count | *"The v1 catalogue is 27 rules: 8 tier-1 + 6 tier-2 + 13 tier-3."* | **Superseded on the number only.** `LEN-002` is added as a tier-3 rule, so the catalogue is **28: 8 tier-1 + 6 tier-2 + 14 tier-3**. Everything else in §12.6(b) stands exactly as written, including the ratification of `PLC-001..003` and the finding that AC-040's "22" was an arithmetic error. **AC-051's fixture gate is unchanged and applies to 28 pairs.** §11.19.2(4). |
+| **AC-040**, the v1 rule set | *"v1 ships this set and no more"*, with the remaining `LEN` rules moving to v1.2 behind a fixture corpus. | **Superseded by one rule.** `LEN-002` joins v1; the rest of the `LEN` family and the other ~40 deferred rules stay v1.2 exactly as AC-040 placed them. The mechanism matters: `LEN-002` is **generic**, reading a declared `maxLength` off the media registry, so adding a medium's limit is a registry row and not a further amendment to this ruling. |
+| **`docs/15` §4**, first draft | A design-time **route polyline**, a `routingFactor` and a `slackAllowance`, treated as a measured length. | **Void, one commit after it was written.** The route is discovered rather than designed: structure (LVLs, concrete beams, purlins) forces runs into a crawlspace instead of an attic and is not knowable from a floorplan. The plan contributes **`planLowerBound`** and nothing else. §11.19.1. |
+| **Roadmap §2.2**, Plan view row | *"plan-measured run lengths"* | **Reworded to "a plan-derived lower bound".** The row otherwise stands and the item stays v1.1 (DR-018, DR-019). |
+
+**Explicitly NOT superseded:**
+
+| Ruling | Status under DR-020 |
+|---|---|
+| **AC-024** | **Unaffected and vindicated.** Its three length fields are exactly the shape the as-built tally needed, and `Location.estimatedRunLengthFromRack` remains the shipping estimate. DR-020 makes the third field reachable rather than changing any of them. |
+| **AC-051** | **Unaffected. The gate is the point.** No rule ships without a known-bad and a known-good near-miss; `LEN-002` ships with its pair or it does not ship. |
+| **LEN-001** | **Unaffected and now better fed.** It stays tier-3, error, Ethernet over 100 m. `planLowerBound` is a sound input to it precisely because a bound that already exceeds the limit settles the question. |
+| **CR-016, AC-027** (`Pathway`) | **Unaffected.** The as-built route is recorded there, and a crawlspace is expressible today as a `zone` `Location` a `Pathway` runs between. Whether `PathwayKind` gains `attic`/`crawlspace` is left open at §11.19.4. |
+| **G3, CR-022** | **Unaffected.** `LEN-002` is a finding like any other and gates nothing. |
+
 ---
 
 ## 13. Resolved §10 questions
@@ -7736,8 +7829,9 @@ allowlist of pairs — an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-019 are the user's decisions and are binding. §12 is the complete
-index of what they supersede — §12.1…§12.5, §12.9, §12.11 and §12.12 by ruling, §12.6 by internal
-correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **§12.12 is the only entry
-that supersedes another DR**, and it supersedes DR-018's stated reasoning as well as its ruling. Anything not listed there stands as written
+**End of Part 4.** DR-001…DR-020 are the user's decisions and are binding. §12 is the complete
+index of what they supersede — §12.1…§12.5, §12.9, §12.11, §12.12 and §12.13 by ruling, §12.6 by
+internal correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **Two entries
+supersede another DR**: §12.12 (DR-018's reasoning as well as its ruling) and §12.13, which also
+corrects §12.6(b)'s rule count from 27 to 28. Anything not listed there stands as written
 in Parts 1–3.

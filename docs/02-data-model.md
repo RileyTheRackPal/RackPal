@@ -841,7 +841,7 @@ Unresolvable registry IDs degrade to an `unknown(rawId)` placeholder that round-
 
 **This section is the rule catalogue. A rule not listed here does not exist (CR-021).** It is the single home the corpus refers to as `docs/rules.md`; that file is not created.
 
-**27 rules: 8 tier-1 + 6 tier-2 + 13 tier-3.** AC-040's "22" is an arithmetic error against its own enumeration of 24; `PLC-001..003` are ratified here as distinct tier-1 rules because CR-017 already rules their conditions model-illegal and an unnumbered blocking rule can carry neither a `Finding.ruleId` nor an AC-051 fixture pair (canon §12.6(b)).
+**28 rules: 8 tier-1 + 6 tier-2 + 14 tier-3.** AC-040's "22" is an arithmetic error against its own enumeration of 24; `PLC-001..003` are ratified as distinct tier-1 rules because CR-017 already rules their conditions model-illegal and an unnumbered blocking rule can carry neither a `Finding.ruleId` nor an AC-051 fixture pair (canon §12.6(b)). The fourteenth tier-3 rule is **`LEN-002`**, added by DR-020 (canon §11.19, §12.13); §12.6(b)'s "27" is superseded on the number only and stands in every other respect.
 
 The naive design is `hard-illegal / warn / allow` as three static rule outcomes. That shape is rejected, because **which tier a rule belongs to is not a property of the rule — it is a property of the situation.** "HDBaseT into a switch port" is a catastrophic error in a new design and *a correct depiction of an existing system you were called in to fix*. A model that cannot draw a mistake cannot document reality, cannot plan a remediation, and cannot import an as-found survey (G2).
 
@@ -898,6 +898,7 @@ Severity vocabulary is `error | warning | advisory | off` — "info" is renamed 
 | `PWR-001` | Σ continuous amps on a circuit > 80% of the breaker, computed on **typical × diversity factor, in VA**. | **warning** (demoted from error) | CR-020, AC-020 |
 | `PWR-003` | Outlets consumed exceed outlets provided in the rack. | error | AC-040 |
 | `LEN-001` | Ethernet channel > 100 m (90 m horizontal + 10 m patch). When length is null it emits *"length unknown, cannot verify"* rather than passing silently — silence reads as approval. | error | AC-024/M9 |
+| `LEN-002` | A run's known length exceeds the declared `maxLength` for its media type. **Generic by construction**: one rule reading the registry, not one rule per medium, so a new limit is a registry row rather than a new ruling. Fed by `cutLength`/`terminatedLength` when known, and by a `planLowerBound` when that alone already exceeds the limit — a bound can prove a violation and can never prove compliance. Null length emits *"length unknown, cannot verify"* like `LEN-001`. | warning | DR-020 |
 | `RCK-001` | RU overlap on the same face. | error | AC-040 |
 | `RCK-002` | Device extends past `heightU`. | error | AC-040 |
 | `RCK-003` | Σ device weight > `Rack.weightCapacity`. | **warning** (advisory at 85%) | CR-020 |
@@ -907,7 +908,7 @@ Severity vocabulary is `error | warning | advisory | off` — "info" is renamed 
 | `CODE-002` | `Pathway.kind == plenumSpace` and jacket is not `cmp`/`lszh` (NEC 800.154). | error | AC-027/M13 |
 | `LNK-020` | N links have unbound endpoints. A checklist, not a failure. | advisory | AC-018/B1 |
 
-**v1 ships this set and no more** (AC-040) — thirteen tier-3 rules, completing the 27. Everything else in the full catalogue — the remaining `DIR`, `CON`, `ELE`, `LEN`, `BUS`, `SER`, `NET`, `PWR` and `RCK` rules, plus `PWR-006`, `RCK-003b`, `RCK-007`, `RCK-014`, `TOP-010`, `TOP-011` and `SEQ-001` adopted by CR-021 and AC-033 — moves to v1.2 behind a fixture corpus. **No rule ships without a known-bad and a known-good fixture** (AC-040, AC-051).
+**v1 ships this set and no more** (AC-040, as amended by DR-020) — fourteen tier-3 rules, completing the 28. Everything else in the full catalogue — the remaining `DIR`, `CON`, `ELE`, `LEN`, `BUS`, `SER`, `NET`, `PWR` and `RCK` rules, plus `PWR-006`, `RCK-003b`, `RCK-007`, `RCK-014`, `TOP-010`, `TOP-011` and `SEQ-001` adopted by CR-021 and AC-033 — moves to v1.2 behind a fixture corpus. **No rule ships without a known-bad and a known-good fixture** (AC-040, AC-051).
 
 ### 5.4 Acknowledgement — one mechanism, two scopes
 
