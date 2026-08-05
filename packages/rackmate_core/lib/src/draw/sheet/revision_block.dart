@@ -79,8 +79,8 @@ const double _kCellPad = 3;
 /// The revision entries actually shown, oldest first — the newest
 /// [kMaxVisibleRevisions] of [revisions].
 ///
-/// Sorted by `date`, tie-broken by `revision` then `description`, so the
-/// order on paper never depends on the order the list happened to be
+/// Sorted by `date`, tie-broken by `revision`, `description` then `by`, so
+/// the order on paper never depends on the order the list happened to be
 /// decoded in (§8.4: stable iteration order everywhere).
 List<RevisionEntry> visibleRevisions(List<RevisionEntry> revisions) {
   final sorted = sortedRevisions(revisions);
@@ -89,15 +89,24 @@ List<RevisionEntry> visibleRevisions(List<RevisionEntry> revisions) {
 }
 
 /// [revisions] in a deterministic oldest-to-newest order.
+///
+/// THE CHAIN RUNS OUT THROUGH `by`, WHICH THE BLOCK PRINTS. `RevisionEntry`
+/// has no id, so the four authored fields ARE its identity, and the chain
+/// has to reach the last of them. It used to stop at `description`: two
+/// entries issued on one date under one revision label with one description
+/// and DIFFERENT authors compared equal, `List.sort` is not stable, and the
+/// BY column could therefore swap between two runs over an unchanged
+/// document. Comparing all four makes the order total over everything a
+/// reader can see, since entries equal in all four print identically.
 List<RevisionEntry> sortedRevisions(List<RevisionEntry> revisions) {
   final sorted = revisions.toList()
     ..sort((a, b) {
       final byDate = a.date.compareTo(b.date);
       if (byDate != 0) return byDate;
       final byRevision = a.revision.compareTo(b.revision);
-      return byRevision != 0
-          ? byRevision
-          : a.description.compareTo(b.description);
+      if (byRevision != 0) return byRevision;
+      final byDescription = a.description.compareTo(b.description);
+      return byDescription != 0 ? byDescription : a.by.compareTo(b.by);
     });
   return sorted;
 }

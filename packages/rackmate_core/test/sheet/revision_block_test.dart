@@ -130,6 +130,27 @@ void main() {
         <String>['A', 'B', 'C'],
       );
     });
+
+    test('two entries alike but for their AUTHOR order the same whichever '
+        'way round they arrive', () {
+      // The BY column is printed, so its order is observable. The chain
+      // used to stop at `description`, which left these two comparing
+      // equal, and `List.sort` is not stable: the column could swap
+      // between two runs over one unchanged document.
+      // Neither author is `testRevision`'s default, so the two entries
+      // differ in `by` and in nothing else.
+      final ja = testRevision('A', 1, description: 'Issued', by: 'JA');
+      final mk = testRevision('A', 1, description: 'Issued', by: 'MK');
+
+      expect(
+        sortedRevisions(<RevisionEntry>[ja, mk]).map((e) => e.by).toList(),
+        <String>['JA', 'MK'],
+      );
+      expect(
+        sortedRevisions(<RevisionEntry>[mk, ja]).map((e) => e.by).toList(),
+        <String>['JA', 'MK'],
+      );
+    });
   });
 
   group('overflow above eight entries', () {
