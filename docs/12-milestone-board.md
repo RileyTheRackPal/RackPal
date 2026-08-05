@@ -1387,8 +1387,16 @@ deferral costs. **It does not make the call.**
 |---|---|---|
 | M0 | 2–3 | `PARTIAL` — 6 of 8 clause rows demonstrated; two vacuous clauses open (§2.4) |
 | M1 | 8–12 | `CRITERION MET` 2026-07-28 — all 8 exit clauses discharged. Still open, and NOT exit clauses: "ships to real users" + six checklist items (§3.3) |
-| M2–M9 | 32–50 | `NOT STARTED` — zero demonstrated exit clauses anywhere, though M6 carries a real M1 slice (§5.5) |
-| **Remaining** | **32–50**, plus an uncosted M1 tail | The 32–50 is roadmap §6's M2–M9 rows summed exactly (4+4+5+4+5+4+2+4 = 32; 7+7+7+6+7+6+3+7 = 50). It excludes the M1 tail, which the roadmap never costed, and the cross-cutting work in §6.1 (CI, goldens, provenance gate), which the roadmap never costed either because it assumed CI existed from M0 |
+| M2 | 4–7 | `CRITERION MET` 2026-08-01 — all 5 exit clauses discharged, four by tests and one by a person (§1, §5.1) |
+| M3–M9 | 28–43 | `NOT STARTED` — zero demonstrated exit clauses anywhere, though M6 carries a real M1 slice (§5.5) |
+| **Remaining** | **28–43**, plus an uncosted M1 tail | The 28–43 is roadmap §6's M3–M9 rows summed exactly (4+5+4+5+4+2+4 = 28; 7+7+6+7+6+3+7 = 43). It excludes the M1 tail, which the roadmap never costed; the cross-cutting work in §6.1 (CI, goldens, provenance gate), which the roadmap never costed either because it assumed CI existed from M0; and **M4's re-costing to `L` 7–9 at its 2026-08-02 decomposition (§5.3, §12.7)**, which roadmap §6's own row predates. Carrying that re-cost forward the band is **30–45** |
+
+> **This table read `M2–M9 | 32–50 | NOT STARTED` until 2026-08-04**, contradicting §1 and §5.1 on
+> this same board, both of which had recorded M2 as `CRITERION MET` since 2026-08-01. The row was
+> written before M2 closed and was never revisited, which overstated the remaining band by M2's
+> whole 4–7 weeks. Recorded rather than silently fixed: §7 is the section a scheduling decision is
+> made from, and a reader who quoted its total in the interim quoted a number this board's own
+> §1 already contradicted.
 
 ### 7.2 What DR-006 changes on its own, before any deferral
 
