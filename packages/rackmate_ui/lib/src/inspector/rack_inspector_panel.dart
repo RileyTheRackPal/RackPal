@@ -547,7 +547,13 @@ class _NullableLengthField extends StatelessWidget {
       label: label,
       // Exact nanometres in, a plain millimetre number out. Trailing ".0"
       // trimmed so a 457.2 mm depth and a 300 mm depth read alike.
-      text: value == null ? '' : _trim(value!.nm / 1e6),
+      //
+      // The divisor is NAMED, not a bare `1e6`. This field converts in both
+      // directions five lines apart, and the mass field below does the same
+      // in a factor that differs by 1000; see `Mass.fromKilograms`, which
+      // exists because those two literals were once confused for each other
+      // and every seed template stored grams.
+      text: value == null ? '' : _trim(value!.nm / Len.nmPerMillimetre),
       onCommit: (raw) {
         if (raw.trim().isEmpty) {
           onCommit(null);
@@ -558,7 +564,7 @@ class _NullableLengthField extends StatelessWidget {
           onRefuse('Usable depth must be a positive number of mm, or empty.');
           return;
         }
-        onCommit(Len((mm * 1e6).round()));
+        onCommit(Len.fromMillimetres(mm));
       },
       onClear: () => onCommit(null),
       hasValue: value != null,
@@ -586,7 +592,8 @@ class _NullableMassField extends StatelessWidget {
   Widget build(BuildContext context) {
     return _NullableNumberField(
       label: label,
-      text: value == null ? '' : _trim(value!.ug / 1e9),
+      // Named divisor, for the reason given on the length field above.
+      text: value == null ? '' : _trim(value!.ug / Mass.ugPerKilogram),
       onCommit: (raw) {
         if (raw.trim().isEmpty) {
           onCommit(null);
@@ -600,7 +607,7 @@ class _NullableMassField extends StatelessWidget {
           );
           return;
         }
-        onCommit(Mass((kg * 1e9).round()));
+        onCommit(Mass.fromKilograms(kg));
       },
       onClear: () => onCommit(null),
       hasValue: value != null,

@@ -28,10 +28,7 @@ import 'package:rackmate_core/src/model/registries.dart';
 import 'package:rackmate_core/src/units/ids.dart';
 import 'package:rackmate_core/src/units/len.dart';
 
-/// Exact nanometres per millimetre (`Len.nmPerInch / 25.4`).
-const int _nmPerMm = 1_000_000;
-
-Len _mm(num value) => Len((value * _nmPerMm).round());
+Len _mm(num v) => Len.fromMillimetres(v);
 
 /// Connector ids with no panel-cutout footprint by design (§5.1) — a
 /// shipped template may reference these without tripping the
