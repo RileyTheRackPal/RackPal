@@ -2,7 +2,7 @@
 
 Raw source material behind the RackMate plan. These are the unedited outputs of the research,
 design, and critique passes that produced [the plan documents](../). They are kept in version
-control so the reasoning behind each decision stays auditable — you can trace any ruling in
+control so the reasoning behind each decision stays auditable; you can trace any ruling in
 [10-decisions.md](../10-decisions.md) back to the material it came from.
 
 ## Status of this material
@@ -10,12 +10,12 @@ control so the reasoning behind each decision stays auditable — you can trace 
 **These are working papers, not specifications.** Read them as evidence, not as instructions.
 
 - The authored plan documents in [`docs/`](../) supersede everything here. Where a working
-  paper conflicts with a plan document, **the plan document wins** — the plan is the reconciled
+  paper conflicts with a plan document, **the plan document wins**: the plan is the reconciled
   output, these are the raw inputs to that reconciliation.
 - The design papers were written **independently and in parallel**, so they contradict each
   other in places. Those contradictions were deliberately surfaced and resolved during
   synthesis; finding one here is expected, not a defect.
-- Factual claims — dimensions, standards references, package APIs, pricing — were gathered from
+- Factual claims (dimensions, standards references, package APIs, pricing) were gathered from
   web sources and have **not all been independently verified**. Claims that were known to need
   checking carry an inline `VERIFY:` marker, but absence of a marker is not a guarantee of
   accuracy. Verify before relying on any specific figure.
@@ -33,7 +33,7 @@ from multiple message blocks and may read choppily at block boundaries.
 
 ## Contents
 
-### Research — domain
+### Research: domain
 
 | File | Subject |
 | --- | --- |
@@ -41,7 +41,7 @@ from multiple message blocks and may read choppily at block boundaries.
 | [research-domain-signals.md](research-domain-signals.md) | A/V signal, cable and connector taxonomy across all families |
 | [research-domain-docs.md](research-domain-docs.md) | Wiring schedules, TIA-606 labelling, structured wiring, CI deliverables |
 
-### Research — technical
+### Research: technical
 
 | File | Subject |
 | --- | --- |
@@ -50,7 +50,7 @@ from multiple message blocks and may read choppily at block boundaries.
 | [research-flutter-arch.md](research-flutter-arch.md) | State management, undo/redo, serialization, project structure |
 | [research-routing.md](research-routing.md) | Orthogonal edge routing, layered layout, net labels, buses |
 
-### Research — market
+### Research: market
 
 | File | Subject |
 | --- | --- |

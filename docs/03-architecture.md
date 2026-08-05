@@ -1,6 +1,6 @@
 # Architecture
 
-This document specifies how RackMate is built: the five packages and the dependency rule that keeps them apart, where the document lives and how it is observed, the command and undo system that is the only way it changes, the derived-data pipeline, the single drawing IR that feeds both the screen and the PDF, persistence, and the platform surface. It is normative for structure and for names; where it states a decision, the governing ruling ID from the [decision record](10-decisions.md) is cited so any statement can be traced back to its adjudication. Anything not verified against a live API is marked `VERIFY:` rather than asserted — per [`critique-feasibility.md`](research/critique-feasibility.md), unverified API claims are the cheapest failure to prevent and the most expensive to discover late.
+This document specifies how RackMate is built: the five packages and the dependency rule that keeps them apart, where the document lives and how it is observed, the command and undo system that is the only way it changes, the derived-data pipeline, the single drawing IR that feeds both the screen and the PDF, persistence, and the platform surface. It is normative for structure and for names; where it states a decision, the governing ruling ID from the [decision record](10-decisions.md) is cited so any statement can be traced back to its adjudication. Anything not verified against a live API is marked `VERIFY:` rather than asserted, per [`critique-feasibility.md`](research/critique-feasibility.md), unverified API claims are the cheapest failure to prevent and the most expensive to discover late.
 
 ---
 
@@ -10,13 +10,13 @@ Restated after adjudication. Three of the five survive intact; two were amended 
 
 | # | Decision | Status | Consequence |
 |---|---|---|---|
-| **D1** | **Monorepo, four pure-Dart packages + one Flutter app**, joined by pub workspaces. `rackmate_core` imports neither `package:flutter`, `dart:ui`, nor `package:pdf`. | **Amended by CR-083** — four packages became five. | Model, commands, routing, validation and the scene builder test in `dart test` in under a second, and run inside a background isolate for PDF export. |
+| **D1** | **Monorepo, four pure-Dart packages + one Flutter app**, joined by pub workspaces. `rackmate_core` imports neither `package:flutter`, `dart:ui`, nor `package:pdf`. | **Amended by CR-083**: four packages became five. | Model, commands, routing, validation and the scene builder test in `dart test` in under a second, and run inside a background isolate for PDF export. |
 | **D2** | **One mutable document aggregate, mutated only through `Command`s.** No immutable tree, no `copyWith`. Change detection by **epoch counters**, not equality. | Intact. | Undo is exact and free; repaint invalidation is exact; no deep-copy churn on drag. |
-| **D3** | **Geometry stored as integers.** | **Superseded by CR-001** — the unit is `int64` **nanometres**, not hundredths-mm. | 1U = `Len(44_450_000)` exactly; 1/32 in = 793 750 nm exactly. The original hundredths-mm claim fails on the exact case it was written for. |
-| **D4** | **A display list (`DiagramScene`) is the single drawing IR.** Screen and PDF are two interpreters of it. | **Strengthened by CR-086** — devices no longer escape it. | Screen and print cannot diverge, including on faceplates, which is where the divergence would have mattered most. |
+| **D3** | **Geometry stored as integers.** | **Superseded by CR-001**: the unit is `int64` **nanometres**, not hundredths-mm. | 1U = `Len(44_450_000)` exactly; 1/32 in = 793 750 nm exactly. The original hundredths-mm claim fails on the exact case it was written for. |
+| **D4** | **A display list (`DiagramScene`) is the single drawing IR.** Screen and PDF are two interpreters of it. | **Strengthened by CR-086**: devices no longer escape it. | Screen and print cannot diverge, including on faceplates, which is where the divergence would have mattered most. |
 | **D5** | **Pointer drags never touch the document.** Ephemeral drag state lives in an overlay-only `Listenable`; `onPointerUp` emits exactly one `Command`. | Intact. | 60 fps during drag with zero document-layer repaints, and one undo entry per gesture with no coalescing logic. |
 
-Rejected alternative to D2: whole-document replacement (Bloc, `Notifier<T>`, signals). A 500 KB graph replaced per pointer-adjacent event is waste, and a replacement carries no information about *what* changed — which is precisely what the repaint system needs.
+Rejected alternative to D2: whole-document replacement (Bloc, `Notifier<T>`, signals). A 500 KB graph replaced per pointer-adjacent event is waste, and a replacement carries no information about *what* changed, which is precisely what the repaint system needs.
 
 ---
 
@@ -24,7 +24,7 @@ Rejected alternative to D2: whole-document replacement (Bloc, `Notifier<T>`, sig
 
 ### 2.1 Five packages, not four and not one
 
-Per **CR-083**. `design-architecture.md` argued four packages; `design-pdf-export.md` argued a single `lib/` tree with all four canvas backends in one directory. The single tree is rejected: it places `TextMeasurer` + `PdfFontMeasurer` in the core tree, which makes core depend on `package:pdf` and breaks core's own Flutter-free guard. The four-package split is rejected as insufficient: **CR-081** requires one concrete `TextMeasurer` backed by `PdfFont.stringMetrics` used by *every* backend including the Flutter one, and there is no legal home for it in four packages. The resolution is dependency **inversion**, not contamination — a fifth package.
+Per **CR-083**. `design-architecture.md` argued four packages; `design-pdf-export.md` argued a single `lib/` tree with all four canvas backends in one directory. The single tree is rejected: it places `TextMeasurer` + `PdfFontMeasurer` in the core tree, which makes core depend on `package:pdf` and breaks core's own Flutter-free guard. The four-package split is rejected as insufficient: **CR-081** requires one concrete `TextMeasurer` backed by `PdfFont.stringMetrics` used by *every* backend including the Flutter one, and there is no legal home for it in four packages. The resolution is dependency **inversion**, not contamination, a fifth package.
 
 | Package | Kind | Depends on | Owns |
 |---|---|---|---|
@@ -34,9 +34,9 @@ Per **CR-083**. `design-architecture.md` argued four packages; `design-pdf-expor
 | `rackmate_ui` | Flutter | core + `rackmate_text` | `FlutterDiagramCanvas`, render objects, widgets, `canvas/input/`. |
 | `apps/rackmate` | Flutter app | everything + plugins | shell, providers, files, export service, diagnostics. |
 
-`rackmate_ui` depending on `rackmate_text` is harmless: `package:pdf` is pure Dart and isolate-safe. The invariant that actually matters survives and is mechanically enforced — **`rackmate_core`, where the scene builder lives, has no concrete font engine and no `dart:ui`; it receives a `TextMeasurer` by injection.**
+`rackmate_ui` depending on `rackmate_text` is harmless: `package:pdf` is pure Dart and isolate-safe. The invariant that actually matters survives and is mechanically enforced, **`rackmate_core`, where the scene builder lives, has no concrete font engine and no `dart:ui`; it receives a `TextMeasurer` by injection.**
 
-Rejected alternative: a folder convention inside one Flutter package. `design-architecture.md §1.1` predicts it "will be violated within a month by an `Offset` that 'was just easier'", and that prediction is the reason a package boundary — which the compiler enforces — is used instead of a lint.
+Rejected alternative: a folder convention inside one Flutter package. `design-architecture.md §1.1` predicts it "will be violated within a month by an `Offset` that 'was just easier'", and that prediction is the reason a package boundary, which the compiler enforces, is used instead of a lint.
 
 Not using melos. Dart 3.6+ pub workspaces do the resolution; melos earns its place past ~6 packages or on first publish.
 
@@ -156,7 +156,7 @@ RackMate/
 | Layer | Lives in | Contains |
 |---|---|---|
 | **Domain** | `rackmate_core/src/{units,idformat,model,routing,derived,draw}` | Entities, value objects, invariants, the router, the DRC rule functions, the scene builder. Knows nothing about files, PDFs, pixels or Flutter. |
-| **Application** | `rackmate_core/src/{commands,document_controller.dart}` | `Command`, `Transaction`, `UndoStack`, `DocumentController`. Every state transition the product supports is a class here — this is the app's verb list. |
+| **Application** | `rackmate_core/src/{commands,document_controller.dart}` | `Command`, `Transaction`, `UndoStack`, `DocumentController`. Every state transition the product supports is a class here; this is the app's verb list. |
 | **Infrastructure** | `rackmate_core/src/persistence`, all of `rackmate_text` and `rackmate_export`, `apps/rackmate/lib/{files,export,diagnostics}` | Codecs, migrations, font metrics, PDF emission, disk I/O, isolates, logging, OS dialogs. |
 | **Presentation** | all of `rackmate_ui`, `apps/rackmate/lib/{providers,shell}` | Widgets, render objects, viewport, input, Riverpod wiring, menus. |
 
@@ -177,7 +177,7 @@ apps/rackmate    →  all of the above, flutter, plugins
 ### 3.1 Three rules that carry the weight
 
 1. **`rackmate_core` imports no `package:flutter`, no `dart:ui`, no `package:pdf`.** Not for `Offset`, not for `Color`, not for `Rect`. Core defines `Pt`, `Box`, and stores colour as `int` ARGB on `SignalDomainDef` (CR-078). Adapters live in `rackmate_ui`.
-2. **The document is mutated only via `DocumentController.run(Command)`.** Enforced with `@internal` from `package:meta` on entity setters — an analyzer error for any consumer outside `rackmate_core`, which `rackmate_ui` and `apps/rackmate` are. Rejected alternative: `part of` the commands library (**AC-013**) — `part` files cannot carry their own imports, so ~40 entity types plus ~30 command types collapse into one library file importing everything and 70 parts that cannot be reasoned about independently.
+2. **The document is mutated only via `DocumentController.run(Command)`.** Enforced with `@internal` from `package:meta` on entity setters, an analyzer error for any consumer outside `rackmate_core`, which `rackmate_ui` and `apps/rackmate` are. Rejected alternative: `part of` the commands library (**AC-013**), `part` files cannot carry their own imports, so ~40 entity types plus ~30 command types collapse into one library file importing everything and 70 parts that cannot be reasoned about independently.
 3. **Nothing in Domain or Application is `async`.** The document is a synchronous, single-threaded data structure. Every `Future` lives in Infrastructure or Presentation. This deletes an entire class of interleaved-mutation bug and makes every core test synchronous.
 
 ### 3.2 Mechanical enforcement
@@ -223,7 +223,7 @@ Rejected alternatives, with the one-line reason each:
 | Rejected | Reason |
 |---|---|
 | `signals` | Its advantage is automatic fine-grained tracking of *widget* rebuilds; the canvas hot path bypasses widget rebuilds entirely via `CustomPainter(repaint:)`, so it is ecosystem risk for a benefit already engineered around. |
-| Bloc | Event-sourcing a canvas means an event object per interaction tick; its good idea — an explicit replayable log — is the command stack, built by hand with better ergonomics (menu labels, inversion). |
+| Bloc | Event-sourcing a canvas means an event object per interaction tick; its good idea, an explicit replayable log, is the command stack, built by hand with better ergonomics (menu labels, inversion). |
 | Immutable document + `copyWith` | Dart has no lens library worth using; deep `copyWith` chains are the largest source of tedium in Flutter document editors, and the two reasons to want immutability (safe undo, change detection) are already supplied by the command stack and the epoch counters. |
 | `build_runner` / freezed / `json_serializable` | Macros were cancelled in January 2025, so codegen is a permanent commitment, not a bridge. Sealed classes plus exhaustive `switch` cover the union case natively, and **hand-written JSON is actively better for a document format** (§9.1). Zero `build_runner` keeps `dart test` sub-second for the life of the project. |
 
@@ -243,9 +243,9 @@ ProviderScope                                       ← one per open document
 └── interactionControllerProvider : InteractionController  ephemeral drag state (D5)
 ```
 
-`VERIFY:` Riverpod 3 demoted `ChangeNotifierProvider` and `StateProvider` to a `legacy` library (**AC-016/#19**). These controllers are consumed by painters as plain `Listenable`s, which is correct and unaffected; the single place needing Riverpod integration — an adapter exposing `epochs.sequence` to chrome providers — is hand-written (~15 lines: `Provider` + `ref.onDispose(n.removeListener)`). Confirm before the provider layer is written; do not import the legacy library for it.
+`VERIFY:` Riverpod 3 demoted `ChangeNotifierProvider` and `StateProvider` to a `legacy` library (**AC-016/#19**). These controllers are consumed by painters as plain `Listenable`s, which is correct and unaffected; the single place needing Riverpod integration, an adapter exposing `epochs.sequence` to chrome providers, is hand-written (~15 lines: `Provider` + `ref.onDispose(n.removeListener)`). Confirm before the provider layer is written; do not import the legacy library for it.
 
-### 4.3 The document — epochs, not equality
+### 4.3 The document: epochs, not equality
 
 ```dart
 /// Bit flags a Command declares. The controller bumps matching epochs on commit.
@@ -281,11 +281,11 @@ Every `Command` declares `EpochMask get touches`. This one mechanism drives **th
 
 `ValueNotifier<int>` is chosen over a bespoke `Listenable` because it composes with `Listenable.merge` and drops straight into `CustomPainter(repaint:)`.
 
-**Two counters, not one (CR-094).** `RackDocument.sequence` is strictly monotonic, incremented on every committed transaction *and* on every undo and redo — an undo is a change — and is persisted; it is the sync cursor. `RackDocument.stateId` is in-memory only and non-monotonic: each undo entry records the `stateId` before and after, and `isDirty == stateId != savedStateId`, so undoing back to the save point marks the document clean. Overloading one counter for both breaks either the sync invariant or the dirty UX. `revision` as a field name is deleted.
+**Two counters, not one (CR-094).** `RackDocument.sequence` is strictly monotonic, incremented on every committed transaction *and* on every undo and redo, an undo is a change, and is persisted; it is the sync cursor. `RackDocument.stateId` is in-memory only and non-monotonic: each undo entry records the `stateId` before and after, and `isDirty == stateId != savedStateId`, so undoing back to the save point marks the document clean. Overloading one counter for both breaks either the sync invariant or the dirty UX. `revision` as a field name is deleted.
 
 ### 4.4 Selection, viewport, tool mode, interaction
 
-**Selection** is observed, not owned by the document. It is never persisted to `.rmpj` and never bumps `sequence` — selecting a device must not mark the file dirty. But every `Transaction` captures `selectionBefore` / `selectionAfter`, so undo restores it; without that, undoing a delete leaves the caret on an entity that no longer exists.
+**Selection** is observed, not owned by the document. It is never persisted to `.rmpj` and never bumps `sequence`, selecting a device must not mark the file dirty. But every `Transaction` captures `selectionBefore` / `selectionAfter`, so undo restores it; without that, undoing a delete leaves the caret on an entity that no longer exists.
 
 ```dart
 class SelectionController extends ChangeNotifier {
@@ -297,9 +297,9 @@ class SelectionController extends ChangeNotifier {
 }
 ```
 
-**Viewport** is a hand-rolled `ChangeNotifier` (~150 lines) owning a `Matrix4` and a cached inverse invalidated in every mutator. `InteractiveViewer` is rejected: it never receives `PointerScrollEvent`, so wheel-zoom-to-cursor is unimplementable inside it; it installs its own `ScaleGestureRecognizer` which fights marquee-select and drag-to-connect in the gesture arena; and `boundaryMargin` is the wrong model for a model-defined scene. Implementation detail that is easy to get backwards: pan deltas arrive in **screen** space and must be applied with `leftTranslate` (pre-multiply), while the zoom pivot uses right-multiplied `translate` in scene space — reversing them produces pan whose speed varies with zoom.
+**Viewport** is a hand-rolled `ChangeNotifier` (~150 lines) owning a `Matrix4` and a cached inverse invalidated in every mutator. `InteractiveViewer` is rejected: it never receives `PointerScrollEvent`, so wheel-zoom-to-cursor is unimplementable inside it; it installs its own `ScaleGestureRecognizer` which fights marquee-select and drag-to-connect in the gesture arena; and `boundaryMargin` is the wrong model for a model-defined scene. Implementation detail that is easy to get backwards: pan deltas arrive in **screen** space and must be applied with `leftTranslate` (pre-multiply), while the zoom pivot uses right-multiplied `translate` in scene space, reversing them produces pan whose speed varies with zoom.
 
-**No widget watches the viewport.** It is passed to painters as a repaint `Listenable`. The single exception is the status-bar zoom readout, which subscribes through a 10 Hz throttling adapter — otherwise a 1000 Hz mouse rebuilds a `Text` widget a thousand times a second.
+**No widget watches the viewport.** It is passed to painters as a repaint `Listenable`. The single exception is the status-bar zoom readout, which subscribes through a 10 Hz throttling adapter, otherwise a 1000 Hz mouse rebuilds a `Text` widget a thousand times a second.
 
 **Tool mode** is a sealed class (`Select`, `PlaceDevice(templateRef)`, `DrawLink(signalFamily)`, `Pan`, `Measure`) in a small `NotifierProvider`. It changes at human speed, so ordinary widget rebuilds are correct and cheap. It parameterises the hit-test policy, the cursor, and which overlay affordances draw.
 
@@ -350,7 +350,7 @@ abstract base class Command {
 Three properties worth defending:
 
 - **`apply`/`revert`, not `undo`/`redo`.** Redo is `apply` again. A command must be idempotent under alternation: `apply; revert; apply` lands in the identical state as a single `apply`. That is the invariant the property test asserts.
-- **Commands store before-values, not whole entities.** `MoveDeviceCommand` holds `{id, fromRuIndex, toRuIndex, fromFace, toFace}` — tens of bytes. A 200-entry history is single-digit MB.
+- **Commands store before-values, not whole entities.** `MoveDeviceCommand` holds `{id, fromRuIndex, toRuIndex, fromFace, toFace}`, tens of bytes. A 200-entry history is single-digit MB.
 - **Commands never allocate IDs at `apply` time.** `AddDeviceCommand` generates its UUIDv7 in its *constructor*, so redo recreates the entity with the identical ID and commands stacked on top of it still resolve. This is the most common command-pattern bug and it is invisible until someone does add → connect → undo → undo → redo → redo.
 
 ### 5.2 A concrete command
@@ -394,7 +394,7 @@ final class MoveDeviceCommand extends Command {
 }
 ```
 
-`touches` includes `wires` even though no `Link` object changes: the *routed geometry* of every link touching this device is invalidated. When in doubt, over-declare — a spurious repaint is cheap, a stale wire is a bug report. **AC-014** removes the guesswork: one generic test snapshots every derived output for each command type, applies, snapshots again, diffs, and asserts the declared mask covers everything that changed. Forty lines, permanent, and the highest value-per-line test not already in the plan.
+`touches` includes `wires` even though no `Link` object changes: the *routed geometry* of every link touching this device is invalidated. When in doubt, over-declare, a spurious repaint is cheap, a stale wire is a bug report. **AC-014** removes the guesswork: one generic test snapshots every derived output for each command type, applies, snapshots again, diffs, and asserts the declared mask covers everything that changed. Forty lines, permanent, and the highest value-per-line test not already in the plan.
 
 ### 5.3 Transactions
 
@@ -419,7 +419,7 @@ final class Transaction extends Command {
 }
 ```
 
-Reverse-order revert is mandatory: deleting a device and its six links must restore the device *before* the links that reference it, or the link restore dereferences a missing device. Nested transactions **flatten into the outermost** — a device-builder "apply template changes" may open transactions internally, and the user must see one undo entry.
+Reverse-order revert is mandatory: deleting a device and its six links must restore the device *before* the links that reference it, or the link restore dereferences a missing device. Nested transactions **flatten into the outermost**: a device-builder "apply template changes" may open transactions internally, and the user must see one undo entry.
 
 **Template-snapshot refcounting (AC-015).** Placing a device may insert a `TemplateSnapshot` into `RackDocument.templates`. Insertion and removal are **explicit child commands** in the transaction, with the refcount computed from `devices.values.where((d) => d.templateRef.key == k)`. Without this, `AddDeviceCommand.revert` either orphans a snapshot or removes one another device still uses. The byte-round-trip property test catches it for free once the generator emits add-device commands.
 
@@ -493,9 +493,9 @@ class DocumentController {
 
 Two subtleties. **Commands `apply` immediately inside `tx.add()`**, not at commit, so later commands in the same transaction read the results of earlier ones ("add device, then connect to it"). **Epochs bump once per transaction**, not per child, so a bulk operation touching 200 devices triggers exactly one repaint and one derived invalidation.
 
-**Coalescing policy.** Merge iff `mergeKey` matches and the delta is under 400 ms — used for inspector typing (renaming is one undo entry), arrow-key nudges, and inspector sliders. Deliberately **not** used for canvas drags: D5's gesture-end-commits-once already collapses those, and doing both risks merging two genuinely distinct drags.
+**Coalescing policy.** Merge iff `mergeKey` matches and the delta is under 400 ms, used for inspector typing (renaming is one undo entry), arrow-key nudges, and inspector sliders. Deliberately **not** used for canvas drags: D5's gesture-end-commits-once already collapses those, and doing both risks merging two genuinely distinct drags.
 
-### 5.5 `SnapshotCommand` — the escape hatch
+### 5.5 `SnapshotCommand`: the escape hatch
 
 Auto-arrange, catalog import, "renumber all designators", "shrink rack and re-flow" are awkward to hand-invert. Do not write fragile inverse logic for them.
 
@@ -508,7 +508,7 @@ final class SnapshotCommand extends Command {
 }
 ```
 
-It snapshots only the **affected entities'** JSON — ~60 KB for a 200-device re-flow. Pay it, get correctness immediately, and reserve precise commands for the high-frequency operations where memory and clarity actually matter.
+It snapshots only the **affected entities'** JSON, ~60 KB for a 200-device re-flow. Pay it, get correctness immediately, and reserve precise commands for the high-frequency operations where memory and clarity actually matter.
 
 ### 5.6 Three stacks, one machinery (CR-106)
 
@@ -518,7 +518,7 @@ It snapshots only the **affected entities'** JSON — ~60 KB for a 200-device re
 |---|---|---|
 | Document | `RackDocument` | The open project. |
 | Device Builder | the `DeviceTemplate` being edited | Discarded on close without save. |
-| — | Settings and library operations are **not undoable** | Therefore each must be individually confirmable or trivially reversible. |
+|: | Settings and library operations are **not undoable** | Therefore each must be individually confirmable or trivially reversible. |
 
 The Structure editor's edits are ordinary document commands and use the document stack. Stated once so nobody builds a second mechanism.
 
@@ -530,7 +530,7 @@ The Structure editor's edits are ordinary document commands and use the document
 
 Three tiers, assigned by cost and staleness tolerance.
 
-### 6.1 Tier 1 — synchronous epoch-keyed memo
+### 6.1 Tier 1: synchronous epoch-keyed memo
 
 Totals (RU used/free, weight, apparent VA, BTU/hr, outlet counts, port counts), the depth-occupancy map, and the **schedule rows**.
 
@@ -550,21 +550,21 @@ class Derived<T> {
 }
 ```
 
-**Do not debounce these.** Debouncing exact, cheap data buys nothing and introduces visible lag in the chip strip. The schedule derivation is shared **verbatim** between the on-screen table and the PDF table — there is exactly one function that turns a `RackDocument` into schedule rows, or the printed schedule will eventually disagree with the screen (G1).
+**Do not debounce these.** Debouncing exact, cheap data buys nothing and introduces visible lag in the chip strip. The schedule derivation is shared **verbatim** between the on-screen table and the PDF table; there is exactly one function that turns a `RackDocument` into schedule rows, or the printed schedule will eventually disagree with the screen (G1).
 
 Rollups report their unknowns rather than fabricating (**CR-114**, G4): *"Total weight 148 lb · 3 devices have no weight."* `null` means unknown, everywhere; `typicalWatts` never defaults to half of nameplate.
 
-### 6.2 Tier 2 — per-domain scene sub-pictures
+### 6.2 Tier 2: per-domain scene sub-pictures
 
-The original tier-2 slot held a `RouteCache` with an `ObstacleField` and per-link incremental invalidation. **CR-013 deletes all of it.** The router is **Sugiyama phases 0–3 (cycle-break, layer, barycentre, coordinate assign) for symbol placement, plus a deterministic layer-ordered orthogonal trace for `drawn` mode**, with a **full deterministic recompute** — full recompute is perfectly stable and the invalidation bookkeeping costs more than it saves. Interval-graph channel routing is **v1.2** (DR-001, canon §12.1): it exists to keep 150 simultaneous polylines legible, and under DR-001 the maximum simultaneous polyline count is one domain partition. `ObstacleField`, `RouteCache` and the phrase "obstacle-aware" do not appear in the repository — the v1 router is simpler still.
+The original tier-2 slot held a `RouteCache` with an `ObstacleField` and per-link incremental invalidation. **CR-013 deletes all of it.** The router is **Sugiyama phases 0–3 (cycle-break, layer, barycentre, coordinate assign) for symbol placement, plus a deterministic layer-ordered orthogonal trace for `drawn` mode**, with a **full deterministic recompute**: full recompute is perfectly stable and the invalidation bookkeeping costs more than it saves. Interval-graph channel routing is **v1.2** (DR-001, canon §12.1): it exists to keep 150 simultaneous polylines legible, and under DR-001 the maximum simultaneous polyline count is one domain partition. `ObstacleField`, `RouteCache` and the phrase "obstacle-aware" do not appear in the repository, the v1 router is simpler still.
 
 The slot is not left empty. Per **AC-003** and **AC-008** it is reassigned to **eight per-domain scene sub-pictures**.
 
-**The commit-path arithmetic, restated under DR-001.** The original commit budget counted one stroked polyline per link. Under DR-001 the default render is **two net-label stubs per link — text, not geometry** — so the dominant commit-path term is the **label layer**, not the wire layer. Two labels per link on a 150-run project is ~300 text runs on top of the ~10 000 the label cache is sized for (AC-009). The eight per-domain sub-pictures are **kept**: they are precisely what lets a domain filter switch that domain to `drawn` mode without rebuilding the other seven. An edit to one HDMI run rebuilds ~1 200 ops while seven pictures replay untouched, and this is nearly free since paths are already batched by colour class.
+**The commit-path arithmetic, restated under DR-001.** The original commit budget counted one stroked polyline per link. Under DR-001 the default render is **two net-label stubs per link (text, not geometry**) so the dominant commit-path term is the **label layer**, not the wire layer. Two labels per link on a 150-run project is ~300 text runs on top of the ~10 000 the label cache is sized for (AC-009). The eight per-domain sub-pictures are **kept**: they are precisely what lets a domain filter switch that domain to `drawn` mode without rebuilding the other seven. An edit to one HDMI run rebuilds ~1 200 ops while seven pictures replay untouched, and this is nearly free since paths are already batched by colour class.
 
-### 6.3 Tier 3 — incremental DRC, with a debounced isolate sweep
+### 6.3 Tier 3: incremental DRC, with a debounced isolate sweep
 
-Rules are **Dart functions in a registry keyed by `ruleId`** (**CR-024**, **AC-011**). The rejected alternative — a JSON-serializable predicate AST — cannot express ~20 of the catalogue's rules (reachability, path enumeration with a per-hop predicate, parallel impedance, cascade budgets, two-limits-two-findings), so it buys a second rule system, a second debugger and a second test suite, for a user-authoring claim that has no UI. What stays data is substantial and correct: rule metadata, per-project `RuleOverride`s, `AckedFinding`s, forward-compat on unknown `ruleId`s, and the connector × signal-family compatibility matrix, which genuinely is a lookup table.
+Rules are **Dart functions in a registry keyed by `ruleId`** (**CR-024**, **AC-011**). The rejected alternative, a JSON-serializable predicate AST, cannot express ~20 of the catalogue's rules (reachability, path enumeration with a per-hop predicate, parallel impedance, cascade budgets, two-limits-two-findings), so it buys a second rule system, a second debugger and a second test suite, for a user-authoring claim that has no UI. What stays data is substantial and correct: rule metadata, per-project `RuleOverride`s, `AckedFinding`s, forward-compat on unknown `ruleId`s, and the connector × signal-family compatibility matrix, which genuinely is a lookup table.
 
 ```dart
 typedef Rule = Iterable<Finding> Function(RuleContext ctx);
@@ -579,7 +579,7 @@ class IncrementalValidator {
 }
 ```
 
-Incremental is the **primary** path, not the isolate. An isolate round-trip plus debounce makes issue badges lag the edit by 250–400 ms, which users read as "the app is slow"; synchronous incremental validation is imperceptible and always correct for local edits. The sweep is debounced at 500 ms with a generation token so a superseded result is discarded. **The isolate payload is a projection, not the document** — `ValidationInput` carries only the graph as flat typed lists (~30 KB), which is only possible because `rackmate_core` is Flutter-free.
+Incremental is the **primary** path, not the isolate. An isolate round-trip plus debounce makes issue badges lag the edit by 250–400 ms, which users read as "the app is slow"; synchronous incremental validation is imperceptible and always correct for local edits. The sweep is debounced at 500 ms with a generation token so a superseded result is discarded. **The isolate payload is a projection, not the document**: `ValidationInput` carries only the graph as flat typed lists (~30 KB), which is only possible because `rackmate_core` is Flutter-free.
 
 Nothing here blocks anything. `Finding`s are computed and never stored; errors gate only `ExportSpec.issuedForConstruction` (**CR-022**, G3).
 
@@ -601,7 +601,7 @@ Nothing here blocks anything. `Finding`s are computed and never stored; errors g
 
 ### 7.1 One drawing path (CR-086)
 
-The corpus contained a latent contradiction: D4 declares the display list the single drawing IR, and every UX document then specified device faceplates, ports and designators as "real widgets" — so the **most information-dense content in the deliverable** would be drawn by a widget tree on screen and by a scene builder in print, with no parity mechanism. The parity test compared the two *canvas backends*, not the two *device renderers*.
+The corpus contained a latent contradiction: D4 declares the display list the single drawing IR, and every UX document then specified device faceplates, ports and designators as "real widgets", so the **most information-dense content in the deliverable** would be drawn by a widget tree on screen and by a scene builder in print, with no parity mechanism. The parity test compared the two *canvas backends*, not the two *device renderers*.
 
 > **Ruling: one rendering path; widgets remain as an interaction and semantics shell.** Each device is still a `RenderBox` child of `RenderRackCanvas` — it owns hit-testing, focus, hover, keyboard handling and `Semantics`, which is what makes the accessibility story true. But its `paint()` **replays that device's `DiagramScene` fragment through `FlutterDiagramCanvas`**; it draws nothing itself. Pixels come from the shared IR; behaviour comes from the widget.
 
@@ -670,27 +670,27 @@ class LayerCache {
 }
 ```
 
-`ui.Picture` caches **drawing instructions, not pixels** — replay still costs GPU time proportional to content, but it eliminates Dart-side command building and the scene walk. `RepaintBoundary` is complementary, not an alternative: wrap the canvas as a whole and the side panels, and do **not** wrap individual device widgets (200 compositing layers cost more than they save).
+`ui.Picture` caches **drawing instructions, not pixels**: replay still costs GPU time proportional to content, but it eliminates Dart-side command building and the scene walk. `RepaintBoundary` is complementary, not an alternative: wrap the canvas as a whole and the side panels, and do **not** wrap individual device widgets (200 compositing layers cost more than they save).
 
 Hard rules:
 
-- **No `setState` in the canvas path, ever.** Pan, zoom, drag, hover and marquee repaint via `repaint:` listenables or `markNeedsPaint()`. `CustomPainter(repaint:)` triggers a repaint while **skipping build and layout entirely** — that is what makes 60 fps achievable regardless of what wraps the canvas.
-- **Zero `saveLayer`.** ~1 ms worst case; three of them eat a fifth of the frame. It is triggered implicitly by subtree opacity, blend modes, and antialiased `clipPath` + save. To dim filtered runs, **bake alpha into the colour** — never wrap in an opacity layer. `checkerboardOffscreenLayers` must read zero, and that is a manual pre-release check.
+- **No `setState` in the canvas path, ever.** Pan, zoom, drag, hover and marquee repaint via `repaint:` listenables or `markNeedsPaint()`. `CustomPainter(repaint:)` triggers a repaint while **skipping build and layout entirely**: that is what makes 60 fps achievable regardless of what wraps the canvas.
+- **Zero `saveLayer`.** ~1 ms worst case; three of them eat a fifth of the frame. It is triggered implicitly by subtree opacity, blend modes, and antialiased `clipPath` + save. To dim filtered runs, **bake alpha into the colour**: never wrap in an opacity layer. `checkerboardOffscreenLayers` must read zero, and that is a manual pre-release check.
 - **Batch by style.** One `Path` per colour class, so eight domains means ~8 `drawPath` calls for 1000 runs.
 - **Line weights follow the stroke, not a global rule (CR-082).** `Stroke.scaleWithGeometry` decides: cable traces, symbol outlines and rack rails **scale**; UI chrome, selection halos and hit slop are **constant in screen pixels** (`width / viewport.scale`); sheet furniture uses `hairlineFloor` with a 0.25 pt print floor. No stroke width is ever emitted as 0.
-- **The label cache is 12 000 entries (AC-009).** The original 2 000 was derived from "200 devices × 8 labels"; the real count is ~10 000 text runs — 200 devices × ~20 ports × two runs (designator *and* label), plus headers, plus two tag pills per run. A thrashing LRU is **worse than none**, because eviction disposes a native `ui.Paragraph` inside the paint path. Key on `(text, styleId, quantisedScale)`: port labels come from a small set of repeated strings, so *distinct* keys collapse to low thousands even at the hard cap. Quantise scale to a ladder (`0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0`) with the residual as a local canvas scale, or every zoom frame is a total cache miss *and* a glyph-atlas miss. **The LOD gate is a test, not an intention:** at fit-to-sheet zoom, assert zero text runs laid out.
-- **`TextPainter` must be disposed on eviction** — it holds a native `ui.Paragraph` the Dart GC will not reclaim. `leak_tracker_flutter_testing` guards this in widget tests.
+- **The label cache is 12 000 entries (AC-009).** The original 2 000 was derived from "200 devices × 8 labels"; the real count is ~10 000 text runs, 200 devices × ~20 ports × two runs (designator *and* label), plus headers, plus two tag pills per run. A thrashing LRU is **worse than none**, because eviction disposes a native `ui.Paragraph` inside the paint path. Key on `(text, styleId, quantisedScale)`: port labels come from a small set of repeated strings, so *distinct* keys collapse to low thousands even at the hard cap. Quantise scale to a ladder (`0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0`) with the residual as a local canvas scale, or every zoom frame is a total cache miss *and* a glyph-atlas miss. **The LOD gate is a test, not an intention:** at fit-to-sheet zoom, assert zero text runs laid out.
+- **`TextPainter` must be disposed on eviction**: it holds a native `ui.Paragraph` the Dart GC will not reclaim. `leak_tracker_flutter_testing` guards this in widget tests.
 
 ### 7.4 Hit-testing (CR-084)
 
-Split by concern. The **geometric** test — `DiagramScene.hits`, point-to-segment distance, nearest-hit selection — lives in `rackmate_core/draw/hit_test.dart`: pure, synchronously testable, and reusable by the read-only mobile shell. The **pointer plumbing** — one query per frame, spatial hash, cursor policy, hover throttle — lives in `rackmate_ui/canvas/input/`.
+Split by concern. The **geometric** test (`DiagramScene.hits`, point-to-segment distance, nearest-hit selection) lives in `rackmate_core/draw/hit_test.dart`: pure, synchronously testable, and reusable by the read-only mobile shell. The **pointer plumbing** (one query per frame, spatial hash, cursor policy, hover throttle) lives in `rackmate_ui/canvas/input/`.
 
 Two facts that contradict plausible assumptions:
 
-- **`Path.contains()` does not work on strokes.** It only works on closed paths, so a stroked polyline returns false everywhere. Flutter exposes no stroke-to-fill-path API — Skia's `getFillPath` is not in `dart:ui`, and Impeller strokes by iterating the curve rather than materialising an outline, so it is unlikely ever to be exposed. Link hit-testing is **closed-form point-to-segment distance**, trivial for orthogonal polylines and faster than every alternative anyway.
+- **`Path.contains()` does not work on strokes.** It only works on closed paths, so a stroked polyline returns false everywhere. Flutter exposes no stroke-to-fill-path API, Skia's `getFillPath` is not in `dart:ui`, and Impeller strokes by iterating the curve rather than materialising an outline, so it is unlikely ever to be exposed. Link hit-testing is **closed-form point-to-segment distance**, trivial for orthogonal polylines and faster than every alternative anyway.
 - **Return the *nearest* hit, not the first.** In a schematic, runs cross constantly; first-hit picks arbitrarily and feels broken.
 
-Start with brute force plus an AABB reject (`if (!w.bounds.inflate(tol).contains(p)) continue;` kills ~95% of candidates — ~64 µs at 1000 runs × 4 segments). Add a uniform spatial hash (~120 lines, `Map<int, List<int>>` by grid cell) only if *hover* shows up in the timeline, and throttle hover to one hit-test per frame regardless. Do not import an R-tree; they earn their complexity at 10⁵ objects and there are 10³.
+Start with brute force plus an AABB reject (`if (!w.bounds.inflate(tol).contains(p)) continue;` kills ~95% of candidates, ~64 µs at 1000 runs × 4 segments). Add a uniform spatial hash (~120 lines, `Map<int, List<int>>` by grid cell) only if *hover* shows up in the timeline, and throttle hover to one hit-test per frame regardless. Do not import an R-tree; they earn their complexity at 10⁵ objects and there are 10³.
 
 ---
 
@@ -700,17 +700,17 @@ Start with brute force plus an AABB reject (`if (!w.bounds.inflate(tol).contains
 
 The single declaration of `DiagramCanvas` is [PDF export §7.3](08-pdf-export.md), in `rackmate_core/draw/canvas.dart`. It is not restated here: CR-086 makes this the one drawing IR both backends replay, and two declarations of it are two chances to diverge.
 
-There is **no `RendererCaps` (CR-088)**. The moment a scene builder branches on capabilities there are two code paths and the abstraction has already leaked. The interface is the common denominator, and the visual-language restriction — **flat fills, strokes, dashes and text only; no gradients, no shadows, no blurs, no blend modes, no shaders** — is promoted from prose to an invariant with a test. This is not a hardship; it *is* the schematic aesthetic, and it is what guarantees the backends agree.
+There is **no `RendererCaps` (CR-088)**. The moment a scene builder branches on capabilities there are two code paths and the abstraction has already leaked. The interface is the common denominator, and the visual-language restriction, **flat fills, strokes, dashes and text only; no gradients, no shadows, no blurs, no blend modes, no shaders**: is promoted from prose to an invariant with a test. This is not a hardship; it *is* the schematic aesthetic, and it is what guarantees the backends agree.
 
-**Units contract, stated once (CR-007).** Geometry at this boundary is in **diagram units: 1 diagram unit = 1 PDF point = 1/72 in, as `double`**. This is not a breach of "no doubles": the model stores `Len` in integer nanometres and `DiagramScene` is a transient rendering artifact that is never persisted. Conversion from `Len(nm)` to points happens in **exactly one function** in the scene builder. Stroke widths and font sizes are in typographic points, with `Stroke.scaleWithGeometry` making "hairlines must not shrink when scaled to fit" a first-class concept. `Stroke` carries explicit `cap`, `join` and `miterLimit` and both backends set them (**AC-016/#21** — PDF's default miter limit is 10, Flutter's is 4).
+**Units contract, stated once (CR-007).** Geometry at this boundary is in **diagram units: 1 diagram unit = 1 PDF point = 1/72 in, as `double`**. This is not a breach of "no doubles": the model stores `Len` in integer nanometres and `DiagramScene` is a transient rendering artifact that is never persisted. Conversion from `Len(nm)` to points happens in **exactly one function** in the scene builder. Stroke widths and font sizes are in typographic points, with `Stroke.scaleWithGeometry` making "hairlines must not shrink when scaled to fit" a first-class concept. `Stroke` carries explicit `cap`, `join` and `miterLimit` and both backends set them (**AC-016/#21**: PDF's default miter limit is 10, Flutter's is 4).
 
-### 8.2 `TextMeasurer` — the load-bearing part
+### 8.2 `TextMeasurer`: the load-bearing part
 
 **CR-081** is what forces the five-package split, so it is worth stating exactly.
 
-`TextMeasurer`, `TextMetrics`, `TextStyleSpec`, `TextAnchor` and the shared `anchorOffset` helper are declared once, in `rackmate_core/draw/text.dart` — see [PDF export §7.5](08-pdf-export.md). One file, one cluster; there is no `draw/text_measurer.dart`.
+`TextMeasurer`, `TextMetrics`, `TextStyleSpec`, `TextAnchor` and the shared `anchorOffset` helper are declared once, in `rackmate_core/draw/text.dart`, see [PDF export §7.5](08-pdf-export.md). One file, one cluster; there is no `draw/text_measurer.dart`.
 
-The rejected alternative was `Pt measureText(...)` with each backend answering independently. It fails at exactly one point, and the failure is invisible until it is printed: `PdfGraphics.drawString` positions at the **baseline**, while `TextPainter.paint` positions at the **top-left of the line box**. Converting between them needs `ascent`, which `Pt` cannot express — so each adapter derives a baseline independently, one from `PdfFontMetrics.ascent` and the other from a fudge of `height × 0.8`, and they do not agree. The result is text sitting a fraction of a line off between screen and print, uniformly, everywhere: invisible in code review, invisible in a display-list golden (which records the anchor, not the resolved baseline), and glaring on a printed drawing beside a leader line.
+The rejected alternative was `Pt measureText(...)` with each backend answering independently. It fails at exactly one point, and the failure is invisible until it is printed: `PdfGraphics.drawString` positions at the **baseline**, while `TextPainter.paint` positions at the **top-left of the line box**. Converting between them needs `ascent`, which `Pt` cannot express, so each adapter derives a baseline independently, one from `PdfFontMetrics.ascent` and the other from a fudge of `height × 0.8`, and they do not agree. The result is text sitting a fraction of a line off between screen and print, uniformly, everywhere: invisible in code review, invisible in a display-list golden (which records the anchor, not the resolved baseline), and glaring on a printed drawing beside a leader line.
 
 The binding rules:
 
@@ -720,19 +720,19 @@ The binding rules:
 4. The Flutter side sets `FontFeature.disable('kern')` **and** `FontFeature.disable('liga')`. `VERIFY:` there is no first-class API for "disable kerning"; these two feature flags are the only route, and standard ligatures are on by default and also affect advances. This is two flags plus a test, not a checkbox.
 5. **The parity test asserts on baseline Y**, not just the bounding box, and a kerning-heavy fixture (`"AV Wa To Ty"`) must agree within 0.5%.
 
-The residual error is understood and accepted: Skia *paints* a string a fraction of a percent wider than PDF metrics predict, so screen text can overflow a box that fits in the PDF. That is cosmetic, screen-only and bounded — and it is the correct trade, because layout parity (symbol widths, pill sizes, track counts, sheet fitting) is exact.
+The residual error is understood and accepted: Skia *paints* a string a fraction of a percent wider than PDF metrics predict, so screen text can overflow a box that fits in the PDF. That is cosmetic, screen-only and bounded, and it is the correct trade, because layout parity (symbol widths, pill sizes, track counts, sheet fitting) is exact.
 
 `VERIFY:` `PdfTtfFont` appears to require a `PdfDocument` to construct, which would mean building a throwaway document purely to parse three font families for metrics (**AC-016/#18**). The metrics font is therefore constructed **lazily on first paint**, not at bootstrap, and `stringMetrics` results are cached aggressively. Measure this against the 1.2 s cold-start budget as the sixth API spike in week one (**CR-120**).
 
 ### 8.3 The two backends
 
-**`FlutterDiagramCanvas`** (`rackmate_ui`) replays a scene into a `ui.Canvas`. It absorbs one mismatch: **`dart:ui Canvas` has no dashing at all**, while `PdfGraphics.setLineDashPattern` is native. Without handling this, dashed domains render solid on screen and dashed in the PDF. It synthesizes via `path_drawing`'s `dashPath` and caches the dashed `ui.Path` per `(geometry, dash)` pair. One consequence is recorded rather than discovered later (**AC-016/#17**): `dashPath` resamples via `PathMetrics`, which is an approximation on curves, so dash phase can diverge between screen and print on corner fillets — documented in [the visual language](05-schematic-editor.md#66-rendering-constants-stated-once). There are no hop arcs in v1 (DR-001), so that half of the original concern is gone; straight dashed segments remain squarely on the hot path. `VERIFY:` profile `dashPath` explicitly in the perf harness rather than assuming the cache absorbs it.
+**`FlutterDiagramCanvas`** (`rackmate_ui`) replays a scene into a `ui.Canvas`. It absorbs one mismatch: **`dart:ui Canvas` has no dashing at all**, while `PdfGraphics.setLineDashPattern` is native. Without handling this, dashed domains render solid on screen and dashed in the PDF. It synthesizes via `path_drawing`'s `dashPath` and caches the dashed `ui.Path` per `(geometry, dash)` pair. One consequence is recorded rather than discovered later (**AC-016/#17**): `dashPath` resamples via `PathMetrics`, which is an approximation on curves, so dash phase can diverge between screen and print on corner fillets, documented in [the visual language](05-schematic-editor.md#66-rendering-constants-stated-once). There are no hop arcs in v1 (DR-001), so that half of the original concern is gone; straight dashed segments remain squarely on the hot path. `VERIFY:` profile `dashPath` explicitly in the perf harness rather than assuming the cache absorbs it.
 
 **`PdfDiagramCanvas`** (`rackmate_export`) replays into `PdfGraphics`. It uses a **global Y-flip (CR-085)**, not per-coordinate negation. Per-coordinate flipping is valid only for an axis-aligned, rotation-free interface, and `DiagramCanvas` exposes `rotate()`; a rotation composed with per-coordinate negation is not a valid transform, and the failure is invisible until someone rotates a label 90° for a vertical rail, at which point it is diagnosed as "the PDF is wrong" months later. Text is counter-flipped in exactly one method. Recorded normatively because it will otherwise cost a day: **`pw.CustomPaint` pre-translates to the *widget box's* bottom-left, so the flip height is `size.y`, not the page height.**
 
-**`BoundsCanvas`** (`rackmate_core`) ships in v1 (**CR-089**). Bounds are not optional — scale-to-fit, zoom-to-fit and the tile count for the one over-tall rack elevation all need the diagram's true extent and there is no other way to get it. Key plans are cut with the rest of the multi-sheet apparatus (CR-073, DR-004). `SvgDiagramCanvas` is v1.1: one file on top of an architecture that already exists.
+**`BoundsCanvas`** (`rackmate_core`) ships in v1 (**CR-089**). Bounds are not optional, scale-to-fit, zoom-to-fit and the tile count for the one over-tall rack elevation all need the diagram's true extent and there is no other way to get it. Key plans are cut with the rest of the multi-sheet apparatus (CR-073, DR-004). `SvgDiagramCanvas` is v1.1: one file on top of an architecture that already exists.
 
-Defining every connector symbol once as an SVG path `d` string eliminates the remaining duplication risk — but **the parse happens once, at catalog load**, via `DiagramPath.fromSvg(String d)`, and both backends then draw the resulting `DiagramPath` through `drawPath`. There is no `drawSvgPath` on the interface: a backend that parses strings is a backend that can disagree with the other one, which is exactly what CR-086 exists to prevent. `PdfGraphics.drawShape` and `parseSvgPathData` remain useful below that boundary, and both signatures were verified in the feasibility review.
+Defining every connector symbol once as an SVG path `d` string eliminates the remaining duplication risk, but **the parse happens once, at catalog load**, via `DiagramPath.fromSvg(String d)`, and both backends then draw the resulting `DiagramPath` through `drawPath`. There is no `drawSvgPath` on the interface: a backend that parses strings is a backend that can disagree with the other one, which is exactly what CR-086 exists to prevent. `PdfGraphics.drawShape` and `parseSvgPathData` remain useful below that boundary, and both signatures were verified in the feasibility review.
 
 ---
 
@@ -751,7 +751,7 @@ abstract class DocumentCodec {
 }
 ```
 
-The envelope puts format metadata at the root and all entity maps under a `"document"` wrapper (**CR-092**). The rejected alternative — project fields at the root — conflates format with content; the wrapper makes the magic-key check a single top-level read before any parsing and gives migrations one obvious place to stand.
+The envelope puts format metadata at the root and all entity maps under a `"document"` wrapper (**CR-092**). The rejected alternative, project fields at the root, conflates format with content; the wrapper makes the magic-key check a single top-level read before any parsing and gives migrations one obvious place to stand.
 
 ```json
 {
@@ -765,9 +765,9 @@ The envelope puts format metadata at the root and all entity maps under a `"docu
 
 Two codec rules: **enums are strings, never ordinals** (`"hdmi"`, not `3`), with unknown values falling back to a round-tripping `unknown(raw)` variant; and **every persisted object preserves unknown fields** in a `Map<String, Object?> unknown` and re-emits them, so a v1.0 app opening a v1.4 file round-trips without destroying newer data.
 
-**Codecs are hand-written.** Generated codecs couple the on-disk format to the Dart class shape, so every class refactor silently changes the file format — for a format that must open in 2033, that coupling *is* the bug. Cost is ~300 lines written once, and the format becomes an explicit, reviewable, diffable artifact.
+**Codecs are hand-written.** Generated codecs couple the on-disk format to the Dart class shape, so every class refactor silently changes the file format, for a format that must open in 2033, that coupling *is* the bug. Cost is ~300 lines written once, and the format becomes an explicit, reviewable, diffable artifact.
 
-**The round-trip test asserts the byte property, not the semantic one (CR-117):** `write(read(bytes)) == bytes`. The stated justification for plain JSON is git-diffability and honest dirty-tracking, and only the byte property constrains key ordering (including inside nested `unknown` maps), timestamp precision, and integer formatting — which are exactly the things that produce spurious diffs and a lying dirty flag.
+**The round-trip test asserts the byte property, not the semantic one (CR-117):** `write(read(bytes)) == bytes`. The stated justification for plain JSON is git-diffability and honest dirty-tracking, and only the byte property constrains key ordering (including inside nested `unknown` maps), timestamp precision, and integer formatting, which are exactly the things that produce spurious diffs and a lying dirty flag.
 
 ### 9.2 Migration
 
@@ -783,17 +783,17 @@ const migrations = <int, Migration>{};
 Outcome<MigratedDoc> migrateToCurrent(JsonMap raw) { … }
 ```
 
-Migration returns `Outcome<T>` and never throws (**CR-093**) — expected outcomes are values. The two cases, with the defect in the original snippet fixed:
+Migration returns `Outcome<T>` and never throws (**CR-093**), expected outcomes are values. The two cases, with the defect in the original snippet fixed:
 
 | Condition | Result |
 |---|---|
-| `minReaderVersion > kSchemaVersion` | `Err(NewerSchema(refuse))` — the original returned `readOnly: false`, which is backwards |
+| `minReaderVersion > kSchemaVersion` | `Err(NewerSchema(refuse))`: the original returned `readOnly: false`, which is backwards |
 | `schemaVersion > kSchemaVersion && minReaderVersion <= kSchemaVersion` | `Ok(doc, openReadOnly: true)`, unknown fields preserved for a subsequent Save As |
-| `generator != "RackMate"` | `Err(NotARackMateFile())` — a good error, not a null-cast crash |
+| `generator != "RackMate"` | `Err(NotARackMateFile())`: a good error, not a null-cast crash |
 
 **Migrate the raw map before any typed deserialization.** Migrating typed objects requires keeping historical Dart class shapes alive forever.
 
-### 9.3 Save path — atomic, always
+### 9.3 Save path: atomic, always
 
 ```text
 1. Serialize in Isolate.run (AC-006: at the corrected ~600 KB, keep the UI thread clean).
@@ -806,25 +806,25 @@ Migration returns `Outcome<T>` and never throws (**CR-093**) — expected outcom
 8. Push to recent files; update the window title.
 ```
 
-A crash at any step leaves either the previous good file, or the previous good file plus a `.tmp`. There is **one** `.bak` sibling and **no `.history/` folder** (**CR-098**) — the confirmed product decision is a local single-file project, so the user's folder gains nothing but the file they asked for and one backup. Pre-update snapshots go to `getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rmpj`, pruned to the last 10.
+A crash at any step leaves either the previous good file, or the previous good file plus a `.tmp`. There is **one** `.bak` sibling and **no `.history/` folder** (**CR-098**), the confirmed product decision is a local single-file project, so the user's folder gains nothing but the file they asked for and one backup. Pre-update snapshots go to `getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rmpj`, pruned to the last 10.
 
 ### 9.4 Dirty tracking, autosave, recovery
 
-`isDirty == doc.stateId != savedStateId`, per **CR-094**. Never document equality — that is `O(document)` per keystroke and gets subtly wrong the moment a float survives into the model (which, per the persistence contract, it must not).
+`isDirty == doc.stateId != savedStateId`, per **CR-094**. Never document equality; that is `O(document)` per keystroke and gets subtly wrong the moment a float survives into the model (which, per the persistence contract, it must not).
 
 - Every **30 s** and on **window blur**, if dirty, write a recovery snapshot to `getApplicationSupportDirectory()/recovery/<docUuid>.rmpj` plus a sidecar `{realPath, sequence, savedAt, displayName}`.
 - **Never autosave over the user's file.** CAD users expect explicit saves and will file a bug the first time an autosave clobbers something.
-- Autosave serialization runs in `Isolate.run` — nobody is waiting, so the transfer cost is free and the UI must not hitch (**CR-099**: `Isolate.run` is correct precisely where neither progress nor cancellation is wanted).
+- Autosave serialization runs in `Isolate.run`; nobody is waiting, so the transfer cost is free and the UI must not hitch (**CR-099**: `Isolate.run` is correct precisely where neither progress nor cancellation is wanted).
 - Delete the snapshot on clean save and on clean exit. On startup, scan the recovery directory; any survivor produces *"RackMate closed unexpectedly. Recover Smith Residence (12 unsaved changes)?"* with Recover / Discard / Keep for later.
 - **Recovery files are never auto-attached to a crash report (CR-096).** A recovery file is a complete project containing the client's name and site address. The crash dialog offers an explicit, default-off checkbox labelled *"This includes your client's name and site address."*
 
 ### 9.5 Close interception, recents, window state
 
-`windowManager.setPreventClose(true)`, then a **three-button** dialog on close-while-dirty: Save / Don't Save / Cancel. Never two buttons. `Ctrl+N` and `Ctrl+O` run the same prompt and then replace the document — v1 is single-document, single-window (**CR-119**); tabs without a design are not a feature.
+`windowManager.setPreventClose(true)`, then a **three-button** dialog on close-while-dirty: Save / Don't Save / Cancel. Never two buttons. `Ctrl+N` and `Ctrl+O` run the same prompt and then replace the document, v1 is single-document, single-window (**CR-119**); tabs without a design are not a feature.
 
-Recent files are a JSON list in application support (`{path, displayName, lastOpened}`), not `shared_preferences` — structured metadata is the wrong shape for prefs. Prune missing files **lazily**: a temporarily unmounted network drive must not evict the entry. Window size, position, monitor and maximised state persist in the same prefs file, with a minimum window size set (a rack editor below ~1000 px wide is unusable).
+Recent files are a JSON list in application support (`{path, displayName, lastOpened}`), not `shared_preferences`, structured metadata is the wrong shape for prefs. Prune missing files **lazily**: a temporarily unmounted network drive must not evict the entry. Window size, position, monitor and maximised state persist in the same prefs file, with a minimum window size set (a rack editor below ~1000 px wide is unusable).
 
-**Import hardening** applies to every import path: JSON depth and size limits, and — for the day a container arrives — zip-slip protection with entry-count and uncompressed-size caps. No evaluated program arrives in any file, which is now structurally true because rules are Dart functions rather than a shipped AST (**AC-011**).
+**Import hardening** applies to every import path: JSON depth and size limits, and, for the day a container arrives, zip-slip protection with entry-count and uncompressed-size caps. No evaluated program arrives in any file, which is now structurally true because rules are Dart functions rather than a shipped AST (**AC-011**).
 
 ---
 
@@ -834,38 +834,38 @@ Recent files are a JSON list in application support (`{path, displayName, lastOp
 
 | Package | Constraint | Package it lives in | Purpose | Risk | Fallback |
 |---|---|---|---|---|---|
-| `meta` | `^1.16.0` | core | `@internal` (the setter gate — AC-013), `@immutable`, `@useResult`. Zero runtime cost. | none | — |
+| `meta` | `^1.16.0` | core | `@internal` (the setter gate: AC-013), `@immutable`, `@useResult`. Zero runtime cost. | none |: |
 | `collection` | `^1.19.0` | core | `UnmodifiableSetView`, `firstWhereOrNull`, deep-equality helpers. | none | trivial to inline |
 | `uuid` | `^4.6.0` | core | **UUIDv7** entity IDs (time-ordered, sortable, index-local) and **v5** for deterministic port IDs (AC-006). | low | ~80 lines |
-| `pdf` | `^3.13.0` | text, export | `PdfGraphics` vector output, `pw.Widget` layout for schedules, `PdfFont.stringMetrics` for the one `TextMeasurer`. Pure Dart ⇒ isolate-safe; Apache-2.0. | **Highest-consequence dependency in the project.** Single maintainer, headline feature. | `DiagramCanvas` **is** the hedge — swapping backends is one file. Failing that: emit PDF 1.7 content streams for pure vector plus Type0 embedding (~2 k lines of well-specified work), or route through `SvgDiagramCanvas` to an external converter. |
-| `flutter` | sdk | ui, app | — | — | — |
-| `path_drawing` | `^1.0.1` | ui | `dashPath()` — `dart:ui` has no native dashing (§8.3). | low activity, but tiny | ~60 lines over `PathMetrics` |
-| `vector_math` | `^2.2.0` | ui | `Matrix4` for the viewport. Transitively available; pin it explicitly. | none | — |
-| `flutter_riverpod` | `^3.3.2` | app | DI, per-document lifetime, chrome read-models. Codegen-free. | `ChangeNotifierProvider` moved to `legacy` — `VERIFY:` before writing the provider layer | hand-written `Listenable`→`Provider` adapter, ~15 lines |
-| *(no file-dialog package)* | — | app | **Native open/save dialogs are ours.** `windows/runner/file_dialog_channel.cpp` drives `IFileDialog` directly (~150 lines of COM) behind a two-method Dart seam, `lib/src/session/file_picker.dart`. `file_selector ^1.1.0` USED TO BE THIS ROW AND WAS DELIBERATELY REMOVED: its Windows plugin calls `AddOptions` only for `select_folders` and `allow_multiple` and its Pigeon `SelectionOptions` has no other field, so `FOS_DONTADDTORECENT` cannot be requested through it at any price — and without that flag every open and every save writes the project's file name and full path into `HKCU\…\Explorer\ComDlg32\OpenSavePidlMRU` and drops a shortcut in `%APPDATA%\Microsoft\Windows\Recent`. It also dragged in `file_selector_android`, which shipped `dartjni.dll` into a Windows-only Release build. | ~150 lines of COM we maintain — and the flag closes only **half** the leak. The other half is stated as a BOUND and not as a list, because naming the measured keys and closing the list has been wrong four times running. Ours and gated: RackMate's own code writes no registry key. Measured against the shipped binary: `OpenSavePidlMRU` and the Recent shortcut are suppressed, so no project file name reaches the host. Beyond that, **the shell writes values under ComDlg32 that RackMate does not control** — at minimum `LastVisitedPidlMRU` (this executable plus the last folder browsed) and `CIDSizeMRU` (this executable, written even when the user cancels the dialog), measured examples and not an inventory — and no supported option prevents them while the shell common dialog is the dialog. So a portable build leaves shell-owned HKCU entries on a client's machine naming this executable and the folders it browsed, and never a project file name. | None wanted. Re-adding `file_selector` fails `session_layering_test.dart` RULE 14d, and `registry_claim_test.dart` fails if this row stops stating the bound, or restates it as a closed list. Suppressing the shell's own records as well would mean a hand-built file browser instead of `IFileDialog` — weighed and declined: large scope, worse dialog, internal tool. |
+| `pdf` | `^3.13.0` | text, export | `PdfGraphics` vector output, `pw.Widget` layout for schedules, `PdfFont.stringMetrics` for the one `TextMeasurer`. Pure Dart ⇒ isolate-safe; Apache-2.0. | **Highest-consequence dependency in the project.** Single maintainer, headline feature. | `DiagramCanvas` **is** the hedge: swapping backends is one file. Failing that: emit PDF 1.7 content streams for pure vector plus Type0 embedding (~2 k lines of well-specified work), or route through `SvgDiagramCanvas` to an external converter. |
+| `flutter` | sdk | ui, app |, |, |: |
+| `path_drawing` | `^1.0.1` | ui | `dashPath()`: `dart:ui` has no native dashing (§8.3). | low activity, but tiny | ~60 lines over `PathMetrics` |
+| `vector_math` | `^2.2.0` | ui | `Matrix4` for the viewport. Transitively available; pin it explicitly. | none |: |
+| `flutter_riverpod` | `^3.3.2` | app | DI, per-document lifetime, chrome read-models. Codegen-free. | `ChangeNotifierProvider` moved to `legacy`, `VERIFY:` before writing the provider layer | hand-written `Listenable`→`Provider` adapter, ~15 lines |
+| *(no file-dialog package)* |: | app | **Native open/save dialogs are ours.** `windows/runner/file_dialog_channel.cpp` drives `IFileDialog` directly (~150 lines of COM) behind a two-method Dart seam, `lib/src/session/file_picker.dart`. `file_selector ^1.1.0` USED TO BE THIS ROW AND WAS DELIBERATELY REMOVED: its Windows plugin calls `AddOptions` only for `select_folders` and `allow_multiple` and its Pigeon `SelectionOptions` has no other field, so `FOS_DONTADDTORECENT` cannot be requested through it at any price, and without that flag every open and every save writes the project's file name and full path into `HKCU\…\Explorer\ComDlg32\OpenSavePidlMRU` and drops a shortcut in `%APPDATA%\Microsoft\Windows\Recent`. It also dragged in `file_selector_android`, which shipped `dartjni.dll` into a Windows-only Release build. | ~150 lines of COM we maintain, and the flag closes only **half** the leak. The other half is stated as a BOUND and not as a list, because naming the measured keys and closing the list has been wrong four times running. Ours and gated: RackMate's own code writes no registry key. Measured against the shipped binary: `OpenSavePidlMRU` and the Recent shortcut are suppressed, so no project file name reaches the host. Beyond that, **the shell writes values under ComDlg32 that RackMate does not control**, at minimum `LastVisitedPidlMRU` (this executable plus the last folder browsed) and `CIDSizeMRU` (this executable, written even when the user cancels the dialog), measured examples and not an inventory, and no supported option prevents them while the shell common dialog is the dialog. So a portable build leaves shell-owned HKCU entries on a client's machine naming this executable and the folders it browsed, and never a project file name. | None wanted. Re-adding `file_selector` fails `session_layering_test.dart` RULE 14d, and `registry_claim_test.dart` fails if this row stops stating the bound, or restates it as a closed list. Suppressing the shell's own records as well would mean a hand-built file browser instead of `IFileDialog`, weighed and declined: large scope, worse dialog, internal tool. |
 | `window_manager` | `^0.5.2` | app | Title with dirty marker, size/position restore, minimum size, and critically `setPreventClose`. | 0.x, single maintainer | the only load-bearing API is `setPreventClose` + the close event: ~80 lines of Win32 platform channel. Do **not** plan on `bitsdojo_window` |
-| `path_provider_windows` | `^2.3.0` | app | `getApplicationSupportPath()` for recovery, snapshots, recents, logs, prefs. Called from **exactly one function** — `productionApplicationSupportDirectory` in `lib/src/storage/data_root.dart` — and a grep test asserts that single call site, which is what keeps M2's portable build a one-function change. **The platform package directly, NOT the `path_provider` umbrella:** on Windows the umbrella forwards to precisely this class, so the resolved path is identical, but it also drags `path_provider_android` in, and that package pulls the `jni` FFI plugin — which put `dartjni.dll` in the Release output beside `rackmate.exe`. Dart-only, no native plugin, no extra DLL. | none | the umbrella, if a second desktop platform ever needs one; then re-check the Release output for `dartjni.dll` (`flutter_dependency_test.dart` asserts it is absent) |
-| `path` | `^1.9.0` | app | Cross-platform joining. Never string-concatenate paths on Windows. | none | — |
-| `printing` | `^5.15.0` | app | **Behind an explicit "Verify output" button only.** `PdfPreview`; `layoutPdf` is v1.1. | `PdfPreview`/`raster` need **pdfium**, which the plugin's CMake downloads at build time — a fresh or network-restricted machine fails `flutter build windows` | **Binaries are vendored into the repo (CR-100)**; a network-fetched binary in a signed release is a supply-chain and reproducibility problem, not just a CI one. Degrade to export + "Open in system viewer", which needs no pdfium |
-| `desktop_drop` | `^0.6.0` | app | Drag a `.rmpj` onto the window. | 0.x, low activity | a nicety — degrade to File ▸ Open. Alternative `super_drag_and_drop` |
-| `logging` | `^1.3.0` | app | Structured, level-based, zero-dependency. Sinks are ours. | none | — |
-| `intl` | `^0.20.0` | app | Number/date/unit formatting; the runtime half of ARB localization. | none | — |
-| `flutter_localizations` | sdk | app | Locale resolution, `MaterialLocalizations`, `Directionality`. | — | — |
-| `test` | `^1.26.0` | dev | Pure-Dart tests in core/text/export. | — | — |
-| `flutter_test` · `integration_test` | sdk | dev | Widget, golden and desktop end-to-end tests. | — | — |
-| `very_good_analysis` | `9.0.0` **exact** | dev | Strictest widely-used lint set — catches the `prefer_final` / `avoid_dynamic_calls` / unawaited-future classes that matter in a document editor. | third-party; a major bump can fail CI on unchanged code | pinned exactly, bumped deliberately. Fallback `flutter_lints ^6.0.0` |
-| `leak_tracker_flutter_testing` | `^3.0.0` | dev | Catches undisposed `TextPainter` / `ui.Picture` / `ChangeNotifier`. Given §7.3's native-resource caching, **not optional**. | — | — |
-| `benchmark_harness` | `^2.3.0` | dev | The perf-budget harness. | — | — |
+| `path_provider_windows` | `^2.3.0` | app | `getApplicationSupportPath()` for recovery, snapshots, recents, logs, prefs. Called from **exactly one function** (`productionApplicationSupportDirectory` in `lib/src/storage/data_root.dart`) and a grep test asserts that single call site, which is what keeps M2's portable build a one-function change. **The platform package directly, NOT the `path_provider` umbrella:** on Windows the umbrella forwards to precisely this class, so the resolved path is identical, but it also drags `path_provider_android` in, and that package pulls the `jni` FFI plugin, which put `dartjni.dll` in the Release output beside `rackmate.exe`. Dart-only, no native plugin, no extra DLL. | none | the umbrella, if a second desktop platform ever needs one; then re-check the Release output for `dartjni.dll` (`flutter_dependency_test.dart` asserts it is absent) |
+| `path` | `^1.9.0` | app | Cross-platform joining. Never string-concatenate paths on Windows. | none |: |
+| `printing` | `^5.15.0` | app | **Behind an explicit "Verify output" button only.** `PdfPreview`; `layoutPdf` is v1.1. | `PdfPreview`/`raster` need **pdfium**, which the plugin's CMake downloads at build time, a fresh or network-restricted machine fails `flutter build windows` | **Binaries are vendored into the repo (CR-100)**; a network-fetched binary in a signed release is a supply-chain and reproducibility problem, not just a CI one. Degrade to export + "Open in system viewer", which needs no pdfium |
+| `desktop_drop` | `^0.6.0` | app | Drag a `.rmpj` onto the window. | 0.x, low activity | a nicety: degrade to File ▸ Open. Alternative `super_drag_and_drop` |
+| `logging` | `^1.3.0` | app | Structured, level-based, zero-dependency. Sinks are ours. | none |: |
+| `intl` | `^0.20.0` | app | Number/date/unit formatting; the runtime half of ARB localization. | none |: |
+| `flutter_localizations` | sdk | app | Locale resolution, `MaterialLocalizations`, `Directionality`. |, |, |
+| `test` | `^1.26.0` | dev | Pure-Dart tests in core/text/export. |, |, |
+| `flutter_test` · `integration_test` | sdk | dev | Widget, golden and desktop end-to-end tests. |, |, |
+| `very_good_analysis` | `9.0.0` **exact** | dev | Strictest widely-used lint set: catches the `prefer_final` / `avoid_dynamic_calls` / unawaited-future classes that matter in a document editor. | third-party; a major bump can fail CI on unchanged code | pinned exactly, bumped deliberately. Fallback `flutter_lints ^6.0.0` |
+| `leak_tracker_flutter_testing` | `^3.0.0` | dev | Catches undisposed `TextPainter` / `ui.Picture` / `ChangeNotifier`. Given §7.3's native-resource caching, **not optional**. |, |, |
+| `benchmark_harness` | `^2.3.0` | dev | The perf-budget harness. |, |, |
 
 Explicitly **not** used: any node-editor package (`vyuh_node_flow`, `fl_nodes`, `flutter_flow_chart`, `diagram_editor`, `graphview`), any spatial-index package, `undo`, `freezed`, `json_serializable`, `build_runner`, `InteractiveViewer`, `golden_toolkit`, `desktop_multi_window`.
 
-The node-editor rejection deserves its reason, because the best of them is genuinely good work: **RackMate is not a node graph.** Node editors model free-floating nodes in unconstrained 2D. RackMate's devices are constrained to integer RU indices in a fixed-width column, with a front/rear dimension no node editor has any concept of, and its "nodes" do not move in x at all. Adopting one means fighting its core layout assumption on every feature — and the canvas *is* the product, not a feature of it. Read their source for port-validation models and LOD thresholds; take the dependency on none of them.
+The node-editor rejection deserves its reason, because the best of them is genuinely good work: **RackMate is not a node graph.** Node editors model free-floating nodes in unconstrained 2D. RackMate's devices are constrained to integer RU indices in a fixed-width column, with a front/rear dimension no node editor has any concept of, and its "nodes" do not move in x at all. Adopting one means fighting its core layout assumption on every feature, and the canvas *is* the product, not a feature of it. Read their source for port-validation models and LOD thresholds; take the dependency on none of them.
 
-### 10.2 Two version facts — the Flutter pin (resolved), Impeller (open)
+### 10.2 Two version facts: the Flutter pin (resolved), Impeller (open)
 
-**RESOLVED — the Flutter pin is `3.44.4`, and it lives in `azure-pipelines.yml`.**
+**RESOLVED: the Flutter pin is `3.44.4`, and it lives in `azure-pipelines.yml`.**
 
-The original item read: *the corpus contains two different Flutter stable versions — `design-architecture.md` targets 3.44.4, while the canvas research reports 3.41 as current. The CI Flutter version is pinned and load-bearing, because a minor bump routinely shifts antialiasing by a pixel and golden regeneration must be a deliberate, reviewed step of every upgrade. Resolve to one number and pin it.*
+The original item read: *the corpus contains two different Flutter stable versions, `design-architecture.md` targets 3.44.4, while the canvas research reports 3.41 as current. The CI Flutter version is pinned and load-bearing, because a minor bump routinely shifts antialiasing by a pixel and golden regeneration must be a deliberate, reviewed step of every upgrade. Resolve to one number and pin it.*
 
 It is resolved to **3.44.4 stable**: that is what `design-architecture.md` targets and what the local toolchain runs (Dart 3.12.2, framework revision `ad70ec4617166f1c38e5d2bfd388af71fda14f06`, engine `a10d8ac38de835021c8d2f920dbf50a920ccc030`). The 3.41 figure was a research-date observation, not a second decision.
 
@@ -874,16 +874,16 @@ It is resolved to **3.44.4 stable**: that is what `design-architecture.md` targe
 | | |
 |---|---|
 | The number | `flutterVersion: '3.44.4'` in `azure-pipelines.yml`, referenced by every step that needs it. One place. |
-| The install | `tools/ci/ensure_flutter.ps1` fetches that exact stable archive — no channel, no version range, no marketplace task resolving on its own. |
+| The install | `tools/ci/ensure_flutter.ps1` fetches that exact stable archive, no channel, no version range, no marketplace task resolving on its own. |
 | **The enforcement** | The same script then reads `flutter --version --machine` and **fails the build** if `frameworkVersion` is not exactly the pinned number, or the channel is not `stable`. A pipeline that *requests* a version and never checks what it got looks identical to one that works, right up until goldens flap. |
-| The revision | `frameworkRevision` is recorded in `azure-pipelines.yml` and **warned about, not enforced** — there are no goldens for it to protect yet (docs/12 §4.3). **Promote it to a hard failure on the day the first golden lands**; the script says so at its call site. |
+| The revision | `frameworkRevision` is recorded in `azure-pipelines.yml` and **warned about, not enforced**: there are no goldens for it to protect yet (docs/12 §4.3). **Promote it to a hard failure on the day the first golden lands**; the script says so at its call site. |
 
 Two things this pin does **not** yet cover, stated so neither is mistaken for done:
 
 - **There are no goldens.** The whole antialiasing argument above is an argument about a corpus that does not exist. The pin is standing guard over the right door in advance; it is not evidence that pixel regressions are caught.
 - **`pubspec.lock` is gitignored**, so CI resolves the dependency graph fresh on every run. The Flutter SDK is pinned exactly and the package graph is not. Committing the lockfile is the fix and it is a project decision, not a CI one.
 
-`VERIFY:` Impeller is not the default on Windows as of the research date; desktop still renders through Skia. Budget frame costs against Skia and re-benchmark when Impeller lands — the `saveLayer` and path-stroking numbers will shift meaningfully.
+`VERIFY:` Impeller is not the default on Windows as of the research date; desktop still renders through Skia. Budget frame costs against Skia and re-benchmark when Impeller lands, the `saveLayer` and path-stroking numbers will shift meaningfully.
 
 ---
 
@@ -896,9 +896,9 @@ Two things this pin does **not** yet cover, stated so neither is mistaken for do
 | Racks per project | 4 | 12 |
 | RU per rack | 45 | 60 (CR-038) |
 | `DeviceInstance` | 200 | 500 |
-| Ports (mostly unmaterialised — AC-006) | 2 000 | 6 000 |
+| Ports (mostly unmaterialised: AC-006) | 2 000 | 6 000 |
 | `Link` | 1 000 | 3 000 |
-| Undo history | 200 entries | — |
+| Undo history | 200 entries |: |
 | `.rmpj` file size | ~600 KB | 3 MB |
 | Distinct text runs | ~10 000 | ~30 000 |
 
@@ -929,11 +929,11 @@ The commit budget is **16 ms, not 8** (**AC-008**). The original 8 ms counted on
 
 ### 11.3 How each is measured
 
-1. **`benchmark_harness` over synthetic documents at 50 / 200 / 500 devices**, pure Dart, headless in CI under the `perf` tag. The CI signal is **op count per layer**, not wall time — op count is stable across runners and wall time is not. Thresholds are **warn-only for the first three months**: establish the baseline curve on CI hardware before it can fail a build, or that time goes to chasing runner variance instead of writing the app.
-2. **DevTools timeline in `--profile`**, driven by a scripted 30-second pan/zoom/drag `integration_test`, asserting on `frame_build_times` and `frame_rasterizer_times` p95 from `TimelineSummary`. On demand, not per-PR — desktop CI runners have no GPU worth trusting.
-3. **A three-item manual pre-release checklist**, each catching a class nothing automated will: `debugRepaintRainbowEnabled` (only the overlay may flicker during a drag), `checkerboardOffscreenLayers` (must be zero — any `saveLayer` is a bug), and dragging the window between a 4K and a 1080p monitor (mixed-DPI breaks naive viewports, and Windows users genuinely run this).
+1. **`benchmark_harness` over synthetic documents at 50 / 200 / 500 devices**, pure Dart, headless in CI under the `perf` tag. The CI signal is **op count per layer**, not wall time, op count is stable across runners and wall time is not. Thresholds are **warn-only for the first three months**: establish the baseline curve on CI hardware before it can fail a build, or that time goes to chasing runner variance instead of writing the app.
+2. **DevTools timeline in `--profile`**, driven by a scripted 30-second pan/zoom/drag `integration_test`, asserting on `frame_build_times` and `frame_rasterizer_times` p95 from `TimelineSummary`. On demand, not per-PR, desktop CI runners have no GPU worth trusting.
+3. **A three-item manual pre-release checklist**, each catching a class nothing automated will: `debugRepaintRainbowEnabled` (only the overlay may flicker during a drag), `checkerboardOffscreenLayers` (must be zero, any `saveLayer` is a bug), and dragging the window between a 4K and a 1080p monitor (mixed-DPI breaks naive viewports, and Windows users genuinely run this).
 
-The arithmetic that justifies the architecture: 1000 runs × ~4 µs per stroked polyline ≈ 4 ms of raster — a quarter of the frame for runs *alone*, if drawn naively every frame. That is why L3a is cached and split by domain, and why the drag path re-records only the ~8 active runs. And `saveLayer` at ~1 ms means three of them cost more than the entire wire layer, which is where the zero-`saveLayer` rule comes from.
+The arithmetic that justifies the architecture: 1000 runs × ~4 µs per stroked polyline ≈ 4 ms of raster, a quarter of the frame for runs *alone*, if drawn naively every frame. That is why L3a is cached and split by domain, and why the drag path re-records only the ~8 active runs. And `saveLayer` at ~1 ms means three of them cost more than the entire wire layer, which is where the zero-`saveLayer` rule comes from.
 
 ---
 
@@ -941,7 +941,7 @@ The arithmetic that justifies the architecture: 1000 runs × ~4 µs per stroked 
 
 ### 12.1 Two categories, two mechanisms
 
-**Expected outcomes are values, not exceptions** — file not found, corrupt document, newer schema, permission denied, target PDF locked by another application:
+**Expected outcomes are values, not exceptions**: file not found, corrupt document, newer schema, permission denied, target PDF locked by another application:
 
 ```dart
 sealed class Outcome<T> { const Outcome(); }
@@ -955,7 +955,7 @@ sealed class AppError {
 }
 ```
 
-Every `AppError` carries a message that says **what to do next** — *"This file was created by a newer version of RackMate. Update RackMate, or open it read-only."* — not a stack trace. There is one error-message catalogue with one voice (**AC-058/D1**).
+Every `AppError` carries a message that says **what to do next**: *"This file was created by a newer version of RackMate. Update RackMate, or open it read-only."*, not a stack trace. There is one error-message catalogue with one voice (**AC-058/D1**).
 
 **Programmer errors throw.** Broken invariants, unreachable switch arms and null entity lookups are bugs: loud in debug, captured in release.
 
@@ -1010,13 +1010,13 @@ Poisoning the stack rather than pretending is the honest behaviour: a user who k
 
 ### 12.4 Logging and redaction
 
-`package:logging` with two sinks: a **rotating file** in `getApplicationSupportDirectory()/logs/` (5 × 2 MB, `INFO`+ in release, `FINE` in debug — rotation is ~40 lines of ours, not a framework), and an **in-memory ring buffer** of the last 2 000 records backing Help ▸ **Copy Diagnostics**.
+`package:logging` with two sinks: a **rotating file** in `getApplicationSupportDirectory()/logs/` (5 × 2 MB, `INFO`+ in release, `FINE` in debug, rotation is ~40 lines of ours, not a framework), and an **in-memory ring buffer** of the last 2 000 records backing Help ▸ **Copy Diagnostics**.
 
-**Redaction policy, enforced by convention and a lint-style test:** log entity **UUIDs**, never device names, client names, project addresses, or file paths above `FINE`. A rack drawing for a private residence contains the client's name and address, and those must not reach a log the user pastes into a public tracker. The diagnostics bundle carries app/Flutter/OS versions, document **statistics** (device count, link count, schema version), the last 200 records, and the current epoch/`sequence` values — **never document content** (**CR-096**).
+**Redaction policy, enforced by convention and a lint-style test:** log entity **UUIDs**, never device names, client names, project addresses, or file paths above `FINE`. A rack drawing for a private residence contains the client's name and address, and those must not reach a log the user pastes into a public tracker. The diagnostics bundle carries app/Flutter/OS versions, document **statistics** (device count, link count, schema version), the last 200 records, and the current epoch/`sequence` values, **never document content** (**CR-096**).
 
 ### 12.5 Crash reporting: local-first, opt-in
 
-**No telemetry by default.** This is a locally installed professional tool handling client project data; silent network egress is a trust violation and, for some commercial clients, a contractual one. On an uncaught error, write a redacted `crashes/<timestamp>.json` to application support. On next launch, if crash files exist, offer **View report** (the exact JSON — no hidden payload), **Send**, and **Never ask again**. Only on opt-in does anything leave the machine, and then to a self-hosted Sentry — deliberately **not a v1 dependency**, because until there is somewhere to send reports it is dead weight and an extra native surface per platform. Attaching the project file is a separate, default-off checkbox with an explicit label (**CR-096**).
+**No telemetry by default.** This is a locally installed professional tool handling client project data; silent network egress is a trust violation and, for some commercial clients, a contractual one. On an uncaught error, write a redacted `crashes/<timestamp>.json` to application support. On next launch, if crash files exist, offer **View report** (the exact JSON, no hidden payload), **Send**, and **Never ask again**. Only on opt-in does anything leave the machine, and then to a self-hosted Sentry, deliberately **not a v1 dependency**, because until there is somewhere to send reports it is dead weight and an extra native surface per platform. Attaching the project file is a separate, default-off checkbox with an explicit label (**CR-096**).
 
 ---
 
@@ -1032,7 +1032,7 @@ Poisoning the stack rather than pretending is the honest behaviour: a user who k
 | **DPI** | Users run 125%/150% scaling and mixed-DPI multi-monitor. All canvas geometry is in document units with an explicit zoom transform, never in logical pixels. The 4K↔1080p window drag is a named pre-release check. |
 | **Canvas text entry** | **No inline canvas editing in v1.** Names are edited in the inspector with a real `TextField`. IME positioning, context menus and selection over a `CustomPaint` are the classic Flutter desktop pain point, and CAD tools do it in a panel anyway. |
 | **Input** | `Listener` for wheel and precision mouse work (the gesture arena adds disambiguation delay); recognizers for trackpad and touch. `PointerScrollEvent` pans, `Ctrl+scroll` zooms at the cursor, `PointerScaleEvent` handles trackpad pinch. All of it enters through `CanvasIntent`, and no editor logic branches on `PointerDeviceKind` (**AC-016/#23**). |
-| **Multi-window** | Not shipping. Canonical's work has no committed version. One `ProviderScope` per document already makes the model correct in-process. Do **not** use `desktop_multi_window` — each window is a separate engine with no shared memory, which is fatal for a shared document. |
+| **Multi-window** | Not shipping. Canonical's work has no committed version. One `ProviderScope` per document already makes the model correct in-process. Do **not** use `desktop_multi_window`, each window is a separate engine with no shared memory, which is fatal for a shared document. |
 | **Code signing** | Certificate procurement starts **two milestones early** (**AC-058/D10**), with vendored pdfium and symbol archival in the release pipeline. |
 
 ### 13.2 macOS
@@ -1043,7 +1043,7 @@ macOS is a v1 target only if [§10.10 of the decision record](10-decisions.md) r
 
 **Storage is always integer nanometres and micrograms; display units are never stored.** `ProjectSettings.displayUnits` is authoritative when set, with the app preference supplying the value for *new* projects and a per-session toggle that does not modify the document or mark it dirty (**CR-097**). The deciding case is real: a US-spec commercial job opened on a German integrator's laptop must still read in inches.
 
-Theme is a UI preference and is **never persisted in the document**. Light is the first-run default and dark is one click away (**CR-076**) — the moment that decides whether a user trusts the tool is comparing the screen to the printed sheet, and that comparison must succeed on first run. **The screen theme never affects the export** (**CR-077**): export palette is an explicit `ExportSpec.palette: colour | greyscale | cmyk`, never inherited from the UI.
+Theme is a UI preference and is **never persisted in the document**. Light is the first-run default and dark is one click away (**CR-076**), the moment that decides whether a user trusts the tool is comparing the screen to the printed sheet, and that comparison must succeed on first run. **The screen theme never affects the export** (**CR-077**): export palette is an explicit `ExportSpec.palette: colour | greyscale | cmyk`, never inherited from the UI.
 
 All user-facing strings go through `AppLocalizations` from the first commit with one locale, `l10n.yaml` in CI, and localisable registry display names. Command labels are the interesting case: they live in `rackmate_core`, which cannot import Flutter, so commands expose a **`LabelKey` enum plus arguments** and `rackmate_ui` maps key → localized string. The Edit menu shows a localized *"Undo Move device"*; the log shows the stable enum name. Retrofitting this across a mature app is a multi-week grind that never quite finishes; the incremental cost per string today is about fifteen seconds.
 
@@ -1055,12 +1055,12 @@ Explicit non-goal: **the canvas stays LTR under an RTL locale.** Electrical sche
 
 Reconciled from the two conflicting orders in the corpus (**CR-120**). The five PDF API spikes plus the sixth for `PdfTtfFont` main-isolate metrics cost about a day and de-risk the largest single dependency in the project, so they run in **week one**; the export *feature* stays late.
 
-1. **Reconciliation** — this document set. Not compressible into the first coding milestone: CR-001, CR-008, CR-017, CR-051, CR-081 and CR-083 each cost a rewrite of everything downstream if guessed wrong.
+1. **Reconciliation**: this document set. Not compressible into the first coding milestone: CR-001, CR-008, CR-017, CR-051, CR-081 and CR-083 each cost a rewrite of everything downstream if guessed wrong.
 2. **The six API spikes**, including `PdfTtfFont` cold-start cost against the 1.2 s budget.
 3. **`units/` + `Pt`/`Box`**, with the two discriminating tests written **before any other code**: exact 1/32-in clearance, and zero accumulated error across a 45U stack (**AC-001**).
 4. **`.rmpj` envelope + hand-written codec + migration harness + the first golden fixture + the byte-round-trip test.** The format is the durable asset.
 5. **`Command` / `Transaction` / `UndoStack` / `DocumentController`**, with `@internal` setters, the apply∘revert property test, and the epoch-mask coverage test. Retrofitting undo is the single most painful refactor available.
-6. **`DiagramCanvas` + `TextMeasurer` + `DiagramScene` + both backends + the baseline-Y parity test, together and early.** If parity does not hold, stop — every hour spent on layout before parity is an hour that may need redoing.
+6. **`DiagramCanvas` + `TextMeasurer` + `DiagramScene` + both backends + the baseline-Y parity test, together and early.** If parity does not hold, stop, every hour spent on layout before parity is an hour that may need redoing.
 7. **`CanvasIntent`, `ViewportController`, wheel/trackpad input, grid painter.** Pan and zoom must feel right before anything sits on them.
 8. `RenderRackCanvas` + device `RenderBox` children replaying scene fragments + RU snapping.
 9. Ports, links, the snap cascade, Sugiyama phases 0–3 plus the orthogonal trace.
@@ -1080,13 +1080,13 @@ Collected so none is lost in prose. Each is an API or environment claim the desi
 
 | # | Claim to verify | Where it bites |
 |---|---|---|
-| 1 | `FontFeature.disable('kern')` **and** `disable('liga')` are the only route to matching PDF metrics; there is no first-class API | §8.2 — screen/print text parity |
+| 1 | `FontFeature.disable('kern')` **and** `disable('liga')` are the only route to matching PDF metrics; there is no first-class API | §8.2: screen/print text parity |
 | 2 | `PdfTtfFont` requires a `PdfDocument` to construct, forcing a throwaway document for metrics; measure the parse cost of three families | §8.2, cold-start budget |
-| 3 | `Printing.layoutPdf` on Windows does not itself require the fetched pdfium | CR-100 — whether the OS print dialog can ship at all |
+| 3 | `Printing.layoutPdf` on Windows does not itself require the fetched pdfium | CR-100: whether the OS print dialog can ship at all |
 | 4 | `path_drawing.dashPath` cost under repeated re-synthesis; profile rather than assume the cache absorbs it | §8.3, frame budget |
-| 5 | Riverpod 3.3.2 `legacy` demotion of `ChangeNotifierProvider` | §4.2 — the hand-written adapter |
-| ~~6~~ | ~~The pinned Flutter stable version (3.44.4 vs 3.41 in the corpus)~~ — **RESOLVED: 3.44.4.** Pinned in `azure-pipelines.yml` and *enforced* by `tools/ci/ensure_flutter.ps1`, which measures `flutter --version --machine` and fails the build on any other version. See §10.2 | §10.2 — goldens do not survive Flutter bumps |
-| 7 | Impeller default status on Windows | §11 — all raster budgets are Skia numbers |
-| 8 | **Label-layer commit cost** on a real 300-link fixture — text-run count and commit time in `netLabels` mode, which is now the dominant term | §6.2 — DR-001 makes labels, not wires, the commit-path budget |
+| 5 | Riverpod 3.3.2 `legacy` demotion of `ChangeNotifierProvider` | §4.2: the hand-written adapter |
+| ~~6~~ | ~~The pinned Flutter stable version (3.44.4 vs 3.41 in the corpus)~~, **RESOLVED: 3.44.4.** Pinned in `azure-pipelines.yml` and *enforced* by `tools/ci/ensure_flutter.ps1`, which measures `flutter --version --machine` and fails the build on any other version. See §10.2 | §10.2: goldens do not survive Flutter bumps |
+| 7 | Impeller default status on Windows | §11: all raster budgets are Skia numbers |
+| 8 | **Label-layer commit cost** on a real 300-link fixture (text-run count and commit time in `netLabels` mode, which is now the dominant term | §6.2) DR-001 makes labels, not wires, the commit-path budget |
 
 See also: [Overview](00-overview.md) · [Domain](01-domain.md) · [Data model](02-data-model.md) · [Rack editor](04-rack-editor.md) · [Schematic editor](05-schematic-editor.md) · [Device builder](06-device-builder.md) · [Structure device](07-structure-device.md) · [PDF export](08-pdf-export.md) · [Decisions](10-decisions.md) · [Testing and quality](11-testing-and-quality.md)

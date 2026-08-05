@@ -11,7 +11,7 @@ and cites the governing ruling ID for every decision; the adjudications are in
 [the canonical decision record](canonical-decisions.md), which is normative.
 
 **Status.** Ruled into v1.1 by **DR-018**, its container shape and one v1 obligation by **DR-019**,
-and its length model by **DR-020** — which voided §4's first draft one commit after it was written,
+and its length model by **DR-020**, which voided §4's first draft one commit after it was written,
 on evidence from the trade rather than the corpus. Not built. The feasibility study and cost are in
 [research/feasibility-plan-view.md](research/feasibility-plan-view.md).
 

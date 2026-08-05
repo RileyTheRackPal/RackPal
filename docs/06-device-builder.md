@@ -1,6 +1,6 @@
 # Device Builder
 
-The Device Builder is the authoring surface for a `DeviceTemplate` — the library object that owns a device's physical facts and its port list, and from which every placed `DeviceInstance` inherits. It exists because requirement 2 demands it and because a seeded catalog can only ever cover archetypes; the real device in the integrator's hand is never quite the archetype. This document covers the ordinary builder and the template library only. The **Structure device** has a fundamentally different entry axis (room × media × quantity, not port-by-port) and its own editor — see [Structure device](07-structure-device.md).
+The Device Builder is the authoring surface for a `DeviceTemplate`, the library object that owns a device's physical facts and its port list, and from which every placed `DeviceInstance` inherits. It exists because requirement 2 demands it and because a seeded catalog can only ever cover archetypes; the real device in the integrator's hand is never quite the archetype. This document covers the ordinary builder and the template library only. The **Structure device** has a fundamentally different entry axis (room × media × quantity, not port-by-port) and its own editor, see [Structure device](07-structure-device.md).
 
 ---
 
@@ -19,16 +19,16 @@ Consequences that follow mechanically:
 | `null` means unknown everywhere. No `Extent`, no `Known`/`Unknown` wrapper. | CR-114 |
 | `typicalWatts` **never** defaults to 50% of `nameplateWatts`. A fabricated number that reaches a circuit-loading calculation is worse than a blank. | AC-039, G4 |
 | `connectorProjection` is **derived from the deepest rear connector footprint**, never `bodyDepth + 75 mm`. | AC-032, CR-036 |
-| Every rollup that consumes a template field reports its unknown count — *"Total weight 148 lb · 3 devices have no weight"*. | CR-114, G4 |
+| Every rollup that consumes a template field reports its unknown count, *"Total weight 148 lb · 3 devices have no weight"*. | CR-114, G4 |
 | The `Draft` flag survives **only** for templates saved with zero ports and no category. | AC-049 |
 
-The device builder ships in v1 and M4 keeps its position (DR-003). This is settled — it is no longer an open question, and "move M4 after M6" is no longer an available schedule lever.
+The device builder ships in v1 and M4 keeps its position (DR-003). This is settled; it is no longer an open question, and "move M4 after M6" is no longer an available schedule lever.
 
 ---
 
 ## 2. Shell layout
 
-A full-window editor, not a modal — a modal cannot host a 68-row virtualised grid. Three persistent panes.
+A full-window editor, not a modal, a modal cannot host a 68-row virtualised grid. Three persistent panes.
 
 ```
 ┌─ Device Builder ── HDMI Matrix 16×16 ──────────────── v3 ─ [Save] [Save & Close] ─┐
@@ -54,7 +54,7 @@ A full-window editor, not a modal — a modal cannot host a 68-row virtualised g
 
 The left rail carries the section list plus the **bank tree**, which becomes the primary navigation once you are in the Ports section. The right dock swaps to a **batch inspector** when more than one grid row is selected.
 
-The builder owns its **own undo stack**, scoped to the template being edited and discarded on close-without-save (CR-106). It is the same `Command`/`UndoStack` machinery as the document, generic over an aggregate — nobody builds a second mechanism. Library operations (delete a template, import, set favourite) are *not* undoable and are therefore individually confirmable or trivially reversible.
+The builder owns its **own undo stack**, scoped to the template being edited and discarded on close-without-save (CR-106). It is the same `Command`/`UndoStack` machinery as the document, generic over an aggregate, nobody builds a second mechanism. Library operations (delete a template, import, set favourite) are *not* undoable and are therefore individually confirmable or trivially reversible.
 
 ---
 
@@ -67,8 +67,8 @@ Sections in rail order. Only section 1's three starred fields block `Save`.
 | 1 | Identity & Classification | `displayName`★, `heightU`★ (= `frontU`), `typePrefix`★ |
 | 2 | Physical & Mounting | no |
 | 3 | Power & Thermal | no |
-| 4 | **Ports (I/O)** | no — blank panels legitimately have zero |
-| 5 | Panel Layout | no — auto, see §5 |
+| 4 | **Ports (I/O)** | no: blank panels legitimately have zero |
+| 5 | Panel Layout | no: auto, see §5 |
 | 6 | Appearance | no |
 | 7 | Notes & Publish | no |
 
@@ -77,23 +77,23 @@ Sections in rail order. Only section 1's three starred fields block `Save`.
 | Field | Type | Notes |
 |---|---|---|
 | `displayName` ★ | text | "HDMI Matrix 16×16" |
-| `manufacturer` | text | Defaults to `Generic`. The whole seeded catalog is `Generic` — confirmed decision 2 rules out a SKU library. |
+| `manufacturer` | text | Defaults to `Generic`. The whole seeded catalog is `Generic`, confirmed decision 2 rules out a SKU library. |
 | `model` | text | |
 | `category` | enum | Video Distribution · Audio · Network · Control · Sources · RF/Coax · Power · Passive & Mechanical. Optional (AC-049). |
 | `typePrefix` ★ | text, 2–4 chars | `MTX`, `AMP`, `SW`, `PP`, `UPS`. Seeds the device designator format `{TYPE_PREFIX}{SEP}{SEQ}` → `MTX-1` (CR-041, CR-045). Auto-suggested from category when one is chosen. |
 | `tags` | chip input | `hdbaset`, `4k60`, `poe`, `residential` |
 | `templateId` | UUID, read-only | Stable across every version. |
-| `version` | **`int`**, read-only | Monotonic. **Not semver** — CR-050. |
+| `version` | **`int`**, read-only | Monotonic. **Not semver**: CR-050. |
 
 *Rejected alternative (CR-050):* `version: {major, minor, patch}` computed from the diff. A semver whose components are computed adds a vocabulary without adding a capability, and `TemplateRef` cannot hold one. The **change class** (safe / additive / breaking) is still computed from the diff and displayed prominently; it is simply not encoded in the number.
 
 ### 3.2 Physical & mounting
 
-Occupancy is a struct, never a scalar (CR-036): `frontU`, `rearU`, `side`, `mountMethod`, `widthClass`, `nominalSpanTwelfths`. A 2U patch panel is `{front: 2, rear: 2}`; a rear lacing bar is `{front: 0, rear: 1}`; a 0U PDU is `{0, 0, side: zeroUVertical}`. Half-rack width is `widthClass: half` plus `nominalSpanTwelfths` (CR-030) — never "0.5 rack width", because 9.5 / 10 / 10.4 / 10.5 in all ship.
+Occupancy is a struct, never a scalar (CR-036): `frontU`, `rearU`, `side`, `mountMethod`, `widthClass`, `nominalSpanTwelfths`. A 2U patch panel is `{front: 2, rear: 2}`; a rear lacing bar is `{front: 0, rear: 1}`; a 0U PDU is `{0, 0, side: zeroUVertical}`. Half-rack width is `widthClass: half` plus `nominalSpanTwelfths` (CR-030), never "0.5 rack width", because 9.5 / 10 / 10.4 / 10.5 in all ship.
 
-All lengths are `Len` (int64 nanometres, CR-001) and all masses `Mass` (int64 micrograms, CR-003). Serialized names carry the unit: `depthNm`, `weightUg`, `chassisWidth`. `chassisWidth` defaults to **432 mm** for `widthClass: full`, not 482.6 mm — 482.6 is the *panel* width including ears, and flowing connectors across it draws jacks out past the rails on the very view that gets taped inside the rack door (AC-032). `maxUnsupportedMass` defaults to ~7 kg for `rackEars` and feeds `RCK-013` (AC-028).
+All lengths are `Len` (int64 nanometres, CR-001) and all masses `Mass` (int64 micrograms, CR-003). Serialized names carry the unit: `depthNm`, `weightUg`, `chassisWidth`. `chassisWidth` defaults to **432 mm** for `widthClass: full`, not 482.6 mm, 482.6 is the *panel* width including ears, and flowing connectors across it draws jacks out past the rails on the very view that gets taped inside the rack door (AC-032). `maxUnsupportedMass` defaults to ~7 kg for `rackEars` and feeds `RCK-013` (AC-028).
 
-Depth and weight are **optional, with a visible `unknown` state**: the fields are `Len? bodyDepth` and `Mass? weight`, and an untouched field stays unknown rather than acquiring a default. Unknown **serializes as an absent key, never an explicit `null`** — the codec omits it, and an absent key reads back as unknown. This is AC-049's three-required-fields promise made concrete: nothing here blocks `Save`, and every rollup that consumes these fields reports its unknown count instead of fabricating a number (CR-114, G4).
+Depth and weight are **optional, with a visible `unknown` state**: the fields are `Len? bodyDepth` and `Mass? weight`, and an untouched field stays unknown rather than acquiring a default. Unknown **serializes as an absent key, never an explicit `null`**: the codec omits it, and an absent key reads back as unknown. This is AC-049's three-required-fields promise made concrete: nothing here blocks `Save`, and every rollup that consumes these fields reports its unknown count instead of fabricating a number (CR-114, G4).
 
 ### 3.3 Power & thermal
 
@@ -115,9 +115,9 @@ Three things the form does **not** do:
 
 ## 4. The I/O editor
 
-This is the product, and the design premise is binding: **the I/O editor is a spreadsheet, not a form.** Integrators live in Excel. Every ergonomic they already know — fill-down, multi-select, TSV paste, Tab/Enter navigation — works. Any interaction costing one click per port is a design failure.
+This is the product, and the design premise is binding: **the I/O editor is a spreadsheet, not a form.** Integrators live in Excel. Every ergonomic they already know (fill-down, multi-select, TSV paste, Tab/Enter navigation) works. Any interaction costing one click per port is a design failure.
 
-### 4.1 Quick Add — docked, never modal
+### 4.1 Quick Add: docked, never modal
 
 ```
 ┌─ Quick Add ─────────────────────────────────────────────────────────────────┐
@@ -127,26 +127,26 @@ This is the product, and the design premise is binding: **the I/O editor is a sp
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Focus lands here on entering the section and **returns here after every add**, so consecutive banks are pure typing. Two modes on one control, bound bidirectionally: **command mode** (a permissive mini-DSL with inline autocomplete) and **field mode** (the same parameters as discrete controls, for discoverability). Typing in command mode updates the fields live, which is how the DSL teaches itself — and the autocomplete is not optional, because the discoverability argument is void without it (AC-050 / A2.4).
+Focus lands here on entering the section and **returns here after every add**, so consecutive banks are pure typing. Two modes on one control, bound bidirectionally: **command mode** (a permissive mini-DSL with inline autocomplete) and **field mode** (the same parameters as discrete controls, for discoverability). Typing in command mode updates the fields live, which is how the DSL teaches itself, and the autocomplete is not optional, because the discoverability argument is void without it (AC-050 / A2.4).
 
-Grammar — everything but qty and connector is optional and order-insensitive:
+Grammar, everything but qty and connector is optional and order-insensitive:
 
 ```text
 <qty> <connector|alias> [<family|alias>] [in|out|bi|bus|pass] [front|rear|both]
       ["<label pattern>"] [@<bank>] [poe:at] [z:75] [dte] [tap:10w]
 ```
 
-Aliases resolve aggressively **against the registry** (CR-058): `ConnectorTypeDef.aliases` and `SignalFamilyDef.aliases` hold the bare trade names, while the canonical IDs stay namespaced `lower.dotted.snake`. So `hdmi` → `conn.hdmi_a` + `video.hdmi.2_0`; `rj45` → `conn.rj45` + `net.ethernet`; `hdbt` → `conn.rj45` + `video.hdbaset` — *a different family on the same connector, which is the entire point of keeping connector, family and direction orthogonal*. `spdif` → `conn.rca` + `audio.spdif_coax` + impedance 75.
+Aliases resolve aggressively **against the registry** (CR-058): `ConnectorTypeDef.aliases` and `SignalFamilyDef.aliases` hold the bare trade names, while the canonical IDs stay namespaced `lower.dotted.snake`. So `hdmi` → `conn.hdmi_a` + `video.hdmi.2_0`; `rj45` → `conn.rj45` + `net.ethernet`; `hdbt` → `conn.rj45` + `video.hdbaset`, *a different family on the same connector, which is the entire point of keeping connector, family and direction orthogonal*. `spdif` → `conn.rca` + `audio.spdif_coax` + impedance 75.
 
-*Rejected alternative (CR-058):* flat bare names as the canonical vocabulary. The DSL gets its ergonomics from the aliases; the file format gets its namespacing and forward compatibility from the IDs. `ac-inlet` as a *signal family* is re-authored throughout as **`power.ac_iec`** + `PortPowerSpec.role: inlet` (CR-058, CR-060). **Inlet and outlet are not directions** — they are `sink`/`source` on a `power.*` family plus a role.
+*Rejected alternative (CR-058):* flat bare names as the canonical vocabulary. The DSL gets its ergonomics from the aliases; the file format gets its namespacing and forward compatibility from the IDs. `ac-inlet` as a *signal family* is re-authored throughout as **`power.ac_iec`** + `PortPowerSpec.role: inlet` (CR-058, CR-060). **Inlet and outlet are not directions**: they are `sink`/`source` on a `power.*` family plus a role.
 
 | Typed | Result |
 |---|---|
 | `16 hdmi in` | 16 × `conn.hdmi_a` / `video.hdmi.2_0` / sink / rear, `HDMI IN 1…16`, bank auto-named "HDMI Inputs" |
-| `16 euro2 out "ZONE {n@2} {L,R}"` | ZONE 1 L, ZONE 1 R, ZONE 2 L … ZONE 8 R — a whole 16-channel amp bank |
+| `16 euro2 out "ZONE {n@2} {L,R}"` | ZONE 1 L, ZONE 1 R, ZONE 2 L … ZONE 8 R: a whole 16-channel amp bank |
 | `24 rj45 poe:at @Ports "{n:2}"` | 01…24, PSE, 802.3at |
 | `24 rj45 pass both "{n:2}"` | 48 ports: 24 front + 24 rear, auto-paired as a passthrough panel |
-| `1 c14 in` | AC inlet — `conn.iec_c14` / `power.ac_iec` / sink, `PortPowerSpec.role: inlet` |
+| `1 c14 in` | AC inlet: `conn.iec_c14` / `power.ac_iec` / sink, `PortPowerSpec.role: inlet` |
 
 ### 4.2 Label pattern language
 
@@ -165,11 +165,11 @@ Parse errors are *designed*, not thrown: the offending span is underlined in the
 
 Three buttons above Quick Add that emit whole topologies:
 
-- **Matrix I/O…** — *N* inputs × *M* outputs, connector per side, with checkboxes for the usual companions: mirrored outputs, per-output audio de-embed, per-output IR, control (LAN + RS-232), AC inlet. Emits 4–7 banks in one action.
-- **Switch ports…** — *N* access ports + *M* uplinks, PoE standard and per-port class, SFP form factor, management port, redundant PSU.
-- **Paste from spreadsheet** — TSV/CSV with a column-mapping sheet, sharing the engine with the Structure CSV import.
+- **Matrix I/O…**: *N* inputs × *M* outputs, connector per side, with checkboxes for the usual companions: mirrored outputs, per-output audio de-embed, per-output IR, control (LAN + RS-232), AC inlet. Emits 4–7 banks in one action.
+- **Switch ports…**: *N* access ports + *M* uplinks, PoE standard and per-port class, SFP form factor, management port, redundant PSU.
+- **Paste from spreadsheet**: TSV/CSV with a column-mapping sheet, sharing the engine with the Structure CSV import.
 
-### 4.4 Banks and port sets — two concepts, two names
+### 4.4 Banks and port sets: two concepts, two names
 
 CR-055 resolves a live name collision, and both concepts ship in v1.
 
@@ -188,14 +188,14 @@ A virtualised data grid, rows grouped by bank under sticky collapsible headers. 
 |---|---|---|
 | `⠿` | drag handle | Reorder within and across banks |
 | `☐` | checkbox | Multi-select |
-| `Key` | text | `PortDef.key` — stable, author-assigned, **the migration join** (CR-051). Auto-derived from the first label, editable, shown greyed until touched |
+| `Key` | text | `PortDef.key`: stable, author-assigned, **the migration join** (CR-051). Auto-derived from the first label, editable, shown greyed until touched |
 | `Label` | text | The silkscreen text |
-| `Designator` | text | `J01` — unique **within the device** (CR-042). Auto-assigned sequentially per ASME Y14.44; auto until manually edited, then pinned (italic → roman) |
+| `Designator` | text | `J01`: unique **within the device** (CR-042). Auto-assigned sequentially per ASME Y14.44; auto until manually edited, then pinned (italic → roman) |
 | `Connector` | combo | `ConnectorTypeId`, grouped picker with footprint preview |
 | `Family` | combo | `SignalFamilyId`, filtered to families legal on that connector, plus "Other…" |
-| `Dir` | segmented | **Five values** — `i o b n p` = source · sink · bidirectional · **busNode** · **passive** (CR-060) |
+| `Dir` | segmented | **Five values**: `i o b n p` = source · sink · bidirectional · **busNode** · **passive** (CR-060) |
 | `Face` | segmented | Front / Rear |
-| `Set` | combo + role | `PortSetDef` + `setRole` — component video, stereo pairs, RGBHV, speaker ± |
+| `Set` | combo + role | `PortSetDef` + `setRole`: component video, stereo pairs, RGBHV, speaker ± |
 | `Notes` | text | |
 
 *Rejected alternative (CR-060):* the catalog's four-letter `i/o/b/p` notation, where `p` collapsed `busNode` and `passive` into one letter. The distinction is load-bearing for `DIR-002`, `BUS-001`, `BUS-002` and the multi-drop stub glyph, so the notation gains a letter and every catalog entry using `p` is re-audited.
@@ -210,7 +210,7 @@ A virtualised data grid, rows grouped by bank under sticky collapsible headers. 
 | Passthrough | Paired port |
 | Advanced | Max connections · Topology · **Gender** · Pinout variant · Return channel · `renamedFrom` |
 
-`Gender` has **three** values — `male | female | genderless` — and the column is only enabled when `ConnectorTypeDef.genderApplies` is true (CR-059). *Rejected alternative:* the five-value enum with `jack` and `plug`, which contained two synonym pairs and silently broke `CON-002`: the rule "both ends male or both ends female" never fired for `jack` + `jack`.
+`Gender` has **three** values, `male | female | genderless`, and the column is only enabled when `ConnectorTypeDef.genderApplies` is true (CR-059). *Rejected alternative:* the five-value enum with `jack` and `plug`, which contained two synonym pairs and silently broke `CON-002`: the rule "both ends male or both ends female" never fired for `jack` + `jack`.
 
 ### 4.6 Editing operations
 
@@ -222,20 +222,20 @@ A virtualised data grid, rows grouped by bank under sticky collapsible headers. 
 | **Multi-row edit** | select N rows, edit any cell | Applies to every selected row; the right dock becomes the batch inspector; mixed values render `—` and are left untouched unless explicitly set |
 | Duplicate | `Ctrl+J` | Clones the selection below, labels auto-incremented past the highest existing index |
 | Delete | `Del` | Undoable on the builder's stack; warns if the port is in a passthrough pair |
-| **Reorder** | drag, or `Alt+↑/↓` | `PortDef.order` is a `FracIndex` (CR-027) — a reorder is one field write on one row, not a renumber of the bank |
+| **Reorder** | drag, or `Alt+↑/↓` | `PortDef.order` is a `FracIndex` (CR-027), a reorder is one field write on one row, not a renumber of the bank |
 | Renumber… | `Ctrl+R` | Re-applies a label pattern to the selection in current display order |
 | Find & replace | `Ctrl+H` | Scoped to labels, keys, designators or notes; regex opt-in |
 | Change type… | `Ctrl+T` | Bulk connector/family change with an impact preview |
 | Move to bank… | `Ctrl+M` | |
 | Copy / paste | `Ctrl+C` / `Ctrl+V` | TSV round-trips to Excel and back |
 | Sort | click header | **View-only by default**, shown with a badge. `Commit sort order` is a separate explicit action, because sorting is destructive to symbol pin order |
-| Mirror bank | bank context menu | Duplicates a bank with direction flipped and the label prefix swapped IN↔OUT — the output side of a matrix in one click |
+| Mirror bank | bank context menu | Duplicates a bank with direction flipped and the label prefix swapped IN↔OUT, the output side of a matrix in one click |
 
 Reorder is semantic: it drives symbol pin order and panel auto-layout. Because `order` is a `FracIndex`, dragging one row rewrites one row.
 
-**Passthrough pairing.** With `isPassthrough` on, the grid gains the `Paired port` column and a **Pair front↔rear by order** action, and both write `TemplateBody.passthroughPairs: [{frontKey, rearKey, sameNet}]` — which now exists in `.rmdx` (CR-057). A passthrough template whose pairs are missing is a **load warning, not an error**. Paired ports share a net, so a trace resolves `Living Room jack → PP-1 F12 → PP-1 R12 → SW-1 P04` as one logical path.
+**Passthrough pairing.** With `isPassthrough` on, the grid gains the `Paired port` column and a **Pair front↔rear by order** action, and both write `TemplateBody.passthroughPairs: [{frontKey, rearKey, sameNet}]`, which now exists in `.rmdx` (CR-057). A passthrough template whose pairs are missing is a **load warning, not an error**. Paired ports share a net, so a trace resolves `Living Room jack → PP-1 F12 → PP-1 R12 → SW-1 P04` as one logical path.
 
-**Live validation** puts a severity dot in the row gutter — duplicate designator in-template, passthrough port with no pair, an RCA carrying `audio.spdif_coax` without impedance 75, an IR 3.5 mm port with no `pinoutVariant`. None of it blocks saving. `pinoutVariant` is safety-adjacent and must therefore carry a cited source before the template ships in the catalog (AC-052).
+**Live validation** puts a severity dot in the row gutter, duplicate designator in-template, passthrough port with no pair, an RCA carrying `audio.spdif_coax` without impedance 75, an IR 3.5 mm port with no `pinoutVariant`. None of it blocks saving. `pinoutVariant` is safety-adjacent and must therefore carry a cited source before the template ships in the catalog (AC-052).
 
 **Footer readout**, one line, always visible:
 
@@ -245,15 +245,15 @@ Reorder is semantic: it drives symbol pin order and panel auto-layout. Because `
 
 ---
 
-## 5. Panel layout — the canonical ruling
+## 5. Panel layout: the canonical ruling
 
 The question "is the visual panel-layout feature in v1?" was answered three different ways across the corpus, and CR-071 splits it into three separate answers.
 
 > **Ruling (CR-071, part 1 — authoring):** ports are authored **in the grid**. Panel geometry is **auto-laid-out from connector footprints**. Manual nudging ships in v1 as an **optional hidden toggle, pre-populated from the auto-layout**. The proposition *"you build a device by drawing its rear panel"* is **rejected as the authoring model.**
 
-*Rejected alternative:* the rear-panel canvas as the device builder's primary output surface. It is precisely the "click 16 times" failure the brief exists to eliminate, multiplied — a 48-port patch panel would need 48 placements. Ports connect by **identity**, not position; the netlist, the schedule and the PDF are all complete without a single coordinate.
+*Rejected alternative:* the rear-panel canvas as the device builder's primary output surface. It is precisely the "click 16 times" failure the brief exists to eliminate, multiplied, a 48-port patch panel would need 48 placements. Ports connect by **identity**, not position; the netlist, the schedule and the PDF are all complete without a single coordinate.
 
-Auto-layout ships anyway, because the geometry is free. Every `ConnectorTypeDef` carries a real footprint and pitch, and **a CI test asserts that every connector referenced by a shipped template has a footprint entry** (AC-050 / A2.2) — the earlier table had 13 entries for a catalog using ~35 connectors, so the "zero-authoring correct rear panel" claim was false as written and is now enforced rather than asserted.
+Auto-layout ships anyway, because the geometry is free. Every `ConnectorTypeDef` carries a real footprint and pitch, and **a CI test asserts that every connector referenced by a shipped template has a footprint entry** (AC-050 / A2.2), the earlier table had 13 entries for a catalog using ~35 connectors, so the "zero-authoring correct rear panel" claim was false as written and is now enforced rather than asserted.
 
 ```text
 Algorithm — panel_layer.dart
@@ -275,11 +275,11 @@ The override is a `☐ Customize panel layout` toggle revealing a canvas seeded 
 
 Three stacked, individually collapsible previews in the right dock, all updating on every keystroke.
 
-1. **Rack elevation strip** — 19 in at true aspect, height `heightU × 44 450 000 nm` exactly (CR-001, CR-002), front/rear toggle, face colour + glyph + name + a `{TYPE_PREFIX}-1` placeholder designator. This is literally what prints.
-2. **Schematic symbol** — auto-generated in the KiCad/Q-SYS idiom: a rectangle with the designator top-left, name centred, model in small type below, pin stubs grouped by bank. Default sides are inputs left, outputs right, control top, power bottom, each overridable via `BankDef.symbolSide`. Pin **shape** encodes connector class; pin **colour** encodes **domain**, taken from `SignalDomainDef` — colour lives on the domain, not the family (CR-078). Banks over 8 ports render **collapsed to a vector pin with a count badge** by default, which is what keeps a 48-port switch legible.
-3. **Rear panel render** — the auto-layout output drawn to scale with a panel-fill percentage.
+1. **Rack elevation strip**: 19 in at true aspect, height `heightU × 44 450 000 nm` exactly (CR-001, CR-002), front/rear toggle, face colour + glyph + name + a `{TYPE_PREFIX}-1` placeholder designator. This is literally what prints.
+2. **Schematic symbol**: auto-generated in the KiCad/Q-SYS idiom: a rectangle with the designator top-left, name centred, model in small type below, pin stubs grouped by bank. Default sides are inputs left, outputs right, control top, power bottom, each overridable via `BankDef.symbolSide`. Pin **shape** encodes connector class; pin **colour** encodes **domain**, taken from `SignalDomainDef`, colour lives on the domain, not the family (CR-078). Banks over 8 ports render **collapsed to a vector pin with a count badge** by default, which is what keeps a 48-port switch legible.
+3. **Rear panel render**: the auto-layout output drawn to scale with a panel-fill percentage.
 
-Both the symbol and the panel are produced by real scene builders (`symbol_layer.dart`, `panel_layer.dart`), not preview-only widgets — a symbol that cannot print is not a symbol (CR-086).
+Both the symbol and the panel are produced by real scene builders (`symbol_layer.dart`, `panel_layer.dart`), not preview-only widgets, a symbol that cannot print is not a symbol (CR-086).
 
 ---
 
@@ -287,16 +287,16 @@ Both the symbol and the panel are produced by real scene builders (`symbol_layer
 
 ### 7.1 Library, categorise, tag, search, favourite
 
-Storage is the app catalog directory (seeded, read-only) plus the user library directory (writable), plus per-project embedded snapshots. The `signature` field and the cryptographic provenance chain are **cut from v1** (AC-042); `contentHash` survives because it is three lines and it is what makes the embedded-snapshot argument true. **Library packs are no longer cut with them** — DR-015 §11.15.3 separates the two halves AC-042 argued as one, renames the pack `.rmda`, and makes it a single JSON file rather than a zip. It is ruled, not built, and it is what makes "multiple device libraries loaded into the palette and filtered as needed" expressible at all.
+Storage is the app catalog directory (seeded, read-only) plus the user library directory (writable), plus per-project embedded snapshots. The `signature` field and the cryptographic provenance chain are **cut from v1** (AC-042); `contentHash` survives because it is three lines and it is what makes the embedded-snapshot argument true. **Library packs are no longer cut with them**: DR-015 §11.15.3 separates the two halves AC-042 argued as one, renames the pack `.rmda`, and makes it a single JSON file rather than a zip. It is ruled, not built, and it is what makes "multiple device libraries loaded into the palette and filtered as needed" expressible at all.
 
-- **Browser:** grid or list, the rack elevation strip as the card thumbnail. Sidebar: category tree, then filter chips — RU height, mount method, "has HDMI", "has PoE", "is passthrough", "container", "used in this project", "drafts".
+- **Browser:** grid or list, the rack elevation strip as the card thumbnail. Sidebar: category tree, then filter chips, RU height, mount method, "has HDMI", "has PoE", "is passthrough", "container", "used in this project", "drafts".
 - **Search:** fuzzy over name, manufacturer, model, tags, description **and port signal families**. Typing `hdbaset` surfaces every template with an HDBaseT port even when the word is absent from its name; typing `16x16` matches the model string.
 - **Favourites:** star toggle; favourites pin to the top of the browser and to the palette.
 - **Smart folders:** `Recently used` and `Used in this project` are always first and satisfy most lookups.
 
-The palette in the browser is the **same widget** used to insert devices everywhere — one palette, one insert command, placement decided by the drop target (CR-104). Dropping on a rack yields a `RailPlacement`; dropping on the schematic, or inserting with no rack focused, yields a `StagedPlacement` plus a `SheetItem`.
+The palette in the browser is the **same widget** used to insert devices everywhere, one palette, one insert command, placement decided by the drop target (CR-104). Dropping on a rack yields a `RailPlacement`; dropping on the schematic, or inserting with no rack focused, yields a `StagedPlacement` plus a `SheetItem`.
 
-The v1 template count is stated in exactly one place — the summary table in [Seed devices](catalog/seed-devices.md#310-catalog-summary-and-what-is-deliberately-not-in-it) — and in no prose anywhere (CR-061).
+The v1 template count is stated in exactly one place, the summary table in [Seed devices](catalog/seed-devices.md#310-catalog-summary-and-what-is-deliberately-not-in-it), and in no prose anywhere (CR-061).
 
 ### 7.2 Versioning
 
@@ -310,10 +310,10 @@ Templates are immutable versioned records. Editing a published template does not
 
 ### 7.3 Duplicate, fork, import, export
 
-- **Duplicate** — new `templateId`, `version 1`, name + " copy", `derivedFrom` recorded. Offered directly from every catalog card as `Duplicate & edit`; this is the intended path for building on the archetypes.
-- **Seeded templates are read-only.** Editing one silently performs Duplicate → edit the copy with a one-line notice. The consequence that no document previously surfaced is now handled: a fork records `derivedFrom{templateId, version}`, and when the catalog later revises the source the fork shows a **passive badge** — *"Based on catalog 'HDMI Matrix 8×8' v1 — the catalog version has since been corrected (v3). Compare…"*. No action is forced (CR-062).
-- **Export / import** — single **`.rmdx`**, plain UTF-8 JSON, LF, 2-space indent, keys sorted. Templates are inert data with no executable content, and the import dialog says so. `.rmdx` obeys the same unit regime as `.rmpj`: `depthNm`, `weightUg`, `xNm` — **no floating-point millimetres** (CR-063), because the template file is part of the persisted model and there is no second unit regime. Every import path enforces JSON depth and size limits (AC-058 / D8).
-- **Hash mismatch is a warning plus a badge on the affected devices, never a load failure** (AC-042). *Rejected alternative:* I-8's hard load error — refusing to open a project because a snapshot was hand-edited is a data-loss event dressed as a safety feature.
+- **Duplicate**: new `templateId`, `version 1`, name + " copy", `derivedFrom` recorded. Offered directly from every catalog card as `Duplicate & edit`; this is the intended path for building on the archetypes.
+- **Seeded templates are read-only.** Editing one silently performs Duplicate → edit the copy with a one-line notice. The consequence that no document previously surfaced is now handled: a fork records `derivedFrom{templateId, version}`, and when the catalog later revises the source the fork shows a **passive badge**, *"Based on catalog 'HDMI Matrix 8×8' v1, the catalog version has since been corrected (v3). Compare…"*. No action is forced (CR-062).
+- **Export / import**: single **`.rmdx`**, plain UTF-8 JSON, LF, 2-space indent, keys sorted. Templates are inert data with no executable content, and the import dialog says so. `.rmdx` obeys the same unit regime as `.rmpj`: `depthNm`, `weightUg`, `xNm`, **no floating-point millimetres** (CR-063), because the template file is part of the persisted model and there is no second unit regime. Every import path enforces JSON depth and size limits (AC-058 / D8).
+- **Hash mismatch is a warning plus a badge on the affected devices, never a load failure** (AC-042). *Rejected alternative:* I-8's hard load error, refusing to open a project because a snapshot was hand-edited is a data-loss event dressed as a safety feature.
 
 ```json
 {
@@ -362,13 +362,13 @@ Right-clicking a placed device offers exactly three edit paths (CR-054), each wi
 
 | Door | Effect | Badge |
 |---|---|---|
-| **Edit this device only** | Writes typed `DeviceOverrides`; template untouched | Amber — *"Editing MTX-1 only. 3 other devices use this template and will not change."* |
-| **Edit the template** | Forks `version + 1` in the library; placed instances untouched until opted in | Blue — *"Editing template 'HDMI Matrix 16×16'. Used by 4 devices."* |
-| **Fork to a new template** | New `templateId`, seeded from snapshot + overrides, this instance rebinds, overrides cleared, `derivedFrom` recorded | Green — *"MTX-1 will use a new independent template."* |
+| **Edit this device only** | Writes typed `DeviceOverrides`; template untouched | Amber: *"Editing MTX-1 only. 3 other devices use this template and will not change."* |
+| **Edit the template** | Forks `version + 1` in the library; placed instances untouched until opted in | Blue: *"Editing template 'HDMI Matrix 16×16'. Used by 4 devices."* |
+| **Fork to a new template** | New `templateId`, seeded from snapshot + overrides, this instance rebinds, overrides cleared, `derivedFrom` recorded | Green: *"MTX-1 will use a new independent template."* |
 
-*Rejected alternative:* a fourth verb, **Detach instance** (`templateRef → null`). It is **deleted** — it produces a device with no lineage, and door 3 covers the case with better provenance. `DeviceInstance.localTemplate` and `PlacedDevice.snapshot` are deleted with it: snapshots live in exactly one store.
+*Rejected alternative:* a fourth verb, **Detach instance** (`templateRef → null`). It is **deleted**: it produces a device with no lineage, and door 3 covers the case with better provenance. `DeviceInstance.localTemplate` and `PlacedDevice.snapshot` are deleted with it: snapshots live in exactly one store.
 
-Overrides are **typed nullable classes**, not dotted-path maps (CR-053, AC-012), and `PortOverrides` lives on the `Port`, never in a device-keyed map — a device-keyed map of port overrides re-introduces the composite-key identity the model bans.
+Overrides are **typed nullable classes**, not dotted-path maps (CR-053, AC-012), and `PortOverrides` lives on the `Port`, never in a device-keyed map, a device-keyed map of port overrides re-introduces the composite-key identity the model bans.
 
 ### 8.3 Propagation and the migration join
 
@@ -390,18 +390,18 @@ Three identities stay distinct and are never conflated: `Port.id` (UUID, graph i
 
 ---
 
-## 9. Worked example — a 16×16 HDBaseT matrix
+## 9. Worked example: a 16×16 HDBaseT matrix
 
-The M4 exit criterion is that a user who has seen the tool once authors this template **from scratch in under three minutes**. The target device: 4U, 16 HDMI inputs, 16 HDBaseT outputs on RJ45, 16 mirrored HDMI outputs, 16 IR emitter outputs, LAN, RS-232, IR in, C14 inlet — **68 ports across 6 banks**.
+The M4 exit criterion is that a user who has seen the tool once authors this template **from scratch in under three minutes**. The target device: 4U, 16 HDMI inputs, 16 HDBaseT outputs on RJ45, 16 mirrored HDMI outputs, 16 IR emitter outputs, LAN, RS-232, IR in, C14 inlet, **68 ports across 6 banks**.
 
-### 9.1 The DSL path — 13 steps
+### 9.1 The DSL path: 13 steps
 
 | # | Action | Keys / clicks | Ports |
 |---|---|---|---|
 | 1 | `File ▸ New template` | `Ctrl+Shift+N` | 0 |
 | 2 | Type the name | `HDMI Matrix 16x16` | 0 |
 | 3 | Tab to RU height, type | `Tab` `4` | 0 |
-| 4 | Tab to prefix — pre-filled `MTX`, accept | `Tab` | 0 |
+| 4 | Tab to prefix: pre-filled `MTX`, accept | `Tab` | 0 |
 | 5 | Jump to Ports (all required fields now satisfied) | `Ctrl+Enter` | 0 |
 | 6 | `16 hdmi in "HDMI IN {n:2}"` | `Enter` | 16 |
 | 7 | `16 hdbt out "HDBT OUT {n:2}"` | `Enter` | 32 |
@@ -414,15 +414,15 @@ The M4 exit criterion is that a user who has seen the tool once authors this tem
 
 **13 steps, ~120 keystrokes, zero mouse clicks, no dialog.** Banks 1–5 are auto-named from family + direction; bank 6 is named by `@Control` on first use. Designators `J01…J68` are auto-assigned per ASME Y14.44. Panel layout is `AUTO`. Power, weight and depth are left blank and render `—` downstream with an accurate unknown count in every rollup.
 
-### 9.2 The archetype path — 7 steps
+### 9.2 The archetype path: 7 steps
 
 | # | Action | Emits |
 |---|---|---|
-| 1 | `Ctrl+Shift+N`, type `HDMI Matrix 16x16`, `Tab` `4` `Tab`, `Ctrl+Enter` | — |
+| 1 | `Ctrl+Shift+N`, type `HDMI Matrix 16x16`, `Tab` `4` `Tab`, `Ctrl+Enter` |: |
 | 2 | Click **Matrix I/O…** | dialog |
-| 3 | Inputs `16`, connector `hdmi` | — |
-| 4 | Outputs `16`, connector `hdbt` | — |
-| 5 | Tick ☑ Mirrored outputs · ☑ Per-output IR · ☑ Control (LAN + RS-232) · ☑ AC inlet | — |
+| 3 | Inputs `16`, connector `hdmi` |: |
+| 4 | Outputs `16`, connector `hdbt` |: |
+| 5 | Tick ☑ Mirrored outputs · ☑ Per-output IR · ☑ Control (LAN + RS-232) · ☑ AC inlet |: |
 | 6 | `[ Generate ]` | **68 ports, 6 banks** |
 | 7 | `Ctrl+S` | saved |
 
@@ -437,7 +437,7 @@ The M4 exit criterion is that a user who has seen the tool once authors this tem
 | **RackMate, DSL path** | **13** |
 | **RackMate, archetype path** | **7** |
 
-Two invariants make the numbers real rather than a demo. First, **focus never leaves Quick Add** during steps 6–13 — no reach for the mouse, no modal dismissal. Second, **nothing in the metadata form was touched after step 4**, because AC-049 removed it from the critical path; the same template, with the same 68 ports, is a complete and placeable template whether or not anyone ever fills in its weight.
+Two invariants make the numbers real rather than a demo. First, **focus never leaves Quick Add** during steps 6–13, no reach for the mouse, no modal dismissal. Second, **nothing in the metadata form was touched after step 4**, because AC-049 removed it from the critical path; the same template, with the same 68 ports, is a complete and placeable template whether or not anyone ever fills in its weight.
 
 ---
 
@@ -452,7 +452,7 @@ Two invariants make the numbers real rather than a demo. First, **focus never le
 | The Structure device's separate editor | [Structure device](07-structure-device.md) |
 | Rear-panel printing, `T2.02`, equipment list | [PDF export](08-pdf-export.md) |
 | M4 sizing and exit criterion | [Roadmap](09-roadmap.md) |
-| Every ruling cited above | [Canonical decisions](canonical-decisions.md) — normative; [10-decisions](10-decisions.md) is the short-form ADR summary of it |
+| Every ruling cited above | [Canonical decisions](canonical-decisions.md), normative; [10-decisions](10-decisions.md) is the short-form ADR summary of it |
 | Footprint CI assertion, DSL parse-error fixtures, catalog provenance | [Testing and quality](11-testing-and-quality.md) |
 
-Two extensibility paths ship with the builder and one does not. The **media-type editor** and **connector aliases** ship, because users hit them — the Structure CSV import already creates media types, and that is correct (AC-050 / A2.1). A **general registry authoring UI** does not ship (RJ-012): it is a database admin tool wearing a product's clothes. The claim that users can author **validation rules** is withdrawn from every document (AC-011); rules are Dart functions in a registry keyed by `ruleId`.
+Two extensibility paths ship with the builder and one does not. The **media-type editor** and **connector aliases** ship, because users hit them, the Structure CSV import already creates media types, and that is correct (AC-050 / A2.1). A **general registry authoring UI** does not ship (RJ-012): it is a database admin tool wearing a product's clothes. The claim that users can author **validation rules** is withdrawn from every document (AC-011); rules are Dart functions in a registry keyed by `ruleId`.

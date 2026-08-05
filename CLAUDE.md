@@ -124,5 +124,14 @@ value survives the behaviour it was protecting; more than one test in this repo 
 been found asserting a defect as intended behaviour. When a comment explains why a
 branch exists, keep it, and update it when the branch changes.
 
-Prose in `docs/` uses em dashes heavily. **New prose should not.** A sweep to remove
-them is scheduled with the next code review.
+**Do not use em dashes in prose.** The sweep this rule used to schedule has run:
+3,361 sites across 21 authored documents became a colon, a comma, a semicolon or a
+pair of parentheses, chosen by what followed the dash.
+
+Three classes were deliberately left alone, and a later sweep should leave them alone
+too. **Code** keeps them, fenced or inline, because there the dash is data rather than
+punctuation: `—` is what G4 prints for an unknown. **Blockquotes** keep them, because
+canon quotes rulings and critiques word for word and editing a quotation falsifies the
+record. **`docs/research/` and `docs/m1-implementation-log.md`** keep them, because
+`research/README.md` calls those papers the unedited outputs of the design passes, and
+a dated log is a record rather than a document.

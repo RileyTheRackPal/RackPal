@@ -31,7 +31,7 @@ The `rackmate_core` package is pure, synchronous Dart with no `package:flutter`,
 | Integration | `apps/rackmate` | every PR, Windows + macOS | blocking |
 | Performance | `rackmate_core/test/perf/` | every PR under `perf` tag | warn-only for 3 months, then blocking |
 | Pixel-diff PDF | `rackmate_export` | nightly | non-blocking, triaged |
-| Manual / hardware | — | per milestone | milestone exit criterion |
+| Manual / hardware |: | per milestone | milestone exit criterion |
 
 Rejected alternative: a Flutter-first suite where the model is exercised through widgets. It makes every domain assertion cost a pump-and-settle and it cannot run the 1,000-seed property tests at all.
 
@@ -60,8 +60,8 @@ Companion invariant tests, each named for the ruling it defends: `ruIndex` is 1-
 
 Two mechanical guards, both dependency-free, both cheap enough to keep forever:
 
-1. `no_flutter_import_test.dart` — greps `packages/rackmate_core/lib` for `package:flutter/`, `dart:ui` and `package:pdf/` and fails the build with the offending path (CR-083). Belt and braces: core's pubspec has no `flutter:` key, so a stray import is also a compile error.
-2. `banned_names_test.dart` — greps the whole repository, including prose and comments, for the [canon §4.7](canonical-decisions.md#47-banned-names) banned vocabulary (`Connection`, `PhysicalLink`, `CableType`, `bottomU`, `refDes`, `StructureDrop`, `StructureBundle`, `bundleStatus`, `RulePredicate`, `RendererCaps`, `ObstacleField`, `blockExportOnErrors`, `Money`, …). `StructureBundle` and `bundleStatus` are named explicitly because bare "bundle" is banned (CR-016) and `Outlet.bundleStatus` survived in prose long after the field became `Outlet.roughInStatus`; the word survives only as UI copy for `Pathway`. Registry IDs are **not** in this list — those are caught by the resolve test in §2.6. N2 makes a banned word banned in prose too; without a test that is an aspiration. One allowlisted file: the migration note that explains each removal.
+1. `no_flutter_import_test.dart`, greps `packages/rackmate_core/lib` for `package:flutter/`, `dart:ui` and `package:pdf/` and fails the build with the offending path (CR-083). Belt and braces: core's pubspec has no `flutter:` key, so a stray import is also a compile error.
+2. `banned_names_test.dart`, greps the whole repository, including prose and comments, for the [canon §4.7](canonical-decisions.md#47-banned-names) banned vocabulary (`Connection`, `PhysicalLink`, `CableType`, `bottomU`, `refDes`, `StructureDrop`, `StructureBundle`, `bundleStatus`, `RulePredicate`, `RendererCaps`, `ObstacleField`, `blockExportOnErrors`, `Money`, …). `StructureBundle` and `bundleStatus` are named explicitly because bare "bundle" is banned (CR-016) and `Outlet.bundleStatus` survived in prose long after the field became `Outlet.roughInStatus`; the word survives only as UI copy for `Pathway`. Registry IDs are **not** in this list; those are caught by the resolve test in §2.6. N2 makes a banned word banned in prose too; without a test that is an aspiration. One allowlisted file: the migration note that explains each removal.
 3. A third grep asserts no entity setter is invoked outside `src/commands/`, backing the `@internal` decision (AC-013).
 
 ### 2.2 Command round-trip and epoch coverage
@@ -79,13 +79,13 @@ test('apply ∘ revert == identity over 1000 seeded (doc, command) pairs', () {
 });
 ```
 
-The generator must emit add-device commands so that `TemplateSnapshot` refcounting is covered for free (AC-015), and the comparison is on **encoded bytes**, which is what makes it also assert `templates.keys` ordering. The alternation invariant `apply; revert; apply == apply` runs on the same seeds. Rejected alternative: a generic property-testing package with an automatic shrinker — it cannot generate valid RU spans or compatible connectors, and a failing seed number is a perfectly good repro.
+The generator must emit add-device commands so that `TemplateSnapshot` refcounting is covered for free (AC-015), and the comparison is on **encoded bytes**, which is what makes it also assert `templates.keys` ordering. The alternation invariant `apply; revert; apply == apply` runs on the same seeds. Rejected alternative: a generic property-testing package with an automatic shrinker; it cannot generate valid RU spans or compatible connectors, and a failing seed number is a perfectly good repro.
 
 The **epoch-mask coverage test** (AC-014) is forty lines and is the highest value-per-line test in the plan: for every registered command type, snapshot every derived output, apply the command, snapshot again, diff, and assert the command's declared `touches` mask covers every epoch that actually changed. Hand-declared masks with "when in doubt, over-declare" produce stale renders, which is the hardest bug class to reproduce. `lodLevel` is an explicit parameter of every `SceneBuilder.build*` and part of every cache key, so the same test catches LOD-keyed staleness (AC-016 #13).
 
 ### 2.3 Validation rules, addressed by rule ID
 
-The v1 catalogue is **28 rules** — 8 tier-1, 6 tier-2, 14 tier-3, with `PLC-001..003` ratified (canon §12.6(b)) and `LEN-002` added (DR-020, canon §11.19) — and every one is a Dart function in a registry keyed by `ruleId` (CR-024, AC-011). The gate is AC-051, and it is absolute: **no rule ships without its fixture pair.**
+The v1 catalogue is **28 rules**, 8 tier-1, 6 tier-2, 14 tier-3, with `PLC-001..003` ratified (canon §12.6(b)) and `LEN-002` added (DR-020, canon §11.19), and every one is a Dart function in a registry keyed by `ruleId` (CR-024, AC-011). The gate is AC-051, and it is absolute: **no rule ships without its fixture pair.**
 
 ```text
 packages/rackmate_core/test/fixtures/drc/
@@ -100,7 +100,7 @@ packages/rackmate_core/test/fixtures/drc/
   expectations.json         # ruleId -> {bad: [findingId...], near: []}
 ```
 
-One table-driven test walks `expectations.json`: the `.bad` document must produce **exactly** that finding — not merely include it — and the `.near` document must produce **none** from that rule. A near-miss that is one field away from the bad case is what stops a rule from being written as `return true`. Three further assertions ride along: every `ruleId` in [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers) resolves to a registered function and vice versa (a rule not in the catalogue does not exist, CR-021); every rule's severity is one of the CR-018 vocabulary with `Severity.info` absent; and **no rule at any severity prevents a PDF from being written to disk** (CR-022, G3), asserted by exporting each `.bad` fixture and checking the file exists.
+One table-driven test walks `expectations.json`: the `.bad` document must produce **exactly** that finding, not merely include it, and the `.near` document must produce **none** from that rule. A near-miss that is one field away from the bad case is what stops a rule from being written as `return true`. Three further assertions ride along: every `ruleId` in [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers) resolves to a registered function and vice versa (a rule not in the catalogue does not exist, CR-021); every rule's severity is one of the CR-018 vocabulary with `Severity.info` absent; and **no rule at any severity prevents a PDF from being written to disk** (CR-022, G3), asserted by exporting each `.bad` fixture and checking the file exists.
 
 Fixtures are `.rmpj` files, not Dart builders, so a domain expert can open one in the app during the M5 sign-off review (AC-051) without reading code.
 
@@ -128,7 +128,7 @@ packages/rackmate_core/test/fixtures/schema/
 
 Assertions per fixture: it migrates to a valid current document; unknown fields survive the round-trip and are re-emitted in their original position (`unknown` on every persisted object, §4.4); `minReaderVersion > kSchemaVersion` ⇒ `Err(NewerSchema(refuse))`; `schemaVersion > kSchemaVersion` with a readable `minReaderVersion` ⇒ `Ok(doc, openReadOnly: true)` (CR-093, defect fixed). `.rmdx` has its own parallel chain and its own corpus (CR-063).
 
-The **byte round-trip** is the contract, not the semantic one (CR-117): `write(read(bytes)) == bytes`. This is what constrains key ordering — including inside nested `unknown` maps — timestamp precision, and integer formatting, and those are exactly the things that otherwise produce spurious git diffs and a lying dirty flag. Rejected alternative: `read(write(read(x))) == read(x)`, which passes while the file churns.
+The **byte round-trip** is the contract, not the semantic one (CR-117): `write(read(bytes)) == bytes`. This is what constrains key ordering, including inside nested `unknown` maps, timestamp precision, and integer formatting, and those are exactly the things that otherwise produce spurious git diffs and a lying dirty flag. Rejected alternative: `read(write(read(x))) == read(x)`, which passes while the file churns.
 
 The four starter projects (AC-052) are real `.rmpj` files and do triple duty: golden corpus, performance fixtures, screenshot source. At least one exercises the Structure device and at least one exports a full sheet set.
 
@@ -138,16 +138,16 @@ The §6.7 acceptance criteria are unit tests, not aspirations, and they run in `
 
 | Test | Assertion | Ruling |
 |---|---|---|
-| PAL-1 | pairwise over **rendered family values**; reference implementation is `tools/pal1_check.py`, ported to Dart at M0 — see below | §6.7/4, AC-054, canon §14 |
-| Dash floor | every shipped dash period ≥ 4.5 pt (1.5875 mm) — 4.25 pt is 1.4992 mm and therefore *below* the 1.5 mm physical floor the rule derives from | §6.7/5 |
+| PAL-1 | pairwise over **rendered family values**; reference implementation is `tools/pal1_check.py`, ported to Dart at M0, see below | §6.7/4, AC-054, canon §14 |
+| Dash floor | every shipped dash period ≥ 4.5 pt (1.5875 mm), 4.25 pt is 1.4992 mm and therefore *below* the 1.5 mm physical floor the rule derives from | §6.7/5 |
 | Glyph coverage | every registry glyph resolves in `RackBody` or `Noto Sans Symbols 2` | §6.7/6, CR-080 |
 | Referential integrity | every `defaultConnector`, `typicalMedia`, `MediaTypeDef.supports` and `SignalFamilyDef.domain` resolves; every connector on a shipped template has a footprint | §6.7/7, AC-050/A2.2 |
-| Documented IDs resolve | every `media.*`, `conn.*`, `SignalDomainId` and signal-family ID appearing in any repository document, template or fixture resolves in `assets/catalog/registries.json` — see below | N1, §6.7/7, seed-devices C2 |
-| Documented **values** match | every hue, dash pattern and weight multiplier printed in a prose table beside such an ID equals the registry's effective value for that family — see below | N1, §6.7/7 |
+| Documented IDs resolve | every `media.*`, `conn.*`, `SignalDomainId` and signal-family ID appearing in any repository document, template or fixture resolves in `assets/catalog/registries.json`, see below | N1, §6.7/7, seed-devices C2 |
+| Documented **values** match | every hue, dash pattern and weight multiplier printed in a prose table beside such an ID equals the registry's effective value for that family, see below | N1, §6.7/7 |
 | Prefix collision | no catalog template shares a `typePrefix` with a system prefix (`STR` stays with Structure, streaming is `STRM`) | CR-043 |
 | Provenance | every safety-adjacent field (`pinoutVariant`, `impedanceOhms`, `poeBudgetWatts`, `maxUnsupportedMass`) has a citation in `assets/catalog/sources.md`; an uncited template fails the build | AC-052 |
 
-**The prefix-collision row is about template `typePrefix` values only.** A catalog template's `typePrefix` and a signal family's `shortTag` are **different namespaces** and are never looked up together, so a family may carry a tag spelled like a reserved prefix without colliding with it: `structure.undetermined` ships `shortTag` `STR` (seed-devices §4.4), and that is the correct value precisely because `STR` belongs to Structure on both sides. What CR-043 forbids is a *template* claiming `STR` — which is why streaming templates are `STRM`.
+**The prefix-collision row is about template `typePrefix` values only.** A catalog template's `typePrefix` and a signal family's `shortTag` are **different namespaces** and are never looked up together, so a family may carry a tag spelled like a reserved prefix without colliding with it: `structure.undetermined` ships `shortTag` `STR` (seed-devices §4.4), and that is the correct value precisely because `STR` belongs to Structure on both sides. What CR-043 forbids is a *template* claiming `STR`, which is why streaming templates are `STRM`.
 
 **PAL-1 is a pairwise test over rendered family values.** The rule it asserts, stated verbatim as canon §14.1 states it:
 
@@ -166,9 +166,9 @@ The §6.7 acceptance criteria are unit tests, not aspirations, and they run in `
 > legend prints them adjacently, and the tag pill disambiguates them — but any two families in one
 > domain must still differ in **dash pattern, weight, or glyph**.
 
-Dash class is the mechanical definition of canon §14.2, reproduced there in full. The test enumerates every shipped `SignalFamilyDef`, computes its triple, and checks every cross-domain pair inside the band; the within-domain exemption is a **domain-equality check, never an allowlist of pairs** — an allowlist is how a real collision gets waived.
+Dash class is the mechanical definition of canon §14.2, reproduced there in full. The test enumerates every shipped `SignalFamilyDef`, computes its triple, and checks every cross-domain pair inside the band; the within-domain exemption is a **domain-equality check, never an allowlist of pairs**: an allowlist is how a real collision gets waived.
 
-**The rule is now enforced by a committed, executable check: [`tools/pal1_check.py`](../tools/pal1_check.py).** Where this document — or any other — disagrees with that file about a family's dash pattern, weight or luminance, **the file wins and the document is wrong.** It runs with no dependencies and no Dart:
+**The rule is now enforced by a committed, executable check: [`tools/pal1_check.py`](../tools/pal1_check.py).** Where this document, or any other, disagrees with that file about a family's dash pattern, weight or luminance, **the file wins and the document is wrong.** It runs with no dependencies and no Dart:
 
 ```text
 python tools/pal1_check.py     # exits 0 clean, 1 on any violation
@@ -178,16 +178,16 @@ PASS - no collisions.
 
 What it checks, in one pass over the 55 shipped families:
 
-1. **The (a)/(b) limb.** Every pair of families in **different** domains whose luminances lie within the 0.10 band — 385 pairs, not 8 domain rows — must differ in dash class or by a weight factor ≥ 1.4. Luminance is computed from the shipped hex, never transcribed.
+1. **The (a)/(b) limb.** Every pair of families in **different** domains whose luminances lie within the 0.10 band (385 pairs, not 8 domain rows) must differ in dash class or by a weight factor ≥ 1.4. Luminance is computed from the shipped hex, never transcribed.
 2. **The within-domain limb.** No two families in one domain may render as the same `(dash, weight)`. This is the limb that caught two byte-identical pairs.
 3. **The period floor.** Every dash period ≥ 4.5 pt, the same rule the Dash-floor row above states.
-4. **Requirement-4 attribution.** A violation touching one of the ten cable types the brief names by hand is reported with that name attached, because such a collision is not a style nit — it is requirement 4 failing its own acceptance test.
+4. **Requirement-4 attribution.** A violation touching one of the ten cable types the brief names by hand is reported with that name attached, because such a collision is not a style nit; it is requirement 4 failing its own acceptance test.
 
-**This file is the reference implementation, and it is ported — not re-derived — to `pal1_conformance_test.dart` in `rackmate_core` at M0.** The port reads the shipped registry rather than a transcribed family list, and thereafter the Dart test is the authority; `pal1_check.py` remains in the tree as the executable statement of intent the port is diffed against. **Both run in CI on every PR** (§7), the Python check as a dependency-free job that cannot be broken by a Dart refactor.
+**This file is the reference implementation, and it is ported, not re-derived, to `pal1_conformance_test.dart` in `rackmate_core` at M0.** The port reads the shipped registry rather than a transcribed family list, and thereafter the Dart test is the authority; `pal1_check.py` remains in the tree as the executable statement of intent the port is diffed against. **Both run in CI on every PR** (§7), the Python check as a dependency-free job that cannot be broken by a Dart refactor.
 
-**The port must carry a known-bad fixture, and that requirement is not negotiable: a conformance test that cannot fail is worthless.** `pal1_check.py` is verified in both directions — it passes on the corrected palette, and it reproduces **all fourteen** violations when the five corrections below are reverted, six of them naming S/PDIF, one of the brief's ten types. The Dart port asserts the same two directions: green on the shipped registry, and exactly fourteen findings on a checked-in reverted-palette fixture, matched by family pair rather than by count alone. A count-only assertion passes when one collision is fixed and another introduced.
+**The port must carry a known-bad fixture, and that requirement is not negotiable: a conformance test that cannot fail is worthless.** `pal1_check.py` is verified in both directions, it passes on the corrected palette, and it reproduces **all fourteen** violations when the five corrections below are reverted, six of them naming S/PDIF, one of the brief's ten types. The Dart port asserts the same two directions: green on the shipped registry, and exactly fourteen findings on a checked-in reverted-palette fixture, matched by family pair rather than by count alone. A count-only assertion passes when one collision is fixed and another introduced.
 
-Note the asymmetry, because it is the reason the fixture obligation falls on the port. `pal1_check.py` takes no arguments and has **no built-in negative mode**: its positive direction runs in CI on every PR, but its negative direction is reproduced by hand-reverting the five rows above and re-running. That is a verification someone performed, not a verification the repository performs — the same shape of assurance that failed three times. Institutionalising it as a checked-in known-bad fixture is precisely what the M0 port is for, and the port is not done until the fixture exists and has been observed to fail loudly when the corrections are restored to it.
+Note the asymmetry, because it is the reason the fixture obligation falls on the port. `pal1_check.py` takes no arguments and has **no built-in negative mode**: its positive direction runs in CI on every PR, but its negative direction is reproduced by hand-reverting the five rows above and re-running. That is a verification someone performed, not a verification the repository performs, the same shape of assurance that failed three times. Institutionalising it as a checked-in known-bad fixture is precisely what the M0 port is for, and the port is not done until the fixture exists and has been observed to fail loudly when the corrections are restored to it.
 
 | Reverted to | Family | Restores the collision |
 |---|---|---|
@@ -197,15 +197,15 @@ Note the asymmetry, because it is the reason the fixture obligation falls on the
 | `6,3,1,3` 1.00× | `audio.spdif_coax` | six ctl families: RS-232, DMX512, DALI, KNX, contact, IR receive |
 | `10,3,1,3` 1.00× | `audio.aes3` | `ctl.cresnet` and `video.avoip` |
 
-That `dL 0.0112` is the whole argument for the rule: `video.analog` (`#56B4E9`, **L = 0.4050**) and `audio.analog` (`#E69F00`, **L = 0.4162**) are vividly different colours and near-identical greys. Publish that figure as 0.4050; several documents round it to 0.401, and the value in [`tools/pal1_check.py`](../tools/pal1_check.py) — computed from the hex, not typed — is the one that governs.
+That `dL 0.0112` is the whole argument for the rule: `video.analog` (`#56B4E9`, **L = 0.4050**) and `audio.analog` (`#E69F00`, **L = 0.4162**) are vividly different colours and near-identical greys. Publish that figure as 0.4050; several documents round it to 0.401, and the value in [`tools/pal1_check.py`](../tools/pal1_check.py) (computed from the hex, not typed) is the one that governs.
 
 **No document may claim PAL-1 was verified by inspection.** It was asserted "verified clear" three times against a palette that contained fourteen collisions, because each check read the eight domain rows rather than enumerating the 385 family pairs actually drawn. A rule checked by reading is not checked. Prose that names which families were compared against which is prose that will be wrong again; the only durable form of the claim is a pointer to the file and its exit code.
 
-**Every `media.*`, `conn.*`, `SignalDomainId` and signal-family ID appearing in any repository document, template or fixture resolves in `assets/catalog/registries.json`.** A grep-and-resolve test over `docs/**/*.md` and `assets/**`. This exists because RJ-012 makes an unmatched media value in a Structure CSV import **silently create a new `MediaTypeDef`** with a confirmation chip rather than fail — so a wrong ID in a shipped synonym table manufactures duplicate media types on the first real import and splits the `T6.30` footage rollup across them. That is a silent data-quality failure, which is exactly the class a test must catch (N1, canon §6.7 criterion 7, seed-devices C2). One allowlisted file: the migration note that records each renamed ID.
+**Every `media.*`, `conn.*`, `SignalDomainId` and signal-family ID appearing in any repository document, template or fixture resolves in `assets/catalog/registries.json`.** A grep-and-resolve test over `docs/**/*.md` and `assets/**`. This exists because RJ-012 makes an unmatched media value in a Structure CSV import **silently create a new `MediaTypeDef`** with a confirmation chip rather than fail, so a wrong ID in a shipped synonym table manufactures duplicate media types on the first real import and splits the `T6.30` footage rollup across them. That is a silent data-quality failure, which is exactly the class a test must catch (N1, canon §6.7 criterion 7, seed-devices C2). One allowlisted file: the migration note that records each renamed ID.
 
-**The same test resolves VALUES, not only IDs.** Where a prose table prints a hue, a dash pattern or a weight multiplier beside a family or media ID, the test parses that cell and asserts it equals the registry's **effective** value — after overrides, the same value PAL-1 renders. This is not a tidiness rule. Value drift between a prose table and the registry is the exact class of defect that shipped here: the palette tables were re-read and re-blessed three times while the drawn values disagreed with them, and an ID-only resolve test was green throughout, because every ID in those tables was perfectly valid. A document that is authoritative about which families exist and wrong about what they look like is worse than one that says nothing, because it is the document a reviewer trusts. The parse is deliberately narrow — hex, `solid`, comma-separated dash lists, and `N.NN×` — and a cell it cannot parse fails rather than skips, since a silently skipped cell is how the check quietly becomes an ID test again.
+**The same test resolves VALUES, not only IDs.** Where a prose table prints a hue, a dash pattern or a weight multiplier beside a family or media ID, the test parses that cell and asserts it equals the registry's **effective** value, after overrides, the same value PAL-1 renders. This is not a tidiness rule. Value drift between a prose table and the registry is the exact class of defect that shipped here: the palette tables were re-read and re-blessed three times while the drawn values disagreed with them, and an ID-only resolve test was green throughout, because every ID in those tables was perfectly valid. A document that is authoritative about which families exist and wrong about what they look like is worse than one that says nothing, because it is the document a reviewer trusts. The parse is deliberately narrow (hex, `solid`, comma-separated dash lists, and `N.NN×`) and a cell it cannot parse fails rather than skips, since a silently skipped cell is how the check quietly becomes an ID test again.
 
-The provenance test is what sets the catalog count, not a target number (CR-061) — see [Seed devices](catalog/seed-devices.md).
+The provenance test is what sets the catalog count, not a target number (CR-061), see [Seed devices](catalog/seed-devices.md).
 
 ---
 
@@ -220,25 +220,25 @@ POLYLINE  [(12000,4445),(20000,4445),(20000,17780)] stroke=#009E73/1.5pt dash=no
 PATH      "M0 0h8v6h-8z" @(31000,8890) fill=#0072B2
 ```
 
-Every colour in that sample is a real palette value, because the whole argument for the dump is that a reviewer reads *"the wire changed colour"* — a fixture teaching a hue that does not ship teaches the reviewer nothing. `#009E73` is Network, the domain that ships at 1.5×; `#0072B2` is Digital Video. The opcode is `PATH`, not `SVGPATH`: `drawSvgPath` does not exist on `DiagramCanvas`, and authored `d` strings are parsed once at catalog load by `DiagramPath.fromSvg`, because a backend that parses strings is a backend that can disagree with the other one. The dump keeps the `d` payload; only the opcode changed.
+Every colour in that sample is a real palette value, because the whole argument for the dump is that a reviewer reads *"the wire changed colour"*, a fixture teaching a hue that does not ship teaches the reviewer nothing. `#009E73` is Network, the domain that ships at 1.5×; `#0072B2` is Digital Video. The opcode is `PATH`, not `SVGPATH`: `drawSvgPath` does not exist on `DiagramCanvas`, and authored `d` strings are parsed once at catalog load by `DiagramPath.fromSvg`, because a backend that parses strings is a backend that can disagree with the other one. The dump keeps the `d` payload; only the opcode changed.
 
-This is reviewable in a pull request — a reviewer reads *"the wire moved 2 mm and changed colour"*, not *"47 pixels differ"* — it is deterministic across platforms and Flutter versions, it runs under `dart test` with no Flutter binding, and because CR-086 puts screen and print on **one** rendering path it covers both simultaneously. Device faceplates are covered by construction, which is the parity mechanism CR-086 exists to create. Goldens pin `lodLevel` explicitly, with at least one golden at print LOD (AC-016 #13).
+This is reviewable in a pull request (a reviewer reads *"the wire moved 2 mm and changed colour"*, not *"47 pixels differ"*), it is deterministic across platforms and Flutter versions, it runs under `dart test` with no Flutter binding, and because CR-086 puts screen and print on **one** rendering path it covers both simultaneously. Device faceplates are covered by construction, which is the parity mechanism CR-086 exists to create. Goldens pin `lodLevel` explicitly, with at least one golden at print LOD (AC-016 #13).
 
 Pixel goldens then serve one narrow purpose: proving the two backends are faithful interpreters of that list. Keep them small and few.
 
-- `matchesGoldenFile` via plain `flutter_test`. No `golden_toolkit`, no `alchemist` — the value over a good `flutter_test_config.dart` is small and the maintenance risk is not. VERIFY: `golden_toolkit` maintenance status at the time of scaffolding.
+- `matchesGoldenFile` via plain `flutter_test`. No `golden_toolkit`, no `alchemist`, the value over a good `flutter_test_config.dart` is small and the maintenance risk is not. VERIFY: `golden_toolkit` maintenance status at the time of scaffolding.
 - Golden the device faceplate renderer and the wire layer **separately**. Never golden the whole canvas: one pixel of change anywhere fails everything and reviewers begin rubber-stamping.
-- `debugDisableShadows = true`, fixed `Random` seeds, no animations, fixed `Size`. A separate invariant test asserts the scene contains no gradient, shadow, blur, blend mode or shader op — CR-088 deleted `RendererCaps` and promoted that rule from prose to a test — and that `saveLayer` count is zero.
+- `debugDisableShadows = true`, fixed `Random` seeds, no animations, fixed `Size`. A separate invariant test asserts the scene contains no gradient, shadow, blur, blend mode or shader op (CR-088 deleted `RendererCaps` and promoted that rule from prose to a test) and that `saveLayer` count is zero.
 - Tagged `@Tags(['golden'])` in `dart_test.yaml` so non-Linux jobs skip them.
 
-### 3.1 Font strategy — the thing that actually makes goldens flaky
+### 3.1 Font strategy: the thing that actually makes goldens flaky
 
 Three families ship, aliased so no test ever names a system font: `RackBody` = IBM Plex Sans (Regular + SemiBold), `RackCond` = IBM Plex Sans Condensed, `RackMono` = IBM Plex Mono (Regular + Bold), fallback Noto Sans Symbols 2, all SIL OFL 1.1 (CR-080). Rejected alternative: Inter + JetBrains Mono, which lacks a true condensed cut and the `Ω`/`µ` coverage the schedule needs.
 
 Four rules remove the system-font variable entirely:
 
 1. Register the bundled TTFs in `flutter_test_config.dart` via `FontLoader` before any golden runs.
-2. A test asserts **no golden scene references a family other than `RackBody`, `RackCond` or `RackMono`** — a fallback silently substituting Ahem or Roboto is the classic invisible golden drift.
+2. A test asserts **no golden scene references a family other than `RackBody`, `RackCond` or `RackMono`**: a fallback silently substituting Ahem or Roboto is the classic invisible golden drift.
 3. Goldens run on **Linux only**, with a **pinned** Flutter version. Windows and macOS jobs run `--exclude-tags golden`. Per-platform golden sets collapse under maintenance cost within months; this is the only approach that holds.
 4. Golden regeneration is a deliberate, reviewed step of every Flutter upgrade, because a minor bump routinely shifts antialiasing by a pixel.
 
@@ -248,16 +248,16 @@ Four rules remove the system-font variable entirely:
 
 ### 4.1 Why byte comparison fails
 
-A PDF's bytes are not deterministic: `/CreationDate` and `/ModDate` are wall-clock, object numbering and the xref table depend on emission order, and font subsetting depends on the glyph set encountered. Hashing the file therefore produces a test that fails on a clock tick and passes on a wrong drawing. **Never hash the file.** Generation itself is made as deterministic as it can be — a fixed `DateTime` injected through the same `Clock` the document uses, a fixed document ID, no randomness in layout (CR-013) — so that a diff between two runs of the same fixture is small and explicable, but the assertion is structural.
+A PDF's bytes are not deterministic: `/CreationDate` and `/ModDate` are wall-clock, object numbering and the xref table depend on emission order, and font subsetting depends on the glyph set encountered. Hashing the file therefore produces a test that fails on a clock tick and passes on a wrong drawing. **Never hash the file.** Generation itself is made as deterministic as it can be, a fixed `DateTime` injected through the same `Clock` the document uses, a fixed document ID, no randomness in layout (CR-013), so that a diff between two runs of the same fixture is small and explicable, but the assertion is structural.
 
 ### 4.2 Structural assertions, every PR
 
-Generate a document from each starter project and assert: page count equals the dry-run count; page sizes match the requested `ExportSpec`; every font referenced is embedded and subset; no page is empty; the **schedule row count equals the `Link` count** for the sheet's filter (one row per cable, services on a sub-line, per CR-010); every `W###` designator on the diagram appears in the schedule and vice versa; the 40-sheet warning fires and the 2000-sheet cap is not hit (AC-050/A7.4); the legend prints **one row per named cable type**, not per domain, and all ten requirement-4 types are present (AC-054); `T0.02` lists every `AckedFinding` with reason, author and date; and — the G3 assertion — a document with errors at every severity still writes a file.
+Generate a document from each starter project and assert: page count equals the dry-run count; page sizes match the requested `ExportSpec`; every font referenced is embedded and subset; no page is empty; the **schedule row count equals the `Link` count** for the sheet's filter (one row per cable, services on a sub-line, per CR-010); every `W###` designator on the diagram appears in the schedule and vice versa; the 40-sheet warning fires and the 2000-sheet cap is not hit (AC-050/A7.4); the legend prints **one row per named cable type**, not per domain, and all ten requirement-4 types are present (AC-054); `T0.02` lists every `AckedFinding` with reason, author and date; and, the G3 assertion, a document with errors at every severity still writes a file.
 
 Two further families of assertion, each defending a ruling that is easy to erode silently:
 
-- **Sheet furniture is a deliverable, so it is asserted (DR-005).** Every emitted sheet carries a title block, a revision block, a drawing border, zone references and a sheet number; revision clouds render where a revision is flagged; the issued-for-construction stamp appears when the `ExportSpec` requests it. Sheet furniture is **orthogonal to wire idiom** — a fully drafted sheet still renders net labels by default (DR-001), and no assertion here may be written as though polish implied drawn wires.
-- **The `T6.01…` count is a partition, not multi-sheet authoring (DR-004, CR-073).** Assert that the document contains exactly one schematic `Sheet` and that the exporter emits one interconnect sheet per domain partition of it, so cross-sheet connections are zero by construction. There are no match lines, no off-sheet connectors and no sheet-boundary link handling to test, because they are never built. A test that reads "N sheets came out of the PDF, therefore multi-sheet exists" is asserting the wrong thing. Those sheets render `drawn`, because a domain partition *is* a domain filter; and where `ExportSpec.wireRender: auto` degrades a dense sheet back to `netLabels`, a test asserts the printed note saying so is present — a degradation the reader cannot see is a lie about the drawing (G4).
+- **Sheet furniture is a deliverable, so it is asserted (DR-005).** Every emitted sheet carries a title block, a revision block, a drawing border, zone references and a sheet number; revision clouds render where a revision is flagged; the issued-for-construction stamp appears when the `ExportSpec` requests it. Sheet furniture is **orthogonal to wire idiom**: a fully drafted sheet still renders net labels by default (DR-001), and no assertion here may be written as though polish implied drawn wires.
+- **The `T6.01…` count is a partition, not multi-sheet authoring (DR-004, CR-073).** Assert that the document contains exactly one schematic `Sheet` and that the exporter emits one interconnect sheet per domain partition of it, so cross-sheet connections are zero by construction. There are no match lines, no off-sheet connectors and no sheet-boundary link handling to test, because they are never built. A test that reads "N sheets came out of the PDF, therefore multi-sheet exists" is asserting the wrong thing. Those sheets render `drawn`, because a domain partition *is* a domain filter; and where `ExportSpec.wireRender: auto` degrades a dense sheet back to `netLabels`, a test asserts the printed note saying so is present, a degradation the reader cannot see is a lie about the drawing (G4).
 
 ### 4.3 The CR-081 baseline parity assertion, concretely
 
@@ -291,7 +291,7 @@ for (final s in kFixtures) {
 }
 ```
 
-`'AV Wa To Ty'` is the kerning-heavy fixture named in AC-007; if Flutter applies GPOS kerning and dart_pdf does not, this string diverges first. `'W014'` versus `'WO14'` is the glyph-disambiguation case CR-080's font argument rests on. The anchor loop matters because `TextAnchor` resolves in one shared pure-Dart helper (CR-081) — the test proves neither adapter guesses a baseline, which is the failure that is otherwise diagnosed months later as "the PDF is wrong". A second test covers CR-085: a label rotated 90° for a vertical rail lands in the same place under the global flip as an unrotated one does under composition, which per-coordinate negation could not satisfy.
+`'AV Wa To Ty'` is the kerning-heavy fixture named in AC-007; if Flutter applies GPOS kerning and dart_pdf does not, this string diverges first. `'W014'` versus `'WO14'` is the glyph-disambiguation case CR-080's font argument rests on. The anchor loop matters because `TextAnchor` resolves in one shared pure-Dart helper (CR-081), the test proves neither adapter guesses a baseline, which is the failure that is otherwise diagnosed months later as "the PDF is wrong". A second test covers CR-085: a label rotated 90° for a vertical rail lands in the same place under the global flip as an unrotated one does under composition, which per-coordinate negation could not satisfy.
 
 ### 4.4 Pixel diff, nightly only
 
@@ -301,9 +301,9 @@ Render pages with poppler's `pdftoppm` in the Linux job and image-diff against r
 
 ## 5. Widget and integration tests
 
-**Widget tests** cover the surfaces where state and UI meet: inspector panels binding typed `DeviceOverrides` (CR-053); the device-builder port grid with fill-down and TSV paste; menu enablement (Undo disabled at sequence 0, enabled after one command, with the correct label); the spring-back reason chip and its `[ Connect anyway ]` affordance (CR-017); the Staging Bin return affordance (CR-032). **Leak tests** via `leak_tracker_flutter_testing` run on every canvas widget test, targeting undisposed `TextPainter` and `ui.Picture` — with a 12,000-entry label cache (AC-009) that is not optional.
+**Widget tests** cover the surfaces where state and UI meet: inspector panels binding typed `DeviceOverrides` (CR-053); the device-builder port grid with fill-down and TSV paste; menu enablement (Undo disabled at sequence 0, enabled after one command, with the correct label); the spring-back reason chip and its `[ Connect anyway ]` affordance (CR-017); the Staging Bin return affordance (CR-032). **Leak tests** via `leak_tracker_flutter_testing` run on every canvas widget test, targeting undisposed `TextPainter` and `ui.Picture`, with a 12,000-entry label cache (AC-009) that is not optional.
 
-**Integration tests** (`integration_test`, desktop) cover the file lifecycle end to end: new → place devices → connect → save → close → reopen → assert a **byte-identical** document; the unsaved-changes close interception; the crash-recovery path (kill mid-edit, relaunch, assert the recovery prompt, accept, assert the document matches); open a `.rmpj` with a newer `minReaderVersion` and assert the refuse path, then one with a newer `schemaVersion` only and assert the read-only banner (CR-093). Two error-surface cases from AC-058/D3 are integration tests because nothing else catches them: **target PDF open in Acrobat** — the most common Windows export failure — and two app instances on one file.
+**Integration tests** (`integration_test`, desktop) cover the file lifecycle end to end: new → place devices → connect → save → close → reopen → assert a **byte-identical** document; the unsaved-changes close interception; the crash-recovery path (kill mid-edit, relaunch, assert the recovery prompt, accept, assert the document matches); open a `.rmpj` with a newer `minReaderVersion` and assert the refuse path, then one with a newer `schemaVersion` only and assert the read-only banner (CR-093). Two error-surface cases from AC-058/D3 are integration tests because nothing else catches them: **target PDF open in Acrobat**, the most common Windows export failure, and two app instances on one file.
 
 The keyboard connection path (AC-058/D11) is asserted at both levels: a widget test drives select port → `W` → `Tab`/`Shift+Tab` across all ports → `Enter` and asserts one `Link` results; the NVDA/VoiceOver announcement matrix is manual and gated at M7.
 
@@ -326,11 +326,11 @@ The budget lives in [Architecture](03-architecture.md); this is how it is defend
 
 Three mechanisms, and the first one is the CI signal:
 
-1. **Op count per layer, not wall time.** AC-008 is explicit: op count is stable across CI runners and wall time is not. The harness asserts that an edit to one HDMI run rebuilds ~1,200 ops in one of the eight per-domain sub-pictures and that the other seven are untouched. Wall-clock thresholds are asserted too, but the job is **warn-only for the first three months** — establish the baseline curve on runner hardware before it can fail a build, or three months are spent chasing variance instead of writing the app.
+1. **Op count per layer, not wall time.** AC-008 is explicit: op count is stable across CI runners and wall time is not. The harness asserts that an edit to one HDMI run rebuilds ~1,200 ops in one of the eight per-domain sub-pictures and that the other seven are untouched. Wall-clock thresholds are asserted too, but the job is **warn-only for the first three months**: establish the baseline curve on runner hardware before it can fail a build, or three months are spent chasing variance instead of writing the app.
 2. **The LOD gate is a test, not an intention** (AC-009): at fit-to-sheet zoom, assert **zero text runs laid out**. `dashPath` is explicitly profiled rather than assumed cheap (AC-016 #17).
 3. **DevTools timeline on demand**, driven by a scripted 30-second pan/zoom/drag `integration_test` under `--profile`, asserting `frame_build_times` and `frame_rasterizer_times` p95 from `TimelineSummary`. Not per-PR: desktop CI runners have no GPU worth trusting.
 
-A three-item manual checklist catches what nothing automated will: `debugRepaintRainbowEnabled` (only the overlay flickers during a drag), `checkerboardOffscreenLayers` (must be zero — any `saveLayer` is a bug), and dragging the window between a 4K and a 1080p monitor, because mixed-DPI breaks naive viewport code and Windows users genuinely run that configuration.
+A three-item manual checklist catches what nothing automated will: `debugRepaintRainbowEnabled` (only the overlay flickers during a drag), `checkerboardOffscreenLayers` (must be zero, any `saveLayer` is a bug), and dragging the window between a 4K and a 1080p monitor, because mixed-DPI breaks naive viewport code and Windows users genuinely run that configuration.
 
 ---
 
@@ -374,7 +374,7 @@ The Flutter version pin is load-bearing and lives in exactly one place.
 
 ## 8. Linting and `analysis_options.yaml`
 
-`very_good_analysis`, **pinned exactly** (`9.0.0`, not `^9.0.0`) and bumped deliberately, because a minor bump of a third-party lint set can fail CI on code nobody touched. Fallback if the strictness proves noisy in practice: `flutter_lints`. It is stricter than `flutter_lints` where it matters for a document editor — `prefer_final`, `avoid_dynamic_calls`, and the unawaited-future family.
+`very_good_analysis`, **pinned exactly** (`9.0.0`, not `^9.0.0`) and bumped deliberately, because a minor bump of a third-party lint set can fail CI on code nobody touched. Fallback if the strictness proves noisy in practice: `flutter_lints`. It is stricter than `flutter_lints` where it matters for a document editor, `prefer_final`, `avoid_dynamic_calls`, and the unawaited-future family.
 
 Project additions on top of the base set:
 
@@ -392,11 +392,11 @@ VERIFY: `very_good_analysis` 9.x rule set against Dart 3.12 before pinning.
 A change is done when all of the following are true. This list is the PR checklist and it is short on purpose.
 
 1. `pwsh -File tools/ci/run_local.ps1` is green: fourteen gates, including zero analyzer errors and warnings, an info count at or under the pin, and `dart format` clean.
-2. New behaviour has a test at the **lowest tier that can express it** — a rule gets fixtures, not a widget test; a layout change gets a display-list golden, not a screenshot.
+2. New behaviour has a test at the **lowest tier that can express it**: a rule gets fixtures, not a widget test; a layout change gets a display-list golden, not a screenshot.
 3. A new DRC rule ships with its `.bad`/`.near` fixture pair (AC-051). No exceptions; this is the gate that holds the v1 catalogue at 27, and it now covers 27 fixture pairs.
 4. A new command declares its `touches` mask and passes the epoch-coverage test (AC-014), and participates in the round-trip property test.
 5. A format change adds a schema fixture on the day it ships and never edits an existing one (§2.5).
-6. A change to any signal-family hue, dash or weight — in the registry **or** in a prose table — keeps `python tools/pal1_check.py` at exit 0, and the family list in that file was updated in the same commit. PAL-1 is never re-blessed by reading (§2.6).
+6. A change to any signal-family hue, dash or weight, in the registry **or** in a prose table, keeps `python tools/pal1_check.py` at exit 0, and the family list in that file was updated in the same commit. PAL-1 is never re-blessed by reading (§2.6).
 7. A new name exists in [the glossary](01-domain.md) and in canon §4, and no banned name was introduced ([canon §4.7](canonical-decisions.md#47-banned-names), N2).
 8. Any user-visible string is localisable and any number that could be unknown renders `—` with an unknown count in its rollup (G4).
 9. Goldens that changed were regenerated deliberately and the diff was read, not rubber-stamped.
@@ -409,10 +409,10 @@ A milestone is done when its exit criterion in [Roadmap](09-roadmap.md) is demon
 
 **No telemetry by default.** RackMate is a locally installed professional tool holding client project data; silent network egress is a trust violation and for some commercial clients a contractual one.
 
-- On an uncaught error, write a redacted bundle plus stack to `crashes/<timestamp>.json` in application support. `ErrorWidget.builder` is replaced by a neutral pane offering "Copy diagnostics" and "Save a recovery copy" — a red-and-yellow error box inside a professional tool destroys credibility.
-- On next launch, offer **View report** (showing the exact JSON — no hidden payload), **Send**, and **Never ask again**. Nothing leaves the machine without an opt-in, and then only to a self-hosted Sentry, which is deliberately **not a v1 dependency** until there is somewhere to send reports.
+- On an uncaught error, write a redacted bundle plus stack to `crashes/<timestamp>.json` in application support. `ErrorWidget.builder` is replaced by a neutral pane offering "Copy diagnostics" and "Save a recovery copy", a red-and-yellow error box inside a professional tool destroys credibility.
+- On next launch, offer **View report** (showing the exact JSON, no hidden payload), **Send**, and **Never ask again**. Nothing leaves the machine without an opt-in, and then only to a self-hosted Sentry, which is deliberately **not a v1 dependency** until there is somewhere to send reports.
 - **Recovery files are never attached automatically (CR-096).** A recovery file is a complete project containing the client's name and site address. The crash dialog offers an explicit, **default-off** "Attach the project file" checkbox labelled *"This includes your client's name and site address."* The design document contradicted itself here; this is the resolution.
-- The diagnostics bundle carries versions, document **statistics** (device count, link count, schema version), the last 200 log records, and epoch/`sequence` values — never document content.
+- The diagnostics bundle carries versions, document **statistics** (device count, link count, schema version), the last 200 log records, and epoch/`sequence` values, never document content.
 - **Redaction is a test.** `redaction_test.dart` asserts no log call above `FINE` interpolates a device name, client name, project address or file path, and that a synthesized crash bundle built from a starter project contains none of that project's proper nouns. Convention alone does not survive a debugging session at 2 am.
 - Rollback poisoning is tested: force a command to throw mid-`apply`, assert the transaction reverts, and if revert itself fails assert the undo stack is poisoned, a forced recovery snapshot is written, and the unrecoverable notice appears (M8 exit criterion: a deliberately induced crash produces a local report containing no project content).
 
@@ -424,14 +424,14 @@ Named here so it is not rediscovered, and scheduled in [Roadmap](09-roadmap.md) 
 
 | Item | When | Note |
 |---|---|---|
-| ~~Windows OV/EV certificate procurement~~ **Self-signing, with a timestamp** | M8 — **not M6, and there is no procurement** | **Superseded by DR-006 (canon §12.9); owed edit paid 2026-08-03.** `New-SelfSignedCertificate` + `Set-AuthenticodeSignature` **with a timestamp server**, public `.cer` to `LocalMachine\Root` and `\TrustedPublisher`, ideally by GPO. **Microsoft Trusted Signing is the named fallback**, adoptable at M8 — verify eligibility for an Individual Partner Center account before relying on it (#101). The lead time the old row defended against was OV/EV identity verification, the SmartScreen reputation ramp and hardware-token logistics; none attaches to either path DR-006 names |
-| Signed MSIX / installer, symbol archival | M8 | **The criterion SPLITS (canon §11.6.2).** Build-side gate: signed, timestamped, valid publisher in file properties, **and the signature still validates after the signing certificate has expired**. Distribution-side, documented and not gated: Local Intranet UNC or Intune/GPO, plus docs/14 §14.2's ZIP trap. **"No SmartScreen warning" is not a build-side property** — SmartScreen evaluates Mark-of-the-Web, which is how a file arrived, not what it is |
+| ~~Windows OV/EV certificate procurement~~ **Self-signing, with a timestamp** | M8: **not M6, and there is no procurement** | **Superseded by DR-006 (canon §12.9); owed edit paid 2026-08-03.** `New-SelfSignedCertificate` + `Set-AuthenticodeSignature` **with a timestamp server**, public `.cer` to `LocalMachine\Root` and `\TrustedPublisher`, ideally by GPO. **Microsoft Trusted Signing is the named fallback**, adoptable at M8, verify eligibility for an Individual Partner Center account before relying on it (#101). The lead time the old row defended against was OV/EV identity verification, the SmartScreen reputation ramp and hardware-token logistics; none attaches to either path DR-006 names |
+| Signed MSIX / installer, symbol archival | M8 | **The criterion SPLITS (canon §11.6.2).** Build-side gate: signed, timestamped, valid publisher in file properties, **and the signature still validates after the signing certificate has expired**. Distribution-side, documented and not gated: Local Intranet UNC or Intune/GPO, plus docs/14 §14.2's ZIP trap. **"No SmartScreen warning" is not a build-side property**: SmartScreen evaluates Mark-of-the-Web, which is how a file arrived, not what it is |
 | Vendored pdfium | M8 | The `printing` plugin's CMake downloads binaries at build time; a network-restricted runner fails `flutter build windows` (CR-100). Vendor and point CMake at the vendored copy |
-| macOS notarisation and stapling | Not v1 unless §10.10 resolves for macOS | Costs `Cmd`/`Ctrl` keymap work across ~40 bindings, a second font-availability check, and a second print matrix — 3–5 weeks plus ongoing CI |
+| macOS notarisation and stapling | Not v1 unless §10.10 resolves for macOS | Costs `Cmd`/`Ctrl` keymap work across ~40 bindings, a second font-availability check, and a second print matrix, 3–5 weeks plus ongoing CI |
 | Reproducible signed builds | Post-v1 | A signed release is a supply-chain and reproducibility problem, not only a CI one |
 | In-app auto-update | **Not doing in v1** (RJ-014) | Signed installer plus a version-check ping. Auto-update is a security surface and a support burden before there are users |
 
-VERIFY: MSIX packaging versus a plain signed installer for a desktop app that registers a `.rmpj` file association — the file-association path differs between the two and drives the choice.
+VERIFY: MSIX packaging versus a plain signed installer for a desktop app that registers a `.rmpj` file association, the file-association path differs between the two and drives the choice.
 
 ---
 

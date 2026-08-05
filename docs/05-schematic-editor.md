@@ -1,6 +1,6 @@
 # The Schematic
 
-The Schematic is the wiring authoring view (`Ctrl+2`) and **the only place a `Link` is created in v1** (per CR-105). This document specifies its visual language, its cable colour system, the connection-creation state machine, validation feedback, the layout and routing pipeline, and — at greatest length, because it is the feature the product lives or dies on — density management. It is normative for `rackmate_ui/canvas/` and for the scene builders in `rackmate_core/draw/` that both the screen and the PDF backends replay (per CR-086). Where it appears to disagree with [`docs/research/design-ux-schematic.md`](research/design-ux-schematic.md), that document is non-normative rationale and this one governs; where it appears to disagree with the [canonical decision record](canonical-decisions.md), the record governs.
+The Schematic is the wiring authoring view (`Ctrl+2`) and **the only place a `Link` is created in v1** (per CR-105). This document specifies its visual language, its cable colour system, the connection-creation state machine, validation feedback, the layout and routing pipeline, and (at greatest length, because it is the feature the product lives or dies on) density management. It is normative for `rackmate_ui/canvas/` and for the scene builders in `rackmate_core/draw/` that both the screen and the PDF backends replay (per CR-086). Where it appears to disagree with [`docs/research/design-ux-schematic.md`](research/design-ux-schematic.md), that document is non-normative rationale and this one governs; where it appears to disagree with the [canonical decision record](canonical-decisions.md), the record governs.
 
 ---
 
@@ -8,13 +8,13 @@ The Schematic is the wiring authoring view (`Ctrl+2`) and **the only place a `Li
 
 Three commitments, each of which is a ruling rather than a preference.
 
-**1.1 — Connectivity is stored; geometry is derived.** The document stores `Link` → `Service` → `Conductor` and a stored `Net` (per CR-008, CR-010, CR-011). **Symbol placement is persisted** as `SheetItem.position`; **wire geometry is never persisted** (per CR-012). The router is a pure deterministic function of the model. `RouteWaypoint`, `waypointsBySheet` and `routeOverrides` do not exist — they are banned names. If a polyline is being written to a `.rmpj`, that is a defect.
+**1.1: Connectivity is stored; geometry is derived.** The document stores `Link` → `Service` → `Conductor` and a stored `Net` (per CR-008, CR-010, CR-011). **Symbol placement is persisted** as `SheetItem.position`; **wire geometry is never persisted** (per CR-012). The router is a pure deterministic function of the model. `RouteWaypoint`, `waypointsBySheet` and `routeOverrides` do not exist; they are banned names. If a polyline is being written to a `.rmpj`, that is a defect.
 
 > Rejected alternative: `design-ux-schematic.md §2.3`'s waypoints and pinned routes, which its own §0.1 forbids three pages earlier. Manual rerouting returns in v1.1 as `routeConstraintsBySheet` — an ordered list of grid points the router must pass through — never as geometry.
 
-**1.2 — There is no free-line tool.** Every stroke on the canvas is a `Link`, a net label, an annotation `Note`, or chrome. The typed netlist is the entire wedge against Visio and draw.io; an arbitrary line between two arbitrary points makes RackMate a worse draw.io.
+**1.2: There is no free-line tool.** Every stroke on the canvas is a `Link`, a net label, an annotation `Note`, or chrome. The typed netlist is the entire wedge against Visio and draw.io; an arbitrary line between two arbitrary points makes RackMate a worse draw.io.
 
-**1.3 — The Schematic is navigation; the Schedule is the deliverable** (G1). Any `Link` may be rendered as a pair of **net labels** or as a **drawn wire** — two renderings of one identical model object, switchable losslessly at any time. **Net labels are the default** (DR-001); wires are drawn when the user filters to one signal domain, `Alt`-hovers, or focuses a selection. Render mode is derived from the active filter and is never persisted (canon §11.1.1). The PDF ships both the drawing and the schedule (Requirement 7).
+**1.3: The Schematic is navigation; the Schedule is the deliverable** (G1). Any `Link` may be rendered as a pair of **net labels** or as a **drawn wire**: two renderings of one identical model object, switchable losslessly at any time. **Net labels are the default** (DR-001); wires are drawn when the user filters to one signal domain, `Alt`-hovers, or focuses a selection. Render mode is derived from the active filter and is never persisted (canon §11.1.1). The PDF ships both the drawing and the schedule (Requirement 7).
 
 > Render mode is a function of the active filter. Unfiltered sheet ⇒ `netLabels`: every `Link` is two labelled stubs, one at each pin, with no polyline between them. Filtered to exactly one `SignalDomainId`, or `Alt`-hover, or focus/isolate ⇒ `drawn`: every `Link` in scope is an orthogonal polyline with a tag pill at each end. `SheetRenderMode` is **derived**, never persisted, never a setting (DR-001, canon §11.1.1).
 
@@ -27,21 +27,21 @@ Three commitments, each of which is a ruling rather than a preference.
 | Constant | Value | Ruling |
 |---|---|---|
 | Grid unit `gu` | `Len(2_500_000)` = 2.5 mm | CR-004 |
-| Position type | `Pt{int gx, int gy}` — integers in `gu`, no sub-grid | CR-004 |
-| Pin pitch | 2 gu (5.0 mm) | CR-004 — AV port labels need more room than KiCad's 100 mil |
+| Position type | `Pt{int gx, int gy}`: integers in `gu`, no sub-grid | CR-004 |
+| Pin pitch | 2 gu (5.0 mm) | CR-004: AV port labels need more room than KiCad's 100 mil |
 | Pin stub length | 2 gu |  |
 | Minimum body width | 20 gu (50 mm) |  |
-| Body corner radius | 0 — square corners; rounded reads as "flowchart" |  |
+| Body corner radius | 0: square corners; rounded reads as "flowchart" |  |
 | Track pitch (routing gutter) | 2 gu |  |
 | Gutter clearance from body | 4 gu |  |
 | Snap | 1 gu default; 4 gu with `Shift`. **No free positioning.** | CR-004 |
 | Canvas boundary unit | 1 diagram unit = 1 PDF point = 1/72 in, `double`, converted in exactly one function in the scene builder | CR-007 |
 
-Free 0.1 mm nudging is deleted (CR-004): it defeats the exact-integer routing the whole pipeline rests on and gives the user a way to author an unroutable drawing. If sub-grid annotation nudging is ever needed it arrives as `int sx, sy` in eighths of a gu — additive, no migration (v1.2).
+Free 0.1 mm nudging is deleted (CR-004): it defeats the exact-integer routing the whole pipeline rests on and gives the user a way to author an unroutable drawing. If sub-grid annotation nudging is ever needed it arrives as `int sx, sy` in eighths of a gu, additive, no migration (v1.2).
 
 **Grid rendering.** Dot grid at 4 gu, 15% ink in the light theme, 12% in dark. A line grid competes with orthogonal wires, which *are* lines. Suppressed entirely below 0.35× zoom. `G` toggles it.
 
-**Sheet frame and zone grid.** There is exactly one schematic `Sheet` and there always will be (DR-004). The exporter partitions it by domain at export time (CR-073); that is not multi-sheet authoring. The canvas is infinite but the sheet frame shows what will print, and content outside it is dimmed with a `3 items outside sheet bounds` chip. Border: 10 mm outer margin, 5 mm frame, zone marks every 40 mm — letters A–D vertically on both edges, numbers 1–8 horizontally on both. **The zone grid stays** even though off-sheet connectors are never built (DR-004): it is ~30 lines and the schedule's `REF` column is what lets an installer find a wire on a sheet. The drawing border, the zone references and the rest of the sheet furniture are v1 deliverables because the sheet set is a client deliverable (DR-005) — furniture is orthogonal to wire idiom, and polishing the sheet does not argue for drawing the wires.
+**Sheet frame and zone grid.** There is exactly one schematic `Sheet` and there always will be (DR-004). The exporter partitions it by domain at export time (CR-073); that is not multi-sheet authoring. The canvas is infinite but the sheet frame shows what will print, and content outside it is dimmed with a `3 items outside sheet bounds` chip. Border: 10 mm outer margin, 5 mm frame, zone marks every 40 mm, letters A–D vertically on both edges, numbers 1–8 horizontally on both. **The zone grid stays** even though off-sheet connectors are never built (DR-004): it is ~30 lines and the schedule's `REF` column is what lets an installer find a wire on a sheet. The drawing border, the zone references and the rest of the sheet furniture are v1 deliverables because the sheet set is a client deliverable (DR-005), furniture is orthogonal to wire idiom, and polishing the sheet does not argue for drawing the wires.
 
 Sheet numbering is `ProjectSettings.sheetNumbering: ncs | simple`, **default `simple`** (CR-066). `Sheet.scaleNumerator/Denominator` of `0/0` means NTS, which is what a schematic always is.
 
@@ -49,7 +49,7 @@ Sheet numbering is `ProjectSettings.sheetNumbering: ncs | simple`, **default `si
 
 ## 3. The device symbol
 
-A symbol is a body rectangle with a header band and pins on its four edges. It is drawn by `symbol_layer.dart` in `rackmate_core/draw/` and replayed by both backends (CR-071, CR-086) — the symbol cannot be a widget-only artifact if it is to print.
+A symbol is a body rectangle with a header band and pins on its four edges. It is drawn by `symbol_layer.dart` in `rackmate_core/draw/` and replayed by both backends (CR-071, CR-086), the symbol cannot be a widget-only artifact if it is to print.
 
 ```
  ┌ header band, height 6 gu ──────────────────────────┐
@@ -60,15 +60,15 @@ A symbol is a body rectangle with a header band and pins on its four edges. It i
  └────────────────────────────────────────────────────┘
 ```
 
-**Header contents, fixed order:** `designator` (`MTX-1`, `AMP-12`, `STR-1` — stored at allocation, never recomputed, per CR-041/CR-048); instance name (free text, cosmetic); right-aligned metadata `2RU · U14–U15 · REAR` plus badges — 📌 `SheetItem.pinned`, ⚠/⛔ finding roll-up, 👁 partially filtered.
+**Header contents, fixed order:** `designator` (`MTX-1`, `AMP-12`, `STR-1`, stored at allocation, never recomputed, per CR-041/CR-048); instance name (free text, cosmetic); right-aligned metadata `2RU · U14–U15 · REAR` plus badges, 📌 `SheetItem.pinned`, ⚠/⛔ finding roll-up, 👁 partially filtered.
 
-**Edge assignment.** Inputs left, outputs right, control and network **top**, AC power **bottom**. The top/bottom assignment is the opinionated part and it is right for this trade: control routes to a gutter above the signal plane and never tangles with A/V, and power falls to the PDU at the rack bottom as a single clean comb that never crosses a signal wire. Bidirectional ports sit on the side matching their dominant direction. Port *order within a side* is `FIXED_ORDER` — a device's ports are real hardware and you cannot reorder the XLR jacks on an amp to make a drawing prettier.
+**Edge assignment.** Inputs left, outputs right, control and network **top**, AC power **bottom**. The top/bottom assignment is the opinionated part and it is right for this trade: control routes to a gutter above the signal plane and never tangles with A/V, and power falls to the PDU at the rack bottom as a single clean comb that never crosses a signal wire. Bidirectional ports sit on the side matching their dominant direction. Port *order within a side* is `FIXED_ORDER`, a device's ports are real hardware and you cannot reorder the XLR jacks on an amp to make a drawing prettier.
 
 **Bank collapse is the density mechanism, and there is exactly one threshold.** `kBankCollapseThreshold = 8` (per CR-103). Any `Bank` of ≥ 2 ports may be collapsed by the user at any time; banks over 8 auto-collapse on first layout and in the Device Builder's symbol preview. A collapsed bank renders as one **vector pin** with a bus-weight stub and a bracketed label `IN[1..8]`; members remain individually routed in the schedule. The collapse is purely graphical.
 
 > Rejected alternative: unit splitting (`MTX1:A/:B/:C`), cut from v1 per CR-070. One device rendered as three bodies is a confusion generator for an audience that has never read an FPGA schematic, and collapse covers the same ground. The 17-pin split threshold and the ≥ 4-port vector-pin threshold are both deleted into `kBankCollapseThreshold`.
 
-`BankDef` (presentation — drives edges, brackets, collapse) and `PortSetDef` (electrical — Y/Pb/Pr, L/R, +/−, `atomicConnect`) are two distinct concepts and both ship in v1 (CR-055).
+`BankDef` (presentation, drives edges, brackets, collapse) and `PortSetDef` (electrical, Y/Pb/Pr, L/R, +/−, `atomicConnect`) are two distinct concepts and both ship in v1 (CR-055).
 
 **Sizing.** `width = max(20gu, textWidth(designator + name) + 8gu, maxLeftLabel + maxRightLabel + 12gu)`, rounded up to 2 gu. `height = 6gu + (max(leftPins, rightPins) + 1) × 2gu`, minimum 16 gu. Top and bottom pins distribute across the width at 2 gu pitch, centred. All text measurement goes through the injected `TextMeasurer` returning `TextMetrics`, never a backend-local measure (CR-081, CR-087).
 
@@ -119,7 +119,7 @@ COLLAPSED — the same device, both banks folded to vector pins (kBankCollapseTh
 
 | Zoom | Rendering |
 |---|---|
-| ≥ 0.80× | full — glyphs, labels, port designators, bank brackets |
+| ≥ 0.80× | full: glyphs, labels, port designators, bank brackets |
 | 0.40–0.80× | glyphs + labels; port designators suppressed |
 | 0.20–0.40× | pin = 3 px domain-coloured tick; header shows designator only |
 | < 0.20× | body = filled block tinted by dominant domain; designator if it fits |
@@ -128,7 +128,7 @@ COLLAPSED — the same device, both banks folded to vector pins (kBankCollapseTh
 
 ## 4. Ports and pins
 
-A pin is three composed elements, outward from the body: **[body edge] — stub — [direction arrow] — [connector glyph]**. Port designators are `J{PORT_SEQ:2}` → `J01`, unique within the device (CR-042); cable runs are `W{SEQ:3}` → `W042` (ASME Y14.44). Adopting the ASME convention makes the drawing legible to anyone who has read a schematic and makes the schedule self-documenting.
+A pin is three composed elements, outward from the body: **[body edge], stub, [direction arrow]: [connector glyph]**. Port designators are `J{PORT_SEQ:2}` → `J01`, unique within the device (CR-042); cable runs are `W{SEQ:3}` → `W042` (ASME Y14.44). Adopting the ASME convention makes the drawing legible to anyone who has read a schematic and makes the schedule self-documenting.
 
 **Direction**, five values, `i o b n p` (CR-060):
 
@@ -137,10 +137,10 @@ A pin is three composed elements, outward from the body: **[body edge] — stub 
 | `source` | solid arrowhead at the stub's outer end, pointing away |
 | `sink` | solid arrowhead at the body edge, pointing in |
 | `bidirectional` | arrowheads at both ends |
-| `busNode` (`n`) | short perpendicular tick at the outer end — the classic multi-drop stub |
+| `busNode` (`n`) | short perpendicular tick at the outer end, the classic multi-drop stub |
 | `passive` (`p`) | no arrow; plain line |
 
-"Power inlet" and "power outlet" are **not directions** (CR-060): they are `sink`/`source` on a `power.*` family with `PortPowerSpec.role: inlet | outlet`. A return channel (eARC, DDC, ARC) renders as a hollow half-size counter-arrow offset 0.5 gu — one physical link, two logical `Service`s, and the drawing must say so.
+"Power inlet" and "power outlet" are **not directions** (CR-060): they are `sink`/`source` on a `power.*` family with `PortPowerSpec.role: inlet | outlet`. A return channel (eARC, DDC, ARC) renders as a hollow half-size counter-arrow offset 0.5 gu, one physical link, two logical `Service`s, and the drawing must say so.
 
 **Connector glyphs** are line drawings at 2 gu nominal, drawn on the pin axis outboard of the arrow, and every one must be distinguishable at 8 device pixels and in 1-bit black and white. Each glyph is tinted with the **domain colour of the port's `signalFamily`**, so an RJ45 carrying `net.ethernet` is green and an RJ45 carrying `video.hdbaset` is blue *and* double-outlined. Those are the two most dangerous ports in the taxonomy and they are now impossible to confuse.
 
@@ -164,17 +164,17 @@ A pin is three composed elements, outward from the body: **[body edge] — stub 
 | `conn.nema_5_15r` / `_5_20r` | rect, two parallel slots + round ground; 20 A slot is T-shaped | |
 | `conn.sfp_cage` / `conn.lc_duplex` | two small rects side by side | |
 | `conn.punchdown_110` / `conn.keystone` | fork / spade outline | structured-wiring rough-in |
-| `conn.unterminated` | ◇ hollow diamond | `structure.undetermined` — not yet assigned |
+| `conn.unterminated` | ◇ hollow diamond | `structure.undetermined`: not yet assigned |
 
-**Gender** is encoded as glyph fill — **filled = female, hollow = male** — and **only where `ConnectorTypeDef.genderApplies` is true** (CR-059). The five-value enum containing two synonym pairs is deleted: `jack` and `plug` are gone, values are `male | female | genderless`, a jack is a female panel connector, and this fixes a concrete bug in `CON-002`, which never fired for `jack`+`jack`. Overloading fill on every connector costs more legibility than it buys.
+**Gender** is encoded as glyph fill (**filled = female, hollow = male**) and **only where `ConnectorTypeDef.genderApplies` is true** (CR-059). The five-value enum containing two synonym pairs is deleted: `jack` and `plug` are gone, values are `male | female | genderless`, a jack is a female panel connector, and this fixes a concrete bug in `CON-002`, which never fired for `jack`+`jack`. Overloading fill on every connector costs more legibility than it buys.
 
-**Pin labels.** Inside the body, 1.8 mm, 1 gu inboard of the edge, two columns per side: `J01  HDMI IN 1` left-aligned on the left edge, `OUT 3  J09` right-aligned on the right. Truncate with `…` at 40% of body width; full text in the tooltip and the inspector. A CI test asserts every `ConnectorTypeDef` referenced by a shipped template has a footprint entry (AC-050/A2.2) and that every registry glyph resolves in `RackBody` (IBM Plex Sans) or `Noto Sans Symbols 2` (CR-080) — a tofu box in an exported drawing is a defect this test exists to prevent.
+**Pin labels.** Inside the body, 1.8 mm, 1 gu inboard of the edge, two columns per side: `J01  HDMI IN 1` left-aligned on the left edge, `OUT 3  J09` right-aligned on the right. Truncate with `…` at 40% of body width; full text in the tooltip and the inspector. A CI test asserts every `ConnectorTypeDef` referenced by a shipped template has a footprint entry (AC-050/A2.2) and that every registry glyph resolves in `RackBody` (IBM Plex Sans) or `Noto Sans Symbols 2` (CR-080), a tofu box in an exported drawing is a defect this test exists to prevent.
 
 ---
 
 ## 5. Wire rendering
 
-This section specifies `drawn` mode, which is what a `Link` looks like on a domain-filtered sheet, under `Alt`-hover, or inside a focused subgraph. It is not the default render — §11.5 is (DR-001). Everything below is equally true whenever a wire is actually drawn.
+This section specifies `drawn` mode, which is what a `Link` looks like on a domain-filtered sheet, under `Alt`-hover, or inside a focused subgraph. It is not the default render, §11.5 is (DR-001). Everything below is equally true whenever a wire is actually drawn.
 
 A drawn `Link` is an orthogonal polyline emitted by the router (§10), stroked with the `SignalDomainDef` of its **dominant service's** family. `Link.dominantSignalFamily` is derived and never serialized (CR-009, CR-115); colour resolves from `Service.signalFamily`, never from the `Link`.
 
@@ -191,11 +191,11 @@ A drawn `Link` is an orthogonal polyline emitted by the router (§10), stroked w
 
 **Arrowheads.** Filled triangle, 1.2 gu × 0.8 gu, at the **sink end only**, placed 0.5 gu before the target pin's own arrow so the two do not collide. A line with no arrowhead reads as bidirectional or as a bus, which is information, not an omission. Bidirectional links get arrowheads at both ends. A return channel gets a hollow half-size counter-arrow at 30% along the run.
 
-**Junction dots** are drawn only at genuine multi-drop junctions — an RF splitter, a 70 V tap, an RS-485 spur, an IR connecting block. Radius = 2× local stroke width, minimum 4 device px, filled in the wire colour. Junction dots are semantic — they mark a real electrical tap, never a visual crossing — and they survive DR-001 unchanged, because they are a property of the `Net`, not of the drawn route. Junction staggering is not built in v1 (DR-001); it returns with interval-graph channel routing in v1.2.
+**Junction dots** are drawn only at genuine multi-drop junctions, an RF splitter, a 70 V tap, an RS-485 spur, an IR connecting block. Radius = 2× local stroke width, minimum 4 device px, filled in the wire colour. Junction dots are semantic (they mark a real electrical tap, never a visual crossing) and they survive DR-001 unchanged, because they are a property of the `Net`, not of the drawn route. Junction staggering is not built in v1 (DR-001); it returns with interval-graph channel routing in v1.2.
 
-**Crossings** render as plain crossovers. Hop arcs, the crossing sweep and junction staggering are not built in v1 (DR-001, canon §11.1.3); they return only if interval-graph channel routing lands in v1.2. **Junction dots at genuine multi-drop nodes stay** — they are semantic, not decorative, and they distinguish a real tap from a visual crossing. Wire bends keep the 0.6 gu fillet; square corners read harsh at screen resolution and anything larger reads as a flowchart.
+**Crossings** render as plain crossovers. Hop arcs, the crossing sweep and junction staggering are not built in v1 (DR-001, canon §11.1.3); they return only if interval-graph channel routing lands in v1.2. **Junction dots at genuine multi-drop nodes stay**: they are semantic, not decorative, and they distinguish a real tap from a visual crossing. Wire bends keep the 0.6 gu fillet; square corners read harsh at screen resolution and anything larger reads as a flowchart.
 
-**Tag pills.** Every drawn run carries a tag pill at **both ends**, hanging **outboard of that end's own escape point** — the same rule §11.5 gives the net-label pennant at the end of a leader, and taking the same one here is DR-001's point rather than a coincidence: `drawn` and `netLabels` are two renderings of one `Link`, so the flag naming it belongs in the same place in both.
+**Tag pills.** Every drawn run carries a tag pill at **both ends**, hanging **outboard of that end's own escape point**: the same rule §11.5 gives the net-label pennant at the end of a leader, and taking the same one here is DR-001's point rather than a coincidence: `drawn` and `netLabels` are two renderings of one `Link`, so the flag naming it belongs in the same place in both.
 
 > **This read *"2 gu outboard of the source pin, 2 gu inboard of the sink pin"*, and the inboard half is the correction.** A pill is several times wider than the 3 gu a wire travels before it may turn, so one placed inboard — or merely *centred* on the escape point — straddles the body edge and paints its inner half over the port label, which is drawn first and therefore loses. The field's screenshot read `MI IN 1` where the symbol said `HDMI IN 1`. Anchoring the near edge at the escape and hanging the pill away from the body is symmetric across the two ends, and the asymmetry the old sentence specified bought nothing.
 
@@ -203,11 +203,11 @@ A drawn `Link` is an orthogonal polyline emitted by the router (§10), stroked w
  ┤W042│HDMI│25'├
 ```
 
-Rounded 1 gu capsule, 1.6 mm `RackCond`, wire colour as a 0.5 px outline, paper-coloured fill so it knocks out the grid. Content: `{tag} · {type} · {length}` by default, `{tag}` only in dense mode, `{tag} · {SRC_REFDES}:{SRC_PORT} → {DST_REFDES}:{DST_PORT}` verbose. **The tag pill is mandatory, not decorative** (canon §6.2.1): it is the one encoding channel that survives CVD, greyscale, a third-generation photocopy, and a bad phone photo taken in an attic. A length rendered from an estimate rather than a measurement is rendered distinctly (AC-024, G4) — the pill never presents a guess as a fact.
+Rounded 1 gu capsule, 1.6 mm `RackCond`, wire colour as a 0.5 px outline, paper-coloured fill so it knocks out the grid. Content: `{tag} · {type} · {length}` by default, `{tag}` only in dense mode, `{tag} · {SRC_REFDES}:{SRC_PORT} → {DST_REFDES}:{DST_PORT}` verbose. **The tag pill is mandatory, not decorative** (canon §6.2.1): it is the one encoding channel that survives CVD, greyscale, a third-generation photocopy, and a bad phone photo taken in an attic. A length rendered from an estimate rather than a measurement is rendered distinctly (AC-024, G4), the pill never presents a guess as a fact.
 
-**Domain glyph at the run midpoint.** ▲ digital video, ▽ RF, ● analog audio, ◆ digital audio, ■ network, ✚ control, ⬢ power, ★ structure. This is the fourth encoding channel (canon §6.2.4). Shape encodes domain; **fill encodes tier** — filled = the domain's native carrier, hollow = the transported, extended or networked variant. It is deliberately not a per-family discriminator; there is no set of 50 shapes legible at 6 pt, and that job belongs to the tag pill.
+**Domain glyph at the run midpoint.** ▲ digital video, ▽ RF, ● analog audio, ◆ digital audio, ■ network, ✚ control, ⬢ power, ★ structure. This is the fourth encoding channel (canon §6.2.4). Shape encodes domain; **fill encodes tier**: filled = the domain's native carrier, hollow = the transported, extended or networked variant. It is deliberately not a per-family discriminator; there is no set of 50 shapes legible at 6 pt, and that job belongs to the tag pill.
 
-**Buses are not in v1.** Graphical bus trunks with 45° entries land in v1.2 (per RJ-001 as scheduled in §7.4). Vector pins on collapsed banks (§3) carry the v1 need, and `Ctrl+B` therefore remains "fill gaps with blanks" in the Rack Editor with no schematic meaning (CR-101). Hyperedges — one source to many sinks, as in an IR emitter bus or a 70 V tap chain — are modelled as one `Net` with one source and N sinks and render as a trunk with perpendicular stubs and junction dots, which is visually distinct from point-to-point regardless of colour.
+**Buses are not in v1.** Graphical bus trunks with 45° entries land in v1.2 (per RJ-001 as scheduled in §7.4). Vector pins on collapsed banks (§3) carry the v1 need, and `Ctrl+B` therefore remains "fill gaps with blanks" in the Rack Editor with no schematic meaning (CR-101). Hyperedges (one source to many sinks, as in an IR emitter bus or a 70 V tap chain) are modelled as one `Net` with one source and N sinks and render as a trunk with perpendicular stubs and junction dots, which is visually distinct from point-to-point regardless of colour.
 
 ---
 
@@ -215,7 +215,7 @@ Rounded 1 gu capsule, 1.6 mm `RackCond`, wire colour as a 0.5 px outline, paper-
 
 ### 6.1 Why hue encodes domain and not cable type
 
-There are ~50 signal families in the registry. **No categorical palette is colour-vision-deficiency-safe past 8–9 categories** — the Okabe–Ito authors stopped at eight, having verified their set under protanopia, deuteranopia and tritanopia simulation. A hue per cable type does not produce a colour-coded drawing; it produces an unreadable one, and it fails hardest for the ~8% of male installers with a CVD who are the exact audience.
+There are ~50 signal families in the registry. **No categorical palette is colour-vision-deficiency-safe past 8–9 categories**: the Okabe–Ito authors stopped at eight, having verified their set under protanopia, deuteranopia and tritanopia simulation. A hue per cable type does not produce a colour-coded drawing; it produces an unreadable one, and it fails hardest for the ~8% of male installers with a CVD who are the exact audience.
 
 The palette is designed for a sheet that is handed to a client, a GC and a job site (DR-005), and it is verified on the hardware that reproduces it, not in simulation. That is a statement about ink on paper and about sheet furniture; it is orthogonal to wire idiom and does not argue for drawn wires (DR-001 governs that, and net labels remain the default).
 
@@ -249,15 +249,15 @@ convention would silently repaint its schematic.
 It would also break this section's own accessibility contract. The eight domain
 hues are Okabe–Ito *because* they survive a CVD; a shop's jacket colours are
 whatever was on the reel and carry no such guarantee, so feeding them to the
-drawing layer would substitute an unvalidated palette for a validated one — the
+drawing layer would substitute an unvalidated palette for a validated one, the
 exact failure CR-078 rejected, arriving through a different door.
 
 Jacket colour belongs on the **schedule, the label and the keystone**, never on
 the drawn wire. This is enforced, not merely documented:
 `packages/rackmate_core/test/jacket_colour_is_not_hue_test.dart` scans
 `lib/src/draw/` and `rackmate_export/lib/src/draw/` for every jacket-colour name
-— including the resolver's `asBuiltColorId`, the most tempting one to reach for
-("just draw the wire the colour it actually is") — and fails the build if one
+, including the resolver's `asBuiltColorId`, the most tempting one to reach for
+("just draw the wire the colour it actually is"), and fails the build if one
 appears. The resolver deliberately lives in `derived/`, never in `draw/`.
 
 > **Known gap in that gate:** it scans the drawing layer only. A coupling
@@ -267,7 +267,7 @@ appears. The resolver deliberately lives in `derived/`, never in `draw/`.
 > back door untouched. Recorded here; widening the gate to ban those three sinks
 > is unowned work.
 
-### 6.2 The eight domains — verbatim from canon §6.2.5
+### 6.2 The eight domains: verbatim from canon §6.2.5
 
 `SignalDomainDef{id, displayName, tagPrefix, color, colorDark, dashPattern, lineWeightPermille, glyph, glyphAlt}`.
 
@@ -279,24 +279,24 @@ appears. The resolver deliberately lives in `derived/`, never in `draw/`.
 | `audio.digital` | Digital Audio | `#D55E00` | `#F07A33` | `6,3,1,3` | 1.00× | ◆ / ◇ | 0.2215 | black, dash-dot, 1.00× |
 | `net` | Network | `#009E73` | `#2FC79A` | solid | 1.50× | ■ / □ | 0.2569 | black, solid, 1.50× |
 | `ctl` | Control | `#CC79A7` | `#E29CC3` | `1.5,3` | 0.75× | ✚ / ✳ | 0.2930 | black, fine dot, 0.75× |
-| `pwr` | Power | `#000000` | `#E8E8E8` *(inverted — black is invisible on dark)* | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.0000 | black, dash-dot-dot, 2.00× |
+| `pwr` | Power | `#000000` | `#E8E8E8` *(inverted: black is invisible on dark)* | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.0000 | black, dash-dot-dot, 2.00× |
 | `str` | Structure | `#999999` | `#A8A8A8` | `6,3,3,3` | 0.75× | ★ / ☆ | 0.3185 | black, `6,3,3,3`, 0.75× |
-| *(reserved)* | Selection / focus | `#F0E442` | `#F5E76B` | — | — | — | 0.7441 | never printed |
+| *(reserved)* | Selection / focus | `#F0E442` | `#F5E76B` |, |, |: | 0.7441 | never printed |
 
 The luminances above are computed from the shipped light hexes by the `luminance()` function in [`tools/pal1_check.py`](../tools/pal1_check.py) and are the figures this project publishes. Any document carrying `video.analog` as `0.401` is stale; the value is **0.4050**.
 
 Dash patterns, weights, glyphs and tags are **identical across themes**. Only hue moves, and the theme is a UI preference never persisted in the document.
 
-`str`'s base dash was authored `4,4` rather than the design document's `6,3`, on the reasoning that an even dash reads as unambiguous against a 2:1 dash. **That reasoning predates the mechanical dash-class definition in §6.3 and does not survive it:** `4,4` and `6,3` both classify as `(short)`, so the authored value left `structure.undetermined` — which carries no `dashOverride` and inherits the domain base — sharing a dash class with the `(short)` families sitting inside PAL-1's luminance band, in some cases at an identical weight as well. **The `str` base dash is therefore `6,3,3,3`**, class `(short,short)`, period 15 pt, permille `[6000, 3000, 3000, 3000]`, weight unchanged at 0.75× (canon §14.3). Because `structure.undetermined` inherits it, the legend's `str` swatch and the drawn line move together.
+`str`'s base dash was authored `4,4` rather than the design document's `6,3`, on the reasoning that an even dash reads as unambiguous against a 2:1 dash. **That reasoning predates the mechanical dash-class definition in §6.3 and does not survive it:** `4,4` and `6,3` both classify as `(short)`, so the authored value left `structure.undetermined`, which carries no `dashOverride` and inherits the domain base, sharing a dash class with the `(short)` families sitting inside PAL-1's luminance band, in some cases at an identical weight as well. **The `str` base dash is therefore `6,3,3,3`**, class `(short,short)`, period 15 pt, permille `[6000, 3000, 3000, 3000]`, weight unchanged at 0.75× (canon §14.3). Because `structure.undetermined` inherits it, the legend's `str` swatch and the drawn line move together.
 
-**This pair is closed, not outstanding.** `str` is `6,3,3,3` and [`tools/pal1_check.py`](../tools/pal1_check.py) passes on the shipped palette. Which partners the change clears is the file's output and not a claim made here — that is the whole point of moving the rule into an executable check, and it is why the check enumerates rendered family values pairwise rather than reading a table of eight domain rows.
+**This pair is closed, not outstanding.** `str` is `6,3,3,3` and [`tools/pal1_check.py`](../tools/pal1_check.py) passes on the shipped palette. Which partners the change clears is the file's output and not a claim made here; that is the whole point of moving the rule into an executable check, and it is why the check enumerates rendered family values pairwise rather than reading a table of eight domain rows.
 
 ### 6.3 The honest greyscale caveat, and the rule it generates
 
 Several sources claim Okabe–Ito "has distinct luminance values so it works in greyscale." **Computing WCAG relative luminance shows that claim is false**, and RackMate does not repeat it. Two collision bands exist in the shipped palette:
 
-- **Sky Blue `#56B4E9` (L 0.4050) vs Orange `#E69F00` (L 0.4162)** — ΔL 0.0112, indistinguishable in greyscale. These are analog video and analog audio.
-- **Vermillion `#D55E00` (0.2215) / Bluish Green `#009E73` (0.2569) / Reddish Purple `#CC79A7` (0.2930)** — a crowded 0.07 band. These are digital audio, network and control.
+- **Sky Blue `#56B4E9` (L 0.4050) vs Orange `#E69F00` (L 0.4162)**: ΔL 0.0112, indistinguishable in greyscale. These are analog video and analog audio.
+- **Vermillion `#D55E00` (0.2215) / Bluish Green `#009E73` (0.2569) / Reddish Purple `#CC79A7` (0.2930)**: a crowded 0.07 band. These are digital audio, network and control.
 
 The collisions are placed **deliberately**, not accepted. Each colliding pair is separated maximally on the other three channels, and that is promoted from a hope to a checkable rule:
 
@@ -326,22 +326,22 @@ The collisions are placed **deliberately**, not accepted. Each colliding pair is
 
 **The authority for PAL-1 is [`tools/pal1_check.py`](../tools/pal1_check.py), an executable check, and no longer any sentence in this document.** It enumerates the **55 shipped families** and the **385 in-band cross-domain pairs** they actually produce, and it exits non-zero on any violation. Where this document and that file disagree, **the file wins and this document is wrong.**
 
-That change of authority was not procedural tidiness. PAL-1 had been recorded as clear three separate times against a palette that in fact contained **fourteen** collisions, because each of those checks read the eight domain rows of §6.2 rather than the family rows §6.4's `dashOverride` and weight overrides actually draw (canon §12.6(c)). **Six of the fourteen involved types requirement 4 names by hand** — S/PDIF alone collided with RS-232, DMX512, DALI, KNX, contact closure and IR receive. A rule that is checked by reading a table is not checked; this section therefore records *what was corrected* and delegates *whether the palette is clear* to the file.
+That change of authority was not procedural tidiness. PAL-1 had been recorded as clear three separate times against a palette that in fact contained **fourteen** collisions, because each of those checks read the eight domain rows of §6.2 rather than the family rows §6.4's `dashOverride` and weight overrides actually draw (canon §12.6(c)). **Six of the fourteen involved types requirement 4 names by hand**: S/PDIF alone collided with RS-232, DMX512, DALI, KNX, contact closure and IR receive. A rule that is checked by reading a table is not checked; this section therefore records *what was corrected* and delegates *whether the palette is clear* to the file.
 
 The corrections below are what the check required. Run it to see the pairs each one resolves:
 
 | Family | Was | Now | What it resolves |
 |---|---|---|---|
-| `video.hdmi.1_4` | solid @ 1.00× | **solid @ 0.75×** | It was byte-identical to `video.hdmi.2_0` and so failed the within-domain limb outright. The three HDMI generations now read as a bandwidth progression — **0.75× / 1.00× / 1.25×** — and all three stay **solid**, solid being the native carrier of digital video. |
+| `video.hdmi.1_4` | solid @ 1.00× | **solid @ 0.75×** | It was byte-identical to `video.hdmi.2_0` and so failed the within-domain limb outright. The three HDMI generations now read as a bandwidth progression, **0.75× / 1.00× / 1.25×**, and all three stay **solid**, solid being the native carrier of digital video. |
 | `video.composite` | `12,4` @ 1.00× | **`1.5,3` @ 1.00×** | Class `(long)` → `(dot)`. Period 4.5 pt, at the floor. |
-| `audio.line_bal` | `10,3` @ 1.00× | **solid @ 1.00×** | Class `(long)` → `(solid)`. It was colliding with **four** `video.analog` families at once — `video.composite`, `video.svideo`, `rf.ota` and `rf.modulated` — every one of them at ΔL 0.0112, the analog-video/analog-audio band named above. |
+| `audio.line_bal` | `10,3` @ 1.00× | **solid @ 1.00×** | Class `(long)` → `(solid)`. It was colliding with **four** `video.analog` families at once (`video.composite`, `video.svideo`, `rf.ota` and `rf.modulated`) every one of them at ΔL 0.0112, the analog-video/analog-audio band named above. |
 | `audio.spdif_coax` | `6,3,1,3` @ 1.00× | **`12,4,3,4` @ 1.00×** | Class `(dot,short)` → `(long,short)`. This is **requirement 4's S/PDIF**, and the move cleared all six of its `ctl` collisions in one edit. |
 | `audio.aes3` | `10,3,1,3` @ 1.00× | **`12,4,10,4` @ 1.00×** | Class `(dot,long)` → `(long,long)`. Cleared `ctl.cresnet` and `video.avoip`. |
-| `audio.spdif_optical` | `2,3` @ 1.00× | **`2,3` @ 1.25×** | Dash unchanged. Against IR `ctl.ir_emitter` (ΔL 0.0715, both `(dot)`) the weight ratio rises from 1.33 to **1.67 ≥ 1.4** ✓ — the (b) limb, since (a) cannot be used without disturbing a second requirement-4 type. |
+| `audio.spdif_optical` | `2,3` @ 1.00× | **`2,3` @ 1.25×** | Dash unchanged. Against IR `ctl.ir_emitter` (ΔL 0.0715, both `(dot)`) the weight ratio rises from 1.33 to **1.67 ≥ 1.4** ✓, the (b) limb, since (a) cannot be used without disturbing a second requirement-4 type. |
 | `structure.pathway` | `2,6` @ 0.75× | **`1.5,3,1.5,9` @ 0.75×** | Class `(dot)` → `(dot,dot)` ✓, period 15 pt. Weight unchanged. |
-| `str` domain base — inherited by `structure.undetermined` | `4,4` @ 0.75× | **`6,3,3,3` @ 0.75×** | Class `(short)` → `(short,short)` ✓, period 15 pt, permille `[6000, 3000, 3000, 3000]`. It is the correct place to move: a placeholder family, not one of requirement 4's ten named types, and one edit rather than many. |
+| `str` domain base: inherited by `structure.undetermined` | `4,4` @ 0.75× | **`6,3,3,3` @ 0.75×** | Class `(short)` → `(short,short)` ✓, period 15 pt, permille `[6000, 3000, 3000, 3000]`. It is the correct place to move: a placeholder family, not one of requirement 4's ten named types, and one edit rather than many. |
 
-All eight preserve their domain's base **weight** semantics, and **no hue changed** — the Okabe–Ito domain palette in §6.2 is untouched, so nothing above alters a luminance or reopens a band. The failing pairs named in the last column are the check's output, not an assertion made here: revert any row and `python tools/pal1_check.py` prints the violations back.
+All eight preserve their domain's base **weight** semantics, and **no hue changed**: the Okabe–Ito domain palette in §6.2 is untouched, so nothing above alters a luminance or reopens a band. The failing pairs named in the last column are the check's output, not an assertion made here: revert any row and `python tools/pal1_check.py` prints the violations back.
 
 `ctl.ir_emitter` is **not** touched: it is a requirement-4 named type and its `1.5,3` is itself the correction that brought the control domain up to the dash-period floor.
 
@@ -351,7 +351,7 @@ All eight preserve their domain's base **weight** semantics, and **no hue change
 
 **Units and storage** (CR-079) are stated once in §6.6, including the **≥ 4.5 pt** shipped dash-period floor that the corrections above are measured against.
 
-### 6.4 Requirement 4 coverage — colour-coding by cable type
+### 6.4 Requirement 4 coverage: colour-coding by cable type
 
 Requirement 4 names ten cable types and demands the plan be colour-coded by them. The resolution (AC-054): **hue = domain; dash + weight + glyph + tag = type**; the `T0.01` legend prints one row per named type in colour and greyscale side by side.
 
@@ -371,7 +371,7 @@ Requirement 4 names ten cable types and demands the plan be colour-coded by them
 The two within-domain collisions the requirement would have produced are both resolved off the hue channel and both survive a greyscale photocopy:
 
 - **Analog RCA vs speaker level** (both `#E69F00`): identical dash, but **1.00× vs 2.00×** stroke and ● vs ◐. A 2× weight difference is the single most legible mono discriminator available.
-- **S/PDIF vs TOSLINK** (both `#D55E00`): a **`12,4,3,4`** long-short at 1.00× with a filled diamond versus a fine `2,3` dot at **1.25×** with a hollow diamond — three channels, not two. Both endpoints of this pair moved, and for different reasons. TOSLINK's weight was raised from 1.00× to 1.25× because at 1.00× it collided with IR (`ctl.ir_emitter`, `1.5,3`, 0.75×) on every non-hue channel: ΔL 0.0715, same `(dot)` class, weight ratio 1.33 below PAL-1's 1.4 floor; at 1.25× the ratio is 1.67 (canon §14.3). S/PDIF's dash moved from `6,3,1,3` to `12,4,3,4` — class `(dot,short)` → `(long,short)` — because `(dot,short)` at 1.00× put it in collision with **six** `ctl` families at once. Between them, three of the brief's ten named types were rendering as near-identical dotted lines in greyscale. This pair also carries real consequence — TOSLINK cannot carry lossless multichannel.
+- **S/PDIF vs TOSLINK** (both `#D55E00`): a **`12,4,3,4`** long-short at 1.00× with a filled diamond versus a fine `2,3` dot at **1.25×** with a hollow diamond, three channels, not two. Both endpoints of this pair moved, and for different reasons. TOSLINK's weight was raised from 1.00× to 1.25× because at 1.00× it collided with IR (`ctl.ir_emitter`, `1.5,3`, 0.75×) on every non-hue channel: ΔL 0.0715, same `(dot)` class, weight ratio 1.33 below PAL-1's 1.4 floor; at 1.25× the ratio is 1.67 (canon §14.3). S/PDIF's dash moved from `6,3,1,3` to `12,4,3,4`, class `(dot,short)` → `(long,short)`, because `(dot,short)` at 1.00× put it in collision with **six** `ctl` families at once. Between them, three of the brief's ten named types were rendering as near-identical dotted lines in greyscale. This pair also carries real consequence, TOSLINK cannot carry lossless multichannel.
 
 RG6 is correctly a **medium**, not a signal, so it is colour-coded by what it carries; its legend row shows all three families, which is more informative than one "RG6" swatch. `ProjectSettings.familyColorOverrides` lets a user override any hue in v1 (AC-054).
 
@@ -396,15 +396,15 @@ Symbol bodies must stay **lighter** than the canvas in dark theme; inverting to 
 
 This section is the single home for the rendering constants that were previously deferred to a `docs/visual-language.md` that does not exist and will not be written. Other documents link here; do not rename the anchor.
 
-**Dash units and storage** (CR-079). Dash patterns are in **points (1/72 in)**, stored as `List<int>` of permille-points so the file stays integral — `6,3` is `[6000, 3000]`. The screen backend divides by the zoom scale so a dash is zoom-invariant; the PDF backend passes them through. **The dash-period floor is 4.5 pt, and 4.5 pt is the only figure.** Every shipped dash period is ≥ 4.5 pt (1.5875 mm), above the 1.5 mm floor below which a dash blurs to solid at 300 dpi. The `4.25 pt` that appeared in earlier drafts is 1.4992 mm — *below* the physical floor the rule derives from — and is retracted rather than rounded: it is not an alternative reading, it is wrong. 4.5 pt is the figure that generated the shipped `1,3` → `1.5,3` correction to the control domain's dot, it is the figure §6.3 and §6.4 measure against, and it is enforced as `PERIOD_FLOOR = 4.5` in [`tools/pal1_check.py`](../tools/pal1_check.py).
+**Dash units and storage** (CR-079). Dash patterns are in **points (1/72 in)**, stored as `List<int>` of permille-points so the file stays integral, `6,3` is `[6000, 3000]`. The screen backend divides by the zoom scale so a dash is zoom-invariant; the PDF backend passes them through. **The dash-period floor is 4.5 pt, and 4.5 pt is the only figure.** Every shipped dash period is ≥ 4.5 pt (1.5875 mm), above the 1.5 mm floor below which a dash blurs to solid at 300 dpi. The `4.25 pt` that appeared in earlier drafts is 1.4992 mm, *below* the physical floor the rule derives from, and is retracted rather than rounded: it is not an alternative reading, it is wrong. 4.5 pt is the figure that generated the shipped `1,3` → `1.5,3` correction to the control domain's dot, it is the figure §6.3 and §6.4 measure against, and it is enforced as `PERIOD_FLOOR = 4.5` in [`tools/pal1_check.py`](../tools/pal1_check.py).
 
-**Filtered-wire ghost alpha.** **VERIFY** — the number lands here, in this section, once measured. The design document's 8% is a placeholder below a legible floor; AC-058/D11 requires a *tested* value against both themes, which is genuine measurement and not a thing that can be settled on paper. DR-001 **raises its importance**: under net labels the ghost state is what a non-matching domain looks like on a filtered sheet, so it is seen constantly rather than occasionally. The alpha is baked into `Paint.color`, never an opacity layer.
+**Filtered-wire ghost alpha.** **VERIFY**: the number lands here, in this section, once measured. The design document's 8% is a placeholder below a legible floor; AC-058/D11 requires a *tested* value against both themes, which is genuine measurement and not a thing that can be settled on paper. DR-001 **raises its importance**: under net labels the ghost state is what a non-matching domain looks like on a filtered sheet, so it is seen constantly rather than occasionally. The alpha is baked into `Paint.color`, never an opacity layer.
 
-**Dash-phase divergence on curves.** `dashPath` resamples via `PathMetrics`, which is an approximation on curves, so dash phase can diverge between screen and print on **corner fillets** (AC-016/#17). The hop-arc half of that finding is moot — there are no hop arcs in v1 (DR-001). Recorded here so it is not rediscovered.
+**Dash-phase divergence on curves.** `dashPath` resamples via `PathMetrics`, which is an approximation on curves, so dash phase can diverge between screen and print on **corner fillets** (AC-016/#17). The hop-arc half of that finding is moot; there are no hop arcs in v1 (DR-001). Recorded here so it is not rediscovered.
 
 ---
 
-## 7. Creating a `Link` — the state machine
+## 7. Creating a `Link`: the state machine
 
 Drag-to-connect and click-click ("sticky") share one state machine; the drag threshold decides the sub-mode, and releasing over the origin port converts drag into sticky. This is the pen-tool convention and users already have the muscle memory. Every state below names its feedback, because a state with no feedback is a state the user experiences as a freeze.
 
@@ -463,19 +463,19 @@ Drag-to-connect and click-click ("sticky") share one state machine; the drag thr
 
 **The binding frame is CR-017: _the gesture may hesitate; the document may not lie._**
 
-- **Model-level illegality** is only `TOP-001..005` — self-connection, duplicate ordered pair on one link, exceeding `maxConnections`, dangling endpoint, container cycle. These are states in which the model *means nothing*, not states the world disallows.
-- Everything the design document called **"Class A — refused at drag time, cannot exist in the document"** is deleted as a category. It becomes **spring-back with a reason chip**, and **every chip carries `[ Connect anyway ]` next to its remedies**. A model that cannot draw a mistake cannot document reality, cannot plan a remediation, and cannot import an as-found survey (G2).
-- Two former Class-A members — "Dante endpoints with no network path" and "AVB traversing a non-TSN switch" — are **logically unevaluatable at drag time**, because the link being drawn may be the one that completes the path. They are demoted to post-hoc findings unconditionally.
+- **Model-level illegality** is only `TOP-001..005`, self-connection, duplicate ordered pair on one link, exceeding `maxConnections`, dangling endpoint, container cycle. These are states in which the model *means nothing*, not states the world disallows.
+- Everything the design document called **"Class A: refused at drag time, cannot exist in the document"** is deleted as a category. It becomes **spring-back with a reason chip**, and **every chip carries `[ Connect anyway ]` next to its remedies**. A model that cannot draw a mistake cannot document reality, cannot plan a remediation, and cannot import an as-found survey (G2).
+- Two former Class-A members ("Dante endpoints with no network path" and "AVB traversing a non-TSN switch") are **logically unevaluatable at drag time**, because the link being drawn may be the one that completes the path. They are demoted to post-hoc findings unconditionally.
 
 > Rejected alternative: `design-ux-schematic.md §2.2`'s nine hard-invalid rules with no override. The remedy chips it designed are excellent and are kept exactly as designed; only the finality goes.
 
 **Live feedback during `WIRE_DRAG` / `WIRE_STICKY`:**
 
-1. **The canvas dims.** Non-port content drops to 35% alpha, **baked into `Paint.color`, never an opacity layer.** `saveLayer` is banned in the hot path — it costs ~1 ms and three of them blow a third of the 16.6 ms frame budget.
-2. **Compatible ports illuminate** — a 3 gu ring in `#F0E442` with a 900 ms breathing pulse (0.6 → 1.0 alpha). "Compatible" means the connector × signal-family matrix admits the pair and no spring-back rule fires.
-3. **Ports that would spring back** get the same ring in amber `#E69F00`, no pulse. They remain droppable — the chip and `[ Connect anyway ]` are what handles them.
+1. **The canvas dims.** Non-port content drops to 35% alpha, **baked into `Paint.color`, never an opacity layer.** `saveLayer` is banned in the hot path; it costs ~1 ms and three of them blow a third of the 16.6 ms frame budget.
+2. **Compatible ports illuminate**: a 3 gu ring in `#F0E442` with a 900 ms breathing pulse (0.6 → 1.0 alpha). "Compatible" means the connector × signal-family matrix admits the pair and no spring-back rule fires.
+3. **Ports that would spring back** get the same ring in amber `#E69F00`, no pulse. They remain droppable, the chip and `[ Connect anyway ]` are what handles them.
 4. **Ports with no legal relationship** hold at 35% with no ring. Not red: red at 40 simultaneous ports is noise, and absence-of-affordance is the clearer signal.
-5. **Rubber band** renders in the source domain's colour, weight and dash, as a live two-bend orthogonal staple — preview what you will get, not a straight line.
+5. **Rubber band** renders in the source domain's colour, weight and dash, as a live two-bend orthogonal staple, preview what you will get, not a straight line.
 6. **Magnetic snap.** Within 12 screen px the band locks to a port's glyph centre and the glyph scales to 1.15×. Snap is **type-weighted**: an HDMI band prefers an HDMI port even if an RJ45 port is 3 px nearer. This is the single biggest usability win in the editor.
 7. **Auto-pan** within 40 px of the viewport edge, up to 800 px/s, ramped quadratically by proximity.
 8. **Hovering a collapsed bank** auto-expands it after 400 ms so a specific member can be targeted.
@@ -483,11 +483,11 @@ Drag-to-connect and click-click ("sticky") share one state machine; the drag thr
 
 **Chain-draw.** Holding `Shift` on commit re-arms `WIRE_STICKY` from the sink device's matching output. `ATV-1 → MTX-1 IN1`, `MTX-1 OUT1 → DA-1 IN`, `DA-1 OUT1 → TV` is three gestures with no round trip through IDLE. Highest-throughput gesture in the editor; build it first.
 
-**Multi-draw.** With N ports selected in one bank, dragging to a target bank creates N `Link`s in rank order under **one undo entry** — the "wire the 8×8 matrix to eight zone amps" gesture. Live preview shows all N bands. This is the demo moment.
+**Multi-draw.** With N ports selected in one bank, dragging to a target bank creates N `Link`s in rank order under **one undo entry**: the "wire the 8×8 matrix to eight zone amps" gesture. Live preview shows all N bands. This is the demo moment.
 
-**Atomic sets.** A `PortSetDef` with `atomicConnect: true` — component video Y/Pb/Pr, a stereo pair, a 16/4 speaker run — connects in **one gesture producing one `Link` with N `Conductor`s** (AC-053). Hand-authoring an arbitrary conductor map is v1.1; `atomicConnect` covers the cases the decision exists for.
+**Atomic sets.** A `PortSetDef` with `atomicConnect: true` (component video Y/Pb/Pr, a stereo pair, a 16/4 speaker run) connects in **one gesture producing one `Link` with N `Conductor`s** (AC-053). Hand-authoring an arbitrary conductor map is v1.1; `atomicConnect` covers the cases the decision exists for.
 
-**Cancel** is `Esc`, right-click, or a click on empty canvas. All three abort with no model mutation and no undo entry. Right-drag is **not** marquee — it is the context menu (CR-102); marquee is left-drag on empty canvas in every view, left→right selecting fully contained (solid band) and right→left selecting intersecting (dashed band).
+**Cancel** is `Esc`, right-click, or a click on empty canvas. All three abort with no model mutation and no undo entry. Right-drag is **not** marquee; it is the context menu (CR-102); marquee is left-drag on empty canvas in every view, left→right selecting fully contained (solid band) and right→left selecting intersecting (dashed band).
 
 **Keyboard path.** A fully specified keyboard route to create a `Link` is a v1 requirement (AC-058/D11), not an accessibility afterthought: `Tab` to a port, `W` to begin a wire, `Tab`/arrow to a candidate port with the same illumination feedback spoken through `Semantics`, `Enter` to commit, `Esc` to cancel. The outline tree (`Ctrl+Alt+3`) is the navigation surface that makes this complete.
 
@@ -510,7 +510,7 @@ Badges are click targets: clicking selects the `Link` and scrolls the DRC panel 
 
 **Acknowledgement is one mechanism at two scopes** (CR-019). An `AckedFinding` carries `{ruleId, targetFingerprint, reason, by, at, demotedTo}`; `targetFingerprint == "*"` is a project-wide mute and its reason is **required**. **Errors are acknowledgeable.** Refusing to let a professional override the tool's opinion about their own system is how the tool gets abandoned.
 
-**Nothing blocks export** (CR-022, G3). `blockExportOnErrors` is deleted. Errors gate exactly one thing — the `ISSUED FOR CONSTRUCTION` stamp and the revision block's `issued` flag, via `ExportSpec.issuedForConstruction`. Every export emits sheet **`T0.02 — Exceptions & Acknowledgements`** listing open findings and every acknowledgement with its reason, author and date. That sheet is where the three documents' promise that "the reason prints" is actually discharged.
+**Nothing blocks export** (CR-022, G3). `blockExportOnErrors` is deleted. Errors gate exactly one thing, the `ISSUED FOR CONSTRUCTION` stamp and the revision block's `issued` flag, via `ExportSpec.issuedForConstruction`. Every export emits sheet **`T0.02 — Exceptions & Acknowledgements`** listing open findings and every acknowledgement with its reason, author and date. That sheet is where the three documents' promise that "the reason prints" is actually discharged.
 
 Be honest in the copy, as KiCad is: **this catches class errors, not intent errors.** No rule can detect a correctly typed connection to the wrong device.
 
@@ -518,21 +518,21 @@ Be honest in the copy, as KiCad is: **this catches class errors, not intent erro
 
 ## 9. Selecting, editing, re-terminating, deleting
 
-**Hit-testing** is split by concern (CR-084): the *geometric* test — `DiagramScene.hits`, point-to-segment distance, nearest-hit selection — lives in `rackmate_core/draw/hit_test.dart`, pure and synchronously testable and reusable by the read-only mobile shell; the *pointer plumbing* — one query per frame, spatial hash, cursor policy, hover throttle — lives in `rackmate_ui/canvas/input/`.
+**Hit-testing** is split by concern (CR-084): the *geometric* test (`DiagramScene.hits`, point-to-segment distance, nearest-hit selection) lives in `rackmate_core/draw/hit_test.dart`, pure and synchronously testable and reusable by the read-only mobile shell; the *pointer plumbing* (one query per frame, spatial hash, cursor policy, hover throttle) lives in `rackmate_ui/canvas/input/`.
 
-- **Nearest hit wins, not first hit.** At a crossing — constant in a schematic — first-hit picks arbitrarily and feels broken.
+- **Nearest hit wins, not first hit.** At a crossing, constant in a schematic, first-hit picks arbitrarily and feels broken.
 - Tolerance is 6 screen px, converted to scene units as `6 / viewport.scale`.
-- Use closed-form point-to-segment distance against the router's emitted polyline. `Path.contains()` only works on closed paths and a stroked polyline is not closed; Flutter exposes no stroke-to-fill API; `PathMetrics` sampling is both slower and approximate. Start brute-force with an AABB reject — `if (!bounds.inflate(tol).contains(p)) continue` kills ~95% of candidates, and 800 wires × 4 segments is ~64 µs. Add a uniform spatial hash only if hover shows in the timeline.
+- Use closed-form point-to-segment distance against the router's emitted polyline. `Path.contains()` only works on closed paths and a stroked polyline is not closed; Flutter exposes no stroke-to-fill API; `PathMetrics` sampling is both slower and approximate. Start brute-force with an AABB reject, `if (!bounds.inflate(tol).contains(p)) continue` kills ~95% of candidates, and 800 wires × 4 segments is ~64 µs. Add a uniform spatial hash only if hover shows in the timeline.
 - Click a wire selects the `Link`; a symbol body or header selects the `DeviceInstance`; a pin selects the `Port`. `Shift+click` adds, `Alt+click` subtracts, `Ctrl+click` a wire selects the whole `Net`.
-- Selected wire: `#F0E442` halo at +5 px *behind* the stroke, square handles at both endpoints. **No waypoint handles and no insertable-midpoint diamonds in v1** — there is no route geometry to handle (CR-012).
+- Selected wire: `#F0E442` halo at +5 px *behind* the stroke, square handles at both endpoints. **No waypoint handles and no insertable-midpoint diamonds in v1**: there is no route geometry to handle (CR-012).
 
-**Rerouting, in v1, is not a user operation.** Because route geometry is not persisted and the router is deterministic, there is no such thing as a stale route and nothing to clear. Segment-dragging, waypoint insertion, `Pin Route` and `Clear Route` are all removed from the v1 context menu. What the user *can* pin is a **symbol**: any manual move sets `SheetItem.pinned = true` and auto-layout never moves a pinned symbol (CR-068). `Ctrl+L` locks/unlocks the selection — in the Schematic that is `SheetItem.pinned`; `Ctrl+Shift+U` unpins. Manual routing returns in v1.1 as `routeConstraintsBySheet`, stored as ordered grid points the router must pass through, never as a polyline.
+**Rerouting, in v1, is not a user operation.** Because route geometry is not persisted and the router is deterministic, there is no such thing as a stale route and nothing to clear. Segment-dragging, waypoint insertion, `Pin Route` and `Clear Route` are all removed from the v1 context menu. What the user *can* pin is a **symbol**: any manual move sets `SheetItem.pinned = true` and auto-layout never moves a pinned symbol (CR-068). `Ctrl+L` locks/unlocks the selection, in the Schematic that is `SheetItem.pinned`; `Ctrl+Shift+U` unpins. Manual routing returns in v1.1 as `routeConstraintsBySheet`, stored as ordered grid points the router must pass through, never as a polyline.
 
 > Rejected alternative: `design-ux-schematic.md §2.3`'s full waypoint editing model. It is a good design for a product with persisted geometry, and this is not one. The itch it scratches is aesthetic; the router is deterministic, so the drawing cannot rot.
 
-**Re-terminating.** Drag an endpoint square handle: this re-enters `WIRE_DRAG` with full port illumination. Dropping on empty canvas **reverts to the original port** rather than creating a loose end — but note this is a *gesture* rule, not a model rule. The model deliberately supports an unbound end through `PlaceEndpoint` and `OpenEndpoint` (AC-018), which is what makes a home run to a wall plate with no device yet expressible, and `LifecycleStatus.designIntent` is what labels it. The gesture simply has no way to ask which kind of open end you meant, so it declines to guess.
+**Re-terminating.** Drag an endpoint square handle: this re-enters `WIRE_DRAG` with full port illumination. Dropping on empty canvas **reverts to the original port** rather than creating a loose end, but note this is a *gesture* rule, not a model rule. The model deliberately supports an unbound end through `PlaceEndpoint` and `OpenEndpoint` (AC-018), which is what makes a home run to a wall plate with no device yet expressible, and `LifecycleStatus.designIntent` is what labels it. The gesture simply has no way to ask which kind of open end you meant, so it declines to guess.
 
-**Deleting.** `Del`/`Backspace`. Deleting a device deletes its links, with a confirm above five — `Delete AVR-1 and its 14 cables?` — as one undo entry. Deletion writes a `Tombstone`; tombstones ship in v1 even though sync does not (CR-095, G5).
+**Deleting.** `Del`/`Backspace`. Deleting a device deletes its links, with a confirm above five, `Delete AVR-1 and its 14 cables?`, as one undo entry. Deletion writes a `Tombstone`; tombstones ship in v1 even though sync does not (CR-095, G5).
 
 **Context menus** are native platform menus, not Material popups.
 
@@ -555,26 +555,26 @@ Be honest in the copy, as KiCad is: **this catches class errors, not intent erro
 
 Rack devices are ordered along one axis at discrete integer RU positions. That is a gift, and the pipeline extracts it twice:
 
-1. **As the initial order and the tie-break within each Sugiyama layer** — which frees the layout from arbitrariness *and* makes the schematic read roughly top-to-bottom in rack order, so cross-referencing between the elevation and the Schematic is near-automatic.
+1. **As the initial order and the tie-break within each Sugiyama layer**, which frees the layout from arbitrariness *and* makes the schematic read roughly top-to-bottom in rack order, so cross-referencing between the elevation and the Schematic is near-automatic.
 2. **As the reason the routing region contains no obstacles.** Once devices are in layers, every inter-layer gutter is an empty vertical channel, so drawing a wire through it is never graph search. In v1 that means a fixed-offset staircase costs nothing to compute (phase 4). It is also what makes the v1.2 upgrade cheap when it is needed: routing an empty channel optimally is **interval-graph colouring**, solved in 1971, and the layering that enables it is already being computed.
 
-**Ruling: Sugiyama phases 0–3 place the symbols; a deterministic layer-ordered orthogonal trace draws the wires in `drawn` mode** (CR-013 as amended by DR-001, canon §12.1). Interval-graph channel routing is **v1.2**: it exists to keep 150 simultaneous polylines legible, and under DR-001 the maximum simultaneous polyline count is one domain partition — roughly 25 runs on a 150-run house. The interval-graph argument remains the right answer if that ever changes; it is not wrong, it is not yet needed. Full deterministic recompute stays, and it eliminates invalidation machinery entirely.
+**Ruling: Sugiyama phases 0–3 place the symbols; a deterministic layer-ordered orthogonal trace draws the wires in `drawn` mode** (CR-013 as amended by DR-001, canon §12.1). Interval-graph channel routing is **v1.2**: it exists to keep 150 simultaneous polylines legible, and under DR-001 the maximum simultaneous polyline count is one domain partition, roughly 25 runs on a 150-run house. The interval-graph argument remains the right answer if that ever changes; it is not wrong, it is not yet needed. Full deterministic recompute stays, and it eliminates invalidation machinery entirely.
 
 > Rejected alternative: `design-architecture.md §5.2`'s obstacle-avoiding orthogonal router with an `ObstacleField`, a `RouteCache` and per-link incremental invalidation. `ObstacleField`, `RouteCache` and the phrase "obstacle-aware" are deleted names. libavoid measures **2,007 ms** on a 305-node/413-edge diagram; the pipeline below is sub-millisecond at N = 300, because it exploits the structure instead of discarding it. (The *provably optimal track count* claim belonged to interval-graph channel routing, which DR-001 moves to v1.2; the rejection of obstacle-avoiding search stands on its own and is unaffected.) A Dart port of libavoid was also assessed and rejected: stages 1 and 2 are easy, but stage 3 (nudging) needs pseudo-direction propagation with split points plus a working VPSC solver, which is the hard 80% and is where all the visual quality lives.
 
 ### 10.2 The v1 pipeline
 
-**Input** `(devices, links, pinnedSheetItems, domainFilter, lifecycleFilter)` → **output** `(symbolPositions, List<Polyline>, junctions, labelAnchors)`, where `List<Polyline>` is **produced only in `drawn` mode** and `labelAnchors` is **produced always — this is the default render**. Crossings are not decorated: they render as plain crossovers (DR-001).
+**Input** `(devices, links, pinnedSheetItems, domainFilter, lifecycleFilter)` → **output** `(symbolPositions, List<Polyline>, junctions, labelAnchors)`, where `List<Polyline>` is **produced only in `drawn` mode** and `labelAnchors` is **produced always: this is the default render**. Crossings are not decorated: they render as plain crossovers (DR-001).
 
-**Phase 0 — Cycle breaking.** Greedy (Eades et al.) over the directed signal graph, DFS order seeded by `ruIndex` then UUID. Reversed edges are flagged and still render their arrowhead at the true sink. AV signal graphs are near-acyclic; the real cycles are AVR↔display eARC and matrix loop-throughs, so bias the heuristic to reverse edges whose family declares a return channel. `O(D + N)`.
+**Phase 0: Cycle breaking.** Greedy (Eades et al.) over the directed signal graph, DFS order seeded by `ruIndex` then UUID. Reversed edges are flagged and still render their arrowhead at the true sink. AV signal graphs are near-acyclic; the real cycles are AVR↔display eARC and matrix loop-throughs, so bias the heuristic to reverse edges whose family declares a return channel. `O(D + N)`.
 
-**Phase 1 — Layer assignment.** Longest-path layering on the DAG, ~15 lines. Constraints: the **Structure device is forced to layer 0** (or layer N when `StructureBody.sheetEdge == right`, per CR-072), rendered as a bank of off-page flags on that edge — which is what makes it visually obvious in the PDF which home runs are **unused**, a valuable deliverable in its own right. Off-rack destinations — displays, speakers, keypads — are forced to the final layer. Pinned symbols take the layer nearest their pinned `gx`. `O(D + N)`.
+**Phase 1: Layer assignment.** Longest-path layering on the DAG, ~15 lines. Constraints: the **Structure device is forced to layer 0** (or layer N when `StructureBody.sheetEdge == right`, per CR-072), rendered as a bank of off-page flags on that edge, which is what makes it visually obvious in the PDF which home runs are **unused**, a valuable deliverable in its own right. Off-rack destinations (displays, speakers, keypads) are forced to the final layer. Pinned symbols take the layer nearest their pinned `gx`. `O(D + N)`.
 
-**Phase 2 — Within-layer ordering.** Barycentre sweep with median tie-break, forward and backward until crossings stop decreasing, capped at 8 iterations. **Initial order and final tie-break are `ruIndex`, then UUID.** Barycentre empirically beats median despite median's provable 3-approximation, so run barycentre, break ties with median, break those with rack order. Ports are `FIXED_ORDER`. `O(k · N log N)`, `k ≤ 8`.
+**Phase 2: Within-layer ordering.** Barycentre sweep with median tie-break, forward and backward until crossings stop decreasing, capped at 8 iterations. **Initial order and final tie-break are `ruIndex`, then UUID.** Barycentre empirically beats median despite median's provable 3-approximation, so run barycentre, break ties with median, break those with rack order. Ports are `FIXED_ORDER`. `O(k · N log N)`, `k ≤ 8`.
 
-**Phase 3 — Coordinate assignment.** Insert dummy nodes for every edge spanning more than one layer, so that **every edge crosses exactly one gutter**. Then Sugiyama's priority method, 3 iterations, priority = degree. Pinned symbols contribute fixed coordinates and are excluded from relaxation. `O(3N)`.
+**Phase 3: Coordinate assignment.** Insert dummy nodes for every edge spanning more than one layer, so that **every edge crosses exactly one gutter**. Then Sugiyama's priority method, 3 iterations, priority = degree. Pinned symbols contribute fixed coordinates and are excluded from relaxation. `O(3N)`.
 
-**Phase 4 — The deterministic per-link orthogonal trace.** Runs only in `drawn` mode. Each link in scope becomes a layer-ordered staircase with a fixed bend budget: out of the first pin along its own edge's axis, across a corridor, into the second the same way. It collapses to a straight line when the two ends already share an axis. **No channel allocation, no track ordering, no interval colouring.** `O(N)`. Built in `packages/rackmate_ui/lib/src/canvas/schematic/wire_trace.dart`, which is the whole v1 router.
+**Phase 4: The deterministic per-link orthogonal trace.** Runs only in `drawn` mode. Each link in scope becomes a layer-ordered staircase with a fixed bend budget: out of the first pin along its own edge's axis, across a corridor, into the second the same way. It collapses to a straight line when the two ends already share an axis. **No channel allocation, no track ordering, no interval colouring.** `O(N)`. Built in `packages/rackmate_ui/lib/src/canvas/schematic/wire_trace.dart`, which is the whole v1 router.
 
 > **The original sentence specified a mechanism, and three of its clauses did not survive being built.** It read: *"a two-bend staple `[(srcPin), (midX, srcY), (midX, dstY), (dstPin)]` where `midX` sits in the gutter between the two layers, offset within the gutter by the link's rank in a total order terminating in UUID."* Corrected here rather than left for the next reader, because two of the three were found by the field rather than by review.
 >
@@ -584,13 +584,13 @@ Rack devices are ordered along one axis at discrete integer RU positions. That i
 >
 > **The budget is four bends, not two.** Two ends **facing away from each other** — a left-edge pin feeding a right-edge pin behind it — have no reachable corridor at all, and a staple drawn between them runs back across the face of a symbol it terminates on. Those take a **detour**: out to the escape, along a lane clear of both bodies, and back in. Which side the lane runs down is the half of its own body the pin sits in, so a wide symbol's fan splits down the middle and no cable crosses more than half the symbol it is leaving. The detour *replaces* the corridor rather than adding to it — two escapes and two turns — so four is the worst case and not a raised ceiling. It is still a pure function of one link: the only new inputs are the two bodies that link's own ends sit on.
 
-Under DR-001 this is enough, and the reason is arithmetic rather than taste: `drawn` mode is entered by filtering to exactly one signal domain, hovering, or focusing, so the polylines on screen at any moment are one domain partition — roughly 25 runs on a 150-run house, not 150. A fixed-offset staircase is legible at 25 simultaneous polylines. It is not legible at 150, which is precisely what interval-graph channel routing was for, and why that remains the v1.2 upgrade rather than a discarded idea.
+Under DR-001 this is enough, and the reason is arithmetic rather than taste: `drawn` mode is entered by filtering to exactly one signal domain, hovering, or focusing, so the polylines on screen at any moment are one domain partition, roughly 25 runs on a 150-run house, not 150. A fixed-offset staircase is legible at 25 simultaneous polylines. It is not legible at 150, which is precisely what interval-graph channel routing was for, and why that remains the v1.2 upgrade rather than a discarded idea.
 
-**Phase 5 is deleted.** There is no decoration pass: no Bentley–Ottmann crossing sweep, no crossing count, no 4-way staggering, no hop arcs. Crossings render as plain crossovers (DR-001, canon §11.1.3). Junction dots survive, but they are emitted from the `Net` in phase 4, not discovered by a sweep — they mark a real electrical tap and are known from the model without looking at geometry.
+**Phase 5 is deleted.** There is no decoration pass: no Bentley–Ottmann crossing sweep, no crossing count, no 4-way staggering, no hop arcs. Crossings render as plain crossovers (DR-001, canon §11.1.3). Junction dots survive, but they are emitted from the `Net` in phase 4, not discovered by a sweep, they mark a real electrical tap and are known from the model without looking at geometry.
 
-**Phase 6 — Labels. Do not solve edge-label placement.** ELP is NP-hard and the industrial answer is to avoid the problem in the layout phase rather than solve it afterwards. **This phase is now load-bearing rather than a payoff**: net labels are the default render, so phase 6 runs on every layout while phase 4 runs only when a filter is active.
+**Phase 6: Labels. Do not solve edge-label placement.** ELP is NP-hard and the industrial answer is to avoid the problem in the layout phase rather than solve it afterwards. **This phase is now load-bearing rather than a payoff**: net labels are the default render, so phase 6 runs on every layout while phase 4 runs only when a filter is active.
 
-The old justification does not survive DR-001 and must not be quietly reused. Collision-free label slots were a benefit *of channel routing* — tracks sat on a discrete grid, so a pill anchored at the top of its own track could not collide. Without channel routing that argument is gone. The replacement: **label slots are collision-free because each net-label stub anchors at a fixed offset from its own pin, and pins sit on the `kPinPitch` grid by construction (CR-004).** ELP is still not solved; it is still avoided; the mechanism that avoids it has changed. `O(N)`.
+The old justification does not survive DR-001 and must not be quietly reused. Collision-free label slots were a benefit *of channel routing*, tracks sat on a discrete grid, so a pill anchored at the top of its own track could not collide. Without channel routing that argument is gone. The replacement: **label slots are collision-free because each net-label stub anchors at a fixed offset from its own pin, and pins sit on the `kPinPitch` grid by construction (CR-004).** ELP is still not solved; it is still avoided; the mechanism that avoids it has changed. `O(N)`.
 
 This is the one place where removing the router costs something, and it is written down here rather than discovered during M2.
 
@@ -606,9 +606,9 @@ Let N = links (50–300 typical), D = devices (10–30).
 | 3 coordinates | `O(3N)` | commit |
 | 4 orthogonal trace | `O(N)` | commit, **`drawn` mode only** |
 | 6 labels | `O(N)` | commit, **always** |
-| **Total at commit** | **`O(N log N)`** — sub-millisecond at N = 300 in Dart, and phase 2 now dominates | |
+| **Total at commit** | **`O(N log N)`**: sub-millisecond at N = 300 in Dart, and phase 2 now dominates | |
 
-Full recompute on every edit. No route cache, no invalidation logic, no incremental bugs. The wire-layer *rebuild* — re-recording the `ui.Picture` — is the real cost at commit and is budgeted separately (AC-008); during a drag, re-record only the wires attached to the moving symbol and replay the cached Picture for everything else. That is the whole ballgame for drag smoothness.
+Full recompute on every edit. No route cache, no invalidation logic, no incremental bugs. The wire-layer *rebuild*, re-recording the `ui.Picture`, is the real cost at commit and is budgeted separately (AC-008); during a drag, re-record only the wires attached to the moving symbol and replay the cached Picture for everything else. That is the whole ballgame for drag smoothness.
 
 **Stability comes free**, and it had two causes that needed two fixes. *Arbitrary tie-breaking* is fixed by making the router a pure function with every sort key terminating in a stable UUID. *Genuine global re-optimisation* largely evaporates: a monotone greedy sweep means a small input change produces a small output change, by construction. Moving one device changes only the trace of its own links.
 
@@ -616,15 +616,15 @@ Full recompute on every edit. No route cache, no invalidation logic, no incremen
 
 ### 10.4 Later upgrades, in priority order
 
-**The v1.2 item comes first and is not on this table: interval-graph channel routing** (§10.1, §10.2 phase 4), which replaces the fixed-offset staircase and is what makes 150 simultaneous polylines legible. It is the upgrade DR-001 defers, not one it cancels, and everything below assumes it has landed — items 2 and 4 in particular are meaningless without tracks.
+**The v1.2 item comes first and is not on this table: interval-graph channel routing** (§10.1, §10.2 phase 4), which replaces the fixed-offset staircase and is what makes 150 simultaneous polylines legible. It is the upgrade DR-001 defers, not one it cancels, and everything below assumes it has landed, items 2 and 4 in particular are meaningless without tracks.
 
 | # | Upgrade | Payoff | Size |
 |---|---|---|---|
 | 1 | Brandes–Köpf coordinate assignment (four-pass median alignment + balancing) replacing the priority method | visibly straighter long chains | ~400 lines |
-| 2 | Nudging pass — order shared segments so crossings occur only at bundle entry/exit, never mid-bundle (libavoid Theorem 3) | fewer perceived crossings; because tracks are already discrete, **ordering *is* placement**, so no VPSC solver is needed | moderate |
+| 2 | Nudging pass: order shared segments so crossings occur only at bundle entry/exit, never mid-bundle (libavoid Theorem 3) | fewer perceived crossings; because tracks are already discrete, **ordering *is* placement**, so no VPSC solver is needed | moderate |
 | 3 | Network-simplex layering replacing longest-path | tighter on wide fan-outs | moderate |
-| 4 | Hyperedge geometry improvement — the shift-segments heuristic, horizontal pass then vertical, topology preserved unless the user asks | better splitter and 70 V tap trees | moderate |
-| 5 | Free-placement escape hatch — if pinning breaks the layered structure, fall back to a **1-bend visibility graph** router for the affected edges only: `O(n)` nodes rather than `O(n²)`, empirically 3–4 A\* steps versus 28–34 | correctness under adversarial pinning | ~700 lines |
+| 4 | Hyperedge geometry improvement: the shift-segments heuristic, horizontal pass then vertical, topology preserved unless the user asks | better splitter and 70 V tap trees | moderate |
+| 5 | Free-placement escape hatch: if pinning breaks the layered structure, fall back to a **1-bend visibility graph** router for the affected edges only: `O(n)` nodes rather than `O(n²)`, empirically 3–4 A\* steps versus 28–34 | correctness under adversarial pinning | ~700 lines |
 
 If a general router is ever needed, reimplement against MSAGL's rectilinear package rather than libavoid's C++, or bind libavoid through an ELK-style subprocess. **VERIFY:** libavoid is LGPL 2.1+ with a commercial licence available; confirm the licence and the linking model before depending on it.
 
@@ -636,25 +636,25 @@ This is the make-or-break section. A house with 80–150 cable runs is not unusu
 
 ### 11.1 The arithmetic, stated out loud
 
-ANSI B landscape is 432 × 279 mm. Subtract a 10 mm margin, a 5 mm frame and a 180 × 50 mm title block and the usable area is roughly 400 × 250 mm ≈ 100,000 mm². At this document's own sizing rules a modest symbol — 20 gu minimum width, header plus eight pins a side — is about 60 × 70 mm ≈ 4,200 mm². **Twenty symbols consume ~84% of the sheet before a single wire is drawn.**
+ANSI B landscape is 432 × 279 mm. Subtract a 10 mm margin, a 5 mm frame and a 180 × 50 mm title block and the usable area is roughly 400 × 250 mm ≈ 100,000 mm². At this document's own sizing rules a modest symbol (20 gu minimum width, header plus eight pins a side) is about 60 × 70 mm ≈ 4,200 mm². **Twenty symbols consume ~84% of the sheet before a single wire is drawn.**
 
 Two consequences follow, and both are rulings.
 
-1. **The "SYSTEM OVERVIEW — all devices" sheet is deleted** (CR-074). There is no legible all-devices sheet at target scale, and shipping one sets an expectation the product cannot meet. The cover sheet's rack summary strip serves the "what is this system" purpose honestly.
+1. **The "SYSTEM OVERVIEW: all devices" sheet is deleted** (CR-074). There is no legible all-devices sheet at target scale, and shipping one sets an expectation the product cannot meet. The cover sheet's rack summary strip serves the "what is this system" purpose honestly.
 2. **Net labels are the default render, not a degradation** (DR-001). Every mechanism below is a rendering choice over an unchanged model, so none of them can lose data, and the Schedule is complete regardless of what the drawing shows.
 
-**There are no density thresholds and nothing switches rendering by link count.** Render mode is a function of the active filter (§1.3), not of density, so the sheet does not change behaviour as a project grows — which is the property that makes it predictable. What each mechanism is *for*:
+**There are no density thresholds and nothing switches rendering by link count.** Render mode is a function of the active filter (§1.3), not of density, so the sheet does not change behaviour as a project grows, which is the property that makes it predictable. What each mechanism is *for*:
 
 | Mechanism | What it is for |
 |---|---|
 | **Net labels (default)** | The unfiltered sheet. Every `Link` is two labelled stubs; the sheet stays legible at 40 links and at 300, because nothing is drawn between them |
-| **Domain filter** (§11.2) | **The primary way to see wires.** Filtering to one domain puts that domain into `drawn` mode — load-bearing, not a mitigation |
+| **Domain filter** (§11.2) | **The primary way to see wires.** Filtering to one domain puts that domain into `drawn` mode, load-bearing, not a mitigation |
 | **Bank collapse** (§11.6) | Symbol size, not wire count. A 48-port patch panel is a large *body* whether or not anything is drawn |
-| **`Alt`-hover** (§11.4) | Local questions — "what is this one connected to" — answered without leaving the label view |
+| **`Alt`-hover** (§11.4) | Local questions, "what is this one connected to", answered without leaving the label view |
 | **Focus / isolate** (§11.4) | Subgraph questions. Focus switches the focused subgraph to `drawn` |
 | **The Schedule** | The deliverable, at every density (G1) |
 
-### 11.2 Domain filter bar — the load-bearing mechanism
+### 11.2 Domain filter bar: the load-bearing mechanism
 
 A persistent strip below the toolbar: eight chips, each a `SignalDomainDef` swatch plus name plus a live count.
 
@@ -664,14 +664,14 @@ A persistent strip below the toolbar: eight chips, each a `SignalDomainDef` swat
 ```
 
 - **Click** solos a domain; `Ctrl+click` toggles; `1`–`8` solo by index; `` ` `` shows all.
-- Filtered-out wires **ghost**, and the ghost alpha is **baked into `Paint.color`, never an opacity layer** — the `saveLayer` ban applies here more than anywhere, because this is a per-frame path.
-- **VERIFY:** the design document's 8% ghost alpha is below a legible floor. AC-058/D11 requires the filtered-wire alpha to be raised to a *tested* value against both themes; the number is set once in §6.6, not here. DR-001 raises its importance — under net labels the ghost is what a non-matching domain looks like on every filtered sheet, so it is seen constantly.
+- Filtered-out wires **ghost**, and the ghost alpha is **baked into `Paint.color`, never an opacity layer**: the `saveLayer` ban applies here more than anywhere, because this is a per-frame path.
+- **VERIFY:** the design document's 8% ghost alpha is below a legible floor. AC-058/D11 requires the filtered-wire alpha to be raised to a *tested* value against both themes; the number is set once in §6.6, not here. DR-001 raises its importance, under net labels the ghost is what a non-matching domain looks like on every filtered sheet, so it is seen constantly.
 - Preference **Ghost** (default) versus **Hide**. Ghost preserves spatial context so the reader still sees that *something* runs there; Hide is for reading a single domain cleanly.
 - Devices with zero visible links dim to 25% and their pins drop to ticks.
 
 The view filter is **transient and per-view**, never persisted in the document. Its persisted counterpart is `Sheet.domainFilter`, which is part of the sheet's definition (CR-067).
 
-### 11.3 Lifecycle filter — the useful half of layers
+### 11.3 Lifecycle filter: the useful half of layers
 
 `Sheet.lifecycleFilter: Set<LifecycleStatus>` (default all) filters on `existing · new · future · removed · designIntent`. `LifecycleStatus` sits on **both** `DeviceInstance` and `Link` and is the design-intent axis, orthogonal to `RoughInStatus` (the field-progress axis). Between them they cover the demolition and phasing conventions a drawing set actually needs: `future` renders at 50% saturation with a `2,2` dash regardless of domain, which is the standard "not yet installed" drafting convention, and `removed` renders in the demolition convention.
 
@@ -679,15 +679,15 @@ The view filter is **transient and per-view**, never persisted in the document. 
 
 ### 11.4 Focus, isolate, and `Alt`-hover
 
-- **`F` — Focus.** With a device selected, everything more than N hops away dims to 10% and desaturates; the focused subgraph keeps full colour **and switches to `drawn` mode** (DR-001), so focusing is one of the three ways a wire gets drawn. N defaults to 1. HUD chip: `Focus: AVR-1 · 1 hop · 14 devices, 31 cables`. `F` again or `Esc` exits. This is "show me everything connected to this AVR" and it is the mode users live in.
-- **`Shift+F` — Isolate.** Same selection, non-members **hidden**, and the router re-runs on the subgraph — a clean minimal diagram, effectively a temporary sheet. `Esc` restores. Isolate plus `Ctrl+P` is how a one-device commissioning sheet gets produced.
-- **`Alt`+hover — transient focus.** No click, no mode, no state: whatever is under the cursor lights its subgraph **in `drawn` mode** and everything else recedes. It is the cheapest possible answer to "what is this connected to", it is the single best idea in the source design document, and under DR-001 it is also the fastest route from a label to a wire — which makes it a primary interaction rather than a convenience.
+- **`F`: Focus.** With a device selected, everything more than N hops away dims to 10% and desaturates; the focused subgraph keeps full colour **and switches to `drawn` mode** (DR-001), so focusing is one of the three ways a wire gets drawn. N defaults to 1. HUD chip: `Focus: AVR-1 · 1 hop · 14 devices, 31 cables`. `F` again or `Esc` exits. This is "show me everything connected to this AVR" and it is the mode users live in.
+- **`Shift+F`: Isolate.** Same selection, non-members **hidden**, and the router re-runs on the subgraph, a clean minimal diagram, effectively a temporary sheet. `Esc` restores. Isolate plus `Ctrl+P` is how a one-device commissioning sheet gets produced.
+- **`Alt`+hover: transient focus.** No click, no mode, no state: whatever is under the cursor lights its subgraph **in `drawn` mode** and everything else recedes. It is the cheapest possible answer to "what is this connected to", it is the single best idea in the source design document, and under DR-001 it is also the fastest route from a label to a wire, which makes it a primary interaction rather than a convenience.
 
-`F` and `Shift+F` are bound in the Schematic and the Rear Panel view only and are **unbound in the Rack Editor** (CR-101) — "focus mode on this rack" is deleted as a distinct command, because it is fit-selection with a rack selected, which is `Ctrl+9`.
+`F` and `Shift+F` are bound in the Schematic and the Rear Panel view only and are **unbound in the Rack Editor** (CR-101), "focus mode on this rack" is deleted as a distinct command, because it is fit-selection with a rack selected, which is `Ctrl+9`.
 
 > Rejected alternative: `T` — Trace through pass-throughs. Deferred to v1.1 and `T` is **unbound in v1** (CR-101, AC-040). It requires modelling continuity through patch panels, switch VLANs, matrix crosspoints, RF splitters and baluns, and it is navigation rather than correctness.
 
-### 11.5 Net labels — the default render
+### 11.5 Net labels: the default render
 
 Any `Link` renders either as a pair of directional pennants at its two ports or as a drawn wire. **The pennants are the default** (DR-001):
 
@@ -697,9 +697,9 @@ source end:   J09 ├──⟩ HDMI_MTX1_OUT3        sink end:   HDMI_MTX1_OUT3 
 
 A right-pointing chevron is a signal leaving, left-pointing is arriving; both flags of a net show the identical string and highlight together on hover. Fill is the domain colour at 12% with a full-strength outline.
 
-**The argument for labelling by default.** Draw a wire when the connection is *local and topologically informative* — the reader learns something from seeing the path. Label it when the wire would be long, cross many others, or contort so badly that following it is harder than reading a name. On an unfiltered residential sheet almost every wire is in the second condition, because the reader is looking at eight domains at once and a video run and a power run share no useful spatial relationship. A wire in that condition has **negative information value**: it costs the reader time and it costs every *other* wire its legibility. So the default is the label, and the drawn wire is what you ask for when you have narrowed the question.
+**The argument for labelling by default.** Draw a wire when the connection is *local and topologically informative*, the reader learns something from seeing the path. Label it when the wire would be long, cross many others, or contort so badly that following it is harder than reading a name. On an unfiltered residential sheet almost every wire is in the second condition, because the reader is looking at eight domains at once and a video run and a power run share no useful spatial relationship. A wire in that condition has **negative information value**: it costs the reader time and it costs every *other* wire its legibility. So the default is the label, and the drawn wire is what you ask for when you have narrowed the question.
 
-Which is exactly what the domain filter does — and it is why the filter is load-bearing rather than a mitigation.
+Which is exactly what the domain filter does, and it is why the filter is load-bearing rather than a mitigation.
 
 ```text
 renderMode(sheet) = drawn   iff  domainFilter selects exactly one SignalDomainId
@@ -708,27 +708,27 @@ renderMode(sheet) = drawn   iff  domainFilter selects exactly one SignalDomainId
                   = netLabels otherwise                    // the default
 ```
 
-`SheetRenderMode` is **derived from the above on every frame — never persisted, never a setting, and there is no density term in it** (DR-001, canon §11.1.1). The three-way **Draw all / Auto / Label all** toggle and its per-link `forceLabel` override are deleted along with the `K` and `D` thresholds: a global override that fights the filter is a second source of truth for the same question. `L` remains bound (CR-101), and in the Schematic it now means **toggle `drawn` for the current filter scope** — the manual escape hatch for "draw this anyway", scoped rather than global.
+`SheetRenderMode` is **derived from the above on every frame: never persisted, never a setting, and there is no density term in it** (DR-001, canon §11.1.1). The three-way **Draw all / Auto / Label all** toggle and its per-link `forceLabel` override are deleted along with the `K` and `D` thresholds: a global override that fights the filter is a second source of truth for the same question. `L` remains bound (CR-101), and in the Schematic it now means **toggle `drawn` for the current filter scope**: the manual escape hatch for "draw this anyway", scoped rather than global.
 
 There is no ⟩ "auto-degraded" badge, because nothing degrades: the label is not a lesser rendering of a wire, it is the rendering.
 
-**Net names are generated, never typed** (CR-049). Default template `{DOMAIN}_{SRC_REFDES}_{SRC_PORT}` → `HDMI_MTX1_OUT3`; the alternate `{ROOM}_{DEVICE}_{N}` makes the on-diagram label match the physical label the installer will find on the cable, which is the entire point of labelling. Names are editable and **never load-bearing**: membership is the foreign key `Service.netId`, not the string (CR-011). Name-carried membership is precisely the KiCad failure mode — "typos can prevent signals from being connected" — and a GUI tool with a device library has no excuse for it. Renaming a `Location` propagates to every label, schedule row and callout in one transaction, which is what fixes the `Study / Office / Room 3` failure that makes as-builts useless.
+**Net names are generated, never typed** (CR-049). Default template `{DOMAIN}_{SRC_REFDES}_{SRC_PORT}` → `HDMI_MTX1_OUT3`; the alternate `{ROOM}_{DEVICE}_{N}` makes the on-diagram label match the physical label the installer will find on the cable, which is the entire point of labelling. Names are editable and **never load-bearing**: membership is the foreign key `Service.netId`, not the string (CR-011). Name-carried membership is precisely the KiCad failure mode, "typos can prevent signals from being connected", and a GUI tool with a device library has no excuse for it. Renaming a `Location` propagates to every label, schedule row and callout in one transaction, which is what fixes the `Study / Office / Room 3` failure that makes as-builts useless.
 
 ### 11.6 Symbol collapse
 
 Any symbol collapses (`-`, or the header chevron) to a compact block showing designator, name and one vector-pin stub per bank. A 48-port patch panel becomes roughly 60 × 30 mm. `SheetItem.collapsed` is per-sheet-item. There is only ever one schematic `Sheet` (DR-004), so in practice that is one collapse state per device; the field stays per-item because `SheetItem` is where it belongs structurally, not because a second sheet is coming. Banks over `kBankCollapseThreshold = 8` auto-collapse on first layout (CR-103).
 
-### 11.7 One sheet, partitioned at export — and why that is enough
+### 11.7 One sheet, partitioned at export: and why that is enough
 
-**There is exactly one schematic `Sheet` in the document and there always will be; the exporter partitions it by domain** (CR-073, DR-004). `Sheet` **remains in the schema** so the file format never migrates if this is ever reversed — it is not vestigial and it is not removable (AC-037). The PDF exporter emits N interconnect sheets `T6.01…` by filtering that one sheet's contents.
+**There is exactly one schematic `Sheet` in the document and there always will be; the exporter partitions it by domain** (CR-073, DR-004). `Sheet` **remains in the schema** so the file format never migrates if this is ever reversed; it is not vestigial and it is not removable (AC-037). The PDF exporter emits N interconnect sheets `T6.01…` by filtering that one sheet's contents.
 
-**These are two different things and no sentence here may conflate them.** *Multi-sheet authoring* — the user creates more than one schematic `Sheet`, and a `Link` can have its ends on different sheets — is **never built** (DR-004). *Exporter domain partition* — one `Sheet` in the document, N sheets out of the PDF — **ships in v1, unchanged** (CR-073). That N sheets come out of the exporter is not evidence multi-sheet authoring exists. A domain partition is also a domain filter, which is why the exported interconnect sheets render `drawn` (DR-001, G0.2).
+**These are two different things and no sentence here may conflate them.** *Multi-sheet authoring* (the user creates more than one schematic `Sheet`, and a `Link` can have its ends on different sheets) is **never built** (DR-004). *Exporter domain partition* (one `Sheet` in the document, N sheets out of the PDF) **ships in v1, unchanged** (CR-073). That N sheets come out of the exporter is not evidence multi-sheet authoring exists. A domain partition is also a domain filter, which is why the exported interconnect sheets render `drawn` (DR-001, G0.2).
 
 The decisive observation:
 
 > A cable belongs to exactly one signal domain, therefore a **domain partition produces zero cross-sheet connections by construction.**
 
-The video sheet contains every video cable, whole. Nothing continues onto another sheet. So **off-sheet connectors, match lines, sheet-boundary link handling and cross-reference resolution are not built — ever** (DR-004) — paired pentagon flags, the second placement pass, min-cut cost functions and key plans all disappear, and so does schematic PDF tiling. Devices simply repeat across the exported sheets, labelled with their designator; a repeated device is just a device. The zone grid stays because the schedule's `REF` column is genuinely useful for finding a wire on a sheet.
+The video sheet contains every video cable, whole. Nothing continues onto another sheet. So **off-sheet connectors, match lines, sheet-boundary link handling and cross-reference resolution are not built, ever** (DR-004), paired pentagon flags, the second placement pass, min-cut cost functions and key plans all disappear, and so does schematic PDF tiling. Devices simply repeat across the exported sheets, labelled with their designator; a repeated device is just a device. The zone grid stays because the schedule's `REF` column is genuinely useful for finding a wire on a sheet.
 
 > Rejected alternative: `design-ux-schematic.md §4.5`'s `Layout → Split to Sheets…` with a domain partition, a graph min-cut alternative and a by-rack alternative. Geometric tiling and min-cut partitioning are cut; `TilingStrategy.geometric` survives only for a single over-tall rack elevation, which is a rack-elevation concern and not a schematic one. Multi-sheet as a *document* feature is not deferred — it is **never built** (DR-004).
 
@@ -752,9 +752,9 @@ They are two projections of one model, and their **positions are deliberately no
 | **Move a device to a different RU** | ✅ | ⚠️ **the symbol does not move** | ✅ reorders | ✅ |
 | **Move a schematic symbol** | ❌ no effect | ✅ | ❌ | ❌ |
 
-**Why positions are not linked.** Rack position is physical: thermal management, weight distribution, service access, cable reach. Schematic position is logical: signal order, sources left, sinks right, readability. An AVR sits at U14 for heat and belongs mid-chain logically; a UPS sits at U1 physically and is a leaf node logically. Slaving one to the other means every thermal decision destroys the reader's mental map of the signal flow — and the failure is *silent*. A user arranges a schematic for twenty minutes, then reorders three devices because the installer called about heat, and the schematic scrambles. No undo affordance makes that acceptable.
+**Why positions are not linked.** Rack position is physical: thermal management, weight distribution, service access, cable reach. Schematic position is logical: signal order, sources left, sinks right, readability. An AVR sits at U14 for heat and belongs mid-chain logically; a UPS sits at U1 physically and is a leaf node logically. Slaving one to the other means every thermal decision destroys the reader's mental map of the signal flow, and the failure is *silent*. A user arranges a schematic for twenty minutes, then reorders three devices because the installer called about heat, and the schematic scrambles. No undo affordance makes that acceptable.
 
-**What rack order does do:** it seeds and tie-breaks within-layer ordering on first layout and on any explicit `Tidy sheet` (§10.2 phase 2). A freshly laid-out schematic therefore mirrors rack order top-to-bottom, and when the user *wants* the schematic to follow the rack, one command gives it to them. When they do not, nothing moves. **Auto-layout never fires as a side effect of an unrelated edit.** After a rack reorder, affected symbols get a subtle chip and the toolbar shows `Rack order changed · Tidy sheet` — staleness *signalling*, never staleness *fixing*.
+**What rack order does do:** it seeds and tie-breaks within-layer ordering on first layout and on any explicit `Tidy sheet` (§10.2 phase 2). A freshly laid-out schematic therefore mirrors rack order top-to-bottom, and when the user *wants* the schematic to follow the rack, one command gives it to them. When they do not, nothing moves. **Auto-layout never fires as a side effect of an unrelated edit.** After a rack reorder, affected symbols get a subtle chip and the toolbar shows `Rack order changed · Tidy sheet`, staleness *signalling*, never staleness *fixing*.
 
 **The v1 layout command surface is one command.** First layout is automatic; any manual move pins; `Ctrl+Shift+U` unpins; a single **Tidy sheet** behind a plain confirm lays out all unpinned symbols (CR-068).
 
@@ -764,30 +764,30 @@ They are two projections of one model, and their **positions are deliberately no
 
 **Adding a device is one command with one palette** (CR-104): `Insert device…` (`Ctrl+Alt+I`, `/` search, double-click, or drag) exists in every view. Dropping on a rack produces a `RailPlacement`; dropping on the schematic canvas, or inserting with no rack focused, produces a `StagedPlacement` plus a `SheetItem` at the drop point. The Schematic's separate `+ New device` button is deleted and its LIBRARY panel is the same palette widget.
 
-**Adapters** split on one mechanical test — *does an installer pull two separate cables to it?* (CR-015). A passive in-line adapter with no independent cable on either side (barrel, gender changer, null-modem shell) is an `InlineAdapter` value on the `Link`, rendered as a small lozenge on the wire. An HDBaseT TX/RX pair, a balun pair, an RF splitter, an IR connecting block or a DA is a real `DeviceInstance` with `mountMethod: notInRack` and two or more `Link`s, and gets a full symbol. The `[ Insert HDBaseT receiver ]` remedy chip therefore inserts a device, correctly, and creates both links in one undo step.
+**Adapters** split on one mechanical test, *does an installer pull two separate cables to it?* (CR-015). A passive in-line adapter with no independent cable on either side (barrel, gender changer, null-modem shell) is an `InlineAdapter` value on the `Link`, rendered as a small lozenge on the wire. An HDBaseT TX/RX pair, a balun pair, an RF splitter, an IR connecting block or a DA is a real `DeviceInstance` with `mountMethod: notInRack` and two or more `Link`s, and gets a full symbol. The `[ Insert HDBaseT receiver ]` remedy chip therefore inserts a device, correctly, and creates both links in one undo step.
 
 ---
 
 ## 13. The cable table
 
-The Schedule (`Ctrl+4`) is a real Flutter data table, not canvas-painted — which makes it **screen-reader navigable for free**, and an accessible wiring schedule is better accessibility than any amount of heroic `CustomPainterSemantics` on the canvas. It is a top-level tab, present and populating live from an empty project (`Ctrl+4`, CR-105, AC-035). A dockable version of the same table sits below the canvas in the Schematic.
+The Schedule (`Ctrl+4`) is a real Flutter data table, not canvas-painted, which makes it **screen-reader navigable for free**, and an accessible wiring schedule is better accessibility than any amount of heroic `CustomPainterSemantics` on the canvas. It is a top-level tab, present and populating live from an empty project (`Ctrl+4`, CR-105, AC-035). A dockable version of the same table sits below the canvas in the Schematic.
 
 One row per **cable**, with a services sub-line when a `Link` carries more than one `Service` (CR-010). A single-service cable never shows the concept.
 
 | `CABLE` | `DOMAIN` | `FROM` | `TO` | `FAMILY` | `MEDIA` | `LEN` | `LIFECYCLE` | `ROUGH-IN` | `REF` | `PATHWAY` | `ISSUES` |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| W021 | ▲ D.Video | ATV-1:J01 HDMI OUT | MTX-1:J01 HDMI IN 1 | HDMI 2.1 | `media.hdmi_passive` | 6′ | new | pulled | 2/C3 | — | — |
+| W021 | ▲ D.Video | ATV-1:J01 HDMI OUT | MTX-1:J01 HDMI IN 1 | HDMI 2.1 | `media.hdmi_passive` | 6′ | new | pulled | 2/C3 |, |, |
 | W044 | ▲ D.Video | MTX-1:J09 OUT 1 | HBT-GRT:J01 IN | HDBaseT | `media.cat6a_futp` | 90′ | new | planned | 2/C5 | B03 | ⚠ 1 |
-| W101 | ⬢ Power | PDU-1:J07 | MTX-1:J20 AC IN | IEC device power | `media.iec_cordage` | 3′ | existing | terminated | 6/A2 | — | — |
+| W101 | ⬢ Power | PDU-1:J07 | MTX-1:J20 AC IN | IEC device power | `media.iec_cordage` | 3′ | existing | terminated | 6/A2 |, |, |
 
 Column rulings that are not negotiable:
 
-- **`Status` is never a bare column header** (CR-065). The three axes that were colliding under it are separated: `LIFECYCLE` (design intent, on devices and links), `ROUGH-IN` (field progress, links only, `planned · pulled · dressed · terminated · tested`), and `ISSUES` (DRC state). *In use* and *spare* are **derived** from whether both endpoints are bound and are not stored. `issued` is deleted from `RoughInStatus` — it is a revision-block concept, not a cable state.
-- **Three length columns exist in the model** — `routedLength`, `cutLength`, `terminatedLength` (AC-024) — and `LEN` shows the most authoritative one present, rendering an estimate distinctly from a measurement. `calculatedLength` is a banned name.
+- **`Status` is never a bare column header** (CR-065). The three axes that were colliding under it are separated: `LIFECYCLE` (design intent, on devices and links), `ROUGH-IN` (field progress, links only, `planned · pulled · dressed · terminated · tested`), and `ISSUES` (DRC state). *In use* and *spare* are **derived** from whether both endpoints are bound and are not stored. `issued` is deleted from `RoughInStatus`; it is a revision-block concept, not a cable state.
+- **Three length columns exist in the model**, `routedLength`, `cutLength`, `terminatedLength` (AC-024), and `LEN` shows the most authoritative one present, rendering an estimate distinctly from a measurement. `calculatedLength` is a banned name.
 - **Both labels always print** on every cable: `StructureOrigin.fieldLabel` (required, unique) and `rackLabel` (optional, unique when set), per CR-044 and AC-047.
-- `Link.linkClass` auto-classifies as `fieldCable | jumper | powerCord | internal`, and the Pull Sheet **excludes jumpers and power cords by default** (AC-026) — patch cords would otherwise bury the schedule. Power cords appear instead as an outlet map on the power schedule.
+- `Link.linkClass` auto-classifies as `fieldCable | jumper | powerCord | internal`, and the Pull Sheet **excludes jumpers and power cords by default** (AC-026), patch cords would otherwise bury the schedule. Power cords appear instead as an outlet map on the power schedule.
 
-Behaviour: bidirectional selection sync (clicking a row pans and flashes the wire; clicking a wire scrolls the row into view); in-place editing of lengths, labels, media, lifecycle, rough-in, pathway and notes; **endpoints and family are read-only here in v1** because structural changes belong on the canvas where the validation feedback lives — editing endpoints from the Schedule and the Rear Panel view lands in v1.1 (CR-105); grouping by domain, source device, destination device, pathway, location or sheet with roll-ups; natural sorting on designators so `AMP-2` precedes `AMP-10`; bulk edit across N selected rows in one transaction; CSV export. See [PDF export](08-pdf-export.md) for the Pull Sheet and Termination Schedule presets that derive from this table.
+Behaviour: bidirectional selection sync (clicking a row pans and flashes the wire; clicking a wire scrolls the row into view); in-place editing of lengths, labels, media, lifecycle, rough-in, pathway and notes; **endpoints and family are read-only here in v1** because structural changes belong on the canvas where the validation feedback lives, editing endpoints from the Schedule and the Rear Panel view lands in v1.1 (CR-105); grouping by domain, source device, destination device, pathway, location or sheet with roll-ups; natural sorting on designators so `AMP-2` precedes `AMP-10`; bulk edit across N selected rows in one transaction; CSV export. See [PDF export](08-pdf-export.md) for the Pull Sheet and Termination Schedule presets that derive from this table.
 
 ---
 
@@ -806,15 +806,15 @@ The keymap is **generated from the single `Intent` registry into `build/keymap.m
 | `Ctrl+Alt+I` | Insert device… | every view |
 | `Ctrl+Z` / `Ctrl+Shift+Z` | Undo · redo | global |
 | `W` | Begin wire from the selected port | **Schematic** |
-| `Shift` held at commit | Chain-draw — re-arm from the sink | Schematic |
+| `Shift` held at commit | Chain-draw: re-arm from the sink | Schematic |
 | `Ctrl` held during draw | Suppress magnetic snap | Schematic |
-| `F` / `Shift+F` | Focus · Isolate | Schematic, Rear Panel — **unbound in the Rack Editor** |
+| `F` / `Shift+F` | Focus · Isolate | Schematic, Rear Panel: **unbound in the Rack Editor** |
 | `Alt`+hover | Transient focus, no click, no mode | Schematic |
 | `1` … `8` / `` ` `` | Solo domain by index · show all | Schematic |
 | `-` / `=` | Collapse · expand the selected symbol | Schematic |
-| `L` | Toggle `drawn` for the current filter scope — the manual "draw it anyway" escape hatch (CR-101; scope narrowed by DR-001, which deletes the global Draw all / Auto / Label all cycle) | every view |
+| `L` | Toggle `drawn` for the current filter scope, the manual "draw it anyway" escape hatch (CR-101; scope narrowed by DR-001, which deletes the global Draw all / Auto / Label all cycle) | every view |
 | `G` | Toggle grid | every view |
-| `Ctrl+L` | Lock / unlock — `SheetItem.pinned` here, `Placement.locked` in the rack | every view |
+| `Ctrl+L` | Lock / unlock: `SheetItem.pinned` here, `Placement.locked` in the rack | every view |
 | `Ctrl+Shift+U` | Unpin selection | Schematic |
 | `Ctrl+Shift+R` | Reverse link direction | Schematic |
 | `Ctrl+R` | Renumber…, scoped to the selection kind | every view |
@@ -822,13 +822,13 @@ The keymap is **generated from the single `Intent` registry into `build/keymap.m
 | `Del` / `Esc` | Delete selection · cancel the current operation | every view |
 | `Ctrl+B` | Fill gaps with blanks | **Rack Editor only** |
 | `Ctrl+Shift+F` | Cycle elevation face | **Rack Editor only** |
-| `T` | **unbound in v1** — Trace defers | — |
+| `T` | **unbound in v1**, Trace defers |, |
 
-**The v1 tab strip shows three tabs: Rack, Schematic, Schedule.** `Ctrl+3` is **reserved** for the interactive Rear Panel view, which is v1.1 (CR-071 point 3); in v1 the binding is an unbound no-op and the tab is absent from the strip. Schedule is **not** rebound to `Ctrl+3` — `Ctrl+n` is a stable view identity, not an ordinal, and moving Schedule in v1 only to move it back in v1.1 breaks muscle memory for a cosmetic gain (canon §4.3, CR-101). Note that sheet `T2.02 Rack Elevation — Rear` **prints in v1**; only the interactive view defers.
+**The v1 tab strip shows three tabs: Rack, Schematic, Schedule.** `Ctrl+3` is **reserved** for the interactive Rear Panel view, which is v1.1 (CR-071 point 3); in v1 the binding is an unbound no-op and the tab is absent from the strip. Schedule is **not** rebound to `Ctrl+3`, `Ctrl+n` is a stable view identity, not an ordinal, and moving Schedule in v1 only to move it back in v1.1 breaks muscle memory for a cosmetic gain (canon §4.3, CR-101). Note that sheet `T2.02 Rack Elevation — Rear` **prints in v1**; only the interactive view defers.
 
-**Pan and zoom.** Do not use `InteractiveViewer`: it cannot receive scroll-wheel `PointerSignal` events, so zoom-to-cursor is impossible; it installs its own `ScaleGestureRecognizer` that fights marquee and wire-draw; and its `boundaryMargin` is the wrong model for infinite-canvas-with-fit. Middle-drag and `Space`+drag pan; `Ctrl`+wheel zooms at the cursor; trackpad pan and pinch are handled through `PointerPanZoomUpdateEvent`. Zoom is `scale *= exp(-delta * 0.002)` — multiplicatively symmetric, so three notches up then three down lands exactly where you started — clamped to `[0.05, 32.0]`. Pan deltas arrive in screen space and must be **left-multiplied**; the zoom pivot is right-multiplied in scene space. Getting that backwards produces pan that accelerates with zoom, the classic hand-rolled-viewport bug.
+**Pan and zoom.** Do not use `InteractiveViewer`: it cannot receive scroll-wheel `PointerSignal` events, so zoom-to-cursor is impossible; it installs its own `ScaleGestureRecognizer` that fights marquee and wire-draw; and its `boundaryMargin` is the wrong model for infinite-canvas-with-fit. Middle-drag and `Space`+drag pan; `Ctrl`+wheel zooms at the cursor; trackpad pan and pinch are handled through `PointerPanZoomUpdateEvent`. Zoom is `scale *= exp(-delta * 0.002)` (multiplicatively symmetric, so three notches up then three down lands exactly where you started) clamped to `[0.05, 32.0]`. Pan deltas arrive in screen space and must be **left-multiplied**; the zoom pivot is right-multiplied in scene space. Getting that backwards produces pan that accelerates with zoom, the classic hand-rolled-viewport bug.
 
-All input goes through `CanvasIntent{beginDrag, updateDrag, commitDrag, cancel}`, built first, and **no editor logic branches on `PointerDeviceKind`** (AC-016/#23) — that is what keeps the touch door open without shipping a squeezed mobile editor.
+All input goes through `CanvasIntent{beginDrag, updateDrag, commitDrag, cancel}`, built first, and **no editor logic branches on `PointerDeviceKind`** (AC-016/#23); that is what keeps the touch door open without shipping a squeezed mobile editor.
 
 ---
 
@@ -836,9 +836,9 @@ All input goes through `CanvasIntent{beginDrag, updateDrag, commitDrag, cancel}`
 
 | # | Item | Status |
 |---|---|---|
-| 1 | Filtered-wire ghost alpha | **VERIFY** — must be measured against both themes and recorded in §6.6 (AC-058/D11). The design document's 8% is a placeholder. DR-001 raises the stakes: the ghost is seen on every filtered sheet. |
+| 1 | Filtered-wire ghost alpha | **VERIFY**: must be measured against both themes and recorded in §6.6 (AC-058/D11). The design document's 8% is a placeholder. DR-001 raises the stakes: the ghost is seen on every filtered sheet. |
 | 2 | Focus-radius adjustment binding (`[` / `]`) | Not in the arbitrated ~40. **VERIFY** against the generated `build/keymap.md` and [canon §1.10](canonical-decisions.md#110-interaction) before implementing. |
-| 3 | Bare-wheel behaviour — pan versus zoom | Ship the preference on day one; complaints arrive either way. |
+| 3 | Bare-wheel behaviour: pan versus zoom | Ship the preference on day one; complaints arrive either way. |
 | 4 | ~~Hop rendering default~~ | **Closed by DR-001.** Hop arcs are not built in v1; crossings render as plain crossovers. Reopens only if interval-graph channel routing lands in v1.2. |
 | 5 | libavoid licence and linking model | **VERIFY** before any v2 dependency. LGPL 2.1+ with a commercial option is believed correct but is not verified here. |
 | 6 | Impeller on Windows | Not default at time of writing; budget frame costs against Skia and re-benchmark when it lands. `saveLayer` and path-stroking numbers will move. |
