@@ -26,9 +26,10 @@
 //   6.  home-run `fieldLabel`s are unique project-wide,
 //       and `rackLabel`s are unique where set            (CR-113)
 //   7.  rack weight <= the rack's stated capacity        (RCK-013 family)
-//   8.  outlets consumed <= outlets provided             (PWR family)
-//   9.  connected VA <= the 80 % continuous limit of the
-//       rack's dedicated circuits                        (NEC 210.20(A))
+//   8.  outlets consumed <= outlets provided, where
+//       both figures are known                           (PWR family)
+//   9.  connected VA is KNOWN, and <= the 80 % continuous
+//       limit of the rack's dedicated circuits           (NEC 210.20(A))
 //   10. shelf-hosted weight <= the shelf's own container
 //       capacity                                        (RCK family)
 //   11. `ruUnknownCount == 0` — every rail device's
@@ -58,6 +59,22 @@
 // not of these documents, and a starter cannot fix it without inventing
 // template data it is forbidden to invent. RU is different — every rail
 // device's occupancy IS knowable — so check 11 asserts that one.
+//
+// `unknownCount` AND `value` ARE DIFFERENT QUESTIONS, and check 9 turns on
+// the difference. `unknownCount > 0` means the total is INCOMPLETE, which
+// is the ordinary state of every rack above. `value == null` means nothing
+// known contributed AT ALL, which for a rack wired to its own dedicated
+// circuits is not a catalog gap but an unfinished starter. So check 9
+// requires the VA figure to exist while checks 7, 8 and 10 stay conditional
+// on their inputs being known.
+//
+// NO CHECK HERE COERCES AN UNKNOWN TO ZERO. Checks 8 and 9 used to, via
+// `?? 0`, and it cost them both directions at once: check 9 compared a
+// fabricated `0 VA` against the branch limit and passed a rack whose power
+// data was missing, and check 8 compared a real consumption against a
+// fabricated zero provision and would have failed a rack that is merely
+// unmodelled. A test that reports G4's own violation as a pass is the empty
+// check this file's opening paragraph warns about.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 
@@ -400,15 +417,30 @@ void _expectRackWithinItsLimits(RackDocument doc, Rack rack, String of) {
     );
   }
 
-  final consumed = rollups.outletsConsumed.value ?? 0;
-  final provided = rollups.outletsProvided.value ?? 0;
-  expect(
-    consumed,
-    lessThanOrEqualTo(provided),
-    reason:
-        '$of: ${rack.designator} consumes $consumed outlets and provides '
-        '$provided.',
-  );
+  // OUTLETS. Both figures are `Rollup`s, and a rollup's value is null when
+  // nothing known contributed (G4, CR-114). `?? 0` used to supply whichever
+  // was missing, which folded two different situations into one wrong
+  // answer: an unknown `provided` compared a real consumption against a
+  // fabricated zero and failed a rack that is merely unmodelled, and two
+  // unknowns compared 0 against 0 and passed having checked nothing.
+  //
+  // Silence is not asserted away here, because it is a property of the SEED
+  // CATALOG rather than of these documents: `catalog_passive.dart` says in
+  // its own header that its templates carry no power data, so a rack of
+  // purely passive gear states no outlet counts at all. The check runs when
+  // it is decidable, which is the same shape the weight check above has
+  // always had.
+  final consumed = rollups.outletsConsumed.value;
+  final provided = rollups.outletsProvided.value;
+  if (consumed != null && provided != null) {
+    expect(
+      consumed,
+      lessThanOrEqualTo(provided),
+      reason:
+          '$of: ${rack.designator} consumes $consumed outlets and provides '
+          '$provided.',
+    );
+  }
 
   // NEC 210.20(A): a continuous load may not exceed 80 % of the branch
   // rating, which `Circuit.continuousLimitAmps` already computes.
@@ -418,7 +450,26 @@ void _expectRackWithinItsLimits(RackDocument doc, Rack rack, String of) {
     0,
     (sum, c) => sum + c.continuousLimitAmps * c.volts,
   );
-  final va = rollups.apparentVA.value ?? 0;
+
+  // THE VA FIGURE MUST EXIST, and this is the assertion `?? 0` was
+  // suppressing. Unlike the outlet counts, this branch is only reached for a
+  // rack that has its OWN DEDICATED CIRCUITS, and a rack wired to its own
+  // circuits with not one device stating apparent VA is not a gap in the
+  // seed catalog, it is a starter nobody finished. The coercion reported
+  // exactly that as a comfortable `0 VA` pass, so this check could not fail
+  // in the one case where failing matters: a starter shipped over its branch
+  // rating with its power data missing would have looked clean.
+  final va = rollups.apparentVA.value;
+  expect(
+    va,
+    isNotNull,
+    reason:
+        '$of: ${rack.designator} has ${circuits.length} dedicated circuit(s) '
+        'but not one device stating apparentVA, so its load cannot be '
+        'checked against NEC 210.20(A) at all (G4).',
+  );
+  // No `!`: the assertion above throws first when the figure is missing,
+  // and `expect` takes its value as `dynamic` regardless.
   expect(
     va,
     lessThanOrEqualTo(limitVa),
