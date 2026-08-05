@@ -112,7 +112,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET** — `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate — **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone — no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED** — `NOT BUILT` | Model only. **Its M2 block has lifted**: the gate was M2 putting `Link` + `Endpoint` in the UI, and M2-F did (§5.1). Row otherwise as of `0fa532d` |
 | **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **NOT STARTED** — `NOT BUILT` | No builder surface. **Its inputs are all present even though its formal gate is open** — §5.3. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
-| **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED** — `NOT BUILT` | 0 of 27 rules. **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
+| **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED** — `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED** — `NOT BUILT` | 3 of 11 sheet slots ship and are real work — but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5) |
 | **M7** | Platform + access | `M` | **0 of 4** | **NOT STARTED** — `NOT BUILT` | Windows-only; no `Intent` registry; no l10n at all |
 | **M8** | Release engineering | `S` | **0 of 4** | **NOT STARTED** — `NOT BUILT` | No installer, no signing, no crash reporter. **Re-scoped by DR-006** |
@@ -130,7 +130,7 @@ on the whole exercise.** Decomposition normally happens at a milestone's start (
 board `#71`), and it earns its keep by being read against the tree as it actually is: M4's
 decomposition found that `Command` is hard-typed to `RackDocument`, that `ConnectorTypeDef.pitch`
 does not exist, and that `derivedFrom` appears nowhere — none of which is inferable from the
-specification. **M5's and M6's decompositions are grounded in the same way** (the 27-rule catalogue
+specification. **M5's and M6's decompositions are grounded in the same way** (the 28-rule catalogue
 and the sheet table are both real, present artifacts). **M8's and M9's are substantially spec
 restatement**, because the tree they will run against does not exist yet. Re-read them before
 starting rather than trusting them; that is what the `Mn-0` rows now say.
@@ -475,7 +475,7 @@ gate is still a test somebody must remember to run, because the pipeline has nev
 
 **Run 1 is scheduled for M5** (user, 2026-08-03), and the stated reason is a workload argument, not
 a tidiness one: **M5 is where most of the design locks in, and it is the milestone made of frequent
-small edits** — 27 rules, each landing with a known-bad and a known-good near-miss (AC-051). That
+small edits** — 28 rules, each landing with a known-bad and a known-good near-miss (AC-051). That
 is precisely the shape of work where *a test somebody must remember to run* fails. A gate skipped
 once in fifty small commits is a gate that was not enforcing anything, and it will be skipped on
 the commit that matters.
@@ -1016,6 +1016,21 @@ view's pin, and it is roadmap §2.1's newest v1 row (DR-019 §11.18.2(5)).
 rough-in producing a Pull Sheet; a forward-compat guard neither helps nor hinders it. Design:
 [Plan view](15-plan-view.md). Canon §11.18, §12.12.
 
+**M3 also grows for the second time, and this one is a surface rather than a field.** DR-020
+(2026-08-04) puts the **as-built tally** here: one table an installer tabs down to record
+`terminatedLength` and the new `Link.spliceCount` per run, reusing the Structure editor's
+bulk-entry ergonomics rather than inventing a second table (AC-048). The reason it lands in M3
+rather than later is that **M9's exit criterion is three internal users on three real jobs**, and a
+tally that has never met an actual pull is a tally nobody has validated. The reason it is cheap is
+that the model is already there: `terminatedLength`, `roughInStatus` and `TestResult` all ship, and
+`derived/schedule.dart` already projects two of them into every `ScheduleEntry`. **The as-built
+story was 80 % modelled and 0 % reachable.**
+
+DR-007 was M3's first growth (keystone strap geometry) and §5.2's cost note already put M3 at the
+upper end of its `M`. This is the second. **M3 stays `M`** — a column on a table the milestone
+already builds is not a new screen — but the row should be read as `M`-at-its-ceiling, and a third
+addition would be the one that moves it.
+
 ### 5.3 M4 — The device builder · `M` · NOT STARTED — weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three
@@ -1150,15 +1165,15 @@ specification with screenshots pasted in.
 
 ### 5.4 M5 — Validation · `M` · NOT STARTED — weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
-> **Exit criterion, verbatim.** Every one of the **27** rules has a known-bad fixture producing
+> **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing
 > exactly that finding and a known-good near-miss producing none — **no rule ships without its pair**
-> (AC-051). A domain-expert review of the 27 rules and of the catalog data is signed off. No rule, at
+> (AC-051). A domain-expert review of the 28 rules and of the catalog data is signed off. No rule, at
 > any severity, prevents a PDF from being written to disk.
 
 | Clause | Mark | Why |
 |---|---|---|
-| 27 rules × fixture pair | **NOT BUILT — 0/27** | No `validation/` or `rules/` directory under `packages/`, no rule registry, no `Finding` type, no severity resolution. No DRC fixture corpus. AC-051's gate is supposed to be *"enforced in CI"* and there is no CI |
-| Domain-expert sign-off on the 27 rules and the catalog data | **UNPERFORMED** | Has not happened |
+| 28 rules × fixture pair | **NOT BUILT — 0/28** | No `validation/` or `rules/` directory under `packages/`, no rule registry, no `Finding` type, no severity resolution. No DRC fixture corpus. AC-051's gate is supposed to be *"enforced in CI"* and there is no CI |
+| Domain-expert sign-off on the 28 rules and the catalog data | **UNPERFORMED** | Has not happened |
 | No rule prevents a PDF being written | **VACUOUS — true, trivially** | True because no rule exists. `packages/rackmate_core/lib/src/draw/sheet/sheet_def.dart:96-98` does correctly encode CR-023/G3 for the one heuristic that exists — a malformed NCS id is a **NOTICE, never a gate** — which is the right shape for when rules arrive |
 
 Two persisted shells survive from M0 — `packages/rackmate_core/lib/src/model/acked_finding.dart` and
@@ -1423,8 +1438,8 @@ have to be amended** — because roadmap §8.3 makes scope movement an amendment
 
 | Option | Buys | Costs the product | Ruling to amend |
 |---|---|---|---|
-| **A · Defer M5 (validation) entirely to v1.1** | **4–6 weeks**, and unblocks M6 from a three-way join to a two-way one | The tool never tells the user a run is wrong. `CODE-001`/`CODE-002` (NEC 725.136, 800.154) are the two checks DR-002/4 says *"protect a residential user from a red-tagged job"* — deferring them means a design error reaches a job site with the tool silent. Note the countervailing fact: CR-022/G3 means **no rule ever blocks an export**, so the deliverable is unaffected either way | Roadmap §2.1 *Validation*; AC-040 (the 27-rule count); AC-051's fixture gate would move with it |
-| **A′ · Defer *most* of M5 — ship tier 1 only** | ~**3–4 weeks** | 8 tier-1 rules including `TOP-001..005` and `PLC-001..003` are already model-illegal (CR-017), so this is closer to "finish what the model implies" than to a feature. Loses the 6 tier-2 and 13 tier-3 rules, which are the ones that catch a *design* mistake rather than an *impossible* one | AC-040's count (27 → 8 in v1, 19 to v1.1) |
+| **A · Defer M5 (validation) entirely to v1.1** | **4–6 weeks**, and unblocks M6 from a three-way join to a two-way one | The tool never tells the user a run is wrong. `CODE-001`/`CODE-002` (NEC 725.136, 800.154) are the two checks DR-002/4 says *"protect a residential user from a red-tagged job"* — deferring them means a design error reaches a job site with the tool silent. Note the countervailing fact: CR-022/G3 means **no rule ever blocks an export**, so the deliverable is unaffected either way | Roadmap §2.1 *Validation*; AC-040 (the 28-rule count, DR-020); AC-051's fixture gate would move with it |
+| **A′ · Defer *most* of M5 — ship tier 1 only** | ~**3–4 weeks** | 8 tier-1 rules including `TOP-001..005` and `PLC-001..003` are already model-illegal (CR-017), so this is closer to "finish what the model implies" than to a feature. Loses the 6 tier-2 and 14 tier-3 rules, which are the ones that catch a *design* mistake rather than an *impossible* one | AC-040's count as amended by DR-020 (28 → 8 in v1, 20 to v1.1) |
 | **B · Defer M7 (platform + access) to v1.1** | **4–6 weeks** | Tablet read-only is the clause with the clearest internal value — a reviewer reading an elevation on a job site is a real workflow. The a11y half is the risk: roadmap §4 M7 *Risks* says accessibility work discovered late *"tends to surface structural problems in the canvas surfaces"*, and the outline tree that was supposed to mitigate that **already slipped once** (§3.3). Deferring compounds a debt that is already overdue | AC-056 (mobile read-only on three surfaces); AC-058 D11 (keyboard path, WCAG AA, NVDA matrix) |
 | **B′ · Defer only the l10n plumbing and the pseudo-locale** | ~**1 week** | An internal English-only tool arguably never needs it. But AC-058 D12 exists because **retrofitting localisation across a shipped UI is the expensive direction**, and the one-locale plumbing is the cheap direction. This is a G5 bet: cheap now, ruinous later | AC-058 (D12) |
 | **C · Defer M9 (beta hardening) to v1.1** | **4–7 weeks** | This is the option that **destroys the evidence**. M9's criterion is the only one that asks whether any of this was true. Under DR-006 the beta population is internal and available, so the recruiting risk that justified deferring it is largely gone — which makes this the **cheapest milestone to keep** and the most expensive to skip | Roadmap §4 M9; measure 8 in docs/00 §9 |

@@ -193,7 +193,7 @@ Ordered from cheapest to hardest. The last one is deliberately a judgement, not 
 | 3 | **Wiring throughput** | 60 connections created **without touching a menu**; the schedule tab shows 60 correctly sorted rows with both labels on both ends. (M2 exit) |
 | 4 | **Determinism** | Same input ⇒ **byte-identical display list**; a 300-connection fixture lays out within one frame at commit. (M2 exit) |
 | 5 | **Print legibility** | All ten requirement-4 cable types remain identifiable on a **real greyscale office laser at ANSI B, photocopied once**, and under protanopia/deuteranopia simulation. |
-| 6 | **Rule trustworthiness** | Every shipped rule has a known-bad fixture that produces exactly that finding and a known-good near-miss that does not. **No rule ships without its pair.** This is also the gate that holds the v1 catalogue at 27 rules. (AC-051, AC-040) |
+| 6 | **Rule trustworthiness** | Every shipped rule has a known-bad fixture that produces exactly that finding and a known-good near-miss that does not. **No rule ships without its pair.** This is also the gate that holds the v1 catalogue at 28 rules. (AC-051, AC-040 as amended by DR-020) |
 | 7 | **Catalog miss rate** | Instrumented from M1: how often a user hits a device the catalog does not have. §10.4 is answered — the device builder ships in v1 (DR-003) — so this is no longer a scope trigger. It is catalog-coverage evidence feeding canon §10.9 and the sizing of the catalog lever. |
 | 8 | **Beta gate** | **Three integrators have each produced a sheet set they were willing to send to a client or a job site, and none of the three needed to leave the app to fix something.** (M9 exit) |
 

@@ -30,7 +30,7 @@ The seven core requirements of the brief, and what v1 does about each. All seven
 | 6 | Structure device | A `DeviceInstance` with `kind == structure` rendering as an edge bank of off-page flags; `Outlet` is the creation atom, a home run is a `Link` carrying a `StructureOrigin` (CR-016, AC-019) |
 | 7 | PDF with diagram **and** schedule | Cover and drawing index, legend, exceptions page, front and rear elevations, **N interconnect sheets — one per domain partition of the single schematic `Sheet`**, Pull Sheet, Termination Schedule, Unused Home Runs, Equipment List and Materials, and plate/panel/pinout details where a non-standard pinout exists (AC-025, AC-055, CR-073, DR-005) |
 
-Beyond the seven: a live [Schedule](docs/05-schematic-editor.md) tab that fills in as you wire rather than appearing at export time (AC-035), 27 validation rules that never block an export (CR-022), a Staging Bin, a project-level location tree, pathways, three separate cable-length fields, and CSV import for structured wiring.
+Beyond the seven: a live [Schedule](docs/05-schematic-editor.md) tab that fills in as you wire rather than appearing at export time (AC-035), 28 validation rules that never block an export (CR-022), a Staging Bin, a project-level location tree, pathways, three separate cable-length fields, and CSV import for structured wiring.
 
 ## Documentation
 

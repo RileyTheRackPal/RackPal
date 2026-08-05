@@ -8,7 +8,7 @@ and a ruling appear to differ, the ruling wins and this file is wrong.
 
 What follows is the short-form decision log for RackMate: sixteen ADRs covering the choices that
 shape the codebase, each traced back to its adjudication in the canonical decision record; then
-**the nineteen user decisions `DR-001`–`DR-019`**, which are binding and override the recommendations
+**the twenty user decisions `DR-001`–`DR-020`**, which are binding and override the recommendations
 they answer; then the questions of canon §10, **none of which is open any longer**: ten are
 answered, 10.3 is moot under DR-006, 10.13 is retired, and 10.11 alone is deferred, to M5 rather
 than indefinitely. An ADR here is a summary with a pointer, not a new ruling. Open questions carry no
@@ -35,11 +35,11 @@ overruled is marked as void where it stands.
 | [015](#adr-015-the-five-package-split) | The five-package split | Accepted | CR-083, CR-084 |
 | [016](#adr-016-density-management--one-sheet-net-labels-filter) | Density management — one sheet, net labels, filter | Accepted | CR-073, CR-103, AC-037, **DR-001**, **DR-004** |
 
-**The nineteen user decisions**, binding and overriding any recommendation they answer. Full text in
+**The twenty user decisions**, binding and overriding any recommendation they answer. Full text in
 canon §11; the supersession index is canon §12.
 
 > **This table listed only `DR-001`–`DR-005` until 2026-08-03**, an owed edit canon §12.9 recorded
-> against DR-006 and which then went ten rulings further out of date. Seven of the nineteen answer a
+> against DR-006 and which then went ten rulings further out of date. Seven of the twenty answer a
 > canon §10 question and say which; the rest are rulings the work itself raised, which is why their
 > `Answers` column is empty. (**The count in this note read "sixteen" against a heading that read
 > "seventeen"** until DR-018's sweep; a written-out count drifts every time a ruling lands, which is
@@ -72,6 +72,7 @@ canon §11; the supersession index is canon §12.
 | DR-017 | **`dart format` is a gate; the analyzer stays a ratchet** | — *(answers docs/12 §4.1, not a §10 entry)* | **Process, not product; no scope change.** Gate 1b in `azure-pipelines.yml` and `run_local.ps1`, so the local count is **fourteen**. Infos stay pinned in `analyze_info_baseline.txt` (**173**) rather than `--fatal-infos`, because formatting has one correct answer and style infos do not. docs/11 §7 amended; §9 clause 1 is now the fourteen-gate run. Board #566 |
 | DR-018 | **The Plan view moves from not-doing to v1.1, conditionally** | — | A **scope amendment under roadmap §8.3**, the second after DR-016. Floor plans leave canon §7.6's cable-dressing row (which had only ever argued cable dressing) and land in roadmap §2.2. Placed conditionally against §2.2's additive membership criterion; **DR-019 discharges the condition** and corrects §11.17.4's reasoning. RJ-017, AC-024, AC-057 and G4 all stand. Feasibility and cost: `docs/research/feasibility-plan-view.md`. No board item |
 | DR-019 | **The plan container is JSON-or-zip by sniff; v1 owes a passthrough, not a carrier** | — | **The only DR that supersedes another DR.** `.rmpj` stays plain pretty JSON with no binary member and becomes a zip container with one, so **nothing migrates** and CR-091's single file survives; the writer owes stated determinism because zip is nondeterministic and CR-117 is byte round-trip. Base64-in-JSON and a sidecar are rejected with reasons. PNG and JPEG in, **no PDF import**. **It corrects DR-018 §11.17.4**, which claimed a migration cost that a read of `persistence/` does not support: the real G5 item is that **`Placement` carries no `unknown` map**, so an older build silently drops plan pins on save. That passthrough is v1's one new item and lands in M3. The Plan view is now v1.1 **unconditionally**. Design: [Plan view](15-plan-view.md). No board item |
+| DR-020 | **A plan may not predict a route; the length column's job is the as-built tally** | — | **The first ruling whose evidence is the trade rather than the corpus.** Structure (LVLs, concrete beams, purlins) forces runs into a crawlspace instead of an attic and is not knowable from a floorplan, so `docs/15` §4's design-time **route polyline is void one commit after it was written**, along with `routingFactor` and `slackAllowance`. The plan contributes **`planLowerBound`** only: italic, prefixed `≥`, never summed into the footage rollup. Its value is the asymmetry — a bound can **prove** a length violation and can never prove compliance. v1 gains three items: `Link.spliceCount: int?` (null unknown, `0` confirmed none), the generic **`LEN-002`** reading a new `maxLength` off the media registry, and the **as-built tally surface in M3**. **The catalogue becomes 28** (8 + 6 + 14), superseding §12.6(b) on the number only; AC-051's gate applies to 28 pairs. `PathwayKind` gaining `attic`/`crawlspace` is left open for M3 |
 
 See also [Canonical decisions](canonical-decisions.md) — normative — plus
 [Overview](00-overview.md), [Data model](02-data-model.md),
@@ -393,7 +394,7 @@ not lie** — three tiers:
 | **Gesture-refused** | **6** | ex-Class A — `SIG-001` `SIG-002` `DIR-001` `DIR-003` `CON-001` `ELE-006` | **Spring-back with a reason chip**, remedies kept exactly as designed, and every chip carries `[ Connect anyway ]`. |
 | **Post-hoc finding** | **13** | the 13-rule post-hoc catalogue | `error \| warning \| advisory \| off` (CR-018); never blocks anything. |
 
-**8 + 6 + 13 = 27.** The v1 catalogue is **27 rules**, enumerated once in
+**8 + 6 + 14 = 28.** The v1 catalogue is **28 rules** (DR-020 added `LEN-002`), enumerated once in
 [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers). The
 long-quoted "22" was an arithmetic error against an enumeration that always listed more; the
 enumeration governs (canon §12.6(b)). `PLC-001`, `PLC-002` and `PLC-003` are **ratified** as
@@ -820,7 +821,7 @@ recommendation is marked **void**. Read this table before the arguments below it
 | **10.9** | Generic archetypes forever, or a real-SKU catalog | **ANSWERED 2026-08-03** | **Shipped catalog stays generic; user templates may carry real SKUs.** Archetypes must be editable; DR-015's `.rmda` is the sharing mechanism. `T6.30` stays an equipment list, not a BOM (AC-055) |
 | **10.10** | macOS in v1 | **ANSWERED — DR-009** | **(b) Windows and macOS from v1.** **Reverses** the recommendation, which was explicitly not a ruling. The register it demanded is [13-macos-debt-register.md](13-macos-debt-register.md) |
 | 10.11 | What the beta gate actually is | **DEFERRED, with a trigger** | Held until M5 lands and the UI is largely frozen. **Must be answered before the M6-J5 recruiting ask**, not before M9 |
-| **10.12** | Small calls needing an owner | **ALL SEVEN SETTLED 2026-08-03** | (d) by DR-002. (a) keep 200, make it a setting (#560). (b) autosave while working, never while idle. (c) editable rack presets, **DR-016**, a scope addition under §8.3 (#561). (e) opt-in local crash log only. (f) RackMate, with a mascot and three scoped surfaces (#563–#565). (g) user-visible, and it is 27 rules |
+| **10.12** | Small calls needing an owner | **ALL SEVEN SETTLED 2026-08-03** | (d) by DR-002. (a) keep 200, make it a setting (#560). (b) autosave while working, never while idle. (c) editable rack presets, **DR-016**, a scope addition under §8.3 (#561). (e) opt-in local crash log only. (f) RackMate, with a mascot and three scoped surfaces (#563–#565). (g) user-visible, and it is 28 rules since DR-020 |
 | 10.13 | The three to answer first | **retired** | All three are answered |
 
 They are ordered by blast radius, and the first one was a fork in what the product fundamentally
@@ -1124,7 +1125,7 @@ friendly users and falls over on the fourth.
 | d | Are the four starter projects residential-only? | **Three residential, one small commercial.** Settled by implication of DR-002; they double as the domain-coverage argument for residential-primary, commercial-capable | DR-002 |
 | e | Telemetry at all, and if so opt-in or opt-out | **Opt-in, local crash log only. Telemetry is POST-v1.** Confirms the recommendation. Accepted consequence: §10.4's miss-rate instrumentation is a manual user-interview exercise, not a dashboard | CR-096 |
 | f | Product name and branding investment | **OVERRULES the recommendation to defer.** The name is **RackMate**. Branding is a Protogen mascot, **Riley the RackMate**, in neutral warm white and greys so it never competes with the eight domain hues. Three surfaces follow and **they are scope, not styling**: an opt-in in-app assistant, a first-run onboarding flow, and user-customisable UI accent colours. RJ-017 rejected branding as a v1 *requirement* and is not reversed; this schedules the work | Board #563–#565 |
-| g | Is [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers) user-visible documentation or internal? | **User-visible, in-app, linked from every finding.** Confirms the recommendation. **The file deliberately does not exist**: canon §5 *is* the catalogue and CR-021 says so, so this is *publish that section*, not *write a new file*. And it is **27** rules, not the 22 this row inherited from AC-040's arithmetic slip | Feeds M5-F3 |
+| g | Is [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers) user-visible documentation or internal? | **User-visible, in-app, linked from every finding.** Confirms the recommendation. **The file deliberately does not exist**: canon §5 *is* the catalogue and CR-021 says so, so this is *publish that section*, not *write a new file*. And it is **28** rules since DR-020, not the 22 this row inherited from AC-040's arithmetic slip | Feeds M5-F3 |
 
 ## 10.13 The three to answer first — RETIRED
 
