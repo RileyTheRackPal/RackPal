@@ -286,8 +286,8 @@ RackLoadProfile computeRackLoadProfile({
     readings.add(
       CumulativeMassReading(
         boundaryU: k,
-        mass: Rollup<Mass>(
-          value: _totalOrUnknown(runningMass, runningKnown, runningUnknown),
+        mass: Rollup<Mass>.fromScan(
+          sum: runningMass,
           knownCount: runningKnown,
           unknownCount: runningUnknown,
         ),
@@ -299,13 +299,13 @@ RackLoadProfile computeRackLoadProfile({
     readings: List.unmodifiable(readings),
     totalMass: readings.last.mass,
     weightCapacity: rack.weightCapacity,
-    apparentVA: Rollup<int>(
-      value: _totalOrUnknown(vaSum, vaKnown, vaUnknown),
+    apparentVA: Rollup<int>.fromScan(
+      sum: vaSum,
       knownCount: vaKnown,
       unknownCount: vaUnknown,
     ),
-    btuPerHour: Rollup<double>(
-      value: _totalOrUnknown(btuSum, btuKnown, btuUnknown),
+    btuPerHour: Rollup<double>.fromScan(
+      sum: btuSum,
       knownCount: btuKnown,
       unknownCount: btuUnknown,
     ),
@@ -315,14 +315,6 @@ RackLoadProfile computeRackLoadProfile({
     undrawnFrontCount: undrawnFront,
     undrawnRearCount: undrawnRear,
   );
-}
-
-/// `derived/totals.dart`'s rule 1, applied identically here: a sum nothing
-/// known contributed to is UNKNOWN when somebody failed to contribute, and
-/// a genuine zero when nobody was asked.
-T? _totalOrUnknown<T>(T sum, int knownCount, int unknownCount) {
-  if (knownCount > 0) return sum;
-  return unknownCount > 0 ? null : sum;
 }
 
 /// The em dash a gutter cell prints for a value that does not exist.

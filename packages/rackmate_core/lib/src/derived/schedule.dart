@@ -1630,9 +1630,9 @@ ScheduleGroup _band(
   isUndeterminedClass: isUndetermined,
 );
 
-/// `totals.dart`'s rule 1, applied to footage: a sum nothing known
-/// contributed to is UNKNOWN when somebody failed to contribute, and a
-/// genuine zero when nobody was asked.
+/// Rule 1 applied to footage, through `Rollup.fromScan` — where the rule
+/// is spelled. This used to restate the ternary under a comment naming
+/// `totals.dart`, which is the shape that lets a rule drift.
 Rollup<Len> _footageOf(List<ScheduleEntry> rows) {
   var sum = Len.zero;
   var known = 0;
@@ -1646,8 +1646,8 @@ Rollup<Len> _footageOf(List<ScheduleEntry> rows) {
       known++;
     }
   }
-  return Rollup<Len>(
-    value: known > 0 ? sum : (unknown > 0 ? null : Len.zero),
+  return Rollup<Len>.fromScan(
+    sum: sum,
     knownCount: known,
     unknownCount: unknown,
   );

@@ -68,6 +68,41 @@ final class Rollup<T> {
     required this.unknownCount,
   });
 
+  /// Rule 1, applied to a scan that accumulated [sum] over [knownCount]
+  /// contributors while [unknownCount] of them could supply nothing.
+  ///
+  /// THE ONE PLACE THE RULE IS SPELLED. It was written four times: a
+  /// private `_totalOrUnknown` here, a VERBATIM copy of that same private
+  /// helper in `draw/scene/rack_load_gutter.dart`, and the ternary inline
+  /// in `derived/equipment_list.dart` (twice) and `derived/schedule.dart`.
+  /// The latter three each carried a comment pointing at this file, which
+  /// is an acknowledgement that they were copies rather than a defence
+  /// against their drifting. All four agreed, so nothing was ever wrong;
+  /// `derived/device_loads.dart`'s header makes the argument for why
+  /// agreeing-for-now is not a state to leave a rule in, and this project
+  /// has already shipped a 1000x error that survived because one
+  /// conversion was pasted into nine files.
+  ///
+  /// A FACTORY RATHER THAN A SHARED FUNCTION, because rule 1 is a
+  /// CONSTRAINT BETWEEN [value] and the two counts, not a calculation that
+  /// happens to be shared. A free function leaves the unnamed constructor
+  /// perfectly able to contradict it; this way a rollup built from a scan
+  /// derives its `value` from the very counts it goes on to report. The
+  /// unnamed constructor stays public for tests and fixtures that need to
+  /// state an arbitrary rollup, including a deliberately inconsistent one.
+  factory Rollup.fromScan({
+    required T sum,
+    required int knownCount,
+    required int unknownCount,
+  }) => Rollup<T>(
+    // Unknown ONLY when nothing known contributed AND somebody failed to.
+    // Nobody asked at all is a genuine zero: an empty rack really does
+    // weigh nothing extra.
+    value: knownCount == 0 && unknownCount > 0 ? null : sum,
+    knownCount: knownCount,
+    unknownCount: unknownCount,
+  );
+
   /// The total over the contributors that supplied a value, or `null` when
   /// none did. NEVER a stand-in zero — see the class doc.
   final T? value;
@@ -337,37 +372,29 @@ RackRollups computeRackRollups({
     ruCapacity: rack.heightU,
     ruUsed: occupiedRu.length,
     ruUnknownCount: ruUnknownCount,
-    weight: Rollup(
-      value: _totalOrUnknown(weightSum, weightKnown, weightUnknown),
+    weight: Rollup.fromScan(
+      sum: weightSum,
       knownCount: weightKnown,
       unknownCount: weightUnknown,
     ),
     weightCapacity: rack.weightCapacity,
-    apparentVA: Rollup(
-      value: _totalOrUnknown(vaSum, vaKnown, vaUnknown),
+    apparentVA: Rollup.fromScan(
+      sum: vaSum,
       knownCount: vaKnown,
       unknownCount: vaUnknown,
     ),
-    outletsConsumed: Rollup(
-      value: _totalOrUnknown(consumedSum, consumedKnown, consumedUnknown),
+    outletsConsumed: Rollup.fromScan(
+      sum: consumedSum,
       knownCount: consumedKnown,
       unknownCount: consumedUnknown,
     ),
-    outletsProvided: Rollup(
-      value: _totalOrUnknown(providedSum, providedKnown, providedUnknown),
+    outletsProvided: Rollup.fromScan(
+      sum: providedSum,
       knownCount: providedKnown,
       unknownCount: providedUnknown,
     ),
     outletsUnknownCount: outletsUnknown,
   );
-}
-
-/// Rule 1 of the file header, in one place so all four rollups obey it
-/// identically: a sum nothing known contributed to is UNKNOWN when
-/// somebody failed to contribute, and a genuine zero when nobody was asked.
-T? _totalOrUnknown<T>(T sum, int knownCount, int unknownCount) {
-  if (knownCount > 0) return sum;
-  return unknownCount > 0 ? null : sum;
 }
 
 // `_belongsToRack` and `_templateKey` USED TO LIVE HERE. They moved to

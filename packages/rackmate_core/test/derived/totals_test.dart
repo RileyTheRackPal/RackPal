@@ -494,6 +494,50 @@ void main() {
     });
   });
 
+  group('Rollup.fromScan is the one spelling of rule 1', () {
+    // The rule was written four times: a private `_totalOrUnknown` in
+    // totals.dart, a verbatim copy of it in rack_load_gutter.dart, and the
+    // ternary inline in equipment_list.dart and schedule.dart. They agreed,
+    // so nothing was wrong; they were also free to stop agreeing. These
+    // assert the rule at the one place it now lives, so the four surfaces
+    // that read it cannot answer differently.
+    test('a partial scan reports the KNOWN sum, not null', () {
+      // The figure is a lower bound and `unknownCount` is what says so.
+      // Nulling a total somebody DID contribute to would discard a
+      // measurement, which is the opposite failure to fabricating one.
+      final r = Rollup<int>.fromScan(sum: 7, knownCount: 2, unknownCount: 3);
+      expect(r.value, 7);
+      expect(r.isUnknown, isFalse);
+      expect(r.knownCount, 2);
+      expect(r.unknownCount, 3);
+    });
+
+    test('nothing known and somebody silent is UNKNOWN', () {
+      final r = Rollup<int>.fromScan(sum: 0, knownCount: 0, unknownCount: 4);
+      expect(r.value, isNull);
+      expect(r.isUnknown, isTrue);
+      expect(r.unknownCount, 4);
+    });
+
+    test('nobody asked at all is a MEASURED zero, not unknown', () {
+      final r = Rollup<int>.fromScan(sum: 0, knownCount: 0, unknownCount: 0);
+      expect(r.value, 0);
+      expect(r.isUnknown, isFalse);
+    });
+
+    test('it carries an extension-type sum through unchanged', () {
+      // `Mass` erases to int at runtime, and the rollup that most needs
+      // exact integer arithmetic is the one this factory is generic for.
+      final r = Rollup<Mass>.fromScan(
+        sum: const Mass(1500),
+        knownCount: 1,
+        unknownCount: 1,
+      );
+      expect(r.value, const Mass(1500));
+      expect(r.value?.ug, 1500);
+    });
+  });
+
   group('unknown is NULL, never 0 (G4, CR-114, docs/04 §5)', () {
     test('a rack whose every device lacks a weight reports NULL, not 0 kg', () {
       final templates = {

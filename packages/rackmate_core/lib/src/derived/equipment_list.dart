@@ -364,16 +364,17 @@ EquipmentGroup _group({
     rackId: rackId,
     title: title,
     rows: List.unmodifiable(rows),
-    // The SAME rule `derived/totals.dart` applies: a sum nothing known
-    // contributed to is UNKNOWN when somebody failed to contribute, and a
-    // genuine zero when nobody was asked.
-    mass: Rollup<Mass>(
-      value: massKnown > 0 ? massSum : (massUnknown > 0 ? null : Mass.zero),
+    // Rule 1 through `Rollup.fromScan`, which is where it is spelled. This
+    // used to restate the ternary and caption it "the SAME rule
+    // `derived/totals.dart` applies", which named the coupling without
+    // doing anything about it.
+    mass: Rollup<Mass>.fromScan(
+      sum: massSum,
       knownCount: massKnown,
       unknownCount: massUnknown,
     ),
-    apparentVA: Rollup<int>(
-      value: vaKnown > 0 ? vaSum : (vaUnknown > 0 ? null : 0),
+    apparentVA: Rollup<int>.fromScan(
+      sum: vaSum,
       knownCount: vaKnown,
       unknownCount: vaUnknown,
     ),
