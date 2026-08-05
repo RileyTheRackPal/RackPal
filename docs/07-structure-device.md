@@ -359,6 +359,19 @@ Both are editable, and a project may write its own pattern from the token vocabu
 
 Both schedule presets carry location on **both** ends — `RK-1 / U14 / rear` and `Great Room / TV wall / WP-1` — never a schematic zone reference alone. Estimated lengths derived from `Location.estimatedRunLengthFromRack` render in italic and are tagged in the schedule so nobody bills off them (AC-024, G4); a null length makes `LEN-*` emit `advisory: length unknown, cannot verify` rather than passing silently. Unbound endpoints raise `LNK-020 advisory: N links have unbound endpoints` — a checklist, not an error, and never a gate on export (AC-018, CR-022, G3).
 
+**The other end of the job: the as-built tally (DR-020).** The Structure editor also owns the
+surface an installer closes out on, because it is the same sixty rows read back in the other
+direction. One table, one length column tabbed down, recording `Link.terminatedLength` and
+`Link.spliceCount` per run — not sixty inspector visits. `spliceCount` is `int?` on the G4/CR-114
+pattern: **null is unknown, `0` is confirmed none**, and the two are not the same claim. A splice is
+a real as-built fact with real consequences, breaking the channel on Cat6 and failing certification,
+adding loss on coax, and entirely normal on fibre; `Link.notes` carries the why. `roughInStatus`
+and `TestResult` already exist alongside these fields and already reach the schedule. What the
+tally then makes possible is the honest footage rollup: **estimated versus actually pulled, per
+media, with the variance visible** — the one number in this document that improves with every job
+rather than being spent once. It is v1, in M3, and it does not wait on the Plan view
+([Plan view](15-plan-view.md) §4.2).
+
 Full sheet order, furniture and table layout are in [PDF export](08-pdf-export.md). The set is a **client deliverable** and carries full drafting furniture — title block, revision block, revision clouds, issued-for-construction stamp, drawing border, zone references and sheet numbering (DR-005). Sheet furniture is orthogonal to wire idiom: the sheet is polished fully and the wires stay net-labelled (DR-001).
 
 ---
