@@ -70,6 +70,7 @@ export 'src/commands/rack_commands.dart';
 export 'src/commands/rack_shrink.dart';
 export 'src/commands/rename_entity_command.dart';
 export 'src/commands/selection.dart';
+export 'src/commands/set_entity_property_command.dart';
 export 'src/commands/set_rack_height_command.dart';
 export 'src/commands/set_rack_property_command.dart';
 export 'src/commands/simple_notifier.dart';

@@ -101,4 +101,15 @@ enum LabelKey {
   // pulled into a building with a label on a wall plate, and the Edit menu
   // offering "Undo connect" for it would describe the wrong gesture.
   addHomeRun,
+
+  // EDITING ONE PROPERTY (commands/set_entity_property_command.dart),
+  // M3-A/5. ONE value covering both `Outlet` and `StructureBody` and every
+  // field of each, exactly as `setRackProperty` above covers twelve `Rack`
+  // fields: the Edit menu offers "Undo edit", and whether the user was
+  // changing a mounting height or a label is not a distinction the menu
+  // has to draw. That is the opposite call from the jacket-colour and
+  // link-class pairs, and the reason differs — there, two DIFFERENT
+  // PEOPLE record two different facts at two different times, so naming
+  // the wrong one misdescribes who did what.
+  setEntityProperty,
 }

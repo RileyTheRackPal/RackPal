@@ -82,15 +82,28 @@ bool _epochPlausiblyCovers(EpochMask touches, String key) => switch (key) {
   'devices' => touches.has(EpochMask.structure) || touches.has(EpochMask.meta),
   'racks' => touches.has(EpochMask.rack) || touches.has(EpochMask.meta),
   'links' || 'nets' => touches.has(EpochMask.wires),
+  // M3-A's Structure family. Both maps sit under the SAME two epochs as
+  // `devices`, and for the same reason: a Structure body is a device with
+  // a building on the other side of it, and an outlet's editable fields
+  // split into where the plate is (`structure`) and what it is called
+  // (`meta`).
+  'outlets' || 'structures' =>
+    touches.has(EpochMask.structure) || touches.has(EpochMask.meta),
   _ => false,
 };
 
-/// The M0 command set only ever mutates these four top-level maps
-/// (devices/racks/links/nets); anything else changing would itself be a
-/// bug (a command reaching into document state it has no business
-/// touching), so this is asserted directly rather than folded into the
-/// permissive per-key epoch mapping above.
-const _knownMutableKeys = {'devices', 'racks', 'links', 'nets'};
+/// The command set only ever mutates these top-level maps; anything else
+/// changing would itself be a bug (a command reaching into document state
+/// it has no business touching), so this is asserted directly rather than
+/// folded into the permissive per-key epoch mapping above.
+const _knownMutableKeys = {
+  'devices',
+  'racks',
+  'links',
+  'nets',
+  'outlets',
+  'structures',
+};
 
 void _expectTouchesCoversChanges(
   Command cmd,
@@ -121,6 +134,25 @@ void _expectTouchesCoversChanges(
           'cover changed key "$key".',
     );
   }
+}
+
+/// Seeds one Structure body and one Outlet on it, and returns the
+/// outlet's id.
+Uuid _seedOutlet(RackDocument doc) {
+  final structure = AddStructureCommand(
+    title: 'Rough-In',
+    designator: 'STR-1',
+    now: DateTime.utc(2026),
+    actor: 'seed',
+  )..apply(doc);
+  final outlet = AddOutletCommand(
+    structureBodyId: structure.bodyId,
+    designation: 'GR-TV-1',
+    order: nextOutletOrder(doc),
+    now: DateTime.utc(2026),
+    actor: 'seed',
+  )..apply(doc);
+  return outlet.id;
 }
 
 void main() {
@@ -389,6 +421,105 @@ void main() {
         _changedTopLevelKeys(doc, () => clear.apply(doc)),
         expectAtLeast: {'racks'},
       );
+    });
+
+    // One case per EpochMask branch `OutletField`/`StructureBodyField`
+    // declare, on the same reasoning as the RackField cases above: the
+    // per-field mask assignments are asserted directly in
+    // set_entity_property_command_test.dart, and what THIS file catches is
+    // a declared mask that under-reports what the command changed.
+    test('SetEntityPropertyCommand (outlet, structure-epoch field)', () {
+      final doc = _freshDoc();
+      final outletId = _seedOutlet(doc);
+      final cmd = SetEntityPropertyCommand<Outlet, Wall?>(
+        id: outletId,
+        field: OutletField.wall,
+        from: null,
+        to: Wall.n,
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'outlets'});
+    });
+
+    test('SetEntityPropertyCommand (outlet, meta-epoch field)', () {
+      final doc = _freshDoc();
+      final outletId = _seedOutlet(doc);
+      final cmd = SetEntityPropertyCommand<Outlet, String>(
+        id: outletId,
+        field: OutletField.designation,
+        from: 'GR-TV-1',
+        to: 'GR-TV-4',
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'outlets'});
+    });
+
+    test('SetEntityPropertyCommand (outlet, nullable field set and '
+        'cleared)', () {
+      final doc = _freshDoc();
+      final outletId = _seedOutlet(doc);
+      final set = SetEntityPropertyCommand<Outlet, Len?>(
+        id: outletId,
+        field: OutletField.mountHeightAff,
+        from: null,
+        to: const Len(450000000),
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      _expectTouchesCoversChanges(
+        set,
+        _changedTopLevelKeys(doc, () => set.apply(doc)),
+        expectAtLeast: {'outlets'},
+      );
+
+      // Clearing back to unknown must ALSO register as a change — an
+      // absent-key encoding (G4/CR-114) that silently matched the set
+      // state would make this case vacuous in one direction.
+      final clear = SetEntityPropertyCommand<Outlet, Len?>(
+        id: outletId,
+        field: OutletField.mountHeightAff,
+        from: const Len(450000000),
+        to: null,
+        now: DateTime.utc(2026, 1, 3),
+        actor: 'tester',
+      );
+
+      _expectTouchesCoversChanges(
+        clear,
+        _changedTopLevelKeys(doc, () => clear.apply(doc)),
+        expectAtLeast: {'outlets'},
+      );
+    });
+
+    test('SetEntityPropertyCommand (structure body)', () {
+      final doc = _freshDoc();
+      final add = AddStructureCommand(
+        title: 'Rough-In',
+        designator: 'STR-1',
+        now: DateTime.utc(2026),
+        actor: 'seed',
+      )..apply(doc);
+      final cmd = SetEntityPropertyCommand<StructureBody, SheetEdge>(
+        id: add.bodyId,
+        field: StructureBodyField.sheetEdge,
+        from: SheetEdge.left,
+        to: SheetEdge.right,
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'structures'});
     });
 
     test('AddLinkCommand', () {

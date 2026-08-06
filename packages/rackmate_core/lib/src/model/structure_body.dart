@@ -30,11 +30,15 @@ final class StructureBody {
     required this.deviceId,
     required String title,
     required this.meta,
-    this.role = StructureRole.homeRunField,
-    this.distributionDeviceLocationId,
-    this.enclosureModel,
-    this.sheetEdge = SheetEdge.left,
-  }) : _title = title;
+    StructureRole role = StructureRole.homeRunField,
+    Uuid? distributionDeviceLocationId,
+    String? enclosureModel,
+    SheetEdge sheetEdge = SheetEdge.left,
+  }) : _title = title,
+       _role = role,
+       _distributionDeviceLocationId = distributionDeviceLocationId,
+       _enclosureModel = enclosureModel,
+       _sheetEdge = sheetEdge;
 
   final Uuid id;
 
@@ -47,17 +51,32 @@ final class StructureBody {
   @internal
   set title(String v) => _title = v;
 
-  // ACCESS CONTROL: fields below are plain mutable pending @internal
-  // retrofit (AC-013). Converted as each is wired to a Command. See
-  // internal_setter_grep_test.dart.
-  StructureRole role;
+  StructureRole _role;
+  StructureRole get role => _role;
+  @internal
+  set role(StructureRole v) => _role = v;
 
   /// The SMC / can / MDF location.
-  Uuid? distributionDeviceLocationId;
+  Uuid? _distributionDeviceLocationId;
+  Uuid? get distributionDeviceLocationId => _distributionDeviceLocationId;
+  @internal
+  set distributionDeviceLocationId(Uuid? v) =>
+      _distributionDeviceLocationId = v;
 
   /// "Generic 42 in structured media enclosure".
-  String? enclosureModel;
-  SheetEdge sheetEdge;
+  String? _enclosureModel;
+  String? get enclosureModel => _enclosureModel;
+  @internal
+  set enclosureModel(String? v) => _enclosureModel = v;
+
+  /// Which edge of the schematic sheet this body's off-page connectors
+  /// bank on (CR-072). Read by `schematic_scene.dart` and `sugiyama.dart`,
+  /// so it is a relayout rather than a repaint.
+  SheetEdge _sheetEdge;
+  SheetEdge get sheetEdge => _sheetEdge;
+  @internal
+  set sheetEdge(SheetEdge v) => _sheetEdge = v;
+
   EntityMeta meta;
 
   // NO bundleIds list — Outlets key back via Link.structureOrigin

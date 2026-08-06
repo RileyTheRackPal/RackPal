@@ -18,18 +18,26 @@ final class Outlet {
     required String designation,
     required this.order,
     required this.meta,
-    this.locationId,
-    this.wall,
-    this.mountSurface,
-    this.mountHeightAff,
-    this.floorNumber,
+    Uuid? locationId,
+    Wall? wall,
+    MountSurface? mountSurface,
+    Len? mountHeightAff,
+    int? floorNumber,
     this.outletTemplateId,
-    this.tia570Grade,
-    this.pathwayId,
-    this.nominalRunLength,
+    String? tia570Grade,
+    Uuid? pathwayId,
+    Len? nominalRunLength,
     String? notes,
     Map<String, Object?>? unknown,
   }) : _designation = designation,
+       _locationId = locationId,
+       _wall = wall,
+       _mountSurface = mountSurface,
+       _mountHeightAff = mountHeightAff,
+       _floorNumber = floorNumber,
+       _tia570Grade = tia570Grade,
+       _pathwayId = pathwayId,
+       _nominalRunLength = nominalRunLength,
        _notes = notes,
        unknown = unknown ?? {};
 
@@ -61,22 +69,62 @@ final class Outlet {
   @internal
   set notes(String? v) => _notes = v;
 
+  /// A standards TAG, not an axis (CR-108).
+  String? _tia570Grade;
+  String? get tia570Grade => _tia570Grade;
+  @internal
+  set tia570Grade(String? v) => _tia570Grade = v;
+
+  Uuid? _locationId;
+  Uuid? get locationId => _locationId;
+  @internal
+  set locationId(Uuid? v) => _locationId = v;
+
+  Wall? _wall;
+  Wall? get wall => _wall;
+  @internal
+  set wall(Wall? v) => _wall = v;
+
+  MountSurface? _mountSurface;
+  MountSurface? get mountSurface => _mountSurface;
+  @internal
+  set mountSurface(MountSurface? v) => _mountSurface = v;
+
+  /// Height above finished floor. Null is UNKNOWN, never a measured zero
+  /// (CR-114): a plate nobody has measured is not a plate on the floor.
+  Len? _mountHeightAff;
+  Len? get mountHeightAff => _mountHeightAff;
+  @internal
+  set mountHeightAff(Len? v) => _mountHeightAff = v;
+
+  int? _floorNumber;
+  int? get floorNumber => _floorNumber;
+  @internal
+  set floorNumber(int? v) => _floorNumber = v;
+
+  Uuid? _pathwayId;
+  Uuid? get pathwayId => _pathwayId;
+  @internal
+  set pathwayId(Uuid? v) => _pathwayId = v;
+
+  /// The per-drop nominal the schedule can source a length from. Null is
+  /// UNKNOWN and the rollup counts it as such (G4, CR-114).
+  Len? _nominalRunLength;
+  Len? get nominalRunLength => _nominalRunLength;
+  @internal
+  set nominalRunLength(Len? v) => _nominalRunLength = v;
+
   // ACCESS CONTROL: fields below are plain mutable pending @internal
-  // retrofit (AC-013). Converted as each is wired to a Command. See
-  // internal_setter_grep_test.dart.
-  Uuid? locationId;
-  Wall? wall;
-  MountSurface? mountSurface;
-  Len? mountHeightAff;
-  int? floorNumber;
+  // retrofit (AC-013). Converted as each is wired to a Command; the eight
+  // above were converted by M3-A/5's `OutletField` table. These remain
+  // because no Command writes them: `outletTemplateId` is provenance
+  // (CR-108, "what created it") that the creating gesture sets and an
+  // inspector only displays, and `order` is written by a reorder drag
+  // through the `FracIndex` allocator rather than as a value a caller
+  // supplies. See internal_setter_grep_test.dart.
 
   /// What created it (CR-108).
   String? outletTemplateId;
-
-  /// A standards TAG, not an axis (CR-108).
-  String? tia570Grade;
-  Uuid? pathwayId;
-  Len? nominalRunLength;
   FracIndex order;
   EntityMeta meta;
 }
