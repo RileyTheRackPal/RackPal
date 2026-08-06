@@ -400,16 +400,13 @@ int templatePortSeq(RackDocument doc, ConnectTarget target) {
 
 /// [key]'s 1-based position in [body]'s declared port order.
 ///
-/// The sort is `PortDef.order` with a `key` tiebreak, IDENTICAL to
-/// `resolvePortSet`'s, because two orderings of the same list is how a pin
-/// ends up with one number on the schedule and a different one in the set
-/// that wires it.
+/// Through `portsInDeclaredOrder`, which `resolvePortSet` and the schematic
+/// also call: two orderings of the same list is how a pin ends up with one
+/// number on the schedule and a different one in the set that wires it.
+/// This used to restate the comparator and caption it "IDENTICAL to
+/// `resolvePortSet`'s", which named that risk without removing it.
 int _seqIn(TemplateBody body, PortKey key) {
-  final ordered = [...body.ports]
-    ..sort((a, b) {
-      final byOrder = a.order.v.compareTo(b.order.v);
-      return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
-    });
+  final ordered = portsInDeclaredOrder(body.ports);
   final at = ordered.indexWhere((p) => p.key.v == key.v);
   return at < 0 ? 1 : at + 1;
 }

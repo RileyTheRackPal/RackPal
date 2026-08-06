@@ -63,12 +63,24 @@ import 'package:rackmate_core/src/units/ids.dart';
 import 'package:rackmate_core/src/units/mass.dart';
 import 'package:rackmate_core/src/units/thermal.dart';
 
-/// The `RackDocument.templates` key for [ref] — `"$templateId@$version"`.
+/// The `RackDocument.templates` key for a template id at a version —
+/// `"$templateId@$version"`.
 ///
 /// One spelling, because three files used to carry their own copy of this
 /// string interpolation and a key that is wrong resolves to `null`, which
 /// every caller reads as "unknown template" rather than as "typo".
-String templateKeyFor(TemplateRef ref) => '${ref.templateId.v}@${ref.version}';
+///
+/// THE ID/VERSION FORM EXISTS FOR THE ONE SITE THAT EXTRACTION MISSED.
+/// `commands/catalog_placement.dart`'s `catalogTemplateKey` pins version 1
+/// for a seed id and has no `TemplateRef` to hand, so it kept its own
+/// `'$catalogId@1'` under a comment naming a THIRD file as the format's
+/// owner. A second spelling of the join is the same defect as a second
+/// spelling of the key.
+String templateKey(String templateId, int version) => '$templateId@$version';
+
+/// [templateKey] for [ref].
+String templateKeyFor(TemplateRef ref) =>
+    templateKey(ref.templateId.v, ref.version);
 
 /// Resolves [device]'s template body from [templates], or `null` when the
 /// snapshot does not resolve.

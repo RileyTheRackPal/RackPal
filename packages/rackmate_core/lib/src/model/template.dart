@@ -510,6 +510,34 @@ final class PowerProfile {
   int? btuPerHourOverride;
 }
 
+/// [ports] in FIXED_ORDER (docs/05 §3): the template's declared `order`,
+/// tie-broken by `key`.
+///
+/// THE ONE SPELLING OF THE DECLARED PORT ORDER. This comparator was written
+/// five times, byte for byte: `derived/connect_rules.dart`,
+/// `derived/connect_target.dart`, `derived/port_set_resolution.dart`,
+/// `commands/multi_draw.dart` and `draw/scene/schematic_scene.dart`.
+/// `connect_target.dart` even carried a doc comment calling its copy
+/// "IDENTICAL to `resolvePortSet`'s", and named the exact failure: "two
+/// orderings of the same list is how a pin ends up with one number on the
+/// schedule and a different one in the set that wires it". Naming the
+/// coupling in prose is not the same as removing it.
+///
+/// The `key` tiebreak is what makes the order TOTAL, and it is not
+/// decoration: `order` is a `FracIndex` compared as a raw string
+/// (`catalog/catalog_ports.dart` says so), nothing enforces its uniqueness
+/// within a body, and `List.sort` is not stable. Two ports sharing an
+/// `order` would otherwise rank by whatever sequence the decoder happened
+/// to produce, and a port's rank becomes its designator.
+///
+/// Returns a new list; [ports] is not mutated. Callers that need a subset
+/// filter first, which is why this takes an `Iterable` rather than a body.
+List<PortDef> portsInDeclaredOrder(Iterable<PortDef> ports) =>
+    ports.toList()..sort((a, b) {
+      final byOrder = a.order.v.compareTo(b.order.v);
+      return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
+    });
+
 /// One port on a template. `key` is the stable, author-assigned migration
 /// join (CR-051) — never a UUID, because a UUID cannot express "this port
 /// was renamed".

@@ -128,14 +128,9 @@ List<ConnectTarget> portsInBank(
   final body = bodyFor(device, doc.templates);
   if (body == null) return const [];
 
-  final defs =
-      <PortDef>[
-        for (final p in body.ports)
-          if (p.bankKey == bankKey) p,
-      ]..sort((a, b) {
-        final byOrder = a.order.v.compareTo(b.order.v);
-        return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
-      });
+  final defs = portsInDeclaredOrder(
+    body.ports.where((p) => p.bankKey == bankKey),
+  );
 
   return <ConnectTarget>[
     for (final def in defs)

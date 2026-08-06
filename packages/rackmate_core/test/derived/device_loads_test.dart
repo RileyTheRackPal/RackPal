@@ -340,5 +340,18 @@ void main() {
         'AMP@3',
       );
     });
+
+    test('`catalogTemplateKey` builds the SAME join, not its own', () {
+      // It pins version 1 for a seed id and has no `TemplateRef` to hand,
+      // which is how it kept a hand-built `'$catalogId@1'` through the
+      // extraction that gave every other caller one spelling. A key that
+      // is wrong resolves to null, which reads as "unknown template"
+      // rather than as "typo".
+      expect(
+        catalogTemplateKey('tpl.generic.amp'),
+        templateKey('tpl.generic.amp', 1),
+      );
+      expect(catalogTemplateKey('tpl.generic.amp'), 'tpl.generic.amp@1');
+    });
   });
 }

@@ -25,9 +25,12 @@ import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/model/template.dart';
 import 'package:rackmate_core/src/units/ids.dart';
 
-/// The `RackDocument.templates` key for a seed catalog id at version 1
-/// (matching `scene_builder.dart`'s own `"$templateId@$version"` scheme).
-String catalogTemplateKey(String catalogId) => '$catalogId@1';
+/// The `RackDocument.templates` key for a seed catalog id at version 1,
+/// through `derived/device_loads.dart`'s [templateKey] so the `@` join has
+/// exactly one spelling. The old comment here named `scene_builder.dart` as
+/// the scheme's owner, which stopped being true when the key moved to
+/// `device_loads.dart` and left this the last hand-built one.
+String catalogTemplateKey(String catalogId) => templateKey(catalogId, 1);
 
 /// One rail-placed device on one face, with its per-face height already
 /// resolved through the template store.

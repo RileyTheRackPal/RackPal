@@ -615,11 +615,7 @@ _Candidate _measureCandidate({
   // FIXED_ORDER (docs/05 §3): a device's ports are real hardware and the
   // template's declared order is the drawing's order. `buildSymbolGeometry`
   // requires them pre-sorted; the key breaks a duplicated `order`.
-  final ports = body.ports.toList()
-    ..sort((a, b) {
-      final byOrder = a.order.v.compareTo(b.order.v);
-      return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
-    });
+  final ports = portsInDeclaredOrder(body.ports);
 
   final bankOf = <String, BankDef>{};
   for (final bank in body.banks) {

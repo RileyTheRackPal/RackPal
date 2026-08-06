@@ -45,7 +45,8 @@ import 'package:rackmate_core/src/model/placement.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 // `PortDirection` — `chainOutputFor` skips the two directions where a
 // signal STOPS (see its own note on why `busNode` is not one of them).
-import 'package:rackmate_core/src/model/template.dart' show PortDirection;
+import 'package:rackmate_core/src/model/template.dart'
+    show PortDirection, portsInDeclaredOrder;
 import 'package:rackmate_core/src/units/ids.dart';
 
 /// The five model-level illegality rules a connect gesture can meet, IN
@@ -273,11 +274,7 @@ ConnectTarget? chainOutputFor(
   final body = bodyFor(device, doc.templates);
   if (body == null) return null;
 
-  final ordered = [...body.ports]
-    ..sort((a, b) {
-      final byOrder = a.order.v.compareTo(b.order.v);
-      return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
-    });
+  final ordered = portsInDeclaredOrder(body.ports);
 
   for (final def in ordered) {
     // A SOURCE, OR SOMETHING THAT CAN ACT AS ONE. `bidirectional` and

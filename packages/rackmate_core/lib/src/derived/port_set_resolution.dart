@@ -124,11 +124,9 @@ ResolvedPortSet? resolvePortSet(
   }
   if (def == null) return null;
 
-  final defs = body.ports.where((p) => p.setKey == setKey).toList()
-    ..sort((a, b) {
-      final byOrder = a.order.v.compareTo(b.order.v);
-      return byOrder != 0 ? byOrder : a.key.v.compareTo(b.key.v);
-    });
+  final defs = portsInDeclaredOrder(
+    body.ports.where((p) => p.setKey == setKey),
+  );
 
   return ResolvedPortSet(
     deviceId: deviceId,
