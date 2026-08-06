@@ -593,6 +593,63 @@ void main() {
     });
   });
 
+  group('the Placement/Outlet passthrough (DR-019 §11.18.2(5))', () {
+    // Fixtures (a)-(d) predate this key, which is exactly the argument
+    // fixture (d) was added under: a corpus that cannot see the encoder a
+    // change touched is not guarding it.
+    //
+    // These assert on BYTES rather than only on the round-trip property.
+    // A codec that dropped the bag on decode and re-emitted nothing would
+    // round-trip perfectly and still have lost the caller's data, which is
+    // the whole failure DR-019 names.
+
+    test('a placement bag survives the trip, and reaches the bytes', () {
+      final doc = _rackAndDeviceFixture();
+      final device = doc.devices.values.first;
+      final rail = device.placement as RailPlacement;
+      device.placement = RailPlacement(
+        rackId: rail.rackId,
+        ruIndex: rail.ruIndex,
+        face: rail.face,
+        unknown: const <String, Object?>{'planPin': 'kept', 'futureU': 7},
+      );
+
+      final bytes = const JsonDocumentCodec().write(doc);
+      expect(utf8.decode(bytes), contains('"planPin": "kept"'));
+
+      final back = const JsonDocumentCodec().read(bytes);
+      final reread =
+          (back as Ok<RackDocument>).value.devices.values.first.placement
+              as RailPlacement;
+      expect(reread.unknown['planPin'], 'kept');
+      expect(reread.unknown['futureU'], 7);
+      expect(const JsonDocumentCodec().write(back.value), bytes);
+    });
+
+    test('an EMPTY bag writes no key at all, so files that predate it still '
+        'round-trip', () {
+      // The rule that makes omission safe: nothing ever writes `{}`, so no
+      // file this build produces can contain the empty bag that would fail
+      // to survive the trip back. Adding the key unconditionally, as
+      // `_encodePort` does, would have changed the bytes of all four
+      // starters and every checked-in fixture.
+      //
+      // Asserted on the PLACEMENT NODE, not on the whole document: `Port`
+      // and `EntityMeta` DO write `"unknown": {}` unconditionally, and a
+      // document-wide string search finds theirs and proves nothing about
+      // this key.
+      final bytes = const JsonDocumentCodec().write(_rackAndDeviceFixture());
+      final root = jsonDecode(utf8.decode(bytes)) as Map<String, Object?>;
+      final document = root['document']! as Map<String, Object?>;
+      final devices = document['devices']! as Map<String, Object?>;
+      final device = devices.values.first! as Map<String, Object?>;
+      final placement = device['placement']! as Map<String, Object?>;
+
+      expect(placement['type'], 'rail');
+      expect(placement.containsKey('unknown'), isFalse);
+    });
+  });
+
   group('PowerProfile on disk: absent is not zero (CR-114, CR-117)', () {
     // The three-way distinction fixture (d) exists for, asserted directly on
     // the bytes rather than only through the round-trip property — a codec

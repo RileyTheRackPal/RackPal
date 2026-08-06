@@ -28,11 +28,27 @@ final class Outlet {
     this.pathwayId,
     this.nominalRunLength,
     String? notes,
+    Map<String, Object?>? unknown,
   }) : _designation = designation,
-       _notes = notes;
+       _notes = notes,
+       unknown = unknown ?? {};
 
   final Uuid id;
   final Uuid structureBodyId;
+
+  /// Forward-compat / passthrough for fields this reader does not model
+  /// (DR-019 §11.18.2(5)). Without it a build that predates a later outlet
+  /// field silently DROPS that field on save, and under DR-006's
+  /// shared-file reality two builds touching one project is ordinary.
+  ///
+  /// THE `Port` SHAPE, not `Placement`'s. `Outlet` is a mutable entity with
+  /// `@internal` setters, so a fresh map per instance is right here for the
+  /// same reason a shared `const` one is right on the immutable placement
+  /// union. See `placement.dart` for why the two deliberately differ.
+  ///
+  /// IT LANDS BEFORE DR-007'S GANG LIST, deliberately. This is the field
+  /// that protects the fields M3 is about to add to this very class.
+  final Map<String, Object?> unknown;
 
   /// The outlet's own field designation.
   String _designation;

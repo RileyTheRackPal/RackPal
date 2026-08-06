@@ -36,7 +36,34 @@ enum ZeroUOrientation { horizontal, vertical }
 /// exclusive placement kinds. Elevation X/Y is NEVER stored; it is always
 /// derived from `(Placement, rail geometry, face)` (CR-006).
 sealed class Placement {
-  const Placement();
+  const Placement({this.unknown = const <String, Object?>{}});
+
+  /// Forward-compat / passthrough for fields this reader does not model
+  /// (DR-019 §11.18.2(5)). Without it a build that predates a later
+  /// placement field silently DROPS that field on save, and under DR-006's
+  /// shared-file reality two builds touching one project is ordinary.
+  ///
+  /// ON THE BASE, NOT ON EACH VARIANT, because the passthrough is a fact
+  /// about being a `Placement` rather than about being a rail or a shelf,
+  /// and five copies of one field is how the copies stop agreeing.
+  ///
+  /// A `const` EMPTY DEFAULT, WHICH IS A DELIBERATE DEVIATION FROM THE
+  /// `Port` PRECEDENT. `port.dart` writes `unknown ?? {}` in an initialiser
+  /// list, giving every instance a fresh MUTABLE map. That is right for
+  /// `Port`, which is a mutable entity; it is wrong here twice over. This
+  /// file's own header states that a placement change REPLACES the whole
+  /// object rather than mutating one in place, so nothing should be adding
+  /// keys to a live placement's bag. And `unknown ?? {}` cannot be `const`,
+  /// which would have cost every `const RailPlacement(...)` in the fixtures
+  /// and tests its constness for a field none of them set. A shared const
+  /// empty map is both the honest shape and the one with no blast radius.
+  ///
+  /// RESERVED CONTAINER, NOT A HARVESTER. Nothing collects unrecognised
+  /// SIBLING keys: what survives a round trip is what a writer deliberately
+  /// put in this bag, which is the contract `codec_split_test.dart` already
+  /// asserts for `Port`. Harvesting siblings would be a different format
+  /// and would need its own ruling (roadmap §8.3).
+  final Map<String, Object?> unknown;
 }
 
 /// Mounted to the rack's vertical rails, on one face, at one RU.
@@ -50,6 +77,7 @@ final class RailPlacement extends Placement {
     this.depthOffsetFromFront,
     this.chassisRotation = ChassisRotation.normal,
     this.locked = false,
+    super.unknown,
   });
 
   final Uuid rackId;
@@ -79,6 +107,7 @@ final class ShelfPlacement extends Placement {
     required this.order,
     this.lateralOffset,
     this.locked = false,
+    super.unknown,
   });
 
   final Uuid hostDeviceId;
@@ -98,6 +127,7 @@ final class ZeroUPlacement extends Placement {
     required this.offsetFromChannelStart,
     required this.orientation,
     this.locked = false,
+    super.unknown,
   });
 
   final Uuid rackId;
@@ -110,7 +140,7 @@ final class ZeroUPlacement extends Placement {
 /// Not in any rack — a wall-mounted speaker, an off-rack passive splitter,
 /// a hardwired device.
 final class OffRackPlacement extends Placement {
-  const OffRackPlacement({this.locationId, this.mountNote});
+  const OffRackPlacement({this.locationId, this.mountNote, super.unknown});
 
   final Uuid? locationId;
   final String? mountNote;
@@ -124,6 +154,7 @@ final class StagedPlacement extends Placement {
     this.lastRuIndex,
     this.lastFace,
     this.schematicHint,
+    super.unknown,
   });
 
   final Uuid? lastRackId;

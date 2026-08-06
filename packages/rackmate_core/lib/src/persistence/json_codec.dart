@@ -957,6 +957,25 @@ TemplateRef _decodeTemplateRef(JsonMap json) => TemplateRef(
 // follow the identical naming pattern (strip "Placement", lowercase the
 // first letter) but aren't themselves shown in the example — noted per
 // this package's drift-handling policy rather than silently assumed.
+/// The `unknown` passthrough entry for [placement], or nothing when the bag
+/// is empty (DR-019 §11.18.2(5)).
+///
+/// OMITTED WHEN EMPTY, WHICH IS A DELIBERATE DEVIATION FROM `_encodePort`.
+/// That one writes `'unknown': p.unknown` unconditionally, so every `Port`
+/// in every shipped file already carries a `"unknown": {}`. Placements do
+/// not, and adding the key unconditionally would change the bytes of all
+/// four starters and every checked-in fixture, breaking CR-117 on files
+/// this build did not write. Omission is also what the format already
+/// means by "not present": canon §12.12 settles the neighbouring container
+/// question on exactly that ground, that an absent key is how this format
+/// expresses absence (G4, CR-114).
+///
+/// The rule is self-consistent because nothing ever WRITES an empty bag, so
+/// no file this build produces can contain the `"unknown": {}` that would
+/// fail to survive the trip back.
+Map<String, Object?>? _placementUnknown(Placement placement) =>
+    placement.unknown.isEmpty ? null : {'unknown': placement.unknown};
+
 JsonMap _encodePlacement(Placement placement) => switch (placement) {
   RailPlacement(
     :final rackId,
@@ -979,6 +998,7 @@ JsonMap _encodePlacement(Placement placement) => switch (placement) {
       'locked': locked,
       if (depthOffsetFromFront != null)
         'depthOffsetFromFrontNm': depthOffsetFromFront.nm,
+      ...?_placementUnknown(placement),
     },
   ShelfPlacement(
     :final hostDeviceId,
@@ -992,6 +1012,7 @@ JsonMap _encodePlacement(Placement placement) => switch (placement) {
       'order': order.v,
       'locked': locked,
       if (lateralOffset != null) 'lateralOffsetNm': lateralOffset.nm,
+      ...?_placementUnknown(placement),
     },
   ZeroUPlacement(
     :final rackId,
@@ -1007,11 +1028,13 @@ JsonMap _encodePlacement(Placement placement) => switch (placement) {
       'offsetFromChannelStartNm': offsetFromChannelStart.nm,
       'orientation': encodeEnumName(orientation),
       'locked': locked,
+      ...?_placementUnknown(placement),
     },
   OffRackPlacement(:final locationId, :final mountNote) => {
     'type': 'offRack',
     if (locationId != null) 'locationId': locationId.v,
     if (mountNote != null) 'mountNote': mountNote,
+    ...?_placementUnknown(placement),
   },
   StagedPlacement(
     :final lastRackId,
@@ -1025,8 +1048,18 @@ JsonMap _encodePlacement(Placement placement) => switch (placement) {
       if (lastRuIndex != null) 'lastRuIndex': lastRuIndex,
       if (lastFace != null) 'lastFace': encodeEnumName(lastFace),
       if (schematicHint != null) 'schematicHint': _encodePt(schematicHint),
+      ...?_placementUnknown(placement),
     },
 };
+
+/// The reserved `unknown` bag on [json], empty when the key is absent.
+///
+/// RESERVED CONTAINER, NOT A HARVESTER: this reads the `unknown` key and
+/// nothing collects unrecognised SIBLING keys, which is the contract
+/// `codec_split_test.dart` already asserts for `Port`. See
+/// `model/placement.dart`.
+Map<String, Object?> _unknownBag(JsonMap json, String context) =>
+    asJsonMap(json['unknown'] ?? const <String, Object?>{}, '$context.unknown');
 
 Placement _decodePlacement(JsonMap json) {
   final type = asStr(json['type'], 'Placement.type');
@@ -1058,6 +1091,7 @@ Placement _decodePlacement(JsonMap json) {
           'RailPlacement.chassisRotation',
         ),
         locked: asBool(json['locked'], 'RailPlacement.locked'),
+        unknown: _unknownBag(json, 'RailPlacement'),
       );
     case 'shelf':
       return ShelfPlacement(
@@ -1071,6 +1105,7 @@ Placement _decodePlacement(JsonMap json) {
           'ShelfPlacement.lateralOffsetNm',
         ),
         locked: asBool(json['locked'], 'ShelfPlacement.locked'),
+        unknown: _unknownBag(json, 'ShelfPlacement'),
       );
     case 'zeroU':
       return ZeroUPlacement(
@@ -1086,6 +1121,7 @@ Placement _decodePlacement(JsonMap json) {
           'ZeroUPlacement.orientation',
         ),
         locked: asBool(json['locked'], 'ZeroUPlacement.locked'),
+        unknown: _unknownBag(json, 'ZeroUPlacement'),
       );
     case 'offRack':
       return OffRackPlacement(
@@ -1094,6 +1130,7 @@ Placement _decodePlacement(JsonMap json) {
           'OffRackPlacement.locationId',
         ),
         mountNote: asStrOrNull(json['mountNote'], 'OffRackPlacement.mountNote'),
+        unknown: _unknownBag(json, 'OffRackPlacement'),
       );
     case 'staged':
       return StagedPlacement(
@@ -1118,6 +1155,7 @@ Placement _decodePlacement(JsonMap json) {
           'StagedPlacement.schematicHint',
           _decodePt,
         ),
+        unknown: _unknownBag(json, 'StagedPlacement'),
       );
     default:
       throw FormatException('Unrecognised Placement.type "$type".');
@@ -1834,6 +1872,9 @@ JsonMap _encodeOutlet(Outlet o) {
   putIfNotNull(json, 'tia570Grade', o.tia570Grade);
   putIfNotNull(json, 'pathwayId', o.pathwayId?.v);
   putIfNotNull(json, 'nominalRunLengthNm', o.nominalRunLength?.nm);
+  // Omitted when empty, for the reason given on `_placementUnknown`: every
+  // shipped outlet predates this key.
+  if (o.unknown.isNotEmpty) json['unknown'] = o.unknown;
   return json;
 }
 
@@ -1877,6 +1918,7 @@ Outlet _decodeOutlet(Uuid id, JsonMap json) => Outlet(
     'Outlet.nominalRunLengthNm',
   ),
   notes: asStrOrNull(json['notes'], 'Outlet.notes'),
+  unknown: _unknownBag(json, 'Outlet'),
 );
 
 // --- StructureBody -----------------------------------------------------------
