@@ -1,8 +1,9 @@
 // rackmate_core/src/commands/set_entity_property_command.dart — pure Dart.
 //
-// THE EDIT HALF of the Structure family: one generic command that writes
-// one declared property on one `Outlet` or one `StructureBody`. Board
-// M3-A/5, AC-013.
+// ONE GENERIC COMMAND that writes one declared property on one entity,
+// plus the accessor tables that say which properties those are. Board
+// M3-A/5 (Outlet, StructureBody) and M3-A/7 (the lifecycle enum on
+// DeviceInstance and Link), AC-013.
 //
 // ─────────────────────────────────────────────────────────────────────────
 // WHY THIS ONE IS GENERIC OVER THE ENTITY AND THE RACK ONE IS NOT
@@ -13,12 +14,12 @@
 // than an `Object?` payload that would discard static typing at exactly
 // the inspector call sites that generate it.
 //
-// What is new is that this task asks for the same thing on TWO entities at
-// once. Writing the command class twice would put a THIRD copy of the
+// What is new is that M3-A/5 asked for the same thing on TWO entities at
+// once. Writing the command class twice would have put a THIRD copy of the
 // `_prevUpdatedAt`/`_prevUpdatedBy`/`_prevLocalRevision` snapshot dance in
 // this package — which is the duplication that argument exists to avoid,
-// one level up. So the entity is a type parameter and the two tables are
-// data.
+// one level up. So the entity is a type parameter and the tables are data,
+// and M3-A/7 then cost two rows rather than a fifth command class.
 //
 // `SetRackPropertyCommand` IS DELIBERATELY LEFT ALONE. Folding it into
 // this class is mechanical but wide: `rackmate_ui`'s inspector, the canvas
@@ -55,25 +56,41 @@
 //    table `set` would silently violate. It needs the refusing-builder
 //    shape `buildAddHomeRunCommand` has, so it is its own board item
 //    rather than a row here.
+//
+// [DeviceField] and [LinkField] are SUBSETS of their models' `@internal`
+// setters rather than equal to them, and deliberately: a device's
+// designator, name and placement are each already wired to a command of
+// their own. Only [OutletField] and [StructureBodyField] own every
+// converted setter on their class, which is why only those two carry the
+// exact-agreement test.
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/label_key.dart';
+import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
-import 'package:rackmate_core/src/model/enums.dart' show MountSurface, Wall;
+import 'package:rackmate_core/src/model/enums.dart'
+    show LifecycleStatus, MountSurface, Wall;
+import 'package:rackmate_core/src/model/link.dart';
 import 'package:rackmate_core/src/model/outlet.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/model/structure_body.dart';
 import 'package:rackmate_core/src/units/ids.dart';
 import 'package:rackmate_core/src/units/len.dart';
 
-// Top-level functions rather than closures so [EntityAccess]'s two
-// instances can be `const`: a tear-off of a top-level function is a
-// constant expression, a closure literal is not.
+// Top-level functions rather than closures so the [EntityAccess] instances
+// below can be `const`: a tear-off of a top-level function is a constant
+// expression, a closure literal is not.
 Outlet? _lookUpOutlet(RackDocument doc, Uuid id) => doc.outlets[id];
 EntityMeta _outletMeta(Outlet o) => o.meta;
 
 StructureBody? _lookUpStructureBody(RackDocument doc, Uuid id) =>
     doc.structures[id];
 EntityMeta _structureBodyMeta(StructureBody b) => b.meta;
+
+DeviceInstance? _lookUpDevice(RackDocument doc, Uuid id) => doc.devices[id];
+EntityMeta _deviceMeta(DeviceInstance d) => d.meta;
+
+Link? _lookUpLink(RackDocument doc, Uuid id) => doc.links[id];
+EntityMeta _linkMeta(Link l) => l.meta;
 
 /// How [SetEntityPropertyCommand] reaches one KIND of entity: which map to
 /// look an id up in, and where that entity keeps its [EntityMeta].
@@ -116,6 +133,20 @@ final class EntityAccess<E> {
     name: 'structureBody',
     lookUp: _lookUpStructureBody,
     metaOf: _structureBodyMeta,
+  );
+
+  /// One placed (or staged) piece of equipment.
+  static const device = EntityAccess<DeviceInstance>(
+    name: 'device',
+    lookUp: _lookUpDevice,
+    metaOf: _deviceMeta,
+  );
+
+  /// One cable.
+  static const link = EntityAccess<Link>(
+    name: 'link',
+    lookUp: _lookUpLink,
+    metaOf: _linkMeta,
   );
 
   @override
@@ -331,6 +362,59 @@ abstract final class StructureBodyField {
     distributionDeviceLocationId,
     sheetEdge,
   ];
+}
+
+/// Editable [DeviceInstance] properties.
+///
+/// ONE ROW SO FAR, and the AC-013 rule is why: a field is converted to an
+/// `@internal` setter as it is wired to a Command, and `DeviceInstance`'s
+/// other converted setters (`designator`, `name`, `placement`, `notes`)
+/// are wired to `RenameEntityCommand` and `MoveDeviceCommand` instead. So
+/// unlike [OutletField] and [StructureBodyField], this table is a SUBSET
+/// of the model's `@internal` setters rather than equal to it, and its
+/// test asserts the one direction that holds.
+abstract final class DeviceField {
+  /// The five-state enum M3-A/7 exists for.
+  ///
+  /// `structure | meta` because the rack canvas subscribes to exactly
+  /// those two: `structure` redraws the elevation, whose border is a
+  /// different dash per state (`lifecycleStroke`, docs/08 §2.2), and
+  /// `meta` refreshes T6.30's STATUS word (`lifecycleLabel`). Declaring
+  /// only one of them would leave a user looking at a stale border or a
+  /// stale list after an edit they just made.
+  static final lifecycleStatus = EntityField<DeviceInstance, LifecycleStatus>(
+    access: EntityAccess.device,
+    key: 'lifecycleStatus',
+    get: (d) => d.lifecycleStatus,
+    set: (d, v) => d.lifecycleStatus = v,
+    touches: EpochMask.structure | EpochMask.meta,
+  );
+
+  /// See [OutletField.all].
+  static final List<EntityField<DeviceInstance, Object?>> all = [
+    lifecycleStatus,
+  ];
+}
+
+/// Editable [Link] properties.
+///
+/// A subset of the model's `@internal` setters, for [DeviceField]'s
+/// reason: `designator`, `notes`, the two jacket colours and the link
+/// class are each wired to their own command.
+abstract final class LinkField {
+  /// `wires | meta` rather than the device's `structure | meta`: a cable's
+  /// state reaches paper through the schedule and the schematic, and the
+  /// schematic canvas subscribes to `wires`.
+  static final lifecycleStatus = EntityField<Link, LifecycleStatus>(
+    access: EntityAccess.link,
+    key: 'lifecycleStatus',
+    get: (l) => l.lifecycleStatus,
+    set: (l, v) => l.lifecycleStatus = v,
+    touches: EpochMask.wires | EpochMask.meta,
+  );
+
+  /// See [OutletField.all].
+  static final List<EntityField<Link, Object?>> all = [lifecycleStatus];
 }
 
 /// Sets one [EntityField] on one entity.

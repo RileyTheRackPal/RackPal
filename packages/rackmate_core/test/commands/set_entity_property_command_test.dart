@@ -35,8 +35,17 @@ final _later = DateTime.utc(2026, 8, 7);
 EntityMeta _meta() =>
     EntityMeta(createdAt: _now, updatedAt: _now, updatedBy: 'seed');
 
-/// A project with one Structure body and one Outlet on it.
-({RackDocument doc, Uuid bodyId, Uuid outletId}) _project() {
+/// A project with one Structure body, one Outlet on it, and one home run
+/// pulled from that outlet — so every one of the four tables has a real
+/// entity to be exercised against.
+({
+  RackDocument doc,
+  Uuid bodyId,
+  Uuid outletId,
+  Uuid deviceId,
+  Uuid linkId,
+})
+_project() {
   final doc = RackDocument(
     id: const Uuid('doc-entity-props'),
     appVersion: '0.1.0',
@@ -57,8 +66,44 @@ EntityMeta _meta() =>
     now: _now,
     actor: 'seed',
   )..apply(doc);
+  final run =
+      (buildAddHomeRunCommand(
+                doc: doc,
+                outletId: outlet.id,
+                fieldLabel: 'GR-DATA-1',
+                designator: 'W001',
+                netName: 'N001',
+                media: const MediaTypeId('media.cat6_utp'),
+                fieldEnd: const PlaceEndpoint(description: 'Great Room'),
+                terminationField: TerminationType.keystone,
+                now: _now,
+                actor: 'seed',
+              )
+              as AddHomeRunReady)
+          .command
+        ..apply(doc);
 
-  return (doc: doc, bodyId: structure.bodyId, outletId: outlet.id);
+  return (
+    doc: doc,
+    bodyId: structure.bodyId,
+    outletId: outlet.id,
+    // The Structure device. It has no template by spec (docs/07 §2), and
+    // `buildEquipmentList` handles that, so it is a legitimate row on
+    // T6.30 and does not need a template snapshot staged for it.
+    deviceId: structure.deviceId,
+    linkId: run.id,
+  );
+}
+
+/// The word T6.30 prints in [deviceId]'s STATUS position, through the real
+/// derivation rather than by re-reading the enum.
+String _statusWordFor(RackDocument doc, Uuid deviceId) {
+  final row = [
+    for (final group in buildEquipmentList(doc).groups)
+      for (final r in group.rows)
+        if (r.deviceId == deviceId) r,
+  ].single;
+  return lifecycleLabel(row.lifecycleStatus);
 }
 
 SetEntityPropertyCommand<E, T> _cmd<E, T>(
@@ -627,6 +672,134 @@ void main() {
     });
   });
 
+  group('LifecycleStatus is reachable through a gesture (M3-A/7)', () {
+    // The property this group exists for, in the board item's words: the
+    // model has carried the five-value enum since M0 and NOTHING COULD
+    // CHANGE IT, so four of the five elevation borders were reachable only
+    // by hand-authoring a file. `lifecycle_status_expression_test.dart`
+    // pins that the five borders and the five labels differ; this pins
+    // that the app can put a device or a cable into each of them.
+    test('all five states are reachable on a DEVICE, and undo comes back', () {
+      final p = _project();
+      final device = p.doc.devices[p.deviceId]!;
+      expect(device.lifecycleStatus, LifecycleStatus.new_);
+
+      for (final status in LifecycleStatus.values) {
+        final cmd = buildSetEntityProperty(
+          doc: p.doc,
+          id: p.deviceId,
+          field: DeviceField.lifecycleStatus,
+          to: status,
+          now: _later,
+          actor: 'tester',
+        );
+        if (status == LifecycleStatus.new_) {
+          expect(
+            cmd,
+            isNull,
+            reason: 'the device already holds the default; that is a no-op',
+          );
+          continue;
+        }
+        cmd!.apply(p.doc);
+        expect(device.lifecycleStatus, status);
+        cmd.revert(p.doc);
+        expect(device.lifecycleStatus, LifecycleStatus.new_);
+      }
+    });
+
+    test('all five states are reachable on a LINK', () {
+      final p = _project();
+      final link = p.doc.links[p.linkId]!;
+
+      for (final status in LifecycleStatus.values) {
+        if (status == LifecycleStatus.new_) continue;
+        buildSetEntityProperty(
+          doc: p.doc,
+          id: p.linkId,
+          field: LinkField.lifecycleStatus,
+          to: status,
+          now: _later,
+          actor: 'tester',
+        )!.apply(p.doc);
+        expect(link.lifecycleStatus, status);
+      }
+    });
+
+    test('DESIGN INTENT reaches T6.30 from a gesture, which is the whole '
+        'point', () {
+      // Before this task the equipment list could print `DESIGN INTENT`
+      // only for a device somebody had hand-authored into a file. The
+      // label table and the command are joined here so neither can be
+      // changed without the other being considered.
+      final p = _project();
+      expect(_statusWordFor(p.doc, p.deviceId), 'NEW');
+
+      buildSetEntityProperty(
+        doc: p.doc,
+        id: p.deviceId,
+        field: DeviceField.lifecycleStatus,
+        to: LifecycleStatus.designIntent,
+        now: _later,
+        actor: 'tester',
+      )!.apply(p.doc);
+
+      expect(_statusWordFor(p.doc, p.deviceId), 'DESIGN INTENT');
+    });
+
+    test('the device field declares BOTH epochs the rack canvas listens '
+        'to', () {
+      // `structure` redraws the elevation border, `meta` refreshes T6.30's
+      // word. Declaring one would leave a user looking at a stale surface
+      // after an edit they just made.
+      expect(
+        DeviceField.lifecycleStatus.touches.has(EpochMask.structure),
+        isTrue,
+      );
+      expect(DeviceField.lifecycleStatus.touches.has(EpochMask.meta), isTrue);
+    });
+
+    test('the link field declares wires, not structure — a cable reaches '
+        'paper through the schedule and the schematic', () {
+      expect(LinkField.lifecycleStatus.touches.has(EpochMask.wires), isTrue);
+      expect(LinkField.lifecycleStatus.touches.has(EpochMask.meta), isTrue);
+    });
+
+    test('a device edit and a link edit never merge with each other', () {
+      final p = _project();
+      final device = _cmd(
+        p.deviceId,
+        DeviceField.lifecycleStatus,
+        LifecycleStatus.new_,
+        LifecycleStatus.existing,
+      );
+      final link = _cmd(
+        p.linkId,
+        LinkField.lifecycleStatus,
+        LifecycleStatus.new_,
+        LifecycleStatus.existing,
+      );
+
+      expect(device.mergeWith(link), isNull);
+      expect(device.mergeKey == link.mergeKey, isFalse);
+    });
+
+    test('a device lifecycle edit round-trips byte-identically', () {
+      final p = _project();
+      final before = _codec.write(p.doc);
+      final cmd = _cmd(
+        p.deviceId,
+        DeviceField.lifecycleStatus,
+        LifecycleStatus.new_,
+        LifecycleStatus.removed,
+      )..apply(p.doc);
+      expect(_codec.write(p.doc), isNot(orderedEquals(before)));
+
+      cmd.revert(p.doc);
+      expect(_codec.write(p.doc), orderedEquals(before));
+    });
+  });
+
   group('the retrofit and the tables agree (AC-013)', () {
     // The task's claim is that wiring a field to a Command IS the
     // `@internal` retrofit. These two cases are what make that a fact
@@ -656,6 +829,24 @@ void main() {
       expect(
         _internalSetters('structure_body.dart'),
         {for (final f in StructureBodyField.all) f.key},
+      );
+    });
+
+    test('every DeviceInstance and Link table key has an @internal setter '
+        'behind it', () {
+      // ONE DIRECTION ONLY for these two, and the asymmetry is real rather
+      // than laziness: `DeviceInstance.designator`, `.name`, `.placement`
+      // and `.notes` are converted setters wired to `RenameEntityCommand`
+      // and `MoveDeviceCommand`, and `Link` has five of its own. So these
+      // tables are SUBSETS, and the direction that must hold is that no
+      // table row writes a field the retrofit skipped.
+      expect(
+        _internalSetters('device_instance.dart'),
+        containsAll([for (final f in DeviceField.all) f.key]),
+      );
+      expect(
+        _internalSetters('link.dart'),
+        containsAll([for (final f in LinkField.all) f.key]),
       );
     });
   });

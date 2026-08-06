@@ -65,7 +65,7 @@ final class DeviceInstance {
     required Placement placement,
     required this.meta,
     this.designatorLocked = false,
-    this.lifecycleStatus = LifecycleStatus.new_,
+    LifecycleStatus lifecycleStatus = LifecycleStatus.new_,
     this.locationId,
     this.serialNumber,
     this.assetTag,
@@ -80,6 +80,7 @@ final class DeviceInstance {
   }) : _designator = designator,
        _name = name,
        _placement = placement,
+       _lifecycleStatus = lifecycleStatus,
        overrides = overrides ?? DeviceOverrides(),
        _notes = notes;
 
@@ -106,6 +107,15 @@ final class DeviceInstance {
   @internal
   set notes(String? v) => _notes = v;
 
+  /// Same five-value enum as `Link.lifecycleStatus` (CR-064, CR-065,
+  /// AC-018). Written through `DeviceField.lifecycleStatus`; the elevation
+  /// draws it as a distinct border per state (`lifecycleStroke`) and T6.30
+  /// prints it as a word (`lifecycleLabel`).
+  LifecycleStatus _lifecycleStatus;
+  LifecycleStatus get lifecycleStatus => _lifecycleStatus;
+  @internal
+  set lifecycleStatus(LifecycleStatus v) => _lifecycleStatus = v;
+
   // ACCESS CONTROL: fields below are plain mutable pending @internal
   // retrofit (AC-013). Converted as each is wired to a Command. See
   // internal_setter_grep_test.dart.
@@ -116,10 +126,6 @@ final class DeviceInstance {
 
   /// CR-034.
   bool designatorLocked;
-
-  /// Same five-value enum as `Link.lifecycleStatus` (CR-064, CR-065,
-  /// AC-018).
-  LifecycleStatus lifecycleStatus;
   Uuid? locationId;
   String? serialNumber;
   String? assetTag;

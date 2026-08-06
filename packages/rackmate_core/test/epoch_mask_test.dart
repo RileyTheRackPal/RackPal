@@ -522,6 +522,52 @@ void main() {
       _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'structures'});
     });
 
+    test('SetEntityPropertyCommand (device lifecycle)', () {
+      final doc = _freshDoc();
+      final add = AddStructureCommand(
+        title: 'Rough-In',
+        designator: 'STR-1',
+        now: DateTime.utc(2026),
+        actor: 'seed',
+      )..apply(doc);
+      final cmd = SetEntityPropertyCommand<DeviceInstance, LifecycleStatus>(
+        id: add.deviceId,
+        field: DeviceField.lifecycleStatus,
+        from: LifecycleStatus.new_,
+        to: LifecycleStatus.existing,
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'devices'});
+    });
+
+    test('SetEntityPropertyCommand (link lifecycle)', () {
+      final doc = _freshDoc();
+      final add = AddLinkCommand(
+        designator: 'W001',
+        netName: 'N001',
+        media: const MediaTypeId('media.cat6a_futp'),
+        order: const FracIndex('a0'),
+        now: DateTime.utc(2026),
+        actor: 'seed',
+      )..apply(doc);
+      final cmd = SetEntityPropertyCommand<Link, LifecycleStatus>(
+        id: add.id,
+        field: LinkField.lifecycleStatus,
+        from: LifecycleStatus.new_,
+        to: LifecycleStatus.future,
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'links'});
+    });
+
     test('AddLinkCommand', () {
       final doc = _freshDoc();
       final cmd = AddLinkCommand(

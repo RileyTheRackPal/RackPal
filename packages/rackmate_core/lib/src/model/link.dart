@@ -77,7 +77,7 @@ final class Link {
     this.slack,
     this.pathwayId,
     this.crossover,
-    this.lifecycleStatus = LifecycleStatus.new_,
+    LifecycleStatus lifecycleStatus = LifecycleStatus.new_,
     this.roughInStatus = RoughInStatus.planned,
     this.test,
     this.installedBy,
@@ -93,6 +93,7 @@ final class Link {
        _linkClassLocked = linkClassLocked,
        _jacketColorId = jacketColorId,
        _jacketColorPulledId = jacketColorPulledId,
+       _lifecycleStatus = lifecycleStatus,
        _notes = notes;
 
   final Uuid id;
@@ -216,6 +217,13 @@ final class Link {
   @internal
   set linkClassLocked(bool v) => _linkClassLocked = v;
 
+  /// Same five-value enum as `DeviceInstance.lifecycleStatus` (CR-064,
+  /// CR-065, AC-018). Written through `LinkField.lifecycleStatus`.
+  LifecycleStatus _lifecycleStatus;
+  LifecycleStatus get lifecycleStatus => _lifecycleStatus;
+  @internal
+  set lifecycleStatus(LifecycleStatus v) => _lifecycleStatus = v;
+
   // ACCESS CONTROL: fields below are plain mutable pending @internal
   // retrofit (AC-013). Converted as each is wired to a Command. See
   // internal_setter_grep_test.dart.
@@ -255,9 +263,6 @@ final class Link {
   Uuid? pathwayId;
   CrossoverKind? crossover;
 
-  /// Same five-value enum as `DeviceInstance.lifecycleStatus` (CR-064,
-  /// CR-065, AC-018).
-  LifecycleStatus lifecycleStatus;
   RoughInStatus roughInStatus;
   TestResult? test;
   String? installedBy;
