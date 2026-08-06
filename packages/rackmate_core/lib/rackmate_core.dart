@@ -59,6 +59,7 @@ export 'src/commands/command.dart';
 export 'src/commands/compaction.dart';
 export 'src/commands/connect_commands.dart';
 export 'src/commands/device_commands.dart';
+export 'src/commands/home_run_commands.dart';
 export 'src/commands/label_key.dart';
 export 'src/commands/link_class_commands.dart';
 export 'src/commands/link_commands.dart';

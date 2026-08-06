@@ -94,4 +94,11 @@ enum LabelKey {
   removeStructure,
   addOutlet,
   removeOutlet,
+
+  // ONE DROP (commands/home_run_commands.dart), M3-A/2, AC-018. Its own
+  // value rather than reusing `addLink`, because a home run and a patch
+  // are different acts to the person undoing one: this creates a cable
+  // pulled into a building with a label on a wall plate, and the Edit menu
+  // offering "Undo connect" for it would describe the wrong gesture.
+  addHomeRun,
 }
