@@ -423,6 +423,166 @@ void main() {
       );
     });
 
+    // ── M3-A's create/remove family (board #580) ──────────────────────
+    //
+    // These four shipped in `541115e` with no case here at all, which is a
+    // hole in AC-014's "for every command type" rather than a decision.
+    // `AddStructureCommand` is the interesting one: it is the only command
+    // in the package that writes two top-level maps which are NOT a
+    // link/net pair, so its declared mask has to cover both.
+    test('AddStructureCommand writes BOTH devices and structures', () {
+      final doc = _freshDoc();
+      final cmd = AddStructureCommand(
+        title: 'Rough-In',
+        designator: 'STR-1',
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(
+        cmd,
+        changed,
+        expectAtLeast: {'devices', 'structures'},
+      );
+    });
+
+    test('RemoveStructureCommand takes both, and does NOT cascade to '
+        'outlets', () {
+      // The no-cascade rule is deliberate (an Outlet is a fact about the
+      // BUILDING and survives the panel it feeds), so `outlets` staying
+      // out of the changed set is the assertion, not an omission.
+      final doc = _freshDoc();
+      final add = AddStructureCommand(
+        title: 'Rough-In',
+        designator: 'STR-1',
+        now: DateTime.utc(2026),
+        actor: 'seed',
+      )..apply(doc);
+      AddOutletCommand(
+        structureBodyId: add.bodyId,
+        designation: 'GR-TV-1',
+        order: nextOutletOrder(doc),
+        now: DateTime.utc(2026),
+        actor: 'seed',
+      ).apply(doc);
+      final cmd = RemoveStructureCommand(bodyId: add.bodyId);
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(
+        cmd,
+        changed,
+        expectAtLeast: {'devices', 'structures'},
+      );
+      expect(
+        changed,
+        isNot(contains('outlets')),
+        reason:
+            'removing a Structure body must not silently delete the wall '
+            'plates it fed',
+      );
+    });
+
+    test('AddOutletCommand', () {
+      final doc = _freshDoc();
+      final add = AddStructureCommand(
+        title: 'Rough-In',
+        designator: 'STR-1',
+        now: DateTime.utc(2026),
+        actor: 'seed',
+      )..apply(doc);
+      final cmd = AddOutletCommand(
+        structureBodyId: add.bodyId,
+        designation: 'GR-TV-1',
+        order: nextOutletOrder(doc),
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'outlets'});
+    });
+
+    test('RemoveOutletCommand', () {
+      final doc = _freshDoc();
+      final outletId = _seedOutlet(doc);
+      final cmd = RemoveOutletCommand(id: outletId);
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'outlets'});
+    });
+
+    test('AddHomeRunCommand writes links AND its implicit net', () {
+      // `b119504`'s command, also uncovered here. The net is part of the
+      // same `wires` epoch, which is what makes ONE declared mask correct
+      // for two changed maps.
+      final doc = _freshDoc();
+      final outletId = _seedOutlet(doc);
+      final cmd =
+          (buildAddHomeRunCommand(
+                    doc: doc,
+                    outletId: outletId,
+                    fieldLabel: 'GR-DATA-1',
+                    designator: 'W001',
+                    netName: 'N001',
+                    media: const MediaTypeId('media.cat6_utp'),
+                    fieldEnd: const PlaceEndpoint(description: 'Great Room'),
+                    terminationField: TerminationType.keystone,
+                    now: DateTime.utc(2026, 1, 2),
+                    actor: 'tester',
+                  )
+                  as AddHomeRunReady)
+              .command;
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'links'});
+      expect(changed, contains('nets'));
+    });
+
+    test('SetEntityPropertyCommand (a StructureOrigin row)', () {
+      // Its table is keyed by the LINK's id, so the map that changes is
+      // `links` and the mask has to name `wires` — a row that declared
+      // only `meta` would repaint nothing that draws cables.
+      final doc = _freshDoc();
+      final outletId = _seedOutlet(doc);
+      final add =
+          (buildAddHomeRunCommand(
+                    doc: doc,
+                    outletId: outletId,
+                    fieldLabel: 'GR-DATA-1',
+                    designator: 'W001',
+                    netName: 'N001',
+                    media: const MediaTypeId('media.cat6_utp'),
+                    fieldEnd: const PlaceEndpoint(description: 'Great Room'),
+                    terminationField: TerminationType.keystone,
+                    now: DateTime.utc(2026),
+                    actor: 'seed',
+                  )
+                  as AddHomeRunReady)
+              .command
+            ..apply(doc);
+      final cmd =
+          (buildSetStructureOriginProperty<String>(
+                    doc: doc,
+                    linkId: add.id,
+                    field: StructureOriginField.fieldLabel,
+                    to: 'GR-DATA-9',
+                    now: DateTime.utc(2026, 1, 2),
+                    actor: 'tester',
+                  )
+                  as SetStructureOriginReady<String>)
+              .command;
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'links'});
+    });
+
     // One case per EpochMask branch `OutletField`/`StructureBodyField`
     // declare, on the same reasoning as the RackField cases above: the
     // per-field mask assignments are asserted directly in
