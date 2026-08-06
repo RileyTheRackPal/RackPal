@@ -1415,6 +1415,40 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _controller.run(command);
   }
 
+  /// Sets `lifecycleStatus` on every SELECTED device as ONE undo entry
+  /// (board M3-A/7).
+  ///
+  /// The whole selection, not the focused device: the control sits under
+  /// "5 devices selected", and one that edited one of the five would be a
+  /// trap. `buildSetEntityProperty` returns null for a device already in
+  /// that state, so a mixed selection changes only the ones that differ
+  /// and a uniform one produces no transaction at all rather than an empty
+  /// undo entry (§3.4 read the other way: an edit that changed nothing
+  /// should not LOOK like it did).
+  void _setSelectionLifecycle(LifecycleStatus status) {
+    final commands = [
+      for (final id in _selection.ids)
+        if (_doc.devices.containsKey(id))
+          if (buildSetEntityProperty(
+                doc: _doc,
+                id: id,
+                field: DeviceField.lifecycleStatus,
+                to: status,
+                now: _controller.clock.nowUtc(),
+                actor: _controller.actor,
+              )
+              case final command?)
+            command,
+    ];
+    if (commands.isEmpty) return;
+    _controller.selection = _selection.snapshot();
+    _controller.transact(LabelKey.setEntityProperty, (tx) {
+      for (final command in commands) {
+        tx.add(command);
+      }
+    });
+  }
+
   /// Rebuilds so the inspector's Height field re-reads the rack's real
   /// height, whatever its own buffer currently says.
   ///
@@ -3886,6 +3920,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                 onRequestHeight: _requestHeight,
                 onApplyPreset: _applyPreset,
                 onRefuse: _status.show,
+                onSetLifecycle: _setSelectionLifecycle,
                 firstFieldFocus: _inspectorFirstFieldFocus,
               ),
             ),

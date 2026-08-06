@@ -182,7 +182,7 @@ class RackInspectorPanel extends StatelessWidget {
               : null,
           onRefuse: onRefuse,
         ),
-        _InspectorDropdown<RackWidthClass>(
+        InspectorDropdown<RackWidthClass>(
           label: 'Width',
           value: rack.widthClass,
           values: RackWidthClass.values,
@@ -195,7 +195,7 @@ class RackInspectorPanel extends StatelessWidget {
           onCommit: (v) => onSetProperty(RackField.usableDepth, v),
           onRefuse: onRefuse,
         ),
-        _InspectorDropdown<RailType>(
+        InspectorDropdown<RailType>(
           label: 'Rail type',
           value: rack.railType,
           values: RailType.values,
@@ -223,7 +223,7 @@ class RackInspectorPanel extends StatelessWidget {
           value: rack.isSwingFrame,
           onChanged: (v) => onSetProperty(RackField.isSwingFrame, v),
         ),
-        _InspectorDropdown<HingeSide?>(
+        InspectorDropdown<HingeSide?>(
           label: 'Hinge side',
           value: rack.hingeSide,
           values: const [null, HingeSide.left, HingeSide.right],
@@ -718,21 +718,36 @@ class _NullableNumberFieldState extends State<_NullableNumberField> {
   }
 }
 
-class _InspectorDropdown<T> extends StatelessWidget {
-  const _InspectorDropdown({
+/// One labelled dropdown in the 320px inspector column.
+///
+/// PUBLIC, unlike its siblings in this file, because the selection view in
+/// `inspector_panel.dart` needs the same control for M3-A/7's lifecycle
+/// picker and a second copy of it would be a second place for the column's
+/// dropdown styling to drift.
+class InspectorDropdown<T> extends StatelessWidget {
+  const InspectorDropdown({
     required this.label,
     required this.value,
     required this.values,
     required this.labelOf,
     required this.onChanged,
+    this.hintText,
     this.enabled = true,
+    super.key,
   });
 
   final String label;
-  final T value;
+
+  /// NULLABLE, for the multi-select case: when the selected entities do
+  /// not agree on a value there is no value to show, and [hintText] says
+  /// so rather than the control naming one of them and inviting the user
+  /// to believe the others match it.
+  final T? value;
+
   final List<T> values;
   final String Function(T) labelOf;
   final ValueChanged<T> onChanged;
+  final String? hintText;
   final bool enabled;
 
   @override
@@ -748,6 +763,7 @@ class _InspectorDropdown<T> extends StatelessWidget {
         isExpanded: true,
         decoration: InputDecoration(
           labelText: label,
+          hintText: hintText,
           isDense: true,
           border: const OutlineInputBorder(),
         ),
@@ -825,7 +841,7 @@ class _LocationField extends StatelessWidget {
         final byOrder = a.order.v.compareTo(b.order.v);
         return byOrder != 0 ? byOrder : a.id.v.compareTo(b.id.v);
       });
-    return _InspectorDropdown<Uuid?>(
+    return InspectorDropdown<Uuid?>(
       label: 'Location',
       // A locationId pointing at a location that no longer exists would
       // otherwise assert inside DropdownButton ("no item with that value").
@@ -960,7 +976,7 @@ class _PresetField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final current = matchingPresetId(rack, presets);
-    return _InspectorDropdown<String?>(
+    return InspectorDropdown<String?>(
       label: 'Preset',
       value: current,
       values: [null, ...presets.keys],

@@ -15,17 +15,33 @@
 // back to `selection`. That gives the spec's semantics honestly using the
 // surfaces that actually exist.
 //
-// THE SELECTION VIEW IS DELIBERATELY MINIMAL — a count, and the focused
-// device's designator and name. It is NOT a device inspector: editing device
-// properties is its own body of work (§3's Width position dropdown, §6's
-// shelf capacity, §7's F2 rename flow, copy-on-place `DeviceOverrides`), none
-// of which is in this stage's scope. Rendering a plausible-looking device
-// form with no working fields would be worse than rendering the honest
-// summary.
+// THE SELECTION VIEW IS DELIBERATELY MINIMAL — a count, the focused
+// device's designator and name, and (M3-A/7) one working control. It is NOT
+// a device inspector: editing device properties is its own body of work
+// (§3's Width position dropdown, §6's shelf capacity, §7's F2 rename flow,
+// copy-on-place `DeviceOverrides`), none of which is in this stage's scope.
+// Rendering a plausible-looking device form with no working fields would be
+// worse than rendering the honest summary.
+//
+// THE LIFECYCLE PICKER DOES NOT BREAK THAT RULE, it satisfies it. The rule
+// was against fields that look editable and are not; this is the opposite
+// case — a value the elevation has drawn five distinct borders for since
+// M0, and which nothing in the application could change, so four of those
+// five borders were reachable only by hand-editing a file (board M3-A/7).
+// Its options are labelled through `lifecycleLabel`, the same function that
+// prints the word on T6.30, so the screen and the sheet cannot drift apart.
+//
+// IT ACTS ON THE WHOLE SELECTION, not the focused device alone. A control
+// sitting under "5 devices selected" that quietly edited one of them would
+// be a trap; the five edits go through one `Transaction`, so the Edit menu
+// offers one thing to undo. When the selection disagrees the control shows
+// no value and says "Mixed" rather than naming one device's state and
+// inviting the user to believe the others match it.
 
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
-import 'package:rackmate_ui/src/inspector/rack_inspector_panel.dart';
+import 'package:rackmate_ui/src/inspector/rack_inspector_panel.dart'
+    show InspectorDropdown, RackInspectorPanel;
 
 /// Which of the two things the inspector column is currently showing.
 enum InspectorTarget {
@@ -53,6 +69,7 @@ class InspectorPanel extends StatelessWidget {
     required this.onRequestHeight,
     required this.onApplyPreset,
     required this.onRefuse,
+    required this.onSetLifecycle,
     this.firstFieldFocus,
     super.key,
   });
@@ -68,6 +85,10 @@ class InspectorPanel extends StatelessWidget {
   final ValueChanged<int> onRequestHeight;
   final ValueChanged<RackPreset> onApplyPreset;
   final ValueChanged<String> onRefuse;
+
+  /// Sets `lifecycleStatus` on EVERY selected device as one undo entry.
+  final ValueChanged<LifecycleStatus> onSetLifecycle;
+
   final FocusNode? firstFieldFocus;
 
   @override
@@ -96,6 +117,7 @@ class InspectorPanel extends StatelessWidget {
           doc: doc,
           selectedIds: selectedIds,
           focusedId: focusedId,
+          onSetLifecycle: onSetLifecycle,
         ),
       },
     );
@@ -109,11 +131,23 @@ class _SelectionSummary extends StatelessWidget {
     required this.doc,
     required this.selectedIds,
     required this.focusedId,
+    required this.onSetLifecycle,
   });
 
   final RackDocument doc;
   final Set<Uuid> selectedIds;
   final Uuid? focusedId;
+  final ValueChanged<LifecycleStatus> onSetLifecycle;
+
+  /// The one status every selected device shares, or null when they
+  /// disagree or nothing is selected.
+  LifecycleStatus? get _sharedLifecycle {
+    final statuses = {
+      for (final id in selectedIds)
+        if (doc.devices[id] case final d?) d.lifecycleStatus,
+    };
+    return statuses.length == 1 ? statuses.single : null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +155,10 @@ class _SelectionSummary extends StatelessWidget {
     final scheme = theme.colorScheme;
     final focused = focusedId == null ? null : doc.devices[focusedId];
     final n = selectedIds.length;
+    final selectedDevices = [
+      for (final id in selectedIds)
+        if (doc.devices.containsKey(id)) id,
+    ];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
@@ -155,6 +193,23 @@ class _SelectionSummary extends StatelessWidget {
               style: theme.textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
+            ),
+          ],
+          if (selectedDevices.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            InspectorDropdown<LifecycleStatus>(
+              label: selectedDevices.length == 1
+                  ? 'Lifecycle status'
+                  : 'Lifecycle status (${selectedDevices.length} devices)',
+              value: _sharedLifecycle,
+              // "Mixed" only ever shows when the selection genuinely
+              // disagrees: a single device always has a shared value.
+              hintText: 'Mixed',
+              values: LifecycleStatus.values,
+              // The SAME function T6.30 prints with, so the word on the
+              // screen and the word on the sheet cannot drift apart.
+              labelOf: lifecycleLabel,
+              onChanged: onSetLifecycle,
             ),
           ],
           const Spacer(),
