@@ -50,12 +50,13 @@
 //    body is a re-parent, not a property edit.
 //  * `Outlet.unknown` — DR-019's passthrough. A reader that does not model
 //    a key has no business offering to edit it.
-//  * `StructureOrigin`'s fields — that is a sub-object of a `Link` rather
-//    than a document-level entity, so it needs a different lookup, and
-//    `fieldLabel` carries CR-113's project-wide uniqueness, which a bare
-//    table `set` would silently violate. It needs the refusing-builder
-//    shape `buildAddHomeRunCommand` has, so it is its own board item
-//    rather than a row here.
+//  * `StructureOrigin`'s fields — they ARE `EntityField`s, but their table
+//    lives in `home_run_commands.dart` beside the builder that guards it,
+//    NOT here. `fieldLabel` and `rackLabel` carry CR-113's project-wide
+//    uniqueness, and a bare table `set` writes and returns with no way to
+//    refuse; a table sitting among tables that are safe to drive directly,
+//    with two rows that are not, would be a trap. See that file's
+//    "EDITING A DROP AFTER IT EXISTS" block.
 //
 // [DeviceField] and [LinkField] are SUBSETS of their models' `@internal`
 // setters rather than equal to them, and deliberately: a device's

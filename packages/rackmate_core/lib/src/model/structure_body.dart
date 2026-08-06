@@ -89,29 +89,60 @@ final class StructureOrigin {
   StructureOrigin({
     required this.structureBodyId,
     required this.outletId,
-    required this.fieldLabel,
-    required this.terminationField,
-    this.rackLabel,
-    this.wall,
-    this.mountSurface,
-    this.mountHeightAff,
-  });
+    required String fieldLabel,
+    required TerminationType terminationField,
+    String? rackLabel,
+    Wall? wall,
+    MountSurface? mountSurface,
+    Len? mountHeightAff,
+  }) : _fieldLabel = fieldLabel,
+       _terminationField = terminationField,
+       _rackLabel = rackLabel,
+       _wall = wall,
+       _mountSurface = mountSurface,
+       _mountHeightAff = mountHeightAff;
 
   final Uuid structureBodyId;
   final Uuid outletId;
 
-  // ACCESS CONTROL: fields below are plain mutable pending @internal
-  // retrofit (AC-013). Converted as each is wired to a Command. See
-  // internal_setter_grep_test.dart.
+  // Every field below is wired to `StructureOriginField`
+  // (commands/home_run_commands.dart), so all six are converted. THE TWO
+  // LABELS ARE NOT SAFE TO SET DIRECTLY even from `src/commands/`: CR-113
+  // makes them unique project-wide, and only
+  // `buildSetStructureOriginProperty` scans for a collision. `@internal`
+  // buys the package boundary; the builder buys the invariant.
 
   /// "LR-TV-1A" — on the wall plate. REQUIRED, unique project-wide across
   /// ALL Structure bodies (CR-113).
-  String fieldLabel;
+  String _fieldLabel;
+  String get fieldLabel => _fieldLabel;
+  @internal
+  set fieldLabel(String v) => _fieldLabel = v;
 
-  /// "1A-A12" — at the panel. Unique when set.
-  String? rackLabel;
-  Wall? wall;
-  MountSurface? mountSurface;
-  Len? mountHeightAff;
-  TerminationType terminationField;
+  /// "1A-A12" — at the panel. Unique when set. Null is UNKNOWN, not "no
+  /// label" (G4, CR-114).
+  String? _rackLabel;
+  String? get rackLabel => _rackLabel;
+  @internal
+  set rackLabel(String? v) => _rackLabel = v;
+
+  Wall? _wall;
+  Wall? get wall => _wall;
+  @internal
+  set wall(Wall? v) => _wall = v;
+
+  MountSurface? _mountSurface;
+  MountSurface? get mountSurface => _mountSurface;
+  @internal
+  set mountSurface(MountSurface? v) => _mountSurface = v;
+
+  Len? _mountHeightAff;
+  Len? get mountHeightAff => _mountHeightAff;
+  @internal
+  set mountHeightAff(Len? v) => _mountHeightAff = v;
+
+  TerminationType _terminationField;
+  TerminationType get terminationField => _terminationField;
+  @internal
+  set terminationField(TerminationType v) => _terminationField = v;
 }

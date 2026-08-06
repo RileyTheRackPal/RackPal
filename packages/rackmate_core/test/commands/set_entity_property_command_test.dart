@@ -820,16 +820,22 @@ void main() {
 
     test('every @internal StructureBody setter has a table row, and vice '
         'versa', () {
-      // `structure_body.dart` also declares `StructureOrigin`, whose
-      // fields are deliberately still plain: it hangs off a `Link` rather
-      // than a document map, and `fieldLabel` carries CR-113's
-      // project-wide uniqueness that a bare table `set` would violate. If
-      // that ever gains an `@internal` setter, this case is where it gets
-      // noticed.
-      expect(
-        _internalSetters('structure_body.dart'),
-        {for (final f in StructureBodyField.all) f.key},
-      );
+      // ONE FILE, TWO TABLES. `structure_body.dart` declares both
+      // `StructureBody` and `StructureOrigin`, and the second's table
+      // lives in `home_run_commands.dart` beside the builder that guards
+      // CR-113 (see that file's block comment). This case is what CAUGHT
+      // the origin retrofit when M3-A/8 made it: it read as a
+      // `StructureBodyField`-only equality and failed the moment six new
+      // `@internal` setters appeared in the file, which is exactly what an
+      // earlier revision of this comment said it was here to do.
+      //
+      // The origin keys are NAMESPACED (`origin.fieldLabel`) so their
+      // merge keys cannot collide with a future `Link.fieldLabel`, so the
+      // comparison is against the setter NAME: the part after the dot.
+      expect(_internalSetters('structure_body.dart'), {
+        for (final f in StructureBodyField.all) f.key,
+        for (final f in StructureOriginField.all) f.key.split('.').last,
+      });
     });
 
     test('every DeviceInstance and Link table key has an @internal setter '
