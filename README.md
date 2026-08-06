@@ -2,13 +2,13 @@
 
 RackMate is a desktop application for designing A/V equipment racks for custom-integration work, **residential-CI-first, commercial-capable** (DR-002): you enter a rack height in rack units, populate the rack from a seeded catalog of generic archetypes, wire the gear together on a schematic canvas, and export a PDF sheet set containing both the drawing and the cable schedule. The repository holds the specification (the canonical decision record, twelve documents derived from it, and the working papers they were adjudicated from) **and a Flutter application that builds and runs on Windows**.
 
-## Status: IN BUILD: M0 and M1 shipped, M2 partial
+## Status: IN BUILD: M0, M1 and M2 shipped, M3 next
 
 | | |
 |---|---|
-| Phase | M0 (foundations) and M1 (the elevation release) shipped; M2 (wiring and the live schedule) is **PARTIAL**: four of five exit clauses discharged |
+| Phase | M0 (foundations), M1 (the elevation release) and M2 (wiring and the live schedule) have all met their exit criteria. M2's was confirmed on 2026-08-01, four clauses by tests and the fifth by a person. M3 (Structure and the field) is next, and its M2 block has lifted |
 | Platform | Windows. macOS ships in v1 (DR-009) and is not built yet; the debt is enumerated in [docs/13](docs/13-macos-debt-register.md) |
-| Tests | 2 832 passing, 0 failing across five packages, behind **thirteen local gates** (`tools/ci/run_local.ps1`) including a pinned analyzer ratchet |
+| Tests | 3 077 passing, 0 failing across five packages, behind **fourteen local gates** (`tools/ci/run_local.ps1`) including a pinned analyzer ratchet and `dart format` (DR-017) |
 | Next step | M3: Structure and the field (see [Roadmap](docs/09-roadmap.md)) |
 | Estimated effort to v1 | 42–65 weeks of implementation; 11–17 months to a shipped v1 with normal overhead |
 
