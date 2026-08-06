@@ -82,4 +82,16 @@ enum LabelKey {
   // cable to disappear, not a lifted conductor to go back into the cable
   // it came out of.
   splitSet,
+
+  // STRUCTURE AND OUTLETS (commands/structure_commands.dart), M3-A/1.
+  // `StructureBody`, `Outlet` and `OutletDrop` have been modelled and
+  // byte-round-tripped since M0 and NOTHING WROTE THEM, which is the shape
+  // M2-F found on `doc.ports`: a model that round-trips is not a model
+  // anything can create. Four values, not two, because adding a Structure
+  // creates a DEVICE and a BODY as one unit while adding an Outlet creates
+  // one entity, and the Edit menu should not call those the same thing.
+  addStructure,
+  removeStructure,
+  addOutlet,
+  removeOutlet,
 }
