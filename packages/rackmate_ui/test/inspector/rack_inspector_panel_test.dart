@@ -33,11 +33,38 @@ final class _FakeMeasurer implements TextMeasurer {
 
 const _geo = RackGeometry(12);
 
-Widget _app({Clock clock = const SystemClock()}) => MaterialApp(
-  home: Scaffold(
-    body: RackCanvasScreen(measurer: _FakeMeasurer(), clock: clock),
-  ),
-);
+Widget _app({Clock clock = const SystemClock(), RackDocument? document}) =>
+    MaterialApp(
+      home: Scaffold(
+        body: RackCanvasScreen(
+          measurer: _FakeMeasurer(),
+          clock: clock,
+          document: document,
+        ),
+      ),
+    );
+
+/// The demo document plus one real `Location`, created the way the app
+/// creates one.
+///
+/// THE DEMO SEED HAS NO LOCATIONS as of board #143. It carried three, and
+/// their own comment said they were "seeded rather than creatable" because
+/// no panel could make one; M3-B built that panel, so the seed stopped
+/// asserting three rooms nobody typed. A test that needs a location now
+/// says so, and says it by running `AddLocationCommand` rather than by
+/// hand-building a `Location`, so the fixture cannot drift from what the
+/// product actually writes.
+RackDocument _docWithOneLocation(String name) {
+  final doc = buildDemoRackDocument();
+  AddLocationCommand(
+    name: name,
+    code: name.substring(0, 2).toUpperCase(),
+    order: nextLocationOrder(doc),
+    now: DateTime.utc(2026, 7, 18),
+    actor: 'test',
+  ).apply(doc);
+  return doc;
+}
 
 Offset _canvasOrigin(WidgetTester tester) =>
     tester.getTopLeft(find.byType(CanvasIntentDetector));
@@ -344,18 +371,33 @@ void main() {
       );
     });
 
-    testWidgets("the Location dropdown is REAL: it lists the project's "
-        'locations and writes through a command', (tester) async {
+    testWidgets('a project with no locations offers only (none), and says '
+        'nothing it cannot back up', (tester) async {
+      // THE STATE `Ctrl+N` PRODUCES. `blank_document.dart` seeds no
+      // locations and, as of board #143, neither does the demo seed. The
+      // dropdown must render that honestly rather than being disabled,
+      // hidden, or seeded with a room nobody typed.
       await tester.pumpWidget(_app());
       await tester.pump();
       await _openInspector(tester);
 
+      expect(_doc(tester).locations, isEmpty);
       expect(_rack(tester).locationId, isNull);
-      await _pickDropdown(tester, 'Location', 'Media Closet');
+      expect(find.text('(none)'), findsOneWidget);
+    });
+
+    testWidgets("the Location dropdown is REAL: it lists the project's "
+        'locations and writes through a command', (tester) async {
+      await tester.pumpWidget(_app(document: _docWithOneLocation('Basement')));
+      await tester.pump();
+      await _openInspector(tester);
+
+      expect(_rack(tester).locationId, isNull);
+      await _pickDropdown(tester, 'Location', 'Basement');
 
       final locationId = _rack(tester).locationId;
       expect(locationId, isNotNull);
-      expect(_doc(tester).locations[locationId]?.name, 'Media Closet');
+      expect(_doc(tester).locations[locationId]?.name, 'Basement');
 
       await _undo(tester);
       expect(_rack(tester).locationId, isNull);

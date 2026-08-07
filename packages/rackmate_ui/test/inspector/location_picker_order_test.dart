@@ -3,12 +3,22 @@
 // DOCUMENT, or of the order the map happened to be built in?
 //
 // WHY A FILE OF ITS OWN, and why it injects a document. The divergence needs
-// two locations sharing one `order`, and the built-in demo seed has a single
-// location. `Location.order` is a plain mutable `FracIndex` that nothing
-// enforces the uniqueness of: `nextOrder` hands racks and links theirs, but
-// no command creates a location, so a collision is reachable by opening a
-// file and by no sequence of gestures at all. `RackCanvasScreen.document`
-// exists for exactly this, as its own doc says.
+// two locations sharing one `order`, and the demo seed has NONE at all
+// (board #143 removed the three it carried, once M3-B made a location
+// creatable). `Location.order` is a plain mutable `FracIndex` that nothing
+// enforces the uniqueness of.
+//
+// ONE SENTENCE HERE WENT STALE AND IS CORRECTED RATHER THAN DELETED,
+// because the correction is the interesting part. This file used to say
+// "no command creates a location, so a collision is reachable by opening a
+// file and by no sequence of gestures at all". `AddLocationCommand` and
+// `nextLocationOrder` exist as of board #144, so the first clause is now
+// false and the CONCLUSION IS UNCHANGED: the allocator makes a collision
+// unreachable through the panel, and `.rmpj` is hand-editable text
+// (DR-015), so a decoded document can still hold one. The picker is sorted
+// defensively for the file, not for the gesture.
+//
+// `RackCanvasScreen.document` exists for exactly this, as its own doc says.
 //
 // THE DEFECT THIS PINS. The picker sorted on `order` alone while every other
 // `order` sort in the tree ends in an id or a key. Colliding entries were

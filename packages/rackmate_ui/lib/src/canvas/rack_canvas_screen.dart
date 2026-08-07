@@ -4500,29 +4500,20 @@ RackDocument _buildDemoDocument(Map<String, TemplateBody> catalog) {
     meta: meta(),
   );
 
-  // Three demo Locations (docs/04 §4's Location dropdown, CR-047's
-  // arbitrary-depth tree). DEMO DATA ONLY — no model or codec change: the
-  // `Location` entity, `doc.locations` and full codec round-trip all
-  // predate this stage; only INSTANCES were missing, which left the
-  // dropdown permanently showing one empty option and made it untestable.
-  // The project Locations panel (CR-112) and the "+ New…" creation flow
-  // remain out of scope, so these are seeded rather than creatable.
-  for (final (id, kind, name, code, order)
-      in <(String, LocationKind, String, String, String)>[
-        ('loc-house', LocationKind.building, 'Main House', 'MH', 'a0'),
-        ('loc-closet', LocationKind.room, 'Media Closet', 'MC', 'a1'),
-        ('loc-living', LocationKind.room, 'Living Room', 'LR', 'a2'),
-      ]) {
-    doc.locations[Uuid(id)] = Location(
-      id: Uuid(id),
-      kind: kind,
-      name: name,
-      code: code,
-      order: FracIndex(order),
-      meta: meta(),
-      parentId: id == 'loc-house' ? null : const Uuid('loc-house'),
-    );
-  }
+  // NO LOCATIONS. Three were seeded here — Main House, Media Closet,
+  // Living Room — and their own comment said why: the `Location` dropdown
+  // had nothing to list, "the project Locations panel (CR-112) and the
+  // '+ New…' creation flow remain out of scope, so these are seeded rather
+  // than creatable". M3-B built the panel (board #145), so the reason is
+  // spent and this is board #143 collecting on it.
+  //
+  // A SEEDED ROOM IS NOT THE SAME KIND OF THING AS A SEEDED RACK. Every
+  // other line of this document is scaffolding for a screen that needs
+  // something to draw; a location is a fact about a BUILDING, and three of
+  // them appearing in a document nobody typed them into is the one shape
+  // this seed could take that a user would have to disprove. `Ctrl+N`
+  // already gives a project with no locations (`blank_document.dart` seeds
+  // none), so the demo agreeing with it is the whole change.
 
   doc.racks[const Uuid('demo-rack')] = Rack(
     id: const Uuid('demo-rack'),

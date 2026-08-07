@@ -47,10 +47,15 @@
 //
 // WHAT THIS PANEL DELIBERATELY DOES NOT HAVE, so a reader does not read an
 // omission as an oversight:
-//   * The Location dropdown's "+ New…" item. The project Locations panel
-//     (CR-112) is out of scope for this stage; a menu item opening nothing
-//     is the dead affordance §3.4 forbids. The dropdown ITSELF is real,
-//     enabled and command-backed over `doc.locations`.
+//   * The Location dropdown's "+ New…" item. It was absent because the
+//     project Locations panel (CR-112) did not exist and a menu item
+//     opening nothing is the dead affordance §3.4 forbids. **THE PANEL NOW
+//     EXISTS** (board #145), so the original reason is spent and the item
+//     is absent for a smaller one: wiring it means this package reaching
+//     the panel's route, and no task has asked for it. The dropdown ITSELF
+//     is real, enabled and command-backed over `doc.locations`; a project
+//     with no locations shows `(none)` and nothing else, which is what
+//     `Ctrl+N` produces.
 //   * A [+ Add circuit] button, for the same reason — no circuit-creating
 //     command exists in any package. One caption line says so instead.
 //   * Rack Vitals, the chip strip and the findings rollup (§5): no
@@ -813,8 +818,8 @@ class _InspectorCheckbox extends StatelessWidget {
 /// §4's Location dropdown — real, enabled and command-backed over
 /// `doc.locations`, with a leading "(none)" entry mapping to null.
 ///
-/// The "+ New…" item §4 also names is deliberately absent: it would open the
-/// project Locations panel (CR-112), which is out of scope for this stage.
+/// The "+ New…" item §4 also names is still absent; see the file header for
+/// why the reason changed once `Project ▸ Locations…` was built.
 class _LocationField extends StatelessWidget {
   const _LocationField({
     required this.rack,
@@ -830,12 +835,14 @@ class _LocationField extends StatelessWidget {
   Widget build(BuildContext context) {
     // ORDER THEN ID, because `order` alone is not a total order.
     // `Location.order` is a plain mutable `FracIndex` that nothing
-    // enforces the uniqueness of: racks and links get theirs from
-    // `nextOrder`, locations are authored directly, so two can collide in
-    // a decoded document. `List.sort` is not stable, so a bare `order`
-    // comparison lets colliding entries swap places between rebuilds of an
-    // unchanged document. Every other `order` sort in the tree ends in an
-    // id or key; this one was the exception.
+    // enforces the uniqueness of. `nextLocationOrder` now allocates one
+    // per sibling group (board #144), so a collision is no longer
+    // reachable through the panel — but it stays reachable by DECODING a
+    // file written before that command existed or edited by hand, and
+    // `.rmpj` is text (DR-015). `List.sort` is not stable, so a bare
+    // `order` comparison lets colliding entries swap places between
+    // rebuilds of an unchanged document. Every other `order` sort in the
+    // tree ends in an id or key; this one was the exception.
     final locations = doc.locations.values.toList()
       ..sort((a, b) {
         final byOrder = a.order.v.compareTo(b.order.v);
