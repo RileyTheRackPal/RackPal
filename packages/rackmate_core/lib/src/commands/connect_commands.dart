@@ -67,11 +67,12 @@ import 'package:rackmate_core/src/util/id_gen.dart';
 /// `Link.media` is required and non-nullable, so a connect must write
 /// SOMETHING. Nothing in the tree knows what:
 ///
-///   * `Registries.mediaTypes` IS EMPTY in every seeded document —
-///     `seed_registries.dart`'s header says so outright ("`cableSpecs`,
-///     `.mediaTypes` and `.outletTemplates` STAY EMPTY"), because docs/02
-///     §5.3's `MediaTypeDef` table was kept out of DR-010's scope. There
-///     is no id to pick that would resolve;
+///   * `Registries.mediaTypes` CARRIES CANON §6.5's 38 TYPES since
+///     M3-C/6, and that changed this limb rather than removing it. The
+///     problem used to be that there was no id to pick; it is now that
+///     there are 38 and nothing in the tree says which. Seeding gave the
+///     drop DSL a table to resolve `4x Cat6` against (docs/07 §4.3); it
+///     did not give a PORT a cable;
 ///   * `SignalFamilyDef` carries no `typicalMedia` — DR-010 §11.10.4
 ///     keeps the twenty-odd corpus fields absent until something needs
 ///     them, and this is not that;
@@ -98,6 +99,14 @@ import 'package:rackmate_core/src/util/id_gen.dart';
 /// WHEN THIS STOPS BEING RIGHT: the moment `mediaTypes` is seeded and a
 /// family can name its typical cable, the connect path should offer that
 /// and this constant should be deleted rather than defaulted around.
+///
+/// HALF OF THAT HAS NOW HAPPENED. `mediaTypes` is seeded; a family still
+/// cannot name its typical cable, because canon §6.5's `supports[]` is
+/// the field that would let it and DR-010 §11.10.4 keeps a field out
+/// until something reads it. So the remaining condition is a real one
+/// and not a formality: seeding a table of cables does not tell a
+/// connect gesture which cable, and guessing from the connector is the
+/// specific error the RJ45 bullet below rules out.
 const MediaTypeId kUnstatedMedia = MediaTypeId('');
 
 /// Everything [ConnectPortsCommand.apply] needs to materialise one pin —

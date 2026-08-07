@@ -87,15 +87,28 @@ void main() {
     expect(rj45.footprintHeight, isNotNull);
   });
 
-  test('and NOTHING in the three registries DR-010 left out of scope', () {
-    // `cableSpecs`, `mediaTypes` and `outletTemplates` are real shipped
-    // content in §5.3/§6 and are deliberately not invented here (G4).
-    // Asserted so that populating them later is a visible change to a
-    // stated expectation rather than a silent one.
+  test('and NOTHING in the two registries still out of scope', () {
+    // `cableSpecs` and `outletTemplates` are real shipped content in §6
+    // and are deliberately not invented here (G4). Asserted so that
+    // populating them later is a visible change to a stated expectation
+    // rather than a silent one — which is exactly what happened to the
+    // third: `mediaTypes` was in this list until M3-C/6 seeded canon
+    // §6.5, and it tripped here as intended.
     final registries = _blank().registries;
-    expect(registries.mediaTypes, isEmpty);
     expect(registries.cableSpecs, isEmpty);
     expect(registries.outletTemplates, isEmpty);
+  });
+
+  test('and a blank project can say what cable a run is (M3-C/6)', () {
+    // The gap this closed: `ProjectSettings.defaultNetworkMedia` has been
+    // `media.cat6a_futp` since M0 and resolved to nothing in every
+    // document the product had ever written.
+    final registries = _blank().registries;
+    expect(registries.mediaTypes, hasLength(38));
+    expect(
+      registries.mediaTypes[const MediaTypeId('media.cat6a_futp')]!.shortTag,
+      'C6A',
+    );
   });
 
   test('every family a blank project carries resolves its own domain', () {

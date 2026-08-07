@@ -2378,6 +2378,19 @@ JsonMap _encodeMediaTypeDef(MediaTypeDef d) {
     'displayName': d.displayName,
     'jacketOptions': [for (final j in d.jacketOptions) encodeEnumName(j)],
   };
+  // BOTH ADDITIVE, BOTH WRITTEN ONLY WHEN PRESENT, and `aliases` does NOT
+  // copy the unconditional shape it has on `SignalFamilyDef` and
+  // `ConnectorTypeDef`. Those two carried the key from M0, so emitting it
+  // always costs nothing; `MediaTypeDef` did not, so an unconditional
+  // write would add an `aliases` key to every media entry in every
+  // document already on disk and break `write(read(bytes)) == bytes`
+  // (CR-117) for exactly the files a user cannot regenerate. Suppressing
+  // the empty list is safe HERE and would not be on `dashOverride`,
+  // because no media type means anything by "an alias list that is
+  // deliberately empty": absent and `[]` are the same fact, no synonyms.
+  // This is why `kSchemaVersion` does not move.
+  putIfNotNull(json, 'shortTag', d.shortTag);
+  if (d.aliases.isNotEmpty) json['aliases'] = d.aliases;
   putIfNotNull(json, 'maxRunLengthPassiveNm', d.maxRunLengthPassive?.nm);
   putIfNotNull(json, 'maxRunLengthActiveNm', d.maxRunLengthActive?.nm);
   return json;
@@ -2386,6 +2399,14 @@ JsonMap _encodeMediaTypeDef(MediaTypeDef d) {
 MediaTypeDef _decodeMediaTypeDef(MediaTypeId id, JsonMap json) => MediaTypeDef(
   id: id,
   displayName: asStr(json['displayName'], 'MediaTypeDef.displayName'),
+  shortTag: asStrOrNull(json['shortTag'], 'MediaTypeDef.shortTag'),
+  aliases: [
+    for (final v in asJsonList(
+      json['aliases'] ?? const <Object?>[],
+      'MediaTypeDef.aliases',
+    ))
+      asStr(v, 'MediaTypeDef.aliases[]'),
+  ],
   maxRunLengthPassive: _decodeLenOrNull(
     json['maxRunLengthPassiveNm'],
     'MediaTypeDef.maxRunLengthPassiveNm',

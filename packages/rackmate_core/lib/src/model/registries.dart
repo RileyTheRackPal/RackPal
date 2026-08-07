@@ -174,11 +174,22 @@ final class ConnectorTypeDef {
 /// What cable is pulled, how long it may run, what jacket it takes.
 /// User-extensible via CSV import (RJ-009).
 ///
-/// M0 MINIMAL SHAPE: full spec pending, see docs/02-data-model.md §4.9.
+/// M0 MINIMAL SHAPE, PLUS TWO. Canon §6.5 names fifteen fields; five
+/// shipped at M0 and `shortTag`/`aliases` are added here by DR-010
+/// §11.10.4's rule, which is to add what something needs and keep the
+/// rest out. Both are what a media token resolves THROUGH, and the two
+/// paths that resolve one are docs/07 §4.3's drop DSL (`4x Cat6`) and
+/// §5.1's CSV `media` column. The remaining eight (`conductorCount`,
+/// `pairCount`, `gaugeAwg`, `impedanceOhms`, `shielded`,
+/// `minBendRadius`, `outerDiameter`, `supports`, `isPathwayOnly`) stay
+/// out until something reads them; `isPathwayOnly` is CR-109's and
+/// belongs with the matrix's EMT column.
 final class MediaTypeDef {
   const MediaTypeDef({
     required this.id,
     required this.displayName,
+    this.shortTag,
+    this.aliases = const [],
     this.maxRunLengthPassive,
     this.maxRunLengthActive,
     this.jacketOptions = const [],
@@ -186,6 +197,28 @@ final class MediaTypeDef {
 
   final MediaTypeId id;
   final String displayName;
+
+  /// Canon §6.5's `Tag` column — `C6`, `RG6`, `16/4`. The trade name an
+  /// installer writes on a pull list, and what a schedule prints when it
+  /// has no room for `displayName`.
+  ///
+  /// NULLABLE, and null means UNKNOWN rather than empty, exactly as
+  /// [SignalFamilyDef.shortTag] is (G4, CR-114): a media type decoded
+  /// from a document written before this key existed has no tag, and a
+  /// caller must fall back rather than print `''`.
+  final String? shortTag;
+
+  /// The trade spellings that resolve to this id — docs/07 §5.1's
+  /// synonym block, `cat6 / cat-6 / c6 / cat6 utp → media.cat6`.
+  ///
+  /// Same role for a media token that [ConnectorTypeDef.aliases] has for
+  /// a port head token (CR-058), and the same rule applies: an alias is
+  /// for typing speed and **the file never stores one** on a `Link` —
+  /// `Link.media` always holds the resolved `media.*` id. What the file
+  /// stores is this table, so that a document carrying a user-created
+  /// media type (RJ-009) still resolves its own synonyms on reopen.
+  final List<String> aliases;
+
   final Len? maxRunLengthPassive;
   final Len? maxRunLengthActive;
   final List<JacketRating> jacketOptions;

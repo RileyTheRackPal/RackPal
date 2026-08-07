@@ -516,14 +516,34 @@ void main() {
   });
 
   group('kUnstatedMedia — the cable type the document cannot state', () {
-    test('the seeded registries carry NO media type at all, so no id a '
-        'connect could pick would resolve', () {
-      // THE PREMISE, ASSERTED RATHER THAN QUOTED. `seed_registries.dart`'s
-      // header says `mediaTypes` stays empty (docs/02 §5.3's table was out
-      // of DR-010's scope); this fails if that ever changes, which is
-      // exactly when the connect path should start offering a real choice
-      // instead of writing nothing.
-      expect(buildSeedRegistries().mediaTypes, isEmpty);
+    test('the registries now carry 38 media types and STILL nothing says '
+        'which one a connect should pick', () {
+      // THE PREMISE, RESTATED AFTER HALF OF IT LAPSED. This used to
+      // assert `mediaTypes` was empty, and it tripped exactly as
+      // intended when M3-C/6 seeded canon §6.5. The standing note on
+      // `kUnstatedMedia` names TWO conditions for its own deletion:
+      // "the moment `mediaTypes` is seeded AND a family can name its
+      // typical cable". The first is now met and the second is not, so
+      // the constant survives on a narrower reason than before.
+      //
+      // The reason is no longer "there is no id to pick". It is that
+      // there are 38 and nothing in the tree maps a connect to one:
+      // `SignalFamilyDef` still carries no `typicalMedia` (canon §6.5's
+      // `supports[]` is the field for it and DR-010 §11.10.4 keeps it
+      // out until something reads it), and a `PortDef` names a
+      // CONNECTOR — RJ45 carries `net.ethernet` and `video.hdbaset` over
+      // different cable grades.
+      final seeded = buildSeedRegistries();
+      expect(seeded.mediaTypes, hasLength(38));
+      expect(
+        seeded.signalFamilies.values.where(
+          (f) => f.defaultConnector.v == 'conn.rj45',
+        ),
+        hasLength(greaterThan(1)),
+        reason:
+            'more than one family lands on RJ45, so the connector cannot '
+            'imply the cable',
+      );
     });
 
     test('a link built with it reaches the schedule as an UNRESOLVED media '

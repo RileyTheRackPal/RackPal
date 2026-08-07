@@ -882,7 +882,303 @@
           "id": "conn.xlr5"
         }
       },
-      "media": {},
+      "media": {
+        "media.12_2": {
+          "displayName": "12/2 speaker",
+          "id": "media.12_2",
+          "jacketOptions": [],
+          "shortTag": "12/2"
+        },
+        "media.14_2": {
+          "aliases": [
+            "14/2",
+            "14-2"
+          ],
+          "displayName": "14/2 speaker",
+          "id": "media.14_2",
+          "jacketOptions": [],
+          "shortTag": "14/2"
+        },
+        "media.14_4": {
+          "aliases": [
+            "14/4",
+            "14-4"
+          ],
+          "displayName": "14/4 speaker",
+          "id": "media.14_4",
+          "jacketOptions": [],
+          "shortTag": "14/4"
+        },
+        "media.16_2": {
+          "aliases": [
+            "16/2",
+            "16-2",
+            "spkr 16/2"
+          ],
+          "displayName": "16/2 speaker",
+          "id": "media.16_2",
+          "jacketOptions": [],
+          "shortTag": "16/2"
+        },
+        "media.16_4": {
+          "aliases": [
+            "16/4",
+            "16-4"
+          ],
+          "displayName": "16/4 speaker",
+          "id": "media.16_4",
+          "jacketOptions": [],
+          "shortTag": "16/4"
+        },
+        "media.18_2_cv": {
+          "displayName": "18/2 constant-voltage",
+          "id": "media.18_2_cv",
+          "jacketOptions": [],
+          "shortTag": "18/2"
+        },
+        "media.22_2": {
+          "aliases": [
+            "22/2"
+          ],
+          "displayName": "22/2 control",
+          "id": "media.22_2",
+          "jacketOptions": [],
+          "shortTag": "22/2"
+        },
+        "media.22_4": {
+          "aliases": [
+            "22/4",
+            "control",
+            "keypad"
+          ],
+          "displayName": "22/4 control",
+          "id": "media.22_4",
+          "jacketOptions": [],
+          "shortTag": "22/4"
+        },
+        "media.aes_110": {
+          "displayName": "110 Ω AES/DMX cable",
+          "id": "media.aes_110",
+          "jacketOptions": [],
+          "maxRunLengthPassiveNm": 100000000000,
+          "shortTag": "Z110"
+        },
+        "media.bonding_6awg": {
+          "displayName": "Bonding conductor",
+          "id": "media.bonding_6awg",
+          "jacketOptions": [],
+          "shortTag": "GND"
+        },
+        "media.cat5e": {
+          "aliases": [
+            "cat5e",
+            "c5e",
+            "cat5"
+          ],
+          "displayName": "Cat5e UTP",
+          "id": "media.cat5e",
+          "jacketOptions": [],
+          "maxRunLengthPassiveNm": 100000000000,
+          "shortTag": "C5E"
+        },
+        "media.cat6": {
+          "aliases": [
+            "cat6",
+            "cat-6",
+            "c6",
+            "cat6 utp"
+          ],
+          "displayName": "Cat6 UTP",
+          "id": "media.cat6",
+          "jacketOptions": [],
+          "maxRunLengthPassiveNm": 100000000000,
+          "shortTag": "C6"
+        },
+        "media.cat6_futp": {
+          "displayName": "Cat6 F/UTP",
+          "id": "media.cat6_futp",
+          "jacketOptions": [],
+          "maxRunLengthPassiveNm": 100000000000,
+          "shortTag": "C6S"
+        },
+        "media.cat6a_futp": {
+          "aliases": [
+            "cat6a",
+            "c6a",
+            "f/utp"
+          ],
+          "displayName": "Cat6a F/UTP",
+          "id": "media.cat6a_futp",
+          "jacketOptions": [],
+          "maxRunLengthPassiveNm": 100000000000,
+          "shortTag": "C6A"
+        },
+        "media.coax_video_75": {
+          "displayName": "Precision 75 Ω video coax (1694A class)",
+          "id": "media.coax_video_75",
+          "jacketOptions": [],
+          "shortTag": "V75"
+        },
+        "media.conduit_emt": {
+          "displayName": "EMT conduit",
+          "id": "media.conduit_emt",
+          "jacketOptions": [],
+          "shortTag": "EMT"
+        },
+        "media.conduit_ent": {
+          "aliases": [
+            "conduit",
+            "smurf",
+            "ent"
+          ],
+          "displayName": "ENT (smurf tube)",
+          "id": "media.conduit_ent",
+          "jacketOptions": [],
+          "shortTag": "ENT"
+        },
+        "media.cresnet_18_22": {
+          "displayName": "Cresnet (18 AWG power + 22 AWG data)",
+          "id": "media.cresnet_18_22",
+          "jacketOptions": [],
+          "shortTag": "CN"
+        },
+        "media.dali_2c": {
+          "displayName": "DALI 2-conductor (mains-rated)",
+          "id": "media.dali_2c",
+          "jacketOptions": [],
+          "shortTag": "DALI"
+        },
+        "media.dmx_120": {
+          "displayName": "120 Ω DMX / RS-485 cable",
+          "id": "media.dmx_120",
+          "jacketOptions": [],
+          "maxRunLengthPassiveNm": 1200000000000,
+          "shortTag": "Z120"
+        },
+        "media.dp_cable": {
+          "displayName": "DisplayPort cable",
+          "id": "media.dp_cable",
+          "jacketOptions": [],
+          "shortTag": "DP"
+        },
+        "media.hdmi_active": {
+          "displayName": "HDMI, active copper",
+          "id": "media.hdmi_active",
+          "jacketOptions": [],
+          "shortTag": "HDMIA"
+        },
+        "media.hdmi_aoc": {
+          "displayName": "HDMI, active optical (AOC)",
+          "id": "media.hdmi_aoc",
+          "jacketOptions": [],
+          "shortTag": "AOC"
+        },
+        "media.hdmi_passive": {
+          "displayName": "HDMI, passive",
+          "id": "media.hdmi_passive",
+          "jacketOptions": [],
+          "shortTag": "HDMI"
+        },
+        "media.iec_cordage": {
+          "displayName": "IEC rated cordage",
+          "id": "media.iec_cordage",
+          "jacketOptions": [],
+          "shortTag": "IEC"
+        },
+        "media.knx_tp1": {
+          "displayName": "KNX TP1 bus cable",
+          "id": "media.knx_tp1",
+          "jacketOptions": [],
+          "maxRunLengthPassiveNm": 1000000000000,
+          "shortTag": "KNX"
+        },
+        "media.mic_stp": {
+          "displayName": "Mic / line shielded twisted pair",
+          "id": "media.mic_stp",
+          "jacketOptions": [],
+          "shortTag": "STP2"
+        },
+        "media.om3": {
+          "displayName": "Fibre OM3 multimode",
+          "id": "media.om3",
+          "jacketOptions": [],
+          "shortTag": "OM3"
+        },
+        "media.om4": {
+          "displayName": "Fibre OM4 multimode",
+          "id": "media.om4",
+          "jacketOptions": [],
+          "shortTag": "OM4"
+        },
+        "media.os2": {
+          "aliases": [
+            "os2",
+            "smf",
+            "single mode"
+          ],
+          "displayName": "Fibre OS2 singlemode",
+          "id": "media.os2",
+          "jacketOptions": [],
+          "shortTag": "OS2"
+        },
+        "media.pof_toslink": {
+          "displayName": "Plastic optical fibre (TOSLINK)",
+          "id": "media.pof_toslink",
+          "jacketOptions": [],
+          "shortTag": "POF"
+        },
+        "media.pull_string": {
+          "displayName": "Pull string",
+          "id": "media.pull_string",
+          "jacketOptions": [],
+          "shortTag": "PULL"
+        },
+        "media.rg11": {
+          "displayName": "RG11",
+          "id": "media.rg11",
+          "jacketOptions": [],
+          "shortTag": "RG11"
+        },
+        "media.rg59": {
+          "displayName": "RG59",
+          "id": "media.rg59",
+          "jacketOptions": [],
+          "shortTag": "RG59"
+        },
+        "media.rg6": {
+          "aliases": [
+            "rg6",
+            "rg-6",
+            "coax"
+          ],
+          "displayName": "RG6",
+          "id": "media.rg6",
+          "jacketOptions": [],
+          "shortTag": "RG6"
+        },
+        "media.rg6_quad": {
+          "aliases": [
+            "rg6q",
+            "quad shield"
+          ],
+          "displayName": "RG6 quad-shield",
+          "id": "media.rg6_quad",
+          "jacketOptions": [],
+          "shortTag": "RG6Q"
+        },
+        "media.so_cord": {
+          "displayName": "SO / SJ power cord",
+          "id": "media.so_cord",
+          "jacketOptions": [],
+          "shortTag": "SO"
+        },
+        "media.usbc_cable": {
+          "displayName": "USB-C cable",
+          "id": "media.usbc_cable",
+          "jacketOptions": [],
+          "shortTag": "USBC"
+        }
+      },
       "outletTemplates": {},
       "signalDomains": {
         "audio.analog": {

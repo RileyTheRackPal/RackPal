@@ -92,38 +92,27 @@ RackDocument buildWholeHouseStarter() {
     sequence: 1_412,
   );
 
-  // The four media types these home runs are pulled in. Registered so the
-  // document says what `media.cat6_utp` MEANS rather than leaving a bare
-  // string; `maxRunLengthPassive` is filled only where a standard fixes
-  // it (TIA-568's 100 m channel for balanced twisted pair) and left null
-  // everywhere else rather than estimated.
-  const cat6 = MediaTypeId('media.cat6_utp');
+  // The four media types these home runs are pulled in — CANON §6.5's OWN
+  // IDS, and no local `MediaTypeDef` at all, because `newDocument` has
+  // already seeded all 38 of them (M3-C/6).
+  //
+  // THREE OF THESE IDS USED TO BE THIS FILE'S INVENTION, and the cost was
+  // not aesthetic. `media.cat6_utp`, `media.speaker_16_4` and
+  // `media.fiber_os2_2f` name cables canon spells `media.cat6`,
+  // `media.16_4` and `media.os2`; docs/07 §5.1's synonym table resolves
+  // to canon's spellings and to nothing else, so a starter written in the
+  // local dialect shipped 27 links whose media no CSV import, no drop DSL
+  // and no wide-mode header match could ever reach. `media.rg6_quad` was
+  // already right and is unchanged.
+  //
+  // The four `jacketOptions` sets that used to live here are gone with
+  // them. They were authored for this fixture rather than sourced — canon
+  // §6.5 names `availableJackets[]` in its field list and gives it no
+  // column — and nothing in the codebase reads the field.
+  const cat6 = MediaTypeId('media.cat6');
   const rg6 = MediaTypeId('media.rg6_quad');
-  const spk164 = MediaTypeId('media.speaker_16_4');
-  const os2 = MediaTypeId('media.fiber_os2_2f');
-  doc.registries.mediaTypes.addAll({
-    cat6: const MediaTypeDef(
-      id: cat6,
-      displayName: 'Cat6 U/UTP',
-      maxRunLengthPassive: Len(100 * 1000 * Len.nmPerMillimetre),
-      jacketOptions: [JacketRating.cmr, JacketRating.cmp],
-    ),
-    rg6: const MediaTypeDef(
-      id: rg6,
-      displayName: 'RG6 quad-shield',
-      jacketOptions: [JacketRating.cl2, JacketRating.cmp],
-    ),
-    spk164: const MediaTypeDef(
-      id: spk164,
-      displayName: 'Speaker 16 AWG, 4-conductor',
-      jacketOptions: [JacketRating.cl3, JacketRating.cmp],
-    ),
-    os2: const MediaTypeDef(
-      id: os2,
-      displayName: 'OS2 single-mode, 2-fibre',
-      jacketOptions: [JacketRating.cmr, JacketRating.cmp],
-    ),
-  });
+  const spk164 = MediaTypeId('media.16_4');
+  const os2 = MediaTypeId('media.os2');
 
   // --- Locations ---------------------------------------------------------
 

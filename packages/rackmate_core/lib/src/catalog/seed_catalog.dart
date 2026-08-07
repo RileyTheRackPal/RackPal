@@ -43,6 +43,9 @@ export 'package:rackmate_core/src/catalog/catalog_video.dart' show kCatVideo;
 // document by its constructor and editable from that moment on.
 export 'package:rackmate_core/src/catalog/jacket_color_convention.dart'
     show buildDefaultJacketColorConvention;
+// Likewise: canon §6.5's 38 media types (M3-C/6), on the same contract.
+export 'package:rackmate_core/src/catalog/seed_media_types.dart'
+    show buildSeedMediaTypes;
 // Likewise: the 8 signal domains and 55 signal families (DR-010 §11.10).
 // Same contract again — seeded into a new document at CREATION, ordinary
 // stored data from that line onward, and NEVER recomputed at save.

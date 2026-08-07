@@ -169,6 +169,83 @@ void main() {
     });
   });
 
+  group("MediaTypeDef's two added keys are additive too (M3-C/6)", () {
+    /// A document whose only registry content is one media type.
+    RackDocument docWithMedia(MediaTypeDef m) {
+      final doc = emptyDoc();
+      doc.registries.mediaTypes[m.id] = m;
+      return doc;
+    }
+
+    const id = MediaTypeId('media.cat6');
+
+    test('a media type written before shortTag and aliases existed '
+        're-encodes BYTE-FOR-BYTE', () {
+      // CONTRACT 1 AGAIN, and the reason `MediaTypeDef.aliases` does NOT
+      // copy the unconditional write that `ConnectorTypeDef.aliases` and
+      // `SignalFamilyDef.aliases` use. Those two carried the key from
+      // M0. This one did not, so writing it always would add an
+      // `aliases` key to every media entry in every document already on
+      // disk — nothing would throw, every golden would just stop
+      // matching at once.
+      final bare = docWithMedia(const MediaTypeDef(id: id, displayName: 'x'));
+      final text = textOf(bare);
+
+      expect(text, isNot(contains('shortTag')));
+      expect(text, isNot(contains('aliases')));
+      expect(textOf(reread(bare)), text);
+    });
+
+    test('both survive a round trip when they are set', () {
+      final rich = docWithMedia(
+        const MediaTypeDef(
+          id: id,
+          displayName: 'Cat6 UTP',
+          shortTag: 'C6',
+          aliases: ['cat6', 'c6'],
+        ),
+      );
+
+      final back = reread(rich).registries.mediaTypes[id]!;
+      expect(back.shortTag, 'C6');
+      expect(back.aliases, ['cat6', 'c6']);
+      expect(textOf(reread(rich)), textOf(rich));
+    });
+
+    test('the key appears when there are synonyms and not when there are '
+        'none, and empty decodes back to empty', () {
+      // The distinction `dashOverride` needs and this one does not:
+      // `audio.line_bal` overrides to *solid*, so `[]` is a real value
+      // there and "absent" and "[]" must stay apart. No media type means
+      // anything by "deliberately no synonyms", so collapsing them costs
+      // nothing and buys the byte-exactness above. Both directions are
+      // asserted so that a later "tidy-up" into an unconditional write
+      // fails here rather than in every golden at once.
+      final none = docWithMedia(const MediaTypeDef(id: id, displayName: 'x'));
+      final some = docWithMedia(
+        const MediaTypeDef(id: id, displayName: 'x', aliases: ['c6']),
+      );
+
+      expect(textOf(none), isNot(contains('aliases')));
+      expect(textOf(some), contains('"aliases"'));
+      expect(reread(none).registries.mediaTypes[id]!.aliases, isEmpty);
+      expect(reread(some).registries.mediaTypes[id]!.aliases, ['c6']);
+    });
+
+    test('all 38 seeded types round-trip with their tags and synonyms', () {
+      final seeded = buildSeedMediaTypes();
+      final back = reread(
+        emptyDoc()..registries = buildSeedRegistries(),
+      ).registries.mediaTypes;
+
+      expect(back, hasLength(38));
+      for (final m in seeded.values) {
+        expect(back[m.id]!.shortTag, m.shortTag, reason: '${m.id.v} tag');
+        expect(back[m.id]!.aliases, m.aliases, reason: '${m.id.v} aliases');
+      }
+    });
+  });
+
   group('the seeded registries as stored data (§11.10.2)', () {
     test('a fully seeded document round-trips byte-exactly (CR-117)', () {
       final doc = seededDoc();

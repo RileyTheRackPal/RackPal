@@ -307,7 +307,7 @@ void main() {
             'iterating an empty list and proving nothing.',
       );
       expect(
-        coloured.every((l) => l.media.v == 'media.cat6_utp'),
+        coloured.every((l) => l.media.v == 'media.cat6'),
         isTrue,
         reason:
             "the integrator's convention is about CATEGORY CABLE. A "

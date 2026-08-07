@@ -323,13 +323,23 @@ void main() {
       expect(seeded.connectorTypes, hasLength(footprints.length));
     });
 
-    test('leaves cableSpecs, mediaTypes and outletTemplates EMPTY', () {
+    test('leaves cableSpecs and outletTemplates EMPTY', () {
       // Out of DR-010's scope and deliberately not invented (G4). This
       // asserts the absence so that populating them later is a visible
       // change to a stated expectation rather than a silent one.
-      expect(seeded.mediaTypes, isEmpty);
+      //
+      // `mediaTypes` WAS ASSERTED EMPTY HERE and is not any more. It was
+      // seeded by M3-C/6, and the tripwire did its job: the drop DSL
+      // (docs/07 §4.3, `4x Cat6`) had nothing to resolve a media name
+      // against. `outletTemplates` is the same shape of gap and is #150's.
       expect(seeded.cableSpecs, isEmpty);
       expect(seeded.outletTemplates, isEmpty);
+    });
+
+    test("carries canon §6.5's media types, which it did not before", () {
+      // Kept beside the absences above so the two read as one list: what
+      // a new document starts from, and what it still does not.
+      expect(seeded.mediaTypes, hasLength(38));
     });
 
     test('two calls are independent — a document may edit its own copy', () {

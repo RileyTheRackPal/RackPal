@@ -52,11 +52,14 @@
 // ═════════════════════════════════════════════════════════════════════
 // WHAT IS DELIBERATELY ABSENT, SO IT READS AS A GAP AND NOT AN OVERSIGHT
 // ═════════════════════════════════════════════════════════════════════
-//  * `Registries.cableSpecs`, `.mediaTypes` and `.outletTemplates` STAY
-//    EMPTY. §5.3's `MediaTypeDef` table and §6's outlet templates are
-//    real shipped content, but they are out of DR-010's scope and
-//    inventing them here to make three maps look populated is the
-//    fabrication G4 forbids. They are still empty; that is the truth.
+//  * `Registries.cableSpecs` and `.outletTemplates` STAY EMPTY. §6's
+//    outlet templates are real shipped content, but they are out of
+//    DR-010's scope and inventing them here to make two maps look
+//    populated is the fabrication G4 forbids. They are still empty; that
+//    is the truth. `.mediaTypes` WAS in this list and is no longer:
+//    M3-C/6 seeded canon §6.5's 38 types from `seed_media_types.dart`,
+//    because the drop DSL (docs/07 §4.3, `4x Cat6`) has to resolve a
+//    media name against something and there was nothing there.
 //  * `SignalFamilyDef.aliases` is empty on all 55. §2.3's alias table is
 //    real, but it is the Quick Add DSL's resolution table (CR-058) and
 //    nothing in this build resolves an alias — §2.3 itself says "the
@@ -73,6 +76,7 @@
 //    lands.
 
 import 'package:rackmate_core/src/catalog/catalog_connectors.dart';
+import 'package:rackmate_core/src/catalog/seed_media_types.dart';
 import 'package:rackmate_core/src/model/registries.dart';
 import 'package:rackmate_core/src/model/template.dart'
     show PortDirection, PortTopology;
@@ -1024,10 +1028,11 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
 /// `connectorTypes` IS INCLUDED and was previously dead —
 /// `buildSeedConnectorFootprints()` shipped at M1 and was consumed only
 /// by its own test, which is why DR-010's finding reads `connectors: 0`
-/// everywhere alongside the two empty signal maps. `cableSpecs`,
-/// `mediaTypes` and `outletTemplates` STAY EMPTY; see the file header.
+/// everywhere alongside the two empty signal maps. `cableSpecs` and
+/// `outletTemplates` STAY EMPTY; see the file header.
 Registries buildSeedRegistries() => Registries(
   signalDomains: buildSeedSignalDomains(),
   signalFamilies: buildSeedSignalFamilies(),
   connectorTypes: buildSeedConnectorFootprints(),
+  mediaTypes: buildSeedMediaTypes(),
 );
