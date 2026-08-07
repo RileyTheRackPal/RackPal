@@ -8,6 +8,7 @@
 // function so it is usable from a command factory without depending on
 // `rackmate_ui`.
 
+import 'package:rackmate_core/src/idformat/id_format.dart';
 import 'package:rackmate_core/src/model/project_settings.dart';
 
 /// Thrown when a designator pattern cannot yield an unused value however
@@ -237,4 +238,144 @@ String allocatePortDesignator({
   firstSeq: portSeq,
   usedDesignators: usedDesignators,
   render: (seq) => settings.portDesignatorFormat.render({'PORT_SEQ': seq}),
+);
+
+// ═════════════════════════════════════════════════════════════════════
+// THE TWO DROP LABELS (M3-D/1, CR-044, CR-045, DR-022)
+// ═════════════════════════════════════════════════════════════════════
+// `ProjectSettings.outletFieldLabelFormat` and `.outletRackLabelFormat`
+// have round-tripped since M0 with exactly one caller each: the codec.
+// This is their wiring, and it is the same gap `netNameFormat` sat in
+// until M2-A closed it.
+//
+// ─────────────────────────────────────────────────────────────────────
+// WHY THESE TWO REPORT AND THE FOUR ABOVE THROW
+// ─────────────────────────────────────────────────────────────────────
+// The four designator allocators supply their own tokens: a type prefix,
+// a sequence, a pin's index in a template. Those are always available, so
+// a missing one is a caller bug and an exception is the right answer.
+//
+// A LABEL'S TOKENS ARE FACTS ABOUT A BUILDING. `{ROOM_ABBR}` is a room the
+// user may not have named, `{SERVICE}` is DR-022's outlet-template tag on
+// a drop that may have been entered without a template, `{PORT}` is a rack
+// jack that AC-018 says fourteen of sixty drops have not landed on yet.
+// None of those is a bug; each is a thing the user has not told us. So
+// these two return [LabelAllocation] and let the caller say a sentence,
+// which is what `buildAddHomeRunCommand` already does for every other
+// reason a drop cannot be created.
+//
+// ─────────────────────────────────────────────────────────────────────
+// THE SHIPPED DEFAULTS THROW ON THE MOST ORDINARY DROP, MEASURED
+// ─────────────────────────────────────────────────────────────────────
+// `{ROOM_ABBR}-{SERVICE}-{SEQ}` wraps nothing in `[...]`, so rendering it
+// for a rough-in drop with no service raises `MissingTokenValueException`
+// — and docs/07 §4.1 calls `Service: undetermined` "a first-class,
+// encouraged state". DR-022 §11.21.1 records the measurement. That is why
+// the missing-token case is a first-class OUTCOME here and not an
+// afterthought: on the default pattern it is reachable immediately.
+//
+// The rack label needs no equivalent worry and gets none: `rackLabel` is
+// OPTIONAL (CR-044), so a caller with no rack port does not call this at
+// all. Nothing is fabricated because nothing is rendered.
+
+/// The outcome of allocating a drop label.
+sealed class LabelAllocation {
+  const LabelAllocation();
+}
+
+final class LabelAllocated extends LabelAllocation {
+  const LabelAllocated(this.label);
+  final String label;
+}
+
+/// The pattern needs tokens the caller did not supply.
+///
+/// ALL OF THEM, not the first: [IdFormat.requiredTokens] is what makes
+/// that possible, and the reason is in its doc comment.
+final class LabelTokensMissing extends LabelAllocation {
+  const LabelTokensMissing(this.tokens, this.pattern);
+
+  /// Token names, in the order the pattern references them.
+  final List<String> tokens;
+
+  /// The pattern that wanted them, so a message can quote it. A user who
+  /// customised their label scheme needs to see the scheme.
+  final String pattern;
+}
+
+/// The lowest unused label for [format], rendered against [values] with
+/// `SEQ` supplied by the walk.
+///
+/// `SEQ` IS THE WALK'S, NOT THE CALLER'S, and a caller-supplied one is
+/// overwritten rather than honoured: the whole point is to find the lowest
+/// sequence number that is free, so a fixed `SEQ` would make the walk
+/// return the same candidate forever and trip
+/// [DesignatorExhaustedException]. Every other token comes from [values].
+LabelAllocation _allocateLabel({
+  required IdFormat format,
+  required Map<String, Object?> values,
+  required Set<String> usedLabels,
+}) {
+  final missing = [
+    for (final token in format.requiredTokens())
+      if (token != 'SEQ' && values[token] == null) token,
+  ];
+  if (missing.isNotEmpty) {
+    return LabelTokensMissing(List.unmodifiable(missing), format.pattern);
+  }
+  return LabelAllocated(
+    _lowestUnused(
+      pattern: format.pattern,
+      firstSeq: 1,
+      usedDesignators: usedLabels,
+      render: (seq) => format.render({...values, 'SEQ': seq}),
+    ),
+  );
+}
+
+/// The `fieldLabel` a NEW drop should receive — `LR-TV-1`, then `LR-TV-2`,
+/// … — rendered through `ProjectSettings.outletFieldLabelFormat`.
+///
+/// REQUIRED AND PROJECT-WIDE UNIQUE (CR-044, CR-113): it is the only
+/// identifier an unbound end has, and it is printed on physical cable, so
+/// [usedLabels] is every field label on the project. Pass
+/// `usedFieldLabels(doc, alsoUsed: …)` (home_run_commands.dart), whose
+/// `alsoUsed` exists so a batch entering sixty drops against one unmutated
+/// document does not hand two of them the same label.
+///
+/// [values] carries `ROOM_ABBR` (the `Location.code` CR-046 names) and
+/// `SERVICE` (DR-022: the outlet template's tag), plus whatever else a
+/// project's customised pattern asks for. `SEQ` is the walk's.
+///
+/// `designatorPad` is deliberately NOT applied, for [allocateNetName]'s
+/// reason: the pad exists for the device pattern, and a label pattern
+/// expresses its own width with `:n`.
+LabelAllocation allocateOutletFieldLabel({
+  required ProjectSettings settings,
+  required Map<String, Object?> values,
+  required Set<String> usedLabels,
+}) => _allocateLabel(
+  format: settings.outletFieldLabelFormat,
+  values: values,
+  usedLabels: usedLabels,
+);
+
+/// The `rackLabel` a NEW drop should receive — `1A-A01`, `1A-A02`, … —
+/// rendered through `ProjectSettings.outletRackLabelFormat`.
+///
+/// OPTIONAL, AND THAT IS THE WHOLE DIFFERENCE FROM THE FIELD LABEL
+/// (CR-044: *"`rackLabel` (optional, project-unique when set)"*). A drop
+/// whose far end has not landed has no `PORT` and therefore no rack label,
+/// which is AC-018's fourteen-of-sixty case; the caller simply does not
+/// call this. `usedRackLabels` likewise holds only the links that have
+/// one, because an absent label is unknown and not a value competing for
+/// uniqueness (G4, CR-114).
+LabelAllocation allocateOutletRackLabel({
+  required ProjectSettings settings,
+  required Map<String, Object?> values,
+  required Set<String> usedLabels,
+}) => _allocateLabel(
+  format: settings.outletRackLabelFormat,
+  values: values,
+  usedLabels: usedLabels,
 );

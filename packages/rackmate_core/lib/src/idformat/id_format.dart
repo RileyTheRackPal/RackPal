@@ -341,6 +341,33 @@ final class IdFormat {
     return buf.toString();
   }
 
+  /// Token names [render] will THROW on if its `tokenValues` has no entry
+  /// for them — that is, every token not wrapped in an optional `[...]`
+  /// segment, in the order they appear.
+  ///
+  /// EXACTLY THE THROW SITE'S OWN CONDITION, derived from the same parse
+  /// rather than from a second reading of the grammar: [render] can only
+  /// raise [MissingTokenValueException] from a bare top-level token,
+  /// because a token inside `[...]` resolves the segment away instead. So
+  /// this walks the top level and nothing else, and the two cannot drift.
+  ///
+  /// WHY A CALLER WANTS THIS RATHER THAN A `try`/`catch`. The exception
+  /// names the FIRST missing token, so a caller repairing one learns about
+  /// the next only on the next attempt. A label is authored during a
+  /// sixty-drop entry session (M3's exit criterion); telling someone about
+  /// one missing fact at a time, sixty times, is the difference between a
+  /// message and an obstacle.
+  ///
+  /// Duplicates are collapsed: a pattern naming `{SEQ}` twice is missing
+  /// one thing, not two.
+  List<String> requiredTokens() {
+    final found = <String>[];
+    for (final node in _parsePattern(pattern)) {
+      if (node is _Token && !found.contains(node.name)) found.add(node.name);
+    }
+    return found;
+  }
+
   /// Token names referenced in [pattern] that are not part of
   /// [kIdFormatTokens] — the registry-validation entry point (CR-045: "one
   /// registry"). Returns an empty list when every referenced token is
