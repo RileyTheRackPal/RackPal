@@ -30,13 +30,15 @@ final class Pathway {
     required this.meta,
     this.kind = PathwayKind.conduit,
     this.containsLineVoltage = false,
-    this.fromLocationId,
-    this.toLocationId,
+    Uuid? fromLocationId,
+    Uuid? toLocationId,
     this.nominalLength,
     this.pathwayMedia,
     String? notes,
   }) : _name = name,
-       _notes = notes;
+       _notes = notes,
+       _fromLocationId = fromLocationId,
+       _toLocationId = toLocationId;
 
   final Uuid id;
 
@@ -51,6 +53,21 @@ final class Pathway {
   @internal
   set notes(String? v) => _notes = v;
 
+  /// THE TWO FIELDS A GREP FOR `locationId` DOES NOT FIND, which is why
+  /// DR-021 enumerates the nine carriers rather than describing them.
+  /// `RemoveLocationCommand` clears both when the room at either end of a
+  /// pathway is deleted (§11.20.2), and that wiring is the AC-013
+  /// retrofit.
+  Uuid? _fromLocationId;
+  Uuid? get fromLocationId => _fromLocationId;
+  @internal
+  set fromLocationId(Uuid? v) => _fromLocationId = v;
+
+  Uuid? _toLocationId;
+  Uuid? get toLocationId => _toLocationId;
+  @internal
+  set toLocationId(Uuid? v) => _toLocationId = v;
+
   // ACCESS CONTROL: fields below are plain mutable pending @internal
   // retrofit (AC-013). Converted as each is wired to a Command. See
   // internal_setter_grep_test.dart.
@@ -58,8 +75,6 @@ final class Pathway {
 
   /// `CODE-001` depends on it.
   bool containsLineVoltage;
-  Uuid? fromLocationId;
-  Uuid? toLocationId;
   Len? nominalLength;
 
   /// `isPathwayOnly` media (CR-109).

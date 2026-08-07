@@ -66,7 +66,7 @@ final class DeviceInstance {
     required this.meta,
     this.designatorLocked = false,
     LifecycleStatus lifecycleStatus = LifecycleStatus.new_,
-    this.locationId,
+    Uuid? locationId,
     this.serialNumber,
     this.assetTag,
     this.macAddressPrimary,
@@ -81,6 +81,7 @@ final class DeviceInstance {
        _name = name,
        _placement = placement,
        _lifecycleStatus = lifecycleStatus,
+       _locationId = locationId,
        overrides = overrides ?? DeviceOverrides(),
        _notes = notes;
 
@@ -116,6 +117,21 @@ final class DeviceInstance {
   @internal
   set lifecycleStatus(LifecycleStatus v) => _lifecycleStatus = v;
 
+  /// The room this device is in. NOT the same field as
+  /// `OffRackPlacement.locationId`, and `AddStructureCommand` writes the
+  /// same value into both: retrofitted by M3-B/1 because
+  /// `RemoveLocationCommand` clears BOTH when that room is deleted
+  /// (DR-021 §11.20.2), and clearing one would leave the document
+  /// disagreeing with itself.
+  ///
+  /// NOT a `DeviceField` row. It has no editing gesture yet; the retrofit
+  /// follows the wiring, and this table stays a SUBSET of the model's
+  /// `@internal` setters, which is the direction its test asserts.
+  Uuid? _locationId;
+  Uuid? get locationId => _locationId;
+  @internal
+  set locationId(Uuid? v) => _locationId = v;
+
   // ACCESS CONTROL: fields below are plain mutable pending @internal
   // retrofit (AC-013). Converted as each is wired to a Command. See
   // internal_setter_grep_test.dart.
@@ -126,7 +142,6 @@ final class DeviceInstance {
 
   /// CR-034.
   bool designatorLocked;
-  Uuid? locationId;
   String? serialNumber;
   String? assetTag;
   String? macAddressPrimary;

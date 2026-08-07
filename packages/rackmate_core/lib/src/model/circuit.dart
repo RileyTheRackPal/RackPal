@@ -21,8 +21,9 @@ final class Circuit {
     this.rackId,
     this.phase,
     this.dedicated = false,
-    this.locationId,
-  }) : _designator = designator;
+    Uuid? locationId,
+  }) : _designator = designator,
+       _locationId = locationId;
 
   final Uuid id;
 
@@ -31,6 +32,14 @@ final class Circuit {
   String get designator => _designator;
   @internal
   set designator(String v) => _designator = v;
+
+  /// Retrofitted by M3-B/1: `RemoveLocationCommand` clears this when the
+  /// room a circuit is in is deleted (DR-021 §11.20.2), and wiring a field
+  /// to a Command IS the AC-013 retrofit.
+  Uuid? _locationId;
+  Uuid? get locationId => _locationId;
+  @internal
+  set locationId(Uuid? v) => _locationId = v;
 
   // ACCESS CONTROL: fields below are plain mutable pending @internal
   // retrofit (AC-013). Converted as each is wired to a Command. See
@@ -43,7 +52,6 @@ final class Circuit {
   int volts;
   int? phase;
   bool dedicated;
-  Uuid? locationId;
   EntityMeta meta;
 
   /// NEC 210.19(A)(1) — DERIVED, never stored (CR-048).

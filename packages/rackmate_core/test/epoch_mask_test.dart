@@ -97,6 +97,11 @@ bool _epochPlausiblyCovers(EpochMask touches, String key) => switch (key) {
   // about — over-declaring is what AC-014 sanctions.
   'locations' =>
     touches.has(EpochMask.structure) || touches.has(EpochMask.meta),
+  // Reached by exactly ONE command so far, and only because DR-021 makes a
+  // location delete clear `Circuit.locationId` and `Pathway.from/to`. Both
+  // are "where a thing is", so both sit under `structure`.
+  'circuits' ||
+  'pathways' => touches.has(EpochMask.structure) || touches.has(EpochMask.meta),
   _ => false,
 };
 
@@ -112,6 +117,8 @@ const _knownMutableKeys = {
   'outlets',
   'structures',
   'locations',
+  'circuits',
+  'pathways',
 };
 
 void _expectTouchesCoversChanges(
@@ -568,6 +575,30 @@ void main() {
       final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
 
       _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'locations'});
+    });
+
+    test('RemoveLocationCommand reaches SEVEN maps, not one', () {
+      // The widest command in the package, and the reason it declares
+      // `wires` as well: DR-021 clears nine carriers across seven entity
+      // kinds, one of which is a `PlaceEndpoint` inside a `Link`. A mask
+      // of `structure | meta` would leave the schedule showing a room that
+      // is gone.
+      final doc = _freshDoc();
+      final room = _seedLocation(doc, 'Living Room', 'LR');
+      const rackId = Uuid('rk-loc');
+      doc.racks[rackId] = _rack(rackId)..locationId = room;
+      final cmd = buildRemoveLocation(doc: doc, locationId: room)!;
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(
+        cmd,
+        changed,
+        expectAtLeast: {
+          'locations',
+          'racks',
+        },
+      );
     });
 
     test('SetEntityPropertyCommand (location, meta-epoch field)', () {
