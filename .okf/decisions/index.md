@@ -13,11 +13,18 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` ย
 * [DR-013, deleting a wired device cascades](dr-013-delete-cascades.md) - a TODO that was inert until DR-011.1 made it live; cascade with a confirmation that counts the cables, and an undo that puts them back.
 * [DR-014, drawing a wired set member elsewhere splits the set](dr-014-splitting-a-set.md) - no modifier was free, so none is spent; four conditions keep it from firing, and the third stops a split from being a silent delete.
 * [DR-015, the rm extension family](dr-015-extension-family.md) - .rmpj / .rmdx / .rmda; a .rackmate still opens and is never rewritten, and the archive is one JSON file because the zip buys only a decompression-bomb surface.
+* [DR-021, deleting a Location cascades](dr-021-location-delete-cascades.md) - the subtree goes and nine references are cleared to null, not left dangling; two of the nine were found by censusing the field rather than grepping its name.
 
 # Not yet written up
 
 DR-002 (residential primary), DR-003 (device builder in v1), DR-004 (multi-sheet
-never), DR-005 (schematic is a client deliverable), DR-006 (internal tool,
-self-signed), DR-007 (keystone geometry ships in M3). All are in
+never), DR-005 (schematic is a client deliverable), DR-007 (keystone geometry
+ships in M3), DR-016 (editable rack presets), DR-017 (`dart format` is a gate),
+DR-018 (the Plan view moves to v1.1), DR-019 (the plan container sniffs) and
+DR-020 (a plan may not predict a route). All are in
 `docs/canonical-decisions.md` ยง11; concepts here are pending. A missing link is
 not-yet-written knowledge, not an error.
+
+**DR-006 was on this list while its own concept sat two lines above**, which is
+the drift a list of absences invites: it names what is missing, so nothing fails
+when an entry stops being true.

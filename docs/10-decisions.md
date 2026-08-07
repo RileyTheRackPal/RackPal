@@ -3,12 +3,12 @@
 **This file is not the normative record.** The normative record is
 [docs/canonical-decisions.md](canonical-decisions.md), 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`,
 canonical naming, the model, the registry, the scope ruling, the milestone plan, and Part 4's
-binding user decisions `DR-001`–`DR-017`. This file is a sixteen-ADR summary of it. Where an ADR
+binding user decisions `DR-001`–`DR-021`. This file is a sixteen-ADR summary of it. Where an ADR
 and a ruling appear to differ, the ruling wins and this file is wrong.
 
 What follows is the short-form decision log for RackMate: sixteen ADRs covering the choices that
 shape the codebase, each traced back to its adjudication in the canonical decision record; then
-**the twenty user decisions `DR-001`–`DR-020`**, which are binding and override the recommendations
+**the twenty-one user decisions `DR-001`–`DR-021`**, which are binding and override the recommendations
 they answer; then the questions of canon §10, **none of which is open any longer**: ten are
 answered, 10.3 is moot under DR-006, 10.13 is retired, and 10.11 alone is deferred, to M5 rather
 than indefinitely. An ADR here is a summary with a pointer, not a new ruling. Open questions carry no
@@ -39,7 +39,7 @@ overruled is marked as void where it stands.
 canon §11; the supersession index is canon §12.
 
 > **This table listed only `DR-001`–`DR-005` until 2026-08-03**, an owed edit canon §12.9 recorded
-> against DR-006 and which then went ten rulings further out of date. Seven of the twenty answer a
+> against DR-006 and which then went ten rulings further out of date. Seven of the twenty-one answer a
 > canon §10 question and say which; the rest are rulings the work itself raised, which is why their
 > `Answers` column is empty. (**The count in this note read "sixteen" against a heading that read
 > "seventeen"** until DR-018's sweep; a written-out count drifts every time a ruling lands, which is
@@ -73,6 +73,7 @@ canon §11; the supersession index is canon §12.
 | DR-018 | **The Plan view moves from not-doing to v1.1, conditionally** |: | A **scope amendment under roadmap §8.3**, the second after DR-016. Floor plans leave canon §7.6's cable-dressing row (which had only ever argued cable dressing) and land in roadmap §2.2. Placed conditionally against §2.2's additive membership criterion; **DR-019 discharges the condition** and corrects §11.17.4's reasoning. RJ-017, AC-024, AC-057 and G4 all stand. Feasibility and cost: `docs/research/feasibility-plan-view.md`. No board item |
 | DR-019 | **The plan container is JSON-or-zip by sniff; v1 owes a passthrough, not a carrier** |: | **The only DR that supersedes another DR.** `.rmpj` stays plain pretty JSON with no binary member and becomes a zip container with one, so **nothing migrates** and CR-091's single file survives; the writer owes stated determinism because zip is nondeterministic and CR-117 is byte round-trip. Base64-in-JSON and a sidecar are rejected with reasons. PNG and JPEG in, **no PDF import**. **It corrects DR-018 §11.17.4**, which claimed a migration cost that a read of `persistence/` does not support: the real G5 item is that **`Placement` carries no `unknown` map**, so an older build silently drops plan pins on save. That passthrough is v1's one new item and lands in M3. The Plan view is now v1.1 **unconditionally**. Design: [Plan view](15-plan-view.md). No board item |
 | DR-020 | **A plan may not predict a route; the length column's job is the as-built tally** |: | **The first ruling whose evidence is the trade rather than the corpus.** Structure (LVLs, concrete beams, purlins) forces runs into a crawlspace instead of an attic and is not knowable from a floorplan, so `docs/15` §4's design-time **route polyline is void one commit after it was written**, along with `routingFactor` and `slackAllowance`. The plan contributes **`planLowerBound`** only: italic, prefixed `≥`, never summed into the footage rollup. Its value is the asymmetry, a bound can **prove** a length violation and can never prove compliance. v1 gains three items: `Link.spliceCount: int?` (null unknown, `0` confirmed none), the generic **`LEN-002`** reading a new `maxLength` off the media registry, and the **as-built tally surface in M3**. **The catalogue becomes 28** (8 + 6 + 14), superseding §12.6(b) on the number only; AC-051's gate applies to 28 pairs. `PathwayKind` gaining `attic`/`crawlspace` is left open for M3 |
+| DR-021 | **Deleting a `Location` cascades the subtree and clears every reference** |: | The first ruling the location tree has raised, which until now had no delete semantics at all. The subtree goes in one undoable command; **promotion is rejected** because it rewrites the breadcrumb of every surviving room without an edit, and refusal is rejected on DR-013 §11.13.3's ground. **Nine fields across seven entities** point at a location from outside the tree, and every one is cleared to null (G4's unknown) rather than left dangling, so a cleared drop lands in the Pull Sheet's `NO ROOM RECORDED` band instead of vanishing. The count is computed once and consumed by the command, DR-013 §11.13.2's shape. A reparent that would make a node its own ancestor is **refused** the way `TOP-005` refuses a shelf cycle. No `Link`, `Outlet`, `Pathway` or drop is deleted. **No scope change.** Board #144, #145 |
 
 See also [Canonical decisions](canonical-decisions.md), normative, plus
 [Overview](00-overview.md), [Data model](02-data-model.md),

@@ -7367,9 +7367,73 @@ documents. Nothing implemented. No board item.
 
 ---
 
+### 11.20 DR-021 · Deleting a `Location` cascades the subtree and clears every reference
+
+**Ruled 2026-08-06.** M3-B/1 (board #144) asks for the four commands the location tree has never
+had: add, rename, reparent, delete. Three of the four are unambiguous. **The corpus says nothing at
+all about what a delete costs**, and the tree is the one entity where that silence is expensive,
+because `Location.parentId` makes the damage recursive (CR-047) and **nine fields across seven
+entities point at a location** from outside the tree, two of them inside immutable value objects.
+
+**The census is part of the ruling, because the question was asked with seven.** They are
+`Rack.locationId`, `DeviceInstance.locationId`, `OffRackPlacement.locationId`, `Outlet.locationId`,
+`StructureBody.distributionDeviceLocationId`, `Circuit.locationId`, `Pathway.fromLocationId`,
+`Pathway.toLocationId` and `PlaceEndpoint.locationId`. A case-sensitive grep for `locationId` finds
+seven of the nine and misses both of `Pathway`'s, because they are spelled `fromLocationId` and
+`toLocationId`. **Two of the nine were found by censusing the field rather than by grepping for the
+name it was expected to have**, which is DR-012's habit applied to a smaller question.
+
+**11.20.1 The subtree goes, in one undoable command.** Deleting a node deletes every descendant.
+**Promotion was considered and rejected**: reparenting the children onto the deleted node's parent
+leaves every surviving room carrying a breadcrumb nobody edited it to have, and a vocabulary whose
+addresses change without an edit is the failure `docs/00` opens with, *"the plan says Study, the
+homeowner says Office, the label says Room 3, and nobody wins"*. **Refusal was considered and
+rejected on DR-013 §11.13.3's ground**, which is not re-argued here: CR-017 reserves refusal for the
+five tier-1 topology rules, whose escape `docs/02` §5 gives as *"None. There is nothing to escape
+to."* Wanting a room gone is not that.
+
+**11.20.2 Every reference is cleared to null, never left dangling.** Null is G4's unknown and is
+what the derivations already read: a drop whose room is cleared prints under the Pull Sheet's own
+`NO ROOM RECORDED` band (`schedule.dart`'s `kUngroupedTitle`) rather than vanishing from the
+deliverable or acquiring an invented room. **Leaving the ids is cheaper and is rejected**: a file
+reopened next month cannot tell a dangling id from data loss, and CR-017's *"the document may not
+lie"* is exactly about a file asserting a thing that is not there.
+
+**11.20.3 The count is computed once, before anything moves, and the command consumes it.** DR-013
+§11.13.2's shape for DR-013's reason, and `device_removal.dart`'s: two walks asking the same
+question is how the dialog and the edit drift apart, and a dialog that said "4 rooms" and removed
+five is worse than no dialog. It counts **locations and referring entities**, in those two units,
+because those are the two things the user is about to lose.
+
+**11.20.4 Undo restores all of it, with the same ids.** DR-013 §11.13.4 verbatim, and it reaches
+one step further here. `OffRackPlacement` and `PlaceEndpoint` are immutable, so clearing them means
+constructing replacements; `revert` must therefore put the **original** objects back rather than
+reconstruct equal ones. Anything less makes delete-then-undo a lossy round trip through the one
+property CR-117's byte gate is about.
+
+**11.20.5 A reparent refuses a cycle.** Not a delete question, but the other half of the same
+command set, ruled here so it has an id to cite. A reparent that would make a node its own ancestor
+is **refused**, walking child to parent with a visited set and a sentence naming both nodes, exactly
+as `TOP-005` walks a shelf chain. This is not the refusal §11.20.1 rejects: a cycle is not a design
+the user disagrees with, it is a tree that is not a tree, and every derivation over it (roots, the
+path to a node, the breadcrumb, the Pull Sheet's own room order) is non-terminating rather than
+wrong.
+
+**11.20.6 What it does not do, and what it does not rule.** It does not delete a `Link`, an
+`Outlet`, a `Pathway` or a drop. **A cable pulled to a wall is a fact about the building and
+survives the room being renamed out of existence**, which is the argument
+`RemoveStructureCommand` already makes about an outlet surviving the panel it feeds. DR-013's
+cascade stops at this boundary and is not authority to cross it. It also does not rule where a
+location may be deleted from; the panel is M3-B/2's question.
+
+**11.20.7 Scope.** **No scope change.** M3-B is unchanged in size and the roadmap is not amended;
+this settles a question inside a milestone that already owns the work. Board #144 and #145 cite it.
+
+---
+
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-020 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-021 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -7829,7 +7893,7 @@ allowlist of pairs, an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-020 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-021 are the user's decisions and are binding. §12 is the complete
 index of what they supersede, §12.1…§12.5, §12.9, §12.11, §12.12 and §12.13 by ruling, §12.6 by
 internal correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **Two entries
 supersede another DR**: §12.12 (DR-018's reasoning as well as its ruling) and §12.13, which also

@@ -1,5 +1,32 @@
 # Update Log
 
+## 2026-08-06
+
+* **Creation**: [DR-021, deleting a Location
+  cascades](/decisions/dr-021-location-delete-cascades.md). M3-B/1 asks for
+  add, rename, reparent and delete on the location tree; three of the four have
+  one obvious meaning and **the corpus says nothing at all about the fourth**.
+  The subtree goes, every reference is cleared to null, the count is computed
+  once before anything moves, and a reparent refuses a cycle the way `TOP-005`
+  refuses a shelf chain.
+* **Note**: **the question was asked with seven carriers and answered against
+  nine.** A case-sensitive grep for `locationId` finds seven; `Pathway` spells
+  its two `fromLocationId` and `toLocationId` and is missed by every one of
+  them. The census practice caught it before the ruling was written rather than
+  after the command shipped, which is the whole margin that practice claims.
+* **Note**: **promotion was the tempting answer and is rejected.** Reparenting
+  the children onto the deleted node's parent destroys nothing, which is exactly
+  what makes it attractive, and it leaves every surviving room carrying a
+  breadcrumb nobody edited it to have. `docs/00` opens on that failure: the plan
+  says Study, the homeowner says Office, the label says Room 3. A location
+  vocabulary that rewrites its own addresses is the problem wearing the costume
+  of the fix.
+* **Note**: the ruling reaches one step past DR-013 on undo. `OffRackPlacement`
+  and `PlaceEndpoint` are **immutable**, so clearing them constructs
+  replacements, and `revert` therefore has to restore the ORIGINAL objects
+  rather than equal ones. DR-013's cascade never had to state that, because
+  everything it removed was a whole entity it could hand back.
+
 ## 2026-08-03 (later)
 
 * **Update**: **every epic on the board is decomposed**: 12 epics, 141 issues,
