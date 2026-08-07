@@ -463,15 +463,16 @@ final class AppServices {
   //        A hand-rolled binding beside the registry is invisible to the
   //        generated table and to arbitration — which is precisely the
   //        state M2-H existed to end — and it would re-hard-code `Ctrl`;
-  //   (iii) the File menu still declares exactly four accelerators across
-  //        five items, so `Export PDF…` has none. docs/08 §8.1 gives it
-  //        `Ctrl+P` and that binding is not built.
+  //   (iii) the shell's menus still declare exactly four accelerators
+  //        across six items, so `Export PDF…` has none. docs/08 §8.1 gives
+  //        it `Ctrl+P` and that binding is not built. The sixth item is
+  //        `Project ▸ Locations…` (M3-B/2, CR-112), which has none either.
   //
   // (iii) is weaker than it was and says so: with `shortcut:` now naming a
   // `KeyBindingId`, a menu item CANNOT advertise a key nothing listens for
   // — the row it names is the binding. What is left to catch is an
-  // accelerator appearing on the export item, or one vanishing from a file
-  // item, and that is a count.
+  // accelerator appearing on an item that was decided not to have one, or
+  // one vanishing from a file item, and that is a count.
   test('RULE 14 — exactly two complete keybinding groups are registered', () {
     // docs/04 §8's ~40-binding table is NOT bound wholesale: a partial
     // keymap reads as a whole one, so a group lands only when it is
@@ -512,12 +513,20 @@ final class AppServices {
     final accelerators = RegExp('shortcut:').allMatches(shell).length;
     expect(
       [menuItems, accelerators],
-      [5, 4],
+      // 5 -> 6 at M3-B/2, and the accelerator count deliberately did NOT
+      // move. The sixth is `Project ▸ Locations…` (CR-112), the first item
+      // on a second top-level menu; CR-110 already owes that menu a
+      // `Structured wiring…` beside it, so this number will move again and
+      // should move visibly each time.
+      [6, 4],
       reason:
           'five File-menu items — New, Open…, Save, Save As…, Export PDF… '
-          '— and four accelerators, because Export PDF has none. docs/08 '
-          '§8.1 gives export Ctrl+P; the dialog is not built and neither '
-          'is the binding.',
+          '— plus Project ▸ Locations…, and four accelerators, because '
+          'neither Export PDF nor Locations has one. docs/08 §8.1 gives '
+          'export Ctrl+P; the dialog is not built and neither is the '
+          'binding. Locations opens a panel once per project and does not '
+          "earn a row in kKeymap, M7's table and arbitration across every "
+          'platform.',
     );
   });
 

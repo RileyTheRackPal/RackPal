@@ -505,12 +505,21 @@ class _Detail extends StatelessWidget {
             key: ValueKey('parent-${location.id.v}'),
             initialValue: location.parentId?.v ?? '',
             decoration: const InputDecoration(labelText: 'Inside'),
+            // EXPANDED AND ELLIPSISED. Every item is a breadcrumb, so its
+            // width grows with the depth of the tree AND with the length
+            // of every name in it. Unconstrained, a three-deep room in a
+            // 720px dialog overflows its own field.
+            isExpanded: true,
             items: [
               const DropdownMenuItem(value: '', child: Text('(top level)')),
               for (final id in _candidateParents)
                 DropdownMenuItem(
                   value: id.v,
-                  child: Text(breadcrumbOf(doc, tree, id) ?? id.v),
+                  child: Text(
+                    breadcrumbOf(doc, tree, id) ?? id.v,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ),
             ],
             onChanged: (v) => onReparent(

@@ -55,13 +55,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:rackmate/src/session/app_services.dart';
 import 'package:rackmate/src/session/document_session.dart';
+import 'package:rackmate/src/session/locations_actions.dart';
 import 'package:rackmate/src/session/session_controller.dart';
 import 'package:rackmate/src/session/session_prompts.dart';
 import 'package:rackmate/src/session/starter_projects.dart';
 import 'package:rackmate/src/session/window_chrome.dart';
 import 'package:rackmate/src/storage/recents_store.dart';
 import 'package:rackmate_core/rackmate_core.dart'
-    show TextMeasurer, Uuid, buildRackPresets;
+    show LocationRemovalPlan, TextMeasurer, Uuid, buildRackPresets;
 import 'package:rackmate_ui/rackmate_ui.dart';
 
 /// Which tab of the v1 strip each `Ctrl/Cmd+n` view identity renders as.
@@ -190,6 +191,7 @@ final class AppShellState extends State<AppShell>
     implements WindowChromeListener {
   late final TabController _tabController;
   final MenuController _fileMenu = MenuController();
+  final MenuController _projectMenu = MenuController();
 
   /// CR-105's signpost, carried across the strip.
   ///
@@ -476,6 +478,10 @@ final class AppShellState extends State<AppShell>
               onExportPdf: _exportPdf,
               onOpenRecent: _openRecent,
             ),
+            _ProjectMenu(
+              controller: _projectMenu,
+              onLocations: () => unawaited(_openLocations()),
+            ),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
@@ -663,6 +669,43 @@ final class AppShellState extends State<AppShell>
     }
   }
 
+  /// `Project ▸ Locations…` (CR-112).
+  ///
+  /// PROJECT-LEVEL, which is the whole ruling: a project with racks and no
+  /// Structure device must still be able to say which room a rack is in,
+  /// so this hangs off the menu bar rather than off either editor.
+  Future<void> _openLocations() async {
+    final session = _services.session;
+    await showLocationsPanel(
+      context,
+      doc: session.document,
+      actions: buildLocationsPanelActions(
+        controller: session.controller,
+        confirmRemoval: _confirmLocationRemoval,
+        onRefuse: _showRefusal,
+      ),
+    );
+  }
+
+  /// DR-021 §11.20.3's confirmation, or an immediate yes when the plan
+  /// costs nothing. The `BuildContext` is why this is here rather than in
+  /// `locations_actions.dart`.
+  Future<bool> _confirmLocationRemoval(
+    LocationRemovalPlan plan,
+    String name,
+  ) async {
+    if (!mounted) return false;
+    return confirmLocationRemoval(context, plan: plan, name: name);
+  }
+
+  /// A refusal must not vanish, the rule `_newRackFromEmptyPanel` already
+  /// states: the sentence names both nodes and is the only thing that
+  /// tells the user which two are the problem.
+  void _showRefusal(String reason) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reason)));
+  }
+
   Widget _rackTab(DocumentSession session) {
     // A document with no racks is REACHABLE the moment the app can open a
     // file, and `RackCanvasScreen` reads `racks.values.first` while
@@ -824,6 +867,42 @@ final class _FileMenu extends StatelessWidget {
       ],
     );
   }
+}
+
+/// The Project menu.
+///
+/// A SECOND TOP-LEVEL MENU, and the first thing to need one. `Project ▸
+/// Locations…` is CR-112's own spelling, and CR-110 already owes this menu
+/// a second entry (`Project ▸ Structured wiring…`), so the menu is where
+/// the corpus put it rather than where one item happened to land.
+///
+/// NO `shortcut:` ON THE ITEM, and deliberately: an accelerator would have
+/// to name a `KeyBindingId`, which means a row in `kKeymap` and a place in
+/// M7's generated table and in `arbitrate()`'s four conflict checks across
+/// every platform. A panel opened once per project does not earn that, and
+/// `session_layering_test.dart` RULE 14 counts the global bindings for
+/// exactly this reason.
+final class _ProjectMenu extends StatelessWidget {
+  const _ProjectMenu({required this.controller, required this.onLocations});
+
+  final MenuController controller;
+  final VoidCallback onLocations;
+
+  @override
+  Widget build(BuildContext context) => MenuBar(
+    children: [
+      SubmenuButton(
+        controller: controller,
+        menuChildren: [
+          MenuItemButton(
+            onPressed: onLocations,
+            child: const Text('Locations…'),
+          ),
+        ],
+        child: const Text('Project'),
+      ),
+    ],
+  );
 }
 
 /// The production [SessionPrompts]: the real dialogs, over a navigator.
