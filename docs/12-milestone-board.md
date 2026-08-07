@@ -998,6 +998,32 @@ chip-strip `Outlets` label at `rack_metrics_row.dart:136`.
 The AC-018 clause is **unreachable by construction**: nothing schedules and nothing prints a `W`
 number. That M2 block, `Link` + `Endpoint` reaching the UI, is discharged as of `ea0af6d` (§5.1).
 
+**M3-B is CLOSED as of `4ae5a54`** (board #84, six commits from `d1b5266`), and the paragraph above
+is now stale in one detail rather than wrong in outline: **grepping `Location` across
+`packages/rackmate_ui/lib` no longer finds only the demo three.** There is a project-level Locations
+panel at `packages/rackmate_ui/lib/src/project/locations_panel.dart`, reached from a second
+top-level menu, and `Location` is creatable, renameable, movable and deletable through commands.
+The three hard-coded demo Locations **are still there**: removing them is #143, sequenced after the
+panel precisely so the dropdown does not go empty again in between.
+
+**M3-B needed one ruling and it is DR-021** (canon §11.20). The corpus specified the tree's shape
+(CR-047) and its owner (CR-112) and said nothing at all about what deleting a node costs, which is
+the one question of the four the panel had to answer. **The census is the part worth keeping**: the
+question was put to the user with seven carriers of a `locationId` and answered against **nine**,
+because a case-sensitive grep for `locationId` finds neither of `Pathway`'s, which are spelled
+`fromLocationId` and `toLocationId`. That is DR-012's habit applied to a smaller question, and it
+was the difference between a delete that clears every reference and one that leaves two dangling in
+a file people email each other.
+
+**M3-B/3 turned out to be a gate rather than a decision**, which the task itself predicted.
+`schedule.dart` has carried `kUngroupedTitle` (`NO ROOM RECORDED`) since M2-B and one case touched
+it; nothing asserted the seven properties that make it an answer instead of a string, and **the
+failure is invisible on every fixture in the corpus**, because they all give every drop a room. It
+is also no longer an exotic state: from DR-021 §11.20.2, deleting a room clears
+`PlaceEndpoint.locationId` on every drop in it, so an ordinary undoable gesture now produces the
+roomless drop that band exists for. The PDF half is **not** covered and is not silently skipped:
+`rackmate_export` paginates the equipment list and no cable-schedule sheet exists yet.
+
 **M3 owes one small thing that is not an exit clause, and it is not the one first recorded here.**
 DR-018 §11.17.4 put the *raster carrier* on M3 on the ground that omitting it would cost a format
 migration. **DR-019 read `persistence/` and that ground did not hold**: the zip sniff already returns

@@ -6,7 +6,7 @@ tags: [ruling, m3, delete, undo, locations, tree, dr-021]
 timestamp: 2026-08-06T00:00:00Z
 ruling_id: DR-021
 canon_section: "11.20"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-06, before board #144 wrote a line of the four
@@ -103,6 +103,30 @@ is not authority to cross it.
 
 It also does not rule where a location may be deleted from. The panel is board
 #145's question.
+
+# Built at `4ae5a54` (board #84), and what building it found
+
+`derived/location_tree.dart` reads the shape, `derived/location_removal.dart`
+computes the cost, `commands/location_commands.dart` writes it, and
+`rackmate_ui/src/project/` is the panel. ~100 tests.
+
+**Two carriers were found by censusing the field rather than grepping its
+name**, and they are the reason this concept carries a table. See above.
+
+**The delete reaches further than DR-013 had to, and the difference is
+immutability.** Everything DR-013 removed was a whole entity it could hand
+back on revert. Two of the nine carriers here are immutable value objects,
+so clearing them CONSTRUCTS replacements, and revert has to restore the
+originals rather than rebuild equal ones. The byte comparison is what
+states that: a rebuilt `Conductor` compares equal to the one it replaced
+and encodes identically only if every field came back, so a field-by-field
+walk would miss the one nobody thought of.
+
+**The panel's own delete dialog says "lose their room", never "be
+deleted".** §11.20.6 deletes no rack, cable, outlet or pathway, and a
+confirmation implying otherwise describes a cascade this ruling refuses to
+perform, so a user would cancel a safe delete out of a fear the product
+invented.
 
 # Citations
 

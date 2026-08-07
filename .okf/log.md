@@ -1,5 +1,31 @@
 # Update Log
 
+## 2026-08-07
+
+* **Update**: **M3-B is closed** (board #84, `4ae5a54`). The location tree
+  is derived, commanded and reachable: a project-level panel, a second
+  top-level menu, and `Location` creatable for the first time since it was
+  modelled in M0. [DR-021](/decisions/dr-021-location-delete-cascades.md)
+  is now `status: built`.
+* **Note**: **the rename cost a table, not a class**, which is board #578's
+  payoff collected one task after it landed. Six `LocationField` rows on
+  the accessor table, and the one field that could NOT be a row,
+  `parentId`, is excluded for the reason `StructureOrigin`'s two labels
+  were excluded from theirs: a table `set` writes and returns with no way
+  to refuse, and DR-021 §11.20.5 makes a reparent refuse a cycle.
+* **Note**: **three defects were found by widget tests rather than by
+  looking**, all three real: a footer that overflowed on a room named
+  "Main House", because the button label carries a user-supplied name and
+  so has unbounded width; a duplicate button in the empty state; and a
+  parent dropdown rendering an unconstrained breadcrumb, whose width grows
+  with the depth of the tree AND the length of every name in it.
+* **Note**: M3-B/3 was **a gate, not a decision**, and the task said so in
+  advance. The Pull Sheet's `NO ROOM RECORDED` band has existed since M2-B
+  and nothing asserted the properties that make it an answer. **The
+  failure it protects against is invisible on every fixture in the
+  corpus**, because they all give every drop a room, so a regression would
+  have passed the whole suite and reached an installer.
+
 ## 2026-08-06
 
 * **Creation**: [DR-021, deleting a Location
