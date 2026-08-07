@@ -985,7 +985,9 @@ Binaries already signed by another publisher are now skipped.
 > drops have unbound far ends and every one of them still schedules, prints and carries a `W`
 > number** (AC-018). Requirement 6 is met.
 
-**Every clause NOT BUILT.** Model only, inherited from M0:
+**Every clause NOT BUILT** *(as recorded when M3 opened; superseded below by M3-A and M3-B, and the
+file paths and line numbers in this paragraph are the ones that were true then)*. Model only,
+inherited from M0:
 `packages/rackmate_core/lib/src/model/{outlet,structure_body,location,pathway}.dart`, persisted and
 byte-round-tripped by the `c_fuller_project` fixture. Grepping `Outlet`/`StructureBody`/`Pathway`/
 `Location` across `packages/rackmate_ui/lib` and `apps/rackmate/lib` finds **no Structure UI at
@@ -1003,8 +1005,19 @@ is now stale in one detail rather than wrong in outline: **grepping `Location` a
 `packages/rackmate_ui/lib` no longer finds only the demo three.** There is a project-level Locations
 panel at `packages/rackmate_ui/lib/src/project/locations_panel.dart`, reached from a second
 top-level menu, and `Location` is creatable, renameable, movable and deletable through commands.
-The three hard-coded demo Locations **are still there**: removing them is #143, sequenced after the
-panel precisely so the dropdown does not go empty again in between.
+The three hard-coded demo Locations **are gone as of `5f5bce5`** (#143), which was sequenced after
+the panel precisely so the dropdown did not go empty in between. That closes the last part of the
+M3-B paragraph above that was still describing the tree as of M0.
+
+**#143's own stated ground had already lapsed, and the correction is the useful part.** It argues
+the demo three were *"a lie that survives into a user's document"*. They could not have been, and
+had not been since the persistence layer landed: `RackCanvasScreen.document` is `@visibleForTesting`
+and the shell always passes `controller:`, so **production never reached the demo fallback at all**.
+What they actually were is FIXTURE data that the whole app suite and much of the `rackmate_ui` suite
+open, which is a smaller problem of the same shape: three rooms no gesture created, sitting under
+every assertion made against that document. The removal stands; the reason is narrower than the one
+written on the board, and a task whose justification decays between being written and being done is
+the ordinary cost of decomposing a milestone in advance rather than an argument against it.
 
 **M3-B needed one ruling and it is DR-021** (canon §11.20). The corpus specified the tree's shape
 (CR-047) and its owner (CR-112) and said nothing at all about what deleting a node costs, which is
