@@ -1,5 +1,26 @@
 # Update Log
 
+## 2026-08-07 (later)
+
+* **Creation**: [DR-022, `{SERVICE}` is the outlet template's
+  tag](/decisions/dr-022-service-token-is-the-template-tag.md). M3-D/1 was
+  about to wire two label formats that have round-tripped since M0 with one
+  caller each, the codec.
+* **Note**: **the pattern had never been rendered.** `{ROOM_ABBR}-{SERVICE}-{SEQ}`
+  has no `[...]` around any token, so a missing one throws, and the state it
+  throws on is `Service: undetermined`, which `docs/07` §4.1 calls
+  "a first-class, encouraged state". The shipped default could not render the
+  state the product most encourages. Read for a year as an example of what a
+  label looks like; nobody had run it.
+* **Note**: **the corpus's own examples were the evidence.** `LR-TV-1`,
+  `MBR-KEY-2`, `EXT-CAM-4` are the TV location, Keypad and Camera TEMPLATES,
+  not signal families. Three worked examples, sitting in two documents,
+  answering a question nobody had asked out loud.
+* **Note**: the rack label needed no ruling and the record says so out loud.
+  It throws without a `PORT` and AC-018 puts fourteen of sixty drops on
+  unbound far ends, but `rackLabel` is optional, so those fourteen have none.
+  A reader who finds the field-label ruling will look for its twin.
+
 ## 2026-08-07
 
 * **Update**: **M3-B is closed** (board #84, `4ae5a54`). The location tree

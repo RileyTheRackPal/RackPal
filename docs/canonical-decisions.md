@@ -7431,9 +7431,74 @@ this settles a question inside a milestone that already owns the work. Board #14
 
 ---
 
+### 11.21 DR-022 · `{SERVICE}` in a drop's field label is the outlet template's tag
+
+**Ruled 2026-08-07.** M3-D/1 (board #152) wires the two label formats that have round-tripped
+since M0 with exactly one caller each, the codec. CR-044 ships their defaults as two named presets
+and CR-045 gives the grammar. **Neither says where `{SERVICE}` gets its value**, and the question
+is not academic: `{ROOM_ABBR}-{SERVICE}-{SEQ}` has no `[...]` around any of its three tokens, so a
+missing one is `MissingTokenValueException` rather than a blank.
+
+**11.21.1 The measurement that forced the question.** Rendering the two shipped defaults against
+the drops M3's own exit criterion describes:
+
+| Case | `{ROOM_ABBR}-{SERVICE}-{SEQ}` |
+|---|---|
+| every token known | `GR-TV-1` |
+| **service undetermined** (docs/07 §4.1: *"at rough-in a Cat6 is just a Cat6"*) | **throws** |
+| no room | **throws** |
+
+The rough-in drop is not an edge case. `docs/07` §4.1 calls `Service: undetermined` *"a
+first-class, encouraged state"* and canon §6.4 gives it a seeded family, so **the default field
+label cannot render the state the product most encourages**.
+
+**11.21.2 The rack label needed no ruling and got none.** `{FLOOR}{SPACE}-{PANEL}{PORT:2}` throws
+without a `PORT`, and AC-018 puts **fourteen of the sixty** drops on unbound far ends. But
+`StructureOrigin.rackLabel` is **optional** (CR-044 above, in its own words: *"`rackLabel`
+(optional, project-unique when set)"*), so those fourteen simply have none. Nothing is fabricated
+and nothing throws, because nothing renders. This is recorded so the next reader does not go
+looking for the ruling that handled it.
+
+**11.21.3 Ruling: `{SERVICE}` is the tag of the `OutletTemplate` the drop was created from.**
+Settled by the user on 2026-08-07. It is the only answer that reproduces the corpus's own worked
+examples: `LR-TV-1`, `MBR-KEY-2` and `EXT-CAM-4` (docs/07 §5, docs/01 §571) are **TV location**,
+**Keypad** and **Camera**, which are three of the six seeded templates docs/07 §4.3 names. They
+are not signal families and never were; reading them as families is the misreading this ruling
+exists to prevent.
+
+**11.21.4 `OutletTemplate` gains a `tag`, and it is not a migration.** The entity is `{id, name,
+drops}` today. `name` is *"TV location"* and a tag derived from it by truncation is a guess printed
+on physical cable, so the tag is authored beside the template. **`registries.outletTemplates` is
+`{}` in all four shipped starters and in every document ever written** (board #150 asserts it; the
+starters were checked). A key added to an entity with zero instances everywhere costs no file a
+byte, which is DR-019's argument for `Placement.unknown` applied to a smaller surface.
+
+**This amends board #150**, which says the outlet-template seed is *"data plus a builder, not a
+model change"*. It is now a one-field model change plus data plus a builder.
+
+**11.21.5 The two rejected answers, and what each would have cost.** **The signal family's
+`shortTag`** needs no model change and gives `LR-STR-1`, because `structure.undetermined.shortTag`
+is `STR`. CR-048 evaluates a designator **once at creation and stores it**, so that label never
+becomes `LR-NET-1` when a real service is assigned: sixty labels on physical cable that all say the
+same word, and the word is the placeholder. **Making the segment optional** in the shipped preset
+(`{ROOM_ABBR}-[{SERVICE}-]{SEQ}`) is cheapest, needs nothing new, and edits a CR-044 preset cited in
+five documents so that its own examples stop rendering.
+
+**11.21.6 What it does not rule.** Where `{SERVICE}` comes from for a drop created with **no
+template at all** (`Attic: 3x Cat6`, docs/07 §4.3's second example). The DSL has an explicit
+`@service=` modifier for exactly that, and which of the two wins, and what happens when neither is
+supplied, is **M3-C/1's question**, because M3-C/1 is where the entry surface decides what it can
+refuse. This ruling settles the SOURCE, not the fallback chain.
+
+**11.21.7 Scope.** **No scope change.** Two tasks inside M3 are resequenced, not added: #152 runs
+before #147, because a repeat-entry loop that makes nine drops from one line needs nine labels and
+CR-045 forbids building them by concatenation. #150 grows by one model field.
+
+---
+
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-021 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-022 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -7893,7 +7958,7 @@ allowlist of pairs, an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-021 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-022 are the user's decisions and are binding. §12 is the complete
 index of what they supersede, §12.1…§12.5, §12.9, §12.11, §12.12 and §12.13 by ruling, §12.6 by
 internal correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **Two entries
 supersede another DR**: §12.12 (DR-018's reasoning as well as its ruling) and §12.13, which also

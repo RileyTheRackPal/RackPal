@@ -14,6 +14,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-014, drawing a wired set member elsewhere splits the set](dr-014-splitting-a-set.md) - no modifier was free, so none is spent; four conditions keep it from firing, and the third stops a split from being a silent delete.
 * [DR-015, the rm extension family](dr-015-extension-family.md) - .rmpj / .rmdx / .rmda; a .rackmate still opens and is never rewritten, and the archive is one JSON file because the zip buys only a decompression-bomb surface.
 * [DR-021, deleting a Location cascades](dr-021-location-delete-cascades.md) - the subtree goes and nine references are cleared to null, not left dangling; two of the nine were found by censusing the field rather than grepping its name.
+* [DR-022, {SERVICE} is the outlet template's tag](dr-022-service-token-is-the-template-tag.md) - the shipped label preset throws on the rough-in drop the product most encourages; the corpus's own examples name the source.
 
 # Not yet written up
 
