@@ -85,6 +85,8 @@ export 'src/inspector/shrink_rack_dialog.dart';
 // can read is two registries.
 export 'src/keymap/keymap.dart';
 export 'src/palette/device_palette_panel.dart';
+export 'src/project/delete_location_dialog.dart';
+export 'src/project/locations_panel.dart';
 export 'src/schedule/schedule_screen.dart';
 // `src/shell/` — shell-shaped WIDGETS the app composes. Every one of the
 // persistence-stage additions below is PRESENTATIONAL: it takes a plain
