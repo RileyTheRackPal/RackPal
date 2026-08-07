@@ -129,11 +129,15 @@ every tracked markdown file: **5,883 sites** became a colon, a comma, a semicolo
 pair of parentheses, chosen by what followed the dash. `docs/research/`,
 `docs/m1-implementation-log.md`, `.okf/` and `assets/catalog/sources.md` are all
 included; `research/README.md` carries the exception this created to its own
-"unedited outputs" claim.
+"unedited outputs" claim. **363 of those sites were wrong** and have been restored;
+the fourth class below is why.
 
-Three classes are deliberately left alone, and a later sweep should leave them alone.
+Four classes are deliberately left alone, and a later sweep should leave them alone.
 **Code** keeps them, fenced or inline, because there the dash is data rather than
-punctuation: `—` is what G4 prints for an unknown. **Blockquotes** keep them, because
+punctuation: `—` is what G4 prints for an unknown. **A table cell whose whole content
+is a dash** keeps it for exactly that reason, backticks or no: it is G4's unknown, or
+"not applicable", and it is the *value* of that column for that row. Rewritten as a
+bare `,` it reads as a typo and the fact is gone. **Blockquotes** keep them, because
 canon quotes rulings and critiques word for word and editing a quotation falsifies the
 record. **YAML frontmatter** keeps them, because a `title: DR-001 — …` rewritten with a
 colon is a parse error, and OKF puts ruling titles in exactly that field.
@@ -142,3 +146,9 @@ A future sweep should reuse the post-conditions rather than trust a spot-check:
 brackets, backticks and emphasis markers must balance, and the **line count must not
 change**, since the corpus is hard-wrapped and a swallowed newline reflows a paragraph.
 Pair detection has to run over the paragraph rather than the line, for the same reason.
+
+Balancing is necessary and not sufficient. Add one more: **a bracket pair must not
+cross a `|`.** Five table rows survived the sweep with `(` in one cell and `)` in the
+next, which balances per line and is nonsense per cell, and no post-condition then in
+force could see it. The cheap check is that no cell's trimmed content is a lone
+bracket.
