@@ -58,6 +58,13 @@
 //    refuse; a table sitting among tables that are safe to drive directly,
 //    with two rows that are not, would be a trap. See that file's
 //    "EDITING A DROP AFTER IT EXISTS" block.
+//  * `Location.parentId` — the SAME exclusion for the same reason, one
+//    milestone task later. DR-021 §11.20.5 makes a reparent refuse a
+//    cycle, and a row cannot refuse. `ReparentLocationCommand` owns it,
+//    behind `buildReparentLocation` (location_commands.dart).
+//  * `Location.order` — reordering siblings is a drag, and it wants
+//    `nextLocationOrder` rather than a value a caller supplies. Identical
+//    to `Outlet.order` above.
 //
 // [DeviceField] and [LinkField] are SUBSETS of their models' `@internal`
 // setters rather than equal to them, and deliberately: a device's
@@ -72,6 +79,7 @@ import 'package:rackmate_core/src/model/entity_meta.dart';
 import 'package:rackmate_core/src/model/enums.dart'
     show LifecycleStatus, MountSurface, RuNumbering, Wall;
 import 'package:rackmate_core/src/model/link.dart';
+import 'package:rackmate_core/src/model/location.dart';
 import 'package:rackmate_core/src/model/outlet.dart';
 import 'package:rackmate_core/src/model/rack.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
@@ -95,6 +103,9 @@ EntityMeta _deviceMeta(DeviceInstance d) => d.meta;
 
 Link? _lookUpLink(RackDocument doc, Uuid id) => doc.links[id];
 EntityMeta _linkMeta(Link l) => l.meta;
+
+Location? _lookUpLocation(RackDocument doc, Uuid id) => doc.locations[id];
+EntityMeta _locationMeta(Location l) => l.meta;
 
 Rack? _lookUpRack(RackDocument doc, Uuid id) => doc.racks[id];
 EntityMeta _rackMeta(Rack r) => r.meta;
@@ -177,6 +188,14 @@ final class EntityAccess<E> {
     label: LabelKey.setEntityProperty,
     lookUp: _lookUpLink,
     metaOf: _linkMeta,
+  );
+
+  /// One node of the arbitrary-depth location tree (CR-047).
+  static const location = EntityAccess<Location>(
+    name: 'location',
+    label: LabelKey.setEntityProperty,
+    lookUp: _lookUpLocation,
+    metaOf: _locationMeta,
   );
 
   @override
@@ -582,6 +601,98 @@ abstract final class LinkField {
 
   /// See [OutletField.all].
   static final List<EntityField<Link, Object?>> all = [lifecycleStatus];
+}
+
+/// Every editable [Location] property except `parentId`.
+///
+/// The exception is the whole design of this table and is stated in the
+/// file header: a reparent refuses a cycle (DR-021 §11.20.5) and a row
+/// cannot refuse, so the tree's one structural field is the one field not
+/// in here. Everything else about a location is an ordinary write.
+///
+/// LIKE [OutletField] AND [StructureBodyField], this table owns every
+/// `@internal` setter on its class bar that one, so its agreement test is
+/// an equality rather than a `containsAll`.
+abstract final class LocationField {
+  /// "Master Bedroom". Renaming propagates to every label, schedule row
+  /// and PDF callout in one undoable command (docs/04 §7.5), which is a
+  /// property of designators being STORED (CR-048) and read through the
+  /// location rather than copied onto each row.
+  static final name = EntityField<Location, String>(
+    access: EntityAccess.location,
+    key: 'name',
+    get: (l) => l.name,
+    set: (l, v) => l.name = v,
+    touches: EpochMask.meta,
+  );
+
+  /// "MBR" — the ONE abbreviation field (CR-046), which `{ROOM_ABBR}`
+  /// reads.
+  static final code = EntityField<Location, String>(
+    access: EntityAccess.location,
+    key: 'code',
+    get: (l) => l.code,
+    set: (l, v) => l.code = v,
+    touches: EpochMask.meta,
+  );
+
+  /// `meta`, not `structure`, and this is CR-047 showing up as a mask: the
+  /// tree's shape is `parentId` alone, so `kind` moves nothing. It is a
+  /// word the user picked for a node, filtered on by the device builder's
+  /// four-level VIEW and carrying no containment of its own.
+  static final kind = EntityField<Location, LocationKind>(
+    access: EntityAccess.location,
+    key: 'kind',
+    get: (l) => l.kind,
+    set: (l, v) => l.kind = v,
+    touches: EpochMask.meta,
+  );
+
+  /// `structure`, matching [OutletField.floorNumber]: a storey is where a
+  /// thing is, not what it is called.
+  static final floorNumber = EntityField<Location, int?>(
+    access: EntityAccess.location,
+    key: 'floorNumber',
+    get: (l) => l.floorNumber,
+    set: (l, v) => l.floorNumber = v,
+    touches: EpochMask.structure,
+  );
+
+  /// "101" — a room number, so `meta` beside [code] rather than
+  /// `structure` beside [floorNumber]. Both are identifiers a building
+  /// gives a space; neither says where the space is.
+  static final spaceCode = EntityField<Location, String?>(
+    access: EntityAccess.location,
+    key: 'spaceCode',
+    get: (l) => l.spaceCode,
+    set: (l, v) => l.spaceCode = v,
+    touches: EpochMask.meta,
+  );
+
+  /// AC-024's ONE number per room, which seeds every home run in that room
+  /// (`ScheduleLengthSource.roomEstimate`).
+  ///
+  /// `structure | wires` for [OutletField.nominalRunLength]'s reason: it is
+  /// a CABLE length the schedule prints, and a consumer watching cable data
+  /// subscribes to `wires`. Null stays UNKNOWN and the rollup counts it
+  /// (G4, CR-114); it is never a measured zero.
+  static final estimatedRunLengthFromRack = EntityField<Location, Len?>(
+    access: EntityAccess.location,
+    key: 'estimatedRunLengthFromRack',
+    get: (l) => l.estimatedRunLengthFromRack,
+    set: (l, v) => l.estimatedRunLengthFromRack = v,
+    touches: EpochMask.structure | EpochMask.wires,
+  );
+
+  /// See [OutletField.all].
+  static final List<EntityField<Location, Object?>> all = [
+    name,
+    code,
+    kind,
+    floorNumber,
+    spaceCode,
+    estimatedRunLengthFromRack,
+  ];
 }
 
 /// Sets one [EntityField] on one entity.

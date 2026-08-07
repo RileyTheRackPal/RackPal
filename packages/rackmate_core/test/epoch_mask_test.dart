@@ -89,6 +89,14 @@ bool _epochPlausiblyCovers(EpochMask touches, String key) => switch (key) {
   // (`meta`).
   'outlets' || 'structures' =>
     touches.has(EpochMask.structure) || touches.has(EpochMask.meta),
+  // M3-B's location tree. THE SAME PAIR AGAIN, and the split runs the same
+  // way: a node's parent is where things are (`structure`), its name and
+  // code are what every schedule row and PDF callout calls the room
+  // (`meta`). `estimatedRunLengthFromRack` also declares `wires` because it
+  // is a cable length, which this permissive OR does not need to know
+  // about — over-declaring is what AC-014 sanctions.
+  'locations' =>
+    touches.has(EpochMask.structure) || touches.has(EpochMask.meta),
   _ => false,
 };
 
@@ -103,6 +111,7 @@ const _knownMutableKeys = {
   'nets',
   'outlets',
   'structures',
+  'locations',
 };
 
 void _expectTouchesCoversChanges(
@@ -154,6 +163,16 @@ Uuid _seedOutlet(RackDocument doc) {
   )..apply(doc);
   return outlet.id;
 }
+
+/// Seeds one root [Location] and returns its id.
+Uuid _seedLocation(RackDocument doc, String name, String code) =>
+    (AddLocationCommand(
+      name: name,
+      code: code,
+      order: nextLocationOrder(doc),
+      now: DateTime.utc(2026),
+      actor: 'seed',
+    )..apply(doc)).id;
 
 void main() {
   group('AC-014 — declared EpochMask covers what a command actually '
@@ -514,6 +533,96 @@ void main() {
       final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
 
       _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'outlets'});
+    });
+
+    test('AddLocationCommand', () {
+      final doc = _freshDoc();
+      final cmd = AddLocationCommand(
+        name: 'Living Room',
+        code: 'LR',
+        order: nextLocationOrder(doc),
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'locations'});
+    });
+
+    test('ReparentLocationCommand', () {
+      final doc = _freshDoc();
+      final house = _seedLocation(doc, 'Main House', 'MH');
+      final living = _seedLocation(doc, 'Living Room', 'LR');
+      final cmd =
+          (buildReparentLocation(
+                    doc: doc,
+                    id: living,
+                    newParentId: house,
+                    now: DateTime.utc(2026, 1, 2),
+                    actor: 'tester',
+                  )
+                  as ReparentLocationReady)
+              .command;
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'locations'});
+    });
+
+    test('SetEntityPropertyCommand (location, meta-epoch field)', () {
+      final doc = _freshDoc();
+      final id = _seedLocation(doc, 'Livng Room', 'LR');
+      final cmd = SetEntityPropertyCommand<Location, String>(
+        id: id,
+        field: LocationField.name,
+        from: 'Livng Room',
+        to: 'Living Room',
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+
+      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'locations'});
+    });
+
+    test('SetEntityPropertyCommand (location, nullable field set and '
+        'cleared)', () {
+      // BOTH DIRECTIONS, because the codec omits an absent key entirely
+      // (G4, CR-114): setting a room estimate ADDS `estimatedRunLength...`
+      // to the encoded node and clearing it REMOVES the key. A one-way
+      // test would miss a mask that only covers the write.
+      final doc = _freshDoc();
+      final id = _seedLocation(doc, 'Living Room', 'LR');
+
+      final set = SetEntityPropertyCommand<Location, Len?>(
+        id: id,
+        field: LocationField.estimatedRunLengthFromRack,
+        from: null,
+        to: Len.fromMillimetres(21000),
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+      _expectTouchesCoversChanges(
+        set,
+        _changedTopLevelKeys(doc, () => set.apply(doc)),
+        expectAtLeast: {'locations'},
+      );
+
+      final clear = SetEntityPropertyCommand<Location, Len?>(
+        id: id,
+        field: LocationField.estimatedRunLengthFromRack,
+        from: Len.fromMillimetres(21000),
+        to: null,
+        now: DateTime.utc(2026, 1, 3),
+        actor: 'tester',
+      );
+      _expectTouchesCoversChanges(
+        clear,
+        _changedTopLevelKeys(doc, () => clear.apply(doc)),
+        expectAtLeast: {'locations'},
+      );
     });
 
     test('AddHomeRunCommand writes links AND its implicit net', () {

@@ -838,6 +838,22 @@ void main() {
       });
     });
 
+    test('every @internal Location setter has a table row, except the one '
+        'DR-021 keeps out', () {
+      // `parentId` IS an `@internal` setter and is deliberately NOT a
+      // table row: DR-021 §11.20.5 makes a reparent refuse a cycle, and a
+      // row's `set` writes and returns with no way to refuse.
+      // `ReparentLocationCommand` owns it, behind `buildReparentLocation`.
+      //
+      // Named literally here rather than filtered out by a predicate, so
+      // that a SECOND field escaping the table fails this case instead of
+      // slipping through a rule that was written for one.
+      expect(_internalSetters('location.dart'), {
+        for (final f in LocationField.all) f.key,
+        'parentId',
+      });
+    });
+
     test('every DeviceInstance and Link table key has an @internal setter '
         'behind it', () {
       // ONE DIRECTION ONLY for these two, and the asymmetry is real rather

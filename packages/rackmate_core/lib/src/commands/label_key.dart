@@ -117,4 +117,23 @@ enum LabelKey {
   // `EntityAccess` carries the `LabelKey`: merging two implementations is
   // not a reason to reword a menu item a user has already learned.
   setEntityProperty,
+
+  // THE LOCATION TREE (commands/location_commands.dart), M3-B/1, CR-047,
+  // CR-112, DR-021. THREE values, not four: the rename, the code, the kind
+  // and the room estimate all go through `setEntityProperty` above, because
+  // they are ordinary field writes on an entity that already has a table.
+  //
+  // `reparentLocation` is its own value rather than another field write
+  // because it is not one: DR-021 §11.20.5 makes it refuse a cycle, so it
+  // is a command with a guard rather than a row, and the Edit menu should
+  // say "Undo move location" for a gesture that moved a whole branch of
+  // the tree.
+  //
+  // `removeLocation` likewise: DR-021 §11.20.1 takes a SUBTREE and clears
+  // every reference to every node in it, and offering "Undo edit" for a
+  // gesture that emptied four rooms off the Pull Sheet would name the
+  // wrong act at the one moment the user most needs the right one.
+  addLocation,
+  reparentLocation,
+  removeLocation,
 }
