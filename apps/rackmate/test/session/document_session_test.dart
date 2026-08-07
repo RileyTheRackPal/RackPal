@@ -175,7 +175,7 @@ void main() {
       // rather than about counting.
       final rack = session.document.racks.values.first;
       session.controller.run(
-        SetRackPropertyCommand<String>(
+        SetEntityPropertyCommand<Rack, String>(
           id: rack.id,
           field: RackField.designator,
           from: rack.designator,

@@ -331,11 +331,11 @@ void main() {
     // set_rack_property_command_test.dart; what THIS file exists to catch
     // is a command whose declared mask under-reports what it changed, and
     // that property is per-mask, not per-field.
-    test('SetRackPropertyCommand (rack-epoch field)', () {
+    test('SetEntityPropertyCommand (rack-epoch field)', () {
       final doc = _freshDoc();
       const rackId = Uuid('rack-1');
       doc.racks[rackId] = _rack(rackId);
-      final cmd = SetRackPropertyCommand<RackWidthClass>(
+      final cmd = SetEntityPropertyCommand<Rack, RackWidthClass>(
         id: rackId,
         field: RackField.widthClass,
         from: RackWidthClass.eia19,
@@ -349,11 +349,11 @@ void main() {
       _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
     });
 
-    test('SetRackPropertyCommand (meta-epoch field)', () {
+    test('SetEntityPropertyCommand (meta-epoch field)', () {
       final doc = _freshDoc();
       const rackId = Uuid('rack-1');
       doc.racks[rackId] = _rack(rackId);
-      final cmd = SetRackPropertyCommand<String>(
+      final cmd = SetEntityPropertyCommand<Rack, String>(
         id: rackId,
         field: RackField.designator,
         from: 'RK-1',
@@ -367,11 +367,11 @@ void main() {
       _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
     });
 
-    test('SetRackPropertyCommand (rack|style display field)', () {
+    test('SetEntityPropertyCommand (rack|style display field)', () {
       final doc = _freshDoc();
       const rackId = Uuid('rack-1');
       doc.racks[rackId] = _rack(rackId);
-      final cmd = SetRackPropertyCommand<RuNumbering>(
+      final cmd = SetEntityPropertyCommand<Rack, RuNumbering>(
         id: rackId,
         field: RackField.ruNumbering,
         from: RuNumbering.bottomUpFromOne,
@@ -385,11 +385,11 @@ void main() {
       _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
     });
 
-    test('SetRackPropertyCommand (nullable field, set and cleared)', () {
+    test('SetEntityPropertyCommand (nullable field, set and cleared)', () {
       final doc = _freshDoc();
       const rackId = Uuid('rack-1');
       doc.racks[rackId] = _rack(rackId);
-      final set = SetRackPropertyCommand<Len?>(
+      final set = SetEntityPropertyCommand<Rack, Len?>(
         id: rackId,
         field: RackField.usableDepth,
         from: null,
@@ -407,7 +407,7 @@ void main() {
       // Clearing back to null must ALSO register as a change — an
       // absent-key encoding (CR-117) that silently matched the set state
       // would make this test vacuous in one direction.
-      final clear = SetRackPropertyCommand<Len?>(
+      final clear = SetEntityPropertyCommand<Rack, Len?>(
         id: rackId,
         field: RackField.usableDepth,
         from: const Len(600000000),

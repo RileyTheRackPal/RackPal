@@ -103,13 +103,18 @@ enum LabelKey {
   addHomeRun,
 
   // EDITING ONE PROPERTY (commands/set_entity_property_command.dart),
-  // M3-A/5. ONE value covering both `Outlet` and `StructureBody` and every
-  // field of each, exactly as `setRackProperty` above covers twelve `Rack`
-  // fields: the Edit menu offers "Undo edit", and whether the user was
-  // changing a mounting height or a label is not a distinction the menu
-  // has to draw. That is the opposite call from the jacket-colour and
-  // link-class pairs, and the reason differs — there, two DIFFERENT
-  // PEOPLE record two different facts at two different times, so naming
-  // the wrong one misdescribes who did what.
+  // M3-A/5. ONE value covering `Outlet`, `StructureBody`, `DeviceInstance`
+  // and `Link` and every field of each: the Edit menu offers "Undo edit",
+  // and whether the user was changing a mounting height or a label is not
+  // a distinction the menu has to draw. That is the opposite call from the
+  // jacket-colour and link-class pairs, and the reason differs — there,
+  // two DIFFERENT PEOPLE record two different facts at two different
+  // times, so naming the wrong one misdescribes who did what.
+  //
+  // `setRackProperty` ABOVE IS NOT FOLDED INTO THIS ONE even though board
+  // #578 folded the two commands together. The command a rack edit runs is
+  // now the same class, and it still reports the older label, because
+  // `EntityAccess` carries the `LabelKey`: merging two implementations is
+  // not a reason to reword a menu item a user has already learned.
   setEntityProperty,
 }

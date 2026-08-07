@@ -55,7 +55,7 @@ const String kRackTypePrefix = 'RK';
 /// doors, 0U channels — keeps `Rack`'s own constructor default, because a
 /// creation dialog that silently set them would be inventing values the
 /// user was never shown (G4). They are all editable afterwards through
-/// `SetRackPropertyCommand`.
+/// `SetEntityPropertyCommand`.
 final class AddRackCommand extends Command {
   AddRackCommand({
     required this.name,

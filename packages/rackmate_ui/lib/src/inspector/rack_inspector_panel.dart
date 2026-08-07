@@ -19,7 +19,7 @@
 // the forbidden assignment in words instead of spelling one out: that grep
 // cannot tell prose from code, and it is right not to try.) The only writes
 // this file performs are calls to
-// [onSetProperty] (which builds a `SetRackPropertyCommand`), [onRename]
+// [onSetProperty] (which builds a `SetEntityPropertyCommand`), [onRename]
 // (`RenameEntityCommand`), [onRequestHeight] (`SetRackHeightCommand`,
 // through the screen's one height funnel) and [onApplyPreset] (one
 // `Transaction`).
@@ -91,10 +91,10 @@ class RackInspectorPanel extends StatelessWidget {
   /// panel has no hidden data source and a test can supply a small set.
   final Map<String, RackPreset> presets;
 
-  /// Runs one `SetRackPropertyCommand`. Generic so the twelve call sites
-  /// below keep full static typing — the whole reason `RackField<T>` is an
+  /// Runs one `SetEntityPropertyCommand`. Generic so the twelve call sites
+  /// below keep full static typing — the whole reason `RackField` is an
   /// accessor table rather than an `Object?` payload.
-  final void Function<T>(RackField<T> field, T value) onSetProperty;
+  final void Function<T>(EntityField<Rack, T> field, T value) onSetProperty;
 
   /// `RenameEntityCommand(targetKind: rack)` — `name` is the one identity
   /// field that already had a command before this stage.
@@ -824,7 +824,7 @@ class _LocationField extends StatelessWidget {
 
   final Rack rack;
   final RackDocument doc;
-  final void Function<T>(RackField<T> field, T value) onSetProperty;
+  final void Function<T>(EntityField<Rack, T> field, T value) onSetProperty;
 
   @override
   Widget build(BuildContext context) {
@@ -865,7 +865,7 @@ class _MountField extends StatelessWidget {
   const _MountField({required this.rack, required this.onSetProperty});
 
   final Rack rack;
-  final void Function<T>(RackField<T> field, T value) onSetProperty;
+  final void Function<T>(EntityField<Rack, T> field, T value) onSetProperty;
 
   @override
   Widget build(BuildContext context) {
@@ -889,7 +889,7 @@ class _RuNumberingField extends StatelessWidget {
   const _RuNumberingField({required this.rack, required this.onSetProperty});
 
   final Rack rack;
-  final void Function<T>(RackField<T> field, T value) onSetProperty;
+  final void Function<T>(EntityField<Rack, T> field, T value) onSetProperty;
 
   @override
   Widget build(BuildContext context) {

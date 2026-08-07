@@ -611,13 +611,13 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       ..addListener(_forgetQuickAddSelection);
     _controller.epochs.structure.addListener(_onEditorChanged);
     // THE FIRST-EVER `rack` EPOCH SUBSCRIPTION. `SetRackHeightCommand` and
-    // `SetRackPropertyCommand` both touch `EpochMask.rack`, and until this
+    // `SetEntityPropertyCommand` both touch `EpochMask.rack`, and until this
     // stage nothing on this screen listened to it — so a height change
     // would have mutated the document and repainted NOTHING, and an
     // inspector edit would have left the panel showing the old value.
     _controller.epochs.rack.addListener(_onEditorChanged);
     // `meta` carries designator/name edits (`RenameEntityCommand`,
-    // `SetRackPropertyCommand(designator)`), which the header bar and the
+    // `SetEntityPropertyCommand(designator)`), which the header bar and the
     // inspector both display.
     _controller.epochs.meta.addListener(_onEditorChanged);
     // Bumped by EVERY commit, undo and redo (CR-094) — the one signal broad
@@ -1396,15 +1396,15 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     }
   }
 
-  /// One `SetRackPropertyCommand` per inspector edit — or nothing at all
-  /// when the value is unchanged, which `buildSetRackProperty` reports by
+  /// One `SetEntityPropertyCommand` per inspector edit — or nothing at all
+  /// when the value is unchanged, which `buildSetEntityProperty` reports by
   /// returning null so a no-op never pushes an empty undo entry (§3.4's
   /// "never silently do nothing" read in the other direction: an edit that
   /// changed nothing should not LOOK like it did).
-  void _setRackProperty<T>(RackField<T> field, T value) {
-    final command = buildSetRackProperty<T>(
+  void _setRackProperty<T>(EntityField<Rack, T> field, T value) {
+    final command = buildSetEntityProperty<Rack, T>(
       doc: _doc,
-      rackId: _rack.id,
+      id: _rack.id,
       field: field,
       to: value,
       now: _controller.clock.nowUtc(),
@@ -1676,7 +1676,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
 
   /// docs/04 §4: applying a preset is a fan-out of writes to ordinary
   /// `Rack` fields (a rack has no `presetRef` — see rack_presets.dart), so
-  /// it is N `SetRackPropertyCommand`s plus one `SetRackHeightCommand` in
+  /// it is N `SetEntityPropertyCommand`s plus one `SetRackHeightCommand` in
   /// ONE `Transaction`, giving one undo entry.
   ///
   /// ATOMIC OR NOTHING, and the height goes through the SAME funnel as every
@@ -1727,10 +1727,10 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     required List<CompactionMove> moves,
   }) {
     _controller.transact(LabelKey.applyRackPreset, (tx) {
-      void set<T>(RackField<T> field, T value) {
-        final command = buildSetRackProperty<T>(
+      void set<T>(EntityField<Rack, T> field, T value) {
+        final command = buildSetEntityProperty<Rack, T>(
           doc: _doc,
-          rackId: _rack.id,
+          id: _rack.id,
           field: field,
           to: value,
           now: _controller.clock.nowUtc(),

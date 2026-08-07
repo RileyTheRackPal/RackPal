@@ -4,11 +4,17 @@
 // anything. Collapsing the pair into a cascade would delete the
 // intermediate assertion, which is the opposite of a simplification.
 //
-// The generic rack-property command and its accessor table. The
-// apply/revert/byte-identity property is covered generically by
-// command_roundtrip_test.dart; this file covers the things that are
-// specific to having ONE class serve twelve fields — per-field merge keys,
-// per-field epoch masks, and the accessor table's own integrity.
+// `RackField`, the accessor table docs/04 §4's twelve editable rack
+// properties live in. The apply/revert/byte-identity property is covered
+// generically by command_roundtrip_test.dart; this file covers what is
+// specific to ONE class serving twelve fields — per-field merge keys,
+// per-field epoch masks, and the table's own integrity.
+//
+// THE FILE IS NAMED FOR THE TABLE, NOT THE COMMAND, since board #578: the
+// command it used to be named for (`SetRackPropertyCommand`) was folded
+// into `SetEntityPropertyCommand`, which now serves five entity kinds. The
+// twelve rows, their keys, their masks and the Edit menu's word for a rack
+// edit all survived that fold unchanged, and this file is what says so.
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:test/test.dart';
 
@@ -41,12 +47,12 @@ RackDocument _doc() {
 
 Rack _rack(RackDocument doc) => doc.racks[_rackId]!;
 
-SetRackPropertyCommand<T> _cmd<T>(
-  RackField<T> field,
+SetEntityPropertyCommand<Rack, T> _cmd<T>(
+  EntityField<Rack, T> field,
   T from,
   T to, {
   DateTime? now,
-}) => SetRackPropertyCommand<T>(
+}) => SetEntityPropertyCommand<Rack, T>(
   id: _rackId,
   field: field,
   from: from,
@@ -120,7 +126,7 @@ void main() {
 
       // Each pair is (fresh value, a second distinct value) so the test
       // cannot pass by the field already holding the value written.
-      void check<T>(RackField<T> f, T a, T b) {
+      void check<T>(EntityField<Rack, T> f, T a, T b) {
         f.set(rack, a);
         expect(f.get(rack), a, reason: '${f.key} -> a');
         f.set(rack, b);
@@ -257,7 +263,8 @@ void main() {
       final first = _cmd(RackField.designator, 'RK-1', 'RK-2');
       final second = _cmd(RackField.designator, 'RK-2', 'RK-3');
 
-      final merged = first.mergeWith(second)! as SetRackPropertyCommand<String>;
+      final merged =
+          first.mergeWith(second)! as SetEntityPropertyCommand<Rack, String>;
 
       expect(merged.from, 'RK-1');
       expect(merged.to, 'RK-3');
@@ -291,7 +298,7 @@ void main() {
 
     test('the same field on two different racks never merges', () {
       final a = _cmd(RackField.groundBarPresent, false, true);
-      final b = SetRackPropertyCommand<bool>(
+      final b = SetEntityPropertyCommand<Rack, bool>(
         id: const Uuid('other-rack'),
         field: RackField.groundBarPresent,
         from: false,
@@ -313,7 +320,7 @@ void main() {
 
       final keys = {
         for (final f in RackField.all)
-          SetRackPropertyCommand<Object?>(
+          SetEntityPropertyCommand<Rack, Object?>(
             id: _rackId,
             field: f,
             from: null,
@@ -341,14 +348,14 @@ void main() {
     });
   });
 
-  group('buildSetRackProperty', () {
+  group('buildSetEntityProperty, on a rack', () {
     test('returns null when the value is already what was asked for', () {
       final doc = _doc();
 
       expect(
-        buildSetRackProperty(
+        buildSetEntityProperty(
           doc: doc,
-          rackId: _rackId,
+          id: _rackId,
           field: RackField.groundBarPresent,
           to: false,
           now: DateTime.utc(2026),
@@ -365,9 +372,9 @@ void main() {
       final doc = _doc();
       _rack(doc).railType = RailType.m6;
 
-      final cmd = buildSetRackProperty(
+      final cmd = buildSetEntityProperty(
         doc: doc,
-        rackId: _rackId,
+        id: _rackId,
         field: RackField.railType,
         to: RailType.roundClearance,
         now: DateTime.utc(2026),
@@ -381,9 +388,9 @@ void main() {
     test('handles the null-to-value and value-to-null transitions', () {
       final doc = _doc();
 
-      final set = buildSetRackProperty<Mass?>(
+      final set = buildSetEntityProperty<Rack, Mass?>(
         doc: doc,
-        rackId: _rackId,
+        id: _rackId,
         field: RackField.weightCapacity,
         to: const Mass(400000000000),
         now: DateTime.utc(2026),
@@ -392,9 +399,9 @@ void main() {
       expect(set.from, isNull);
       set.apply(doc);
 
-      final clear = buildSetRackProperty<Mass?>(
+      final clear = buildSetEntityProperty<Rack, Mass?>(
         doc: doc,
-        rackId: _rackId,
+        id: _rackId,
         field: RackField.weightCapacity,
         to: null,
         now: DateTime.utc(2026),
@@ -407,9 +414,9 @@ void main() {
     test('an unknown rack id throws rather than returning null — that is a '
         'caller bug, not a no-op', () {
       expect(
-        () => buildSetRackProperty(
+        () => buildSetEntityProperty(
           doc: _doc(),
-          rackId: const Uuid('nope'),
+          id: const Uuid('nope'),
           field: RackField.groundBarPresent,
           to: true,
           now: DateTime.utc(2026),

@@ -21,12 +21,13 @@
 // one level up. So the entity is a type parameter and the tables are data,
 // and M3-A/7 then cost two rows rather than a fifth command class.
 //
-// `SetRackPropertyCommand` IS DELIBERATELY LEFT ALONE. Folding it into
-// this class is mechanical but wide: `rackmate_ui`'s inspector, the canvas
-// screen and a dedicated test file all name `RackField` and
-// `SetRackPropertyCommand` directly, and rewriting them inside a task
-// scoped to `Outlet` and `StructureBody` would be a scope change under
-// roadmap §8.3. It is a board item, not a TODO comment.
+// `SetEntityPropertyCommand` WAS FOLDED IN by board #578, so the package now
+// has ONE accessor-table mechanism rather than two that drift. That was a
+// separate commit on purpose: M3-A/5 was scoped to `Outlet` and
+// `StructureBody`, and rewriting `rackmate_ui`'s inspector inside it would
+// have been a scope change under roadmap §8.3. The names survived the fold
+// (`RackField.designator`, `RackField.all`) and so did the Edit menu's own
+// word for a rack edit, which is what [EntityAccess.label] is for.
 //
 // ─────────────────────────────────────────────────────────────────────────
 // WIRING A FIELD TO THIS COMMAND *IS* THE AC-013 RETROFIT
@@ -69,13 +70,15 @@ import 'package:rackmate_core/src/commands/label_key.dart';
 import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
 import 'package:rackmate_core/src/model/enums.dart'
-    show LifecycleStatus, MountSurface, Wall;
+    show LifecycleStatus, MountSurface, RuNumbering, Wall;
 import 'package:rackmate_core/src/model/link.dart';
 import 'package:rackmate_core/src/model/outlet.dart';
+import 'package:rackmate_core/src/model/rack.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/model/structure_body.dart';
 import 'package:rackmate_core/src/units/ids.dart';
 import 'package:rackmate_core/src/units/len.dart';
+import 'package:rackmate_core/src/units/mass.dart';
 
 // Top-level functions rather than closures so the [EntityAccess] instances
 // below can be `const`: a tear-off of a top-level function is a constant
@@ -93,6 +96,9 @@ EntityMeta _deviceMeta(DeviceInstance d) => d.meta;
 Link? _lookUpLink(RackDocument doc, Uuid id) => doc.links[id];
 EntityMeta _linkMeta(Link l) => l.meta;
 
+Rack? _lookUpRack(RackDocument doc, Uuid id) => doc.racks[id];
+EntityMeta _rackMeta(Rack r) => r.meta;
+
 /// How [SetEntityPropertyCommand] reaches one KIND of entity: which map to
 /// look an id up in, and where that entity keeps its [EntityMeta].
 ///
@@ -102,6 +108,7 @@ EntityMeta _linkMeta(Link l) => l.meta;
 final class EntityAccess<E> {
   const EntityAccess({
     required this.name,
+    required this.label,
     required this.lookUp,
     required this.metaOf,
   });
@@ -112,6 +119,16 @@ final class EntityAccess<E> {
   ///
   /// NOT persisted, so it is free to rename.
   final String name;
+
+  /// What the Edit menu offers to undo.
+  ///
+  /// PER ENTITY KIND, not one value for the whole command. `Rack` edits
+  /// said "set rack property" for a whole milestone before this class
+  /// absorbed them, and folding two implementations together is not a
+  /// reason to reword a menu item a user has learned. Every other kind
+  /// shares `setEntityProperty`: whether someone was changing a mounting
+  /// height or a label is not a distinction the menu has to draw.
+  final LabelKey label;
 
   /// Returns null when the document does not hold that entity, which is a
   /// caller bug the command turns into a named [StateError] rather than a
@@ -125,6 +142,7 @@ final class EntityAccess<E> {
   /// One wall plate / one ceiling location (CR-016).
   static const outlet = EntityAccess<Outlet>(
     name: 'outlet',
+    label: LabelKey.setEntityProperty,
     lookUp: _lookUpOutlet,
     metaOf: _outletMeta,
   );
@@ -132,6 +150,7 @@ final class EntityAccess<E> {
   /// The Structure device's body, paired 1:1 with its `DeviceInstance`.
   static const structureBody = EntityAccess<StructureBody>(
     name: 'structureBody',
+    label: LabelKey.setEntityProperty,
     lookUp: _lookUpStructureBody,
     metaOf: _structureBodyMeta,
   );
@@ -139,13 +158,23 @@ final class EntityAccess<E> {
   /// One placed (or staged) piece of equipment.
   static const device = EntityAccess<DeviceInstance>(
     name: 'device',
+    label: LabelKey.setEntityProperty,
     lookUp: _lookUpDevice,
     metaOf: _deviceMeta,
+  );
+
+  /// A physical enclosure or frame (docs/04 §4).
+  static const rack = EntityAccess<Rack>(
+    name: 'rack',
+    label: LabelKey.setRackProperty,
+    lookUp: _lookUpRack,
+    metaOf: _rackMeta,
   );
 
   /// One cable.
   static const link = EntityAccess<Link>(
     name: 'link',
+    label: LabelKey.setEntityProperty,
     lookUp: _lookUpLink,
     metaOf: _linkMeta,
   );
@@ -365,6 +394,143 @@ abstract final class StructureBodyField {
   ];
 }
 
+/// Every editable [Rack] property: the twelve docs/04 §4 makes editable.
+///
+/// THE ORIGINAL ACCESSOR TABLE. It shipped in M1 with its own command
+/// class, `SetEntityPropertyCommand`, whose file argued this whole shape:
+/// one class rather than twelve, and a typed table rather than an
+/// `Object?` payload that would discard static typing at exactly the
+/// inspector call sites that generate it. M3-A/5 needed the same thing on
+/// two more entities and made the entity a type parameter; board #578
+/// then folded this one in, so the package has ONE mechanism rather than
+/// two that drift.
+///
+/// The names are unchanged (`RackField.designator`, `RackField.all`) and
+/// so is the Edit menu's word for a rack edit — see [EntityAccess.label].
+///
+/// `heightU` IS ABSENT ON PURPOSE. It has its own `SetRackHeightCommand`,
+/// because CR-038's 1..60 range is asserted on the setter and a resize can
+/// displace occupants, which is a transaction rather than a field write.
+abstract final class RackField {
+  /// "RK-1" — the ONLY rack identifier (CR-040).
+  static final designator = EntityField<Rack, String>(
+    access: EntityAccess.rack,
+    key: 'designator',
+    get: (r) => r.designator,
+    set: (r, v) => r.designator = v,
+    touches: EpochMask.meta,
+  );
+
+  static final locationId = EntityField<Rack, Uuid?>(
+    access: EntityAccess.rack,
+    key: 'locationId',
+    get: (r) => r.locationId,
+    set: (r, v) => r.locationId = v,
+    touches: EpochMask.meta,
+  );
+
+  /// Display-only (CR-026), but it redraws the RU ruler — hence `style` as
+  /// well as `rack`.
+  static final ruNumbering = EntityField<Rack, RuNumbering>(
+    access: EntityAccess.rack,
+    key: 'ruNumbering',
+    get: (r) => r.ruNumbering,
+    set: (r, v) => r.ruNumbering = v,
+    touches: EpochMask.rack | EpochMask.style,
+  );
+
+  /// Display-only (CR-035), but it drives the NOT MIRRORED chip.
+  static final mirrorRearElevation = EntityField<Rack, bool>(
+    access: EntityAccess.rack,
+    key: 'mirrorRearElevation',
+    get: (r) => r.mirrorRearElevation,
+    set: (r, v) => r.mirrorRearElevation = v,
+    touches: EpochMask.rack | EpochMask.style,
+  );
+
+  static final widthClass = EntityField<Rack, RackWidthClass>(
+    access: EntityAccess.rack,
+    key: 'widthClass',
+    get: (r) => r.widthClass,
+    set: (r, v) => r.widthClass = v,
+    touches: EpochMask.rack,
+  );
+
+  static final railType = EntityField<Rack, RailType>(
+    access: EntityAccess.rack,
+    key: 'railType',
+    get: (r) => r.railType,
+    set: (r, v) => r.railType = v,
+    touches: EpochMask.rack,
+  );
+
+  static final formFactor = EntityField<Rack, RackFormFactor>(
+    access: EntityAccess.rack,
+    key: 'formFactor',
+    get: (r) => r.formFactor,
+    set: (r, v) => r.formFactor = v,
+    touches: EpochMask.rack,
+  );
+
+  /// Nullable: a 2-post frame leaves it unset, and null means UNKNOWN,
+  /// never zero (CR-114, docs/04 §4's "explicit unset/dash state").
+  static final usableDepth = EntityField<Rack, Len?>(
+    access: EntityAccess.rack,
+    key: 'usableDepth',
+    get: (r) => r.usableDepth,
+    set: (r, v) => r.usableDepth = v,
+    touches: EpochMask.rack,
+  );
+
+  static final weightCapacity = EntityField<Rack, Mass?>(
+    access: EntityAccess.rack,
+    key: 'weightCapacity',
+    get: (r) => r.weightCapacity,
+    set: (r, v) => r.weightCapacity = v,
+    touches: EpochMask.rack,
+  );
+
+  static final isSwingFrame = EntityField<Rack, bool>(
+    access: EntityAccess.rack,
+    key: 'isSwingFrame',
+    get: (r) => r.isSwingFrame,
+    set: (r, v) => r.isSwingFrame = v,
+    touches: EpochMask.rack,
+  );
+
+  static final hingeSide = EntityField<Rack, HingeSide?>(
+    access: EntityAccess.rack,
+    key: 'hingeSide',
+    get: (r) => r.hingeSide,
+    set: (r, v) => r.hingeSide = v,
+    touches: EpochMask.rack,
+  );
+
+  static final groundBarPresent = EntityField<Rack, bool>(
+    access: EntityAccess.rack,
+    key: 'groundBarPresent',
+    get: (r) => r.groundBarPresent,
+    set: (r, v) => r.groundBarPresent = v,
+    touches: EpochMask.rack,
+  );
+
+  /// See [OutletField.all].
+  static final List<EntityField<Rack, Object?>> all = [
+    designator,
+    locationId,
+    ruNumbering,
+    mirrorRearElevation,
+    widthClass,
+    railType,
+    formFactor,
+    usableDepth,
+    weightCapacity,
+    isSwingFrame,
+    hingeSide,
+    groundBarPresent,
+  ];
+}
+
 /// Editable [DeviceInstance] properties.
 ///
 /// ONE ROW SO FAR, and the AC-013 rule is why: a field is converted to an
@@ -445,13 +611,10 @@ final class SetEntityPropertyCommand<E, T> extends Command {
   String? _prevUpdatedBy;
   int? _prevLocalRevision;
 
-  /// ONE value for both entity kinds, and for every field. The Edit menu
-  /// says "Undo edit"; the distinction between editing an outlet's height
-  /// and its label is not one a user needs the menu to make, and
-  /// `SetRackPropertyCommand` already sets that precedent with twelve
-  /// fields behind `setRackProperty`.
+  /// From the ACCESS, not this class — see [EntityAccess.label] for why a
+  /// rack edit keeps its own word.
   @override
-  LabelKey get label => LabelKey.setEntityProperty;
+  LabelKey get label => field.access.label;
 
   @override
   EpochMask get touches => field.touches;
@@ -550,7 +713,7 @@ final class SetEntityPropertyCommand<E, T> extends Command {
 ///
 /// An unknown id THROWS rather than returning null, because the two mean
 /// different things: null is a no-op the caller may ignore, an unknown id
-/// is a bug. `buildSetRackProperty` draws the same line.
+/// is a bug. `buildSetEntityProperty` draws the same line.
 SetEntityPropertyCommand<E, T>? buildSetEntityProperty<E, T>({
   required RackDocument doc,
   required Uuid id,

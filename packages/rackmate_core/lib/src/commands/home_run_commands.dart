@@ -474,7 +474,7 @@ abstract final class StructureOriginField {
 
 /// The outcome of [buildSetStructureOriginProperty].
 ///
-/// THREE ARMS, NOT TWO. `buildSetRackProperty` collapses "nothing to do"
+/// THREE ARMS, NOT TWO. `buildSetEntityProperty` collapses "nothing to do"
 /// into a null return, which is fine when the only other outcome is a
 /// command. Here there are three genuinely different things a caller
 /// reports differently: it did something; it did nothing because there was

@@ -80,7 +80,7 @@ class InspectorPanel extends StatelessWidget {
   final Map<String, RackPreset> presets;
   final Set<Uuid> selectedIds;
   final Uuid? focusedId;
-  final void Function<T>(RackField<T> field, T value) onSetProperty;
+  final void Function<T>(EntityField<Rack, T> field, T value) onSetProperty;
   final ValueChanged<String> onRename;
   final ValueChanged<int> onRequestHeight;
   final ValueChanged<RackPreset> onApplyPreset;

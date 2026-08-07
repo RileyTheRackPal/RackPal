@@ -395,7 +395,7 @@ void main() {
     testWidgets('Usable depth: an empty field means NULL (unknown), not '
         'zero — CR-114', (tester) async {
       // A `MutableClock` stepped past `UndoStack.mergeWindow` between the
-      // two edits, deliberately. `SetRackPropertyCommand.mergeKey` includes
+      // two edits, deliberately. `SetEntityPropertyCommand.mergeKey` includes
       // the field key, so setting a depth and clearing it within 400ms
       // coalesce into ONE undo entry (from null, to null) — correct
       // per-property behaviour, but it would make the assertion below

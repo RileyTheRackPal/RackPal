@@ -246,7 +246,7 @@ const _jacketColorIds = <JacketColorId?>[
   JacketColorId('jc.deleted_last_year'),
 ];
 
-/// Builds a `SetRackPropertyCommand` for a randomly chosen field, with a
+/// Builds a `SetEntityPropertyCommand` for a randomly chosen field, with a
 /// randomly chosen NEW value of that field's own type.
 ///
 /// Deliberately covers all five value shapes the table carries — String,
@@ -256,7 +256,7 @@ const _jacketColorIds = <JacketColorId?>[
 /// so a revert that restored `Len(0)` instead of `null` would produce a
 /// semantically-equal document with different bytes, and only this test
 /// would catch it.
-Command _buildSetRackProperty(_SequenceState s, Random rnd) {
+Command _buildSetEntityProperty(_SequenceState s, Random rnd) {
   final rack = s.doc.racks[_rackId]!;
   final now = s.nextNow();
   const actor = 'gen';
@@ -266,8 +266,8 @@ Command _buildSetRackProperty(_SequenceState s, Random rnd) {
     return others.isEmpty ? current : others[rnd.nextInt(others.length)];
   }
 
-  SetRackPropertyCommand<T> make<T>(RackField<T> field, T to) =>
-      SetRackPropertyCommand<T>(
+  SetEntityPropertyCommand<Rack, T> make<T>(EntityField<Rack, T> field, T to) =>
+      SetEntityPropertyCommand<Rack, T>(
         id: _rackId,
         field: field,
         from: field.get(rack),
@@ -670,7 +670,7 @@ Command? _buildCommand(_StepKind kind, _SequenceState s, Random rnd, int step) {
       );
 
     case _StepKind.setRackProperty:
-      return _buildSetRackProperty(s, rnd);
+      return _buildSetEntityProperty(s, rnd);
 
     case _StepKind.addLink:
       return AddLinkCommand(

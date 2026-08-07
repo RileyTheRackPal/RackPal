@@ -254,7 +254,7 @@ final class RackSceneOptions {
 /// On `Face.rear` the lateral span of every device is reflected about the
 /// opening's centre when `rack.mirrorRearElevation` is set — which it is
 /// by default. It is read from the RACK rather than passed in, because it
-/// is a per-rack property with a `SetRackPropertyCommand` behind it and a
+/// is a per-rack property with a `SetEntityPropertyCommand` behind it and a
 /// caller that could pass something else would be a second answer to a
 /// question the model already answers.
 ///
