@@ -327,5 +327,36 @@ void main() {
       expect(find.textContaining('Great Room — 1 runs'), findsOneWidget);
       expect(find.textContaining('78 ft'), findsWidgets);
     });
+
+    testWidgets('a drop with NO room is on the screen too, under a band '
+        'that names the absence (M3-B/3)', (tester) async {
+      // `pull_sheet_unassigned_room_test.dart` pins this in the
+      // derivation; this is the same claim one layer up, because the
+      // screen flattens bands and rows itself and could drop a band the
+      // view produced. G1 and G4: the run may not vanish from the
+      // deliverable and may not be filed under an invented room.
+      //
+      // Newly ORDINARY rather than exotic: from M3-B/1, deleting a
+      // location clears this field on every drop in it (DR-021 §11.20.2).
+      final doc = _populatedDoc();
+      doc.links[const Uuid('lnk-roomless')] = Link(
+        id: const Uuid('lnk-roomless'),
+        designator: 'W404',
+        media: const MediaTypeId('media.cat6a_futp'),
+        order: const FracIndex('z0'),
+        meta: _meta(),
+        conductors: [
+          const Conductor(
+            from: PlaceEndpoint(description: 'somewhere in the attic'),
+            to: OpenEndpoint('coiled'),
+          ),
+        ],
+      );
+
+      await _pump(tester, doc);
+
+      expect(find.text('W404'), findsOneWidget);
+      expect(find.textContaining(kUngroupedTitle), findsOneWidget);
+    });
   });
 }
