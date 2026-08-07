@@ -1070,6 +1070,39 @@ upper end of its `M`. This is the second. **M3 stays `M`**, a column on a table 
 already builds is not a new screen, but the row should be read as `M`-at-its-ceiling, and a third
 addition would be the one that moves it.
 
+**M3-C gained a sixth task before its first, and the census is why.** M3-C/1 (#147) is the
+repeat-entry loop, whose worked line is docs/07 §4.3's `Living Room: 4x Cat6, 2x RG6, 2x 16/4, 1x
+22/4`. Opening it turned up that **`Registries.mediaTypes` was `{}` in every document the product
+had ever written**, so `Cat6` had nowhere to resolve and no task owned filling it. #582 (M3-C/6) is
+that task, **closed at `acd63d5`**, and it is worth three notes beyond its own commit message.
+
+*The count is 38, not 34.* Canon §6.5 prints 34 rows and four of them carry two ids on one line
+joined by `·`. Reading the table as 34 types silently drops `media.14_4`, `media.22_2`, `media.om4`
+and `media.conduit_ent`, and docs/07 §5.1's synonym block resolves to three of those four. This is
+the same shape of error as DR-021's, which was asked with seven `locationId` carriers and answered
+against nine: **the field, not the name.**
+
+*The shipped starter spoke a private dialect.* `whole_house.dart` named `media.cat6_utp`,
+`media.speaker_16_4` and `media.fiber_os2_2f` for cables the corpus spells `media.cat6`,
+`media.16_4` and `media.os2`. Because it registered its own `MediaTypeDef` for each, the document
+was internally consistent and nothing failed: 27 links simply carried media that **no CSV import,
+no drop DSL and no wide-mode header match could reach**, and would not have until someone typed
+`Cat6` into a starter and got nothing. Corrected in the same commit.
+
+*One derived-document sentence was false and is now true.* docs/07 §5.1 closed with "Every target
+above resolves in `assets/catalog/registries.json`; a CI assertion enforces it". That file has
+never existed and could not have been loaded by `rackmate_core` if it had; DR-010 §11.10.1 settled
+the master as seeded Dart. The assertion now exists, transcribes the block from the doc rather than
+reading it out of the code, and checks the converse too, that the seed invents no synonym the doc
+does not list.
+
+**What #582 did not do, stated so #147 does not assume it.** `kUnstatedMedia` survives. Its
+standing note names two conditions for its own deletion, `mediaTypes` seeded **and** a family able
+to name its typical cable; only the first is met, because canon §6.5's `supports[]` is one of the
+eight fields DR-010 §11.10.4 keeps out until something reads it. So a connect gesture still cannot
+pick a cable, and the reason has changed from *there is no id* to *there are 38 and nothing says
+which*.
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three

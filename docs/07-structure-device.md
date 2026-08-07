@@ -233,7 +233,15 @@ conduit / smurf / ent                   → media.conduit_ent   (isPathwayOnly)
 
 14 AWG gets its own targets rather than folding onto the 16 AWG ones: mapping `14/4` to a 16 AWG media type changes the gauge and the footage rollup, and `media.14_2` / `media.14_4` exist in the registry precisely so it does not have to.
 
-Every target above resolves in `assets/catalog/registries.json`; a CI assertion enforces it for every `media.*`, `conn.*` and signal-family ID appearing in any document (N1, seed-devices C2). RJ-012 makes an unmatched value create a new type rather than fail, so a wrong target here is a silent data-quality failure, not a loud one. An unmatched value creates a new media type with a confirmation chip; it is never a rejected row.
+Every target above resolves in `packages/rackmate_core/lib/src/catalog/seed_media_types.dart`, and a CI assertion enforces it: `seed_media_types_test.dart` transcribes this block and checks every target, every synonym, and that no synonym is claimed twice. It also checks the converse, that the seed carries no synonym this block does not list, because `media.cat6_futp` looks like it should have `c6s` and does not. RJ-012 makes an unmatched value create a new type rather than fail, so a wrong target here is a silent data-quality failure, not a loud one. An unmatched value creates a new media type with a confirmation chip; it is never a rejected row.
+
+> **This sentence used to name `assets/catalog/registries.json`.** That file
+> has never existed, was declared in no pubspec, and could not have been loaded
+> if it had: `rackmate_core` imports no Flutter, so `rootBundle` is unavailable
+> to it. DR-010 §11.10.1 settled the master as seeded Dart for that reason, and
+> M3-C/6 (commit `acd63d5`) is what made the claim true. The equivalent
+> assertion for `conn.*` and signal-family IDs lives in
+> `seed_registries_test.dart`.
 
 ### 5.2 Example
 
