@@ -132,7 +132,7 @@ Worked examples from the standard: `J0001` (information outlet jack) · `D306` (
 | Network connection (user side of CO) | Green | 353C |
 | Common equipment (PBX, LAN, mainframe, mux) | Purple | 264C |
 | Key system | Red | 184C |
-| First-level backbone (Cabling Subsystem 3) | White |: |
+| First-level backbone (Cabling Subsystem 3) | White | — |
 | Second-level backbone (Cabling Subsystem 2) | Gray | 422C |
 | Campus backbone (inter-building) | Brown | 465C |
 | Horizontal (Cabling Subsystem 1) | Blue | 291C |
@@ -439,7 +439,7 @@ Cover sheet · Drawing index · Symbol legend + abbreviations + general notes ·
 | 9 | Network / IP schedule | `T6.05` | Device, designator, hostname, IP, subnet, MAC, VLAN, switch + port, PoE class |
 | 10 | Power schedule | `T6.06` | Device, designator, plug type, V, A/W draw, PDU + outlet, circuit, running total vs breaker |
 | 11 | Plate/panel details & pinouts | `T5.01` | Custom pin configurations, connector plate layouts |
-| 12 | Field pull sheet |: | Wiring schedule filtered to rough-in fields + blank status/test columns |
+| 12 | Field pull sheet | — | Wiring schedule filtered to rough-in fields + blank status/test columns |
 
 **Ordering rationale:** general → plans/elevations → diagrams → schedules, which is exactly the NCS sheet-type ordering (0 general, 2 elevations, 6 schedules & diagrams) and matches how submittal packages are assembled (cover → index → BOM → diagrams → elevations → details → revisions).
 

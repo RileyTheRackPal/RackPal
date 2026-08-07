@@ -185,9 +185,9 @@ Two amendments, both forced by the caret being invisible in practice for the who
 | Key | With a selection | With no selection |
 |---|---|---|
 | `↑` / `↓` | nudge ±1U | move caret ±1U |
-| `Shift+↑/↓` | extend selection to the adjacent **occupant** |: |
-| `Ctrl+↑/↓` | jump to the next free slot, skipping occupied space |: |
-| `Alt+↑/↓` | swap with the adjacent occupant; unequal heights re-pack from the lower position |: |
+| `Shift+↑/↓` | extend selection to the adjacent **occupant** | — |
+| `Ctrl+↑/↓` | jump to the next free slot, skipping occupied space | — |
+| `Alt+↑/↓` | swap with the adjacent occupant; unequal heights re-pack from the lower position | — |
 | `Home` / `End` | lowest / highest fitting position | caret to U1 / top |
 | `PgUp` / `PgDn` | ±10U | ±10U |
 

@@ -39,8 +39,8 @@ Sheet numbering follows the U.S. National CAD Standard Uniform Drawing System: `
 | n+4 | **Power schedule** | `T6.40` | **auto** | On iff ≥1 PDU/UPS/sequencer with ≥1 power connection. |
 | n+5 | **Network / IP schedule** | `T6.50` | **auto** | On iff ≥1 device has an assigned IP or MAC. |
 | n+6 | **Plate, panel & pinout details** | `T5.01` | **auto** | On iff any custom plate or non-standard pinout (null-modem RS-232, IR pinout variant, Euroblock wiring) exists in the project. |
-| n+7 | **Field pull sheet** |: | OFF | Wiring schedule filtered to rough-in runs, status/test/initials columns blank, zebra off, greyscale on. A separate deliverable, not part of the design set. |
-| n+8 | **Datasheet appendix** |: | OFF | Concatenated PDFs attached to device templates. v2 (needs PDF merge; the `pdf` package writes, it doesn't import pages). |
+| n+7 | **Field pull sheet** | — | OFF | Wiring schedule filtered to rough-in runs, status/test/initials columns blank, zebra off, greyscale on. A separate deliverable, not part of the design set. |
+| n+8 | **Datasheet appendix** | — | OFF | Concatenated PDFs attached to device templates. v2 (needs PDF merge; the `pdf` package writes, it doesn't import pages). |
 
 ### 1.2 Default-on vs optional: the actual argument
 
@@ -54,7 +54,7 @@ The static default/optional split is the wrong frame. Three better rules:
 
 | Preset | Sheets | Overrides |
 |---|---|---|
-| **Full set** (default) | all resolved sheets |: |
+| **Full set** (default) | all resolved sheets | — |
 | **Installer set** | all + field pull sheet | greyscale ON, status/test columns ON, zebra OFF, rear elevation forced ON |
 | **Client set** | cover, legend, front elevation, system-level interconnect (single sheet, blocks only, no port stubs), equipment list | colour ON, cable IDs hidden on diagram, notes column hidden |
 | **Single sheet** | the sheet currently open | furniture unchanged |
@@ -463,16 +463,16 @@ Bottom-right, **396 × 115 pt** (5.5 × 1.6 in) on ANSI B and larger. On ANSI A 
 | Rack designator + name + RU | current rack | `—` on non-rack sheets |
 | Sheet title | sheet definition | required |
 | Sheet number | NCS assignment (§1.1) | required |
-| Sheet n of m | `ctx.pageNumber` / `ctx.pagesCount` |: |
+| Sheet n of m | `ctx.pageNumber` / `ctx.pagesCount` | — |
 | Date | issue date (export-time or pinned revision date) | today |
 | Revision | current revision letter | `—` |
 | Drawn by | `project.drawnBy` | user initials from prefs |
 | Checked by | `project.checkedBy` | `—` |
 | Scale | computed per sheet, `1:8` or `NTS` | `NTS` |
-| Size | page format short name |: |
-| Discipline | `T` |: |
+| Size | page format short name | — |
+| Discipline | `T` | — |
 | Project number | `project.number` | collapses |
-| File name | source filename |: |
+| File name | source filename | — |
 | Integrator block | app preferences (firm, phone, licence) | collapses |
 | Legend reference | fixed `SEE SHEET T0.01` | required by J-STD-710 §3.6.1 |
 
@@ -965,7 +965,7 @@ So the height you flip about is **`size.y`, the widget's height, not the page he
 | 12 | Transform | `Canvas.transform(Float64List)` concatenates | `setTransform(Matrix4)` **concatenates** (emits `cm`) despite the name | 1:1: both concatenate. `Matrix4.storage` feeds `Canvas.transform` directly. Always bracket with save/restore. |
 | 13 | Clip | part of save/restore, intersective | `clipPath()` consumes the *current path*, intersective, undone only by `restoreContext` | Adapter builds the path then calls `clipPath`. Semantics match; no "unclip" on either side. |
 | 14 | Zero-width strokes | `strokeWidth = 0` → 1 device pixel hairline | width 0 → thinnest device line (invisible on a 2400 dpi imagesetter) | **Never emit width 0.** Clamp to 0.25 pt in `_applyStroke` on both backends. |
-| 15 | Winding under flip |: | the global flip reverses winding direction | Only matters for `evenOdd` vs `nonZero` on nested subpaths. Symbol paths avoid nesting; `addEllipse` emits a consistent direction. Note it and move on. |
+| 15 | Winding under flip | — | the global flip reverses winding direction | Only matters for `evenOdd` vs `nonZero` on nested subpaths. Symbol paths avoid nesting; `addEllipse` emits a consistent direction. Note it and move on. |
 | 16 | Text wrapping | `TextPainter` wraps and shapes | `drawString` is single-line, baseline-origin, no wrap | The interface has no wrapping. Multi-line text is the caller's job: measure, split, emit N `drawText` calls at a computed leading. Correct, layout belongs in the scene builder, not the backend. |
 | 17 | Images | `Canvas.drawImage`, full formats | `PdfImage`, JPEG/PNG, pre-decoded | `ImageRef` is an opaque handle resolved per backend from the same `Uint8List`. Only used for the logo. |
 | 18 | Antialiasing | on by default | resolution-independent, N/A | No action. |

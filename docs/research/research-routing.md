@@ -139,8 +139,8 @@ Q-SYS goes further and makes pin **type** a first-class, colour-coded, type-chec
 | DataPort | right triangle | black/white |
 | Loudspeaker | left triangle | orange |
 | HDMI / AV stream | special | black |
-| Camera |: | green (dark outline) |
-| USB |: | two-tone purple |
+| Camera | — | green (dark outline) |
+| USB | — | two-tone purple |
 
 And it **hard-enforces type compatibility**: "You cannot connect an input to an input, a control connector to a data connector, or a data connector of an amplifier to a data connector of another amplifier." Loose wires are prohibited; both ends must land.
 
@@ -203,8 +203,8 @@ Layering for signal flow: **longest-path layering on the DAG of signal direction
 |---|---|---|---|---|
 | [`graphview`](https://pub.dev/packages/graphview) | 1.5.1, ~9 mo old | MIT | **514 likes, ~37k downloads**, verified publisher (nabilmh.com) | Only credible option. Has `SugiyamaAlgorithm`, Buchheim–Walker tree, Fruchterman–Reingold, tidier tree, radial/balloon/circular/mindmap. **No orthogonal/bendpoint edge routing**: edges are straight/curved via pluggable "edge renderers". |
 | [`dart_dagre`](https://pub.dev/packages/dart_dagre) | 1.0.0, ~21 mo old | Apache-2.0 | **1 like, 45 downloads**, unverified uploader | Effectively unmaintained. Do not depend on it. |
-| [`rwl/dagre`](https://github.com/rwl/dagre/blob/dart/README.md) (`dart` branch) |, |, | Pre-Dart-2 era port by Richard Lincoln | Dead. Historical interest only. |
-| ELK |: | EPL-2.0 | Java; no Dart port | Subprocess/server only |
+| [`rwl/dagre`](https://github.com/rwl/dagre/blob/dart/README.md) (`dart` branch) | — | — | Pre-Dart-2 era port by Richard Lincoln | Dead. Historical interest only. |
+| ELK | — | EPL-2.0 | Java; no Dart port | Subprocess/server only |
 
 **There is no Dart port of ELK, and no Dart orthogonal edge router of any kind**: I searched specifically and found none. `graphview`'s Sugiyama is the closest thing that exists.
 

@@ -128,7 +128,7 @@ final class Rgb { final int r, g, b, a; }
 | Percentage / factor | `Permille` | `int` parts per thousand | CR-001 | Floating-point fractions. |
 | Scale | `int` / `int` | numerator and denominator | CR-118 | A `double` ratio. Fit-to-page snapped to a standard ratio within 2%, otherwise `NTS`. |
 | Rotation | `int` | quarter turns, 0..3 | §3.7 | Arbitrary float angles. Schematics are orthogonal; free rotation costs float geometry throughout the router. |
-| Unknown value | `null` |: | CR-114, G4 | `sealed class Extent { Known \| Unknown }`. One mechanism; the obligation moves to the UI, which must **report** its unknown count rather than silently treating null as zero. |
+| Unknown value | `null` | — | CR-114, G4 | `sealed class Extent { Known \| Unknown }`. One mechanism; the obligation moves to the UI, which must **report** its unknown count rather than silently treating null as zero. |
 
 Constants live once, in `rackmate_core/units/`:
 

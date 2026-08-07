@@ -518,7 +518,7 @@ It snapshots only the **affected entities'** JSON, ~60 KB for a 200-device re-fl
 |---|---|---|
 | Document | `RackDocument` | The open project. |
 | Device Builder | the `DeviceTemplate` being edited | Discarded on close without save. |
-|: | Settings and library operations are **not undoable** | Therefore each must be individually confirmable or trivially reversible. |
+| — | Settings and library operations are **not undoable** | Therefore each must be individually confirmable or trivially reversible. |
 
 The Structure editor's edits are ordinary document commands and use the document stack. Stated once so nobody builds a second mechanism.
 
@@ -834,28 +834,28 @@ Recent files are a JSON list in application support (`{path, displayName, lastOp
 
 | Package | Constraint | Package it lives in | Purpose | Risk | Fallback |
 |---|---|---|---|---|---|
-| `meta` | `^1.16.0` | core | `@internal` (the setter gate: AC-013), `@immutable`, `@useResult`. Zero runtime cost. | none |: |
+| `meta` | `^1.16.0` | core | `@internal` (the setter gate: AC-013), `@immutable`, `@useResult`. Zero runtime cost. | none | — |
 | `collection` | `^1.19.0` | core | `UnmodifiableSetView`, `firstWhereOrNull`, deep-equality helpers. | none | trivial to inline |
 | `uuid` | `^4.6.0` | core | **UUIDv7** entity IDs (time-ordered, sortable, index-local) and **v5** for deterministic port IDs (AC-006). | low | ~80 lines |
 | `pdf` | `^3.13.0` | text, export | `PdfGraphics` vector output, `pw.Widget` layout for schedules, `PdfFont.stringMetrics` for the one `TextMeasurer`. Pure Dart ⇒ isolate-safe; Apache-2.0. | **Highest-consequence dependency in the project.** Single maintainer, headline feature. | `DiagramCanvas` **is** the hedge: swapping backends is one file. Failing that: emit PDF 1.7 content streams for pure vector plus Type0 embedding (~2 k lines of well-specified work), or route through `SvgDiagramCanvas` to an external converter. |
-| `flutter` | sdk | ui, app |, |, |: |
+| `flutter` | sdk | ui, app | — | — | — |
 | `path_drawing` | `^1.0.1` | ui | `dashPath()`: `dart:ui` has no native dashing (§8.3). | low activity, but tiny | ~60 lines over `PathMetrics` |
-| `vector_math` | `^2.2.0` | ui | `Matrix4` for the viewport. Transitively available; pin it explicitly. | none |: |
+| `vector_math` | `^2.2.0` | ui | `Matrix4` for the viewport. Transitively available; pin it explicitly. | none | — |
 | `flutter_riverpod` | `^3.3.2` | app | DI, per-document lifetime, chrome read-models. Codegen-free. | `ChangeNotifierProvider` moved to `legacy`, `VERIFY:` before writing the provider layer | hand-written `Listenable`→`Provider` adapter, ~15 lines |
-| *(no file-dialog package)* |: | app | **Native open/save dialogs are ours.** `windows/runner/file_dialog_channel.cpp` drives `IFileDialog` directly (~150 lines of COM) behind a two-method Dart seam, `lib/src/session/file_picker.dart`. `file_selector ^1.1.0` USED TO BE THIS ROW AND WAS DELIBERATELY REMOVED: its Windows plugin calls `AddOptions` only for `select_folders` and `allow_multiple` and its Pigeon `SelectionOptions` has no other field, so `FOS_DONTADDTORECENT` cannot be requested through it at any price, and without that flag every open and every save writes the project's file name and full path into `HKCU\…\Explorer\ComDlg32\OpenSavePidlMRU` and drops a shortcut in `%APPDATA%\Microsoft\Windows\Recent`. It also dragged in `file_selector_android`, which shipped `dartjni.dll` into a Windows-only Release build. | ~150 lines of COM we maintain, and the flag closes only **half** the leak. The other half is stated as a BOUND and not as a list, because naming the measured keys and closing the list has been wrong four times running. Ours and gated: RackMate's own code writes no registry key. Measured against the shipped binary: `OpenSavePidlMRU` and the Recent shortcut are suppressed, so no project file name reaches the host. Beyond that, **the shell writes values under ComDlg32 that RackMate does not control**, at minimum `LastVisitedPidlMRU` (this executable plus the last folder browsed) and `CIDSizeMRU` (this executable, written even when the user cancels the dialog), measured examples and not an inventory, and no supported option prevents them while the shell common dialog is the dialog. So a portable build leaves shell-owned HKCU entries on a client's machine naming this executable and the folders it browsed, and never a project file name. | None wanted. Re-adding `file_selector` fails `session_layering_test.dart` RULE 14d, and `registry_claim_test.dart` fails if this row stops stating the bound, or restates it as a closed list. Suppressing the shell's own records as well would mean a hand-built file browser instead of `IFileDialog`, weighed and declined: large scope, worse dialog, internal tool. |
+| *(no file-dialog package)* | — | app | **Native open/save dialogs are ours.** `windows/runner/file_dialog_channel.cpp` drives `IFileDialog` directly (~150 lines of COM) behind a two-method Dart seam, `lib/src/session/file_picker.dart`. `file_selector ^1.1.0` USED TO BE THIS ROW AND WAS DELIBERATELY REMOVED: its Windows plugin calls `AddOptions` only for `select_folders` and `allow_multiple` and its Pigeon `SelectionOptions` has no other field, so `FOS_DONTADDTORECENT` cannot be requested through it at any price, and without that flag every open and every save writes the project's file name and full path into `HKCU\…\Explorer\ComDlg32\OpenSavePidlMRU` and drops a shortcut in `%APPDATA%\Microsoft\Windows\Recent`. It also dragged in `file_selector_android`, which shipped `dartjni.dll` into a Windows-only Release build. | ~150 lines of COM we maintain, and the flag closes only **half** the leak. The other half is stated as a BOUND and not as a list, because naming the measured keys and closing the list has been wrong four times running. Ours and gated: RackMate's own code writes no registry key. Measured against the shipped binary: `OpenSavePidlMRU` and the Recent shortcut are suppressed, so no project file name reaches the host. Beyond that, **the shell writes values under ComDlg32 that RackMate does not control**, at minimum `LastVisitedPidlMRU` (this executable plus the last folder browsed) and `CIDSizeMRU` (this executable, written even when the user cancels the dialog), measured examples and not an inventory, and no supported option prevents them while the shell common dialog is the dialog. So a portable build leaves shell-owned HKCU entries on a client's machine naming this executable and the folders it browsed, and never a project file name. | None wanted. Re-adding `file_selector` fails `session_layering_test.dart` RULE 14d, and `registry_claim_test.dart` fails if this row stops stating the bound, or restates it as a closed list. Suppressing the shell's own records as well would mean a hand-built file browser instead of `IFileDialog`, weighed and declined: large scope, worse dialog, internal tool. |
 | `window_manager` | `^0.5.2` | app | Title with dirty marker, size/position restore, minimum size, and critically `setPreventClose`. | 0.x, single maintainer | the only load-bearing API is `setPreventClose` + the close event: ~80 lines of Win32 platform channel. Do **not** plan on `bitsdojo_window` |
 | `path_provider_windows` | `^2.3.0` | app | `getApplicationSupportPath()` for recovery, snapshots, recents, logs, prefs. Called from **exactly one function** (`productionApplicationSupportDirectory` in `lib/src/storage/data_root.dart`) and a grep test asserts that single call site, which is what keeps M2's portable build a one-function change. **The platform package directly, NOT the `path_provider` umbrella:** on Windows the umbrella forwards to precisely this class, so the resolved path is identical, but it also drags `path_provider_android` in, and that package pulls the `jni` FFI plugin, which put `dartjni.dll` in the Release output beside `rackmate.exe`. Dart-only, no native plugin, no extra DLL. | none | the umbrella, if a second desktop platform ever needs one; then re-check the Release output for `dartjni.dll` (`flutter_dependency_test.dart` asserts it is absent) |
-| `path` | `^1.9.0` | app | Cross-platform joining. Never string-concatenate paths on Windows. | none |: |
+| `path` | `^1.9.0` | app | Cross-platform joining. Never string-concatenate paths on Windows. | none | — |
 | `printing` | `^5.15.0` | app | **Behind an explicit "Verify output" button only.** `PdfPreview`; `layoutPdf` is v1.1. | `PdfPreview`/`raster` need **pdfium**, which the plugin's CMake downloads at build time, a fresh or network-restricted machine fails `flutter build windows` | **Binaries are vendored into the repo (CR-100)**; a network-fetched binary in a signed release is a supply-chain and reproducibility problem, not just a CI one. Degrade to export + "Open in system viewer", which needs no pdfium |
 | `desktop_drop` | `^0.6.0` | app | Drag a `.rmpj` onto the window. | 0.x, low activity | a nicety: degrade to File ▸ Open. Alternative `super_drag_and_drop` |
-| `logging` | `^1.3.0` | app | Structured, level-based, zero-dependency. Sinks are ours. | none |: |
-| `intl` | `^0.20.0` | app | Number/date/unit formatting; the runtime half of ARB localization. | none |: |
-| `flutter_localizations` | sdk | app | Locale resolution, `MaterialLocalizations`, `Directionality`. |, |, |
-| `test` | `^1.26.0` | dev | Pure-Dart tests in core/text/export. |, |, |
-| `flutter_test` · `integration_test` | sdk | dev | Widget, golden and desktop end-to-end tests. |, |, |
+| `logging` | `^1.3.0` | app | Structured, level-based, zero-dependency. Sinks are ours. | none | — |
+| `intl` | `^0.20.0` | app | Number/date/unit formatting; the runtime half of ARB localization. | none | — |
+| `flutter_localizations` | sdk | app | Locale resolution, `MaterialLocalizations`, `Directionality`. | — | — |
+| `test` | `^1.26.0` | dev | Pure-Dart tests in core/text/export. | — | — |
+| `flutter_test` · `integration_test` | sdk | dev | Widget, golden and desktop end-to-end tests. | — | — |
 | `very_good_analysis` | `9.0.0` **exact** | dev | Strictest widely-used lint set: catches the `prefer_final` / `avoid_dynamic_calls` / unawaited-future classes that matter in a document editor. | third-party; a major bump can fail CI on unchanged code | pinned exactly, bumped deliberately. Fallback `flutter_lints ^6.0.0` |
-| `leak_tracker_flutter_testing` | `^3.0.0` | dev | Catches undisposed `TextPainter` / `ui.Picture` / `ChangeNotifier`. Given §7.3's native-resource caching, **not optional**. |, |, |
-| `benchmark_harness` | `^2.3.0` | dev | The perf-budget harness. |, |, |
+| `leak_tracker_flutter_testing` | `^3.0.0` | dev | Catches undisposed `TextPainter` / `ui.Picture` / `ChangeNotifier`. Given §7.3's native-resource caching, **not optional**. | — | — |
+| `benchmark_harness` | `^2.3.0` | dev | The perf-budget harness. | — | — |
 
 Explicitly **not** used: any node-editor package (`vyuh_node_flow`, `fl_nodes`, `flutter_flow_chart`, `diagram_editor`, `graphview`), any spatial-index package, `undo`, `freezed`, `json_serializable`, `build_runner`, `InteractiveViewer`, `golden_toolkit`, `desktop_multi_window`.
 
@@ -898,7 +898,7 @@ Two things this pin does **not** yet cover, stated so neither is mistaken for do
 | `DeviceInstance` | 200 | 500 |
 | Ports (mostly unmaterialised: AC-006) | 2 000 | 6 000 |
 | `Link` | 1 000 | 3 000 |
-| Undo history | 200 entries |: |
+| Undo history | 200 entries | — |
 | `.rmpj` file size | ~600 KB | 3 MB |
 | Distinct text runs | ~10 000 | ~30 000 |
 

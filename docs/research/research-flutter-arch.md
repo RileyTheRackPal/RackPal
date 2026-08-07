@@ -17,7 +17,7 @@ Current package status:
 | Package | Version | Publisher | Notes |
 |---|---|---|---|
 | [`riverpod` / `flutter_riverpod`](https://pub.dev/packages/riverpod) | **3.3.2** (~Jun 2026) | rrousselGit, Flutter Favorite | 3.x is stable and mature |
-| [`riverpod_generator`](https://pub.dev/packages/riverpod_generator) | 3.0.3 |: | codegen **optional** in 3.x |
+| [`riverpod_generator`](https://pub.dev/packages/riverpod_generator) | 3.0.3 | — | codegen **optional** in 3.x |
 | [`signals`](https://pub.dev/packages/signals) | **7.1.0** (~Jun 2026) | rodydavis.com | 684 likes, ~20k downloads: small ecosystem |
 | [`bloc` / `flutter_bloc`](https://pub.dev/packages/bloc) | 9.x | felangel | event-sourced; good audit trail, heavy for canvas |
 
@@ -208,7 +208,7 @@ Rules to commit to on day one:
 | [`window_manager`](https://pub.dev/packages/window_manager) | **0.5.2** | 1.1k likes, 494k downloads | de-facto standard |
 | [`archive`](https://pub.dev/packages/archive) | **4.0.9** | 900 likes, 10.7M downloads | pure Dart zip; 4.x renamed `decodeBuffer`→`decodeStream`, `InputStream`→`InputMemoryStream` |
 | [`path_provider`](https://pub.dev/packages/path_provider) | 2.x | flutter.dev | `getApplicationSupportDirectory()` |
-| [`desktop_drop`](https://pub.dev/packages/desktop_drop) | 0.6.x |: | drag-and-drop file onto window |
+| [`desktop_drop`](https://pub.dev/packages/desktop_drop) | 0.6.x | — | drag-and-drop file onto window |
 | [`pdf`](https://pub.dev/packages/pdf) | **3.13.0** | nfet.net, 3k likes | Flutter-like widget API, `MultiPage`, tables, vector/SVG, for requirement #7 |
 
 `file_selector` supports `getSaveLocation()` on Windows/macOS/Linux and `getDirectoryPath()` on Windows/macOS/Linux/Android. `window_manager` covers size, position, appearance, close behaviour and event listening.

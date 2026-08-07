@@ -67,7 +67,7 @@ Topology: **P2P** point-to-point · **MD** multi-drop · **STAR** switched/hub
 | 19 | Speaker level, low-Z | Binding post, banana, Phoenix/Euroblock, SpeakON | 16/2–12/2, 16/4 | → | P2P (or parallel) | Gauge/length table; 14 AWG ~15 m for 8 Ω | **Polarity (+/−) is a schedulable attribute.** Parallel speakers change amp load impedance, needs validation. 4-conductor for single-run bi-amp or for a stereo pair to one location |
 | 20 | Speaker, constant-voltage 70 V / 100 V / 25 V | Euroblock, screw terminal | 16/2 or 18/2 | → | **MD (multi-tap bus)** | Hundreds of feet with negligible loss | Each speaker has a **transformer tap** (typ. 2.5 / 5 / 10 / 15 / 20 W). Sum of taps must be ≤ amp rating (design ~20 % headroom). Tap value is a per-connection property, not a per-device one |
 | 21 | Subwoofer / LFE | RCA, XLR | Shielded coax | → | P2P (or Y-split) | ~10 m | Often Y-split to two subs: one output, two sinks |
-| 22 | Headphone | 1/4" TRS, 3.5 mm |: | → | P2P | short | Rarely in rack plans; include for completeness |
+| 22 | Headphone | 1/4" TRS, 3.5 mm | — | → | P2P | short | Rarely in rack plans; include for completeness |
 | **DIGITAL AUDIO** |
 | 23 | S/PDIF coax | RCA **75 Ω** | 75 Ω coax (RG59) | → | P2P | ~10 m | Physically identical to analog RCA; **impedance differs**. Wiring a plain analog interconnect causes intermittent dropouts |
 | 24 | TOSLINK / optical S/PDIF | JIS F05 (EIAJ) | POF or glass | → | P2P | POF ~5–10 m; glass 30 m+ | Bend radius; cannot carry lossless multichannel (no DTS-HD MA/TrueHD), a real design constraint |
@@ -90,9 +90,9 @@ Topology: **P2P** point-to-point · **MD** multi-drop · **STAR** switched/hub
 | 39 | PoE | RJ45 | Cat5e+ | → power, ↔ data | STAR | 100 m | See PoE table below. Budget is per-switch, not per-port |
 | 40 | Fiber / SFP | LC, SC, ST; SFP/SFP+/SFP28 cage | OM3/OM4 MMF, OS2 SMF | ↔ | P2P (STAR at switch) | MMF ~300–400 m @10 G; SMF 10–40 km | Transceiver type, wavelength, and *pair polarity* (TX↔RX crossover) all matter. A/B polarity is the fiber analogue of null-modem |
 | **POWER** |
-| 41 | Branch circuit inlet | NEMA 5-15P (15 A) / 5-20P (20 A) / L5-30P / L14-30P | SO cord / conduit | → | P2P to circuit |: | Circuit identity + breaker size + phase must be schedulable |
+| 41 | Branch circuit inlet | NEMA 5-15P (15 A) / 5-20P (20 A) / L5-30P / L14-30P | SO cord / conduit | → | P2P to circuit | — | Circuit identity + breaker size + phase must be schedulable |
 | 42 | IEC device power | **C13/C14** (10 A IEC, 15 A NA, 250 V) · **C19/C20** (16 A IEC, up to 20 A NA) | Rated cordage | → | P2P | short | Odd number = female connector on the cord; next even = male inlet on the equipment. C13→C14 is the standard rack pigtail |
-| 43 | PDU outlet | NEMA 5-15R/5-20R, C13, C19 |: | → | 1 outlet : 1 device |: | Attributes: **switched / unswitched / sequenced (with sequence step + delay) / UPS-backed / surge-only / metered**. This is the power schedule |
+| 43 | PDU outlet | NEMA 5-15R/5-20R, C13, C19 | — | → | 1 outlet : 1 device | — | Attributes: **switched / unswitched / sequenced (with sequence step + delay) / UPS-backed / surge-only / metered**. This is the power schedule |
 
 ---
 
@@ -106,7 +106,7 @@ Needed for a per-switch power-budget validator.
 | 802.3at (PoE+) | Type 2 | 4 | 30 W | 25.5 W | 2 |
 | 802.3bt (PoE++) | **Type 3** | 5, 6 | **60 W** | **51 W** (Cl.5 ≈ 40 W, Cl.6 ≈ 51 W) | **4** |
 | 802.3bt (PoE++) | **Type 4** | 7, 8 | **90 W** | **71–73 W** (Cl.7 ≈ 62 W, Cl.8 ≈ 73 W) | **4** |
-| PoH (HDBaseT) |, |, | **up to 100 W** |: | **4** |
+| PoH (HDBaseT) | — | — | **up to 100 W** | — | **4** |
 
 PoH is *based on* 802.3at but modified for 4-pair 100 W delivery; it is **not** interoperable with standard PoE PSEs. Treat as its own family.
 
@@ -290,7 +290,7 @@ Okabe-Ito was built by running candidate colours through CVD simulators and veri
 | **Control** (IR, RS-232/485, contact, trigger, Cresnet, DALI, KNX, DMX) | `#CC79A7` | Reddish Purple | dot `1,3` | `IR`,`232`,`485`,`DMX` | 0.293 |
 | **Power** (AC, IEC, PDU) | `#000000` | Black | dash-dot-dot, 2× weight | `PWR` | 0.000 |
 | **Structure / home-run** (unassigned rough-in) | `#999999` | (grey, added) | dash `6,3`, thin | `STR` | 0.319 |
-| *Selection / highlight only* | `#F0E442` | Yellow |, |, | 0.744 |
+| *Selection / highlight only* | `#F0E442` | Yellow | — | — | 0.744 |
 
 Yellow is reserved for interactive highlight, never for a cable, at 0.744 luminance it is illegible as a thin line on white paper.
 

@@ -281,7 +281,7 @@ Its **goal** line carries a clause the criterion does not: *"The smallest genuin
 | 6 | Equipment list matches rack contents **exactly** | **DEMONSTRATED** | `packages/rackmate_export/test/starters_export_test.dart` asserts a **bijection in both directions** over all four real starter files: designator multiset equality against the document, **plus** every designator recovered as actual text from a `T6.30` content stream |
 | 7 | Baseline-y parity within 0.5% on a kerning-heavy string | **DEMONSTRATED** | `apps/rackmate/test/baseline_parity_test.dart`, fixture `AV Wa To Ty`, `tol = 0.005 * m.lineHeight` at line 208. Both backends' baselines are recovered **independently from real output**: PDF `cm`/`Td` operators out of the emitted stream; Flutter's recorded translate + `paintOffset` + `paragraph.alphabeticBaseline`, and it additionally pins Skia's line width to `PdfFont.stringMetrics` within 1%. This is `RISK-01`'s stop-the-line gate and it is genuinely green |
 | 8 | Undo restores every operation in that sequence | **DEMONSTRATED** | `command_roundtrip_test.dart` at the core level, plus UI-level coverage in `packages/rackmate_ui/test/canvas/{rack_canvas_screen,rack_compaction,rack_resize_drag}_test.dart` and `test/inspector/{rack_inspector_panel,shrink_rack_dialog}_test.dart`, including *"Preset and Apply lands the preset AND the resize AND every displacement as ONE undo entry"* |
-|: | *Goal clause:* **"and it ships to real users"** | **NOT BUILT** | No installer, no signing, no release artefact of any kind. See M8 and DR-006 |
+| — | *Goal clause:* **"and it ships to real users"** | **NOT BUILT** | No installer, no signing, no release artefact of any kind. See M8 and DR-006 |
 
 The exporter demonstration is recorded in the closing commit `0fa532d`.
 
@@ -1461,7 +1461,7 @@ These are not deferrals. They are work the internal-tool ruling **removes or shr
 | **M6** | The *"Windows OV/EV certificate procurement starts here"* clause is withdrawn. Removes a multi-week **external** dependency and retires `RISK-07`'s mitigation schedule | 0 engineering weeks, but removes the largest calendar risk in the plan |
 | **M8** | No certificate purchase, no hardware token, no SmartScreen reputation ramp. Self-signed via `New-SelfSignedCertificate` + `Set-AuthenticodeSignature` + a timestamp server, `.cer` to `LocalMachine\Root` and `\TrustedPublisher` by Group Policy. The licence/EULA question shrinks to an internal-use notice | Perhaps **1 of M8's 2–3** |
 | **M9** | *"Three integrators"* becomes three internal users on three real jobs. The judgement the criterion asks for is unchanged; the **recruiting problem** largely disappears | Reduces `RISK-08`, not the weeks |
-| **M7** | Unchanged in scope, but the **argument** shifts: WCAG AA and the NVDA matrix are now about the people in this building rather than about an unknown customer base. That is a smaller population and a **known** one (which makes the requirement easier to *scope*, not automatically safe to *cut* |) |
+| **M7** | Unchanged in scope, but the **argument** shifts: WCAG AA and the NVDA matrix are now about the people in this building rather than about an unknown customer base. That is a smaller population and a **known** one (which makes the requirement easier to *scope*, not automatically safe to *cut*) | — |
 
 **What DR-006 does *not* change: DR-005.** DR-005 rules that **the sheet set** is a client
 deliverable handed to a client, a GC and a job site. DR-006 rules that **the software** is not

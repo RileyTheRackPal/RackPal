@@ -418,11 +418,11 @@ The M4 exit criterion is that a user who has seen the tool once authors this tem
 
 | # | Action | Emits |
 |---|---|---|
-| 1 | `Ctrl+Shift+N`, type `HDMI Matrix 16x16`, `Tab` `4` `Tab`, `Ctrl+Enter` |: |
+| 1 | `Ctrl+Shift+N`, type `HDMI Matrix 16x16`, `Tab` `4` `Tab`, `Ctrl+Enter` | — |
 | 2 | Click **Matrix I/O…** | dialog |
-| 3 | Inputs `16`, connector `hdmi` |: |
-| 4 | Outputs `16`, connector `hdbt` |: |
-| 5 | Tick ☑ Mirrored outputs · ☑ Per-output IR · ☑ Control (LAN + RS-232) · ☑ AC inlet |: |
+| 3 | Inputs `16`, connector `hdmi` | — |
+| 4 | Outputs `16`, connector `hdbt` | — |
+| 5 | Tick ☑ Mirrored outputs · ☑ Per-output IR · ☑ Control (LAN + RS-232) · ☑ AC inlet | — |
 | 6 | `[ Generate ]` | **68 ports, 6 banks** |
 | 7 | `Ctrl+S` | saved |
 

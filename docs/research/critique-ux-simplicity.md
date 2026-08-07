@@ -103,15 +103,15 @@ Heavy-low, amp spacing, vent-above-heat, 15% spare RU, with per-rule checkboxes 
 | Key | Meaning A | Meaning B | Meaning C |
 |---|---|---|---|
 | `Shift+F` | Toggle Both-faces view | Move selection to opposite face | Isolate (schematic) |
-| `Ctrl+P` | Export PDF (rack) | Command palette (schematic) |: |
+| `Ctrl+P` | Export PDF (rack) | Command palette (schematic) | — |
 | `Ctrl+1` | Zoom 100% (rack) | Switch to Rack view | Toggle domain 1 |
-| `Ctrl+B` | Fill gaps with blanks | Create bus |: |
-| `Ctrl+R` | Renumber dialog | Reverse connection direction |: |
-| `Ctrl+L` | Lock position | Toggle wire ↔ net label |: |
-| `G` | Toggle 0U gutters | Toggle grid |: |
-| `L` | Cycle label mode | Tidy selection |: |
-| `F` | Flip face | Focus |: |
-| `T` / `W` | (rack: unbound/warnings) | Trace / marquee-wires |: |
+| `Ctrl+B` | Fill gaps with blanks | Create bus | — |
+| `Ctrl+R` | Renumber dialog | Reverse connection direction | — |
+| `Ctrl+L` | Lock position | Toggle wire ↔ net label | — |
+| `G` | Toggle 0U gutters | Toggle grid | — |
+| `L` | Cycle label mode | Tidy selection | — |
+| `F` | Flip face | Focus | — |
+| `T` / `W` | (rack: unbound/warnings) | Trace / marquee-wires | — |
 
 `Shift+F` is defined twice *within the same document*.
 
@@ -209,7 +209,7 @@ Honest walkthrough of a 16×16, using the spec's own affordances, for a user who
 | Matrix I/O generator: N, M, in-connector, out-connector, 5 companion checkboxes | 9 controls | 50 s |
 | Fix generated banks: labels, sides, designator ranges | grid work | 60 s |
 | Control + power banks the generator didn't emit | 2 DSL lines or ~12 fields | 40 s |
-| Review, resolve validation warnings, publish |: | 30 s |
+| Review, resolve validation warnings, publish | — | 30 s |
 | **Total** | | **≈ 5.5 minutes** |
 
 For a first-timer who doesn't know `{n:2}`, `@bank`, or that `hdbt` resolves to RJ45+hdbaset, add 3–4 minutes of exploration.

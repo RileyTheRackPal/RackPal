@@ -33,8 +33,8 @@ EIA-310-D (US, inches), IEC 60297-3-100 (metric) and DIN 41494 are the harmonise
 | Panel / faceplate width | 19.000 | **482.6** | `482_600_000` | The "19-inch" name is the *panel* width, not the rack width **[std]** |
 | Chassis width (connector field) | ~17.0 | **432** | `432_000_000` | Default `TemplateBody.chassisWidth`; AC-032 |
 | Rail-to-rail hole centres | 18.312 | **465.1** | `465_100_000` | Nominal; sources quote 18.28–18.34 in as tolerance |
-| Clear opening between rail faces | 17.75 | 450.85 |: | Often quoted as a 450 mm minimum |
-| Mounting post width (each) | 0.625 | 15.88 |, |, |
+| Clear opening between rail faces | 17.75 | 450.85 | — | Often quoted as a 450 mm minimum |
+| Mounting post width (each) | 0.625 | 15.88 | — | — |
 | Inter-panel clearance | **1/32** | **0.79375** | `793_750` | See §2.2; this is why `Len` is nanometres |
 
 ### 2.2 1U is 44.45 mm exactly, and panel height is not `n × 1.75`
@@ -330,7 +330,7 @@ This is the authored content of `assets/catalog/registries.json`. It is data tha
 | `rf.catv` | RF / CATV distribution | `conn.f_type` | → (↔ DOCSIS) | **MD** | `RF` | Splitter loss is the design; a 2-way splitter is ≈3.5 dB. Cascade rule is v1.2 |
 | `rf.satellite` | Satellite / SWM | `conn.f_type` | ↔ | **MD, power-passing** | `SAT` | See §7.6 |
 | `rf.ota` | OTA antenna | `conn.f_type` | → | MD | `OTA` | Often diplexed with satellite; preamp needs power injection |
-| `rf.modulated` | RF modulated channel | `conn.f_type` | → | MD | `RFM` |: |
+| `rf.modulated` | RF modulated channel | `conn.f_type` | → | MD | `RFM` | — |
 
 ### 6.3 Analog audio: `#E69F00`
 
@@ -368,7 +368,7 @@ The requirement's "Analog RCA" and "speaker level" share one orange and are sepa
 | `net.poh` | PoH (HDBaseT power) | `conn.rj45` | → | P2P | `PoH` | Own family, own glyph: not a flag on PoE |
 | `net.fiber_mm` | Fibre multimode (OM3/OM4) | `conn.lc_duplex` | ↔ | P2P / STAR | `FIB` | ~300–400 m at 10 G; A/B polarity is `Link.crossover` |
 | `net.fiber_sm` | Fibre singlemode (OS2) | `conn.lc_duplex` | ↔ | P2P / STAR | `FIBS` | 10–40 km |
-| `net.dac` | Direct-attach copper | `conn.sfp_cage` | ↔ | P2P | `DAC` |: |
+| `net.dac` | Direct-attach copper | `conn.sfp_cage` | ↔ | P2P | `DAC` | — |
 
 ### 6.6 Control: `#CC79A7`
 
@@ -394,8 +394,8 @@ The requirement's "Analog RCA" and "speaker level" share one orange and are sepa
 |---|---|---|---|---|---|
 | `power.ac_branch` | **AC branch circuit** | `conn.nema_5_15p` | → | `PWR` | Circuit identity, breaker size and phase are all schedulable |
 | `power.ac_iec` | IEC device power | `conn.iec_c14` | → | `IEC` | **Odd IEC number = female connector on the cord; next even = male inlet on the equipment.** C13→C14 is the standard rack pigtail |
-| `power.ac_hardwired` | Hardwired AC | `conn.hardwired` | → | `HW` |: |
-| `power.dc_low` | Low-voltage DC (12/24 V) | `conn.barrel_dc` | → | `DC` |: |
+| `power.ac_hardwired` | Hardwired AC | `conn.hardwired` | → | `HW` | — |
+| `power.dc_low` | Low-voltage DC (12/24 V) | `conn.barrel_dc` | → | `DC` | — |
 | `power.bonding` | Bonding / grounding conductor | `conn.ground_lug` | ↔ | `GND` | Exists so a bonding conductor is *drawable*. Busbar entity and conductor sizing are v1.2 (RJ-010) |
 
 **Inlet and outlet are not directions**: they are `sink`/`source` on a `power.*` family plus `PortPowerSpec.role: inlet | outlet` (CR-058, CR-060). Links on `power.*` originating at a PDU outlet auto-classify as `LinkClass.powerCord` and are excluded from the pull sheet by default, appearing instead as an **outlet map** on the power schedule (AC-026).
@@ -407,7 +407,7 @@ PDU outlet attributes that matter: switched / unswitched / sequenced (with step 
 | `id` | Display | Connector | Tag | Note |
 |---|---|---|---|---|
 | `structure.undetermined` | Undetermined home run | `conn.unterminated` | `STR` | **Legal and deliberate.** A Cat6 home run at rough-in may end up carrying Ethernet, HDBaseT, or nothing. It schedules, prints, gets a `W` number and both labels; the DRC validates **retroactively** once a `Service` assigns a real family |
-| `structure.pathway` | Pathway only (conduit / pull string) |: | `PATH` | Pairs with `MediaTypeDef.isPathwayOnly`. Creates a `Pathway`, never a Link and never a Port. Appears on the pull sheet, you still pull the smurf tube and it still costs money, and never in the netlist (CR-109) |
+| `structure.pathway` | Pathway only (conduit / pull string) | — | `PATH` | Pairs with `MediaTypeDef.isPathwayOnly`. Creates a `Pathway`, never a Link and never a Port. Appears on the pull sheet, you still pull the smurf tube and it still costs money, and never in the netlist (CR-109) |
 
 ### 6.9 Media types
 
@@ -421,15 +421,15 @@ Full table in `assets/catalog/registries.json`; the load-bearing rows:
 | `media.rg6` · `media.rg6_quad` | **RG6** · quad-shield | 1 coax | 18 | 75 | ~150 m | `rf.catv`, `rf.ota` · `rf.satellite` (swept to 3 GHz) |
 | `media.rg59` · `media.rg11` | RG59 · RG11 | 1 coax | 20 · 14 | 75 | ~100 m · ~300 m | `video.composite`, `audio.spdif_coax` · CATV trunk |
 | `media.coax_video_75` | Precision 75 Ω video coax | 1 coax | 20 | 75 | 12G ~45 m | `video.sdi`, `video.component` |
-| `media.mic_stp` | Mic / line STP | 2 + shield | 22 |: | 100 m+ | `audio.mic`, `audio.line_bal` |
+| `media.mic_stp` | Mic / line STP | 2 + shield | 22 | — | 100 m+ | `audio.mic`, `audio.line_bal` |
 | `media.aes_110` · `media.dmx_120` | 110 Ω AES/DMX · 120 Ω DMX/RS-485 | 2 + shield | 22 | 110 · 120 | 100 m · 1200 m | `audio.aes3` · `ctl.dmx512`, `ctl.rs485` |
-| `media.16_2` · `16_4` · `14_2` · `14_4` · `12_2` | Speaker cable | 2 or 4 | 16 / 14 / 12 |: | gauge/length table; 14 AWG ≈ 15 m at 8 Ω | `audio.speaker_lowz` |
-| `media.18_2_cv` | 18/2 constant-voltage | 2 | 18 |: | hundreds of feet | `audio.speaker_cv` |
-| `media.22_2` · `media.22_4` | Control cable | 2 / 4 | 22 |: | long | `ctl.contact`, `ctl.trigger12v`, `ctl.ir_emitter` |
-| `media.cresnet_18_22` | Cresnet | 4 / 2 | 18 + 22 |: | 915 m data · **333 ft at 20 W** | `ctl.cresnet` |
-| `media.hdmi_passive` · `_active` · `_aoc` | HDMI passive · active copper · AOC | 19 bonded / hybrid |, |, | 2.1: 3–4.5 m · ~7.6 m · 15–90 m+ | `video.hdmi.*`: **active and AOC are direction-locked** |
-| `media.om3` · `om4` · `os2` | Fibre | 2 strands |, |, | ~300–400 m at 10 G · 10–40 km | `net.fiber_mm` · `net.fiber_sm` |
-| `media.conduit_emt` · `conduit_ent` · `pull_string` | EMT · ENT (smurf) · pull string |, |, |, |, | **`isPathwayOnly: true`** |
+| `media.16_2` · `16_4` · `14_2` · `14_4` · `12_2` | Speaker cable | 2 or 4 | 16 / 14 / 12 | — | gauge/length table; 14 AWG ≈ 15 m at 8 Ω | `audio.speaker_lowz` |
+| `media.18_2_cv` | 18/2 constant-voltage | 2 | 18 | — | hundreds of feet | `audio.speaker_cv` |
+| `media.22_2` · `media.22_4` | Control cable | 2 / 4 | 22 | — | long | `ctl.contact`, `ctl.trigger12v`, `ctl.ir_emitter` |
+| `media.cresnet_18_22` | Cresnet | 4 / 2 | 18 + 22 | — | 915 m data · **333 ft at 20 W** | `ctl.cresnet` |
+| `media.hdmi_passive` · `_active` · `_aoc` | HDMI passive · active copper · AOC | 19 bonded / hybrid | — | — | 2.1: 3–4.5 m · ~7.6 m · 15–90 m+ | `video.hdmi.*`: **active and AOC are direction-locked** |
+| `media.om3` · `om4` · `os2` | Fibre | 2 strands | — | — | ~300–400 m at 10 G · 10–40 km | `net.fiber_mm` · `net.fiber_sm` |
+| `media.conduit_emt` · `conduit_ent` · `pull_string` | EMT · ENT (smurf) · pull string | — | — | — | — | **`isPathwayOnly: true`** |
 
 `JacketRating { cl2, cl3, cmr, cmp, lszh, directBurial }` is not decorative:
 
@@ -472,7 +472,7 @@ Xantech/Niles-style **receivers** are tip = signal, ring = GND, sleeve = +12 V. 
 | 802.3at (PoE+) | 2 | 4 | 30 W | 25.5 W | 2 |
 | 802.3bt (PoE++) | **3** | 5, 6 | **60 W** | ~40 W / ~51 W | **4** |
 | 802.3bt (PoE++) | **4** | 7, 8 | **90 W** | ~62 W / ~73 W | **4** |
-| PoH (HDBaseT) |, |, | **up to 100 W** |: | **4** |
+| PoH (HDBaseT) | — | — | **up to 100 W** | — | **4** |
 
 Shipped as `PoeSpec{role, standard, type, class, watts}`. `NET-001` checks `Σ(PD class draw) ≤ PowerProfile.poeBudgetWatts`, **a switch's budget is almost always well below ports × max class**, and flags a Type-4 PD on a Type-2 PSE.
 

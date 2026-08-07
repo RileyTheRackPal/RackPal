@@ -281,7 +281,7 @@ appears. The resolver deliberately lives in `derived/`, never in `draw/`.
 | `ctl` | Control | `#CC79A7` | `#E29CC3` | `1.5,3` | 0.75× | ✚ / ✳ | 0.2930 | black, fine dot, 0.75× |
 | `pwr` | Power | `#000000` | `#E8E8E8` *(inverted: black is invisible on dark)* | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.0000 | black, dash-dot-dot, 2.00× |
 | `str` | Structure | `#999999` | `#A8A8A8` | `6,3,3,3` | 0.75× | ★ / ☆ | 0.3185 | black, `6,3,3,3`, 0.75× |
-| *(reserved)* | Selection / focus | `#F0E442` | `#F5E76B` |, |, |: | 0.7441 | never printed |
+| *(reserved)* | Selection / focus | `#F0E442` | `#F5E76B` | — | — | — | 0.7441 | never printed |
 
 The luminances above are computed from the shipped light hexes by the `luminance()` function in [`tools/pal1_check.py`](../tools/pal1_check.py) and are the figures this project publishes. Any document carrying `video.analog` as `0.401` is stale; the value is **0.4050**.
 
@@ -776,9 +776,9 @@ One row per **cable**, with a services sub-line when a `Link` carries more than 
 
 | `CABLE` | `DOMAIN` | `FROM` | `TO` | `FAMILY` | `MEDIA` | `LEN` | `LIFECYCLE` | `ROUGH-IN` | `REF` | `PATHWAY` | `ISSUES` |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| W021 | ▲ D.Video | ATV-1:J01 HDMI OUT | MTX-1:J01 HDMI IN 1 | HDMI 2.1 | `media.hdmi_passive` | 6′ | new | pulled | 2/C3 |, |, |
+| W021 | ▲ D.Video | ATV-1:J01 HDMI OUT | MTX-1:J01 HDMI IN 1 | HDMI 2.1 | `media.hdmi_passive` | 6′ | new | pulled | 2/C3 | — | — |
 | W044 | ▲ D.Video | MTX-1:J09 OUT 1 | HBT-GRT:J01 IN | HDBaseT | `media.cat6a_futp` | 90′ | new | planned | 2/C5 | B03 | ⚠ 1 |
-| W101 | ⬢ Power | PDU-1:J07 | MTX-1:J20 AC IN | IEC device power | `media.iec_cordage` | 3′ | existing | terminated | 6/A2 |, |, |
+| W101 | ⬢ Power | PDU-1:J07 | MTX-1:J20 AC IN | IEC device power | `media.iec_cordage` | 3′ | existing | terminated | 6/A2 | — | — |
 
 Column rulings that are not negotiable:
 
@@ -822,7 +822,7 @@ The keymap is **generated from the single `Intent` registry into `build/keymap.m
 | `Del` / `Esc` | Delete selection · cancel the current operation | every view |
 | `Ctrl+B` | Fill gaps with blanks | **Rack Editor only** |
 | `Ctrl+Shift+F` | Cycle elevation face | **Rack Editor only** |
-| `T` | **unbound in v1**, Trace defers |, |
+| `T` | **unbound in v1**, Trace defers | — |
 
 **The v1 tab strip shows three tabs: Rack, Schematic, Schedule.** `Ctrl+3` is **reserved** for the interactive Rear Panel view, which is v1.1 (CR-071 point 3); in v1 the binding is an unbound no-op and the tab is absent from the strip. Schedule is **not** rebound to `Ctrl+3`, `Ctrl+n` is a stable view identity, not an ordinal, and moving Schedule in v1 only to move it back in v1.1 breaks muscle memory for a cosmetic gain (canon §4.3, CR-101). Note that sheet `T2.02 Rack Elevation — Rear` **prints in v1**; only the interactive view defers.
 

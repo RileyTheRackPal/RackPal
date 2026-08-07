@@ -169,7 +169,7 @@ Designators follow ASME Y14.44 / IEEE 315: **`J###` = port (fixed connector), `W
 | **Control**: IR, RS-232/485, contact, trigger, Cresnet, DALI, KNX, DMX | `#CC79A7` | `1,3` dot | 0.75× | `IR` `232` `485` `DMX` `CN` |
 | **Power**: AC, IEC, PDU | `#000000` | `8,3,1,3,1,3` dash-dot-dot | 2.0× | `PWR` |
 | **Structure**: unassigned home run | `#999999` | `6,3` dash | 0.75× | `STR` |
-| *Selection / focus only* | `#F0E442` |, |, | never a cable |
+| *Selection / focus only* | `#F0E442` | — | — | never a cable |
 
 This is Okabe–Ito mapped onto trade convention (blue = video, warm = audio, green = network, purple = control) so installers read it correctly on first sight. Yellow is reserved for interactive highlight and is never a cable, at 0.744 relative luminance it is illegible as a thin line on white paper.
 
@@ -781,9 +781,9 @@ A dockable panel (bottom or right, `Ctrl+4` to toggle), and also a full-screen v
 
 | Tag | Domain | From | To | Type | Media | Len | Layer | Sheet/Zone | Bundle | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| W021 | ◼ D.Video | ATV1:J01 HDMI OUT | MTX1:J01 HDMI IN 1 | HDMI 2.1 | HDMI-48G | 6′ | Ph1 | 2/B3 |: | ✓ |
+| W021 | ◼ D.Video | ATV1:J01 HDMI OUT | MTX1:J01 HDMI IN 1 | HDMI 2.1 | HDMI-48G | 6′ | Ph1 | 2/B3 | — | ✓ |
 | W044 | ◼ D.Video | MTX1:J09 OUT 1 | HBT-GRT:J01 IN | HDBaseT | Cat6a F/UTP | 90′ | Ph1 | 2/C5 | B03 | ⚠ |
-| W101 | ◼ Power | PDU1:O07 | MTX1:J20 AC IN | IEC C13 | 16 AWG SJT | 3′ | Ph1 | 6/A2 |: | ✓ |
+| W101 | ◼ Power | PDU1:O07 | MTX1:J20 AC IN | IEC C13 | 16 AWG SJT | 3′ | Ph1 | 6/A2 | — | ✓ |
 
 - **Bidirectional selection sync.** Click a row → the canvas pans/zooms to fit that wire and flashes it 3× at 200 ms. Click a wire → the row scrolls into view and highlights. Multi-select works both ways.
 - **Editable in place:** length, label, media, layer, bundle, notes. Type and endpoints are read-only here (structural changes belong on the canvas where the validation feedback lives).

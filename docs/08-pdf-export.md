@@ -73,7 +73,7 @@ Presets are the primary UI; the per-sheet checkbox list sits behind a disclosure
 
 | Preset | Sheets | Overrides |
 |---|---|---|
-| **Full set** (default) | every resolved sheet |: |
+| **Full set** (default) | every resolved sheet | — |
 | **Installer set** | Full set, rear elevation forced ON | `palette: greyscale` (CR-077), sign-off columns ON, zebra OFF |
 | **Client set** | Cover, Legend, front elevations, interconnect with symbols collapsed and no port stubs, Equipment List | `palette: colour`, `Link` designators hidden on traces, NOTES column hidden |
 | **This sheet only** | the sheet currently open | furniture unchanged |
@@ -149,7 +149,7 @@ Rows per page    ⌊(659 − 18) / 15⌋ = 42   (≈28 with heavy notes)
 | 7 | `MEDIA` | 58 | left | `RackCond` 7 | `MediaTypeDef.displayName` + jacket |
 | 8 | `LEN` | 28 | **right** | `RackMono` 7.5 | `cutLength`; **italic** when derived from `Location.estimatedRunLengthFromRack`; `—` when null |
 | 9 | `PATHWAY` | 36 | left | `RackBody` 7 | `Pathway.designator` |
-| 10 | `SIGN-OFF` | 56 | centre |: | `☐ P` 12 · `☐ T` 12 · `☐ T` 12 · `INIT` 20 |
+| 10 | `SIGN-OFF` | 56 | centre | — | `☐ P` 12 · `☐ T` 12 · `☐ T` 12 · `INIT` 20 |
 
 ### 3.3 Termination Schedule: exact columns
 
@@ -351,14 +351,14 @@ The same rows as a table, with the two length variants distinguished:
 |---|---|---|---|---|---|---|---|---|---|
 | W015 | ▨ STR | GR-TV-1 | 1A-A03 | Great Room / TV wall WP-1 | RK-1 / U14 / rear PP-1 A03 | Cat6A F/UTP CMR | 78 | CD-1 | Grade 2 outlet |
 | W016 | ▨ STR | GR-TV-2 | 1A-A04 | Great Room / TV wall WP-1 | RK-1 / U14 / rear PP-1 A04 | Cat6A F/UTP CMR | 78 | CD-1 | |
-| W041 | ▥ AUD·SPK | GR-CLG-1 |: | Great Room / ceiling L/R | RK-1 / U08 / rear AMP-1 CH 5 ± | 16/2 CL3 | *62* | JH-2 | 1 `Link`, 2 `Conductor`s (`atomicConnect`) |
+| W041 | ▥ AUD·SPK | GR-CLG-1 | — | Great Room / ceiling L/R | RK-1 / U08 / rear AMP-1 CH 5 ± | 16/2 CL3 | *62* | JH-2 | 1 `Link`, 2 `Conductor`s (`atomicConnect`) |
 | W070 | ▧ RF | ANT-ROOF | 1A-F01 | Attic / mast | RK-1 / U02 / rear SPL-1 IN | RG6 quad, swept 3 GHz | 44 | CD-3 | OTA; preamp power injected at SPL-1 |
-| W042 | ▥ AUD·SPK | KIT-CLG-1 |: | Kitchen / ceiling pair | RK-1 / U08 / rear AMP-1 CH 7 ± | 16/2 CL3 | *51* | JH-2 | **VERIFY POLARITY** |
+| W042 | ▥ AUD·SPK | KIT-CLG-1 | — | Kitchen / ceiling pair | RK-1 / U08 / rear AMP-1 CH 7 ± | 16/2 CL3 | *51* | JH-2 | **VERIFY POLARITY** |
 | W043 | ▬ NET | KIT-AP-1 | 1A-A11 | Kitchen / ceiling AP | RK-1 / U20 / rear SW-1 P11 | Cat6A F/UTP CMR | 47 | CD-1 | PoE Class 4 |
 | W044 | ▨ STR | KIT-KP-1 | 1A-A12 | Kitchen / keypad wall | RK-1 / U14 / rear PP-1 A12 | Cat6A F/UTP CMR | 43 | CD-1 | far end `OpenEndpoint` |
 | W014 | ▤ VID·HBT | MR-PROJ-1 | 1A-A07 | Media Rm / ceiling projector | RK-1 / U16 / rear TX-1 LINK OUT | Cat6A F/UTP solid CMR | 66 | CD-2 | **NOT ETHERNET**: do not patch to SW-1. PoH 100 W |
 | W055 | ▪ CTL·232 | MR-PROJ-C | 1A-A08 | Media Rm / ceiling projector | RK-1 / U22 / rear CTL-1 COM 2 | Cat6 + DE-9 adapters | 41 | CD-2 | **NULL-MODEM** 2↔3 4↔6 7↔8 5→5 |
-| W061 | ▪ CTL·IR | MR-EMIT-1 |: | Media Rm / rack shelf | RK-1 / U22 / rear CTL-1 IR 3 | 3.5 mm **mono** emitter | *38* | CD-2 | Xantech pinout; **not** the receiver jack |
+| W061 | ▪ CTL·IR | MR-EMIT-1 | — | Media Rm / rack shelf | RK-1 / U22 / rear CTL-1 IR 3 | 3.5 mm **mono** emitter | *38* | CD-2 | Xantech pinout; **not** the receiver jack |
 | W072 | ▧ RF | MR-CATV-1 | 1A-F04 | Media Rm / AV wall | RK-1 / U02 / rear SPL-1 OUT 2 | RG6 quad | 53 | CD-3 | |
 
 Note what the notes are doing. `NOT ETHERNET`, `NULL-MODEM 2↔3 4↔6 7↔8 5→5`, `VERIFY POLARITY`, `not the receiver jack` are **generated from the port and connector model**, not typed by a user. That is the single highest-value thing this schedule does that a spreadsheet cannot. Italic lengths are estimates derived from `Location.estimatedRunLengthFromRack` and are tagged as such so nobody bills off them (AC-024); a null length prints `—` and the `LEN-*` rules emit *"length unknown, cannot verify"* rather than silently passing (G4).
@@ -769,7 +769,7 @@ Pt anchorOffset(TextAnchor a, TextMetrics m) {
 | 12 | Transform | `Canvas.transform` concatenates | `setTransform(Matrix4)` **concatenates** despite the name | 1:1. `Matrix4.storage` feeds `Canvas.transform` directly. Always bracket with save/restore |
 | 13 | Clip | part of save/restore, intersective | `clipPath()` consumes the current path, intersective | Semantics match; there is no "unclip" on either side |
 | 14 | Zero-width strokes | `0` → one device pixel | `0` → thinnest device line, invisible at 2400 dpi | **Never emit 0.** Clamp in `_applyStroke` on both backends: 0.5 pt signal floor, 0.25 pt furniture floor (CR-082) |
-| 15 | Winding under flip |: | the flip reverses winding | Only matters for `evenOdd` on nested subpaths. Symbol paths do not nest; `addEllipse` emits a consistent direction |
+| 15 | Winding under flip | — | the flip reverses winding | Only matters for `evenOdd` on nested subpaths. Symbol paths do not nest; `addEllipse` emits a consistent direction |
 | 16 | Text wrapping | `TextPainter` wraps and shapes | `drawString` is single-line, baseline-origin | The interface has **no wrapping**. Multi-line is the scene builder's job: measure, split, emit N `drawText` calls at a computed leading. Layout belongs in the builder, not the backend |
 | 17 | Images | full format support | `PdfImage`, pre-decoded | **Not in v1.** `ImageRef` and `drawImage` are not in the interface, their only consumer was the title-block logo (RJ-017). Recorded here so the v2 container change knows what it must add |
 | 18 | OS text scaling | inherits accessibility scale | none | `textScaler: TextScaler.noScaling`. Without it a user at 125% OS scaling sees labels 25% larger than the PDF and blames the PDF |
@@ -1108,7 +1108,7 @@ Saving uses **the app's own save dialog**, `lib/src/session/file_picker.dart` ov
 |---|---|---|---|
 | Windows / macOS / Linux | `getSaveLocation` + `XFile.saveTo` | `Printing.layoutPdf`: **v1.1** | `Printing.sharePdf` (weak on Win/Linux) |
 | iOS / Android (read-only) | `Printing.sharePdf` | `Printing.layoutPdf` | VERIFY: `bounds:` is reportedly required in practice on iPad |
-| Web (not a v1 target) | Blob URL, not `data:` |: | download |
+| Web (not a v1 target) | Blob URL, not `data:` | — | download |
 
 VERIFY: 11×17 on Windows reportedly needs `forceCustomPrintPaper: true` to reach the driver; and `dynamicLayout: true` re-invokes the layout callback when the user changes paper size, so the callback must honour the `PdfPageFormat` it receives.
 

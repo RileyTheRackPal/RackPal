@@ -177,7 +177,7 @@ That is **16–22 months of pure implementation**; with normal overhead, 24+ mon
 | `SignalRoute`, `Circuit`, `SheetItem` rotation, `RevisionEntry` | `Link` + `Net` + `Conductor` |
 | ~58 of the 70 DRC rules | The 5 blocking + ~12 highest-value (SIG-001, DIR-001/003, RCK-001/002/003, LEN-001, PWR-001/003, CON-001, NET-001, ELE-003) |
 | Structure bundles, CSV import, matrix entry | Flat drop table + one label template |
-| Rear-panel view |: |
+| Rear-panel view | — |
 | 8 PDF sheet types | 2: diagram + schedule |
 
 The `DiagramCanvas`/display-list architecture, the command stack, the unit model, and the file format all stay; those are the "do it now or pay 10× later" items and the architecture doc is right to say so.

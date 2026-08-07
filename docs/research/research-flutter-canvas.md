@@ -337,7 +337,7 @@ This is genuinely messy and the docs undersell it. Since Flutter 3.3, [trackpad 
 |---|---|---|---|
 | Mouse wheel | `PointerScrollEvent` (discrete, ~±120 quantum) | `PointerScrollEvent` | `PointerScrollEvent` |
 | Trackpad 2-finger scroll | `PointerScrollEvent` (precision, small deltas) | `PointerPanZoomUpdateEvent` | `PointerScrollEvent` |
-| Trackpad pinch |: | `PointerPanZoomUpdateEvent` (`.scale`) | `PointerScaleEvent` (ctrl+wheel emulation) |
+| Trackpad pinch | — | `PointerPanZoomUpdateEvent` (`.scale`) | `PointerScaleEvent` (ctrl+wheel emulation) |
 
 And there is a known limitation you should design around rather than fight: **[Flutter cannot reliably distinguish mouse wheel from trackpad scroll](https://github.com/flutter/flutter/issues/88175)** on desktop. Heuristics on delta magnitude are fragile. The pragmatic convention, which matches Figma/Illustrator and is what users already expect:
 
@@ -500,11 +500,11 @@ Honest assessment. All data from pub.dev, July 2026.
 | [`vyuh_node_flow`](https://pub.dev/packages/vyuh_node_flow) | 0.27.3 | ~5 mo | 151 / 160 | Yes (+validation) | Bezier/smoothstep/**step** | Partial | **Best of breed** |
 | [`fl_nodes`](https://pub.dev/packages/fl_nodes) | 0.5.0+1 | ~9 mo | 60 / 130 | Yes | No | Some | Interesting, immature |
 | [`flutter_flow_chart`](https://pub.dev/packages/flutter_flow_chart) | 4.1.1 | ~7 mo | 196 / 160 | **No** | "rectangular" arrows only | **No** | Wrong shape |
-| [`diagram_editor`](https://pub.dev/packages/diagram_editor) | 1.0.0 | ~4 mo |: | Type-safe data, not typed *ports* | No | **No** | Framework, not editor |
-| [`graphview`](https://pub.dev/packages/graphview) | 1.5.1 | ~9 mo |, | No | No | No | **Visualisation only, no editing** |
-| `node_editor` |: | stale | low | Some | No | No | Skip |
-| `boardview` |, | stale |, | N/A | N/A | N/A | Kanban, irrelevant |
-| `xml_flow` |, |, |, |, |, |, | Not a node editor |
+| [`diagram_editor`](https://pub.dev/packages/diagram_editor) | 1.0.0 | ~4 mo | — | Type-safe data, not typed *ports* | No | **No** | Framework, not editor |
+| [`graphview`](https://pub.dev/packages/graphview) | 1.5.1 | ~9 mo | — | No | No | No | **Visualisation only, no editing** |
+| `node_editor` | — | stale | low | Some | No | No | Skip |
+| `boardview` | — | stale | — | N/A | N/A | N/A | Kanban, irrelevant |
+| `xml_flow` | — | — | — | — | — | — | Not a node editor |
 
 Notes on the two that deserve real consideration:
 

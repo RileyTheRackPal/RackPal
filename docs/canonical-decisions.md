@@ -3175,46 +3175,46 @@ states whether the entity carries `EntityMeta` per CR-095.
 | Canonical type | UI label | What it is | Owner / key | Conflict unit |
 |---|---|---|---|---|
 | **`RackDocument`** | "project" | The in-memory mutable aggregate: flat UUID-keyed entity maps, mutated only through `Command`s. The thing `.rackmate` serializes. | root | ✅ |
-| **`ProjectInfo`** | "project details" | Title-block metadata: client, site address, integrator, drawn/checked/approved by, drawing number. Field of `RackDocument`. | on document |: |
-| **`ProjectSettings`** | "project settings" | Persisted per-project preferences: display units, ID formats, defaults, rule overrides. Field of `RackDocument`. | on document |: |
+| **`ProjectInfo`** | "project details" | Title-block metadata: client, site address, integrator, drawn/checked/approved by, drawing number. Field of `RackDocument`. | on document | — |
+| **`ProjectSettings`** | "project settings" | Persisted per-project preferences: display units, ID formats, defaults, rule overrides. Field of `RackDocument`. | on document | — |
 | **`Location`** | "location" | One node of the arbitrary-depth location tree (site ▸ building ▸ floor ▸ room ▸ zone ▸ outdoor). CR-047. | `parentId` self-ref | ✅ |
 | **`Rack`** | "rack" | One physical enclosure or frame. Owns height, rails, depths, capacities, 0U channels. | `locationId` | ✅ |
-| **`ZeroUChannel`** | "0U channel" | A vertical mounting channel inside a `Rack`. Sub-object, string-keyed within the rack. | inside `Rack` |: |
+| **`ZeroUChannel`** | "0U channel" | A vertical mounting channel inside a `Rack`. Sub-object, string-keyed within the rack. | inside `Rack` | — |
 | **`Circuit`** | "circuit" | One branch circuit / breaker. Flat on the document with an optional `rackId`. CR-028. | `Circuit.rackId?` | ✅ |
-| **`DeviceTemplate`** | "template" | The **mutable library** object. Lives in the catalog or user library. Never referenced by a device. | library |: |
-| **`TemplateSnapshot`** | (not shown) | The **immutable, embedded** capture of a template at one version. Keyed `"$templateId@$version"`. | on document |: |
-| **`TemplateBody`** | (not shown) | Everything physically true of the model. The payload of both of the above. |, |, |
-| **`TemplateRef`** | (not shown) | `{templateId, version, contentHash}`: a device's pin to an exact snapshot. | on `DeviceInstance` |: |
+| **`DeviceTemplate`** | "template" | The **mutable library** object. Lives in the catalog or user library. Never referenced by a device. | library | — |
+| **`TemplateSnapshot`** | (not shown) | The **immutable, embedded** capture of a template at one version. Keyed `"$templateId@$version"`. | on document | — |
+| **`TemplateBody`** | (not shown) | Everything physically true of the model. The payload of both of the above. | — | — |
+| **`TemplateRef`** | (not shown) | `{templateId, version, contentHash}`: a device's pin to an exact snapshot. | on `DeviceInstance` | — |
 | **`DeviceInstance`** | "device" | One piece of gear in this project. | `templateRef`, `placement` | ✅ |
-| **`DeviceOverrides`** | "device overrides" | Typed, nullable per-instance overrides of `TemplateBody` facts. CR-053, AC-012. | on `DeviceInstance` |: |
-| **`Placement`** | "placement" | Sealed union of five mounting variants. CR-031. Never called a slot. | on `DeviceInstance` |: |
-| **`PortDef`** | (not shown) | The template-side port definition. Identified by `PortKey`. | inside `TemplateBody` |: |
+| **`DeviceOverrides`** | "device overrides" | Typed, nullable per-instance overrides of `TemplateBody` facts. CR-053, AC-012. | on `DeviceInstance` | — |
+| **`Placement`** | "placement" | Sealed union of five mounting variants. CR-031. Never called a slot. | on `DeviceInstance` | — |
+| **`PortDef`** | (not shown) | The template-side port definition. Identified by `PortKey`. | inside `TemplateBody` | — |
 | **`Port`** | "port" | The instance-side port. Graph identity; what a `Conductor` references. Lazily materialised (AC-006). | `deviceId` | ❌ |
-| **`PortOverrides`** | "port overrides" | Typed per-port overrides. Lives **on the `Port`**, never in a device-keyed map. CR-053. | on `Port` |: |
+| **`PortOverrides`** | "port overrides" | Typed per-port overrides. Lives **on the `Port`**, never in a device-keyed map. CR-053. | on `Port` | — |
 | **`BankDef`** / **`Bank`** | "bank" | A **presentation** grouping of ports: drives symbol edges, brackets, collapse, and auto panel layout. CR-055. | `PortDef.bankKey` | ❌ |
 | **`PortSetDef`** / **`PortSet`** | "port set" | An **electrical** grouping: Y/Pb/Pr, L/R, +/−, `atomicConnect`. Renamed from `PortGroupDef`. CR-055. | `PortDef.setKey` | ❌ |
-| **`PassthroughPairDef`** | "paired port" | `{frontKey, rearKey, sameNet}` on a patch-panel template. CR-057. | inside `TemplateBody` |: |
+| **`PassthroughPairDef`** | "paired port" | `{frontKey, rearKey, sameNet}` on a patch-panel template. CR-057. | inside `TemplateBody` | — |
 | **`Link`** | "cable" / "run" | **One physical cable.** One `W###` designator, one schedule row, one thing a human pulls. | document map | ✅ |
 | **`Service`** | "service" | One signal carried on a `Link`. A `Link` has `List<Service>`. CR-010. Hidden in the UI when there is exactly one. | inside `Link` | ❌ |
 | **`Conductor`** | "conductor" | One electrical path within a `Link`, spanning exactly two `Endpoint`s. CR-014. | inside `Link` | ❌ |
-| **`Endpoint`** | "end" | Sealed union: `PortEndpoint` · `PlaceEndpoint` · `OpenEndpoint`. AC-018. | inside `Conductor` |: |
-| **`Breakout`** | "breakout" | A fan-out point on a multi-device `Link` (dual-head IR emitter, snake). CR-014. | inside `Link` |: |
-| **`InlineAdapter`** | "adapter" | A **passive in-line** adapter with no independent cable on either side. CR-015. An adapter an installer pulls two cables to is a `DeviceInstance`, not this. | inside `Link` |: |
+| **`Endpoint`** | "end" | Sealed union: `PortEndpoint` · `PlaceEndpoint` · `OpenEndpoint`. AC-018. | inside `Conductor` | — |
+| **`Breakout`** | "breakout" | A fan-out point on a multi-device `Link` (dual-head IR emitter, snake). CR-014. | inside `Link` | — |
+| **`InlineAdapter`** | "adapter" | A **passive in-line** adapter with no independent cable on either side. CR-015. An adapter an installer pulls two cables to is a `DeviceInstance`, not this. | inside `Link` | — |
 | **`Net`** | "net" | One **stored** logical equivalence class. Membership is the FK `Service.netId`, never a name. CR-011. | document map | ✅ |
 | **`StructureBody`** | "structured wiring" | The body of a `DeviceInstance` with `kind == structure`. Renders as an edge bank of off-page flags. | `deviceId` | ✅ |
-| **`StructureOrigin`** | (not shown) | The field-end facts a home-run `Link` carries: structure body, outlet, both labels, wall, height, field termination. AC-019. | on `Link` |: |
+| **`StructureOrigin`** | (not shown) | The field-end facts a home-run `Link` carries: structure body, outlet, both labels, wall, height, field termination. AC-019. | on `Link` | — |
 | **`Outlet`** | "outlet location" | **One wall plate / one ceiling location.** The atom of creation, specification and pricing. Renamed from `StructureBundle`. CR-016, RJ-011. | `structureBodyId` | ✅ |
-| **`OutletTemplate`** | "outlet type" | A named recipe: "TV location", "AP", "Ceiling speaker pair". First-class; grades are presets. CR-108. | library |: |
+| **`OutletTemplate`** | "outlet type" | A named recipe: "TV location", "AP", "Ceiling speaker pair". First-class; grades are presets. CR-108. | library | — |
 | **`Pathway`** | "pathway" (UI may say "bundle") | A conduit, J-hook run, tray or trunk that N `Link`s share. Purely organisational. Carries `kind` and `containsLineVoltage`. CR-016, AC-027. | document map | ✅ |
 | **`Sheet`** | "sheet" | One output sheet. Exactly one schematic `Sheet` exists in v1; the **exporter** partitions by domain. CR-073. | document map | ✅ |
 | **`SheetItem`** | (not shown) | The placement of one entity on one sheet. **The only** symbol position and the only stacking order. CR-069. | inside `Sheet` | ❌ |
 | **`Note`** | "note" | Annotation, anchored to any entity or free-floating. | document map | ✅ |
 | **`RevisionEntry`** | "revision" | One row of the drawing revision block. Never conflated with `RackDocument.sequence`. CR-094. | document map | ✅ |
-| **`Finding`** | "issue" | DRC output. **Computed, never stored.** | derived |: |
+| **`Finding`** | "issue" | DRC output. **Computed, never stored.** | derived | — |
 | **`AckedFinding`** | "acknowledgement" | The persisted acknowledgement of a finding, with a required reason at project scope. CR-019. | document map | ✅ |
-| **`RuleOverride`** | "rule setting" | `{severity, reason, by, at}` per rule for this project. Replaces the bare severity map. CR-019. | in `ProjectSettings` |: |
-| **`Tombstone`** | (not shown) | `{deletedAt, entityType, by}`. Ships in v1. CR-095, G5. | on document |: |
-| **`EntityMeta`** | (not shown) | `{createdAt, updatedAt, updatedBy, localRevision, unknown}`. Carried by conflict units only. CR-095. | on conflict units |: |
+| **`RuleOverride`** | "rule setting" | `{severity, reason, by, at}` per rule for this project. Replaces the bare severity map. CR-019. | in `ProjectSettings` | — |
+| **`Tombstone`** | (not shown) | `{deletedAt, entityType, by}`. Ships in v1. CR-095, G5. | on document | — |
+| **`EntityMeta`** | (not shown) | `{createdAt, updatedAt, updatedBy, localRevision, unknown}`. Carried by conflict units only. CR-095. | on conflict units | — |
 
 **Registry types**: see §6 for their contents.
 
@@ -3247,8 +3247,8 @@ Only the fields that were spelled more than one way, or whose spelling is load-b
 | `pinned` | `SheetItem` | `bool` | CR-068 | `manual`, `locked` |
 | `weightUg` | serialized `Mass` fields | `int` µg | CR-003 | `weightKg`, `weightLb`, `weightGrams` |
 | `depthNm`, `lengthNm`, `xNm` | serialized `Len` fields | `int` nm | CR-001, CR-063 | `depthMm`, `xMm`, tenths, hundredths |
-| `bodyDepth`, `connectorProjection`, `chassisWidth` | `TemplateBody` | `Len` | AC-022, AC-032 |: |
-| `maxUnsupportedMass` | `TemplateBody` | `Mass?` | AC-028 |: |
+| `bodyDepth`, `connectorProjection`, `chassisWidth` | `TemplateBody` | `Len` | AC-022, AC-032 | — |
+| `maxUnsupportedMass` | `TemplateBody` | `Mass?` | AC-028 | — |
 | `routedLength` / `cutLength` / `terminatedLength` | `Link` | `Len?` ×3 | AC-024 | `calculatedLength` (deleted), `lengthFt` |
 | `media` | `Link` | `MediaTypeId` | CR-008 | `cableType` |
 | `class` (Dart: `linkClass`) | `Link` | `fieldCable \| jumper \| powerCord \| internal` | AC-026 | `kind`, `category` |
@@ -3259,23 +3259,23 @@ Only the fields that were spelled more than one way, or whose spelling is load-b
 | `roughInStatus` | `Link` | `planned \| pulled \| dressed \| terminated \| tested` | CR-065 | `status` bare; `issued` is deleted |
 | `fieldLabel` / `rackLabel` | `StructureOrigin` | `String` / `String?`, both project-unique, **both print** | CR-044, AC-047 | `label` / `TIA-606 ID` as field names |
 | `code` | `Location` | `String` | CR-046 | `abbr` |
-| `estimatedRunLengthFromRack` | `Location` | `Len?` | AC-024 |: |
-| `usableDepth` | `Rack` | `Len?` (nullable, 2-post) | AC-050/A1.3 |, |
+| `estimatedRunLengthFromRack` | `Location` | `Len?` | AC-024 | — |
+| `usableDepth` | `Rack` | `Len?` (nullable, 2-post) | AC-050/A1.3 | — |
 | `poeBudgetWatts`, `apparentVA`, `powerFactor` | `PowerProfile` | `int?` ×3 (`powerFactor` in permille) | CR-056, AC-020 | undeclared JSON keys |
-| `nameplateWatts` / `typicalWatts` | `PowerProfile` | `int?` (**`typicalWatts` never defaults to half of nameplate** | AC-039, RJ-007 |) |
+| `nameplateWatts` / `typicalWatts` | `PowerProfile` | `int?` (**`typicalWatts` never defaults to half of nameplate**) | AC-039, RJ-007 | — |
 | `sequence` | `RackDocument` | `int`, strictly monotonic, persisted, the sync cursor | CR-094 | `revision` |
 | `stateId` | `RackDocument` | in-memory only, non-monotonic, drives `isDirty` | CR-094 | `revision` |
-| `schemaVersion` / `minReaderVersion` | envelope | `int` ×2 | CR-092 |: |
-| `sheetEdge` | `StructureBody` | `left \| right`, default `left` | CR-072 |: |
+| `schemaVersion` / `minReaderVersion` | envelope | `int` ×2 | CR-092 | — |
+| `sheetEdge` | `StructureBody` | `left \| right`, default `left` | CR-072 | — |
 | `mirrorRearElevation` | `Rack` | `bool`, default `true`, project default seeds it | CR-035 | a project-only setting |
-| `groundBarPresent` | `Rack` | `bool` | AC-034/m21 |: |
-| `containsLineVoltage` / `kind` | `Pathway` | `bool` / `PathwayKind` | AC-027 |: |
+| `groundBarPresent` | `Rack` | `bool` | AC-034/m21 | — |
+| `containsLineVoltage` / `kind` | `Pathway` | `bool` / `PathwayKind` | AC-027 | — |
 | `tia570Grade` | `Outlet` | `String?`: a **standards tag**, not an enum axis | CR-108 | `StructureGrade` |
-| `isPathwayOnly` | `MediaTypeDef` | `bool` | CR-109 |: |
+| `isPathwayOnly` | `MediaTypeDef` | `bool` | CR-109 | — |
 | `topologyFree` | `SignalFamilyDef` | `bool` | AC-030 | a hard-coded suppression array |
-| `genderApplies` | `ConnectorTypeDef` | `bool` | CR-059 |: |
+| `genderApplies` | `ConnectorTypeDef` | `bool` | CR-059 | — |
 | `key` / `renamedFrom` | `PortDef` | `PortKey` / `List<PortKey>`: **the** template migration join | CR-051 | `portId` |
-| `unknown` | every persisted object | `Map<String, Object?>`, preserved and re-emitted | §4.4 forward-compat |: |
+| `unknown` | every persisted object | `Map<String, Object?>`, preserved and re-emitted | §4.4 forward-compat | — |
 
 ---
 
@@ -3288,16 +3288,16 @@ Only the fields that were spelled more than one way, or whose spelling is load-b
 | **Rear Panel view** | The interactive rear-panel view. `Ctrl+3`. **v1.1.** CR-071. | The rear elevation still *prints* in v1. |
 | **Schedule** | The live schedule table. `Ctrl+4`. **The second tab in the app**, populated from an empty project. AC-035. | Not "table view", not "BOM". |
 | **Staging Bin** | The UI surface for devices with `StagedPlacement`. A query, not an entity. CR-032. | Not "unplaced", not "tray". |
-| **Locations panel** | `Project ▸ Locations…`: project-level, **not** owned by the Structure editor. CR-112. |: |
-| **Structure editor** | Opens in **table mode**; matrix mode is a tab. AC-048/cliff #4. |: |
-| **Device Builder** | Template authoring. **Three required fields** (name, RU height, designator prefix) then ports. AC-049. |: |
+| **Locations panel** | `Project ▸ Locations…`: project-level, **not** owned by the Structure editor. CR-112. | — |
+| **Structure editor** | Opens in **table mode**; matrix mode is a tab. AC-048/cliff #4. | — |
+| **Device Builder** | Template authoring. **Three required fields** (name, RU height, designator prefix) then ports. AC-049. | — |
 | **Pull Sheet** | Field-cable schedule preset: portrait, sorted **room then pathway**, with `Pulled ☐ Terminated ☐ Tested ☐ Init ___`. AC-025. | Excludes `jumper` and `powerCord` by default. AC-026. |
-| **Termination Schedule** | Rack-side schedule preset: landscape, sorted **rack, panel, port**, with pinout, punch position, polarity and conductor colour. AC-025. |: |
+| **Termination Schedule** | Rack-side schedule preset: landscape, sorted **rack, panel, port**, with pinout, punch position, polarity and conductor colour. AC-025. | — |
 | **Equipment List and Materials** | Sheet `T6.30`. **No pricing.** Includes the cable footage rollup by media with waste factor. AC-055, AC-024. | Never called a BOM. `Money`, `cost`, `supplier`, `purchaseOrder` are deleted from v1. |
 | **Exceptions & Acknowledgements** | Sheet `T0.02`. Every open finding and every acknowledgement with reason, author, date. CR-022. | This is where "the reason prints". |
 | **Symbol Legend** | Sheet `T0.01`. **One row per named cable type**, in colour and greyscale side by side. AC-054. | Other sheets' title blocks are auto-filled with `SYMBOL LEGEND: SEE SHEET T0.01`. CR-023. |
 | **Unused Home Runs** | The page listing home-run `Link`s with an unbound rack end. | A differentiator; keep the name. |
-| **`ISSUED FOR CONSTRUCTION`** | The stamp. Gated on zero open errors. **Never gates bytes.** CR-022, G3. |: |
+| **`ISSUED FOR CONSTRUCTION`** | The stamp. Gated on zero open errors. **Never gates bytes.** CR-022, G3. | — |
 
 Sheet numbering is `ProjectSettings.sheetNumbering: ncs | simple`, **default `simple`** (CR-066).
 
@@ -3309,12 +3309,12 @@ Sheet numbering is `ProjectSettings.sheetNumbering: ncs | simple`, **default `si
 |---|---|---|
 | **the schedule** | The tabular deliverable. G1: *the schedule is the deliverable; the drawing is the receipt.* | "the table" |
 | **the drawing** | The sheet set. | "the diagram", "the print" |
-| **conflict unit** | An entity that carries `EntityMeta` and is an LWW unit for future sync. CR-095. |: |
+| **conflict unit** | An entity that carries `EntityMeta` and is an LWW unit for future sync. CR-095. | — |
 | **materialised port** | A `Port` serialized because it carries project state; others are key-joined at load. AC-006. | "real port" |
-| **deterministic port ID** | `uuidv5(deviceId, portKey)` for template-derived ports. AC-006. |: |
+| **deterministic port ID** | `uuidv5(deviceId, portKey)` for template-derived ports. AC-006. | — |
 | **acknowledgement** | An `AckedFinding`. Reason **required** only at project scope. CR-019, RJ-006. | "dismissal", "mute", "suppression" |
 | **spring-back** | The gesture-level refusal with a reason chip and `[ Connect anyway ]`. CR-017. | "blocked", "invalid", "Class A" |
-| **the gesture may hesitate; the document may not lie** | The binding validation frame. CR-017. |: |
+| **the gesture may hesitate; the document may not lie** | The binding validation frame. CR-017. | — |
 | **copy-on-place** | v1's template binding: snapshot embedded, no update manager. AC-041. | "pinning", "vendoring" |
 | **the three doors** | Edit this device only · Edit the template · Fork to a new template. CR-054. | "detach" (deleted) |
 | **domain partition** | The exporter's sheet split. Produces **zero** cross-sheet connections by construction. CR-073. | "multi-sheet" |
@@ -3323,7 +3323,7 @@ Sheet numbering is `ProjectSettings.sheetNumbering: ncs | simple`, **default `si
 | **drop** | UI-only word for a home run inside the Structure editor's table. | a model entity |
 | **diagram unit** | 1 diagram unit = 1 PDF point = 1/72 in, `double` at the canvas boundary only. CR-007. | a persisted unit |
 | **grid unit (`gu`)** | `Len(2_500_000)` = 2.5 mm. Schematic pitch; pin pitch 2 gu. CR-004. | "U" (that means rack unit) |
-| **rack unit (`U`)** | `Len(44_450_000)` = 44.45 mm exactly. CR-001, CR-002. |: |
+| **rack unit (`U`)** | `Len(44_450_000)` = 44.45 mm exactly. CR-001, CR-002. | — |
 
 ---
 
@@ -3334,7 +3334,7 @@ Sheet numbering is `ProjectSettings.sheetNumbering: ncs | simple`, **default `si
 | Device designator | `{TYPE_PREFIX}{SEP}{SEQ}`: ships as `MTX-1`, `AMP-12` | CR-041 |
 | Port designator | `J{PORT_SEQ:2}` → `J01`, **unique within the device** | CR-042 |
 | Link designator | `W{SEQ:3}` → `W042` | CR-008, ASME Y14.44 |
-| Cable end (implicit) | `P###`: not stored; ASME convention referenced on the legend |: |
+| Cable end (implicit) | `P###`: not stored; ASME convention referenced on the legend | — |
 | Net designator | `N{SEQ:3}` → `N012`; `Net.name` generated, editable, **never load-bearing** | CR-049 |
 | Outlet field label | `{ROOM_ABBR}-{SERVICE}-{SEQ}` → `LR-TV-1` (preset: Residential CI) | CR-044 |
 | Outlet rack label | `{FLOOR}{SPACE}-{PANEL}{PORT:2}` → `1A-A12` (preset: TIA-606 Class 2) | CR-044 |
@@ -4195,7 +4195,7 @@ palette that `design-data-model.md` simultaneously carried and argued against.
 | `ctl` | Control | `#CC79A7` | `#E29CC3` | `1.5,3` | 0.75× | ✚ / ✳ | 0.2930 |
 | `pwr` | Power | `#000000` | `#E8E8E8` *(inverted: black is invisible on dark)* | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.0000 |
 | `str` | Structure | `#999999` | `#A8A8A8` | `6,3,3,3` | 0.75× | ★ / ☆ | 0.3185 |
-| *(reserved)* | Selection / focus | `#F0E442` | `#F5E76B` |, |, |: | 0.744 |
+| *(reserved)* | Selection / focus | `#F0E442` | `#F5E76B` | — | — | — | 0.744 |
 
 Dash patterns, weights, glyphs and tags are **identical across themes**. Only hue moves, and the
 theme is a UI preference never persisted in the document.
@@ -4232,10 +4232,10 @@ only; `jack` and `plug` are deleted.
 | `conn.3_5mm_ts` · `conn.3_5mm_trs` | 3.5 mm mono / stereo | no | 2 / 3 |
 | `conn.6_35mm_trs` | 1/4 in TRS | no | 3 |
 | `conn.xlr3` · `conn.xlr5` | XLR3 / XLR5 | **yes** | 3 / 5 |
-| `conn.jis_f05` | JIS F05 (TOSLINK / EIAJ optical) | no |: |
+| `conn.jis_f05` | JIS F05 (TOSLINK / EIAJ optical) | no | — |
 | `conn.rj45` | RJ45 (8P8C) | **yes** | 8 |
-| `conn.lc_duplex` · `conn.sc` · `conn.st` | LC duplex / SC / ST | **yes** |: |
-| `conn.sfp_cage` | SFP / SFP+ / SFP28 cage | no |: |
+| `conn.lc_duplex` · `conn.sc` · `conn.st` | LC duplex / SC / ST | **yes** | — |
+| `conn.sfp_cage` | SFP / SFP+ / SFP28 cage | no | — |
 | `conn.de9` | DE-9 (commonly mis-called DB9) | **yes** | 9 |
 | `conn.euroblock_2` · `_3` · `_5` | Euroblock / Phoenix 2, 3, 5-pole | **yes** | 2 / 3 / 5 |
 | `conn.phoenix_4` | 4-pin Phoenix (Cresnet) | **yes** | 4 |
@@ -4246,7 +4246,7 @@ only; `jack` and `plug` are deleted.
 | `conn.iec_c13` · `_c14` · `_c19` · `_c20` | IEC 60320 C13 / C14 / C19 / C20 | **yes** | 3 |
 | `conn.nema_5_15p` · `_5_15r` · `_5_20p` · `_5_20r` · `conn.nema_l5_30p` | NEMA plugs and receptacles | **yes** | 3 |
 | `conn.barrel_dc` | DC barrel | **yes** | 2 |
-| `conn.hardwired` · `conn.ground_lug` · `conn.unterminated` | Hardwired / ground lug / unterminated | no |: |
+| `conn.hardwired` · `conn.ground_lug` · `conn.unterminated` | Hardwired / ground lug / unterminated | no | — |
 
 Aliases (`hdmi`, `hdbt`, `rj45`, `xlr`, `spdif`, `toslink`, `euro3`, `bp`, `db9` → `conn.de9`)
 live in `ConnectorTypeDef.aliases` and are what the Quick Add DSL resolves against (CR-058).
@@ -4382,7 +4382,7 @@ data on `PoeSpec{role, standard, type, class, watts}`:
 | 802.3at (PoE+) | 2 | 4 | 30 W | 25.5 W | 2 |
 | 802.3bt (PoE++) | **3** | 5, 6 | **60 W** | ~40 W / ~51 W | **4** |
 | 802.3bt (PoE++) | **4** | 7, 8 | **90 W** | ~62 W / ~73 W | **4** |
-| PoH (HDBaseT) |, |, | **up to 100 W** |: | **4** |
+| PoH (HDBaseT) | — | — | **up to 100 W** | — | **4** |
 
 PoH is *based on* 802.3at and modified for 4-pair 100 W delivery. It is **not** interoperable
 with a standard PoE PSE, which is why it is its own family with its own glyph rather than a flag
@@ -4459,7 +4459,7 @@ default, appearing instead as an **outlet map** on the power schedule (AC-026).
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
 | `structure.undetermined` | Undetermined home run | `conn.unterminated` | passive | P2P | `6,3,3,3` | 0.75× | `STR` | ★ |
-| `structure.pathway` | Pathway only (conduit / pull string) |, | passive |, | `1.5,3,1.5,9` | 0.75× | `PATH` | ☆ |
+| `structure.pathway` | Pathway only (conduit / pull string) | — | passive | — | `1.5,3,1.5,9` | 0.75× | `PATH` | ☆ |
 
 `structure.undetermined` is the interesting case and it is deliberate: a Cat6 home run at
 rough-in may end up carrying Ethernet, HDBaseT, or nothing. The family is legal, it schedules, it
@@ -4489,31 +4489,31 @@ CSV import is not rejected; it is created as a new user media type with a confir
 | `media.rg59` | RG59 | `RG59` | 1 coax | 20 | 75 | yes | ~100 m | `video.composite`, `audio.spdif_coax` |
 | `media.rg11` | RG11 | `RG11` | 1 coax | 14 | 75 | yes | ~300 m | `rf.catv` trunk |
 | `media.coax_video_75` | Precision 75 Ω video coax (1694A class) | `V75` | 1 coax | 20 | 75 | yes | 12G ~45 m | `video.sdi`, `video.component` |
-| `media.mic_stp` | Mic / line shielded twisted pair | `STP2` | 2 + shield | 22 |: | yes | 100 m+ | `audio.mic`, `audio.line_bal` |
+| `media.mic_stp` | Mic / line shielded twisted pair | `STP2` | 2 + shield | 22 | — | yes | 100 m+ | `audio.mic`, `audio.line_bal` |
 | `media.aes_110` | 110 Ω AES/DMX cable | `Z110` | 2 + shield | 22 | 110 | yes | 100 m | `audio.aes3`, `ctl.dmx512` |
 | `media.dmx_120` | 120 Ω DMX / RS-485 cable | `Z120` | 2 + shield | 22 | 120 | yes | 1200 m | `ctl.dmx512`, `ctl.rs485` |
-| `media.16_2` | 16/2 speaker | `16/2` | 2 | 16 |: | no | gauge/length table | `audio.speaker_lowz` |
-| `media.16_4` | 16/4 speaker | `16/4` | 4 | 16 |, | no |, | `audio.speaker_lowz` (stereo or bi-amp on one pull) |
-| `media.14_2` · `media.14_4` | 14/2 · 14/4 speaker | `14/2` `14/4` | 2 / 4 | 14 |: | no | ~15 m at 8 Ω | `audio.speaker_lowz` |
-| `media.12_2` | 12/2 speaker | `12/2` | 2 | 12 |, | no |, | `audio.speaker_lowz` long runs |
-| `media.18_2_cv` | 18/2 constant-voltage | `18/2` | 2 | 18 |: | no | hundreds of feet | `audio.speaker_cv` |
-| `media.22_2` · `media.22_4` | 22/2 · 22/4 control | `22/2` `22/4` | 2 / 4 | 22 |: | optional | long | `ctl.contact`, `ctl.trigger12v`, `ctl.ir_emitter` |
-| `media.cresnet_18_22` | Cresnet (18 AWG power + 22 AWG data) | `CN` | 4 / 2 | 18 + 22 |: | yes | 915 m data · **333 ft at 20 W** | `ctl.cresnet` |
-| `media.knx_tp1` | KNX TP1 bus cable | `KNX` | 2 (+2) | 22 |: | yes | 1000 m | `ctl.knx` |
-| `media.dali_2c` | DALI 2-conductor (mains-rated) | `DALI` | 2 | 18 |: | no | ~300 m | `ctl.dali` |
-| `media.hdmi_passive` | HDMI, passive | `HDMI` | 19 bonded |, |, | yes | 2.1: 3–4.5 m · 2.0: ~7.5 m | `video.hdmi.*` |
-| `media.hdmi_active` | HDMI, active copper | `HDMIA` | 19 bonded |, |, | yes | ~7.6 m | `video.hdmi.*`: **direction-locked** |
-| `media.hdmi_aoc` | HDMI, active optical (AOC) | `AOC` | hybrid |, |, |, | 15–90 m+ | `video.hdmi.*`, **direction-locked, source/display ends marked** |
-| `media.dp_cable` | DisplayPort cable | `DP` |, |, |: | yes | DP80 passive 1.2 m | `video.displayport` |
-| `media.usbc_cable` | USB-C cable | `USBC` |, |, |: | yes | ~1–2 m at full BW | `video.usbc_dpalt` |
-| `media.om3` · `media.om4` | Fibre OM3 · OM4 multimode | `OM3` `OM4` | 2 strands |, |, |: | ~300–400 m at 10 G | `net.fiber_mm` |
-| `media.os2` | Fibre OS2 singlemode | `OS2` | 2 strands |, |, |: | 10–40 km | `net.fiber_sm` |
-| `media.pof_toslink` | Plastic optical fibre (TOSLINK) | `POF` | 1 |, |, |: | ~5–10 m (glass 30 m+) | `audio.spdif_optical` |
-| `media.so_cord` | SO / SJ power cord | `SO` | 3 | 14–12 |, | no |, | `power.ac_branch` |
-| `media.iec_cordage` | IEC rated cordage | `IEC` | 3 | 18–14 |: | no | short | `power.ac_iec` |
-| `media.bonding_6awg` | Bonding conductor | `GND` | 1 | 6 |, | no |, | `power.bonding` |
-| `media.conduit_emt` · `media.conduit_ent` | EMT conduit · ENT (smurf tube) | `EMT` `ENT` |, |, |, |, |: | **`isPathwayOnly: true`** |
-| `media.pull_string` | Pull string | `PULL` |, |, |, |, |: | **`isPathwayOnly: true`** |
+| `media.16_2` | 16/2 speaker | `16/2` | 2 | 16 | — | no | gauge/length table | `audio.speaker_lowz` |
+| `media.16_4` | 16/4 speaker | `16/4` | 4 | 16 | — | no | — | `audio.speaker_lowz` (stereo or bi-amp on one pull) |
+| `media.14_2` · `media.14_4` | 14/2 · 14/4 speaker | `14/2` `14/4` | 2 / 4 | 14 | — | no | ~15 m at 8 Ω | `audio.speaker_lowz` |
+| `media.12_2` | 12/2 speaker | `12/2` | 2 | 12 | — | no | — | `audio.speaker_lowz` long runs |
+| `media.18_2_cv` | 18/2 constant-voltage | `18/2` | 2 | 18 | — | no | hundreds of feet | `audio.speaker_cv` |
+| `media.22_2` · `media.22_4` | 22/2 · 22/4 control | `22/2` `22/4` | 2 / 4 | 22 | — | optional | long | `ctl.contact`, `ctl.trigger12v`, `ctl.ir_emitter` |
+| `media.cresnet_18_22` | Cresnet (18 AWG power + 22 AWG data) | `CN` | 4 / 2 | 18 + 22 | — | yes | 915 m data · **333 ft at 20 W** | `ctl.cresnet` |
+| `media.knx_tp1` | KNX TP1 bus cable | `KNX` | 2 (+2) | 22 | — | yes | 1000 m | `ctl.knx` |
+| `media.dali_2c` | DALI 2-conductor (mains-rated) | `DALI` | 2 | 18 | — | no | ~300 m | `ctl.dali` |
+| `media.hdmi_passive` | HDMI, passive | `HDMI` | 19 bonded | — | — | yes | 2.1: 3–4.5 m · 2.0: ~7.5 m | `video.hdmi.*` |
+| `media.hdmi_active` | HDMI, active copper | `HDMIA` | 19 bonded | — | — | yes | ~7.6 m | `video.hdmi.*`: **direction-locked** |
+| `media.hdmi_aoc` | HDMI, active optical (AOC) | `AOC` | hybrid | — | — | — | 15–90 m+ | `video.hdmi.*`, **direction-locked, source/display ends marked** |
+| `media.dp_cable` | DisplayPort cable | `DP` | — | — | — | yes | DP80 passive 1.2 m | `video.displayport` |
+| `media.usbc_cable` | USB-C cable | `USBC` | — | — | — | yes | ~1–2 m at full BW | `video.usbc_dpalt` |
+| `media.om3` · `media.om4` | Fibre OM3 · OM4 multimode | `OM3` `OM4` | 2 strands | — | — | — | ~300–400 m at 10 G | `net.fiber_mm` |
+| `media.os2` | Fibre OS2 singlemode | `OS2` | 2 strands | — | — | — | 10–40 km | `net.fiber_sm` |
+| `media.pof_toslink` | Plastic optical fibre (TOSLINK) | `POF` | 1 | — | — | — | ~5–10 m (glass 30 m+) | `audio.spdif_optical` |
+| `media.so_cord` | SO / SJ power cord | `SO` | 3 | 14–12 | — | no | — | `power.ac_branch` |
+| `media.iec_cordage` | IEC rated cordage | `IEC` | 3 | 18–14 | — | no | short | `power.ac_iec` |
+| `media.bonding_6awg` | Bonding conductor | `GND` | 1 | 6 | — | no | — | `power.bonding` |
+| `media.conduit_emt` · `media.conduit_ent` | EMT conduit · ENT (smurf tube) | `EMT` `ENT` | — | — | — | — | — | **`isPathwayOnly: true`** |
+| `media.pull_string` | Pull string | `PULL` | — | — | — | — | — | **`isPathwayOnly: true`** |
 
 `JacketRating` is `cl2 | cl3 | cmr | cmp | lszh | directBurial`. It is not decorative: `CODE-002`
 is an error when `Pathway.kind == plenumSpace` and the jacket is not `cmp` or `lszh` (NEC
@@ -4544,7 +4544,7 @@ by side.** This is the audit that the resolution actually covers what was asked.
 | **TOSLINK** | `audio.spdif_optical` | `#D55E00` | `2,3` | 1.25× | ◇ | `OPT` |
 | **Speaker level** | `audio.speaker_lowz` (+ `audio.speaker_cv`) | `#E69F00` | `6,3` / `10,3,2,3` | **2.00×** | ◐ / ○ | `SPK` `70V` |
 | **Power** | `power.ac_branch` / `power.ac_iec` | `#000000` | `8,3,1.5,3,1.5,3` / `8,3,1.5,3` | 2.00× | ⬢ | `PWR` `IEC` |
-| *"etc."* | 37 further families across the same 8 domains |, |, |, |, |: |
+| *"etc."* | 37 further families across the same 8 domains | — | — | — | — | — |
 
 The two within-domain collisions the requirement would have produced are both resolved on
 non-hue channels, and both resolutions are legible in a greyscale photocopy:
@@ -7579,7 +7579,7 @@ recommendation. One derived item is withdrawn:
 | **§10.6** recommendation | "(b) internal-first, with the title block and revision block present … but **no further investment in drafting ceremony until a user asks**." | **Void.** DR-005 = (a). Full sheet furniture ships in v1: title block, revision block, **revision clouds**, IFC stamp, drawing border, zone references, sheet numbering, `T0.00` cover and drawing index. |
 | **Revision clouds = v1.1** (export document, As-built preset) | "Revision **clouds** are v1.1." | **v1.** A cloud primitive on `DiagramCanvas`, driven from `RevisionEntry`, with a revision triangle carrying the revision letter. |
 | **§9.7 (M6)** | Sized `M`, mid-band. | Still `M`, at the **top** of its band (+0.5–1 week) for revision clouds. Sheet furniture is not available as a schedule lever. |
-| **§10.6**'s inference that (a) "argues for (A) in 10.1" |: | **Explicitly rejected.** §11.5.1. Drafting polish is sheet furniture; wire idiom is DR-001. They are orthogonal axes and this decision does not reopen that one. |
+| **§10.6**'s inference that (a) "argues for (A) in 10.1" | — | **Explicitly rejected.** §11.5.1. Drafting polish is sheet furniture; wire idiom is DR-001. They are orthogonal axes and this decision does not reopen that one. |
 
 **Explicitly NOT superseded:** **CR-022 / G3**: the IFC stamp is gated on zero open errors and
 **never gates bytes**; `blockExportOnErrors` stays deleted. **G1**: the schedule is still the

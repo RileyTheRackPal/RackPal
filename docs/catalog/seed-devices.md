@@ -271,37 +271,37 @@ three-axis split**: `rj45` and `hdbt` resolve to the same connector and differen
 
 | Alias | Connector | Signal family | Also sets |
 |---|---|---|---|
-| `hdmi` | `conn.hdmi_a` | `video.hdmi.2_0` |: |
-| `hdmi21` | `conn.hdmi_a` | `video.hdmi.2_1` |: |
+| `hdmi` | `conn.hdmi_a` | `video.hdmi.2_0` | — |
+| `hdmi21` | `conn.hdmi_a` | `video.hdmi.2_1` | — |
 | `hdbt` | `conn.rj45` | `video.hdbaset` | `topologyFree: false`; `acceptedFamilies` **excludes** `net.ethernet` |
-| `avoip` | `conn.rj45` | `video.avoip` |: |
-| `rj45` | `conn.rj45` | `net.ethernet` |: |
+| `avoip` | `conn.rj45` | `video.avoip` | — |
+| `rj45` | `conn.rj45` | `net.ethernet` | — |
 | `sfp+` | `conn.sfp_cage` | `net.ethernet` | `sfp: sfpPlus`, `linkSpeedMbps: 10000` |
 | `lc` | `conn.lc_duplex` | `net.fiber_sm` | `fiberMode: singlemode` |
-| `rca` | `conn.rca` | `audio.line_unbal` |: |
+| `rca` | `conn.rca` | `audio.line_unbal` | — |
 | `spdif` | `conn.rca75` | `audio.spdif_coax` | `impedanceOhms: 75` |
-| `toslink` | `conn.jis_f05` | `audio.spdif_optical` |: |
+| `toslink` | `conn.jis_f05` | `audio.spdif_optical` | — |
 | `xlr` | `conn.xlr3` | `audio.line_bal` | `balanced: true`; gender from direction (`OUT` ⇒ male, `IN` ⇒ female) |
 | `aes` | `conn.xlr3` | `audio.aes3` | `impedanceOhms: 110` |
-| `euro2` `euro3` `euro5` | `conn.euroblock_2/_3/_5` | `audio.line_bal` (3/5) · `audio.speaker_lowz` (2) |: |
-| `bp` | `conn.binding_post` | `audio.speaker_lowz` |: |
+| `euro2` `euro3` `euro5` | `conn.euroblock_2/_3/_5` | `audio.line_bal` (3/5) · `audio.speaker_lowz` (2) | — |
+| `bp` | `conn.binding_post` | `audio.speaker_lowz` | — |
 | `cv` | `conn.euroblock_2` | `audio.speaker_cv` | `nominalVoltage: 70` |
-| `dante` | `conn.rj45` | `audio.dante` |: |
+| `dante` | `conn.rj45` | `audio.dante` | — |
 | `ir` | `conn.3_5mm_ts` | `ctl.ir_emitter` | `pinoutVariant` **required** |
 | `irrx` | `conn.3_5mm_trs` | `ctl.ir_receiver` | `pinoutVariant` **required** |
 | `232` / `db9` | `conn.de9` | `ctl.rs232` | `SerialSpec.role` required |
-| `485` | `conn.euroblock_3` | `ctl.rs485` |: |
-| `dmx` | `conn.xlr5` | `ctl.dmx512` |: |
+| `485` | `conn.euroblock_3` | `ctl.rs485` | — |
+| `dmx` | `conn.xlr5` | `ctl.dmx512` | — |
 | `cresnet` | `conn.phoenix_4` | `ctl.cresnet` | `topologyFree: true` |
-| `cc` | `conn.euroblock_2` | `ctl.contact` |: |
+| `cc` | `conn.euroblock_2` | `ctl.contact` | — |
 | `trg` | `conn.3_5mm_ts` | `ctl.trigger12v` | `maxCurrentMa: 100`; **mono plug**: a stereo plug shorts ring to sleeve |
 | `f` | `conn.f_type` | `rf.catv` | `impedanceOhms: 75` |
-| `sat` | `conn.f_type` | `rf.satellite` |: |
-| `ota` | `conn.f_type` | `rf.ota` |: |
+| `sat` | `conn.f_type` | `rf.satellite` | — |
+| `ota` | `conn.f_type` | `rf.ota` | — |
 | `c13` `c14` `c19` `c20` | `conn.iec_c13/_c14/_c19/_c20` | `power.ac_iec` | `role` from direction |
 | `5-15p` `5-15r` `5-20p` `5-20r` `l5-30p` | `conn.nema_*` | `power.ac_branch` | `role` from direction |
 | `dc` | `conn.barrel_dc` | `power.dc_low` | `nominalVoltage: 12` |
-| `gnd` | `conn.ground_lug` | `power.bonding` |: |
+| `gnd` | `conn.ground_lug` | `power.bonding` | — |
 | `110` | `conn.punchdown_110` | `net.ethernet` | patch-panel rear |
 
 The explicit form `conn.rj45/audio.dante` is always available and is what the generator emits when
@@ -424,7 +424,7 @@ and `connectorProjection`, both `Len`, both in nanometres in the file (CR-001, C
 | `standard` | 250–400 mm | Most residential gear |
 | `deep` | 400–550 mm | Amplifiers, UPS, NAS |
 | `extraDeep` | > 550 mm | Server-class; needs a 4-post enclosure |
-| `none` |, | `mountMethod: notInRack`, field devices carry no rack depth |
+| `none` | — | `mountMethod: notInRack`, field devices carry no rack depth |
 
 **Occupancy** is written `{frontU, rearU, side}` (CR-036, a struct, never a scalar). `side` is
 `front | rear | both | zeroUVertical | none`. `hosted` means `mountMethod: hosted` (it lives on a
@@ -450,7 +450,7 @@ is `maxUnsupportedMass`, the mass above which front-ear mounting alone is insuff
 | V04 | HDMI Distribution Amplifier 1×N *(param 1×4, 1×8)* | `DA` | `{1,1,both}` | shallow | 2.3 kg | 25 / 15 | 900 | 10 |
 | V05 | Presentation Switcher / Scaler 4×1 | `SCL` | `{1,1,both}` | shallow | 3.6 kg | 45 / 28 | 950 | 12 |
 | V06 | HDBaseT Extender *(param role: TX, RX)* | `TX` / `RX` | hosted / `notInRack` | shallow / none | 0.55 kg | 12 / 8 · 0 / 0 | 900 | 7 / 6 |
-| V07 | AVoIP Endpoint *(param role: ENC, DEC)* | `ENC` / `DEC` | hosted | shallow | 0.7 kg | 12 / 9 |: | 8 / 6 |
+| V07 | AVoIP Endpoint *(param role: ENC, DEC)* | `ENC` / `DEC` | hosted | shallow | 0.7 kg | 12 / 9 | — | 8 / 6 |
 
 ---
 
@@ -756,9 +756,9 @@ collision here, with a CI assertion that no catalog `typePrefix` collides with a
 | ID | Template | Prefix | Occupancy | Depth | Weight | W (name/typ) | PoE budget | Ports |
 |---|---|---|---|---|---|---|---|---|
 | N01 | PoE Switch, N-port *(param 8, 24, 48)* | `SW` | `{1,1,both}` | standard / deep | 2.7 / 5.0 / 7.7 kg | 150/60 · 450/190 · 900/380 | 130 / 370 / 740 W | 11 / 30 / 54 |
-| N02 | Router / Firewall | `FW` | `{1,1,both}` | standard | 4.1 kg | 120 / 55 |: | 14 |
-| N03 | Patch Panel, N-port *(param 12, 24, 48)* | `PP` | `{1,0,front}` / `{2,0,front}` | shallow | 0.9–2.3 kg | 0 / 0 |: | 24 / 48 / 96 |
-| N04 | Fibre Enclosure / LIU, 24-fibre | `LIU` | `{1,1,both}` | shallow | 2.7 kg | 0 / 0 |: | 36 |
+| N02 | Router / Firewall | `FW` | `{1,1,both}` | standard | 4.1 kg | 120 / 55 | — | 14 |
+| N03 | Patch Panel, N-port *(param 12, 24, 48)* | `PP` | `{1,0,front}` / `{2,0,front}` | shallow | 0.9–2.3 kg | 0 / 0 | — | 24 / 48 / 96 |
+| N04 | Fibre Enclosure / LIU, 24-fibre | `LIU` | `{1,1,both}` | shallow | 2.7 kg | 0 / 0 | — | 36 |
 
 ---
 
@@ -954,7 +954,7 @@ trying to occupy the same air, and the rear door does not close (AC-022).
 
 | ID | Template | Prefix | Occupancy | Depth | Weight | W (name/typ) | PF | Ports |
 |---|---|---|---|---|---|---|---|---|
-| R01 | RF Splitter Panel, 8-way | `SPL` | `{1,1,both}` | shallow | 0.9 kg | 0 / 0 *(passive)* |: | 9 |
+| R01 | RF Splitter Panel, 8-way | `SPL` | `{1,1,both}` | shallow | 0.9 kg | 0 / 0 *(passive)* | — | 9 |
 | R02 | Satellite Multiswitch, SWM-16 | `SWM` | `{1,1,both}` | shallow | 2.3 kg | 30 / 22 | 900 | 22 |
 
 RG6 is a **medium**, not a signal, that is the entire point of the three-axis split, so these
@@ -1006,7 +1006,7 @@ RG6 shows all three families rather than a single meaningless "RG6" swatch (cano
 |---|---|---|---|---|---|---|---|---|
 | P01 | Rack PDU, N-outlet *(param 1U-8, 2U-16, 0U-24)* | `PDU` | `{1,1,both}` / `{2,2,both}` / `{0,0,zeroUVertical}` | shallow | 3.2 / 5.4 / 6.4 kg | 5 / 8 / 10 W | 20 / 20 / 30 A | 10 / 18 / 26 |
 | P02 | Power Conditioner / Sequencer, 2U, 16-outlet | `SEQ` | `{2,2,both}` | standard | 8.2 kg | 12 W | 20 A | 22 |
-| P03 | UPS, N VA *(param 1000, 1500, 3000)* | `UPS` | `{1,1,both}` / `{2,2,both}` / `{3,3,both}` | deep | 13.6 / 21.8 / 41.7 kg |: | 15 / 15 / 30 A | 9 / 11 / 14 |
+| P03 | UPS, N VA *(param 1000, 1500, 3000)* | `UPS` | `{1,1,both}` / `{2,2,both}` / `{3,3,both}` | deep | 13.6 / 21.8 / 41.7 kg | — | 15 / 15 / 30 A | 9 / 11 / 14 |
 
 ---
 
@@ -1098,8 +1098,8 @@ The 3000 VA variant shown.
 
 | ID | Template | Prefix | Occupancy | Depth | Weight | Ports | Notes |
 |---|---|---|---|---|---|---|---|
-| X01 | Blank Panel, N U *(param 1, 2, 3)* | `BLK` | `{N, 0, front}` | shallow | 0.45 kg/U | 0 |: |
-| X02 | Vent Panel, N U, 64% open *(param 1, 2)* | `VNT` | `{N, 0, front}` | shallow | 0.45 kg/U | 0 |: |
+| X01 | Blank Panel, N U *(param 1, 2, 3)* | `BLK` | `{N, 0, front}` | shallow | 0.45 kg/U | 0 | — |
+| X02 | Vent Panel, N U, 64% open *(param 1, 2)* | `VNT` | `{N, 0, front}` | shallow | 0.45 kg/U | 0 | — |
 | X03 | Rack Shelf, N U, vented *(param 1, 2)* | `SHF` | `{N, 0, front}` | standard | 1.4 / 2.3 kg | 0 | **container** |
 
 All three are `mountMethod: rackEars`, `power: {}` (no `PowerProfile` at all, not zero watts,
@@ -1150,21 +1150,21 @@ because `impedanceOhms` lives on the speaker terminal and `tapWatts` on the inst
 | F01 | Display (flat panel) | `DISP` | 18.1 kg | 200 / 120 | 9 | The far end of every HDBaseT run |
 | F02 | Projector | `PROJ` | 7.3 kg | 400 / 280 | 8 | Long HDMI/HDBaseT runs; trigger source |
 | F03 | Projection Screen, motorised | `SCRN` | 22.7 kg | 180 / 90 | 3 | It has a 12 V trigger **and** a power feed |
-| F04 | In-Ceiling Speaker Pair | `SPK` | 2.7 kg |: | 4 | `ELE-004`; the 16/4 atomic-connect case |
-| F05 | In-Wall Speaker | `SPK` | 3.2 kg |: | 2 | `ELE-004` |
+| F04 | In-Ceiling Speaker Pair | `SPK` | 2.7 kg | — | 4 | `ELE-004`; the 16/4 atomic-connect case |
+| F05 | In-Wall Speaker | `SPK` | 3.2 kg | — | 2 | `ELE-004` |
 | F06 | Subwoofer, powered | `SUB` | 22.7 kg | 500 / 150 | 4 | Line **and** power at the same location |
-| F07 | Outdoor / Landscape Speaker | `SPK` | 1.8 kg |: | 2 | Direct-burial jacket; `CODE-*` reach |
-| F08 | 70 V Pendant Speaker | `SPK` | 2.3 kg |: | 2 | `ELE-005`, `ELE-006`; `tapWatts` selector |
+| F07 | Outdoor / Landscape Speaker | `SPK` | 1.8 kg | — | 2 | Direct-burial jacket; `CODE-*` reach |
+| F08 | 70 V Pendant Speaker | `SPK` | 2.3 kg | — | 2 | `ELE-005`, `ELE-006`; `tapWatts` selector |
 | F09 | IP Camera | `CAM` | 0.7 kg | 12 / 8 | 3 | PoE PD; `NET-001` budget arithmetic |
 | F10 | NVR | `NVR` | 6.8 kg | 120 / 65 | 6 | Camera aggregation; often rack-adjacent |
 | F11 | Wireless Access Point | `AP` | 0.9 kg | 30 / 18 | 2 | PoE+ PD; the ceiling Cat6 home run |
 | F12 | Touchpanel | `TP` | 1.4 kg | 25 / 15 | 3 | PoE PD **or** 24 V Cresnet |
 | F13 | Keypad | `KP` | 0.2 kg | 3 / 2 | 2 | Cresnet bus node; 22/4 home run |
-| F14 | Volume Control | `VC` | 0.3 kg |, | 4 | In-line on a speaker run, passive, two pairs |
-| F15 | IR Receiver Eye | `IRR` | 0.05 kg |: | 1 | The other end of the C02 pinout hazard |
+| F14 | Volume Control | `VC` | 0.3 kg | — | 4 | In-line on a speaker run, passive, two pairs |
+| F15 | IR Receiver Eye | `IRR` | 0.05 kg | — | 1 | The other end of the C02 pinout hazard |
 | F16 | ISP Gateway / ONT | `ONT` | 1.1 kg | 25 / 15 | 5 | Present in every North American residential rack |
-| F17 | OTA Antenna | `ANT` | 3.6 kg |: | 1 | `rf.ota`; the F-type ground path |
-| F18 | F-Type Ground Block | `GB` | 0.1 kg |: | 3 | Code item and a real lightning liability |
+| F17 | OTA Antenna | `ANT` | 3.6 kg | — | 1 | `rf.ota`; the F-type ground path |
+| F18 | F-Type Ground Block | `GB` | 0.1 kg | — | 3 | Code item and a real lightning liability |
 
 ---
 
@@ -1418,7 +1418,7 @@ archetype it forks from already ships.
 | UHD Disc Player, Streaming Media Player, Network Tuner | Near-duplicates of S01; **Mirror bank** plus two row deletions | S01 |
 | RF Distribution Amplifier, RF Modulator | R01 and R02 cover `rf.catv` multi-drop and `rf.satellite` DC-pass; the cascade-loss rule is v1.2 | R02 |
 | 10G Aggregation Switch | N01's 48-port variant and N02 cover SFP+ and SFP28 | N01 |
-| Wall plate, floor box, structured media enclosure | These are **`Outlet`s**, not devices (CR-016) (they belong to the Structure device, not the template library |) |
+| Wall plate, floor box, structured media enclosure | These are **`Outlet`s**, not devices (CR-016); they belong to the Structure device, not the template library | — |
 | Doorbell station, gate operator | Real, but no shipped rule reaches them and neither is in AC-031's normative 18 | F09 |
 
 The last two rows matter more than their length suggests. A wall plate is an `Outlet` (one wall
@@ -1550,7 +1550,7 @@ glyph, glyphAlt}`.
 | `ctl` | Control | `#CC79A7` | `#E29CC3` | `1.5,3` | 0.75× | ✚ / ✳ | 0.2930 |
 | `pwr` | Power | `#000000` | `#E8E8E8` *(inverted: black is invisible on dark)* | `8,3,1.5,3,1.5,3` | 2.00× | ⬢ / ⬡ / ⏚ | 0.0000 |
 | `str` | Structure | `#999999` | `#A8A8A8` | `6,3,3,3` | 0.75× | ★ / ☆ | 0.3185 |
-| *(reserved)* | Selection / focus | `#F0E442` | `#F5E76B` |, |, |: | 0.744 |
+| *(reserved)* | Selection / focus | `#F0E442` | `#F5E76B` | — | — | — | 0.744 |
 
 Dash patterns, weights, glyphs and tags are **identical across themes**. Only hue moves, and the
 theme is a UI preference never persisted in the document.
@@ -1730,7 +1730,7 @@ data on `PoeSpec{role, standard, type, class, watts}`:
 | 802.3at (PoE+) | 2 | 4 | 30 W | 25.5 W | 2 |
 | 802.3bt (PoE++) | **3** | 5, 6 | **60 W** | ~40 W / ~51 W | **4** |
 | 802.3bt (PoE++) | **4** | 7, 8 | **90 W** | ~62 W / ~73 W | **4** |
-| PoH (HDBaseT) |, |, | **up to 100 W** |: | **4** |
+| PoH (HDBaseT) | — | — | **up to 100 W** | — | **4** |
 
 PoH is *based on* 802.3at and modified for 4-pair 100 W delivery. It is **not** interoperable with
 a standard PoE PSE, which is why it is its own family with its own glyph rather than a flag on
@@ -1802,7 +1802,7 @@ appearing instead as an **outlet map** on the power schedule (AC-026).
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
 | `structure.undetermined` | Undetermined home run | `conn.unterminated` | passive | P2P | `6,3,3,3` | 0.75× | `STR` | ★ |
-| `structure.pathway` | Pathway only (conduit / pull string) |, | passive |, | `1.5,3,1.5,9` | 0.75× | `PATH` | ☆ |
+| `structure.pathway` | Pathway only (conduit / pull string) | — | passive | — | `1.5,3,1.5,9` | 0.75× | `PATH` | ☆ |
 
 `structure.undetermined` is the interesting case and it is deliberate: a Cat6 home run at rough-in
 may end up carrying Ethernet, HDBaseT, or nothing. The family is legal, it schedules, it prints,
@@ -1842,7 +1842,7 @@ type in colour and greyscale side by side.**
 | **TOSLINK** | `audio.spdif_optical` | `#D55E00` | `2,3` | **1.25×** | ◇ | `OPT` |
 | **Speaker level** | `audio.speaker_lowz` (+ `audio.speaker_cv`) | `#E69F00` | `6,3` / `10,3,2,3` | **2.00×** | ◐ / ○ | `SPK` `70V` |
 | **Power** | `power.ac_branch` / `power.ac_iec` | `#000000` | `8,3,1.5,3,1.5,3` / `8,3,1.5,3` | 2.00× | ⬢ | `PWR` `IEC` |
-| *"etc."* | 37 further families across the same 8 domains |, |, |, |, |: |
+| *"etc."* | 37 further families across the same 8 domains | — | — | — | — | — |
 
 RG6 is correctly a **medium**, not a signal, that is the point of the three-axis split, so it is
 colour-coded by what it carries. The legend row for RG6 shows all three of its families, which is
@@ -1908,10 +1908,10 @@ plug or inlet)**.
 | `conn.3_5mm_ts` · `conn.3_5mm_trs` | 3.5 mm mono / stereo | no | 2 / 3 | Barrel with one ring band (TS) or two (TRS), **the band count is the pinout channel and is why an IR emitter and an IR eye look different on the sheet** |
 | `conn.6_35mm_trs` | 1/4 in TRS | no | 3 | As `3_5mm_trs` at 1.4× scale |
 | `conn.xlr3` · `conn.xlr5` | XLR3 / XLR5 | **yes** | 3 / 5 | Circle with a latch tab at 12 o'clock and 3 or 5 dots in a triangle/pentagon; **fill encodes gender** |
-| `conn.jis_f05` | JIS F05 (TOSLINK / EIAJ optical) | no |, | Square with a shuttered door glyph, a small horizontal bar across the upper third |
+| `conn.jis_f05` | JIS F05 (TOSLINK / EIAJ optical) | no | — | Square with a shuttered door glyph, a small horizontal bar across the upper third |
 | `conn.rj45` | RJ45 (8P8C) | **yes** | 8 | Rectangle with a downward latch tab on the lower edge and eight tick contacts on the upper edge |
-| `conn.lc_duplex` · `conn.sc` · `conn.st` | LC duplex / SC / ST | **yes** |: | LC: two small squares side by side; SC: one square with a keyed notch; ST: circle with a bayonet slot |
-| `conn.sfp_cage` | SFP / SFP+ / SFP28 cage | no |, | Open-ended rectangle (three sides drawn), a cage, not a connector |
+| `conn.lc_duplex` · `conn.sc` · `conn.st` | LC duplex / SC / ST | **yes** | — | LC: two small squares side by side; SC: one square with a keyed notch; ST: circle with a bayonet slot |
+| `conn.sfp_cage` | SFP / SFP+ / SFP28 cage | no | — | Open-ended rectangle (three sides drawn), a cage, not a connector |
 | `conn.de9` | DE-9 (commonly mis-called DB9) | **yes** | 9 | D-shell outline with two dot rows (5 over 4); **fill encodes gender** |
 | `conn.euroblock_2` · `_3` · `_5` | Euroblock / Phoenix 2, 3, 5-pole | **yes** | 2 / 3 / 5 | N adjacent squares with a screw-slot diagonal in each |
 | `conn.phoenix_4` | 4-pin Phoenix (Cresnet) | **yes** | 4 | Four adjacent squares, outer two shaded (24 V pair), inner two clear (data pair) |
@@ -1922,7 +1922,7 @@ plug or inlet)**.
 | `conn.iec_c13` · `_c14` · `_c19` · `_c20` | IEC 60320 C13 / C14 / C19 / C20 | **yes** | 3 | Chamfered rectangle (upper corners cut) with three pin dots; C19/C20 at 1.3× and rotated 90° |
 | `conn.nema_5_15p` · `_5_15r` · `_5_20p` · `_5_20r` · `conn.nema_l5_30p` | NEMA plugs and receptacles | **yes** | 3 | Two parallel slots over a round ground hole; 5-20 rotates the neutral slot to T-shape; L5-30 draws three curved locking slots |
 | `conn.barrel_dc` | DC barrel | **yes** | 2 | Concentric circle with a solid centre pin |
-| `conn.hardwired` · `conn.ground_lug` · `conn.unterminated` | Hardwired / ground lug / unterminated | no |: | Hardwired: three short parallel leads into a bracket. Ground lug: the ⏚ earth glyph. Unterminated: a plain open half-circle cap, deliberately drawn as "nothing yet" |
+| `conn.hardwired` · `conn.ground_lug` · `conn.unterminated` | Hardwired / ground lug / unterminated | no | — | Hardwired: three short parallel leads into a bracket. Ground lug: the ⏚ earth glyph. Unterminated: a plain open half-circle cap, deliberately drawn as "nothing yet" |
 
 Aliases (`hdmi`, `hdbt`, `rj45`, `xlr`, `spdif`, `toslink`, `euro3`, `bp`, `db9` → `conn.de9`)
 live in `ConnectorTypeDef.aliases` and are what the notation in §2 resolves against (CR-058).
@@ -1974,31 +1974,31 @@ which is the difference between an import that works and one that throws.
 | `media.rg59` | RG59 | `RG59` | 1 coax | 20 | 75 | yes | ~100 m | `video.composite`, `audio.spdif_coax` |
 | `media.rg11` | RG11 | `RG11` | 1 coax | 14 | 75 | yes | ~300 m | `rf.catv` trunk |
 | `media.coax_video_75` | Precision 75 Ω video coax (1694A class) | `V75` | 1 coax | 20 | 75 | yes | 12G ~45 m | `video.sdi`, `video.component` |
-| `media.mic_stp` | Mic / line shielded twisted pair | `STP2` | 2 + shield | 22 |: | yes | 100 m+ | `audio.mic`, `audio.line_bal` |
+| `media.mic_stp` | Mic / line shielded twisted pair | `STP2` | 2 + shield | 22 | — | yes | 100 m+ | `audio.mic`, `audio.line_bal` |
 | `media.aes_110` | 110 Ω AES/DMX cable | `Z110` | 2 + shield | 22 | 110 | yes | 100 m | `audio.aes3`, `ctl.dmx512` |
 | `media.dmx_120` | 120 Ω DMX / RS-485 cable | `Z120` | 2 + shield | 22 | 120 | yes | 1200 m | `ctl.dmx512`, `ctl.rs485` |
-| `media.16_2` | 16/2 speaker | `16/2` | 2 | 16 |: | no | gauge/length table | `audio.speaker_lowz` |
-| `media.16_4` | 16/4 speaker | `16/4` | 4 | 16 |, | no |, | `audio.speaker_lowz` (stereo or bi-amp on one pull) |
-| `media.14_2` · `media.14_4` | 14/2 · 14/4 speaker | `14/2` `14/4` | 2 / 4 | 14 |: | no | ~15 m at 8 Ω | `audio.speaker_lowz` |
-| `media.12_2` | 12/2 speaker | `12/2` | 2 | 12 |, | no |, | `audio.speaker_lowz` long runs |
-| `media.18_2_cv` | 18/2 constant-voltage | `18/2` | 2 | 18 |: | no | hundreds of feet | `audio.speaker_cv` |
-| `media.22_2` · `media.22_4` | 22/2 · 22/4 control | `22/2` `22/4` | 2 / 4 | 22 |: | optional | long | `ctl.contact`, `ctl.trigger12v`, `ctl.ir_emitter` |
-| `media.cresnet_18_22` | Cresnet (18 AWG power + 22 AWG data) | `CN` | 4 / 2 | 18 + 22 |: | yes | 915 m data · **333 ft at 20 W** | `ctl.cresnet` |
-| `media.knx_tp1` | KNX TP1 bus cable | `KNX` | 2 (+2) | 22 |: | yes | 1000 m | `ctl.knx` |
-| `media.dali_2c` | DALI 2-conductor (mains-rated) | `DALI` | 2 | 18 |: | no | ~300 m | `ctl.dali` |
-| `media.hdmi_passive` | HDMI, passive | `HDMI` | 19 bonded |, |, | yes | 2.1: 3–4.5 m · 2.0: ~7.5 m | `video.hdmi.*` |
-| `media.hdmi_active` | HDMI, active copper | `HDMIA` | 19 bonded |, |, | yes | ~7.6 m | `video.hdmi.*`: **direction-locked** |
-| `media.hdmi_aoc` | HDMI, active optical (AOC) | `AOC` | hybrid |, |, |, | 15–90 m+ | `video.hdmi.*`, **direction-locked, source/display ends marked** |
-| `media.dp_cable` | DisplayPort cable | `DP` |, |, |: | yes | DP80 passive 1.2 m | `video.displayport` |
-| `media.usbc_cable` | USB-C cable | `USBC` |, |, |: | yes | ~1–2 m at full BW | `video.usbc_dpalt` |
-| `media.om3` · `media.om4` | Fibre OM3 · OM4 multimode | `OM3` `OM4` | 2 strands |, |, |: | ~300–400 m at 10 G | `net.fiber_mm` |
-| `media.os2` | Fibre OS2 singlemode | `OS2` | 2 strands |, |, |: | 10–40 km | `net.fiber_sm` |
-| `media.pof_toslink` | Plastic optical fibre (TOSLINK) | `POF` | 1 |, |, |: | ~5–10 m (glass 30 m+) | `audio.spdif_optical` |
-| `media.so_cord` | SO / SJ power cord | `SO` | 3 | 14–12 |, | no |, | `power.ac_branch` |
-| `media.iec_cordage` | IEC rated cordage | `IEC` | 3 | 18–14 |: | no | short | `power.ac_iec` |
-| `media.bonding_6awg` | Bonding conductor | `GND` | 1 | 6 |, | no |, | `power.bonding` |
-| `media.conduit_emt` · `media.conduit_ent` | EMT conduit · ENT (smurf tube) | `EMT` `ENT` |, |, |, |, |: | **`isPathwayOnly: true`** |
-| `media.pull_string` | Pull string | `PULL` |, |, |, |, |: | **`isPathwayOnly: true`** |
+| `media.16_2` | 16/2 speaker | `16/2` | 2 | 16 | — | no | gauge/length table | `audio.speaker_lowz` |
+| `media.16_4` | 16/4 speaker | `16/4` | 4 | 16 | — | no | — | `audio.speaker_lowz` (stereo or bi-amp on one pull) |
+| `media.14_2` · `media.14_4` | 14/2 · 14/4 speaker | `14/2` `14/4` | 2 / 4 | 14 | — | no | ~15 m at 8 Ω | `audio.speaker_lowz` |
+| `media.12_2` | 12/2 speaker | `12/2` | 2 | 12 | — | no | — | `audio.speaker_lowz` long runs |
+| `media.18_2_cv` | 18/2 constant-voltage | `18/2` | 2 | 18 | — | no | hundreds of feet | `audio.speaker_cv` |
+| `media.22_2` · `media.22_4` | 22/2 · 22/4 control | `22/2` `22/4` | 2 / 4 | 22 | — | optional | long | `ctl.contact`, `ctl.trigger12v`, `ctl.ir_emitter` |
+| `media.cresnet_18_22` | Cresnet (18 AWG power + 22 AWG data) | `CN` | 4 / 2 | 18 + 22 | — | yes | 915 m data · **333 ft at 20 W** | `ctl.cresnet` |
+| `media.knx_tp1` | KNX TP1 bus cable | `KNX` | 2 (+2) | 22 | — | yes | 1000 m | `ctl.knx` |
+| `media.dali_2c` | DALI 2-conductor (mains-rated) | `DALI` | 2 | 18 | — | no | ~300 m | `ctl.dali` |
+| `media.hdmi_passive` | HDMI, passive | `HDMI` | 19 bonded | — | — | yes | 2.1: 3–4.5 m · 2.0: ~7.5 m | `video.hdmi.*` |
+| `media.hdmi_active` | HDMI, active copper | `HDMIA` | 19 bonded | — | — | yes | ~7.6 m | `video.hdmi.*`: **direction-locked** |
+| `media.hdmi_aoc` | HDMI, active optical (AOC) | `AOC` | hybrid | — | — | — | 15–90 m+ | `video.hdmi.*`, **direction-locked, source/display ends marked** |
+| `media.dp_cable` | DisplayPort cable | `DP` | — | — | — | yes | DP80 passive 1.2 m | `video.displayport` |
+| `media.usbc_cable` | USB-C cable | `USBC` | — | — | — | yes | ~1–2 m at full BW | `video.usbc_dpalt` |
+| `media.om3` · `media.om4` | Fibre OM3 · OM4 multimode | `OM3` `OM4` | 2 strands | — | — | — | ~300–400 m at 10 G | `net.fiber_mm` |
+| `media.os2` | Fibre OS2 singlemode | `OS2` | 2 strands | — | — | — | 10–40 km | `net.fiber_sm` |
+| `media.pof_toslink` | Plastic optical fibre (TOSLINK) | `POF` | 1 | — | — | — | ~5–10 m (glass 30 m+) | `audio.spdif_optical` |
+| `media.so_cord` | SO / SJ power cord | `SO` | 3 | 14–12 | — | no | — | `power.ac_branch` |
+| `media.iec_cordage` | IEC rated cordage | `IEC` | 3 | 18–14 | — | no | short | `power.ac_iec` |
+| `media.bonding_6awg` | Bonding conductor | `GND` | 1 | 6 | — | no | — | `power.bonding` |
+| `media.conduit_emt` · `media.conduit_ent` | EMT conduit · ENT (smurf tube) | `EMT` `ENT` | — | — | — | — | — | **`isPathwayOnly: true`** |
+| `media.pull_string` | Pull string | `PULL` | — | — | — | — | — | **`isPathwayOnly: true`** |
 
 `JacketRating` is `cl2 | cl3 | cmr | cmp | lszh | directBurial`. It is not decorative: `CODE-002`
 is an error when `Pathway.kind == plenumSpace` and the jacket is not `cmp` or `lszh` (NEC 800.154),

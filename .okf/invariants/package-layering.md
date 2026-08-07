@@ -12,10 +12,10 @@ status: enforced
 | Package | Role | May not import |
 |---|---|---|
 | `rackmate_core` | pure-Dart domain: model, commands, persistence, derivations, the drawing IR | `package:flutter`, `dart:ui`, `package:pdf` |
-| `rackmate_ui` | Flutter widgets and canvases |: |
+| `rackmate_ui` | Flutter widgets and canvases | — |
 | `rackmate_export` | PDF/sheet backends | `rackmate_ui` |
-| `rackmate_text` | text measurement |: |
-| `apps/rackmate` | the shell, storage, session |: |
+| `rackmate_text` | text measurement | — |
+| `apps/rackmate` | the shell, storage, session | — |
 
 # Why it keeps deciding things
 

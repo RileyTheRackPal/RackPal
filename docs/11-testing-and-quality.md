@@ -31,7 +31,7 @@ The `rackmate_core` package is pure, synchronous Dart with no `package:flutter`,
 | Integration | `apps/rackmate` | every PR, Windows + macOS | blocking |
 | Performance | `rackmate_core/test/perf/` | every PR under `perf` tag | warn-only for 3 months, then blocking |
 | Pixel-diff PDF | `rackmate_export` | nightly | non-blocking, triaged |
-| Manual / hardware |: | per milestone | milestone exit criterion |
+| Manual / hardware | — | per milestone | milestone exit criterion |
 
 Rejected alternative: a Flutter-first suite where the model is exercised through widgets. It makes every domain assertion cost a pump-and-settle and it cannot run the 1,000-seed property tests at all.
 

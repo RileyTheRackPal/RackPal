@@ -1013,7 +1013,7 @@ That is the entire production dependency set for the layer where 80% of the logi
 
 | Package | Constraint | Why |
 |---|---|---|
-| `flutter` | sdk |: |
+| `flutter` | sdk | — |
 | `path_drawing` | `^1.0.1` | `dashPath()`: synthesizes dashes that `dart:ui` cannot do natively (§6.6). Small, stable, single-purpose. |
 | `vector_math` | `^2.2.0` | `Matrix4` for the viewport. Transitively available via Flutter; pin it explicitly since core geometry code touches it. |
 
@@ -1183,7 +1183,7 @@ jobs:
 | Devices | 200 | 500 |
 | Ports | 2 000 | 6 000 |
 | Connections | 1 000 | 3 000 |
-| Undo history | 200 entries |: |
+| Undo history | 200 entries | — |
 | `.rackmate` file size | 500 KB | 3 MB |
 
 ### 10.2 Time budgets

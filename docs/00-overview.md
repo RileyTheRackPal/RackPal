@@ -156,7 +156,7 @@ Two refusals from the raw prior-art analysis were themselves **overruled** and a
 | Residential AV signal types (HDMI, IR, RS-232, RG6, TOSLINK, speaker level) | **Yes: 8 domains, ~50 families** | Catalog metadata, not a typed netlist | Shapes only | No | Unknown |
 | One model, many views | **Yes**: elevation, schematic, schedule, PDF are four renderings of one graph | Drawing renders the database in a *second app*, and can contradict it | No | No | Unknown |
 | Diffable local project file | **Yes**: pretty-printed key-sorted JSON, stable UUIDs, `schemaVersion` | Proprietary / cloud | Binary | Cloud | Unknown |
-| Blocks your export on a heuristic | **Never** (G3) |, |, |, |, |
+| Blocks your export on a heuristic | **Never** (G3) | — | — | — | — |
 
 Two competitors outside that table set the real bar. **NetBox** has the reference data model (typed templated components, front/rear pass-through ports that let a trace run straight through a patch panel, and cables carrying type, colour, length and label) but its rack elevations are read-only rendered images and its signal vocabulary is Ethernet, fibre and power. **Q-SYS Designer** has the reference interaction model, pin shape encodes type, only complementary directions connect, and a loose wire is prohibited outright. RackMate takes the data model from the first and the gesture from the second, and applies both to a domain neither serves. Notably, Q-SYS, the most refined tool in this space, ships **no auto-routing at all**; RackMate builds one anyway (CR-013, DR-001), scoped to the `drawn` render mode a domain filter or a hover turns on, and that is a deliberate, costed bet, not an oversight.
 

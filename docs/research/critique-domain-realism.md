@@ -224,11 +224,11 @@ These aren't style issues, each one changes a number that goes on a drawing.
 | Concept | data-model | ux-rack | ux-schematic | architecture |
 |---|---|---|---|---|
 | Length unit | nanometres | tenths-mm | tenths-mm | **hundredths-mm** (and explicitly argues tenths is wrong: 44.45 mm ≠ integer tenths) |
-| RU index origin | 1-based (`ruIndex ∈ [1, heightU]`) | **0-based** (`bottomU`, "0-based from the rack's physical bottom") |, |, |
-| Circuit ownership | project-level entity with `locationId` | `List<Circuit>` on `Rack` |, |, |
-| Wire geometry | persisted (`Link.waypointsBySheet`) |, | **never persisted** ("if you find yourself persisting a polyline, you have made an architectural error") |, |
-| Rules that block creation | exactly 5 topology rules | "Errors are not dismissible" | large "Class A hard-invalid" list incl. HDBaseT-into-switch |: |
-| Connection model | `Link` + `Conductor` + `Net` + `SignalRoute` |: | single `Connection(from, to, ...)` | `Connection` |
+| RU index origin | 1-based (`ruIndex ∈ [1, heightU]`) | **0-based** (`bottomU`, "0-based from the rack's physical bottom") | — | — |
+| Circuit ownership | project-level entity with `locationId` | `List<Circuit>` on `Rack` | — | — |
+| Wire geometry | persisted (`Link.waypointsBySheet`) | — | **never persisted** ("if you find yourself persisting a polyline, you have made an architectural error") | — |
+| Rules that block creation | exactly 5 topology rules | "Errors are not dismissible" | large "Class A hard-invalid" list incl. HDBaseT-into-switch | — |
+| Connection model | `Link` + `Conductor` + `Net` + `SignalRoute` | — | single `Connection(from, to, ...)` | `Connection` |
 
 The RU off-by-one is the one that will actually hurt: a device at data-model `ruIndex: 7` and a device at ux-rack `bottomU: 7` are in different rack positions. Someone will implement the elevation from one document and the schedule from the other, and the drawing will say U7 while the label says U8. Pick one origin, write it in the file-format spec, and assert it.
 

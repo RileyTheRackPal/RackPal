@@ -182,7 +182,7 @@ Racks lay out **left to right in a single row**, in explicit `bayOrder`, with a 
 
 | Target | Cursor | Visual on hover |
 |---|---|---|
-| Empty canvas | `basic` |: |
+| Empty canvas | `basic` | — |
 | Empty U inside a rack | `basic` | That U's ruler cell brightens to `surfaceContainerHighest`; 1 px dotted accent lines at both its boundaries; tooltip after 600 ms: `U14 — free (front) · 4U contiguous free above` |
 | Placed device body | `grab` | 1.5 px accent outline inset 1 px; elevation shadow 2; badges fade in over 90 ms; tooltip after 700 ms with full vitals card |
 | Placed device, `Ctrl` held | `copy` | outline turns to dashed accent: signals drag-to-duplicate |
