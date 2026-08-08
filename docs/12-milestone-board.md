@@ -1096,6 +1096,23 @@ the master as seeded Dart. The assertion now exists, transcribes the block from 
 reading it out of the code, and checks the converse too, that the seed invents no synonym the doc
 does not list.
 
+**M3-D/1 is closed at `b4b9115`, and it was held open for eleven days on purpose.** The two drop
+label formats had round-tripped since M0 with exactly one caller each, the codec, which is precisely
+where `netNameFormat` sat until M2-A wired it. `b4b9115` gave both an allocator through the one
+format engine (CR-045, CR-049), so a project's customised pattern is honoured rather than bypassed.
+
+**It was not marked done then, and the reason is §8.1.** Nothing outside its own tests called either
+allocator, and done means demonstrated. The caller is **M3-C/1**: `drop_line_planner.dart` allocates
+every drop's field label through `allocateOutletFieldLabel` at `20c0801`, and the sixty drops in the
+keystroke measurement reach the document carrying labels this task produced. Recorded because the
+alternative was a green tick over a function nothing invoked, which is the shape of "checklist-
+ticked" §8.1 exists to refuse.
+
+Its measurement is what forced two rulings. `{ROOM_ABBR}-{SERVICE}-{SEQ}` wraps nothing in `[...]`,
+so it **throws** on the state docs/07 §4.1 calls *"first-class, encouraged"*: that is DR-022's
+evidence, and DR-023 is the chain that answered it. The rack label needed no ruling and got none,
+because `rackLabel` is optional (CR-044) and AC-018's fourteen unbound drops simply have none.
+
 **M3-C/1 is closed, and the number it produced is 5.82.** #147's instruction was not "build a text
 field": *"write the loop first, drive it with a keyboard, and time ten drops on a stub UI. If ten
 drops are not on pace, no amount of table polish will make sixty."* Closed across four commits, the
