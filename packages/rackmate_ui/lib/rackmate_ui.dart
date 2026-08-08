@@ -105,3 +105,4 @@ export 'src/shell/unbuilt_view.dart';
 export 'src/shell/unsaved_changes_dialog.dart';
 export 'src/structure/drop_entry_panel.dart';
 export 'src/structure/outlet_template_picker.dart';
+export 'src/structure/structure_editor_screen.dart';

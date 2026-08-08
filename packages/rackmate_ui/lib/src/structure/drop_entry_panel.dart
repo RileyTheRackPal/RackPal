@@ -44,19 +44,19 @@ import 'package:rackmate_core/rackmate_core.dart';
 
 /// Opens the entry surface as a dialog.
 ///
-/// A DIALOG AND NOT A TAB, for now and for a stated reason: board #148's
-/// Structure editor is where this lives permanently, as its command mode
-/// beside table mode. Until that editor exists, a person who cannot reach
-/// this surface cannot run M3-G's drill on it, and a loop only a widget
-/// test drives has not been driven.
+/// A DIALOG AND ALSO A BAR, and the "and" arrived with #148. This used to
+/// say "a dialog and not a tab, for now": the Structure editor is where
+/// §4.3's command mode lives permanently, and until it existed a person
+/// who could not reach this surface could not run M3-G's drill on it.
+/// `StructureEditorScreen` now embeds [DropEntryLoop] as its quick-add
+/// bar, so the loop has its permanent home. The dialog stays because it
+/// is the route from anywhere, without opening an editor first, and both
+/// drive the same widget rather than two copies of it.
 ///
 /// [currentDoc] is read on EVERY build rather than captured once, and
 /// that is what makes the loop work across commits. A dialog holding one
 /// document reference would plan the second line against the state before
 /// the first one landed, and offer labels the first line just spent.
-///
-/// The dialog owns the "just added" tail and appends to it here, so the
-/// caller supplies only what an edit MEANS.
 Future<void> showDropEntryPanel(
   BuildContext context, {
   required DropEntryActions actions,
@@ -68,23 +68,37 @@ Future<void> showDropEntryPanel(
       width: 640,
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: _DropEntryHost(actions: actions, currentDoc: currentDoc),
+        child: DropEntryLoop(actions: actions, currentDoc: currentDoc),
       ),
     ),
   ),
 );
 
-class _DropEntryHost extends StatefulWidget {
-  const _DropEntryHost({required this.actions, required this.currentDoc});
+/// The loop with its "just added" tail, host-agnostic.
+///
+/// PUBLIC SO THE EDITOR AND THE DIALOG SHARE ONE, rather than the editor
+/// growing its own copy of the twelve lines below. The tail is state
+/// about a SESSION of typing, not about a document, so it belongs to
+/// whichever surface is hosting the typing; what must not be duplicated
+/// is the rule that the tail reports what the app did and not what the
+/// preview predicted.
+class DropEntryLoop extends StatefulWidget {
+  const DropEntryLoop({
+    required this.actions,
+    required this.currentDoc,
+    super.key,
+  });
 
   final DropEntryActions actions;
+
+  /// Read on every build. See [showDropEntryPanel].
   final RackDocument Function() currentDoc;
 
   @override
-  State<_DropEntryHost> createState() => _DropEntryHostState();
+  State<DropEntryLoop> createState() => _DropEntryLoopState();
 }
 
-class _DropEntryHostState extends State<_DropEntryHost> {
+class _DropEntryLoopState extends State<DropEntryLoop> {
   final List<String> _recent = [];
 
   @override
