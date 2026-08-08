@@ -1241,6 +1241,60 @@ no model to read. And there is **no instantiating builder**: `+ Add outlet ▾` 
 into one `Outlet` and N `Link`s is the Structure editor's, not the catalog's. This shipped the
 master.
 
+**Two of those three absences closed at M3-C/5, and the third is still open.** The field landed at
+`7516df4` and the gesture at `cc96e0d`/`7ea2e44`; AC-034/m24's template-driven inspector fields are
+the one left, and DR-024 §11.23.4 keeps them out deliberately.
+
+**M3-C/5 (#151) closed at `7ea2e44`, and it was re-scoped before it was built.** #151 read
+*"TIA-570-D presets"*, and #150 had already shipped all three of them: the task's data half was
+done by its neighbour, without either being wrong. Rather than open it, find it two thirds
+finished and re-scope in the dark, the change is **DR-024** (canon §11.23) under roadmap §8.3, with
+a real question inside it rather than only bookkeeping.
+
+*The question, and why the cheap answer loses.* Does the grade stamp live on `OutletTemplate`, or
+does the builder special-case the three seeded ids? The special case needs no model change and works
+for exactly the three presets this repository ships, **which is the opposite of what CR-108 ruled**:
+user-defined templates are first-class, so a shop authoring its own Grade 2, or one citing a
+builder's spec rather than TIA's, would stamp nothing, and an id rename would be a silent behaviour
+change. So `OutletTemplate.tia570Grade: String?`, a free string because CR-108 deleted
+`StructureGrade` and kept the field as a **citation for specs that cite one**. The three presets
+carry the exact string the whole-house fixture already writes by hand, and a test pins it: a free
+`String?` makes a divergent spelling of the same standard possible and silent.
+
+*CR-117 held, and it mattered more here than for `tag`.* Nine templates had shipped four commits
+earlier, so a document written between `5abb8b3` and `7516df4` carries the three grade entries with
+no `tia570Grade` key. Reading yields null, writing omits it, `write(read(bytes)) == bytes`. Gated in
+both directions.
+
+*The gesture is the first caller DR-023 step 2 has ever had, and that is the finding.* The chain is
+`@service=`, then the outlet template's tag, then the media's `shortTag`. **The middle arm has been
+unreachable since it was ruled**, because nothing in the product created an `Outlet` *from* a
+template: the DSL creates bare outlets, and the only outlets carrying an `outletTemplateId` were the
+seventeen hand-authored ones in the whole-house fixture. `LR-TV-1`, DR-022's own first worked
+example, could be produced only by typing `@service=tv`, which is step 1 wearing step 2's clothes.
+It now comes out of a menu pick with nothing typed.
+
+*What it deliberately does not do.* It **creates** an outlet and never joins one, because docs/07
+§4.3 says *"as one `Outlet`"* and `outletTemplateId` is provenance (CR-108, *"what created it"*):
+adding a recipe to a plate that already exists would either overwrite that or leave drops
+disagreeing with the template they name. `@outlet="…"` remains the gesture for an existing plate.
+And the template's `OutletDrop.service` is **not** copied onto the `Link` — `AddHomeRunCommand`
+writes `structure.undetermined` and docs/07 §4.1 says why, so the template's service stays the
+recipe's intent, which is the pair of facts docs/02 §6.2 prints in one file.
+
+*One refactor, and the reason it is one.* The label, the `W` number, the net name, the endpoint and
+the refusals are one behaviour with two entry surfaces now, so they moved into
+`structure/drop_build.dart` (unexported) and `planDropLine` calls it. Two copies would drift exactly
+the way CR-107 ruled `StructureDrop` and `Link` would: *"the drop schedule says 78 ft and the wiring
+schedule says 90 ft, and nobody knows which to bill against."* All 62 existing planner tests pass
+unchanged, which is what makes it a refactor rather than a rewrite.
+
+*Three stale sentences of my own, fixed in passing.* `_serviceTagFor`'s doc still said
+`outletTemplates` is `{}` in every document and `EXT-CAM-4` is unreachable until #150; canon §11.22's
+heading was `##` where every other §11.x is `###`, putting DR-023 at the same level as §12; and
+`.okf/decisions/dr-023-*.md` had an unquoted colon in its frontmatter `description:`, which made the
+OKF conformance checker call the **whole bundle** non-conformant. It is conformant now.
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three
