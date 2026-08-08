@@ -3,12 +3,12 @@
 **This file is not the normative record.** The normative record is
 [docs/canonical-decisions.md](canonical-decisions.md), 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`,
 canonical naming, the model, the registry, the scope ruling, the milestone plan, and Part 4's
-binding user decisions `DR-001`–`DR-022`. This file is a sixteen-ADR summary of it. Where an ADR
+binding user decisions `DR-001`–`DR-023`. This file is a sixteen-ADR summary of it. Where an ADR
 and a ruling appear to differ, the ruling wins and this file is wrong.
 
 What follows is the short-form decision log for RackMate: sixteen ADRs covering the choices that
 shape the codebase, each traced back to its adjudication in the canonical decision record; then
-**the twenty-two user decisions `DR-001`–`DR-022`**, which are binding and override the recommendations
+**the twenty-three user decisions `DR-001`–`DR-023`**, which are binding and override the recommendations
 they answer; then the questions of canon §10, **none of which is open any longer**: ten are
 answered, 10.3 is moot under DR-006, 10.13 is retired, and 10.11 alone is deferred, to M5 rather
 than indefinitely. An ADR here is a summary with a pointer, not a new ruling. Open questions carry no
@@ -39,7 +39,7 @@ overruled is marked as void where it stands.
 canon §11; the supersession index is canon §12.
 
 > **This table listed only `DR-001`–`DR-005` until 2026-08-03**, an owed edit canon §12.9 recorded
-> against DR-006 and which then went ten rulings further out of date. Seven of the twenty-two answer a
+> against DR-006 and which then went ten rulings further out of date. Seven of the twenty-three answer a
 > canon §10 question and say which; the rest are rulings the work itself raised, which is why their
 > `Answers` column is empty. (**The count in this note read "sixteen" against a heading that read
 > "seventeen"** until DR-018's sweep; a written-out count drifts every time a ruling lands, which is
@@ -75,6 +75,7 @@ canon §11; the supersession index is canon §12.
 | DR-020 | **A plan may not predict a route; the length column's job is the as-built tally** | — | **The first ruling whose evidence is the trade rather than the corpus.** Structure (LVLs, concrete beams, purlins) forces runs into a crawlspace instead of an attic and is not knowable from a floorplan, so `docs/15` §4's design-time **route polyline is void one commit after it was written**, along with `routingFactor` and `slackAllowance`. The plan contributes **`planLowerBound`** only: italic, prefixed `≥`, never summed into the footage rollup. Its value is the asymmetry, a bound can **prove** a length violation and can never prove compliance. v1 gains three items: `Link.spliceCount: int?` (null unknown, `0` confirmed none), the generic **`LEN-002`** reading a new `maxLength` off the media registry, and the **as-built tally surface in M3**. **The catalogue becomes 28** (8 + 6 + 14), superseding §12.6(b) on the number only; AC-051's gate applies to 28 pairs. `PathwayKind` gaining `attic`/`crawlspace` is left open for M3 |
 | DR-021 | **Deleting a `Location` cascades the subtree and clears every reference** | — | The first ruling the location tree has raised, which until now had no delete semantics at all. The subtree goes in one undoable command; **promotion is rejected** because it rewrites the breadcrumb of every surviving room without an edit, and refusal is rejected on DR-013 §11.13.3's ground. **Nine fields across seven entities** point at a location from outside the tree, and every one is cleared to null (G4's unknown) rather than left dangling, so a cleared drop lands in the Pull Sheet's `NO ROOM RECORDED` band instead of vanishing. The count is computed once and consumed by the command, DR-013 §11.13.2's shape. A reparent that would make a node its own ancestor is **refused** the way `TOP-005` refuses a shelf cycle. No `Link`, `Outlet`, `Pathway` or drop is deleted. **No scope change.** Board #144, #145 |
 | DR-022 | **`{SERVICE}` in a drop's field label is the outlet template's tag** | — | Measured, not argued: the shipped `Residential CI` preset `{ROOM_ABBR}-{SERVICE}-{SEQ}` has no `[...]` around any token, so it **throws on a rough-in drop** — the state docs/07 §4.1 calls *"first-class, encouraged"*. The corpus's own examples settle the source: `LR-TV-1`, `MBR-KEY-2`, `EXT-CAM-4` are the **TV location / Keypad / Camera** templates, not signal families. `OutletTemplate` gains a `tag`; **not a migration**, because `outletTemplates` is `{}` in all four shipped starters, which is DR-019's `Placement.unknown` argument on a smaller surface. The family `shortTag` route is rejected because CR-048 stores a designator once, so every rough-in label would read `STR` forever. The **rack label needed no ruling**: it is optional (CR-044), so AC-018's fourteen unbound drops simply have none. Amends board #150 to a one-field model change; resequences #152 before #147. **No scope change** |
+| DR-023 | **The `{SERVICE}` fallback chain: modifier, then template tag, then the media's short tag** | — | The question DR-022 §11.21.6 handed to #147. Three steps and no fourth: the line's `@service=`, else the `OutletTemplate.tag` DR-022 settled, else `MediaTypeDef.shortTag`. **`@service=` outranks the template** because CR-048 stores a designator once at creation, so a label that cannot be overridden at entry can only be fixed by deleting the drop, and a sixty-drop drill cannot afford that; the accepted cost is a drop whose label may disagree with its own outlet's template. **The media tag is not the `STR` answer DR-022 rejected**: `STR` was rejected for being one placeholder word identical on every rough-in cable, and `C6`/`RG6`/`16/4` vary per drop and are facts the line stated. Refusing instead would refuse docs/07 §4.3's own first worked example and fight §4.1's *"first-class, encouraged"* undetermined state. A user-created media type with no `shortTag` (RJ-009 import) **refuses** rather than printing a raw id. Deliberately does **not** rule whether `@service=` also sets `Service.signalFamily`. **No scope change** |
 
 See also [Canonical decisions](canonical-decisions.md), normative, plus
 [Overview](00-overview.md), [Data model](02-data-model.md),

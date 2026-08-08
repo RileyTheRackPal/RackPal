@@ -1,5 +1,28 @@
 # Update Log
 
+## 2026-08-07 (later still)
+
+* **Creation**: [DR-023, the `{SERVICE}` fallback
+  chain](/decisions/dr-023-service-fallback-chain.md). DR-022 settled where the
+  token's value comes from and explicitly left the chain to board #147, which
+  is where the entry surface decides what it can refuse.
+* **Note**: **refusing was the option that looked principled and cost the
+  most.** Keeping `{SERVICE}` to one meaning would have refused `Living Room:
+  4x Cat6` — `docs/07` §4.3's own first worked example of the surface being
+  built — and fought §4.1's statement that the undetermined state is
+  "first-class, encouraged". The chain takes a second sense for the token
+  instead.
+* **Note**: **the media tag is not the answer DR-022 rejected, and the
+  distinction is the whole ruling.** `STR` was rejected for being one
+  placeholder word identical on sixty cables and stored forever by CR-048.
+  `C6`, `RG6`, `16/4` vary per drop and are facts the line stated. A rejected
+  answer's REASON has to be re-read before a similar-looking answer is rejected
+  by association.
+* **Note**: `@service=` sets a label segment and NOT `Service.signalFamily`.
+  The two share a word and are different fields; `camera` names no signal
+  family because there is none. Kept apart deliberately so the label chain is
+  not blocked on the taxonomy question.
+
 ## 2026-08-07 (later)
 
 * **Creation**: [DR-022, `{SERVICE}` is the outlet template's

@@ -7496,9 +7496,76 @@ CR-045 forbids building them by concatenation. #150 grows by one model field.
 
 ---
 
+## 11.22 DR-023 · The `{SERVICE}` fallback chain, and what a line with no service is called
+
+**Settled by the user on 2026-08-07**, answering the question DR-022 §11.21.6 explicitly left to
+M3-C/1 (board #147): *"which of the two wins, and what happens when neither is supplied"*. DR-022
+settled the **source**; this settles the **chain**.
+
+**11.22.1 The chain, in order.** `{SERVICE}` resolves from the first of these that is present:
+
+| | Source | Example |
+|---|---|---|
+| 1 | The line's `@service=` modifier | `Exterior: 6x Cat6 @service=camera` → `EXT-CAM-4` |
+| 2 | The `tag` of the `OutletTemplate` the drop's `Outlet` was created from (DR-022) | a *TV location* outlet → `LR-TV-1` |
+| 3 | The `shortTag` of the drop's **media type** | `Living Room: 4x Cat6` → `LR-C6-1` |
+
+There is no fourth step and no placeholder. Every step is a fact the person supplied on the line or
+stored on the outlet.
+
+**11.22.2 Why `@service=` outranks the template, which is step 1 beating step 2.** CR-048 evaluates
+a designator **once at creation and stores it**. A label that cannot be overridden at the moment of
+entry can only be corrected by deleting the drop and re-entering it, which is the one operation a
+sixty-drop drill cannot afford. The modifier is also the more specific statement: it is typed on
+*this line*, about *these drops*, where the template is a default carried by the outlet.
+
+**The cost is accepted and named.** A drop can now carry a label that disagrees with its own
+outlet's template: six Cat6 on a *TV location* outlet with `@service=camera` are labelled `CAM` and
+sit on an outlet called *TV location*. That is a true record of what the installer was told, and
+the alternative, silently ignoring a modifier the person typed, is what docs/04 §3.4 forbids
+outright.
+
+**11.22.3 Why the media's `shortTag` is step 3, and why this is not the `STR` answer DR-022
+rejected.** docs/07 §4.1: *"`Service: undetermined` is a first-class, encouraged state ... At
+rough-in a Cat6 is just a Cat6."* A chain that refuses `Living Room: 4x Cat6` refuses the corpus's
+own first worked example of the entry surface, and does it at the exact point where friction is
+most expensive.
+
+DR-022 §11.21.5 rejected `structure.undetermined.shortTag` and the reason was **not** that a
+fallback is wrong. It was that `STR` is a *placeholder word*, identical on every rough-in cable in
+the project, stored forever by CR-048: sixty labels that all say the same thing, and the thing they
+say is "we do not know". The media tag fails none of that. `C6`, `RG6`, `16/4` and `22/4` **vary
+per drop**, they are facts the line actually stated, and `LR-C6-1` is a sentence an installer can
+act on with a label printer in one hand.
+
+**What it costs, stated plainly:** `{SERVICE}` now means *what this drop is for* when a template or
+modifier says so, and *what this drop is* when neither does. One token, two senses. The alternative
+readings each cost more: refusing costs the encouraged state, and a placeholder costs sixty
+identical labels on physical cable.
+
+**11.22.4 A media type with no `shortTag` is the one hole, and it refuses.** `shortTag` is nullable
+on `MediaTypeDef` (G4, CR-114) and all 38 seeded types carry one, but a **user-created** type from
+an RJ-009 CSV import may not. That drop reports `LabelTokensMissing(['SERVICE'])` through M3-D/1's
+existing outcome and is refused with a sentence naming the two fixes. It is not defaulted, and it
+is not given the raw media id: a label is printed on cable and `media.cat6` is not a label.
+
+**11.22.5 What this does not rule.** Whether `@service=` also sets the drop's `Service.signalFamily`
+is **not** settled here and is not the same question. docs/07 §4.1 backs the drop's Service column
+with the `structure.undetermined` family and §5.1 maps the CSV `service` column to a
+`SignalFamilyId`, while the token this ruling governs is a **label segment**. The two share a word
+and are different fields; `@service=camera` names no signal family, because there is none. Drops
+created by the loop take `structure.undetermined` until something assigns a real family, which is
+§4.1's retroactive-DRC path working as written. **A later ruling may connect them; this one keeps
+them apart deliberately, so that the label chain is not blocked on the taxonomy question.**
+
+**11.22.6 Scope.** **No scope change.** No task is added, moved or grown. This is the fallback
+policy #147 was told to decide, and #147's own description is unchanged by it.
+
+---
+
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-022 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-023 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -7958,7 +8025,7 @@ allowlist of pairs, an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-022 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-023 are the user's decisions and are binding. §12 is the complete
 index of what they supersede, §12.1…§12.5, §12.9, §12.11, §12.12 and §12.13 by ruling, §12.6 by
 internal correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **Two entries
 supersede another DR**: §12.12 (DR-018's reasoning as well as its ruling) and §12.13, which also
