@@ -78,6 +78,7 @@ final class Link {
     this.pathwayId,
     this.crossover,
     LifecycleStatus lifecycleStatus = LifecycleStatus.new_,
+    int? spliceCount,
     this.roughInStatus = RoughInStatus.planned,
     this.test,
     this.installedBy,
@@ -94,6 +95,7 @@ final class Link {
        _jacketColorId = jacketColorId,
        _jacketColorPulledId = jacketColorPulledId,
        _lifecycleStatus = lifecycleStatus,
+       _spliceCount = spliceCount,
        _notes = notes;
 
   final Uuid id;
@@ -223,6 +225,29 @@ final class Link {
   LifecycleStatus get lifecycleStatus => _lifecycleStatus;
   @internal
   set lifecycleStatus(LifecycleStatus v) => _lifecycleStatus = v;
+
+  /// How many splices are in this run (DR-020 §11.19.2(3)). Written
+  /// through `LinkField.spliceCount`.
+  ///
+  /// NULL IS UNKNOWN, `0` IS A CONFIRMED NONE (G4, CR-114), and a
+  /// non-nullable `int` defaulting to `0` is the whole failure this
+  /// nullability exists to prevent: it cannot tell "nobody has looked"
+  /// from "somebody looked and there are none". A splice count is a
+  /// number an installer acts on, so the two must stay apart.
+  ///
+  /// A REAL AS-BUILT FACT WITH REAL CONSEQUENCES, which is why DR-020
+  /// put it in v1 rather than deferring it: on Cat6 a splice breaks the
+  /// channel and fails certification, on coax it is loss, on fibre it is
+  /// normal and engineered. [notes] carries the why; this carries the
+  /// how many.
+  ///
+  /// NO RULE READS IT YET, and that is deliberate. Canon §5 is explicit
+  /// that a rule not listed does not exist, and DR-020 adds exactly one
+  /// rule to v1 (`LEN-002`, in M5). M3 is where the fact is entered.
+  int? _spliceCount;
+  int? get spliceCount => _spliceCount;
+  @internal
+  set spliceCount(int? v) => _spliceCount = v;
 
   // ACCESS CONTROL: fields below are plain mutable pending @internal
   // retrofit (AC-013). Converted as each is wired to a Command. See

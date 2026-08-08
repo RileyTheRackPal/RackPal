@@ -599,8 +599,26 @@ abstract final class LinkField {
     touches: EpochMask.wires | EpochMask.meta,
   );
 
+  /// How many splices are in this run (DR-020 §11.19.2(3), M3-J/2).
+  ///
+  /// `EntityField<Link, int?>` AND NOT `int`. Null is unknown and `0` is
+  /// a confirmed none (G4, CR-114), so clearing the cell has to be a
+  /// legal edit that lands as null rather than as zero. The generic
+  /// machinery already carries the nullable case for `Outlet.notes` and
+  /// `StructureOrigin.rackLabel`; this is the same contract on a number.
+  static final spliceCount = EntityField<Link, int?>(
+    access: EntityAccess.link,
+    key: 'spliceCount',
+    get: (l) => l.spliceCount,
+    set: (l, v) => l.spliceCount = v,
+    touches: EpochMask.wires | EpochMask.meta,
+  );
+
   /// See [OutletField.all].
-  static final List<EntityField<Link, Object?>> all = [lifecycleStatus];
+  static final List<EntityField<Link, Object?>> all = [
+    lifecycleStatus,
+    spliceCount,
+  ];
 }
 
 /// Every editable [Location] property except `parentId`.

@@ -1699,6 +1699,12 @@ JsonMap _encodeLink(Link l) {
   if (l.crossover != null) json['crossover'] = encodeEnumName(l.crossover!);
   if (l.test != null) json['test'] = _encodeTestResult(l.test!);
   putIfNotNull(json, 'installedBy', l.installedBy);
+  // ADDITIVE, and `0` MUST STILL WRITE. `putIfNotNull` tests the value
+  // against null rather than against falsiness, so a confirmed count of
+  // none reaches disk as `"spliceCount": 0` and an unlooked-at run has
+  // no key at all — which is the entire distinction DR-020 sect 11.19.2(3)
+  // asked for. Absent means unknown; it never means zero.
+  putIfNotNull(json, 'spliceCount', l.spliceCount);
   if (l.terminatedAt != null) {
     json['terminatedAt'] = encodeDateTime(l.terminatedAt!);
   }
@@ -1799,6 +1805,7 @@ Link _decodeLink(Uuid id, JsonMap json) => Link(
   ),
   test: decodeNullableObject(json, 'test', 'Link.test', _decodeTestResult),
   installedBy: asStrOrNull(json['installedBy'], 'Link.installedBy'),
+  spliceCount: asIntOrNull(json['spliceCount'], 'Link.spliceCount'),
   terminatedAt: json['terminatedAt'] == null
       ? null
       : decodeDateTime(asStr(json['terminatedAt'], 'Link.terminatedAt')),

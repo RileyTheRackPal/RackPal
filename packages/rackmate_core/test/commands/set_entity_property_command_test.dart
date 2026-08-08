@@ -800,6 +800,134 @@ void main() {
     });
   });
 
+  group('Link.spliceCount — null is unknown, 0 is none (M3-J/2)', () {
+    // DR-020 §11.19.2(3). A splice is a real as-built fact with real
+    // consequences: on Cat6 it breaks the channel and fails
+    // certification, on coax it is loss, on fibre it is normal and
+    // engineered. The whole reason it is `int?` is that a non-nullable
+    // `int` defaulting to 0 cannot tell "nobody has looked" from
+    // "somebody looked and there are none".
+
+    ({RackDocument doc, Uuid linkId}) seeded() {
+      final p = _project();
+      return (doc: p.doc, linkId: p.linkId);
+    }
+
+    void setSplices(RackDocument doc, Uuid linkId, int? to) {
+      buildSetEntityProperty(
+        doc: doc,
+        id: linkId,
+        field: LinkField.spliceCount,
+        to: to,
+        now: _later,
+        actor: 'tester',
+      )!.apply(doc);
+    }
+
+    test('a new run has NOT been looked at', () {
+      final p = seeded();
+      expect(p.doc.links[p.linkId]!.spliceCount, isNull);
+    });
+
+    test('a confirmed none is 0 and survives the round trip AS 0', () {
+      // The case a falsy-write codec would destroy. `0` is a measurement:
+      // somebody opened the ceiling and counted.
+      final p = seeded();
+      setSplices(p.doc, p.linkId, 0);
+
+      final read = _codec.read(_codec.write(p.doc));
+      final link = (read as Ok<RackDocument>).value.links[p.linkId]!;
+      expect(link.spliceCount, 0);
+      expect(link.spliceCount, isNotNull);
+    });
+
+    test('and UNKNOWN is an absent key, never an explicit null', () {
+      // G4's serialization rule (CR-114), asserted on the wire rather
+      // than on the model, because the model cannot tell the two apart.
+      final p = seeded();
+      final tree = _codec.encodeToJsonTree(p.doc);
+      final links =
+          (tree['document']! as Map<String, Object?>)['links']!
+              as Map<String, Object?>;
+      final link = links[p.linkId.v]! as Map<String, Object?>;
+
+      expect(link.containsKey('spliceCount'), isFalse);
+    });
+
+    test('a confirmed none WRITES the key, which is the whole point', () {
+      final p = seeded();
+      setSplices(p.doc, p.linkId, 0);
+
+      final tree = _codec.encodeToJsonTree(p.doc);
+      final links =
+          (tree['document']! as Map<String, Object?>)['links']!
+              as Map<String, Object?>;
+      final link = links[p.linkId.v]! as Map<String, Object?>;
+
+      expect(link['spliceCount'], 0);
+    });
+
+    test('clearing the cell goes back to UNKNOWN, not to zero', () {
+      // An installer who typed a number into the wrong row must be able
+      // to take the claim back, not merely correct it to "none".
+      final p = seeded();
+      setSplices(p.doc, p.linkId, 2);
+      expect(p.doc.links[p.linkId]!.spliceCount, 2);
+
+      setSplices(p.doc, p.linkId, null);
+      expect(p.doc.links[p.linkId]!.spliceCount, isNull);
+    });
+
+    test('the edit round-trips byte-identically on revert (CR-117)', () {
+      final p = seeded();
+      final before = _codec.write(p.doc);
+      final cmd = buildSetEntityProperty(
+        doc: p.doc,
+        id: p.linkId,
+        field: LinkField.spliceCount,
+        to: 3,
+        now: _later,
+        actor: 'tester',
+      )!..apply(p.doc);
+      expect(_codec.write(p.doc), isNot(orderedEquals(before)));
+
+      cmd.revert(p.doc);
+      expect(_codec.write(p.doc), orderedEquals(before));
+    });
+
+    test('it declares wires and meta, like every other Link field', () {
+      // A splice count reaches paper through the schedule, so the
+      // schematic canvas and the sheet both have to see the epoch move.
+      expect(LinkField.spliceCount.touches.has(EpochMask.wires), isTrue);
+      expect(LinkField.spliceCount.touches.has(EpochMask.meta), isTrue);
+    });
+
+    test('and it never merges with the lifecycle edit beside it', () {
+      // Coalescing is per property, per entity: an undo that took back a
+      // splice count AND a lifecycle change would describe neither.
+      final p = seeded();
+      final splice = buildSetEntityProperty(
+        doc: p.doc,
+        id: p.linkId,
+        field: LinkField.spliceCount,
+        to: 1,
+        now: _later,
+        actor: 'tester',
+      )!;
+      final lifecycle = buildSetEntityProperty(
+        doc: p.doc,
+        id: p.linkId,
+        field: LinkField.lifecycleStatus,
+        to: LifecycleStatus.existing,
+        now: _later,
+        actor: 'tester',
+      )!;
+
+      expect(splice.mergeWith(lifecycle), isNull);
+      expect(splice.mergeKey == lifecycle.mergeKey, isFalse);
+    });
+  });
+
   group('the retrofit and the tables agree (AC-013)', () {
     // The task's claim is that wiring a field to a Command IS the
     // `@internal` retrofit. These two cases are what make that a fact
