@@ -88,7 +88,7 @@ built"*. That is still literally true, `apps/rackmate/test/session/session_layer
 RULE 14 asserts `isNot(contains('SingleActivator('))` against `app_shell.dart` alone, and
 `packages/rackmate_ui/test/keymap/keymap_arbitration_test.dart` arbitrates the registry's CONTENT
 without ever reading `rackmate_ui/lib` for literals. Meanwhile **M2-F added nine schematic rows**
-(`kKeymap` is 44 rows now, was 35), every one of them in the ungated package.
+(`kKeymap` stood at 44 rows then, up from 35), every one in the ungated package.
 
 So §3.5's warning, *"the largest remaining binding surface in v1, in the ungated package; if D7
 regresses anywhere, here"*, has had one milestone slice's worth of practice run against it with
@@ -222,7 +222,7 @@ seam that already has a working Windows implementation M3 extends rather than wa
 |---|---|---|
 | **M3-A** Outlet / structureOrigin / endpoint kinds in UI | **touches D7** | New bindings must be `kKeymap` rows; §3.1's hole is the exposure |
 | **M3-B** Locations panel (CR-112) | none | Pure model + Flutter UI |
-| **M3-C** Structure editor | **touches D7** | The **largest remaining binding surface in v1**, in the ungated package. If D7 regresses anywhere, here |
+| **M3-C** Structure editor | **touches D7** | The **largest remaining binding surface in v1**, in the ungated package. If D7 regresses anywhere, here. **M3-C/2 landed 2026-08-08 and added two rows**, `Ctrl+D` and `Ctrl+V` in a new `KeyScope.structure`, both through `kKeymap` with the gate watching. The forecast said largest; the outcome was two, because every editable cell is a real focusable control and tab order is therefore the framework's, not a binding |
 | **M3-D** dual labels, lengths, footage rollup | none | Grows neither D9 (see the D9 row) nor the cross-platform question (see §2's correction). It **does** straddle M6, the Pull Sheet role is assigned to M6 by `sheet_def.dart:15-20` while M3's exit criterion demands exporting it. Not macOS debt; recorded so M3-D is not scoped from its one-line description |
 | **M3-E** Pathway, multiple Structure instances | none | |
 | **M3-F** CSV import | **GROWS D2: the only growth in M3** | `pickOpen` already exists (`file_picker.dart:156`), so nothing is blocked. What is missing is a **file-type filter** anywhere in the stack, see **D13**. Hours on top of D2's days, once, and then it is done. **Not the D7 case**, which grew ~95% in a day because every commit added bindings |

@@ -539,20 +539,20 @@ final class AppServices {
       // 8 -> 7 at M3-C/2, AND THIS IS THE FIRST TIME THIS NUMBER HAS GONE
       // DOWN. #148 built that editor, so the two lodgers left as both
       // their own doc comments promised and one `Project ▸ Structure…`
-      // stands where they were. Quick add is now the bar across the top
-      // of the drop table and `Add outlet` the button beneath it, which
-      // is where docs/07 §4 draws each. The accelerator count did not
-      // move a fourth time, for the reason it has not moved three times
-      // already: a surface opened from a menu once per session does not
-      // pay for a row in `kKeymap`, M7's generated table and
-      // `arbitrate()`'s conflict checks on every platform.
+      // stands where they were, under CR-110's own name. Quick add is
+      // now the bar across the top of the drop table and `Add outlet`
+      // the button beneath it, which is where §4 draws each. The
+      // accelerator count did not move a fourth time, for the reason it
+      // has not moved three times already: a surface opened from a menu
+      // once per session does not pay for a row in `kKeymap`, M7's
+      // generated table and `arbitrate()`'s conflict checks everywhere.
       [7, 4],
       reason:
           'five File-menu items — New, Open…, Save, Save As…, Export PDF… '
-          '— plus Project ▸ Locations… and Structure…, and four '
+          '— plus Project ▸ Locations… and Structured wiring…, and four '
           'accelerators, because none of Export PDF, Locations or '
-          'Structure has one. docs/08 §8.1 gives export Ctrl+P; the '
-          'dialog is not built and neither is the binding. The two '
+          'Structured wiring has one. docs/08 §8.1 gives export Ctrl+P; '
+          'the dialog is not built and neither is the binding. The two '
           'Project items open panels and do not earn a row in kKeymap, '
           "M7's table and arbitration across every platform.",
     );

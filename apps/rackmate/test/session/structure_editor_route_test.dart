@@ -1,5 +1,5 @@
-// M3-C/2, #148 — `Project ▸ Structure…` reaches the editor, and what is
-// typed into it lands in the real document.
+// M3-C/2, #148 — `Project ▸ Structured wiring…` reaches the editor, and
+// what is typed into it lands in the real document.
 //
 // WHY THIS FILE EXISTS SEPARATELY FROM THE WIDGET TESTS. Those drive
 // `StructureEditorScreen` against a harness that stands in for the app.
@@ -84,11 +84,11 @@ void main() {
   Future<void> openEditor(WidgetTester tester) async {
     await tester.tap(find.text('Project'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Structure…'));
+    await tester.tap(find.text('Structured wiring…'));
     await tester.pumpAndSettle();
   }
 
-  testWidgets('Project ▸ Structure… opens the editor (AC-048)', (
+  testWidgets('Project ▸ Structured wiring… opens the editor (AC-048)', (
     tester,
   ) async {
     final built = await buildTestApp(measurer, document: _project());
@@ -112,7 +112,9 @@ void main() {
     await tester.tap(find.text('Project'));
     await tester.pumpAndSettle();
     expect(find.text('Locations…'), findsOneWidget);
-    expect(find.text('Structure…'), findsOneWidget);
+    // CR-110'S OWN WORDS. The ruling names this item, and a menu that
+    // paraphrases a ruling is a menu the corpus cannot be searched for.
+    expect(find.text('Structured wiring…'), findsOneWidget);
     expect(find.text('Add drops…'), findsNothing);
     expect(find.text('Add outlet…'), findsNothing);
   });

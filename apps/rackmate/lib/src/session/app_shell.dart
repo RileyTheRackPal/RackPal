@@ -691,7 +691,14 @@ final class AppShellState extends State<AppShell>
     );
   }
 
-  /// `Project ▸ Structure…` — docs/07 §4's editor (M3-C/2, AC-048).
+  /// `Project ▸ Structured wiring…` — docs/07 §4's editor (M3-C/2,
+  /// AC-048).
+  ///
+  /// THE LABEL IS CR-110'S OWN WORDS, not a paraphrase. That ruling says
+  /// a `StructureBody` is created from `Project ▸ Structured wiring…` and
+  /// docs/02 §6 and docs/07 §3 both repeat it; this shipped as
+  /// `Structure…` for one commit and was corrected by reading the ruling
+  /// rather than the neighbouring code.
   ///
   /// IT REPLACES TWO MENU ITEMS RATHER THAN JOINING THEM. `Add drops…`
   /// (M3-C/1) and `Add outlet…` (M3-C/5) each shipped with a comment
@@ -958,7 +965,7 @@ final class _ProjectMenu extends StatelessWidget {
           // comments; the editor they were waiting for now holds both.
           MenuItemButton(
             onPressed: onStructure,
-            child: const Text('Structure…'),
+            child: const Text('Structured wiring…'),
           ),
         ],
         child: const Text('Project'),

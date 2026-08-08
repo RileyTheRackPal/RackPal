@@ -1349,7 +1349,103 @@ there with the ruling's own framing on both sides, so it is decided rather than 
 *What M3-J is blocked on, stated so the order is not re-derived.* **M3-J/3 needs #148.** DR-020
 §11.19.5 says twice that the tally is *"a column on a table the milestone already builds, not a new
 screen"*, and that is why M3 stayed `M` when the ruling grew it. M3-J/2 (`Link.spliceCount`) and
-M3-J/4 are unblocked and can land in any order.
+M3-J/4 are unblocked and can land in any order. **#148 closed on 2026-08-08, so M3-J/3 is
+unblocked**: the table it needs a column on is built, and `StructureColumnId` plus
+`kStructureOptionalColumns` are where that column goes.
+
+**M3-C/2 (#148) closed across five commits, and the design finding is that the table is a
+projection.** docs/07 §4.1's eight default columns, FIELD LABEL through ROUGH-IN, are **all already
+on `ScheduleEntry`**, resolved, with the registry lookups done and the unknowns counted. So
+`derived/structure_table.dart` filters and regroups rather than re-deriving, and `structureCell`
+delegates to `ScheduleEntry.cell` for six of the eight. A second derivation is exactly what CR-107
+deleted `StructureDrop` for, and the editor is the surface people trust most because they are typing
+into it: *"the drop schedule says 78 ft and the wiring schedule says 90 ft, and nobody knows which
+to bill against"*, one layer up. The widget test does not look for `LR-C6-1`; it walks every default
+column of every row, asks core what the cell says, and requires that string on screen.
+
+*What the table adds that the sheet does not have.* The room order is the **location tree's** rather
+than the sheet's sort, because §4 draws the two side by side and two panels disagreeing about which
+room is third is the defect nobody reports and everybody distrusts. The per-room and total counts
+the status bar prints. And no preset and no filter in the derivation: an editor that hid a row would
+let somebody delete a room's last drop and see nothing change.
+
+*One design bug, caught by its own test.* `spareCount` was written as `dropCount - connectedCount`,
+which makes `hasUnresolvedEnds` **arithmetically impossible to trip**: a `PortEndpoint` naming a
+port nobody holds would have been reported as an ordinary spare drop, silently. Spare is counted
+from the ends now, `unresolvedPort` is neither connected nor spare, and the status bar's own
+arithmetic exposes the fault.
+
+*§4.1's `conduit` column landed as `PATHWAY KIND`, and the rename is a finding rather than a
+preference.* CR-016 made the conduit a first-class `Pathway`, so *"which conduit"* is already the
+default `PATHWAY` column; a second column naming the same thing would undo RJ-004's demotion by
+accident. What is genuinely invisible without it is the **kind**, which is what `CODE-001` reads.
+Two other items on §4.1's optional list are deliberately absent and say so in the source: the
+`unknown`-map columns a CSV import preserves, because there is no importer yet and a menu entry for
+a column that can never hold a value is a promise about an unbuilt feature, and reel ID, cut
+outright by RJ-004.
+
+*What the §4 wireframe draws and the editor does not.* `shell_tabs_test.dart` proves no surface
+*"fabricates a device, a port label or a control that does nothing"*, and a new surface meets that
+for free by not drawing the control. **No tab strip**: the matrix is #149 and `[Outlets]` and
+`[Pathways]` are later, and a strip whose three other tabs open nothing is `UnbuiltView` in a new
+hat. AC-048 asks that the editor **open in table mode**, which one surface satisfies outright. No
+`[Group into pathway]`, `[Renumber…]`, `[Import CSV…]`, `[Export CSV]` and no `Labels:` profile
+pickers. A test asserts each of those six labels is absent, so the day one is built the test says
+the other five still are not.
+
+*The route replaced two menu items rather than joining them.* `Project ▸ Add drops…` (M3-C/1) and
+`Add outlet…` (M3-C/5) each shipped with a doc comment saying it sat on that menu only until this
+editor existed. Both are gone; `Project ▸ Structured wiring…` stands where they were, under the
+name CR-110 gives it. Quick add is the bar across the top of the table and `Add outlet` the
+button beneath it, which is where §4 draws each. RULE 14's menu-item pin goes **8 → 7, the first
+time that number has ever gone down**, and the accelerator count did not move a fourth time.
+
+*And the route test found a defect in M3-C/1's loop.* On a blank project the quick-add bar offers to
+create the Structure device on `Enter`, keeps the line, and lets the same key commit it. **The
+second press created a second Structure device.** `_plan` is computed from a document that the offer
+arms mutate, and `didUpdateWidget` cannot notice, because commands mutate `RackDocument` **in
+place** and the reference stays `identical`. The commit arm was safe by accident: it clears the
+field, and clearing fires the text listener. It survived M3-C/1 because every test there started
+from a project that already had a Structure body, which a real new project does not, so the first
+thing a new user does was the one path nothing drove.
+
+*Inline editing is four columns, and the other sixteen are named rather than forgotten.*
+`structureColumnIsEditable` says which four have a `Command` to write through today, and groups the
+rest by what each would need: a picker for the columns that name registry entries, a unit parser for
+the three lengths, a colour control for the jacket pair. A text box that silently accepted `Cat6a`
+into a `MediaTypeId` would be worse than a cell that cannot be typed into. `Link.roughInStatus` took
+the AC-013 retrofit on the way, which is what wiring a field to a Command **is**.
+
+*An editable cell is always the real control, and that is what buys the tab order.* A widget that
+exists only once clicked is not in the focus tree, so `Tab` cannot reach it. Rendering the input
+always makes tab order the widget order, which is why #148's three-item list, *"fill-down, tab
+order, paste"*, produced **two** keymap rows and not three: a `Tab` row would shadow a framework
+default to reimplement what it already does correctly.
+
+*The two that are keys landed in a fifth scope.* `KeyScope.structure` holds `Ctrl+D` and `Ctrl+V`,
+both acting on the focused cell, because neither has an honest answer outside a grid and a global
+row would have to decline everywhere else. The arbitration test's counts move **48 → 50**. docs/13
+§3.5 called M3-C *"the largest remaining binding surface in v1, in the ungated package; if D7
+regresses anywhere, here"*; the gate landed before the task, and the surface added two rows.
+
+*Filling a rack label down is refused, and that is the feature.* Rack labels are unique where set
+(CR-113), so a fill would put two rows on one panel position. The refusal comes from the same
+builder a typed cell goes through, which is why `onEdit` takes a **list** of edits rather than
+writing values itself: `buildSetStructureOriginProperty`'s `alsoUsedLabels` is the only thing that
+can see a batch colliding with itself, and a batch checked one edit at a time against an unmutated
+document cannot. A paste taller than the table is refused whole for the neighbouring reason: pasting
+does not create drops, and ten clipboard rows into the last three would invent seven cables each
+needing a room, a media type and a label nobody chose.
+
+*Two test findings worth keeping.* `doc.links.values` is map insertion order and does **not** match
+the table's, which sorts by `Link.order` then id, so every *"the row above"* assertion reads its
+order off `buildStructureTable`; reading it anywhere else was testing a different table. And
+building a `StructureOrigin` command through `buildSetStructureOriginProperty<Object?>` **compiles
+and then throws at apply time**, with `(Link, String) => void is not a subtype of (Link, Object?)
+=> void`, because `EntityField.set` is a typed closure, so each column names its concrete type.
+
+*Closed at `b0ab0d7` (the row model), `80778b0` (the columns), `6c839bf` (the surface), `9bee69c`
+(the route and the loop fix), `d302c7e` (inline editing) and `02c540e` (fill-down and paste).*
 
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 

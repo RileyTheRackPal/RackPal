@@ -110,6 +110,8 @@ Four regions. **Left** is the location tree, shown read-only with an inline "edi
 
 Default columns are the ones a person needs to answer "what am I pulling and where does it land": field label, rack label, outlet, media, service, pathway, rack termination, rough-in status. **Optional columns**, off by default, added from `⚙ Columns`: jacket rating, jacket colour (convention), **jacket colour pulled** (the exception), conduit, `routedLength` / `cutLength` / `terminatedLength`, field termination, test result and certificate ID, installed by, notes, and any `unknown`-map columns preserved from a CSV import. Jacket colour and conduit were demoted from default to optional and reel ID was cut entirely (RJ-004).
 
+**`conduit` ships as `PATHWAY KIND`, and the rename is a finding rather than a preference** (M3-C/2). CR-016 made the conduit a first-class `Pathway`, so "which conduit" is already the *default* `PATHWAY` column; a second column naming the same thing would undo RJ-004's demotion by accident. What is genuinely invisible without it is the **kind**, whether `PW-LR-1` is conduit, J-hook or tray, which is what `CODE-001` reads. The `unknown`-map columns are likewise **not offered yet**: there is no CSV importer (§5), so there is no unknown map to preserve, and a menu entry for a column that can never hold a value is a promise about an unbuilt feature. Both absences are named in `derived/structure_table.dart` beside the list they are absent from.
+
 Jacket colour is **two optional columns, not one**, because it is two facts.
 `Link.jacketColorId` says what the run IS (a control drop) and drives the
 keystone; `Link.jacketColorPulledId` says what was actually pulled and is set
