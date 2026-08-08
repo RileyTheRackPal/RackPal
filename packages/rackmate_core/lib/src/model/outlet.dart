@@ -150,6 +150,7 @@ final class OutletTemplate {
     required this.id,
     required this.name,
     this.tag,
+    this.tia570Grade,
     List<OutletDrop>? drops,
   }) : drops = drops ?? [];
 
@@ -178,6 +179,28 @@ final class OutletTemplate {
   /// shipped starters and in every document ever written, so a key added
   /// to an entity with zero instances everywhere costs no file a byte.
   String? tag;
+
+  /// The standards citation this template stamps on every `Outlet` it
+  /// creates — `"TIA-570-D Grade 2"` (DR-024 §11.23.2).
+  ///
+  /// A FIELD, NOT A SPECIAL CASE ON THE THREE SEEDED IDS. Keying the
+  /// stamp to `outlet.tia570d_grade1..3` needs no model change and works
+  /// for exactly the three presets this repository ships, which is the
+  /// opposite of what CR-108 ruled: user-defined templates are
+  /// first-class, so a shop authoring its own Grade 2, or one citing a
+  /// builder's spec rather than TIA's, would stamp nothing. It would
+  /// also make an id rename a silent behaviour change.
+  ///
+  /// A CITATION, NOT A SUGGESTION, and that is why it is a free `String`
+  /// rather than an enum. CR-108 deleted `StructureGrade` and kept
+  /// `Outlet.tia570Grade: String?` as a **tag for specs that cite one**;
+  /// this field is the same string, carried one level up so the gesture
+  /// that creates the outlet has something to copy.
+  ///
+  /// NULL ON THE SIX NAMED TEMPLATES, and that is G4 rather than a gap:
+  /// *TV location* makes no standards claim, and writing one would put a
+  /// citation in a document nobody made.
+  String? tia570Grade;
 
   List<OutletDrop> drops;
 }

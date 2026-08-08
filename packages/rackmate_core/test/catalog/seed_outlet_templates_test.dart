@@ -116,6 +116,34 @@ void main() {
       expect(tags.toSet(), hasLength(tags.length));
     });
 
+    test('THE THREE GRADES CARRY THE CITATION THEY EXIST FOR', () {
+      // DR-024 §11.23.2. The string is the one the whole-house fixture
+      // already sets by hand on an outlet, so the two agree rather than
+      // spelling the same standard two ways — `Outlet.tia570Grade` is a
+      // free `String?` (CR-108 deleted the enum), which makes a
+      // divergent spelling possible and silent.
+      expect(
+        seeded['outlet.tia570d_grade2']!.tia570Grade,
+        'TIA-570-D Grade 2',
+      );
+      expect(
+        seeded['outlet.tia570d_grade1']!.tia570Grade,
+        'TIA-570-D Grade 1',
+      );
+      expect(
+        seeded['outlet.tia570d_grade3']!.tia570Grade,
+        'TIA-570-D Grade 3',
+      );
+    });
+
+    test('and the six named templates cite NO standard', () {
+      // G4: *TV location* makes no standards claim. Writing one would
+      // put a citation in a document nobody made.
+      for (final id in _workedLabels.values) {
+        expect(seeded[id]!.tia570Grade, isNull, reason: id);
+      }
+    });
+
     test('THE THREE GRADES CARRY NO TAG, and that is G4', () {
       // No label in the corpus renders a grade, so there is no attested
       // word. Null is unknown (CR-114) and DR-023 falls through to the
@@ -293,6 +321,26 @@ void main() {
 
       final tv = templates['outlet.tv_location']! as Map<String, Object?>;
       expect(tv['tag'], 'TV');
+    });
+
+    test('and a template that cites no standard writes NO grade key', () {
+      // DR-024 §11.23.2's CR-117 argument, at the artifact. Nine
+      // templates have shipped since M3-C/4, so a document written in
+      // that window carries the three grade entries with no
+      // `tia570Grade`; the round trip holds only because reading yields
+      // null and writing omits the key.
+      final tree = const JsonDocumentCodec().encodeToJsonTree(_docWith(seeded));
+      final templates =
+          ((tree['document']! as Map<String, Object?>)['registries']!
+                  as Map<String, Object?>)['outletTemplates']!
+              as Map<String, Object?>;
+
+      final tv = templates['outlet.tv_location']! as Map<String, Object?>;
+      expect(tv.containsKey('tia570Grade'), isFalse);
+
+      final grade2 =
+          templates['outlet.tia570d_grade2']! as Map<String, Object?>;
+      expect(grade2['tia570Grade'], 'TIA-570-D Grade 2');
     });
   });
 }

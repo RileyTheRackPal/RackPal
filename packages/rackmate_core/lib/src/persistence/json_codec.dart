@@ -2466,6 +2466,12 @@ JsonMap _encodeOutletTemplate(OutletTemplate t) {
   // contract and DR-022 §11.21.4's "not a migration" claim, which holds
   // only if the key stays absent on a template that has no tag.
   putIfNotNull(json, 'tag', t.tag);
+  // Same contract, DR-024 §11.23.2. It matters more here than for `tag`,
+  // because nine templates have SHIPPED since M3-C/4: a document written
+  // in that window carries the three grade entries with no
+  // `tia570Grade`, and CR-117 holds only because reading yields null and
+  // writing omits the key. The six named templates never write it.
+  putIfNotNull(json, 'tia570Grade', t.tia570Grade);
   return json;
 }
 
@@ -2473,6 +2479,7 @@ OutletTemplate _decodeOutletTemplate(String id, JsonMap json) => OutletTemplate(
   id: id,
   name: asStr(json['name'], 'OutletTemplate.name'),
   tag: asStrOrNull(json['tag'], 'OutletTemplate.tag'),
+  tia570Grade: asStrOrNull(json['tia570Grade'], 'OutletTemplate.tia570Grade'),
   drops: decodeObjectList(
     json['drops'],
     'OutletTemplate.drops',

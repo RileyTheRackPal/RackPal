@@ -129,21 +129,24 @@
 // ═════════════════════════════════════════════════════════════════════
 // WHAT IS DELIBERATELY ABSENT, SO IT READS AS A GAP AND NOT AN OVERSIGHT
 // ═════════════════════════════════════════════════════════════════════
-//  * NO `tia570Grade` ON THE TEMPLATE. `Outlet.tia570Grade` is a
-//    `String?` standards tag (CR-108) and the whole-house fixture sets
-//    it by hand to `'TIA-570-D Grade 2'`. A grade PRESET therefore
-//    cannot stamp the very tag it exists to carry, because
-//    `OutletTemplate` has no field for it. Owed, and named here so the
-//    three ids below are findable when it lands.
 //  * NO LOCATION-FIELD REQUIREMENTS. AC-034/m24 makes the template drive
 //    which fields the inspector demands — `mountSurface: ceiling` for a
 //    speaker pair, never a wall compass direction. That is a UI contract
 //    with no model field today.
-//  * NO INSTANTIATING BUILDER. `+ Add outlet ▾` turning a template into
-//    one `Outlet` and N `Link`s is the Structure editor's, not this
-//    file's. This ships the master; the gesture is separate.
+//  * NO LIBRARY FLOW. CR-108 makes user-defined templates first-class and
+//    the registries are ordinary editable stored data after the seed copy
+//    (docs/03 §5.6), but which surface edits them is unsettled (DR-024
+//    §11.23.4). This ships the master, not an editor for it.
 //  * `Registries.cableSpecs` STAYS EMPTY. Still out of DR-010's scope,
 //    and still nothing to transcribe.
+//
+// `tia570Grade` WAS ON THIS LIST AND IS NOT ANY MORE. M3-C/4 shipped the
+// three grade presets with no way to stamp the very tag they exist to
+// carry, because `OutletTemplate` had no field for it; DR-024 §11.23.2
+// added one, and the three below now carry the same string the
+// whole-house fixture sets by hand, `'TIA-570-D Grade 2'`. The six named
+// templates leave it null, because *TV location* cites no standard and
+// writing one would put a citation in a document nobody made.
 
 import 'package:rackmate_core/src/model/outlet.dart';
 import 'package:rackmate_core/src/units/ids.dart';
@@ -156,12 +159,21 @@ OutletDrop _drop(String media, String service, [int count = 1]) =>
 
 /// One shipped template. [tag] is the `{SERVICE}` segment DR-022 ruled
 /// on; null means UNKNOWN and falls through to DR-023's step 3.
+/// [grade] is the standards citation stamped on every outlet the
+/// template creates (DR-024), null on the six that make no such claim.
 OutletTemplate _template(
   String id,
   String name,
   String? tag,
-  List<OutletDrop> drops,
-) => OutletTemplate(id: id, name: name, tag: tag, drops: drops);
+  List<OutletDrop> drops, {
+  String? grade,
+}) => OutletTemplate(
+  id: id,
+  name: name,
+  tag: tag,
+  tia570Grade: grade,
+  drops: drops,
+);
 
 const String _cat6 = 'media.cat6';
 const String _cat6a = 'media.cat6a_futp';
@@ -208,23 +220,35 @@ Map<String, OutletTemplate> buildSeedOutletTemplates() {
     // Grade 2 mark fibre "optional", and a preset that ships an optional
     // item asserts it on every outlet created from it. Grade 3 marks it
     // **required**, so it is there.
-    _template('outlet.tia570d_grade1', 'TIA-570-D Grade 1', null, [
-      _drop(_cat6a, _ethernet),
-      _drop(_rg6q, _catv),
-    ]),
-    _template('outlet.tia570d_grade2', 'TIA-570-D Grade 2', null, [
-      _drop(_cat6a, _ethernet, 2),
-      _drop(_rg6q, _catv, 2),
-    ]),
-    _template('outlet.tia570d_grade3', 'TIA-570-D Grade 3', null, [
-      _drop(_cat6, _ethernet, 2),
-      _drop(_rg6q, _catv),
-      // "2-fibre" is two strands in ONE jacket, pulled once, so it is
-      // one drop and not two: `Link` is the cable (CR-107, "one cable,
-      // one row, one length, one certificate"), and strand count lives
-      // on `Conductor` the way the speaker pair's does.
-      _drop('media.os2', 'net.fiber_sm'),
-    ]),
+    _template(
+      'outlet.tia570d_grade1',
+      'TIA-570-D Grade 1',
+      null,
+      [_drop(_cat6a, _ethernet), _drop(_rg6q, _catv)],
+      grade: 'TIA-570-D Grade 1',
+    ),
+    _template(
+      'outlet.tia570d_grade2',
+      'TIA-570-D Grade 2',
+      null,
+      [_drop(_cat6a, _ethernet, 2), _drop(_rg6q, _catv, 2)],
+      grade: 'TIA-570-D Grade 2',
+    ),
+    _template(
+      'outlet.tia570d_grade3',
+      'TIA-570-D Grade 3',
+      null,
+      [
+        _drop(_cat6, _ethernet, 2),
+        _drop(_rg6q, _catv),
+        // "2-fibre" is two strands in ONE jacket, pulled once, so it is
+        // one drop and not two: `Link` is the cable (CR-107, "one cable,
+        // one row, one length, one certificate"), and strand count lives
+        // on `Conductor` the way the speaker pair's does.
+        _drop('media.os2', 'net.fiber_sm'),
+      ],
+      grade: 'TIA-570-D Grade 3',
+    ),
   ];
   return {for (final t in all) t.id: t};
 }

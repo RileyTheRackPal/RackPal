@@ -5313,7 +5313,8 @@
             }
           ],
           "id": "outlet.tia570d_grade1",
-          "name": "TIA-570-D Grade 1"
+          "name": "TIA-570-D Grade 1",
+          "tia570Grade": "TIA-570-D Grade 1"
         },
         "outlet.tia570d_grade2": {
           "drops": [
@@ -5329,7 +5330,8 @@
             }
           ],
           "id": "outlet.tia570d_grade2",
-          "name": "TIA-570-D Grade 2"
+          "name": "TIA-570-D Grade 2",
+          "tia570Grade": "TIA-570-D Grade 2"
         },
         "outlet.tia570d_grade3": {
           "drops": [
@@ -5350,7 +5352,8 @@
             }
           ],
           "id": "outlet.tia570d_grade3",
-          "name": "TIA-570-D Grade 3"
+          "name": "TIA-570-D Grade 3",
+          "tia570Grade": "TIA-570-D Grade 3"
         },
         "outlet.tv_location": {
           "drops": [
