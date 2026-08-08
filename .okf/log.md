@@ -1,5 +1,25 @@
 # Update Log
 
+## 2026-08-08
+
+* **Creation**: [DR-024, board #151 is a field and a
+  picker](/decisions/dr-024-board-151-is-a-field-and-a-picker.md). #150
+  seeded the nine outlet templates and in doing so closed over half of #151,
+  without either task being wrong. The three TIA-570-D presets were #151's
+  data half and they shipped.
+* **Note**: **a task can be half-closed by a neighbour, and saying so is
+  cheaper than discovering it.** #151 read "TIA-570-D presets" and its
+  remaining work is a model field and a gesture. Left alone it would have
+  been opened, found two-thirds done, and re-scoped in the dark.
+* **Note**: **the special case was rejected on CR-108's own property.**
+  Keying the grade stamp to the ids `outlet.tia570d_grade1..3` needs no model
+  change and works for exactly the three templates the repository ships,
+  which is the opposite of what CR-108 ruled: user-defined templates are
+  first-class. A shop's own preset would stamp nothing.
+* **Note**: `+ Add outlet ▾` is the **first caller of DR-023 step 2**. The
+  chain's middle arm has been unreachable since it was ruled, because
+  nothing in the product creates an `Outlet` *from* a template.
+
 ## 2026-08-07 (later still)
 
 * **Creation**: [DR-023, the `{SERVICE}` fallback

@@ -16,6 +16,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-021, deleting a Location cascades](dr-021-location-delete-cascades.md) - the subtree goes and nine references are cleared to null, not left dangling; two of the nine were found by censusing the field rather than grepping its name.
 * [DR-022, {SERVICE} is the outlet template's tag](dr-022-service-token-is-the-template-tag.md) - the shipped label preset throws on the rough-in drop the product most encourages; the corpus's own examples name the source.
 * [DR-023, the {SERVICE} fallback chain](dr-023-service-fallback-chain.md) - modifier, then template tag, then the media's short tag; three steps and no placeholder, because a fourth would print one word on sixty cables.
+* [DR-024, board #151 is a field and a picker](dr-024-board-151-is-a-field-and-a-picker.md) - its data half shipped with #150's seed; what is left is the field that lets a preset stamp its own standards tag, and the gesture that places it.
 
 # Not yet written up
 

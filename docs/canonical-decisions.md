@@ -7496,7 +7496,7 @@ CR-045 forbids building them by concatenation. #150 grows by one model field.
 
 ---
 
-## 11.22 DR-023 · The `{SERVICE}` fallback chain, and what a line with no service is called
+### 11.22 DR-023 · The `{SERVICE}` fallback chain, and what a line with no service is called
 
 **Settled by the user on 2026-08-07**, answering the question DR-022 §11.21.6 explicitly left to
 M3-C/1 (board #147): *"which of the two wins, and what happens when neither is supplied"*. DR-022
@@ -7578,9 +7578,69 @@ policy #147 was told to decide, and #147's own description is unchanged by it.
 
 ---
 
+### 11.23 DR-024 · Board #151 is a model field and a picker; its data half already shipped
+
+**Settled by the user on 2026-08-08**, after M3-C/4 (#150) closed at `5abb8b3`. #151 is *"TIA-570-D
+presets"*, and #150 shipped the three presets as part of seeding the nine outlet templates. What
+was left was neither presets nor data, so the task is re-scoped rather than left to be discovered
+half-done.
+
+**11.23.1 What #150 already delivered against #151's own brief.** #151 asked for the grade presets
+and gave the reason they are not decoration: *"Grade is a CITATION, not a suggestion: it names a
+published standard, so a preset that does not match the standard is a wrong fact in the document
+(G4). Transcribe with the source beside it."* `outlet.tia570d_grade1`/`2`/`3` are transcribed from
+docs/07 §1's table with that source named in the seed header, **including the part that reads
+oddly**: docs/07 gives Grade 3 a lower twisted-pair grade and fewer coax than Grade 2, which is not
+how the published standard stacks them, and a silent correction in code would have made the seed
+disagree with the document it claims to transcribe. The disagreement is flagged for docs/07 and the
+transcription stands.
+
+**11.23.2 The remainder is one model field: `OutletTemplate.tia570Grade: String?`.** CR-108 keeps
+`Outlet.tia570Grade` as a **standards tag, never an axis**, and the whole-house fixture sets it by
+hand. So a grade preset today cannot stamp the very tag it exists to carry, and the picker has
+nothing to copy from.
+
+**The rejected answer is a builder special case on the three seeded ids.** Cheaper, needs no model
+change, and keys the behaviour to the strings `outlet.tia570d_grade1..3`. It fails on the property
+CR-108 exists to protect: **user-defined templates are first-class**, so a shop that authors its own
+Grade 2 preset, or one citing a builder's spec rather than TIA's, could never stamp anything. It
+also makes an id rename a silent behaviour change, which is the class of failure a `String?` on the
+entity does not have.
+
+**Not a migration, and CR-117 is not at risk.** The key is additive and absent when null, so the six
+named templates write no `tia570Grade` and re-encode byte for byte. A document written between
+`5abb8b3` and this change carries the three grade entries without the key; reading it yields null,
+writing it omits the key, and `write(read(bytes)) == bytes` holds. Only documents created after the
+change carry it, which is the same contract `tag` landed on in DR-022 §11.21.4.
+
+**11.23.3 The picker is `+ Add outlet ▾`, and no task claimed it.** docs/07 §4's button bar carries
+it and §4.3 says what it does: *"instantiates an `OutletTemplate` in one action, TV location → 2 ×
+Cat6 + 2 × RG6 as one `Outlet` with four `Link`s and four label pairs."* #148 is the table's rows
+and columns, #149 is the matrix tab; neither description mentions it, and #150 explicitly shipped
+the master without a gesture to instantiate it. It goes here, because a preset with no way to place
+it is the half of #151 that was never the point.
+
+One `Command`, one undo entry, and it stamps `Outlet.tia570Grade` from the template. It is also
+**the first caller of DR-023 step 2**: the chain's middle arm — the outlet's template tag — has had
+no way to be reached, because nothing until now creates an outlet *from* a template.
+
+**11.23.4 What this does not rule.** The **library flow** that edits templates. CR-108 makes
+user-defined templates first-class and `Registries.outletTemplates` is ordinary editable stored data
+after the seed copy (docs/03 §5.6), but which surface edits it is not settled here. Nor is
+**AC-034/m24**, *"which location fields the inspector demands is driven by the template"* — a
+ceiling speaker pair asking for `mountSurface: ceiling` and never a wall compass direction. That
+needs a second model field and a UI contract, and adding it to this task would make the same mistake
+this ruling is correcting.
+
+**11.23.5 Scope.** **No scope change to roadmap §2.** #151 is narrowed in one direction, its data
+half is delivered, and named in the other, it acquires a gesture no task claimed. The task count is
+unchanged and no milestone moves.
+
+---
+
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-023 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-024 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -8040,7 +8100,7 @@ allowlist of pairs, an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-023 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-024 are the user's decisions and are binding. §12 is the complete
 index of what they supersede, §12.1…§12.5, §12.9, §12.11, §12.12 and §12.13 by ruling, §12.6 by
 internal correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **Two entries
 supersede another DR**: §12.12 (DR-018's reasoning as well as its ruling) and §12.13, which also

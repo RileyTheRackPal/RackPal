@@ -1,7 +1,7 @@
 ---
 type: Design Ruling
 title: DR-023 — The {SERVICE} fallback chain, and what a line with no service is called
-description: Three steps and no fourth: the line's @service=, else the outlet template's tag, else the media's short tag. Refusing would refuse the corpus's own first worked example.
+description: "Three steps and no fourth: the line's @service=, else the outlet template's tag, else the media's short tag. Refusing would refuse the corpus's own first worked example."
 tags: [ruling, m3, labels, idformat, dsl, dr-023]
 timestamp: 2026-08-07T00:00:00Z
 ruling_id: DR-023
