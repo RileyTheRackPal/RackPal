@@ -483,8 +483,7 @@ final class AppShellState extends State<AppShell>
             _ProjectMenu(
               controller: _projectMenu,
               onLocations: () => unawaited(_openLocations()),
-              onAddDrops: () => unawaited(_openDropEntry()),
-              onAddOutlet: () => unawaited(_openOutletPicker()),
+              onStructure: () => unawaited(_openStructureEditor()),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -691,33 +690,38 @@ final class AppShellState extends State<AppShell>
     );
   }
 
-  /// `Project ▸ Add drops…` — docs/07 §4.3's command mode (M3-C/1).
+  /// `Project ▸ Structure…` — docs/07 §4's editor (M3-C/2, AC-048).
   ///
-  /// HERE UNTIL BOARD #148 BUILDS THE STRUCTURE EDITOR, which is where
-  /// command mode lives permanently, beside table mode. It hangs off the
-  /// same menu as Locations for the same reason CR-112 put that one
-  /// there: a project with no Structure device must still be able to
-  /// start one, and this surface offers to create it.
+  /// IT REPLACES TWO MENU ITEMS RATHER THAN JOINING THEM. `Add drops…`
+  /// (M3-C/1) and `Add outlet…` (M3-C/5) each shipped with a comment
+  /// saying it was on this menu only until the editor existed and would
+  /// leave when it did. It exists, so they are gone: quick add is the bar
+  /// across the top of the table and `Add outlet` is the button under it,
+  /// which is where §4 draws both. Two routes to one surface is two
+  /// things to keep true.
   ///
   /// `currentDoc` is a CALLBACK and not a value. Nine drops committed by
   /// the first line change the document the second line must plan
   /// against; a captured reference would offer labels the first line just
   /// spent.
-  Future<void> _openDropEntry() async {
+  Future<void> _openStructureEditor() async {
     final session = _services.session;
-    await showDropEntryPanel(
+    await showStructureEditor(
       context,
       currentDoc: () => session.document,
-      actions: buildDropEntryActions(controller: session.controller),
+      actions: StructureEditorActions(
+        dropEntry: buildDropEntryActions(controller: session.controller),
+        onAddOutlet: () => unawaited(_openOutletPicker()),
+      ),
     );
   }
 
-  /// `Project ▸ Add outlet…` — docs/07 §4.3's `+ Add outlet ▾` (M3-C/5,
-  /// DR-024 §11.23.3).
+  /// The editor's `Add outlet` button — docs/07 §4.3's `+ Add outlet ▾`
+  /// (M3-C/5, DR-024 §11.23.3).
   ///
-  /// HERE FOR THE SAME REASON `Add drops…` IS, and it leaves with it:
-  /// board #148's Structure editor is where this button lives
-  /// permanently, in the bar under the drop table.
+  /// A SECOND DIALOG OVER THE EDITOR, which is what the picker already
+  /// is: it plans against the live document, so opening it from inside a
+  /// surface that also reads the live document costs nothing.
   ///
   /// `currentDoc` is a CALLBACK and not a value, for the same reason
   /// again: an outlet placed by the first click changes the document the
@@ -930,14 +934,12 @@ final class _ProjectMenu extends StatelessWidget {
   const _ProjectMenu({
     required this.controller,
     required this.onLocations,
-    required this.onAddDrops,
-    required this.onAddOutlet,
+    required this.onStructure,
   });
 
   final MenuController controller;
   final VoidCallback onLocations;
-  final VoidCallback onAddDrops;
-  final VoidCallback onAddOutlet;
+  final VoidCallback onStructure;
 
   @override
   Widget build(BuildContext context) => MenuBar(
@@ -949,13 +951,12 @@ final class _ProjectMenu extends StatelessWidget {
             onPressed: onLocations,
             child: const Text('Locations…'),
           ),
+          // TWO ITEMS BECAME ONE AT M3-C/2. `Add drops…` and `Add
+          // outlet…` were both temporary lodgers here by their own doc
+          // comments; the editor they were waiting for now holds both.
           MenuItemButton(
-            onPressed: onAddDrops,
-            child: const Text('Add drops…'),
-          ),
-          MenuItemButton(
-            onPressed: onAddOutlet,
-            child: const Text('Add outlet…'),
+            onPressed: onStructure,
+            child: const Text('Structure…'),
           ),
         ],
         child: const Text('Project'),

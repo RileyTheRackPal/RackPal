@@ -81,9 +81,9 @@ final class StructureEditorActions {
 /// header carries the body it is editing so two Structure bodies (§7)
 /// can never be confused for one.
 ///
-/// [currentDoc] is read on every build, for `showDropEntryPanel`'s
-/// reason: a surface holding one document reference plans the next line
-/// against the state before the last one landed.
+/// [currentDoc] is read on every build, for [DropEntryLoop]'s reason: a
+/// surface holding one document reference plans the next line against
+/// the state before the last one landed.
 Future<void> showStructureEditor(
   BuildContext context, {
   required StructureEditorActions actions,

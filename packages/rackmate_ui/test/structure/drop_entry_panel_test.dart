@@ -58,6 +58,12 @@ final class _Harness {
   int commits = 0;
   int structuresRequested = 0;
 
+  /// Whether `onCreateStructure` actually adds a body, or only counts the
+  /// request. COUNTING IS THE DEFAULT because every other test here
+  /// starts from a project that already has one; the arm that creates for
+  /// real is what the offer arms' re-plan is tested through.
+  bool createsStructureForReal = false;
+
   DropEntryActions get actions => DropEntryActions(
     // THE APP'S SHAPE, NOT THE PREVIEW'S: it re-plans against its own
     // clock and actor and returns what it did. `apps/rackmate`'s real
@@ -88,7 +94,16 @@ final class _Harness {
         actor: 't',
       ).apply(doc);
     },
-    onCreateStructure: () => structuresRequested++,
+    onCreateStructure: () {
+      structuresRequested++;
+      if (!createsStructureForReal) return;
+      AddStructureCommand(
+        title: 'Rough-In',
+        designator: 'STR-1',
+        now: _now,
+        actor: 't',
+      ).apply(doc);
+    },
   );
 }
 
@@ -415,6 +430,81 @@ void main() {
         // Unbound far end: AC-018's fourteen come from exactly here.
         expect(l.structureOrigin!.rackLabel, isNull);
       }
+    });
+  });
+
+  group('taking an offer re-plans, so the next Enter commits', () {
+    // THE DEFECT, AND WHY IT SURVIVED M3-C/1. `_plan` is computed from a
+    // document that the offer arms have just mutated, and
+    // `didUpdateWidget` cannot see it: commands mutate `RackDocument` in
+    // place, so the reference stays `identical`. The commit arm is safe
+    // only because it CLEARS the field and clearing fires the text
+    // listener; the two offer arms keep the line on purpose, so nothing
+    // was re-planning them.
+    //
+    // The blast radius was one Structure device per keypress. It went
+    // unseen because every test here starts from a project that already
+    // has one, which a real new project does not.
+
+    /// A project with rooms and NO Structure body, which is what every
+    /// new project is.
+    RackDocument bare() {
+      final doc = RackDocument(
+        id: const Uuid('doc-no-structure'),
+        appVersion: '0.1.0',
+        createdAt: _now,
+        modifiedAt: _now,
+        meta: EntityMeta(createdAt: _now, updatedAt: _now, updatedBy: 't'),
+      )..registries = buildSeedRegistries();
+      AddLocationCommand(
+        name: 'Living Room',
+        code: 'LR',
+        order: nextLocationOrder(doc),
+        now: _now,
+        actor: 't',
+      ).apply(doc);
+      return doc;
+    }
+
+    testWidgets('Enter creates the Structure device, Enter again the drops', (
+      tester,
+    ) async {
+      final h = _Harness(bare())..createsStructureForReal = true;
+      await _pumpPanel(tester, h);
+
+      await _type(tester, 'Living Room: 4x Cat6');
+      expect(h.doc.structures, hasLength(1));
+      expect(h.doc.links, isEmpty, reason: 'the first Enter took the offer');
+
+      // The line was kept, so the same key commits it.
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(
+        h.doc.structures,
+        hasLength(1),
+        reason: 'a second body is what a stale plan would have created',
+      );
+      expect(h.doc.links, hasLength(4));
+    });
+
+    testWidgets('and the same holds for a room it offers to create', (
+      tester,
+    ) async {
+      final h = _Harness(_project(rooms: const []));
+      await _pumpPanel(tester, h);
+
+      await _type(tester, 'Attic: 3x Cat6');
+      expect(h.createdLocations, ['Attic']);
+      expect(h.doc.links, isEmpty);
+
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(
+        h.createdLocations,
+        ['Attic'],
+        reason: 'a stale plan would have created a second Attic',
+      );
+      expect(h.doc.links, hasLength(3));
     });
   });
 }

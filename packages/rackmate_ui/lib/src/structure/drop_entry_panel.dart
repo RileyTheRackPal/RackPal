@@ -42,46 +42,22 @@
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 
-/// Opens the entry surface as a dialog.
+/// The loop with its "just added" tail.
 ///
-/// A DIALOG AND ALSO A BAR, and the "and" arrived with #148. This used to
-/// say "a dialog and not a tab, for now": the Structure editor is where
-/// §4.3's command mode lives permanently, and until it existed a person
-/// who could not reach this surface could not run M3-G's drill on it.
-/// `StructureEditorScreen` now embeds [DropEntryLoop] as its quick-add
-/// bar, so the loop has its permanent home. The dialog stays because it
-/// is the route from anywhere, without opening an editor first, and both
-/// drive the same widget rather than two copies of it.
+/// THERE WAS A `showDropEntryPanel` DIALOG HERE AND IT IS GONE, which is
+/// what this file's header always said would happen: "board #148's
+/// Structure editor is where this lives permanently, as its command mode
+/// beside table mode", and the dialog existed only so that a loop nobody
+/// could reach was not a loop nobody had driven. `StructureEditorScreen`
+/// embeds this widget as the quick-add bar across the top of the table,
+/// which is where docs/07 §4 draws it. Keeping the dialog as a second
+/// route would be a second surface to keep true, opening a panel over
+/// whichever tab happened to be showing.
 ///
 /// [currentDoc] is read on EVERY build rather than captured once, and
-/// that is what makes the loop work across commits. A dialog holding one
+/// that is what makes the loop work across commits. A host holding one
 /// document reference would plan the second line against the state before
 /// the first one landed, and offer labels the first line just spent.
-Future<void> showDropEntryPanel(
-  BuildContext context, {
-  required DropEntryActions actions,
-  required RackDocument Function() currentDoc,
-}) => showDialog<void>(
-  context: context,
-  builder: (context) => Dialog(
-    child: SizedBox(
-      width: 640,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: DropEntryLoop(actions: actions, currentDoc: currentDoc),
-      ),
-    ),
-  ),
-);
-
-/// The loop with its "just added" tail, host-agnostic.
-///
-/// PUBLIC SO THE EDITOR AND THE DIALOG SHARE ONE, rather than the editor
-/// growing its own copy of the twelve lines below. The tail is state
-/// about a SESSION of typing, not about a document, so it belongs to
-/// whichever surface is hosting the typing; what must not be duplicated
-/// is the rule that the tail reports what the app did and not what the
-/// preview predicted.
 class DropEntryLoop extends StatefulWidget {
   const DropEntryLoop({
     required this.actions,
@@ -91,7 +67,7 @@ class DropEntryLoop extends StatefulWidget {
 
   final DropEntryActions actions;
 
-  /// Read on every build. See [showDropEntryPanel].
+  /// Read on every build. See the class doc.
   final RackDocument Function() currentDoc;
 
   @override
@@ -201,9 +177,16 @@ class _DropEntryPanelState extends State<DropEntryPanel> {
   @override
   void didUpdateWidget(DropEntryPanel old) {
     super.didUpdateWidget(old);
-    // The document moved under us — a committed line, or an undo. The
-    // preview is a function of the document, so it has to be recomputed
-    // or it will show labels that are already taken.
+    // A DIFFERENT DOCUMENT — a file opened, a new project. The preview is
+    // a function of the document, so it has to be recomputed or it will
+    // show labels that are already taken.
+    //
+    // THIS CANNOT SEE AN IN-PLACE EDIT, AND IT NEVER COULD. Commands
+    // mutate `RackDocument` in place, so `identical` is true across every
+    // commit this panel makes; the reason the loop still works is that
+    // committing CLEARS the field, and clearing fires the text listener,
+    // which re-plans. The two arms that do not clear the field re-plan
+    // for themselves. See [_submit].
     if (!identical(old.doc, widget.doc)) _replan();
   }
 
@@ -255,11 +238,29 @@ class _DropEntryPanelState extends State<DropEntryPanel> {
         // the loop.
         _text.clear();
         _focus.requestFocus();
+      // ═══════════════════════════════════════════════════════════════
+      // THE TWO OFFER ARMS RE-PLAN, AND WITHOUT THAT THE OFFER IS A TRAP
+      // ═══════════════════════════════════════════════════════════════
+      // Each accepts an offer by changing the document and then KEEPS THE
+      // LINE, so the same `Enter` that took the offer can commit it. But
+      // `_plan` is a value computed from a document that has just changed
+      // underneath it, and `didUpdateWidget` cannot notice: commands
+      // mutate `RackDocument` in place, so the reference is `identical`.
+      //
+      // Without the re-plan, `_plan` is still `NeedsStructure` on the
+      // second press, so the second `Enter` creates a SECOND Structure
+      // device instead of the drops — and a third makes a third. The
+      // commit arm is safe only because clearing the field fires the text
+      // listener. Found by `structure_editor_route_test.dart`, driving
+      // the loop from a blank project, which is the state every new
+      // project is in and therefore the first thing a new user meets.
       case DropLinePlanNeedsLocation(:final locationName):
         widget.actions.onCreateLocation(locationName);
+        _replan();
         _focus.requestFocus();
       case DropLinePlanNeedsStructure():
         widget.actions.onCreateStructure();
+        _replan();
         _focus.requestFocus();
       case _:
         // A refusal keeps the text. See the file header.
