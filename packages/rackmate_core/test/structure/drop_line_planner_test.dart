@@ -145,6 +145,35 @@ void main() {
       }
     });
 
+    test('AC-018: every drop the loop makes SCHEDULES, with its W number '
+        'and its field label, far end unbound', () {
+      // M3-A's exit criterion in one assertion. That issue opens with
+      // "AC-018 is currently unreachable BY CONSTRUCTION ... the work is
+      // producing the drops, not teaching the schedule" — M2-B taught the
+      // schedule already, and `301136f` verified it over whole_house.
+      // What nothing asserted until now is that drops produced by THIS
+      // path arrive there, which is the whole of what M3-A was for.
+      //
+      // AC-018's fourth clause, "prints", is not reachable in M3 at all:
+      // `SheetRole` has three values and none is a cable schedule (board
+      // #574). Deliberately not claimed here.
+      final p = _project();
+      _apply(
+        p.doc,
+        _ready(_plan(p.doc, 'Living Room: 4x Cat6, 2x RG6, 1x 22/4')),
+      );
+
+      final rows = buildSchedule(p.doc).rows;
+      expect(rows, hasLength(7));
+      for (final r in rows) {
+        expect(r.designator, isNotEmpty);
+        expect(r.fieldLabel, isNotEmpty);
+        expect(r.rackLabel, isNull, reason: 'the far end is unbound');
+      }
+      // One W number is one physical cable and one schedule row (G1).
+      expect(rows.map((r) => r.designator).toSet(), hasLength(7));
+    });
+
     test('W numbers and net names do not collide inside one line', () {
       // The `alsoUsed` reservation, at the artifact: nine drops built
       // against ONE unmutated document would otherwise all be W001.
