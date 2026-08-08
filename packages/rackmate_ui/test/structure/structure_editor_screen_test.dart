@@ -88,7 +88,95 @@ final class _Harness {
       onCreateStructure: () {},
     ),
     onAddOutlet: () => outletPickerOpened++,
+    onEdit: edit,
   );
+
+  /// What `apps/rackmate`'s `buildStructureEditAction` does, in the
+  /// shape it does it: plan the whole batch, refuse it whole, then
+  /// apply. Mirrored here rather than imported because `rackmate_ui`
+  /// may not depend on the app, and because the harness has to be
+  /// driveable without a `DocumentController`.
+  String? edit(List<StructureCellEdit> edits) {
+    final commands = <Command>[];
+    final claimedLabels = <String>{};
+
+    for (final e in edits) {
+      switch (e.column) {
+        // THE TWO ARE SPELLED OUT RATHER THAN SHARING A BRANCH, and it
+        // is not verbosity: `EntityField`'s `set` is a typed closure, so
+        // building the command through `<Object?>` compiles and then
+        // throws `(Link, String) => void is not a subtype of (Link,
+        // Object?) => void` at apply time. The concrete type parameter is
+        // what keeps the closure callable.
+        case StructureColumnId.fieldLabel:
+          final field = buildSetStructureOriginProperty<String>(
+            doc: doc,
+            linkId: e.linkId,
+            field: StructureOriginField.fieldLabel,
+            to: e.value.trim(),
+            now: _now,
+            actor: 'editor',
+            alsoUsedLabels: claimedLabels,
+          );
+          switch (field) {
+            case SetStructureOriginRefused(:final reason):
+              return reason;
+            case SetStructureOriginUnchanged():
+              break;
+            case SetStructureOriginReady(:final command):
+              commands.add(command);
+              claimedLabels.add(e.value.trim());
+          }
+        case StructureColumnId.rackLabel:
+          final rack = buildSetStructureOriginProperty<String?>(
+            doc: doc,
+            linkId: e.linkId,
+            field: StructureOriginField.rackLabel,
+            to: e.value,
+            now: _now,
+            actor: 'editor',
+          );
+          switch (rack) {
+            case SetStructureOriginRefused(:final reason):
+              return reason;
+            case SetStructureOriginUnchanged():
+              break;
+            case SetStructureOriginReady(:final command):
+              commands.add(command);
+          }
+        case StructureColumnId.roughIn:
+          final status = RoughInStatus.values
+              .where((s) => roughInLabel(s) == e.value.trim().toUpperCase())
+              .firstOrNull;
+          if (status == null) return '"${e.value}" is not a rough-in status.';
+          final c = buildSetEntityProperty<Link, RoughInStatus>(
+            doc: doc,
+            id: e.linkId,
+            field: LinkField.roughInStatus,
+            to: status,
+            now: _now,
+            actor: 'editor',
+          );
+          if (c != null) commands.add(c);
+        case StructureColumnId.notes:
+          final c = buildSetEntityProperty<Link, String?>(
+            doc: doc,
+            id: e.linkId,
+            field: LinkField.notes,
+            to: e.value.trim().isEmpty ? null : e.value.trim(),
+            now: _now,
+            actor: 'editor',
+          );
+          if (c != null) commands.add(c);
+        case _:
+          return 'That column cannot be typed into.';
+      }
+    }
+    for (final c in commands) {
+      c.apply(doc);
+    }
+    return null;
+  }
 }
 
 Future<void> _pump(WidgetTester tester, _Harness h) async {
@@ -357,6 +445,176 @@ void main() {
       ]) {
         expect(find.text(label), findsNothing, reason: '$label is unbuilt');
       }
+    });
+  });
+
+  group('inline editing is the primary path (§4.1)', () {
+    /// The cell holding [value], by what is in its box.
+    ///
+    /// BY CONTENT AND NOT BY POSITION, because position is what these
+    /// tests are least sure of and least interested in: an index into
+    /// the visible columns would silently point at a different cell the
+    /// day an optional column is turned on.
+    Finder cellHolding(String value) => find.byWidgetPredicate(
+      (w) => w is TextField && w.controller?.text == value,
+      description: 'a table cell reading "$value"',
+    );
+
+    testWidgets('typing a field label writes it through a Command', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+
+      final linkId = h.doc.links.values.single.id;
+      final before = h.doc.links[linkId]!.structureOrigin!.fieldLabel;
+
+      await tester.enterText(cellHolding(before), 'LR-1');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(h.doc.links[linkId]!.structureOrigin!.fieldLabel, 'LR-1');
+      // And the table followed, because it re-derived rather than
+      // caching what it drew. The CELL, not `find.text`: the quick-add
+      // bar's "just added" tail says the old label too, which is correct
+      // of it — it reports what that line produced at the time.
+      expect(cellHolding('LR-1'), findsOneWidget);
+    });
+
+    testWidgets('a duplicate label is REFUSED, and the cell goes back', (
+      tester,
+    ) async {
+      // CR-113: unique project-wide across all Structure bodies. The
+      // defect this forbids is two rows an installer cannot tell apart,
+      // written silently through the ordinary edit path.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+
+      final links = h.doc.links.values.toList();
+      final first = links[0].structureOrigin!.fieldLabel;
+      final second = links[1].structureOrigin!.fieldLabel;
+
+      await tester.enterText(cellHolding(second), first);
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(
+        links[1].structureOrigin!.fieldLabel,
+        second,
+        reason: 'the write was refused, so the document did not move',
+      );
+      // THE SENTENCE IS ON SCREEN AND STAYS. A refusal that put the old
+      // value back and said nothing would read as typing that vanished.
+      expect(find.textContaining(first), findsWidgets);
+      expect(find.textContaining('already'), findsWidgets);
+    });
+
+    testWidgets('ROUGH-IN is a dropdown over the five real values', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      final linkId = h.doc.links.values.single.id;
+      expect(h.doc.links[linkId]!.roughInStatus, RoughInStatus.planned);
+
+      await tester.tap(find.text('PLANNED'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('PULLED').last);
+      await tester.pumpAndSettle();
+
+      expect(h.doc.links[linkId]!.roughInStatus, RoughInStatus.pulled);
+    });
+
+    testWidgets('a derived column is not typed into at all', (tester) async {
+      // MEDIA names a registry entry. A text box that accepted `Cat6a`
+      // into a `MediaTypeId` would be worse than a cell that cannot be
+      // typed into, which is what `structureColumnIsEditable` says.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+
+      final editable = kStructureDefaultColumns
+          .where(structureColumnIsEditable)
+          .toList();
+      expect(editable, [
+        StructureColumnId.fieldLabel,
+        StructureColumnId.rackLabel,
+        StructureColumnId.roughIn,
+      ]);
+      // Two text boxes on the row (the third editable default is the
+      // dropdown), plus the quick-add field above the table.
+      expect(find.byType(TextField), findsNWidgets(3));
+    });
+
+    testWidgets('an empty NOTES box lands as unknown, never as an empty '
+        'string (G4)', (tester) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      final link = h.doc.links.values.single;
+
+      expect(
+        h.edit([
+          StructureCellEdit(
+            linkId: link.id,
+            column: StructureColumnId.notes,
+            value: 'coiled above the ceiling',
+          ),
+        ]),
+        isNull,
+      );
+      expect(link.notes, 'coiled above the ceiling');
+
+      expect(
+        h.edit([
+          StructureCellEdit(
+            linkId: link.id,
+            column: StructureColumnId.notes,
+            value: '   ',
+          ),
+        ]),
+        isNull,
+      );
+      expect(link.notes, isNull, reason: 'not the empty string');
+    });
+
+    testWidgets('a batch is ALL or NOTHING, and says which row stopped it', (
+      tester,
+    ) async {
+      // This is the shape fill-down and paste both take. A batch that
+      // wrote the good rows and reported the bad one would leave a
+      // person to work out which rows moved.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 3x Cat6');
+      final links = h.doc.links.values.toList();
+      final before = links.map((l) => l.structureOrigin!.fieldLabel).toList();
+
+      final refusal = h.edit([
+        StructureCellEdit(
+          linkId: links[0].id,
+          column: StructureColumnId.fieldLabel,
+          value: 'LR-A',
+        ),
+        StructureCellEdit(
+          linkId: links[1].id,
+          column: StructureColumnId.fieldLabel,
+          // COLLIDES WITH THE EDIT ABOVE, not with the document. Only
+          // `alsoUsedLabels` can see this, which is why the batch is
+          // planned as a batch.
+          value: 'LR-A',
+        ),
+      ]);
+
+      expect(refusal, isNotNull);
+      expect(
+        links.map((l) => l.structureOrigin!.fieldLabel),
+        before,
+        reason: 'the first edit must not have been applied either',
+      );
     });
   });
 }

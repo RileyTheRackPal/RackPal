@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
 import 'package:rackmate/src/session/blank_document.dart';
+import 'package:rackmate/src/session/structure_edit_actions.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_text/rackmate_text.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
@@ -197,5 +198,132 @@ void main() {
     expect(find.byType(OutletTemplatePicker), findsOneWidget);
     // The nine seeded templates are what it offers (CR-108, M3-C/4).
     expect(find.text('TV location'), findsOneWidget);
+  });
+
+  group('a typed cell is a Command on the real undo stack', () {
+    /// A project with a Structure body and three drops in one room, made
+    /// through the real commands rather than by hand.
+    (RackDocument, List<Uuid>) seeded() {
+      final doc = _project(rooms: [('Living Room', 'LR')]);
+      AddStructureCommand(
+        title: 'Rough-In',
+        designator: 'STR-1',
+        now: _when,
+        actor: 'test',
+      ).apply(doc);
+      final parsed = parseDropLine('Living Room: 3x Cat6') as DropLineParsed;
+      final plan =
+          planDropLine(doc: doc, line: parsed, now: _when, actor: 'test')
+              as DropLinePlanReady;
+      for (final c in plan.commands) {
+        c.apply(doc);
+      }
+      return (doc, doc.links.keys.toList());
+    }
+
+    testWidgets('editing a label undoes as ONE step', (tester) async {
+      final (doc, linkIds) = seeded();
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+
+      final edit = buildStructureEditAction(controller: controller);
+      final before = doc.links[linkIds.first]!.structureOrigin!.fieldLabel;
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: linkIds.first,
+            column: StructureColumnId.fieldLabel,
+            value: 'LR-TV-1',
+          ),
+        ]),
+        isNull,
+      );
+
+      expect(doc.links[linkIds.first]!.structureOrigin!.fieldLabel, 'LR-TV-1');
+      // ONE FIELD WRITE READS AS "edit", which is the label the corpus
+      // already chose for a single property (LabelKey.setEntityProperty).
+      expect(controller.undo.undoLabelKey, LabelKey.setEntityProperty.name);
+
+      controller.undoLast();
+      expect(doc.links[linkIds.first]!.structureOrigin!.fieldLabel, before);
+    });
+
+    testWidgets('a bulk edit undoes as one step and reports itself as one', (
+      tester,
+    ) async {
+      final (doc, linkIds) = seeded();
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+
+      final edit = buildStructureEditAction(controller: controller);
+      expect(
+        edit([
+          for (final id in linkIds)
+            StructureCellEdit(
+              linkId: id,
+              column: StructureColumnId.roughIn,
+              value: roughInLabel(RoughInStatus.pulled),
+            ),
+        ]),
+        isNull,
+      );
+
+      expect(
+        doc.links.values.map((l) => l.roughInStatus),
+        everyElement(RoughInStatus.pulled),
+      );
+      // AND IT NAMES ITSELF AS A FILL, not as an edit: an Edit menu
+      // offering "Undo edit" for something that moved three rows names a
+      // third of what it is about to take back.
+      expect(controller.undo.undoLabelKey, LabelKey.fillCells.name);
+
+      controller.undoLast();
+      expect(
+        doc.links.values.map((l) => l.roughInStatus),
+        everyElement(RoughInStatus.planned),
+      );
+    });
+
+    testWidgets('a batch that collides applies NONE of itself', (tester) async {
+      final (doc, linkIds) = seeded();
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+
+      final edit = buildStructureEditAction(controller: controller);
+      final before = [
+        for (final id in linkIds) doc.links[id]!.structureOrigin!.fieldLabel,
+      ];
+      final depth = controller.undo.depth;
+
+      final refusal = edit([
+        StructureCellEdit(
+          linkId: linkIds[0],
+          column: StructureColumnId.fieldLabel,
+          value: 'LR-A',
+        ),
+        StructureCellEdit(
+          linkId: linkIds[1],
+          column: StructureColumnId.fieldLabel,
+          // Collides with the edit above and NOT with the document, which
+          // is the case only `alsoUsedLabels` can see.
+          value: 'LR-A',
+        ),
+      ]);
+
+      expect(refusal, contains('LR-A'));
+      expect(
+        [for (final id in linkIds) doc.links[id]!.structureOrigin!.fieldLabel],
+        before,
+      );
+      // NOTHING WAS PUSHED EITHER. A refused batch that still cost an
+      // undo step would make the next Ctrl+Z do nothing visible.
+      expect(controller.undo.depth, depth);
+    });
   });
 }

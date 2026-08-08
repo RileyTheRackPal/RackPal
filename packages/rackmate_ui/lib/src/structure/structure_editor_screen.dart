@@ -62,6 +62,7 @@ final class StructureEditorActions {
   const StructureEditorActions({
     required this.dropEntry,
     required this.onAddOutlet,
+    required this.onEdit,
   });
 
   /// M3-C/1's loop, unchanged. See `DropEntryActions.onCommit` for why
@@ -71,6 +72,41 @@ final class StructureEditorActions {
 
   /// Opens M3-C/5's outlet-template picker.
   final VoidCallback onAddOutlet;
+
+  /// Applies cell edits as ONE undo step, and returns a refusal sentence
+  /// or null.
+  ///
+  /// A LIST AND NOT ONE EDIT, because the interesting case is the bulk
+  /// one. `buildSetStructureOriginProperty` takes `alsoUsedLabels`
+  /// precisely so a batch cannot let two rows agree on a field label
+  /// while each individually looks fine against the unmutated document;
+  /// handing it one edit at a time would throw that away. A single typed
+  /// cell is a list of one.
+  ///
+  /// ALL OR NOTHING. A batch with one bad label applies none of itself
+  /// and says which one, because a fill-down that wrote nine of ten rows
+  /// and reported an error leaves a person to work out which nine.
+  final String? Function(List<StructureCellEdit> edits) onEdit;
+}
+
+/// One cell, as an edit request: which drop, which column, what was
+/// typed.
+///
+/// THE VALUE IS TEXT, always, even for `ROUGH-IN` whose model type is an
+/// enum. The parsing belongs on the app side beside the command that
+/// refuses, so this type stays what the surface actually has: what a
+/// person put in a box.
+@immutable
+final class StructureCellEdit {
+  const StructureCellEdit({
+    required this.linkId,
+    required this.column,
+    required this.value,
+  });
+
+  final Uuid linkId;
+  final StructureColumnId column;
+  final String value;
 }
 
 /// Opens the editor full-screen.
@@ -134,6 +170,16 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
   Uuid? _roomFilter;
   MediaTypeId? _mediaFilter;
   bool _unconnectedOnly = false;
+
+  /// The last refusal, held until the next edit succeeds.
+  ///
+  /// IT DOES NOT FADE. A `SnackBar` would be the ordinary choice and it
+  /// is the wrong one here: a refused label edit means the cell went back
+  /// to what it was, and a person who looked away for three seconds sees
+  /// only that their typing vanished. docs/04 §3.4's rule is that a
+  /// refusal names itself; a rule that expires is a rule that sometimes
+  /// does not.
+  String? _refusal;
 
   List<StructureColumnId> get _columns => [
     ...kStructureDefaultColumns,
@@ -212,6 +258,7 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
                           doc: doc,
                           groups: visible,
                           columns: _columns,
+                          onEdit: _edit,
                           isFiltered:
                               _roomFilter != null ||
                               _mediaFilter != null ||
@@ -228,6 +275,7 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
           const Divider(height: 1),
           _StatusBar(
             table: table,
+            refusal: _refusal,
             hidden: table.dropCount - _shownCount(visible),
             onAddDrop: null,
             onAddOutlet: widget.actions.onAddOutlet,
@@ -235,6 +283,19 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
         ],
       ),
     );
+  }
+
+  /// Hands [edits] to the app and rebuilds on whatever came back.
+  ///
+  /// THE APP'S ANSWER IS THE ONLY ANSWER. This does not check a label for
+  /// uniqueness, does not parse a `RoughInStatus` and does not decide
+  /// that an empty box means null: every one of those is a rule with a
+  /// document behind it, and a surface holding a second copy of a rule is
+  /// how two answers to one question start.
+  String? _edit(List<StructureCellEdit> edits) {
+    final refusal = widget.actions.onEdit(edits);
+    setState(() => _refusal = refusal);
+    return refusal;
   }
 
   /// The loop's actions, wrapped so the TABLE rebuilds too.
@@ -617,6 +678,7 @@ class _DropTable extends StatelessWidget {
     required this.columns,
     required this.isFiltered,
     required this.totalDrops,
+    required this.onEdit,
   });
 
   final RackDocument doc;
@@ -624,6 +686,7 @@ class _DropTable extends StatelessWidget {
   final List<StructureColumnId> columns;
   final bool isFiltered;
   final int totalDrops;
+  final String? Function(List<StructureCellEdit> edits) onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -679,10 +742,20 @@ class _DropTable extends StatelessWidget {
                                 SliverList.builder(
                                   itemCount: group.rows.length,
                                   itemBuilder: (context, index) => _DataRow(
+                                    // KEYED ON THE LINK, so a `TextField`
+                                    // and its controller follow the DROP
+                                    // rather than the row position. A
+                                    // filter change or a deletion
+                                    // reshuffles the list, and an
+                                    // unkeyed row would hand row 3's
+                                    // controller to whatever cable is
+                                    // third afterwards.
+                                    key: ValueKey(group.rows[index].linkId),
                                     doc: doc,
                                     row: group.rows[index],
                                     columns: columns,
                                     scale: effective,
+                                    onEdit: onEdit,
                                   ),
                                 ),
                               ],
@@ -824,12 +897,15 @@ class _DataRow extends StatelessWidget {
     required this.row,
     required this.columns,
     required this.scale,
+    required this.onEdit,
+    super.key,
   });
 
   final RackDocument doc;
   final ScheduleEntry row;
   final List<StructureColumnId> columns;
   final double scale;
+  final String? Function(List<StructureCellEdit> edits) onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -845,9 +921,8 @@ class _DataRow extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5),
+        padding: const EdgeInsets.symmetric(vertical: 2),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final id in columns)
               SizedBox(
@@ -865,6 +940,39 @@ class _DataRow extends StatelessWidget {
 
   Widget _cell(ThemeData theme, StructureColumnId id, UnitSystem units) {
     final text = structureCell(doc, row, id, units: units);
+    // ═══════════════════════════════════════════════════════════════════
+    // AN EDITABLE CELL IS ALWAYS AN INPUT, NEVER A LABEL THAT BECOMES ONE
+    // ═══════════════════════════════════════════════════════════════════
+    // §4.1: "inline editing is the primary path, a cell is one click and
+    // a keystroke". Click-to-edit costs a click before the keystroke and
+    // it costs the TAB ORDER, which is the half #148's brief names: a
+    // widget that only exists once clicked is not in the focus tree, so
+    // `Tab` cannot reach it. Rendering the real control always makes tab
+    // order the widget order, and that is why this file adds NO key
+    // binding for it — Flutter's own traversal already does the work, and
+    // an unnecessary `kKeymap` row would be a real cost (D7, M7's
+    // generated table, `arbitrate()` on every platform).
+    if (structureColumnIsEditable(id)) {
+      if (id == StructureColumnId.roughIn) {
+        return _RoughInCell(
+          linkId: row.linkId,
+          value: row.roughInStatus,
+          onEdit: onEdit,
+        );
+      }
+      return _TextCell(
+        linkId: row.linkId,
+        column: id,
+        // THE DASH IS NOT PUT IN THE BOX. `—` is what an unknown PRINTS,
+        // and a text field showing it would make a person delete a
+        // character that was never theirs — worse, typing after it would
+        // save `—PP1-01`. An empty box is what "nobody has said" looks
+        // like when it is editable, and the hint says so.
+        value: text == kUnknownCell ? '' : text,
+        bold: id == StructureColumnId.fieldLabel,
+        onEdit: onEdit,
+      );
+    }
     final isUnknown = text == kUnknownCell;
     return Text(
       text,
@@ -875,10 +983,159 @@ class _DataRow extends StatelessWidget {
         color: isUnknown
             ? theme.colorScheme.onSurfaceVariant
             : theme.colorScheme.onSurface,
-        fontWeight: id == StructureColumnId.fieldLabel
-            ? FontWeight.w700
-            : FontWeight.w400,
       ),
+    );
+  }
+}
+
+/// One typed cell.
+///
+/// IT COMMITS ON `Enter` AND ON LOSING FOCUS, and those are the same two
+/// moments the device builder's inspector commits on. Losing focus is the
+/// one that matters for `Tab`: a person filling a column types, tabs,
+/// types, tabs, and never presses `Enter` at all.
+///
+/// A REFUSED EDIT PUTS THE STORED VALUE BACK. The batch was rejected
+/// whole, so the cell showing the typed text would be showing something
+/// no document holds. The sentence goes to the status bar, where it stays
+/// until the next edit rather than fading.
+class _TextCell extends StatefulWidget {
+  const _TextCell({
+    required this.linkId,
+    required this.column,
+    required this.value,
+    required this.bold,
+    required this.onEdit,
+  });
+
+  final Uuid linkId;
+  final StructureColumnId column;
+  final String value;
+  final bool bold;
+  final String? Function(List<StructureCellEdit> edits) onEdit;
+
+  @override
+  State<_TextCell> createState() => _TextCellState();
+}
+
+class _TextCellState extends State<_TextCell> {
+  late final TextEditingController _text = TextEditingController(
+    text: widget.value,
+  );
+  final FocusNode _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(_TextCell old) {
+    super.didUpdateWidget(old);
+    // THE DOCUMENT WINS, EXCEPT WHILE SOMEBODY IS TYPING IN THIS BOX.
+    // A fill-down, an undo or a paste changes the stored value under a
+    // cell that is not focused, and the cell must follow. Overwriting a
+    // FOCUSED cell would delete what the person is halfway through
+    // typing, which is the classic controlled-input defect.
+    if (widget.value != old.value && !_focus.hasFocus) {
+      _text.text = widget.value;
+    }
+  }
+
+  @override
+  void dispose() {
+    _focus
+      ..removeListener(_onFocusChange)
+      ..dispose();
+    _text.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (!_focus.hasFocus) _commit();
+  }
+
+  void _commit() {
+    if (_text.text == widget.value) return;
+    final refusal = widget.onEdit([
+      StructureCellEdit(
+        linkId: widget.linkId,
+        column: widget.column,
+        value: _text.text,
+      ),
+    ]);
+    if (refusal != null) _text.text = widget.value;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return TextField(
+      controller: _text,
+      focusNode: _focus,
+      style: theme.textTheme.bodySmall?.copyWith(
+        fontWeight: widget.bold ? FontWeight.w700 : FontWeight.w400,
+      ),
+      decoration: InputDecoration(
+        isDense: true,
+        border: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(vertical: 4),
+        hintText: kUnknownCell,
+        hintStyle: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+      onSubmitted: (_) => _commit(),
+    );
+  }
+}
+
+/// `ROUGH-IN` as the five-value enum it is.
+///
+/// A DROPDOWN AND NOT A TEXT BOX, because the model type is an enum and
+/// there is nothing to parse: five values, all of them legal, none of
+/// them typo-able. The text columns beside it are text because their
+/// model type is a string.
+class _RoughInCell extends StatelessWidget {
+  const _RoughInCell({
+    required this.linkId,
+    required this.value,
+    required this.onEdit,
+  });
+
+  final Uuid linkId;
+  final RoughInStatus value;
+  final String? Function(List<StructureCellEdit> edits) onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DropdownButton<RoughInStatus>(
+      value: value,
+      isDense: true,
+      isExpanded: true,
+      underline: const SizedBox.shrink(),
+      style: theme.textTheme.bodySmall,
+      items: [
+        for (final status in RoughInStatus.values)
+          DropdownMenuItem<RoughInStatus>(
+            value: status,
+            child: Text(roughInLabel(status)),
+          ),
+      ],
+      onChanged: (next) {
+        if (next == null || next == value) return;
+        onEdit([
+          StructureCellEdit(
+            linkId: linkId,
+            column: StructureColumnId.roughIn,
+            // The label, not `.name`, so one vocabulary crosses this
+            // boundary and `roughInLabel` stays the only speller.
+            value: roughInLabel(next),
+          ),
+        ]);
+      },
     );
   }
 }
@@ -949,12 +1206,14 @@ class _EmptyBody extends StatelessWidget {
 class _StatusBar extends StatelessWidget {
   const _StatusBar({
     required this.table,
+    required this.refusal,
     required this.hidden,
     required this.onAddDrop,
     required this.onAddOutlet,
   });
 
   final StructureTable table;
+  final String? refusal;
   final int hidden;
   final VoidCallback? onAddDrop;
   final VoidCallback onAddOutlet;
@@ -962,23 +1221,49 @@ class _StatusBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              _summary(),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall,
+    final scheme = theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // THE REFUSAL SITS ABOVE THE COUNTS AND STAYS THERE. A refused
+        // edit has already put the old value back in the cell, so without
+        // this line the only visible effect is that somebody's typing
+        // disappeared.
+        if (refusal case final sentence?)
+          ColoredBox(
+            color: scheme.errorContainer,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+              child: Text(
+                sentence,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: scheme.onErrorContainer,
+                ),
+              ),
             ),
           ),
-          if (onAddDrop != null)
-            TextButton(onPressed: onAddDrop, child: const Text('Add drop')),
-          TextButton(onPressed: onAddOutlet, child: const Text('Add outlet')),
-        ],
-      ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _summary(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall,
+                ),
+              ),
+              if (onAddDrop != null)
+                TextButton(onPressed: onAddDrop, child: const Text('Add drop')),
+              TextButton(
+                onPressed: onAddOutlet,
+                child: const Text('Add outlet'),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

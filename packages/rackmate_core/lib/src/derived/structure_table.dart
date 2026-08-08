@@ -391,6 +391,40 @@ double structureColumnWidth(StructureColumnId id) => switch (id) {
   StructureColumnId.notes => 140,
 };
 
+/// Whether a person can type into this column.
+///
+/// FOUR OF TWENTY, AND THE OTHER SIXTEEN ARE NOT "NOT YET" IN THE SAME
+/// WAY. docs/07 §4.1 wants inline editing to be the primary path, and
+/// these four are the ones that have a `Command` to write through today:
+/// `StructureOriginField.fieldLabel` and `.rackLabel`, which refuse a
+/// CR-113 collision rather than writing it, plus `LinkField.roughInStatus`
+/// and `.notes`.
+///
+/// The rest fall into three groups, and naming them is the point of this
+/// function existing rather than a `switch` inside a widget:
+///
+///  * DERIVED, and editable only by editing what they derive from.
+///    `MEDIA` and `SERVICE` name registry entries, `RACK TERM` is
+///    assembled from a termination type and a port designator, `OUTLET`
+///    belongs to the `Outlet`. Each needs a picker, not a text box.
+///  * MEASUREMENTS in the project's display units. The three length
+///    columns and `TEST` want a parser that can refuse `62 ft 3` and a
+///    round trip that does not lose the nanometres (CR-001).
+///  * JACKET and PULLED, which name convention entries and already have
+///    their own two commands; a two-column colour picker is its own
+///    gesture.
+///
+/// None of that is hard. All of it is a decision about a control, and a
+/// text box that silently accepted `Cat6a` into a column that stores a
+/// `MediaTypeId` would be worse than a cell that cannot be typed into.
+bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
+  StructureColumnId.fieldLabel ||
+  StructureColumnId.rackLabel ||
+  StructureColumnId.roughIn ||
+  StructureColumnId.notes => true,
+  _ => false,
+};
+
 /// Right-aligned where the value is a number to compare down a column.
 ScheduleAlign structureColumnAlign(StructureColumnId id) => switch (id) {
   StructureColumnId.routedLength ||

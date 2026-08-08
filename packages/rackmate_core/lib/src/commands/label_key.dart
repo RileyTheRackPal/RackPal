@@ -133,6 +133,20 @@ enum LabelKey {
   // not a reason to reword a menu item a user has already learned.
   setEntityProperty,
 
+  // MANY CELLS AT ONCE (the Structure editor's table), M3-C/2. Its own
+  // value rather than reusing `setEntityProperty`, on the same argument
+  // that separated `addDrops` from `addHomeRun`: the unit the person
+  // undoes is the GESTURE. A fill-down over eleven rows and a paste of a
+  // contractor's column are each one act, and an Edit menu offering
+  // "Undo edit" for something that rewrote eleven labels names a
+  // fraction of what it is about to take back.
+  //
+  // A SINGLE TYPED CELL STILL REPORTS `setEntityProperty`, because a
+  // single typed cell IS one field write and that menu item is already
+  // right for it. The two are told apart by how many cells the gesture
+  // touched, which is the only thing that differs.
+  fillCells,
+
   // THE LOCATION TREE (commands/location_commands.dart), M3-B/1, CR-047,
   // CR-112, DR-021. THREE values, not four: the rename, the code, the kind
   // and the room estimate all go through `setEntityProperty` above, because

@@ -61,6 +61,7 @@ import 'package:rackmate/src/session/outlet_template_actions.dart';
 import 'package:rackmate/src/session/session_controller.dart';
 import 'package:rackmate/src/session/session_prompts.dart';
 import 'package:rackmate/src/session/starter_projects.dart';
+import 'package:rackmate/src/session/structure_edit_actions.dart';
 import 'package:rackmate/src/session/window_chrome.dart';
 import 'package:rackmate/src/storage/recents_store.dart';
 import 'package:rackmate_core/rackmate_core.dart'
@@ -712,6 +713,7 @@ final class AppShellState extends State<AppShell>
       actions: StructureEditorActions(
         dropEntry: buildDropEntryActions(controller: session.controller),
         onAddOutlet: () => unawaited(_openOutletPicker()),
+        onEdit: buildStructureEditAction(controller: session.controller),
       ),
     );
   }

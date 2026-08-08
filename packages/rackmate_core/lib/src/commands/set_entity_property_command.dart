@@ -614,10 +614,48 @@ abstract final class LinkField {
     touches: EpochMask.wires | EpochMask.meta,
   );
 
+  /// How far along this run is (docs/07 §4.1's `ROUGH-IN` column,
+  /// M3-C/2).
+  ///
+  /// NOT NULLABLE, where its two neighbours are, and that is not G4 being
+  /// forgotten: `planned` IS the state of a drop nobody has touched, so
+  /// there is no unknown to keep apart from it. Contrast `spliceCount`
+  /// above, where "nobody looked" and "somebody looked and found none"
+  /// are genuinely different answers.
+  ///
+  /// THE COLUMN A PERSON WALKS THE JOB WITH, which is why it is among
+  /// §4.1's eight defaults and why wiring it was M3-C/2's business: it is
+  /// edited far more often than anything else on a `Link`.
+  static final roughInStatus = EntityField<Link, RoughInStatus>(
+    access: EntityAccess.link,
+    key: 'roughInStatus',
+    get: (l) => l.roughInStatus,
+    set: (l, v) => l.roughInStatus = v,
+    touches: EpochMask.wires | EpochMask.meta,
+  );
+
+  /// Free text about this cable (docs/07 §4.1's optional `NOTES`).
+  ///
+  /// NULLABLE, and an empty box lands as null rather than as `''`: the
+  /// same rule `StructureOriginField.rackLabel` states, because `''` is a
+  /// third state every reader downstream would have to guess about.
+  /// Normalising is the CALLER's job here, not the row's — a row cannot
+  /// refuse and does not transform, so `buildSetEntityProperty` is handed
+  /// the already-normalised value.
+  static final notes = EntityField<Link, String?>(
+    access: EntityAccess.link,
+    key: 'notes',
+    get: (l) => l.notes,
+    set: (l, v) => l.notes = v,
+    touches: EpochMask.wires | EpochMask.meta,
+  );
+
   /// See [OutletField.all].
   static final List<EntityField<Link, Object?>> all = [
     lifecycleStatus,
     spliceCount,
+    roughInStatus,
+    notes,
   ];
 }
 

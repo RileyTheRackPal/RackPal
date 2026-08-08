@@ -79,7 +79,7 @@ final class Link {
     this.crossover,
     LifecycleStatus lifecycleStatus = LifecycleStatus.new_,
     int? spliceCount,
-    this.roughInStatus = RoughInStatus.planned,
+    RoughInStatus roughInStatus = RoughInStatus.planned,
     this.test,
     this.installedBy,
     this.terminatedAt,
@@ -96,6 +96,7 @@ final class Link {
        _jacketColorPulledId = jacketColorPulledId,
        _lifecycleStatus = lifecycleStatus,
        _spliceCount = spliceCount,
+       _roughInStatus = roughInStatus,
        _notes = notes;
 
   final Uuid id;
@@ -249,6 +250,22 @@ final class Link {
   @internal
   set spliceCount(int? v) => _spliceCount = v;
 
+  /// How far along this run is: planned, pulled, dressed, terminated,
+  /// tested.
+  ///
+  /// CONVERTED AT M3-C/2, when the Structure editor made it an editable
+  /// cell. It is the column a person actually walks the job with, and
+  /// docs/07 §4.1 puts it among the eight defaults for that reason.
+  ///
+  /// NOT NULLABLE, unlike almost everything else on this class, and that
+  /// is not an oversight about G4: `planned` IS the state of a drop
+  /// nobody has touched, so there is no "unknown" to distinguish it from.
+  /// A cable that exists in the document has, at minimum, been planned.
+  RoughInStatus _roughInStatus;
+  RoughInStatus get roughInStatus => _roughInStatus;
+  @internal
+  set roughInStatus(RoughInStatus v) => _roughInStatus = v;
+
   // ACCESS CONTROL: fields below are plain mutable pending @internal
   // retrofit (AC-013). Converted as each is wired to a Command. See
   // internal_setter_grep_test.dart.
@@ -288,7 +305,6 @@ final class Link {
   Uuid? pathwayId;
   CrossoverKind? crossover;
 
-  RoughInStatus roughInStatus;
   TestResult? test;
   String? installedBy;
   DateTime? terminatedAt;
