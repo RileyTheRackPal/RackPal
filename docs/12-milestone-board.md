@@ -1096,6 +1096,37 @@ the master as seeded Dart. The assertion now exists, transcribes the block from 
 reading it out of the code, and checks the converse too, that the seed invents no synonym the doc
 does not list.
 
+**M3-C/1 is closed, and the number it produced is 5.82.** #147's instruction was not "build a text
+field": *"write the loop first, drive it with a keyboard, and time ten drops on a stub UI. If ten
+drops are not on pace, no amount of table polish will make sixty."* Closed across four commits, the
+last at `bf43a38`, in three layers that can each be driven alone: a parser that takes text and needs
+no document (`73073dc`), a planner that takes a parsed line and a document and mutates neither
+(`20c0801`), and the surface (`64f8108`).
+
+*The measurement, and what it is not.* Sixty drops across ten rooms cost **349 keystrokes, 5.82 per
+drop**, or **292 and 4.87** when the rooms are typed by code rather than by name. Both are gated.
+Neither times a person: fifteen seconds per drop *including thinking* is a human fact and **#163
+(M3-G/1) is still the only thing that can measure it**. What is measured here is the part the
+surface controls, which is the part that could have made the drill impossible before anyone ran it.
+The first version of that test asserted "under four" because four sounded right; the figure is 5.82
+and the assertion is now a ceiling over the measurement rather than a target somebody hoped for.
+
+*One ruling, DR-023 (canon §11.22), and the corpus's own example caught the implementation.* The
+chain is `@service=`, then the outlet template's tag, then the media's `shortTag`. Step 1 was
+written first as "use the modifier literally", which renders `EXT-CAMERA-1` where docs/01 §571
+prints `EXT-CAM-4`. `CAMERA` is not `CAM`: the modifier names an `OutletTemplate` exactly as step 2
+does, and differs only in how that template is chosen. **`EXT-CAM-4` is not reproducible until #150
+seeds the six templates**, because `outletTemplates` is `{}` in every document, and that is gated in
+both directions rather than left to be noticed.
+
+*Two outcomes that are deliberately not refusals.* A missing room and a missing Structure device are
+what a blank project is always missing, and both are one keystroke away. As refusals they would make
+the surface print an error for the most ordinary thing that can happen on line one; as their own
+outcomes it prints an offer. Nothing is created behind the user's back either way.
+
+*What M3-C/1 unblocks.* #575 (M3-A/6) was waiting on exactly this, and it is the last open task
+under M3-A.
+
 **What #582 did not do, stated so #147 does not assume it.** `kUnstatedMedia` survives. Its
 standing note names two conditions for its own deletion, `mediaTypes` seeded **and** a family able
 to name its typical cable; only the first is met, because canon §6.5's `supports[]` is one of the
