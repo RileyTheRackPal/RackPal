@@ -321,16 +321,16 @@ Residential rack: streaming box, 8×8 HDMI matrix, HDBaseT TX, AVR, 16-channel a
 │          │        ┃          │          │ TV wall WP-1 │ rear         ┃ CMR         │     │      ┃              │
 │ W016     │▨ STR   ┃ GR-TV-2  │ 1A-A04   │ Great Room / │ RK-1 / U14 / ┃ Cat6A F/UTP │ 78  │ CD-1 ┃ ☐  ☐  ☐  ___ │
 │          │        ┃          │          │ TV wall WP-1 │ rear         ┃ CMR         │     │      ┃              │
-│ W041     │▥ AUD·SPK┃ GR-CLG-1│ —        │ Great Room / │ RK-1 / U08 / ┃ 16/2 CL3    │ 62i │ JH-2 ┃ ☐  ☐  ☐  ___ │
+│ W041     │▥ AUD·SPK┃ GR-SPK-1│ —        │ Great Room / │ RK-1 / U08 / ┃ 16/2 CL3    │ 62i │ JH-2 ┃ ☐  ☐  ☐  ___ │
 │          │        ┃          │          │ ceiling L/R  │ rear AMP-1   ┃             │     │      ┃              │
 │ W070     │▧ RF    ┃ ANT-ROOF │ 1A-F01   │ Attic / mast │ RK-1 / U02 / ┃ RG6 quad    │ 44  │ CD-3 ┃ ☐  ☐  ☐  ___ │
 │          │        ┃          │          │              │ rear SPL-1   ┃ swept 3 GHz │     │      ┃              │
 │▌ KITCHEN — 3 runs ─────────────────────────────────────────────────────────────────────────────  141 ft ───────│
-│ W042     │▥ AUD·SPK┃ KIT-CLG-1│ —       │ Kitchen /    │ RK-1 / U08 / ┃ 16/2 CL3    │ 51i │ JH-2 ┃ ☐  ☐  ☐  ___ │
+│ W042     │▥ AUD·SPK┃ KIT-SPK-1│ —       │ Kitchen /    │ RK-1 / U08 / ┃ 16/2 CL3    │ 51i │ JH-2 ┃ ☐  ☐  ☐  ___ │
 │          │        ┃          │          │ ceiling pair │ rear AMP-1   ┃             │     │      ┃ VERIFY POL.  │
 │ W043     │▬ NET   ┃ KIT-AP-1 │ 1A-A11   │ Kitchen /    │ RK-1 / U20 / ┃ Cat6A F/UTP │ 47  │ CD-1 ┃ ☐  ☐  ☐  ___ │
 │          │        ┃          │          │ ceiling AP   │ rear SW-1    ┃ CMR         │     │      ┃ PoE Class 4  │
-│ W044     │▨ STR   ┃ KIT-KP-1 │ 1A-A12   │ Kitchen /    │ RK-1 / U14 / ┃ Cat6A F/UTP │ 43  │ CD-1 ┃ ☐  ☐  ☐  ___ │
+│ W044     │▨ STR   ┃ KIT-KEY-1│ 1A-A12   │ Kitchen /    │ RK-1 / U14 / ┃ Cat6A F/UTP │ 43  │ CD-1 ┃ ☐  ☐  ☐  ___ │
 │          │        ┃          │          │ keypad wall  │ rear         ┃ CMR         │     │      ┃              │
 │▌ MEDIA ROOM — 4 runs ──────────────────────────────────────────────────────────────────────────  198 ft ───────│
 │ W014     │▤ VID·HBT┃ MR-PROJ-1│ 1A-A07  │ Media Rm /   │ RK-1 / U16 / ┃ Cat6A F/UTP │ 66  │ CD-2 ┃ ☐  ☐  ☐  ___ │
@@ -351,15 +351,27 @@ The same rows as a table, with the two length variants distinguished:
 |---|---|---|---|---|---|---|---|---|---|
 | W015 | ▨ STR | GR-TV-1 | 1A-A03 | Great Room / TV wall WP-1 | RK-1 / U14 / rear PP-1 A03 | Cat6A F/UTP CMR | 78 | CD-1 | Grade 2 outlet |
 | W016 | ▨ STR | GR-TV-2 | 1A-A04 | Great Room / TV wall WP-1 | RK-1 / U14 / rear PP-1 A04 | Cat6A F/UTP CMR | 78 | CD-1 | |
-| W041 | ▥ AUD·SPK | GR-CLG-1 | — | Great Room / ceiling L/R | RK-1 / U08 / rear AMP-1 CH 5 ± | 16/2 CL3 | *62* | JH-2 | 1 `Link`, 2 `Conductor`s (`atomicConnect`) |
+| W041 | ▥ AUD·SPK | GR-SPK-1 | — | Great Room / ceiling L/R | RK-1 / U08 / rear AMP-1 CH 5 ± | 16/2 CL3 | *62* | JH-2 | 1 `Link`, 2 `Conductor`s (`atomicConnect`) |
 | W070 | ▧ RF | ANT-ROOF | 1A-F01 | Attic / mast | RK-1 / U02 / rear SPL-1 IN | RG6 quad, swept 3 GHz | 44 | CD-3 | OTA; preamp power injected at SPL-1 |
-| W042 | ▥ AUD·SPK | KIT-CLG-1 | — | Kitchen / ceiling pair | RK-1 / U08 / rear AMP-1 CH 7 ± | 16/2 CL3 | *51* | JH-2 | **VERIFY POLARITY** |
+| W042 | ▥ AUD·SPK | KIT-SPK-1 | — | Kitchen / ceiling pair | RK-1 / U08 / rear AMP-1 CH 7 ± | 16/2 CL3 | *51* | JH-2 | **VERIFY POLARITY** |
 | W043 | ▬ NET | KIT-AP-1 | 1A-A11 | Kitchen / ceiling AP | RK-1 / U20 / rear SW-1 P11 | Cat6A F/UTP CMR | 47 | CD-1 | PoE Class 4 |
-| W044 | ▨ STR | KIT-KP-1 | 1A-A12 | Kitchen / keypad wall | RK-1 / U14 / rear PP-1 A12 | Cat6A F/UTP CMR | 43 | CD-1 | far end `OpenEndpoint` |
+| W044 | ▨ STR | KIT-KEY-1 | 1A-A12 | Kitchen / keypad wall | RK-1 / U14 / rear PP-1 A12 | Cat6A F/UTP CMR | 43 | CD-1 | far end `OpenEndpoint` |
 | W014 | ▤ VID·HBT | MR-PROJ-1 | 1A-A07 | Media Rm / ceiling projector | RK-1 / U16 / rear TX-1 LINK OUT | Cat6A F/UTP solid CMR | 66 | CD-2 | **NOT ETHERNET**: do not patch to SW-1. PoH 100 W |
 | W055 | ▪ CTL·232 | MR-PROJ-C | 1A-A08 | Media Rm / ceiling projector | RK-1 / U22 / rear CTL-1 COM 2 | Cat6 + DE-9 adapters | 41 | CD-2 | **NULL-MODEM** 2↔3 4↔6 7↔8 5→5 |
 | W061 | ▪ CTL·IR | MR-EMIT-1 | — | Media Rm / rack shelf | RK-1 / U22 / rear CTL-1 IR 3 | 3.5 mm **mono** emitter | *38* | CD-2 | Xantech pinout; **not** the receiver jack |
 | W072 | ▧ RF | MR-CATV-1 | 1A-F04 | Media Rm / AV wall | RK-1 / U02 / rear SPL-1 OUT 2 | RG6 quad | 53 | CD-3 | |
+
+> **Three field labels in this example were corrected when M3-C/4 seeded
+> the outlet templates.** Under DR-022 the `{SERVICE}` segment is the
+> `OutletTemplate.tag` the drop was created from, so the words in that
+> position are now shipped data rather than prose. `KIT-KP-1` became
+> `KIT-KEY-1`, because canon §11.21's worked example is `MBR-KEY-2` and
+> canon is normative over a derived sheet. `GR-CLG-1` and `KIT-CLG-1`
+> became `GR-SPK-1` and `KIT-SPK-1`, because `CLG` is an OUTLET
+> designation — docs/07 §4's table prints it in that column, beside a
+> field label of `LR-SPK-1` — and it had wandered one column left. The
+> seeded tags and the reasoning are in
+> `packages/rackmate_core/lib/src/catalog/seed_outlet_templates.dart`.
 
 Note what the notes are doing. `NOT ETHERNET`, `NULL-MODEM 2↔3 4↔6 7↔8 5→5`, `VERIFY POLARITY`, `not the receiver jack` are **generated from the port and connector model**, not typed by a user. That is the single highest-value thing this schedule does that a spreadsheet cannot. Italic lengths are estimates derived from `Location.estimatedRunLengthFromRack` and are tagged as such so nobody bills off them (AC-024); a null length prints `—` and the `LEN-*` rules emit *"length unknown, cannot verify"* rather than silently passing (G4).
 

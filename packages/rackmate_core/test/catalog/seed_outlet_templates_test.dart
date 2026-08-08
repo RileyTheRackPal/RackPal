@@ -95,11 +95,14 @@ void main() {
       expect(seeded['outlet.keypad']!.tag, 'KEY');
     });
 
-    test('CEILING SPEAKER PAIR is SPK, not the mount surface', () {
-      // docs/08's `GR-CLG-1` put `CLG` in the service segment. docs/07
-      // §4's table carries both words in DIFFERENT columns — `LR-SPK-1`
-      // is the label and `CLG` is the mount surface — so `CLG` is a
-      // column that wandered.
+    test('CEILING SPEAKER PAIR is SPK, and the other two readings lose', () {
+      // A three-way split. docs/07 §4's labelled table prints
+      // `LR-SPK-1` in FIELD LABEL with `CLG` in the OUTLET column beside
+      // it, so docs/08's `GR-CLG-1` is an outlet designation that
+      // wandered into the service segment. The whole-house fixture's
+      // `GR-AUD-1` loses on principle rather than on count: `AUD` is
+      // `audio.analog`'s DOMAIN tag prefix, which is precisely the
+      // family-shaped answer DR-022 §11.21.5 rejected.
       expect(seeded['outlet.ceiling_speaker_pair']!.tag, 'SPK');
     });
 

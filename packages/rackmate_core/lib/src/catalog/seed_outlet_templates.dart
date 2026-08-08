@@ -67,10 +67,18 @@
 //    design-ux-schematic's `MBR-KY-2`. `MBR-KEY-2` is the form canon
 //    §11.21 and docs/07 §8's label table both print, and canon wins over
 //    a derived sheet. docs/08 is owed the edit.
-//  * CEILING SPEAKER PAIR is `SPK`, not docs/08's `GR-CLG-1`. docs/07
-//    §4's table carries BOTH words in different columns — `LR-SPK-1` is
-//    the label, `CLG` is the mount surface — so docs/08 put a mount
-//    surface in the service segment. docs/08 is owed that edit too.
+//  * CEILING SPEAKER PAIR is `SPK`, and this one was a three-way split.
+//    docs/07 §4's labelled table and design-ux-device-builder's both
+//    print `LR-SPK-1` in the FIELD LABEL column, with `CLG` sitting in
+//    the OUTLET column beside it — so docs/08's `GR-CLG-1` put an outlet
+//    designation in the service segment. The whole-house fixture is the
+//    third reading, `GR-AUD-1`, and it is the one this seed can rule out
+//    on principle rather than on count: `AUD` is `audio.analog`'s DOMAIN
+//    tag prefix, which makes it exactly the family-shaped answer DR-022
+//    §11.21.5 rejected — a word that never varies and never becomes
+//    anything else, stored forever by CR-048. docs/08 is owed its edit;
+//    the fixture's labels are hand-authored rather than generated, so
+//    they are a separate question from this one.
 //
 // THE THREE GRADES CARRY NO TAG, and that is G4 rather than an
 // oversight. No `{ROOM_ABBR}-{SERVICE}-{SEQ}` label anywhere in the
