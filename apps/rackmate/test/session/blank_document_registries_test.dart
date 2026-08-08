@@ -87,16 +87,28 @@ void main() {
     expect(rj45.footprintHeight, isNotNull);
   });
 
-  test('and NOTHING in the two registries still out of scope', () {
-    // `cableSpecs` and `outletTemplates` are real shipped content in §6
-    // and are deliberately not invented here (G4). Asserted so that
-    // populating them later is a visible change to a stated expectation
-    // rather than a silent one — which is exactly what happened to the
-    // third: `mediaTypes` was in this list until M3-C/6 seeded canon
-    // §6.5, and it tripped here as intended.
+  test('and NOTHING in the one registry still out of scope', () {
+    // `cableSpecs` is real shipped content in §6 and is deliberately not
+    // invented here (G4). Asserted so that populating it later is a
+    // visible change to a stated expectation rather than a silent one —
+    // which is exactly what happened to the other two: `mediaTypes` was
+    // in this list until M3-C/6 seeded canon §6.5, `outletTemplates`
+    // until M3-C/4 seeded CR-108's, and each tripped here as intended.
     final registries = _blank().registries;
     expect(registries.cableSpecs, isEmpty);
-    expect(registries.outletTemplates, isEmpty);
+  });
+
+  test('and a blank project knows what a TV location is (M3-C/4)', () {
+    // The gap this closed: seventeen outlets in the whole-house starter
+    // carried an `outletTemplateId` that resolved to nothing, because
+    // `registries.outletTemplates` was `{}` in every document ever
+    // written.
+    final registries = _blank().registries;
+    expect(registries.outletTemplates, hasLength(9));
+    expect(
+      registries.outletTemplates['outlet.tv_location']!.drops,
+      hasLength(2),
+    );
   });
 
   test('and a blank project can say what cable a run is (M3-C/6)', () {

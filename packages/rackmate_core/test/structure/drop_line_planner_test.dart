@@ -209,34 +209,51 @@ void main() {
       expect(plan.fieldLabels, ['LR-C6-1', 'LR-RG6-1', 'LR-16/4-1']);
     });
 
-    test('STEP 1 RESOLVES THROUGH A TEMPLATE, which is what makes the '
-        "corpus's own EXT-CAM label come out", () {
-      // `@service=camera` → `EXT-CAM-4` (docs/01 §571, DR-023 §11.22.1).
+    test('STEP 1 RESOLVES THROUGH A TEMPLATE, and the corpus label now '
+        'comes out of a BLANK project', () {
+      // `Exterior: 6x Cat6 @service=camera` → `EXT-CAM-4`, DR-023
+      // §11.22.1's own worked line, printed by docs/07 §8's label table.
       // `CAMERA` is not `CAM`, so the modifier cannot be used literally:
       // it names the same kind of thing step 2 does, and differs only in
       // how the template is chosen.
+      //
+      // NOTHING IS INSERTED HERE ANY MORE. This test used to author a
+      // `tpl.cam` by hand, and the one below it asserted that a real
+      // document could NOT produce `EXT-CAM-4` because
+      // `registries.outletTemplates` was `{}` everywhere. M3-C/4 seeded
+      // `outlet.camera`, so the seed master is what resolves the token.
       final p = _project(code: 'EXT', name: 'Exterior');
-      p.doc.registries.outletTemplates['tpl.cam'] = OutletTemplate(
-        id: 'tpl.cam',
-        name: 'Camera',
-        tag: 'CAM',
-      );
 
       final plan = _ready(_plan(p.doc, 'Exterior: 6x Cat6 @service=camera'));
-      expect(plan.fieldLabels.first, 'EXT-CAM-1');
+      expect(plan.fieldLabels, [
+        'EXT-CAM-1',
+        'EXT-CAM-2',
+        'EXT-CAM-3',
+        'EXT-CAM-4',
+        'EXT-CAM-5',
+        'EXT-CAM-6',
+      ]);
     });
 
-    test('STEP 1 falls back to the literal when no template is named '
-        'that, so the modifier works before #150 seeds any', () {
-      // `registries.outletTemplates` is `{}` in every document today, so
-      // this arm is the only reachable one and the corpus's `EXT-CAM-4`
-      // is NOT reproducible until #150 lands. Asserted so that fact is
-      // visible here rather than discovered there.
+    test('STEP 1 still falls back to the literal for a token no template '
+        'is named', () {
+      // The other arm, kept: `@service=poe` on a project that authored no
+      // such template must still produce a label rather than refuse.
+      // Nine templates ship now, so this reaches past all of them.
       final p = _project(code: 'EXT', name: 'Exterior');
-      expect(p.doc.registries.outletTemplates, isEmpty);
+      expect(p.doc.registries.outletTemplates, isNotEmpty);
 
-      final plan = _ready(_plan(p.doc, 'Exterior: 6x Cat6 @service=camera'));
-      expect(plan.fieldLabels.first, 'EXT-CAMERA-1');
+      final plan = _ready(_plan(p.doc, 'Exterior: 2x Cat6 @service=poe'));
+      expect(plan.fieldLabels.first, 'EXT-POE-1');
+    });
+
+    test('STEP 1 resolves by TAG before name, which is why `tv` works', () {
+      // The seeded *TV location* answers to `tv` because its tag is `TV`;
+      // its NAME is two words nobody types mid-drill.
+      final p = _project();
+
+      final plan = _ready(_plan(p.doc, 'Living Room: 2x Cat6 @service=tv'));
+      expect(plan.fieldLabels, ['LR-TV-1', 'LR-TV-2']);
     });
 
     test('STEP 2, the outlet template tag, beaten by STEP 1 when both '
@@ -245,12 +262,10 @@ void main() {
       // the chain: the drop lands on a TV location outlet and is
       // labelled CAM anyway, which is the cost the ruling accepted in as
       // many words.
+      // The outlet is created from the SEEDED `outlet.tv_location`, not
+      // a template authored in this test, so the step-2 arm exercises
+      // the same data a real document carries.
       final p = _project();
-      p.doc.registries.outletTemplates['tpl.tv'] = OutletTemplate(
-        id: 'tpl.tv',
-        name: 'TV location',
-        tag: 'TV',
-      );
       AddOutletCommand(
         structureBodyId: p.bodyId,
         designation: 'LR-TV-1',
@@ -258,7 +273,7 @@ void main() {
         now: _now,
         actor: 'test',
         locationId: p.livingRoom,
-        outletTemplateId: 'tpl.tv',
+        outletTemplateId: 'outlet.tv_location',
       ).apply(p.doc);
 
       final withTemplate = _ready(

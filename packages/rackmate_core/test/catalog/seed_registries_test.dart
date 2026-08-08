@@ -323,23 +323,31 @@ void main() {
       expect(seeded.connectorTypes, hasLength(footprints.length));
     });
 
-    test('leaves cableSpecs and outletTemplates EMPTY', () {
+    test('leaves cableSpecs EMPTY', () {
       // Out of DR-010's scope and deliberately not invented (G4). This
-      // asserts the absence so that populating them later is a visible
+      // asserts the absence so that populating it later is a visible
       // change to a stated expectation rather than a silent one.
       //
-      // `mediaTypes` WAS ASSERTED EMPTY HERE and is not any more. It was
-      // seeded by M3-C/6, and the tripwire did its job: the drop DSL
+      // TWO IDS HAVE LEFT THIS TEST, and the tripwire did its job both
+      // times. `mediaTypes` went to M3-C/6, because the drop DSL
       // (docs/07 §4.3, `4x Cat6`) had nothing to resolve a media name
-      // against. `outletTemplates` is the same shape of gap and is #150's.
+      // against. `outletTemplates` went to M3-C/4, because seventeen
+      // outlets in the whole-house starter named ids inside it.
       expect(seeded.cableSpecs, isEmpty);
-      expect(seeded.outletTemplates, isEmpty);
     });
 
     test("carries canon §6.5's media types, which it did not before", () {
-      // Kept beside the absences above so the two read as one list: what
-      // a new document starts from, and what it still does not.
+      // Kept beside the absence above so the three read as one list:
+      // what a new document starts from, and what it still does not.
       expect(seeded.mediaTypes, hasLength(38));
+    });
+
+    test("carries CR-108's outlet templates, which it did not before", () {
+      // Six named recipes plus TIA-570-D Grade 1/2/3. Contents are
+      // gated in `seed_outlet_templates_test.dart`; this is the line
+      // that puts them in a new document.
+      expect(seeded.outletTemplates, hasLength(9));
+      expect(seeded.outletTemplates['outlet.tv_location']!.tag, 'TV');
     });
 
     test('two calls are independent — a document may edit its own copy', () {

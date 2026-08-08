@@ -5238,7 +5238,138 @@
           "shortTag": "USBC"
         }
       },
-      "outletTemplates": {},
+      "outletTemplates": {
+        "outlet.ap": {
+          "drops": [
+            {
+              "count": 1,
+              "media": "media.cat6",
+              "service": "net.ethernet"
+            }
+          ],
+          "id": "outlet.ap",
+          "name": "AP",
+          "tag": "AP"
+        },
+        "outlet.camera": {
+          "drops": [
+            {
+              "count": 1,
+              "media": "media.cat6",
+              "service": "net.ethernet"
+            }
+          ],
+          "id": "outlet.camera",
+          "name": "Camera",
+          "tag": "CAM"
+        },
+        "outlet.ceiling_speaker_pair": {
+          "drops": [
+            {
+              "count": 1,
+              "media": "media.16_4",
+              "service": "audio.speaker_lowz"
+            }
+          ],
+          "id": "outlet.ceiling_speaker_pair",
+          "name": "Ceiling speaker pair",
+          "tag": "SPK"
+        },
+        "outlet.data_only": {
+          "drops": [
+            {
+              "count": 1,
+              "media": "media.cat6",
+              "service": "net.ethernet"
+            }
+          ],
+          "id": "outlet.data_only",
+          "name": "Data only",
+          "tag": "DATA"
+        },
+        "outlet.keypad": {
+          "drops": [
+            {
+              "count": 1,
+              "media": "media.22_4",
+              "service": "structure.undetermined"
+            }
+          ],
+          "id": "outlet.keypad",
+          "name": "Keypad",
+          "tag": "KEY"
+        },
+        "outlet.tia570d_grade1": {
+          "drops": [
+            {
+              "count": 1,
+              "media": "media.cat6a_futp",
+              "service": "net.ethernet"
+            },
+            {
+              "count": 1,
+              "media": "media.rg6_quad",
+              "service": "rf.catv"
+            }
+          ],
+          "id": "outlet.tia570d_grade1",
+          "name": "TIA-570-D Grade 1"
+        },
+        "outlet.tia570d_grade2": {
+          "drops": [
+            {
+              "count": 2,
+              "media": "media.cat6a_futp",
+              "service": "net.ethernet"
+            },
+            {
+              "count": 2,
+              "media": "media.rg6_quad",
+              "service": "rf.catv"
+            }
+          ],
+          "id": "outlet.tia570d_grade2",
+          "name": "TIA-570-D Grade 2"
+        },
+        "outlet.tia570d_grade3": {
+          "drops": [
+            {
+              "count": 2,
+              "media": "media.cat6",
+              "service": "net.ethernet"
+            },
+            {
+              "count": 1,
+              "media": "media.rg6_quad",
+              "service": "rf.catv"
+            },
+            {
+              "count": 1,
+              "media": "media.os2",
+              "service": "net.fiber_sm"
+            }
+          ],
+          "id": "outlet.tia570d_grade3",
+          "name": "TIA-570-D Grade 3"
+        },
+        "outlet.tv_location": {
+          "drops": [
+            {
+              "count": 2,
+              "media": "media.cat6",
+              "service": "net.ethernet"
+            },
+            {
+              "count": 2,
+              "media": "media.rg6_quad",
+              "service": "rf.catv"
+            }
+          ],
+          "id": "outlet.tv_location",
+          "name": "TV location",
+          "tag": "TV"
+        }
+      },
       "signalDomains": {
         "audio.analog": {
           "color": "#FFE69F00",

@@ -52,14 +52,15 @@
 // ═════════════════════════════════════════════════════════════════════
 // WHAT IS DELIBERATELY ABSENT, SO IT READS AS A GAP AND NOT AN OVERSIGHT
 // ═════════════════════════════════════════════════════════════════════
-//  * `Registries.cableSpecs` and `.outletTemplates` STAY EMPTY. §6's
-//    outlet templates are real shipped content, but they are out of
-//    DR-010's scope and inventing them here to make two maps look
-//    populated is the fabrication G4 forbids. They are still empty; that
-//    is the truth. `.mediaTypes` WAS in this list and is no longer:
-//    M3-C/6 seeded canon §6.5's 38 types from `seed_media_types.dart`,
-//    because the drop DSL (docs/07 §4.3, `4x Cat6`) has to resolve a
-//    media name against something and there was nothing there.
+//  * `Registries.cableSpecs` STAYS EMPTY. Real shipped content in §6,
+//    but out of DR-010's scope, and inventing it here to make the map
+//    look populated is the fabrication G4 forbids. It is still empty;
+//    that is the truth. TWO IDS HAVE LEFT THIS LIST: `.mediaTypes` to
+//    M3-C/6, because the drop DSL (docs/07 §4.3, `4x Cat6`) has to
+//    resolve a media name against something, and `.outletTemplates` to
+//    M3-C/4, because seventeen outlets in the whole-house starter name
+//    ids that resolved to nothing. Both were seeded once something
+//    needed them, which is DR-010 §11.10.4's rule working.
 //  * `SignalFamilyDef.aliases` is empty on all 55. §2.3's alias table is
 //    real, but it is the Quick Add DSL's resolution table (CR-058) and
 //    nothing in this build resolves an alias — §2.3 itself says "the
@@ -77,6 +78,7 @@
 
 import 'package:rackmate_core/src/catalog/catalog_connectors.dart';
 import 'package:rackmate_core/src/catalog/seed_media_types.dart';
+import 'package:rackmate_core/src/catalog/seed_outlet_templates.dart';
 import 'package:rackmate_core/src/model/registries.dart';
 import 'package:rackmate_core/src/model/template.dart'
     show PortDirection, PortTopology;
@@ -1028,11 +1030,12 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
 /// `connectorTypes` IS INCLUDED and was previously dead —
 /// `buildSeedConnectorFootprints()` shipped at M1 and was consumed only
 /// by its own test, which is why DR-010's finding reads `connectors: 0`
-/// everywhere alongside the two empty signal maps. `cableSpecs` and
-/// `outletTemplates` STAY EMPTY; see the file header.
+/// everywhere alongside the two empty signal maps. `cableSpecs` STAYS
+/// EMPTY; see the file header.
 Registries buildSeedRegistries() => Registries(
   signalDomains: buildSeedSignalDomains(),
   signalFamilies: buildSeedSignalFamilies(),
   connectorTypes: buildSeedConnectorFootprints(),
   mediaTypes: buildSeedMediaTypes(),
+  outletTemplates: buildSeedOutletTemplates(),
 );
