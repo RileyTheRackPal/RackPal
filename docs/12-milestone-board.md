@@ -1353,6 +1353,55 @@ M3-J/4 are unblocked and can land in any order. **#148 closed on 2026-08-08, so 
 unblocked**: the table it needs a column on is built, and `StructureColumnId` plus
 `kStructureOptionalColumns` are where that column goes.
 
+**M3-J/3 (#585) closed the same day, and M3-J closed with it.** §11.19.3's "80 % modelled and 0 %
+reachable" was still half true after #148: five of the seven as-built columns RENDERED and none of
+them could be typed into. Two were missing outright, `SPLICES` (M3-J/2's own field, which had no
+column at all) and `TERMINATED`. All seven are enterable now, and `kStructureAsBuiltColumns` turns
+the set on as **one switch** at the top of `⚙ Columns`, because reaching that table through seven
+menu entries would put the cost §11.19.2(5) is about back in a different place. `ROUGH-IN` is
+deliberately not in the group: it is one of §4.1's eight defaults, since "how far along is this
+run" is what the rough-in table is already about, where these seven answer "what did we actually
+do" on a second visit weeks later.
+
+*The parsers are in core and every one of them refuses with a sentence, because null is already
+taken.* An empty box means UNKNOWN and is a legal edit (G4), so a parser answering null for both
+"cleared" and "nonsense" would let `62 ft 3` silently erase a measurement. That string is #585's
+own example of what must not be accepted and it has a test.
+
+*A length column is WHOLE UNITS and a decimal is refused, which is the finding worth keeping.*
+`scheduleLengthCell` rounds, because docs/08 §3.2 prints `78` and cable is cut in whole feet. A
+cell that accepted `62.5` would store a value its own column then displays as `63`, so the number
+on screen and the number in the file would disagree the moment it was typed. **A stored precise
+value is not clobbered by this**: a cell commits only when its text changes, so tabbing past a run
+measured at 62 ft 6 in leaves it exactly where it is. A date is `YYYY-MM-DD` and nothing else,
+because `03/04` is March and April at the same time; `DateTime.utc(2026, 2, 31)` is March 3rd and
+throws nothing, so the parser compares the parts back rather than trusting the constructor.
+
+*Three rules the columns enforce, each of them G4 at a keyboard.* A splice count keeps `0` and
+blank apart, which is the entire reason §11.19.2(3) made the field nullable. `TEST` is three states
+and null is NOT TESTED rather than failed, so the control can return to unknown after somebody has
+answered once. And **`CERT ID` is refused on a cable with no result**: `TestResult` requires
+`pass`, so accepting a certificate would write a verdict nobody gave, on the one column whose whole
+purpose is to be evidence. Re-testing a failed run keeps its certificate and headroom, because
+changing the verdict is not the same act as re-certifying.
+
+*One thing the generic machinery could not do for us.* `TestResult` has no `operator ==`, as no def
+in this model does, so "nothing to do" is checked in the edit action rather than left to
+`buildSetEntityProperty`. Without it, filling `PASS` down a column already all `PASS` would build
+sixty commands replacing objects with equal ones and cost an undo step that visibly changes
+nothing.
+
+*And the measurement the brief asked for.* #585's own framing is that "the ergonomics are the
+feature, not the columns" and that "a tally that costs an inspector visit per cable has not
+shipped". **Closing out sixty runs costs three gestures and three undo steps**: three fills over
+sixty rows for tested, dated and credited, each one `LabelKey.fillCells`, so backing out "we marked
+them all tested" is one keystroke rather than sixty. The test drives the real controller and
+asserts the undo depth as well as the writes, because the depth is half the claim.
+
+*Closed at `f580c2a`.* The AC-013 retrofit lands on `terminatedLength`, `test`, `installedBy` and
+`terminatedAt`; `routedLength` and `cutLength` stay plain and read-only, and that asymmetry is a
+task boundary stated in three places rather than an oversight, since #153 (M3-D/2) owns them.
+
 **M3-C/2 (#148) closed across five commits, and the design finding is that the table is a
 projection.** docs/07 §4.1's eight default columns, FIELD LABEL through ROUGH-IN, are **all already
 on `ScheduleEntry`**, resolved, with the registry lookups done and the unknowns counted. So

@@ -382,6 +382,15 @@ media, with the variance visible**: the one number in this document that improve
 rather than being spent once. It is v1, in M3, and it does not wait on the Plan view
 ([Plan view](15-plan-view.md) §4.2).
 
+**The tally shipped at M3-J/3 as seven optional columns**, not a screen: `TERM. LEN`, `SPLICES`,
+`FIELD TERM`, `TEST`, `CERT ID`, `INSTALLED BY` and `TERMINATED`, turned on together from `⚙
+Columns` as **As-built columns** and entered with the same fill-down and paste the rough-in table
+uses. `ROUGH-IN` is not one of them: it is one of §4.1's eight defaults, because "how far along is
+this run" is what the rough-in table is already about, where these seven answer "what did we
+actually do" on a second visit. Closing out sixty runs costs three gestures. The footage rollup
+that compares estimated against pulled is **#154** (M3-D/3) and is a different number for a
+different reader; this task records the facts it will read.
+
 Full sheet order, furniture and table layout are in [PDF export](08-pdf-export.md). The set is a **client deliverable** and carries full drafting furniture, title block, revision block, revision clouds, issued-for-construction stamp, drawing border, zone references and sheet numbering (DR-005). Sheet furniture is orthogonal to wire idiom: the sheet is polished fully and the wires stay net-labelled (DR-001).
 
 ---
