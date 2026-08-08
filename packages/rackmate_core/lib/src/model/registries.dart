@@ -219,7 +219,28 @@ final class MediaTypeDef {
   /// media type (RJ-009) still resolves its own synonyms on reopen.
   final List<String> aliases;
 
+  /// The declared maximum for this medium, and **the field DR-020
+  /// §11.19.2(4) calls "a new `maxLength` on the media registry"**. It is
+  /// neither new nor called that; canon §11.19.7 is the census, and
+  /// M3-C/6 seeded it at `acd63d5`.
+  ///
+  /// `LEN-002` READS THIS ONE. Seven of the 38 shipped types declare a
+  /// length and thirty-one are deliberately null, because canon §6.5's
+  /// `Max channel` column is hedged prose (`~150 m`, `100 m+`, `hundreds
+  /// of feet`) and G4 forbids rounding a hedge into a figure an installer
+  /// buys cable from. The rule is therefore SILENT on the thirty-one and
+  /// counts them; it must not read null as zero or as infinity.
   final Len? maxRunLengthPassive;
+
+  /// NULL ON ALL 38, and gated as such in `seed_media_types_test.dart`:
+  /// canon §6.5 has one `Max channel` column, and this is a separate M0
+  /// field with no source column to fill it from.
+  ///
+  /// `LEN-002` MUST NOT READ THIS ONE. A rule written against it would
+  /// compile, pass its own AC-051 fixture pair if the fixture set the
+  /// field, and never fire on a real document. Silent non-firing is the
+  /// worst failure mode a validation rule has, which is why canon
+  /// §11.19.7 rules the choice rather than leaving it to be discovered.
   final Len? maxRunLengthActive;
   final List<JacketRating> jacketOptions;
 }

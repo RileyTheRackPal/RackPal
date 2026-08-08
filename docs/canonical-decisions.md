@@ -7332,7 +7332,9 @@ looks specific. **§4's first draft is void and is not to be re-argued from.**
 4. **`LEN-002` ships in v1, and the catalogue becomes 28.** *A run's known length exceeds the
    declared maximum for its media type.* One generic rule reading a **new `maxLength` on the media
    registry** rather than one rule per medium: one AC-051 fixture pair instead of three or ten, and
-   a new medium's limit costs a registry row rather than an amendment. Tier 3.
+   a new medium's limit costs a registry row rather than an amendment. Tier 3. **The field is not
+   new and is not called that; it is `MediaTypeDef.maxRunLengthPassive`, and §11.19.7 is the
+   census.**
    **The v1 catalogue is 28 rules: 8 tier-1 + 6 tier-2 + 14 tier-3.** AC-051's gate is unchanged
    and now applies to 28 pairs.
 5. **The as-built tally surface ships in M3**, with the Structure editor, reusing its bulk-entry
@@ -7363,7 +7365,34 @@ the tally surface is a column on a table the milestone already builds, not a new
 one rule and one fixture pair. Roadmap §2.1, §2.2 and M3's checklist are amended.
 
 **11.19.6 Landed.** Ruling, scope list, `docs/15` §4 rewritten, and the 28-rule sweep across ten
-documents. Nothing implemented. No board item.
+documents. Board M3-J (#569) was added afterwards and decomposed on 2026-08-08 into #583–#586;
+`Link.spliceCount` shipped at `70a93f4`.
+
+**11.19.7 The registry field is not new, and this is the census rather than a decision.** §11.19.2(4)
+asks for *"a new `maxLength` on the media registry"*. There is no such field and there never was one
+to add: `MediaTypeDef` has carried **`maxRunLengthPassive`** and **`maxRunLengthActive`** since M0,
+and M3-C/6 seeded the first of them at `acd63d5`. Board #569 asked which milestone owned the field
+before any model work landed; the answer is that **M3 owns it and M3 has already shipped it**, so M5
+owes only the rule. Ruled here rather than in a board comment because three derived documents and
+this one all name a field that does not exist, and the next reader to implement `LEN-002` would
+otherwise add a third.
+
+**`LEN-002` reads `maxRunLengthPassive` and must not read the active one.** `maxRunLengthActive` is
+**null on all 38** shipped media types and gated as such, because canon §6.5 has one `Max channel`
+column and the active field is a separate M0 field with no source. A rule written against it would
+compile, pass its own AC-051 fixture pair if the fixture set the field, and **never fire on a real
+document**. Silent non-firing is the worst failure mode a validation rule has, and it is the one
+this clause exists to prevent.
+
+**Seven of 38, not 38 of 38, and the rule must survive that.** Thirty-one types carry no declared
+maximum because canon §6.5's column is hedged prose (`~150 m`, `100 m+`, `hundreds of feet`), and G4
+forbids rounding a hedge into a figure an installer buys cable from. `LEN-002` is therefore
+**silent** on those thirty-one rather than treating null as zero or as infinity, and it reports how
+many runs it could not check, the way `LEN-001` already emits *"length unknown, cannot verify"*
+rather than passing silently.
+
+**Nothing above changes what §11.19.2(4) ruled.** One generic rule over a registry field, tier 3,
+one fixture pair, still in M5. Only the field's name and its existing state are corrected.
 
 ---
 

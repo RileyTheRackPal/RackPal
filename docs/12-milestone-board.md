@@ -1324,6 +1324,23 @@ written against it would compile, pass a fixture pair, and never fire on a real 
 non-firing is the worst failure mode a validation rule has, and it is now written down before M5
 starts rather than found there.
 
+*#586 closed at the commit below, and the correction went into the ruling rather than only the
+board.* Canon gains **§11.19.7**, which names the field, records that M3-C/6 shipped it, rules that
+`LEN-002` reads `maxRunLengthPassive` and not the empty active one, and states that the rule is
+silent-with-a-count on the thirty-one types with no declared maximum. §11.19.2(4) keeps its wording
+and gains a pointer; nothing it ruled changes. Three derived documents named a field that does not
+exist and now name the one that does (docs/02 §5's `LEN-002` row, docs/09 §3 and its risks table,
+docs/10's DR-020 row), and both `MediaTypeDef` fields carry the choice in their own doc comments,
+which is where M5's implementer will actually be standing.
+
+*M3-J/2 (#584) closed at `70a93f4`.* `Link.spliceCount: int?`, the second of DR-020's three v1
+items. The nullability is the task rather than a detail: a non-nullable `int` defaulting to `0`
+cannot tell *"nobody has looked"* from *"somebody looked and there are none"*, and four of the eight
+tests exist to keep those apart. `putIfNotNull` is the right writer precisely because it compares
+against null and not against zero, so a confirmed none reaches disk as `"spliceCount": 0` while an
+unlooked-at run has no key. Wired to a `LinkField` row, which is the AC-013 retrofit; that table had
+held exactly one row since M3-A/7.
+
 *One item was found unowned and given a home rather than a task.* DR-020 §11.19.4 leaves open
 whether `PathwayKind` gains `attic` and `crawlspace`, and says it is **"Owed at M3, when `Pathway`
 gets its editor"**. That editor is #156 (M3-E/1) and no item claimed the question; it is recorded
