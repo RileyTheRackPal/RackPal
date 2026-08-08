@@ -103,3 +103,4 @@ export 'src/shell/shell_banner.dart';
 export 'src/shell/start_card.dart';
 export 'src/shell/unbuilt_view.dart';
 export 'src/shell/unsaved_changes_dialog.dart';
+export 'src/structure/drop_entry_panel.dart';
