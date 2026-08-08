@@ -12,6 +12,7 @@
 // field that is on screen directly above it, and the test below drives
 // that exact instruction.
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
@@ -200,6 +201,19 @@ Future<void> _addLine(WidgetTester tester, String line) async {
   await tester.testTextInput.receiveAction(TextInputAction.done);
   await tester.pumpAndSettle();
 }
+
+/// The drops IN THE ORDER THE TABLE DRAWS THEM.
+///
+/// NOT `doc.links.values`, which is map insertion order and does NOT
+/// match: `buildSchedule` sorts by `Link.order` then id, so the two
+/// disagree the moment one line creates more than one drop. Every
+/// assertion about "the row above" reads its order from here, because
+/// reading it off anything but the table would be testing a different
+/// table.
+List<Link> _rows(_Harness h) => [
+  for (final row in buildStructureTable(h.doc).groups.single.rows)
+    h.doc.links[row.linkId]!,
+];
 
 void main() {
   group('it shows the derivation, and nothing it computed itself', () {
@@ -615,6 +629,229 @@ void main() {
         before,
         reason: 'the first edit must not have been applied either',
       );
+    });
+  });
+
+  group('the grid operations #148 names', () {
+    Finder cellHolding(String value) => find.byWidgetPredicate(
+      (w) => w is TextField && w.controller?.text == value,
+      description: 'a table cell reading "$value"',
+    );
+
+    testWidgets('TAB ORDER IS THE WIDGET ORDER, with no binding for it', (
+      tester,
+    ) async {
+      // The claim the design rests on: because every editable cell is a
+      // real control rather than a label that becomes one, Flutter's own
+      // traversal already walks them. If this fails, the cells stopped
+      // being real controls and `kKeymap` owes a `Tab` row.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+      final labels = _rows(
+        h,
+      ).map((l) => l.structureOrigin!.fieldLabel).toList();
+
+      await tester.tap(cellHolding(labels.first));
+      await tester.pumpAndSettle();
+      final first = primaryFocus;
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      expect(primaryFocus, isNot(first));
+      expect(primaryFocus?.hasFocus, isTrue);
+    });
+
+    testWidgets('Ctrl+D fills ROUGH-IN down, which is the gesture that '
+        'earns the key', (tester) async {
+      // "Everything from here down is pulled" is what a person does
+      // walking a job, and a status is legal to repeat where a label is
+      // not — see the refusal beside this.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+      final links = _rows(h);
+
+      expect(
+        h.edit([
+          StructureCellEdit(
+            linkId: links[0].id,
+            column: StructureColumnId.roughIn,
+            value: roughInLabel(RoughInStatus.pulled),
+          ),
+        ]),
+        isNull,
+      );
+      await tester.pumpAndSettle();
+
+      // The second row's status cell. Clicking it is what puts the caret
+      // there; `Esc` closes the menu the click opened without choosing.
+      await tester.tap(find.text(roughInLabel(RoughInStatus.planned)).last);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyD);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+
+      expect(links[1].roughInStatus, RoughInStatus.pulled);
+    });
+
+    testWidgets('and it REFUSES to fill a rack label down (CR-113)', (
+      tester,
+    ) async {
+      // THE CASE THAT LOOKS LIKE A BUG AND IS THE FEATURE. Rack labels
+      // are unique where set, so filling one down would put two rows on
+      // one panel position. The refusal comes from the same builder a
+      // typed cell goes through, so the grid operation cannot route
+      // around it — which is the whole reason `onEdit` takes a list of
+      // edits rather than writing values itself.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+      final links = _rows(h);
+
+      expect(
+        h.edit([
+          StructureCellEdit(
+            linkId: links[0].id,
+            column: StructureColumnId.rackLabel,
+            value: 'PP1-01',
+          ),
+        ]),
+        isNull,
+      );
+      await tester.pumpAndSettle();
+
+      // Row two's rack-label cell is empty, so it cannot be found by
+      // content: reach it from the label cell beside it, one `Tab` away.
+      await tester.tap(cellHolding(links[1].structureOrigin!.fieldLabel));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyD);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+
+      expect(links[1].structureOrigin!.rackLabel, isNull);
+      expect(find.textContaining('unique where set'), findsOneWidget);
+    });
+
+    testWidgets('Ctrl+D on the first row says why it did nothing', (
+      tester,
+    ) async {
+      // docs/04 §3.4: never silently do nothing. A grid operation that
+      // declined without a reason is indistinguishable from an unbound
+      // key.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+      final first = _rows(h).first.structureOrigin!.fieldLabel;
+
+      await tester.tap(cellHolding(first));
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyD);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+
+      expect(find.text(kNothingAboveToFill), findsOneWidget);
+    });
+
+    testWidgets('Ctrl+D with no caret says where to put one', (tester) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyD);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+
+      expect(find.text(kNoCaretForFill), findsOneWidget);
+    });
+
+    testWidgets('Ctrl+V pastes tab-separated cells from the caret', (
+      tester,
+    ) async {
+      // docs/07 §5: the contractor's pull list arrives as a spreadsheet,
+      // and a person with one open will try this before they go looking
+      // for an importer.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+      final links = _rows(h);
+      final first = links[0].structureOrigin!.fieldLabel;
+
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async => call.method == 'Clipboard.getData'
+            ? <String, dynamic>{'text': 'LR-A\tPP1-01\nLR-B\tPP1-02'}
+            : null,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+
+      await tester.tap(cellHolding(first));
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+
+      // TWO COLUMNS AND TWO ROWS, from one keystroke.
+      expect(links[0].structureOrigin!.fieldLabel, 'LR-A');
+      expect(links[0].structureOrigin!.rackLabel, 'PP1-01');
+      expect(links[1].structureOrigin!.fieldLabel, 'LR-B');
+      expect(links[1].structureOrigin!.rackLabel, 'PP1-02');
+    });
+
+    testWidgets('a paste taller than the table creates nothing and says so', (
+      tester,
+    ) async {
+      // THE DEFECT THIS FORBIDS: inventing cables from a spreadsheet.
+      // Each would need a room, a media type and a label nobody chose.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      final before = h.doc.links.length;
+      final first = _rows(h).first.structureOrigin!.fieldLabel;
+
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async => call.method == 'Clipboard.getData'
+            ? <String, dynamic>{'text': 'LR-A\nLR-B\nLR-C'}
+            : null,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+
+      await tester.tap(cellHolding(first));
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+
+      expect(h.doc.links, hasLength(before));
+      expect(
+        _rows(h).first.structureOrigin!.fieldLabel,
+        first,
+        reason: 'the rows that WOULD have fitted are not written either',
+      );
+      expect(find.text(kPasteOverruns(3, 1)), findsOneWidget);
     });
   });
 }

@@ -48,8 +48,12 @@
 // editor for it". Rooms are named once, in `Project ▸ Locations…`, and
 // the affordance below the tree says so rather than the pane silently
 // refusing a double-click.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard;
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/keymap/keymap.dart';
 import 'package:rackmate_ui/src/structure/drop_entry_panel.dart';
 
 /// What the app does when the editor asks for something.
@@ -205,84 +209,243 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
     );
     final visible = _filter(doc, table);
 
-    return ColoredBox(
-      color: Theme.of(context).colorScheme.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _EditorHeader(
-            doc: doc,
-            structureBodyId: widget.structureBodyId,
-            table: table,
-            onDone: widget.onDone,
+    // THE TWO GRID BINDINGS, in their own scope. Both act on the focused
+    // cell, so there is no honest answer to either outside this table —
+    // which is why `KeyScope.structure` exists rather than two more
+    // global rows that would have to decline everywhere else.
+    return Shortcuts(
+      shortcuts: keymapShortcuts(KeyScope.structure),
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          FillDownIntent: CallbackAction<FillDownIntent>(
+            onInvoke: (_) {
+              _fillDown();
+              return null;
+            },
           ),
-          const Divider(height: 1),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  width: 220,
-                  child: _LocationPane(doc: doc, table: table),
+          PasteCellsIntent: CallbackAction<PasteCellsIntent>(
+            onInvoke: (_) {
+              unawaited(_paste());
+              return null;
+            },
+          ),
+        },
+        child: ColoredBox(
+          color: Theme.of(context).colorScheme.surface,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _EditorHeader(
+                doc: doc,
+                structureBodyId: widget.structureBodyId,
+                table: table,
+                onDone: widget.onDone,
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      width: 220,
+                      child: _LocationPane(doc: doc, table: table),
+                    ),
+                    const VerticalDivider(width: 1),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                            child: DropEntryLoop(
+                              actions: _loopActions(),
+                              currentDoc: widget.currentDoc,
+                            ),
+                          ),
+                          _FilterBar(
+                            doc: doc,
+                            table: table,
+                            roomFilter: _roomFilter,
+                            mediaFilter: _mediaFilter,
+                            unconnectedOnly: _unconnectedOnly,
+                            optional: _optional,
+                            onRoom: (v) => setState(() => _roomFilter = v),
+                            onMedia: (v) => setState(() => _mediaFilter = v),
+                            onUnconnected: (v) =>
+                                setState(() => _unconnectedOnly = v),
+                            onToggleColumn: (id) => setState(() {
+                              if (!_optional.remove(id)) _optional.add(id);
+                            }),
+                          ),
+                          const Divider(height: 1),
+                          Expanded(
+                            child: _DropTable(
+                              doc: doc,
+                              groups: visible,
+                              columns: _columns,
+                              onEdit: _edit,
+                              onCaret: (cell) => _caret = cell,
+                              isFiltered:
+                                  _roomFilter != null ||
+                                  _mediaFilter != null ||
+                                  _unconnectedOnly,
+                              totalDrops: table.dropCount,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const VerticalDivider(width: 1),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-                        child: DropEntryLoop(
-                          actions: _loopActions(),
-                          currentDoc: widget.currentDoc,
-                        ),
-                      ),
-                      _FilterBar(
-                        doc: doc,
-                        table: table,
-                        roomFilter: _roomFilter,
-                        mediaFilter: _mediaFilter,
-                        unconnectedOnly: _unconnectedOnly,
-                        optional: _optional,
-                        onRoom: (v) => setState(() => _roomFilter = v),
-                        onMedia: (v) => setState(() => _mediaFilter = v),
-                        onUnconnected: (v) =>
-                            setState(() => _unconnectedOnly = v),
-                        onToggleColumn: (id) => setState(() {
-                          if (!_optional.remove(id)) _optional.add(id);
-                        }),
-                      ),
-                      const Divider(height: 1),
-                      Expanded(
-                        child: _DropTable(
-                          doc: doc,
-                          groups: visible,
-                          columns: _columns,
-                          onEdit: _edit,
-                          isFiltered:
-                              _roomFilter != null ||
-                              _mediaFilter != null ||
-                              _unconnectedOnly,
-                          totalDrops: table.dropCount,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const Divider(height: 1),
+              _StatusBar(
+                table: table,
+                refusal: _refusal,
+                hidden: table.dropCount - _shownCount(visible),
+                onAddDrop: null,
+                onAddOutlet: widget.actions.onAddOutlet,
+              ),
+            ],
           ),
-          const Divider(height: 1),
-          _StatusBar(
-            table: table,
-            refusal: _refusal,
-            hidden: table.dropCount - _shownCount(visible),
-            onAddDrop: null,
-            onAddOutlet: widget.actions.onAddOutlet,
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  /// Which cell the caret is in, or null when it is not in the table.
+  ///
+  /// SET BY THE CELLS THEMSELVES as they gain focus, rather than tracked
+  /// by a selection model this screen would then have to keep in step
+  /// with the focus tree. There is exactly one focused widget and Flutter
+  /// already knows which; a second answer to that question is a second
+  /// thing to be wrong.
+  (Uuid, StructureColumnId)? _caret;
+
+  /// The rows the table is showing, flattened across the bands.
+  ///
+  /// THE VISIBLE ORDER, and that is the honest one for a fill: `Ctrl+D`
+  /// means "the cell above", and the cell above is the one a person can
+  /// see above. Filling from a row hidden by a filter would copy a value
+  /// off the screen.
+  List<ScheduleEntry> _visibleRows(RackDocument doc) => [
+    for (final group in _filter(
+      doc,
+      buildStructureTable(
+        doc,
+        structureBodyId: widget.structureBodyId,
+      ),
+    ))
+      ...group.rows,
+  ];
+
+  /// `Ctrl+D` — copy the cell directly above into the focused one.
+  void _fillDown() {
+    final caret = _caret;
+    if (caret == null) {
+      setState(() => _refusal = kNoCaretForFill);
+      return;
+    }
+    final doc = widget.currentDoc();
+    final rows = _visibleRows(doc);
+    final index = rows.indexWhere((r) => r.linkId == caret.$1);
+    if (index <= 0) {
+      // Row zero has nothing above it, and saying so beats a keypress
+      // that appears to do nothing (docs/04 §3.4).
+      setState(() => _refusal = kNothingAboveToFill);
+      return;
+    }
+    _edit([
+      StructureCellEdit(
+        linkId: caret.$1,
+        column: caret.$2,
+        value: _valueFor(doc, rows[index - 1], caret.$2),
+      ),
+    ]);
+  }
+
+  /// `Ctrl+V` — tab-separated cells, from the caret rightwards and down.
+  ///
+  /// ONE BATCH FOR THE WHOLE PASTE, so a spreadsheet column that collides
+  /// on its fourth row writes none of its rows rather than three. See
+  /// `StructureEditorActions.onEdit`.
+  Future<void> _paste() async {
+    final caret = _caret;
+    if (caret == null) {
+      setState(() => _refusal = kNoCaretForPaste);
+      return;
+    }
+    final clip = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = clip?.text;
+    if (text == null || text.trim().isEmpty) return;
+    if (!mounted) return;
+
+    final doc = widget.currentDoc();
+    final rows = _visibleRows(doc);
+    final columns = _columns;
+    final firstRow = rows.indexWhere((r) => r.linkId == caret.$1);
+    final firstColumn = columns.indexOf(caret.$2);
+    if (firstRow < 0 || firstColumn < 0) return;
+
+    final edits = <StructureCellEdit>[];
+    // `\r\n` AND `\n`, because the clipboard's line ending is the source
+    // application's, not this platform's: Excel on Windows and a text
+    // editor on the same machine disagree, and a stray `\r` would land
+    // inside a label.
+    final lines = text.replaceAll('\r\n', '\n').split('\n');
+    for (var r = 0; r < lines.length; r++) {
+      if (lines[r].isEmpty && r == lines.length - 1) continue;
+      final targetRow = firstRow + r;
+      if (targetRow >= rows.length) {
+        // A PASTE DOES NOT CREATE DROPS. Ten values into the last three
+        // rows would otherwise invent seven cables from a spreadsheet,
+        // each needing a room, a media type and a label nobody chose.
+        setState(
+          () => _refusal = kPasteOverruns(lines.length, rows.length - firstRow),
+        );
+        return;
+      }
+      final cells = lines[r].split('\t');
+      for (var c = 0; c < cells.length; c++) {
+        final targetColumn = firstColumn + c;
+        if (targetColumn >= columns.length) {
+          setState(() => _refusal = kPasteOverrunsColumns);
+          return;
+        }
+        final column = columns[targetColumn];
+        if (!structureColumnIsEditable(column)) {
+          setState(
+            () => _refusal =
+                'Nothing can be pasted into ${structureColumnHeader(column)}.',
+          );
+          return;
+        }
+        edits.add(
+          StructureCellEdit(
+            linkId: rows[targetRow].linkId,
+            column: column,
+            value: cells[c],
+          ),
+        );
+      }
+    }
+    if (edits.isNotEmpty) _edit(edits);
+  }
+
+  /// What a cell holds, as the edit path wants it: the displayed string,
+  /// with the unknown dash flattened to empty.
+  ///
+  /// THE SAME TRANSLATION `_DataRow` MAKES when it fills a text box, and
+  /// for the same reason: `—` is what an unknown prints, never a value to
+  /// copy into another row.
+  String _valueFor(RackDocument doc, ScheduleEntry row, StructureColumnId id) {
+    final text = structureCell(
+      doc,
+      row,
+      id,
+      units: doc.settings.displayUnits,
+    );
+    return text == kUnknownCell ? '' : text;
   }
 
   /// Hands [edits] to the app and rebuilds on whatever came back.
@@ -679,6 +842,7 @@ class _DropTable extends StatelessWidget {
     required this.isFiltered,
     required this.totalDrops,
     required this.onEdit,
+    required this.onCaret,
   });
 
   final RackDocument doc;
@@ -687,6 +851,12 @@ class _DropTable extends StatelessWidget {
   final bool isFiltered;
   final int totalDrops;
   final String? Function(List<StructureCellEdit> edits) onEdit;
+
+  /// Reported as a cell gains focus, and nulled as it loses it. NOT
+  /// `setState`: the caret changes on every `Tab` and nothing on screen
+  /// draws differently for it, so rebuilding the whole table would be a
+  /// rebuild per keystroke down a sixty-row column.
+  final ValueChanged<(Uuid, StructureColumnId)?> onCaret;
 
   @override
   Widget build(BuildContext context) {
@@ -756,6 +926,7 @@ class _DropTable extends StatelessWidget {
                                     columns: columns,
                                     scale: effective,
                                     onEdit: onEdit,
+                                    onCaret: onCaret,
                                   ),
                                 ),
                               ],
@@ -898,6 +1069,7 @@ class _DataRow extends StatelessWidget {
     required this.columns,
     required this.scale,
     required this.onEdit,
+    required this.onCaret,
     super.key,
   });
 
@@ -906,6 +1078,7 @@ class _DataRow extends StatelessWidget {
   final List<StructureColumnId> columns;
   final double scale;
   final String? Function(List<StructureCellEdit> edits) onEdit;
+  final ValueChanged<(Uuid, StructureColumnId)?> onCaret;
 
   @override
   Widget build(BuildContext context) {
@@ -958,11 +1131,13 @@ class _DataRow extends StatelessWidget {
           linkId: row.linkId,
           value: row.roughInStatus,
           onEdit: onEdit,
+          onCaret: onCaret,
         );
       }
       return _TextCell(
         linkId: row.linkId,
         column: id,
+        onCaret: onCaret,
         // THE DASH IS NOT PUT IN THE BOX. `—` is what an unknown PRINTS,
         // and a text field showing it would make a person delete a
         // character that was never theirs — worse, typing after it would
@@ -1006,6 +1181,7 @@ class _TextCell extends StatefulWidget {
     required this.value,
     required this.bold,
     required this.onEdit,
+    required this.onCaret,
   });
 
   final Uuid linkId;
@@ -1013,6 +1189,7 @@ class _TextCell extends StatefulWidget {
   final String value;
   final bool bold;
   final String? Function(List<StructureCellEdit> edits) onEdit;
+  final ValueChanged<(Uuid, StructureColumnId)?> onCaret;
 
   @override
   State<_TextCell> createState() => _TextCellState();
@@ -1053,7 +1230,16 @@ class _TextCellState extends State<_TextCell> {
   }
 
   void _onFocusChange() {
-    if (!_focus.hasFocus) _commit();
+    if (_focus.hasFocus) {
+      widget.onCaret((widget.linkId, widget.column));
+      return;
+    }
+    // NOT NULLED ON BLUR. `Ctrl+D` and `Ctrl+V` are dispatched while this
+    // field still has focus, so nulling here would be harmless; what it
+    // would break is the moment focus moves to the SHORTCUT handler in
+    // some future Flutter, leaving the grid with no idea where it was.
+    // The caret is replaced by the next cell that takes focus.
+    _commit();
   }
 
   void _commit() {
@@ -1102,43 +1288,82 @@ class _RoughInCell extends StatelessWidget {
     required this.linkId,
     required this.value,
     required this.onEdit,
+    required this.onCaret,
   });
 
   final Uuid linkId;
   final RoughInStatus value;
   final String? Function(List<StructureCellEdit> edits) onEdit;
+  final ValueChanged<(Uuid, StructureColumnId)?> onCaret;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return DropdownButton<RoughInStatus>(
-      value: value,
-      isDense: true,
-      isExpanded: true,
-      underline: const SizedBox.shrink(),
-      style: theme.textTheme.bodySmall,
-      items: [
-        for (final status in RoughInStatus.values)
-          DropdownMenuItem<RoughInStatus>(
-            value: status,
-            child: Text(roughInLabel(status)),
-          ),
-      ],
-      onChanged: (next) {
-        if (next == null || next == value) return;
-        onEdit([
-          StructureCellEdit(
-            linkId: linkId,
-            column: StructureColumnId.roughIn,
-            // The label, not `.name`, so one vocabulary crosses this
-            // boundary and `roughInLabel` stays the only speller.
-            value: roughInLabel(next),
-          ),
-        ]);
+    // IT REPORTS THE CARET LIKE ANY OTHER CELL, through a `Focus` rather
+    // than through `onTap`, so it is reported by TABBING to it as well as
+    // by clicking. This is the column where fill-down earns its
+    // keystroke: "everything from here down is pulled" is the gesture a
+    // person makes walking a job, and a status is legal to repeat where a
+    // label is not.
+    return Focus(
+      onFocusChange: (has) {
+        if (has) onCaret((linkId, StructureColumnId.roughIn));
       },
+      child: DropdownButton<RoughInStatus>(
+        value: value,
+        isDense: true,
+        isExpanded: true,
+        underline: const SizedBox.shrink(),
+        style: theme.textTheme.bodySmall,
+        items: [
+          for (final status in RoughInStatus.values)
+            DropdownMenuItem<RoughInStatus>(
+              value: status,
+              child: Text(roughInLabel(status)),
+            ),
+        ],
+        onChanged: (next) {
+          if (next == null || next == value) return;
+          onEdit([
+            StructureCellEdit(
+              linkId: linkId,
+              column: StructureColumnId.roughIn,
+              // The label, not `.name`, so one vocabulary crosses this
+              // boundary and `roughInLabel` stays the only speller.
+              value: roughInLabel(next),
+            ),
+          ]);
+        },
+      ),
     );
   }
 }
+
+/// Why `Ctrl+D` did nothing.
+///
+/// EVERY ONE OF THESE FOUR NAMES A CAUSE, because docs/04 §3.4's rule is
+/// that a surface never silently does nothing, and a grid operation that
+/// declined without saying why is indistinguishable from a key that is
+/// not bound.
+const String kNoCaretForFill =
+    'Put the caret in a cell first: Ctrl+D fills it from the row above.';
+
+/// The focused cell is the first row on screen.
+const String kNothingAboveToFill =
+    'This is the first row, so there is nothing above it to fill from.';
+
+/// Why `Ctrl+V` did nothing.
+const String kNoCaretForPaste =
+    'Put the caret in a cell first: paste starts from there.';
+
+/// The clipboard is taller than the table below the caret.
+String kPasteOverruns(int lines, int available) =>
+    'That is $lines rows and there are $available below the caret. Pasting '
+    'does not create drops: add them first, then paste.';
+
+/// The clipboard is wider than the columns to the right of the caret.
+const String kPasteOverrunsColumns =
+    'That is wider than the columns to the right of the caret.';
 
 /// What the first line of the no-drops state says.
 const String kNoDropsHeadline = 'This Structure body has no drops yet.';

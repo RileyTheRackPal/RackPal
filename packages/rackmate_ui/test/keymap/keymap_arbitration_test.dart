@@ -147,11 +147,24 @@ void main() {
       // Same chord, same intent and the same LABEL as the rack's, which is
       // what `KeymapConflictKind.meaningDrift` requires of one key across
       // two scopes and is asserted in its own right below.
+      // M3-C/2 OPENS A FIFTH SCOPE AND PUTS TWO ROWS IN IT, which is the
+      // first growth of this table since M2. docs/13 §3.5 calls M3-C "the
+      // largest remaining binding surface in v1", so two is a number worth
+      // looking at: `Ctrl+D` fill-down and `Ctrl+V` paste, both acting on
+      // the focused cell of the drop table.
+      //
+      // #148's brief names THREE grid operations — "fill-down, tab order,
+      // paste" — and tab order is deliberately not among these rows.
+      // Every editable cell in that table is a real focusable control, so
+      // Flutter's own traversal already walks them in draw order; a `Tab`
+      // row would shadow a framework default (see the fifteen below) to
+      // reimplement what it does correctly.
       expect(keyBindingsIn(KeyScope.global), hasLength(7));
       expect(keyBindingsIn(KeyScope.rack), hasLength(16));
       expect(keyBindingsIn(KeyScope.schematic), hasLength(24));
+      expect(keyBindingsIn(KeyScope.structure), hasLength(2));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(48));
+      expect(kKeymap, hasLength(50));
     });
   });
 

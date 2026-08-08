@@ -114,6 +114,15 @@ enum KeyScope {
   /// `SchematicCanvasScreen`'s `Shortcuts`.
   schematic,
 
+  /// `StructureEditorScreen`'s `Shortcuts`, wrapping the drop table.
+  ///
+  /// ITS OWN SCOPE AND NOT `global`, because both of its bindings act on
+  /// THE FOCUSED CELL and there is no honest answer to `Ctrl+D` outside a
+  /// grid. A global row would have to decline everywhere else, which is
+  /// how a key ends up meaning nothing in three places and something in
+  /// one.
+  structure,
+
   /// The modal dialogs' `CallbackShortcuts`.
   ///
   /// One scope for all three (unsaved changes, recovery prompt, file
@@ -183,6 +192,10 @@ enum KeyBindingId {
   extendPinSelectionDown,
   deleteCable,
   deleteCableBackspace,
+
+  // --- structure ------------------------------------------------------
+  fillDown,
+  pasteCells,
 
   // --- dialog ---------------------------------------------------------
   dialogDismiss,
@@ -433,6 +446,23 @@ final class ExtendPinSelectionIntent extends Intent {
 
   /// +1 towards the end of the bank, -1 towards its start.
   final int step;
+}
+
+/// Copy the cell directly above the focused one into it (docs/07 §4.1's
+/// grid operations, M3-C/2).
+///
+/// ONE CELL, because the drop table has no range selection. Excel's
+/// `Ctrl+D` with a single cell selected does exactly this, so the key
+/// keeps the meaning a person already has for it rather than acquiring a
+/// RackMate-specific one that would have to be taught.
+final class FillDownIntent extends Intent {
+  const FillDownIntent();
+}
+
+/// Paste tab-separated cells into the grid from the focused cell
+/// (docs/07 §4.1, and §5's spreadsheet entry path).
+final class PasteCellsIntent extends Intent {
+  const PasteCellsIntent();
 }
 
 /// A single declared binding: what key, in what scope, meaning what.
@@ -1173,6 +1203,42 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
   // command dispatched into a subtree. [dialogDismissShortcut] is the seam
   // — the activator still comes from here, so the row is in the table and
   // arbitration sees it.
+  // ── structure ────────────────────────────────────────────────────────
+  // BOARD #148'S OWN LIST is "fill-down, tab order, paste", and only two
+  // of the three are here. TAB ORDER IS NOT A BINDING in this app and
+  // must not become one: every editable cell in the drop table is a real
+  // focusable control, always, so Flutter's own traversal already walks
+  // them in the order they are drawn. A `Tab` row here would shadow the
+  // framework (see `frameworkShadowedBindings`) to reimplement what it
+  // already does correctly.
+  KeyBinding(
+    id: KeyBindingId.fillDown,
+    scope: KeyScope.structure,
+    trigger: LogicalKeyboardKey.keyD,
+    primary: true,
+    label: 'Fill down from the cell above',
+    intent: FillDownIntent(),
+    source: 'docs/07 §4.1',
+    note:
+        'The spreadsheet key, and the spreadsheet meaning for a single '
+        'selected cell: copy what is directly above. There is no range '
+        'selection in the table yet, so there is no range to fill.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.pasteCells,
+    scope: KeyScope.structure,
+    trigger: LogicalKeyboardKey.keyV,
+    primary: true,
+    label: 'Paste tab-separated cells from the caret',
+    intent: PasteCellsIntent(),
+    source: 'docs/07 §4.1 · §5',
+    note:
+        'SHADOWS NOTHING AND STEALS NOTHING: text fields handle paste '
+        'through the framework, and this row only fires when the table '
+        'has the focus. docs/07 §5 makes the contractor spreadsheet the '
+        'ENTRY path, and a person with one open will try this before '
+        'they find an importer.',
+  ),
   KeyBinding(
     id: KeyBindingId.dialogDismiss,
     scope: KeyScope.dialog,
