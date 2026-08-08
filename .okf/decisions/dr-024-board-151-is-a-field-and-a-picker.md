@@ -76,7 +76,7 @@ data after the seed copy (docs/03 §5.6), but which surface edits them is
 not settled here.
 
 Nor **AC-034/m24**, *"which location fields the inspector demands is
-driven by the template"* — a ceiling speaker pair asks for
+driven by the template"*. A ceiling speaker pair asks for
 `mountSurface: ceiling` and never for a wall compass direction. That
 needs a second model field and a UI contract, and folding it in would
 repeat the mistake this ruling corrects.

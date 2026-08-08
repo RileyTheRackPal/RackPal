@@ -1278,7 +1278,7 @@ It now comes out of a menu pick with nothing typed.
 §4.3 says *"as one `Outlet`"* and `outletTemplateId` is provenance (CR-108, *"what created it"*):
 adding a recipe to a plate that already exists would either overwrite that or leave drops
 disagreeing with the template they name. `@outlet="…"` remains the gesture for an existing plate.
-And the template's `OutletDrop.service` is **not** copied onto the `Link` — `AddHomeRunCommand`
+And the template's `OutletDrop.service` is **not** copied onto the `Link`: `AddHomeRunCommand`
 writes `structure.undetermined` and docs/07 §4.1 says why, so the template's service stays the
 recipe's intent, which is the pair of facts docs/02 §6.2 prints in one file.
 
@@ -1294,6 +1294,45 @@ unchanged, which is what makes it a refactor rather than a rewrite.
 heading was `##` where every other §11.x is `###`, putting DR-023 at the same level as §12; and
 `.okf/decisions/dr-023-*.md` had an unquoted colon in its frontmatter `description:`, which made the
 OKF conformance checker call the **whole bundle** non-conformant. It is conformant now.
+
+**M3-J was decomposed on 2026-08-08, four tasks (#583–#586), and it had none until then.** DR-020
+postdates the decomposition that issue #70 performed, so the epic it added carried a brief and no
+work items. That is the failure mode decomposing an epic before starting it exists to prevent, arriving on an
+epic nobody had started.
+
+*M3-J/1 (#583) closed at `f43406d` before the epic was decomposed, and is a task anyway.*
+`StructureOrigin.terminationField` was non-nullable while `derived/schedule.dart` calls it *"what the
+trim-out crew actually installs"* and prints it, so both entry surfaces had to write a decision they
+did not have. M3-A/6 had already changed the drop line from `keystone` to `unterminated` and its own
+comment said outright that this was *"the nearest true value, not the right one"*. **`unterminated`
+is a decision**, a coil left deliberately bare, and a drop entered at rough-in has no answer at
+all; a non-nullable enum cannot tell those apart, which is G4's central prohibition. The unknown
+path already existed and was unreachable: `ScheduleEntry.terminationType` has always been
+`TerminationType?` and `_terminationOf` has always had a *"then nothing"* arm that no home run could
+reach. One behaviour change is gated and stated: **a null origin outranks nothing**, so it falls
+through to a `PlaceEndpoint.intendedTermination` rather than printing a dash over a stated intent.
+CR-117 held without a schema bump, because the key was unconditional before and every document ever
+written carries it.
+
+*M3-J/4 (#586) is the boundary #569 asked to settle, and the answer is a census rather than a
+decision.* DR-020 §11.19.2(4) asks for *"a new `maxLength` on the media registry"*. `MediaTypeDef`
+has carried `maxRunLengthPassive` and `maxRunLengthActive` since M0, and **M3-C/6 seeded the first
+of them at `acd63d5`**: seven of the 38 types carry a length and thirty-one are deliberately null.
+So M3 owns the field, M3 has already shipped it, and M5 owes only the rule. **The hazard is that
+there are two fields**: `maxRunLengthActive` is null on all 38 and gated as such, so a `LEN-002`
+written against it would compile, pass a fixture pair, and never fire on a real document. Silent
+non-firing is the worst failure mode a validation rule has, and it is now written down before M5
+starts rather than found there.
+
+*One item was found unowned and given a home rather than a task.* DR-020 §11.19.4 leaves open
+whether `PathwayKind` gains `attic` and `crawlspace`, and says it is **"Owed at M3, when `Pathway`
+gets its editor"**. That editor is #156 (M3-E/1) and no item claimed the question; it is recorded
+there with the ruling's own framing on both sides, so it is decided rather than rediscovered.
+
+*What M3-J is blocked on, stated so the order is not re-derived.* **M3-J/3 needs #148.** DR-020
+§11.19.5 says twice that the tally is *"a column on a table the milestone already builds, not a new
+screen"*, and that is why M3 stayed `M` when the ruling grew it. M3-J/2 (`Link.spliceCount`) and
+M3-J/4 are unblocked and can land in any order.
 
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 

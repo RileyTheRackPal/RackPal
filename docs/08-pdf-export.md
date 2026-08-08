@@ -368,8 +368,8 @@ The same rows as a table, with the two length variants distinguished:
 > `KIT-KEY-1`, because canon §11.21's worked example is `MBR-KEY-2` and
 > canon is normative over a derived sheet. `GR-CLG-1` and `KIT-CLG-1`
 > became `GR-SPK-1` and `KIT-SPK-1`, because `CLG` is an OUTLET
-> designation — docs/07 §4's table prints it in that column, beside a
-> field label of `LR-SPK-1` — and it had wandered one column left. The
+> designation: docs/07 §4's table prints it in that column, beside a
+> field label of `LR-SPK-1`, and it had wandered one column left. The
 > seeded tags and the reasoning are in
 > `packages/rackmate_core/lib/src/catalog/seed_outlet_templates.dart`.
 

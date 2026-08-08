@@ -7621,13 +7621,13 @@ the master without a gesture to instantiate it. It goes here, because a preset w
 it is the half of #151 that was never the point.
 
 One `Command`, one undo entry, and it stamps `Outlet.tia570Grade` from the template. It is also
-**the first caller of DR-023 step 2**: the chain's middle arm — the outlet's template tag — has had
+**the first caller of DR-023 step 2**. The chain's middle arm, the outlet's template tag, has had
 no way to be reached, because nothing until now creates an outlet *from* a template.
 
 **11.23.4 What this does not rule.** The **library flow** that edits templates. CR-108 makes
 user-defined templates first-class and `Registries.outletTemplates` is ordinary editable stored data
 after the seed copy (docs/03 §5.6), but which surface edits it is not settled here. Nor is
-**AC-034/m24**, *"which location fields the inspector demands is driven by the template"* — a
+**AC-034/m24**, *"which location fields the inspector demands is driven by the template"*: a
 ceiling speaker pair asking for `mountSurface: ceiling` and never a wall compass direction. That
 needs a second model field and a UI contract, and adding it to this task would make the same mistake
 this ruling is correcting.
