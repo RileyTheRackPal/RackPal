@@ -55,6 +55,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:rackmate/src/session/app_services.dart';
 import 'package:rackmate/src/session/document_session.dart';
+import 'package:rackmate/src/session/drop_entry_actions.dart';
 import 'package:rackmate/src/session/locations_actions.dart';
 import 'package:rackmate/src/session/session_controller.dart';
 import 'package:rackmate/src/session/session_prompts.dart';
@@ -481,6 +482,7 @@ final class AppShellState extends State<AppShell>
             _ProjectMenu(
               controller: _projectMenu,
               onLocations: () => unawaited(_openLocations()),
+              onAddDrops: () => unawaited(_openDropEntry()),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -687,6 +689,30 @@ final class AppShellState extends State<AppShell>
     );
   }
 
+  /// `Project ▸ Add drops…` — docs/07 §4.3's command mode (M3-C/1).
+  ///
+  /// HERE UNTIL BOARD #148 BUILDS THE STRUCTURE EDITOR, which is where
+  /// command mode lives permanently, beside table mode. It hangs off the
+  /// same menu as Locations for the same reason CR-112 put that one
+  /// there: a project with no Structure device must still be able to
+  /// start one, and this surface offers to create it.
+  ///
+  /// `currentDoc` is a CALLBACK and not a value. Nine drops committed by
+  /// the first line change the document the second line must plan
+  /// against; a captured reference would offer labels the first line just
+  /// spent.
+  Future<void> _openDropEntry() async {
+    final session = _services.session;
+    await showDropEntryPanel(
+      context,
+      currentDoc: () => session.document,
+      actions: buildDropEntryActions(
+        controller: session.controller,
+        onRefuse: _showRefusal,
+      ),
+    );
+  }
+
   /// DR-021 §11.20.3's confirmation, or an immediate yes when the plan
   /// costs nothing. The `BuildContext` is why this is here rather than in
   /// `locations_actions.dart`.
@@ -883,10 +909,15 @@ final class _FileMenu extends StatelessWidget {
 /// `session_layering_test.dart` RULE 14 counts the global bindings for
 /// exactly this reason.
 final class _ProjectMenu extends StatelessWidget {
-  const _ProjectMenu({required this.controller, required this.onLocations});
+  const _ProjectMenu({
+    required this.controller,
+    required this.onLocations,
+    required this.onAddDrops,
+  });
 
   final MenuController controller;
   final VoidCallback onLocations;
+  final VoidCallback onAddDrops;
 
   @override
   Widget build(BuildContext context) => MenuBar(
@@ -897,6 +928,10 @@ final class _ProjectMenu extends StatelessWidget {
           MenuItemButton(
             onPressed: onLocations,
             child: const Text('Locations…'),
+          ),
+          MenuItemButton(
+            onPressed: onAddDrops,
+            child: const Text('Add drops…'),
           ),
         ],
         child: const Text('Project'),

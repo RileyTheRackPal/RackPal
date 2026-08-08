@@ -42,6 +42,72 @@
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 
+/// Opens the entry surface as a dialog.
+///
+/// A DIALOG AND NOT A TAB, for now and for a stated reason: board #148's
+/// Structure editor is where this lives permanently, as its command mode
+/// beside table mode. Until that editor exists, a person who cannot reach
+/// this surface cannot run M3-G's drill on it, and a loop only a widget
+/// test drives has not been driven.
+///
+/// [currentDoc] is read on EVERY build rather than captured once, and
+/// that is what makes the loop work across commits. A dialog holding one
+/// document reference would plan the second line against the state before
+/// the first one landed, and offer labels the first line just spent.
+///
+/// The dialog owns the "just added" tail and appends to it here, so the
+/// caller supplies only what an edit MEANS.
+Future<void> showDropEntryPanel(
+  BuildContext context, {
+  required DropEntryActions actions,
+  required RackDocument Function() currentDoc,
+}) => showDialog<void>(
+  context: context,
+  builder: (context) => Dialog(
+    child: SizedBox(
+      width: 640,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: _DropEntryHost(actions: actions, currentDoc: currentDoc),
+      ),
+    ),
+  ),
+);
+
+class _DropEntryHost extends StatefulWidget {
+  const _DropEntryHost({required this.actions, required this.currentDoc});
+
+  final DropEntryActions actions;
+  final RackDocument Function() currentDoc;
+
+  @override
+  State<_DropEntryHost> createState() => _DropEntryHostState();
+}
+
+class _DropEntryHostState extends State<_DropEntryHost> {
+  final List<String> _recent = [];
+
+  @override
+  Widget build(BuildContext context) => DropEntryPanel(
+    doc: widget.currentDoc(),
+    recent: _recent,
+    actions: DropEntryActions(
+      onCommit: (plan) {
+        widget.actions.onCommit(plan);
+        setState(() => _recent.insert(0, plan.fieldLabels.join(', ')));
+      },
+      onCreateLocation: (name) {
+        widget.actions.onCreateLocation(name);
+        setState(() {});
+      },
+      onCreateStructure: () {
+        widget.actions.onCreateStructure();
+        setState(() {});
+      },
+    ),
+  );
+}
+
 /// What the app does with a line the panel has planned.
 @immutable
 final class DropEntryActions {

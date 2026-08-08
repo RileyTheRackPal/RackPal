@@ -102,6 +102,13 @@ enum LabelKey {
   // offering "Undo connect" for it would describe the wrong gesture.
   addHomeRun,
 
+  // ONE DROP LINE (structure/drop_line_planner.dart), M3-C/1. Its own
+  // value rather than reusing `addHomeRun`, because the unit the person
+  // undoes is the LINE: `Living Room: 4x Cat6, 2x RG6` is nine cables and
+  // an outlet, and an Edit menu offering "Undo drop" would describe one
+  // ninth of what it is about to take back.
+  addDrops,
+
   // EDITING ONE PROPERTY (commands/set_entity_property_command.dart),
   // M3-A/5. ONE value covering `Outlet`, `StructureBody`, `DeviceInstance`
   // and `Link` and every field of each: the Edit menu offers "Undo edit",

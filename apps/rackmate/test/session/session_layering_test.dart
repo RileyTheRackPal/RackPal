@@ -518,15 +518,25 @@ final class AppServices {
       // on a second top-level menu; CR-110 already owes that menu a
       // `Structured wiring…` beside it, so this number will move again and
       // should move visibly each time.
-      [6, 4],
+      //
+      // 6 -> 7 at M3-C/1, and the accelerator count deliberately did NOT
+      // move again. The seventh is `Project ▸ Add drops…`, docs/07 §4.3's
+      // command mode, which lives on this menu only until board #148
+      // builds the Structure editor to hold it. It earns no accelerator
+      // for the same reason Locations does not: a surface opened from a
+      // menu once per session does not pay for a row in `kKeymap`, M7's
+      // generated table and `arbitrate()`'s conflict checks on every
+      // platform. Its OWN keyboard cost is one key, `Enter`, and that one
+      // is a `TextField.onSubmitted` rather than a binding.
+      [7, 4],
       reason:
           'five File-menu items — New, Open…, Save, Save As…, Export PDF… '
-          '— plus Project ▸ Locations…, and four accelerators, because '
-          'neither Export PDF nor Locations has one. docs/08 §8.1 gives '
-          'export Ctrl+P; the dialog is not built and neither is the '
-          'binding. Locations opens a panel once per project and does not '
-          "earn a row in kKeymap, M7's table and arbitration across every "
-          'platform.',
+          '— plus Project ▸ Locations… and Project ▸ Add drops…, and four '
+          'accelerators, because none of Export PDF, Locations or Add '
+          'drops has one. docs/08 §8.1 gives export Ctrl+P; the dialog is '
+          'not built and neither is the binding. The two Project items '
+          "open panels and do not earn a row in kKeymap, M7's table and "
+          'arbitration across every platform.',
     );
   });
 
