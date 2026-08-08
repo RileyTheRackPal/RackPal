@@ -1162,9 +1162,10 @@ and the assertion is now a ceiling over the measurement rather than a target som
 chain is `@service=`, then the outlet template's tag, then the media's `shortTag`. Step 1 was
 written first as "use the modifier literally", which renders `EXT-CAMERA-1` where docs/01 §571
 prints `EXT-CAM-4`. `CAMERA` is not `CAM`: the modifier names an `OutletTemplate` exactly as step 2
-does, and differs only in how that template is chosen. **`EXT-CAM-4` is not reproducible until #150
-seeds the six templates**, because `outletTemplates` is `{}` in every document, and that is gated in
-both directions rather than left to be noticed.
+does, and differs only in how that template is chosen. **`EXT-CAM-4` was not reproducible until #150
+seeds the six templates**, because `outletTemplates` was `{}` in every document, and that was gated
+in both directions rather than left to be noticed. #150 closed at `5abb8b3` and the gate is now the
+label itself; see below.
 
 *Two outcomes that are deliberately not refusals.* A missing room and a missing Structure device are
 what a blank project is always missing, and both are one keystroke away. As refusals they would make
@@ -1180,6 +1181,65 @@ to name its typical cable; only the first is met, because canon §6.5's `support
 eight fields DR-010 §11.10.4 keeps out until something reads it. So a connect gesture still cannot
 pick a cable, and the reason has changed from *there is no id* to *there are 38 and nothing says
 which*.
+
+**M3-C/4 (#150) closed at `5abb8b3`, and the number that made it a real task is seventeen.**
+`registries.outletTemplates` was `{}` in every document the product has ever written. It was not,
+however, unreferenced: `whole_house.rmpj` carries **seventeen outlets** whose `outletTemplateId`
+reads `outlet.tv_location`, `outlet.ap`, `outlet.camera`, `outlet.data_only` or
+`outlet.ceiling_speaker_pair`, and every one of those references had dangled since the fixture was
+authored. Five of the six ids are therefore transcribed rather than chosen; `outlet.keypad` is the
+only one this seed named first. Nine templates ship: CR-108's six, then TIA-570-D Grade 1/2/3.
+
+*What the ruling specified, and what had to be censused.* Canon §1673 names the six templates and
+stops. The recipes came from the fixture's own drops, which are the only executable statement of
+what these produce, plus docs/07 §4.3 and docs/01 §519/§521. **One source disagrees and is named in
+the seed header rather than dropped**: docs/02 §6.2's worked JSON gives `outlet.tv_location` a fifth
+drop, `1 × media.cat5e` for `ctl.ir_emitter`, and `media.cat6a_futp` for the twisted pair. It is
+outvoted three to two, and taking Cat6A would put the seeded TV location at odds with
+`Living Room: 4x Cat6`, the first drop line the corpus prints. The IR run is not wrong; canon §2202
+accepts exactly that Cat5e at a TV location. It is one integrator's habit, and a seeded preset is
+the wrong place to make it everyone's.
+
+*The tags are the corpus's own labels, and the census settled two spellings.* DR-022 §11.21.4 is
+explicit that a tag is authored beside the name and never derived from it, so all six come from
+field labels the corpus actually prints. **KEYPAD is `KEY`**, canon §11.21's `MBR-KEY-2`, not
+docs/08's `KIT-KP-1` and not design-ux-schematic's `MBR-KY-2`: three spellings, and canon is
+normative over a derived sheet. **CEILING SPEAKER PAIR is `SPK`**, and that one was three-way.
+docs/07 §4's labelled table prints `LR-SPK-1` in FIELD LABEL with `CLG` in the OUTLET column beside
+it, so docs/08's `GR-CLG-1` is an outlet designation that wandered one column left. The whole-house
+fixture's `GR-AUD-1` is the third reading and it loses **on principle rather than on count**: `AUD`
+is `audio.analog`'s domain tag prefix, which is precisely the family-shaped answer DR-022 §11.21.5
+rejected, a word that never varies and never becomes anything else, stored forever by CR-048.
+docs/08's three labels were corrected at `88a1730`; the fixture's are hand-authored rather than
+template-generated and are a separate question.
+
+*Two absences that are G4 rather than oversights.* **The three grades carry no tag.** No label
+anywhere in the corpus renders a grade, so there is no attested word, and inventing `G2` would print
+a guess on physical cable. `tag` is nullable, null is unknown (CR-114), and DR-023's chain falls
+through to step 3, so a Grade 2 outlet's drops label `LR-C6A-1` and `LR-RG6Q-1`: what they are,
+which is true. **Keypad's service is `structure.undetermined`**, and that is the finding this task
+turned up. docs/07 §4's table prints `Keypad` in its SERVICE column and there is no keypad family
+among the 55: a keypad speaks Cresnet, Lutron QS, DALI, KNX, RS-485 or a contact closure depending
+on a control system chosen months after the 22/4 is pulled.
+
+*The seed's `service` is intent, and the Link's is not.* `AddHomeRunCommand` writes
+`structure.undetermined` unconditionally, and docs/07 §4.1 says why: at rough-in a Cat6 is just a
+Cat6. docs/02 §6.2 prints both facts in one file, `outlet.tv_location`'s drops naming `net.ethernet`
+and `rf.catv` while `W001.services[0].signalFamily` reads `structure.undetermined`. Nothing consumes
+the field yet, and the note that matters for whoever wires `+ Add outlet ▾` is that it must **not**
+copy `service` onto the Link.
+
+*What it retires.* `drop_line_planner_test.dart` had asserted since M3-C/1, in as many words, that
+`EXT-CAM-4` could not come out of a real document. It now does, all six of it, from a project that
+authored nothing. One test was deleted and its replacement asserts the corpus's own line.
+
+*What #150 did not do, so the next reader does not assume it.* `OutletTemplate` still has **no
+`tia570Grade` field**, so a grade preset cannot stamp the very standards tag it exists to carry
+(CR-108; the fixture sets `'TIA-570-D Grade 2'` by hand). It carries no location-field requirements
+either, so AC-034/m24's rule that a ceiling speaker pair is never asked for a compass direction has
+no model to read. And there is **no instantiating builder**: `+ Add outlet ▾` turning a template
+into one `Outlet` and N `Link`s is the Structure editor's, not the catalog's. This shipped the
+master.
 
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
