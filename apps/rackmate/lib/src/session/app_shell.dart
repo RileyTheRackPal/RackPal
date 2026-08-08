@@ -57,6 +57,7 @@ import 'package:rackmate/src/session/app_services.dart';
 import 'package:rackmate/src/session/document_session.dart';
 import 'package:rackmate/src/session/drop_entry_actions.dart';
 import 'package:rackmate/src/session/locations_actions.dart';
+import 'package:rackmate/src/session/outlet_template_actions.dart';
 import 'package:rackmate/src/session/session_controller.dart';
 import 'package:rackmate/src/session/session_prompts.dart';
 import 'package:rackmate/src/session/starter_projects.dart';
@@ -483,6 +484,7 @@ final class AppShellState extends State<AppShell>
               controller: _projectMenu,
               onLocations: () => unawaited(_openLocations()),
               onAddDrops: () => unawaited(_openDropEntry()),
+              onAddOutlet: () => unawaited(_openOutletPicker()),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -710,6 +712,25 @@ final class AppShellState extends State<AppShell>
     );
   }
 
+  /// `Project ▸ Add outlet…` — docs/07 §4.3's `+ Add outlet ▾` (M3-C/5,
+  /// DR-024 §11.23.3).
+  ///
+  /// HERE FOR THE SAME REASON `Add drops…` IS, and it leaves with it:
+  /// board #148's Structure editor is where this button lives
+  /// permanently, in the bar under the drop table.
+  ///
+  /// `currentDoc` is a CALLBACK and not a value, for the same reason
+  /// again: an outlet placed by the first click changes the document the
+  /// second click must plan against.
+  Future<void> _openOutletPicker() async {
+    final session = _services.session;
+    await showOutletTemplatePicker(
+      context,
+      currentDoc: () => session.document,
+      actions: buildOutletTemplateActions(controller: session.controller),
+    );
+  }
+
   /// DR-021 §11.20.3's confirmation, or an immediate yes when the plan
   /// costs nothing. The `BuildContext` is why this is here rather than in
   /// `locations_actions.dart`.
@@ -910,11 +931,13 @@ final class _ProjectMenu extends StatelessWidget {
     required this.controller,
     required this.onLocations,
     required this.onAddDrops,
+    required this.onAddOutlet,
   });
 
   final MenuController controller;
   final VoidCallback onLocations;
   final VoidCallback onAddDrops;
+  final VoidCallback onAddOutlet;
 
   @override
   Widget build(BuildContext context) => MenuBar(
@@ -929,6 +952,10 @@ final class _ProjectMenu extends StatelessWidget {
           MenuItemButton(
             onPressed: onAddDrops,
             child: const Text('Add drops…'),
+          ),
+          MenuItemButton(
+            onPressed: onAddOutlet,
+            child: const Text('Add outlet…'),
           ),
         ],
         child: const Text('Project'),

@@ -528,15 +528,22 @@ final class AppServices {
       // generated table and `arbitrate()`'s conflict checks on every
       // platform. Its OWN keyboard cost is one key, `Enter`, and that one
       // is a `TextField.onSubmitted` rather than a binding.
-      [7, 4],
+      //
+      // 7 -> 8 at M3-C/5, and the accelerator count deliberately did NOT
+      // move a third time. The eighth is `Project ▸ Add outlet…`,
+      // docs/07 §4.3's `+ Add outlet ▾` (DR-024 §11.23.3), and it leaves
+      // this menu with `Add drops…` when #148 builds the editor whose
+      // button bar both belong to. It has no keyboard cost at all: the
+      // gesture is a pick and a click.
+      [8, 4],
       reason:
           'five File-menu items — New, Open…, Save, Save As…, Export PDF… '
-          '— plus Project ▸ Locations… and Project ▸ Add drops…, and four '
-          'accelerators, because none of Export PDF, Locations or Add '
-          'drops has one. docs/08 §8.1 gives export Ctrl+P; the dialog is '
-          'not built and neither is the binding. The two Project items '
-          "open panels and do not earn a row in kKeymap, M7's table and "
-          'arbitration across every platform.',
+          '— plus Project ▸ Locations…, Add drops… and Add outlet…, and '
+          'four accelerators, because none of Export PDF, Locations, Add '
+          'drops or Add outlet has one. docs/08 §8.1 gives export Ctrl+P; '
+          'the dialog is not built and neither is the binding. The three '
+          'Project items open panels and do not earn a row in kKeymap, '
+          "M7's table and arbitration across every platform.",
     );
   });
 

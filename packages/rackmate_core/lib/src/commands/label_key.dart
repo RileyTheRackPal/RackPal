@@ -109,6 +109,14 @@ enum LabelKey {
   // ninth of what it is about to take back.
   addDrops,
 
+  // ONE OUTLET FROM A TEMPLATE (structure/outlet_template_planner.dart),
+  // M3-C/5. Its own value rather than reusing `addDrops`, on the same
+  // argument that separated `addDrops` from `addHomeRun`: the unit the
+  // person undoes is the PLATE. A *TV location* is one outlet and four
+  // cables placed by one click, and "Undo drops" would name the cables
+  // while leaving the thing the user pointed at unnamed.
+  addOutletFromTemplate,
+
   // EDITING ONE PROPERTY (commands/set_entity_property_command.dart),
   // M3-A/5. ONE value covering `Outlet`, `StructureBody`, `DeviceInstance`
   // and `Link` and every field of each: the Edit menu offers "Undo edit",
