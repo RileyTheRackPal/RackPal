@@ -39,17 +39,16 @@
 // docs/04 §3.4 forbids the silent version in both directions.
 import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/commands/command.dart';
-import 'package:rackmate_core/src/commands/home_run_commands.dart';
+import 'package:rackmate_core/src/commands/home_run_commands.dart'
+    show usedFieldLabels;
 import 'package:rackmate_core/src/commands/structure_commands.dart';
-import 'package:rackmate_core/src/idformat/designator_allocator.dart';
-import 'package:rackmate_core/src/model/conductor.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
-import 'package:rackmate_core/src/model/enums.dart' show TerminationType;
 import 'package:rackmate_core/src/model/link.dart' show RoughInStatus;
 import 'package:rackmate_core/src/model/location.dart';
 import 'package:rackmate_core/src/model/outlet.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/model/registries.dart';
+import 'package:rackmate_core/src/structure/drop_build.dart';
 import 'package:rackmate_core/src/structure/drop_line_parser.dart';
 
 /// The outcome of [planDropLine].
@@ -188,7 +187,7 @@ DropLinePlan planDropLine({
     final add = AddOutletCommand(
       structureBodyId: bodyId,
       designation:
-          line.outletDesignation ?? _outletDesignationFor(doc, location),
+          line.outletDesignation ?? outletDesignationFor(doc, location),
       order: nextOutletOrder(doc),
       now: now,
       actor: actor,
@@ -210,119 +209,48 @@ DropLinePlan planDropLine({
 
   // --- the drops -----------------------------------------------------
   final template = _templateOf(doc, plannedOutlet);
-  final usedLabels = usedFieldLabels(doc, alsoUsed: alsoUsedLabels);
-  final usedDesignators = {
-    for (final l in doc.links.values) l.designator,
-    ...alsoUsedDesignators,
-  };
-  final usedNetNames = {for (final n in doc.nets.values) n.name};
-
-  final labels = <String>[];
-  for (var i = 0; i < line.items.length; i++) {
-    final item = line.items[i];
-    final def = media[i];
-
-    final serviceTag = _serviceTagFor(
+  final built = buildDropsFor(
+    doc: doc,
+    location: location,
+    outlet: plannedOutlet,
+    items: [
+      for (var i = 0; i < line.items.length; i++)
+        PlannedDropItem(
+          media: media[i],
+          count: line.items[i].count,
+          column: line.items[i].column,
+          token: line.items[i].mediaToken,
+        ),
+    ],
+    serviceTag: (item) => _serviceTagFor(
       modifier: line.service,
       templates: doc.registries.outletTemplates,
       template: template,
-      media: def,
-    );
-    if (serviceTag == null) {
-      // DR-023 §11.22.4: the one hole in the chain, and it refuses.
-      return DropLinePlanRefused(
-        '"${item.mediaToken}" has no short tag, so these drops cannot be '
-        'labelled. Give the line a @service=, or give that cable type a '
-        'tag.',
-        item.column,
-      );
-    }
-
-    for (var n = 0; n < item.count; n++) {
-      final allocated = allocateOutletFieldLabel(
-        settings: doc.settings,
-        values: {
-          if (location.code.trim().isNotEmpty)
-            'ROOM_ABBR': location.code.trim(),
-          'SERVICE': serviceTag,
-          if (location.floorNumber case final f?) 'FLOOR': f,
-        },
-        usedLabels: usedLabels,
-      );
-      if (allocated is LabelTokensMissing) {
-        return DropLinePlanRefused(
-          _missingTokenSentence(allocated, location),
-          item.column,
-        );
-      }
-      final label = (allocated as LabelAllocated).label;
-
-      final designator = allocateLinkDesignator(
-        settings: doc.settings,
-        usedDesignators: usedDesignators,
-      );
-      final netName = allocateNetName(
-        settings: doc.settings,
-        usedNames: usedNetNames,
-      );
-
-      final built = buildAddHomeRunCommand(
-        doc: doc,
-        outletId: plannedOutlet.id,
-        fieldLabel: label,
-        designator: designator,
-        netName: netName,
-        media: def.id,
-        // AC-018: the far end is unbound at rough-in, and the FIELD end
-        // is the one that exists. `rackEnd` stays null.
-        fieldEnd: PlaceEndpoint(
-          description: location.name,
-          locationId: location.id,
-        ),
-        // NOT `keystone`, AND THE DIFFERENCE PRINTS. `derived/schedule
-        // .dart` calls this field "what the trim-out crew actually
-        // installs" and puts it on the Termination Schedule. A drop line
-        // says how many and of what; it never says how the wall end is
-        // finished, so writing `keystone` on all of them asserts a
-        // keystone jack for an RG6 run, which is an F barrel, and for a
-        // 16/4 speaker run, which is not a jack at all. Plausible and
-        // wrong on a sheet somebody buys hardware from is the failure
-        // `kUnstatedMedia` exists to avoid, and this is the same shape.
-        //
-        // OWED, AND NOT FIXABLE HERE: the field is NON-NULLABLE on
-        // `StructureOrigin`, so a home run cannot record "not decided"
-        // the way `_terminationOf`'s own `TerminationType?` return
-        // already allows for every other link. `unterminated` is the
-        // nearest true value, not the right one. G4 wants the key
-        // absent; making it so is a model change with a codec and an
-        // AC-013 accessor behind it.
-        terminationField: TerminationType.unterminated,
-        now: now,
-        actor: actor,
-        alsoUsedLabels: usedLabels,
-        alsoUsedDesignators: usedDesignators,
-        alsoOutlets: {plannedOutlet.id: plannedOutlet},
-      );
-      switch (built) {
-        case AddHomeRunRefused(:final reason):
-          return DropLinePlanRefused(reason, item.column);
-        case AddHomeRunReady(:final command):
-          commands.add(command);
-          labels.add(label);
-          usedLabels.add(label);
-          usedDesignators.add(designator);
-          usedNetNames.add(netName);
-      }
-    }
-  }
-
-  return DropLinePlanReady(
-    commands: commands,
-    dropCount: labels.length,
-    fieldLabels: labels,
-    outletCreated: outletCreated,
-    warnings: _warningsFor(line, status),
+      media: item.media,
+    ),
+    now: now,
+    actor: actor,
+    usedLabels: usedFieldLabels(doc, alsoUsed: alsoUsedLabels),
+    usedDesignators: {
+      for (final l in doc.links.values) l.designator,
+      ...alsoUsedDesignators,
+    },
+    usedNetNames: {for (final n in doc.nets.values) n.name},
   );
+
+  switch (built) {
+    case DropBuildRefused(:final reason, :final column):
+      return DropLinePlanRefused(reason, column);
+    case DropBuildOk(commands: final drops, :final fieldLabels):
+      return DropLinePlanReady(
+        // The outlet first when one is being created, then the drops.
+        commands: [...commands, ...drops],
+        dropCount: fieldLabels.length,
+        fieldLabels: fieldLabels,
+        outletCreated: outletCreated,
+        warnings: _warningsFor(line, status),
+      );
+  }
 }
 
 /// What the line asked for that this build did not do.
@@ -410,12 +338,15 @@ MediaTypeDef? resolveMediaToken(Registries registries, String token) {
 /// what reaches the label is the template's `tag`.
 ///
 /// THE LITERAL FALLBACK IS NOT A CONSOLATION PRIZE. `@service=poe` on a
-/// project that authored no template still has to produce a label, and
-/// refusing would make the modifier useless until board #150 seeds the
-/// six templates. `registries.outletTemplates` is `{}` in every document
-/// today, so the literal arm is the ONLY arm currently reachable and the
-/// corpus's `EXT-CAM-4` is not reproducible until #150 lands. Stated
-/// here rather than discovered there.
+/// project that authored no template such as that still has to produce a
+/// label, and refusing would make the modifier useless for any word the
+/// nine seeded templates do not cover.
+///
+/// THIS COMMENT USED TO SAY THE OTHER ARM WAS UNREACHABLE. Until M3-C/4
+/// (`5abb8b3`) `registries.outletTemplates` was `{}` in every document,
+/// so the literal arm was the only one that could fire and `EXT-CAM-4`
+/// was not reproducible. Nine templates ship now and the corpus's own
+/// label comes out of a blank project.
 String? _serviceTagFor({
   required String? modifier,
   required Map<String, OutletTemplate> templates,
@@ -424,31 +355,12 @@ String? _serviceTagFor({
 }) {
   final typed = modifier?.trim() ?? '';
   if (typed.isNotEmpty) {
-    final named = _resolveTemplate(templates, typed);
+    final named = resolveOutletTemplate(templates, typed);
     if (named?.tag case final t? when t.trim().isNotEmpty) return t.trim();
     return typed.toUpperCase();
   }
   if (template?.tag case final t? when t.trim().isNotEmpty) return t.trim();
   return media.shortTag;
-}
-
-/// An `@service=` value → a template, by tag first and then by name.
-///
-/// TAG BEFORE NAME because the tag is the shorter, more deliberate
-/// handle: someone typing fast writes `@service=tv`, and *TV location*
-/// is what they mean.
-OutletTemplate? _resolveTemplate(
-  Map<String, OutletTemplate> templates,
-  String token,
-) {
-  final want = token.trim().toLowerCase();
-  for (final t in templates.values) {
-    if (t.tag?.trim().toLowerCase() == want) return t;
-  }
-  for (final t in templates.values) {
-    if (t.name.trim().toLowerCase() == want) return t;
-  }
-  return null;
 }
 
 /// Case- and space-insensitive, because a person typing sixty drops
@@ -486,40 +398,4 @@ RoughInStatus? _resolveStatus(String raw) {
     if (s.name.toLowerCase() == want) return s;
   }
   return null;
-}
-
-/// `LR-1`, `LR-2`, … — an outlet designation for a line that named none.
-///
-/// NOT A LABEL AND NOT SUBJECT TO CR-045. `Outlet.designation` is the
-/// plate's own name in the project tree; the two things CR-045 governs
-/// are the drop's field and rack labels, and those go through the format
-/// engine a few lines below. This only has to be unique and readable.
-String _outletDesignationFor(RackDocument doc, Location location) {
-  final code = location.code.trim();
-  final stem = code.isNotEmpty ? code : location.name.trim();
-  final used = {for (final o in doc.outlets.values) o.designation};
-  for (var n = 1; ; n++) {
-    final candidate = '$stem-$n';
-    if (!used.contains(candidate)) return candidate;
-  }
-}
-
-/// Turns `LabelTokensMissing` into a sentence naming the FIELD a person
-/// has to fill, rather than the token a format string happens to use.
-String _missingTokenSentence(LabelTokensMissing missing, Location location) {
-  const fields = {
-    'ROOM_ABBR': 'a short code',
-    'FLOOR': 'a floor number',
-    'SPACE': 'a space code',
-  };
-  final named = [
-    for (final t in missing.tokens)
-      if (fields[t] case final f?) f,
-  ];
-  if (named.isEmpty) {
-    return 'The drop label pattern "${missing.pattern}" needs '
-        '${missing.tokens.join(', ')}, which this line does not supply.';
-  }
-  return '${location.name} needs ${named.join(' and ')} before its drops can '
-      'be labelled — the pattern is "${missing.pattern}".';
 }

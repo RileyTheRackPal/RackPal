@@ -1,0 +1,266 @@
+// THE PART BOTH ENTRY SURFACES SHARE. Extracted from
+// `drop_line_planner.dart` by M3-C/5 (#151, DR-024), unchanged in
+// behaviour.
+//
+// ═════════════════════════════════════════════════════════════════════
+// WHY THIS FILE EXISTS
+// ═════════════════════════════════════════════════════════════════════
+// There are now two ways to make drops: a typed line (docs/07 §4.3's
+// DSL, board #147) and a picked template (`+ Add outlet ▾`, board #151).
+// They differ ONLY in where the list of `(media, count)` comes from and
+// in how `{SERVICE}` is chosen. Everything after that — the label, the
+// `W` number, the net name, the endpoint, the refusals — is one
+// behaviour, and two copies of it would drift the way `StructureDrop`
+// and `Link` were ruled to drift in CR-107: "the drop schedule says 78
+// ft and the wiring schedule says 90 ft, and nobody knows which to bill
+// against."
+//
+// NOT EXPORTED from `rackmate_core.dart`. Consumers call `planDropLine`
+// or `planOutletFromTemplate`; this is the shared middle and has no
+// standalone meaning.
+//
+// ═════════════════════════════════════════════════════════════════════
+// IT MUTATES NOTHING, AND THAT IS THE WHOLE CONTRACT
+// ═════════════════════════════════════════════════════════════════════
+// [buildDropsFor] takes an `Outlet` that may not be in the document yet
+// and returns commands nobody has applied. A gesture that refused on its
+// seventh drop must leave six behind — so the three `used*` sets are the
+// running reservation, and the caller applies the whole list or none of
+// it.
+import 'package:meta/meta.dart';
+import 'package:rackmate_core/src/commands/command.dart';
+import 'package:rackmate_core/src/commands/home_run_commands.dart';
+import 'package:rackmate_core/src/idformat/designator_allocator.dart';
+import 'package:rackmate_core/src/model/conductor.dart';
+import 'package:rackmate_core/src/model/enums.dart' show TerminationType;
+import 'package:rackmate_core/src/model/location.dart';
+import 'package:rackmate_core/src/model/outlet.dart';
+import 'package:rackmate_core/src/model/rack_document.dart';
+import 'package:rackmate_core/src/model/registries.dart';
+
+/// One resolved media type and how many of it — the unit both entry
+/// surfaces reduce to before any id is allocated.
+@immutable
+final class PlannedDropItem {
+  const PlannedDropItem({
+    required this.media,
+    required this.count,
+    this.column,
+    this.token,
+  });
+
+  final MediaTypeDef media;
+  final int count;
+
+  /// Where in the typed line this came from, so a refusal can point a
+  /// caret at it. Null when the items were picked from a menu and there
+  /// is no line to point into.
+  final int? column;
+
+  /// What the person actually typed, for a refusal that quotes them
+  /// back. Falls back to the media's display name when there is no line.
+  final String? token;
+
+  String get spelling => token ?? media.displayName;
+}
+
+/// What [buildDropsFor] produced.
+sealed class DropBuildOutcome {
+  const DropBuildOutcome();
+}
+
+@immutable
+final class DropBuildOk extends DropBuildOutcome {
+  const DropBuildOk({required this.commands, required this.fieldLabels});
+
+  /// In order, one per drop. Apply inside ONE transaction.
+  final List<Command> commands;
+  final List<String> fieldLabels;
+}
+
+@immutable
+final class DropBuildRefused extends DropBuildOutcome {
+  const DropBuildRefused(this.reason, [this.column]);
+  final String reason;
+  final int? column;
+}
+
+/// Turns resolved items into home-run commands against [outlet].
+///
+/// [outlet] may be one the caller is about to create; it is passed to
+/// `buildAddHomeRunCommand` through `alsoOutlets` so the lookup resolves
+/// before the document has it. The three `used*` sets are updated in
+/// place as ids are spent.
+///
+/// [serviceTag] is called once per item and returns the `{SERVICE}`
+/// segment, or null to refuse — DR-023 §11.22.4's one hole, which is
+/// reachable only for a user-created media type with no `shortTag`.
+DropBuildOutcome buildDropsFor({
+  required RackDocument doc,
+  required Location location,
+  required Outlet outlet,
+  required List<PlannedDropItem> items,
+  required String? Function(PlannedDropItem item) serviceTag,
+  required DateTime now,
+  required String actor,
+  required Set<String> usedLabels,
+  required Set<String> usedDesignators,
+  required Set<String> usedNetNames,
+}) {
+  final commands = <Command>[];
+  final labels = <String>[];
+
+  for (final item in items) {
+    final tag = serviceTag(item);
+    if (tag == null) {
+      return DropBuildRefused(
+        '"${item.spelling}" has no short tag, so these drops cannot be '
+        'labelled. Give the line a @service=, or give that cable type a '
+        'tag.',
+        item.column,
+      );
+    }
+
+    for (var n = 0; n < item.count; n++) {
+      final allocated = allocateOutletFieldLabel(
+        settings: doc.settings,
+        values: {
+          if (location.code.trim().isNotEmpty)
+            'ROOM_ABBR': location.code.trim(),
+          'SERVICE': tag,
+          if (location.floorNumber case final f?) 'FLOOR': f,
+        },
+        usedLabels: usedLabels,
+      );
+      if (allocated is LabelTokensMissing) {
+        return DropBuildRefused(
+          missingTokenSentence(allocated, location),
+          item.column,
+        );
+      }
+      final label = (allocated as LabelAllocated).label;
+
+      final designator = allocateLinkDesignator(
+        settings: doc.settings,
+        usedDesignators: usedDesignators,
+      );
+      final netName = allocateNetName(
+        settings: doc.settings,
+        usedNames: usedNetNames,
+      );
+
+      final built = buildAddHomeRunCommand(
+        doc: doc,
+        outletId: outlet.id,
+        fieldLabel: label,
+        designator: designator,
+        netName: netName,
+        media: item.media.id,
+        // AC-018: the far end is unbound at rough-in, and the FIELD end
+        // is the one that exists. `rackEnd` stays null.
+        fieldEnd: PlaceEndpoint(
+          description: location.name,
+          locationId: location.id,
+        ),
+        // NOT `keystone`, AND THE DIFFERENCE PRINTS. `derived/schedule
+        // .dart` calls this field "what the trim-out crew actually
+        // installs" and puts it on the Termination Schedule. Neither
+        // entry surface says how the wall end is finished — a drop line
+        // says how many and of what, and a template says a recipe — so
+        // writing `keystone` on all of them asserts a keystone jack for
+        // an RG6 run, which is an F barrel, and for a 16/4 speaker run,
+        // which is not a jack at all. Plausible and wrong on a sheet
+        // somebody buys hardware from is the failure `kUnstatedMedia`
+        // exists to avoid, and this is the same shape.
+        //
+        // OWED, AND NOT FIXABLE HERE: the field is NON-NULLABLE on
+        // `StructureOrigin`, so a home run cannot record "not decided"
+        // the way `_terminationOf`'s own `TerminationType?` return
+        // already allows for every other link. `unterminated` is the
+        // nearest true value, not the right one. G4 wants the key
+        // absent; making it so is a model change with a codec and an
+        // AC-013 accessor behind it.
+        terminationField: TerminationType.unterminated,
+        now: now,
+        actor: actor,
+        alsoUsedLabels: usedLabels,
+        alsoUsedDesignators: usedDesignators,
+        alsoOutlets: {outlet.id: outlet},
+      );
+      switch (built) {
+        case AddHomeRunRefused(:final reason):
+          return DropBuildRefused(reason, item.column);
+        case AddHomeRunReady(:final command):
+          commands.add(command);
+          labels.add(label);
+          usedLabels.add(label);
+          usedDesignators.add(designator);
+          usedNetNames.add(netName);
+      }
+    }
+  }
+
+  return DropBuildOk(commands: commands, fieldLabels: labels);
+}
+
+/// `LR-1`, `LR-2`, … — an outlet designation for a gesture that named
+/// none.
+///
+/// NOT A LABEL AND NOT SUBJECT TO CR-045. `Outlet.designation` is the
+/// plate's own name in the project tree; the two things CR-045 governs
+/// are the drop's field and rack labels, and those go through the format
+/// engine inside [buildDropsFor]. This only has to be unique and
+/// readable.
+String outletDesignationFor(
+  RackDocument doc,
+  Location location, {
+  Set<String> alsoUsed = const {},
+}) {
+  final code = location.code.trim();
+  final stem = code.isNotEmpty ? code : location.name.trim();
+  final used = {for (final o in doc.outlets.values) o.designation, ...alsoUsed};
+  for (var n = 1; ; n++) {
+    final candidate = '$stem-$n';
+    if (!used.contains(candidate)) return candidate;
+  }
+}
+
+/// An `@service=` value or a template name → a template, by tag first
+/// and then by name.
+///
+/// TAG BEFORE NAME because the tag is the shorter, more deliberate
+/// handle: someone typing fast writes `@service=tv`, and *TV location*
+/// is what they mean.
+OutletTemplate? resolveOutletTemplate(
+  Map<String, OutletTemplate> templates,
+  String token,
+) {
+  final want = token.trim().toLowerCase();
+  for (final t in templates.values) {
+    if (t.tag?.trim().toLowerCase() == want) return t;
+  }
+  for (final t in templates.values) {
+    if (t.name.trim().toLowerCase() == want) return t;
+  }
+  return null;
+}
+
+/// Turns `LabelTokensMissing` into a sentence naming the FIELD a person
+/// has to fill, rather than the token a format string happens to use.
+String missingTokenSentence(LabelTokensMissing missing, Location location) {
+  const fields = {
+    'ROOM_ABBR': 'a short code',
+    'FLOOR': 'a floor number',
+    'SPACE': 'a space code',
+  };
+  final named = [
+    for (final t in missing.tokens)
+      if (fields[t] case final f?) f,
+  ];
+  if (named.isEmpty) {
+    return 'The drop label pattern "${missing.pattern}" needs '
+        '${missing.tokens.join(', ')}, which this gesture does not supply.';
+  }
+  return '${location.name} needs ${named.join(' and ')} before its drops can '
+      'be labelled — the pattern is "${missing.pattern}".';
+}
