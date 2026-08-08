@@ -26,6 +26,16 @@ to board #147. DR-022 settled the **source**; this settles the **chain**.
 There is no fourth step and no placeholder. Every step is a fact the person
 supplied on the line or stored on the outlet.
 
+**Step 1 resolves THROUGH a template before falling back to the literal.**
+`@service=camera` renders `CAM`, not `CAMERA` — the modifier names the same
+kind of thing step 2 does and differs only in how the template is chosen, so
+the value is looked up against `outletTemplates` by `tag` then by `name`. Where
+nothing is named that, the literal is used upper-cased, because
+`@service=poe` on a project that authored no template must still produce a
+label. Since `outletTemplates` is `{}` in every document today, the literal arm
+is the only reachable one and `EXT-CAM-4` is **not reproducible until board
+#150 seeds the six templates**.
+
 # Why the modifier outranks the template
 
 CR-048 evaluates a designator **once at creation and stores it**. A label that

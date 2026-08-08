@@ -7513,6 +7513,21 @@ settled the **source**; this settles the **chain**.
 There is no fourth step and no placeholder. Every step is a fact the person supplied on the line or
 stored on the outlet.
 
+**Step 1 resolves THROUGH a template before it falls back to the literal, and the worked example is
+why.** `@service=camera` renders `CAM`, not `CAMERA`. The modifier names the same kind of thing
+step 2 does, an `OutletTemplate`, and differs only in **how that template is chosen**: typed on this
+line rather than carried by the outlet. So the value is looked up against `outletTemplates` by
+`tag` first and then by `name`, and what reaches the label is the template's `tag`. Where nothing
+is named that, the literal is used, upper-cased: `@service=poe` on a project that authored no
+template must still produce a label, and refusing would make the modifier useless until board #150
+seeds the six.
+
+**Consequence, recorded rather than left to be discovered:** `registries.outletTemplates` is `{}` in
+every document today, so the literal arm is currently the only reachable one and **`EXT-CAM-4` is
+not reproducible until #150 lands**. It is a gate in `drop_line_planner_test.dart`, in both
+directions, so the day templates are seeded the corpus's own label appears rather than being
+noticed.
+
 **11.22.2 Why `@service=` outranks the template, which is step 1 beating step 2.** CR-048 evaluates
 a designator **once at creation and stores it**. A label that cannot be overridden at the moment of
 entry can only be corrected by deleting the drop and re-entering it, which is the one operation a

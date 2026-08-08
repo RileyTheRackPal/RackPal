@@ -149,6 +149,7 @@ final class OutletTemplate {
   OutletTemplate({
     required this.id,
     required this.name,
+    this.tag,
     List<OutletDrop>? drops,
   }) : drops = drops ?? [];
 
@@ -158,5 +159,25 @@ final class OutletTemplate {
   // retrofit (AC-013). Converted as each is wired to a Command. See
   // internal_setter_grep_test.dart.
   String name;
+
+  /// The label segment `{SERVICE}` renders — `TV`, `KEY`, `CAM`
+  /// (DR-022 §11.21.4, DR-023 step 2).
+  ///
+  /// AUTHORED BESIDE THE NAME, NEVER DERIVED FROM IT. `name` is *"TV
+  /// location"* and a tag truncated out of it is a guess printed on
+  /// physical cable. The corpus's own worked labels are `LR-TV-1`,
+  /// `MBR-KEY-2` and `EXT-CAM-4`, and no truncation rule produces all
+  /// three from *TV location*, *Keypad* and *Camera*.
+  ///
+  /// NULLABLE, and null means UNKNOWN rather than empty (G4, CR-114): a
+  /// template authored before this key existed has no tag, and DR-023's
+  /// chain falls through to the media's short tag rather than printing
+  /// a blank segment.
+  ///
+  /// NOT A MIGRATION. `registries.outletTemplates` is `{}` in all four
+  /// shipped starters and in every document ever written, so a key added
+  /// to an entity with zero instances everywhere costs no file a byte.
+  String? tag;
+
   List<OutletDrop> drops;
 }

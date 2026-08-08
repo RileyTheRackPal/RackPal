@@ -46,6 +46,7 @@ import 'package:rackmate_core/src/model/enums.dart'
     show MountSurface, TerminationType, Wall;
 import 'package:rackmate_core/src/model/link.dart';
 import 'package:rackmate_core/src/model/net.dart';
+import 'package:rackmate_core/src/model/outlet.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/model/service.dart';
 import 'package:rackmate_core/src/model/structure_body.dart';
@@ -279,8 +280,20 @@ AddHomeRunResult buildAddHomeRunCommand({
   Uuid? pathwayId,
   Set<String> alsoUsedLabels = const {},
   Set<String> alsoUsedDesignators = const {},
+  Map<Uuid, Outlet> alsoOutlets = const {},
 }) {
-  final outlet = doc.outlets[outletId];
+  // [alsoOutlets] is the third member of the `alsoUsed` family above and
+  // exists for the same reason: a bulk entry builds against ONE unmutated
+  // document. `Living Room: 4x Cat6` creates the outlet AND four drops in
+  // one transaction, so the outlet those drops name is pending rather
+  // than stored, and a lookup that could only see `doc.outlets` would
+  // refuse all four with "that outlet is not in this project" — which is
+  // true and useless.
+  //
+  // It is a LOOKUP FALLBACK, not an override: a stored outlet always
+  // wins, so a caller cannot accidentally validate against a stale copy
+  // of an outlet the document already has.
+  final outlet = doc.outlets[outletId] ?? alsoOutlets[outletId];
   if (outlet == null) {
     return const AddHomeRunRefused('That outlet is not in this project.');
   }

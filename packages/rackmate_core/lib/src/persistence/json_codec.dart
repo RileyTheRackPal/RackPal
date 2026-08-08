@@ -2456,15 +2456,23 @@ OutletDrop _decodeOutletDrop(JsonMap json) => OutletDrop(
   count: asInt(json['count'] ?? 1, 'OutletDrop.count'),
 );
 
-JsonMap _encodeOutletTemplate(OutletTemplate t) => {
-  'id': t.id,
-  'name': t.name,
-  'drops': [for (final d in t.drops) _encodeOutletDrop(d)],
-};
+JsonMap _encodeOutletTemplate(OutletTemplate t) {
+  final json = <String, Object?>{
+    'id': t.id,
+    'name': t.name,
+    'drops': [for (final d in t.drops) _encodeOutletDrop(d)],
+  };
+  // ADDITIVE, written only when present — `MediaTypeDef.shortTag`'s
+  // contract and DR-022 §11.21.4's "not a migration" claim, which holds
+  // only if the key stays absent on a template that has no tag.
+  putIfNotNull(json, 'tag', t.tag);
+  return json;
+}
 
 OutletTemplate _decodeOutletTemplate(String id, JsonMap json) => OutletTemplate(
   id: id,
   name: asStr(json['name'], 'OutletTemplate.name'),
+  tag: asStrOrNull(json['tag'], 'OutletTemplate.tag'),
   drops: decodeObjectList(
     json['drops'],
     'OutletTemplate.drops',
