@@ -42,8 +42,13 @@
 // and it answers it against an unmutated document so a widget can rebuild
 // it on every frame.
 import 'package:meta/meta.dart';
+import 'package:rackmate_core/src/derived/equipment_list.dart'
+    show kUnknownCell;
 import 'package:rackmate_core/src/derived/location_tree.dart';
 import 'package:rackmate_core/src/derived/schedule.dart';
+import 'package:rackmate_core/src/model/enums.dart' show UnitSystem;
+import 'package:rackmate_core/src/model/link.dart' show RoughInStatus;
+import 'package:rackmate_core/src/model/pathway.dart' show PathwayKind;
 import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/units/ids.dart';
 import 'package:rackmate_core/src/units/len.dart';
@@ -245,6 +250,299 @@ bool _isSpare(ScheduleEntry row) => switch (row.to.kind) {
   ScheduleEndKind.unresolvedPort => false,
   ScheduleEndKind.rackPort || ScheduleEndKind.unrackedPort => false,
   _ => true,
+};
+
+// ═════════════════════════════════════════════════════════════════════
+// THE COLUMNS — docs/07 §4.1
+// ═════════════════════════════════════════════════════════════════════
+// EIGHT DEFAULT, THE REST BEHIND `⚙ Columns`. §4.1 states the split and
+// its reason: the defaults are "the ones a person needs to answer 'what
+// am I pulling and where does it land'", and RJ-004 demoted jacket colour
+// and conduit out of that set and cut reel ID entirely.
+//
+// THE CELL TEXT IS THE SHEET'S. Six of the eight defaults are already
+// `ScheduleColumnId`s, so [structureCell] delegates and the editor cannot
+// print a media name the Pull Sheet spells differently. Where there is no
+// sheet column — `OUTLET` and `ROUGH-IN` — the string is assembled here,
+// once, and the widget takes it.
+//
+// WHY AN ENUM AND NOT A LIST OF WIDGETS. `⚙ Columns` is a set the user
+// toggles and the app persists; a column has to be nameable, orderable
+// and storable independently of anything Flutter. That, and the rest of
+// this file's reason: none of it may be re-derived per frame.
+
+/// Every column the Structure editor's table can carry.
+///
+/// ORDERED AS §4.1 LISTS THEM, defaults first, so a `⚙ Columns` menu
+/// built by walking `values` reads in the corpus's own order.
+enum StructureColumnId {
+  // ── the eight defaults ─────────────────────────────────────────────
+  fieldLabel,
+  rackLabel,
+  outlet,
+  media,
+  service,
+  pathway,
+  rackTerm,
+  roughIn,
+
+  // ── optional, off by default ───────────────────────────────────────
+  jacketRating,
+  jacketColor,
+  jacketColorPulled,
+  pathwayKind,
+  routedLength,
+  cutLength,
+  terminatedLength,
+  fieldTerm,
+  testResult,
+  certificateId,
+  installedBy,
+  notes,
+}
+
+/// §4.1's eight, in the wireframe's own left-to-right order.
+const List<StructureColumnId> kStructureDefaultColumns = <StructureColumnId>[
+  StructureColumnId.fieldLabel,
+  StructureColumnId.rackLabel,
+  StructureColumnId.outlet,
+  StructureColumnId.media,
+  StructureColumnId.service,
+  StructureColumnId.pathway,
+  StructureColumnId.rackTerm,
+  StructureColumnId.roughIn,
+];
+
+/// Everything `⚙ Columns` offers.
+///
+/// TWO OF §4.1'S LIST ARE NOT HERE, and both absences are ruled rather
+/// than forgotten:
+///
+///  * **`unknown`-map columns preserved from a CSV import.** There is no
+///    CSV importer yet (docs/07 §5, still owed), so there is no unknown
+///    map to preserve. A menu entry for a column that can never have a
+///    value would be a promise about an unbuilt feature.
+///  * **Reel ID**, cut entirely by RJ-004. It is named here so a later
+///    reader does not add it back from §4.1's prose.
+const List<StructureColumnId> kStructureOptionalColumns = <StructureColumnId>[
+  StructureColumnId.jacketRating,
+  StructureColumnId.jacketColor,
+  StructureColumnId.jacketColorPulled,
+  StructureColumnId.pathwayKind,
+  StructureColumnId.routedLength,
+  StructureColumnId.cutLength,
+  StructureColumnId.terminatedLength,
+  StructureColumnId.fieldTerm,
+  StructureColumnId.testResult,
+  StructureColumnId.certificateId,
+  StructureColumnId.installedBy,
+  StructureColumnId.notes,
+];
+
+/// The column header, as §4.1 and the §4 wireframe spell it.
+String structureColumnHeader(StructureColumnId id) => switch (id) {
+  StructureColumnId.fieldLabel => 'FIELD LABEL',
+  StructureColumnId.rackLabel => 'RACK LBL',
+  StructureColumnId.outlet => 'OUTLET',
+  StructureColumnId.media => 'MEDIA',
+  StructureColumnId.service => 'SERVICE',
+  StructureColumnId.pathway => 'PATHWAY',
+  StructureColumnId.rackTerm => 'RACK TERM',
+  StructureColumnId.roughIn => 'ROUGH-IN',
+  StructureColumnId.jacketRating => 'RATING',
+  // TWO COLUMNS, NOT ONE, and §4.1 spends a paragraph on why: one says
+  // what the run IS and drives the keystone, the other says what was
+  // actually pulled and is null in the normal case.
+  StructureColumnId.jacketColor => 'JACKET',
+  StructureColumnId.jacketColorPulled => 'PULLED',
+  StructureColumnId.pathwayKind => 'PATHWAY KIND',
+  StructureColumnId.routedLength => 'ROUTED',
+  StructureColumnId.cutLength => 'CUT',
+  StructureColumnId.terminatedLength => 'TERM. LEN',
+  StructureColumnId.fieldTerm => 'FIELD TERM',
+  StructureColumnId.testResult => 'TEST',
+  StructureColumnId.certificateId => 'CERT ID',
+  StructureColumnId.installedBy => 'INSTALLED BY',
+  StructureColumnId.notes => 'NOTES',
+};
+
+/// Points, at the same scale `kPullSheetColumns` uses, so the editor and
+/// the printed sheet keep recognisably the same proportions.
+double structureColumnWidth(StructureColumnId id) => switch (id) {
+  StructureColumnId.fieldLabel => 84,
+  StructureColumnId.rackLabel => 62,
+  StructureColumnId.outlet => 52,
+  StructureColumnId.media => 76,
+  StructureColumnId.service => 76,
+  StructureColumnId.pathway => 62,
+  StructureColumnId.rackTerm => 78,
+  StructureColumnId.roughIn => 62,
+  StructureColumnId.jacketRating => 48,
+  StructureColumnId.jacketColor => 48,
+  StructureColumnId.jacketColorPulled => 48,
+  StructureColumnId.pathwayKind => 72,
+  StructureColumnId.routedLength ||
+  StructureColumnId.cutLength ||
+  StructureColumnId.terminatedLength => 46,
+  StructureColumnId.fieldTerm => 78,
+  StructureColumnId.testResult => 44,
+  StructureColumnId.certificateId => 72,
+  StructureColumnId.installedBy => 84,
+  StructureColumnId.notes => 140,
+};
+
+/// Right-aligned where the value is a number to compare down a column.
+ScheduleAlign structureColumnAlign(StructureColumnId id) => switch (id) {
+  StructureColumnId.routedLength ||
+  StructureColumnId.cutLength ||
+  StructureColumnId.terminatedLength => ScheduleAlign.right,
+  _ => ScheduleAlign.left,
+};
+
+/// What one cell says.
+///
+/// [doc] IS REQUIRED AND IS NOT A SMELL. Five optional columns read a
+/// field the wiring schedule has no column for (`cutLength`, the test
+/// result and its certificate, `installedBy`, the field-end termination),
+/// so they come off the `Link` and the `StructureOrigin` rather than off
+/// the row. The DEFAULT eight never need it: they are the sheet's.
+///
+/// EVERY UNKNOWN PRINTS [kUnknownCell] AND NOTHING ELSE (G4, CR-114).
+/// There is no empty-string branch below and there must not be one: a
+/// blank cell reads as "nothing to say here", and the whole point of the
+/// dash is that it reads as "nobody has said".
+String structureCell(
+  RackDocument doc,
+  ScheduleEntry row,
+  StructureColumnId id, {
+  required UnitSystem units,
+}) {
+  final link = doc.links[row.linkId];
+  final origin = link?.structureOrigin;
+  return switch (id) {
+    // The sheet's own six. `cell` is the one lookup both presets use;
+    // this makes it the one lookup all three surfaces use.
+    StructureColumnId.fieldLabel => row.cell(
+      ScheduleColumnId.fieldLabel,
+      units: units,
+    ),
+    StructureColumnId.rackLabel => row.cell(
+      ScheduleColumnId.rackLabel,
+      units: units,
+    ),
+    StructureColumnId.media => row.cell(ScheduleColumnId.media, units: units),
+    StructureColumnId.service => row.cell(ScheduleColumnId.type, units: units),
+    StructureColumnId.pathway => row.cell(
+      ScheduleColumnId.pathway,
+      units: units,
+    ),
+    StructureColumnId.rackTerm => row.cell(ScheduleColumnId.term, units: units),
+
+    // The two the sheet has no column of its own for. `OUTLET` is half of
+    // the Pull Sheet's `FROM (ROOM / OUTLET)`; splitting it is what makes
+    // it an editable cell rather than a rendered sentence.
+    StructureColumnId.outlet => row.outletDesignation ?? kUnknownCell,
+    StructureColumnId.roughIn => roughInLabel(row.roughInStatus),
+
+    StructureColumnId.jacketRating => switch (row.jacketRating) {
+      final r? => jacketRatingLabel(r),
+      null => kUnknownCell,
+    },
+    // SPLIT WHERE `jacketColorCell` JOINS. The sheet prints `BLU→YEL` in
+    // one cell because a printed row has no room for two; the editor has
+    // two columns because they are two facts a person edits separately,
+    // and §4.1 says so in as many words.
+    StructureColumnId.jacketColor => _jacketToken(
+      row.jacketColor.conventionId,
+      row.jacketColor.convention?.abbr,
+    ),
+    StructureColumnId.jacketColorPulled => _jacketToken(
+      row.jacketColor.pulledId,
+      row.jacketColor.pulled?.abbr,
+    ),
+
+    // §4.1's `conduit` COLUMN UNDER ITS CURRENT NAME. CR-016 made the
+    // conduit a first-class `Pathway`, so "which conduit" is already the
+    // default `PATHWAY` column and a second one naming the same thing
+    // would be the RJ-004 demotion undone by accident. What that leaves
+    // genuinely invisible is the KIND — whether `PW-LR-1` is conduit,
+    // J-hook or tray, which is what `CODE-001` reads.
+    StructureColumnId.pathwayKind => switch (row.pathwayId) {
+      final pid? => switch (doc.pathways[pid]?.kind) {
+        final k? => pathwayKindLabel(k),
+        null => kUnknownCell,
+      },
+      null => kUnknownCell,
+    },
+
+    StructureColumnId.routedLength => scheduleLengthCell(
+      row.routedLength,
+      units,
+    ),
+    // OFF THE LINK, NOT OFF THE ROW. `ScheduleEntry.length` is the
+    // RESOLVED length and may be an estimate from the room or the outlet
+    // (`lengthSource`); `cutLength` is the measured one, and a column
+    // headed `CUT` showing a room estimate is what AC-024 forbids.
+    StructureColumnId.cutLength => scheduleLengthCell(link?.cutLength, units),
+    StructureColumnId.terminatedLength => scheduleLengthCell(
+      row.terminatedLength,
+      units,
+    ),
+
+    StructureColumnId.fieldTerm => switch (origin?.terminationField) {
+      final t? => terminationLabel(t),
+      null => kUnknownCell,
+    },
+    // PASS/FAIL, and NULL IS "NOT TESTED" rather than a failure. The two
+    // are a fortnight apart on a jobsite and only one of them is somebody
+    // else's problem.
+    StructureColumnId.testResult => switch (link?.test) {
+      final t? => t.pass ? 'PASS' : 'FAIL',
+      null => kUnknownCell,
+    },
+    StructureColumnId.certificateId => _text(link?.test?.certificateId),
+    StructureColumnId.installedBy => _text(link?.installedBy),
+    StructureColumnId.notes => _text(link?.notes),
+  };
+}
+
+/// A stored string, or the unknown dash. AN EMPTY STRING IS UNKNOWN here
+/// and not a value: nothing in the product writes `''` deliberately, and
+/// a cell that rendered one would be indistinguishable from a cell nobody
+/// has filled in.
+String _text(String? value) {
+  final trimmed = value?.trim();
+  return trimmed == null || trimmed.isEmpty ? kUnknownCell : trimmed;
+}
+
+/// One half of the jacket pair. A set id whose entry is missing prints
+/// [kDanglingJacketColorCell], never nothing: the record of what was
+/// pulled must survive the deletion of the convention entry naming it.
+String _jacketToken(Object? id, String? abbr) {
+  if (id == null) return kUnknownCell;
+  return abbr ?? kDanglingJacketColorCell;
+}
+
+/// What a `RoughInStatus` prints. The enum's own names, uppercased, which
+/// is what §4's wireframe shows (`pulled`, `tested`, `termin.`) once the
+/// table's own casing is applied.
+String roughInLabel(RoughInStatus status) => switch (status) {
+  RoughInStatus.planned => 'PLANNED',
+  RoughInStatus.pulled => 'PULLED',
+  RoughInStatus.dressed => 'DRESSED',
+  RoughInStatus.terminated => 'TERMINATED',
+  RoughInStatus.tested => 'TESTED',
+};
+
+/// What a `PathwayKind` prints.
+String pathwayKindLabel(PathwayKind kind) => switch (kind) {
+  PathwayKind.conduit => 'CONDUIT',
+  PathwayKind.jhook => 'J-HOOK',
+  PathwayKind.tray => 'TRAY',
+  PathwayKind.plenumSpace => 'PLENUM',
+  PathwayKind.riser => 'RISER',
+  PathwayKind.directBury => 'DIRECT BURY',
+  PathwayKind.exterior => 'EXTERIOR',
 };
 
 /// Every location id, parents before children, siblings in `order`.

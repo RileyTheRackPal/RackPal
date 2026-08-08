@@ -601,7 +601,7 @@ final class ScheduleEntry {
   String get mediaCell {
     final name = media?.displayName ?? mediaId.v;
     final rating = jacketRating;
-    return rating == null ? name : '$name ${_jacketRatingLabel(rating)}';
+    return rating == null ? name : '$name ${jacketRatingLabel(rating)}';
   }
 
   /// §3.1's jacket-colour cell. TWO TOKENS WHEN THE RUN IS AN EXCEPTION —
@@ -635,7 +635,7 @@ final class ScheduleEntry {
   /// is NOT here; see the file header.
   String get terminationCell {
     final parts = <String>[
-      if (terminationType != null) _terminationLabel(terminationType!),
+      if (terminationType != null) terminationLabel(terminationType!),
       if (nearEnd.portDesignator != null) nearEnd.portDesignator!,
     ];
     return parts.isEmpty ? kUnknownCell : parts.join(' ');
@@ -654,15 +654,7 @@ final class ScheduleEntry {
   /// ESTIMATE flag is [lengthIsEstimated] and is not encoded in this
   /// string — italic is the renderer's job, and a caller that reads the
   /// number without the flag would bill off an estimate (AC-024).
-  String lengthCell(UnitSystem units) {
-    final value = length;
-    if (value == null) return kUnknownCell;
-    final divisor = switch (units) {
-      UnitSystem.imperial => _nmPerFoot,
-      UnitSystem.metric => _nmPerMetre,
-    };
-    return '${(value.nm / divisor).round()}';
-  }
+  String lengthCell(UnitSystem units) => scheduleLengthCell(length, units);
 
   /// §3.3 column 12's conductor half — `L+ red · L- black`.
   String get conductorCell {
@@ -747,7 +739,30 @@ const String kDanglingJacketColorCell = '?';
 const int _nmPerFoot = Len.nmPerInch * 12;
 const int _nmPerMetre = Len.nmPerMillimetre * 1000;
 
-String _jacketRatingLabel(JacketRating rating) => switch (rating) {
+/// WHOLE FEET OR WHOLE METRES, ONCE, FOR EVERY LENGTH ANY TABLE PRINTS.
+///
+/// [ScheduleEntry.lengthCell] is one caller; docs/07 §4.1's three optional
+/// length columns (`routedLength` / `cutLength` / `terminatedLength`) are
+/// the others. They go through here rather than each dividing by its own
+/// constant for the reason named above [_nmPerFoot]: this project has
+/// already shipped a 1000x unit error that survived nine copy-pasted
+/// conversions.
+///
+/// NULL IS UNKNOWN and prints as such (G4, CR-114). Never `0`, which on a
+/// length column means a measured zero.
+String scheduleLengthCell(Len? value, UnitSystem units) {
+  if (value == null) return kUnknownCell;
+  final divisor = switch (units) {
+    UnitSystem.imperial => _nmPerFoot,
+    UnitSystem.metric => _nmPerMetre,
+  };
+  return '${(value.nm / divisor).round()}';
+}
+
+/// What a `JacketRating` prints. PUBLIC because the Structure editor
+/// offers fire rating as its own optional column (docs/07 §4.1) and a
+/// second spelling of `CMR` is a second vocabulary.
+String jacketRatingLabel(JacketRating rating) => switch (rating) {
   JacketRating.cl2 => 'CL2',
   JacketRating.cl3 => 'CL3',
   JacketRating.cmr => 'CMR',
@@ -756,7 +771,10 @@ String _jacketRatingLabel(JacketRating rating) => switch (rating) {
   JacketRating.directBurial => 'DIRECT BURIAL',
 };
 
-String _terminationLabel(TerminationType type) => switch (type) {
+/// What a `TerminationType` prints. PUBLIC for the same reason
+/// [jacketRatingLabel] is: docs/07 §4.1 gives the FIELD termination its
+/// own optional column, and the rack end already prints through here.
+String terminationLabel(TerminationType type) => switch (type) {
   TerminationType.keystone => 'KEYSTONE',
   TerminationType.punchdown => 'PUNCHDOWN',
   TerminationType.fBarrel => 'F BARREL',

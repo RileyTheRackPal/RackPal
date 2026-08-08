@@ -526,4 +526,270 @@ void main() {
       expect(buildStructureTable(_Doc().doc).dropCount, 0);
     });
   });
+
+  group('the columns (docs/07 §4.1)', () {
+    test("the eight defaults are §4.1's eight, in the wireframe order", () {
+      expect(kStructureDefaultColumns.map(structureColumnHeader), [
+        'FIELD LABEL',
+        'RACK LBL',
+        'OUTLET',
+        'MEDIA',
+        'SERVICE',
+        'PATHWAY',
+        'RACK TERM',
+        'ROUGH-IN',
+      ]);
+    });
+
+    test('every column is offered exactly once, default or optional', () {
+      final offered = [
+        ...kStructureDefaultColumns,
+        ...kStructureOptionalColumns,
+      ];
+      // A column in neither list is unreachable from `⚙ Columns`; a
+      // column in both would render twice.
+      expect(offered.toSet(), StructureColumnId.values.toSet());
+      expect(offered.length, StructureColumnId.values.length);
+    });
+
+    test('the six sheet columns print exactly what the sheet prints', () {
+      // THE ANTI-DRIFT GATE, in the same shape as the first group's: it
+      // compares the two outputs rather than asserting either.
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      final o = d.outlet('LR-1', locationId: lr);
+      final pw = d.pathway('PW-LR-1');
+      _drop(
+        d,
+        outletId: o,
+        locationId: lr,
+        fieldLabel: 'LR-TV-1',
+        rackPort: d.panelPort('A01'),
+        pathwayId: pw,
+      );
+
+      final row = buildStructureTable(d.doc).groups.single.rows.single;
+      const shared = <StructureColumnId, ScheduleColumnId>{
+        StructureColumnId.fieldLabel: ScheduleColumnId.fieldLabel,
+        StructureColumnId.rackLabel: ScheduleColumnId.rackLabel,
+        StructureColumnId.media: ScheduleColumnId.media,
+        StructureColumnId.service: ScheduleColumnId.type,
+        StructureColumnId.pathway: ScheduleColumnId.pathway,
+        StructureColumnId.rackTerm: ScheduleColumnId.term,
+      };
+      for (final entry in shared.entries) {
+        expect(
+          structureCell(
+            d.doc,
+            row,
+            entry.key,
+            units: UnitSystem.imperial,
+          ),
+          row.cell(entry.value, units: UnitSystem.imperial),
+          reason:
+              '${structureColumnHeader(entry.key)} must be the sheet '
+              'string, not a second spelling of it',
+        );
+      }
+    });
+
+    test('an unset value is the dash, never an empty cell (G4)', () {
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      final o = d.outlet('LR-1', locationId: lr);
+      _drop(d, outletId: o, locationId: lr, fieldLabel: 'LR-TV-1');
+
+      final row = buildStructureTable(d.doc).groups.single.rows.single;
+      for (final id in StructureColumnId.values) {
+        final cell = structureCell(d.doc, row, id, units: UnitSystem.imperial);
+        expect(
+          cell,
+          isNotEmpty,
+          reason:
+              '${structureColumnHeader(id)} rendered nothing, which '
+              'reads as "nothing to say" where the truth is "nobody has '
+              'said"',
+        );
+      }
+      // The five that have no value on a bare rough-in drop say so.
+      for (final id in [
+        StructureColumnId.installedBy,
+        StructureColumnId.notes,
+        StructureColumnId.testResult,
+        StructureColumnId.certificateId,
+        StructureColumnId.cutLength,
+      ]) {
+        expect(
+          structureCell(d.doc, row, id, units: UnitSystem.imperial),
+          kUnknownCell,
+        );
+      }
+    });
+
+    test('CUT is the measured length and never the room estimate', () {
+      // The defect this forbids: a column headed CUT showing a figure
+      // somebody would order cable against, which came from a room
+      // estimate nobody measured (AC-024, G4).
+      final d = _Doc();
+      final lr = d.room(
+        'Living Room',
+        code: 'LR',
+        estimate: const Len(62 * 304800000),
+      );
+      final o = d.outlet('LR-1', locationId: lr);
+      final linkId = _drop(
+        d,
+        outletId: o,
+        locationId: lr,
+        fieldLabel: 'LR-TV-1',
+      );
+
+      final row = buildStructureTable(d.doc).groups.single.rows.single;
+      expect(row.length, isNotNull, reason: 'the room estimate resolved');
+      expect(row.lengthIsEstimated, isTrue);
+      expect(
+        structureCell(
+          d.doc,
+          row,
+          StructureColumnId.cutLength,
+          units: UnitSystem.imperial,
+        ),
+        kUnknownCell,
+      );
+
+      d.doc.links[linkId]!.cutLength = const Len(71 * 304800000);
+      final measured = buildStructureTable(d.doc).groups.single.rows.single;
+      expect(
+        structureCell(
+          d.doc,
+          measured,
+          StructureColumnId.cutLength,
+          units: UnitSystem.imperial,
+        ),
+        '71',
+      );
+    });
+
+    test('a length column follows the project display units', () {
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      final o = d.outlet('LR-1', locationId: lr);
+      final linkId = _drop(
+        d,
+        outletId: o,
+        locationId: lr,
+        fieldLabel: 'LR-TV-1',
+      );
+      d.doc.links[linkId]!.cutLength = const Len(100 * 304800000);
+
+      final row = buildStructureTable(d.doc).groups.single.rows.single;
+      expect(
+        structureCell(
+          d.doc,
+          row,
+          StructureColumnId.cutLength,
+          units: UnitSystem.imperial,
+        ),
+        '100',
+      );
+      expect(
+        structureCell(
+          d.doc,
+          row,
+          StructureColumnId.cutLength,
+          units: UnitSystem.metric,
+        ),
+        '30',
+      );
+    });
+
+    test('JACKET and PULLED are two cells where the sheet joins them', () {
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      final o = d.outlet('LR-1', locationId: lr);
+      final linkId = _drop(
+        d,
+        outletId: o,
+        locationId: lr,
+        fieldLabel: 'LR-TV-1',
+      );
+      d.doc.settings.jacketColorConventions.addAll({
+        const JacketColorId('jc.blue'): const JacketColorDef(
+          displayName: 'Blue',
+          abbr: 'BLU',
+          color: Rgb(0x00, 0x00, 0xFF),
+        ),
+        const JacketColorId('jc.yellow'): const JacketColorDef(
+          displayName: 'Yellow',
+          abbr: 'YEL',
+          color: Rgb(0xFF, 0xFF, 0x00),
+        ),
+      });
+      SetLinkJacketColorCommand(
+        linkId: linkId,
+        conventionId: const JacketColorId('jc.blue'),
+      ).apply(d.doc);
+      SetLinkPulledJacketColorCommand(
+        linkId: linkId,
+        pulledId: const JacketColorId('jc.yellow'),
+      ).apply(d.doc);
+
+      final row = buildStructureTable(d.doc).groups.single.rows.single;
+      expect(
+        structureCell(
+          d.doc,
+          row,
+          StructureColumnId.jacketColor,
+          units: UnitSystem.imperial,
+        ),
+        'BLU',
+      );
+      expect(
+        structureCell(
+          d.doc,
+          row,
+          StructureColumnId.jacketColorPulled,
+          units: UnitSystem.imperial,
+        ),
+        'YEL',
+      );
+      // The sheet still joins them, and that difference is §4.1's own.
+      expect(row.jacketColorCell, 'BLU→YEL');
+    });
+
+    test('PATHWAY KIND is the kind, where PATHWAY is the name', () {
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      final o = d.outlet('LR-1', locationId: lr);
+      final pw = d.pathway('PW-LR-1');
+      d.doc.pathways[pw]!.kind = PathwayKind.jhook;
+      _drop(
+        d,
+        outletId: o,
+        locationId: lr,
+        fieldLabel: 'LR-TV-1',
+        pathwayId: pw,
+      );
+
+      final row = buildStructureTable(d.doc).groups.single.rows.single;
+      expect(
+        structureCell(
+          d.doc,
+          row,
+          StructureColumnId.pathway,
+          units: UnitSystem.imperial,
+        ),
+        'PW-LR-1',
+      );
+      expect(
+        structureCell(
+          d.doc,
+          row,
+          StructureColumnId.pathwayKind,
+          units: UnitSystem.imperial,
+        ),
+        'J-HOOK',
+      );
+    });
+  });
 }
