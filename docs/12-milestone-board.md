@@ -1009,6 +1009,36 @@ The three hard-coded demo Locations **are gone as of `5f5bce5`** (#143), which w
 the panel precisely so the dropdown did not go empty in between. That closes the last part of the
 M3-B paragraph above that was still describing the tree as of M0.
 
+**M3-A is CLOSED as of `6cb7e5a`** (board #83, eight tasks), and the criterion was demonstrated
+rather than inferred from the ticks. That issue opens *"AC-018 is currently unreachable BY
+CONSTRUCTION; M2-B's schedule already handles unbound ends correctly, so the work is producing the
+drops, not teaching the schedule."* Nothing joined the entry loop to `buildSchedule` until the
+closing commit: seven drops from one typed line now produce seven schedule rows, each with a W
+number and a field label and no rack label, asserted as a SET so a duplicate cannot hide inside a
+matching count (G1). **AC-018's fourth clause, "prints", is not claimed and is not reachable in M3
+at all** — `SheetRole` has three values and none is a cable schedule, which is #574.
+
+**#575 was the last task, and what it found is the part worth keeping.** Its premise ("the command
+layer is done, nothing in the app calls it") had already been discharged by M3-C/1 two days
+earlier, so the remaining work was the twenty lines between a typed line and the undo stack, which
+had **no tests at all**. Both defects there were invisible to all fourteen gates:
+
+*The preview's actor reached the document.* `DropEntryPanel` re-plans on every keystroke to draw its
+preview, with `actor: 'preview'` and a throwaway clock, and `planDropLine` threads both into every
+command it builds. `onCommit` applied those commands, so sixty cables would have recorded the
+literal string `preview` as their author. A comment claimed the app rebuilt them; it did not, and
+the comment was the only thing making the design sound right. Labels, W numbers, net names and the
+byte round-trip are identical either way, so nothing but a test naming `EntityMeta` could have
+caught it.
+
+*`keystone` was asserted on every drop, and it prints.* `derived/schedule.dart` calls
+`StructureOrigin.terminationField` "what the trim-out crew actually installs" and puts it on the
+Termination Schedule. A drop line never says how the wall end is finished, so `4x Cat6, 2x RG6, 2x
+16/4` produced rows ordering a keystone jack for an F barrel and for something that is not a jack.
+Now `unterminated`, which the code says outright is the nearest true value and not the right one:
+**the field should be nullable** (G4, CR-114), and `_terminationOf` already returns
+`TerminationType?` for every link that is not a home run. Owed, and filed rather than smuggled in.
+
 **#143's own stated ground had already lapsed, and the correction is the useful part.** It argues
 the demo three were *"a lie that survives into a user's document"*. They could not have been, and
 had not been since the persistence layer landed: `RackCanvasScreen.document` is `@visibleForTesting`
