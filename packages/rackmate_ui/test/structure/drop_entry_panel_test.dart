@@ -59,12 +59,24 @@ final class _Harness {
   int structuresRequested = 0;
 
   DropEntryActions get actions => DropEntryActions(
-    onCommit: (plan) {
+    // THE APP'S SHAPE, NOT THE PREVIEW'S: it re-plans against its own
+    // clock and actor and returns what it did. `apps/rackmate`'s real
+    // `buildDropEntryActions` does exactly this; the harness mirrors it
+    // so the panel is driven the way it will be driven.
+    onCommit: (line) {
+      final plan = planDropLine(
+        doc: doc,
+        line: line,
+        now: _now,
+        actor: 'committer',
+      );
+      if (plan is! DropLinePlanReady) return plan;
       for (final c in plan.commands) {
         c.apply(doc);
       }
       commits++;
       recent.insert(0, plan.fieldLabels.join(', '));
+      return plan;
     },
     onCreateLocation: (name) {
       createdLocations.add(name);
@@ -91,7 +103,11 @@ Future<void> _pumpPanel(WidgetTester tester, _Harness h) async {
             // how it does. The app rebuilds the same way.
             doc: h.doc,
             actions: DropEntryActions(
-              onCommit: (p) => setState(() => h.actions.onCommit(p)),
+              onCommit: (line) {
+                final r = h.actions.onCommit(line);
+                setState(() {});
+                return r;
+              },
               onCreateLocation: (n) =>
                   setState(() => h.actions.onCreateLocation(n)),
               onCreateStructure: () =>

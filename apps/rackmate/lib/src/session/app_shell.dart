@@ -706,10 +706,7 @@ final class AppShellState extends State<AppShell>
     await showDropEntryPanel(
       context,
       currentDoc: () => session.document,
-      actions: buildDropEntryActions(
-        controller: session.controller,
-        onRefuse: _showRefusal,
-      ),
+      actions: buildDropEntryActions(controller: session.controller),
     );
   }
 

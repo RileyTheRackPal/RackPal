@@ -92,9 +92,14 @@ class _DropEntryHostState extends State<_DropEntryHost> {
     doc: widget.currentDoc(),
     recent: _recent,
     actions: DropEntryActions(
-      onCommit: (plan) {
-        widget.actions.onCommit(plan);
-        setState(() => _recent.insert(0, plan.fieldLabels.join(', ')));
+      onCommit: (line) {
+        final committed = widget.actions.onCommit(line);
+        // The tail reports what the APP did, not what the preview
+        // predicted, for the same reason `onCommit` takes the line.
+        if (committed is DropLinePlanReady) {
+          setState(() => _recent.insert(0, committed.fieldLabels.join(', ')));
+        }
+        return committed;
       },
       onCreateLocation: (name) {
         widget.actions.onCreateLocation(name);
@@ -117,9 +122,22 @@ final class DropEntryActions {
     required this.onCreateStructure,
   });
 
-  /// Apply these commands as ONE undo entry. The plan is already built
-  /// against the current document; the app runs it and nothing else.
-  final void Function(DropLinePlanReady plan) onCommit;
+  /// Commit one line, and report what actually happened.
+  ///
+  /// THE PARSED LINE CROSSES THIS BOUNDARY, NOT THE PREVIEW'S PLAN, and
+  /// that is deliberate. The preview is planned on every keystroke with
+  /// a throwaway clock and no real actor, because it exists to be looked
+  /// at; those values reach `EntityMeta.createdAt` and `.updatedBy` on
+  /// every command a plan holds. Handing the preview's commands to the
+  /// app would write the preview's timestamp and the string `preview`
+  /// onto sixty cables, and nothing downstream would ever question it.
+  ///
+  /// So the app re-plans against its OWN clock and actor and returns the
+  /// result, which the panel then displays. Re-planning is free
+  /// (`planDropLine` mutates nothing) and gives the same labels, because
+  /// nothing changed between the last keystroke and `Enter` — a property
+  /// `drop_line_planner_test.dart` asserts directly rather than assumes.
+  final DropLinePlan Function(DropLineParsed line) onCommit;
 
   /// The room the line named does not exist. Creating it is the user's
   /// call, taken with one keystroke, and never this panel's.
@@ -155,6 +173,10 @@ class _DropEntryPanelState extends State<DropEntryPanel> {
   final FocusNode _focus = FocusNode();
   DropLinePlan? _plan;
 
+  /// The line behind [_plan], kept so `Enter` can hand the APP the line
+  /// rather than the preview's commands.
+  DropLineParsed? _parsed;
+
   @override
   void initState() {
     super.initState();
@@ -183,17 +205,20 @@ class _DropEntryPanelState extends State<DropEntryPanel> {
   void _replan() {
     final parsed = parseDropLine(_text.text);
     setState(() {
+      _parsed = parsed is DropLineParsed ? parsed : null;
       _plan = switch (parsed) {
         DropLineBlank() => null,
         DropLineMalformed(:final reason, :final column) => DropLinePlanRefused(
           reason,
           column,
         ),
+        // PREVIEW VALUES, AND THEY NEVER REACH A DOCUMENT. See
+        // `DropEntryActions.onCommit`: the app re-plans on commit with
+        // its own clock and actor, because these two would otherwise be
+        // written onto every drop's `EntityMeta`.
         final DropLineParsed p => planDropLine(
           doc: widget.doc,
           line: p,
-          // Diagnostics only for the preview; the committed commands are
-          // rebuilt by the app against its own clock and actor.
           now: DateTime.now(),
           actor: 'preview',
         ),
@@ -204,7 +229,14 @@ class _DropEntryPanelState extends State<DropEntryPanel> {
   void _submit() {
     switch (_plan) {
       case DropLinePlanReady(:final commands) when commands.isNotEmpty:
-        widget.actions.onCommit(_plan! as DropLinePlanReady);
+        final committed = widget.actions.onCommit(_parsed!);
+        // THE APP'S ANSWER WINS over the preview's, including when it
+        // disagrees. It cannot today, but a panel that showed its own
+        // guess after the fact would hide the day it starts to.
+        if (committed is! DropLinePlanReady) {
+          _focus.requestFocus();
+          return;
+        }
         // CLEARED ONLY ON SUCCESS, and focus is never given up. This is
         // the loop.
         _text.clear();

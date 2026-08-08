@@ -40,11 +40,34 @@ String initialsFor(String name) {
 }
 
 /// Wires the entry panel to a live [DocumentController].
+///
+/// NO `onRefuse` HERE, and the absence is deliberate. Every other panel
+/// in this app takes one, because its refusals arrive after a dialog has
+/// closed and would otherwise vanish. This one's refusals are already on
+/// screen: the preview under the field shows the sentence and puts a
+/// caret under the column, live, before `Enter` is ever pressed. A
+/// snackbar saying the same thing a second time would be the surface
+/// shouting at somebody who is already looking at the answer.
 DropEntryActions buildDropEntryActions({
   required DocumentController controller,
-  required void Function(String reason) onRefuse,
 }) => DropEntryActions(
-  onCommit: (plan) {
+  onCommit: (line) {
+    // PLANNED HERE, NOT IN THE PANEL, against this controller's clock and
+    // actor. The panel plans on every keystroke to draw a preview, and
+    // those values reach `EntityMeta.createdAt` and `.updatedBy` on every
+    // command a plan carries — so committing the preview's commands would
+    // stamp a keystroke's timestamp and the literal string `preview` onto
+    // sixty cables, and no gate in this repository would notice.
+    //
+    // Re-planning costs nothing: `planDropLine` mutates no document.
+    final plan = planDropLine(
+      doc: controller.doc,
+      line: line,
+      now: controller.clock.nowUtc(),
+      actor: controller.actor,
+    );
+    if (plan is! DropLinePlanReady) return plan;
+
     // ONE TRANSACTION, ONE UNDO ENTRY. Nine drops and their outlet are
     // what a person means by "that line", so undo must take the line and
     // not the last cable on it.
@@ -53,6 +76,7 @@ DropEntryActions buildDropEntryActions({
         tx.add(c);
       }
     });
+    return plan;
   },
   onCreateLocation: (name) {
     controller.run(
