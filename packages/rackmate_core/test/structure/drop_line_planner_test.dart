@@ -115,6 +115,25 @@ void main() {
       }
     });
 
+    test('the wall end is UNTERMINATED, not a keystone nobody chose', () {
+      // `derived/schedule.dart` calls `StructureOrigin.terminationField`
+      // "what the trim-out crew actually installs" and prints it. A drop
+      // line says how many and of what, never how the wall end is
+      // finished, so `keystone` on all of them would order a keystone
+      // jack for an RG6 run (an F barrel) and for a speaker run (not a
+      // jack). Asserted across MIXED media, because a single-media line
+      // would pass under either value.
+      final p = _project();
+      _apply(p.doc, _ready(_plan(p.doc, 'Living Room: 1x Cat6, 1x RG6')));
+
+      for (final l in p.doc.links.values) {
+        expect(
+          l.structureOrigin!.terminationField,
+          TerminationType.unterminated,
+        );
+      }
+    });
+
     test('the field end carries the room, so the Pull Sheet can group', () {
       final p = _project();
       _apply(p.doc, _ready(_plan(p.doc, 'Living Room: 2x Cat6')));

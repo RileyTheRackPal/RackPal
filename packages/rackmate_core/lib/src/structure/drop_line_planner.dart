@@ -279,7 +279,24 @@ DropLinePlan planDropLine({
           description: location.name,
           locationId: location.id,
         ),
-        terminationField: TerminationType.keystone,
+        // NOT `keystone`, AND THE DIFFERENCE PRINTS. `derived/schedule
+        // .dart` calls this field "what the trim-out crew actually
+        // installs" and puts it on the Termination Schedule. A drop line
+        // says how many and of what; it never says how the wall end is
+        // finished, so writing `keystone` on all of them asserts a
+        // keystone jack for an RG6 run, which is an F barrel, and for a
+        // 16/4 speaker run, which is not a jack at all. Plausible and
+        // wrong on a sheet somebody buys hardware from is the failure
+        // `kUnstatedMedia` exists to avoid, and this is the same shape.
+        //
+        // OWED, AND NOT FIXABLE HERE: the field is NON-NULLABLE on
+        // `StructureOrigin`, so a home run cannot record "not decided"
+        // the way `_terminationOf`'s own `TerminationType?` return
+        // already allows for every other link. `unterminated` is the
+        // nearest true value, not the right one. G4 wants the key
+        // absent; making it so is a model change with a codec and an
+        // AC-013 accessor behind it.
+        terminationField: TerminationType.unterminated,
         now: now,
         actor: actor,
         alsoUsedLabels: usedLabels,
