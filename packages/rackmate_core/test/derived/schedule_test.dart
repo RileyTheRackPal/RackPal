@@ -175,6 +175,10 @@ Uuid _link(
   JacketRating? jacket,
   CrossoverKind? crossover,
   RoughInStatus roughInStatus = RoughInStatus.planned,
+  // NULLABLE FROM M3-J, so a home run can say "nobody has decided how
+  // this wall end is finished" (G4, CR-114). Defaults to `keystone` so
+  // every existing case in this file is unchanged.
+  TerminationType? terminationField = TerminationType.keystone,
   int order = 0,
 }) {
   final id = d._mint('link');
@@ -212,7 +216,7 @@ Uuid _link(
             outletId: outletId ?? const Uuid('outlet-none'),
             fieldLabel: fieldLabel,
             rackLabel: rackLabel,
-            terminationField: TerminationType.keystone,
+            terminationField: terminationField,
           ),
   );
   return id;
@@ -1175,6 +1179,77 @@ void main() {
   // ═══════════════════════════════════════════════════════════════════
   // §3.2 COLUMN 8 — LENGTH
   // ═══════════════════════════════════════════════════════════════════
+  group('the termination cell, and what UNKNOWN outranks (M3-J)', () {
+    // BOTH REQUIRED, both nullable. This group is about which of the two
+    // wins, so a call that omitted one would hide the case it is testing
+    // behind a default.
+    ScheduleEntry rowWith({
+      required TerminationType? origin,
+      required TerminationType? intended,
+    }) {
+      final d = _Doc();
+      final where = d.room('Kitchen');
+      _link(
+        d,
+        designator: 'W042',
+        from: PlaceEndpoint(
+          description: 'wall plate',
+          locationId: where,
+          intendedTermination: intended,
+        ),
+        to: const OpenEndpoint('coil'),
+        fieldLabel: 'KIT-TV-1',
+        outletId: d.outlet('KIT-1', locationId: where),
+        terminationField: origin,
+      );
+      return _pull(d.doc).rows.single;
+    }
+
+    test('the origin wins when it says something', () {
+      // Unchanged: the origin is what the trim-out crew installs, and the
+      // endpoint's field is an intent recorded at rough-in.
+      expect(
+        rowWith(
+          origin: TerminationType.punchdown,
+          intended: TerminationType.keystone,
+        ).terminationType,
+        TerminationType.punchdown,
+      );
+    });
+
+    test('A NULL ORIGIN OUTRANKS NOTHING, and falls through to the intent', () {
+      // The behaviour that changed. The field was non-nullable, so a home
+      // run always answered and this fallthrough was unreachable for one.
+      // Unknown is not a value to prefer over a stated intent.
+      expect(
+        rowWith(
+          origin: null,
+          intended: TerminationType.fBarrel,
+        ).terminationType,
+        TerminationType.fBarrel,
+      );
+    });
+
+    test('and with neither, the cell is empty rather than guessed', () {
+      // Never inferred from the connector: an F barrel and a keystone are
+      // both RG6 terminations, and the model says which or it does not.
+      expect(rowWith(origin: null, intended: null).terminationType, isNull);
+    });
+
+    test('`unterminated` is a DECISION and still reads as one', () {
+      // The distinction the nullability bought: a coil left deliberately
+      // bare is a fact somebody recorded, and it must not read the same
+      // as a drop nobody has got to.
+      expect(
+        rowWith(
+          origin: TerminationType.unterminated,
+          intended: null,
+        ).terminationType,
+        TerminationType.unterminated,
+      );
+    });
+  });
+
   group('§3.2 column 8 — the length, and what it is not', () {
     ScheduleEntry rowWith({
       Len? cutLength,

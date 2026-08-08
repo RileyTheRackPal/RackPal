@@ -111,11 +111,11 @@ final class AddHomeRunCommand extends Command {
     required this.order,
     required this.media,
     required this.fieldEnd,
-    required this.terminationField,
     required this.now,
     required this.actor,
     this.rackEnd,
     this.rackLabel,
+    this.terminationField,
     this.wall,
     this.mountSurface,
     this.mountHeightAff,
@@ -171,7 +171,10 @@ final class AddHomeRunCommand extends Command {
   /// to land on yet.
   final Endpoint? rackEnd;
 
-  final TerminationType terminationField;
+  /// How the wall-plate end is finished. NULL IS UNKNOWN (G4, CR-114):
+  /// a drop entered at rough-in has no answer, and `unterminated` is a
+  /// decision rather than an absence. See `StructureOrigin`.
+  final TerminationType? terminationField;
   final Wall? wall;
   final MountSurface? mountSurface;
   final Len? mountHeightAff;
@@ -272,11 +275,11 @@ AddHomeRunResult buildAddHomeRunCommand({
   required String netName,
   required MediaTypeId media,
   required Endpoint fieldEnd,
-  required TerminationType terminationField,
   required DateTime now,
   required String actor,
   Endpoint? rackEnd,
   String? rackLabel,
+  TerminationType? terminationField,
   Uuid? pathwayId,
   Set<String> alsoUsedLabels = const {},
   Set<String> alsoUsedDesignators = const {},
@@ -466,7 +469,7 @@ abstract final class StructureOriginField {
     touches: EpochMask.wires | EpochMask.meta,
   );
 
-  static final terminationField = EntityField<Link, TerminationType>(
+  static final terminationField = EntityField<Link, TerminationType?>(
     access: EntityAccess.link,
     key: 'origin.terminationField',
     get: (l) => _originOf(l).terminationField,

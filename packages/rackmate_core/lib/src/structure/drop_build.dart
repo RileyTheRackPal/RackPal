@@ -32,7 +32,6 @@ import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/home_run_commands.dart';
 import 'package:rackmate_core/src/idformat/designator_allocator.dart';
 import 'package:rackmate_core/src/model/conductor.dart';
-import 'package:rackmate_core/src/model/enums.dart' show TerminationType;
 import 'package:rackmate_core/src/model/location.dart';
 import 'package:rackmate_core/src/model/outlet.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
@@ -162,25 +161,24 @@ DropBuildOutcome buildDropsFor({
           description: location.name,
           locationId: location.id,
         ),
-        // NOT `keystone`, AND THE DIFFERENCE PRINTS. `derived/schedule
-        // .dart` calls this field "what the trim-out crew actually
-        // installs" and puts it on the Termination Schedule. Neither
-        // entry surface says how the wall end is finished — a drop line
-        // says how many and of what, and a template says a recipe — so
-        // writing `keystone` on all of them asserts a keystone jack for
-        // an RG6 run, which is an F barrel, and for a 16/4 speaker run,
-        // which is not a jack at all. Plausible and wrong on a sheet
-        // somebody buys hardware from is the failure `kUnstatedMedia`
-        // exists to avoid, and this is the same shape.
+        // NOT PASSED AT ALL, which is the point. `derived/schedule.dart`
+        // calls this field "what the trim-out crew actually installs" and
+        // puts it on the Termination Schedule. Neither entry surface says
+        // how the wall end is finished — a drop line says how many and of
+        // what, and a template says a recipe — so any value written here
+        // is one nobody stated.
         //
-        // OWED, AND NOT FIXABLE HERE: the field is NON-NULLABLE on
-        // `StructureOrigin`, so a home run cannot record "not decided"
-        // the way `_terminationOf`'s own `TerminationType?` return
-        // already allows for every other link. `unterminated` is the
-        // nearest true value, not the right one. G4 wants the key
-        // absent; making it so is a model change with a codec and an
-        // AC-013 accessor behind it.
-        terminationField: TerminationType.unterminated,
+        // IT USED TO WRITE `unterminated`, and the comment that stood
+        // here said outright it was "the nearest true value, not the
+        // right one": the field was non-nullable, so a drop entered at
+        // rough-in had to claim a decision weeks before anyone opened a
+        // box of jacks. Writing `keystone` instead was worse — a keystone
+        // jack for an RG6 run, which is an F barrel, and for a 16/4
+        // speaker run, which is not a jack at all — but `unterminated` is
+        // still a DECISION, the coil left deliberately bare, and on a
+        // sheet somebody buys hardware from that is a different fact from
+        // "not decided". M3-J made the field nullable (G4, CR-114), so
+        // the key is now simply absent and the schedule prints `—`.
         now: now,
         actor: actor,
         alsoUsedLabels: usedLabels,

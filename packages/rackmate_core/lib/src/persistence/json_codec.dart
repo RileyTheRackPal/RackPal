@@ -1591,8 +1591,15 @@ JsonMap _encodeStructureOrigin(StructureOrigin o) {
     'structureBodyId': o.structureBodyId.v,
     'outletId': o.outletId.v,
     'fieldLabel': o.fieldLabel,
-    'terminationField': encodeEnumName(o.terminationField),
   };
+  // ADDITIVE FROM M3-J, and CR-117 holds without a schema bump because
+  // the key was UNCONDITIONAL before it: every document ever written
+  // carries it, reading yields that value and writing writes it back, so
+  // no existing file moves a byte. Only a run whose wall end nobody has
+  // decided omits it, and that run did not exist before this change.
+  if (o.terminationField case final t?) {
+    json['terminationField'] = encodeEnumName(t);
+  }
   putIfNotNull(json, 'rackLabel', o.rackLabel);
   if (o.wall != null) json['wall'] = encodeEnumName(o.wall!);
   if (o.mountSurface != null) {
@@ -1609,11 +1616,13 @@ StructureOrigin _decodeStructureOrigin(JsonMap json) => StructureOrigin(
   ),
   outletId: _decodeUuid(json['outletId'], 'StructureOrigin.outletId'),
   fieldLabel: asStr(json['fieldLabel'], 'StructureOrigin.fieldLabel'),
-  terminationField: decodeEnumStrict(
-    TerminationType.values,
-    asStr(json['terminationField'], 'StructureOrigin.terminationField'),
-    'StructureOrigin.terminationField',
-  ),
+  terminationField: json['terminationField'] == null
+      ? null
+      : decodeEnumStrict(
+          TerminationType.values,
+          asStr(json['terminationField'], 'StructureOrigin.terminationField'),
+          'StructureOrigin.terminationField',
+        ),
   rackLabel: asStrOrNull(json['rackLabel'], 'StructureOrigin.rackLabel'),
   wall: json['wall'] == null
       ? null

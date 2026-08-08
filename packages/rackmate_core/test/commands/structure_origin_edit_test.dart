@@ -160,7 +160,7 @@ void main() {
       _ready<Wall?>(
         _set(p.doc, p.linkA, StructureOriginField.wall, Wall.s),
       ).apply(p.doc);
-      _ready<TerminationType>(
+      _ready<TerminationType?>(
         _set(
           p.doc,
           p.linkA,
@@ -402,6 +402,57 @@ void main() {
         ),
         isA<AddHomeRunRefused>(),
       );
+    });
+  });
+
+  group('the wall-end termination is UNKNOWABLE, and says so (M3-J)', () {
+    test('a home run can carry no termination at all', () {
+      // Non-nullable until M3-J, so `unterminated` was the only way to
+      // say "not a keystone" and `_terminationOf`'s "then nothing" arm
+      // was unreachable for a home run. Null is unknown (G4, CR-114);
+      // `unterminated` is the coil somebody deliberately left bare.
+      final p = _project();
+      _ready<TerminationType?>(
+        _set(p.doc, p.linkA, StructureOriginField.terminationField, null),
+      ).apply(p.doc);
+
+      expect(_origin(p.doc, p.linkA).terminationField, isNull);
+    });
+
+    test('and the key is ABSENT on the wire rather than written null', () {
+      // G4's serialization rule (CR-114): unknown is an absent key, never
+      // an explicit `null`.
+      final p = _project();
+      _ready<TerminationType?>(
+        _set(p.doc, p.linkA, StructureOriginField.terminationField, null),
+      ).apply(p.doc);
+
+      final tree = const JsonDocumentCodec().encodeToJsonTree(p.doc);
+      final links =
+          (tree['document']! as Map<String, Object?>)['links']!
+              as Map<String, Object?>;
+      final origin =
+          (links[p.linkA.v]! as Map<String, Object?>)['structureOrigin']!
+              as Map<String, Object?>;
+
+      expect(origin.containsKey('terminationField'), isFalse);
+      expect(origin['fieldLabel'], isNotNull);
+    });
+
+    test('a set one still writes, so CR-117 holds for every file so far', () {
+      // The key was UNCONDITIONAL before this change, so every document
+      // ever written carries it. Reading yields the value and writing
+      // writes it back: no existing file moves a byte.
+      final p = _project();
+      final tree = const JsonDocumentCodec().encodeToJsonTree(p.doc);
+      final links =
+          (tree['document']! as Map<String, Object?>)['links']!
+              as Map<String, Object?>;
+      final origin =
+          (links[p.linkA.v]! as Map<String, Object?>)['structureOrigin']!
+              as Map<String, Object?>;
+
+      expect(origin['terminationField'], 'keystone');
     });
   });
 

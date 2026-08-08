@@ -115,22 +115,37 @@ void main() {
       }
     });
 
-    test('the wall end is UNTERMINATED, not a keystone nobody chose', () {
+    test('the wall end is UNKNOWN, not a decision nobody made', () {
       // `derived/schedule.dart` calls `StructureOrigin.terminationField`
       // "what the trim-out crew actually installs" and prints it. A drop
       // line says how many and of what, never how the wall end is
       // finished, so `keystone` on all of them would order a keystone
       // jack for an RG6 run (an F barrel) and for a speaker run (not a
       // jack). Asserted across MIXED media, because a single-media line
-      // would pass under either value.
+      // would pass under any single value.
+      //
+      // THIS ASSERTED `unterminated` UNTIL M3-J, when the field became
+      // nullable (G4, CR-114). `unterminated` is a DECISION — the coil
+      // left deliberately bare — and on a sheet somebody buys hardware
+      // from that is a different fact from "nobody has decided".
       final p = _project();
       _apply(p.doc, _ready(_plan(p.doc, 'Living Room: 1x Cat6, 1x RG6')));
 
       for (final l in p.doc.links.values) {
-        expect(
-          l.structureOrigin!.terminationField,
-          TerminationType.unterminated,
-        );
+        expect(l.structureOrigin!.terminationField, isNull);
+      }
+    });
+
+    test('and the schedule prints nothing for it rather than a guess', () {
+      // The half that matters on paper: `ScheduleEntry.terminationType`
+      // has always been nullable and its "then nothing" arm was
+      // unreachable for home runs, because the model could not express
+      // the state. It can now.
+      final p = _project();
+      _apply(p.doc, _ready(_plan(p.doc, 'Living Room: 1x Cat6, 1x RG6')));
+
+      for (final row in buildSchedule(p.doc).rows) {
+        expect(row.terminationType, isNull);
       }
     });
 

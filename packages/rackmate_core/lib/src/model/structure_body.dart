@@ -90,7 +90,7 @@ final class StructureOrigin {
     required this.structureBodyId,
     required this.outletId,
     required String fieldLabel,
-    required TerminationType terminationField,
+    TerminationType? terminationField,
     String? rackLabel,
     Wall? wall,
     MountSurface? mountSurface,
@@ -141,8 +141,27 @@ final class StructureOrigin {
   @internal
   set mountHeightAff(Len? v) => _mountHeightAff = v;
 
-  TerminationType _terminationField;
-  TerminationType get terminationField => _terminationField;
+  /// How the WALL-PLATE end is finished — what the trim-out crew
+  /// actually installs, which is what `derived/schedule.dart` prints on
+  /// the Termination Schedule.
+  ///
+  /// NULL IS UNKNOWN AND `unterminated` IS A DECISION (G4, CR-114). A
+  /// coil left deliberately bare is `unterminated`; a drop entered at
+  /// rough-in, weeks before anyone opens a box of jacks, has no answer
+  /// at all, and the two are different facts on a sheet somebody buys
+  /// hardware from. This field was NON-NULLABLE until M3-J, so both
+  /// entry surfaces had to write a value they did not have: the drop
+  /// line and the outlet picker wrote `unterminated` and their own code
+  /// said, in as many words, that it was "the nearest true value, not
+  /// the right one".
+  ///
+  /// docs/07 §5.1 already treated it as optional — `termination_field`
+  /// is an unmarked CSV column, so an import without one had nothing
+  /// honest to store. `_terminationOf` had a `TerminationType?` return
+  /// and a "then nothing" arm from the start; the arm was simply
+  /// unreachable for home runs.
+  TerminationType? _terminationField;
+  TerminationType? get terminationField => _terminationField;
   @internal
-  set terminationField(TerminationType v) => _terminationField = v;
+  set terminationField(TerminationType? v) => _terminationField = v;
 }

@@ -901,9 +901,17 @@ ScheduleEntry _row(RackDocument doc, Link link) {
 /// `intendedTermination` because the origin is what the trim-out crew
 /// actually installs; the endpoint's field is an INTENT recorded at
 /// rough-in and may predate the decision.
+///
+/// A NULL ORIGIN FIELD OUTRANKS NOTHING, and that is what changed at
+/// M3-J. The field was non-nullable, so a home run always answered and
+/// this function returned on the first line for every one of them. Now
+/// null means UNKNOWN (G4, CR-114), and unknown is not a value to prefer
+/// over a stated intent: a drop whose wall end nobody has decided, on an
+/// endpoint that says `fBarrel`, should print `fBarrel` rather than `—`.
+/// The precedence is unchanged where both are present.
 TerminationType? _terminationOf(Link link, Conductor? first) {
   final origin = link.structureOrigin;
-  if (origin != null) return origin.terminationField;
+  if (origin?.terminationField case final t?) return t;
   for (final end in <Endpoint?>[first?.from, first?.to]) {
     if (end is PlaceEndpoint && end.intendedTermination != null) {
       return end.intendedTermination;
