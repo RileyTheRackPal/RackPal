@@ -650,12 +650,71 @@ abstract final class LinkField {
     touches: EpochMask.wires | EpochMask.meta,
   );
 
+  // ── the as-built four (DR-020 §11.19.2(5), M3-J/3) ─────────────────
+  // §11.19.3: "the as-built story was 80 % modelled and 0 % reachable".
+  // These four were on `Link` from M0 with no gesture; the Structure
+  // editor's optional columns are the gesture, so this is where they get
+  // their rows and their AC-013 conversion.
+
+  /// What was actually terminated, end to end (AC-024).
+  ///
+  /// A DIFFERENT FACT FROM `cutLength`, which is what to ORDER, and the
+  /// reason only this one has a row: M3-J/3 makes the as-built length
+  /// enterable in bulk, and #153 (M3-D/2) owns the other two.
+  static final terminatedLength = EntityField<Link, Len?>(
+    access: EntityAccess.link,
+    key: 'terminatedLength',
+    get: (l) => l.terminatedLength,
+    set: (l, v) => l.terminatedLength = v,
+    touches: EpochMask.wires | EpochMask.meta,
+  );
+
+  /// The certification result, or null for NOT TESTED.
+  ///
+  /// THE WHOLE OBJECT, never a field inside it. `TestResult` is mutable,
+  /// so a caller that reached in and flipped `pass` would leave this
+  /// command's captured "previous" pointing at the object it just
+  /// changed, and undo would restore the new value. Callers build a new
+  /// `TestResult` and set it.
+  ///
+  /// NULL IS "NOT TESTED" AND NOT "FAILED" (G4). The two are a fortnight
+  /// apart on a jobsite and only one of them is somebody else's problem.
+  static final test = EntityField<Link, TestResult?>(
+    access: EntityAccess.link,
+    key: 'test',
+    get: (l) => l.test,
+    set: (l, v) => l.test = v,
+    touches: EpochMask.wires | EpochMask.meta,
+  );
+
+  /// Who pulled it. Free text; an empty box lands as null.
+  static final installedBy = EntityField<Link, String?>(
+    access: EntityAccess.link,
+    key: 'installedBy',
+    get: (l) => l.installedBy,
+    set: (l, v) => l.installedBy = v,
+    touches: EpochMask.wires | EpochMask.meta,
+  );
+
+  /// When the trim-out crew landed it.
+  static final terminatedAt = EntityField<Link, DateTime?>(
+    access: EntityAccess.link,
+    key: 'terminatedAt',
+    get: (l) => l.terminatedAt,
+    set: (l, v) => l.terminatedAt = v,
+    touches: EpochMask.wires | EpochMask.meta,
+  );
+
   /// See [OutletField.all].
   static final List<EntityField<Link, Object?>> all = [
     lifecycleStatus,
     spliceCount,
     roughInStatus,
     notes,
+    terminatedLength,
+    test,
+    installedBy,
+    terminatedAt,
   ];
 }
 

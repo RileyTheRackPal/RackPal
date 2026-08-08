@@ -294,10 +294,12 @@ enum StructureColumnId {
   routedLength,
   cutLength,
   terminatedLength,
+  spliceCount,
   fieldTerm,
   testResult,
   certificateId,
   installedBy,
+  terminatedAt,
   notes,
 }
 
@@ -332,11 +334,36 @@ const List<StructureColumnId> kStructureOptionalColumns = <StructureColumnId>[
   StructureColumnId.routedLength,
   StructureColumnId.cutLength,
   StructureColumnId.terminatedLength,
+  StructureColumnId.spliceCount,
   StructureColumnId.fieldTerm,
   StructureColumnId.testResult,
   StructureColumnId.certificateId,
   StructureColumnId.installedBy,
+  StructureColumnId.terminatedAt,
   StructureColumnId.notes,
+];
+
+/// The as-built set, as one thing to switch on (DR-020 §11.19.2(5)).
+///
+/// A GROUP RATHER THAN SEVEN TICKS, because the ruling's own picture is a
+/// person "closing out sixty runs" who "needs one table with a length
+/// column they tab down, not sixty inspector visits". Making them reach
+/// that table through seven separate menu entries would put the cost back
+/// in a different place.
+///
+/// `ROUGH-IN` IS NOT IN IT, and that is the line between the two halves:
+/// it is one of §4.1's eight DEFAULTS, because "how far along is this
+/// run" is a question the rough-in table is already about. These seven
+/// answer "what did we actually do", which is a second visit to the same
+/// cable weeks later.
+const List<StructureColumnId> kStructureAsBuiltColumns = <StructureColumnId>[
+  StructureColumnId.terminatedLength,
+  StructureColumnId.spliceCount,
+  StructureColumnId.fieldTerm,
+  StructureColumnId.testResult,
+  StructureColumnId.certificateId,
+  StructureColumnId.installedBy,
+  StructureColumnId.terminatedAt,
 ];
 
 /// The column header, as §4.1 and the §4 wireframe spell it.
@@ -359,10 +386,12 @@ String structureColumnHeader(StructureColumnId id) => switch (id) {
   StructureColumnId.routedLength => 'ROUTED',
   StructureColumnId.cutLength => 'CUT',
   StructureColumnId.terminatedLength => 'TERM. LEN',
+  StructureColumnId.spliceCount => 'SPLICES',
   StructureColumnId.fieldTerm => 'FIELD TERM',
   StructureColumnId.testResult => 'TEST',
   StructureColumnId.certificateId => 'CERT ID',
   StructureColumnId.installedBy => 'INSTALLED BY',
+  StructureColumnId.terminatedAt => 'TERMINATED',
   StructureColumnId.notes => 'NOTES',
 };
 
@@ -384,10 +413,12 @@ double structureColumnWidth(StructureColumnId id) => switch (id) {
   StructureColumnId.routedLength ||
   StructureColumnId.cutLength ||
   StructureColumnId.terminatedLength => 46,
+  StructureColumnId.spliceCount => 46,
   StructureColumnId.fieldTerm => 78,
   StructureColumnId.testResult => 44,
   StructureColumnId.certificateId => 72,
   StructureColumnId.installedBy => 84,
+  StructureColumnId.terminatedAt => 78,
   StructureColumnId.notes => 140,
 };
 
@@ -422,6 +453,25 @@ bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
   StructureColumnId.rackLabel ||
   StructureColumnId.roughIn ||
   StructureColumnId.notes => true,
+
+  // M3-J/3's seven. DR-020 §11.19.2(5) asks for "one table with a length
+  // column they tab down, not sixty inspector visits", so the whole
+  // as-built set is enterable and not merely visible.
+  //
+  // `ROUTED` AND `CUT` STAY READ-ONLY, and the asymmetry is a task
+  // boundary rather than an oversight: #585 makes the AS-BUILT length
+  // enterable in bulk and #153 (M3-D/2) owns the other two. A person who
+  // notices will be right that it is odd; a person who fills in a `CUT`
+  // column this milestone does not own would be wrong in a way nobody
+  // could see.
+  StructureColumnId.terminatedLength ||
+  StructureColumnId.spliceCount ||
+  StructureColumnId.fieldTerm ||
+  StructureColumnId.testResult ||
+  StructureColumnId.certificateId ||
+  StructureColumnId.installedBy ||
+  StructureColumnId.terminatedAt => true,
+
   _ => false,
 };
 
@@ -429,7 +479,8 @@ bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
 ScheduleAlign structureColumnAlign(StructureColumnId id) => switch (id) {
   StructureColumnId.routedLength ||
   StructureColumnId.cutLength ||
-  StructureColumnId.terminatedLength => ScheduleAlign.right,
+  StructureColumnId.terminatedLength ||
+  StructureColumnId.spliceCount => ScheduleAlign.right,
   _ => ScheduleAlign.left,
 };
 
@@ -531,11 +582,31 @@ String structureCell(
     // are a fortnight apart on a jobsite and only one of them is somebody
     // else's problem.
     StructureColumnId.testResult => switch (link?.test) {
-      final t? => t.pass ? 'PASS' : 'FAIL',
+      final t? => t.pass ? kTestPassCell : kTestFailCell,
       null => kUnknownCell,
     },
     StructureColumnId.certificateId => _text(link?.test?.certificateId),
     StructureColumnId.installedBy => _text(link?.installedBy),
+
+    // A COUNT, WHERE `0` IS A VALUE AND BLANK IS NOT. `spliceCount` is
+    // the field DR-020 §11.19.2(3) added precisely so "nobody has looked"
+    // and "somebody looked and there are none" stop being the same
+    // answer, so this must not fall through `_text`'s empty-is-unknown
+    // rule and must not print `0` for null.
+    StructureColumnId.spliceCount => switch (link?.spliceCount) {
+      final n? => '$n',
+      null => kUnknownCell,
+    },
+
+    // A DATE, NOT A TIMESTAMP. `terminatedAt` is a `DateTime` and the
+    // codec stores the instant, but nothing in the product records an
+    // hour; printing one would invent a precision the document does not
+    // have. See [parseDateCell] for the other half of the round trip.
+    StructureColumnId.terminatedAt => switch (link?.terminatedAt) {
+      final t? => formatDateCell(t),
+      null => kUnknownCell,
+    },
+
     StructureColumnId.notes => _text(link?.notes),
   };
 }
@@ -578,6 +649,141 @@ String pathwayKindLabel(PathwayKind kind) => switch (kind) {
   PathwayKind.directBury => 'DIRECT BURY',
   PathwayKind.exterior => 'EXTERIOR',
 };
+
+// ═════════════════════════════════════════════════════════════════════
+// READING A TYPED CELL BACK — M3-J/3
+// ═════════════════════════════════════════════════════════════════════
+// THE PARSERS ARE HERE AND NOT IN THE WIDGET, for the reason `structureCell`
+// is: a surface holding a rule is a second copy of that rule. They are also
+// here rather than in the app layer because what they enforce is CR-001 —
+// integer nanometres, no floating-point millimetres anywhere — and that is
+// this package's invariant to keep.
+//
+// EACH REFUSES WITH A SENTENCE RATHER THAN RETURNING NULL, because null is
+// already taken: an empty box means UNKNOWN and is a legal edit (G4). A
+// parser that answered null for both "cleared" and "nonsense" would make
+// `62 ft 3` silently erase a measurement.
+
+/// What reading a cell produced: a value, or why it was refused.
+sealed class CellParse<T> {
+  const CellParse();
+}
+
+/// The cell parsed. [value] may be null, which means the box was cleared
+/// and the fact is now UNKNOWN (G4, CR-114).
+final class CellParsed<T> extends CellParse<T> {
+  const CellParsed(this.value);
+  final T? value;
+}
+
+/// The cell held something this column cannot mean.
+final class CellRefused<T> extends CellParse<T> {
+  const CellRefused(this.reason);
+  final String reason;
+}
+
+/// A length column, in the project's display units.
+///
+/// WHOLE UNITS ONLY, AND THAT IS THE HONEST RULE FOR THIS COLUMN.
+/// `scheduleLengthCell` rounds to whole feet or whole metres, because
+/// docs/08 §3.2 prints `78` and cable is ordered and cut in whole feet.
+/// A cell that ACCEPTED `62.5` would store a value its own column then
+/// displays as `63`, so the number on screen and the number in the file
+/// would disagree the moment it was typed. Refusing is the only answer
+/// that keeps them equal.
+///
+/// A STORED PRECISE VALUE IS NOT CLOBBERED BY THIS. The cell only commits
+/// when its text CHANGES, so tabbing through a run measured at 62 ft 6 in
+/// leaves it exactly where it is; only typing over it rounds it, which is
+/// a person's decision rather than a side effect of navigation.
+CellParse<Len> parseLengthCell(String text, UnitSystem units) {
+  final trimmed = text.trim();
+  if (trimmed.isEmpty) return const CellParsed<Len>(null);
+  final n = int.tryParse(trimmed);
+  final suffix = units == UnitSystem.imperial ? 'feet' : 'metres';
+  if (n == null) {
+    return CellRefused<Len>(
+      '"$trimmed" is not a length. This column is whole $suffix, so type '
+      'a number and nothing else.',
+    );
+  }
+  if (n < 0) {
+    return const CellRefused<Len>('A length cannot be negative.');
+  }
+  final divisor = units == UnitSystem.imperial
+      ? Len.nmPerInch * 12
+      : Len.nmPerMillimetre * 1000;
+  return CellParsed<Len>(Len(n * divisor));
+}
+
+/// A count column: `spliceCount` today.
+///
+/// `0` IS A VALUE AND BLANK IS NOT THE SAME THING. That distinction is
+/// the entire reason DR-020 §11.19.2(3) made the field nullable, so it
+/// has to survive the round trip through a text box.
+CellParse<int> parseCountCell(String text) {
+  final trimmed = text.trim();
+  if (trimmed.isEmpty) return const CellParsed<int>(null);
+  final n = int.tryParse(trimmed);
+  if (n == null) {
+    return CellRefused<int>('"$trimmed" is not a whole number.');
+  }
+  if (n < 0) {
+    return const CellRefused<int>('A count cannot be negative.');
+  }
+  return CellParsed<int>(n);
+}
+
+/// A date column: `terminatedAt` today.
+///
+/// `YYYY-MM-DD` AND NOTHING ELSE, which is the one spelling that is not
+/// ambiguous between two readers on two continents: `03/04` is March and
+/// April at the same time, and a jobsite date that is wrong by a month is
+/// worse than a jobsite date that is missing.
+///
+/// STORED AT MIDNIGHT UTC. Nothing in the product records an hour, so
+/// there is none to lose; [formatDateCell] prints the date back and the
+/// round trip is exact.
+CellParse<DateTime> parseDateCell(String text) {
+  final trimmed = text.trim();
+  if (trimmed.isEmpty) return const CellParsed<DateTime>(null);
+  if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(trimmed)) {
+    return CellRefused<DateTime>(
+      '"$trimmed" is not a date. Use YYYY-MM-DD, which reads the same '
+      'everywhere.',
+    );
+  }
+  final parts = trimmed.split('-').map(int.parse).toList();
+  final value = DateTime.utc(parts[0], parts[1], parts[2]);
+  // `DateTime.utc` ROLLS OVER rather than throwing: month 13 becomes
+  // January of the next year and 31 February becomes early March, so a
+  // typo would be stored as a real date nobody meant. Comparing the parts
+  // back is what catches it.
+  if (value.year != parts[0] ||
+      value.month != parts[1] ||
+      value.day != parts[2]) {
+    return CellRefused<DateTime>('There is no such date as $trimmed.');
+  }
+  return CellParsed<DateTime>(value);
+}
+
+/// `2026-08-08`. The inverse of [parseDateCell].
+String formatDateCell(DateTime value) {
+  final utc = value.toUtc();
+  final m = utc.month.toString().padLeft(2, '0');
+  final d = utc.day.toString().padLeft(2, '0');
+  return '${utc.year.toString().padLeft(4, '0')}-$m-$d';
+}
+
+/// What a `TEST` cell prints, and the three things it can say.
+///
+/// THREE STATES, NOT TWO. Null is NOT TESTED and is not a failure; the
+/// two are a fortnight apart on a jobsite and only one of them is
+/// somebody else's problem (G4).
+const String kTestPassCell = 'PASS';
+
+/// See [kTestPassCell].
+const String kTestFailCell = 'FAIL';
 
 /// Every location id, parents before children, siblings in `order`.
 ///

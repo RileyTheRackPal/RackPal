@@ -380,6 +380,11 @@ void main() {
 
       await tester.tap(find.text('Columns'));
       await tester.pumpAndSettle();
+      // SCROLLED TO FIRST. The menu grew past one screen when M3-J/3
+      // added the as-built group and two more columns, and a `tap` on an
+      // item below the fold hits whatever is drawn there instead.
+      await tester.ensureVisible(find.text('NOTES'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('NOTES'));
       await tester.pumpAndSettle();
 
@@ -391,6 +396,46 @@ void main() {
       await tester.tapAt(const Offset(4, 4));
       await tester.pumpAndSettle();
       expect(find.text('NOTES'), findsOneWidget);
+    });
+
+    testWidgets('the as-built group is ONE switch, not seven ticks', (
+      tester,
+    ) async {
+      // DR-020 §11.19.2(5) pictures somebody closing out sixty runs who
+      // "needs one table with a length column they tab down". Making them
+      // reach that table through seven menu entries would put the cost
+      // back in a different place.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+
+      for (final id in kStructureAsBuiltColumns) {
+        expect(find.text(structureColumnHeader(id)), findsNothing);
+      }
+
+      await tester.tap(find.text('Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(kAsBuiltColumnsLabel));
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(4, 4));
+      await tester.pumpAndSettle();
+
+      for (final id in kStructureAsBuiltColumns) {
+        expect(
+          find.text(structureColumnHeader(id)),
+          findsOneWidget,
+          reason: '${structureColumnHeader(id)} is in the as-built set',
+        );
+      }
+      // And off again, because a switch that only goes one way is a trap
+      // on a table this wide.
+      await tester.tap(find.text('Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(kAsBuiltColumnsLabel));
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(4, 4));
+      await tester.pumpAndSettle();
+      expect(find.text('SPLICES'), findsNothing);
     });
 
     testWidgets('the eight defaults are all there before any menu is opened', (

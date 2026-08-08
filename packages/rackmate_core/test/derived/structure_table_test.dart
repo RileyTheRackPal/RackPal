@@ -792,4 +792,197 @@ void main() {
       );
     });
   });
+
+  group('reading a typed cell back (M3-J/3)', () {
+    test('a length column is WHOLE units, and a decimal is refused', () {
+      // The rule and its reason: `scheduleLengthCell` rounds, so a cell
+      // that accepted `62.5` would store a value its own column then
+      // displays as `63`. Refusing is what keeps the number on screen and
+      // the number in the file equal.
+      expect(
+        (parseLengthCell('62', UnitSystem.imperial) as CellParsed<Len>).value,
+        const Len(62 * 304800000),
+      );
+      expect(
+        parseLengthCell('62.5', UnitSystem.imperial),
+        isA<CellRefused<Len>>(),
+      );
+      // #585's own example of what must not be accepted.
+      expect(
+        parseLengthCell('62 ft 3', UnitSystem.imperial),
+        isA<CellRefused<Len>>(),
+      );
+      expect(
+        parseLengthCell('-1', UnitSystem.imperial),
+        isA<CellRefused<Len>>(),
+      );
+    });
+
+    test('and it reads the project display units', () {
+      expect(
+        (parseLengthCell('30', UnitSystem.metric) as CellParsed<Len>).value,
+        const Len(30 * 1000000000),
+      );
+      expect(
+        (parseLengthCell('30', UnitSystem.imperial) as CellParsed<Len>).value,
+        const Len(30 * 304800000),
+      );
+    });
+
+    test('a cleared length is UNKNOWN, which is a legal edit (G4)', () {
+      final parsed = parseLengthCell('   ', UnitSystem.imperial);
+      expect(parsed, isA<CellParsed<Len>>());
+      expect((parsed as CellParsed<Len>).value, isNull);
+    });
+
+    test('a count keeps 0 and blank apart, which is the whole point', () {
+      // DR-020 §11.19.2(3) made `spliceCount` nullable so "nobody looked"
+      // and "somebody looked and found none" stop being one answer. That
+      // distinction has to survive a text box.
+      expect((parseCountCell('0') as CellParsed<int>).value, 0);
+      expect((parseCountCell('') as CellParsed<int>).value, isNull);
+      expect((parseCountCell('3') as CellParsed<int>).value, 3);
+      expect(parseCountCell('two'), isA<CellRefused<int>>());
+      expect(parseCountCell('-1'), isA<CellRefused<int>>());
+    });
+
+    test('a date is YYYY-MM-DD and nothing else', () {
+      // `03/04` is March and April at the same time. A jobsite date wrong
+      // by a month is worse than one that is missing.
+      expect(
+        (parseDateCell('2026-08-08') as CellParsed<DateTime>).value,
+        DateTime.utc(2026, 8, 8),
+      );
+      expect(parseDateCell('08/08/2026'), isA<CellRefused<DateTime>>());
+      expect(parseDateCell('8 Aug 2026'), isA<CellRefused<DateTime>>());
+      expect((parseDateCell('') as CellParsed<DateTime>).value, isNull);
+    });
+
+    test('a date that does not exist is refused, not rolled over', () {
+      // `DateTime.utc(2026, 2, 31)` is March 3rd and throws nothing, so a
+      // typo would otherwise be stored as a real date nobody meant.
+      expect(parseDateCell('2026-02-31'), isA<CellRefused<DateTime>>());
+      expect(parseDateCell('2026-13-01'), isA<CellRefused<DateTime>>());
+    });
+
+    test('a date round-trips through the cell exactly', () {
+      final parsed =
+          (parseDateCell('2026-08-08') as CellParsed<DateTime>).value!;
+      expect(formatDateCell(parsed), '2026-08-08');
+    });
+  });
+
+  group('the as-built columns (DR-020 §11.19.2(5))', () {
+    test('the as-built set is seven, and ROUGH-IN is not one of them', () {
+      // ROUGH-IN answers "how far along is this run" and is one of §4.1's
+      // eight DEFAULTS; these seven answer "what did we actually do".
+      expect(kStructureAsBuiltColumns.map(structureColumnHeader), [
+        'TERM. LEN',
+        'SPLICES',
+        'FIELD TERM',
+        'TEST',
+        'CERT ID',
+        'INSTALLED BY',
+        'TERMINATED',
+      ]);
+      expect(
+        kStructureAsBuiltColumns,
+        isNot(contains(StructureColumnId.roughIn)),
+      );
+      // And every one of them is an OPTIONAL column, off by default.
+      for (final id in kStructureAsBuiltColumns) {
+        expect(kStructureOptionalColumns, contains(id));
+      }
+    });
+
+    test('every one of the seven is enterable, and CUT is not', () {
+      for (final id in kStructureAsBuiltColumns) {
+        expect(
+          structureColumnIsEditable(id),
+          isTrue,
+          reason: '${structureColumnHeader(id)} is what #585 makes typeable',
+        );
+      }
+      // THE TASK BOUNDARY, asserted so it is deliberate: #153 (M3-D/2)
+      // owns the other two length columns.
+      expect(structureColumnIsEditable(StructureColumnId.cutLength), isFalse);
+      expect(
+        structureColumnIsEditable(StructureColumnId.routedLength),
+        isFalse,
+      );
+    });
+
+    test('SPLICES prints 0 as 0 and unknown as the dash', () {
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      final o = d.outlet('LR-1', locationId: lr);
+      final linkId = _drop(
+        d,
+        outletId: o,
+        locationId: lr,
+        fieldLabel: 'LR-TV-1',
+      );
+
+      String cell() => structureCell(
+        d.doc,
+        buildStructureTable(d.doc).groups.single.rows.single,
+        StructureColumnId.spliceCount,
+        units: UnitSystem.imperial,
+      );
+
+      expect(cell(), kUnknownCell);
+      d.doc.links[linkId]!.spliceCount = 0;
+      expect(cell(), '0', reason: 'a confirmed none is not an unknown');
+      d.doc.links[linkId]!.spliceCount = 2;
+      expect(cell(), '2');
+    });
+
+    test('TERMINATED prints a date and never an hour', () {
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      final o = d.outlet('LR-1', locationId: lr);
+      final linkId = _drop(
+        d,
+        outletId: o,
+        locationId: lr,
+        fieldLabel: 'LR-TV-1',
+      );
+      d.doc.links[linkId]!.terminatedAt = DateTime.utc(2026, 8, 8, 14, 30);
+
+      expect(
+        structureCell(
+          d.doc,
+          buildStructureTable(d.doc).groups.single.rows.single,
+          StructureColumnId.terminatedAt,
+          units: UnitSystem.imperial,
+        ),
+        '2026-08-08',
+      );
+    });
+
+    test('TEST is three states, and null is NOT TESTED', () {
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      final o = d.outlet('LR-1', locationId: lr);
+      final linkId = _drop(
+        d,
+        outletId: o,
+        locationId: lr,
+        fieldLabel: 'LR-TV-1',
+      );
+
+      String cell() => structureCell(
+        d.doc,
+        buildStructureTable(d.doc).groups.single.rows.single,
+        StructureColumnId.testResult,
+        units: UnitSystem.imperial,
+      );
+
+      expect(cell(), kUnknownCell, reason: 'not tested is not a failure');
+      d.doc.links[linkId]!.test = TestResult(pass: false);
+      expect(cell(), kTestFailCell);
+      d.doc.links[linkId]!.test = TestResult(pass: true);
+      expect(cell(), kTestPassCell);
+    });
+  });
 }

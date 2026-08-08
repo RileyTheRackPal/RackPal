@@ -81,6 +81,59 @@ StructureEditFn buildStructureEditAction({
         to: edit.value.trim().isEmpty ? null : edit.value.trim(),
         into: commands,
       ),
+
+      // ── the as-built seven (DR-020 §11.19.2(5), M3-J/3) ────────────
+      // EVERY PARSE IS CORE'S. `parseLengthCell` and its two siblings
+      // live beside `structureCell` because what they enforce is CR-001,
+      // integer nanometres, and because a surface holding a parsing rule
+      // is a second copy of that rule.
+      StructureColumnId.terminatedLength => _parsed<Len>(
+        controller: controller,
+        edit: edit,
+        field: LinkField.terminatedLength,
+        parse: parseLengthCell(
+          edit.value,
+          controller.doc.settings.displayUnits,
+        ),
+        into: commands,
+      ),
+      StructureColumnId.spliceCount => _parsed<int>(
+        controller: controller,
+        edit: edit,
+        field: LinkField.spliceCount,
+        parse: parseCountCell(edit.value),
+        into: commands,
+      ),
+      StructureColumnId.terminatedAt => _parsed<DateTime>(
+        controller: controller,
+        edit: edit,
+        field: LinkField.terminatedAt,
+        parse: parseDateCell(edit.value),
+        into: commands,
+      ),
+      StructureColumnId.installedBy => _plain(
+        controller: controller,
+        edit: edit,
+        field: LinkField.installedBy,
+        to: edit.value.trim().isEmpty ? null : edit.value.trim(),
+        into: commands,
+      ),
+      StructureColumnId.fieldTerm => _fieldTermination(
+        controller: controller,
+        edit: edit,
+        into: commands,
+      ),
+      StructureColumnId.testResult => _testResult(
+        controller: controller,
+        edit: edit,
+        into: commands,
+      ),
+      StructureColumnId.certificateId => _certificateId(
+        controller: controller,
+        edit: edit,
+        into: commands,
+      ),
+
       _ => 'That column cannot be typed into.',
     };
     if (refusal != null) return refusal;
@@ -176,6 +229,166 @@ String? _roughIn({
     edit: edit,
     field: LinkField.roughInStatus,
     to: status,
+    into: into,
+  );
+}
+
+/// A column core knows how to read, written through the generic table.
+///
+/// THE REFUSAL IS CORE'S SENTENCE, verbatim. It already names the value
+/// and the format ("this column is whole feet, so type a number and
+/// nothing else"), and re-wording it here would give the same rule two
+/// voices.
+String? _parsed<T>({
+  required DocumentController controller,
+  required StructureCellEdit edit,
+  required EntityField<Link, T?> field,
+  required CellParse<T> parse,
+  required List<Command> into,
+}) => switch (parse) {
+  CellRefused<T>(:final reason) => reason,
+  CellParsed<T>(:final value) => _plain<T?>(
+    controller: controller,
+    edit: edit,
+    field: field,
+    to: value,
+    into: into,
+  ),
+};
+
+/// `FIELD TERM`, from the label back to the enum.
+///
+/// THE UNKNOWN OPTION CLEARS IT, and that is why the field is nullable at
+/// all: M3-J/1 made `StructureOrigin.terminationField` nullable because
+/// `unterminated` is a DECISION (a coil left deliberately bare) and a
+/// drop at rough-in has no answer. A control that could not go back to
+/// unknown would make the second state unreachable once anybody guessed.
+String? _fieldTermination({
+  required DocumentController controller,
+  required StructureCellEdit edit,
+  required List<Command> into,
+}) {
+  final wanted = edit.value.trim().toUpperCase();
+  TerminationType? value;
+  if (wanted.isNotEmpty && wanted != kUnknownCell) {
+    value = TerminationType.values
+        .where((t) => terminationLabel(t) == wanted)
+        .firstOrNull;
+    if (value == null) {
+      return '"${edit.value}" is not a termination. Use one of: '
+          '${TerminationType.values.map(terminationLabel).join(', ')}.';
+    }
+  }
+  final result = buildSetStructureOriginProperty<TerminationType?>(
+    doc: controller.doc,
+    linkId: edit.linkId,
+    field: StructureOriginField.terminationField,
+    to: value,
+    now: controller.clock.nowUtc(),
+    actor: controller.actor,
+  );
+  return switch (result) {
+    SetStructureOriginRefused(:final reason) => reason,
+    SetStructureOriginUnchanged() => null,
+    SetStructureOriginReady(:final command) => () {
+      into.add(command);
+      return null;
+    }(),
+  };
+}
+
+/// `TEST`, as the three states the column shows.
+///
+/// THE WHOLE `TestResult` IS REPLACED, never mutated: the command
+/// captures the previous VALUE to undo with, so reaching into the stored
+/// object and flipping `pass` would leave undo restoring the new one.
+///
+/// CLEARING IT TO UNKNOWN DISCARDS THE CERTIFICATE with it, and that is
+/// the honest reading rather than a shortcut: a certificate id is the
+/// identifier OF a result, and keeping one for a result that no longer
+/// exists would be a reference to nothing. Undo takes it back.
+String? _testResult({
+  required DocumentController controller,
+  required StructureCellEdit edit,
+  required List<Command> into,
+}) {
+  final link = controller.doc.links[edit.linkId];
+  if (link == null) return 'That cable is not in this project.';
+  final wanted = edit.value.trim().toUpperCase();
+
+  final TestResult? next;
+  if (wanted.isEmpty || wanted == kUnknownCell) {
+    next = null;
+  } else if (wanted == kTestPassCell || wanted == kTestFailCell) {
+    final previous = link.test;
+    next = TestResult(
+      pass: wanted == kTestPassCell,
+      // CARRIED, not dropped: a run that failed and was re-tested keeps
+      // the certificate and the headroom the tester recorded, because
+      // changing the verdict is not the same act as re-certifying.
+      headroom: previous?.headroom,
+      certificateId: previous?.certificateId,
+    );
+  } else {
+    return '"${edit.value}" is not a test result. Use '
+        '$kTestPassCell, $kTestFailCell, or clear it for not tested.';
+  }
+
+  // NOTHING TO DO IS CHECKED HERE AND NOT BY THE COMMAND BUILDER, because
+  // `TestResult` has no `operator ==` (no def in this model does). Without
+  // this, filling `PASS` down a column that is already all `PASS` would
+  // build sixty commands that each replace an object with an equal one,
+  // and cost an undo step that visibly changes nothing.
+  if (_sameResult(link.test, next)) return null;
+
+  return _plain<TestResult?>(
+    controller: controller,
+    edit: edit,
+    field: LinkField.test,
+    to: next,
+    into: into,
+  );
+}
+
+/// Value equality for a type that has none. See [_testResult].
+bool _sameResult(TestResult? a, TestResult? b) {
+  if (a == null || b == null) return a == null && b == null;
+  return a.pass == b.pass &&
+      a.headroom == b.headroom &&
+      a.certificateId == b.certificateId;
+}
+
+/// `CERT ID`, which only exists once there is a result to identify.
+///
+/// IT REFUSES ON A CABLE WITH NO TEST RESULT rather than inventing one.
+/// `TestResult` requires `pass`, so accepting a certificate here would
+/// mean writing a verdict nobody gave, on the one column whose whole
+/// purpose is to be evidence (G4).
+String? _certificateId({
+  required DocumentController controller,
+  required StructureCellEdit edit,
+  required List<Command> into,
+}) {
+  final link = controller.doc.links[edit.linkId];
+  if (link == null) return 'That cable is not in this project.';
+  final previous = link.test;
+  final trimmed = edit.value.trim();
+  if (previous == null) {
+    if (trimmed.isEmpty) return null;
+    return 'Record the test result first: a certificate identifies a '
+        'result, and this cable does not have one yet.';
+  }
+  final next = TestResult(
+    pass: previous.pass,
+    headroom: previous.headroom,
+    certificateId: trimmed.isEmpty ? null : trimmed,
+  );
+  if (_sameResult(previous, next)) return null;
+  return _plain<TestResult?>(
+    controller: controller,
+    edit: edit,
+    field: LinkField.test,
+    to: next,
     into: into,
   );
 }

@@ -73,16 +73,16 @@ final class Link {
     this.plenum = false,
     this.routedLength,
     this.cutLength,
-    this.terminatedLength,
+    Len? terminatedLength,
     this.slack,
     this.pathwayId,
     this.crossover,
     LifecycleStatus lifecycleStatus = LifecycleStatus.new_,
     int? spliceCount,
     RoughInStatus roughInStatus = RoughInStatus.planned,
-    this.test,
-    this.installedBy,
-    this.terminatedAt,
+    TestResult? test,
+    String? installedBy,
+    DateTime? terminatedAt,
     this.structureOrigin,
     String? notes,
   }) : services = services ?? [],
@@ -97,6 +97,10 @@ final class Link {
        _lifecycleStatus = lifecycleStatus,
        _spliceCount = spliceCount,
        _roughInStatus = roughInStatus,
+       _terminatedLength = terminatedLength,
+       _test = test,
+       _installedBy = installedBy,
+       _terminatedAt = terminatedAt,
        _notes = notes;
 
   final Uuid id;
@@ -266,6 +270,55 @@ final class Link {
   @internal
   set roughInStatus(RoughInStatus v) => _roughInStatus = v;
 
+  // ─────────────────────────────────────────────────────────────────
+  // THE AS-BUILT FOUR (DR-020 §11.19.2(5), M3-J/3).
+  // ─────────────────────────────────────────────────────────────────
+  // "The as-built story was 80 % modelled and 0 % reachable" (§11.19.3).
+  // These four were modelled from M0 and had no gesture; the Structure
+  // editor's optional columns are that gesture, so this is where they
+  // take the AC-013 retrofit.
+
+  /// What was actually terminated, end to end (AC-024).
+  ///
+  /// NULL IS UNKNOWN, never a measured zero, and it is a DIFFERENT FACT
+  /// from [cutLength]: the pull sheet's number is what to order and this
+  /// is what went in. A rollup that substituted one for the other would
+  /// bill an estimate.
+  Len? _terminatedLength;
+  Len? get terminatedLength => _terminatedLength;
+  @internal
+  set terminatedLength(Len? v) => _terminatedLength = v;
+
+  /// The certification result, or null for NOT TESTED.
+  ///
+  /// REPLACED WHOLE, never mutated in place, by every caller that writes
+  /// it. `SetEntityPropertyCommand` captures the previous VALUE to undo
+  /// with, so an in-place edit of the old object would leave undo
+  /// restoring a reference to something already changed.
+  TestResult? _test;
+  TestResult? get test => _test;
+  @internal
+  set test(TestResult? v) => _test = v;
+
+  /// Who pulled it. Free text: a subcontractor's crew is not a document
+  /// entity and inventing one to hold a name would be a model nobody
+  /// asked for.
+  String? _installedBy;
+  String? get installedBy => _installedBy;
+  @internal
+  set installedBy(String? v) => _installedBy = v;
+
+  /// When the trim-out crew landed it.
+  ///
+  /// NOTHING IN THE PRODUCT WRITES A TIME-OF-DAY into this, which is why
+  /// the editor's column is a date and parses one. If a surface ever
+  /// records the hour, that column has to grow rather than silently
+  /// truncate.
+  DateTime? _terminatedAt;
+  DateTime? get terminatedAt => _terminatedAt;
+  @internal
+  set terminatedAt(DateTime? v) => _terminatedAt = v;
+
   // ACCESS CONTROL: fields below are plain mutable pending @internal
   // retrofit (AC-013). Converted as each is wired to a Command. See
   // internal_setter_grep_test.dart.
@@ -298,16 +351,19 @@ final class Link {
 
   /// Three fields, three columns: pull sheet wants cut length, as-built
   /// wants terminated length, takeoff wants routed length (AC-024/M9).
+  ///
+  /// ONLY THE AS-BUILT ONE IS CONVERTED, and the asymmetry is the rule
+  /// rather than an oversight: this region's standing note is that a
+  /// field becomes a getter plus an `@internal` setter "as each is wired
+  /// to a Command", and M3-J/3 wires exactly one of the three. The pull
+  /// sheet's `cutLength` and the takeoff's `routedLength` are #153's
+  /// (M3-D/2). Converting them here would claim a Command that does not
+  /// exist.
   Len? routedLength;
   Len? cutLength;
-  Len? terminatedLength;
   Permille? slack;
   Uuid? pathwayId;
   CrossoverKind? crossover;
-
-  TestResult? test;
-  String? installedBy;
-  DateTime? terminatedAt;
 
   /// Home runs only (AC-019).
   StructureOrigin? structureOrigin;

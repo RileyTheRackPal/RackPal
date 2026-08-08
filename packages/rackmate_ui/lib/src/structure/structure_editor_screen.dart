@@ -276,6 +276,19 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
                             onToggleColumn: (id) => setState(() {
                               if (!_optional.remove(id)) _optional.add(id);
                             }),
+                            onToggleAsBuilt: () => setState(() {
+                              // ALL ON, OR ALL OFF. A half-on set toggles
+                              // ON, because somebody who ticked one of
+                              // them by hand and then asked for the group
+                              // wants the group.
+                              if (_optional.containsAll(
+                                kStructureAsBuiltColumns,
+                              )) {
+                                _optional.removeAll(kStructureAsBuiltColumns);
+                              } else {
+                                _optional.addAll(kStructureAsBuiltColumns);
+                              }
+                            }),
                           ),
                           const Divider(height: 1),
                           Expanded(
@@ -741,6 +754,7 @@ class _FilterBar extends StatelessWidget {
     required this.onMedia,
     required this.onUnconnected,
     required this.onToggleColumn,
+    required this.onToggleAsBuilt,
   });
 
   final RackDocument doc;
@@ -753,6 +767,7 @@ class _FilterBar extends StatelessWidget {
   final ValueChanged<MediaTypeId?> onMedia;
   final ValueChanged<bool> onUnconnected;
   final ValueChanged<StructureColumnId> onToggleColumn;
+  final VoidCallback onToggleAsBuilt;
 
   @override
   Widget build(BuildContext context) {
@@ -807,6 +822,25 @@ class _FilterBar extends StatelessWidget {
           ),
           MenuAnchor(
             menuChildren: [
+              // THE AS-BUILT SET AS ONE SWITCH, at the top rather than
+              // buried among the seven ticks it replaces. DR-020
+              // §11.19.2(5) pictures somebody "closing out sixty runs"
+              // who "needs one table with a length column they tab down,
+              // not sixty inspector visits"; making them reach that table
+              // through seven menu entries would put the cost back in a
+              // different place.
+              MenuItemButton(
+                closeOnActivate: false,
+                leadingIcon: Icon(
+                  optional.containsAll(kStructureAsBuiltColumns)
+                      ? Icons.check_box_outlined
+                      : Icons.check_box_outline_blank,
+                  size: 18,
+                ),
+                onPressed: onToggleAsBuilt,
+                child: const Text(kAsBuiltColumnsLabel),
+              ),
+              const Divider(height: 1),
               for (final id in kStructureOptionalColumns)
                 MenuItemButton(
                   closeOnActivate: false,
@@ -1126,10 +1160,32 @@ class _DataRow extends StatelessWidget {
     // an unnecessary `kKeymap` row would be a real cost (D7, M7's
     // generated table, `arbitrate()` on every platform).
     if (structureColumnIsEditable(id)) {
-      if (id == StructureColumnId.roughIn) {
-        return _RoughInCell(
+      // THE CLOSED-SET COLUMNS GET A DROPDOWN AND THE REST GET A BOX, and
+      // which is which follows the MODEL TYPE rather than a preference:
+      // three of these store an enum, so there is nothing to parse and
+      // nothing to typo. The text columns beside them store strings and
+      // numbers, and their parsing lives in core.
+      final options = switch (id) {
+        StructureColumnId.roughIn =>
+          RoughInStatus.values.map(roughInLabel).toList(),
+        StructureColumnId.testResult => kTestCellOptions,
+        // UNKNOWN IS AN OPTION HERE and is not on `ROUGH-IN`, which is the
+        // difference G4 draws between them: `planned` is a real state of
+        // an untouched drop, where "nobody has decided how this end is
+        // finished" is genuinely an absence (M3-J/1 made the field
+        // nullable for exactly that).
+        StructureColumnId.fieldTerm => <String>[
+          kUnknownCell,
+          ...TerminationType.values.map(terminationLabel),
+        ],
+        _ => null,
+      };
+      if (options != null) {
+        return _ChoiceCell(
           linkId: row.linkId,
-          value: row.roughInStatus,
+          column: id,
+          value: text,
+          options: options,
           onEdit: onEdit,
           onCaret: onCaret,
         );
@@ -1283,16 +1339,37 @@ class _TextCellState extends State<_TextCell> {
 /// there is nothing to parse: five values, all of them legal, none of
 /// them typo-able. The text columns beside it are text because their
 /// model type is a string.
-class _RoughInCell extends StatelessWidget {
-  const _RoughInCell({
+/// A cell whose column has a closed set of answers.
+///
+/// ONE WIDGET FOR FOUR COLUMNS. `ROUGH-IN` was the first; M3-J/3 adds
+/// `FIELD TERM` and `TEST`, which differ only in their option list and in
+/// whether "nobody has said" is one of the options. Writing a class per
+/// enum would have put the caret reporting, the label vocabulary and the
+/// `onEdit` shape in three places to keep in step.
+///
+/// THE OPTIONS AND THE VALUE ARE BOTH LABELS, not enum values, for the
+/// reason `StructureCellEdit.value` is text: the label is what crosses
+/// the boundary, so core's own speller stays the only one.
+class _ChoiceCell extends StatelessWidget {
+  const _ChoiceCell({
     required this.linkId,
+    required this.column,
     required this.value,
+    required this.options,
     required this.onEdit,
     required this.onCaret,
   });
 
   final Uuid linkId;
-  final RoughInStatus value;
+  final StructureColumnId column;
+
+  /// The label showing now. [kUnknownCell] when nothing is recorded, and
+  /// it must then also be in [options] or the dropdown has no value.
+  final String value;
+
+  /// Every label this column accepts, in the order a person reads them.
+  final List<String> options;
+
   final String? Function(List<StructureCellEdit> edits) onEdit;
   final ValueChanged<(Uuid, StructureColumnId)?> onCaret;
 
@@ -1301,43 +1378,49 @@ class _RoughInCell extends StatelessWidget {
     final theme = Theme.of(context);
     // IT REPORTS THE CARET LIKE ANY OTHER CELL, through a `Focus` rather
     // than through `onTap`, so it is reported by TABBING to it as well as
-    // by clicking. This is the column where fill-down earns its
+    // by clicking. These are the columns where fill-down earns its
     // keystroke: "everything from here down is pulled" is the gesture a
     // person makes walking a job, and a status is legal to repeat where a
     // label is not.
     return Focus(
       onFocusChange: (has) {
-        if (has) onCaret((linkId, StructureColumnId.roughIn));
+        if (has) onCaret((linkId, column));
       },
-      child: DropdownButton<RoughInStatus>(
+      child: DropdownButton<String>(
         value: value,
         isDense: true,
         isExpanded: true,
         underline: const SizedBox.shrink(),
         style: theme.textTheme.bodySmall,
         items: [
-          for (final status in RoughInStatus.values)
-            DropdownMenuItem<RoughInStatus>(
-              value: status,
-              child: Text(roughInLabel(status)),
-            ),
+          for (final label in options)
+            DropdownMenuItem<String>(value: label, child: Text(label)),
         ],
         onChanged: (next) {
           if (next == null || next == value) return;
           onEdit([
-            StructureCellEdit(
-              linkId: linkId,
-              column: StructureColumnId.roughIn,
-              // The label, not `.name`, so one vocabulary crosses this
-              // boundary and `roughInLabel` stays the only speller.
-              value: roughInLabel(next),
-            ),
+            StructureCellEdit(linkId: linkId, column: column, value: next),
           ]);
         },
       ),
     );
   }
 }
+
+/// What the `⚙ Columns` menu calls the as-built group.
+const String kAsBuiltColumnsLabel = 'As-built columns';
+
+/// The labels a `TEST` cell offers, unknown first.
+///
+/// THREE, NOT TWO. Clearing it back to [kUnknownCell] is a legal edit and
+/// means NOT TESTED, which is not a failure (G4). A two-option control
+/// would make "we have not been back yet" unsayable once somebody had
+/// answered once.
+const List<String> kTestCellOptions = <String>[
+  kUnknownCell,
+  kTestPassCell,
+  kTestFailCell,
+];
 
 /// Why `Ctrl+D` did nothing.
 ///
