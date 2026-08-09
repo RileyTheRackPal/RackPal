@@ -20,6 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
 import 'package:rackmate/src/session/blank_document.dart';
 import 'package:rackmate/src/session/structure_edit_actions.dart';
+import 'package:rackmate/src/session/structure_matrix_actions.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_text/rackmate_text.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
@@ -589,6 +590,159 @@ void main() {
         isTrue,
         reason: 'one gesture came back, not all three',
       );
+    });
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // M3-C/3, #149 — THE MATRIX TAB, THROUGH THE REAL CONTROLLER
+  // ══════════════════════════════════════════════════════════════════
+
+  group('the matrix reaches the document (M3-C/3)', () {
+    /// The room called [name] in [doc].
+    Uuid roomId(RackDocument doc, String name) =>
+        doc.locations.values.firstWhere((l) => l.name == name).id;
+
+    testWidgets('a cell creates drops through the real undo stack', (
+      tester,
+    ) async {
+      final doc = _project(rooms: const [('Living Room', 'LR')]);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final set = buildStructureMatrixAction(controller: controller);
+
+      // A blank project has no Structure device, and the grid says so
+      // rather than creating one behind the person using it.
+      expect(
+        set(
+          StructureMatrixEdit(
+            locationId: roomId(doc, 'Living Room'),
+            media: const MediaTypeId('media.cat6'),
+            targetCount: 4,
+          ),
+        ),
+        kMatrixNeedsStructure,
+      );
+      expect(doc.links, isEmpty);
+
+      controller.run(
+        AddStructureCommand(
+          title: 'Rough-In',
+          designator: 'STR-1',
+          now: _when,
+          actor: 'test',
+        ),
+      );
+      final before = controller.undo.depth;
+
+      expect(
+        set(
+          StructureMatrixEdit(
+            locationId: roomId(doc, 'Living Room'),
+            media: const MediaTypeId('media.cat6'),
+            targetCount: 4,
+          ),
+        ),
+        isNull,
+      );
+
+      expect(doc.links, hasLength(4));
+      // FOUR CABLES AND ONE PLATE ARE ONE UNDO STEP, because the unit a
+      // person undoes is the cell.
+      expect(controller.undo.depth, before + 1);
+      expect(controller.undo.undoLabelKey, LabelKey.addDrops.name);
+
+      controller.undoLast();
+      expect(doc.links, isEmpty);
+      expect(doc.outlets, isEmpty);
+    });
+
+    testWidgets('and lowering it says "remove drops", not "add"', (
+      tester,
+    ) async {
+      // Opposite acts on the same grid. A person who typed the wrong
+      // number needs the Edit menu to say which direction it will go.
+      final doc = _project(rooms: const [('Living Room', 'LR')]);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller
+        ..run(
+          AddStructureCommand(
+            title: 'Rough-In',
+            designator: 'STR-1',
+            now: _when,
+            actor: 'test',
+          ),
+        );
+      final set = buildStructureMatrixAction(controller: controller);
+      StructureMatrixEdit cell(int n) => StructureMatrixEdit(
+        locationId: roomId(doc, 'Living Room'),
+        media: const MediaTypeId('media.cat6'),
+        targetCount: n,
+      );
+
+      expect(set(cell(4)), isNull);
+      expect(set(cell(1)), isNull);
+
+      expect(doc.links, hasLength(1));
+      expect(controller.undo.undoLabelKey, LabelKey.removeDrops.name);
+
+      // And the three that went come back together.
+      controller.undoLast();
+      expect(doc.links, hasLength(4));
+    });
+
+    testWidgets('a cell that already says that costs no undo step', (
+      tester,
+    ) async {
+      // Tabbing across a row commits every cell it passes. A no-op that
+      // produced a transaction would cost an undo step per keystroke.
+      final doc = _project(rooms: const [('Living Room', 'LR')]);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller
+        ..run(
+          AddStructureCommand(
+            title: 'Rough-In',
+            designator: 'STR-1',
+            now: _when,
+            actor: 'test',
+          ),
+        );
+      final set = buildStructureMatrixAction(controller: controller);
+      StructureMatrixEdit cell(int n) => StructureMatrixEdit(
+        locationId: roomId(doc, 'Living Room'),
+        media: const MediaTypeId('media.cat6'),
+        targetCount: n,
+      );
+
+      expect(set(cell(2)), isNull);
+      final depth = controller.undo.depth;
+      expect(set(cell(2)), isNull);
+      expect(controller.undo.depth, depth);
+    });
+
+    testWidgets('the tab strip is on the real editor and opens on Table', (
+      tester,
+    ) async {
+      final built = await buildTestApp(
+        measurer,
+        document: _project(rooms: const [('Living Room', 'LR')]),
+      );
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      await openEditor(tester);
+
+      expect(find.text(kTableTabLabel), findsOneWidget);
+      expect(find.text(kMatrixTabLabel), findsOneWidget);
+      expect(find.text(kMatrixTotalLabel), findsNothing);
+
+      await tester.tap(find.text(kMatrixTabLabel));
+      await tester.pumpAndSettle();
+      expect(find.text(kMatrixTotalLabel), findsOneWidget);
     });
   });
 }

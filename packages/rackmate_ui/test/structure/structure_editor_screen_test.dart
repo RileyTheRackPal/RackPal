@@ -90,7 +90,37 @@ final class _Harness {
     ),
     onAddOutlet: () => outletPickerOpened++,
     onEdit: edit,
+    onSetCount: setCount,
   );
+
+  /// What `apps/rackmate`'s `buildStructureMatrixAction` does, in the
+  /// shape it does it: plan against the live document, refuse whole,
+  /// then apply. Mirrored here for `edit`'s reason — `rackmate_ui` may
+  /// not depend on the app, and the harness has to be driveable without
+  /// a `DocumentController`.
+  String? setCount(StructureMatrixEdit edit) {
+    final plan = planMatrixCell(
+      doc: doc,
+      locationId: edit.locationId,
+      media: edit.media,
+      targetCount: edit.targetCount,
+      now: _now,
+      actor: 'gridder',
+    );
+    switch (plan) {
+      case MatrixCellRefused(:final reason):
+        return reason;
+      case MatrixCellUnchanged():
+        return null;
+      case MatrixCellNeedsStructure():
+        return 'This project has no Structure device yet.';
+      case MatrixCellReady(:final commands):
+        for (final c in commands) {
+          c.apply(doc);
+        }
+        return null;
+    }
+  }
 
   /// What `apps/rackmate`'s `buildStructureEditAction` does, in the
   /// shape it does it: plan the whole batch, refuse it whole, then
@@ -195,8 +225,19 @@ Future<void> _pump(WidgetTester tester, _Harness h) async {
 }
 
 /// Types one quick-add line and commits it, the way a person does.
+///
+/// SCOPED TO THE LOOP'S OWN FIELD. Every editable cell on either tab is
+/// a real `TextField` (that is what buys the tab order), so an unscoped
+/// `find.byType(TextField)` stops meaning the quick-add bar the moment
+/// there is one drop or one room on screen.
 Future<void> _addLine(WidgetTester tester, String line) async {
-  await tester.enterText(find.byType(TextField), line);
+  await tester.enterText(
+    find.descendant(
+      of: find.byType(DropEntryLoop),
+      matching: find.byType(TextField),
+    ),
+    line,
+  );
   await tester.pumpAndSettle();
   await tester.testTextInput.receiveAction(TextInputAction.done);
   await tester.pumpAndSettle();
@@ -214,6 +255,50 @@ List<Link> _rows(_Harness h) => [
   for (final row in buildStructureTable(h.doc).groups.single.rows)
     h.doc.links[row.linkId]!,
 ];
+
+/// The room called [name].
+Uuid _roomId(_Harness h, String name) =>
+    h.doc.locations.values.firstWhere((l) => l.name == name).id;
+
+/// Switches to §4.2's grid the way a person does.
+Future<void> _showMatrix(WidgetTester tester) async {
+  await tester.tap(find.text(kMatrixTabLabel));
+  await tester.pumpAndSettle();
+}
+
+/// The matrix the screen is drawing, with the same columns it seeds.
+StructureMatrix _matrix(_Harness h) => buildStructureMatrix(
+  h.doc,
+  alsoColumns: kStructureMatrixSeedColumns.toSet(),
+);
+
+/// One grid cell, found the way the grid lays it out: the row keyed on
+/// the room, then the Nth `TextField` in it.
+///
+/// A POSITIONAL FINDER AND NOT A KEY PER CELL, because the position is
+/// the thing under test: a cell that wrote to the wrong column would be
+/// invisible to a finder that asked for the column by name.
+Finder _cell(_Harness h, Uuid locationId, MediaTypeId media) => find
+    .descendant(
+      of: find.byKey(ValueKey(locationId)),
+      matching: find.byType(TextField),
+    )
+    .at(_matrix(h).columns.indexOf(media));
+
+/// What a grid cell says on screen.
+String _shows(WidgetTester tester, Finder cell) =>
+    tester.widget<TextField>(cell).controller!.text;
+
+/// Types [value] into a grid cell and commits it.
+Future<void> _type(WidgetTester tester, Finder cell, String value) async {
+  await tester.enterText(cell, value);
+  await tester.pumpAndSettle();
+  await tester.testTextInput.receiveAction(TextInputAction.done);
+  await tester.pumpAndSettle();
+}
+
+const MediaTypeId _cat6 = MediaTypeId('media.cat6');
+const MediaTypeId _rg6 = MediaTypeId('media.rg6');
 
 void main() {
   group('it shows the derivation, and nothing it computed itself', () {
@@ -499,7 +584,10 @@ void main() {
         'Renumber…',
         'Import CSV…',
         'Export CSV',
-        'Matrix',
+        // `Matrix` LEFT THIS LIST AT M3-C/3 and `Outlets` and `Pathways`
+        // are still on it, which is the bookkeeping this test is for:
+        // the day one is built the test says the others still are not.
+        'Outlets',
         'Pathways',
       ]) {
         expect(find.text(label), findsNothing, reason: '$label is unbuilt');
@@ -897,6 +985,279 @@ void main() {
         reason: 'the rows that WOULD have fitted are not written either',
       );
       expect(find.text(kPasteOverruns(3, 1)), findsOneWidget);
+    });
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // M3-C/3, #149 — THE MATRIX AS A TAB
+  // ══════════════════════════════════════════════════════════════════
+
+  group('THE TAB STRIP IS TWO TABS, and the editor opens on the first', () {
+    testWidgets('AC-048: it opens in table mode', (tester) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+
+      // The table's own header is on screen and the grid's TOTAL row is
+      // not, which is the difference a person sees.
+      expect(
+        find.text(structureColumnHeader(StructureColumnId.media)),
+        findsOneWidget,
+      );
+      expect(find.text(kMatrixTotalLabel), findsNothing);
+    });
+
+    testWidgets('only Table and Matrix are offered, because two are built', (
+      tester,
+    ) async {
+      // §4 draws four. `Outlets` and `Pathways` open nothing, and a tab
+      // that opens nothing is `UnbuiltView` in a different hat.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+
+      expect(find.text(kTableTabLabel), findsOneWidget);
+      expect(find.text(kMatrixTabLabel), findsOneWidget);
+      for (final absent in ['Outlets', 'Pathways']) {
+        expect(find.text(absent), findsNothing, reason: '$absent is later');
+      }
+    });
+
+    testWidgets('switching shows the grid and the table goes away', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _showMatrix(tester);
+
+      expect(find.text(kMatrixTotalLabel), findsOneWidget);
+      expect(
+        find.text(structureColumnHeader(StructureColumnId.media)),
+        findsNothing,
+      );
+    });
+
+    testWidgets('the repeat loop is NOT re-established on the second tab', (
+      tester,
+    ) async {
+      // #149's whole instruction: "a matrix that is its own screen is a
+      // second place the repeat loop has to be re-established". The same
+      // widget sits above both tabs, so a line typed with the grid
+      // showing lands in the grid.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _showMatrix(tester);
+
+      expect(find.byType(DropEntryLoop), findsOneWidget);
+      await _addLine(tester, 'Living Room: 3x Cat6');
+
+      expect(_shows(tester, _cell(h, _roomId(h, 'Living Room'), _cat6)), '3');
+    });
+
+    testWidgets('and the status bar counts the same drops on both tabs', (
+      tester,
+    ) async {
+      // ONE STATUS BAR, one set of counts, whichever view is up. The
+      // exact string rather than a substring, because the band header on
+      // the table tab also says "3 drops" and this is about the bar.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6, 1x RG6');
+      const summary =
+          '3 drops · 0 connected · 3 spare · 1 outlets · '
+          '0 pathways';
+      expect(find.text(summary), findsOneWidget);
+
+      await _showMatrix(tester);
+      expect(find.text(summary), findsOneWidget);
+    });
+
+    testWidgets('Ctrl+D on the matrix says so rather than doing nothing', (
+      tester,
+    ) async {
+      // The bindings act on a TABLE cell. Saying that is docs/04 §3.4;
+      // printing "put the caret in a cell first" at somebody whose caret
+      // is in a grid cell would be worse than an unbound key.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _showMatrix(tester);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyD);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+
+      expect(find.text(kGridKeysAreTableOnly), findsOneWidget);
+    });
+  });
+
+  group('THE GRID SHOWS THE DERIVATION AND NOTHING IT COUNTED ITSELF', () {
+    testWidgets('every cell is the number buildStructureMatrix produced', (
+      tester,
+    ) async {
+      // The same gate the table has, in the grid's terms: not "the cell
+      // says 4", but "every cell says whatever core says it says".
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 4x Cat6, 2x RG6');
+      await _addLine(tester, 'Kitchen: 1x Cat6');
+      await _showMatrix(tester);
+
+      final matrix = _matrix(h);
+      expect(matrix.rows, hasLength(2));
+      for (final row in matrix.rows) {
+        for (var c = 0; c < matrix.columns.length; c++) {
+          expect(
+            _shows(tester, _cell(h, row.locationId!, matrix.columns[c])),
+            '${row.counts[c]}',
+            reason: '${row.title} by ${matrix.columns[c].v}',
+          );
+        }
+      }
+    });
+
+    testWidgets('the grid total is the table drop count', (tester) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 4x Cat6, 2x RG6');
+      await _showMatrix(tester);
+
+      expect(_matrix(h).dropCount, buildStructureTable(h.doc).dropCount);
+      expect(find.text(kMatrixTotalLabel), findsOneWidget);
+    });
+
+    testWidgets('an empty room is a row of zeroes, not a missing row', (
+      tester,
+    ) async {
+      // The table omits an empty room and the grid must not: a `0` cell
+      // is where a person types `2`.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      await _showMatrix(tester);
+
+      final kit = _roomId(h, 'Kitchen');
+      expect(find.byKey(ValueKey(kit)), findsOneWidget);
+      expect(_shows(tester, _cell(h, kit, _cat6)), '0');
+    });
+  });
+
+  group('TYPING A CELL', () {
+    testWidgets('0 to 2 creates two drops, and the table tab has them', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _showMatrix(tester);
+
+      await _type(tester, _cell(h, _roomId(h, 'Living Room'), _cat6), '2');
+
+      expect(h.doc.links, hasLength(2));
+      await tester.tap(find.text(kTableTabLabel));
+      await tester.pumpAndSettle();
+      expect(buildStructureTable(h.doc).groups.single.rows, hasLength(2));
+    });
+
+    testWidgets('lowering it deletes the highest-sequence spare runs', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 4x Cat6');
+      final kept = _rows(h).take(2).map((l) => l.id).toList();
+      await _showMatrix(tester);
+      final lr = _roomId(h, 'Living Room');
+
+      await _type(tester, _cell(h, lr, _cat6), '2');
+
+      expect(h.doc.links.keys, unorderedEquals(kept));
+      expect(_shows(tester, _cell(h, lr, _cat6)), '2');
+    });
+
+    testWidgets('a word is refused, the cell springs back and it says why', (
+      tester,
+    ) async {
+      // CR-017's spring-back. A cell that kept the typed text would be
+      // showing something no document holds.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+      await _showMatrix(tester);
+      final lr = _roomId(h, 'Living Room');
+
+      await _type(tester, _cell(h, lr, _cat6), 'two');
+
+      expect(h.doc.links, hasLength(2));
+      expect(_shows(tester, _cell(h, lr, _cat6)), '2');
+      expect(
+        find.textContaining('cannot hold fewer than no drops'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('one column does not disturb the one beside it', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _showMatrix(tester);
+      final lr = _roomId(h, 'Living Room');
+
+      await _type(tester, _cell(h, lr, _cat6), '4');
+      await _type(tester, _cell(h, lr, _rg6), '2');
+
+      expect(_shows(tester, _cell(h, lr, _cat6)), '4');
+      expect(_shows(tester, _cell(h, lr, _rg6)), '2');
+    });
+  });
+
+  group('THE COLUMNS AND THE EMPTY STATE', () {
+    testWidgets('the grid opens on eight columns, and EMT is not one', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _showMatrix(tester);
+
+      expect(_matrix(h).columns, hasLength(8));
+      for (final id in _matrix(h).columns) {
+        expect(id.v, isNot(contains('conduit')));
+      }
+    });
+
+    testWidgets('Media column is offered, and it is the only add path', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _showMatrix(tester);
+
+      expect(find.text(kAddMediaColumnLabel), findsOneWidget);
+      // §4.2's wireframe also draws `+ Room`, and the loop above the
+      // grid plus CR-112's panel are already two paths to that rule.
+      expect(find.text('Room'), findsNothing);
+    });
+
+    testWidgets('a project with no rooms says so, and names the field', (
+      tester,
+    ) async {
+      final h = _Harness(_project(rooms: const []));
+      await _pump(tester, h);
+      await _showMatrix(tester);
+
+      expect(find.text(kNoRoomsHeadline), findsOneWidget);
+      expect(find.text(kNoRoomsDetail), findsOneWidget);
+
+      // AND THE INSTRUCTION IT GIVES IS ONE THIS SURFACE CARRIES OUT.
+      // Two presses, not one: the room does not exist, so the first
+      // `Enter` takes M3-C/1's offer to create it and the second commits
+      // the line — which is the loop working, above a tab it knows
+      // nothing about.
+      await _addLine(tester, 'Attic: 2x Cat6');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(find.text(kNoRoomsHeadline), findsNothing);
+      expect(h.doc.links, hasLength(2));
+      expect(_shows(tester, _cell(h, _roomId(h, 'Attic'), _cat6)), '2');
     });
   });
 }

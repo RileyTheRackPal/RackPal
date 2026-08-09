@@ -25,13 +25,13 @@
 // binds a new surface hardest, because a new surface can meet it for
 // free by simply not drawing the control.
 //
-//   * NO TAB STRIP. §4 draws `[▶ Table] [ Matrix ] [ Outlets ]
-//     [ Pathways ]`. The matrix is board #149 and the other two are
-//     later still; a strip whose three other tabs open nothing is the
-//     `UnbuiltView` defect wearing a different hat. AC-048's requirement
-//     is that the editor OPENS IN TABLE MODE, which one surface satisfies
-//     outright. #149 adds the strip when there is a second thing to
-//     switch to.
+//   * THE TAB STRIP IS TWO TABS AND §4 DRAWS FOUR. `[▶ Table]
+//     [ Matrix ]` are both built (M3-C/2 and M3-C/3); `[ Outlets ]` and
+//     `[ Pathways ]` are later, and a tab that opens nothing is the
+//     `UnbuiltView` defect wearing a different hat. #148 shipped with no
+//     strip at all for exactly this reason — AC-048 asks that the editor
+//     OPEN IN TABLE MODE, which one surface satisfies outright — and
+//     #149 adds it because there is now a second thing to switch to.
 //   * NO `[Group into pathway]`, `[Renumber…]`, `[Import CSV…]` or
 //     `[Export CSV]` in the button bar. Renumber is M3-F, CSV is docs/07
 //     §5 and unbuilt, and grouping into a pathway has no command yet.
@@ -55,6 +55,7 @@ import 'package:flutter/services.dart' show Clipboard;
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
 import 'package:rackmate_ui/src/structure/drop_entry_panel.dart';
+import 'package:rackmate_ui/src/structure/structure_matrix_view.dart';
 
 /// What the app does when the editor asks for something.
 ///
@@ -67,6 +68,7 @@ final class StructureEditorActions {
     required this.dropEntry,
     required this.onAddOutlet,
     required this.onEdit,
+    required this.onSetCount,
   });
 
   /// M3-C/1's loop, unchanged. See `DropEntryActions.onCommit` for why
@@ -91,7 +93,36 @@ final class StructureEditorActions {
   /// and says which one, because a fill-down that wrote nine of ten rows
   /// and reported an error leaves a person to work out which nine.
   final String? Function(List<StructureCellEdit> edits) onEdit;
+
+  /// Applies one MATRIX cell as one undo step, and returns a refusal
+  /// sentence or null (M3-C/3).
+  ///
+  /// A SECOND CALLBACK RATHER THAN A THIRD COLUMN ID, because the two
+  /// tabs edit different things. A table cell is a FIELD on one drop; a
+  /// matrix cell is a COUNT of drops, and typing `2` over `6` deletes
+  /// four cables. Folding them together would put "does this write a
+  /// value or delete a cable" behind one signature.
+  final String? Function(StructureMatrixEdit edit) onSetCount;
 }
+
+/// Which of §4's tabs the editor is showing.
+///
+/// TWO, AND §4 DRAWS FOUR. See the file header: `Outlets` and `Pathways`
+/// are later, and a tab that opens nothing is a promise about an unbuilt
+/// surface.
+enum StructureEditorTab {
+  /// AC-048's requirement, and the value this enum starts on.
+  table,
+
+  /// docs/07 §4.2.
+  matrix,
+}
+
+/// What the tab strip calls each tab.
+const String kTableTabLabel = 'Table';
+
+/// See [kTableTabLabel].
+const String kMatrixTabLabel = 'Matrix';
 
 /// One cell, as an edit request: which drop, which column, what was
 /// typed.
@@ -171,6 +202,16 @@ class StructureEditorScreen extends StatefulWidget {
 class _StructureEditorScreenState extends State<StructureEditorScreen> {
   final Set<StructureColumnId> _optional = <StructureColumnId>{};
 
+  /// AC-048: THE EDITOR OPENS IN TABLE MODE. The one requirement the
+  /// ruling makes of this surface, and the one line that keeps it.
+  StructureEditorTab _tab = StructureEditorTab.table;
+
+  /// The matrix's media columns, seeded with §4.2's own eight so the
+  /// grid is usable the moment it opens rather than after a person has
+  /// configured it. Filtered against the document's registry inside
+  /// `buildStructureMatrix`.
+  final Set<MediaTypeId> _mediaColumns = {...kStructureMatrixSeedColumns};
+
   Uuid? _roomFilter;
   MediaTypeId? _mediaFilter;
   bool _unconnectedOnly = false;
@@ -209,10 +250,14 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
     );
     final visible = _filter(doc, table);
 
-    // THE TWO GRID BINDINGS, in their own scope. Both act on the focused
-    // cell, so there is no honest answer to either outside this table —
-    // which is why `KeyScope.structure` exists rather than two more
-    // global rows that would have to decline everywhere else.
+    // THE TWO GRID BINDINGS WRAP THE WHOLE EDITOR AND NOT THE TABLE TAB,
+    // which looks like the looser choice and is the stricter one.
+    // `Shortcuts` only sees a key when the FOCUSED widget is inside it,
+    // so scoping this to the table body would make `Ctrl+D` silently do
+    // nothing whenever focus sat in the quick-add bar — the exact thing
+    // docs/04 §3.4 forbids, and the thing `kNoCaretForFill` exists to
+    // prevent. Both handlers say what is true where they are pressed;
+    // see [_fillDown].
     return Shortcuts(
       shortcuts: keymapShortcuts(KeyScope.structure),
       child: Actions(
@@ -230,100 +275,157 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
             },
           ),
         },
-        child: ColoredBox(
-          color: Theme.of(context).colorScheme.surface,
-          child: Column(
+        child: _body(context, doc, table, visible),
+      ),
+    );
+  }
+
+  Widget _body(
+    BuildContext context,
+    RackDocument doc,
+    StructureTable table,
+    List<StructureTableGroup> visible,
+  ) => ColoredBox(
+    color: Theme.of(context).colorScheme.surface,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _EditorHeader(
+          doc: doc,
+          structureBodyId: widget.structureBodyId,
+          table: table,
+          onDone: widget.onDone,
+        ),
+        _TabStrip(
+          tab: _tab,
+          onTab: (next) => setState(() => _tab = next),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _EditorHeader(
-                doc: doc,
-                structureBodyId: widget.structureBodyId,
-                table: table,
-                onDone: widget.onDone,
+              SizedBox(
+                width: 220,
+                child: _LocationPane(doc: doc, table: table),
               ),
-              const Divider(height: 1),
+              const VerticalDivider(width: 1),
               Expanded(
-                child: Row(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(
-                      width: 220,
-                      child: _LocationPane(doc: doc, table: table),
-                    ),
-                    const VerticalDivider(width: 1),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-                            child: DropEntryLoop(
-                              actions: _loopActions(),
-                              currentDoc: widget.currentDoc,
-                            ),
-                          ),
-                          _FilterBar(
-                            doc: doc,
-                            table: table,
-                            roomFilter: _roomFilter,
-                            mediaFilter: _mediaFilter,
-                            unconnectedOnly: _unconnectedOnly,
-                            optional: _optional,
-                            onRoom: (v) => setState(() => _roomFilter = v),
-                            onMedia: (v) => setState(() => _mediaFilter = v),
-                            onUnconnected: (v) =>
-                                setState(() => _unconnectedOnly = v),
-                            onToggleColumn: (id) => setState(() {
-                              if (!_optional.remove(id)) _optional.add(id);
-                            }),
-                            onToggleAsBuilt: () => setState(() {
-                              // ALL ON, OR ALL OFF. A half-on set toggles
-                              // ON, because somebody who ticked one of
-                              // them by hand and then asked for the group
-                              // wants the group.
-                              if (_optional.containsAll(
-                                kStructureAsBuiltColumns,
-                              )) {
-                                _optional.removeAll(kStructureAsBuiltColumns);
-                              } else {
-                                _optional.addAll(kStructureAsBuiltColumns);
-                              }
-                            }),
-                          ),
-                          const Divider(height: 1),
-                          Expanded(
-                            child: _DropTable(
-                              doc: doc,
-                              groups: visible,
-                              columns: _columns,
-                              onEdit: _edit,
-                              onCaret: (cell) => _caret = cell,
-                              isFiltered:
-                                  _roomFilter != null ||
-                                  _mediaFilter != null ||
-                                  _unconnectedOnly,
-                              totalDrops: table.dropCount,
-                            ),
-                          ),
-                        ],
+                    // THE LOOP IS ABOVE THE TABS AND NOT INSIDE ONE,
+                    // which is the whole of #149's instruction: "a
+                    // matrix that is its own screen is a second place
+                    // the repeat loop has to be re-established". It is
+                    // the same widget with the same state on both.
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                      child: DropEntryLoop(
+                        actions: _loopActions(),
+                        currentDoc: widget.currentDoc,
                       ),
+                    ),
+                    Expanded(
+                      child: switch (_tab) {
+                        StructureEditorTab.table => _tableBody(
+                          doc,
+                          table,
+                          visible,
+                        ),
+                        StructureEditorTab.matrix => StructureMatrixView(
+                          doc: doc,
+                          structureBodyId: widget.structureBodyId,
+                          columns: _mediaColumns,
+                          onColumn: (id) => setState(() {
+                            if (!_mediaColumns.remove(id)) {
+                              _mediaColumns.add(id);
+                            }
+                          }),
+                          onSetCount: _setCount,
+                        ),
+                      },
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1),
-              _StatusBar(
-                table: table,
-                refusal: _refusal,
-                hidden: table.dropCount - _shownCount(visible),
-                onAddDrop: null,
-                onAddOutlet: widget.actions.onAddOutlet,
-              ),
             ],
           ),
         ),
+        const Divider(height: 1),
+        _StatusBar(
+          table: table,
+          refusal: _refusal,
+          // THE FILTERS ARE THE TABLE'S, so on the matrix tab nothing
+          // is hidden by them. Reporting "9 hidden by filter" beside a
+          // grid that shows every room would be the status bar
+          // describing a screen nobody is looking at.
+          hidden: _tab == StructureEditorTab.table
+              ? table.dropCount - _shownCount(visible)
+              : 0,
+          onAddDrop: null,
+          onAddOutlet: widget.actions.onAddOutlet,
+        ),
+      ],
+    ),
+  );
+
+  /// The table tab: the filter bar, then the grid.
+  Widget _tableBody(
+    RackDocument doc,
+    StructureTable table,
+    List<StructureTableGroup> visible,
+  ) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _FilterBar(
+        doc: doc,
+        table: table,
+        roomFilter: _roomFilter,
+        mediaFilter: _mediaFilter,
+        unconnectedOnly: _unconnectedOnly,
+        optional: _optional,
+        onRoom: (v) => setState(() => _roomFilter = v),
+        onMedia: (v) => setState(() => _mediaFilter = v),
+        onUnconnected: (v) => setState(() => _unconnectedOnly = v),
+        onToggleColumn: (id) => setState(() {
+          if (!_optional.remove(id)) _optional.add(id);
+        }),
+        onToggleAsBuilt: () => setState(() {
+          // ALL ON, OR ALL OFF. A half-on set toggles ON, because
+          // somebody who ticked one of them by hand and then asked
+          // for the group wants the group.
+          if (_optional.containsAll(kStructureAsBuiltColumns)) {
+            _optional.removeAll(kStructureAsBuiltColumns);
+          } else {
+            _optional.addAll(kStructureAsBuiltColumns);
+          }
+        }),
       ),
-    );
+      const Divider(height: 1),
+      Expanded(
+        child: _DropTable(
+          doc: doc,
+          groups: visible,
+          columns: _columns,
+          onEdit: _edit,
+          onCaret: (cell) => _caret = cell,
+          isFiltered:
+              _roomFilter != null || _mediaFilter != null || _unconnectedOnly,
+          totalDrops: table.dropCount,
+        ),
+      ),
+    ],
+  );
+
+  /// Hands one matrix cell to the app and rebuilds on whatever came
+  /// back, which is [_edit]'s shape and for [_edit]'s reason: the rules
+  /// have a document behind them and a surface holding a second copy of
+  /// one is how two answers to a question start.
+  String? _setCount(StructureMatrixEdit edit) {
+    final refusal = widget.actions.onSetCount(edit);
+    setState(() => _refusal = refusal);
+    return refusal;
   }
 
   /// Which cell the caret is in, or null when it is not in the table.
@@ -353,7 +455,17 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
   ];
 
   /// `Ctrl+D` — copy the cell directly above into the focused one.
+  ///
+  /// IT ANSWERS FOR THE TAB IT IS PRESSED ON. Both bindings act on a
+  /// TABLE cell, so on the matrix there is nothing for them to do — and
+  /// saying that is the whole of docs/04 §3.4, where printing "put the
+  /// caret in a cell first" at somebody whose caret IS in a cell would
+  /// be worse than an unbound key.
   void _fillDown() {
+    if (_tab != StructureEditorTab.table) {
+      setState(() => _refusal = kGridKeysAreTableOnly);
+      return;
+    }
     final caret = _caret;
     if (caret == null) {
       setState(() => _refusal = kNoCaretForFill);
@@ -383,6 +495,10 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
   /// on its fourth row writes none of its rows rather than three. See
   /// `StructureEditorActions.onEdit`.
   Future<void> _paste() async {
+    if (_tab != StructureEditorTab.table) {
+      setState(() => _refusal = kGridKeysAreTableOnly);
+      return;
+    }
     final caret = _caret;
     if (caret == null) {
       setState(() => _refusal = kNoCaretForPaste);
@@ -604,6 +720,43 @@ class _EditorHeader extends StatelessWidget {
     if (doc.structures.isEmpty) return 'No Structure device yet';
     return '${doc.structures.length} Structure devices';
   }
+}
+
+/// §4's `[▶ Table] [ Matrix ]`.
+///
+/// A `SegmentedButton` AND NOT TWO `TextButton`s, because a segmented
+/// control states which one is showing rather than leaving a reader to
+/// infer it from an underline, and it is one focus stop that the arrow
+/// keys move within — which is what a two-item strip should cost a
+/// keyboard.
+class _TabStrip extends StatelessWidget {
+  const _TabStrip({required this.tab, required this.onTab});
+
+  final StructureEditorTab tab;
+  final ValueChanged<StructureEditorTab> onTab;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.centerLeft,
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: SegmentedButton<StructureEditorTab>(
+        segments: const [
+          ButtonSegment<StructureEditorTab>(
+            value: StructureEditorTab.table,
+            label: Text(kTableTabLabel),
+          ),
+          ButtonSegment<StructureEditorTab>(
+            value: StructureEditorTab.matrix,
+            label: Text(kMatrixTabLabel),
+          ),
+        ],
+        selected: {tab},
+        showSelectedIcon: false,
+        onSelectionChanged: (next) => onTab(next.single),
+      ),
+    ),
+  );
 }
 
 /// The read-only location tree (CR-112).
@@ -1447,6 +1600,16 @@ String kPasteOverruns(int lines, int available) =>
 /// The clipboard is wider than the columns to the right of the caret.
 const String kPasteOverrunsColumns =
     'That is wider than the columns to the right of the caret.';
+
+/// `Ctrl+D` or `Ctrl+V` on the matrix tab.
+///
+/// A SENTENCE RATHER THAN SILENCE, and rather than a matrix
+/// implementation nobody asked for. Filling a COUNT down a room column
+/// would be a legible gesture, but "eight rooms all get four Cat6" makes
+/// 32 cables and an outlet each from one keystroke, and that is a ruling
+/// rather than an afternoon.
+const String kGridKeysAreTableOnly =
+    'Ctrl+D and Ctrl+V work on the table, not the matrix.';
 
 /// What the first line of the no-drops state says.
 const String kNoDropsHeadline = 'This Structure body has no drops yet.';
