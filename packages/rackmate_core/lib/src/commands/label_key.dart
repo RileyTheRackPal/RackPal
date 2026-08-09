@@ -109,6 +109,19 @@ enum LabelKey {
   // ninth of what it is about to take back.
   addDrops,
 
+  // ONE MATRIX CELL, DECREMENTED (structure/matrix_plan.dart), M3-C/3.
+  // Its own value rather than reusing `removeLink`, on the mirror of the
+  // argument that gave `addDrops` one: the unit the person undoes is the
+  // CELL. Typing `2` over `6` deletes four cables at once, and an Edit
+  // menu offering "Undo remove link" would name one of the four and take
+  // all of them back.
+  //
+  // NOT `removeDrop` SINGULAR, and not shared with the increment either.
+  // "Undo add drops" and "Undo remove drops" are opposite acts on the
+  // same grid, and a person who typed the wrong number in a cell needs
+  // the menu to say which direction it is about to go.
+  removeDrops,
+
   // ONE OUTLET FROM A TEMPLATE (structure/outlet_template_planner.dart),
   // M3-C/5. Its own value rather than reusing `addDrops`, on the same
   // argument that separated `addDrops` from `addHomeRun`: the unit the

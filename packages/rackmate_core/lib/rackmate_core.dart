@@ -171,6 +171,7 @@ export 'src/persistence/migrations.dart';
 export 'src/persistence/schema.dart';
 export 'src/structure/drop_line_parser.dart';
 export 'src/structure/drop_line_planner.dart';
+export 'src/structure/matrix_plan.dart';
 export 'src/structure/outlet_template_planner.dart';
 export 'src/units/box.dart';
 export 'src/units/constants.dart';
