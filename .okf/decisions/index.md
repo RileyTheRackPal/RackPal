@@ -17,6 +17,12 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` ย
 * [DR-022, {SERVICE} is the outlet template's tag](dr-022-service-token-is-the-template-tag.md) - the shipped label preset throws on the rough-in drop the product most encourages; the corpus's own examples name the source.
 * [DR-023, the {SERVICE} fallback chain](dr-023-service-fallback-chain.md) - modifier, then template tag, then the media's short tag; three steps and no placeholder, because a fourth would print one word on sixty cables.
 * [DR-024, board #151 is a field and a picker](dr-024-board-151-is-a-field-and-a-picker.md) - its data half shipped with #150's seed; what is left is the field that lets a preset stamp its own standards tag, and the gesture that places it.
+* [DR-025, @service= names the label and @signal= names the family](dr-025-signal-and-service-are-two-words.md) - a structured run's family was unreachable by any gesture, and one word could not carry both facts without letting a naming decision switch off SIG-001.
+* [DR-026, two interim M3 answers](dr-026-two-interim-m3-answers.md) - a pathway designator is hand-entered because manual is the reversible direction, and Outlet.nominalRunLength is ratified as implemented because the deadline to rule on it had passed.
+* [DR-027, M3 owes the rows and M6 owns every sheet](dr-027-m3-owes-rows-m6-owns-sheets.md) - the exporter has no Pull Sheet role while M3's criterion demands one; the derivation stays in M3 and the sheet moves to M6, which amends an exit criterion.
+* [DR-028, the keystone cell is the front nose](dr-028-keystone-cell-is-the-front-nose.md) - 14.5 x 16 mm; its own first draft was wrong and overruled a figure that was right, so an unruled figure with provenance outranks a ruled figure without one.
+* [DR-029, the Plan view ships in v1](dr-029-plan-view-in-v1.md) - the first amendment that makes v1 larger; before M6, because a plan sheet arriving later would make M6's criterion run twice.
+* [DR-030, the integrator's logo ships in v1](dr-030-integrator-logo-in-v1.md) - reverses RJ-017's last clause on two fallen grounds; the third stands, so the logo goes beside the text block and never instead of it, and the opacity does not come back.
 
 # Not yet written up
 
@@ -27,6 +33,11 @@ DR-018 (the Plan view moves to v1.1), DR-019 (the plan container sniffs) and
 DR-020 (a plan may not predict a route). All are in
 `docs/canonical-decisions.md` ยง11; concepts here are pending. A missing link is
 not-yet-written knowledge, not an error.
+
+**DR-007, DR-018 and DR-020 are the three that now cost the most by their
+absence**, because the six concepts added on 2026-08-09 all link to them:
+DR-028 amends DR-007, DR-029 supersedes DR-018 clause by clause, and DR-020 is
+cited by DR-026, DR-029 and the footage rollup alike.
 
 **DR-006 was on this list while its own concept sat two lines above**, which is
 the drift a list of absences invites: it names what is missing, so nothing fails

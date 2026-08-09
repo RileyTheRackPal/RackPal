@@ -10,3 +10,4 @@ by something going wrong.
 * [Diagnose before fixing](diagnose-before-fixing.md) - twelve fix commits touched neither cause; what that means and what shape of fix held.
 * [The ZIP trap](the-zip-trap.md) - how a file arrives decides whether it is trusted; a property that lives in the channel cannot be gated at the source.
 * [One keymap registry](one-keymap-registry.md) - every binding is a table row, arbitrated across every platform, and why a real collision does not throw.
+* [Re-read a task against canon before pricing it](re-read-a-task-against-canon.md) - two of M3-D's four tasks asked questions that rulings dated after them had already answered; the cost that does not announce itself is the estimate.

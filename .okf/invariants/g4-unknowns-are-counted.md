@@ -3,7 +3,7 @@ type: Invariant
 title: G4 — an unknown is counted and shown, never guessed
 description: Where a value cannot be determined, the system reports that it cannot, rather than substituting a plausible default.
 tags: [invariant, g4, correctness]
-timestamp: 2026-07-28T00:00:00Z
+timestamp: 2026-08-09T00:00:00Z
 ruling_id: G4
 status: enforced
 ---
@@ -29,6 +29,18 @@ out of room footage subtotals so an unestablished run's length cannot join one.
 **Rollups.** `totals.dart`'s `Rollup.unknownCount` is the precedent: a subtotal
 with no known contributor is `null`, **not `0`**. Zero is a claim; null is not.
 
+**The cable takeoff, where the claim is money.** `derived/cable_footage.dart`
+(M3-D/3) is the sharpest case yet, because `0` there does not read as *"we
+measured nothing"* but as **"buy none"**. A room whose lengths simply have not
+been entered must not print as if it needed no cable, so a media type with no
+known contributor is null and so is its waste figure: ten percent of *"we do not
+know"* is not a number. The same file shows the rule's second half working, the
+part that is about what may be COUNTED rather than what may be shown: only
+`fieldCable` reaches a purchase quantity, and jumpers, power cords, internal
+links and **undetermined-class runs** are each excluded and counted by reason.
+The undetermined exclusion is the one that looks like an omission and is the most
+G4 of the four.
+
 **Connector footprints.** Both dimensions null means no footprint has been
 authored, never estimated. A shipped catalog template must not reference such a
 connector, and CI asserts it.
@@ -52,3 +64,4 @@ correctly".
 [1] `packages/rackmate_core/lib/src/derived/totals.dart`
 [2] `packages/rackmate_core/lib/src/derived/schedule.dart`
 [3] `packages/rackmate_core/lib/src/derived/link_class.dart`
+[4] `packages/rackmate_core/lib/src/derived/cable_footage.dart`

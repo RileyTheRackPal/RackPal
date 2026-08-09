@@ -1,9 +1,9 @@
 ---
 type: Playbook
 title: A test that counts the mechanism will certify the defect
-description: A test asserted "one corridor per pin", passed, and the sheet drew a fifth of its ink twice — because the reader sees overlapping wires, not corridor counts.
-tags: [practice, testing, mutation-testing, schematic]
-timestamp: 2026-08-03T12:00:00Z
+description: A test asserted "one corridor per pin", passed, and the sheet drew a fifth of its ink twice — because the reader sees overlapping wires, not corridor counts. Three mouths to the trap, the third being parts that are each right while the compound claim is never asserted.
+tags: [practice, testing, mutation-testing, schematic, exit-criteria]
+timestamp: 2026-08-09T00:00:00Z
 status: adopted
 ---
 
@@ -60,6 +60,32 @@ is looking at an artifact. Find the quantity where that question has no answer.
 Note that the second is also **cheaper to read**: its failure message names the
 pairs and the units, so a regression arrives already diagnosed.
 
+# And a third mouth: every part right, the claim never asserted
+
+M3-D/4 found the same family of gap from the other side. Exit clause 3 is a
+compound claim — a rough-in produces rows **sorted by room and pathway** with
+**per-room footage subtotals**. The sort, the room grouping and the footage
+rollup each had passing cases in `schedule_test.dart`, each asserting a genuine
+artifact, none of them a proxy.
+
+**None of them had ever been pointed at the same document.** Three good tests
+over three fixtures demonstrate three mechanisms; they do not demonstrate the
+claim, because the claim is about one rough-in and nothing had ever built one.
+
+Roadmap §8.1 is what makes this a defect rather than a tidiness question: the
+exit criterion is the unit of truth, and a milestone whose evidence is a set of
+component tests has not met a compound criterion. The fix is one fixture that
+every part reads:
+`packages/rackmate_core/test/derived/pull_sheet_clause_test.dart`.
+
+Two details make that file carry its weight rather than merely exist. **It is
+built to falsify**: rooms and pathways are created in an order that is not their
+sorted order, so a build that preserved insertion order fails instead of
+coinciding. And **it asserts the boundary too** — `SheetRole` is pinned to its
+three values, so if a Pull Sheet role ever appears the case fails and whoever
+added it has to say whether M3's clause or M6's now owns the sheet
+([DR-027](/decisions/dr-027-m3-owes-rows-m6-owns-sheets.md)).
+
 # Where this does not apply
 
 An artifact-level assertion is not always available, and inventing a bad one is
@@ -70,6 +96,10 @@ mechanisms on principle.
 
 # Citations
 
-[1] `packages/rackmate_ui/test/canvas/schematic/wire_trace_layering_test.dart` (group 1, and its own header recording both wrong versions
-[2] `docs/12-milestone-board.md` §5.1) the six field reports this came out of
-[3] Commits `b48e96c` (the mirrored comb), `5d53512` (the measurement that replaced the count)
+[1] `packages/rackmate_ui/test/canvas/schematic/wire_trace_layering_test.dart`
+    (group 1, and its own header recording both wrong versions)
+[2] `docs/12-milestone-board.md` §5.1, the six field reports this came out of
+[3] Commits `b48e96c` (the mirrored comb), `5d53512` (the measurement that
+    replaced the count)
+[4] `packages/rackmate_core/test/derived/pull_sheet_clause_test.dart`, and
+    `docs/12-milestone-board.md` §5.2's M3-D/4 close

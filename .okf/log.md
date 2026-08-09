@@ -1,5 +1,72 @@
 # Update Log
 
+## 2026-08-09
+
+* **Note**: **this entry is a catch-up, and the gap is the finding.** The bundle
+  last moved on 2026-08-08 while six rulings and a whole issue landed after it.
+  `getting-started.md` says this bundle is maintained as changes land; it was
+  not, and a bundle that lags is worse than one that is obviously empty, because
+  it reads as current. Recorded rather than quietly backfilled.
+* **Creation**: [DR-025, `@service=` and `@signal=` are two
+  words](/decisions/dr-025-signal-and-service-are-two-words.md). A structured
+  run's `Service.signalFamily` was `structure.undetermined` forever with **no
+  gesture able to change it**, while docs/07 §4's wireframe drew a SERVICE column
+  of values nothing could produce. The decisive argument is not tidiness: if a
+  label set the family, then **choosing a name would decide whether SIG-001
+  fires**, and SIG-001 is the check that stops an HDBaseT output being patched
+  into a switch.
+* **Creation**: [DR-026, two interim M3
+  answers](/decisions/dr-026-two-interim-m3-answers.md), settled for
+  REVERSIBILITY rather than permanently: a nullable hand-entered string can later
+  gain an allocator, and an allocated series cannot become manual without
+  abandoning the uniqueness it assumed.
+* **Creation**: [DR-027, M3 owes the rows and M6 owns every
+  sheet](/decisions/dr-027-m3-owes-rows-m6-owns-sheets.md). `SheetRole` has three
+  values and none is a Pull Sheet, so M3 could not discharge a clause about a
+  sheet it does not own. **It amends an exit criterion**, which is what makes it
+  a ruling under §8.3 rather than a note.
+* **Creation**: [DR-028, the keystone cell is the front
+  nose](/decisions/dr-028-keystone-cell-is-the-front-nose.md), whose own first
+  draft was wrong and superseded a figure that was right. **An unruled figure
+  with provenance outranks a ruled figure without one**; deliberateness was the
+  wrong test, because the earlier number had a source and the later one had a
+  recollection.
+* **Creation**: [DR-029, the Plan view ships in
+  v1](/decisions/dr-029-plan-view-in-v1.md), the first amendment that makes v1
+  LARGER. Sequenced before M6 structurally rather than by preference: M6's
+  criterion is that all four starters export a COMPLETE set, so a plan sheet
+  arriving afterwards would make that criterion run twice.
+* **Creation**: [DR-030, the integrator's logo ships in
+  v1](/decisions/dr-030-integrator-logo-in-v1.md). Two of RJ-017's three grounds
+  had fallen; **the third stands and shapes the ruling**, so the logo is added
+  beside the title block's text and never instead of it, because a photocopy at
+  third generation still carries a licence number and may not carry a logo. The
+  opacity does not return.
+* **Creation**: [Re-read a task against canon before pricing
+  it](/practices/re-read-a-task-against-canon.md). **Two of M3-D's four tasks
+  asked questions that were already answered**, both by rulings dated after the
+  tasks were written. The cost that does not announce itself is the estimate: a
+  task reading "ratify or overrule before anything reads it" gets scheduled as
+  preventive work, where the same task re-read against canon is a mechanical
+  retrofit with a documentation edit attached.
+* **Note**: **DR-026 reasoned from a doc comment that did not cite it back**,
+  which is why it was missed. When a ruling reasons FROM a piece of code, the
+  citation belongs ON that code; `ScheduleLengthSource.outletNominal` and
+  docs/08's two derived sentences now carry it.
+* **Update**: [G4](/invariants/g4-unknowns-are-counted.md) gains the cable
+  takeoff, its sharpest case yet, because there `0` does not read as "we measured
+  nothing" but as **"buy none"**. The same file shows the rule's other half: only
+  `fieldCable` reaches a purchase quantity, and the **undetermined-class**
+  exclusion is the one that looks like an omission and is the most G4 of the four.
+* **Update**: [Assert the artifact, not the
+  mechanism](/practices/assert-the-artifact-not-the-mechanism.md) gains a third
+  mouth to the trap. M3-D/4 found it from the other side: the sort, the grouping
+  and the footage rollup each had passing tests asserting genuine artifacts, and
+  **none of them had ever been pointed at the same document**. Three good tests
+  over three fixtures demonstrate three mechanisms, not a compound exit clause.
+  Its citation block, damaged by an earlier sweep into a bracket pair spanning
+  two entries, is repaired in the same edit.
+
 ## 2026-08-08
 
 * **Creation**: [DR-024, board #151 is a field and a
