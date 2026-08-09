@@ -1568,7 +1568,41 @@ matrix both make `Link`s out of `Office: 1x ENT`, which is a pre-existing CR-109
 found rather than introduced, and both source comments now name the right task.
 
 *Closed at `30a3a6f` (the grid model), `096daf7` (the cell planner), `263f403` (the tab and the
-route) and this commit.* Core 1937, UI 785, app 765.
+route) and `13c42a0` (the derived docs).* Core 1937, UI 785, app 765.
+
+**And closing #149 surfaced a capability M3 promises, draws and has never had a task for: a
+structured run's service is `structure.undetermined` forever and no gesture can change it.** #587
+is the task; it is a **decomposition gap rather than a scope change** (§8.3), because docs/07 §4.1
+already promises the capability and §4's wireframe already draws a SERVICE column reading
+`HDBaseT`, `Ethernet`, `CATV`, `Speaker`, `Keypad`, none of which any gesture can produce.
+
+*The starting value is right and is not what is missing.* §4.1 calls `Service: undetermined` *"a
+first-class, encouraged state"* and `seed_outlet_templates.dart` says the instantiating gesture
+*"must NOT copy `service` onto the Link"*. What is missing is the second half of §4.1's own
+sentence: *"the DRC validates RETROACTIVELY when a `Service` later assigns a real family"*. **There
+is no later.** `buildAddHomeRunCommand` hardcodes the family with no parameter, `Service
+.signalFamily` still carries the pending-AC-013 marker, there is no `LinkField` row, and the four
+`signalFamily` references in `rackmate_ui/lib` and `apps/rackmate/lib` are all the schematic
+building a NEW link from two ports.
+
+*Three things look like they set it.* `@service=camera` sets the label tag and nothing else, and the
+planner does not warn, because as far as DR-023 is concerned the modifier was applied. An
+`OutletTemplate`'s `OutletDrop.service` is intent, and docs/02 §6.2 prints both facts in one file on
+purpose. And #148 grouped the SERVICE column with `MEDIA` as *"needs a picker, not a text box"*,
+which is true and insufficient: there is no Command behind the picker.
+
+*It is load-bearing for M5 rather than cosmetic.* SIG-001 (#272), SIG-002 (#273) and LEN-001 (#284)
+all read the service family, so LEN-001 cannot know a run is Ethernet and §4.1's own worked example,
+*"an HDBaseT run patched into a switch throws the error it should, when it should"*, cannot fire on
+any drop this product creates. There is no workaround either: re-drawing the run in the schematic
+does give it a real family, and strips the `structureOrigin` that made it a drop.
+
+*Why it is filed as RULING NEEDED.* docs/07 §5.1's import table maps a `service` column to
+**`SignalFamilyId`**, and its accepted headers are a contractor's `use` / `purpose` / `function`
+column. DR-023 §11.22 resolves `@service=` through an `OutletTemplate` by tag then by name, so its
+value is a template handle. One word, two targets, and `@service=poe` names a family no template
+carries. **M3-F cannot be written until this is settled**, because #159 has to know what a
+contractor's `Use` column becomes.
 
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
