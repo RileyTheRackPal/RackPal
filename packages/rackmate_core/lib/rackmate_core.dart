@@ -78,6 +78,7 @@ export 'src/commands/split_commands.dart';
 export 'src/commands/structure_commands.dart';
 export 'src/commands/transaction.dart';
 export 'src/commands/undo_stack.dart';
+export 'src/derived/cable_footage.dart';
 export 'src/derived/connect_rules.dart';
 export 'src/derived/connect_target.dart';
 export 'src/derived/device_loads.dart';
