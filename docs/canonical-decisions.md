@@ -7846,26 +7846,48 @@ hand M6 the design work along with the rendering, and the seam would have become
 **11.26.5 Scope.** **A milestone-boundary amendment; no change to roadmap §2's contents.** Nothing
 leaves v1 and nothing joins it. One clause moves from M3's criterion to M6's. M3-D/4 is unblocked.
 
-### 11.27 DR-028 · The keystone occupant cell is 15 mm × 16 mm
+### 11.27 DR-028 · The keystone occupant cell is the FRONT NOSE, 14.5 mm × 16 mm
 
 **Settled by the user on 2026-08-09**, supplying the figure DR-007 does not give and board #167
-refuses to infer.
+refuses to infer. **Corrected by the user the same day**, and the correction is kept in full below
+because what it caught is worth more than the figure.
 
-**11.27.1 The figure, and its provenance in the user's own terms:** *"Standard for 110 Keystones is
-16mm tall, but width can vary. 15mm is right in the middle of the range."*
+**11.27.1 The figure.** A cell is **14.5 mm wide by 16 mm tall**, and it is the **front nose** of the
+keystone: the visible bezel face, not the body, the latch or the depth behind the plate.
 
-A cell is **15 mm wide by 16 mm tall**. The height is the standard; the width is a **stated choice
-at the centre of an observed range**, recorded as a choice rather than presented as a measurement,
-which is #167's own instruction and G4's rule. A reader who later finds a strap that disagrees is
-looking at the range, not at an error.
+**THE NOSE IS THE ONLY DIMENSION THIS PRODUCT NEEDS, and §11.7.9 B is why.** That entry rules that
+*"the cell renders from the front, and the front hides the differences"*: a keystone is drawn
+face-on in a plate elevation, where a punchdown jack and an inline coupler are the same object, a
+coloured bezel with a connector opening. So the face is what the renderer draws and the face is what
+gets stored. Nothing in v1 draws a plate in section.
 
-**It supersedes §11.7.8's parenthetical.** DR-007 wrote *"a standard keystone is about 14.5 × 16.0
-mm"* inside an arithmetic check, and that figure was never ruled: it was an "about" used to show
-that 2 across and 3 down **fit** a Decora opening. The heights agree; the widths differ by 0.5 mm
-and this ruling's is the one to build from, because it is the one a person stated deliberately. The
-arithmetic still holds at 15 mm (2 × 15 = 30 mm across an opening of about 33.3).
+**11.27.2 THE FIRST DRAFT OF THIS RULING WAS WRONG, AND IT OVERRULED A FIGURE THAT WAS RIGHT.** It
+recorded **15 × 16** from *"standard for 110 Keystones is 16mm tall, but width can vary. 15mm is
+right in the middle of the range"*, treated the width as a stated choice at the centre of a range,
+and on that basis **superseded §11.7.8's parenthetical** *"a standard keystone is about 14.5 × 16.0
+mm"*. The user then corrected their own figure: *"the front nose of each keystone is 14.5 mm wide by
+16 mm tall. My own research was incorrect."*
 
-**11.27.2 WHAT THIS DOES NOT SETTLE, and it must not be read as settling it.** §11.7.8's **change 3
+**That supersession is withdrawn.** §11.7.8's number was right, was arrived at independently, and
+now corroborates rather than conflicts. The arithmetic it was written to support is DR-007's
+original: 2 × 14.5 = 29 mm across a Decora opening of about 33.3, and 3 × 16 = 48 mm down about
+66.7.
+
+**The lesson, which this record exists to keep.** A figure carried as an unruled *"about"* inside an
+arithmetic check survived contact with reality, and a figure elevated to a ruling did not. The
+supersession was written on the reasoning that *"this ruling's is the one to build from, because it
+is the one a person stated deliberately"*, and deliberateness turned out to be the wrong test:
+the earlier number had a source and the later one had a recollection. **An unruled figure with
+provenance outranks a ruled figure without one**, and the corpus should not have been edited to
+agree with the newer of two numbers merely because it was newer.
+
+**11.27.3 The provenance, stated at its real strength.** The width is no longer a choice at the
+centre of a range; it is the dimension of a standard part, stated by the user and independently
+matching §11.7.8. It is **not yet physically confirmed**: the user is seeking manufacturer CAD for
+the brand in use and will otherwise measure one against a rule. That confirmation is welcome and is
+not a blocker, because two independent statements now agree.
+
+**11.27.4 WHAT THIS DOES NOT SETTLE, and it must not be read as settling it.** §11.7.8's **change 3
 remains open**: whether a cell on a 2-wide strap is the same size as a cell on a 1-wide strap. That
 is a question about two parts, not about one figure, and DR-007 requires it be *measured rather than
 inferred* **before any dimensioned rendering**, because a uniform-cell assumption that turns out
@@ -7873,16 +7895,21 @@ false is wrong on every plate drawing at once. Supplying one cell size does not 
 reader who takes this ruling as licence to assume uniformity has made exactly the inference §11.7.8
 forbids.
 
-**11.27.3 Stored as `Len` in nanometres (CR-001).** 15 mm is `15_000_000` nm and 16 mm is
+**11.27.5 Stored as `Len` in nanometres (CR-001).** 14.5 mm is `14_500_000` nm and 16 mm is
 `16_000_000` nm. No floating-point millimetres, in the model or in any file format.
 
-**11.27.4 One cell size is the entire geometry, and that is DR-007's doing.** §11.7.2, revised
+**A HALF-MILLIMETRE IS WHY THE UNIT IS NANOMETRES**, and this is the first place in the corpus where
+that pays visibly rather than in principle. `14.5` is exact as an integer count of nanometres and is
+a binary fraction as a count of millimetres; CR-001 chose int64 nanometres precisely so a dimension
+like this needs no `double` anywhere between the ruling and the rendered plate.
+
+**11.27.6 One cell size is the entire geometry, and that is DR-007's doing.** §11.7.2, revised
 2026-07-28, makes **every occupant 1 × 1**, a speaker binding post included, so a strap is a grid of
 equal cells and the only questions left are plate sizes, orientation and which cells are filled. Had
 occupants stayed multi-cell, this ruling would have owed a size per occupant kind and would have got
 one of them wrong.
 
-**11.27.5 Scope.** **No scope change.** DR-007 already placed keystone geometry in M3; this supplies
+**11.27.7 Scope.** **No scope change.** DR-007 already placed keystone geometry in M3; this supplies
 one figure it left open. M3-H/2 is unblocked.
 
 ---
