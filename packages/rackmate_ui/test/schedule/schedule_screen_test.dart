@@ -115,13 +115,25 @@ RackDocument _populatedDoc() {
     doc.ports[id] = Port(id: id, deviceId: deviceId, designator: designator);
   }
 
-  Link link(String id, String designator, Endpoint from, Endpoint to) => Link(
+  // `cutLength` IS A CONSTRUCTOR ARGUMENT AND NOT A CASCADE, since
+  // M3-D/2 gave it the AC-013 retrofit: the setter is `@internal`, so
+  // this package cannot write it and the analyzer says so. Building the
+  // fixture through the constructor is the fix rather than a workaround
+  // — it is what every other field on this Link already does.
+  Link link(
+    String id,
+    String designator,
+    Endpoint from,
+    Endpoint to, {
+    Len? cutLength,
+  }) => Link(
     id: Uuid(id),
     designator: designator,
     media: const MediaTypeId('media.cat6a_futp'),
     order: FracIndex('a$designator'),
     meta: _meta(),
     conductors: [Conductor(from: from, to: to)],
+    cutLength: cutLength,
   );
 
   final home =
@@ -130,8 +142,8 @@ RackDocument _populatedDoc() {
           'W015',
           const PlaceEndpoint(description: 'TV wall', locationId: room),
           const PortEndpoint(panelPort),
+          cutLength: const Len(78 * 12 * Len.nmPerInch),
         )
-        ..cutLength = const Len(78 * 12 * Len.nmPerInch)
         ..structureOrigin = StructureOrigin(
           structureBodyId: const Uuid('sb-1'),
           outletId: const Uuid('outlet-1'),

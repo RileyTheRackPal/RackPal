@@ -457,13 +457,6 @@ bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
   // M3-J/3's seven. DR-020 §11.19.2(5) asks for "one table with a length
   // column they tab down, not sixty inspector visits", so the whole
   // as-built set is enterable and not merely visible.
-  //
-  // `ROUTED` AND `CUT` STAY READ-ONLY, and the asymmetry is a task
-  // boundary rather than an oversight: #585 makes the AS-BUILT length
-  // enterable in bulk and #153 (M3-D/2) owns the other two. A person who
-  // notices will be right that it is odd; a person who fills in a `CUT`
-  // column this milestone does not own would be wrong in a way nobody
-  // could see.
   StructureColumnId.terminatedLength ||
   StructureColumnId.spliceCount ||
   StructureColumnId.fieldTerm ||
@@ -471,6 +464,14 @@ bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
   StructureColumnId.certificateId ||
   StructureColumnId.installedBy ||
   StructureColumnId.terminatedAt => true,
+
+  // `ROUTED` AND `CUT` JOIN THEM (M3-D/2). They were read-only for one
+  // milestone and the reason was a task boundary, not a control problem:
+  // M3-J/3 owned the as-built length and #153 owned the other two. Both
+  // now have a `LinkField`, and all three take `parseLengthCell` — the
+  // same parser, so the three columns cannot disagree about what `62.5`
+  // means or about which unit an unadorned number is in.
+  StructureColumnId.routedLength || StructureColumnId.cutLength => true,
 
   _ => false,
 };

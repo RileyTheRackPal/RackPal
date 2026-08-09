@@ -895,7 +895,8 @@ void main() {
       }
     });
 
-    test('every one of the seven is enterable, and CUT is not', () {
+    test('every one of the seven is enterable, and so are the other two '
+        'lengths now', () {
       for (final id in kStructureAsBuiltColumns) {
         expect(
           structureColumnIsEditable(id),
@@ -903,13 +904,14 @@ void main() {
           reason: '${structureColumnHeader(id)} is what #585 makes typeable',
         );
       }
-      // THE TASK BOUNDARY, asserted so it is deliberate: #153 (M3-D/2)
-      // owns the other two length columns.
-      expect(structureColumnIsEditable(StructureColumnId.cutLength), isFalse);
-      expect(
-        structureColumnIsEditable(StructureColumnId.routedLength),
-        isFalse,
-      );
+      // THIS CASE USED TO ASSERT THE OPPOSITE, and the change is the
+      // point rather than a loosened test. #585 left `CUT` and `ROUTED`
+      // read-only because #153 (M3-D/2) owned them, and pinned that
+      // boundary here so it stayed deliberate. M3-D/2 has now wired both
+      // to a `LinkField`, so the boundary is gone and the assertion
+      // follows it. All three of AC-024's lengths are typeable.
+      expect(structureColumnIsEditable(StructureColumnId.cutLength), isTrue);
+      expect(structureColumnIsEditable(StructureColumnId.routedLength), isTrue);
     });
 
     test('SPLICES prints 0 as 0 and unknown as the dash', () {

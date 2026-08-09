@@ -423,6 +423,59 @@ void main() {
       expect(doc.links[ids.first]!.spliceCount, isNull);
     });
 
+    testWidgets('ROUTED and CUT are typed into, on the same parser (M3-D/2)', (
+      tester,
+    ) async {
+      // The three lengths were one enterable column and two read-only
+      // ones for a milestone, which was a task boundary rather than a
+      // control decision (#585's own comment says so). All three now go
+      // through `parseLengthCell`, so a person tabbing across the row
+      // meets one rule and not three.
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final edit = buildStructureEditAction(
+        controller: built.session.services.session.controller,
+      );
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.routedLength,
+            value: '80',
+          ),
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.cutLength,
+            value: '92',
+          ),
+        ]),
+        isNull,
+      );
+      expect(doc.links[ids.first]!.routedLength, const Len(80 * 304800000));
+      expect(doc.links[ids.first]!.cutLength, const Len(92 * 304800000));
+
+      // ONE UNDO FOR THE PAIR, because one gesture wrote both. The batch
+      // is what `LabelKey.fillCells` is for.
+      built.session.services.session.controller.undoLast();
+      expect(doc.links[ids.first]!.routedLength, isNull);
+      expect(doc.links[ids.first]!.cutLength, isNull);
+
+      // AND THE REFUSAL IS THE SAME SENTENCE the as-built column gives.
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.cutLength,
+            value: '92.5',
+          ),
+        ]),
+        contains('whole feet'),
+      );
+    });
+
     testWidgets('a certificate needs a result to identify (G4)', (
       tester,
     ) async {

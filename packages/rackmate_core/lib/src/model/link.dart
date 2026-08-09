@@ -71,8 +71,8 @@ final class Link {
     JacketColorId? jacketColorPulledId,
     this.shielded = false,
     this.plenum = false,
-    this.routedLength,
-    this.cutLength,
+    Len? routedLength,
+    Len? cutLength,
     Len? terminatedLength,
     this.slack,
     this.pathwayId,
@@ -97,6 +97,8 @@ final class Link {
        _lifecycleStatus = lifecycleStatus,
        _spliceCount = spliceCount,
        _roughInStatus = roughInStatus,
+       _routedLength = routedLength,
+       _cutLength = cutLength,
        _terminatedLength = terminatedLength,
        _test = test,
        _installedBy = installedBy,
@@ -289,6 +291,39 @@ final class Link {
   @internal
   set terminatedLength(Len? v) => _terminatedLength = v;
 
+  // ─────────────────────────────────────────────────────────────────
+  // AND THE OTHER TWO OF AC-024'S THREE (M3-D/2).
+  // ─────────────────────────────────────────────────────────────────
+  // M3-J/3 converted the as-built length alone and said why: a field
+  // takes the retrofit "as each is wired to a Command", and that task
+  // wired one. These two are the Command that did not exist then. The
+  // three now sit together because AC-024's rule is about the three as a
+  // SET — "three fields, three columns" — and a reader who finds one of
+  // them needs the other two in view to see which fact they are holding.
+
+  /// The takeoff's estimate of how far this run travels (AC-024).
+  ///
+  /// FIRST OF THE THREE AND THE LEAST BINDING. It is what a person
+  /// pacing a set of drawings believes before anybody pulls anything, so
+  /// it is the number to plan a truck load from and the wrong number to
+  /// bill from. Null is unknown, never a measured zero.
+  Len? _routedLength;
+  Len? get routedLength => _routedLength;
+  @internal
+  set routedLength(Len? v) => _routedLength = v;
+
+  /// What to actually pull, and the one the Pull Sheet prints (AC-024).
+  ///
+  /// THE ONLY ONE OF THE THREE `derived/schedule.dart` READS for its
+  /// `LEN` column, at the head of `_lengthOf`'s chain, so this is the
+  /// field that decides whether a row prints an upright measurement or
+  /// an italic estimate. Filling it in is what promotes a row from
+  /// `ScheduleLengthSource.outletNominal` to `.cut`.
+  Len? _cutLength;
+  Len? get cutLength => _cutLength;
+  @internal
+  set cutLength(Len? v) => _cutLength = v;
+
   /// The certification result, or null for NOT TESTED.
   ///
   /// REPLACED WHOLE, never mutated in place, by every caller that writes
@@ -349,18 +384,9 @@ final class Link {
   bool shielded;
   bool plenum;
 
-  /// Three fields, three columns: pull sheet wants cut length, as-built
-  /// wants terminated length, takeoff wants routed length (AC-024/M9).
-  ///
-  /// ONLY THE AS-BUILT ONE IS CONVERTED, and the asymmetry is the rule
-  /// rather than an oversight: this region's standing note is that a
-  /// field becomes a getter plus an `@internal` setter "as each is wired
-  /// to a Command", and M3-J/3 wires exactly one of the three. The pull
-  /// sheet's `cutLength` and the takeoff's `routedLength` are #153's
-  /// (M3-D/2). Converting them here would claim a Command that does not
-  /// exist.
-  Len? routedLength;
-  Len? cutLength;
+  // AC-024's three lengths ARE NOT HERE ANY MORE. All three are wired to
+  // Commands and all three sit in the converted region above; M3-D/2
+  // closed the asymmetry M3-J/3 left and recorded.
   Permille? slack;
   Uuid? pathwayId;
   CrossoverKind? crossover;

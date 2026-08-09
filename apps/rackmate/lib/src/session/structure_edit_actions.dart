@@ -134,6 +134,32 @@ StructureEditFn buildStructureEditAction({
         into: commands,
       ),
 
+      // ── the other two lengths (AC-024, M3-D/2) ─────────────────────
+      // THE SAME PARSER THE AS-BUILT LENGTH USES, deliberately. Three
+      // columns that each decided what `62.5` means would be three
+      // rules; this is one rule read three times, and the refusal a
+      // person sees is identical whichever of the three they typed in.
+      StructureColumnId.routedLength => _parsed<Len>(
+        controller: controller,
+        edit: edit,
+        field: LinkField.routedLength,
+        parse: parseLengthCell(
+          edit.value,
+          controller.doc.settings.displayUnits,
+        ),
+        into: commands,
+      ),
+      StructureColumnId.cutLength => _parsed<Len>(
+        controller: controller,
+        edit: edit,
+        field: LinkField.cutLength,
+        parse: parseLengthCell(
+          edit.value,
+          controller.doc.settings.displayUnits,
+        ),
+        into: commands,
+      ),
+
       _ => 'That column cannot be typed into.',
     };
     if (refusal != null) return refusal;

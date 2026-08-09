@@ -1401,6 +1401,92 @@ void main() {
       expect(view.estimatedCount, 1);
       expect(view.groups.single.estimatedCount, 1);
     });
+
+    // ── M3-D/2: the chain is now REACHABLE, which is the whole task ───
+    // The four cases above state the chain's shape and have passed since
+    // M2-B. What none of them could assert is that a person can MOVE a
+    // row along it, because until this task `cutLength` had no Command
+    // and nothing outside a test could write one. These assert the
+    // artifact: what the sheet claims changes when somebody fills the
+    // column in.
+    group('a cut length typed in promotes the row off its estimate', () {
+      ({RackDocument doc, Uuid linkId}) estimatedAt(Len nominal) {
+        final d = _Doc();
+        final where = d.room('Kitchen');
+        final outlet = d.outlet(
+          'KIT-1',
+          locationId: where,
+          nominalRunLength: nominal,
+        );
+        final id = _link(
+          d,
+          designator: 'W042',
+          from: PlaceEndpoint(description: 'ceiling pair', locationId: where),
+          to: const OpenEndpoint('coil'),
+          fieldLabel: 'KIT-CLG-1',
+          outletId: outlet,
+        );
+        return (doc: d.doc, linkId: id);
+      }
+
+      void setCut(RackDocument doc, Uuid linkId, Len? to) {
+        buildSetEntityProperty(
+          doc: doc,
+          id: linkId,
+          field: LinkField.cutLength,
+          to: to,
+          now: DateTime.utc(2026, 8, 9),
+          actor: 'tester',
+        )!.apply(doc);
+      }
+
+      test('the row prints an italic estimate until it is', () {
+        final p = estimatedAt(const Len(99 * 12 * Len.nmPerInch));
+        expect(
+          _pull(p.doc).rows.single.lengthIsEstimated,
+          isTrue,
+          reason: 'nobody has cut anything yet',
+        );
+
+        setCut(p.doc, p.linkId, const Len(104 * 12 * Len.nmPerInch));
+
+        final row = _pull(p.doc).rows.single;
+        expect(row.lengthSource, ScheduleLengthSource.cut);
+        expect(row.lengthIsEstimated, isFalse);
+        expect(row.lengthCell(UnitSystem.imperial), '104');
+      });
+
+      test('and clearing it gives the ESTIMATE back, not a blank', () {
+        // The direction that matters on a jobsite: a number typed into
+        // the wrong row is taken back, and the row returns to what the
+        // takeoff believed rather than to "unknown". A chain that only
+        // ran forwards would strand the drop with no figure at all.
+        final p = estimatedAt(const Len(99 * 12 * Len.nmPerInch));
+        setCut(p.doc, p.linkId, const Len(104 * 12 * Len.nmPerInch));
+        setCut(p.doc, p.linkId, null);
+
+        final row = _pull(p.doc).rows.single;
+        expect(row.lengthSource, ScheduleLengthSource.outletNominal);
+        expect(row.lengthCell(UnitSystem.imperial), '99');
+      });
+
+      test('a room subtotal counts the cut figure, not the estimate it '
+          'replaced', () {
+        // A subtotal that kept adding the nominal after somebody measured
+        // would be a number nobody could reconcile against the sheet's
+        // own rows.
+        final p = estimatedAt(const Len(99 * 12 * Len.nmPerInch));
+        setCut(p.doc, p.linkId, const Len(104 * 12 * Len.nmPerInch));
+
+        final view = _pull(p.doc);
+        expect(view.footage.value, const Len(104 * 12 * Len.nmPerInch));
+        expect(
+          view.estimatedCount,
+          0,
+          reason: 'the room no longer has an estimated run in it',
+        );
+      });
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════════

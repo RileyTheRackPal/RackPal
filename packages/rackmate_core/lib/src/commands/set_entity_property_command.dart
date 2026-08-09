@@ -658,14 +658,53 @@ abstract final class LinkField {
 
   /// What was actually terminated, end to end (AC-024).
   ///
-  /// A DIFFERENT FACT FROM `cutLength`, which is what to ORDER, and the
-  /// reason only this one has a row: M3-J/3 makes the as-built length
-  /// enterable in bulk, and #153 (M3-D/2) owns the other two.
+  /// A DIFFERENT FACT FROM [cutLength], which is what to ORDER. M3-J/3
+  /// gave this one its row and left the other two to #153 (M3-D/2); they
+  /// are directly below, and the three are now a complete set.
   static final terminatedLength = EntityField<Link, Len?>(
     access: EntityAccess.link,
     key: 'terminatedLength',
     get: (l) => l.terminatedLength,
     set: (l, v) => l.terminatedLength = v,
+    touches: EpochMask.wires | EpochMask.meta,
+  );
+
+  // ── the other two lengths (AC-024, M3-D/2) ─────────────────────────
+  // THREE FIELDS, THREE COLUMNS, THREE READERS: takeoff, pull sheet,
+  // as-built. They are three rows here for the same reason they are
+  // three fields on the model rather than one with a provenance flag —
+  // a run can be estimated at 60 ft, cut at 75 and terminated at 71,
+  // and all three of those are true at once.
+
+  /// The takeoff's estimate of the run (AC-024).
+  ///
+  /// `Len?` LIKE ITS TWO SIBLINGS: null is unknown and a cleared cell
+  /// lands as null, never as a measured zero (G4, CR-114). A zero-length
+  /// cable is not a thing an installer pulls, but the rule is the
+  /// contract rather than the plausibility of the value.
+  static final routedLength = EntityField<Link, Len?>(
+    access: EntityAccess.link,
+    key: 'routedLength',
+    get: (l) => l.routedLength,
+    set: (l, v) => l.routedLength = v,
+    touches: EpochMask.wires | EpochMask.meta,
+  );
+
+  /// What to pull, and what the Pull Sheet's `LEN` column prints
+  /// (AC-024).
+  ///
+  /// THE ONE EDIT ON THIS TABLE THAT CHANGES A PRINTED SHEET'S TYPEFACE.
+  /// `_lengthOf` reads `cutLength` first, so filling this in moves a row
+  /// from an italic estimate to an upright measurement, and clearing it
+  /// moves the row back. That is the intended behaviour and not a
+  /// side-effect: the italic exists so nobody bills off an estimate, and
+  /// a person who deletes a wrong cut length should get the estimate
+  /// back rather than a blank.
+  static final cutLength = EntityField<Link, Len?>(
+    access: EntityAccess.link,
+    key: 'cutLength',
+    get: (l) => l.cutLength,
+    set: (l, v) => l.cutLength = v,
     touches: EpochMask.wires | EpochMask.meta,
   );
 
@@ -712,6 +751,8 @@ abstract final class LinkField {
     roughInStatus,
     notes,
     terminatedLength,
+    routedLength,
+    cutLength,
     test,
     installedBy,
     terminatedAt,
