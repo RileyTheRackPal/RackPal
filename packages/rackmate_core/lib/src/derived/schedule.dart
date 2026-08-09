@@ -367,6 +367,24 @@ enum ScheduleLengthSource {
   /// (`whole_house` sets `nominalRunLength` on all seventeen outlets and
   /// `cutLength` on none). It prints as an estimate, never as a cut
   /// length.
+  ///
+  /// RATIFIED, PROVISIONALLY, BY DR-026 §11.25.2 — and the citation is
+  /// added here because this doc comment is the evidence that ruling
+  /// reasoned from, which made it the one place a reader could not find
+  /// the answer. Board #153 asked for the placement to be "ratified or
+  /// overruled BEFORE ANYTHING READS IT"; the ruling's finding is that
+  /// the deadline had already passed, since the tier shipped at M2-B and
+  /// the corpus's own fixture depends on it, so the task must not be
+  /// picked up and priced as preventive. The tier stands as written:
+  /// more specific than the room estimate, less authoritative than a cut
+  /// length, printed as an estimate and never as a measurement.
+  ///
+  /// PROVISIONAL, AND THE PLAN VIEW IS THE NAMED TRIGGER. Whether a
+  /// floorplan supersedes any of these four tiers is open and is owed
+  /// when it lands (DR-029 put it in v1, before M6). Note DR-020
+  /// §11.19.2(2) in advance: a plan yields a BOUND, and a bound "never
+  /// enters the footage rollup as a quantity", so the tier that arrives
+  /// will not behave like the three here.
   outletNominal,
 
   /// `Location.estimatedRunLengthFromRack` — AC-024's "ONE number per

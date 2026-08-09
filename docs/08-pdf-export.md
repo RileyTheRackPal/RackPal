@@ -147,7 +147,7 @@ Rows per page    ⌊(659 − 18) / 15⌋ = 42   (≈28 with heavy notes)
 | 5 | `FROM — ROOM / OUTLET` | 68 | left | `RackCond` 7 | `Location.name` / `Outlet` designator |
 | 6 | `TO — RACK / RU / FACE` | 64 | left | `RackCond` 7 | `RK-1 / U14 / rear` |
 | 7 | `MEDIA` | 58 | left | `RackCond` 7 | `MediaTypeDef.displayName` + jacket |
-| 8 | `LEN` | 28 | **right** | `RackMono` 7.5 | `cutLength`; **italic** when derived from `Location.estimatedRunLengthFromRack`; `—` when null |
+| 8 | `LEN` | 28 | **right** | `RackMono` 7.5 | `cutLength`; **italic** when derived from either estimate, `Outlet.nominalRunLength` first and then `Location.estimatedRunLengthFromRack` (DR-026 §11.25.2); `—` when null |
 | 9 | `PATHWAY` | 36 | left | `RackBody` 7 | `Pathway.designator` |
 | 10 | `SIGN-OFF` | 56 | centre | — | `☐ P` 12 · `☐ T` 12 · `☐ T` 12 · `INIT` 20 |
 
@@ -373,7 +373,7 @@ The same rows as a table, with the two length variants distinguished:
 > seeded tags and the reasoning are in
 > `packages/rackmate_core/lib/src/catalog/seed_outlet_templates.dart`.
 
-Note what the notes are doing. `NOT ETHERNET`, `NULL-MODEM 2↔3 4↔6 7↔8 5→5`, `VERIFY POLARITY`, `not the receiver jack` are **generated from the port and connector model**, not typed by a user. That is the single highest-value thing this schedule does that a spreadsheet cannot. Italic lengths are estimates derived from `Location.estimatedRunLengthFromRack` and are tagged as such so nobody bills off them (AC-024); a null length prints `—` and the `LEN-*` rules emit *"length unknown, cannot verify"* rather than silently passing (G4).
+Note what the notes are doing. `NOT ETHERNET`, `NULL-MODEM 2↔3 4↔6 7↔8 5→5`, `VERIFY POLARITY`, `not the receiver jack` are **generated from the port and connector model**, not typed by a user. That is the single highest-value thing this schedule does that a spreadsheet cannot. Italic lengths are estimates derived from `Outlet.nominalRunLength` where the drop carries one and from `Location.estimatedRunLengthFromRack` otherwise, and are tagged as such so nobody bills off them (AC-024, DR-026 §11.25.2); a null length prints `—` and the `LEN-*` rules emit *"length unknown, cannot verify"* rather than silently passing (G4).
 
 ---
 

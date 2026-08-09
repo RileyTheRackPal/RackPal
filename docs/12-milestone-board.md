@@ -1351,6 +1351,48 @@ against null and not against zero, so a confirmed none reaches disk as `"spliceC
 unlooked-at run has no key. Wired to a `LinkField` row, which is the AC-013 retrofit; that table had
 held exactly one row since M3-A/7.
 
+**M3-D/2 (#153) closed at `36994ef`, and the ratification it was written to obtain had already been
+granted.** The task has two halves and only one of them was work. Its ruling half asks for
+`Outlet.nominalRunLength` to be *"ratified or overruled before anything reads it"*, on the ground
+that four sources of one number with three of them documented is how a schedule comes to disagree
+with itself. **DR-026 §11.25.2 ratified it as implemented, provisionally, on 2026-08-09** and found
+that the deadline had passed long before: the tier shipped at M2-B, `whole_house` sets the field on
+all seventeen outlets while setting `cutLength` on none, and the ruling says in terms that #153
+*"ratifies behaviour that already ships"* and that M3-D/2 is unblocked by it. Recorded here because
+the ruling reasoned FROM `ScheduleLengthSource`'s doc comment, and that comment carried no pointer
+back, so the one place a reader would look was the one place the answer was not. It now cites the
+ruling, and so do docs/08's two derived sentences, which named only the room estimate.
+
+*The build half is the retrofit M3-J/3 deferred, in the three places it said so.* `routedLength` and
+`cutLength` take the AC-013 conversion and gain `LinkField` rows, which is one change and not two:
+this model's standing note is that a field converts *"as each is wired to a Command"*, so converting
+without wiring claims a Command that does not exist and wiring without converting leaves the field
+writable behind the command stack. All three of AC-024's lengths now go through `parseLengthCell`,
+so the three columns cannot disagree about what `62.5` means.
+
+*The artifact is that a printed sheet changes what it claims.* `_lengthOf` reads `cutLength` first,
+so filling the column promotes a row from an italic estimate to an upright measurement, and
+**clearing it demotes the row back to the estimate rather than to a blank**. The second direction is
+the one that matters on a jobsite, and it is the one a chain built to run forwards only would have
+got wrong: a number typed into the wrong row has to be retractable to what the takeoff believed.
+The room subtotal follows the promotion, because a subtotal still adding the nominal after somebody
+measured is a figure nobody can reconcile against the sheet's own rows.
+
+*Two tests changed and the second one is the finding.* `structure_table_test.dart` asserted that CUT
+and ROUTED were **not** editable; that case existed to keep #585's task boundary deliberate, and the
+boundary is what this task removes, so the assertion follows it and says so in place. The other is
+worth more than its diff: `schedule_screen_test.dart` in **`rackmate_ui`** built a fixture with
+`..cutLength =`, and the moment the setter became `@internal` that became an
+`INVALID_USE_OF_INTERNAL_MEMBER` warning against a gate whose threshold is zero. **The AC-013
+boundary caught a real cross-package write on the first build in which it could**, in a widget test
+nobody would have thought to audit, and the fix was to use the constructor every other field on that
+same Link already used.
+
+*What it does not do.* It adds no length SOURCE: the chain is still the four tiers DR-026 ratified,
+and the plan-derived bound DR-020 §11.19.2(2) describes is not among them and will not behave like
+them when it lands. It does not touch `LEN-002`, which is M5's, and it does not give the two new
+columns a place on any rendered sheet, which is M6's under DR-027.
+
 *One item was found unowned and given a home rather than a task.* DR-020 §11.19.4 leaves open
 whether `PathwayKind` gains `attic` and `crawlspace`, and says it is **"Owed at M3, when `Pathway`
 gets its editor"**. That editor is #156 (M3-E/1) and no item claimed the question; it is recorded
