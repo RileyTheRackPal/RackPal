@@ -7355,8 +7355,10 @@ design was written without reading the code it duplicates (§11.18.5).
 `conduit | jhook | tray | plenumSpace | riser | directBury | exterior`. Both carry consequences an
 integrator acts on (temperature rating, rodent, moisture) in the way `plenumSpace` carries a code
 consequence, but both are *spaces* and the location tree already models spaces. **Owed at M3**, when
-`Pathway` gets its editor. It also does not add length rules per medium beyond `LEN-002`; AC-040's
-deferral of the remaining ~40 rules to v1.2 stands.
+`Pathway` gets its editor. **DISCHARGED by DR-031 (§11.30) on 2026-08-09**: both values are added,
+because `Location` models where a room is and `Pathway.kind` models what a cable passes through, and
+an attic a run crosses is nobody's room. It also does not add length rules per medium beyond
+`LEN-002`; AC-040's deferral of the remaining ~40 rules to v1.2 stands.
 
 **11.19.5 Scope.** **v1 grows by three items**: `Link.spliceCount`, `LEN-002` plus its registry
 `maxLength`, and the as-built tally surface. **v1.1 shrinks by one**: the Plan view's route
@@ -8086,9 +8088,65 @@ paragraph is what it will be checked against.
 
 ---
 
+### 11.30 DR-031 · `PathwayKind` gains `attic` and `crawlspace`; the discharge of DR-020 §11.19.4
+
+**Settled by the user on 2026-08-09**, at the moment DR-020 named. §11.19.4 left one question open
+and dated it: *"Whether `PathwayKind` gains `attic` and `crawlspace` … **Owed at M3**, when
+`Pathway` gets its editor."* M3-E is that editor and this is the discharge.
+
+**11.30.1 The ruling.** `PathwayKind` becomes **nine values**: `conduit | jhook | tray |
+plenumSpace | riser | directBury | exterior | attic | crawlspace`.
+
+**11.30.2 The tension §11.19.4 named, and why it resolves this way.** The objection is that both are
+*spaces*, and the location tree already models spaces. It does, and that is not the same fact.
+**`Location` models where a room IS; `Pathway.kind` models what a cable PASSES THROUGH.** A run from
+the rack to a bedroom crosses an attic that is nobody's room, belongs to no room's subtree, and
+would have to be invented as a `Location` purely to be pointed at. `fromLocationId` and
+`toLocationId` are the pathway's **endpoints**, so a space in the middle has no field to live in.
+
+**What the field is for is the CONSEQUENCE**, which is what makes this the same kind of value as
+`plenumSpace` rather than a taxonomy exercise. `plenumSpace` earns its place because it carries a
+code consequence (NEC 800.154, `CODE-002`). The two added here carry consequences an integrator acts
+on with the same seriousness:
+
+| Value | What it obliges |
+|---|---|
+| `attic` | Temperature derating, and rodent exposure |
+| `crawlspace` | Moisture, and vermin |
+
+**11.30.3 It is deliberately not a rule, and M5 is unaffected.** This ruling adds two enum values
+and **no validation**. The v1 catalogue stays at **28 rules** (DR-020 §11.19.2(4)); nothing here
+adds a 29th, and no existing rule changes its reading. `CODE-001` and `CODE-002` are M5's and are
+written against `containsLineVoltage` and `plenumSpace` exactly as before. **A `attic` run is not
+an error and must never become one**: G2 requires the document be able to represent the world as
+found, and an attic run is the ordinary case in a retrofit rather than a defect.
+
+**11.30.4 The cost, stated because it is the reason this was cheap to settle now rather than
+later.** `PathwayKind` is **not seeded catalog data**: it is a Dart enum serialised by name, with no
+registry row, no `sources.md` entry and no palette. Two values cost two enum members, two picker
+entries and two label strings.
+
+**Settling it BEFORE the editor ships is the whole point of the timing.** The field serialises by
+name, so values added after documents exist are readable going forward but leave earlier documents
+having recorded `conduit` for a run somebody would now call `attic`. DR-020 deferred this to *"when
+`Pathway` gets its editor"* precisely so the enum would be complete on the day the first gesture
+could write it, and no document would carry a value chosen from a short list.
+
+**11.30.5 What it does not rule.** It does not say a pathway's kind is **required**; the field keeps
+its `conduit` default and nothing refuses a run whose kind nobody has set. It does not add
+`Location` kinds for attic or crawlspace, which remains available if a project genuinely wants an
+attic as a place rather than as a route. And it does not touch the remaining open half of §11.19.4,
+which is AC-040's deferral of ~40 length rules to v1.2.
+
+**11.30.6 Scope.** **No scope change to roadmap §2.** No feature joins or leaves v1, no milestone
+moves, and §12.7 is not re-costed. **DR-020 §11.19.4's first clause is discharged** and should be
+read with this section beside it. **M3-E/1 is unblocked.**
+
+---
+
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-030 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-031 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -8558,9 +8616,14 @@ allowlist of pairs, an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-030 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-031 are the user's decisions and are binding. §12 is the complete
 index of what they supersede, §12.1…§12.5, §12.9, §12.11, §12.12 and §12.13 by ruling, §12.6 by
 internal correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **Two entries
 supersede another DR**: §12.12 (DR-018's reasoning as well as its ruling) and §12.13, which also
 corrects §12.6(b)'s rule count from 27 to 28. Anything not listed there stands as written
 in Parts 1–3.
+
+**§11.30 supersedes nothing and DISCHARGES something**, which is a third relationship and is why it
+has no §12 entry. DR-020 §11.19.4 is a *"what it does not rule"* clause with a date on it; answering
+it leaves DR-020 entirely intact and simply makes one of its open questions closed. A reader of
+§11.19.4 should follow the pointer there rather than infer that DR-020 was amended.
