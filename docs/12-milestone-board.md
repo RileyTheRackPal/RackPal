@@ -1351,48 +1351,6 @@ against null and not against zero, so a confirmed none reaches disk as `"spliceC
 unlooked-at run has no key. Wired to a `LinkField` row, which is the AC-013 retrofit; that table had
 held exactly one row since M3-A/7.
 
-**M3-D/2 (#153) closed at `36994ef`, and the ratification it was written to obtain had already been
-granted.** The task has two halves and only one of them was work. Its ruling half asks for
-`Outlet.nominalRunLength` to be *"ratified or overruled before anything reads it"*, on the ground
-that four sources of one number with three of them documented is how a schedule comes to disagree
-with itself. **DR-026 §11.25.2 ratified it as implemented, provisionally, on 2026-08-09** and found
-that the deadline had passed long before: the tier shipped at M2-B, `whole_house` sets the field on
-all seventeen outlets while setting `cutLength` on none, and the ruling says in terms that #153
-*"ratifies behaviour that already ships"* and that M3-D/2 is unblocked by it. Recorded here because
-the ruling reasoned FROM `ScheduleLengthSource`'s doc comment, and that comment carried no pointer
-back, so the one place a reader would look was the one place the answer was not. It now cites the
-ruling, and so do docs/08's two derived sentences, which named only the room estimate.
-
-*The build half is the retrofit M3-J/3 deferred, in the three places it said so.* `routedLength` and
-`cutLength` take the AC-013 conversion and gain `LinkField` rows, which is one change and not two:
-this model's standing note is that a field converts *"as each is wired to a Command"*, so converting
-without wiring claims a Command that does not exist and wiring without converting leaves the field
-writable behind the command stack. All three of AC-024's lengths now go through `parseLengthCell`,
-so the three columns cannot disagree about what `62.5` means.
-
-*The artifact is that a printed sheet changes what it claims.* `_lengthOf` reads `cutLength` first,
-so filling the column promotes a row from an italic estimate to an upright measurement, and
-**clearing it demotes the row back to the estimate rather than to a blank**. The second direction is
-the one that matters on a jobsite, and it is the one a chain built to run forwards only would have
-got wrong: a number typed into the wrong row has to be retractable to what the takeoff believed.
-The room subtotal follows the promotion, because a subtotal still adding the nominal after somebody
-measured is a figure nobody can reconcile against the sheet's own rows.
-
-*Two tests changed and the second one is the finding.* `structure_table_test.dart` asserted that CUT
-and ROUTED were **not** editable; that case existed to keep #585's task boundary deliberate, and the
-boundary is what this task removes, so the assertion follows it and says so in place. The other is
-worth more than its diff: `schedule_screen_test.dart` in **`rackmate_ui`** built a fixture with
-`..cutLength =`, and the moment the setter became `@internal` that became an
-`INVALID_USE_OF_INTERNAL_MEMBER` warning against a gate whose threshold is zero. **The AC-013
-boundary caught a real cross-package write on the first build in which it could**, in a widget test
-nobody would have thought to audit, and the fix was to use the constructor every other field on that
-same Link already used.
-
-*What it does not do.* It adds no length SOURCE: the chain is still the four tiers DR-026 ratified,
-and the plan-derived bound DR-020 §11.19.2(2) describes is not among them and will not behave like
-them when it lands. It does not touch `LEN-002`, which is M5's, and it does not give the two new
-columns a place on any rendered sheet, which is M6's under DR-027.
-
 *One item was found unowned and given a home rather than a task.* DR-020 §11.19.4 leaves open
 whether `PathwayKind` gains `attic` and `crawlspace`, and says it is **"Owed at M3, when `Pathway`
 gets its editor"**. That editor is #156 (M3-E/1) and no item claimed the question; it is recorded
@@ -1655,6 +1613,101 @@ column. DR-023 §11.22 resolves `@service=` through an `OutletTemplate` by tag t
 value is a template handle. One word, two targets, and `@service=poe` names a family no template
 carries. **M3-F cannot be written until this is settled**, because #159 has to know what a
 contractor's `Use` column becomes.
+
+**M3-D/2 (#153) closed at `36994ef`, and the ratification it was written to obtain had already been
+granted.** The task has two halves and only one of them was work. Its ruling half asks for
+`Outlet.nominalRunLength` to be *"ratified or overruled before anything reads it"*, on the ground
+that four sources of one number with three of them documented is how a schedule comes to disagree
+with itself. **DR-026 §11.25.2 ratified it as implemented, provisionally, on 2026-08-09** and found
+that the deadline had passed long before: the tier shipped at M2-B, `whole_house` sets the field on
+all seventeen outlets while setting `cutLength` on none, and the ruling says in terms that #153
+*"ratifies behaviour that already ships"* and that M3-D/2 is unblocked by it. Recorded here because
+the ruling reasoned FROM `ScheduleLengthSource`'s doc comment, and that comment carried no pointer
+back, so the one place a reader would look was the one place the answer was not. It now cites the
+ruling, and so do docs/08's two derived sentences, which named only the room estimate.
+
+*The build half is the retrofit M3-J/3 deferred, in the three places it said so.* `routedLength` and
+`cutLength` take the AC-013 conversion and gain `LinkField` rows, which is one change and not two:
+this model's standing note is that a field converts *"as each is wired to a Command"*, so converting
+without wiring claims a Command that does not exist and wiring without converting leaves the field
+writable behind the command stack. All three of AC-024's lengths now go through `parseLengthCell`,
+so the three columns cannot disagree about what `62.5` means.
+
+*The artifact is that a printed sheet changes what it claims.* `_lengthOf` reads `cutLength` first,
+so filling the column promotes a row from an italic estimate to an upright measurement, and
+**clearing it demotes the row back to the estimate rather than to a blank**. The second direction is
+the one that matters on a jobsite, and it is the one a chain built to run forwards only would have
+got wrong: a number typed into the wrong row has to be retractable to what the takeoff believed.
+The room subtotal follows the promotion, because a subtotal still adding the nominal after somebody
+measured is a figure nobody can reconcile against the sheet's own rows.
+
+*Two tests changed and the second one is the finding.* `structure_table_test.dart` asserted that CUT
+and ROUTED were **not** editable; that case existed to keep #585's task boundary deliberate, and the
+boundary is what this task removes, so the assertion follows it and says so in place. The other is
+worth more than its diff: `schedule_screen_test.dart` in **`rackmate_ui`** built a fixture with
+`..cutLength =`, and the moment the setter became `@internal` that became an
+`INVALID_USE_OF_INTERNAL_MEMBER` warning against a gate whose threshold is zero. **The AC-013
+boundary caught a real cross-package write on the first build in which it could**, in a widget test
+nobody would have thought to audit, and the fix was to use the constructor every other field on that
+same Link already used.
+
+*What it does not do.* It adds no length SOURCE: the chain is still the four tiers DR-026 ratified,
+and the plan-derived bound DR-020 §11.19.2(2) describes is not among them and will not behave like
+them when it lands. It does not touch `LEN-002`, which is M5's, and it does not give the two new
+columns a place on any rendered sheet, which is M6's under DR-027.
+
+**M3-D/3 (#154) closed at `8361c15`: `derived/cable_footage.dart`, AC-024's second change.** The
+takeoff is a **third reader of the one schedule derivation** rather than a second scan over
+`doc.links`, and that is the design rather than convenience. `ScheduleGroup.footage` already sums a
+ROOM for the person walking the house; this sums a MEDIA TYPE for the person at a counter deciding
+what to buy, which is #585's own distinction: *"how much cable to order, not how much went in the
+wall."* Building it off `buildSchedule`'s rows is what makes the two numbers unable to disagree
+about a length, a media type or which cables are real pulls (docs/08 §3.1), and a test drives that
+seam directly by setting a cut length and watching the sheet's subtotal and the takeoff's line move
+together.
+
+*The G4 rule is the task, and `Rollup.fromScan` is where it already lived.* A media type nothing
+known contributed to is **null and not zero**, because `0` reads as *"buy none"* to the person
+holding the page, and a room whose lengths simply have not been entered must not print as if it
+needed no cable. The waste figure of an unknown subtotal is unknown too: ten percent of *"we do not
+know"* is not a number. Nothing here re-spells the rule, which is `totals.dart`'s whole argument for
+being a factory rather than a shared function.
+
+*Only `fieldCable` reaches a purchase quantity, and the fourth exclusion is the one worth defending.*
+Jumpers and power cords are assemblies bought by the piece and docs/08 §2.2 gives them their own
+rollup, so folding them in would both double-count them and put a patch cord into a spool order;
+`internal` is a link inside one device. **A run whose class nobody has established is excluded as
+well**, on the strength of `kUndeterminedClassGroupTitle`'s own comment: its footage *"must not join
+a room's subtotal ... it is the number an installer orders cable against"*. Ordering is precisely
+what this rollup is for, so that argument applies with more force here, not less. All four are
+counted by reason.
+
+*The waste factor is applied at the rollup and never written back to a `Link`.* Baking it in would
+make an installer's measured 62 ft read 68 ft on the sheet they measured it against, and would
+compound the next time somebody changed the setting. The arithmetic is integer permille (CR-001):
+`Permille.toFraction()` exists but its own comment calls it display-only, and a takeoff is
+arithmetic somebody buys against.
+
+*`_isQuantity` is an exhaustive switch with no default arm, and that is a decision about a feature
+that does not exist yet.* DR-020 §11.19.2(2) rules that a plan-derived bound *"never enters the
+footage rollup as a quantity"*, and DR-029 puts the Plan view in v1 before M6. A `default: true`
+would admit that bound to a purchase order silently on the day the source is added; this way the
+build stops and a person decides.
+
+**The box count is NOT built, and the reason is the one canon §11.19.7 already wrote down.** AC-024's
+example ends *"→ 3 boxes (1000 ft)"*. `MediaTypeDef` has **no packaging field**, and no shipped
+media type carries a sourced package size, so a box count means hard-coding 1000 ft as a universal:
+false for RG6, for 16/4, and for anything on a reel. Adding a nullable `packageLength` and dividing
+where set would be worse, because that is the exact shape §11.19.7 refuses, a field null on all 38
+behind a rule that compiles, passes its own fixture and never fires on a real document. **Owed, with
+the missing field named**, rather than faked. Nothing in roadmap §2 or docs/08 §2.2 requires it:
+both say *"footage rollup by media with waste factor"* and stop.
+
+*No surface, and that is DR-027 rather than an M3-D/1 repeat.* Nothing outside its tests calls
+`buildCableFootage`, which is the shape §8.1 refused for M3-D/1. The difference is a ruling: the
+materials rollup belongs to `T6.30`, DR-027 §11.26.2 puts every rendered sheet in M6, and §11.26.4
+names the derivation as the load-bearing half M3 owes. Recorded so the next reader does not mistake
+one for the other.
 
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
