@@ -79,11 +79,15 @@ The consequences worth stating:
 | **Base64 inside the JSON** | A 2 MB PNG becomes roughly 2.7 MB of inline text in a pretty-printed file that is rewritten whole on every save, and CR-117's round-trip starts moving megabytes on every run of the core suite. It is the fast answer and the one that is regretted |
 | **A sidecar file next to the `.rmpj`** | Breaks CR-091's single-file property outright, and "email the project, lose the floorplan" is the exact failure this product exists to prevent. It would also owe a new state in the file-layer error surface (AC-058/D3) |
 
-**Raster formats accepted: PNG and JPEG.** PDF is not read. The `pdf` package writes documents and
+**Raster formats accepted: PNG and JPEG. PDF IS READ, as of DR-029**, and this paragraph used to say it was not. The `pdf` package writes documents and
 does not import pages (docs/08 §1.1), so a PDF floorplan would require PDFium or a WinRT path, and
 either puts a multi-megabyte native binary into a self-signed portable distribution (DR-006) or owes
-a `docs/13` entry against DR-009. The user exports a page to an image first. PDF import stays
-available as a later increment that changes no stored format.
+a `docs/13` entry against DR-009. That increment is bought: DR-029 ships it in v1 at a
+costed 2–3 weeks over raster-only, because architects send PDFs and a manual conversion step
+would sit on the ordinary path rather than the exceptional one. **It changes no stored format**, and
+that prediction holds exactly: a PDF is rasterised at IMPORT and the member written to the zip is
+still PNG or JPEG, so `PlanUnderlay.format` keeps its two values and `rackmate_core` still needs no
+decoder. What it buys is a `docs/13` entry against DR-009, which DR-029 accepts and names.
 
 ---
 

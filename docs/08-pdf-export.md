@@ -459,7 +459,7 @@ Bottom-right, 396 × 115 pt on ANSI B and larger; on ANSI A a full-width 690 × 
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
-There is no logo. RJ-017 ships the integrator's **text** block (firm, contact, licence number) which carries the same information and needs no raster asset in the container.
+**The logo ships in v1 as of DR-030**, in M6 beside the title block it sits in, and this line used to read *"There is no logo"*. It rides the zip container DR-019 settled and the raster path DR-029 builds for the plan sheet, so it is a fourth consumer of things already paid for rather than a new subsystem. The integrator's **text** block (firm, contact, licence number) is unchanged and still ships: the logo is added beside it, never instead of it, because the text is what a photocopy at third generation still carries.
 
 Every field resolves from `ProjectInfo`, `Rack`, the sheet definition, or app preferences. Nothing is typed at export time. Empty optional lines collapse rather than printing a blank. Two fields are computed rather than stored:
 
@@ -652,7 +652,7 @@ abstract interface class DiagramCanvas {
 
 This is the single declaration of `DiagramCanvas` in the corpus. [Architecture §8.1](03-architecture.md) cross-references it and does not restate it (CR-086). No method exists beyond the ones above, and none may be added without an amendment.
 
-`drawImage`/`ImageRef` are **not** in the v1 interface. Their only consumer was the title-block logo, which RJ-017 defers to v2; they return with the v2 zip container as one amendment. The exported document is therefore 100% vector with no raster path and no alpha path at all.
+`drawImage`/`ImageRef` **are in the v1 interface as of DR-029**, and this sentence used to say the opposite. The Plan view ships in v1 and its `T1.01 Device Location Plan` prints a screened floorplan underlay, so the exported document is **no longer 100% vector**: there is a raster path, it has one consumer today and a second when DR-030's title-block logo lands, and `draw/canvas.dart`'s own amendment clause is what governs the addition. **The no-alpha property is unchanged and is defended separately**; see row 9 below, which is now the only thing standing between this document and an `ExtGState`.
 
 Five decisions embedded in that shape:
 
@@ -775,7 +775,7 @@ Pt anchorOffset(TextAnchor a, TextMetrics m) {
 | 6 | **Text metrics** | `TextPainter`, full shaping | `PdfFont.stringMetrics`, unkerned advances | **`stringMetrics` is the single source of truth on both backends. CR-081** |
 | 7 | **Kerning / ligatures** | Skia applies GPOS `kern` and `liga` | dart_pdf applies neither | `FontFeature.disable('kern')`, `disable('liga')`, `disable('clig')` on the Flutter side. Without this, screen text is 1–3% narrower than print and every collision calculation disagrees. **CR-081** |
 | 8 | Colour space | `ui.Color`, sRGB 8-bit ARGB | `PdfColor`, 4 × double, **DeviceRGB** | `PdfColor.fromInt(argb)`. DeviceRGB is unmanaged; mitigations are the CMYK palette (pure black `0,0,0,1`, never rich black) and explicit grey values for greyscale rather than luminance conversion. sRGB `OutputIntent` is v1.1 |
-| 9 | **Alpha** | per-`Paint` alpha | no per-paint alpha; needs `ExtGState` | **Do not use alpha in the document: absolutely, with no exception.** Tints are pre-composited at palette-definition time (18% over white). Alpha is reserved for the on-screen selection highlight, which never reaches the PDF. The one former exception, the logo-opacity path, is gone with the logo (RJ-017), so no `ExtGState` is ever emitted and `setGraphicState` is never called. |
+| 9 | **Alpha** | per-`Paint` alpha | no per-paint alpha; needs `ExtGState` | **Do not use alpha in the document: absolutely, with no exception.** Tints are pre-composited at palette-definition time (18% over white). Alpha is reserved for the on-screen selection highlight, which never reaches the PDF. The former exception was the logo-opacity path; **DR-030 returns the logo and deliberately does NOT return its opacity**, so the rule survives it. **The live question is the Plan view's SCREENED underlay** (DR-029): screening by per-image alpha would emit the first `ExtGState` this document has ever carried, so the underlay must be **pre-composited at import** the way tints are, and that is the Plan view epic's to settle before `T1.01` renders. |
 | 10 | Miter limit | `strokeMiterLimit` default **4** | PDF default **10** | Set `strokeMiterLimit = 10` on the Flutter side to match PDF, not the reverse. Invisible for orthogonal traces (90° miter ratio √2 ≈ 1.414), visible on acute symbol paths |
 | 11 | Line cap | default butt | default butt | 1:1. Keep butt on dashed traces: round caps change apparent dash length on both |
 | 12 | Transform | `Canvas.transform` concatenates | `setTransform(Matrix4)` **concatenates** despite the name | 1:1. `Matrix4.storage` feeds `Canvas.transform` directly. Always bracket with save/restore |
@@ -783,7 +783,7 @@ Pt anchorOffset(TextAnchor a, TextMetrics m) {
 | 14 | Zero-width strokes | `0` → one device pixel | `0` → thinnest device line, invisible at 2400 dpi | **Never emit 0.** Clamp in `_applyStroke` on both backends: 0.5 pt signal floor, 0.25 pt furniture floor (CR-082) |
 | 15 | Winding under flip | — | the flip reverses winding | Only matters for `evenOdd` on nested subpaths. Symbol paths do not nest; `addEllipse` emits a consistent direction |
 | 16 | Text wrapping | `TextPainter` wraps and shapes | `drawString` is single-line, baseline-origin | The interface has **no wrapping**. Multi-line is the scene builder's job: measure, split, emit N `drawText` calls at a computed leading. Layout belongs in the builder, not the backend |
-| 17 | Images | full format support | `PdfImage`, pre-decoded | **Not in v1.** `ImageRef` and `drawImage` are not in the interface, their only consumer was the title-block logo (RJ-017). Recorded here so the v2 container change knows what it must add |
+| 17 | Images | full format support | `PdfImage`, pre-decoded | **IN v1 as of DR-029**, where this row used to read *"Not in v1"*. Two consumers: the Plan view's screened underlay on `T1.01`, and DR-030's title-block logo. Both ride DR-019's zip container, both store PNG or JPEG, and neither may use alpha (row 9) |
 | 18 | OS text scaling | inherits accessibility scale | none | `textScaler: TextScaler.noScaling`. Without it a user at 125% OS scaling sees labels 25% larger than the PDF and blames the PDF |
 
 ### 7.7 The two adapters

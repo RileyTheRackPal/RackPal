@@ -8002,11 +8002,93 @@ paragraph and §2.2 loses its row. **The milestone's contents and its exit crite
 decomposition**, not here: this ruling settles that it ships, when, and how much of it, and the
 first task of the epic is to decompose it (the rule M3-0 established).
 
+**11.28.11 Four derived sentences this ruling falsified, corrected the same day and listed because
+the first pass missed them.** DR-029 named the `drawImage` op and stopped there, which was
+incomplete in a way worth recording: a ruling that adds a raster to an exported sheet falsifies
+every claim the export document makes about being vector-only, and those claims were three
+paragraphs apart in one file.
+
+| Sentence | Where | Now |
+|---|---|---|
+| *"The exported document is therefore 100% vector with no raster path and no alpha path at all."* | docs/08 §6.2 | **False.** `T1.01` prints a screened underlay. There is a raster path; the no-alpha property survives separately. |
+| Backend table row 17, *"Images: **Not in v1.**"* | docs/08 | **False.** Two consumers: the underlay, and DR-030's logo. |
+| *"There is no logo."* | docs/08 §5, the title block | **False as of DR-030.** |
+| *"PDF is not read. The user exports a page to an image first."* | docs/15 §2 | **False.** DR-029 buys that increment. |
+
+**AND ONE LIVE QUESTION THE PLAN VIEW EPIC MUST SETTLE BEFORE `T1.01` RENDERS.** docs/08 row 9
+forbids alpha *"absolutely, with no exception"*, and docs/15 calls the underlay **screened**.
+Screening by per-image alpha would emit the first `ExtGState` this document has ever carried and
+break that rule. **The underlay must be pre-composited at import**, the way palette tints already
+are at 18 % over white, and #589 carries it.
+
+**11.28.12 One cost that is smaller than it looks.** docs/15 predicted that PDF import *"changes no
+stored format"*, and the prediction holds exactly: a PDF is rasterised **at import** and the member
+written to the zip is still PNG or JPEG, so `PlanUnderlay.format` keeps its two values and
+`rackmate_core` still needs no image decoder. What is bought is an import path and a `docs/13`
+entry, not a model change.
+
+### 11.29 DR-030 · The integrator's logo ships in v1, in M6, without its opacity
+
+**Settled by the user on 2026-08-09:** *"Let's add the logo in; likely during M6. If it's cheap we
+may as well."*
+
+**11.29.1 What it reverses, and what it leaves standing.** RJ-017 accepted
+`critique-completeness.md` D9 *"except for the last clause"* and rejected the integrator's logo for
+v1 on three grounds:
+
+| RJ-017's ground | Status |
+|---|---|
+| It requires a raster asset inside the project, *"which reopens the container question that AC-057 just closed by cutting images"* | **Gone.** DR-019 settled the container and DR-029 builds it. |
+| *"The logo lands with the v2 zip container, alongside device images"* | **Arrived early.** DR-029 brings the carrier into v1. |
+| *"The title block's **text** integrator block ships in v1 and carries the same information"* | **STANDS, and is not overturned.** The logo is added **beside** the text, never instead of it. |
+
+The third ground is the one that survives contact, and it is why this ruling adds rather than
+replaces: a photocopy at third generation still carries the firm, the contact and the licence
+number, and it may well not carry a logo.
+
+**11.29.2 Why it is cheap, as arithmetic rather than as an impression.** The logo is the **fourth
+consumer of three things already being built**: DR-019's zip container, DR-029's `drawImage` op on
+`DiagramCanvas`, and DR-029's raster embedding in the PDF backend for `T1.01`. On its own account it
+adds a model field, a fit rule and a print check. **If the Plan view slips out of v1, this slips
+with it**, because every one of those three is DR-029's.
+
+**11.29.3 THE OPACITY DOES NOT COME BACK, and that is this ruling's one real constraint.** docs/08
+row 9 forbids alpha *"absolutely, with no exception"* and records that the sole former exception was
+the logo-opacity path, *"gone with the logo"*. **The logo returns at full opacity.** No `ExtGState`
+is emitted, `setGraphicState` is never called, and an invariant that was written around this
+feature's absence survives its return. A user who wants a faded logo supplies a faded PNG, which
+moves the compositing to import where the underlay's is going too.
+
+**11.29.4 It lands in M6, and the ordering already works without a new constraint.** #341 (M6-G) is
+sheet furniture in full and #343 (M6-G2) is the title block. DR-029 puts the Plan view before M6, so
+the container, the canvas op and the PDF raster path all exist by the time M6-G runs. Nothing needs
+sequencing beyond what DR-029 already fixed.
+
+**11.29.5 What it owes on its own account**, so decomposition does not discover it: a model field
+mirroring `PlanUnderlay`'s shape (member path, format, pixel dimensions so layout needs no decode,
+`contentHash` as a warning and never a load failure, AC-042); a **fit rule**, because title-block
+real estate is fixed and a logo's aspect is arbitrary, so fit-inside with aspect preserved and never
+stretched; **import hardening** on M4-M4's rule that every import path carries limits, meaning a
+format allowlist and byte-size and pixel-dimension caps; and a place in **the print matrix** (AC-058
+D13, #360), because a logo that smears to black on a greyscale laser is a defect the vector sheets
+could not previously have. Stored bytes go in verbatim, so M6-I5's byte-determinism assertion is
+unaffected.
+
+**11.29.6 What it does not do.** It does not return **device images**: AC-057 cut those on a
+separate argument about file size and the 3–6× budget, and nothing here touches it. It does not add
+alpha. It does not make a logo **required**: absent is the ordinary case, and G4's
+absent-key-is-unknown applies to a firm that has no logo or does not want one on the sheet.
+
+**11.29.7 Scope.** **v1 grows by one small item inside M6.** No milestone moves and **§12.7 is not
+re-costed**: the addition is days against M6's 5–7 weeks. That is a judgement rather than a
+measurement, and it is recorded as one: if decomposition finds otherwise, M6's row moves and this
+paragraph is what it will be checked against.
+
 ---
 
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-029 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-030 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -8290,7 +8372,7 @@ in. See §11.7.
 |---|---|
 | **CR-117** | **Unaffected and it constrains the writer.** Zip is nondeterministic by default, so §11.18.2(2) fixes entry order, timestamps, compression method and extra fields. The plain-JSON path's existing round-trip and golden corpus are untouched, because a document without an underlay writes identical bytes. |
 | **AC-057** | **Unaffected.** No image member reaches `.rmdev`/`.rmdx`, and device images stay cut. What DR-019 opens is a *project* container, which is a different file and a different question. |
-| **RJ-017** | **Superseded in part by DR-029.** `DiagramCanvas` **gains a `drawImage` op in v1**, because DR-029 ships the Plan view in v1 and docs/15 §7 records that adding one is part of building it; `draw/canvas.dart`'s own amendment clause governs the addition. RJ-017's rejection of the **integrator's logo** is NOT reversed: one of its grounds (a raster asset reopening the container question) is gone, the others are not, and DR-029 §11.28.6 refuses to collect the logo as a side effect of a ruling that never considered it. |
+| **RJ-017** | **Superseded in part by DR-029 and DR-030.** `DiagramCanvas` **gains a `drawImage` op in v1** (DR-029), and **the integrator's logo ships in v1 during M6** (DR-030), which is the last clause RJ-017 rejected. Two of RJ-017's three grounds fell to DR-019 and DR-029; **the third stands and governs the shape**: the title block's TEXT integrator block still ships and the logo is added beside it, never instead of it. **The logo's OPACITY does not return**, so docs/08 row 9's no-alpha rule survives the feature it was written around. Everything else RJ-017 accepted (icon, wordmark, window and document icons, file-type registration, the trademark search) is untouched. |
 | **AC-040**, the count of 27 | **Unaffected.** The four `PLN-*` advisories in docs/15 §9 ship with the Plan view in its own band and are not v1 rules. Any document quoting a rule total says which band it counts. |
 | **AC-024** | **Unaffected and extended, not replaced.** `Location.estimatedRunLengthFromRack` remains tier 3 of docs/15 §4's four tiers and remains the answer for every room without a plan. |
 | **G4 / CR-114** | **Unaffected, and it is the reason §11.18.1's correction matters.** Silent field loss on save is the same class of failure as a fabricated number: the document stops saying what it knows. |
@@ -8476,7 +8558,7 @@ allowlist of pairs, an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-029 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-030 are the user's decisions and are binding. §12 is the complete
 index of what they supersede, §12.1…§12.5, §12.9, §12.11, §12.12 and §12.13 by ruling, §12.6 by
 internal correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **Two entries
 supersede another DR**: §12.12 (DR-018's reasoning as well as its ruling) and §12.13, which also
