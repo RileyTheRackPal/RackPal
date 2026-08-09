@@ -182,8 +182,10 @@ final class ConnectorTypeDef {
 /// §5.1's CSV `media` column. The remaining eight (`conductorCount`,
 /// `pairCount`, `gaugeAwg`, `impedanceOhms`, `shielded`,
 /// `minBendRadius`, `outerDiameter`, `supports`, `isPathwayOnly`) stay
-/// out until something reads them; `isPathwayOnly` is CR-109's and
-/// belongs with the matrix's EMT column.
+/// out until something reads them; `isPathwayOnly` is CR-109's and goes
+/// with M3-E/1, which is the task that makes something able to CREATE a
+/// `Pathway`. See `seed_media_types.dart` for why the matrix was the
+/// wrong home for it.
 final class MediaTypeDef {
   const MediaTypeDef({
     required this.id,

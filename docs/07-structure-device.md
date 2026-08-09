@@ -106,6 +106,22 @@ The editor **opens in table mode**; the room × media matrix is a tab beside it 
 
 Four regions. **Left** is the location tree, shown read-only with an inline "edit in `Project ▸ Locations…`" affordance; it is a view of the project vocabulary, not an editor for it (CR-112). **Top** is the dual-mode bulk entry bar. **Centre** is the drop table, grouped by room with a sticky group header carrying the room `code`, the estimated run length, and the drop/connected counts. **Right** (collapsed in the wireframe) is the inspector and batch inspector, with the same ergonomics as the device builder's, see [Device builder](06-device-builder.md).
 
+**The strip is two tabs and this wireframe draws four** (M3-C/3). `[▶ Table]`
+and `[ Matrix ]` are built; `[ Outlets ]` and `[ Pathways ]` open nothing, and
+a tab that opens nothing is the `UnbuiltView` defect wearing a different hat.
+M3-C/2 therefore shipped with no strip at all, because AC-048 asks only that
+the editor **open in table mode** and one surface satisfies that outright. The
+strip arrived with the second thing to switch to, and `structure_editor_screen
+.dart` names the two that are still absent beside the list they are absent
+from.
+
+**The bulk entry bar is above the tabs, not inside one.** It is the same widget
+with the same state on both, which is M3-C/3's whole instruction: *"a matrix
+that is its own screen is a second place the repeat loop has to be
+re-established"*. Typing a line with the grid showing puts the drops in the
+grid, and typing one on a project with no rooms creates the room and then the
+drops without leaving either view.
+
 ### 4.1 Table columns
 
 Default columns are the ones a person needs to answer "what am I pulling and where does it land": field label, rack label, outlet, media, service, pathway, rack termination, rough-in status. **Optional columns**, off by default, added from `⚙ Columns`: jacket rating, jacket colour (convention), **jacket colour pulled** (the exception), conduit, `routedLength` / `cutLength` / `terminatedLength`, field termination, test result and certificate ID, installed by, notes, and any `unknown`-map columns preserved from a CSV import. Jacket colour and conduit were demoted from default to optional and reel ID was cut entirely (RJ-004).
@@ -144,6 +160,51 @@ Rooms down, media across, integer spinners at the intersections. Changing a cell
 ```
 
 The `EMT` column is `isPathwayOnly` and creates `Pathway`s, not drops, its cells are tinted and excluded from the Σ drop count (CR-109). Media columns are user-configurable; `+ Media column` opens the media-type picker with an inline "create new type" row.
+
+**A cell is a target and not a step** (M3-C/3). The surface hands over the
+number a person typed and `planMatrixCell` works out what it means against the
+current document, because a `+1` computed from what the widget last drew is
+`+1` against a number an undo, a typed line or a second window has already
+moved. The count it reads back and the rows a decrement then takes come off one
+call to `buildStructureTable`, so the number on screen and the cables that go
+are the same list. A cell that already says that number produces no command at
+all, since tabbing across a row commits every cell it passes.
+
+**Highest-sequence means last in the table's own order**, reusing that
+comparator rather than inventing a second one, so the runs that go are the ones
+a person can see at the bottom of the room's band. A landed run is stepped over
+rather than taken; the refusal is for when there are not enough spares, and it
+names the floor the cell cannot go below rather than only saying no. Removing a
+drop never removes the plate it hung on: an outlet with nothing pulled to it is
+a real state.
+
+**An increment creates a plate, exactly as the typed line does.** The matrix
+does not know about plates: a cell is a room and a cable, and a real plate is
+mixed media, so no cell can correspond to one. Joining the room's first outlet
+would put speaker cable on a TV plate somebody else created, so the plate count
+is one per gesture and the `Outlets` column is where that is visible rather
+than hidden. This is `planOutletFromTemplate`'s rule from the other side: it
+creates an outlet and never joins one.
+
+**The grid shows every room and the table does not**, which is the one place
+the two views deliberately disagree. `buildStructureTable` omits a room with no
+drops because the tree beside it already lists every room; here a `0` cell is
+where a person types `2`, and a matrix that hid the empty rooms would be a
+bulk-entry grid you cannot enter the first drop on. Which locations get a row
+is `LocationKind`'s answer and not a second notion of "room": `room`, `zone`
+and `outdoor` take drops, and a `site`, `building` or `floor` gets a row only
+when it already carries one.
+
+**Two of this section's own controls are absent and say so in the source.** The
+tinted `EMT` column needs `MediaTypeDef.isPathwayOnly`, which is not a field,
+and a `Pathway` command, which nothing in the product has: that is M3-E/1, and
+a tint with no `Pathway` behind it would claim CR-109 holds when it does not.
+`+ Media column` has no "create new type" row, because creating a media type is
+the media-type editor (M4-P2). There is no `+ Room` either, and that one is not
+owed: the loop above the grid already creates a room on `Enter` and CR-112 puts
+the second path in `Project ▸ Locations…`, so a third would be a third place
+one rule lives. The grid opens on this section's own eight columns, minus
+`EMT`.
 
 ### 4.3 Bulk entry: command mode and outlet templates
 

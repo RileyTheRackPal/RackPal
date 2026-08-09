@@ -1496,6 +1496,80 @@ and then throws at apply time**, with `(Link, String) => void is not a subtype o
 *Closed at `b0ab0d7` (the row model), `80778b0` (the columns), `6c839bf` (the surface), `9bee69c`
 (the route and the loop fix), `d302c7e` (inline editing) and `02c540e` (fill-down and paste).*
 
+**M3-C/3 (#149) closed across four commits, and the claim it had to make good is arithmetic rather
+than architectural.** The task reads *"one editor, two views of the same rows"*, and "the same rows"
+is easy to satisfy in a widget tree and easy to lose in a tally: a grid that counted `doc.links` for
+itself would be a third derivation of one fact, which is what CR-107 deleted `StructureDrop` for.
+So `derived/structure_matrix.dart` is a projection of `buildStructureTable`, which is a projection
+of `buildSchedule`, and the first test group asserts that the matrix's Σ **is** the table's drop
+count rather than that it equals some number.
+
+*Where the two views deliberately disagree, and why that is not drift.* The table omits a room with
+no drops, because the tree beside it already lists every room and forty empty bands would push the
+drops off the screen. The matrix must show it, because **a `0` cell is where a person types `2`**,
+and a bulk-entry grid you cannot enter the first drop on is not one. Which locations get a row is
+`LocationKind`'s answer rather than a second notion of "room": `room`, `zone` and `outdoor` take
+drops, and a `site`, `building` or `floor` gets a row only when it already carries one, which an
+import or a reparent can produce and which hiding would hide cable somebody paid for.
+
+*A cell is a TARGET and not a delta, and that is the finding worth keeping.* The surface hands over
+the number a person typed and `planMatrixCell` works out what it means against the current document.
+A `+1` computed by the widget is `+1` against whatever it last drew, and the thing a grid of sixty
+cells does most is go stale: an undo, a typed line, another cell's gesture. The count it reads back
+and the rows a decrement then takes come off **one** call to `buildStructureTable`, so the number a
+person saw and the cables that go are the same list. A cell already at its number produces no
+command at all, because tabbing across a row commits every cell it passes and an undo step per
+keystroke is not a grid.
+
+*§4.2's decrement clause, read exactly.* "The highest-sequence UNCONNECTED drops" means last in the
+table's own order, reusing that comparator rather than inventing a second one, so the runs that go
+are the ones visible at the bottom of the room's band. A landed run is **stepped over**, not taken
+and not made to refuse the whole gesture; the refusal is for when there are not enough spares, and
+it names the floor the cell cannot go below rather than only saying no (CR-017's spring-back).
+`unresolvedPort` is takeable, because a `PortEndpoint` naming a port this document does not hold is
+a fault rather than a connection and refusing would make the fault permanent.
+
+*The one question §4.2 does not answer, answered.* An increment creates a plate, exactly as the
+typed line does. **The matrix does not know about plates**: a cell is a room and a cable, and a real
+plate is mixed media (§4's `WP-1` carries Cat6 and RG6), so no cell can correspond to one. The
+tempting rule, join the room's first outlet, is worse than it looks, because it puts speaker cable
+on a TV plate somebody else created. So the plate count is one per gesture, §4.2's own `Outlets`
+column is where that is visible rather than hidden, and a decrement never takes the outlet with it.
+That is `planOutletFromTemplate`'s rule from the other side.
+
+*The spinner became a number box, which is #148's argument again.* §4.2 draws "integer spinners";
+six rooms by nine media is 54 of them and 108 arrow buttons, each costing a click where a keystroke
+does, and a pair of arrows is not in the focus tree in a way `Tab` can walk across a row. Rendering
+the real input makes tab order the widget order, so **this task added no `kKeymap` row either** and
+the arbitration count stays at 50.
+
+*The keybindings stayed wrapped around the whole editor, which looks looser and is stricter.*
+`Shortcuts` only sees a key when the FOCUSED widget is inside it, so scoping `Ctrl+D` and `Ctrl+V`
+to the table body would have made them silently do nothing whenever focus sat in the quick-add bar,
+which is the exact thing `kNoCaretForFill` exists to prevent. On the matrix they say so instead.
+Filling a count down a room column would be a legible gesture, but *"eight rooms all get four
+Cat6"* makes 32 cables and an outlet each from one keystroke, and that is a ruling rather than an
+afternoon.
+
+*What the tab strip did to #148's absent-controls test.* `Matrix` left the list and `Outlets`
+joined it, which is the bookkeeping that test is for: the day one is built it says the others still
+are not. `+ Room` is absent and is **not** owed, because the loop above the grid already creates a
+room on `Enter` and CR-112 puts the second path in `Project ▸ Locations…`; a third would be a third
+place one rule lives. `+ Media column` has no "create new type" row, which is M4-P2's editor.
+
+*And §4.2's tinted `EMT` column is absent, which corrects a pointer rather than deferring a
+feature.* `seed_media_types.dart` said `isPathwayOnly` "belongs with the Structure matrix's EMT
+column (#149)", and that reading does not survive contact: the flag's whole purpose is that such a
+media type creates a `Pathway` instead of a `Link`, and **nothing in this product creates a
+`Pathway` at all**. Seeding the flag alone would mark three types with a fact no code could act on,
+and tinting a column would claim CR-109 holds when it does not. It goes to **#156** (M3-E/1), which
+owns `Pathway.kind` and `containsLineVoltage` through to the UI. Until then the drop line and the
+matrix both make `Link`s out of `Office: 1x ENT`, which is a pre-existing CR-109 gap this task
+found rather than introduced, and both source comments now name the right task.
+
+*Closed at `30a3a6f` (the grid model), `096daf7` (the cell planner), `263f403` (the tab and the
+route) and this commit.* Core 1937, UI 785, app 765.
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three

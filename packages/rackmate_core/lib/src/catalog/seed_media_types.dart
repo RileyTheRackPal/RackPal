@@ -72,9 +72,16 @@
 //    whole-house starter used to carry were authored for that fixture,
 //    not sourced, and nothing in the codebase reads the field.
 //  * NO `isPathwayOnly`, though canon marks `media.conduit_emt`,
-//    `media.conduit_ent` and `media.pull_string` with it. It is CR-109's
-//    and belongs with the Structure matrix's EMT column (#149); the
-//    three ids are named here so they are findable when it lands.
+//    `media.conduit_ent` and `media.pull_string` with it. THIS USED TO
+//    NAME #149, and #149 shipped without it: the flag's whole purpose is
+//    that such a media type creates a `Pathway` instead of a `Link`, and
+//    NOTHING IN THIS PRODUCT CREATES A `Pathway` AT ALL. Seeding the
+//    flag alone would mark three types with a fact no code could act on,
+//    so it goes with #156 (M3-E/1), which owns `Pathway.kind` and
+//    `containsLineVoltage` through to the UI. Until then the drop line
+//    and the matrix both make `Link`s out of conduit, which docs/07 §5.2
+//    already shows the importer must not do; the three ids are named
+//    here so they are findable when it lands.
 //  * NO `conductorCount`, `pairCount`, `gaugeAwg`, `impedanceOhms`,
 //    `shielded`, `minBendRadius`, `outerDiameter` or `supports`. Canon
 //    §6.5 has columns for the first five and nothing reads any of them;
