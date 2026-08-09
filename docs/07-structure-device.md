@@ -219,6 +219,22 @@ Kitchen: 2x Cat6 + 1x RG6 @outlet="KIT-TV-1"
 
 `@outlet="…"` creates or joins one `Outlet`, note that this is the *outlet* sense of "bundle", not the pathway sense (CR-016); the DSL uses the canonical word. `@pathway="…"` is the conduit sense.
 
+**`@service=` names the LABEL and `@signal=` names the FAMILY, and they are two words** (DR-025).
+`@service=` is DR-023's chain and reaches `{SERVICE}` in the field label; `@signal=` writes
+`Service.signalFamily` and reaches the DRC, the palette and the schedule's SERVICE column. One word
+cannot be both: a house running AVoIP in most zones and one HDBaseT pair from an AVR to a projector
+has runs with the same label and different families, and `video.avoip` and `video.hdbaset` are the
+same domain, the same `conn.rj45` and the same Cat6 in the wall. The decisive case is that
+`video.hdbaset` excludes `net.ethernet` from `acceptedFamilies`, because 100 W of PoH into a switch
+damages it (`SIG-001`), so a label that set the family would let a naming decision switch off the
+check.
+
+`@signal=` resolves by `shortTag`, then the id's own tail, then `displayName`, so `@signal=hbt`,
+`@signal=hdbaset` and `@signal=avoip` all land. **An unresolved value refuses** rather than creating
+a family, which is the opposite of RJ-012's rule for media and follows §3: media types are
+user-extensible, signal families are catalog-updated. Omitting it leaves the run
+`structure.undetermined`, which stays the encouraged default (§4.1).
+
 `+ Add outlet ▾` instantiates an `OutletTemplate` in one action, *TV location* → 2 × Cat6 + 2 × RG6 as one `Outlet` with four `Link`s and four label pairs. Seeded templates: **TV location · AP · Keypad · Ceiling speaker pair · Camera · Data only**, plus **TIA-570-D Grade 1 / 2 / 3** (CR-108). The grades stay **presets and a standards tag, never an axis**: the integrator does not speak TIA-570-D and is never asked to (AC-034/m23, DR-002). Which location fields the inspector demands is driven by the template: a ceiling speaker pair asks for `mountSurface: ceiling` and never for a wall compass direction (AC-034/m24).
 
 ---
@@ -243,7 +259,8 @@ Header matching is case-, space-, underscore- and hyphen-insensitive. Every sour
 | `rackLabel` | `tia_id`, `tia606`, `rack_label`, `panel_id` | |
 | `media` → `MediaTypeId` | `media`, `cable_type`, `type`, `wire`, `cable` | ✔ (long) |
 | `qty` | `qty`, `quantity`, `count`, `ea`, `number` | |
-| `service` → `SignalFamilyId` | `service`, `use`, `purpose`, `signal`, `function`, `application` | |
+| `service` → the label's `{SERVICE}` (DR-023) | `service`, `use`, `purpose`, `function`, `application` | |
+| `signal` → `SignalFamilyId` | `signal` | |
 | `pathway` → `Pathway.name` | `bundle`, `bundle_id`, `run`, `group`, `home_run`, `conduit`, `raceway`, `pathway` | |
 | `routedLength` | `length`, `length_ft`, `footage`, `ft`, `len` | |
 | rack-end termination → `PlaceEndpoint.intendedTermination` | `termination_rack`, `rack_end`, `panel`, `panel_port`, `head_end` | see note |

@@ -7665,11 +7665,94 @@ this ruling is correcting.
 half is delivered, and named in the other, it acquires a gesture no task claimed. The task count is
 unchanged and no milestone moves.
 
+### 11.24 DR-025 · `@service=` names the label, `@signal=` names the family; they are two words
+
+**Settled by the user on 2026-08-08**, answering the question board #587 raised while M3-C/3 (#149)
+closed. The finding was that a structured run's `Service.signalFamily` is `structure.undetermined`
+forever and **no gesture in the product can change it**: `buildAddHomeRunCommand` hardcodes it,
+nothing writes it afterwards, and docs/07 §4's own wireframe draws a SERVICE column of values no
+gesture can produce.
+
+The ruling is not about the starting value, which is right and unchanged. It is about which word
+sets the family, because the corpus points two ways: docs/07 §5.1's import table maps a `service`
+column to **`SignalFamilyId`**, while DR-023 §11.22 resolves `@service=` through an `OutletTemplate`
+by tag then by name, making its value a template handle.
+
+**Ruling: they are two different facts and they get two different words.** `@service=` is unchanged
+and DR-023 stands entirely; a new `@signal=` names the signal family.
+
+**11.24.1 The user's own evidence, which is what decides it.** *"We often have situations where we
+use one AVoIP system for most areas, but use a simple HDBT transmitter/receiver pair for say,
+running from an AVR to a projector."*
+
+Both families ship and are deliberately separate: `video.avoip` (*AV-over-IP, SDVoE / JPEG XS /
+NDI*, `conn.rj45`, **star**) and `video.hdbaset` (*HDBaseT 5Play*, `conn.rj45`, **point-to-point**).
+Same domain, same connector, same Cat6 in the wall. So one house has runs that are **the same label
+and different families**, and three AVoIP drops to a TV, a projector and a display are **the same
+family and different labels**. One word cannot carry both without being wrong in one direction on
+every job that mixes the two, which the user reports is the ordinary case rather than the exotic
+one.
+
+**11.24.2 The decisive form of the argument: a naming decision must not be able to switch off a
+safety check.** `seed_registries.dart` on `video.hdbaset`, quoted rather than paraphrased because
+it is the reason this ruling has consequences beyond tidiness:
+
+> `acceptedFamilies` deliberately EXCLUDES `net.ethernet` — patching an HDBaseT output into a
+> switch does not work and its 100 W PoH can damage the switch. That check (`SIG-001`) is the
+> highest-value validation in the product and is only expressible because this is its own family.
+
+If `{SERVICE}` set the family, then choosing a label would decide whether SIG-001 fires. A label is
+a naming decision governed by CR-045 and CR-048 and stored once at creation; a family is an
+electrical fact the DRC reads. Letting the first drive the second is how a rule stops meaning
+anything.
+
+**11.24.3 The modifier is `@signal=`**, chosen because docs/07 §5.1 already lists `signal` as an
+accepted header for exactly this column, so the DSL and the importer share one word rather than
+acquiring a third. It resolves against `registries.signalFamilies` by `shortTag`, then the id's own
+tail, then `displayName`, which is `resolveMediaToken`'s widest-last shape: `@signal=hbt`,
+`@signal=hdbaset` and `@signal=avoip` all land.
+
+**An unresolved value REFUSES**, and does not create a family. This is the opposite of RJ-012's rule
+for media and the difference is already ruled: docs/07 §3 says *"Media types are user-extensible in
+v1 … Signal families and connector types remain catalog-updated."* A family invented from a typo
+would be a family with no domain, no colour, no dash and no `acceptedFamilies`, which is a run the
+DRC and the palette both cannot reason about.
+
+**11.24.4 A CSV `Use` column feeds the label chain and never the family.** Real pull lists put `TV`,
+`Data`, `Camera`, `Speaker` in that column, which name templates rather than families, and DR-023's
+chain already resolves exactly those. The family is stated deliberately or not at all: from
+`@signal=`, from the editor's SERVICE column, or from a CSV column that maps to `signal`.
+
+**docs/07 §5.1's table is owed the edit**, and it is the only derived-document change this ruling
+forces: the row reading `service` → `SignalFamilyId` with headers `service, use, purpose, signal,
+function, application` splits, with `signal` going to the family and the rest to the label. The
+accepted cost is that importing a list whose `Use` column says `HDBaseT` leaves those runs
+undetermined; the alternative is a spreadsheet word silently setting the fact SIG-001 reads.
+
+**11.24.5 The default is unchanged and is not what this ruling touches.** A drop is created
+`structure.undetermined` (docs/07 §4.1: *"at rough-in a Cat6 is just a Cat6"*), an
+`OutletTemplate`'s `OutletDrop.service` stays intent and is still never copied onto the `Link`, and
+a line with no `@signal=` sets no family. What changes is that §4.1's second clause becomes
+reachable: *"the DRC validates RETROACTIVELY when a `Service` later assigns a real family."*
+
+**11.24.6 One implementation fact the task must not miss: the family is stored TWICE.**
+`buildAddHomeRunCommand` writes it to `Service.signalFamily` and to `Net.signalFamily`. Today only
+the first is consumed, and docs/05 §5 is explicit that colour *"resolves from `Service.signalFamily`,
+never from the `Link`"*; `Net.signalFamily` is written once, serialised, and read by nothing but the
+codec. A command that sets one and not the other leaves the file carrying two answers to one
+question, in the one place nothing would notice, which is CR-107's failure in miniature. Both are
+written or neither is.
+
+**11.24.7 Scope.** **No scope change to roadmap §2.** docs/07 §4.1 already promises the capability
+and §4's wireframe already draws it; no task was ever cut for it, so #587 is a decomposition gap
+rather than an amendment. **M3-F is unblocked by this ruling**: #159 could not be written while a
+contractor's `Use` column had two possible targets.
+
 ---
 
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-024 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-025 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -8129,7 +8212,7 @@ allowlist of pairs, an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-024 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-025 are the user's decisions and are binding. §12 is the complete
 index of what they supersede, §12.1…§12.5, §12.9, §12.11, §12.12 and §12.13 by ruling, §12.6 by
 internal correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **Two entries
 supersede another DR**: §12.12 (DR-018's reasoning as well as its ruling) and §12.13, which also
