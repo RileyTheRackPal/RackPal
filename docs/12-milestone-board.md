@@ -1709,6 +1709,67 @@ materials rollup belongs to `T6.30`, DR-027 §11.26.2 puts every rendered sheet 
 names the derivation as the load-bearing half M3 owes. Recorded so the next reader does not mistake
 one for the other.
 
+**M3-D/4 (#155) closed at `59ea14a`, and its decision half was already made: the seam is DR-027.**
+The task asks
+to *"decide the seam"* between M3's exit criterion, which says a rough-in *"exports a Pull Sheet"*,
+and `sheet_def.dart:15-20`, which assigns that sheet to M6. **DR-027 §11.26.2 ratified exactly the
+seam #155 proposed** on 2026-08-09, on the user's *"M6 is where sheets are going to be rendered and
+I'd like to work those issues out all at once"*. So the task's remaining content is the
+demonstration, and the demonstration was genuinely absent.
+
+*Every part of clause 3 was tested and the clause was not, which is a distinction §8.1 makes and a
+suite cannot.* The sort, the room grouping and the footage rollup each had passing cases in
+`schedule_test.dart`. **None of them had ever been pointed at the same document.** A milestone whose
+evidence is three unit tests over three fixtures has demonstrated three mechanisms; the clause is a
+compound claim about one rough-in, and `pull_sheet_clause_test.dart` is that rough-in: three rooms,
+two pathways, six drops, and lengths deliberately mixed between measured, estimated and unknown.
+
+*The fixture is built to falsify rather than to agree.* Rooms are created Kitchen, Attic, Bedroom
+and pathways Riser, Attic Run, so the expected output is never the insertion order and a build that
+merely preserved it fails instead of coinciding. The Bedroom exists for one assertion: a room where
+nothing is known reports **`null` and not `0`**, because a `0` subtotal on a Pull Sheet reads as
+*"this room needs no cable"*. Kitchen carries the mixed case, where a cut 52 ft and an estimated
+45 ft both count as quantities, one drop supplies nothing, and the estimate is counted separately so
+the subtotal's standing stays visible.
+
+*And the last case asserts the seam itself, in executable form.* `SheetRole` is pinned to its three
+values, so if a `pullSheet` role ever appears that case fails and whoever added it has to say
+whether M3's clause or M6's now owns the sheet. **The clause's "initial boxes" are deliberately not
+asserted anywhere in M3**, because DR-027 gives them to M6 along with the layout and the page;
+claiming them here would be the checklist-ticking §8.1 refuses, on the one clause that has already
+been amended once for exactly that reason.
+
+*One derived row corrected.* docs/13's M3-D row described the straddle as a live tension. It now
+cites the ruling that ended it and names the test that demonstrates M3's half.
+
+*No Pull Sheet column changes, and that is worth stating because the task's title implies some.*
+docs/08 §3.2 gives the sheet one length column, `LEN`, which is the cut length; `ROUTED` and
+`TERM. LEN` are Structure-editor columns under `⚙ Columns` and were never sheet columns. M3-D/2
+made both enterable without adding either to any sheet.
+
+**M3-D IS CLOSED as of `59ea14a`** (board #86, four tasks). Its own one-line brief was *"the same
+gap the net names had"*, and all four halves of it are discharged: both drop labels allocate through
+the one format engine (M3-D/1 at `b4b9115`, demonstrated by M3-C/1's caller), all three of AC-024's
+lengths are Command-backed and enterable (M3-D/2 at `36994ef`), the footage rollup by media applies
+its waste factor at the rollup and reports null rather than zero (M3-D/3 at `8361c15`), and clause
+3's derivation is demonstrated on one rough-in (M3-D/4 at `59ea14a`).
+
+**Two of its four tasks turned out to be already-answered questions, and that is the pattern worth
+carrying into M3-E.** #153 asked for a ratification DR-026 §11.25.2 had granted, and #155 asked to
+decide a seam DR-027 §11.26.2 had ruled, both on 2026-08-09 and both AFTER the tasks were written.
+Neither task was wrong and neither was empty: what remained in each case was the build half plus the
+work of recording the ruling where the code and the derived documents would be read. **A task
+written before a ruling should be re-read against canon before it is priced**, which is #153's own
+warning ("the task must not be picked up and priced as preventive") generalised by a second
+instance. M3-E/2 (#157) is the next task in this milestone with a DR-026 clause behind it.
+
+*What M3-D leaves for other milestones, stated so none of it is mistaken for a gap.* `LEN-002` reads
+`MediaTypeDef.maxRunLengthPassive` and is M5's (canon §11.19.7). Every rendered sheet, including the
+Pull Sheet and T6.30's materials block, is M6's under DR-027. A packaging field for AC-024's box
+count does not exist and is deliberately not invented (see M3-D/3 above). And the plan-derived
+bound, which DR-020 §11.19.2(2) forbids entering the footage rollup as a quantity, arrives with the
+Plan view; `_isQuantity`'s exhaustive switch is what will stop it entering silently.
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three
