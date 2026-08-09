@@ -7859,16 +7859,30 @@ at the centre of an observed range**, recorded as a choice rather than presented
 which is #167's own instruction and G4's rule. A reader who later finds a strap that disagrees is
 looking at the range, not at an error.
 
-**11.27.2 Stored as `Len` in nanometres (CR-001).** 15 mm is `15_000_000` nm and 16 mm is
+**It supersedes §11.7.8's parenthetical.** DR-007 wrote *"a standard keystone is about 14.5 × 16.0
+mm"* inside an arithmetic check, and that figure was never ruled: it was an "about" used to show
+that 2 across and 3 down **fit** a Decora opening. The heights agree; the widths differ by 0.5 mm
+and this ruling's is the one to build from, because it is the one a person stated deliberately. The
+arithmetic still holds at 15 mm (2 × 15 = 30 mm across an opening of about 33.3).
+
+**11.27.2 WHAT THIS DOES NOT SETTLE, and it must not be read as settling it.** §11.7.8's **change 3
+remains open**: whether a cell on a 2-wide strap is the same size as a cell on a 1-wide strap. That
+is a question about two parts, not about one figure, and DR-007 requires it be *measured rather than
+inferred* **before any dimensioned rendering**, because a uniform-cell assumption that turns out
+false is wrong on every plate drawing at once. Supplying one cell size does not answer it, and a
+reader who takes this ruling as licence to assume uniformity has made exactly the inference §11.7.8
+forbids.
+
+**11.27.3 Stored as `Len` in nanometres (CR-001).** 15 mm is `15_000_000` nm and 16 mm is
 `16_000_000` nm. No floating-point millimetres, in the model or in any file format.
 
-**11.27.3 One cell size is the entire geometry, and that is DR-007's doing.** §11.7.2, revised
+**11.27.4 One cell size is the entire geometry, and that is DR-007's doing.** §11.7.2, revised
 2026-07-28, makes **every occupant 1 × 1**, a speaker binding post included, so a strap is a grid of
 equal cells and the only questions left are plate sizes, orientation and which cells are filled. Had
 occupants stayed multi-cell, this ruling would have owed a size per occupant kind and would have got
 one of them wrong.
 
-**11.27.4 Scope.** **No scope change.** DR-007 already placed keystone geometry in M3; this supplies
+**11.27.5 Scope.** **No scope change.** DR-007 already placed keystone geometry in M3; this supplies
 one figure it left open. M3-H/2 is unblocked.
 
 ---
