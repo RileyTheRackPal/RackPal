@@ -7912,11 +7912,101 @@ one of them wrong.
 **11.27.7 Scope.** **No scope change.** DR-007 already placed keystone geometry in M3; this supplies
 one figure it left open. M3-H/2 is unblocked.
 
+### 11.28 DR-029 · The Plan view ships in v1, before M6, with PDF rasterisation
+
+**Settled by the user on 2026-08-09.** A **scope amendment under roadmap §8.3**, and the first one
+that makes v1 larger rather than smaller or merely rearranged. The user's reason: *"development has
+been exceptionally fast and I feel like it's an important feature to have."*
+
+**11.28.1 The ruling.** The Plan view leaves roadmap §2.2 and joins **§2.1**. It is **v1**. It is
+sequenced to be **finished before M6**, it ships **with PDF rasterisation**, and it gets **its own
+board epic rather than a milestone number**.
+
+**11.28.2 What of DR-018 this supersedes, listed one by one so nothing is left half-true.**
+
+| DR-018 said | Now |
+|---|---|
+| §11.17.2(1) the Plan view is **v1.1** | **Superseded.** It is v1. |
+| §11.17.2(2) the placement is **conditional** on the underlay carrier shipping in v1 | **Moot.** DR-019 answered the carrier and roadmap §2.2 already recorded the condition as discharged. |
+| §11.17.2(3) *"Nothing is added to v1 by this ruling"* | **Superseded.** This ruling adds it. |
+| §11.17.6 *"This does not enter §12.7's totals"* | **Superseded.** It does, and §12.7 is re-costed below. |
+| §11.17.7 *"Nothing is scheduled. No board item."* | **Superseded.** An epic exists. |
+| §11.17.2(5) reevaluation **by condition, not by date** | **Discharged.** The reevaluation happened, and this is its outcome. |
+| §11.17.2(4) *"The Plan view does not displace M3"* | **Reaffirmed, unchanged.** It is a better front end for what M3 builds and is not a substitute for it. **No M3 task is cut by this ruling**, and `T6.10` remains the answer to the motivating problem. |
+
+**11.28.3 BEFORE M6 IS NOT A PREFERENCE, IT IS THE ONLY ORDERING THAT DOES NOT MAKE M6 RUN TWICE.**
+Roadmap §2.2 describes the feature as including *"a plan sheet in the set"*, and M6's exit criterion
+is that **all four starter projects export a complete set**. A Plan view landing after M6 would
+have M6 declared met over a sheet set that is about to gain a sheet, so M6's criterion would have to
+be re-demonstrated against a different set. The user's instinct is therefore structurally right and
+is recorded as an argument rather than as a scheduling wish.
+
+The same seam is already carrying weight in that direction. **DR-027 put the Pull Sheet's rendering
+in M6 this same day**, and board #574 parks AC-018's PRINTS clause there. M6 is the milestone where
+sheets become real, and everything that owes it a sheet must precede it.
+
+**11.28.4 It gets an epic, NOT a milestone number, and the reason is the corpus rather than taste.**
+Renumbering M6→M7→M8→M9→M10 would rewrite every `M6-A1`-shaped task title, docs/12 §5.3–§5.8's
+headers, §12.7's table, and dozens of references across canon and the roadmap including AC-058's
+print matrix and #574. The board already carries **two non-numbered v1 epics** for exactly this
+reason, `macOS support ships in v1 (DR-009)` and the Store epic, so the precedent is the project's
+own. **The sequencing constraint is a stated dependency, not a number.**
+
+**11.28.5 It ships WITH PDF rasterisation, which is a deliberate purchase of 2–3 weeks.** Floor
+plans arrive from architects as PDF, and a raster-only import would put a conversion step between
+the user and the feature on the ordinary path rather than the exceptional one. DR-018 §11.17.6
+costs the levels: 5–7 weeks minimum viable, 7–10 raster-only, **9–13 with PDF rasterisation on both
+platforms**. The last is chosen.
+
+**`docs/13` GAINS AN ENTRY, and DR-018 §11.17.4 predicted this exact one**: *"`docs/13` gains an
+entry if the chosen import path is a Windows-only rasterizer, because DR-009 puts macOS in v1."* It
+does. The likely rasteriser is **pdfium**, which the debt register is already discussing for a
+different reason at D9 (*"if printing is adopted, vendor pdfium per platform (CR-100)"*), so the two
+should be costed together rather than twice.
+
+**11.28.6 `DiagramCanvas` GAINS A `drawImage` OP IN V1, and this is the ruling that does it.** §12's
+RJ-017 row currently reads *"`DiagramCanvas` still gains no `drawImage` by any ruling to date.
+docs/15 §7 records that adding one is part of building the Plan view and names what it touches."*
+That sentence stops being true here. `draw/canvas.dart`'s own amendment clause governs the addition,
+and docs/15 §7 is the existing account of what it costs.
+
+**One consequence that is NOT ruled here and must not be inferred.** RJ-017 rejected the
+integrator's logo in the title block partly because *"it requires a raster asset inside the project,
+which reopens the container question that AC-057 just closed by cutting images"*. DR-019 answered
+the container question and this ruling ships raster handling, so **that particular ground is gone**
+and the logo would now be cheap. It still does not ship: RJ-017 is not reversed by a ruling that
+never considered it, and anyone who wants it should ask for it directly rather than collect it as a
+side effect.
+
+**11.28.7 What does not change.** **G4 is untouched**: a plan yields a measured horizontal distance,
+**never a route**, and DR-020's *"the route is discovered, not designed"* stands in full. A
+plan-derived length remains an estimate under AC-024 unless a human marks it measured, and AC-024's
+per-room number remains the source that ships. **Mobile editing stays v2** (AC-056): the feasibility
+study §7 records that the motivating workflow is a tablet one and **that this feature does not reach
+it**, which is worth restating now that it is v1, because shipping it will not by itself put a plan
+in a technician's hands on site.
+
+**11.28.8 Two provisional M3 positions now have a scheduled trigger rather than a hypothetical one.**
+DR-026 §11.25.1 (`Pathway.designator` hand-entered) and §11.25.2 (`Outlet.nominalRunLength` ratified
+as implemented) both name the Plan view as the condition on which they are revisited. This morning
+that was an open-ended "if"; it is now an epic sequenced before M6. **Both must be re-read when this
+epic is decomposed**, and the decomposition task carries that instruction.
+
+**11.28.9 The plan, re-costed.** The Plan view is `L` at **9–13 weeks**, placed between M5 and M6;
+the ruling constrains only its relationship to M6. §12.7's table gains a row and its totals move
+from 44–67 weeks to **53–80 weeks**. **M1, M4 and the Plan view are now the three `L` items**, where
+§12.7 previously named two.
+
+**11.28.10 Scope.** **v1 grows by one item and 9–13 weeks.** Roadmap §2.1 gains a subsystem
+paragraph and §2.2 loses its row. **The milestone's contents and its exit criterion are owed at
+decomposition**, not here: this ruling settles that it ships, when, and how much of it, and the
+first task of the epic is to decompose it (the rule M3-0 established).
+
 ---
 
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-028 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-029 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -8029,13 +8119,23 @@ DR-001 removes 4–5 weeks from M2; DR-005 adds 0.5–1 week to M6; **DR-015 add
 | M3 Structure and the field | `M` | 4–7 | 18–29 |
 | M4 Device builder | **`L`** *(was `M`)* | **7–9** *(was 5–7)* | 25–38 |
 | M5 Validation | `M` | 4–6 | 29–44 |
-| M6 Full sheet set | `M` | 5–7 | 34–51 |
-| M7 Platform and access | `M` | 4–6 | 38–57 |
-| M8 Release engineering | `S` | 2–3 | 40–60 |
-| M9 Beta hardening | `M` | 4–7 | 44–67 |
+| **The Plan view** *(DR-029)* | **`L`** | **9–13** | 38–57 |
+| M6 Full sheet set | `M` | 5–7 | 43–64 |
+| M7 Platform and access | `M` | 4–6 | 47–70 |
+| M8 Release engineering | `S` | 2–3 | 49–73 |
+| M9 Beta hardening | `M` | 4–7 | 53–80 |
 
-**44–67 weeks of implementation; 11–18 months to a shipped v1** for one experienced engineer.
-**M1 and M4 are the two `L` milestones.**
+**53–80 weeks of implementation; 13–21 months to a shipped v1** for one experienced engineer.
+**M1, M4 and the Plan view are the three `L` items.**
+
+> **The Plan view row is DR-029, added 2026-08-09**, and it is the first amendment that makes v1
+> LARGER. It is an epic rather than a milestone number, so it carries no `Mn` and renumbers
+> nothing; it is placed between M5 and M6 because the ruling constrains only that it finish
+> **before M6**, which is the one ordering that does not make M6's *"all four starter projects
+> export a complete set"* run twice over a set about to gain a plan sheet. The weeks are
+> DR-018 §11.17.6's own costing at the PDF-rasterisation level. **The month figures carry
+> §12.7's existing weeks-to-months scaling forward rather than re-deriving it**; the weeks are
+> the auditable number and the months were never a clean division.
 
 > **M4's row moved on 2026-08-02, at that milestone's decomposition and not before.** DR-015 put the
 > device-library subsystem onto M4's checklist — the library directory service, the `.rmda` codec and
@@ -8190,7 +8290,7 @@ in. See §11.7.
 |---|---|
 | **CR-117** | **Unaffected and it constrains the writer.** Zip is nondeterministic by default, so §11.18.2(2) fixes entry order, timestamps, compression method and extra fields. The plain-JSON path's existing round-trip and golden corpus are untouched, because a document without an underlay writes identical bytes. |
 | **AC-057** | **Unaffected.** No image member reaches `.rmdev`/`.rmdx`, and device images stay cut. What DR-019 opens is a *project* container, which is a different file and a different question. |
-| **RJ-017** | **Unaffected.** `DiagramCanvas` still gains no `drawImage` by any ruling to date. docs/15 §7 records that adding one is part of building the Plan view and names what it touches. |
+| **RJ-017** | **Superseded in part by DR-029.** `DiagramCanvas` **gains a `drawImage` op in v1**, because DR-029 ships the Plan view in v1 and docs/15 §7 records that adding one is part of building it; `draw/canvas.dart`'s own amendment clause governs the addition. RJ-017's rejection of the **integrator's logo** is NOT reversed: one of its grounds (a raster asset reopening the container question) is gone, the others are not, and DR-029 §11.28.6 refuses to collect the logo as a side effect of a ruling that never considered it. |
 | **AC-040**, the count of 27 | **Unaffected.** The four `PLN-*` advisories in docs/15 §9 ship with the Plan view in its own band and are not v1 rules. Any document quoting a rule total says which band it counts. |
 | **AC-024** | **Unaffected and extended, not replaced.** `Location.estimatedRunLengthFromRack` remains tier 3 of docs/15 §4's four tiers and remains the answer for every room without a plan. |
 | **G4 / CR-114** | **Unaffected, and it is the reason §11.18.1's correction matters.** Silent field loss on save is the same class of failure as a fabricated number: the document stops saying what it knows. |
@@ -8376,7 +8476,7 @@ allowlist of pairs, an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-028 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-029 are the user's decisions and are binding. §12 is the complete
 index of what they supersede, §12.1…§12.5, §12.9, §12.11, §12.12 and §12.13 by ruling, §12.6 by
 internal correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **Two entries
 supersede another DR**: §12.12 (DR-018's reasoning as well as its ruling) and §12.13, which also
