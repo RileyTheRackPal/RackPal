@@ -7667,7 +7667,7 @@ unchanged and no milestone moves.
 
 ### 11.24 DR-025 · `@service=` names the label, `@signal=` names the family; they are two words
 
-**Settled by the user on 2026-08-08**, answering the question board #587 raised while M3-C/3 (#149)
+**Settled by the user on 2026-08-09**, answering the question board #587 raised while M3-C/3 (#149)
 closed. The finding was that a structured run's `Service.signalFamily` is `structure.undetermined`
 forever and **no gesture in the product can change it**: `buildAddHomeRunCommand` hardcodes it,
 nothing writes it afterwards, and docs/07 §4's own wireframe draws a SERVICE column of values no
@@ -7748,11 +7748,134 @@ and §4's wireframe already draws it; no task was ever cut for it, so #587 is a 
 rather than an amendment. **M3-F is unblocked by this ruling**: #159 could not be written while a
 contractor's `Use` column had two possible targets.
 
+### 11.25 DR-026 · Two M3 answers taken as interim positions, because the Plan view may move them
+
+**Settled by the user on 2026-08-09**, answering board #157 and #153 together. Both are questions
+M3 cannot avoid and neither is safe to answer permanently: DR-018 moved the Plan view into v1.1,
+and a floorplan speaks to both. The ruling is therefore two positions **chosen for reversibility**,
+and reversibility is the criterion here rather than a caveat attached to one.
+
+**11.25.1 `Pathway.designator` exists and is MANUALLY ENTERED (#157).** The user's reason: *"once a
+trunk line is established in the home, it would be nice to know exactly where it is relative to the
+plans."*
+
+**This is DR-020's own distinction applied to pathways.** §11.19.1 ruled that *"the route is
+discovered, not designed"* and voided a design-time polyline for storing a guess wearing the
+authority of a measurement. A trunk that **has been established** is the opposite case: it is an
+as-built fact somebody walked, and recording where it is takes nothing on trust. A designator a
+person types is a record; one generated before anybody has opened a ceiling would be the voided
+polyline in a shorter form.
+
+So: `String? designator`, null is unknown (G4, CR-114), **no allocator, no series, no format
+token**.
+
+**Manual is the reversible direction and generated is not**, which is the whole of why it wins. A
+nullable hand-entered string can later gain an allocator that fills the absent ones, without
+changing the field, the file or the column. An allocated series cannot become manual mid-project
+without abandoning the uniqueness its allocator assumed. #157 asked which of three to build; the
+user asked for whichever is easy to change later, and only one of them is.
+
+**Unique where set, project-wide**, on CR-113's `rackLabel` precedent: two trunks called `T1` on one
+Pull Sheet is the defect the column exists to prevent, and null is not a collision.
+
+**#157's own cost estimate is over-stated, and this ruling does not incur it.** The task reads
+*"adding one changes stored state (CR-117's byte gate, `kSchemaVersion`)"*. A nullable key written
+only when present does neither: every file already on disk re-encodes byte for byte and the schema
+version does not move. That is `tia570Grade`'s precedent (DR-024) and `MediaTypeDef.aliases`'s
+before it.
+
+**`Pathway.name` IS NOT OVERLOADED, and the finding is stated because it makes #157's third option
+look cheaper than it is.** The field exists, its own doc comment gives `"B03"` as the example, which
+is designator-shaped, and docs/07 §4's wireframe prints `PW-LR-1` in the PATHWAY column. The
+temptation is therefore to print the name and add nothing. Refused: every other entity in this model
+carries a human name and a short identifier separately (`DeviceInstance`, `Rack`), and a trunk
+called *"attic run to the garage"* and one called `PW-LR-1` are two facts. Overloading them makes
+the Pull Sheet column print whichever one a person happened to type.
+
+**11.25.2 `Outlet.nominalRunLength` is RATIFIED AS IMPLEMENTED, provisionally (#153).** The task
+says *"RATIFY OR OVERRULE ITS PLACEMENT before anything reads it"*. **That deadline has passed**,
+and the task must not be picked up and priced as preventive. `ScheduleLengthSource` already ships
+four tiers, `cut | outletNominal | roomEstimate | none`, with the second one's own doc comment
+declaring itself *"a DELIBERATE addition, stated here rather than buried"*;
+`OutletField.nominalRunLength` is Command-backed; and `whole_house` populates it on **all seventeen**
+outlets while setting `cutLength` on **none**. The choice was made and shipped at M2-B, and the
+corpus's own fixture depends on it.
+
+The tier therefore stands as written: more specific than the room estimate, less authoritative than
+a cut length, printed as an estimate and never as a measurement.
+
+**It is provisional and the Plan view is the named trigger.** Whether a floorplan supersedes any of
+the four tiers is open, is not ruled here, and is owed when DR-018's condition resolves.
+
+**11.25.3 Scope.** **No scope change to roadmap §2.** #157 gains a nullable field and no series;
+#153 ratifies behaviour that already ships. Neither adds a milestone item. M3-E/2 and M3-D/2 are
+unblocked.
+
+### 11.26 DR-027 · M3 owes the Pull Sheet's rows and its sort; M6 owns every rendered sheet
+
+**Settled by the user on 2026-08-09**, ratifying the seam board #155 proposed: *"M6 is where sheets
+are going to be rendered and I'd like to work those issues out all at once."*
+
+**11.26.1 The tension it resolves.** `SheetRole` has three values, `rackElevationFront`,
+`rackElevationRear` and `equipmentList`; there is no Pull Sheet and no Termination Schedule in the
+exporter. M3's exit criterion nonetheless says a rough-in *"exports a Pull Sheet sorted by room and
+pathway with per-room footage subtotals and initial boxes"*. One of the two has to give.
+
+**11.26.2 The ruling.** M3 owes the **derivation**: the rows, the sort by room then pathway, and the
+per-room footage subtotals, as tested output of `rackmate_core`. M6 owes the **sheet**: the
+`SheetRole`, the layout, the initial boxes and the page.
+
+**11.26.3 It amends an exit criterion, which is why it is a ruling and not a note.** §8.1 makes the
+exit criterion the unit of truth, so moving a clause across a milestone boundary is an amendment
+under §8.3. **M3's clause 3 is amended**: M3 demonstrates the rows, the sort and the subtotals, and
+**M6 demonstrates the export**. M3 cannot discharge a clause about a sheet it does not own, and
+reading that clause loosely enough to call it met would be precisely the checklist-ticking §8.1
+refuses. M6's criterion needs no addition: *"all four starter projects export a complete set"*
+already contains the sheet.
+
+**It tidies a second clause rather than creating one.** Board #574 already parks AC-018's PRINTS
+clause on M6 for the identical reason: *"there is no Pull Sheet and no Termination Schedule in the
+exporter at all, so there is no sheet for an unbound run to print on."* One seam, two clauses, now
+stated once instead of discovered twice.
+
+**11.26.4 What M3 still owes, so this is not read as a deferral.** The derivation is the
+load-bearing half and it stays in M3: sorted rows, per-room subtotals, and the unknown counts G4
+requires of every rollup. A milestone that shipped an unordered, untotalled data structure would
+hand M6 the design work along with the rendering, and the seam would have become an excuse.
+
+**11.26.5 Scope.** **A milestone-boundary amendment; no change to roadmap §2's contents.** Nothing
+leaves v1 and nothing joins it. One clause moves from M3's criterion to M6's. M3-D/4 is unblocked.
+
+### 11.27 DR-028 · The keystone occupant cell is 15 mm × 16 mm
+
+**Settled by the user on 2026-08-09**, supplying the figure DR-007 does not give and board #167
+refuses to infer.
+
+**11.27.1 The figure, and its provenance in the user's own terms:** *"Standard for 110 Keystones is
+16mm tall, but width can vary. 15mm is right in the middle of the range."*
+
+A cell is **15 mm wide by 16 mm tall**. The height is the standard; the width is a **stated choice
+at the centre of an observed range**, recorded as a choice rather than presented as a measurement,
+which is #167's own instruction and G4's rule. A reader who later finds a strap that disagrees is
+looking at the range, not at an error.
+
+**11.27.2 Stored as `Len` in nanometres (CR-001).** 15 mm is `15_000_000` nm and 16 mm is
+`16_000_000` nm. No floating-point millimetres, in the model or in any file format.
+
+**11.27.3 One cell size is the entire geometry, and that is DR-007's doing.** §11.7.2, revised
+2026-07-28, makes **every occupant 1 × 1**, a speaker binding post included, so a strap is a grid of
+equal cells and the only questions left are plate sizes, orientation and which cells are filled. Had
+occupants stayed multi-cell, this ruling would have owed a size per occupant kind and would have got
+one of them wrong.
+
+**11.27.4 Scope.** **No scope change.** DR-007 already placed keystone geometry in M3; this supplies
+one figure it left open. M3-H/2 is unblocked.
+
 ---
 
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-025 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-028 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -8212,7 +8335,7 @@ allowlist of pairs, an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-025 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-028 are the user's decisions and are binding. §12 is the complete
 index of what they supersede, §12.1…§12.5, §12.9, §12.11, §12.12 and §12.13 by ruling, §12.6 by
 internal correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **Two entries
 supersede another DR**: §12.12 (DR-018's reasoning as well as its ruling) and §12.13, which also

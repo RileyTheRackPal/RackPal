@@ -985,6 +985,16 @@ Binaries already signed by another publisher are now skipped.
 > drops have unbound far ends and every one of them still schedules, prints and carries a `W`
 > number** (AC-018). Requirement 6 is met.
 
+**Clause 3 is AMENDED by DR-027 and the blockquote above is its original wording, kept because a
+quoted criterion is the record.** M3 owes the **derivation**: the rows, the sort by room then
+pathway, and the per-room footage subtotals, as tested `rackmate_core` output. **M6 owes the
+sheet**: the `SheetRole`, the layout, the initial boxes and the page. `SheetRole` has three values
+and none is a Pull Sheet, so M3 could not have discharged a clause about a sheet it does not own,
+and reading the clause loosely enough to call it met is the checklist-ticking §8.1 refuses. The same
+seam already governs AC-018's PRINTS clause (#574), which is parked on M6 for the identical reason;
+one seam, two clauses. M6's own criterion needs no addition, since *"all four starter projects
+export a complete set"* already contains the sheet.
+
 **Every clause NOT BUILT** *(as recorded when M3 opened; superseded below by M3-A and M3-B, and the
 file paths and line numbers in this paragraph are the ones that were true then)*. Model only,
 inherited from M0:
