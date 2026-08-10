@@ -1770,6 +1770,51 @@ count does not exist and is deliberately not invented (see M3-D/3 above). And th
 bound, which DR-020 §11.19.2(2) forbids entering the footage rollup as a quantity, arrives with the
 Plan view; `_isQuantity`'s exhaustive switch is what will stop it entering silently.
 
+**M3-E opened 2026-08-09, and the census found the entity could not be created at all.** #156's
+title is *"`Pathway.kind` and `containsLineVoltage`, modelled through to the UI"*, and both fields
+sat at their constructor defaults on an entity **no gesture in the product could produce**. There
+was no create command, no accessor table and no editor; the only writers of `doc.pathways` were
+`RemoveLocationCommand` clearing the two location references during DR-021's cascade. So
+`Link.pathwayId` could never point at anything real and every drop's `PATH` cell was the unknown
+marker by construction. **This is M3-C/1's finding again**, *"nothing in the app ever materialises a
+port"*, and it was found the same way: by censusing before pricing.
+
+*Filed as #591 rather than absorbed into #156.* A decomposition gap and not a scope change (§8.3),
+on #587's precedent: CR-016 makes the pathway first-class, docs/07 §4 draws a `[ Pathways ]` tab,
+docs/08 §3.2 prints the column. The capability was promised and no task owned the gesture. Closed at
+`bcb1b31` with the four fields retrofitted, a `PathwayField` table, an add and a remove.
+
+*The delete is deliberately not a cascade, and the distinction is the design.* DR-021 makes deleting
+a `Location` take its subtree and clear nine references **because a location contains things**.
+Nothing lives inside a pathway. So nothing else is destroyed: `Link.pathwayId` is cleared on every
+run through it, each one recorded so undo restores both, and the cable survives having lost its
+recorded route, which is the state every drop in this product was in until this commit. A dangling
+id would print a `PATH` cell identical to *"nobody said"*, which is the G4 failure.
+
+**And the user named where a pathway will actually be set, which caps how far the Structure editor's
+tab should go.** On 2026-08-09: *"Pathway will likely be set in the plan view, once a pathway is
+actually determined and set on site."*
+
+That is **DR-020 applied to the pathway itself**. §11.19.1 rules that the route is *discovered, not
+designed*, because structure forces a run through a crawlspace instead of an attic and nobody knows
+which until the framing is open; DR-026 §11.25.1 already used that reasoning to make
+`Pathway.designator` hand-entered, calling an established trunk *"an as-built fact"*. The statement
+extends it from the designator to the entity: a pathway is created when somebody has walked it, and
+the Plan view is where they will be standing.
+
+Two consequences, recorded rather than left in a conversation. **docs/07 §4's `[ Pathways ]` tab is
+still owed and should be built small**: a list and an editor for what exists, not the place a
+pathway is born, and certainly not a routing surface. And **the Plan view epic (#588) carries this
+as an inbound expectation**, so pathway assignment is not discovered late by whoever decomposes it;
+DR-029 sequences that epic before M6, so it is not far off. Neither is a ruling and neither is
+recorded as one: this is a stated expectation about a surface, and the ruling that would move any
+scope has not been asked for.
+
+*What M3-E still owes.* #156 proper, which is now the two fields reaching a UI plus CR-109's
+`MediaTypeDef.isPathwayOnly`, **also not a field yet**, so conduit media still creates a `Link`
+rather than a `Pathway`. #157, which DR-026 §11.25.1 already ruled and is a build rather than a
+decision. And #158's single-instance assumptions.
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three
