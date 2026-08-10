@@ -14,31 +14,52 @@ EntityMeta _meta() => EntityMeta(
   updatedBy: 'seed',
 );
 
-TemplateSnapshot _template(String id, int h) => TemplateSnapshot(
-  templateId: TemplateId(id),
-  version: 1,
-  contentHash: 'sha256:$id',
-  capturedAt: DateTime.utc(2026),
-  body: TemplateBody(
-    manufacturer: 'Generic',
-    model: id,
-    displayName: id,
-    frontU: h,
-    rearU: h,
-    side: OccupancySide.both,
-    mountMethod: MountMethod.rackEars,
-  ),
-);
+/// A template identified by its (frontU, rearU) pair, with `side` DERIVED
+/// from the two rather than passed — a body claiming `both` with
+/// `rearU: 0` is a fixture that contradicts itself.
+TemplateSnapshot _template({required int frontU, required int rearU}) {
+  final id = 'tpl.f${frontU}r$rearU';
+  return TemplateSnapshot(
+    templateId: TemplateId(id),
+    version: 1,
+    contentHash: 'sha256:$id',
+    capturedAt: DateTime.utc(2026),
+    body: TemplateBody(
+      manufacturer: 'Generic',
+      model: id,
+      displayName: id,
+      frontU: frontU,
+      rearU: rearU,
+      side: frontU > 0 && rearU > 0
+          ? OccupancySide.both
+          : (frontU > 0 ? OccupancySide.front : OccupancySide.rear),
+      mountMethod: MountMethod.rackEars,
+    ),
+  );
+}
 
-typedef _Occ = ({String d, int ru, int h, Face face, bool locked});
+typedef _Occ = ({
+  String d,
+  int ru,
+  int h,
+  int? otherU,
+  Face face,
+  bool locked,
+});
 
+/// [h] is the height on the face the device is BOLTED to; [otherU] is its
+/// height on the other one, defaulting to [h] — the full-depth
+/// `side: both` shape every shipped rack-mountable template has. Pass
+/// `otherU: 0` for a device only one elevation draws, or a different
+/// number for the asymmetric shape no seed template has yet.
 _Occ _at(
   String d,
   int ru,
   int h, {
   Face face = Face.front,
   bool locked = false,
-}) => (d: d, ru: ru, h: h, face: face, locked: locked);
+  int? otherU,
+}) => (d: d, ru: ru, h: h, otherU: otherU, face: face, locked: locked);
 
 RackDocument _doc(int heightU, List<_Occ> occupants) {
   final doc = RackDocument(
@@ -57,15 +78,19 @@ RackDocument _doc(int heightU, List<_Occ> occupants) {
     meta: _meta(),
   );
   for (final o in occupants) {
-    final tid = 'tpl.h${o.h}';
-    doc.templates['$tid@1'] = _template(tid, o.h);
+    final other = o.otherU ?? o.h;
+    final snapshot = _template(
+      frontU: o.face == Face.front ? o.h : other,
+      rearU: o.face == Face.front ? other : o.h,
+    );
+    doc.templates['${snapshot.templateId.v}@1'] = snapshot;
     doc.devices[Uuid('dev-${o.d}')] = DeviceInstance(
       id: Uuid('dev-${o.d}'),
       kind: DeviceKind.rackDevice,
       templateRef: TemplateRef(
-        templateId: TemplateId(tid),
+        templateId: snapshot.templateId,
         version: 1,
-        contentHash: 'sha256:$tid',
+        contentHash: snapshot.contentHash,
       ),
       designator: o.d,
       name: 'Device ${o.d}',
@@ -485,7 +510,13 @@ void main() {
             'the rescue must plan both faces, not just the displayed '
             'one',
       );
-      expect(_targets(rescue.moves), {'F1': 1, 'F2': 2, 'R1': 1, 'R2': 2});
+      // ALL FOUR ARE FULL DEPTH, so they interleave into one stack rather
+      // than into two independent columns. The front pass packs F1/F2 into
+      // U1-U2; the rear pass is handed those targets and packs R1/R2 above
+      // them. Sending R1 to U1 as well would put two full-depth devices in
+      // one U — a rescue that proposes the overlap `findBlockingOccupant`
+      // refuses, out of a modal promising a lossless shrink.
+      expect(_targets(rescue.moves), {'F1': 1, 'F2': 2, 'R1': 3, 'R2': 4});
     });
 
     test('compacts UP for a bottom trim, and the net move already includes '
@@ -532,11 +563,18 @@ void main() {
       // Front: A@1(2U), B@6(1U)  -> compacts to A@1-2, B@3. Top 6 -> 3.
       // Rear:  C@1(2U), D@6(1U)  -> identical. Top 6 -> 3.
       // Each face's own plan reports freedU 3. The rack gained 3.
+      //
+      // EVERY DEVICE HERE IS SINGLE-FACE (`otherU: 0`), and that is the
+      // fixture, not an incidental. Two FULL-DEPTH devices at the same U
+      // on opposite rails are an occupancy conflict — the rear pair would
+      // have to pack ABOVE the front pair, the faces would not be
+      // independent, and the "each frees 3" premise this test is built on
+      // would be false before the arithmetic under test ever ran.
       final doc = _doc(24, [
-        _at('A', 1, 2),
-        _at('B', 6, 1),
-        _at('C', 1, 2, face: Face.rear),
-        _at('D', 6, 1, face: Face.rear),
+        _at('A', 1, 2, otherU: 0),
+        _at('B', 6, 1, otherU: 0),
+        _at('C', 1, 2, face: Face.rear, otherU: 0),
+        _at('D', 6, 1, face: Face.rear, otherU: 0),
       ]);
 
       final plan = planRackShrink(doc: doc, rackId: _rackId, toHeightU: 4);
@@ -553,10 +591,16 @@ void main() {
       expect(rescue.achievableHeightU, 4);
     });
 
-    test('the shipped demo rack asked for 6U reports 4U, not 10U', () {
-      // 12U: UPS-1@U1 2U, AMP-1@U4 2U, SW-1@U7 1U front; PP-1@U9 1U rear.
-      // Front frees 7-5 = 2U; rear frees 9-1 = 8U; the sum is 10U of gaps
-      // in a 12U rack. The rack's own top goes U9 -> U5.
+    test('the shipped demo rack asked for 6U reports 3U, not 10U', () {
+      // 12U: UPS-1@U1 2U, AMP-1@U4 2U, SW-1@U7 1U front; PP-1@U9 1U rear,
+      // all full depth. The FRONT plan alone frees 7-5 = 2U; the REAR plan
+      // taken alone frees 9-1 = 8U; the sum is 10U of gaps in a 12U rack.
+      //
+      // The rack's own top goes U9 -> U6, so the true figure is 3. The
+      // rear pass cannot drop PP-1 to U1 the way a per-face fold assumes:
+      // the compacted front stack is full depth and now fills U1-U5, and
+      // PP-1 is full depth too, so the lowest U it can actually reach is
+      // U6. Folding the faces would over-report by more than threefold.
       final doc = _doc(12, [
         _at('UPS-1', 1, 2),
         _at('AMP-1', 4, 2),
@@ -567,16 +611,20 @@ void main() {
       final plan = planRackShrink(doc: doc, rackId: _rackId, toHeightU: 6);
       final rescue = plan.rescue!;
 
-      expect(rescue.freedU, 4);
+      expect(rescue.freedU, 3);
       expect(plan.smallestFittingHeightU, 9);
       expect(rescue.achievableHeightU, 6);
       expect(rescue.isFull, isTrue);
     });
 
     test('one 1U device per face at U20 of a 24U rack frees 19U, not 38U', () {
+      // Single-face devices, so the two elevations really are independent
+      // columns and each genuinely reclaims 19U on its own. A full-depth
+      // pair at the same U would be an occupancy conflict, not a rack that
+      // frees twice as much.
       final doc = _doc(24, [
-        _at('F', 20, 1),
-        _at('R', 20, 1, face: Face.rear),
+        _at('F', 20, 1, otherU: 0),
+        _at('R', 20, 1, face: Face.rear, otherU: 0),
       ]);
 
       final plan = planRackShrink(doc: doc, rackId: _rackId, toHeightU: 12);
@@ -699,6 +747,131 @@ void main() {
         reason:
             'no height produced a rescue, so nothing above ran: this '
             'fixture no longer reaches the clamp it exists to defend',
+      );
+    });
+  });
+
+  // A shrink is a physical change to a rack, so its rescue has to compose
+  // into ONE layout. Each `planCompaction` call still moves only what is
+  // bolted to its own face, but a `side: both` device stands in both
+  // elevations — so two calls planned independently against the document's
+  // current positions both reach for U1 and the composed result puts two
+  // full-depth devices in the same U.
+  group('the two faces compose into one layout, not two', () {
+    test('the rear pass packs above the front pass rather than into it', () {
+      final doc = _doc(24, [
+        _at('F', 10, 1),
+        _at('R', 11, 1, face: Face.rear),
+      ]);
+
+      final rescue = planRackShrink(
+        doc: doc,
+        rackId: _rackId,
+        toHeightU: 8,
+      ).rescue!;
+
+      expect(
+        _targets(rescue.moves),
+        {'F': 1, 'R': 2},
+        reason:
+            'planned independently both would claim U1, and the modal '
+            'would promise a lossless shrink onto an overlap',
+      );
+      expect(rescue.isFull, isTrue);
+    });
+
+    test('applying a rescue leaves NO range findBlockingOccupant would call '
+        'occupied, on either elevation', () {
+      for (final trim in TrimFrom.values) {
+        final doc = _doc(24, [
+          _at('A', 3, 2),
+          _at('B', 14, 1),
+          _at('C', 21, 1, otherU: 0),
+          _at('D', 8, 2, face: Face.rear),
+          _at('E', 18, 1, face: Face.rear, otherU: 0),
+        ]);
+        final plan = planRackShrink(
+          doc: doc,
+          rackId: _rackId,
+          toHeightU: 10,
+          trimFrom: trim,
+        );
+        for (final c in shrinkDisplacementCommands(
+          plan.rescue!.moves,
+          now: DateTime.utc(2026),
+          actor: 't',
+        )) {
+          c.apply(doc);
+        }
+
+        for (final face in Face.values) {
+          for (final o in elevationOccupantsOnFace(
+            rack: doc.racks[_rackId]!,
+            devices: doc.devices.values,
+            face: face,
+            templates: doc.templates,
+          )) {
+            expect(
+              findBlockingOccupant(
+                rack: doc.racks[_rackId]!,
+                devices: doc.devices.values,
+                face: face,
+                templates: doc.templates,
+                ruStart: o.ruIndex,
+                deviceH: o.deviceH,
+                exceptId: o.device.id,
+              ),
+              isNull,
+              reason:
+                  'trim=$trim landed ${o.device.designator} on top of '
+                  'another device at ${face.name} U${o.ruIndex}',
+            );
+          }
+        }
+      }
+    });
+  });
+
+  // An occupant is measured by the TALLER of its two faces, never by the
+  // face it happens to be bolted to. No seeded template has `frontU !=
+  // rearU` with both non-zero yet, so nothing else in the repository
+  // exercises this — which is exactly why it is asserted rather than
+  // assumed.
+  group('an occupant is measured by its tallest face', () {
+    test('a device bolted front with frontU 1 / rearU 4 is judged by 4U', () {
+      final doc = _doc(24, [_at('LACE', 20, 1, otherU: 4)]);
+
+      final plan = planRackShrink(doc: doc, rackId: _rackId, toHeightU: 22);
+
+      expect(
+        _names(plan.doomed),
+        {'LACE'},
+        reason:
+            'judged by its 1U front block it would survive a 22U rack '
+            'while three U of it stood outside — the silent stranding '
+            '"always name the casualties" forbids',
+      );
+      final casualty = plan.doomed.single;
+      expect(casualty.deviceH, 4);
+      expect(casualty.topRu, 23);
+      expect(plan.smallestFittingHeightU, 23);
+    });
+
+    test('and it packs by 4U too: compaction never leaves part of it above '
+        'the rack top', () {
+      final doc = _doc(24, [
+        _at('BLOCKER', 1, 2, locked: true),
+        _at('LACE', 20, 1, otherU: 4),
+      ]);
+
+      final plan = planRackShrink(doc: doc, rackId: _rackId, toHeightU: 6);
+      final rescue = plan.rescue!;
+
+      expect(_targets(rescue.moves), {'LACE': 3});
+      expect(
+        rescue.achievableHeightU,
+        6,
+        reason: 'U3-U6 is the whole 4U footprint, not U3 alone',
       );
     });
   });

@@ -98,8 +98,10 @@ List<RailOccupant> elevationOccupantsOnFace({
 /// rear-elevation move over a front-bolted device by its rear FOOTPRINT
 /// would silently unbolt it and re-hang it on the rear rails. Those
 /// planners therefore move only what is bolted to the face they are
-/// planning — and take what merely OCCUPIES that face as an immovable
-/// anchor, so they still never pack anything through visible ink.
+/// planning — and take what merely OCCUPIES an elevation, on EITHER face,
+/// as an immovable anchor, so they never pack anything through visible
+/// ink. See `compaction.dart`'s `_anchors`: what moves is the bolted set,
+/// what it must clear is the rack.
 ///
 /// No other caller should reach for this. Anything that draws, counts or
 /// collision-checks a face wants [elevationOccupantsOnFace].

@@ -36,6 +36,7 @@ import 'package:rackmate_core/src/commands/catalog_placement.dart';
 import 'package:rackmate_core/src/commands/compaction.dart';
 import 'package:rackmate_core/src/commands/device_commands.dart';
 import 'package:rackmate_core/src/commands/link_count.dart';
+import 'package:rackmate_core/src/derived/device_loads.dart';
 import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/placement.dart';
 import 'package:rackmate_core/src/model/rack.dart';
@@ -278,10 +279,23 @@ final class RackShrinkPlan {
 /// placement IS enumerated here. If the host is doomed the host is named,
 /// and since rule 3 never deletes the host, the child never loses its
 /// home independently. There is no invisible casualty to find.
+///
+/// TWO HEIGHTS, BECAUSE THEY ANSWER TWO QUESTIONS. `deviceH` is the
+/// height on the face the device is BOLTED to — the number that goes
+/// into a `CompactionMove`, and therefore the height the preview draws a
+/// ghost at on that elevation. `stackH` is [stackOccupancyU],
+/// the TALLER of the two faces, and it is what every "does this still fit"
+/// question uses: whether the rack top comes down onto it, whether the
+/// floor rises under it, and how far a lossless shrink can go. A rear lace
+/// bar with `frontU 1 / rearU 4` judged by its 1 U front block is a device
+/// this planner would let a shrink strand three U outside the rack while
+/// reporting no casualties at all, which is precisely the silent stranding
+/// "always name the casualties" forbids.
 typedef _Occupant = ({
   DeviceInstance device,
   int ruIndex,
   int deviceH,
+  int stackH,
   Face face,
   DoomedKind kind,
 });
@@ -382,6 +396,8 @@ RackShrinkPlan planRackShrink({
 List<_Occupant> _rackOccupants(RackDocument doc, Rack rack) {
   final out = <_Occupant>[];
   final modelled = <Uuid>{};
+  int? stackOf(DeviceInstance d) =>
+      stackOccupancyU(doc.templates[templateKeyFor(d.templateRef)]?.body);
   for (final face in Face.values) {
     for (final o in boltedOccupantsOnFace(
       rack: rack,
@@ -394,6 +410,12 @@ List<_Occupant> _rackOccupants(RackDocument doc, Rack rack) {
         device: o.device,
         ruIndex: o.ruIndex,
         deviceH: o.deviceH,
+        // The taller face, never the bolted one — see [_Occupant]. The
+        // fallback cannot fire for an occupant the bolted scan returned
+        // (it resolved a template and a non-zero height to get here) and
+        // is kept so a future scan change degrades to the old reading
+        // rather than to zero.
+        stackH: stackOf(o.device) ?? o.deviceH,
         face: face,
         kind: DoomedKind.rail,
       ));
@@ -405,26 +427,34 @@ List<_Occupant> _rackOccupants(RackDocument doc, Rack rack) {
     switch (d.placement) {
       // Rail-placed here, yet the scan did not return it on either face:
       // its template snapshot is missing, or it resolves to zero height on
-      // the face it claims. Its RU index is real; its height is not
-      // knowable, so claim the least it can possibly occupy.
+      // the face it claims. Its RU index is real; its height is knowable
+      // only when a snapshot survives — a device bolted to the front rails
+      // with `frontU 0 / rearU 4` is exactly that shape, and the rear
+      // elevation draws all four U of it. With no snapshot at all, claim
+      // the least it can possibly occupy.
       case RailPlacement(:final rackId, :final ruIndex, :final face)
           when rackId == rack.id:
         out.add((
           device: d,
           ruIndex: ruIndex,
           deviceH: 1,
+          stackH: stackOf(d) ?? 1,
           face: face,
           kind: DoomedKind.unmodelledRail,
         ));
       case ZeroUPlacement(:final rackId, :final channelId)
           when rackId == rack.id:
         final channel = _channelById(rack, channelId);
+        final span = channel == null
+            ? rack.heightU
+            : _channelTop(channel) - _channelBottom(channel) + 1;
         out.add((
           device: d,
           ruIndex: channel == null ? 1 : _channelBottom(channel),
-          deviceH: channel == null
-              ? rack.heightU
-              : _channelTop(channel) - _channelBottom(channel) + 1,
+          deviceH: span,
+          // A channel has no second face to be taller on: its span IS its
+          // footprint in the stack.
+          stackH: span,
           face: channel == null ? Face.front : _faceOfChannelSide(channel.side),
           kind: DoomedKind.zeroU,
         ));
@@ -470,8 +500,10 @@ bool _diesUnderPlainTrim(
   int toHeightU,
   int removed,
 ) => switch (trimFrom) {
-  // The rack top comes down onto it.
-  TrimFrom.top => o.ruIndex + o.deviceH - 1 > toHeightU,
+  // The rack top comes down onto it — measured against the TALLER face
+  // (see [_Occupant]), so a device whose rear block outruns its front one
+  // is judged by the block that actually hits the ceiling.
+  TrimFrom.top => o.ruIndex + o.stackH - 1 > toHeightU,
   // The floor comes up under it. `removed <= 0` is a grow, which shifts
   // nobody and kills nobody. A non-shiftable occupant (a 0U channel
   // device) dies for ANY removal: a bottom trim renumbers every surviving
@@ -487,7 +519,11 @@ DoomedOccupant _doom(RackDocument doc, _Occupant o) => DoomedOccupant(
   designator: o.device.designator,
   name: o.device.name,
   ruIndex: o.ruIndex,
-  deviceH: o.deviceH,
+  // The casualty list names the U a device HOLDS, which is its tallest
+  // face — the modal's "U20–U23" has to cover the block that will be left
+  // outside the rack even when the elevation on screen draws only one U of
+  // it.
+  deviceH: o.stackH,
   face: o.face,
   linkCount: linkCountForDevice(doc, o.device.id),
   kind: o.kind,
@@ -520,7 +556,7 @@ int _losslessFloor({
   var lowestBottom = 1 << 30;
   for (final o in occupants) {
     final ru = ruOf(o);
-    final top = ru + o.deviceH - 1;
+    final top = ru + o.stackH - 1;
     if (top > highestTop) highestTop = top;
     final bottom = _shiftable(o) ? ru : 1;
     if (bottom < lowestBottom) lowestBottom = bottom;
@@ -562,23 +598,34 @@ CompactionRescue? _planRescue({
   // instead would strand any device too tall to fit under it, which is
   // exactly the device whose compacted position determines
   // [CompactionRescue.achievableHeightU].
-  final plans = <Face, CompactionPlan>{
-    for (final face in Face.values)
-      face: planCompaction(
-        rack: rack,
-        devices: doc.devices.values,
-        face: face,
-        templates: doc.templates,
-        direction: direction,
-      ),
-  };
-
-  // Post-compaction ruIndex for every occupant. Occupants compaction
-  // cannot see stay exactly where they are, which is the truth: nothing
-  // moved them.
+  //
+  // IN SEQUENCE, NOT IN PARALLEL, and the `alreadyPlanned` thread is the
+  // whole reason. Each call packs only what is bolted to its own face, but
+  // a `side: both` device occupies BOTH elevations, so two calls planned
+  // independently against the document's current positions will both
+  // reach for U1 and the composed layout puts two full-depth devices in
+  // one U — an overlap this planner proposed, out of a modal that promised
+  // a lossless shrink. Feeding face two the targets face one assigned
+  // makes the second pass anchor on where the rack will actually be. The
+  // cost is an ordering asymmetry: the FRONT plan still anchors on the
+  // rear's pre-compaction positions, so it can leave a gap the rear later
+  // vacates. That direction of error only ever packs less tightly, never
+  // into occupied U, which is the side to be wrong on.
   final postRu = <Uuid, int>{for (final o in occupants) o.device.id: o.ruIndex};
+  final planned = <Uuid, int>{};
   for (final face in Face.values) {
-    for (final m in plans[face]!.moves) {
+    final plan = planCompaction(
+      rack: rack,
+      devices: doc.devices.values,
+      face: face,
+      templates: doc.templates,
+      direction: direction,
+      alreadyPlanned: planned,
+    );
+    for (final m in plan.moves) {
+      planned[m.deviceId] = m.toRuIndex;
+      // Occupants compaction cannot see stay exactly where they are, which
+      // is the truth: nothing moved them.
       postRu[m.deviceId] = m.toRuIndex;
     }
   }
@@ -593,6 +640,7 @@ CompactionRescue? _planRescue({
       device: o.device,
       ruIndex: postRu[d.deviceId]!,
       deviceH: o.deviceH,
+      stackH: o.stackH,
       face: o.face,
       kind: o.kind,
     );

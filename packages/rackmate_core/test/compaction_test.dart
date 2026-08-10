@@ -14,31 +14,44 @@ EntityMeta _meta() => EntityMeta(
   updatedBy: 'seed',
 );
 
-/// A template whose front and rear heights can differ, so the "one face at
-/// a time" contract and CR-036's per-face occupancy are both testable.
-TemplateSnapshot _template(String id, {required int frontU, int? rearU}) =>
-    TemplateSnapshot(
-      templateId: TemplateId(id),
-      version: 1,
-      contentHash: 'sha256:$id',
-      capturedAt: DateTime.utc(2026),
-      body: TemplateBody(
-        manufacturer: 'Generic',
-        model: id,
-        displayName: id,
-        frontU: frontU,
-        rearU: rearU ?? frontU,
-        side: OccupancySide.both,
-        mountMethod: MountMethod.rackEars,
-      ),
-    );
+/// A template whose front and rear heights can differ, identified by the
+/// pair so two shapes never collide on one key. `side` is DERIVED from the
+/// two heights rather than passed, because a body claiming `both` with
+/// `rearU: 0` is a fixture that contradicts itself and would test nothing
+/// real.
+TemplateSnapshot _template({required int frontU, required int rearU}) {
+  final id = 'tpl.f${frontU}r$rearU';
+  return TemplateSnapshot(
+    templateId: TemplateId(id),
+    version: 1,
+    contentHash: 'sha256:$id',
+    capturedAt: DateTime.utc(2026),
+    body: TemplateBody(
+      manufacturer: 'Generic',
+      model: id,
+      displayName: id,
+      frontU: frontU,
+      rearU: rearU,
+      side: frontU > 0 && rearU > 0
+          ? OccupancySide.both
+          : (frontU > 0 ? OccupancySide.front : OccupancySide.rear),
+      mountMethod: MountMethod.rackEars,
+    ),
+  );
+}
+
+typedef _Occ = ({
+  String d,
+  int ru,
+  int h,
+  int? otherU,
+  Face face,
+  bool locked,
+});
 
 /// Builds a document with one [heightU] rack and the given occupants,
 /// each spelled `(designator, ruIndex, heightU, face, locked)`.
-RackDocument _doc(
-  int heightU,
-  List<({String d, int ru, int h, Face face, bool locked})> occupants,
-) {
+RackDocument _doc(int heightU, List<_Occ> occupants) {
   final doc = RackDocument(
     id: const Uuid('doc-compaction'),
     appVersion: '0.1.0',
@@ -55,15 +68,19 @@ RackDocument _doc(
     meta: _meta(),
   );
   for (final o in occupants) {
-    final templateId = 'tpl.h${o.h}';
-    doc.templates['$templateId@1'] = _template(templateId, frontU: o.h);
+    final other = o.otherU ?? o.h;
+    final snapshot = _template(
+      frontU: o.face == Face.front ? o.h : other,
+      rearU: o.face == Face.front ? other : o.h,
+    );
+    doc.templates['${snapshot.templateId.v}@1'] = snapshot;
     doc.devices[Uuid('dev-${o.d}')] = DeviceInstance(
       id: Uuid('dev-${o.d}'),
       kind: DeviceKind.rackDevice,
       templateRef: TemplateRef(
-        templateId: TemplateId(templateId),
+        templateId: snapshot.templateId,
         version: 1,
-        contentHash: 'sha256:$templateId',
+        contentHash: snapshot.contentHash,
       ),
       designator: o.d,
       name: 'Device ${o.d}',
@@ -79,13 +96,19 @@ RackDocument _doc(
   return doc;
 }
 
-({String d, int ru, int h, Face face, bool locked}) _at(
+/// [h] is the height on the face the device is BOLTED to; [otherU] is its
+/// height on the other one, defaulting to [h] — the full-depth `side:
+/// both` shape every shipped rack-mountable template has. Pass `otherU: 0`
+/// for a device only one elevation draws, or a different number for the
+/// asymmetric shape no seed template has yet.
+_Occ _at(
   String d,
   int ru,
   int h, {
   Face face = Face.front,
   bool locked = false,
-}) => (d: d, ru: ru, h: h, face: face, locked: locked);
+  int? otherU,
+}) => (d: d, ru: ru, h: h, otherU: otherU, face: face, locked: locked);
 
 CompactionPlan _plan(
   RackDocument doc,
@@ -328,7 +351,12 @@ void main() {
   });
 
   group('face scope', () {
-    test('plans ONE face and ignores occupants on the other', () {
+    test('moves only what is BOLTED to the planned face', () {
+      // Both are 1U and full depth, so each is drawn on the OTHER
+      // elevation too — and neither plan may relocate the other's device,
+      // because a `CompactionMove` becomes
+      // `MoveDeviceCommand(fromFace:, toFace:)` and would re-hang it on
+      // the wrong rails.
       final doc = _doc(12, [
         _at('FRONT', 5, 1),
         _at('REAR', 9, 1, face: Face.rear),
@@ -341,6 +369,254 @@ void main() {
       expect(_targets(rear), {'REAR': 1});
       expect(front.moves.single.face, Face.front);
       expect(rear.moves.single.face, Face.rear);
+    });
+  });
+
+  // CR-036: `elevationOccupancyU` decides what a face DRAWS, and a
+  // `side: both` device bolted to one face is drawn on both. Before this,
+  // the planner packed around the BOLTED set only, so Compact Down on the
+  // rear could propose a target `findBlockingOccupant` refuses — a preview
+  // showing a device sliding into space another device is visibly standing
+  // in.
+  group("the other face's ink is an obstacle too", () {
+    test('Compact Down packs AROUND a device the other face bolted and '
+        'this one draws', () {
+      // REAR is bolted to the rear rails and is full depth, so the FRONT
+      // elevation draws it across U2-U3. The lowest run FRONT can reach is
+      // U4, not U1.
+      final doc = _doc(12, [
+        _at('MOVER', 8, 2),
+        _at('DRAWN', 2, 2, face: Face.rear),
+      ]);
+
+      final plan = _plan(doc, CompactDirection.down);
+
+      expect(_targets(plan), {'MOVER': 4});
+      expect(
+        plan.moves.map((m) => m.designator),
+        isNot(contains('DRAWN')),
+        reason:
+            'it is an obstacle, not a mover: moving it would rebolt it '
+            'to the front rails',
+      );
+    });
+
+    test('Compact Up packs AROUND one too', () {
+      final doc = _doc(12, [
+        _at('MOVER', 2, 2),
+        _at('DRAWN', 10, 2, face: Face.rear),
+      ]);
+
+      final plan = _plan(doc, CompactDirection.up);
+
+      expect(_targets(plan), {'MOVER': 8});
+    });
+
+    test('a move must clear EVERY elevation that draws the mover, not just '
+        'the one being planned', () {
+      // The front elevation is empty below U9, so a front-only planner
+      // sends MOVER to U1. But MOVER is full depth: at U1 its REAR block
+      // lands on DRAWN, which is bolted to the rear rails at rear U1-U2
+      // and occupies no front U at all. The only honest target is U3.
+      final doc = _doc(12, [
+        _at('MOVER', 9, 2),
+        _at('DRAWN', 1, 2, face: Face.rear, otherU: 0),
+      ]);
+
+      final plan = _plan(doc, CompactDirection.down);
+
+      expect(_targets(plan), {'MOVER': 3});
+    });
+
+    test('a SINGLE-FACE mover ignores the other elevation entirely', () {
+      // The mirror of the case above, and the reason the check is per-face
+      // rather than "block on the union": MOVER occupies no rear U, so a
+      // rear-only device at rear U1-U2 is nothing to it.
+      final doc = _doc(12, [
+        _at('MOVER', 9, 2, otherU: 0),
+        _at('DRAWN', 1, 2, face: Face.rear, otherU: 0),
+      ]);
+
+      final plan = _plan(doc, CompactDirection.down);
+
+      expect(_targets(plan), {'MOVER': 1});
+    });
+
+    test('a device is never an obstacle to ITSELF across faces', () {
+      // THE REGRESSION THIS GUARDS. Anchoring the elevation scan wholesale
+      // — rather than the elevation scan MINUS the movers — pins every
+      // full-depth device against its own reflection on the other face, and
+      // Compact Down proposes nothing at all. 19 of `whole_house` RK-1's
+      // 27 devices are `side: both`, so that failure would be the shipped
+      // behaviour, not an edge case.
+      final doc = _doc(12, [_at('A', 3, 1), _at('B', 6, 2), _at('C', 10, 1)]);
+
+      final plan = _plan(doc, CompactDirection.down);
+
+      expect(_targets(plan), {'A': 1, 'B': 2, 'C': 4});
+    });
+
+    test("freedU stops at the other face's device: the U above it were "
+        "never this elevation's to spend", () {
+      final doc = _doc(12, [
+        _at('A', 4, 1),
+        _at('DRAWN', 9, 1, face: Face.rear),
+      ]);
+
+      final plan = _plan(doc, CompactDirection.down);
+
+      expect(_targets(plan), {'A': 1});
+      expect(
+        plan.freedU,
+        0,
+        reason:
+            'DRAWN still holds U9 of this elevation; the front face '
+            'gained nothing at the top',
+      );
+    });
+
+    test('a rear-only device bolted to the FRONT rails blocks the rear '
+        'elevation and not the front', () {
+      // `{frontU: 0, rearU: 1}` on the front rails — the rear lace bar
+      // `device_loads.dart` keeps naming. The front elevation does not
+      // draw it, so a front-only mover packs straight past it; the rear
+      // elevation does, so a rear mover does not.
+      final doc = _doc(12, [
+        _at('FRONTONLY', 6, 1, otherU: 0),
+        _at('REARONLY', 5, 1, otherU: 0, face: Face.rear),
+        _at('LACE', 1, 0, otherU: 1),
+      ]);
+
+      expect(
+        _targets(_plan(doc, CompactDirection.down)),
+        {'FRONTONLY': 1},
+        reason: 'LACE occupies no front U, so U1 really is free here',
+      );
+      expect(
+        _targets(_plan(doc, CompactDirection.down, face: Face.rear)),
+        {'REARONLY': 2},
+        reason: 'LACE draws rear U1, so the lowest rear run is U2',
+      );
+    });
+
+    test('a mover is bounded by its TALLER face, so its rear block never '
+        'overhangs the rack top', () {
+      // `frontU 1 / rearU 4` compacted UP on the FRONT elevation. Bounded
+      // by the 1U front block it would go to U12 and stand four U in a
+      // twelve-U rack; the packer has to reserve the whole stack.
+      final doc = _doc(12, [_at('LACE', 2, 1, otherU: 4)]);
+
+      final plan = _plan(doc, CompactDirection.up);
+
+      expect(_targets(plan), {'LACE': 9});
+    });
+
+    test('two movers on ONE face can still collide on the OTHER, and the '
+        'pass tracks both', () {
+      // X is `frontU 1 / rearU 4`, so it holds one front U and four rear
+      // U. Y is 1U on both. The front elevation says U2 is free the
+      // instant X is placed at U1 — and it is, but X's rear block runs to
+      // rear U4, so Y cannot follow it up until U5.
+      final doc = _doc(16, [
+        _at('X', 1, 1, otherU: 4),
+        _at('Y', 6, 1),
+      ]);
+
+      final plan = _plan(doc, CompactDirection.down);
+
+      expect(_targets(plan), {'Y': 5});
+    });
+
+    test('...and the next front U really is the next front U when the '
+        'follower occupies no rear', () {
+      // The mirror of the case above, and the reason the packing cursor
+      // steps by the PLANNED face's height rather than by the stack. Z is
+      // front-only, so X's four rear U are nothing to it: U2 is free, the
+      // user can see that it is free, and a plan that skipped to U5 would
+      // leave a hole it could not explain.
+      final doc = _doc(16, [
+        _at('X', 1, 1, otherU: 4),
+        _at('Z', 8, 1, otherU: 0),
+      ]);
+
+      final plan = _plan(doc, CompactDirection.down);
+
+      expect(_targets(plan), {'Z': 2});
+    });
+
+    test('a device that could not move is an obstacle where it STANDS, not '
+        'where the cursor thinks it ends', () {
+      // MUTATION-TEST-DRIVEN, and the fixture is the whole test. ANCHOR
+      // pins U1-U9, so STUCK — `frontU 1 / rearU 4` at U10 — has nowhere
+      // legal to go: its rear block would need U10-U13 of a 12U rack. It
+      // stays, overhanging, because compaction never evicts. The cursor
+      // then steps past its ONE front U to U11, and B is the device that
+      // finds out whether the pass remembers the other three: U11 and U12
+      // are free on the front elevation and occupied on the rear.
+      final doc = _doc(12, [
+        _at('ANCHOR', 1, 9, locked: true),
+        _at('STUCK', 10, 1, otherU: 4),
+        _at('B', 12, 1),
+      ]);
+
+      final plan = _plan(doc, CompactDirection.down);
+
+      expect(
+        plan.isEmpty,
+        isTrue,
+        reason:
+            'B has no legal home either; moving it to U11 would put it '
+            "inside STUCK's rear block",
+      );
+    });
+
+    test('applying a plan leaves NO range findBlockingOccupant would call '
+        'occupied — the invariant the whole obstacle set exists for', () {
+      for (final direction in CompactDirection.values) {
+        for (final face in Face.values) {
+          final doc = _doc(16, [
+            _at('A', 3, 2),
+            _at('B', 9, 1),
+            _at('C', 14, 1, otherU: 0),
+            _at('D', 5, 2, face: Face.rear),
+            _at('E', 12, 1, face: Face.rear, otherU: 0),
+          ]);
+          final plan = _plan(doc, direction, face: face);
+          for (final c in compactionCommands(
+            plan,
+            now: DateTime.utc(2026),
+            actor: 't',
+          )) {
+            c.apply(doc);
+          }
+
+          for (final f in Face.values) {
+            for (final o in elevationOccupantsOnFace(
+              rack: doc.racks[_rackId]!,
+              devices: doc.devices.values,
+              face: f,
+              templates: doc.templates,
+            )) {
+              expect(
+                findBlockingOccupant(
+                  rack: doc.racks[_rackId]!,
+                  devices: doc.devices.values,
+                  face: f,
+                  templates: doc.templates,
+                  ruStart: o.ruIndex,
+                  deviceH: o.deviceH,
+                  exceptId: o.device.id,
+                ),
+                isNull,
+                reason:
+                    '$direction on ${face.name} put '
+                    '${o.device.designator} at ${f.name} U${o.ruIndex} on '
+                    'top of another device',
+              );
+            }
+          }
+        }
+      }
     });
   });
 
@@ -572,13 +848,30 @@ void main() {
       );
     });
 
-    test('an unmodelled device on the OTHER face anchors nothing', () {
-      final doc = _doc(12, [_at('A', 8, 2)]);
+    test('an unmodelled device on the OTHER face anchors nothing for a '
+        'mover that occupies only this one', () {
+      // A is front-only, so nothing it does can land on the rear rails
+      // ORPHAN is bolted to. The single U ORPHAN claims is a rear U.
+      final doc = _doc(12, [_at('A', 8, 2, otherU: 0)]);
       addOrphan(doc, 'ORPHAN', 2, face: Face.rear);
 
       final plan = _plan(doc, CompactDirection.down);
 
       expect(_targets(plan), {'A': 1});
+    });
+
+    test('...but it anchors a FULL-DEPTH mover, whose rear block would land '
+        'on it', () {
+      // The same fixture with A full depth. Packing A to U1 puts its rear
+      // block across rear U1-U2, and ORPHAN is standing on rear U2 — a U
+      // no elevation can draw, which is exactly why the packer has to be
+      // told about it rather than shown it.
+      final doc = _doc(12, [_at('A', 8, 2)]);
+      addOrphan(doc, 'ORPHAN', 2, face: Face.rear);
+
+      final plan = _plan(doc, CompactDirection.down);
+
+      expect(_targets(plan), {'A': 3});
     });
   });
 }

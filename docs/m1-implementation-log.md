@@ -1676,7 +1676,7 @@ makes `rack_shrink_test`'s "two faces each freeing 3U have together freed 3U" th
 `side: both` devices at the same U on opposite rails are an occupancy conflict the bolted view
 cannot see.
 
-### Deferred, and named rather than dropped
+### Deferred, and named rather than dropped — **both closed in §3i**
 
 `planCompaction` packs around the **bolted** set, so it still does not anchor on a device the other
 face bolted and this face merely draws: Compact Down on a rear elevation can propose a target the
@@ -1689,6 +1689,10 @@ Likewise `planRackShrink` measures an occupant by its height on the face it is b
 than by `stackOccupancyU` (the taller of the two), so a device with `frontU 1 / rearU 4` is judged
 by 1 U. No shipped template has `frontU != rearU` with both non-zero, so nothing in the repository
 exercises it today.
+
+Both are now fixed, see §3i, which also records the third defect the first one was hiding (two
+faces planned independently compose into an overlap) and the answer to "should a device be anchored
+against itself across faces?" (no, and the set difference that says so is load-bearing).
 
 ### A source-level gate can only be followed if the file it names exists
 
@@ -1883,6 +1887,115 @@ guess the run's purpose (G4). It resolves as `asBuilt = yellow`, `keystone = nul
 `isException = true`, and reads on a schedule as `—→YEL`, which is admittedly awkward. If the
 user would rather forbid it, that is a one-line invariant plus a Command refusal, and per this
 project's rules, a refused action must report rather than silently drop.
+## 3i. The two planners, pass 5: compaction could still propose an overlap
+
+§3g fixed what the elevation DRAWS and stopped at the planner that packs against it, naming two
+deferrals in place. Both are closed here, along with a third that only became visible once the first
+was fixed.
+
+### What moves is the bolted set; what it must clear is the rack
+
+`planCompaction` had one occupancy question where it needed two. It asked
+`boltedOccupantsOnFace` (correctly, for **movers**, because a `CompactionMove` becomes
+`MoveDeviceCommand(fromFace:, toFace:)` and planning by elevation footprint would unbolt every
+front-mounted `side: both` device and re-hang it on the rear rails) and then packed **around** that
+same set. So a device the other face bolted and this face merely draws (CR-036) was not an obstacle
+at all: Compact Down on the rear could propose a target `findBlockingOccupant` refuses, out of a
+preview showing a device sliding into space another device is visibly standing in.
+
+The obstacle set is now `elevationOccupantsOnFace` **on both faces, minus the movers**
+(`compaction.dart`'s `_anchors`), and the fit test (`_straddles`) checks a candidate target against
+every elevation that draws the mover, not just the one being planned. Both halves are load-bearing:
+
+* **Both faces, because a move carries the whole device.** Packing a full-depth device down the
+  front elevation moves its rear block too. Front-only clearance sends it onto a rear-bolted
+  device: the same defect, mirrored.
+* **Minus the movers, because a device is not an obstacle to itself.** This was §3g's stated
+  objection to "just anchor on the elevation scan", and the set difference is the whole answer: a
+  device's front block and rear block are one object at one U. Anchoring them wholesale pins every
+  `side: both` device against its own reflection, and Compact Down proposes nothing, ever, on any
+  rack whose devices are full depth, which is 19 of `whole_house` RK-1's 27.
+
+`freedU` is unchanged in meaning and now measures against the widened anchor list for the planned
+face: a front elevation whose top is still held by a rear-bolted device has gained nothing at the
+top, exactly as it already reported for a device no elevation can model. The other face's anchors
+are deliberately **not** folded in: the number is a run on one elevation and is spent there, and a
+front-only blank really does fit above a front stack whose rear neighbour reaches higher.
+
+### The packing cursor steps by the planned face, and `blockers` does the rest
+
+Two heights meet in the pass and they are not interchangeable. The **monotonic cursor** exists only
+for order preservation on the elevation being compacted, so it steps by that face's height. The
+**rack-extent bound** in `_lowestFit`/`_highestFit` is the stack height (`max(frontU, rearU)`), or a
+`frontU 1 / rearU 4` device compacted up a 12U rack lands at U12 with three U of itself outside the
+rack. Correctness (nothing overlapping anything) belongs to neither of them: it belongs to
+`blockers`, which every placed mover is added to on every face it draws on. Stepping the cursor by
+the stack instead only refuses **legal** placements: a front-only follower belongs at the next front
+U, not three U above it, staring at a gap the preview cannot explain.
+
+### The third defect: two faces planned independently compose into an overlap
+
+`planRackShrink` plans both faces, because a shrink is a physical change to a rack rather than a
+view operation. With cross-face anchoring in place that exposed the real bug underneath: two calls
+planned against the document's *current* positions both reach for U1, and the composed rescue puts
+two full-depth devices in the same U, an overlap the planner proposed, out of a modal promising a
+lossless shrink. `planCompaction` gained one optional parameter, `alreadyPlanned`, and
+`_planRescue` now runs the faces **in sequence**, feeding the second the targets the first assigned.
+The residual asymmetry is stated rather than hidden: the front pass still anchors on the rear's
+pre-compaction positions, so it can leave a gap the rear later vacates, an error that packs less
+tightly, never into occupied U.
+
+### An occupant is measured by its tallest face
+
+`planRackShrink`'s `_Occupant` now carries two heights. `deviceH` stays the bolted face's: it is
+what a `CompactionMove` hands the preview to draw a ghost at. `stackH` is `stackOccupancyU`, and it
+is what every *does this still fit* question uses: `_diesUnderPlainTrim`, `_losslessFloor`, and the
+U range `DoomedOccupant` names in the casualty list. Judged by its 1 U front block, a
+`frontU 1 / rearU 4` device survives a shrink to 22U with three U of itself outside the rack and
+**no modal opens at all**, the silent stranding "always name the casualties" exists to prevent. It
+also reaches the `unmodelledRail` branch: a device bolted to the front rails with `frontU 0` is
+skipped by both bolted scans, but its snapshot may still say the rear elevation draws four U of it,
+and claiming 1 U there was an under-count with a resolvable answer sitting right beside it.
+
+### The fixtures that were quietly invalid
+
+Three `rack_shrink_test` fixtures put two **full-depth** devices at the same U on opposite rails.
+That is not a rack; it is an occupancy conflict, and the bolted-only planner simply could not see
+it. Two are now spelled with single-face devices (`otherU: 0`), which is what their comments always
+claimed they were testing: *independent* elevations whose contiguous runs do not sum. The third
+(the shipped-demo shape) keeps its full-depth devices and gets a truer number: the rear pass cannot
+drop PP-1 to U1 under a full-depth front stack, so the rack frees **3U**, not the 4 the old
+independent planning claimed and emphatically not the 10 a per-face fold reports. Both test helpers
+gained an `otherU` knob, and `side` is now derived from the two heights rather than passed, so a
+body cannot claim `both` with `rearU: 0`.
+
+Two invariant tests now pin the whole thing end-to-end rather than by target arithmetic: applying a
+plan (compaction) or a rescue (shrink) and asserting that `findBlockingOccupant` reports **no**
+occupied range on either elevation, for every direction and both trims.
+
+### Test counts and mutation testing
+
+`rackmate_core` 903, `rackmate_ui` 351, `apps/rackmate` 651, `rackmate_export` 183, for **2088**.
+`flutter analyze` 195 infos, 0 errors, 0 warnings.
+
+Ten mutations run, ten killed, and **two survived their first pass**, which is how the packing
+cursor got fixed. `cursor = target + _stackH(foot)` and dropping `_occupy` for placed movers were
+*both* invisible, because the over-conservative cursor was masking the missing obstacle record. The
+kill for the second one only exists because the first was corrected to the height it should always
+have used.
+
+| Mutation | Killed by |
+|---|---|
+| A move need only clear the face being planned | `compaction_test` "a move must clear EVERY elevation…" + 5 more |
+| `_anchors` stops subtracting `movers` | 15 `compaction_test` cases: every plan becomes empty |
+| `_anchors` drops the elevation ranges (the §3g behaviour) | `compaction_test` "Compact Down packs AROUND a device the other face bolted…" + 9 more |
+| `_planRescue` passes `alreadyPlanned: const {}` | `rack_shrink_test` "the rear pass packs above the front pass" + 3 more |
+| `_Occupant.stackH` reverts to the bolted-face height | `rack_shrink_test` "judged by 4U" |
+| The cursor steps by the stack height | `compaction_test` "…the next front U really is the next front U" |
+| `_occupy` is not called for a placed mover | `compaction_test` "two movers on ONE face can still collide on the OTHER" |
+| `_occupy` is not called for a locked occupant | `compaction_test` "never packs a device THROUGH an anchor…" |
+| `_occupy` is not called for a device that could not move | `compaction_test` "…an obstacle where it STANDS" |
+| The fit bound uses `frontU`, not the stack | `compaction_test` "bounded by its TALLER face" |
 
 ---
 
