@@ -8454,7 +8454,7 @@ launched the application.
 
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-032 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-034 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -8963,7 +8963,7 @@ allowlist of pairs, an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-032 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-034 are the user's decisions and are binding. §12 is the complete
 index of what they supersede, §12.1…§12.5, §12.9, §12.11, §12.12 and §12.13 by ruling, §12.6 by
 internal correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **Two entries
 supersede another DR**: §12.12 (DR-018's reasoning as well as its ruling) and §12.13, which also
