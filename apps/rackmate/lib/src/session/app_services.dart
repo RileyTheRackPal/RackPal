@@ -86,7 +86,7 @@ import 'package:rackmate_core/rackmate_core.dart';
 /// THE SCHEME (docs/14 §14.0): `0.EPIC.TASK`. The leading `0` holds until
 /// the first public release, the middle number is the milestone epic under
 /// development, and the last increments per major task completed in it.
-const String kAppVersion = '0.2.0';
+const String kAppVersion = '0.3.30';
 
 /// Everything the shell is handed.
 final class AppServices {
