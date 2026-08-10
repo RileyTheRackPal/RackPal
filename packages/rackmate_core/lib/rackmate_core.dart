@@ -173,6 +173,7 @@ export 'src/persistence/json_util.dart' show JsonMap;
 export 'src/persistence/migrations.dart';
 export 'src/persistence/schema.dart';
 export 'src/structure/csv_header_map.dart';
+export 'src/structure/csv_import_plan.dart';
 export 'src/structure/csv_mapping.dart';
 export 'src/structure/csv_reader.dart';
 export 'src/structure/csv_row_resolve.dart';
