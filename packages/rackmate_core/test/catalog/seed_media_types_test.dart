@@ -219,6 +219,44 @@ void main() {
     });
   });
 
+  group('isPathwayOnly — conduit is not a cable (CR-109, M3-E/1)', () {
+    test('exactly the three canon §6.5 marks carry the flag', () {
+      // EXACTLY, not "at least". A fourth would silently stop creating
+      // `Link`s for a medium somebody pulls, and a missing one would put
+      // a port on a smurf tube — CR-109's own rejected alternative,
+      // "which produces a port you can wire an HDMI cable into".
+      expect(
+        seeded.values.where((d) => d.isPathwayOnly).map((d) => d.id.v).toSet(),
+        {'media.conduit_emt', 'media.conduit_ent', 'media.pull_string'},
+      );
+    });
+
+    test('and every cable is false, including the ones that sound like '
+        'conduit', () {
+      // `media.innerduct` and friends do not exist, but the failure this
+      // guards is a future medium named for where it goes rather than
+      // what it is. 35 of 38 is the arithmetic.
+      expect(seeded.values.where((d) => !d.isPathwayOnly), hasLength(35));
+    });
+
+    test('the flag is not yet READ, and that is a stated gap', () {
+      // Seeding is half of CR-109. The drop line and the matrix still
+      // make `Link`s out of conduit, which docs/07 §5.2 shows the
+      // importer must not do. This case exists so the day a planner
+      // branches on the flag, somebody deletes it deliberately rather
+      // than discovering the product had two behaviours for one medium.
+      final conduit = seeded[const MediaTypeId('media.conduit_ent')]!;
+      expect(conduit.isPathwayOnly, isTrue);
+      expect(
+        conduit.aliases,
+        contains('conduit'),
+        reason:
+            'a drop line saying `1x conduit` still resolves to this '
+            'medium and still makes a Link today',
+      );
+    });
+  });
+
   group('what a new document gets', () {
     test('buildSeedRegistries now carries the media types', () {
       expect(buildSeedRegistries().mediaTypes, hasLength(38));

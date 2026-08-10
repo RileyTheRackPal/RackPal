@@ -71,17 +71,19 @@
 //    there is nothing to transcribe. The four `JacketRating` sets the
 //    whole-house starter used to carry were authored for that fixture,
 //    not sourced, and nothing in the codebase reads the field.
-//  * NO `isPathwayOnly`, though canon marks `media.conduit_emt`,
-//    `media.conduit_ent` and `media.pull_string` with it. THIS USED TO
-//    NAME #149, and #149 shipped without it: the flag's whole purpose is
-//    that such a media type creates a `Pathway` instead of a `Link`, and
-//    NOTHING IN THIS PRODUCT CREATES A `Pathway` AT ALL. Seeding the
-//    flag alone would mark three types with a fact no code could act on,
-//    so it goes with #156 (M3-E/1), which owns `Pathway.kind` and
-//    `containsLineVoltage` through to the UI. Until then the drop line
-//    and the matrix both make `Link`s out of conduit, which docs/07 §5.2
-//    already shows the importer must not do; the three ids are named
-//    here so they are findable when it lands.
+//  * `isPathwayOnly` IS NOW SEEDED on `media.conduit_emt`,
+//    `media.conduit_ent` and `media.pull_string` (M3-E/1). It was held
+//    out through #149 for one reason, stated here at the time: the
+//    flag's whole purpose is that such a media type creates a `Pathway`
+//    instead of a `Link`, and NOTHING IN THIS PRODUCT COULD CREATE A
+//    `Pathway` AT ALL, so seeding it alone would have marked three types
+//    with a fact no code could act on. M3-E/4 (`bcb1b31`) built the
+//    creation path and the reason lapsed. **Reading the flag is the
+//    OTHER half and is not done here**: the drop line and the matrix
+//    still make `Link`s out of conduit, which docs/07 §5.2 shows the
+//    importer must not do. Seeding first is deliberate rather than
+//    partial — the registry fact is what a planner will read, and a
+//    planner branching on a flag no medium carries is untestable.
 //  * NO `conductorCount`, `pairCount`, `gaugeAwg`, `impedanceOhms`,
 //    `shielded`, `minBendRadius`, `outerDiameter` or `supports`. Canon
 //    §6.5 has columns for the first five and nothing reads any of them;
@@ -102,12 +104,14 @@ MediaTypeDef _media(
   String shortTag, {
   List<String> aliases = const [],
   Len? maxChannel,
+  bool isPathwayOnly = false,
 }) => MediaTypeDef(
   id: MediaTypeId(id),
   displayName: displayName,
   shortTag: shortTag,
   aliases: aliases,
   maxRunLengthPassive: maxChannel,
+  isPathwayOnly: isPathwayOnly,
 );
 
 const Len _m100 = Len(100 * 1000 * Len.nmPerMillimetre);
@@ -235,14 +239,19 @@ Map<MediaTypeId, MediaTypeDef> buildSeedMediaTypes() {
     _media('media.bonding_6awg', 'Bonding conductor', 'GND'),
 
     // --- pathway only (CR-109) ----------------------------------------
-    _media('media.conduit_emt', 'EMT conduit', 'EMT'),
+    // THE THREE `isPathwayOnly` TYPES (CR-109), which canon §6.5 marks
+    // and which nothing could act on until M3-E/4 gave the product a way
+    // to create a `Pathway`. A medium with the flag creates one, never a
+    // `Link` and never a `Port`.
+    _media('media.conduit_emt', 'EMT conduit', 'EMT', isPathwayOnly: true),
     _media(
       'media.conduit_ent',
       'ENT (smurf tube)',
       'ENT',
       aliases: const ['conduit', 'smurf', 'ent'],
+      isPathwayOnly: true,
     ),
-    _media('media.pull_string', 'Pull string', 'PULL'),
+    _media('media.pull_string', 'Pull string', 'PULL', isPathwayOnly: true),
   ];
   return {for (final d in defs) d.id: d};
 }

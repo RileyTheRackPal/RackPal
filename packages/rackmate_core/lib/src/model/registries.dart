@@ -181,11 +181,15 @@ final class ConnectorTypeDef {
 /// paths that resolve one are docs/07 §4.3's drop DSL (`4x Cat6`) and
 /// §5.1's CSV `media` column. The remaining eight (`conductorCount`,
 /// `pairCount`, `gaugeAwg`, `impedanceOhms`, `shielded`,
-/// `minBendRadius`, `outerDiameter`, `supports`, `isPathwayOnly`) stay
-/// out until something reads them; `isPathwayOnly` is CR-109's and goes
-/// with M3-E/1, which is the task that makes something able to CREATE a
-/// `Pathway`. See `seed_media_types.dart` for why the matrix was the
-/// wrong home for it.
+/// `minBendRadius`, `outerDiameter`, `supports`) stay out until
+/// something reads them.
+///
+/// **`isPathwayOnly` HAS ARRIVED** (M3-E/1). It was held out for one
+/// reason and that reason is gone: the flag's whole purpose is that such
+/// a media type creates a `Pathway` instead of a `Link`, and until
+/// M3-E/4 (`bcb1b31`) NOTHING IN THIS PRODUCT COULD CREATE A `Pathway`
+/// AT ALL. Seeding it earlier would have marked three types with a fact
+/// no code could act on.
 final class MediaTypeDef {
   const MediaTypeDef({
     required this.id,
@@ -195,6 +199,7 @@ final class MediaTypeDef {
     this.maxRunLengthPassive,
     this.maxRunLengthActive,
     this.jacketOptions = const [],
+    this.isPathwayOnly = false,
   });
 
   final MediaTypeId id;
@@ -245,6 +250,28 @@ final class MediaTypeDef {
   /// §11.19.7 rules the choice rather than leaving it to be discovered.
   final Len? maxRunLengthActive;
   final List<JacketRating> jacketOptions;
+
+  /// CR-109: **conduit is not a cable.** A medium with this set creates a
+  /// `Pathway`, never a `Link` and never a `Port`.
+  ///
+  /// THREE OF THE 38 CARRY IT: `media.conduit_emt`, `media.conduit_ent`
+  /// and `media.pull_string`, which is what canon §6.5 marks. docs/07
+  /// §1 states the consequence in the trade's own terms: *"you still
+  /// pull the smurf tube and it still costs money"*, so it appears in
+  /// the drop table and on the Pull Sheet, and it **never appears in the
+  /// netlist**.
+  ///
+  /// THE REJECTED ALTERNATIVE IS WHY THE FLAG EXISTS. CR-109 records it:
+  /// conduit as a connectable drop like any other, *"which produces a
+  /// port you can wire an HDMI cable into"*. A `bool` on the medium is
+  /// what stops that at the point a drop line is planned rather than by
+  /// a rule that would have to refuse it afterwards.
+  ///
+  /// NOT NULLABLE, and this is not a G4 lapse: `false` is the answer for
+  /// every cable, which is 35 of the 38 and every user-created medium
+  /// under RJ-009. There is no "nobody has said" state for whether a
+  /// thing is a conduit.
+  final bool isPathwayOnly;
 }
 
 /// Which manufacturer part number a cable is. Optional throughout,
