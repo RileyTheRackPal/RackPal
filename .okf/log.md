@@ -1,5 +1,63 @@
 # Update Log
 
+## 2026-08-10 (second entry)
+
+* **Creation**: [DR-037, the Plan view's exit
+  criterion](/decisions/dr-037-plan-view-exit-criterion.md), discharging #589
+  (`PLAN-0`). **The criterion is one clause and the rest is scaffolding**: a
+  person who has never seen the building is handed the printed `T1.01` and the
+  printed Pull Sheet and locates every drop without asking a question. DR-018's
+  motivation is coloured dots in a notes application against which *"work is
+  inevitably done incorrectly"*, and **a dot in Notes is perfectly legible to the
+  person who drew it, which is exactly why it fails**. Every other clause of the
+  criterion is checkable by a machine or by the author, and an author cannot test
+  legibility to somebody else.
+* **Note**: **three of the four decisions came out of code that contradicted the
+  design**, which is the entry's real content and is why this task was worth more
+  than a task breakdown:
+  * **`Location.riseAllowance` does not exist.** DR-020 §11.19.2(1) and docs/15
+    §4.1 have both been spending it since 2026-08-04. Zero occurrences in every
+    `.dart` file. It is the **third** instance of that shape, and it earned a
+    practice: [two documents agreeing is not
+    verification](/practices/two-documents-agreeing-is-not-verification.md).
+  * **`PdfImage(..., alpha: true)` writes an `/SMask`.** docs/08 row 9 forbids
+    alpha *"absolutely, with no exception"* and is **written about
+    `ExtGState`**, so a PNG underlay with an alpha channel would have emitted an
+    alpha path into the document **without anybody calling `setGraphicState`**.
+    The rule's coverage was narrower than its wording, and the first feature
+    capable of breaking it found out. Read out of `pdf-3.13.0`, not recalled.
+  * **`cable_footage.dart`'s `_isQuantity` was already waiting.** Its header says
+    the switch was left exhaustive with no default arm so *"the day it is added
+    this file stops compiling and somebody decides, rather than a bound silently
+    joining a purchase"*. **It is the one place in this tree where a future
+    decision was booby-trapped into the build, and it worked.**
+* **Note**: **DR-029 §11.28.11 is superseded on WHERE and reaffirmed on WHAT.**
+  It said the underlay is *"pre-composited at import, the way palette tints
+  already are"*; a tint is composited at DEFINITION time, so that reading stores
+  a washed-out image and falsifies docs/15 §7's *"on screen it renders at full
+  value"*. The screening moves to the export backend. The gain is not aesthetic:
+  a percentage that lives in code can be changed, while one baked in at import
+  can only be changed by re-importing every underlay in every project file a user
+  owns.
+* **Note**: **the length tier was decided by the rollup and not by the column.**
+  A bound is excluded from the footage total (DR-020 §11.19.2(2)), so ranking
+  `planLowerBound` above `roomEstimate` would make **the number an integrator
+  orders cable from degrade in proportion to how much of the job had been
+  planned**. It ranks below. The rank costs the bound nothing, because
+  `LEN-001`/`LEN-002` read it whichever tier printed, which is where its value
+  always was.
+* **Note**: **DR-026's two provisional positions are CONFIRMED, and neither for
+  the reason that made them provisional.** A floorplan does speak to
+  `Pathway.designator` and it speaks **for** manual entry: the plan is the
+  consumer of a designator, not a source of one. And a floorplan supersedes
+  **none** of `ScheduleLengthSource`'s four tiers, which answers the open half of
+  §11.25.2 rather than deferring it again.
+* **Note**: the decomposition is 10 issues (#597–#606) and 43 tasks
+  (#607–#649). **The prose said 41 before the items existed and was wrong by
+  two**, caught by grep and not by proofreading, which is the fifth time
+  written-out counts in this corpus have needed a sweep and an argument for
+  writing the number after the act rather than before it.
+
 ## 2026-08-10
 
 * **Creation**: [DR-036, public GPLv3, CC0 catalog, nothing
