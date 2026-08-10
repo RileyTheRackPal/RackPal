@@ -119,7 +119,7 @@ final class Pathway {
   /// precedent, and **null is not a collision**. Two trunks called `T1` on
   /// one Pull Sheet is the defect the column exists to prevent. Enforced
   /// by `buildSetPathwayDesignator`, which REFUSES; the
-  /// [PathwayField.designator] row exists for readers and must not be
+  /// `PathwayField.designator` row exists for readers and must not be
   /// driven through `buildSetEntityProperty`, which writes and cannot
   /// decline.
   String? _designator;

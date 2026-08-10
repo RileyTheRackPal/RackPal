@@ -434,6 +434,7 @@ final class ScheduleEntry {
     required this.roomName,
     required this.pathwayId,
     required this.pathwayName,
+    required this.pathwayDesignator,
     required this.mediaId,
     required this.media,
     required this.jacketRating,
@@ -506,11 +507,19 @@ final class ScheduleEntry {
 
   final Uuid? pathwayId;
 
-  /// `Pathway.name` — `CD-1`. §3.2 calls the column's content
-  /// `Pathway.designator`; the entity's field is `name` and there is no
-  /// `designator` on it (`pathway.dart`), so this reads the field that
-  /// exists.
+  /// `Pathway.name` — "attic run to the garage". The HUMAN NAME.
+  ///
+  /// This comment used to record that docs/08 §3.2 calls the column's
+  /// content `Pathway.designator` while the entity had no such field, *"so
+  /// this reads the field that exists"*. M3-E/2 (#157) built the field, and
+  /// the honest workaround is retired: see [pathwayDesignator] and
+  /// [pathwayLabel].
   final String? pathwayName;
+
+  /// `Pathway.designator` — `T1`, `PW-LR-1`. What docs/08 §3.2 column 9
+  /// always specified. Null is unknown (G4, CR-114); most pathways carry
+  /// none until somebody has walked the building (DR-026 §11.25.1).
+  final String? pathwayDesignator;
 
   final MediaTypeId mediaId;
 
@@ -569,6 +578,36 @@ final class ScheduleEntry {
 
   /// True when a person's class and the classifier disagree.
   bool get hasClassDisagreement => classDisagreement != null;
+
+  /// What §3.2 column 9 prints: the designator where one is written, the
+  /// name otherwise.
+  ///
+  /// **THE FALLBACK IS NOT AN OVERLOAD**, and the distinction is the one
+  /// DR-026 §11.25.1 drew. That ruling refused to *store* a designator in
+  /// `name`, because two facts written into one field cannot be told apart
+  /// afterwards by anybody. Both facts are stored here, separately, and the
+  /// column resolves between them at the point of printing while
+  /// [pathwayLabelIsDesignator] preserves which one it got. Nothing is
+  /// lost and nothing is guessed.
+  ///
+  /// Without the fallback, every existing project's `PATHWAY` column would
+  /// go to em rules the day the field shipped, since no pathway anywhere
+  /// carries a designator yet.
+  String? get pathwayLabel => pathwayDesignator ?? pathwayName;
+
+  /// Whether [pathwayLabel] is a designator rather than a name.
+  ///
+  /// §3.2 column 9's font: `RackMono` for a designator, because it is an
+  /// identifier somebody wrote on a trunk, and `RackBody` for a name,
+  /// because it is prose. The sheet already assigns fonts by kind this way
+  /// (`CABLE ID` and `RACK LABEL` are mono, `FROM — ROOM` is condensed),
+  /// so a reader can tell a label in a wall from somebody's description
+  /// without being told.
+  ///
+  /// A per-row flag the renderer consults, on [lengthIsEstimated]'s
+  /// precedent. **The rendering itself is M6's** (DR-027 §11.26.2): M3
+  /// owes the rows and the sort, M6 owns the sheet.
+  bool get pathwayLabelIsDesignator => pathwayDesignator != null;
 
   /// Whether [length] is an estimate — §3.2 column 8's italic.
   bool get lengthIsEstimated =>
@@ -724,7 +763,7 @@ final class ScheduleEntry {
     ScheduleColumnId.media => mediaCell,
     ScheduleColumnId.jacketColor => jacketColorCell,
     ScheduleColumnId.length => lengthCell(units),
-    ScheduleColumnId.pathway => pathwayName ?? kUnknownCell,
+    ScheduleColumnId.pathway => pathwayLabel ?? kUnknownCell,
     ScheduleColumnId.term => terminationCell,
     ScheduleColumnId.conductorNotes => _conductorNotesCell,
   };
@@ -898,6 +937,7 @@ ScheduleEntry _row(RackDocument doc, Link link) {
     roomName: _locationName(doc, roomId),
     pathwayId: pathwayId,
     pathwayName: _trimToNull(doc.pathways[pathwayId]?.name),
+    pathwayDesignator: _trimToNull(doc.pathways[pathwayId]?.designator),
     mediaId: link.media,
     media: doc.registries.mediaTypes[link.media],
     jacketRating: link.jacket,
@@ -1639,9 +1679,13 @@ const String kAllRunsTitle = 'ALL RUNS';
         row.nearEnd.rackId,
         row.nearEnd.rackDesignator ?? kNotInARackCell,
       ),
+      // THE SAME VALUE THE CELL PRINTS, deliberately. A band headed `T1`
+      // over rows whose own `PATHWAY` cells read "attic run to the garage"
+      // is a sheet disagreeing with itself, and this corpus has shipped
+      // that shape twice from one number computed two ways.
       ScheduleGrouping.pathway => (
         row.pathwayId,
-        row.pathwayName ?? kNoPathwayGroupTitle,
+        row.pathwayLabel ?? kNoPathwayGroupTitle,
       ),
       // The domain is a registry def, not an entity, so it has no `Uuid`
       // to key on — the title carries the identity and the null key says
@@ -1726,7 +1770,10 @@ Comparator<ScheduleEntry> _comparatorFor(ScheduleSort sort) => switch (sort) {
   ScheduleSort.designator => _byDesignator,
   ScheduleSort.roomThenPathway => (a, b) => _chain([
     () => _compareNullableText(a.roomName, b.roomName),
-    () => _compareNullableText(a.pathwayName, b.pathwayName),
+    // Sorts on what the column prints, so the order a reader sees matches
+    // the values they are reading. Ends in `_byDesignator`, which is
+    // unique, so the chain stays TOTAL (Dart's List.sort is not stable).
+    () => _compareNullableText(a.pathwayLabel, b.pathwayLabel),
     () => _byDesignator(a, b),
   ]),
   ScheduleSort.rackThenPanelThenPort => (a, b) => _chain([
