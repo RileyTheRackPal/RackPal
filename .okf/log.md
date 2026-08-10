@@ -1,5 +1,55 @@
 # Update Log
 
+## 2026-08-10 (third entry)
+
+* **Note**: **two abandoned worktrees were diffed against main and both were
+  salvaged**, at `091255f` and `497d54f`. Both were based on `49b762c`, roughly
+  thirty commits back. Neither was superseded, and one had become **more**
+  valuable while it sat.
+* **Note**: **canon §12.8 was giving directions with coordinates, and all nine
+  of them were wrong.** The section lists supersession pointers owed into Parts
+  1–3 and located nine of its seventeen sites by line number. `after line 2666`
+  now lands on AC-056, `the table at 3323` on a glossary row for *"drop"*,
+  `after line 4601` on *"End of Part 2."* Canon has grown by about four thousand
+  lines since those numbers were taken, and DR-021 through DR-037 all landed
+  above them. **The eight rows that already used prose anchors never drifted**,
+  which is the whole argument, and the nine are now spelled the same way. This is
+  the failure the house rules already name, with the aggravation that §12.8 is an
+  instruction rather than a claim.
+* **Note**: **the em-dash sweep and the anchor rewrite collided on the same
+  lines and touched different cells.** Rows 5, 8 and 9 had their *pointer text*
+  swept to colons in main while the salvaged change rewrote their *anchor*
+  column. Resolved per cell rather than per line, so neither edit was lost.
+  Worth recording as a merge shape: a table row is not the unit of conflict, a
+  cell is.
+* **Note**: **three defects in the two elevation planners**, and the second and
+  third were only visible once the first was fixed. `planCompaction` took its
+  movers from the bolted scan (correctly) and then packed **around that same
+  set**, so a device the other face bolted and this face merely draws was not an
+  obstacle: Compact Down could propose a target `findBlockingOccupant` refuses,
+  out of a preview showing a device sliding into space another device is visibly
+  standing in. A shrink judged occupants by the **bolted** face's height, so a
+  `frontU 1 / rearU 4` device survived a shrink to 22U with three U of itself
+  outside the rack and **no modal opened at all**. And with cross-face anchoring
+  in place, `planRackShrink`'s two independent per-face passes both reached for
+  U1 and **composed into an overlap**, inside a modal promising a lossless
+  shrink. All three are CR-036 underneath: occupancy is a struct, and a
+  `side: both` device bolted to one face is drawn on the other.
+* **Note**: **three test fixtures were asserting an impossible rack.** Two
+  full-depth devices at the same U on opposite rails is an occupancy conflict,
+  and the bolted-only planner could not see it, so the fixtures passed. This is
+  [assert the artifact, not the
+  mechanism](/practices/assert-the-artifact-not-the-mechanism.md) from the input
+  side: the fixtures were invalid rather than the assertions, and the planner's
+  blindness is exactly what stopped anyone noticing. The replacement tests apply
+  a plan and then assert `findBlockingOccupant` reports no occupied range on
+  either elevation, which is the artifact.
+* **Note**: **`dart format .` from a package directory reformats 89 files the
+  gate considers clean**; from the repo root it reports zero. The gate runs it
+  from the root. This matters because the repo's own instructions say to run the
+  **suites** from the package directory, so the two commands point in opposite
+  directions and the difference is silent.
+
 ## 2026-08-10 (second entry)
 
 * **Creation**: [DR-037, the Plan view's exit
