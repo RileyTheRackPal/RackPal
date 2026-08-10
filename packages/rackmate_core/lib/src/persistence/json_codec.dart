@@ -3018,6 +3018,16 @@ PortSetDef _decodePortSetDef(JsonMap json) => PortSetDef(
   ),
 );
 
+JsonMap _encodeSubmissionCredit(SubmissionCredit c) => {
+  'handle': c.handle,
+  'userId': c.userId,
+};
+
+SubmissionCredit _decodeSubmissionCredit(JsonMap json) => SubmissionCredit(
+  handle: asStr(json['handle'], 'SubmissionCredit.handle'),
+  userId: asInt(json['userId'], 'SubmissionCredit.userId'),
+);
+
 JsonMap _encodePassthroughPairDef(PassthroughPairDef p) => {
   'frontKey': p.frontKey.v,
   'rearKey': p.rearKey.v,
@@ -3090,6 +3100,10 @@ JsonMap _encodeTemplateBody(TemplateBody b) {
   putIfNotNull(json, 'containerUsableDepthNm', b.containerUsableDepth?.nm);
   putIfNotNull(json, 'containerUsableWidthNm', b.containerUsableWidth?.nm);
   if (b.accentColor != null) json['accentColor'] = _encodeRgb(b.accentColor!);
+  // Absent when never submitted, never an explicit null (G4, CR-114, DR-033).
+  if (b.submittedBy != null) {
+    json['submittedBy'] = _encodeSubmissionCredit(b.submittedBy!);
+  }
   return json;
 }
 
@@ -3222,6 +3236,11 @@ TemplateBody _decodeTemplateBody(JsonMap json) => TemplateBody(
     'TemplateBody.panelGraphics',
     _decodePanelGraphic,
   ),
+  submittedBy: json['submittedBy'] == null
+      ? null
+      : _decodeSubmissionCredit(
+          asJsonMap(json['submittedBy'], 'TemplateBody.submittedBy'),
+        ),
 );
 
 JsonMap _encodeTemplateSnapshot(TemplateSnapshot t) => {

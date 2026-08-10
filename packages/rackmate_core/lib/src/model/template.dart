@@ -321,6 +321,7 @@ final class TemplateBody {
     List<PortSetDef>? portSets,
     this.accentColor,
     List<PanelGraphic>? panelGraphics,
+    this.submittedBy,
   }) : tags = tags ?? [],
        alternateMountMethods = alternateMountMethods ?? [],
        passthroughPairs = passthroughPairs ?? [],
@@ -398,6 +399,19 @@ final class TemplateBody {
 
   Rgb? accentColor;
   List<PanelGraphic> panelGraphics;
+
+  /// Who submitted this template to the community catalog (DR-033).
+  ///
+  /// **Written on submission and never read by the application.** null means
+  /// this template has not been submitted, and serialises as an **absent key**
+  /// rather than an explicit null (G4, CR-114).
+  ///
+  /// The field ships ahead of the v1.1 surface that writes it, because this
+  /// class has no `unknown` passthrough: a credit written by a build that knew
+  /// about it would otherwise be **silently dropped** by one that did not, the
+  /// first time that build re-saved the file (canon §11.32.8, DR-019
+  /// §11.18.2(5)).
+  SubmissionCredit? submittedBy;
 }
 
 /// M0 MINIMAL SHAPE: docs/02-data-model.md declares `PowerProfile` with a
@@ -704,6 +718,41 @@ final class PortSetDef {
 
   /// One gesture connects the whole set.
   bool atomicConnect;
+}
+
+/// Who filed the pull request that proposed this template to the community
+/// catalog (DR-033, canon §11.32).
+///
+/// **A credit, not a signature.** The application never reads this to decide
+/// anything, it authenticates nothing, and anybody may write anything into it.
+/// The only place the claim is tested is the pull request itself, where GitHub
+/// has already established who is speaking. AC-042 deleted signatures and
+/// `provenance`/`derivedFrom` chains and this does not bring them back.
+///
+/// **Two fields because they are two facts** (the discipline DR-026 §11.25.1
+/// applied to `Pathway.designator`). A GitHub login is renameable *and* a
+/// freed login is claimable by somebody else, so [handle] alone can come to
+/// credit a different person years later with nothing in the file having
+/// changed. [userId] never changes and is unreadable; [handle] is readable and
+/// may drift. Deriving either from the other is the version of this that is
+/// wrong in a way nobody notices for two years.
+final class SubmissionCredit {
+  const SubmissionCredit({required this.handle, required this.userId});
+
+  /// The GitHub login as it read at submission time. Display only.
+  final String handle;
+
+  /// The GitHub numeric user id. Stable across renames; the real identity.
+  final int userId;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SubmissionCredit &&
+      other.handle == handle &&
+      other.userId == userId;
+
+  @override
+  int get hashCode => Object.hash(handle, userId);
 }
 
 /// Patch-panel front <-> rear passthrough (CR-057).
