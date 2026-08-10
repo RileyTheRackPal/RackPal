@@ -81,6 +81,7 @@ import 'package:rackmate_core/src/model/enums.dart'
 import 'package:rackmate_core/src/model/link.dart';
 import 'package:rackmate_core/src/model/location.dart';
 import 'package:rackmate_core/src/model/outlet.dart';
+import 'package:rackmate_core/src/model/pathway.dart';
 import 'package:rackmate_core/src/model/rack.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/model/structure_body.dart';
@@ -106,6 +107,9 @@ EntityMeta _linkMeta(Link l) => l.meta;
 
 Location? _lookUpLocation(RackDocument doc, Uuid id) => doc.locations[id];
 EntityMeta _locationMeta(Location l) => l.meta;
+
+Pathway? _lookUpPathway(RackDocument doc, Uuid id) => doc.pathways[id];
+EntityMeta _pathwayMeta(Pathway p) => p.meta;
 
 Rack? _lookUpRack(RackDocument doc, Uuid id) => doc.racks[id];
 EntityMeta _rackMeta(Rack r) => r.meta;
@@ -196,6 +200,14 @@ final class EntityAccess<E> {
     label: LabelKey.setEntityProperty,
     lookUp: _lookUpLocation,
     metaOf: _locationMeta,
+  );
+
+  /// A conduit, J-hook, tray or trunk a `Link` runs through (CR-016).
+  static const pathway = EntityAccess<Pathway>(
+    name: 'pathway',
+    label: LabelKey.setEntityProperty,
+    lookUp: _lookUpPathway,
+    metaOf: _pathwayMeta,
   );
 
   @override
@@ -848,6 +860,103 @@ abstract final class LocationField {
     floorNumber,
     spaceCode,
     estimatedRunLengthFromRack,
+  ];
+}
+
+/// Editable [Pathway] properties (M3-E/4, #591).
+///
+/// THE TWO LOCATION REFERENCES ARE NOT HERE, and the omission is the same
+/// shape as `LocationField`'s missing `parentId`. `fromLocationId` and
+/// `toLocationId` are `@internal` setters written by
+/// `RemoveLocationCommand` during DR-021's cascade, which clears them
+/// rather than leaving them dangling. Handing a table row the ability to
+/// point one at an arbitrary id would put a second writer on a field
+/// whose invariant (it names a location that exists, or nothing) is
+/// currently maintained in exactly one place. A pathway's endpoints get a
+/// picker when something needs to set them, and it will refuse.
+abstract final class PathwayField {
+  /// `PW-LR-1`, or "attic run to the garage" (DR-026 §11.25.1 keeps the
+  /// NAME and the designator apart, because they are two facts).
+  ///
+  /// `meta` alone: a pathway's name prints on the Pull Sheet's `PATH`
+  /// column, and nothing about the cable graph changes when it is
+  /// renamed. Same reading `LocationField.name` takes.
+  static final name = EntityField<Pathway, String>(
+    access: EntityAccess.pathway,
+    key: 'name',
+    get: (p) => p.name,
+    set: (p, v) => p.name = v,
+    touches: EpochMask.meta,
+  );
+
+  /// What the cable passes through (DR-031, canon §11.30).
+  ///
+  /// `structure | meta`: the kind is a fact about the building, and it
+  /// prints in the Structure editor's `PATHWAY KIND` column. It is NOT
+  /// `wires`, because no cable's routing, class or colour changes when a
+  /// conduit turns out to be a J-hook.
+  static final kind = EntityField<Pathway, PathwayKind>(
+    access: EntityAccess.pathway,
+    key: 'kind',
+    get: (p) => p.kind,
+    set: (p, v) => p.kind = v,
+    touches: EpochMask.structure | EpochMask.meta,
+  );
+
+  /// Whether line voltage shares this pathway.
+  ///
+  /// THE FIELD M5'S `CODE-001` AND `CODE-002` READ, which is why #156
+  /// insists it be settable and trustworthy before M5 exists. **No rule
+  /// is implemented here**: canon §5 says a rule not listed does not
+  /// exist, and a tier-2 rule built as a tier-1 refusal would make the
+  /// product unable to draw a mistake (G2, CR-017).
+  static final containsLineVoltage = EntityField<Pathway, bool>(
+    access: EntityAccess.pathway,
+    key: 'containsLineVoltage',
+    get: (p) => p.containsLineVoltage,
+    set: (p, v) => p.containsLineVoltage = v,
+    touches: EpochMask.structure | EpochMask.meta,
+  );
+
+  /// How long the pathway runs. Null is unknown, never a measured zero.
+  ///
+  /// `structure | wires` on `LocationField.estimatedRunLengthFromRack`'s
+  /// reasoning: it is a length a takeoff reader compares against cable
+  /// figures, so a consumer watching cable data has to see it move.
+  static final nominalLength = EntityField<Pathway, Len?>(
+    access: EntityAccess.pathway,
+    key: 'nominalLength',
+    get: (p) => p.nominalLength,
+    set: (p, v) => p.nominalLength = v,
+    touches: EpochMask.structure | EpochMask.wires,
+  );
+
+  /// Which `isPathwayOnly` medium this conduit is (CR-109).
+  static final pathwayMedia = EntityField<Pathway, MediaTypeId?>(
+    access: EntityAccess.pathway,
+    key: 'pathwayMedia',
+    get: (p) => p.pathwayMedia,
+    set: (p, v) => p.pathwayMedia = v,
+    touches: EpochMask.structure | EpochMask.meta,
+  );
+
+  /// Free text. Empty lands as null, never as `''` (G4).
+  static final notes = EntityField<Pathway, String?>(
+    access: EntityAccess.pathway,
+    key: 'notes',
+    get: (p) => p.notes,
+    set: (p, v) => p.notes = v,
+    touches: EpochMask.meta,
+  );
+
+  /// See [OutletField.all].
+  static final List<EntityField<Pathway, Object?>> all = [
+    name,
+    kind,
+    containsLineVoltage,
+    nominalLength,
+    pathwayMedia,
+    notes,
   ];
 }
 

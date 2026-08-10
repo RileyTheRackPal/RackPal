@@ -178,4 +178,11 @@ enum LabelKey {
   addLocation,
   reparentLocation,
   removeLocation,
+
+  // M3-E/4 (#591). `removePathway` is its own key rather than a generic
+  // delete for `removeLocation`'s reason at a smaller scale: it clears
+  // `Link.pathwayId` on every run through the pathway, so the Edit menu
+  // has to name the act that took those routes away.
+  addPathway,
+  removePathway,
 }

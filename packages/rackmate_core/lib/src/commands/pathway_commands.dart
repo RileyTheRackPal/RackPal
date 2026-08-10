@@ -1,0 +1,194 @@
+// packages/rackmate_core/lib/src/commands/pathway_commands.dart — pure
+// Dart. Board M3-E/4 (#591), CR-016.
+//
+// ═════════════════════════════════════════════════════════════════════
+// THE ENTITY EXISTED FOR THREE MILESTONES AND COULD NOT BE CREATED
+// ═════════════════════════════════════════════════════════════════════
+// `Pathway` has been in the model since M0, is byte-round-tripped by the
+// codec, is read by the schedule (`PATH`), by the Structure editor
+// (`PATHWAY`, `PATHWAY KIND`) and by `structure_matrix.dart`. Nothing
+// wrote one. The only writers of `doc.pathways` were
+// `RemoveLocationCommand` clearing the two location references during
+// DR-021's cascade.
+//
+// So `Link.pathwayId` could never point at anything real, every drop's
+// `PATH` cell was the unknown marker by construction, and `kind` and
+// `containsLineVoltage` sat at their constructor defaults where M5's
+// `CODE-001` and `CODE-002` will eventually read them. This file is the
+// gesture side of that gap; `PathwayField` in
+// `set_entity_property_command.dart` is the editing side.
+//
+// ═════════════════════════════════════════════════════════════════════
+// WHAT A DELETE OWES, AND WHY IT IS NOT A CASCADE
+// ═════════════════════════════════════════════════════════════════════
+// DR-021 makes deleting a `Location` cascade its subtree and clear nine
+// references. Deleting a `Pathway` is deliberately NOT that shape: a
+// pathway is not a container and nothing lives inside it. What refers to
+// one is `Link.pathwayId`, and a cable whose conduit is deleted is still
+// a cable — it is a run whose route nobody has recorded, which is
+// exactly the state every drop in this product has been in until now.
+//
+// **The reference is CLEARED, never left dangling, and the count is
+// reported.** A dangling `pathwayId` would print an unknown `PATH` cell
+// that looks identical to "nobody said", so the document would carry a
+// broken pointer indistinguishable from an honest absence (G4). DR-021
+// §11.20.2's rule, applied to a smaller graph.
+
+import 'package:rackmate_core/src/commands/command.dart';
+import 'package:rackmate_core/src/commands/label_key.dart';
+import 'package:rackmate_core/src/commands/rack_commands.dart' show nextOrder;
+import 'package:rackmate_core/src/model/entity_meta.dart';
+import 'package:rackmate_core/src/model/pathway.dart';
+import 'package:rackmate_core/src/model/rack_document.dart';
+import 'package:rackmate_core/src/units/ids.dart';
+import 'package:rackmate_core/src/units/len.dart';
+import 'package:rackmate_core/src/util/id_gen.dart';
+
+/// The next `order` for a new pathway.
+///
+/// PER DOCUMENT, not per anything: pathways are a flat list, unlike
+/// `nextLocationOrder`'s per-sibling-group allocation over a tree.
+FracIndex nextPathwayOrder(RackDocument doc) =>
+    nextOrder(doc.pathways.values.map((p) => p.order));
+
+/// Creates one [Pathway].
+final class AddPathwayCommand extends Command {
+  AddPathwayCommand({
+    required this.name,
+    required this.order,
+    required this.now,
+    required this.actor,
+    this.kind = PathwayKind.conduit,
+    this.containsLineVoltage = false,
+    this.nominalLength,
+    this.pathwayMedia,
+    this.notes,
+    Uuid? id,
+  }) : id = id ?? newEntityId();
+
+  /// Minted in the CONSTRUCTOR, never in [apply] — the `Command`
+  /// contract, so redo recreates the identical pathway and anything
+  /// stacked on it (a `Link.pathwayId` set afterwards) still resolves.
+  final Uuid id;
+
+  /// `PW-LR-1`, or "attic run to the garage". The NAME; the designator is
+  /// a separate hand-entered field under DR-026 §11.25.1 and is #157's.
+  final String name;
+
+  final FracIndex order;
+
+  /// Defaults to `conduit`, which is the model's own default and is a
+  /// guess in the way `roughInStatus.planned` is a guess rather than in
+  /// the way a null length is unknown: a pathway is a physical thing
+  /// somebody built, so this always has a true answer.
+  final PathwayKind kind;
+
+  /// Defaults to false, matching the model. See
+  /// `Pathway.containsLineVoltage` for why this is a `bool` and not a
+  /// `bool?`, and what it would take to widen it.
+  final bool containsLineVoltage;
+
+  /// Null stays UNKNOWN through this command. Defaulting it to zero would
+  /// fabricate a measurement at the exact point the user is saying they
+  /// have none (G4, CR-114) — `AddLocationCommand`'s reasoning for
+  /// `estimatedRunLengthFromRack`, verbatim.
+  final Len? nominalLength;
+
+  final MediaTypeId? pathwayMedia;
+  final String? notes;
+
+  final DateTime now;
+  final String actor;
+
+  @override
+  LabelKey get label => LabelKey.addPathway;
+
+  /// `structure` because a pathway is part of how the building is put
+  /// together, `meta` because its name prints on the Pull Sheet's `PATH`
+  /// column for every run through it.
+  @override
+  EpochMask get touches => EpochMask.structure | EpochMask.meta;
+
+  @override
+  Iterable<Uuid> get affects => [id];
+
+  @override
+  void apply(RackDocument doc) {
+    doc.pathways[id] = Pathway(
+      id: id,
+      name: name,
+      order: order,
+      meta: EntityMeta(createdAt: now, updatedAt: now, updatedBy: actor),
+      kind: kind,
+      containsLineVoltage: containsLineVoltage,
+      nominalLength: nominalLength,
+      pathwayMedia: pathwayMedia,
+      notes: notes,
+    );
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    doc.pathways.remove(id);
+  }
+}
+
+/// Deletes one [Pathway] and clears every `Link` that named it.
+///
+/// NOT A CASCADE. See the file header: nothing lives inside a pathway,
+/// so no other entity is destroyed. What happens is that runs through it
+/// go back to having no recorded route.
+final class RemovePathwayCommand extends Command {
+  RemovePathwayCommand({required this.id, required this.now});
+
+  final Uuid id;
+  final DateTime now;
+
+  /// Captured on [apply] so [revert] restores the exact object rather
+  /// than rebuilding an equal one. `EntityMeta` carries a revision, and a
+  /// rebuilt pathway with a fresh one is what breaks CR-117's byte round
+  /// trip.
+  Pathway? _removed;
+
+  /// The links whose `pathwayId` this cleared, so undo can put each one
+  /// back. A set would lose nothing today, but a list keeps the restore
+  /// deterministic if the same link is ever cleared twice by a merged
+  /// command.
+  final List<Uuid> _clearedLinks = [];
+
+  @override
+  LabelKey get label => LabelKey.removePathway;
+
+  /// `wires` as well as `structure | meta`, and that is the difference
+  /// from [AddPathwayCommand]: creating a pathway changes no cable, and
+  /// deleting one rewrites `Link.pathwayId` on every run through it.
+  @override
+  EpochMask get touches =>
+      EpochMask.structure | EpochMask.wires | EpochMask.meta;
+
+  @override
+  Iterable<Uuid> get affects => [id, ..._clearedLinks];
+
+  @override
+  void apply(RackDocument doc) {
+    _removed = doc.pathways.remove(id);
+    _clearedLinks.clear();
+    for (final link in doc.links.values) {
+      if (link.pathwayId == id) {
+        _clearedLinks.add(link.id);
+        link
+          ..pathwayId = null
+          ..meta.touch(now, 'removePathway');
+      }
+    }
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    final pathway = _removed;
+    if (pathway != null) doc.pathways[id] = pathway;
+    for (final linkId in _clearedLinks) {
+      doc.links[linkId]?.pathwayId = id;
+    }
+  }
+}

@@ -982,6 +982,25 @@ void main() {
       });
     });
 
+    test('every @internal Pathway setter has a table row, except the two '
+        'DR-021 keeps out', () {
+      // M3-E/4 (#591). `LocationField`'s shape rather than `LinkField`'s,
+      // and for the same reason `parentId` is kept out of that one: the
+      // two location references are written by `RemoveLocationCommand`
+      // during DR-021's cascade, which CLEARS them so nothing dangles.
+      // A table row would put a second writer on the one field whose
+      // invariant is currently maintained in exactly one place.
+      //
+      // Named literally rather than filtered by a predicate, so a THIRD
+      // field escaping the table fails this case instead of slipping
+      // through a rule written for two.
+      expect(_internalSetters('pathway.dart'), {
+        for (final f in PathwayField.all) f.key,
+        'fromLocationId',
+        'toLocationId',
+      });
+    });
+
     test('every DeviceInstance and Link table key has an @internal setter '
         'behind it', () {
       // ONE DIRECTION ONLY for these two, and the asymmetry is real rather

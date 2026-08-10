@@ -58,17 +58,21 @@ final class Pathway {
     required String name,
     required this.order,
     required this.meta,
-    this.kind = PathwayKind.conduit,
-    this.containsLineVoltage = false,
+    PathwayKind kind = PathwayKind.conduit,
+    bool containsLineVoltage = false,
     Uuid? fromLocationId,
     Uuid? toLocationId,
-    this.nominalLength,
-    this.pathwayMedia,
+    Len? nominalLength,
+    MediaTypeId? pathwayMedia,
     String? notes,
   }) : _name = name,
        _notes = notes,
        _fromLocationId = fromLocationId,
-       _toLocationId = toLocationId;
+       _toLocationId = toLocationId,
+       _kind = kind,
+       _containsLineVoltage = containsLineVoltage,
+       _nominalLength = nominalLength,
+       _pathwayMedia = pathwayMedia;
 
   final Uuid id;
 
@@ -98,17 +102,71 @@ final class Pathway {
   @internal
   set toLocationId(Uuid? v) => _toLocationId = v;
 
+  // ─────────────────────────────────────────────────────────────────
+  // THE FOUR M3-E/4 WIRED (#591).
+  // ─────────────────────────────────────────────────────────────────
+  // Until that task, NOTHING IN THE PRODUCT CREATED A `Pathway` at all:
+  // no command, no accessor table, no editor, and the only writers of
+  // `doc.pathways` were `RemoveLocationCommand` clearing the two
+  // location references during DR-021's cascade. So these four sat at
+  // their constructor defaults on an entity that could not exist, which
+  // is why they take the AC-013 retrofit here and not earlier: a field
+  // converts as each is wired to a Command.
+
+  /// What the cable passes through (DR-031, canon §11.30).
+  ///
+  /// DEFAULTS TO `conduit` AND IS NEVER UNKNOWN, which is deliberate and
+  /// unlike its nullable neighbours: a pathway is a physical thing
+  /// somebody built, so `kind` always has a true answer even when nobody
+  /// has recorded it. The default is a guess in the way `roughInStatus`'s
+  /// `planned` is a guess, not in the way a null length is unknown.
+  PathwayKind _kind;
+  PathwayKind get kind => _kind;
+  @internal
+  set kind(PathwayKind v) => _kind = v;
+
+  /// Whether line voltage shares this pathway.
+  ///
+  /// NOT COSMETIC. `CODE-001` reads it, and `CODE-002` is an ERROR when a
+  /// pathway is a plenum space and the jacket is not `cmp`/`lszh`
+  /// (NEC 800.154). Both rules are M5's; M3 is where the fact is entered,
+  /// which is the whole reason it has to be settable and trustworthy
+  /// before M5 can read it.
+  ///
+  /// `bool` AND NOT `bool?`, which is a real asymmetry against G4 and is
+  /// the model's existing choice rather than this task's: `false` here
+  /// means "no line voltage declared", and a rule that fired on unknown
+  /// would fire on every pathway nobody had answered for. If M5 finds it
+  /// needs the third state, that is a ruling and a migration, not a
+  /// silent widening.
+  bool _containsLineVoltage;
+  bool get containsLineVoltage => _containsLineVoltage;
+  @internal
+  set containsLineVoltage(bool v) => _containsLineVoltage = v;
+
+  /// How long the pathway itself runs. Null is unknown (G4, CR-114), and
+  /// it is NOT a cable length: a `Link.routedLength` is the cable's own
+  /// figure and may exceed this one by every service loop in the run.
+  Len? _nominalLength;
+  Len? get nominalLength => _nominalLength;
+  @internal
+  set nominalLength(Len? v) => _nominalLength = v;
+
+  /// `isPathwayOnly` media (CR-109) — which conduit this actually is.
+  ///
+  /// STILL UNREACHABLE FROM A DROP LINE, and the reason is a field that
+  /// does not exist: CR-109 turns on `MediaTypeDef.isPathwayOnly`, and
+  /// that is not a registry field yet. #156 owns it. Until then a
+  /// `Pathway` is created deliberately rather than as a side effect of
+  /// typing `Office: 1x ENT`.
+  MediaTypeId? _pathwayMedia;
+  MediaTypeId? get pathwayMedia => _pathwayMedia;
+  @internal
+  set pathwayMedia(MediaTypeId? v) => _pathwayMedia = v;
+
   // ACCESS CONTROL: fields below are plain mutable pending @internal
   // retrofit (AC-013). Converted as each is wired to a Command. See
   // internal_setter_grep_test.dart.
-  PathwayKind kind;
-
-  /// `CODE-001` depends on it.
-  bool containsLineVoltage;
-  Len? nominalLength;
-
-  /// `isPathwayOnly` media (CR-109).
-  MediaTypeId? pathwayMedia;
   FracIndex order;
   EntityMeta meta;
 }
