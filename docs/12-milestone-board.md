@@ -1355,6 +1355,10 @@ held exactly one row since M3-A/7.
 whether `PathwayKind` gains `attic` and `crawlspace`, and says it is **"Owed at M3, when `Pathway`
 gets its editor"**. That editor is #156 (M3-E/1) and no item claimed the question; it is recorded
 there with the ruling's own framing on both sides, so it is decided rather than rediscovered.
+**Answered as DR-031 at `a9ecede`**: both values are in, because what a `PathwayKind` value carries
+is a consequence an integrator acts on, and the "these are spaces and `Location` models spaces"
+objection fails on the fact that `fromLocationId`/`toLocationId` are ENDPOINTS, so a space in the
+middle of a run has no field to live in.
 
 *What M3-J is blocked on, stated so the order is not re-derived.* **M3-J/3 needs #148.** DR-020
 §11.19.5 says twice that the tally is *"a column on a table the milestone already builds, not a new
@@ -1576,6 +1580,9 @@ and tinting a column would claim CR-109 holds when it does not. It goes to **#15
 owns `Pathway.kind` and `containsLineVoltage` through to the UI. Until then the drop line and the
 matrix both make `Link`s out of `Office: 1x ENT`, which is a pre-existing CR-109 gap this task
 found rather than introduced, and both source comments now name the right task.
+**Discharged at `b093062` (the drop line) and `2618272` (the column)**, and the deferral was worth
+its cost: building the tint here would have shipped a cell that accepted a number and read back `0`,
+because a DR-032 pathway recorded neither its medium nor its room until **DR-035** said it must.
 
 *Closed at `30a3a6f` (the grid model), `096daf7` (the cell planner), `263f403` (the tab and the
 route) and `13c42a0` (the derived docs).* Core 1937, UI 785, app 765.
@@ -1810,9 +1817,38 @@ DR-029 sequences that epic before M6, so it is not far off. Neither is a ruling 
 recorded as one: this is a stated expectation about a surface, and the ruling that would move any
 scope has not been asked for.
 
-*What M3-E still owes.* #156 proper, which is now the two fields reaching a UI plus CR-109's
-`MediaTypeDef.isPathwayOnly`, **also not a field yet**, so conduit media still creates a `Link`
-rather than a `Pathway`. #157, which DR-026 §11.25.1 already ruled and is a build rather than a
+**#156 is closed, and it took five commits because it was four obligations wearing one title.** The
+title names two fields reaching a UI; the task's own comments added CR-109's
+`MediaTypeDef.isPathwayOnly` and DR-020 §11.19.4's open enum question, and §4.2's tinted `EMT`
+column was routed here by this board (above). Closed at `719fa34` (the flag), `a9ecede` (DR-031's
+`attic` and `crawlspace`), `b093062` (DR-032, a conduit drop line builds a `Pathway`), `d5d36b8`
+`b3facd5` `620aa8e` (the `[ Pathways ]` tab) and `2618272` (the `EMT` column). Core 1948 → 2013,
+UI 791 → 807, app 766 → 784.
+
+*The tab is a list and an editor, and that cap is the user's.* Seven columns, the whole of `Pathway`
+minus the two location references, with `KIND` and `LINE VOLTAGE` as the controls M5's `CODE-001`
+and `CODE-002` were waiting on. **No rule fires there and a test in each package asserts the
+silence**, because "the validation is missing" and "the validation is M5's on purpose" look identical
+from outside. There is no routing surface and `[Group into pathway]` is still unbuilt, which is
+DR-020 §11.19.1 applied to the entity: the route is discovered, not designed, and the user said the
+Plan view is where somebody will be standing.
+
+*Two defects were found by building it, and both were surfaces contradicting themselves.* The status
+bar's `8 pathways` counted only pathways **that had drops in them**: `outletCount`'s rule applied to
+the field beside it, coherent until DR-032 made `Office: 1x ENT` build a pathway and no cable, after
+which the bar read `0 pathways` on the keystroke after somebody made one. Its test asserted
+`pathwayCount, 1` on a two-pathway document, which is house style's "a defect asserted as intended
+behaviour" caught in the act. And the `EMT` column could not have worked as drawn: a matrix cell is a
+target, and a DR-032 pathway recorded neither its medium nor its room, so the cell would have
+accepted a number and read back `0` forever. That is **DR-035**, taken before the column was built
+rather than discovered by shipping it.
+
+*Three tests were asserting absences that this task filled, and all three said so in their own
+comments.* `structure_matrix_test`'s "the seed columns are eight, and EMT is not one of them", its UI
+twin, and `structure_editor_screen_test`'s unbuilt-control list. That is the bookkeeping those
+assertions were written for, and it worked: each one named the day it would come due.
+
+*What M3-E still owes.* #157, which DR-026 §11.25.1 already ruled and is a build rather than a
 decision. And #158's single-instance assumptions.
 
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`

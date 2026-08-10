@@ -106,14 +106,30 @@ The editor **opens in table mode**; the room × media matrix is a tab beside it 
 
 Four regions. **Left** is the location tree, shown read-only with an inline "edit in `Project ▸ Locations…`" affordance; it is a view of the project vocabulary, not an editor for it (CR-112). **Top** is the dual-mode bulk entry bar. **Centre** is the drop table, grouped by room with a sticky group header carrying the room `code`, the estimated run length, and the drop/connected counts. **Right** (collapsed in the wireframe) is the inspector and batch inspector, with the same ergonomics as the device builder's, see [Device builder](06-device-builder.md).
 
-**The strip is two tabs and this wireframe draws four** (M3-C/3). `[▶ Table]`
-and `[ Matrix ]` are built; `[ Outlets ]` and `[ Pathways ]` open nothing, and
-a tab that opens nothing is the `UnbuiltView` defect wearing a different hat.
-M3-C/2 therefore shipped with no strip at all, because AC-048 asks only that
-the editor **open in table mode** and one surface satisfies that outright. The
-strip arrived with the second thing to switch to, and `structure_editor_screen
-.dart` names the two that are still absent beside the list they are absent
-from.
+**The strip is three tabs and this wireframe draws four** (M3-E/1). `[▶ Table]`,
+`[ Matrix ]` and `[ Pathways ]` are built; `[ Outlets ]` opens nothing, and a tab
+that opens nothing is the `UnbuiltView` defect wearing a different hat. M3-C/2
+therefore shipped with no strip at all, because AC-048 asks only that the editor
+**open in table mode** and one surface satisfies that outright. The strip arrived
+with the second thing to switch to, and `structure_editor_screen.dart` names the
+one that is still absent beside the list it is absent from.
+
+**The strip keeps this wireframe's order**, so the absent tab holds its place
+rather than letting the built ones shuffle left: a strip that rearranged itself
+as tabs arrive would move a target under the hand of anybody who had learned
+where it was.
+
+**`[ Pathways ]` is a list and an editor for what exists, and deliberately not a
+routing surface.** There is no map, no assignment of runs to a conduit, and
+`[Group into pathway]` is still absent from the button bar. That cap is the
+user's own, stated on 2026-08-09: *"Pathway will likely be set in the plan view,
+once a pathway is actually determined and set on site"*, which is DR-020 §11.19.1
+applied to the entity rather than to its designator. Its seven columns are the
+whole of `Pathway` minus the two location references; `KIND` and `LINE VOLTAGE`
+are what M5's `CODE-001` and `CODE-002` read, and **no rule fires here** (canon
+§5, G2, CR-017: a tier-2 rule built as a tier-1 refusal makes the product unable
+to draw a mistake). The delete is not a cascade and its tooltip states the run
+count before the click.
 
 **The bulk entry bar is above the tabs, not inside one.** It is the same widget
 with the same state on both, which is M3-C/3's whole instruction: *"a matrix
@@ -195,10 +211,19 @@ is `LocationKind`'s answer and not a second notion of "room": `room`, `zone`
 and `outdoor` take drops, and a `site`, `building` or `floor` gets a row only
 when it already carries one.
 
-**Two of this section's own controls are absent and say so in the source.** The
-tinted `EMT` column needs `MediaTypeDef.isPathwayOnly`, which is not a field,
-and a `Pathway` command, which nothing in the product has: that is M3-E/1, and
-a tint with no `Pathway` behind it would claim CR-109 holds when it does not.
+**The tinted `EMT` column is built** (M3-E/1). It was absent for three tasks
+because it needed `MediaTypeDef.isPathwayOnly`, a `Pathway` something could
+create, and a drop line that honoured the flag: a tint with no `Pathway` behind
+it would have claimed CR-109 held when it did not. The last piece was **DR-035**,
+which gives a created pathway the medium and the room, and it is not
+bookkeeping: a cell is a target, so a column that created entities it could not
+then find would accept a number and read back `0` forever. The cells are excluded
+from the `Σ` drop count, a decrement **refuses** to take a pathway with cable
+running through it and names the `[ Pathways ]` tab, and the column needs no
+Structure device at all, because a `Pathway` hangs off the document as a
+`Location` does (CR-112).
+
+**One of this section's controls is still absent and says so in the source.**
 `+ Media column` has no "create new type" row, because creating a media type is
 the media-type editor (M4-P2). There is no `+ Room` either, and that one is not
 owed: the loop above the grid already creates a room on `Enter` and CR-112 puts
