@@ -1,5 +1,47 @@
 # Update Log
 
+## 2026-08-10 (eighth entry)
+
+* **Creation**: [A modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md).
+  M3-F/6 found three more of `pathway_commands.dart`'s finding while trying to
+  apply a CSV import: **nothing in `lib/` had ever written
+  `registries.mediaTypes`**, so RJ-012's "creates a new media type ... never a
+  rejected row" could be honoured only by rejecting the row; `Link.pathwayId`
+  was settable at creation and never afterwards; and docs/07 §5.3.1's "derived
+  `code`" had no derivation anywhere. Four occurrences is what moved it from an
+  anecdote to a check.
+* **Note**: **the corpus is not what missed these, and that is the point.** The
+  data model lists each field, the codec round-trips it, the design document
+  describes the behaviour reading it, and every one of those artifacts is
+  accurate. None is evidence a person can change the value.
+  [Two documents agreeing is not verification](/practices/two-documents-agreeing-is-not-verification.md)
+  is the same lesson one layer down.
+* **Note**: three bugs in the importer were caught by ONE test shape, apply then
+  re-import then assert zero creates. The load-bearing one: RJ-012's minted media
+  type has to carry the spelling that made it AS AN ALIAS, or the second pass
+  fails to resolve `Cat6e` again and mints `media.cat6e_2`. Nothing about a
+  single import shows it, which is why idempotence has to be tested as a round
+  trip rather than asserted as a property.
+* **Note**: the dedup's short-circuit was wrong in a way that reads as obviously
+  right. It skipped the drop lookup when a row's room did not exist, since a room
+  the project lacks cannot hold an existing drop. **`fieldLabel` is unique
+  PROJECT-WIDE under CR-113**, so a drop that moved rooms between revisions is
+  the same drop, and the shortcut would have duplicated it and orphaned the
+  original.
+* **Note**: **D13 is closed, and the shape of the fix was the decision.** Dart
+  sends a KIND (`project`, `csv`) and never a `COMDLG_FILTERSPEC`, because a
+  Win32 pattern does not port to `NSOpenPanel` and D13's instruction was to avoid
+  D2 widening a narrow contract twice. The gate over it strips comments from BOTH
+  the C++ and the Dart, which is that file's own opening lesson arriving
+  inverted: an ABSENCE assertion fails on the prose explaining the absence.
+* **Note**: `#654` records a defect this work found and did not fix.
+  `drop_line_planner.dart` matches an outlet by designation ALONE, project-wide,
+  where docs/07 §5.3.2 keys on `(locationId, designation)`. Two rooms both
+  calling a plate `WP-1` is normal residential work, so typing
+  `Attic: 2x Cat6 @outlet="WP-1"` can hang the attic's drops on the living
+  room's plate. Changing a shipped gesture's matching inside a CSV task is not
+  this task's to do.
+
 ## 2026-08-10 (seventh entry)
 
 * **Creation**: [Check a decomposition for holes](/practices/check-a-decomposition-for-holes.md).
