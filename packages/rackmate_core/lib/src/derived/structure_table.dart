@@ -141,7 +141,25 @@ final class StructureTable {
   /// real, but it is not what "9 outlets" means beside "52 drops".
   final int outletCount;
 
-  /// Distinct pathways named by these drops, on the same rule.
+  /// Every `Pathway` in the document.
+  ///
+  /// **NOT [outletCount]'S RULE, AND DR-032 IS WHY.** This used to be
+  /// *"distinct pathways named by these drops"*, which was the outlet
+  /// reading applied to the neighbouring field and was coherent while
+  /// nothing in the product could create a `Pathway` at all. It stopped
+  /// being coherent the moment a conduit-only drop line could:
+  /// `Office: 1x ENT` builds a pathway **and no cable**, so a bar counting
+  /// only pathways with drops through them reads `0 pathways` on the
+  /// keystroke after somebody made one. A surface that contradicts the
+  /// gesture that fed it is worse than a statistic with a slightly wider
+  /// scope.
+  ///
+  /// **DOCUMENT-WIDE WHERE ITS FOUR NEIGHBOURS ARE PER BODY**, and that is
+  /// stated rather than smoothed: `doc.pathways` carries no
+  /// `structureBodyId`, for the reason `doc.locations` carries none
+  /// (CR-112). A conduit from the garage to the attic belongs to the
+  /// building. On every document this product can currently produce the
+  /// two scopes coincide, because a second Structure body is #158's.
   final int pathwayCount;
 
   /// True when a `PortEndpoint` names something this document does not
@@ -232,10 +250,10 @@ StructureTable buildStructureTable(
       for (final row in rows)
         if (doc.links[row.linkId]?.structureOrigin case final o?) o.outletId,
     }.length,
-    pathwayCount: {
-      for (final row in rows)
-        if (row.pathwayId case final id?) id,
-    }.length,
+    // See [StructureTable.pathwayCount]: the document's, not this body's
+    // drops', because DR-032 makes a pathway with nothing running through
+    // it the ordinary product of a conduit-only line.
+    pathwayCount: doc.pathways.length,
   );
 }
 

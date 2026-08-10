@@ -408,7 +408,14 @@ void main() {
       expect(buildStructureTable(d.doc).outletCount, 1);
     });
 
-    test('pathways likewise, and a drop in none costs nothing', () {
+    test('pathways do NOT take that rule, and DR-032 is why', () {
+      // This assertion used to read `pathwayCount, 1` — the outlet rule
+      // applied to the neighbouring field, which was coherent while
+      // nothing in the product could create a `Pathway`. DR-032 makes
+      // `Office: 1x ENT` build a pathway and no cable, so the old reading
+      // printed `0 pathways` on the keystroke after somebody made one,
+      // and the `[ Pathways ]` tab listing it would sit on the same
+      // screen as a bar denying it existed.
       final d = _Doc();
       final lr = d.room('Living Room', code: 'LR');
       final o = d.outlet('LR-1', locationId: lr);
@@ -424,6 +431,13 @@ void main() {
       _drop(d, outletId: o, locationId: lr, fieldLabel: 'LR-TV-2');
 
       expect(d.doc.pathways, hasLength(2));
+      expect(buildStructureTable(d.doc).pathwayCount, 2);
+    });
+
+    test('a pathway with nothing through it still counts', () {
+      // DR-032's ordinary output, and the case the old rule got wrong.
+      final d = _Doc();
+      d.pathway('Office ENT');
       expect(buildStructureTable(d.doc).pathwayCount, 1);
     });
 
