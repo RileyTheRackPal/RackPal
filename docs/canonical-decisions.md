@@ -4811,8 +4811,8 @@ existing user data. That is the criterion for the v1.1 bucket, not effort.
 | `Trace` through pass-throughs, and the search DSL | AC-040 | Both are navigation, not correctness |
 | Manual reroute, stored as `routeConstraintsBySheet` (ordered grid points the router must pass through), never as a polyline | CR-012 | The router is deterministic; the itch is aesthetic |
 | Registry editor beyond media types and connector aliases | AC-050 (A2.1) | The two extensibility paths users actually hit already ship |
-| **Submitting a device to the community catalog**: the Device Builder's review sheet, GitHub sign-in by authorization code with PKCE, the fork-branch-commit-pull-request sequence, and the port-photograph citation | **DR-033**, a scope addition under §8.3. **Conditional on §11.32.7**: the release posture and licence are not ruled | The `.rmdx` still exports and imports, so a device is still shareable as a file (DR-015). What waits is the one-click path and the shared library it fills. **`TemplateBody.submittedBy` does not wait** and ships in v1, because the template body has no `unknown` passthrough and a v1 build would drop the credit on save (§11.32.8) |
-| **Installing and updating the community library**: the bundled snapshot, the first-run opt-in card, the `.rmda` release-asset fetch, and the once-daily `releases/latest` check behind a non-modal notice | **DR-034**, a scope addition under §8.3, sharing DR-033's precondition | Nothing, until DR-033's row ships: an empty library has nothing to distribute. The seeded catalog is unaffected and is what v1 draws from. **The separation of the two libraries is not deferrable** and is a determinism gate, because a golden that resolves a template out of a fetched library depends on a release tag (§11.33.5) |
+| **Submitting a device to the community catalog**: the Device Builder's review sheet, GitHub sign-in by authorization code with PKCE, the fork-branch-commit-pull-request sequence, and the port-photograph citation | **DR-033**, a scope addition under §8.3. **Precondition discharged by DR-036** (§11.35): the posture and licence are ruled | The `.rmdx` still exports and imports, so a device is still shareable as a file (DR-015). What waits is the one-click path and the shared library it fills. **`TemplateBody.submittedBy` does not wait** and ships in v1, because the template body has no `unknown` passthrough and a v1 build would drop the credit on save (§11.32.8) |
+| **Installing and updating the community library**: the bundled snapshot, the first-run opt-in card, the `.rmda` release-asset fetch, and the once-daily `releases/latest` check behind a non-modal notice | **DR-034**, a scope addition under §8.3, sharing DR-033's now-discharged precondition | Nothing, until DR-033's row ships: an empty library has nothing to distribute. The seeded catalog is unaffected and is what v1 draws from. **The separation of the two libraries is not deferrable** and is a determinism gate, because a golden that resolves a template out of a fetched library depends on a release tag (§11.33.5) |
 
 ### 7.4 v1.2: the second release
 
@@ -8334,6 +8334,12 @@ because a submit button aimed at a repository nobody can see is an expensive way
 This ruling deliberately does not settle it: it is a licensing decision as much as a distribution
 one, and it deserves its own argument rather than a clause in somebody else's.
 
+> **DISCHARGED 2026-08-10 by DR-036 (§11.35).** RackMate is a public project under GPLv3-or-later,
+> the community catalog is CC0, and nothing is priced. **This precondition no longer holds anything
+> back**: DR-033 and DR-034 are unconditional v1.1 items on their own merits. The paragraph above is
+> kept as written, rather than edited, because it is the record of what the surface was waiting on
+> and of the fact that it was made to wait deliberately.
+
 **11.32.8 Scope, and the one part that lands now.** **A scope change under roadmap §8.3**: a new row
 in §7.3 and roadmap §2.2. The v1.1 membership criterion is met, since nothing here migrates a format
 or re-derives user data.
@@ -8514,9 +8520,131 @@ and the four starters are checked rather than assumed: none types a conduit thro
 
 ---
 
+### 11.35 DR-036 · RackMate is a public GPLv3 project, the catalog is CC0, and nothing is priced
+
+**Settled by the user on 2026-08-10.** This is the ruling DR-033 §11.32.7 declined to make and named
+as its precondition. It **reverses DR-006's first clause**, answers §10.3 **on its own terms** rather
+than leaving it moot, and unblocks the v1.1 community catalog.
+
+**11.35.1 The ruling, in five clauses.**
+
+1. **RackMate is a public project.** DR-006's *"NO COMMERCIAL RELEASE IS PLANNED"* is reversed as a
+   statement about **distribution**. Development happens in the open.
+2. **The application code is GPLv3-or-later.** All five packages and the app shell.
+3. **The community catalog is CC0 1.0**, a public domain dedication, and is **not** GPL
+   (§11.35.3, which is the clause most likely to have been got wrong).
+4. **Contributions arrive under a DCO sign-off**, not a contributor licence agreement.
+5. **Nothing is priced.** §10.3 is answered: no fee, no tier, no gate, no enforcement.
+
+**11.35.2 The dependency census, measured rather than recalled.** Read out of the pub cache at
+`pdf` 3.13.0, not from memory, because a licence claim reasoned from the shape of a question is the
+error §11.18.5 already records once.
+
+| Licence | Packages |
+|---|---|
+| **Apache-2.0** | `pdf` |
+| MIT | `uuid`, `path_drawing`, `window_manager`, `screen_retriever` |
+| BSD-3-Clause | `collection`, `meta`, `path`, `vector_math`, `path_provider_windows`, the Flutter SDK |
+
+Every dependency is permissive, so every option was open **but one**: `pdf` being Apache-2.0 closes
+**GPLv2 permanently**, because Apache's patent-termination and indemnity terms are additional
+restrictions under v2 and are explicitly accommodated by v3. The tree is clean for GPLv3 and always
+was. **The SIL OFL fonts AC-058/D7 speaks of are not bundled yet**: `assets/` holds only `catalog/`,
+so that obligation is future rather than current, and D7's `LicenseRegistry` wiring now owes GPLv3
+itself as well.
+
+**11.35.3 Why the catalog is NOT copyleft, which is the clause that would have been got wrong.**
+Copy-on-place (AC-041, docs/06 §8.1) embeds a full `TemplateSnapshot` into `RackDocument.templates`
+so that *"a `.rmpj` file is therefore self-contained: the recipient does not need your library"*.
+**Under a copyleft catalog, every project file an integrator sends a client contains
+catalog-derived content**, and the product would be handing professional users a licensing question
+about their own deliverables. Nobody reads a licence before emailing a drawing set; they would
+simply be quietly non-compliant, at scale, because of an architectural decision made for an
+unrelated reason.
+
+**CC0 removes the question instead of answering it.** It is also the honest description of the
+content, which is largely uncopyrightable fact: a device has four rack units, eight HDMI inputs and
+an IEC C14 inlet whoever writes it down. **Attribution survives where it belongs**, in the pull
+request history and in `submittedBy`, which DR-033 §11.32.5 already made a credit rather than a
+licence term. Requiring attribution as a *licence condition* would put that same travel problem back
+into every embedded snapshot, which is why CC-BY was refused.
+
+**11.35.4 The output exception, because the seed has the same problem and CC0 does not reach it.**
+The seeded catalog is **Dart source inside `rackmate_core`** and is therefore GPLv3 as code. Copy-on-
+place embeds *seeded* snapshots into `.rmpj` files exactly as it embeds community ones, so fixing
+only the community catalog would leave the identical defect wearing the archetypes that ship in the
+binary.
+
+**So the licence carries an explicit output exception**, in the manner of the GCC runtime library
+exception and of Bison's: **a document produced by RackMate is the user's own work and is not a
+derivative of RackMate**, and that includes template snapshots embedded from the seeded catalog and
+every exported PDF sheet. **This is stated in `LICENSE` and in the README, not inferred**, because an
+exception nobody can find is not one. Without it, GPLv3 on a program whose whole purpose is to emit
+a client deliverable is a trap set for the people the product exists to serve.
+
+**11.35.5 What DR-006 loses, and the fallback it already named firing on schedule.** Reversed: the
+internal-tool posture and the no-commercial-release clause, and with them §10.3's mootness.
+
+**Not reversed, and this is DR-006 being right in advance**: it named **Microsoft Trusted Signing**
+as the fallback *"if external distribution is ever required, adoptable at M8, with no earlier
+milestone needing to anticipate it"*. That condition has now fired, and the promise holds: **no
+milestone before M8 changes**, because self-signing was never load-bearing for anything but delivery.
+Public distribution makes the switch necessary rather than optional, since a self-signed binary
+downloaded over the internet carries Mark-of-the-Web and meets the SmartScreen ramp §11.6.2 split
+M8's criterion over. **§11.6.1's reasoning survives intact**: the three mechanisms it removed were
+specific to OV/EV procurement and none of them returns.
+
+**11.35.6 §10.3 is answered on its own terms, and the watermark hazard stays buried.** §13 records
+§10.3 as MOOT with the standing note that *"if DR-006 is reversed, §10.3 reopens exactly as written,
+watermark hazard included"*. It has reopened, and the answer is **nothing is priced**: no perpetual
+licence, no subscription, no free tier with a paid ceiling.
+
+**The watermark is the part that mattered and it never gets built.** §10.3's option (c) would have
+watermarked client-facing sheets, and **DR-005 makes the whole sheet set a client deliverable**,
+which is precisely what makes a watermark unshippable rather than merely unpleasant: an integrator
+cannot send a stamped drawing to a homeowner. AC-058/D7 shrinks a second time. DR-006 consequence 9
+already deleted the commercial EULA and the enforcement machinery; this keeps them deleted
+permanently rather than pending, and what survives is the same obligation as before, every bundled
+licence reachable from `showLicensePage`, now including GPLv3.
+
+**11.35.7 A DCO and not a CLA, and what that deliberately forecloses.** The Developer Certificate of
+Origin is a `Signed-off-by` line asserting the contributor has the right to submit. **DR-033's
+submission flow can add it automatically**, so the friction for a contributor is zero, which is the
+whole argument: a signed agreement deters exactly the one-device drive-by contribution the catalog
+exists to collect.
+
+**What it costs is unilateral relicensing, and that cost is accepted knowingly.** Without a CLA, the
+code licence cannot be changed later without every contributor's consent. **Clause 2 is therefore
+close to irreversible in practice**, and is taken meaning it rather than as a default.
+
+**11.35.8 Neither licence grants the name.** *RackMate* and **Riley the RackMate** (§10.12(f)) are
+trademarks and are not licensed by GPLv3 or by CC0. A fork may take the code and **may not take the
+name or the mascot**. Stated because §10.12(f) scheduled real branding work and a reader who assumes
+the code licence covers it has assumed wrong.
+
+**11.35.9 Scope, and what it discharges.** **No milestone moves and roadmap §2 gains nothing.**
+Licensing is not a feature.
+
+**DR-033 §11.32.7's precondition is discharged.** The submission surface (DR-033) and the library
+fetch (DR-034) are no longer conditional; both stay **v1.1** on their own merits, and the
+conditional clause leaves their §7.3 rows.
+
+**What it obliges**, none of it in v1's critical path: a verbatim `LICENSE` at the repository root
+with the §11.35.4 exception stated beside it; a `LICENSE` in the catalog repository carrying CC0; a
+`CONTRIBUTING.md` carrying the DCO text; `LicenseRegistry` registration so `showLicensePage` shows
+GPLv3; and the M8 switch to Trusted Signing.
+
+**What it does not rule.** **Not the date the repository actually becomes public**, which is a
+readiness call and not a licensing one. Not which forge hosts it: DR-033 assumes GitHub because pull
+requests are its mechanism, and this ruling does not independently ratify that. Not governance, merge
+rights, or a code of conduct. And **not the licence on a user's own authored templates**, which are
+the user's work under §11.35.4 and were never the project's to license.
+
+---
+
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-035 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -8865,22 +8993,44 @@ in. See §11.7.
 
 ---
 
+### 12.16 Superseded by DR-036 (public GPLv3 project, CC0 catalog, nothing priced)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-006 §11.6**, the posture clause | *"(a) INTERNAL TOOL. NO COMMERCIAL RELEASE IS PLANNED.* RackMate is distributed inside the organisation that builds it." | **Superseded on posture and on distribution.** RackMate is a public project, developed in the open under GPLv3-or-later. **The rest of DR-006 stands**, including §11.6.1's finding that the two-milestone lead time was specific to OV/EV procurement. §11.35.1, §11.35.5. |
+| **DR-006's signing answer** | Self-signed, with Trusted Signing as a fallback *"if external distribution is ever required"*. | **The fallback fires, exactly as it was written to.** Public distribution makes Microsoft Trusted Signing necessary at M8. **No milestone before M8 changes**, which is the promise DR-006 made when it named the fallback, and it holds. §11.35.5. |
+| **§10.3, pricing** | **MOOT under DR-006**, retained with the standing note that it reopens exactly as written if DR-006 is reversed. | **Reopened and ANSWERED on its own terms: nothing is priced.** No perpetual licence, no subscription, no free tier. **The watermark hazard the note preserved is answered by never building one**, DR-005 having made the whole sheet set a client deliverable. §11.35.6, and §13's row. |
+| **AC-058/D7**, the licence deliverable | Already shrunk once by DR-006 consequence 9, which deleted the commercial EULA and enforcement machinery. | **Shrinks a second time and stops being provisional.** The EULA and enforcement stay deleted permanently rather than pending a commercial decision that will not come. **It also grows by one**: GPLv3 itself must register via `LicenseRegistry` and be reachable from `showLicensePage`. §11.35.6. |
+| **DR-033 §11.32.7**, the precondition | *"The submission surface may not ship before the release posture and the licence are ruled."* | **Discharged.** Both are ruled here. DR-033 and DR-034 are unconditional v1.1 items on their own merits, and their §7.3 rows lose the conditional. §11.35.9. |
+
+**Explicitly NOT superseded:**
+
+| Ruling | Status under DR-036 |
+|---|---|
+| **AC-041, copy-on-place** | **Unaffected, and the reason clauses 3 and the output exception exist.** A `.rmpj` stays self-contained. What changes is that the licence now says so out loud: a document RackMate produces is the user's own work, seeded snapshots included. §11.35.3, §11.35.4. |
+| **DR-005** | **Unaffected and load-bearing.** The sheet set being a client deliverable is exactly why a watermark could never have shipped, so the pricing model that would have needed one was never really available. §11.35.6. |
+| **§10.12(f), branding** | **Unaffected and explicitly not licensed.** *RackMate* and Riley the RackMate are trademarks; neither GPLv3 nor CC0 grants them. A fork takes the code and not the name. §11.35.8. |
+| **RJ-014** | **Unaffected.** Going public does not add an in-app application updater. A signed installer plus a version check is still the whole story, and DR-034's catalog check is still data rather than code. |
+| **§10.8** | **Unaffected.** Its network-use enumeration was already amended by DR-033 and DR-034 (§12.14, §12.15); a licence adds no network use of its own. |
+
+---
+
 ## 13. Resolved §10 questions
 
-**§10 has no open entries left.** Of its thirteen: **ten are ANSWERED**, one (§10.3) is **MOOT**
-under DR-006 rather than answered on its own terms, one (§10.11) is **DEFERRED with a trigger**
-that fires before M6-J5, and one (§10.13) is **retired** because the three questions it prioritised
-are all answered. The text of §10 stays in place as the record of the argument; this section is the
-index of what was decided.
+**§10 has no open entries left.** Of its thirteen: **eleven are ANSWERED**, one (§10.11) is
+**DEFERRED with a trigger** that fires before M6-J5, and one (§10.13) is **retired** because the
+three questions it prioritised are all answered. The text of §10 stays in place as the record of the
+argument; this section is the index of what was decided.
 
-Closed as of 2026-08-03. §10.11 is the only entry still owing an answer, and it owes it to M5, not
-to now.
+Closed as of 2026-08-03, except **§10.3, which reopened and was answered on 2026-08-10** when DR-036
+reversed DR-006 and made it a live question again, exactly as its own row had warned it would.
+§10.11 is the only entry still owing an answer, and it owes it to M5, not to now.
 
 | § | Question | Status | Answer |
 |---|---|---|---|
 | **10.1** | Draw every wire, or net labels by default, the fork | **ANSWERED, DR-001** | **(B) Net labels by default.** Drawn wires on domain filter, `Alt`-hover or focus. Reverses the record's recommendation. §11.1. |
 | **10.2** | Residential CI or commercial AV, the primary customer | **ANSWERED, DR-002** | **(a) Residential-primary, commercial-capable.** Commercial capability present, never fronted. Confirms the recommendation. §11.2. |
-| **10.3** | Pricing and licensing model | **MOOT: DR-006** | **Nothing to price.** RackMate is an internal tool and no commercial release is planned, so no pricing or licensing model is chosen and none is needed. Retained in full as the record of the argument: **if DR-006 is reversed, §10.3 reopens exactly as written**, watermark hazard included. §11.6, consequence 12. |
+| **10.3** | Pricing and licensing model | **REOPENED, then ANSWERED 2026-08-10: DR-036** | **Nothing is priced.** No perpetual licence, no subscription, no free tier with a paid ceiling. **The row's own warning came true**: DR-036 reversed DR-006, §10.3 reopened exactly as written, and the watermark hazard it preserved is answered by never building one, since DR-005 makes the whole sheet set a client deliverable and an integrator cannot send a stamped drawing to a homeowner. The licensing half is answered too: **GPLv3-or-later** for the code, **CC0** for the community catalog, with an output exception putting every document RackMate produces outside both. §11.35. |
 | **10.4** | Does the device builder have to be in v1 | **ANSWERED: DR-003** | **(a) Yes. M4 stays where it is.** Confirms the recommendation. §11.3. |
 | **10.5** | Metric or imperial default | **ANSWERED 2026-08-03** | **Imperial default, one obvious toggle.** Confirms the recommendation. The default is already in the code; the toggle is owed (#562). §10.5. |
 | **10.6** | Is the schematic a client deliverable or an internal tool | **ANSWERED, DR-005** | **(a) Client deliverable, invest in drafting polish.** Reverses the record's recommendation. Orthogonal to 10.1. §11.5. |
@@ -9025,7 +9175,7 @@ allowlist of pairs, an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-035 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-036 are the user's decisions and are binding. §12 is the complete
 index of what they supersede, §12.1…§12.5, §12.9, §12.11, §12.12 and §12.13 by ruling, §12.6 by
 internal correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **Two entries
 supersede another DR**: §12.12 (DR-018's reasoning as well as its ruling) and §12.13, which also
