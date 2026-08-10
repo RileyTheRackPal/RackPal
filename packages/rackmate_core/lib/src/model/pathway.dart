@@ -64,8 +64,10 @@ final class Pathway {
     Uuid? toLocationId,
     Len? nominalLength,
     MediaTypeId? pathwayMedia,
+    String? designator,
     String? notes,
   }) : _name = name,
+       _designator = designator,
        _notes = notes,
        _fromLocationId = fromLocationId,
        _toLocationId = toLocationId,
@@ -76,11 +78,54 @@ final class Pathway {
 
   final Uuid id;
 
-  /// "B03".
+  /// "attic run to the garage". THE HUMAN NAME, and not the designator
+  /// beside it.
+  ///
+  /// The doc comment here used to read `"B03"`, which is designator-shaped
+  /// and is exactly the confusion DR-026 §11.25.1 refused: the temptation
+  /// was to print this field in the Pull Sheet's `PATHWAY` column and add
+  /// nothing. Refused, because every other entity in this model carries a
+  /// human name and a short identifier separately (`DeviceInstance`,
+  /// `Rack`), and overloading them makes that column print whichever one a
+  /// person happened to type.
   String _name;
   String get name => _name;
   @internal
   set name(String v) => _name = v;
+
+  /// `T1`, `PW-LR-1`: what is written on the trunk, where one is written.
+  ///
+  /// MANUALLY ENTERED. NO ALLOCATOR, NO SERIES, NO FORMAT TOKEN
+  /// (DR-026 §11.25.1, confirmed and made permanent by DR-037 §11.36.6).
+  /// This is DR-020's distinction applied to pathways: *"the route is
+  /// discovered, not designed"*, so a designator generated before anybody
+  /// has opened a ceiling would be the voided design-time polyline in a
+  /// shorter form. A trunk that HAS been established is the opposite case,
+  /// an as-built fact somebody walked, and recording it takes nothing on
+  /// trust.
+  ///
+  /// **MANUAL IS THE REVERSIBLE DIRECTION AND GENERATED IS NOT**, which is
+  /// the whole of why it won. A nullable hand-entered string can later
+  /// gain an allocator that fills the absent ones, without changing the
+  /// field, the file or the column. An allocated series cannot become
+  /// manual mid-project without abandoning the uniqueness its allocator
+  /// assumed.
+  ///
+  /// Null is unknown (G4, CR-114), never "no designator": a trunk nobody
+  /// has labelled yet genuinely has none, and inventing one names a
+  /// conduit no installer can find.
+  ///
+  /// **UNIQUE WHERE SET, PROJECT-WIDE**, on CR-113's `rackLabel`
+  /// precedent, and **null is not a collision**. Two trunks called `T1` on
+  /// one Pull Sheet is the defect the column exists to prevent. Enforced
+  /// by `buildSetPathwayDesignator`, which REFUSES; the
+  /// [PathwayField.designator] row exists for readers and must not be
+  /// driven through `buildSetEntityProperty`, which writes and cannot
+  /// decline.
+  String? _designator;
+  String? get designator => _designator;
+  @internal
+  set designator(String? v) => _designator = v;
 
   String? _notes;
   String? get notes => _notes;

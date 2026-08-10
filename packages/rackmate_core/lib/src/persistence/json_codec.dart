@@ -1829,6 +1829,13 @@ JsonMap _encodePathway(Pathway p) {
     'kind': encodeEnumName(p.kind),
     'containsLineVoltage': p.containsLineVoltage,
   };
+  // WRITTEN ONLY WHEN PRESENT, which is what keeps this field free
+  // (DR-026 §11.25.1). #157's own description priced it as changing
+  // stored state and moving `kSchemaVersion`; a nullable key emitted only
+  // when set does neither, and every file already on disk re-encodes byte
+  // for byte. `tia570Grade`'s precedent (DR-024), and
+  // `MediaTypeDef.aliases`'s before it.
+  putIfNotNull(json, 'designator', p.designator);
   putIfNotNull(json, 'notes', p.notes);
   putIfNotNull(json, 'fromLocationId', p.fromLocationId?.v);
   putIfNotNull(json, 'toLocationId', p.toLocationId?.v);
@@ -1863,6 +1870,7 @@ Pathway _decodePathway(Uuid id, JsonMap json) => Pathway(
   pathwayMedia: json['pathwayMedia'] == null
       ? null
       : MediaTypeId(asStr(json['pathwayMedia'], 'Pathway.pathwayMedia')),
+  designator: asStrOrNull(json['designator'], 'Pathway.designator'),
   notes: asStrOrNull(json['notes'], 'Pathway.notes'),
 );
 
