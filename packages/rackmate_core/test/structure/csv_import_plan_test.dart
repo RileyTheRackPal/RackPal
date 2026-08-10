@@ -68,27 +68,26 @@ final class _Doc {
   }
 }
 
-CsvImportPlan _plan(_Doc d, String csv) {
+List<ResolvedCsvRow> _resolve(_Doc d, String csv) {
   final read = readCsv(csv);
   final table = switch (read) {
     CsvReadOk(:final table) => table,
     CsvReadRefused(:final message) => fail('refused: $message'),
   };
-  final mapping = CsvMapping.guess(
+  return resolveCsvRows(
     table: table,
-    detection: detectCsvShape(table, _registries),
-    registries: _registries,
-  );
-  return planCsvImport(
-    doc: d.doc,
-    rows: resolveCsvRows(
+    mapping: CsvMapping.guess(
       table: table,
-      mapping: mapping,
+      detection: detectCsvShape(table, _registries),
       registries: _registries,
-      settings: d.doc.settings,
     ),
+    registries: _registries,
+    settings: d.doc.settings,
   );
 }
+
+CsvImportPlan _plan(_Doc d, String csv) =>
+    planCsvImport(doc: d.doc, rows: _resolve(d, csv));
 
 void main() {
   group('an empty project: everything is a create', () {
@@ -320,6 +319,60 @@ void main() {
       );
       expect(p.createCount, 8);
       expect(p.newLocationNames, ['Attic']);
+    });
+  });
+
+  group('the "will create" list is a checklist, and unticking subtracts', () {
+    test('by default every box is ticked and everything is created', () {
+      final p = _plan(_Doc(), 'Room,Cable Type\nAttic,Cat6\nGarage,Cat6e\n');
+      expect(p.newLocationNames, ['Attic', 'Garage']);
+      expect(p.newMediaTokens, ['Cat6e']);
+      expect(p.createCount, 2);
+      expect(p.skippedRowCount, 0);
+    });
+
+    test('a declined room skips its rows and they are COUNTED', () {
+      // A tick box that silently removed four of sixty rows would be the
+      // discard G4 forbids, wearing a checkbox.
+      final d = _Doc();
+      final p = planCsvImport(
+        doc: d.doc,
+        rows: _resolve(d, 'Room,Cable Type\nAttic,Cat6\nGarage,Cat6\n'),
+        declinedLocations: {'Attic'},
+      );
+      expect(p.createCount, 1);
+      expect(p.skippedRowCount, 1);
+      // And it stays on the checklist, unticked rather than gone.
+      expect(p.newLocationNames, ['Attic', 'Garage']);
+    });
+
+    test('a declined cable drops its items, skipping a row left empty', () {
+      final d = _Doc();
+      final p = planCsvImport(
+        doc: d.doc,
+        rows: _resolve(d, 'Room,Cable Type\nAttic,Cat6e\nAttic,Cat6\n'),
+        declinedMediaTokens: {'Cat6e'},
+      );
+      expect(p.createCount, 1);
+      expect(p.skippedRowCount, 1);
+      expect(p.newMediaTokens, ['Cat6e']);
+    });
+
+    test('a WIDE sheet can never produce a new cable type', () {
+      // Not a gap in the checklist: it is unreachable by construction,
+      // and knowing that is worth a test. A column only becomes a count
+      // column because its header ALREADY resolved against the registry,
+      // so `CsvColumnMediaCount` always carries a known id. A header
+      // that resolves to nothing is not a cable column at all, which is
+      // what keeps `Room,Cat6,Zipcord` a long sheet rather than a wide
+      // one with an invented type.
+      final d = _Doc();
+      final wide = _plan(d, 'Room,Cat6,RG6\nAttic,4,2\nGarage,1,1\n');
+      expect(wide.newMediaTokens, isEmpty);
+      expect(wide.createCount, 8);
+
+      final notWide = _plan(d, 'Room,Cat6,Zipcord\nAttic,4,2\nGarage,1,1\n');
+      expect(notWide.createCount, 0, reason: 'read as long, no media column');
     });
   });
 }

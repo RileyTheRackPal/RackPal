@@ -171,9 +171,29 @@ final class CsvImportPlan {
 }
 
 /// §5.3's matching, dedup and counts, against [doc], mutating nothing.
+///
+/// [declinedLocations] and [declinedMediaTokens] are the boxes the
+/// operator UNTICKED in the import dialog's "will create" list, matched
+/// against [CsvImportPlan.newLocationNames] and
+/// [CsvImportPlan.newMediaTokens] by exact spelling.
+///
+/// **DECLINING IS EXPRESSED AS A SUBTRACTION FROM ALL-ACCEPTED, so the
+/// empty default is every box ticked.** The dialog opens with the whole
+/// list checked because a pull list IS the room list on a February job
+/// and unticking is the exception; an accept-list would make an empty
+/// set mean "import nothing", which is the wrong thing for a caller to
+/// get by omission.
+///
+/// A declined room skips its rows. A declined cable drops its items,
+/// and a row left with no items skips. Both are counted in
+/// [CsvImportPlan.skippedRowCount] rather than vanishing, because a
+/// checkbox that silently removed four of sixty rows would be the
+/// discard G4 forbids wearing a tick box.
 CsvImportPlan planCsvImport({
   required RackDocument doc,
   required List<ResolvedCsvRow> rows,
+  Set<String> declinedLocations = const {},
+  Set<String> declinedMediaTokens = const {},
 }) {
   final planned = <CsvPlannedRow>[];
   final issues = <CsvCellIssue>[];
@@ -244,20 +264,62 @@ CsvImportPlan planCsvImport({
     }
 
     // --- RJ-012's new types, once per spelling ------------------------
+    // Every new token is LISTED even when it is declined, because the
+    // list is what the dialog's tick boxes render; declining removes the
+    // drops, not the row of the checklist.
     for (final item in row.items) {
       if (item.media case ResolvedMediaNew(:final token)) {
         if (!newMedia.contains(token)) newMedia.add(token);
       }
     }
 
-    final totalDrops = row.items.fold(0, (t, i) => t + i.count);
+    // --- what the operator unticked ------------------------------------
+    if (location == null && declinedLocations.contains(row.locationName)) {
+      planned.add(
+        CsvPlannedRow(
+          row: row,
+          action: CsvRowAction.skipped,
+          drops: 0,
+          issues: [
+            CsvCellIssue(
+              severity: CsvIssueSeverity.warning,
+              message:
+                  '"${row.locationName}" is not being created, so this '
+                  'row is skipped.',
+            ),
+          ],
+        ),
+      );
+      continue;
+    }
+
+    final items = [
+      for (final item in row.items)
+        if (!(item.media is ResolvedMediaNew &&
+            declinedMediaTokens.contains(
+              (item.media as ResolvedMediaNew).token,
+            )))
+          item,
+    ];
+    final declinedItems = row.items.length - items.length;
+
+    final totalDrops = items.fold(0, (t, i) => t + i.count);
     if (totalDrops == 0) {
       planned.add(
         CsvPlannedRow(
           row: row,
           action: CsvRowAction.skipped,
           drops: 0,
-          issues: const [],
+          issues: declinedItems == 0
+              ? const []
+              : [
+                  const CsvCellIssue(
+                    severity: CsvIssueSeverity.warning,
+                    message:
+                        'The cable this row names is not being created, '
+                        'so the row is skipped.',
+                  ),
+                ],
           location: location,
           outlet: outlet,
           pathway: pathway,
@@ -277,6 +339,7 @@ CsvImportPlan planCsvImport({
     final matched = _matchDrops(
       doc: doc,
       row: row,
+      items: items,
       outlet: outlet,
       claimed: claimed,
     );
@@ -409,6 +472,7 @@ Pathway? _matchPathway(RackDocument doc, String name) {
 List<Uuid> _matchDrops({
   required RackDocument doc,
   required ResolvedCsvRow row,
+  required List<ResolvedCsvItem> items,
   required Outlet? outlet,
   required Set<Uuid> claimed,
 }) {
@@ -428,7 +492,7 @@ List<Uuid> _matchDrops({
   if (outlet == null) return const [];
 
   final wantedMedia = <MediaTypeId>[];
-  for (final item in row.items) {
+  for (final item in items) {
     if (item.media case ResolvedMediaKnown(:final id)) {
       for (var n = 0; n < item.count; n++) {
         wantedMedia.add(id);
