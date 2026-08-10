@@ -8452,9 +8452,71 @@ launched the application.
 
 ---
 
+### 11.34 DR-035 · A created `Pathway` records the medium it is and the room it serves
+
+**Settled by the user on 2026-08-10.** DR-032 §11.31.1 rules what a pathway created from a
+pathway-only medium is **called**. It is silent on what else that act records, and §11.31.6's list of
+what it does not rule does not mention either field. The silence was invisible while only one surface
+created pathways; it stops being invisible the moment §11.31.5's second surface is built.
+
+**11.34.1 The forcing case, which is a broken control and not a tidiness argument.** docs/07 §4.2's
+matrix cell is a **count**: a person types `3` into `[Living Room × EMT]` and the cell must then read
+`3`, and typing `1` must remove two. Reading it back means finding *"the pathways in this room, of
+this medium"*, and a `Pathway` created under DR-032 records **neither**: `pathwayMedia` is null and
+both location references are null. A cell that accepts a number and always reads back `0` is not a
+partially built feature, it is a control that lies, and it would ship the tinted column docs/07 §4.2
+draws while making it unusable.
+
+**11.34.2 The ruling.** An entry surface that creates a `Pathway` from a pathway-only medium sets,
+in addition to DR-032's name:
+
+1. **`pathwayMedia`** to the resolved `MediaTypeId`. It is the medium the user named; the field's own
+   doc comment calls it *"which conduit this actually is"*, and nothing else in the document can
+   answer that question afterwards.
+2. **`fromLocationId`** to the room the line or the cell named. `toLocationId` **stays null**, which
+   is UNKNOWN and not empty (G4, CR-114): nobody has said where the other end lands, and a run to the
+   rack is a guess about a rack this project may not hold.
+
+**`kind` and `containsLineVoltage` are still untouched**, exactly as §11.31.6 has it: typing a medium
+states neither.
+
+**11.34.3 `from` is the room, and the reason is that this product already has one convention.**
+`Pathway.fromLocationId` and `Pathway.toLocationId` have shipped since M0 with **no reader that
+establishes an order**: the only writer is `RemoveLocationCommand` clearing both during DR-021's
+cascade, which treats them symmetrically. So the orientation is genuinely open and is being set here
+for the first time.
+
+docs/08 §3.2 reads every schedule row **`FROM — ROOM`** then **`TO — RACK`**, and
+`ScheduleEntry.roomId` is already oriented on that basis, which `buildStructureTable` relies on. Room
+is the *from* end throughout the product. The rejected alternative is the installer's own phrasing,
+*"conduit runs from the panel to the bedroom"*, which is how a person describes pulling it and is a
+perfectly good sentence. It loses on cost: it would make the same physical run read `FROM = room` on
+its cable rows and `TO = room` on its pathway, one table apart, so *"which end is the wall"* would
+have two answers in one editor.
+
+**11.34.4 Both surfaces produce the same entity, and that is §11.31.5 restated.** The drop line
+already shipped (`b093062`) and did not set these fields, so it is **retrofitted in the same change**
+rather than left as the odd one out. §11.31.5's holding is that *"one medium must not mean two things
+depending on which box a person typed it into"*; two surfaces that agree on the name and disagree on
+the medium would satisfy the letter of DR-032 and break its point.
+
+**11.34.5 What this does not touch.** `+ Add pathway` on the Pathways tab sets **neither** field, and
+that is not an inconsistency: it has no room and no medium to record, because somebody pressed a
+button on a list rather than naming either. Inventing them there is the failure DR-032 §11.31.2
+already refused in the name field, one field over. Nothing is made required: a pathway with no medium
+and no room is legal, is what the button produces, and prints the unknown dash in both columns.
+
+**11.34.6 Scope.** **No scope change to roadmap §2.** CR-109 and DR-032 are implemented rather than
+amended, and no milestone moves. It is a **behaviour change to a shipped gesture** on §11.31.7's own
+terms: a drop line reading `Office: 1x ENT` recorded a bare name before this ruling and records the
+medium and the room after it. Nothing has shipped to a user, so no document carries the old shape,
+and the four starters are checked rather than assumed: none types a conduit through a drop line.
+
+---
+
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-034 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-035 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -8963,7 +9025,7 @@ allowlist of pairs, an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-034 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-035 are the user's decisions and are binding. §12 is the complete
 index of what they supersede, §12.1…§12.5, §12.9, §12.11, §12.12 and §12.13 by ruling, §12.6 by
 internal correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **Two entries
 supersede another DR**: §12.12 (DR-018's reasoning as well as its ruling) and §12.13, which also
