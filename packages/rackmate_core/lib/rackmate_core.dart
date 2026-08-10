@@ -172,6 +172,7 @@ export 'src/persistence/json_limits.dart';
 export 'src/persistence/json_util.dart' show JsonMap;
 export 'src/persistence/migrations.dart';
 export 'src/persistence/schema.dart';
+export 'src/structure/csv_header_map.dart';
 export 'src/structure/drop_line_parser.dart';
 export 'src/structure/drop_line_planner.dart';
 export 'src/structure/matrix_plan.dart';
