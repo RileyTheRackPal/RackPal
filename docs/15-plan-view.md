@@ -12,8 +12,12 @@ and cites the governing ruling ID for every decision; the adjudications are in
 
 **Status.** Ruled into v1.1 by **DR-018**, its container shape and one v1 obligation by **DR-019**,
 and its length model by **DR-020**, which voided §4's first draft one commit after it was written,
-on evidence from the trade rather than the corpus. Not built. The feasibility study and cost are in
-[research/feasibility-plan-view.md](research/feasibility-plan-view.md).
+on evidence from the trade rather than the corpus. **Moved into v1 and sequenced before M6 by
+DR-029**, which also buys PDF import. **Decomposed on 2026-08-10 by DR-037**, which settles this
+document's four remaining open points and corrects §4.1, §7 and §10 in place. Not built. The
+feasibility study and cost are in
+[research/feasibility-plan-view.md](research/feasibility-plan-view.md); the exit criterion is
+roadmap §4 and canon §11.36.1, and the task breakdown is docs/12 §5.9.
 
 ---
 
@@ -87,7 +91,15 @@ costed 2–3 weeks over raster-only, because architects send PDFs and a manual c
 would sit on the ordinary path rather than the exceptional one. **It changes no stored format**, and
 that prediction holds exactly: a PDF is rasterised at IMPORT and the member written to the zip is
 still PNG or JPEG, so `PlanUnderlay.format` keeps its two values and `rackmate_core` still needs no
-decoder. What it buys is a `docs/13` entry against DR-009, which DR-029 accepts and names.
+decoder. What it buys is a `docs/13` entry against DR-009, which DR-029 accepts and names, and which
+is now **D15** and is costed with **D9** rather than twice.
+
+**A multi-page PDF gets a page picker, and exactly one page becomes one underlay** (DR-037
+§11.36.2). Architectural sets are multi-page and the electrical sheet is not page 1, so importing
+only the first page would put the conversion step DR-029 spent 2–3 weeks buying out back on the
+ordinary path. The pages are rasterised at thumbnail size, shown as a grid, and the one clicked
+becomes the underlay. **This narrows §10's exclusion rather than reversing it**: no underlay is ever
+more than one page and nothing is tiled.
 
 ---
 
@@ -201,6 +213,8 @@ framing turns out to be:
 provenance as `cut | outletNominal | roomEstimate | none`. The plan adds **one value**, not a new
 system:
 
+The ladder, in order, **most authoritative first** (the rank is DR-037 §11.36.4):
+
 | Source | Meaning | Prints |
 |---|---|---|
 | `cut` | `Link.cutLength`, the measured figure | Upright |
@@ -212,6 +226,23 @@ system:
 **It is never a takeoff number and never enters the footage rollup as a quantity.** A bound cannot
 be summed into "how much Cat6 to order" without becoming a claim it is not entitled to make. The
 rollup counts bound-only rows the way `Rollup.unknownCount` already counts unknowns.
+
+**IT RANKS BELOW `roomEstimate`, AND THE REASON IS THE ROLLUP RATHER THAN THE COLUMN.** Because a
+bound is excluded from the footage total, ranking it above the room estimate would make every drop on
+a calibrated plan leave the purchase quantity and land in `unknownCount`: **the number an integrator
+orders cable from would get worse in proportion to how much of the job had been planned.**
+`derived/cable_footage.dart`'s `_isQuantity` is an exhaustive switch with no default arm, written so
+that adding this value stops the build until somebody decides, and this is that decision.
+
+**The rank costs the bound nothing, because its value was never the column.** `LEN-001` and
+`LEN-002` read the bound **regardless of which tier printed**, so the asymmetry survives intact: a
+plan proves a violation and can never prove compliance. The bound is a rule input that happens to be
+printable, not a length that happens to be checkable.
+
+**`Location.riseAllowance` DOES NOT EXIST YET.** This section and DR-020 §11.19.2(1) have both been
+spending it since 2026-08-04 and a grep over every `.dart` file in the tree returns nothing.
+DR-037 §11.36.5 adds it as `Len? riseAllowance` on `Location`, null unknown and `0` a measured zero
+(G4, CR-114), written only when present so no file on disk changes a byte.
 
 **What it is good for is `LEN-001`.** That rule is already one of v1's 27 (docs/02 §5, tier 1,
 Ethernet channel over 100 m). A lower bound is exactly the right input for it, because **if the
@@ -322,6 +353,21 @@ lightening pass so that black callouts stay legible over it. This is ordinary dr
 a background reference, and it also protects the callouts' greyscale separation, which is what
 PAL-1 gates.
 
+**THE LIGHTENING PASS RUNS IN THE EXPORT BACKEND, AND THE STORED BYTES ARE THE ARCHITECT'S PAGE**
+(DR-037 §11.36.3). DR-029 §11.28.11 said *"pre-composited at import, the way palette tints already
+are"*, and a palette tint is composited at **definition** time, which would have meant the zip held a
+washed-out image and the sentence above was false. It is not: the flatten and the screen both happen
+where the `PdfImage` is built.
+
+**The obligation that clause was protecting is real and is bigger than it looked.** docs/08 row 9
+forbids alpha absolutely, and reading `pdf-3.13.0` found that **`PdfImage(..., alpha: true)` writes
+an `/SMask`**: a PNG underlay carrying an alpha channel emits an alpha path into the document
+**without anybody calling `setGraphicState`**, which is not the failure row 9 was written about. So
+the underlay is flattened to opaque RGB before it becomes a `PdfImage`, `alpha: false` is the only
+call shape, and no `/SMask` and no `ExtGState` is ever emitted. Doing it here rather than at import
+also means the screening percentage can be changed by editing code, instead of by re-importing every
+underlay in every project file a user owns.
+
 **PAL-1 and the underlay.** `tools/pal1_check.py` enumerates signal families and checks rendered
 greyscale separation pairwise (canon §14). An underlay is not a signal family and is excluded from
 that enumeration. What is *not* excluded is the requirement that callout glyphs remain separable
@@ -388,10 +434,12 @@ already.
 calibration; pins on devices, outlets and racks; `planLowerBound` as one new `ScheduleLengthSource`
 value; the Plan editor; `T1.01` as `AUTO`; the four `PLN-*` advisories.
 
-**Out, and these are limits rather than a backlog:** PDF import; walls, rooms or any geometry beyond
-the pin; **any design-time route prediction at all** (DR-020, §4); area takeoff and coverage;
-reflected ceiling plans and risers (DR-005 §11.5.3); multi-page or tiled plans; anything that reads
-structure out of the image.
+**Out, and these are limits rather than a backlog:** ~~PDF import~~ (**bought by DR-029**); walls,
+rooms or any geometry beyond the pin; **any design-time route prediction at all** (DR-020, §4); area
+takeoff and coverage; reflected ceiling plans and risers (DR-005 §11.5.3); **tiled** plans, and
+**multi-page underlays** (a multi-page PDF may be *imported* through §2's page picker, and exactly
+one chosen page becomes one underlay, DR-037 §11.36.2); anything that reads structure out of the
+image.
 
 **Not this document's, and shipping earlier:** the as-built tally surface, `Link.spliceCount` and
 the generic `LEN-002` are **v1, in M3** (DR-020 §11.19.2). They are listed here only so a reader of
@@ -416,10 +464,12 @@ did.
 
 ## 11. What this document does not decide
 
-**Whether the Plan view is v1 or v1.1.** DR-018 places it in v1.1 and DR-019 discharges the condition
-that placement carried. Pulling it into v1 as an `M3.5` remains available and is a further amendment
-under roadmap §8.3, to be taken or declined after M3 lands, when the field-device model has been
-used rather than only designed.
+**~~Whether the Plan view is v1 or v1.1.~~ DECIDED: it is v1, before M6 (DR-029).** DR-018 placed it
+in v1.1 and DR-019 discharged the condition that placement carried; the amendment this paragraph
+described as *"available"* was taken on 2026-08-09, and it is an epic rather than an `M3.5`
+because renumbering M6→M10 would have cost more than the sequencing constraint is worth
+(§11.28.4). The paragraph is kept rather than deleted because the reasoning that made the move
+legal is the reasoning that decided it.
 
 **Whether the tablet question changes the answer.** The practice this feature replaces happens in a
 notes application, plausibly on an iPad, plausibly while walking the building. RackMate is desktop;
