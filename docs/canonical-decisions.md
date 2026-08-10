@@ -4811,6 +4811,7 @@ existing user data. That is the criterion for the v1.1 bucket, not effort.
 | `Trace` through pass-throughs, and the search DSL | AC-040 | Both are navigation, not correctness |
 | Manual reroute, stored as `routeConstraintsBySheet` (ordered grid points the router must pass through), never as a polyline | CR-012 | The router is deterministic; the itch is aesthetic |
 | Registry editor beyond media types and connector aliases | AC-050 (A2.1) | The two extensibility paths users actually hit already ship |
+| **Submitting a device to the community catalog**: the Device Builder's review sheet, GitHub sign-in by authorization code with PKCE, the fork-branch-commit-pull-request sequence, and the port-photograph citation | **DR-033**, a scope addition under §8.3. **Conditional on §11.32.7**: the release posture and licence are not ruled | The `.rmdx` still exports and imports, so a device is still shareable as a file (DR-015). What waits is the one-click path and the shared library it fills. **`TemplateBody.submittedBy` does not wait** and ships in v1, because the template body has no `unknown` passthrough and a v1 build would drop the credit on save (§11.32.8) |
 
 ### 7.4 v1.2: the second release
 
@@ -8215,6 +8216,145 @@ shipped to a user, so no document carries the old shape.
 
 ---
 
+### 11.32 DR-033 · The community catalog is a second repository, and the app opens the pull request itself
+
+**Settled by the user on 2026-08-09.** §10.9 ruled what the **shipped** catalog contains and left
+sharing at DR-015's `.rmda`, which is a file you email to somebody. Its recommendation went further
+and was never ruled: *"(b), with (c) as the mechanism: a curated community library where every
+submission carries the same `sources.md` citation the shipped catalog requires."* This rules it, and
+names the surface that makes it happen: a submit action in the Device Builder that opens a pull
+request against a separate catalog repository.
+
+**11.32.1 The ruling, in seven clauses.**
+
+1. **A second repository holds the community library**, one `.rmdx` per device. It is **not**
+   `packages/rackmate_core/lib/src/catalog/`, which is Dart and stays Dart (§11.32.4).
+2. **The Device Builder gains a `Submit to community catalog` toolbar action**, opening a review
+   sheet showing the exact JSON to be proposed, the citation, and the sign-in state, before anything
+   leaves the machine.
+3. **Identity is GitHub, obtained by OAuth authorization code with PKCE**, loopback redirect on
+   `127.0.0.1` at an ephemeral port. **No credential is embedded in the binary.** REST calls go from
+   the app to GitHub directly. There is no server and no broker (§11.32.2).
+4. **`TemplateBody.submittedBy` records the GitHub handle and the numeric user id.** Written on
+   submission, **never read by the application**, absent when the template has not been submitted.
+5. **The citation bar is a photograph of the device's ports**, satisfied either by an image the app
+   commits to the contributor's own fork or by a URL to a manufacturer image. **It blocks submit.**
+6. **Evidence never enters the `.rmdx`.** AC-057 deleted device images from the model and this does
+   not reopen that. Evidence travels with the pull request (§11.32.6).
+7. **v1.1, and conditional on a precondition this ruling does not rule** (§11.32.7).
+
+**11.32.2 The embedded token, proposed and withdrawn, which is the load-bearing half.** The user's
+first design had the app call GitHub's REST API directly carrying *"a restricted app token"* embedded
+*"securely"* in the binary, on the correct reasoning that a broker service is a large and permanent
+operating cost for a desktop tool. **The direct call survives. The embedded token does not.** The
+user asked for verification before committing to a mechanism, and GitHub's own documentation for
+public clients answers it: a native app *"cannot secure your client secret"*, because you *"ship the
+client secret in the application's code"*. No obfuscation repairs this, since whatever key decrypts
+the embedded credential ships beside it.
+
+**Three failures of a shared token have nothing to do with theft, and are the reasons that would
+stand even if the binary were unreadable.** It arrives from **one identity**, so clause 4's credit
+becomes an unverifiable self-declaration and the attribution this feature exists to produce is gone.
+It shares **one rate limit**, so a single enthusiastic contributor stops everyone. And revoking it is
+**an app release**, not a click.
+
+**The theft argument is also not hypothetical under §11.32.7's intended posture.** GitHub's secret
+scanning automatically revokes GitHub tokens found in public repositories, so a credential committed
+to a public source tree is dead before the first contributor finds the button that uses it.
+
+**What replaces it costs nothing, which is why this correction is cheap.** GitHub states the
+`client_secret` is not needed for the device flow, so a secret-free direct-REST design already
+exists in two forms. The ruling takes **authorization code with PKCE** rather than device flow, on
+GitHub's own preference: device flow has no redirect URI at all and is therefore usable to
+impersonate an app in a phishing attack, and it is documented for constrained environments such as
+CLIs and headless systems. RackMate is a windowed desktop application that can open a browser and
+listen on loopback, so it is not that environment and does not get that exemption. Sources:
+`docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps` and
+`.../best-practices-for-creating-an-oauth-app`.
+
+**11.32.3 Why not Google OAuth, which is what was asked for.** A pull request is an operation against
+a GitHub identity. Google OAuth establishes that somebody controls a Google account, which is not
+that identity and cannot be exchanged for it. Honouring the request literally requires a hosted
+service holding a GitHub App private key and opening pull requests under a bot account, which buys a
+server, a key rotation, an abuse surface, a store of personal data, and pull requests whose author is
+a robot with the human buried in the body. It was priced at weeks against days and the user withdrew
+it once the constraint was verified rather than asserted.
+
+**11.32.4 The second repository, and what DR-002 and AC-052 keep.** The seeded catalog is Dart source
+under DR-002's generic-archetype rule and AC-052's citation gate. A community submission is a real
+manufacturer and a real model, which §10.9 explicitly permits for user-authored templates and
+explicitly refuses for the seed: *"AC-052's provenance gate and DR-002's generic-archetypes rule bind
+the SEEDED catalog"*. Landing community devices in `catalog_audio.dart` would violate both, so they
+land somewhere else. The second repository also keeps a moderation queue out of the application
+repository's pull request list, and keeps device submissions from running the fourteen gates, which
+exist to protect a Flutter application and have nothing useful to say about a patch panel.
+
+**11.32.5 `submittedBy` is a credit, not a signature, and this does not reopen AC-042.** AC-042
+deleted signatures and `provenance`/`derivedFrom` chains from v1 and kept `contentHash`. Nothing here
+returns: the field is a plain record of who filed a pull request, it authenticates nothing, and **the
+application never reads it**. Anybody may type anything into it, and the only place the claim is
+actually tested is the pull request, where GitHub has already established who is speaking.
+
+**Handle and numeric id are two fields because they are two facts**, the discipline DR-026 §11.25.1
+applied to `Pathway.designator`. A GitHub login is renameable, and a freed login is claimable by
+somebody else, so a handle alone can come to credit a different person years later without anything
+having changed in the file. The numeric id never changes and is unreadable; the handle is readable
+and may drift. Storing one and deriving the other is the version of this that is wrong in a way
+nobody notices for two years.
+
+**11.32.6 The citation bar is a photograph, and AC-057 is why it is not in the file.** The user's bar:
+*"a photo/photos of the ports on the device itself"*, on the reasoning that a contributor either has
+the unit in front of them and a phone, or can find the manufacturer's image. **This is a stronger
+citation than a URL, not a weaker one**: a photograph of the actual rear panel is a primary source,
+where a manufacturer product page is a secondary one that returns 404 about as fast as the product
+is discontinued. Both are accepted; neither may be skipped.
+
+**Where it travels is fixed by two constraints, one of them external.** AC-057 keeps images out of
+the model, so the photograph is never `.rmdx` payload. And GitHub has **no documented REST API for
+attaching an image to a pull request body**: the drag-and-drop path is a web interface feature, and
+the `uploads.github.com` endpoint that community tools use is undocumented and unsupported, which
+disqualifies it as the foundation of a shipped feature. So the app **commits** the image to the
+contributor's own fork under an evidence path, using the supported contents API, where it renders in
+the pull request diff for review and never reaches the upstream repository. The app downscales
+before committing, because a fork is not a place to put unmodified phone camera output.
+
+**The repository's history is the provenance store, and the file is not.** A merged device is joined
+to the pull request that introduced it by ordinary version control, which is where the photograph,
+the reviewer's questions and the contributor's answers already live. That is the shape AC-042 wanted
+when it deleted the in-file chain.
+
+**11.32.7 The precondition this ruling does not rule.** DR-006 rules RackMate an internal tool with
+no commercial release planned, and §10.8's answer names an update check and API-key publishing as the
+only contemplated network uses, neither in v1 scope. **A community with contributors is a public
+project**, and this feature is a third network use. The user's stated intent, recorded because the
+v1.1 item depends on it: *"It will eventually become a public project."* That is an intent and not a
+ruling. **The submission surface may not ship before the release posture and the licence are ruled**,
+because a submit button aimed at a repository nobody can see is an expensive way to build a form.
+This ruling deliberately does not settle it: it is a licensing decision as much as a distribution
+one, and it deserves its own argument rather than a clause in somebody else's.
+
+**11.32.8 Scope, and the one part that lands now.** **A scope change under roadmap §8.3**: a new row
+in §7.3 and roadmap §2.2. The v1.1 membership criterion is met, since nothing here migrates a format
+or re-derives user data.
+
+**The `submittedBy` field itself lands in v1, ahead of its surface.** `TemplateBody` has **no
+`unknown` passthrough**: `_encodeTemplateBody` builds a fixed map, so a `.rmdx` carrying a credit
+written by a v1.1 build would have that credit **silently dropped** by any v1 build that opened and
+re-saved it. That is exactly DR-019 §11.18.2(5)'s argument, where a build predating a field drops it
+on save and the remedy was to land the mechanism early. Here the remedy is cheaper than a passthrough
+because the field is one nullable record and the format is not yet built at all. Model ships, gesture
+defers, which is §7.0's filter 2 doing the job it was written for.
+
+**What it does not rule.** It does not choose between an OAuth App and a GitHub App for the client
+registration, which is a spike in the build task and turns on fine-grained permission scoping rather
+than on anything decided here. It does not specify the review workflow, the moderation policy, or who
+holds merge rights on the second repository. It does not make submission a step in any other flow:
+clause 2's toolbar action is the only entry point ruled, and a palette context menu would be a second
+one somebody may add later. And it does not give the seeded catalog a submission path, which
+§11.32.4 is the reason for.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-032 change or void, plus the small set of internal
@@ -8527,6 +8667,26 @@ in. See §11.7.
 
 ---
 
+### 12.14 Superseded by DR-033 (the community catalog submission surface)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **§10.8's answer**, the network-use clause | *"An update check and API-key publishing to project-management services are the only contemplated network uses and are not v1 scope."* | **Superseded on the enumeration only.** There is a **third** contemplated network use: the Device Builder's authenticated submission to the community catalog. The clause's substance is untouched and is in fact honoured twice over. DR-033 keeps the use **out of v1** exactly as §10.8 requires, and it arrives as the §8.3 amendment the parenthetical demanded rather than by drift. §11.32.8. |
+| **§10.9's answer**, the sharing mechanism | *"DR-015's `.rmda` is the sharing mechanism."* | **Extended, not replaced.** `.rmda` remains the answer for a library you hand to somebody. It was never an answer for a library **strangers contribute to**, which is what §10.9's own recommendation asked for and what DR-033 supplies. Both ship. §11.32.1. |
+
+**Explicitly NOT superseded:**
+
+| Ruling | Status under DR-033 |
+|---|---|
+| **DR-002, AC-052** | **Unaffected, and the reason the second repository exists.** They bind the seeded catalog, which stays generic archetypes with cited provenance and gains no submission path. §11.32.4. |
+| **AC-042** | **Unaffected.** `submittedBy` is a credit that authenticates nothing and that the application never reads. Signatures and `provenance`/`derivedFrom` chains stay deleted, and the pull request history is where the chain lives instead. §11.32.5. |
+| **AC-057** | **Unaffected and load-bearing.** Device images stay out of the model. The port photograph is pull request evidence committed to the contributor's fork, never `.rmdx` payload. §11.32.6. |
+| **DR-006** | **Unaffected here, and it is the precondition.** The internal-tool ruling stands until something reverses it. DR-033's surface may not ship first, and §11.32.7 declines to rule the reversal rather than smuggling it in. |
+| **DR-015** | **Unaffected.** `.rmda` is ruled and still unbuilt; DR-033 adds a second distribution path and removes nothing from the first. |
+| **CR-117, G4/CR-114** | **Unaffected and binding on the new field.** `submittedBy` is absent when unknown, never an explicit null, and round-trips byte-for-byte with keys sorted. |
+
+---
+
 ## 13. Resolved §10 questions
 
 **§10 has no open entries left.** Of its thirteen: **ten are ANSWERED**, one (§10.3) is **MOOT**
@@ -8547,8 +8707,8 @@ to now.
 | **10.5** | Metric or imperial default | **ANSWERED 2026-08-03** | **Imperial default, one obvious toggle.** Confirms the recommendation. The default is already in the code; the toggle is owed (#562). §10.5. |
 | **10.6** | Is the schematic a client deliverable or an internal tool | **ANSWERED, DR-005** | **(a) Client deliverable, invest in drafting polish.** Reverses the record's recommendation. Orthogonal to 10.1. §11.5. |
 | **10.7** | Multi-sheet timing | **ANSWERED: DR-004** | **(c) Never.** One `Sheet` plus domain filtering, permanently. The entity remains. §11.4. |
-| **10.8** | Cloud-ready investment | **ANSWERED 2026-08-03** | **(a). Spend nothing further; RackMate is a local application.** Confirms the recommendation. The six cloud-ready properties are **retained in full** and option (c) is not taken. `docs/02` §8 is **ratified** as the conflict-unit and merge-story page the recommendation asked for, rather than commissioned. An update check and API-key publishing to project-management services are the only contemplated network uses and are **not v1 scope** (§8.3 applies to either). §10.8. |
-| **10.9** | Generic archetypes forever, or a real-SKU catalog | **ANSWERED 2026-08-03** | **Shipped catalog stays generic; user templates may carry real SKUs.** Archetypes must be editable (docs/06 §7.3's `Duplicate & edit`), and DR-015's `.rmda` is the sharing mechanism. AC-052/DR-002 bind the SEED only. `T6.30` stays an equipment list, not a BOM (AC-055). §10.9. |
+| **10.8** | Cloud-ready investment | **ANSWERED 2026-08-03** | **(a). Spend nothing further; RackMate is a local application.** Confirms the recommendation. The six cloud-ready properties are **retained in full** and option (c) is not taken. `docs/02` §8 is **ratified** as the conflict-unit and merge-story page the recommendation asked for, rather than commissioned. An update check and API-key publishing to project-management services are the only contemplated network uses and are **not v1 scope** (§8.3 applies to either). §10.8. **Amended by DR-033**: there is a third contemplated network use, the community catalog submission, and it is likewise not v1 (§12.14). |
+| **10.9** | Generic archetypes forever, or a real-SKU catalog | **ANSWERED 2026-08-03** | **Shipped catalog stays generic; user templates may carry real SKUs.** Archetypes must be editable (docs/06 §7.3's `Duplicate & edit`), and DR-015's `.rmda` is the sharing mechanism. AC-052/DR-002 bind the SEED only. `T6.30` stays an equipment list, not a BOM (AC-055). §10.9. **Its recommendation is discharged by DR-033**, which builds the curated community library as a second repository the app submits to. §10.9's stated tipping condition was whether users start swapping device files unprompted; the user settled it by deciding to support the swap rather than waiting to observe it. §11.32. |
 | **10.10** | macOS in v1 | **ANSWERED: DR-009** | **(b) Windows and macOS from v1.** Reverses the record's recommendation, which was explicitly *"not a ruling"* and rested on a desk survey that was never run. The register §10.10 demanded and never received is `docs/13-macos-debt-register.md`. §11.9. |
 | 10.11 | What the beta gate actually is | **DEFERRED 2026-08-03, with a trigger** | Held until M5 (Validation) lands and the UI is largely frozen, on the ground that the bar is easier to state against a product than against a plan. **It must be answered before the M6 recruiting ask (M6-J5)**, not before M9; you cannot ask three people to commit real jobs without saying what you will judge. |
 | 10.12 | Small calls needing an owner | **ALL SEVEN SETTLED 2026-08-03** | (d) three residential + one commercial starter, by DR-002. **(a)** keep 200, make it a setting (#560). **(b)** autosave while working, never while idle, and it exposed a live defect, now fixed. **(c)** editable rack presets, **DR-016**, a scope addition under §8.3 (#561). |
