@@ -20,7 +20,7 @@
 // that line".
 //
 // ═════════════════════════════════════════════════════════════════════
-// DR-023's CHAIN, IMPLEMENTED ONCE, IN [_serviceTagFor]
+// DR-023's CHAIN, IMPLEMENTED ONCE, IN [serviceTagFor]
 // ═════════════════════════════════════════════════════════════════════
 // `@service=`, else the `OutletTemplate.tag`, else the media's
 // `shortTag`. There is no fourth step and no placeholder. A media type
@@ -323,7 +323,7 @@ DropLinePlan planDropLine({
           token: line.items[i].mediaToken,
         ),
     ],
-    serviceTag: (item) => _serviceTagFor(
+    serviceTag: (item) => serviceTagFor(
       modifier: line.service,
       templates: doc.registries.outletTemplates,
       template: template,
@@ -496,7 +496,7 @@ SignalFamilyDef? resolveSignalFamilyToken(
 /// so the literal arm was the only one that could fire and `EXT-CAM-4`
 /// was not reproducible. Nine templates ship now and the corpus's own
 /// label comes out of a blank project.
-String? _serviceTagFor({
+String? serviceTagFor({
   required String? modifier,
   required Map<String, OutletTemplate> templates,
   required OutletTemplate? template,

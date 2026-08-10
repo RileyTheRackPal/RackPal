@@ -538,6 +538,15 @@ bool _wouldChange(Link link, ResolvedCsvRow row, Pathway? pathway) {
     return true;
   }
   if (row.notes != null && row.notes != link.notes) return true;
+  // A `Bundle` naming a pathway THIS IMPORT WILL CREATE is a change too,
+  // and reading `pathway == null` as "no pathway stated" misses it: the
+  // link cannot already sit in a pathway the document does not hold. A
+  // revised sheet that only moves runs between trunks would otherwise
+  // report every row unchanged and then move them anyway.
+  if (row.pathwayName != null &&
+      (pathway == null || pathway.id != link.pathwayId)) {
+    return true;
+  }
   if (row.jacketColor != null && row.jacketColor != link.jacketColorId) {
     return true;
   }
@@ -545,7 +554,6 @@ bool _wouldChange(Link link, ResolvedCsvRow row, Pathway? pathway) {
       row.jacketColorPulled != link.jacketColorPulledId) {
     return true;
   }
-  if (pathway != null && pathway.id != link.pathwayId) return true;
   if (origin != null) {
     if (row.rackLabel != null && row.rackLabel != origin.rackLabel) return true;
     if (row.terminationField != null &&
