@@ -29,18 +29,24 @@
 //    reparent can produce, and hiding those would hide cable.
 //
 // ═════════════════════════════════════════════════════════════════════
-// WHAT §4.2 DRAWS THAT IS NOT HERE
+// THE `EMT` COLUMN, AND WHY IT TOOK THREE TASKS TO ARRIVE
 // ═════════════════════════════════════════════════════════════════════
-// THE TINTED `EMT` COLUMN. §4.2: "The `EMT` column is `isPathwayOnly`
-// and creates `Pathway`s, not drops, its cells are tinted and excluded
-// from the Σ drop count (CR-109)." Two things it needs are absent from
-// this build: `MediaTypeDef.isPathwayOnly` is not a field, and nothing
-// in the product creates a `Pathway` at all — that is #156 (M3-E/1),
-// which owns `Pathway.kind` and `containsLineVoltage` through to the UI.
-// So a conduit media type here behaves like any other column and makes
-// `Link`s, which is what the typed drop line has always done with
-// `Office: 1x ENT`. Named rather than half-built: a tint with no
-// `Pathway` behind it would say CR-109 holds when it does not.
+// §4.2: "The `EMT` column is `isPathwayOnly` and creates `Pathway`s, not
+// drops, its cells are tinted and excluded from the Σ drop count
+// (CR-109)." It was held out of this file rather than half-built,
+// because a tint with no `Pathway` behind it would have said CR-109 held
+// when it did not. What it was waiting on arrived in order:
+// `MediaTypeDef.isPathwayOnly` (`719fa34`), a `Pathway` anything could
+// create (`bcb1b31`), the drop line honouring the flag (`b093062`), and
+// DR-035 giving that act the medium and the room, WITHOUT WHICH A CELL
+// COULD NOT COUNT ITS OWN WORK: a matrix cell is a target, so a column
+// that creates entities it cannot then find is a control that lies.
+//
+// A PATHWAY COLUMN IS A COLUMN OF THIS GRID and not a second grid beside
+// it. DR-032 §11.31.5: one medium must not mean two things depending on
+// which box a person typed it into. What keeps the two kinds apart is
+// `StructureMatrixRow.isPathwayColumn`, which is what lets the Σ exclude
+// them while the cells sit in the same row.
 import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/derived/location_tree.dart';
 import 'package:rackmate_core/src/derived/schedule.dart' show kUngroupedTitle;
@@ -58,6 +64,7 @@ final class StructureMatrixRow {
     required this.code,
     required this.depth,
     required this.counts,
+    required this.isPathwayColumn,
     required this.outletCount,
   });
 
@@ -85,13 +92,39 @@ final class StructureMatrixRow {
   /// facts nobody recorded, and this is not one).
   final List<int> counts;
 
+  /// Parallel to [counts]: which of them count `Pathway`s rather than
+  /// drops (CR-109).
+  ///
+  /// CARRIED ON THE ROW RATHER THAN LOOKED UP, because [dropCount] is the
+  /// `Σ` column and has to exclude them. A getter that could not tell the
+  /// two apart would add three conduits to fifty-two drops and print the
+  /// total docs/07 §4.2 explicitly forbids.
+  final List<bool> isPathwayColumn;
+
   /// Outlets with at least one drop in this room, on [StructureTable]'s
   /// own rule — not `doc.outlets`, which includes plates nobody has
   /// pulled to yet.
   final int outletCount;
 
-  /// §4.2's `Σ` column.
-  int get dropCount => counts.fold<int>(0, (n, c) => n + c);
+  /// §4.2's `Σ` column: drops, and **not** the pathway columns.
+  ///
+  /// §4.2 states the exclusion in as many words: the `EMT` column's cells
+  /// are "tinted and excluded from the Σ drop count (CR-109)". Conduit is
+  /// not a cable, so a conduit in the Σ would be one item of a total
+  /// somebody orders cable from.
+  int get dropCount => _sum(pathways: false);
+
+  /// The conduits, pull strings and other pathway-only media in this
+  /// room. Reported beside [dropCount] rather than folded into it.
+  int get pathwayCount => _sum(pathways: true);
+
+  int _sum({required bool pathways}) {
+    var total = 0;
+    for (var c = 0; c < counts.length; c++) {
+      if (isPathwayColumn[c] == pathways) total += counts[c];
+    }
+    return total;
+  }
 
   /// False for the trailing row. See [locationId].
   bool get takesDrops => locationId != null;
@@ -153,11 +186,37 @@ StructureMatrix buildStructureMatrix(
     }
   }
 
+  // PATHWAYS COUNT INTO THE SAME MAP, and that is what makes `EMT` a
+  // column of this grid rather than a second grid beside it (CR-109,
+  // DR-032 §11.31.5: one medium must not mean two things depending on
+  // which box a person typed it into). What keeps them apart afterwards
+  // is `isPathwayColumn`, so the Σ can exclude them.
+  //
+  // KEYED ON `fromLocationId`, which DR-035 §11.34.3 rules is the room.
+  // A pathway whose room was deleted has it cleared to null (DR-021) and
+  // lands in the trailing band with the drops in the same state, rather
+  // than disappearing from a surface somebody would use to put it back.
+  //
+  // DOCUMENT-WIDE, unlike the drops above: `doc.pathways` carries no
+  // `structureBodyId`, so a pathway is not filtered by the body this
+  // grid was opened on. `StructureTable.pathwayCount` takes the same
+  // reading and says so.
+  for (final pathway in doc.pathways.values) {
+    final media = pathway.pathwayMedia;
+    if (media == null) continue;
+    final byMedia = counts[pathway.fromLocationId] ??= <MediaTypeId, int>{};
+    byMedia[media] = (byMedia[media] ?? 0) + 1;
+  }
+
   final columns = structureMatrixColumns(
     doc,
     present: {for (final byMedia in counts.values) ...byMedia.keys},
     alsoColumns: alsoColumns,
   );
+  final isPathwayColumn = [
+    for (final id in columns)
+      doc.registries.mediaTypes[id]?.isPathwayOnly ?? false,
+  ];
 
   final rows = <StructureMatrixRow>[];
   final tree = LocationTree.of(doc);
@@ -179,6 +238,7 @@ StructureMatrix buildStructureMatrix(
           code: location.code.trim(),
           depth: depth,
           counts: [for (final column in columns) byMedia[column] ?? 0],
+          isPathwayColumn: isPathwayColumn,
           outletCount: (plates[id] ?? const <Uuid>{}).length,
         ),
       );
@@ -208,6 +268,7 @@ StructureMatrix buildStructureMatrix(
         code: '',
         depth: 0,
         counts: [for (final column in columns) unplaced[column] ?? 0],
+        isPathwayColumn: isPathwayColumn,
         outletCount: (plates[null] ?? const <Uuid>{}).length,
       ),
     );
@@ -281,10 +342,13 @@ String structureMatrixColumnHeader(RackDocument doc, MediaTypeId id) {
 /// would make a person configure the surface before using it, which is
 /// the opposite of what a bulk-entry grid is for.
 ///
-/// `EMT` IS THE ONE THAT IS MISSING, and the file header says why: it is
-/// the pathway column, and nothing in this build creates a `Pathway`
-/// (#156). Offering it would make conduit into cable one click faster
-/// than the typed line already does.
+/// **`EMT` IS THE NINTH AND IT IS BACK** (M3-E/1). It was held out of
+/// this list because it is the pathway column and nothing in the build
+/// created a `Pathway`, so offering it would have made conduit into cable
+/// one click faster than the typed line already did. `719fa34` added the
+/// flag, `b093062` made the drop line honour it and DR-035 gave the
+/// created pathway the two facts a cell needs to count it, so the column
+/// now does what §4.2 says it does.
 ///
 /// Filtered against the document's registry by [structureMatrixColumns],
 /// so a document that carries none of these opens on the columns its own
@@ -298,6 +362,7 @@ const List<MediaTypeId> kStructureMatrixSeedColumns = <MediaTypeId>[
   MediaTypeId('media.16_4'),
   MediaTypeId('media.22_4'),
   MediaTypeId('media.os2'),
+  MediaTypeId('media.conduit_emt'),
 ];
 
 /// Whether a drop can land on a location of this kind.

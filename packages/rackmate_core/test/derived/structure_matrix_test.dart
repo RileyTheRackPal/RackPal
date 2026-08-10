@@ -23,6 +23,9 @@ const MediaTypeId _cat6 = MediaTypeId('media.cat6');
 const MediaTypeId _rg6 = MediaTypeId('media.rg6');
 const MediaTypeId _spk = MediaTypeId('media.16_4');
 
+/// §4.2's ninth column, and the only `isPathwayOnly` one in the seed set.
+const MediaTypeId _emt = MediaTypeId('media.conduit_emt');
+
 final class _Doc {
   _Doc({bool seeded = true})
     : doc = RackDocument(
@@ -462,14 +465,16 @@ void main() {
       );
     });
 
-    test('the seed columns are eight, and EMT is not one of them', () {
-      // §4.2 draws nine and the ninth creates a `Pathway`, which nothing
-      // in this build does (#156). Offering it would make conduit into
-      // cable one click faster than the typed line already does.
-      expect(kStructureMatrixSeedColumns, hasLength(8));
+    test('the seed columns are §4.2 nine, and the ninth is EMT', () {
+      // THIS ASSERTION USED TO READ `hasLength(8)` with EMT excluded,
+      // because the ninth column creates a `Pathway` and nothing in the
+      // build could. M3-E/1 is the day named in that comment: the flag,
+      // the entity, the drop line and DR-035's two facts all landed, so
+      // the column now does what §4.2 says it does.
+      expect(kStructureMatrixSeedColumns, hasLength(9));
       expect(
-        kStructureMatrixSeedColumns.map((m) => m.v),
-        isNot(contains(contains('conduit'))),
+        kStructureMatrixSeedColumns.last,
+        const MediaTypeId('media.conduit_emt'),
       );
     });
   });
@@ -548,6 +553,114 @@ void main() {
       _drop(d, outletId: plate, locationId: lr, fieldLabel: 'LR-C6-2');
 
       expect(_cell(buildStructureMatrix(d.doc), 'Living Room', _cat6), 2);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // §4.2's TINTED `EMT` COLUMN — M3-E/1 (#156), CR-109, DR-032, DR-035
+  // ═══════════════════════════════════════════════════════════════════
+  // The column that was held out of this grid for three tasks, because
+  // a tint with no `Pathway` behind it would have claimed CR-109 held
+  // when it did not. What these gate is the half that is easy to get
+  // wrong once it is in: the Σ, which §4.2 says excludes it in as many
+  // words, and the round trip, without which a cell accepts a number
+  // and reads back zero.
+  group('a pathway column counts Pathways and not drops', () {
+    test('a conduit lands in the cell for its room and medium', () {
+      final d = _Doc();
+      final lr = _room(d, 'Living Room', code: 'LR');
+      AddPathwayCommand(
+        name: 'Living Room EMT',
+        order: nextPathwayOrder(d.doc),
+        now: _when,
+        actor: 'test',
+        pathwayMedia: _emt,
+        fromLocationId: lr,
+      ).apply(d.doc);
+
+      expect(_cell(buildStructureMatrix(d.doc), 'Living Room', _emt), 1);
+    });
+
+    test('it is EXCLUDED from the Σ, which §4.2 states outright', () {
+      final d = _Doc();
+      final lr = _room(d, 'Living Room', code: 'LR');
+      final plate = d.outlet('LR-1', locationId: lr);
+      _drop(d, outletId: plate, locationId: lr, fieldLabel: 'LR-C6-1');
+      _drop(d, outletId: plate, locationId: lr, fieldLabel: 'LR-C6-2');
+      AddPathwayCommand(
+        name: 'Living Room EMT',
+        order: nextPathwayOrder(d.doc),
+        now: _when,
+        actor: 'test',
+        pathwayMedia: _emt,
+        fromLocationId: lr,
+      ).apply(d.doc);
+
+      final row = _row(buildStructureMatrix(d.doc), 'Living Room')!;
+      // Two cables and one conduit. A Σ of three would be a number
+      // somebody orders cable from.
+      expect(row.dropCount, 2);
+      expect(row.pathwayCount, 1);
+    });
+
+    test('and out of the grid total, which is still the table drop count', () {
+      final d = _Doc();
+      final lr = _room(d, 'Living Room', code: 'LR');
+      final plate = d.outlet('LR-1', locationId: lr);
+      _drop(d, outletId: plate, locationId: lr, fieldLabel: 'LR-C6-1');
+      AddPathwayCommand(
+        name: 'Living Room EMT',
+        order: nextPathwayOrder(d.doc),
+        now: _when,
+        actor: 'test',
+        pathwayMedia: _emt,
+        fromLocationId: lr,
+      ).apply(d.doc);
+
+      final m = buildStructureMatrix(d.doc);
+      expect(m.dropCount, buildStructureTable(d.doc).dropCount);
+      expect(m.dropCount, 1);
+    });
+
+    test('a pathway whose room was deleted lands in the trailing band', () {
+      // DR-021 clears `fromLocationId` rather than deleting the pathway,
+      // so it goes where the orphaned drops go. A conduit that vanished
+      // from a screen is a conduit somebody stops accounting for.
+      final d = _Doc();
+      final lr = _room(d, 'Living Room', code: 'LR');
+      AddPathwayCommand(
+        name: 'Living Room EMT',
+        order: nextPathwayOrder(d.doc),
+        now: _when,
+        actor: 'test',
+        pathwayMedia: _emt,
+        fromLocationId: lr,
+      ).apply(d.doc);
+      d.controllerlessRemoveRoom(lr);
+
+      expect(_cell(buildStructureMatrix(d.doc), kUngroupedTitle, _emt), 1);
+    });
+
+    test('a pathway with no medium is in no cell, and that is G4', () {
+      // What `+ Add pathway` produces: somebody pressed a button and
+      // named no medium, so no column can claim it (DR-035 §11.34.5).
+      final d = _Doc();
+      final lr = _room(d, 'Living Room', code: 'LR');
+      AddPathwayCommand(
+        name: 'New pathway',
+        order: nextPathwayOrder(d.doc),
+        now: _when,
+        actor: 'test',
+        fromLocationId: lr,
+      ).apply(d.doc);
+
+      // `alsoColumns` because nothing in the document names EMT: with no
+      // medium there is nothing to make the column `present`, which is
+      // itself the assertion. The column is the one `⚙ + Media column`
+      // and the seed list put on screen.
+      final m = buildStructureMatrix(d.doc, alsoColumns: {_emt});
+      expect(_cell(m, 'Living Room', _emt), 0);
+      expect(d.doc.pathways, hasLength(1));
     });
   });
 }

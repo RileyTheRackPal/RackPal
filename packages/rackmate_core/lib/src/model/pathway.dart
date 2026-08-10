@@ -92,6 +92,16 @@ final class Pathway {
   /// `RemoveLocationCommand` clears both when the room at either end of a
   /// pathway is deleted (§11.20.2), and that wiring is the AC-013
   /// retrofit.
+  ///
+  /// **`from` IS THE ROOM AND `to` IS WHERE IT GOES** (DR-035 §11.34.3).
+  /// That order was open until 2026-08-10: both fields shipped at M0 with
+  /// no reader establishing one, and `RemoveLocationCommand` treats them
+  /// symmetrically. It is docs/08 §3.2's `FROM — ROOM` / `TO — RACK`,
+  /// which `ScheduleEntry.roomId` already relies on, rather than a new
+  /// convention.
+  ///
+  /// `to` IS WRITTEN BY NO GESTURE and that is G4: a conduit's far end is
+  /// the rack in the ordinary case, and this project may hold no rack.
   Uuid? _fromLocationId;
   Uuid? get fromLocationId => _fromLocationId;
   @internal
@@ -154,11 +164,17 @@ final class Pathway {
 
   /// `isPathwayOnly` media (CR-109) — which conduit this actually is.
   ///
-  /// STILL UNREACHABLE FROM A DROP LINE, and the reason is a field that
-  /// does not exist: CR-109 turns on `MediaTypeDef.isPathwayOnly`, and
-  /// that is not a registry field yet. #156 owns it. Until then a
-  /// `Pathway` is created deliberately rather than as a side effect of
-  /// typing `Office: 1x ENT`.
+  /// SET BY EVERY SURFACE THAT CREATES A PATHWAY FROM A MEDIUM
+  /// (DR-035 §11.34.2). This comment used to say the flag did not exist
+  /// and the drop line could not reach here; `719fa34` added
+  /// `MediaTypeDef.isPathwayOnly`, `b093062` made `Office: 1x ENT` build
+  /// a `Pathway`, and DR-035 made that act record which medium it was.
+  ///
+  /// WITHOUT THIS FIELD THE MATRIX CELL COULD NOT COUNT ITS OWN WORK.
+  /// docs/07 §4.2's grid is a count, and "the pathways in this room, of
+  /// this medium" is unanswerable from a name that is a description
+  /// (DR-032 §11.31.2). Null stays legal and is what `+ Add pathway`
+  /// produces: a button press names no medium.
   MediaTypeId? _pathwayMedia;
   MediaTypeId? get pathwayMedia => _pathwayMedia;
   @internal

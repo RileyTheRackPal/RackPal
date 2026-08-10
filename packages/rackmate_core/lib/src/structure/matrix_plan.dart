@@ -45,13 +45,18 @@ import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/home_run_commands.dart'
     show usedFieldLabels;
 import 'package:rackmate_core/src/commands/link_commands.dart';
+import 'package:rackmate_core/src/commands/pathway_commands.dart';
+import 'package:rackmate_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackmate_core/src/commands/structure_commands.dart';
 import 'package:rackmate_core/src/derived/link_lookup.dart';
 import 'package:rackmate_core/src/derived/schedule.dart';
+import 'package:rackmate_core/src/derived/structure_matrix.dart'
+    show structureMatrixColumnHeader;
 import 'package:rackmate_core/src/derived/structure_table.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
 import 'package:rackmate_core/src/model/location.dart';
 import 'package:rackmate_core/src/model/outlet.dart';
+import 'package:rackmate_core/src/model/pathway.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/structure/drop_build.dart';
 import 'package:rackmate_core/src/units/ids.dart';
@@ -135,6 +140,23 @@ MatrixCellPlan planMatrixCell({
   if (location == null) {
     return const MatrixCellRefused(
       'That room is not in this project any more.',
+    );
+  }
+
+  // CONDUIT IS NOT A CABLE, so a pathway-only column takes a different
+  // path entirely and takes it FIRST (CR-109, DR-032 §11.31.5). Falling
+  // through to the drop logic would make `Living Room × EMT = 2` mint an
+  // outlet and two `Link`s, which is the exact thing CR-109 rejected:
+  // "conduit as a connectable drop like any other, which produces a port
+  // you can wire an HDMI cable into".
+  if (doc.registries.mediaTypes[media]?.isPathwayOnly ?? false) {
+    return _planPathwayCell(
+      doc: doc,
+      location: location,
+      media: media,
+      targetCount: targetCount,
+      now: now,
+      actor: actor,
     );
   }
 
@@ -252,6 +274,128 @@ MatrixCellPlan _add({
       fieldLabels: fieldLabels,
     ),
   };
+}
+
+/// §4.2's tinted `EMT` column: the cell counts `Pathway`s and creates
+/// them (CR-109, DR-032, DR-035).
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// IT NEEDS NO STRUCTURE BODY, WHICH IS THE STRUCTURAL DIFFERENCE
+/// ═════════════════════════════════════════════════════════════════════
+/// Every other cell in this grid refuses on a project with no Structure
+/// device, because a drop hangs off an `Outlet` and an outlet hangs off a
+/// body. A `Pathway` hangs off the document, exactly as a `Location`
+/// does (CR-112), so a conduit can be recorded in a project that has
+/// nothing else in it yet. That is not a loophole: a conduit IS a thing
+/// somebody pulls before there is a panel to terminate in.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// A DECREMENT REFUSES TO TAKE A PATHWAY THAT HAS CABLE IN IT
+/// ═════════════════════════════════════════════════════════════════════
+/// §4.2's rule for drops is that a decrement takes the unconnected ones
+/// and refuses the rest; the fact it protects is work somebody has
+/// already done. The analogue here is a pathway with runs through it:
+/// deleting it does not destroy the cable — `RemovePathwayCommand`
+/// clears the reference — but it silently un-records the route of every
+/// run in it, from a cell that shows a number and nothing else.
+///
+/// So this refuses and NAMES THE SURFACE THAT WILL DO IT, which is the
+/// `[ Pathways ]` tab, where the delete states the run count in its
+/// tooltip before the click. CR-017's spring-back, applied to the one
+/// place a grid could quietly cost somebody an afternoon of routing.
+MatrixCellPlan _planPathwayCell({
+  required RackDocument doc,
+  required Location location,
+  required MediaTypeId media,
+  required int targetCount,
+  required DateTime now,
+  required String actor,
+}) {
+  // ORDERED, and the comparator is total: two pathways can share a
+  // `FracIndex`, and a decrement that took "the last ones" out of map
+  // iteration order would delete a different pathway on a different
+  // machine (§8.4).
+  final inCell =
+      <Pathway>[
+        for (final p in doc.pathways.values)
+          if (p.pathwayMedia == media && p.fromLocationId == location.id) p,
+      ]..sort((a, b) {
+        final byOrder = a.order.v.compareTo(b.order.v);
+        return byOrder != 0 ? byOrder : a.id.v.compareTo(b.id.v);
+      });
+
+  final current = inCell.length;
+  if (targetCount == current) return const MatrixCellUnchanged();
+
+  if (targetCount > current) {
+    final tag = structureMatrixColumnHeader(doc, media);
+    final commands = <Command>[];
+    final names = <String>[];
+    // Grown as the cell is planned, because `nextPathwayOrder` reads the
+    // DOCUMENT and cannot see commands that have not been applied yet —
+    // the trap `b093062` found on the drop line.
+    final plannedOrders = [for (final p in doc.pathways.values) p.order];
+    for (var n = current; n < targetCount; n++) {
+      // DR-032 §11.31.1's shape: the room and the medium, with a 1-based
+      // index once there is more than one to tell apart.
+      //
+      // THE INDEX CONTINUES FROM THE CELL rather than restarting per
+      // gesture, which is where this departs from §11.31.1's letter and
+      // serves §11.31.3's reason. A line is one act on a state nobody
+      // has counted; a CELL is a running total, so an index that
+      // restarted would give `1 -> 3` a second "Living Room EMT 1" and
+      // produce the identical `PATH` cells §11.31.3 exists to prevent.
+      final name = n == 0
+          ? '${location.name} $tag'
+          : '${location.name} $tag ${n + 1}';
+      final order = nextOrder(plannedOrders);
+      plannedOrders.add(order);
+      names.add(name);
+      commands.add(
+        AddPathwayCommand(
+          name: name,
+          order: order,
+          now: now,
+          actor: actor,
+          pathwayMedia: media,
+          fromLocationId: location.id,
+        ),
+      );
+    }
+    return MatrixCellReady(
+      commands: commands,
+      added: commands.length,
+      removed: 0,
+      // NOT FIELD LABELS, and empty is the honest answer: a pathway has
+      // no `fieldLabel` because CR-109 says it is "never a `Link` and
+      // never a `Port`". The preview line reads `pathwayNames` on the
+      // drop line for the same reason.
+      fieldLabels: const [],
+    );
+  }
+
+  final going = inCell.sublist(targetCount);
+  final routed = <Pathway>[
+    for (final p in going)
+      if (doc.links.values.any((l) => l.pathwayId == p.id)) p,
+  ];
+  if (routed.isNotEmpty) {
+    final names = routed.map((p) => p.name).join(', ');
+    final floor = inCell.length - going.length + routed.length;
+    final one = routed.length == 1;
+    return MatrixCellRefused(
+      'This cell cannot go below $floor: $names ${one ? 'has' : 'have'} cable '
+      'running through ${one ? 'it' : 'them'}. Delete it on the Pathways tab, '
+      'which says how many runs lose their recorded route.',
+    );
+  }
+
+  return MatrixCellReady(
+    commands: [for (final p in going) RemovePathwayCommand(id: p.id, now: now)],
+    added: 0,
+    removed: going.length,
+    fieldLabels: const [],
+  );
 }
 
 /// The decrement. §4.2's "the highest-sequence unconnected drops".

@@ -210,7 +210,19 @@ DropLinePlan planDropLine({
       plannedOrders.add(order);
       pathwayNames.add(name);
       pathwayCommands.add(
-        AddPathwayCommand(name: name, order: order, now: now, actor: actor),
+        AddPathwayCommand(
+          name: name,
+          order: order,
+          now: now,
+          actor: actor,
+          // DR-035 §11.34.2. The NAME is a description and cannot be
+          // read back; these two are the facts, and without them the
+          // matrix cell that creates the same entity could never count
+          // its own pathways. `toLocationId` stays null: nobody has said
+          // where the other end lands (G4).
+          pathwayMedia: media[i].id,
+          fromLocationId: location.id,
+        ),
       );
     }
   }

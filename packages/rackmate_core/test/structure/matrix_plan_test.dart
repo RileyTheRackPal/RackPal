@@ -21,6 +21,9 @@ EntityMeta _meta() =>
 const MediaTypeId _cat6 = MediaTypeId('media.cat6');
 const MediaTypeId _rg6 = MediaTypeId('media.rg6');
 
+/// §4.2's ninth column: the `isPathwayOnly` one (CR-109).
+const MediaTypeId _emt = MediaTypeId('media.conduit_emt');
+
 final class _Doc {
   _Doc({bool withStructure = true})
     : doc = RackDocument(
@@ -538,6 +541,148 @@ void main() {
       );
       expect(plan, isA<MatrixCellRefused>());
       expect((plan as MatrixCellRefused).reason, contains('Living Room'));
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // §4.2's `EMT` COLUMN — M3-E/1 (#156), CR-109, DR-032, DR-035
+  // ═══════════════════════════════════════════════════════════════════
+  // The whole claim is that a cell in this column means something
+  // different: it creates `Pathway`s and never a `Link`, never a `Port`
+  // and never an `Outlet`. The first test is the one that would catch a
+  // fall-through to the drop planner, which would produce exactly those
+  // three and pass every count assertion beside it.
+  group('a pathway-only column creates Pathways, not drops', () {
+    test('0 to 2 makes two pathways and NO outlet, link or port', () {
+      final d = _Doc();
+      final lr = _room(d, 'Living Room');
+      final plan = _set(d, locationId: lr, media: _emt, to: 2);
+
+      expect(plan, isA<MatrixCellReady>());
+      expect(d.doc.pathways, hasLength(2));
+      // CR-109's "never a `Link` and never a `Port`", plus the outlet
+      // the drop planner would have minted unconditionally.
+      expect(d.doc.links, isEmpty);
+      expect(d.doc.ports, isEmpty);
+      expect(d.doc.outlets, isEmpty);
+    });
+
+    test('each carries the medium and the room (DR-035 §11.34.2)', () {
+      final d = _Doc();
+      final lr = _room(d, 'Living Room');
+      _set(d, locationId: lr, media: _emt, to: 1);
+
+      final pathway = d.doc.pathways.values.single;
+      expect(pathway.pathwayMedia, _emt);
+      expect(pathway.fromLocationId, lr);
+      // Nobody said where the other end lands (G4).
+      expect(pathway.toLocationId, isNull);
+    });
+
+    test('the cell reads back what it created, which is the whole point', () {
+      // Without DR-035's two fields this is unanswerable and the cell
+      // would accept a number and always report zero.
+      final d = _Doc();
+      final lr = _room(d, 'Living Room');
+      _set(d, locationId: lr, media: _emt, to: 3);
+
+      expect(
+        _set(d, locationId: lr, media: _emt, to: 3),
+        isA<MatrixCellUnchanged>(),
+      );
+    });
+
+    test(
+      'names follow DR-032 shape, and the index continues from the cell',
+      () {
+        // §11.31.1's shape, but the index does NOT restart per gesture: a
+        // cell is a running total, so `1 -> 3` restarting would make a
+        // second "Living Room EMT 1" and produce the identical `PATH`
+        // cells §11.31.3 exists to prevent.
+        final d = _Doc();
+        final lr = _room(d, 'Living Room');
+        _set(d, locationId: lr, media: _emt, to: 1);
+        _set(d, locationId: lr, media: _emt, to: 3);
+
+        final names = d.doc.pathways.values.map((p) => p.name).toList()..sort();
+        expect(names, [
+          'Living Room EMT',
+          'Living Room EMT 2',
+          'Living Room EMT 3',
+        ]);
+      },
+    );
+
+    test('it needs no Structure device, unlike every other column', () {
+      // A `Pathway` hangs off the document as a `Location` does (CR-112),
+      // not off a body. A conduit IS a thing somebody pulls before there
+      // is a panel to terminate in.
+      final d = _Doc(withStructure: false);
+      final lr = _room(d, 'Living Room');
+
+      expect(
+        _set(d, locationId: lr, media: _cat6, to: 1),
+        isA<MatrixCellNeedsStructure>(),
+      );
+      expect(
+        _set(d, locationId: lr, media: _emt, to: 1),
+        isA<MatrixCellReady>(),
+      );
+      expect(d.doc.pathways, hasLength(1));
+    });
+
+    test('a decrement removes the highest-order ones', () {
+      final d = _Doc();
+      final lr = _room(d, 'Living Room');
+      _set(d, locationId: lr, media: _emt, to: 3);
+      _set(d, locationId: lr, media: _emt, to: 1);
+
+      expect(d.doc.pathways, hasLength(1));
+      expect(d.doc.pathways.values.single.name, 'Living Room EMT');
+    });
+
+    test('a decrement REFUSES to take a pathway with cable in it', () {
+      // §4.2's rule for drops, applied to the fact that matters here:
+      // deleting the pathway does not destroy the cable, it silently
+      // un-records the route of every run in it, from a cell that shows
+      // a number and nothing else.
+      final d = _Doc();
+      final lr = _room(d, 'Living Room');
+      _set(d, locationId: lr, media: _emt, to: 1);
+      final pathwayId = d.doc.pathways.values.single.id;
+
+      final plate = (AddOutletCommand(
+        structureBodyId: d.bodyId!,
+        designation: 'LR-1',
+        order: nextOutletOrder(d.doc),
+        now: _when,
+        actor: 'test',
+        locationId: lr,
+      )..apply(d.doc)).id;
+      _set(d, locationId: lr, media: _cat6, to: 1);
+      final link = d.doc.links.values.single..pathwayId = pathwayId;
+      expect(link.pathwayId, pathwayId);
+      expect(plate, isNotNull);
+
+      final plan = _set(d, locationId: lr, media: _emt, to: 0);
+      expect(plan, isA<MatrixCellRefused>());
+      // IT NAMES THE SURFACE THAT WILL DO IT, where the delete states
+      // the run count before the click.
+      expect((plan as MatrixCellRefused).reason, contains('Pathways tab'));
+      expect(d.doc.pathways, hasLength(1));
+    });
+
+    test('a pathway in another room is not in this cell', () {
+      final d = _Doc();
+      final lr = _room(d, 'Living Room');
+      final kit = _room(d, 'Kitchen', code: 'KIT');
+      _set(d, locationId: lr, media: _emt, to: 2);
+
+      expect(
+        _set(d, locationId: kit, media: _emt, to: 0),
+        isA<MatrixCellUnchanged>(),
+      );
+      expect(d.doc.pathways, hasLength(2));
     });
   });
 }

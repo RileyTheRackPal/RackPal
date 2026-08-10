@@ -1320,17 +1320,38 @@ void main() {
   });
 
   group('THE COLUMNS AND THE EMPTY STATE', () {
-    testWidgets('the grid opens on eight columns, and EMT is not one', (
+    testWidgets('the grid opens on §4.2 nine columns, EMT among them', (
       tester,
     ) async {
+      // THIS USED TO ASSERT EIGHT with conduit excluded, because the
+      // ninth column creates a `Pathway` and nothing in the build could.
+      // M3-E/1 built it, so the grid opens on the wireframe's own nine.
       final h = _Harness(_project());
       await _pump(tester, h);
       await _showMatrix(tester);
 
-      expect(_matrix(h).columns, hasLength(8));
-      for (final id in _matrix(h).columns) {
-        expect(id.v, isNot(contains('conduit')));
-      }
+      expect(_matrix(h).columns, hasLength(9));
+      expect(
+        _matrix(h).columns.last,
+        const MediaTypeId('media.conduit_emt'),
+      );
+    });
+
+    testWidgets('and the EMT column is excluded from the Σ', (tester) async {
+      // §4.2 in as many words: the cells are "tinted and excluded from
+      // the Σ drop count (CR-109)". Conduit is not a cable, so a conduit
+      // inside the Σ is one item of a total somebody orders cable from.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+      await _addLine(tester, 'Living Room: 1x ENT');
+      await _showMatrix(tester);
+
+      final row = _matrix(
+        h,
+      ).rows.firstWhere((r) => r.title == 'Living Room');
+      expect(row.dropCount, 2);
+      expect(row.pathwayCount, 1);
     });
 
     testWidgets('Media column is offered, and it is the only add path', (

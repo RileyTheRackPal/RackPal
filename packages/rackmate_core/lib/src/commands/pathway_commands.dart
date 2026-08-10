@@ -62,6 +62,8 @@ final class AddPathwayCommand extends Command {
     this.containsLineVoltage = false,
     this.nominalLength,
     this.pathwayMedia,
+    this.fromLocationId,
+    this.toLocationId,
     this.notes,
     Uuid? id,
   }) : id = id ?? newEntityId();
@@ -94,7 +96,30 @@ final class AddPathwayCommand extends Command {
   /// `estimatedRunLengthFromRack`, verbatim.
   final Len? nominalLength;
 
+  /// Which `isPathwayOnly` medium this conduit is (CR-109, DR-035
+  /// §11.34.2).
   final MediaTypeId? pathwayMedia;
+
+  /// The room this pathway serves (DR-035 §11.34.2).
+  ///
+  /// `from` IS THE ROOM AND NOT THE RACK, which DR-035 §11.34.3 sets for
+  /// the first time: these two fields shipped at M0 with no reader that
+  /// established an order, and docs/08 §3.2 reads every schedule row
+  /// `FROM — ROOM` then `TO — RACK`, so this is the product's existing
+  /// convention rather than a new one.
+  ///
+  /// NULL IS LEGAL AND IS WHAT `+ Add pathway` PRODUCES. Somebody who
+  /// pressed a button on a list named no room, and inventing one is the
+  /// failure DR-032 §11.31.2 refused one field over (§11.34.5).
+  final Uuid? fromLocationId;
+
+  /// Where the pathway goes, when anybody has said.
+  ///
+  /// SET BY NO GESTURE TODAY, and that is G4 rather than an omission: a
+  /// conduit's far end is the rack in the ordinary case and this project
+  /// may hold no rack at all, so nothing may write one on a guess.
+  final Uuid? toLocationId;
+
   final String? notes;
 
   final DateTime now;
@@ -123,6 +148,8 @@ final class AddPathwayCommand extends Command {
       containsLineVoltage: containsLineVoltage,
       nominalLength: nominalLength,
       pathwayMedia: pathwayMedia,
+      fromLocationId: fromLocationId,
+      toLocationId: toLocationId,
       notes: notes,
     );
   }
