@@ -311,6 +311,26 @@ Two further sequencing constraints are binding, from AC-059:
 
 **Risks.** The fixture-pair gate is what holds the catalogue at 27; the pressure to add "just one more obvious rule" without its pair is the mechanism by which this milestone overruns. Enforce the gate in CI.
 
+### The Plan view · L · an epic, not a milestone number · finished before M6
+
+**Goal.** Answer *where*. A schedule says `W044` runs from `RK-1 / U14 / rear` to `Great Room / TV wall / WP-1` and gives the installer everything except which wall.
+
+**It has no milestone number on purpose** (DR-029 §11.28.4): renumbering M6→M10 would rewrite every `M6-A1`-shaped task title, docs/12 §5.3–§5.8's headers, §12.7's table and dozens of canon references. **The sequencing is a stated dependency, not a number.** It sits between M5 and M6 because M6's criterion is that all four starters export a **complete** set, and a plan sheet arriving afterwards would make that criterion run twice. It **does not displace M3** and no M3 task is cut (DR-018 §11.17.2(4)).
+
+- [ ] `drawImage` on `DiagramCanvas` through the IR and both backends, under `draw/canvas.dart`'s own amendment clause (DR-029 §11.28.6); op-count baselines re-recorded; the underlay excluded from PAL-1 explicitly
+- [ ] The zip container DR-019 ruled: `document.json` plus `underlays/<uuid>.<ext>`, entries sorted, a constant timestamp, one compression method, no extra fields, and CR-117 holding on the zip path
+- [ ] `PlanUnderlay`, `PlanScale`, `PxPt` and `PlanPin` on `OffRackPlacement`, `Outlet` and `Rack`; **`Location.riseAllowance`, which DR-020 specified and nothing ever built** (DR-037 §11.36.5)
+- [ ] Import: PNG and JPEG, **PDF rasterised at import with a page picker** (DR-037 §11.36.2), the format allowlist and the byte and pixel caps every import path owes (AC-058/D12)
+- [ ] The Plan editor as a third canvas, reusing the viewport, selection, hit-test and drag-preview machinery; the Structure-table-then-plan fast path for a 60-drop rough-in; the unpinned strip with its count
+- [ ] Two-point calibration, recalibration as an undoable document command, and **uncalibrated as a fact rather than a default**
+- [ ] `planLowerBound` as a fifth `ScheduleLengthSource`, ranked **below `roomEstimate`** and out of the footage rollup as a quantity (DR-020 §11.19.2(2), DR-037 §11.36.4); `LEN-001` reads the bound whichever tier printed
+- [ ] `T1.01 Device Location Plan`, `AUTO`, the twelfth sheet slot: the screened underlay **composited in the export backend so no alpha and no `/SMask` reaches the file**, callouts, a drawn scale bar, and the per-plan device schedule
+- [ ] The four `PLN-*` advisories, in their own band, added to no total
+
+**Exit criterion.** An architect's floorplan PDF is imported **without leaving the app**, calibrated from one known dimension, and the rack plus every drop of a real rough-in carries a pin. The project exports a sheet set whose `T1.01` places a callout for every pinned drop, each printing the designator its Pull Sheet row prints. **A person who has never seen the building is handed the printed `T1.01` and the printed Pull Sheet, and locates every drop without asking a question.** The set is printed on a real greyscale laser at ANSI B and every callout stays legible over the screened underlay (AC-054). `write(read(bytes)) == bytes` holds on the zip path across a write, a reopen and a second write, and a project with **no** underlay writes bytes identical to what the plain-JSON path writes today. See [Plan view](15-plan-view.md), [feasibility](research/feasibility-plan-view.md), and canon §11.28 / §11.36.
+
+**Risks.** The plan canvas is the largest row and the feasibility study §6 names it *"the one most likely to be wrong in the optimistic direction"*: it is smaller than M1's canvas work **only because** the viewport, selection, hit-test and drag-preview machinery already exist, and if any of those turn out to be coupled to rack or schematic semantics more tightly than a read suggests, that row grows first. The second risk is quieter: this ships to a desk and **not** to a technician on site (AC-056, DR-029 §11.28.7), so it does not by itself replace the tablet workflow that motivated it.
+
 ### M6: The full sheet set · M
 
 **Goal.** Requirement 7, and with it all seven brief requirements.

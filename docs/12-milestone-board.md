@@ -113,7 +113,8 @@ way. Board item #92 is the scheduled full sweep.
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED**: `NOT BUILT` | Model only. **Its M2 block has lifted**: the gate was M2 putting `Link` + `Endpoint` in the UI, and M2-F did (§5.1). Row otherwise as of `0fa532d` |
 | **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **NOT STARTED**: `NOT BUILT` | No builder surface. **Its inputs are all present even though its formal gate is open**: §5.3. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED**: `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
-| **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 11 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5) |
+| **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
+| **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 11 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set becomes 12 slots** when `T1.01` lands ahead of it |
 | **M7** | Platform + access | `M` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | Windows-only; no `Intent` registry; no l10n at all |
 | **M8** | Release engineering | `S` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | No installer, no signing, no crash reporter. **Re-scoped by DR-006** |
 | **M9** | Beta hardening | `M` | **0 of 1** | **NOT STARTED**: `UNPERFORMED` | Nothing is installable, so nothing is testable by anyone outside this machine |
@@ -2121,6 +2122,61 @@ against recorded budgets, **zero `@Tags(['perf'])` tests exist**.
 started, but **the recruiting lead time is already running against the calendar**, and it does not
 depend on anything being built. Under DR-006 the population changes (three integrators become three
 internal users on three real jobs, §7.2's M9 row) but the lead time does not.
+
+### 5.9 The Plan view · `L` · NOT STARTED, weakest mark `NOT BUILT` · decomposed 2026-08-10
+
+> **Exit criterion, verbatim** (DR-037 §11.36.1, roadmap §4). An architect's floorplan PDF is
+> imported **without leaving the app**, calibrated from one known dimension, and the rack plus every
+> drop of a real rough-in carries a pin. The project exports a sheet set whose `T1.01` places a
+> callout for every pinned drop, each printing the designator its Pull Sheet row prints. **A person
+> who has never seen the building is handed the printed `T1.01` and the printed Pull Sheet, and
+> locates every drop without asking a question.** The set is printed on a real greyscale laser at
+> ANSI B and every callout stays legible over the screened underlay (AC-054).
+> `write(read(bytes)) == bytes` holds on the zip path across a write, a reopen and a second write,
+> and a project with **no** underlay writes bytes identical to what the plain-JSON path writes today.
+
+**An epic, not a milestone number** (DR-029 §11.28.4), on this board's own precedent (#55 macOS,
+#100 Store). Sequenced **before M6** because M6's criterion is that all four starters export a
+*complete* set, and a plan sheet arriving afterwards would make that criterion run twice.
+
+| Clause | Mark | Why |
+|---|---|---|
+| PDF imported without leaving the app | **NOT BUILT** | No import path of any kind. `pdf ^3.13.0` **writes** documents and does not import pages (docs/08 §1.1); no rasteriser is in any pubspec in this tree (docs/13 D9) |
+| Calibrated from a known dimension | **NOT BUILT** | `PlanScale`, `PxPt` and the two-point pick do not exist |
+| Rack and every drop pinned | **NOT BUILT** | `PlanPin` does not exist; `OffRackPlacement` decodes as exactly `locationId` and `mountNote`. **The M3-I passthrough that protects a pin against an older build DOES ship** (#568, `Placement` and `Outlet` both carry the reserved `unknown` map), so that dependency is discharged |
+| `T1.01` with a callout per pin | **NOT BUILT** | `SheetRole` has **exactly three values** (`rackElevationFront`, `rackElevationRear`, `equipmentList`), and `DiagramCanvas` has no `drawImage` |
+| The stranger locates every drop | **UNPERFORMED** | Nothing to print, and nobody has been asked |
+| Greyscale laser at ANSI B | **UNPERFORMED** | Same as M6's row: nothing has been printed on hardware |
+| CR-117 on the zip path | **NOT BUILT** | `looksLikeZip` returns `UnsupportedZipContainerError` today, by design. `DocumentCodec` still has exactly one implementation |
+
+**What the decomposition found by reading the tree rather than the design.** Three things, and none
+was inferable from docs/15:
+
+- **`Location.riseAllowance` does not exist**, and DR-020 §11.19.2(1) plus docs/15 §4.1 both spend it
+  as though it does. Grep returns zero occurrences in every `.dart` file. DR-037 §11.36.5 adds it.
+  **Third instance of this shape**, after `MediaTypeDef.maxLength` (§11.19.7) and `unknown` on
+  `Placement` (§11.18.1): a design document and a ruling agreeing with each other reads exactly like
+  verification and is not.
+- **`PdfImage(..., alpha: true)` writes an `/SMask`.** docs/08 row 9 forbids alpha and was written
+  about `ExtGState`; a PNG underlay with an alpha channel would have emitted an alpha path into the
+  document **without anybody calling `setGraphicState`**. Read out of `pdf-3.13.0/lib/src/pdf/obj/image.dart`,
+  not recalled. DR-037 §11.36.3 puts the flatten in the export backend where it can catch this.
+- **`cable_footage.dart:302`'s `_isQuantity` was already waiting for this day.** Its header says the
+  switch was left exhaustive with no default arm so that *"the day it is added this file stops
+  compiling and somebody decides, rather than a bound silently joining a purchase"*. It is the one
+  place in this tree where a future decision was booby-trapped into the build, and it worked.
+
+**Two dependencies are already paid**, which is why this is not worse than `L`: M3-I's `unknown`
+passthrough (#568, `Done`) and `archive`/`image`, both **already in the resolved tree transitively
+via `pdf`** and both MIT, so the licence census DR-036 ran covers them and no new copyleft question
+opens.
+
+**Decomposed 2026-08-10 into 10 issues (#597–#606) and 43 tasks (#607–#649), `PLAN-A`…`PLAN-J`**,
+closing #589.
+Read it against the tree before starting rather than trusting it, per §1's caveat on every
+decomposition: `PLAN-E`'s canvas row rests on the claim that the viewport, selection, hit-test and
+drag-preview machinery are reusable, and **that claim has not been tested by anything except a
+read**.
 
 ---
 
