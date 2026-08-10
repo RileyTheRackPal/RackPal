@@ -37,6 +37,8 @@
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/label_key.dart';
 import 'package:rackmate_core/src/commands/rack_commands.dart' show nextOrder;
+import 'package:rackmate_core/src/commands/set_entity_property_command.dart'
+    show PathwayField, SetEntityPropertyCommand;
 import 'package:rackmate_core/src/model/entity_meta.dart';
 import 'package:rackmate_core/src/model/pathway.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
@@ -218,4 +220,124 @@ final class RemovePathwayCommand extends Command {
       doc.links[linkId]?.pathwayId = id;
     }
   }
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// THE DESIGNATOR NEEDS A BUILDER THAT CAN REFUSE (M3-E/2, #157)
+// ═════════════════════════════════════════════════════════════════════
+// `PathwayField.designator` exists in the field table so a reader can
+// find it, and it is the one row in that table that MUST NOT be driven
+// through `buildSetEntityProperty`. That builder writes the value and
+// returns; it has no way to decline. DR-026 §11.25.1 makes the
+// designator UNIQUE WHERE SET, PROJECT-WIDE, on CR-113's `rackLabel`
+// precedent, and a uniqueness rule enforced by a builder that cannot say
+// no is a comment rather than a rule.
+//
+// This is the same shape M3-A/8 (#581) found for `fieldLabel` and
+// `rackLabel`: two rows of a table whose other rows are safe to drive
+// directly. A table sitting among tables that ARE safe, with one row
+// that is not, is a trap, so the guard sits beside the entity it guards.
+//
+// **NULL IS NOT A COLLISION.** Two unlabelled trunks are two trunks
+// nobody has labelled, which is the ordinary state of a project before
+// anybody has walked it (G4, CR-114). Only a SET designator competes.
+
+/// Every designator in use, for the uniqueness scan.
+///
+/// [exceptPathwayId] lets an edit ignore its own current value, so
+/// retyping `T1` onto the pathway that already holds it is `Unchanged`
+/// rather than a collision with itself.
+///
+/// [alsoUsed] is the `alsoUsedLabels` family's third member and exists
+/// for the same reason: a bulk edit built against one unmutated document
+/// would otherwise let two rows agree on a designator and never notice.
+Set<String> usedPathwayDesignators(
+  RackDocument doc, {
+  Uuid? exceptPathwayId,
+  Set<String> alsoUsed = const {},
+}) => {
+  for (final p in doc.pathways.values)
+    if (p.id != exceptPathwayId)
+      if (p.designator case final d?) d,
+  ...alsoUsed,
+};
+
+/// The outcome of [buildSetPathwayDesignator].
+///
+/// THREE ARMS, on `SetStructureOriginResult`'s reasoning: a caller
+/// reports "it did something", "there was nothing to do" and "the edit
+/// was not allowed" three different ways, and docs/04 §3.4's *"never
+/// silently do nothing"* is about telling the last two apart.
+sealed class SetPathwayDesignatorResult {
+  const SetPathwayDesignatorResult();
+}
+
+final class SetPathwayDesignatorReady extends SetPathwayDesignatorResult {
+  const SetPathwayDesignatorReady(this.command);
+  final SetEntityPropertyCommand<Pathway, String?> command;
+}
+
+/// The pathway already carries the requested designator. Distinct from a
+/// refusal: nothing was wrong.
+final class SetPathwayDesignatorUnchanged extends SetPathwayDesignatorResult {
+  const SetPathwayDesignatorUnchanged();
+}
+
+final class SetPathwayDesignatorRefused extends SetPathwayDesignatorResult {
+  const SetPathwayDesignatorRefused(this.reason);
+  final String reason;
+}
+
+/// Sets one pathway's designator, refusing with a sentence rather than
+/// writing a value that puts two `T1`s on one Pull Sheet.
+///
+/// A BLANK BOX BECOMES NULL, never `''`. Clearing it means "this trunk
+/// carries no label I know of", and an empty string would be a third
+/// state every reader has to guess about: G4's rule is that unknown is
+/// ABSENT, not empty. It is also what makes clearing a designator always
+/// legal, since null never collides.
+SetPathwayDesignatorResult buildSetPathwayDesignator({
+  required RackDocument doc,
+  required Uuid pathwayId,
+  required String? to,
+  required DateTime now,
+  required String actor,
+  Set<String> alsoUsedDesignators = const {},
+}) {
+  final pathway = doc.pathways[pathwayId];
+  if (pathway == null) {
+    return const SetPathwayDesignatorRefused(
+      'That pathway is not in this project.',
+    );
+  }
+
+  final trimmed = to?.trim();
+  final value = (trimmed?.isEmpty ?? true) ? null : trimmed;
+
+  if (value != null &&
+      usedPathwayDesignators(
+        doc,
+        exceptPathwayId: pathwayId,
+        alsoUsed: alsoUsedDesignators,
+      ).contains(value)) {
+    return SetPathwayDesignatorRefused(
+      '$value is already used by another pathway. Pathway designators are '
+      'unique where set (DR-026), because two trunks with one designator '
+      'is the defect the Pull Sheet column exists to prevent.',
+    );
+  }
+
+  final from = PathwayField.designator.get(pathway);
+  if (from == value) return const SetPathwayDesignatorUnchanged();
+
+  return SetPathwayDesignatorReady(
+    SetEntityPropertyCommand<Pathway, String?>(
+      id: pathwayId,
+      field: PathwayField.designator,
+      from: from,
+      to: value,
+      now: now,
+      actor: actor,
+    ),
+  );
 }

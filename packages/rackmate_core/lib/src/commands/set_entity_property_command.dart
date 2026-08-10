@@ -875,8 +875,34 @@ abstract final class LocationField {
 /// currently maintained in exactly one place. A pathway's endpoints get a
 /// picker when something needs to set them, and it will refuse.
 abstract final class PathwayField {
-  /// `PW-LR-1`, or "attic run to the garage" (DR-026 §11.25.1 keeps the
-  /// NAME and the designator apart, because they are two facts).
+  /// `T1`, `PW-LR-1`: the label on the trunk, where somebody has written
+  /// one. Null is unknown (G4, CR-114), and **null is not a collision**.
+  ///
+  /// **THE ONE ROW IN THIS TABLE THAT MUST NOT BE DRIVEN THROUGH
+  /// `buildSetEntityProperty`.** DR-026 §11.25.1 makes it unique where
+  /// set, project-wide, on CR-113's `rackLabel` precedent, and that
+  /// builder writes the value and returns with no way to decline. Drive
+  /// it through `buildSetPathwayDesignator`, which refuses and says why.
+  /// A table whose other rows are safe to drive directly, with one row
+  /// that is not, is a trap; this comment and the guard's own header are
+  /// the two halves of the sign on it. `StructureOriginField.fieldLabel`
+  /// and `.rackLabel` carry the identical warning for the identical
+  /// reason (M3-A/8, #581).
+  ///
+  /// `meta` alone, matching [name]: a designator prints in the Pull
+  /// Sheet's `PATHWAY` column and in the Pathways tab, and no cable's
+  /// routing, class or colour changes when a trunk is labelled.
+  static final designator = EntityField<Pathway, String?>(
+    access: EntityAccess.pathway,
+    key: 'designator',
+    get: (p) => p.designator,
+    set: (p, v) => p.designator = v,
+    touches: EpochMask.meta,
+  );
+
+  /// "attic run to the garage": the HUMAN NAME, not the designator
+  /// beside it (DR-026 §11.25.1 keeps the two apart, because they are
+  /// two facts).
   ///
   /// `meta` alone: a pathway's name prints on the Pull Sheet's `PATH`
   /// column, and nothing about the cable graph changes when it is
@@ -951,6 +977,7 @@ abstract final class PathwayField {
 
   /// See [OutletField.all].
   static final List<EntityField<Pathway, Object?>> all = [
+    designator,
     name,
     kind,
     containsLineVoltage,
