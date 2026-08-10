@@ -557,4 +557,99 @@ void main() {
       );
     });
   });
+
+  group('conduit is not a cable (CR-109, DR-032)', () {
+    test('a conduit-only line makes a Pathway and NO outlet, no drop, no '
+        'label', () {
+      // CR-109: "never a `Link` and never a `Port`". An outlet minted
+      // here would be a real entity on the Structure body with no drop
+      // on it, which the drop count and the outlet rollup would then
+      // both have to explain.
+      final p = _project();
+      final plan = _ready(_plan(p.doc, 'Living Room: 1x ENT'));
+
+      expect(plan.dropCount, 0);
+      expect(plan.fieldLabels, isEmpty);
+      expect(plan.outletCreated, isFalse);
+      expect(plan.pathwayNames, ['Living Room ENT']);
+
+      _apply(p.doc, plan);
+      expect(p.doc.pathways.values.single.name, 'Living Room ENT');
+      expect(p.doc.links, isEmpty);
+      expect(p.doc.outlets, isEmpty);
+    });
+
+    test('the name is a DESCRIPTION and the designator stays null', () {
+      // DR-032 §11.31.2. `PW-LR-1` is the allocated series DR-026
+      // §11.25.1 refused for the designator, and a name minted at
+      // creation would reintroduce it through the one field that ruling
+      // left alone.
+      final p = _project();
+      _apply(p.doc, _ready(_plan(p.doc, 'Living Room: 1x ENT')));
+
+      final pathway = p.doc.pathways.values.single;
+      expect(pathway.name, 'Living Room ENT');
+      expect(pathway.name, isNot(matches(RegExp('^PW-'))));
+      expect(pathway.kind, PathwayKind.conduit);
+    });
+
+    test('a mixed line makes both, and the drop count counts only drops', () {
+      // docs/07 §4.2 excludes pathways from the Σ drop count in so many
+      // words.
+      final p = _project();
+      final plan = _ready(_plan(p.doc, 'Living Room: 4x Cat6, 1x ENT'));
+
+      expect(plan.dropCount, 4);
+      expect(plan.fieldLabels, hasLength(4));
+      expect(plan.pathwayNames, ['Living Room ENT']);
+      expect(plan.outletCreated, isTrue);
+
+      _apply(p.doc, plan);
+      expect(p.doc.links, hasLength(4));
+      expect(p.doc.pathways, hasLength(1));
+      expect(p.doc.outlets, hasLength(1));
+    });
+
+    test('a count above one makes that many, each distinguishable', () {
+      // Two smurf tubes are two entities: a `Pathway` has no quantity
+      // field. Identical names would defeat the `PATH` column, which is
+      // the same argument that rejected naming it after the medium
+      // alone.
+      final p = _project();
+      final plan = _ready(_plan(p.doc, 'Living Room: 2x ENT'));
+
+      expect(plan.pathwayNames, ['Living Room ENT 1', 'Living Room ENT 2']);
+
+      _apply(p.doc, plan);
+      expect(p.doc.pathways, hasLength(2));
+      expect(
+        p.doc.pathways.values.map((x) => x.order.v).toSet(),
+        hasLength(2),
+        reason: 'a shared order makes list position depend on map iteration',
+      );
+    });
+
+    test('every alias for the same conduit lands on a Pathway', () {
+      // `conduit`, `smurf` and `ent` all resolve to `media.conduit_ent`,
+      // and the flag is on the MEDIUM, so which word was typed cannot
+      // change what gets built.
+      for (final token in const ['conduit', 'smurf', 'ent']) {
+        final p = _project();
+        final plan = _ready(_plan(p.doc, 'Living Room: 1x $token'));
+        expect(plan.dropCount, 0, reason: '$token built a drop');
+        expect(plan.pathwayNames, hasLength(1));
+      }
+    });
+
+    test('and a cable line is completely unaffected', () {
+      // The regression this guards: partitioning by a flag that is false
+      // on 35 of 38 types must not perturb the ordinary path.
+      final p = _project();
+      final plan = _ready(_plan(p.doc, 'Living Room: 4x Cat6'));
+
+      expect(plan.dropCount, 4);
+      expect(plan.pathwayNames, isEmpty);
+      expect(plan.outletCreated, isTrue);
+    });
+  });
 }

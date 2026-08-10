@@ -41,6 +41,8 @@ import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/home_run_commands.dart'
     show usedFieldLabels;
+import 'package:rackmate_core/src/commands/pathway_commands.dart';
+import 'package:rackmate_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackmate_core/src/commands/structure_commands.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
 import 'package:rackmate_core/src/model/link.dart' show RoughInStatus;
@@ -64,6 +66,7 @@ final class DropLinePlanReady extends DropLinePlan {
     required this.dropCount,
     required this.fieldLabels,
     required this.outletCreated,
+    this.pathwayNames = const [],
     this.warnings = const [],
   });
 
@@ -71,12 +74,22 @@ final class DropLinePlanReady extends DropLinePlan {
   /// drops. Apply them inside ONE transaction.
   final List<Command> commands;
 
+  /// DROPS ONLY. A pathway is not a drop and docs/07 §4.2 excludes it
+  /// from the Σ drop count in so many words; [pathwayNames] is the other
+  /// half (CR-109, DR-032).
   final int dropCount;
 
   /// The labels these drops will carry, in order — what a preview line
   /// shows before the user commits, and what the timing harness reads.
   final List<String> fieldLabels;
 
+  /// The pathways this line creates, in order, named per DR-032
+  /// §11.31.1. Empty for every line that names no conduit, which is
+  /// almost all of them.
+  final List<String> pathwayNames;
+
+  /// False when the line was conduit only, because a conduit terminates
+  /// at no outlet (CR-109: "never a `Link` and never a `Port`").
   final bool outletCreated;
 
   /// Things the surface should SAY but which do not stop the line, e.g.
@@ -162,6 +175,59 @@ DropLinePlan planDropLine({
     media.add(def);
   }
 
+  // --- conduit is not a cable (CR-109, DR-032) ------------------------
+  // Partitioned BEFORE the outlet, because a line that names only
+  // conduit must not create one: a pathway terminates at no outlet and
+  // CR-109 says "never a `Link` and never a `Port`". An outlet minted
+  // here would be a real entity on the Structure body with no drop on
+  // it, which the Σ drop count and the outlet rollup would both then
+  // have to explain.
+  final cableIndices = <int>[];
+  final pathwayCommands = <Command>[];
+  final pathwayNames = <String>[];
+
+  // Grown as the line is planned, because `nextPathwayOrder` reads the
+  // DOCUMENT and cannot see commands that have not been applied yet. Two
+  // conduits on one line would otherwise be allocated the same order,
+  // which makes their list position depend on map iteration (§8.4).
+  final plannedOrders = [for (final p in doc.pathways.values) p.order];
+  for (var i = 0; i < line.items.length; i++) {
+    if (!media[i].isPathwayOnly) {
+      cableIndices.add(i);
+      continue;
+    }
+    final item = line.items[i];
+    for (var n = 0; n < item.count; n++) {
+      // DR-032 §11.31.1: the location and the medium AS TYPED, with a
+      // 1-based index only when the count exceeds one. A description,
+      // never `PW-LR-1`, which is the allocated series DR-026 §11.25.1
+      // refused for the designator and which this must not reintroduce
+      // through the name.
+      final name = item.count == 1
+          ? '${location.name} ${item.mediaToken}'
+          : '${location.name} ${item.mediaToken} ${n + 1}';
+      final order = nextOrder(plannedOrders);
+      plannedOrders.add(order);
+      pathwayNames.add(name);
+      pathwayCommands.add(
+        AddPathwayCommand(name: name, order: order, now: now, actor: actor),
+      );
+    }
+  }
+
+  // A CONDUIT-ONLY LINE IS COMPLETE HERE. No outlet, no drops, no field
+  // labels; `dropCount` is 0 and the pathways are the whole result.
+  if (cableIndices.isEmpty) {
+    return DropLinePlanReady(
+      commands: pathwayCommands,
+      dropCount: 0,
+      fieldLabels: const [],
+      outletCreated: false,
+      pathwayNames: pathwayNames,
+      warnings: _warningsFor(line, status),
+    );
+  }
+
   // --- the outlet: joined, or created --------------------------------
   final existing = _resolveOutlet(doc, line.outletDesignation);
   if (line.outletDesignation != null && existing == null) {
@@ -213,8 +279,10 @@ DropLinePlan planDropLine({
     doc: doc,
     location: location,
     outlet: plannedOutlet,
+    // THE CABLE ITEMS ONLY. Conduit was partitioned out above and has
+    // already become `AddPathwayCommand`s.
     items: [
-      for (var i = 0; i < line.items.length; i++)
+      for (final i in cableIndices)
         PlannedDropItem(
           media: media[i],
           count: line.items[i].count,
@@ -243,11 +311,14 @@ DropLinePlan planDropLine({
       return DropLinePlanRefused(reason, column);
     case DropBuildOk(commands: final drops, :final fieldLabels):
       return DropLinePlanReady(
-        // The outlet first when one is being created, then the drops.
-        commands: [...commands, ...drops],
+        // The outlet first when one is being created, then the drops,
+        // then the pathways. Order matters only for the outlet, which
+        // the drops name; the pathways reference nothing on this line.
+        commands: [...commands, ...drops, ...pathwayCommands],
         dropCount: fieldLabels.length,
         fieldLabels: fieldLabels,
         outletCreated: outletCreated,
+        pathwayNames: pathwayNames,
         warnings: _warningsFor(line, status),
       );
   }
