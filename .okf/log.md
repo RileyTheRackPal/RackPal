@@ -1,5 +1,54 @@
 # Update Log
 
+## 2026-08-10 (fifth entry)
+
+* **Note**: **M3-E/3 (#158) is BUILT, and the audit was worth more than the
+  fix.** The task said *"find the assumptions before adding the second instance,
+  or the second instance finds them"*, so the two-body test was written FIRST,
+  against the tree as it stood. **Five of seven worries were already correct**,
+  each for a stated reason: the Pull Sheet's sort has no Structure term because
+  an installer walks the building rather than the panel; the footage rollup is
+  project-wide because one purchase order covers the job; the Locations tree
+  never belonged to a body; layering is per device; and CR-113's own
+  project-wide label uniqueness was already scanned over `doc.links`. **A test
+  written after a fix asserts the fix. A test written before it asserts the
+  tree**, and that is the only ordering in which "these five were already fine"
+  is a finding rather than a hope.
+* **Note**: **the two real defects were a contract used wrongly and a refusal
+  with no way out.** `buildStructureTable`'s null means *"do not filter"*, which
+  is fine; the editor passed null **forever**, so two panels merged into one
+  table while the header said *"2 Structure devices"*. And three planners
+  refused above one body, correctly, but **nothing could name a body**, so a
+  two-panel project could never create anything again. Neither is a bug in the
+  thing that looks wrong.
+* **Note**: **each of those refusals cited #158 by number in its own production
+  message.** That is [a test that asserts an absence names its due
+  date](/practices/a-test-that-asserts-an-absence-names-its-due-date.md) applied
+  to a user-facing string, and it turned scoping this task into a grep. Second
+  time this week the practice has paid on something that is not a test.
+* **Note**: **`StructureBody` has no `order` field and this deliberately did not
+  add one.** Every other sequenced entity carries a `FracIndex`; a body never
+  needed one because nothing could show two at once. Adding a stored order would
+  rewrite the file for every existing document **in order to serve a dropdown**.
+  The order is derived from the paired device's designator, which is the string
+  the header already prints, and ends in the body id because nothing enforces
+  designator uniqueness across structure devices.
+* **Note**: **the body rides on the payload, not on the action.** The app builds
+  these callbacks once as the editor opens and the picker moves afterwards, so a
+  body captured at construction is the selection that existed *before anybody
+  made one*. The outlet dialog is the one exception and captures at open, which
+  is correct there because it is modal over the editor.
+* **Note**: **two widget-test finders broke on the same shape as yesterday's.**
+  `find.byType` stopped naming one thing the moment the table had a row in it,
+  because every editable cell on this surface is a real control. The picker
+  carries a `Key` now. **A positional or type-only finder is an assertion about
+  layout wearing an assertion about behaviour**, and this corpus has now made
+  that mistake twice in two days.
+* **Note**: one assertion in the audit was **nearly a false positive**: the
+  matrix planner returns `Unchanged` before it reaches its structure check, so
+  asking a room that already held two Cat6 drops for two would have passed
+  without testing what it claimed.
+
 ## 2026-08-10 (fourth entry)
 
 * **Note**: **M3-E/2 (#157) is BUILT**, and the task's own description was wrong

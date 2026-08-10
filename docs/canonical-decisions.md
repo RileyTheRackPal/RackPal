@@ -1731,6 +1731,30 @@ Structure goes to layer 0, every `right`-edge one to layer N (CR-072). Drop `fie
 uniqueness is **project-wide across all Structures**, per `design-ux-device-builder.md §6.9`,
 labels get printed on physical cable and must not collide across panels.
 
+**BUILT at M3-E/3 (#158), 2026-08-10, and the audit is the more useful half.** Five of the
+seven things a two-body document could have broken were already correct, each for a stated
+reason rather than by luck: the Pull Sheet's sort has no Structure term (an installer walks
+the building, not the panel, and the far end already names which panel a run lands in); the
+footage rollup is project-wide (one purchase order covers the job); the Locations tree is
+untouched (a room belongs to the building); layering is per device, so N bodies land on N
+anchors; and `fieldLabel` uniqueness was already scanned over `doc.links` rather than over
+one body's drops, which is this ruling's own clause holding without anybody checking.
+
+**Two were not.** `buildStructureTable` merges every body when handed no id, and the editor
+passed none **forever**, so two panels' drops arrived in one undifferentiated table while the
+header said *"2 Structure devices"*. And three planners refused above one body, correctly,
+since filing sixty drops on the wrong panel puts them on the wrong sheet, but **nothing could
+NAME a body**, so a two-panel project could never create an outlet or a drop again. Each of
+those refusals cited #158 by number in its own message, which is why the task cost minutes to
+scope.
+
+**What shipped:** a header dropdown, hidden on a one-panel project; `structureBodyId` threaded
+through `planDropLine` and `planOutletFromTemplate` (`planMatrixCell` already had it) and
+carried on the edit payloads rather than captured when an action is built; and
+`structureBodiesInOrder`, a **derived** total order by the paired device's designator ending in
+the body id. **`StructureBody` gains no `order` field**: adding one would rewrite the file for
+every existing document to serve a dropdown.
+
 ---
 
 ## 1.12 Residual internal contradictions

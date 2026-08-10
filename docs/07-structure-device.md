@@ -144,6 +144,15 @@ column exists to prevent. **Null is not a collision**, so clearing one is always
 legal and any number of trunks may carry none, which is the ordinary state before
 anybody has walked the building.
 
+**A project may hold more than one Structure device, and the header picks between them**
+(CR-113, M3-E/3). The picker sits beside the `Structure` title and **appears only when there is
+more than one**: a single-panel project is the ordinary case and gains no control it cannot
+use. The editor always shows **exactly one body's** drops, never a merged view, because two
+panels in one undifferentiated table is the failure CR-113's milestone exists to prevent. Every
+create gesture on this surface (quick add, `+ Add outlet`, a matrix cell) files onto the body
+the picker is showing. The bodies are listed by their device's designator, `STR-1` before
+`STR-2`, which is the string the header already prints.
+
 **The bulk entry bar is above the tabs, not inside one.** It is the same widget
 with the same state on both, which is M3-C/3's whole instruction: *"a matrix
 that is its own screen is a second place the repeat loop has to be
