@@ -150,10 +150,35 @@ const MethodChannel kFileDialogChannel = MethodChannel(
   'rackmate/file_dialog',
 );
 
+/// Which files a dialog should offer, as a KIND rather than a filter
+/// string (docs/13 D13, board M3-F/4).
+///
+/// **THE WIRE VALUE IS THE ENUM NAME**, and the native side switches on
+/// it. Dart never sends a `COMDLG_FILTERSPEC`, and that is the decision
+/// D13 asks to get right BEFORE D2: a Win32 filter pattern does not
+/// port, because `NSOpenPanel` wants `UTType`s or bare extensions and
+/// would have to parse the pattern back apart. A kind maps onto both, so
+/// the macOS runner implements the same two words rather than a Windows
+/// contract in disguise.
+///
+/// Adding a value means adding an arm in
+/// `windows/runner/file_dialog_channel.cpp`; an unrecognised kind falls
+/// back to [project] there rather than showing the user nothing.
+enum FileDialogType {
+  /// `.rmpj` and `.rackmate` in one entry (DR-015).
+  project,
+
+  /// `.csv`, for M3-F's import.
+  csv,
+}
+
 /// Native open and save dialogs, behind two methods.
 abstract interface class FilePicker {
   /// Asks the user which document to open. Null means cancelled.
-  Future<String?> pickOpen({String? initialDirectory});
+  Future<String?> pickOpen({
+    String? initialDirectory,
+    FileDialogType type = FileDialogType.project,
+  });
 
   /// Asks the user where to save. Null means cancelled.
   ///
@@ -161,7 +186,11 @@ abstract interface class FilePicker {
   /// back `Smith` when the user types `Smith` under the "All files"
   /// filter. Normalising that is `SavePaths.forTarget`'s job, in exactly
   /// one place.
-  Future<String?> pickSave({String? suggestedName, String? initialDirectory});
+  Future<String?> pickSave({
+    String? suggestedName,
+    String? initialDirectory,
+    FileDialogType type = FileDialogType.project,
+  });
 }
 
 /// The production picker: RackMate's own `IFileDialog`.
@@ -173,17 +202,23 @@ final class Win32FilePicker implements FilePicker {
   final MethodChannel channel;
 
   @override
-  Future<String?> pickOpen({String? initialDirectory}) => _invoke('open', {
+  Future<String?> pickOpen({
+    String? initialDirectory,
+    FileDialogType type = FileDialogType.project,
+  }) => _invoke('open', {
     'initialDirectory': initialDirectory,
     'confirmButtonText': 'Open',
+    'fileType': type.name,
   });
 
   @override
   Future<String?> pickSave({
     String? suggestedName,
     String? initialDirectory,
+    FileDialogType type = FileDialogType.project,
   }) => _invoke('save', {
     'initialDirectory': initialDirectory,
+    'fileType': type.name,
     // The dialog shows this in the file-name field. It carries the
     // extension so the common path — the user presses Save without
     // editing — already produces a well-named file, and

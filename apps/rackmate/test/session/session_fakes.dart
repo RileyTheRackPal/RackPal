@@ -201,10 +201,22 @@ final class FakeFilePicker implements FilePicker {
   /// stored absolute path it has not checked.
   final List<String?> initialDirectories = [];
 
+  /// Every `type` handed to a dialog, in order.
+  ///
+  /// RECORDED for D13's reason: the filter is the whole of M3-F/4, and a
+  /// caller that forgot to ask for `csv` opens a dialog showing no CSV
+  /// files at all, which looks like a broken import rather than a wrong
+  /// argument.
+  final List<FileDialogType> dialogTypes = [];
+
   @override
-  Future<String?> pickOpen({String? initialDirectory}) async {
+  Future<String?> pickOpen({
+    String? initialDirectory,
+    FileDialogType type = FileDialogType.project,
+  }) async {
     openCalls++;
     initialDirectories.add(initialDirectory);
+    dialogTypes.add(type);
     return _openPaths.isEmpty ? null : _openPaths.removeAt(0);
   }
 
@@ -212,10 +224,12 @@ final class FakeFilePicker implements FilePicker {
   Future<String?> pickSave({
     String? suggestedName,
     String? initialDirectory,
+    FileDialogType type = FileDialogType.project,
   }) async {
     saveCalls++;
     suggestedNames.add(suggestedName);
     initialDirectories.add(initialDirectory);
+    dialogTypes.add(type);
     return _savePaths.isEmpty ? null : _savePaths.removeAt(0);
   }
 }

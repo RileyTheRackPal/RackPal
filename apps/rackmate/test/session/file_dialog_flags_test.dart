@@ -71,18 +71,25 @@ String _source() {
         'run from the app root. If this file is gone, the app is back on '
         'a dialog that cannot set FOS_DONTADDTORECENT.',
   );
-  final withoutBlocks = file.readAsStringSync().replaceAll(
-    RegExp(r'/\*.*?\*/', dotAll: true),
-    '',
-  );
-  return withoutBlocks
-      .split('\n')
-      .map((line) {
-        final i = line.indexOf('//');
-        return i == -1 ? line : line.substring(0, i);
-      })
-      .join('\n');
+  return _stripComments(file.readAsStringSync());
 }
+
+/// Code only: block comments and `//` tails removed.
+///
+/// EXTRACTED SO THE DART ASSERTIONS GET IT TOO. The D13 cases below
+/// assert that the Dart side does NOT contain a Win32 filter spelling,
+/// and `file_picker.dart`'s own doc comment explains at length why it
+/// must not — which is this file's opening lesson arriving from the
+/// other direction: an absence assertion over raw text fails on the
+/// prose describing the absence.
+String _stripComments(String source) => source
+    .replaceAll(RegExp(r'/\*.*?\*/', dotAll: true), '')
+    .split('\n')
+    .map((line) {
+      final i = line.indexOf('//');
+      return i == -1 ? line : line.substring(0, i);
+    })
+    .join('\n');
 
 void main() {
   test('FOS_DONTADDTORECENT is set', () {
@@ -147,6 +154,76 @@ void main() {
           'OR-ing onto what the shell already decided is what keeps '
           'FOS_OVERWRITEPROMPT alive on the save dialog',
     );
+  });
+
+  // ── D13: the file-type filter (board M3-F/4, #162) ─────────────────
+  //
+  // Same discipline as the flag above, and for the same reason: the
+  // header prose names `csv` several times, so `contains('csv')` over
+  // the raw text would stay green after the arm was deleted. Every
+  // assertion here runs over `_source()`, which strips comments first.
+
+  test('the filter is chosen from an argument, not hard-coded', () {
+    final source = _source();
+    expect(
+      source,
+      contains('StringArg(args, "fileType")'),
+      reason:
+          'D13: the dialog took no file-type argument at all, so a CSV '
+          'import could only be reached through the All files entry',
+    );
+    expect(
+      source,
+      contains('*.csv'),
+      reason: 'the CSV filter has to exist, not only be described',
+    );
+    expect(
+      source,
+      contains('*.rmpj;*.rackmate'),
+      reason: 'DR-015 keeps both project spellings in ONE entry',
+    );
+  });
+
+  test('the DEFAULT extension follows the kind, on both dialogs', () {
+    // The half D13 names separately: `SetDefaultExtension` fired inside
+    // `ConfigureDialog`, which BOTH branches call, so a Save As of
+    // anything that was not a project still acquired `.rmpj`.
+    expect(
+      _source(),
+      contains('SetDefaultExtension(csv ? L"csv" : L"rmpj")'),
+      reason:
+          'one call, one condition; a second hard-coded call anywhere '
+          'would re-open the defect on whichever dialog reached it',
+    );
+  });
+
+  test('Dart sends a KIND and never a Win32 filter string', () {
+    // The decision D13 asks to get right BEFORE D2. A COMDLG_FILTERSPEC
+    // pattern crossing the channel would not port: NSOpenPanel wants
+    // UTTypes or bare extensions, so the macOS runner would have to
+    // parse the pattern back apart, which is D13's "widen it twice".
+    final picker = _stripComments(
+      File('lib/src/session/file_picker.dart').readAsStringSync(),
+    );
+    expect(picker, contains('enum FileDialogType'));
+    expect(picker, contains("'fileType': type.name"));
+    expect(
+      picker,
+      isNot(contains('COMDLG_FILTERSPEC')),
+      reason: 'the Dart side must not know the Win32 spelling',
+    );
+    expect(
+      picker,
+      isNot(contains('*.csv')),
+      reason: 'nor the pattern; the native side owns both',
+    );
+  });
+
+  test('an unknown kind falls back rather than showing nothing', () {
+    // `csv` is the only special case and everything else takes the
+    // project filter, so a Dart value the runner has not been taught
+    // yet opens a usable dialog instead of an empty one.
+    expect(_source(), contains('*file_type == L"csv"'));
   });
 
   test('the runner actually registers the channel', () {

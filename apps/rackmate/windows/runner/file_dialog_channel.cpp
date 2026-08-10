@@ -111,11 +111,36 @@ HRESULT ConfigureDialog(IFileDialog* dialog, const EncodableMap* args,
   // them, which is a discoverability cliff for the exact people least
   // likely to know the extension changed. One entry shows both in Open,
   // and `SetDefaultExtension` below still decides what a Save gets.
-  COMDLG_FILTERSPEC filter[] = {
+  //
+  // ─────────────────────────────────────────────────────────────────────
+  // D13: THE FILTER IS A NAMED KIND, NOT A FILTER STRING FROM DART
+  // ─────────────────────────────────────────────────────────────────────
+  // Board M3-F/4 (#162). This was hard-coded to the project filter and
+  // fired `SetDefaultExtension(L"rmpj")` on BOTH dialogs, so a CSV import
+  // could only be reached through "All files" and a Save As of anything
+  // else acquired a project extension.
+  //
+  // Dart sends a KIND (`project`, `csv`) and never a `COMDLG_FILTERSPEC`,
+  // and that is the decision D13 asks to get right the first time,
+  // because D2 is the macOS port and would otherwise reimplement a narrow
+  // contract and widen it twice. A Win32 filter string does not port:
+  // `NSOpenPanel` wants `UTType`s or bare extensions, so a raw pattern
+  // would have to be parsed back apart on the other platform. A kind maps
+  // onto both, and an unknown kind falls back to the project filter
+  // rather than showing the user nothing.
+  const std::optional<std::wstring> file_type = StringArg(args, "fileType");
+  const bool csv = file_type.has_value() && *file_type == L"csv";
+
+  COMDLG_FILTERSPEC project_filter[] = {
       {L"RackMate project", L"*.rmpj;*.rackmate"},
       {L"All files", L"*.*"},
   };
-  hr = dialog->SetFileTypes(ARRAYSIZE(filter), filter);
+  COMDLG_FILTERSPEC csv_filter[] = {
+      {L"Comma-separated values", L"*.csv"},
+      {L"All files", L"*.*"},
+  };
+  hr = csv ? dialog->SetFileTypes(ARRAYSIZE(csv_filter), csv_filter)
+           : dialog->SetFileTypes(ARRAYSIZE(project_filter), project_filter);
   if (FAILED(hr)) {
     return hr;
   }
@@ -129,7 +154,7 @@ HRESULT ConfigureDialog(IFileDialog* dialog, const EncodableMap* args,
   // bare name. It also leaves a `.rackmate` the user is saving over
   // exactly where it is — the default extension applies to a name that has
   // none, not to one this app still recognises.
-  hr = dialog->SetDefaultExtension(L"rmpj");
+  hr = dialog->SetDefaultExtension(csv ? L"csv" : L"rmpj");
   if (FAILED(hr)) {
     return hr;
   }
