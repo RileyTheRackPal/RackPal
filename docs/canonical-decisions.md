@@ -8640,6 +8640,144 @@ requests are its mechanism, and this ruling does not independently ratify that. 
 rights, or a code of conduct. And **not the licence on a user's own authored templates**, which are
 the user's work under §11.35.4 and were never the project's to license.
 
+### 11.36 DR-037 · The Plan view's exit criterion, and the four questions decomposition had to answer first
+
+**Settled by the user on 2026-08-10**, discharging board #589 (`PLAN-0`). DR-029 §11.28.10 left the
+epic's **contents and its exit criterion** to decomposition rather than to the ruling, and §11.28.8
+required DR-026's two provisional M3 positions to be re-read here. This is that task's output.
+
+**11.36.1 The exit criterion.** Stated in roadmap §4's form, binary and demonstrable:
+
+> An architect's floorplan PDF is imported **without leaving the app**, calibrated from one known
+> dimension, and the rack plus every drop of a real rough-in carries a pin. The project exports a
+> sheet set whose `T1.01 Device Location Plan` places a callout for every pinned drop, each printing
+> the designator its Pull Sheet row prints. **A person who has never seen the building is handed the
+> printed `T1.01` and the printed Pull Sheet, and locates every drop without asking a question.**
+> The set is printed on a real greyscale laser at ANSI B and every callout stays legible over the
+> screened underlay (AC-054's standard). `write(read(bytes)) == bytes` holds on the zip path across
+> a write, a reopen and a second write, and a project with **no** underlay writes bytes identical to
+> what the plain-JSON path writes today.
+
+**The stranger clause is the criterion and the rest is scaffolding.** DR-018's motivation is that
+the designer marks device locations as coloured dots in a notes application and *"work is inevitably
+done incorrectly against them"*. A dot in Notes is legible to the person who drew it; that is
+exactly why it fails. Every other clause here is checkable by a machine or by the author, and an
+author cannot test legibility to somebody else. It is the same standard M9-F sets (*"three sheet
+sets someone was willing to send"*) and the same shape as M1's tape measure: an act, performed, with
+a result that can come back negative.
+
+**11.36.2 Four questions decomposition could not defer, each with the evidence rather than the
+preference.**
+
+| Question | Ruled | Because |
+|---|---|---|
+| **Where the underlay is screened** | **Stored original; the screening pass runs in the PDF backend at export.** | See §11.36.3: docs/15 §7 and DR-029 §11.28.11 contradicted each other and only one of them survives contact with `PdfImage`. |
+| **Where `planLowerBound` ranks** | **Below `roomEstimate`, above `none`.** The ladder is `cut > outletNominal > roomEstimate > planLowerBound > none`. | See §11.36.4. Ranking it higher makes the footage rollup **worse the more of the job is planned**, which is measurable in `cable_footage.dart` today. |
+| **Multi-page PDFs** | **A page picker with rasterised thumbnails; one chosen page becomes one underlay.** | The electrical sheet is not page 1 of an architectural set. First-page-only reinstates the manual conversion step DR-029 spent 2–3 weeks buying out, on the ordinary path rather than the exceptional one. Importing all pages puts 39 unpinned rasters in the zip and spends AC-006's budget on them. |
+| **How hard the physical clause is** | **The stranger walkthrough, as a clause of the criterion and not a follow-up.** | §11.36.1. |
+
+**11.36.3 THE SCREENING CONTRADICTION, AND THE MECHANISM THAT DECIDES IT.** docs/15 §7 says the
+underlay *"renders at full value"* on screen and is screened on paper. DR-029 §11.28.11 says it must
+be *"pre-composited at import, the way palette tints already are at 18 % over white"*. **Those are
+not the same instruction.** A palette tint is composited at *definition* time, so the stored value
+**is** the screened one; applied to an underlay, that means the zip holds a washed-out image and
+docs/15 §7's first half is false.
+
+**The prohibition is real and is bigger than `ExtGState`.** docs/08 row 9 forbids alpha *"absolutely,
+with no exception"*, and `pdf-3.13.0`'s `PdfImage` was read rather than assumed: **`PdfImage(...,
+alpha: true)` writes an `/SMask` entry**, a second image object serving as a soft mask. A PNG
+underlay carrying an alpha channel therefore emits an alpha path into the PDF **without anybody
+calling `setGraphicState`**, which is the failure mode row 9 would not have caught, because row 9 is
+written about `ExtGState`.
+
+**The ruling separates the two obligations that DR-029 had fused.** *No alpha reaches the PDF* is
+absolute and is discharged in the export backend: the underlay is flattened to opaque RGB and the
+screening is composited there, so `/SMask` is never emitted and `alpha: false` is the only call
+shape. *The stored bytes* stay the architect's page, unmodified. **§11.28.11's requirement is met;
+its stated location is not, and the location was the part that was wrong.** The gain is not
+aesthetic: a screening percentage that lives in the export path can be changed by editing code,
+while one baked in at import can only be changed by re-importing every underlay in every project
+file a user owns.
+
+**11.36.4 `planLowerBound` RANKS BELOW `roomEstimate`, AND THE CODE ALREADY KNEW TO ASK.**
+`derived/cable_footage.dart:302`'s `_isQuantity` decides whether a length may be **summed into a
+purchase**, and its own header records that it was left as an **exhaustive switch with no default
+arm** precisely so *"the day it is added this file stops compiling and somebody decides, rather than
+a bound silently joining a purchase"*. This is that day, and the decision is the one that file was
+written to force.
+
+DR-020 §11.19.2(2) rules a bound out of the rollup as a quantity. `ScheduleLengthSource` is **one
+value per row**, so a rank is not optional. Rank the bound **above** `roomEstimate` and every drop on
+a calibrated plan leaves the footage total and lands in `unknownCount`: **the number an integrator
+orders cable from degrades in proportion to how much of the job has been planned**, which is a
+perverse result for a planning feature and would have been discovered by somebody ordering short.
+
+So the bound prints only when nothing better is known. **That does not weaken it, because its value
+was never the column.** `LEN-001` and `LEN-002` read the bound **regardless of which tier printed**,
+which preserves DR-020's asymmetry intact: a plan can prove a violation and can never prove
+compliance. The bound is a rule input that happens to be printable, not a length that happens to be
+checkable.
+
+**11.36.5 `Location.riseAllowance` DOES NOT EXIST, and two rulings spend it as though it does.**
+DR-020 §11.19.2(1) defines `planLowerBound` as *"the calibrated straight line from rack pin to device
+pin, **plus the location's `riseAllowance` if one is set**"*, and docs/15 §4.1 repeats it. A grep over
+every `.dart` file in the tree returns **zero occurrences**. `Location` carries
+`estimatedRunLengthFromRack` and no second `Len`.
+
+It is added here, by this ruling, as `Len? riseAllowance` on `Location`: **null is unknown, `0` is a
+measured zero** (G4, CR-114), written only when present, so no file on disk changes a byte and
+`kSchemaVersion` does not move (`tia570Grade`'s precedent, DR-024). **It is the survivor of a deleted
+set**: DR-020 killed `routingFactor` and `slackAllowance` as the product guessing at building
+geometry, and kept this one because a plan is flat and the drop from ceiling to device is the one
+dimension it structurally cannot see. Adding it keeps the result a bound.
+
+**This is the third time a field named across three documents turned out not to exist**, after
+`MediaTypeDef.maxLength` (§11.19.7, which was `maxRunLengthPassive` all along) and `unknown` on
+`Placement` (§11.18.1). The pattern is not carelessness about names; it is that **a design document
+and a ruling can agree with each other without either having read the model**, and agreement between
+two documents reads exactly like verification.
+
+**11.36.6 DR-026's two provisional positions, re-read as §11.28.8 required. BOTH ARE CONFIRMED, and
+neither for the reason that made them provisional.**
+
+**§11.25.1 `Pathway.designator` stays hand-entered.** DR-026 made it provisional because *"a
+floorplan speaks to"* the question. It does, and it speaks **for** manual entry rather than against
+it. The user's stated reason was *"once a trunk line is established in the home, it would be nice to
+know exactly where it is relative to the plans"*, and the plan is the **consumer** of a designator,
+not a source of one. DR-020 governs why: the route is discovered, not designed, so a plan cannot know
+that a trunk exists, let alone allocate it a number. The Plan view makes the field more useful and
+supplies nothing to it. **No allocator, no series, no format token**, unchanged.
+
+**§11.25.2 `Outlet.nominalRunLength`'s tier stands, and the open question attached to it is now
+answered.** DR-026 left open *"whether a floorplan supersedes any of the four tiers"*. It supersedes
+**none of them**. §11.36.4 places the plan's contribution at the bottom of the ladder, so the three
+shipped tiers keep their order and their meanings exactly. `ScheduleLengthSource`'s doc comment
+carries a forward pointer to this question and is corrected in place rather than left to be read as
+still open.
+
+**11.36.7 What the decomposition is, and the one number worth stating.** Ten issues (#597–#606) and
+forty-three tasks (#607–#649), `PLAN-A` through `PLAN-J`, under epic #588. The order is a dependency order and not a
+preference: the canvas op (`PLAN-A`) and the container (`PLAN-B`) are the two things every other
+issue consumes, and `PLAN-E`'s plan canvas is the row the feasibility study §6 names as *"the one
+most likely to be wrong in the optimistic direction"*. **No cost is re-estimated here.** DR-029's
+`L` at 9–13 weeks stands; a decomposition that quietly re-priced the epic it was decomposing would
+be a scope amendment wearing a task's clothes (§8.3).
+
+**11.36.8 What this does NOT rule, listed so it is not inferred.** Not the rasteriser: `pdfium`
+is DR-029's *likely* answer and `PLAN-D/1` picks it against `Windows.Data.Pdf` and costs it with
+docs/13's D9, which is a decision that needs the tree read, not a decision that needs a user.
+**Not the integrator's logo**, which is DR-030's and lands in M6 (§11.29.4); the Plan view builds
+three of its four dependencies and collects none of the credit. **Not the rasterisation resolution**,
+which `PLAN-D/3` settles against AC-006's file-size budget with a measurement. **Not mobile**: AC-056
+stands, v1 mobile is read-only, and shipping this puts a plan on a desk and not in a technician's
+hand on site (§11.28.7).
+
+**11.36.9 Scope.** **No scope change to roadmap §2, and this ruling is careful not to be one.** The
+Plan view is already v1 by DR-029; §11.36.5's `riseAllowance` is a field DR-020 already specified and
+this ruling only observes that it was never built. Roadmap §4 gains the epic's checklist and exit
+criterion, docs/12 gains §5.9, docs/13 gains **D15** for the rasteriser, and docs/15 is corrected at
+§4.1, §7 and §10.
+
 ---
 
 ## 12. Superseded rulings
@@ -9012,6 +9150,30 @@ in. See §11.7.
 | **§10.12(f), branding** | **Unaffected and explicitly not licensed.** *RackMate* and Riley the RackMate are trademarks; neither GPLv3 nor CC0 grants them. A fork takes the code and not the name. §11.35.8. |
 | **RJ-014** | **Unaffected.** Going public does not add an in-app application updater. A signed installer plus a version check is still the whole story, and DR-034's catalog check is still data rather than code. |
 | **§10.8** | **Unaffected.** Its network-use enumeration was already amended by DR-033 and DR-034 (§12.14, §12.15); a licence adds no network use of its own. |
+
+---
+
+### 12.17 Superseded by DR-037 (the Plan view's exit criterion and the four decomposition answers)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-029 §11.28.11**, the screening clause | *"The underlay must be **pre-composited at import**, the way palette tints already are at 18 % over white, and #589 carries it."* | **Superseded on WHERE, reaffirmed on WHAT.** No alpha reaches the PDF; that half is absolute and is strengthened, because reading `PdfImage` found a second alpha path (`/SMask`) that the `ExtGState` framing would not have caught. The compositing happens **in the export backend**, not at import, so the stored bytes stay the architect's page. §11.36.3. |
+| **docs/15 §7**, *"On screen it renders at full value; on paper it renders through a lightening pass"* | Both halves, as written. | **Both halves now hold**, and they did not under §11.28.11's literal reading. The sentence stops being a contradiction rather than being corrected. §11.36.3. |
+| **DR-026 §11.25.2**, the open half | *"Whether a floorplan supersedes any of the four tiers is open, is not ruled here, and is owed when DR-018's condition resolves."* | **Answered: it supersedes none of them.** `planLowerBound` is a fifth value ranked **below** `roomEstimate`, so the three shipped tiers keep their order and their meanings. §11.36.4, §11.36.6. |
+| **DR-026 §11.25.1 / §11.25.2**, the provisional status | Both positions *"chosen for reversibility"*, with the Plan view named as the revisit trigger. | **The trigger has fired and both are CONFIRMED.** They stop being provisional. §11.36.6. |
+| **DR-020 §11.19.2(1)** and **docs/15 §4.1**, *"plus the location's `riseAllowance` if one is set"* | Both name the field as though it exists. | **It did not exist and is added by §11.36.5.** `Len? riseAllowance` on `Location`, null unknown, written only when present, no byte on disk changes and `kSchemaVersion` does not move. |
+| **docs/15 §10**, the Out list | *"multi-page or tiled plans"* are out. | **Tiled stays out; multi-page is narrowed rather than reversed.** A multi-page PDF may be **imported** through a page picker, and exactly one chosen page becomes one underlay. No underlay is ever more than one page and nothing is tiled. §11.36.2. |
+
+**Explicitly NOT superseded:**
+
+| Ruling | Status under DR-037 |
+|---|---|
+| **DR-020 §11.19.2(2)**, the bound is not a quantity | **Unaffected and now enforced by a rank rather than by a convention.** `_isQuantity` excludes `planLowerBound`; the rollup counts those rows rather than absorbing them. §11.36.4. |
+| **DR-020 §11.19.1**, the route is discovered | **Unaffected and load-bearing twice.** It is why the plan yields a bound and not a length, and it is why `Pathway.designator` stays hand-entered. §11.36.6. |
+| **docs/08 row 9**, no alpha | **Unaffected and widened in coverage.** The rule survives the first feature that could have broken it, and now names `/SMask` as well as `ExtGState`. §11.36.3. |
+| **AC-040**, the 27-rule catalogue *(28 under DR-020)* | **Unaffected.** The four `PLN-*` advisories ship in their own band and are not added to the total, exactly as docs/15 §9 states. |
+| **DR-029 §11.28.9**, the cost | **Unaffected. `L`, 9–13 weeks, unchanged.** A decomposition does not re-price the epic it decomposes; that would be a §8.3 amendment wearing a task's clothes. §11.36.7. |
+| **AC-056**, mobile read-only | **Unaffected.** This ships to a desk, not to a technician on site, and §11.28.7 already said so. |
 
 ---
 
