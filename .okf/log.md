@@ -2,6 +2,31 @@
 
 ## 2026-08-10
 
+* **Creation**: [DR-036, public GPLv3, CC0 catalog, nothing
+  priced](/decisions/dr-036-public-gplv3-cc0-catalog.md). It reverses DR-006's
+  posture and discharges the precondition DR-033 had deliberately left standing.
+  **The licence names are the least interesting part of it.** Two clauses came
+  out of the codebase rather than out of licence preference, and both trace to
+  copy-on-place (AC-041) embedding a full `TemplateSnapshot` into every `.rmpj`:
+  a copyleft catalog would have put catalog-derived content in **every project
+  file an integrator sends a client**, and the seeded catalog being Dart source
+  meant CC0 on the community repo would have fixed only half of it. Hence CC0
+  **and** an explicit output exception. A licence chosen without reading the
+  persistence layer would have shipped both defects and neither would have
+  surfaced until a user asked whether they could email a drawing set.
+* **Note**: **the dependency census was measured, not recalled.** Every LICENSE
+  was read out of the pub cache. The memory that `pdf` is Apache-2.0 and closes
+  GPLv2 turned out to be right, which is not a reason to have trusted it: the
+  same session had already been wrong twice about who owned a gate failure.
+* **Note**: **DR-006's fallback fired exactly as it was written to.** It named
+  Trusted Signing *"if external distribution is ever required, adoptable at M8,
+  with no earlier milestone needing to anticipate it"*, and no milestone before
+  M8 moves. A ruling that names its own reversal condition costs nothing when
+  the condition arrives, which is the argument for writing them that way.
+* **Note**: **§10.3 reopened exactly as its own row warned it would.** §13 had
+  carried the standing note *"if DR-006 is reversed, §10.3 reopens exactly as
+  written, watermark hazard included"* since 2026-08-03. It is the first time
+  this corpus's own contingency note has been cashed.
 * **Creation**: [DR-031, `PathwayKind` gains `attic` and
   `crawlspace`](/decisions/dr-031-pathwaykind-gains-two-values.md), which
   discharges DR-020 §11.19.4 on the day that ruling dated it to. **The objection

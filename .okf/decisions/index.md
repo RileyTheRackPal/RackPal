@@ -28,6 +28,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` ย
 * [DR-035, a created Pathway records its medium and its room](dr-035-a-created-pathway-records-its-medium-and-room.md) - what DR-032 was silent about, forced by a matrix cell that could not count its own work; sets the from/to orientation for the first time, on the schedule's existing FROM-ROOM convention.
 * [DR-033, a device is submitted as a pull request the app opens](dr-033-community-catalog-submission.md) - discharges ยง10.9's unruled recommendation; two clauses were corrected against verification rather than taken as asked, because Google OAuth cannot open a pull request and no desktop binary can hold a secret.
 * [DR-034, the community library is fetched, never cloned](dr-034-community-library-fetch.md) - DR-033's read path; clone does not survive a platform with no git, the format was already ruled and unbuilt, and the bundled snapshot is a floor while the fetch is a ceiling.
+* [DR-036, public GPLv3 project, CC0 catalog, nothing priced](dr-036-public-gplv3-cc0-catalog.md) - reverses DR-006 and discharges DR-033's precondition; the licence names matter less than the two clauses copy-on-place forced, a catalog that is deliberately not copyleft and an output exception putting every document the app emits outside the GPL.
 
 # Not yet written up
 
