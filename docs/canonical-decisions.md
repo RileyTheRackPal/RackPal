@@ -4812,6 +4812,7 @@ existing user data. That is the criterion for the v1.1 bucket, not effort.
 | Manual reroute, stored as `routeConstraintsBySheet` (ordered grid points the router must pass through), never as a polyline | CR-012 | The router is deterministic; the itch is aesthetic |
 | Registry editor beyond media types and connector aliases | AC-050 (A2.1) | The two extensibility paths users actually hit already ship |
 | **Submitting a device to the community catalog**: the Device Builder's review sheet, GitHub sign-in by authorization code with PKCE, the fork-branch-commit-pull-request sequence, and the port-photograph citation | **DR-033**, a scope addition under §8.3. **Conditional on §11.32.7**: the release posture and licence are not ruled | The `.rmdx` still exports and imports, so a device is still shareable as a file (DR-015). What waits is the one-click path and the shared library it fills. **`TemplateBody.submittedBy` does not wait** and ships in v1, because the template body has no `unknown` passthrough and a v1 build would drop the credit on save (§11.32.8) |
+| **Installing and updating the community library**: the bundled snapshot, the first-run opt-in card, the `.rmda` release-asset fetch, and the once-daily `releases/latest` check behind a non-modal notice | **DR-034**, a scope addition under §8.3, sharing DR-033's precondition | Nothing, until DR-033's row ships: an empty library has nothing to distribute. The seeded catalog is unaffected and is what v1 draws from. **The separation of the two libraries is not deferrable** and is a determinism gate, because a golden that resolves a template out of a fetched library depends on a release tag (§11.33.5) |
 
 ### 7.4 v1.2: the second release
 
@@ -8355,6 +8356,102 @@ one somebody may add later. And it does not give the seeded catalog a submission
 
 ---
 
+### 11.33 DR-034 · The community library arrives as an `.rmda` release asset, and is never cloned
+
+**Settled by the user on 2026-08-09**, the same day and in the same conversation as DR-033, which it
+completes. DR-033 is the **write** path, one device leaving one machine. This is the **read** path,
+the whole library arriving on every machine. They are one feature with two directions and are ruled
+separately because they fail differently.
+
+**11.33.1 The ruling, in seven clauses.**
+
+1. **One `.rmda` per release tag**, attached as a release asset and fetched over HTTPS. **Nothing is
+   cloned and no git is involved** (§11.33.2).
+2. **The installer bundles a snapshot `.rmda`**, so a first launch with no connectivity still has a
+   community library. The bundled tag is recorded.
+3. **First run offers and never blocks.** A dismissible card in the first-run experience, with the
+   device count and the download size. Declining costs nothing and being offline costs nothing.
+4. **The update check is `releases/latest`, unauthenticated, at most once per 24 hours on launch.**
+   If the tag differs from the installed one, a **non-modal** notice offers the update.
+5. **Updating is a user action.** The installed library records its tag and is never replaced behind
+   the user's back.
+6. **The community library is a separate library**, filterable in the palette by DR-015 §11.15.5's
+   mechanism. It is **never merged into the seed** (§11.33.5).
+7. **v1.1, under DR-033 §11.32.7's precondition**, which governs both directions.
+
+**11.33.2 Why it is not a clone, which is the word the request arrived in.** Three reasons, in
+ascending order of cost.
+
+**Flutter desktop has no git.** Cloning means vendoring libgit2 or shelling out to a `git` binary
+that is not installed on an integrator's site laptop. That is a native dependency on both platforms
+and an entry in `docs/13` for a feature whose entire job is to fetch some JSON. **A clone also drags
+the history**, which is every revision of every device anybody ever proposed, to deliver the current
+one.
+
+**The third reason is the one that decides it: the format is already ruled and not yet built.**
+DR-015 §11.15.3 ruled `.rmda` as the device archive, and M4 already owes *"the codec, the library
+directory service, import/export, and the palette filter that makes more than one library usable"*.
+A community release **is** a library pack. Fetching one over HTTPS instead of receiving one by email
+changes the transport and nothing else, so the download lands in a slot the product already has a
+concept of, and the import path is the path a user's own `.rmda` already takes. **A tarball of loose
+`.rmdx` files would be a second on-disk shape**, and the library directory service would carry both
+forever because the first users to install one would never stop having it.
+
+**11.33.3 The floor and the ceiling, which is why both answers were taken.** The user took the
+bundled library **and** the opt-in card rather than choosing. That is not indecision and it is the
+better answer: **the bundle is a floor and the fetch is a ceiling.** A bundled snapshot alone ties
+the library's freshness to the application's release cadence, which is the exact coupling release
+tags exist to break. A fetch alone means a first launch in a half-built house with no wifi shows an
+empty library, and **the seeded catalog is generic archetypes** (DR-002), so the user who most needs
+a real SKU is the one standing in the mechanical room. Together, the offline case is a stale library
+rather than no library, and connectivity is an upgrade rather than a prerequisite.
+
+**A consequence to expect rather than be surprised by:** the application ships less often than the
+catalog does, so the bundled tag will nearly always be behind on first launch. **The first-run card
+and the update notice are therefore the same mechanism**, and the card states which it is offering.
+
+**11.33.4 This is not RJ-014's auto-updater, and the distinction is not a technicality.** RJ-014
+refused an in-app update mechanism for v1 on the ground that *"auto-update is a security surface
+before there are users"*, and allowed a signed installer plus a version-check ping. **Nothing here
+updates the application.** A `.rmda` is inert data: docs/06 §7.3 already states templates
+*"are inert data with no executable content, and the import dialog says so"*. No code is fetched, nothing is
+executed, and the signed installer remains the only thing that changes the binary. Clause 4's check
+is the version-check ping RJ-014 explicitly permitted, pointed at a catalog instead of a release.
+
+**11.33.5 The community library may not touch determinism, and this is a gate.** Determinism is a
+project invariant: same document, same display list, same exported bytes. The four starter projects
+do triple duty as goldens, perf fixtures and screenshot source (AC-052). **If a golden could resolve
+a template out of a library that arrives over the network, the goldens would depend on a release tag
+and stop being goldens.** So the seed and the community library are separate resolution scopes, the
+starters and every golden read the seed only, and a test asserts it. This is the one clause here
+that constrains implementation rather than product behaviour, and it is the one most likely to be
+violated by accident, because merging the two libraries into one palette list is the obvious
+shortcut and it is invisible until a golden moves under somebody six months later.
+
+**11.33.6 A download is an import, and gets the import path's defences.** AC-058/D8's JSON depth and
+size limits apply to a fetched bundle exactly as to a file the user chose, because **the network is
+not a more trusted input than the disk**, and the release asset is written by whoever holds merge
+rights on a repository full of strangers' contributions. The bundle's `contentHash` is verified
+before it is installed (AC-042 keeps `contentHash` for exactly this class of use), the fetch is
+HTTPS, and a failure leaves the previously installed library in place rather than a half-written
+directory.
+
+**11.33.7 What this obliges, stated so it is not discovered later.** The catalog repository must
+**cut releases**: a tag, a workflow that bundles every `.rmdx` into one `.rmda`, and the asset
+attached. A repository that merges pull requests and never tags produces an application whose update
+check truthfully reports that there is nothing new, forever. That is a standing maintenance cost of
+this ruling and it belongs to whoever holds the second repository, not to the application.
+
+**11.33.8 Scope, and what it does not rule.** **A scope change under roadmap §8.3**, v1.1, sharing
+DR-033's precondition. It does not set the release cadence, the bundle size budget, or the retention
+policy for superseded library versions. It does not rule whether a user may pin to an older tag,
+which is a real request that costs nothing to add later and should not be guessed at now. It does not
+give the update check a telemetry channel of any kind: §10.12(e)'s opt-in local-first position is
+untouched, and an unauthenticated `releases/latest` call sends nothing but the fact that somebody
+launched the application.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-032 change or void, plus the small set of internal
@@ -8687,6 +8784,25 @@ in. See §11.7.
 
 ---
 
+### 12.15 Superseded by DR-034 (installing and updating the community library)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **§12.14's own row on §10.8** | The third contemplated network use is the Device Builder's submission. | **Corrected while the ink is wet.** The third use has **two directions**, and §12.14 named only the one DR-033 ruled. Submission (DR-033) and library fetch plus update check (DR-034) are one network use with a write half and a read half. **Both stay out of v1**, so §10.8's substance is still untouched and the count in §12.14's row was the only thing wrong with it. §11.33.1. |
+
+**Explicitly NOT superseded:**
+
+| Ruling | Status under DR-034 |
+|---|---|
+| **RJ-014** | **Unaffected, and narrower than it looks.** It refused an in-app mechanism that updates the **application**, and permitted a signed installer plus a version-check ping. DR-034 updates **data**, fetches no code, executes nothing, and its `releases/latest` call is that permitted ping aimed at a catalog. The binary still changes only by installer. §11.33.4. |
+| **DR-015** | **Unaffected and reused rather than extended.** `.rmda` is the archive format already ruled; DR-034 adds a transport for it and does not touch the format, the codec, or §11.15.5's palette filter, which is the mechanism that makes a second library usable in the first place. |
+| **AC-052** | **Unaffected.** The four starters and every golden resolve out of the seed, never out of a fetched library, which is what keeps them goldens. §11.33.5. |
+| **AC-058/D8, AC-042** | **Unaffected and now load-bearing on a second path.** JSON depth and size limits apply to a downloaded bundle exactly as to a chosen file, and `contentHash` is verified before install. The network is not a more trusted input than the disk. §11.33.6. |
+| **§10.12(e), telemetry** | **Unaffected.** Opt-in and local-first stands. An unauthenticated release check reports nothing but that somebody launched the application, and no channel is added. §11.33.8. |
+| **DR-002** | **Unaffected, and the reason clause 2 exists.** The seed is generic archetypes, so an offline first launch without a bundled library is precisely the user who needed a real SKU and cannot reach one. §11.33.3. |
+
+---
+
 ## 13. Resolved §10 questions
 
 **§10 has no open entries left.** Of its thirteen: **ten are ANSWERED**, one (§10.3) is **MOOT**
@@ -8707,7 +8823,7 @@ to now.
 | **10.5** | Metric or imperial default | **ANSWERED 2026-08-03** | **Imperial default, one obvious toggle.** Confirms the recommendation. The default is already in the code; the toggle is owed (#562). §10.5. |
 | **10.6** | Is the schematic a client deliverable or an internal tool | **ANSWERED, DR-005** | **(a) Client deliverable, invest in drafting polish.** Reverses the record's recommendation. Orthogonal to 10.1. §11.5. |
 | **10.7** | Multi-sheet timing | **ANSWERED: DR-004** | **(c) Never.** One `Sheet` plus domain filtering, permanently. The entity remains. §11.4. |
-| **10.8** | Cloud-ready investment | **ANSWERED 2026-08-03** | **(a). Spend nothing further; RackMate is a local application.** Confirms the recommendation. The six cloud-ready properties are **retained in full** and option (c) is not taken. `docs/02` §8 is **ratified** as the conflict-unit and merge-story page the recommendation asked for, rather than commissioned. An update check and API-key publishing to project-management services are the only contemplated network uses and are **not v1 scope** (§8.3 applies to either). §10.8. **Amended by DR-033**: there is a third contemplated network use, the community catalog submission, and it is likewise not v1 (§12.14). |
+| **10.8** | Cloud-ready investment | **ANSWERED 2026-08-03** | **(a). Spend nothing further; RackMate is a local application.** Confirms the recommendation. The six cloud-ready properties are **retained in full** and option (c) is not taken. `docs/02` §8 is **ratified** as the conflict-unit and merge-story page the recommendation asked for, rather than commissioned. An update check and API-key publishing to project-management services are the only contemplated network uses and are **not v1 scope** (§8.3 applies to either). §10.8. **Amended by DR-033 and DR-034**: there is a third contemplated network use, the community catalog, in a write direction (submission) and a read direction (library fetch and update check). Both are likewise not v1 (§12.14, §12.15). |
 | **10.9** | Generic archetypes forever, or a real-SKU catalog | **ANSWERED 2026-08-03** | **Shipped catalog stays generic; user templates may carry real SKUs.** Archetypes must be editable (docs/06 §7.3's `Duplicate & edit`), and DR-015's `.rmda` is the sharing mechanism. AC-052/DR-002 bind the SEED only. `T6.30` stays an equipment list, not a BOM (AC-055). §10.9. **Its recommendation is discharged by DR-033**, which builds the curated community library as a second repository the app submits to. §10.9's stated tipping condition was whether users start swapping device files unprompted; the user settled it by deciding to support the swap rather than waiting to observe it. §11.32. |
 | **10.10** | macOS in v1 | **ANSWERED: DR-009** | **(b) Windows and macOS from v1.** Reverses the record's recommendation, which was explicitly *"not a ruling"* and rested on a desk survey that was never run. The register §10.10 demanded and never received is `docs/13-macos-debt-register.md`. §11.9. |
 | 10.11 | What the beta gate actually is | **DEFERRED 2026-08-03, with a trigger** | Held until M5 (Validation) lands and the UI is largely frozen, on the ground that the bar is easier to state against a product than against a plan. **It must be answered before the M6 recruiting ask (M6-J5)**, not before M9; you cannot ask three people to commit real jobs without saying what you will judge. |
