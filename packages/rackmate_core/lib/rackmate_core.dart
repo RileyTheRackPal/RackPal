@@ -91,6 +91,7 @@ export 'src/derived/link_class.dart';
 export 'src/derived/link_lookup.dart';
 export 'src/derived/location_removal.dart';
 export 'src/derived/location_tree.dart';
+export 'src/derived/pathway_table.dart';
 export 'src/derived/port_fill.dart';
 export 'src/derived/port_set_resolution.dart';
 export 'src/derived/schedule.dart';
