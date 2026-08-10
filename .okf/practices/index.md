@@ -3,6 +3,7 @@
 Working conventions that earned their place; each is here because it was tested
 by something going wrong.
 
+* [A test that asserts an absence names its due date](a-test-that-asserts-an-absence-names-its-due-date.md) - three came due in one task and cost five minutes between them, because each comment said which item would retire it.
 * [A deferred action needs a frame](defer-past-the-gesture.md) - addPostFrameCallback queues but does not schedule, and a TabBarView settles the page under a tab switch made mid-click.
 * [Assert the artifact, not the mechanism](assert-the-artifact-not-the-mechanism.md) - a test counted corridors, passed, and the sheet painted a fifth of its ink twice.
 * [Census before building](census-before-building.md) - print the field over the whole corpus first; it has caught an empty field, an unmeasured cost and a wrong ordering.

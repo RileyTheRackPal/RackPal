@@ -1,5 +1,63 @@
 # Update Log
 
+## 2026-08-10
+
+* **Creation**: [DR-031, `PathwayKind` gains `attic` and
+  `crawlspace`](/decisions/dr-031-pathwaykind-gains-two-values.md), which
+  discharges DR-020 §11.19.4 on the day that ruling dated it to. **The objection
+  was good and wrong on a detail of the model**: both values ARE spaces and
+  `Location` does model spaces, but `Pathway`'s two location fields are
+  ENDPOINTS, so an attic a run merely crosses belongs to no room's subtree and
+  has no field to live in.
+* **Creation**: [DR-032, a pathway-only medium names its
+  `Pathway` for where it goes](/decisions/dr-032-pathway-only-medium-names-its-pathway.md).
+  CR-109 said such a medium creates a `Pathway` and never a `Link`; it did not
+  say what the thing is CALLED, and `Pathway.name` is required. The tempting
+  answer `PW-LR-1` **is the allocated series DR-026 refused one field over**, so
+  the name is a description and the two facts stay two facts.
+* **Creation**: [DR-035, a created `Pathway` records its medium and its
+  room](/decisions/dr-035-a-created-pathway-records-its-medium-and-room.md).
+  **The forcing case was a broken control, not tidiness.** A matrix cell is a
+  COUNT, so it has to find "the pathways in this room, of this medium", and a
+  DR-032 pathway recorded neither: §4.2's tinted `EMT` column would have accepted
+  a number and read back `0` forever. It also sets the `from`/`to` orientation
+  for the first time (both fields shipped at M0 with no reader establishing
+  one) on docs/08 §3.2's existing `FROM — ROOM` convention.
+* **Creation**: [A test that asserts an absence names its due
+  date](/practices/a-test-that-asserts-an-absence-names-its-due-date.md).
+  **Three came due in one task and cost about five minutes between them**,
+  because each comment named the item that would retire it. This is the only
+  class of test that passes more easily as it becomes wrong.
+* **Note**: **#156 is closed at `2618272`** and it was four obligations wearing
+  one title: two fields reaching a UI, CR-109's `isPathwayOnly`, DR-020
+  §11.19.4's enum question, and §4.2's tinted column that this board had routed
+  to it. Five commits. Core 1948 → 2013, UI 791 → 807, app 766 → 784.
+* **Note**: **two surfaces were found contradicting themselves**, and both are
+  the shape [assert the artifact, not the
+  mechanism](/practices/assert-the-artifact-not-the-mechanism.md) collects. The
+  status bar's `8 pathways` counted only pathways WITH DROPS IN THEM, which was
+  `outletCount`'s rule applied to the field beside it and stopped being coherent
+  the moment DR-032 made `Office: 1x ENT` build a pathway and no cable: it read
+  `0 pathways` on the keystroke after somebody made one, and its own test pinned
+  `pathwayCount, 1` on a two-pathway document. And the `EMT` column could not
+  have worked as drawn, which is what DR-035 exists for.
+* **Note**: `Pathway.kind` and `containsLineVoltage` are **read by M5's
+  `CODE-001` and `CODE-002`** (NEC 800.154) and no surface could set either
+  until now. A test in each package asserts that a plenum pathway carrying line
+  voltage is accepted **in silence**, because canon §5 says a rule not listed
+  does not exist and "the validation is missing" and "the validation is M5's on
+  purpose" look identical from outside.
+* **Note**: the `[ Pathways ]` tab is a LIST AND AN EDITOR and deliberately not
+  a routing surface, which is the user's own cap: *"Pathway will likely be set
+  in the plan view, once a pathway is actually determined and set on site."*
+  That is DR-020 §11.19.1 applied to the entity rather than to its designator.
+  `[Group into pathway]` is still unbuilt and still on the accuracy test's list.
+* **Note**: this bundle was **two rulings behind before the session started**,
+  which is the same finding 2026-08-09 recorded about itself. DR-031 and DR-032
+  were in the "not yet written up" list rather than in the bundle, and that list
+  is exactly the drift-inviting shape its own entry warns about: it names what is
+  missing, so nothing fails when an entry stops being true.
+
 ## 2026-08-09
 
 * **Creation**: [DR-033, a device is submitted as a pull request the app
