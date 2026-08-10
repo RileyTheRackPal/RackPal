@@ -120,6 +120,7 @@ OutletTemplatePlan planOutletFromTemplate({
   Set<String> alsoUsedLabels = const {},
   Set<String> alsoUsedDesignators = const {},
   Set<String> alsoUsedDesignations = const {},
+  Uuid? structureBodyId,
 }) {
   final location = doc.locations[locationId];
   if (location == null) {
@@ -131,10 +132,17 @@ OutletTemplatePlan planOutletFromTemplate({
   if (doc.structures.isEmpty) {
     return const OutletTemplatePlanNeedsStructure();
   }
-  if (doc.structures.length > 1) {
-    // The drop line refuses here for the same reason and names the same
-    // board item: filing drops on the wrong Structure body puts them on
-    // the wrong sheet, and picking between bodies is #158 (M3-E/3).
+  // [structureBodyId] IS THE EDITOR'S CURRENT BODY (M3-E/3, #158). This
+  // block used to refuse unconditionally above one body and named that
+  // task as what would retire it. Retired: what survives is the case
+  // where a caller named no body at all, which is still a gesture that
+  // has not said which panel.
+  if (structureBodyId != null && !doc.structures.containsKey(structureBodyId)) {
+    return const OutletTemplatePlanRefused(
+      'That Structure device is not in this project any more.',
+    );
+  }
+  if (structureBodyId == null && doc.structures.length > 1) {
     return const OutletTemplatePlanRefused(
       'This project has more than one Structure device, and this gesture '
       'does not say which one the outlet belongs to.',
@@ -171,7 +179,14 @@ OutletTemplatePlan planOutletFromTemplate({
   }
 
   // --- the outlet -----------------------------------------------------
-  final bodyId = doc.structures.keys.first;
+  // The named body, else the only one. `keys.first` was safe before only
+  // because the block above refused whenever there was more than one; it
+  // is now reached with several, so the fallback is `defaultStructureBody`
+  // and the choice is deterministic rather than map iteration order.
+  final bodyId =
+      structureBodyId ??
+      defaultStructureBody(doc)?.id ??
+      doc.structures.keys.first;
   final add = AddOutletCommand(
     structureBodyId: bodyId,
     designation: designation?.trim().isNotEmpty ?? false

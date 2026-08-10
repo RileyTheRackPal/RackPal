@@ -308,4 +308,99 @@ void main() {
       );
     });
   });
+
+  group('naming a body is what retires the refusals', () {
+    test('the bodies have a TOTAL order, by designator then id', () {
+      // `StructureBody` carries no `order` field, so the picker's list
+      // has to be derived. By the designator a person already reads, and
+      // ending in the id because two devices may share one.
+      final t = _twoPanels();
+      final ordered = structureBodiesInOrder(t.doc);
+      expect(ordered.map((b) => t.doc.devices[b.deviceId]!.designator), [
+        'STR-1',
+        'STR-2',
+      ]);
+      expect(defaultStructureBody(t.doc)!.id, ordered.first.id);
+    });
+
+    test('the order does not depend on insertion order', () {
+      final doc = _project();
+      // Created out of designator order on purpose: a builder that
+      // preserved insertion would pass this by coincidence otherwise.
+      _structure(doc, 'STR-2', 'Guest House Panel');
+      _structure(doc, 'STR-1', 'Media Panel');
+      expect(
+        structureBodiesInOrder(
+          doc,
+        ).map((b) => doc.devices[b.deviceId]!.designator),
+        ['STR-1', 'STR-2'],
+      );
+    });
+
+    test('planOutletFromTemplate ACCEPTS a named body and builds on it', () {
+      final t = _twoPanels();
+      final plan = planOutletFromTemplate(
+        doc: t.doc,
+        template: t.doc.registries.outletTemplates.values.first,
+        locationId: t.doc.locations.keys.first,
+        structureBodyId: t.guest,
+        now: _when,
+        actor: _actor,
+      );
+      expect(plan, isA<OutletTemplatePlanReady>());
+
+      // The artifact, not the mechanism: apply it and read which body the
+      // outlet actually landed on.
+      for (final c in (plan as OutletTemplatePlanReady).commands) {
+        c.apply(t.doc);
+      }
+      expect(
+        t.doc.outlets.values.map((o) => o.structureBodyId),
+        everyElement(t.guest),
+      );
+    });
+
+    test('planDropLine ACCEPTS a named body, and files the drops on it', () {
+      final t = _twoPanels();
+      final parsed = parseDropLine('Guest Bedroom: 2x Cat6');
+      expect(parsed, isA<DropLineParsed>());
+
+      final plan = planDropLine(
+        doc: t.doc,
+        line: parsed as DropLineParsed,
+        structureBodyId: t.guest,
+        now: _when,
+        actor: _actor,
+      );
+      expect(plan, isA<DropLinePlanReady>());
+
+      for (final c in (plan as DropLinePlanReady).commands) {
+        c.apply(t.doc);
+      }
+      final created = t.doc.outlets.values.where(
+        (o) => o.structureBodyId == t.guest,
+      );
+      expect(created, isNotEmpty);
+    });
+
+    test('a body that is not in the project is REFUSED by name', () {
+      // The narrower refusal that survives. A stale id in a picker after
+      // somebody deleted the panel is an ordinary Tuesday under DR-006's
+      // shared-file reality.
+      final t = _twoPanels();
+      final plan = planOutletFromTemplate(
+        doc: t.doc,
+        template: t.doc.registries.outletTemplates.values.first,
+        locationId: t.doc.locations.keys.first,
+        structureBodyId: const Uuid('0190e3c1-0000-7000-8000-00000000gone'),
+        now: _when,
+        actor: _actor,
+      );
+      expect(plan, isA<OutletTemplatePlanRefused>());
+      expect(
+        (plan as OutletTemplatePlanRefused).reason,
+        contains('not in this project'),
+      );
+    });
+  });
 }

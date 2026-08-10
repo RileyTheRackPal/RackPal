@@ -52,6 +52,7 @@ import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/model/registries.dart';
 import 'package:rackmate_core/src/structure/drop_build.dart';
 import 'package:rackmate_core/src/structure/drop_line_parser.dart';
+import 'package:rackmate_core/src/units/ids.dart';
 
 /// The outcome of [planDropLine].
 sealed class DropLinePlan {
@@ -131,21 +132,33 @@ DropLinePlan planDropLine({
   required String actor,
   Set<String> alsoUsedLabels = const {},
   Set<String> alsoUsedDesignators = const {},
+  Uuid? structureBodyId,
 }) {
   // --- the room ------------------------------------------------------
   final location = _resolveLocation(doc, line.locationName);
   if (location == null) return DropLinePlanNeedsLocation(line.locationName);
 
   // --- the Structure device the outlet hangs on ----------------------
+  // [structureBodyId] IS THE EDITOR'S CURRENT BODY (M3-E/3, #158). The
+  // refusal below used to be unconditional above one body and named this
+  // task as what would retire it; it is retired, and what survives is the
+  // narrower case where a caller genuinely said nothing.
   if (doc.structures.isEmpty) return const DropLinePlanNeedsStructure();
-  if (doc.structures.length > 1 && line.outletDesignation == null) {
-    // Choosing between them is board #158 (M3-E/3). Refused rather than
-    // guessed, because filing sixty drops on the wrong Structure body
-    // puts them on the wrong sheet.
+  if (structureBodyId != null && !doc.structures.containsKey(structureBodyId)) {
+    return const DropLinePlanRefused(
+      'That Structure device is not in this project any more.',
+    );
+  }
+  if (structureBodyId == null &&
+      doc.structures.length > 1 &&
+      line.outletDesignation == null) {
+    // Still refused rather than guessed: filing sixty drops on the wrong
+    // Structure body puts them on the wrong sheet, and a caller that
+    // named neither a body nor an outlet has not said which panel.
     return const DropLinePlanRefused(
       'This project has more than one Structure device, so this line does '
-      'not say which one these drops belong to. Name an existing outlet '
-      'with @outlet="…" until picking one is supported.',
+      'not say which one these drops belong to. Choose one in the editor, '
+      'or name an existing outlet with @outlet="…".',
     );
   }
 
@@ -243,9 +256,9 @@ DropLinePlan planDropLine({
   // --- the outlet: joined, or created --------------------------------
   final existing = _resolveOutlet(doc, line.outletDesignation);
   if (line.outletDesignation != null && existing == null) {
-    // Creating it is fine; what is not fine is creating it on a guessed
-    // Structure body when there are several.
-    if (doc.structures.length > 1) {
+    // Creating it is fine; what is not fine is creating it on a GUESSED
+    // Structure body when there are several. A named body is not a guess.
+    if (structureBodyId == null && doc.structures.length > 1) {
       return DropLinePlanRefused(
         'No outlet is called "${line.outletDesignation}", and this project '
         'has more than one Structure device to create it on.',
@@ -261,7 +274,15 @@ DropLinePlan planDropLine({
     plannedOutlet = existing;
     outletCreated = false;
   } else {
-    final bodyId = doc.structures.keys.first;
+    // The named body, else the only one. `keys.first` was safe before
+    // only because every path reaching here had already refused above one
+    // body; it is now reached with several, so the fallback goes through
+    // `defaultStructureBody` and the choice is deterministic rather than
+    // whatever the map iterated first.
+    final bodyId =
+        structureBodyId ??
+        defaultStructureBody(doc)?.id ??
+        doc.structures.keys.first;
     final add = AddOutletCommand(
       structureBodyId: bodyId,
       designation:

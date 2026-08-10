@@ -363,3 +363,51 @@ final class RemoveOutletCommand extends Command {
     if (outlet != null) doc.outlets[outlet.id] = outlet;
   }
 }
+
+// ═════════════════════════════════════════════════════════════════════
+// ORDERING THE BODIES (M3-E/3, #158, CR-113)
+// ═════════════════════════════════════════════════════════════════════
+// `StructureBody` HAS NO `order` FIELD, unlike `Location`, `Pathway`,
+// `Outlet` and `Link`, all of which carry a `FracIndex`. That is not an
+// oversight to correct here: nothing has ever needed to sequence bodies,
+// because until #158 nothing could show more than one at a time. Adding
+// a stored `order` would rewrite the file for every existing document in
+// order to serve a dropdown, which is a migration bought for a control.
+//
+// So the order is DERIVED, and derived from what a person already reads:
+// the paired device's designator, `STR-1` before `STR-2`. The editor
+// header prints exactly that string, so the picker lists bodies by the
+// thing it is showing rather than by a hidden key.
+//
+// IT ENDS IN THE BODY ID, because §8.4 requires a TOTAL comparator and
+// Dart's `List.sort` is not stable. Nothing enforces designator
+// uniqueness across structure devices, so two bodies CAN share one, and
+// a comparator returning 0 there would leave their relative position to
+// map iteration order.
+
+/// Every [StructureBody] in [doc], in the order a picker should list them.
+///
+/// By the paired device's `designator`, then by the body's own id. A body
+/// whose `deviceId` resolves to nothing sorts under the empty string
+/// rather than throwing: a dangling reference is a broken document, and a
+/// picker that crashes on one is worse than a picker that shows it.
+List<StructureBody> structureBodiesInOrder(RackDocument doc) {
+  return doc.structures.values.toList()..sort((a, b) {
+    final byDesignator = (doc.devices[a.deviceId]?.designator ?? '').compareTo(
+      doc.devices[b.deviceId]?.designator ?? '',
+    );
+    return byDesignator != 0 ? byDesignator : a.id.v.compareTo(b.id.v);
+  });
+}
+
+/// The body a surface should open on when nobody has chosen one.
+///
+/// The first of [structureBodiesInOrder], or null when the project holds
+/// no Structure device at all, which is the state every new project is
+/// in.
+///
+/// **NEVER "all of them".** Merging two panels into one undifferentiated
+/// table is the failure CR-113's milestone exists to prevent, and it is
+/// what the editor did by accident for as long as it passed no id.
+StructureBody? defaultStructureBody(RackDocument doc) =>
+    structureBodiesInOrder(doc).firstOrNull;
