@@ -1,3 +1,4 @@
+import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/model/placement.dart' show Face;
 import 'package:rackmate_core/src/units/ids.dart';
 import 'package:rackmate_core/src/units/len.dart';
@@ -736,6 +737,14 @@ final class PortSetDef {
 /// changed. [userId] never changes and is unreadable; [handle] is readable and
 /// may drift. Deriving either from the other is the version of this that is
 /// wrong in a way nobody notices for two years.
+///
+/// `@immutable` is load-bearing rather than decorative: this is the only
+/// value type in this file that defines `==`, and the lint that demands the
+/// annotation is right to, because a mutable class with value equality is a
+/// key that changes under the map holding it. Every other field on
+/// [TemplateBody] is plain-mutable pending the AC-013 retrofit; this one is
+/// not, and never becomes so.
+@immutable
 final class SubmissionCredit {
   const SubmissionCredit({required this.handle, required this.userId});
 
