@@ -60,6 +60,11 @@ PathwayEditFn buildPathwayEditAction({
       return 'That pathway is not in this project.';
     }
     final refusal = switch (edit.column) {
+      PathwayColumnId.designator => _designator(
+        controller: controller,
+        edit: edit,
+        into: commands,
+      ),
       PathwayColumnId.name => _name(
         controller: controller,
         edit: edit,
@@ -183,6 +188,43 @@ PathwayRemoveFn buildPathwayRemoveAction({
 /// land in, and an empty name would print as the unknown dash in the
 /// Pull Sheet's `PATH` column on every run through it — indistinguishable
 /// from a cable nobody routed (G4).
+/// `DESIGNATOR`, through the ONE builder that can refuse.
+///
+/// NOT `_plain`, and this is the whole point of the arm. DR-026 §11.25.1
+/// makes the designator unique where set, project-wide, and `_plain`
+/// drives `buildSetEntityProperty`, which writes the value and returns
+/// with no way to decline. Two trunks called `T1` on one Pull Sheet is
+/// the defect the column exists to prevent, and it would arrive silently
+/// through the ordinary edit path.
+///
+/// `buildSetPathwayDesignator` also owns the blank-is-null rule, so this
+/// arm passes `edit.value` through untouched rather than trimming here
+/// and disagreeing with core about what an empty box means.
+String? _designator({
+  required DocumentController controller,
+  required PathwayCellEdit edit,
+  required List<Command> into,
+}) {
+  final result = buildSetPathwayDesignator(
+    doc: controller.doc,
+    pathwayId: edit.pathwayId,
+    to: edit.value,
+    now: controller.clock.nowUtc(),
+    actor: controller.actor,
+  );
+  return switch (result) {
+    SetPathwayDesignatorReady(:final command) => () {
+      into.add(command);
+      return null;
+    }(),
+    // Nothing to do is not a refusal; docs/04 §3.4 is about telling those
+    // two apart, and collapsing them here would put a false error in
+    // front of somebody who retyped a value.
+    SetPathwayDesignatorUnchanged() => null,
+    SetPathwayDesignatorRefused(:final reason) => reason,
+  };
+}
+
 String? _name({
   required DocumentController controller,
   required PathwayCellEdit edit,

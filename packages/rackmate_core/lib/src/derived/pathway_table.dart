@@ -53,6 +53,16 @@ import 'package:rackmate_core/src/units/len.dart';
 /// two location references, and hiding one of seven would only hide the
 /// two fields M5 is waiting on.
 enum PathwayColumnId {
+  /// `T1`, `PW-LR-1`: what is written on the trunk, where somebody has
+  /// written one. Hand-entered, no allocator (DR-026 §11.25.1).
+  ///
+  /// FIRST, AND THE PRIMARY COLUMN. Identifiers lead everywhere else in
+  /// this product: the drop table opens with `FIELD LABEL` and
+  /// `RACK LABEL`, the equipment list with designators. This is the value
+  /// an installer matches against a label in a wall; [name] is the
+  /// context around it.
+  designator,
+
   /// `Living Room ENT`, DR-032 §11.31.1's description.
   name,
 
@@ -79,6 +89,7 @@ enum PathwayColumnId {
 /// UPPERCASE, matching `structureColumnHeader`, because these two tables
 /// sit one tab apart and a person reads them as one surface.
 String pathwayColumnHeader(PathwayColumnId id) => switch (id) {
+  PathwayColumnId.designator => 'DESIGNATOR',
   PathwayColumnId.name => 'PATHWAY',
   PathwayColumnId.kind => 'KIND',
   // NOT `LINE V` OR `120V`. The column decides whether a jacket rating is
@@ -93,6 +104,9 @@ String pathwayColumnHeader(PathwayColumnId id) => switch (id) {
 
 /// Layout width in points, on `structureColumnWidth`'s scale.
 double pathwayColumnWidth(PathwayColumnId id) => switch (id) {
+  // Narrow on purpose: a designator is `T1` or `PW-LR-1`, and a column
+  // wide enough for a sentence invites somebody to type one into it.
+  PathwayColumnId.designator => 96,
   PathwayColumnId.name => 190,
   // Wide enough for `CRAWLSPACE`, which DR-031 deliberately left
   // unabbreviated.
@@ -109,6 +123,7 @@ double pathwayColumnWidth(PathwayColumnId id) => switch (id) {
 final class PathwayTableRow {
   const PathwayTableRow({
     required this.id,
+    required this.designator,
     required this.name,
     required this.kind,
     required this.containsLineVoltage,
@@ -120,6 +135,11 @@ final class PathwayTableRow {
   });
 
   final Uuid id;
+
+  /// Null when nobody has labelled this trunk, which is the ordinary
+  /// state before anybody has walked the building (G4, CR-114).
+  final String? designator;
+
   final String name;
   final PathwayKind kind;
   final bool containsLineVoltage;
@@ -206,6 +226,7 @@ PathwayTable buildPathwayTable(RackDocument doc) {
     rows.add(
       PathwayTableRow(
         id: pathway.id,
+        designator: pathway.designator,
         name: pathway.name,
         kind: pathway.kind,
         containsLineVoltage: pathway.containsLineVoltage,
@@ -243,6 +264,7 @@ String pathwayCell(
   PathwayColumnId id, {
   required UnitSystem units,
 }) => switch (id) {
+  PathwayColumnId.designator => _text(row.designator),
   PathwayColumnId.name => _text(row.name),
   PathwayColumnId.kind => pathwayKindLabel(row.kind),
   PathwayColumnId.lineVoltage =>

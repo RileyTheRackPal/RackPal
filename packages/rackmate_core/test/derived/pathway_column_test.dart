@@ -29,7 +29,7 @@ EntityMeta _meta() =>
     EntityMeta(createdAt: _when, updatedAt: _when, updatedBy: 'rriley');
 
 int _seq = 0;
-Uuid _mint(String tag) => Uuid('0190e3c1-0000-7000-8000-${tag}${_seq++}');
+Uuid _mint(String tag) => Uuid('0190e3c1-0000-7000-8000-$tag${_seq++}');
 
 final class _Job {
   _Job() {
@@ -232,7 +232,7 @@ void main() {
       ).rows;
 
       expect(
-        rows.map((r) => _pathwayCell(r)),
+        rows.map(_pathwayCell),
         orderedEquals(<String>['A1', 'Alpha trunk']),
       );
     });

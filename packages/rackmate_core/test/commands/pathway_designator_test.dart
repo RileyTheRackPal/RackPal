@@ -35,14 +35,14 @@ RackDocument _doc({String? aDesignator, String? bDesignator}) {
   doc.pathways[_idA] = Pathway(
     id: _idA,
     name: 'attic run to the garage',
-    order: FracIndex('a0'),
+    order: const FracIndex('a0'),
     meta: _meta(),
     designator: aDesignator,
   );
   doc.pathways[_idB] = Pathway(
     id: _idB,
     name: 'riser to level 2',
-    order: FracIndex('a1'),
+    order: const FracIndex('a1'),
     meta: _meta(),
     designator: bDesignator,
   );

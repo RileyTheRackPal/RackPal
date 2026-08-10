@@ -36,16 +36,40 @@ final class _Harness {
 
   final RackDocument doc;
 
+  /// What the last edit refused with, or null if it did not refuse.
+  ///
+  /// The real tab shows this to the person; a test that only checked the
+  /// document would pass on a silent no-op, which looks identical to a
+  /// save from the outside.
+  String? lastRefusal;
+
   PathwaysActions get actions => PathwaysActions(
     onEdit: edit,
     onAdd: add,
     onRemove: remove,
   );
 
-  String? edit(List<PathwayCellEdit> edits) {
+  String? edit(List<PathwayCellEdit> edits) => lastRefusal = _edit(edits);
+
+  String? _edit(List<PathwayCellEdit> edits) {
     for (final e in edits) {
       final Command? command;
       switch (e.column) {
+        // THROUGH THE REFUSING BUILDER, matching the app's real path.
+        // `buildSetEntityProperty` would write a duplicate designator
+        // silently, and a harness that is laxer than the product tests
+        // a product that does not exist (DR-026 §11.25.1).
+        case PathwayColumnId.designator:
+          final result = buildSetPathwayDesignator(
+            doc: doc,
+            pathwayId: e.pathwayId,
+            to: e.value,
+            now: _now,
+            actor: 'editor',
+          );
+          if (result is SetPathwayDesignatorRefused) return result.reason;
+          // Unchanged is not a refusal: nothing to push, nothing wrong.
+          command = result is SetPathwayDesignatorReady ? result.command : null;
         case PathwayColumnId.name:
           final trimmed = e.value.trim();
           if (trimmed.isEmpty) return 'A pathway needs a name.';
@@ -154,11 +178,13 @@ Uuid _pathway(
   PathwayKind kind = PathwayKind.conduit,
   bool containsLineVoltage = false,
   MediaTypeId? pathwayMedia,
+  String? designator,
 }) {
   final uuid = Uuid(id);
   doc.pathways[uuid] = Pathway(
     id: uuid,
     name: name,
+    designator: designator,
     order: nextPathwayOrder(doc),
     meta: _meta(),
     kind: kind,
@@ -199,6 +225,30 @@ Finder _lineVoltageCell(int row) =>
     find.byType(DropdownButton<String>).at(row * 3 + 1);
 Finder _mediaCell(int row) =>
     find.byType(DropdownButton<String>).at(row * 3 + 2);
+
+/// The text cell for one column, by COUNTING the text columns before it
+/// rather than by a hard-coded index.
+///
+/// THE HARD-CODED INDEX IS WHAT BROKE. This helper exists because
+/// `find.byType(TextField).first` meant "the NAME cell" only for as long
+/// as `name` happened to be the first column; M3-E/2 put `DESIGNATOR`
+/// in front of it and the assertion silently started testing a different
+/// cell. Derived from `PathwayColumnId.values`, it survives the next
+/// column too.
+Finder _textCell(int row, PathwayColumnId column) {
+  final textColumns = PathwayColumnId.values
+      .where(
+        (id) =>
+            pathwayColumnIsEditable(id) &&
+            id != PathwayColumnId.kind &&
+            id != PathwayColumnId.lineVoltage &&
+            id != PathwayColumnId.media,
+      )
+      .toList();
+  final index = textColumns.indexOf(column);
+  assert(index >= 0, '$column is not a text column');
+  return find.byType(TextField).at(row * textColumns.length + index);
+}
 
 /// Rebuilds from the live document on every frame, which is what the real
 /// editor does: the tab reads `currentDoc()` per build, so a command
@@ -332,6 +382,82 @@ void main() {
     });
   });
 
+  group('DESIGNATOR, hand-entered and unique where set (M3-E/2, #157)', () {
+    testWidgets('it is the FIRST column, ahead of PATHWAY', (tester) async {
+      // Identifiers lead everywhere else in this product: the drop table
+      // opens with FIELD LABEL and RACK LABEL, the equipment list with
+      // designators. Asserted on the header order rather than on a pixel
+      // position, so a layout change does not fail it spuriously.
+      final doc = _project();
+      _pathway(doc, 'pth-a', 'attic run to the garage', designator: 'T1');
+      await _pump(tester, _Harness(doc));
+
+      final designatorX = tester.getTopLeft(find.text('DESIGNATOR')).dx;
+      final pathwayX = tester.getTopLeft(find.text('PATHWAY')).dx;
+      expect(designatorX, lessThan(pathwayX));
+    });
+
+    testWidgets('typing one writes it through', (tester) async {
+      final doc = _project();
+      final id = _pathway(doc, 'pth-a', 'attic run to the garage');
+      final h = _Harness(doc);
+      await _pump(tester, h);
+
+      await tester.enterText(
+        _textCell(0, PathwayColumnId.designator),
+        'T1',
+      );
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+
+      expect(doc.pathways[id]!.designator, 'T1');
+      // The NAME is untouched. Two facts, and the one this column does
+      // not own stays where it was (DR-026 §11.25.1).
+      expect(doc.pathways[id]!.name, 'attic run to the garage');
+    });
+
+    testWidgets('a DUPLICATE springs back and says why', (tester) async {
+      // The refusal has to reach the person, not just the return value.
+      // A silent no-op here would look identical to a save, and two
+      // trunks called T1 on one Pull Sheet is the defect the column
+      // exists to prevent.
+      final doc = _project();
+      final a = _pathway(doc, 'pth-a', 'attic run', designator: 'T1');
+      final b = _pathway(doc, 'pth-b', 'riser');
+      final h = _Harness(doc);
+      await _pump(tester, h);
+
+      await tester.enterText(
+        _textCell(1, PathwayColumnId.designator),
+        'T1',
+      );
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+
+      expect(doc.pathways[b]!.designator, isNull);
+      expect(doc.pathways[a]!.designator, 'T1');
+      expect(h.lastRefusal, contains('already used by another pathway'));
+    });
+
+    testWidgets('clearing one is legal even when another pathway has one', (
+      tester,
+    ) async {
+      final doc = _project();
+      final a = _pathway(doc, 'pth-a', 'attic run', designator: 'T1');
+      _pathway(doc, 'pth-b', 'riser', designator: 'T2');
+      final h = _Harness(doc);
+      await _pump(tester, h);
+
+      await tester.enterText(_textCell(0, PathwayColumnId.designator), '');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+
+      // Null never collides, so this is not a refusal (G4, CR-114).
+      expect(doc.pathways[a]!.designator, isNull);
+      expect(h.lastRefusal, isNull);
+    });
+  });
+
   group('the other columns', () {
     testWidgets('the name commits on losing focus', (tester) async {
       final doc = _project();
@@ -340,7 +466,7 @@ void main() {
       await _pump(tester, h);
 
       await tester.enterText(
-        find.byType(TextField).first,
+        _textCell(0, PathwayColumnId.name),
         'attic run to the garage',
       );
       // Committing on blur is what makes `Tab` work: a person filling a

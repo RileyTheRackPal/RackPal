@@ -424,7 +424,10 @@ class _PathwayRow extends StatelessWidget {
       // THE DASH IS NOT PUT IN THE BOX, on `_DataRow`'s rule: `—` is what
       // an unknown PRINTS, and typing after it would save `—40`.
       value: text == kUnknownCell ? '' : text,
-      bold: id == PathwayColumnId.name,
+      // DESIGNATOR IS THE PRIMARY COLUMN, not the name (M3-E/2, #157).
+      // It is what an installer matches against a label in a wall, and
+      // it is where every other identifier column in this product sits.
+      bold: id == PathwayColumnId.designator,
       onEdit: actions.onEdit,
     );
   }

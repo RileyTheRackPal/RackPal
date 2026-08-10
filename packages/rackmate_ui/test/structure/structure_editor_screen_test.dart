@@ -108,6 +108,21 @@ final class _Harness {
         // Spelled out per column for `edit`'s reason: `EntityField`'s
         // `set` is a typed closure, so `<Object?>` compiles and throws at
         // apply time.
+        // THROUGH THE REFUSING BUILDER, matching the app's real path.
+        // `buildSetEntityProperty` would write a duplicate designator
+        // silently, and a harness that is laxer than the product tests
+        // a product that does not exist (DR-026 §11.25.1).
+        case PathwayColumnId.designator:
+          final result = buildSetPathwayDesignator(
+            doc: doc,
+            pathwayId: e.pathwayId,
+            to: e.value,
+            now: _now,
+            actor: 'editor',
+          );
+          if (result is SetPathwayDesignatorRefused) return result.reason;
+          // Unchanged is not a refusal: nothing to push, nothing wrong.
+          command = result is SetPathwayDesignatorReady ? result.command : null;
         case PathwayColumnId.name:
           command = buildSetEntityProperty<Pathway, String>(
             doc: doc,
