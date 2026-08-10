@@ -82,6 +82,8 @@ Membership criterion is **additive**: no format migration, no command-stack chan
 | `Trace` through pass-throughs, and the search DSL | AC-040 | Both are navigation, not correctness |
 | Manual reroute stored as `routeConstraintsBySheet`, ordered grid points, never a polyline | CR-012 | The router is deterministic; the itch is aesthetic |
 | Registry editor beyond media types and connector aliases | AC-050 | The two extensibility paths users actually hit already ship |
+| **Submitting a device to the community catalog**: the Device Builder's review sheet, GitHub sign-in by authorization code with PKCE, the fork-branch-commit-pull-request sequence, the port-photograph citation | **DR-033**, §8.3 addition. **Conditional**: canon §11.32.7 holds it behind an unruled release posture | `.rmdx` still exports and imports, so a device is still shareable as a file. **`TemplateBody.submittedBy` does not wait**: it ships in v1 because the template body has no `unknown` passthrough and a v1 build would drop the credit on save |
+| **Installing and updating the community library**: the bundled snapshot, the first-run opt-in card, the `.rmda` release-asset fetch, the once-daily `releases/latest` check behind a non-modal notice | **DR-034**, §8.3 addition, sharing DR-033's precondition | Nothing until submission ships; an empty library has nothing to distribute. **The two libraries' separation is not deferrable**: it is a determinism gate, since a golden resolving a template out of a fetched library depends on a release tag (canon §11.33.5) |
 
 ### 2.3 v1.2: the second release
 

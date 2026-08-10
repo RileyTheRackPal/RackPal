@@ -25,16 +25,23 @@
 // binds a new surface hardest, because a new surface can meet it for
 // free by simply not drawing the control.
 //
-//   * THE TAB STRIP IS TWO TABS AND §4 DRAWS FOUR. `[▶ Table]
-//     [ Matrix ]` are both built (M3-C/2 and M3-C/3); `[ Outlets ]` and
-//     `[ Pathways ]` are later, and a tab that opens nothing is the
+//   * THE TAB STRIP IS THREE TABS AND §4 DRAWS FOUR. `[▶ Table]
+//     [ Matrix ]` are M3-C/2 and M3-C/3, `[ Pathways ]` is M3-E/1, and
+//     `[ Outlets ]` is later — a tab that opens nothing is the
 //     `UnbuiltView` defect wearing a different hat. #148 shipped with no
 //     strip at all for exactly this reason — AC-048 asks that the editor
 //     OPEN IN TABLE MODE, which one surface satisfies outright — and
-//     #149 adds it because there is now a second thing to switch to.
+//     #149 adds it because there is now a second thing to switch to. The
+//     strip keeps §4's order, so the absent tab holds its place rather
+//     than letting the built ones shuffle left.
 //   * NO `[Group into pathway]`, `[Renumber…]`, `[Import CSV…]` or
 //     `[Export CSV]` in the button bar. Renumber is M3-F, CSV is docs/07
-//     §5 and unbuilt, and grouping into a pathway has no command yet.
+//     §5 and unbuilt. **Grouping into a pathway still has no command**,
+//     and `[ Pathways ]` does not supply one: that tab lists and edits
+//     the pathways that exist and does not assign runs to them, which is
+//     the user's own scoping — a pathway is set in the Plan view, once
+//     somebody has walked the run (DR-020 §11.19.1's reasoning applied to
+//     the entity).
 //   * NO `Labels: [Residential CI ▾] [TIA-606 Cl.2 ▾]` in the header.
 //     Those pick an id-format profile, which is M3-H.
 //
@@ -55,6 +62,7 @@ import 'package:flutter/services.dart' show Clipboard;
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
 import 'package:rackmate_ui/src/structure/drop_entry_panel.dart';
+import 'package:rackmate_ui/src/structure/pathways_view.dart';
 import 'package:rackmate_ui/src/structure/structure_matrix_view.dart';
 
 /// What the app does when the editor asks for something.
@@ -69,6 +77,9 @@ final class StructureEditorActions {
     required this.onAddOutlet,
     required this.onEdit,
     required this.onSetCount,
+    required this.onEditPathways,
+    required this.onAddPathway,
+    required this.onRemovePathway,
   });
 
   /// M3-C/1's loop, unchanged. See `DropEntryActions.onCommit` for why
@@ -103,19 +114,40 @@ final class StructureEditorActions {
   /// four cables. Folding them together would put "does this write a
   /// value or delete a cable" behind one signature.
   final String? Function(StructureMatrixEdit edit) onSetCount;
+
+  /// The Pathways tab's cells, as ONE undo step (M3-E/1, #156).
+  ///
+  /// A THIRD CALLBACK RATHER THAN A WIDER `onEdit`, on [onSetCount]'s
+  /// reasoning: the id in a `PathwayCellEdit` is a `Pathway`'s and the id
+  /// in a `StructureCellEdit` is a `Link`'s. Folding them together would
+  /// put two entity types behind one `Uuid` and leave the app to work out
+  /// which it was handed from the column.
+  final String? Function(List<PathwayCellEdit> edits) onEditPathways;
+
+  /// Creates one pathway (`AddPathwayCommand`).
+  final String? Function() onAddPathway;
+
+  /// Deletes one pathway and clears every `Link` that named it. NOT a
+  /// cascade: see `RemovePathwayCommand`.
+  final String? Function(Uuid id) onRemovePathway;
 }
 
 /// Which of §4's tabs the editor is showing.
 ///
-/// TWO, AND §4 DRAWS FOUR. See the file header: `Outlets` and `Pathways`
-/// are later, and a tab that opens nothing is a promise about an unbuilt
-/// surface.
+/// THREE, AND §4 DRAWS FOUR. See the file header: `Outlets` is later, and
+/// a tab that opens nothing is a promise about an unbuilt surface.
 enum StructureEditorTab {
   /// AC-048's requirement, and the value this enum starts on.
   table,
 
   /// docs/07 §4.2.
   matrix,
+
+  /// docs/07 §4, M3-E/1 (#156). A list and an editor for the pathways
+  /// that exist, deliberately not a routing surface: the user's stated
+  /// expectation is that a pathway is SET in the Plan view, once somebody
+  /// has walked the run.
+  pathways,
 }
 
 /// What the tab strip calls each tab.
@@ -123,6 +155,9 @@ const String kTableTabLabel = 'Table';
 
 /// See [kTableTabLabel].
 const String kMatrixTabLabel = 'Matrix';
+
+/// See [kTableTabLabel].
+const String kPathwaysTabLabel = 'Pathways';
 
 /// One cell, as an edit request: which drop, which column, what was
 /// typed.
@@ -344,6 +379,14 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
                           }),
                           onSetCount: _setCount,
                         ),
+                        StructureEditorTab.pathways => PathwaysView(
+                          doc: doc,
+                          actions: PathwaysActions(
+                            onEdit: _editPathways,
+                            onAdd: _addPathway,
+                            onRemove: _removePathway,
+                          ),
+                        ),
                       },
                     ),
                   ],
@@ -424,6 +467,30 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
   /// one is how two answers to a question start.
   String? _setCount(StructureMatrixEdit edit) {
     final refusal = widget.actions.onSetCount(edit);
+    setState(() => _refusal = refusal);
+    return refusal;
+  }
+
+  /// The Pathways tab's three gestures, each on [_setCount]'s shape.
+  ///
+  /// THEY GO THROUGH THE SAME `_refusal` AS THE OTHER TWO TABS, so a
+  /// pathway edit that is refused says so in the one place this editor
+  /// puts a refusal. A second banner would be a second thing to look at
+  /// for the same class of news.
+  String? _editPathways(List<PathwayCellEdit> edits) {
+    final refusal = widget.actions.onEditPathways(edits);
+    setState(() => _refusal = refusal);
+    return refusal;
+  }
+
+  String? _addPathway() {
+    final refusal = widget.actions.onAddPathway();
+    setState(() => _refusal = refusal);
+    return refusal;
+  }
+
+  String? _removePathway(Uuid id) {
+    final refusal = widget.actions.onRemovePathway(id);
     setState(() => _refusal = refusal);
     return refusal;
   }
@@ -749,6 +816,15 @@ class _TabStrip extends StatelessWidget {
           ButtonSegment<StructureEditorTab>(
             value: StructureEditorTab.matrix,
             label: Text(kMatrixTabLabel),
+          ),
+          // AFTER `Matrix` AND NOT BESIDE `Table`, because §4's wireframe
+          // orders the strip `[Table] [Matrix] [Outlets] [Pathways]` and
+          // the one absent tab still holds its place in the sequence. A
+          // strip that reordered itself as tabs arrive would move a
+          // target under the hand of anybody who had learned where it was.
+          ButtonSegment<StructureEditorTab>(
+            value: StructureEditorTab.pathways,
+            label: Text(kPathwaysTabLabel),
           ),
         ],
         selected: {tab},

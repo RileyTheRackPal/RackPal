@@ -91,7 +91,79 @@ final class _Harness {
     onAddOutlet: () => outletPickerOpened++,
     onEdit: edit,
     onSetCount: setCount,
+    onEditPathways: editPathways,
+    onAddPathway: addPathway,
+    onRemovePathway: removePathway,
   );
+
+  /// What `apps/rackmate`'s three pathway actions do, in the shape they
+  /// do them. Mirrored for [edit]'s reason: `rackmate_ui` may not depend
+  /// on the app, and the harness has to be driveable without a
+  /// `DocumentController`. `pathways_view_test.dart` drives the tab
+  /// itself; this exists so the editor's own tests can reach the tab.
+  String? editPathways(List<PathwayCellEdit> edits) {
+    for (final e in edits) {
+      final Command? command;
+      switch (e.column) {
+        // Spelled out per column for `edit`'s reason: `EntityField`'s
+        // `set` is a typed closure, so `<Object?>` compiles and throws at
+        // apply time.
+        case PathwayColumnId.name:
+          command = buildSetEntityProperty<Pathway, String>(
+            doc: doc,
+            id: e.pathwayId,
+            field: PathwayField.name,
+            to: e.value.trim(),
+            now: _now,
+            actor: 'editor',
+          );
+        case PathwayColumnId.kind:
+          final kind = PathwayKind.values
+              .where((k) => pathwayKindLabel(k) == e.value.trim().toUpperCase())
+              .firstOrNull;
+          if (kind == null) return '"${e.value}" is not a pathway kind.';
+          command = buildSetEntityProperty<Pathway, PathwayKind>(
+            doc: doc,
+            id: e.pathwayId,
+            field: PathwayField.kind,
+            to: kind,
+            now: _now,
+            actor: 'editor',
+          );
+        case PathwayColumnId.lineVoltage:
+          command = buildSetEntityProperty<Pathway, bool>(
+            doc: doc,
+            id: e.pathwayId,
+            field: PathwayField.containsLineVoltage,
+            to: e.value.trim().toUpperCase() == kLineVoltageYesCell,
+            now: _now,
+            actor: 'editor',
+          );
+        case PathwayColumnId.media:
+        case PathwayColumnId.nominalLength:
+        case PathwayColumnId.notes:
+        case PathwayColumnId.runs:
+          return null;
+      }
+      if (command != null) command.apply(doc);
+    }
+    return null;
+  }
+
+  String? addPathway() {
+    AddPathwayCommand(
+      name: 'New pathway',
+      order: nextPathwayOrder(doc),
+      now: _now,
+      actor: 'adder',
+    ).apply(doc);
+    return null;
+  }
+
+  String? removePathway(Uuid id) {
+    RemovePathwayCommand(id: id, now: _now).apply(doc);
+    return null;
+  }
 
   /// What `apps/rackmate`'s `buildStructureMatrixAction` does, in the
   /// shape it does it: plan against the live document, refuse whole,
@@ -580,15 +652,21 @@ void main() {
       await _pump(tester, h);
 
       for (final label in [
+        // STILL ABSENT AFTER M3-E/1, and the distinction is the tab's
+        // own scoping: `[ Pathways ]` LISTS AND EDITS the pathways that
+        // exist and does not assign runs to them. Grouping needs a
+        // command nothing has written, and the user's stated expectation
+        // is that a pathway is set in the Plan view once somebody has
+        // walked the run.
         'Group into pathway',
         'Renumber…',
         'Import CSV…',
         'Export CSV',
-        // `Matrix` LEFT THIS LIST AT M3-C/3 and `Outlets` and `Pathways`
-        // are still on it, which is the bookkeeping this test is for:
-        // the day one is built the test says the others still are not.
+        // `Matrix` LEFT THIS LIST AT M3-C/3 and `Pathways` at M3-E/1,
+        // which is the bookkeeping this test is for: the day one is
+        // built the test says the others still are not. `Outlets` is
+        // the last one.
         'Outlets',
-        'Pathways',
       ]) {
         expect(find.text(label), findsNothing, reason: '$label is unbuilt');
       }
@@ -992,7 +1070,7 @@ void main() {
   // M3-C/3, #149 — THE MATRIX AS A TAB
   // ══════════════════════════════════════════════════════════════════
 
-  group('THE TAB STRIP IS TWO TABS, and the editor opens on the first', () {
+  group('THE TAB STRIP IS THREE TABS, and the editor opens on the first', () {
     testWidgets('AC-048: it opens in table mode', (tester) async {
       final h = _Harness(_project());
       await _pump(tester, h);
@@ -1006,19 +1084,51 @@ void main() {
       expect(find.text(kMatrixTotalLabel), findsNothing);
     });
 
-    testWidgets('only Table and Matrix are offered, because two are built', (
-      tester,
-    ) async {
-      // §4 draws four. `Outlets` and `Pathways` open nothing, and a tab
-      // that opens nothing is `UnbuiltView` in a different hat.
+    testWidgets('three are offered, because three are built', (tester) async {
+      // §4 draws four. `Outlets` opens nothing, and a tab that opens
+      // nothing is `UnbuiltView` in a different hat. `Pathways` joined
+      // the strip at M3-E/1 (#156).
       final h = _Harness(_project());
       await _pump(tester, h);
 
       expect(find.text(kTableTabLabel), findsOneWidget);
       expect(find.text(kMatrixTabLabel), findsOneWidget);
-      for (final absent in ['Outlets', 'Pathways']) {
-        expect(find.text(absent), findsNothing, reason: '$absent is later');
-      }
+      expect(find.text(kPathwaysTabLabel), findsOneWidget);
+      expect(find.text('Outlets'), findsNothing, reason: 'Outlets is later');
+    });
+
+    testWidgets('the Pathways tab opens a real surface', (tester) async {
+      // The claim this asserts is the one the strip's own comment makes:
+      // no tab here opens nothing. `PathwaysView` renders its own empty
+      // state on a project with no pathways, which is a surface, not a
+      // blank.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await tester.tap(find.text(kPathwaysTabLabel));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PathwaysView), findsOneWidget);
+      expect(find.text(kAddPathwayLabel), findsOneWidget);
+    });
+
+    testWidgets('the strip keeps §4 order, so the absent tab holds its place', (
+      tester,
+    ) async {
+      // A strip that reordered itself as tabs arrive would move a target
+      // under the hand of anybody who had learned where it was.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+
+      final labels = tester
+          .widgetList<Text>(
+            find.descendant(
+              of: find.byType(SegmentedButton<StructureEditorTab>),
+              matching: find.byType(Text),
+            ),
+          )
+          .map((t) => t.data)
+          .toList();
+      expect(labels, [kTableTabLabel, kMatrixTabLabel, kPathwaysTabLabel]);
     });
 
     testWidgets('switching shows the grid and the table goes away', (

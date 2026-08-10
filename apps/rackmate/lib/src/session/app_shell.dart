@@ -58,6 +58,7 @@ import 'package:rackmate/src/session/document_session.dart';
 import 'package:rackmate/src/session/drop_entry_actions.dart';
 import 'package:rackmate/src/session/locations_actions.dart';
 import 'package:rackmate/src/session/outlet_template_actions.dart';
+import 'package:rackmate/src/session/pathway_actions.dart';
 import 'package:rackmate/src/session/session_controller.dart';
 import 'package:rackmate/src/session/session_prompts.dart';
 import 'package:rackmate/src/session/starter_projects.dart';
@@ -723,6 +724,13 @@ final class AppShellState extends State<AppShell>
         onAddOutlet: () => unawaited(_openOutletPicker()),
         onEdit: buildStructureEditAction(controller: session.controller),
         onSetCount: buildStructureMatrixAction(
+          controller: session.controller,
+        ),
+        onEditPathways: buildPathwayEditAction(
+          controller: session.controller,
+        ),
+        onAddPathway: buildPathwayAddAction(controller: session.controller),
+        onRemovePathway: buildPathwayRemoveAction(
           controller: session.controller,
         ),
       ),

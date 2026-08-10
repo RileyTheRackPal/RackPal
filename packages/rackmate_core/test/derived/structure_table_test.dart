@@ -436,8 +436,7 @@ void main() {
 
     test('a pathway with nothing through it still counts', () {
       // DR-032's ordinary output, and the case the old rule got wrong.
-      final d = _Doc();
-      d.pathway('Office ENT');
+      final d = _Doc()..pathway('Office ENT');
       expect(buildStructureTable(d.doc).pathwayCount, 1);
     });
 

@@ -344,6 +344,34 @@ Note what is **not** in the file: no `portId` UUID, no semver object, no `frontI
 
 Note also what is **absent rather than null**: `typicalWatts` and `apparentVA` are unknown on this template and are therefore omitted entirely. The codec never writes an explicit `null` for an unknown value, and an absent key reads back as unknown (CR-114, G4).
 
+`submittedBy` is absent above for the same reason and by the same rule: this template has never been submitted to the community catalog. On one that has, it reads `"submittedBy": {"handle": "riley", "userId": 12345}` and nothing else changes. See §7.4.
+
+### 7.4 Submitting a device to the community catalog
+
+**v1.1, DR-033, and conditional**: canon §11.32.7 holds the surface behind a release posture that is not yet ruled. **The `submittedBy` field itself is v1** and ships ahead of the surface, because `TemplateBody` has no `unknown` passthrough and a v1 build that re-saved a v1.1 file would drop the credit silently.
+
+**Where it goes.** A second repository holds the community library as one `.rmdx` per device. **Not** `packages/rackmate_core/lib/src/catalog/`, which is Dart and stays Dart: DR-002 binds the seeded catalog to generic archetypes and AC-052 requires cited provenance for it, so a real manufacturer and model cannot land there. Canon §10.9 permits real SKUs on user-authored templates and refuses them in the seed, and this is that boundary made into two repositories.
+
+**The gesture.** A `Submit to community catalog` action in the editor's toolbar opens a **review sheet** before anything leaves the machine. The sheet shows three things: the exact JSON to be proposed, the citation, and the sign-in state. Submission is deliberate and reviewable, which matters because the failure this prevents is a template carrying a client's name in `description` becoming public. *Rejected alternative:* a prompt in the save-or-close flow. It submits more devices and it asks everyone every time, which trains the dismissal reflex and makes the accidental publication above routine rather than rare.
+
+**Signing in.** GitHub, by **OAuth authorization code with PKCE**, loopback redirect on `127.0.0.1` at an ephemeral port. **No credential is embedded in the binary**, because a native application cannot hold one: it ships in the application's code by definition, and GitHub's secret scanning revokes GitHub tokens found in public repositories. PKCE is preferred over the device flow on GitHub's own guidance, the device flow having no redirect URI and being usable to impersonate an application in a phishing attack. The app calls GitHub directly; there is no broker service. Canon §11.32.2.
+
+**The citation is a photograph of the ports**, satisfied by either an image or a URL to a manufacturer image, and it **blocks submit**. A photograph of the actual rear panel is a primary source where a product page is a secondary one that outlives the product by about a year. **Evidence never enters the `.rmdx`** (AC-057): an image is committed to the contributor's own fork under an evidence path, using the supported contents API, and renders in the pull request diff. GitHub has no documented API for attaching an image to a pull request body, so the undocumented upload endpoint is not used.
+
+**`submittedBy` is a credit, not a signature.** The application **never reads it**. It authenticates nothing, anybody may type anything into it, and the only place the claim is tested is the pull request, where GitHub has already established who is speaking. AC-042 stays as it was: no signatures, no `provenance` or `derivedFrom` chains beyond the fork join §7.3 already describes. Handle and numeric user id are **two fields because they are two facts**: a GitHub login is renameable and a freed login is claimable by somebody else, so a handle alone can come to credit the wrong person with nothing in the file having changed.
+
+### 7.5 Installing and updating the community library
+
+**v1.1, DR-034**, under the same precondition. The library arrives as **one `.rmda` per release tag**, attached as a release asset and fetched over HTTPS. Nothing is cloned: Flutter desktop has no git, and `.rmda` is already the ruled archive format (DR-015 §11.15.3) whose codec, library directory service and palette filter M4 owes regardless.
+
+**The installer bundles a snapshot**, so a first launch with no connectivity still has a library. The first-run experience then shows a **dismissible card** offering the newer release, with the device count and download size; declining costs nothing and being offline costs nothing. The application ships less often than the catalog does, so the bundled tag is nearly always behind and the card and the update notice are the same mechanism.
+
+**The update check is `releases/latest`, unauthenticated, at most once per 24 hours on launch**, and the notice is **non-modal**. Nobody opening a rack drawing wants a dialog about a parts library. Updating is always a user action and the installed tag is recorded.
+
+**Two boundaries.** The community library is a **separate library**, filterable in the palette (DR-015 §11.15.5), and is **never merged into the seed**: the four starters and every golden resolve out of the seed only, because a golden that resolves a template out of a fetched library depends on a release tag and has stopped being a golden. A test asserts it. And **a download is an import**: AC-058/D8's JSON depth and size limits apply, `contentHash` is verified before install, and a failed fetch leaves the previous library in place. The network is not a more trusted input than the disk.
+
+**This is not an application updater** (RJ-014). No code is fetched and nothing is executed; templates are inert data, as §7.3 already says. The binary still changes only by installer.
+
 ---
 
 ## 8. Editing a template that is already placed
