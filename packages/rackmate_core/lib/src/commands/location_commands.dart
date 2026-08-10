@@ -68,6 +68,72 @@ FracIndex nextLocationOrder(RackDocument doc, {Uuid? parentId}) => nextOrder(
   doc.locations.values.where((l) => l.parentId == parentId).map((l) => l.order),
 );
 
+/// A short code for a room called [name], unique within [doc].
+///
+/// **docs/07 §5.3.1 ASKS FOR THIS AND NOTHING PROVIDED IT.** The section
+/// says an unmatched room "offers 'create room' inline, pre-filled with
+/// a derived `code`", and no derivation existed anywhere in the
+/// repository: every room created so far was given a code by hand.
+/// M3-F/6 needs it because a CSV import creates rooms in bulk, where
+/// "by hand" is not available.
+///
+/// **INITIALS FOR A MULTI-WORD NAME, FIRST TWO LETTERS OTHERWISE.**
+/// `Living Room` becomes `LR`, which is the spelling the corpus uses in
+/// every worked example, and `Attic` becomes `AT`. Both cap at three
+/// characters, because the code prints in the Pull Sheet's room column
+/// and in `{ROOM_ABBR}` on a label somebody reads off a wall plate.
+///
+/// **A COLLISION TAKES A DIGIT RATHER THAN THE OTHER ROOM'S CODE.** Two
+/// rooms with one code is the defect `rackLabel`'s uniqueness rule
+/// exists to prevent one field over, and on a Pull Sheet it merges two
+/// rooms' subtotals. `LR`, then `LR2`, then `LR3`.
+///
+/// [alsoUsed] carries codes a CALLER has already allocated against this
+/// same unmutated document, which a bulk create needs and a single one
+/// does not: a CSV import creating `Living Room` and `Laundry Room` in
+/// one transaction derives `LR` for both, because neither is in [doc]
+/// yet. Same shape and same reason as `buildAddHomeRunCommand`'s
+/// `alsoUsedLabels`.
+///
+/// A SUGGESTION AND NOT A DECISION: the surface shows it in an editable
+/// box. Nothing here is authoritative about what a room is called.
+String deriveLocationCode(
+  RackDocument doc,
+  String name, {
+  Set<String> alsoUsed = const {},
+}) {
+  final words = name
+      .trim()
+      .split(RegExp(r'[\s_/-]+'))
+      .where((w) => w.isNotEmpty)
+      .toList();
+  final letters = words
+      .map((w) => w.replaceAll(RegExp('[^A-Za-z0-9]'), ''))
+      .where((w) => w.isNotEmpty)
+      .toList();
+
+  var base = switch (letters.length) {
+    0 => 'RM',
+    1 =>
+      letters.single.length >= 2
+          ? letters.single.substring(0, 2)
+          : letters.single,
+    _ => letters.take(3).map((w) => w[0]).join(),
+  }.toUpperCase();
+  if (base.isEmpty) base = 'RM';
+
+  final taken = {
+    for (final l in doc.locations.values) l.code.trim().toUpperCase(),
+    for (final c in alsoUsed) c.trim().toUpperCase(),
+  };
+  if (!taken.contains(base)) return base;
+  var n = 2;
+  while (taken.contains('$base$n')) {
+    n++;
+  }
+  return '$base$n';
+}
+
 /// Creates one [Location].
 final class AddLocationCommand extends Command {
   AddLocationCommand({

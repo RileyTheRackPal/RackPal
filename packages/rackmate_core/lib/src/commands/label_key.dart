@@ -185,4 +185,19 @@ enum LabelKey {
   // has to name the act that took those routes away.
   addPathway,
   removePathway,
+
+  // M3-F/6 (#652). RJ-012's rule, that an unmatched CSV media value
+  // "creates a new media type with a confirmation chip; it is never a
+  // rejected row", had no command behind it: nothing in `lib/` had ever
+  // written `registries.mediaTypes`, only tests. Its own key rather than
+  // a generic add, because undoing an import has to be able to say that
+  // it took a cable type back out of the project's registry and not only
+  // that it removed some drops.
+  addMediaType,
+
+  // The transaction label for a whole CSV import (docs/07 §5.3: "the
+  // whole import is one undoable `Command`"). ONE ENTRY on the undo
+  // stack for sixty drops, four rooms and two cable types, because
+  // undoing an import a row at a time is not undoing an import.
+  importCsv,
 }
