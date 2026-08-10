@@ -7,7 +7,35 @@ import 'package:rackmate_core/src/model/entity_meta.dart';
 import 'package:rackmate_core/src/units/ids.dart';
 import 'package:rackmate_core/src/units/len.dart';
 
-/// conduit|jhook|tray|plenumSpace|riser|directBury|exterior.
+/// conduit|jhook|tray|plenumSpace|riser|directBury|exterior|attic|
+/// crawlspace.
+///
+/// NINE VALUES, and the last two are DR-031 (canon §11.30) discharging
+/// DR-020 §11.19.4, which left them open and dated the question *"Owed at
+/// M3, when `Pathway` gets its editor"*.
+///
+/// THE OBJECTION WAS THAT BOTH ARE SPACES AND `Location` ALREADY MODELS
+/// SPACES. It does, and that is a different fact: `Location` models where
+/// a room IS, this models what a cable PASSES THROUGH. A run from the
+/// rack to a bedroom crosses an attic that is nobody's room and belongs
+/// to no room's subtree, and [Pathway.fromLocationId] /
+/// [Pathway.toLocationId] are ENDPOINTS, so a space in the middle has no
+/// field to live in.
+///
+/// WHAT A VALUE CARRIES IS A CONSEQUENCE, which is why these two sit
+/// beside `plenumSpace` rather than in a taxonomy: `attic` obliges
+/// temperature derating and rodent exposure, `crawlspace` obliges
+/// moisture and vermin, as `plenumSpace` obliges a jacket rating
+/// (NEC 800.154, `CODE-002`).
+///
+/// **NEITHER IS AN ERROR AND NEITHER ADDS A RULE.** The v1 catalogue
+/// stays at 28. G2 requires the document be able to represent the world
+/// as found, and in a retrofit an attic run is the ordinary case.
+///
+/// SERIALISED BY NAME, which is why DR-020 deferred the question to the
+/// day the editor lands rather than settling it earlier or later: the
+/// enum is complete before any gesture can write it, so no document
+/// records `conduit` for a run its author would have called `attic`.
 enum PathwayKind {
   conduit,
   jhook,
@@ -16,6 +44,8 @@ enum PathwayKind {
   riser,
   directBury,
   exterior,
+  attic,
+  crawlspace,
 }
 
 /// A conduit / j-hook / tray / trunk a `Link` may be routed through

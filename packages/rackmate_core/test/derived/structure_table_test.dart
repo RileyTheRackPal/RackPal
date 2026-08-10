@@ -791,6 +791,63 @@ void main() {
         'J-HOOK',
       );
     });
+
+    test('the two DR-031 kinds print, and every kind has a label', () {
+      // DR-031 (canon §11.30) discharges DR-020 §11.19.4. The switch in
+      // `pathwayKindLabel` is exhaustive, so a missing arm is a compile
+      // error rather than a test failure — what this case adds is that
+      // the two new values reach a CELL, which is the thing an installer
+      // reads, and that no label is silently the empty string.
+      final d = _Doc();
+      final lr = d.room('Attic Run', code: 'AT');
+      final o = d.outlet('AT-1', locationId: lr);
+      final pw = d.pathway('PW-AT-1');
+      d.doc.pathways[pw]!.kind = PathwayKind.attic;
+      _drop(
+        d,
+        outletId: o,
+        locationId: lr,
+        fieldLabel: 'AT-TV-1',
+        pathwayId: pw,
+      );
+
+      final row = buildStructureTable(d.doc).groups.single.rows.single;
+      expect(
+        structureCell(
+          d.doc,
+          row,
+          StructureColumnId.pathwayKind,
+          units: UnitSystem.imperial,
+        ),
+        'ATTIC',
+      );
+
+      expect(pathwayKindLabel(PathwayKind.crawlspace), 'CRAWLSPACE');
+      for (final kind in PathwayKind.values) {
+        expect(
+          pathwayKindLabel(kind),
+          isNotEmpty,
+          reason: '${kind.name} would print as a blank cell',
+        );
+      }
+    });
+
+    test('a DR-031 kind survives the byte round trip (CR-117)', () {
+      // The enum serialises BY NAME, which is the whole reason DR-020
+      // deferred this question to the day the editor lands: the two
+      // values have to be readable before any gesture can write one.
+      final d = _Doc();
+      final pw = d.pathway('PW-CS-1');
+      d.doc.pathways[pw]!.kind = PathwayKind.crawlspace;
+
+      const codec = JsonDocumentCodec();
+      final bytes = codec.write(d.doc);
+      final read = codec.read(bytes);
+      final reread = (read as Ok<RackDocument>).value;
+
+      expect(reread.pathways[pw]!.kind, PathwayKind.crawlspace);
+      expect(codec.write(reread), orderedEquals(bytes));
+    });
   });
 
   group('reading a typed cell back (M3-J/3)', () {

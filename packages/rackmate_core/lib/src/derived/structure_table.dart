@@ -649,6 +649,11 @@ String pathwayKindLabel(PathwayKind kind) => switch (kind) {
   PathwayKind.riser => 'RISER',
   PathwayKind.directBury => 'DIRECT BURY',
   PathwayKind.exterior => 'EXTERIOR',
+  // DR-031 (canon §11.30). Unabbreviated: `PLENUM` is short for a term
+  // of art nobody says in full, where these two are already the words an
+  // installer uses, and the column has the room at 72 pt.
+  PathwayKind.attic => 'ATTIC',
+  PathwayKind.crawlspace => 'CRAWLSPACE',
 };
 
 // ═════════════════════════════════════════════════════════════════════
