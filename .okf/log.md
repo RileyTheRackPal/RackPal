@@ -1,5 +1,34 @@
 # Update Log
 
+## 2026-08-10 (sixth entry)
+
+* **Creation**: [DR-038, the keystone cell is uniform across strap
+  widths](/decisions/dr-038-keystone-cell-is-uniform.md). The user took a
+  caliper to a real 3-port and a real 6-port strap: **the cells are identical**,
+  every one of them DR-028's 14.5 × 16 mm nose. DR-007 §11.7.8's change 3 asked
+  for exactly this measurement and forbade **any dimensioned rendering** until it
+  was taken.
+* **Note**: **the measurement is the authority and the argument beside it is
+  corroboration**, and the corpus records it that way round on purpose. The user
+  also reasoned that *"all cells are required to fit the 14.5x16mm nose of a
+  keystone insert anyway"*, which is true and establishes a **lower** bound only:
+  a 1-wide strap with deliberately roomier openings would satisfy it while
+  breaking every uniform-cell drawing. That is §11.27.2's lesson arriving one
+  ruling later, where a figure was wrongly elevated for having been *"stated
+  deliberately"* and the conclusion was that **provenance outranks
+  deliberateness**. Here the provenance is a physical part and a measuring tool.
+* **Note**: **naming an open measurement is what made it cheap to close.** The
+  question was written down, scoped to two named parts, and assigned a tool, so
+  discharging it cost one person a minute rather than a design session. DR-007 is
+  now three-for-three on physical reference beating a careful reading, and this
+  is the first of the three where the reference settled a question the corpus had
+  correctly identified as unanswerable rather than one it had answered wrongly.
+* **Note**: it unblocks more than the M3 editor. `T5.01 Plate, Panel & Pinout
+  Details` is **M6's** (DR-007 §11.7.7), and M6 now inherits a settled geometry
+  instead of discovering an open measurement late. **Change 2 is untouched**: the
+  cell grid is still centred in the plate opening rather than anchored to an
+  edge, and the opening's own dimensions are still an unruled *"about"*.
+
 ## 2026-08-10 (fifth entry)
 
 * **Note**: **M3-E/3 (#158) is BUILT, and the audit was worth more than the

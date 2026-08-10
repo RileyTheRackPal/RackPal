@@ -6329,6 +6329,13 @@ it must be taken before any dimensioned rendering, because a uniform-cell assump
 false is wrong on every plate drawing at once. Recorded as an open measurement rather than resolved
 by the most convenient reading (G4).
 
+> **DISCHARGED by DR-038 (§11.37) on 2026-08-10, with a caliper: the cells ARE identical across
+> strap widths.** Every cell is DR-028's 14.5 × 16 mm nose on a 1-wide and a 2-wide alike, so the
+> arithmetic above was right and *permits* turned out to be *is*. Dimensioned rendering is unblocked
+> for the M3 strap editor and for `T5.01` at M6. **Change 2 is untouched**: the grid is still centred
+> in the opening rather than anchored to an edge, and the opening's own dimensions are still an
+> *"about"*.
+
 **11.7.9 The keystone modules themselves: and the one that contradicts §11.7.2.**
 
 *Added 2026-07-28, from the parts in `docs/reference/keystone/`.*
@@ -7941,6 +7948,12 @@ false is wrong on every plate drawing at once. Supplying one cell size does not 
 reader who takes this ruling as licence to assume uniformity has made exactly the inference §11.7.8
 forbids.
 
+> **ANSWERED by DR-038 (§11.37) on 2026-08-10, by measurement rather than by inference.** The cells
+> are identical across strap widths, so this figure now describes every cell on every strap. **This
+> clause was right to refuse the inference and is not weakened by the answer agreeing with it**: the
+> reasoning available in advance (a cell must fit the nose) established only a lower bound, and a
+> roomier 1-wide opening would have satisfied it while breaking every plate drawing.
+
 **11.27.5 Stored as `Len` in nanometres (CR-001).** 14.5 mm is `14_500_000` nm and 16 mm is
 `16_000_000` nm. No floating-point millimetres, in the model or in any file format.
 
@@ -8819,6 +8832,60 @@ Plan view is already v1 by DR-029; §11.36.5's `riseAllowance` is a field DR-020
 this ruling only observes that it was never built. Roadmap §4 gains the epic's checklist and exit
 criterion, docs/12 gains §5.9, docs/13 gains **D15** for the rasteriser, and docs/15 is corrected at
 §4.1, §7 and §10.
+
+### 11.37 DR-038 · The cell is uniform across strap widths, measured; §11.7.8's change 3 is discharged
+
+**Settled by the user on 2026-08-10, with a caliper.** DR-007 §11.7.8 change 3 recorded that
+whether a cell on a 2-wide strap is the same size as a cell on a 1-wide strap was **not answerable
+from the reference**, required a physical measurement of a real 3-port and a real 6-port, and had to
+be taken **before any dimensioned rendering**, *"because a uniform-cell assumption that turns out
+false is wrong on every plate drawing at once"*. It has been taken.
+
+**11.37.1 The finding.** The cells are **identical across strap widths**. Every cell on every strap
+is DR-028's 14.5 mm × 16 mm front nose, on a 1-wide and a 2-wide alike. A strap is therefore a grid
+of uniform cells with no width-dependent term anywhere in it.
+
+**11.37.2 THE MEASUREMENT IS THE AUTHORITY, AND THE ARGUMENT BESIDE IT IS CORROBORATION.** The user
+also offered a reason: *"all cells are required to fit the 14.5x16mm nose of a keystone insert
+anyway, so them being identical makes sense."* That argument is good and it is **not what settles
+this**, and the distinction is §11.27.2's own lesson applied one ruling later. The argument
+establishes a **lower** bound: a cell must be at least nose-sized or the part does not go in. It
+does not establish an upper one, and a 1-wide strap whose openings were deliberately roomier would
+satisfy it while breaking every uniform-cell drawing. **The caliper closes the gap the reasoning
+leaves open**, which is exactly why §11.7.8 asked for a caliper and not for an argument.
+
+Recorded this way round deliberately. §11.27.2 records a figure being wrongly elevated over an
+earlier one because it had been *"stated deliberately"*, and concluded that **provenance outranks
+deliberateness**. Here the provenance is a physical part and a measuring tool, and the corpus should
+say so rather than lead with the tidier sentence.
+
+**11.37.3 What it unblocks, and it is more than the editor.** §11.7.8's prohibition was on **any
+dimensioned rendering**, which reaches further than M3:
+
+| Blocked on change 3 | Now |
+|---|---|
+| The M3 strap editor drawing a plate to scale (M3-H/2, #167) | **Unblocked.** A cell is one size, everywhere, and the editor may draw dimensioned rather than schematic. |
+| `T5.01 Plate, Panel & Pinout Details` at **M6** | **Unblocked in advance.** DR-007 §11.7.7 keeps the printing at M6, and M6 now inherits a settled geometry rather than an open measurement it would have discovered late. |
+| DR-028 §11.27.4's explicit reservation | **Discharged.** That clause warned that supplying one cell size *"does not answer"* uniformity and that a reader taking it as licence to assume uniformity had made the forbidden inference. Nobody has to infer it now. |
+
+**11.37.4 What it does NOT settle.** The **plate opening** dimensions and the position of the cell
+grid within them. §11.7.8 change 2 stands untouched: the grid is **centred in the opening, not
+anchored to an edge**, and a 1- or 2-port strap does not fill its vertical span. Uniform cells make
+the grid's *internal* geometry trivial; where that grid sits inside a Decora opening is a different
+measurement and this ruling does not claim it. The ~33.3 × 66.7 mm opening figure in §11.7.8 remains
+an *"about"* carried inside an arithmetic check, and §11.27.2 is the reason nobody should quietly
+promote it.
+
+**11.37.5 DR-007 is now three-for-three on physical reference.** §11.7.9's lesson was that *"a
+physical reference is worth more than a careful reading of a description"*, scored two-for-two on
+the single-post keystone and the separate cover plate. The caliper is the third, and it is the first
+where the reference settled a question the corpus had correctly identified as unanswerable rather
+than one it had answered wrongly. **Naming an open measurement is what made this cheap**: the
+question was written down, scoped to two parts, and assigned a tool, so discharging it took one
+person a minute rather than a design session.
+
+**11.37.6 Scope.** **No scope change.** Nothing enters or leaves v1; an open measurement inside an
+existing ruling is closed. Board #167 loses its "must not be inferred" hazard and gains a figure.
 
 ---
 

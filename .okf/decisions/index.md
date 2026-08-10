@@ -30,6 +30,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-034, the community library is fetched, never cloned](dr-034-community-library-fetch.md) - DR-033's read path; clone does not survive a platform with no git, the format was already ruled and unbuilt, and the bundled snapshot is a floor while the fetch is a ceiling.
 * [DR-036, public GPLv3 project, CC0 catalog, nothing priced](dr-036-public-gplv3-cc0-catalog.md) - reverses DR-006 and discharges DR-033's precondition; the licence names matter less than the two clauses copy-on-place forced, a catalog that is deliberately not copyleft and an output exception putting every document the app emits outside the GPL.
 * [DR-037, the Plan view's exit criterion](dr-037-plan-view-exit-criterion.md) - a stranger finds every drop from a printed set, because an author cannot test legibility to somebody else; three of its four decisions came from code that contradicted the design, including an alpha path row 9 was too narrowly worded to forbid.
+* [DR-038, the keystone cell is uniform across strap widths](dr-038-keystone-cell-is-uniform.md) - a caliper closed the measurement DR-007 forbade any dimensioned rendering without; the argument that agrees with it only ever established a lower bound, which is why the corpus leads with the measurement.
 
 # Not yet written up
 
