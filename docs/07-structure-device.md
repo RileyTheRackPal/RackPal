@@ -124,12 +124,25 @@ routing surface.** There is no map, no assignment of runs to a conduit, and
 `[Group into pathway]` is still absent from the button bar. That cap is the
 user's own, stated on 2026-08-09: *"Pathway will likely be set in the plan view,
 once a pathway is actually determined and set on site"*, which is DR-020 §11.19.1
-applied to the entity rather than to its designator. Its seven columns are the
+applied to the entity rather than to its designator. Its eight columns are the
 whole of `Pathway` minus the two location references; `KIND` and `LINE VOLTAGE`
 are what M5's `CODE-001` and `CODE-002` read, and **no rule fires here** (canon
 §5, G2, CR-017: a tier-2 rule built as a tier-1 refusal makes the product unable
 to draw a mistake). The delete is not a cascade and its tooltip states the run
 count before the click.
+
+**`DESIGNATOR` is the tab's first and primary column, ahead of `PATHWAY`**
+(M3-E/2, DR-026 §11.25.1, confirmed permanent by DR-037 §11.36.6). It is
+hand-entered: no allocator, no series, no format token, because the route is
+discovered rather than designed and a designator generated before anybody has
+opened a ceiling records a guess. Identifiers lead in every other table here, and
+the designator is what an installer matches against a label in a wall while the
+name is the context around it. It is **unique where set, project-wide**, on
+CR-113's `rackLabel` precedent, and a duplicate **springs back with a sentence**
+rather than saving: two trunks called `T1` on one Pull Sheet is the defect the
+column exists to prevent. **Null is not a collision**, so clearing one is always
+legal and any number of trunks may carry none, which is the ordinary state before
+anybody has walked the building.
 
 **The bulk entry bar is above the tabs, not inside one.** It is the same widget
 with the same state on both, which is M3-C/3's whole instruction: *"a matrix

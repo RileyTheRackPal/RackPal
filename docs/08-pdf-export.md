@@ -148,7 +148,7 @@ Rows per page    ⌊(659 − 18) / 15⌋ = 42   (≈28 with heavy notes)
 | 6 | `TO — RACK / RU / FACE` | 64 | left | `RackCond` 7 | `RK-1 / U14 / rear` |
 | 7 | `MEDIA` | 58 | left | `RackCond` 7 | `MediaTypeDef.displayName` + jacket |
 | 8 | `LEN` | 28 | **right** | `RackMono` 7.5 | `cutLength`; **italic** when derived from either estimate, `Outlet.nominalRunLength` first and then `Location.estimatedRunLengthFromRack` (DR-026 §11.25.2); `—` when null |
-| 9 | `PATHWAY` | 36 | left | `RackBody` 7 | `Pathway.designator` |
+| 9 | `PATHWAY` | 36 | left | `RackMono` 7 / `RackBody` 7 | `Pathway.designator`; **falls back to `Pathway.name`** when the trunk carries none, and the FONT says which (M3-E/2, DR-026 §11.25.1). Mono for a designator, because it is an identifier somebody wrote on a trunk; body for a name, because it is prose. `ScheduleEntry.pathwayLabelIsDesignator` is the flag. `—` when the run is in no pathway at all |
 | 10 | `SIGN-OFF` | 56 | centre | — | `☐ P` 12 · `☐ T` 12 · `☐ T` 12 · `INIT` 20 |
 
 ### 3.3 Termination Schedule: exact columns

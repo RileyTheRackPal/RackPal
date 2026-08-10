@@ -7811,6 +7811,24 @@ a cut length, printed as an estimate and never as a measurement.
 **It is provisional and the Plan view is the named trigger.** Whether a floorplan supersedes any of
 the four tiers is open, is not ruled here, and is owed when DR-018's condition resolves.
 
+**11.25.1a BUILT, at M3-E/2 (#157), 2026-08-10.** `Pathway.designator` ships exactly as ruled: a
+nullable hand-entered string, no allocator, no series, no format token. **The ruling's own cost
+finding held against the encoder**: the key is written only when present, so the checked-in fixture
+corpus is byte-unchanged and `kSchemaVersion` did not move, refuting #157's description, which had
+priced a schema bump and a fourth designator series. Uniqueness where set is enforced by
+`buildSetPathwayDesignator`, a **refusing** builder on `buildSetStructureOriginProperty`'s shape
+(M3-A/8), because the field table's `set` writes and cannot decline; **null is not a collision**, so
+clearing is always legal and any number of trunks may carry none.
+
+**Two consequences the ruling did not name, both settled at DR-037's UI/UX pass.** docs/08 §3.2
+column 9 always specified `Pathway.designator` while `ScheduleEntry.pathwayName` read `Pathway.name`
+and **said so in its own doc comment**; the column now prints the designator and **falls back to the
+name**, with `pathwayLabelIsDesignator` telling the sheet which it got so the font can distinguish an
+identifier from prose. *That fallback is not the overload §11.25.1 refused*: the refusal was about
+**storing** two facts in one field, and both are stored separately here. The Pull Sheet's pathway
+grouping and its sort follow the same resolved value, because a band headed `T1` over rows printing a
+description is a sheet contradicting itself.
+
 **11.25.3 Scope.** **No scope change to roadmap §2.** #157 gains a nullable field and no series;
 #153 ratifies behaviour that already ships. Neither adds a milestone item. M3-E/2 and M3-D/2 are
 unblocked.

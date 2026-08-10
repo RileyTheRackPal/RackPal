@@ -1,5 +1,49 @@
 # Update Log
 
+## 2026-08-10 (fourth entry)
+
+* **Note**: **M3-E/2 (#157) is BUILT**, and the task's own description was wrong
+  about what it would cost. It read *"adding one changes stored state (CR-117's
+  byte gate, `kSchemaVersion`)"* and *"introduces a fourth designator series with
+  its own allocator"*. There is no series, and a key written only when present
+  leaves the checked-in fixture corpus byte-unchanged and the schema version
+  where it was. DR-026 §11.25.1 had already found this by reading
+  `tia570Grade`'s precedent; the task text was never updated, which is
+  [re-read a task against canon](/practices/re-read-a-task-against-canon.md)
+  arriving for the third time.
+* **Note**: **`ScheduleEntry.pathwayName`'s doc comment was the honest kind of
+  workaround and it is now retired.** docs/08 §3.2 column 9 has always specified
+  `Pathway.designator`; the field did not exist, and the comment said so in as
+  many words rather than quietly printing the name and letting a reader assume.
+  **A gap that names itself costs one commit to close. A gap that reads as
+  finished costs a milestone.**
+* **Note**: **the fallback is not the overload DR-026 refused, and the two look
+  alike.** That ruling refused to STORE a designator in `name`, because two facts
+  in one field cannot be told apart afterwards. Both are stored separately; only
+  the choice of which to PRINT happens at print time, and
+  `pathwayLabelIsDesignator` records which it was, so the sheet can set the font
+  by kind. Without a fallback every existing project loses that column to em
+  rules the day the field ships, since no pathway anywhere carries a designator
+  yet.
+* **Note**: **grouping and sorting were moved onto the printed value in the same
+  commit**, because a band headed `T1` over rows reading "attic run to the
+  garage" is a sheet disagreeing with itself, which is the shape
+  [assert the artifact, not the
+  mechanism](/practices/assert-the-artifact-not-the-mechanism.md) collects and
+  which this corpus has shipped twice from one number computed two ways.
+* **Note**: **a widget test was pinned to column order and silently changed
+  meaning.** *"the name commits on losing focus"* drove
+  `find.byType(TextField).first`, which meant the NAME cell only for as long as
+  `name` was the first column. Putting `DESIGNATOR` in front of it made the
+  assertion type into a different cell, and it failed for the right reason. The
+  replacement counts text columns out of `PathwayColumnId.values`, so the next
+  column does not break it a third time. **A positional finder is an assertion
+  about layout wearing an assertion about behaviour.**
+* **Note**: **the analyzer ratchet did its job on new code.** Four fresh infos in
+  the new test files would have taken the count from 173 to 177. Fixed rather
+  than pinned: raising the baseline requires saying why in the commit message,
+  and *"my new tests are untidy"* is not a why.
+
 ## 2026-08-10 (third entry)
 
 * **Note**: **two abandoned worktrees were diffed against main and both were
