@@ -8151,10 +8151,23 @@ read with this section beside it. **M3-E/1 is unblocked.**
 and `Pathway.name` is required. This supplies that, the way DR-028 supplied the figure DR-007 left
 open.
 
-**11.31.1 The ruling.** An entry surface meeting a pathway-only medium creates one `Pathway` per
-item, **named from the location and the medium as the user typed them**: `Living Room: 1x ENT`
-produces a pathway named **`Living Room ENT`**. `kind` takes its `conduit` default and
-**`designator` stays null**.
+**11.31.1 The ruling.** An entry surface meeting a pathway-only medium creates a `Pathway`
+**per unit of the count**, each **named from the location and the medium as the user typed them**:
+`Living Room: 1x ENT` produces a pathway named **`Living Room ENT`**. `kind` takes its `conduit`
+default and **`designator` stays null**.
+
+**The count is real and is not a quantity field.** `2x ENT` is two smurf tubes, and a `Pathway` has
+no quantity: two runs are two entities, exactly as two Cat6 drops are two `Link`s. **Where the count
+exceeds one the names carry a 1-based index** (`Living Room ENT 1`, `Living Room ENT 2`), for
+§11.31.3's reason applied within a single line rather than across two rooms: identical `PATH` cells
+defeat the column. **The index is part of a description and is not a series** — it says *"the second
+ENT to the Living Room"* and it restarts per line, where `PW-LR-1` would be a document-wide
+allocation. A count of one takes no index, because there is nothing to distinguish it from.
+
+*This paragraph corrects this ruling's own first draft*, which said *"one `Pathway` per item"* and
+was written from a worked example whose count was one. It is corrected before any code reads it,
+and the wrong phrasing is quoted here rather than replaced silently, which is the same discipline
+§11.27.2 applied to DR-028's withdrawn figure.
 
 **11.31.2 Why a DESCRIPTION and not a derived identifier, which is the whole ruling.** The tempting
 answer is `PW-LR-1`: it matches docs/07 §4's wireframe, it sorts, and it looks like every other
