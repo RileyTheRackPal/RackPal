@@ -427,6 +427,51 @@ MediaTypeDef? resolveMediaToken(Registries registries, String token) {
   return null;
 }
 
+/// A signal-family token → a registry entry, or null.
+///
+/// **DR-025 §11.24.3's chain, verbatim**: `shortTag`, then the id's own
+/// tail, then `displayName`, which is [resolveMediaToken]'s widest-last
+/// shape. `hbt`, `hdbaset` and `avoip` all land.
+///
+/// **AN UNRESOLVED VALUE ANSWERS NULL AND NOTHING CREATES A FAMILY**,
+/// which is the OPPOSITE of RJ-012's rule for media and is already
+/// ruled: docs/07 §3 says media types are user-extensible in v1 while
+/// "signal families and connector types remain catalog-updated". A
+/// family invented from a typo would have no domain, no colour, no dash
+/// and no `acceptedFamilies`, which is a run the DRC and the palette
+/// both cannot reason about.
+///
+/// **`aliases` IS NOT IN THE CHAIN, AND DR-025 IS WHY.** The ruling
+/// names three steps and `SignalFamilyDef.aliases` is not among them.
+/// That reads like an oversight next to [resolveMediaToken], where
+/// aliases are the authority, and it is not: media aliases are the
+/// user-extensible surface RJ-009 governs, and a signal family's are
+/// catalog data serving the schematic. Widening this chain is a ruling.
+///
+/// Placed beside [resolveMediaToken] because two callers need it and
+/// neither owns it: the CSV `signal` column (M3-F/6) and `@signal=`
+/// (#587, unbuilt). Two copies would be two chances to disagree about
+/// what `hbt` means.
+SignalFamilyDef? resolveSignalFamilyToken(
+  Registries registries,
+  String token,
+) {
+  final want = normaliseMediaToken(token);
+  if (want.isEmpty) return null;
+
+  for (final d in registries.signalFamilies.values) {
+    if (d.shortTag case final t? when normaliseMediaToken(t) == want) return d;
+  }
+  for (final d in registries.signalFamilies.values) {
+    final tail = d.id.v.contains('.') ? d.id.v.split('.').last : d.id.v;
+    if (normaliseMediaToken(tail) == want) return d;
+  }
+  for (final d in registries.signalFamilies.values) {
+    if (normaliseMediaToken(d.displayName) == want) return d;
+  }
+  return null;
+}
+
 /// DR-023 §11.22.1's chain, and the only place it is written down in
 /// code. Null means "nothing in the chain had anything", which is a
 /// refusal and never a default.
