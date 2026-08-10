@@ -1,5 +1,38 @@
 # Update Log
 
+## 2026-08-10 (seventh entry)
+
+* **Creation**: [Check a decomposition for holes](/practices/check-a-decomposition-for-holes.md).
+  M3-F looked healthy at pick-up: four tasks, one Done, each description carrying
+  its constraints. **Nothing in the repository read a CSV file.** M3-F/2 could not
+  show a mapping sheet for headers nothing had read and M3-F/3 could not confirm
+  counts nothing computed. The breakdown was written from the roadmap's RISK
+  register, which is complete about how the feature goes wrong and silent about
+  how it works, because that part was never in dispute.
+* **Note**: **the same audit produced a gap and a scope question, and the scope
+  list is what told them apart.** The reader is a decomposition gap (#651, #652)
+  on canon §11.24.7's own test for #587: docs/07 §5 promised it and roadmap §2
+  already carried the feature, so no task was ever cut. Export CSV is promised by
+  exactly one derived priority-3 sentence and by no entry on the scope list, so it
+  went to the user as **RULING NEEDED** (#653) rather than into the same batch.
+* **Note**: `readCsv` **diagnoses a wrong delimiter rather than sniffing one**. A
+  sniff counts `,` against `;` and tab, and the file it gets wrong is the one with
+  semicolons inside its notes. A header row parsing as a single field containing a
+  `;` or a tab is refused with a sentence naming what was found. RJ-004 capped this
+  feature's tail and a counter is exactly the kind of thing that grows one
+  plausible case at a time.
+* **Note**: **`Conduit` is a cable and a pathway, and both readings are correct.**
+  `matchCsvHeader('conduit')` is `CsvColumnTarget.pathway`; `seed_media_types.dart`
+  seeds `conduit` as an alias of `media.conduit_ent`. docs/07 §5's numeric test
+  separates them, and because wide detection needs TWO cable columns an ambiguous
+  one can never flip a long file by itself. Recorded because the collision is
+  invisible from either file alone.
+* **Note**: a CRLF surviving into a quoted cell would have broken §5.3's dedup
+  invisibly, since it compares `fieldLabel` and notes as strings and a row would
+  differ from itself across two exports of one sheet. Embedded line endings
+  normalise, and [G4](/invariants/g4-unknowns-are-counted.md)'s counting rule
+  covers the blank separator lines the reader skips.
+
 ## 2026-08-10 (sixth entry)
 
 * **Creation**: [DR-038, the keystone cell is uniform across strap
