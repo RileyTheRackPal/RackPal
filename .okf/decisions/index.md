@@ -23,14 +23,17 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` �
 * [DR-028, the keystone cell is the front nose](dr-028-keystone-cell-is-the-front-nose.md) - 14.5 x 16 mm; its own first draft was wrong and overruled a figure that was right, so an unruled figure with provenance outranks a ruled figure without one.
 * [DR-029, the Plan view ships in v1](dr-029-plan-view-in-v1.md) - the first amendment that makes v1 larger; before M6, because a plan sheet arriving later would make M6's criterion run twice.
 * [DR-030, the integrator's logo ships in v1](dr-030-integrator-logo-in-v1.md) - reverses RJ-017's last clause on two fallen grounds; the third stands, so the logo goes beside the text block and never instead of it, and the opacity does not come back.
+* [DR-033, a device is submitted as a pull request the app opens](dr-033-community-catalog-submission.md) - discharges §10.9's unruled recommendation; two clauses were corrected against verification rather than taken as asked, because Google OAuth cannot open a pull request and no desktop binary can hold a secret.
+* [DR-034, the community library is fetched, never cloned](dr-034-community-library-fetch.md) - DR-033's read path; clone does not survive a platform with no git, the format was already ruled and unbuilt, and the bundled snapshot is a floor while the fetch is a ceiling.
 
 # Not yet written up
 
 DR-002 (residential primary), DR-003 (device builder in v1), DR-004 (multi-sheet
 never), DR-005 (schematic is a client deliverable), DR-007 (keystone geometry
 ships in M3), DR-016 (editable rack presets), DR-017 (`dart format` is a gate),
-DR-018 (the Plan view moves to v1.1), DR-019 (the plan container sniffs) and
-DR-020 (a plan may not predict a route). All are in
+DR-018 (the Plan view moves to v1.1), DR-019 (the plan container sniffs),
+DR-020 (a plan may not predict a route), DR-031 (`PathwayKind` gains two values)
+and DR-032 (a pathway-only medium names its `Pathway`). All are in
 `docs/canonical-decisions.md` §11; concepts here are pending. A missing link is
 not-yet-written knowledge, not an error.
 

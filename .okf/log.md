@@ -2,6 +2,35 @@
 
 ## 2026-08-09
 
+* **Creation**: [DR-033, a device is submitted as a pull request the app
+  opens](/decisions/dr-033-community-catalog-submission.md). It discharges
+  §10.9's recommendation, which had sat unruled since 2026-08-03. **Two of its
+  clauses were corrected against verification rather than taken as asked**, and
+  that is the entry's real content: Google OAuth cannot open a pull request,
+  because a pull request is an operation against a GitHub identity; and the
+  embedded *"restricted app token"* proposed to avoid a broker service cannot
+  exist, because GitHub documents that a public client ships its secret in the
+  application's code and their secret scanning revokes GitHub tokens found in
+  public repositories. **The user's actual requirement, a direct REST call with
+  no server, survived both corrections intact** as authorization code with PKCE,
+  which needs no secret at all. The lesson is the one
+  [verify by reading](/practices/re-read-a-task-against-canon.md) keeps
+  teaching: the request was sound and one mechanism in it was not, and asking
+  the vendor's documentation cost one fetch.
+* **Creation**: [DR-034, the community library is fetched, never
+  cloned](/decisions/dr-034-community-library-fetch.md), DR-033's read path.
+  **The corpus already held the answer**: DR-015's `.rmda` is the library pack
+  and M4 already owes its codec, so a community release *is* one and HTTPS
+  instead of email changes only the transport. Cloning would have bought
+  libgit2, a native dependency on both platforms, to fetch some JSON. Its
+  determinism clause is the one to watch: merging the fetched library into the
+  seed's resolution scope is the obvious shortcut and would make every golden
+  depend on a release tag, invisibly, until one moved under somebody.
+* **Note**: **§12.15 corrects §12.14 about an hour after it was written**, the
+  same discipline DR-032 applied to its own first draft. §12.14 recorded the
+  community catalog as a third contemplated network use under §10.8 and named
+  only the submission half; it has two directions, and the read half arrived in
+  the next ruling.
 * **Note**: **this entry is a catch-up, and the gap is the finding.** The bundle
   last moved on 2026-08-08 while six rulings and a whole issue landed after it.
   `getting-started.md` says this bundle is maintained as changes land; it was
