@@ -63,9 +63,14 @@ class DropEntryLoop extends StatefulWidget {
     required this.actions,
     required this.currentDoc,
     super.key,
+    this.structureBodyId,
   });
 
   final DropEntryActions actions;
+
+  /// The Structure body the editor's picker is on (M3-E/3, #158). Null on
+  /// a project with one body, where there is nothing to disambiguate.
+  final Uuid? structureBodyId;
 
   /// Read on every build. See the class doc.
   final RackDocument Function() currentDoc;
@@ -81,9 +86,15 @@ class _DropEntryLoopState extends State<DropEntryLoop> {
   Widget build(BuildContext context) => DropEntryPanel(
     doc: widget.currentDoc(),
     recent: _recent,
+    structureBodyId: widget.structureBodyId,
     actions: DropEntryActions(
-      onCommit: (line) {
-        final committed = widget.actions.onCommit(line);
+      onCommit: (line, {structureBodyId}) {
+        // The LOOP's body wins over anything a caller passed, because the
+        // loop is the thing sitting under the picker.
+        final committed = widget.actions.onCommit(
+          line,
+          structureBodyId: structureBodyId ?? widget.structureBodyId,
+        );
         // The tail reports what the APP did, not what the preview
         // predicted, for the same reason `onCommit` takes the line.
         if (committed is DropLinePlanReady) {
@@ -127,7 +138,16 @@ final class DropEntryActions {
   /// (`planDropLine` mutates nothing) and gives the same labels, because
   /// nothing changed between the last keystroke and `Enter` — a property
   /// `drop_line_planner_test.dart` asserts directly rather than assumes.
-  final DropLinePlan Function(DropLineParsed line) onCommit;
+  ///
+  /// `structureBodyId` is the body the editor's picker is on (M3-E/3,
+  /// #158). Passed PER COMMIT rather than captured when the action is
+  /// built, because the app builds this once as the editor opens and the
+  /// picker moves afterwards.
+  final DropLinePlan Function(
+    DropLineParsed line, {
+    Uuid? structureBodyId,
+  })
+  onCommit;
 
   /// The room the line named does not exist. Creating it is the user's
   /// call, taken with one keystroke, and never this panel's.
@@ -144,10 +164,14 @@ class DropEntryPanel extends StatefulWidget {
     required this.actions,
     super.key,
     this.recent = const [],
+    this.structureBodyId,
   });
 
   final RackDocument doc;
   final DropEntryActions actions;
+
+  /// The Structure body the editor's picker is on (M3-E/3, #158).
+  final Uuid? structureBodyId;
 
   /// What the last few committed lines produced, newest first. Shown so
   /// the loop has a visible tail: a person entering sixty drops needs to
@@ -226,7 +250,10 @@ class _DropEntryPanelState extends State<DropEntryPanel> {
   void _submit() {
     switch (_plan) {
       case DropLinePlanReady(:final commands) when commands.isNotEmpty:
-        final committed = widget.actions.onCommit(_parsed!);
+        final committed = widget.actions.onCommit(
+          _parsed!,
+          structureBodyId: widget.structureBodyId,
+        );
         // THE APP'S ANSWER WINS over the preview's, including when it
         // disagrees. It cannot today, but a panel that showed its own
         // guess after the fact would hide the day it starts to.

@@ -51,7 +51,7 @@ String initialsFor(String name) {
 DropEntryActions buildDropEntryActions({
   required DocumentController controller,
 }) => DropEntryActions(
-  onCommit: (line) {
+  onCommit: (line, {structureBodyId}) {
     // PLANNED HERE, NOT IN THE PANEL, against this controller's clock and
     // actor. The panel plans on every keystroke to draw a preview, and
     // those values reach `EntityMeta.createdAt` and `.updatedBy` on every
@@ -65,6 +65,9 @@ DropEntryActions buildDropEntryActions({
       line: line,
       now: controller.clock.nowUtc(),
       actor: controller.actor,
+      // The editor's picker, forwarded (M3-E/3, #158). Null on a
+      // one-panel project, where there is nothing to disambiguate.
+      structureBodyId: structureBodyId,
     );
     if (plan is! DropLinePlanReady) return plan;
 

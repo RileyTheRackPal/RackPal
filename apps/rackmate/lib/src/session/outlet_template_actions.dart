@@ -14,6 +14,7 @@ import 'package:rackmate_ui/rackmate_ui.dart';
 /// somebody who is looking at the answer.
 OutletTemplateActions buildOutletTemplateActions({
   required DocumentController controller,
+  Uuid? structureBodyId,
 }) => OutletTemplateActions(
   onCommit: (template, locationId) {
     // PLANNED HERE, NOT IN THE PICKER, against this controller's clock
@@ -32,6 +33,12 @@ OutletTemplateActions buildOutletTemplateActions({
       locationId: locationId,
       now: controller.clock.nowUtc(),
       actor: controller.actor,
+      // The Structure body the editor's picker was on when the button
+      // was pressed (M3-E/3, #158). Captured at OPEN rather than read
+      // live, which is right here and wrong for the drop loop: this
+      // dialog is modal over the editor, so the picker cannot move
+      // while it is up.
+      structureBodyId: structureBodyId,
     );
     if (plan is! OutletTemplatePlanReady) return plan;
 

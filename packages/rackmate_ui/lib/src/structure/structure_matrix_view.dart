@@ -41,10 +41,19 @@ final class StructureMatrixEdit {
     required this.locationId,
     required this.media,
     required this.targetCount,
+    this.structureBodyId,
   });
 
   final Uuid locationId;
   final MediaTypeId media;
+
+  /// Which Structure body the drops belong to (M3-E/3, #158).
+  ///
+  /// ON THE EDIT AND NOT ON THE ACTION, because the app builds the action
+  /// once when the editor opens and the picker changes afterwards. A body
+  /// captured at construction is the selection that existed before
+  /// anybody made one.
+  final Uuid? structureBodyId;
 
   /// What the cell should say when this is done — NOT how much to add.
   /// See the file header.
@@ -123,6 +132,7 @@ class StructureMatrixView extends StatelessWidget {
                     row: matrix.rows[index],
                     columns: matrix.columns,
                     onSetCount: onSetCount,
+                    structureBodyId: structureBodyId,
                   ),
                 ),
               ),
@@ -263,11 +273,15 @@ class _MatrixRow extends StatelessWidget {
     required this.columns,
     required this.onSetCount,
     super.key,
+    this.structureBodyId,
   });
 
   final StructureMatrixRow row;
   final List<MediaTypeId> columns;
   final String? Function(StructureMatrixEdit edit) onSetCount;
+
+  /// Passed down to each cell so its edits name a body (#158).
+  final Uuid? structureBodyId;
 
   @override
   Widget build(BuildContext context) {
@@ -335,6 +349,7 @@ class _MatrixRow extends StatelessWidget {
                       media: columns[c],
                       count: row.counts[c],
                       onSetCount: onSetCount,
+                      structureBodyId: structureBodyId,
                     ),
                     null => _Number(row.counts[c], color: foreground),
                   },
@@ -453,10 +468,15 @@ class _CountCell extends StatefulWidget {
     required this.media,
     required this.count,
     required this.onSetCount,
+    this.structureBodyId,
   });
 
   final Uuid locationId;
   final MediaTypeId media;
+
+  /// Rides onto every `StructureMatrixEdit` this cell emits (#158).
+  final Uuid? structureBodyId;
+
   final int count;
   final String? Function(StructureMatrixEdit edit) onSetCount;
 
@@ -515,6 +535,7 @@ class _CountCellState extends State<_CountCell> {
         StructureMatrixEdit(
           locationId: widget.locationId,
           media: widget.media,
+          structureBodyId: widget.structureBodyId,
           // -1 CAN ONLY REFUSE, and the refusal it produces is the one
           // sentence a person needs. Refusing here instead would put a
           // second copy of that sentence in the widget layer.
@@ -528,6 +549,7 @@ class _CountCellState extends State<_CountCell> {
       StructureMatrixEdit(
         locationId: widget.locationId,
         media: widget.media,
+        structureBodyId: widget.structureBodyId,
         targetCount: target,
       ),
     );

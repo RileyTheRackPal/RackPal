@@ -64,11 +64,15 @@ final class _Harness {
   final RackDocument doc;
   int outletPickerOpened = 0;
 
+  /// The Structure body the last `Add outlet` was opened on (#158).
+  Uuid? outletPickerBody;
+
   StructureEditorActions get actions => StructureEditorActions(
     dropEntry: DropEntryActions(
-      onCommit: (line) {
+      onCommit: (line, {structureBodyId}) {
         final plan = planDropLine(
           doc: doc,
+          structureBodyId: structureBodyId,
           line: line,
           now: _now,
           actor: 'committer',
@@ -88,7 +92,13 @@ final class _Harness {
       ).apply(doc),
       onCreateStructure: () {},
     ),
-    onAddOutlet: () => outletPickerOpened++,
+    // The harness records the BODY it was handed, not just the click,
+    // because #158's whole point is that the picker's selection reaches
+    // the gesture.
+    onAddOutlet: (bodyId) {
+      outletPickerOpened++;
+      outletPickerBody = bodyId;
+    },
     onEdit: edit,
     onSetCount: setCount,
     onEditPathways: editPathways,
@@ -191,6 +201,7 @@ final class _Harness {
       locationId: edit.locationId,
       media: edit.media,
       targetCount: edit.targetCount,
+      structureBodyId: edit.structureBodyId,
       now: _now,
       actor: 'gridder',
     );
@@ -295,6 +306,21 @@ final class _Harness {
     }
     return null;
   }
+}
+
+/// The drop count the STATUS BAR is showing, which is the table's own
+/// count for the body currently selected.
+///
+/// READ OFF THE SCREEN rather than recomputed, because the question is
+/// what the editor is showing and not what a builder would return if
+/// asked the same thing twice.
+int _visibleDropCount(WidgetTester tester) {
+  final text = tester
+      .widgetList<Text>(find.byType(Text))
+      .map((t) => t.data)
+      .whereType<String>()
+      .firstWhere((d) => RegExp(r'^\d+ drops · ').hasMatch(d));
+  return int.parse(RegExp(r'^(\d+) drops').firstMatch(text)!.group(1)!);
 }
 
 Future<void> _pump(WidgetTester tester, _Harness h) async {
@@ -1404,6 +1430,91 @@ void main() {
       expect(find.text(kNoRoomsHeadline), findsNothing);
       expect(h.doc.links, hasLength(2));
       expect(_shows(tester, _cell(h, _roomId(h, 'Attic'), _cat6)), '2');
+    });
+  });
+
+  group('TWO STRUCTURE BODIES (M3-E/3, #158, CR-113)', () {
+    /// Adds a second panel to an existing harness document.
+    Uuid addSecondPanel(_Harness h) {
+      final command = AddStructureCommand(
+        title: 'Guest House Panel',
+        designator: 'STR-2',
+        now: _now,
+        actor: 't',
+      )..apply(h.doc);
+      return command.bodyId;
+    }
+
+    testWidgets('no picker on a ONE-panel project', (tester) async {
+      // The ordinary case gains no chrome. A dropdown with one entry is a
+      // control that cannot be used and still has to be read past.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      expect(find.byKey(kStructureBodyPickerKey), findsNothing);
+      // The header still NAMES the body in its subtitle; what is absent
+      // is the control. Asserting the text was absent would have been a
+      // claim about the wrong widget, and it failed for that reason.
+      expect(find.text('STR-1 · Media Panel'), findsOneWidget);
+    });
+
+    testWidgets('a picker appears the moment there are two', (tester) async {
+      final h = _Harness(_project());
+      addSecondPanel(h);
+      await _pump(tester, h);
+
+      expect(find.byKey(kStructureBodyPickerKey), findsOneWidget);
+      // Opens on the FIRST body by designator order, never on "all".
+      expect(find.text('STR-1 · Media Panel'), findsWidgets);
+    });
+
+    testWidgets("switching the picker changes which body's drops show", (
+      tester,
+    ) async {
+      // DRIVEN THROUGH THE CONTROL rather than by calling the builder
+      // with two different ids. The builder was always able to filter;
+      // what did not exist was any way for a person to ask it to, and a
+      // test that calls it directly would pass on the tree as it was
+      // before this task.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+      expect(h.doc.links, hasLength(2));
+
+      addSecondPanel(h);
+      await _pump(tester, h);
+      // STR-1 is selected, so its two drops are on screen.
+      expect(find.text(kNoRoomsHeadline), findsNothing);
+      expect(_visibleDropCount(tester), 2);
+
+      await tester.tap(find.byKey(kStructureBodyPickerKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('STR-2 · Guest House Panel').last);
+      await tester.pumpAndSettle();
+
+      // STR-2 has no drops of its own. Before the picker existed the
+      // table merged both bodies and would still have shown two.
+      expect(_visibleDropCount(tester), 0);
+    });
+
+    testWidgets('Add outlet opens on the body the picker is showing', (
+      tester,
+    ) async {
+      // THE ASSERTION THAT MATTERS. Before #158 this button reached a
+      // planner that refused outright on a two-panel project, so the
+      // gesture was dead. Now it carries the selection.
+      final h = _Harness(_project());
+      addSecondPanel(h);
+      await _pump(tester, h);
+
+      await tester.tap(find.text('Add outlet'));
+      await tester.pumpAndSettle();
+
+      expect(h.outletPickerOpened, 1);
+      expect(
+        h.outletPickerBody,
+        defaultStructureBody(h.doc)!.id,
+        reason: 'the picker opened on STR-1, so the outlet goes to STR-1',
+      );
     });
   });
 }

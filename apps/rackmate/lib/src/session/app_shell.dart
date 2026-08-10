@@ -721,7 +721,7 @@ final class AppShellState extends State<AppShell>
       currentDoc: () => session.document,
       actions: StructureEditorActions(
         dropEntry: buildDropEntryActions(controller: session.controller),
-        onAddOutlet: () => unawaited(_openOutletPicker()),
+        onAddOutlet: (bodyId) => unawaited(_openOutletPicker(bodyId)),
         onEdit: buildStructureEditAction(controller: session.controller),
         onSetCount: buildStructureMatrixAction(
           controller: session.controller,
@@ -747,12 +747,15 @@ final class AppShellState extends State<AppShell>
   /// `currentDoc` is a CALLBACK and not a value, for the same reason
   /// again: an outlet placed by the first click changes the document the
   /// second click must plan against.
-  Future<void> _openOutletPicker() async {
+  Future<void> _openOutletPicker([Uuid? structureBodyId]) async {
     final session = _services.session;
     await showOutletTemplatePicker(
       context,
       currentDoc: () => session.document,
-      actions: buildOutletTemplateActions(controller: session.controller),
+      actions: buildOutletTemplateActions(
+        controller: session.controller,
+        structureBodyId: structureBodyId,
+      ),
     );
   }
 

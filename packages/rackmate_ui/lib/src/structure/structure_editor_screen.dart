@@ -87,8 +87,9 @@ final class StructureEditorActions {
   /// commands.
   final DropEntryActions dropEntry;
 
-  /// Opens M3-C/5's outlet-template picker.
-  final VoidCallback onAddOutlet;
+  /// Opens M3-C/5's outlet-template picker, on the Structure body the
+  /// editor's picker is currently showing (M3-E/3, #158).
+  final void Function(Uuid? structureBodyId) onAddOutlet;
 
   /// Applies cell edits as ONE undo step, and returns a refusal sentence
   /// or null.
@@ -222,8 +223,15 @@ class StructureEditorScreen extends StatefulWidget {
   final StructureEditorActions actions;
   final RackDocument Function() currentDoc;
 
-  /// Which body to show, or every one of them when null (§7 allows more
-  /// than one Structure device).
+  /// The body to OPEN on. Null means "decide from the document", which
+  /// resolves to `defaultStructureBody` and never to "all of them"
+  /// (M3-E/3, #158).
+  ///
+  /// IT USED TO MEAN "SHOW EVERY ONE OF THEM", and the app passed null
+  /// forever, so a project with two panels rendered both sets of drops in
+  /// one undifferentiated table while the header said *"2 Structure
+  /// devices"*. CR-113 ships multiple instances; merging them is not what
+  /// it ships.
   final Uuid? structureBodyId;
 
   /// Null when the editor is not in a route it can pop — the state a
@@ -250,6 +258,31 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
   Uuid? _roomFilter;
   MediaTypeId? _mediaFilter;
   bool _unconnectedOnly = false;
+
+  /// The body the picker has chosen, or null before anybody has chosen.
+  ///
+  /// RESOLVED PER BUILD RATHER THAN LATCHED IN `initState`, by
+  /// [_bodyIdFor]. A latched id goes stale the moment the chosen panel is
+  /// deleted from another surface, and a table filtered to a body that no
+  /// longer exists shows nothing at all, which reads exactly like a
+  /// project with no drops.
+  Uuid? _pickedBodyId;
+
+  /// Which body this build shows: the picked one if it still exists, else
+  /// the one the editor was opened on, else the document's default.
+  ///
+  /// NEVER NULL WHEN THE PROJECT HAS A BODY, which is the whole change.
+  /// `buildStructureTable`'s null means "do not filter", and that is a
+  /// fine contract for a caller that wants every row; it is the wrong
+  /// thing for an editor, because two panels merged into one table is the
+  /// failure CR-113's milestone exists to prevent.
+  Uuid? _bodyIdFor(RackDocument doc) {
+    final picked = _pickedBodyId;
+    if (picked != null && doc.structures.containsKey(picked)) return picked;
+    final opened = widget.structureBodyId;
+    if (opened != null && doc.structures.containsKey(opened)) return opened;
+    return defaultStructureBody(doc)?.id;
+  }
 
   /// The last refusal, held until the next edit succeeds.
   ///
@@ -279,10 +312,7 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final doc = widget.currentDoc();
-    final table = buildStructureTable(
-      doc,
-      structureBodyId: widget.structureBodyId,
-    );
+    final table = buildStructureTable(doc, structureBodyId: _bodyIdFor(doc));
     final visible = _filter(doc, table);
 
     // THE TWO GRID BINDINGS WRAP THE WHOLE EDITOR AND NOT THE TABLE TAB,
@@ -327,9 +357,10 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
       children: [
         _EditorHeader(
           doc: doc,
-          structureBodyId: widget.structureBodyId,
+          structureBodyId: _bodyIdFor(doc),
           table: table,
           onDone: widget.onDone,
+          onBody: (id) => setState(() => _pickedBodyId = id),
         ),
         _TabStrip(
           tab: _tab,
@@ -359,6 +390,7 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
                       child: DropEntryLoop(
                         actions: _loopActions(),
                         currentDoc: widget.currentDoc,
+                        structureBodyId: _bodyIdFor(doc),
                       ),
                     ),
                     Expanded(
@@ -407,7 +439,7 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
               ? table.dropCount - _shownCount(visible)
               : 0,
           onAddDrop: null,
-          onAddOutlet: widget.actions.onAddOutlet,
+          onAddOutlet: () => widget.actions.onAddOutlet(_bodyIdFor(doc)),
         ),
       ],
     ),
@@ -665,8 +697,11 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
   /// other, including the refusing one: a refusal can still have created
   /// a room or a Structure body on the way to refusing.
   DropEntryActions _loopActions() => DropEntryActions(
-    onCommit: (line) {
-      final committed = widget.actions.dropEntry.onCommit(line);
+    onCommit: (line, {structureBodyId}) {
+      final committed = widget.actions.dropEntry.onCommit(
+        line,
+        structureBodyId: structureBodyId,
+      );
       setState(() {});
       return committed;
     },
@@ -732,6 +767,7 @@ class _EditorHeader extends StatelessWidget {
     required this.structureBodyId,
     required this.table,
     required this.onDone,
+    required this.onBody,
   });
 
   final RackDocument doc;
@@ -739,18 +775,31 @@ class _EditorHeader extends StatelessWidget {
   final StructureTable table;
   final VoidCallback? onDone;
 
+  /// Choose which body the editor is working on (M3-E/3, #158).
+  final ValueChanged<Uuid> onBody;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final body = structureBodyId == null
-        ? (doc.structures.length == 1 ? doc.structures.values.first : null)
-        : doc.structures[structureBodyId];
+    final body = doc.structures[structureBodyId];
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
       child: Row(
         children: [
           Text('Structure', style: theme.textTheme.titleMedium),
           const SizedBox(width: 12),
+          // THE PICKER APPEARS ONLY WHEN THERE IS SOMETHING TO PICK. A
+          // one-panel project is the ordinary case and gains no chrome;
+          // a dropdown with one entry is a control that cannot be used
+          // and still has to be read past.
+          if (doc.structures.length > 1) ...[
+            _StructureBodyPicker(
+              doc: doc,
+              selectedId: structureBodyId,
+              onBody: onBody,
+            ),
+            const SizedBox(width: 12),
+          ],
           Expanded(
             child: Text(
               _subtitle(body, doc),
@@ -785,7 +834,67 @@ class _EditorHeader extends StatelessWidget {
       return title.isEmpty ? designator : '$designator · $title';
     }
     if (doc.structures.isEmpty) return 'No Structure device yet';
+    // UNREACHABLE FROM THE EDITOR AS OF #158, because `_bodyIdFor` always
+    // resolves a body when the project holds one. Kept because this
+    // widget is constructible with any id, including a stale one, and a
+    // header that renders blank on a deleted panel is worse than one that
+    // says how many exist.
     return '${doc.structures.length} Structure devices';
+  }
+}
+
+/// The Structure-body picker, so a test can reach it without competing
+/// with the drop table's own dropdowns.
+///
+/// EVERY EDITABLE CELL ON BOTH TABS IS A REAL CONTROL, which is what buys
+/// the tab order, so `find.byType` stops naming one thing the moment the
+/// table has a row in it. Same reason `_kindCell` in the Pathways tests
+/// indexes rather than searches by text.
+const Key kStructureBodyPickerKey = Key('structure-body-picker');
+
+/// `[ STR-1 · Media Panel ▾ ]` — which Structure body the editor edits.
+///
+/// ONLY BUILT WHEN THE PROJECT HAS MORE THAN ONE (see [_EditorHeader]).
+///
+/// THE LIST IS `structureBodiesInOrder`, not `doc.structures.values`. A
+/// map's iteration order is insertion order, so a picker built from it
+/// would reshuffle when a document was reloaded from disk, and the entry
+/// a person reached for by position would move under them.
+class _StructureBodyPicker extends StatelessWidget {
+  const _StructureBodyPicker({
+    required this.doc,
+    required this.selectedId,
+    required this.onBody,
+  });
+
+  final RackDocument doc;
+  final Uuid? selectedId;
+  final ValueChanged<Uuid> onBody;
+
+  @override
+  Widget build(BuildContext context) {
+    final bodies = structureBodiesInOrder(doc);
+    return DropdownButton<Uuid>(
+      key: kStructureBodyPickerKey,
+      value: selectedId,
+      focusColor: Colors.transparent,
+      onChanged: (id) {
+        if (id != null) onBody(id);
+      },
+      items: [
+        for (final body in bodies)
+          DropdownMenuItem<Uuid>(value: body.id, child: Text(_label(body))),
+      ],
+    );
+  }
+
+  /// `STR-1 · Media Panel`, on `_EditorHeader._subtitle`'s rule: the
+  /// designator belongs to the paired device and there is no second copy
+  /// of it to go stale.
+  String _label(StructureBody body) {
+    final designator = doc.devices[body.deviceId]?.designator ?? kUnknownCell;
+    final title = body.title.trim();
+    return title.isEmpty ? designator : '$designator · $title';
   }
 }
 

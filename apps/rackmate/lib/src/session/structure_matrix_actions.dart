@@ -32,8 +32,11 @@ typedef StructureMatrixFn = String? Function(StructureMatrixEdit edit);
 
 /// Wires the Structure matrix's cells to a live [DocumentController].
 ///
-/// [structureBodyId] is the body the editor was opened on, so a project
-/// with more than one does not have to guess (#158).
+/// THE BODY RIDES ON THE EDIT, not on this builder (#158). The app
+/// constructs this once as the editor opens, and the picker moves
+/// afterwards; a body captured here is the selection that existed before
+/// anybody made one. The parameter survives as the FALLBACK for a caller
+/// that has no picker.
 StructureMatrixFn buildStructureMatrixAction({
   required DocumentController controller,
   Uuid? structureBodyId,
@@ -45,7 +48,7 @@ StructureMatrixFn buildStructureMatrixAction({
     targetCount: edit.targetCount,
     now: controller.clock.nowUtc(),
     actor: controller.actor,
-    structureBodyId: structureBodyId,
+    structureBodyId: edit.structureBodyId ?? structureBodyId,
   );
 
   switch (plan) {

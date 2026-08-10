@@ -69,9 +69,10 @@ final class _Harness {
     // clock and actor and returns what it did. `apps/rackmate`'s real
     // `buildDropEntryActions` does exactly this; the harness mirrors it
     // so the panel is driven the way it will be driven.
-    onCommit: (line) {
+    onCommit: (line, {structureBodyId}) {
       final plan = planDropLine(
         doc: doc,
+        structureBodyId: structureBodyId,
         line: line,
         now: _now,
         actor: 'committer',
@@ -118,8 +119,11 @@ Future<void> _pumpPanel(WidgetTester tester, _Harness h) async {
             // how it does. The app rebuilds the same way.
             doc: h.doc,
             actions: DropEntryActions(
-              onCommit: (line) {
-                final r = h.actions.onCommit(line);
+              onCommit: (line, {structureBodyId}) {
+                final r = h.actions.onCommit(
+                  line,
+                  structureBodyId: structureBodyId,
+                );
                 setState(() {});
                 return r;
               },
