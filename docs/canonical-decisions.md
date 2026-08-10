@@ -8144,9 +8144,67 @@ read with this section beside it. **M3-E/1 is unblocked.**
 
 ---
 
+### 11.31 DR-032 · A pathway-only medium creates a `Pathway` named for where it goes
+
+**Settled by the user on 2026-08-09.** CR-109 rules that a medium with `isPathwayOnly` creates a
+`Pathway`, *"never a `Link` and never a `Port`"*. It does not say what the `Pathway` is **called**,
+and `Pathway.name` is required. This supplies that, the way DR-028 supplied the figure DR-007 left
+open.
+
+**11.31.1 The ruling.** An entry surface meeting a pathway-only medium creates one `Pathway` per
+item, **named from the location and the medium as the user typed them**: `Living Room: 1x ENT`
+produces a pathway named **`Living Room ENT`**. `kind` takes its `conduit` default and
+**`designator` stays null**.
+
+**11.31.2 Why a DESCRIPTION and not a derived identifier, which is the whole ruling.** The tempting
+answer is `PW-LR-1`: it matches docs/07 §4's wireframe, it sorts, and it looks like every other
+short identifier in the product. **It is the thing DR-026 §11.25.1 refused.** That ruling made
+`Pathway.designator` hand-entered with *"no allocator and no series"*, because a trunk already
+established is an as-built fact and manual is the reversible direction: a nullable hand-entered
+string can later gain an allocator, and an allocated series cannot become manual without abandoning
+the uniqueness it assumed. A name minted `PW-LR-1` at creation time would be that series, wearing
+the one field DR-026 deliberately left alone.
+
+A description cannot be mistaken for an identifier, so the two facts stay two facts, which is
+§11.25.1's other holding: *"a trunk called 'attic run to the garage' and one called `PW-LR-1` are
+two facts"*.
+
+**11.31.3 The rejected alternative, and the column it breaks.** Naming the pathway after the medium
+alone (`ENT`) is simpler and is honest that nobody has named it. It fails on the Pull Sheet: two
+conduits to two rooms would print the identical `PATH` cell, and telling one run's route from
+another's **is that column's entire job** (docs/08 §3.2). The location is what makes the name
+distinguishing, and it costs nothing because the user has already typed it.
+
+**11.31.4 The designator stays null, and that is the as-built half.** Nothing allocates it and no
+gesture here sets it. It is filled in when somebody has walked the run, which is DR-020 §11.19.1's
+*"the route is discovered, not designed"* applied to the identifier. The user's stated expectation
+on the same day, recorded because it shapes where the gesture eventually lives: *"Pathway will
+likely be set in the plan view, once a pathway is actually determined and set on site."*
+
+**11.31.5 Which surfaces do this.** All three that resolve a media token: docs/07 §4.3's drop-line
+DSL, §4.2's matrix column, and §5.1's CSV importer. The corpus names the last two explicitly
+(§4.2's tinted `EMT` column, §5.2's worked row *"the last row's `isPathwayOnly` media creates a
+`Pathway`, not a drop"*) and is silent on the first only because §4.3's examples happen to use
+cable. **One medium must not mean two things depending on which box a person typed it into**, which
+is the failure `structure_matrix.dart` already records as its reason for being a projection of the
+table rather than a second derivation.
+
+**11.31.6 What it does not rule.** It does not make a pathway REQUIRED for anything, and it does not
+set `containsLineVoltage`, which nobody has stated by typing a medium. It does not touch the Σ drop
+count, whose exclusion docs/07 §4.2 already states. And it does not settle whether the Plan view
+**owns** pathway creation rather than merely offering it; that is a bigger question and is not asked
+here.
+
+**11.31.7 Scope.** **No scope change to roadmap §2.** CR-109 is implemented rather than amended, and
+no milestone moves. **Note it is a behaviour change to a shipped gesture**: a drop line reading
+`Office: 1x ENT` made a `Link` until this ruling and makes a `Pathway` after it. Nothing has
+shipped to a user, so no document carries the old shape.
+
+---
+
 ## 12. Superseded rulings
 
-Every ruling in Parts 1–3 that DR-001…DR-031 change or void, plus the small set of internal
+Every ruling in Parts 1–3 that DR-001…DR-032 change or void, plus the small set of internal
 contradictions the amendment sweep exposed and which are ruled here so the record does not
 contradict itself. **A ruling not listed below stands exactly as written in Parts 1–3.**
 
@@ -8616,7 +8674,7 @@ allowlist of pairs, an allowlist is how a real collision gets waived.
 
 ---
 
-**End of Part 4.** DR-001…DR-031 are the user's decisions and are binding. §12 is the complete
+**End of Part 4.** DR-001…DR-032 are the user's decisions and are binding. §12 is the complete
 index of what they supersede, §12.1…§12.5, §12.9, §12.11, §12.12 and §12.13 by ruling, §12.6 by
 internal correction, and §12.8 the list of Parts 1–3 sites carrying a pointer. **Two entries
 supersede another DR**: §12.12 (DR-018's reasoning as well as its ruling) and §12.13, which also
