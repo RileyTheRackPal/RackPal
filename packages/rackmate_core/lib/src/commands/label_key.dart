@@ -213,4 +213,26 @@ enum LabelKey {
   // stack for sixty drops, four rooms and two cable types, because
   // undoing an import a row at a time is not undoing an import.
   importCsv,
+
+  // M3-H/1 (#166), DR-007 §11.7. FOUR keys, and `setStrapSize` is its own
+  // rather than a field write for `reparentLocation`'s reason: shrinking
+  // a strap DROPS the keystones in the cells that stop existing, so the
+  // Edit menu has to name the act that took them off the plate rather
+  // than offer "Undo edit" for a gesture that emptied four cells.
+  //
+  // `setCellOccupant` covers place, move and clear, because on a plate
+  // those are one gesture: putting a jack in a cell it is not in already
+  // takes it out of the cell it was in. A separate `clearCell` would let
+  // a caller pick the arm that skips the move.
+  addGang,
+  removeGang,
+  setStrapSize,
+  setCellOccupant,
+
+  // The transaction label for `Arrange`, which fits straps to the drops
+  // that land on a plate and fills the cells in one step (M3-H/2). One
+  // entry on the undo stack for a whole plate, `importCsv`'s reasoning at
+  // a smaller scale: undoing an arrange a cell at a time is not undoing
+  // an arrange.
+  arrangePlate,
 }
