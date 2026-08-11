@@ -122,7 +122,7 @@ minutes. CR-098's pre-update behaviour is untouched.
 # Citations
 
 [1] Canon §11.38; roadmap §2, §8.3
-[2] `apps/rackmate/lib/src/storage/snapshot_store.dart` — already writes,
+[2] `apps/rackmate/lib/src/storage/snapshot_store.dart`, which already writes,
     sequences and prunes; one call site
-[3] `packages/rackmate_core/lib/src/model/tombstone.dart` — CR-095, G5
+[3] `packages/rackmate_core/lib/src/model/tombstone.dart` (CR-095, G5)
 [4] Board #655, tasks #656 through #660
