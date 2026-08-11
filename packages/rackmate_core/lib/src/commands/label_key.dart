@@ -130,6 +130,19 @@ enum LabelKey {
   // while leaving the thing the user pointed at unnamed.
   addOutletFromTemplate,
 
+  // LANDING A DROP ON A PANEL PORT (commands/bind_endpoint_command.dart),
+  // M3-K/2, DR-039 §11.38.2. Its own value rather than reusing
+  // `connectPorts`, because a connect CREATES a cable and this one moves
+  // an end of a cable that already exists: "Undo connect" offered for it
+  // would suggest the drop is about to disappear, and the drop is what
+  // the person spent the last ten minutes typing.
+  //
+  // ONE VALUE FOR ONE END AND FOR A BATCH, unlike `addDrops`. AC-018's
+  // forty-six land a line at a time, and the menu naming the LINE would
+  // be right for `@panel=` and wrong for the single bind a person makes
+  // when they punch one stray drop down; "Undo bind" is true of both.
+  bindEndpoint,
+
   // EDITING ONE PROPERTY (commands/set_entity_property_command.dart),
   // M3-A/5. ONE value covering `Outlet`, `StructureBody`, `DeviceInstance`
   // and `Link` and every field of each: the Edit menu offers "Undo edit",

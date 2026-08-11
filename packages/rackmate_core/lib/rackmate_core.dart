@@ -53,6 +53,7 @@ library;
 export 'src/catalog/rack_presets.dart';
 export 'src/catalog/seed_catalog.dart';
 export 'src/commands/atomic_connect.dart';
+export 'src/commands/bind_endpoint_command.dart';
 export 'src/commands/catalog_placement.dart';
 export 'src/commands/clock.dart';
 export 'src/commands/command.dart';
