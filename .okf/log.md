@@ -1,5 +1,42 @@
 # Update Log
 
+## 2026-08-10 (ninth entry)
+
+* **Note**: **M3-F is built.** #159, #651, #652, #162, #160 and #161 are all
+  closed; #653 (Export CSV) is a ruling the user deferred and #654 is a defect
+  this work found in the typed-line planner and did not fix.
+* **Note**: **RJ-012 rejected every row it exists to accept, and only an
+  end-to-end test could see it.** DR-023's label chain ends at
+  `MediaTypeDef.shortTag`, and `buildDropsFor` refuses a drop whose chain yields
+  nothing rather than printing `media.cat6e` on a wall plate. Every type RJ-012
+  minted had no tag, under G4's "null is unknown". DR-023 §11.22.4 had already
+  named the hole as *"reachable only for a user-created media type with no
+  `shortTag`"*; M3-F/6 is what made it reachable, because until an importer
+  could create such a type nothing could. The fix copies the spelling into the
+  tag, which is not a guess: `shortTag`'s own doc calls it *"the trade name an
+  installer writes on a pull list"*, and the CSV cell is exactly that.
+* **Note**: **three UI tests were sized against a header that does not ship.**
+  They asserted three drops are visible at 600 px, which held only because the
+  harness passes no `onDone`, so the header rendered with NO BUTTON and collapsed
+  to 24 px. Production always has `Done` and has always been 48 px, so those
+  tests had been describing a surface nobody uses. Adding `Import CSV…` made the
+  test header match production and the gap appeared. The fix sized the harness to
+  a real window rather than relaxing the assertion, which is the same choice
+  [assert the artifact, not the mechanism](/practices/assert-the-artifact-not-the-mechanism.md)
+  asks for: a test harness that misrepresents the surface is testing a product
+  that does not exist.
+* **Note**: **the layering gates earned their keep.** The first draft of the
+  import's app half reached for `dart:io` and constructed a `File`; RULE 10 and
+  RULE 1b both refused it. Going through `FileStore.readBytes` is not compliance
+  for its own sake: a second I/O path would carry none of `io_file_store.dart`'s
+  errno translation, on the one platform where a locked file is the normal case
+  because Excel is still holding the sheet open.
+* **Note**: the import decodes UTF-8 with replacement rather than refusing an
+  encoding. An old Excel export is frequently Windows-1252 and the differing byte
+  is almost always inside a name or a note; rejecting sixty readable rows over one
+  byte would be the fail-fast §5.3 forbids, so it becomes U+FFFD and shows in the
+  preview grid.
+
 ## 2026-08-10 (eighth entry)
 
 * **Creation**: [A modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md).
