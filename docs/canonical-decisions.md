@@ -6336,6 +6336,13 @@ by the most convenient reading (G4).
 > in the opening rather than anchored to an edge, and the opening's own dimensions are still an
 > *"about"*.
 
+> **AND THE OPENING IS NO LONGER AN "ABOUT" EITHER, per DR-041 (§11.40) on 2026-08-11.** Measured at
+> **33.34 × 66.68 mm**, confirming this subsection's parenthetical to within 0.04 mm, and with it the
+> two cell pitches, **22 mm vertical and 15.95 mm horizontal**, which turn change 2's *"centred in
+> the opening"* from a rule into coordinates. Both centrings fall out of the measured numbers rather
+> than being imposed on them. This paragraph's arithmetic was right twice: once about the cell, and
+> once about the opening the cell sits in.
+
 **11.7.9 The keystone modules themselves: and the one that contradicts §11.7.2.**
 
 *Added 2026-07-28, from the parts in `docs/reference/keystone/`.*
@@ -8876,6 +8883,13 @@ measurement and this ruling does not claim it. The ~33.3 × 66.7 mm opening figu
 an *"about"* carried inside an arithmetic check, and §11.27.2 is the reason nobody should quietly
 promote it.
 
+> **SUPPLIED by DR-041 (§11.40) on 2026-08-11, one day later and by the same instrument.** The
+> opening is **33.34 × 66.68 mm** measured, and the grid's position within it is
+> **22 mm vertical / 15.95 mm horizontal** cell pitch, also measured. **This clause was right to
+> refuse the figure and is not weakened by the measurement agreeing with the "about"**: the horizontal
+> pitch was independently derivable to 15.947 from the opening width alone, and that derivation
+> assumed an even-margin manufacturing convention which nothing available in advance could confirm.
+
 **11.37.5 DR-007 is now three-for-three on physical reference.** §11.7.9's lesson was that *"a
 physical reference is worth more than a careful reading of a description"*, scored two-for-two on
 the single-post keystone and the separate cover plate. The caliper is the third, and it is the first
@@ -9114,6 +9128,102 @@ position two ways. **That disagreement is older than this ruling**: it is betwee
 and the physical part, and it exists today on every device with authored port labels. Closing it
 means teaching designator ALLOCATION to honour an authored label, which changes the connect gesture's
 output across the whole catalog and is its own ruling and its own task. It is filed, not smuggled in.
+
+### 11.40 DR-041 · The plate opening and the two cell pitches, measured; §11.7.8's last "about" is discharged
+
+**Settled by the user on 2026-08-11, with a caliper**, at the point M3-H/2 needed each figure and
+the corpus did not contain it. DR-038 §11.37.4 named exactly what was still missing: *"The **plate
+opening** dimensions and the position of the cell grid within them"*, and warned that the
+~33.3 × 66.7 mm figure was an *"about"* nobody should quietly promote. It is no longer an about.
+
+**11.40.1 The five figures, and what each one is worth.** A plate drawing needs all five and the
+corpus previously had one.
+
+| Figure | Value | Provenance |
+|---|---|---|
+| Cell, the front nose | **14.5 × 16 mm** | DR-028 §11.27.1, ruled; DR-038 makes it uniform across strap widths |
+| Gang opening | **33.34 × 66.68 mm** | **Measured 2026-08-11.** Confirms §11.7.8's ~33.3 × 66.7 to within 0.04 mm |
+| Cell pitch, vertical | **22 mm** | **Measured 2026-08-11** |
+| Cell pitch, horizontal | **15.95 mm** | **Measured 2026-08-11**, after being derived to 15.947 from the opening width. See §11.40.3 |
+| Gang pitch, horizontal | **1.8125 in = 46.0375 mm** | **A STANDARD, NOT A MEASUREMENT.** The ganged-device-box spacing. See §11.40.4 |
+
+**Every one of them checks out against the others, and that is the point of listing them together.**
+Three cells at a 22 mm vertical pitch span 2 × 22 + 16 = 60 mm inside a 66.68 mm opening, leaving
+3.34 mm of plastic above and below, symmetric. Two cells at a 15.95 mm horizontal pitch span
+15.95 + 14.5 = 30.45 mm inside 33.34, leaving 1.445 mm either side, symmetric. **That symmetry is
+§11.7.8's change 2 falling out of the arithmetic rather than being asserted by it**: the grid is
+centred in the opening, and the numbers agree without anyone arranging them to.
+
+**11.40.2 What this makes computable, stated as the formula, because the formula is the deliverable.**
+For a `W × H` strap in an opening `(Wo, Ho)`, with pitches `(Px, Py)` and a cell `(Wc, Hc)`, cell
+`(c, r)`'s centre sits at `((c − (W−1)/2)·Px, (r − (H−1)/2)·Py)` relative to the opening's centre.
+**There is no width-dependent term and no height-dependent term anywhere in it**, which is DR-038's
+finding expressed as code rather than as a sentence, and it is why a 1-port strap renders with its
+single jack centred rather than at the top.
+
+**11.40.3 One figure was derived first and measured second, and the order is the record.** The
+horizontal pitch was reachable by arithmetic: three equal margins across the opening give
+`3m + 2 × 14.5 = 33.34`, so `m = 1.4467` and the pitch is `15.947`. That derivation was offered as an
+option and **explicitly labelled as the kind of plausible inference §11.7.8 change 3 forbade on the
+cell size**, to be recorded as a stated choice rather than a ruling. The user measured it instead
+and got **15.95**.
+
+**The derivation being right does not make offering it the right call, and the corpus should say so
+plainly.** §11.27.2 already records a figure being wrongly elevated because it sounded deliberate,
+and §11.37.2 records an argument that established a lower bound being correctly refused as an
+answer. This is the same shape a third time: an even-margin layout was one manufacturing convention
+among several, a strap with a wider centre web would have satisfied every constraint stated and
+broken every 4- and 6-port drawing, and **nothing available in advance could distinguish the two.**
+The caliper could. It agreed. Agreement after the fact is not evidence that the inference was safe
+before it.
+
+**11.40.4 THE GANG PITCH IS THE ONE FIGURE NOBODY MEASURED, and it is marked as such everywhere it
+appears.** 1.8125 in is the ganged-device-box spacing, and it is taken on **corroboration rather than
+on authority**: a 1-gang plate is 2.75 in wide and a 2-gang is 4.5625 in, and the difference is
+exactly 1.8125 in, so the standard predicts a plate dimension that can be checked without trusting
+it. With a 33.34 mm opening it leaves 12.7 mm of plastic between neighbours, which is a real web
+rather than an implausible one.
+
+**It is a stated choice, NOT a ruled figure**, and that is deliberate under §11.27.2's rule that an
+unruled figure with provenance outranks a ruled figure without one. Leaving it unruled means a later
+caliper reading **wins automatically, with nothing to withdraw**. Ruling it would set up exactly the
+supersession-and-retraction that entry exists to prevent.
+
+**11.40.5 A WRONG READING WAS REFUTED BY ARITHMETIC BEFORE IT REACHED THE CODE, and that is the
+reusable part.** The gang pitch was first given as **22 mm**, which is impossible: an opening is
+33.34 mm wide, so two openings 22 mm apart overlap by 11.34 mm. **The check is one line and needs no
+tools: a pitch cannot be smaller than the opening is wide.** The reading was real, it was simply the
+*vertical cell* pitch, and the question that recovered it was the user's own, *"are we speaking
+vertically or horizontally?"*, which exposed that the request had not named an axis.
+
+**Two lessons, and the second is the one that generalises.** First, a dimension request must name its
+axis, because a plate has three distinct centre-to-centre distances and they differ by a factor of
+three. Second, **every figure in §11.40.1 sits in an inequality with at least one other figure**, and
+those inequalities are free. A number that violates one is wrong before anybody draws with it. The
+corpus already believed a physical reference beats a careful reading (§11.7.9); this adds that
+**arithmetic beats a physical reading that was answering a different question**.
+
+**11.40.6 Stored as `Len` in nanometres (CR-001), and all five are exact.** `33_340_000`,
+`66_680_000`, `22_000_000`, `15_950_000` nm, and the gang pitch as `46_037_500` nm, which is
+1.8125 in taken through `Len.nmPerInch` rather than through its 46.04 mm rounding. **The hundredths
+of a millimetre are why this is not a `double` problem**: 33.34 and 15.95 are exact integer counts of
+nanometres and are not binary fractions of a millimetre, which is §11.27.5's observation arriving
+with four more instances of itself.
+
+**11.40.7 What it does NOT settle, listed so nothing is read as settled.**
+
+| Open | Why it is not needed yet |
+|---|---|
+| The **plate outline** (a 1-gang Decora is ~2.75 × 4.5 in) | Nothing in M3 draws the plate's edge. The editor draws openings and cells. Carried as an *"about"* exactly like the opening was, and it should not be promoted either |
+| The **strap's own plastic** outside the opening | Hidden behind the cover plate in every elevation the product draws (§11.7.9 B: the front hides the differences) |
+| Anything in **depth** | §11.7.9 C: module depth and exit direction are a box-fill fact, and box fill is not v1 |
+| Where the opening sits **within** the plate outline | Falls out of the outline the moment somebody measures it, and until then there is no outline to sit inside |
+
+**11.40.8 Scope.** **No scope change.** Nothing enters or leaves roadmap §2. DR-007 already placed
+keystone geometry in M3 and DR-038 already unblocked dimensioned rendering; this supplies the four
+figures that rendering needs and marks the fifth as unmeasured. **M3-H/2 (#167) has no remaining
+"must not be inferred" hazard**: every dimension it draws with is now either measured, ruled, or
+labelled in the geometry source as a standard nobody has checked.
 
 ---
 

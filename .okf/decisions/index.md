@@ -33,6 +33,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-039, project history is a journal first](dr-039-history-is-a-journal-first.md) - a request for snapshots that cited the journal's benefit; what a file LOOKED like and why it CHANGED are two artifacts, and only the second fits in the file today.
 * [DR-038, the keystone cell is uniform across strap widths](dr-038-keystone-cell-is-uniform.md) - a caliper closed the measurement DR-007 forbade any dimensioned rendering without; the argument that agrees with it only ever established a lower bound, which is why the corpus leads with the measurement.
 * [DR-040, a drop lands on a panel port](dr-040-a-drop-lands-on-a-panel-port.md) - the product could only make AC-018's fourteen unbound drops, sixty times, and three of the four tokens in the shipped rack-label preset had no reachable source; found by censusing the exit criterion before the stopwatch instead of after it.
+* [DR-041, the plate opening and the two cell pitches](dr-041-plate-opening-and-cell-pitches.md) - the last four numbers a plate drawing needs; a fifth reading was refuted by arithmetic before it reached the code, because a gang pitch cannot be smaller than the opening is wide.
 
 # Not yet written up
 
