@@ -1898,6 +1898,21 @@ diagnosis, and M1's cost a person two runs to produce one. This diagnosis cost a
 task. **The stopwatch is still owed** and nothing here discharges #163:
 what is discharged is the part that would have wasted the first run.
 
+**The census produced DR-039 (canon §11.38) and M3-K, four tasks, #663 to #666.** The user took the
+expensive-looking option, and it is cheaper than it reads: `derivePortId` is a pure UUIDv5 over
+`(deviceId, portKey)`, so a pin's id is knowable before the pin exists, and DR-011.1 already rules
+that ports materialise inside a command's `apply()`. `BindEndpoint` inherits both rather than
+inventing either. **A third absence surfaced while the ruling was being written**, and it is the one
+that would have cost the second run rather than the first: `{FLOOR}` and `{SPACE}` have **no editor
+anywhere in the product**, so building the binding alone would have produced forty-six bound drops
+carrying no label at all. That is why #663 lands first and why it is the cheapest of the four.
+
+*It is a decomposition gap, not a growth, and the distinction is #591's.* The clause was always in
+the criterion; no task owned the gesture. That is the third time in this milestone, after #591 (no
+gesture created a `Pathway`) and #587, and all three were found the same way. **The row still costs
+what it costs**: four tasks arriving at an exit criterion have the same effect on a calendar as a
+growth would, and §5.2 already read M3 as `M`-at-its-ceiling before them.
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three

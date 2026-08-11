@@ -1,5 +1,34 @@
 # Update Log
 
+## 2026-08-11 (second entry)
+
+* **Creation**: [DR-039, a drop lands on a panel
+  port](/decisions/dr-039-a-drop-lands-on-a-panel-port.md). The user took the
+  expensive-looking option and it is cheaper than it reads: `derivePortId` is a pure
+  UUIDv5 over `(deviceId, portKey)`, so **the id a pin will have is knowable before
+  the pin exists**, and DR-011.1 already rules that ports materialise inside a
+  command's `apply()`. `BindEndpoint` inherits both rather than inventing either.
+* **Note**: **the census found a third absence while the ruling was being written,
+  and it is the one that would have cost the second drill run.** `{FLOOR}` and
+  `{SPACE}` have **no editor anywhere in the product**: `floorNumber` and `spaceCode`
+  appear in the whole of `packages/rackmate_ui/lib` and `apps/rackmate/lib` exactly
+  once, in a comment saying they were left out on purpose because the third field on
+  that list belonged with M3-D. **Three of the four tokens in the shipped preset were
+  unreachable**, so building the binding alone would have produced forty-six bound
+  drops with no labels and a drill refuted a second time for a new reason.
+* **Note**: **`{PANEL}` had no source field at all and the ruling refused to invent
+  one.** CR-044 renders the preset `1A-A12`, which is a TIA-606 example rather than a
+  specification. The model has no `Panel` entity, which `schedule.dart` already states
+  outright, so the panel's designator is the only identifier available and the default
+  preset now renders `1A-PP-101`. Adding a `panelLetter` to reproduce `A` would be
+  **inventing a fact nobody stated in order to match a rendering**, which is DR-028
+  §11.27.2 with the provenance running the other way.
+* **Note**: **the bind and the label are two facts and the ruling keeps them apart.**
+  A panel whose location has no floor number produces a bound `PortEndpoint` and an
+  absent `rackLabel`, not a refusal. [G4](/invariants/g4-unknowns-are-counted.md): a
+  missing token is a thing the user has not said, and letting it undo a physical fact
+  somebody did state would be the fusion G4 exists to forbid.
+
 ## 2026-08-11
 
 * **Note**: **M3-G's drill is refuted by construction, and a census found it before the

@@ -8887,6 +8887,89 @@ person a minute rather than a design session.
 **11.37.6 Scope.** **No scope change.** Nothing enters or leaves v1; an open measurement inside an
 existing ruling is closed. Board #167 loses its "must not be inferred" hazard and gains a figure.
 
+### 11.38 DR-039 · A drop lands on a panel port; `@panel=` is the gesture and the rack label is allocated
+
+**Settled by the user on 2026-08-11**, from a census taken before M3-G's stopwatch rather than after
+it. Board #163 says *"run the drill EARLY, on a rough build ... a drill run on a rough build finds
+them while the design can still move"*, and the reading that pays is **find the reasons it cannot
+pass while they are still cheap**. Three were reachable from a grep.
+
+**11.38.1 What the census found, and none of it was visible from the suite.** M3's criterion wants
+sixty drops of which forty-six land at a rack and fourteen stay open. The product could only ever
+make the second kind:
+
+| Absence | Evidence |
+|---|---|
+| **Nothing allocates a `rackLabel`.** | `allocateOutletRackLabel` has four callers and all four are in `drop_label_allocator_test.dart`. |
+| **Nothing binds a far end.** | `drop_build.dart:159` never passes `rackEnd`, so `home_run_commands.dart:224` writes `OpenEndpoint('not yet landed')` on every drop the product can create. Sixty of sixty. |
+| **`BindEndpoint` was never written.** | Zero `.dart` files. §2186 names it, `docs/01` §535 and `docs/02` §663 both cite it as though it exists. |
+| **`{FLOOR}` and `{SPACE}` have no editor.** | `floorNumber` and `spaceCode` appear in the whole of `packages/rackmate_ui/lib` and `apps/rackmate/lib` **exactly once**, in a `locations_panel.dart` comment saying they are deliberately unedited. |
+| **`{PANEL}` has no source field at all.** | It is in `kIdFormatTokens` and in the shipped preset. Nothing in the model answers it. |
+
+**Three of the four tokens in the shipped TIA-606 preset were unreachable**, so
+`{FLOOR}{SPACE}-{PANEL}{PORT:2}` could not render on any document this product has ever written,
+and could not have even if the binding had existed. That is the finding that would have cost the
+second drill run rather than the first.
+
+**11.38.2 The ruling, in four clauses.**
+
+1. **A landed far end is a `PortEndpoint` on a patch panel device.** `BindEndpoint` is built, in
+   `rackmate_core`, and it materialises the port inside `apply()` exactly as DR-011.1 rules for the
+   connect gesture. `derivePortId` is a pure UUIDv5 over `(deviceId, portKey)` (CR-116, AC-006), so
+   the id is knowable before the pin exists and no panel needs pre-materialised ports.
+2. **The gesture is `@panel=` on the drop line.** `Media Room: 4x Cat6 @panel=PP-1` lands every drop
+   on that line. Ten modifiers cover forty-six drops, which keeps the drill near the measured 5.82
+   keystrokes per drop instead of adding forty-six hand-typed cells to a fifteen-minute clock.
+3. **The rack label is ALLOCATED, never typed**, through the one format engine (CR-045), on the
+   field label's precedent. A typed string is governed by no pattern, so a project that customised
+   its preset would get sixty labels that ignore it.
+4. **The drop lands on the REAR port.** The N03 archetype's own description says why: *"Rear ports
+   are 110 punchdown, not RJ45: modelling both faces as RJ45 is the error that makes the Termination
+   Schedule wrong on the one column the trim tech actually needs (AC-025)."* A structured drop is
+   punched down. The front jack is where a patch cord goes.
+
+**11.38.3 `{PANEL}` is the panel device's designator, and the alternative was invented data.** CR-044
+ships the preset and renders it `1A-A12`, which is a TIA-606 example and not a specification: it
+names no source for the panel segment. The model has exactly one identifier for a panel, because
+**the model has no `Panel` entity** and `schedule.dart:205` already says so out loud, calling a patch
+panel *"a `DeviceInstance` like any other"* and sorting §3.6's `rack, panel, port` on the device
+designator. So `{PANEL}` is that designator and the default preset renders `1A-PP-101`. Adding a
+`panelLetter` field to make `1A-A12` reproducible would be **inventing a fact nobody stated** to
+match an example, which is §11.27.2's error with the provenance running the other way.
+
+**11.38.4 `{FLOOR}` and `{SPACE}` become editable on the `Location`, and they are the RACK's.** The
+fields, the `LocationField` entries and the commands all exist; only the two controls are missing,
+and `locations_panel.dart:110` says they were left out because the third field on that list belonged
+with M3-D. That reason has expired. **The floor and space that render are the panel's, read through
+the panel device's location, never the drop's room**: `1A` is the telecom room, and a drop from a
+bedroom on the second floor does not get a `2` because it starts there.
+
+**11.38.5 A bind that cannot render a label still binds.** The endpoint and the label are two facts
+and G4 forbids fusing them. A panel whose location has no floor number produces a bound
+`PortEndpoint` and **an absent `rackLabel`**, with the refusal sentence naming the field to fill, on
+`missingTokenSentence`'s existing pattern. The alternative, refusing the bind, would make an
+unrelated missing token undo a physical fact somebody stated.
+
+**11.38.6 What this does NOT settle.** **`LNK-020` stays M5's.** Its canonical text is literally
+*"14 links have unbound endpoints"*, and after this ruling it will finally be able to say something
+true, but the rule catalogue is M5's and building one rule early buys nothing. **Unbinding is not
+ruled**: `BindEndpoint` gets a `revert` because every command does, and a deliberate *"this was
+punched into the wrong port"* gesture is not specified here. **The front jacks are untouched**: this
+ruling lands a drop on the rear and says nothing about patching the front to a switch, which is the
+schematic's job and M2's gesture.
+
+**11.38.7 Scope.** **No scope change under §8.3.** Nothing enters or leaves v1 and M3's exit
+criterion is not amended: this is the criterion's *existing* clause 2b and clause 4 being made
+reachable, which is a build. **This is a decomposition gap on #591's and #587's precedent**, both
+filed in this same milestone with the same reasoning: a capability the corpus promised, that no task
+owned, found by censusing rather than by pricing. The board grows by a new M3-K issue for the
+binding and its four tasks.
+
+**It is fair to record what it costs anyway.** DR-007 and DR-020 were M3's first two growths and
+§5.2 already reads the row as `M`-at-its-ceiling. This is not a third growth, but four tasks arriving
+at the exit criterion have the same effect on a calendar as if it were, and the row should be read as
+`M`-over-ceiling until the drill returns a verdict.
+
 ---
 
 ## 12. Superseded rulings
