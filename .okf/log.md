@@ -1,5 +1,30 @@
 # Update Log
 
+## 2026-08-11
+
+* **Note**: **M3-G's drill is refuted by construction, and a census found it before the
+  stopwatch did.** #163 says *"run the drill EARLY, on a rough build"*, and the useful
+  reading of that is not "start the clock sooner", it is **find the reasons it cannot
+  pass while they are still cheap**. Two of AC-018's clauses have no gesture at all:
+  **nothing allocates a `rackLabel`** (`allocateOutletRackLabel` has four callers and
+  all four are its own tests) and **nothing binds a far end** (`drop_build.dart` never
+  passes `rackEnd`, so all sixty drops are `OpenEndpoint('not yet landed')` where the
+  criterion wants forty-six landed and fourteen open).
+* **Note**: **the two absences are one hole.** The shipped rack-label pattern is
+  `{FLOOR}{SPACE}-{PANEL}{PORT:2}`, and `{PANEL}` and `{PORT}` are facts about a
+  landing that nothing in the product records. The allocator is not dead code somebody
+  forgot to call; it is uncallable, and closing either absence alone closes nothing.
+* **Note**: ***`BindEndpoint` exists in zero `.dart` files***, and canon §2186 names it
+  outright, with `docs/01` §535 and `docs/02` §663 both deriving from that sentence as
+  though it had been built. **A capability promised in three documents and owned by no
+  task** is the shape #591 and #587 already carried in this milestone, arriving a third
+  time at the exit criterion rather than inside it.
+* **Note**: **M3-D/1 closed on one allocator and the argument covered fourteen drops of
+  sixty.** Its record reads *"`b4b9115` gave both an allocator"*, and the caller cited
+  is M3-C/1's field label. The rack label's missing caller was justified by CR-044's
+  optionality, which is correct for AC-018's fourteen and says nothing about the other
+  forty-six. **An exemption sized for the exception was read as covering the rule.**
+
 ## 2026-08-10 (sixth entry)
 
 * **Creation**: [DR-038, the keystone cell is uniform across strap

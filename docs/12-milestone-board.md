@@ -1852,6 +1852,52 @@ assertions were written for, and it worked: each one named the day it would come
 *What M3-E still owes.* #157, which DR-026 §11.25.1 already ruled and is a build rather than a
 decision. And #158's single-instance assumptions.
 
+**M3-G opened 2026-08-11 with a census, and the drill is REFUTED BY CONSTRUCTION before anybody
+starts a stopwatch.** #163's instruction is *"run the drill EARLY, on a rough build ... a drill run
+on a rough build finds them while the design can still move."* Read as a procedure that is a person
+and a clock. Read as an instruction it is **find the reasons the drill cannot pass while they are
+still cheap**, and two of them are reachable from a grep. Neither needed fifteen minutes of anyone's
+time to find, and neither would have been visible from the suite: 2206 tests were the M1 precedent
+that #163 quotes, and this milestone's are green over both holes.
+
+*The criterion, clause by clause, against `01c698d`.*
+
+| # | Clause | State | Evidence |
+|---|---|---|---|
+| 1 | 60 drops entered in under fifteen minutes | **needs a person** | 349 keystrokes, 5.82 per drop, gated in `drop_entry_panel_test.dart:293`. The surface cannot make it impossible; only a clock can say whether a human is on pace |
+| 2 | 60 `Link`s each with one `fieldLabel` | **BUILT** | `drop_build.dart:124` allocates every one through `allocateOutletFieldLabel` |
+| 2b | ...and one `rackLabel` | **NOTHING ALLOCATES ONE** | `allocateOutletRackLabel` has four callers and all four are in `drop_label_allocator_test.dart` |
+| 3 | Pull Sheet sorted by room then pathway, per-room footage subtotals | **BUILT as derivation** | `SchedulePreset.pullSheet`, `ScheduleSort.roomThenPathway`, `ScheduleGrouping.room` (`schedule.dart:1239`). The sheet, the initial boxes and the page are M6's under DR-027 |
+| 4 | fourteen of them have unbound far ends | **sixty of sixty are unbound** | `drop_build.dart:159` never passes `rackEnd`, so `home_run_commands.dart:224` writes `OpenEndpoint('not yet landed')` for every drop the product can create |
+| 4b | ...and each still schedules and carries a `W` number | **BUILT** | gated at `drop_entry_panel_test.dart:420`, asserted as a set |
+| 4c | ...and prints | **M6's** | #574, parked there by DR-027 |
+
+*Clause 2b and clause 4 are one hole wearing two numbers.* The shipped rack-label pattern is
+`{FLOOR}{SPACE}-{PANEL}{PORT:2}` (`project_settings.dart:31`), and `{PANEL}` and `{PORT}` are facts
+about a landing. Nothing in the product records a landing, so the pattern cannot render, so the
+allocator is not called, so the label can only be a string a person types into the `RACK LBL` cell.
+The two absences are not independent and closing either one alone closes nothing.
+
+***`BindEndpoint` appears in zero `.dart` files.*** AC-018 §2186 names it: *"Binding it later is one
+command (`BindEndpoint`) that preserves the ID, the length, the jacket, and the test result."* It is
+cited in `docs/01` §535 and `docs/02` §663 as though it exists. It is specified, it is derived into
+two documents, and it has never been written. **`LNK-020`, the advisory whose canonical example text
+is literally `14 links have unbound endpoints`, is also unwritten**, which is M5's and correctly so,
+but it is worth naming here because it is the check that would have reported this state out loud.
+
+*What the criterion's own arithmetic requires, and why it needs a ruling rather than a build.* Sixty
+`Link`s **each** with a `rackLabel`, and fourteen with unbound far ends, cannot both be literally
+true: DR-022 §11.21 already settled that the fourteen *"simply have none"*, because `rackLabel` is
+optional under CR-044. So the criterion means **46 landed and labelled, 14 open and unlabelled**, and
+the product today makes 60 open and unlabelled. The gap is not a slow surface. It is a state the
+product cannot express.
+
+*Why this is filed before the drill rather than after it.* A refuted drill is only worth its
+diagnosis, and M1's cost a person two runs to produce one. This diagnosis cost a census, which is
+`.okf/practices/census-before-building.md` applied to a milestone's exit criterion instead of to a
+task. **The stopwatch is still owed** and nothing here discharges #163:
+what is discharged is the part that would have wasted the first run.
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three
