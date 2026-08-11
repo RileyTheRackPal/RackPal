@@ -520,6 +520,123 @@ final bool _updateGoldens = Platform.environment['UPDATE_GOLDENS'] == '1';
 ///      from the code that claims to produce it.
 ///
 /// Property 1 is the one that was missing for the whole of M0 and M1.
+/// (f) DR-007's gang list, on the same argument fixture (d) was added
+/// under: (a)-(e) contain no `gangs` key at all, so the corpus had
+/// nothing to say about `_encodeGang`.
+///
+/// **THAT (a)-(e) STAY BYTE-IDENTICAL IS HALF THE PROOF** and is why this
+/// is a new fixture rather than gangs bolted onto (c). An empty gang list
+/// emits no key, so every document written before M3-H reads and rewrites
+/// unchanged, and `kSchemaVersion` had no reason to move. Mutating (c)
+/// would have proved the encoder while destroying that evidence.
+///
+/// Every distinguishable cell state appears exactly once: an occupied
+/// cell, a conductor cell, a decided blank, an undecided cell, a strap
+/// with no cells filled at all, and a gang with no strap chosen.
+RackDocument _plateGangsFixture() {
+  final meta = _meta(createdAt: DateTime.utc(2026, 8, 11, 10));
+
+  const structureBodyId = Uuid('0190e3c1-1111-7000-8000-000000000001');
+  const structureDeviceId = Uuid('0190e3c1-1111-7000-8000-000000000002');
+  const outletId = Uuid('0190e3c1-1111-7000-8000-000000000003');
+  const dataLinkId = Uuid('0190e3c1-1111-7000-8000-000000000004');
+  const speakerLinkId = Uuid('0190e3c1-1111-7000-8000-000000000005');
+
+  final doc = RackDocument(
+    id: const Uuid('0190e3c1-0000-7000-8000-000000000005'),
+    appVersion: '0.1.0+build.1',
+    createdAt: DateTime.utc(2026, 8, 11, 10),
+    modifiedAt: DateTime.utc(2026, 8, 11, 10, 30),
+    meta: meta,
+  );
+
+  doc.devices[structureDeviceId] = DeviceInstance(
+    id: structureDeviceId,
+    kind: DeviceKind.structure,
+    templateRef: const TemplateRef(
+      templateId: TemplateId('tpl.system.structure'),
+      version: 1,
+      contentHash: 'sha256:tpl.system.structure',
+    ),
+    designator: 'STR-1',
+    name: 'Rough-In - First Floor',
+    placement: const OffRackPlacement(mountNote: 'Hallway enclosure'),
+    structureBodyId: structureBodyId,
+    meta: meta,
+  );
+  doc.structures[structureBodyId] = StructureBody(
+    id: structureBodyId,
+    deviceId: structureDeviceId,
+    title: 'Rough-In - First Floor',
+    meta: meta,
+  );
+
+  doc.outlets[outletId] = Outlet(
+    id: outletId,
+    structureBodyId: structureBodyId,
+    designation: 'WP-1',
+    order: const FracIndex('a0'),
+    meta: meta,
+    gangs: [
+      // Gang 0: a 2x3, holding one jack, two speaker posts in
+      // NON-ADJACENT cells (DR-007 §11.7.2 as revised), one decided
+      // blank, and two cells nobody has ruled on.
+      Gang(
+        strap: Strap(
+          width: 2,
+          height: 3,
+          cells: {
+            0: const LinkEndOccupant(dataLinkId),
+            1: const ConductorOccupant(ConductorRef(speakerLinkId, 0)),
+            4: const ConductorOccupant(ConductorRef(speakerLinkId, 1)),
+            5: const BlankInsert(),
+          },
+        ),
+      ),
+      // Gang 1: a strap chosen and nothing decided about any cell. The
+      // `cells` key is absent, not an empty list.
+      Gang(strap: Strap(width: 1, height: 1)),
+      // Gang 2: no strap chosen. Encodes as `{}` — absent key, never an
+      // explicit null (G4/CR-114).
+      Gang(),
+    ],
+  );
+
+  doc.links[dataLinkId] = Link(
+    id: dataLinkId,
+    designator: 'W001',
+    media: const MediaTypeId('media.cat6'),
+    order: const FracIndex('a0'),
+    meta: meta,
+    structureOrigin: StructureOrigin(
+      structureBodyId: structureBodyId,
+      outletId: outletId,
+      fieldLabel: 'LR-DATA-1',
+      terminationField: TerminationType.keystone,
+    ),
+  );
+  doc.links[speakerLinkId] = Link(
+    id: speakerLinkId,
+    designator: 'W002',
+    media: const MediaTypeId('media.speaker.16-2'),
+    order: const FracIndex('a1'),
+    meta: meta,
+    conductors: const [
+      Conductor(from: OpenEndpoint('+'), to: OpenEndpoint('+'), role: '+'),
+      Conductor(from: OpenEndpoint('-'), to: OpenEndpoint('-'), role: '-'),
+    ],
+    structureOrigin: StructureOrigin(
+      structureBodyId: structureBodyId,
+      outletId: outletId,
+      fieldLabel: 'LR-SPK-1',
+      // The value that did not exist before M3-H, on disk.
+      terminationField: TerminationType.bindingPost,
+    ),
+  );
+
+  return doc;
+}
+
 void _assertByteRoundTrip(String label, RackDocument fixture) {
   final file = File('test/fixtures/$label.rmpj.json');
   final fresh = _codec.write(fixture);
@@ -590,6 +707,52 @@ void main() {
         'd_templates_and_power',
         _templatesAndPowerFixture(),
       );
+    });
+
+    test('(f) DR-007 gangs — a filled strap, an untouched strap, and a '
+        'gang with no strap chosen', () {
+      _assertByteRoundTrip('f_plate_gangs', _plateGangsFixture());
+    });
+  });
+
+  group("DR-007's gang list costs an existing file nothing", () {
+    // THE POINT OF THE WHOLE GROUP: fixtures (a)-(d) are checked-in bytes
+    // written before `gangs` existed, and they still round-trip exactly.
+    // That is what makes `kSchemaVersion` staying at 2 true rather than
+    // merely convenient, and it would be destroyed by adding gangs to any
+    // of them. See `_plateGangsFixture`'s doc comment.
+    test('an outlet with no gangs emits no key at all', () {
+      final bytes = _codec.write(_fullerProjectFixture());
+      expect(utf8.decode(bytes), isNot(contains('"gangs"')));
+    });
+
+    test(
+      'a decoded pre-M3-H outlet has an empty gang list, not a null one',
+      () {
+        final stored = File(
+          'test/fixtures/c_fuller_project.rmpj.json',
+        ).readAsBytesSync();
+        final doc = (_codec.read(stored) as Ok<RackDocument>).value;
+        expect(doc.outlets.values.single.gangs, isEmpty);
+      },
+    );
+
+    test('a gang with no strap survives as a gang, not as an absence', () {
+      final bytes = _codec.write(_plateGangsFixture());
+      final doc = (_codec.read(bytes) as Ok<RackDocument>).value;
+      final gangs = doc.outlets.values.single.gangs;
+      expect(gangs, hasLength(3));
+      expect(gangs[2].strap, isNull);
+      // The undecided cells came back undecided rather than as blanks.
+      expect(gangs[0].strap!.undecidedCount, 2);
+      expect(gangs[1].strap!.undecidedCount, 1);
+    });
+
+    test('a strap size no manufacturer makes is refused on read', () {
+      final json = utf8.decode(_codec.write(_plateGangsFixture()));
+      final bad = json.replaceFirst('"width": 2', '"width": 3');
+      final result = _codec.read(utf8.encode(bad));
+      expect(result, isA<Err<RackDocument>>());
     });
   });
 

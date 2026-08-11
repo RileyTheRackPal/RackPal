@@ -1,0 +1,247 @@
+{
+  "appVersion": "0.1.0+build.1",
+  "createdAt": "2026-08-11T10:00:00.000Z",
+  "document": {
+    "ackedFindings": {},
+    "circuits": {},
+    "devices": {
+      "0190e3c1-1111-7000-8000-000000000002": {
+        "designator": "STR-1",
+        "designatorLocked": false,
+        "designatorWatermark": 0,
+        "id": "0190e3c1-1111-7000-8000-000000000002",
+        "kind": "structure",
+        "lifecycleStatus": "new",
+        "meta": {
+          "createdAt": "2026-08-11T10:00:00.000Z",
+          "localRevision": 0,
+          "unknown": {},
+          "updatedAt": "2026-08-11T10:00:00.000Z",
+          "updatedBy": "rriley"
+        },
+        "name": "Rough-In - First Floor",
+        "overrides": {},
+        "placement": {
+          "mountNote": "Hallway enclosure",
+          "type": "offRack"
+        },
+        "structureBodyId": "0190e3c1-1111-7000-8000-000000000001",
+        "templateRef": {
+          "contentHash": "sha256:tpl.system.structure",
+          "templateId": "tpl.system.structure",
+          "version": 1
+        }
+      }
+    },
+    "info": {
+      "projectName": "Untitled Project"
+    },
+    "links": {
+      "0190e3c1-1111-7000-8000-000000000004": {
+        "breakouts": [],
+        "conductors": [],
+        "designator": "W001",
+        "designatorLocked": false,
+        "id": "0190e3c1-1111-7000-8000-000000000004",
+        "inlineAdapters": [],
+        "lifecycleStatus": "new",
+        "linkClass": "fieldCable",
+        "media": "media.cat6",
+        "meta": {
+          "createdAt": "2026-08-11T10:00:00.000Z",
+          "localRevision": 0,
+          "unknown": {},
+          "updatedAt": "2026-08-11T10:00:00.000Z",
+          "updatedBy": "rriley"
+        },
+        "order": "a0",
+        "plenum": false,
+        "roughInStatus": "planned",
+        "services": [],
+        "shielded": false,
+        "structureOrigin": {
+          "fieldLabel": "LR-DATA-1",
+          "outletId": "0190e3c1-1111-7000-8000-000000000003",
+          "structureBodyId": "0190e3c1-1111-7000-8000-000000000001",
+          "terminationField": "keystone"
+        }
+      },
+      "0190e3c1-1111-7000-8000-000000000005": {
+        "breakouts": [],
+        "conductors": [
+          {
+            "from": {
+              "description": "+",
+              "type": "open"
+            },
+            "role": "+",
+            "to": {
+              "description": "+",
+              "type": "open"
+            }
+          },
+          {
+            "from": {
+              "description": "-",
+              "type": "open"
+            },
+            "role": "-",
+            "to": {
+              "description": "-",
+              "type": "open"
+            }
+          }
+        ],
+        "designator": "W002",
+        "designatorLocked": false,
+        "id": "0190e3c1-1111-7000-8000-000000000005",
+        "inlineAdapters": [],
+        "lifecycleStatus": "new",
+        "linkClass": "fieldCable",
+        "media": "media.speaker.16-2",
+        "meta": {
+          "createdAt": "2026-08-11T10:00:00.000Z",
+          "localRevision": 0,
+          "unknown": {},
+          "updatedAt": "2026-08-11T10:00:00.000Z",
+          "updatedBy": "rriley"
+        },
+        "order": "a1",
+        "plenum": false,
+        "roughInStatus": "planned",
+        "services": [],
+        "shielded": false,
+        "structureOrigin": {
+          "fieldLabel": "LR-SPK-1",
+          "outletId": "0190e3c1-1111-7000-8000-000000000003",
+          "structureBodyId": "0190e3c1-1111-7000-8000-000000000001",
+          "terminationField": "bindingPost"
+        }
+      }
+    },
+    "locations": {},
+    "meta": {
+      "createdAt": "2026-08-11T10:00:00.000Z",
+      "localRevision": 0,
+      "unknown": {},
+      "updatedAt": "2026-08-11T10:00:00.000Z",
+      "updatedBy": "rriley"
+    },
+    "nets": {},
+    "notes": {},
+    "outlets": {
+      "0190e3c1-1111-7000-8000-000000000003": {
+        "designation": "WP-1",
+        "gangs": [
+          {
+            "strap": {
+              "cells": [
+                {
+                  "cell": 0,
+                  "kind": "linkEnd",
+                  "linkId": "0190e3c1-1111-7000-8000-000000000004"
+                },
+                {
+                  "cell": 1,
+                  "conductorIndex": 0,
+                  "kind": "conductor",
+                  "linkId": "0190e3c1-1111-7000-8000-000000000005"
+                },
+                {
+                  "cell": 4,
+                  "conductorIndex": 1,
+                  "kind": "conductor",
+                  "linkId": "0190e3c1-1111-7000-8000-000000000005"
+                },
+                {
+                  "cell": 5,
+                  "kind": "blank"
+                }
+              ],
+              "height": 3,
+              "width": 2
+            }
+          },
+          {
+            "strap": {
+              "height": 1,
+              "width": 1
+            }
+          },
+          {}
+        ],
+        "id": "0190e3c1-1111-7000-8000-000000000003",
+        "meta": {
+          "createdAt": "2026-08-11T10:00:00.000Z",
+          "localRevision": 0,
+          "unknown": {},
+          "updatedAt": "2026-08-11T10:00:00.000Z",
+          "updatedBy": "rriley"
+        },
+        "order": "a0",
+        "structureBodyId": "0190e3c1-1111-7000-8000-000000000001"
+      }
+    },
+    "pathways": {},
+    "ports": {},
+    "racks": {},
+    "registries": {
+      "cableSpecs": {},
+      "connectors": {},
+      "media": {},
+      "outletTemplates": {},
+      "signalDomains": {},
+      "signalFamilies": {}
+    },
+    "revisionBlock": [],
+    "settings": {
+      "cableWasteFactor": 100,
+      "collisionPolicy": "suffixLetter",
+      "defaultLineVolts": 120,
+      "defaultMirrorRearElevation": true,
+      "defaultNetworkMedia": "media.cat6a_futp",
+      "defaultRackHeightU": 12,
+      "defaultRuNumbering": "bottomUpFromOne",
+      "designatorBlockSize": 100,
+      "designatorPad": 0,
+      "designatorSeparator": "-",
+      "deviceDesignatorFormat": "{TYPE_PREFIX}{SEP}{SEQ}",
+      "displayUnits": "imperial",
+      "diversityFactorsByCategory": {},
+      "familyColorOverrides": {},
+      "linkDesignatorFormat": "W{SEQ:3}",
+      "netNameFormat": "N{SEQ:3}",
+      "outletFieldLabelFormat": "{ROOM_ABBR}-{SERVICE}-{SEQ}",
+      "outletRackLabelFormat": "{FLOOR}{SPACE}-{PANEL}{PORT:2}",
+      "portDesignatorFormat": "J{PORT_SEQ:2}",
+      "ruleOverrides": {},
+      "sheetNumbering": "simple"
+    },
+    "sheets": {},
+    "structures": {
+      "0190e3c1-1111-7000-8000-000000000001": {
+        "deviceId": "0190e3c1-1111-7000-8000-000000000002",
+        "id": "0190e3c1-1111-7000-8000-000000000001",
+        "meta": {
+          "createdAt": "2026-08-11T10:00:00.000Z",
+          "localRevision": 0,
+          "unknown": {},
+          "updatedAt": "2026-08-11T10:00:00.000Z",
+          "updatedBy": "rriley"
+        },
+        "role": "homeRunField",
+        "sheetEdge": "left",
+        "title": "Rough-In - First Floor"
+      }
+    },
+    "templates": {},
+    "tombstones": {}
+  },
+  "generator": "RackMate",
+  "id": "0190e3c1-0000-7000-8000-000000000005",
+  "minReaderVersion": 2,
+  "modifiedAt": "2026-08-11T10:30:00.000Z",
+  "schemaVersion": 2,
+  "sequence": 0,
+  "unknown": {}
+}

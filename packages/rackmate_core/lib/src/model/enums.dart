@@ -17,6 +17,9 @@ enum Severity { error, warning, advisory, off }
 /// How a conductor endpoint that isn't a live port yet is meant to be
 /// terminated — used by `PlaceEndpoint.intendedTermination` and by
 /// `StructureOrigin.terminationField`.
+/// APPENDED, NEVER REORDERED. `bindingPost` is last because these
+/// serialize by NAME and a `values` reorder is still a diff nobody can
+/// review; new cases go on the end so a reader can see the history.
 enum TerminationType {
   keystone,
   punchdown,
@@ -24,6 +27,27 @@ enum TerminationType {
   euroblock,
   unterminated,
   fieldConnector,
+
+  /// A single-post speaker terminal, ONE PER CONDUCTOR.
+  ///
+  /// Added by M3-H (DR-007 §11.7.2.1), which says exactly why: the
+  /// cells a field end needs is "a function of TERMINATION, not of the
+  /// cable", `TerminationType` "already carries exactly this
+  /// distinction and is the hook M3 should read", and "it does not yet
+  /// name a binding-post case, and adding one is the smallest change
+  /// that makes this table computable".
+  ///
+  /// THIS IS THE ONLY VALUE THAT COUNTS CONDUCTORS. Every other
+  /// termination here occupies one cell per `Link` end however many
+  /// conductors the cable has: a Cat6 run in one RJ45 is one cell, not
+  /// eight. A 16/4 speaker run is four, which is §11.7.2.2's case that
+  /// bites, because four cells do not fit on a 1-, 2- or 3-port strap
+  /// at all. See `derived/plate_fill.dart`.
+  ///
+  /// NOT A MIGRATION. Adding a value to an enum that serializes by name
+  /// leaves every written document byte-identical; no file in existence
+  /// contains this name, so `kSchemaVersion` does not move (CR-117).
+  bindingPost,
 }
 
 /// Which surface an `Outlet` or a `StructureOrigin` field end is mounted

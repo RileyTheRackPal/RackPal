@@ -1,0 +1,241 @@
+// DR-007 §11.7's model, tested against the RULING rather than against the
+// request that preceded it. Two whole groups exist because the ruling was
+// refined three times and a reader who builds from the first draft gets a
+// plausible-looking model of a part nobody sells.
+import 'package:rackmate_core/rackmate_core.dart';
+import 'package:test/test.dart';
+
+final _when = DateTime.utc(2026, 8, 11);
+
+EntityMeta _meta() =>
+    EntityMeta(createdAt: _when, updatedAt: _when, updatedBy: 'test');
+
+Uuid _u(String s) => Uuid(s);
+
+Link _drop({
+  required Uuid id,
+  required Uuid outletId,
+  TerminationType? termination,
+  int conductors = 2,
+}) => Link(
+  id: id,
+  designator: 'W001',
+  media: const MediaTypeId('media.cat6'),
+  order: const FracIndex('a0'),
+  meta: _meta(),
+  conductors: [
+    for (var i = 0; i < conductors; i++)
+      const Conductor(from: OpenEndpoint('a'), to: OpenEndpoint('b')),
+  ],
+  structureOrigin: StructureOrigin(
+    structureBodyId: _u('11111111-1111-4111-8111-111111111111'),
+    outletId: outletId,
+    fieldLabel: 'LR-DATA-1',
+    terminationField: termination,
+  ),
+);
+
+Outlet _outlet(Uuid id, {List<Gang>? gangs}) => Outlet(
+  id: id,
+  structureBodyId: _u('11111111-1111-4111-8111-111111111111'),
+  designation: 'WP-1',
+  order: const FracIndex('a0'),
+  meta: _meta(),
+  gangs: gangs,
+);
+
+void main() {
+  final outletId = _u('22222222-2222-4222-8222-222222222222');
+  final linkId = _u('33333333-3333-4333-8333-333333333333');
+
+  group('the strap is a grid and five ports cannot be expressed', () {
+    test('the shipped port counts are exactly 1, 2, 3, 4 and 6', () {
+      final counts = <int>{};
+      for (var w = kMinStrapWidth; w <= kMaxStrapWidth; w++) {
+        for (var h = kMinStrapHeight; h <= kMaxStrapHeight; h++) {
+          expect(isValidStrapSize(w, h), isTrue);
+          counts.add(Strap(width: w, height: h).cellCount);
+        }
+      }
+      // The ARTIFACT of §11.7.1's bounds, not a transcription of its
+      // table: 5 is absent because W x H cannot produce it, and nothing
+      // in this package excludes it by name.
+      expect(counts, {1, 2, 3, 4, 6});
+      expect(counts, isNot(contains(5)));
+    });
+
+    test('a strap outside the bounds is refused rather than constructed', () {
+      expect(() => Strap(width: 3, height: 1), throwsArgumentError);
+      expect(() => Strap(width: 1, height: 4), throwsArgumentError);
+      expect(() => Strap(width: 0, height: 1), throwsArgumentError);
+    });
+
+    test('cell indices are row-major, so cell 0 is top-left', () {
+      final s = Strap(width: 2, height: 3);
+      expect(s.cellIndex(0, 0), 0);
+      expect(s.cellIndex(1, 0), 1);
+      expect(s.cellIndex(0, 1), 2);
+      expect(s.cellIndex(1, 2), 5);
+      expect(s.columnOf(5), 1);
+      expect(s.rowOf(5), 2);
+      expect(s.holdsIndex(6), isFalse);
+    });
+  });
+
+  group('every occupant is 1x1 (the supersession, not the request)', () {
+    test('a speaker pair is two ordinary cells and need not be adjacent', () {
+      final s = Strap(width: 2, height: 3);
+      // 16/2: two posts, in cell 0 and cell 5. Opposite corners. Under
+      // the SUPERSEDED text this was one two-cell occupant whose
+      // orientation was forced on a 1-wide strap; under the ruling as it
+      // stands there is nothing to constrain.
+      s.cells[0] = ConductorOccupant(ConductorRef(linkId, 0));
+      s.cells[5] = ConductorOccupant(ConductorRef(linkId, 1));
+      expect(s.cells.length, 2);
+      expect(s.undecidedCount, 4);
+    });
+
+    test('no occupant type carries a span or an orientation', () {
+      // The artifact of §11.7.2's deletion: a cell holds an occupant and
+      // an occupant holds no geometry at all. If a future edit adds one,
+      // this reads as a failure to notice the ruling.
+      const occupants = <CellOccupant>[
+        LinkEndOccupant(Uuid('44444444-4444-4444-8444-444444444444')),
+        BlankInsert(),
+      ];
+      for (final o in occupants) {
+        expect(o, isA<CellOccupant>());
+      }
+      expect(const BlankInsert(), const BlankInsert());
+    });
+  });
+
+  group('an undecided cell and a blank insert are different facts', () {
+    test('a blank is counted as fitted and an empty cell as undecided', () {
+      final s = Strap(width: 2, height: 3);
+      s.cells[0] = LinkEndOccupant(linkId);
+      s.cells[1] = const BlankInsert();
+      final fill = computePlateFill(
+        _outlet(outletId, gangs: [Gang(strap: s)]),
+        const <Link>[],
+      );
+      expect(fill.cellsOccupied, 1);
+      expect(fill.blanksFitted, 1);
+      // FOUR, not zero. A half-designed plate does not silently become
+      // an order for four blank inserts (§11.7.4).
+      expect(fill.cellsUndecided, 4);
+    });
+
+    test('an empty strap orders no blanks at all', () {
+      final fill = computePlateFill(
+        _outlet(outletId, gangs: [Gang(strap: Strap(width: 2, height: 3))]),
+        const <Link>[],
+      );
+      expect(fill.blanksFitted, 0);
+      expect(fill.cellsUndecided, 6);
+    });
+  });
+
+  group('cells required is a function of termination, not of the cable', () {
+    test('a Cat6 keystone is ONE cell however many conductors it has', () {
+      // §11.7.2.1's stated counter-example. Eight conductors, one jack.
+      expect(cellsRequiredFor(TerminationType.keystone, 8), 1);
+      expect(cellsRequiredFor(TerminationType.punchdown, 8), 1);
+      expect(cellsRequiredFor(TerminationType.fBarrel, 1), 1);
+    });
+
+    test('a 16/4 binding-post drop is FOUR cells', () {
+      // §11.7.2.2's case that bites: four cells do not fit on a 1-, 2-
+      // or 3-port strap, so this is a real constraint on plate choice.
+      expect(cellsRequiredFor(TerminationType.bindingPost, 4), 4);
+      expect(cellsRequiredFor(TerminationType.bindingPost, 2), 2);
+      expect(smallestStrapFor(4), (width: 2, height: 2));
+      expect(smallestStrapFor(3), (width: 1, height: 3));
+      expect(smallestStrapFor(5), (width: 2, height: 3));
+      expect(smallestStrapFor(7), isNull);
+    });
+
+    test('a coil and a field connector need NO cell, stated as zero', () {
+      expect(cellsRequiredFor(TerminationType.unterminated, 4), 0);
+      expect(cellsRequiredFor(TerminationType.fieldConnector, 4), 0);
+    });
+
+    test('an undecided termination returns null and is never guessed', () {
+      // G4. The arm that would return 1 here is the whole defect this
+      // signature exists to make impossible.
+      expect(cellsRequiredFor(null, 4), isNull);
+    });
+  });
+
+  group('a plate reports what it could not answer', () {
+    test('unknown drops are counted beside the requirement, not in it', () {
+      final fill = computePlateFill(
+        _outlet(outletId, gangs: [Gang(strap: Strap(width: 1, height: 2))]),
+        [
+          _drop(
+            id: linkId,
+            outletId: outletId,
+            termination: TerminationType.keystone,
+          ),
+          _drop(
+            id: _u('55555555-5555-4555-8555-555555555555'),
+            outletId: outletId,
+          ),
+        ],
+      );
+      expect(fill.cellsRequired, 1);
+      expect(fill.unknownDrops, 1);
+      // NOT SETTLED, even though 1 <= 2. The shortfall is zero and the
+      // plate is still not known to fit, which is exactly why these are
+      // two fields.
+      expect(fill.shortfall, 0);
+      expect(fill.isSettled, isFalse);
+    });
+
+    test('a gang with no strap chosen is unknown, not a zero-cell gang', () {
+      final fill = computePlateFill(
+        _outlet(
+          outletId,
+          gangs: [
+            Gang(),
+            Gang(strap: Strap(width: 1, height: 1)),
+          ],
+        ),
+        const <Link>[],
+      );
+      expect(fill.gangCount, 2);
+      expect(fill.strapsUnchosen, 1);
+      expect(fill.cellsProvided, 1);
+      expect(fill.isSettled, isFalse);
+    });
+
+    test('drops at another outlet do not count against this one', () {
+      final other = _u('66666666-6666-4666-8666-666666666666');
+      final fill = computePlateFill(_outlet(outletId), [
+        _drop(
+          id: linkId,
+          outletId: other,
+          termination: TerminationType.keystone,
+        ),
+      ]);
+      expect(fill.cellsRequired, 0);
+      expect(fill.unknownDrops, 0);
+    });
+  });
+
+  group(
+    'the cover plate is one part and its gang count is the list length',
+    () {
+      test('N gangs is exactly one N-gang plate, derived not stored', () {
+        // §11.7.8 change 1. The count is never free: it IS gangs.length.
+        for (final n in [0, 1, 2, 3]) {
+          final fill = computePlateFill(
+            _outlet(outletId, gangs: [for (var i = 0; i < n; i++) Gang()]),
+            const <Link>[],
+          );
+          expect(fill.coverPlateGangs, n);
+        }
+      });
+    },
+  );
+}

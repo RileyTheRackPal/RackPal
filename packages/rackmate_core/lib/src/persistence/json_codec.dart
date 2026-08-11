@@ -45,6 +45,7 @@ import 'package:rackmate_core/src/model/conductor.dart';
 import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
 import 'package:rackmate_core/src/model/enums.dart';
+import 'package:rackmate_core/src/model/gang.dart';
 import 'package:rackmate_core/src/model/jacket_color.dart';
 import 'package:rackmate_core/src/model/link.dart';
 import 'package:rackmate_core/src/model/location.dart';
@@ -1899,7 +1900,118 @@ JsonMap _encodeOutlet(Outlet o) {
   // Omitted when empty, for the reason given on `_placementUnknown`: every
   // shipped outlet predates this key.
   if (o.unknown.isNotEmpty) json['unknown'] = o.unknown;
+  // DR-007's gang list. Omitted when empty, and it is empty on every
+  // document ever written, which is why `kSchemaVersion` does not move: a
+  // key an encoder never emits costs no existing file a byte (CR-117).
+  if (o.gangs.isNotEmpty) {
+    json['gangs'] = [for (final g in o.gangs) _encodeGang(g)];
+  }
   return json;
+}
+
+// --- Gang / Strap / cell occupant (DR-007 §11.7) ------------------------------
+//
+// A GANG WITH NO STRAP ENCODES AS `{}`, and that is G4 rather than an
+// oversight: null is UNKNOWN and unknown is an absent key, never an
+// explicit null (CR-114/CR-117). A gang whose part nobody has picked is
+// an ordinary rough-in state.
+//
+// CELLS ARE A LIST, NOT AN INT-KEYED OBJECT. Two reasons and the second
+// is the load-bearing one. JSON object keys are strings, so an int-keyed
+// map round-trips through a lexicographic sort that only coincides with
+// numeric order while a strap has fewer than ten cells; six is the bound
+// today and relying on it puts a silent trap under any future part. And
+// an UNFILLED CELL IS SIMPLY NOT IN THE LIST, which is the absent-key
+// discipline stated structurally rather than by convention: there is no
+// shape a "cell 4 is null" entry could even take.
+//
+// Sorted by index on the way out, so the bytes are a function of the
+// document and not of a map's iteration order.
+
+JsonMap _encodeGang(Gang g) {
+  final json = <String, Object?>{};
+  final strap = g.strap;
+  if (strap != null) json['strap'] = _encodeStrap(strap);
+  return json;
+}
+
+Gang _decodeGang(JsonMap json) => Gang(
+  strap: decodeNullableObject(json, 'strap', 'Gang.strap', _decodeStrap),
+);
+
+JsonMap _encodeStrap(Strap s) {
+  final indices = s.cells.keys.toList()..sort();
+  return <String, Object?>{
+    'width': s.width,
+    'height': s.height,
+    if (indices.isNotEmpty)
+      'cells': [
+        for (final i in indices)
+          <String, Object?>{'cell': i, ..._encodeCellOccupant(s.cells[i]!)},
+      ],
+  };
+}
+
+Strap _decodeStrap(JsonMap json) {
+  final width = asInt(json['width'], 'Strap.width');
+  final height = asInt(json['height'], 'Strap.height');
+  // THE DERIVED CONSTRAINT, ENFORCED AT THE DOOR (§11.7.1). A 3-wide
+  // strap is not a part, so a file claiming one is malformed rather than
+  // forward-compatible, and `Strap`'s own constructor would throw an
+  // ArgumentError that reads as a bug in this build rather than as a bad
+  // file. Reported here as the FormatException every other malformed
+  // value in this codec reports.
+  if (!isValidStrapSize(width, height)) {
+    throw FormatException(
+      'Strap.width x Strap.height is $width x $height, which is not a '
+      'shipped part: DR-007 §11.7.1 bounds W to '
+      '$kMinStrapWidth..$kMaxStrapWidth and H to '
+      '$kMinStrapHeight..$kMaxStrapHeight.',
+    );
+  }
+  final strap = Strap(width: width, height: height);
+  for (final entry in asJsonList(json['cells'] ?? const [], 'Strap.cells')) {
+    final cell = asJsonMap(entry, 'Strap.cells[]');
+    final index = asInt(cell['cell'], 'Strap.cells[].cell');
+    if (!strap.holdsIndex(index)) {
+      throw FormatException(
+        'Strap.cells[].cell is $index, outside a $width x $height strap.',
+      );
+    }
+    strap.cells[index] = _decodeCellOccupant(cell);
+  }
+  return strap;
+}
+
+JsonMap _encodeCellOccupant(CellOccupant o) => switch (o) {
+  LinkEndOccupant(:final linkId) => {'kind': 'linkEnd', 'linkId': linkId.v},
+  ConductorOccupant(:final conductor) => {
+    'kind': 'conductor',
+    'linkId': conductor.linkId.v,
+    'conductorIndex': conductor.index,
+  },
+  BlankInsert() => {'kind': 'blank'},
+};
+
+CellOccupant _decodeCellOccupant(JsonMap json) {
+  final kind = asStr(json['kind'], 'Strap.cells[].kind');
+  switch (kind) {
+    case 'linkEnd':
+      return LinkEndOccupant(
+        _decodeUuid(json['linkId'], 'LinkEndOccupant.linkId'),
+      );
+    case 'conductor':
+      return ConductorOccupant(
+        ConductorRef(
+          _decodeUuid(json['linkId'], 'ConductorOccupant.linkId'),
+          asInt(json['conductorIndex'], 'ConductorOccupant.conductorIndex'),
+        ),
+      );
+    case 'blank':
+      return const BlankInsert();
+    default:
+      throw FormatException('Unrecognised Strap.cells[].kind "$kind".');
+  }
 }
 
 Outlet _decodeOutlet(Uuid id, JsonMap json) => Outlet(
@@ -1942,6 +2054,13 @@ Outlet _decodeOutlet(Uuid id, JsonMap json) => Outlet(
     'Outlet.nominalRunLengthNm',
   ),
   notes: asStrOrNull(json['notes'], 'Outlet.notes'),
+  // `?? const []` because the key is absent on every document written
+  // before M3-H, which is all of them.
+  gangs: decodeObjectList(
+    json['gangs'] ?? const [],
+    'Outlet.gangs',
+    _decodeGang,
+  ),
   unknown: _unknownBag(json, 'Outlet'),
 );
 

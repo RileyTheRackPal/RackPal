@@ -5,6 +5,7 @@
 import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
 import 'package:rackmate_core/src/model/enums.dart' show MountSurface, Wall;
+import 'package:rackmate_core/src/model/gang.dart';
 import 'package:rackmate_core/src/units/ids.dart';
 import 'package:rackmate_core/src/units/len.dart';
 
@@ -28,8 +29,10 @@ final class Outlet {
     Uuid? pathwayId,
     Len? nominalRunLength,
     String? notes,
+    List<Gang>? gangs,
     Map<String, Object?>? unknown,
-  }) : _designation = designation,
+  }) : gangs = gangs ?? [],
+       _designation = designation,
        _locationId = locationId,
        _wall = wall,
        _mountSurface = mountSurface,
@@ -127,6 +130,33 @@ final class Outlet {
   String? outletTemplateId;
   FracIndex order;
   EntityMeta meta;
+
+  /// The gang openings in this plate, LEFT TO RIGHT (DR-007 §11.7.3).
+  ///
+  /// **`Outlet` STAYS THE PLATE AND GAINS A LIST**, which is why this is
+  /// a field here rather than one `Outlet` per gang. That alternative was
+  /// considered and rejected in the ruling: it "would lose the fact that
+  /// two drops SHARE A BOX, which is exactly the fact a room-by-room
+  /// guide exists to show", and it would redefine CR-016 rather than
+  /// extend it.
+  ///
+  /// **THE COVER PLATE IS NOT IN HERE, AND ITS GANG COUNT IS THIS
+  /// LIST'S LENGTH.** §11.7.8 change 1: a strap and a Decora plate are
+  /// two distinct purchasable objects, so an `Outlet` with N gangs is N
+  /// straps plus exactly ONE N-gang cover plate. That count is never
+  /// free and never stored, because a stored copy of `gangs.length` is
+  /// the second copy of one physical fact that CR-107 deleted
+  /// `StructureDrop` over. `derived/plate_fill.dart` computes it.
+  ///
+  /// **EMPTY ON EVERY DOCUMENT EVER WRITTEN**, which is why the codec
+  /// omits the key when empty and `kSchemaVersion` does not move: a key
+  /// added to a list that is empty everywhere costs no existing file a
+  /// byte (CR-117).
+  ///
+  /// ACCESS CONTROL: plain mutable pending the AC-013 retrofit, like
+  /// `Link.conductors`. Gangs are added, removed and reordered through
+  /// `commands/gang_commands.dart`.
+  List<Gang> gangs;
 }
 
 /// One drop within an `OutletTemplate`'s recipe.

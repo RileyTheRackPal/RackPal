@@ -838,6 +838,7 @@ String terminationLabel(TerminationType type) => switch (type) {
   TerminationType.euroblock => 'EUROBLOCK',
   TerminationType.unterminated => 'UNTERMINATED',
   TerminationType.fieldConnector => 'FIELD CONNECTOR',
+  TerminationType.bindingPost => 'BINDING POST',
 };
 
 /// What a `LinkClass` prints. `null` is UNDETERMINED and prints as such —
