@@ -112,6 +112,7 @@ export 'src/draw/path.dart';
 export 'src/draw/scene/device_layer.dart';
 export 'src/draw/scene/family_glyph.dart';
 export 'src/draw/scene/net_label_layer.dart';
+export 'src/draw/scene/plate_geometry.dart';
 export 'src/draw/scene/rack_geometry.dart';
 export 'src/draw/scene/rack_layer.dart';
 export 'src/draw/scene/rack_load_gutter.dart';
