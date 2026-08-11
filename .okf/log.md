@@ -92,6 +92,117 @@
   is M3-C/1's field label. The rack label's missing caller was justified by CR-044's
   optionality, which is correct for AC-018's fourteen and says nothing about the other
   forty-six. **An exemption sized for the exception was read as covering the rule.**
+## 2026-08-10 (ninth entry)
+
+* **Note**: **M3-F is built.** #159, #651, #652, #162, #160 and #161 are all
+  closed; #653 (Export CSV) is a ruling the user deferred and #654 is a defect
+  this work found in the typed-line planner and did not fix.
+* **Note**: **RJ-012 rejected every row it exists to accept, and only an
+  end-to-end test could see it.** DR-023's label chain ends at
+  `MediaTypeDef.shortTag`, and `buildDropsFor` refuses a drop whose chain yields
+  nothing rather than printing `media.cat6e` on a wall plate. Every type RJ-012
+  minted had no tag, under G4's "null is unknown". DR-023 §11.22.4 had already
+  named the hole as *"reachable only for a user-created media type with no
+  `shortTag`"*; M3-F/6 is what made it reachable, because until an importer
+  could create such a type nothing could. The fix copies the spelling into the
+  tag, which is not a guess: `shortTag`'s own doc calls it *"the trade name an
+  installer writes on a pull list"*, and the CSV cell is exactly that.
+* **Note**: **three UI tests were sized against a header that does not ship.**
+  They asserted three drops are visible at 600 px, which held only because the
+  harness passes no `onDone`, so the header rendered with NO BUTTON and collapsed
+  to 24 px. Production always has `Done` and has always been 48 px, so those
+  tests had been describing a surface nobody uses. Adding `Import CSV…` made the
+  test header match production and the gap appeared. The fix sized the harness to
+  a real window rather than relaxing the assertion, which is the same choice
+  [assert the artifact, not the mechanism](/practices/assert-the-artifact-not-the-mechanism.md)
+  asks for: a test harness that misrepresents the surface is testing a product
+  that does not exist.
+* **Note**: **the layering gates earned their keep.** The first draft of the
+  import's app half reached for `dart:io` and constructed a `File`; RULE 10 and
+  RULE 1b both refused it. Going through `FileStore.readBytes` is not compliance
+  for its own sake: a second I/O path would carry none of `io_file_store.dart`'s
+  errno translation, on the one platform where a locked file is the normal case
+  because Excel is still holding the sheet open.
+* **Note**: the import decodes UTF-8 with replacement rather than refusing an
+  encoding. An old Excel export is frequently Windows-1252 and the differing byte
+  is almost always inside a name or a note; rejecting sixty readable rows over one
+  byte would be the fail-fast §5.3 forbids, so it becomes U+FFFD and shows in the
+  preview grid.
+
+## 2026-08-10 (eighth entry)
+
+* **Creation**: [A modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md).
+  M3-F/6 found three more of `pathway_commands.dart`'s finding while trying to
+  apply a CSV import: **nothing in `lib/` had ever written
+  `registries.mediaTypes`**, so RJ-012's "creates a new media type ... never a
+  rejected row" could be honoured only by rejecting the row; `Link.pathwayId`
+  was settable at creation and never afterwards; and docs/07 §5.3.1's "derived
+  `code`" had no derivation anywhere. Four occurrences is what moved it from an
+  anecdote to a check.
+* **Note**: **the corpus is not what missed these, and that is the point.** The
+  data model lists each field, the codec round-trips it, the design document
+  describes the behaviour reading it, and every one of those artifacts is
+  accurate. None is evidence a person can change the value.
+  [Two documents agreeing is not verification](/practices/two-documents-agreeing-is-not-verification.md)
+  is the same lesson one layer down.
+* **Note**: three bugs in the importer were caught by ONE test shape, apply then
+  re-import then assert zero creates. The load-bearing one: RJ-012's minted media
+  type has to carry the spelling that made it AS AN ALIAS, or the second pass
+  fails to resolve `Cat6e` again and mints `media.cat6e_2`. Nothing about a
+  single import shows it, which is why idempotence has to be tested as a round
+  trip rather than asserted as a property.
+* **Note**: the dedup's short-circuit was wrong in a way that reads as obviously
+  right. It skipped the drop lookup when a row's room did not exist, since a room
+  the project lacks cannot hold an existing drop. **`fieldLabel` is unique
+  PROJECT-WIDE under CR-113**, so a drop that moved rooms between revisions is
+  the same drop, and the shortcut would have duplicated it and orphaned the
+  original.
+* **Note**: **D13 is closed, and the shape of the fix was the decision.** Dart
+  sends a KIND (`project`, `csv`) and never a `COMDLG_FILTERSPEC`, because a
+  Win32 pattern does not port to `NSOpenPanel` and D13's instruction was to avoid
+  D2 widening a narrow contract twice. The gate over it strips comments from BOTH
+  the C++ and the Dart, which is that file's own opening lesson arriving
+  inverted: an ABSENCE assertion fails on the prose explaining the absence.
+* **Note**: `#654` records a defect this work found and did not fix.
+  `drop_line_planner.dart` matches an outlet by designation ALONE, project-wide,
+  where docs/07 §5.3.2 keys on `(locationId, designation)`. Two rooms both
+  calling a plate `WP-1` is normal residential work, so typing
+  `Attic: 2x Cat6 @outlet="WP-1"` can hang the attic's drops on the living
+  room's plate. Changing a shipped gesture's matching inside a CSV task is not
+  this task's to do.
+
+## 2026-08-10 (seventh entry)
+
+* **Creation**: [Check a decomposition for holes](/practices/check-a-decomposition-for-holes.md).
+  M3-F looked healthy at pick-up: four tasks, one Done, each description carrying
+  its constraints. **Nothing in the repository read a CSV file.** M3-F/2 could not
+  show a mapping sheet for headers nothing had read and M3-F/3 could not confirm
+  counts nothing computed. The breakdown was written from the roadmap's RISK
+  register, which is complete about how the feature goes wrong and silent about
+  how it works, because that part was never in dispute.
+* **Note**: **the same audit produced a gap and a scope question, and the scope
+  list is what told them apart.** The reader is a decomposition gap (#651, #652)
+  on canon §11.24.7's own test for #587: docs/07 §5 promised it and roadmap §2
+  already carried the feature, so no task was ever cut. Export CSV is promised by
+  exactly one derived priority-3 sentence and by no entry on the scope list, so it
+  went to the user as **RULING NEEDED** (#653) rather than into the same batch.
+* **Note**: `readCsv` **diagnoses a wrong delimiter rather than sniffing one**. A
+  sniff counts `,` against `;` and tab, and the file it gets wrong is the one with
+  semicolons inside its notes. A header row parsing as a single field containing a
+  `;` or a tab is refused with a sentence naming what was found. RJ-004 capped this
+  feature's tail and a counter is exactly the kind of thing that grows one
+  plausible case at a time.
+* **Note**: **`Conduit` is a cable and a pathway, and both readings are correct.**
+  `matchCsvHeader('conduit')` is `CsvColumnTarget.pathway`; `seed_media_types.dart`
+  seeds `conduit` as an alias of `media.conduit_ent`. docs/07 §5's numeric test
+  separates them, and because wide detection needs TWO cable columns an ambiguous
+  one can never flip a long file by itself. Recorded because the collision is
+  invisible from either file alone.
+* **Note**: a CRLF surviving into a quoted cell would have broken §5.3's dedup
+  invisibly, since it compares `fieldLabel` and notes as strings and a row would
+  differ from itself across two exports of one sheet. Embedded line endings
+  normalise, and [G4](/invariants/g4-unknowns-are-counted.md)'s counting rule
+  covers the blank separator lines the reader skips.
 
 ## 2026-08-10 (sixth entry)
 

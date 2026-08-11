@@ -36,6 +36,7 @@ import 'package:rackmate_core/src/model/location.dart';
 import 'package:rackmate_core/src/model/outlet.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/model/registries.dart';
+import 'package:rackmate_core/src/units/ids.dart';
 
 /// One resolved media type and how many of it — the unit both entry
 /// surfaces reduce to before any id is allocated.
@@ -105,6 +106,7 @@ DropBuildOutcome buildDropsFor({
   required Set<String> usedLabels,
   required Set<String> usedDesignators,
   required Set<String> usedNetNames,
+  Uuid? pathwayId,
 }) {
   final commands = <Command>[];
   final labels = <String>[];
@@ -179,6 +181,16 @@ DropBuildOutcome buildDropsFor({
         // sheet somebody buys hardware from that is a different fact from
         // "not decided". M3-J made the field nullable (G4, CR-114), so
         // the key is now simply absent and the schedule prints `—`.
+        // WHICH TRUNK THESE RUNS SHARE, when the caller knows.
+        //
+        // Null falls back to `outlet.pathwayId` inside
+        // `buildAddHomeRunCommand`, which is how the typed line has
+        // always worked: the plate carries the route and its drops
+        // inherit it. A CSV `Bundle` column is the other case, a
+        // GROUPING stated per row, and one plate's drops may sit in two
+        // bundles, so it cannot go on the outlet without lying about
+        // the ones it does not cover (docs/07 §5.1, §5.3.3).
+        pathwayId: pathwayId,
         now: now,
         actor: actor,
         alsoUsedLabels: usedLabels,

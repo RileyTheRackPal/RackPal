@@ -6,6 +6,8 @@ by something going wrong.
 * [A test that asserts an absence names its due date](a-test-that-asserts-an-absence-names-its-due-date.md) - three came due in one task and cost five minutes between them, because each comment said which item would retire it.
 * [A deferred action needs a frame](defer-past-the-gesture.md) - addPostFrameCallback queues but does not schedule, and a TabBarView settles the page under a tab switch made mid-click.
 * [Assert the artifact, not the mechanism](assert-the-artifact-not-the-mechanism.md) - a test counted corridors, passed, and the sheet painted a fifth of its ink twice.
+* [A modelled field is not a reachable one](a-modelled-field-is-not-a-reachable-one.md) - four fields modelled, persisted and read by four consumers each, with no gesture able to set them; grep the writers, not the declaration.
+* [Check a decomposition for holes](check-a-decomposition-for-holes.md) - a healthy-looking four-task issue had nothing that read a CSV file; ask what produces each task's input, and know a gap from a scope change.
 * [Census before building](census-before-building.md) - print the field over the whole corpus first; it has caught an empty field, an unmeasured cost and a wrong ordering.
 * [Decompose before building](decompose-before-building.md) - the first task of a milestone is its own breakdown, and task descriptions carry the traps.
 * [Diagnose before fixing](diagnose-before-fixing.md) - twelve fix commits touched neither cause; what that means and what shape of fix held.

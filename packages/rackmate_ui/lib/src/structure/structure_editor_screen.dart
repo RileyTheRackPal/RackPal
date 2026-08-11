@@ -61,6 +61,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard;
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
+import 'package:rackmate_ui/src/structure/csv_import_dialog.dart';
 import 'package:rackmate_ui/src/structure/drop_entry_panel.dart';
 import 'package:rackmate_ui/src/structure/pathways_view.dart';
 import 'package:rackmate_ui/src/structure/structure_matrix_view.dart';
@@ -80,6 +81,7 @@ final class StructureEditorActions {
     required this.onEditPathways,
     required this.onAddPathway,
     required this.onRemovePathway,
+    required this.onImportCsv,
   });
 
   /// M3-C/1's loop, unchanged. See `DropEntryActions.onCommit` for why
@@ -131,6 +133,20 @@ final class StructureEditorActions {
   /// Deletes one pathway and clears every `Link` that named it. NOT a
   /// cascade: see `RemovePathwayCommand`.
   final String? Function(Uuid id) onRemovePathway;
+
+  /// docs/07 §5's import, on the body the editor is showing (M3-F/2,
+  /// #160).
+  ///
+  /// THE WHOLE FLOW LIVES ON THE APP SIDE, because it opens a native
+  /// file dialog and reads a file, and `rackmate_ui` has neither. What
+  /// crosses this boundary is a request and nothing else: the dialog
+  /// this opens is `showCsvImportDialog`, which is in this package and
+  /// takes only a parsed table and the live document.
+  ///
+  /// ASYNC, unlike every other callback here, and that is the file
+  /// dialog: the native picker blocks on the user and AC-058/D14 wants
+  /// progress on anything over ~500 ms.
+  final Future<void> Function(Uuid? structureBodyId) onImportCsv;
 }
 
 /// Which of §4's tabs the editor is showing.
@@ -361,6 +377,8 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
           table: table,
           onDone: widget.onDone,
           onBody: (id) => setState(() => _pickedBodyId = id),
+          onImportCsv: () =>
+              unawaited(widget.actions.onImportCsv(_bodyIdFor(doc))),
         ),
         _TabStrip(
           tab: _tab,
@@ -768,12 +786,18 @@ class _EditorHeader extends StatelessWidget {
     required this.table,
     required this.onDone,
     required this.onBody,
+    required this.onImportCsv,
   });
 
   final RackDocument doc;
   final Uuid? structureBodyId;
   final StructureTable table;
   final VoidCallback? onDone;
+
+  /// M3-F/2 (#160). In the HEADER rather than beside `Add outlet`,
+  /// because it acts on the whole body and not on the table's selection,
+  /// and §4's wireframe draws it with the other body-level controls.
+  final VoidCallback onImportCsv;
 
   /// Choose which body the editor is working on (M3-E/3, #158).
   final ValueChanged<Uuid> onBody;
@@ -793,10 +817,18 @@ class _EditorHeader extends StatelessWidget {
           // a dropdown with one entry is a control that cannot be used
           // and still has to be read past.
           if (doc.structures.length > 1) ...[
-            _StructureBodyPicker(
-              doc: doc,
-              selectedId: structureBodyId,
-              onBody: onBody,
+            // FLEXIBLE, because the picker's width is the LONGEST BODY
+            // NAME a person typed and nothing bounds that. It was the
+            // only unconstrained child in this row, so adding one more
+            // button (M3-F/2's `Import CSV…`) overflowed the header on a
+            // narrow window by four pixels. The subtitle beside it was
+            // already free to collapse; this one was not.
+            Flexible(
+              child: _StructureBodyPicker(
+                doc: doc,
+                selectedId: structureBodyId,
+                onBody: onBody,
+              ),
             ),
             const SizedBox(width: 12),
           ],
@@ -809,6 +841,10 @@ class _EditorHeader extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+          ),
+          TextButton(
+            onPressed: onImportCsv,
+            child: const Text(kImportCsvLabel),
           ),
           if (onDone != null)
             TextButton(onPressed: onDone, child: const Text('Done')),
@@ -878,12 +914,26 @@ class _StructureBodyPicker extends StatelessWidget {
       key: kStructureBodyPickerKey,
       value: selectedId,
       focusColor: Colors.transparent,
+      // FILLS ITS BOX AND ELLIPSISES, because the label is
+      // `STR-1 · "Media Panel — Garage"` and the quoted half is whatever
+      // a person typed. Unbounded, it pushed the header's own controls
+      // off the right on a narrow window; bounded without this, the
+      // button's internal row overflowed instead. The caller gives it a
+      // `Flexible`; this is what lets it accept the offer.
+      isExpanded: true,
       onChanged: (id) {
         if (id != null) onBody(id);
       },
       items: [
         for (final body in bodies)
-          DropdownMenuItem<Uuid>(value: body.id, child: Text(_label(body))),
+          DropdownMenuItem<Uuid>(
+            value: body.id,
+            child: Text(
+              _label(body),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
       ],
     );
   }

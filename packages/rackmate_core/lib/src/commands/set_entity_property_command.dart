@@ -662,6 +662,33 @@ abstract final class LinkField {
     touches: EpochMask.wires | EpochMask.meta,
   );
 
+  /// Which `Pathway` this run travels in (CR-016, docs/07 §4.1's
+  /// `PATHWAY` column).
+  ///
+  /// **A RUN COULD BE FILED UNDER A PATHWAY AND NEVER RE-FILED.**
+  /// `buildAddHomeRunCommand` sets it at creation and nothing could
+  /// change it afterwards, so a drop pulled before anybody decided which
+  /// conduit it shared was stuck outside every trunk. M3-F/6 is what
+  /// forced the row: a revised pull list whose `Bundle` column changed is
+  /// an ordinary revision, and an importer that counted the change and
+  /// then could not apply it would make §5.3.5's confirm overstate what
+  /// it was about to do.
+  ///
+  /// NULLABLE, and null is "no recorded route" rather than "no route"
+  /// (G4) — the same reading `RemovePathwayCommand` leaves behind when it
+  /// clears this field on every run through a deleted pathway.
+  ///
+  /// `wires | meta` for the uniform reason `StructureOriginField` states:
+  /// the pathway draws as a trunk on the schematic and prints in the Pull
+  /// Sheet's `PATH` cell for this cable's row.
+  static final pathwayId = EntityField<Link, Uuid?>(
+    access: EntityAccess.link,
+    key: 'pathwayId',
+    get: (l) => l.pathwayId,
+    set: (l, v) => l.pathwayId = v,
+    touches: EpochMask.wires | EpochMask.meta,
+  );
+
   // ── the as-built four (DR-020 §11.19.2(5), M3-J/3) ─────────────────
   // §11.19.3: "the as-built story was 80 % modelled and 0 % reachable".
   // These four were on `Link` from M0 with no gesture; the Structure

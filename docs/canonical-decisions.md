@@ -8887,6 +8887,131 @@ person a minute rather than a design session.
 **11.37.6 Scope.** **No scope change.** Nothing enters or leaves v1; an open measurement inside an
 existing ruling is closed. Board #167 loses its "must not be inferred" hazard and gains a figure.
 
+### 11.38 DR-039 · Project history: an in-file journal, an operation panel, and snapshots, in that order
+
+**Settled by the user on 2026-08-11**, from a request for *"a full undo/redo history with snapshots
+taken at regular intervals ... that can be rolled back to if a bulk of edits needs to be undone
+quickly"*, refined to *"similar to what Autodesk Fusion has for its revision system"* and then to
+*"I do want the versioning in-file; it may be necessary to have this for troubleshooting in the
+future. The more documentation that is held over the HISTORY of a project, the easier it is to read
+WHY a change was made."*
+
+**This is a §8.3 amendment and roadmap §2 gains a line.** Nothing in the scope list mentions
+project history, and the machinery that exists (`SnapshotStore`, `Tombstone`, `EntityMeta`) was
+built for other reasons.
+
+**11.38.1 "What did it look like" and "why did it change" are two artifacts, and the second is the
+one the user asked for.** A snapshot answers the first: it is a whole document, ~870 kB of
+uncompressed JSON, and recovering a REASON from ten of them means diffing and inferring. The
+second is answered by a JOURNAL: an append-only log of what happened, when, by whom, with a
+comment. That is text, it is kilobytes, and it needs no container.
+
+The request named snapshots and cited the journal's benefit. Both ship; the journal ships first,
+because it is what the stated reason needs.
+
+**11.38.2 The journal is IN THE FILE, and it costs no schema version.** CR-117's additive-optional
+contract is why: a key written only when present leaves every existing document encoding
+byte-for-byte, so `kSchemaVersion` does not move. Reading and writing a file without editing it
+appends nothing, so `write(read(bytes)) == bytes` is untouched.
+
+**In-file is the requirement and not an implementation detail.** The user's reason is
+troubleshooting a project somebody sends you, and application-support storage cannot serve it:
+history left on the author's machine is absent from the artifact under investigation.
+
+**11.38.3 Grain: milestones and saves, not every command.** One entry per save, per bulk act (CSV
+import, template apply, bulk delete, matrix fill), and per issued drawing revision, each carrying a
+timestamp, an actor, a generated summary and an optional user comment. **Every-command was
+refused**: a 60-drop rough-in is already several hundred commands and a project's life is tens of
+thousands, which is megabytes of journal in an uncompressed file, unreadable by the person it
+exists to inform, and it would make the ZIP container a prerequisite (§11.38.6). **Saves-only was
+also refused**: a bulk act between two saves would go unrecorded, which is the exact
+troubleshooting case the request named.
+
+**11.38.4 CR-095's tombstones are the same feature, half-built, and this ruling finishes them.**
+`Tombstone` records `deletedAt`, `entityType` and `by`, is encoded, decoded and byte-round-tripped,
+and its own doc comment says it *"Ships in v1 even though no history UI exists yet"*. **Nothing in
+`lib/` has ever constructed one**, so `doc.tombstones` is empty in every document this product has
+produced. That is the fourth instance of the pattern the practice bundle now names, and it is why
+the journal work starts by filling in the gesture rather than by inventing a parallel record.
+
+`EntityMeta{createdAt, updatedAt, updatedBy}` is already on every entity, already in the file, and
+already surfaced nowhere.
+
+**11.38.5 The operation panel is NOT a Fusion timeline, and the surface must not imply it is.**
+Fusion's timeline scrubs a PARAMETRIC feature tree: editing feature 12 recomputes 13 through 40.
+`UndoStack` is a linear log of applied mutations with a `revert()`, so operations 13 through 40
+were written against the state 12 produced and cannot be recomputed against a rule. **Undo-to-a-
+point is available; edit-in-the-middle is not**, and no amount of UI makes it so. The panel says
+this by its shape rather than by a tooltip.
+
+The panel is otherwise nearly free: `UndoStack` already holds 200 entries and merges within 400 ms,
+and every command already carries a `LabelKey`.
+
+**11.38.6 Snapshots stay in application support for now, and the ZIP container is a SEPARATE
+ruling.** `.rmpj` is plain uncompressed JSON. Moving it to a container would fix a real parsing
+concern and shrink files ~8×, and it is the right eventual home for snapshots and for DR-030's
+integrator logo. It is also one to two weeks dominated by CR-117 determinism (ZIP carries per-entry
+mtime, compression level, entry order and CRC, none of which may vary), by re-baselining thirteen
+byte-exact artifacts and their `.gitattributes` pins, and by AC-058/D8's zip-slip and
+inflation-limit work becoming mandatory on File ▸ Open rather than deferrable on import.
+
+**The sequencing decision is that application-support snapshots do not block a container, and
+in-file snapshots would.** Versions are files; moving them into a container later is a copy loop
+and one migration. Committing to in-file snapshots now makes the container a prerequisite for
+shipping any of it. The journal is in-file from the start because it is small enough that this
+argument does not apply to it.
+
+**11.38.7 Restore is PROMOTE, never overwrite** (Fusion's semantics, and they make the cheap
+implementation the correct one). Restoring version 7 while on version 12 creates version 13 as a
+copy of 7 and destroys nothing. Two consequences: it does not need DR-013's destructive-confirm
+pattern, because it is not destructive; and it may be implemented as `DocumentSession.adopt`, the
+existing File ▸ Open path, without adding a mutation primitive to the layer roadmap §2 line 48
+calls *"the most expensive retrofit in the project"*.
+
+**11.38.8 Naming: VERSIONS are file states; REVISIONS are issued drawings.** `RevisionEntry
+{revision, date, description, by}` already exists and is the title-block revision table (*"Rev B,
+2026-03-14, Issued for construction"*). Using one word for both would put two meanings on one term
+in one document class. Issuing a revision is a natural journal entry and a natural snapshot
+trigger, which is a relationship worth having and not a reason to merge them.
+
+**11.38.9 CR-098's "pruned to the last 10" is amended for snapshots to a retention the user can
+set, defaulting to a day of history.** Ten was chosen for pre-migration backups, where it is
+generous. It is wrong for interval snapshots: at ten minutes it is 100 minutes of history. The
+pre-update snapshot behaviour CR-098 rules is otherwise untouched.
+
+**11.38.10 SNAPSHOTS ARE DIFFABLE, and the diff is what makes the journal answer "why".** The
+journal says *"14:20, imported smith-pull-list.csv, 61 drops"*. A diff of the snapshots either side
+of that entry says WHICH 61 and what changed on each. Index and detail are different artifacts and
+the pair is what the request asked for; neither alone is.
+
+**The property this rests on is already enforced rather than newly required.** `json_codec.dart`
+writes *"plain, pretty-printed, key-sorted UTF-8 JSON"* with a deep sort, and CR-117 gates the
+result byte-for-byte. Sorted keys make a textual diff stable and minimal; byte-exactness makes every
+difference a REAL change rather than serialisation noise. Most project formats can claim neither,
+and a diff over one that could not would be unreadable.
+
+**11.38.11 The diff is computed over the CODEC'S OUTPUT, never over the object graph.** Two
+reasons, and the second is the one that decides it.
+
+The codec is total and CR-117's 1000-sequence fuzz harness already proves it. An object-graph
+walker would be a second traversal with no such proof, and the field it forgot would be invisible
+in exactly the way a diff must never be. The entity maps are also flat and UUID-keyed, so
+added / removed / changed falls out of a map comparison for free.
+
+**The accessor tables are used to PRETTIFY, never to enumerate.** `LinkField`, `LocationField`,
+`PathwayField` and their siblings name and format a field for a human, and a key none of them
+carries falls back to its raw spelling. Enumerating the comparison FROM those tables would be the
+census trap this project has already paid for twice: they cover fields a gesture edits, not fields
+that exist, so a diff built on them would silently omit every field nothing has been wired to yet.
+Built this way the diff is total on day one and merely gets friendlier as the tables grow.
+
+A consequence worth having: `unknown` passthrough maps appear in a diff automatically, so a field
+written by a NEWER build shows up as a change rather than as nothing.
+
+**11.38.12 Scope.** **Roadmap §2 gains "project history: an in-file journal, an operation panel,
+promote-not-overwrite snapshots and a document diff".** The ZIP container is explicitly NOT in this
+amendment and needs its own ruling. The milestone this lands in is open; it is not M3, which is
+mid-flight.
 ### 11.39 DR-040 · A drop lands on a panel port; `@panel=` is the gesture and the rack label is allocated
 
 **Settled by the user on 2026-08-11**, from a census taken before M3-G's stopwatch rather than after
