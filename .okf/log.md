@@ -1,5 +1,44 @@
 # Update Log
 
+## 2026-08-11 (third entry)
+
+* **Note**: **M3-K is BUILT, four tasks in one day, and the ordering was the whole
+  plan.** #663 (the `{FLOOR}`/`{SPACE}` editors) is the cheapest of the four and it
+  went first because **without it the other three are unobservable**: every rack
+  label the binding produced would have come out absent, and the build would have
+  looked broken for a reason that was not the binding.
+* **Note**: **`allocateOutletRackLabel` has a caller for the first time since
+  M3-D/1**, and the useful distinction is that it was **uncallable rather than
+  uncalled**. The pattern needs `{PANEL}` and `{PORT}`, which are facts about a
+  landing; nothing recorded a landing. That is why M3-D/1 closing green was not a
+  bookkeeping error, and why "give it a caller" was never a one-line task.
+* **Creation**: DR-039 §11.38.8, taken by the user **mid-build**, when the label came
+  out `1A-PP-1J04`. `{PORT}` is the number **printed on the part**, not the
+  designator this product allocates: `portDesignatorFormat` is `J{PORT_SEQ:2}` and
+  `PORT_SEQ` counts the front jacks a drop never touches, so `J04` appears nowhere on
+  the panel a tech is standing at. **The ruling records what it does not fix**: the
+  Termination Schedule still prints the designator for the same hole, and that
+  disagreement is older than DR-039. Filed as board #667.
+* **Note**: **an existing test caught a UI regression the new fields caused, and the
+  fix was not the obvious one.** The Locations dialog is a fixed 720 × 520; two more
+  fields pushed `Delete location` out of the detail pane, and three delete cases went
+  red. Making the dialog taller fixes today and nothing else. The button moved
+  **outside the scroll view**, where no future field can take its place, and the new
+  case mounts the REAL 720 × 520 rather than the harness's roomier 800 × 600, because
+  **a pane that fits the test viewport and not the dialog would have passed all
+  three**.
+* **Note**: **the drill script was driven through the real planner before a person
+  touched it, and its first draft was wrong.** It left twelve drops open where AC-018
+  wants fourteen. The verifier caught it on the run that existed to test the
+  verifier. **An arithmetic slip in a drill script costs fifteen minutes of a
+  person's time if nothing checks it first**, and this is now gated end to end as
+  "the whole drill, minus the human".
+* **Note**: **the measured cost of landing is 84 keystrokes for forty-six drops.**
+  The script goes 349 → 433, which is 1.8 per landed drop against roughly seven for a
+  hand-typed `RACK LBL` cell. **That ratio is the argument for `@panel=` being a
+  modifier rather than a column**, and it is measured rather than asserted, which is
+  the same discipline M3-C/1 applied to 5.82.
+
 ## 2026-08-11 (second entry)
 
 * **Creation**: [DR-039, a drop lands on a panel

@@ -1913,6 +1913,47 @@ gesture created a `Pathway`) and #587, and all three were found the same way. **
 what it costs**: four tasks arriving at an exit criterion have the same effect on a calendar as a
 growth would, and §5.2 already read M3 as `M`-at-its-ceiling before them.
 
+**M3-K CLOSED the same day it opened, four tasks, `175ec74` `a662283` `9e68bda` `7fb2ffe`.** Each is
+worth one line beyond its commit message:
+
+*#663 was the cheapest and it unblocked the other three.* Two controls on a panel that already had
+three. What made it first is that **without it the other three are unobservable**: `{FLOOR}` and
+`{SPACE}` had no editor, so every rack label the binding produced would have come out absent and the
+build would have looked broken for a reason that was not the binding. It also had a defect of its
+own that three EXISTING delete cases caught: the dialog is a fixed 720 × 520, two new fields pushed
+`Delete location` out of the detail pane, and the button now lives outside the scroll view where no
+future field can take its place. The new case mounts the REAL 720 × 520 rather than the test
+harness's roomier 800 × 600, with an anti-vacuity guard on §3.5's C2 precedent.
+
+*#664 wrote a command canon has cited since AC-018 and nobody had built.* Its test group transcribes
+§2186's clause rather than paraphrasing it, because the clause IS a list of what must not change and
+a bind that rebuilt the `Link` would pass every endpoint assertion while losing the id, the length,
+the jacket and the test result.
+
+*#665 gave `allocateOutletRackLabel` its first caller in a milestone.* The allocator shipped with
+M3-D/1 and had four callers, all in its own test file. **It was not uncalled, it was uncallable**, and
+that distinction is the whole of why M3-D/1 closing green was not a bookkeeping error.
+
+*#666 cost the drill 84 keystrokes and bought forty-six landings.* `@panel=` on seven of ten lines
+takes the script from 349 to 433, which is 1.8 keystrokes per landed drop against roughly seven for a
+hand-typed `RACK LBL` cell. **That ratio is the argument for it being a modifier and not a column**,
+and it is measured rather than asserted.
+
+**The drill kit is built and the stopwatch is the only thing left.** `docs/16-m3g-drill.md` carries
+the script, #164's conditions form and #165's verdict form; `apps/rackmate/tool/verify_drill.dart`
+reads the saved `.rmpj` and checks AC-018 clause by clause, reporting all thirteen rather than
+stopping at the first failure. **The script was driven through the real planner before any person
+touches it, and its first draft was wrong**: twelve drops open where the criterion wants fourteen,
+caught by the verifier on the run that existed to test the verifier. It is now gated end to end,
+which is the whole drill minus the human.
+
+*What that gate does and does not settle.* It settles that the FILE half of AC-018 is achievable:
+sixty drops, fourteen open, forty-six landed and labelled, every label unique as a set, and no
+unbound drop carrying a rack label. **It settles nothing about the clock.** Fifteen seconds per drop
+INCLUDING thinking is a human fact, #163 is still the only instrument for it, and M1's precedent is
+that the two defects which refuted that drill were invisible to 2206 passing tests and were found by
+a person opening the app.
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three
