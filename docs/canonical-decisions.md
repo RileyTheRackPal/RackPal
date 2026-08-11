@@ -8970,6 +8970,26 @@ binding and its four tasks.
 at the exit criterion have the same effect on a calendar as if it were, and the row should be read as
 `M`-over-ceiling until the drill returns a verdict.
 
+**11.38.8 `{PORT}` is the number PRINTED ON THE PART, taken mid-task when the build produced
+`1A-PP-1J04`.** §11.38.3 ruled `{PANEL}` and was silent about `{PORT}`, and the silence had a
+visible answer: `ConnectTarget.portDesignator` renders `J04`, because `portDesignatorFormat` is
+`J{PORT_SEQ:2}` and `PORT_SEQ` counts a position's place in the whole template **including the front
+jacks a drop never touches**. `J04` appears nowhere on the physical panel, so a tech on a ladder
+holding a cable labelled `1A-PP-1J04` has to translate it against a panel silkscreened `01 … 24`.
+CR-044's own example is `1A-A12`, and the `12` in it is a position.
+
+**The archetype already carries the number.** `catalog_network.dart` calls `n03.p(rearKey, n, …)`
+with `n` the zero-padded position, which lands in `PortDef.label`. So `{PORT}` takes the label where
+a template declares one and the designator where it does not, and the shipped preset renders
+`1A-PP-101`.
+
+**What this deliberately does NOT fix, so nobody reads it as fixed.** The Termination Schedule's
+`RACK TERM` column still prints the *designator* for the same hole, so two columns describe one
+position two ways. **That disagreement is older than this ruling**: it is between `portDesignator`
+and the physical part, and it exists today on every device with authored port labels. Closing it
+means teaching designator ALLOCATION to honour an authored label, which changes the connect gesture's
+output across the whole catalog and is its own ruling and its own task. It is filed, not smuggled in.
+
 ---
 
 ## 12. Superseded rulings

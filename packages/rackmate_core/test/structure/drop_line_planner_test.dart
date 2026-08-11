@@ -871,6 +871,103 @@ void main() {
       );
     });
 
+    test('THE WHOLE DRILL, MINUS THE HUMAN (M3-G, docs/16)', () {
+      // WHAT THIS IS AND IS NOT, on `drop_entry_panel_test`'s precedent.
+      // It does not time anybody: fifteen seconds per drop including
+      // thinking is a human fact and board #163 is the only instrument
+      // for it. What it pins is the part the SURFACE controls, which is
+      // the part that could make the drill impossible before anyone runs
+      // it, and it is now the AC-018 SHAPE and not only the keystrokes.
+      //
+      // The script is docs/16 §2 verbatim. If they drift apart, a person
+      // spends fifteen minutes discovering it.
+      const script = [
+        'Living Room: 4x Cat6, 2x RG6, 2x 16/4, 1x 22/4 @panel=PP-1',
+        'Kitchen: 2x Cat6, 1x RG6, 1x 16/4, 1x 22/4 @panel=PP-1',
+        'Office: 4x Cat6, 1x RG6, 1x 22/4 @panel=PP-1',
+        'Primary Bedroom: 2x Cat6, 2x RG6, 1x 16/4, 1x 22/4 @panel=PP-1',
+        'Bedroom 2: 2x Cat6, 1x RG6, 1x 22/4 @panel=PP-1',
+        'Bedroom 3: 2x Cat6, 1x RG6',
+        'Attic: 5x Cat6',
+        'Exterior: 6x Cat6',
+        'Garage: 4x Cat6, 2x RG6, 1x 22/4 @panel=PP-1',
+        'Media Room: 4x Cat6, 2x RG6, 2x 16/4, 1x 22/4 @panel=PP-1',
+      ];
+      const rooms = [
+        ('Kitchen', 'KIT'),
+        ('Office', 'OFF'),
+        ('Primary Bedroom', 'MBR'),
+        ('Bedroom 2', 'BR2'),
+        ('Bedroom 3', 'BR3'),
+        ('Attic', 'ATT'),
+        ('Exterior', 'EXT'),
+        ('Garage', 'GAR'),
+        ('Media Room', 'MED'),
+      ];
+
+      final p = _project();
+      _panel(p.doc, positions: 48);
+      for (final (name, code) in rooms) {
+        AddLocationCommand(
+          name: name,
+          code: code,
+          order: nextLocationOrder(p.doc),
+          now: _now,
+          actor: 'test',
+        ).apply(p.doc);
+      }
+
+      for (final line in script) {
+        _apply(p.doc, _ready(_plan(p.doc, line)));
+      }
+
+      final drops = p.doc.links.values.toList();
+      final open = [
+        for (final l in drops)
+          if (l.conductors.first.to is! PortEndpoint) l,
+      ];
+
+      // AC-018, clause by clause, at the artifact.
+      expect(drops, hasLength(60), reason: "the drill's own size");
+      expect(open, hasLength(14), reason: "AC-018's fourteen");
+      expect(drops.length - open.length, 46, reason: 'and its forty-six');
+      for (final l in drops) {
+        expect(l.designator, isNotEmpty, reason: 'a W number');
+        expect(l.structureOrigin!.fieldLabel, isNotEmpty);
+      }
+      // AS SETS, so a duplicate cannot hide inside a matching count (G1).
+      expect(
+        {for (final l in drops) l.structureOrigin!.fieldLabel},
+        hasLength(60),
+      );
+      expect(
+        {
+          for (final l in drops)
+            if (l.structureOrigin!.rackLabel case final r?) r,
+        },
+        hasLength(46),
+      );
+      // THE CONVERSE, which is the one that catches a fabrication: nothing
+      // may name a panel position a cable has not reached (G4).
+      for (final l in open) {
+        expect(l.structureOrigin!.rackLabel, isNull);
+      }
+
+      // THE COST, MEASURED THEN PINNED, in that order. 349 was the figure
+      // before anything landed; `@panel=` on seven of ten lines buys
+      // forty-six landings for 84 more keystrokes, which is 1.8 each
+      // against roughly 7 for a hand-typed `RACK LBL` cell.
+      final keystrokes = script.fold(0, (n, l) => n + l.length) + script.length;
+      expect(keystrokes, 433, reason: 'the measurement, pinned exactly');
+      expect(
+        keystrokes / drops.length,
+        lessThan(8.0),
+        reason:
+            '$keystrokes keystrokes for ${drops.length} drops = '
+            '${(keystrokes / drops.length).toStringAsFixed(2)} each',
+      );
+    });
+
     test('the binds come after the drops, because a bind names a Link', () {
       // Ordering as an assertion rather than a comment: a bind sequenced
       // ahead of its own AddHomeRunCommand names a link the document does
