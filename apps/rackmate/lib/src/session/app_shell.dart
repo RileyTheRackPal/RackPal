@@ -58,6 +58,7 @@ import 'package:rackmate/src/session/csv_import_actions.dart';
 import 'package:rackmate/src/session/document_session.dart';
 import 'package:rackmate/src/session/drop_entry_actions.dart';
 import 'package:rackmate/src/session/locations_actions.dart';
+import 'package:rackmate/src/session/outlet_plate_actions.dart';
 import 'package:rackmate/src/session/outlet_template_actions.dart';
 import 'package:rackmate/src/session/pathway_actions.dart';
 import 'package:rackmate/src/session/session_controller.dart';
@@ -735,6 +736,7 @@ final class AppShellState extends State<AppShell>
           controller: session.controller,
         ),
         onImportCsv: (bodyId) => _runCsvImport(session, bodyId),
+        outlets: buildOutletsActions(controller: session.controller),
       ),
     );
   }

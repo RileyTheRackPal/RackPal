@@ -63,6 +63,7 @@ import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
 import 'package:rackmate_ui/src/structure/csv_import_dialog.dart';
 import 'package:rackmate_ui/src/structure/drop_entry_panel.dart';
+import 'package:rackmate_ui/src/structure/outlets_view.dart';
 import 'package:rackmate_ui/src/structure/pathways_view.dart';
 import 'package:rackmate_ui/src/structure/structure_matrix_view.dart';
 
@@ -82,6 +83,7 @@ final class StructureEditorActions {
     required this.onAddPathway,
     required this.onRemovePathway,
     required this.onImportCsv,
+    required this.outlets,
   });
 
   /// M3-C/1's loop, unchanged. See `DropEntryActions.onCommit` for why
@@ -147,18 +149,33 @@ final class StructureEditorActions {
   /// dialog: the native picker blocks on the user and AC-058/D14 wants
   /// progress on anything over ~500 ms.
   final Future<void> Function(Uuid? structureBodyId) onImportCsv;
+
+  /// The Outlets tab's five gestures (M3-H/2, #167, DR-007 §11.7).
+  ///
+  /// ITS OWN GROUP RATHER THAN FIVE MORE FIELDS HERE, which is the shape
+  /// `dropEntry` already uses: they are one surface's vocabulary, they
+  /// all carry an `outletId` a table edit never does, and a tab that had
+  /// to reach past four unrelated pathway callbacks to find them would
+  /// invite somebody to widen `onEdit` instead.
+  final OutletsActions outlets;
 }
 
 /// Which of §4's tabs the editor is showing.
 ///
-/// THREE, AND §4 DRAWS FOUR. See the file header: `Outlets` is later, and
-/// a tab that opens nothing is a promise about an unbuilt surface.
+/// FOUR, AND §4 DRAWS FOUR. The strip was three from M3-C to M3-H and
+/// this file named the missing one beside the list it was missing from;
+/// `Outlets` arrived with M3-H (#167) and the count now matches the
+/// wireframe. The order is still §4's, so nothing shuffled.
 enum StructureEditorTab {
   /// AC-048's requirement, and the value this enum starts on.
   table,
 
   /// docs/07 §4.2.
   matrix,
+
+  /// docs/07 §4, M3-H/2 (#167), DR-007 §11.7. One wall plate at a time,
+  /// drawn to scale: gangs, straps, and which keystone is in which cell.
+  outlets,
 
   /// docs/07 §4, M3-E/1 (#156). A list and an editor for the pathways
   /// that exist, deliberately not a routing surface: the user's stated
@@ -172,6 +189,9 @@ const String kTableTabLabel = 'Table';
 
 /// See [kTableTabLabel].
 const String kMatrixTabLabel = 'Matrix';
+
+/// See [kTableTabLabel].
+const String kOutletsTabLabel = 'Outlets';
 
 /// See [kTableTabLabel].
 const String kPathwaysTabLabel = 'Pathways';
@@ -428,6 +448,11 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
                             }
                           }),
                           onSetCount: _setCount,
+                        ),
+                        StructureEditorTab.outlets => OutletsView(
+                          doc: doc,
+                          structureBodyId: widget.structureBodyId,
+                          actions: widget.actions.outlets,
                         ),
                         StructureEditorTab.pathways => PathwaysView(
                           doc: doc,
@@ -976,11 +1001,16 @@ class _TabStrip extends StatelessWidget {
             value: StructureEditorTab.matrix,
             label: Text(kMatrixTabLabel),
           ),
-          // AFTER `Matrix` AND NOT BESIDE `Table`, because §4's wireframe
-          // orders the strip `[Table] [Matrix] [Outlets] [Pathways]` and
-          // the one absent tab still holds its place in the sequence. A
-          // strip that reordered itself as tabs arrive would move a
-          // target under the hand of anybody who had learned where it was.
+          // `Outlets` LANDED IN THE SLOT THAT WAS BEING HELD FOR IT
+          // (M3-H/2, #167). §4's wireframe orders the strip
+          // `[Table] [Matrix] [Outlets] [Pathways]`, and `Pathways`
+          // shipped in third position holding fourth place rather than
+          // shuffling left, precisely so this arrival moves nothing under
+          // the hand of anybody who had learned where `Pathways` was.
+          ButtonSegment<StructureEditorTab>(
+            value: StructureEditorTab.outlets,
+            label: Text(kOutletsTabLabel),
+          ),
           ButtonSegment<StructureEditorTab>(
             value: StructureEditorTab.pathways,
             label: Text(kPathwaysTabLabel),

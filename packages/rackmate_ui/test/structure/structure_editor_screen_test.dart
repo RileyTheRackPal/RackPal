@@ -108,6 +108,67 @@ final class _Harness {
       importCsvOpened++;
       importCsvBody = bodyId;
     },
+    outlets: outletsActions,
+  );
+
+  /// M3-H/2 (#167). The Outlets tab's five gestures, applied straight to
+  /// [doc] the way every other callback in this harness is: the commands
+  /// are core's and this file may not reach for a `DocumentController`.
+  /// `outlets_view_test.dart` drives the tab itself; this exists so the
+  /// editor's own tests can reach it.
+  OutletsActions get outletsActions => OutletsActions(
+    onAddGang: (outletId) {
+      AddGangCommand(outletId: outletId).apply(doc);
+      return null;
+    },
+    onRemoveGang: (outletId, gangIndex) {
+      RemoveGangCommand(outletId: outletId, index: gangIndex).apply(doc);
+      return null;
+    },
+    onSetStrap: (outletId, gangIndex, width, height) {
+      SetStrapSizeCommand(
+        outletId: outletId,
+        index: gangIndex,
+        width: width,
+        height: height,
+      ).apply(doc);
+      return null;
+    },
+    onSetCell: (outletId, gangIndex, cellIndex, occupant) {
+      SetCellOccupantCommand(
+        outletId: outletId,
+        gangIndex: gangIndex,
+        cellIndex: cellIndex,
+        occupant: occupant,
+      ).apply(doc);
+      return null;
+    },
+    onArrange: (outletId, plan) {
+      final outlet = doc.outlets[outletId];
+      if (outlet == null) return 'no such outlet';
+      // BACK TO FRONT, the same hazard the app's own arrange documents:
+      // gangs are addressed by position and removing gang 0 renumbers
+      // every one after it.
+      for (var i = outlet.gangs.length - 1; i >= 0; i--) {
+        RemoveGangCommand(outletId: outletId, index: i).apply(doc);
+      }
+      for (final strap in plan.straps) {
+        AddGangCommand(
+          outletId: outletId,
+          width: strap.width,
+          height: strap.height,
+        ).apply(doc);
+      }
+      for (final cell in plan.cells) {
+        SetCellOccupantCommand(
+          outletId: outletId,
+          gangIndex: cell.gangIndex,
+          cellIndex: cell.cellIndex,
+          occupant: cell.occupant,
+        ).apply(doc);
+      }
+      return null;
+    },
   );
 
   /// M3-F/2 (#160). Recorded rather than acted on: the whole import flow
@@ -739,11 +800,12 @@ void main() {
         // scope list, does not name it, so #653 asks for a ruling rather
         // than an afternoon.
         'Export CSV',
-        // `Matrix` LEFT THIS LIST AT M3-C/3 and `Pathways` at M3-E/1,
-        // which is the bookkeeping this test is for: the day one is
-        // built the test says the others still are not. `Outlets` is
-        // the last one.
-        'Outlets',
+        // `Matrix` LEFT THIS LIST AT M3-C/3, `Pathways` at M3-E/1 and
+        // `Outlets` at M3-H/2 (#167), which is the bookkeeping this test
+        // is for: the day one is built the test says the others still
+        // are not. THE TAB LIST IS NOW EMPTY and what remains here is
+        // two button-bar controls plus one that is unruled rather than
+        // unbuilt.
       ]) {
         expect(find.text(label), findsNothing, reason: '$label is unbuilt');
       }
@@ -1147,7 +1209,7 @@ void main() {
   // M3-C/3, #149 — THE MATRIX AS A TAB
   // ══════════════════════════════════════════════════════════════════
 
-  group('THE TAB STRIP IS THREE TABS, and the editor opens on the first', () {
+  group('THE TAB STRIP IS FOUR TABS, and the editor opens on the first', () {
     testWidgets('AC-048: it opens in table mode', (tester) async {
       final h = _Harness(_project());
       await _pump(tester, h);
@@ -1161,17 +1223,18 @@ void main() {
       expect(find.text(kMatrixTotalLabel), findsNothing);
     });
 
-    testWidgets('three are offered, because three are built', (tester) async {
-      // §4 draws four. `Outlets` opens nothing, and a tab that opens
-      // nothing is `UnbuiltView` in a different hat. `Pathways` joined
-      // the strip at M3-E/1 (#156).
+    testWidgets('four are offered, because four are built', (tester) async {
+      // §4 draws four and the strip finally has four. `Pathways` joined
+      // at M3-E/1 (#156) and `Outlets` at M3-H/2 (#167); until the
+      // latter this case asserted `Outlets` was ABSENT, because a tab
+      // that opens nothing is `UnbuiltView` in a different hat.
       final h = _Harness(_project());
       await _pump(tester, h);
 
       expect(find.text(kTableTabLabel), findsOneWidget);
       expect(find.text(kMatrixTabLabel), findsOneWidget);
+      expect(find.text(kOutletsTabLabel), findsOneWidget);
       expect(find.text(kPathwaysTabLabel), findsOneWidget);
-      expect(find.text('Outlets'), findsNothing, reason: 'Outlets is later');
     });
 
     testWidgets('the Pathways tab opens a real surface', (tester) async {
@@ -1188,11 +1251,13 @@ void main() {
       expect(find.text(kAddPathwayLabel), findsOneWidget);
     });
 
-    testWidgets('the strip keeps §4 order, so the absent tab holds its place', (
+    testWidgets('the strip is in §4 order, and Pathways did not move', (
       tester,
     ) async {
-      // A strip that reordered itself as tabs arrive would move a target
-      // under the hand of anybody who had learned where it was.
+      // THE PAYOFF OF HOLDING THE SLOT. `Pathways` shipped in third
+      // POSITION while occupying §4's fourth SLOT, precisely so that
+      // `Outlets` arriving would not move it under the hand of anybody
+      // who had learned where it was. It did not.
       final h = _Harness(_project());
       await _pump(tester, h);
 
@@ -1205,7 +1270,12 @@ void main() {
           )
           .map((t) => t.data)
           .toList();
-      expect(labels, [kTableTabLabel, kMatrixTabLabel, kPathwaysTabLabel]);
+      expect(labels, [
+        kTableTabLabel,
+        kMatrixTabLabel,
+        kOutletsTabLabel,
+        kPathwaysTabLabel,
+      ]);
     });
 
     testWidgets('switching shows the grid and the table goes away', (
