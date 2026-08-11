@@ -104,7 +104,22 @@ final class _Harness {
     onEditPathways: editPathways,
     onAddPathway: addPathway,
     onRemovePathway: removePathway,
+    onImportCsv: (bodyId) async {
+      importCsvOpened++;
+      importCsvBody = bodyId;
+    },
   );
+
+  /// M3-F/2 (#160). Recorded rather than acted on: the whole import flow
+  /// is the app layer's, because it opens a native file dialog and reads
+  /// a file, and neither exists in `rackmate_ui`. What this surface owes
+  /// is that the control is there and hands over the body it is showing.
+  int importCsvOpened = 0;
+
+  /// The Structure body the last `Import CSV…` was opened on, which is
+  /// the same #158 question `Add outlet` answers: an import filed on the
+  /// wrong panel puts sixty drops on the wrong sheet.
+  Uuid? importCsvBody;
 
   /// What `apps/rackmate`'s three pathway actions do, in the shape they
   /// do them. Mirrored for [edit]'s reason: `rackmate_ui` may not depend
@@ -324,6 +339,21 @@ int _visibleDropCount(WidgetTester tester) {
 }
 
 Future<void> _pump(WidgetTester tester, _Harness h) async {
+  // A WINDOW, NOT A PHONE. The default 800×600 test surface is smaller
+  // than any window this editor opens in: `showStructureEditor` uses
+  // `Dialog.fullscreen`.
+  //
+  // FOUND BY M3-F/2, and the finding is about the tests rather than the
+  // screen. These cases asserted that three drops are all visible at
+  // 600 px, and that held only because the harness passes no `onDone`,
+  // so the header rendered with NO BUTTON IN IT and collapsed to 24 px.
+  // Production always has `Done`, so production's header has always been
+  // 48 px and has always shown one fewer row than these tests claimed.
+  // Adding `Import CSV…` made the test header match production and the
+  // gap became visible. Sizing the surface to a real window fixes the
+  // representation rather than the assertion.
+  await tester.binding.setSurfaceSize(const Size(1200, 900));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -701,7 +731,13 @@ void main() {
         // walked the run.
         'Group into pathway',
         'Renumber…',
-        'Import CSV…',
+        // `Import CSV…` LEFT THIS LIST AT M3-F/2 (#160), which is the
+        // bookkeeping this test is for. `Export CSV` stays, and its
+        // reason is now different from the other three: it is not
+        // unbuilt-for-lack-of-a-command but UNRULED. docs/07 §5.3's
+        // closing line promises the round trip and roadmap §2, the one
+        // scope list, does not name it, so #653 asks for a ruling rather
+        // than an afternoon.
         'Export CSV',
         // `Matrix` LEFT THIS LIST AT M3-C/3 and `Pathways` at M3-E/1,
         // which is the bookkeeping this test is for: the day one is
