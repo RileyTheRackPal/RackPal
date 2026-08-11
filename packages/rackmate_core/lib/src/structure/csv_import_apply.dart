@@ -184,6 +184,10 @@ CsvImportBuild buildCsvImport({
       AddMediaTypeCommand(
         id: id,
         displayName: token,
+        // WITHOUT A TAG THE DROP CANNOT BE LABELLED and `buildDropsFor`
+        // refuses it, which would make RJ-012's "never a rejected row"
+        // reject every row naming an unrecognised cable.
+        shortTag: mediaShortTagFor(token),
         // THE SPELLING BECOMES AN ALIAS, which is what makes a re-import
         // idempotent for exactly the rows RJ-012 serves: without it the
         // second pass finds no match for `Cat6e` again and mints
@@ -291,7 +295,11 @@ CsvImportBuild buildCsvImport({
               // registry does not hold it yet. `buildDropsFor` reads
               // `displayName` and `shortTag` off the def, so it is
               // reconstructed to match what `AddMediaTypeCommand` writes.
-              MediaTypeDef(id: id, displayName: _tokenFor(row, id, newMedia)),
+              MediaTypeDef(
+                id: id,
+                displayName: _tokenFor(row, id, newMedia),
+                shortTag: mediaShortTagFor(_tokenFor(row, id, newMedia)),
+              ),
           count: item.count,
           token: _tokenFor(row, id, newMedia),
         ),

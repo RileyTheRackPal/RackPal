@@ -67,6 +67,39 @@ MediaTypeId mediaTypeIdFor(RackDocument doc, String spelling) {
   return candidate;
 }
 
+/// The trade tag for a type created from the spelling [spelling].
+///
+/// **WITHOUT THIS, RJ-012 CANNOT BE HONOURED, AND THE TEST THAT FOUND IT
+/// IS THE FIRST THING THAT COULD.** DR-023's label chain ends at
+/// `MediaTypeDef.shortTag`, and `buildDropsFor` REFUSES a drop whose
+/// chain produces nothing rather than printing `media.cat6e` on a wall
+/// plate. DR-023 §11.22.4 names that hole and says it is "reachable only
+/// for a user-created media type with no `shortTag`"; M3-F/6 is what
+/// made it reachable, because every type RJ-012 mints was one. The
+/// result was that "never a rejected row" rejected every row naming an
+/// unrecognised cable, unless the sheet happened to carry a `Use`
+/// column.
+///
+/// **THE SPELLING IS THE TAG, AND THIS IS NOT A GUESS.** `shortTag`'s
+/// own doc calls it "the trade name an installer writes on a pull list",
+/// and a CSV cell reading `Cat6e` is literally an installer writing a
+/// trade name on a pull list. G4 forbids inventing a fact; this copies
+/// one the operator stated.
+///
+/// **NOT TRUNCATED.** Canon's tags are short (`C6`, `RG6`, `16/4`) and
+/// it is tempting to cap this at some length, but every cap is a number
+/// nobody chose: `Unobtainium` clipped to `UNOBTA` is a label segment
+/// that means nothing, where the full word at least reads. A long tag
+/// makes a long label, which is visible in the preview grid and fixable
+/// by editing the type.
+String mediaShortTagFor(String spelling) {
+  final cleaned = spelling.trim().toUpperCase().replaceAll(
+    RegExp(r'\s+'),
+    '',
+  );
+  return cleaned.isEmpty ? 'TYPE' : cleaned;
+}
+
 /// Adds one [MediaTypeDef] to the document's registry (RJ-012, RJ-009).
 final class AddMediaTypeCommand extends Command {
   AddMediaTypeCommand({
