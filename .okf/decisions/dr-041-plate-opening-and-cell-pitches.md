@@ -111,8 +111,8 @@ through its 46.04 mm rounding.
 and 15.95 are exact integer counts of nanometres and are not binary fractions of
 a millimetre. That is [DR-028](dr-028-keystone-cell-is-the-front-nose.md)
 §11.27.5's observation arriving with four more instances of itself. See
-[CR-001 and the integer-unit rule](/invariants/cr-117-byte-exactness.md) for why
-the file format cares.
+[byte exactness](/invariants/cr-117-byte-exactness.md) for why the file format
+cares that these are integers.
 
 # What it does not settle
 

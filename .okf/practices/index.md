@@ -8,6 +8,7 @@ by something going wrong.
 * [Assert the artifact, not the mechanism](assert-the-artifact-not-the-mechanism.md) - a test counted corridors, passed, and the sheet painted a fifth of its ink twice.
 * [A modelled field is not a reachable one](a-modelled-field-is-not-a-reachable-one.md) - four fields modelled, persisted and read by four consumers each, with no gesture able to set them; grep the writers, not the declaration.
 * [Check a decomposition for holes](check-a-decomposition-for-holes.md) - a healthy-looking four-task issue had nothing that read a CSV file; ask what produces each task's input, and know a gap from a scope change.
+* [A dimension sits in an inequality](a-dimension-sits-in-an-inequality.md) - a 22 mm gang pitch against a 33.34 mm opening is two holes overlapping; the check is free, and the reading was real but was answering a different axis.
 * [Census before building](census-before-building.md) - print the field over the whole corpus first; it has caught an empty field, an unmeasured cost and a wrong ordering.
 * [Decompose before building](decompose-before-building.md) - the first task of a milestone is its own breakdown, and task descriptions carry the traps.
 * [Diagnose before fixing](diagnose-before-fixing.md) - twelve fix commits touched neither cause; what that means and what shape of fix held.

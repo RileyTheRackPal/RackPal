@@ -1954,6 +1954,83 @@ INCLUDING thinking is a human fact, #163 is still the only instrument for it, an
 that the two defects which refuted that drill were invisible to 2206 passing tests and were found by
 a person opening the app.
 
+**M3-H opened and closed on 2026-08-11, three tasks, #166 to #168, five commits.** The low-voltage
+box's internal geometry: `ee593c8` (DR-041), `00df1d7` (the model), `74b6734` (the four gestures),
+`eccbc6a` (the plate geometry), `3358cdd` (the arrange planner), `7623c34` (the Outlets tab).
+
+*It cost a ruling before it could start, and the ruling is most of what this entry is for.* DR-007
+§11.7.8 change 3 forbade **any dimensioned rendering** until a caliper had been put on real parts.
+DR-038 discharged the cell on 2026-08-10 and named in the same breath what was still missing: the
+plate opening and where the grid sits inside it. That is four figures, and the task could not draw a
+rectangle without them.
+
+| Figure | Value | Provenance |
+|---|---|---|
+| Cell, the front nose | 14.5 × 16 mm | DR-028, ruled; DR-038 makes it uniform |
+| Gang opening | 33.34 × 66.68 mm | **Measured 2026-08-11**, confirming §11.7.8's "about" to 0.04 mm |
+| Cell pitch, vertical | 22 mm | **Measured** |
+| Cell pitch, horizontal | 15.95 mm | **Measured**, after being derived to 15.947 |
+| Gang pitch, horizontal | 1.8125 in | **A STANDARD NOBODY MEASURED**, and it says so in the source |
+
+***A wrong figure was refuted by arithmetic before it reached a line of code, and that is the part
+worth reusing.*** The gang pitch arrived as **22 mm**, which cannot coexist with a 33.34 mm opening:
+two openings 22 mm apart overlap by 11.34 mm. **The check is one line and needs no tools, a pitch
+cannot be smaller than the opening is wide**, and every figure in the table above sits in an
+inequality with at least one other. The reading was real; it was the *vertical cell* pitch, and what
+recovered it was the user's own question, *"are we speaking vertically or horizontally?"*, which
+exposed that the request had never named an axis. §11.7.9's lesson was that a physical reference
+beats a careful reading; this adds that **arithmetic beats a physical reading that was answering a
+different question**. `plate_geometry_test.dart` carries the five inequalities as a test, so the
+class of error is gated rather than remembered.
+
+*One figure was derived before it was measured, and the corpus records the order rather than the
+agreement.* Even margins across the opening give 15.947 and the caliper gave 15.95. The derivation
+was offered as an option and labelled as exactly the inference change 3 forbade. **Agreement after
+the fact is not evidence the inference was safe before it**: an even-margin layout is one
+manufacturing convention among several, and a wider centre web would have satisfied every stated
+constraint while breaking every 4- and 6-port drawing.
+
+*What was built, clause by clause against the ruling as it now stands.*
+
+| # | DR-007 clause | State | Evidence |
+|---|---|---|---|
+| §11.7.1 | `W ∈ {1,2}`, `H ∈ {1,2,3}`, and five ports do not exist | **BUILT as a derived constraint** | `isValidStrapSize`; no set literal of `{1,2,3,4,6}` exists in the package, and the test enumerates the bounds rather than transcribing the table |
+| §11.7.2 | every occupant is 1 × 1 | **BUILT** | no orientation field, no occupant span, no packing search anywhere. `plate_arrange.dart`'s header says why looking for one would be a defect |
+| §11.7.2.1 | cells are a function of TERMINATION | **BUILT** | `cellsRequiredFor`; `TerminationType.bindingPost` added, which the ruling names as "the smallest change that makes this table computable" |
+| §11.7.3 | `Outlet` gains an ordered gang list | **BUILT** | `Outlet.gangs`, positional, no minted id, on `ConductorRef`'s argument |
+| §11.7.4 | blank inserts are occupants, not absence | **BUILT, and it is the invariant that would have been invisible if got wrong** | an absent cell entry is undecided and a `BlankInsert` is a purchase; collapsing them would order two blanks for every unfinished plate |
+| §11.7.5 | the keystone follows the convention | **BUILT by consumption** | `outlets_view.dart` reads `ResolvedJacketColor.keystone` and never `jacketColorPulledId`; the exception prints as text and never as a hue |
+| §11.7.7 | the printing half stays at M6 | **UNCHANGED** | `T5.01` is not touched. M6 now inherits a settled geometry |
+| §11.7.8 ch.1 | one N-gang cover plate, N = `gangs.length` | **BUILT as a getter** | `PlateFill.coverPlateGangs`. Storing it would be CR-107's second copy of one physical fact |
+| §11.7.8 ch.2 | the grid is CENTRED in the opening | **BUILT** | and the tests assert the SYMMETRY rather than the margins, because a test pinning "cell 0's top is 13.36 units" passes on a top-anchored renderer that happens to have the first row right |
+| §11.7.10 | does the gang enter the field label | **RULED: no token** | the user, on 2026-08-11: *"There's no need for this when the plate diagrams will have each keystone labeled."* A label is printed on cable at rough-in and which gang a jack ends up in is decided at trim-out, so a token would go stale on the wall. No `IdFormat` grammar change |
+
+***`kSchemaVersion` did not move, and fixture (f) rather than gangs bolted onto (c) is why that is
+evidence instead of an assertion.*** Fixtures (a) to (d) are checked-in bytes written before `gangs`
+existed and they regenerate byte-identical, because an empty gang list emits no key. Mutating (c)
+would have proved the encoder while destroying the proof. That is fixture (d)'s own argument, reused
+one milestone later.
+
+*The commands landed in the same change as the field, and that is the practice paying rather than
+being cited.* `.okf/practices/a-modelled-field-is-not-a-reachable-one.md` records four fields that
+were modelled, persisted, round-tripped and read by several consumers with nothing able to set them,
+each found while implementing something else. **`Outlet.gangs` would have been the fifth**: it had a
+codec, a golden fixture and a derived rollup before it had a writer. It has four now.
+
+*Two defects were found by writing the widget tests, not by shipping them.* A `Spacer` inside a
+`Wrap` threw on every pump, which no analyzer catches. And the cell picker returned a bare
+`CellOccupant?`, in which `Clear it` and a dismissed dialog are the same value: **pressing Escape
+would have erased a cell**, a destructive cancel, and the kind of thing found by accident three
+weeks later. It returns a record now and a case drives the dismissal.
+
+**What M3-H does NOT settle.** The plate **outline** (~2.75 × 4.5 in) is still an unruled *"about"*
+and nothing draws it, so the plate view is openings-relative; DR-041 §11.40.7 records it as open
+alongside the strap's own plastic and everything in depth. **The gang pitch is a standard nobody has
+measured**, marked as such in `plate_geometry.dart` and left unruled deliberately, so a caliper
+reading later wins with nothing to withdraw. **Nothing here touches M3's exit criterion**, which
+DR-007 §11.7 states outright: a 60-drop rough-in schedules and prints without knowing which cell a
+keystone occupies. This is the milestone growth that ruling booked in advance, delivered.
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three

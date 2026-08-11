@@ -1,5 +1,48 @@
 # Update Log
 
+## 2026-08-11 (fourth entry)
+
+* **Creation**: [DR-041](/decisions/dr-041-plate-opening-and-cell-pitches.md), the
+  four figures DR-038 named as still missing and one it did not. **M3-H could not
+  draw a rectangle without them**, because DR-007 §11.7.8 change 3 forbids any
+  dimensioned rendering from a figure nobody stated.
+* **Note**: **A wrong figure was refuted by arithmetic before it reached a line of
+  code.** The gang pitch arrived as 22 mm against an opening already measured at
+  33.34 mm wide, which is two holes overlapping by 11.34 mm. The check needs no
+  tools: **a pitch cannot be smaller than the opening is wide.** The reading was
+  real, it was the *vertical cell* pitch, and what recovered it was the user asking
+  which axis the request meant, because the request had never said.
+* **Creation**: [A dimension sits in an inequality](/practices/a-dimension-sits-in-an-inequality.md),
+  which is that made reusable and then made a test rather than a habit. It is the
+  third rule of this family: §11.7.9 has a physical reference beating a careful
+  reading, DR-038 has a measurement beating a sound argument that only bounds, and
+  this has **arithmetic beating a physical reading that answered a different
+  question**.
+* **Note**: **One figure was derived before it was measured, and the record leads
+  with the order rather than the agreement.** Even margins across the opening give
+  15.947 mm and the caliper gave 15.95. Offering the derivation was still wrong: an
+  even-margin layout is one manufacturing convention among several, and **agreement
+  after the fact is not evidence the inference was safe before it**. §11.27.2's
+  lesson, arriving a third time.
+* **Note**: **The gang pitch is deliberately NOT ruled**, and is labelled a standard
+  nobody measured in `plate_geometry.dart` itself rather than only in canon. Under
+  §11.27.2 an unruled figure with provenance outranks a ruled figure without one, so
+  leaving it unruled means a later caliper reading wins with **nothing to withdraw**.
+* **Note**: **M3-H closed the day it opened**, three tasks, five commits, and the
+  invariant that would have been invisible if got wrong is §11.7.4's: an empty cell
+  and a blank insert are different facts. No entry means undecided; a `BlankInsert`
+  is a part somebody buys. Collapsing them orders two blanks for every plate a
+  designer had not finished.
+* **Note**: [A modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md)
+  **paid rather than being cited**. `Outlet.gangs` had a codec, a golden fixture and
+  a derived rollup before it had a writer, which is the exact shape of all four cases
+  in that file. Its four commands shipped in the same change, so it is not the fifth.
+* **Note**: **Two defects were found by writing the widget tests, not by shipping
+  them.** A `Spacer` inside a `Wrap` threw on every pump, which no analyzer catches.
+  And the cell picker returned a bare `CellOccupant?`, in which "clear this cell" and
+  "I dismissed the dialog" are the same value: **pressing Escape would have erased a
+  cell**.
+
 ## 2026-08-11 (third entry)
 
 * **Note**: **M3-K is BUILT, four tasks in one day, and the ordering was the whole
