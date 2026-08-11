@@ -54,6 +54,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:rackmate/src/session/app_services.dart';
+import 'package:rackmate/src/session/csv_import_actions.dart';
 import 'package:rackmate/src/session/document_session.dart';
 import 'package:rackmate/src/session/drop_entry_actions.dart';
 import 'package:rackmate/src/session/locations_actions.dart';
@@ -733,8 +734,30 @@ final class AppShellState extends State<AppShell>
         onRemovePathway: buildPathwayRemoveAction(
           controller: session.controller,
         ),
+        onImportCsv: (bodyId) => _runCsvImport(session, bodyId),
       ),
     );
+  }
+
+  /// docs/07 §5's import, from the editor's `Import CSV…` (M3-F/2).
+  ///
+  /// THE BODY COMES FROM THE EDITOR'S PICKER, the same #158 question
+  /// `Add outlet` answers one method down: an import filed on the wrong
+  /// Structure body puts sixty drops on the wrong sheet, and unlike a
+  /// single outlet that is not something anybody notices row by row.
+  Future<void> _runCsvImport(DocumentSession session, Uuid? bodyId) async {
+    final refusal = await runCsvImport(
+      context: context,
+      controller: session.controller,
+      // THE CONTROLLER'S OWN PICKER, not a second one. `Open` and
+      // `Save As` already go through it, so an import that minted its
+      // own would be the one dialog in the app whose flags nothing
+      // gates (`file_dialog_flags_test.dart`).
+      picker: _services.controller.picker,
+      fs: _services.controller.fs,
+      structureBodyId: bodyId,
+    );
+    if (refusal != null) _showRefusal(refusal);
   }
 
   /// The editor's `Add outlet` button — docs/07 §4.3's `+ Add outlet ▾`
