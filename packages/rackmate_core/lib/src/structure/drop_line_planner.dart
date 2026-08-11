@@ -38,12 +38,14 @@
 // [Enter]"). Nothing is created behind the user's back either way —
 // docs/04 §3.4 forbids the silent version in both directions.
 import 'package:meta/meta.dart';
+import 'package:rackmate_core/src/commands/bind_endpoint_command.dart';
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/home_run_commands.dart'
-    show usedFieldLabels;
+    show AddHomeRunCommand, resolveRackLabel, usedFieldLabels, usedRackLabels;
 import 'package:rackmate_core/src/commands/pathway_commands.dart';
 import 'package:rackmate_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackmate_core/src/commands/structure_commands.dart';
+import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
 import 'package:rackmate_core/src/model/link.dart' show RoughInStatus;
 import 'package:rackmate_core/src/model/location.dart';
@@ -68,6 +70,7 @@ final class DropLinePlanReady extends DropLinePlan {
     required this.fieldLabels,
     required this.outletCreated,
     this.pathwayNames = const [],
+    this.rackLabels = const [],
     this.warnings = const [],
   });
 
@@ -92,6 +95,14 @@ final class DropLinePlanReady extends DropLinePlan {
   /// False when the line was conduit only, because a conduit terminates
   /// at no outlet (CR-109: "never a `Link` and never a `Port`").
   final bool outletCreated;
+
+  /// The rack labels `@panel=` allocated, in order (DR-039 §11.38.2).
+  ///
+  /// EMPTY IS TWO DIFFERENT FACTS AND THE CALLER MUST NOT CONFLATE THEM:
+  /// the line named no panel, or it named one whose location cannot render
+  /// the pattern yet (§11.38.5). [warnings] carries the second, which is
+  /// why an empty list here is never on its own a reason to say nothing.
+  final List<String> rackLabels;
 
   /// Things the surface should SAY but which do not stop the line, e.g.
   /// a modifier this build does not understand. Never silent.
@@ -132,6 +143,7 @@ DropLinePlan planDropLine({
   required String actor,
   Set<String> alsoUsedLabels = const {},
   Set<String> alsoUsedDesignators = const {},
+  Set<String> alsoUsedRackLabels = const {},
   Uuid? structureBodyId,
 }) {
   // --- the room ------------------------------------------------------
@@ -343,18 +355,167 @@ DropLinePlan planDropLine({
     case DropBuildRefused(:final reason, :final column):
       return DropLinePlanRefused(reason, column);
     case DropBuildOk(commands: final drops, :final fieldLabels):
+      final landing = _landDrops(
+        doc: doc,
+        line: line,
+        drops: drops,
+        alsoUsedRackLabels: alsoUsedRackLabels,
+        now: now,
+        actor: actor,
+      );
+      if (landing.refusal case final r?) return DropLinePlanRefused(r);
+
       return DropLinePlanReady(
         // The outlet first when one is being created, then the drops,
         // then the pathways. Order matters only for the outlet, which
         // the drops name; the pathways reference nothing on this line.
-        commands: [...commands, ...drops, ...pathwayCommands],
+        //
+        // THE BINDS COME LAST AND MUST. Each names a `Link` by the id its
+        // `AddHomeRunCommand` minted in ITS constructor, and that link is
+        // not in the document until the drop ahead of it has applied.
+        commands: [
+          ...commands,
+          ...drops,
+          ...landing.commands,
+          ...pathwayCommands,
+        ],
         dropCount: fieldLabels.length,
         fieldLabels: fieldLabels,
         outletCreated: outletCreated,
         pathwayNames: pathwayNames,
-        warnings: _warningsFor(line, status),
+        rackLabels: landing.rackLabels,
+        warnings: [..._warningsFor(line, status), ...landing.warnings],
       );
   }
+}
+
+/// What `@panel=` produced: the binds, the labels they wrote, and anything
+/// the user has to be told.
+typedef _Landing = ({
+  List<Command> commands,
+  List<String> rackLabels,
+  List<String> warnings,
+  String? refusal,
+});
+
+const _Landing _noLanding = (
+  commands: <Command>[],
+  rackLabels: <String>[],
+  warnings: <String>[],
+  refusal: null,
+);
+
+/// Lands every drop on this line on the next free position of `@panel=`
+/// (DR-039 §11.38.2 clause 2).
+///
+/// IT REFUSES RATHER THAN CREATING A PANEL. `@panel=PP-9` on a project with
+/// no `PP-9` is a typo far more often than it is an intention, and a
+/// gesture that invented a twenty-four-port device out of a typo would put
+/// hardware nobody chose on the equipment list. Same rule
+/// `buildAddHomeRunCommand` follows for an outlet it cannot resolve.
+///
+/// IT ALSO REFUSES WHEN THE PANEL IS TOO SMALL, and says by how much.
+/// Landing four of six drops silently would leave two rows on the Pull
+/// Sheet that look identical to a deliberate rough-in coil.
+_Landing _landDrops({
+  required RackDocument doc,
+  required DropLineParsed line,
+  required List<Command> drops,
+  required Set<String> alsoUsedRackLabels,
+  required DateTime now,
+  required String actor,
+}) {
+  final wanted = line.panelDesignator?.trim();
+  if (wanted == null || wanted.isEmpty) return _noLanding;
+
+  final panel = _resolvePanel(doc, wanted);
+  if (panel == null) {
+    return (
+      commands: const [],
+      rackLabels: const [],
+      warnings: const [],
+      refusal:
+          'No device in this project is called "$wanted", so there is '
+          'nothing to land these drops on.',
+    );
+  }
+
+  final homeRuns = [
+    for (final c in drops)
+      if (c is AddHomeRunCommand) c,
+  ];
+  final free = freePanelPositions(doc, panelDeviceId: panel.id);
+  if (free.length < homeRuns.length) {
+    return (
+      commands: const [],
+      rackLabels: const [],
+      warnings: const [],
+      refusal:
+          '${panel.designator} has ${free.length} free position(s) and this '
+          'line needs ${homeRuns.length}. Nothing was landed.',
+    );
+  }
+
+  final commands = <Command>[];
+  final labels = <String>[];
+  final warnings = <String>[];
+  // ONE SCAN, EXTENDED AS IT GOES. Ten drops from one line are planned
+  // against ONE unmutated document, so a label spent by drop 3 has to be
+  // visible to drop 4 or two of them come out identical (CR-113).
+  final spent = usedRackLabels(doc, alsoUsed: alsoUsedRackLabels);
+
+  for (var i = 0; i < homeRuns.length; i++) {
+    final position = free[i];
+    final resolved = resolveRackLabel(
+      doc: doc,
+      panelDeviceId: panel.id,
+      // THE NUMBER ON THE PART, not the designator this product
+      // allocated (DR-039 §11.38.8).
+      portDesignator: position.positionToken,
+      usedRackLabels: spent,
+    );
+    if (resolved.note case final n? when !warnings.contains(n)) {
+      // ONCE PER LINE, not once per drop. Six drops onto a panel with no
+      // floor number is one fact about one room, and printing it six times
+      // is how a user learns to stop reading warnings.
+      warnings.add(n);
+    }
+    if (resolved.label case final l?) {
+      spent.add(l);
+      labels.add(l);
+    }
+    commands.add(
+      BindEndpointCommand(
+        linkId: homeRuns[i].id,
+        port: position.port,
+        rackLabel: resolved.label,
+        now: now,
+        actor: actor,
+      ),
+    );
+  }
+
+  return (
+    commands: commands,
+    rackLabels: labels,
+    warnings: warnings,
+    refusal: null,
+  );
+}
+
+/// The device `@panel=` names, matched on designator, case-insensitively.
+///
+/// DESIGNATOR AND NOT NAME, unlike `_resolveLocation`'s two-way match. A
+/// designator is the identifier printed on the rack and on every schedule
+/// (CR-042); a device NAME is free text that two panels can share, and a
+/// gesture that landed on "whichever Patch Panel matched first" would put
+/// the drop in a different rack depending on map order.
+DeviceInstance? _resolvePanel(RackDocument doc, String designator) {
+  final want = designator.trim().toLowerCase();
+  for (final d in doc.devices.values) {
+    if (d.designator.trim().toLowerCase() == want) return d;
+  }
+  return null;
 }
 
 /// What the line asked for that this build did not do.

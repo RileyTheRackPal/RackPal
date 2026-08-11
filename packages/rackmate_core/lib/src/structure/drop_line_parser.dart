@@ -119,6 +119,7 @@ final class DropLineParsed extends DropLineParse {
     this.status,
     this.outletDesignation,
     this.pathwayName,
+    this.panelDesignator,
     this.unknownModifiers = const {},
   });
 
@@ -140,6 +141,18 @@ final class DropLineParsed extends DropLineParse {
 
   /// `@pathway="…"`, the conduit sense.
   final String? pathwayName;
+
+  /// `@panel=PP-1` — the patch panel every drop on this line lands on
+  /// (DR-039 §11.38.2 clause 2). A device DESIGNATOR, not resolved here:
+  /// this file has no document.
+  ///
+  /// ONE MODIFIER LANDS A WHOLE LINE, and that is the reason it is a
+  /// modifier at all. AC-018 wants forty-six of sixty drops landed inside
+  /// fifteen minutes; ten `@panel=` are about sixty keystrokes against the
+  /// measured 349 for the drops themselves, where forty-six hand-typed
+  /// rack-label cells would be roughly 322 and would nearly double the
+  /// drill.
+  final String? panelDesignator;
 
   /// Modifiers this build does not know, kept rather than dropped.
   ///
@@ -169,6 +182,10 @@ const Set<String> _knownModifiers = {
   'status',
   'outlet',
   'pathway',
+  // DR-039 §11.38.2 clause 2. The `unknownModifiers` map below is what
+  // this was added to: its own comment named "a future `@wall=`" as the
+  // shape it was holding open, and this is the first key to take it up.
+  'panel',
 };
 
 /// Parses one line of docs/07 §4.3's command mode.
@@ -228,6 +245,7 @@ DropLineParse parseDropLine(String line) {
     status: mods['status'],
     outletDesignation: mods['outlet'],
     pathwayName: mods['pathway'],
+    panelDesignator: mods['panel'],
     unknownModifiers: {
       for (final e in mods.entries)
         if (!_knownModifiers.contains(e.key)) e.key: e.value,

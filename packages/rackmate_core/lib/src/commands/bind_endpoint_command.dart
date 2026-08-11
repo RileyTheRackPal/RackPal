@@ -53,16 +53,22 @@
 // number cannot render `{FLOOR}`, and letting that undo a physical fact
 // somebody stated would be exactly the fusion G4 forbids. The caller says
 // the sentence naming the field to fill; the punchdown still happened.
+import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/connect_commands.dart'
     show PortMaterialisation;
 import 'package:rackmate_core/src/commands/label_key.dart';
 import 'package:rackmate_core/src/derived/connect_rules.dart'
     show portConductorCount;
+import 'package:rackmate_core/src/derived/connect_target.dart'
+    show resolveConnectTarget;
+import 'package:rackmate_core/src/derived/device_loads.dart' show bodyFor;
 import 'package:rackmate_core/src/model/conductor.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
+import 'package:rackmate_core/src/model/placement.dart' show Face;
 import 'package:rackmate_core/src/model/port.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
+import 'package:rackmate_core/src/model/template.dart' show PortDef;
 import 'package:rackmate_core/src/units/ids.dart';
 
 /// Lands one home run's far end on one panel pin, and records the rack
@@ -190,6 +196,109 @@ final class BindEndpointCommand extends Command {
     _previousRackLabel = null;
     _previousMeta = null;
   }
+}
+
+/// The positions on [panelDeviceId] a drop may land on, in the template's
+/// declared order, lowest first.
+///
+/// REAR ONLY, WHICH IS DR-039 §11.38.2 CLAUSE 4 AS A FILTER. `Face.rear`
+/// is `PortBuilder.p`'s default and is what the N03 archetype's twenty-four
+/// punchdowns carry; its front twenty-four are `Face.front` and are where a
+/// patch cord goes, not a pulled cable. A walk that offered both would hand
+/// the first drop `front.1` and put the whole rough-in on the wrong side of
+/// the panel.
+///
+/// DECLARED ORDER, NOT MAP ORDER. `TemplateBody.ports` is the declared
+/// sequence (the catalog port-order gate is what keeps it so), and it is
+/// what makes `01, 02, 03…` come out in the order a person punches them
+/// down rather than in whatever order a hash produced.
+///
+/// [alsoClaimed] is the sibling reservation `buildAddHomeRunCommand`
+/// explains: ten drops landed from one typed line are planned against ONE
+/// unmutated document, so each must see the positions its siblings took.
+List<PanelLanding> freePanelPositions(
+  RackDocument doc, {
+  required Uuid panelDeviceId,
+  Set<Uuid> alsoClaimed = const <Uuid>{},
+}) {
+  final device = doc.devices[panelDeviceId];
+  if (device == null) return const [];
+  final body = bodyFor(device, doc.templates);
+  if (body == null) return const [];
+
+  final free = <PanelLanding>[];
+  for (final def in body.ports) {
+    if (def.face != Face.rear) continue;
+    final target = resolveConnectTarget(
+      doc,
+      deviceId: panelDeviceId,
+      portKey: def.key.v,
+    );
+    if (target == null) continue;
+    if (alsoClaimed.contains(target.portId)) continue;
+    // ASKED, NOT ANSWERED AGAIN. `portConductorCount` is where TOP-003
+    // lives; a second occupancy test written here would be a second
+    // answer to one question.
+    if (portConductorCount(doc, target.portId) > 0) continue;
+    final designator = target.portDesignator;
+    free.add(
+      PanelLanding(
+        port: PortMaterialisation.of(target, designator: designator),
+        positionToken: panelPositionToken(def, designator),
+      ),
+    );
+  }
+  return free;
+}
+
+/// One free position on a panel: the pin, and what `{PORT}` renders for it.
+///
+/// TWO STRINGS BECAUSE THERE ARE TWO FACTS, and DR-039 §11.38.8 is the
+/// ruling that separates them. `port.designator` is what the `Port` entity
+/// will carry, which is project state governed by `portDesignatorFormat`.
+/// [positionToken] is what is PRINTED ON THE PART. On a patch panel those
+/// differ, and a caller that used one for both would either put `J04` on a
+/// cable label or write `01` into a port designator that the rest of the
+/// product allocates.
+@immutable
+final class PanelLanding {
+  const PanelLanding({required this.port, required this.positionToken});
+
+  final PortMaterialisation port;
+
+  /// What `{PORT}` renders. See [panelPositionToken].
+  final String positionToken;
+}
+
+/// What `{PORT}` renders for a position on a patch panel (DR-039
+/// §11.38.8).
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// THE NUMBER PRINTED ON THE PANEL, NOT THE ONE THIS PRODUCT ALLOCATED
+/// ═════════════════════════════════════════════════════════════════════
+/// `ConnectTarget.portDesignator` renders `J04` on a three-up/three-down
+/// fixture, because `portDesignatorFormat` is `J{PORT_SEQ:2}` and
+/// `PORT_SEQ` counts the FRONT jacks a drop never touches. `J04` appears
+/// nowhere on the physical part, so a tech on a ladder holding a cable
+/// labelled `1A-PP-1J04` has to translate it against a panel silkscreened
+/// `01 … 24`. CR-044's own example is `1A-A12`, which is a position
+/// number.
+///
+/// The archetype already carries that number: `catalog_network.dart` calls
+/// `n03.p(rearKey, n, …)` where `n` is `'01'`, so it is `PortDef.label`.
+/// So the label wins where the template declares one, and the designator
+/// is the fallback for a pin whose template says nothing.
+///
+/// WHAT THIS DOES NOT FIX, STATED SO NOBODY READS IT AS FIXED. The
+/// Termination Schedule's `RACK TERM` column still prints the DESIGNATOR
+/// for the same hole, so two columns describe one position two ways. That
+/// disagreement predates this function: it is between `portDesignator` and
+/// the part, and closing it means teaching designator ALLOCATION to honour
+/// an authored label, which is its own ruling and touches the connect
+/// gesture's output for every device in the catalog.
+String panelPositionToken(PortDef def, String designator) {
+  final label = def.label.trim();
+  return label.isEmpty ? designator : label;
 }
 
 /// The outcome of [buildBindEndpointCommand].

@@ -45,6 +45,84 @@ _Project _project({String code = 'LR', String name = 'Living Room'}) {
   return (doc: doc, bodyId: structure.bodyId, livingRoom: room.id);
 }
 
+const _pos = PanelPosition(
+  ruOffset: 0,
+  xTwelfth: 0,
+  xFineNm: Len.zero,
+  yFineNm: Len.zero,
+);
+
+/// Puts a patch panel in the project, plus a telecom room carrying the two
+/// identifiers the rack-label preset wants.
+///
+/// FRONT PORTS ARE DECLARED FIRST, DELIBERATELY. DR-039 §11.38.2 clause 4
+/// lands a drop on the REAR, and a walk that took declared order without
+/// filtering the face would hand the first drop `front.1`.
+Uuid _panel(RackDocument doc, {String designator = 'PP-1', int positions = 3}) {
+  const tplId = 'tpl.pp';
+  doc.templates['$tplId@1'] = TemplateSnapshot(
+    templateId: const TemplateId(tplId),
+    version: 1,
+    contentHash: 'sha256:$tplId',
+    body: TemplateBody(
+      manufacturer: 'Generic',
+      model: 'PP',
+      displayName: 'Patch Panel',
+      typePrefix: 'PP',
+      ports: [
+        for (var i = 1; i <= positions; i++)
+          PortDef(
+            key: PortKey('front.$i'),
+            label: i.toString().padLeft(2, '0'),
+            connector: const ConnectorTypeId('conn.rj45'),
+            signalFamily: const SignalFamilyId('net.ethernet'),
+            face: Face.front,
+            position: _pos,
+            order: FracIndex('a$i'),
+          ),
+        for (var i = 1; i <= positions; i++)
+          PortDef(
+            key: PortKey('rear.$i'),
+            label: i.toString().padLeft(2, '0'),
+            connector: const ConnectorTypeId('conn.punchdown_110'),
+            signalFamily: const SignalFamilyId('net.ethernet'),
+            face: Face.rear,
+            position: _pos,
+            order: FracIndex('b$i'),
+          ),
+      ],
+    ),
+    capturedAt: _now,
+  );
+
+  final room = AddLocationCommand(
+    name: 'Media Closet',
+    code: 'MC',
+    order: nextLocationOrder(doc),
+    floorNumber: 1,
+    spaceCode: 'A',
+    now: _now,
+    actor: 'test',
+  )..apply(doc);
+
+  final id = Uuid('dev-$designator');
+  doc.devices[id] = DeviceInstance(
+    id: id,
+    kind: DeviceKind.rackDevice,
+    templateRef: const TemplateRef(
+      templateId: TemplateId(tplId),
+      version: 1,
+      contentHash: 'sha256:$tplId',
+    ),
+    designator: designator,
+    name: 'Patch Panel',
+    placement: const OffRackPlacement(),
+    locationId: room.id,
+    meta: EntityMeta(createdAt: _now, updatedAt: _now, updatedBy: 'test'),
+  );
+  return id;
+}
+
 DropLinePlan _plan(
   RackDocument doc,
   String line, {
@@ -650,6 +728,163 @@ void main() {
       expect(plan.dropCount, 4);
       expect(plan.pathwayNames, isEmpty);
       expect(plan.outletCreated, isTrue);
+    });
+  });
+
+  group('@panel= lands the whole line (DR-039 §11.38.2 clause 2)', () {
+    test('THREE DROPS FROM ONE MODIFIER, each on its own rear position', () {
+      // The clause's whole reason for being a modifier: AC-018 wants
+      // forty-six of sixty landed inside fifteen minutes, and this costs
+      // one `@panel=PP-1` per line rather than forty-six typed cells.
+      final p = _project();
+      _panel(p.doc);
+      final plan = _ready(_plan(p.doc, 'Living Room: 3x Cat6 @panel=PP-1'));
+      _apply(p.doc, plan);
+
+      final ends = [for (final l in p.doc.links.values) l.conductors.first.to];
+      expect(ends, everyElement(isA<PortEndpoint>()));
+      expect(
+        {for (final e in ends) (e as PortEndpoint).portId},
+        hasLength(3),
+        reason: 'three DIFFERENT positions, not three copies of one',
+      );
+    });
+
+    test('THE REAR, NOT THE FRONT, and the fixture declares front first', () {
+      // The front jacks are where a patch cord goes. A walk that took
+      // declared order without filtering the face would put the whole
+      // rough-in on the wrong side of the panel, and the archetype's own
+      // description says why that breaks the Termination Schedule.
+      final p = _project();
+      final panelId = _panel(p.doc);
+      _apply(p.doc, _ready(_plan(p.doc, 'Living Room: 1x Cat6 @panel=PP-1')));
+
+      final end = p.doc.links.values.first.conductors.first.to as PortEndpoint;
+      expect(end.portId, derivePortId(panelId, const PortKey('rear.1')));
+    });
+
+    test('the rack labels are allocated in position order', () {
+      final p = _project();
+      _panel(p.doc);
+      final plan = _ready(_plan(p.doc, 'Living Room: 3x Cat6 @panel=PP-1'));
+
+      expect(plan.rackLabels, ['1A-PP-101', '1A-PP-102', '1A-PP-103']);
+      _apply(p.doc, plan);
+      expect(
+        {for (final l in p.doc.links.values) l.structureOrigin!.rackLabel},
+        {'1A-PP-101', '1A-PP-102', '1A-PP-103'},
+      );
+    });
+
+    test('a second line takes the positions the first one did NOT', () {
+      final p = _project();
+      final panelId = _panel(p.doc);
+      _apply(p.doc, _ready(_plan(p.doc, 'Living Room: 1x Cat6 @panel=PP-1')));
+      final second = _ready(_plan(p.doc, 'Living Room: 1x Cat6 @panel=PP-1'));
+
+      expect(second.rackLabels, ['1A-PP-102']);
+      _apply(p.doc, second);
+      expect(
+        {
+          for (final l in p.doc.links.values)
+            (l.conductors.first.to as PortEndpoint).portId,
+        },
+        {
+          derivePortId(panelId, const PortKey('rear.1')),
+          derivePortId(panelId, const PortKey('rear.2')),
+        },
+      );
+    });
+
+    test('A PANEL THAT DOES NOT EXIST REFUSES, and creates nothing', () {
+      // `@panel=PP-9` is a typo far more often than an intention, and a
+      // gesture that invented a 24-port device out of one would put
+      // hardware nobody chose on the equipment list.
+      final p = _project();
+      _panel(p.doc);
+      final before = p.doc.links.length;
+
+      expect(
+        _refusal(_plan(p.doc, 'Living Room: 1x Cat6 @panel=PP-9')),
+        contains('called "PP-9"'),
+      );
+      expect(p.doc.links, hasLength(before));
+    });
+
+    test('a panel too small refuses ALL of it, and says by how much', () {
+      // Landing four of six silently would leave two rows on the Pull
+      // Sheet that look identical to a deliberate rough-in coil.
+      final p = _project();
+      _panel(p.doc);
+
+      final reason = _refusal(_plan(p.doc, 'Living Room: 6x Cat6 @panel=PP-1'));
+      expect(reason, contains('3 free position'));
+      expect(reason, contains('needs 6'));
+      expect(reason, contains('Nothing was landed'));
+    });
+
+    test('NO PANEL NAMED MEANS NOTHING CHANGED, which is every other line', () {
+      // The regression guard: `@panel=` is opt-in, and the other 349
+      // keystrokes of the drill must behave exactly as they did.
+      final p = _project();
+      _panel(p.doc);
+      final plan = _ready(_plan(p.doc, 'Living Room: 4x Cat6'));
+      _apply(p.doc, plan);
+
+      expect(plan.rackLabels, isEmpty);
+      expect(
+        [for (final l in p.doc.links.values) l.conductors.first.to],
+        everyElement(isA<OpenEndpoint>()),
+      );
+    });
+
+    test('a panel with no floor number LANDS ANYWAY and says so ONCE', () {
+      // DR-039 §11.38.5, plus the once-per-line rule: three drops onto a
+      // panel with no floor number is ONE fact about ONE room, and
+      // printing it three times is how a person learns to stop reading
+      // warnings.
+      final p = _project();
+      final panelId = _panel(p.doc);
+      p.doc.locations[p.doc.devices[panelId]!.locationId!]!.floorNumber = null;
+
+      final plan = _ready(_plan(p.doc, 'Living Room: 3x Cat6 @panel=PP-1'));
+      _apply(p.doc, plan);
+
+      expect(plan.rackLabels, isEmpty);
+      expect(
+        plan.warnings.where((w) => w.contains('floor number')),
+        hasLength(1),
+      );
+      expect(
+        [for (final l in p.doc.links.values) l.conductors.first.to],
+        everyElement(isA<PortEndpoint>()),
+        reason: 'the drops were still punched down',
+      );
+    });
+
+    test('the designator match is case-insensitive, like every other one', () {
+      final p = _project();
+      _panel(p.doc);
+      expect(
+        _plan(p.doc, 'Living Room: 1x Cat6 @panel=pp-1'),
+        isA<DropLinePlanReady>(),
+      );
+    });
+
+    test('the binds come after the drops, because a bind names a Link', () {
+      // Ordering as an assertion rather than a comment: a bind sequenced
+      // ahead of its own AddHomeRunCommand names a link the document does
+      // not hold yet, and would silently do nothing.
+      final p = _project();
+      _panel(p.doc);
+      final plan = _ready(_plan(p.doc, 'Living Room: 2x Cat6 @panel=PP-1'));
+
+      expect(
+        plan.commands.indexWhere((c) => c is BindEndpointCommand),
+        greaterThan(
+          plan.commands.lastIndexWhere((c) => c is AddHomeRunCommand),
+        ),
+      );
     });
   });
 }
