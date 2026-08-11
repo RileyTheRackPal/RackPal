@@ -188,6 +188,7 @@ export 'src/structure/drop_line_parser.dart';
 export 'src/structure/drop_line_planner.dart';
 export 'src/structure/matrix_plan.dart';
 export 'src/structure/outlet_template_planner.dart';
+export 'src/structure/plate_arrange.dart';
 export 'src/units/box.dart';
 export 'src/units/constants.dart';
 export 'src/units/ids.dart';
