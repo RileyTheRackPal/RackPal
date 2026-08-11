@@ -36,10 +36,13 @@
 // an ordinary patch. Silently rewriting it into one would file a cable on
 // the wrong sheet, so [buildAddHomeRunCommand] refuses and says why
 // (docs/04 §3.4: never silently do nothing).
+import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/label_key.dart';
 import 'package:rackmate_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackmate_core/src/commands/set_entity_property_command.dart';
+import 'package:rackmate_core/src/derived/device_loads.dart' show hostRackOf;
+import 'package:rackmate_core/src/idformat/designator_allocator.dart';
 import 'package:rackmate_core/src/model/conductor.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
 import 'package:rackmate_core/src/model/enums.dart'
@@ -97,6 +100,113 @@ Set<String> usedRackLabels(
       if (l.structureOrigin?.rackLabel case final r?) r,
   ...alsoUsed,
 };
+
+/// What [resolveRackLabel] found: a label, or nothing and a reason.
+///
+/// TWO NULLABLE FIELDS RATHER THAN A SEALED PAIR, and DR-039 §11.38.5 is
+/// why. A landing that cannot render a label is NOT a failure: the drop
+/// still gets punched down and the document still records where. So the
+/// caller always proceeds and the two fields answer two questions it
+/// always has — what to write, and what to tell the user. A sealed union
+/// would make the ordinary "no floor number yet" case look like an error
+/// path and invite a caller to refuse the bind on it.
+@immutable
+final class RackLabelResolution {
+  const RackLabelResolution({this.label, this.note});
+
+  /// `1A-PP-101`, or NULL when the pattern could not render.
+  final String? label;
+
+  /// A sentence naming the field a person has to fill, or null when there
+  /// was nothing to say.
+  final String? note;
+}
+
+/// The `rackLabel` a drop landing on [portDesignator] of [panelDeviceId]
+/// should carry (DR-039 §11.38.2 clause 3, §11.38.3).
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// THIS IS `allocateOutletRackLabel`'S FIRST CALLER, AND IT WAITED A
+/// MILESTONE
+/// ═════════════════════════════════════════════════════════════════════
+/// That allocator shipped with M3-D/1 and had four callers, all of them in
+/// its own test file. It was not uncalled, it was UNCALLABLE: the shipped
+/// pattern is `{FLOOR}{SPACE}-{PANEL}{PORT:2}` and `{PANEL}` and `{PORT}`
+/// are facts about a landing that nothing in the product recorded. M3-K/2
+/// records the landing; this renders the label from it.
+///
+/// `{PANEL}` IS THE DEVICE DESIGNATOR (§11.38.3). CR-044 renders the
+/// preset `1A-A12`, which is a TIA-606 example rather than a
+/// specification: it names no source for the panel segment. The model has
+/// exactly one identifier for a panel because **the model has no `Panel`
+/// entity**, which `derived/schedule.dart` already says out loud when it
+/// calls a patch panel *"a `DeviceInstance` like any other"* and sorts
+/// §3.6's `rack, panel, port` on the designator. So the default preset
+/// renders `1A-PP-101`, and a `panelLetter` field invented to reproduce
+/// the `A` would be a fact nobody stated added to match a rendering.
+///
+/// `{FLOOR}` AND `{SPACE}` ARE THE PANEL'S, NEVER THE DROP'S ROOM. `1A` is
+/// the telecom room; a drop pulled from a second-floor bedroom does not
+/// make the panel's label say `2`. Read through the same walk the schedule
+/// uses, `device.locationId ?? hostRack.locationId`, so a panel that
+/// inherits its room from its rack is not treated as roomless.
+RackLabelResolution resolveRackLabel({
+  required RackDocument doc,
+  required Uuid panelDeviceId,
+  required String portDesignator,
+  required Set<String> usedRackLabels,
+}) {
+  final panel = doc.devices[panelDeviceId];
+  if (panel == null) {
+    return const RackLabelResolution(
+      note: 'That panel is not in this project, so no rack label was set.',
+    );
+  }
+  final rackId = hostRackOf(panel, doc.devices);
+  final locationId = panel.locationId ?? doc.racks[rackId]?.locationId;
+  final location = locationId == null ? null : doc.locations[locationId];
+
+  final allocated = allocateOutletRackLabel(
+    settings: doc.settings,
+    values: {
+      'PANEL': panel.designator,
+      'PORT': portDesignator,
+      if (location?.floorNumber case final f?) 'FLOOR': f,
+      if (location?.spaceCode?.trim() case final s? when s.isNotEmpty)
+        'SPACE': s,
+      if (location?.code.trim() case final c? when c.isNotEmpty) 'ROOM_ABBR': c,
+      if (doc.racks[rackId]?.designator case final r?) 'RACK': r,
+    },
+    usedLabels: usedRackLabels,
+  );
+
+  switch (allocated) {
+    case LabelAllocated(:final label):
+      return RackLabelResolution(label: label);
+    case LabelTokensMissing(:final tokens, :final pattern):
+      // §11.38.5: the bind proceeds and the label is absent. The sentence
+      // names the FIELD rather than the token, on
+      // `missingTokenSentence`'s rule, because a person who has never
+      // read the pattern cannot act on `{SPACE}`.
+      const fields = {
+        'FLOOR': 'a floor number',
+        'SPACE': 'a space code',
+        'PANEL': 'a designator',
+        'ROOM_ABBR': 'a short code',
+      };
+      final named = [
+        for (final t in tokens)
+          if (fields[t] case final f?) f,
+      ];
+      final what = named.isEmpty ? tokens.join(', ') : named.join(' and ');
+      return RackLabelResolution(
+        note:
+            'The drop is landed, but its rack label needs $what on the '
+            "panel's location before it can be written. The pattern is "
+            '"$pattern".',
+      );
+  }
+}
 
 /// Creates one home run: a [Link] carrying a [StructureOrigin], a field end
 /// that is deliberately NOT a live port, and a rack end that may or may not

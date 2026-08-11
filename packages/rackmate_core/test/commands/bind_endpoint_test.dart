@@ -459,6 +459,159 @@ void main() {
     });
   });
 
+  group('the rack label is ALLOCATED, not typed (M3-K/3, §11.38.3)', () {
+    /// Gives the panel a room with the two identifiers the preset wants.
+    Uuid telecom(RackDocument doc, {int? floor = 1, String? space = 'A'}) {
+      final add = AddLocationCommand(
+        name: 'Media Closet',
+        code: 'MC',
+        order: nextLocationOrder(doc),
+        floorNumber: floor,
+        spaceCode: space,
+        now: _now,
+        actor: 'test',
+      )..apply(doc);
+      doc.devices[_panel]!.locationId = add.id;
+      return add.id;
+    }
+
+    test('the shipped preset renders from the landing, not from a typist', () {
+      // `allocateOutletRackLabel` shipped with M3-D/1 and had four
+      // callers, all in its own test file. This is its first real one.
+      final p = _project();
+      telecom(p.doc);
+
+      final r = resolveRackLabel(
+        doc: p.doc,
+        panelDeviceId: _panel,
+        portDesignator: '01',
+        usedRackLabels: const {},
+      );
+
+      // `{FLOOR}{SPACE}-{PANEL}{PORT:2}` over floor 1, space A, panel
+      // PP-1, port 01. §11.38.3: `{PANEL}` is the DEVICE DESIGNATOR,
+      // because the model has no `Panel` entity to hold anything shorter.
+      expect(r.label, '1A-PP-101');
+      expect(r.note, isNull);
+    });
+
+    test('a project that customised its pattern is HONOURED, not bypassed', () {
+      // The whole argument for allocating instead of typing (CR-045): a
+      // string somebody types is governed by no pattern at all.
+      final p = _project();
+      telecom(p.doc);
+      p.doc.settings.outletRackLabelFormat = const IdFormat(
+        '{PANEL}.{PORT}@{SPACE}',
+      );
+
+      final r = resolveRackLabel(
+        doc: p.doc,
+        panelDeviceId: _panel,
+        portDesignator: '07',
+        usedRackLabels: const {},
+      );
+
+      expect(r.label, 'PP-1.07@A');
+      expect(r.note, isNull);
+    });
+
+    test('NO FLOOR NUMBER MEANS NO LABEL, AND THE BIND STILL HAPPENS', () {
+      // DR-039 §11.38.5. This is the ordinary state of a project nobody
+      // has filled the telecom room's identifiers on, and it must not read
+      // as an error path.
+      final p = _project();
+      telecom(p.doc, floor: null);
+
+      final r = resolveRackLabel(
+        doc: p.doc,
+        panelDeviceId: _panel,
+        portDesignator: '01',
+        usedRackLabels: const {},
+      );
+
+      expect(r.label, isNull);
+      // THE SENTENCE NAMES THE FIELD IN PLAIN WORDS. A person who has
+      // never read the pattern cannot act on `{FLOOR}`. It quotes the
+      // pattern too, which is `LabelTokensMissing.pattern`'s stated
+      // reason: somebody who CUSTOMISED their scheme needs to see the
+      // scheme in order to know which of its tokens went missing.
+      expect(r.note, contains('a floor number'));
+      expect(r.note, contains('{FLOOR}{SPACE}-{PANEL}{PORT:2}'));
+      // And it says the drop landed, because it did.
+      expect(r.note, contains('landed'));
+
+      _ready(_build(p.doc, p.linkId, rackLabel: r.label)).apply(p.doc);
+      expect(p.doc.links[p.linkId]!.conductors.first.to, isA<PortEndpoint>());
+    });
+
+    test("the floor is the PANEL'S, never the room the drop starts in", () {
+      // `1A` is the telecom room. A drop pulled from a second-floor
+      // bedroom does not make the panel's label say `2`.
+      final p = _project();
+      telecom(p.doc);
+      final bedroom = AddLocationCommand(
+        name: 'Bedroom 2',
+        code: 'BR2',
+        order: nextLocationOrder(p.doc),
+        floorNumber: 2,
+        spaceCode: 'Z',
+        now: _now,
+        actor: 'test',
+      )..apply(p.doc);
+      p.doc.links[p.linkId]!.conductors[0] = Conductor(
+        from: PlaceEndpoint(description: 'BR2 wall', locationId: bedroom.id),
+        to: p.doc.links[p.linkId]!.conductors.first.to,
+      );
+
+      final r = resolveRackLabel(
+        doc: p.doc,
+        panelDeviceId: _panel,
+        portDesignator: '01',
+        usedRackLabels: const {},
+      );
+
+      expect(r.label, '1A-PP-101', reason: 'not 2Z-');
+    });
+
+    test("a panel with no location of its own inherits its RACK's", () {
+      // The same walk `_portEnd` uses. Reading `device.locationId` alone
+      // would call a rail-mounted panel roomless and drop the two tokens.
+      final p = _project();
+      final loc = AddLocationCommand(
+        name: 'Media Closet',
+        code: 'MC',
+        order: nextLocationOrder(p.doc),
+        floorNumber: 1,
+        spaceCode: 'A',
+        now: _now,
+        actor: 'test',
+      )..apply(p.doc);
+      final rack = AddRackCommand(
+        designator: 'RK-1',
+        name: 'Main',
+        heightU: 12,
+        order: nextRackOrder(p.doc.racks.values.map((r) => r.order)),
+        now: _now,
+        actor: 'test',
+      )..apply(p.doc);
+      p.doc.racks[rack.id]!.locationId = loc.id;
+      p.doc.devices[_panel]!.placement = RailPlacement(
+        rackId: rack.id,
+        ruIndex: 1,
+        face: Face.front,
+      );
+
+      final r = resolveRackLabel(
+        doc: p.doc,
+        panelDeviceId: _panel,
+        portDesignator: '01',
+        usedRackLabels: const {},
+      );
+
+      expect(r.label, '1A-PP-101');
+    });
+  });
+
   group('AC-018 end to end', () {
     test('a landed drop still schedules and still carries its W number', () {
       // The half of AC-018 that was already true and must STAY true: the
