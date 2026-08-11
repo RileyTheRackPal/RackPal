@@ -66,6 +66,8 @@ class _Harness {
     onRename: (id, name) => _set(id, LocationField.name, name),
     onSetCode: (id, code) => _set(id, LocationField.code, code),
     onSetKind: (id, kind) => _set(id, LocationField.kind, kind),
+    onSetFloorNumber: (id, v) => _set(id, LocationField.floorNumber, v),
+    onSetSpaceCode: (id, v) => _set(id, LocationField.spaceCode, v),
     onReparent: (id, newParentId) {
       final result = buildReparentLocation(
         doc: doc,
@@ -262,6 +264,199 @@ void main() {
     });
   });
 
+  group('{FLOOR} and {SPACE} have controls at last (DR-039 §11.38.4)', () {
+    /// Selects [name] and returns the harness, so each case starts from a
+    /// detail pane rather than from a tree.
+    Future<Uuid> open(WidgetTester tester, _Harness h, String name) async {
+      final id = h.seed(name);
+      await tester.pumpWidget(h.app);
+      await tester.tap(find.text(name));
+      await tester.pump();
+      return id;
+    }
+
+    testWidgets('a floor and a space reach the document as commands', (
+      tester,
+    ) async {
+      // THE ABSENCE THIS CLOSES, stated as the assertion: before this,
+      // `floorNumber` and `spaceCode` appeared across the whole of
+      // `rackmate_ui/lib` and `apps/rackmate/lib` exactly once, in a
+      // comment saying they had no editor. Three of the four tokens in
+      // `{FLOOR}{SPACE}-{PANEL}{PORT:2}` were therefore unreachable.
+      final h = _Harness();
+      final id = await open(tester, h, 'Media Closet');
+
+      await tester.enterText(find.byKey(ValueKey('floor-${id.v}')), '1');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      await tester.enterText(find.byKey(ValueKey('space-${id.v}')), 'A');
+      await tester.pump();
+
+      expect(h.doc.locations[id]!.floorNumber, 1);
+      expect(h.doc.locations[id]!.spaceCode, 'A');
+      // The load-bearing property, as the name field's own case puts it:
+      // the edit is a Command, not a poke.
+      h.controller.undoLast();
+      expect(h.doc.locations[id]!.spaceCode, isNull);
+    });
+
+    testWidgets('a basement commits, and the caret survives typing it', (
+      tester,
+    ) async {
+      // WHY THE FLOOR FIELD COMMITS ON BLUR AND THE NAME DOES NOT. `-` is
+      // the first keystroke of `-1`, and a per-keystroke parse would
+      // refuse it, so a person typing a basement would be told they were
+      // wrong before they were finished. Nothing is refused here.
+      final h = _Harness();
+      final id = await open(tester, h, 'Basement');
+
+      await tester.enterText(find.byKey(ValueKey('floor-${id.v}')), '-');
+      await tester.pump();
+      expect(h.refusals, isEmpty, reason: 'mid-typing is not an error');
+
+      await tester.enterText(find.byKey(ValueKey('floor-${id.v}')), '-1');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      expect(h.doc.locations[id]!.floorNumber, -1);
+      expect(h.refusals, isEmpty);
+    });
+
+    testWidgets('a floor that is not a number is refused and put back', (
+      tester,
+    ) async {
+      // A box holding text the document does not have is a box the next
+      // rebuild silently overwrites. The stored value and the refusal
+      // beside it is the only pair that stays true to each other.
+      final h = _Harness();
+      final id = await open(tester, h, 'Attic');
+
+      await tester.enterText(find.byKey(ValueKey('floor-${id.v}')), '2');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      await tester.enterText(find.byKey(ValueKey('floor-${id.v}')), 'B');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      expect(h.doc.locations[id]!.floorNumber, 2, reason: 'unchanged');
+      expect(h.refusals, hasLength(1));
+      expect(h.refusals.single, contains('basement'));
+      // The RENDERED text, not the controller behind it: what the user is
+      // looking at is the claim, and a box that reads `B` over a document
+      // holding `2` is the defect this case exists for.
+      expect(
+        find.descendant(
+          of: find.byKey(ValueKey('floor-${id.v}')),
+          matching: find.text('2'),
+        ),
+        findsOneWidget,
+        reason: 'the box shows what the document holds',
+      );
+    });
+
+    testWidgets('clearing either one stores UNKNOWN, never 0 and never ""', (
+      tester,
+    ) async {
+      // G4 at two fields at once. `0` is a real storey and `''` is a third
+      // state every reader downstream would have to guess about, so
+      // neither may be what "the user cleared the box" means.
+      final h = _Harness();
+      final id = await open(tester, h, 'Garage');
+
+      await tester.enterText(find.byKey(ValueKey('floor-${id.v}')), '0');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      await tester.enterText(find.byKey(ValueKey('space-${id.v}')), 'B2');
+      await tester.pump();
+      expect(h.doc.locations[id]!.floorNumber, 0, reason: 'a measured zero');
+
+      await tester.enterText(find.byKey(ValueKey('floor-${id.v}')), '');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      await tester.enterText(find.byKey(ValueKey('space-${id.v}')), '   ');
+      await tester.pump();
+
+      expect(h.doc.locations[id]!.floorNumber, isNull);
+      expect(h.doc.locations[id]!.spaceCode, isNull);
+    });
+
+    testWidgets("DELETE IS REACHABLE AT THE DIALOG'S REAL SIZE, unscrolled", (
+      tester,
+    ) async {
+      // THE REGRESSION THIS PANE ALREADY SHIPPED ONCE, as an assertion.
+      // `showLocationsPanel` mounts a FIXED 720 x 520, and adding two
+      // fields pushed `Delete location` out of the detail pane. The three
+      // delete cases caught it only because they tap at 800 x 600, which
+      // is roomier than production: a pane that fits the test viewport and
+      // not the dialog would have passed all of them.
+      //
+      // So this mounts the real geometry and taps with no scrolling at
+      // all. It fails the moment a field pushes the button off again, and
+      // it is why the button lives outside the scroll view.
+      final h = _Harness();
+      final id = h.seed('Living Room');
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 720,
+                height: 520,
+                child: LocationsPanel(doc: h.doc, actions: h.actions),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Living Room'));
+      await tester.pump();
+
+      // AN ANTI-VACUITY GUARD, and §3.5's C2 case is why it is an
+      // assertion rather than a comment. If the fields happened to FIT at
+      // 720 x 520 this case would pass with the pinned button deleted, and
+      // would go on passing until the pane grew again. Asserting that the
+      // field area really does overflow is what makes the tap below a test
+      // of the pinning and not of a coincidence.
+      final fields = tester.state<ScrollableState>(
+        find
+            .ancestor(
+              of: find.byKey(ValueKey('parent-${id.v}')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      expect(
+        fields.position.maxScrollExtent,
+        greaterThan(0),
+        reason: 'the fields must overflow, or this proves nothing',
+      );
+
+      await tester.tap(find.text('Delete location'));
+      await tester.pumpAndSettle();
+
+      expect(h.doc.locations[id], isNull, reason: 'the tap landed');
+    });
+
+    testWidgets('tabbing through the floor field writes nothing', (
+      tester,
+    ) async {
+      // An undo entry per field visited would make Ctrl+Z do nothing
+      // visible, once per field somebody looked at.
+      final h = _Harness();
+      final id = await open(tester, h, 'Office');
+      final before = h.controller.doc.locations[id]!.meta.updatedAt;
+
+      await tester.tap(find.byKey(ValueKey('floor-${id.v}')));
+      await tester.pump();
+      await tester.tap(find.byKey(ValueKey('space-${id.v}')));
+      await tester.pump();
+
+      expect(h.doc.locations[id]!.floorNumber, isNull);
+      expect(h.doc.locations[id]!.meta.updatedAt, before);
+    });
+  });
+
   group('reparenting', () {
     testWidgets('moving a node under another runs one command', (
       tester,
@@ -273,6 +468,12 @@ void main() {
 
       await tester.tap(find.text('Living Room'));
       await tester.pump();
+      // SCROLLED TO FIRST, because `Inside` is the last field in a pane
+      // that scrolls (DR-039 §11.38.4 added a row above it). That is what
+      // a person does; a test that assumed a fixed y was asserting the
+      // layout while claiming to assert the reparent.
+      await tester.ensureVisible(find.byKey(ValueKey('parent-${living.v}')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(ValueKey('parent-${living.v}')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Main House').last);
@@ -296,6 +497,8 @@ void main() {
 
       await tester.tap(find.text('Main House'));
       await tester.pump();
+      await tester.ensureVisible(find.byKey(ValueKey('parent-${house.v}')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(ValueKey('parent-${house.v}')));
       await tester.pumpAndSettle();
 

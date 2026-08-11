@@ -940,6 +940,37 @@ void main() {
           (parseDateCell('2026-08-08') as CellParsed<DateTime>).value!;
       expect(formatDateCell(parsed), '2026-08-08');
     });
+
+    test('A FLOOR MAY BE NEGATIVE, which is why it is not a count', () {
+      // The one behaviour that makes `parseFloorCell` a separate function
+      // rather than a call to `parseCountCell`. A basement is `0` under
+      // one convention and `-1` under another, and nothing here knows
+      // which building the user is standing in. Delete this function and
+      // route `Floor` at `parseCountCell` and only this line fails.
+      expect((parseFloorCell('-1') as CellParsed<int>).value, -1);
+      expect(parseCountCell('-1'), isA<CellRefused<int>>());
+    });
+
+    test('a blank floor is UNKNOWN and never ground level (G4)', () {
+      // `0` is a real storey somewhere, so a blank that landed as `0`
+      // would put a wrong `{FLOOR}` on every rack label in a room nobody
+      // had got to yet, and it would look deliberate on the sheet.
+      expect((parseFloorCell('') as CellParsed<int>).value, isNull);
+      expect((parseFloorCell('   ') as CellParsed<int>).value, isNull);
+      expect((parseFloorCell('0') as CellParsed<int>).value, 0);
+    });
+
+    test('a floor that is not a whole number is refused', () {
+      expect(parseFloorCell('B'), isA<CellRefused<int>>());
+      expect(parseFloorCell('1.5'), isA<CellRefused<int>>());
+      expect(parseFloorCell('ground'), isA<CellRefused<int>>());
+      // The sentence says what to type instead, because "B" is the most
+      // likely wrong answer and the field cannot hold it.
+      expect(
+        (parseFloorCell('B') as CellRefused<int>).reason,
+        contains('basement'),
+      );
+    });
   });
 
   group('the as-built columns (DR-020 §11.19.2(5))', () {

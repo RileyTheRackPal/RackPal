@@ -88,6 +88,8 @@ class LocationsPanelActions {
     required this.onRename,
     required this.onSetCode,
     required this.onSetKind,
+    required this.onSetFloorNumber,
+    required this.onSetSpaceCode,
     required this.onReparent,
     required this.onDelete,
     required this.onRefuse,
@@ -106,14 +108,32 @@ class LocationsPanelActions {
   /// `onEdit(field, value)` would compile and throw the first time it ran,
   /// because the closure really is `(Location, String) => void`.
   ///
-  /// The three fields the panel edits are the three CR-047 and CR-046 are
-  /// about. `floorNumber`, `spaceCode` and `estimatedRunLengthFromRack`
-  /// are table rows with no editor here on purpose: the room estimate is
-  /// AC-024's number and belongs with M3-D, which builds the footage
-  /// rollup that consumes it and the nullable length entry it needs.
+  /// The first three fields are the three CR-047 and CR-046 are about.
+  ///
+  /// `floorNumber` AND `spaceCode` JOINED THEM AT DR-039 §11.38.4, and the
+  /// reason they were absent had expired. They were left out beside
+  /// `estimatedRunLengthFromRack` because that third field is AC-024's
+  /// number and belonged with M3-D; the two identifiers were never M3-D's,
+  /// and their absence made **three of the four tokens in the shipped rack
+  /// label preset unreachable**, so `{FLOOR}{SPACE}-{PANEL}{PORT:2}` could
+  /// not render on any document this product had ever written.
+  ///
+  /// `estimatedRunLengthFromRack` is still a table row with no editor here,
+  /// and that one is still M3-D's.
   final void Function(Uuid id, String name) onRename;
   final void Function(Uuid id, String code) onSetCode;
   final void Function(Uuid id, LocationKind kind) onSetKind;
+
+  /// A storey, or null for unknown. The panel hands over an already-parsed
+  /// value: `parseFloorCell` refuses in core, on `structure_edit_actions`'
+  /// rule that EVERY parse is core's and a surface holding a second copy of
+  /// one is how two answers to one question start.
+  final void Function(Uuid id, int? floorNumber) onSetFloorNumber;
+
+  /// A space code, or null for unknown. An empty box lands as null and
+  /// never as `''`, which is `LinkField.notes`' stated rule: `''` is a
+  /// third state every reader downstream would have to guess about.
+  final void Function(Uuid id, String? spaceCode) onSetSpaceCode;
 
   /// Moves `id` under `newParentId`, or to the top level when null.
   /// Returns a refusal sentence, or null when it went through.
@@ -453,6 +473,42 @@ class _Detail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // THE FIELDS SCROLL; `Delete location` DOES NOT.
+    //
+    // The dialog is a fixed 720 × 520 (`showLocationsPanel`) and this pane
+    // has grown twice: M3-B built it with three controls, DR-039 §11.38.4
+    // added two more, and the second growth pushed the delete button out
+    // of the pane's viewport. Three delete cases caught it, which is the
+    // only reason it was not shipped.
+    //
+    // Making the dialog taller fixes today and nothing else, because the
+    // next field puts it right back. A destructive action pinned outside
+    // the scroll view has a fixed home no future field can take, and a
+    // person looking for it never has to discover that this pane scrolls.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: _fields(theme)),
+        const Divider(height: 1),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: TextButton.icon(
+              onPressed: () => onDelete(location.id),
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Delete location'),
+              style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.error,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _fields(ThemeData theme) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -481,6 +537,59 @@ class _Detail extends StatelessWidget {
             helper: 'Feeds {ROOM_ABBR} on every label.',
             value: location.code,
             onChanged: (v) => onEdit(() => actions.onSetCode(location.id, v)),
+          ),
+          const SizedBox(height: 12),
+          // FLOOR AND SPACE SIT BESIDE CODE because all three are
+          // identifiers a label reads, and none of them is a name. DR-039
+          // §11.38.4: these are the RACK's when a rack label renders, so
+          // the room a drop starts in never contributes its own storey.
+          //
+          // ON ONE ROW, AND THE DIALOG IS WHY, not tidiness. It is a
+          // FIXED 720 × 520 (`showLocationsPanel`), so two stacked rows
+          // put `Delete location` below the fold of a pane a person cannot
+          // resize. One row also reads the way the label does: `{FLOOR}`
+          // and `{SPACE}` concatenate with nothing between them, and `1A`
+          // is one identifier a building uses, not two.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _CommitField(
+                  key: ValueKey('floor-${location.id.v}'),
+                  label: 'Floor',
+                  helper: 'Feeds {FLOOR}. Blank is unknown.',
+                  value: location.floorNumber?.toString() ?? '',
+                  onCommit: (text) {
+                    switch (parseFloorCell(text)) {
+                      case CellParsed<int>(:final value):
+                        onEdit(
+                          () => actions.onSetFloorNumber(location.id, value),
+                        );
+                        return true;
+                      case CellRefused<int>(:final reason):
+                        actions.onRefuse(reason);
+                        return false;
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _TextField(
+                  key: ValueKey('space-${location.id.v}'),
+                  label: 'Space',
+                  helper: 'Feeds {SPACE}. A telecom room is often "1A".',
+                  value: location.spaceCode ?? '',
+                  onChanged: (v) => onEdit(() {
+                    final trimmed = v.trim();
+                    actions.onSetSpaceCode(
+                      location.id,
+                      trimmed.isEmpty ? null : trimmed,
+                    );
+                  }),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<LocationKind>(
@@ -525,18 +634,6 @@ class _Detail extends StatelessWidget {
             onChanged: (v) => onReparent(
               location.id,
               v == null || v.isEmpty ? null : Uuid(v),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () => onDelete(location.id),
-              icon: const Icon(Icons.delete_outline),
-              label: const Text('Delete location'),
-              style: TextButton.styleFrom(
-                foregroundColor: theme.colorScheme.error,
-              ),
             ),
           ),
         ],
@@ -588,6 +685,79 @@ class _TextFieldState extends State<_TextField> {
       helperText: widget.helper,
     ),
     onChanged: widget.onChanged,
+  );
+}
+
+/// A text field that commits when it LOSES FOCUS, not per keystroke.
+///
+/// THE SIBLING ABOVE IS PER-KEYSTROKE AND THAT IS RIGHT FOR A NAME.
+/// It is wrong for a parsed field: `-` is the first keystroke of `-1` and
+/// `parseFloorCell` would refuse it, so a person typing a basement would
+/// be told they were wrong twice before they were right. Committing on
+/// blur means the parse sees a finished value.
+///
+/// A REFUSED COMMIT PUTS THE OLD TEXT BACK. The alternative is a box
+/// holding text the document does not have, which the next rebuild would
+/// silently overwrite anyway; showing the stored value with the refusal
+/// beside it is the only pair that stays true to each other.
+class _CommitField extends StatefulWidget {
+  const _CommitField({
+    required this.label,
+    required this.value,
+    required this.onCommit,
+    this.helper,
+    super.key,
+  });
+
+  final String label;
+  final String? helper;
+  final String value;
+
+  /// Returns whether the value was accepted.
+  final bool Function(String text) onCommit;
+
+  @override
+  State<_CommitField> createState() => _CommitFieldState();
+}
+
+class _CommitFieldState extends State<_CommitField> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.value,
+  );
+  late final FocusNode _focus = FocusNode()..addListener(_onFocusChange);
+
+  void _onFocusChange() {
+    if (!_focus.hasFocus) _commit();
+  }
+
+  void _commit() {
+    // NOTHING TYPED, NOTHING COMMITTED. Tabbing through a field must not
+    // push an undo entry, and a text box that has not changed has no
+    // opinion about the document.
+    if (_controller.text == widget.value) return;
+    if (!widget.onCommit(_controller.text)) {
+      _controller.text = widget.value;
+    }
+  }
+
+  @override
+  void dispose() {
+    _focus
+      ..removeListener(_onFocusChange)
+      ..dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => TextField(
+    controller: _controller,
+    focusNode: _focus,
+    decoration: InputDecoration(
+      labelText: widget.label,
+      helperText: widget.helper,
+    ),
+    onSubmitted: (_) => _commit(),
   );
 }
 

@@ -758,6 +758,31 @@ CellParse<int> parseCountCell(String text) {
   return CellParsed<int>(n);
 }
 
+/// A storey: `Location.floorNumber` today (DR-039 §11.38.4).
+///
+/// NEGATIVES ARE LEGAL, AND THAT IS THE WHOLE REASON THIS IS NOT
+/// [parseCountCell]. A basement is floor `0` under one convention and `-1`
+/// under another, and nothing in this product knows which building the
+/// user is standing in. A count cannot be negative; a storey can. `B` is
+/// unrepresentable because the field is `int?`, which is the model's
+/// decision and not this parser's.
+///
+/// BLANK IS UNKNOWN, NEVER GROUND LEVEL (G4, CR-114). A blank that landed
+/// as `0` would put a wrong `{FLOOR}` on every rack label in a room nobody
+/// had got to yet, and `0` is a real storey somewhere.
+CellParse<int> parseFloorCell(String text) {
+  final trimmed = text.trim();
+  if (trimmed.isEmpty) return const CellParsed<int>(null);
+  final n = int.tryParse(trimmed);
+  if (n == null) {
+    return CellRefused<int>(
+      '"$trimmed" is not a floor. A storey is a whole number, and a '
+      'basement is a negative one rather than "B".',
+    );
+  }
+  return CellParsed<int>(n);
+}
+
 /// A date column: `terminatedAt` today.
 ///
 /// `YYYY-MM-DD` AND NOTHING ELSE, which is the one spelling that is not
