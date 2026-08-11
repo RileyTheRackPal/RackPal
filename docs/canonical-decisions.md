@@ -8924,7 +8924,7 @@ timestamp, an actor, a generated summary and an optional user comment. **Every-c
 refused**: a 60-drop rough-in is already several hundred commands and a project's life is tens of
 thousands, which is megabytes of journal in an uncompressed file, unreadable by the person it
 exists to inform, and it would make the ZIP container a prerequisite (§11.38.6). **Saves-only was
-also refused**: a bulk act between two saves would leave no trace, which is the exact
+also refused**: a bulk act between two saves would go unrecorded, which is the exact
 troubleshooting case the request named.
 
 **11.38.4 CR-095's tombstones are the same feature, half-built, and this ruling finishes them.**
