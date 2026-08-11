@@ -110,7 +110,7 @@ class LocationsPanelActions {
   ///
   /// The first three fields are the three CR-047 and CR-046 are about.
   ///
-  /// `floorNumber` AND `spaceCode` JOINED THEM AT DR-039 §11.38.4, and the
+  /// `floorNumber` AND `spaceCode` JOINED THEM AT DR-040 §11.39.4, and the
   /// reason they were absent had expired. They were left out beside
   /// `estimatedRunLengthFromRack` because that third field is AC-024's
   /// number and belonged with M3-D; the two identifiers were never M3-D's,
@@ -476,7 +476,7 @@ class _Detail extends StatelessWidget {
     // THE FIELDS SCROLL; `Delete location` DOES NOT.
     //
     // The dialog is a fixed 720 × 520 (`showLocationsPanel`) and this pane
-    // has grown twice: M3-B built it with three controls, DR-039 §11.38.4
+    // has grown twice: M3-B built it with three controls, DR-040 §11.39.4
     // added two more, and the second growth pushed the delete button out
     // of the pane's viewport. Three delete cases caught it, which is the
     // only reason it was not shipped.
@@ -540,8 +540,8 @@ class _Detail extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           // FLOOR AND SPACE SIT BESIDE CODE because all three are
-          // identifiers a label reads, and none of them is a name. DR-039
-          // §11.38.4: these are the RACK's when a rack label renders, so
+          // identifiers a label reads, and none of them is a name. DR-040
+          // §11.39.4: these are the RACK's when a rack label renders, so
           // the room a drop starts in never contributes its own storey.
           //
           // ON ONE ROW, AND THE DIALOG IS WHY, not tidiness. It is a

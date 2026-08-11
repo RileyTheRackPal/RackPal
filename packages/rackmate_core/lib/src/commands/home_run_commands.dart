@@ -103,7 +103,7 @@ Set<String> usedRackLabels(
 
 /// What [resolveRackLabel] found: a label, or nothing and a reason.
 ///
-/// TWO NULLABLE FIELDS RATHER THAN A SEALED PAIR, and DR-039 §11.38.5 is
+/// TWO NULLABLE FIELDS RATHER THAN A SEALED PAIR, and DR-040 §11.39.5 is
 /// why. A landing that cannot render a label is NOT a failure: the drop
 /// still gets punched down and the document still records where. So the
 /// caller always proceeds and the two fields answer two questions it
@@ -123,7 +123,7 @@ final class RackLabelResolution {
 }
 
 /// The `rackLabel` a drop landing on [portDesignator] of [panelDeviceId]
-/// should carry (DR-039 §11.38.2 clause 3, §11.38.3).
+/// should carry (DR-040 §11.39.2 clause 3, §11.39.3).
 ///
 /// ═════════════════════════════════════════════════════════════════════
 /// THIS IS `allocateOutletRackLabel`'S FIRST CALLER, AND IT WAITED A
@@ -135,7 +135,7 @@ final class RackLabelResolution {
 /// are facts about a landing that nothing in the product recorded. M3-K/2
 /// records the landing; this renders the label from it.
 ///
-/// `{PANEL}` IS THE DEVICE DESIGNATOR (§11.38.3). CR-044 renders the
+/// `{PANEL}` IS THE DEVICE DESIGNATOR (§11.39.3). CR-044 renders the
 /// preset `1A-A12`, which is a TIA-606 example rather than a
 /// specification: it names no source for the panel segment. The model has
 /// exactly one identifier for a panel because **the model has no `Panel`
@@ -184,7 +184,7 @@ RackLabelResolution resolveRackLabel({
     case LabelAllocated(:final label):
       return RackLabelResolution(label: label);
     case LabelTokensMissing(:final tokens, :final pattern):
-      // §11.38.5: the bind proceeds and the label is absent. The sentence
+      // §11.39.5: the bind proceeds and the label is absent. The sentence
       // names the FIELD rather than the token, on
       // `missingTokenSentence`'s rule, because a person who has never
       // read the pattern cannot act on `{SPACE}`.

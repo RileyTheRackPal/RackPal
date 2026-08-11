@@ -1,5 +1,5 @@
-// commands/bind_endpoint_command.dart — board M3-K/2 (#664), DR-039
-// §11.38.2, AC-018.
+// commands/bind_endpoint_command.dart — board M3-K/2 (#664), DR-040
+// §11.39.2, AC-018.
 //
 // THE CLAUSE THIS FILE IS ABOUT IS A LIST OF WHAT MUST NOT CHANGE. Canon
 // :2186 words the command as one *"that preserves the ID, the length, the
@@ -36,7 +36,7 @@ const _panel = Uuid('dev-pp1');
 
 /// The rear punchdown positions of a small patch panel.
 ///
-/// REAR, WHICH IS DR-039 §11.38.2 CLAUSE 4. The N03 archetype models front
+/// REAR, WHICH IS DR-040 §11.39.2 CLAUSE 4. The N03 archetype models front
 /// RJ45 jacks and rear 110 punchdowns separately and says why in its own
 /// description; a drop lands on the punchdown.
 PortDef _rear(String key, String label, String order) => PortDef(
@@ -203,7 +203,7 @@ void main() {
     );
 
     test('the rack label lands, and a null one lands as null (G4)', () {
-      // DR-039 §11.38.5: the endpoint and the label are two facts. A panel
+      // DR-040 §11.39.5: the endpoint and the label are two facts. A panel
       // whose location cannot render `{FLOOR}` still gets punched down.
       final p = _project();
       _ready(_build(p.doc, p.linkId, rackLabel: null)).apply(p.doc);
@@ -392,7 +392,7 @@ void main() {
     });
 
     test('a drop that is ALREADY landed is refused, not re-landed', () {
-      // DR-039 §11.38.6: moving a drop off a jack it is punched into is
+      // DR-040 §11.39.6: moving a drop off a jack it is punched into is
       // its own gesture and is not ruled. Silently re-landing it would
       // rewrite a termination somebody recorded.
       final p = _project();
@@ -459,7 +459,7 @@ void main() {
     });
   });
 
-  group('the rack label is ALLOCATED, not typed (M3-K/3, §11.38.3)', () {
+  group('the rack label is ALLOCATED, not typed (M3-K/3, §11.39.3)', () {
     /// Gives the panel a room with the two identifiers the preset wants.
     Uuid telecom(RackDocument doc, {int? floor = 1, String? space = 'A'}) {
       final add = AddLocationCommand(
@@ -489,7 +489,7 @@ void main() {
       );
 
       // `{FLOOR}{SPACE}-{PANEL}{PORT:2}` over floor 1, space A, panel
-      // PP-1, port 01. §11.38.3: `{PANEL}` is the DEVICE DESIGNATOR,
+      // PP-1, port 01. §11.39.3: `{PANEL}` is the DEVICE DESIGNATOR,
       // because the model has no `Panel` entity to hold anything shorter.
       expect(r.label, '1A-PP-101');
       expect(r.note, isNull);
@@ -516,7 +516,7 @@ void main() {
     });
 
     test('NO FLOOR NUMBER MEANS NO LABEL, AND THE BIND STILL HAPPENS', () {
-      // DR-039 §11.38.5. This is the ordinary state of a project nobody
+      // DR-040 §11.39.5. This is the ordinary state of a project nobody
       // has filled the telecom room's identifiers on, and it must not read
       // as an error path.
       final p = _project();

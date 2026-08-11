@@ -264,7 +264,7 @@ void main() {
     });
   });
 
-  group('{FLOOR} and {SPACE} have controls at last (DR-039 §11.38.4)', () {
+  group('{FLOOR} and {SPACE} have controls at last (DR-040 §11.39.4)', () {
     /// Selects [name] and returns the harness, so each case starts from a
     /// detail pane rather than from a tree.
     Future<Uuid> open(WidgetTester tester, _Harness h, String name) async {
@@ -469,7 +469,7 @@ void main() {
       await tester.tap(find.text('Living Room'));
       await tester.pump();
       // SCROLLED TO FIRST, because `Inside` is the last field in a pane
-      // that scrolls (DR-039 §11.38.4 added a row above it). That is what
+      // that scrolls (DR-040 §11.39.4 added a row above it). That is what
       // a person does; a test that assumed a fixed y was asserting the
       // layout while claiming to assert the reparent.
       await tester.ensureVisible(find.byKey(ValueKey('parent-${living.v}')));

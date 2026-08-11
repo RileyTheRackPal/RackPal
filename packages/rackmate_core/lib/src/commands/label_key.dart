@@ -131,7 +131,7 @@ enum LabelKey {
   addOutletFromTemplate,
 
   // LANDING A DROP ON A PANEL PORT (commands/bind_endpoint_command.dart),
-  // M3-K/2, DR-039 §11.38.2. Its own value rather than reusing
+  // M3-K/2, DR-040 §11.39.2. Its own value rather than reusing
   // `connectPorts`, because a connect CREATES a cable and this one moves
   // an end of a cable that already exists: "Undo connect" offered for it
   // would suggest the drop is about to disappear, and the drop is what

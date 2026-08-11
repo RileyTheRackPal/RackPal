@@ -1,6 +1,6 @@
 ---
 type: Design Ruling
-title: DR-039 — A drop lands on a panel port, and the rack label is allocated
+title: DR-040 — A drop lands on a panel port, and the rack label is allocated
 description: >-
   M3's exit criterion wants forty-six of sixty drops landed at a rack. The product
   could only make the fourteen kind, sixty times, and three of the four tokens in
@@ -8,8 +8,8 @@ description: >-
   drill rather than by stopwatch after it.
 tags: [ruling, structure, m3, ac-018, labels, endpoints, census, dr-039]
 timestamp: 2026-08-11T12:00:00Z
-ruling_id: DR-039
-canon_section: "11.38"
+ruling_id: DR-040
+canon_section: "11.39"
 status: ruled
 ---
 

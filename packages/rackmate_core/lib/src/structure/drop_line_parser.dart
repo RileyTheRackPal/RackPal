@@ -143,7 +143,7 @@ final class DropLineParsed extends DropLineParse {
   final String? pathwayName;
 
   /// `@panel=PP-1` — the patch panel every drop on this line lands on
-  /// (DR-039 §11.38.2 clause 2). A device DESIGNATOR, not resolved here:
+  /// (DR-040 §11.39.2 clause 2). A device DESIGNATOR, not resolved here:
   /// this file has no document.
   ///
   /// ONE MODIFIER LANDS A WHOLE LINE, and that is the reason it is a
@@ -182,7 +182,7 @@ const Set<String> _knownModifiers = {
   'status',
   'outlet',
   'pathway',
-  // DR-039 §11.38.2 clause 2. The `unknownModifiers` map below is what
+  // DR-040 §11.39.2 clause 2. The `unknownModifiers` map below is what
   // this was added to: its own comment named "a future `@wall=`" as the
   // shape it was holding open, and this is the first key to take it up.
   'panel',

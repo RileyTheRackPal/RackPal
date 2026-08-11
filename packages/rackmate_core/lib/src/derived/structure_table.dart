@@ -758,7 +758,7 @@ CellParse<int> parseCountCell(String text) {
   return CellParsed<int>(n);
 }
 
-/// A storey: `Location.floorNumber` today (DR-039 §11.38.4).
+/// A storey: `Location.floorNumber` today (DR-040 §11.39.4).
 ///
 /// NEGATIVES ARE LEGAL, AND THAT IS THE WHOLE REASON THIS IS NOT
 /// [parseCountCell]. A basement is floor `0` under one convention and `-1`

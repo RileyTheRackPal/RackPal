@@ -1898,7 +1898,7 @@ diagnosis, and M1's cost a person two runs to produce one. This diagnosis cost a
 task. **The stopwatch is still owed** and nothing here discharges #163:
 what is discharged is the part that would have wasted the first run.
 
-**The census produced DR-039 (canon §11.38) and M3-K, four tasks, #663 to #666.** The user took the
+**The census produced DR-040 (canon §11.39) and M3-K, four tasks, #663 to #666.** The user took the
 expensive-looking option, and it is cheaper than it reads: `derivePortId` is a pure UUIDv5 over
 `(deviceId, portKey)`, so a pin's id is knowable before the pin exists, and DR-011.1 already rules
 that ports materialise inside a command's `apply()`. `BindEndpoint` inherits both rather than

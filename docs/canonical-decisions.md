@@ -8887,14 +8887,14 @@ person a minute rather than a design session.
 **11.37.6 Scope.** **No scope change.** Nothing enters or leaves v1; an open measurement inside an
 existing ruling is closed. Board #167 loses its "must not be inferred" hazard and gains a figure.
 
-### 11.38 DR-039 · A drop lands on a panel port; `@panel=` is the gesture and the rack label is allocated
+### 11.39 DR-040 · A drop lands on a panel port; `@panel=` is the gesture and the rack label is allocated
 
 **Settled by the user on 2026-08-11**, from a census taken before M3-G's stopwatch rather than after
 it. Board #163 says *"run the drill EARLY, on a rough build ... a drill run on a rough build finds
 them while the design can still move"*, and the reading that pays is **find the reasons it cannot
 pass while they are still cheap**. Three were reachable from a grep.
 
-**11.38.1 What the census found, and none of it was visible from the suite.** M3's criterion wants
+**11.39.1 What the census found, and none of it was visible from the suite.** M3's criterion wants
 sixty drops of which forty-six land at a rack and fourteen stay open. The product could only ever
 make the second kind:
 
@@ -8911,7 +8911,7 @@ make the second kind:
 and could not have even if the binding had existed. That is the finding that would have cost the
 second drill run rather than the first.
 
-**11.38.2 The ruling, in four clauses.**
+**11.39.2 The ruling, in four clauses.**
 
 1. **A landed far end is a `PortEndpoint` on a patch panel device.** `BindEndpoint` is built, in
    `rackmate_core`, and it materialises the port inside `apply()` exactly as DR-011.1 rules for the
@@ -8928,7 +8928,7 @@ second drill run rather than the first.
    Schedule wrong on the one column the trim tech actually needs (AC-025)."* A structured drop is
    punched down. The front jack is where a patch cord goes.
 
-**11.38.3 `{PANEL}` is the panel device's designator, and the alternative was invented data.** CR-044
+**11.39.3 `{PANEL}` is the panel device's designator, and the alternative was invented data.** CR-044
 ships the preset and renders it `1A-A12`, which is a TIA-606 example and not a specification: it
 names no source for the panel segment. The model has exactly one identifier for a panel, because
 **the model has no `Panel` entity** and `schedule.dart:205` already says so out loud, calling a patch
@@ -8937,20 +8937,20 @@ designator. So `{PANEL}` is that designator and the default preset renders `1A-P
 `panelLetter` field to make `1A-A12` reproducible would be **inventing a fact nobody stated** to
 match an example, which is §11.27.2's error with the provenance running the other way.
 
-**11.38.4 `{FLOOR}` and `{SPACE}` become editable on the `Location`, and they are the RACK's.** The
+**11.39.4 `{FLOOR}` and `{SPACE}` become editable on the `Location`, and they are the RACK's.** The
 fields, the `LocationField` entries and the commands all exist; only the two controls are missing,
 and `locations_panel.dart:110` says they were left out because the third field on that list belonged
 with M3-D. That reason has expired. **The floor and space that render are the panel's, read through
 the panel device's location, never the drop's room**: `1A` is the telecom room, and a drop from a
 bedroom on the second floor does not get a `2` because it starts there.
 
-**11.38.5 A bind that cannot render a label still binds.** The endpoint and the label are two facts
+**11.39.5 A bind that cannot render a label still binds.** The endpoint and the label are two facts
 and G4 forbids fusing them. A panel whose location has no floor number produces a bound
 `PortEndpoint` and **an absent `rackLabel`**, with the refusal sentence naming the field to fill, on
 `missingTokenSentence`'s existing pattern. The alternative, refusing the bind, would make an
 unrelated missing token undo a physical fact somebody stated.
 
-**11.38.6 What this does NOT settle.** **`LNK-020` stays M5's.** Its canonical text is literally
+**11.39.6 What this does NOT settle.** **`LNK-020` stays M5's.** Its canonical text is literally
 *"14 links have unbound endpoints"*, and after this ruling it will finally be able to say something
 true, but the rule catalogue is M5's and building one rule early buys nothing. **Unbinding is not
 ruled**: `BindEndpoint` gets a `revert` because every command does, and a deliberate *"this was
@@ -8958,7 +8958,7 @@ punched into the wrong port"* gesture is not specified here. **The front jacks a
 ruling lands a drop on the rear and says nothing about patching the front to a switch, which is the
 schematic's job and M2's gesture.
 
-**11.38.7 Scope.** **No scope change under §8.3.** Nothing enters or leaves v1 and M3's exit
+**11.39.7 Scope.** **No scope change under §8.3.** Nothing enters or leaves v1 and M3's exit
 criterion is not amended: this is the criterion's *existing* clause 2b and clause 4 being made
 reachable, which is a build. **This is a decomposition gap on #591's and #587's precedent**, both
 filed in this same milestone with the same reasoning: a capability the corpus promised, that no task
@@ -8970,8 +8970,8 @@ binding and its four tasks.
 at the exit criterion have the same effect on a calendar as if it were, and the row should be read as
 `M`-over-ceiling until the drill returns a verdict.
 
-**11.38.8 `{PORT}` is the number PRINTED ON THE PART, taken mid-task when the build produced
-`1A-PP-1J04`.** §11.38.3 ruled `{PANEL}` and was silent about `{PORT}`, and the silence had a
+**11.39.8 `{PORT}` is the number PRINTED ON THE PART, taken mid-task when the build produced
+`1A-PP-1J04`.** §11.39.3 ruled `{PANEL}` and was silent about `{PORT}`, and the silence had a
 visible answer: `ConnectTarget.portDesignator` renders `J04`, because `portDesignatorFormat` is
 `J{PORT_SEQ:2}` and `PORT_SEQ` counts a position's place in the whole template **including the front
 jacks a drop never touches**. `J04` appears nowhere on the physical panel, so a tech on a ladder

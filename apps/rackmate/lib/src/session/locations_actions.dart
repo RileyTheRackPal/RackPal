@@ -90,7 +90,7 @@ LocationsPanelActions buildLocationsPanelActions({
     onRename: (id, name) => set(id, LocationField.name, name),
     onSetCode: (id, code) => set(id, LocationField.code, code),
     onSetKind: (id, kind) => set(id, LocationField.kind, kind),
-    // DR-039 §11.38.4. Both arrive ALREADY PARSED AND NORMALISED: the
+    // DR-040 §11.39.4. Both arrive ALREADY PARSED AND NORMALISED: the
     // panel ran `parseFloorCell` and trimmed the space code to null,
     // because a row cannot refuse and does not transform, which
     // `LinkField.notes` states in as many words.

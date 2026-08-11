@@ -4,7 +4,7 @@
 
 This is the script, the conditions form and the verdict form for a drill **no agent can run**. It is
 a timed act by a person. Everything an agent could do to it has been done: the census that found
-three absences before the stopwatch (docs/12 §5.2), DR-039 and the four M3-K tasks that closed them,
+three absences before the stopwatch (docs/12 §5.2), DR-040 and the four M3-K tasks that closed them,
 and the verifier below that reads the saved file so a verdict is a measurement rather than an
 impression.
 
@@ -84,7 +84,7 @@ document and that test drift apart, a person spends fifteen minutes finding out.
 **The cost, measured then pinned in that order.** The ten lines are **433 keystrokes, 7.22 per
 drop**. The pre-landing figure was 349 (5.82), so `@panel=` on seven of ten lines buys forty-six
 landings for **84 keystrokes, about 1.8 each**, against roughly seven for a hand-typed `RACK LBL`
-cell. That ratio is the entire argument for DR-039 §11.38.2 clause 2 being a modifier rather than a
+cell. That ratio is the entire argument for DR-040 §11.39.2 clause 2 being a modifier rather than a
 column.
 
 **The three unlanded lines are AC-018's fourteen and they are deliberate.** Bedroom 3, the Attic and
@@ -147,5 +147,5 @@ the answers.
 - **"Prints" is M6's** (#574, DR-027). This drill produces rows, not a sheet. A Pull Sheet PDF does
   not exist and its absence is not a refutation of anything here.
 - **The Pull Sheet's initial boxes and page layout are M6's** for the same reason.
-- **`LNK-020` is M5's.** After DR-039 it can finally say something true (`14 links have unbound
+- **`LNK-020` is M5's.** After DR-040 it can finally say something true (`14 links have unbound
   endpoints`), and it still is not built.

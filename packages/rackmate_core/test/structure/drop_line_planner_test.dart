@@ -55,7 +55,7 @@ const _pos = PanelPosition(
 /// Puts a patch panel in the project, plus a telecom room carrying the two
 /// identifiers the rack-label preset wants.
 ///
-/// FRONT PORTS ARE DECLARED FIRST, DELIBERATELY. DR-039 §11.38.2 clause 4
+/// FRONT PORTS ARE DECLARED FIRST, DELIBERATELY. DR-040 §11.39.2 clause 4
 /// lands a drop on the REAR, and a walk that took declared order without
 /// filtering the face would hand the first drop `front.1`.
 Uuid _panel(RackDocument doc, {String designator = 'PP-1', int positions = 3}) {
@@ -731,7 +731,7 @@ void main() {
     });
   });
 
-  group('@panel= lands the whole line (DR-039 §11.38.2 clause 2)', () {
+  group('@panel= lands the whole line (DR-040 §11.39.2 clause 2)', () {
     test('THREE DROPS FROM ONE MODIFIER, each on its own rear position', () {
       // The clause's whole reason for being a modifier: AC-018 wants
       // forty-six of sixty landed inside fifteen minutes, and this costs
@@ -839,7 +839,7 @@ void main() {
     });
 
     test('a panel with no floor number LANDS ANYWAY and says so ONCE', () {
-      // DR-039 §11.38.5, plus the once-per-line rule: three drops onto a
+      // DR-040 §11.39.5, plus the once-per-line rule: three drops onto a
       // panel with no floor number is ONE fact about ONE room, and
       // printing it three times is how a person learns to stop reading
       // warnings.

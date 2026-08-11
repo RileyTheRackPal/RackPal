@@ -1,6 +1,6 @@
 // rackmate_core/src/commands/bind_endpoint_command.dart — pure Dart.
 //
-// LANDING A DROP AT THE RACK. Board M3-K/2 (#664), DR-039 §11.38.2,
+// LANDING A DROP AT THE RACK. Board M3-K/2 (#664), DR-040 §11.39.2,
 // AC-018.
 //
 // ─────────────────────────────────────────────────────────────────────────
@@ -36,7 +36,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // THE REAR PORT IS THE CALLER'S CHOICE AND THE CATALOG SAYS WHY
 // ─────────────────────────────────────────────────────────────────────────
-// This command binds whatever pin it is handed. DR-039 §11.38.2 clause 4
+// This command binds whatever pin it is handed. DR-040 §11.39.2 clause 4
 // rules that a structured drop lands on the REAR, and the N03 archetype
 // carries the reason in its own description: *"Rear ports are 110
 // punchdown, not RJ45 — modelling both faces as RJ45 is the error that
@@ -46,7 +46,7 @@
 // command.
 //
 // ─────────────────────────────────────────────────────────────────────────
-// A BIND THAT CANNOT RENDER A LABEL STILL BINDS (DR-039 §11.38.5)
+// A BIND THAT CANNOT RENDER A LABEL STILL BINDS (DR-040 §11.39.5)
 // ─────────────────────────────────────────────────────────────────────────
 // [rackLabel] is nullable and a null one is written as null. The endpoint
 // and the label are two facts: a panel whose location carries no floor
@@ -201,7 +201,7 @@ final class BindEndpointCommand extends Command {
 /// The positions on [panelDeviceId] a drop may land on, in the template's
 /// declared order, lowest first.
 ///
-/// REAR ONLY, WHICH IS DR-039 §11.38.2 CLAUSE 4 AS A FILTER. `Face.rear`
+/// REAR ONLY, WHICH IS DR-040 §11.39.2 CLAUSE 4 AS A FILTER. `Face.rear`
 /// is `PortBuilder.p`'s default and is what the N03 archetype's twenty-four
 /// punchdowns carry; its front twenty-four are `Face.front` and are where a
 /// patch cord goes, not a pulled cable. A walk that offered both would hand
@@ -253,7 +253,7 @@ List<PanelLanding> freePanelPositions(
 
 /// One free position on a panel: the pin, and what `{PORT}` renders for it.
 ///
-/// TWO STRINGS BECAUSE THERE ARE TWO FACTS, and DR-039 §11.38.8 is the
+/// TWO STRINGS BECAUSE THERE ARE TWO FACTS, and DR-040 §11.39.8 is the
 /// ruling that separates them. `port.designator` is what the `Port` entity
 /// will carry, which is project state governed by `portDesignatorFormat`.
 /// [positionToken] is what is PRINTED ON THE PART. On a patch panel those
@@ -270,8 +270,8 @@ final class PanelLanding {
   final String positionToken;
 }
 
-/// What `{PORT}` renders for a position on a patch panel (DR-039
-/// §11.38.8).
+/// What `{PORT}` renders for a position on a patch panel (DR-040
+/// §11.39.8).
 ///
 /// ═════════════════════════════════════════════════════════════════════
 /// THE NUMBER PRINTED ON THE PANEL, NOT THE ONE THIS PRODUCT ALLOCATED
@@ -359,7 +359,7 @@ BindEndpointResult buildBindEndpointCommand({
 
   final existing = link.conductors.first.to;
   if (existing is PortEndpoint) {
-    // NOT AN UNBIND, AND DR-039 §11.38.6 says so out loud: moving a drop
+    // NOT AN UNBIND, AND DR-040 §11.39.6 says so out loud: moving a drop
     // off a jack it is already punched into is its own gesture and is not
     // ruled. Silently re-landing it would rewrite a termination somebody
     // recorded, and the rack label with it.

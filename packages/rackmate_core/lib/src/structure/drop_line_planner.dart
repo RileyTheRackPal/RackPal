@@ -96,11 +96,11 @@ final class DropLinePlanReady extends DropLinePlan {
   /// at no outlet (CR-109: "never a `Link` and never a `Port`").
   final bool outletCreated;
 
-  /// The rack labels `@panel=` allocated, in order (DR-039 §11.38.2).
+  /// The rack labels `@panel=` allocated, in order (DR-040 §11.39.2).
   ///
   /// EMPTY IS TWO DIFFERENT FACTS AND THE CALLER MUST NOT CONFLATE THEM:
   /// the line named no panel, or it named one whose location cannot render
-  /// the pattern yet (§11.38.5). [warnings] carries the second, which is
+  /// the pattern yet (§11.39.5). [warnings] carries the second, which is
   /// why an empty list here is never on its own a reason to say nothing.
   final List<String> rackLabels;
 
@@ -406,7 +406,7 @@ const _Landing _noLanding = (
 );
 
 /// Lands every drop on this line on the next free position of `@panel=`
-/// (DR-039 §11.38.2 clause 2).
+/// (DR-040 §11.39.2 clause 2).
 ///
 /// IT REFUSES RATHER THAN CREATING A PANEL. `@panel=PP-9` on a project with
 /// no `PP-9` is a typo far more often than it is an intention, and a
@@ -470,7 +470,7 @@ _Landing _landDrops({
       doc: doc,
       panelDeviceId: panel.id,
       // THE NUMBER ON THE PART, not the designator this product
-      // allocated (DR-039 §11.38.8).
+      // allocated (DR-040 §11.39.8).
       portDesignator: position.positionToken,
       usedRackLabels: spent,
     );

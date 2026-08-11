@@ -12,13 +12,13 @@
   uncalled**. The pattern needs `{PANEL}` and `{PORT}`, which are facts about a
   landing; nothing recorded a landing. That is why M3-D/1 closing green was not a
   bookkeeping error, and why "give it a caller" was never a one-line task.
-* **Creation**: DR-039 §11.38.8, taken by the user **mid-build**, when the label came
+* **Creation**: DR-040 §11.39.8, taken by the user **mid-build**, when the label came
   out `1A-PP-1J04`. `{PORT}` is the number **printed on the part**, not the
   designator this product allocates: `portDesignatorFormat` is `J{PORT_SEQ:2}` and
   `PORT_SEQ` counts the front jacks a drop never touches, so `J04` appears nowhere on
   the panel a tech is standing at. **The ruling records what it does not fix**: the
   Termination Schedule still prints the designator for the same hole, and that
-  disagreement is older than DR-039. Filed as board #667.
+  disagreement is older than DR-040. Filed as board #667.
 * **Note**: **an existing test caught a UI regression the new fields caused, and the
   fix was not the obvious one.** The Locations dialog is a fixed 720 × 520; two more
   fields pushed `Delete location` out of the detail pane, and three delete cases went
@@ -41,8 +41,8 @@
 
 ## 2026-08-11 (second entry)
 
-* **Creation**: [DR-039, a drop lands on a panel
-  port](/decisions/dr-039-a-drop-lands-on-a-panel-port.md). The user took the
+* **Creation**: [DR-040, a drop lands on a panel
+  port](/decisions/dr-040-a-drop-lands-on-a-panel-port.md). The user took the
   expensive-looking option and it is cheaper than it reads: `derivePortId` is a pure
   UUIDv5 over `(deviceId, portKey)`, so **the id a pin will have is knowable before
   the pin exists**, and DR-011.1 already rules that ports materialise inside a
