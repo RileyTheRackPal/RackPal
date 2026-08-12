@@ -18,8 +18,13 @@ starting at the field and stopping at the first thing that assigns it.
 
 # Why, with the evidence
 
-This has now happened four times, and the fourth was found the same way as the
-first: by trying to use the thing.
+**Every one of these was found the same way: by trying to use the thing.** Not
+one was found by reading the model, and not one was found by a test.
+
+The first five are fields with no writer. The sixth, below, is a different shape
+and is the reason this heading no longer carries a count: a sentence that says
+"four times" is wrong the moment there is a fifth, and this file has been wrong
+that way once already.
 
 * **`Pathway`** (M3-E/4). In the model since M0, round-tripped by the codec, read
   by the schedule's `PATH` column, the Structure editor and
