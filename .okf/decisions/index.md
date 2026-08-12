@@ -45,6 +45,8 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 
 * [DR-046, the rack end is its own termination](dr-046-rack-end-is-its-own-termination.md) - reported as an unwanted default and it was worse: there was one field and both columns read it, so a phoenix at the panel could not be recorded at all.
 
+* [DR-047, a gang can be fitted with a pass-through](dr-047-a-gang-can-be-fitted-with-a-pass-through.md) - asked as "outlet or drop" and the answer is neither; a census found the distinction already half-built, at the third scale of one this project has got wrong twice.
+
 # Not yet written up
 
 DR-002 (residential primary), DR-003 (device builder in v1), DR-004 (multi-sheet

@@ -9624,6 +9624,108 @@ omitted when null, and it is null on every home run ever written because the fie
 
 ---
 
+### 11.46 DR-047 · A gang can be fitted with a pass-through, and the plate follows from what is in it
+
+**Settled by the user on 2026-08-12**, answering the question DR-045 §11.44.6 filed as board #678:
+a pass-through or brush plate *"occupies no strap cell and IS a purchasable line item"*, and nothing
+in the model could say so.
+
+**11.46.1 THE QUESTION WAS ASKED AS "OUTLET OR DROP" AND THE ANSWER IS NEITHER.** §11.44.6 named two
+places the fact could live. A census before pricing found a third, already built and already carrying
+the right distinction: **`Gang.strap` is nullable, and null means *nobody has picked a part yet***. A
+brush plate is a gang opening somebody has **decided** gets no strap, which is a different fact from
+one nobody has reached.
+
+**That is §11.7.4's distinction at a third scale, and the two below it are already ruled.** A cell
+holds nothing (undecided) or a `BlankInsert` (decided, and a purchase). An outlet has no drops
+(empty) or every drop off-plate (**needs no plate**, §11.44.4). And now a gang has no fitting chosen
+(undecided) or a pass-through (decided, and a purchase). **Each of the first two was got wrong once
+and cost a correction**, so the third is ruled before it is built rather than after.
+
+**Why not the drop.** `StructureOrigin.outletId` is **non-nullable**: every drop in the document
+already has an outlet, so the drop buys no expressiveness. It costs plenty. Three runs through one
+brush plate become three claims about one physical object; two drops sharing a box can disagree about
+what covers it; and a materials line would have to de-duplicate by `outletId` to recover the
+outlet-level answer, which is the outlet option computed the hard way and one milestone later.
+
+**Why not a plate kind on the outlet.** It cannot express a **mixed plate**, one 2-gang cover plate
+with a keystone strap behind one opening and a brush at the other, which is an ordinary thing to
+install. It is also a **second copy of a fact the gangs already carry**: a gang holding six keystones
+requires a Decora opening, so a document could assert `brush` over it and nothing would catch the
+contradiction. CR-107 deleted `StructureDrop` over exactly that shape. And it would be null on every
+outlet in every document ever written, so under G4 every plate in every job would read *"kind
+unknown"* on the day the field shipped.
+
+**11.46.2 `Gang.strap` becomes `Gang.fitting`, and `Strap` is one kind of fitting.**
+
+```
+GangFitting (sealed, nullable)
+  ├─ Strap        W x H cell grid, exactly as today  [DR-007 §11.7.1]
+  └─ PassThrough  a hole in the plate, with a style  [NEW]
+```
+
+**Null still means UNKNOWN** and is still an absent key on the wire (G4, CR-114). The rename is not
+cosmetic: a `Strap?` typed field makes *"this opening is a brush"* unsayable, and the sealed switch
+is what forces every reader to say which of the three states it means. No convenience getter returns
+null for a pass-through, because that is precisely the collapse this ruling removes.
+
+**11.46.3 Two styles, `brush` and `bullNose`, and the vocabulary was ASKED.** The user names three
+parts they buy: a **whole brush or pass-through plate**, a **Decora-format brush insert**, and a
+**bull-nose or grommet plate**. The first two are the same opening in two forms and §11.46.4 derives
+which; the third is a different opening and is the second enum value.
+
+**A keystone-format brush insert was offered and DECLINED**, so there is **no fourth `CellOccupant`**
+and nothing here touches a strap's cells. Recorded because a declined option is evidence and an
+unasked one is not: this is the enum-growth question §11.44.2 made standing, asked and answered in
+the same breath as the fitting itself.
+
+**11.46.4 The plate is DERIVED from the fittings, and the rule is total.**
+
+| The gangs | The plate | The inserts |
+|---|---|---|
+| none at all | **no plate** (§11.44.4's plateless outlet, unchanged) | none |
+| every one a pass-through, **all one style** | one N-gang plate **of that style** | none |
+| any gang holds a strap, or the styles differ | one N-gang **Decora** cover plate | **one per pass-through gang**, each of its own style |
+| any gang's fitting unchosen | as above for what IS chosen, **and the unchosen are counted** | a **lower bound**, read beside that count |
+
+**The middle two rows are the user's decision and the reasoning is stock rather than model.** Nobody
+manufactures every Decora-plus-brush combination, so a plate with a strap behind one opening and a
+brush at another is genuinely bought as a standard plate plus an insert. **Mixed styles fail the same
+way**, which is why the rule keys on *one style* rather than on *all pass-through*: a plate that is
+brush at one opening and bull-nose at the next is not a part either.
+
+**No field records which form was bought, and §11.27.2 is why.** A derivation with its reasoning
+written down outranks a stored field without one, so a shop that stocks Decora plates and inserts
+rather than brush plates can be served later by an override that wins **with nothing to withdraw**.
+The alternative was a plate-form field null on every outlet in every existing document, which buys a
+purchasing preference at the price of a G4 unknown on every plate in the product.
+
+**11.46.5 What the counts do, and one sentence of DR-045 that this changes.** `PlateFill` gains a
+count of pass-through gangs and renames `strapsUnchosen` to `fittingsUnchosen`, because **a gang
+destined for a brush was never a strap nobody chose** and a name that has stopped describing its
+field is worse than a missing one. A pass-through provides **zero cells** and blocks nothing, so a
+plate whose every opening is decided is `isSettled` whether or not any of them holds a jack.
+
+**`needsNoPlate` does NOT move, and the reason is the correction.** It stays `gangCount == 0`: an
+outlet covered by a brush plate is **not a plateless outlet**, it is an outlet with a plate that has
+no jacks in it. §11.44.6 wrote that a pass-through plate is *"a plate with no strap behind it, which
+`PlateFill.coverPlateGangs` structurally cannot express"*. **That was true only while a brush had no
+gang.** Give the opening its gang and the count falls out of `gangs.length` exactly as it already
+did, and the getter needs no change at all. See §12.19.
+
+**11.46.6 `Arrange` never fits a pass-through and never destroys one.** `planPlateArrangement` sizes
+straps from what the drops need in cells; a pass-through is a decision about a part, made by a person,
+and a plan that invented one would be asserting a purchase nobody made. The other direction matters
+more: a run of `Arrange` over an outlet whose openings a designer has already brushed must not
+silently replace them with straps sized for zero cells.
+
+**11.46.7 Scope.** **No scope change to roadmap §2.** One sealed type, two enum values, one command,
+one picker, one derived rollup. **`kSchemaVersion` does not move**: the `strap` key is written exactly
+as before for a strap, and `passThrough` is a key no document in existence contains, which is CR-117's
+additive case.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -10037,6 +10139,22 @@ recorded as a **stated choice** precisely so it could be replaced silently, so t
 withdraw. This voids a **clause of a ruling**, which is the thing §12 exists to index. The contrast
 is the whole practical argument for §11.40.4's discipline: one of these needed an entry here and the
 other did not.
+
+### 12.19 Corrected by DR-047 (a gang can be fitted with a pass-through)
+
+**A premise rather than a judgement, and it is listed because §12's preamble makes an unlisted
+sentence read as still binding.** DR-045 filed the pass-through plate honestly and did not model it;
+what it also did was describe the obstacle, and the description stopped being true the moment the
+obstacle was removed.
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-045 §11.44.6** | A pass-through plate is *"a plate with no strap behind it, which `PlateFill.coverPlateGangs` structurally cannot express, because that getter returns `gangs.length` and a plateless outlet has zero gangs by construction."* | **Premise changed, conclusion withdrawn.** True only while a brush opening had no gang. Under §11.46.2 the opening **is** a gang, fitted with a `PassThrough` rather than a `Strap`, so the plate's gang count falls out of `gangs.length` as it always did and **`coverPlateGangs` is unchanged**. The sentence's *other* half stands and is reaffirmed: a pass-through plate is a **third object** after the strap and the cover plate, and §11.7.8 change 1's separation is what made room for it. |
+| **DR-045 §11.44.6**, the open question | *"It needs its own ruling on whether the plate is a property of the **outlet** or of the **drop**."* | **Answered as neither**, §11.46.1. Both readings were live and both are refused: the drop buys nothing (`outletId` is non-nullable) and costs a de-duplication rule; the outlet cannot express a mixed plate and duplicates a fact the gangs carry. **A question with two named options is not a closed set**, and this is the second time in three rulings that censusing the code before pricing the task produced the answer neither option contained (see DR-043 §11.42, where five drop-entry surfaces corrected a task that had asked for a modifier). |
+
+**Nothing else in DR-045 moves.** `TerminationType.rj45Plug` and its zero cells (§11.44.2), the AP
+template (§11.44.3), the three states of an outlet (§11.44.4) and the derived-never-stored rule
+(§11.44.5) are all untouched, and §11.46.5 restates the last of them rather than amending it.
 
 ---
 
