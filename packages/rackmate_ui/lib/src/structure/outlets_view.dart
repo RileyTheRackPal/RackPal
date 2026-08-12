@@ -337,6 +337,7 @@ class _PlatePane extends StatelessWidget {
                       doc: doc,
                       outlet: outlet,
                       links: links,
+                      fill: fill,
                       onCell: (gang, cell) =>
                           _pickOccupant(context, gang, cell),
                       onStrap: (gang) => _pickStrap(context, gang),
@@ -614,6 +615,7 @@ class _PlateWidget extends StatelessWidget {
     required this.doc,
     required this.outlet,
     required this.links,
+    required this.fill,
     required this.onCell,
     required this.onStrap,
     required this.onRemove,
@@ -622,13 +624,14 @@ class _PlateWidget extends StatelessWidget {
   final RackDocument doc;
   final Outlet outlet;
   final List<Link> links;
+  final PlateFill fill;
   final void Function(int gangIndex, int cellIndex) onCell;
   final ValueChanged<int> onStrap;
   final ValueChanged<int> onRemove;
 
   @override
   Widget build(BuildContext context) {
-    if (outlet.gangs.isEmpty) return const _NoGangs();
+    if (outlet.gangs.isEmpty) return _NoGangs(fill: fill);
 
     // ONE PLATE, N OPENINGS IN IT. Until DR-042 the outline was an
     // unruled "about", so each gang was drawn as its own free-floating
@@ -1092,15 +1095,66 @@ class _NoOutlets extends StatelessWidget {
   );
 }
 
+/// An outlet with no gangs, which is THREE different facts (DR-045
+/// §11.44.4).
+///
+/// **THIS WIDGET SAID ONE SENTENCE FOR ALL THREE UNTIL M3-M**, and the
+/// sentence was the undecided one: *"This outlet has no gangs yet. Add
+/// one, or press Arrange…"*. An access point that mounts straight to its
+/// box is FINISHED, and it read as unfinished work from M3-H until now.
+/// That is DR-007 §11.7.4's blank-insert-versus-empty-cell distinction
+/// one level up, and got wrong the same way: *nobody has said* and
+/// *somebody said no plate* are different facts.
+///
+/// The derivation was never wrong. `PlateFill.isSettled` has returned
+/// true for a plateless outlet since M3-H; only this copy threw it away.
 class _NoGangs extends StatelessWidget {
-  const _NoGangs();
+  const _NoGangs({required this.fill});
+
+  final PlateFill fill;
 
   @override
-  Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.symmetric(vertical: 32),
-    child: Text(
-      'This outlet has no gangs yet. Add one, or press Arrange to size the '
-      'plate from the drops that land here.',
-    ),
-  );
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final (String headline, String detail) = switch (fill) {
+      // SETTLED, and the one the product could not say. Every drop here
+      // ends in a device, so there is correctly no strap and no cover
+      // plate to buy.
+      final f when f.needsNoPlate => (
+        'This outlet needs no plate.',
+        'All ${f.dropCount} drop(s) here terminate off-plate, straight into '
+            'a device, so there is no strap and no cover plate to fit.',
+      ),
+      // Nothing lands here at all. Not plateless: empty.
+      //
+      // NOT "No drop lands on this outlet yet", WHICH THE DROP LIST TO
+      // THE RIGHT ALREADY SAYS. Two panels on one screen repeating a
+      // sentence is the same collision the batch bar hit with the status
+      // bar: a reader checks whether the two are saying different things
+      // and finds they are not.
+      final f when f.dropCount == 0 => (
+        'Nothing to fit yet.',
+        'No drop lands on this outlet, so there is no plate to size.',
+      ),
+      // A plate is missing, or nobody can say whether one is needed.
+      // The unknown case is deliberately in THIS arm and not the first:
+      // "needs no plate" over an unrecorded termination is a guess (G4).
+      _ => (
+        'This outlet has no gangs yet.',
+        'Add one, or press Arrange to size the plate from the drops that '
+            'land here.',
+      ),
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(headline, style: theme.textTheme.titleSmall),
+          const SizedBox(height: 4),
+          Text(detail, style: theme.textTheme.bodyMedium),
+        ],
+      ),
+    );
+  }
 }

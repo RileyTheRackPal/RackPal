@@ -92,9 +92,15 @@ int? cellsRequiredFor(TerminationType? termination, int conductorCount) =>
       // that makes it concrete, because the device fills the gang, and a
       // plate sized to give it a keystone as well is one cell too big on
       // every keypad drop in a house.
+      //
+      // `rj45Plug` JOINED THIS ROW AT DR-045 (§11.44.2), and unlike
+      // `euroblock` above it was ASKED rather than assumed. The plug is
+      // crimped on the cable and goes into the device, so an AP that
+      // mounts to the box needs no strap at all.
       TerminationType.euroblock ||
       TerminationType.unterminated ||
-      TerminationType.fieldConnector => 0,
+      TerminationType.fieldConnector ||
+      TerminationType.rj45Plug => 0,
     };
 
 /// What one `Outlet`'s plate needs and what it currently provides.
@@ -106,6 +112,7 @@ final class PlateFill {
   const PlateFill({
     required this.outletId,
     required this.gangCount,
+    required this.dropCount,
     required this.cellsRequired,
     required this.unknownDrops,
     required this.cellsProvided,
@@ -118,6 +125,15 @@ final class PlateFill {
 
   /// `Outlet.gangs.length`.
   final int gangCount;
+
+  /// Every drop landing on this outlet, whatever it terminates in and
+  /// whether or not anybody has said.
+  ///
+  /// CARRIED SO [needsNoPlate] CAN TELL AN EMPTY OUTLET FROM A PLATELESS
+  /// ONE. Both have zero gangs and zero required cells; only the drop
+  /// count separates "nothing lands here yet" from "everything that
+  /// lands here goes into a device".
+  final int dropCount;
 
   /// Cells the drops landing here need, summing only the drops whose
   /// termination is KNOWN. Reads with [unknownDrops] or not at all.
@@ -167,6 +183,35 @@ final class PlateFill {
   /// is merely not-known-to-be-wrong returns false.
   bool get isSettled =>
       unknownDrops == 0 && strapsUnchosen == 0 && shortfall == 0;
+
+  /// **THIS OUTLET IS FINISHED AND HAS NO PLATE** (DR-045 §11.44.4). An
+  /// access point mounting straight to the box, or a transceiver fed by a
+  /// crimped RJ45 plug: drops land here, every one of them terminates in
+  /// a device rather than in a jack, and there is correctly no strap and
+  /// no cover plate.
+  ///
+  /// **THREE STATES, NOT TWO, AND THIS IS THE ONE THE PRODUCT COULD NOT
+  /// SAY.** An empty outlet and a plateless one both have zero gangs and
+  /// zero required cells; [dropCount] is what separates them. The surface
+  /// showed the *undecided* sentence for both, so a correctly-finished AP
+  /// box read as unfinished work. That is DR-007 §11.7.4's
+  /// blank-insert-versus-empty-cell distinction one level up, and got
+  /// wrong the same way: *nobody has said* and *somebody said no plate*
+  /// are different facts.
+  ///
+  /// **AN UNKNOWN TERMINATION MAKES THIS FALSE, ALWAYS.** [unknownDrops]
+  /// is in the condition because "needs no plate" asserted over a drop
+  /// nobody has terminated is a guess, and it is the guess that would
+  /// make a materials sheet omit a part somebody has to buy (G4).
+  ///
+  /// DERIVED AND NEVER STORED (CR-107). A `hasPlate` flag would be the
+  /// second copy of one physical fact, and it would go stale the first
+  /// time somebody changed a drop's termination.
+  bool get needsNoPlate =>
+      dropCount > 0 &&
+      gangCount == 0 &&
+      unknownDrops == 0 &&
+      cellsRequired == 0;
 }
 
 /// Computes [PlateFill] for [outlet] against the links that land on it.
@@ -183,10 +228,12 @@ final class PlateFill {
 PlateFill computePlateFill(Outlet outlet, Iterable<Link> links) {
   var cellsRequired = 0;
   var unknownDrops = 0;
+  var dropCount = 0;
 
   for (final link in links) {
     final origin = link.structureOrigin;
     if (origin == null || origin.outletId != outlet.id) continue;
+    dropCount++;
     final needed = cellsRequiredFor(
       origin.terminationField,
       link.conductors.length,
@@ -225,6 +272,7 @@ PlateFill computePlateFill(Outlet outlet, Iterable<Link> links) {
   return PlateFill(
     outletId: outlet.id,
     gangCount: outlet.gangs.length,
+    dropCount: dropCount,
     cellsRequired: cellsRequired,
     unknownDrops: unknownDrops,
     cellsProvided: cellsProvided,

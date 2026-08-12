@@ -171,7 +171,14 @@ void main() {
       expect(cellsRequiredFor(TerminationType.euroblock, 4), 0);
     });
 
-    test('every TerminationType has an answer, and the zero row is three', () {
+    test('AN RJ45 PLUG NEEDS NO CELL (DR-045 §11.44.2)', () {
+      // The plug is crimped on the cable and goes into the device, so an
+      // AP that mounts to the box needs no strap at all. ASKED rather
+      // than assumed, which is DR-044's lesson costing one question.
+      expect(cellsRequiredFor(TerminationType.rj45Plug, 8), 0);
+    });
+
+    test('every TerminationType has an answer, and the zero row is four', () {
       // THE ARTIFACT OF 11.7.2.1's TABLE rather than a transcription of
       // it: exactly three terminations put nothing on the plate, and a
       // fourth appearing here without a ruling is the defect DR-044 was
@@ -183,6 +190,7 @@ void main() {
         TerminationType.euroblock,
         TerminationType.unterminated,
         TerminationType.fieldConnector,
+        TerminationType.rj45Plug,
       });
     });
 
@@ -246,6 +254,73 @@ void main() {
       ]);
       expect(fill.cellsRequired, 0);
       expect(fill.unknownDrops, 0);
+    });
+  });
+
+  group('an outlet can need no plate at all (DR-045 §11.44.4)', () {
+    test('drops that all terminate off-plate leave nothing to buy', () {
+      // The AP case: one Cat6 into an access point that mounts to the
+      // box. No gangs, no strap, no cover plate, and NOTHING MISSING.
+      final fill = computePlateFill(_outlet(outletId), [
+        _drop(
+          id: linkId,
+          outletId: outletId,
+          termination: TerminationType.rj45Plug,
+        ),
+      ]);
+      expect(fill.needsNoPlate, isTrue);
+      expect(fill.isSettled, isTrue);
+      expect(fill.coverPlateGangs, 0);
+      expect(fill.shortfall, 0);
+    });
+
+    test('AN EMPTY OUTLET IS NOT A PLATELESS ONE', () {
+      // Both have zero gangs and zero required cells; only the drop
+      // count separates "nothing lands here yet" from "everything that
+      // lands here goes into a device". Collapsing them is what made a
+      // finished AP box read as unfinished work.
+      final fill = computePlateFill(_outlet(outletId), const <Link>[]);
+      expect(fill.dropCount, 0);
+      expect(fill.needsNoPlate, isFalse);
+    });
+
+    test('an UNKNOWN termination is never "needs no plate"', () {
+      // G4. Asserting it over a drop nobody has terminated is the guess
+      // that would make a materials sheet omit a part somebody buys.
+      final fill = computePlateFill(_outlet(outletId), [
+        _drop(id: linkId, outletId: outletId),
+      ]);
+      expect(fill.unknownDrops, 1);
+      expect(fill.needsNoPlate, isFalse);
+    });
+
+    test('one drop that needs a cell is enough to need a plate', () {
+      final fill = computePlateFill(_outlet(outletId), [
+        _drop(
+          id: linkId,
+          outletId: outletId,
+          termination: TerminationType.rj45Plug,
+        ),
+        _drop(
+          id: _u('77777777-7777-4777-8777-777777777777'),
+          outletId: outletId,
+          termination: TerminationType.keystone,
+        ),
+      ]);
+      expect(fill.cellsRequired, 1);
+      expect(fill.needsNoPlate, isFalse);
+      expect(fill.shortfall, 1);
+    });
+
+    test('a gang somebody added means the outlet is not plateless', () {
+      final fill = computePlateFill(_outlet(outletId, gangs: [Gang()]), [
+        _drop(
+          id: linkId,
+          outletId: outletId,
+          termination: TerminationType.rj45Plug,
+        ),
+      ]);
+      expect(fill.needsNoPlate, isFalse);
     });
   });
 

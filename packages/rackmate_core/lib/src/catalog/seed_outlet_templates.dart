@@ -198,6 +198,12 @@ const TerminationType _euroblock = TerminationType.euroblock;
 const TerminationType _bindingPost = TerminationType.bindingPost;
 const TerminationType _keystone = TerminationType.keystone;
 
+/// DR-045 §11.44.3. `TV location` deliberately does NOT use this: the user
+/// said *"some instances"* recommend a plug, and a template asserting one
+/// for every TV in every job would put a claim in a record nobody made.
+/// The drop line's `:rj45 plug` covers the exception.
+const TerminationType _rj45Plug = TerminationType.rj45Plug;
+
 /// One shipped template. [tag] is the `{SERVICE}` segment DR-022 ruled
 /// on; null means UNKNOWN and falls through to DR-023's step 3.
 /// [grade] is the standards citation stamped on every outlet the
@@ -232,8 +238,11 @@ Map<String, OutletTemplate> buildSeedOutletTemplates() {
       _drop(_cat6, _ethernet, 2, _punchdown),
       _drop(_rg6q, _catv, 2, _fBarrel),
     ]),
+    // AN AP MOUNTS DIRECTLY TO THE BOX, so its run ends in a crimped
+    // plug and the box needs no plate and no strap (DR-045 §11.44.3).
+    // This was `punchdown` between DR-044 and DR-045.
     _template('outlet.ap', 'AP', 'AP', [
-      _drop(_cat6, _ethernet, 1, _punchdown),
+      _drop(_cat6, _ethernet, 1, _rj45Plug),
     ]),
     _template('outlet.keypad', 'Keypad', 'KEY', [
       _drop('media.22_4', _undetermined, 1, _euroblock),

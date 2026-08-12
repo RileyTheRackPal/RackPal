@@ -48,6 +48,28 @@ enum TerminationType {
   /// leaves every written document byte-identical; no file in existence
   /// contains this name, so `kSchemaVersion` does not move (CR-117).
   bindingPost,
+
+  /// A field-crimped male RJ45, pushed straight into the device.
+  ///
+  /// Added by M3-M (DR-045 §11.44.1). **NOT [keystone] AND NOT
+  /// [punchdown]**: both of those are a jack, and the entire point of
+  /// this termination is that there is no jack. Nor is it
+  /// [fieldConnector], which names no connector and would leave the
+  /// Termination Schedule saying nothing to somebody deciding between a
+  /// crimper and a punchdown tool.
+  ///
+  /// THE REASON IS RELIABILITY, NOT TIDINESS. A keystone plus a patch
+  /// cable puts two extra mated connections on a link carrying
+  /// uncompressed video, and AVoIP and HDBaseT vendors recommend a
+  /// continuous run for exactly that. The other volume case is an access
+  /// point that mounts directly to the low-voltage box: no plate, no
+  /// strap, nothing for a jack to sit in.
+  ///
+  /// **ZERO CELLS** (§11.44.2), beside [euroblock], [unterminated] and
+  /// [fieldConnector]. The plug goes into the device. This was ASKED
+  /// rather than inferred, because inferring it for [euroblock] is a
+  /// defect that shipped in M3-H and had to be corrected at DR-044.
+  rj45Plug,
 }
 
 /// Which surface an `Outlet` or a `StructureOrigin` field end is mounted

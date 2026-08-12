@@ -9484,6 +9484,87 @@ counts written into prose are recorded in this project's own memory as a liabili
 that reads the bytes. The correction is therefore not only to the wording: the claim is now stated
 where a golden can contradict it, and both doc comments say what the starters actually contain.
 
+### 11.44 DR-045 · The field-crimped RJ45 plug, and an outlet that needs no plate
+
+**Settled by the user on 2026-08-12**, from a request grounded in two installation facts rather than
+in the model: *"some instances (AVOIP/HDBT transceivers, namely) recommend not using
+keystones/patch cables for reliability reasons, and most AP locations ... are on low voltage boxes,
+but feature no plate/strap due to the AP mounting directly to the box."*
+
+**11.44.1 `TerminationType` gains `rj45Plug`, printing `RJ45 PLUG`.** A Cat6 run crimped into a male
+RJ45 plug and pushed straight into the device. **It is not `keystone` and it is not `punchdown`**:
+both of those are a jack, and the whole point of this termination is that there is no jack. Nor is it
+`fieldConnector`, which names no connector at all and would leave the Termination Schedule saying
+nothing useful to somebody deciding whether to reach for a crimper or a punchdown tool.
+
+**The reason is reliability rather than tidiness, and it belongs in the record.** A keystone plus a
+patch cable puts **two extra mated connections** on a link carrying uncompressed video, and AVoIP and
+HDBaseT vendors recommend a continuous run for exactly that. The product now lets a drawing say so.
+
+**11.44.2 IT OCCUPIES ZERO CELLS, and this time the question was asked rather than assumed.** The
+plug goes into the device, so nothing sits in a keystone cell. It joins `euroblock`, `unterminated`
+and `fieldConnector` in §11.7.2.1's *"nothing is on the plate"* row.
+
+**§11.43.4 is why this was asked.** M3-H put `euroblock` at one cell silently, on an inference nobody
+wrote down, and it took a seeding exercise to surface it. The same guess was available here and was
+not taken. **A termination's cell count is now a question this project asks out loud every time the
+enum grows**, which is the cheapest possible form of that lesson.
+
+**11.44.3 The shipped AP template changes from `punchdown` to `rj45Plug`.** One Cat6 to an access
+point that **mounts directly to the box**, so the run terminates in a plug and the box needs no plate
+at all. This is the first seeded value to change since DR-044 set it, and it regenerates the four
+starter goldens again.
+
+**`TV location` DELIBERATELY DOES NOT CHANGE.** The user said *"some instances"* recommend it, and a
+template asserting a plug for every TV in every job would put a claim in six records nobody made,
+which is DR-024 §11.23.2's refusal and DR-044 §11.43.2's correction of it read together: a
+termination is a recipe fact, and *"this recipe sometimes does X"* is not one. The drop line's
+`:rj45 plug` covers the exception, which is what §11.42.3 built it for.
+
+**11.44.4 AN OUTLET WHOSE DROPS ALL TERMINATE OFF-PLATE NEEDS NO PLATE, AND THAT IS DERIVED.** An AP
+box with one `rj45Plug` drop is **finished**: no gangs, no strap, no cover plate, nothing missing.
+
+***The product could not say that, and the failure is G4's.*** `_NoGangs` reads *"This outlet has no
+gangs yet. Add one, or press Arrange to size the plate from the drops that land here"*, which is the
+**undecided** sentence. A correctly-finished AP box has read as unfinished work since M3-H. That is
+DR-007 §11.7.4's blank-insert-versus-empty-cell distinction, one level up and got wrong: *nobody has
+said* and *somebody said no plate* are different facts and the surface collapsed them.
+
+**THREE STATES, NOT TWO**, and the third is the one G4 cares about:
+
+| State | What it means |
+|---|---|
+| no drops land here yet | nothing to say. Not plateless, just empty |
+| drops land here and **every one is known to terminate off-plate** | **needs no plate.** Settled |
+| drops land here that need cells, **or whose termination is unknown** | a plate is missing, or nobody can say |
+
+**AN UNKNOWN TERMINATION FALLS IN THE THIRD ROW AND NEVER THE SECOND.** "Needs no plate" asserted
+over a drop nobody has terminated is a guess, and it is the guess that would make a materials sheet
+omit a part somebody has to buy.
+
+**11.44.5 DERIVED, NOT STORED (CR-107).** `PlateFill` already computes every input: an outlet whose
+drops need zero cells with zero gangs and zero unknowns already returns `isSettled`. **The derivation
+was correct and only the copy was wrong.** A stored `hasPlate` flag would be the second copy of one
+physical fact that CR-107 deleted `StructureDrop` over, and it would go stale the first time somebody
+changed a drop's termination.
+
+**11.44.6 What this does NOT settle, raised by the user in the same breath.** Asked how many cells a
+plug occupies, the answer was *"zero, but the plate is a separate question"*: some off-plate runs
+still come through a **pass-through or brush plate**, which occupies no strap cell and **is a
+purchasable line item**.
+
+**That is a third object and this ruling does not model it.** §11.7.8 change 1 already separates a
+strap from a cover plate; a pass-through plate is a plate with **no strap behind it**, which
+`PlateFill.coverPlateGangs` structurally cannot express, because that getter returns `gangs.length`
+and a plateless outlet has zero gangs by construction. It needs its own ruling on whether the plate
+is a property of the **outlet** or of the **drop**, and then a materials line. **Filed, not
+smuggled in.** Nothing is wrong today; the materials sheet simply does not know about a part that
+gets bought.
+
+**11.44.7 Scope.** **No scope change to roadmap §2.** One enum value, one seeded template, one
+derived getter and one corrected sentence on a surface. `kSchemaVersion` does not move: enum values
+serialize by name, so no document in existence contains this one.
+
 ---
 
 ## 12. Superseded rulings

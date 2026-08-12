@@ -839,6 +839,7 @@ String terminationLabel(TerminationType type) => switch (type) {
   TerminationType.unterminated => 'UNTERMINATED',
   TerminationType.fieldConnector => 'FIELD CONNECTOR',
   TerminationType.bindingPost => 'BINDING POST',
+  TerminationType.rj45Plug => 'RJ45 PLUG',
 };
 
 /// What a `LinkClass` prints. `null` is UNDETERMINED and prints as such —

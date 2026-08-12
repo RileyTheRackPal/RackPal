@@ -193,15 +193,63 @@ Future<void> _pump(
 
 void main() {
   group('the tab opens something', () {
-    testWidgets('an outlet with no gangs says how to give it one', (
-      tester,
-    ) async {
-      await _pump(tester, _project());
+    testWidgets('an outlet with nothing on it says so, and is not called '
+        'plateless', (tester) async {
       // A surface, not a blank. The rule `shell_tabs_test.dart` states
-      // and the reason this tab was absent until now.
-      expect(find.textContaining('no gangs yet'), findsOneWidget);
+      // and the reason this tab was absent until M3-H.
+      //
+      // THIS CASE USED TO EXPECT "no gangs yet" FOR AN EMPTY OUTLET, and
+      // that was the collapsed sentence DR-045 §11.44.4 split: an empty
+      // outlet and a plateless one both have zero gangs, and only the
+      // drop count tells them apart.
+      await _pump(tester, _project());
+      // THE PLATE PANE'S OWN SENTENCE, not the drop list's. Those two
+      // said the same words for a moment and the finder matched both,
+      // which is how the duplication was noticed at all.
+      expect(find.textContaining('Nothing to fit yet'), findsOneWidget);
       expect(find.text('+ Add gang'), findsOneWidget);
       expect(find.text('Arrange'), findsOneWidget);
+    });
+
+    testWidgets('a drop that needs a cell asks for a gang', (tester) async {
+      final doc = _project();
+      _addDrop(
+        doc,
+        fieldLabel: 'LR-DATA-1',
+        termination: TerminationType.keystone,
+      );
+      await _pump(tester, doc);
+      expect(find.textContaining('no gangs yet'), findsOneWidget);
+    });
+
+    testWidgets('AN AP BOX IS FINISHED, and says so (DR-045 §11.44.4)', (
+      tester,
+    ) async {
+      // The case the product could not express: one Cat6 into an access
+      // point that mounts straight to the box. No strap, no cover plate,
+      // nothing missing. It read as unfinished work from M3-H until now.
+      final doc = _project();
+      _addDrop(
+        doc,
+        fieldLabel: 'LR-AP-1',
+        termination: TerminationType.rj45Plug,
+      );
+      await _pump(tester, doc);
+      expect(find.textContaining('needs no plate'), findsOneWidget);
+      expect(find.textContaining('no gangs yet'), findsNothing);
+    });
+
+    testWidgets('an UNKNOWN termination is never called plateless', (
+      tester,
+    ) async {
+      // G4: "needs no plate" over a drop nobody has terminated is a
+      // guess, and it is the guess that omits a part from a materials
+      // sheet.
+      final doc = _project();
+      _addDrop(doc, fieldLabel: 'LR-DATA-9');
+      await _pump(tester, doc);
+      expect(find.textContaining('needs no plate'), findsNothing);
+      expect(find.textContaining('no gangs yet'), findsOneWidget);
     });
 
     testWidgets('a project with no outlets says so rather than blanking', (

@@ -1186,7 +1186,7 @@
               "count": 1,
               "media": "media.cat6",
               "service": "net.ethernet",
-              "termination": "punchdown"
+              "termination": "rj45Plug"
             }
           ],
           "id": "outlet.ap",
