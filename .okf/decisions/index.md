@@ -39,6 +39,8 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 
 * [DR-043, the field termination gets three entry paths](dr-043-field-termination-entry-paths.md) - the fix that mattered was not the modifier the board asked for; a modifier serves the person already typing and the question was about the person clicking.
 
+* [DR-044, the shipped templates carry terminations](dr-044-templates-carry-terminations.md) - DR-043 was wrong one clause deep and a census caught it before a line was built; a euroblock occupies no cell, and a sentence of the ruling itself was refuted by the goldens within the hour.
+
 # Not yet written up
 
 DR-002 (residential primary), DR-003 (device builder in v1), DR-004 (multi-sheet

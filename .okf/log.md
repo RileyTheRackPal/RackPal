@@ -1,5 +1,45 @@
 # Update Log
 
+## 2026-08-11 (sixth entry)
+
+* **Creation**: [DR-043](/decisions/dr-043-field-termination-entry-paths.md), three
+  entry paths for the field termination, and
+  [DR-044](/decisions/dr-044-templates-carry-terminations.md), which supersedes a
+  clause of it **the same day, before a line of it was built.**
+* **Note**: **THE BOARD ASKED FOR A MODIFIER AND THE MODIFIER WAS NOT THE
+  LOAD-BEARING FIX.** The question raised beside #668 was whether a mouse path
+  exists, because *"typing a large amount of text is going to put off a lot of
+  people"*. A modifier serves the person already typing. A census found **five**
+  drop-entry surfaces, four already mouse-driven, and `+ Add outlet ▾` was the one
+  route a mouse-first person lives in and the ONLY one that could not express a
+  termination.
+* **Note**: **The same census corrected #668's own arithmetic.** `FIELD TERM` is a
+  DROPDOWN, not a typed cell, and `Ctrl+D` fills it down: sixty drops was one
+  dropdown plus fifty-nine keypresses, not the ~420 keystrokes the task claimed.
+  It overstated the pain by about seven times.
+* **Note**: **DR-044 exists because DR-043's own premise was false.** Nothing in
+  this product can author an `OutletTemplate`, so leaving the shipped ones null
+  would have made the field null everywhere for ever: the **fifth** instance of
+  [a modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md),
+  and **the first caught before the field was written**.
+* **Note**: **A euroblock occupies ZERO cells, correcting M3-H.** DR-007 §11.7.2.1
+  does not mention it and M3-H put it beside `keystone` on an inference nobody
+  wrote down. Found by **seeding a value and having to say what the value meant**:
+  the Keypad template could not be seeded without answering "and how many cells is
+  that". **A fact you write down gets audited; a fact you infer does not.**
+* **Note**: **Asking beat offering, and one row proves it.** Twisted pair seeds as
+  `punchdown`, not the `keystone` that was recommended. Face-on the two are the
+  same object, so no drawing changes and the **Termination Schedule** does: the
+  recommendation would have looked right and printed a false column on every data
+  drop in every job.
+* **Note**: **A SENTENCE OF DR-044 WAS FALSE AND THE GOLDENS REFUTED IT WITHIN THE
+  HOUR.** It claimed `outletTemplates` is `{}` in every shipped starter; all four
+  carry all nine. The claim was **inherited verbatim** from a paragraph on
+  `OutletTemplate.tag` where it had been false since DR-022, and the chain ran doc
+  comment to doc comment to normative ruling in three steps, each looking like a
+  citation of the last. **A sentence asserting a count is not checkable by reading
+  the sentence**; a test that reads the bytes is.
+
 ## 2026-08-11 (fifth entry)
 
 * **Creation**: [DR-042](/decisions/dr-042-plate-outline-measured.md), which closes

@@ -2062,6 +2062,60 @@ keystone geometry is an *"about"*.** **Nothing here touches M3's exit criterion*
 states outright: a 60-drop rough-in schedules and prints without knowing which cell a keystone
 occupies. This is the milestone growth that ruling booked in advance, delivered.
 
+**M3-L opened and closed on 2026-08-11, three tasks, #671 to #673, plus two rulings.** The field
+termination gets entry paths: `4561baf` (DR-043), `a644a07` (multi-select), `17905dd` (the template
+field and the item grammar, with DR-044).
+
+*Why it exists.* M3-H's `Arrange` reads DR-007 §11.7.2.1's cell-count table, which keys on
+`StructureOrigin.terminationField`. **Nothing in the product set that field**, so `Arrange` correctly
+refused every drop the product could create. Found by running the feature, which is how all five
+instances of `a-modelled-field-is-not-a-reachable-one` have been found.
+
+***THE BOARD ASKED FOR A MODIFIER AND THE MODIFIER IS NOT THE LOAD-BEARING FIX.*** #668 proposed
+`@term=` on the drop line. The question raised beside it was whether a mouse path exists at all,
+because *"typing a large amount of text is going to put off a lot of people"*. **A modifier serves
+the person already typing.** A census found **five** drop-entry surfaces, four of them already
+mouse-driven, and `+ Add outlet ▾` is the one a mouse-first person lives in: it was also the only
+route that could not express a termination. So `OutletDrop.termination` is the load-bearing change
+and the colon grammar ships beside it.
+
+*The same census corrected #668's own arithmetic.* That task claimed sixty drops meant ~420
+keystrokes of `FIELD TERM`. It is a **dropdown**, and `Ctrl+D` fills it down: one dropdown plus
+fifty-nine keypresses. **The task overstated the pain by about seven times**, and the estimate came
+from reasoning about a surface rather than opening it.
+
+***DR-043 WAS WRONG ONE CLAUSE DEEP AND A CENSUS CAUGHT IT BEFORE A LINE WAS BUILT.*** §11.42.5 left
+the shipped templates null because *"a shop authoring its own template says what it terminates in"*.
+**Nothing in this product can author an `OutletTemplate`**: no command, no editor, and
+`seed_outlet_templates.dart`'s own header says so. The field would have been null everywhere for
+ever. DR-044 seeds all nine. **This is the fifth instance of that practice and the first caught
+BEFORE the field was written** rather than in the next milestone.
+
+*A euroblock occupies zero cells, correcting M3-H.* §11.7.2.1's table does not mention `euroblock`
+and M3-H put it beside `keystone` on an inference nobody wrote down. It is a screw terminal on a
+device: the keypad fills the gang, and a plate sized to give it a keystone as well is one cell too
+big on every keypad drop in a house. **Found by seeding a value and having to say what the value
+meant.** A fact you write down gets audited; a fact you infer does not.
+
+*Asking beat offering, and one row is the evidence.* Twisted pair seeds as **`punchdown`**, not the
+`keystone` that was recommended. Face-on the two are the same object (§11.7.9 B) so no drawing
+changes, and the **Termination Schedule** does: the recommendation would have looked right and
+printed a false column on every data drop in every job.
+
+***AND A SENTENCE OF DR-044 WAS FALSE, REFUTED BY THE GOLDENS WITHIN THE HOUR.*** §11.43.6 claimed
+`registries.outletTemplates` is `{}` in every shipped starter. **All four carry all nine**, and
+`starter_assets_test.dart` failed on every one. The claim was **inherited verbatim** from a paragraph
+on `OutletTemplate.tag` where it had been false since DR-022: those starters carry `tag` on six
+templates on disk today. Doc comment, to second doc comment, to normative ruling, in three steps and
+one afternoon, each step looking like a citation of the one before. **A sentence asserting a count is
+not checkable by reading the sentence**, and what caught it was a test that reads the bytes.
+
+*What M3-L does not settle.* **There is still no authoring surface for `OutletTemplate`**, so a shop
+cannot write its own recipe; DR-024 §11.23.4 already holds that open and DR-033/DR-034 place it in
+the community-catalog work. §11.43.5 records it as a live cap on DR-043 §11.42.2's argument rather
+than a discharged one. The batch bar also offers only the columns the table is SHOWING, so `FIELD
+TERM` must be switched on through `⚙ Columns` before it can be bulk-set.
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three

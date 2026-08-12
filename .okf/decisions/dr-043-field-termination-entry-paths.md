@@ -79,6 +79,16 @@ vocabularies, and a refusal that lists the accepted set is the cheaper teacher.
 
 # The six shipped templates stay null
 
+> **SUPERSEDED BY [DR-044](dr-044-templates-carry-terminations.md) THE SAME DAY**,
+> before a line of it was built. **Nothing in this product can author an
+> `OutletTemplate`**, so the sentence below describes a capability that does not
+> exist, and this clause together with the template argument above would have
+> produced a permanently unreachable field. The DR-024 precedent is also
+> mis-cited: that ruling refused a *standards citation*, and a termination is a
+> recipe fact of the same kind as the cable count already in the recipe. **All
+> nine shipped templates are seeded.**
+
+
 **This is [DR-024](dr-024-board-151-is-a-field-and-a-picker.md) §11.23.2's
 refusal repeated deliberately.** That ruling kept `tia570Grade` null on all six
 because *"TV location makes no standards claim, and writing one would put a
