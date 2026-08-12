@@ -37,6 +37,8 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 
 * [DR-042, the plate outline and the gang pitch, measured](dr-042-plate-outline-measured.md) - DR-041's last two hedges close a day later, and because the pitch was deliberately left unruled the caliper replaced it with no supersession to write.
 
+* [DR-043, the field termination gets three entry paths](dr-043-field-termination-entry-paths.md) - the fix that mattered was not the modifier the board asked for; a modifier serves the person already typing and the question was about the person clicking.
+
 # Not yet written up
 
 DR-002 (residential primary), DR-003 (device builder in v1), DR-004 (multi-sheet

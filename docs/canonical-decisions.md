@@ -9297,6 +9297,82 @@ figure anywhere in the keystone geometry is an *"about"*.
 **11.41.7 Scope.** **No scope change.** Nothing enters or leaves roadmap §2, no milestone moves, and
 no earlier ruling is amended. Two open measurements close.
 
+### 11.42 DR-043 · The field termination gets three entry paths; the default stays Unspecified
+
+**Settled by the user on 2026-08-11**, from board #668: nothing in the product sets
+`StructureOrigin.terminationField`, so DR-007 §11.7.2.1's cell-count table has no input and M3-H's
+`Arrange` correctly refuses every drop the product can create.
+
+**11.42.1 The default does not move, and that half is a ruling by omission.** `terminationField` stays
+**nullable, defaulting to null, meaning Unspecified**. M3-J made it nullable precisely so neither
+entry surface would write a value it did not have, and both surfaces' own code said `unterminated`
+was *"the nearest true value, not the right one"*. **Nothing here re-introduces that guess.** A drop
+created by any path this ruling adds still comes out Unspecified unless somebody said otherwise, and
+`Arrange` still reports what it could not place (G4, CR-114).
+
+**11.42.2 Three paths, and the ordering of them is the argument.** The user's question was *"do we
+have a GUI path yet? Typing a large amount of text is going to put off a lot of people."* A census
+found **five drop-entry surfaces**, of which four are already mouse-driven: `+ Add outlet ▾`, the
+Matrix tab, the table's cells, and CSV import. The typed line is one of five, not the only one.
+
+| Path | Gesture | Who it serves |
+|---|---|---|
+| **`OutletDrop.termination`** on a template | **Zero extra clicks.** `+ Add outlet ▾` already picks a recipe | the mouse-first person, and it is the strongest path we have |
+| **`4x Cat6:keystone`** on the drop line | 9 characters per item | the typist, and the ad-hoc mixed line |
+| **Multi-select and batch set** on the table | tick rows, set the column once | fixing a house after the fact |
+
+**THE TEMPLATE IS THE LOAD-BEARING ONE AND IT WAS NOT WHAT #668 ASKED FOR.** #668 proposed a
+modifier. A modifier serves the person already typing; it does nothing for the person clicking, who
+is the one the question was about. A template already says *"TV location = 2 × Cat6 + 2 × RG6"*, and
+**how that Cat6 terminates is a property of the recipe rather than of the day**, so putting the field
+there makes the mouse path produce fully-specified drops for free. Shipping only the modifier would
+have left `+ Add outlet ▾`, the one route a mouse-first person lives in, as the single route that
+could not express a termination.
+
+**11.42.3 The item grammar, and why a colon.** Items parse as `count` + `mediaToken` today; the five
+existing modifiers (`@service`, `@signal`, `@outlet`, `@pathway`, `@panel`) are **line-level**,
+scanned off the end. A per-item termination is therefore a genuine grammar change and not another
+modifier.
+
+`4x Cat6:keystone` binds to the item it follows, reads left to right, and costs **9 characters
+against `@term=`'s 15**, which matters when AC-018's whole measured script is 433 keystrokes.
+**`@term=` was rejected on a second ground that is worse than the character count**: it would have
+looked identical to five modifiers that apply to the whole line while applying to one item, with
+nothing in the syntax to say so.
+
+**The separator is safe and that was checked rather than assumed.** No media display name or alias in
+the seed catalog contains a colon; they contain spaces and slashes (`Cat6 F/UTP`, `16/4`) and the
+room separator is the line's FIRST colon, which sits at a different nesting level. An item's own
+first colon is therefore unambiguous.
+
+**11.42.4 The vocabulary is core's, and no alias is invented.** A termination token matches on
+`terminationLabel`'s spelling and on the enum name, both normalised for case and non-alphanumerics,
+so `f barrel`, `fbarrel`, `F BARREL` and `fBarrel` all reach `TerminationType.fBarrel`. **Nothing
+shorter is accepted**: `post` does not resolve to `bindingPost`, because inventing trade shorthand in
+a parser is how a product ends up with two vocabularies and the refusal is the cheaper teacher. A bad
+token is refused with a caret and the accepted list, on `drop_line_parser.dart`'s existing rule that
+a refusal quotes the person back.
+
+**11.42.5 The six shipped templates are NOT seeded with terminations.** They stay null. **This is
+DR-024 §11.23.2's refusal repeated deliberately**: that ruling kept `tia570Grade` null on all six
+because *"TV location makes no standards claim, and writing one would put a citation in a document
+nobody made"*. A termination is the same class of claim. A shop authoring its own template says what
+it terminates in; the shipped six say nothing, and produce Unspecified, which is the honest output.
+
+**11.42.6 Multi-select is new machinery and is priced as such.** The table has **no selection model
+today**; §4's wireframe draws row checkboxes that nothing implements. The batch path goes through the
+same refusing builder a single cell edit does, and the whole batch is **one undo entry**, on
+`importCsv`'s reasoning: undoing a batch a row at a time is not undoing a batch. **All or nothing**,
+matching `StructureEditorActions.onEdit`'s existing contract, because a batch that wrote nine of ten
+rows and reported an error leaves a person to work out which nine.
+
+**11.42.7 Scope.** **No scope change to roadmap §2.** Nothing enters or leaves v1. `OutletDrop` gains
+one nullable field, the drop-line grammar gains one production, and the Structure table gains a
+selection model it was already drawn with. **M3 gains an issue**, M3-L, which is a decomposition gap
+rather than a growth in the sense §11.39 draws: the clause was never in an exit criterion, and
+DR-007 §11.7.2.1 named `TerminationType` as *"the hook M3 should read"* while saying nothing about
+what writes it. Board #668 is closed by M3-L.
+
 ---
 
 ## 12. Superseded rulings
