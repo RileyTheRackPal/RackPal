@@ -295,6 +295,24 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
   MediaTypeId? _mediaFilter;
   bool _unconnectedOnly = false;
 
+  /// Ticked rows, by `Link` id (M3-L/3, DR-043 §11.42.6).
+  ///
+  /// **IDS AND NOT INDICES**, for the reason `_DataRow` is keyed on the
+  /// link: a filter change or a deletion reshuffles the list, and a
+  /// selection held as positions would silently come to mean different
+  /// cables.
+  ///
+  /// **NOT PRUNED WHEN A FILTER HIDES A ROW.** The id stays selected and
+  /// the bar counts it as hidden; see [_selectedVisible] for the half
+  /// that matters, which is that a batch never writes to a row nobody can
+  /// see. Pruning was the alternative and it throws away work: narrowing
+  /// a filter to find the rest of your rows would drop the ones already
+  /// ticked.
+  final Set<Uuid> _selected = <Uuid>{};
+
+  /// The batch bar's column, or null before anybody picked one.
+  StructureColumnId? _batchColumn;
+
   /// The body the picker has chosen, or null before anybody has chosen.
   ///
   /// RESOLVED PER BUILD RATHER THAN LATCHED IN `initState`, by
@@ -521,6 +539,22 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
         }),
       ),
       const Divider(height: 1),
+      // ONLY WHEN SOMETHING IS TICKED. A bar that was always there would
+      // be a permanent strip of controls that do nothing on an empty
+      // selection, which is the defect `shell_tabs_test.dart` gates.
+      if (_selected.isNotEmpty)
+        _BatchBar(
+          selectedVisible: _selectedVisible(doc).length,
+          selectedHidden: _selected.length - _selectedVisible(doc).length,
+          column: _batchColumn,
+          columns: _columns.where(structureColumnIsBatchable).toList(),
+          onColumn: (id) => setState(() => _batchColumn = id),
+          onSet: _batchSet,
+          onClear: () => setState(() {
+            _selected.clear();
+            _batchColumn = null;
+          }),
+        ),
       Expanded(
         child: _DropTable(
           doc: doc,
@@ -531,6 +565,25 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
           isFiltered:
               _roomFilter != null || _mediaFilter != null || _unconnectedOnly,
           totalDrops: table.dropCount,
+          selected: _selected,
+          onSelect: (linkId, {required ticked}) => setState(() {
+            if (ticked) {
+              _selected.add(linkId);
+            } else {
+              _selected.remove(linkId);
+            }
+          }),
+          onSelectAll: (ticked) => setState(() {
+            // ALL VISIBLE, NOT ALL ROWS. The header tick means "these",
+            // and "these" is what is on screen: a filter is the person
+            // saying which rows they are working on.
+            final ids = _visibleRows(doc).map((r) => r.linkId);
+            if (ticked) {
+              _selected.addAll(ids);
+            } else {
+              _selected.removeAll(ids);
+            }
+          }),
         ),
       ),
     ],
@@ -595,6 +648,41 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
     ))
       ...group.rows,
   ];
+
+  /// Selected rows that are ALSO on screen, in visible order.
+  ///
+  /// **THE ONLY SET A BATCH EVER WRITES TO** (DR-043 §11.42.6, and the
+  /// user's own call on 2026-08-11). Editing a row hidden behind a filter
+  /// is the one genuinely dangerous outcome available here: the button
+  /// would look safe, the undo entry would name a count matching nothing
+  /// on screen, and the person would find out weeks later on a printed
+  /// sheet. `_fillDown` already refuses to copy FROM a hidden row for the
+  /// same reason.
+  List<ScheduleEntry> _selectedVisible(RackDocument doc) => [
+    for (final row in _visibleRows(doc))
+      if (_selected.contains(row.linkId)) row,
+  ];
+
+  /// Sets one column to one value on every selected VISIBLE row.
+  ///
+  /// ONE BATCH, so it is one entry on the undo stack and it is all or
+  /// nothing: `StructureEditorActions.onEdit` already contracts both, and
+  /// `_paste` already relies on it. Nothing new was needed in the edit
+  /// path for this task, only the selection in front of it.
+  void _batchSet(String value) {
+    final column = _batchColumn;
+    if (column == null) return;
+    final doc = widget.currentDoc();
+    final rows = _selectedVisible(doc);
+    if (rows.isEmpty) {
+      setState(() => _refusal = kNothingSelectedToSet);
+      return;
+    }
+    _edit([
+      for (final row in rows)
+        StructureCellEdit(linkId: row.linkId, column: column, value: value),
+    ]);
+  }
 
   /// `Ctrl+D` — copy the cell directly above into the focused one.
   ///
@@ -855,7 +943,6 @@ class _EditorHeader extends StatelessWidget {
                 onBody: onBody,
               ),
             ),
-            const SizedBox(width: 12),
           ],
           Expanded(
             child: Text(
@@ -1144,7 +1231,6 @@ class _TreeRow extends StatelessWidget {
               ),
             ),
           if (dropCount > 0) ...[
-            const SizedBox(width: 8),
             Text(
               '$dropCount',
               style: theme.textTheme.labelSmall?.copyWith(
@@ -1295,6 +1381,9 @@ class _DropTable extends StatelessWidget {
     required this.totalDrops,
     required this.onEdit,
     required this.onCaret,
+    required this.selected,
+    required this.onSelect,
+    required this.onSelectAll,
   });
 
   final RackDocument doc;
@@ -1310,13 +1399,21 @@ class _DropTable extends StatelessWidget {
   /// rebuild per keystroke down a sixty-row column.
   final ValueChanged<(Uuid, StructureColumnId)?> onCaret;
 
+  /// Ticked rows, by link id (M3-L/3).
+  final Set<Uuid> selected;
+  final void Function(Uuid linkId, {required bool ticked}) onSelect;
+  final ValueChanged<bool> onSelectAll;
+
   @override
   Widget build(BuildContext context) {
     final units = doc.settings.displayUnits;
-    final totalPt = columns.fold<double>(
-      0,
-      (n, c) => n + structureColumnWidth(c),
-    );
+    final totalPt =
+        kSelectGutterWidth +
+        columns.fold<double>(0, (n, c) => n + structureColumnWidth(c));
+    final visibleIds = <Uuid>{
+      for (final g in groups)
+        for (final r in g.rows) r.linkId,
+    };
     return LayoutBuilder(
       builder: (context, constraints) {
         // Never squeezed below the authored widths — a narrow window
@@ -1338,7 +1435,18 @@ class _DropTable extends StatelessWidget {
                   // is what makes an empty table READABLE rather than
                   // blank: a person can see what the columns will be
                   // before deciding what to type.
-                  _HeaderRow(columns: columns, scale: effective),
+                  _HeaderRow(
+                    columns: columns,
+                    scale: effective,
+                    // TRISTATE, and the middle state is the honest one:
+                    // some of the visible rows are ticked, and neither
+                    // "all" nor "none" says that.
+                    allTicked:
+                        visibleIds.isNotEmpty &&
+                        visibleIds.every(selected.contains),
+                    someTicked: visibleIds.any(selected.contains),
+                    onSelectAll: onSelectAll,
+                  ),
                   const Divider(height: 1, thickness: 1),
                   Expanded(
                     child: groups.isEmpty
@@ -1379,6 +1487,10 @@ class _DropTable extends StatelessWidget {
                                     scale: effective,
                                     onEdit: onEdit,
                                     onCaret: onCaret,
+                                    ticked: selected.contains(
+                                      group.rows[index].linkId,
+                                    ),
+                                    onSelect: onSelect,
                                   ),
                                 ),
                               ],
@@ -1395,11 +1507,187 @@ class _DropTable extends StatelessWidget {
   }
 }
 
+/// The strip that appears when rows are ticked (M3-L/3, DR-043 §11.42.6).
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// IT COUNTS WHAT IT WILL WRITE TO, AND SEPARATELY WHAT IT WILL NOT
+/// ═════════════════════════════════════════════════════════════════════
+/// "12 selected · 8 hidden by filter" rather than "20 selected". The
+/// user settled this on 2026-08-11 and the reason is the one dangerous
+/// outcome available on this surface: a batch that reached rows behind a
+/// filter would look safe, would put a count on the undo stack matching
+/// nothing on screen, and would surface weeks later on a printed sheet.
+/// `_fillDown` already refuses to copy FROM a hidden row.
+///
+/// The hidden count is only drawn when it is non-zero, so the ordinary
+/// case reads "12 selected" and carries no arithmetic nobody needs.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// THE VALUE CONTROL FOLLOWS THE COLUMN'S MODEL TYPE
+/// ═════════════════════════════════════════════════════════════════════
+/// A dropdown where [structureCellChoices] gives a closed set, a text box
+/// otherwise, which is exactly what the inline cell does and is the same
+/// function answering. Two copies of that decision would disagree the
+/// first time a column gained a value.
+class _BatchBar extends StatefulWidget {
+  const _BatchBar({
+    required this.selectedVisible,
+    required this.selectedHidden,
+    required this.column,
+    required this.columns,
+    required this.onColumn,
+    required this.onSet,
+    required this.onClear,
+  });
+
+  final int selectedVisible;
+  final int selectedHidden;
+  final StructureColumnId? column;
+
+  /// The batchable columns currently on screen. Filtered by
+  /// `structureColumnIsBatchable`, so `FIELD LABEL` and `RACK LBL` are
+  /// absent: CR-113 makes them unique, and a control whose only outcome
+  /// on two or more rows is a refusal is a control that does nothing.
+  final List<StructureColumnId> columns;
+  final ValueChanged<StructureColumnId> onColumn;
+  final ValueChanged<String> onSet;
+  final VoidCallback onClear;
+
+  @override
+  State<_BatchBar> createState() => _BatchBarState();
+}
+
+class _BatchBarState extends State<_BatchBar> {
+  final TextEditingController _text = TextEditingController();
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final column = widget.column;
+    final choices = column == null ? null : structureCellChoices(column);
+    return ColoredBox(
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+        // A WRAP AND NOT A ROW. The bar carries two counts, a label, two
+        // dropdowns and a button, and the second count only appears once
+        // a filter hides part of the selection: a `Row` overflowed by
+        // 154 px in exactly that state and would have shipped as a
+        // yellow-and-black stripe on the one screen a person reaches
+        // while doing something careful. A control strip has no reason to
+        // insist on one line.
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              '${widget.selectedVisible} selected',
+              style: theme.textTheme.labelLarge,
+            ),
+            if (widget.selectedHidden > 0)
+              // NOT "N hidden by filter", WHICH IS ALREADY ON SCREEN.
+              // The status bar carries that exact phrase for the table's
+              // own hidden-row count, and two lines saying it with
+              // different numbers is a person doing arithmetic to work
+              // out which is which. Found by a test that matched the
+              // wrong widget, which is the same collision a reader hits.
+              Text(
+                '${widget.selectedHidden} more ticked, off screen',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            Text(kBatchSetLabel, style: theme.textTheme.labelMedium),
+            DropdownButton<StructureColumnId>(
+              key: const ValueKey('batch-column'),
+              value: column,
+              hint: const Text('column'),
+              items: [
+                for (final id in widget.columns)
+                  DropdownMenuItem(
+                    value: id,
+                    child: Text(structureColumnHeader(id)),
+                  ),
+              ],
+              onChanged: (id) {
+                if (id != null) widget.onColumn(id);
+              },
+            ),
+            if (column != null)
+              if (choices != null)
+                // NO APPLY BUTTON ON A DROPDOWN. Picking the value IS the
+                // gesture, the way an inline `_ChoiceCell` commits on
+                // selection; a second click to confirm would make the
+                // batch path slower per value than the cell it replaces.
+                DropdownButton<String>(
+                  key: const ValueKey('batch-value'),
+                  hint: const Text('value'),
+                  items: [
+                    for (final label in choices)
+                      DropdownMenuItem(value: label, child: Text(label)),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) widget.onSet(v);
+                  },
+                )
+              else
+                SizedBox(
+                  width: 180,
+                  child: TextField(
+                    key: const ValueKey('batch-value-text'),
+                    controller: _text,
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      hintText: 'value, then Enter',
+                    ),
+                    onSubmitted: widget.onSet,
+                  ),
+                ),
+            // NO `Spacer`: `Wrap` has no free axis to expand into, and a
+            // `Spacer` inside one throws at layout time rather than
+            // being ignored.
+            TextButton(
+              key: const ValueKey('batch-clear'),
+              onPressed: widget.onClear,
+              child: const Text(kClearSelectionLabel),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The select gutter's width, in the same points the columns are authored
+/// in (docs/07 §4 draws it as `⠿☐` before `FIELD LABEL`).
+///
+/// FIXED CHROME AND NOT A COLUMN. It carries no data, has no header text,
+/// and is not in `StructureColumnId`, which is the same class of width as
+/// `rack_geometry.dart`'s RU ruler: an annotation gutter outside the
+/// thing being measured.
+const double kSelectGutterWidth = 34;
+
 class _HeaderRow extends StatelessWidget {
-  const _HeaderRow({required this.columns, required this.scale});
+  const _HeaderRow({
+    required this.columns,
+    required this.scale,
+    required this.allTicked,
+    required this.someTicked,
+    required this.onSelectAll,
+  });
 
   final List<StructureColumnId> columns;
   final double scale;
+  final bool allTicked;
+  final bool someTicked;
+  final ValueChanged<bool> onSelectAll;
 
   @override
   Widget build(BuildContext context) {
@@ -1409,6 +1697,20 @@ class _HeaderRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          SizedBox(
+            width: kSelectGutterWidth * scale,
+            child: Checkbox(
+              key: const ValueKey('select-all'),
+              value: allTicked ? true : (someTicked ? null : false),
+              tristate: true,
+              // TICKING FROM THE MIDDLE STATE SELECTS, it does not clear.
+              // Somebody who has ticked four of forty and then reaches
+              // for the header wants the other thirty-six, which is the
+              // same reasoning `_FilterBar`'s as-built group already
+              // uses for a half-on set.
+              onChanged: (v) => onSelectAll(!allTicked),
+            ),
+          ),
           for (final id in columns)
             SizedBox(
               width: structureColumnWidth(id) * scale,
@@ -1514,6 +1816,38 @@ class _BandDelegate extends SliverPersistentHeaderDelegate {
       old.group != group || old.units != units || old.theme != theme;
 }
 
+/// The closed set of labels a column accepts, or null when the column
+/// takes free text.
+///
+/// ONE ANSWER FOR TWO CONSUMERS (M3-L/3). The inline cell and the batch
+/// bar both need "what may this column be set to", and two copies of this
+/// switch would disagree the first time a column gained a value. It was
+/// inline in `_DataRow._cell` until the batch bar needed it.
+///
+/// WHICH COLUMNS ARE CLOSED FOLLOWS THE MODEL TYPE rather than a
+/// preference: these three store an enum, so there is nothing to parse
+/// and nothing to typo. The text columns beside them store strings and
+/// numbers, and their parsing lives in core.
+///
+/// THE LABELS ARE CORE'S SPELLING, never `.name`. The surface sends what
+/// it DISPLAYED, so core stays the only speller: `directBury` already
+/// prints `DIRECT BURY`, so a `.name` match is a bug waiting for the
+/// second time a label stops being the enum name uppercased.
+List<String>? structureCellChoices(StructureColumnId id) => switch (id) {
+  StructureColumnId.roughIn => RoughInStatus.values.map(roughInLabel).toList(),
+  StructureColumnId.testResult => kTestCellOptions,
+  // UNKNOWN IS AN OPTION HERE and is not on `ROUGH-IN`, which is the
+  // difference G4 draws between them: `planned` is a real state of an
+  // untouched drop, where "nobody has decided how this end is finished"
+  // is genuinely an absence (M3-J/1 made the field nullable for exactly
+  // that).
+  StructureColumnId.fieldTerm => <String>[
+    kUnknownCell,
+    ...TerminationType.values.map(terminationLabel),
+  ],
+  _ => null,
+};
+
 class _DataRow extends StatelessWidget {
   const _DataRow({
     required this.doc,
@@ -1522,6 +1856,8 @@ class _DataRow extends StatelessWidget {
     required this.scale,
     required this.onEdit,
     required this.onCaret,
+    required this.ticked,
+    required this.onSelect,
     super.key,
   });
 
@@ -1531,6 +1867,8 @@ class _DataRow extends StatelessWidget {
   final double scale;
   final String? Function(List<StructureCellEdit> edits) onEdit;
   final ValueChanged<(Uuid, StructureColumnId)?> onCaret;
+  final bool ticked;
+  final void Function(Uuid linkId, {required bool ticked}) onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -1549,6 +1887,17 @@ class _DataRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 2),
         child: Row(
           children: [
+            SizedBox(
+              width: kSelectGutterWidth * scale,
+              child: Checkbox(
+                // KEYED ON THE LINK, like the row itself: a filter change
+                // reshuffles the list and a positional key would hand
+                // row 3's tick to whatever cable is third afterwards.
+                key: ValueKey('select-${row.linkId.v}'),
+                value: ticked,
+                onChanged: (v) => onSelect(row.linkId, ticked: v ?? false),
+              ),
+            ),
             for (final id in columns)
               SizedBox(
                 width: structureColumnWidth(id) * scale,
@@ -1583,21 +1932,7 @@ class _DataRow extends StatelessWidget {
       // three of these store an enum, so there is nothing to parse and
       // nothing to typo. The text columns beside them store strings and
       // numbers, and their parsing lives in core.
-      final options = switch (id) {
-        StructureColumnId.roughIn =>
-          RoughInStatus.values.map(roughInLabel).toList(),
-        StructureColumnId.testResult => kTestCellOptions,
-        // UNKNOWN IS AN OPTION HERE and is not on `ROUGH-IN`, which is the
-        // difference G4 draws between them: `planned` is a real state of
-        // an untouched drop, where "nobody has decided how this end is
-        // finished" is genuinely an absence (M3-J/1 made the field
-        // nullable for exactly that).
-        StructureColumnId.fieldTerm => <String>[
-          kUnknownCell,
-          ...TerminationType.values.map(terminationLabel),
-        ],
-        _ => null,
-      };
+      final options = structureCellChoices(id);
       if (options != null) {
         return _ChoiceCell(
           linkId: row.linkId,
@@ -1839,6 +2174,24 @@ const List<String> kTestCellOptions = <String>[
   kTestPassCell,
   kTestFailCell,
 ];
+
+/// Why `Set` on the batch bar did nothing (M3-L/3).
+///
+/// Reachable only when every ticked row is behind a filter, which is a
+/// state a person can get into by ticking rows and then narrowing the
+/// view. The bar already says "0 selected, 12 hidden by filter" in that
+/// case, and this is the belt to that pair of braces: a button that
+/// declined without saying why is indistinguishable from a broken one
+/// (docs/04 §3.4).
+const String kNothingSelectedToSet =
+    'Every ticked row is hidden by the current filter, so there is nothing '
+    'on screen to set. Clear the filter, or tick rows you can see.';
+
+/// The batch bar's own label, so the test and the widget agree.
+const String kBatchSetLabel = 'Set';
+
+/// See [kBatchSetLabel].
+const String kClearSelectionLabel = 'Clear selection';
 
 /// Why `Ctrl+D` did nothing.
 ///

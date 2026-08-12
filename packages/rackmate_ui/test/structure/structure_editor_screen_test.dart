@@ -301,7 +301,17 @@ final class _Harness {
   /// apply. Mirrored here rather than imported because `rackmate_ui`
   /// may not depend on the app, and because the harness has to be
   /// driveable without a `DocumentController`.
+  /// The size of every batch `onEdit` was handed, in order (M3-L/3).
+  ///
+  /// RECORDED BECAUSE "one undo entry" IS THE CLAIM. A batch bar that
+  /// looped and called `onEdit` once per row would leave the document in
+  /// exactly the same state and put twelve entries on the undo stack,
+  /// and no assertion about the resulting cells could tell the
+  /// difference. This is the only place that can.
+  final List<int> batchSizes = <int>[];
+
   String? edit(List<StructureCellEdit> edits) {
+    batchSizes.add(edits.length);
     final commands = <Command>[];
     final claimedLabels = <String>{};
 
@@ -363,6 +373,35 @@ final class _Harness {
             actor: 'editor',
           );
           if (c != null) commands.add(c);
+        // ADDED BY M3-L/3, and its absence was a harness gap rather than
+        // a product one: `buildStructureEditAction` has always handled
+        // this column and nothing here ever drove it, so the harness
+        // refused a column the app applies. A harness stricter than the
+        // product tests a product that does not exist.
+        case StructureColumnId.fieldTerm:
+          final value = e.value.trim();
+          final termination = value == kUnknownCell || value.isEmpty
+              ? null
+              : TerminationType.values
+                    .where(
+                      (t) => terminationLabel(t) == value.toUpperCase(),
+                    )
+                    .firstOrNull;
+          if (termination == null &&
+              value != kUnknownCell &&
+              value.isNotEmpty) {
+            return '"${e.value}" is not a field termination.';
+          }
+          final result = buildSetStructureOriginProperty<TerminationType?>(
+            doc: doc,
+            linkId: e.linkId,
+            field: StructureOriginField.terminationField,
+            to: termination,
+            now: _now,
+            actor: 'editor',
+          );
+          if (result is SetStructureOriginRefused) return result.reason;
+          if (result is SetStructureOriginReady) commands.add(result.command);
         case StructureColumnId.notes:
           final c = buildSetEntityProperty<Link, String?>(
             doc: doc,
@@ -1621,6 +1660,237 @@ void main() {
         defaultStructureBody(h.doc)!.id,
         reason: 'the picker opened on STR-1, so the outlet goes to STR-1',
       );
+    });
+  });
+
+  group('multi-select and batch set (M3-L/3, DR-043)', () {
+    /// Ticks one drop, by its id.
+    ///
+    /// BY ID AND NOT BY A LABEL SPELLING. The label a bare `2x Cat6`
+    /// produces comes out of DR-023's fallback chain, so a test that
+    /// hardcoded `LR-DATA-1` would be asserting that chain rather than
+    /// the selection, and would break the day a media short tag changed.
+    Future<void> tickId(WidgetTester tester, Uuid id) async {
+      await tester.tap(find.byKey(ValueKey('select-${id.v}')));
+      await tester.pumpAndSettle();
+    }
+
+    /// Picks a column and a value on the bar.
+    ///
+    /// USES `ROUGH-IN`, WHICH IS A DEFAULT COLUMN, and that is the point
+    /// rather than a convenience: the bar offers the columns the TABLE is
+    /// showing, so `FIELD TERM` is absent until somebody switches it on.
+    /// One case below drives that path deliberately.
+    Future<void> setColumn(
+      WidgetTester tester,
+      String column,
+      String value,
+    ) async {
+      await tester.tap(find.byKey(const ValueKey('batch-column')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(column).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('batch-value')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(value).last);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the bar is absent until something is ticked', (tester) async {
+      // A permanent strip of controls that do nothing on an empty
+      // selection is the defect `shell_tabs_test.dart` gates.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+      expect(find.byKey(const ValueKey('batch-column')), findsNothing);
+
+      await tickId(tester, _rows(h).first.id);
+      expect(find.byKey(const ValueKey('batch-column')), findsOneWidget);
+      expect(find.text('1 selected'), findsOneWidget);
+    });
+
+    testWidgets('ONE BATCH for the whole selection, not one call per row', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 3x Cat6');
+
+      await tester.tap(find.byKey(const ValueKey('select-all')));
+      await tester.pumpAndSettle();
+      expect(find.text('3 selected'), findsOneWidget);
+
+      h.batchSizes.clear();
+      await setColumn(tester, 'ROUGH-IN', 'PULLED');
+
+      // THE CLAIM IS ONE UNDO ENTRY. A loop calling onEdit per row leaves
+      // the document identical and the undo stack three deep, and no
+      // assertion about the cells could tell the difference.
+      expect(h.batchSizes, [3]);
+      expect(
+        h.doc.links.values
+            .where((l) => l.roughInStatus == RoughInStatus.pulled)
+            .length,
+        3,
+      );
+    });
+
+    testWidgets('an OPTIONAL column is offered once it is switched on', (
+      tester,
+    ) async {
+      // FIELD TERM is the column DR-043 exists for and it is not a
+      // default. The bar offers what the table shows, so this is the
+      // whole path a person walks to bulk-set it.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+      await tester.tap(find.byKey(const ValueKey('select-all')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('batch-column')));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byType(DropdownMenuItem<StructureColumnId>),
+          matching: find.text(
+            structureColumnHeader(StructureColumnId.fieldTerm),
+          ),
+        ),
+        findsNothing,
+        reason: 'not a default column, so the bar cannot set it yet',
+      );
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
+
+      // The ⚙ Columns path a person walks, including the ensureVisible
+      // the menu has needed since it grew past one screen at M3-J/3.
+      await tester.tap(find.text('Columns'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('FIELD TERM'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('FIELD TERM'));
+      await tester.pumpAndSettle();
+      // The menu stays open on purpose, so it has to be dismissed.
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
+
+      h.batchSizes.clear();
+      await setColumn(tester, 'FIELD TERM', 'KEYSTONE');
+
+      expect(h.batchSizes, [2]);
+      expect(
+        h.doc.links.values.every(
+          (l) =>
+              l.structureOrigin?.terminationField == TerminationType.keystone,
+        ),
+        isTrue,
+      );
+    });
+
+    testWidgets('A BATCH NEVER WRITES TO A ROW BEHIND A FILTER', (
+      tester,
+    ) async {
+      // The one genuinely dangerous outcome on this surface, and the
+      // user's own call on 2026-08-11: the button would look safe, the
+      // undo entry would name a count matching nothing on screen, and it
+      // would surface weeks later on a printed sheet.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+      await _addLine(tester, 'Kitchen: 2x Cat6');
+
+      await tester.tap(find.byKey(const ValueKey('select-all')));
+      await tester.pumpAndSettle();
+      expect(find.text('4 selected'), findsOneWidget);
+
+      await tester.tap(find.text('All rooms'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Living Room').last);
+      await tester.pumpAndSettle();
+
+      // The count SPLITS rather than shrinking silently.
+      expect(find.text('2 selected'), findsOneWidget);
+      expect(find.text('2 more ticked, off screen'), findsOneWidget);
+
+      h.batchSizes.clear();
+      await setColumn(tester, 'ROUGH-IN', 'PULLED');
+      expect(h.batchSizes, [2]);
+
+      // And the Kitchen's two are untouched.
+      final livingRoom = _roomId(h, 'Living Room');
+      for (final link in h.doc.links.values) {
+        final room = h.doc.outlets[link.structureOrigin!.outletId]?.locationId;
+        expect(
+          link.roughInStatus,
+          room == livingRoom ? RoughInStatus.pulled : RoughInStatus.planned,
+          reason: link.structureOrigin!.fieldLabel,
+        );
+      }
+    });
+
+    testWidgets('the unique columns are not offered (CR-113)', (tester) async {
+      // One value across N rows is refused by the builder on every row
+      // after the first, so offering them is a control that does nothing.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+      await tickId(tester, _rows(h).first.id);
+
+      await tester.tap(find.byKey(const ValueKey('batch-column')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(structureColumnHeader(StructureColumnId.roughIn)),
+        findsWidgets,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(DropdownMenuItem<StructureColumnId>),
+          matching: find.text(
+            structureColumnHeader(StructureColumnId.fieldLabel),
+          ),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('clear selection puts the bar away', (tester) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+      await tickId(tester, _rows(h).first.id);
+      expect(find.byKey(const ValueKey('batch-column')), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('batch-clear')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('batch-column')), findsNothing);
+    });
+
+    testWidgets('a tick follows its DROP, not its row position', (
+      tester,
+    ) async {
+      // The reason the checkbox is keyed on the link, like the row: a
+      // filter change reshuffles the list, and a positional key would
+      // hand row 1's tick to whatever cable is first afterwards.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      await _addLine(tester, 'Kitchen: 1x Cat6');
+      final kitchen = _roomId(h, 'Kitchen');
+      final kitchenDrop = h.doc.links.values.firstWhere(
+        (l) =>
+            h.doc.outlets[l.structureOrigin!.outletId]?.locationId == kitchen,
+      );
+      await tickId(tester, kitchenDrop.id);
+      expect(find.text('1 selected'), findsOneWidget);
+
+      await tester.tap(find.text('All rooms'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Kitchen').last);
+      await tester.pumpAndSettle();
+      // Still one selected and NOT off screen: the Kitchen drop is the
+      // one visible now.
+      expect(find.text('1 selected'), findsOneWidget);
+      expect(find.textContaining('more ticked, off screen'), findsNothing);
     });
   });
 }
