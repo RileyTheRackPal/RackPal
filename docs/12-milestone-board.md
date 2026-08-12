@@ -2116,6 +2116,47 @@ the community-catalog work. §11.43.5 records it as a live cap on DR-043 §11.42
 than a discharged one. The batch bar also offers only the columns the table is SHOWING, so `FIELD
 TERM` must be switched on through `⚙ Columns` before it can be bulk-set.
 
+**M3-H/5 (#674) closed 2026-08-12 at `f8c4481`, and it is a defect M3-H shipped.** Nothing deleted a
+gang. `RemoveGangCommand` was built and tested including undo, `OutletsActions.onRemoveGang` was
+declared, and `buildOutletsActions` implemented it with its bounds check and refusal sentence.
+**No widget invoked it**, so the only ways to remove a gang were `Ctrl+Z` and a full destructive
+`Arrange`. **Found by the user asking what the current method was**, which is the same instrument
+that found #591, #587 and #668: using the thing.
+
+***IT IS THE SIXTH INSTANCE OF THAT PRACTICE AND IT SITS ONE LAYER ABOVE WHERE THE PRACTICE
+LOOKS.*** `a-modelled-field-is-not-a-reachable-one` says *"grep for what WRITES it"*, and **the field
+had a writer**. What it lacked was a caller for the callback in front of that writer, so the check as
+written passes on this defect. `gang_commands.dart`'s own header argues that its commands shipped in
+the same change as the field precisely so `Outlet.gangs` would not be the fifth instance. It was not.
+This was.
+
+*Why nothing else saw it, which is worth more than the fix.* A declared-and-implemented callback
+hides **better** than an unreachable field, because both ends are present and only the middle is
+missing: the analyzer sees nothing unused (the record is constructed with every member and passed to
+a child), the app-side implementation has passing tests, the command has passing tests including
+undo, and every reader compiles. The only absent thing is a widget saying `actions.onRemoveGang(...)`,
+and **no Dart type can require one**.
+
+*So it is a gate rather than a habit.* `actions_have_callers_test.dart` scans every function-typed
+member of a `*Actions` record in `rackmate_ui` and fails when one has no call site: **18 callbacks,
+one hole** on its first run. **It was watched failing before being trusted** and names the offender
+exactly. It skips nested records deliberately, because `StructureEditorActions.dropEntry` and
+`.outlets` are passed rather than invoked and a naive scan reports both, and a gate that cries wolf
+on its first run is a gate people learn to ignore.
+
+*The gesture itself.* A small delete beside each gang's strap picker, adjacent to the thing it
+deletes rather than folded into a dialog labelled `6-port` or behind a right-click this app teaches
+nowhere. It confirms and **counts what it discards** when the strap holds anything, and goes without
+a prompt when it does not, because a dialog for a gesture that destroys nothing trains people to
+dismiss dialogs.
+
+*Two of the author's own errors were caught by gates rather than by the author.* `draw_source_gate_test`
+refused a production comment citing `outlets_actions_have_callers_test.dart` when the file is
+`actions_have_callers_test.dart`. And **the first draft of the undo case asserted nothing and
+passed**: it built a FRESH `RemoveGangCommand` to revert one already applied, which finds the index
+out of range on an empty gang list and no-ops. The harness now hands back the command it actually
+ran, which is the only version of that assertion that means anything.
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three

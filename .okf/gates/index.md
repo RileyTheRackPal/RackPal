@@ -10,6 +10,8 @@ gate's blind spot is as worth knowing as its coverage.
 * [Catalog port order](catalog-port-order.md) - declared order must equal ranked order; FracIndex sorts as a string and 678 of 727 ports were scrambled.
 * [Release signature](release-signature.md) - signed, timestamped, and still valid after the certificate expires; canon's recipe for the last one has an unstated precondition.
 
+* [Callbacks have callers](callbacks-have-callers.md) - every function-typed `*Actions` member in `rackmate_ui` must be invoked somewhere; 18 callbacks, one hole on its first run, and two false positives it must not report.
+
 # Not yet written up
 
 `flutter pin`, `tracked sources (would a clone compile?)`, `PAL-1 conformance`,

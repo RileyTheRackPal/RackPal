@@ -1,5 +1,36 @@
 # Update Log
 
+## 2026-08-12
+
+* **Note**: **NOTHING DELETED A GANG, and it was found by the user asking what the
+  current method is.** `RemoveGangCommand` was built and tested including undo,
+  `OutletsActions.onRemoveGang` was declared, and the app side implemented it.
+  **No widget called it**, so the only ways to remove a gang were `Ctrl+Z` and a
+  full destructive `Arrange`.
+* **Update**: [A modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md)
+  gains its **sixth** instance, and it is **one layer above where that practice
+  looks**. Its check is *"grep for what WRITES it"*; the field had a writer, and
+  what it lacked was a caller for the callback in front of that writer. **The
+  practice as written passes on this defect.** The addition: ask **what a person
+  clicks**, and follow that all the way down.
+* **Note**: **A declared-and-implemented callback hides better than an unreachable
+  field.** Both ends are present and only the middle is missing, so the analyzer
+  sees nothing unused, the app-side implementation has passing tests, the command
+  has passing tests including undo, and every reader compiles. The only absent
+  thing is a widget saying `actions.onRemoveGang(...)`, and no Dart type can
+  require one.
+* **Creation**: [Callbacks have callers](/gates/callbacks-have-callers.md), so the
+  seventh instance is caught for free. **It was watched failing before being
+  trusted**: with the call site removed it names the offender exactly. It skips
+  nested records deliberately, because `StructureEditorActions.dropEntry` and
+  `.outlets` are passed rather than invoked and a naive scan reports both.
+* **Note**: **Two of my own errors were caught by gates rather than by me.**
+  `draw_source_gate_test` refused a comment citing a test filename that did not
+  exist. And the first draft of the undo case built a **fresh** command to revert
+  one already applied, which finds the index out of range on an empty list and
+  no-ops: **it asserted nothing and passed.** The harness now hands back the
+  command it actually ran.
+
 ## 2026-08-11 (sixth entry)
 
 * **Creation**: [DR-043](/decisions/dr-043-field-termination-entry-paths.md), three

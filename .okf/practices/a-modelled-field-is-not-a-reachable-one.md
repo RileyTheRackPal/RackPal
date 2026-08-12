@@ -1,7 +1,7 @@
 ---
 type: Playbook
 title: A modelled field is not a reachable one; look for the gesture, not the field
-description: Four times now a field has been modelled, persisted, round-tripped and read by four consumers, with nothing in the product able to set it. Grep the writers, not the declaration.
+description: Six times now. Five were fields with no writer; the sixth was a callback with a writer behind it and no caller in front, which this file's own check passes. Ask what a person clicks, and follow it down.
 tags: [practice, model, commands, verification]
 timestamp: 2026-08-10T00:00:00Z
 status: adopted
@@ -10,6 +10,11 @@ status: adopted
 **Before planning work that reads a field, grep for what WRITES it.** A field
 can be modelled, persisted, byte-round-tripped, seeded and consumed by four
 readers, and still be unreachable because no command sets it.
+
+**And then go one layer further out.** A field with a writer can still be
+unreachable if the gesture in front of the writer has no caller. Ask **"what
+does a person click"**, and follow that answer all the way down, rather than
+starting at the field and stopping at the first thing that assigns it.
 
 # Why, with the evidence
 
@@ -34,6 +39,37 @@ first: by trying to use the thing.
   inline, pre-filled with a derived `code`". No derivation existed anywhere;
   every room so far had been coded by hand, which is not available when a sheet
   creates twelve at once.
+
+# The sixth is one layer up, and this file's own check misses it
+
+**`OutletsActions.onRemoveGang`** (M3-H/5). The command was built and tested
+including undo, the callback was declared, and the app side implemented it with
+its bounds check and refusal sentence. **Nothing invoked it.** The only way to
+remove a gang was `Ctrl+Z` or a full destructive `Arrange`.
+
+The guidance below is *"grep for what WRITES it"*, and **the field had a
+writer**. What it lacked was a **caller for the callback in front of that
+writer**. So the check as stated passes on a defect of exactly the kind it
+exists to find.
+
+**A declared-and-implemented callback reads BETTER than an unreachable field**,
+because both ends are present and only the middle is missing:
+
+* the analyzer sees nothing unused, because the record is constructed with every
+  member supplied and then passed to a child;
+* the app-side implementation has its own tests, and they pass;
+* the command has its own tests, including undo, and they pass;
+* every reader of the record compiles.
+
+The only absent thing is a widget that says `actions.onRemoveGang(...)`, and no
+Dart type can require one.
+
+**It is a gate now rather than a habit.** `actions_have_callers_test.dart` scans
+every function-typed callback on a `*Actions` record in `rackmate_ui` and fails
+when one has no call site: 18 callbacks, one hole on its first run. It was
+**watched failing** before being trusted, and it deliberately skips nested
+records (`StructureEditorActions.dropEntry`, `.outlets`) because those are passed
+rather than invoked, and a gate that cries wolf on its first run gets weakened.
 
 # The check, which costs a minute
 
