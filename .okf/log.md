@@ -1,5 +1,53 @@
 # Update Log
 
+## 2026-08-12 (fourth entry)
+
+* **Creation**: [DR-047](/decisions/dr-047-a-gang-can-be-fitted-with-a-pass-through.md),
+  the pass-through as a gang fitting.
+* **Note**: **THE QUESTION NAMED TWO OPTIONS AND THE ANSWER IS NEITHER.** Board
+  #678 and canon §11.44.6 both ask whether a brush plate belongs to the **outlet**
+  or to the **drop**. A census before pricing found the distinction **already
+  half-built**: `Gang.strap` is `Strap?` and null already meant *"nobody has
+  picked a part"*, so an opening somebody decided gets no strap had no spelling of
+  its own. **A question with two named options is not a closed set**, and this is
+  the second time in three rulings that reading the code first produced an answer
+  neither option contained.
+* **Note**: **IT IS THE SAME DISTINCTION AT A THIRD SCALE.** A cell (no entry
+  versus `BlankInsert`), an outlet (no drops versus needs-no-plate, DR-045), and
+  now a gang. **Each of the first two was got wrong once and cost a correction a
+  milestone later.** This one was ruled before a line of it was built, which is
+  what [a modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md)
+  and DR-044 were both asking for.
+* **Note**: **A DECLINED OPTION IS EVIDENCE AND AN UNASKED ONE IS NOT.** Two
+  styles, `brush` and `bullNose`, because those are the parts named. A
+  **keystone-format brush insert was offered and refused**, so there is no fourth
+  `CellOccupant`, and the refusal is recorded rather than the absence. DR-045
+  §11.44.2 made asking standing after `euroblock` was inferred silently; this is
+  its second payment.
+* **Note**: **THE PLATE IS DERIVED FROM THE FITTINGS AND STORED NOWHERE.**
+  All-pass-through of one style is one integral plate; anything else is a Decora
+  plate plus inserts. That is a fact about **what is stocked**, and §11.27.2 is
+  why it is a derivation: a shop that buys inserts instead of brush plates can be
+  served later by an override that wins **with nothing to withdraw**.
+* **Note**: **A SENTENCE THE PRODUCT USED TO SAY IS NOW A GUESS.** A plate with
+  openings and nothing in them read *"3-gang cover plate"*, true while one kind of
+  plate existed. It reads *"kind unknown"* now. **One strap anywhere settles it**,
+  because a strap needs a Decora opening, so the finished plate is unchanged and
+  only the half-built one is newly honest.
+* **Note**: **THE DEFECT THIS WOULD HAVE SHIPPED WAS IN `Arrange`, WITH BOTH ENDS
+  GREEN.** That gesture rebuilds a plate from nothing, so a brushed opening would
+  have been deleted by a gesture nobody thinks of as destructive. Core proves the
+  plan carries the pass-throughs; the widget harness **reimplements** arrange
+  without the loop that re-fits them; and `buildOutletsActions` had **no test at
+  all**. That is [callbacks have callers](/gates/callbacks-have-callers.md) one
+  layer along: the callback had a caller, and the caller's own twenty lines had no
+  test. It was **watched failing** before it was trusted.
+* **Note**: **Two of my own errors were caught by gates.** A refusal case mutated
+  its fixture with a search string that cannot match an indented file, so it
+  asserted a refusal against an **untouched document and passed**. And the new
+  derivation file sat untracked while all fourteen gates were green, which
+  `verify_tracked_sources` named exactly.
+
 ## 2026-08-12 (third entry)
 
 * **Creation**: [DR-046](/decisions/dr-046-rack-end-is-its-own-termination.md), the

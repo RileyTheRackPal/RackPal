@@ -66,6 +66,29 @@ ignore: **it would have cried wolf twice on its first run.**
   different gate.
 * **It only scans `rackmate_ui`.** Records living elsewhere are unguarded.
 
+# The second blind spot came true at DR-047, and it is worth the detail
+
+Building the pass-through fitting needed `Arrange` to **re-fit** the brushed
+openings it tears down, because that gesture rebuilds a plate from nothing. Had
+that loop been missing, the gesture would have **deleted a part somebody chose**,
+and:
+
+* `rackmate_core` proves `planPlateArrangement` returns the pass-throughs to keep;
+* `outlets_view_test.dart`'s harness **reimplements** arrange over the raw
+  commands, so it never runs the app's version at all;
+* this gate is satisfied, because `onArrange` has a caller;
+* and `buildOutletsActions` had **no test of its own**, in any package.
+
+Four green signals around twenty untested lines. The fix is a test file for the
+**app-side builder** (`apps/rackmate/test/session/outlet_plate_actions_test.dart`),
+watched failing with the loop disabled before being trusted.
+
+**The generalisation: a callback has three parts and this gate checks one.** The
+declaration, the call site, and the twenty lines that turn the call into commands.
+When a UI test harness reimplements the third part rather than importing it, the
+harness is a *second implementation* and the real one is unguarded. Ask which of
+the three a suite is actually exercising.
+
 # It was watched failing
 
 A gate that has only ever been green proves nothing. With the call site removed

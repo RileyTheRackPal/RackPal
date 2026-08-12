@@ -2229,6 +2229,61 @@ when `_valueFor` already maps that to `''`, so it never fired; a test harness mi
 but not `rackTerm`; and three column tests that pinned the old default set. **Every one of the four
 was caught by a test rather than by review.**
 
+**#678 closed 2026-08-12 at `911258f`, ruling `8f673cb`, and the ruling is the interesting half.**
+The task and canon §11.44.6 both frame it as *"is the pass-through plate a property of the OUTLET or
+of the DROP"*. **It is neither**, and a census before pricing is what said so.
+
+***THE DISTINCTION WAS ALREADY HALF-BUILT AND THE FIELD'S TYPE WAS HIDING IT.*** `Gang.strap` is
+`Strap?`, and null already meant *"nobody has picked a part yet"*. A brush plate is a gang opening
+somebody **decided** gets no strap, so the two states were sharing one spelling. That is DR-007
+§11.7.4's cell distinction at a **third scale**: a cell (no entry versus `BlankInsert`), an outlet
+(no drops versus needs-no-plate, §11.44.4) and now a gang. **Each of the first two was got wrong
+once and cost a correction a milestone later**, so this one was ruled before a line of it existed.
+
+*Both named options were live and both are refused, with reasons.* The **drop** buys nothing:
+`StructureOrigin.outletId` is non-nullable, so every drop already has an outlet to hang the fact on,
+and it costs three claims about one physical object for three runs through one brush plate. The
+**outlet** cannot express a mixed plate (one 2-gang cover, a strap behind one opening and a brush at
+the other), and it duplicates a fact the gangs carry, which is the shape CR-107 deleted
+`StructureDrop` over.
+
+***THE VOCABULARY WAS ASKED AND ONE OPTION WAS DECLINED, WHICH IS §11.44.2 PAYING A SECOND TIME.***
+`brush` and `bullNose`, because the user names a whole brush plate, a Decora-format insert and a
+bull-nose or grommet plate as parts they buy. **A keystone-format brush insert was offered and
+declined**, so there is no fourth `CellOccupant` and nothing here touches a strap's cells. A
+declined option is evidence; an unasked one is not.
+
+*The plate is derived and the rule is a fact about stock.* `derived/plate_materials.dart`: every
+opening a pass-through of **one** style is one integral N-gang plate, anything else is a Decora plate
+plus one insert per brushed opening. Nobody manufactures every Decora-plus-brush combination, and
+mixed styles fail the same way, which is why the rule keys on *one style* rather than on *all
+pass-through*. **No field records which form was bought** (§11.27.2): a shop stocking inserts rather
+than brush plates can be served later by an override that wins with nothing to withdraw.
+
+**ONE SENTENCE THE PRODUCT USED TO SAY IS NOW A GUESS, AND IT IS SAID DIFFERENTLY.** A plate with
+openings and nothing fitted read *"3-gang cover plate"*, which was true while there was one kind of
+plate. It reads *"3-gang plate, kind unknown"* now, because an unfitted opening could still make the
+whole plate one integral part. **One strap anywhere settles it**, so the finished plate is unchanged
+and only the half-built one is newly honest. `CoverPlateKind` has five values rather than a nullable
+style, on `EquipmentMounting`'s precedent: *"no plate at all"* and *"nobody can say yet"* are
+different facts.
+
+***THE DEFECT THIS CHANGE WOULD HAVE SHIPPED IS IN `Arrange`, AND BOTH ENDS WERE GREEN.*** That
+gesture rebuilds a plate from nothing, so a brushed opening would have been **deleted by a gesture
+nobody thinks of as destructive**. Core proves the plan carries the pass-throughs to keep, and
+`outlets_view_test.dart`'s harness **reimplements** arrange without the loop that re-fits them, so
+neither suite could see the twenty lines in between. `apps/rackmate/test/session/outlet_plate_actions_test.dart`
+is new for exactly that reason: **`buildOutletsActions` had no test of its own**, which is
+`callbacks-have-callers` one layer along. It was **watched failing** with the loop disabled before it
+was trusted.
+
+*Two of the author's own mistakes were caught by the gates rather than by the author, again.* The
+both-keys refusal case mutated its fixture with a `replaceFirst` on `'"strap":{'`, which matches
+nothing because the file is written with a 2-space indent (CR-091): **it asserted a refusal against
+an untouched document and passed**, and now decodes, injects and re-encodes instead. And
+`plate_materials.dart` sat **untracked** while all fourteen local gates were green, which
+`verify_tracked_sources` named exactly, on the barrel export it had already been added to.
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three
