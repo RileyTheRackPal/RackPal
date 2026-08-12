@@ -1,5 +1,30 @@
 # Update Log
 
+## 2026-08-12 (third entry)
+
+* **Creation**: [DR-046](/decisions/dr-046-rack-end-is-its-own-termination.md), the
+  rack end as its own termination.
+* **Note**: **REPORTED AS AN UNWANTED DEFAULT; IT WAS WORSE.** There was only ONE
+  field. `FIELD TERM` and `RACK TERM` both resolved to
+  `StructureOrigin.terminationField`, so a speaker run with a phoenix at the panel
+  and binding posts in the room was **inexpressible**, and the column most people
+  saw was a default showing the other end's data.
+* **Note**: **THE 90 % IS THE ARGUMENT AGAINST A DEFAULT, NOT FOR ONE.** Nine Cat6
+  runs in ten match at both ends, and that is precisely why nothing copies: a
+  schedule that fills the second field can no longer tell a stated value from an
+  assumed one. The convenience is a **gesture** that writes real values because
+  somebody pressed it, and it **skips rows whose field end is unknown**.
+* **Note**: **A SCRIPTED EDIT MATCHED INSIDE ANOTHER LINE AND THE FIELD VANISHED
+  MID-CHAIN.** A six-space search string is a substring of the same eight-space
+  line, so a replace hit one site twice, the wrong duplicate was deleted, and
+  `buildAddHomeRunCommand` took the new parameter without forwarding it. **Parsed,
+  planned, then gone**, with every layer correct in isolation. Found by probing the
+  chain end to end, which is the same instrument that found four earlier holes.
+* **Note**: **#679 filed rather than fixed.** The printed Termination Schedule's
+  `TERM` column still means the field end, and splitting it re-lays a twelve-column
+  landscape sheet whose width is already allocated. DR-027 put sheets in M6 for
+  exactly this reason, so the inconsistency is recorded as stated.
+
 ## 2026-08-12 (second entry)
 
 * **Creation**: [DR-045](/decisions/dr-045-rj45-plug-and-plateless-outlet.md), the

@@ -2193,6 +2193,42 @@ strap from a cover plate; this is a **third** object with no strap behind it, an
 plateless outlet has zero gangs by construction. Nothing is wrong today; the materials sheet simply
 does not know about a part that gets bought.
 
+**M3-N closed 2026-08-12, one commit `422e2e6` plus DR-046.** Reported as *"the rack termination
+shouldn't be automatically set by the field termination"*.
+
+***IT WAS WORSE THAN AUTOMATIC: THERE WAS ONLY ONE FIELD.***
+`StructureOrigin.terminationField` is documented as *"how the WALL-PLATE end is finished"*.
+`FIELD TERM` read it, and `RACK TERM` read it too by way of `_terminationOf`. **Two columns, one
+value, since M3-C.** So a speaker run with a phoenix connector at the panel and binding posts in the
+room was not awkward to express, it was **inexpressible**, and the column most people saw showed the
+other end's data: `RACK TERM` was a **default** and `FIELD TERM` was **optional**.
+
+***THE 90 % IS THE ARGUMENT AGAINST A DEFAULT, NOT FOR ONE.*** The user's own figure is that nine
+Cat6 runs in ten match at both ends, and that is exactly why nothing copies: if the product fills the
+second field, a schedule can no longer tell a stated value from an assumed one, which is the defect
+being removed wearing a different hat. The convenience is a **gesture**, `Rack term: same as field`
+on the batch bar, which writes real values, lands as one undo entry, and **skips rows whose field end
+is unknown** rather than copying *"nobody has said"* into a second column.
+
+*The drop line takes a second colon*, `2x 16/4:binding post:euroblock`, field first. One colon still
+means the field end alone, so every line written under DR-043 parses unchanged.
+
+**#679 IS FILED AND NOT BUILT.** The **printed** Termination Schedule's `TERM` column still resolves
+to the field end, so the sheet and the editor now disagree about what `TERM` means. Splitting or
+renaming it re-lays a twelve-column landscape page whose 690 pt is already allocated, and **DR-027
+§11.26 moved every sheet to M6 for exactly this reason**. §11.45.5 records the inconsistency as
+**stated** rather than hidden.
+
+***FOUR OF THE AUTHOR'S OWN MISTAKES, AND ONE IS A PATTERN WORTH THE ENTRY.*** A six-space search
+string matched **inside** an eight-space line, so a scripted replace hit the same site twice; the
+wrong duplicate was deleted; and `buildAddHomeRunCommand` ended up taking the new parameter without
+forwarding it. **The field parsed, planned, and then vanished**, and every layer looked correct in
+isolation. It was found by probing the chain end to end rather than by reading it, which is the same
+instrument that found #591, #668 and #674. The other three: a guard comparing against `kUnknownCell`
+when `_valueFor` already maps that to `''`, so it never fired; a test harness mirroring `fieldTerm`
+but not `rackTerm`; and three column tests that pinned the old default set. **Every one of the four
+was caught by a test rather than by review.**
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three

@@ -43,6 +43,8 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 
 * [DR-045, the RJ45 plug and an outlet that needs no plate](dr-045-rj45-plug-and-plateless-outlet.md) - a run that ends in a plug rather than a jack, and the AP box that follows from it, which the product had been calling unfinished since M3-H.
 
+* [DR-046, the rack end is its own termination](dr-046-rack-end-is-its-own-termination.md) - reported as an unwanted default and it was worse: there was one field and both columns read it, so a phoenix at the panel could not be recorded at all.
+
 # Not yet written up
 
 DR-002 (residential primary), DR-003 (device builder in v1), DR-004 (multi-sheet

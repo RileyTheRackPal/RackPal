@@ -9565,6 +9565,63 @@ gets bought.
 derived getter and one corrected sentence on a surface. `kSchemaVersion` does not move: enum values
 serialize by name, so no document in existence contains this one.
 
+### 11.45 DR-046 · The rack end is its own termination, and nothing infers it
+
+**Settled by the user on 2026-08-12**, reported as *"the rack termination shouldn't be automatically
+set by the field termination ... 90% of the time we'll have the same termination on both ends for a
+CAT6, but a speaker run might have a phoenix connector on the rack side, but binding posts on the
+other."*
+
+**11.45.1 IT WAS WORSE THAN AUTOMATIC. THERE WAS ONLY ONE FIELD.**
+`StructureOrigin.terminationField` is documented as *"how the WALL-PLATE end is finished"*. The
+`FIELD TERM` column read it, and the `RACK TERM` column read it too, by way of
+`_terminationOf`. **Two columns, one value, since M3-C.**
+
+So the speaker run above was not awkward to express, it was **inexpressible**: recording binding
+posts in the room forced the schedule to claim binding posts at the panel. And the column most people
+saw was the one showing the other end's data, because `RACK TERM` was a **default** column and
+`FIELD TERM` was **optional**.
+
+**`StructureOrigin` gains `terminationRack`**, beside `terminationField`. That class already held
+`fieldLabel` and `rackLabel`, so holding both ends of the termination is the shape it was already in.
+
+**11.45.2 NOTHING INFERS ONE FROM THE OTHER, AND THE 90 % IS THE ARGUMENT AGAINST DOING SO.** The
+user's own figure is that nine Cat6 runs in ten match at both ends. **Defaulting on that basis
+re-creates precisely the defect being removed**: a schedule cannot then distinguish a value somebody
+stated from one the product copied, which is G4's complaint in its purest form. A run whose panel end
+nobody has decided prints the unknown marker.
+
+**The convenience is a GESTURE, not a default.** `Rack term: same as field` on the batch bar fills
+`RACK TERM` from `FIELD TERM` on the selected visible rows. It writes **real** values because a
+person asked for them, it lands as **one** undo entry, and it **skips rows whose field end is
+unknown** rather than copying *"nobody has said"* onto a second column, which would make the two
+agree for the wrong reason.
+
+**11.45.3 The drop line takes a second colon: `2x 16/4:binding post:euroblock`.** Field first, rack
+second. **One colon still means the field end alone**, so every line written under DR-043 parses
+unchanged. A bad rack token refuses the **whole line** with its own caret, on the same vocabulary as
+the field end: a termination is a termination, and the end it is on is which colon it followed.
+
+**11.45.4 `FIELD TERM` becomes a default column.** Both ends side by side is what makes the
+distinction teach itself, and until now the visible one was showing the wrong end. It also **leaves
+the as-built group**, because a group that toggles a column already on screen turns it **off**, which
+is not what *"show me the as-built set"* means.
+
+**11.45.5 THE PRINTED TERMINATION SCHEDULE IS DELIBERATELY UNCHANGED.** `ScheduleColumnId.term` still
+resolves to the field end. That sheet is **M6's under DR-027** and its column set is a sheet change,
+not an editor change; a twelve-column landscape sheet gaining a thirteenth is exactly the kind of
+thing §11.26 moved out of M3. **Filed as board #679, not smuggled in.** The editor is correct now and
+the sheet is unchanged, which is a stated inconsistency rather than a hidden one.
+
+**11.45.6 What this does NOT add.** **`OutletDrop` gains no rack termination.** A template says what
+a recipe pulls and how it lands in the room; what it lands on at the panel depends on which panel,
+which is a fact about a job rather than about a recipe. Nothing prevents adding one later, and
+nothing today would populate it.
+
+**11.45.7 Scope.** **No scope change to roadmap §2.** One nullable field, one grammar production, one
+column moved from optional to default, one gesture. `kSchemaVersion` does not move: the key is
+omitted when null, and it is null on every home run ever written because the field did not exist.
+
 ---
 
 ## 12. Superseded rulings
