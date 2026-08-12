@@ -86,6 +86,16 @@ Link _addDrop(
   return link;
 }
 
+/// The `RemoveGangCommand`s the harness actually applied, in order.
+///
+/// KEPT SO UNDO CAN BE DRIVEN ON THE REAL OBJECT. A fresh command cannot
+/// revert one that has already run: `RemoveGangCommand` stores the gang
+/// it removed, so a second instance built after the fact finds the index
+/// out of range and no-ops. This list is what makes an undo assertion in
+/// a widget test mean anything, and its absence is how the first draft of
+/// that case passed while asserting nothing.
+final List<RemoveGangCommand> _appliedRemovals = <RemoveGangCommand>[];
+
 /// Applies the tab's gestures straight to [doc]: the commands are core's
 /// and this package may not reach for a `DocumentController`.
 OutletsActions _actions(RackDocument doc, {List<String>? log}) =>
@@ -97,7 +107,12 @@ OutletsActions _actions(RackDocument doc, {List<String>? log}) =>
       },
       onRemoveGang: (outletId, gangIndex) {
         log?.add('removeGang $gangIndex');
-        RemoveGangCommand(outletId: outletId, index: gangIndex).apply(doc);
+        final command = RemoveGangCommand(
+          outletId: outletId,
+          index: gangIndex,
+        );
+        _appliedRemovals.add(command);
+        command.apply(doc);
         return null;
       },
       onSetStrap: (outletId, gangIndex, width, height) {
@@ -309,6 +324,120 @@ void main() {
       expect(
         left,
         closeTo(PlateGeometry.unitsForLen(PlateGeometry.edgeMarginX), 0.01),
+      );
+    });
+  });
+
+  group('a gang can be deleted (M3-H/5, #674)', () {
+    testWidgets('an EMPTY gang goes without a prompt', (tester) async {
+      // A dialog for a gesture that destroys nothing trains people to
+      // dismiss dialogs, which is what makes the one that matters
+      // ineffective.
+      final doc = _project(
+        gangs: [
+          Gang(),
+          Gang(strap: Strap(width: 1, height: 1)),
+        ],
+      );
+      final log = <String>[];
+      await _pump(tester, doc, log: log);
+
+      await tester.tap(find.byKey(const ValueKey('plate-remove-0')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(log, ['removeGang 0']);
+      expect(doc.outlets[_outletId]!.gangs, hasLength(1));
+    });
+
+    testWidgets('a gang WITH CELLS asks first and counts what it discards', (
+      tester,
+    ) async {
+      final strap = Strap(width: 2, height: 3);
+      strap.cells[0] = const LinkEndOccupant(
+        Uuid('44444444-4444-4444-8444-000000000001'),
+      );
+      strap.cells[3] = const BlankInsert();
+      final doc = _project(gangs: [Gang(strap: strap)]);
+      final log = <String>[];
+      // A WINDOW, NOT A PHONE. A 2x3 plate is 457 units tall before any
+      // chrome, so at the 800x600 default the controls under it sit off
+      // the bottom of the surface and a tap silently misses.
+      await _pump(tester, doc, log: log, surface: const Size(1600, 900));
+
+      await tester.tap(find.byKey(const ValueKey('plate-remove-0')));
+      await tester.pumpAndSettle();
+      // DR-013's "a confirmation that counts the cables", at gang scale.
+      expect(find.textContaining('2 filled cell(s)'), findsOneWidget);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(log, isEmpty);
+      expect(doc.outlets[_outletId]!.gangs, hasLength(1));
+
+      await tester.tap(find.byKey(const ValueKey('plate-remove-0')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Remove'));
+      await tester.pumpAndSettle();
+      expect(log, ['removeGang 0']);
+      expect(doc.outlets[_outletId]!.gangs, isEmpty);
+    });
+
+    testWidgets('the x deletes the gang it sits under, not the first', (
+      tester,
+    ) async {
+      // Gangs are addressed by POSITION, so an off-by-one here removes a
+      // different opening and looks like it worked.
+      final doc = _project(
+        gangs: [
+          Gang(strap: Strap(width: 1, height: 1)),
+          Gang(strap: Strap(width: 2, height: 3)),
+          Gang(),
+        ],
+      );
+      final log = <String>[];
+      await _pump(tester, doc, log: log, surface: const Size(1600, 900));
+
+      await tester.tap(find.byKey(const ValueKey('plate-remove-1')));
+      await tester.pumpAndSettle();
+      expect(log, ['removeGang 1']);
+
+      final gangs = doc.outlets[_outletId]!.gangs;
+      expect(gangs, hasLength(2));
+      // The 6-port went; the 1-port and the strapless one remain, in
+      // order.
+      expect(gangs[0].strap!.cellCount, 1);
+      expect(gangs[1].strap, isNull);
+    });
+
+    testWidgets('undo puts the gang back with everything in it', (
+      tester,
+    ) async {
+      // The command already tests this; what this adds is that the
+      // GESTURE reaches that command rather than some other path.
+      const linkId = Uuid('44444444-4444-4444-8444-000000000002');
+      final strap = Strap(width: 1, height: 2);
+      strap.cells[1] = const LinkEndOccupant(linkId);
+      final doc = _project(gangs: [Gang(strap: strap)]);
+      _appliedRemovals.clear();
+
+      await _pump(tester, doc, surface: const Size(1600, 900));
+      await tester.tap(find.byKey(const ValueKey('plate-remove-0')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Remove'));
+      await tester.pumpAndSettle();
+      expect(doc.outlets[_outletId]!.gangs, isEmpty);
+
+      // REVERTING THE COMMAND THE GESTURE ACTUALLY RAN. A fresh instance
+      // would find index 0 out of range on an empty list and no-op,
+      // which is how the first draft of this case passed nothing while
+      // looking like it asserted undo.
+      expect(_appliedRemovals, hasLength(1));
+      _appliedRemovals.single.revert(doc);
+      expect(doc.outlets[_outletId]!.gangs, hasLength(1));
+      expect(
+        doc.outlets[_outletId]!.gangs.single.strap!.cells[1],
+        const LinkEndOccupant(linkId),
       );
     });
   });

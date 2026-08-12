@@ -340,6 +340,7 @@ class _PlatePane extends StatelessWidget {
                       onCell: (gang, cell) =>
                           _pickOccupant(context, gang, cell),
                       onStrap: (gang) => _pickStrap(context, gang),
+                      onRemove: (gang) => _removeGang(context, gang),
                     ),
                   ),
                 ),
@@ -406,6 +407,51 @@ class _PlatePane extends StatelessWidget {
       if (ok != true) return;
     }
     run(() => actions.onArrange(outlet.id, plan));
+  }
+
+  /// Removes one gang, asking first when it holds anything.
+  ///
+  /// **THE CALL SITE THAT DID NOT EXIST UNTIL M3-H/5.**
+  /// `RemoveGangCommand` was built and tested, `OutletsActions.onRemoveGang`
+  /// was declared, and `buildOutletsActions` implemented it. Nothing
+  /// invoked it, so the only way to remove a gang was `Ctrl+Z` or a full
+  /// destructive `Arrange`. `actions_have_callers_test.dart` is
+  /// now the gate that fails if a callback loses its caller again.
+  ///
+  /// **THE CONFIRMATION COUNTS WHAT IT DISCARDS** and appears only when
+  /// there is something to discard, which is DR-013's "a cascade with a
+  /// confirmation that counts the cables" and `_pickStrap`'s own shape.
+  /// An empty gang goes without a prompt: a dialog for a gesture that
+  /// destroys nothing trains people to dismiss dialogs.
+  Future<void> _removeGang(BuildContext context, int gangIndex) async {
+    if (gangIndex < 0 || gangIndex >= outlet.gangs.length) return;
+    final strap = outlet.gangs[gangIndex].strap;
+    final occupied = strap?.cells.length ?? 0;
+
+    if (occupied > 0) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Remove gang ${gangIndex + 1}?'),
+          content: Text(
+            'It holds $occupied filled cell(s), and they go with it. '
+            'Undo puts the gang back with everything in it.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Remove'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
+    run(() => actions.onRemoveGang(outlet.id, gangIndex));
   }
 
   Future<void> _pickStrap(BuildContext context, int gangIndex) async {
@@ -570,6 +616,7 @@ class _PlateWidget extends StatelessWidget {
     required this.links,
     required this.onCell,
     required this.onStrap,
+    required this.onRemove,
   });
 
   final RackDocument doc;
@@ -577,6 +624,7 @@ class _PlateWidget extends StatelessWidget {
   final List<Link> links;
   final void Function(int gangIndex, int cellIndex) onCell;
   final ValueChanged<int> onStrap;
+  final ValueChanged<int> onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -630,10 +678,11 @@ class _PlateWidget extends StatelessWidget {
                   left: geometry.openingAt(g).left,
                   width: geometry.openingAt(g).width,
                   top: 0,
-                  child: _StrapButton(
+                  child: _GangControls(
                     gangIndex: g,
                     strap: outlet.gangs[g].strap,
-                    onPressed: () => onStrap(g),
+                    onStrap: () => onStrap(g),
+                    onRemove: () => onRemove(g),
                   ),
                 ),
             ],
@@ -666,31 +715,58 @@ class _PlateWidget extends StatelessWidget {
   }
 }
 
-/// The `6-port` / `No strap` control under one opening.
-class _StrapButton extends StatelessWidget {
-  const _StrapButton({
+/// The two controls under one opening: which strap, and remove the gang.
+///
+/// **THE DELETE SITS BESIDE THE THING IT DELETES**, rather than in the
+/// strap dialog or behind a right-click. A destructive action folded into
+/// a menu labelled `6-port` is one nobody looks for, and this app has no
+/// other context menu to teach the right-click with. Adjacency is what
+/// buys discoverability here; the confirmation is what buys safety, and
+/// the two are different problems.
+class _GangControls extends StatelessWidget {
+  const _GangControls({
     required this.gangIndex,
     required this.strap,
-    required this.onPressed,
+    required this.onStrap,
+    required this.onRemove,
   });
 
   final int gangIndex;
   final Strap? strap;
-  final VoidCallback onPressed;
+  final VoidCallback onStrap;
+  final VoidCallback onRemove;
 
   @override
-  Widget build(BuildContext context) => TextButton(
-    key: ValueKey('plate-strap-$gangIndex'),
-    onPressed: onPressed,
-    style: TextButton.styleFrom(padding: EdgeInsets.zero),
-    child: Text(
-      strap == null
-          // NOT "0-port". A gang whose part nobody has chosen is unknown,
-          // and saying zero would make it look decided.
-          ? 'No strap'
-          : '${strap!.cellCount}-port',
-      style: const TextStyle(fontSize: 12),
-    ),
+  Widget build(BuildContext context) => Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Flexible(
+        child: TextButton(
+          key: ValueKey('plate-strap-$gangIndex'),
+          onPressed: onStrap,
+          style: TextButton.styleFrom(padding: EdgeInsets.zero),
+          child: Text(
+            strap == null
+                // NOT "0-port". A gang whose part nobody has chosen is
+                // unknown, and saying zero would make it look decided.
+                ? 'No strap'
+                : '${strap!.cellCount}-port',
+            style: const TextStyle(fontSize: 12),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ),
+      IconButton(
+        key: ValueKey('plate-remove-$gangIndex'),
+        onPressed: onRemove,
+        icon: const Icon(Icons.close, size: 14),
+        visualDensity: VisualDensity.compact,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+        tooltip: 'Remove gang ${gangIndex + 1}',
+      ),
+    ],
   );
 }
 
