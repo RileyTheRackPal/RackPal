@@ -1942,15 +1942,52 @@ JsonMap _encodeOutlet(Outlet o) {
 // Sorted by index on the way out, so the bytes are a function of the
 // document and not of a map's iteration order.
 
+// A PASS-THROUGH IS A SECOND KEY, NOT A TAGGED UNION (DR-047 §11.46.7).
+// `strap` is written exactly as it was, byte for byte, so no document in
+// existence changes and `kSchemaVersion` does not move; `passThrough` is
+// a key nothing has ever written. Wrapping both in a `{"kind": ...}`
+// envelope would have been tidier and would have rewritten every plate
+// ever saved, which is CR-117's whole point.
+//
+// A gang carrying BOTH keys is malformed rather than forward-compatible:
+// an opening holds one part. Refused at the door, like a 3-wide strap.
+
 JsonMap _encodeGang(Gang g) {
   final json = <String, Object?>{};
-  final strap = g.strap;
-  if (strap != null) json['strap'] = _encodeStrap(strap);
+  switch (g.fitting) {
+    case null:
+      break;
+    case final Strap s:
+      json['strap'] = _encodeStrap(s);
+    case final PassThrough p:
+      json['passThrough'] = <String, Object?>{'style': p.style.name};
+  }
   return json;
 }
 
-Gang _decodeGang(JsonMap json) => Gang(
-  strap: decodeNullableObject(json, 'strap', 'Gang.strap', _decodeStrap),
+Gang _decodeGang(JsonMap json) {
+  final strap = decodeNullableObject(json, 'strap', 'Gang.strap', _decodeStrap);
+  final passThrough = decodeNullableObject(
+    json,
+    'passThrough',
+    'Gang.passThrough',
+    _decodePassThrough,
+  );
+  if (strap != null && passThrough != null) {
+    throw const FormatException(
+      'Gang has both a strap and a passThrough, and one opening holds '
+      'one part (DR-047 §11.46.2).',
+    );
+  }
+  return Gang(fitting: strap ?? passThrough);
+}
+
+PassThrough _decodePassThrough(JsonMap json) => PassThrough(
+  decodeEnumStrict(
+    PassThroughStyle.values,
+    asStr(json['style'], 'Gang.passThrough.style'),
+    'Gang.passThrough.style',
+  ),
 );
 
 JsonMap _encodeStrap(Strap s) {

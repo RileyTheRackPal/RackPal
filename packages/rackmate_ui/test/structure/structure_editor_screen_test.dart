@@ -134,6 +134,14 @@ final class _Harness {
       ).apply(doc);
       return null;
     },
+    onSetPassThrough: (outletId, gangIndex, style) {
+      SetGangPassThroughCommand(
+        outletId: outletId,
+        index: gangIndex,
+        style: style,
+      ).apply(doc);
+      return null;
+    },
     onSetCell: (outletId, gangIndex, cellIndex, occupant) {
       SetCellOccupantCommand(
         outletId: outletId,

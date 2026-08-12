@@ -229,6 +229,13 @@ enum LabelKey {
   setStrapSize,
   setCellOccupant,
 
+  // DR-047 §11.46.2. A FIFTH, and it is not `setStrapSize` with a flag:
+  // fitting a brush and sizing a strap are two different acts on two
+  // different parts, and the Edit menu has to name the one that happened.
+  // Undoing "Fit pass-through" back to a 6-port strap full of keystones
+  // reads as an accident if the menu called it "Set strap size".
+  setGangPassThrough,
+
   // The transaction label for `Arrange`, which fits straps to the drops
   // that land on a plate and fills the cells in one step (M3-H/2). One
   // entry on the undo stack for a whole plate, `importCsv`'s reasoning at

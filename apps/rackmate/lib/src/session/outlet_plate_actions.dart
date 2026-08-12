@@ -100,13 +100,43 @@ OutletsActions buildOutletsActions({required DocumentController controller}) {
       return null;
     },
 
+    onSetPassThrough: (outletId, gangIndex, style) {
+      final refusal = gangGuard(outletId, gangIndex);
+      if (refusal != null) return refusal;
+      // NO SIZE CHECK AND NO REFUSAL FOR A FULL STRAP. Discarding cells
+      // is `gang_commands.dart`'s standing choice for somebody who has
+      // decided the plate was wrong, and the count is
+      // `occupantsLostByPassThrough`, which the picker asks BEFORE it
+      // gets here.
+      controller.transact(LabelKey.setGangPassThrough, (tx) {
+        tx.add(
+          SetGangPassThroughCommand(
+            outletId: outletId,
+            index: gangIndex,
+            style: style,
+          ),
+        );
+      });
+      return null;
+    },
+
     onSetCell: (outletId, gangIndex, cellIndex, occupant) {
       final refusal = gangGuard(outletId, gangIndex);
       if (refusal != null) return refusal;
-      final strap = outletOf(outletId)!.gangs[gangIndex].strap;
-      if (strap == null) {
+      // THREE ARMS AND THREE SENTENCES (DR-047 §11.46.2). "Nobody has
+      // chosen a part" and "somebody fitted a hole here" are different
+      // answers to "why has this gang no cells", and one sentence for
+      // both is the collapse the ruling removes: the first invites a
+      // person to pick a strap, the second tells them the plate is
+      // already right.
+      final fitting = outletOf(outletId)!.gangs[gangIndex].fitting;
+      if (fitting is PassThrough) {
+        return 'Gang ${gangIndex + 1} is a pass-through, so it has no cells.';
+      }
+      if (fitting is! Strap) {
         return 'Gang ${gangIndex + 1} has no strap yet, so it has no cells.';
       }
+      final strap = fitting;
       if (!strap.holdsIndex(cellIndex)) {
         return 'A ${strap.cellCount}-port strap has no cell ${cellIndex + 1}.';
       }
@@ -152,6 +182,30 @@ OutletsActions buildOutletsActions({required DocumentController controller}) {
               occupant: cell.occupant,
             ),
           );
+        }
+        // THE BRUSHES COME BACK, AFTER the straps (DR-047 §11.46.6).
+        // Arrange plans from what the drops need in cells, and a
+        // pass-through needs none, so a plan that simply rebuilt the
+        // plate would delete a part somebody chose. They land last
+        // because the cell indices above are relative to the strap gangs
+        // this loop must not renumber.
+        //
+        // THE INDEX COMES FROM THE PLAN, NOT FROM `outlet.gangs.length`.
+        // Every gang was removed and `plan.straps.length` were added, so
+        // the nth brush lands at `straps.length + n` by construction.
+        // Reading the live list mid-transaction would make this depend on
+        // whether `transact` applies as it collects, which is not a thing
+        // this call site should know or care about.
+        for (var i = 0; i < plan.keptPassThroughs.length; i++) {
+          tx
+            ..add(AddGangCommand(outletId: outletId))
+            ..add(
+              SetGangPassThroughCommand(
+                outletId: outletId,
+                index: plan.straps.length + i,
+                style: plan.keptPassThroughs[i],
+              ),
+            );
         }
       });
       return null;

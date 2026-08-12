@@ -3,10 +3,24 @@
 // THE INSIDE OF A LOW-VOLTAGE BOX (DR-007 §11.7). An `Outlet` is one wall
 // plate; this is what is behind it.
 //
-//   Outlet          one wall plate / one ceiling location   [CR-016]
-//     └─ Gang × N   one gang opening, ORDERED               [DR-007 §11.7.3]
-//          └─ Strap W × H grid of keystone cells
+//   Outlet            one wall plate / one ceiling location [CR-016]
+//     └─ Gang × N     one gang opening, ORDERED             [DR-007 §11.7.3]
+//          └─ fitting Strap, or a PassThrough               [DR-047 §11.46.2]
 //               └─ cell  one occupant, or nothing at all
+//
+// ═════════════════════════════════════════════════════════════════════
+// AN OPENING IS NOT ALWAYS A STRAP (DR-047 §11.46)
+// ═════════════════════════════════════════════════════════════════════
+// A brush or bull-nose plate is a plate with a hole in it and nothing
+// behind the hole. Until DR-047 this file could not say that, because
+// `Gang.strap` was `Strap?` and null already meant SOMETHING ELSE:
+// nobody has picked a part yet.
+//
+// So [GangFitting] is sealed and [Strap] is one case of it. The rename
+// from `strap` to `fitting` is deliberate and the sealed switch is the
+// point: every reader now has to say which of the three states it means,
+// and no getter hands back null for a pass-through, because that is
+// exactly the collapse the ruling removes.
 //
 // ═════════════════════════════════════════════════════════════════════
 // BUILT FROM THE RULING AS IT NOW STANDS, NOT FROM THE REQUEST
@@ -62,8 +76,15 @@
 // derived from an absence of work. The precedent one scale up is exact
 // and §11.7.4 names it: `X01 Blank Panel` is a catalog template, not a
 // gap in a rack.
+//
+// THAT DISTINCTION NOW EXISTS AT THREE SCALES and DR-047 §11.46.1 is
+// where they are tabulated: a cell (no entry / `BlankInsert`), a gang
+// (no fitting / a [PassThrough]) and an outlet (no drops / needs no
+// plate, §11.44.4). Two of the three were got wrong once each and cost a
+// correction a milestone later. The gang one was ruled first.
 import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/model/conductor.dart' show ConductorRef;
+import 'package:rackmate_core/src/model/enums.dart' show PassThroughStyle;
 import 'package:rackmate_core/src/units/ids.dart';
 
 /// The width bounds of a strap: `W ∈ {1, 2}` (DR-007 §11.7.1).
@@ -170,6 +191,51 @@ final class BlankInsert extends CellOccupant {
   String toString() => 'BlankInsert()';
 }
 
+/// What is fitted in one gang opening (DR-047 §11.46.2).
+///
+/// Two cases, and the nullability of the field holding one is the third
+/// state: **null is UNKNOWN**, a gang whose part nobody has picked. See
+/// [Gang.fitting], and this file's header for why a `Strap?` could not
+/// express the middle case at all.
+sealed class GangFitting {
+  const GangFitting();
+}
+
+/// A hole in the plate at this opening, with nothing behind it.
+///
+/// **A DECISION AND A PURCHASE**, which is what separates it from a gang
+/// with no fitting chosen. §11.7.4's argument for `BlankInsert` one
+/// scale up: *"somebody decided nothing goes there"* is a part on a
+/// materials sheet, and *"nobody has said"* is not.
+///
+/// **IT RECORDS NO DROPS, AND THAT WAS ASKED** (§11.46, question 3). A
+/// brush is one opening that any number of cables share, so per-opening
+/// occupancy is a fiction there. Listing the drops through it would also
+/// be a **second membership list** beside `Link.structureOrigin.outletId`,
+/// which AC-019 and CR-016 shaped the whole model to avoid: it could
+/// disagree with the first, and it would need its own cascade when a drop
+/// is deleted.
+///
+/// **WHETHER THE PLATE ITSELF IS BRUSHED OR HOLDS AN INSERT IS DERIVED**,
+/// never stored (§11.46.4). `derived/plate_fill.dart` decides, from
+/// whether every opening on the plate is a pass-through of one style.
+@immutable
+final class PassThrough extends GangFitting {
+  const PassThrough(this.style);
+
+  final PassThroughStyle style;
+
+  @override
+  bool operator ==(Object other) =>
+      other is PassThrough && other.style == style;
+
+  @override
+  int get hashCode => Object.hash('passThrough', style);
+
+  @override
+  String toString() => 'PassThrough(${style.name})';
+}
+
 /// One keystone strap: a `W × H` grid of equal cells.
 ///
 /// **FIVE PORT COUNTS EXIST AND FIVE PORTS IS NOT ONE OF THEM.** With
@@ -184,7 +250,11 @@ final class BlankInsert extends CellOccupant {
 /// alike (DR-038, measured). That is not modelled here because it is not
 /// a per-strap fact: the figures live once, in `draw/scene/`, and this
 /// type carries only which cells exist and what is in them.
-final class Strap {
+///
+/// **ONE CASE OF [GangFitting] SINCE DR-047**, and nothing else about it
+/// changed. A strap is what is behind a Decora opening; a [PassThrough]
+/// is what is behind nothing.
+final class Strap extends GangFitting {
   Strap({
     required this.width,
     required this.height,
@@ -249,21 +319,25 @@ final class Strap {
   }
 }
 
-/// One gang opening in a plate, holding at most one [Strap].
+/// One gang opening in a plate, holding at most one [GangFitting].
 ///
-/// **[strap] IS NULLABLE AND NULL IS UNKNOWN** (G4/CR-114). A gang whose
-/// strap nobody has chosen is an ordinary state at rough-in: the box is
+/// **[fitting] IS NULLABLE AND NULL IS UNKNOWN** (G4/CR-114). A gang whose
+/// part nobody has chosen is an ordinary state at rough-in: the box is
 /// in the wall, the drops are pulled, and which part gets screwed to it
 /// is a trim-out decision weeks later. Defaulting it to a 1-port strap
 /// would put a purchase on a materials sheet that nobody made, which is
 /// the same defect `Outlet.mountHeightAff` documents for a plate nobody
 /// has measured.
+///
+/// **THREE STATES, AND THE FIELD WAS `Strap?` FOR TWO OF THEM** until
+/// DR-047 §11.46.2. Null, a [Strap], or a [PassThrough]: an opening
+/// somebody decided gets no strap is not an opening nobody has reached.
 final class Gang {
-  Gang({this.strap});
+  Gang({this.fitting});
 
   /// ACCESS CONTROL: plain mutable pending the AC-013 retrofit, converted
   /// as it is wired to a `Command`.
-  Strap? strap;
+  GangFitting? fitting;
 }
 
 /// Whether `W × H` names a strap that exists (DR-007 §11.7.1).

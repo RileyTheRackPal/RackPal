@@ -582,7 +582,7 @@ RackDocument _plateGangsFixture() {
       // NON-ADJACENT cells (DR-007 §11.7.2 as revised), one decided
       // blank, and two cells nobody has ruled on.
       Gang(
-        strap: Strap(
+        fitting: Strap(
           width: 2,
           height: 3,
           cells: {
@@ -595,7 +595,7 @@ RackDocument _plateGangsFixture() {
       ),
       // Gang 1: a strap chosen and nothing decided about any cell. The
       // `cells` key is absent, not an empty list.
-      Gang(strap: Strap(width: 1, height: 1)),
+      Gang(fitting: Strap(width: 1, height: 1)),
       // Gang 2: no strap chosen. Encodes as `{}` — absent key, never an
       // explicit null (G4/CR-114).
       Gang(),
@@ -742,10 +742,10 @@ void main() {
       final doc = (_codec.read(bytes) as Ok<RackDocument>).value;
       final gangs = doc.outlets.values.single.gangs;
       expect(gangs, hasLength(3));
-      expect(gangs[2].strap, isNull);
+      expect(gangs[2].fitting, isNull);
       // The undecided cells came back undecided rather than as blanks.
-      expect(gangs[0].strap!.undecidedCount, 2);
-      expect(gangs[1].strap!.undecidedCount, 1);
+      expect((gangs[0].fitting! as Strap).undecidedCount, 2);
+      expect((gangs[1].fitting! as Strap).undecidedCount, 1);
     });
 
     test('a strap size no manufacturer makes is refused on read', () {

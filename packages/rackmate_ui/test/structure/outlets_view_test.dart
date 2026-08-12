@@ -125,6 +125,15 @@ OutletsActions _actions(RackDocument doc, {List<String>? log}) =>
         ).apply(doc);
         return null;
       },
+      onSetPassThrough: (outletId, gangIndex, style) {
+        log?.add('setPassThrough $gangIndex ${style.name}');
+        SetGangPassThroughCommand(
+          outletId: outletId,
+          index: gangIndex,
+          style: style,
+        ).apply(doc);
+        return null;
+      },
       onSetCell: (outletId, gangIndex, cellIndex, occupant) {
         log?.add('setCell $gangIndex:$cellIndex ${occupant.runtimeType}');
         SetCellOccupantCommand(
@@ -263,8 +272,34 @@ void main() {
     testWidgets('the cover plate chip is gangs.length, always', (tester) async {
       // §11.7.8 change 1, on screen: N straps plus exactly ONE N-gang
       // cover plate, and the count is never free.
-      await _pump(tester, _project(gangs: [Gang(), Gang(), Gang()]));
+      await _pump(
+        tester,
+        _project(
+          gangs: [
+            Gang(),
+            Gang(),
+            Gang(fitting: Strap(width: 1, height: 1)),
+          ],
+        ),
+      );
       expect(find.text('3-gang cover plate'), findsOneWidget);
+    });
+
+    testWidgets('a plate with NOTHING fitted names its gangs and not its '
+        'kind', (tester) async {
+      // DR-047 §11.46.4 CHANGED THIS SENTENCE, and it is a real
+      // consequence rather than a rename. Before the ruling there was one
+      // kind of plate, so "3-gang cover plate" over three empty openings
+      // was true by construction. Now an unfitted opening could still
+      // become a brush and make the whole plate one integral part, so
+      // naming Decora here would be a guess (G4).
+      //
+      // THE CASE ABOVE IS WHY THIS IS NOT MERELY PEDANTRY: one strap
+      // anywhere settles it, because a strap needs a Decora opening and
+      // no later decision changes that. The common finished plate reads
+      // exactly as it always did.
+      await _pump(tester, _project(gangs: [Gang(), Gang(), Gang()]));
+      expect(find.text('3-gang plate, kind unknown'), findsOneWidget);
     });
   });
 
@@ -279,9 +314,148 @@ void main() {
     testWidgets('a fitted strap names its port count', (tester) async {
       await _pump(
         tester,
-        _project(gangs: [Gang(strap: Strap(width: 2, height: 3))]),
+        _project(gangs: [Gang(fitting: Strap(width: 2, height: 3))]),
       );
       expect(find.text('6-port'), findsOneWidget);
+    });
+  });
+
+  group('a brushed opening is a part, not an absence (DR-047)', () {
+    testWidgets('its button names the part rather than reading No strap', (
+      tester,
+    ) async {
+      // THE M3-H PLATELESS-OUTLET DEFECT ONE SCALE DOWN. A decided
+      // opening reading "No strap" is a correct plate describing itself
+      // as unfinished work.
+      await _pump(
+        tester,
+        _project(
+          gangs: [Gang(fitting: const PassThrough(PassThroughStyle.brush))],
+        ),
+      );
+      expect(find.text('Brush'), findsOneWidget);
+      expect(find.text('No strap'), findsNothing);
+    });
+
+    testWidgets('the opening is drawn as a hole, with no cells in it', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        _project(
+          gangs: [Gang(fitting: const PassThrough(PassThroughStyle.bullNose))],
+        ),
+      );
+      expect(
+        find.byKey(const ValueKey('plate-passthrough-0')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('plate-cell-0-0')), findsNothing);
+    });
+
+    testWidgets('THE PICKER HAS A CALLER, and it reaches the action', (
+      tester,
+    ) async {
+      // `actions_have_callers_test.dart` gates the callback having a call
+      // site at all; this gates the call site being reachable by a
+      // person, which is the half M3-H/5 shipped without.
+      final doc = _project(gangs: [Gang()]);
+      final log = <String>[];
+      await _pump(tester, doc, log: log);
+
+      await tester.tap(find.byKey(const ValueKey('plate-strap-0')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Brush'));
+      await tester.pumpAndSettle();
+
+      expect(log, ['setPassThrough 0 brush']);
+      expect(
+        doc.outlets[_outletId]!.gangs.single.fitting,
+        const PassThrough(PassThroughStyle.brush),
+      );
+    });
+
+    testWidgets('fitting one over a full strap ASKS FIRST', (tester) async {
+      // It discards keystones, so it earns the same confirmation a
+      // shrink does. An empty gang gets no prompt, because a dialog for a
+      // gesture that destroys nothing trains people to dismiss dialogs.
+      final doc = _project(gangs: [Gang(fitting: Strap(width: 1, height: 1))]);
+      final drop = _addDrop(
+        doc,
+        fieldLabel: 'LR-DATA-1',
+        termination: TerminationType.keystone,
+      );
+      (doc.outlets[_outletId]!.gangs[0].fitting! as Strap).cells[0] =
+          LinkEndOccupant(drop.id);
+
+      final log = <String>[];
+      await _pump(tester, doc, log: log);
+      await tester.tap(find.byKey(const ValueKey('plate-strap-0')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Brush'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Fit a pass-through?'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      // CANCEL MEANS IT. Nothing was asked of the action.
+      expect(log, isEmpty);
+      expect(doc.outlets[_outletId]!.gangs.single.fitting, isA<Strap>());
+    });
+
+    testWidgets('the cover plate chip names an all-brush plate as one part', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        _project(
+          gangs: [
+            Gang(fitting: const PassThrough(PassThroughStyle.brush)),
+            Gang(fitting: const PassThrough(PassThroughStyle.brush)),
+          ],
+        ),
+        surface: const Size(1600, 900),
+      );
+      expect(find.text('2-gang brush plate'), findsOneWidget);
+      // NOT ALSO TWO INSERTS. The brush IS the plate here, and ordering
+      // inserts as well is ordering the same hole twice (§11.46.4).
+      expect(find.textContaining('insert'), findsNothing);
+    });
+
+    testWidgets('a mixed plate is a Decora plate PLUS an insert', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        _project(
+          gangs: [
+            Gang(fitting: Strap(width: 1, height: 1)),
+            Gang(fitting: const PassThrough(PassThroughStyle.brush)),
+          ],
+        ),
+        surface: const Size(1600, 900),
+      );
+      expect(find.text('2-gang cover plate'), findsOneWidget);
+      expect(find.text('1 brush insert'), findsOneWidget);
+    });
+
+    testWidgets('an unfitted gang beside a brush leaves the plate UNNAMED', (
+      tester,
+    ) async {
+      // G4. That opening is exactly what decides between an integral
+      // brush plate and a Decora plate with an insert, so naming either
+      // is a guess.
+      await _pump(
+        tester,
+        _project(
+          gangs: [
+            Gang(fitting: const PassThrough(PassThroughStyle.brush)),
+            Gang(),
+          ],
+        ),
+        surface: const Size(1600, 900),
+      );
+      expect(find.text('2-gang plate, kind unknown'), findsOneWidget);
     });
   });
 
@@ -293,8 +467,8 @@ void main() {
         tester,
         _project(
           gangs: [
-            Gang(strap: Strap(width: 1, height: 3)),
-            Gang(strap: Strap(width: 2, height: 3)),
+            Gang(fitting: Strap(width: 1, height: 3)),
+            Gang(fitting: Strap(width: 2, height: 3)),
             Gang(),
           ],
         ),
@@ -323,8 +497,8 @@ void main() {
         tester,
         _project(
           gangs: [
-            Gang(strap: Strap(width: 2, height: 3)),
-            Gang(strap: Strap(width: 2, height: 3)),
+            Gang(fitting: Strap(width: 2, height: 3)),
+            Gang(fitting: Strap(width: 2, height: 3)),
           ],
         ),
         surface: const Size(1600, 900),
@@ -356,7 +530,7 @@ void main() {
       // plastic before the first hole and after the last one.
       await _pump(
         tester,
-        _project(gangs: [Gang(strap: Strap(width: 1, height: 1))]),
+        _project(gangs: [Gang(fitting: Strap(width: 1, height: 1))]),
         surface: const Size(1600, 900),
       );
       final plate = tester.getRect(find.byKey(const ValueKey('plate-outline')));
@@ -384,7 +558,7 @@ void main() {
       final doc = _project(
         gangs: [
           Gang(),
-          Gang(strap: Strap(width: 1, height: 1)),
+          Gang(fitting: Strap(width: 1, height: 1)),
         ],
       );
       final log = <String>[];
@@ -406,7 +580,7 @@ void main() {
         Uuid('44444444-4444-4444-8444-000000000001'),
       );
       strap.cells[3] = const BlankInsert();
-      final doc = _project(gangs: [Gang(strap: strap)]);
+      final doc = _project(gangs: [Gang(fitting: strap)]);
       final log = <String>[];
       // A WINDOW, NOT A PHONE. A 2x3 plate is 457 units tall before any
       // chrome, so at the 800x600 default the controls under it sit off
@@ -438,8 +612,8 @@ void main() {
       // different opening and looks like it worked.
       final doc = _project(
         gangs: [
-          Gang(strap: Strap(width: 1, height: 1)),
-          Gang(strap: Strap(width: 2, height: 3)),
+          Gang(fitting: Strap(width: 1, height: 1)),
+          Gang(fitting: Strap(width: 2, height: 3)),
           Gang(),
         ],
       );
@@ -454,8 +628,8 @@ void main() {
       expect(gangs, hasLength(2));
       // The 6-port went; the 1-port and the strapless one remain, in
       // order.
-      expect(gangs[0].strap!.cellCount, 1);
-      expect(gangs[1].strap, isNull);
+      expect((gangs[0].fitting! as Strap).cellCount, 1);
+      expect(gangs[1].fitting, isNull);
     });
 
     testWidgets('undo puts the gang back with everything in it', (
@@ -466,7 +640,7 @@ void main() {
       const linkId = Uuid('44444444-4444-4444-8444-000000000002');
       final strap = Strap(width: 1, height: 2);
       strap.cells[1] = const LinkEndOccupant(linkId);
-      final doc = _project(gangs: [Gang(strap: strap)]);
+      final doc = _project(gangs: [Gang(fitting: strap)]);
       _appliedRemovals.clear();
 
       await _pump(tester, doc, surface: const Size(1600, 900));
@@ -484,7 +658,7 @@ void main() {
       _appliedRemovals.single.revert(doc);
       expect(doc.outlets[_outletId]!.gangs, hasLength(1));
       expect(
-        doc.outlets[_outletId]!.gangs.single.strap!.cells[1],
+        (doc.outlets[_outletId]!.gangs.single.fitting! as Strap).cells[1],
         const LinkEndOccupant(linkId),
       );
     });
@@ -492,7 +666,7 @@ void main() {
 
   group('a cell offers two different answers for "empty"', () {
     testWidgets('blank insert and clear are separate options', (tester) async {
-      final doc = _project(gangs: [Gang(strap: Strap(width: 1, height: 1))]);
+      final doc = _project(gangs: [Gang(fitting: Strap(width: 1, height: 1))]);
       final log = <String>[];
       await _pump(tester, doc, log: log);
 
@@ -509,7 +683,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(log, ['setCell 0:0 BlankInsert']);
       expect(
-        doc.outlets[_outletId]!.gangs[0].strap!.cells[0],
+        (doc.outlets[_outletId]!.gangs[0].fitting! as Strap).cells[0],
         isA<BlankInsert>(),
       );
     });
@@ -520,7 +694,7 @@ void main() {
       // Escape erase a cell. Cancel must never be destructive.
       final strap = Strap(width: 1, height: 1);
       strap.cells[0] = const BlankInsert();
-      final doc = _project(gangs: [Gang(strap: strap)]);
+      final doc = _project(gangs: [Gang(fitting: strap)]);
       final log = <String>[];
       await _pump(tester, doc, log: log);
 
@@ -531,7 +705,7 @@ void main() {
 
       expect(log, isEmpty);
       expect(
-        doc.outlets[_outletId]!.gangs[0].strap!.cells[0],
+        (doc.outlets[_outletId]!.gangs[0].fitting! as Strap).cells[0],
         isA<BlankInsert>(),
       );
     });
@@ -539,7 +713,7 @@ void main() {
     testWidgets('a binding-post drop offers one option PER POST', (
       tester,
     ) async {
-      final doc = _project(gangs: [Gang(strap: Strap(width: 2, height: 2))]);
+      final doc = _project(gangs: [Gang(fitting: Strap(width: 2, height: 2))]);
       _addDrop(
         doc,
         fieldLabel: 'LR-SPK-1',
@@ -593,7 +767,7 @@ void main() {
       );
       final strap = Strap(width: 1, height: 1);
       strap.cells[0] = LinkEndOccupant(link.id);
-      doc.outlets[_outletId]!.gangs.add(Gang(strap: strap));
+      doc.outlets[_outletId]!.gangs.add(Gang(fitting: strap));
       await _pump(tester, doc);
 
       // THE EXCEPTION IS TEXT AND NEVER A HUE. The keystone is fitted
@@ -617,7 +791,7 @@ void main() {
       );
       final strap = Strap(width: 1, height: 1);
       strap.cells[0] = LinkEndOccupant(link.id);
-      doc.outlets[_outletId]!.gangs.add(Gang(strap: strap));
+      doc.outlets[_outletId]!.gangs.add(Gang(fitting: strap));
       await _pump(tester, doc);
 
       // NOT A DEFAULT GREY. Grey is a colour somebody could have chosen,
@@ -639,7 +813,7 @@ void main() {
       );
       final strap = Strap(width: 1, height: 1);
       strap.cells[0] = LinkEndOccupant(link.id);
-      doc.outlets[_outletId]!.gangs.add(Gang(strap: strap));
+      doc.outlets[_outletId]!.gangs.add(Gang(fitting: strap));
       await _pump(tester, doc);
 
       // "Somebody said blue and the entry is gone" is a different fact
@@ -654,7 +828,7 @@ void main() {
     testWidgets('an unknown drop is counted, not absorbed into shortfall', (
       tester,
     ) async {
-      final doc = _project(gangs: [Gang(strap: Strap(width: 1, height: 3))]);
+      final doc = _project(gangs: [Gang(fitting: Strap(width: 1, height: 3))]);
       _addDrop(
         doc,
         fieldLabel: 'LR-DATA-1',
@@ -672,16 +846,17 @@ void main() {
     testWidgets('unplaced counts partial placement as unplaced', (
       tester,
     ) async {
-      final doc = _project(gangs: [Gang(strap: Strap(width: 2, height: 3))]);
+      final doc = _project(gangs: [Gang(fitting: Strap(width: 2, height: 3))]);
       final speaker = _addDrop(
         doc,
         fieldLabel: 'LR-SPK-1',
         termination: TerminationType.bindingPost,
         conductors: 4,
       );
-      doc.outlets[_outletId]!.gangs[0].strap!.cells[0] = ConductorOccupant(
-        ConductorRef(speaker.id, 0),
-      );
+      (doc.outlets[_outletId]!.gangs[0].fitting! as Strap).cells[0] =
+          ConductorOccupant(
+            ConductorRef(speaker.id, 0),
+          );
       await _pump(tester, doc);
       expect(find.text('1 of 1 unplaced'), findsOneWidget);
     });
@@ -708,8 +883,8 @@ void main() {
       expect(log, ['arrange 1 gang']);
       final gangs = doc.outlets[_outletId]!.gangs;
       expect(gangs, hasLength(1));
-      expect(gangs[0].strap!.cellCount, 3);
-      expect(gangs[0].strap!.cells, hasLength(3));
+      expect((gangs[0].fitting! as Strap).cellCount, 3);
+      expect((gangs[0].fitting! as Strap).cells, hasLength(3));
     });
 
     testWidgets('a plate with work on it ASKS FIRST and Cancel means it', (
@@ -723,7 +898,7 @@ void main() {
       );
       final strap = Strap(width: 2, height: 3);
       strap.cells[4] = LinkEndOccupant(link.id);
-      doc.outlets[_outletId]!.gangs.add(Gang(strap: strap));
+      doc.outlets[_outletId]!.gangs.add(Gang(fitting: strap));
       final log = <String>[];
       await _pump(tester, doc, log: log);
 
@@ -736,7 +911,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(log, isEmpty);
       // Untouched: still a 6-port with the jack in cell 4.
-      expect(doc.outlets[_outletId]!.gangs[0].strap!.cells[4], isNotNull);
+      expect(
+        (doc.outlets[_outletId]!.gangs[0].fitting! as Strap).cells[4],
+        isNotNull,
+      );
     });
 
     testWidgets('nothing to arrange says WHY when the cause is unknowns', (

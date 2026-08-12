@@ -81,6 +81,7 @@ final class OutletsActions {
     required this.onAddGang,
     required this.onRemoveGang,
     required this.onSetStrap,
+    required this.onSetPassThrough,
     required this.onSetCell,
     required this.onArrange,
   });
@@ -88,9 +89,19 @@ final class OutletsActions {
   final String? Function(Uuid outletId) onAddGang;
   final String? Function(Uuid outletId, int gangIndex) onRemoveGang;
 
-  /// Null width and height un-choose the strap.
+  /// Null width and height un-choose the fitting.
   final String? Function(Uuid outletId, int gangIndex, int? width, int? height)
   onSetStrap;
+
+  /// Fits a pass-through: this opening is a hole and gets no strap
+  /// (DR-047).
+  ///
+  /// **NOT `onSetStrap` WITH A SENTINEL.** Un-choosing a fitting and
+  /// fitting a brush are opposite acts: one says nobody has decided, the
+  /// other is a decision and a purchase. They also carry different undo
+  /// labels, for the same reason.
+  final String? Function(Uuid outletId, int gangIndex, PassThroughStyle style)
+  onSetPassThrough;
 
   /// A null occupant clears the cell back to UNDECIDED, which is not the
   /// same as fitting a blank. See `gang_commands.dart`.
@@ -105,6 +116,16 @@ final class OutletsActions {
   /// Commits a whole [PlateArrangement] as ONE undo step.
   final String? Function(Uuid outletId, PlateArrangement plan) onArrange;
 }
+
+/// What a [PassThroughStyle] is called on screen (DR-047 §11.46.3).
+///
+/// **ONE FUNCTION, THREE CALL SITES**: the picker, the button under the
+/// opening and the plate's own tooltip. Three literals would drift, and
+/// this vocabulary is a ruling rather than copy.
+String passThroughLabel(PassThroughStyle style) => switch (style) {
+  PassThroughStyle.brush => 'Brush',
+  PassThroughStyle.bullNose => 'Bull-nose',
+};
 
 /// docs/07 §4's fourth tab: one plate at a time, drawn to scale.
 class OutletsView extends StatefulWidget {
@@ -233,7 +254,11 @@ class _OutletList extends StatelessWidget {
   static String _subtitleFor(PlateFill fill) {
     final parts = <String>[
       '${fill.gangCount} gang',
-      if (fill.strapsUnchosen > 0) '${fill.strapsUnchosen} no strap',
+      if (fill.fittingsUnchosen > 0) '${fill.fittingsUnchosen} no strap',
+      // COUNTED SEPARATELY FROM "no strap", which is the whole of DR-047
+      // at this scale: one is an opening nobody has decided and this is
+      // one somebody decided gets a hole.
+      if (fill.passThroughGangs > 0) '${fill.passThroughGangs} pass-through',
       if (fill.shortfall > 0) 'short ${fill.shortfall}',
       if (fill.unknownDrops > 0) '${fill.unknownDrops} unknown',
       if (fill.isSettled) 'fits',
@@ -262,9 +287,35 @@ class _PlatePane extends StatelessWidget {
   final OutletsActions actions;
   final void Function(String? Function()) run;
 
+  /// How many inserts of each style, IN ENUM ORDER so two runs of the
+  /// same plate emit the same chips (§8.4). A `toSet()` over the list
+  /// would order them by first appearance, which is a fact about which
+  /// opening a person clicked first.
+  static Map<PassThroughStyle, int> _insertCounts(PlateMaterials m) => {
+    for (final style in PassThroughStyle.values)
+      if (m.passThroughInserts.contains(style))
+        style: m.passThroughInserts.where((s) => s == style).length,
+  };
+
+  /// What the one cover plate is, in the chip's words (DR-047 §11.46.4).
+  ///
+  /// **[CoverPlateKind.unknown] SAYS SO RATHER THAN GUESSING DECORA.**
+  /// With one opening nobody has fitted and no strap to settle it, the
+  /// plate could still turn out to be an integral brush plate, and naming
+  /// a part on the strength of an absence of work is the exact defect G4
+  /// exists to stop.
+  static String _coverPlateLabel(PlateMaterials m) => switch (m.coverPlate) {
+    CoverPlateKind.none => 'no plate needed',
+    CoverPlateKind.decora => '${m.coverPlateGangs}-gang cover plate',
+    CoverPlateKind.brush => '${m.coverPlateGangs}-gang brush plate',
+    CoverPlateKind.bullNose => '${m.coverPlateGangs}-gang bull-nose plate',
+    CoverPlateKind.unknown => '${m.coverPlateGangs}-gang plate, kind unknown',
+  };
+
   @override
   Widget build(BuildContext context) {
     final unplaced = unplacedDropsOf(outlet, links);
+    final materials = computePlateMaterials(outlet);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -284,10 +335,24 @@ class _PlatePane extends StatelessWidget {
                     ),
                     // §11.7.8 change 1: N straps plus exactly ONE N-gang
                     // cover plate, and the count is gangs.length, always.
+                    // WHAT KIND of plate is DR-047's derivation, and the
+                    // chip says it rather than assuming Decora: a plate
+                    // whose every opening is brushed is one part, and a
+                    // mixed plate is a Decora plus inserts.
                     Chip(
-                      label: Text('${fill.coverPlateGangs}-gang cover plate'),
+                      key: const ValueKey('plate-cover-chip'),
+                      label: Text(_coverPlateLabel(materials)),
                       visualDensity: VisualDensity.compact,
                     ),
+                    for (final entry in _insertCounts(materials).entries)
+                      Chip(
+                        label: Text(
+                          '${entry.value} '
+                          '${passThroughLabel(entry.key).toLowerCase()} '
+                          'insert',
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      ),
                     if (fill.blanksFitted > 0)
                       Chip(
                         label: Text('${fill.blanksFitted} blank'),
@@ -340,7 +405,7 @@ class _PlatePane extends StatelessWidget {
                       fill: fill,
                       onCell: (gang, cell) =>
                           _pickOccupant(context, gang, cell),
-                      onStrap: (gang) => _pickStrap(context, gang),
+                      onStrap: (gang) => _pickFitting(context, gang),
                       onRemove: (gang) => _removeGang(context, gang),
                     ),
                   ),
@@ -421,13 +486,14 @@ class _PlatePane extends StatelessWidget {
   ///
   /// **THE CONFIRMATION COUNTS WHAT IT DISCARDS** and appears only when
   /// there is something to discard, which is DR-013's "a cascade with a
-  /// confirmation that counts the cables" and `_pickStrap`'s own shape.
+  /// confirmation that counts the cables" and `_pickFitting`'s own shape.
   /// An empty gang goes without a prompt: a dialog for a gesture that
   /// destroys nothing trains people to dismiss dialogs.
   Future<void> _removeGang(BuildContext context, int gangIndex) async {
     if (gangIndex < 0 || gangIndex >= outlet.gangs.length) return;
-    final strap = outlet.gangs[gangIndex].strap;
-    final occupied = strap?.cells.length ?? 0;
+    // A pass-through holds no cells, so removing one destroys nothing to
+    // count and goes without a prompt, exactly like an empty gang.
+    final occupied = occupantsLostByPassThrough(outlet.gangs[gangIndex]);
 
     if (occupied > 0) {
       final ok = await showDialog<bool>(
@@ -455,25 +521,51 @@ class _PlatePane extends StatelessWidget {
     run(() => actions.onRemoveGang(outlet.id, gangIndex));
   }
 
-  Future<void> _pickStrap(BuildContext context, int gangIndex) async {
-    final choice = await showDialog<({int? width, int? height})>(
+  /// One picker for the whole opening: a strap, a hole, or nothing
+  /// decided (DR-047 §11.46.2).
+  ///
+  /// **THE THREE ANSWERS SIT IN ONE LIST BECAUSE THEY ARE ONE QUESTION**,
+  /// *"what is in this opening"*. A separate `Fit pass-through` control
+  /// beside the strap button would let a person hold both answers at
+  /// once on screen and would have to explain which wins.
+  ///
+  /// The result is a RECORD around a nullable fitting, for the reason
+  /// `_pickOccupant` gives at length: a bare `GangFitting?` makes
+  /// *"nothing chosen"* and *"I dismissed the dialog"* the same value,
+  /// and here that would silently un-choose a 6-port strap on Escape.
+  Future<void> _pickFitting(BuildContext context, int gangIndex) async {
+    final choice = await showDialog<({GangFitting? fitting})>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: Text('Strap for gang ${gangIndex + 1}'),
+        title: Text('Gang ${gangIndex + 1}'),
         children: [
           // DERIVED FROM THE BOUNDS, so five ports never appears as an
           // option and nothing here lists the port counts (§11.7.1).
           for (var w = kMinStrapWidth; w <= kMaxStrapWidth; w++)
             for (var h = kMinStrapHeight; h <= kMaxStrapHeight; h++)
               SimpleDialogOption(
-                onPressed: () =>
-                    Navigator.of(context).pop((width: w, height: h)),
+                onPressed: () => Navigator.of(
+                  context,
+                ).pop((fitting: Strap(width: w, height: h))),
                 child: Text('${w * h}-port  ($w x $h)'),
               ),
+          const Divider(height: 1),
+          // DERIVED FROM THE ENUM for the same reason the straps are
+          // derived from the bounds: a hand-written list here is a fact
+          // about this dialog, and the vocabulary is a fact about the
+          // ruling (§11.46.3).
+          for (final style in PassThroughStyle.values)
+            SimpleDialogOption(
+              onPressed: () =>
+                  Navigator.of(context).pop((fitting: PassThrough(style))),
+              child: Text(passThroughLabel(style)),
+            ),
+          const Divider(height: 1),
           SimpleDialogOption(
-            onPressed: () =>
-                Navigator.of(context).pop((width: null, height: null)),
-            child: const Text('No strap chosen'),
+            onPressed: () => Navigator.of(context).pop((fitting: null)),
+            // NOT "no strap" and not "none". This is the UNDECIDED arm,
+            // and the two arms above it are both decisions.
+            child: const Text('Nothing chosen yet'),
           ),
         ],
       ),
@@ -481,16 +573,23 @@ class _PlatePane extends StatelessWidget {
     if (choice == null) return;
 
     final gang = outlet.gangs[gangIndex];
-    final lost = choice.width == null || choice.height == null
-        ? (gang.strap?.cells.length ?? 0)
-        : occupantsLostByResize(gang, choice.width!, choice.height!);
+    final lost = switch (choice.fitting) {
+      final Strap s => occupantsLostByResize(gang, s.width, s.height),
+      // A hole has no cells and neither has an undecided opening, so both
+      // discard everything the strap was holding.
+      null || PassThrough() => occupantsLostByPassThrough(gang),
+    };
     if (lost > 0 && context.mounted) {
       final ok = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Smaller strap'),
+          title: Text(switch (choice.fitting) {
+            Strap() => 'Smaller strap',
+            PassThrough() => 'Fit a pass-through?',
+            null => 'Un-choose this gang?',
+          }),
           content: Text(
-            '$lost keystone(s) sit in cells this strap does not have and '
+            '$lost keystone(s) sit in cells this gang will not have and '
             'will be taken off the plate. Undo puts them back.',
           ),
           actions: [
@@ -507,14 +606,14 @@ class _PlatePane extends StatelessWidget {
       );
       if (ok != true) return;
     }
-    run(
-      () => actions.onSetStrap(
-        outlet.id,
-        gangIndex,
-        choice.width,
-        choice.height,
-      ),
-    );
+    switch (choice.fitting) {
+      case null:
+        run(() => actions.onSetStrap(outlet.id, gangIndex, null, null));
+      case final Strap s:
+        run(() => actions.onSetStrap(outlet.id, gangIndex, s.width, s.height));
+      case final PassThrough p:
+        run(() => actions.onSetPassThrough(outlet.id, gangIndex, p.style));
+    }
   }
 
   Future<void> _pickOccupant(
@@ -683,7 +782,7 @@ class _PlateWidget extends StatelessWidget {
                   top: 0,
                   child: _GangControls(
                     gangIndex: g,
-                    strap: outlet.gangs[g].strap,
+                    fitting: outlet.gangs[g].fitting,
                     onStrap: () => onStrap(g),
                     onRemove: () => onRemove(g),
                   ),
@@ -718,7 +817,8 @@ class _PlateWidget extends StatelessWidget {
   }
 }
 
-/// The two controls under one opening: which strap, and remove the gang.
+/// The two controls under one opening: what is fitted, and remove the
+/// gang.
 ///
 /// **THE DELETE SITS BESIDE THE THING IT DELETES**, rather than in the
 /// strap dialog or behind a right-click. A destructive action folded into
@@ -729,13 +829,13 @@ class _PlateWidget extends StatelessWidget {
 class _GangControls extends StatelessWidget {
   const _GangControls({
     required this.gangIndex,
-    required this.strap,
+    required this.fitting,
     required this.onStrap,
     required this.onRemove,
   });
 
   final int gangIndex;
-  final Strap? strap;
+  final GangFitting? fitting;
   final VoidCallback onStrap;
   final VoidCallback onRemove;
 
@@ -750,11 +850,17 @@ class _GangControls extends StatelessWidget {
           onPressed: onStrap,
           style: TextButton.styleFrom(padding: EdgeInsets.zero),
           child: Text(
-            strap == null
-                // NOT "0-port". A gang whose part nobody has chosen is
-                // unknown, and saying zero would make it look decided.
-                ? 'No strap'
-                : '${strap!.cellCount}-port',
+            switch (fitting) {
+              // NOT "0-port". A gang whose part nobody has chosen is
+              // unknown, and saying zero would make it look decided.
+              null => 'No strap',
+              Strap(:final cellCount) => '$cellCount-port',
+              // A DECISION, so it reads as a part rather than as an
+              // absence. This button said "No strap" for a brushed
+              // opening in every draft before DR-047, which is the M3-H
+              // plateless-outlet defect one scale down.
+              PassThrough(:final style) => passThroughLabel(style),
+            },
             style: const TextStyle(fontSize: 12),
             overflow: TextOverflow.ellipsis,
           ),
@@ -804,7 +910,7 @@ class _GangWidget extends StatelessWidget {
     // the box; this only fills it.
     const geometry = PlateGeometry(1);
     final opening = geometry.openingAt(0);
-    final strap = gang.strap;
+    final fitting = gang.fitting;
     final scheme = Theme.of(context).colorScheme;
 
     return Stack(
@@ -818,7 +924,28 @@ class _GangWidget extends StatelessWidget {
             ),
           ),
         ),
-        if (strap != null)
+        // A PASS-THROUGH FILLS THE WHOLE OPENING, because that is what
+        // the part does: no cells, no grid, one hole (DR-047 §11.46.2).
+        // Hatched rather than tinted, which is the treatment this file
+        // already reserves for "not a jack" and needs no new colour, so
+        // PAL-1 has nothing to say about it.
+        if (fitting case PassThrough(:final style))
+          Positioned.fill(
+            key: ValueKey('plate-passthrough-$gangIndex'),
+            child: Tooltip(
+              message:
+                  '${passThroughLabel(style)} pass-through: cables '
+                  'pass and nothing is fitted here',
+              child: CustomPaint(
+                painter: _CellPainter(
+                  fill: scheme.surfaceContainerHigh,
+                  outline: scheme.outline,
+                  hatched: true,
+                ),
+              ),
+            ),
+          ),
+        if (fitting case final Strap strap)
           for (var i = 0; i < strap.cellCount; i++)
             _cellAt(context, geometry, opening, strap, i),
       ],

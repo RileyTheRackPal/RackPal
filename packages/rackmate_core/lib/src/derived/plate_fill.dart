@@ -118,7 +118,8 @@ final class PlateFill {
     required this.cellsProvided,
     required this.cellsOccupied,
     required this.blanksFitted,
-    required this.strapsUnchosen,
+    required this.fittingsUnchosen,
+    this.passThroughGangs = 0,
   });
 
   final Uuid outletId;
@@ -143,9 +144,21 @@ final class PlateFill {
   /// one may need cells or may need none, and nothing here decides which.
   final int unknownDrops;
 
-  /// Cells the fitted straps actually have. A gang with no strap chosen
-  /// contributes nothing and is counted in [strapsUnchosen] instead.
+  /// Cells the fitted straps actually have. A gang with no fitting chosen
+  /// contributes nothing and is counted in [fittingsUnchosen] instead; a
+  /// gang fitted with a `PassThrough` contributes nothing either, and is
+  /// counted in [passThroughGangs], because a hole has no cells.
   final int cellsProvided;
+
+  /// Gangs fitted with a `PassThrough`: a hole in the plate, decided
+  /// (DR-047 §11.46).
+  ///
+  /// **NOT AN UNCHOSEN GANG AND NOT A SETTLED-AWAY ONE.** It provides no
+  /// cells, exactly like a gang nobody has fitted, and it is the opposite
+  /// state: somebody said this opening gets no strap. Keeping the two in
+  /// separate fields is the whole of the ruling at this scale, and
+  /// [isSettled] reads only the first.
+  final int passThroughGangs;
 
   /// Cells holding a jack or a post.
   final int cellsOccupied;
@@ -154,13 +167,27 @@ final class PlateFill {
   /// (§11.7.4).
   final int blanksFitted;
 
-  /// Gangs whose strap nobody has chosen. Distinct from a strap with
+  /// Gangs whose fitting nobody has chosen. Distinct from a strap with
   /// undecided cells: this is a part not yet picked, that one is a part
   /// picked and not yet filled.
-  final int strapsUnchosen;
+  ///
+  /// **NAMED `fittingsUnchosen` SINCE DR-047 AND `strapsUnchosen` BEFORE
+  /// IT.** The rename is the ruling: a gang destined for a brush was
+  /// never a strap nobody chose, so the old name asserted the very
+  /// collapse §11.46.1 exists to remove. A field name that has stopped
+  /// describing its field is worse than a missing one, because it is
+  /// trusted.
+  final int fittingsUnchosen;
 
   /// EXACTLY ONE N-gang cover plate, N being [gangCount] (§11.7.8
   /// change 1). Zero gangs is zero plates rather than one 0-gang plate.
+  ///
+  /// **UNCHANGED BY DR-047, AND §12.19 IS WHY THAT IS WORTH SAYING.**
+  /// DR-045 §11.44.6 held that a pass-through plate is one this getter
+  /// "structurally cannot express". That was true only while a brush
+  /// opening had no gang. It has one now, so the count still falls out of
+  /// `gangs.length` and the *style* of the plate is a separate derivation
+  /// in `derived/plate_materials.dart`.
   int get coverPlateGangs => gangCount;
 
   /// Cells with nothing in them and no blank fitted: nobody has said.
@@ -181,8 +208,14 @@ final class PlateFill {
 
   /// True when the known drops fit and nothing is unknown. A plate that
   /// is merely not-known-to-be-wrong returns false.
+  ///
+  /// **[passThroughGangs] IS DELIBERATELY NOT IN HERE** (DR-047 §11.46.5).
+  /// A brushed opening is a decided opening, so a plate whose every gang
+  /// is a pass-through is settled: there is nothing left for anybody to
+  /// say about it. Counting it as unsettled would be the M3-H defect
+  /// again, where a finished AP box read as unfinished work.
   bool get isSettled =>
-      unknownDrops == 0 && strapsUnchosen == 0 && shortfall == 0;
+      unknownDrops == 0 && fittingsUnchosen == 0 && shortfall == 0;
 
   /// **THIS OUTLET IS FINISHED AND HAS NO PLATE** (DR-045 §11.44.4). An
   /// access point mounting straight to the box, or a transceiver fed by a
@@ -207,6 +240,12 @@ final class PlateFill {
   /// DERIVED AND NEVER STORED (CR-107). A `hasPlate` flag would be the
   /// second copy of one physical fact, and it would go stale the first
   /// time somebody changed a drop's termination.
+  ///
+  /// **DR-047 DOES NOT MOVE THIS, AND THE `gangCount == 0` IS WHY.** An
+  /// outlet covered by a brush plate is **not** a plateless outlet; it is
+  /// an outlet with a plate that has no jacks in it, and it has a gang to
+  /// prove it. The two states stay distinct: a box with an AP screwed to
+  /// it needs no part at all, and a box with a brush plate needs one.
   bool get needsNoPlate =>
       dropCount > 0 &&
       gangCount == 0 &&
@@ -248,24 +287,31 @@ PlateFill computePlateFill(Outlet outlet, Iterable<Link> links) {
   var cellsProvided = 0;
   var cellsOccupied = 0;
   var blanksFitted = 0;
-  var strapsUnchosen = 0;
+  var fittingsUnchosen = 0;
+  var passThroughGangs = 0;
 
+  // THREE ARMS, AND THE SWITCH IS THE RULING (DR-047 §11.46.2). The two
+  // that provide no cells are NOT the same arm: one is a gang nobody has
+  // fitted and the other is one somebody fitted with a hole. A
+  // `if (strap == null)` could only see the first.
   for (final gang in outlet.gangs) {
-    final strap = gang.strap;
-    if (strap == null) {
-      strapsUnchosen++;
-      continue;
-    }
-    cellsProvided += strap.cellCount;
-    for (var i = 0; i < strap.cellCount; i++) {
-      switch (strap.cells[i]) {
-        case null:
-          break;
-        case BlankInsert():
-          blanksFitted++;
-        case LinkEndOccupant() || ConductorOccupant():
-          cellsOccupied++;
-      }
+    switch (gang.fitting) {
+      case null:
+        fittingsUnchosen++;
+      case PassThrough():
+        passThroughGangs++;
+      case final Strap strap:
+        cellsProvided += strap.cellCount;
+        for (var i = 0; i < strap.cellCount; i++) {
+          switch (strap.cells[i]) {
+            case null:
+              break;
+            case BlankInsert():
+              blanksFitted++;
+            case LinkEndOccupant() || ConductorOccupant():
+              cellsOccupied++;
+          }
+        }
     }
   }
 
@@ -278,7 +324,8 @@ PlateFill computePlateFill(Outlet outlet, Iterable<Link> links) {
     cellsProvided: cellsProvided,
     cellsOccupied: cellsOccupied,
     blanksFitted: blanksFitted,
-    strapsUnchosen: strapsUnchosen,
+    fittingsUnchosen: fittingsUnchosen,
+    passThroughGangs: passThroughGangs,
   );
 }
 

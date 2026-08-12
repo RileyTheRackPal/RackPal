@@ -9700,6 +9700,14 @@ rather than brush plates can be served later by an override that wins **with not
 The alternative was a plate-form field null on every outlet in every existing document, which buys a
 purchasing preference at the price of a G4 unknown on every plate in the product.
 
+**ROW 4 CHANGES A SENTENCE THE PRODUCT USED TO SAY, AND THE CHANGE IS THE POINT.** A plate with
+openings but nothing fitted in any of them used to read *"3-gang cover plate"*, which was true when
+there was one kind of plate and is a guess now: an unfitted opening could still become a brush and
+make the whole plate one integral part. It reads *"3-gang plate, kind unknown"* until somebody says.
+**One strap anywhere settles it**, because a strap needs a Decora opening and no later decision
+changes that, so **the finished plate reads exactly as it always did** and only the half-built one
+is newly honest.
+
 **11.46.5 What the counts do, and one sentence of DR-045 that this changes.** `PlateFill` gains a
 count of pass-through gangs and renames `strapsUnchosen` to `fittingsUnchosen`, because **a gang
 destined for a brush was never a strap nobody chose** and a name that has stopped describing its

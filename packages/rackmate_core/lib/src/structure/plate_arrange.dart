@@ -51,6 +51,7 @@
 import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/derived/plate_fill.dart';
 import 'package:rackmate_core/src/model/conductor.dart' show ConductorRef;
+import 'package:rackmate_core/src/model/enums.dart' show PassThroughStyle;
 import 'package:rackmate_core/src/model/gang.dart';
 import 'package:rackmate_core/src/model/link.dart';
 import 'package:rackmate_core/src/model/outlet.dart';
@@ -77,6 +78,7 @@ final class PlateArrangement {
     required this.straps,
     required this.cells,
     required this.skippedUnknown,
+    this.keptPassThroughs = const [],
   });
 
   /// One entry per gang, left to right, giving the strap to fit.
@@ -90,8 +92,23 @@ final class PlateArrangement {
   /// arranged for four drops out of seven is not an arranged plate.
   final int skippedUnknown;
 
+  /// Pass-through openings the plate already has, to be re-fitted AFTER
+  /// [straps] (DR-047 §11.46.6).
+  ///
+  /// **THE ONE THING THIS PLAN READS OFF THE EXISTING PLATE**, and the
+  /// ruling requires it: a brushed opening is a decision a person made,
+  /// not arithmetic this file can re-derive from the drops. Arrange
+  /// planning it away would replace a part somebody chose with a strap
+  /// sized for zero cells.
+  final List<PassThroughStyle> keptPassThroughs;
+
   /// True when there is nothing to do, which is the case a caller should
   /// refuse rather than commit an empty transaction for.
+  ///
+  /// **[keptPassThroughs] IS NOT IN HERE ON PURPOSE.** A plate holding
+  /// nothing but brushes has nothing to arrange, and returning false
+  /// would make Arrange tear those gangs down and build them straight
+  /// back: one undo entry, no change, and a person wondering what it did.
   bool get isEmpty => straps.isEmpty && cells.isEmpty;
 }
 
@@ -118,15 +135,30 @@ List<CellOccupant> _cellsFor(Link link) {
 
 /// Plans a whole plate for [outlet] from the [links] that land on it.
 ///
-/// **THE EXISTING PLATE IS NOT CONSULTED.** This is a fresh proposal, and
-/// a caller committing it replaces whatever was there. That is why the
-/// gesture is worth a confirmation when `PlateFill.cellsOccupied > 0`:
-/// re-arranging a plate somebody hand-built is destructive, and a
-/// "helpful" merge would have to guess which of the two arrangements the
-/// person meant.
+/// **THE EXISTING PLATE IS CONSULTED FOR EXACTLY ONE THING**, and DR-047
+/// §11.46.6 is why: its pass-through openings, which come back in
+/// [PlateArrangement.keptPassThroughs]. Everything else is a fresh
+/// proposal and a caller committing it replaces whatever was there. That
+/// is why the gesture is worth a confirmation when
+/// `PlateFill.cellsOccupied > 0`: re-arranging a plate somebody hand-built
+/// is destructive, and a "helpful" merge would have to guess which of the
+/// two arrangements the person meant.
+///
+/// **A BRUSH IS NOT AN ARRANGEMENT.** Straps and cells fall out of
+/// §11.7.2.1's table from the drops; a pass-through is a decision about a
+/// part, so this file can neither invent one (it would assert a purchase
+/// nobody made) nor discard one (it would delete a purchase somebody
+/// did).
 PlateArrangement planPlateArrangement(Outlet outlet, Iterable<Link> links) {
   final drops = <Link>[];
   var skippedUnknown = 0;
+
+  // IN GANG ORDER, so the plate a person gets back has its brushes in the
+  // same left-to-right sequence it had them in.
+  final keptPassThroughs = <PassThroughStyle>[
+    for (final gang in outlet.gangs)
+      if (gang.fitting case PassThrough(:final style)) style,
+  ];
 
   for (final link in links) {
     final origin = link.structureOrigin;
@@ -186,6 +218,7 @@ PlateArrangement planPlateArrangement(Outlet outlet, Iterable<Link> links) {
     straps: straps,
     cells: cells,
     skippedUnknown: skippedUnknown,
+    keptPassThroughs: keptPassThroughs,
   );
 }
 
@@ -210,16 +243,19 @@ PlateArrangement planPlateArrangement(Outlet outlet, Iterable<Link> links) {
 List<Uuid> unplacedDropsOf(Outlet outlet, Iterable<Link> links) {
   final found = <Uuid, int>{};
   for (final gang in outlet.gangs) {
-    final strap = gang.strap;
-    if (strap == null) continue;
-    for (final occupant in strap.cells.values) {
-      switch (occupant) {
-        case LinkEndOccupant(:final linkId):
-          found[linkId] = (found[linkId] ?? 0) + 1;
-        case ConductorOccupant(:final conductor):
-          found[conductor.linkId] = (found[conductor.linkId] ?? 0) + 1;
-        case BlankInsert():
-          break;
+    // A PASS-THROUGH HOLDS NOTHING, so it neither places a drop nor
+    // hides one. Skipped for the same reason a gang with no fitting is:
+    // there are no cells here to have found anything in.
+    if (gang.fitting case final Strap strap) {
+      for (final occupant in strap.cells.values) {
+        switch (occupant) {
+          case LinkEndOccupant(:final linkId):
+            found[linkId] = (found[linkId] ?? 0) + 1;
+          case ConductorOccupant(:final conductor):
+            found[conductor.linkId] = (found[conductor.linkId] ?? 0) + 1;
+          case BlankInsert():
+            break;
+        }
       }
     }
   }

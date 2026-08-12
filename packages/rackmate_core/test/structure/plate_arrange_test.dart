@@ -181,14 +181,14 @@ void main() {
       // Two of four posts. Counting this as done would take it off the
       // picker with two conductors still homeless.
       expect(
-        unplacedDropsOf(_outlet(gangs: [Gang(strap: strap)]), [speaker]),
+        unplacedDropsOf(_outlet(gangs: [Gang(fitting: strap)]), [speaker]),
         [speaker.id],
       );
 
       strap.cells[2] = ConductorOccupant(ConductorRef(speaker.id, 2));
       strap.cells[3] = ConductorOccupant(ConductorRef(speaker.id, 3));
       expect(
-        unplacedDropsOf(_outlet(gangs: [Gang(strap: strap)]), [speaker]),
+        unplacedDropsOf(_outlet(gangs: [Gang(fitting: strap)]), [speaker]),
         isEmpty,
       );
     });
@@ -213,6 +213,74 @@ void main() {
         outletId: const Uuid('99999999-9999-4999-8999-999999999999'),
       );
       expect(unplacedDropsOf(_outlet(), [elsewhere]), isEmpty);
+    });
+  });
+
+  group('arrange neither invents a pass-through nor destroys one', () {
+    test('a plate of drops that need cells plans NO pass-through', () {
+      // Fitting one would assert a purchase nobody made. Arrange plans
+      // from §11.7.2.1's table and a brush is nowhere in it.
+      final plan = planPlateArrangement(_outlet(), [
+        _drop(fieldLabel: 'LR-DATA-1', termination: TerminationType.keystone),
+      ]);
+      expect(plan.keptPassThroughs, isEmpty);
+      expect(plan.straps, hasLength(1));
+    });
+
+    test('a brushed opening comes back in the plan, in gang order', () {
+      // DR-047 §11.46.6. Arrange rebuilds the plate from nothing, so a
+      // brush that is not in the plan is a part deleted by a gesture
+      // nobody thought was destructive.
+      final plan = planPlateArrangement(
+        _outlet(
+          gangs: [
+            Gang(fitting: const PassThrough(PassThroughStyle.bullNose)),
+            Gang(fitting: Strap(width: 1, height: 1)),
+            Gang(fitting: const PassThrough(PassThroughStyle.brush)),
+          ],
+        ),
+        [_drop(fieldLabel: 'LR-DATA-1', termination: TerminationType.keystone)],
+      );
+      expect(plan.keptPassThroughs, [
+        PassThroughStyle.bullNose,
+        PassThroughStyle.brush,
+      ]);
+    });
+
+    test('a plate of nothing but brushes has NOTHING to arrange', () {
+      // isEmpty deliberately ignores the kept brushes: returning false
+      // would make Arrange tear those gangs down and build them straight
+      // back, which is one undo entry and no change.
+      final plan = planPlateArrangement(
+        _outlet(
+          gangs: [Gang(fitting: const PassThrough(PassThroughStyle.brush))],
+        ),
+        [
+          _drop(
+            fieldLabel: 'LR-AP-1',
+            termination: TerminationType.rj45Plug,
+          ),
+        ],
+      );
+      expect(plan.isEmpty, isTrue);
+      expect(plan.keptPassThroughs, [PassThroughStyle.brush]);
+    });
+
+    test('a brushed opening neither places a drop nor hides one', () {
+      // It has no cells, so a drop that needs one is still unplaced.
+      final drop = _drop(
+        fieldLabel: 'LR-DATA-1',
+        termination: TerminationType.keystone,
+      );
+      expect(
+        unplacedDropsOf(
+          _outlet(
+            gangs: [Gang(fitting: const PassThrough(PassThroughStyle.brush))],
+          ),
+          [drop],
+        ),
+        [drop.id],
+      );
     });
   });
 }

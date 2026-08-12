@@ -53,6 +53,7 @@
 // to be allowed to say so.
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/label_key.dart';
+import 'package:rackmate_core/src/model/enums.dart' show PassThroughStyle;
 import 'package:rackmate_core/src/model/gang.dart';
 import 'package:rackmate_core/src/model/outlet.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
@@ -68,7 +69,28 @@ Strap? _copyStrap(Strap? strap) => strap == null
         cells: Map<int, CellOccupant>.of(strap.cells),
       );
 
-Gang _copyGang(Gang gang) => Gang(strap: _copyStrap(gang.strap));
+/// Copies a whole fitting for revert. A [PassThrough] is immutable and is
+/// its own copy; a [Strap] is not.
+GangFitting? _copyFitting(GangFitting? fitting) => switch (fitting) {
+  null => null,
+  final Strap s => _copyStrap(s),
+  final PassThrough p => p,
+};
+
+Gang _copyGang(Gang gang) => Gang(fitting: _copyFitting(gang.fitting));
+
+/// The strap in [gang], or null when the gang holds a pass-through or
+/// nothing.
+///
+/// **PRIVATE, AND IT STAYS PRIVATE** (DR-047 §11.46.2). This is precisely
+/// the collapse the sealed type removes: outside this file, "no strap"
+/// and "a brush" must not spell the same value, because one is a purchase
+/// and the other is an open question. In here every caller is already a
+/// question about cells, which a pass-through has none of.
+Strap? _strapOf(Gang gang) => switch (gang.fitting) {
+  final Strap s => s,
+  _ => null,
+};
 
 /// How many occupants a resize of [gang] to `width x height` would
 /// destroy.
@@ -77,8 +99,12 @@ Gang _copyGang(Gang gang) => Gang(strap: _copyStrap(gang.strap));
 /// confirmation prompt needs, and it exists as a free function rather
 /// than as a field on the command so a caller can put it in a dialog
 /// without building the command it might not run.
+///
+/// Zero for a gang holding a pass-through: a hole has no cells, so
+/// fitting a strap over one loses no occupants. It does discard a
+/// decision, which is the picker's business rather than this count's.
 int occupantsLostByResize(Gang gang, int width, int height) {
-  final strap = gang.strap;
+  final strap = _strapOf(gang);
   if (strap == null) return 0;
   final cells = width * height;
   var lost = 0;
@@ -87,6 +113,15 @@ int occupantsLostByResize(Gang gang, int width, int height) {
   }
   return lost;
 }
+
+/// How many occupants fitting a pass-through to [gang] would discard.
+///
+/// The same question [occupantsLostByResize] answers, for the gesture
+/// that removes the strap altogether: a brush has no cells, so everything
+/// in the strap goes. Its own function rather than
+/// `occupantsLostByResize(gang, 0, 0)`, which is the same arithmetic
+/// spelled as a riddle.
+int occupantsLostByPassThrough(Gang gang) => _strapOf(gang)?.cells.length ?? 0;
 
 /// Appends one gang to [outletId]'s plate.
 ///
@@ -132,7 +167,7 @@ final class AddGangCommand extends Command {
     final h = height;
     outlet.gangs.add(
       Gang(
-        strap: w == null || h == null ? null : Strap(width: w, height: h),
+        fitting: w == null || h == null ? null : Strap(width: w, height: h),
       ),
     );
   }
@@ -186,12 +221,17 @@ final class RemoveGangCommand extends Command {
   }
 }
 
-/// Fits a strap of `width x height` to the gang at [index], or removes
-/// the strap entirely when both are null.
+/// Fits a strap of `width x height` to the gang at [index], or takes the
+/// gang back to undecided when both are null.
 ///
 /// **Occupants in cells the new size does not have are DROPPED**, and
 /// [occupantsLostByResize] is how a caller finds out how many before
 /// asking. See this file's header for why it drops rather than refuses.
+///
+/// **IT ALSO REPLACES A PASS-THROUGH, AND REVERTS TO ONE** (DR-047). The
+/// before-value is the whole [GangFitting] rather than a `Strap?`,
+/// because undoing "I fitted a 2-port here" over an opening that was a
+/// brush has to give the brush back and not a blank question mark.
 final class SetStrapSizeCommand extends Command {
   SetStrapSizeCommand({
     required this.outletId,
@@ -203,15 +243,15 @@ final class SetStrapSizeCommand extends Command {
   final Uuid outletId;
   final int index;
 
-  /// Null with a null [height] removes the strap: "I have not decided
-  /// what part goes here after all", which is a state a person can get
-  /// back to.
+  /// Null with a null [height] un-chooses the fitting: "I have not
+  /// decided what part goes here after all", which is a state a person
+  /// can get back to.
   final int? width;
 
   /// See [width].
   final int? height;
 
-  Strap? _before;
+  GangFitting? _before;
   bool _applied = false;
 
   @override
@@ -228,13 +268,13 @@ final class SetStrapSizeCommand extends Command {
     final outlet = doc.outlets[outletId];
     if (outlet == null || index < 0 || index >= outlet.gangs.length) return;
     final gang = outlet.gangs[index];
-    _before = _copyStrap(gang.strap);
+    _before = _copyFitting(gang.fitting);
     _applied = true;
 
     final w = width;
     final h = height;
     if (w == null || h == null) {
-      gang.strap = null;
+      gang.fitting = null;
       return;
     }
     final next = Strap(width: w, height: h);
@@ -245,11 +285,18 @@ final class SetStrapSizeCommand extends Command {
     // chosen: index is what the file stores and what a person just
     // clicked, and re-flowing by coordinate would move jacks a person
     // did not touch.
-    for (final entry
-        in (_before?.cells ?? const <int, CellOccupant>{}).entries) {
+    //
+    // A PASS-THROUGH CARRIES NOTHING ACROSS, and the switch says so
+    // rather than a null check: a brush has no cells to keep, so there is
+    // nothing here to lose and nothing to warn about.
+    final carried = switch (_before) {
+      final Strap s => s.cells,
+      _ => const <int, CellOccupant>{},
+    };
+    for (final entry in carried.entries) {
       if (next.holdsIndex(entry.key)) next.cells[entry.key] = entry.value;
     }
-    gang.strap = next;
+    gang.fitting = next;
   }
 
   @override
@@ -257,7 +304,61 @@ final class SetStrapSizeCommand extends Command {
     if (!_applied) return;
     final outlet = doc.outlets[outletId];
     if (outlet == null || index < 0 || index >= outlet.gangs.length) return;
-    outlet.gangs[index].strap = _copyStrap(_before);
+    outlet.gangs[index].fitting = _copyFitting(_before);
+  }
+}
+
+/// Fits a pass-through of [style] to the gang at [index] (DR-047).
+///
+/// **ITS OWN COMMAND AND ITS OWN LABEL, not a flag on
+/// [SetStrapSizeCommand].** Fitting a brush and sizing a strap are two
+/// acts on two different parts, and undoing the first back to a 6-port
+/// full of keystones reads as an accident when the Edit menu calls it
+/// *"Set strap size"*.
+///
+/// **IT DISCARDS THE CELLS AND DOES NOT REFUSE**, which is this file's
+/// standing choice for a person who has decided the plate was wrong. The
+/// whole previous fitting is held for revert, so undo is exact: every
+/// keystone comes back in the cell it was in.
+final class SetGangPassThroughCommand extends Command {
+  SetGangPassThroughCommand({
+    required this.outletId,
+    required this.index,
+    required this.style,
+  });
+
+  final Uuid outletId;
+  final int index;
+  final PassThroughStyle style;
+
+  GangFitting? _before;
+  bool _applied = false;
+
+  @override
+  LabelKey get label => LabelKey.setGangPassThrough;
+
+  @override
+  EpochMask get touches => EpochMask.structure;
+
+  @override
+  Iterable<Uuid> get affects => [outletId];
+
+  @override
+  void apply(RackDocument doc) {
+    final outlet = doc.outlets[outletId];
+    if (outlet == null || index < 0 || index >= outlet.gangs.length) return;
+    final gang = outlet.gangs[index];
+    _before = _copyFitting(gang.fitting);
+    _applied = true;
+    gang.fitting = PassThrough(style);
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    if (!_applied) return;
+    final outlet = doc.outlets[outletId];
+    if (outlet == null || index < 0 || index >= outlet.gangs.length) return;
+    outlet.gangs[index].fitting = _copyFitting(_before);
   }
 }
 
@@ -310,7 +411,7 @@ final class SetCellOccupantCommand extends Command {
     if (outlet == null || gangIndex < 0 || gangIndex >= outlet.gangs.length) {
       return;
     }
-    final strap = outlet.gangs[gangIndex].strap;
+    final strap = _strapOf(outlet.gangs[gangIndex]);
     if (strap == null || !strap.holdsIndex(cellIndex)) return;
 
     _hadBefore = strap.cells.containsKey(cellIndex);
@@ -336,7 +437,7 @@ final class SetCellOccupantCommand extends Command {
 
   void _vacateDuplicatesOf(Outlet outlet, CellOccupant occupant) {
     for (var g = 0; g < outlet.gangs.length; g++) {
-      final other = outlet.gangs[g].strap;
+      final other = _strapOf(outlet.gangs[g]);
       if (other == null) continue;
       for (final index in other.cells.keys.toList()) {
         if (g == gangIndex && index == cellIndex) continue;
@@ -354,7 +455,7 @@ final class SetCellOccupantCommand extends Command {
     if (outlet == null || gangIndex < 0 || gangIndex >= outlet.gangs.length) {
       return;
     }
-    final strap = outlet.gangs[gangIndex].strap;
+    final strap = _strapOf(outlet.gangs[gangIndex]);
     if (strap == null) return;
 
     if (_hadBefore) {
@@ -364,7 +465,7 @@ final class SetCellOccupantCommand extends Command {
     }
     for (final entry in _vacated.entries) {
       final (gang, index) = entry.key;
-      outlet.gangs[gang].strap?.cells[index] = entry.value;
+      _strapOf(outlet.gangs[gang])?.cells[index] = entry.value;
     }
   }
 }

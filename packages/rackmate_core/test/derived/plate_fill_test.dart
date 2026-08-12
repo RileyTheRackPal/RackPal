@@ -116,7 +116,7 @@ void main() {
       s.cells[0] = LinkEndOccupant(linkId);
       s.cells[1] = const BlankInsert();
       final fill = computePlateFill(
-        _outlet(outletId, gangs: [Gang(strap: s)]),
+        _outlet(outletId, gangs: [Gang(fitting: s)]),
         const <Link>[],
       );
       expect(fill.cellsOccupied, 1);
@@ -128,7 +128,7 @@ void main() {
 
     test('an empty strap orders no blanks at all', () {
       final fill = computePlateFill(
-        _outlet(outletId, gangs: [Gang(strap: Strap(width: 2, height: 3))]),
+        _outlet(outletId, gangs: [Gang(fitting: Strap(width: 2, height: 3))]),
         const <Link>[],
       );
       expect(fill.blanksFitted, 0);
@@ -204,7 +204,7 @@ void main() {
   group('a plate reports what it could not answer', () {
     test('unknown drops are counted beside the requirement, not in it', () {
       final fill = computePlateFill(
-        _outlet(outletId, gangs: [Gang(strap: Strap(width: 1, height: 2))]),
+        _outlet(outletId, gangs: [Gang(fitting: Strap(width: 1, height: 2))]),
         [
           _drop(
             id: linkId,
@@ -232,13 +232,13 @@ void main() {
           outletId,
           gangs: [
             Gang(),
-            Gang(strap: Strap(width: 1, height: 1)),
+            Gang(fitting: Strap(width: 1, height: 1)),
           ],
         ),
         const <Link>[],
       );
       expect(fill.gangCount, 2);
-      expect(fill.strapsUnchosen, 1);
+      expect(fill.fittingsUnchosen, 1);
       expect(fill.cellsProvided, 1);
       expect(fill.isSettled, isFalse);
     });
@@ -337,6 +337,80 @@ void main() {
           expect(fill.coverPlateGangs, n);
         }
       });
+
+      test('a gang holding a pass-through still counts toward the plate', () {
+        // §12.19. DR-045 held that a brush plate is one this getter
+        // "structurally cannot express". Give the opening a gang and the
+        // count falls out of gangs.length exactly as it always did, which
+        // is the whole reason DR-047 needed no change here.
+        final fill = computePlateFill(
+          _outlet(
+            outletId,
+            gangs: [
+              Gang(fitting: Strap(width: 1, height: 1)),
+              Gang(fitting: const PassThrough(PassThroughStyle.brush)),
+            ],
+          ),
+          const <Link>[],
+        );
+        expect(fill.coverPlateGangs, 2);
+      });
     },
   );
+
+  group('a gang somebody brushed is not a gang nobody has fitted', () {
+    // DR-047 §11.46.5. Both provide zero cells; only one is a question.
+    test('it is counted apart from the unchosen ones', () {
+      final fill = computePlateFill(
+        _outlet(
+          outletId,
+          gangs: [
+            Gang(),
+            Gang(fitting: const PassThrough(PassThroughStyle.brush)),
+            Gang(fitting: const PassThrough(PassThroughStyle.bullNose)),
+          ],
+        ),
+        const <Link>[],
+      );
+      expect(fill.fittingsUnchosen, 1);
+      expect(fill.passThroughGangs, 2);
+      expect(fill.cellsProvided, 0);
+    });
+
+    test('a plate of nothing but pass-throughs IS settled', () {
+      // The M3-H defect one scale down: a finished thing must not read as
+      // unfinished work. Every opening here is decided, so there is
+      // nothing left for anybody to say.
+      final fill = computePlateFill(
+        _outlet(
+          outletId,
+          gangs: [Gang(fitting: const PassThrough(PassThroughStyle.brush))],
+        ),
+        [
+          _drop(
+            id: linkId,
+            outletId: outletId,
+            termination: TerminationType.rj45Plug,
+          ),
+        ],
+      );
+      expect(fill.isSettled, isTrue);
+      // AND IT IS NOT PLATELESS. It has a plate; the plate has no jacks.
+      expect(fill.needsNoPlate, isFalse);
+    });
+
+    test('one unfitted gang beside a brush is still unsettled', () {
+      final fill = computePlateFill(
+        _outlet(
+          outletId,
+          gangs: [
+            Gang(fitting: const PassThrough(PassThroughStyle.brush)),
+            Gang(),
+          ],
+        ),
+        const <Link>[],
+      );
+      expect(fill.isSettled, isFalse);
+    });
+  });
 }

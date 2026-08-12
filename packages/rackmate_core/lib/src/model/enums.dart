@@ -72,6 +72,29 @@ enum TerminationType {
   rj45Plug,
 }
 
+/// What kind of hole a gang opening is, when it is a hole rather than a
+/// strap (DR-047 §11.46.3).
+///
+/// TWO VALUES BECAUSE THE USER NAMED TWO PARTS, and a third was offered
+/// and declined. Asked which pass-throughs they buy, the answer was a
+/// whole brush plate, a Decora-format brush insert and a bull-nose or
+/// grommet plate. The first two are the same opening in two forms, and
+/// `derived/plate_fill.dart` derives which; the third is a different
+/// opening and is [bullNose].
+///
+/// **A KEYSTONE-FORMAT BRUSH INSERT WAS DECLINED**, so there is no
+/// fourth `CellOccupant` and nothing about this enum touches a strap's
+/// cells. §11.44.2 made "how many cells, and which parts" a question
+/// this project asks out loud every time a vocabulary grows, after
+/// inferring it for `euroblock` cost a correction a milestone later.
+enum PassThroughStyle {
+  /// Bristles across the opening: cables pass and the hole is hidden.
+  brush,
+
+  /// A hard opening or a rubber grommet rather than bristles.
+  bullNose,
+}
+
 /// Which surface an `Outlet` or a `StructureOrigin` field end is mounted
 /// on. §4.7, m24.
 enum MountSurface { wall, ceiling, floor, soffit, exterior, inGround }
