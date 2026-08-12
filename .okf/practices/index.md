@@ -6,7 +6,7 @@ by something going wrong.
 * [A test that asserts an absence names its due date](a-test-that-asserts-an-absence-names-its-due-date.md) - three came due in one task and cost five minutes between them, because each comment said which item would retire it.
 * [A deferred action needs a frame](defer-past-the-gesture.md) - addPostFrameCallback queues but does not schedule, and a TabBarView settles the page under a tab switch made mid-click.
 * [Assert the artifact, not the mechanism](assert-the-artifact-not-the-mechanism.md) - a test counted corridors, passed, and the sheet painted a fifth of its ink twice.
-* [A modelled field is not a reachable one](a-modelled-field-is-not-a-reachable-one.md) - six now; the sixth was a callback with a writer behind it and no caller in front, which the file's own check passes, and it is a gate now rather than a habit.
+* [A modelled field is not a reachable one](a-modelled-field-is-not-a-reachable-one.md) - fields with no writer, a callback with no caller, and `NetworkConfig`, whose only writer in the whole tree is the JSON decoder; the last was found by censusing a feature request before pricing it.
 * [Check a decomposition for holes](check-a-decomposition-for-holes.md) - a healthy-looking four-task issue had nothing that read a CSV file; ask what produces each task's input, and know a gap from a scope change.
 * [A dimension sits in an inequality](a-dimension-sits-in-an-inequality.md) - a 22 mm gang pitch against a 33.34 mm opening is two holes overlapping; the check is free, and the reading was real but was answering a different axis.
 * [Census before building](census-before-building.md) - print the field over the whole corpus first; it has caught an empty field, an unmeasured cost and a wrong ordering.

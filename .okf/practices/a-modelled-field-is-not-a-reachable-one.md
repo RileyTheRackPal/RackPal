@@ -1,9 +1,9 @@
 ---
 type: Playbook
 title: A modelled field is not a reachable one; look for the gesture, not the field
-description: Six times now. Five were fields with no writer; the sixth was a callback with a writer behind it and no caller in front, which this file's own check passes. Ask what a person clicks, and follow it down.
+description: Fields with no writer, a callback with no caller, and one field whose only writer is the JSON decoder. Ask what a person clicks, and follow it down.
 tags: [practice, model, commands, verification]
-timestamp: 2026-08-10T00:00:00Z
+timestamp: 2026-08-12T00:00:00Z
 status: adopted
 ---
 
@@ -18,13 +18,15 @@ starting at the field and stopping at the first thing that assigns it.
 
 # Why, with the evidence
 
-**Every one of these was found the same way: by trying to use the thing.** Not
-one was found by reading the model, and not one was found by a test.
+**All but the last were found the same way: by trying to use the thing.** Not by
+reading the model, and not by a test. The exception is at the bottom and is worth
+the most, because it was found before anybody tried.
 
-The first five are fields with no writer. The sixth, below, is a different shape
-and is the reason this heading no longer carries a count: a sentence that says
-"four times" is wrong the moment there is a fifth, and this file has been wrong
-that way once already.
+The first five are fields with no writer. The sixth is a different shape, and is
+the reason no heading here carries a count: a sentence that says "four times" is
+wrong the moment there is a fifth, and this file has been wrong that way once
+already. **The frontmatter said "six" while the body held seven**, which is the
+same failure one layer out, so the count has now left the description too.
 
 * **`Pathway`** (M3-E/4). In the model since M0, round-tripped by the codec, read
   by the schedule's `PATH` column, the Structure editor and
@@ -44,6 +46,11 @@ that way once already.
   inline, pre-filled with a derived `code`". No derivation existed anywhere;
   every room so far had been coded by hand, which is not available when a sheet
   creates twelve at once.
+* **`OutletTemplate`'s termination** (DR-044). The fifth, and **the first caught
+  before the field was written**: DR-043 proposed leaving it null on the shipped
+  templates, and nothing in this product can author an `OutletTemplate`, so null
+  on the shipped ones is null everywhere for ever. A census before a line was
+  built is what turned that into a ruling instead of a defect.
 
 # The sixth is one layer up, and this file's own check misses it
 
@@ -75,6 +82,42 @@ when one has no call site: 18 callbacks, one hole on its first run. It was
 **watched failing** before being trusted, and it deliberately skips nested
 records (`StructureEditorActions.dropEntry`, `.outlets`) because those are passed
 rather than invoked, and a gate that cries wolf on its first run gets weakened.
+
+# The seventh has NO writer at all, and it was found before anybody tried to use it
+
+**`NetworkConfig` on `Port`** (`{hostname, ip, subnet, gw, mac, vlans[],
+portRole}`), plus `DeviceInstance.macAddressPrimary`. In the model since M0,
+encoded and decoded by `json_codec.dart`. Censused 2026-08-12 while pricing a
+feature request for static IP settings on the sheets:
+
+```
+grep -rn "network\s*=\|network:" --include=*.dart .
+→ json_codec.dart:1361:  network: decodeNullableObject(
+```
+
+**One hit, and it is the decoder.** Not a command, not a widget, not a test
+fixture. The only way a `NetworkConfig` has ever existed in this product is if
+somebody hand-edited a `.rmpj`. Every earlier entry had at least a fixture; this
+one is the pure case.
+
+**It reads as nearly-shipped from three directions at once**, which is what makes
+it worth the entry. The field is modelled. The codec round-trips it. And
+`sheet_def.dart`'s `kReservedNcsIds` **reserves `T6.50` for "the v1.1 Network/IP
+Schedule"**, with docs/08 §2.2 saying in terms that its deferral is *"a ruling,
+not an omission"*. A reader finds a modelled field, a working codec and a
+reserved sheet number, and concludes the work is mostly done. **It is zero
+percent reachable.** The reserved id is doing the same damage a citation does in
+[two documents agreeing is not verification](two-documents-agreeing-is-not-verification.md):
+it is evidence of intent that reads as evidence of existence.
+
+**This is the first one found by reading rather than by using**, which the
+paragraph at the top of this file used to say never happens. It did not happen by
+accident. It happened because a **feature request was censused before it was
+priced**, which is the same instrument as
+[census before building](census-before-building.md) pointed at a proposal instead
+of at a corpus. **That is the cheap moment**: an unreachable field discovered
+while scoping costs a paragraph, and the same field discovered mid-build costs an
+unscheduled command.
 
 # The check, which costs a minute
 

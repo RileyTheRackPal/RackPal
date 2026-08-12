@@ -1,5 +1,43 @@
 # Update Log
 
+## 2026-08-12 (fifth entry)
+
+* **Update**: [The analyzer ratchet](/gates/analyzer-baseline.md) said the pin was
+  **194**; it has been **173** since DR-017's clearing work. **The bundle whose
+  purpose is to prevent drift had drifted, about the one integer in the repository
+  whose job is to measure drift.** The fix is not a new number, it is a **pointer**:
+  the concept now refuses to quote the figure and sends the reader to
+  `tools/ci/analyze_info_baseline.txt`. A number copied into prose is a number that
+  will be wrong.
+* **Update**: [Registry parity](/gates/registry-parity.md) called itself the *"13th
+  gate"*. It is the **eighth of fourteen**, because DR-017 inserted the formatter
+  ahead of it. **A gate's position in a list is not a fact about the gate**, and the
+  ordinal has been replaced rather than corrected: the same sentence would rot again
+  on the next insertion.
+* **Update**: [A modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md)
+  gains its **seventh** instance, and the count has now left the frontmatter as
+  well, because **the description said "six" while the body already held seven**,
+  which is the file's own lesson failing one layer out. The missing **fifth** bullet
+  (DR-044's `OutletTemplate` termination) was also absent from a list its own prose
+  said held five.
+* **Note**: **`NetworkConfig` HAS NO WRITER ANYWHERE, NOT EVEN A TEST FIXTURE.**
+  `{hostname, ip, subnet, gw, mac, vlans[], portRole}` on `Port`, plus
+  `DeviceInstance.macAddressPrimary`: in the model since M0, round-tripped by the
+  codec, and the single assignment in the whole tree is `json_codec.dart`'s decoder.
+  Every earlier instance had at least a fixture. **This is the pure case.**
+* **Note**: **IT READS AS NEARLY-SHIPPED FROM THREE DIRECTIONS.** The field is
+  modelled, the codec works, and `sheet_def.dart` **reserves `T6.50` for "the v1.1
+  Network/IP Schedule"** with docs/08 §2.2 calling that deferral *"a ruling, not an
+  omission"*. A reserved sheet number is doing exactly what a citation does in
+  [two documents agreeing is not verification](/practices/two-documents-agreeing-is-not-verification.md):
+  standing in for existence while being evidence only of intent.
+* **Note**: **The first instance found by READING rather than by USING**, which the
+  practice's own opening paragraph said had never happened. It was found by
+  censusing a **feature request** before pricing it, which is
+  [census before building](/practices/census-before-building.md) pointed at a
+  proposal instead of at a corpus, and it is the cheapest moment this pattern has
+  ever been caught at.
+
 ## 2026-08-12 (fourth entry)
 
 * **Creation**: [DR-047](/decisions/dr-047-a-gang-can-be-fitted-with-a-pass-through.md),

@@ -9,7 +9,13 @@ status: enforced
 ---
 
 `python tools/registry_parity.py`. Added by
-[DR-010](/decisions/dr-010-seeded-registries.md), 13th gate in `run_local.ps1`.
+[DR-010](/decisions/dr-010-seeded-registries.md), one of the fourteen gates
+`run_local.ps1 -SkipBuild` runs.
+
+**An ordinal was what this line used to carry, and it rotted.** It read *"13th
+gate"*, which was true on the day DR-010 appended it and false as soon as DR-017
+inserted the formatter ahead of it. A gate's position in a list is not a fact
+about the gate. Count the `Invoke-Gate` calls if the number matters.
 
 # The pair it completes
 

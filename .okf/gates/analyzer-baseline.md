@@ -9,15 +9,27 @@ status: enforced
 ---
 
 `pwsh -File tools/ci/analyze_gate.ps1` must report **0 errors, 0 warnings, and
-exactly the pinned info count** (194 as of `a984add`).
+exactly the pinned info count**.
+
+**Do not quote the number from here. Read
+`tools/ci/analyze_info_baseline.txt`,** which is the pin itself and carries its own
+rationale header. This file said `194` for a fortnight after the pin reached `173`,
+which is the drift the bundle exists to prevent, committed by the bundle, about
+the one integer in the repository whose entire job is to measure drift.
 
 # Why a number and not `--fatal-infos`
 
-`very_good_analysis` reports ~195 infos on this tree, so `--fatal-infos` would
-make `main` permanently red on the first push, and a permanently red main is
-worse than no CI. Clearing them and then switching to `--fatal-infos` is the
-destination; the pin is what stops the number moving the wrong way in the
-meantime, after it went 203 → 395 during the salvage with nothing watching.
+`very_good_analysis` reported ~195 infos when the gate was written, so
+`--fatal-infos` would have made `main` permanently red on the first push, and a
+permanently red main is worse than no CI. Clearing them and then switching to
+`--fatal-infos` remains available; the pin is what stops the number moving the
+wrong way meanwhile, after it went 203 → 395 during the salvage with nothing
+watching.
+
+**DR-017 (canon §11.16) settled this on 2026-08-03** and the ratchet is the
+answer rather than a holding position: `dart format` became a gate because
+formatting is mechanical and settles permanently, and the ratchet stayed for
+infos because the remainder are style opinions it already prevents growing.
 
 # It scans tests, not just `lib/`
 
