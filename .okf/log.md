@@ -1,5 +1,37 @@
 # Update Log
 
+## 2026-08-11 (fifth entry)
+
+* **Creation**: [DR-042](/decisions/dr-042-plate-outline-measured.md), which closes
+  DR-041's last two hedges one day after it wrote them: the plate outline
+  (2.75 × 4.5 in) and the gang pitch (1.8125 in), both measured.
+* **Note**: **THE MECHANISM IS WORTH MORE THAN EITHER FIGURE.** §11.40.4 left the
+  gang pitch a **stated choice rather than a ruled figure** and said the reading
+  would win *"with nothing to withdraw"*. It did: **no supersession entry, no §12
+  row, no corpus edit reversing an earlier claim.** §11.27.2 is what the other path
+  costs, a figure elevated to a ruling and un-elevated within hours, taking a
+  wrongly-superseded parenthetical with it. The rule: **when a figure is needed
+  before it can be measured, record it where a measurement can replace it
+  silently.**
+* **Update**: [A dimension sits in an inequality](/practices/a-dimension-sits-in-an-inequality.md)
+  gains its second instance, and it is a **different shape**. Neither new figure had
+  an inequality to check, because both were new. What checked them was an
+  **invariant across a family**: the plate's edge margin is 18.255 mm for every gang
+  count, which holds only if the outline formula and the pitch are both right and
+  drifts with N if either is wrong. **Where a single figure has an inequality, a set
+  of figures has an invariant.**
+* **Note**: **DR-007 §11.7.8's three changes are now fully discharged** and no figure
+  in the keystone geometry is an *"about"*. What is left open is the strap's own
+  plastic (hidden behind the cover plate in every elevation this product draws) and
+  depth (a box-fill fact, and box fill is not v1). Neither blocks a drawing.
+* **Note**: **The Outlets tab drew each gang as a free-floating box until this.**
+  That is a picture of some holes; it is a picture of a part now, one plate with N
+  openings at the real pitch. Three defects surfaced getting there, and all three
+  are the kind that ship: a coordinate rebase that would have shifted every cell by
+  18 × 24 mm and still looked like a plate, a 3-gang plate clipping in a pane 287
+  units wide, and a cell-size assertion comparing doubles by identity that caught a
+  64.0 against a 64.00000000000003.
+
 ## 2026-08-11 (fourth entry)
 
 * **Creation**: [DR-041](/decisions/dr-041-plate-opening-and-cell-pitches.md), the

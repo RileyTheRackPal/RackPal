@@ -2023,13 +2023,44 @@ codec, a golden fixture and a derived rollup before it had a writer. It has four
 would have erased a cell**, a destructive cancel, and the kind of thing found by accident three
 weeks later. It returns a record now and a case drives the dismissal.
 
-**What M3-H does NOT settle.** The plate **outline** (~2.75 × 4.5 in) is still an unruled *"about"*
-and nothing draws it, so the plate view is openings-relative; DR-041 §11.40.7 records it as open
-alongside the strap's own plastic and everything in depth. **The gang pitch is a standard nobody has
-measured**, marked as such in `plate_geometry.dart` and left unruled deliberately, so a caliper
-reading later wins with nothing to withdraw. **Nothing here touches M3's exit criterion**, which
-DR-007 §11.7 states outright: a 60-drop rough-in schedules and prints without knowing which cell a
-keystone occupies. This is the milestone growth that ruling booked in advance, delivered.
+**M3-H/4 closed the same day, `bed4639`, and it is DR-041's own mechanism paying out.** The two
+things the entry above listed as open, the plate outline and the unmeasured gang pitch, were both
+measured within the day: **2.75 × 4.5 in** and **1.8125 in**, DR-042 (§11.41).
+
+***Nothing was superseded and nothing was withdrawn, which is the whole return.*** §11.40.4 left the
+gang pitch a **stated choice rather than a ruled figure**, on §11.27.2's rule that an unruled figure
+with provenance outranks a ruled figure without one, and predicted that a later caliper reading would
+win *"with nothing to withdraw"*. It did: **no §12 row, no supersession entry, no corpus edit
+reversing an earlier claim.** §11.27.2 records the other path costing a retraction inside the
+normative document within hours. The rule is worth one sentence in a source file: **when a figure is
+needed before it can be measured, record it where a measurement can replace it silently.**
+
+*The check that carries DR-042 is an invariant rather than an inequality, and that is a new shape.*
+Neither figure had an inequality to test against, because both were new. What tested them is that
+the plastic between a plate's edge and its outermost opening comes out **18.255 mm for every gang
+count**, which holds only if the outline formula and the pitch are *both* right and drifts with `N`
+if either is wrong. Evidence about the pair, not a restatement of one of them.
+`.okf/practices/a-dimension-sits-in-an-inequality.md` gains it as a second instance: **where a single
+figure has an inequality, a set of figures has an invariant.**
+
+*What the measurement bought that a reader can see.* The Outlets tab drew each gang as a
+free-floating box with an arbitrary gap, which is a picture of some holes. It draws **one plate with
+N openings at the real pitch** now, with real plastic around the edge, so §11.7.8 change 2's *"blank
+plastic above and below"* is something a person can look at rather than something the corpus asserts.
+**Three defects surfaced getting there and all three are the kind that ship**: `cellAt` returns plate
+coordinates while each gang widget's box *is* its opening, so a missing rebase would have shifted
+every cell by 18 × 24 mm and still looked like a plate; a 3-gang plate is 647 units wide and the pane
+gave it 287, so it clipped, and a clipped dimensioned drawing looks correct while omitting a gang;
+and a cell-size assertion comparing doubles by identity caught a `64.0` against a
+`64.00000000000003`, because `DBox` stores corners and `(top + h) − top` is not `h` for every `top`.
+
+**What M3-H does NOT settle, as it now stands.** The **strap's own plastic** outside the opening,
+which §11.7.9 B keeps invisible because the cover plate hides it in every elevation this product
+draws, and **anything in depth**, which §11.7.9 C files as a box-fill fact and box fill is not v1.
+Neither blocks a drawing. **DR-007 §11.7.8's three changes are fully discharged and no figure in the
+keystone geometry is an *"about"*.** **Nothing here touches M3's exit criterion**, which DR-007 §11.7
+states outright: a 60-drop rough-in schedules and prints without knowing which cell a keystone
+occupies. This is the milestone growth that ruling booked in advance, delivered.
 
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 

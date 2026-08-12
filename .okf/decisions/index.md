@@ -35,6 +35,8 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-040, a drop lands on a panel port](dr-040-a-drop-lands-on-a-panel-port.md) - the product could only make AC-018's fourteen unbound drops, sixty times, and three of the four tokens in the shipped rack-label preset had no reachable source; found by censusing the exit criterion before the stopwatch instead of after it.
 * [DR-041, the plate opening and the two cell pitches](dr-041-plate-opening-and-cell-pitches.md) - the last four numbers a plate drawing needs; a fifth reading was refuted by arithmetic before it reached the code, because a gang pitch cannot be smaller than the opening is wide.
 
+* [DR-042, the plate outline and the gang pitch, measured](dr-042-plate-outline-measured.md) - DR-041's last two hedges close a day later, and because the pitch was deliberately left unruled the caliper replaced it with no supersession to write.
+
 # Not yet written up
 
 DR-002 (residential primary), DR-003 (device builder in v1), DR-004 (multi-sheet

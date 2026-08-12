@@ -54,6 +54,20 @@ different question**. A caliper reading is not self-labelling. The instrument wa
 right, the hand was right, and the number still could not be used, because
 nothing about it said which distance it was.
 
+# The second instance, and it is a different shape
+
+[DR-042](/decisions/dr-042-plate-outline-measured.md) added the plate outline and
+promoted the gang pitch. Neither could be checked against a single inequality,
+because both were new. What checked them was an **invariant across a family**:
+with an N-gang plate at `2.75 + (N-1) × 1.8125` in and a uniform pitch, the edge
+margin comes out 18.255 mm for *every* N.
+
+That holds only if both figures are right and it drifts with `N` if either is
+wrong, so it is evidence about the **pair** rather than a restatement of one of
+them. **Where a single figure has an inequality, a set of figures has an
+invariant.** Look for the quantity that should not change, and vary the thing it
+is indexed on.
+
 # Make it a test, not a habit
 
 `plate_geometry_test.dart` carries the five inequalities as a case:
@@ -64,6 +78,14 @@ cellPitchX + cellWidth  <= openingWidth
 2*cellPitchY + cellHeight <= openingHeight
 cellWidth  <= cellPitchX
 cellHeight <= cellPitchY
+openingWidth  < plateWidth1Gang
+openingHeight < plateHeight
+```
+
+plus the family invariant, over N = 1..4:
+
+```
+(plateWidthFor(N) - (openingWidth + gangPitch*(N-1))) / 2  ==  18.255 mm
 ```
 
 A habit is something one person remembers. These fail loudly the next time

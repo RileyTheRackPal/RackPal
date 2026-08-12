@@ -80,6 +80,11 @@ means a later caliper reading wins automatically, with nothing to withdraw.
 Ruling it would set up precisely the supersession-and-retraction that DR-028
 exists to prevent.
 
+> **MEASURED by [DR-042](dr-042-plate-outline-measured.md) on 2026-08-11**, one
+> day later. **The mechanism worked exactly as designed**: the reading replaced
+> this figure with no supersession entry anywhere in the corpus. That is the
+> whole return on writing "stated choice" instead of "ruled".
+
 # A wrong reading was refuted by arithmetic before it reached the code
 
 The gang pitch was first given as **22 mm**. That is impossible: an opening is
@@ -118,7 +123,7 @@ cares that these are integers.
 
 | Open | Why it is not needed yet |
 |---|---|
-| The **plate outline** (~2.75 × 4.5 in for 1-gang) | Nothing in M3 draws the plate's edge. Carried as an *"about"*, and it should not be promoted either |
+| The **plate outline** (~2.75 × 4.5 in for 1-gang) | **MEASURED by [DR-042](dr-042-plate-outline-measured.md)**, and the *"about"* was right: 2.75 × 4.5 in exactly. The editor draws the edge now |
 | The **strap's own plastic** outside the opening | Hidden behind the cover plate in every elevation the product draws |
 | Anything in **depth** | DR-007 §11.7.9 C: a box-fill fact, and box fill is not v1 |
 | Where the opening sits **within** the outline | Falls out of the outline the moment somebody measures it |
