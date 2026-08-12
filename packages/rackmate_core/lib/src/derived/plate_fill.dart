@@ -78,12 +78,23 @@ int? cellsRequiredFor(TerminationType? termination, int conductorCount) =>
       TerminationType.bindingPost => conductorCount,
       TerminationType.keystone ||
       TerminationType.punchdown ||
-      TerminationType.fBarrel ||
-      TerminationType.euroblock => 1,
+      TerminationType.fBarrel => 1,
       // NOTHING IS ON THE PLATE. Not "one cell we cannot name" — zero, and
       // §11.7.2.1 states it as zero. A coil in a J-hook and a run brought
       // to a field connector both leave the plate alone.
-      TerminationType.unterminated || TerminationType.fieldConnector => 0,
+      //
+      // `euroblock` JOINED THIS ROW AT DR-044 (§11.43.4) AND WAS IN THE
+      // ARM ABOVE, WRONGLY, FROM M3-H UNTIL THEN. §11.7.2.1's table does
+      // not mention it at all, and M3-H put it beside `keystone` on an
+      // inference nobody wrote down. A euroblock is a pluggable screw
+      // terminal on a DEVICE: the conductors land on a keypad or an
+      // amplifier and no jack occupies a cell. The keypad is the case
+      // that makes it concrete, because the device fills the gang, and a
+      // plate sized to give it a keystone as well is one cell too big on
+      // every keypad drop in a house.
+      TerminationType.euroblock ||
+      TerminationType.unterminated ||
+      TerminationType.fieldConnector => 0,
     };
 
 /// What one `Outlet`'s plate needs and what it currently provides.

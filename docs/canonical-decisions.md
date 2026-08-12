@@ -9353,7 +9353,15 @@ a parser is how a product ends up with two vocabularies and the refusal is the c
 token is refused with a caret and the accepted list, on `drop_line_parser.dart`'s existing rule that
 a refusal quotes the person back.
 
-**11.42.5 The six shipped templates are NOT seeded with terminations.** They stay null. **This is
+**11.42.5 The six shipped templates are NOT seeded with terminations.** They stay null.
+
+> **SUPERSEDED BY DR-044 (§11.43) THE SAME DAY, before a line of it was built.** A census found that
+> **nothing in this product can author an `OutletTemplate`**, so *"a shop authoring its own template
+> says what it terminates in"* describes a capability that does not exist, and this clause together
+> with §11.42.2 would have produced a permanently unreachable field. The DR-024 precedent below is
+> also mis-cited: that ruling refused a STANDARDS CITATION, and a termination is a recipe fact of the
+> same kind as the cable count already in the recipe. **The nine shipped templates are seeded**; see
+> §11.43.3 for the five values and their provenance. **This is
 DR-024 §11.23.2's refusal repeated deliberately**: that ruling kept `tia570Grade` null on all six
 because *"TV location makes no standards claim, and writing one would put a citation in a document
 nobody made"*. A termination is the same class of claim. A shop authoring its own template says what
@@ -9372,6 +9380,109 @@ selection model it was already drawn with. **M3 gains an issue**, M3-L, which is
 rather than a growth in the sense §11.39 draws: the clause was never in an exit criterion, and
 DR-007 §11.7.2.1 named `TerminationType` as *"the hook M3 should read"* while saying nothing about
 what writes it. Board #668 is closed by M3-L.
+
+### 11.43 DR-044 · The shipped templates carry terminations, and a euroblock occupies no cell
+
+**Settled by the user on 2026-08-11**, and this ruling exists because **DR-043 §11.42.5 was wrong one
+clause deep and a census caught it before a line of it was built.**
+
+**11.43.1 What the census found, and why §11.42.5 could not stand.** §11.42.2 made
+`OutletDrop.termination` **the load-bearing path**, on the argument that a modifier serves the person
+already typing while the question was about the person clicking. §11.42.5 then left the shipped
+templates null, on the reasoning that *"a shop authoring its own template says what it terminates
+in"*.
+
+***Nothing in this product can author an `OutletTemplate`.*** There is no command, no editor, and the
+only writer of `registries.outletTemplates` anywhere outside test fixtures is `buildSeedRegistries()`
+at document creation. `seed_outlet_templates.dart`'s own header says so: *"NO LIBRARY FLOW ... This
+ships the master, not an editor for it."*
+
+So the two clauses together would have produced a field that is **null on every template in every
+document, for ever, with nothing able to set it**: the fifth instance of
+`.okf/practices/a-modelled-field-is-not-a-reachable-one.md`, and the first caught **before** the
+field was written rather than in the next milestone. §11.42.2's argument for preferring the template
+over the modifier was, as written, void.
+
+**11.43.2 §11.42.5 IS SUPERSEDED, and the cause is a mis-cited precedent rather than a change of
+mind.** That clause leaned on DR-024 §11.23.2, which kept `tia570Grade` null on the six named
+templates because *"TV location makes no standards claim, and writing one would put a citation in a
+document nobody made"*.
+
+**That is a ruling about a STANDARDS CITATION, and a termination is not one.** A citation asserts
+conformance to an external document somebody has to be answerable for. A termination is a fact about
+the recipe of the same kind as the cable count already in it: *"TV location = 2 × Cat6 + 2 × RG6"*
+already says what gets pulled, and saying the Cat6 lands on a punchdown is that sentence continuing.
+The precedent was reached for because it looked similar and was about something else.
+
+**11.43.3 The five values, with provenance per row.** The user specified each rather than accepting a
+set offered to them, which is why this table has a provenance column at all.
+
+| Media | Termination | Source |
+|---|---|---|
+| `media.cat6`, `media.cat6a_futp` | **`punchdown`** | Stated by the user. NOT the `keystone` that was offered as the ordinary answer |
+| `media.rg6_quad` | **`fBarrel`** | Stated by the user, and it is the part in DR-007 §11.7.9's own reference photographs |
+| `media.22_4` | **`euroblock`** | Stated by the user. Zero cells per §11.43.4, so a keypad fills the gang and needs no keystone |
+| `media.16_4` | **`bindingPost`** | **NOT ASKED AGAIN.** Already on the record: §11.7.2's supersession rests on the user's *"We use single post keystones, one per conductor"* |
+| `media.os2` | **`keystone`** | Stated by the user. An LC keystone, one cell, in the grid like any other jack |
+
+**`punchdown` OVER `keystone` IS THE ROW WORTH NOTING**, because it is where asking beat offering.
+The recommended option was `keystone` and the shop's answer was `punchdown`. Face-on the two are the
+same object under §11.7.9 B, so the drawing is unaffected and the **Termination Schedule** is not:
+the sheet an installer works from now prints what this shop does. Had the seed been taken from the
+recommendation, nothing would have looked wrong and one printed column would have been quietly false
+on every data drop in every job.
+
+**11.43.4 A EUROBLOCK OCCUPIES ZERO CELLS, closing a gap DR-007 left that M3-H filled by inference.**
+§11.7.2.1's table names `keystone`, `fBarrel` and the module family as one cell per `Link` end,
+`punchdown` as one, binding posts as one per `Conductor`, and `unterminated` and `fieldConnector` as
+**zero**. **It does not mention `euroblock` at all.**
+
+M3-H's `cellsRequiredFor` put it at **one**, silently, in the same arm as `keystone`. That is exactly
+the class of inference §11.7.8 change 3 refused on a dimension, made on a count instead, and it
+shipped.
+
+The ruling: **zero, in the "nothing is on the plate" row beside `unterminated` and `fieldConnector`.**
+A euroblock is a pluggable screw terminal on a **device**, so the conductors land on a keypad or an
+amplifier and no jack occupies a cell. The keypad makes it concrete: the device fills the gang, and a
+plate sized to give it a keystone as well would be one cell too big on every keypad drop in a house.
+
+**How it was found is the reusable part.** Not by reading the code and not by a test: by **seeding a
+value and having to say what the value meant**. The Keypad template could not be seeded without
+answering "and how many cells is that". **A fact you have to write down gets audited; a fact you
+infer does not.**
+
+**11.43.5 What is still unreachable, stated so it is not read as closed.** There is **still no
+authoring surface for `OutletTemplate`**, and this ruling does not add one: DR-024 §11.23.4 already
+records which surface edits the registries as unsettled, and DR-033/DR-034 place the library flow in
+the community-catalog work. What changes is that the **nine shipped templates now carry the fact**, so
+the mouse path produces arrangeable plates today. A shop wanting its own recipe still cannot have one,
+and that is a live cap on §11.42.2's argument rather than a discharged one.
+
+**11.43.6 Scope.** **No scope change to roadmap §2.** One clause of a ruling dated the same day is
+superseded, one gap in DR-007 §11.7.2.1 is closed, and nine seeded records gain a field they were
+always going to need. `kSchemaVersion` does not move: an omitted-when-null key is additive and an
+older reader skips it (CR-117).
+
+**11.43.7 A SENTENCE OF THIS RULING WAS FALSE AND THE GOLDENS CAUGHT IT WITHIN THE HOUR.** §11.43.6
+first read *"`registries.outletTemplates` is `{}` in every shipped starter and in every document ever
+written, so the seed change costs no existing file a byte"*. **All four starters carry all nine
+seeded templates**, because `apps/rackmate/tool/starters/authoring.dart` assigns
+`buildSeedRegistries()` into each, and `starter_assets_test.dart` failed on all four the first time
+the suite ran. They are regenerated with the seed and the four golden files change.
+
+**The claim was not invented here; it was INHERITED, and that is the part worth keeping.** It is a
+verbatim copy of a paragraph that has sat on `OutletTemplate.tag` since DR-022, and **it was already
+false there**: those same starters carry `tag` on six templates and `tia570Grade` on three, on disk,
+today. The chain ran doc comment, to second doc comment, to normative ruling, in three steps and one
+afternoon, and each step looked like a citation of the one before it.
+
+**Two rules the corpus already had, and neither fired.**
+`.okf/practices/two-documents-agreeing-is-not-verification.md` says a citation is evidence of intent
+rather than of existence; here it was not even two documents, it was one sentence read twice. And
+counts written into prose are recorded in this project's own memory as a liability, because
+**a sentence asserting a count is not checkable by reading the sentence.** What caught it was a test
+that reads the bytes. The correction is therefore not only to the wording: the claim is now stated
+where a golden can contradict it, and both doc comments say what the starters actually contain.
 
 ---
 
@@ -9769,6 +9880,25 @@ in. See §11.7.
 | **AC-040**, the 27-rule catalogue *(28 under DR-020)* | **Unaffected.** The four `PLN-*` advisories ship in their own band and are not added to the total, exactly as docs/15 §9 states. |
 | **DR-029 §11.28.9**, the cost | **Unaffected. `L`, 9–13 weeks, unchanged.** A decomposition does not re-price the epic it decomposes; that would be a §8.3 amendment wearing a task's clothes. §11.36.7. |
 | **AC-056**, mobile read-only | **Unaffected.** This ships to a desk, not to a technician on site, and §11.28.7 already said so. |
+
+### 12.18 Superseded by DR-044 (the shipped templates carry terminations)
+
+**One clause, and it is the shortest-lived entry in this section: hours.** DR-043 was ruled on
+2026-08-11 and DR-044 superseded a clause of it the same day, before any of it was built.
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-043 §11.42.5** | The six shipped `OutletTemplate`s are **not** seeded with terminations and stay null, because *"a shop authoring its own template says what it terminates in"*, on DR-024 §11.23.2's precedent. | **Superseded.** **All nine shipped templates are seeded** (§11.43.3). The clause failed on a fact rather than on a judgement: **nothing in this product can author an `OutletTemplate`**, so the sentence describes a capability that does not exist, and the field would have been null everywhere for ever. The DR-024 precedent was also mis-cited: that ruling refused a **standards citation**, and a termination is a recipe fact of the same kind as the cable count already in the recipe. |
+| **DR-043 §11.42.2**, the template is the load-bearing path | **Restored rather than superseded.** The argument was sound and its premise was false; §11.43 supplies the premise. **Its cap survives**: a shop still cannot author its own recipe, and §11.43.5 records that as live rather than discharged. |
+
+**Nothing else in DR-043 moves.** The default stays Unspecified (§11.42.1), the colon grammar
+(§11.42.3), the vocabulary rule (§11.42.4) and the batch machinery (§11.42.6) are untouched.
+
+**Why this is a §12 entry and DR-042 was not.** DR-042 replaced a figure that had been deliberately
+recorded as a **stated choice** precisely so it could be replaced silently, so there was nothing to
+withdraw. This voids a **clause of a ruling**, which is the thing §12 exists to index. The contrast
+is the whole practical argument for §11.40.4's discipline: one of these needed an entry here and the
+other did not.
 
 ---
 

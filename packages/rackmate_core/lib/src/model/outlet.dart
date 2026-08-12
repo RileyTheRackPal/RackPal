@@ -4,7 +4,8 @@
 // the shorthand `this._field` form does not apply.
 import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
-import 'package:rackmate_core/src/model/enums.dart' show MountSurface, Wall;
+import 'package:rackmate_core/src/model/enums.dart'
+    show MountSurface, TerminationType, Wall;
 import 'package:rackmate_core/src/model/gang.dart';
 import 'package:rackmate_core/src/units/ids.dart';
 import 'package:rackmate_core/src/units/len.dart';
@@ -161,7 +162,12 @@ final class Outlet {
 
 /// One drop within an `OutletTemplate`'s recipe.
 final class OutletDrop {
-  OutletDrop({required this.media, required this.service, this.count = 1});
+  OutletDrop({
+    required this.media,
+    required this.service,
+    this.count = 1,
+    this.termination,
+  });
 
   // ACCESS CONTROL: fields below are plain mutable pending @internal
   // retrofit (AC-013). Converted as each is wired to a Command. See
@@ -169,6 +175,40 @@ final class OutletDrop {
   MediaTypeId media;
   String service;
   int count;
+
+  /// How this drop's FIELD end is finished, stamped on every `Link` the
+  /// template creates (DR-043 §11.42.2, DR-044 §11.43).
+  ///
+  /// **A RECIPE FACT, IN THE SAME FAMILY AS [count].** "TV location =
+  /// 2 × Cat6 + 2 × RG6" already says what gets pulled; saying the Cat6
+  /// lands on a punchdown is that sentence continuing. DR-044 §11.43.2
+  /// records why the opposite was briefly ruled and why it was wrong:
+  /// DR-024 refused a *standards citation* on these templates, which is a
+  /// different kind of claim.
+  ///
+  /// **THIS IS THE MOUSE PATH.** `+ Add outlet ▾` is the route a
+  /// mouse-first person lives in, and until this field existed it was the
+  /// ONE route that could not express a termination. DR-007 §11.7.2.1's
+  /// cell-count table reads `StructureOrigin.terminationField`, so a
+  /// template that carries this produces plates `Arrange` can size.
+  ///
+  /// **NULLABLE, AND NULL STAYS UNSPECIFIED** (G4, CR-114). DR-043
+  /// §11.42.1 does not move: a template that makes no claim produces
+  /// drops that make none either, and M3-J made the field nullable
+  /// precisely so no surface would write a value it did not have.
+  ///
+  /// **IT DOES COST THE FOUR STARTERS BYTES, AND THE CLAIM THAT IT WOULD
+  /// NOT WAS ALREADY IN THIS FILE AND ALREADY FALSE.** [OutletTemplate.tag]
+  /// below says `registries.outletTemplates` is `{}` in all four shipped
+  /// starters; they carry all NINE seeded templates, six of them with a
+  /// `tag` on disk. This comment said the same thing for one commit,
+  /// inherited by copying, until `starter_assets_test.dart` failed on all
+  /// four files at once. The starters are regenerated with DR-044's seed.
+  ///
+  /// `kSchemaVersion` STILL DOES NOT MOVE, and that half was never in
+  /// doubt: an omitted-when-null key is additive, and an older reader
+  /// skips it (CR-117).
+  TerminationType? termination;
 }
 
 /// A first-class recipe for creating a set of `Outlet` drops in one
@@ -205,9 +245,18 @@ final class OutletTemplate {
   /// chain falls through to the media's short tag rather than printing
   /// a blank segment.
   ///
-  /// NOT A MIGRATION. `registries.outletTemplates` is `{}` in all four
-  /// shipped starters and in every document ever written, so a key added
-  /// to an entity with zero instances everywhere costs no file a byte.
+  /// **THIS PARAGRAPH USED TO CLAIM `registries.outletTemplates` IS `{}`
+  /// IN ALL FOUR SHIPPED STARTERS. IT IS NOT, AND WAS NOT WHEN THAT WAS
+  /// WRITTEN.** Every starter carries all nine seeded templates, six of
+  /// them with this very field on disk: `authoring.dart` assigns
+  /// `buildSeedRegistries()` into each one. Adding a key here changes
+  /// four checked-in golden files, and `starter_assets_test.dart` is
+  /// what says so. Found at DR-044, when the claim was copied onto
+  /// [OutletDrop.termination] and the goldens went red.
+  ///
+  /// What survives is the part that was about the FORMAT rather than
+  /// about the corpus: an omitted-when-null key is additive and
+  /// `kSchemaVersion` does not move (CR-117).
   String? tag;
 
   /// The standards citation this template stamps on every `Outlet` it

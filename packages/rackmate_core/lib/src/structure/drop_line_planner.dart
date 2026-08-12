@@ -45,8 +45,11 @@ import 'package:rackmate_core/src/commands/home_run_commands.dart'
 import 'package:rackmate_core/src/commands/pathway_commands.dart';
 import 'package:rackmate_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackmate_core/src/commands/structure_commands.dart';
+import 'package:rackmate_core/src/derived/structure_table.dart'
+    show resolveTerminationToken, terminationTokens;
 import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
+import 'package:rackmate_core/src/model/enums.dart' show TerminationType;
 import 'package:rackmate_core/src/model/link.dart' show RoughInStatus;
 import 'package:rackmate_core/src/model/location.dart';
 import 'package:rackmate_core/src/model/outlet.dart';
@@ -318,6 +321,29 @@ DropLinePlan planDropLine({
     );
   }
 
+  // --- the terminations the line named (DR-043 §11.42.3) --------------
+  //
+  // RESOLVED BEFORE ANY COMMAND IS BUILT, so a mistyped termination
+  // refuses the WHOLE line with a caret on the token rather than
+  // creating three drops and then giving up on the fourth. That is
+  // `buildDropsFor`'s own contract read one stage earlier: a gesture
+  // that refused on its seventh drop must leave six behind, and a line
+  // that cannot be parsed leaves none.
+  final terminations = <int, TerminationType?>{};
+  for (final i in cableIndices) {
+    final token = line.items[i].terminationToken;
+    if (token == null) continue;
+    final resolved = resolveTerminationToken(token);
+    if (resolved == null) {
+      return DropLinePlanRefused(
+        '"$token" is not a field termination. Try one of: '
+        '${terminationTokens().join(', ')}.',
+        line.items[i].terminationColumn,
+      );
+    }
+    terminations[i] = resolved;
+  }
+
   // --- the drops -----------------------------------------------------
   final template = _templateOf(doc, plannedOutlet);
   final built = buildDropsFor(
@@ -333,6 +359,7 @@ DropLinePlan planDropLine({
           count: line.items[i].count,
           column: line.items[i].column,
           token: line.items[i].mediaToken,
+          termination: terminations[i],
         ),
     ],
     serviceTag: (item) => serviceTagFor(

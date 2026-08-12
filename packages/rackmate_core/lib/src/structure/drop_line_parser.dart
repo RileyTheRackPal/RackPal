@@ -60,10 +60,11 @@
 // the worst possible version of that.
 import 'package:meta/meta.dart';
 
-/// One `4x Cat6` on a line: how many, and the media name AS TYPED.
+/// One `4x Cat6` or `4x Cat6:punchdown` on a line: how many, the media
+/// name AS TYPED, and how its field end is finished when the line said.
 ///
-/// The token is not resolved here and not lower-cased. The resolver
-/// needs the original spelling to put in a refusal sentence, and
+/// Neither token is resolved here and neither is lower-cased. The
+/// resolver needs the original spelling to put in a refusal sentence, and
 /// `docs/07` §5.1's synonym table is case-folded at the point of
 /// comparison rather than on the way in.
 @immutable
@@ -72,6 +73,8 @@ final class DropLineItem {
     required this.count,
     required this.mediaToken,
     required this.column,
+    this.terminationToken,
+    this.terminationColumn,
   });
 
   final int count;
@@ -80,18 +83,43 @@ final class DropLineItem {
   /// 0-based offset of this item in the source line, for a caret.
   final int column;
 
+  /// What followed the item's colon, AS TYPED, or null when the item
+  /// carried none (DR-043 §11.42.3).
+  ///
+  /// **A COLON AND NOT A SIXTH `@modifier`, and that is a real
+  /// distinction rather than a preference.** The five modifiers are
+  /// LINE-level and are scanned off the end of the line; this binds to
+  /// the item it follows. `@term=` would have looked identical to them
+  /// while behaving differently, with nothing in the syntax to say so,
+  /// and it costs 15 characters against this one's 9 on a drill whose
+  /// whole measured script is 433 keystrokes.
+  ///
+  /// **THE SEPARATOR IS SAFE AND THAT WAS CHECKED, NOT ASSUMED.** No
+  /// media display name or alias in the seed catalog contains a colon;
+  /// they contain spaces and slashes (`Cat6 F/UTP`, `16/4`). The room
+  /// separator is the LINE's first colon, at a different nesting level,
+  /// so an item's own first colon is unambiguous.
+  final String? terminationToken;
+
+  /// Where [terminationToken] starts, for a caret on a refusal.
+  final int? terminationColumn;
+
   @override
   bool operator ==(Object other) =>
       other is DropLineItem &&
       other.count == count &&
       other.mediaToken == mediaToken &&
-      other.column == column;
+      other.column == column &&
+      other.terminationToken == terminationToken &&
+      other.terminationColumn == terminationColumn;
 
   @override
-  int get hashCode => Object.hash(count, mediaToken, column);
+  int get hashCode => Object.hash(count, mediaToken, column, terminationToken);
 
   @override
-  String toString() => 'DropLineItem(${count}x $mediaToken @$column)';
+  String toString() =>
+      'DropLineItem(${count}x $mediaToken'
+      '${terminationToken == null ? '' : ':$terminationToken'} @$column)';
 }
 
 /// The outcome of [parseDropLine].
@@ -390,7 +418,38 @@ final RegExp _countPrefix = RegExp(r'^\s*(\d+)\s*[xX×]\s*');
 final RegExp _digitsOnly = RegExp(r'^\d+$');
 
 /// `4x Cat6` → 4 and `Cat6`; a bare `Cat6` → 1 and `Cat6`.
-_ItemResult _parseItem(String text, int offset) {
+_ItemResult _parseItem(String rawText, int rawOffset) {
+  // THE ITEM'S OWN FIRST COLON SPLITS IT (DR-043 §11.42.3). The line's
+  // first colon already went to the room, and no media name or alias in
+  // the seed catalog contains one, so this cannot eat part of a cable
+  // name. `4x Cat6:punchdown` is nine characters against `@term=`'s
+  // fifteen, and it binds to the item rather than to the line.
+  var text = rawText;
+  final offset = rawOffset;
+  String? terminationToken;
+  int? terminationColumn;
+  final colon = rawText.indexOf(':');
+  if (colon >= 0) {
+    final after = rawText.substring(colon + 1).trim();
+    if (after.isEmpty) {
+      return _ItemBad(
+        DropLineMalformed(
+          'A colon says how the drop terminates, like "4x Cat6:punchdown". '
+          'This one has nothing after it.',
+          offset + colon,
+        ),
+      );
+    }
+    terminationToken = after;
+    terminationColumn =
+        offset +
+        colon +
+        1 +
+        (rawText.substring(colon + 1).length -
+            rawText.substring(colon + 1).trimLeft().length);
+    text = rawText.substring(0, colon);
+  }
+
   final lead = text.length - text.trimLeft().length;
   final match = _countPrefix.firstMatch(text);
   if (match == null) {
@@ -410,7 +469,13 @@ _ItemResult _parseItem(String text, int offset) {
       );
     }
     return _ItemOk(
-      DropLineItem(count: 1, mediaToken: token, column: offset + lead),
+      DropLineItem(
+        count: 1,
+        mediaToken: token,
+        column: offset + lead,
+        terminationToken: terminationToken,
+        terminationColumn: terminationColumn,
+      ),
     );
   }
 
@@ -434,6 +499,12 @@ _ItemResult _parseItem(String text, int offset) {
     );
   }
   return _ItemOk(
-    DropLineItem(count: count, mediaToken: token, column: offset + lead),
+    DropLineItem(
+      count: count,
+      mediaToken: token,
+      column: offset + lead,
+      terminationToken: terminationToken,
+      terminationColumn: terminationColumn,
+    ),
   );
 }

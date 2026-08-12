@@ -32,6 +32,7 @@ import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/home_run_commands.dart';
 import 'package:rackmate_core/src/idformat/designator_allocator.dart';
 import 'package:rackmate_core/src/model/conductor.dart';
+import 'package:rackmate_core/src/model/enums.dart' show TerminationType;
 import 'package:rackmate_core/src/model/location.dart';
 import 'package:rackmate_core/src/model/outlet.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
@@ -47,10 +48,20 @@ final class PlannedDropItem {
     required this.count,
     this.column,
     this.token,
+    this.termination,
   });
 
   final MediaTypeDef media;
   final int count;
+
+  /// How this item's FIELD end is finished, when the surface said
+  /// (DR-043 §11.42.2, DR-044 §11.43).
+  ///
+  /// **NULL IS STILL UNSPECIFIED AND IS STILL THE DEFAULT** (§11.42.1).
+  /// A typed line with no `:termination` and a template that carries none
+  /// both arrive here null, and `buildDropsFor` then omits the key
+  /// entirely rather than writing a value nobody stated.
+  final TerminationType? termination;
 
   /// Where in the typed line this came from, so a refusal can point a
   /// caret at it. Null when the items were picked from a menu and there
@@ -163,12 +174,20 @@ DropBuildOutcome buildDropsFor({
           description: location.name,
           locationId: location.id,
         ),
-        // NOT PASSED AT ALL, which is the point. `derived/schedule.dart`
-        // calls this field "what the trim-out crew actually installs" and
-        // puts it on the Termination Schedule. Neither entry surface says
-        // how the wall end is finished — a drop line says how many and of
-        // what, and a template says a recipe — so any value written here
-        // is one nobody stated.
+        terminationField: item.termination,
+        // PASSED ONLY WHEN THE SURFACE SAID, AND NULL OTHERWISE.
+        // `derived/schedule.dart` calls this field "what the trim-out
+        // crew actually installs" and puts it on the Termination
+        // Schedule, so a value nobody stated is a false line on a sheet
+        // somebody buys hardware from.
+        //
+        // THIS COMMENT USED TO SAY "NOT PASSED AT ALL, which is the
+        // point", and the reason it gave was that neither entry surface
+        // could say how the wall end is finished. That was true and
+        // stopped being true at DR-043: a template carries
+        // `OutletDrop.termination` (DR-044 seeds all nine) and a typed
+        // line carries `4x Cat6:punchdown`. What has NOT changed is the
+        // default: no claim in, no key out.
         //
         // IT USED TO WRITE `unterminated`, and the comment that stood
         // here said outright it was "the nearest true value, not the

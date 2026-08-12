@@ -2591,12 +2591,24 @@ JsonMap _encodeOutletDrop(OutletDrop d) => {
   'media': d.media.v,
   'service': d.service,
   'count': d.count,
+  // OMITTED WHEN NULL, never written as an explicit null: unspecified is
+  // an absent key (G4/CR-114), and a template that makes no claim about
+  // how its cable terminates says nothing rather than saying "unknown"
+  // out loud (DR-043 §11.42.1).
+  if (d.termination != null) 'termination': encodeEnumName(d.termination!),
 };
 
 OutletDrop _decodeOutletDrop(JsonMap json) => OutletDrop(
   media: MediaTypeId(asStr(json['media'], 'OutletDrop.media')),
   service: asStr(json['service'], 'OutletDrop.service'),
   count: asInt(json['count'] ?? 1, 'OutletDrop.count'),
+  termination: json['termination'] == null
+      ? null
+      : decodeEnumStrict(
+          TerminationType.values,
+          asStr(json['termination'], 'OutletDrop.termination'),
+          'OutletDrop.termination',
+        ),
 );
 
 JsonMap _encodeOutletTemplate(OutletTemplate t) {

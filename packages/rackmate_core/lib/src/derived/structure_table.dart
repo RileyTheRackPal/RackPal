@@ -46,7 +46,8 @@ import 'package:rackmate_core/src/derived/equipment_list.dart'
     show kUnknownCell;
 import 'package:rackmate_core/src/derived/location_tree.dart';
 import 'package:rackmate_core/src/derived/schedule.dart';
-import 'package:rackmate_core/src/model/enums.dart' show UnitSystem;
+import 'package:rackmate_core/src/model/enums.dart'
+    show TerminationType, UnitSystem;
 import 'package:rackmate_core/src/model/link.dart' show RoughInStatus;
 import 'package:rackmate_core/src/model/pathway.dart' show PathwayKind;
 import 'package:rackmate_core/src/model/rack_document.dart';
@@ -517,6 +518,41 @@ bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
 /// LIVES HERE AND NOT IN THE TABLE WIDGET, so the batch bar and any later
 /// consumer read one answer. A list hardcoded in `rackmate_ui` would
 /// drift the first time a column becomes editable.
+/// Resolves a typed termination token to its `TerminationType`, or null
+/// when nothing matches (DR-043 §11.42.4).
+///
+/// **MATCHES [terminationLabel]'S SPELLING AND THE ENUM NAME, BOTH
+/// NORMALISED** for case and non-alphanumerics, so `f barrel`,
+/// `fbarrel`, `F BARREL` and `fBarrel` all reach
+/// `TerminationType.fBarrel`. The label half is the load-bearing one:
+/// the surface sends what it DISPLAYED, so core stays the only speller,
+/// which is `pathway_actions.dart`'s rule for `PathwayKind` applied to a
+/// second enum.
+///
+/// **NO ALIAS IS INVENTED, AND `post` DOES NOT RESOLVE TO
+/// `bindingPost`.** Trade shorthand in a parser is how a product ends up
+/// with two vocabularies, one of them undocumented, and a refusal that
+/// lists the accepted set teaches it once. [terminationTokens] is that
+/// list, so a refusal and this function cannot disagree about what is
+/// accepted.
+TerminationType? resolveTerminationToken(String token) {
+  String norm(String s) => s.toLowerCase().replaceAll(RegExp('[^a-z0-9]'), '');
+  final wanted = norm(token);
+  if (wanted.isEmpty) return null;
+  for (final t in TerminationType.values) {
+    if (norm(t.name) == wanted || norm(terminationLabel(t)) == wanted) {
+      return t;
+    }
+  }
+  return null;
+}
+
+/// Every spelling [resolveTerminationToken] accepts, for a refusal
+/// sentence. One per value, in enum order, in the label's own casing.
+List<String> terminationTokens() => [
+  for (final t in TerminationType.values) terminationLabel(t),
+];
+
 bool structureColumnIsBatchable(StructureColumnId id) =>
     structureColumnIsEditable(id) &&
     id != StructureColumnId.fieldLabel &&

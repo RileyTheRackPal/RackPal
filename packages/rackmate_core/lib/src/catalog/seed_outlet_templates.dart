@@ -148,14 +148,55 @@
 // templates leave it null, because *TV location* cites no standard and
 // writing one would put a citation in a document nobody made.
 
+import 'package:rackmate_core/src/model/enums.dart' show TerminationType;
 import 'package:rackmate_core/src/model/outlet.dart';
 import 'package:rackmate_core/src/units/ids.dart';
 
 /// One drop within a recipe, positional in the corpus's own column order
 /// — media, service, count — so a reader can diff this file against
 /// docs/02 §6.2's worked JSON without reordering anything.
-OutletDrop _drop(String media, String service, [int count = 1]) =>
-    OutletDrop(media: MediaTypeId(media), service: service, count: count);
+OutletDrop _drop(
+  String media,
+  String service, [
+  int count = 1,
+  TerminationType? termination,
+]) => OutletDrop(
+  media: MediaTypeId(media),
+  service: service,
+  count: count,
+  termination: termination,
+);
+
+/// How each seeded medium's FIELD end is finished (DR-044 §11.43.3).
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// EVERY ONE OF THESE FIVE WAS STATED BY THE USER, NOT INFERRED
+/// ═════════════════════════════════════════════════════════════════════
+/// The file's own header argues that transcription beats inference, and
+/// this table is that argument applied to a fact the corpus did not
+/// contain: the user was asked per medium rather than offered a set.
+///
+/// `punchdown` FOR TWISTED PAIR IS THE ROW THAT PROVES IT WAS WORTH
+/// ASKING. `keystone` was the recommended answer and the shop's answer
+/// was `punchdown`. Face-on the two are the same object (DR-007
+/// §11.7.9 B) so no drawing changes, and the TERMINATION SCHEDULE does:
+/// had the recommendation been taken, nothing would have looked wrong
+/// and one printed column would have been quietly false on every data
+/// drop in every job.
+///
+/// `media.16_4` WAS NOT ASKED AGAIN. §11.7.2's supersession already
+/// rests on the user's *"We use single post keystones, one per
+/// conductor"*, so a 16/4 ceiling pair is four binding posts and the
+/// answer was on the record before the question came up.
+///
+/// `media.22_4` IS A EUROBLOCK AND THEREFORE ZERO CELLS (§11.43.4). The
+/// keypad fills the gang itself; a plate sized to give it a keystone as
+/// well would be one cell too big on every keypad drop in a house.
+const TerminationType _punchdown = TerminationType.punchdown;
+const TerminationType _fBarrel = TerminationType.fBarrel;
+const TerminationType _euroblock = TerminationType.euroblock;
+const TerminationType _bindingPost = TerminationType.bindingPost;
+const TerminationType _keystone = TerminationType.keystone;
 
 /// One shipped template. [tag] is the `{SERVICE}` segment DR-022 ruled
 /// on; null means UNKNOWN and falls through to DR-023's step 3.
@@ -188,22 +229,26 @@ Map<String, OutletTemplate> buildSeedOutletTemplates() {
   final all = <OutletTemplate>[
     // --- the six CR-108 names, in canon §1673's own order -------------
     _template('outlet.tv_location', 'TV location', 'TV', [
-      _drop(_cat6, _ethernet, 2),
-      _drop(_rg6q, _catv, 2),
+      _drop(_cat6, _ethernet, 2, _punchdown),
+      _drop(_rg6q, _catv, 2, _fBarrel),
     ]),
-    _template('outlet.ap', 'AP', 'AP', [_drop(_cat6, _ethernet)]),
+    _template('outlet.ap', 'AP', 'AP', [
+      _drop(_cat6, _ethernet, 1, _punchdown),
+    ]),
     _template('outlet.keypad', 'Keypad', 'KEY', [
-      _drop('media.22_4', _undetermined),
+      _drop('media.22_4', _undetermined, 1, _euroblock),
     ]),
     _template('outlet.ceiling_speaker_pair', 'Ceiling speaker pair', 'SPK', [
       // ONE cable, not two. A 16/4 carries both channels of the pair on
       // four conductors; docs/08's `GR-CLG-1` row says so in its own
       // note, "1 `Link`, 2 `Conductor`s".
-      _drop('media.16_4', 'audio.speaker_lowz'),
+      _drop('media.16_4', 'audio.speaker_lowz', 1, _bindingPost),
     ]),
-    _template('outlet.camera', 'Camera', 'CAM', [_drop(_cat6, _ethernet)]),
+    _template('outlet.camera', 'Camera', 'CAM', [
+      _drop(_cat6, _ethernet, 1, _punchdown),
+    ]),
     _template('outlet.data_only', 'Data only', 'DATA', [
-      _drop(_cat6, _ethernet),
+      _drop(_cat6, _ethernet, 1, _punchdown),
     ]),
 
     // --- the three TIA-570-D grades (docs/07 §1's table) --------------
@@ -224,14 +269,20 @@ Map<String, OutletTemplate> buildSeedOutletTemplates() {
       'outlet.tia570d_grade1',
       'TIA-570-D Grade 1',
       null,
-      [_drop(_cat6a, _ethernet), _drop(_rg6q, _catv)],
+      [
+        _drop(_cat6a, _ethernet, 1, _punchdown),
+        _drop(_rg6q, _catv, 1, _fBarrel),
+      ],
       grade: 'TIA-570-D Grade 1',
     ),
     _template(
       'outlet.tia570d_grade2',
       'TIA-570-D Grade 2',
       null,
-      [_drop(_cat6a, _ethernet, 2), _drop(_rg6q, _catv, 2)],
+      [
+        _drop(_cat6a, _ethernet, 2, _punchdown),
+        _drop(_rg6q, _catv, 2, _fBarrel),
+      ],
       grade: 'TIA-570-D Grade 2',
     ),
     _template(
@@ -239,13 +290,13 @@ Map<String, OutletTemplate> buildSeedOutletTemplates() {
       'TIA-570-D Grade 3',
       null,
       [
-        _drop(_cat6, _ethernet, 2),
-        _drop(_rg6q, _catv),
+        _drop(_cat6, _ethernet, 2, _punchdown),
+        _drop(_rg6q, _catv, 1, _fBarrel),
         // "2-fibre" is two strands in ONE jacket, pulled once, so it is
         // one drop and not two: `Link` is the cable (CR-107, "one cable,
         // one row, one length, one certificate"), and strand count lives
         // on `Conductor` the way the speaker pair's does.
-        _drop('media.os2', 'net.fiber_sm'),
+        _drop('media.os2', 'net.fiber_sm', 1, _keystone),
       ],
       grade: 'TIA-570-D Grade 3',
     ),

@@ -5244,7 +5244,8 @@
             {
               "count": 1,
               "media": "media.cat6",
-              "service": "net.ethernet"
+              "service": "net.ethernet",
+              "termination": "punchdown"
             }
           ],
           "id": "outlet.ap",
@@ -5256,7 +5257,8 @@
             {
               "count": 1,
               "media": "media.cat6",
-              "service": "net.ethernet"
+              "service": "net.ethernet",
+              "termination": "punchdown"
             }
           ],
           "id": "outlet.camera",
@@ -5268,7 +5270,8 @@
             {
               "count": 1,
               "media": "media.16_4",
-              "service": "audio.speaker_lowz"
+              "service": "audio.speaker_lowz",
+              "termination": "bindingPost"
             }
           ],
           "id": "outlet.ceiling_speaker_pair",
@@ -5280,7 +5283,8 @@
             {
               "count": 1,
               "media": "media.cat6",
-              "service": "net.ethernet"
+              "service": "net.ethernet",
+              "termination": "punchdown"
             }
           ],
           "id": "outlet.data_only",
@@ -5292,7 +5296,8 @@
             {
               "count": 1,
               "media": "media.22_4",
-              "service": "structure.undetermined"
+              "service": "structure.undetermined",
+              "termination": "euroblock"
             }
           ],
           "id": "outlet.keypad",
@@ -5304,12 +5309,14 @@
             {
               "count": 1,
               "media": "media.cat6a_futp",
-              "service": "net.ethernet"
+              "service": "net.ethernet",
+              "termination": "punchdown"
             },
             {
               "count": 1,
               "media": "media.rg6_quad",
-              "service": "rf.catv"
+              "service": "rf.catv",
+              "termination": "fBarrel"
             }
           ],
           "id": "outlet.tia570d_grade1",
@@ -5321,12 +5328,14 @@
             {
               "count": 2,
               "media": "media.cat6a_futp",
-              "service": "net.ethernet"
+              "service": "net.ethernet",
+              "termination": "punchdown"
             },
             {
               "count": 2,
               "media": "media.rg6_quad",
-              "service": "rf.catv"
+              "service": "rf.catv",
+              "termination": "fBarrel"
             }
           ],
           "id": "outlet.tia570d_grade2",
@@ -5338,17 +5347,20 @@
             {
               "count": 2,
               "media": "media.cat6",
-              "service": "net.ethernet"
+              "service": "net.ethernet",
+              "termination": "punchdown"
             },
             {
               "count": 1,
               "media": "media.rg6_quad",
-              "service": "rf.catv"
+              "service": "rf.catv",
+              "termination": "fBarrel"
             },
             {
               "count": 1,
               "media": "media.os2",
-              "service": "net.fiber_sm"
+              "service": "net.fiber_sm",
+              "termination": "keystone"
             }
           ],
           "id": "outlet.tia570d_grade3",
@@ -5360,12 +5372,14 @@
             {
               "count": 2,
               "media": "media.cat6",
-              "service": "net.ethernet"
+              "service": "net.ethernet",
+              "termination": "punchdown"
             },
             {
               "count": 2,
               "media": "media.rg6_quad",
-              "service": "rf.catv"
+              "service": "rf.catv",
+              "termination": "fBarrel"
             }
           ],
           "id": "outlet.tv_location",

@@ -175,7 +175,18 @@ OutletTemplatePlan planOutletFromTemplate({
         'does not carry. Add that cable type first.',
       );
     }
-    items.add(PlannedDropItem(media: def, count: drop.count));
+    // THE RECIPE'S TERMINATION RIDES ALONG (DR-043 §11.42.2). This one
+    // line is the whole of what makes `+ Add outlet ▾` produce plates
+    // `Arrange` can size, and it is why the template field was ruled the
+    // load-bearing path over the drop-line modifier: the mouse route
+    // carries the fact without anybody typing anything.
+    items.add(
+      PlannedDropItem(
+        media: def,
+        count: drop.count,
+        termination: drop.termination,
+      ),
+    );
   }
 
   // --- the outlet -----------------------------------------------------

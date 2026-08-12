@@ -160,6 +160,32 @@ void main() {
       expect(cellsRequiredFor(TerminationType.fieldConnector, 4), 0);
     });
 
+    test('A EUROBLOCK NEEDS NO CELL EITHER (DR-044 11.43.4)', () {
+      // IT WAS 1 FROM M3-H UNTIL DR-044, ON AN INFERENCE NOBODY WROTE
+      // DOWN. DR-007 11.7.2.1's table does not mention euroblock at all
+      // and M3-H put it in the same arm as `keystone`. A euroblock is a
+      // pluggable screw terminal on a DEVICE: a keypad's conductors land
+      // on the keypad, which fills the gang itself, so a plate sized to
+      // give it a keystone as well is one cell too big on every keypad
+      // drop in a house.
+      expect(cellsRequiredFor(TerminationType.euroblock, 4), 0);
+    });
+
+    test('every TerminationType has an answer, and the zero row is three', () {
+      // THE ARTIFACT OF 11.7.2.1's TABLE rather than a transcription of
+      // it: exactly three terminations put nothing on the plate, and a
+      // fourth appearing here without a ruling is the defect DR-044 was
+      // written about.
+      final zero = TerminationType.values
+          .where((t) => cellsRequiredFor(t, 4) == 0)
+          .toSet();
+      expect(zero, {
+        TerminationType.euroblock,
+        TerminationType.unterminated,
+        TerminationType.fieldConnector,
+      });
+    });
+
     test('an undecided termination returns null and is never guessed', () {
       // G4. The arm that would return 1 here is the whole defect this
       // signature exists to make impossible.
