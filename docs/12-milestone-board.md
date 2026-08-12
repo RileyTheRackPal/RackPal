@@ -2157,6 +2157,42 @@ passed**: it built a FRESH `RemoveGangCommand` to revert one already applied, wh
 out of range on an empty gang list and no-ops. The harness now hands back the command it actually
 ran, which is the only version of that assertion that means anything.
 
+**M3-M opened and closed on 2026-08-12, two tasks, #676 and #677, one commit `bda1276` plus DR-045.**
+Requested from the field rather than from the model: AVoIP and HDBaseT vendors recommend against a
+keystone plus a patch cable, and access points mount straight to the box with no plate at all.
+
+*What was missing, and it was two things.* `TerminationType` had no value for a **male plug**:
+`keystone` and `punchdown` are both a jack, and `fieldConnector` names no connector, so the
+Termination Schedule could not tell somebody whether to reach for a crimper. And a **plateless outlet
+was indistinguishable from an unfinished one**.
+
+***THE CELL COUNT WAS ASKED, NOT ASSUMED, AND THAT IS DR-044 PAYING.*** `rj45Plug` occupies zero
+cells. The identical guess was available for `euroblock` at M3-H, was taken silently, and cost a
+correction one milestone later. **A termination's cell count is now a question this project asks out
+loud every time the enum grows**, which is the cheapest possible form of that lesson.
+
+***THE PLATELESS OUTLET IS A G4 DEFECT M3-H SHIPPED.*** `_NoGangs` read *"This outlet has no gangs
+yet. Add one, or press Arrange…"* for an AP box that is **finished**, so a correct plate read as
+unfinished work. It is DR-007 §11.7.4's blank-insert-versus-empty-cell distinction one level up and
+got wrong the same way: *nobody has said* and *somebody said no plate* are different facts. **The
+derivation was never wrong**: `PlateFill.isSettled` has returned true for a plateless outlet since
+M3-H, and only the sentence threw it away. Three arms now, and an unknown termination sits in the
+third, because "needs no plate" over an unrecorded termination is the guess that omits a part from a
+materials sheet.
+
+*Two smaller findings.* The plate pane and the drop list said the **same sentence** for an empty
+outlet, noticed only because a finder matched both, which is the same duplicate-copy collision the
+batch bar hit with the status bar at M3-L/3. And an M3-H test asserted the collapsed sentence, so it
+is four cases now, one per arm.
+
+**#678 IS FILED AND NOT BUILT.** Asked how many cells a plug occupies, the user answered *"zero, but
+the plate is a separate question"*: some off-plate runs still come through a **pass-through or brush
+plate**, which occupies no strap cell and **is a purchasable line item**. §11.7.8 change 1 separates a
+strap from a cover plate; this is a **third** object with no strap behind it, and
+`PlateFill.coverPlateGangs` structurally cannot express it because it returns `gangs.length` and a
+plateless outlet has zero gangs by construction. Nothing is wrong today; the materials sheet simply
+does not know about a part that gets bought.
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three

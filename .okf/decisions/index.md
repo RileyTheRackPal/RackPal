@@ -41,6 +41,8 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 
 * [DR-044, the shipped templates carry terminations](dr-044-templates-carry-terminations.md) - DR-043 was wrong one clause deep and a census caught it before a line was built; a euroblock occupies no cell, and a sentence of the ruling itself was refuted by the goldens within the hour.
 
+* [DR-045, the RJ45 plug and an outlet that needs no plate](dr-045-rj45-plug-and-plateless-outlet.md) - a run that ends in a plug rather than a jack, and the AP box that follows from it, which the product had been calling unfinished since M3-H.
+
 # Not yet written up
 
 DR-002 (residential primary), DR-003 (device builder in v1), DR-004 (multi-sheet

@@ -1,5 +1,33 @@
 # Update Log
 
+## 2026-08-12 (second entry)
+
+* **Creation**: [DR-045](/decisions/dr-045-rj45-plug-and-plateless-outlet.md), the
+  field-crimped RJ45 plug and the outlet that needs no plate. Requested from the
+  field: AVoIP and HDBaseT vendors recommend against a keystone plus a patch cable
+  because it puts two extra mated connections on the link, and access points mount
+  straight to the box.
+* **Note**: **THE CELL COUNT WAS ASKED RATHER THAN ASSUMED, AND THAT IS DR-044
+  PAYING.** `rj45Plug` occupies zero cells. The identical guess was available for
+  `euroblock` at M3-H, was taken silently, and cost a correction a milestone later.
+  A termination's cell count is now asked out loud every time the enum grows.
+* **Note**: **A PLATELESS OUTLET READ AS UNFINISHED WORK FROM M3-H UNTIL NOW**, and
+  it is DR-007 §11.7.4's blank-insert-versus-empty-cell distinction one level up:
+  *nobody has said* and *somebody said no plate* are different facts, and one
+  sentence served both. **The derivation was never wrong**; only the copy was.
+  `PlateFill.isSettled` has returned true for these outlets since M3-H.
+* **Note**: **An unknown termination is deliberately NOT "needs no plate".**
+  Asserting it over a drop nobody has terminated is the guess that omits a part
+  from a materials sheet, which is the whole of what G4 is for.
+* **Note**: **Filed rather than guessed at**: a pass-through or brush plate
+  occupies no strap cell and is still a purchasable line item. It is a **third**
+  object after the strap and the cover plate, and `coverPlateGangs` cannot express
+  it because a plateless outlet has zero gangs by construction.
+* **Note**: **The rack termination and the field termination are ONE FIELD**, found
+  while closing this. `FIELD TERM` and `RACK TERM` both read
+  `StructureOrigin.terminationField`, so a speaker run with a phoenix connector at
+  the rack and binding posts in the room is inexpressible. Its own ruling, next.
+
 ## 2026-08-12
 
 * **Note**: **NOTHING DELETED A GANG, and it was found by the user asking what the
