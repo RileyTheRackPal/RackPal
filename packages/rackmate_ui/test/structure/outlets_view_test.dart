@@ -149,7 +149,19 @@ Future<void> _pump(
   WidgetTester tester,
   RackDocument doc, {
   List<String>? log,
+  Size? surface,
 }) async {
+  // A PLATE IS DRAWN TO SCALE, so a 3-gang one is 647 units wide and does
+  // not fit the 800x600 default surface once the outlet list and the drop
+  // list have taken their columns. The pane scrolls horizontally rather
+  // than clipping, which means `getRect` on a wide plate measures the
+  // VIEWPORT and not the part. Cases that measure the drawing therefore
+  // ask for a surface the drawing fits in, rather than the drawing being
+  // shrunk to fit a test.
+  if (surface != null) {
+    await tester.binding.setSurfaceSize(surface);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+  }
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -207,6 +219,97 @@ void main() {
         _project(gangs: [Gang(strap: Strap(width: 2, height: 3))]),
       );
       expect(find.text('6-port'), findsOneWidget);
+    });
+  });
+
+  group('the plate is drawn as one part (DR-042)', () {
+    testWidgets('a 3-gang plate is ONE outline at the measured width', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        _project(
+          gangs: [
+            Gang(strap: Strap(width: 1, height: 3)),
+            Gang(strap: Strap(width: 2, height: 3)),
+            Gang(),
+          ],
+        ),
+        surface: const Size(1600, 900),
+      );
+      // Until DR-042 this was three free-floating boxes with an
+      // arbitrary gap: a picture of some holes rather than of a part.
+      final rect = tester.getRect(find.byKey(const ValueKey('plate-outline')));
+      expect(
+        rect.width,
+        closeTo(
+          PlateGeometry.unitsForLen(PlateGeometry.plateWidthFor(3)),
+          0.01,
+        ),
+      );
+    });
+
+    testWidgets('EVERY CELL LANDS INSIDE ITS OWN OPENING', (tester) async {
+      // The case that catches the coordinate rebase. `cellAt` returns
+      // PLATE coordinates and each gang widget's box IS its opening, so
+      // the opening's inset has to come back off. Forget it and every
+      // cell shifts down and right by 18 x 24 mm, which is visible but
+      // is exactly the kind of thing that ships because the picture
+      // still looks like a plate.
+      await _pump(
+        tester,
+        _project(
+          gangs: [
+            Gang(strap: Strap(width: 2, height: 3)),
+            Gang(strap: Strap(width: 2, height: 3)),
+          ],
+        ),
+        surface: const Size(1600, 900),
+      );
+      for (var g = 0; g < 2; g++) {
+        final opening = tester.getRect(
+          find.byKey(ValueKey('plate-opening-$g')),
+        );
+        for (var c = 0; c < 6; c++) {
+          final cell = tester.getRect(find.byKey(ValueKey('plate-cell-$g-$c')));
+          expect(
+            opening.contains(cell.topLeft),
+            isTrue,
+            reason: 'gang $g cell $c top-left',
+          );
+          expect(
+            opening.contains(cell.bottomRight),
+            isTrue,
+            reason: 'gang $g cell $c bottom-right',
+          );
+        }
+      }
+    });
+
+    testWidgets('the openings are inset from the plate edge, both axes', (
+      tester,
+    ) async {
+      // §11.7.8 change 2 made visible rather than implied: there is real
+      // plastic before the first hole and after the last one.
+      await _pump(
+        tester,
+        _project(gangs: [Gang(strap: Strap(width: 1, height: 1))]),
+        surface: const Size(1600, 900),
+      );
+      final plate = tester.getRect(find.byKey(const ValueKey('plate-outline')));
+      final opening = tester.getRect(
+        find.byKey(const ValueKey('plate-opening-0')),
+      );
+      final left = opening.left - plate.left;
+      final right = plate.right - opening.right;
+      final top = opening.top - plate.top;
+      final bottom = plate.bottom - opening.bottom;
+      expect(left, closeTo(right, 0.01));
+      expect(top, closeTo(bottom, 0.01));
+      expect(
+        left,
+        closeTo(PlateGeometry.unitsForLen(PlateGeometry.edgeMarginX), 0.01),
+      );
     });
   });
 

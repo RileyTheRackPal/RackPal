@@ -9214,7 +9214,7 @@ with four more instances of itself.
 
 | Open | Why it is not needed yet |
 |---|---|
-| The **plate outline** (a 1-gang Decora is ~2.75 × 4.5 in) | Nothing in M3 draws the plate's edge. The editor draws openings and cells. Carried as an *"about"* exactly like the opening was, and it should not be promoted either |
+| The **plate outline** (a 1-gang Decora is ~2.75 × 4.5 in) | ~~Nothing in M3 draws the plate's edge~~. **MEASURED by DR-042 (§11.41) on 2026-08-11**, one day later, and the *"about"* was right: 2.75 × 4.5 in exactly. The editor draws the edge now |
 | The **strap's own plastic** outside the opening | Hidden behind the cover plate in every elevation the product draws (§11.7.9 B: the front hides the differences) |
 | Anything in **depth** | §11.7.9 C: module depth and exit direction are a box-fill fact, and box fill is not v1 |
 | Where the opening sits **within** the plate outline | Falls out of the outline the moment somebody measures it, and until then there is no outline to sit inside |
@@ -9224,6 +9224,78 @@ keystone geometry in M3 and DR-038 already unblocked dimensioned rendering; this
 figures that rendering needs and marks the fifth as unmeasured. **M3-H/2 (#167) has no remaining
 "must not be inferred" hazard**: every dimension it draws with is now either measured, ruled, or
 labelled in the geometry source as a standard nobody has checked.
+
+> **THE FIFTH IS NO LONGER UNMEASURED, per DR-042 (§11.41) on 2026-08-11.** The gang pitch was
+> measured and is 1.8125 in, so §11.40.4's stated choice is now a measurement and this clause's
+> last hedge is discharged. **The mechanism worked exactly as §11.40.4 designed it**: because the
+> figure was deliberately left unruled, the caliper reading replaced it with **nothing to withdraw
+> and no supersession to write**.
+
+### 11.41 DR-042 · The plate outline and the gang pitch, measured; DR-041's last two hedges are discharged
+
+**Settled by the user on 2026-08-11, with a caliper**, one day after DR-041 and against the two
+things that ruling deliberately declined to claim. **This entry exists mostly to record that
+DR-041's own mechanism worked**, and that is worth more than either figure.
+
+**11.41.1 The two figures.**
+
+| Figure | Value | Was |
+|---|---|---|
+| 1-gang plate outline | **2.75 × 4.5 in** (69.85 × 114.3 mm) | §11.40.7's unruled *"about"* |
+| Gang pitch, centre to centre | **1.8125 in** (46.0375 mm) | §11.40.4's *"a standard nobody measured"* |
+
+An N-gang plate is therefore `2.75 + (N − 1) × 1.8125` in wide: 2.75, 4.5625, 6.375, 8.1875.
+
+**11.41.2 NOTHING IS SUPERSEDED AND NOTHING IS WITHDRAWN, WHICH IS THE POINT.** §11.40.4 left the
+gang pitch a **stated choice rather than a ruled figure**, on §11.27.2's rule that an unruled figure
+with provenance outranks a ruled figure without one, and said in as many words that this meant *"a
+later caliper reading wins automatically, with nothing to withdraw"*. The reading arrived the next
+day and that is exactly what happened: **no supersession entry, no §12 row, no corpus edit reversing
+an earlier claim**. Compare §11.27.2, where the same class of figure was elevated to a ruling and had
+to be un-elevated within hours, taking a wrongly-superseded parenthetical with it.
+
+**The reusable rule, stated so it is not re-derived a third time.** *When a figure is needed before
+it can be measured, record it where a measurement can replace it silently.* A ruled figure has to be
+overturned; a labelled stated choice is simply overwritten. The cost of the discipline is one
+sentence in a source file. The cost of skipping it is a retraction inside the normative document.
+
+**11.41.3 The cross-check, and it is stronger than either measurement alone.** With the outline and
+the pitch both fixed, the plastic between a plate's edge and its outermost opening is
+`(width(N) − (33.34 + 46.0375 × (N − 1))) / 2`, which evaluates to **18.255 mm for every N**:
+
+| Gang count | Plate width | Edge margin |
+|---|---|---|
+| 1 | 2.7500 in | 18.255 mm |
+| 2 | 4.5625 in | 18.255 mm |
+| 3 | 6.3750 in | 18.255 mm |
+| 4 | 8.1875 in | 18.255 mm |
+
+**That invariance is not imposed and it is not arithmetic anybody arranged.** It holds only if the
+outline formula and the pitch are *both* right, and it drifts with `N` if either is wrong. It is
+therefore evidence about the pair rather than a restatement of one of them, and it lands in
+`plate_geometry_test.dart` as a case rather than as a paragraph, per
+`.okf/practices/a-dimension-sits-in-an-inequality.md`.
+
+**11.41.4 Every figure stays exact in integer nanometres (CR-001).** `69_850_000`, `114_300_000`,
+`46_037_500`, with margins of `18_255_000` horizontally and `23_810_000` vertically. **All five are
+exact because the inch is exact**: 2.75 = 11/4, 4.5 = 9/2 and 1.8125 = 29/16, each written through
+`Len.nmPerInch` rather than through a millimetre rounding, so no `double` appears anywhere between
+this ruling and a rendered plate. §11.27.5's observation now has nine instances.
+
+**11.41.5 What it unblocks.** `plate_geometry.dart` stops being **openings-relative** and draws the
+plate edge, so the Outlets tab renders a part rather than a set of holes floating in space. §11.7.8
+change 2's *"blank plastic above and below, symmetric about the centre"* becomes visible rather than
+implied: a 1-port strap now demonstrably sits in the middle of a plate, which is the appearance that
+paragraph was written from. `T5.01` at M6 inherits the outline along with everything else.
+
+**11.41.6 What remains open, and it is now a short list.** The **strap's own plastic** outside the
+opening, which §11.7.9 B keeps invisible because the cover plate hides it in every elevation this
+product draws; and **anything in depth**, which §11.7.9 C files as a box-fill fact and box fill is
+not v1. Neither blocks a drawing. **DR-007 §11.7.8's three changes are now fully discharged**, and no
+figure anywhere in the keystone geometry is an *"about"*.
+
+**11.41.7 Scope.** **No scope change.** Nothing enters or leaves roadmap §2, no milestone moves, and
+no earlier ruling is amended. Two open measurements close.
 
 ---
 

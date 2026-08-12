@@ -321,14 +321,26 @@ class _PlatePane extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
+                // SCROLLS BOTH WAYS, and the horizontal one is not
+                // decoration. A plate is drawn to scale, so its width is
+                // a fact about the part rather than about the pane: at
+                // DR-042's outline a 3-gang plate is 647 units wide, and
+                // a pane narrower than that must scroll rather than
+                // clip. Clipping a dimensioned drawing is worse than
+                // scrolling it, because a clipped plate still looks like
+                // a plate and simply omits the last gang.
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: _PlateWidget(
-                    doc: doc,
-                    outlet: outlet,
-                    links: links,
-                    onCell: (gang, cell) => _pickOccupant(context, gang, cell),
-                    onStrap: (gang) => _pickStrap(context, gang),
+                  scrollDirection: Axis.horizontal,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: _PlateWidget(
+                      doc: doc,
+                      outlet: outlet,
+                      links: links,
+                      onCell: (gang, cell) =>
+                          _pickOccupant(context, gang, cell),
+                      onStrap: (gang) => _pickStrap(context, gang),
+                    ),
                   ),
                 ),
               ),
@@ -569,25 +581,126 @@ class _PlateWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (outlet.gangs.isEmpty) return const _NoGangs();
-    return Wrap(
-      spacing: 24,
-      runSpacing: 24,
+
+    // ONE PLATE, N OPENINGS IN IT. Until DR-042 the outline was an
+    // unruled "about", so each gang was drawn as its own free-floating
+    // box with an arbitrary gap between them: a picture of some holes
+    // rather than of a part. The measurement is what lets this be a
+    // cover plate at 1.8125 in pitch with real plastic around the edge,
+    // which is the whole visible payoff of that caliper reading.
+    final geometry = PlateGeometry(outlet.gangs.length);
+    final plate = geometry.bounds;
+    final scheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        for (var g = 0; g < outlet.gangs.length; g++)
-          _GangWidget(
-            doc: doc,
-            gangIndex: g,
-            gang: outlet.gangs[g],
-            links: links,
-            onCell: (cell) => onCell(g, cell),
-            onStrap: () => onStrap(g),
+        SizedBox(
+          key: const ValueKey('plate-outline'),
+          width: plate.width,
+          height: plate.height,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: scheme.outline),
+                    borderRadius: BorderRadius.circular(4),
+                    color: scheme.surface,
+                  ),
+                ),
+              ),
+              for (var g = 0; g < outlet.gangs.length; g++)
+                _positionedGang(context, geometry, g),
+            ],
           ),
+        ),
+        const SizedBox(height: 6),
+        // The strap pickers sit UNDER their own openings rather than in a
+        // row of their own, so "which strap am I changing" is answered by
+        // position on a 3-gang plate instead of by counting.
+        SizedBox(
+          width: plate.width,
+          height: 32,
+          child: Stack(
+            children: [
+              for (var g = 0; g < outlet.gangs.length; g++)
+                Positioned(
+                  left: geometry.openingAt(g).left,
+                  width: geometry.openingAt(g).width,
+                  top: 0,
+                  child: _StrapButton(
+                    gangIndex: g,
+                    strap: outlet.gangs[g].strap,
+                    onPressed: () => onStrap(g),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _positionedGang(
+    BuildContext context,
+    PlateGeometry geometry,
+    int gangIndex,
+  ) {
+    final opening = geometry.openingAt(gangIndex);
+    return Positioned(
+      left: opening.left,
+      top: opening.top,
+      width: opening.width,
+      height: opening.height,
+      child: _GangWidget(
+        key: ValueKey('plate-opening-$gangIndex'),
+        doc: doc,
+        gangIndex: gangIndex,
+        gang: outlet.gangs[gangIndex],
+        links: links,
+        onCell: (cell) => onCell(gangIndex, cell),
+      ),
     );
   }
 }
 
-/// One gang opening, drawn at [PlateGeometry]'s scale.
+/// The `6-port` / `No strap` control under one opening.
+class _StrapButton extends StatelessWidget {
+  const _StrapButton({
+    required this.gangIndex,
+    required this.strap,
+    required this.onPressed,
+  });
+
+  final int gangIndex;
+  final Strap? strap;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => TextButton(
+    key: ValueKey('plate-strap-$gangIndex'),
+    onPressed: onPressed,
+    style: TextButton.styleFrom(padding: EdgeInsets.zero),
+    child: Text(
+      strap == null
+          // NOT "0-port". A gang whose part nobody has chosen is unknown,
+          // and saying zero would make it look decided.
+          ? 'No strap'
+          : '${strap!.cellCount}-port',
+      style: const TextStyle(fontSize: 12),
+    ),
+  );
+}
+
+/// One gang opening and its cells, sized and positioned by its parent.
+///
+/// FILLS ITS BOX rather than measuring itself, because since DR-042 the
+/// opening's position is a fact about the PLATE and only the plate knows
+/// the gang count. Cell rectangles still come from [PlateGeometry], via
+/// a single-gang instance whose opening is at the same offset, so both
+/// halves read the same figures.
 class _GangWidget extends StatelessWidget {
   const _GangWidget({
     required this.doc,
@@ -595,7 +708,7 @@ class _GangWidget extends StatelessWidget {
     required this.gang,
     required this.links,
     required this.onCell,
-    required this.onStrap,
+    super.key,
   });
 
   final RackDocument doc;
@@ -603,54 +716,32 @@ class _GangWidget extends StatelessWidget {
   final Gang gang;
   final List<Link> links;
   final ValueChanged<int> onCell;
-  final VoidCallback onStrap;
 
   @override
   Widget build(BuildContext context) {
+    // A ONE-GANG GEOMETRY, whose opening sits at the same inset this
+    // widget's box already occupies, so cell offsets come out relative
+    // to the opening exactly as they should. The parent has positioned
+    // the box; this only fills it.
     const geometry = PlateGeometry(1);
     final opening = geometry.openingAt(0);
     final strap = gang.strap;
     final scheme = Theme.of(context).colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
+    return Stack(
       children: [
-        Text('Gang ${gangIndex + 1}', style: const TextStyle(fontSize: 12)),
-        const SizedBox(height: 4),
-        SizedBox(
-          width: opening.width,
-          height: opening.height,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: scheme.outline),
-                    borderRadius: BorderRadius.circular(3),
-                    color: scheme.surfaceContainerHighest,
-                  ),
-                ),
-              ),
-              if (strap != null)
-                for (var i = 0; i < strap.cellCount; i++)
-                  _cellAt(context, geometry, strap, i),
-            ],
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(color: scheme.outline),
+              borderRadius: BorderRadius.circular(3),
+              color: scheme.surfaceContainerHighest,
+            ),
           ),
         ),
-        const SizedBox(height: 4),
-        TextButton(
-          key: ValueKey('plate-strap-$gangIndex'),
-          onPressed: onStrap,
-          child: Text(
-            strap == null
-                // NOT "0-port". A gang whose part nobody has chosen is
-                // unknown, and saying zero would make it look decided.
-                ? 'No strap'
-                : '${strap.cellCount}-port',
-            style: const TextStyle(fontSize: 12),
-          ),
-        ),
+        if (strap != null)
+          for (var i = 0; i < strap.cellCount; i++)
+            _cellAt(context, geometry, opening, strap, i),
       ],
     );
   }
@@ -658,15 +749,21 @@ class _GangWidget extends StatelessWidget {
   Widget _cellAt(
     BuildContext context,
     PlateGeometry geometry,
+    DBox opening,
     Strap strap,
     int index,
   ) {
     final box = geometry.cellAt(0, strap, index)!;
     final occupant = strap.cells[index];
     final paint = _cellPaint(context, occupant);
+    // REBASED ONTO THE OPENING. `cellAt` returns plate coordinates and
+    // this widget's box IS the opening, so the opening's own inset is
+    // subtracted back off. Skipping this would push every cell down and
+    // right by the plate's edge margin, which is 18 x 24 mm of visible
+    // wrongness rather than a subtle one.
     return Positioned(
-      left: box.left,
-      top: box.top,
+      left: box.left - opening.left,
+      top: box.top - opening.top,
       width: box.width,
       height: box.height,
       child: Tooltip(

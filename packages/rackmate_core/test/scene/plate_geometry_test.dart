@@ -38,6 +38,22 @@ void main() {
       expect(PlateGeometry.gangPitch.nm, 46_037_500);
     });
 
+    test('the plate outline is DR-042 s 2.75 x 4.5 in, exactly', () {
+      expect(PlateGeometry.plateWidth1Gang.nm, 69_850_000);
+      expect(PlateGeometry.plateHeight.nm, 114_300_000);
+    });
+
+    test('every figure is an exact integer count of nanometres', () {
+      // CR-001's whole point, and 11.41.4's: the inch is exact, so
+      // 11/4, 9/2 and 29/16 of one are too, and no double appears
+      // between a ruling and a rendered plate. A margin that came out
+      // odd would mean a figure had been rounded somewhere upstream.
+      expect((PlateGeometry.plateWidth1Gang.nm - 33_340_000) % 2, 0);
+      expect((PlateGeometry.plateHeight.nm - 66_680_000) % 2, 0);
+      expect(PlateGeometry.edgeMarginX.nm, 18_255_000);
+      expect(PlateGeometry.edgeMarginY.nm, 23_810_000);
+    });
+
     test('every figure sits inside the inequality DR-041 refuted 22 mm on', () {
       // The check that killed a wrong reading before it reached the code:
       // a pitch cannot be smaller than the thing it separates.
@@ -65,6 +81,61 @@ void main() {
         PlateGeometry.cellHeight.nm,
         lessThanOrEqualTo(PlateGeometry.cellPitchY.nm),
       );
+      // DR-042 adds two more: an opening has to fit inside its plate.
+      expect(
+        PlateGeometry.openingWidth.nm,
+        lessThan(PlateGeometry.plateWidth1Gang.nm),
+      );
+      expect(
+        PlateGeometry.openingHeight.nm,
+        lessThan(PlateGeometry.plateHeight.nm),
+      );
+    });
+
+    test('THE EDGE MARGIN IS INVARIANT ACROSS GANG COUNTS (DR-042)', () {
+      // This is the case that carries DR-042 rather than either
+      // measurement carrying itself. The margin holds only if the
+      // outline formula AND the pitch are both right, and it drifts with
+      // the gang count if either is wrong, so it is evidence about the
+      // pair. Change one figure and this reads red while every
+      // single-figure assertion above stays green.
+      for (var n = 1; n <= 4; n++) {
+        final plate = PlateGeometry(n);
+        expect(
+          plate.openingAt(0).left,
+          _about(
+            plate.bounds.left +
+                PlateGeometry.unitsForLen(
+                  PlateGeometry.edgeMarginX,
+                ),
+          ),
+          reason: 'left margin on a $n-gang plate',
+        );
+        expect(
+          plate.bounds.right - plate.openingAt(n - 1).right,
+          _about(plate.openingAt(0).left - plate.bounds.left),
+          reason: 'right margin differs from left on a $n-gang plate',
+        );
+      }
+    });
+
+    test('an N-gang plate is 2.75 + (N-1) x 1.8125 inches wide', () {
+      // Derived from the two measured figures rather than tabulated, so
+      // a plate width can never drift from the pitch beside it.
+      const inch = 25_400_000;
+      for (final (n, inches) in const [
+        (1, 2.75),
+        (2, 4.5625),
+        (3, 6.375),
+        (4, 8.1875),
+      ]) {
+        expect(
+          PlateGeometry.plateWidthFor(n).nm,
+          (inches * inch).round(),
+          reason: '$n-gang plate width',
+        );
+      }
+      expect(PlateGeometry.plateWidthFor(0).nm, 0);
     });
   });
 
@@ -111,16 +182,31 @@ void main() {
 
   group('no width- or height-dependent term, which is DR-038 as code', () {
     test('every cell is the same size on every strap', () {
-      final sizes = <String>{};
+      final widths = <double>[];
+      final heights = <double>[];
       for (final (w, h) in const [(1, 1), (1, 2), (1, 3), (2, 2), (2, 3)]) {
         for (final box in plate.cellsOf(0, Strap(width: w, height: h))) {
-          sizes.add('${box.width}x${box.height}');
+          widths.add(box.width);
+          heights.add(box.height);
         }
       }
       // ONE size, across all five shipped parts. This is the property
       // DR-007 forbade any dimensioned rendering without, and it is
       // asserted over the drawing rather than over the constant.
-      expect(sizes, hasLength(1));
+      //
+      // TO A TOLERANCE AND NOT BY IDENTITY. `DBox` stores corners, so
+      // `height` is `(top + h) - top`, which is not bit-identical to `h`
+      // for every `top` a centred grid produces: this case caught a
+      // 64.0 against a 64.00000000000003, one ULP apart. The CLAIM is
+      // that the cells are one size; double bit-equality is not the
+      // claim, and CR-001 is why the exactness that matters lives in the
+      // `Len` constants above rather than out here in diagram space.
+      for (final w in widths) {
+        expect(w, _about(widths.first));
+      }
+      for (final h in heights) {
+        expect(h, _about(heights.first));
+      }
     });
 
     test('a column keeps its pitch whatever the strap width', () {
@@ -151,7 +237,18 @@ void main() {
       const three = PlateGeometry(3);
       final step = three.openingAt(1).left - three.openingAt(0).left;
       expect(three.openingAt(2).left - three.openingAt(1).left, _about(step));
-      expect(three.openingAt(0).left, _about(0));
+      // NOT ZERO SINCE DR-042. The origin is the plate's corner, and
+      // there is 18.255 mm of real plastic before the first hole. This
+      // case asserted `_about(0)` while the outline was unmeasured and
+      // the drawing was openings-relative.
+      expect(
+        three.openingAt(0).left,
+        _about(PlateGeometry.unitsForLen(PlateGeometry.edgeMarginX)),
+      );
+      expect(
+        three.openingAt(0).top,
+        _about(PlateGeometry.unitsForLen(PlateGeometry.edgeMarginY)),
+      );
     });
 
     test('neighbouring openings do not overlap, and the web is 12.7 mm', () {
@@ -163,11 +260,24 @@ void main() {
       expect(web, _about(12.6975 * PlateGeometry.unitsPerMillimetre));
     });
 
-    test('bounds spans every opening and nothing more', () {
+    test('bounds is the PLATE and every opening sits inside it', () {
+      // `bounds` changed meaning at DR-042: it was the openings' extent
+      // while the outline was an unruled "about", and it is the plate
+      // now. The property that survives the change is the one worth
+      // asserting: nothing is drawn outside the part.
       const three = PlateGeometry(3);
       expect(three.bounds.left, _about(0));
-      expect(three.bounds.right, _about(three.openingAt(2).right));
-      expect(three.bounds.height, _about(three.openingAt(0).height));
+      expect(
+        three.bounds.width,
+        _about(PlateGeometry.unitsForLen(PlateGeometry.plateWidthFor(3))),
+      );
+      for (var g = 0; g < 3; g++) {
+        final opening = three.openingAt(g);
+        expect(opening.left, greaterThan(three.bounds.left));
+        expect(opening.right, lessThan(three.bounds.right));
+        expect(opening.top, greaterThan(three.bounds.top));
+        expect(opening.bottom, lessThan(three.bounds.bottom));
+      }
     });
 
     test('a plate with no gangs draws nothing', () {

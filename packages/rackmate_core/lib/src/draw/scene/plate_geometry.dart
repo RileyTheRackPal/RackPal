@@ -17,21 +17,36 @@
 //   opening        33.34 x 66.68 mm DR-041, MEASURED 2026-08-11
 //   cell pitch Y   22 mm            DR-041, MEASURED
 //   cell pitch X   15.95 mm         DR-041, MEASURED
-//   gang pitch X   1.8125 in        DR-041, A STANDARD NOBODY MEASURED
+//   gang pitch X   1.8125 in        DR-042, MEASURED 2026-08-11
+//   plate outline  2.75 x 4.5 in    DR-042, MEASURED 2026-08-11
 //
-// The last row is the one to keep an eye on. It is the ganged-device-box
-// spacing, taken on corroboration rather than authority: a 1-gang plate
-// is 2.75 in wide and a 2-gang is 4.5625 in, and the difference is
-// exactly 1.8125 in, so the standard predicts a plate dimension that can
-// be checked without trusting the standard. DR-041 §11.40.4 leaves it
-// deliberately UNRULED so a later caliper reading overrides it with
-// nothing to withdraw, which is §11.27.2's rule that an unruled figure
-// with provenance outranks a ruled figure without one.
+// EVERY FIGURE IN THIS FILE IS NOW MEASURED, and the last two arrived one
+// day after the first four. The gang pitch spent that day here as a
+// STATED CHOICE labelled "a standard nobody measured", deliberately
+// unruled under DR-041 §11.40.4 so a caliper reading could replace it
+// with nothing to withdraw. It did, and there is no supersession entry
+// anywhere in the corpus as a result. §11.27.2 records what the other
+// path costs: a figure elevated to a ruling had to be un-elevated within
+// hours, taking a wrongly-superseded parenthetical with it.
 //
 // **Nothing here may be replaced by a figure nobody stated.** Board #167:
 // "what must NOT be inferred: a cell size in millimetres nobody stated.
 // If the ruling does not give a figure, it is a stated choice and is
 // recorded as one, the way SchematicWireStyle records its distances."
+// The rule stands even though nothing in this file needs it today: the
+// next dimension this product wants will arrive the same way.
+//
+// ═════════════════════════════════════════════════════════════════════
+// THE EDGE MARGIN IS INVARIANT, AND THAT IS WHY THE PAIR IS TRUSTED
+// ═════════════════════════════════════════════════════════════════════
+// An N-gang plate is 2.75 + (N-1) x 1.8125 in wide. Combined with a
+// 33.34 mm opening at a 1.8125 in pitch, the plastic between the plate's
+// edge and its outermost opening comes out 18.255 mm FOR EVERY N.
+//
+// That is not arithmetic anybody arranged. It holds only if the outline
+// formula and the pitch are BOTH right and it drifts with N if either is
+// wrong, so it is evidence about the pair rather than a restatement of
+// one of them. `plate_geometry_test.dart` carries it as a case.
 //
 // ═════════════════════════════════════════════════════════════════════
 // THE GRID IS CENTRED IN THE OPENING, NOT ANCHORED TO AN EDGE
@@ -54,17 +69,21 @@
 // ═════════════════════════════════════════════════════════════════════
 // WHAT THIS FILE DELIBERATELY DOES NOT DRAW
 // ═════════════════════════════════════════════════════════════════════
-// The plate OUTLINE. A 1-gang Decora is about 2.75 x 4.5 in and that
-// figure is an unruled "about" of exactly the kind §11.27.2 says nobody
-// should quietly promote, so this file draws openings and cells and stops
-// there. DR-041 §11.40.7 records it as open. Adding an outline needs a
-// caliper, not a decision.
+// The strap's own plastic outside the opening, which §11.7.9 B keeps
+// invisible: the cover plate hides it in every elevation this product
+// draws. And anything in depth, which §11.7.9 C files as a box-fill fact,
+// and box fill is not v1.
 //
 // Depth, module bodies, latch tabs, and the difference between a
 // punchdown jack and an inline coupler: §11.7.9 B rules that "the cell
 // renders from the front, and the front hides the differences", so the
 // renderer needs (connector type, colour) and nothing else. This file
 // supplies neither, only where each cell is.
+//
+// THE OUTLINE USED TO BE ON THIS LIST and came off at DR-042. What it was
+// waiting for was a caliper and not a decision, which is why it was
+// recorded as an open measurement rather than resolved by the most
+// convenient reading (G4).
 import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/draw/geometry.dart';
 import 'package:rackmate_core/src/model/gang.dart';
@@ -133,49 +152,78 @@ final class PlateGeometry {
   static const Len cellPitchY = Len(22_000_000);
 
   /// Opening centre to opening centre across a multi-gang plate:
-  /// 1.8125 in exactly.
-  ///
-  /// **THE ONE FIGURE HERE NOBODY MEASURED** (DR-041 §11.40.4).
+  /// 1.8125 in exactly (DR-042, MEASURED).
   ///
   /// Written as `29/16 in` through [Len.nmPerInch] rather than as its
-  /// 46.04 mm rounding. The standard is stated in inches, 1.8125 = 29/16
+  /// 46.04 mm rounding. The figure is stated in inches, 1.8125 = 29/16
   /// exactly, and the whole expression is exact in integer nanometres:
   /// `25_400_000 × 29 ÷ 16 = 46_037_500`. Spelling it 46.04 mm would
   /// invite the next reader to round a figure that has no rounding in it.
   static const Len gangPitch = Len(Len.nmPerInch * 29 ~/ 16);
 
+  /// A 1-gang plate's outline: 2.75 in wide (DR-042, MEASURED).
+  ///
+  /// A multi-gang plate is [plateWidthFor] wide; this is the N = 1 case
+  /// and the base every other one is built from.
+  static const Len plateWidth1Gang = Len(Len.nmPerInch * 11 ~/ 4);
+
+  /// A plate's outline height: 4.5 in (DR-042, MEASURED). It does not
+  /// change with gang count, which is why there is no `plateHeightFor`.
+  static const Len plateHeight = Len(Len.nmPerInch * 9 ~/ 2);
+
   // ── the derived layout ───────────────────────────────────────────────
 
-  /// The whole drawn extent: [gangCount] openings at [gangPitch], each
-  /// [openingWidth] wide.
+  /// An N-gang plate's outline width: `2.75 + (N − 1) × 1.8125` in.
   ///
-  /// This is the OPENINGS' extent and not the plate's. See the file
-  /// header: the plate outline is an unruled "about" and is not drawn.
+  /// DERIVED FROM THE TWO MEASURED FIGURES rather than tabulated, so the
+  /// 5-gang case a catalog does not stock is expressible and no list of
+  /// plate widths can drift from the pitch beside it. Zero gangs is zero
+  /// width rather than a 1-gang plate with nothing in it.
+  static Len plateWidthFor(int gangCount) => gangCount <= 0
+      ? Len.zero
+      : Len(plateWidth1Gang.nm + gangPitch.nm * (gangCount - 1));
+
+  /// The plastic between the plate's edge and its outermost opening,
+  /// horizontally. **18.255 mm, and the same for every gang count.**
+  ///
+  /// THE INVARIANCE IS THE EVIDENCE, not a convenience. It holds only if
+  /// [plateWidthFor] and [gangPitch] are both right and it drifts with
+  /// the gang count if either is wrong, which is why DR-042 leads with it
+  /// rather than with either measurement alone.
+  static Len get edgeMarginX =>
+      Len((plateWidth1Gang.nm - openingWidth.nm) ~/ 2);
+
+  /// The plastic above and below an opening. 23.81 mm.
+  static Len get edgeMarginY => Len((plateHeight.nm - openingHeight.nm) ~/ 2);
+
+  /// The whole drawn extent: the plate outline.
+  ///
+  /// THIS BECAME THE PLATE AT DR-042 and used to be the openings' extent,
+  /// because the outline was an unruled *"about"* nobody was allowed to
+  /// promote. Consumers that positioned things against `bounds` now get a
+  /// box that is 36.51 mm wider and 47.62 mm taller, which is the correct
+  /// change and is worth knowing about.
   DBox get bounds => DBox.fromLtwh(
     0,
     0,
-    gangCount <= 0
-        ? 0
-        : unitsForLen(openingWidth) + unitsForLen(gangPitch) * (gangCount - 1),
-    unitsForLen(openingHeight),
+    unitsForLen(plateWidthFor(gangCount)),
+    gangCount <= 0 ? 0 : unitsForLen(plateHeight),
   );
 
   /// The opening for gang [index], left to right.
   ///
-  /// The FIRST opening starts at x = 0 and every later one is offset by
-  /// [gangPitch]. On a real plate the leftmost opening sits some distance
-  /// in from the plate's edge, and that distance is part of the outline
-  /// nobody has measured, so it is not modelled: the drawing is
-  /// openings-relative and a later outline shifts all of them together.
-  DBox openingAt(int index) {
-    final x = unitsForLen(gangPitch) * index;
-    return DBox.fromLtwh(
-      x,
-      0,
-      unitsForLen(openingWidth),
-      unitsForLen(openingHeight),
-    );
-  }
+  /// **INSET BY [edgeMarginX] AND [edgeMarginY]**, so gang 0's opening no
+  /// longer starts at the origin: the origin is the plate's top-left
+  /// corner and there is real plastic before the first hole. That is the
+  /// whole visible difference DR-042 buys, and it is what makes §11.7.8
+  /// change 2's "blank plastic above and below" something a person can
+  /// see rather than something the corpus asserts.
+  DBox openingAt(int index) => DBox.fromLtwh(
+    unitsForLen(edgeMarginX) + unitsForLen(gangPitch) * index,
+    unitsForLen(edgeMarginY),
+    unitsForLen(openingWidth),
+    unitsForLen(openingHeight),
+  );
 
   /// The rectangle of cell [cellIndex] on [strap], fitted in gang
   /// [gangIndex]'s opening.
