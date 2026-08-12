@@ -226,6 +226,7 @@ final class AddHomeRunCommand extends Command {
     this.rackEnd,
     this.rackLabel,
     this.terminationField,
+    this.terminationRack,
     this.wall,
     this.mountSurface,
     this.mountHeightAff,
@@ -285,6 +286,10 @@ final class AddHomeRunCommand extends Command {
   /// a drop entered at rough-in has no answer, and `unterminated` is a
   /// decision rather than an absence. See `StructureOrigin`.
   final TerminationType? terminationField;
+
+  /// How the RACK end is finished (DR-046). Null is UNSPECIFIED and is
+  /// never inferred from [terminationField].
+  final TerminationType? terminationRack;
   final Wall? wall;
   final MountSurface? mountSurface;
   final Len? mountHeightAff;
@@ -339,6 +344,7 @@ final class AddHomeRunCommand extends Command {
         outletId: outletId,
         fieldLabel: fieldLabel,
         terminationField: terminationField,
+        terminationRack: terminationRack,
         rackLabel: rackLabel,
         wall: wall,
         mountSurface: mountSurface,
@@ -390,6 +396,7 @@ AddHomeRunResult buildAddHomeRunCommand({
   Endpoint? rackEnd,
   String? rackLabel,
   TerminationType? terminationField,
+  TerminationType? terminationRack,
   Uuid? pathwayId,
   Set<String> alsoUsedLabels = const {},
   Set<String> alsoUsedDesignators = const {},
@@ -470,6 +477,7 @@ AddHomeRunResult buildAddHomeRunCommand({
       media: media,
       fieldEnd: fieldEnd,
       terminationField: terminationField,
+      terminationRack: terminationRack,
       rackEnd: rackEnd,
       rackLabel: (trimmedRackLabel?.isEmpty ?? true) ? null : trimmedRackLabel,
       // The outlet is the authority on where it is. Copying its placement
@@ -587,6 +595,16 @@ abstract final class StructureOriginField {
     touches: EpochMask.wires | EpochMask.meta,
   );
 
+  /// How the RACK end is finished (DR-046 §11.45). A SECOND FIELD
+  /// because there was only ever one, and both columns read it.
+  static final terminationRack = EntityField<Link, TerminationType?>(
+    access: EntityAccess.link,
+    key: 'origin.terminationRack',
+    get: (l) => _originOf(l).terminationRack,
+    set: (l, v) => _originOf(l).terminationRack = v,
+    touches: EpochMask.wires | EpochMask.meta,
+  );
+
   /// Every field in the table. READ-ONLY use — see `OutletField.all`.
   static final List<EntityField<Link, Object?>> all = [
     fieldLabel,
@@ -595,6 +613,7 @@ abstract final class StructureOriginField {
     mountSurface,
     mountHeightAff,
     terminationField,
+    terminationRack,
   ];
 }
 

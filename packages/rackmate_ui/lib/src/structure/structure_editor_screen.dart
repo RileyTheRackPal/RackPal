@@ -554,6 +554,11 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
             _selected.clear();
             _batchColumn = null;
           }),
+          onCopyFieldToRack:
+              _columns.contains(StructureColumnId.fieldTerm) &&
+                  _columns.contains(StructureColumnId.rackTerm)
+              ? _copyFieldTermToRack
+              : null,
         ),
       Expanded(
         child: _DropTable(
@@ -682,6 +687,45 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
       for (final row in rows)
         StructureCellEdit(linkId: row.linkId, column: column, value: value),
     ]);
+  }
+
+  /// Fills `RACK TERM` from `FIELD TERM` on every selected VISIBLE row
+  /// (DR-046 §11.45.2).
+  ///
+  /// **A GESTURE, NOT A DEFAULT.** The two are separate fields precisely
+  /// so a schedule can tell a stated rack termination from an assumed
+  /// one; this writes real values because somebody pressed a button, and
+  /// it lands as ONE batch on the undo stack like every other bulk edit
+  /// here.
+  ///
+  /// **ROWS WHOSE FIELD END IS UNKNOWN ARE SKIPPED**, not written as
+  /// unknown: copying "nobody has said" onto a second column asserts
+  /// nothing and would make the two agree for the wrong reason (G4).
+  void _copyFieldTermToRack() {
+    final doc = widget.currentDoc();
+    final rows = _selectedVisible(doc);
+    final edits = <StructureCellEdit>[];
+    for (final row in rows) {
+      // EMPTY, NOT `kUnknownCell`. `_valueFor` already maps the unknown
+      // marker to `''` on the way out, because the dash is what an
+      // unknown PRINTS and is never what goes in a box. Comparing
+      // against the marker here never fired, and the first draft of this
+      // method copied a blank onto every unterminated row.
+      final value = _valueFor(doc, row, StructureColumnId.fieldTerm);
+      if (value.isEmpty) continue;
+      edits.add(
+        StructureCellEdit(
+          linkId: row.linkId,
+          column: StructureColumnId.rackTerm,
+          value: value,
+        ),
+      );
+    }
+    if (edits.isEmpty) {
+      setState(() => _refusal = kNothingToCopyAcross);
+      return;
+    }
+    _edit(edits);
   }
 
   /// `Ctrl+D` — copy the cell directly above into the focused one.
@@ -1538,6 +1582,7 @@ class _BatchBar extends StatefulWidget {
     required this.onColumn,
     required this.onSet,
     required this.onClear,
+    required this.onCopyFieldToRack,
   });
 
   final int selectedVisible;
@@ -1552,6 +1597,10 @@ class _BatchBar extends StatefulWidget {
   final ValueChanged<StructureColumnId> onColumn;
   final ValueChanged<String> onSet;
   final VoidCallback onClear;
+
+  /// Fills RACK TERM from FIELD TERM on the selected visible rows, or
+  /// null when neither column is on screen to do it between.
+  final VoidCallback? onCopyFieldToRack;
 
   @override
   State<_BatchBar> createState() => _BatchBarState();
@@ -1653,6 +1702,17 @@ class _BatchBarState extends State<_BatchBar> {
             // NO `Spacer`: `Wrap` has no free axis to expand into, and a
             // `Spacer` inside one throws at layout time rather than
             // being ignored.
+            // NOT A DEFAULT, A GESTURE (DR-046 §11.45.2). Nine Cat6 runs
+            // in ten do match at both ends, and defaulting on that basis
+            // is exactly what DR-046 removed: a schedule cannot then
+            // tell a stated value from a copied one. Pressing this
+            // writes a REAL value, because a person asked for it.
+            if (widget.onCopyFieldToRack != null)
+              TextButton(
+                key: const ValueKey('batch-same-as-field'),
+                onPressed: widget.onCopyFieldToRack,
+                child: const Text(kSameAsFieldLabel),
+              ),
             TextButton(
               key: const ValueKey('batch-clear'),
               onPressed: widget.onClear,
@@ -1842,6 +1902,13 @@ List<String>? structureCellChoices(StructureColumnId id) => switch (id) {
   // is genuinely an absence (M3-J/1 made the field nullable for exactly
   // that).
   StructureColumnId.fieldTerm => <String>[
+    kUnknownCell,
+    ...TerminationType.values.map(terminationLabel),
+  ],
+  // THE SAME OPTIONS AS THE FIELD END, and one vocabulary for both
+  // (DR-046 §11.45). A termination is a termination; the end it is on is
+  // which column it sits in.
+  StructureColumnId.rackTerm => <String>[
     kUnknownCell,
     ...TerminationType.values.map(terminationLabel),
   ],
@@ -2187,11 +2254,24 @@ const String kNothingSelectedToSet =
     'Every ticked row is hidden by the current filter, so there is nothing '
     'on screen to set. Clear the filter, or tick rows you can see.';
 
+/// Why `Rack term: same as field` did nothing (DR-046 §11.45.2).
+const String kNothingToCopyAcross =
+    'None of the ticked rows has a field termination recorded, so there is '
+    'nothing to copy across.';
+
 /// The batch bar's own label, so the test and the widget agree.
 const String kBatchSetLabel = 'Set';
 
 /// See [kBatchSetLabel].
 const String kClearSelectionLabel = 'Clear selection';
+
+/// The batch bar's copy-across gesture (DR-046 §11.45.2).
+///
+/// A GESTURE AND NOT A DEFAULT. The rack termination is never inferred
+/// from the field one, because a schedule cannot then tell a stated
+/// value from a copied one. This writes a real value on rows a person
+/// ticked, which is a different act entirely.
+const String kSameAsFieldLabel = 'Rack term: same as field';
 
 /// Why `Ctrl+D` did nothing.
 ///

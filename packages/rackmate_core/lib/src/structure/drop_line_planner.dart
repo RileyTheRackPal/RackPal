@@ -330,18 +330,35 @@ DropLinePlan planDropLine({
   // that refused on its seventh drop must leave six behind, and a line
   // that cannot be parsed leaves none.
   final terminations = <int, TerminationType?>{};
+  final rackTerminations = <int, TerminationType?>{};
   for (final i in cableIndices) {
     final token = line.items[i].terminationToken;
-    if (token == null) continue;
-    final resolved = resolveTerminationToken(token);
-    if (resolved == null) {
-      return DropLinePlanRefused(
-        '"$token" is not a field termination. Try one of: '
-        '${terminationTokens().join(', ')}.',
-        line.items[i].terminationColumn,
-      );
+    if (token != null) {
+      final resolved = resolveTerminationToken(token);
+      if (resolved == null) {
+        return DropLinePlanRefused(
+          '"$token" is not a field termination. Try one of: '
+          '${terminationTokens().join(', ')}.',
+          line.items[i].terminationColumn,
+        );
+      }
+      terminations[i] = resolved;
     }
-    terminations[i] = resolved;
+    // THE SECOND COLON, RESOLVED THE SAME WAY AND REFUSED THE SAME WAY
+    // (DR-046 §11.45.3). One vocabulary for both ends: a termination is
+    // a termination, and the end it is on is which colon it followed.
+    final rackToken = line.items[i].rackTerminationToken;
+    if (rackToken != null) {
+      final resolved = resolveTerminationToken(rackToken);
+      if (resolved == null) {
+        return DropLinePlanRefused(
+          '"$rackToken" is not a rack termination. Try one of: '
+          '${terminationTokens().join(', ')}.',
+          line.items[i].rackTerminationColumn,
+        );
+      }
+      rackTerminations[i] = resolved;
+    }
   }
 
   // --- the drops -----------------------------------------------------
@@ -360,6 +377,7 @@ DropLinePlan planDropLine({
           column: line.items[i].column,
           token: line.items[i].mediaToken,
           termination: terminations[i],
+          rackTermination: rackTerminations[i],
         ),
     ],
     serviceTag: (item) => serviceTagFor(

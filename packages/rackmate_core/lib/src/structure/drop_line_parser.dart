@@ -75,6 +75,8 @@ final class DropLineItem {
     required this.column,
     this.terminationToken,
     this.terminationColumn,
+    this.rackTerminationToken,
+    this.rackTerminationColumn,
   });
 
   final int count;
@@ -104,6 +106,18 @@ final class DropLineItem {
   /// Where [terminationToken] starts, for a caret on a refusal.
   final int? terminationColumn;
 
+  /// What followed the item's SECOND colon: how the RACK end is
+  /// finished (DR-046 §11.45.3). Null when the line named only one.
+  ///
+  /// **FIELD FIRST, RACK SECOND, and one colon means field only.** The
+  /// order is the cable's own: a drop line describes a run leaving a
+  /// room, so it reads out from the plate. `2x 16/4:binding post:euroblock`
+  /// is the case that forced the field to exist at all.
+  final String? rackTerminationToken;
+
+  /// Where [rackTerminationToken] starts, for a caret on a refusal.
+  final int? rackTerminationColumn;
+
   @override
   bool operator ==(Object other) =>
       other is DropLineItem &&
@@ -111,15 +125,25 @@ final class DropLineItem {
       other.mediaToken == mediaToken &&
       other.column == column &&
       other.terminationToken == terminationToken &&
-      other.terminationColumn == terminationColumn;
+      other.terminationColumn == terminationColumn &&
+      other.rackTerminationToken == rackTerminationToken &&
+      other.rackTerminationColumn == rackTerminationColumn;
 
   @override
-  int get hashCode => Object.hash(count, mediaToken, column, terminationToken);
+  int get hashCode => Object.hash(
+    count,
+    mediaToken,
+    column,
+    terminationToken,
+    rackTerminationToken,
+  );
 
   @override
   String toString() =>
       'DropLineItem(${count}x $mediaToken'
-      '${terminationToken == null ? '' : ':$terminationToken'} @$column)';
+      '${terminationToken == null ? '' : ':$terminationToken'}'
+      '${rackTerminationToken == null ? '' : ':$rackTerminationToken'}'
+      ' @$column)';
 }
 
 /// The outcome of [parseDropLine].
@@ -428,10 +452,28 @@ _ItemResult _parseItem(String rawText, int rawOffset) {
   final offset = rawOffset;
   String? terminationToken;
   int? terminationColumn;
+  String? rackTerminationToken;
+  int? rackTerminationColumn;
+
+  // The token between [at] and [end], trimmed, with the column its first
+  // non-space character sits at, or null when it is blank.
+  (String, int)? segment(int at, int end) {
+    final raw = rawText.substring(at + 1, end);
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return null;
+    return (trimmed, offset + at + 1 + (raw.length - raw.trimLeft().length));
+  }
+
   final colon = rawText.indexOf(':');
   if (colon >= 0) {
-    final after = rawText.substring(colon + 1).trim();
-    if (after.isEmpty) {
+    // A SECOND COLON IS THE RACK END (DR-046 §11.45.3). Field first,
+    // rack second, and one colon still means the field end alone, so
+    // every line written before this change parses unchanged.
+    final second = rawText.indexOf(':', colon + 1);
+    final fieldEnd = second >= 0 ? second : rawText.length;
+
+    final field = segment(colon, fieldEnd);
+    if (field == null) {
       return _ItemBad(
         DropLineMalformed(
           'A colon says how the drop terminates, like "4x Cat6:punchdown". '
@@ -440,13 +482,22 @@ _ItemResult _parseItem(String rawText, int rawOffset) {
         ),
       );
     }
-    terminationToken = after;
-    terminationColumn =
-        offset +
-        colon +
-        1 +
-        (rawText.substring(colon + 1).length -
-            rawText.substring(colon + 1).trimLeft().length);
+    (terminationToken, terminationColumn) = field;
+
+    if (second >= 0) {
+      final rack = segment(second, rawText.length);
+      if (rack == null) {
+        return _ItemBad(
+          DropLineMalformed(
+            'A second colon says how the RACK end terminates, like '
+            '"2x 16/4:binding post:euroblock". This one has nothing after '
+            'it.',
+            offset + second,
+          ),
+        );
+      }
+      (rackTerminationToken, rackTerminationColumn) = rack;
+    }
     text = rawText.substring(0, colon);
   }
 
@@ -475,6 +526,8 @@ _ItemResult _parseItem(String rawText, int rawOffset) {
         column: offset + lead,
         terminationToken: terminationToken,
         terminationColumn: terminationColumn,
+        rackTerminationToken: rackTerminationToken,
+        rackTerminationColumn: rackTerminationColumn,
       ),
     );
   }
@@ -505,6 +558,8 @@ _ItemResult _parseItem(String rawText, int rawOffset) {
       column: offset + lead,
       terminationToken: terminationToken,
       terminationColumn: terminationColumn,
+      rackTerminationToken: rackTerminationToken,
+      rackTerminationColumn: rackTerminationColumn,
     ),
   );
 }

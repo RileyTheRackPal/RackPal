@@ -1601,6 +1601,13 @@ JsonMap _encodeStructureOrigin(StructureOrigin o) {
   if (o.terminationField case final t?) {
     json['terminationField'] = encodeEnumName(t);
   }
+  // DR-046. OMITTED WHEN NULL, and null is the state of every home run
+  // ever written: the field did not exist, and nothing infers it from
+  // `terminationField`. So no existing file moves a byte and
+  // `kSchemaVersion` does not move (CR-117).
+  if (o.terminationRack case final t?) {
+    json['terminationRack'] = encodeEnumName(t);
+  }
   putIfNotNull(json, 'rackLabel', o.rackLabel);
   if (o.wall != null) json['wall'] = encodeEnumName(o.wall!);
   if (o.mountSurface != null) {
@@ -1623,6 +1630,13 @@ StructureOrigin _decodeStructureOrigin(JsonMap json) => StructureOrigin(
           TerminationType.values,
           asStr(json['terminationField'], 'StructureOrigin.terminationField'),
           'StructureOrigin.terminationField',
+        ),
+  terminationRack: json['terminationRack'] == null
+      ? null
+      : decodeEnumStrict(
+          TerminationType.values,
+          asStr(json['terminationRack'], 'StructureOrigin.terminationRack'),
+          'StructureOrigin.terminationRack',
         ),
   rackLabel: asStrOrNull(json['rackLabel'], 'StructureOrigin.rackLabel'),
   wall: json['wall'] == null

@@ -180,6 +180,76 @@ void main() {
     });
   });
 
+  group('the rack end is its own field (DR-046 §11.45)', () {
+    List<TerminationType?> rackTerms(RackDocument doc) => [
+      for (final l in doc.links.values) l.structureOrigin?.terminationRack,
+    ];
+
+    test('ONE COLON STILL MEANS THE FIELD END ONLY', () {
+      // Every line written before DR-046 parses unchanged, and the rack
+      // end stays unknown rather than being copied.
+      final doc = _project();
+      _commit(doc, 'Living Room: 2x Cat6:punchdown');
+      expect(_terminations(doc), everyElement(TerminationType.punchdown));
+      expect(rackTerms(doc), everyElement(isNull));
+    });
+
+    test('a second colon is the rack end, and the two can DIFFER', () {
+      // The case that forced the field to exist: a phoenix connector at
+      // the panel and binding posts in the room. Inexpressible before.
+      final doc = _project();
+      _commit(doc, 'Living Room: 1x 16/4:binding post:euroblock');
+      final origin = doc.links.values.single.structureOrigin!;
+      expect(origin.terminationField, TerminationType.bindingPost);
+      expect(origin.terminationRack, TerminationType.euroblock);
+    });
+
+    test('nothing infers the rack end from the field end', () {
+      // Nine Cat6 runs in ten match at both ends, and inferring on that
+      // basis is what DR-046 exists to remove: a schedule cannot then
+      // tell a stated value from a copied one.
+      final doc = _project();
+      _commit(doc, 'Living Room: 1x Cat6:punchdown');
+      expect(rackTerms(doc), [isNull]);
+    });
+
+    test('a bad rack token refuses the whole line, with its own caret', () {
+      final doc = _project();
+      final plan = _commit(doc, 'Living Room: 1x Cat6:punchdown:wombat');
+      expect(plan, isA<DropLinePlanRefused>());
+      final refused = plan as DropLinePlanRefused;
+      expect(refused.reason, contains('rack termination'));
+      expect(
+        'Living Room: 1x Cat6:punchdown:wombat'.substring(refused.column!),
+        'wombat',
+      );
+      expect(doc.links, isEmpty);
+    });
+
+    test('an empty second colon is refused by the parser', () {
+      final parsed = parseDropLine('Living Room: 1x Cat6:punchdown:');
+      expect(parsed, isA<DropLineMalformed>());
+      expect((parsed as DropLineMalformed).reason, contains('RACK end'));
+    });
+
+    test('the rack end survives the file, and null writes no key', () {
+      const codec = JsonDocumentCodec();
+      final doc = _project();
+      _commit(doc, 'Living Room: 1x Cat6:punchdown:euroblock, 1x RG6');
+
+      final first = codec.write(doc);
+      final back = (codec.read(first) as Ok<RackDocument>).value;
+      expect(codec.write(back), equals(first));
+
+      final rack = [
+        for (final l in back.links.values) l.structureOrigin?.terminationRack,
+      ];
+      expect(rack, containsAll(<Object?>[TerminationType.euroblock, null]));
+      // ONE key on disk, not two: the RG6 drop named no rack end.
+      expect('"terminationRack"'.allMatches(utf8.decode(first)).length, 1);
+    });
+  });
+
   group('the template path, which needs no typing at all (§11.42.2)', () {
     test('the nine shipped templates all carry a termination (DR-044)', () {
       // 11.43.1: with none of them seeded and no way to author one, the

@@ -49,6 +49,7 @@ final class PlannedDropItem {
     this.column,
     this.token,
     this.termination,
+    this.rackTermination,
   });
 
   final MediaTypeDef media;
@@ -62,6 +63,15 @@ final class PlannedDropItem {
   /// both arrive here null, and `buildDropsFor` then omits the key
   /// entirely rather than writing a value nobody stated.
   final TerminationType? termination;
+
+  /// How the RACK end is finished, when the surface said (DR-046).
+  ///
+  /// **NEVER INFERRED FROM [termination].** Nine Cat6 runs in ten do
+  /// match at both ends, and copying on that basis is exactly what
+  /// DR-046 exists to stop: a schedule cannot then tell a stated value
+  /// from a guessed one. Only the drop line's second colon fills this
+  /// today; a template carries no rack end (§11.45.6).
+  final TerminationType? rackTermination;
 
   /// Where in the typed line this came from, so a refusal can point a
   /// caret at it. Null when the items were picked from a menu and there
@@ -175,6 +185,7 @@ DropBuildOutcome buildDropsFor({
           locationId: location.id,
         ),
         terminationField: item.termination,
+        terminationRack: item.rackTermination,
         // PASSED ONLY WHEN THE SURFACE SAID, AND NULL OTHERWISE.
         // `derived/schedule.dart` calls this field "what the trim-out
         // crew actually installs" and puts it on the Termination

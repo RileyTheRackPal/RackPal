@@ -541,7 +541,12 @@ void main() {
   });
 
   group('the columns (docs/07 §4.1)', () {
-    test("the eight defaults are §4.1's eight, in the wireframe order", () {
+    test("the defaults are §4.1's, plus FIELD TERM at DR-046", () {
+      // NINE, NOT §4.1's EIGHT, and the ninth is ruled rather than
+      // slipped in. Until DR-046 `FIELD TERM` and `RACK TERM` read ONE
+      // field, so the column a person saw without configuring anything
+      // was `RACK TERM` showing the FIELD end's value. Drawing both is
+      // what makes the distinction teach itself (§11.45.4).
       expect(kStructureDefaultColumns.map(structureColumnHeader), [
         'FIELD LABEL',
         'RACK LBL',
@@ -549,6 +554,7 @@ void main() {
         'MEDIA',
         'SERVICE',
         'PATHWAY',
+        'FIELD TERM',
         'RACK TERM',
         'ROUGH-IN',
       ]);
@@ -565,7 +571,7 @@ void main() {
       expect(offered.length, StructureColumnId.values.length);
     });
 
-    test('the six sheet columns print exactly what the sheet prints', () {
+    test('the five sheet columns print exactly what the sheet prints', () {
       // THE ANTI-DRIFT GATE, in the same shape as the first group's: it
       // compares the two outputs rather than asserting either.
       final d = _Doc();
@@ -588,7 +594,13 @@ void main() {
         StructureColumnId.media: ScheduleColumnId.media,
         StructureColumnId.service: ScheduleColumnId.type,
         StructureColumnId.pathway: ScheduleColumnId.pathway,
-        StructureColumnId.rackTerm: ScheduleColumnId.term,
+        // `rackTerm` LEFT THIS MAP AT DR-046. It read
+        // `ScheduleColumnId.term`, which resolves to the FIELD
+        // termination, so the editor's rack column printed the wall
+        // end's value. It reads `terminationRack` directly now, and the
+        // printed Termination Schedule's own `TERM` column is
+        // deliberately unchanged: that sheet is M6's under DR-027 and
+        // its column set is a sheet change (§11.45.5, board #679).
       };
       for (final entry in shared.entries) {
         expect(
@@ -974,13 +986,17 @@ void main() {
   });
 
   group('the as-built columns (DR-020 §11.19.2(5))', () {
-    test('the as-built set is seven, and ROUGH-IN is not one of them', () {
-      // ROUGH-IN answers "how far along is this run" and is one of §4.1's
-      // eight DEFAULTS; these seven answer "what did we actually do".
+    test('the as-built set is six, and ROUGH-IN is not one of them', () {
+      // ROUGH-IN answers "how far along is this run" and is a DEFAULT;
+      // these answer "what did we actually do".
+      //
+      // SIX SINCE DR-046, and `FIELD TERM` is the one that left. It is a
+      // default column now, and a group that toggled a column already on
+      // screen would turn it OFF, which is not what "show me the
+      // as-built set" means.
       expect(kStructureAsBuiltColumns.map(structureColumnHeader), [
         'TERM. LEN',
         'SPLICES',
-        'FIELD TERM',
         'TEST',
         'CERT ID',
         'INSTALLED BY',

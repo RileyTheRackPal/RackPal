@@ -91,12 +91,14 @@ final class StructureOrigin {
     required this.outletId,
     required String fieldLabel,
     TerminationType? terminationField,
+    TerminationType? terminationRack,
     String? rackLabel,
     Wall? wall,
     MountSurface? mountSurface,
     Len? mountHeightAff,
   }) : _fieldLabel = fieldLabel,
        _terminationField = terminationField,
+       _terminationRack = terminationRack,
        _rackLabel = rackLabel,
        _wall = wall,
        _mountSurface = mountSurface,
@@ -164,4 +166,34 @@ final class StructureOrigin {
   TerminationType? get terminationField => _terminationField;
   @internal
   set terminationField(TerminationType? v) => _terminationField = v;
+
+  /// How the RACK end is finished, at the panel.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A SECOND FIELD, BECAUSE THERE WAS ONLY EVER ONE (DR-046 §11.45)
+  /// ═══════════════════════════════════════════════════════════════════
+  /// The Structure editor has drawn `FIELD TERM` and `RACK TERM` as two
+  /// columns since M3-C, and **both read [terminationField]**. Two
+  /// columns, one value: setting the wall end forced the panel end to
+  /// claim the same thing, and the case that exposed it is ordinary:
+  /// *"a speaker run might have a phoenix connector on the rack side,
+  /// but binding posts on the other."* That was not awkward to express;
+  /// it was **inexpressible**.
+  ///
+  /// **NOTHING INFERS THIS FROM [terminationField], EVER.** Roughly nine
+  /// Cat6 runs in ten do match at both ends, and defaulting on that
+  /// basis is precisely the defect this field exists to remove: a
+  /// schedule cannot then distinguish a value somebody stated from one
+  /// the product copied, which is G4's whole complaint. The convenience
+  /// lives in a GESTURE instead, `Same as field` on the batch bar, which
+  /// writes a real value because a person asked it to.
+  ///
+  /// SYMMETRICAL WITH THE LABELS. `fieldLabel` is the wall plate and
+  /// `rackLabel` is the panel; this class already held both ends of that
+  /// pair, so holding both ends of the termination is the shape it was
+  /// already in.
+  TerminationType? _terminationRack;
+  TerminationType? get terminationRack => _terminationRack;
+  @internal
+  set terminationRack(TerminationType? v) => _terminationRack = v;
 }

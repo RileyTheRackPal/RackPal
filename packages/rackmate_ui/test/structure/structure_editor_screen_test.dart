@@ -402,6 +402,31 @@ final class _Harness {
           );
           if (result is SetStructureOriginRefused) return result.reason;
           if (result is SetStructureOriginReady) commands.add(result.command);
+        // DR-046. The harness mirrors the app, and the app has handled
+        // both ends since this ruling; a harness that refused one of
+        // them would test a product that does not exist.
+        case StructureColumnId.rackTerm:
+          final value = e.value.trim();
+          final termination = value == kUnknownCell || value.isEmpty
+              ? null
+              : TerminationType.values
+                    .where((t) => terminationLabel(t) == value.toUpperCase())
+                    .firstOrNull;
+          if (termination == null &&
+              value != kUnknownCell &&
+              value.isNotEmpty) {
+            return '"${e.value}" is not a rack termination.';
+          }
+          final result = buildSetStructureOriginProperty<TerminationType?>(
+            doc: doc,
+            linkId: e.linkId,
+            field: StructureOriginField.terminationRack,
+            to: termination,
+            now: _now,
+            actor: 'editor',
+          );
+          if (result is SetStructureOriginRefused) return result.reason;
+          if (result is SetStructureOriginReady) commands.add(result.command);
         case StructureColumnId.notes:
           final c = buildSetEntityProperty<Link, String?>(
             doc: doc,
@@ -942,13 +967,17 @@ void main() {
       final editable = kStructureDefaultColumns
           .where(structureColumnIsEditable)
           .toList();
+      // FIVE SINCE DR-046: both termination columns are defaults now,
+      // and both are dropdowns rather than boxes.
       expect(editable, [
         StructureColumnId.fieldLabel,
         StructureColumnId.rackLabel,
+        StructureColumnId.fieldTerm,
+        StructureColumnId.rackTerm,
         StructureColumnId.roughIn,
       ]);
-      // Two text boxes on the row (the third editable default is the
-      // dropdown), plus the quick-add field above the table.
+      // Two text boxes on the row (the other three editable defaults are
+      // dropdowns), plus the quick-add field above the table.
       expect(find.byType(TextField), findsNWidgets(3));
     });
 
@@ -1738,9 +1767,14 @@ void main() {
     testWidgets('an OPTIONAL column is offered once it is switched on', (
       tester,
     ) async {
-      // FIELD TERM is the column DR-043 exists for and it is not a
-      // default. The bar offers what the table shows, so this is the
-      // whole path a person walks to bulk-set it.
+      // NOTES, not FIELD TERM: that column became a DEFAULT at DR-046,
+      // so it is offered immediately and no longer drives this path.
+      // The bar offers what the table shows, and this is the whole walk
+      // a person makes to bulk-set something optional.
+      //
+      // IT ALSO EXERCISES THE TEXT-VALUE ARM, which no other case does:
+      // a column with no closed set gets a box and commits on Enter
+      // rather than on selection.
       final h = _Harness(_project());
       await _pump(tester, h);
       await _addLine(tester, 'Living Room: 2x Cat6');
@@ -1753,7 +1787,7 @@ void main() {
         find.descendant(
           of: find.byType(DropdownMenuItem<StructureColumnId>),
           matching: find.text(
-            structureColumnHeader(StructureColumnId.fieldTerm),
+            structureColumnHeader(StructureColumnId.notes),
           ),
         ),
         findsNothing,
@@ -1766,22 +1800,30 @@ void main() {
       // the menu has needed since it grew past one screen at M3-J/3.
       await tester.tap(find.text('Columns'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('FIELD TERM'));
+      await tester.ensureVisible(find.text('NOTES'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('FIELD TERM'));
+      await tester.tap(find.text('NOTES'));
       await tester.pumpAndSettle();
       // The menu stays open on purpose, so it has to be dismissed.
       await tester.tapAt(Offset.zero);
       await tester.pumpAndSettle();
 
       h.batchSizes.clear();
-      await setColumn(tester, 'FIELD TERM', 'KEYSTONE');
+      await tester.tap(find.byKey(const ValueKey('batch-column')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('NOTES').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('batch-value-text')),
+        'pulled with the AV trunk',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
 
       expect(h.batchSizes, [2]);
       expect(
         h.doc.links.values.every(
-          (l) =>
-              l.structureOrigin?.terminationField == TerminationType.keystone,
+          (l) => l.notes == 'pulled with the AV trunk',
         ),
         isTrue,
       );
@@ -1850,6 +1892,75 @@ void main() {
           ),
         ),
         findsNothing,
+      );
+    });
+
+    testWidgets('RACK TERM IS NOT SET BY FIELD TERM (DR-046)', (
+      tester,
+    ) async {
+      // The defect this ruling removed: the two columns read one field,
+      // so setting the wall end made the panel end claim the same thing.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+
+      await tester.tap(find.byKey(const ValueKey('select-all')));
+      await tester.pumpAndSettle();
+      await setColumn(tester, 'FIELD TERM', 'PUNCHDOWN');
+
+      for (final l in h.doc.links.values) {
+        expect(l.structureOrigin!.terminationField, TerminationType.punchdown);
+        expect(
+          l.structureOrigin!.terminationRack,
+          isNull,
+          reason: 'nothing infers the rack end from the field end',
+        );
+      }
+    });
+
+    testWidgets('"same as field" is a GESTURE, and writes real values', (
+      tester,
+    ) async {
+      // Nine Cat6 runs in ten match at both ends. That convenience lives
+      // in a button rather than in a default, so a schedule can still
+      // tell a stated value from one the product assumed.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+
+      await tester.tap(find.byKey(const ValueKey('select-all')));
+      await tester.pumpAndSettle();
+      await setColumn(tester, 'FIELD TERM', 'PUNCHDOWN');
+
+      h.batchSizes.clear();
+      await tester.tap(find.byKey(const ValueKey('batch-same-as-field')));
+      await tester.pumpAndSettle();
+
+      // ONE batch, so one undo entry for the whole copy.
+      expect(h.batchSizes, [2]);
+      for (final l in h.doc.links.values) {
+        expect(l.structureOrigin!.terminationRack, TerminationType.punchdown);
+      }
+    });
+
+    testWidgets('it skips rows whose field end is unknown', (tester) async {
+      // Copying "nobody has said" onto a second column asserts nothing
+      // and would make the two agree for the wrong reason (G4).
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+
+      await tester.tap(find.byKey(const ValueKey('select-all')));
+      await tester.pumpAndSettle();
+      h.batchSizes.clear();
+      await tester.tap(find.byKey(const ValueKey('batch-same-as-field')));
+      await tester.pumpAndSettle();
+
+      expect(h.batchSizes, isEmpty);
+      expect(find.textContaining('nothing to copy across'), findsOneWidget);
+      expect(
+        h.doc.links.values.single.structureOrigin!.terminationRack,
+        isNull,
       );
     });
 

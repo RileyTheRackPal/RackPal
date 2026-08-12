@@ -330,6 +330,13 @@ const List<StructureColumnId> kStructureDefaultColumns = <StructureColumnId>[
   StructureColumnId.media,
   StructureColumnId.service,
   StructureColumnId.pathway,
+  // BOTH ENDS, SIDE BY SIDE (DR-046 §11.45.4). `fieldTerm` joined the
+  // defaults here: until DR-046 the two columns read one field, so the
+  // one a person saw without configuring anything was `RACK TERM`
+  // showing the FIELD end's value. Drawing them together is what makes
+  // the distinction teach itself, and the table already scrolls
+  // horizontally rather than squeezing below authored widths.
+  StructureColumnId.fieldTerm,
   StructureColumnId.rackTerm,
   StructureColumnId.roughIn,
 ];
@@ -354,7 +361,7 @@ const List<StructureColumnId> kStructureOptionalColumns = <StructureColumnId>[
   StructureColumnId.cutLength,
   StructureColumnId.terminatedLength,
   StructureColumnId.spliceCount,
-  StructureColumnId.fieldTerm,
+  // `fieldTerm` LEFT THIS LIST AT DR-046 and is a default now.
   StructureColumnId.testResult,
   StructureColumnId.certificateId,
   StructureColumnId.installedBy,
@@ -378,7 +385,9 @@ const List<StructureColumnId> kStructureOptionalColumns = <StructureColumnId>[
 const List<StructureColumnId> kStructureAsBuiltColumns = <StructureColumnId>[
   StructureColumnId.terminatedLength,
   StructureColumnId.spliceCount,
-  StructureColumnId.fieldTerm,
+  // `fieldTerm` IS A DEFAULT SINCE DR-046 and is no longer in this
+  // group: a group that toggles a column already on screen would turn it
+  // OFF, which is not what "show me the as-built set" means.
   StructureColumnId.testResult,
   StructureColumnId.certificateId,
   StructureColumnId.installedBy,
@@ -479,6 +488,8 @@ bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
   StructureColumnId.terminatedLength ||
   StructureColumnId.spliceCount ||
   StructureColumnId.fieldTerm ||
+  // DR-046: the rack end is its own field and its own editable cell.
+  StructureColumnId.rackTerm ||
   StructureColumnId.testResult ||
   StructureColumnId.certificateId ||
   StructureColumnId.installedBy ||
@@ -604,7 +615,16 @@ String structureCell(
       ScheduleColumnId.pathway,
       units: units,
     ),
-    StructureColumnId.rackTerm => row.cell(ScheduleColumnId.term, units: units),
+    // READS THE RACK END, AND UNTIL DR-046 READ THE FIELD END. This
+    // column and `fieldTerm` below both resolved to
+    // `StructureOrigin.terminationField`: two columns, one value, so a
+    // speaker run with a phoenix at the panel and binding posts in the
+    // room was inexpressible. NOTHING IS INFERRED from the other end;
+    // an unrecorded rack termination prints the unknown marker (G4).
+    StructureColumnId.rackTerm => switch (origin?.terminationRack) {
+      final t? => terminationLabel(t),
+      null => kUnknownCell,
+    },
 
     // The two the sheet has no column of its own for. `OUTLET` is half of
     // the Pull Sheet's `FROM (ROOM / OUTLET)`; splitting it is what makes
