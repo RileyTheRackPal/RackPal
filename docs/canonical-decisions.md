@@ -9942,6 +9942,80 @@ DR-004's pattern.
 
 ---
 
+### 11.49 DR-050 · Plan geometry fills the room estimate that already exists, and it buys cable
+
+**Settled by the user on 2026-08-12**, from a request for Specifi-styled wire-run length estimation:
+*"room dimensions can be derived from the user placing vertices on the plan view ... and ceiling
+heights can be easily specified."*
+
+**11.49.1 THE CENSUS CORRECTED THE QUESTION BEFORE IT CORRECTED THE ANSWER, AND THIS RECORD LED WITH
+THE WRONG FRAMING FIRST.** The request was initially put to the user against the claim that
+DR-020 §11.19.2(2) forbids an estimate from entering the footage rollup. **It forbids a BOUND**,
+which is not the same object, and the difference is the whole ruling:
+
+| Source | Exists? | Reachable? | Sums into a purchase? |
+|---|---|---|---|
+| `cut` | yes | yes | **yes** |
+| `outletNominal` | yes | yes | **yes** (DR-026 §11.25.2) |
+| `roomEstimate` | yes | **yes**, `Location.estimatedRunLengthFromRack` | **yes** |
+| `planLowerBound` | not built | not built | **no**, DR-020 §11.19.2(2) |
+
+`cable_footage.dart`'s `_isQuantity` returns `true` for `roomEstimate` today, and says why in its own
+comment: *"AC-024's own example is an ESTIMATED total plus waste, so an estimate is a quantity here.
+`estimatedCount` is what keeps the figure's standing visible."* **So the shipped position was never
+that estimates may not buy cable.** It is that they may, and that the count of them is reported
+beside the total.
+
+**11.49.2 THEREFORE NO NEW TIER, AND THIS IS THE RULING.** `ScheduleLengthSource` gains nothing.
+Plan geometry becomes a **better way to populate `Location.estimatedRunLengthFromRack`**, a field that
+already exists, is already written by `set_entity_property_command.dart`, already ranks below
+`outletNominal`, and already sums.
+
+A fourth tier would buy a provenance distinction, and the user's own ground is that the distinction
+does not pay here: *"it's used to estimate quotes, with a healthy margin for error ... in most A/V
+companies, wire is a consumable."* **Machinery for a distinction nobody acts on is machinery that
+gets read as significant by the next person.**
+
+**11.49.3 A COMPUTED VALUE IS MARKED AS COMPUTED, AND THAT IS DR-046'S LESSON HONOURED RATHER THAN
+CONTRADICTED.** When geometry proposes the figure, the field records that it was **proposed rather
+than typed**. §11.45.2 ruled that nothing may copy a field termination into the rack termination,
+because a schedule that fills the second column can no longer tell a stated value from an assumed
+one, and the same hazard exists here.
+
+**What differs is the cost of being wrong, and that is why the answers differ.** A termination is a
+**discrete part**: a wrong value orders a keystone jack for an F barrel, and no margin absorbs it.
+A length is a **continuous estimate consumed with a margin the user controls**, and the user's
+trade evidence is that the margin is wide and the material is a consumable. **Different failure
+costs justify different defaults**, and a rule applied without that test would have forbidden a
+feature on the strength of a precedent about a different kind of fact.
+
+The marker is one nullable field and it is cheap; it exists so that a later reader asking *"did
+somebody measure this room or did the software guess it"* has an answer, which is the question
+`estimatedCount` already exists to keep askable.
+
+**11.49.4 DR-020 IS NOT SUPERSEDED AND MUST NOT BE READ AS WEAKENED.** `planLowerBound` remains
+forbidden from the rollup. **The route is still discovered rather than designed**, the route
+polyline, `routingFactor` and `slackAllowance` are still deleted and still not to be re-argued from,
+and §11.19.1's evidence stands: framing decides the path and framing is not knowable when the plan is
+drawn.
+
+**A room's dimensions are not a route.** What this ruling adds is a way to compute a *room-level*
+figure from measured geometry instead of from a person's recollection, into a tier that already
+existed for room-level figures. **A per-drop figure derived from a drawn path remains forbidden.**
+
+**11.49.5 Scope.** **v1 grows by two items**: the geometry-to-estimate derivation and the
+computed-versus-typed marker. Both land with the **Plan view**, which is where the vertices and the
+calibration live, and it is already a v1 epic sequenced before M6 (DR-029). `Location` gains a
+ceiling height if the derivation needs one, which is a field question for the task rather than a
+ruling.
+
+**What it does not rule.** The formula. Whether a rise is added per storey, whether the figure is
+straight-line or perimeter, and what margin if any is folded in are all decisions for the task, and
+all of them are cheaper to change than a provenance tier. It also does not touch `LEN-002` or the
+waste factor.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
