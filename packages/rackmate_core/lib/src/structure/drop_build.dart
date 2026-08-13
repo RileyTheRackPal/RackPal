@@ -137,6 +137,11 @@ DropBuildOutcome buildDropsFor({
 }) {
   final commands = <Command>[];
   final labels = <String>[];
+  // THE FOURTH RUNNING RESERVATION (#691). The three below it are
+  // sets of strings; this one is a list because `nextOrder` takes the
+  // MAX and order is the thing being allocated, not a uniqueness
+  // constraint.
+  final usedOrders = <FracIndex>[];
 
   for (final item in items) {
     final tag = serviceTag(item);
@@ -236,6 +241,7 @@ DropBuildOutcome buildDropsFor({
         actor: actor,
         alsoUsedLabels: usedLabels,
         alsoUsedDesignators: usedDesignators,
+        alsoUsedOrders: usedOrders,
         alsoOutlets: {outlet.id: outlet},
       );
       switch (built) {
@@ -247,6 +253,7 @@ DropBuildOutcome buildDropsFor({
           usedLabels.add(label);
           usedDesignators.add(designator);
           usedNetNames.add(netName);
+          usedOrders.add(command.order);
       }
     }
   }

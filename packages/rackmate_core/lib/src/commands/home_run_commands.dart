@@ -58,8 +58,25 @@ import 'package:rackmate_core/src/units/len.dart';
 import 'package:rackmate_core/src/util/id_gen.dart';
 
 /// The `FracIndex` a new home-run [Link] should sort at.
-FracIndex nextLinkOrder(RackDocument doc) =>
-    nextOrder(doc.links.values.map((l) => l.order));
+/// The next `Link` order, counting what siblings in this same gesture
+/// have already spent.
+///
+/// **[alsoUsed] IS THE FOURTH RESERVATION AND IT WAS MISSING (board
+/// #691).** `buildDropsFor` already threads three of these, for labels,
+/// designators and net names, because the whole line is planned against
+/// ONE UNMUTATED document and a value spent by drop 3 has to be visible
+/// to drop 4. Ordering was the one member of that family nobody wrote.
+///
+/// Measured before the fix: `LR: 3x Cat6` minted three links all at
+/// `a0`, so `buildSchedule`'s `order` then `id` sort fell through to a
+/// random entity id and a line's rows came out in a different order every
+/// run, never the order the operator typed. It had been invisible since
+/// M3-C because nothing had ever compared the typed order with the
+/// printed one.
+FracIndex nextLinkOrder(
+  RackDocument doc, {
+  Iterable<FracIndex> alsoUsed = const [],
+}) => nextOrder([...doc.links.values.map((l) => l.order), ...alsoUsed]);
 
 /// Every field label CR-113's project-wide uniqueness rule already spends.
 ///
@@ -420,6 +437,9 @@ AddHomeRunResult buildAddHomeRunCommand({
   TerminationType? terminationRack,
   Uuid? pathwayId,
   SignalFamilyId? signalFamily,
+
+  /// Orders already spent by earlier drops in THIS gesture (#691).
+  Iterable<FracIndex> alsoUsedOrders = const [],
   Set<String> alsoUsedLabels = const {},
   Set<String> alsoUsedDesignators = const {},
   Map<Uuid, Outlet> alsoOutlets = const {},
@@ -495,7 +515,7 @@ AddHomeRunResult buildAddHomeRunCommand({
       fieldLabel: trimmedLabel,
       designator: designator,
       netName: netName,
-      order: nextLinkOrder(doc),
+      order: nextLinkOrder(doc, alsoUsed: alsoUsedOrders),
       media: media,
       fieldEnd: fieldEnd,
       terminationField: terminationField,
