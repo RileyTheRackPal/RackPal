@@ -25,26 +25,26 @@
 // being printed.
 //
 // ═════════════════════════════════════════════════════════════════════
-// TWO MATCHING RULES DIFFER FROM THE TYPED-LINE PLANNER'S, DELIBERATELY
+// THE TWO MATCHING RULES NO LONGER DIFFER. DR-053 UNIFIED THEM
 // ═════════════════════════════════════════════════════════════════════
-// `drop_line_planner.dart` matches a room by `name` then `code` under
-// TRIM and lower-case, and matches an outlet by DESIGNATION ALONE,
-// project-wide. §5.3 says something different for both, and this file
-// implements §5.3:
+// THIS BLOCK USED TO SAY THE DIFFERENCE WAS DELIBERATE AND THAT
+// "UNIFYING THEM IS A RULING". The ruling is DR-053 (canon §11.52,
+// board #654), and both differences are gone:
 //
-//   1. Location matching here is fully WHITESPACE-INSENSITIVE, so
-//      `Living  Room` finds `Living Room`. Trim alone would create a
-//      second room from a double space nobody can see in a spreadsheet.
-//   2. Outlet matching here is `(locationId, designation)`, per §5.3.2.
-//      Designation alone is wrong the moment two rooms both call a plate
-//      `WP-1`, which is the normal case, not an edge one.
+//   1. Location matching. Both paths now call `normaliseTypedName`, and
+//      it COLLAPSES internal whitespace rather than stripping it, which
+//      is a narrowing HERE and a widening in the planner. `Living  Room`
+//      still finds `Living Room`; `LivingRoom` no longer does. The old
+//      body was `s.toLowerCase().replaceAll(RegExp(r'\s+'), '')`.
+//   2. Outlet matching. The typed-line planner now keys on
+//      `(locationId, designation)` too, so this file's rule stopped
+//      being the exception and became the rule.
 //
-// **BOTH DIFFERENCES ARE A FINDING RATHER THAN A PREFERENCE, and the
-// second one looks like a defect in the typed-line planner.** They are
-// not changed here: altering the DSL's matching inside a CSV task would
-// move behaviour nobody asked about, and rule 2 in particular decides
-// whether an existing gesture joins a plate or mints one. Unifying them
-// is a ruling.
+// **THE OLD BLOCK WAS RIGHT ABOUT ITS OWN SCOPE AND IS KEPT IN OUTLINE
+// FOR THAT REASON.** It declined to change a shipped gesture from inside
+// a CSV task and said what it would take instead. That is what happened,
+// three days later, and the finding it recorded is what got #654 filed
+// rather than lost.
 import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/model/link.dart';
 import 'package:rackmate_core/src/model/location.dart';
@@ -52,6 +52,8 @@ import 'package:rackmate_core/src/model/outlet.dart';
 import 'package:rackmate_core/src/model/pathway.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/structure/csv_row_resolve.dart';
+import 'package:rackmate_core/src/structure/drop_line_planner.dart'
+    show normaliseTypedName;
 import 'package:rackmate_core/src/units/ids.dart';
 
 /// What a planned row does to the document.
@@ -583,7 +585,24 @@ List<Link> _stable(RackDocument doc) {
   });
 }
 
-/// §5.3's "case- and whitespace-insensitive", which is more than a trim:
-/// `Living  Room` and `Living Room` are one room, and the double space
-/// is invisible in the spreadsheet that produced it.
-String _squash(String s) => s.toLowerCase().replaceAll(RegExp(r'\s+'), '');
+/// §5.3's "case- and whitespace-insensitive", as DR-053 §11.52.4 reads it.
+///
+/// IT USED TO STRIP AND NOW IT COLLAPSES, which narrows this path. The old
+/// body was `s.toLowerCase().replaceAll(RegExp(r'\s+'), '')`, so
+/// `LivingRoom` matched `Living Room`; now it does not, and `Living  Room`
+/// still does. The ruling took collapsing because stripping also makes two
+/// names a person reads as distinct unrepresentable in one project, which
+/// is a larger claim than §5.3.1 makes.
+///
+/// ONE FUNCTION FOR BOTH ENTRY PATHS, WHICH IS THE POINT OF THE RULING.
+/// The typed line used to trim and lower-case only, so a double-spaced
+/// room name created a second room from one path and matched the existing
+/// one from the other. Keeping a second normaliser here would relocate
+/// that disagreement rather than remove it.
+///
+/// THE THREE USES DR-053 DOES NOT NAME INHERIT THIS, and they are safe
+/// because both sides of every comparison normalise the same way: a
+/// pathway name, a field label and the label-collision map all compare
+/// squashed against squashed, so the only inputs whose behaviour moves are
+/// exactly the `AB` versus `A B` pairs the ruling decided.
+String _squash(String s) => normaliseTypedName(s);

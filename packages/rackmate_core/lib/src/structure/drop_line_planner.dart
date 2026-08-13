@@ -45,6 +45,7 @@ import 'package:rackmate_core/src/commands/home_run_commands.dart'
 import 'package:rackmate_core/src/commands/pathway_commands.dart';
 import 'package:rackmate_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackmate_core/src/commands/structure_commands.dart';
+import 'package:rackmate_core/src/derived/schedule.dart' show kUngroupedTitle;
 import 'package:rackmate_core/src/derived/structure_table.dart'
     show resolveTerminationToken, terminationTokens;
 import 'package:rackmate_core/src/model/device_instance.dart';
@@ -269,7 +270,12 @@ DropLinePlan planDropLine({
   }
 
   // --- the outlet: joined, or created --------------------------------
-  final existing = _resolveOutlet(doc, line.outletDesignation);
+  final outletLookup = _resolveOutlet(
+    doc,
+    location.id,
+    line.outletDesignation,
+  );
+  final existing = outletLookup.match;
   if (line.outletDesignation != null && existing == null) {
     // Creating it is fine; what is not fine is creating it on a GUESSED
     // Structure body when there are several. A named body is not a guess.
@@ -429,7 +435,18 @@ DropLinePlan planDropLine({
         outletCreated: outletCreated,
         pathwayNames: pathwayNames,
         rackLabels: landing.rackLabels,
-        warnings: [..._warningsFor(line, status), ...landing.warnings],
+        warnings: [
+          // FIRST, because it is about what this line just did rather than
+          // about how it was written. DR-053 §11.52.3.
+          if (outletLookup.elsewhere case final other?)
+            _sameNameElsewhere(
+              designation: line.outletDesignation!,
+              here: location.name,
+              other: other,
+            ),
+          ..._warningsFor(line, status),
+          ...landing.warnings,
+        ],
       );
   }
 }
@@ -718,27 +735,107 @@ String? serviceTagFor({
   return media.shortTag;
 }
 
+/// What the surface says when a designation is in use in another room.
+///
+/// It reports what happened and does not ask a question, because the line
+/// has already been planned and DR-053 §11.52.3 makes this a note rather
+/// than a refusal. Naming BOTH rooms is the point: the reader is deciding
+/// whether they meant the other one, and a sentence that omits either
+/// half cannot help them do that.
+String _sameNameElsewhere({
+  required String designation,
+  required String here,
+  required String other,
+}) =>
+    '"$designation" also exists in $other. '
+    'Created a new one in $here.';
+
+/// docs/07 §5.3's normal form for a name typed on either entry path.
+///
+/// Case-folded, trimmed, and **internal whitespace runs collapsed to one
+/// space** (DR-053 §11.52.4). `Living  Room` matches `Living Room`;
+/// `LivingRoom` does not.
+///
+/// THE COMMENT ON [_resolveLocation] CLAIMED THIS BEFORE THE CODE DID. It
+/// said "case- and space-insensitive" while the body only trimmed and
+/// lower-cased, so a double space created a second room from a typed line
+/// and matched the existing one from a CSV import, which is two entry
+/// paths disagreeing about whether two rooms are one room.
+///
+/// Collapsing rather than STRIPPING is the ruled reading: stripping would
+/// also make two names a person reads as distinct unrepresentable in one
+/// project, which is a larger claim than §5.3.1 makes.
+String normaliseTypedName(String s) =>
+    s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+
 /// Case- and space-insensitive, because a person typing sixty drops
 /// types `living room` as often as `Living Room`. Falls back to the
 /// location's `code`, so `LR: 4x Cat6` works once a code is set.
 Location? _resolveLocation(RackDocument doc, String name) {
-  final want = name.trim().toLowerCase();
+  final want = normaliseTypedName(name);
   for (final l in doc.locations.values) {
-    if (l.name.trim().toLowerCase() == want) return l;
+    if (normaliseTypedName(l.name) == want) return l;
   }
   for (final l in doc.locations.values) {
-    if (l.code.trim().toLowerCase() == want) return l;
+    if (normaliseTypedName(l.code) == want) return l;
   }
   return null;
 }
 
-Outlet? _resolveOutlet(RackDocument doc, String? designation) {
-  if (designation == null) return null;
-  final want = designation.trim().toLowerCase();
+/// The outlet [designation] names **in [locationId]**, and what to say
+/// when that designation is in use somewhere else.
+///
+/// KEYED ON `(locationId, designation)`, WHICH IS WHAT docs/07 §5.3.2 HAS
+/// ALWAYS SAID (DR-053 §11.52.2). This matched on designation alone,
+/// project-wide, until `2c82f04`: `Attic: 2x Cat6 @outlet="WP-1"` on a
+/// project with a Living Room `WP-1` hung the attic's drops on the LIVING
+/// ROOM's plate, and nothing refused, because as far as the planner was
+/// concerned the outlet resolved. Those drops then carried the wrong room
+/// on the Pull Sheet, in the per-room footage subtotals and in the
+/// schematic's room grouping.
+///
+/// The argument was already in this file, forty lines along and about a
+/// different entity: [_resolvePanel] refuses to match a device by NAME
+/// because a gesture landing on "whichever matched first" depends on map
+/// order. `doc.outlets` is a map too.
+///
+/// `elsewhere` IS A NOTE AND NEVER A REFUSAL (§11.52.3). Two rooms with a
+/// `WP-1` is ordinary residential work, so refusing is wrong; silence is
+/// wrong for a narrower reason, that a mistyped room name and a genuine
+/// second plate produce the identical outcome, so this is the only moment
+/// the product can say anything useful. Deterministic by location name
+/// then outlet id, because it is a sentence a user reads and a test pins.
+({Outlet? match, String? elsewhere}) _resolveOutlet(
+  RackDocument doc,
+  Uuid locationId,
+  String? designation,
+) {
+  if (designation == null) return (match: null, elsewhere: null);
+  final want = normaliseTypedName(designation);
+  final others = <Outlet>[];
   for (final o in doc.outlets.values) {
-    if (o.designation.trim().toLowerCase() == want) return o;
+    if (normaliseTypedName(o.designation) != want) continue;
+    if (o.locationId == locationId) return (match: o, elsewhere: null);
+    others.add(o);
   }
-  return null;
+  if (others.isEmpty) return (match: null, elsewhere: null);
+  others.sort((a, b) {
+    final an = doc.locations[a.locationId]?.name ?? '';
+    final bn = doc.locations[b.locationId]?.name ?? '';
+    final byName = an.compareTo(bn);
+    // TOTAL, so the sentence does not depend on map order either. Two
+    // outlets in one room can share neither designation nor id, but a
+    // roomless pair both compare '' on the first limb.
+    return byName != 0 ? byName : a.id.v.compareTo(b.id.v);
+  });
+  final where = doc.locations[others.first.locationId]?.name;
+  return (
+    match: null,
+    // `NO ROOM RECORDED` rather than a second spelling of the same fact:
+    // `schedule.dart` has printed that string since M2-B, and DR-021's
+    // cascade makes a roomless outlet an ordinary undoable state.
+    elsewhere: where == null || where.trim().isEmpty ? kUngroupedTitle : where,
+  );
 }
 
 OutletTemplate? _templateOf(RackDocument doc, Outlet outlet) {
