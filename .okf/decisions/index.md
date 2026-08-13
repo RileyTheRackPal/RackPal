@@ -51,6 +51,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 
 * [DR-049, the tabular exports and a label that is not a sheet](dr-049-tabular-exports-and-a-label-that-is-not-a-sheet.md) - CSV out, labels out, no printer drivers and no vendor exporter; a page of adhesive labels cannot be a slot in a client deliverable, and both refusals are refusals because neither can be demonstrated.
 * [DR-050, geometry fills the room estimate that already exists](dr-050-geometry-fills-the-room-estimate.md) - the census corrected the question before the answer: DR-020 forbids a BOUND from summing, not an estimate, and the room estimate has been summing since M2-B, so the ruling adds no tier at all.
+* [DR-051, documentation is referenced and never embedded](dr-051-documentation-is-referenced-never-embedded.md) - four grounds, and the one that makes it never rather than later is the one the request did not raise; three could be engineered around and copyright cannot.
 
 # Not yet written up
 

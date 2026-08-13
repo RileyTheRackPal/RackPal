@@ -10016,6 +10016,64 @@ waste factor.
 
 ---
 
+### 11.50 DR-051 · Documentation is referenced and never embedded
+
+**Settled by the user on 2026-08-12**, from a request for embedded manuals and spec sheets: *"who
+wants to frantically try to use their Google-Fu to find documentation for some obscure device that's
+locked behind a dealer portal they don't have access to at the end of the day."* The user raised file
+size as the concern; three other grounds turned out to bind harder.
+
+**11.50.1 THE EXPORTER STRUCTURALLY CANNOT DO IT TODAY.** docs/08 §2.2, written long before this was
+asked: *"the `pdf` package writes documents, it does not import pages."* That is a capability limit
+of the only PDF library in the tree, not a preference, so embedding a manufacturer PDF into the sheet
+set is **impossible** rather than expensive.
+
+**11.50.2 DR-015 ALREADY REFUSED THE CONTAINER THIS WOULD NEED, AND THE ARGUMENT TRANSFERS INTACT.**
+§11.15.4 ruled `.rmda` a single JSON file and not a zip, because the zip existed only to carry binary
+members, images are cut, and a zip buys **zip-slip protection, entry-count limits, uncompressed-size
+limits and image-decode bounds** as new attack surface with nothing on the other side. Embedding
+documents reopens every one of those and **adds parsing untrusted PDFs from the internet**, which is
+a class of surface this product has none of today.
+
+**11.50.3 The arithmetic is worse than the concern that raised it.** A whole document is ~870 kB of
+uncompressed JSON (§11.38.1). One mid-range AVR manual is 8 to 40 MB, and base64 in JSON adds a
+further third. A forty-device house would carry a payload **one to two orders of magnitude larger
+than the drawing it decorates**, and it would destroy the diffability that CR-117, DR-039's document
+diff and any future sync all depend on.
+
+**11.50.4 The ground the request did not raise, and it is the one that ends it.** Manufacturer
+manuals are **copyrighted**. Redistributing them inside a project file that is emailed to clients is
+redistribution, at scale, by a product whose users are professionals. **The dealer portal the request
+complains about exists precisely to control that.** A CC0 catalog (DR-036 §11.35.3) cannot carry
+them, and the output exception at §11.35.4 does not reach content the project never had the right to
+embed.
+
+**11.50.5 The ruling: a citation, and a date.** `TemplateBody` carries a reference block: **URL,
+document title, revision, and a retrieved-on date.** No file. It prints on `T5.01` and in the
+equipment list.
+
+**The date is what makes it honest, and it is DR-048's mechanism reused deliberately.** §11.47.3
+added `verifiedOn` because **G4 handles unknown and has no mechanism for stale**. A link has exactly
+that failure: it rots silently, and a rotted link with a retrieval date at least tells a tech how old
+the claim is. An embedded file has the same failure and cannot be dated out of it, because a manual
+embedded in 2026 documents firmware 1.2 while the device ships 3.0 in 2028, authoritative-looking and
+wrong.
+
+It also **reuses machinery that exists**: CR-061's provenance gate and `assets/catalog/sources.md`
+already do this exact shape for catalog data.
+
+**11.50.6 Embedding is refused permanently, on DR-004's pattern.** Not v1, not v1.1, not v1.2, not
+v2. **docs/08 §2.2's "the datasheet appendix defers to v2" is superseded** (§12.21): a deferral
+implies a release in which the objections lapse, and none of the four does. The library limit could
+be engineered around; the copyright ground cannot.
+
+**11.50.7 Scope.** v1 grows by one item, the reference block and its printing. No container, no
+binary member, no new dependency, no `SheetRole`. **v2 does not shrink, because it never held the
+row**: the appendix's v2 promise lived in two derived documents and DR-005's bullet, and roadmap §2
+has never mentioned a datasheet in any release (§12.21). Roadmap §2.5 gains it as a ruling.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -10462,6 +10520,29 @@ carried **no row for `T6.50` in any release**, so there is nothing in the scope 
 carries it are two different artifacts**, and this item had the first and never the second for the
 whole life of the project, which is how a reserved sheet id came to be the most authoritative-looking
 statement about it (§11.47.1).
+
+---
+
+### 12.21 Superseded by DR-051 (documentation is referenced and never embedded)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **docs/08 §2.2** | *"The datasheet appendix defers to v2, the `pdf` package writes documents, it does not import pages."* | **The deferral becomes a refusal.** Not v1, not v1.1, not v1.2, **not v2**, on DR-004's pattern. **The stated reason survives and is reaffirmed**: the library limit is real and is restated at §11.50.1. What changes is the destination, because a deferral implies a release in which the objections lapse and **none of the four does**. The library limit could be engineered around; the **copyright** ground (§11.50.4) cannot be, at any date, by any amount of work. |
+| **DR-005 §11.5.3**, first bullet | Listed *"datasheet appendices"* among the things it does not add to v1, *"out (v1.1 / v2)"*. | **Superseded for the datasheet appendix, which now has no release at all.** The rest of that bullet is unaffected here; `T6.50` moved at §12.20 and everything else stays where DR-005 left it. |
+
+**ROADMAP §2.4 NEVER CARRIED THE DATASHEET APPENDIX, and this row was drafted claiming it did.**
+`grep -in datasheet docs/09-roadmap.md` returns nothing. The v2 promise lived in **docs/08 §2.2 and
+docs/10:803**, both derived, plus DR-005's bullet, which is the only normative site. **So v2 does not
+shrink by a line, because it never held one**, and roadmap §2.5 gains the row instead. Recorded as a
+correction rather than silently fixed, because it is the *third* time in three days that a v-number
+in a derived document has been mistaken for a scope-list entry (§11.47.5 is the same finding about
+`T6.50`, from the opposite direction).
+
+**Explicitly NOT superseded.** **DR-015 §11.15.4 is untouched and is load-bearing here**: `.rmda` is a
+single JSON file and not a zip, and §11.50.2 *applies* that argument rather than revisiting it.
+**DR-036 §11.35.3 and §11.35.4 are untouched**: the CC0 catalog and the output exception both stand,
+and §11.50.4's point is that neither reaches content the project never had the right to embed in the
+first place.
 
 ---
 
