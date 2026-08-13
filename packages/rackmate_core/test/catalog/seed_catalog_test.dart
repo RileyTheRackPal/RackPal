@@ -379,6 +379,117 @@ void main() {
     });
   });
 
+  group('signal families a shipped port names (RJ-012: families are '
+      'catalog-updated and never user-created)', () {
+    final registries = buildSeedRegistries();
+
+    /// Every `part:port -> family` in the shipped catalog that [families]
+    /// cannot resolve.
+    ///
+    /// TAKES THE MAP RATHER THAN CLOSING OVER THE SEEDED ONE, which is
+    /// what lets the mutation case below run THIS detection, the one that
+    /// ships, against a map it has deliberately broken. A vacuity check
+    /// that re-implements the loop it is vouching for proves only that
+    /// the copy works.
+    Set<String> unresolvedAgainst(
+      Map<SignalFamilyId, SignalFamilyDef> families,
+    ) => {
+      for (final entry in catalog.entries)
+        for (final port in entry.value.ports)
+          if (!families.containsKey(port.signalFamily))
+            '${entry.key}:${port.key.v} -> ${port.signalFamily.v}',
+    };
+
+    test('every signal family a shipped port names resolves in the '
+        'registry', () {
+      // THE CONNECTOR SIBLING OF THIS TEST ALREADY EXISTS AND THIS ONE
+      // DID NOT, which left the second of a `PortDef`'s two registry
+      // references ungated. `registry_parity.py` does not close it
+      // either: it compares the seeded registry against `pal1_check.py`,
+      // the palette authority, and the catalog is not in that
+      // comparison at all.
+      //
+      // WHAT IT COSTS TO BE WRONG IS WHY IT IS WORTH A TEST.
+      // `catalog_ports.dart` builds `SignalFamilyId(family)` from a raw
+      // string, and `AtomicConnectCommand` carries that id onto both the
+      // `Service` and the `Net` with nothing in between to object. An
+      // unseeded family therefore reaches a saved document, where it has
+      // no domain, so no colour, no dash, no glyph and no
+      // `acceptedFamilies`: the run draws in no domain's style and
+      // SIG-001 cannot reason about it.
+      final unresolved = unresolvedAgainst(registries.signalFamilies);
+      expect(
+        unresolved,
+        isEmpty,
+        reason: 'unresolved signal families: $unresolved',
+      );
+    });
+
+    test('every family a shipped port names carries a domain, so the cell '
+        'and the palette can both spell it', () {
+      // A FAMILY IN THE REGISTRY IS NOT ENOUGH. `ScheduleEntry.typeCell`
+      // needs BOTH the family and its domain to print `VID.HDBaseT
+      // (5Play)`, and falls back to the bare id when the domain is
+      // missing. That fallback is not a spelling any picker offers, so a
+      // domainless family is a cell no menu can round-trip.
+      final domainless = <String>{};
+      for (final body in catalog.values) {
+        for (final port in body.ports) {
+          final family = registries.signalFamilies[port.signalFamily];
+          if (family == null) continue;
+          if (!registries.signalDomains.containsKey(family.domain)) {
+            domainless.add('${port.signalFamily.v} -> ${family.domain.v}');
+          }
+        }
+      }
+      expect(
+        domainless,
+        isEmpty,
+        reason: 'families with no domain: $domainless',
+      );
+    });
+
+    test('proved by mutation: drop one family the catalog uses and the '
+        'check reports it', () {
+      // VERIFIED BY MUTATION RATHER THAN BY READING, which is the bar
+      // `registry_parity.py` states for itself: "a gate that silently
+      // passes when its input disappears is worse than no gate". The
+      // assertion above passes today, and passing is exactly what a
+      // gate looking at the wrong thing also does.
+      //
+      // NO COUNT IS PINNED. The catalog is expected to grow, and a
+      // number in a test is a number that goes stale on precisely the
+      // growth it was written to survive.
+      final used = <SignalFamilyId>{
+        for (final body in catalog.values)
+          for (final port in body.ports) port.signalFamily,
+      };
+      expect(used, isNotEmpty, reason: 'no port names a family at all');
+      expect(
+        used.map((f) => registries.signalFamilies[f]!.domain).toSet().length,
+        greaterThan(1),
+        reason: 'a catalog naming one domain would pass a weaker check',
+      );
+
+      // Deterministically chosen, so a failure names the same family
+      // twice running (Dart's Set iteration order is insertion order,
+      // which is a build detail rather than a promise).
+      final victim = (used.toList()..sort((a, b) => a.v.compareTo(b.v))).first;
+      final broken = Map.of(registries.signalFamilies)..remove(victim);
+      final found = unresolvedAgainst(broken);
+      expect(
+        found,
+        isNotEmpty,
+        reason: 'removing ${victim.v} must be visible to the check',
+      );
+      expect(
+        found.every((s) => s.endsWith('-> ${victim.v}')),
+        isTrue,
+        reason: 'only ${victim.v} was removed, so only it may be reported',
+      );
+    });
+  });
+
   group('idformat wiring (docs/04-rack-editor.md §7)', () {
     final settings = ProjectSettings();
 
