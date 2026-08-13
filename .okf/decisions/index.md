@@ -54,6 +54,8 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-051, documentation is referenced and never embedded](dr-051-documentation-is-referenced-never-embedded.md) - four grounds, and the one that makes it never rather than later is the one the request did not raise; three could be engineered around and copyright cannot.
 * [DR-052, git sync is v1.2 and live collaboration is never](dr-052-git-sync-v12-collaboration-never.md) - diffable is not mergeable, and a v2 row that read as one feature was two, so splitting it moved one half forward and the other to never.
 
+* [DR-053, one key for an outlet and a room](dr-053-one-key-for-an-outlet-and-a-room.md) - the typed line matched an outlet project-wide and landed attic drops on the living room's plate; the argument that settles it was already written forty lines away in the same file, about panels.
+
 # Not yet written up
 
 DR-002 (residential primary), DR-003 (device builder in v1), DR-004 (multi-sheet

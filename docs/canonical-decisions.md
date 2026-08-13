@@ -10141,6 +10141,74 @@ arrived.
 
 ---
 
+### 11.52 DR-053 · The typed line and the CSV agree on what identifies an outlet and a room
+
+**Settled by the user on 2026-08-13**, closing board #654, which was filed during M3-F/6 as a
+defect found while building something else and explicitly not fixed there: *"changing which outlet
+an existing gesture joins is a behaviour change to a shipped surface, decided inside a task about
+CSV."*
+
+**11.52.1 The defect, and it is a wrong answer rather than a missing one.**
+`drop_line_planner.dart`'s `_resolveOutlet` matches an `Outlet` by `designation` **alone,
+project-wide**. docs/07 §5.3.2 states the key as **`(locationId, designation)`**.
+
+So `Attic: 2x Cat6 @outlet="WP-1"`, typed on a project that already has a Living Room `WP-1`, hangs
+the attic's drops on **the Living Room's plate**. Nothing refuses, because as far as the planner is
+concerned the outlet resolved. The drops then carry the wrong room on the Pull Sheet, in the
+per-room footage subtotals and in the schematic's room grouping.
+
+**This is the normal residential case and not an edge one.** docs/07 §5.2's own worked example uses
+`WP-1`, `CLG`, `AP-1` and `CAM-1..6`, **none of which is room-scoped by construction**.
+
+**11.52.2 The ruling: `(locationId, designation)`, as already stated.** The code moves to the
+document rather than the document to the code, and the reason is sitting forty lines away in the
+same file. **`_resolvePanel` already refuses to match a device by NAME**, and its comment says why:
+
+> A designator is the identifier printed on the rack and on every schedule (CR-042); a device NAME
+> is free text that two panels can share, and a gesture that landed on *"whichever Patch Panel
+> matched first"* would put the drop in a different rack depending on map order.
+
+**That argument is about outlets word for word.** `doc.outlets` is a map, its iteration order is not
+a fact about the project, and a first-match-wins rule over free text is the same defect the same
+file already refuses one function along.
+
+**11.52.3 A repeated name is REPORTED and never refused.** When the typed room has no such outlet and
+another room does, the planner **creates the new one and says which room already carries that name.**
+
+Refusing would be wrong: two rooms with a `WP-1` is ordinary. Staying silent would be wrong for a
+narrower reason: **a mistyped room name and a genuine second plate produce the identical outcome**,
+so the one moment the product can tell the operator anything useful is the moment it declines to
+join them. This is G4's shape rather than its letter, the fact being surfaced is *"this looks
+like something you already have"*, and it is a note rather than a refusal because
+G3 forbids a heuristic holding the work hostage.
+
+**11.52.4 Room matching collapses internal whitespace, and the two paths stop disagreeing.**
+`_resolveLocation` matches on **trim and lower-case**; `csv_row_resolve.dart` implements §5.3.1's
+**case- and whitespace-insensitive** rule. So `Living  Room` typed with a double space creates a
+second room, and the same string imported from a spreadsheet matches the existing one. **Two entry
+paths disagreeing about whether two rooms are one room**, which is the disagreement that produces a
+Pull Sheet with two Living Rooms on it.
+
+**Internal runs collapse; whitespace is not stripped entirely.** `Living  Room` matches
+`Living Room` and `LivingRoom` does not. Stripping outright would catch one more class of typo and
+would also make two names a person reads as distinct unrepresentable in one project, which is a
+larger claim than §5.3.1 makes. **The narrower reading is the one that cannot be wrong in a way the
+user cannot undo.**
+
+**11.52.5 Nothing migrates, and that is a property of where the rule lives.** Resolution happens **at
+gesture time**; no key is stored. So no existing document changes, no `.rmpj` byte moves, and
+`kSchemaVersion` does not advance. What changes is which `Outlet` the **next** typed line joins.
+
+**11.52.6 Scope.** No roadmap §2 change: docs/07 §5.3 already promised both rules and the code
+implemented one of them. This is a **decomposition-gap fix under the §11.24.7 test**, not an
+amendment, and it is ruled rather than merely fixed because §11.52.3's note and §11.52.4's choice of
+reading are both decisions the corpus did not already contain.
+
+**What it does not rule.** Whether `Outlet.designation` should be unique within a location at the
+model level, which is a validation question with an AC-051 fixture pair and belongs to M5.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
