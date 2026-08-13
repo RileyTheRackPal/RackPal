@@ -128,6 +128,11 @@ StructureEditFn buildStructureEditAction({
         edit: edit,
         into: commands,
       ),
+      StructureColumnId.service => _signalFamily(
+        controller: controller,
+        edit: edit,
+        into: commands,
+      ),
       StructureColumnId.certificateId => _certificateId(
         controller: controller,
         edit: edit,
@@ -317,6 +322,59 @@ String? _fieldTermination({
     SetStructureOriginRefused(:final reason) => reason,
     SetStructureOriginUnchanged() => null,
     SetStructureOriginReady(:final command) => () {
+      into.add(command);
+      return null;
+    }(),
+  };
+}
+
+/// `SERVICE`, the signal family (DR-025 §11.24.5, board #587).
+///
+/// **IT RESOLVES THROUGH CORE AND SPELLS NOTHING ITSELF.**
+/// `resolveSignalFamilyCell` is the inverse of the function that built
+/// the menu, so the picker, the cell and this arm cannot disagree about
+/// what `VID·HDBaseT (5Play)` means. The neighbouring termination arm
+/// compares against `terminationLabel` for the same reason.
+///
+/// That spelling is worth getting right in a comment: this file's first
+/// draft wrote `V·HDBaseT 5Play`, which is the shape canon §11.24.1's
+/// PROSE uses and which the catalog spells nowhere. The tests that
+/// hardcoded it failed for a reason that had nothing to do with the
+/// picker.
+///
+/// **NO EMPTY-CLEARS-IT BRANCH, unlike the termination arms.** A
+/// `Service` always has a family and `structure.undetermined` is an
+/// ordinary row in the menu, so there is nothing to clear TO: an empty
+/// string is a refusal rather than a null write (G4 draws the line at
+/// whether an absence is a real state, and here it is not).
+///
+/// **THE REFUSAL LISTS NOTHING.** Its neighbour can name all nine
+/// terminations in a sentence; there are 55 families, and a refusal that
+/// printed them would be a wall a person scrolls past. The picker is the
+/// list, which is why this column is a closed set rather than a text box.
+String? _signalFamily({
+  required DocumentController controller,
+  required StructureCellEdit edit,
+  required List<Command> into,
+}) {
+  final family = resolveSignalFamilyCell(
+    controller.doc.registries,
+    edit.value,
+  );
+  if (family == null) {
+    return '"${edit.value}" is not a signal family. Choose one from the '
+        'list; families come from the catalog and cannot be created here.';
+  }
+  final result = buildSetSignalFamily(
+    doc: controller.doc,
+    linkId: edit.linkId,
+    family: family,
+    now: controller.clock.nowUtc(),
+    actor: controller.actor,
+  );
+  return switch (result) {
+    SetSignalFamilyRefused(:final reason) => reason,
+    SetSignalFamilyReady(:final command) => () {
       into.add(command);
       return null;
     }(),

@@ -435,6 +435,30 @@ final class _Harness {
           );
           if (result is SetStructureOriginRefused) return result.reason;
           if (result is SetStructureOriginReady) commands.add(result.command);
+        // ADDED BY #587, and its absence is what made the picker's own
+        // two cases fail while the app's passed. The comment four arms
+        // up already said it: "a harness stricter than the product tests
+        // a product that does not exist". The picker was built, the app
+        // grew its arm, and this fell through to `case _` and returned
+        // "That column cannot be typed into" on a column that now can be.
+        case StructureColumnId.service:
+          final family = resolveSignalFamilyCell(doc.registries, e.value);
+          if (family == null) {
+            return '"${e.value}" is not a signal family.';
+          }
+          final set = buildSetSignalFamily(
+            doc: doc,
+            linkId: e.linkId,
+            family: family,
+            now: _now,
+            actor: 'editor',
+          );
+          switch (set) {
+            case SetSignalFamilyRefused(:final reason):
+              return reason;
+            case SetSignalFamilyReady(:final command):
+              commands.add(command);
+          }
         case StructureColumnId.notes:
           final c = buildSetEntityProperty<Link, String?>(
             doc: doc,
@@ -975,17 +999,31 @@ void main() {
       final editable = kStructureDefaultColumns
           .where(structureColumnIsEditable)
           .toList();
-      // FIVE SINCE DR-046: both termination columns are defaults now,
-      // and both are dropdowns rather than boxes.
+      // SIX SINCE DR-025's PICKER (#587). It used to assert FIVE and
+      // said "both termination columns are defaults now, and both are
+      // dropdowns rather than boxes", which was right at DR-046 and did
+      // not say what would retire it. What retired it: `SERVICE` became
+      // editable when `SetSignalFamilyCommand` gave it a command to sit
+      // behind, so the column this case is NAMED for is no longer the
+      // example it uses. **MEDIA still is**, and that is the assertion
+      // that matters: a text box accepting `Cat6a` into a `MediaTypeId`
+      // is worse than a cell that cannot be typed into.
       expect(editable, [
         StructureColumnId.fieldLabel,
         StructureColumnId.rackLabel,
+        StructureColumnId.service,
         StructureColumnId.fieldTerm,
         StructureColumnId.rackTerm,
         StructureColumnId.roughIn,
       ]);
-      // Two text boxes on the row (the other three editable defaults are
-      // dropdowns), plus the quick-add field above the table.
+      expect(
+        structureColumnIsEditable(StructureColumnId.media),
+        isFalse,
+        reason: 'MEDIA is the derived column this case is really about',
+      );
+      // UNCHANGED AT THREE, and that is the point of the picker: SERVICE
+      // arrived as a DROPDOWN, so it added no text box. Two boxes on the
+      // row plus the quick-add field above the table.
       expect(find.byType(TextField), findsNWidgets(3));
     });
 
@@ -2010,6 +2048,256 @@ void main() {
       // one visible now.
       expect(find.text('1 selected'), findsOneWidget);
       expect(find.textContaining('more ticked, off screen'), findsNothing);
+    });
+  });
+
+  group('the SERVICE picker, both entry paths (DR-025 §11.24.5, #587)', () {
+    /// Ticks one drop by id, and picks a column and value on the batch
+    /// bar. LOCAL COPIES: the batch group above owns its own, and sharing
+    /// them would couple two groups that ask different questions.
+    Future<void> tick(WidgetTester tester, Uuid id) async {
+      await tester.tap(find.byKey(ValueKey('select-${id.v}')));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> setColumn(
+      WidgetTester tester,
+      String column,
+      String value,
+    ) async {
+      await tester.tap(find.byKey(const ValueKey('batch-column')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(column).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('batch-value')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text(value).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(value).last);
+      await tester.pumpAndSettle();
+    }
+
+    /// Every family the document records, read off BOTH places §11.24.6
+    /// stores it, so a half-write cannot pass as a success.
+    ({Set<String> services, Set<String> nets}) families(RackDocument doc) => (
+      services: {
+        for (final l in doc.links.values)
+          for (final svc in l.services) svc.signalFamily.v,
+      },
+      nets: {for (final n in doc.nets.values) n.signalFamily.v},
+    );
+
+    /// Opens the picker on one row's SERVICE cell.
+    Future<void> openCell(WidgetTester tester, Uuid linkId) async {
+      await tester.tap(find.byKey(ValueKey('service-${linkId.v}')));
+      await tester.pumpAndSettle();
+    }
+
+    /// Clicks a row in the open panel.
+    ///
+    /// SCROLLS TO IT FIRST, and that is a fact about the product rather
+    /// than test plumbing: the panel is a `SingleChildScrollView` capped
+    /// at [kFamilyPickerMaxHeight], the groups run in domain-id order, and
+    /// `video.digital` sorts LAST, so `VID·HDBaseT (5Play)` lays out some
+    /// 1800 points below the fold. A person reaches it by typing in the
+    /// filter box, which is the case below; a person who scrolls instead
+    /// is doing this.
+    Future<void> pick(WidgetTester tester, String label) async {
+      await tester.ensureVisible(find.text(label).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(label).last);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> filter(WidgetTester tester, String query) async {
+      await tester.enterText(
+        find.byKey(const ValueKey('service-filter')),
+        query,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the labels this group types are the ones the catalog '
+        'actually spells', (tester) async {
+      // PINNED ONCE, HERE, AND DERIVED EVERYWHERE ELSE. The first draft
+      // of this group typed `V·AV-over-IP` and `V·HDBaseT 5Play`, which
+      // are the shapes canon §11.24.1's PROSE uses; the catalog spells
+      // neither. Both cases failed for a reason that had nothing to do
+      // with the picker. One test now owns the literal, so a respelling
+      // breaks this and reads as what it is.
+      final h = _Harness(_project());
+      final r = h.doc.registries;
+      String label(String id) => signalFamilyCellLabel(
+        r.signalDomains[r.signalFamilies[SignalFamilyId(id)]!.domain]!,
+        r.signalFamilies[SignalFamilyId(id)]!,
+      );
+      expect(label('video.hdbaset'), 'VID·HDBaseT (5Play)');
+      expect(label('video.avoip'), 'VID·AV-over-IP (SDVoE / JPEG XS / NDI)');
+      expect(label('structure.undetermined'), 'STR·Undetermined home run');
+    });
+
+    testWidgets('the precise path: one cell, one picked row', (tester) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      expect(families(h.doc).services, {'structure.undetermined'});
+
+      await openCell(tester, _rows(h).single.id);
+      await pick(tester, 'VID·HDBaseT (5Play)');
+
+      final after = families(h.doc);
+      expect(after.services, {'video.hdbaset'});
+      expect(
+        after.nets,
+        {'video.hdbaset'},
+        reason:
+            '§11.24.6: nothing reads the Net, so only naming it sees '
+            'a half-write',
+      );
+    });
+
+    testWidgets('the fast path: many rows, one value', (tester) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 3x Cat6');
+      for (final row in _rows(h)) {
+        await tick(tester, row.id);
+      }
+
+      await setColumn(
+        tester,
+        'SERVICE',
+        'VID·AV-over-IP (SDVoE / JPEG XS / NDI)',
+      );
+
+      expect(families(h.doc).services, {'video.avoip'});
+      expect(families(h.doc).nets, {'video.avoip'});
+    });
+
+    testWidgets('the filter NARROWS and never commits', (tester) async {
+      // THE DISTINCTION #587 IS ABOUT. SERVICE was grouped with MEDIA as
+      // "needs a picker, not a text box"; a box that committed what was
+      // typed would put that straight back. Typing must change what is
+      // VISIBLE and nothing else.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+
+      await openCell(tester, _rows(h).single.id);
+      expect(find.text('VID·HDBaseT (5Play)'), findsOneWidget);
+      expect(find.text('DIG·Dante'), findsOneWidget);
+
+      // `hbt` is the shortTag `@signal=` already accepts, so the picker
+      // and the DSL share one vocabulary rather than acquiring a second.
+      await filter(tester, 'hbt');
+      expect(find.text('VID·HDBaseT (5Play)'), findsOneWidget);
+      expect(find.text('DIG·Dante'), findsNothing);
+      expect(
+        families(h.doc).services,
+        {'structure.undetermined'},
+        reason: 'typing a whole family name must still write nothing',
+      );
+
+      await pick(tester, 'VID·HDBaseT (5Play)');
+      expect(families(h.doc).services, {'video.hdbaset'});
+    });
+
+    testWidgets('a filter matching nothing says so and offers nothing', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+
+      await openCell(tester, _rows(h).single.id);
+      await filter(tester, 'zzz');
+      expect(find.textContaining('No signal family matches'), findsOneWidget);
+      expect(
+        find.textContaining('cannot be created here'),
+        findsOneWidget,
+        reason: 'RJ-012 in the one place a user meets it',
+      );
+      expect(find.text('VID·HDBaseT (5Play)'), findsNothing);
+    });
+
+    testWidgets('the menu is grouped, with a header per domain', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+
+      await openCell(tester, _rows(h).single.id);
+      // Ordered by domain id, which is `schematic_filter.dart`'s order,
+      // so the same eight things are not in two orders in one product.
+      final groups = signalFamilyCellGroups(h.doc.registries);
+      expect(
+        groups.map((g) => g.tagPrefix).take(3),
+        [
+          'AUD',
+          'DIG',
+          'CTL',
+        ],
+        reason: 'audio.analog, audio.digital, ctl',
+      );
+      expect(
+        find.textContaining('VID  Digital Video'),
+        findsOneWidget,
+        reason: 'the header names the domain, not just its tag',
+      );
+    });
+
+    testWidgets('SERVICE offers no unknown row, unlike FIELD TERM', (
+      tester,
+    ) async {
+      // G4 drawing a real distinction: a termination is nullable because
+      // nobody deciding is a genuine absence, and a Service always HAS a
+      // family, so `structure.undetermined` is an ordinary choice.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      final options = structureCellChoices(
+        StructureColumnId.service,
+        h.doc.registries,
+      );
+      expect(options, isNotNull);
+      expect(options, isNot(contains(kUnknownCell)));
+      expect(
+        structureCellChoices(StructureColumnId.fieldTerm, h.doc.registries),
+        contains(kUnknownCell),
+      );
+    });
+
+    testWidgets('a family the registries do not hold costs one cell, not '
+        'the table', (tester) async {
+      // THE CRASH THIS COLUMN WOULD OTHERWISE HAVE INTRODUCED.
+      // `DropdownButton` asserts exactly one item matches its value, and
+      // `typeCell` prints a bare id when a `Service` names a family the
+      // registries lack, which is a spelling no menu offers. The
+      // enum-backed columns cannot reach it because the enum IS their
+      // menu, so SERVICE is the first column where a document can say
+      // something the control cannot represent.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      final linkId = _rows(h).single.id;
+
+      h.doc.registries.signalFamilies.remove(
+        const SignalFamilyId('structure.undetermined'),
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      await _pump(tester, h);
+
+      expect(tester.takeException(), isNull, reason: 'the table still builds');
+      expect(
+        find.byKey(ValueKey('service-${linkId.v}')),
+        findsNothing,
+        reason: 'no picker on a value the picker cannot offer',
+      );
+      expect(
+        find.text('structure.undetermined'),
+        findsOneWidget,
+        reason: 'the stored id is shown rather than silently dropped',
+      );
     });
   });
 }

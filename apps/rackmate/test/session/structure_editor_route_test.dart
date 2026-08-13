@@ -291,6 +291,60 @@ void main() {
       );
     });
 
+    testWidgets('a bulk SERVICE set is one undo, and both fields come back', (
+      tester,
+    ) async {
+      // DR-025 §11.24.5's fast path. THE ARTIFACT IS WHAT ONE Ctrl+Z
+      // TAKES BACK: asserting three commands were built would pass on a
+      // build that ran them as three transactions, which is the thing a
+      // person would actually complain about.
+      final (doc, linkIds) = seeded();
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+
+      final hdbaset = signalFamilyCellLabel(
+        doc.registries.signalDomains[doc
+            .registries
+            .signalFamilies[const SignalFamilyId('video.hdbaset')]!
+            .domain]!,
+        doc.registries.signalFamilies[const SignalFamilyId('video.hdbaset')]!,
+      );
+
+      final edit = buildStructureEditAction(controller: controller);
+      expect(
+        edit([
+          for (final id in linkIds)
+            StructureCellEdit(
+              linkId: id,
+              column: StructureColumnId.service,
+              value: hdbaset,
+            ),
+        ]),
+        isNull,
+      );
+
+      Set<String> families() => {
+        for (final l in doc.links.values)
+          for (final s in l.services) s.signalFamily.v,
+      };
+      Set<String> nets() => {
+        for (final n in doc.nets.values) n.signalFamily.v,
+      };
+      expect(families(), {'video.hdbaset'});
+      expect(nets(), {'video.hdbaset'}, reason: '§11.24.6, both halves');
+      expect(controller.undo.undoLabelKey, LabelKey.fillCells.name);
+
+      controller.undoLast();
+      expect(families(), {'structure.undetermined'});
+      expect(
+        nets(),
+        {'structure.undetermined'},
+        reason: 'one undo restores BOTH, or the revert is half a revert',
+      );
+    });
+
     testWidgets('a batch that collides applies NONE of itself', (tester) async {
       final (doc, linkIds) = seeded();
       final built = await buildTestApp(measurer, document: doc);

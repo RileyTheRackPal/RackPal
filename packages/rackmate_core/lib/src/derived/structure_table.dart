@@ -51,6 +51,9 @@ import 'package:rackmate_core/src/model/enums.dart'
 import 'package:rackmate_core/src/model/link.dart' show RoughInStatus;
 import 'package:rackmate_core/src/model/pathway.dart' show PathwayKind;
 import 'package:rackmate_core/src/model/rack_document.dart';
+import 'package:rackmate_core/src/model/registries.dart';
+import 'package:rackmate_core/src/structure/drop_line_planner.dart'
+    show normaliseMediaToken;
 import 'package:rackmate_core/src/units/ids.dart';
 import 'package:rackmate_core/src/units/len.dart';
 
@@ -503,32 +506,21 @@ bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
   // means or about which unit an unadorned number is in.
   StructureColumnId.routedLength || StructureColumnId.cutLength => true,
 
+  // THE SIGNAL FAMILY (DR-025 §11.24.5, board #587). It was grouped with
+  // MEDIA as "derived, needs a picker and not a text box", and a picker
+  // was never the whole of what it lacked: there was no Command behind
+  // it either, so a surface had nothing to call. `SetSignalFamilyCommand`
+  // is that command and this makes the cell reachable.
+  //
+  // Batchable follows for free, because the rule below is
+  // editable-minus-the-unique-ones and a family is not unique. MEDIA
+  // does NOT follow: it still has no command, and RJ-012 makes it
+  // user-extensible, which is a different question from this one.
+  StructureColumnId.service => true,
+
   _ => false,
 };
 
-/// Whether a column can be set to ONE value across MANY selected rows
-/// (DR-043 §11.42.6, M3-L/3).
-///
-/// **EDITABLE MINUS THE UNIQUE ONES, and the rule is uniqueness rather
-/// than a taste about which facts feel bulk-shaped.** CR-113 makes
-/// `fieldLabel` unique project-wide and `rackLabel` unique when set, so
-/// one value across N rows is refused by
-/// `buildSetStructureOriginProperty` on every row after the first. A
-/// batch menu offering them would be a control whose only outcome on a
-/// real selection is a refusal sentence, which is
-/// `shell_tabs_test.dart`'s "no control that does nothing" wearing a
-/// different hat.
-///
-/// **NOTHING ELSE IS EXCLUDED, INCLUDING THE ODD-LOOKING ONES.** A bulk
-/// `CUT` length reads strange until it is forty identical patch runs, and
-/// `CERT ID` is not declared unique anywhere, so neither is this
-/// function's business. The refusing builder is still in the path and
-/// still decides; this only declines to draw a control that cannot ever
-/// succeed.
-///
-/// LIVES HERE AND NOT IN THE TABLE WIDGET, so the batch bar and any later
-/// consumer read one answer. A list hardcoded in `rackmate_ui` would
-/// drift the first time a column becomes editable.
 /// Resolves a typed termination token to its `TerminationType`, or null
 /// when nothing matches (DR-043 §11.42.4).
 ///
@@ -564,6 +556,223 @@ List<String> terminationTokens() => [
   for (final t in TerminationType.values) terminationLabel(t),
 ];
 
+// ─────────────────────────────────────────────────────────────────────
+// THE SERVICE COLUMN'S MENU (DR-025 §11.24.5, board #587)
+// ─────────────────────────────────────────────────────────────────────
+
+/// One family, as the SERVICE picker needs it: what to print, what to
+/// write, and what a filter box matches against.
+@immutable
+final class SignalFamilyCellOption {
+  const SignalFamilyCellOption({
+    required this.id,
+    required this.label,
+    required this.searchKey,
+  });
+
+  final SignalFamilyId id;
+
+  /// [signalFamilyCellLabel]'s spelling, which is also what the cell
+  /// PRINTS. The menu and the cell must agree, or the first family whose
+  /// display name is not its tag round-trips wrong, which is most of
+  /// them.
+  final String label;
+
+  /// Everything [matches] compares against, normalised and joined once.
+  ///
+  /// PRE-COMPUTED because a filter box runs this on every keystroke
+  /// against every family, and because building it in one place is the
+  /// only way to be sure the printed label and the DSL's own tokens are
+  /// searched by the same rule.
+  final String searchKey;
+
+  /// Whether this row survives a filter box containing [query].
+  ///
+  /// SUBSTRING, WHERE `resolveSignalFamilyToken` IS EXACT, and the two
+  /// answer different questions rather than disagreeing. `@signal=hdb`
+  /// must REFUSE, because DR-025 §11.24.3 says an unresolved value never
+  /// invents a family; typing `hdb` into a filter must SHOW HDBaseT,
+  /// because a box that only matched what was already spelled correctly
+  /// is a search for people who do not need one.
+  bool matches(String query) {
+    final want = normaliseMediaToken(query);
+    return want.isEmpty || searchKey.contains(want);
+  }
+}
+
+/// One domain's block in the SERVICE picker.
+@immutable
+final class SignalFamilyCellGroup {
+  const SignalFamilyCellGroup({
+    required this.domainId,
+    required this.tagPrefix,
+    required this.domainName,
+    required this.options,
+  });
+
+  final SignalDomainId domainId;
+
+  /// `VID`, `AUD`, `NET`. Every label in [options] starts with it, so a
+  /// header repeating it is a heading rather than new information, which
+  /// is why the surface pairs it with [domainName].
+  final String tagPrefix;
+  final String domainName;
+  final List<SignalFamilyCellOption> options;
+}
+
+/// The SERVICE picker's rows, grouped by domain.
+///
+/// **A FLAT MENU DOES NOT FIT, AND THE NUMBER THAT SETTLES IT IS THE
+/// COLUMN WIDTH RATHER THAN THE FAMILY COUNT.** SERVICE is 76 points, a
+/// `DropdownButton`'s menu inherits its button's width, and the seeded
+/// labels average 22 characters and reach 45. Measured, every row
+/// renders clamped to 84 points, so `AUD·Speaker level, low-Z` and
+/// `AUD·Speaker, constant-voltage 70 / 100 / 25 V` both arrive as
+/// `AUD·Speaker…`. The three enum-backed choice columns never hit this
+/// because `PULLED` and `RJ45` fit in 84 points.
+///
+/// **ORDERED BY DOMAIN ID, WHICH IS `schematic_filter.dart`'S ORDER.**
+/// That file already sorts these same eight domains for the schematic's
+/// filter bar, and the same eight things in two different orders in one
+/// product reads as assembled from parts. Sorting by id also keeps
+/// `audio.analog` next to `audio.digital` and `video.analog` next to
+/// `video.digital`, which sorting by [SignalFamilyCellGroup.tagPrefix]
+/// would split apart.
+///
+/// **TOTAL AT BOTH LEVELS**, domains by id and families by label, so the
+/// menu never depends on map order.
+///
+/// A family whose domain is missing is DROPPED rather than listed
+/// domainless: it has no tag to file it under and no colour to draw in.
+/// `seed_catalog_test.dart` gates the shipped catalog against exactly
+/// that, so this arm is a guard on a document rather than on the seed.
+List<SignalFamilyCellGroup> signalFamilyCellGroups(Registries registries) {
+  final byDomain = <SignalDomainId, List<SignalFamilyCellOption>>{};
+  for (final family in registries.signalFamilies.values) {
+    final domain = registries.signalDomains[family.domain];
+    if (domain == null) continue;
+    final label = signalFamilyCellLabel(domain, family);
+    byDomain
+        .putIfAbsent(family.domain, () => [])
+        .add(
+          SignalFamilyCellOption(
+            id: family.id,
+            label: label,
+            searchKey: normaliseMediaToken(
+              [
+                label,
+                family.shortTag ?? '',
+                family.id.v,
+                family.displayName,
+                ...family.aliases,
+              ].join(' '),
+            ),
+          ),
+        );
+  }
+  final ids = byDomain.keys.toList()..sort((a, b) => a.v.compareTo(b.v));
+  return [
+    for (final id in ids)
+      SignalFamilyCellGroup(
+        domainId: id,
+        tagPrefix: registries.signalDomains[id]!.tagPrefix,
+        domainName: registries.signalDomains[id]!.displayName,
+        options: byDomain[id]!..sort((a, b) => a.label.compareTo(b.label)),
+      ),
+  ];
+}
+
+/// Every spelling the SERVICE picker offers, flat and sorted.
+///
+/// **ITS INVERSE IS [resolveSignalFamilyCell] AND THE TWO ARE ONE PAIR**,
+/// the `terminationLabel` / [resolveTerminationToken] shape applied to a
+/// family: the surface offers what core spells and hands back what it
+/// displayed, so core stays the only speller and a refusal cannot
+/// disagree with the menu that produced it.
+///
+/// **THERE IS NO `unknown` ENTRY, UNLIKE THE TERMINATION COLUMNS**, and
+/// that is G4 drawing a real distinction rather than an inconsistency.
+/// `TerminationType?` is nullable because "nobody has decided how this
+/// end is finished" is a genuine absence. A `Service` always HAS a
+/// family, and `structure.undetermined` is the encouraged first-class
+/// value (docs/07 §4.1: at rough-in a Cat6 is just a Cat6), so it is an
+/// ordinary row in this list and choosing it is a statement rather than
+/// a clearing.
+///
+/// Derived from [signalFamilyCellGroups] rather than rebuilt, so the
+/// validator and the menu cannot come to hold different sets.
+List<String> signalFamilyCellOptions(Registries registries) => [
+  for (final group in signalFamilyCellGroups(registries))
+    for (final option in group.options) option.label,
+]..sort();
+
+/// The family a SERVICE cell's text names, or null when nothing matches.
+///
+/// Compares against [signalFamilyCellLabel]'s own spelling, so this and
+/// the menu cannot drift. A batch fill or a pasted column can produce a
+/// string that matches nothing, and that REFUSES rather than inventing a
+/// family (DR-025 §11.24.3): families are catalog-updated where media
+/// types are user-extensible.
+///
+/// **EXACT ON THE LABEL, NOT [SignalFamilyCellOption.matches].** A cell
+/// COMMITS a value where a filter only narrows a list, so accepting a
+/// substring here would let `hdmi` commit whichever of the three HDMI
+/// generations happened to sort first.
+SignalFamilyId? resolveSignalFamilyCell(Registries registries, String cell) {
+  final want = cell.trim().toLowerCase();
+  if (want.isEmpty) return null;
+  for (final group in signalFamilyCellGroups(registries)) {
+    for (final option in group.options) {
+      if (option.label.toLowerCase() == want) return option.id;
+    }
+  }
+  return null;
+}
+
+/// Whether a column's choices come from the DOCUMENT'S REGISTRIES rather
+/// than from a Dart enum.
+///
+/// **THE SURFACE NEEDS THIS TO CHOOSE A CONTROL, and the distinction is
+/// where the options come from rather than how many there are today.**
+/// An enum-backed column has a handful of short fixed labels and a plain
+/// dropdown fits it. A registry-backed one has as many rows as the
+/// catalog ships, spelled as long as the catalog spells them, and needs
+/// a menu sized to its content plus a way to find a row without reading
+/// all of them.
+///
+/// LIVES HERE FOR [structureColumnIsBatchable]'S REASON: the cell and
+/// the batch bar have to reach the same answer, and a list hardcoded in
+/// `rackmate_ui` would drift the first time a second column becomes
+/// registry-backed. MEDIA is the one waiting to do that, since RJ-012
+/// ships a media-type editor and makes media user-extensible, which is
+/// what makes this a predicate rather than an `id == service` test at
+/// the call site.
+bool structureColumnChoicesAreRegistryBacked(StructureColumnId id) =>
+    id == StructureColumnId.service;
+
+/// Whether a column can be set to ONE value across MANY selected rows
+/// (DR-043 §11.42.6, M3-L/3).
+///
+/// **EDITABLE MINUS THE UNIQUE ONES, and the rule is uniqueness rather
+/// than a taste about which facts feel bulk-shaped.** CR-113 makes
+/// `fieldLabel` unique project-wide and `rackLabel` unique when set, so
+/// one value across N rows is refused by
+/// `buildSetStructureOriginProperty` on every row after the first. A
+/// batch menu offering them would be a control whose only outcome on a
+/// real selection is a refusal sentence, which is
+/// `shell_tabs_test.dart`'s "no control that does nothing" wearing a
+/// different hat.
+///
+/// **NOTHING ELSE IS EXCLUDED, INCLUDING THE ODD-LOOKING ONES.** A bulk
+/// `CUT` length reads strange until it is forty identical patch runs, and
+/// `CERT ID` is not declared unique anywhere, so neither is this
+/// function's business. The refusing builder is still in the path and
+/// still decides; this only declines to draw a control that cannot ever
+/// succeed.
+///
+/// LIVES HERE AND NOT IN THE TABLE WIDGET, so the batch bar and any later
+/// consumer read one answer. A list hardcoded in `rackmate_ui` would
+/// drift the first time a column becomes editable.
 bool structureColumnIsBatchable(StructureColumnId id) =>
     structureColumnIsEditable(id) &&
     id != StructureColumnId.fieldLabel &&

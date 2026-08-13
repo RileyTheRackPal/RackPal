@@ -2284,6 +2284,56 @@ an untouched document and passed**, and now decodes, injects and re-encodes inst
 `plate_materials.dart` sat **untracked** while all fourteen local gates were green, which
 `verify_tracked_sources` named exactly, on the barrel export it had already been added to.
 
+**#587 closed 2026-08-13, DR-025 delivered whole.** The task named three things: the Command
+(`515d61e`), the modifier (`48ae15b`) and the picker (`80fd007`, on `a1c5a8e`, `379a9cd` and
+`22aa6d6`). Until the last of them the SERVICE column was read-only, so `@signal=` on a drop line
+was the only way to state a family and **a run created before the ruling could never be corrected**.
+§11.24.5's *"the DRC validates RETROACTIVELY when a `Service` later assigns a real family"* now has
+its later.
+
+***THE CONTROL WAS CHOSEN BY MEASUREMENT AND THE MEASUREMENT CONTRADICTED THE OBVIOUS ANSWER.*** A
+`DropdownButton` was the natural fit, since three choice columns already use one. Its menu inherits
+its **button's** width; SERVICE is 76 points, the 55 seeded labels average 22 characters and reach
+45, and a throwaway harness put the menu at **116 points wide with every row clamped to 84**. So
+`AUD·Speaker level, low-Z` and `AUD·Speaker, constant-voltage 70 / 100 / 25 V` both render
+`AUD·Speaker…`. The three enum columns keep their dropdown because `PULLED` and `RJ45` fit, and that
+asymmetry is `structureColumnChoicesAreRegistryBacked` rather than a taste.
+
+*The filter box is not a text box, and the difference is the whole task.* SERVICE was grouped with
+MEDIA as *"derived, needs a picker not a text box"*; a box that committed what was typed would put
+that straight back. It narrows and never writes, and it matches on the tokens `@signal=` already
+accepts, so `hbt` finds HDBaseT and the product does not acquire a second vocabulary for one fact.
+
+***A CRASH WAS CLOSED THAT THIS CHANGE WOULD OTHERWISE HAVE INTRODUCED.*** `DropdownButton` asserts
+exactly one item matches its value, and `typeCell` prints a bare id when a `Service` names a family
+the registries do not hold: a spelling no menu offers, so the **whole table** would throw rather
+than one cell misbehaving. The enum columns cannot reach it because the enum **is** their menu, which
+makes SERVICE the first column where a document can say something its control cannot represent. The
+cell degrades to read-only text, and the state is separately made unreachable below.
+
+**A GATE WAS MISSING AND NOBODY OWNED THE GAP.** A `PortDef` carries two registry references and only
+the connector half was gated; `registry_parity.py` compares the seeded registry against
+`pal1_check.py` and does not look at the catalog at all, and its concept file's stated blind spots do
+not cover this because it is a third thing rather than a corner of the second. `catalog_ports.dart`
+builds `SignalFamilyId(family)` from a raw string and `AtomicConnectCommand` carries it onto both the
+`Service` and the `Net` with nothing in between to object. Measured before the test was written: 48
+parts name 34 distinct families and all 34 resolve, **which is a fact about this catalog on this date
+and not an invariant**. `379a9cd` makes it one, and proves the check by mutation rather than by
+reading.
+
+*Two defects in the in-flight work are recorded because both are instances of named practices.* The
+tests typed `V·AV-over-IP` and `V·HDBaseT 5Play`, which are the shapes **canon §11.24.1's prose**
+uses and which the catalog spells nowhere: `verify-codebase-claims-by-reading`, in the session that
+most needed it. And the UI harness had no `service` arm, so it returned *"That column cannot be typed
+into"* on a column the app applies, four lines below a comment added by M3-L/3 saying **"a harness
+stricter than the product tests a product that does not exist"**.
+
+**One consequence worth a later look rather than a task.** Groups run in domain-id order, which is
+`schematic_filter.dart`'s order and is why it was chosen, so `video.digital` sorts **last** and
+`VID·HDBaseT (5Play)` lays out some 1800 points below the fold. The filter box is what makes that
+reachable. If a second surface ever wants domains in trade-frequency order, that is a change to both
+lists or to neither.
+
 ### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three

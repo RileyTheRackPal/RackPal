@@ -1104,4 +1104,198 @@ void main() {
       expect(cell(), kTestPassCell);
     });
   });
+
+  group("the SERVICE column's menu (DR-025 §11.24.5, board #587)", () {
+    final registries = buildSeedRegistries();
+
+    test('every label the menu offers resolves back to the family that '
+        'produced it', () {
+      // THE PAIR IS A TRUE INVERSE OR IT IS NOTHING, and that is the
+      // whole reason the spelling lives in core. The cell PRINTS
+      // `signalFamilyCellLabel`, the menu OFFERS it, and the edit arm
+      // READS IT BACK. Three spellings would round-trip wrong on the
+      // first family whose display name is not simply its tag, which is
+      // most of them.
+      for (final group in signalFamilyCellGroups(registries)) {
+        for (final option in group.options) {
+          expect(
+            resolveSignalFamilyCell(registries, option.label),
+            option.id,
+            reason: option.label,
+          );
+        }
+      }
+    });
+
+    test('the spelling the cell prints is on the menu, for every '
+        'family', () {
+      // The other half of the same claim. A menu agreeing with itself
+      // proves nothing if the cell spells the family a fourth way.
+      for (final family in registries.signalFamilies.values) {
+        final domain = registries.signalDomains[family.domain]!;
+        expect(
+          signalFamilyCellOptions(registries),
+          contains(signalFamilyCellLabel(domain, family)),
+          reason: family.id.v,
+        );
+      }
+    });
+
+    test('every family appears exactly once across the groups', () {
+      final ids = [
+        for (final g in signalFamilyCellGroups(registries))
+          for (final o in g.options) o.id,
+      ];
+      expect(ids.toSet(), hasLength(ids.length), reason: 'no duplicates');
+      // Against the registry rather than a literal: the catalog is
+      // expected to grow, and a number here goes stale on exactly the
+      // growth it was written to survive.
+      expect(ids, hasLength(registries.signalFamilies.length));
+      expect(
+        signalFamilyCellOptions(registries),
+        hasLength(registries.signalFamilies.length),
+      );
+    });
+
+    test('groups are ordered by domain id and options by label', () {
+      final groups = signalFamilyCellGroups(registries);
+      final ids = groups.map((g) => g.domainId.v).toList();
+      expect(ids, orderedEquals(ids.toList()..sort()));
+      for (final g in groups) {
+        final labels = g.options.map((o) => o.label).toList();
+        expect(
+          labels,
+          orderedEquals(labels.toList()..sort()),
+          reason: g.tagPrefix,
+        );
+      }
+    });
+
+    test('the order does not depend on map order', () {
+      // THE DOC COMMENT'S CLAIM, TESTED RATHER THAN ASSERTED. Dart map
+      // iteration is insertion order, so a registry decoded from a file
+      // whose keys arrived in a different sequence would reorder the
+      // menu under the user if either sort here were partial.
+      Map<K, V> reverse<K, V>(Map<K, V> m) => {
+        for (final e in m.entries.toList().reversed) e.key: e.value,
+      };
+      final shuffled = Registries(
+        signalDomains: reverse(registries.signalDomains),
+        signalFamilies: reverse(registries.signalFamilies),
+      );
+      expect(
+        signalFamilyCellGroups(shuffled).map((g) => g.domainId.v).toList(),
+        signalFamilyCellGroups(registries).map((g) => g.domainId.v).toList(),
+      );
+      expect(
+        signalFamilyCellOptions(shuffled),
+        signalFamilyCellOptions(registries),
+      );
+    });
+
+    test('there is no unknown row, unlike the termination columns', () {
+      // G4 drawing a real distinction rather than an inconsistency: a
+      // `TerminationType?` is nullable because nobody having decided is
+      // a genuine absence, while a `Service` always HAS a family and
+      // `structure.undetermined` is the encouraged first-class value.
+      expect(
+        signalFamilyCellOptions(registries),
+        isNot(contains(kUnknownCell)),
+      );
+      expect(
+        signalFamilyCellOptions(
+          registries,
+        ).where((l) => l.contains('Undetermined home run')),
+        hasLength(1),
+        reason: 'choosing undetermined is a statement, so it is a row',
+      );
+    });
+
+    test('a filter is a SUBSTRING where a commit is EXACT', () {
+      // The two answer different questions rather than disagreeing.
+      // `@signal=hdb` must refuse, because DR-025 §11.24.3 never invents
+      // a family from a typo; typing `hdb` into a filter box must show
+      // HDBaseT, or the box is a search for people who already knew the
+      // answer.
+      final hdbaset = [
+        for (final g in signalFamilyCellGroups(registries))
+          for (final o in g.options)
+            if (o.id == const SignalFamilyId('video.hdbaset')) o,
+      ].single;
+
+      expect(hdbaset.matches('hdb'), isTrue, reason: 'a partial word');
+      expect(hdbaset.matches('HBT'), isTrue, reason: 'its shortTag');
+      expect(hdbaset.matches('hdbaset'), isTrue, reason: "the id's own tail");
+      expect(hdbaset.matches('5play'), isTrue, reason: 'inside displayName');
+      expect(hdbaset.matches(''), isTrue, reason: 'an empty box hides nothing');
+      expect(hdbaset.matches('   '), isTrue, reason: 'nor does whitespace');
+      expect(hdbaset.matches('dante'), isFalse);
+
+      expect(
+        resolveSignalFamilyCell(registries, 'hdb'),
+        isNull,
+        reason: 'a substring must not COMMIT a family',
+      );
+      expect(
+        resolveSignalFamilyCell(registries, 'hdmi'),
+        isNull,
+        reason: 'and must not pick whichever HDMI generation sorts first',
+      );
+    });
+
+    test('a cell that names nothing refuses rather than inventing', () {
+      expect(resolveSignalFamilyCell(registries, ''), isNull);
+      expect(resolveSignalFamilyCell(registries, '   '), isNull);
+      expect(resolveSignalFamilyCell(registries, 'VID·Nonsense'), isNull);
+      expect(
+        resolveSignalFamilyCell(registries, 'video.hdbaset'),
+        isNull,
+        reason: 'the raw id is not a cell spelling; the label is',
+      );
+    });
+
+    test('case and surrounding space are forgiven on a commit', () {
+      final label = signalFamilyCellLabel(
+        registries.signalDomains[const SignalDomainId('video.digital')]!,
+        registries.signalFamilies[const SignalFamilyId('video.hdbaset')]!,
+      );
+      expect(
+        resolveSignalFamilyCell(registries, '  ${label.toUpperCase()}  '),
+        const SignalFamilyId('video.hdbaset'),
+      );
+    });
+
+    test('SERVICE is the registry-backed column and the enum ones are not', () {
+      expect(
+        structureColumnChoicesAreRegistryBacked(StructureColumnId.service),
+        isTrue,
+      );
+      for (final id in [
+        StructureColumnId.roughIn,
+        StructureColumnId.testResult,
+        StructureColumnId.fieldTerm,
+        StructureColumnId.rackTerm,
+      ]) {
+        expect(
+          structureColumnChoicesAreRegistryBacked(id),
+          isFalse,
+          reason: '$id reads a Dart enum and a plain dropdown fits it',
+        );
+      }
+    });
+
+    test('a family whose domain is missing is dropped, not listed '
+        'domainless', () {
+      // A guard on a DOCUMENT rather than on the seed, which
+      // `seed_catalog_test.dart` gates. A domainless family has no tag
+      // to file it under and no colour to draw in, and `typeCell` would
+      // print a bare id that no menu offers.
+      final orphaned = Registries(
+        signalFamilies: registries.signalFamilies,
+      );
+      expect(signalFamilyCellGroups(orphaned), isEmpty);
+      expect(signalFamilyCellOptions(orphaned), isEmpty);
+      expect(resolveSignalFamilyCell(orphaned, 'VID·HDBaseT (5Play)'), isNull);
+    });
+  });
 }

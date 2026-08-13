@@ -546,6 +546,7 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
         _BatchBar(
           selectedVisible: _selectedVisible(doc).length,
           selectedHidden: _selected.length - _selectedVisible(doc).length,
+          registries: doc.registries,
           column: _batchColumn,
           columns: _columns.where(structureColumnIsBatchable).toList(),
           onColumn: (id) => setState(() => _batchColumn = id),
@@ -1577,6 +1578,7 @@ class _BatchBar extends StatefulWidget {
   const _BatchBar({
     required this.selectedVisible,
     required this.selectedHidden,
+    required this.registries,
     required this.column,
     required this.columns,
     required this.onColumn,
@@ -1587,6 +1589,11 @@ class _BatchBar extends StatefulWidget {
 
   final int selectedVisible;
   final int selectedHidden;
+
+  /// THE MENU FOR ONE COLUMN IS DOCUMENT DATA (DR-025 §11.24.5). Every
+  /// other batchable column's options are a Dart enum; `SERVICE` reads
+  /// the signal-family registry, so the bar cannot build its own list.
+  final Registries registries;
   final StructureColumnId? column;
 
   /// The batchable columns currently on screen. Filtered by
@@ -1619,7 +1626,9 @@ class _BatchBarState extends State<_BatchBar> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final column = widget.column;
-    final choices = column == null ? null : structureCellChoices(column);
+    final choices = column == null
+        ? null
+        : structureCellChoices(column, widget.registries);
     return ColoredBox(
       color: theme.colorScheme.surfaceContainerHighest,
       child: Padding(
@@ -1670,7 +1679,25 @@ class _BatchBarState extends State<_BatchBar> {
               },
             ),
             if (column != null)
-              if (choices != null)
+              // THE SAME PICKER THE CELL USES, not a second menu over the
+              // same registry. `structureCellChoices`' rule for the enum
+              // columns applied to this one: two controls built from one
+              // list are two chances to disagree about what it holds.
+              if (structureColumnChoicesAreRegistryBacked(column))
+                SizedBox(
+                  width: kBatchFamilyPickerWidth,
+                  child: _FamilyPicker(
+                    key: const ValueKey('batch-value'),
+                    groups: signalFamilyCellGroups(widget.registries),
+                    // NULL, WHERE A CELL IS NEVER NULL. A `Service`
+                    // always has a family; a batch bar starts having
+                    // been asked for nothing.
+                    value: null,
+                    hint: 'value',
+                    onPick: widget.onSet,
+                  ),
+                )
+              else if (choices != null)
                 // NO APPLY BUTTON ON A DROPDOWN. Picking the value IS the
                 // gesture, the way an inline `_ChoiceCell` commits on
                 // selection; a second click to confirm would make the
@@ -1893,7 +1920,10 @@ class _BandDelegate extends SliverPersistentHeaderDelegate {
 /// it DISPLAYED, so core stays the only speller: `directBury` already
 /// prints `DIRECT BURY`, so a `.name` match is a bug waiting for the
 /// second time a label stops being the enum name uppercased.
-List<String>? structureCellChoices(StructureColumnId id) => switch (id) {
+List<String>? structureCellChoices(
+  StructureColumnId id,
+  Registries registries,
+) => switch (id) {
   StructureColumnId.roughIn => RoughInStatus.values.map(roughInLabel).toList(),
   StructureColumnId.testResult => kTestCellOptions,
   // UNKNOWN IS AN OPTION HERE and is not on `ROUGH-IN`, which is the
@@ -1912,6 +1942,21 @@ List<String>? structureCellChoices(StructureColumnId id) => switch (id) {
     kUnknownCell,
     ...TerminationType.values.map(terminationLabel),
   ],
+  // THE ONE ARM WHOSE OPTIONS ARE DOCUMENT DATA, WHICH IS WHY THIS
+  // FUNCTION TAKES [registries] AT ALL. The three above it read a Dart
+  // enum and need nothing; a signal family is a registry row, so the menu
+  // is built per document. That is also why the spelling comes from core
+  // (`signalFamilyCellOptions`) rather than being assembled here: the
+  // cell PRINTS `signalFamilyCellLabel` and the picker must offer the
+  // identical string or the first family whose display name is not its
+  // tag round-trips wrong, which is most of them.
+  //
+  // NO `unknown` ENTRY, unlike the two termination arms, and G4 is the
+  // reason rather than an oversight: a `TerminationType?` is nullable
+  // because nobody deciding is a real absence, while a `Service` always
+  // HAS a family and `structure.undetermined` is the encouraged value.
+  // Choosing it is a statement, not a clearing.
+  StructureColumnId.service => signalFamilyCellOptions(registries),
   _ => null,
 };
 
@@ -1999,8 +2044,34 @@ class _DataRow extends StatelessWidget {
       // three of these store an enum, so there is nothing to parse and
       // nothing to typo. The text columns beside them store strings and
       // numbers, and their parsing lives in core.
-      final options = structureCellChoices(id);
-      if (options != null) {
+      final options = structureCellChoices(id, doc.registries);
+      // A REGISTRY-BACKED COLUMN GETS THE FILTERING PICKER INSTEAD, and
+      // the split is core's answer rather than an `id ==` test here, so
+      // the batch bar below reaches the same one.
+      if (structureColumnChoicesAreRegistryBacked(id)) {
+        // FALLS THROUGH TO THE READ-ONLY TEXT WHEN THE STORED FAMILY IS
+        // NOT ON THE MENU, and that is a crash this column would
+        // otherwise have introduced. `DropdownButton` asserts exactly one
+        // item matches its value; `typeCell` prints a bare id when a
+        // `Service` names a family the registries do not hold, and a bare
+        // id is not a spelling any menu offers. The enum-backed columns
+        // cannot reach this because `TerminationType.values` IS their
+        // menu. `seed_catalog_test.dart` gates the shipped catalog so
+        // this stays unreachable; the cell degrades rather than taking
+        // the whole table down if a file arrives saying otherwise.
+        if (options != null && options.contains(text)) {
+          return _FamilyPicker(
+            key: ValueKey('service-${row.linkId.v}'),
+            groups: signalFamilyCellGroups(doc.registries),
+            value: text,
+            hint: '',
+            onPick: (label) => onEdit([
+              StructureCellEdit(linkId: row.linkId, column: id, value: label),
+            ]),
+            onFocused: () => onCaret((row.linkId, id)),
+          );
+        }
+      } else if (options != null) {
         return _ChoiceCell(
           linkId: row.linkId,
           column: id,
@@ -2009,20 +2080,21 @@ class _DataRow extends StatelessWidget {
           onEdit: onEdit,
           onCaret: onCaret,
         );
+      } else {
+        return _TextCell(
+          linkId: row.linkId,
+          column: id,
+          onCaret: onCaret,
+          // THE DASH IS NOT PUT IN THE BOX. `—` is what an unknown PRINTS,
+          // and a text field showing it would make a person delete a
+          // character that was never theirs — worse, typing after it would
+          // save `—PP1-01`. An empty box is what "nobody has said" looks
+          // like when it is editable, and the hint says so.
+          value: text == kUnknownCell ? '' : text,
+          bold: id == StructureColumnId.fieldLabel,
+          onEdit: onEdit,
+        );
       }
-      return _TextCell(
-        linkId: row.linkId,
-        column: id,
-        onCaret: onCaret,
-        // THE DASH IS NOT PUT IN THE BOX. `—` is what an unknown PRINTS,
-        // and a text field showing it would make a person delete a
-        // character that was never theirs — worse, typing after it would
-        // save `—PP1-01`. An empty box is what "nobody has said" looks
-        // like when it is editable, and the hint says so.
-        value: text == kUnknownCell ? '' : text,
-        bold: id == StructureColumnId.fieldLabel,
-        onEdit: onEdit,
-      );
     }
     final isUnknown = text == kUnknownCell;
     return Text(
@@ -2222,6 +2294,303 @@ class _ChoiceCell extends StatelessWidget {
             StructureCellEdit(linkId: linkId, column: column, value: next),
           ]);
         },
+      ),
+    );
+  }
+}
+
+/// How wide the SERVICE picker's menu is, in logical pixels.
+///
+/// SIZED TO THE LONGEST LABEL RATHER THAN TO THE CELL, which is the whole
+/// reason this is not a `DropdownButton`. `AUD·Speaker, constant-voltage
+/// 70 / 100 / 25 V` is 45 characters; at `bodySmall` that needs roughly
+/// 300, and the rest is the check gutter and the padding.
+const double kFamilyPickerWidth = 360;
+
+/// How tall the list may grow before it scrolls. Eight domain headers and
+/// 55 rows do not fit any screen, so this is a scroll viewport and not a
+/// budget: the filter box above it is what makes the scroll avoidable.
+const double kFamilyPickerMaxHeight = 340;
+
+/// The batch bar's copy of the picker, which needs a width of its own
+/// because it sits in a `Wrap` rather than in a fixed column.
+const double kBatchFamilyPickerWidth = 220;
+
+/// What the filter box says when it is empty.
+const String kFamilyFilterHint = 'Filter families';
+
+/// What the panel says when a filter matches nothing.
+///
+/// IT NAMES THE RULE RATHER THAN LISTING THE SET. Its enum-backed
+/// neighbours can name all nine terminations in a sentence; there are 55
+/// families, and a refusal that printed them would be a wall a person
+/// scrolls past. The sentence a person needs is not "here are the
+/// options", it is "you cannot invent one here", which is DR-025
+/// §11.24.3 and RJ-012 in the one place a user meets them.
+String familyFilterEmpty(String query) =>
+    'No signal family matches "$query". Families come from the catalog '
+    'and cannot be created here.';
+
+/// The SERVICE column's control: a menu grouped by domain, with a filter
+/// box (DR-025 §11.24.5, board #587).
+///
+/// **NOT A `DropdownButton`, AND THE REASON IS MEASURED RATHER THAN
+/// STYLISTIC.** That widget's menu inherits its BUTTON's width. SERVICE
+/// is 76 points, the seeded labels average 22 characters and reach 45,
+/// and a throwaway harness put the resulting menu at 116 points wide with
+/// every row's text clamped to 84: `AUD·Speaker level, low-Z` and
+/// `AUD·Speaker, constant-voltage 70 / 100 / 25 V` both arrive as
+/// `AUD·Speaker…`. A `MenuAnchor` sizes to its content, so the menu is
+/// allowed to be wider than the cell that opened it.
+///
+/// **THE THREE ENUM-BACKED CHOICE COLUMNS KEEP THEIR `DropdownButton`**,
+/// and that is not an inconsistency left lying about: `PULLED` and `RJ45`
+/// fit in 84 points, so they have no problem this control solves, and a
+/// filter box over five rough-in statuses would be a search for a list
+/// you can already see.
+///
+/// **THE FILTER NEVER COMMITS, IT ONLY NARROWS.** #587 exists because
+/// SERVICE was grouped with MEDIA as "needs a picker, not a text box",
+/// and a box that accepted what was typed would put that straight back.
+/// Typing changes which rows are visible and nothing else; a family is
+/// chosen by clicking a row, and what that row hands back is
+/// `signalFamilyCellLabel`'s own spelling.
+///
+/// **SHARED WITH THE BATCH BAR**, which is why [value] is nullable when a
+/// cell's never is: a `Service` always has a family, and a batch bar
+/// starts having been asked for nothing.
+class _FamilyPicker extends StatefulWidget {
+  const _FamilyPicker({
+    required this.groups,
+    required this.value,
+    required this.hint,
+    required this.onPick,
+    super.key,
+    this.onFocused,
+  });
+
+  final List<SignalFamilyCellGroup> groups;
+
+  /// The label showing now, or null when nothing is chosen yet.
+  final String? value;
+
+  /// What the button reads when [value] is null.
+  final String hint;
+
+  final ValueChanged<String> onPick;
+
+  /// Reported for the caret through a `Focus` rather than through the
+  /// tap, so TABBING to the cell reports it too. `_ChoiceCell` does the
+  /// same and for the same reason.
+  final VoidCallback? onFocused;
+
+  @override
+  State<_FamilyPicker> createState() => _FamilyPickerState();
+}
+
+class _FamilyPickerState extends State<_FamilyPicker> {
+  final MenuController _menu = MenuController();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final value = widget.value;
+    return Focus(
+      onFocusChange: (has) {
+        if (has) widget.onFocused?.call();
+      },
+      child: MenuAnchor(
+        controller: _menu,
+        // ONE PANEL RATHER THAN A LIST OF `MenuItemButton`s, because the
+        // filter's text is state and the grouping is layout, and neither
+        // survives being flattened into menu items.
+        menuChildren: [
+          _FamilyPickerPanel(
+            groups: widget.groups,
+            selected: value,
+            onPick: (label) {
+              _menu.close();
+              widget.onPick(label);
+            },
+          ),
+        ],
+        builder: (context, controller, child) => InkWell(
+          onTap: () =>
+              controller.isOpen ? controller.close() : controller.open(),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  value ?? widget.hint,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: value == null
+                        ? theme.colorScheme.onSurfaceVariant
+                        : theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.arrow_drop_down,
+                size: 18,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The open menu: a filter box, then one block per domain.
+class _FamilyPickerPanel extends StatefulWidget {
+  const _FamilyPickerPanel({
+    required this.groups,
+    required this.selected,
+    required this.onPick,
+  });
+
+  final List<SignalFamilyCellGroup> groups;
+
+  /// Ticked in the list, so a person who opened the menu to check what a
+  /// run is set to can close it again without reading the cell.
+  final String? selected;
+
+  final ValueChanged<String> onPick;
+
+  @override
+  State<_FamilyPickerPanel> createState() => _FamilyPickerPanelState();
+}
+
+class _FamilyPickerPanelState extends State<_FamilyPickerPanel> {
+  final TextEditingController _filter = TextEditingController();
+
+  /// ITS OWN CONTROLLER, NOT THE PRIMARY ONE. `MenuAnchor` wraps its
+  /// children in a `Scrollbar` bound to `PrimaryScrollController`, and a
+  /// second bare `SingleChildScrollView` in the same subtree attaches to
+  /// it too. That throws "the Scrollbar requires a single ScrollPosition"
+  /// mid-layout, and the panel then lays out at its full unconstrained
+  /// height rather than at [kFamilyPickerMaxHeight], which puts the rows
+  /// off screen where nothing can click them.
+  final ScrollController _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _filter.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final query = _filter.text;
+    // MATCHING IS CORE'S, not a `contains` written here. A filter that
+    // searched only the printed label would fail on `hbt`, which is the
+    // token `@signal=` already accepts, and the product would then have
+    // two vocabularies for one fact.
+    final kept = [
+      for (final group in widget.groups)
+        if (group.options.where((o) => o.matches(query)).toList()
+            case final options when options.isNotEmpty)
+          (group: group, options: options),
+    ];
+    return SizedBox(
+      width: kFamilyPickerWidth,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+            child: TextField(
+              key: const ValueKey('service-filter'),
+              controller: _filter,
+              autofocus: true,
+              style: theme.textTheme.bodySmall,
+              decoration: const InputDecoration(
+                isDense: true,
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.search, size: 16),
+                hintText: kFamilyFilterHint,
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+          if (kept.isEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+              child: Text(
+                familyFilterEmpty(query),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            )
+          else
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxHeight: kFamilyPickerMaxHeight,
+              ),
+              child: SingleChildScrollView(
+                controller: _scroll,
+                primary: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final entry in kept) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 2),
+                        child: Text(
+                          '${entry.group.tagPrefix}  '
+                          '${entry.group.domainName}',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      // THE ROW PRINTS THE WHOLE LABEL, tag prefix and
+                      // all, even though the header above it repeats the
+                      // tag. What a row shows is what the cell will show
+                      // and what the edit will carry, and a row reading
+                      // `HDBaseT (5Play)` under a `VID` header would be a
+                      // fourth spelling of the same fact.
+                      for (final option in entry.options)
+                        InkWell(
+                          onTap: () => widget.onPick(option.label),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 18,
+                                  child: option.label == widget.selected
+                                      ? Icon(
+                                          Icons.check,
+                                          size: 14,
+                                          color: theme.colorScheme.primary,
+                                        )
+                                      : null,
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    option.label,
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

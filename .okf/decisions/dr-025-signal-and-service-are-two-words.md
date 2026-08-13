@@ -6,7 +6,7 @@ tags: [ruling, m3, labels, validation, dsl, dr-025]
 timestamp: 2026-08-09T00:00:00Z
 ruling_id: DR-025
 canon_section: "11.24"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-09, answering the question board #587 raised
@@ -102,6 +102,49 @@ No scope change to roadmap §2. docs/07 §4.1 already promises the capability, s
 #587 is a **decomposition gap rather than an amendment**. **M3-F is unblocked**:
 #159 could not be written while a contractor's `Use` column had two possible
 targets.
+
+# BUILT 2026-08-13, and what building it taught
+
+Three deliverables, in order: the Command (`515d61e`), the `@signal=` modifier
+(`48ae15b`) and the SERVICE picker (`80fd007`). §11.24.6 held: one command writes
+both fields, and one undo restores both.
+
+**The control was chosen by measurement, and the measurement contradicted the
+obvious answer.** A `DropdownButton` was the natural fit because three choice
+columns already use one. Its menu inherits its **button's** width; SERVICE is 76
+points, the 55 labels average 22 characters and reach 45, and a throwaway harness
+put the menu at **116 points wide with every row clamped to 84**. So
+`AUD·Speaker level, low-Z` and `AUD·Speaker, constant-voltage 70 / 100 / 25 V`
+both render `AUD·Speaker…`. The enum-backed columns keep their dropdown because
+`PULLED` and `RJ45` fit, and that asymmetry is a core predicate rather than a
+taste. See
+[measure the control before choosing it](/practices/measure-the-control-before-choosing-it.md).
+
+**A filter box is not the text box this ruling refused.** It narrows and never
+commits, and it matches on the tokens `@signal=` already accepts, so `hbt` finds
+HDBaseT and the product does not acquire a second vocabulary for one fact.
+Filtering is SUBSTRING where resolution is EXACT, which is two questions rather
+than a disagreement.
+
+**Making the column editable would have introduced a crash, and closing it found
+a missing gate.** `DropdownButton` asserts exactly one item matches its value,
+and `typeCell` prints a bare id when a `Service` names a family the registries
+lack. The enum columns cannot reach this because the enum IS their menu. Chasing
+whether that state was reachable found that **a `PortDef` carries two registry
+references and only the connector half was gated**: `registry_parity.py` compares
+the seeded registry against `pal1_check.py` and never looks at the catalog, and
+this is a third thing rather than a corner of its stated blind spots.
+`catalog_ports.dart` builds `SignalFamilyId(family)` from a raw string and
+`AtomicConnectCommand` carries it onto both the `Service` and the `Net` with
+nothing in between to object. Measured: 48 parts name 34 families and all 34
+resolve, **a fact about that catalog on that date rather than an invariant**.
+`379a9cd` makes it one.
+
+**The `Use` column deferral now has a named cost the user has confirmed.** Signal
+families being catalog-updated (RJ-012) means expanding the trade's vocabulary is
+a catalog change and never a user action. `CTL·Lutron QS / HomeWorks link` already
+ships; Legrand Vantage does not, and that is a catalog task rather than a picker
+one.
 
 # Citations
 
