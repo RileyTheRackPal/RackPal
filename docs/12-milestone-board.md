@@ -114,7 +114,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **NOT STARTED**: `NOT BUILT` | No builder surface. **Its inputs are all present even though its formal gate is open**: §5.3. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED**: `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
-| **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 11 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set becomes 12 slots** when `T1.01` lands ahead of it |
+| **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
 | **M7** | Platform + access | `M` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | Windows-only; no `Intent` registry; no l10n at all |
 | **M8** | Release engineering | `S` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | No installer, no signing, no crash reporter. **Re-scoped by DR-006** |
 | **M9** | Beta hardening | `M` | **0 of 1** | **NOT STARTED**: `UNPERFORMED` | Nothing is installable, so nothing is testable by anyone outside this machine |
@@ -2450,7 +2450,7 @@ validation engine)"*) and `:56` (*"Validation drawer … not started"*), for thi
 
 | Clause | Mark | Why |
 |---|---|---|
-| All four starters export a **complete sheet set** | **NOT BUILT** | They export **3 of 11 slots**. Missing: `T0.00` cover/index, `T0.01` legend, `T0.02` exceptions, `T6.01+` interconnect, `T6.10` pull sheet, `T6.11` termination schedule, `T6.20` unused home runs, `T5.01` pinout details. `sheet_def.dart:15-20` states this plainly and states **why**: *"most of them need `Link`s, which do not exist until M2. They are absent from `SheetRole` rather than stubbed"* |
+| All four starters export a **complete sheet set** | **NOT BUILT** | They export **3 of 12 slots**. Missing: `T0.00` cover/index, `T0.01` legend, `T0.02` exceptions, `T6.01+` interconnect, `T6.10` pull sheet, `T6.11` termination schedule, `T6.20` unused home runs, `T6.50` network/IP schedule (added to v1 by DR-048, `AUTO`), `T5.01` pinout details. `sheet_def.dart:15-20` states this plainly and states **why**: *"most of them need `Link`s, which do not exist until M2. They are absent from `SheetRole` rather than stubbed"*, and `T6.50` joins them for the neighbouring reason: `NetworkConfig` has existed since M0 with no writer, so the sheet would have had nothing to print |
 | Legend under deuteranopia / protanopia simulation | **UNPERFORMED** | No legend sheet exists to verify |
 | Real greyscale laser print (AC-054) | **UNPERFORMED** | Nothing has been printed |
 | ANSI B laser / ANSI D plotter / photocopy, physically inspected and signed off (AC-058 D13) | **UNPERFORMED** | Nothing has been printed |
@@ -2480,9 +2480,41 @@ CONSTRUCTION` stamp (grep across core and export `lib/` returns nothing). Also a
 count, the 40-sheet warning, the 2000-sheet cap, export preview, progress/cancel, and the `kIsWeb`
 isolate guard.
 
-**Incremental cost from here:** eight sheet roles, the zone band and grid, revision clouds, the IFC
+**Incremental cost from here:** nine sheet roles, the zone band and grid, revision clouds, the IFC
 stamp, and the export-dialog apparatus. **Hard-blocked three ways** as a join on M2, M3 and M5, the
 milestone most exposed to slip anywhere upstream (roadmap §5).
+
+**M6 grew on 2026-08-12, by one `AUTO` sheet, and the interesting part is what the growth was made
+of.** DR-048 (canon §11.47, §12.20) moves **`T6.50` Network/IP Schedule** into v1, superseding
+DR-005 §11.5.3 for that slot alone. `T6.40` Power Schedule does not move, and the asymmetry is the
+whole argument: **`NetworkConfig` has been in the format since M0 and the power data has not**, so
+`T6.50` is a sheet over data the model already holds while `T6.40` would be a sheet plus the model
+to feed it.
+
+***THE FIELD HAD NO WRITER ANYWHERE, NOT EVEN A TEST FIXTURE.*** `NetworkConfig{hostname, ip,
+subnet, gw, mac, vlans[], portRole}` on `Port`, plus `DeviceInstance.macAddressPrimary`: modelled
+since M0, encoded and decoded, and the single assignment in the entire tree is `json_codec.dart`'s
+decoder. It is the **seventh** instance of the reachability practice and the **first found by
+reading rather than by using**, because the feature request was censused before it was priced
+rather than after. Every earlier instance had at least a fixture.
+
+***A RESERVED SHEET ID WAS THE MOST AUTHORITATIVE-LOOKING STATEMENT ABOUT IT, AND IT WAS NOT ONE.***
+`sheet_def.dart`'s `kReservedNcsIds` reserves `T6.50` for *"the v1.1 Network/IP Schedule"*, citing
+docs/08 §2.2, which is a derived document. **Roadmap §2 carried no row for it in any release**:
+`grep -in network docs/09-roadmap.md` returned nothing. So a modelled field, a working codec and a
+reserved sheet number together read as *nearly shipped* while the thing was zero percent reachable,
+which is §5.2's *two documents agreeing is not verification* wearing a sheet id.
+
+**The sheet is `AUTO` rather than `ON`**, iff at least one device carries a network value, on the
+pattern `T6.20` and `T5.01` already set. A residential job with no managed switch must not print a
+blank page, because an empty sheet in a client deliverable (DR-005) reads as an omission rather than
+as an absence.
+
+**One defect is fixed with the work rather than filed.** `_encodeNetworkConfig` writes
+`{'vlans': n.vlans}` **unconditionally**, so an untouched list encodes as `"vlans": []`, which under
+CR-114 claims *measured zero* where the fact is *nobody said*. It has never mattered because nothing
+ever constructed one; it becomes the common case on a device-level record. Filing it would mean
+shipping the defect and the fix in that order.
 
 ### 5.6 M7, Platform and access · `M` · NOT STARTED, weakest mark `NOT BUILT`
 
@@ -2665,7 +2697,7 @@ saving DR-006 buys.**
   └──────────────► M5 ○  (findings need a wired graph)
                      │
  {M2, M3, M5} ───────┴──────► M6 ○ NOT STARTED — 0 of 5 clauses, a THREE-WAY JOIN
-                                   │            3 of 11 slots are built and real; no
+                                   │            3 of 12 slots are built and real; no
                                    │            clause of the criterion is discharged
                                    ▼
                               M7 ○ (surfaces frozen; owed M1's outline tree)

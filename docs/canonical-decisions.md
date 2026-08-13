@@ -9734,6 +9734,133 @@ additive case.
 
 ---
 
+### 11.47 DR-048 · A network value is a dated as-built fact, and `T6.50` ships in v1
+
+**Settled by the user on 2026-08-12**, from a request for static IP settings on the sheets:
+*"when a service tech looks at a rack, the first thing they usually want to do is connect to the
+problem system ... having the IP scheme of every fixed device in the system right there on the
+sheets would be incredibly valuable for those late-afternoon rats nest rack troubleshoots."*
+
+**11.47.1 THE MODEL HAS CARRIED THIS SINCE M0 AND NOTHING HAS EVER WRITTEN IT.**
+`NetworkConfig{hostname, ip, subnet, gw, mac, vlans[], portRole}` sits on `Port` (docs/02 §4.5), is
+encoded and decoded by `json_codec.dart`, and byte-round-trips. `DeviceInstance.macAddressPrimary`
+sits beside `serialNumber`, `assetTag`, `firmwareVersion` and `installedAt` in the same condition.
+
+A census taken before this was priced found the assignment count:
+
+```
+grep -rn "network\s*=\|network:" --include=*.dart .
+→ json_codec.dart:1361:  network: decodeNullableObject(
+```
+
+**One hit, and it is the decoder.** Not a command, not a widget, **not a test fixture**. Every
+earlier instance of this pattern had at least a fixture; this is the pure case, and the only way a
+`NetworkConfig` has ever existed in this product is a hand-edited `.rmpj`. It is the **seventh**
+instance of the practice, and the **first found by reading rather than by using**, because the
+request was censused before it was estimated rather than after.
+
+**It reads as nearly-shipped from three directions**, which is why nobody caught it: the field is
+modelled, the codec works, and `sheet_def.dart`'s `kReservedNcsIds` **reserves `T6.50` for "the v1.1
+Network/IP Schedule"**. A reserved sheet number is evidence of intent doing duty as evidence of
+existence, which is §11.19.7's failure wearing a sheet id.
+
+**11.47.2 The management address is a DEVICE fact and the per-port facts stay on the port.** The
+user's constraint is the one that settles it: *"switches will have static IPs marked out by devices
+themselves."* A managed switch has **one** management address and **forty-eight** ports, so an
+address hung off a port is a fact filed under an arbitrary one of them.
+
+`DeviceInstance` **gains `network: NetworkConfig?`**, beside the as-built identity block it already
+carries. `Port.network` is unchanged and keeps what it is for: VLAN membership, `portRole`, and the
+address of a device that genuinely has more than one.
+
+**The existing type is reused rather than a scalar added**, because a static assignment that records
+an address without its subnet and gateway is not usable by the tech it exists to serve, and
+`NetworkConfig` already carries both with a working codec. **`kSchemaVersion` does not move**: the
+whole `network` key is absent when null, which is CR-117's additive-optional case, and
+`macAddressPrimary`'s `putIfNotNull` is the pattern being copied.
+
+**11.47.3 EVERY NETWORK VALUE CARRIES `verifiedOn`, BECAUSE G4 CANNOT SEE STALE.**
+G4 handles *unknown* completely: null, absent key, counted, never estimated. It has **no mechanism
+for a value that was true and is not**. An address recorded in March and re-assigned in June is not
+null, is not counted, and prints in the same typeface as a fact.
+
+That failure is worse here than almost anywhere else in the product, because the reader is a tech
+standing at a rack at the end of a day, and a confidently wrong address costs twenty minutes of
+proving it wrong. So `NetworkConfig` **gains `verifiedOn: DateTime?`**, and a value without one
+renders as **unverified** rather than as fact.
+
+**A document-level "network data as of" date was refused.** The real case is four devices
+re-addressed last week and thirty untouched, and one date per project cannot tell them apart; it
+would launder the stale thirty into the fresh four's credibility.
+
+**11.47.4 `T6.50` Network/IP Schedule ships in v1, in M6.** This is a **§8.3 amendment** and it
+**supersedes DR-005 §11.5.3**, which put `T6.40` and `T6.50` *"out (v1.1 / v2)"*. **`T6.40` Power
+Schedule does not move** and stays exactly where DR-005 left it; only `T6.50` is amended, on the
+ground that the data is already in the format while the power data is not.
+
+**The sheet is `AUTO`, iff at least one device carries a network value**, on the pattern `T6.20`
+(Unused Home Runs) and `T5.01` (Plate, Panel & Pinout) already set. A residential job with no managed
+switch must not print a blank page, and an empty sheet in a client deliverable reads as an omission
+rather than as an absence.
+
+**The set becomes twelve slots: nine `ON` and three `AUTO`.** It was eleven, nine and two, and the
+count is stated in **six places across four documents**, every one of which is edited by this ruling
+rather than left to be found. It becomes thirteen when `T1.01` lands ahead of it (docs/12 §1).
+
+**11.47.5 Roadmap §2 never carried this at all, in any release.** `grep -in network docs/09-roadmap.md`
+returns **nothing**. So the amendment is doing two jobs: resolving DR-005's *"v1.1 / v2"* hedge to a
+single destination, and putting a row in the one scope list §8.3 recognises. **A ruling deferring
+something is not the same as a scope list carrying it**, and the gap between those two is where this
+sat for the whole project.
+
+**11.47.6 The surface is columns first and the inspector second.** Toggleable columns in the table
+via `⚙ Columns`, with `Ctrl+D` fill-down and the batch bar, plus a **read-only** summary in the
+device inspector.
+
+The table is primary because the alternative fails the same test DR-020 §11.19.2(5) already applied
+to the as-built tally: **an installer closing out a job needs one table they tab down, not sixty
+inspector visits.** The inspector summary is read-only so there is exactly one place a value is
+written, which is what keeps the batch bar and the panel from disagreeing about what was set.
+
+**11.47.7 The address launches a browser, behind a confirmation that shows the URL.** Taken against
+the recommendation, on the user's stated workflow: a copy of the project lives at the client's home
+and changes are saved back to it, and the trade already runs remote-access systems (UniFi with
+Teleport, OvrC, Eero Insight, Nice Management Cloud, BlueBolt) that put a tech on that network
+routinely. **The objection was that the drawing machine is not on the rack's network; the answer is
+that in this trade it frequently is**, and techs already know which system to reach for and when.
+
+The confirmation shows the target before anything opens, so the gesture is never a silent navigation
+to a user-supplied address.
+
+**11.47.8 Scope bound: modelled devices with fixed addressing, and not an inventory.** From the
+user: *"a client personal device is very unlikely to have a static IP, so it doesn't need one."*
+The schedule covers devices this product already models that carry a fixed address. It is **not** a
+DHCP client list, it does not discover anything, and nothing on it is derived from the live network.
+
+**11.47.9 A G4 DEFECT IN THE EXISTING CODEC, EXPOSED BY MAKING THE FIELD REACHABLE.**
+`_encodeNetworkConfig` opens `final json = <String, Object?>{'vlans': n.vlans};`, so `vlans` is
+written **unconditionally** and an untouched list encodes as `"vlans": []`. Under CR-114 that says
+*measured zero VLANs* where the fact is *nobody said*, and it is the `designatorLocked`
+anti-pattern the bundle already warns is copied by proximity.
+
+It has never mattered, because nothing ever constructed a `NetworkConfig`. **It matters the moment
+this ships**, and on a device-level record it is the common case rather than the rare one. It is
+fixed with this work rather than filed, because filing it means shipping the defect and the fix in
+that order.
+
+**11.47.10 Scope.** **v1 grows by three items**: `DeviceInstance.network`, `NetworkConfig.verifiedOn`,
+and the `T6.50` sheet. **M6 grows** by one `AUTO` sheet and moves within its `M`; docs/12 §5.5's
+slot arithmetic is edited. **M4 is untouched**: this is instance data, not template data, and no
+device template gains a field.
+
+**What it does not rule.** Whether an address is **validated** as well-formed, or checked for
+collisions inside a project. Both are DRC rules, both belong to M5's catalogue with an AC-051 fixture
+pair each, and neither is added here: `LEN-002`'s history (§11.19.7) is the precedent for a rule
+shipping one milestone after the field it reads. It also does not rule `T6.40`, does not add
+discovery of any kind, and does not give `TemplateBody` a network field.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -10163,6 +10290,23 @@ obstacle was removed.
 **Nothing else in DR-045 moves.** `TerminationType.rj45Plug` and its zero cells (§11.44.2), the AP
 template (§11.44.3), the three states of an outlet (§11.44.4) and the derived-never-stored rule
 (§11.44.5) are all untouched, and §11.46.5 restates the last of them rather than amending it.
+
+---
+
+### 12.20 Superseded by DR-048 (`T6.50` ships in v1; a network value is dated)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-005 §11.5.3**, first bullet | *"It does not add floor plans, riser diagrams, reflected ceiling plans, datasheet appendices, `T6.40` Power Schedule or `T6.50` Network/IP Schedule to v1. Those remain out (v1.1 / v2)."* | **Superseded for `T6.50` ALONE.** The Network/IP Schedule ships in **v1, in M6**, as an `AUTO` slot emitted iff at least one device carries a network value (§11.47.4). **Every other item in that bullet is untouched and stays out**: floor plans went to v1 by their own ruling (DR-029) and riser diagrams, reflected ceiling plans, the datasheet appendix and **`T6.40` Power Schedule** remain exactly where DR-005 left them. The asymmetry has a reason and it is not preference: `NetworkConfig` is in the format today and the power data is not, so `T6.50` is a sheet over data the model already holds while `T6.40` would be a sheet plus the model to feed it. |
+| **docs/08 §2.2** | *"`T6.40` Power Schedule and `T6.50` Network/IP Schedule … defer to v1.1"*, under the heading **"Not in v1, and this is a ruling, not an omission."* | **Half superseded.** The heading was accurate and is the reason this took an amendment rather than a doc edit. `T6.40`'s row stands verbatim. `T6.50` moves into v1 and its sentence is rewritten in place. |
+| **§12.11's DR-018 row** and **§11.17** | Recorded that DR-018 *"does not add `T6.40`, `T6.50`, riser diagrams or reflected ceiling plans, which stay where DR-005 left them."* | **Still true of DR-018, and now historical for `T6.50`.** DR-018 did not move it; DR-048 does. The row is kept as written because it is DR-018's record and editing it would falsify what that ruling did. |
+
+**One thing this does NOT supersede, stated because its absence looks like an oversight.** Roadmap §2
+carried **no row for `T6.50` in any release**, so there is nothing in the scope list to supersede;
+§2.1 gains a row rather than §2.2 losing one. **A ruling that defers something and a scope list that
+carries it are two different artifacts**, and this item had the first and never the second for the
+whole life of the project, which is how a reserved sheet id came to be the most authoritative-looking
+statement about it (§11.47.1).
 
 ---
 

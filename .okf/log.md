@@ -1,5 +1,46 @@
 # Update Log
 
+## 2026-08-12 (sixth entry)
+
+* **Creation**: [DR-048](/decisions/dr-048-network-value-is-dated-and-t650-ships.md),
+  a network value is a dated as-built fact and `T6.50` ships in v1. **The ruling that
+  the previous entry's census produced**, which is the shape this project wants:
+  census, then ruling, then build.
+* **Note**: **G4 HANDLES UNKNOWN AND HAS NO MECHANISM FOR STALE**, and that is the
+  clause worth carrying elsewhere. Null, absent key, counted, never estimated is
+  complete about *nobody said*. **A value that was true and is not** is not null, is
+  not counted, and prints in the same typeface as a fact. `verifiedOn` is what
+  closes it, and an undated value renders as unverified rather than as fact.
+* **Note**: **A DOCUMENT-LEVEL "AS OF" DATE WAS REFUSED.** The real case is four
+  devices re-addressed last week and thirty untouched; one date per project cannot
+  tell them apart, and it would launder the stale thirty into the fresh four's
+  credibility.
+* **Note**: **A RESERVED SHEET ID WAS THE MOST AUTHORITATIVE-LOOKING STATEMENT ABOUT
+  A THING THAT DID NOT EXIST.** `kReservedNcsIds` reserves `T6.50` citing docs/08
+  §2.2, a derived document, and **roadmap §2 carried no row in any release**. A
+  ruling that defers something and a scope list that carries it are two different
+  artifacts, and this had the first and never the second, which is
+  [two documents agreeing is not verification](/practices/two-documents-agreeing-is-not-verification.md)
+  wearing a sheet number.
+* **Note**: **TWO OF THREE RECOMMENDATIONS WERE OVERRULED, ON TRADE KNOWLEDGE
+  RATHER THAN ON THE CORPUS.** The sheet ships in v1 rather than v1.1, and the
+  address launches a browser behind a confirmation. The second reverses an argument
+  I made from the shape of the problem: *"the drawing machine is not on the rack's
+  network"* is false in this trade, because a project copy lives at the client's
+  home and UniFi Teleport, OvrC, Eero Insight, Nice Management Cloud and BlueBolt
+  put a tech there routinely.
+* **Note**: **`T6.40` DELIBERATELY DID NOT MOVE WITH IT**, though DR-005 §11.5.3
+  deferred both in one sentence. `NetworkConfig` is in the format today and the
+  power data is not, so one is a sheet over existing data and the other is a sheet
+  plus the model to feed it. **Superseding half a bullet is the honest edit** and
+  §12.20 says which half.
+* **Note**: **Making the field reachable exposed a G4 defect in its own codec.**
+  `_encodeNetworkConfig` writes `{'vlans': n.vlans}` unconditionally, so an
+  untouched list encodes as `"vlans": []`: *measured zero* where the fact is
+  *nobody said*. It never mattered while nothing constructed one. It is fixed with
+  the work rather than filed, because filing it ships the defect and the fix in
+  that order.
+
 ## 2026-08-12 (fifth entry)
 
 * **Update**: [The analyzer ratchet](/gates/analyzer-baseline.md) said the pin was

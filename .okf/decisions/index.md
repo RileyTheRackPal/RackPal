@@ -47,6 +47,8 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 
 * [DR-047, a gang can be fitted with a pass-through](dr-047-a-gang-can-be-fitted-with-a-pass-through.md) - asked as "outlet or drop" and the answer is neither; a census found the distinction already half-built, at the third scale of one this project has got wrong twice.
 
+* [DR-048, a network value is dated and T6.50 ships in v1](dr-048-network-value-is-dated-and-t650-ships.md) - the field had no writer anywhere, not even a test fixture, while a reserved sheet id made it read as nearly shipped; and G4 handles unknown but has no mechanism for stale, which is exactly the failure this data has.
+
 # Not yet written up
 
 DR-002 (residential primary), DR-003 (device builder in v1), DR-004 (multi-sheet
