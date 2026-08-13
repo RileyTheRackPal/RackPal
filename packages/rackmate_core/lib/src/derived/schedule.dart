@@ -329,6 +329,17 @@ final class ScheduleEnd {
   }
 }
 
+/// How a signal family is SPELLED in a cell: `V·HDBaseT 5Play`.
+///
+/// EXTRACTED FROM [ScheduleEntry.typeCell] SO THERE IS ONE SPELLER.
+/// The SERVICE column is a picker (DR-025 §11.24.5), its options are
+/// built from this, and `resolveSignalFamilyCell` reads it back. A
+/// dropdown that offered one spelling while the cell printed another
+/// would round-trip wrong on the first family whose display name is not
+/// its tag, which is most of them.
+String signalFamilyCellLabel(SignalDomainDef domain, SignalFamilyDef family) =>
+    '${domain.tagPrefix}·${family.displayName}';
+
 /// What §3.3 prints for an `OpenEndpoint`. A distinct token from
 /// [kUnknownCell]: "nothing is landed here yet" is a fact, and "we do not
 /// know" is not.
@@ -693,7 +704,7 @@ final class ScheduleEntry {
     final family = signalFamily;
     final domain = signalDomain;
     if (domain != null && family != null) {
-      return '${domain.tagPrefix}·${family.displayName}';
+      return signalFamilyCellLabel(domain, family);
     }
     if (domain != null) return domain.tagPrefix;
     return signalFamilyId?.v ?? kUnknownCell;
