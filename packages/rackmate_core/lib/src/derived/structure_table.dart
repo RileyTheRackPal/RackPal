@@ -506,29 +506,6 @@ bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
   _ => false,
 };
 
-/// Whether a column can be set to ONE value across MANY selected rows
-/// (DR-043 §11.42.6, M3-L/3).
-///
-/// **EDITABLE MINUS THE UNIQUE ONES, and the rule is uniqueness rather
-/// than a taste about which facts feel bulk-shaped.** CR-113 makes
-/// `fieldLabel` unique project-wide and `rackLabel` unique when set, so
-/// one value across N rows is refused by
-/// `buildSetStructureOriginProperty` on every row after the first. A
-/// batch menu offering them would be a control whose only outcome on a
-/// real selection is a refusal sentence, which is
-/// `shell_tabs_test.dart`'s "no control that does nothing" wearing a
-/// different hat.
-///
-/// **NOTHING ELSE IS EXCLUDED, INCLUDING THE ODD-LOOKING ONES.** A bulk
-/// `CUT` length reads strange until it is forty identical patch runs, and
-/// `CERT ID` is not declared unique anywhere, so neither is this
-/// function's business. The refusing builder is still in the path and
-/// still decides; this only declines to draw a control that cannot ever
-/// succeed.
-///
-/// LIVES HERE AND NOT IN THE TABLE WIDGET, so the batch bar and any later
-/// consumer read one answer. A list hardcoded in `rackmate_ui` would
-/// drift the first time a column becomes editable.
 /// Resolves a typed termination token to its `TerminationType`, or null
 /// when nothing matches (DR-043 §11.42.4).
 ///
@@ -564,6 +541,29 @@ List<String> terminationTokens() => [
   for (final t in TerminationType.values) terminationLabel(t),
 ];
 
+/// Whether a column can be set to ONE value across MANY selected rows
+/// (DR-043 §11.42.6, M3-L/3).
+///
+/// **EDITABLE MINUS THE UNIQUE ONES, and the rule is uniqueness rather
+/// than a taste about which facts feel bulk-shaped.** CR-113 makes
+/// `fieldLabel` unique project-wide and `rackLabel` unique when set, so
+/// one value across N rows is refused by
+/// `buildSetStructureOriginProperty` on every row after the first. A
+/// batch menu offering them would be a control whose only outcome on a
+/// real selection is a refusal sentence, which is
+/// `shell_tabs_test.dart`'s "no control that does nothing" wearing a
+/// different hat.
+///
+/// **NOTHING ELSE IS EXCLUDED, INCLUDING THE ODD-LOOKING ONES.** A bulk
+/// `CUT` length reads strange until it is forty identical patch runs, and
+/// `CERT ID` is not declared unique anywhere, so neither is this
+/// function's business. The refusing builder is still in the path and
+/// still decides; this only declines to draw a control that cannot ever
+/// succeed.
+///
+/// LIVES HERE AND NOT IN THE TABLE WIDGET, so the batch bar and any later
+/// consumer read one answer. A list hardcoded in `rackmate_ui` would
+/// drift the first time a column becomes editable.
 bool structureColumnIsBatchable(StructureColumnId id) =>
     structureColumnIsEditable(id) &&
     id != StructureColumnId.fieldLabel &&
