@@ -169,6 +169,24 @@ RackDocument _freshDocumentWithOneRack(DateTime at) {
   );
   doc.templates[templateKeyFor(_templateRef)] = _fixtureTemplate(at);
 
+  // THE REGISTRIES ARE SEEDED, AND THEY WERE NOT UNTIL #587.
+  //
+  // Measured: over 1000 sequences `aliveHomeRunLinkIds` was non-empty
+  // 1587 times, so a registry-validating arm was OFFERED that often and
+  // FIRED ZERO TIMES, because every builder that checks a registry
+  // refuses against an empty one. Any such command could be added to this
+  // harness, look registered, and never once be exercised.
+  //
+  // That is the `VACUOUS` mark docs/12 exists to refuse, one level down:
+  // not a check that cannot fail, but a generator that cannot run. It was
+  // found by instrumenting the arm rather than by reading it, after the
+  // fuzz declined to catch a mutation the dedicated case caught.
+  //
+  // Seeding does not weaken the property. Apply-then-revert byte identity
+  // is asserted on ONE document against ITSELF, so a larger starting
+  // document exercises more and proves the same thing.
+  doc.registries = buildSeedRegistries();
+
   // ONE STRUCTURE BODY AND ONE OUTLET, SEEDED.
   //
   // Not decoration: without them a home run needs `addStructure` then
@@ -232,6 +250,11 @@ enum _StepKind {
   setStructureBodyProperty,
   addHomeRun,
   setOriginProperty,
+  // DR-025 §11.24.5 (#587). REGISTERED THE DAY IT SHIPPED, because this
+  // command writes TWO entities per service and its revert must put BOTH
+  // back plus the meta triple; a half-restore re-encodes consistently, so
+  // only a byte-identity fuzz sees it.
+  setSignalFamily,
   setLifecycleStatus,
 }
 
@@ -590,6 +613,7 @@ final class _SequenceState {
     // does for a full jack.
     if (aliveOutletIds.isNotEmpty) _StepKind.addHomeRun,
     if (aliveHomeRunLinkIds.isNotEmpty) _StepKind.setOriginProperty,
+    if (aliveHomeRunLinkIds.isNotEmpty) _StepKind.setSignalFamily,
     if (aliveDeviceIds.isNotEmpty || aliveLinkIds.isNotEmpty)
       _StepKind.setLifecycleStatus,
   ];
@@ -848,7 +872,36 @@ Command? _buildCommand(_StepKind kind, _SequenceState s, Random rnd, int step) {
 
     case _StepKind.setLifecycleStatus:
       return _buildSetLifecycle(s, rnd);
+    case _StepKind.setSignalFamily:
+      return _buildSetSignalFamily(s, rnd);
   }
+}
+
+/// One `SetSignalFamilyCommand` over a random home run (DR-025 §11.24).
+///
+/// PICKS FROM THE REGISTRY rather than minting an id, because the builder
+/// REFUSES an unknown family (§11.24.3), so a harness that fed it one
+/// would exercise the refusal forever and the write path never. Sorted
+/// before indexing, so the choice is a function of the seed and not of
+/// map order.
+Command? _buildSetSignalFamily(_SequenceState s, Random rnd) {
+  final linkId = s.aliveHomeRunLinkIds.elementAt(
+    rnd.nextInt(s.aliveHomeRunLinkIds.length),
+  );
+  final families = s.doc.registries.signalFamilies.keys.toList()
+    ..sort((a, b) => a.v.compareTo(b.v));
+  if (families.isEmpty) return null;
+  final built = buildSetSignalFamily(
+    doc: s.doc,
+    linkId: linkId,
+    family: families[rnd.nextInt(families.length)],
+    now: s.nextNow(),
+    actor: 'fuzz',
+  );
+  return switch (built) {
+    SetSignalFamilyReady(:final command) => command,
+    SetSignalFamilyRefused() => null,
+  };
 }
 
 void _reconcileTrackingAfterCommit(
@@ -915,6 +968,7 @@ void _reconcileTrackingAfterCommit(
     case _StepKind.setOutletProperty:
     case _StepKind.setStructureBodyProperty:
     case _StepKind.setOriginProperty:
+    case _StepKind.setSignalFamily:
     case _StepKind.setLifecycleStatus:
     // Mutate entities already tracked; no alive-id bookkeeping needed.
   }

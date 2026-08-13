@@ -173,6 +173,16 @@ enum LabelKey {
   // touched, which is the only thing that differs.
   fillCells,
 
+  // THE SIGNAL FAMILY, SET AFTER THE FACT (DR-025 §11.24.5, board #587).
+  //
+  // ITS OWN VALUE AND NOT `setEntityProperty`, for the reason that
+  // separated `fillCells`: the unit a person undoes is the gesture, and
+  // this one writes TWO fields on two entities per service (§11.24.6, the
+  // `Service` and its `Net`). "Undo edit" names a field write; this is
+  // not one, and a user who sets a family on eleven rows and then undoes
+  // should be told what is coming back.
+  setSignalFamily,
+
   // THE LOCATION TREE (commands/location_commands.dart), M3-B/1, CR-047,
   // CR-112, DR-021. THREE values, not four: the rename, the code, the kind
   // and the room estimate all go through `setEntityProperty` above, because
