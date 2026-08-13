@@ -4864,7 +4864,7 @@ users rather than now.
 |---|---|
 | `SignalRoute`: Dante flows, AVoIP streams, matrix crosspoints, eARC, VLAN/multicast/latency | CR-008, AC-036. Returns **with** a Dante view or not at all. A third entity layer with no editor is dead weight |
 | **Layers**: Existing / Phase 1 / Phase 2 / Future / Demo | CR-064, AC-038. Real for commercial retrofit; absent from the residential first job; multiplies every filter and every print flag. `DeviceStatus` covers 80% for one field |
-| Cloud sync and multi-user | The model is already cloud-ready (stable UUIDs, `schemaVersion`, no positional identity, tombstones, `sequence`). Nothing more is spent until someone asks |
+| Cloud sync and multi-user | The model is already cloud-ready (stable UUIDs, `schemaVersion`, no positional identity, tombstones, `sequence`). Nothing more is spent until someone asks. **SUPERSEDED, SPLIT IN TWO BY DR-052, see §12.22**: sync moves *forward* to v1.2 (git) with divergence detection in v1, and **simultaneous multi-user editing moves to never**. The reasoning in this cell survives and is what made the split possible: a cloud-ready model is why sync is cheap, and it is irrelevant to concurrent editing |
 | Mobile **editing** | v1 is read-only by confirmed decision; the intent layer keeps the door open |
 | A read-only **web** viewer | AC-016 (#22). One `kIsWeb` guard already exists; distribution story, not a feature |
 | Unit splitting (`MTX1:A/:B/:C`) | CR-070. Only if multi-sheet lands and users demonstrably need it. It is a confusion generator and collapse covers most of the ground |
@@ -10074,6 +10074,73 @@ has never mentioned a datasheet in any release (§12.21). Roadmap §2.5 gains it
 
 ---
 
+### 11.51 DR-052 · Git sync is v1.2 and gated on evidence; live collaboration is never
+
+**Settled by the user on 2026-08-12**, from two requests taken together, because they are one
+question: git syncs the file between people, live collaboration edits it simultaneously.
+
+**11.51.1 LIVE COLLABORATION IS NEVER, ON DR-004's PATTERN.** Not v1, not v1.1, not v1.2, not v2.
+Deleted from the plan rather than deferred, and three separate things make it so:
+
+1. **It deletes determinism's precondition.** *Same document, same display list, same exported
+   bytes* holds because there is one writer. Concurrency does not weaken that guarantee, it removes
+   what makes it true, and a 1000-sequence fuzz harness asserting byte identity is asserting a
+   property of a single-writer system.
+2. **It renegotiates CR-117.** A CRDT needs per-field causal metadata in the file. That is a
+   schema version, a migration chain, and the end of *an absent key means not present*, which is the
+   sentence the entire persistence suite rests on. Operational transform avoids the format cost and
+   needs a server plus a rebase rule **per command type**, of which there are around forty.
+3. **Undo has no good multi-user answer.** §11.38.5 already had to explain that undo-to-a-point works
+   and edit-in-the-middle does not, because each operation was written against the state its
+   predecessor produced. Multi-user undo asks whose undo, and reverts either the user's last act or
+   the document's; both are wrong often enough that shipping products maintain apology pages about
+   it.
+
+**And the workflow it serves is rarer than it sounds.** Two integrators on one house hand off far
+more often than they co-edit, and a handoff is the sync problem below, not this one.
+
+**11.51.2 Git sync is v1.2, gated on evidence, and the gate is the point.** §2.3's membership rule is
+that each item needs a format addition, a fixture corpus, or evidence from real projects. This one
+needs the third: **real projects showing two people whose handoff a file share does not already
+solve.** It ships if that evidence appears and does not if it does not, which is the same shape as
+interval-graph channel routing's row.
+
+**11.51.3 DIFFABLE IS NOT MERGEABLE, AND THAT IS THE WHOLE ENGINEERING RISK.** CR-117 gives
+byte-exact key-sorted output, so `git diff` reads well and `git log` is genuinely useful. **A
+three-way merge is a different problem.** Two designers who each add a device produce a textual merge
+that **succeeds** and a document that may carry duplicate designators, colliding `FracIndex` orders,
+or an `UndoStack` that no longer describes the file.
+
+**So the ruling forbids the tempting half: RackMate performs no merge.** It detects that the file
+changed underneath it, refuses to overwrite silently, and offers a side-by-side. Merging is git's job
+and a person's, and an in-app three-way merge UI for this format is how a sync feature becomes a
+corruption feature.
+
+**11.51.4 It does not replace DR-039's journal and must not be read as doing so.** §11.38.2 put the
+journal **in the file** because *"history left on the author's machine is absent from the artifact
+under investigation"*, and the user's stated reason was troubleshooting a project somebody sends you.
+**Git puts history on a server**, so a `.rmpj` emailed to a client carries none of it. The two solve
+different problems and the journal is not deferred by this.
+
+**11.51.5 Authentication inherits DR-033's constraint, which is already settled.** §11.32 established
+that **no desktop binary can hold a secret**, and its answer is the authorization-code flow with
+PKCE. Git sync uses the same mechanism, and nothing here re-opens it. It also does not ratify a
+forge: DR-034 §11.33 already ruled that a library is **fetched, never cloned**, because *"clone does
+not survive a platform with no git"*, and that reasoning applies to any user without git on their
+machine.
+
+**11.51.6 Scope.** **v1 grows by one small item** and it is the part that solves the reported
+problem: **detect that a `.rmpj` changed underneath an open session, warn before overwriting, and
+offer a side-by-side rather than a merge.** It works on any file sync a user already pays for, needs
+no authentication, and does not touch the format. **v1.2 gains the git row**, gated as above. **v2
+loses nothing, because live collaboration was never on it.**
+
+**What it does not rule.** Which forge, what a sync UI looks like, or whether the app ever bundles a
+git implementation as against shelling out to one. All are downstream of evidence that has not
+arrived.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -10543,6 +10610,22 @@ single JSON file and not a zip, and §11.50.2 *applies* that argument rather tha
 **DR-036 §11.35.3 and §11.35.4 are untouched**: the CC0 catalog and the output exception both stand,
 and §11.50.4's point is that neither reaches content the project never had the right to embed in the
 first place.
+
+---
+
+### 12.22 Superseded by DR-052 (git sync is v1.2; live collaboration is never)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **Roadmap §2.4**, v2 row; **docs/00 §7**; **canon §4867** | *"Cloud sync and multi-user. The model is already cloud-ready (stable UUIDs, `schemaVersion`, no positional identity, tombstones, `sequence`). Nothing more is spent until someone asks."* | **SPLIT, because the row is two features wearing one name.** **Sync** (moving one document between machines and people, one writer at a time) moves **forward** to v1.2 as git sync, gated on evidence, plus a v1 divergence warning. **Multi-user** in the sense of simultaneous editing moves to **never** (§11.51.1). The row's *reasoning* survives both halves and is why the split is possible: the model being cloud-ready is exactly what makes sync cheap and is **irrelevant** to concurrent editing, which fails on determinism, CR-117 and undo rather than on identity. |
+| **Roadmap §2.4**, the same row's "nothing more is spent until someone asks" | A standing deferral with no gate. | **Replaced by a real gate for the sync half**: real projects showing a handoff a file share does not already solve (§11.51.2). *"Until someone asks"* is not a gate, because somebody has now asked and the sentence gives no way to tell whether that settles it. |
+
+**Explicitly NOT superseded.** **DR-039 is untouched and is not replaced by this** (§11.51.4): the
+in-file journal exists because history on a server is absent from the artifact under investigation,
+which git does not fix and makes slightly worse. **DR-033 §11.32's no-secrets constraint governs the
+authentication** and is not re-opened. **DR-034 §11.33's "fetched, never cloned"** is not contradicted:
+it ruled how a *library* arrives, on the ground that clone does not survive a platform with no git,
+and that ground is why §11.51.6 puts the v1 item on plain file divergence rather than on git.
 
 ---
 

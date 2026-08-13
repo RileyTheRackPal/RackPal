@@ -1,5 +1,56 @@
 # Update Log
 
+## 2026-08-12 (seventh entry)
+
+* **Creation**: four rulings closing a feature triage,
+  [DR-049](/decisions/dr-049-tabular-exports-and-a-label-that-is-not-a-sheet.md)
+  (tabular exports), [DR-050](/decisions/dr-050-geometry-fills-the-room-estimate.md)
+  (geometry fills the room estimate),
+  [DR-051](/decisions/dr-051-documentation-is-referenced-never-embedded.md)
+  (documentation is referenced) and
+  [DR-052](/decisions/dr-052-git-sync-v12-collaboration-never.md) (git sync v1.2,
+  collaboration never). **Three of the eight candidates were already adjudicated in
+  the corpus** and would have been re-decided by anybody who did not read it first.
+* **Note**: **THE CENSUS CORRECTED THE QUESTION, NOT ONLY THE ANSWER, AND THE WRONG
+  QUESTION HAD ALREADY REACHED THE USER.** DR-050's request was put as *"DR-020
+  forbids an estimate from entering the footage rollup"*. **It forbids a BOUND.**
+  `_isQuantity` returns `true` for `roomEstimate` today and says why in its own
+  comment. The option list built on that collapse had to be withdrawn and re-asked.
+  [Re-read a task against canon](/practices/re-read-a-task-against-canon.md) one
+  level out: the thing needing re-reading was my own question.
+* **Note**: **A PAGE OF LABELS CANNOT BE A SLOT IN A CLIENT DELIVERABLE**, which is
+  DR-005 deciding a question nobody had pointed at it. The alternative is a
+  per-sheet suppression rule for client exports, and **that is a mechanism built to
+  hide a mistake made by the first decision**. So the label export is an action, not
+  a `SheetRole`, and DR-048's twelve-slot count survives a day.
+* **Note**: **`SheetSize` HAS TWO VALUES AND NEITHER IS LETTER**, so a label sheet
+  is an enum change rather than a layout change. It is the same enum `D14` has owed
+  A4/A3 on since before M6, which turns two half-funded jobs into one.
+* **Note**: **A DEFERRAL IMPLIES A RELEASE IN WHICH THE OBJECTIONS LAPSE.** DR-051
+  had four grounds; three (a library limit, a container, file size) could all be
+  engineered around given time, and **copyright cannot be, at any date, by any
+  amount of work.** That is what turns a v2 row into a never, and it is the test to
+  apply to any other deferral.
+* **Note**: **A V2 ROW THAT WAS TWO FEATURES WEARING ONE NAME.** *"Cloud sync and
+  multi-user"* split cleanly: sync moved **forward** to v1.2 and simultaneous
+  editing moved to **never**. The row's own reasoning is why the split works, a
+  cloud-ready model is what makes sync cheap and is **irrelevant** to concurrent
+  editing. Its gate was also not a gate: *"until someone asks"* gives no way to tell
+  whether being asked settles it, and somebody had now asked.
+* **Note**: **THE THIRD TIME IN THREE DAYS A V-NUMBER IN A DERIVED DOCUMENT WAS
+  MISTAKEN FOR A SCOPE-LIST ENTRY**, and this time by me, in a supersession row
+  asserting roadmap §2.4 carried the datasheet appendix. It never did. **The same
+  census that caught it found a real supersession I had missed**, the cloud-sync
+  row above. Both corrections are recorded in §12.21 and §12.22 rather than quietly
+  fixed.
+* **Note**: **DR-046 WAS NOT APPLIED MECHANICALLY, AND SAYING SO IS THE ENTRY.**
+  That ruling forbids inferring a rack termination from a field termination; DR-050
+  lets geometry fill a length. The difference is the cost of being wrong: a
+  termination is a **discrete part** where a wrong value orders the wrong object,
+  and a length is a **continuous estimate** consumed with a margin the user sets. A
+  precedent applied without asking what kind of fact it governed would have
+  forbidden a feature the user has good trade reasons to want.
+
 ## 2026-08-12 (sixth entry)
 
 * **Creation**: [DR-048](/decisions/dr-048-network-value-is-dated-and-t650-ships.md),
