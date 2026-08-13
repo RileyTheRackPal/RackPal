@@ -9861,6 +9861,87 @@ discovery of any kind, and does not give `TemplateBody` a network field.
 
 ---
 
+### 11.48 DR-049 · The tabular exports ship in v1: rows out, and a label sheet that is not a sheet
+
+**Settled by the user on 2026-08-12**, from a request for label exporting: *"seems like a very cheap
+add; all the data's there. Just a matter of formatting for label printers/label sheets."* Taken
+together with a request to export to D-Tools and XTEN-AV, because the two are one object.
+
+**11.48.1 It discharges board #653, which has been waiting for exactly this.** M3-F/7 was filed as
+`RULING NEEDED, deferred` rather than built, and the reason it was filed that way is the test worth
+keeping: docs/07 §5.3's closing line promises the CSV round trip, **roadmap §2 does not name it**,
+and docs/07 is derived and priority-3. *A promise living in exactly one derived document is a scope
+question for the user, not a hole to quietly fill.* That is now answered rather than still open.
+
+**11.48.2 CSV/TSV export ships in v1, and the round trip is a property rather than a phrase.**
+`import(export(doc))` must reproduce the same rows. It is the CSV analogue of
+CR-117 and it is testable, which matters because *"the round trip"* has been an aspiration in
+docs/07 since M3-F and nothing has ever asserted it. **The reader stack already exists**
+(`csv_reader.dart`, `csv_mapping.dart`, `csv_import_plan.dart`, `csv_import_apply.dart`,
+`csv_row_resolve.dart` and the dialog); only the writer is missing.
+
+**11.48.3 THE CSV WRITER IS M6's, NOT M3's, ON DR-027's SEAM.** #653 sits under M3-F today. M3's
+exit criterion is a 60-drop rough-in, and §11.26 already ruled that **M3 owes derivations and M6 owns
+outputs**. A CSV file is an output. Moving it is the same seam applied a second time rather than a
+new judgement, and it keeps a milestone that is one human act from closing from growing on its way
+out.
+
+**11.48.4 The label sheet ships in v1, and it is NOT a slot in the sheet set.** This is the clause
+that took the most thought and it follows from DR-005: **the sheet set is a client deliverable**. A
+page of adhesive labels is a shop artifact. Putting it in the set means either handing a homeowner a
+sheet of labels or inventing a per-sheet suppression rule for client exports, and the second is a
+mechanism built to hide a mistake made by the first.
+
+So it is a **separate export action** with its own dialog. **The twelve-slot count does not change**,
+`SheetRole` gains nothing, and DR-048's arithmetic stands as written.
+
+**11.48.5 `SheetSize` gains US Letter portrait, and the enum has exactly two values today.**
+`ansiBPortrait` (11 × 17) and `ansiALandscape` (11 × 8.5). Neither is Letter portrait, so **the sheet
+machinery physically cannot emit an Avery-style page**; this is an enum change, not a layout change.
+
+**It is the same enum `D14` already owes A4/A3 on** (docs/13, board #453): docs/08:509 requires a
+non-US platform locale to substitute A4/A3 and `SheetSize` has neither, so **a Windows machine in a
+metric locale has that problem today**. The two are done together or the second is done twice.
+
+**11.48.6 What prints on a label is the dual labels, both ends, and nothing is invented.**
+`fieldLabel` and `rackLabel` already exist on every cable and CR-044, AC-025 and AC-047 already
+require both to print. The label export is a different **arrangement** of a derivation that is
+already correct, which is the whole reason it is cheap.
+
+**11.48.7 NO PRINTER DRIVERS, AND THIS IS A REFUSAL RATHER THAN A DEFERRAL.** Brother P-touch, Dymo
+Rhino and Epson LabelWorks each speak a different dialect. An export nobody has run on the actual
+hardware scores `VACUOUS` under docs/12 §0's legend, and this project already carries **two unfunded
+print matrices** (AC-058 `D11` and `D13`) that nobody has executed. Adding a third is how the first
+two stay unexecuted for ever.
+
+**A CSV is what covers them.** Every label program on the market imports one, the mapping is the
+user's to make once, and it needs no hardware this project does not have.
+
+**11.48.8 D-TOOLS AND XTEN-AV GET NO EXPORTER, AND THE REASON IS TESTABILITY.** D-Tools SI is a
+licensed Windows/SQL product; XTEN-AV's API sits behind a commercial agreement. **An exporter for a
+format that cannot be opened in the target application cannot be demonstrated**, which is the same
+`VACUOUS` mark as above and a support channel staffed for ever against a schema that changes on
+somebody else's release cadence.
+
+**It is also a positioning claim.** docs/00 §4.2 commits this product to pricing against AVSnap and
+Stardraw, **explicitly not against D-Tools**, and board #91 already warns that changing what the
+corpus asserts about positioning is an amendment rather than a doc edit. A dedicated exporter says
+*"we are the drawing front end for your D-Tools workflow"*, which is a smaller product than the one
+roadmap §2 describes. **The generic CSV serves the same user** through an import wizard those
+products already ship, with no vendor coupling and no test environment nobody owns.
+
+**11.48.9 Scope.** **v1 grows by three items**: the CSV/TSV writer with an asserted round trip, the
+label export action with its dialog, and `SheetSize.usLetterPortrait`. Roadmap §2.1 gains a row it
+has never had. **M6 grows** by the writer and the label action; **M3 shrinks** by #653 moving off it.
+**The sheet set does not grow**, so §11.47.4's twelve slots are unaffected.
+
+**What it does not rule.** Which columns a CSV carries by default, which is a surface decision for
+the task. Not the label media size, beyond the page being Letter portrait. Not a D-Tools or XTEN-AV
+integration in any release, and **that half is a refusal, not a deferral**: no gate reopens it, on
+DR-004's pattern.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

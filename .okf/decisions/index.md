@@ -49,6 +49,8 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 
 * [DR-048, a network value is dated and T6.50 ships in v1](dr-048-network-value-is-dated-and-t650-ships.md) - the field had no writer anywhere, not even a test fixture, while a reserved sheet id made it read as nearly shipped; and G4 handles unknown but has no mechanism for stale, which is exactly the failure this data has.
 
+* [DR-049, the tabular exports and a label that is not a sheet](dr-049-tabular-exports-and-a-label-that-is-not-a-sheet.md) - CSV out, labels out, no printer drivers and no vendor exporter; a page of adhesive labels cannot be a slot in a client deliverable, and both refusals are refusals because neither can be demonstrated.
+
 # Not yet written up
 
 DR-002 (residential primary), DR-003 (device builder in v1), DR-004 (multi-sheet
