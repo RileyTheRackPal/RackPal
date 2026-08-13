@@ -103,17 +103,22 @@
 //    ships nowhere would be the same fabrication.
 
 import 'package:meta/meta.dart';
-import 'package:rackmate_core/src/derived/device_loads.dart' show hostRackOf;
+import 'package:rackmate_core/src/commands/bind_endpoint_command.dart'
+    show panelPositionToken;
+import 'package:rackmate_core/src/derived/device_loads.dart'
+    show bodyFor, hostRackOf;
 import 'package:rackmate_core/src/derived/equipment_list.dart'
     show kUnknownCell, kUnplacedGroupTitle;
 import 'package:rackmate_core/src/derived/jacket_color_resolution.dart';
 import 'package:rackmate_core/src/derived/link_class.dart';
 import 'package:rackmate_core/src/derived/totals.dart' show Rollup;
 import 'package:rackmate_core/src/model/conductor.dart';
+import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/enums.dart'
     show LifecycleStatus, TerminationType, UnitSystem;
 import 'package:rackmate_core/src/model/link.dart';
 import 'package:rackmate_core/src/model/placement.dart';
+import 'package:rackmate_core/src/model/port.dart';
 import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/model/registries.dart';
 import 'package:rackmate_core/src/units/ids.dart';
@@ -174,6 +179,7 @@ final class ScheduleEnd {
     this.deviceDesignator,
     this.portId,
     this.portDesignator,
+    this.portPositionToken,
     this.portLabel,
     this.locationId,
     this.roomName,
@@ -210,10 +216,28 @@ final class ScheduleEnd {
 
   final Uuid? portId;
 
-  /// `J09`, `A03`. On a punchdown this IS §3.3's punch position — the
-  /// model carries no second field for it, and inventing one would give
-  /// the sheet two answers for one physical hole.
+  /// `J09`, `A03`. **What this product ALLOCATED, and identity rather
+  /// than rendering**: it is what `PORT` sorts on and what a `Port`
+  /// carries (CR-042), and since DR-054 it is no longer what the column
+  /// prints. See [portCell] and [portPositionToken].
+  ///
+  /// THIS COMMENT USED TO SAY "on a punchdown this IS §3.3's punch
+  /// position, the model carries no second field for it, and inventing
+  /// one would give the sheet two answers for one physical hole." The
+  /// sheet HAD two answers for one hole, and the second field was not
+  /// invented, it was already there: `PortDef.label` is the number
+  /// silkscreened on the part, and `RACK LBL` has rendered it since
+  /// DR-040 §11.39.8 while this column rendered the allocated one.
   final String? portDesignator;
+
+  /// The number printed ON THE PART, `01` on a patch panel (DR-054
+  /// §11.53.3, via `panelPositionToken`).
+  ///
+  /// Null when the end is not a materialised port on a device whose
+  /// template resolves; [portCell] falls back to [portDesignator], which
+  /// is what `panelPositionToken` itself does for a template that
+  /// silkscreens nothing.
+  final String? portPositionToken;
 
   /// `Port.userLabel`, when the user has set one.
   final String? portLabel;
@@ -275,12 +299,33 @@ final class ScheduleEnd {
     ScheduleEndKind.unresolvedPort || ScheduleEndKind.none => kUnknownCell,
   };
 
-  /// `J09` plus its user label when there is one.
+  /// THE NUMBER PRINTED ON THE PART, plus its user label when there is
+  /// one. `01` on a patch panel, `J09` on a device that silkscreens
+  /// nothing.
+  ///
+  /// DR-054 (canon §11.53) MOVED THIS OFF `portDesignator`, and the
+  /// column and `RACK LBL` now describe one hole one way. `RACK LBL`
+  /// has rendered `PortDef.label` since DR-040 §11.39.8, while this
+  /// rendered `Port.designator`, and `portDesignatorFormat` is
+  /// `J{PORT_SEQ:2}` where `PORT_SEQ` counts the FRONT jacks a drop never
+  /// touches: on a three-up/three-down fixture the hole labelled `01`
+  /// designates `J04`. One sheet, two numbers, one position.
+  ///
+  /// [portPositionToken] already falls back to the designator, so this
+  /// is uniform rather than special-cased, and `farPort` gets it free
+  /// because it renders through here too.
+  ///
+  /// **`portDesignator` IS UNCHANGED AND IS STILL WHAT SORTS.** DR-054
+  /// deliberately did not touch designator ALLOCATION: `Port.designator`
+  /// is stored project state (CR-042), so changing how it is allocated
+  /// would leave one document holding `J04` on ports bound last week and
+  /// `01` on ports bound today, with no migration able to reconcile them.
+  /// A rendering rule has no such tail.
   String get portCell {
-    final designator = portDesignator;
-    if (designator == null) return kUnknownCell;
+    final shown = portPositionToken ?? portDesignator;
+    if (shown == null) return kUnknownCell;
     final label = portLabel;
-    return label == null || label.isEmpty ? designator : '$designator $label';
+    return label == null || label.isEmpty ? shown : '$shown $label';
   }
 }
 
@@ -1063,10 +1108,35 @@ ScheduleEnd _portEnd(RackDocument doc, Uuid portId) {
     deviceDesignator: device.designator,
     portId: portId,
     portDesignator: port.designator,
+    portPositionToken: _positionTokenFor(doc, device, port),
     portLabel: _trimToNull(port.userLabel),
     locationId: locationId,
     roomName: _locationName(doc, locationId),
   );
+}
+
+/// The number silkscreened on [port]'s hole, via `panelPositionToken`
+/// (DR-054 §11.53.3).
+///
+/// Null when the join cannot be made, and `null` is right rather than a
+/// fallback here: [ScheduleEnd.portCell] falls back to the designator, so
+/// a template that cannot be resolved renders exactly what it rendered
+/// before this existed. **A default of `port.designator` HERE would be a
+/// second fallback saying the same thing in a second place**, which is
+/// how two of them come to disagree.
+///
+/// `bodyFor` returning null is a hand-edited file rather than an
+/// impossibility, which is the reading `resolvePortSet` and
+/// `connect_target.dart` already take of CR-054.
+String? _positionTokenFor(RackDocument doc, DeviceInstance device, Port port) {
+  final key = port.templatePortKey;
+  if (key == null) return null;
+  final body = bodyFor(device, doc.templates);
+  if (body == null) return null;
+  for (final def in body.ports) {
+    if (def.key.v == key.v) return panelPositionToken(def, port.designator);
+  }
+  return null;
 }
 
 String? _locationName(RackDocument doc, Uuid? id) =>
