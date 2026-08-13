@@ -16,3 +16,4 @@ by something going wrong.
 * [Two documents agreeing is not verification](two-documents-agreeing-is-not-verification.md) - three fields named by a ruling AND a design document and present in neither the model nor the codec; a citation is evidence of intent, not of existence.
 * [One keymap registry](one-keymap-registry.md) - every binding is a table row, arbitrated across every platform, and why a real collision does not throw.
 * [Re-read a task against canon before pricing it](re-read-a-task-against-canon.md) - two of M3-D's four tasks asked questions that rulings dated after them had already answered; the cost that does not announce itself is the estimate.
+* [Measure the control before choosing it](measure-the-control-before-choosing-it.md) - a 55-row dropdown in a 76-point column renders every row as an ellipsised stump; the three sibling columns using the same widget were not evidence, because their labels fit.

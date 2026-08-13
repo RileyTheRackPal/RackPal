@@ -1,5 +1,67 @@
 # Update Log
 
+## 2026-08-13 (second entry)
+
+* **Update**: [DR-025](/decisions/dr-025-signal-and-service-are-two-words.md) is
+  **BUILT**, three deliverables in order: the Command (`515d61e`), the `@signal=`
+  modifier (`48ae15b`) and the SERVICE picker (`80fd007`). §11.24.5's *"the DRC
+  validates RETROACTIVELY when a `Service` later assigns a real family"* now has
+  its later; until the picker, a run created before the ruling could never be
+  corrected.
+* **Creation**: [Measure the control before choosing
+  it](/practices/measure-the-control-before-choosing-it.md). **THE OBVIOUS
+  CONTROL WAS WRONG AND ONLY A MEASUREMENT COULD SAY SO.** Three sibling columns
+  use a `DropdownButton`, whose menu inherits its BUTTON's width; SERVICE is 76
+  points and the 55 labels average 22 characters and reach 45. A throwaway
+  harness printed `Size(116, 256)` with **every row clamped to 84**, so
+  `AUD·Speaker level, low-Z` and `AUD·Speaker, constant-voltage 70 / 100 / 25 V`
+  both render `AUD·Speaker…`. **The siblings were not evidence**: they work
+  because `PULLED` and `RJ45` fit, which is a property of their labels and not
+  of the control.
+* **Note**: **A `PortDef` CARRIES TWO REGISTRY REFERENCES AND ONLY ONE WAS
+  GATED.** The connector half has had *"every connector a shipped port names
+  resolves in the registry"* since a port was caught naming one that did not; the
+  signal-family half had nothing, anywhere.
+  [Registry parity](/gates/registry-parity.md) does not close it and is not meant
+  to: it compares the seeded registry against `pal1_check.py`, and **the catalog
+  is not in that comparison at all**. Its concept file lists its blind spots and
+  this is not among them either, because it is **a third thing rather than a
+  corner of the second**. `catalog_ports.dart` builds `SignalFamilyId(family)`
+  from a raw string and `AtomicConnectCommand` carries it onto both the `Service`
+  and the `Net` with nothing in between to object. Measured: 48 parts name 34
+  families and all 34 resolve, **a fact about that catalog on that date rather
+  than an invariant**. `379a9cd` makes it one, and proves itself by removing a
+  family the catalog uses and demanding the shipped detection report it.
+* **Note**: **MAKING A COLUMN EDITABLE INTRODUCED A CRASH, AND THE COLUMN WAS THE
+  FIRST THAT COULD.** `DropdownButton` asserts exactly one item matches its
+  value, and `typeCell` prints a bare id when a `Service` names a family the
+  registries lack: a spelling no menu offers, so the **whole table** throws
+  rather than one cell misbehaving. The enum-backed columns cannot reach it
+  because the enum IS their menu, which makes SERVICE the first place a document
+  can say something its control cannot represent. [G4](/invariants/g4-unknowns-are-counted.md)
+  wearing a widget: the cell degrades to read-only text and shows the stored id
+  rather than dropping it.
+* **Note**: **TWO DEFECTS IN THE IN-FLIGHT WORK, AND BOTH ARE NAMED PRACTICES.**
+  The tests typed `V·AV-over-IP` and `V·HDBaseT 5Play`, which are the shapes
+  **canon §11.24.1's PROSE** uses and which the catalog spells nowhere: verifying
+  a codebase claim by reading it, unread in the session that most needed it. And
+  the UI harness had no `service` arm, so it returned *"That column cannot be
+  typed into"* on a column the app applies, **four lines below a comment added by
+  M3-L/3 saying "a harness stricter than the product tests a product that does
+  not exist"**. A lesson written down is not a lesson applied.
+* **Note**: **A DOC COMMENT WAS MOVED AND MISPLACED AGAIN** (`a1c5a8e`).
+  `structureColumnIsBatchable`'s twenty-three lines sat above
+  `resolveTerminationToken`, four functions from what they describe. **The
+  mechanism is that two adjacent `///` blocks merge into one**, so it is
+  well-formed, attached, and attached to the wrong thing, and no analyzer can see
+  it. `dart doc` would have printed CR-113's uniqueness argument under a
+  termination parser.
+* **Note**: **THE `Use` COLUMN DEFERRAL HAS A NAMED COST THE USER CONFIRMED.**
+  Families being catalog-updated (RJ-012) means growing the trade's vocabulary is
+  a catalog change, never a user action. `CTL·Lutron QS / HomeWorks link` already
+  ships; **Legrand Vantage does not**, and that is a catalog task rather than a
+  picker one.
+
 ## 2026-08-13
 
 * **Creation**: [DR-053](/decisions/dr-053-one-key-for-an-outlet-and-a-room.md), one

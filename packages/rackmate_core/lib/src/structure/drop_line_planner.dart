@@ -695,8 +695,15 @@ MediaTypeDef? resolveMediaToken(Registries registries, String token) {
 ///
 /// Placed beside [resolveMediaToken] because two callers need it and
 /// neither owns it: the CSV `signal` column (M3-F/6) and `@signal=`
-/// (#587, unbuilt). Two copies would be two chances to disagree about
-/// what `hbt` means.
+/// (#587). Two copies would be two chances to disagree about what `hbt`
+/// means.
+///
+/// THREE CALLERS NOW, AND THE THIRD IS NOT A COPY. The SERVICE picker's
+/// filter box also has to understand `hbt`, but it FILTERS where this
+/// RESOLVES: `@signal=hdb` must refuse, and typing `hdb` into the box
+/// must show HDBaseT. `SignalFamilyCellOption.searchKey` is built from
+/// the same four fields this walks, so the two agree about the
+/// vocabulary while disagreeing about how much of a token counts.
 SignalFamilyDef? resolveSignalFamilyToken(
   Registries registries,
   String token,
