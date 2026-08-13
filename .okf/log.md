@@ -1,5 +1,50 @@
 # Update Log
 
+## 2026-08-13
+
+* **Creation**: [DR-053](/decisions/dr-053-one-key-for-an-outlet-and-a-room.md), one
+  key for an outlet and a room, and
+  [DR-054](/decisions/dr-054-the-port-column-prints-the-part.md), the `PORT` column
+  prints the part. **M3's two open rulings, both closed**; what is left in that
+  milestone is one human act with a stopwatch.
+* **Note**: **THE ARGUMENT THAT SETTLED DR-053 WAS ALREADY IN THE FILE, ABOUT
+  SOMETHING ELSE.** `_resolvePanel` refuses to match a device by NAME and says why:
+  a gesture landing on *"whichever Patch Panel matched first"* puts the drop in a
+  different rack depending on map order. **That is about outlets word for word**, and
+  `_resolveOutlet` sat forty lines away doing exactly it. The lesson is not "read the
+  docs": **a rule already argued for one entity is evidence about its neighbours**,
+  and nobody had carried it across.
+* **Note**: **A REPEATED NAME IS REPORTED AND NEVER REFUSED.** Two rooms with a
+  `WP-1` is ordinary, so refusing is wrong. Staying silent is wrong for a narrower
+  reason: **a mistyped room name and a genuine second plate produce the identical
+  outcome**, so the moment the product declines to join them is the only moment it
+  can say anything useful.
+* **Note**: **A TASK'S OWN VOCABULARY WAS RE-ASSIGNED UNDERNEATH IT.** #667 is
+  titled *"`RACK TERM` and `RACK LBL` name one hole two ways"*. There is no
+  `rackTerm` column, and **DR-046 has since given "rack term" a specific and
+  different meaning**, so a reader picking the task up looks at the termination
+  columns, finds them correct, and is lost. The columns in question are `PORT` and
+  `RACK LBL`. This is
+  [re-read a task against canon](/practices/re-read-a-task-against-canon.md) in a
+  sharper form: there a task was stale because a ruling answered it; here the words
+  still parse and point somewhere else.
+* **Note**: **THE DEEP FIX WAS REFUSED ON A COST ITS OWN COMMENT OMITS.**
+  `bind_endpoint_command.dart` says teaching designator ALLOCATION to honour an
+  authored label *"touches the connect gesture's output for every device in the
+  catalog"*. It undersells it: **`Port.designator` is STORED**, so allocation
+  changes what NEW ports get and leaves existing ones alone, and **one document
+  would hold `J04` on ports bound last week and `01` on ports bound today** with no
+  migration able to reconcile them. **A rendering rule has no such tail**, and that
+  asymmetry rather than the size of the diff is the argument.
+* **Note**: **BOARD HIERARCHY REPAIR, and the census found seven where two were
+  reported.** Issue parenting broke at **M3-L** (#670, #675, #680 had no Epic) and
+  task parenting broke at **M3-H** (#668, #678, #679 had no parent at all), while
+  everything M3-A through M3-K is correct. **An orphan is invisible to a roll-up**,
+  which is how #679 stayed off an M3 query that was otherwise right. #587 was a Task
+  parented straight to an Epic and now sits under #690. **The eighteen parentless
+  Issues are NOT defects**: #655 (DR-039) has its tasks under it and no Epic, so an
+  Issue acting as a small epic is an established pattern.
+
 ## 2026-08-12 (seventh entry)
 
 * **Creation**: four rulings closing a feature triage,

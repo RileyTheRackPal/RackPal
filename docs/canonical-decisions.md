@@ -10209,6 +10209,68 @@ model level, which is a validation question with an AC-051 fixture pair and belo
 
 ---
 
+### 11.53 DR-054 · The `PORT` column prints the number on the part
+
+**Settled by the user on 2026-08-13**, closing board #667, and it **discharges an open item DR-040
+named rather than superseding anything.**
+
+**11.53.1 THE TASK'S OWN TITLE IS WRONG, AND A LATER RULING MADE IT WORSE.** #667 is filed as
+*"`RACK TERM` and `RACK LBL` name one hole two ways"*. **There is no `rackTerm` column**;
+`ScheduleColumnId` has `port` and `term`, and **DR-046 (§11.45) has since given "rack term" a
+specific and entirely different meaning**, the rack-end termination type. A reader picking the task
+up today looks at the termination columns, finds them correct, and is lost.
+
+The two columns that describe one hole are **`PORT` and `RACK LBL`**. Recorded because
+the practice of re-reading a task against canon before pricing it says a board task is a snapshot of what was
+unknown on the day it was written, and this is the sharper version: **the task's own vocabulary was
+re-assigned underneath it by a ruling three weeks later.**
+
+**11.53.2 What each column prints today.** `RACK LBL` renders `1A-PP-101`, whose `01` comes from
+`panelPositionToken` and therefore from **`PortDef.label`, the number silkscreened on the part**
+(DR-040 §11.39.8). `PORT` renders `portCell`, which is **`Port.designator`** plus any user label, and
+`portDesignatorFormat` is `J{PORT_SEQ:2}` where `PORT_SEQ` counts the **front** jacks a drop never
+touches. On a three-up/three-down fixture that is `J04` for the hole labelled `01`.
+
+**So one sheet carries two numbers for one position, and a tech on a ladder has to know which is
+which.**
+
+**11.53.3 The ruling: `PORT` renders the position token.** `panelPositionToken` is reused rather
+than a second rule written, and the reuse is the argument: **it already falls back to the designator
+when a template authors no label.** So the change is uniform rather than special-cased, a panel port
+prints `01` and an ordinary device port still prints `J09` exactly as now, and `farPort` gets the
+same treatment for free because it renders through the same `portCell`.
+
+**11.53.4 The deeper fix was available and is deliberately not taken.**
+`bind_endpoint_command.dart`'s own comment names it: *"closing it means teaching designator
+ALLOCATION to honour an authored label, which is its own ruling and touches the connect gesture's
+output for every device in the catalog."*
+
+**It is refused on a cost the comment does not state.** `Port.designator` is **stored** project state,
+unique within a device (CR-042). Changing allocation changes what **new** ports get and leaves every
+already-materialised port carrying what it was given, so **one document would hold `J04` on the
+ports bound last week and `01` on the ports bound today, with no migration able to reconcile them**
+without rewriting identifiers other entities reference. A rendering rule has no such tail.
+
+**11.53.5 The allocated designator stops appearing on any sheet, and that is a loss worth naming.**
+After this, `Port.designator` is visible only in the app. That is the right side of the trade because
+**it identifies a `Port` to the software and not to a person on a ladder**: CR-044's own worked
+example is `1A-A12`, a position number, and nothing an installer holds is silkscreened `J04`. But it
+is stated rather than glossed, because the next person to ask *"where did the port designator go"*
+deserves to find the answer rather than a surprise.
+
+**11.53.6 This DISCHARGES rather than supersedes, which is the third relationship this record
+recognises.** DR-040 §11.39.8 is a *"what this does not fix, stated so nobody reads it as fixed"*
+clause. Answering it leaves DR-040 entirely intact, exactly as **§11.30 discharged DR-020
+§11.19.4**, so there is **no §12 entry** and a reader of §11.39.8 should follow the pointer here
+rather than infer that DR-040 was amended.
+
+**11.53.7 Scope.** No roadmap §2 change and no milestone moves. One rendering function gains a
+caller, two columns agree, nothing is stored, nothing migrates, and `kSchemaVersion` does not
+advance. **It is not #679**, which is the `TERM` column meaning the field end on a sheet whose
+editor now distinguishes both ends, and which DR-027 parks on M6.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

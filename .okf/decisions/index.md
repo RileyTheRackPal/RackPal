@@ -55,6 +55,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-052, git sync is v1.2 and live collaboration is never](dr-052-git-sync-v12-collaboration-never.md) - diffable is not mergeable, and a v2 row that read as one feature was two, so splitting it moved one half forward and the other to never.
 
 * [DR-053, one key for an outlet and a room](dr-053-one-key-for-an-outlet-and-a-room.md) - the typed line matched an outlet project-wide and landed attic drops on the living room's plate; the argument that settles it was already written forty lines away in the same file, about panels.
+* [DR-054, the PORT column prints the part](dr-054-the-port-column-prints-the-part.md) - a rendering change and not an allocation change, because `Port.designator` is stored and changing allocation leaves one document holding two conventions; and the task's own vocabulary had been re-assigned underneath it by a later ruling.
 
 # Not yet written up
 
