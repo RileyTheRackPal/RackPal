@@ -231,6 +231,7 @@ final class AddHomeRunCommand extends Command {
     this.mountSurface,
     this.mountHeightAff,
     this.pathwayId,
+    this.signalFamily,
     Uuid? id,
     Uuid? netId,
   }) : id = id ?? newEntityId(),
@@ -250,6 +251,21 @@ final class AddHomeRunCommand extends Command {
 
   final Uuid structureBodyId;
   final Uuid outletId;
+
+  /// The signal family this run carries, or null for "nobody has said"
+  /// (DR-025 §11.24). Null becomes `structure.undetermined`, which is
+  /// docs/07 §4.1's first-class, encouraged state: at rough-in a Cat6 is
+  /// just a Cat6.
+  ///
+  /// **§11.24.6: THE FAMILY IS STORED TWICE AND BOTH ARE WRITTEN HERE.**
+  /// `Service.signalFamily` is what the palette and the DRC read; docs/05
+  /// §5 is explicit that colour resolves from it and never from the
+  /// `Link`. `Net.signalFamily` is written, serialised, and read by
+  /// nothing but the codec today. A command that set one and not the
+  /// other would leave the file carrying two answers to one question in
+  /// the one place nothing would notice, which is CR-107's failure in
+  /// miniature. Both or neither.
+  final SignalFamilyId? signalFamily;
 
   /// "GR-DATA-1" — on the wall plate. REQUIRED and project-unique across
   /// ALL Structure bodies (CR-113). Allocated caller-side; the allocator
@@ -308,13 +324,18 @@ final class AddHomeRunCommand extends Command {
   @override
   Iterable<Uuid> get affects => [id, netId, outletId];
 
+  /// ONE PLACE THE DEFAULT LIVES, so the Net and the Service cannot
+  /// drift apart. See [signalFamily].
+  SignalFamilyId get _family =>
+      signalFamily ?? const SignalFamilyId('structure.undetermined');
+
   @override
   void apply(RackDocument doc) {
     final meta = EntityMeta(createdAt: now, updatedAt: now, updatedBy: actor);
     doc.nets[netId] = Net(
       id: netId,
       name: netName,
-      signalFamily: const SignalFamilyId('structure.undetermined'),
+      signalFamily: _family,
       meta: meta,
     );
     doc.links[id] = Link(
@@ -327,7 +348,7 @@ final class AddHomeRunCommand extends Command {
       services: [
         Service(
           id: 'svc-1',
-          signalFamily: const SignalFamilyId('structure.undetermined'),
+          signalFamily: _family,
           netId: netId,
         ),
       ],
@@ -398,6 +419,7 @@ AddHomeRunResult buildAddHomeRunCommand({
   TerminationType? terminationField,
   TerminationType? terminationRack,
   Uuid? pathwayId,
+  SignalFamilyId? signalFamily,
   Set<String> alsoUsedLabels = const {},
   Set<String> alsoUsedDesignators = const {},
   Map<Uuid, Outlet> alsoOutlets = const {},
@@ -487,6 +509,11 @@ AddHomeRunResult buildAddHomeRunCommand({
       mountSurface: outlet.mountSurface,
       mountHeightAff: outlet.mountHeightAff,
       pathwayId: pathwayId ?? outlet.pathwayId,
+      // FORWARDED, and this line is why the task says to probe the chain
+      // rather than read it. DR-046's own record is of a parameter that
+      // parsed, planned, and then vanished here, with every layer correct
+      // in isolation.
+      signalFamily: signalFamily,
       now: now,
       actor: actor,
     ),

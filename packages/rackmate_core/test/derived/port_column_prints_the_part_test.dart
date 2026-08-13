@@ -162,11 +162,27 @@ void main() {
 
     test('PORT reads the silkscreen and not the allocated designator', () {
       final doc = _landedProject();
-      final rows = _landedRows(doc);
-      final shown = rows.map((r) => r.farEnd.portCell).toList();
+      final shown = _landedRows(doc).map((r) => r.farEnd.portCell).toList()
+        ..sort();
 
       // `01`, `02`, `03` on the rear, NOT `J04`, `J05`, `J06`.
+      //
+      // SORTED, AND THE SORT IS NOT TIDINESS. This case first asserted the
+      // sequence as returned and FAILED INTERMITTENTLY, which is how
+      // board #691 was found: every drop from one line is minted with the
+      // same `FracIndex` (`a0`), because `nextLinkOrder` reads the
+      // unmutated document and has no running reservation, so the
+      // schedule's `order` then `id` sort falls through to random ids and
+      // a line's rows come out in a different order every run. Pinning
+      // the sequence here would pin a defect as intended behaviour, which
+      // this repository has done before. DR-054 is about WHAT each cell
+      // prints; the row order is #691's.
       expect(shown, ['01', '02', '03']);
+      expect(
+        shown.toSet(),
+        hasLength(3),
+        reason: 'three drops, three distinct holes',
+      );
       expect(
         shown.any((s) => s.startsWith('J')),
         isFalse,

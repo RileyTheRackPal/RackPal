@@ -367,12 +367,34 @@ DropLinePlan planDropLine({
     }
   }
 
+  // --- @signal=, the family (DR-025 §11.24.3) -------------------------
+  // AN UNRESOLVED VALUE REFUSES AND NEVER INVENTS A FAMILY, which is the
+  // OPPOSITE of RJ-012's rule for media and is already ruled: docs/07 §3
+  // makes media types user-extensible in v1 and keeps signal families
+  // catalog-updated. A family invented from a typo would have no domain,
+  // no colour, no dash and no `acceptedFamilies`, which is a run the DRC
+  // and the palette both cannot reason about.
+  SignalFamilyId? signalFamily;
+  if (line.signal case final token? when token.trim().isNotEmpty) {
+    final def = resolveSignalFamilyToken(doc.registries, token);
+    if (def == null) {
+      return DropLinePlanRefused(
+        'No signal family is called "$token". '
+        'Try a short tag like "hbt" or "avoip", or leave it off: a drop '
+        'with no family is a first-class state and the SERVICE column '
+        'can set it later.',
+      );
+    }
+    signalFamily = def.id;
+  }
+
   // --- the drops -----------------------------------------------------
   final template = _templateOf(doc, plannedOutlet);
   final built = buildDropsFor(
     doc: doc,
     location: location,
     outlet: plannedOutlet,
+    signalFamily: signalFamily,
     // THE CABLE ITEMS ONLY. Conduit was partitioned out above and has
     // already become `AddPathwayCommand`s.
     items: [

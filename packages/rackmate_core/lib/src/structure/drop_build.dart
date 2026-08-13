@@ -128,6 +128,12 @@ DropBuildOutcome buildDropsFor({
   required Set<String> usedDesignators,
   required Set<String> usedNetNames,
   Uuid? pathwayId,
+
+  /// The family every drop on this line carries, from `@signal=`
+  /// (DR-025 §11.24.3). Null is the ordinary case and leaves
+  /// `structure.undetermined`, which docs/07 §4.1 calls a first-class,
+  /// encouraged state.
+  SignalFamilyId? signalFamily,
 }) {
   final commands = <Command>[];
   final labels = <String>[];
@@ -186,6 +192,11 @@ DropBuildOutcome buildDropsFor({
         ),
         terminationField: item.termination,
         terminationRack: item.rackTermination,
+        // LINE-LEVEL, so every drop the line makes carries it. The
+        // family is a fact about the run rather than about the item,
+        // and `@signal=` is scanned off the end of the line for the
+        // same reason `@panel=` is.
+        signalFamily: signalFamily,
         // PASSED ONLY WHEN THE SURFACE SAID, AND NULL OTHERWISE.
         // `derived/schedule.dart` calls this field "what the trim-out
         // crew actually installs" and puts it on the Termination

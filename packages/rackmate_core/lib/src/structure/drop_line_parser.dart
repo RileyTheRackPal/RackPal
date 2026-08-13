@@ -168,6 +168,7 @@ final class DropLineParsed extends DropLineParse {
     required this.locationName,
     required this.items,
     this.service,
+    this.signal,
     this.status,
     this.outletDesignation,
     this.pathwayName,
@@ -181,7 +182,35 @@ final class DropLineParsed extends DropLineParse {
 
   /// `@service=`. DR-023 step 1: this outranks the outlet template's tag
   /// when both are present.
+  ///
+  /// **IT NAMES THE LABEL AND NEVER THE FAMILY** (DR-025 §11.24). See
+  /// [signal], which is the other word.
   final String? service;
+
+  /// `@signal=`, the SIGNAL FAMILY (DR-025 §11.24.3). Still a raw token:
+  /// resolving it against `registries.signalFamilies` is the planner's
+  /// job, because this file has no document.
+  ///
+  /// TWO WORDS BECAUSE THERE ARE TWO FACTS, and the user's own evidence
+  /// is what decided it: one house runs AVoIP to most areas and a plain
+  /// HDBaseT pair from an AVR to a projector, so it has runs that are the
+  /// same label and a different family, and three AVoIP drops that are
+  /// the same family and different labels. One word is wrong in one
+  /// direction on every job that mixes them.
+  ///
+  /// THE DECISIVE FORM OF THE ARGUMENT IS THAT A NAMING DECISION MUST NOT
+  /// SWITCH OFF A SAFETY CHECK. `video.hdbaset`'s `acceptedFamilies`
+  /// excludes `net.ethernet`, because patching an HDBaseT output into a
+  /// switch does not work and its 100 W PoH can damage the switch. That
+  /// is `SIG-001`, and it is only expressible because the family is its
+  /// own fact. If `{SERVICE}` set the family, choosing a label would
+  /// decide whether the check fires.
+  ///
+  /// An unresolved value REFUSES and never invents a family (§11.24.3),
+  /// which is the opposite of RJ-012's rule for media and is already
+  /// ruled: media types are user-extensible in v1 and signal families are
+  /// catalog-updated.
+  final String? signal;
 
   /// `@status=`, still a raw token — mapping it to `RoughInStatus` is the
   /// resolver's job, because a bad value must refuse with the list of
@@ -231,6 +260,10 @@ final class DropLineMalformed extends DropLineParse {
 
 const Set<String> _knownModifiers = {
   'service',
+  // DR-025 §11.24.3. The word is `signal` and not a third spelling
+  // because docs/07 §5.1 already lists it as an accepted CSV header for
+  // exactly this column, so the DSL and the importer share one word.
+  'signal',
   'status',
   'outlet',
   'pathway',
@@ -294,6 +327,7 @@ DropLineParse parseDropLine(String line) {
     locationName: locationName,
     items: items,
     service: mods['service'],
+    signal: mods['signal'],
     status: mods['status'],
     outletDesignation: mods['outlet'],
     pathwayName: mods['pathway'],
