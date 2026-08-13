@@ -506,6 +506,18 @@ bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
   // means or about which unit an unadorned number is in.
   StructureColumnId.routedLength || StructureColumnId.cutLength => true,
 
+  // THE SIGNAL FAMILY (DR-025 §11.24.5, board #587). It was grouped with
+  // MEDIA as "derived, needs a picker and not a text box", and a picker
+  // was never the whole of what it lacked: there was no Command behind
+  // it either, so a surface had nothing to call. `SetSignalFamilyCommand`
+  // is that command and this makes the cell reachable.
+  //
+  // Batchable follows for free, because the rule below is
+  // editable-minus-the-unique-ones and a family is not unique. MEDIA
+  // does NOT follow: it still has no command, and RJ-012 makes it
+  // user-extensible, which is a different question from this one.
+  StructureColumnId.service => true,
+
   _ => false,
 };
 
