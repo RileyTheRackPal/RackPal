@@ -503,14 +503,16 @@
           "displayName": "3.5 mm stereo (TRS)",
           "footprintHeightNm": 7000000,
           "footprintWidthNm": 7000000,
-          "id": "conn.3_5mm_trs"
+          "id": "conn.3_5mm_trs",
+          "pitchNm": 10000000
         },
         "conn.3_5mm_ts": {
           "aliases": [],
           "displayName": "3.5 mm mono (TS)",
           "footprintHeightNm": 7000000,
           "footprintWidthNm": 7000000,
-          "id": "conn.3_5mm_ts"
+          "id": "conn.3_5mm_ts",
+          "pitchNm": 10000000
         },
         "conn.6_35mm_trs": {
           "aliases": [],
@@ -524,6 +526,7 @@
           "displayName": "Banana plug",
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 10000000,
+          "genderApplies": true,
           "id": "conn.banana"
         },
         "conn.barrel_dc": {
@@ -533,6 +536,7 @@
           "displayName": "DC barrel",
           "footprintHeightNm": 8000000,
           "footprintWidthNm": 8000000,
+          "genderApplies": true,
           "id": "conn.barrel_dc"
         },
         "conn.binding_post": {
@@ -542,13 +546,16 @@
           "displayName": "Binding post",
           "footprintHeightNm": 12000000,
           "footprintWidthNm": 12000000,
-          "id": "conn.binding_post"
+          "genderApplies": true,
+          "id": "conn.binding_post",
+          "pitchNm": 20000000
         },
         "conn.bnc50": {
           "aliases": [],
           "displayName": "BNC 50 ohm",
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 10000000,
+          "genderApplies": true,
           "id": "conn.bnc50"
         },
         "conn.bnc75": {
@@ -556,7 +563,9 @@
           "displayName": "BNC 75 ohm",
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 10000000,
-          "id": "conn.bnc75"
+          "genderApplies": true,
+          "id": "conn.bnc75",
+          "pitchNm": 14000000
         },
         "conn.de9": {
           "aliases": [
@@ -566,7 +575,9 @@
           "displayName": "DE-9 (DB9)",
           "footprintHeightNm": 13000000,
           "footprintWidthNm": 31000000,
-          "id": "conn.de9"
+          "genderApplies": true,
+          "id": "conn.de9",
+          "pitchNm": 34000000
         },
         "conn.dp": {
           "aliases": [],
@@ -580,6 +591,7 @@
           "displayName": "Euroblock 2-pole",
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 9000000,
+          "genderApplies": true,
           "id": "conn.euroblock_2"
         },
         "conn.euroblock_3": {
@@ -589,13 +601,16 @@
           "displayName": "Euroblock 3-pole",
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 12500000,
-          "id": "conn.euroblock_3"
+          "genderApplies": true,
+          "id": "conn.euroblock_3",
+          "pitchNm": 15000000
         },
         "conn.euroblock_5": {
           "aliases": [],
           "displayName": "Euroblock 5-pole",
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 18000000,
+          "genderApplies": true,
           "id": "conn.euroblock_5"
         },
         "conn.f_type": {
@@ -603,7 +618,9 @@
           "displayName": "F-type",
           "footprintHeightNm": 9500000,
           "footprintWidthNm": 9500000,
-          "id": "conn.f_type"
+          "genderApplies": true,
+          "id": "conn.f_type",
+          "pitchNm": 13000000
         },
         "conn.ground_lug": {
           "aliases": [
@@ -624,6 +641,7 @@
           "displayName": "HD-15 (VGA)",
           "footprintHeightNm": 12000000,
           "footprintWidthNm": 27000000,
+          "genderApplies": true,
           "id": "conn.hd15"
         },
         "conn.hdmi_a": {
@@ -633,7 +651,8 @@
           "displayName": "HDMI Type A",
           "footprintHeightNm": 5600000,
           "footprintWidthNm": 15100000,
-          "id": "conn.hdmi_a"
+          "id": "conn.hdmi_a",
+          "pitchNm": 19000000
         },
         "conn.hdmi_c": {
           "aliases": [],
@@ -656,7 +675,9 @@
           "displayName": "IEC C13",
           "footprintHeightNm": 20000000,
           "footprintWidthNm": 27000000,
-          "id": "conn.iec_c13"
+          "genderApplies": true,
+          "id": "conn.iec_c13",
+          "pitchNm": 30000000
         },
         "conn.iec_c14": {
           "aliases": [
@@ -665,7 +686,9 @@
           "displayName": "IEC C14",
           "footprintHeightNm": 20000000,
           "footprintWidthNm": 27000000,
-          "id": "conn.iec_c14"
+          "genderApplies": true,
+          "id": "conn.iec_c14",
+          "pitchNm": 30000000
         },
         "conn.iec_c19": {
           "aliases": [
@@ -674,6 +697,7 @@
           "displayName": "IEC C19",
           "footprintHeightNm": 26000000,
           "footprintWidthNm": 35000000,
+          "genderApplies": true,
           "id": "conn.iec_c19"
         },
         "conn.iec_c20": {
@@ -683,6 +707,7 @@
           "displayName": "IEC C20",
           "footprintHeightNm": 26000000,
           "footprintWidthNm": 35000000,
+          "genderApplies": true,
           "id": "conn.iec_c20"
         },
         "conn.jis_f05": {
@@ -715,13 +740,16 @@
           "displayName": "LC duplex",
           "footprintHeightNm": 9000000,
           "footprintWidthNm": 12500000,
-          "id": "conn.lc_duplex"
+          "genderApplies": true,
+          "id": "conn.lc_duplex",
+          "pitchNm": 14000000
         },
         "conn.mini_din4": {
           "aliases": [],
           "displayName": "Mini-DIN 4 (S-Video)",
           "footprintHeightNm": 12000000,
           "footprintWidthNm": 12000000,
+          "genderApplies": true,
           "id": "conn.mini_din4"
         },
         "conn.mini_dp": {
@@ -738,7 +766,9 @@
           "displayName": "NEMA 5-15P",
           "footprintHeightNm": 27000000,
           "footprintWidthNm": 34000000,
-          "id": "conn.nema_5_15p"
+          "genderApplies": true,
+          "id": "conn.nema_5_15p",
+          "pitchNm": 38000000
         },
         "conn.nema_5_15r": {
           "aliases": [
@@ -747,7 +777,9 @@
           "displayName": "NEMA 5-15R",
           "footprintHeightNm": 27000000,
           "footprintWidthNm": 34000000,
-          "id": "conn.nema_5_15r"
+          "genderApplies": true,
+          "id": "conn.nema_5_15r",
+          "pitchNm": 38000000
         },
         "conn.nema_5_20p": {
           "aliases": [
@@ -756,7 +788,9 @@
           "displayName": "NEMA 5-20P",
           "footprintHeightNm": 27000000,
           "footprintWidthNm": 34000000,
-          "id": "conn.nema_5_20p"
+          "genderApplies": true,
+          "id": "conn.nema_5_20p",
+          "pitchNm": 38000000
         },
         "conn.nema_5_20r": {
           "aliases": [
@@ -765,7 +799,9 @@
           "displayName": "NEMA 5-20R",
           "footprintHeightNm": 27000000,
           "footprintWidthNm": 34000000,
-          "id": "conn.nema_5_20r"
+          "genderApplies": true,
+          "id": "conn.nema_5_20r",
+          "pitchNm": 38000000
         },
         "conn.nema_l5_30p": {
           "aliases": [
@@ -774,6 +810,7 @@
           "displayName": "NEMA L5-30P (twist-lock)",
           "footprintHeightNm": 32000000,
           "footprintWidthNm": 32000000,
+          "genderApplies": true,
           "id": "conn.nema_l5_30p"
         },
         "conn.phoenix_4": {
@@ -781,6 +818,7 @@
           "displayName": "Phoenix 4-pole (Cresnet)",
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 18000000,
+          "genderApplies": true,
           "id": "conn.phoenix_4"
         },
         "conn.punchdown_110": {
@@ -797,14 +835,18 @@
           "displayName": "RCA",
           "footprintHeightNm": 8400000,
           "footprintWidthNm": 8400000,
-          "id": "conn.rca"
+          "genderApplies": true,
+          "id": "conn.rca",
+          "pitchNm": 11000000
         },
         "conn.rca75": {
           "aliases": [],
           "displayName": "RCA 75 ohm",
           "footprintHeightNm": 8400000,
           "footprintWidthNm": 8400000,
-          "id": "conn.rca75"
+          "genderApplies": true,
+          "id": "conn.rca75",
+          "pitchNm": 11000000
         },
         "conn.rj45": {
           "aliases": [
@@ -814,13 +856,16 @@
           "displayName": "RJ45 (8P8C)",
           "footprintHeightNm": 13000000,
           "footprintWidthNm": 15000000,
-          "id": "conn.rj45"
+          "genderApplies": true,
+          "id": "conn.rj45",
+          "pitchNm": 17000000
         },
         "conn.sc": {
           "aliases": [],
           "displayName": "SC fibre",
           "footprintHeightNm": 13000000,
           "footprintWidthNm": 13000000,
+          "genderApplies": true,
           "id": "conn.sc"
         },
         "conn.screw_terminal": {
@@ -844,6 +889,7 @@
           "displayName": "SpeakON NL4",
           "footprintHeightNm": 24000000,
           "footprintWidthNm": 24000000,
+          "genderApplies": true,
           "id": "conn.speakon_nl4"
         },
         "conn.st": {
@@ -851,6 +897,7 @@
           "displayName": "ST fibre",
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 10000000,
+          "genderApplies": true,
           "id": "conn.st"
         },
         "conn.unterminated": {
@@ -872,14 +919,18 @@
           "displayName": "XLR3",
           "footprintHeightNm": 24000000,
           "footprintWidthNm": 24000000,
-          "id": "conn.xlr3"
+          "genderApplies": true,
+          "id": "conn.xlr3",
+          "pitchNm": 27000000
         },
         "conn.xlr5": {
           "aliases": [],
           "displayName": "XLR5",
           "footprintHeightNm": 24000000,
           "footprintWidthNm": 24000000,
-          "id": "conn.xlr5"
+          "genderApplies": true,
+          "id": "conn.xlr5",
+          "pitchNm": 27000000
         }
       },
       "media": {

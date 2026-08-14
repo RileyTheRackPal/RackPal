@@ -117,6 +117,49 @@ lead, a ground lug, and an unterminated wire end are not jacks). This is
 asserted, not just documented, see `seed_catalog_test.dart`'s
 connector-footprint group.
 
+### 3.1 Connector pitch (DR-057, canon §11.56)
+
+`ConnectorTypeDef.pitch` is the **centre-to-centre spacing for a row** of that
+connector, and it is authored on stricter terms than the footprint above:
+**nothing is scaled and nothing is estimated.** Twenty of the forty-nine
+shipped connectors carry one.
+
+| Connector | Pitch (mm) | Source |
+|---|---|---|
+| `conn.hdmi_a` | 19 | §5.2 verbatim |
+| `conn.rj45` | 17 | §5.2 verbatim |
+| `conn.rca` / `conn.rca75` | 11 | §5.2 verbatim (one row names both) |
+| `conn.xlr3` | 27 | §5.2 verbatim |
+| `conn.f_type` | 13 | §5.2 verbatim |
+| `conn.bnc75` | 14 | §5.2 verbatim |
+| `conn.de9` | 34 | §5.2 verbatim |
+| `conn.3_5mm_trs` | 10 | §5.2 verbatim |
+| `conn.iec_c14` | 30 | §5.2 verbatim |
+| `conn.nema_5_15r` | 38 | §5.2 verbatim |
+| `conn.euroblock_3` | 15 | §5.2 verbatim |
+| `conn.binding_post` | 20 | §5.2 verbatim (¾ in centres, and it is BELOW the 24 mm pair footprint) |
+| `conn.lc_duplex` | 14 | §5.2 verbatim |
+| `conn.3_5mm_ts` | 10 | shared shell with `conn.3_5mm_trs`: one 7 mm barrel, the pairing this file already makes for the footprint |
+| `conn.xlr5` | 27 | shared shell with `conn.xlr3`, which the row above states in terms |
+| `conn.iec_c13` | 30 | shared shell with `conn.iec_c14`: one body, one the inlet and one the outlet |
+| `conn.nema_5_15p` | 38 | shared shell with `conn.nema_5_15r`: one duplex yoke |
+| `conn.nema_5_20p` | 38 | shared shell with `conn.nema_5_15r` |
+| `conn.nema_5_20r` | 38 | shared shell with `conn.nema_5_15r` |
+
+**The other twenty-nine have no pitch and will not get one.** A pitch is not
+derivable from a footprint: most stated ones sit 2 to 4 mm above theirs, and
+then `conn.binding_post` sits 4 mm *below* its own, because ¾ inch is a
+physical fact about how binding posts are built and a clearance formula cannot
+know it.
+
+**This costs no capability.** CR-071 rules that panel geometry is
+auto-laid-out from connector **footprints**, and §5.2's own introduction says
+the layout *"needs a real footprint per connector"*. The algorithm advances by
+`pitch ?? (footprintWidth + gutter)` and skips the three connectors with no
+cutout, so it runs on every shipped template. See DR-057 §11.56.4, which exists
+because the opposite was briefly believed, read off docs/06 §5's pseudocode
+rather than off any ruling.
+
 ## 4. What this file does not claim
 
 - No template in this catalog represents a real, purchasable product.

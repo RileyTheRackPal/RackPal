@@ -253,12 +253,17 @@ The question "is the visual panel-layout feature in v1?" was answered three diff
 
 *Rejected alternative:* the rear-panel canvas as the device builder's primary output surface. It is precisely the "click 16 times" failure the brief exists to eliminate, multiplied, a 48-port patch panel would need 48 placements. Ports connect by **identity**, not position; the netlist, the schedule and the PDF are all complete without a single coordinate.
 
-Auto-layout ships anyway, because the geometry is free. Every `ConnectorTypeDef` carries a real footprint and pitch, and **a CI test asserts that every connector referenced by a shipped template has a footprint entry** (AC-050 / A2.2), the earlier table had 13 entries for a catalog using ~35 connectors, so the "zero-authoring correct rear panel" claim was false as written and is now enforced rather than asserted.
+Auto-layout ships anyway, because the geometry is free. Every `ConnectorTypeDef` carries a real footprint, and **a CI test asserts that every connector referenced by a shipped template has a footprint entry** (AC-050 / A2.2), the earlier table had 13 entries for a catalog using ~35 connectors, so the "zero-authoring correct rear panel" claim was false as written and is now enforced rather than asserted.
+
+**Pitch is a refinement and not a prerequisite (DR-057, §11.56).** 20 of the 49 shipped connectors carry a `pitch`: 14 transcribed from docs/catalog/seed-devices.md §5.2 and 6 inherited from a connector sharing the same physical shell. The other 29 have none and will not acquire an invented one, because a pitch is not derivable, `conn.binding_post` states 20 mm against a 24 mm pair footprint since ¾ in is the centre spacing binding posts are built on. **Step 2 below therefore falls back to the footprint**, which is what CR-071 rules the layout flows from in the first place, so auto-layout runs on every template rather than on the 14 of 45 an earlier reading of this pseudocode priced it at.
 
 ```text
 Algorithm — panel_layer.dart
   1. banks in BankDef.order; within a bank, ports in PortDef.order
-  2. flow left → right at ConnectorTypeDef.pitch
+  2. flow left → right, advancing by
+        ConnectorTypeDef.pitch ?? (footprintWidth + gutter)   ← DR-057 §11.56.4
+     skipping connectors §5.1 gives no cutout (hardwired,
+     ground lug, unterminated): they occupy no panel width
   3. wrap to a new row when chassisWidth is exhausted      ← 432 mm, NOT 482.6 (AC-032)
   4. distribute rows vertically within (heightU × 44.45 mm − 0.79 mm)
   5. pin power inlets far right; network/control far left; signal banks centred

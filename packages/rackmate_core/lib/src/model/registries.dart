@@ -155,6 +155,10 @@ final class SignalFamilyDef {
 /// footprint has been authored yet — never estimated (G4) — and a shipped
 /// catalog template must not reference such a connector; see
 /// `seed_catalog_test.dart`'s connector-footprint assertion.
+/// **[pitch] and [genderApplies] ARRIVED AT M4-B**, both documented since
+/// M0 and declared by neither the Dart nor the codec until then;
+/// `json_codec.dart`'s registry-drift note listed `genderApplies` among
+/// fields the corpus showed and this class never had.
 final class ConnectorTypeDef {
   const ConnectorTypeDef({
     required this.id,
@@ -162,6 +166,8 @@ final class ConnectorTypeDef {
     this.aliases = const [],
     this.footprintWidth,
     this.footprintHeight,
+    this.pitch,
+    this.genderApplies = false,
   });
 
   final ConnectorTypeId id;
@@ -169,6 +175,60 @@ final class ConnectorTypeDef {
   final List<String> aliases;
   final Len? footprintWidth;
   final Len? footprintHeight;
+
+  /// Centre-to-centre spacing for a ROW of these connectors, which is
+  /// docs/06 §5's auto-layout step 2, *flow left → right at
+  /// `ConnectorTypeDef.pitch`*. Step 2 could not be written before this
+  /// field existed, which is why M4-B runs ahead of the panel layer.
+  ///
+  /// **NOT derivable from [footprintWidth], and the corpus's own table
+  /// proves it.** Most of docs/catalog/seed-devices.md §5.2's stated
+  /// pitches sit 2 to 4 mm above the footprint, which looks like a
+  /// uniform clearance until `conn.binding_post`, whose pitch of 20 mm is
+  /// BELOW its 24 mm pair footprint because 20 mm is the ¾ inch centre
+  /// spacing binding posts are actually built on. A derived pitch would
+  /// have to invent that, and inventing it is what draws a rear panel
+  /// wrong to scale on the one view that gets taped inside the rack door
+  /// (AC-032).
+  ///
+  /// **NULL IS UNKNOWN AND MOST CONNECTORS ARE NULL** (G4), permanently
+  /// (DR-057 §11.56.3). §5.2 states a pitch for fourteen ids and six more
+  /// inherit one from a connector sharing their shell; the remaining
+  /// twenty-nine have no stated pitch anywhere in the corpus and are not
+  /// going to acquire an invented one.
+  ///
+  /// **AN ABSENT PITCH DOES NOT DISABLE AUTO-LAYOUT** (DR-057 §11.56.4).
+  /// CR-071 rules that panel geometry is *"auto-laid-out from connector
+  /// footprints"*, and docs/catalog §5.2's own intro says the layout
+  /// *"needs a real footprint per connector"*. Neither names a pitch. The
+  /// algorithm advances by `pitch ?? (footprintWidth + gutter)`: where
+  /// the corpus states a real centre spacing this field supplies it,
+  /// because it carries physical facts a formula cannot reach, and
+  /// everywhere else the footprint does the work.
+  ///
+  /// So this is a REFINEMENT, not a prerequisite. Reading it as a
+  /// prerequisite is a mistake made once already, from docs/06 §5's
+  /// pseudocode rather than from the ruling, and it priced a feature cut
+  /// that did not exist.
+  final Len? pitch;
+
+  /// Whether gender is a real distinction for this connector, and
+  /// therefore whether `CON-002` ("both ends male or both ends female")
+  /// evaluates and whether the schematic glyph's fill encodes gender
+  /// (CR-059, canon §6.3).
+  ///
+  /// **A `bool` and not a `bool?`, which is a deliberate departure from
+  /// this file's usual G4 shape.** CR-059 specifies `bool` in terms, and
+  /// canon §6.3 authors the value for every connector the catalog ships,
+  /// so there is no unknown to represent in the seed. `false` is also the
+  /// safe default for the one thing that reads it: a validation rule that
+  /// declines to fire costs a missed finding, and one that fires wrongly
+  /// costs a false positive, which is the failure M5's whole
+  /// known-good-near-miss design is built to avoid.
+  ///
+  /// A user-authored connector type (M4-P) therefore arrives with gender
+  /// not applying until somebody says otherwise.
+  final bool genderApplies;
 }
 
 /// What cable is pulled, how long it may run, what jacket it takes.

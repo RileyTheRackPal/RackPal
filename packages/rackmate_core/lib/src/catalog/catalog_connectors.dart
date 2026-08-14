@@ -23,6 +23,49 @@
 // cutout to author, and the catalog test's assertion exempts exactly these
 // three ids rather than inventing a footprint for them (G4: null is
 // unknown, never estimated).
+//
+// ---------------------------------------------------------------------
+// M4-B (board #173) ADDED TWO FIELDS, AND THEY ARE AUTHORED ON OPPOSITE
+// PRINCIPLES. Read this before adding a value to either.
+//
+// `genderApplies` IS COMPLETE, because canon §6.3 authors it. That table
+// gives a yes or no for every connector id below, so every entry here is
+// a TRANSCRIPTION and none is a judgement. CR-059 is why the field
+// exists: the five-value gender enum contained two synonym pairs and
+// silently broke `CON-002`, whose "both ends male or both ends female"
+// never fired for jack+jack.
+//
+// `pitch` IS DELIBERATELY SPARSE AND STAYS THAT WAY (DR-057 §11.56).
+// TWENTY of the forty-nine carry one: FOURTEEN transcribed from
+// docs/catalog/seed-devices.md §5.2's thirteen rows (`conn.rca` /
+// `conn.rca75` share a row), and SIX that inherit from a connector
+// sharing their physical shell, each marked at its entry. The remaining
+// twenty-nine are null and are not going to acquire a value.
+//
+// DO NOT FILL THE REST IN, and specifically do not derive one from
+// `footprintWidth`. It looks derivable: most of the stated pitches sit 2
+// to 4 mm above their footprint, which reads as a uniform clearance.
+// Then `conn.binding_post` has a pitch of 20 mm against a 24 mm pair
+// footprint, BELOW it, because 20 mm is the ¾ inch centre spacing
+// binding posts are actually built on, and `conn.euroblock_3`'s own name
+// carries a 3.5 mm CONTACT pitch that has nothing to do with its 15 mm
+// connector pitch. A formula fitted to the rest gets both of those
+// wrong.
+//
+// AN ABSENT PITCH COSTS NOTHING, and the paragraph that used to sit here
+// said otherwise. It claimed panel auto-layout was unavailable for a
+// template using an unpitched connector, and that was read off docs/06
+// §5's pseudocode. **CR-071 rules the layout flows from connector
+// FOOTPRINTS** and §5.2's own intro says the same; neither names a
+// pitch. The algorithm advances by `pitch ?? (footprintWidth + gutter)`
+// (DR-057 §11.56.4), so the twenty stated pitches sharpen a layout that
+// works without them.
+//
+// Note the footprint table above took a different call, scaling within a
+// connector family for values §5.2 does not state, and
+// `assets/catalog/sources.md` labels those rows as scaled. The
+// shared-shell six here are the same instrument used far more narrowly:
+// only where sources.md ALREADY documents two ids as one physical shell.
 
 import 'package:rackmate_core/src/model/registries.dart';
 import 'package:rackmate_core/src/units/ids.dart';
@@ -44,22 +87,32 @@ const Set<String> kFootprintExemptConnectors = {
   'conn.unterminated',
 };
 
+/// [pitchMm] is the centre-to-centre row spacing and is **omitted for
+/// most connectors on purpose** — see this file's header. [gender] is
+/// transcribed from canon §6.3, which authors it for every id below.
 ConnectorTypeDef _c(
   String id,
   String name,
   num widthMm,
   num heightMm, {
   List<String> aliases = const [],
+  num? pitchMm,
+  bool gender = false,
 }) => ConnectorTypeDef(
   id: ConnectorTypeId(id),
   displayName: name,
   aliases: aliases,
   footprintWidth: _mm(widthMm),
   footprintHeight: _mm(heightMm),
+  pitch: pitchMm == null ? null : _mm(pitchMm),
+  genderApplies: gender,
 );
 
 /// A registry entry for a connector that has no panel cutout to author.
-/// Both dimensions stay null — unknown is never estimated (G4).
+/// Both dimensions stay null — unknown is never estimated (G4) — and so
+/// does [ConnectorTypeDef.pitch], which is the same fact: nothing with no
+/// cutout has a row spacing. All three are `genderApplies: no` in canon
+/// §6.3, which is the default, so none passes the flag.
 ConnectorTypeDef _cNoFootprint(
   String id,
   String name, {
@@ -76,26 +129,47 @@ ConnectorTypeDef _cNoFootprint(
 Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
   final all = <ConnectorTypeDef>[
     // -- Digital video --------------------------------------------------
-    _c('conn.hdmi_a', 'HDMI Type A', 15.1, 5.6, aliases: const ['hdmi']),
+    _c(
+      'conn.hdmi_a',
+      'HDMI Type A',
+      15.1,
+      5.6,
+      aliases: const ['hdmi'],
+      pitchMm: 19,
+    ),
     _c('conn.hdmi_c', 'HDMI Type C (Mini)', 11.3, 4.2),
     _c('conn.hdmi_d', 'HDMI Type D (Micro)', 9.1, 3.4),
     _c('conn.dp', 'DisplayPort', 13.0, 5.0),
     _c('conn.mini_dp', 'Mini DisplayPort', 8.0, 4.0),
     _c('conn.usb_c', 'USB-C', 9.0, 3.5),
     // -- Analog video / RF -----------------------------------------------
-    _c('conn.bnc75', 'BNC 75 ohm', 10.0, 10.0),
-    _c('conn.bnc50', 'BNC 50 ohm', 10.0, 10.0),
-    _c('conn.f_type', 'F-type', 9.5, 9.5),
-    _c('conn.rca', 'RCA', 8.4, 8.4),
-    _c('conn.rca75', 'RCA 75 ohm', 8.4, 8.4),
-    _c('conn.hd15', 'HD-15 (VGA)', 27.0, 12.0),
-    _c('conn.mini_din4', 'Mini-DIN 4 (S-Video)', 12.0, 12.0),
+    _c('conn.bnc75', 'BNC 75 ohm', 10.0, 10.0, pitchMm: 14, gender: true),
+    _c('conn.bnc50', 'BNC 50 ohm', 10.0, 10.0, gender: true),
+    _c('conn.f_type', 'F-type', 9.5, 9.5, pitchMm: 13, gender: true),
+    _c('conn.rca', 'RCA', 8.4, 8.4, pitchMm: 11, gender: true),
+    _c('conn.rca75', 'RCA 75 ohm', 8.4, 8.4, pitchMm: 11, gender: true),
+    _c('conn.hd15', 'HD-15 (VGA)', 27.0, 12.0, gender: true),
+    _c('conn.mini_din4', 'Mini-DIN 4 (S-Video)', 12.0, 12.0, gender: true),
     // -- Analog / digital audio ------------------------------------------
-    _c('conn.3_5mm_ts', '3.5 mm mono (TS)', 7.0, 7.0),
-    _c('conn.3_5mm_trs', '3.5 mm stereo (TRS)', 7.0, 7.0),
+    // SHARED SHELL with `conn.3_5mm_trs` below — the same 7 mm barrel,
+    // which is the pairing `assets/catalog/sources.md` already makes for
+    // the footprint ("applied to both TS/TRS variants of the same
+    // barrel"). DR-057 §11.56.2.
+    _c('conn.3_5mm_ts', '3.5 mm mono (TS)', 7.0, 7.0, pitchMm: 10),
+    _c('conn.3_5mm_trs', '3.5 mm stereo (TRS)', 7.0, 7.0, pitchMm: 10),
     _c('conn.6_35mm_trs', '1/4 in TRS', 10.0, 10.0),
-    _c('conn.xlr3', 'XLR3', 24.0, 24.0, aliases: const ['xlr']),
-    _c('conn.xlr5', 'XLR5', 24.0, 24.0),
+    _c(
+      'conn.xlr3',
+      'XLR3',
+      24.0,
+      24.0,
+      aliases: const ['xlr'],
+      pitchMm: 27,
+      gender: true,
+    ),
+    // SHARED SHELL with `conn.xlr3` — sources.md says so in terms
+    // ("XLR5 shares the XLR3 shell"). DR-057 §11.56.2.
+    _c('conn.xlr5', 'XLR5', 24.0, 24.0, pitchMm: 27, gender: true),
     _c(
       'conn.jis_f05',
       'JIS F05 (TOSLINK)',
@@ -104,10 +178,26 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['toslink'],
     ),
     // -- Network -----------------------------------------------------------
-    _c('conn.rj45', 'RJ45 (8P8C)', 15.0, 13.0, aliases: const ['rj45', 'hdbt']),
-    _c('conn.lc_duplex', 'LC duplex', 12.5, 9.0, aliases: const ['lc']),
-    _c('conn.sc', 'SC fibre', 13.0, 13.0),
-    _c('conn.st', 'ST fibre', 10.0, 10.0),
+    _c(
+      'conn.rj45',
+      'RJ45 (8P8C)',
+      15.0,
+      13.0,
+      aliases: const ['rj45', 'hdbt'],
+      pitchMm: 17,
+      gender: true,
+    ),
+    _c(
+      'conn.lc_duplex',
+      'LC duplex',
+      12.5,
+      9.0,
+      aliases: const ['lc'],
+      pitchMm: 14,
+      gender: true,
+    ),
+    _c('conn.sc', 'SC fibre', 13.0, 13.0, gender: true),
+    _c('conn.st', 'ST fibre', 10.0, 10.0, gender: true),
     _c(
       'conn.sfp_cage',
       'SFP/SFP+/SFP28 cage',
@@ -116,23 +206,47 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['sfp+'],
     ),
     // -- Control -------------------------------------------------------------
-    _c('conn.de9', 'DE-9 (DB9)', 31.0, 13.0, aliases: const ['db9', '232']),
-    _c('conn.euroblock_2', 'Euroblock 2-pole', 9.0, 10.0),
+    _c(
+      'conn.de9',
+      'DE-9 (DB9)',
+      31.0,
+      13.0,
+      aliases: const ['db9', '232'],
+      pitchMm: 34,
+      gender: true,
+    ),
+    _c('conn.euroblock_2', 'Euroblock 2-pole', 9.0, 10.0, gender: true),
     _c(
       'conn.euroblock_3',
       'Euroblock 3-pole',
       12.5,
       10.0,
       aliases: const ['euro3'],
+      pitchMm: 15,
+      gender: true,
     ),
-    _c('conn.euroblock_5', 'Euroblock 5-pole', 18.0, 10.0),
-    _c('conn.phoenix_4', 'Phoenix 4-pole (Cresnet)', 18.0, 10.0),
+    _c('conn.euroblock_5', 'Euroblock 5-pole', 18.0, 10.0, gender: true),
+    _c(
+      'conn.phoenix_4',
+      'Phoenix 4-pole (Cresnet)',
+      18.0,
+      10.0,
+      gender: true,
+    ),
     _c('conn.screw_terminal', 'Screw terminal', 9.0, 10.0),
     _c('conn.knx_terminal', 'KNX bus terminal', 9.0, 10.0),
     // -- Passive / mechanical audio -----------------------------------------
-    _c('conn.binding_post', 'Binding post', 12.0, 12.0, aliases: const ['bp']),
-    _c('conn.banana', 'Banana plug', 10.0, 10.0),
-    _c('conn.speakon_nl4', 'SpeakON NL4', 24.0, 24.0),
+    _c(
+      'conn.binding_post',
+      'Binding post',
+      12.0,
+      12.0,
+      aliases: const ['bp'],
+      pitchMm: 20,
+      gender: true,
+    ),
+    _c('conn.banana', 'Banana plug', 10.0, 10.0, gender: true),
+    _c('conn.speakon_nl4', 'SpeakON NL4', 24.0, 24.0, gender: true),
     _c(
       'conn.punchdown_110',
       '110 punchdown',
@@ -142,22 +256,98 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
     ),
     _c('conn.keystone', 'Keystone jack', 16.0, 16.0),
     // -- Power -----------------------------------------------------------
-    _c('conn.iec_c13', 'IEC C13', 27.0, 20.0, aliases: const ['c13']),
-    _c('conn.iec_c14', 'IEC C14', 27.0, 20.0, aliases: const ['c14']),
-    _c('conn.iec_c19', 'IEC C19', 35.0, 26.0, aliases: const ['c19']),
-    _c('conn.iec_c20', 'IEC C20', 35.0, 26.0, aliases: const ['c20']),
-    _c('conn.nema_5_15p', 'NEMA 5-15P', 34.0, 27.0, aliases: const ['5-15p']),
-    _c('conn.nema_5_15r', 'NEMA 5-15R', 34.0, 27.0, aliases: const ['5-15r']),
-    _c('conn.nema_5_20p', 'NEMA 5-20P', 34.0, 27.0, aliases: const ['5-20p']),
-    _c('conn.nema_5_20r', 'NEMA 5-20R', 34.0, 27.0, aliases: const ['5-20r']),
+    // SHARED SHELL with `conn.iec_c14` — the same body, one the inlet and
+    // one the outlet, which is why sources.md gives the pair a single
+    // footprint row. DR-057 §11.56.2.
+    _c(
+      'conn.iec_c13',
+      'IEC C13',
+      27.0,
+      20.0,
+      aliases: const ['c13'],
+      pitchMm: 30,
+      gender: true,
+    ),
+    _c(
+      'conn.iec_c14',
+      'IEC C14',
+      27.0,
+      20.0,
+      aliases: const ['c14'],
+      pitchMm: 30,
+      gender: true,
+    ),
+    _c(
+      'conn.iec_c19',
+      'IEC C19',
+      35.0,
+      26.0,
+      aliases: const ['c19'],
+      gender: true,
+    ),
+    _c(
+      'conn.iec_c20',
+      'IEC C20',
+      35.0,
+      26.0,
+      aliases: const ['c20'],
+      gender: true,
+    ),
+    _c(
+      'conn.nema_5_15p',
+      'NEMA 5-15P',
+      34.0,
+      27.0,
+      aliases: const ['5-15p'],
+      // SHARED SHELL with `conn.nema_5_15r`, below. All four 5-15/5-20
+      // variants sit on the same duplex yoke, which is why sources.md
+      // gives the four a single footprint row. DR-057 §11.56.2.
+      pitchMm: 38,
+      gender: true,
+    ),
+    _c(
+      'conn.nema_5_15r',
+      'NEMA 5-15R',
+      34.0,
+      27.0,
+      aliases: const ['5-15r'],
+      pitchMm: 38,
+      gender: true,
+    ),
+    _c(
+      'conn.nema_5_20p',
+      'NEMA 5-20P',
+      34.0,
+      27.0,
+      aliases: const ['5-20p'],
+      pitchMm: 38, // shared shell, see `conn.nema_5_15p`
+      gender: true,
+    ),
+    _c(
+      'conn.nema_5_20r',
+      'NEMA 5-20R',
+      34.0,
+      27.0,
+      aliases: const ['5-20r'],
+      pitchMm: 38, // shared shell, see `conn.nema_5_15p`
+      gender: true,
+    ),
     _c(
       'conn.nema_l5_30p',
       'NEMA L5-30P (twist-lock)',
       32.0,
       32.0,
       aliases: const ['l5-30p'],
+      gender: true,
     ),
-    _c('conn.barrel_dc', 'DC barrel', 8.0, 8.0, aliases: const ['dc']),
+    _c(
+      'conn.barrel_dc',
+      'DC barrel',
+      8.0,
+      8.0,
+      aliases: const ['dc'],
+      gender: true,
+    ),
     // -- No panel cutout (§5.1 states their footprint column as "no") -----
     //
     // NULL FOOTPRINTS, NOT ABSENT ENTRIES, and the distinction is the

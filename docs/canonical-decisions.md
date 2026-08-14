@@ -10432,6 +10432,80 @@ standing when the question arises.
 
 ---
 
+### 11.56 DR-057 · Connector pitch is a refinement, not a prerequisite, and stays sparse
+
+**Settled by the user on 2026-08-14**, during M4-B (board `#173`). It supersedes nothing and
+**corrects a reading of docs/06 §5 that was about to cut a feature nobody had ruled out.**
+
+**11.56.1 What M4-B found.** `ConnectorTypeDef.pitch` and `.genderApplies` were documented from M0
+and declared by neither the Dart nor the codec. The two turned out to be authorable on opposite
+terms. **`genderApplies` was never open work**: §6.3 already carries a complete yes/no table for
+every connector, so all 49 are a transcription and none is a judgement. **`pitch` is stated for 13
+rows naming 14 ids** in docs/catalog/seed-devices.md §5.2, and for nothing else in the corpus.
+
+**11.56.2 Shared-shell inheritance: SIX ids inherit a pitch, and the instrument is borrowed rather
+than invented.** `conn.3_5mm_ts` from `_trs` (one 7 mm barrel), `conn.xlr5` from `xlr3`,
+`conn.iec_c13` from `_c14` (one body, one the inlet), and `conn.nema_5_15p` / `_5_20p` / `_5_20r`
+from `_5_15r` (one duplex yoke). **Every one of those pairings is already made and cited in
+`assets/catalog/sources.md`'s FOOTPRINT table**, so this reuses an existing documented derivation
+instead of adding a second kind of provenance.
+
+Held in the test as a RELATION and not as six more literals: each inheritor must equal its source,
+so re-authoring `conn.xlr3` drags `conn.xlr5` with it. Six duplicated numbers would drift apart,
+which is the failure a shared-shell rule invites.
+
+**11.56.3 The remaining twenty-nine have no pitch, permanently.** Thirteen of them block real
+catalog ports: `conn.euroblock_2`, `conn.punchdown_110`, `conn.usb_c`, `conn.screw_terminal`,
+`conn.barrel_dc`, `conn.sfp_cage`, `conn.iec_c19`, `conn.jis_f05`, `conn.phoenix_4`,
+`conn.nema_l5_30p`, `conn.euroblock_5`, `conn.6_35mm_trs`, `conn.sc`. **No value is invented for
+any of them.** A pitch looks derivable from `footprintWidth`, since most stated ones sit 2 to 4 mm
+above it, and then `conn.binding_post` states 20 mm against a 24 mm pair footprint, BELOW it,
+because ¾ inch is the centre spacing binding posts are physically built on.
+
+**11.56.4 AND THAT COSTS NOTHING, WHICH IS THE CORRECTION THIS RULING EXISTS FOR.** The question
+was first put to the user as a trade-off between sparse pitch and auto-layout coverage, priced at
+**14 of 45 shipped templates**. That price came from **docs/06 §5's pseudocode**, *"flow left →
+right at `ConnectorTypeDef.pitch`"*, in a derived priority-3 document.
+
+**Every normative statement says footprint.** CR-071 §1 rules panel geometry *"auto-laid-out from
+connector footprints"*; docs/catalog §5.2's own introduction says the layout *"needs a real
+footprint per connector"*; roadmap §2 lists *"the connector footprint table complete for every
+shipped connector"*. **The word pitch appears in no ruling.**
+
+**The algorithm therefore advances by `pitch ?? (footprintWidth + gutter)`,** and skips the three
+connectors §5.1 gives no cutout, since a hardwired lead occupies no panel width. Auto-layout runs
+on **45 of 45** templates with ports. The 20 stated pitches sharpen a layout that works without
+them, and the gutter is **one stated layout constant**, the same kind of thing as `kGridUnit`, not
+a physical claim about 29 connectors.
+
+**Its value is left to M4-K**, where it can be judged against a rendered panel rather than a table.
+The evidence available now: the stated pitches sit 2 to 4 mm above their footprints, excluding
+`conn.binding_post`, whose real spacing is narrower than its pair footprint and which needs no
+gutter because it states one.
+
+**11.56.5 The mistake is recorded because it is the second of its kind in three days.** DR-056
+§11.55.1 read a Dart constructor as a product rule; this read a derived document's pseudocode as a
+requirement. Both were caught by the same instrument, re-reading the question against canon before
+acting on it, and in this case only just: the ruling was being drafted when the check ran. **A
+derived document that describes a mechanism is not a ruling about what the mechanism needs.**
+
+**11.56.6 Scope.** **No scope change to roadmap §2, which never named a pitch**, and no feature is
+cut: §11.56.4 is why. No migration and `kSchemaVersion` does not advance, because both new keys are
+written only when present, so every document already on disk still satisfies CR-117. The four
+shipped starters regenerate, since the seeded registry now carries values; their only byte delta is
+the two new keys.
+
+**docs/06 §5 is edited to match rather than pointered**, so §12 is owed nothing: its algorithm step
+2 gains the fallback and its *"carries a real footprint and pitch"* sentence becomes true as
+written.
+
+**11.56.7 Who builds what.** M4-B (`#173`) ships the fields, the codec, the authoring and the
+gates. **M4-K (`#182`) owns the algorithm, the gutter constant and the no-cutout skip**, none of
+which exists yet: there is no `panel_layer.dart`. `ConnectorTypeDef.pitch`'s own doc comment
+carries this ruling, because that is where the next implementer will be standing.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

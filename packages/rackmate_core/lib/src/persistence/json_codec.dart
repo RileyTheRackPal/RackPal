@@ -2445,9 +2445,16 @@ SignalDomainDef _decodeSignalDomainDef(SignalDomainId id, JsonMap json) =>
 // SignalFamilyDef/ConnectorTypeDef/MediaTypeDef: the doc's worked JSON
 // example (§6.2 registries.signalFamilies/connectors/media) shows
 // materially different field sets (topologyFree/maxChannelLengthNm,
-// contacts/genderApplies/matesWith, conductorCount/isPathwayOnly/
-// pairCount) that do not correspond to any field these Dart classes
-// actually declare. This codec serializes the real Dart fields
+// contacts/matesWith, conductorCount/pairCount) that do not correspond
+// to any field these Dart classes actually declare.
+//
+// `genderApplies` LEFT THAT LIST AT M4-B (board #173), joining
+// `ConnectorTypeDef` with `pitch` beside it, so both are now encoded
+// under the corpus's own key names. `isPathwayOnly` also left it, at
+// M3-E/1, when `MediaTypeDef` declared it; **the codec still does not
+// carry that one**, so a pathway-only media type does not survive a
+// save. Filed rather than fixed here, because it is CR-109's defect and
+// not this registry's. This codec serializes the real Dart fields
 // (id/displayName/domain/defaultConnector/defaultDirection/
 // defaultTopology/aliases, etc.), per this package's drift-resolution
 // instructions.
@@ -2542,6 +2549,19 @@ JsonMap _encodeConnectorTypeDef(ConnectorTypeDef d) {
   };
   putIfNotNull(json, 'footprintWidthNm', d.footprintWidth?.nm);
   putIfNotNull(json, 'footprintHeightNm', d.footprintHeight?.nm);
+  // M4-B's two, ADDITIVE AND WRITTEN ONLY WHEN PRESENT, for the reason
+  // `_encodeMediaTypeDef` sets out below at length: `registries` is
+  // serialized into every document, so a key written unconditionally
+  // would appear in every connector entry of every file already on disk
+  // and break `write(read(bytes)) == bytes` (CR-117) for exactly the
+  // files a user cannot regenerate. This is why `kSchemaVersion` does
+  // not move.
+  putIfNotNull(json, 'pitchNm', d.pitch?.nm);
+  // Suppressing `false` is safe HERE and would not be on a tri-state:
+  // nothing means anything by "gender deliberately does not apply" that
+  // it does not also mean by saying nothing, because `genderApplies` is
+  // a `bool` whose false branch IS the silent one (registries.dart).
+  if (d.genderApplies) json['genderApplies'] = true;
   return json;
 }
 
@@ -2563,6 +2583,11 @@ ConnectorTypeDef _decodeConnectorTypeDef(ConnectorTypeId id, JsonMap json) =>
       footprintHeight: _decodeLenOrNull(
         json['footprintHeightNm'],
         'ConnectorTypeDef.footprintHeightNm',
+      ),
+      pitch: _decodeLenOrNull(json['pitchNm'], 'ConnectorTypeDef.pitchNm'),
+      genderApplies: asBool(
+        json['genderApplies'] ?? false,
+        'ConnectorTypeDef.genderApplies',
       ),
     );
 
