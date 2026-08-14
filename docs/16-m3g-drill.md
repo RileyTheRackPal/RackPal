@@ -10,6 +10,16 @@ impression.
 
 Read [§4](#4-what-would-refute-it) before you start, not after.
 
+> **THE SAVED FILE IS THE VERDICT. DO NOT CLOSE THE APP UNTIL §3 HAS RUN.**
+>
+> §3 reads the file, so a run that ends without one produced a stopwatch reading and
+> nothing that can be checked. **A clean shutdown deletes the recovery snapshot**
+> (`session_controller.dart:694`, on every clean exit), so quitting normally is not a
+> second chance: the only survivable states are "still open" and "crashed".
+>
+> This is not hypothetical. It is what happened on the first run of this drill, and
+> §4.1 records it.
+
 ---
 
 ## 1. Setup, which is NOT on the clock
@@ -55,7 +65,17 @@ Garage: 4x Cat6, 2x RG6, 1x 22/4 @panel=PP-1
 Media Room: 4x Cat6, 2x RG6, 2x 16/4, 1x 22/4 @panel=PP-1
 ```
 
-**Stop the stopwatch.** Then `Ctrl+S`.
+**Then, in this order, and do not close the app until step 4 is done:**
+
+1. **Stop the stopwatch.** Write the number down now, on paper, before anything else.
+2. **`Ctrl+S`.** This is the artifact. Without it there is no verdict, only an anecdote.
+3. Fill in §5's form while it is fresh.
+4. **Run §3's verifier** and paste its output into the form.
+
+*Step 2 used to be half of a sentence attached to step 1 (`"Stop the stopwatch. Then
+`Ctrl+S`."`), which put the one irreversible action of the whole drill at the moment
+of maximum relief, in the smallest type on the page. It was missed on the first run
+and the run was lost. Numbering it is the whole fix.*
 
 | Room | Code | Drops | Landed |
 |---|---|---|---|
@@ -119,6 +139,51 @@ found by a person opening the app. So:
 - **A refutation is not a failure of the drill.** It is the drill working.
 - If the loop breaks, **record what you were doing on the keystroke it broke**, not what you think
   caused it. The M1 post-mortem's value is entirely in that level of detail.
+
+### 4.1 Run 1, 2026-08-13: UNVERIFIABLE, and the procedure is what failed
+
+**Elapsed 7 minutes, no file saved, verifier never ran. Not `MET` and not `REFUTED`: there is no
+measurement, so there is no verdict.** Recorded in full because §4's own rule does not exempt the
+runs that are embarrassing, and because the failure is in this document rather than in the operator.
+
+| | |
+|---|---|
+| Who ran it | The tool's author |
+| Practice | **Less rehearsed than M1's drill**, stated by the operator unprompted |
+| Machine | A laptop, the one intended for eventual field use, not the development machine |
+| Elapsed | **7 minutes**, reported as "total"; which of §5's two rows that is was not captured |
+| Artifact | **None.** The app was closed without `Ctrl+S` |
+| Verifier | Could not run |
+| Verdict | **UNVERIFIABLE** |
+
+**What is worth keeping from it.** Seven minutes against a fifteen-minute ceiling is 7 seconds per
+drop, under half the budget, on a machine that is not the development box and by an operator who had
+deliberately not rehearsed. As an *observation* that is encouraging. It is **not evidence**, because
+nothing checked that sixty drops with the right labels and the right fourteen open ends came out the
+other end, and the clause about entry speed is the only one of five a stopwatch alone can speak to.
+
+**The operator's stated caveat cuts the opposite way to the one intended.** Being under-rehearsed
+makes an entry-speed number more conservative, not less. **The confound that matters is the one §5
+names and the run did not mention**: this is the tool's author, who knew `@panel=PP-1` without
+looking it up and was reading from a script rather than inventing drops. Seven minutes is a floor
+for the population, not a median.
+
+**The finding, which is the actual product of this run.** The single irreversible step of the whole
+drill was the tail of a sentence, positioned at the moment of maximum relief, after "Stop the
+stopwatch". A person who has just finished a timed exercise stops. **A procedure that loses its
+entire artifact to one skipped keystroke is a fragile procedure**, and no amount of care from the
+operator fixes that: it is fixed by numbering the step and by saying that closing the app is
+irreversible, both of which §2 and the banner now do. A clean shutdown deletes the recovery snapshot
+(`session_controller.dart:694`), so there was nothing to recover by design and correctly so, since
+CR-096's rule that a recovery file is never a durable archive is worth more than this drill.
+
+**This is exactly what #163 asked for.** *"Run the drill EARLY, on a rough build ... a drill run on a
+rough build finds them while the design can still move."* It found a defect on the first run. The
+defect was in the script rather than in the software, which is a cheaper place to find one.
+
+**Run 2 carries a condition run 1 did not**: the operator is now rehearsed, and the unrehearsed
+7-minute observation cannot be recreated. Record that in §5 rather than quietly comparing the two
+numbers as though they were taken under the same conditions.
 
 ## 5. The operator's conditions (#164)
 
