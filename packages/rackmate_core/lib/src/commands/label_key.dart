@@ -265,4 +265,12 @@ enum LabelKey {
   // argument: whether the user was typing a manufacturer or a rack-unit
   // height is not a distinction the builder's Edit menu has to draw.
   setTemplateProperty,
+
+  // SAVING A TEMPLATE INTO THE PROJECT (commands/template_snapshot_
+  // commands.dart), M4-D. This one IS a document command and belongs on
+  // the document's stack, unlike `setTemplateProperty` above: the
+  // builder's own stack dies with the window (CR-106), and what the save
+  // leaves behind is a snapshot in `RackDocument.templates` that the
+  // project keeps. Undoing it is undoing an edit to the project.
+  saveTemplateToProject,
 }

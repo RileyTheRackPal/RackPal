@@ -342,6 +342,22 @@ class _Header extends StatelessWidget {
                   padding: EdgeInsets.only(right: 12),
                   child: Text('Unsaved'),
                 ),
+              // DERIVED, NOT A TOGGLE (AC-049, M4-D/4). There is no
+              // control here because there is nothing to control: the
+              // chip appears when the body has no ports and no category,
+              // and it leaves the moment either arrives. A checkbox
+              // would let somebody mark a finished template incomplete,
+              // which is the idea AC-049 exists to delete.
+              if (isDraftTemplate(session.body))
+                const Padding(
+                  padding: EdgeInsets.only(right: 12),
+                  child: Tooltip(
+                    message:
+                        'No ports and no category yet. Not a warning: '
+                        'a template with three fields is finished.',
+                    child: Chip(label: Text('Draft')),
+                  ),
+                ),
               _ChangeClassChip(report: report),
               const SizedBox(width: 12),
               IconButton(
@@ -875,6 +891,19 @@ class _IdentitySection extends StatelessWidget {
         'Everything outside this section is optional. A template saved '
         'with a name, a height and a prefix is not incomplete: it is a '
         'template (AC-049).',
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      const SizedBox(height: 8),
+      // THE LIMIT, SAID OUT LOUD. Saving writes a snapshot into THIS
+      // project (docs/06 §7.1's per-project embedded snapshots), because
+      // the user library directory is M4-N's and does not exist. A user
+      // who expects a shared library and finds out by opening a second
+      // job has been misled by silence; one sentence is cheaper than
+      // that.
+      Text(
+        'Saving stores this template in the current project. A shared '
+        'device library arrives at M4-N; until then a template travels '
+        'with the file it was authored in.',
         style: Theme.of(context).textTheme.bodySmall,
       ),
     ],

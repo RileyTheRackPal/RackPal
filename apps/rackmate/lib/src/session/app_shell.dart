@@ -55,6 +55,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:rackmate/src/session/app_services.dart';
 import 'package:rackmate/src/session/csv_import_actions.dart';
+import 'package:rackmate/src/session/device_builder_actions.dart';
 import 'package:rackmate/src/session/document_session.dart';
 import 'package:rackmate/src/session/drop_entry_actions.dart';
 import 'package:rackmate/src/session/locations_actions.dart';
@@ -69,7 +70,12 @@ import 'package:rackmate/src/session/structure_matrix_actions.dart';
 import 'package:rackmate/src/session/window_chrome.dart';
 import 'package:rackmate/src/storage/recents_store.dart';
 import 'package:rackmate_core/rackmate_core.dart'
-    show LocationRemovalPlan, TextMeasurer, Uuid, buildRackPresets;
+    show
+        LocationRemovalPlan,
+        TemplateBody,
+        TextMeasurer,
+        Uuid,
+        buildRackPresets;
 import 'package:rackmate_ui/rackmate_ui.dart';
 
 /// Which tab of the v1 strip each `Ctrl/Cmd+n` view identity renders as.
@@ -489,6 +495,7 @@ final class AppShellState extends State<AppShell>
               controller: _projectMenu,
               onLocations: () => unawaited(_openLocations()),
               onStructure: () => unawaited(_openStructureEditor()),
+              onNewDevice: () => unawaited(_openDeviceBuilder()),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -741,6 +748,34 @@ final class AppShellState extends State<AppShell>
     );
   }
 
+  /// docs/06's Device Builder, from `Project ▸ New device template…`
+  /// (M4-D, #175).
+  ///
+  /// STARTS FROM A BLANK BODY WITH `Generic` ALREADY IN IT (DR-056,
+  /// §11.55): `Generic` is the trade's standard token for *unspecified /
+  /// by others* in a manufacturer column, so pre-filling it is the
+  /// industry's own spelling of what an unknown prints rather than a
+  /// fabricated value under G4. `model` is NOT pre-filled, by the same
+  /// ruling: no trade convention was offered for a model string, so an
+  /// untouched one stays blank, prints an unknown and counts as one.
+  ///
+  /// NO `Duplicate & edit` ENTRY POINT YET. docs/06 §7.3 offers one from
+  /// every catalog card, and that belongs with the library browser
+  /// (M4-O, #186); this menu item is the one route that exists, and it
+  /// authors a NEW template rather than forking a seeded one.
+  Future<void> _openDeviceBuilder() async {
+    final session = _services.session;
+    await showDeviceBuilder(
+      context,
+      template: TemplateBody(
+        manufacturer: 'Generic',
+        model: '',
+        displayName: '',
+      ),
+      actions: buildDeviceBuilderActions(controller: session.controller),
+    );
+  }
+
   /// docs/07 §5's import, from the editor's `Import CSV…` (M3-F/2).
   ///
   /// THE BODY COMES FROM THE EDITOR'S PICKER, the same #158 question
@@ -984,11 +1019,18 @@ final class _ProjectMenu extends StatelessWidget {
     required this.controller,
     required this.onLocations,
     required this.onStructure,
+    required this.onNewDevice,
   });
 
   final MenuController controller;
   final VoidCallback onLocations;
   final VoidCallback onStructure;
+
+  /// docs/06's builder. Under `Project` rather than beside the palette,
+  /// because what it authors is a template the PROJECT holds (§7.1's
+  /// per-project embedded snapshots) until M4-N gives templates a
+  /// library of their own.
+  final VoidCallback onNewDevice;
 
   @override
   Widget build(BuildContext context) => MenuBar(
@@ -1006,6 +1048,10 @@ final class _ProjectMenu extends StatelessWidget {
           MenuItemButton(
             onPressed: onStructure,
             child: const Text('Structured wiring…'),
+          ),
+          MenuItemButton(
+            onPressed: onNewDevice,
+            child: const Text('New device template…'),
           ),
         ],
         child: const Text('Project'),
