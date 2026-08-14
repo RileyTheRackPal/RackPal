@@ -10359,6 +10359,79 @@ match rather than pointered**, so §12 is owed nothing.
 
 ---
 
+### 11.55 DR-056 · `Generic` is the trade's word for unspecified, so the builder pre-fills it
+
+**Settled by the user on 2026-08-14**, ratifying `docs/06-device-builder.md` §3.1's existing
+sentence *"Defaults to `Generic`"* and giving it the ruling it never had. It supersedes nothing.
+
+**11.55.1 The question was raised as a contradiction that does not exist, and the correction is
+recorded because it is the instructive part.** M4-A flagged that board `#175` names the builder's
+three required fields as `displayName`, RU height and `typePrefix`, while `TemplateBody`'s
+constructor requires `manufacturer`, `model` and `displayName`. **Those are not two claims about the
+same thing.** AC-049 (§2.3) rules the FORM's required set and docs/06 §1 and §3 state it in terms;
+the constructor is a Dart signature the builder satisfies by supplying values. A constructor
+parameter was read as a product rule, and the corpus had answered the actual question before it was
+asked, which is precisely the failure the *re-read a task against canon* practice exists to prevent.
+
+**AC-049 stands untouched: three required fields, `displayName`, `frontU`, `typePrefix`.** Nothing
+in this ruling adds a fourth or removes one.
+
+**11.55.2 The real question the census surfaced, which canon WAS silent on.** `docs/06` §3.1's
+default sits in a **derived, priority-3 document**, and its stated reason is about the seed: *"The
+whole seeded catalog is `Generic`"*, which 31 catalog entries confirm. That justifies the seeded
+bodies, which hard-code the string in Dart. **It says nothing about what a USER's untouched field
+should become**, and the two diverge the first time somebody authors a real device.
+
+The consequence is concrete and printed. `equipment_list.dart:428` runs
+`_trimToNull(body?.manufacturer)`, and `equipment_sheet.dart:606` renders
+`row.manufacturer ?? kUnknownCell`, so a blank manufacturer reaches paper as **`—`** and is counted
+as an unknown, while `Generic` reaches paper as `Generic` and is counted as known.
+
+**11.55.3 The ruling: the form pre-fills the literal `Generic`, and the reason is trade convention.**
+**`Generic` is standard within the industry** in a manufacturer column: it is the recognised token
+for *unspecified* / *by others* / *contractor's choice*, and the people reading an equipment list
+parse it as such. It is therefore **not a fabricated value under G4** but the trade's own spelling of
+the same fact `—` states, on a document whose readers already know the word.
+
+**11.55.4 The objection that was put and answered, recorded so it is not re-run.** The argument
+against was that a value the user never typed reaches a client-facing deliverable, where `Generic`
+would read as a claim that a real device is a no-name unit, and that the unknown rollup, which exists
+to catch exactly that before a sheet goes out, cannot see a field holding a value.
+
+**That argument depends entirely on how a reader parses the word, and it was wrong about the
+reader.** A convention the trade already reads as "unspecified" is not misread as a product claim.
+The objection was an inference about document reading made without trade knowledge, and the same
+class has been overruled on the same grounds at **§11.47** (DR-048: the drawing machine *"is not on
+the rack's network"*, when a project copy at the client's home routinely is) and at **§11.54.7**
+(DR-055: two visits, therefore two sheets). Named rather than counted, so the list stays true when
+there is a fourth. **The generalisation is the useful part: put "how the trade works" objections as
+questions, not findings.**
+
+**11.55.5 One consequence is stated rather than hidden, because it follows and is not a defect.**
+The unknown rollup will report **zero** devices missing a manufacturer, because the field holds a
+value. That is the intended behaviour under this ruling and not a bug in `totals.dart`; a future
+reader finding "0 devices have no manufacturer" beside a sheet full of `Generic` should read this
+clause rather than file a defect.
+
+**`model` is NOT defaulted and stays blank**, exactly as docs/06 §3.1 has it: the table gives
+`manufacturer` a default and gives `model` none, no trade convention was offered for a model string,
+and an invented one would be the fabrication this ruling is careful not to be. An untouched `model`
+therefore still prints `—` and still counts as unknown.
+
+**11.55.6 Scope.** **No scope change to roadmap §2, no model change, no codec change, no migration**,
+and `kSchemaVersion` does not advance. The nullable-fields option, making
+`TemplateBody.manufacturer`/`model` `String?` so an untouched field is an absent key per CR-114
+rather than an empty string normalised by `_trimToNull` at read time, **was offered and not taken**;
+the present-key-holding-empty-string shape stands. docs/06 §3.1 is edited to carry this ruling's id
+rather than pointered, so §12 is owed nothing.
+
+**11.55.7 Who builds it.** M4-D (`#175`), the metadata form. Nothing ships with this ruling: the
+form does not exist, and M4-A built machinery beneath it. `TemplateBodyField.manufacturer`
+(`builder/template_commands.dart`) carries the citation, because that is where the implementer is
+standing when the question arises.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

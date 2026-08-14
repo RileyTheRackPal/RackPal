@@ -2422,11 +2422,29 @@ builder window, no form, no port grid, and nothing in `rackmate_ui` or `apps/rac
 `a modelled field is not a reachable one`. **The row above is now `L`** to match roadmap §6 and
 §5.3's own re-derivation, which had moved the estimate while this heading still read `M`.
 
-**One thing to check before M4-D is priced.** #175 names the three required fields as
-`displayName`, RU height and `typePrefix`; `TemplateBody`'s constructor requires `manufacturer`,
-`model` and `displayName`. Those are two different threes, and the form cannot be built until
-somebody says which one binds. Flagged here rather than answered, because it is a product question
-about what a template minimally *is*.
+**The required-fields question this section first filed as open was NOT open, and the correction is
+worth more than the question was.** It read: #175 names three required fields as `displayName`, RU
+height and `typePrefix` while `TemplateBody`'s constructor requires `manufacturer`, `model` and
+`displayName`, so which binds? **Neither answer was needed, because they are not claims about the
+same thing.** AC-049 rules the FORM's required set, docs/06 §1 and §3 state it, and the constructor
+is a Dart signature the builder satisfies by supplying values. A constructor parameter was read as a
+product rule. This is `re-read a task against canon` failing in its own documented shape, and the
+cheap check it prescribes, one grep of §11 for the task's nouns, would have caught it.
+
+**The census run to check it did find a real unruled question, and that is DR-056 (§11.55).**
+`docs/06` §3.1 has always said `manufacturer` *"Defaults to `Generic`"*, in a derived priority-3
+document, justified by a sentence about the seed. Whether that reaches a USER's untouched field was
+never ruled, and it is a printed difference: `equipment_list.dart:428` trims blank to null and
+`equipment_sheet.dart:606` prints `—` for it, so a blank manufacturer is an unknown on paper and
+`Generic` is not.
+
+**Ruled 2026-08-14: the form pre-fills `Generic`, on trade grounds.** `Generic` is the industry's
+standard token for *unspecified / by others* in a manufacturer column, so it is the trade's own
+spelling of what `—` says rather than a fabricated value. The counter-argument, that a value nobody
+typed reaches a client deliverable invisibly to the unknown rollup, **was put and answered**: it
+assumed a reader parses `Generic` as a product claim, and the trade does not. Recorded in §11.55.4
+as the third overrule of that class, and the generalisation is *put trade objections as questions,
+not findings*. `model` stays undefaulted and still prints `—`.
 
 **No builder surface exists** *(as recorded when M4 opened; M4-A adds `rackmate_core`'s `builder/`
 directory but no UI, so the paragraph below still holds for `rackmate_ui`)*. `ls packages/rackmate_ui/lib/src/` returns exactly five directories,

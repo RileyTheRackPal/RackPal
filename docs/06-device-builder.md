@@ -77,8 +77,8 @@ Sections in rail order. Only section 1's three starred fields block `Save`.
 | Field | Type | Notes |
 |---|---|---|
 | `displayName` ★ | text | "HDMI Matrix 16×16" |
-| `manufacturer` | text | Defaults to `Generic`. The whole seeded catalog is `Generic`, confirmed decision 2 rules out a SKU library. |
-| `model` | text | |
+| `manufacturer` | text | **Pre-filled with the literal `Generic` (DR-056, §11.55).** `Generic` is the trade's standard token for *unspecified / by others* in a manufacturer column, so it is not a fabricated value under G4 but the industry's own spelling of what `—` means. The whole seeded catalog is `Generic` too, and confirmed decision 2 rules out a SKU library. Consequence, stated rather than hidden: the unknown rollup reports **zero** devices missing a manufacturer, because the field holds a value (§11.55.5). |
+| `model` | text | **NOT defaulted; left blank (DR-056 §11.55.5).** No trade convention was offered for a model string and an invented one would be the fabrication the manufacturer default is careful not to be, so an untouched `model` prints `—` and counts as unknown. |
 | `category` | enum | Video Distribution · Audio · Network · Control · Sources · RF/Coax · Power · Passive & Mechanical. Optional (AC-049). |
 | `typePrefix` ★ | text, 2–4 chars | `MTX`, `AMP`, `SW`, `PP`, `UPS`. Seeds the device designator format `{TYPE_PREFIX}{SEP}{SEQ}` → `MTX-1` (CR-041, CR-045). Auto-suggested from category when one is chosen. |
 | `tags` | chip input | `hdbaset`, `4k60`, `poe`, `residential` |

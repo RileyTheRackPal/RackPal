@@ -1,5 +1,34 @@
 # Update Log
 
+## 2026-08-14
+
+* **Creation**: [DR-056, `Generic` is the trade's word for
+  unspecified](/decisions/dr-056-generic-is-the-trades-word-for-unspecified.md),
+  settling the question M4-A closed with. The builder's form pre-fills the
+  literal `Generic`; `model` stays undefaulted and still prints `—`.
+* **Note**: **THE QUESTION WAS FILED AS A CONTRADICTION AND THERE WAS NONE.**
+  AC-049 rules the FORM's three required fields (`displayName`, `frontU`,
+  `typePrefix`) and `TemplateBody`'s constructor is a Dart signature the builder
+  satisfies. **A constructor parameter was read as a product rule**, which is
+  [re-read a task against canon](/practices/re-read-a-task-against-canon.md)
+  failing in its own documented shape; the grep of §11 it prescribes would have
+  caught it before it was ever raised.
+* **Note**: **THE CENSUS RUN TO CHECK IT FOUND THE REAL QUESTION**, one layer
+  along and genuinely unruled: docs/06 §3.1's `Generic` default is a derived,
+  priority-3 sentence justified by an argument about the SEED, and whether it
+  reaches a user's untouched field is a printed difference:
+  `equipment_list.dart:428` trims blank to null and `equipment_sheet.dart:606`
+  renders `—` for it.
+* **Creation**: [Trade objections are questions, not
+  findings](/practices/trade-knowledge-beats-workflow-reasoning.md). **DR-056 is
+  the cleanest instance because the objection was not outweighed, it was simply
+  wrong**: it assumed a reader parses `Generic` as a product claim, and the trade
+  reads it as *unspecified / by others*. The corpus is authoritative about the
+  code and **silent about the trade**, so a workflow claim can be confidently
+  wrong and pass every check this repository has. Instances are **named rather
+  than counted** (§11.47, §11.54.7, §11.55.4), so the list stays true when there
+  is a fourth.
+
 ## 2026-08-13 (fifth entry)
 
 * **Creation**: [CR-106, one machinery and three

@@ -62,13 +62,31 @@ final class TemplateField<T> {
 abstract final class TemplateBodyField {
   /// "Extron". Free text, not a registry: the long tail is the whole
   /// reason the builder exists.
+  ///
+  /// **M4-D's form PRE-FILLS the literal `Generic` (DR-056, canon
+  /// §11.55).** The citation sits here rather than only in the corpus
+  /// because this is where an implementer stands when the question comes
+  /// up. `Generic` is the trade's standard token for *unspecified / by
+  /// others* in a manufacturer column, so it is not a fabricated value
+  /// under G4 but the industry's own spelling of what `—` means.
+  ///
+  /// Two consequences follow and are not defects. The unknown rollup
+  /// reports **zero** devices missing a manufacturer, because the field
+  /// holds a value (§11.55.5). And `_trimToNull` in
+  /// `derived/equipment_list.dart` will therefore never see this field
+  /// empty in practice, though it stays as the guard for a template
+  /// authored before the form existed or edited by hand.
   static const manufacturer = TemplateField<String>(
     key: 'manufacturer',
     get: _getManufacturer,
     set: _setManufacturer,
   );
 
-  /// "DTP CrossPoint 84".
+  /// "DTP CrossPoint 84". **NOT defaulted, unlike [manufacturer]**
+  /// (DR-056 §11.55.5): no trade convention was offered for a model
+  /// string, and inventing one would be the fabrication the manufacturer
+  /// default is careful not to be. An untouched `model` prints `—` and
+  /// counts as unknown.
   static const model = TemplateField<String>(
     key: 'model',
     get: _getModel,
