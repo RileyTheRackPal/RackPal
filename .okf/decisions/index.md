@@ -58,6 +58,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-054, the PORT column prints the part](dr-054-the-port-column-prints-the-part.md) - a rendering change and not an allocation change, because `Port.designator` is stored and changing allocation leaves one document holding two conventions; and the task's own vocabulary had been re-assigned underneath it by a later ruling.
 * [DR-055, the Termination Schedule prints both ends](dr-055-the-termination-schedule-prints-both-ends.md) - filed as a naming disagreement; the census found the rack termination reached no printed output at all, on the one sheet filtered, sorted and grouped by rack. The argument was already on the sheet, in the three other facts that print both ends.
 * [DR-056, `Generic` is the trade's word for unspecified](dr-056-generic-is-the-trades-word-for-unspecified.md) - raised as a contradiction between AC-049 and a Dart constructor, which was no contradiction at all; the census run to check it found the real unruled question, and trade convention settled it against the G4 argument.
+* [DR-057, pitch is a refinement, not a prerequisite](dr-057-pitch-is-a-refinement-not-a-prerequisite.md) - sparse pitch was priced as a feature cut at 14 of 45 templates, off a derived document's pseudocode; every ruling says the layout flows from footprints, so the cut was never real.
 
 # Not yet written up
 

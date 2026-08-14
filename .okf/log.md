@@ -1,5 +1,43 @@
 # Update Log
 
+## 2026-08-14 (second entry)
+
+* **Creation**: [DR-057, pitch is a refinement, not a
+  prerequisite](/decisions/dr-057-pitch-is-a-refinement-not-a-prerequisite.md),
+  settling M4-B. `ConnectorTypeDef` gains `pitch` and `genderApplies`, both
+  documented from M0 and declared by neither the Dart nor the codec.
+* **Note**: **THE TWO FIELDS WERE AUTHORABLE ON OPPOSITE TERMS AND THE TASK
+  KNEW THIS ABOUT NEITHER.** `genderApplies` was never open work: canon §6.3
+  carries a complete yes/no column for all 49 connectors, so every entry is a
+  transcription. `pitch` is stated for 14 ids and nothing else, six more inherit
+  from a shared shell, and 29 stay null permanently. **A pitch is not derivable
+  from a footprint**: most sit 2 to 4 mm above theirs, and then
+  `conn.binding_post` states 20 mm against a 24 mm pair footprint, BELOW it,
+  because ¾ inch is how binding posts are built.
+* **Note**: **A NEAR MISS, AND THE SECOND PREMISE ERROR IN THREE DAYS.** Sparse
+  pitch was measured as a feature cut (auto-layout on 14 of 45 templates) and
+  put to the user as a priced trade-off. **The price came from docs/06 §5's
+  PSEUDOCODE.** CR-071 §1 rules the layout is *"auto-laid-out from connector
+  footprints"*, docs/catalog §5.2's own intro agrees, roadmap §2 names only the
+  footprint table, and **no ruling mentions pitch**. The fallback
+  `pitch ?? (footprintWidth + gutter)` runs on 45 of 45. Caught by
+  [re-reading against canon](/practices/re-read-a-task-against-canon.md) while
+  the ruling was already being drafted. Pairs with DR-056 §11.55.1, which read a
+  Dart constructor as a product rule: **a derived document describing a
+  mechanism is not a ruling about what the mechanism needs.**
+* **Note**: **THE REGISTRY SHIPS 49 CONNECTORS, NOT THE 44 A GREP SAID.**
+  `grep -c "_c('conn"` misses every multi-line call. Third instance of
+  [census the field, not the name](/practices/census-before-building.md), this
+  time against the pattern rather than the corpus.
+* **Note**: **`MediaTypeDef.isPathwayOnly` IS WRITTEN AND READ BY NOTHING IN THE
+  CODEC**, found while censusing the sibling registry. A pathway-only media type
+  does not survive a save, so CR-109's three seeded conduit types would come back
+  as ordinary cable types on reload, and DR-032/DR-035's "creates a `Pathway`
+  instead of a `Link`" would stop firing. Filed rather than folded into M4-B.
+  Another [modelled field that is not a reachable
+  one](/practices/a-modelled-field-is-not-a-reachable-one.md), and this one has
+  a writer, a reader and no codec.
+
 ## 2026-08-14
 
 * **Creation**: [DR-056, `Generic` is the trade's word for

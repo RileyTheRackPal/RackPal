@@ -2446,6 +2446,48 @@ assumed a reader parses `Generic` as a product claim, and the trade does not. Re
 as the third overrule of that class, and the generalisation is *put trade objections as questions,
 not findings*. `model` stays undefaulted and still prints `—`.
 
+#### 5.3.2 M4-B, the two registry fields · CLOSED · `b7f3534`
+
+**`ConnectorTypeDef.pitch` and `.genderApplies` exist, are encoded and are authored.** Both were
+documented from M0 and declared by neither the Dart nor the codec, which `json_codec.dart`'s own
+registry-drift note recorded for `genderApplies` and nothing recorded for `pitch`.
+
+**The two were authorable on opposite terms, and the task knew this about neither.**
+`genderApplies` **was never open work**: canon §6.3 carries a complete yes/no column for every
+connector id, so all 49 are a transcription, 31 true and 18 false. The task read as an authoring
+job because it was written from the *field's* absence rather than from the corpus, which is
+`re-read a task against canon` again. `pitch` is stated for **13 rows naming 14 ids** in
+docs/catalog §5.2 and nowhere else; **6 more inherit** from a connector sharing their shell
+(DR-057 §11.56.2), and **29 have none, permanently** (§11.56.3).
+
+**The registry ships 49 connectors, not the 44 a grep said.** The count came from
+`grep -c "_c('conn"`, which misses every multi-line call. Census the field, not the pattern that
+happens to match most of it.
+
+**THE FINDING IS A NEAR MISS AND IT IS RECORDED AS ONE.** Sparse pitch was measured as a feature
+cut, auto-layout available on **14 of 45** templates with ports, and was put to the user as a
+priced trade-off. The price was read off **docs/06 §5's pseudocode**, *"flow left → right at
+`ConnectorTypeDef.pitch`"*, in a derived priority-3 document. **CR-071 §1 rules the layout is
+"auto-laid-out from connector footprints"**, docs/catalog §5.2's own introduction agrees, and
+roadmap §2 names only the footprint table. **No ruling mentions pitch.** The algorithm advances by
+`pitch ?? (footprintWidth + gutter)` and runs on 45 of 45. The cut was never real, and the check
+that caught it ran while the ruling was already being drafted.
+
+That is the second premise error in three days, after DR-056 §11.55.1 read a Dart constructor as a
+product rule. §11.56.5 pairs them: **a derived document describing a mechanism is not a ruling
+about what the mechanism needs.**
+
+**Two things the census found and M4-B did not fix.** The task names the registry-parity CI gate as
+the one that moves with these fields; `tools/registry_parity.py` is **palette-only** and the gate
+that actually holds them is `seed_catalog_test.dart`. And **`MediaTypeDef.isPathwayOnly` is written
+and read by nothing in the codec**, so a pathway-only media type does not survive a save, which
+would silently turn CR-109's three seeded conduit types into ordinary cable types on reload. Filed,
+not folded in.
+
+**What M4-B does NOT deliver.** No panel layer: `scene/panel_layer.dart` does not exist, and M4-K
+(`#182`) owns the algorithm, the gutter constant and the no-cutout skip. `pitch` therefore has no
+reader in `lib/` yet, exactly as `footprintWidth` has had none since M1, and both files say so.
+
 **No builder surface exists** *(as recorded when M4 opened; M4-A adds `rackmate_core`'s `builder/`
 directory but no UI, so the paragraph below still holds for `rackmate_ui`)*. `ls packages/rackmate_ui/lib/src/` returns exactly five directories,
 `canvas/`, `draw/`, `inspector/` (`inspector_panel`, `rack_inspector_panel`, `shrink_rack_dialog`),
