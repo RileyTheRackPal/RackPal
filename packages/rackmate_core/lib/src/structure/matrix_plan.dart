@@ -86,7 +86,7 @@ final class MatrixCellReady extends MatrixCellPlan {
 
   /// In application order: the outlet, if one is being created, then the
   /// drops. Apply them inside ONE transaction.
-  final List<Command> commands;
+  final List<Command<RackDocument>> commands;
 
   /// How many drops this creates. Zero on a decrement.
   final int added;
@@ -329,7 +329,7 @@ MatrixCellPlan _planPathwayCell({
 
   if (targetCount > current) {
     final tag = structureMatrixColumnHeader(doc, media);
-    final commands = <Command>[];
+    final commands = <Command<RackDocument>>[];
     final names = <String>[];
     // Grown as the cell is planned, because `nextPathwayOrder` reads the
     // DOCUMENT and cannot see commands that have not been applied yet —

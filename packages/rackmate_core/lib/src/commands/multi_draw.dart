@@ -283,7 +283,7 @@ String bankLabelFor(
 /// no command leaves no undo entry, the same rule a refused pin-to-pin
 /// connect follows (DR-011.1), and `transact` already declines to push a
 /// transaction with no children.
-List<Command> buildMultiDrawCommands({
+List<Command<RackDocument>> buildMultiDrawCommands({
   required RackDocument doc,
   required MultiDrawPlan plan,
   required MediaTypeId media,
@@ -293,7 +293,7 @@ List<Command> buildMultiDrawCommands({
   if (plan.isEmpty) return const [];
 
   final reserve = ConnectAllocations();
-  final commands = <Command>[];
+  final commands = <Command<RackDocument>>[];
   for (final pair in plan.pairs) {
     final built = buildConnectPortsCommand(
       doc: doc,
@@ -311,5 +311,5 @@ List<Command> buildMultiDrawCommands({
     // half-formed transaction; the plan is what the user was shown.
     if (built is ConnectPortsReady) commands.add(built.command);
   }
-  return List<Command>.unmodifiable(commands);
+  return List<Command<RackDocument>>.unmodifiable(commands);
 }

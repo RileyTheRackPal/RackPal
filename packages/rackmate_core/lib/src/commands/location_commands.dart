@@ -135,7 +135,7 @@ String deriveLocationCode(
 }
 
 /// Creates one [Location].
-final class AddLocationCommand extends Command {
+final class AddLocationCommand extends Command<RackDocument> {
   AddLocationCommand({
     required this.name,
     required this.code,
@@ -231,7 +231,7 @@ final class AddLocationCommand extends Command {
 /// checks DR-021 §11.20.5's cycle rule. Constructing this class directly
 /// bypasses that check, which is why the builder exists and why the panel
 /// calls it.
-final class ReparentLocationCommand extends Command {
+final class ReparentLocationCommand extends Command<RackDocument> {
   ReparentLocationCommand({
     required this.id,
     required this.from,
@@ -424,7 +424,7 @@ String _nameOf(Location? location) {
 // `location_removal_test`'s byte case is what holds that.
 
 /// Removes a location, its whole subtree, and every reference into it.
-final class RemoveLocationCommand extends Command {
+final class RemoveLocationCommand extends Command<RackDocument> {
   RemoveLocationCommand({required this.plan});
 
   /// Computed by `planLocationRemoval` BEFORE anything moved, and the same

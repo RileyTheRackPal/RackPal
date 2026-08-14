@@ -5,14 +5,17 @@
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/label_key.dart';
 import 'package:rackmate_core/src/commands/selection.dart';
-import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/units/ids.dart';
 
 /// A group of [Command]s applied and undone as one undo-stack entry.
 /// Nested transactions flatten into the outermost — see
 /// `DocumentController.transact` — so the user sees exactly one undo
 /// entry regardless of how many commands a single user gesture produced.
-final class Transaction extends Command {
+///
+/// Generic over the same aggregate its children are (M4-A, CR-106): a
+/// transaction is a composite `Command`, so it can no more be
+/// document-bound than the interface it implements.
+final class Transaction<A> extends Command<A> {
   Transaction(
     this.label,
     this.children,
@@ -22,9 +25,22 @@ final class Transaction extends Command {
 
   @override
   final LabelKey label;
-  final List<Command> children;
-  final Selection selectionBefore;
-  final Selection selectionAfter;
+  final List<Command<A>> children;
+
+  /// Nullable since M4-A: [Selection] is a set of `Uuid`s, and an
+  /// aggregate whose parts are not `Uuid`-keyed has no selection to
+  /// record — a `TemplateBody`'s ports are keyed by `PortKey`. Null is
+  /// "this aggregate does not model selection", not "nothing was
+  /// selected"; an empty [Selection] means the latter and the two must
+  /// not share a value (G4's shape again).
+  ///
+  /// **These two are not what undo restores.** `UndoStack` captures its
+  /// own `selectionBefore`/`selectionAfter` per entry and those are the
+  /// pair `undoSelection`/`redoSelection` read; the copies here are used
+  /// only to carry a merge forward. Kept because docs/03-architecture.md
+  /// §5.3 declares them on `Transaction`.
+  final Selection? selectionBefore;
+  final Selection? selectionAfter;
 
   /// Diagnostics only — not part of any correctness property; commands
   /// themselves carry the `now`/`actor` that reach `EntityMeta`, per this
@@ -32,24 +48,37 @@ final class Transaction extends Command {
   /// "do not call DateTime.now() directly").
   final DateTime timestamp;
 
+  /// The union of the children's masks, or `null` when NO child declares
+  /// one — a transaction over an aggregate with no epoch model. A child
+  /// that declares `EpochMask.none` still counts as declaring, so a
+  /// document transaction whose commands all touch nothing folds to
+  /// `none` and not to null: those are different answers (see
+  /// [DocEpochs.bump]).
   @override
-  EpochMask get touches =>
-      children.fold(const EpochMask(0), (m, c) => m | c.touches);
+  EpochMask? get touches {
+    EpochMask? acc;
+    for (final c in children) {
+      final t = c.touches;
+      if (t == null) continue;
+      acc = acc == null ? t : acc | t;
+    }
+    return acc;
+  }
 
   @override
   Iterable<Uuid> get affects => children.expand((c) => c.affects);
 
   @override
-  void apply(RackDocument doc) {
+  void apply(A aggregate) {
     for (final c in children) {
-      c.apply(doc);
+      c.apply(aggregate);
     }
   }
 
   @override
-  void revert(RackDocument doc) {
+  void revert(A aggregate) {
     for (var i = children.length - 1; i >= 0; i--) {
-      children[i].revert(doc);
+      children[i].revert(aggregate);
     }
   }
 
@@ -67,15 +96,15 @@ final class Transaction extends Command {
       children.length == 1 ? children.single.mergeKey : null;
 
   @override
-  Command? mergeWith(Command next) {
-    if (next is! Transaction ||
+  Command<A>? mergeWith(Command<A> next) {
+    if (next is! Transaction<A> ||
         children.length != 1 ||
         next.children.length != 1) {
       return null;
     }
     final mergedChild = children.single.mergeWith(next.children.single);
     if (mergedChild == null) return null;
-    return Transaction(
+    return Transaction<A>(
       next.label,
       [mergedChild],
       selectionBefore,

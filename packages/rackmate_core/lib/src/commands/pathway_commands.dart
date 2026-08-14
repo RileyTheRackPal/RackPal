@@ -54,7 +54,7 @@ FracIndex nextPathwayOrder(RackDocument doc) =>
     nextOrder(doc.pathways.values.map((p) => p.order));
 
 /// Creates one [Pathway].
-final class AddPathwayCommand extends Command {
+final class AddPathwayCommand extends Command<RackDocument> {
   AddPathwayCommand({
     required this.name,
     required this.order,
@@ -167,7 +167,7 @@ final class AddPathwayCommand extends Command {
 /// NOT A CASCADE. See the file header: nothing lives inside a pathway,
 /// so no other entity is destroyed. What happens is that runs through it
 /// go back to having no recorded route.
-final class RemovePathwayCommand extends Command {
+final class RemovePathwayCommand extends Command<RackDocument> {
   RemovePathwayCommand({required this.id, required this.now});
 
   final Uuid id;

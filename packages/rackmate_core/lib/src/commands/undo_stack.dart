@@ -5,23 +5,25 @@
 //
 // CR-106 declares `UndoStack<A>` generic over the aggregate it undoes,
 // since the Device Builder's own stack (docs/03-architecture.md §5.6)
-// will one day undo a `TemplateBody`, not a `RackDocument`. The `Command`
-// interface this milestone builds (command.dart) is NOT itself generic —
-// its `apply`/`revert` are hard-typed to `RackDocument` (§5.1, transcribed
-// as given) — so full generic reuse would need `Command<A>` too, which is
-// a bigger change than M0's exit criterion calls for. This class keeps
-// the `<A>` type parameter for CR-106's documented intent and for
-// `DocumentController`'s `UndoStack<RackDocument>` instantiation to read
-// correctly, but its `undo`/`redo` concretely take a `RackDocument` — the
-// only aggregate any `Command` in this milestone can act on. Revisit
-// together with `Command` if/when the Device Builder's own stack is
-// built.
+// undoes a `TemplateBody`, not a `RackDocument`.
+//
+// M0 SHIPPED THIS HALF-DONE AND SAID SO: the class carried `<A>` for
+// CR-106's documented intent while `undo`/`redo` concretely took a
+// `RackDocument`, because `Command` itself was hard-typed to one (§5.1,
+// transcribed as given) and making it generic was a bigger change than
+// M0's exit criterion called for. The header said to revisit this
+// together with `Command` if/when the builder's stack was built.
+//
+// **M4-A is that revisit, and the gap is closed.** `Command<A>` is
+// generic (command.dart), `Transaction<A>` with it, and the members
+// below take an `A`. The document instantiation is unchanged in
+// behaviour: `DocumentController` holds an `UndoStack<RackDocument>` and
+// still records CR-094's stateId-before/after per entry.
 import 'package:collection/collection.dart';
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/selection.dart';
-import 'package:rackmate_core/src/model/rack_document.dart';
 
-final class _Entry {
+final class _Entry<A> {
   _Entry(
     this.command,
     this.selectionBefore,
@@ -31,9 +33,13 @@ final class _Entry {
     this.stateIdAfter,
   );
 
-  final Command command;
-  final Selection selectionBefore;
-  final Selection selectionAfter;
+  final Command<A> command;
+
+  /// Null when the aggregate models no selection — see
+  /// `Transaction.selectionBefore` (transaction.dart) for why that is not
+  /// an empty [Selection]. The document stack always records a real one.
+  final Selection? selectionBefore;
+  final Selection? selectionAfter;
   final DateTime at;
 
   /// CR-094: "each undo entry records the stateId before and after". These
@@ -57,8 +63,8 @@ class UndoStack<A> {
   final int maxEntries;
   final Duration mergeWindow;
 
-  final List<_Entry> _done = [];
-  final List<_Entry> _undone = [];
+  final List<_Entry<A>> _done = [];
+  final List<_Entry<A>> _undone = [];
   bool _poisoned = false;
 
   bool get canUndo => !_poisoned && _done.isNotEmpty;
@@ -75,6 +81,12 @@ class UndoStack<A> {
   /// entity that no longer exists"). Added in M1 to close the loop with
   /// `rackmate_ui`'s `SelectionController`; the `selectionBefore`/`After`
   /// were already captured in M0, they simply had no reader.
+  ///
+  /// Since M4-A `null` carries a second meaning — an aggregate that
+  /// models no selection recorded none — so a caller that must tell the
+  /// two apart reads [canUndo] first. No caller does: the only reason to
+  /// read this is to restore a selection, and there is nothing to restore
+  /// in either case.
   Selection? get undoSelection => canUndo ? _done.last.selectionBefore : null;
 
   /// The selection to restore when the NEXT [redo] runs — the
@@ -105,10 +117,10 @@ class UndoStack<A> {
   /// where the first edit started to where the second one ended, and the
   /// intermediate id is simply retired. The allocator never reuses an id,
   /// so a retired one can never be mistaken for a live state.
-  EpochMask push(
-    Command c,
-    Selection before,
-    Selection after,
+  EpochMask? push(
+    Command<A> c,
+    Selection? before,
+    Selection? after,
     DateTime now,
     int stateIdBefore,
     int stateIdAfter,
@@ -166,10 +178,10 @@ class UndoStack<A> {
   /// Reverts the top of [_done] and pushes it onto [_undone]. Returns the
   /// `EpochMask` the undone command touched, or [EpochMask.none] if there
   /// was nothing to undo.
-  EpochMask undo(RackDocument doc) {
+  EpochMask? undo(A aggregate) {
     if (!canUndo) return EpochMask.none;
     final entry = _done.removeLast();
-    entry.command.revert(doc);
+    entry.command.revert(aggregate);
     _undone.add(entry);
     return entry.command.touches;
   }
@@ -177,10 +189,10 @@ class UndoStack<A> {
   /// Re-applies the top of [_undone] and pushes it back onto [_done].
   /// Returns the `EpochMask` the redone command touched, or
   /// [EpochMask.none] if there was nothing to redo.
-  EpochMask redo(RackDocument doc) {
+  EpochMask? redo(A aggregate) {
     if (!canRedo) return EpochMask.none;
     final entry = _undone.removeLast();
-    entry.command.apply(doc);
+    entry.command.apply(aggregate);
     _done.add(entry);
     return entry.command.touches;
   }

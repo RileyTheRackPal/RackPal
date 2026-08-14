@@ -80,7 +80,7 @@ final class DropLinePlanReady extends DropLinePlan {
 
   /// In application order: the outlet, if one is being created, then the
   /// drops. Apply them inside ONE transaction.
-  final List<Command> commands;
+  final List<Command<RackDocument>> commands;
 
   /// DROPS ONLY. A pathway is not a drop and docs/07 §4.2 excludes it
   /// from the Σ drop count in so many words; [pathwayNames] is the other
@@ -212,7 +212,7 @@ DropLinePlan planDropLine({
   // it, which the Σ drop count and the outlet rollup would both then
   // have to explain.
   final cableIndices = <int>[];
-  final pathwayCommands = <Command>[];
+  final pathwayCommands = <Command<RackDocument>>[];
   final pathwayNames = <String>[];
 
   // Grown as the line is planned, because `nextPathwayOrder` reads the
@@ -287,7 +287,7 @@ DropLinePlan planDropLine({
     }
   }
 
-  final commands = <Command>[];
+  final commands = <Command<RackDocument>>[];
   final Outlet plannedOutlet;
   final bool outletCreated;
 
@@ -476,14 +476,14 @@ DropLinePlan planDropLine({
 /// What `@panel=` produced: the binds, the labels they wrote, and anything
 /// the user has to be told.
 typedef _Landing = ({
-  List<Command> commands,
+  List<Command<RackDocument>> commands,
   List<String> rackLabels,
   List<String> warnings,
   String? refusal,
 });
 
 const _Landing _noLanding = (
-  commands: <Command>[],
+  commands: <Command<RackDocument>>[],
   rackLabels: <String>[],
   warnings: <String>[],
   refusal: null,
@@ -504,7 +504,7 @@ const _Landing _noLanding = (
 _Landing _landDrops({
   required RackDocument doc,
   required DropLineParsed line,
-  required List<Command> drops,
+  required List<Command<RackDocument>> drops,
   required Set<String> alsoUsedRackLabels,
   required DateTime now,
   required String actor,
@@ -540,7 +540,7 @@ _Landing _landDrops({
     );
   }
 
-  final commands = <Command>[];
+  final commands = <Command<RackDocument>>[];
   final labels = <String>[];
   final warnings = <String>[];
   // ONE SCAN, EXTENDED AS IT GOES. Ten drops from one line are planned

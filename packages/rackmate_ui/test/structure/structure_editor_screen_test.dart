@@ -197,7 +197,7 @@ final class _Harness {
   /// itself; this exists so the editor's own tests can reach the tab.
   String? editPathways(List<PathwayCellEdit> edits) {
     for (final e in edits) {
-      final Command? command;
+      final Command<RackDocument>? command;
       switch (e.column) {
         // Spelled out per column for `edit`'s reason: `EntityField`'s
         // `set` is a typed closure, so `<Object?>` compiles and throws at
@@ -320,7 +320,7 @@ final class _Harness {
 
   String? edit(List<StructureCellEdit> edits) {
     batchSizes.add(edits.length);
-    final commands = <Command>[];
+    final commands = <Command<RackDocument>>[];
     final claimedLabels = <String>{};
 
     for (final e in edits) {

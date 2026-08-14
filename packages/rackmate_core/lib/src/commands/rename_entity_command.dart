@@ -17,7 +17,7 @@ enum RenameTargetKind { device, rack }
 /// `MoveDeviceCommand` (device_commands.dart) for why `revert()` restores
 /// the target's `EntityMeta` via `restoreTo` rather than calling `touch`
 /// again — the same reasoning applies here verbatim.
-final class RenameEntityCommand extends Command {
+final class RenameEntityCommand extends Command<RackDocument> {
   RenameEntityCommand({
     required this.targetKind,
     required this.id,
@@ -122,30 +122,31 @@ final class RenameEntityCommand extends Command {
   }
 
   @override
-  Command? mergeWith(Command next) => switch (next) {
-    RenameEntityCommand(
-      targetKind: final k,
-      id: final n,
-      to: final newTo,
-      now: final mergedNow,
-      actor: final mergedActor,
-    )
-        when k == targetKind && n == id =>
-      // See MoveDeviceCommand.mergeWith's comment (device_commands.dart):
-      // carries THIS command's already-captured "before" meta snapshot
-      // forward, since the merged command is a fresh object that never
-      // itself has apply() called on it before a possible revert().
-      (RenameEntityCommand(
-          targetKind: targetKind,
-          id: id,
-          from: from,
-          to: newTo,
-          now: mergedNow,
-          actor: mergedActor,
+  Command<RackDocument>? mergeWith(Command<RackDocument> next) =>
+      switch (next) {
+        RenameEntityCommand(
+          targetKind: final k,
+          id: final n,
+          to: final newTo,
+          now: final mergedNow,
+          actor: final mergedActor,
         )
-        .._prevUpdatedAt = _prevUpdatedAt
-        .._prevUpdatedBy = _prevUpdatedBy
-        .._prevLocalRevision = _prevLocalRevision),
-    _ => null,
-  };
+            when k == targetKind && n == id =>
+          // See MoveDeviceCommand.mergeWith's comment (device_commands.dart):
+          // carries THIS command's already-captured "before" meta snapshot
+          // forward, since the merged command is a fresh object that never
+          // itself has apply() called on it before a possible revert().
+          (RenameEntityCommand(
+              targetKind: targetKind,
+              id: id,
+              from: from,
+              to: newTo,
+              now: mergedNow,
+              actor: mergedActor,
+            )
+            .._prevUpdatedAt = _prevUpdatedAt
+            .._prevUpdatedBy = _prevUpdatedBy
+            .._prevLocalRevision = _prevLocalRevision),
+        _ => null,
+      };
 }

@@ -54,7 +54,7 @@ PathwayEditFn buildPathwayEditAction({
 }) => (edits) {
   if (edits.isEmpty) return null;
 
-  final commands = <Command>[];
+  final commands = <Command<RackDocument>>[];
   for (final edit in edits) {
     if (!controller.doc.pathways.containsKey(edit.pathwayId)) {
       return 'That pathway is not in this project.';
@@ -203,7 +203,7 @@ PathwayRemoveFn buildPathwayRemoveAction({
 String? _designator({
   required DocumentController controller,
   required PathwayCellEdit edit,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) {
   final result = buildSetPathwayDesignator(
     doc: controller.doc,
@@ -228,7 +228,7 @@ String? _designator({
 String? _name({
   required DocumentController controller,
   required PathwayCellEdit edit,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) {
   final trimmed = edit.value.trim();
   if (trimmed.isEmpty) return kPathwayNeedsAName;
@@ -245,7 +245,7 @@ String? _name({
 String? _kind({
   required DocumentController controller,
   required PathwayCellEdit edit,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) {
   final wanted = edit.value.trim().toUpperCase();
   final kind = PathwayKind.values
@@ -275,7 +275,7 @@ String? _kind({
 String? _lineVoltage({
   required DocumentController controller,
   required PathwayCellEdit edit,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) {
   final wanted = edit.value.trim().toUpperCase();
   final bool value;
@@ -314,7 +314,7 @@ String? _lineVoltage({
 String? _media({
   required DocumentController controller,
   required PathwayCellEdit edit,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) {
   final wanted = edit.value.trim();
   if (wanted.isEmpty || wanted == kUnknownCell) {
@@ -358,7 +358,7 @@ String? _parsed<T>({
   required PathwayCellEdit edit,
   required EntityField<Pathway, T?> field,
   required CellParse<T> parse,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) => switch (parse) {
   CellRefused<T>(:final reason) => reason,
   CellParsed<T>(:final value) => _plain<T?>(
@@ -379,7 +379,7 @@ String? _plain<T>({
   required PathwayCellEdit edit,
   required EntityField<Pathway, T> field,
   required T to,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) {
   final command = buildSetEntityProperty<Pathway, T>(
     doc: controller.doc,

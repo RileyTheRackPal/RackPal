@@ -69,7 +69,7 @@ import 'package:rackmate_core/src/units/ids.dart';
 /// index 0, so the gesture lands the right cable on the WRONG PIN and
 /// every downstream sheet agrees with it."* An undo that reordered the
 /// survivors would do that to a cable the user had just put back.
-final class SplitConductorCommand extends Command {
+final class SplitConductorCommand extends Command<RackDocument> {
   SplitConductorCommand({required this.linkId, required this.index});
 
   final Uuid linkId;
@@ -172,7 +172,7 @@ final class SplitConnectReady extends SplitConnectResult {
   /// document that briefly holds two conductors on a one-connection jack
   /// is a document any observer between the two writes would read as
   /// illegal.
-  final List<Command> commands;
+  final List<Command<RackDocument>> commands;
 
   /// The new cable, for its designator. Also inside [commands].
   final ConnectPortsCommand connect;

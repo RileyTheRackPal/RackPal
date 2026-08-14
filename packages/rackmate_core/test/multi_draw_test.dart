@@ -167,7 +167,7 @@ MultiDrawPlan _plan(RackDocument doc, {Iterable<String>? only}) =>
       toBankKey: 'in',
     );
 
-List<Command> _commands(RackDocument doc, MultiDrawPlan plan) =>
+List<Command<RackDocument>> _commands(RackDocument doc, MultiDrawPlan plan) =>
     buildMultiDrawCommands(
       doc: doc,
       plan: plan,

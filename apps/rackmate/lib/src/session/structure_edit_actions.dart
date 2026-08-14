@@ -33,7 +33,7 @@ StructureEditFn buildStructureEditAction({
 }) => (edits) {
   if (edits.isEmpty) return null;
 
-  final commands = <Command>[];
+  final commands = <Command<RackDocument>>[];
 
   // WHAT THIS BATCH HAS ALREADY SPENT. Seeded empty and grown as the
   // batch is planned, so edit five is checked against the four before it
@@ -201,7 +201,7 @@ String? _origin<T>({
   required T to,
   required Set<String> claimedLabels,
   required Set<String> claimedRackLabels,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) {
   final result = buildSetStructureOriginProperty<T>(
     doc: controller.doc,
@@ -245,7 +245,7 @@ String? _origin<T>({
 String? _roughIn({
   required DocumentController controller,
   required StructureCellEdit edit,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) {
   final wanted = edit.value.trim().toUpperCase();
   final status = RoughInStatus.values
@@ -275,7 +275,7 @@ String? _parsed<T>({
   required StructureCellEdit edit,
   required EntityField<Link, T?> field,
   required CellParse<T> parse,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) => switch (parse) {
   CellRefused<T>(:final reason) => reason,
   CellParsed<T>(:final value) => _plain<T?>(
@@ -297,7 +297,7 @@ String? _parsed<T>({
 String? _fieldTermination({
   required DocumentController controller,
   required StructureCellEdit edit,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) {
   final wanted = edit.value.trim().toUpperCase();
   TerminationType? value;
@@ -355,7 +355,7 @@ String? _fieldTermination({
 String? _signalFamily({
   required DocumentController controller,
   required StructureCellEdit edit,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) {
   final family = resolveSignalFamilyCell(
     controller.doc.registries,
@@ -394,7 +394,7 @@ String? _signalFamily({
 String? _testResult({
   required DocumentController controller,
   required StructureCellEdit edit,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) {
   final link = controller.doc.links[edit.linkId];
   if (link == null) return 'That cable is not in this project.';
@@ -451,7 +451,7 @@ bool _sameResult(TestResult? a, TestResult? b) {
 String? _certificateId({
   required DocumentController controller,
   required StructureCellEdit edit,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) {
   final link = controller.doc.links[edit.linkId];
   if (link == null) return 'That cable is not in this project.';
@@ -486,7 +486,7 @@ String? _plain<T>({
   required StructureCellEdit edit,
   required EntityField<Link, T> field,
   required T to,
-  required List<Command> into,
+  required List<Command<RackDocument>> into,
 }) {
   if (!controller.doc.links.containsKey(edit.linkId)) {
     return 'That cable is not in this project.';

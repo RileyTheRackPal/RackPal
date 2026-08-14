@@ -56,7 +56,7 @@ const String kRackTypePrefix = 'RK';
 /// creation dialog that silently set them would be inventing values the
 /// user was never shown (G4). They are all editable afterwards through
 /// `SetEntityPropertyCommand`.
-final class AddRackCommand extends Command {
+final class AddRackCommand extends Command<RackDocument> {
   AddRackCommand({
     required this.name,
     required this.designator,

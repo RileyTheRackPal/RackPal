@@ -28,7 +28,7 @@ import 'package:rackmate_core/src/util/id_gen.dart';
 /// identical, which is all the byte round-trip property (CR-117) needs;
 /// there is no "prior state" to preserve because the entity did not
 /// exist before this command's first `apply()`.
-final class AddDeviceCommand extends Command {
+final class AddDeviceCommand extends Command<RackDocument> {
   AddDeviceCommand({
     required this.kind,
     required this.templateRef,
@@ -129,7 +129,7 @@ final class AddDeviceCommand extends Command {
 /// already leaves snapshots in files for devices that were never placed —
 /// so it is file size rather than correctness, and it stays deferred
 /// rather than being folded in here because it is a different question.
-final class RemoveDeviceCommand extends Command {
+final class RemoveDeviceCommand extends Command<RackDocument> {
   RemoveDeviceCommand({required this.id});
 
   final Uuid id;
@@ -229,7 +229,7 @@ final class RemoveDeviceCommand extends Command {
 /// Repositions an already rail-placed device — docs/03-architecture.md
 /// §5.2's worked example, transcribed with the rest of `RailPlacement`'s
 /// fields (elided there) carried across unchanged.
-final class MoveDeviceCommand extends Command {
+final class MoveDeviceCommand extends Command<RackDocument> {
   MoveDeviceCommand({
     required this.id,
     required this.fromRuIndex,
@@ -333,41 +333,42 @@ final class MoveDeviceCommand extends Command {
   }
 
   @override
-  Command? mergeWith(Command next) => switch (next) {
-    MoveDeviceCommand(
-      id: final n,
-      toRuIndex: final r,
-      toFace: final f,
-      now: final mergedNow,
-      actor: final mergedActor,
-    )
-        when n == id =>
-      // Carries THIS command's already-captured "before" meta snapshot
-      // (from its own apply()) into the merged result. Without this, the
-      // merged command's cache fields are null — it is a brand-new object
-      // that has never itself had apply() called on it, since merging
-      // happens as pure undo-HISTORY bookkeeping (UndoStack.push, called
-      // from DocumentController._commit) after the document has already
-      // been mutated by the original, now-discarded commands. Reachable
-      // in practice the moment two `MoveDeviceCommand.run()` calls for the
-      // same device land within the merge window — see
-      // document_controller_test.dart's coalescing test, which is exactly
-      // what caught this the first time it was missing. `_prevXxx` are
-      // library-private, not class-private, so `this`'s fields are
-      // directly readable here even though `next`/the result are
-      // different instances.
-      (MoveDeviceCommand(
-          id: id,
-          fromRuIndex: fromRuIndex,
-          toRuIndex: r,
-          fromFace: fromFace,
-          toFace: f,
-          now: mergedNow,
-          actor: mergedActor,
+  Command<RackDocument>? mergeWith(Command<RackDocument> next) =>
+      switch (next) {
+        MoveDeviceCommand(
+          id: final n,
+          toRuIndex: final r,
+          toFace: final f,
+          now: final mergedNow,
+          actor: final mergedActor,
         )
-        .._prevUpdatedAt = _prevUpdatedAt
-        .._prevUpdatedBy = _prevUpdatedBy
-        .._prevLocalRevision = _prevLocalRevision),
-    _ => null,
-  };
+            when n == id =>
+          // Carries THIS command's already-captured "before" meta snapshot
+          // (from its own apply()) into the merged result. Without this, the
+          // merged command's cache fields are null — it is a brand-new object
+          // that has never itself had apply() called on it, since merging
+          // happens as pure undo-HISTORY bookkeeping (UndoStack.push, called
+          // from DocumentController._commit) after the document has already
+          // been mutated by the original, now-discarded commands. Reachable
+          // in practice the moment two `MoveDeviceCommand.run()` calls for the
+          // same device land within the merge window — see
+          // document_controller_test.dart's coalescing test, which is exactly
+          // what caught this the first time it was missing. `_prevXxx` are
+          // library-private, not class-private, so `this`'s fields are
+          // directly readable here even though `next`/the result are
+          // different instances.
+          (MoveDeviceCommand(
+              id: id,
+              fromRuIndex: fromRuIndex,
+              toRuIndex: r,
+              fromFace: fromFace,
+              toFace: f,
+              now: mergedNow,
+              actor: mergedActor,
+            )
+            .._prevUpdatedAt = _prevUpdatedAt
+            .._prevUpdatedBy = _prevUpdatedBy
+            .._prevLocalRevision = _prevLocalRevision),
+        _ => null,
+      };
 }

@@ -58,9 +58,22 @@ class DocEpochs {
   /// [sequence] itself becomes the observable mirror of `doc.sequence` —
   /// what `rackmate_ui` actually subscribes to, since a plain `int` field
   /// on `RackDocument` is not itself a `Listenable`.
-  void bump(EpochMask m, RackDocument doc) {
+  ///
+  /// [m] became NULLABLE at M4-A, and `null` is not `EpochMask.none`:
+  /// `none` asserts a command touched no epoch, `null` says the command's
+  /// aggregate has no epoch model to touch at all — a
+  /// `Command<TemplateBody>` on the Device Builder's stack (CR-106). G4's
+  /// shape, applied to a mask: a measured zero and an inapplicable
+  /// question are different answers and must not share a value.
+  /// `DocumentController` is the only caller and never passes null today;
+  /// the parameter is nullable because `Transaction<A>.touches` is, and
+  /// saying so in the type beats making every call site guess a mask.
+  /// The [sequence] bump happens either way, because CR-094 makes it a
+  /// property of *a commit having happened*, not of what it touched.
+  void bump(EpochMask? m, RackDocument doc) {
     doc.sequence++;
     sequence.value = doc.sequence;
+    if (m == null) return;
     if (m.has(EpochMask.structure)) structure.value++;
     if (m.has(EpochMask.wires)) wires.value++;
     if (m.has(EpochMask.rack)) rack.value++;
@@ -70,9 +83,23 @@ class DocEpochs {
   }
 }
 
-/// One undoable change to a [RackDocument]. Transcribed from
-/// docs/03-architecture.md §5.1 exactly, with `RackFace` read as `Face`
-/// per this package's naming-drift note (placement.dart).
+/// One undoable change to an aggregate of type [A]. Transcribed from
+/// docs/03-architecture.md §5.1, with `RackFace` read as `Face` per this
+/// package's naming-drift note (placement.dart), and with the type
+/// parameter §5.1 does not carry — see below.
+///
+/// **The type parameter is CR-106's, and it arrived late on purpose.**
+/// §5.1 hard-types `apply`/`revert` to `RackDocument` and M0 transcribed
+/// that literally; `UndoStack<A>` has carried `<A>` since M0 for CR-106's
+/// documented intent while its own `undo`/`redo` still took a concrete
+/// document, and `undo_stack.dart`'s header named the gap as deferred
+/// debt to close *"if/when the Device Builder's own stack is built"*.
+/// M4-A is that moment. CR-106 rules **one `Command` machinery, three
+/// stacks**: the document's, the Device Builder's over the `TemplateBody`
+/// being edited, and none at all for settings and library operations,
+/// which are individually confirmable instead. Making this generic AFTER
+/// the builder's UI existed would have meant migrating the builder's own
+/// commands too, which is the whole reason M4-A runs first.
 ///
 /// Three properties MUST hold, verified by `command_roundtrip_test.dart`:
 ///  * `apply`/`revert`, not `undo`/`redo` — redo is `apply()` again.
@@ -82,16 +109,22 @@ class DocEpochs {
 ///    allocate ids at `apply` time — ids are minted in the constructor
 ///    (see `newEntityId()`, util/id_gen.dart), so redo recreates the
 ///    identical entity and anything stacked on top of it still resolves.
-abstract base class Command {
+abstract base class Command<A> {
   const Command();
 
   LabelKey get label;
-  EpochMask get touches;
+
+  /// The document epochs this command invalidates, or `null` when [A] has
+  /// no epoch model — see [DocEpochs.bump] for why that is not
+  /// [EpochMask.none]. Every `Command<RackDocument>` returns non-null;
+  /// the nullability exists for the aggregates that are not documents.
+  EpochMask? get touches;
+
   Iterable<Uuid> get affects;
   Object? get mergeKey => null;
 
-  void apply(RackDocument doc);
-  void revert(RackDocument doc);
+  void apply(A aggregate);
+  void revert(A aggregate);
 
-  Command? mergeWith(Command next) => null;
+  Command<A>? mergeWith(Command<A> next) => null;
 }

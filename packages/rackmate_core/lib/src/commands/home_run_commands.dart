@@ -228,7 +228,7 @@ RackLabelResolution resolveRackLabel({
 /// Creates one home run: a [Link] carrying a [StructureOrigin], a field end
 /// that is deliberately NOT a live port, and a rack end that may or may not
 /// have landed yet.
-final class AddHomeRunCommand extends Command {
+final class AddHomeRunCommand extends Command<RackDocument> {
   AddHomeRunCommand({
     required this.structureBodyId,
     required this.outletId,

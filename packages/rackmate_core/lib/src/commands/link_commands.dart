@@ -27,7 +27,7 @@ import 'package:rackmate_core/src/util/id_gen.dart';
 /// Adds a new [Link] (one [Service], one [Conductor] with two open ends)
 /// plus its implicit [Net]. Both ids are minted in the constructor, never
 /// in `apply()`, so redo recreates identical entities.
-final class AddLinkCommand extends Command {
+final class AddLinkCommand extends Command<RackDocument> {
   AddLinkCommand({
     required this.designator,
     required this.netName,
@@ -106,7 +106,7 @@ final class AddLinkCommand extends Command {
 /// holding both removed objects directly (not a field-by-field copy) so
 /// `revert()` restores them exactly, the same pattern as
 /// `RemoveDeviceCommand`.
-final class RemoveLinkCommand extends Command {
+final class RemoveLinkCommand extends Command<RackDocument> {
   RemoveLinkCommand({required this.id, required this.netId});
 
   final Uuid id;

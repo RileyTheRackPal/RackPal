@@ -73,7 +73,7 @@ import 'package:rackmate_core/src/units/ids.dart';
 
 /// Lands one home run's far end on one panel pin, and records the rack
 /// label that landing makes renderable.
-final class BindEndpointCommand extends Command {
+final class BindEndpointCommand extends Command<RackDocument> {
   BindEndpointCommand({
     required this.linkId,
     required this.port,

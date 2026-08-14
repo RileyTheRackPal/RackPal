@@ -53,7 +53,7 @@ final class _Harness {
 
   String? _edit(List<PathwayCellEdit> edits) {
     for (final e in edits) {
-      final Command? command;
+      final Command<RackDocument>? command;
       switch (e.column) {
         // THROUGH THE REFUSING BUILDER, matching the app's real path.
         // `buildSetEntityProperty` would write a duplicate designator

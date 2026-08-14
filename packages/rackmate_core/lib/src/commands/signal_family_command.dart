@@ -103,7 +103,7 @@ SetSignalFamilyResult buildSetSignalFamily({
 }
 
 /// Sets the signal family on a link's services AND on their nets.
-final class SetSignalFamilyCommand extends Command {
+final class SetSignalFamilyCommand extends Command<RackDocument> {
   SetSignalFamilyCommand({
     required this.linkId,
     required this.family,

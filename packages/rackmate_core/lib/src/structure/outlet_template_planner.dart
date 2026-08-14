@@ -73,7 +73,7 @@ final class OutletTemplatePlanReady extends OutletTemplatePlan {
 
   /// In application order: the outlet, then its drops. Apply them inside
   /// ONE transaction.
-  final List<Command> commands;
+  final List<Command<RackDocument>> commands;
 
   /// What the plate will be called in the project tree.
   final String outletDesignation;

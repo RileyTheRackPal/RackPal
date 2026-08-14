@@ -122,10 +122,23 @@ const _knownMutableKeys = {
 };
 
 void _expectTouchesCoversChanges(
-  Command cmd,
+  Command<RackDocument> cmd,
   Set<String> changed, {
   required Set<String> expectAtLeast,
 }) {
+  // `Command.touches` is nullable since M4-A, where null means "this
+  // aggregate has no epoch model" — true of the Device Builder's
+  // `Command<TemplateBody>`, never of a document command. Asserted rather
+  // than `!`-ed, because a document command that returns null would
+  // silently invalidate NOTHING and the canvas would simply not redraw.
+  final touches = cmd.touches;
+  expect(
+    touches,
+    isNotNull,
+    reason:
+        '${cmd.runtimeType} is a Command<RackDocument> and must declare an '
+        'EpochMask; null is reserved for aggregates with no epoch model.',
+  );
   expect(
     changed,
     containsAll(expectAtLeast),
@@ -143,10 +156,10 @@ void _expectTouchesCoversChanges(
   );
   for (final key in changed) {
     expect(
-      _epochPlausiblyCovers(cmd.touches, key),
+      _epochPlausiblyCovers(touches!, key),
       isTrue,
       reason:
-          '${cmd.runtimeType}.touches (${cmd.touches.bits}) does not '
+          '${cmd.runtimeType}.touches (${touches.bits}) does not '
           'cover changed key "$key".',
     );
   }

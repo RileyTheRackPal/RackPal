@@ -34,7 +34,7 @@ import 'package:rackmate_core/src/units/ids.dart';
 /// `Link.jacketColorId` references.
 ///
 /// Does NOT touch `Link.jacketColorPulledId`; see the file header.
-final class SetLinkJacketColorCommand extends Command {
+final class SetLinkJacketColorCommand extends Command<RackDocument> {
   SetLinkJacketColorCommand({required this.linkId, required this.conventionId});
 
   /// The run being described.
@@ -102,7 +102,7 @@ final class SetLinkJacketColorCommand extends Command {
 /// Does NOT touch `Link.jacketColorId`, and in particular never PROMOTES
 /// an override to the convention: doing so would assert what the run is
 /// for, which nobody has said (G4).
-final class SetLinkPulledJacketColorCommand extends Command {
+final class SetLinkPulledJacketColorCommand extends Command<RackDocument> {
   SetLinkPulledJacketColorCommand({
     required this.linkId,
     required this.pulledId,

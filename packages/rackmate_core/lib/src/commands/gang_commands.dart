@@ -129,7 +129,7 @@ int occupantsLostByPassThrough(Gang gang) => _strapOf(gang)?.cells.length ?? 0;
 /// plate (see `model/gang.dart`), and a new gang is a wider box, which
 /// grows to the right. Inserting in the middle would renumber every gang
 /// after it and silently restate which opening every keystone is in.
-final class AddGangCommand extends Command {
+final class AddGangCommand extends Command<RackDocument> {
   AddGangCommand({required this.outletId, this.width, this.height});
 
   final Uuid outletId;
@@ -184,7 +184,7 @@ final class AddGangCommand extends Command {
 /// its cells cannot be reconstructed from anything else in the document:
 /// `Link.structureOrigin` says a drop lands at this OUTLET and has never
 /// said which cell.
-final class RemoveGangCommand extends Command {
+final class RemoveGangCommand extends Command<RackDocument> {
   RemoveGangCommand({required this.outletId, required this.index});
 
   final Uuid outletId;
@@ -232,7 +232,7 @@ final class RemoveGangCommand extends Command {
 /// before-value is the whole [GangFitting] rather than a `Strap?`,
 /// because undoing "I fitted a 2-port here" over an opening that was a
 /// brush has to give the brush back and not a blank question mark.
-final class SetStrapSizeCommand extends Command {
+final class SetStrapSizeCommand extends Command<RackDocument> {
   SetStrapSizeCommand({
     required this.outletId,
     required this.index,
@@ -320,7 +320,7 @@ final class SetStrapSizeCommand extends Command {
 /// standing choice for a person who has decided the plate was wrong. The
 /// whole previous fitting is held for revert, so undo is exact: every
 /// keystone comes back in the cell it was in.
-final class SetGangPassThroughCommand extends Command {
+final class SetGangPassThroughCommand extends Command<RackDocument> {
   SetGangPassThroughCommand({
     required this.outletId,
     required this.index,
@@ -367,7 +367,7 @@ final class SetGangPassThroughCommand extends Command {
 /// **PLACE, MOVE AND CLEAR ARE ONE COMMAND.** If [occupant] already sits
 /// in another cell of this outlet, that cell is vacated in the same undo
 /// step: one link end lands in exactly one cell. See the file header.
-final class SetCellOccupantCommand extends Command {
+final class SetCellOccupantCommand extends Command<RackDocument> {
   SetCellOccupantCommand({
     required this.outletId,
     required this.gangIndex,

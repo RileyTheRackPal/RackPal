@@ -279,7 +279,7 @@ const _jacketColorIds = <JacketColorId?>[
 /// so a revert that restored `Len(0)` instead of `null` would produce a
 /// semantically-equal document with different bytes, and only this test
 /// would catch it.
-Command _buildSetEntityProperty(_SequenceState s, Random rnd) {
+Command<RackDocument> _buildSetEntityProperty(_SequenceState s, Random rnd) {
   final rack = s.doc.racks[_rackId]!;
   final now = s.nextNow();
   const actor = 'gen';
@@ -350,7 +350,11 @@ Command _buildSetEntityProperty(_SequenceState s, Random rnd) {
 /// `_buildSetRackProperty`'s reason: driving `set` through the erased
 /// element type would discard the static typing the table exists for, and
 /// the nullable arms below are exactly where an absent-key bug hides.
-Command _buildSetOutletProperty(_SequenceState s, Random rnd, int step) {
+Command<RackDocument> _buildSetOutletProperty(
+  _SequenceState s,
+  Random rnd,
+  int step,
+) {
   final id = s.aliveOutletIds[rnd.nextInt(s.aliveOutletIds.length)];
   final outlet = s.doc.outlets[id]!;
   final now = s.nextNow();
@@ -390,7 +394,7 @@ Command _buildSetOutletProperty(_SequenceState s, Random rnd, int step) {
 }
 
 /// One `SetEntityPropertyCommand` over a random `StructureBodyField`.
-Command _buildSetStructureBodyProperty(
+Command<RackDocument> _buildSetStructureBodyProperty(
   _SequenceState s,
   Random rnd,
   int step,
@@ -438,7 +442,11 @@ Command _buildSetStructureBodyProperty(
 /// generated rename onto a label another drop already holds is a state
 /// this walk reaches routinely and the builder is the thing that decides
 /// what happens then.
-Command? _buildSetOriginProperty(_SequenceState s, Random rnd, int step) {
+Command<RackDocument>? _buildSetOriginProperty(
+  _SequenceState s,
+  Random rnd,
+  int step,
+) {
   final linkId =
       s.aliveHomeRunLinkIds[rnd.nextInt(s.aliveHomeRunLinkIds.length)];
   final now = s.nextNow();
@@ -488,7 +496,7 @@ Command? _buildSetOriginProperty(_SequenceState s, Random rnd, int step) {
 }
 
 /// One lifecycle edit, on a device or a cable — M3-A/7's two table rows.
-Command _buildSetLifecycle(_SequenceState s, Random rnd) {
+Command<RackDocument> _buildSetLifecycle(_SequenceState s, Random rnd) {
   final now = s.nextNow();
   final status =
       LifecycleStatus.values[rnd.nextInt(LifecycleStatus.values.length)];
@@ -629,7 +637,12 @@ final class _SequenceState {
 /// command, no document change and nothing to assert a byte property
 /// about. Failing the test there would make the harness red on a document
 /// state it is supposed to be generating.
-Command? _buildCommand(_StepKind kind, _SequenceState s, Random rnd, int step) {
+Command<RackDocument>? _buildCommand(
+  _StepKind kind,
+  _SequenceState s,
+  Random rnd,
+  int step,
+) {
   switch (kind) {
     case _StepKind.addDevice:
       return AddDeviceCommand(
@@ -884,7 +897,7 @@ Command? _buildCommand(_StepKind kind, _SequenceState s, Random rnd, int step) {
 /// would exercise the refusal forever and the write path never. Sorted
 /// before indexing, so the choice is a function of the seed and not of
 /// map order.
-Command? _buildSetSignalFamily(_SequenceState s, Random rnd) {
+Command<RackDocument>? _buildSetSignalFamily(_SequenceState s, Random rnd) {
   final linkId = s.aliveHomeRunLinkIds.elementAt(
     rnd.nextInt(s.aliveHomeRunLinkIds.length),
   );
@@ -906,7 +919,7 @@ Command? _buildSetSignalFamily(_SequenceState s, Random rnd) {
 
 void _reconcileTrackingAfterCommit(
   _StepKind kind,
-  Command cmd,
+  Command<RackDocument> cmd,
   _SequenceState s,
 ) {
   switch (kind) {

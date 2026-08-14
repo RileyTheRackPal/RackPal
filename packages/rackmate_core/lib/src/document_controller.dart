@@ -21,14 +21,21 @@ import 'package:rackmate_core/src/model/rack_document.dart';
 /// Commands `apply()` IMMEDIATELY inside [add], not at commit, so a later
 /// command in the same transaction sees the results of an earlier one
 /// ("add device, then connect to it", §5.4).
-final class TxnScope {
-  TxnScope(this._children, this._doc);
+///
+/// Generic over the aggregate since M4-A, so the Device Builder's session
+/// (`TemplateEditSession`) reuses this one rather than growing a second
+/// transaction scope of its own. CR-106's "stated once so nobody builds a
+/// second mechanism" is about the `Command`/`UndoStack` pair, and this is
+/// the third piece of the same pair: without it, every new aggregate
+/// re-implements apply-on-add.
+final class TxnScope<A> {
+  TxnScope(this._children, this._aggregate);
 
-  final List<Command> _children;
-  final RackDocument _doc;
+  final List<Command<A>> _children;
+  final A _aggregate;
 
-  void add(Command c) {
-    c.apply(_doc);
+  void add(Command<A> c) {
+    c.apply(_aggregate);
     _children.add(c);
   }
 }
@@ -40,7 +47,7 @@ final class _TxnBuilder {
 
   final LabelKey label;
   final Selection selectionBefore;
-  final List<Command> children = [];
+  final List<Command<RackDocument>> children = [];
 }
 
 /// THE only mutation entry point (docs/03-architecture.md §2.2) — every
@@ -136,20 +143,20 @@ class DocumentController {
   /// captured before serializing.
   void markSaved() => markSavedAt(doc.stateId);
 
-  void run(Command c) => transact(c.label, (tx) => tx.add(c));
+  void run(Command<RackDocument> c) => transact(c.label, (tx) => tx.add(c));
 
-  T transact<T>(LabelKey label, T Function(TxnScope tx) body) {
+  T transact<T>(LabelKey label, T Function(TxnScope<RackDocument> tx) body) {
     final open = _open;
     if (open != null) {
       // Flatten: nested transactions share the outermost's children list,
       // so the user sees exactly one undo entry no matter how many
       // `transact` calls a single gesture nests.
-      return body(TxnScope(open.children, doc));
+      return body(TxnScope<RackDocument>(open.children, doc));
     }
     final b = _TxnBuilder(label, selection.snapshot());
     _open = b;
     try {
-      final result = body(TxnScope(b.children, doc));
+      final result = body(TxnScope<RackDocument>(b.children, doc));
       _commit(b);
       return result;
     } catch (e, st) {
@@ -162,7 +169,7 @@ class DocumentController {
 
   void _commit(_TxnBuilder b) {
     if (b.children.isEmpty) return; // no-op edits add no history
-    final txn = Transaction(
+    final txn = Transaction<RackDocument>(
       b.label,
       b.children,
       b.selectionBefore,

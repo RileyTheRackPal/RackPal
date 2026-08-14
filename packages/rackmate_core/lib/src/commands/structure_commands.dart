@@ -98,7 +98,7 @@ FracIndex nextOutletOrder(RackDocument doc) =>
     nextOrder(doc.outlets.values.map((o) => o.order));
 
 /// Creates the paired Structure `DeviceInstance` + [StructureBody].
-final class AddStructureCommand extends Command {
+final class AddStructureCommand extends Command<RackDocument> {
   AddStructureCommand({
     required this.title,
     required this.designator,
@@ -195,7 +195,7 @@ final class AddStructureCommand extends Command {
 /// A caller that means to remove both composes a `Transaction`, which is
 /// visible in the Edit menu as one undo step and leaves this command
 /// honest about what it took.
-final class RemoveStructureCommand extends Command {
+final class RemoveStructureCommand extends Command<RackDocument> {
   RemoveStructureCommand({required this.bodyId});
 
   final Uuid bodyId;
@@ -241,7 +241,7 @@ final class RemoveStructureCommand extends Command {
 }
 
 /// Creates one [Outlet] on a Structure body.
-final class AddOutletCommand extends Command {
+final class AddOutletCommand extends Command<RackDocument> {
   AddOutletCommand({
     required this.structureBodyId,
     required this.designation,
@@ -331,7 +331,7 @@ final class AddOutletCommand extends Command {
 /// deleting a user's home runs because they removed a wall plate is a much
 /// larger edit than the gesture asked for. A caller that means both
 /// composes a `Transaction`.
-final class RemoveOutletCommand extends Command {
+final class RemoveOutletCommand extends Command<RackDocument> {
   RemoveOutletCommand({required this.id});
 
   final Uuid id;

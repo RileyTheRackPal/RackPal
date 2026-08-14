@@ -4,7 +4,7 @@
 // and re-flow" — snapshotting only the affected entities' JSON before and
 // after, rather than writing fragile per-operation inverse logic:
 //
-//   final class SnapshotCommand extends Command {
+//   final class SnapshotCommand extends Command<RackDocument> {
 //     SnapshotCommand(this.label, this.touches, this.affects, this.before,
 //         this.after);
 //     final Map<Uuid, JsonMap?> before, after;   // null value == absent

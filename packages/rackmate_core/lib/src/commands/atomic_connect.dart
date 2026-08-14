@@ -459,7 +459,7 @@ ConnectRefused? _tier1(
 /// `apply()`, so redo recreates identical entities — the `AddLinkCommand`
 /// rule, and the reason [plan] is computed before construction rather
 /// than inside `apply()`.
-final class AtomicConnectCommand extends Command {
+final class AtomicConnectCommand extends Command<RackDocument> {
   AtomicConnectCommand({
     required this.plan,
     required this.materialisations,

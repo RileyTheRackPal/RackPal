@@ -1020,7 +1020,7 @@ abstract final class PathwayField {
 /// `touch` again, for the reason `MoveDeviceCommand` (device_commands.dart)
 /// gives at length: a revision left one higher than it started is exactly
 /// what breaks CR-117's byte round-trip.
-final class SetEntityPropertyCommand<E, T> extends Command {
+final class SetEntityPropertyCommand<E, T> extends Command<RackDocument> {
   SetEntityPropertyCommand({
     required this.id,
     required this.field,
@@ -1097,7 +1097,7 @@ final class SetEntityPropertyCommand<E, T> extends Command {
   }
 
   @override
-  Command? mergeWith(Command next) {
+  Command<RackDocument>? mergeWith(Command<RackDocument> next) {
     if (next is! SetEntityPropertyCommand<E, T>) return null;
     if (next.id != id) return null;
     if (next.field.key != field.key) return null;

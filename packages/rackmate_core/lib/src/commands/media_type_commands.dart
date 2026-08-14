@@ -101,7 +101,7 @@ String mediaShortTagFor(String spelling) {
 }
 
 /// Adds one [MediaTypeDef] to the document's registry (RJ-012, RJ-009).
-final class AddMediaTypeCommand extends Command {
+final class AddMediaTypeCommand extends Command<RackDocument> {
   AddMediaTypeCommand({
     required this.id,
     required this.displayName,

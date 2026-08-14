@@ -6,7 +6,7 @@ import 'package:rackmate_core/src/units/ids.dart';
 /// Changes `Rack.heightU`. See `MoveDeviceCommand` (device_commands.dart)
 /// for why `revert()` restores `EntityMeta` via `restoreTo` rather than
 /// calling `touch` again.
-final class SetRackHeightCommand extends Command {
+final class SetRackHeightCommand extends Command<RackDocument> {
   SetRackHeightCommand({
     required this.id,
     required this.fromHeightU,
@@ -67,28 +67,29 @@ final class SetRackHeightCommand extends Command {
   }
 
   @override
-  Command? mergeWith(Command next) => switch (next) {
-    SetRackHeightCommand(
-      id: final n,
-      toHeightU: final h,
-      now: final mergedNow,
-      actor: final mergedActor,
-    )
-        when n == id =>
-      // See MoveDeviceCommand.mergeWith's comment (device_commands.dart):
-      // carries THIS command's already-captured "before" meta snapshot
-      // forward, since the merged command is a fresh object that never
-      // itself has apply() called on it before a possible revert().
-      (SetRackHeightCommand(
-          id: id,
-          fromHeightU: fromHeightU,
-          toHeightU: h,
-          now: mergedNow,
-          actor: mergedActor,
+  Command<RackDocument>? mergeWith(Command<RackDocument> next) =>
+      switch (next) {
+        SetRackHeightCommand(
+          id: final n,
+          toHeightU: final h,
+          now: final mergedNow,
+          actor: final mergedActor,
         )
-        .._prevUpdatedAt = _prevUpdatedAt
-        .._prevUpdatedBy = _prevUpdatedBy
-        .._prevLocalRevision = _prevLocalRevision),
-    _ => null,
-  };
+            when n == id =>
+          // See MoveDeviceCommand.mergeWith's comment (device_commands.dart):
+          // carries THIS command's already-captured "before" meta snapshot
+          // forward, since the merged command is a fresh object that never
+          // itself has apply() called on it before a possible revert().
+          (SetRackHeightCommand(
+              id: id,
+              fromHeightU: fromHeightU,
+              toHeightU: h,
+              now: mergedNow,
+              actor: mergedActor,
+            )
+            .._prevUpdatedAt = _prevUpdatedAt
+            .._prevUpdatedBy = _prevUpdatedBy
+            .._prevLocalRevision = _prevLocalRevision),
+        _ => null,
+      };
 }

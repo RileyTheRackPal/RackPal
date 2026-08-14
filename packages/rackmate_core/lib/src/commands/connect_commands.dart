@@ -162,7 +162,7 @@ final class PortMaterialisation {
 /// Ids are minted in the constructor, never in `apply()`, so redo
 /// recreates identical entities — the `AddLinkCommand` rule. See the file
 /// header for why port materialisation is not a violation of it.
-final class ConnectPortsCommand extends Command {
+final class ConnectPortsCommand extends Command<RackDocument> {
   ConnectPortsCommand({
     required this.from,
     required this.to,

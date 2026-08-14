@@ -41,7 +41,7 @@ import 'package:rackmate_core/src/units/ids.dart';
 /// that happens to agree with the classifier today is still an
 /// assertion, and demoting it to "unlocked because it matches" would
 /// silently drop the user's word the next time the document moved.
-final class SetLinkClassCommand extends Command {
+final class SetLinkClassCommand extends Command<RackDocument> {
   SetLinkClassCommand({required this.linkId, required this.linkClass});
 
   /// The run being classified.
@@ -103,7 +103,7 @@ final class SetLinkClassCommand extends Command {
 /// `effectiveLinkClassOf` reads the classifier again — including `null`
 /// for undetermined, which is a legitimate outcome and not a failure of
 /// this command.
-final class ClearLinkClassOverrideCommand extends Command {
+final class ClearLinkClassOverrideCommand extends Command<RackDocument> {
   ClearLinkClassOverrideCommand({required this.linkId});
 
   /// The run being handed back.

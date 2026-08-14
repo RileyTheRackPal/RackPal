@@ -95,7 +95,7 @@ final class DropBuildOk extends DropBuildOutcome {
   const DropBuildOk({required this.commands, required this.fieldLabels});
 
   /// In order, one per drop. Apply inside ONE transaction.
-  final List<Command> commands;
+  final List<Command<RackDocument>> commands;
   final List<String> fieldLabels;
 }
 
@@ -135,7 +135,7 @@ DropBuildOutcome buildDropsFor({
   /// encouraged state.
   SignalFamilyId? signalFamily,
 }) {
-  final commands = <Command>[];
+  final commands = <Command<RackDocument>>[];
   final labels = <String>[];
   // THE FOURTH RUNNING RESERVATION (#691). The three below it are
   // sets of strings; this one is a list because `nextOrder` takes the

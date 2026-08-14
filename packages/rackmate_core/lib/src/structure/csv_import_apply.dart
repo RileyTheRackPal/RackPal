@@ -71,7 +71,7 @@ final class CsvImportReady extends CsvImportBuild {
   /// In application order: registry and entity creations first, then the
   /// drops, then the updates. The order is load-bearing, because a drop
   /// naming a room refers to a room that has to exist by then.
-  final List<Command> commands;
+  final List<Command<RackDocument>> commands;
 
   final int createdDrops;
   final int updatedDrops;
@@ -120,9 +120,9 @@ CsvImportBuild buildCsvImport({
     );
   }
 
-  final creations = <Command>[];
-  final drops = <Command>[];
-  final updates = <Command>[];
+  final creations = <Command<RackDocument>>[];
+  final drops = <Command<RackDocument>>[];
+  final updates = <Command<RackDocument>>[];
   final warnings = <CsvCellIssue>[];
 
   // Reservations, carried across every row in this import.
@@ -377,7 +377,7 @@ String _tokenFor(
 /// and this repeats structurally: every arm is guarded on the value
 /// being non-null, so a sheet carrying only lengths cannot clear a note
 /// somebody typed in the app.
-List<Command> _buildUpdates({
+List<Command<RackDocument>> _buildUpdates({
   required RackDocument doc,
   required CsvPlannedRow planned,
   required Uuid? pathwayId,
@@ -386,7 +386,7 @@ List<Command> _buildUpdates({
   required Set<String> usedLabels,
 }) {
   final row = planned.row;
-  final out = <Command>[];
+  final out = <Command<RackDocument>>[];
 
   for (final linkId in planned.matchedLinkIds) {
     final link = doc.links[linkId];
@@ -472,7 +472,7 @@ List<Command> _buildUpdates({
 }
 
 void _origin<T>(
-  List<Command> out, {
+  List<Command<RackDocument>> out, {
   required RackDocument doc,
   required Uuid linkId,
   required EntityField<Link, T> field,

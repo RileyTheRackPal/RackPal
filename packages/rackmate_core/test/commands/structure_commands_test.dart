@@ -258,14 +258,18 @@ void main() {
       final add = _addStructure();
       final outlet = _addOutlet(add.bodyId);
 
-      for (final cmd in <Command>[
+      for (final cmd in <Command<RackDocument>>[
         add,
         outlet,
         RemoveStructureCommand(bodyId: add.bodyId),
         RemoveOutletCommand(id: outlet.id),
       ]) {
         expect(
-          cmd.touches.has(EpochMask.structure),
+          // `?.` rather than `!`: `touches` is nullable since M4-A and a
+          // document command returning null is exactly the defect this
+          // assertion exists to catch — null fails `isTrue` with the
+          // reason below, which is the right answer either way.
+          cmd.touches?.has(EpochMask.structure),
           isTrue,
           reason:
               '${cmd.runtimeType} must bump the structure epoch, or the '
