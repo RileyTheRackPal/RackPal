@@ -79,7 +79,7 @@ Sections in rail order. Only section 1's three starred fields block `Save`.
 | `displayName` ★ | text | "HDMI Matrix 16×16" |
 | `manufacturer` | text | **Pre-filled with the literal `Generic` (DR-056, §11.55).** `Generic` is the trade's standard token for *unspecified / by others* in a manufacturer column, so it is not a fabricated value under G4 but the industry's own spelling of what `—` means. The whole seeded catalog is `Generic` too, and confirmed decision 2 rules out a SKU library. Consequence, stated rather than hidden: the unknown rollup reports **zero** devices missing a manufacturer, because the field holds a value (§11.55.5). |
 | `model` | text | **NOT defaulted; left blank (DR-056 §11.55.5).** No trade convention was offered for a model string and an invented one would be the fabrication the manufacturer default is careful not to be, so an untouched `model` prints `—` and counts as unknown. |
-| `category` | enum | Video Distribution · Audio · Network · Control · Sources · RF/Coax · Power · Passive & Mechanical. Optional (AC-049). |
+| `category` | enum | **`kCatalogCategoryOrder`, which is the source of truth and carries NINE**: Video Distribution & Switching · Audio · Network & Cabling Infrastructure · Control · Sources · RF / Coax · Power · Passive & Mechanical · Field Devices. The eight-item list this row used to spell abbreviated three of those and dropped `Field Devices` altogether; the builder reads the constant the palette groups by, because a second list is how the two come to disagree about what a device is (DR-059 §11.58.6). Optional (AC-049). |
 | `typePrefix` ★ | text, 2–4 chars | `MTX`, `AMP`, `SW`, `PP`, `UPS`. Seeds the device designator format `{TYPE_PREFIX}{SEP}{SEQ}` → `MTX-1` (CR-041, CR-045). Auto-suggested from category when one is chosen. |
 | `tags` | chip input | `hdbaset`, `4k60`, `poe`, `residential` |
 | `templateId` | UUID, read-only | Stable across every version. |
@@ -109,7 +109,17 @@ Three things the form does **not** do:
 
 ### 3.4 Appearance
 
-`accentColor` and a glyph from a built-in icon set, both defaulting from category. **No device images.** `frontImage` and `rearImage` are cut from v1 (AC-057): they resolve nothing the output needs, add an image-decode import surface, and add ~1 MB per template.
+`accentColor` and a **`glyph`** from a built-in set of **17 marks plus `none`**, both defaulting from category (DR-059, §11.58).
+
+**The glyph is ruled in rather than assumed in, and the reason is CR-078's.** This section named it from M0 and no ruling did, so it was put to the user as a scope question and ruled to ship. The argument that carried it is not decoration: *"hue is never used alone"*, because hue dies in greyscale and on a photocopy, and the elevation is the sheet that gets taped inside the rack door. A census found `accentColor` authored on **0 of the 48 seeded templates** and read by **no renderer** (`draw/scene/device_layer.dart` fills every device with `palette.deviceFill`), so shipping it alone would have been hue alone on the worst sheet for it.
+
+**It is drawn as geometry, never as a codepoint** (§11.58.4). `draw/scene/family_glyph.dart` exists because the signal glyph once was one: Jost carries none of those characters, so the PDF measurer returned a near-zero advance while the screen fell back to a system font and drew it full width, and the field saw a family token printed over a net name.
+
+**The value set is capped at 17 by legibility, not by taste**: the mark draws 1U tall on a greyscale photocopy, so silhouettes group by what a box *is* and several catalog ids share one. Defaults key off `kCatalogCategoryOrder`, the palette's own **nine** categories, which is the same list §3.1 abbreviates to eight; that constant is the source of truth and this table is not a second one.
+
+**M4-D ships the enum, the field, the codec and the defaults; the 17 vector marks and their renderers are M4-K's**, where a glyph can be judged against a rendered panel (§11.58.7).
+
+**No device images.** `frontImage` and `rearImage` are cut from v1 (AC-057): they resolve nothing the output needs, add an image-decode import surface, and add ~1 MB per template.
 
 ---
 

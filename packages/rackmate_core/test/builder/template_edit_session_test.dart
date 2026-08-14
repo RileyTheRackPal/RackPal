@@ -18,6 +18,7 @@
 // defects.
 import 'dart:typed_data';
 
+import 'package:collection/collection.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:test/test.dart';
 
@@ -378,45 +379,120 @@ void main() {
       expect(keys.toSet(), hasLength(keys.length));
     });
 
-    test('no two fields are the same field, written then read as a set', () {
-      // The census this repo asks for before trusting a descriptor table.
+    test('writing one field moves that field and no other', () {
+      // The census this repo asks for before trusting a descriptor table,
+      // and it is on its THIRD shape. Each rewrite came from watching the
+      // previous one pass something it should have caught.
       //
-      // WRITE ALL, THEN READ ALL — not write-then-read one at a time,
-      // which is the version this test started as and which is weaker in
-      // exactly the way that matters. A `get`/`set` pair copied from the
-      // row above and only HALF repointed fails either version; a pair
-      // copied and not repointed AT ALL, so that two rows both drive
-      // `manufacturer`, passes the one-at-a-time version and fails this
-      // one, because the second write clobbers the first and the first
-      // read comes back wrong.
-      final body = _body();
-      final written = <String, Object?>{};
-      for (final field in TemplateBodyField.all) {
-        switch (field) {
-          case TemplateField<String>():
-            written[field.key] = 'probe-${field.key}';
-            field.set(body, 'probe-${field.key}');
-          case TemplateField<String?>():
-            written[field.key] = 'probe-${field.key}';
-            field.set(body, 'probe-${field.key}');
-          case TemplateField<int>():
-            // Distinct per field for the same reason the strings are.
-            final v = 70 + TemplateBodyField.all.indexOf(field);
-            written[field.key] = v;
-            field.set(body, v);
-          default:
-            fail('${field.key} has an unhandled field type');
-        }
-      }
-      for (final field in TemplateBodyField.all) {
+      //   1. WRITE ONE, READ ONE. Passes when two rows both drive
+      //      `manufacturer`, because each write is read back before the
+      //      next one clobbers it.
+      //   2. WRITE ALL, READ ALL. Catches that, and was the shape until
+      //      M4-D/3 added three `bool` fields. There are only two bools,
+      //      so `isPassthrough` and `isContainer` can be aliased to one
+      //      body field, both be written `true`, and both read back
+      //      `true`. A census whose probe values collide is a census with
+      //      holes in it, and adding a boolean is what puts them there.
+      //   3. THIS. Snapshot every field, write ONE probe, and assert that
+      //      exactly one reading moved. It cannot be defeated by a value
+      //      set of any size, because it compares positions rather than
+      //      values, and it names both sides when it fails.
+      //
+      // The probe must DIFFER from what is already there or the write is
+      // unobservable, which is what `_probeFor` is careful about.
+      const deep = DeepCollectionEquality();
+      for (final subject in TemplateBodyField.all) {
+        final body = _body();
+        final before = [
+          for (final f in TemplateBodyField.all) f.get(body),
+        ];
+        _writeProbe(subject, body);
+        final after = [for (final f in TemplateBodyField.all) f.get(body)];
+
+        final moved = [
+          for (var i = 0; i < after.length; i++)
+            if (!deep.equals(before[i], after[i])) TemplateBodyField.all[i].key,
+        ];
+
         expect(
-          field.get(body),
-          written[field.key],
+          moved,
+          [subject.key],
           reason:
-              '${field.key} did not read back its own probe — two rows of '
-              'TemplateBodyField are pointing at one field of TemplateBody',
+              'writing ${subject.key} moved $moved. If that list is empty '
+              'the probe equalled the existing value and the write was '
+              'unobservable; if it names another field, two rows of '
+              'TemplateBodyField point at one field of TemplateBody',
         );
       }
     });
   });
 }
+
+/// Writes a value into [subject] that is guaranteed to differ from what
+/// the field currently holds.
+///
+/// EXPLICIT PER TYPE, with `default: fail`, so a field whose type nobody
+/// taught this function fails the census loudly instead of being skipped
+/// in silence. That is how M4-D/3 found out it had added thirteen fields
+/// this test could not see.
+void _writeProbe(TemplateField<Object?> subject, TemplateBody body) {
+  switch (subject) {
+    case TemplateField<String>():
+      subject.set(body, 'probe-${subject.key}');
+    case TemplateField<String?>():
+      subject.set(body, 'probe-${subject.key}');
+    case TemplateField<List<String>>():
+      // A FRESH LIST, and the reason is the one shape that can pass a
+      // census while still being wrong: accessors that hand back the
+      // body's OWN list make `get` and the live value the same object, so
+      // a command's `from` aliases what it is meant to restore and undo
+      // does nothing at all.
+      subject.set(body, <String>['probe-${subject.key}']);
+    // THESE TWO ALSO CATCH EVERY `Len` AND `Mass` FIELD, and there is no
+    // way to write a case that does not.
+    //
+    // `Len` and `Mass` are EXTENSION TYPES over `int`, so they have no
+    // runtime representation at all: `TemplateField<Len>` and
+    // `TemplateField<int>` are the same type once the program is running,
+    // and a `case TemplateField<Len>()` written below these is dead code
+    // the analyzer rightly refuses (`unreachable_switch_case`). It was
+    // written, and deleted after watching the warning.
+    //
+    // The census is unharmed, which is the part worth checking rather
+    // than assuming. Adding 7 to a `Len` adds 7 NANOMETRES: a daft
+    // quantity for a chassis, and a perfectly good probe, because all
+    // this function owes is a value that DIFFERS from the one already
+    // there. Nothing here asserts a unit.
+    case TemplateField<int>():
+      subject.set(body, subject.get(body) + 7);
+    case TemplateField<int?>():
+      subject.set(body, (subject.get(body) ?? 0) + 7);
+    case TemplateField<bool>():
+      subject.set(body, !subject.get(body));
+    case TemplateField<Rgb?>():
+      subject.set(body, const Rgb(0x11, 0x22, 0x33));
+    case TemplateField<OccupancySide>():
+      subject.set(body, _next(OccupancySide.values, subject.get(body)));
+    case TemplateField<MountMethod>():
+      subject.set(body, _next(MountMethod.values, subject.get(body)));
+    case TemplateField<WidthClass>():
+      subject.set(body, _next(WidthClass.values, subject.get(body)));
+    case TemplateField<ThermalClass>():
+      subject.set(body, _next(ThermalClass.values, subject.get(body)));
+    case TemplateField<PlugType?>():
+      subject.set(body, PlugType.values.first);
+    case TemplateField<DeviceGlyph?>():
+      subject.set(body, DeviceGlyph.matrix);
+    default:
+      fail(
+        '${subject.key} has a type this census cannot probe. Teach '
+        '_writeProbe about it rather than dropping the row: an untested '
+        'accessor pair is exactly what this test exists to find.',
+      );
+  }
+}
+
+/// The next value round the enum, so the probe always differs from what
+/// is there.
+T _next<T>(List<T> values, T current) =>
+    values[(values.indexOf(current) + 1) % values.length];

@@ -60,6 +60,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` ย
 * [DR-056, `Generic` is the trade's word for unspecified](dr-056-generic-is-the-trades-word-for-unspecified.md) - raised as a contradiction between AC-049 and a Dart constructor, which was no contradiction at all; the census run to check it found the real unruled question, and trade convention settled it against the G4 argument.
 * [DR-057, pitch is a refinement, not a prerequisite](dr-057-pitch-is-a-refinement-not-a-prerequisite.md) - sparse pitch was priced as a feature cut at 14 of 45 templates, off a derived document's pseudocode; every ruling says the layout flows from footprints, so the cut was never real.
 * [DR-058, a fork whose source cannot be seen is silent and counted](dr-058-an-unseen-source-is-silent-and-counted.md) - CR-062 rules what a corrected source shows and not what an invisible one does; no badge on the device, and the rollup reports the count, which is G4 applied to a comparison.
+* [DR-059, the device glyph ships](dr-059-the-device-glyph-ships.md) - a ยง8.3 scope amendment; the census found `accentColor` authored on 0 of 48 seeds and read by no renderer, so shipping it alone would have been hue alone on the sheet that gets photocopied.
 
 # Not yet written up
 

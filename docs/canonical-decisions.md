@@ -10547,6 +10547,76 @@ widget ships**, because nothing forks yet (Duplicate is M4-D `#175`) and no libr
 present, so every document already on disk still satisfies CR-117. `builder/fork_status.dart`
 carries this ruling in its own header, for DR-057 §11.56.7's reason.
 
+### 11.58 DR-059 · The device glyph ships, because `accentColor` alone is hue alone
+
+**Settled by the user on 2026-08-14**, during M4-C's census of M4-D (board `#175`, `#201`). **This
+is a §8.3 amendment, not a decomposition gap**, and the distinction is the reason it has its own
+ruling ID and its own commit: roadmap §2's device-builder line does not name a glyph, and neither
+does any ruling in Parts 1 to 3.
+
+**11.58.1 What the question was.** docs/06 §3.4 says Appearance carries *"`accentColor` and a glyph
+from a built-in icon set, both defaulting from category"*. There is no icon set, no model field and
+no ruling behind that sentence. **Every `glyph` in canon is `SignalDomainDef.glyph`**, which is
+CR-078's channel 4a on the *schematic* and a different axis entirely: it identifies a signal family,
+not a device. So the device glyph lived in exactly one derived, priority-3 sentence, which
+`check a decomposition for holes` makes a scope question for the user rather than a hole to fill
+quietly. It was put as one, with a recommendation to drop it.
+
+**11.58.2 The user ruled it in, and the census had already found the better reason.** Three facts,
+measured rather than reasoned:
+
+| | Finding |
+|---|---|
+| `accentColor` is authored on **0 of the 48** seeded templates | It is not merely unread, it is unwritten. DR-012's *"the field is empty"* case exactly |
+| `accentColor` is read by **no renderer at all** | `grep` across `packages/*/lib` returns the model, the codec and M4-C's change-class table. `draw/scene/device_layer.dart` fills every device with `palette.deviceFill`, one uniform colour |
+| So the Appearance section as specified would offer **two controls and no channel that reaches paper** | Which is the defect `shell_tabs_test.dart` exists to prevent, arriving through a section rather than a tab |
+
+**11.58.3 And CR-078's own argument makes the case the derived sentence never made.** *"Hue is
+never used alone"*, because no categorical palette is CVD-safe past 8 or 9 categories and because
+**hue dies in greyscale and on a photocopy, which is how these drawings reach a job site**. The
+elevation is the single sheet that argument bites hardest on: it is the one that gets taped inside
+the rack door. Shipping `accentColor` as the only appearance channel would be hue alone, on the
+worst possible sheet, in a codebase that has a CI gate against exactly that on the schematic. The
+glyph is that redundancy applied one surface over.
+
+**11.58.4 IT IS GEOMETRY, NEVER A CHARACTER, and this is not a preference.**
+`draw/scene/family_glyph.dart` exists because the signal glyph was once a codepoint: **Jost carries
+none of them, so `PdfFontMeasurer` returned a near-zero advance while the screen's `TextPainter`
+fell back to a system font and drew it at full width.** Measured short, drawn wide, and the field
+saw `NET-NEN006` printed over the net name. It was invisible to every gate because both backends
+emitted identical ops and only the font behind one of them differed. The device glyph is drawn as
+paths, its advance computed from the type size, for that reason and no other.
+
+**11.58.5 The value set is censused, not invented, and is capped by legibility.** The set could
+have been one glyph per shipped archetype, which the 48 templates would put near 40. **It is 17
+plus `none`**, because the mark is drawn 1U tall on a greyscale photocopy and a 40-way silhouette
+distinction is not readable at that size: `measure the control before choosing it`, applied to an
+icon. Silhouettes group by what a box *is*, so several catalog ids share one: the three HDMI
+matrices are one `matrix`, and F04 through F08 are one `speaker`. Every one of the 48 resolves, and
+a gate asserts it.
+
+**11.58.6 Defaulting from category reuses `kCatalogCategoryOrder` and does not restate it.** That
+constant is the palette's own grouping order and carries **nine** categories. docs/06 §3.1's
+eight-item list is an abbreviation of it that also drops `Field Devices` and respells three of the
+others, so it is corrected to point at the constant rather than to compete with it. A second list of
+categories is how the palette and the builder come to disagree about what a device is.
+
+**11.58.7 Who builds what, because the artwork is not the field.** **M4-D (`#201`) ships the enum,
+`TemplateBody.glyph`, the codec, the change class and the default-from-category table.** The
+**vector artwork and its renderers are a new issue** sequenced with M4-K (`#182`), which already
+owns the three live previews and is the first surface where a device glyph would appear at all.
+Folding 17 hand-drawn paths, a PDF parity pass and a golden regeneration into the metadata-form
+task would swamp it, and M4-K is where a glyph can be judged against a rendered panel rather than
+against a table: DR-057 §11.56.7 made the same split for `pitch` and for the same reason.
+
+**11.58.8 Scope.** **Roadmap §2's device-builder line is amended** to name the glyph beside AC-049,
+which is the §8.3 edit this ruling exists to authorise. docs/06 §3.4 is edited to match rather than
+pointered, so §12 is owed nothing. `kSchemaVersion` does not advance: the key is written only when
+the glyph is not the category default, so every document already on disk still satisfies CR-117.
+**`accentColor`'s unreachability is NOT fixed here** and is filed as its own finding: making it
+reach `device_layer.dart` changes the elevation, regenerates four starters' goldens and must clear
+PAL-1, none of which belongs in a metadata form.
+
 ---
 
 ## 12. Superseded rulings

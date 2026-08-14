@@ -546,15 +546,31 @@ final class AppServices {
       // has not moved three times already: a surface opened from a menu
       // once per session does not pay for a row in `kKeymap`, M7's
       // generated table and `arbitrate()`'s conflict checks everywhere.
-      [7, 4],
+      //
+      // 7 -> 8 at M4-D, and the accelerator count STILL did not move.
+      // The eighth is `Project ▸ New device template…`, docs/06's
+      // builder. It sits under `Project` rather than beside the palette
+      // because what it authors is a template the PROJECT holds
+      // (docs/06 §7.1's per-project embedded snapshots) until M4-N gives
+      // templates a library of their own, and it will gain a sibling
+      // `Duplicate & edit` from every catalog card when M4-O builds the
+      // browser — so expect this number to move again.
+      //
+      // NO ACCELERATOR, for the fifth time and the same reason: the
+      // builder is a full-window editor opened deliberately, not a
+      // gesture in a loop. Its own keyboard cost is zero rows, because
+      // every control in it is a real input and Flutter's traversal
+      // already makes tab order the widget order.
+      [8, 4],
       reason:
           'five File-menu items — New, Open…, Save, Save As…, Export PDF… '
-          '— plus Project ▸ Locations… and Structured wiring…, and four '
-          'accelerators, because none of Export PDF, Locations or '
-          'Structured wiring has one. docs/08 §8.1 gives export Ctrl+P; '
-          'the dialog is not built and neither is the binding. The two '
-          'Project items open panels and do not earn a row in kKeymap, '
-          "M7's table and arbitration across every platform.",
+          '— plus Project ▸ Locations…, Structured wiring… and New device '
+          'template…, and four accelerators, because none of Export PDF, '
+          'Locations, Structured wiring or the device builder has one. '
+          'docs/08 §8.1 gives export Ctrl+P; the dialog is not built and '
+          'neither is the binding. The three Project items open surfaces '
+          "and do not earn a row in kKeymap, M7's table and arbitration "
+          'across every platform.',
     );
   });
 

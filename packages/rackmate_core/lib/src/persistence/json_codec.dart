@@ -42,6 +42,7 @@ import 'package:rackmate_core/src/idformat/id_format.dart';
 import 'package:rackmate_core/src/model/acked_finding.dart';
 import 'package:rackmate_core/src/model/circuit.dart';
 import 'package:rackmate_core/src/model/conductor.dart';
+import 'package:rackmate_core/src/model/device_glyph.dart';
 import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/entity_meta.dart';
 import 'package:rackmate_core/src/model/enums.dart';
@@ -3364,6 +3365,11 @@ JsonMap _encodeTemplateBody(TemplateBody b) {
   putIfNotNull(json, 'containerUsableDepthNm', b.containerUsableDepth?.nm);
   putIfNotNull(json, 'containerUsableWidthNm', b.containerUsableWidth?.nm);
   if (b.accentColor != null) json['accentColor'] = _encodeRgb(b.accentColor!);
+  // Absent means INHERIT THE CATEGORY'S DEFAULT, not unknown (DR-059).
+  // Writing the resolved value instead would put a key on all 48 seeded
+  // templates and regenerate four starters for nothing, and would lose
+  // the author's *choice* the moment the category changed.
+  if (b.glyph != null) json['glyph'] = encodeEnumName(b.glyph!);
   // Absent when never submitted, never an explicit null (G4, CR-114, DR-033).
   if (b.submittedBy != null) {
     json['submittedBy'] = _encodeSubmissionCredit(b.submittedBy!);
@@ -3515,6 +3521,13 @@ TemplateBody _decodeTemplateBody(JsonMap json) => TemplateBody(
       ? null
       : _decodeTemplateOrigin(
           asJsonMap(json['derivedFrom'], 'TemplateBody.derivedFrom'),
+        ),
+  glyph: json['glyph'] == null
+      ? null
+      : decodeEnumStrict(
+          DeviceGlyph.values,
+          asStr(json['glyph'], 'TemplateBody.glyph'),
+          'TemplateBody.glyph',
         ),
 );
 

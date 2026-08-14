@@ -1,4 +1,5 @@
 import 'package:meta/meta.dart';
+import 'package:rackmate_core/src/model/device_glyph.dart' show DeviceGlyph;
 import 'package:rackmate_core/src/model/placement.dart' show Face;
 import 'package:rackmate_core/src/units/ids.dart';
 import 'package:rackmate_core/src/units/len.dart';
@@ -321,6 +322,7 @@ final class TemplateBody {
     List<BankDef>? banks,
     List<PortSetDef>? portSets,
     this.accentColor,
+    this.glyph,
     List<PanelGraphic>? panelGraphics,
     this.submittedBy,
     this.derivedFrom,
@@ -400,6 +402,17 @@ final class TemplateBody {
   List<PortSetDef> portSets;
 
   Rgb? accentColor;
+
+  /// The appearance mark, or null to inherit the category's default
+  /// (DR-059, canon §11.58).
+  ///
+  /// **Read it through `effectiveGlyph`, never directly**, and see that
+  /// function for why null here is an override slot rather than a G4
+  /// unknown. It ships beside [accentColor] because CR-078 rules that hue
+  /// is never used alone, and the elevation is the sheet that gets
+  /// photocopied.
+  DeviceGlyph? glyph;
+
   List<PanelGraphic> panelGraphics;
 
   /// Who submitted this template to the community catalog (DR-033).
