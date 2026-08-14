@@ -238,7 +238,11 @@ const Map<String, _Rule> _bodyRules = {
   'isPassthrough': _breaking,
 
   // Colour and faceplate art. docs/06 §7.2: colour and glyph are safe.
+  // The device glyph (DR-059) joins them by the same reading: it changes
+  // what a mark looks like on an elevation and touches no connection and
+  // no occupancy.
   'accentColor': _safe,
+  'glyph': _safe,
 
   // A credit the application never reads (DR-033), and a provenance join
   // that Duplicate writes once and nothing else should ever touch

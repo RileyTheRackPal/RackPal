@@ -147,6 +147,7 @@ export 'src/idformat/tokens.dart';
 export 'src/model/acked_finding.dart';
 export 'src/model/circuit.dart';
 export 'src/model/conductor.dart';
+export 'src/model/device_glyph.dart';
 export 'src/model/device_instance.dart';
 export 'src/model/entity_meta.dart';
 export 'src/model/enums.dart';
