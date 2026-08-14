@@ -241,34 +241,63 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(
-              width: 200,
-              child: _SectionRail(
-                selected: _section,
-                canSave: _canSave,
-                onSelect: (s) => setState(() => _section = s),
+            // ═══════════════════════════════════════════════════════════
+            // TWO TRAVERSAL GROUPS, AND WITHOUT THEM TAB IS UNUSABLE
+            // ═══════════════════════════════════════════════════════════
+            // Flutter's default is `ReadingOrderTraversalPolicy`, which
+            // orders focus by GEOMETRY: top to bottom, left to right,
+            // across the whole subtree. The rail's tiles and the form's
+            // fields are two columns of roughly the same pitch, so
+            // reading order INTERLEAVES them. Measured, before the fix:
+            //
+            //   Display name -> RAIL TILE -> RAIL TILE -> Manufacturer
+            //
+            // which is what a user reported, and it is worse than it
+            // looks. A `ListTile` fires its `onTap` on Enter or Space, so
+            // somebody tabbing toward the designator prefix and typing
+            // without watching lands on a rail tile and CHANGES SECTION.
+            // The field they meant to fill then reads as broken, which is
+            // exactly how it was reported: "this doesn't appear to work
+            // at all".
+            //
+            // A `FocusTraversalGroup` makes each pane a unit, so Tab
+            // finishes the form before it leaves the form. The rail stays
+            // reachable, deliberately: keyboard-only operation is M7's
+            // criterion and M1's drill already proved that removing a
+            // stop is how a surface becomes unusable without a mouse.
+            // What changes is the ORDER, not the reachability.
+            FocusTraversalGroup(
+              child: SizedBox(
+                width: 200,
+                child: _SectionRail(
+                  selected: _section,
+                  canSave: _canSave,
+                  onSelect: (s) => setState(() => _section = s),
+                ),
               ),
             ),
             const VerticalDivider(width: 1),
             Expanded(
-              child: switch (_section) {
-                BuilderSection.identity => _IdentitySection(
-                  body: _session.body,
-                  onEdit: _run,
-                ),
-                BuilderSection.physical => _PhysicalSection(
-                  body: _session.body,
-                  onEdit: _run,
-                ),
-                BuilderSection.power => _PowerSection(
-                  body: _session.body,
-                  onEdit: _run,
-                ),
-                BuilderSection.appearance => _AppearanceSection(
-                  body: _session.body,
-                  onEdit: _run,
-                ),
-              },
+              child: FocusTraversalGroup(
+                child: switch (_section) {
+                  BuilderSection.identity => _IdentitySection(
+                    body: _session.body,
+                    onEdit: _run,
+                  ),
+                  BuilderSection.physical => _PhysicalSection(
+                    body: _session.body,
+                    onEdit: _run,
+                  ),
+                  BuilderSection.power => _PowerSection(
+                    body: _session.body,
+                    onEdit: _run,
+                  ),
+                  BuilderSection.appearance => _AppearanceSection(
+                    body: _session.body,
+                    onEdit: _run,
+                  ),
+                },
+              ),
             ),
           ],
         ),
@@ -484,45 +513,50 @@ class _PhysicalSection extends StatelessWidget {
     padding: const EdgeInsets.all(24),
     children: [
       const _SectionNote(
-        'Occupancy is six fields and not one height, because a 2U patch '
-        'panel is front 2 / rear 2, a rear lacing bar is front 0 / rear 1, '
-        'and a 0U PDU is 0 / 0 mounted vertically. A single number cannot '
-        'say any of the three (CR-036).',
+        'Where a device sits takes more than one number. A 2U patch '
+        'panel fills 2U front and back; a rear lacing bar takes nothing '
+        'at the front and 1U behind; a 0U PDU takes no rack units at '
+        'all and mounts vertically.',
       ),
       _IntRow(
         label: 'RU height (rear)',
         value: body.rearU,
-        hint: 'A front-only device is 0 here',
+        hint:
+            'How much it takes up behind the rails. A front-only '
+            'device is 0.',
         onChanged: (v) => onEdit(TemplateBodyField.rearU, v),
       ),
       _EnumRow<OccupancySide>(
         label: 'Occupies',
         value: body.side,
         values: OccupancySide.values,
-        nameOf: (v) => v.name,
+        nameOf: _occupancyLabel,
         onChanged: (v) => onEdit(TemplateBodyField.side, v),
       ),
       _EnumRow<MountMethod>(
         label: 'Mount method',
         value: body.mountMethod,
         values: MountMethod.values,
-        nameOf: (v) => v.name,
+        nameOf: _mountLabel,
         onChanged: (v) => onEdit(TemplateBodyField.mountMethod, v),
       ),
       _EnumRow<WidthClass>(
         label: 'Width class',
         value: body.widthClass,
         values: WidthClass.values,
-        nameOf: (v) => v.name,
+        nameOf: _widthLabel,
         onChanged: (v) => onEdit(TemplateBodyField.widthClass, v),
       ),
       _IntRow(
-        label: 'Nominal span (twelfths)',
+        label: 'Width in twelfths of a rack',
         value: body.nominalSpanTwelfths,
         // HALF-RACK IS A CLASS PLUS A SPAN, never "0.5 rack width"
         // (CR-030), because 9.5 / 10 / 10.4 / 10.5 in all ship and a
         // fraction cannot tell them apart.
-        hint: '12 is full width. Half-rack is 6 with widthClass: half',
+        hint:
+            '12 is full width, 6 is half. Half-rack gear is not all one '
+            'width, which is why this sits alongside the width class '
+            'rather than instead of it.',
         onChanged: (v) => onEdit(TemplateBodyField.nominalSpanTwelfths, v),
       ),
       _LenRow(
@@ -531,7 +565,9 @@ class _PhysicalSection extends StatelessWidget {
         // UNKNOWN, NOT ZERO (G4, CR-114). An empty box stays unknown,
         // serialises as an absent key, and every rollup that reads it
         // reports its unknown count instead of inventing a total.
-        hint: 'mm. Leave blank for unknown: it will not be guessed',
+        hint:
+            'Millimetres. Leave blank if you do not know: nothing will '
+            'be guessed for you.',
         onChanged: (v) => onEdit(TemplateBodyField.bodyDepth, v),
       ),
       _LenRow(
@@ -541,8 +577,9 @@ class _PhysicalSection extends StatelessWidget {
         // ears; flowing connectors across it draws jacks out past the
         // rails, on the one view that gets taped inside the rack door.
         hint:
-            'mm. 432 for a full-width chassis, not 482.6 (that is the '
-            'panel width including ears)',
+            'Millimetres, and 432 for a standard full-width chassis. '
+            '482.6 is the panel width including the rack ears, which is '
+            'a different measurement.',
         onChanged: (v) => onEdit(
           TemplateBodyField.chassisWidth,
           v ?? const Len(432_000_000),
@@ -551,13 +588,15 @@ class _PhysicalSection extends StatelessWidget {
       _MassRow(
         label: 'Weight',
         value: body.weight,
-        hint: 'kg. Leave blank for unknown',
+        hint: 'Kilograms. Leave blank if you do not know.',
         onChanged: (v) => onEdit(TemplateBodyField.weight, v),
       ),
       _MassRow(
         label: 'Max unsupported mass',
         value: body.maxUnsupportedMass,
-        hint: 'kg. Feeds RCK-013: above this the device needs rear support',
+        hint:
+            'Kilograms. Heavier than this and the device needs rear '
+            'support, which the drawing will call out.',
         onChanged: (v) => onEdit(TemplateBodyField.maxUnsupportedMass, v),
       ),
       _IntRow(
@@ -574,7 +613,7 @@ class _PhysicalSection extends StatelessWidget {
         label: 'Thermal class',
         value: body.thermalClass,
         values: ThermalClass.values,
-        nameOf: (v) => v.name,
+        nameOf: _thermalLabel,
         onChanged: (v) => onEdit(TemplateBodyField.thermalClass, v),
       ),
       SwitchListTile(
@@ -610,10 +649,10 @@ class _PowerSection extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       children: [
         const _SectionNote(
-          'Every field here is optional and none of them is guessed. '
-          'Typical draw is NOT derived from the nameplate: a fabricated '
-          'number that reaches a circuit-loading calculation is worse '
-          'than a blank (AC-039).',
+          'Every field here is optional and nothing is guessed for '
+          'you. Typical draw in particular is never worked out from the '
+          'nameplate: a made-up number that reaches a circuit-loading '
+          'calculation is worse than a blank one.',
         ),
         _NullableIntRow(
           label: 'Nameplate watts',
@@ -629,8 +668,9 @@ class _PowerSection extends StatelessWidget {
           // applies it the number stops being sourced and starts being
           // invented, and nothing downstream can tell the difference.
           hint:
-              'Typical draw is usually 30-70% of nameplate. Not filled '
-              'in for you: type a sourced number or leave it blank',
+              'Typical draw is usually 30 to 70 percent of the '
+              'nameplate. It is deliberately not filled in for you: put '
+              'in a figure you have a source for, or leave it blank.',
           onChanged: (v) => onEdit(TemplateBodyField.typicalWatts, v),
         ),
         _NullableIntRow(
@@ -649,7 +689,10 @@ class _PowerSection extends StatelessWidget {
           // LOADING IS COMPUTED IN VA, NOT WATTS (CR-056, AC-020): a
           // linear-supply amplifier at PF 0.65 under-reports current by
           // 35% on exactly the gear where it matters.
-          hint: 'Circuit loading is computed in VA, never in watts',
+          hint:
+              'Circuit loading is worked out in VA rather than watts, '
+              'because a low power factor makes watts understate the '
+              'current the breaker actually sees.',
           onChanged: (v) => onEdit(TemplateBodyField.apparentVA, v),
         ),
         _NullableIntRow(
@@ -657,20 +700,20 @@ class _PowerSection extends StatelessWidget {
           value: body.power.powerFactor,
           // PERMILLE, because CR-001 admits no floating point in the
           // persisted model, here or anywhere else.
-          hint: '650 means 0.65. Integer units only',
+          hint: 'Whole numbers only: enter 650 for a power factor of 0.65.',
           onChanged: (v) => onEdit(TemplateBodyField.powerFactor, v),
         ),
         _NullableIntRow(
           label: 'PoE budget watts',
           value: body.power.poeBudgetWatts,
-          hint: 'NET-001 depends on it',
+          hint: 'Total PoE this device can supply across all its ports.',
           onChanged: (v) => onEdit(TemplateBodyField.poeBudgetWatts, v),
         ),
         _EnumRow<PlugType?>(
           label: 'Inlet plug',
           value: body.power.inletPlug,
           values: const [null, ...PlugType.values],
-          nameOf: (v) => v?.name ?? 'unknown',
+          nameOf: _plugLabel,
           onChanged: (v) => onEdit(TemplateBodyField.inletPlug, v),
         ),
         SwitchListTile(
@@ -687,10 +730,11 @@ class _PowerSection extends StatelessWidget {
           title: const Text('Heat (BTU/hr)'),
           subtitle: Text(
             typical == null
-                ? 'Unknown until typical watts is filled in. Derived as '
-                      'watts x 3.412142, never stored (CR-005).'
-                : '${wattsToBtuPerHour(typical).toStringAsFixed(1)} — '
-                      'derived from typical watts, never stored (CR-005)',
+                ? 'Unknown until typical watts is filled in. It is '
+                      'worked out from the watts rather than stored, so '
+                      'the two can never disagree.'
+                : '${wattsToBtuPerHour(typical).toStringAsFixed(1)}, '
+                      'worked out from typical watts',
           ),
         ),
         _NullableIntRow(
@@ -698,7 +742,7 @@ class _PowerSection extends StatelessWidget {
           value: body.power.btuPerHourOverride,
           hint:
               'Only for a manufacturer figure that disagrees with the '
-              'arithmetic above',
+              'number above.',
           onChanged: (v) => onEdit(TemplateBodyField.btuPerHourOverride, v),
         ),
         const SizedBox(height: 16),
@@ -707,8 +751,9 @@ class _PowerSection extends StatelessWidget {
         // one of the two would be printed. Counting them needs the port
         // grid, which is M4-E.
         const _SectionNote(
-          'Outlets provided and consumed are counted from the port list, '
-          'not typed here. The port grid arrives at M4-E.',
+          'Outlets provided and consumed are counted from the device '
+          'port list rather than typed here. The port list is not built '
+          'yet.',
         ),
       ],
     );
@@ -744,9 +789,10 @@ class _AppearanceSection extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       children: [
         const _SectionNote(
-          'Colour is never the only channel. Hue dies in greyscale and on '
-          'a photocopy, which is how an elevation reaches a job site, so '
-          'a device also carries a mark (CR-078, DR-059).',
+          'Colour is never the only thing telling devices apart. It '
+          'disappears in greyscale and on a photocopy, which is how an '
+          'elevation usually reaches a job site, so a device carries a '
+          'mark as well.',
         ),
         const Text('Accent colour'),
         const SizedBox(height: 8),
@@ -788,9 +834,9 @@ class _AppearanceSection extends StatelessWidget {
           onChanged: (v) => onEdit(TemplateBodyField.glyph, v),
         ),
         const _SectionNote(
-          'Nothing draws these yet. The seventeen marks and the renderers '
-          'that put them on an elevation are M4-K, with the live previews '
-          '(DR-059).',
+          'The marks are not drawn on anything yet. Choosing one now '
+          'means it is already set when they start appearing on '
+          'elevations.',
         ),
       ],
     );
@@ -824,7 +870,13 @@ class _IdentitySection extends StatelessWidget {
         label: 'Display name',
         required: true,
         value: body.displayName,
-        hint: 'HDMI Matrix 16x16',
+        // AN EXAMPLE IS A PLACEHOLDER, NEVER A HELPER LINE. Under a
+        // FILLED field, "HDMI Matrix 16x16" sitting below "Pro Max 24
+        // PoE" reads as a second value rather than as a suggestion, and
+        // that is how it was reported. `example` shows inside the box
+        // only while it is empty; `hint` is guidance that stays true
+        // once there is a value.
+        example: 'HDMI Matrix 16x16',
         onChanged: (v) => onEdit(TemplateBodyField.displayName, v),
       ),
       _TextRow(
@@ -835,7 +887,7 @@ class _IdentitySection extends StatelessWidget {
         // "unspecified / by others" in a manufacturer column, so it is
         // the industry's own spelling of what an unknown prints, not a
         // fabricated value under G4.
-        hint: 'Generic',
+        example: 'Generic',
         onChanged: (v) => onEdit(TemplateBodyField.manufacturer, v),
       ),
       _TextRow(
@@ -845,7 +897,8 @@ class _IdentitySection extends StatelessWidget {
         // trade convention was offered for a model string, and an
         // invented one would be the fabrication the manufacturer default
         // is careful not to be. Blank prints an unknown and counts as one.
-        hint: 'left blank counts as unknown',
+        hint: 'Leave blank if you do not know it.',
+        example: 'DTP CrossPoint 84',
         onChanged: (v) => onEdit(TemplateBodyField.model, v),
       ),
       _CategoryRow(
@@ -869,7 +922,16 @@ class _IdentitySection extends StatelessWidget {
         label: 'Designator prefix',
         required: true,
         value: body.typePrefix ?? '',
-        hint: 'MTX — seeds MTX-1, MTX-2 (CR-041, CR-045)',
+        // THE MOST CRYPTIC LINE ON THE SCREEN, AND IT WAS REPORTED AS
+        // ONE. It read "MTX -- seeds MTX-1, MTX-2 (CR-041, CR-045)":
+        // "seeds" is our word rather than the trade's, and a ruling id
+        // on screen tells a user nothing they can act on. What this
+        // field decides is the tag printed beside the device on every
+        // sheet, so the helper says that in one sentence.
+        hint:
+            'Two to four letters. Each device you place is numbered '
+            'from it, so MTX gives MTX-1, MTX-2, MTX-3 on the drawings.',
+        example: 'MTX',
         onChanged: (v) => onEdit(TemplateBodyField.typePrefix, v),
       ),
       _IntRow(
@@ -879,7 +941,10 @@ class _IdentitySection extends StatelessWidget {
         // 0 IS A MEASURED ZERO, not an unknown: a 0U vertical PDU
         // occupies no rack units and says so. G4 cuts the other way here
         // than it does for weight, which is why this field is an `int`.
-        hint: '0 is a real answer: a 0U device',
+        hint:
+            'How many rack units the front of the device takes up. '
+            'Use 0 only for gear that mounts vertically in the rear '
+            'channel rather than on the rails.',
         onChanged: (v) => onEdit(TemplateBodyField.frontU, v),
       ),
       _TagsRow(
@@ -888,9 +953,9 @@ class _IdentitySection extends StatelessWidget {
       ),
       const SizedBox(height: 24),
       Text(
-        'Everything outside this section is optional. A template saved '
-        'with a name, a height and a prefix is not incomplete: it is a '
-        'template (AC-049).',
+        'Everything outside this section is optional. A template with '
+        'just a name, a height and a prefix is not half-finished: it is '
+        'a template, and it will place and print like any other.',
         style: Theme.of(context).textTheme.bodySmall,
       ),
       const SizedBox(height: 8),
@@ -901,9 +966,9 @@ class _IdentitySection extends StatelessWidget {
       // job has been misled by silence; one sentence is cheaper than
       // that.
       Text(
-        'Saving stores this template in the current project. A shared '
-        'device library arrives at M4-N; until then a template travels '
-        'with the file it was authored in.',
+        'Saving stores this template in the current project, so it '
+        'travels with this file. A shared library you can reuse across '
+        'jobs is not built yet.',
         style: Theme.of(context).textTheme.bodySmall,
       ),
     ],
@@ -937,12 +1002,27 @@ class _TextRow extends StatefulWidget {
     required this.value,
     required this.onChanged,
     this.hint,
+    this.example,
     this.required = false,
   });
 
   final String label;
   final String value;
+
+  /// Guidance that stays true once the field has a value. Sits BELOW the
+  /// box, permanently.
   final String? hint;
+
+  /// A sample value, shown INSIDE the box and only while it is empty.
+  ///
+  /// **The two are not interchangeable, and confusing them is what got
+  /// reported.** `HDMI Matrix 16x16` was a helper line, so it went on
+  /// sitting under `Pro Max 24 PoE` after the user had typed a name, and
+  /// read as a second value rather than as a suggestion. An example is
+  /// only useful while there is nothing there, which is exactly what
+  /// `hintText` does and `helperText` does not.
+  final String? example;
+
   final bool required;
   final ValueChanged<String> onChanged;
 
@@ -994,7 +1074,13 @@ class _TextRowState extends State<_TextRow> {
       controller: _controller,
       decoration: InputDecoration(
         labelText: widget.required ? '${widget.label} *' : widget.label,
+        hintText: widget.example,
         helperText: widget.hint,
+        // Three lines, because several hints are a full sentence and a
+        // clipped explanation is worse than none. `helperMaxLines` above
+        // 1 is what stops "Two to four letters. Each device you place is
+        // numbered from it…" ending at "Two to four lette…".
+        helperMaxLines: 3,
         border: const OutlineInputBorder(),
       ),
       onChanged: widget.onChanged,
@@ -1056,6 +1142,7 @@ class _IntRowState extends State<_IntRow> {
       decoration: InputDecoration(
         labelText: widget.required ? '${widget.label} *' : widget.label,
         helperText: widget.hint,
+        helperMaxLines: 3,
         border: const OutlineInputBorder(),
       ),
       // UNPARSEABLE TEXT IS IGNORED, NOT COERCED TO ZERO. `int.tryParse`
@@ -1129,6 +1216,7 @@ class _NullableIntRowState extends State<_NullableIntRow> {
       decoration: InputDecoration(
         labelText: widget.label,
         helperText: widget.hint,
+        helperMaxLines: 3,
         border: const OutlineInputBorder(),
       ),
       onChanged: (t) {
@@ -1212,6 +1300,7 @@ class _LenRowState extends State<_LenRow> {
       decoration: InputDecoration(
         labelText: widget.label,
         helperText: widget.hint,
+        helperMaxLines: 3,
         border: const OutlineInputBorder(),
       ),
       onChanged: (t) {
@@ -1286,6 +1375,7 @@ class _MassRowState extends State<_MassRow> {
       decoration: InputDecoration(
         labelText: widget.label,
         helperText: widget.hint,
+        helperMaxLines: 3,
         border: const OutlineInputBorder(),
       ),
       onChanged: (t) {
@@ -1300,6 +1390,63 @@ class _MassRowState extends State<_MassRow> {
     ),
   );
 }
+
+// ═════════════════════════════════════════════════════════════════════
+// WHAT THE DROPDOWNS SAY, AND WHY IT IS NOT `.name`
+// ═════════════════════════════════════════════════════════════════════
+// The first build put the raw enum identifier in front of the user, so
+// the mount-method menu offered `rackEars`, `notInRack` and `zeroU`, and
+// occupancy offered `zeroUVertical`. Those are Dart spellings of trade
+// facts, not the trade's own words, and they land in the same complaint
+// the designator prefix did: a control whose wording nobody outside this
+// repository can read.
+//
+// The tables below are the trade's spelling. They are per-value and
+// hand-written rather than a `camelCase` splitter, because "0U" is not
+// "zero u", "C14" is not "c14" and "NEMA 5-15P" is not "nema515p": the
+// cases that matter are exactly the ones an algorithm gets wrong.
+String _occupancyLabel(OccupancySide v) => switch (v) {
+  OccupancySide.front => 'Front only',
+  OccupancySide.rear => 'Rear only',
+  OccupancySide.both => 'Front and rear',
+  OccupancySide.zeroUVertical => '0U, vertical in the rear channel',
+  OccupancySide.none => 'Does not sit in the rack',
+};
+
+String _mountLabel(MountMethod v) => switch (v) {
+  MountMethod.rackEars => 'Rack ears',
+  MountMethod.shelf => 'On a shelf',
+  MountMethod.zeroU => '0U mount',
+  MountMethod.sideMount => 'Side mounted',
+  MountMethod.rearRail => 'Rear rail',
+  MountMethod.furniture => 'In furniture',
+  MountMethod.hosted => 'Hosted in another device',
+  MountMethod.notInRack => 'Not in a rack',
+};
+
+String _widthLabel(WidthClass v) => switch (v) {
+  WidthClass.full => 'Full width',
+  WidthClass.half => 'Half rack',
+  WidthClass.third => 'Third rack',
+  WidthClass.quarter => 'Quarter rack',
+  WidthClass.customWidth => 'Custom width',
+};
+
+String _thermalLabel(ThermalClass v) => switch (v) {
+  ThermalClass.passive => 'Passive, no fan',
+  ThermalClass.lowHeat => 'Runs cool',
+  ThermalClass.highHeat => 'Runs hot',
+  ThermalClass.activeCooled => 'Fan cooled',
+};
+
+String _plugLabel(PlugType? v) => switch (v) {
+  null => 'Unknown',
+  PlugType.c14 => 'IEC C14',
+  PlugType.c20 => 'IEC C20',
+  PlugType.nema515p => 'NEMA 5-15P',
+  PlugType.hardwired => 'Hardwired',
+  PlugType.wallWart => 'External power brick',
+};
 
 /// A closed set: nothing to parse and nothing to typo.
 class _EnumRow<T> extends StatelessWidget {
@@ -1354,7 +1501,7 @@ class _CategoryRow extends StatelessWidget {
       initialValue: value.isEmpty ? null : value,
       decoration: const InputDecoration(
         labelText: 'Category',
-        helperText: 'Optional (AC-049). Suggests a prefix and a glyph.',
+        helperText: 'Optional. Suggests a designator prefix and a mark.',
         border: OutlineInputBorder(),
       ),
       items: [
