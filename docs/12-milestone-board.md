@@ -2219,6 +2219,31 @@ renaming it re-lays a twelve-column landscape page whose 690 pt is already alloc
 §11.26 moved every sheet to M6 for exactly this reason**. §11.45.5 records the inconsistency as
 **stated** rather than hidden.
 
+> **RULED 2026-08-13 as DR-055 (§11.54), and the census restated the problem before it solved it.**
+> #679's framing, *"the sheet and the editor disagree"*, is the smaller half.
+> **`terminationRack` reaches no printed output anywhere**: its only consumer in the tree is the
+> editor's own column, and `rackmate_export` holds not one reference to any schedule column. It is
+> absent from the one sheet that drops every row where `!row.landsInRack`, sorts
+> `rackThenPanelThenPort` and groups by rack, so **the rack-side work order could not state the
+> rack-side termination.**
+>
+> ***THE ARGUMENT WAS ALREADY ON THE SHEET, ABOUT ITS OTHER COLUMNS.*** §3.3 prints both ends of
+> identity (`RACK LABEL` / `FIELD LABEL`), location (`RACK / RU / FACE` / `FAR END`) and port
+> (`PORT` / `FAR PORT`). Termination was **the only per-end fact collapsed into one column**, filed
+> in the *spec* block beside `MEDIA` as though it belonged to the cable. DR-046 ruled that collapse
+> wrong in the **model** and nobody carried it across. That is DR-053's lesson recurring inside a
+> day: a rule argued for one entity is evidence about its neighbours.
+>
+> *The width objection dissolved on reading §3.4.* The sheet is 690 pt and fully allocated, which is
+> what made this look expensive; §3.4 has always said a new column's width comes from
+> `CONDUCTOR / NOTES` first and then `MEDIA`. Applying the sheet's own rule fits the thirteenth
+> column with no new decision, and Σ stays 690.
+>
+> **Still M6's, and the ruling ships no code.** §11.26.4 keeps the derivation in M3 and it was
+> already done; a `header` and a `widthPt` are presentation. Board **#693**. `rackmate_export` has
+> no schedule renderer at all, so there is no page to re-lay while the constant waits. docs/08 §3.3
+> is edited to match rather than pointered.
+
 ***FOUR OF THE AUTHOR'S OWN MISTAKES, AND ONE IS A PATTERN WORTH THE ENTRY.*** A six-space search
 string matched **inside** an eight-space line, so a scripted replace hit the same site twice; the
 wrong duplicate was deleted; and `buildAddHomeRunCommand` ended up taking the new parameter without

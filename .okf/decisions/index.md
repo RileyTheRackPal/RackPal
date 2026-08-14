@@ -56,6 +56,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 
 * [DR-053, one key for an outlet and a room](dr-053-one-key-for-an-outlet-and-a-room.md) - the typed line matched an outlet project-wide and landed attic drops on the living room's plate; the argument that settles it was already written forty lines away in the same file, about panels.
 * [DR-054, the PORT column prints the part](dr-054-the-port-column-prints-the-part.md) - a rendering change and not an allocation change, because `Port.designator` is stored and changing allocation leaves one document holding two conventions; and the task's own vocabulary had been re-assigned underneath it by a later ruling.
+* [DR-055, the Termination Schedule prints both ends](dr-055-the-termination-schedule-prints-both-ends.md) - filed as a naming disagreement; the census found the rack termination reached no printed output at all, on the one sheet filtered, sorted and grouped by rack. The argument was already on the sheet, in the three other facts that print both ends.
 
 # Not yet written up
 

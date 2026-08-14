@@ -1,5 +1,47 @@
 # Update Log
 
+## 2026-08-13 (fourth entry)
+
+* **Creation**: [DR-055, the Termination Schedule prints both
+  ends](/decisions/dr-055-the-termination-schedule-prints-both-ends.md), closing
+  board #679 and discharging DR-046 §11.45.5's filed inconsistency. `TERM`
+  retires for `FIELD TERM` and `RACK TERM`, thirteen columns, Σ still 690.
+* **Note**: **THE TASK UNDERSTATED ITS OWN FINDING AND A CENSUS CORRECTED IT.**
+  #679 reads *"the sheet and the editor disagree about what `TERM` means"*. The
+  larger half: **`terminationRack` reaches no printed output anywhere**, its only
+  consumer being the editor's own column, and `rackmate_export` holds not one
+  reference to any schedule column. It is missing from the one sheet that drops
+  every row where `!row.landsInRack`, sorts `rackThenPanelThenPort` and groups by
+  rack, so **the rack-side work order could not state the rack-side
+  termination.**
+* **Note**: **THE ARGUMENT THAT SETTLED IT WAS ALREADY ON THE SHEET, ABOUT ITS
+  OTHER COLUMNS.** §3.3 prints both ends of identity (`RACK LABEL` /
+  `FIELD LABEL`), of location (`RACK / RU / FACE` / `FAR END`) and of port
+  (`PORT` / `FAR PORT`). **Termination was the only per-end fact collapsed into
+  one column**, filed in the *spec* block beside `MEDIA` as though it were a
+  property of the cable. DR-046 ruled that collapse wrong in the MODEL and nobody
+  carried it across to the sheet. This is DR-053's lesson recurring within a day:
+  **a rule already argued for one entity is evidence about its neighbours.**
+* **Note**: **THE WIDTH RULE WAS ALREADY WRITTEN AND UNUSED.** The sheet is
+  690 pt and fully allocated, which is what parked this as hard; §3.4 has said
+  since it was written that a column's width comes from `CONDUCTOR / NOTES`
+  first and then `MEDIA`. Applying the sheet's own rule fits the thirteenth
+  column with no new decision: `MEDIA` 56 to 42, `CONDUCTOR / NOTES` 66 to 44,
+  two termination columns at 44.
+* **Note**: **A SOUND OBJECTION WAS PUT AND OVERRULED ON TRADE GROUNDS.** Field
+  ends are terminated at trim-out and rack ends at rack build, weeks apart and
+  sometimes by different people, which argues for two documents. The user ruled
+  **one sheet**, because it is the cable's record and already serves both readers
+  for labels, locations and ports. Recorded as overruled rather than unasked,
+  the same instrument that corrected two of three DR-048 recommendations.
+* **Note**: **THE RULING SHIPS NO CODE, AND §11.26.4 IS WHY.** *"The derivation
+  is the load-bearing half and it stays in M3"*; a `header` and a `widthPt` are
+  presentation, so the constant and the page are **M6's under DR-027** (#693).
+  The derivation was already done before the question was asked, and
+  `rackmate_export` has **no schedule renderer at all**, so there is no printed
+  page to re-lay and no drift while the constant waits. docs/08 §3.3 is edited to
+  match rather than pointered, so §12 is owed nothing.
+
 ## 2026-08-13 (third entry)
 
 * **Note**: **M3-G RUN 1 IS `UNVERIFIABLE`, AND THE PROCEDURE IS WHAT FAILED.**

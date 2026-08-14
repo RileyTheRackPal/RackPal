@@ -1264,6 +1264,25 @@ const List<ScheduleColumn> kPullSheetColumns = <ScheduleColumn>[
 ];
 
 /// §3.3 — the Termination Schedule's twelve columns, landscape, Σ 690 pt.
+///
+/// **THIRTEEN COLUMNS BY RULING, TWELVE IN CODE, AND THE GAP IS OWNED.**
+/// DR-055 (§11.54) retires `TERM` for `FIELD TERM` 44 and `RACK TERM` 44,
+/// taking width from `CONDUCTOR / NOTES` 66 to 44 and `MEDIA` 56 to 42, so
+/// Σ stays 690. It is not built here because §11.26.4 splits the work:
+/// sorted rows and G4's counts are the derivation and are M3's, while a
+/// `header` and a `widthPt` are presentation and are **M6's under
+/// DR-027**. Board #693.
+///
+/// **THE DERIVATION IS ALREADY DONE**, which is why the ruling ships no
+/// code: `StructureOrigin` carries both `terminationField` and
+/// `terminationRack`, both round-trip, and the editor populates both.
+/// What is missing is a printed page, and `rackmate_export` has no
+/// schedule renderer at all, so nothing renders this constant today and
+/// there is no drift to fear while it waits.
+///
+/// When it is built: `RACK TERM` gets **no fallback**. `_terminationOf`'s
+/// `PlaceEndpoint` chain belongs to the field end alone, and copying one
+/// end onto the other is the defect DR-046 removed from the model.
 const List<ScheduleColumn> kTerminationScheduleColumns = <ScheduleColumn>[
   ScheduleColumn(id: ScheduleColumnId.cableId, header: 'CABLE ID', widthPt: 56),
   ScheduleColumn(id: ScheduleColumnId.type, header: 'TYPE', widthPt: 44),

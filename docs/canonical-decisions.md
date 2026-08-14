@@ -10271,6 +10271,94 @@ editor now distinguishes both ends, and which DR-027 parks on M6.
 
 ---
 
+### 11.54 DR-055 · The Termination Schedule prints both ends, because it already prints both ends of everything else
+
+**Settled by the user on 2026-08-13**, closing board #679 and **answering the inconsistency DR-046
+§11.45.5 filed rather than hid.** It discharges that clause and supersedes nothing.
+
+**11.54.1 THE TASK UNDERSTATED ITS OWN FINDING, AND THE CENSUS IS WHAT CORRECTED IT.** #679 is filed
+as *"the sheet and the editor now disagree about what `TERM` means"*, which is true and is the
+smaller half. The larger half: **`StructureOrigin.terminationRack` reaches no printed output
+anywhere.** Its only consumer in the tree is `structure_table.dart`'s own column; `rackmate_export`
+contains not one reference to any schedule column, and the whole derived schedule layer names the
+field alone.
+
+**And it is absent from the one sheet built around the rack.** `buildScheduleView` drops every row
+where `!row.landsInRack` for this preset, sorts `rackThenPanelThenPort` and groups by rack. **So the
+Termination Schedule is a rack-side work order that cannot state the rack-side termination**, which
+is a sharper defect than a column with a stale name.
+
+**11.54.2 The decisive argument was already on the sheet, about its other columns.** §3.3's twelve
+columns print **both ends of every other fact**: identity is `RACK LABEL` and `FIELD LABEL`, location
+is `RACK / RU / FACE` and `FAR END`, port is `PORT` and `FAR PORT`. **Termination is the only per-end
+fact the sheet collapses into a single column**, and §3.3's rule-weight grouping files it in the
+*spec* block beside `MEDIA`, as though it were a property of the cable rather than of an end.
+
+**DR-046 ruled that exact collapse wrong in the model**, where one field served two columns and a
+speaker run with a phoenix at the panel was inexpressible. The sheet carried the same collapse and
+nobody had carried the argument across. This is the shape §11.52's note names: **a rule already
+argued for one entity is evidence about its neighbours.**
+
+**11.54.3 The ruling: thirteen columns.** `TERM` becomes **`FIELD TERM`** and **`RACK TERM`** joins
+it. `FIELD TERM` renders `StructureOrigin.terminationField` through the existing chain, including its
+`PlaceEndpoint.intendedTermination` fallback; `RACK TERM` renders `terminationRack` and has no
+fallback, because DR-046's whole content is that **nothing infers one end from the other**.
+
+**11.54.4 The width arithmetic, which the sheet had no room for until its own §3.4 supplied the
+rule.** The sheet is ANSI A landscape, usable **690 pt, fully allocated**. §3.4 already names the
+donor order for a column that has to fit: *"width is taken from `CONDUCTOR / NOTES` first, then
+`MEDIA`"*. Both donors are used and nothing else moves:
+
+| Column | Was | Now |
+|---|---|---|
+| `MEDIA` | 56 | **42** |
+| `TERM` | 52 | retired |
+| `FIELD TERM` | | **44** |
+| `RACK TERM` | | **44** |
+| `CONDUCTOR / NOTES` | 66 | **44** |
+| **Σ** | **690** | **690** |
+
+The nine identity and end columns are untouched. `CONDUCTOR / NOTES` keeps its two-line wrap and
+loses a little of its ellipsis budget, which is the cost and is accepted.
+
+**11.54.5 An unknown end prints the unknown token and NEVER the other end's value.** G4 and CR-114,
+in the place they are cheapest to get wrong: a run terminated at the plate and not yet at the panel
+prints its field type and `—` beside it, and a reader learns that the rack end is undecided. Copying
+the field value across would reproduce the precise defect DR-046 exists to remove, on paper, where it
+is hardest to correct.
+
+**11.54.6 Two alternatives were offered and both are refused, with reasons.** **One cell carrying
+both ends** (`T568B › 110 A03`) keeps twelve columns and needs no arithmetic, and it fails on the
+measurement: 52 pt at `RackMono` 7 does not hold two termination tokens, `F BARREL › F BARREL`
+overruns on the third row of the worked example, and the header would have to teach a reading order.
+**`TERM` meaning the rack end** costs one line and no layout, and it **reverses the defect instead of
+resolving it**: the field end would then print nowhere in the product, which is today's complaint
+with the ends exchanged.
+
+**11.54.7 The two-visit objection was put to the user and answered.** A field end is terminated at
+trim-out and a rack end at rack build, often weeks apart and sometimes by different people, which is
+a real argument for two documents. **The user ruled one sheet.** The sheet is the cable's record and
+already serves both readers for labels, locations and ports; a second sheet is a new `SheetRole`
+under DR-049 and buys nothing this one cannot carry. **Recorded because the objection is sound and
+was overruled on trade grounds, not missed.**
+
+**11.54.8 Who builds it, and why this ruling ships no code.** §11.26.4 splits it: *"the derivation is
+the load-bearing half and it stays in M3"*, meaning sorted rows, subtotals and G4's counts. **A column
+set carrying `header` and `widthPt` is presentation**, so `kTerminationScheduleColumns` and the page
+it lays out are **M6's under DR-027 §11.26**. The derivation is already done and was done before this
+was asked: both fields exist, both round-trip, and both are populated by the editor.
+
+**Nothing renders this sheet today.** `rackmate_export` has no schedule renderer at all, so there is
+no printed page to re-lay and no drift to fear in the meantime; the code keeps a twelve-column
+constant and a pointer to this ruling until M6 reaches it.
+
+**11.54.9 Scope.** **No scope change to roadmap §2.** The Termination Schedule is already in scope,
+already has an exact column table, and gains one column inside its existing page. No model field, no
+codec change, no migration, and `kSchemaVersion` does not advance. **docs/08 §3.3's table is edited to
+match rather than pointered**, so §12 is owed nothing.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

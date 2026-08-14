@@ -166,9 +166,21 @@ ANSI A landscape, 792 × 612 pt, usable 690 pt, body 479 pt, **30 rows per page*
 | 7 | `PORT` | 46 | left | `RackMono` 7.5 | `Port.designator` + label |
 | 8 | `FAR END` | 84 | left | `RackBody` 7.5 | device, `Outlet`, or `— OPEN —` for an `OpenEndpoint` |
 | 9 | `FAR PORT` | 46 | left | `RackMono` 7.5 | |
-| 10 | `MEDIA` | 56 | left | `RackCond` 7 | |
-| 11 | `TERM` | 52 | left | `RackMono` 7 | `T568B` · `110 A03` · `LC-A` · `EURO 3` |
-| 12 | `CONDUCTOR / NOTES` | 66 | left | `RackBody` 6.5 | `Conductor.colorCode` per role; wraps to 2 lines then ellipsis |
+| 10 | `MEDIA` | 42 | left | `RackCond` 7 | |
+| 11 | `FIELD TERM` | 44 | left | `RackMono` 7 | `T568B` · `F BARREL` · `LC-A` · `EURO 3` |
+| 12 | `RACK TERM` | 44 | left | `RackMono` 7 | `110 A03` · `T568B` · `LC-A`; `—` when undecided |
+| 13 | `CONDUCTOR / NOTES` | 44 | left | `RackBody` 6.5 | `Conductor.colorCode` per role; wraps to 2 lines then ellipsis |
+
+**Thirteen columns since DR-055 (§11.54), and the widths above are that ruling's.** `TERM` was one
+column resolving to the **field** end while the sheet is filtered, sorted and grouped by rack, so the
+one sheet built around the rack could not state the rack-side termination. The argument that settled
+it was already on this table: every other fact prints **both** ends (`RACK LABEL` / `FIELD LABEL`,
+`RACK / RU / FACE` / `FAR END`, `PORT` / `FAR PORT`), and termination was the only per-end fact
+collapsed into one column. Width came from §3.4's own donor order, `CONDUCTOR / NOTES` first and then
+`MEDIA`; Σ is still exactly 690.
+
+**Neither column ever falls back to the other.** An end nobody has decided prints `—` (G4, CR-114).
+Copying the field value across would reproduce on paper the defect DR-046 removed from the model.
 
 **Rule weights**: grouping without colspan, which `pw.Table` cannot do. 0.8 pt vertical rules at the block boundaries (identity ┃ ends ┃ spec ┃ notes); 0.35 pt between all other columns and between rows; 0.8 pt above and below the header; **no outer border**: the drawing border supplies it.
 
