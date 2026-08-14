@@ -1,5 +1,50 @@
 # Update Log
 
+## 2026-08-14 (fourth entry)
+
+* **Creation**: [DR-059, the device glyph
+  ships](/decisions/dr-059-the-device-glyph-ships.md), a **roadmap §8.3
+  amendment in its own commit**. docs/06 §3.4 promised a glyph in one derived,
+  priority-3 sentence with no ruling behind it; put to the user as a scope
+  question recommending it be dropped, and ruled IN.
+* **Note**: **THE CENSUS HAD ALREADY FOUND THE BETTER ARGUMENT THAN THE ONE THE
+  QUESTION WAS ASKED WITH.** `accentColor` is authored on **0 of the 48** seeded
+  templates and read by **no renderer at all** (`device_layer.dart` fills every
+  device with `palette.deviceFill`), so Appearance was about to ship two
+  controls and no channel that reaches paper. CR-078's *"hue is never used
+  alone"* bites hardest on the elevation, which is the sheet that gets
+  photocopied and taped inside the rack door. The glyph will be GEOMETRY, never
+  a codepoint: `family_glyph.dart` exists because the signal glyph once was one,
+  and Jost carries none of those characters.
+* **Note**: **M4-D IS THE FIRST M4 TASK A PERSON CAN OPEN**, and the exit
+  criterion still reads 0 of 2. That is correct: the criterion is a 16x16 matrix
+  authored in under three minutes, which needs the port grid and the drill.
+* **Note**: **`_canSave`'s RU-HEIGHT CLAUSE WAS A GATE THAT ALWAYS PASSED.**
+  `frontU` is a non-nullable `int` defaulting to `0`, so it can never be absent
+  the way a name can, and `frontU >= 0` let a brand-new template save as a 0U
+  device. That is AC-049's own stall wearing a different hat, a default silently
+  supplying one of the three facts the user was meant to supply. Zero must now
+  be MEANT, and docs/06 §3.2 already had the spelling: `side: zeroUVertical`.
+* **Note**: **THE FIELD-TABLE CENSUS IS ON ITS THIRD SHAPE**, and each rewrite
+  came from watching the previous one pass something. Write-one-read-one misses
+  two rows driving one field; write-all-read-all held until three `bool` fields
+  arrived, because two aliased rows can both be written `true` and both read
+  `true`. It now writes ONE probe and asserts exactly one reading moved, which
+  no value set can defeat. See
+  [census the field, not the name](/practices/census-before-building.md).
+* **Note**: **DRAFT IS DERIVED, NEVER STORED** (ruled with the user). A stored
+  flag is a second source of truth that can disagree with the body, and a
+  togglable one would restore the incomplete-template idea AC-049 exists to
+  delete. Zero ports ALONE would have marked the blank panel, the vent panel and
+  the shelf as drafts forever, which is why the ruling names the category too.
+* **Note**: **TWO GATES PUSHED BACK AND BOTH WERE RIGHT.** `Len` and `Mass` are
+  extension types, so they erase to `int` and a `case TemplateField<Len>()` is
+  unreachable. And `internal_setter_grep_test` flagged
+  `TemplateBody.widthClass = v`, whose `@internal` twin belongs to `Rack`: the
+  name-collision class that grep's own header documents. `src/builder/` joins
+  the exempt directories, because CR-106 makes `template_commands.dart` a
+  command file that does not live in `commands/`.
+
 ## 2026-08-14 (third entry)
 
 * **Creation**: [DR-058, a fork whose source cannot be seen is silent and

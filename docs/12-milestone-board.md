@@ -111,7 +111,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED**: `NOT BUILT` | Model only. **Its M2 block has lifted**: the gate was M2 putting `Link` + `Endpoint` in the UI, and M2-F did (§5.1). Row otherwise as of `0fa532d` |
-| **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **IN PROGRESS**: `NOT BUILT` | Still no builder surface, which is why the clause count has not moved: M4-A (`#172`), M4-B (`#173`) and M4-C (`#174`) are closed and all three are machinery under a UI nobody has built yet (§5.3.1–5.3.3). The criterion is a demonstration by a person and M4-D (`#175`) is the first task that could touch it. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
+| **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **IN PROGRESS**: `PARTIAL` | **The builder opens.** M4-A (`#172`), M4-B (`#173`), M4-C (`#174`) and M4-D (`#175`) are closed: `Project ▸ New device template…` gives a full-window editor with four sections, real undo and a Save that lands a snapshot in the project (§5.3.1–5.3.4). The clause count has still not moved, and correctly: the criterion is a 16×16 matrix authored in under three minutes by a person, which needs the port grid (`#176`) and the drill (`#188`). **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED**: `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
@@ -2366,11 +2366,11 @@ lists or to neither.
 > ports places into a rack and appears correctly in the equipment list with `—` in every unknown
 > column and an accurate unknown count in the rollup.
 
-**M4-A, M4-B and M4-C are CLOSED** (board #172, #173, #174), and §5.3.1 through §5.3.3 below are
-their record. **Nothing in the exit criterion is discharged by any of them**, which is worth saying
-once rather than three times: all three are machinery, none builds a surface, and the criterion is a
-demonstration by a person. The first task that could move a clause is M4-D (`#175`), the builder
-shell.
+**M4-A, M4-B, M4-C and M4-D are CLOSED** (board #172, #173, #174, #175), and §5.3.1 through §5.3.4
+below are their record. **Nothing in the exit criterion is discharged by any of them.** The first
+three are machinery under no surface at all; **M4-D builds the surface** and still moves no clause,
+because the criterion is a 16×16 matrix authored from scratch in under three minutes, which needs
+the port grid (M4-E, `#176`) and the drill that measures it (M4-Q, `#188`).
 
 **A pattern across the three that the next one should expect.** Every one of them was written from a
 field's or a type's ABSENCE, and every one turned out to be partly a corpus question rather than an
@@ -2575,8 +2575,75 @@ library. `builder/fork_status.dart` and `builder/template_change_class.dart` say
 headers rather than leaving it to be discovered, per `a modelled field is not a reachable one`. The
 `rackmate_ui` paragraph below still holds unchanged.
 
+#### 5.3.4 M4-D, the builder shell and the metadata form · CLOSED · `27bf82f`, `3d153c0`, `56c052a`, `f105481`, `675292b`
+
+**THE FIRST M4 TASK A PERSON CAN OPEN.** `Project ▸ New device template…` opens a full-window
+editor over M4-A's `TemplateEditSession`, with four sections, real commands, real undo, and a Save
+that writes a `TemplateSnapshot` into the project. Four issues into the milestone, the exit
+criterion still reads **0 of 2** clauses, and that is correct rather than disappointing: the
+criterion is a 16×16 matrix authored in under three minutes, which needs the port grid (M4-E) and
+the drill (M4-Q).
+
+**AC-049 IS THE WHOLE SCREEN, and `_canSave` is where it lives.** Three fields block a save and
+nothing else may join them: a fourth condition creeping into that getter is how this screen becomes
+the thing the ruling deleted. Every optional field is optional on purpose, and the form says so
+under the Identity section rather than leaving it to be inferred.
+
+**Two panes, though docs/06 §2 draws three.** The right dock is three live previews and a batch
+inspector; the previews are M4-K and the inspector needs a grid selection, which is M4-E. There is
+nothing to put in a 340px dock, so it is not drawn, and the section rail lists **four** of §3's
+seven for the same reason. `shell_tabs_test.dart`'s rule, and the Structure editor's own precedent:
+`#148` shipped with no tab strip at all because one surface satisfied its ruling, and `#149` added
+the strip when there was a second thing to switch to.
+
+**M4-C's change class finally has a surface**, beside `[Save]` with its deciding reasons in the
+tooltip, which is docs/06 §7.2's *"shown prominently before save"* read literally.
+
+**FOUR DEFECTS AND TWO GATES, all found by writing the test rather than by reading the code.**
+
+| | What it was | Why it mattered |
+|---|---|---|
+| Undo did not move the text boxes | A `TextEditingController` seeded once never hears a change it did not cause | Undo reverted the model while the field showed the typed text, and the next keystroke wrote the stale value back over the restored one |
+| `_canSave`'s RU clause was `frontU >= 0` | A non-nullable `int` defaulting to `0` can never be absent, so the gate always passed | A new template saved as a 0U device: wrong for a rack-mount box and invisible on an elevation. **AC-049's own stall wearing a different hat**: a default silently supplying one of the three facts the user was meant to supply |
+| The header `Row` overflowed by 18px | Too many fixed children below some width | No user reaches it (`kMinWindowWidth` is 1000), but a header that throws below a threshold is one nobody may safely add a control to, and it still owes `[Duplicate]` and `[Submit]` |
+| The field-table census could not see three `bool`s | Only two values exist, so two aliased rows both write `true` and both read `true` | Its **third** shape: snapshot every field, write one probe, assert exactly one reading moved. Watched failing by aliasing `isContainer` onto `isPassthrough` |
+
+The two gates that pushed back were both right. **`Len` and `Mass` are extension types**, so they
+erase to `int` and a `case TemplateField<Len>()` is unreachable code the analyzer refuses; the `int`
+probe adds 7 nanometres, which is a daft chassis depth and a perfectly good probe. And
+**`internal_setter_grep_test` flagged `TemplateBody.widthClass = v`**, whose `@internal` twin belongs
+to `Rack`: a NAME collision the grep's own header already documents. `src/builder/` joins the two
+exempt directories, because CR-106 makes `template_commands.dart` a command file that simply does
+not live in `commands/`, its aggregate being a `TemplateBody`.
+
+**DR-059 came out of this task's census and is a §8.3 amendment in its own commit** (`27bf82f`,
+canon §11.58). docs/06 §3.4 promised *"a glyph from a built-in icon set"* in one derived,
+priority-3 sentence with no ruling behind it; put to the user as a scope question with a
+recommendation to drop it, and ruled IN. The census had already found the better argument:
+`accentColor` is authored on **0 of the 48** seeded templates and read by **no renderer at all**
+(`device_layer.dart` fills every device with `palette.deviceFill`), so Appearance would have shipped
+two controls and no channel that reaches paper. CR-078's *"hue is never used alone"* applies hardest
+to the elevation, which is the sheet that gets photocopied and taped inside the rack door.
+
+**Draft is derived, never stored** (M4-D/4). `ports.isEmpty && category.isEmpty`, computed, with no
+model field and no codec key. A stored flag is a second source of truth that can disagree with the
+body, and **a user-togglable one would restore the incomplete-template idea AC-049 exists to
+delete**. Zero ports alone would have marked X01, X02 and X03 as drafts forever.
+
+**Save writes into the project, and the form says so.** docs/06 §7.1's three storage locations,
+minus the user library (M4-N), leaves per-project embedded snapshots, which every `.rmpj` has
+carried since M0. A save FORKS (CR-050): `nextTemplateVersion` allocates in the caller so redo is
+idempotent, and revert removes only the key it added.
+
+**What M4-D does NOT deliver.** No port grid, no Quick Add, no panel layout, no previews, no
+library, no `Duplicate & edit`, and no `.rmdx`. `contentHash` is written as a labelled placeholder
+rather than a real sha256, because the hash belongs with the codec that decides which bytes it
+covers (M4-M). The seventeen glyph marks are M4-K's.
+
 **No builder surface exists** *(as recorded when M4 opened; M4-A adds `rackmate_core`'s `builder/`
-directory but no UI, so the paragraph below still holds for `rackmate_ui`)*. `ls packages/rackmate_ui/lib/src/` returns exactly five directories,
+directory but no UI. **M4-D ends this**: `packages/rackmate_ui/lib/src/builder/` now holds
+`device_builder_screen.dart`, and the paragraph below is kept as the record of what was true when
+the milestone started)*. `ls packages/rackmate_ui/lib/src/` returns exactly five directories,
 `canvas/`, `draw/`, `inspector/` (`inspector_panel`, `rack_inspector_panel`, `shrink_rack_dialog`),
 `palette/` (one file) and `shell/`. No `builder/`, no port grid, no form. Grep for `rmdev` across
 `packages/*/lib` and `apps/*/lib` returns **nothing**, so the single-file `.rmdev` codec and its
