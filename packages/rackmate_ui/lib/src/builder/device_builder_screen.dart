@@ -256,11 +256,18 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
                   body: _session.body,
                   onEdit: _run,
                 ),
-                // M4-D/3's three sections land here next. Rendering an
-                // empty pane for them would be the control-that-does-
-                // nothing this file's header refuses, so the rail does
-                // not offer them until they exist.
-                _ => const _NotYetSection(),
+                BuilderSection.physical => _PhysicalSection(
+                  body: _session.body,
+                  onEdit: _run,
+                ),
+                BuilderSection.power => _PowerSection(
+                  body: _session.body,
+                  onEdit: _run,
+                ),
+                BuilderSection.appearance => _AppearanceSection(
+                  body: _session.body,
+                  onEdit: _run,
+                ),
               },
             ),
           ],
@@ -449,15 +456,340 @@ class _SectionRail extends StatelessWidget {
   );
 }
 
-class _NotYetSection extends StatelessWidget {
-  const _NotYetSection();
+/// docs/06 §3.2. Occupancy is a struct, never a scalar (CR-036).
+class _PhysicalSection extends StatelessWidget {
+  const _PhysicalSection({required this.body, required this.onEdit});
+
+  final TemplateBody body;
+  final void Function<T>(TemplateField<T> field, T value) onEdit;
 
   @override
-  Widget build(BuildContext context) => const Center(
-    child: Padding(
-      padding: EdgeInsets.all(24),
-      child: Text('This section arrives with M4-D/3.'),
-    ),
+  Widget build(BuildContext context) => ListView(
+    padding: const EdgeInsets.all(24),
+    children: [
+      const _SectionNote(
+        'Occupancy is six fields and not one height, because a 2U patch '
+        'panel is front 2 / rear 2, a rear lacing bar is front 0 / rear 1, '
+        'and a 0U PDU is 0 / 0 mounted vertically. A single number cannot '
+        'say any of the three (CR-036).',
+      ),
+      _IntRow(
+        label: 'RU height (rear)',
+        value: body.rearU,
+        hint: 'A front-only device is 0 here',
+        onChanged: (v) => onEdit(TemplateBodyField.rearU, v),
+      ),
+      _EnumRow<OccupancySide>(
+        label: 'Occupies',
+        value: body.side,
+        values: OccupancySide.values,
+        nameOf: (v) => v.name,
+        onChanged: (v) => onEdit(TemplateBodyField.side, v),
+      ),
+      _EnumRow<MountMethod>(
+        label: 'Mount method',
+        value: body.mountMethod,
+        values: MountMethod.values,
+        nameOf: (v) => v.name,
+        onChanged: (v) => onEdit(TemplateBodyField.mountMethod, v),
+      ),
+      _EnumRow<WidthClass>(
+        label: 'Width class',
+        value: body.widthClass,
+        values: WidthClass.values,
+        nameOf: (v) => v.name,
+        onChanged: (v) => onEdit(TemplateBodyField.widthClass, v),
+      ),
+      _IntRow(
+        label: 'Nominal span (twelfths)',
+        value: body.nominalSpanTwelfths,
+        // HALF-RACK IS A CLASS PLUS A SPAN, never "0.5 rack width"
+        // (CR-030), because 9.5 / 10 / 10.4 / 10.5 in all ship and a
+        // fraction cannot tell them apart.
+        hint: '12 is full width. Half-rack is 6 with widthClass: half',
+        onChanged: (v) => onEdit(TemplateBodyField.nominalSpanTwelfths, v),
+      ),
+      _LenRow(
+        label: 'Body depth',
+        value: body.bodyDepth,
+        // UNKNOWN, NOT ZERO (G4, CR-114). An empty box stays unknown,
+        // serialises as an absent key, and every rollup that reads it
+        // reports its unknown count instead of inventing a total.
+        hint: 'mm. Leave blank for unknown: it will not be guessed',
+        onChanged: (v) => onEdit(TemplateBodyField.bodyDepth, v),
+      ),
+      _LenRow(
+        label: 'Chassis width',
+        value: body.chassisWidth,
+        // 432, NOT 482.6 (AC-032). 482.6 is the PANEL width including
+        // ears; flowing connectors across it draws jacks out past the
+        // rails, on the one view that gets taped inside the rack door.
+        hint:
+            'mm. 432 for a full-width chassis, not 482.6 (that is the '
+            'panel width including ears)',
+        onChanged: (v) => onEdit(
+          TemplateBodyField.chassisWidth,
+          v ?? const Len(432_000_000),
+        ),
+      ),
+      _MassRow(
+        label: 'Weight',
+        value: body.weight,
+        hint: 'kg. Leave blank for unknown',
+        onChanged: (v) => onEdit(TemplateBodyField.weight, v),
+      ),
+      _MassRow(
+        label: 'Max unsupported mass',
+        value: body.maxUnsupportedMass,
+        hint: 'kg. Feeds RCK-013: above this the device needs rear support',
+        onChanged: (v) => onEdit(TemplateBodyField.maxUnsupportedMass, v),
+      ),
+      _IntRow(
+        label: 'Clearance above (U)',
+        value: body.requiresClearanceAboveU,
+        onChanged: (v) => onEdit(TemplateBodyField.requiresClearanceAboveU, v),
+      ),
+      _IntRow(
+        label: 'Clearance below (U)',
+        value: body.requiresClearanceBelowU,
+        onChanged: (v) => onEdit(TemplateBodyField.requiresClearanceBelowU, v),
+      ),
+      _EnumRow<ThermalClass>(
+        label: 'Thermal class',
+        value: body.thermalClass,
+        values: ThermalClass.values,
+        nameOf: (v) => v.name,
+        onChanged: (v) => onEdit(TemplateBodyField.thermalClass, v),
+      ),
+      SwitchListTile(
+        title: const Text('Passthrough'),
+        subtitle: const Text(
+          'A patch panel or plate: front and rear ports pair up. The '
+          'pairing itself is set in the port grid.',
+        ),
+        value: body.isPassthrough,
+        onChanged: (v) => onEdit(TemplateBodyField.isPassthrough, v),
+      ),
+      SwitchListTile(
+        title: const Text('Container'),
+        subtitle: const Text('A shelf or drawer that holds other devices.'),
+        value: body.isContainer,
+        onChanged: (v) => onEdit(TemplateBodyField.isContainer, v),
+      ),
+    ],
+  );
+}
+
+/// docs/06 §3.3.
+class _PowerSection extends StatelessWidget {
+  const _PowerSection({required this.body, required this.onEdit});
+
+  final TemplateBody body;
+  final void Function<T>(TemplateField<T> field, T value) onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final typical = body.power.typicalWatts;
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        const _SectionNote(
+          'Every field here is optional and none of them is guessed. '
+          'Typical draw is NOT derived from the nameplate: a fabricated '
+          'number that reaches a circuit-loading calculation is worse '
+          'than a blank (AC-039).',
+        ),
+        _NullableIntRow(
+          label: 'Nameplate watts',
+          value: body.power.nameplateWatts,
+          hint: 'What the label says',
+          onChanged: (v) => onEdit(TemplateBodyField.nameplateWatts, v),
+        ),
+        _NullableIntRow(
+          label: 'Typical watts',
+          value: typical,
+          // THE HINT IS THE WHOLE POINT OF AC-039. It tells the user the
+          // relationship without applying it, because the moment the form
+          // applies it the number stops being sourced and starts being
+          // invented, and nothing downstream can tell the difference.
+          hint:
+              'Typical draw is usually 30-70% of nameplate. Not filled '
+              'in for you: type a sourced number or leave it blank',
+          onChanged: (v) => onEdit(TemplateBodyField.typicalWatts, v),
+        ),
+        _NullableIntRow(
+          label: 'Standby watts',
+          value: body.power.standbyWatts,
+          onChanged: (v) => onEdit(TemplateBodyField.standbyWatts, v),
+        ),
+        _NullableIntRow(
+          label: 'Nominal volts',
+          value: body.power.nominalVolts,
+          onChanged: (v) => onEdit(TemplateBodyField.nominalVolts, v),
+        ),
+        _NullableIntRow(
+          label: 'Apparent VA',
+          value: body.power.apparentVA,
+          // LOADING IS COMPUTED IN VA, NOT WATTS (CR-056, AC-020): a
+          // linear-supply amplifier at PF 0.65 under-reports current by
+          // 35% on exactly the gear where it matters.
+          hint: 'Circuit loading is computed in VA, never in watts',
+          onChanged: (v) => onEdit(TemplateBodyField.apparentVA, v),
+        ),
+        _NullableIntRow(
+          label: 'Power factor (permille)',
+          value: body.power.powerFactor,
+          // PERMILLE, because CR-001 admits no floating point in the
+          // persisted model, here or anywhere else.
+          hint: '650 means 0.65. Integer units only',
+          onChanged: (v) => onEdit(TemplateBodyField.powerFactor, v),
+        ),
+        _NullableIntRow(
+          label: 'PoE budget watts',
+          value: body.power.poeBudgetWatts,
+          hint: 'NET-001 depends on it',
+          onChanged: (v) => onEdit(TemplateBodyField.poeBudgetWatts, v),
+        ),
+        _EnumRow<PlugType?>(
+          label: 'Inlet plug',
+          value: body.power.inletPlug,
+          values: const [null, ...PlugType.values],
+          nameOf: (v) => v?.name ?? 'unknown',
+          onChanged: (v) => onEdit(TemplateBodyField.inletPlug, v),
+        ),
+        SwitchListTile(
+          title: const Text('Continuous load'),
+          value: body.power.isContinuousLoad,
+          onChanged: (v) => onEdit(TemplateBodyField.isContinuousLoad, v),
+        ),
+        const SizedBox(height: 8),
+        // DERIVED, NEVER STORED (CR-005). Shown as a reading rather than
+        // as a field, because a box holding heat would be a second source
+        // of truth for a number that is arithmetic.
+        ListTile(
+          dense: true,
+          title: const Text('Heat (BTU/hr)'),
+          subtitle: Text(
+            typical == null
+                ? 'Unknown until typical watts is filled in. Derived as '
+                      'watts x 3.412142, never stored (CR-005).'
+                : '${wattsToBtuPerHour(typical).toStringAsFixed(1)} — '
+                      'derived from typical watts, never stored (CR-005)',
+          ),
+        ),
+        _NullableIntRow(
+          label: 'BTU/hr override',
+          value: body.power.btuPerHourOverride,
+          hint:
+              'Only for a manufacturer figure that disagrees with the '
+              'arithmetic above',
+          onChanged: (v) => onEdit(TemplateBodyField.btuPerHourOverride, v),
+        ),
+        const SizedBox(height: 16),
+        // READ-ONLY AND COUNTED FROM PORTS (docs/06 §3.3), so there is no
+        // box: a typed count could disagree with the ports beside it, and
+        // one of the two would be printed. Counting them needs the port
+        // grid, which is M4-E.
+        const _SectionNote(
+          'Outlets provided and consumed are counted from the port list, '
+          'not typed here. The port grid arrives at M4-E.',
+        ),
+      ],
+    );
+  }
+}
+
+/// docs/06 §3.4.
+class _AppearanceSection extends StatelessWidget {
+  const _AppearanceSection({required this.body, required this.onEdit});
+
+  final TemplateBody body;
+  final void Function<T>(TemplateField<T> field, T value) onEdit;
+
+  /// A small fixed set, not a full picker. The value is an `Rgb` on the
+  /// model and a wheel would invite a hue nobody checked against the
+  /// greyscale gate; these are the eight Okabe-Ito hues the palette
+  /// already ships, which PAL-1 has already cleared.
+  static const _swatches = <Rgb>[
+    Rgb(0x00, 0x00, 0x00),
+    Rgb(0xE6, 0x9F, 0x00),
+    Rgb(0x56, 0xB4, 0xE9),
+    Rgb(0x00, 0x9E, 0x73),
+    Rgb(0xF0, 0xE4, 0x42),
+    Rgb(0x00, 0x72, 0xB2),
+    Rgb(0xD5, 0x5E, 0x00),
+    Rgb(0xCC, 0x79, 0xA7),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final resolved = effectiveGlyph(body.glyph, body.category);
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        const _SectionNote(
+          'Colour is never the only channel. Hue dies in greyscale and on '
+          'a photocopy, which is how an elevation reaches a job site, so '
+          'a device also carries a mark (CR-078, DR-059).',
+        ),
+        const Text('Accent colour'),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final c in _swatches)
+              InkWell(
+                onTap: () => onEdit(TemplateBodyField.accentColor, c),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Color.fromARGB(c.a, c.r, c.g, c.b),
+                    border: Border.all(
+                      width: body.accentColor == c ? 3 : 1,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                  ),
+                ),
+              ),
+            TextButton(
+              onPressed: () => onEdit(TemplateBodyField.accentColor, null),
+              child: const Text('Clear'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        _EnumRow<DeviceGlyph?>(
+          label: 'Mark',
+          value: body.glyph,
+          // NULL IS AN OPTION AND IT IS FIRST, because it is the
+          // DIFFERENT thing from `none`: null inherits the category's
+          // default and `none` draws nothing on purpose. Collapsing them
+          // would take away the only way to say "draw no mark".
+          values: const [null, ...DeviceGlyph.values],
+          nameOf: (v) =>
+              v == null ? 'from category (${resolved.name})' : v.name,
+          onChanged: (v) => onEdit(TemplateBodyField.glyph, v),
+        ),
+        const _SectionNote(
+          'Nothing draws these yet. The seventeen marks and the renderers '
+          'that put them on an elevation are M4-K, with the live previews '
+          '(DR-059).',
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionNote extends StatelessWidget {
+  const _SectionNote(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: Text(text, style: Theme.of(context).textTheme.bodySmall),
   );
 }
 
@@ -706,6 +1038,271 @@ class _IntRowState extends State<_IntRow> {
       onChanged: (t) {
         final parsed = int.tryParse(t.trim());
         if (parsed != null) widget.onChanged(parsed);
+      },
+    ),
+  );
+}
+
+/// A nullable integer, where BLANK MEANS UNKNOWN and never zero.
+///
+/// This is G4 as a text box. `_IntRow` keeps its last good value when the
+/// text stops parsing, because its field cannot be absent; this one does
+/// the opposite and writes null, because an emptied box is the user
+/// saying they do not know. The two look identical on screen and mean
+/// opposite things, which is why they are separate widgets rather than
+/// one with a flag.
+class _NullableIntRow extends StatefulWidget {
+  const _NullableIntRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    this.hint,
+  });
+
+  final String label;
+  final int? value;
+  final String? hint;
+  final ValueChanged<int?> onChanged;
+
+  @override
+  State<_NullableIntRow> createState() => _NullableIntRowState();
+}
+
+class _NullableIntRowState extends State<_NullableIntRow> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.value?.toString() ?? '',
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_NullableIntRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (int.tryParse(_controller.text.trim()) != widget.value) {
+      final text = widget.value?.toString() ?? '';
+      _controller.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: TextField(
+      controller: _controller,
+      keyboardType: TextInputType.number,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        helperText: widget.hint,
+        border: const OutlineInputBorder(),
+      ),
+      onChanged: (t) {
+        final trimmed = t.trim();
+        if (trimmed.isEmpty) {
+          widget.onChanged(null);
+          return;
+        }
+        final parsed = int.tryParse(trimmed);
+        // Half-typed junk is ignored rather than written as null: the
+        // user is mid-keystroke, not declaring an unknown.
+        if (parsed != null) widget.onChanged(parsed);
+      },
+    ),
+  );
+}
+
+/// Millimetres in, nanometres out (CR-001).
+///
+/// **The box takes mm because a spec sheet is written in mm**, and
+/// `Len.fromMillimetres` is the one conversion site, named for the reason
+/// its own doc gives: the seed catalog once carried nine hand-rolled
+/// copies of this and of the mass one, and the mass copies were wrong by
+/// 1000x for as long as nobody could review a literal against its unit.
+/// **No `double` ever reaches the model**; the conversion rounds to an
+/// exact integer count of nanometres here and nothing downstream sees a
+/// millimetre again.
+class _LenRow extends StatefulWidget {
+  const _LenRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    this.hint,
+  });
+
+  final String label;
+  final Len? value;
+  final String? hint;
+  final ValueChanged<Len?> onChanged;
+
+  @override
+  State<_LenRow> createState() => _LenRowState();
+}
+
+class _LenRowState extends State<_LenRow> {
+  static String _mm(Len? v) =>
+      v == null ? '' : (v.nm / Len.nmPerMillimetre).toStringAsFixed(1);
+
+  late final TextEditingController _controller = TextEditingController(
+    text: _mm(widget.value),
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_LenRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final shown = double.tryParse(_controller.text.trim());
+    final want = widget.value == null
+        ? null
+        : widget.value!.nm / Len.nmPerMillimetre;
+    if (shown != want) {
+      final text = _mm(widget.value);
+      _controller.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: TextField(
+      controller: _controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: InputDecoration(
+        labelText: widget.label,
+        helperText: widget.hint,
+        border: const OutlineInputBorder(),
+      ),
+      onChanged: (t) {
+        final trimmed = t.trim();
+        if (trimmed.isEmpty) {
+          widget.onChanged(null);
+          return;
+        }
+        final parsed = double.tryParse(trimmed);
+        if (parsed != null) widget.onChanged(Len.fromMillimetres(parsed));
+      },
+    ),
+  );
+}
+
+/// Kilograms in, micrograms out (CR-003). See `_LenRow` for the reasoning.
+class _MassRow extends StatefulWidget {
+  const _MassRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    this.hint,
+  });
+
+  final String label;
+  final Mass? value;
+  final String? hint;
+  final ValueChanged<Mass?> onChanged;
+
+  @override
+  State<_MassRow> createState() => _MassRowState();
+}
+
+class _MassRowState extends State<_MassRow> {
+  static const int _ugPerKilogram = 1_000_000_000;
+
+  static String _kg(Mass? v) =>
+      v == null ? '' : (v.ug / _ugPerKilogram).toStringAsFixed(2);
+
+  late final TextEditingController _controller = TextEditingController(
+    text: _kg(widget.value),
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_MassRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final shown = double.tryParse(_controller.text.trim());
+    final want = widget.value == null
+        ? null
+        : widget.value!.ug / _ugPerKilogram;
+    if (shown != want) {
+      final text = _kg(widget.value);
+      _controller.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: TextField(
+      controller: _controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: InputDecoration(
+        labelText: widget.label,
+        helperText: widget.hint,
+        border: const OutlineInputBorder(),
+      ),
+      onChanged: (t) {
+        final trimmed = t.trim();
+        if (trimmed.isEmpty) {
+          widget.onChanged(null);
+          return;
+        }
+        final parsed = double.tryParse(trimmed);
+        if (parsed != null) widget.onChanged(Mass.fromKilograms(parsed));
+      },
+    ),
+  );
+}
+
+/// A closed set: nothing to parse and nothing to typo.
+class _EnumRow<T> extends StatelessWidget {
+  const _EnumRow({
+    required this.label,
+    required this.value,
+    required this.values,
+    required this.nameOf,
+    required this.onChanged,
+  });
+
+  final String label;
+  final T value;
+  final List<T> values;
+  final String Function(T) nameOf;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: DropdownButtonFormField<T>(
+      initialValue: value,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+      items: [
+        for (final v in values)
+          DropdownMenuItem<T>(value: v, child: Text(nameOf(v))),
+      ],
+      onChanged: (v) {
+        if (v is T) onChanged(v);
       },
     ),
   );

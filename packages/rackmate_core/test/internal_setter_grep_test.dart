@@ -75,7 +75,27 @@ void main() {
         .where((f) => f.path.endsWith('.dart'))
         .where((f) {
           final p = f.path.replaceAll(r'\', '/');
-          return !p.contains('/src/model/') && !p.contains('/src/commands/');
+          // `/src/builder/` JOINS THE TWO EXEMPT DIRECTORIES AT M4-D/3,
+          // and it is the same exemption rather than a new one. CR-106
+          // rules that the builder shares the document's `Command`
+          // machinery and runs it over a different aggregate, so
+          // `builder/template_commands.dart` IS a command file; it simply
+          // does not live in `commands/`, because its aggregate is a
+          // `TemplateBody` and every file in there takes a
+          // `RackDocument`.
+          //
+          // What actually tripped: `TemplateBody.widthClass = v`. The
+          // `@internal` setter of that NAME belongs to `Rack`, is a
+          // different type on a different class, and `TemplateBody`'s
+          // fields are deliberately plain-mutable (AC-013 scoping note on
+          // the class). This grep matches by name across every model
+          // type, and its own header already names this false-positive
+          // class for `this.x =` initialising formals. Same cause, and
+          // the honest fix is to exempt the directory that holds the
+          // command set rather than to weaken the pattern.
+          return !p.contains('/src/model/') &&
+              !p.contains('/src/commands/') &&
+              !p.contains('/src/builder/');
         })
         .toList();
 

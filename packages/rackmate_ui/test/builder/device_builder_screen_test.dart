@@ -25,6 +25,13 @@ TemplateBody _blank() => TemplateBody(
   displayName: '',
 );
 
+/// A template that already satisfies AC-049's three, so a test about
+/// some other section is not also a test about the Save gate.
+TemplateBody _named() => _blank()
+  ..displayName = 'HDMI Matrix 16x16'
+  ..typePrefix = 'MTX'
+  ..frontU = 4;
+
 /// Pumps the screen and hands back the bodies it saved.
 Future<List<TemplateBody>> _pump(
   WidgetTester tester, {
@@ -192,6 +199,106 @@ void main() {
 
       expect(find.text('A template already uses MTX-1.'), findsOneWidget);
       expect(find.text('Unsaved'), findsOneWidget);
+    });
+  });
+
+  group('the sections that carry a ruling, not just a field', () {
+    Future<void> openSection(WidgetTester tester, String label) async {
+      await tester.tap(find.widgetWithText(ListTile, label));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('AC-039: typical watts is NOT filled in from the nameplate. '
+        'A fabricated number reaching a circuit-loading calculation is '
+        'worse than a blank', (tester) async {
+      final saved = await _pump(tester, template: _named());
+      await openSection(tester, 'Power');
+
+      await _type(tester, 'Nameplate watts', '400');
+      await openSection(tester, 'Identity');
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(saved.single.power.nameplateWatts, 400);
+      expect(
+        saved.single.power.typicalWatts,
+        isNull,
+        reason: 'no 30-70% guess reached the model',
+      );
+    });
+
+    testWidgets('CR-114: an untouched depth saves as unknown, not as zero', (
+      tester,
+    ) async {
+      final saved = await _pump(tester, template: _named());
+      await openSection(tester, 'Physical');
+      await openSection(tester, 'Identity');
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(saved.single.bodyDepth, isNull);
+      expect(saved.single.weight, isNull);
+    });
+
+    testWidgets('CR-114: clearing a filled depth returns it to unknown '
+        'rather than to zero, which is the half a nullable box gets wrong', (
+      tester,
+    ) async {
+      final saved = await _pump(
+        tester,
+        template: _named()..bodyDepth = const Len(330000000),
+      );
+      await openSection(tester, 'Physical');
+
+      await _type(tester, 'Body depth', '');
+      await openSection(tester, 'Identity');
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(saved.single.bodyDepth, isNull);
+    });
+
+    testWidgets('CR-001: a depth typed in mm reaches the model as an exact '
+        'integer count of nanometres, with no double anywhere near it', (
+      tester,
+    ) async {
+      final saved = await _pump(tester, template: _named());
+      await openSection(tester, 'Physical');
+
+      await _type(tester, 'Body depth', '330');
+      await openSection(tester, 'Identity');
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(saved.single.bodyDepth, const Len(330000000));
+    });
+
+    testWidgets('CR-005: heat is shown as a derived reading and never as a '
+        'box, so nothing can store a BTU figure that disagrees with the '
+        'watts beside it', (tester) async {
+      await _pump(tester, template: _named()..power.typicalWatts = 100);
+      await openSection(tester, 'Power');
+      // The reading sits below the fold: a `ListView` builds only what is
+      // visible, so a bare `find` would report "not there" for a widget
+      // that simply has not been scrolled to. The section pane is the
+      // SECOND list on screen; the first is the rail.
+      await tester.drag(find.byType(ListView).last, const Offset(0, -900));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('341.2'), findsOneWidget);
+      expect(
+        find.widgetWithText(TextField, 'Heat (BTU/hr)'),
+        findsNothing,
+        reason: 'a reading, not a field',
+      );
+    });
+
+    testWidgets('DR-059: the mark defaults from the category and says so, '
+        'and null is offered separately from `none`', (tester) async {
+      await _pump(tester, template: _named()..category = kCatAudio);
+      await openSection(tester, 'Appearance');
+
+      expect(find.textContaining('from category (amplifier)'), findsOneWidget);
     });
   });
 
