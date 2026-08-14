@@ -3302,6 +3302,21 @@ PanelGraphic _decodePanelGraphic(JsonMap json) => PanelGraphic(
 TemplateBody copyTemplateBody(TemplateBody b) =>
     _decodeTemplateBody(_encodeTemplateBody(b));
 
+/// [b] in the exact shape it takes on disk.
+///
+/// **A read-only view for callers that need to compare two bodies rather
+/// than store one**, which today is `builder/template_change_class.dart`.
+/// It exists for the same reason [copyTemplateBody] does: the encoder is
+/// the only description of a `TemplateBody` that is under CR-117's gate,
+/// so a field it fails to carry is a field the FILE fails to carry, and
+/// anything built on it inherits that guarantee instead of drifting from
+/// it. Comparing the Dart objects instead would need `==` on eight nested
+/// types that deliberately do not define one.
+///
+/// The returned map is freshly built and safe to keep; it is NOT a live
+/// view of [b].
+JsonMap templateBodyToJson(TemplateBody b) => _encodeTemplateBody(b);
+
 JsonMap _encodeTemplateBody(TemplateBody b) {
   final json = <String, Object?>{
     'manufacturer': b.manufacturer,
