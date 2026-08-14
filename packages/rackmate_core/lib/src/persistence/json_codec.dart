@@ -3243,6 +3243,21 @@ SubmissionCredit _decodeSubmissionCredit(JsonMap json) => SubmissionCredit(
   userId: asInt(json['userId'], 'SubmissionCredit.userId'),
 );
 
+// TWO keys and no `contentHash`, matching docs/06 §7.3's worked `.rmdx`
+// example exactly. The absent third field is AC-042's cut apparatus, not
+// an oversight — see `TemplateOrigin`'s doc comment.
+JsonMap _encodeTemplateOrigin(TemplateOrigin o) => {
+  'templateId': o.templateId.v,
+  'version': o.version,
+};
+
+TemplateOrigin _decodeTemplateOrigin(JsonMap json) => TemplateOrigin(
+  templateId: TemplateId(
+    asStr(json['templateId'], 'TemplateOrigin.templateId'),
+  ),
+  version: asInt(json['version'], 'TemplateOrigin.version'),
+);
+
 JsonMap _encodePassthroughPairDef(PassthroughPairDef p) => {
   'frontKey': p.frontKey.v,
   'rearKey': p.rearKey.v,
@@ -3337,6 +3352,12 @@ JsonMap _encodeTemplateBody(TemplateBody b) {
   // Absent when never submitted, never an explicit null (G4, CR-114, DR-033).
   if (b.submittedBy != null) {
     json['submittedBy'] = _encodeSubmissionCredit(b.submittedBy!);
+  }
+  // Absent when the template is ORIGINAL, by the same rule (CR-062,
+  // CR-114). An explicit null here would be an assertion that somebody
+  // measured the provenance and found none, which is a different claim.
+  if (b.derivedFrom != null) {
+    json['derivedFrom'] = _encodeTemplateOrigin(b.derivedFrom!);
   }
   return json;
 }
@@ -3474,6 +3495,11 @@ TemplateBody _decodeTemplateBody(JsonMap json) => TemplateBody(
       ? null
       : _decodeSubmissionCredit(
           asJsonMap(json['submittedBy'], 'TemplateBody.submittedBy'),
+        ),
+  derivedFrom: json['derivedFrom'] == null
+      ? null
+      : _decodeTemplateOrigin(
+          asJsonMap(json['derivedFrom'], 'TemplateBody.derivedFrom'),
         ),
 );
 

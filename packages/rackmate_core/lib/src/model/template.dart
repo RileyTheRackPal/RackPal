@@ -323,6 +323,7 @@ final class TemplateBody {
     this.accentColor,
     List<PanelGraphic>? panelGraphics,
     this.submittedBy,
+    this.derivedFrom,
   }) : tags = tags ?? [],
        alternateMountMethods = alternateMountMethods ?? [],
        passthroughPairs = passthroughPairs ?? [],
@@ -413,6 +414,30 @@ final class TemplateBody {
   /// first time that build re-saved the file (canon §11.32.8, DR-019
   /// §11.18.2(5)).
   SubmissionCredit? submittedBy;
+
+  /// The template this one was forked from, or null when it is original
+  /// (CR-062, DR-015 §11.15.3, board #196).
+  ///
+  /// **Written once, by Duplicate, and never again.** Editing a fork does
+  /// not touch it: the whole point is to remember where the copy came
+  /// from so that a later correction to the SOURCE can be surfaced
+  /// passively. Re-pointing it at the source's newer version is the one
+  /// mutation that would make CR-062's badge permanently silent.
+  ///
+  /// null means ORIGINAL, and serialises as an **absent key** rather than
+  /// an explicit null (G4, CR-114). That is not the same as "forked from
+  /// something we cannot find": a fork whose source is missing from this
+  /// installation still carries a [TemplateOrigin], and the staleness
+  /// question about it answers UNKNOWN rather than no.
+  ///
+  /// **It lives on the body rather than beside `TemplateSnapshot.version`
+  /// for `submittedBy`'s reason, which is a file-layout fact.** The
+  /// `.rmdx` worked example in docs/06 §7.3 writes it at the top level
+  /// beside `templateId`, and a `.rmdx` has no snapshot to hang it on —
+  /// the whole file IS one template. The codec flattens that layout onto
+  /// this class exactly as it does `identity.`/`physical.`/`power.`
+  /// (CR-053).
+  TemplateOrigin? derivedFrom;
 }
 
 /// M0 MINIMAL SHAPE: docs/02-data-model.md declares `PowerProfile` with a
@@ -762,6 +787,54 @@ final class SubmissionCredit {
 
   @override
   int get hashCode => Object.hash(handle, userId);
+}
+
+/// The template version a fork was taken from (CR-062, board #196).
+///
+/// **A join, not a chain, and the distinction is what makes it v1.**
+/// AC-042 deleted the `signature` field and the CRYPTOGRAPHIC provenance
+/// chain and deliberately kept `contentHash`; DR-015 §11.15.3 separates
+/// the two halves that ruling argued as one. This type is on the kept
+/// side: one hop back to the source a Duplicate was taken from, resolved
+/// by lookup and trusted no further than any other field in the file.
+/// Nothing walks it transitively, nothing verifies it, and a fork whose
+/// source is unknown to this installation is UNKNOWN rather than
+/// up-to-date (G4). Anyone reading AC-042 alone concludes the opposite,
+/// which is why board #174 is its own task.
+///
+/// **NOT a [TemplateRef], deliberately.** A ref carries `contentHash`
+/// because it must resolve to an embedded snapshot and prove it got the
+/// right one (CR-054). This resolves to nothing in particular: the source
+/// may be a catalog archetype this machine has never seen, or a library
+/// template the user deleted years ago, and both are ordinary. Giving it
+/// a hash would put an integrity check on a link that has no integrity to
+/// check, which is the apparatus AC-042 cut.
+///
+/// [version] is a monotonic int for CR-050's reason: a semver whose
+/// components are computed adds a vocabulary without adding a capability.
+@immutable
+final class TemplateOrigin {
+  const TemplateOrigin({required this.templateId, required this.version});
+
+  /// The source template's stable id.
+  final TemplateId templateId;
+
+  /// The source template's version AT THE MOMENT OF THE FORK. It is a
+  /// snapshot of what was copied, never updated afterwards — updating it
+  /// is precisely what would silence CR-062's badge.
+  final int version;
+
+  @override
+  bool operator ==(Object other) =>
+      other is TemplateOrigin &&
+      other.templateId == templateId &&
+      other.version == version;
+
+  @override
+  int get hashCode => Object.hash(templateId, version);
+
+  @override
+  String toString() => 'TemplateOrigin(${templateId.v}@$version)';
 }
 
 /// Patch-panel front <-> rear passthrough (CR-057).
