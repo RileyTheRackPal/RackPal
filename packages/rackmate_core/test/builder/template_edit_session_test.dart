@@ -404,6 +404,17 @@ void main() {
             final v = 70 + TemplateBodyField.all.indexOf(field);
             written[field.key] = v;
             field.set(body, v);
+          case TemplateField<List<String>>():
+            // WRITTEN AS A FRESH LIST AND COMPARED BY VALUE. A list field
+            // is the one shape that can pass this census while still
+            // being wrong: an accessor pair that hands back the body's
+            // OWN list makes `get` and the live value the same object, so
+            // a command's `from` aliases what it is meant to restore and
+            // undo does nothing. `equals` below reads through to element
+            // comparison, which is what makes the copy observable at all.
+            final v = <String>['probe-${field.key}'];
+            written[field.key] = v;
+            field.set(body, v);
           default:
             fail('${field.key} has an unhandled field type');
         }

@@ -119,14 +119,44 @@ abstract final class TemplateBodyField {
     set: _setFrontU,
   );
 
+  /// One of `kCatalogCategoryOrder`'s NINE strings, or empty.
+  ///
+  /// **A string and not an enum**, matching `TemplateBody.category` and
+  /// the seeded catalog, which key their grouping on the same constant.
+  /// Optional under AC-049, and load-bearing for two other things anyway:
+  /// it seeds [typePrefix]'s suggestion, and it selects the default
+  /// `DeviceGlyph` when the author has chosen none (DR-059 §11.58.6).
+  static const category = TemplateField<String>(
+    key: 'category',
+    get: _getCategory,
+    set: _setCategory,
+  );
+
+  /// `hdbaset`, `4k60`, `poe`. Searched over by the library browser
+  /// (docs/06 §7.1), which is M4-O's.
+  ///
+  /// **Its accessors COPY, and that is not defensive style.** `from` on
+  /// a `SetTemplateFieldCommand` is whatever `get` returned; handing back
+  /// the body's own list would make `from` and the live value the same
+  /// object, so `revert` would write the mutated list over itself and
+  /// undo would silently do nothing. Every future list-valued field on
+  /// this table has the same obligation.
+  static const tags = TemplateField<List<String>>(
+    key: 'tags',
+    get: _getTags,
+    set: _setTags,
+  );
+
   /// Every field above, for the uniqueness test and for a future batch
   /// inspector. Order is presentation order, not significance.
   static const all = <TemplateField<Object?>>[
     manufacturer,
     model,
     displayName,
+    category,
     typePrefix,
     frontU,
+    tags,
   ];
 }
 
@@ -144,6 +174,15 @@ void _setTypePrefix(TemplateBody b, String? v) => b.typePrefix = v;
 
 int _getFrontU(TemplateBody b) => b.frontU;
 void _setFrontU(TemplateBody b, int v) => b.frontU = v;
+
+String _getCategory(TemplateBody b) => b.category;
+void _setCategory(TemplateBody b, String v) => b.category = v;
+
+// COPIES ON BOTH SIDES. See `TemplateBodyField.tags` for why: sharing the
+// list would make a command's `from` alias the value it is meant to
+// restore, and undo would appear to run and change nothing.
+List<String> _getTags(TemplateBody b) => List<String>.of(b.tags);
+void _setTags(TemplateBody b, List<String> v) => b.tags = List<String>.of(v);
 
 /// Sets one [TemplateField] on the [TemplateBody] a
 /// `TemplateEditSession` is editing.

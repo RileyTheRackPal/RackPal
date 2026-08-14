@@ -43,6 +43,7 @@
 /// something true to show.
 library;
 
+export 'src/builder/device_builder_screen.dart';
 export 'src/canvas/canvas_intent.dart';
 export 'src/canvas/compaction_preview_bar.dart';
 export 'src/canvas/compaction_preview_controller.dart';
