@@ -50,6 +50,8 @@
 /// worse than no signpost.
 library;
 
+export 'src/builder/fork_status.dart';
+export 'src/builder/template_change_class.dart';
 export 'src/builder/template_commands.dart';
 export 'src/builder/template_edit_session.dart';
 export 'src/catalog/rack_presets.dart';

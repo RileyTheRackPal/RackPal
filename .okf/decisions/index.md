@@ -59,6 +59,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-055, the Termination Schedule prints both ends](dr-055-the-termination-schedule-prints-both-ends.md) - filed as a naming disagreement; the census found the rack termination reached no printed output at all, on the one sheet filtered, sorted and grouped by rack. The argument was already on the sheet, in the three other facts that print both ends.
 * [DR-056, `Generic` is the trade's word for unspecified](dr-056-generic-is-the-trades-word-for-unspecified.md) - raised as a contradiction between AC-049 and a Dart constructor, which was no contradiction at all; the census run to check it found the real unruled question, and trade convention settled it against the G4 argument.
 * [DR-057, pitch is a refinement, not a prerequisite](dr-057-pitch-is-a-refinement-not-a-prerequisite.md) - sparse pitch was priced as a feature cut at 14 of 45 templates, off a derived document's pseudocode; every ruling says the layout flows from footprints, so the cut was never real.
+* [DR-058, a fork whose source cannot be seen is silent and counted](dr-058-an-unseen-source-is-silent-and-counted.md) - CR-062 rules what a corrected source shows and not what an invisible one does; no badge on the device, and the rollup reports the count, which is G4 applied to a comparison.
 
 # Not yet written up
 

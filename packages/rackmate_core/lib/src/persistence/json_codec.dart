@@ -3243,6 +3243,21 @@ SubmissionCredit _decodeSubmissionCredit(JsonMap json) => SubmissionCredit(
   userId: asInt(json['userId'], 'SubmissionCredit.userId'),
 );
 
+// TWO keys and no `contentHash`, matching docs/06 §7.3's worked `.rmdx`
+// example exactly. The absent third field is AC-042's cut apparatus, not
+// an oversight — see `TemplateOrigin`'s doc comment.
+JsonMap _encodeTemplateOrigin(TemplateOrigin o) => {
+  'templateId': o.templateId.v,
+  'version': o.version,
+};
+
+TemplateOrigin _decodeTemplateOrigin(JsonMap json) => TemplateOrigin(
+  templateId: TemplateId(
+    asStr(json['templateId'], 'TemplateOrigin.templateId'),
+  ),
+  version: asInt(json['version'], 'TemplateOrigin.version'),
+);
+
 JsonMap _encodePassthroughPairDef(PassthroughPairDef p) => {
   'frontKey': p.frontKey.v,
   'rearKey': p.rearKey.v,
@@ -3286,6 +3301,21 @@ PanelGraphic _decodePanelGraphic(JsonMap json) => PanelGraphic(
 /// which is the strongest guarantee available here.
 TemplateBody copyTemplateBody(TemplateBody b) =>
     _decodeTemplateBody(_encodeTemplateBody(b));
+
+/// [b] in the exact shape it takes on disk.
+///
+/// **A read-only view for callers that need to compare two bodies rather
+/// than store one**, which today is `builder/template_change_class.dart`.
+/// It exists for the same reason [copyTemplateBody] does: the encoder is
+/// the only description of a `TemplateBody` that is under CR-117's gate,
+/// so a field it fails to carry is a field the FILE fails to carry, and
+/// anything built on it inherits that guarantee instead of drifting from
+/// it. Comparing the Dart objects instead would need `==` on eight nested
+/// types that deliberately do not define one.
+///
+/// The returned map is freshly built and safe to keep; it is NOT a live
+/// view of [b].
+JsonMap templateBodyToJson(TemplateBody b) => _encodeTemplateBody(b);
 
 JsonMap _encodeTemplateBody(TemplateBody b) {
   final json = <String, Object?>{
@@ -3337,6 +3367,12 @@ JsonMap _encodeTemplateBody(TemplateBody b) {
   // Absent when never submitted, never an explicit null (G4, CR-114, DR-033).
   if (b.submittedBy != null) {
     json['submittedBy'] = _encodeSubmissionCredit(b.submittedBy!);
+  }
+  // Absent when the template is ORIGINAL, by the same rule (CR-062,
+  // CR-114). An explicit null here would be an assertion that somebody
+  // measured the provenance and found none, which is a different claim.
+  if (b.derivedFrom != null) {
+    json['derivedFrom'] = _encodeTemplateOrigin(b.derivedFrom!);
   }
   return json;
 }
@@ -3474,6 +3510,11 @@ TemplateBody _decodeTemplateBody(JsonMap json) => TemplateBody(
       ? null
       : _decodeSubmissionCredit(
           asJsonMap(json['submittedBy'], 'TemplateBody.submittedBy'),
+        ),
+  derivedFrom: json['derivedFrom'] == null
+      ? null
+      : _decodeTemplateOrigin(
+          asJsonMap(json['derivedFrom'], 'TemplateBody.derivedFrom'),
         ),
 );
 

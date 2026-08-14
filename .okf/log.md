@@ -1,5 +1,53 @@
 # Update Log
 
+## 2026-08-14 (third entry)
+
+* **Creation**: [DR-058, a fork whose source cannot be seen is silent and
+  counted](/decisions/dr-058-an-unseen-source-is-silent-and-counted.md),
+  settling M4-C. CR-062 says what a fork shows when its source was corrected
+  and nothing about what it shows when the source cannot be found at all, which
+  is the routine case: a project opened on a second machine. **No badge on the
+  device, and the rollup reports the count.**
+* **Note**: **G4 APPLIED TO A COMPARISON RATHER THAN TO A VALUE**, which is the
+  general form worth keeping. A resolver answering *"up to date"* when it merely
+  failed to look is the same defect as a load rollup that totals the devices it
+  could price and omits the ones it could not. See
+  [unknowns are counted](/invariants/g4-unknowns-are-counted.md). The version a
+  partial shelf DID find is withheld with the verdict, because a badge reading
+  *"the catalog is at v1"* beside *"you forked v3"* invites a conclusion nobody
+  claimed.
+* **Note**: **`derivedFrom` WAS MISSING BECAUSE AC-042 READS LIKE IT CUT IT.**
+  Four documents name the field (docs/06 §7.3's Duplicate row and its worked
+  `.rmdx` example, docs/02 §7's fork row, CR-062, DR-015's `.rmda` provenance)
+  and a grep of `packages/` returned nothing. AC-042 deleted the `signature`
+  field and the CRYPTOGRAPHIC chain in one sentence; DR-015 §11.15.3 separates
+  the two halves that ruling argued as one, and this is the kept side. **Not a
+  `TemplateRef`**: a ref carries `contentHash` because it must prove it resolved
+  to the right snapshot, and an origin resolves to nothing in particular.
+* **Note**: **docs/06 §7.2's CHANGE-CLASS TABLE IS EXAMPLES, NOT A
+  SPECIFICATION**, and covers roughly a third of the fields a `TemplateBody`
+  carries. The rule derived for the other ~70: the class answers a question
+  about a device somebody has ALREADY PLACED. **Breaking has a third clause read
+  off the doc rather than invented** (a connector retype orphans nothing, it
+  makes the cable already in the wall the wrong cable), which is why
+  `pinoutVariant` (AC-052's IR hazard) and `polarity` (AC-030) are classed with
+  it.
+* **Note**: **THE APPARENT CONTRADICTION IN THAT TABLE DISSOLVES RATHER THAN
+  NEEDING A PATCH.** `depth` and `weight` are safe while `frontU` is breaking:
+  `frontU` moves every device below it, and `depth` changes a number M5 raises a
+  FINDING from. A finding is not a migration. The same reading puts the
+  clearances and `chassisWidth` on the safe side and
+  `widthClass`/`nominalSpanTwelfths` on the breaking side.
+* **Note**: **THE TABLE IS GATED IN BOTH DIRECTIONS, because the default that
+  would sit under an unclassified field is `safe`.**
+  `template_change_class_coverage_test.dart` greps the codec's own encoders and
+  asserts the classified set matches key for key. It was watched failing three
+  times, twice for its own bugs: an arrow-bodied encoder ran into the next
+  function, and a `dart format`-wrapped `putIfNotNull` was invisible to a
+  per-line matcher. **That second one is M4-B's 44-vs-49 connector miscount
+  exactly, six days later**:
+  [census the field, not the name](/practices/census-before-building.md).
+
 ## 2026-08-14 (second entry)
 
 * **Creation**: [DR-057, pitch is a refinement, not a

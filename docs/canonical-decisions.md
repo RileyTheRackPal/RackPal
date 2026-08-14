@@ -10504,6 +10504,49 @@ gates. **M4-K (`#182`) owns the algorithm, the gutter constant and the no-cutout
 which exists yet: there is no `panel_layer.dart`. `ConnectorTypeDef.pitch`'s own doc comment
 carries this ruling, because that is where the next implementer will be standing.
 
+### 11.57 DR-058 · A fork whose source cannot be seen is silent on the device and counted in the rollup
+
+**Settled by the user on 2026-08-14**, during M4-C (board `#198`). It supersedes nothing and fills a
+gap CR-062 left because the case had not come up: **the ruling says what happens when the source
+was corrected, and says nothing about what happens when the source cannot be found at all.**
+
+**11.57.1 The gap is routine, not exotic.** CR-062 compares a fork's `derivedFrom{templateId,
+version}` against the source's current version. That comparison needs a shelf holding the source,
+and there are four of them arriving across four milestones: a document's own `templates` map, the
+seeded catalog, the user library (M4-N) and DR-034's fetched community pack. A project opened on a
+second machine, or one whose author deleted the library template years ago, reaches a state where
+**no shelf in view holds the id**. So does a shelf holding only a version OLDER than the fork
+claims, which is a partial shelf rather than a correction.
+
+**11.57.2 The ruling.** No badge on the device, and the count is reported by the rollup. Three
+options were put:
+
+| | What it does | Why not |
+|---|---|---|
+| **No badge, counted** | The device shows nothing; the template list reports *"N forks could not be checked"* | **RULED.** |
+| A quiet neutral badge per device | A greyed *"source not available"* marker | Fires on every fork in every project opened anywhere else, which is normal and not a problem. A marker that is always on stops being read, and CR-062's whole design is a badge that means something when it appears |
+| Treat it as up to date | No badge, no count | Makes an unknown look like a measured *no*. This is exactly the fabrication G4/CR-114 forbid everywhere else in the model, applied to a version number instead of a wattage |
+
+**11.57.3 It is G4 applied to a comparison rather than to a value, and that is the general form
+worth keeping.** *"Null is unknown, never estimated. Every rollup reports its unknown count rather
+than fabricating a total."* A resolver that answers `current` when it merely failed to look is the
+same defect as a load rollup that totals the devices it could price and omits the ones it could
+not. The count is what makes the silence visible somewhere rather than nowhere.
+
+**11.57.4 One consequence, stated because it decides a pixel.** The version number a partial shelf
+DID find is withheld along with the verdict. A badge reading *"the catalog is at v1"* beside *"you
+forked v3"* invites the reader to conclude the catalog rolled backwards, which is a claim nobody
+made. `ForkResolution.currentSourceVersion` is therefore null on `sourceUnknown`, and
+`showsStaleBadge` is a property rather than a `status != current` comparison spelled at each call
+site, because that comparison is wrong in exactly this case.
+
+**11.57.5 Scope.** No scope change: CR-062 already names the badge and roadmap §2 already carries
+the device library. `ForkStatus`, `ForkResolution` and `ForkAudit` are `rackmate_core` only; **no
+widget ships**, because nothing forks yet (Duplicate is M4-D `#175`) and no library holds one
+(M4-N). No migration and `kSchemaVersion` does not advance: `derivedFrom` is written only when
+present, so every document already on disk still satisfies CR-117. `builder/fork_status.dart`
+carries this ruling in its own header, for DR-057 §11.56.7's reason.
+
 ---
 
 ## 12. Superseded rulings
