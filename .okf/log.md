@@ -1,5 +1,36 @@
 # Update Log
 
+## 2026-08-13 (third entry)
+
+* **Note**: **M3-G RUN 1 IS `UNVERIFIABLE`, AND THE PROCEDURE IS WHAT FAILED.**
+  Seven minutes, no file saved, `verify_drill.dart` never ran. **Not `MET` and not
+  `REFUTED`**: the verifier reads the saved file, so a run without one produced a
+  stopwatch reading and nothing checkable. Recorded at docs/16 §4.1 (`529d724`)
+  rather than quietly re-run, on #165's own principle that M1's refutation is the
+  most useful record on the board because it was written as a refutation.
+* **Note**: **THE ONE IRREVERSIBLE STEP OF A PROCEDURE MUST NOT BE THE TAIL OF A
+  SENTENCE.** `Ctrl+S` was half of *"Stop the stopwatch. Then `Ctrl+S`."*, which
+  placed the only unrecoverable action in the drill **at the moment of maximum
+  relief**, directly after the clause telling the operator they had finished. No
+  amount of operator care fixes that shape; numbering the step does. This is
+  [assert the artifact, not the
+  mechanism](/practices/assert-the-artifact-not-the-mechanism.md) pointed at a
+  human procedure: the artifact was the whole verdict and the script treated
+  producing it as an afterthought.
+* **Note**: **NOTHING WAS RECOVERABLE AND THAT IS CORRECT.** A clean shutdown
+  calls `recovery.delete` (`session_controller.dart:694`). CR-096's rule that a
+  recovery file is a crash survivor and never a durable archive **outranks this
+  drill**, so the fix is a warning in the script rather than a change to the store.
+  The banner now states that quitting normally is not a second chance.
+* **Note**: **AN OPERATOR'S OWN CAVEAT POINTED THE WRONG WAY, WHICH IS WORTH
+  CATCHING RATHER THAN ACCEPTING.** The run was offered with *"I didn't practice
+  this as much as the first drill in M1"*, as mitigation. Being under-rehearsed
+  makes an entry-speed figure **more conservative, not less**. The confound that
+  matters is the one docs/16 §5 already names and the run did not mention: this
+  was **the tool's author**, who knew `@panel=PP-1` without looking it up and was
+  reading from a script rather than inventing drops. Seven seconds per drop
+  against a fifteen-second budget is a **floor for the population, not a median**.
+
 ## 2026-08-13 (second entry)
 
 * **Update**: [DR-025](/decisions/dr-025-signal-and-service-are-two-words.md) is
