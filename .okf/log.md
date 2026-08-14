@@ -1,5 +1,48 @@
 # Update Log
 
+## 2026-08-13 (fifth entry)
+
+* **Creation**: [CR-106, one machinery and three
+  stacks](/invariants/cr-106-one-machinery-three-stacks.md), written as M4-A
+  built the second of the three. `Command<A>` and `UndoStack<A>` are now
+  genuinely generic, closing a gap `undo_stack.dart`'s own header has named as
+  deferred M0 debt since the milestone it was written in.
+* **Note**: **A TYPE PARAMETER ON A WIDELY IMPLEMENTED INTERFACE HAS NO PARTIAL
+  LANDING, and the board's four-task split assumed one.** Three of the four
+  tasks are a single commit: an override's parameter type must be a supertype
+  of the base's, so all 36 subclasses break the instant `Command` gains `<A>`,
+  and `strict-raw-types: true` closes the escape of leaving the stack holding a
+  raw `Command` because `strict_raw_type` is a **warning** and warnings are
+  gated at zero. Worth carrying into any similar estimate.
+* **Note**: **THE BLAST RADIUS WAS 38 FILES AGAINST AN ESTIMATE OF ~24, and the
+  miss is [census the field, not the name](/practices/census-before-building.md)
+  again.** The task counted `commands/` and stopped; `List<Command>` also lives
+  in four structure planners, `csv_import_apply.dart` and both of the app's
+  session action files. The noun searched for was the directory rather than the
+  type.
+* **Note**: **`EpochMask` WENT NULLABLE AND NULL IS NOT `none`.** `none` asserts
+  a command touched no epoch; null says the aggregate has no epoch model,
+  [G4](/invariants/g4-unknowns-are-counted.md)'s shape on a bitmask. The cost of
+  getting it wrong is mechanical: a document command declaring `none`
+  invalidates nothing, so **the model changes and the canvas does not repaint** -
+  undo that appears to work while the screen lies. `epoch_mask_test` now names
+  that as a failure.
+* **Note**: **"DISCARDED ON CLOSE-WITHOUT-SAVE" WAS UNIMPLEMENTABLE AS
+  DECOMPOSED**, and filling the hole is a decomposition gap rather than an
+  amendment (canon §11.24.7's test): the session has to edit a COPY, or
+  dropping the stack leaves every cancelled edit in memory for the next device
+  placed from that template. The copy is a codec round trip rather than a
+  ~50-field clone, so [CR-117](/invariants/cr-117-byte-exactness.md)'s gate
+  fails first if it is ever lossy.
+* **Note**: **TWO TESTS WERE WATCHED FAILING AND BOTH WATCHINGS CHANGED THE
+  TEST.** Sabotaging the copy to `(b) => b` fails the identity tests and PASSES
+  the 48-template byte sweep, so the two catch different defects and neither
+  covers the other. And the descriptor-table test was rewritten: write-then-read
+  one field at a time passes when two rows point at one body field, while
+  write-all-then-read-all fails. A test written from the same assumption as the
+  code inherits the assumption, exactly as
+  [census before building](/practices/census-before-building.md) has it.
+
 ## 2026-08-13 (fourth entry)
 
 * **Creation**: [DR-055, the Termination Schedule prints both

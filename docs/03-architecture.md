@@ -67,9 +67,11 @@ RackMate/
 │  │     │                            · conductor.dart · placement.dart · structure_body.dart
 │  │     │                            · outlet.dart · pathway.dart · sheet.dart · template.dart
 │  │     │                            · entity_meta.dart · tombstone.dart          CR-095
-│  │     ├─ commands/                 command.dart (Command, EpochMask, mergeKey) ·
-│  │     │                            transaction.dart · undo_stack.dart (generic over an
-│  │     │                            aggregate — CR-106) · device_commands.dart ·
+│  │     ├─ builder/                  template_edit_session.dart (the second stack —
+│  │     │                            CR-106) · template_commands.dart          M4-A
+│  │     ├─ commands/                 command.dart (Command<A>, EpochMask, mergeKey) ·
+│  │     │                            transaction.dart · undo_stack.dart (both generic
+│  │     │                            over an aggregate — CR-106) · device_commands.dart ·
 │  │     │                            link_commands.dart (Add/Remove/RetypeLink — CR-008) ·
 │  │     │                            snapshot_command.dart
 │  │     ├─ document_controller.dart   THE only mutation entry point; owns the UndoStack
@@ -233,7 +235,7 @@ Rejected alternatives, with the one-line reason each:
 ProviderScope                                       ← one per open document
 └── documentControllerProvider : DocumentController          [plain Dart, in core]
     ├── RackDocument doc            flat UUID-keyed entity maps; @internal setters
-    ├── UndoStack undo              document-scoped stack (one of three — CR-106)
+    ├── UndoStack<RackDocument>     document-scoped stack (one of three — CR-106)
     ├── DocEpochs epochs            ValueNotifier<int> × 6   ← repaint + invalidation triggers
     └── DerivedRegistry derived     epoch-keyed memo cells
 
@@ -324,7 +326,7 @@ class InteractionController extends ChangeNotifier {
 
 ```dart
 // packages/rackmate_core/lib/src/commands/command.dart
-abstract base class Command {
+abstract base class Command<A> {                  // generic over the aggregate — CR-106
   const Command();
 
   /// Stable enum key + args, NOT a string — core cannot import Flutter, and the
@@ -332,7 +334,9 @@ abstract base class Command {
   LabelKey get label;
 
   /// Which epochs this command dirties. Static per command type; verified by test.
-  EpochMask get touches;
+  /// NULL when `A` has no epoch model at all — not `EpochMask.none`, which asserts
+  /// a command touched none of them. Every `Command<RackDocument>` returns non-null.
+  EpochMask? get touches;
 
   /// The entities this command touched — hands the derived layer its invalidation set.
   Iterable<Uuid> get affects;
@@ -340,12 +344,14 @@ abstract base class Command {
   /// Non-null makes this eligible to coalesce with an adjacent equal-mergeKey command.
   Object? get mergeKey => null;
 
-  void apply(RackDocument doc);
-  void revert(RackDocument doc);
+  void apply(A aggregate);
+  void revert(A aggregate);
 
-  Command? mergeWith(Command next) => null;
+  Command<A>? mergeWith(Command<A> next) => null;
 }
 ```
+
+**The type parameter arrived at M4-A, not at M0, and the gap was recorded rather than hidden.** M0 transcribed this interface literally and hard-typed `apply`/`revert` to `RackDocument`, while `UndoStack<A>` already carried its `<A>` for CR-106's documented intent; `undo_stack.dart`'s header named the mismatch as debt to close if the Device Builder's own stack was ever built. M4-A built it. The three pieces cannot land separately: an override's parameter type must be a supertype of the base's, so every subclass breaks the instant `Command` gains a parameter, and `strict-raw-types` closes the escape of leaving the stack holding a raw `Command`.
 
 Three properties worth defending:
 
@@ -399,22 +405,24 @@ final class MoveDeviceCommand extends Command {
 ### 5.3 Transactions
 
 ```dart
-final class Transaction extends Command {
+final class Transaction<A> extends Command<A> {
   Transaction(this.label, this.children, this.selectionBefore, this.selectionAfter)
     : timestamp = DateTime.now();
 
   @override final LabelKey label;
-  final List<Command> children;
-  final Selection selectionBefore, selectionAfter;
+  final List<Command<A>> children;
+  final Selection? selectionBefore, selectionAfter;
 
-  @override EpochMask get touches =>
-      children.fold(const EpochMask(0), (m, c) => m | c.touches);
+  /// The union of the children that declare a mask; null when NONE does. A child
+  /// declaring `EpochMask.none` still counts as declaring, so a document
+  /// transaction folds to a real mask and never to null.
+  @override EpochMask? get touches { … }
   @override Iterable<Uuid> get affects => children.expand((c) => c.affects);
 
-  @override void apply(RackDocument doc) { for (final c in children) c.apply(doc); }
+  @override void apply(A aggregate) { for (final c in children) c.apply(aggregate); }
 
-  @override void revert(RackDocument doc) {
-    for (var i = children.length - 1; i >= 0; i--) children[i].revert(doc);
+  @override void revert(A aggregate) {
+    for (var i = children.length - 1; i >= 0; i--) children[i].revert(aggregate);
   }
 }
 ```
@@ -433,7 +441,9 @@ class UndoStack<A> {                       // generic over the aggregate — CR-
   String? get undoLabelKey => _done.lastOrNull?.command.label.name;
 
   /// Coalesces into the stack top iff mergeKey matches AND the window has not elapsed.
-  EpochMask push(Command c, Selection before, Selection after, DateTime now) {
+  /// `before`/`after` are nullable since M4-A: a `Selection` is a set of `Uuid`s, and
+  /// an aggregate whose parts are not `Uuid`-keyed records none.
+  EpochMask? push(Command<A> c, Selection? before, Selection? after, DateTime now) {
     _undone.clear();                                  // linear undo; no undo tree in v1
     final top = _done.lastOrNull;
     if (top != null && c.mergeKey != null &&
@@ -463,9 +473,9 @@ class DocumentController {
 
   bool get isDirty => doc.stateId != _savedStateId;
 
-  void run(Command c) => transact(c.label, (tx) => tx.add(c));
+  void run(Command<RackDocument> c) => transact(c.label, (tx) => tx.add(c));
 
-  T transact<T>(LabelKey label, T Function(TxnScope tx) body) {
+  T transact<T>(LabelKey label, T Function(TxnScope<RackDocument> tx) body) {
     if (_open != null) return body(_open!.scope);            // flatten
     final b = _TxnBuilder(label, selection.snapshot());
     _open = b;
@@ -500,7 +510,7 @@ Two subtleties. **Commands `apply` immediately inside `tx.add()`**, not at commi
 Auto-arrange, catalog import, "renumber all designators", "shrink rack and re-flow" are awkward to hand-invert. Do not write fragile inverse logic for them.
 
 ```dart
-final class SnapshotCommand extends Command {
+final class SnapshotCommand extends Command<RackDocument> {
   SnapshotCommand(this.label, this.touches, this.affects, this.before, this.after);
   final Map<Uuid, JsonMap?> before, after;         // null value == entity absent
   @override void apply(RackDocument doc) => doc.restoreEntities(after);
@@ -516,11 +526,15 @@ It snapshots only the **affected entities'** JSON, ~60 KB for a 200-device re-fl
 
 | Stack | Scope | Lifetime |
 |---|---|---|
-| Document | `RackDocument` | The open project. |
-| Device Builder | the `DeviceTemplate` being edited | Discarded on close without save. |
+| Document | `RackDocument`, in `DocumentController` | The open project. |
+| Device Builder | the `TemplateBody` being edited, in `TemplateEditSession` | Discarded on close without save. |
 | — | Settings and library operations are **not undoable** | Therefore each must be individually confirmable or trivially reversible. |
 
 The Structure editor's edits are ordinary document commands and use the document stack. Stated once so nobody builds a second mechanism.
+
+**Built at M4-A.** `TemplateEditSession` (`packages/rackmate_core/lib/src/builder/`) is the second row, and it shares `Command<A>`, `Transaction<A>`, `TxnScope<A>` and `UndoStack<A>` with the first: everything the session adds is policy (a dirty save point, a close), and none of it is undo. **The session edits a deep COPY of the body**, made by `copyTemplateBody`, and that is what makes "discarded on close without save" a behaviour rather than a comment: a session mutating the library's own `TemplateBody` would leave every cancelled edit in memory for the next device placed from that template.
+
+The third row is a rule with no code, and it stays that way. An undo scoped to one template cannot coherently undo an act on the shelf that template sits on.
 
 ---
 

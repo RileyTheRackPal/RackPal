@@ -2359,14 +2359,77 @@ stricter than the product tests a product that does not exist"**.
 reachable. If a second surface ever wants domains in trade-frequency order, that is a change to both
 lists or to neither.
 
-### 5.3 M4, The device builder · `M` · NOT STARTED, weakest mark `NOT BUILT`
+### 5.3 M4, The device builder · `L` · IN PROGRESS, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three
 > minutes by a user who has seen the tool once**, and a template saved with exactly three fields plus
 > ports places into a rack and appears correctly in the equipment list with `—` in every unknown
 > column and an accurate unknown count in the rollup.
 
-**No builder surface exists.** `ls packages/rackmate_ui/lib/src/` returns exactly five directories,
+**M4-A is CLOSED as of `881cdbe`** (board #172, two commits from `e964e28`), and §5.3.1 below is
+its record. Nothing in the exit criterion is discharged by it: M4-A builds no surface, and the
+criterion is a demonstration by a person.
+
+#### 5.3.1 M4-A, `Command` goes generic · CLOSED · `e964e28`, `881cdbe`
+
+**Four tasks, two commits, and the arithmetic is the finding.** #189 (the interface), #190 (the
+stack) and #191 (the migration) are one commit, because Dart will not let them be three. An
+override's parameter type must be a supertype of the base's, so every `apply(RackDocument doc)`
+stops overriding the moment `Command` gains `<A>`, and all 36 subclasses break in the same instant.
+The escape, leaving `UndoStack` holding a raw `Command`, is closed by `strict-raw-types: true` in
+`analysis_options.yaml`: `strict_raw_type` is a **warning**, and warnings are gated at zero. #192 is
+the second commit.
+
+**The blast radius was 38 files, not the ~24 the task estimated**, and the difference is where
+nobody looked: `List<Command>` also appears in four structure planners
+(`drop_build`, `drop_line_planner`, `matrix_plan`, `outlet_template_planner`), in
+`csv_import_apply.dart`, and in both of the app's session action files. The estimate counted
+`packages/rackmate_core/lib/src/commands/` and stopped there. It is a census miss of the ordinary
+kind: the noun searched for was the directory, not the type.
+
+**`EpochMask` became nullable, and null is NOT `EpochMask.none`.** `none` asserts a command touched
+no epoch. Null says the aggregate has no epoch model to touch, which is true of a
+`Command<TemplateBody>` and of nothing else. This is G4's shape applied to a mask, and the reason
+it matters is mechanical rather than philosophical: a document command returning `none` invalidates
+nothing, so the model changes and the canvas does not repaint. `epoch_mask_test` now asserts that
+every `Command<RackDocument>` declares one, which is an assertion the nullability made both
+possible and necessary.
+
+**M4-A/4 needed a piece no task had written down, and filling it is a decomposition gap rather than
+an amendment (§11.24.7's test).** "Discarded on close-without-save" cannot be implemented while the
+session edits the library's own `TemplateBody`: dropping the stack would leave every cancelled edit
+in memory for the next device placed from that template to pick up, and no test reading only the
+undo stack would see it. `TemplateEditSession` therefore deep-copies, via `copyTemplateBody`, new in
+`json_codec.dart`. CR-106 and `TemplateBody`'s own header comment both already promised the
+capability; no task was ever cut for it.
+
+**The copy is a codec round trip, not a hand-written clone.** `TemplateBody` has ~50 fields and
+eight growable lists, and a clone drifts the first time somebody adds field 51, where a forgotten
+field is a *list shared between the copy and the original*. The encode/decode pair is already under
+CR-117's gate, so a field the copy loses is a field the file loses, and that gate fails first.
+
+**Two tests were watched failing, and both watchings changed the tests.** With `copyTemplateBody`
+sabotaged to `(b) => b`, the two identity tests fail and the 48-template byte sweep **passes**: a
+body compared with itself is trivially byte-identical. So the sweep catches a copy that *loses* a
+field and the identity tests catch one that *shares* one, and neither covers the other. Separately,
+the field-table test was rewritten after watching it: write-then-read one field at a time passes
+when two descriptor rows are pointed at one body field, and write-all-then-read-all fails, because
+the second write clobbers the first. Confirmed by aliasing `model` onto `manufacturer`.
+
+**What M4-A does NOT deliver, stated so nobody reads the closure as more than it is.** There is no
+builder window, no form, no port grid, and nothing in `rackmate_ui` or `apps/rackmate` reaches
+`TemplateEditSession` at all. Its file header says so rather than leaving it to be discovered, per
+`a modelled field is not a reachable one`. **The row above is now `L`** to match roadmap §6 and
+§5.3's own re-derivation, which had moved the estimate while this heading still read `M`.
+
+**One thing to check before M4-D is priced.** #175 names the three required fields as
+`displayName`, RU height and `typePrefix`; `TemplateBody`'s constructor requires `manufacturer`,
+`model` and `displayName`. Those are two different threes, and the form cannot be built until
+somebody says which one binds. Flagged here rather than answered, because it is a product question
+about what a template minimally *is*.
+
+**No builder surface exists** *(as recorded when M4 opened; M4-A adds `rackmate_core`'s `builder/`
+directory but no UI, so the paragraph below still holds for `rackmate_ui`)*. `ls packages/rackmate_ui/lib/src/` returns exactly five directories,
 `canvas/`, `draw/`, `inspector/` (`inspector_panel`, `rack_inspector_panel`, `shrink_rack_dialog`),
 `palette/` (one file) and `shell/`. No `builder/`, no port grid, no form. Grep for `rmdev` across
 `packages/*/lib` and `apps/*/lib` returns **nothing**, so the single-file `.rmdev` codec and its
