@@ -1,5 +1,7 @@
 // CR-062's passive stale-fork badge, as a rule rather than as a widget.
-// Board #198, M4-C/3.
+// Board #198, M4-C/3. The fourth status and the withheld version number
+// are DR-058 (canon §11.57), which this file carries because it is where
+// the next implementer will be standing.
 //
 // THE RULING, and the consequence it exists to surface. Seeded templates
 // are read-only, so editing one silently performs Duplicate-then-edit. The

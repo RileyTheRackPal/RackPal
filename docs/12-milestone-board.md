@@ -111,7 +111,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED**: `NOT BUILT` | Model only. **Its M2 block has lifted**: the gate was M2 putting `Link` + `Endpoint` in the UI, and M2-F did (§5.1). Row otherwise as of `0fa532d` |
-| **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **NOT STARTED**: `NOT BUILT` | No builder surface. **Its inputs are all present even though its formal gate is open**: §5.3. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
+| **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **IN PROGRESS**: `NOT BUILT` | Still no builder surface, which is why the clause count has not moved: M4-A (`#172`), M4-B (`#173`) and M4-C (`#174`) are closed and all three are machinery under a UI nobody has built yet (§5.3.1–5.3.3). The criterion is a demonstration by a person and M4-D (`#175`) is the first task that could touch it. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED**: `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
@@ -2366,9 +2366,18 @@ lists or to neither.
 > ports places into a rack and appears correctly in the equipment list with `—` in every unknown
 > column and an accurate unknown count in the rollup.
 
-**M4-A is CLOSED as of `881cdbe`** (board #172, two commits from `e964e28`), and §5.3.1 below is
-its record. Nothing in the exit criterion is discharged by it: M4-A builds no surface, and the
-criterion is a demonstration by a person.
+**M4-A, M4-B and M4-C are CLOSED** (board #172, #173, #174), and §5.3.1 through §5.3.3 below are
+their record. **Nothing in the exit criterion is discharged by any of them**, which is worth saying
+once rather than three times: all three are machinery, none builds a surface, and the criterion is a
+demonstration by a person. The first task that could move a clause is M4-D (`#175`), the builder
+shell.
+
+**A pattern across the three that the next one should expect.** Every one of them was written from a
+field's or a type's ABSENCE, and every one turned out to be partly a corpus question rather than an
+authoring job: M4-A found its required-fields "contradiction" was a Dart constructor read as a
+product rule, M4-B found `genderApplies` was a complete transcription already sitting in canon §6.3,
+and M4-C found docs/06 §7.2's change-class table was examples rather than a specification. **Three
+for three, the first useful hour went into reading, not typing.**
 
 #### 5.3.1 M4-A, `Command` goes generic · CLOSED · `e964e28`, `881cdbe`
 
@@ -2488,6 +2497,84 @@ not folded in.
 (`#182`) owns the algorithm, the gutter constant and the no-cutout skip. `pitch` therefore has no
 reader in `lib/` yet, exactly as `footprintWidth` has had none since M1, and both files say so.
 
+#### 5.3.3 M4-C, `derivedFrom` and the change class · CLOSED · `b841643`, `55a89c2`, `92c6a3b`
+
+**Three tasks, three commits, and the estimate held for the first time this milestone.** #196 the
+model field and its codec, #197 the change-class computer, #198 CR-062's stale-fork rule. Nothing in
+the exit criterion is discharged: M4-C builds no surface either, and the criterion is a
+demonstration by a person.
+
+**`derivedFrom` was missing because AC-042 reads like it cut the field, and it did not.** Four
+documents name it: docs/06 §7.3's Duplicate row, that section's worked `.rmdx` example, docs/02 §7's
+fork row and DR-015's `.rmda` provenance. AC-042 deleted the `signature` field and the
+**cryptographic** provenance chain in one sentence, and DR-015 §11.15.3 separates the two halves that
+ruling argued as one. This is on the kept side, beside `contentHash`. A task was written for it
+precisely because anybody reading AC-042 alone concludes the opposite.
+
+**It is NOT a `TemplateRef`, and the difference is the whole design.** A ref carries `contentHash`
+because it must resolve to an embedded snapshot and prove it got the right one (CR-054). A
+`TemplateOrigin` resolves to nothing in particular: the source may be a catalog archetype this
+machine has never seen or a library template deleted years ago, and both are ordinary. Hanging an
+integrity check on a link with no integrity to check is the apparatus AC-042 cut. It lives on the
+**body** rather than beside `TemplateSnapshot.version` for `submittedBy`'s reason: a `.rmdx` has no
+snapshot to hang it on, because the whole file **is** one template.
+
+**docs/06 §7.2's change-class table is EXAMPLES, not a specification, and that is #197's finding.**
+Its three rows name roughly a third of the fields a `TemplateBody` carries; the other ~70 needed a
+rule. The rule adopted: **the class answers a question about a device somebody has already placed in
+a project already drawn.** Safe means nothing about its placement or connections changes meaning.
+Additive means something new appeared and nothing was invalidated. Breaking means a connection may
+orphan, the occupancy or tiling changes, **or installed work becomes wrong**.
+
+**That third clause is read off the doc rather than invented.** A connector retype orphans nothing;
+it makes the cable already in the wall the wrong cable, and §7.2 files it under breaking anyway. So
+`pinoutVariant` (AC-052 names it as the IR emitter/receiver hazard) and `polarity` (AC-030 put it on
+the terminal so a typo would be inexpressible) are classed with it.
+
+**And the table's apparent contradiction dissolves rather than needing a patch.** `depth` and
+`weight` are safe while `frontU` is breaking, which reads like an oversight. It is not: `frontU`
+changes how many U the device occupies, so everything below it is now in the wrong place, and
+`depth` moves nothing at all: it changes a number M5 raises a **finding** from, and a finding is not
+a migration. The same reading puts the clearance requirements and `chassisWidth` on the safe side
+and `widthClass` / `nominalSpanTwelfths` on the breaking side, because those two decide how a device
+**tiles** within a U.
+
+**The table is gated in both directions, and that is not decoration.** The default sitting under an
+unclassified field would be `safe`, which is the single wrong answer that costs somebody a job, so
+`_diffMap` throws instead and `template_change_class_coverage_test.dart` greps the codec's own
+encoders and asserts the two key sets match exactly. A class left behind for a field the codec
+dropped fails too: a table that **looks** maintained and is not is worse than an obviously stale one.
+
+**The gate was watched failing three times, twice for its own bugs, and the second one is a
+repeat.** An arrow-bodied encoder ran into the next function, so `_encodeBankDef` "emitted"
+`frontKey`. Then a `dart format`-wrapped `putIfNotNull(json, 'containerWeightCapacityUg', …)` was
+invisible to a per-line matcher: **that is M4-B's 44-vs-49 connector miscount exactly, six days
+later, and by the identical mechanism.** Census the field, not the pattern that happens to match most
+of it.
+
+**Two rules generalise §7.2's "new column data on existing ports".** Filling in a previously absent
+fact is additive whatever the field costs to change; and a value that **only grew**, a list that
+gained entries without losing any or a `maxConnections` raised, is additive on a field declared
+breaking, because nothing that existed stopped existing. The counterpart is stated as a known
+over-warn rather than hidden: *"retyped incompatibly"* is computed as *"retyped"*, since the compat
+matrix is M5's. Over-warning on an advisory label is recoverable; under-warning ships a breaking
+change labelled safe.
+
+**#198 found a gap in CR-062 and it is DR-058 (§11.57).** The ruling says what a fork shows when its
+source **was corrected** and nothing about what it shows when the source **cannot be found at all**,
+which is the routine case rather than an exotic one: a project opened on a second machine, or a
+library template deleted years ago, or a shelf holding only a version older than the fork claims.
+Ruled by the user on 2026-08-14: **no badge on the device, and the rollup reports the count.** That
+is G4 applied to a comparison instead of to a value, and a resolver answering `current` when it
+merely failed to look is the same defect as a rollup that totals what it could price and omits what
+it could not.
+
+**What M4-C does NOT deliver.** No `Duplicate`, so nothing writes a `derivedFrom` and nothing calls
+`classifyTemplateChange`: both are M4-D's shell (`#175`). No badge widget, no save dialog, no
+library. `builder/fork_status.dart` and `builder/template_change_class.dart` say so in their own
+headers rather than leaving it to be discovered, per `a modelled field is not a reachable one`. The
+`rackmate_ui` paragraph below still holds unchanged.
+
 **No builder surface exists** *(as recorded when M4 opened; M4-A adds `rackmate_core`'s `builder/`
 directory but no UI, so the paragraph below still holds for `rackmate_ui`)*. `ls packages/rackmate_ui/lib/src/` returns exactly five directories,
 `canvas/`, `draw/`, `inspector/` (`inspector_panel`, `rack_inspector_panel`, `shrink_rack_dialog`),
@@ -2580,6 +2667,10 @@ among fields the documents show and the Dart never declared. **Step 2 of docs/06
 algorithm, *flow left → right at `ConnectorTypeDef.pitch`*, cannot be written today** (`#173`).
 A third, smaller one: `derivedFrom` appears nowhere in `packages/`, though the fork chain, CR-062's
 stale-fork badge and `.rmdx`'s own worked example all reference it (`#174`).
+
+**All three findings are now closed** (§8.8): `#172` at `e964e28`/`881cdbe`, `#173` at `b7f3534`,
+`#174` at `b841643`/`55a89c2`/`92c6a3b`. The paragraphs above are the decomposition's record of what
+it found on 2026-08-02, not a live claim about the tree.
 
 **The number that was NOT adopted, recorded because hiding it would make the adopted one look
 better than it is.** Summing all 17 issues bottom-up gives roughly **10–15 weeks**, against the
