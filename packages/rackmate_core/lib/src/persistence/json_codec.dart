@@ -3243,6 +3243,25 @@ PanelGraphic _decodePanelGraphic(JsonMap json) => PanelGraphic(
   geometryRef: asStrOrNull(json['geometryRef'], 'PanelGraphic.geometryRef'),
 );
 
+/// A deep copy of [b], sharing no mutable structure with it.
+///
+/// The Device Builder edits a COPY and its stack is discarded on close
+/// without save (CR-106, M4-A/4), which is only true if the body the
+/// session mutates is not the one the library holds.
+///
+/// **Implemented by the codec round trip rather than a hand-written
+/// clone, and that is the point.** `TemplateBody` has ~50 fields, eight
+/// of them growable lists; a `copyWith`-style clone drifts the first time
+/// somebody adds one, and a field the clone forgets is a list SHARED
+/// between the copy and the original, so cancelling out of the builder
+/// silently keeps the edit. Nothing would catch that. This pair is
+/// already under CR-117's byte-exactness gate, so a field it fails to
+/// carry is a field the FILE fails to carry, and that gate fails first
+/// and loudly. The copy is exactly as faithful as saving and reloading,
+/// which is the strongest guarantee available here.
+TemplateBody copyTemplateBody(TemplateBody b) =>
+    _decodeTemplateBody(_encodeTemplateBody(b));
+
 JsonMap _encodeTemplateBody(TemplateBody b) {
   final json = <String, Object?>{
     'manufacturer': b.manufacturer,

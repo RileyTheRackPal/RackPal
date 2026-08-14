@@ -252,4 +252,17 @@ enum LabelKey {
   // a smaller scale: undoing an arrange a cell at a time is not undoing
   // an arrange.
   arrangePlate,
+
+  // THE DEVICE BUILDER'S FIELD WRITE (builder/template_commands.dart),
+  // M4-A/4, CR-106. Its own value rather than `setEntityProperty`, and
+  // the reason is not menu wording: it is a different Edit menu. The
+  // builder owns its own stack over the `TemplateBody` being edited, so
+  // this key can never appear beside a document command, and a shared
+  // value would say the two stacks are one thing when the whole of
+  // CR-106 is that they are three.
+  //
+  // ONE value for every field of the body, on `setEntityProperty`'s
+  // argument: whether the user was typing a manufacturer or a rack-unit
+  // height is not a distinction the builder's Edit menu has to draw.
+  setTemplateProperty,
 }
