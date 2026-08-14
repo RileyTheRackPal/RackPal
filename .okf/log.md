@@ -1,5 +1,36 @@
 # Update Log
 
+## 2026-08-14 (fifth entry)
+
+* **Creation**: [drive the keyboard, not the
+  finder](/practices/drive-the-keyboard-not-the-finder.md), after a user found
+  two defects in the builder within a minute of opening it and **nineteen
+  passing widget tests had seen neither**.
+* **Note**: **`enterText` TELEPORTS AND A PERSON WALKS.** Flutter's default
+  `ReadingOrderTraversalPolicy` orders focus by GEOMETRY, so the section rail
+  and the form interleaved by vertical position: `Display name -> RAIL TILE ->
+  RAIL TILE -> Manufacturer`. Not one of the nineteen tests ever moved between
+  two fields the way a hand does, so all of them passed throughout. The fix is
+  a `FocusTraversalGroup` per pane: **group, never remove**, because
+  keyboard-only operation is M7's criterion.
+* **Note**: **A NAVIGATION DEFECT PRESENTS AS A DATA DEFECT**, which is the
+  part worth carrying forward. A `ListTile` fires `onTap` on Enter, so tabbing
+  toward the designator prefix and typing changed SECTION and the keystrokes
+  went nowhere. It was reported as *"this doesn't appear to work at all"*, and
+  the field wrote correctly and had a passing test proving it. **Expect the bug
+  report to name the wrong control.**
+* **Note**: **TWENTY-SIX USER-FACING STRINGS WERE CITING THE CORPUS AT THE
+  USER**, the worst being `MTX — seeds MTX-1, MTX-2 (CR-041, CR-045)`. docs/12
+  already rules this for end-user documentation and it binds a form harder,
+  because nobody reads a form twice. Dropdowns were also showing raw Dart
+  identifiers (`rackEars`, `zeroUVertical`). A grep gate over the screen's own
+  source now holds it, skipping comment lines, because a citation beside the
+  control is exactly where it belongs.
+* **Note**: **AN EXAMPLE IS A PLACEHOLDER, NEVER A HELPER LINE.** `HDMI Matrix
+  16x16` was `helperText`, so it sat under `Pro Max 24 PoE` after the user
+  typed a name and read as a second value. `hintText` shows only while the box
+  is empty, which is what an example is for.
+
 ## 2026-08-14 (fourth entry)
 
 * **Creation**: [DR-059, the device glyph
