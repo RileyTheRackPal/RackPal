@@ -111,7 +111,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED**: `NOT BUILT` | Model only. **Its M2 block has lifted**: the gate was M2 putting `Link` + `Endpoint` in the UI, and M2-F did (§5.1). Row otherwise as of `0fa532d` |
-| **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **IN PROGRESS**: `PARTIAL` | **The builder opens.** M4-A (`#172`), M4-B (`#173`), M4-C (`#174`) and M4-D (`#175`) are closed: `Project ▸ New device template…` gives a full-window editor with four sections, real undo and a Save that lands a snapshot in the project (§5.3.1–5.3.4). The clause count has still not moved, and correctly: the criterion is a 16×16 matrix authored in under three minutes by a person, which needs the port grid (`#176`) and the drill (`#188`). **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
+| **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **IN PROGRESS**: `PARTIAL` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **A 16×16 matrix can now be authored from scratch**; the clause still open is *under three minutes by a user who has seen the tool once*, which rests on Quick Add (`#178`) and the drill that measures it (`#188`). **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED**: `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
@@ -2366,18 +2366,21 @@ lists or to neither.
 > ports places into a rack and appears correctly in the equipment list with `—` in every unknown
 > column and an accurate unknown count in the rollup.
 
-**M4-A, M4-B, M4-C and M4-D are CLOSED** (board #172, #173, #174, #175), and §5.3.1 through §5.3.4
-below are their record. **Nothing in the exit criterion is discharged by any of them.** The first
-three are machinery under no surface at all; **M4-D builds the surface** and still moves no clause,
-because the criterion is a 16×16 matrix authored from scratch in under three minutes, which needs
-the port grid (M4-E, `#176`) and the drill that measures it (M4-Q, `#188`).
+**M4-A through M4-E are CLOSED** (board #172, #173, #174, #175, #176), and §5.3.1 through §5.3.5
+below are their record. The first three are machinery under no surface at all; **M4-D builds the
+surface** and **M4-E builds the product**, which is the first of them to move the exit criterion at
+all. A 16×16 matrix can now be authored from scratch. Whether it takes **under three minutes by a
+user who has seen the tool once** is the clause still open, and it rests on Quick Add (M4-G, `#178`)
+and the drill that measures it (M4-Q, `#188`).
 
-**A pattern across the three that the next one should expect.** Every one of them was written from a
+**A pattern across all five, and the next one should expect it.** Every one was written from a
 field's or a type's ABSENCE, and every one turned out to be partly a corpus question rather than an
 authoring job: M4-A found its required-fields "contradiction" was a Dart constructor read as a
 product rule, M4-B found `genderApplies` was a complete transcription already sitting in canon §6.3,
-and M4-C found docs/06 §7.2's change-class table was examples rather than a specification. **Three
-for three, the first useful hour went into reading, not typing.**
+M4-C found docs/06 §7.2's change-class table was examples rather than a specification, and M4-E
+found §4.5's column table names **nine columns with no model field** while the model carries
+**eight fields no column names**. **Four for four, the first useful hour went into reading, not
+typing.**
 
 #### 5.3.1 M4-A, `Command` goes generic · CLOSED · `e964e28`, `881cdbe`
 
@@ -2771,6 +2774,143 @@ a user who has not been given them cannot read the filter bar. **And the corpus 
 truth for that document, never the source of text**: docs/00–14 argue, cite rulings and record what
 was rejected, which is the builder's genre; lifting prose from it is how a project ships a
 specification with screenshots pasted in.
+
+
+#### 5.3.5 M4-E, the port grid · CLOSED · `f372a8d`, `3e19c7d`, `6c1cda4`, `a36b964`, `77d7b72`, `c9dc527`, `fdf56c7`
+
+**The first clause of the exit criterion is now reachable, and only the first.** A 16×16 matrix can
+be authored in this grid; whether it takes under three minutes is M4-Q's drill (`#188`) and depends
+on Quick Add (M4-G), which does not exist. Board #203 through #207 are closed.
+
+**THE DECOMPOSITION HAD A HOLE, AND IT IS THE FINDING TO CARRY FORWARD.** M4-E's five tasks build a
+grid, its columns, its packs, its validation dots and its footer. **Not one of them creates a port.**
+Quick Add is M4-G, archetypes are M4-I, paste is M4-I3, and the application's only entry point opens
+a blank template, so as decomposed the milestone task shipped a virtualised view of nothing. `+ Add
+port` and `Delete` land with the grid instead. That is `check a decomposition for holes` in its
+stated form: ask what produces each task's input. **Deleting is in none of the five either**, and a
+grid you can add to but not remove from is one nobody can correct a mis-click in.
+
+**THIS IS THE FOURTH TABLE IN THE APPLICATION AND THE THIRD WITH BANDED ROWS.**
+`structure_editor_screen.dart`'s `_DropTable` already solved every structural problem it has: a
+horizontal scroll carrying the header with its rows, `SliverPersistentHeader(pinned: true)` per
+band, `SliverList.builder` for virtualisation, and a `LayoutBuilder` that refuses to squeeze a
+column below its authored width. Copied in shape, and the columns live in **core** the way
+`derived/structure_table.dart`'s do, so 49 field accessors and every rule below are tested without
+pumping a widget.
+
+##### The census, which is the reason M4-E took longer than a grid should
+
+docs/06 §4.5 names the seven packs and their columns. Measured against `PortDef`, field by field:
+
+- **NINE columns §4.5 names have no field to write to**: `VLANs`, `Segment`, `Address`, `Universe`,
+  `Receptacle`, `Outlet mode`, `Seq step`, `Seq delay`, `Circuit`. Building a cell for any of them
+  means inventing a model field inside a grid task, or shipping a control that writes nowhere, and
+  `actions_have_callers_test.dart` is a gate about the second. Not built; named in the source.
+- **EIGHT fields the model carries are named by no column at all**: `balanced`, `conductorCount`,
+  `maxCurrentMa`, `channelIndex`, `bus.protocol`, `bus.addressable`, `power.drawWatts`, and the
+  `carriedProtocols`/`acceptedFamilies` pair. They have round-tripped through the codec since M0
+  with no way to author them: `a modelled field is not a reachable one`, in its original form. Six
+  join the pack that already draws their neighbours; `channelIndex` belongs with port sets (M4-J2)
+  and the two family lists need a multi-select the grid has no cell shape for.
+
+**docs/06 §4.5's column table is owed an edit**, and this is the third M4 task in a row where a
+derived document turned out to be an illustration rather than a specification (M4-A's required
+fields, M4-C's change-class table, now this). **Four for four counting M4-B.**
+
+##### What the grid rules, and why
+
+**ONE ORDER, NOT TWO.** Rows are `portsInDeclaredOrder` and a band is a RUN of that order rather
+than a re-sort of it, so the grid's reading and `PORT_SEQ`'s reading are the same reading. That is
+also why `AddPortCommand` only appends: `PortDef.order` is a `FracIndex` compared as a raw string,
+nothing in this package mints one BETWEEN two others, and inserting mid-list is a reorder, which is
+M4-F4 (`#211`).
+
+**THE DESIG COLUMN GOES THROUGH `allocatePortDesignator`.** CR-042 rules that the template supplies
+a hint and the project allocates, so the cell previews what THIS project would render, honours a
+project that numbers differently, and switches to the typed value the moment one is typed. A hint of
+whitespace is **not** pinned: clearing the cell means back to automatic, never "deliberately
+unnumbered". Two allocation failures report UNKNOWN rather than a number: the commercial
+`{DEV_BLOCK}{PORT_SEQ:2}` preset needs a token no template can supply, and a pattern with no
+`PORT_SEQ` renders the same string for every port. Allocation accumulates across the template
+exactly as one device's pins allocate against one another, which is the only reason the second is
+visible at all.
+
+**THE KEY FOLLOWS THE LABEL ON EXACTLY TWO CONDITIONS**, and the user chose the rule: it must not
+have been typed, and the port must be new in this session. `PortDef.key` is the migration join
+(CR-051), so a published key silently following a typo correction would rewire an existing project's
+cables. The touched-key set is **session-only and never stored** (reopen a saved template and every
+key is the author's, because it was saved) and it is **monotonic**, recording both sides of a rename
+so an undo lands on a key it still remembers.
+
+**AUTO-REVEAL KEYS ON THE DOMAIN, NOT THE FAMILY.** §4.5's rule is "the bank's dominant family", and
+the catalog ships 34 families against eight domains canon fixes, so the rule table is eight rows
+rather than a list that grows with the community library. `ctl` reveals two packs, because control
+is RS-232 and RS-485 in the same breath. Advanced is never auto-revealed; Passthrough follows
+`isPassthrough`, because a patch panel's pairing is a fact about the device rather than one bank's
+traffic. A pack the person toggles overrides the reveal for the session, and the open set is
+remembered per CATEGORY in `prefs.json` beside the coach marks, on §11.12.4's ruling that UI chrome
+does not belong in the document.
+
+**NONE OF THE VALIDATION BLOCKS SAVING**, which docs/06 says twice and AC-049 explains: three fields
+make a template, so a checker that can stop a save is a fourth required field wearing a warning
+triangle. Two severities, drawn as a filled dot and a hollow one, shape rather than colour alone
+(CR-078's discipline). The IR pinout is the only warning about hardware rather than paper, and the
+seeded registries already explain why in their own comment: emitter and receiver share a plug and
+have opposite pinouts, so plugging one into the other destroys the emitter. **The S/PDIF rule keys
+on the family and not the connector**, though §4.5 words it as "an RCA carrying spdif": coaxial
+S/PDIF is 75 ohm on a BNC too, and the seeded catalog's own default connector for that family is
+`conn.rca75` rather than `conn.rca`.
+
+**Two validation rules name catalog ids, and a test holds them.** The durable form is a field on
+`SignalFamilyDef`, which is not built, so a rename in the seeded registries would otherwise switch a
+safety check off in silence. `port_validation_test.dart` resolves every id against the shipped
+registries and asserts there are still exactly two IR families, because the hazard IS that they are
+two.
+
+**PANEL FILL IS ABSENT FROM THE FOOTER, AND THAT IS A DECISION.** §4.5's worked line ends
+`· Panel fill R: 71%`; that number comes only from the auto-layout, which is M4-K, and every port
+this editor creates sits at the origin. A guess is G4's fabrication and `Panel fill R: —` is what
+the Structure editor's band header already rejected, because a dash belongs in a column where a
+reader compares values, not in a running sentence. The clause arrives with the number.
+
+##### One widget was extracted rather than copied
+
+The SIGNAL column needs the SERVICE column's picker, which was private to
+`structure_editor_screen.dart`. It now lives in `widgets/family_picker.dart` and both surfaces use
+it. A copy would have been the cheaper edit and the wrong one: that widget carries a **measured**
+finding (#587 put a `DropdownButton`'s menu at 116 points with every row clamped to 84, so two
+different speaker families both arrive as `AUD·Speaker…`) and a **ruling** (DR-025 §11.24.3: the
+filter narrows and never commits, because an unresolved value must not invent a family). Two copies
+of a control encoding two decisions is two places for one of them to be forgotten. The Structure
+editor's own tests pass untouched.
+
+**CONNECTOR gets a menu rather than M3-L's read-only degradation, and the difference is a blank
+row.** A `DropdownButton` asserts exactly one item matches its value, so the Structure editor lets
+an unrecognised SERVICE fall back to text; here the same fallback would catch every brand-new port,
+because a blank row names no connector at all, and a cell you cannot open is a port you cannot
+finish.
+
+##### Three defects found by tests before a user could
+
+1. **The touched-key set lived in the grid's own `State`**, and the rail rebuilds the grid on every
+   section change. A walk to Physical and back therefore forgot that the author had chosen a key,
+   and the label started dragging it again. It is a fact about the editing session and now lives
+   beside the session.
+2. **The first cell tests asserted on the `TemplateBody` the test passed in**, which
+   `TemplateEditSession` deep-copies on purpose (CR-106). Every assertion was reading an object
+   nothing had touched, and five passed for that reason before the sixth exposed it. The harness
+   presses `[Save]` and reads what the editor hands over.
+3. **The `*Actions` gate caught a documented distinction the code did not make.** The two pack
+   callbacks were nullable, with a comment explaining that null meant "nobody is remembering" and
+   empty meant "everything closed", which nothing downstream could act on, because the screen folded
+   null to empty on the way past. Non-nullable with defaults now.
+
+**What M4-E does NOT deliver.** No Quick Add, no DSL, no label patterns, no archetypes, no paste, no
+fill-down, no multi-row edit, no TSV, no reorder, no sort, no bank CRUD and no pairing action:
+M4-F through M4-J own those, and the grid's Bank and Paired columns are read-only until M4-J. No
+panel layout, no previews, no batch inspector. Enter commits and stays rather than moving down,
+because moving down is spreadsheet ergonomics and belongs with M4-F's fill-down; Tab already moves
+right, and a test drives real Tab events rather than finding the next cell.
 
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 

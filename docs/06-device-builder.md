@@ -222,6 +222,10 @@ A virtualised data grid, rows grouped by bank under sticky collapsible headers. 
 
 `Gender` has **three** values, `male | female | genderless`, and the column is only enabled when `ConnectorTypeDef.genderApplies` is true (CR-059). *Rejected alternative:* the five-value enum with `jack` and `plug`, which contained two synonym pairs and silently broke `CON-002`: the rule "both ends male or both ends female" never fired for `jack` + `jack`.
 
+**What M4-E actually built, and where this table was an illustration rather than a specification.** Censused field by field against `PortDef` (docs/12 §5.3.5), **nine columns above have no model field to write to** and are not built: `VLANs`, `Segment`, `Address`, `Universe`, `Receptacle`, `Outlet mode`, `Seq step`, `Seq delay`, `Circuit`. Each needs a model field first, which is a data-model decision rather than a grid task. In the other direction the model carries **eight fields this table names nowhere**; six of them now sit in the pack that already draws their neighbours (`balanced` and `maxCurrentMa` in Electrical, `bus.protocol` and `bus.addressable` in Bus, `power.drawWatts` in Power, `conductorCount` in Advanced), while `channelIndex` waits for port sets (M4-J2) and `carriedProtocols`/`acceptedFamilies` wait for a multi-select cell.
+
+Two column shapes also changed under measurement. `Dir` is a dropdown spelling all five values out rather than a segmented control of letters, because a column too narrow to tell `Bus node` from `Passive` re-introduces in the editor exactly what CR-060 removed from the catalog. `Set` and its role are **two columns**, not a combo with a role attached, because the second control had nowhere to sit in one cell. And `Family` is not filtered by connector: no field in the model records which families are legal on which connector, so the picker offers every family grouped by domain and a filter box, which is the SERVICE column's control (DR-025 §11.24.5) rather than a second one.
+
 ### 4.6 Editing operations
 
 | Op | Binding | Behaviour |
