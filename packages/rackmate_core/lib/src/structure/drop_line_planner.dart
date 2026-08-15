@@ -674,9 +674,10 @@ MediaTypeDef? resolveMediaToken(Registries registries, String token) {
 
 /// A signal-family token → a registry entry, or null.
 ///
-/// **DR-025 §11.24.3's chain, verbatim**: `shortTag`, then the id's own
-/// tail, then `displayName`, which is [resolveMediaToken]'s widest-last
-/// shape. `hbt`, `hdbaset` and `avoip` all land.
+/// **DR-060 §11.59.4's chain**: `aliases`, then `shortTag`, then the id's
+/// own tail, then `displayName`. That is [resolveMediaToken]'s shape
+/// exactly, aliases first and widest last. `hbt`, `hdbaset` and `avoip`
+/// land on the later steps, as they did before aliases existed.
 ///
 /// **AN UNRESOLVED VALUE ANSWERS NULL AND NOTHING CREATES A FAMILY**,
 /// which is the OPPOSITE of RJ-012's rule for media and is already
@@ -686,17 +687,22 @@ MediaTypeDef? resolveMediaToken(Registries registries, String token) {
 /// and no `acceptedFamilies`, which is a run the DRC and the palette
 /// both cannot reason about.
 ///
-/// **`aliases` IS NOT IN THE CHAIN, AND DR-025 IS WHY.** The ruling
-/// names three steps and `SignalFamilyDef.aliases` is not among them.
-/// That reads like an oversight next to [resolveMediaToken], where
-/// aliases are the authority, and it is not: media aliases are the
-/// user-extensible surface RJ-009 governs, and a signal family's are
-/// catalog data serving the schematic. Widening this chain is a ruling.
+/// **`aliases` JOINED THE CHAIN AT DR-060 §11.59.4, AND THE RULING IS
+/// WHAT THIS DOCSTRING USED TO ASK FOR.** It said, correctly, that
+/// DR-025 named three steps, that `SignalFamilyDef.aliases` was not
+/// among them, and that widening the chain was a ruling rather than a
+/// patch. The ruling exists now: Quick Add's DSL types `hdbt`, which is
+/// docs/06 §4.1's own spelling and matched no step of the three, and the
+/// list it needed had been empty on all 55 families since M0. The old
+/// distinction still holds and is why aliases are seeded SPARSELY here
+/// but authored freely on media: media aliases are the user-extensible
+/// surface RJ-009 governs, a family's are catalog data.
 ///
 /// Placed beside [resolveMediaToken] because two callers need it and
 /// neither owns it: the CSV `signal` column (M3-F/6) and `@signal=`
 /// (#587). Two copies would be two chances to disagree about what `hbt`
-/// means.
+/// means, **which is exactly why Quick Add widened this instead of
+/// growing its own** (DR-060 §11.59.3). Both callers inherit the step.
 ///
 /// THREE CALLERS NOW, AND THE THIRD IS NOT A COPY. The SERVICE picker's
 /// filter box also has to understand `hbt`, but it FILTERS where this
@@ -712,6 +718,11 @@ SignalFamilyDef? resolveSignalFamilyToken(
   if (want.isEmpty) return null;
 
   for (final d in registries.signalFamilies.values) {
+    for (final a in d.aliases) {
+      if (normaliseMediaToken(a) == want) return d;
+    }
+  }
+  for (final d in registries.signalFamilies.values) {
     if (d.shortTag case final t? when normaliseMediaToken(t) == want) return d;
   }
   for (final d in registries.signalFamilies.values) {
@@ -720,6 +731,40 @@ SignalFamilyDef? resolveSignalFamilyToken(
   }
   for (final d in registries.signalFamilies.values) {
     if (normaliseMediaToken(d.displayName) == want) return d;
+  }
+  return null;
+}
+
+/// A connector token → a registry entry, or null. DR-060 §11.59.4's
+/// other half.
+///
+/// **TWO STEPS, NOT FOUR**, and the missing two are deliberate.
+/// `displayName` is not walked because connector display names are
+/// authored for a table cell rather than for typing (`RJ45 (8P8C)`,
+/// `3.5 mm stereo (TRS)`, `XLR 3-pin`), so a `displayName` step would
+/// match almost nothing and would occasionally match something absurd.
+/// There is no `shortTag` on `ConnectorTypeDef` at all.
+///
+/// **THIS IS IN THIS FILE DESPITE ITS NAME, AND THE SIBLING FUNCTIONS
+/// ARE WHY.** [resolveMediaToken] and [resolveSignalFamilyToken] already
+/// live here, and their own docstring gives the rule: token resolution
+/// gets one home, because two copies are two chances to disagree. A
+/// connector resolver in the builder and a family resolver in structure
+/// would be exactly the split that rule forbids, one registry apart. The
+/// trio has outgrown a file called `drop_line_planner`; moving all three
+/// is a rename, not a Quick Add task, and is left as one.
+ConnectorTypeDef? resolveConnectorToken(Registries registries, String token) {
+  final want = normaliseMediaToken(token);
+  if (want.isEmpty) return null;
+
+  for (final d in registries.connectorTypes.values) {
+    for (final a in d.aliases) {
+      if (normaliseMediaToken(a) == want) return d;
+    }
+  }
+  for (final d in registries.connectorTypes.values) {
+    final tail = d.id.v.contains('.') ? d.id.v.split('.').last : d.id.v;
+    if (normaliseMediaToken(tail) == want) return d;
   }
   return null;
 }

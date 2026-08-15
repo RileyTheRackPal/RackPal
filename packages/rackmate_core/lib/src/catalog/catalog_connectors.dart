@@ -178,12 +178,25 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['toslink'],
     ),
     // -- Network -----------------------------------------------------------
+    // `hdbt` LEFT THIS LIST AT DR-060 §11.59.5, and it was never a
+    // connector name: HDBaseT is a transmission standard carried over
+    // twisted pair, and the connector it lands on is this 8P8C. It now
+    // lives on `video.hdbaset.aliases`, where resolving it also answers
+    // the question `conn.rj45` cannot -- WHICH of the six families that
+    // wear this shell was meant.
+    //
+    // `rj45` STAYS, for two reasons and the second is the load-bearing
+    // one. It genuinely names the connector; and `portConnectorShortLabel`
+    // prints `aliases.first.toUpperCase()` in the port grid's CONN column
+    // and footer, so deleting it would silently turn every `RJ45` cell
+    // M4-E shipped into `RJ45 (8P8C)`. Grep the readers before tidying
+    // seeded data.
     _c(
       'conn.rj45',
       'RJ45 (8P8C)',
       15.0,
       13.0,
-      aliases: const ['rj45', 'hdbt'],
+      aliases: const ['rj45'],
       pitchMm: 17,
       gender: true,
     ),
@@ -215,7 +228,21 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       pitchMm: 34,
       gender: true,
     ),
-    _c('conn.euroblock_2', 'Euroblock 2-pole', 9.0, 10.0, gender: true),
+    // `euro2` mirrors the `euro3` alias three lines down, which has been
+    // here since M1. The id's tail normalises to `euroblock2`, so the
+    // spelling docs/06 §4.1's table actually types reached nothing.
+    // NOTE the family stays UNKNOWN for this token on purpose (DR-060
+    // §11.59.4): a 2-pole euroblock carries low-Z speaker OR
+    // constant-voltage, and `16 euro2 out` does not say which. Guessing
+    // would put 70 V on an 8 Ω run.
+    _c(
+      'conn.euroblock_2',
+      'Euroblock 2-pole',
+      9.0,
+      10.0,
+      aliases: const ['euro2'],
+      gender: true,
+    ),
     _c(
       'conn.euroblock_3',
       'Euroblock 3-pole',
