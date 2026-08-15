@@ -44,6 +44,10 @@
 
 import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/builder/label_pattern.dart';
+import 'package:rackmate_core/src/builder/port_commands.dart'
+    show AddBankCommand, AddPortCommand, autoPortKey, kUnplacedPanelPosition;
+import 'package:rackmate_core/src/commands/command.dart';
+import 'package:rackmate_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackmate_core/src/model/placement.dart';
 import 'package:rackmate_core/src/model/registries.dart';
 import 'package:rackmate_core/src/model/template.dart';
@@ -397,22 +401,153 @@ String _connectorHead(Registries registries, ConnectorTypeId id) {
       : def.aliases.first.toUpperCase();
 }
 
-/// [deriveBankName] with collisions resolved against [body].
+/// The bank label a plan lands in, resolved against [body].
 ///
-/// COLLISIONS TAKE A NUMERIC SUFFIX (docs/06 §4.2), and the comparison
-/// is on the LABEL rather than the key, because the label is what the
-/// user reads and two banks reading "HDMI Inputs" are the confusion the
-/// suffix exists to prevent, whatever their keys say.
+/// **AN EXPLICIT `@bank` IS RETURNED UNCHANGED AND REUSES AN EXISTING
+/// BANK. ONLY A DERIVED NAME TAKES A SUFFIX.** docs/06 §4.2 states the
+/// numeric suffix inside the clause about `@bank` being OMITTED, and the
+/// exit criterion settles the reading: §9.1's steps 10, 11 and 12 all
+/// type `@Control`, and the criterion says the finished template has SIX
+/// banks. Suffixing an explicit name gives Control, Control 2 and
+/// Control 3, and eight banks. Typing the same bank name twice is how a
+/// person says "the same bank".
+///
+/// A derived name still suffixes, because two commands that happen to
+/// derive one head are two commands, and the user did not name either.
+///
+/// The comparison is on the LABEL rather than the key: the label is what
+/// the user reads, and two banks reading "HDMI Inputs" are the confusion
+/// the suffix exists to prevent, whatever their keys say.
 String uniqueBankName(
   Registries registries,
   TemplateBody body,
   QuickAddPlan plan,
 ) {
-  final wanted = plan.bankName ?? deriveBankName(registries, plan);
+  if (plan.bankName case final named?) return named;
+  final wanted = deriveBankName(registries, plan);
   final taken = {for (final b in body.banks) b.label};
   if (!taken.contains(wanted)) return wanted;
   for (var n = 2; ; n++) {
     final candidate = '$wanted $n';
+    if (!taken.contains(candidate)) return candidate;
+  }
+}
+
+/// Turns a plan into the commands that realise it, against [body].
+///
+/// RETURNS COMMANDS, NOT PORTS, and the caller runs them inside ONE
+/// `transact` so sixteen ports are one `Ctrl+Z`. There is deliberately
+/// no `AddPortsCommand`: `Transaction` is itself a `Command` holding
+/// children and the port grid already groups its deletes that way, so a
+/// batch command would be a second mechanism for a solved problem.
+///
+/// THE BANK COMES FIRST in the returned list, because a port naming a
+/// bank that does not exist yet is a dangling reference for however long
+/// the list takes to apply, and `revert` runs the list backwards.
+///
+/// **`both` AND `pass` CREATE THEIR PORTS AND NOT THEIR PAIRING.** A
+/// `both` command makes two ports per position, front and rear, which is
+/// the count `QuickAddPlan.portCount` promises. Joining them with
+/// `PassthroughPairDef`s is M4-J (`#181`), which owns passthrough
+/// pairing in the UI and the warning docs/06 §4.6 asks for when one half
+/// is deleted. Named here rather than half-built: a pair written without
+/// the delete-side handling is the dangling reference `RemovePortCommand`
+/// exists to prevent.
+List<Command<TemplateBody>> buildQuickAdd(
+  Registries registries,
+  TemplateBody body,
+  QuickAddPlan plan,
+) {
+  final commands = <Command<TemplateBody>>[];
+
+  final bankLabel = uniqueBankName(registries, body, plan);
+  final existing = body.banks.where((b) => b.label == bankLabel).firstOrNull;
+  final bankKey = existing?.key ?? _uniqueBankKey(body, bankLabel);
+  if (existing == null) {
+    commands.add(
+      AddBankCommand(
+        BankDef(
+          key: bankKey,
+          label: bankLabel,
+          // The abbr is the label's own head, which is already the
+          // family's display token; a separate derivation here would be
+          // a third place for the same vocabulary to drift.
+          abbr: bankLabel.split(' ').first,
+          order: nextOrder(body.banks.map((b) => b.order)),
+        ),
+      ),
+    );
+  }
+
+  final family = plan.family == null
+      ? null
+      : registries.signalFamilies[plan.family];
+  final direction =
+      plan.direction ?? family?.defaultDirection ?? PortDirection.bidirectional;
+  final labels = plan.labels;
+
+  // Keys and orders are allocated against a GROWING set rather than
+  // against `body` as it stands, because none of these commands has run
+  // yet. Allocating all sixteen against the same snapshot would mint
+  // sixteen identical keys.
+  final taken = {for (final p in body.ports) p.key.v};
+  var order = nextOrder(body.ports.map((p) => p.order));
+  var ordinal = body.ports.length + 1;
+
+  void addPort(String label, Face face) {
+    final key = autoPortKey(label, taken: taken, ordinal: ordinal);
+    taken.add(key.v);
+    ordinal++;
+    commands.add(
+      AddPortCommand(
+        PortDef(
+          key: key,
+          label: label,
+          // AN UNRESOLVED HALF IS WRITTEN AS THE EMPTY ID, which is what
+          // `blankPort` already does and what the grid's validation dot
+          // already marks. G4's absent-key rule governs the CODEC, not
+          // this constructor: `PortDef.connector` is non-nullable.
+          connector: plan.connector ?? const ConnectorTypeId(''),
+          signalFamily: plan.family ?? const SignalFamilyId(''),
+          face: face,
+          position: kUnplacedPanelPosition,
+          order: order,
+          direction: direction,
+          topology: family?.defaultTopology ?? PortTopology.p2p,
+          bankKey: bankKey,
+        ),
+      ),
+    );
+    order = nextOrder([order]);
+  }
+
+  for (var i = 0; i < plan.quantity; i++) {
+    final label = i < labels.length ? labels[i] : '';
+    if (plan.bothFaces) {
+      addPort(label, Face.front);
+      addPort(label, Face.rear);
+    } else {
+      addPort(label, plan.face ?? Face.rear);
+    }
+  }
+
+  return commands;
+}
+
+/// A bank key that no bank in [body] already holds.
+///
+/// Slugged from the label on `autoPortKey`'s convention, so a reader
+/// seeing `hdmi.inputs` beside `port.3` does not have to learn two.
+String _uniqueBankKey(TemplateBody body, String label) {
+  final slug = label
+      .toLowerCase()
+      .replaceAll(RegExp('[^a-z0-9]+'), '.')
+      .replaceAll(RegExp(r'^\.+|\.+$'), '');
+  final base = slug.isEmpty ? 'bank.${body.banks.length + 1}' : slug;
+  final taken = {for (final b in body.banks) b.key};
+  if (!taken.contains(base)) return base;
+  for (var n = 2; ; n++) {
+    final candidate = '$base.$n';
     if (!taken.contains(candidate)) return candidate;
   }
 }

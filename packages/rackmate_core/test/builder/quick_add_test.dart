@@ -291,6 +291,17 @@ void main() {
       );
     });
 
+    test('an EXPLICIT name never suffixes, because @Control means it', () {
+      // §9.1 types @Control three times and the exit criterion says the
+      // finished template has SIX banks. Suffixing an explicit name
+      // gives Control, Control 2, Control 3 and a template with eight.
+      final body = emptyBody()..banks.add(bank('c', 'Control'));
+      expect(
+        uniqueBankName(r, body, planOk(r, '1 de9 bi @Control')),
+        'Control',
+      );
+    });
+
     test('collisions take a numeric suffix, compared on the LABEL', () {
       final body = emptyBody()..banks.add(bank('a', 'HDMI Inputs'));
       expect(uniqueBankName(r, body, planOk(r, '16 hdmi in')), 'HDMI Inputs 2');
@@ -329,6 +340,138 @@ void main() {
           'Mirror Outputs',
           'IR Outputs',
           'Control',
+        ]),
+      );
+    });
+  });
+
+  group('building a plan into ports', () {
+    /// Runs a command list against a body, the way a `transact` would.
+    TemplateBody apply(TemplateBody body, String command) {
+      for (final c in buildQuickAdd(r, body, planOk(r, command))) {
+        c.apply(body);
+      }
+      return body;
+    }
+
+    test('16 hdbt out lands sixteen ports in one new bank', () {
+      final body = apply(emptyBody(), '16 hdbt out "HDBT OUT {n:2}"');
+      expect(body.ports, hasLength(16));
+      expect(body.banks, hasLength(1));
+      expect(body.banks.single.label, 'HDBT Outputs');
+      expect(body.ports.first.label, 'HDBT OUT 01');
+      expect(body.ports.last.label, 'HDBT OUT 16');
+      expect(
+        body.ports.every((p) => p.bankKey == body.banks.single.key),
+        isTrue,
+      );
+    });
+
+    test('every port key is distinct, which a shared snapshot would break', () {
+      // Keys are allocated against a GROWING set: all sixteen commands
+      // are built before any runs, so allocating against `body` as it
+      // stands would mint sixteen identical keys.
+      final body = apply(emptyBody(), '16 hdmi in "HDMI IN {n:2}"');
+      expect(body.ports.map((p) => p.key.v).toSet(), hasLength(16));
+    });
+
+    test('and every order is distinct and ascending', () {
+      final body = apply(emptyBody(), '16 hdmi in "HDMI IN {n:2}"');
+      final orders = body.ports.map((p) => p.order.v).toList();
+      expect(orders.toSet(), hasLength(16));
+      final sorted = [...orders]..sort();
+      expect(orders, sorted, reason: 'ports arrive in the order typed');
+    });
+
+    test('the family fills in direction and topology when unstated', () {
+      final body = apply(emptyBody(), '4 hdmi');
+      expect(body.ports.first.direction, PortDirection.source);
+      expect(body.ports.first.topology, PortTopology.p2p);
+    });
+
+    test('an unresolved family is written as the empty id, not a guess', () {
+      final body = apply(emptyBody(), '4 xlr in');
+      expect(body.ports.first.signalFamily.v, '');
+      expect(body.ports.first.connector.v, 'conn.xlr3');
+    });
+
+    test('a second command into the same bank name reuses the bank', () {
+      final body = emptyBody();
+      apply(body, '1 rj45 in "LAN" @Control');
+      apply(body, '1 de9 bi "RS-232" @Control');
+      expect(body.banks, hasLength(1), reason: 'no second Control bank');
+      expect(body.ports, hasLength(2));
+      expect(body.ports[0].bankKey, body.ports[1].bankKey);
+    });
+
+    test('both makes two ports per position, front and rear', () {
+      final body = apply(emptyBody(), '2 rj45 pass both "{n:2}"');
+      expect(body.ports, hasLength(4));
+      expect(body.ports.map((p) => p.face).toList(), [
+        Face.front,
+        Face.rear,
+        Face.front,
+        Face.rear,
+      ]);
+      // The pairing itself is M4-J (#181), named in `buildQuickAdd` and
+      // asserted absent here so its arrival is a visible diff.
+      expect(body.passthroughPairs, isEmpty);
+    });
+
+    test('the bank is the FIRST command, so no port dangles', () {
+      // `revert` runs a transaction backwards, so a bank added after
+      // its ports would be removed before them on undo.
+      final commands = buildQuickAdd(r, emptyBody(), planOk(r, '2 hdmi in'));
+      expect(commands.first, isA<AddBankCommand>());
+      expect(commands.skip(1).every((c) => c is AddPortCommand), isTrue);
+    });
+
+    test('and reverting the whole list leaves the body as it was', () {
+      final body = emptyBody();
+      final commands = buildQuickAdd(r, body, planOk(r, '16 hdmi in'));
+      for (final c in commands) {
+        c.apply(body);
+      }
+      for (final c in commands.reversed) {
+        c.revert(body);
+      }
+      expect(body.ports, isEmpty);
+      expect(body.banks, isEmpty);
+    });
+
+    test('THE THIRTEEN-STEP PATH BUILDS 68 PORTS IN 6 BANKS', () {
+      // The exit criterion's own numbers, produced by running the eight
+      // commands a user types rather than by asserting a constant.
+      const steps = <String>[
+        '16 hdmi in "HDMI IN {n:2}"',
+        '16 hdbt out "HDBT OUT {n:2}"',
+        '16 hdmi out "MIRROR {n:2}" @Mirror Outputs',
+        '16 ir35 out "IR OUT {n:2}"',
+        '1 rj45 in "LAN" @Control',
+        '1 de9 bi "RS-232" @Control',
+        '1 ir35 in "IR IN" @Control',
+        '1 c14 in',
+      ];
+      final body = emptyBody();
+      for (final step in steps) {
+        apply(body, step);
+      }
+      expect(body.ports, hasLength(68));
+      expect(body.banks, hasLength(6));
+      expect(
+        body.ports.map((p) => p.key.v).toSet(),
+        hasLength(68),
+        reason: 'no two of the 68 ports may share a key',
+      );
+      expect(
+        body.banks.map((b) => b.label).toList(),
+        containsAll(<String>[
+          'HDMI Inputs',
+          'HDBT Outputs',
+          'Mirror Outputs',
+          'IR Outputs',
+          'Control',
+          'IEC Inputs',
         ]),
       );
     });
