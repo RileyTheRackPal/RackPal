@@ -787,6 +787,72 @@ void main() {
     });
   });
 
+  group('the footer readout (M4-E5)', () {
+    testWidgets('is there before any port is, so the shape is learnable', (
+      tester,
+    ) async {
+      await _pump(tester);
+
+      expect(find.text('0 ports · 0 banks · Rear 0 / Front 0'), findsOneWidget);
+    });
+
+    testWidgets('counts what the grid holds, in one line', (tester) async {
+      await _pump(
+        tester,
+        template: _saveable()
+          ..ports.addAll([
+            _port('a', order: 'a0', bank: 'in'),
+            _port('b', order: 'a1', bank: 'in'),
+            _netPort('n', order: 'a2')..face = Face.front,
+          ]),
+      );
+
+      expect(
+        find.text('3 ports · 2 banks · 3 HDMI Type A · Rear 2 / Front 1'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('follows an edit immediately, which is what it is for', (
+      tester,
+    ) async {
+      // "The fastest check that a generator did what the user meant" is
+      // only fast if it moves when the grid does.
+      await _pump(tester);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Add port'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('1 port · 1 bank'), findsOneWidget);
+    });
+
+    testWidgets('stays put while the columns scroll under it', (tester) async {
+      // A footer inside the horizontal scroll would be off screen exactly
+      // when a wide template made it most useful.
+      await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('p1', order: 'a0')),
+      );
+
+      final before = tester.getTopLeft(find.textContaining('1 port · 1 bank'));
+
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Network'));
+      await tester.pumpAndSettle();
+      await tester.drag(
+        find.byType(SingleChildScrollView).first,
+        const Offset(-300, 0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getTopLeft(find.textContaining('1 port · 1 bank')),
+        before,
+      );
+    });
+  });
+
   group('the keyboard, which is how this grid is actually used', () {
     testWidgets('Tab walks the row left to right and never lands on the '
         'section rail', (tester) async {

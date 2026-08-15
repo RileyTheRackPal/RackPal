@@ -257,7 +257,6 @@ class _PortGridState extends State<PortGrid> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Toolbar(
-          portCount: table.portCount,
           tickedCount: _ticked.length,
           onAdd: _addPort,
           onDelete: _ticked.isEmpty ? null : _deleteTicked,
@@ -331,7 +330,42 @@ class _PortGridState extends State<PortGrid> {
             },
           ),
         ),
+        const Divider(height: 1),
+        _Footer(summary: buildPortSummary(widget.body, widget.registries)),
       ],
+    );
+  }
+}
+
+/// docs/06 §4.5's one-line readout, always visible.
+///
+/// OUTSIDE THE HORIZONTAL SCROLL, so it stays put while the columns move
+/// under it. A footer that scrolled sideways with the grid would be off
+/// screen exactly when a wide template made it most useful.
+///
+/// THE SENTENCE IS BUILT IN CORE. This widget draws a string and knows
+/// nothing about PoE, faces or connector names, which is what stops the
+/// footer and the equipment list ever disagreeing about how many HDMI
+/// ports a device has.
+class _Footer extends StatelessWidget {
+  const _Footer({required this.summary});
+
+  final PortSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ColoredBox(
+      color: theme.colorScheme.surfaceContainerHigh,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Text(
+          portSummaryLine(summary),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.labelMedium,
+        ),
+      ),
     );
   }
 }
@@ -347,7 +381,6 @@ const double kPortSelectGutter = 56;
 
 class _Toolbar extends StatelessWidget {
   const _Toolbar({
-    required this.portCount,
     required this.tickedCount,
     required this.onAdd,
     required this.onDelete,
@@ -355,7 +388,6 @@ class _Toolbar extends StatelessWidget {
     required this.onTogglePack,
   });
 
-  final int portCount;
   final int tickedCount;
   final VoidCallback onAdd;
   final VoidCallback? onDelete;
@@ -385,11 +417,6 @@ class _Toolbar extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        Text(
-          portCount == 1 ? '1 port' : '$portCount ports',
-          style: Theme.of(context).textTheme.labelMedium,
-        ),
-        const SizedBox(width: 12),
         // ═══════════════════════════════════════════════════════════════
         // TICKS, NOT A LIST OF NAMES, AND THE STATE IS ALREADY DECIDED
         // ═══════════════════════════════════════════════════════════════
