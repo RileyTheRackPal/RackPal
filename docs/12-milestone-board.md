@@ -111,7 +111,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED**: `NOT BUILT` | Model only. **Its M2 block has lifted**: the gate was M2 putting `Link` + `Endpoint` in the UI, and M2-F did (§5.1). Row otherwise as of `0fa532d` |
-| **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **IN PROGRESS**: `PARTIAL` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). The clause still open is the half no test can reach, *under three minutes by a user who has seen the tool once*, and it now rests on the drill (`#188`) and on the DSL becoming teachable, which is field mode and autocomplete (`#215`, `#216`). **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
+| **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **IN PROGRESS**: `PARTIAL` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. The clause still open is the half no test can reach, *under three minutes by a user who has seen the tool once*, and it now rests on the drill (`#188`) alone. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED**: `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
@@ -2373,8 +2373,7 @@ surface**, **M4-E builds the product** and **M4-G makes it fast**, which is the 
 exit criterion at
 all. A 16×16 matrix can now be authored from scratch, and **M4-G types one in eight lines**
 (§5.3.6). Whether it takes **under three minutes by a user who has seen the tool once** is the
-clause still open, and it rests on the drill (M4-Q, `#188`) and on the DSL becoming teachable
-(`#215`, `#216`).
+clause still open, and it rests on the drill (M4-Q, `#188`) alone.
 
 **A pattern across all five, and the next one should expect it.** Every one was written from a
 field's or a type's ABSENCE, and every one turned out to be partly a corpus question rather than an
@@ -2915,15 +2914,15 @@ panel layout, no previews, no batch inspector. Enter commits and stays rather th
 because moving down is spreadsheet ergonomics and belongs with M4-F's fill-down; Tab already moves
 right, and a test drives real Tab events rather than finding the next cell.
 
-#### 5.3.6 M4-G and M4-H, Quick Add and the pattern language · CLOSED · `0d60b80`, `a16bc73`, `158a60f`, `70d4fc5`, `34e4c3b`, `06cf577`, `3947192`, `c57c6b1`, `560fc98`
+#### 5.3.6 M4-G and M4-H, Quick Add and the pattern language · CLOSED · `0d60b80`, `a16bc73`, `158a60f`, `70d4fc5`, `34e4c3b`, `06cf577`, `3947192`, `c57c6b1`, `560fc98`, `438e268`, `34091b5`, `2a8180c`
 
 **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED FOR THE FIRST TIME, AND ONLY ITS SHAPE.** A test types
 docs/06 §9.1's eight commands into the bar and asserts **68 ports across 6 banks with focus still in
 the field**. That number is computed by running the commands, not restated from the document.
 **Whether a person can do it in under three minutes remains entirely unmeasured** and is M4-Q
 (`#188`), which no agent can perform. Board `#213`, `#214`, `#217`, `#218` and `#219` are closed;
-`#215` (field mode) and `#216` (autocomplete) are **not**, so the DSL does not yet teach itself and
-AC-050's discoverability argument is unanswered.
+`#215` and `#216` closed last, and with them the DSL teaches itself: AC-050's discoverability
+argument is answered.
 
 **M4-H WAS FOLDED INTO M4-G's DELIVERY**, settled by the user on 2026-08-15. Every one of §9.1's
 thirteen steps quotes a label pattern, so a Quick Add without the pattern language produces sixteen
@@ -3031,8 +3030,35 @@ the trade. §11.59.4's "either half may come back UNKNOWN" is now carried by `xl
 ruling says so, because a later reader finding `euro2` resolved would otherwise think the invariant
 had eroded.
 
-**What M4-G does NOT deliver.** No field mode and no autocomplete (`#215`, `#216`), so the DSL is
-unteachable and must be known before it is useful. No archetype generators, no paste (M4-I). `both`
+##### The two tasks that close it, and what each cost
+
+**AUTOCOMPLETE IS NOT ON `Tab`, AND THE KEYMAP DECIDED THAT.** Tab was the design the user picked;
+`meaningDrift` refused it, because the schematic already spends Tab on *"next candidate pin for the
+wire in flight"* and advancing THROUGH offers is close to the opposite of taking one. Put back to
+the user as a real collision, they chose **right-arrow**, which is fish and zsh-autosuggestions'
+accept and shares a label with `pinCaretRight` **without straining**: the caret does move right,
+through the suggestion when one is showing. DR-011.6's shape on a second key. It is gated on an
+offer existing AND on the caret being at the end of the line, through a real `Action` whose
+`isActionEnabled` is false otherwise, because right-arrow MOVES THE CARET and a binding that
+swallowed it would stop a user walking their own command. **A ghost the key would not take is a lie
+drawn in grey.**
+
+**A PROPERTY GATE FOUND A PARSER BUG NO HAND-WRITTEN TEST HAD.** Field mode needs
+`renderQuickAdd`, and gating it with `parse(render(p)) == p` failed immediately on `16 euro2 out`.
+The cause was in the **parser**: `connector ??= connectorHit?.id ?? familyHit?.defaultConnector`
+lets the FIRST token's family DEFAULT occupy the connector slot, so no later token can name one, and
+`16 speaker euro2 out` resolved to a **binding post** instead of a euroblock. DR-060 §11.59.4's rule
+is *"a default loses to a named one"*, and that draft applied it **within a token but not across
+tokens**. Named and inherited connectors are tracked separately now.
+
+**EVERY TEST IN THE BAR'S FILE FAILED THE MOMENT FIELD MODE LANDED**, and the failure was the useful
+part: `find.byType(TextField)` had silently stopped meaning "the command line" the instant five more
+text fields appeared beside it. **The finder had been standing in for identity** and worked only
+while there was exactly one. The same mistake then repeated one layer down: the first fix navigated
+`find.ancestor(of: text('Qty'), matching: Column)`, which resolves to the bar's ENTIRE Column, so
+the test typed into the command line and asserted against it. Both are keys now.
+
+**What M4-G does NOT deliver.** No archetype generators, no paste (M4-I). `both`
 and `pass` create their ports and **not** their `PassthroughPairDef` pairing, which is M4-J and is
 asserted absent by a test so its arrival is a visible diff. No `poe:`, `z:`, `dte` or `tap:`
 modifiers: §9.1's thirteen steps exercise none of them, and the grid's column packs already author

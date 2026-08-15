@@ -43,6 +43,27 @@
   genuinely dead and went. The same grep found that seeding family aliases
   improves the M3 signal picker, which spreads them into its search key and had
   been searching an empty list since M0.
+* **Note**: **A PROPERTY GATE FOUND A PARSER BUG NO HAND-WRITTEN TEST HAD.**
+  Field mode needs a plan rendered back to a command, and gating that with
+  `parse(render(p)) == p` failed at once: the FIRST type token's family DEFAULT
+  occupied the connector slot, so no later token could name one, and
+  `16 speaker euro2 out` authored a **binding post** instead of a euroblock.
+  DR-060's rule is "a default loses to a named one" and the draft applied it
+  WITHIN a token but not ACROSS tokens. Nothing written by hand had covered it.
+* **Note**: **A `byType` FINDER WAS STANDING IN FOR IDENTITY, AND WORKED ONLY
+  WHILE THERE WAS ONE OF THE THING.** Field mode put five more `TextField`s
+  beside the Quick Add command line and every test in that file failed in the
+  same instant. The repair repeated the mistake one layer down: navigating
+  `find.ancestor(of: text('Qty'), matching: Column)` resolves to the WHOLE
+  widget's Column, so the test typed into the command line and asserted against
+  it. Key the thing you mean.
+* **Note**: **THE KEYMAP OVERRULED A USER'S KEY CHOICE AND WAS RIGHT.** `Tab`
+  for autocomplete collided with the schematic's "next candidate pin", and
+  advancing THROUGH offers is close to the opposite of taking one, so no shared
+  label was honest. Put back to the user as a real collision rather than fudged;
+  right-arrow shares `pinCaretRight`'s label without straining, because the
+  caret does move right. **The test for a shared label is whether the
+  generalisation holds without straining**, and it is worth applying out loud.
 * **Note**: **THREE ERRORS THIS MILESTONE SHIPPED INSIDE A CONFIDENT
   EXPLANATORY PARAGRAPH**: the unreachable composition check, the invented alias
   invariant, and the backwards keymap note. In each case the prose was longer

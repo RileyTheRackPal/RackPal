@@ -67,6 +67,18 @@ counting the banks caught it in one line.
 Three instances, three layers: a chip, a message, a count. In all three the
 narrow check was green and the wide one was red on the first run.
 
+## And the widest form: a property, where an example would not do
+
+M4-G's field mode needed a plan rendered back to a command. The gate written
+for it was not an example but a PROPERTY: `parse(render(p)) == p`, over every
+command the milestone's worked example types. It failed on the first run and
+the bug was in the PARSER, not the renderer: the first type token's family
+DEFAULT occupied the connector slot, so `16 speaker euro2 out` authored a
+binding post rather than a euroblock.
+
+**Nothing written by hand had covered that**, because nobody writes the command
+that exposes it. A round-trip property enumerates its own cases.
+
 # What to do
 
 * **Loop over the whole set the property claims to hold for.** If the property
@@ -79,6 +91,10 @@ narrow check was green and the wide one was red on the first run.
 * **Assert the sentence, not the severity.** For anything with designed errors,
   pin the message and the span. A test that only checks that something was
   refused cannot tell a correct refusal from a lucky one.
+* **Where a round trip exists, gate the round trip.** `parse(render(x)) == x`
+  and `write(read(b)) == b` (CR-117 is the same idea on the file format)
+  enumerate cases nobody would think to write, which is exactly the set a
+  hand-written example misses.
 
 # Citations
 
@@ -87,7 +103,9 @@ narrow check was green and the wide one was red on the first run.
 [2] `packages/rackmate_core/lib/src/builder/label_pattern.dart` — the
     one-value-set repair, and the reachability comment on the composition check
 [3] `packages/rackmate_core/test/builder/quick_add_test.dart` — the bank count
-[4] Commits `70d4fc5`, `c57c6b1`
-[5] [Assert the artifact, not the
+[4] `packages/rackmate_core/test/builder/quick_add_test.dart` — the
+    render/parse round trip
+[5] Commits `70d4fc5`, `c57c6b1`, `2a8180c`
+[6] [Assert the artifact, not the
     mechanism](/practices/assert-the-artifact-not-the-mechanism.md), of which
     this is the failure mode from the other side
