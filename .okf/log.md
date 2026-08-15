@@ -1,5 +1,44 @@
 # Update Log
 
+## 2026-08-15 (sixth entry)
+
+* **Creation**: [a spec table is an illustration until
+  censused](/practices/a-spec-table-is-an-illustration-until-censused.md) and
+  [ask what produces each task's
+  input](/practices/ask-what-produces-each-tasks-input.md), both earned by
+  M4-E, the port grid.
+* **Note**: **FOUR M4 TASKS IN A ROW WERE WRITTEN FROM A DERIVED DOCUMENT'S
+  TABLE, AND ALL FOUR FOUND THE TABLE WAS EXAMPLES.** M4-E's census is the
+  sharpest: docs/06 §4.5 names **nine pack columns with no field on `PortDef`**
+  (`VLANs`, `Segment`, `Address`, `Universe`, `Receptacle`, `Outlet mode`,
+  `Seq step`, `Seq delay`, `Circuit`) while the model carries **eight fields
+  the table names nowhere**, several of which have round-tripped through the
+  codec since M0 with no way to author them. Walk the table BOTH WAYS, and
+  write the result into the source rather than into a commit message.
+* **Note**: **A DECOMPOSITION CAN COVER EVERY OUTPUT AND PRODUCE NO INPUT.**
+  M4-E's five tasks build a grid, its columns, its packs, its validation dots
+  and its footer, and not one of them creates a port; the application's only
+  entry point opens a blank template. Every acceptance check would have passed
+  over an empty list. The tell is a task list where every verb is *display*,
+  *format*, *validate* or *summarise*: all of those take an argument, and
+  something has to make it.
+* **Note**: **THE SIGNAL PICKER WAS EXTRACTED RATHER THAN COPIED**, and the
+  reason generalises: that widget carries a MEASURED finding (a
+  `DropdownButton`'s menu inherits its button's width, so every family label
+  arrived clamped to 84 points) and a RULING (DR-025 §11.24.3, the filter
+  narrows and never commits). Two copies of a control encoding two decisions is
+  two places for one of them to be forgotten.
+* **Note**: **A `bool?` CELL IS A DROPDOWN AND NOT A CHECKBOX.** Three states,
+  and a checkbox has two, so an unmeasured port would render as a definite no.
+  G4 in a control, one milestone after it was last a question about a rollup.
+* **Note**: **A STATED DIFFERENCE THE CODE DOES NOT MAKE IS WORSE THAN NO
+  DIFFERENCE.** Two callbacks shipped nullable with a comment explaining that
+  null meant "nobody is remembering" and empty meant "everything closed", which
+  nothing downstream could act on because the screen folded null to empty on
+  the way past. `actions_have_callers_test.dart` caught it for an unrelated
+  reason (a `?.call(` the gate could not see through), which is the second time
+  that gate has paid for itself.
+
 ## 2026-08-14 (fifth entry)
 
 * **Creation**: [drive the keyboard, not the

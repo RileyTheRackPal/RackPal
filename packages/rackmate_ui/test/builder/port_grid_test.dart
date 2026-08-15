@@ -21,7 +21,24 @@ Registries _registries() => Registries(
       displayName: 'HDMI Type A',
     ),
   },
+  signalFamilies: {
+    const SignalFamilyId('net.ethernet'): const SignalFamilyDef(
+      id: SignalFamilyId('net.ethernet'),
+      displayName: 'Ethernet',
+      domain: SignalDomainId('net'),
+      defaultConnector: ConnectorTypeId('conn.rj45'),
+      defaultDirection: PortDirection.bidirectional,
+      defaultTopology: PortTopology.p2p,
+    ),
+  },
 );
+
+/// A port the auto-reveal reacts to: its family sits in the `net` domain.
+PortDef _netPort(String key, {required String order}) =>
+    _port(key, order: order)
+      ..signalFamily = const SignalFamilyId(
+        'net.ethernet',
+      );
 
 PortDef _port(String key, {required String order, String? bank}) => PortDef(
   key: PortKey(key),
@@ -520,6 +537,318 @@ void main() {
         reason:
             'G4: an absent key is unknown, and an empty string would be a '
             'note somebody wrote',
+      );
+    });
+  });
+
+  group('the seven column packs (M4-E3)', () {
+    testWidgets('closed by default, and the gear opens one', (tester) async {
+      await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('p1', order: 'a0')),
+      );
+
+      expect(find.text('PoE ROLE'), findsNothing);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Network'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('PoE ROLE'), findsOneWidget);
+      expect(
+        find.text('LABEL'),
+        findsOneWidget,
+        reason: 'a pack joins the core columns rather than replacing them',
+      );
+    });
+
+    testWidgets('a pack the user closes stays closed even when the bank '
+        'would open it', (tester) async {
+      // Without the override, closing a pack the auto-reveal wants would
+      // last exactly one rebuild.
+      final harness = await _pump(
+        tester,
+        template: _saveable()..ports.add(_netPort('n1', order: 'a0')),
+      );
+
+      expect(
+        find.text('PoE ROLE'),
+        findsOneWidget,
+        reason: 'a bank of ethernet ports reveals the Network pack',
+      );
+
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Network'));
+      await tester.pumpAndSettle();
+      expect(find.text('PoE ROLE'), findsNothing);
+      expect(harness, isNotNull);
+    });
+
+    testWidgets('the app is handed the set to remember, keyed on the '
+        'category', (tester) async {
+      final remembered = <String, Set<PortColumnPack>>{};
+      tester.view.physicalSize = const Size(1400, 820);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DeviceBuilderScreen(
+              // ONE OF `kCatalogCategoryOrder`'S NINE. The Identity
+              // section's category dropdown asserts that exactly one item
+              // matches its value, so a made-up category takes the whole
+              // screen down: the same assertion M3-L found on SERVICE,
+              // met here by a test rather than by a user.
+              template: _saveable()..category = kCatNetwork,
+              registries: _registries(),
+              actions: DeviceBuilderActions(
+                onSave: (_) => null,
+                rememberedPacks: (c) => remembered[c] ?? const {},
+                onPacksRemembered: (c, packs) => remembered[c] = packs,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.widgetWithText(ListTile, 'Ports'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Serial'));
+      await tester.pumpAndSettle();
+
+      expect(remembered[kCatNetwork], contains(PortColumnPack.serial));
+    });
+
+    testWidgets('GENDER is dead on a connector that has none (CR-059)', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('p1', order: 'a0')),
+      );
+
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Advanced'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('GENDER'), findsOneWidget);
+      expect(
+        find.byTooltip('This connector has no gender.'),
+        findsOneWidget,
+        reason:
+            'disabled rather than hidden: the column is open because the '
+            'person opened the pack, and a gap where a control should be '
+            'reads as a rendering fault',
+      );
+    });
+
+    testWidgets('a number cell writes an int and an empty one writes '
+        'UNKNOWN', (tester) async {
+      final harness = await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('p1', order: 'a0')),
+      );
+
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Electrical'));
+      await tester.pumpAndSettle();
+
+      final column = tester.getTopLeft(find.text('IMPEDANCE')).dx;
+      final fields = find.byType(TextField);
+      for (var i = 0; i < tester.widgetList(fields).length; i++) {
+        if ((tester.getTopLeft(fields.at(i)).dx - column).abs() < 8) {
+          await tester.enterText(fields.at(i), '75');
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pumpAndSettle();
+          break;
+        }
+      }
+
+      expect((await harness.read(tester)).ports.single.impedanceOhms, 75);
+    });
+  });
+
+  group('the validation dot (M4-E4)', () {
+    testWidgets('a clean row has no dot at all', (tester) async {
+      await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('p1', order: 'a0')),
+      );
+
+      expect(find.byIcon(Icons.circle), findsNothing);
+      expect(find.byIcon(Icons.circle_outlined), findsNothing);
+    });
+
+    testWidgets('a filled dot for a warning, hollow for a notice', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        template: _saveable()
+          ..ports.addAll([
+            _port('ir', order: 'a0')
+              ..signalFamily = const SignalFamilyId('ctl.ir_emitter'),
+            _port('spdif', order: 'a1')
+              ..signalFamily = const SignalFamilyId('audio.spdif_coax'),
+          ]),
+      );
+
+      expect(find.byIcon(Icons.circle), findsOneWidget);
+      expect(find.byIcon(Icons.circle_outlined), findsOneWidget);
+    });
+
+    testWidgets('the tooltip says what is wrong, in words an installer '
+        'can act on', (tester) async {
+      await _pump(
+        tester,
+        template: _saveable()
+          ..ports.add(
+            _port('ir', order: 'a0')
+              ..signalFamily = const SignalFamilyId('ctl.ir_emitter'),
+          ),
+      );
+
+      final tooltip = tester.widget<Tooltip>(
+        find.ancestor(
+          of: find.byIcon(Icons.circle),
+          matching: find.byType(Tooltip),
+        ),
+      );
+
+      expect(tooltip.message, contains('destroys'));
+      expect(tooltip.message, isNot(contains('AC-')));
+    });
+
+    testWidgets('IT DOES NOT BLOCK SAVING, which is the whole design', (
+      tester,
+    ) async {
+      // AC-049: three fields make a template. A checker that can stop a
+      // save is a fourth required field wearing a warning triangle, and
+      // that is the thing the ruling deleted.
+      final harness = await _pump(
+        tester,
+        template: _saveable()
+          ..ports.add(
+            _port('ir', order: 'a0')
+              ..signalFamily = const SignalFamilyId('ctl.ir_emitter'),
+          ),
+      );
+
+      expect(find.byIcon(Icons.circle), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Save'))
+            .onPressed,
+        isNotNull,
+      );
+      expect((await harness.read(tester)).ports, hasLength(1));
+    });
+
+    testWidgets('fixing the fault clears the dot', (tester) async {
+      await _pump(
+        tester,
+        template: _saveable()
+          ..ports.add(
+            _port('ir', order: 'a0')
+              ..signalFamily = const SignalFamilyId('ctl.ir_emitter'),
+          ),
+      );
+
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Advanced'));
+      await tester.pumpAndSettle();
+
+      final column = tester.getTopLeft(find.text('PINOUT')).dx;
+      final fields = find.byType(TextField);
+      for (var i = 0; i < tester.widgetList(fields).length; i++) {
+        if ((tester.getTopLeft(fields.at(i)).dx - column).abs() < 8) {
+          await tester.enterText(fields.at(i), 'emitter');
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pumpAndSettle();
+          break;
+        }
+      }
+
+      expect(
+        find.byIcon(Icons.circle),
+        findsNothing,
+        reason: 'live means live: the dot goes when the fault does',
+      );
+    });
+  });
+
+  group('the footer readout (M4-E5)', () {
+    testWidgets('is there before any port is, so the shape is learnable', (
+      tester,
+    ) async {
+      await _pump(tester);
+
+      expect(find.text('0 ports · 0 banks · Rear 0 / Front 0'), findsOneWidget);
+    });
+
+    testWidgets('counts what the grid holds, in one line', (tester) async {
+      await _pump(
+        tester,
+        template: _saveable()
+          ..ports.addAll([
+            _port('a', order: 'a0', bank: 'in'),
+            _port('b', order: 'a1', bank: 'in'),
+            _netPort('n', order: 'a2')..face = Face.front,
+          ]),
+      );
+
+      expect(
+        find.text('3 ports · 2 banks · 3 HDMI Type A · Rear 2 / Front 1'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('follows an edit immediately, which is what it is for', (
+      tester,
+    ) async {
+      // "The fastest check that a generator did what the user meant" is
+      // only fast if it moves when the grid does.
+      await _pump(tester);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Add port'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('1 port · 1 bank'), findsOneWidget);
+    });
+
+    testWidgets('stays put while the columns scroll under it', (tester) async {
+      // A footer inside the horizontal scroll would be off screen exactly
+      // when a wide template made it most useful.
+      await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('p1', order: 'a0')),
+      );
+
+      final before = tester.getTopLeft(find.textContaining('1 port · 1 bank'));
+
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Network'));
+      await tester.pumpAndSettle();
+      await tester.drag(
+        find.byType(SingleChildScrollView).first,
+        const Offset(-300, 0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getTopLeft(find.textContaining('1 port · 1 bank')),
+        before,
       );
     });
   });

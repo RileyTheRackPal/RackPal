@@ -16,6 +16,9 @@
 // with the file, and does NOT appear in another project until M4-N. The
 // builder says that above the Save button rather than letting somebody
 // find out by opening a second job.
+import 'dart:async';
+
+import 'package:rackmate/src/storage/prefs_store.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
@@ -60,8 +63,37 @@ TemplateId templateIdFor(RackDocument doc, String displayName) {
 /// from v1 keep resolving to v1.
 DeviceBuilderActions buildDeviceBuilderActions({
   required DocumentController controller,
+  PrefsStore? prefs,
   TemplateId? editing,
 }) => DeviceBuilderActions(
+  // ══════════════════════════════════════════════════════════════════
+  // THE COLUMN PACKS ARE A USER PREFERENCE, NOT PROJECT STATE
+  // ══════════════════════════════════════════════════════════════════
+  // Which columns an installer likes to see while authoring a network
+  // switch is a fact about the installer, and canon §11.12.4 already
+  // ruled UI chrome out of the document by name: it would re-fire for
+  // every new file and it would sit inside CR-117's byte-exact surface.
+  // So this goes to `prefs.json` beside the coach marks.
+  //
+  // NULL WHEN THERE IS NO STORE, and that is a real state rather than a
+  // test hook: a read-only data folder produces a degraded session with
+  // no `prefs.json` at all. The grid then runs its auto-reveal and
+  // remembers nothing, which is the honest degradation.
+  rememberedPacks: (category) => {
+    for (final name in prefs?.current.packsFor(category) ?? const <String>{})
+      if (portColumnPackNamed(name) case final pack?) pack,
+  },
+  onPacksRemembered: (category, packs) {
+    final store = prefs;
+    if (store == null) return;
+    unawaited(
+      store.save(
+        store.current.withPacksFor(category, {
+          for (final pack in packs) pack.name,
+        }),
+      ),
+    );
+  },
   onSave: (body) {
     final doc = controller.doc;
     final templateId = editing ?? templateIdFor(doc, body.displayName);

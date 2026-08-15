@@ -272,6 +272,206 @@ void main() {
     });
   });
 
+  group('the seven packs', () {
+    test('every column belongs to exactly one pack, or to none and is '
+        'therefore core', () {
+      final grouped = <PortColumnId>{
+        ...portCoreColumns,
+        for (final pack in PortColumnPack.values) ...portColumnsIn(pack),
+      };
+
+      expect(
+        grouped,
+        hasLength(PortColumnId.values.length),
+        reason: 'a column in no pack and not core would never be drawn',
+      );
+    });
+
+    test('the core columns are the ten docs/06 §4.5 lists', () {
+      expect(portCoreColumns, hasLength(10));
+      expect(portCoreColumns.first, PortColumnId.portKey);
+      expect(portCoreColumns.last, PortColumnId.notes);
+    });
+
+    test('opening a pack appends its columns after the core ones, '
+        'together', () {
+      final visible = portVisibleColumns({PortColumnPack.network});
+
+      expect(visible.take(10), portCoreColumns);
+      expect(visible.skip(10), portColumnsIn(PortColumnPack.network));
+    });
+
+    test('a pack keeps its columns adjacent even with two open', () {
+      final visible = portVisibleColumns({
+        PortColumnPack.advanced,
+        PortColumnPack.electrical,
+      });
+      final first = visible.indexOf(PortColumnId.impedanceOhms);
+      final last = visible.indexOf(PortColumnId.maxCurrentMa);
+
+      expect(
+        last - first,
+        portColumnsIn(PortColumnPack.electrical).length - 1,
+        reason: 'a pack arrives as a block or the gear menu is a lie',
+      );
+    });
+
+    test('every pack column has a header and a width too', () {
+      for (final id in PortColumnId.values) {
+        expect(portColumnHeader(id), isNotEmpty);
+        expect(portColumnWidth(id), greaterThan(0));
+      }
+    });
+  });
+
+  group('auto-reveal', () {
+    final registries = Registries(
+      signalFamilies: {
+        for (final (id, domain) in [
+          ('net.ethernet', 'net'),
+          ('audio.analog.line', 'audio.analog'),
+          ('control.rs232', 'ctl'),
+          ('power.ac_iec', 'pwr'),
+          ('video.hdmi.2_0', 'video.digital'),
+        ])
+          SignalFamilyId(id): SignalFamilyDef(
+            id: SignalFamilyId(id),
+            displayName: id,
+            domain: SignalDomainId(domain),
+            defaultConnector: const ConnectorTypeId('conn.rj45'),
+            defaultDirection: PortDirection.bidirectional,
+            defaultTopology: PortTopology.p2p,
+          ),
+      },
+    );
+
+    PortDef familyPort(String family, String order) => PortDef(
+      key: PortKey(order),
+      label: '',
+      connector: const ConnectorTypeId('conn.rj45'),
+      signalFamily: SignalFamilyId(family),
+      face: Face.rear,
+      position: kUnplacedPanelPosition,
+      order: FracIndex(order),
+    );
+
+    test('a switch bank shows the Network pack, which is §4.5 verbatim', () {
+      expect(
+        autoRevealedPacks([familyPort('net.ethernet', 'a0')], registries),
+        {PortColumnPack.network},
+      );
+    });
+
+    test('control shows Serial AND Bus, because a control bank is both', () {
+      expect(
+        autoRevealedPacks([familyPort('control.rs232', 'a0')], registries),
+        {
+          PortColumnPack.serial,
+          PortColumnPack.bus,
+        },
+      );
+    });
+
+    test('HDMI reveals nothing, because none of the seven holds a field a '
+        'person would fill in for it', () {
+      expect(
+        autoRevealedPacks([familyPort('video.hdmi.2_0', 'a0')], registries),
+        isEmpty,
+      );
+    });
+
+    test('the DOMINANT family decides, not the first one', () {
+      final ports = [
+        familyPort('video.hdmi.2_0', 'a0'),
+        familyPort('net.ethernet', 'a1'),
+        familyPort('net.ethernet', 'a2'),
+      ];
+
+      expect(autoRevealedPacks(ports, registries), {PortColumnPack.network});
+    });
+
+    test('a tie resolves the same way twice, because sorting here is '
+        'total', () {
+      final ports = [
+        familyPort('net.ethernet', 'a0'),
+        familyPort('power.ac_iec', 'a1'),
+      ];
+
+      final first = autoRevealedPacks(ports, registries);
+      final second = autoRevealedPacks(ports.reversed, registries);
+      expect(first, second);
+    });
+
+    test('Passthrough follows the DEVICE, never a bank', () {
+      // docs/06 §4.6: with `isPassthrough` on, the grid gains the paired
+      // column. A patch panel's pairing is a fact about the device.
+      expect(
+        autoRevealedPacks(
+          [familyPort('net.ethernet', 'a0')],
+          registries,
+          isPassthrough: true,
+        ),
+        {PortColumnPack.network, PortColumnPack.passthrough},
+      );
+    });
+
+    test('Advanced is never revealed by itself', () {
+      for (final family in [
+        'net.ethernet',
+        'audio.analog.line',
+        'control.rs232',
+        'power.ac_iec',
+      ]) {
+        expect(
+          autoRevealedPacks([familyPort(family, 'a0')], registries),
+          isNot(contains(PortColumnPack.advanced)),
+        );
+      }
+    });
+
+    test('a family the registries do not hold reveals nothing rather than '
+        'guessing', () {
+      expect(
+        autoRevealedPacks([familyPort('who.knows', 'a0')], registries),
+        isEmpty,
+      );
+    });
+  });
+
+  group('GENDER is gated on the connector, not on the value', () {
+    final registries = Registries(
+      connectorTypes: {
+        const ConnectorTypeId('conn.xlr3'): const ConnectorTypeDef(
+          id: ConnectorTypeId('conn.xlr3'),
+          displayName: 'XLR 3-pin',
+          genderApplies: true,
+        ),
+        const ConnectorTypeId('conn.rj45'): const ConnectorTypeDef(
+          id: ConnectorTypeId('conn.rj45'),
+          displayName: 'RJ45',
+        ),
+      },
+    );
+
+    test('an XLR has a gender and an RJ45 does not (CR-059)', () {
+      expect(
+        portGenderApplies(registries, const ConnectorTypeId('conn.xlr3')),
+        isTrue,
+      );
+      expect(
+        portGenderApplies(registries, const ConnectorTypeId('conn.rj45')),
+        isFalse,
+      );
+    });
+
+    test('an unknown connector is not licence to record a gender', () {
+      expect(
+        portGenderApplies(registries, const ConnectorTypeId('conn.invented')),
+        isFalse,
+      );
+    });
+  });
+
   group('the DIRECTION vocabulary', () {
     test('spells five values, and no two the same', () {
       final labels = [
