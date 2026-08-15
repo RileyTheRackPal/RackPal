@@ -266,6 +266,23 @@ enum LabelKey {
   // height is not a distinction the builder's Edit menu has to draw.
   setTemplateProperty,
 
+  // THE PORT GRID (builder/port_commands.dart), M4-E. Also the builder's
+  // own stack, and split from `setTemplateProperty` on the same test that
+  // split `multiDraw` from `connectPorts`: what the Edit menu has to say.
+  // "Undo Add Port" and "Undo Delete Port" are the two a user looks for
+  // after a mis-click in a 68-row grid, and neither reads as a property
+  // write. Editing a CELL does read as one, so all ten core columns share
+  // `setPortProperty` exactly as fifty body fields share the key above.
+  setPortProperty,
+  addPort,
+  removePort,
+
+  // ITS OWN VALUE BECAUSE IT IS NOT A CELL EDIT. `PortDef.key` is the
+  // migration join (CR-051) and renaming one rewrites `renamedFrom` and
+  // every passthrough pair that named it, so the Edit menu says what
+  // happened rather than calling it a property write like the other nine.
+  renamePortKey,
+
   // SAVING A TEMPLATE INTO THE PROJECT (commands/template_snapshot_
   // commands.dart), M4-D. This one IS a document command and belongs on
   // the document's stack, unlike `setTemplateProperty` above: the
