@@ -111,7 +111,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED**: `NOT BUILT` | Model only. **Its M2 block has lifted**: the gate was M2 putting `Link` + `Endpoint` in the UI, and M2-F did (§5.1). Row otherwise as of `0fa532d` |
-| **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **IN PROGRESS**: `PARTIAL` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. The clause still open is the half no test can reach, *under three minutes by a user who has seen the tool once*, and it now rests on the drill (`#188`) alone. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
+| **M4** | Device builder | **`L`** *(was `M`)* | **1 of 2** | **IN PROGRESS**: `CONFIRMED` on clause 1 | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **Clause 2 is untouched** and is the whole of what M4 still owes: a three-field template placing into a rack with `—` in every unknown column and an accurate unknown count (`#251`). **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED**: `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
@@ -3083,6 +3083,62 @@ and `pass` create their ports and **not** their `PassthroughPairDef` pairing, wh
 asserted absent by a test so its arrival is a visible diff. No `poe:`, `z:`, `dte` or `tap:`
 modifiers: §9.1's thirteen steps exercise none of them, and the grid's column packs already author
 all four.
+
+#### 5.3.7 M4-Q1, the drill · CLAUSE 1 CONFIRMED · **93 seconds** · `da0ac86`
+
+> **The clause.** *A 16×16 matrix template is authored from scratch in under three minutes by a
+> user who has seen the tool once.*
+
+**Performed by the user on 2026-08-15 against the build carrying `ce5f70f`. 93 SECONDS, a 48%
+margin under the criterion.** Full scope: named, RU height set, the eight Quick Add commands typed,
+`Ctrl+S`. **The result was checked rather than assumed**, in the footer M4-E5 built: **68 ports
+across 6 banks.** Typed DSL throughout, not the field-mode controls.
+
+##### THE DRILL FOUND A MISSING KEYSTROKE THAT FOURTEEN GREEN GATES COULD NOT
+
+The run **used the mouse to change section**, reported as a preference. It was not one. docs/06
+§9.1 spends **step 5** on `Ctrl+Enter`, *"Jump to Ports"*, and **the binding had never been built**:
+`KeyScope.builder` held the Quick Add commit and its autocomplete and nothing else.
+
+**Every gate was green over that hole and would have stayed green forever.** The keymap arbitration
+suite checks that what IS in the table is consistent across platforms; it cannot fail for a row the
+specification promises and nobody wrote. **This is the second time a drill has found what the whole
+test suite could not**, after M1's clause 3 (§3.5), and it is the entire argument for M4-Q existing
+as a human act rather than a job.
+
+Built in `da0ac86`, with the deliberate departure that it does **not** gate on the required fields
+being satisfied, despite §9.1's parenthetical: AC-049 took the metadata form off the critical path,
+and a jump refused because a field is blank would put back the gate that ruling removed, on the one
+surface a stopwatch is pointed at.
+
+##### The operator's conditions, recorded rather than dropped
+
+**M1's clause 3 set this precedent in capitals and it binds here.** The user types **140+ wpm**, and
+is not a user who has seen the tool once: **they specified this grammar the same afternoon**, chose
+its autocomplete key after the keymap refused their first choice, and ruled on its bank naming and
+its `euro2` default. That is the fastest possible operator of a DSL they designed.
+
+**The clause says "a user" and 93 seconds satisfies it literally; this reading is not a hedge on the
+mark.** But clause 1 is load-bearing for **M7's accessibility criterion**, whose subject is exactly
+the person who has NOT memorised the vocabulary, and **93 seconds establishes nothing about them**.
+A run by someone who has not seen the DSL is worth having before M7 leans on this number. Inline
+autocomplete (`#216`) exists precisely for that population and was **not** exercised in this run.
+
+**§9.3's invariant survives intact.** It states that focus never leaves Quick Add *during steps 6 to
+13*, and the mouse was used at step 5, reaching Ports. The eight banks themselves were pure typing.
+
+**A CONFIRMED mark is not a gate.** No CI job re-runs this, and it does not survive a change to the
+keymap or the grammar. What guards the mechanism between drills is
+`packages/rackmate_ui/test/builder/quick_add_bar_test.dart`, which types the same eight commands and
+asserts 68 ports across 6 banks with focus still in the bar, and
+`quick_add_test.dart`'s build group, which asserts the same totals in core.
+
+##### What clause 2 still owes, and it is the whole of M4's remainder
+
+*A template saved with exactly three fields plus ports places into a rack and appears correctly in
+the equipment list with `—` in every unknown column and an accurate unknown count in the rollup.*
+Board `#251`. **Untested by this drill and by any other.** `#250`, the archetype path, is blocked
+on M4-I, which is not built; the DSL path is the only one that exists.
 
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 

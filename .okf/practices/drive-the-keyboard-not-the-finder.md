@@ -76,6 +76,20 @@ sitting under `Pro Max 24 PoE` after the user typed a name, and read as a second
 value. Examples are `hintText`; `helperText` is for guidance that is still true
 once the field is filled.
 
+# The inverse, found by the M4 drill (2026-08-15)
+
+**A keyboard route can be fully reachable and still fail a criterion measured
+with a stopwatch.** The builder's section rail was deliberately `Tab`-reachable,
+and M4-D's `FocusTraversalGroup` note argues for keeping it so. It was reachable
+throughout. The user still used the mouse, because docs/06 §9.1's step 5,
+`Ctrl+Enter` to jump to Ports, **had never been built**, and tabbing out of a
+form across a rail to the right tile is not the same act as one chord.
+
+**Reachability is the accessibility question; keystroke COUNT is the speed
+question, and they are different tests.** A surface can pass the first and lose
+a stopwatch run on the second. Where a spec names a chord, the chord is the
+requirement, not the route it shortens.
+
 # Citations
 
 [1] `packages/rackmate_ui/test/builder/builder_copy_and_focus_test.dart`

@@ -1,5 +1,30 @@
 # Update Log
 
+## 2026-08-15 (ninth entry)
+
+* **Note**: **M4'S CLAUSE 1 IS CONFIRMED AT 93 SECONDS** against a 180-second
+  criterion, run by the user, full scope, result verified in the footer at 68
+  ports across 6 banks. **Clause 2 is untouched**, so M4 is 1 of 2 and not met.
+* **Note**: **THE DRILL FOUND A MISSING KEYSTROKE THAT FOURTEEN GREEN GATES
+  COULD NOT, AND IT IS THE SECOND TIME.** docs/06 §9.1 spends step 5 on
+  `Ctrl+Enter` to reach the Ports section; the binding had never been built, and
+  the run reached for the MOUSE there and reported it as a preference. **A
+  keymap gate can check that what is in the table is consistent. It cannot fail
+  for a row the specification promises and nobody wrote.** After M1's clause 3,
+  this is twice that a person with a stopwatch found what the whole suite could
+  not, which is the entire argument for keeping a human act in the exit
+  criterion.
+* **Note**: **"IT FELT MORE NATURAL" WAS A MISSING FEATURE WEARING A
+  PREFERENCE.** The user described the mouse reach as taste. Asking WHERE it
+  happened, rather than accepting it, turned one sentence into a defect with a
+  spec citation. **When a drill reports a preference, ask which step.**
+* **Update**: [Drive the keyboard, not the
+  finder](/practices/drive-the-keyboard-not-the-finder.md) gains the inverse
+  case: its existing lesson is that `enterText` teleports where a person walks,
+  and this one is that **a keyboard route can be fully reachable and still cost
+  a stopwatch the run**. The rail was always `Tab`-reachable by design; what was
+  missing was the one chord that skips it.
+
 ## 2026-08-15 (eighth entry)
 
 * **Update**: [Trade objections are
