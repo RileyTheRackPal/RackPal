@@ -53,7 +53,10 @@ void main() {
     return body;
   }
 
-  Finder barField() => find.byType(TextField);
+  /// THE COMMAND LINE, by key rather than by type. Field mode puts five
+  /// more `TextField`s on this widget, and a `byType` finder silently
+  /// stopped meaning "the bar" the moment they arrived.
+  Finder barField() => find.byKey(kQuickAddCommandField);
 
   group('the bar is docked and it adds (M4-G1)', () {
     testWidgets('focus lands here on entering the section', (tester) async {
@@ -202,6 +205,192 @@ void main() {
       await tester.enterText(barField(), '16 hdmi in "HDMI IN');
       await tester.pump();
       expect(find.byIcon(Icons.error_outline), findsNothing);
+    });
+  });
+
+  group('inline autocomplete (M4-G4, AC-050 / A2.4)', () {
+    testWidgets('right-arrow accepts the suggestion', (tester) async {
+      await pumpBar(tester);
+      await tester.enterText(barField(), '16 hdb');
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+
+      expect(tester.widget<TextField>(barField()).controller?.text, '16 hdbt');
+    });
+
+    testWidgets('and the caret lands after it, ready to keep typing', (
+      tester,
+    ) async {
+      await pumpBar(tester);
+      await tester.enterText(barField(), '16 hdb');
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+
+      final controller = tester.widget<TextField>(barField()).controller!;
+      expect(controller.selection.baseOffset, controller.text.length);
+    });
+
+    testWidgets('WITH NO SUGGESTION THE KEY IS HANDED BACK UNTOUCHED', (
+      tester,
+    ) async {
+      // Right-arrow MOVES THE CARET in a text field. The action's
+      // `isActionEnabled` is false when nothing is offered, so the key
+      // falls through and a user can still walk their own command. A
+      // CallbackAction here would swallow it and freeze the caret.
+      await pumpBar(tester);
+      await tester.enterText(barField(), '16 hdmi in');
+      await tester.pump();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+
+      expect(
+        tester.widget<TextField>(barField()).controller?.text,
+        '16 hdmi in',
+        reason: 'nothing was inserted',
+      );
+      expect(
+        tester.widget<TextField>(barField()).focusNode?.hasFocus,
+        isTrue,
+        reason: 'and the caret stayed in the field, unlike Tab',
+      );
+    });
+
+    testWidgets('MID-COMMAND THERE IS NO OFFER, so the caret walks freely', (
+      tester,
+    ) async {
+      // The offer exists only at the end of the line, deliberately: a
+      // ghost the key would not take is a lie drawn in grey.
+      await pumpBar(tester);
+      await tester.enterText(barField(), '16 hdb');
+      await tester.pump();
+      final controller = tester.widget<TextField>(barField()).controller!
+        ..selection = const TextSelection.collapsed(offset: 3);
+      await tester.pump();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      expect(controller.text, '16 hdb', reason: 'no completion was taken');
+    });
+
+    testWidgets('accepting a suggestion does not commit anything', (
+      tester,
+    ) async {
+      // Right completes; only Enter adds. A completion that also ran the
+      // command would create ports from a word the user was still
+      // deciding about.
+      final body = await pumpBar(tester);
+      await tester.enterText(barField(), '16 hdb');
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      expect(body.ports, isEmpty);
+    });
+
+    testWidgets('THE GHOST IS PAINT, NEVER CONTENT', (tester) async {
+      // The suggestion must not enter the value: an Enter pressed before
+      // the ghost was accepted would otherwise commit a word the user
+      // never typed. `16 hdb` is not a valid command, so the Add button
+      // stays dead while the ghost is showing.
+      await pumpBar(tester);
+      await tester.enterText(barField(), '16 hdb');
+      await tester.pump();
+
+      expect(tester.widget<TextField>(barField()).controller?.text, '16 hdb');
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('typing on past the suggestion just works', (tester) async {
+      await pumpBar(tester);
+      await tester.enterText(barField(), '16 hdb');
+      await tester.pump();
+      await tester.enterText(barField(), '16 hdbt out');
+      await tester.pump();
+
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNotNull,
+      );
+    });
+  });
+
+  group('field mode is bound both ways (M4-G3)', () {
+    testWidgets('typing in the command updates the fields', (tester) async {
+      // Command to fields. This is the direction board #215 calls "how
+      // the DSL teaches itself".
+      await pumpBar(tester);
+      await tester.enterText(barField(), '16 hdbt out "HDBT OUT {n:2}"');
+      await tester.pump();
+
+      final fields = tester.widget<QuickAddFields>(
+        find.byType(QuickAddFields),
+      );
+      expect(fields.plan?.quantity, 16);
+      expect(fields.plan?.family?.v, 'video.hdbaset');
+      expect(fields.plan?.direction, PortDirection.source);
+      expect(fields.plan?.labelPattern?.source, 'HDBT OUT {n:2}');
+    });
+
+    testWidgets('AND EDITING A FIELD REWRITES THE COMMAND', (tester) async {
+      // Fields to command, the direction that costs work and the one
+      // that does the teaching: the user watches the words appear.
+      await pumpBar(tester);
+      await tester.enterText(barField(), '16 hdmi in');
+      await tester.pump();
+
+      // BY KEY, NOT BY TREE WALK. An earlier draft navigated
+      // `find.ancestor(of: text('Qty'), matching: Column)` and typed
+      // into the BAR'S OWN command line, because the outermost Column
+      // matching that query is the whole widget.
+      await tester.enterText(find.byKey(quickAddFieldKey('Qty')), '8');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      expect(
+        tester.widget<TextField>(barField()).controller?.text,
+        startsWith('8 hdmi in'),
+      );
+    });
+
+    testWidgets('the fields grey rather than vanish on a bad command', (
+      tester,
+    ) async {
+      // A row that appears and disappears as you type is harder to read
+      // than one that dims, and vanishing controls teach nothing.
+      await pumpBar(tester);
+      await tester.enterText(barField(), '16 wibble in');
+      await tester.pump();
+
+      expect(find.byType(QuickAddFields), findsOneWidget);
+      expect(
+        tester.widget<QuickAddFields>(find.byType(QuickAddFields)).plan,
+        isNull,
+      );
+    });
+
+    testWidgets('THE COMMAND LINE IS THE ONLY SOURCE OF TRUTH', (
+      tester,
+    ) async {
+      // The controls hold no state of their own, so there is nothing for
+      // the two modes to drift between. Retyping the command replaces
+      // everything the fields showed.
+      await pumpBar(tester);
+      await tester.enterText(barField(), '16 hdbt out');
+      await tester.pump();
+      await tester.enterText(barField(), '4 xlr in front');
+      await tester.pump();
+
+      final fields = tester.widget<QuickAddFields>(
+        find.byType(QuickAddFields),
+      );
+      expect(fields.plan?.quantity, 4);
+      expect(fields.plan?.family, isNull, reason: 'xlr names no family');
+      expect(fields.plan?.face, Face.front);
     });
   });
 

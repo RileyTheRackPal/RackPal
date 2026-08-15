@@ -35,7 +35,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/builder/quick_add_fields.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
+
+/// Names the command line itself, as opposed to field mode's controls.
+const kQuickAddCommandField = ValueKey<String>('quickAddCommand');
 
 /// The docked Quick Add bar.
 class QuickAddBar extends StatefulWidget {
@@ -70,6 +74,7 @@ class _QuickAddBarState extends State<QuickAddBar> {
   final FocusNode _focus = FocusNode(debugLabel: 'QuickAdd');
 
   QuickAddResult? _result;
+  QuickAddCompletion? _completion;
 
   @override
   void initState() {
@@ -93,13 +98,37 @@ class _QuickAddBarState extends State<QuickAddBar> {
     final result = text.trim().isEmpty
         ? null
         : parseQuickAdd(widget.registries, text);
+    final caret = _controller.selection.baseOffset;
     setState(() {
       _result = result;
+      // ONLY AT THE END OF THE LINE, though `quickAddCompletion` will
+      // happily offer at the end of any token. Right-arrow moves the
+      // caret, so the offer and the key must agree: mid-command the
+      // user is navigating and the ghost would be pointing at a place
+      // the key will not take them.
+      _completion = caret == text.length
+          ? quickAddCompletion(widget.registries, text, caret)
+          : null;
+      _controller.ghost = _completion?.suffix;
       _controller.errorSpan = switch (result) {
         final QuickAddFailure f => (f.start, f.end),
         _ => null,
       };
     });
+  }
+
+  /// Accepts the ghost by appending it, which is safe because the offer
+  /// only exists when the caret is at the end of the line.
+  void _acceptCompletion() {
+    final offer = _completion;
+    if (offer == null) return;
+    final text = _controller.text;
+    _controller.value = TextEditingValue(
+      text: '$text${offer.suffix}',
+      selection: TextSelection.collapsed(
+        offset: text.length + offer.suffix.length,
+      ),
+    );
   }
 
   void _commit() {
@@ -112,6 +141,14 @@ class _QuickAddBarState extends State<QuickAddBar> {
       _focus.requestFocus();
     }
   }
+
+  /// Writes a whole command line and returns focus to it.
+  ///
+  /// THE ONE PATH BY WHICH FIELD MODE CHANGES ANYTHING. The controls
+  /// hold no state; they render an edited plan back to a command and
+  /// hand it here, so the text field stays the single source of truth
+  /// and the two modes have nothing to drift between.
+  void _replaceCommand(String command) => _applyRepair(command);
 
   /// Replaces the whole command with a repair chip's suggestion and puts
   /// the caret at the end, so the next keystroke continues rather than
@@ -158,8 +195,21 @@ class _QuickAddBarState extends State<QuickAddBar> {
                               return null;
                             },
                           ),
+                      // A REAL ACTION, NOT A CallbackAction, and the
+                      // keymap row says why: a CallbackAction consumes
+                      // the key regardless of what its body does, so an
+                      // idle bar would stop a user walking the caret
+                      // through their own command. `isActionEnabled`
+                      // false hands right-arrow straight back.
+                      QuickAddCompleteIntent: _AcceptCompletionAction(this),
                     },
                     child: TextField(
+                      // KEYED so a test can name THE COMMAND LINE rather
+                      // than "the first TextField". Field mode adds five
+                      // more of them, and every test in this file broke
+                      // at once the day it landed because a `byType`
+                      // finder had been standing in for identity.
+                      key: kQuickAddCommandField,
                       controller: _controller,
                       focusNode: _focus,
                       autofocus: widget.autofocus,
@@ -188,6 +238,18 @@ class _QuickAddBarState extends State<QuickAddBar> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 6),
+          // FIELD MODE, ALWAYS VISIBLE RATHER THAN BEHIND A TOGGLE. The
+          // controls exist to TEACH the grammar (board #215), and a
+          // discoverability mechanism nobody discovers is not one. They
+          // grey rather than vanish when the command does not parse,
+          // because a row that appears and disappears as you type is
+          // harder to read than one that dims.
+          QuickAddFields(
+            plan: _result is QuickAddPlan ? _result! as QuickAddPlan : null,
+            registries: widget.registries,
+            onCommand: _replaceCommand,
           ),
           const SizedBox(height: 6),
           _Summary(
@@ -318,6 +380,26 @@ String _directionWord(PortDirection d) => switch (d) {
   PortDirection.passive => 'passthrough',
 };
 
+/// Accepts the inline completion, and DECLINES WHEN THERE IS NONE.
+///
+/// The declining is the whole reason this is a class. `Tab` is how a
+/// keyboard-only user leaves a text field, and `Action.isActionEnabled`
+/// returning false is what lets the key fall through to focus traversal
+/// rather than being swallowed. `keymap_arbitration_test.dart` states the
+/// requirement for every binding that shadows a framework default: "a
+/// CallbackAction consumes the key regardless of what its body does".
+class _AcceptCompletionAction extends Action<QuickAddCompleteIntent> {
+  _AcceptCompletionAction(this._state);
+
+  final _QuickAddBarState _state;
+
+  @override
+  bool get isActionEnabled => _state._completion != null;
+
+  @override
+  void invoke(QuickAddCompleteIntent intent) => _state._acceptCompletion();
+}
+
 /// A controller that draws a wavy underline under one character range.
 ///
 /// The range is the parser's own span, so what is marked is exactly what
@@ -325,12 +407,26 @@ String _directionWord(PortDirection d) => switch (d) {
 class _SpanController extends TextEditingController {
   (int, int)? errorSpan;
 
+  /// The completion's remaining characters, painted after the caret in a
+  /// muted colour and NOT part of [text].
+  ///
+  /// GHOST TEXT IS PAINTING, NEVER CONTENT. It is appended in
+  /// [buildTextSpan] and never enters the value, so the parser, the
+  /// summary line and Enter all see exactly what the user typed. A
+  /// completion written into the field would be committed by an Enter
+  /// pressed before it was accepted, which is a tool putting words in
+  /// someone's mouth and then acting on them.
+  String? ghost;
+
   @override
   set value(TextEditingValue newValue) {
-    // The span is stale the instant the text changes; clearing it here
-    // rather than in the listener avoids one frame drawn with the old
-    // range against the new characters.
-    if (newValue.text != text) errorSpan = null;
+    // Both are stale the instant the text changes; clearing here rather
+    // than in the listener avoids one frame drawn with the old range,
+    // or the old suggestion, against the new characters.
+    if (newValue.text != text) {
+      errorSpan = null;
+      ghost = null;
+    }
     super.value = newValue;
   }
 
@@ -340,11 +436,34 @@ class _SpanController extends TextEditingController {
     required bool withComposing,
     TextStyle? style,
   }) {
+    final theme = Theme.of(context);
+    final tail = ghost;
+    // The ghost is only honest at the END of the line. Mid-command the
+    // completion is inserted at the caret, and painting it after the
+    // whole string would put the suggestion somewhere it will not go.
+    final showGhost =
+        tail != null && tail.isNotEmpty && selection.baseOffset == text.length;
+    // The two conditions above are the SAME ones the accept action is
+    // gated on, deliberately: a ghost the key would not take is a lie
+    // drawn in grey.
+    final ghostSpan = showGhost
+        ? TextSpan(
+            text: tail,
+            style: TextStyle(color: theme.disabledColor),
+          )
+        : null;
+
     final span = errorSpan;
     if (span == null || span.$1 >= span.$2 || span.$2 > text.length) {
-      return TextSpan(text: text, style: style);
+      return TextSpan(
+        style: style,
+        children: [
+          TextSpan(text: text),
+          if (ghostSpan != null) ghostSpan,
+        ],
+      );
     }
-    final error = Theme.of(context).colorScheme.error;
+    final error = theme.colorScheme.error;
     return TextSpan(
       style: style,
       children: [
@@ -358,6 +477,7 @@ class _SpanController extends TextEditingController {
           ),
         ),
         TextSpan(text: text.substring(span.$2)),
+        if (ghostSpan != null) ghostSpan,
       ],
     );
   }
