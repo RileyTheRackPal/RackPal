@@ -51,6 +51,7 @@
 library;
 
 export 'src/builder/fork_status.dart';
+export 'src/builder/label_pattern.dart';
 export 'src/builder/port_commands.dart';
 export 'src/builder/port_summary.dart';
 export 'src/builder/port_table.dart';
