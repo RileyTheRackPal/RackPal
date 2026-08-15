@@ -1,5 +1,27 @@
 # Update Log
 
+## 2026-08-15 (eighth entry)
+
+* **Update**: [Trade objections are
+  questions](/practices/trade-knowledge-beats-workflow-reasoning.md) gains
+  DR-060's pair, and the second one INVERTS the practice's usual shape.
+  `ir35 in` resolved to the IR EMITTER family on a command labelled `IR IN`, and
+  **the catalog states the destructive pinout hazard in a comment sitting
+  directly above the two families' declarations**. The trade fact was not
+  missing from the corpus; it was at the exact site and was not read. Aliasing a
+  thing without reading the eight lines above it is the failure.
+* **Note**: **THIS IS THE FIRST DEFECT THIS MILESTONE WHERE A WRONG ANSWER
+  DESTROYS HARDWARE** rather than producing a bad drawing, and it survived every
+  gate: an emitter port with direction `in` is not structurally invalid, so no
+  validation dot would have flagged it. It was found by PRINTING THE REAL OUTPUT
+  and reading it, which is also what found "1 ports" on four of the worked
+  example's eight steps.
+* **Note**: **UI COPY IS NOT REVIEWED UNTIL SOMEBODY READS IT RENDERED.** The
+  Quick Add summary line passed a dozen `contains` assertions while printing
+  `1 ports`, `HDMI · HDMI`, and `IEC device power (C13/C14, C19/C20)` on a line
+  read at a glance. A `contains` assertion cannot see density or grammar; the
+  tests now pin whole strings.
+
 ## 2026-08-15 (seventh entry)
 
 * **Creation**: [a test's exemption list is where the bug

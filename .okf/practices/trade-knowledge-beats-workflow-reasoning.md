@@ -2,11 +2,12 @@
 type: Playbook
 title: Trade objections are questions, not findings
 description: >-
-  Three rulings have now overruled an objection grounded in "how the work
-  happens in the field". The corpus is authoritative about the code and silent
-  about the trade, and the two kinds of objection are indistinguishable in
-  output unless they are labelled.
-tags: [practice, process, rulings, trade, g4, dr-048, dr-055, dr-056]
+  Rulings keep overruling objections grounded in "how the work happens in the
+  field". The corpus is authoritative about the code and silent about the trade,
+  and the two kinds of objection are indistinguishable in output unless they are
+  labelled. The newest instance inverts the usual shape: the trade fact was
+  written down, at the declaration site, and was walked past anyway.
+tags: [practice, process, rulings, trade, g4, dr-048, dr-055, dr-056, dr-060]
 timestamp: 2026-08-14T00:00:00Z
 status: adopted
 ---
@@ -44,6 +45,25 @@ simply wrong.** It depended entirely on how a reader parses the word. `Generic`
 is standard in the industry for *unspecified / by others / contractor's choice*,
 so it is the trade's own spelling of what `—` means and the people holding the
 sheet parse it correctly. There was nothing to trade off.
+
+**[DR-060](/decisions/dr-060-quick-add-resolves-family-first.md) §11.59.10(b) and
+§11.59.11, and this pair is the one to read.** The first is the usual shape:
+`euro2` was recommended to resolve to no family, on the argument that a 2-pole
+euroblock carries low-Z or constant-voltage and guessing puts 70 V on an 8 Ω run.
+**The user ruled low-Z, because it is the overwhelming case in these racks**,
+which is a fact about the work and not about the parser.
+
+**The second inverts the shape and is worse.** `ir35 in` resolved to
+`ctl.ir_emitter`, on a command whose own label was `IR IN`. Emitter and receiver
+have destructively incompatible pinouts, and **the catalog says so, in a comment
+sitting directly above the two families' declarations**: plugging an emitter into
+a receiver jack destroys the emitter and can damage the supply. The alias was
+seeded without reading the eight lines above the thing being aliased.
+
+So the trade fact was not missing from the corpus this time. **It was present, at
+the exact site, and the failure was not looking.** A trade objection is a question
+to ask the user; a trade hazard written in the source is a thing to read before
+touching it.
 
 # Why the corpus cannot catch this
 

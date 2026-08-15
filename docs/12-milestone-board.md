@@ -3058,6 +3058,26 @@ while there was exactly one. The same mistake then repeated one layer down: the 
 `find.ancestor(of: text('Qty'), matching: Column)`, which resolves to the bar's ENTIRE Column, so
 the test typed into the command line and asserted against it. Both are keys now.
 
+##### Two fixes after the merge, from reading the real output
+
+**THE FIRST DEFECT THIS MILESTONE WHERE A WRONG ANSWER DESTROYS HARDWARE.** `1 ir35 in "IR IN"`,
+which is docs/06 §9.1's own step 12, resolved to **`ctl.ir_emitter`**. The catalog states the reason
+that is dangerous in a comment sitting **directly above the two families' declarations**: emitter and
+receiver pinouts are incompatible and plugging one into the other's jack destroys the emitter and can
+damage the supply. AC-052 makes `pinoutVariant` mandatory on every 3.5 mm IR port for that reason.
+
+**It survived every gate**, because an emitter port with direction `in` is not structurally invalid,
+so no validation dot could flag it. DR-060 §11.59.11 rules the direction picks the family, in a
+named one-row table, and states the bar for admitting a second: a wrong answer must destroy hardware
+rather than merely inconvenience someone.
+
+**THE SUMMARY LINE WAS RULED DOWN BY THE USER AFTER READING IT RENDERED.** Field mode had made five
+of its seven fields redundant. It also printed **`1 ports`** on four of the eight steps, **`HDMI ·
+HDMI`** wherever a connector is named after its signal, and `IEC device power (C13/C14, C19/C20)` on
+a line read at a glance. **A dozen `contains` assertions were green throughout**, because a
+`contains` assertion cannot see grammar or density. The line now says only what no control shows,
+and its tests pin whole strings.
+
 **What M4-G does NOT deliver.** No archetype generators, no paste (M4-I). `both`
 and `pass` create their ports and **not** their `PassthroughPairDef` pairing, which is M4-J and is
 asserted absent by a test so its arrival is a visible diff. No `poe:`, `z:`, `dte` or `tap:`
