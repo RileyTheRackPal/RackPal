@@ -247,6 +247,7 @@ class _PortGridState extends State<PortGrid> {
       (key) => !widget.body.ports.any((p) => p.key.v == key),
     );
 
+    final issues = validatePorts(widget.body);
     final columns = portVisibleColumns(_openPacks());
     final total =
         kPortSelectGutter +
@@ -304,6 +305,7 @@ class _PortGridState extends State<PortGrid> {
                                   },
                                   columns: columns,
                                   pairedWith: _pairs(),
+                                  issues: issues,
                                   registriesForGender: widget.registries,
                                   onKeyTouched: widget.onKeyTouched,
                                   collapsed: _collapsed,
@@ -334,8 +336,14 @@ class _PortGridState extends State<PortGrid> {
   }
 }
 
-/// The tick-box gutter, in the same points the columns are authored in.
-const double kPortSelectGutter = 34;
+/// The tick-box gutter plus the validation dot, in the same points the
+/// columns are authored in.
+///
+/// THE DOT IS IN THE GUTTER AND NOT IN A COLUMN, which is docs/06 §4.5's
+/// word ("a severity dot in the row gutter") and is also the only place
+/// it can go: a finding is about the ROW, and half of them name a column
+/// that may not be showing.
+const double kPortSelectGutter = 56;
 
 class _Toolbar extends StatelessWidget {
   const _Toolbar({
@@ -465,6 +473,7 @@ class _Bands extends StatelessWidget {
     required this.takenKeys,
     required this.columns,
     required this.pairedWith,
+    required this.issues,
     required this.registriesForGender,
     required this.onKeyTouched,
     required this.collapsed,
@@ -483,6 +492,7 @@ class _Bands extends StatelessWidget {
   final Set<String> takenKeys;
   final List<PortColumnId> columns;
   final Map<String, String> pairedWith;
+  final Map<String, List<PortIssue>> issues;
   final Registries registriesForGender;
   final void Function(String was, String now) onKeyTouched;
   final Set<String?> collapsed;
@@ -527,6 +537,8 @@ class _Bands extends StatelessWidget {
               takenKeys: takenKeys,
               columns: columns,
               pairedWith: pairedWith[band.rows[index].port.key.v],
+              issues:
+                  issues[band.rows[index].port.key.v] ?? const <PortIssue>[],
               genderApplies: portGenderApplies(
                 registriesForGender,
                 band.rows[index].port.connector,
@@ -648,6 +660,7 @@ class _PortRow extends StatelessWidget {
     required this.columns,
     required this.pairedWith,
     required this.genderApplies,
+    required this.issues,
     required this.onKeyTouched,
     required this.ticked,
     required this.onTick,
@@ -674,6 +687,10 @@ class _PortRow extends StatelessWidget {
   /// Whether GENDER may be edited here (CR-059, gated on the registry's
   /// `genderApplies` for this port's connector).
   final bool genderApplies;
+
+  /// What live validation has to say about this port (M4-E4). Empty is
+  /// the ordinary case and draws nothing at all.
+  final List<PortIssue> issues;
 
   /// Whether typing a LABEL should carry the key along with it.
   final bool keyFollowsLabel;
@@ -774,9 +791,20 @@ class _PortRow extends StatelessWidget {
         children: [
           SizedBox(
             width: kPortSelectGutter * scale,
-            child: Checkbox(
-              value: ticked,
-              onChanged: (v) => onTick(_port.key.v, on: v ?? false),
+            child: Row(
+              children: [
+                // SHRUNK, because a `Checkbox` reserves Material's 48-point
+                // TAP TARGET by default and the gutter now has to hold a
+                // dot beside it. Measured: the default overflowed this row
+                // by 2.2 points.
+                Checkbox(
+                  value: ticked,
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  onChanged: (v) => onTick(_port.key.v, on: v ?? false),
+                ),
+                _IssueDot(issues: issues),
+              ],
             ),
           ),
           for (final id in columns)
@@ -1483,6 +1511,47 @@ class _MenuCellState extends State<_MenuCell> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The severity dot docs/06 §4.5 puts in the row gutter.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// IT NEVER BLOCKS ANYTHING, AND THE SHAPE SAYS SO
+/// ═══════════════════════════════════════════════════════════════════════
+/// A filled dot for a warning, a hollow one for a notice, and nothing at
+/// all for a clean row. No red cross, no disabled Save, no banner: AC-049
+/// rules that three fields make a template, and a checker that can stop a
+/// save is a fourth required field wearing a warning triangle.
+///
+/// SHAPE AND NOT COLOUR ALONE, which is the same discipline CR-078 fixes
+/// for the schematic: hue is never the only channel, because a reader who
+/// cannot separate two hues has to be able to separate two marks.
+class _IssueDot extends StatelessWidget {
+  const _IssueDot({required this.issues});
+
+  final List<PortIssue> issues;
+
+  @override
+  Widget build(BuildContext context) {
+    final worst = worstIssue(issues);
+    if (worst == null) return const SizedBox(width: 18);
+    final scheme = Theme.of(context).colorScheme;
+    final warning = worst == PortIssueSeverity.warning;
+    return Tooltip(
+      // EVERY finding, not just the loudest. A row can be an IR port with
+      // no pinout AND share a designator, and fixing one would otherwise
+      // leave a dot with a sentence the person has already read.
+      message: [for (final issue in issues) issue.message].join('\n\n'),
+      child: SizedBox(
+        width: 18,
+        child: Icon(
+          warning ? Icons.circle : Icons.circle_outlined,
+          size: 10,
+          color: warning ? scheme.error : scheme.onSurfaceVariant,
         ),
       ),
     );

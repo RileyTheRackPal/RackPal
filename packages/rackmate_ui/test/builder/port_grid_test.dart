@@ -676,6 +676,117 @@ void main() {
     });
   });
 
+  group('the validation dot (M4-E4)', () {
+    testWidgets('a clean row has no dot at all', (tester) async {
+      await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('p1', order: 'a0')),
+      );
+
+      expect(find.byIcon(Icons.circle), findsNothing);
+      expect(find.byIcon(Icons.circle_outlined), findsNothing);
+    });
+
+    testWidgets('a filled dot for a warning, hollow for a notice', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        template: _saveable()
+          ..ports.addAll([
+            _port('ir', order: 'a0')
+              ..signalFamily = const SignalFamilyId('ctl.ir_emitter'),
+            _port('spdif', order: 'a1')
+              ..signalFamily = const SignalFamilyId('audio.spdif_coax'),
+          ]),
+      );
+
+      expect(find.byIcon(Icons.circle), findsOneWidget);
+      expect(find.byIcon(Icons.circle_outlined), findsOneWidget);
+    });
+
+    testWidgets('the tooltip says what is wrong, in words an installer '
+        'can act on', (tester) async {
+      await _pump(
+        tester,
+        template: _saveable()
+          ..ports.add(
+            _port('ir', order: 'a0')
+              ..signalFamily = const SignalFamilyId('ctl.ir_emitter'),
+          ),
+      );
+
+      final tooltip = tester.widget<Tooltip>(
+        find.ancestor(
+          of: find.byIcon(Icons.circle),
+          matching: find.byType(Tooltip),
+        ),
+      );
+
+      expect(tooltip.message, contains('destroys'));
+      expect(tooltip.message, isNot(contains('AC-')));
+    });
+
+    testWidgets('IT DOES NOT BLOCK SAVING, which is the whole design', (
+      tester,
+    ) async {
+      // AC-049: three fields make a template. A checker that can stop a
+      // save is a fourth required field wearing a warning triangle, and
+      // that is the thing the ruling deleted.
+      final harness = await _pump(
+        tester,
+        template: _saveable()
+          ..ports.add(
+            _port('ir', order: 'a0')
+              ..signalFamily = const SignalFamilyId('ctl.ir_emitter'),
+          ),
+      );
+
+      expect(find.byIcon(Icons.circle), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Save'))
+            .onPressed,
+        isNotNull,
+      );
+      expect((await harness.read(tester)).ports, hasLength(1));
+    });
+
+    testWidgets('fixing the fault clears the dot', (tester) async {
+      await _pump(
+        tester,
+        template: _saveable()
+          ..ports.add(
+            _port('ir', order: 'a0')
+              ..signalFamily = const SignalFamilyId('ctl.ir_emitter'),
+          ),
+      );
+
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Advanced'));
+      await tester.pumpAndSettle();
+
+      final column = tester.getTopLeft(find.text('PINOUT')).dx;
+      final fields = find.byType(TextField);
+      for (var i = 0; i < tester.widgetList(fields).length; i++) {
+        if ((tester.getTopLeft(fields.at(i)).dx - column).abs() < 8) {
+          await tester.enterText(fields.at(i), 'emitter');
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pumpAndSettle();
+          break;
+        }
+      }
+
+      expect(
+        find.byIcon(Icons.circle),
+        findsNothing,
+        reason: 'live means live: the dot goes when the fault does',
+      );
+    });
+  });
+
   group('the keyboard, which is how this grid is actually used', () {
     testWidgets('Tab walks the row left to right and never lands on the '
         'section rail', (tester) async {
