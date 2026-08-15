@@ -4,7 +4,7 @@ title: One keymap registry, arbitrated across every platform
 description: Every keybinding is a row in one table whose primary modifier resolves in a single place — and the gate must ban the construction, not name a file.
 tags: [keyboard, accessibility, macos, portability, gates, m2-h, d7]
 timestamp: 2026-07-29T00:00:00Z
-status: built-gate-incomplete
+status: adopted
 ---
 
 Every keybinding in RackMate is a row in `kKeymap`. Nothing constructs a
@@ -74,10 +74,41 @@ tree and allow the one legitimate site; do not name the file you happened to be
 editing**: a per-file ban leaves exactly as many holes as there are files you
 did not think of.
 
+# The gate landed, and it has now caught two things (M4-G, 2026-08-15)
+
+`keymap_source_ban_test.dart` exists and reads every `.dart` under this
+package's `lib/`, comments stripped. **It caught the first `SingleActivator`
+built outside the registry since it landed**, in the Quick Add bar's first
+draft, written by an agent that had this practice in front of it. A structural
+rule needs a structural gate precisely because knowing the rule is not enough.
+
+**The second catch is the more interesting one, and it was a COMMENT.** The
+binding was duly moved into `kKeymap` and given a label of its own, "Add the
+ports Quick Add names", with a note explaining that this was permissible
+because *"meaningDrift is allowed to see two meanings precisely because the
+labels differ."*
+
+**That is the rule stated backwards.** Differing labels across scopes are what
+`meaningDrift` fires on. `CommitWireIntent`'s docstring had already argued the
+case and named that position as *"the smaller edit and the wrong one"*, because
+**a keyboard-only user cannot see a scope boundary**.
+
+The right answer was better than the draft. `Enter` already means "Commit what
+is in flight" in two scopes under DR-011.6, and **a typed Quick Add command is
+in flight in exactly the sense a half-drawn wire is**. Three surfaces, three
+`Actions` maps, three intent types, one meaning. The test for whether a shared
+label is honest or a fudge is whether the generalisation holds without
+straining; here it did.
+
+`KeyScope.builder` is a sixth scope with exactly ONE row, and the smallness is
+the finding rather than an omission: docs/06 §9.1's whole thirteen-step path is
+a text field and one key. `Tab` is deliberately unclaimed until autocomplete
+needs it and can argue for it.
+
 # Citations
 
 [1] `packages/rackmate_ui/lib/src/keymap/keymap.dart`
 [2] `docs/13-macos-debt-register.md` §3, §3.1
 [3] canonical-decisions.md §11.9.2 (the ordering argument), §11.11.6 (the
     shared-label retrofit [DR-011](/decisions/dr-011-connect-gesture.md) needs)
-[4] Commit `b36c04c`
+[4] Commits `b36c04c`, `560fc98`

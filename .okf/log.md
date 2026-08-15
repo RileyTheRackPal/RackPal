@@ -1,5 +1,54 @@
 # Update Log
 
+## 2026-08-15 (seventh entry)
+
+* **Creation**: [a test's exemption list is where the bug
+  lives](/practices/a-tests-exemption-list-is-where-the-bug-lives.md) and [a
+  rule you invent must be checked against the good
+  cases](/practices/a-rule-you-invent-must-be-checked-against-the-good-cases.md),
+  both earned by M4-G and M4-H, Quick Add and the label pattern language.
+* **Update**: [One keymap registry](/practices/one-keymap-registry.md) is
+  `adopted` rather than `built-gate-incomplete`. The gate exists, and it has now
+  caught two things: an inline `SingleActivator` in the Quick Add bar's first
+  draft, and **a note that stated `meaningDrift`'s rule BACKWARDS**, claiming
+  differing labels across scopes were permitted when they are exactly what the
+  rule forbids.
+* **Update**: [A modelled field is not a reachable
+  one](/practices/a-modelled-field-is-not-a-reachable-one.md) gains
+  `SignalFamilyDef.aliases`: modelled, persisted, byte-round-tripped, and
+  **empty on all 55 seeded families behind a helper that could not express one**,
+  while two board tasks and a canon ruling all asserted the data existed.
+* **Note**: **FIVE M4 ISSUES IN A ROW WERE WRITTEN FROM A DOCUMENT'S ASSERTION
+  THAT DISSOLVED ON CONTACT WITH THE SOURCE.** M4-G's is the sharpest because
+  the claim was about DATA rather than about a rule: CR-058's orthogonality
+  example, `hdbt` and `rj45` giving one connector and two families, was
+  unresolvable by anything in the tree. At five, this has stopped being a
+  coincidence and is the process.
+* **Note**: **THE RESOLVER THIS NEEDED ALREADY EXISTED AND ITS OWN DOCSTRING
+  ASKED FOR THE RULING.** `resolveSignalFamilyToken` implements DR-025's chain,
+  is shared by two callers, and says in capitals that `aliases` is not in it and
+  that *"widening this chain is a ruling"*, one paragraph after warning that
+  *"two copies would be two chances to disagree about what `hbt` means"*. Read
+  the callers before writing a second one.
+* **Note**: **`c13` KILLED A RESOLUTION RULE BEFORE IT SHIPPED.** A rack PDU has
+  C13 outlets and a C14 inlet, both `power.ac_iec`. A single first-hit chain
+  takes the family's `defaultConnector`, which is the C14, and authors **every
+  outlet on every power strip in the catalog with an inlet**, silently, on the
+  panel drawing an electrician builds from. The two registries now answer
+  independently: a default connector loses to a named one.
+* **Note**: **GREP THE READERS BEFORE TIDYING SEEDED DATA.** `rj45` was reasoned
+  to be dead in the connector table and was one edit from deletion;
+  `portConnectorShortLabel` prints `aliases.first` in the port grid's CONN
+  column, so every `RJ45` cell would have become `RJ45 (8P8C)`. `hdbt` was
+  genuinely dead and went. The same grep found that seeding family aliases
+  improves the M3 signal picker, which spreads them into its search key and had
+  been searching an empty list since M0.
+* **Note**: **THREE ERRORS THIS MILESTONE SHIPPED INSIDE A CONFIDENT
+  EXPLANATORY PARAGRAPH**: the unreachable composition check, the invented alias
+  invariant, and the backwards keymap note. In each case the prose was longer
+  and more assured than the code deserved. **A paragraph arguing for a one-line
+  rule is a signal to run the rule.**
+
 ## 2026-08-15 (sixth entry)
 
 * **Creation**: [a spec table is an illustration until
