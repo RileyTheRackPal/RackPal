@@ -177,6 +177,13 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
   BuilderSection _section = BuilderSection.identity;
   String? _refusal;
 
+  /// Port keys the author has typed by hand, for the whole life of this
+  /// window. See `PortGrid.keyTouched`: it lives here rather than in the
+  /// grid because the rail rebuilds the grid, so a set kept there was
+  /// discarded by a trip to the Physical section and a deliberately
+  /// chosen key quietly went back to following its label.
+  final _keyTouched = <String>{};
+
   @override
   void dispose() {
     _session.close();
@@ -331,6 +338,16 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
                   BuilderSection.ports => PortGrid(
                     body: _session.body,
                     registries: widget.registries ?? Registries(),
+                    // FROM `_opened`, WHICH IS THE TEMPLATE AS IT ARRIVED.
+                    // A port already in it has a PUBLISHED key: some
+                    // project may join its cables through that string
+                    // (CR-051), so renaming it records the old name and
+                    // typing a label never moves it.
+                    openedPortKeys: {
+                      for (final port in _opened.ports) port.key.v,
+                    },
+                    keyTouched: _keyTouched,
+                    onKeyTouched: (was, now) => _keyTouched.addAll([was, now]),
                     portDesignatorFormat: widget.portDesignatorFormat,
                     actions: PortGridActions(
                       run: _runCommand,

@@ -17,12 +17,25 @@
 // ceiling: a 48-port patch panel plus its banks is the ordinary case.
 //
 // ═══════════════════════════════════════════════════════════════════════
-// THE CELLS ARE READ-ONLY HERE, AND THAT IS THE TASK BOUNDARY
+// THREE CONTROLS FOR TEN COLUMNS, AND THE SPLIT IS MEASURED
 // ═══════════════════════════════════════════════════════════════════════
-// M4-E1 is the grid, its bands and its virtualisation; M4-E2 (`#204`) is
-// the columns' editors. Rows draw their values through core's own
-// spelling functions so that when the editors arrive they replace a
-// control rather than a vocabulary.
+// M4-E2 (`#204`) makes the cells editable, and which control a column
+// gets follows its answer set rather than a taste:
+//
+//   * TEXT for the five columns whose model type is a string.
+//   * `DropdownButton` for DIRECTION, FACE and SET. A dropdown's menu
+//     inherits its BUTTON's width; `Bidirectional` fits in 116 points and
+//     these three have no problem a bigger control would solve.
+//   * A `MenuAnchor` for CONNECTOR and SIGNAL, which do. Their labels
+//     come from the registries and run to 45 characters, and #587
+//     measured what a `DropdownButton` does to those: every row clamped
+//     to 84 points, so two different speaker families both arrive as
+//     `AUD·Speaker…`. SIGNAL uses the Structure editor's own picker,
+//     extracted to `widgets/family_picker.dart` rather than copied.
+//
+// The vocabulary is core's in every one of them. The moment this file
+// writes `port.direction.name` it owns a second speller, and the first
+// time one changes they disagree on a printed schedule.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // [+ ADD PORT] IS HERE BECAUSE NOTHING IN M4-E CREATES A PORT
@@ -40,6 +53,7 @@
 // correct a mis-click in.
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/widgets/family_picker.dart';
 
 /// How the grid asks the builder to change the template.
 ///
@@ -67,6 +81,9 @@ class PortGrid extends StatefulWidget {
   const PortGrid({
     required this.body,
     required this.registries,
+    required this.openedPortKeys,
+    required this.keyTouched,
+    required this.onKeyTouched,
     required this.actions,
     this.portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
     super.key,
@@ -79,6 +96,41 @@ class PortGrid extends StatefulWidget {
   /// For the connector and signal-family display names. A port naming
   /// something this does not hold still draws, showing the raw id.
   final Registries registries;
+
+  /// The keys the template already had when the builder opened.
+  ///
+  /// PASSED IN RATHER THAN CAPTURED HERE, because this widget is built
+  /// lazily when the rail first reaches the Ports section and again every
+  /// time the user comes back to it. Capturing on the second visit would
+  /// call the ports created on the first visit "published", and a rename
+  /// would start writing `renamedFrom` entries for names nothing ever saw.
+  final Set<String> openedPortKeys;
+
+  /// Keys whose cell a person has typed into.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// OWNED BY THE SCREEN, NOT BY THIS WIDGET, AND THAT IS A FIX
+  /// ═══════════════════════════════════════════════════════════════════
+  /// It lived in this `State` until a test walked out to the Physical
+  /// section and back: the grid is rebuilt by a `switch` on the rail, so
+  /// leaving the section DISPOSED the set, and a key the author had
+  /// deliberately typed silently went back to following its label. That
+  /// is a fact about the editing SESSION rather than about a widget, so
+  /// it lives beside the session.
+  ///
+  /// MONOTONIC, AND THAT IS WHAT MAKES IT SURVIVE AN UNDO. A hand-typed
+  /// rename records BOTH the old and the new key, so undoing the rename
+  /// lands on a key that is still marked touched. A set tracking only the
+  /// current key would forget, and the migration join would resume
+  /// following a typo correction, which is the failure CR-051 exists to
+  /// prevent.
+  ///
+  /// SESSION-ONLY, never stored. Reopen a saved template and every key is
+  /// the author's, because it was saved.
+  final Set<String> keyTouched;
+
+  /// Records a hand-typed rename in [keyTouched]. Both sides; see there.
+  final void Function(String was, String now) onKeyTouched;
 
   final PortGridActions actions;
 
@@ -100,6 +152,17 @@ class _PortGridState extends State<PortGrid> {
   /// because a rename replaces the key, and a stale selection that still
   /// matched by identity would tick a row that no longer exists.
   final _ticked = <String>{};
+
+  /// Whether this port's key still follows its label.
+  ///
+  /// Two conditions, and both are about whether the key can still be
+  /// nobody's decision: it must not have been typed, and the port must be
+  /// new in this session. A port that was in the template when the window
+  /// opened has a PUBLISHED key, and a project somewhere may already join
+  /// its cables through it.
+  bool _keyFollows(PortDef port) =>
+      !widget.keyTouched.contains(port.key.v) &&
+      !widget.openedPortKeys.contains(port.key.v);
 
   void _addPort() {
     final port = blankPort(widget.body);
@@ -181,6 +244,14 @@ class _PortGridState extends State<PortGrid> {
                                   table: table,
                                   scale: scale,
                                   registries: widget.registries,
+                                  portSets: widget.body.portSets,
+                                  actions: widget.actions,
+                                  keyFollows: _keyFollows,
+                                  isPublished: widget.openedPortKeys.contains,
+                                  takenKeys: {
+                                    for (final p in widget.body.ports) p.key.v,
+                                  },
+                                  onKeyTouched: widget.onKeyTouched,
                                   collapsed: _collapsed,
                                   ticked: _ticked,
                                   onToggleBand: (key) => setState(() {
@@ -300,6 +371,12 @@ class _Bands extends StatelessWidget {
     required this.table,
     required this.scale,
     required this.registries,
+    required this.portSets,
+    required this.actions,
+    required this.keyFollows,
+    required this.isPublished,
+    required this.takenKeys,
+    required this.onKeyTouched,
     required this.collapsed,
     required this.ticked,
     required this.onToggleBand,
@@ -309,6 +386,12 @@ class _Bands extends StatelessWidget {
   final PortTable table;
   final double scale;
   final Registries registries;
+  final List<PortSetDef> portSets;
+  final PortGridActions actions;
+  final bool Function(PortDef port) keyFollows;
+  final bool Function(String portKey) isPublished;
+  final Set<String> takenKeys;
+  final void Function(String was, String now) onKeyTouched;
   final Set<String?> collapsed;
   final Set<String> ticked;
   final ValueChanged<String?> onToggleBand;
@@ -344,6 +427,12 @@ class _Bands extends StatelessWidget {
               row: band.rows[index],
               scale: scale,
               registries: registries,
+              portSets: portSets,
+              actions: actions,
+              keyFollowsLabel: keyFollows(band.rows[index].port),
+              keyIsPublished: isPublished(band.rows[index].port.key.v),
+              takenKeys: takenKeys,
+              onKeyTouched: onKeyTouched,
               ticked: ticked.contains(band.rows[index].port.key.v),
               onTick: onTick,
             ),
@@ -452,6 +541,12 @@ class _PortRow extends StatelessWidget {
     required this.row,
     required this.scale,
     required this.registries,
+    required this.portSets,
+    required this.actions,
+    required this.keyFollowsLabel,
+    required this.keyIsPublished,
+    required this.takenKeys,
+    required this.onKeyTouched,
     required this.ticked,
     required this.onTick,
     super.key,
@@ -460,8 +555,98 @@ class _PortRow extends StatelessWidget {
   final PortTableRow row;
   final double scale;
   final Registries registries;
+  final List<PortSetDef> portSets;
+  final PortGridActions actions;
+
+  /// Every port key on this template, so an automatic key can be made
+  /// unique without asking the body again.
+  final Set<String> takenKeys;
+
+  /// Whether typing a LABEL should carry the key along with it.
+  final bool keyFollowsLabel;
+
+  /// Whether this port was in the template when the builder opened, which
+  /// is what decides whether a rename records an alias (CR-051).
+  final bool keyIsPublished;
+
+  final void Function(String was, String now) onKeyTouched;
+
   final bool ticked;
   final void Function(String portKey, {required bool on}) onTick;
+
+  PortDef get _port => row.port;
+
+  void _set<T>(PortField<T> field, T value) {
+    if (field.get(_port) == value) return;
+    actions.run(
+      SetPortFieldCommand<T>(
+        port: _port.key,
+        field: field,
+        from: field.get(_port),
+        to: value,
+      ),
+    );
+  }
+
+  /// The Key cell, typed by hand. Records the rename and stops the
+  /// automatic following for good.
+  void _renameKey(String typed) {
+    final now = typed.trim();
+    if (now.isEmpty || now == _port.key.v) return;
+    onKeyTouched(_port.key.v, now);
+    actions.run(
+      RenamePortKeyCommand(
+        from: _port.key,
+        to: PortKey(now),
+        recordAlias: keyIsPublished,
+      ),
+    );
+  }
+
+  /// The Label cell, which may drag the key behind it.
+  ///
+  /// ONE TRANSACTION, so the pair is one `Ctrl+Z`. A user who types a
+  /// label and undoes once expects the label back, not a key left holding
+  /// a slug of a name that no longer exists.
+  void _setLabel(String typed) {
+    final label = typed.trim();
+    if (label == _port.label) return;
+    if (!keyFollowsLabel) {
+      _set(PortDefField.label, label);
+      return;
+    }
+    final wanted = autoPortKey(
+      label,
+      // ITS OWN KEY IS NOT TAKEN, by itself. Leaving it in would suffix
+      // every port that already matches its label to `.2` the moment the
+      // label is corrected for a typo.
+      taken: {...takenKeys}..remove(_port.key.v),
+      ordinal: 1,
+    );
+    actions.transact(LabelKey.setPortProperty, (tx) {
+      tx.add(
+        SetPortFieldCommand<String>(
+          port: _port.key,
+          field: PortDefField.label,
+          from: _port.label,
+          to: label,
+        ),
+      );
+      if (wanted.v != _port.key.v) {
+        tx.add(
+          RenamePortKeyCommand(
+            from: _port.key,
+            to: wanted,
+            // NEVER, on this path. The key being replaced is one this
+            // editor invented seconds ago and no project has ever seen,
+            // so recording it as a former name would put a working title
+            // in the file permanently (CR-051).
+            recordAlias: false,
+          ),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -478,25 +663,15 @@ class _PortRow extends StatelessWidget {
             width: kPortSelectGutter * scale,
             child: Checkbox(
               value: ticked,
-              onChanged: (v) => onTick(row.port.key.v, on: v ?? false),
+              onChanged: (v) => onTick(_port.key.v, on: v ?? false),
             ),
           ),
           for (final id in _kColumns)
             SizedBox(
               width: portColumnWidth(id) * scale,
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 10,
-                ),
-                child: _CellText(
-                  value: _cell(id),
-                  // AUTOMATIC VALUES ARE ITALIC AND PINNED ONES ARE NOT
-                  // (docs/06 §4.5). One glance says which designators a
-                  // renumber would move and which the author fixed.
-                  automatic:
-                      id == PortColumnId.designator && !row.isDesignatorPinned,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: _cell(context, id),
               ),
             ),
         ],
@@ -504,55 +679,392 @@ class _PortRow extends StatelessWidget {
     );
   }
 
-  /// What this column reads for this port, or null for UNKNOWN.
+  /// This column's editor for this port.
   ///
-  /// EVERY SPELLING COMES FROM CORE. The moment this file starts writing
+  /// EVERY SPELLING COMES FROM CORE. The moment this file writes
   /// `port.direction.name` it owns a second vocabulary, and the first
   /// time one of them changes they disagree on a printed schedule.
-  String? _cell(PortColumnId id) => switch (id) {
-    PortColumnId.portKey => row.port.key.v,
-    PortColumnId.label => _orNull(row.port.label),
-    PortColumnId.designator => row.designator,
-    PortColumnId.connector => portConnectorText(
-      registries,
-      row.port.connector,
+  Widget _cell(BuildContext context, PortColumnId id) => switch (id) {
+    // THE KEY IS GREY UNTIL IT IS TOUCHED (docs/06 §4.5), because while
+    // it follows the label it is not a value the author has chosen.
+    PortColumnId.portKey => _TextCell(
+      value: _port.key.v,
+      automatic: keyFollowsLabel,
+      onCommit: _renameKey,
     ),
-    PortColumnId.family => portFamilyText(registries, row.port.signalFamily),
-    PortColumnId.direction => portDirectionLabel(row.port.direction),
-    PortColumnId.face => portFaceLabel(row.port.face),
-    PortColumnId.portSet => _orNull(row.port.setKey),
-    PortColumnId.setRole => _orNull(row.port.setRole),
-    PortColumnId.notes => _orNull(row.port.notes),
+    PortColumnId.label => _TextCell(
+      value: _port.label,
+      hint: 'HDMI IN 1',
+      onCommit: _setLabel,
+    ),
+    PortColumnId.designator => _TextCell(
+      value: row.isDesignatorPinned ? _port.designatorHint : row.autoDesignator,
+      // AUTOMATIC VALUES ARE ITALIC AND PINNED ONES ARE NOT (docs/06
+      // §4.5). One glance says which designators a renumber would move
+      // and which the author fixed.
+      automatic: !row.isDesignatorPinned,
+      // EMPTY MEANS BACK TO AUTOMATIC, not "deliberately unnumbered".
+      onCommit: (v) => _set(
+        PortDefField.designatorHint,
+        v.trim().isEmpty ? null : v.trim(),
+      ),
+    ),
+    PortColumnId.connector => _ConnectorCell(
+      registries: registries,
+      value: _port.connector,
+      onPick: (v) => _set(PortDefField.connector, v),
+    ),
+    PortColumnId.family => _FamilyCell(
+      registries: registries,
+      value: _port.signalFamily,
+      onPick: (v) => _set(PortDefField.signalFamily, v),
+    ),
+    PortColumnId.direction => _ChoiceCell<PortDirection>(
+      value: _port.direction,
+      options: PortDirection.values,
+      label: portDirectionLabel,
+      onPick: (v) => _set(PortDefField.direction, v),
+    ),
+    PortColumnId.face => _ChoiceCell<Face>(
+      value: _port.face,
+      options: Face.values,
+      label: portFaceLabel,
+      onPick: (v) => _set(PortDefField.face, v),
+    ),
+    PortColumnId.portSet => _ChoiceCell<String?>(
+      value: _port.setKey,
+      // NULL IS AN OPTION AND IS LISTED FIRST. Most ports belong to no
+      // set, and a dropdown a person cannot get back out of is worse
+      // than one they never opened.
+      options: [null, for (final set in portSets) set.key],
+      label: (v) => v == null
+          ? kUnknownCell
+          : portSets.firstWhere((s) => s.key == v).label,
+      onPick: (v) => _set(PortDefField.setKey, v),
+    ),
+    PortColumnId.setRole => _TextCell(
+      value: _port.setRole,
+      hint: 'L',
+      onCommit: (v) =>
+          _set(PortDefField.setRole, v.trim().isEmpty ? null : v.trim()),
+    ),
+    PortColumnId.notes => _TextCell(
+      value: _port.notes,
+      onCommit: (v) =>
+          _set(PortDefField.notes, v.trim().isEmpty ? null : v.trim()),
+    ),
   };
-
-  static String? _orNull(String? value) =>
-      (value ?? '').trim().isEmpty ? null : value!.trim();
 }
 
-/// One cell's text, with the dash G4 prints for an unknown.
-class _CellText extends StatelessWidget {
-  const _CellText({required this.value, required this.automatic});
+/// A cell a person types into.
+///
+/// COMMITS ON BLUR AND ON ENTER, never per keystroke. That is docs/06
+/// §4.6's rule and it is also why the port commands do not coalesce: one
+/// committed value is one edit. Moving DOWN on Enter is spreadsheet
+/// ergonomics and belongs with M4-F (`#177`), which owns fill-down,
+/// multi-row edit and the rest of the Excel muscle memory; Tab already
+/// moves right through the row because the cells are in reading order.
+class _TextCell extends StatefulWidget {
+  const _TextCell({
+    required this.value,
+    required this.onCommit,
+    this.hint,
+    this.automatic = false,
+  });
 
   final String? value;
+  final ValueChanged<String> onCommit;
+
+  /// Shown greyed inside an EMPTY box only, which is the distinction M4-D
+  /// had to be told twice: an example that stays under a filled field
+  /// reads as a second value.
+  final String? hint;
+
+  /// Drawn italic and dimmed: a value this editor derived rather than one
+  /// the author chose.
   final bool automatic;
+
+  @override
+  State<_TextCell> createState() => _TextCellState();
+}
+
+class _TextCellState extends State<_TextCell> {
+  late final TextEditingController _text = TextEditingController(
+    text: widget.value ?? '',
+  );
+  final FocusNode _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(_TextCell old) {
+    super.didUpdateWidget(old);
+    // THE MODEL WINS, EXCEPT WHILE SOMEBODY IS TYPING IN THIS BOX. An
+    // undo, or a key following a label typed one cell to the right,
+    // changes the stored value under a cell that is not focused, and the
+    // cell must follow. Overwriting a FOCUSED cell would delete what the
+    // person is halfway through typing. M4-D shipped without this and
+    // undo looked like a button that did nothing.
+    if (widget.value != old.value && !_focus.hasFocus) {
+      _text.text = widget.value ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _focus
+      ..removeListener(_onFocusChange)
+      ..dispose();
+    _text.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (!_focus.hasFocus) _commit();
+  }
+
+  void _commit() {
+    if (_text.text == (widget.value ?? '')) return;
+    widget.onCommit(_text.text);
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final unknown = value == null;
-    return Text(
-      // THE DASH, and not an empty box. An empty cell says nothing about
-      // whether anybody has looked at this field; the dash is the same
-      // mark the equipment list and every schedule print for a fact
-      // nobody has supplied.
-      unknown ? '—' : value!,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
+    return TextField(
+      controller: _text,
+      focusNode: _focus,
       style: theme.textTheme.bodySmall?.copyWith(
-        fontStyle: automatic ? FontStyle.italic : null,
-        color: unknown || automatic
+        fontStyle: widget.automatic ? FontStyle.italic : null,
+        color: widget.automatic
             ? theme.colorScheme.onSurfaceVariant
             : theme.colorScheme.onSurface,
+      ),
+      decoration: InputDecoration(
+        isDense: true,
+        border: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+        // THE DASH, and not an empty box. An empty cell says nothing
+        // about whether anybody has looked at this field; the dash is
+        // what the equipment list and every schedule print for a fact
+        // nobody has supplied.
+        hintText: widget.hint ?? kUnknownCell,
+        hintStyle: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+      onSubmitted: (_) => _commit(),
+    );
+  }
+}
+
+/// A cell whose column has a short closed set of answers.
+///
+/// A `DropdownButton` HERE AND A MENU FOR CONNECTOR AND SIGNAL, and the
+/// difference is measured rather than stylistic: this widget's menu
+/// inherits its BUTTON's width, which is fine for `Bidirectional` in a
+/// 116-point column and is not fine for `AUD·Speaker, constant-voltage 70
+/// / 100 / 25 V`. See `family_picker.dart`.
+class _ChoiceCell<T> extends StatelessWidget {
+  const _ChoiceCell({
+    required this.value,
+    required this.options,
+    required this.label,
+    required this.onPick,
+  });
+
+  final T value;
+  final List<T> options;
+  final String Function(T value) label;
+  final ValueChanged<T> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<T>(
+        value: value,
+        isDense: true,
+        isExpanded: true,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurface,
+        ),
+        items: [
+          for (final option in options)
+            DropdownMenuItem<T>(
+              value: option,
+              child: Text(
+                label(option),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+        ],
+        onChanged: (v) {
+          if (v is T) onPick(v);
+        },
+      ),
+    );
+  }
+}
+
+/// The CONNECTOR cell: a menu sized to its content, for the SIGNAL
+/// column's measured reason.
+///
+/// THE CURRENT VALUE IS ALWAYS IN THE MENU, even when the registry does
+/// not hold it. A `DropdownButton` asserts that exactly one item matches
+/// its value, and M3-L found what that costs: a document naming something
+/// no menu offers takes the WHOLE table down rather than misbehaving in
+/// one cell. A `MenuAnchor` has no such assertion, and an unset port (a
+/// brand-new row names no connector at all) still has a menu to pick from,
+/// which read-only degradation would deny it.
+class _ConnectorCell extends StatelessWidget {
+  const _ConnectorCell({
+    required this.registries,
+    required this.value,
+    required this.onPick,
+  });
+
+  final Registries registries;
+  final ConnectorTypeId value;
+  final ValueChanged<ConnectorTypeId> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final options = [...registries.connectorTypes.values]
+      ..sort((a, b) => a.displayName.compareTo(b.displayName));
+    return _MenuCell(
+      text: portConnectorText(registries, value),
+      hint: 'Connector',
+      entries: [
+        for (final def in options) (def.id.v, def.displayName),
+      ],
+      selected: value.v,
+      onPick: (id) => onPick(ConnectorTypeId(id)),
+    );
+  }
+}
+
+/// The SIGNAL cell, on the Structure editor's own picker.
+///
+/// THE SAME WIDGET, NOT A SECOND ONE. `family_picker.dart` carries the
+/// measurement that rejected a `DropdownButton` and the ruling that its
+/// filter narrows without ever committing (DR-025 §11.24.3: an
+/// unresolved value never invents a family). A copy here would be a
+/// second place for one of those to be forgotten.
+class _FamilyCell extends StatelessWidget {
+  const _FamilyCell({
+    required this.registries,
+    required this.value,
+    required this.onPick,
+  });
+
+  final Registries registries;
+  final SignalFamilyId value;
+  final ValueChanged<SignalFamilyId> onPick;
+
+  @override
+  Widget build(BuildContext context) => FamilyPicker(
+    groups: signalFamilyCellGroups(registries),
+    value: portFamilyText(registries, value),
+    hint: 'Signal',
+    onPick: (label) {
+      final picked = resolveSignalFamilyCell(registries, label);
+      if (picked != null) onPick(picked);
+    },
+  );
+}
+
+/// A menu of `(value, label)` pairs, wider than the cell that opened it.
+class _MenuCell extends StatefulWidget {
+  const _MenuCell({
+    required this.text,
+    required this.hint,
+    required this.entries,
+    required this.selected,
+    required this.onPick,
+  });
+
+  final String? text;
+  final String hint;
+  final List<(String, String)> entries;
+  final String selected;
+  final ValueChanged<String> onPick;
+
+  @override
+  State<_MenuCell> createState() => _MenuCellState();
+}
+
+class _MenuCellState extends State<_MenuCell> {
+  final MenuController _menu = MenuController();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return MenuAnchor(
+      controller: _menu,
+      menuChildren: [
+        SizedBox(
+          width: kFamilyPickerWidth,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxHeight: kFamilyPickerMaxHeight,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final (id, label) in widget.entries)
+                    MenuItemButton(
+                      onPressed: () {
+                        _menu.close();
+                        widget.onPick(id);
+                      },
+                      leadingIcon: Icon(
+                        Icons.check,
+                        size: 16,
+                        color: id == widget.selected
+                            ? theme.colorScheme.primary
+                            : Colors.transparent,
+                      ),
+                      child: Text(label),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+      builder: (context, controller, child) => InkWell(
+        onTap: () => controller.isOpen ? controller.close() : controller.open(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.text ?? kUnknownCell,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: widget.text == null
+                        ? theme.colorScheme.onSurfaceVariant
+                        : theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.arrow_drop_down,
+                size: 18,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

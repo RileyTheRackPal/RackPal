@@ -6,6 +6,7 @@
 // drove M4-D's form by finding controls and missed both defects a user
 // found in the first minute, because neither lived in a control.
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
@@ -34,13 +35,37 @@ PortDef _port(String key, {required String order, String? bank}) => PortDef(
   bankKey: bank,
 );
 
+/// A template that already satisfies AC-049's three, so `[Save]` is live
+/// and [_Harness.read] can get at what the editor is actually holding.
+TemplateBody _saveable() => _blank()
+  ..displayName = 'Matrix'
+  ..typePrefix = 'MTX'
+  ..frontU = 2;
+
+/// THE SESSION EDITS A COPY, WHICH IS THE POINT OF IT (CR-106). The
+/// template handed to `DeviceBuilderScreen` is never mutated, so a test
+/// that asserts on the object it passed in is asserting that nothing
+/// happened. [read] presses Save and returns what the editor hands over,
+/// which is the only honest way to see the working copy from outside.
+final class _Harness {
+  TemplateBody? _saved;
+
+  Future<TemplateBody> read(WidgetTester tester) async {
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    final body = _saved;
+    if (body == null) fail('Save is disabled: the template needs its three');
+    return body;
+  }
+}
+
 /// The builder, opened on the Ports section.
-Future<TemplateBody> _pump(
+Future<_Harness> _pump(
   WidgetTester tester, {
   TemplateBody? template,
   IdFormat format = const IdFormat('J{PORT_SEQ:2}'),
 }) async {
-  final body = template ?? _blank();
+  final harness = _Harness();
   tester.view.physicalSize = const Size(1400, 820);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -49,17 +74,22 @@ Future<TemplateBody> _pump(
     MaterialApp(
       home: Scaffold(
         body: DeviceBuilderScreen(
-          template: body,
+          template: template ?? _blank(),
           registries: _registries(),
           portDesignatorFormat: format,
-          actions: DeviceBuilderActions(onSave: (_) => null),
+          actions: DeviceBuilderActions(
+            onSave: (body) {
+              harness._saved = body;
+              return null;
+            },
+          ),
         ),
       ),
     ),
   );
   await tester.tap(find.widgetWithText(ListTile, 'Ports'));
   await tester.pumpAndSettle();
-  return body;
+  return harness;
 }
 
 void main() {
@@ -269,8 +299,18 @@ void main() {
           ]),
       );
 
-      final auto = tester.widget<Text>(find.text('J01'));
-      final pinned = tester.widget<Text>(find.text('HDMI-A'));
+      // READ OFF THE FIELD'S STYLE, not off a `Text`: since M4-E2 the
+      // cell is a `TextField`, and `find.text` matches its `EditableText`
+      // rather than a `Text` widget.
+      final auto = tester.widget<TextField>(
+        find.ancestor(of: find.text('J01'), matching: find.byType(TextField)),
+      );
+      final pinned = tester.widget<TextField>(
+        find.ancestor(
+          of: find.text('HDMI-A'),
+          matching: find.byType(TextField),
+        ),
+      );
 
       expect(auto.style?.fontStyle, FontStyle.italic);
       expect(
@@ -291,6 +331,285 @@ void main() {
 
       // `video.hdmi.2_0` is deliberately absent from `_registries`.
       expect(find.text('video.hdmi.2_0'), findsOneWidget);
+    });
+  });
+
+  group('the cells write back (M4-E2)', () {
+    /// Types [text] into the cell under [header] on the only row.
+    Future<void> typeCell(
+      WidgetTester tester,
+      String header,
+      String text,
+    ) async {
+      final column = tester.getTopLeft(find.text(header)).dx;
+      final fields = find.byType(TextField);
+      for (var i = 0; i < tester.widgetList(fields).length; i++) {
+        if ((tester.getTopLeft(fields.at(i)).dx - column).abs() < 8) {
+          await tester.enterText(fields.at(i), text);
+          await tester.pump();
+          // TAB OUT, because the cell commits on BLUR. Calling
+          // `enterText` and asserting would test a `TextEditingController`
+          // and nothing else, which is `drive the keyboard, not the
+          // finder` in its smallest form.
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pumpAndSettle();
+          return;
+        }
+      }
+      fail('no text cell under $header');
+    }
+
+    testWidgets('a label typed into a new row drags its key along, in one '
+        'undo entry', (tester) async {
+      final harness = await _pump(tester, template: _saveable());
+      await tester.tap(find.widgetWithText(FilledButton, 'Add port'));
+      await tester.pumpAndSettle();
+
+      await typeCell(tester, 'LABEL', 'HDMI IN 1');
+
+      expect((await harness.read(tester)).ports.single.label, 'HDMI IN 1');
+      expect(
+        (await harness.read(tester)).ports.single.key.v,
+        'hdmi.in.1',
+        reason: 'a key nobody has typed is not a key anybody has chosen',
+      );
+
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+
+      expect(
+        (await harness.read(tester)).ports.single.label,
+        isEmpty,
+        reason:
+            'one gesture, one Ctrl+Z: the label and the key move back '
+            'together',
+      );
+      expect((await harness.read(tester)).ports.single.key.v, 'port.1');
+    });
+
+    testWidgets('once the key is typed it stops following, and the old '
+        'name is NOT recorded for a port no project has seen', (tester) async {
+      final harness = await _pump(tester, template: _saveable());
+      await tester.tap(find.widgetWithText(FilledButton, 'Add port'));
+      await tester.pumpAndSettle();
+
+      await typeCell(tester, 'KEY', 'mine');
+      await typeCell(tester, 'LABEL', 'HDMI IN 1');
+
+      expect(
+        (await harness.read(tester)).ports.single.key.v,
+        'mine',
+        reason: 'the label must not overwrite a key the author chose',
+      );
+      expect(
+        (await harness.read(tester)).ports.single.renamedFrom,
+        isEmpty,
+        reason:
+            'CR-051: `port.1` was a working title this editor invented '
+            'seconds earlier and no project has ever joined through it',
+      );
+    });
+
+    testWidgets('a key that WAS in the template records its old name, '
+        'because a project may join cables through it', (tester) async {
+      final harness = await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('published', order: 'a0')),
+      );
+
+      await typeCell(tester, 'KEY', 'renamed');
+
+      expect((await harness.read(tester)).ports.single.key.v, 'renamed');
+      expect(
+        (await harness.read(tester)).ports.single.renamedFrom.map((k) => k.v),
+        ['published'],
+      );
+    });
+
+    testWidgets('a published port does not drag its key when the label is '
+        'corrected', (tester) async {
+      final harness = await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('published', order: 'a0')),
+      );
+
+      await typeCell(tester, 'LABEL', 'HDMI IN 2');
+
+      expect((await harness.read(tester)).ports.single.label, 'HDMI IN 2');
+      expect(
+        (await harness.read(tester)).ports.single.key.v,
+        'published',
+        reason:
+            'the migration join silently following a typo correction is '
+            'the failure CR-051 exists to prevent',
+      );
+    });
+
+    testWidgets('an undone key rename stays touched, so the label does not '
+        'start dragging it again', (tester) async {
+      final harness = await _pump(tester, template: _saveable());
+      await tester.tap(find.widgetWithText(FilledButton, 'Add port'));
+      await tester.pumpAndSettle();
+
+      await typeCell(tester, 'KEY', 'mine');
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+      expect((await harness.read(tester)).ports.single.key.v, 'port.1');
+
+      await typeCell(tester, 'LABEL', 'HDMI IN 1');
+
+      expect(
+        (await harness.read(tester)).ports.single.key.v,
+        'port.1',
+        reason:
+            'the touched set holds BOTH sides of a rename, so an undo '
+            'lands on a key it still remembers',
+      );
+    });
+
+    testWidgets('clearing a designator returns it to automatic rather than '
+        'pinning a blank', (tester) async {
+      final harness = await _pump(
+        tester,
+        template: _saveable()
+          ..ports.add(_port('p1', order: 'a0')..designatorHint = 'HDMI-A'),
+      );
+
+      await typeCell(tester, 'DESIG', '');
+
+      expect((await harness.read(tester)).ports.single.designatorHint, isNull);
+      expect(find.text('J01'), findsOneWidget);
+    });
+
+    testWidgets('DIRECTION offers all five values in words', (tester) async {
+      final harness = await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('p1', order: 'a0')),
+      );
+
+      await tester.tap(find.text('Input').last);
+      await tester.pumpAndSettle();
+
+      for (final d in PortDirection.values) {
+        expect(find.text(portDirectionLabel(d)), findsWidgets);
+      }
+
+      await tester.tap(find.text('Bus node').last);
+      await tester.pumpAndSettle();
+
+      expect(
+        (await harness.read(tester)).ports.single.direction,
+        PortDirection.busNode,
+      );
+    });
+
+    testWidgets('a note is UNKNOWN when cleared, never an empty string', (
+      tester,
+    ) async {
+      final harness = await _pump(
+        tester,
+        template: _saveable()
+          ..ports.add(_port('p1', order: 'a0')..notes = 'hi'),
+      );
+
+      await typeCell(tester, 'NOTES', '   ');
+
+      expect(
+        (await harness.read(tester)).ports.single.notes,
+        isNull,
+        reason:
+            'G4: an absent key is unknown, and an empty string would be a '
+            'note somebody wrote',
+      );
+    });
+  });
+
+  group('the keyboard, which is how this grid is actually used', () {
+    testWidgets('Tab walks the row left to right and never lands on the '
+        'section rail', (tester) async {
+      // `drive the keyboard, not the finder`. The last surface this file
+      // covers shipped with Tab going through the rail, and a `ListTile`
+      // fires its tap on Enter, so a person tabbing across a row and
+      // typing changed SECTION and lost the keystrokes.
+      await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('p1', order: 'a0')),
+      );
+
+      await tester.tap(
+        find.ancestor(
+          of: find.text('p1'),
+          matching: find.byType(TextField),
+        ),
+      );
+      await tester.pump();
+
+      final stops = <double>[];
+      for (var i = 0; i < 3; i++) {
+        final focused = FocusManager.instance.primaryFocus?.context;
+        expect(
+          focused?.findAncestorWidgetOfExactType<ListTile>(),
+          isNull,
+          reason: 'the rail is a separate traversal group',
+        );
+        if (focused != null) {
+          stops.add(
+            (focused.findRenderObject()! as RenderBox)
+                .localToGlobal(Offset.zero)
+                .dx,
+          );
+        }
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+      }
+
+      expect(
+        stops,
+        orderedEquals(<double>[...stops]..sort()),
+        reason: 'a row is read left to right, so Tab moves right',
+      );
+    });
+
+    testWidgets('a key typed by hand stays typed across a trip to another '
+        'section', (tester) async {
+      // THE DEFECT THIS TEST WAS WRITTEN FOR. The touched set lived in
+      // the grid's own `State`, and the rail rebuilds the grid, so
+      // walking to Physical and back forgot that the author had chosen a
+      // key and the label started dragging it again.
+      final harness = await _pump(tester, template: _saveable());
+      await tester.tap(find.widgetWithText(FilledButton, 'Add port'));
+      await tester.pumpAndSettle();
+
+      final column = tester.getTopLeft(find.text('KEY')).dx;
+      final fields = find.byType(TextField);
+      for (var i = 0; i < tester.widgetList(fields).length; i++) {
+        if ((tester.getTopLeft(fields.at(i)).dx - column).abs() < 8) {
+          await tester.enterText(fields.at(i), 'mine');
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pumpAndSettle();
+          break;
+        }
+      }
+
+      await tester.tap(find.widgetWithText(ListTile, 'Physical'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ListTile, 'Ports'));
+      await tester.pumpAndSettle();
+
+      final labels = find.byType(TextField);
+      final labelColumn = tester.getTopLeft(find.text('LABEL')).dx;
+      for (var i = 0; i < tester.widgetList(labels).length; i++) {
+        if ((tester.getTopLeft(labels.at(i)).dx - labelColumn).abs() < 8) {
+          await tester.enterText(labels.at(i), 'HDMI IN 1');
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pumpAndSettle();
+          break;
+        }
+      }
+
+      expect((await harness.read(tester)).ports.single.key.v, 'mine');
     });
   });
 

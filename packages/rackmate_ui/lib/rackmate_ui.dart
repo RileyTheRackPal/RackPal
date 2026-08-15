@@ -112,3 +112,4 @@ export 'src/structure/outlets_view.dart';
 export 'src/structure/pathways_view.dart';
 export 'src/structure/structure_editor_screen.dart';
 export 'src/structure/structure_matrix_view.dart';
+export 'src/widgets/family_picker.dart';
