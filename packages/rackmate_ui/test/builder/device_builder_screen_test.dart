@@ -131,14 +131,17 @@ void main() {
   });
 
   group('the rail offers only sections that exist', () {
-    testWidgets('four, not the seven docs/06 §3 lists: Ports, Panel Layout '
-        'and Notes belong to milestones that have not run', (tester) async {
+    testWidgets('five, not the seven docs/06 §3 lists: Panel Layout and '
+        'Notes belong to milestones that have not run', (tester) async {
+      // WAS FOUR UNTIL M4-E. Ports joined the rail when the grid behind
+      // it existed, which is this file's whole rule rather than an
+      // exception to it: a rail entry that opens nothing is the
+      // `UnbuiltView` defect wearing a different hat.
       await _pump(tester);
 
       for (final s in BuilderSection.values) {
         expect(find.widgetWithText(ListTile, s.label), findsOneWidget);
       }
-      expect(find.widgetWithText(ListTile, 'Ports'), findsNothing);
       expect(find.widgetWithText(ListTile, 'Panel Layout'), findsNothing);
       expect(find.widgetWithText(ListTile, 'Notes'), findsNothing);
     });

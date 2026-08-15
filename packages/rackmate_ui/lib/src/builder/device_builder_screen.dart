@@ -24,8 +24,10 @@
 // nothing fabricates a device, a port label or a control that does
 // nothing. §2's right dock is three live previews (rack strip, symbol,
 // rear panel) and a batch inspector; the previews are M4-K (`#182`) and
-// the batch inspector needs a grid selection, which is M4-E. **There is
-// nothing to put in a 340px dock**, so it is not drawn.
+// the batch inspector is M4-F2 (`#209`). **There is nothing to put in a
+// 340px dock**, so it is not drawn. M4-E has since given the grid its
+// row selection, so the dock now waits on the inspector rather than on
+// anything to select.
 //
 // The Structure editor set this precedent explicitly: `#148` shipped with
 // NO tab strip at all because one surface satisfied its ruling outright,
@@ -33,10 +35,10 @@
 // A pane that opens nothing is the `UnbuiltView` defect wearing a
 // different hat.
 //
-// The section rail obeys the same rule. §3 lists seven sections; four
-// exist (Identity, Physical, Power, Appearance) and three do not: Ports
-// is M4-E, Panel Layout is M4-K, Notes & Publish is M4-P. The rail lists
-// the four that work.
+// The section rail obeys the same rule. §3 lists seven sections; five
+// exist (Identity, Ports, Physical, Power, Appearance) and two do not:
+// Panel Layout is M4-K, Notes & Publish is M4-P. The rail lists the five
+// that work.
 //
 // ═════════════════════════════════════════════════════════════════════
 // THE CHANGE CLASS IS IN THE HEADER, WHERE "BEFORE SAVE" MEANS SOMETHING
@@ -60,6 +62,7 @@
 // would need a scope this screen does not yet have.
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/builder/port_grid.dart';
 
 /// What the app does when the builder asks for something.
 ///
@@ -91,12 +94,16 @@ Future<void> showDeviceBuilder(
   BuildContext context, {
   required TemplateBody template,
   required DeviceBuilderActions actions,
+  Registries? registries,
+  IdFormat portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
 }) => showDialog<void>(
   context: context,
   builder: (context) => Dialog.fullscreen(
     child: DeviceBuilderScreen(
       template: template,
       actions: actions,
+      registries: registries,
+      portDesignatorFormat: portDesignatorFormat,
       onDone: () => Navigator.of(context).pop(),
     ),
   ),
@@ -106,6 +113,11 @@ Future<void> showDeviceBuilder(
 /// do not.
 enum BuilderSection {
   identity('Identity'),
+
+  /// docs/06 §2 puts PORTS here, second, and it is the product: the I/O
+  /// editor is what the exit criterion is measured on, and the metadata
+  /// form is what a user fills in once.
+  ports('Ports'),
   physical('Physical'),
   power('Power'),
   appearance('Appearance');
@@ -120,6 +132,8 @@ class DeviceBuilderScreen extends StatefulWidget {
   const DeviceBuilderScreen({
     required this.template,
     required this.actions,
+    this.registries,
+    this.portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
     this.onDone,
     super.key,
   });
@@ -130,6 +144,20 @@ class DeviceBuilderScreen extends StatefulWidget {
   final TemplateBody template;
 
   final DeviceBuilderActions actions;
+
+  /// The project's registries, so the port grid can print `HDMI Type A`
+  /// where the model holds `conn.hdmi_a`.
+  ///
+  /// NULLABLE, AND AN EMPTY SET IS NOT THE SAME THING AS ABSENT. A caller
+  /// with no document in hand passes nothing and every port shows its raw
+  /// ids, which is honest; passing empty registries would say the project
+  /// declares no connectors at all.
+  final Registries? registries;
+
+  /// The project's port designator format (CR-042), so the DESIG column
+  /// previews what THIS project would allocate.
+  final IdFormat portDesignatorFormat;
+
   final VoidCallback? onDone;
 
   @override
@@ -148,6 +176,13 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
 
   BuilderSection _section = BuilderSection.identity;
   String? _refusal;
+
+  /// Port keys the author has typed by hand, for the whole life of this
+  /// window. See `PortGrid.keyTouched`: it lives here rather than in the
+  /// grid because the rail rebuilds the grid, so a set kept there was
+  /// discarded by a trip to the Physical section and a deliberately
+  /// chosen key quietly went back to following its label.
+  final _keyTouched = <String>{};
 
   @override
   void dispose() {
@@ -198,6 +233,22 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
       _refusal = null;
     });
   }
+
+  /// Runs one command that is not a field write, and repaints.
+  ///
+  /// NO EQUALITY GUARD, unlike [_run]. That guard exists because a text
+  /// box can write the value already in it on every rebuild; a port
+  /// command is a structural change somebody asked for, and there is no
+  /// "already added" to compare against.
+  void _runCommand(Command<TemplateBody> command) =>
+      setState(() => _session.run(command));
+
+  /// Several commands as ONE undo entry, for a gesture that touches more
+  /// than one port.
+  void _transact(
+    LabelKey label,
+    void Function(TxnScope<TemplateBody> tx) body,
+  ) => setState(() => _session.transact(label, body));
 
   void _save({required bool close}) {
     final refusal = widget.actions.onSave(copyTemplateBody(_session.body));
@@ -283,6 +334,25 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
                   BuilderSection.identity => _IdentitySection(
                     body: _session.body,
                     onEdit: _run,
+                  ),
+                  BuilderSection.ports => PortGrid(
+                    body: _session.body,
+                    registries: widget.registries ?? Registries(),
+                    // FROM `_opened`, WHICH IS THE TEMPLATE AS IT ARRIVED.
+                    // A port already in it has a PUBLISHED key: some
+                    // project may join its cables through that string
+                    // (CR-051), so renaming it records the old name and
+                    // typing a label never moves it.
+                    openedPortKeys: {
+                      for (final port in _opened.ports) port.key.v,
+                    },
+                    keyTouched: _keyTouched,
+                    onKeyTouched: (was, now) => _keyTouched.addAll([was, now]),
+                    portDesignatorFormat: widget.portDesignatorFormat,
+                    actions: PortGridActions(
+                      run: _runCommand,
+                      transact: _transact,
+                    ),
                   ),
                   BuilderSection.physical => _PhysicalSection(
                     body: _session.body,
