@@ -10762,6 +10762,42 @@ named ports and cannot perform a single step of the example the milestone is mea
 decomposition change, not a scope change**, so it is recorded on the board and in docs/12 §5.3.6,
 and §8.3 is not engaged.
 
+**11.59.10 TWO CALLS THE USER MADE AND THE AGENT DID NOT, both settled on 2026-08-15 against a
+stated recommendation.** `trade knowledge beats workflow reasoning` is a practice here because
+reasoning about how installers work has produced a wrong ruling before, so both are recorded with
+the recommendation they overruled rather than presented as if they had always been the plan.
+
+**(a) A derived bank name is built from the family's FIRST ALIAS, falling back to `shortTag`, and
+docs/06 §4.2's stated rule is wrong.** §4.2 says the name is `"{family display name} {direction
+plural}"`. The seeded display name for `video.hdmi.2_0` is `HDMI 2.0 (18 Gbps)`, so that rule yields
+**"HDMI 2.0 (18 Gbps) Inputs"**, while §4.1's own example table and §2's layout sketch BOTH show the
+bank as **"HDMI Inputs"**. The rule and its worked examples contradict each other, which is
+`a spec table is an illustration until censused` arriving from the other direction: here the PROSE
+is the illustration and the examples are the specification. Alias-then-`shortTag` reproduces
+"HDMI Inputs" and "HDBT Outputs" exactly as both examples write them. **docs/06 §4.2 is edited to
+match rather than pointered**, so §12 is owed nothing.
+
+The cost is that **alias ORDER now carries display meaning**, which it already did for connectors:
+`portConnectorShortLabel` has printed `aliases.first` in the port grid's CONN column since M4-E. The
+convention is therefore extended rather than invented, and it is stated on both fields. `ctl
+.ir_emitter` gains `ir` AHEAD of `ir35` for this reason and no other, so its bank derives as
+**"IR Outputs"** rather than "IR35 Outputs"; an installer writes the former, and `ir` already
+resolved to that family through `shortTag` anyway, so the alias adds a display fact rather than a
+vocabulary one.
+
+**(b) `euro2` DEFAULTS TO `audio.speaker_lowz`, and the recommendation to leave it unknown is
+overruled.** The agent's argument was that a 2-pole euroblock carries low-Z or constant-voltage,
+that the token does not say which, and that guessing wrong puts 70 V on an 8 Ω run. **The user ruled
+that low-Z is the overwhelming case in the racks this tool is for**, which is a fact about the trade
+and not about the parser, and the cell remains editable in the grid with one keystroke. Recorded
+because §11.59.4's "either half may come back UNKNOWN" is now carried by `xlr` alone, and a later
+reader finding `euro2` resolved would otherwise think the invariant had eroded. **It has not**: `xlr`
+still refuses, because an XLR3 carries four families with no majority among them, and that is the
+distinction, a default is legitimate where the trade HAS a default and never where it merely has a
+most-common-guess. The resolution runs through §11.59.4's two-registry split unchanged: `euro2` names
+`audio.speaker_lowz`, whose `defaultConnector` is `conn.binding_post`, and the connector table's own
+`euro2` overrides it to `conn.euroblock_2`. The same mechanism `c13` forced.
+
 ---
 
 ## 12. Superseded rulings
