@@ -10798,6 +10798,29 @@ most-common-guess. The resolution runs through §11.59.4's two-registry split un
 `audio.speaker_lowz`, whose `defaultConnector` is `conn.binding_post`, and the connector table's own
 `euro2` overrides it to `conn.euroblock_2`. The same mechanism `c13` forced.
 
+**11.59.11 ONE TOKEN RESOLVES TO A DIFFERENT FAMILY IN ONE DIRECTION, AND A DESTRUCTIVE PINOUT IS
+WHY.** Settled by the user on 2026-08-15, after the summary line was read against real output and
+`1 ir35 in "IR IN"` was seen resolving to **`ctl.ir_emitter`**.
+
+`seed_registries.dart` states the hazard where the two IR families are declared: *"receivers are
+tip = signal, ring = GND, sleeve = +12 V; emitters are tip = IR in, sleeve = GND. Plugging an
+emitter into a receiver jack destroys the emitter and can damage the supply."* AC-052 makes
+`pinoutVariant` mandatory on every 3.5 mm IR port for exactly that reason. docs/06 §9.1 then types
+`ir35 out` at step 9 for emitters and `1 ir35 in "IR IN"` at step 12 for the matrix's IR **input**,
+which is a receiver input. **One token, two families, and the direction is what separates them.**
+
+**Ruling: `ir35 in` resolves to `ctl.ir_receiver`, `ir35 out` to `ctl.ir_emitter`,** and the
+connector follows the swapped family's default unless one was named, which §11.59.4 already governs.
+
+**IT IS A NAMED TABLE HOLDING ONE ROW, NOT AN `if`.** A second directional pair is then a row rather
+than a second branch. It is deliberately NOT a field on `SignalFamilyDef`: expressing one fact would
+cost a model field, a codec change and four regenerated starters, and DR-010 §11.10.4's rule is to
+seed a field once something needs it. **If a second pair ever appears, that is the something.**
+
+**This is the only exception to "one alias, one family" in the resolver**, and it is stated here so
+a reader finding it does not conclude the rule has eroded. The test for admitting another is the one
+this passed: a wrong answer is not merely inconvenient but **destroys hardware**.
+
 ---
 
 ## 12. Superseded rulings

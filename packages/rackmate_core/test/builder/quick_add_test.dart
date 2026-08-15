@@ -498,6 +498,52 @@ void main() {
     });
   });
 
+  group('IR direction picks the family (DR-060 §11.59.11)', () {
+    // The catalog states the hazard where the two families are declared:
+    // emitter and receiver have incompatible pinouts, and plugging one
+    // into the other's jack destroys the emitter and can damage the
+    // supply. docs/06 §9.1 types `ir35 out` for emitters at step 9 and
+    // `1 ir35 in "IR IN"` at step 12 for a matrix's IR INPUT, which is a
+    // receiver. Settled by the user on 2026-08-15.
+    test('ir35 out is an emitter', () {
+      final p = planOk(r, '16 ir35 out "IR OUT {n:2}"');
+      expect(p.family?.v, 'ctl.ir_emitter');
+      expect(p.connector?.v, 'conn.3_5mm_ts');
+    });
+
+    test('AND ir35 in IS A RECEIVER, which is a different pinout', () {
+      final p = planOk(r, '1 ir35 in "IR IN"');
+      expect(p.family?.v, 'ctl.ir_receiver');
+      expect(
+        p.connector?.v,
+        'conn.3_5mm_trs',
+        reason: 'the receiver needs the ring for +12 V',
+      );
+    });
+
+    test('a NAMED connector still wins over the swapped default', () {
+      // §11.59.4's rule survives the swap: a person being explicit is
+      // not overruled by a table.
+      final p = planOk(r, '1 ir35 in 3_5mm_ts');
+      expect(p.family?.v, 'ctl.ir_receiver');
+      expect(p.connector?.v, 'conn.3_5mm_ts');
+    });
+
+    test('and no other family swaps on direction', () {
+      // The table holds one row on purpose. `hdmi in` must stay HDMI.
+      expect(planOk(r, '16 hdmi in').family?.v, 'video.hdmi.2_0');
+      expect(planOk(r, '16 hdmi out').family?.v, 'video.hdmi.2_0');
+      expect(planOk(r, '1 rj45 in').family?.v, 'net.ethernet');
+    });
+
+    test('the swapped plan still round-trips', () {
+      final first = planOk(r, '1 ir35 in "IR IN"');
+      final second = planOk(r, renderQuickAdd(r, first));
+      expect(second.family, first.family);
+      expect(second.connector, first.connector);
+    });
+  });
+
   group('rendering a plan back to a command (M4-G3)', () {
     /// The property the bidirectional binding rests on: what field mode
     /// writes, command mode reads back as the same thing.

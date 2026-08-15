@@ -162,6 +162,15 @@ const _kDirections = <String, PortDirection>{
   'pass': PortDirection.passive,
 };
 
+/// Families whose token means a DIFFERENT family in one direction.
+///
+/// `{resolved family id: (direction that swaps it, what it becomes)}`.
+/// See the note at the call site: this exists for the IR pinout hazard
+/// and holds exactly one row on purpose.
+const _kDirectionalFamilies = <String, (PortDirection, String)>{
+  'ctl.ir_emitter': (PortDirection.sink, 'ctl.ir_receiver'),
+};
+
 const _kFaces = <String, Face?>{
   'front': Face.front,
   'rear': Face.rear,
@@ -335,6 +344,39 @@ QuickAddResult parseQuickAdd(Registries registries, String source) {
   // be unknown, because unknown is a real state a port can hold, but a
   // command with neither a connector nor a family has not said what to
   // add and is far more likely a typo than an intention.
+  // ═══════════════════════════════════════════════════════════════════
+  // ONE TOKEN WHOSE FAMILY DEPENDS ON THE DIRECTION, AND THE REASON IS
+  // A DESTRUCTIVE PINOUT (DR-060 §11.59.11)
+  // ═══════════════════════════════════════════════════════════════════
+  // `seed_registries.dart` states the hazard where the two IR families
+  // are declared: "receivers are tip = signal, ring = GND, sleeve =
+  // +12 V; emitters are tip = IR in, sleeve = GND. Plugging an emitter
+  // into a receiver jack destroys the emitter and can damage the
+  // supply." AC-052 makes `pinoutVariant` mandatory on every 3.5 mm IR
+  // port for that reason.
+  //
+  // docs/06 §9.1 types `ir35 out` at step 9 for emitters and
+  // `1 ir35 in "IR IN"` at step 12 for the matrix's IR INPUT, which is a
+  // RECEIVER input. One token, two families, and the direction is what
+  // separates them: an IR port you drive is an emitter, an IR port that
+  // listens is a receiver.
+  //
+  // A NAMED TABLE RATHER THAN AN `if`, so a second pair is a row and not
+  // a second branch. If one ever arrives this becomes a field on
+  // `SignalFamilyDef`; with one entry that would be a model change, a
+  // codec change and four regenerated starters to express one fact.
+  final swapped = _kDirectionalFamilies[family?.v];
+  if (swapped != null && direction == swapped.$1) {
+    family = SignalFamilyId(swapped.$2);
+    // The connector is NOT swapped with it. `conn.3_5mm_ts` and
+    // `conn.3_5mm_trs` are the two families' defaults and they differ,
+    // but a named connector must still win: `16 ir35 in trs` is a person
+    // being explicit, and DR-060 §11.59.4 says a default loses.
+    inheritedConnector = namedConnector == null
+        ? registries.signalFamilies[family]?.defaultConnector
+        : inheritedConnector;
+  }
+
   final connector = namedConnector ?? inheritedConnector;
   if (connector == null && family == null) {
     return fail(
