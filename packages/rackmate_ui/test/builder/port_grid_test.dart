@@ -217,6 +217,144 @@ void main() {
     });
   });
 
+  group('the selection (DR-061, M4-F0)', () {
+    /// Three rows, so a range has a middle to include.
+    Future<void> three(WidgetTester tester) => _pump(
+      tester,
+      template: _blank()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001'),
+          _port('p3', order: 'a0002'),
+        ]),
+    ).then((_) {});
+
+    /// A click in a row's body, which is any cell in it.
+    Future<void> clickRow(
+      WidgetTester tester,
+      String label, {
+      LogicalKeyboardKey? holding,
+    }) async {
+      if (holding != null) await tester.sendKeyDownEvent(holding);
+      await tester.tap(find.text(label));
+      if (holding != null) await tester.sendKeyUpEvent(holding);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a click selects the row it lands in', (tester) async {
+      await three(tester);
+
+      await clickRow(tester, 'P2');
+
+      expect(find.widgetWithText(TextButton, 'Delete 1 selected'), findsOne);
+    });
+
+    testWidgets('clicking a row ticks its box, because the box IS the '
+        'selection rather than a second set beside it', (tester) async {
+      await three(tester);
+
+      await clickRow(tester, 'P1');
+
+      expect(
+        tester.widget<Checkbox>(find.byType(Checkbox).at(0)).value,
+        isTrue,
+      );
+      expect(
+        tester.widget<Checkbox>(find.byType(Checkbox).at(1)).value,
+        isFalse,
+      );
+    });
+
+    testWidgets('Shift+click takes the whole run between the two', (
+      tester,
+    ) async {
+      await three(tester);
+
+      await clickRow(tester, 'P1');
+      await clickRow(tester, 'P3', holding: LogicalKeyboardKey.shift);
+
+      expect(find.widgetWithText(TextButton, 'Delete 3 selected'), findsOne);
+    });
+
+    testWidgets('Ctrl+click adds one row and leaves the gap alone', (
+      tester,
+    ) async {
+      await three(tester);
+
+      await clickRow(tester, 'P1');
+      await clickRow(tester, 'P3', holding: LogicalKeyboardKey.control);
+
+      expect(find.widgetWithText(TextButton, 'Delete 2 selected'), findsOne);
+      expect(
+        tester.widget<Checkbox>(find.byType(Checkbox).at(1)).value,
+        isFalse,
+        reason: 'the middle row was never touched',
+      );
+    });
+
+    testWidgets('A TICK AND A CLICK BUILD THE SAME SET, which is the whole '
+        'of the ruling: ticking one row then Shift+clicking another '
+        'ranges from the ticked one', (tester) async {
+      await three(tester);
+
+      await tester.tap(find.byType(Checkbox).at(0));
+      await tester.pumpAndSettle();
+      await clickRow(tester, 'P3', holding: LogicalKeyboardKey.shift);
+
+      expect(find.widgetWithText(TextButton, 'Delete 3 selected'), findsOne);
+    });
+
+    testWidgets('CLICKING A CELL IN AN ALREADY-SELECTED ROW DOES NOT '
+        'COLLAPSE THE SELECTION, or F2 could never fire and would fail '
+        'by writing one row instead of N', (tester) async {
+      await three(tester);
+
+      await clickRow(tester, 'P1');
+      await clickRow(tester, 'P3', holding: LogicalKeyboardKey.shift);
+      expect(find.widgetWithText(TextButton, 'Delete 3 selected'), findsOne);
+
+      // The gesture a person makes to start editing the batch.
+      await clickRow(tester, 'P2');
+
+      expect(
+        find.widgetWithText(TextButton, 'Delete 3 selected'),
+        findsOne,
+        reason:
+            'the row was already in the selection, so the click is about '
+            'which cell to edit and not about which rows are chosen',
+      );
+    });
+
+    testWidgets('a plain click on a row OUTSIDE the selection replaces it, '
+        'because that is how a person starts over', (tester) async {
+      await three(tester);
+
+      await clickRow(tester, 'P1');
+      await clickRow(tester, 'P2', holding: LogicalKeyboardKey.shift);
+      await clickRow(tester, 'P3');
+
+      expect(find.widgetWithText(TextButton, 'Delete 1 selected'), findsOne);
+    });
+
+    testWidgets('deleting the selection empties it, so the button does not '
+        'go on counting rows that are gone', (tester) async {
+      await three(tester);
+
+      await clickRow(tester, 'P1');
+      await clickRow(tester, 'P2', holding: LogicalKeyboardKey.shift);
+      await tester.tap(find.widgetWithText(TextButton, 'Delete 2 selected'));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(TextButton, 'Delete'), findsOne);
+      expect(
+        tester
+            .widget<TextButton>(find.widgetWithText(TextButton, 'Delete'))
+            .onPressed,
+        isNull,
+      );
+    });
+  });
+
   group('bands', () {
     testWidgets('one per bank, with its count, and they fold', (tester) async {
       await _pump(

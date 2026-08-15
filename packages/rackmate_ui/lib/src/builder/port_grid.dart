@@ -52,6 +52,7 @@
 // either: a grid you can add to and not remove from is one nobody can
 // correct a mis-click in.
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/builder/quick_add_bar.dart';
 import 'package:rackmate_ui/src/widgets/family_picker.dart';
@@ -169,10 +170,15 @@ class _PortGridState extends State<PortGrid> {
   /// member: the no-bank band folds like any other.
   final _collapsed = <String?>{};
 
-  /// Ticked rows, by port key. Held as strings rather than `PortKey`
-  /// because a rename replaces the key, and a stale selection that still
-  /// matched by identity would tick a row that no longer exists.
-  final _ticked = <String>{};
+  /// The selection (DR-061): which rows, where a `Shift`+click extends
+  /// from, and which column has focus.
+  ///
+  /// THIS IS M4-E's `_ticked` UNDER ITS REAL NAME. The tick box was
+  /// already a set of port keys read by the delete button; DR-061 makes it
+  /// the one selection the whole section acts on rather than a second
+  /// thing beside a selection. The algebra is in core, so what remains
+  /// here is the gestures and the paint.
+  PortSelection _selection = PortSelection.empty;
 
   /// Whether this port's key still follows its label.
   ///
@@ -244,10 +250,10 @@ class _PortGridState extends State<PortGrid> {
     });
   }
 
-  void _deleteTicked() {
+  void _deleteSelected() {
     final doomed = [
       for (final port in widget.body.ports)
-        if (_ticked.contains(port.key.v)) port.key,
+        if (_selection.contains(port.key.v)) port.key,
     ];
     if (doomed.isEmpty) return;
     widget.actions.transact(LabelKey.removePort, (tx) {
@@ -255,7 +261,27 @@ class _PortGridState extends State<PortGrid> {
         tx.add(RemovePortCommand(key));
       }
     });
-    setState(_ticked.clear);
+    setState(() => _selection = PortSelection.empty);
+  }
+
+  /// A click in a row's body, with whatever modifiers were down.
+  ///
+  /// A PLAIN CLICK ON AN ALREADY-SELECTED ROW LEAVES THE SELECTION ALONE,
+  /// which is not a nicety. F2 (`#209`) is "select N rows, edit any cell,
+  /// it applies to every selected row": if clicking into a cell collapsed
+  /// the selection to that row first, the feature could never fire, and it
+  /// would fail silently by writing one row instead of N.
+  void _onRowTap(String portKey, List<String> visible) {
+    final keys = HardwareKeyboard.instance;
+    setState(() {
+      if (keys.isShiftPressed) {
+        _selection = _selection.extendTo(portKey, visible);
+      } else if (keys.isControlPressed || keys.isMetaPressed) {
+        _selection = _selection.toggle(portKey);
+      } else if (!_selection.contains(portKey)) {
+        _selection = _selection.selectOnly(portKey);
+      }
+    });
   }
 
   @override
@@ -264,12 +290,24 @@ class _PortGridState extends State<PortGrid> {
       widget.body,
       portDesignatorFormat: widget.portDesignatorFormat,
     );
-    // Ports the user ticked and then deleted, or that a rename moved:
+    // Ports the user selected and then deleted, or that a rename moved:
     // dropped here rather than in the writer, so the count under the
-    // buttons is never a count of rows that are not there.
-    _ticked.removeWhere(
-      (key) => !widget.body.ports.any((p) => p.key.v == key),
-    );
+    // buttons is never a count of rows that are not there. `prunedTo`
+    // returns the same object when nothing changed, so this is not a new
+    // selection on every frame.
+    _selection = _selection.prunedTo({
+      for (final port in widget.body.ports) port.key.v,
+    });
+
+    // The rows a person can actually see and therefore click, which is
+    // what a `Shift`+click ranges over (DR-061): a collapsed band's rows
+    // are absent, so a range drawn across a folded bank cannot sweep up
+    // forty rows nobody can see.
+    final visible = [
+      for (final band in table.bands)
+        if (!_collapsed.contains(band.bankKey))
+          for (final row in band.rows) row.port.key.v,
+    ];
 
     final issues = validatePorts(widget.body);
     final columns = portVisibleColumns(_openPacks());
@@ -292,9 +330,9 @@ class _PortGridState extends State<PortGrid> {
         ),
         const Divider(height: 1),
         _Toolbar(
-          tickedCount: _ticked.length,
+          selectedCount: _selection.length,
           onAdd: _addPort,
-          onDelete: _ticked.isEmpty ? null : _deleteTicked,
+          onDelete: _selection.isEmpty ? null : _deleteSelected,
           openPacks: _openPacks(),
           onTogglePack: _togglePack,
         ),
@@ -343,18 +381,21 @@ class _PortGridState extends State<PortGrid> {
                                   registriesForGender: widget.registries,
                                   onKeyTouched: widget.onKeyTouched,
                                   collapsed: _collapsed,
-                                  ticked: _ticked,
+                                  selection: _selection,
                                   onToggleBand: (key) => setState(() {
                                     if (!_collapsed.remove(key)) {
                                       _collapsed.add(key);
                                     }
                                   }),
-                                  onTick: (key, {required bool on}) =>
-                                      setState(() {
-                                        on
-                                            ? _ticked.add(key)
-                                            : _ticked.remove(key);
-                                      }),
+                                  // THE TICK BOX IS Ctrl+CLICK (DR-061),
+                                  // which is why it takes no `on`: a
+                                  // checkbox that reported its own new
+                                  // value would be a second opinion about
+                                  // what the selection holds.
+                                  onToggleRow: (key) => setState(() {
+                                    _selection = _selection.toggle(key);
+                                  }),
+                                  onTapRow: (key) => _onRowTap(key, visible),
                                 ),
                         ),
                       ],
@@ -416,14 +457,14 @@ const double kPortSelectGutter = 56;
 
 class _Toolbar extends StatelessWidget {
   const _Toolbar({
-    required this.tickedCount,
+    required this.selectedCount,
     required this.onAdd,
     required this.onDelete,
     required this.openPacks,
     required this.onTogglePack,
   });
 
-  final int tickedCount;
+  final int selectedCount;
   final VoidCallback onAdd;
   final VoidCallback? onDelete;
   final Set<PortColumnPack> openPacks;
@@ -444,11 +485,11 @@ class _Toolbar extends StatelessWidget {
           onPressed: onDelete,
           icon: const Icon(Icons.delete_outline, size: 18),
           // COUNTS WHAT IT WILL DELETE. A bare "Delete" beside a grid of
-          // 68 rows does not say whether it means the ticked rows or all
-          // of them, and the answer matters most to the person who is
+          // 68 rows does not say whether it means the selected rows or
+          // all of them, and the answer matters most to the person who is
           // about to find out.
           label: Text(
-            tickedCount == 0 ? 'Delete' : 'Delete $tickedCount selected',
+            selectedCount == 0 ? 'Delete' : 'Delete $selectedCount selected',
           ),
         ),
         const Spacer(),
@@ -539,9 +580,10 @@ class _Bands extends StatelessWidget {
     required this.registriesForGender,
     required this.onKeyTouched,
     required this.collapsed,
-    required this.ticked,
+    required this.selection,
     required this.onToggleBand,
-    required this.onTick,
+    required this.onToggleRow,
+    required this.onTapRow,
   });
 
   final PortTable table;
@@ -558,9 +600,10 @@ class _Bands extends StatelessWidget {
   final Registries registriesForGender;
   final void Function(String was, String now) onKeyTouched;
   final Set<String?> collapsed;
-  final Set<String> ticked;
+  final PortSelection selection;
   final ValueChanged<String?> onToggleBand;
-  final void Function(String portKey, {required bool on}) onTick;
+  final ValueChanged<String> onToggleRow;
+  final ValueChanged<String> onTapRow;
 
   @override
   Widget build(BuildContext context) => CustomScrollView(
@@ -606,8 +649,9 @@ class _Bands extends StatelessWidget {
                 band.rows[index].port.connector,
               ),
               onKeyTouched: onKeyTouched,
-              ticked: ticked.contains(band.rows[index].port.key.v),
-              onTick: onTick,
+              selected: selection.contains(band.rows[index].port.key.v),
+              onToggleRow: onToggleRow,
+              onTapRow: onTapRow,
             ),
           ),
       ],
@@ -724,8 +768,9 @@ class _PortRow extends StatelessWidget {
     required this.genderApplies,
     required this.issues,
     required this.onKeyTouched,
-    required this.ticked,
-    required this.onTick,
+    required this.selected,
+    required this.onToggleRow,
+    required this.onTapRow,
     super.key,
   });
 
@@ -763,8 +808,13 @@ class _PortRow extends StatelessWidget {
 
   final void Function(String was, String now) onKeyTouched;
 
-  final bool ticked;
-  final void Function(String portKey, {required bool on}) onTick;
+  final bool selected;
+
+  /// `Ctrl`+click, and the tick box, which DR-061 makes one gesture.
+  final ValueChanged<String> onToggleRow;
+
+  /// A click in the row's BODY, which reads its own modifiers.
+  final ValueChanged<String> onTapRow;
 
   PortDef get _port => row.port;
 
@@ -845,6 +895,11 @@ class _PortRow extends StatelessWidget {
     final theme = Theme.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
+        // The tint `locations_panel.dart` already uses for a selected row,
+        // so the two lists in this app agree on what selected looks like.
+        // Behind the cells rather than over them: an overlay would tint
+        // the text a person is editing.
+        color: selected ? theme.colorScheme.primaryContainer : null,
         border: Border(
           bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4)),
         ),
@@ -860,23 +915,47 @@ class _PortRow extends StatelessWidget {
                 // dot beside it. Measured: the default overflowed this row
                 // by 2.2 points.
                 Checkbox(
-                  value: ticked,
+                  value: selected,
                   visualDensity: VisualDensity.compact,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  onChanged: (v) => onTick(_port.key.v, on: v ?? false),
+                  // IGNORES THE VALUE IT IS HANDED. The selection is the
+                  // authority on what is selected; a checkbox reporting
+                  // its own new state would be a second opinion, and the
+                  // two would part the first time a range replaced the set
+                  // under it.
+                  onChanged: (_) => onToggleRow(_port.key.v),
                 ),
                 _IssueDot(issues: issues),
               ],
             ),
           ),
-          for (final id in columns)
-            SizedBox(
-              width: portColumnWidth(id) * scale,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: _cell(context, id),
-              ),
+          // THE CELLS ARE THE CLICK TARGET, AND THE GUTTER IS NOT.
+          //
+          // `Listener` on pointer-down rather than a `GestureDetector`, so
+          // the cells underneath still take focus and still edit: the row
+          // is selected AND the text field opens, which is what a person
+          // clicking a cell in a spreadsheet gets. `translucent`, because
+          // the padding between cells is part of the row.
+          //
+          // The gutter sits outside it on purpose. Inside, a tap on the
+          // checkbox would run both handlers and toggle twice, ending on
+          // the state it started in.
+          Listener(
+            behavior: HitTestBehavior.translucent,
+            onPointerDown: (_) => onTapRow(_port.key.v),
+            child: Row(
+              children: [
+                for (final id in columns)
+                  SizedBox(
+                    width: portColumnWidth(id) * scale,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: _cell(context, id),
+                    ),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );
