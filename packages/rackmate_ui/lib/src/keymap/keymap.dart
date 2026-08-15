@@ -123,6 +123,16 @@ enum KeyScope {
   /// one.
   structure,
 
+  /// The DEVICE BUILDER's `Shortcuts` (M4-G).
+  ///
+  /// ITS OWN SCOPE, NOT `global`, and the reason is the same one
+  /// `structure` gives: the binding acts on THE FOCUSED BAR and there is
+  /// no honest answer to it anywhere else. It is also not `rack`: the
+  /// builder is a full-window editor over a `TemplateBody` with its own
+  /// undo stack (CR-106), so a scope shared with the document's canvas
+  /// would say the two stacks were one thing.
+  builder,
+
   /// The modal dialogs' `CallbackShortcuts`.
   ///
   /// One scope for all three (unsaved changes, recovery prompt, file
@@ -181,6 +191,9 @@ enum KeyBindingId {
   schematicCancel,
   beginWire,
   commitWire,
+
+  // --- builder (M4-G) -------------------------------------------------
+  quickAddCommit,
   commitWireChained,
   nextCandidatePin,
   previousCandidatePin,
@@ -374,6 +387,24 @@ final class BeginWireIntent extends Intent {
 /// docs/05's keyboard path is for.
 final class CommitWireIntent extends Intent {
   const CommitWireIntent();
+}
+
+/// Run what is typed in Quick Add (`Enter`, docs/06 §4.1).
+///
+/// THE THIRD TYPE UNDER [CommitWireIntent]'s LABEL, and the pattern that
+/// docstring describes applied once more: three surfaces handle this key
+/// so three `Actions` maps need three keys, but it MEANS one thing and
+/// [KeymapConflictKind.meaningDrift] is what holds that true.
+///
+/// It was drafted with a label of its own, on the argument that
+/// committing a wire joins two pins that exist while this creates
+/// sixteen ports that do not. **The gate refused it and was right.** The
+/// reason is the one [CommitWireIntent] already states: a keyboard-only
+/// user cannot see a scope boundary, so `Enter` gets one meaning across
+/// the product or the keymap has lied to them. A typed Quick Add command
+/// is in flight in exactly the sense a half-drawn wire is.
+final class QuickAddCommitIntent extends Intent {
+  const QuickAddCommitIntent();
 }
 
 /// Move the pin caret to the next/previous candidate while a wire is in
@@ -1060,6 +1091,29 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     note:
         'W is UNBOUND IN THE RACK, which KeymapConflictKind.letterCollision '
         'keeps true — canon §1.10 principle (c).',
+  ),
+  KeyBinding(
+    id: KeyBindingId.quickAddCommit,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.enter,
+    label: 'Commit what is in flight',
+    intent: QuickAddCommitIntent(),
+    source: 'docs/06 §4.1 · §9.1',
+    note:
+        'THE BINDING THE THIRTEEN-STEP PATH IS MADE OF. Each of docs/06 '
+        "§9.1's steps 6 to 13 is one command and one Enter, and the "
+        'criterion is a stopwatch, so this key is the difference between '
+        'eight keystrokes and eight dialogs. '
+        'THE THIRD INTENT UNDER THIS ONE LABEL, joining applyCompaction '
+        "and commitWire under DR-011.6's rule, and it was very nearly "
+        'given a label of its own. meaningDrift REFUSED IT, correctly: a '
+        'keyboard-only user cannot see a scope boundary, so one key may '
+        'wear one meaning across the product. The generalisation holds '
+        'without straining, which is the test for whether a shared label '
+        'is honest or a fudge: a Quick Add command typed and not yet run '
+        'IS something in flight, exactly as a wire is and as a compaction '
+        'preview is. Three surfaces, three Actions maps, three intent '
+        'types, one meaning.',
   ),
   KeyBinding(
     id: KeyBindingId.commitWire,

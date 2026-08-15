@@ -53,6 +53,7 @@
 // correct a mis-click in.
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/builder/quick_add_bar.dart';
 import 'package:rackmate_ui/src/widgets/family_picker.dart';
 
 /// How the grid asks the builder to change the template.
@@ -88,6 +89,7 @@ class PortGrid extends StatefulWidget {
     required this.onPacksRemembered,
     required this.actions,
     this.portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
+    this.quickAddAutofocus = true,
     super.key,
   });
 
@@ -98,6 +100,15 @@ class PortGrid extends StatefulWidget {
   /// For the connector and signal-family display names. A port naming
   /// something this does not hold still draws, showing the raw id.
   final Registries registries;
+
+  /// Whether Quick Add takes focus on entering the section.
+  ///
+  /// TRUE IN THE PRODUCT, because docs/06 §4.1 says focus lands
+  /// there. False only in the nineteen-odd widget tests that are
+  /// examining a CELL: an autofocusing bar would take focus from the
+  /// control under test and every one of them would fail for a
+  /// reason unrelated to what it asserts.
+  final bool quickAddAutofocus;
 
   /// The keys the template already had when the builder opened.
   ///
@@ -220,6 +231,19 @@ class _PortGridState extends State<PortGrid> {
     widget.actions.run(AddPortCommand(port));
   }
 
+  /// SIXTEEN PORTS AND A BANK, ONE UNDO ENTRY. The same `transact` the
+  /// delete path uses; Quick Add needed no batch command of its own,
+  /// only its own `LabelKey` so the Edit menu can name the whole line
+  /// rather than one of the rows it is about to remove.
+  void _runQuickAdd(List<Command<TemplateBody>> commands) {
+    if (commands.isEmpty) return;
+    widget.actions.transact(LabelKey.quickAddPorts, (tx) {
+      for (final command in commands) {
+        tx.add(command);
+      }
+    });
+  }
+
   void _deleteTicked() {
     final doomed = [
       for (final port in widget.body.ports)
@@ -256,6 +280,17 @@ class _PortGridState extends State<PortGrid> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // QUICK ADD SITS ABOVE THE TOOLBAR, which is docs/06 §2's own
+        // layout and also the ordering the exit criterion needs: the
+        // fast path is the first thing under the hand on entering the
+        // section, and `+ Add port` stays as the slow path beneath it.
+        QuickAddBar(
+          body: widget.body,
+          registries: widget.registries,
+          onRun: _runQuickAdd,
+          autofocus: widget.quickAddAutofocus,
+        ),
+        const Divider(height: 1),
         _Toolbar(
           tickedCount: _ticked.length,
           onAdd: _addPort,

@@ -159,12 +159,22 @@ void main() {
       // Flutter's own traversal already walks them in draw order; a `Tab`
       // row would shadow a framework default (see the fifteen below) to
       // reimplement what it does correctly.
+      //
+      // M4-G OPENS A SIXTH SCOPE AND PUTS ONE ROW IN IT: the device
+      // builder's Quick Add `Enter`. ONE, and the smallness is the
+      // finding rather than an omission. docs/06 §9.1's whole
+      // thirteen-step path is built from a text field and this single
+      // key; everything else the bar does is typing. A `Tab` row was NOT
+      // added for the same reason M3-C declined one, and autocomplete
+      // (M4-G4) will need one, which is a row and an argument then
+      // rather than a guess now.
       expect(keyBindingsIn(KeyScope.global), hasLength(7));
       expect(keyBindingsIn(KeyScope.rack), hasLength(16));
       expect(keyBindingsIn(KeyScope.schematic), hasLength(24));
       expect(keyBindingsIn(KeyScope.structure), hasLength(2));
+      expect(keyBindingsIn(KeyScope.builder), hasLength(1));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(50));
+      expect(kKeymap, hasLength(51));
     });
   });
 
@@ -497,7 +507,7 @@ void main() {
   });
 
   group('the framework defaults this app takes keys away from', () {
-    testWidgets('are exactly these fifteen, and no more', (tester) async {
+    testWidgets('are exactly these sixteen, and no more', (tester) async {
       // A REPORT WITH TEETH, NOT A FAILURE. `WidgetsApp` installs `Enter`
       // -> ActivateIntent, `Esc` -> DismissIntent, the arrows ->
       // DirectionalFocusIntent and the page keys -> ScrollIntent at the
@@ -506,8 +516,9 @@ void main() {
       //
       // Each one is deliberate and each is argued where it is handled —
       // the rack canvas's caret, its compaction Enter, the universal
-      // cancel, and since M2-F the schematic's whole keyboard connect
-      // route. What must not happen is a SIXTEENTH arriving unnoticed: an
+      // cancel, the schematic's whole keyboard connect route since M2-F,
+      // and since M4-G the builder's Quick Add commit. What must not
+      // happen is a SEVENTEENTH arriving unnoticed: an
       // ungated binding on a framework chord does not merely shadow a
       // default, it took `Backspace` away from six text fields for nine
       // days (see `_GatedAction`).
@@ -548,6 +559,22 @@ void main() {
           KeyBindingId.pinCaretDown,
           KeyBindingId.pinCaretLeft,
           KeyBindingId.pinCaretRight,
+          // M4-G, docs/06 §4.1. THE SIXTEENTH, AND THIS COMMENT IS THE
+          // "say why in the row" the reason below asks for.
+          //
+          // It shadows `Enter` -> ActivateIntent, and the subtree it
+          // shadows it over is ONE TEXT FIELD: the `Shortcuts` wrapping
+          // the Quick Add box and nothing else. That is the narrowest
+          // scope any row in this list has, and it is deliberate, because
+          // the failure this test exists to catch is the `Backspace` that
+          // was taken from six text fields for nine days.
+          //
+          // The key is not optional and not a convenience. docs/06 §9.3
+          // makes "focus never leaves Quick Add" one of the two things
+          // that make the thirteen-step count real; a bar whose commit
+          // needed a click has failed M4's exit criterion regardless of
+          // what it adds.
+          KeyBindingId.quickAddCommit,
         ]),
         reason:
             'a binding that shadows a WidgetsApp default must be gated on '
