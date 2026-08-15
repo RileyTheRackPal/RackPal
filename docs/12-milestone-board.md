@@ -111,7 +111,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED**: `NOT BUILT` | Model only. **Its M2 block has lifted**: the gate was M2 putting `Link` + `Endpoint` in the UI, and M2-F did (§5.1). Row otherwise as of `0fa532d` |
-| **M4** | Device builder | **`L`** *(was `M`)* | **1 of 2** | **IN PROGRESS**: `CONFIRMED` on clause 1 | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **Clause 2 is untouched** and is the whole of what M4 still owes: a three-field template placing into a rack with `—` in every unknown column and an accurate unknown count (`#251`). **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
+| **M4** | Device builder | **`L`** *(was `M`)* | **1 of 2** | **IN PROGRESS**: `CONFIRMED` on clause 1 | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **Clause 2 is untouched AND CANNOT CURRENTLY BE PERFORMED** (§5.3.8): a template authored in the builder saves into the project and **no surface offers it for placement**, because the palette is built from the seeded catalog alone. That blocks `#251` and belongs to no issue. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED**: `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
@@ -3139,6 +3139,43 @@ asserts 68 ports across 6 banks with focus still in the bar, and
 the equipment list with `—` in every unknown column and an accurate unknown count in the rollup.*
 Board `#251`. **Untested by this drill and by any other.** `#250`, the archetype path, is blocked
 on M4-I, which is not built; the DSL path is the only one that exists.
+
+#### 5.3.8 CLAUSE 2 CANNOT BE PERFORMED, and the reason is a hole in the decomposition
+
+**Found on 2026-08-15 while writing the drill route for `#251`, before the user spent time on it.**
+
+> **Clause 2, verbatim.** *A template saved with exactly three fields plus ports **places into a
+> rack** and appears correctly in the equipment list with `—` in every unknown column and an
+> accurate unknown count in the rollup.*
+
+**A TEMPLATE AUTHORED IN THE BUILDER CANNOT BE PLACED.** It saves, it round-trips, and no surface
+offers it:
+
+| | |
+|---|---|
+| `SaveTemplateToProjectCommand` | writes the body to `RackDocument.templates['<id>@<version>']` (`device_builder_actions.dart`) |
+| The palette | is built from `buildSeedCatalog()`, the 48 shipped archetypes (`rack_canvas_screen.dart:357`) |
+| `_catalog` | is `late final` and **never mutated**: a grep for subscripts of it finds one read at :3187 and no write at all |
+| `doc.templates` | is read only to resolve snapshots for devices ALREADY placed (:3092, :3360) and by demo construction |
+
+So the 93-second template of §5.3.7 exists in the project and can never reach a rack. **Clause 2's
+first half has no route, and its second half is therefore unreachable.**
+
+**A SECOND FINDING BESIDE IT.** `buildEquipmentList` has **exactly one caller in the whole tree**,
+`rackmate_export`'s `build_document.dart:86`. **There is no equipment list on screen.** Even given a
+placed device, clause 2 could today only be checked through a PDF export, which is a question about
+what the criterion means and not merely a missing view.
+
+**THIS BELONGS TO NO ISSUE.** M4-N (`#170`) is the LIBRARY subsystem: `.rmda` archives, several
+libraries loaded at once, filtering by which one a device came from. This is the plain in-project
+case and none of M4's nineteen issues names it. `#251` is the drill for clause 2 and is blocked by
+it.
+
+**IT IS §5.3.5's FINDING MIRRORED, one level up.** M4-E's was *"five tasks build a grid and not one
+of them creates a port"*: **ask what produces each task's input.** This is the other direction.
+**Ask what CONSUMES each task's output.** M4-D built a save, gated it, tested it, and nothing reads
+what it saved. A decomposition can be complete on both counts and still leave a milestone's criterion
+unreachable, because the two questions are asked of different ends of the same task.
 
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 

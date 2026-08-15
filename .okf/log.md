@@ -1,5 +1,26 @@
 # Update Log
 
+## 2026-08-15 (tenth entry)
+
+* **Note**: **M4'S CLAUSE 2 CANNOT BE PERFORMED, AND THE BLOCKER BELONGS TO NO
+  ISSUE.** A template authored in the device builder saves into
+  `RackDocument.templates` and **no surface offers it for placement**: the
+  palette is built from `buildSeedCatalog()` and its map is `late final`, never
+  extended. The 93-second template of the drill exists in the project and can
+  never reach a rack. Found by writing the drill route rather than by running it.
+* **Note**: **`buildEquipmentList` HAS EXACTLY ONE CALLER IN THE TREE**, the PDF
+  builder. There is no equipment list on screen, so clause 2's "appears
+  correctly in the equipment list" could today only be checked through an
+  export. That is a question about what the criterion means, not merely a
+  missing view.
+* **Update**: [Check a decomposition for
+  holes](/practices/check-a-decomposition-for-holes.md) gains **the mirror**.
+  Its existing form is M4-E's, ask what PRODUCES each task's input. The output
+  form is M4-D's: ask what CONSUMES it. M4-D built a Save that is gated, tested
+  and round-tripping, and nothing reads what it saved. **A decomposition can be
+  complete on inputs and still leave a criterion unreachable**, because the
+  writing task passes all of its own tests.
+
 ## 2026-08-15 (ninth entry)
 
 * **Note**: **M4'S CLAUSE 1 IS CONFIRMED AT 93 SECONDS** against a 180-second

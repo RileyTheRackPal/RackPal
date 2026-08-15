@@ -72,6 +72,33 @@ exactly one derived document is a scope question for the user, not a hole to
 quietly fill. **The same audit produces both answers, and the scope list is what
 tells them apart.**
 
+# The mirror: ask what CONSUMES each task's output (M4, 2026-08-15)
+
+M4-E earned the input form of this practice: five tasks built a grid, its
+columns, its packs, its validation dots and its footer, and **not one of them
+created a port**. Ask what produces each task's input.
+
+**The same milestone then produced the mirror, and it is the more expensive
+one.** M4-D built the builder's Save: a real command writing the authored body
+into `RackDocument.templates`, gated, tested, round-tripping. **Nothing reads
+what it saved.** The palette is built from `buildSeedCatalog()` and its map is
+`late final`, never extended, so a template authored in the builder can never be
+placed in a rack. That is the first half of M4's clause 2, and it belongs to none
+of the milestone's nineteen issues.
+
+**A decomposition can be complete on inputs and still leave a criterion
+unreachable**, because the two questions are asked of different ends of the same
+task. Walk both:
+
+* for each task, **what produces its input?** (M4-E's form)
+* for each task that WRITES something, **what reads it?** If the answer is "a
+  later milestone" that is a plan; if the answer is "nothing", that is a hole
+  and it will not announce itself, because the writing task passes all its own
+  tests.
+
+The tell for the output form is a task list whose verbs are *save*, *record*,
+*emit* or *store* with no sibling that displays, resolves or places the result.
+
 # Citations
 
 [1] Canon §11.24.7 (DR-025), the #587 precedent
