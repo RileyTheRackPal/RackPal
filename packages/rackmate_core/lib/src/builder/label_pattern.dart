@@ -267,8 +267,21 @@ LabelPatternResult parseLabelPattern(String source) {
       );
     }
 
+    // EVERY TOKEN REPAIR IS A WHOLE-PATTERN REPAIR, and the substitution
+    // happens here rather than inside `_parseToken` so it cannot be
+    // forgotten at one of the six call sites. The class docstring
+    // promises a chip that is "the WHOLE pattern with the fix applied,
+    // not a fragment"; an earlier draft returned bare `{n}` from three
+    // of those sites, so the promise was true of half the errors. A
+    // stated difference the code does not make is worse than none.
     final body = source.substring(i + 1, close);
-    final result = _parseToken(body, i, close + 1, fail);
+    final result = _parseToken(
+      body,
+      i,
+      close + 1,
+      (from, to, message, token) =>
+          fail(from, to, message, source.replaceRange(from, to, token)),
+    );
     if (result is LabelPatternFailure) return result;
 
     flush();
@@ -283,6 +296,10 @@ LabelPatternResult parseLabelPattern(String source) {
 /// One `{...}` body. [from] and [to] are the token's span in the whole
 /// source, including the braces, so every failure underlines the token
 /// rather than an offset inside it.
+///
+/// [fail]'s fourth argument is THE REPLACEMENT TOKEN, not a whole
+/// pattern: the caller substitutes it into the source. Every site below
+/// therefore names only what this token should have been.
 Object _parseToken(
   String body,
   int from,
@@ -305,12 +322,31 @@ Object _parseToken(
   if (body.contains(',')) {
     final values = body.split(',');
     if (values.any((v) => v.isEmpty)) {
-      final cleaned = values.where((v) => v.isNotEmpty).join(',');
+      final kept = values.where((v) => v.isNotEmpty).toList();
+      // WHAT THE REPAIR IS DEPENDS ON WHAT SURVIVES, and the one-value
+      // case is the interesting one. `{L,}` cleaned naively gives `{L}`,
+      // WHICH DOES NOT PARSE: a braced token with no comma is read as a
+      // token name, so `{L}` would come back as "L is not a pattern
+      // token" and the chip would hand the user a second error. It
+      // cannot be fixed by making `{L}` a one-value set either, because
+      // then `{x}` stops being a typo and starts being a literal, which
+      // costs the designed error the whole token vocabulary depends on.
+      //
+      // A set of one IS just a literal, so that is what the chip
+      // offers: `IN {L,}` repairs to `IN L`. Found by widening the
+      // "every chip parses" loop from two cases to all twelve.
+      final repair = switch (kept.length) {
+        0 => '{n}',
+        1 => kept.single,
+        _ => '{${kept.join(',')}}',
+      };
       return fail(
         from,
         to,
-        'This set has an empty value.',
-        cleaned.isEmpty ? '{n}' : '{$cleaned}',
+        kept.length == 1
+            ? 'A set needs at least two values. One value is just text.'
+            : 'This set has an empty value.',
+        repair,
       );
     }
     return _Cycle(values);

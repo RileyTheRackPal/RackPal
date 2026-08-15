@@ -154,7 +154,7 @@ void main() {
       expect(f.span, '{x}');
       expect(f.message, contains('"x" is not a pattern token'));
       expect(f.message, contains('{n}'));
-      expect(f.repair, '{n}');
+      expect(f.repair, 'IN {n}', reason: 'the chip is the WHOLE pattern');
     });
 
     test('an unknown token starting with r suggests {rev}', () {
@@ -164,7 +164,7 @@ void main() {
     test('an empty {} suggests the commonest token', () {
       final f = expandFail('IN {}');
       expect(f.span, '{}');
-      expect(f.repair, '{n}');
+      expect(f.repair, 'IN {n}');
     });
 
     test('{n:} says the width is missing', () {
@@ -198,10 +198,19 @@ void main() {
       expect(f.message, contains('not both'));
     });
 
-    test('an empty value in a set is refused with the set repaired', () {
-      final f = expandFail('{L,}');
+    test('a set of one is just text, and the chip says so', () {
+      // `{L,}` cannot repair to `{L}`: a braced token with no comma is
+      // read as a token NAME, so the chip would hand back a second
+      // error. Widening the "every chip parses" loop is what found it.
+      final f = expandFail('IN {L,}');
+      expect(f.message, contains('at least two values'));
+      expect(f.repair, 'IN L');
+    });
+
+    test('a set with an inner empty value keeps the set', () {
+      final f = expandFail('{L,,R}');
       expect(f.message, contains('empty value'));
-      expect(f.repair, '{L}');
+      expect(f.repair, '{L,R}');
     });
 
     test('the span is always a real range into the source', () {
@@ -214,11 +223,28 @@ void main() {
       }
     });
 
-    test('every repair chip itself parses', () {
-      // A chip that produces a second error is worse than no chip. Only
-      // whole-pattern repairs are checked; fragment repairs are the
-      // token to substitute and are asserted above.
-      for (final bad in ['HDMI {n:2', 'HDMI n}']) {
+    test('EVERY repair chip is a whole pattern, and every one parses', () {
+      // A chip that produces a second error is worse than no chip, and
+      // a chip that is a fragment cannot be applied in one click. Both
+      // properties are checked over every designed error rather than
+      // over the two that happened to be whole patterns: an earlier
+      // draft returned a bare `{n}` from three sites while the class
+      // docstring promised a whole pattern, and a narrower loop was
+      // what let the two disagree.
+      for (final bad in [
+        'HDMI {n:2',
+        'HDMI n}',
+        'IN {x}',
+        'IN {}',
+        '{n:}',
+        '{n:x}',
+        '{n:0}',
+        '{n@}',
+        '{n@0}',
+        '{n@2:2}',
+        '{L,}',
+        '{reverse}',
+      ]) {
         final f = expandFail(bad);
         expect(
           parseLabelPattern(f.repair),
