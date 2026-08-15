@@ -7,8 +7,8 @@ TemplateBody _body() =>
 
 PortDef _port(
   String key, {
-  String? bank,
   required String order,
+  String? bank,
   String? designatorHint,
 }) => PortDef(
   key: PortKey(key),

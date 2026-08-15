@@ -765,6 +765,7 @@ final class AppShellState extends State<AppShell>
   /// authors a NEW template rather than forking a seeded one.
   Future<void> _openDeviceBuilder() async {
     final session = _services.session;
+    final doc = session.controller.doc;
     await showDeviceBuilder(
       context,
       template: TemplateBody(
@@ -773,6 +774,13 @@ final class AppShellState extends State<AppShell>
         displayName: '',
       ),
       actions: buildDeviceBuilderActions(controller: session.controller),
+      // THE PROJECT'S OWN REGISTRIES AND FORMAT, so the port grid prints
+      // `HDMI Type A` where the model holds `conn.hdmi_a`, and previews
+      // the designators THIS project would allocate rather than a default
+      // project's (CR-042). Read once at open: the builder edits a
+      // template and cannot change either of these.
+      registries: doc.registries,
+      portDesignatorFormat: doc.settings.portDesignatorFormat,
     );
   }
 
