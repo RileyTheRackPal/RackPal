@@ -216,7 +216,8 @@ QuickAddResult parseQuickAdd(Registries registries, String source) {
     );
   }
 
-  ConnectorTypeId? connector;
+  ConnectorTypeId? namedConnector;
+  ConnectorTypeId? inheritedConnector;
   SignalFamilyId? family;
   PortDirection? direction;
   Face? face;
@@ -304,8 +305,19 @@ QuickAddResult parseQuickAdd(Registries registries, String source) {
       unresolved.add(token);
       continue;
     }
+    // A NAMED CONNECTOR AND AN INHERITED ONE ARE TRACKED SEPARATELY, and
+    // the reason is a defect the render/parse round-trip found. The
+    // first draft wrote `connector ??= connectorHit?.id ??
+    // familyHit?.defaultConnector`, which lets the FIRST token's family
+    // DEFAULT occupy the slot, so no later token could ever name a
+    // connector: `16 speaker euro2 out` resolved to a binding post,
+    // because `speaker` claimed the slot before `euro2` was read.
+    //
+    // DR-060 §11.59.4's rule is "a default loses to a named one", and
+    // that draft applied it WITHIN a token and not ACROSS tokens.
     family ??= familyHit?.id;
-    connector ??= connectorHit?.id ?? familyHit?.defaultConnector;
+    namedConnector ??= connectorHit?.id;
+    inheritedConnector ??= familyHit?.defaultConnector;
   }
 
   if (unresolved.isNotEmpty) {
@@ -323,6 +335,7 @@ QuickAddResult parseQuickAdd(Registries registries, String source) {
   // be unknown, because unknown is a real state a port can hold, but a
   // command with neither a connector nor a family has not said what to
   // add and is far more likely a typo than an intention.
+  final connector = namedConnector ?? inheritedConnector;
   if (connector == null && family == null) {
     return fail(
       first.start,
@@ -432,6 +445,203 @@ String uniqueBankName(
     if (!taken.contains(candidate)) return candidate;
   }
 }
+
+/// Renders a plan back into a command line.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// THE OTHER HALF OF THE BIDIRECTIONAL BINDING (M4-G3, docs/06 §4.1)
+/// ═════════════════════════════════════════════════════════════════════
+/// Command mode and field mode are "bound bidirectionally", and typing
+/// in command mode updating the fields is the easy direction: that is
+/// just [parseQuickAdd]. THIS is the hard one, and it is what makes the
+/// DSL teach itself: a user who reaches for the dropdowns because they
+/// do not know the grammar watches the command line assemble itself
+/// from their clicks, and learns the words by seeing them written.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// IT ROUND-TRIPS, AND A GATE HOLDS IT TO THAT
+/// ═════════════════════════════════════════════════════════════════════
+/// `parseQuickAdd(registries, renderQuickAdd(registries, plan))` yields
+/// a plan equal to the original on every field. Without that, editing a
+/// dropdown could silently change something the user did not touch,
+/// which is worse than not offering the control at all.
+///
+/// It is NOT byte-identical to what the user typed, and it does not try
+/// to be. `16 hdmi in` renders as `16 hdmi in rear`, because the plan
+/// carries the face the parser inferred, and a field-mode edit must
+/// write out what the fields SHOW. Preserving the original spelling
+/// would need the plan to remember its own source text, which is a
+/// second representation of the same fact and the thing this pair
+/// exists to avoid.
+String renderQuickAdd(Registries registries, QuickAddPlan plan) {
+  final parts = <String>['${plan.quantity}'];
+
+  // THE FAMILY TOKEN COMES FIRST WHEN THERE IS ONE, because a family
+  // carries a connector and the reverse is not true (DR-060 §11.59.4).
+  // Rendering the connector first would produce a command whose second
+  // token had to override the first, which parses correctly and reads
+  // like an argument.
+  final family = plan.family == null
+      ? null
+      : registries.signalFamilies[plan.family];
+  if (family != null) {
+    parts.add(_familyToken(family));
+  }
+
+  // The connector is written only when it is NOT what the family would
+  // have given anyway: `16 hdmi in` rather than `16 hdmi hdmi in`. When
+  // there is no family it is the only type token there is.
+  final connector = plan.connector == null
+      ? null
+      : registries.connectorTypes[plan.connector];
+  if (connector != null && connector.id != family?.defaultConnector) {
+    parts.add(_connectorToken(connector));
+  }
+
+  if (plan.passthrough) {
+    parts.add('pass');
+  } else if (plan.direction case final d?) {
+    parts.add(_kDirections.entries.firstWhere((e) => e.value == d).key);
+  }
+
+  if (plan.bothFaces) {
+    parts.add('both');
+  } else {
+    parts.add((plan.face ?? Face.rear).name);
+  }
+
+  if (plan.labelPattern case final p?) {
+    parts.add('"${p.source}"');
+  }
+  if (plan.bankName case final b?) {
+    parts.add('@$b');
+  }
+
+  return parts.join(' ');
+}
+
+/// The shortest token that resolves back to [family].
+///
+/// THE FIRST ALIAS, falling back to `shortTag` then the id tail, which
+/// is `deriveBankName`'s rule in lower case and for the same reason: the
+/// alias list's head is the trade's own spelling. `displayName` is NOT
+/// in this chain even though the resolver accepts it, because
+/// `HDMI 2.0 (18 Gbps)` is not something a person types on a command
+/// line and rendering it would teach the wrong vocabulary.
+String _familyToken(SignalFamilyDef family) {
+  if (family.aliases.isNotEmpty) return family.aliases.first.toLowerCase();
+  if (family.shortTag case final t? when t.isNotEmpty) return t.toLowerCase();
+  return _tail(family.id.v).toLowerCase();
+}
+
+String _connectorToken(ConnectorTypeDef connector) =>
+    connector.aliases.isNotEmpty
+    ? connector.aliases.first.toLowerCase()
+    : _tail(connector.id.v).toLowerCase();
+
+/// One inline completion offer.
+@immutable
+final class QuickAddCompletion {
+  const QuickAddCompletion({required this.token, required this.suffix});
+
+  /// The whole completed token, for a surface that wants to name it.
+  final String token;
+
+  /// What accepting inserts at the caret. Never empty: a completion
+  /// that adds nothing is not offered, because ghost text showing the
+  /// word already typed is noise that teaches nothing.
+  final String suffix;
+}
+
+/// The completion for the token the caret sits at the end of, or null.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// AUTOCOMPLETE IS NOT OPTIONAL, AND THE REASON IS NOT CONVENIENCE
+/// ═════════════════════════════════════════════════════════════════════
+/// AC-050/A2.4, restated by board #216: the discoverability argument for
+/// shipping a DSL at all is void without it, so a DSL shipped without
+/// autocomplete has not shipped. A user who has seen the tool once, who
+/// is exactly the population M4's exit criterion names, does not know
+/// that `hdbt` exists. This is how they find out.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// THE CANDIDATE ORDER IS TOTAL, BECAUSE A GHOST THAT MOVES IS WORSE
+/// THAN NO GHOST
+/// ═════════════════════════════════════════════════════════════════════
+/// Determinism is an invariant here as everywhere else: the same prefix
+/// must offer the same word every time, or the suggestion cannot be
+/// learned. Candidates are therefore sorted SHORTEST FIRST and
+/// alphabetically within a length, so `in` beats `input` and the chain
+/// ends in a unique string.
+///
+/// Shortest-first is also the right ergonomics: the short spellings are
+/// the ones the grammar is built from, and a user typing `i` wants `in`
+/// rather than the first entry of a map iteration.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// WHAT IS DELIBERATELY NOT COMPLETED
+/// ═════════════════════════════════════════════════════════════════════
+///  * THE QUANTITY. It is a number the user is choosing, not a word
+///    they are recalling.
+///  * ANYTHING INSIDE QUOTES. A label is the user's own vocabulary and
+///    a tool guessing at it is a tool fighting them.
+///  * `@bank` NAMES. Completing them needs the `TemplateBody`, and a
+///    bank list is a different offer from a token list: it is existing
+///    data rather than grammar. Named here rather than half-built.
+QuickAddCompletion? quickAddCompletion(
+  Registries registries,
+  String text,
+  int caret,
+) {
+  if (caret < 0 || caret > text.length) return null;
+
+  // Only at the END of a token: completing mid-word would rewrite text
+  // the user is standing in the middle of.
+  if (caret < text.length && text[caret] != ' ') return null;
+
+  final tokens = _lex(text);
+  if (tokens.isEmpty) return null;
+
+  final at = tokens.where((t) => t.end == caret).firstOrNull;
+  if (at == null || at.quoted) return null;
+  if (identical(at, tokens.first)) return null;
+  if (at.text.isEmpty || at.text.startsWith('@')) return null;
+
+  final prefix = at.text.toLowerCase();
+  final candidates =
+      <String>{
+            ..._kDirections.keys,
+            ..._kFaces.keys,
+            for (final f in registries.signalFamilies.values) ...[
+              ...f.aliases,
+              if (f.shortTag case final t?) t,
+              _tail(f.id.v),
+            ],
+            for (final c in registries.connectorTypes.values) ...[
+              ...c.aliases,
+              _tail(c.id.v),
+            ],
+          }
+          .map((c) => c.toLowerCase())
+          .where((c) => c.startsWith(prefix))
+          .toList()
+        ..sort((a, b) {
+          final byLength = a.length.compareTo(b.length);
+          return byLength != 0 ? byLength : a.compareTo(b);
+        });
+
+  for (final candidate in candidates) {
+    if (candidate.length > prefix.length) {
+      return QuickAddCompletion(
+        token: candidate,
+        suffix: candidate.substring(prefix.length),
+      );
+    }
+  }
+  return null;
+}
+
+String _tail(String id) => id.contains('.') ? id.split('.').last : id;
 
 /// Turns a plan into the commands that realise it, against [body].
 ///

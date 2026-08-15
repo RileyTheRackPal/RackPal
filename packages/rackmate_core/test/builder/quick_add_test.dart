@@ -93,6 +93,27 @@ void main() {
       );
     });
 
+    test("A NAMED CONNECTOR BEATS AN EARLIER TOKEN'S FAMILY DEFAULT", () {
+      // Found by the render/parse round-trip, not by reading. The first
+      // draft merged with `connector ??= connectorHit?.id ??
+      // familyHit?.defaultConnector`, so the FIRST token's family
+      // DEFAULT occupied the slot and no later token could name a
+      // connector: this command resolved to a binding post, because
+      // `speaker` claimed it before `euro2` was read. DR-060 §11.59.4's
+      // rule is "a default loses to a named one" and that draft applied
+      // it within a token but not ACROSS tokens.
+      final p = planOk(r, '16 speaker euro2 out');
+      expect(p.family?.v, 'audio.speaker_lowz');
+      expect(p.connector?.v, 'conn.euroblock_2');
+    });
+
+    test('and order does not matter to that either', () {
+      final a = planOk(r, '16 speaker euro2 out');
+      final b = planOk(r, '16 euro2 speaker out');
+      expect(b.family, a.family);
+      expect(b.connector, a.connector);
+    });
+
     test('a bank name may contain spaces', () {
       expect(
         planOk(r, '16 hdmi out @Mirror Outputs').bankName,
@@ -474,6 +495,184 @@ void main() {
           'IEC Inputs',
         ]),
       );
+    });
+  });
+
+  group('rendering a plan back to a command (M4-G3)', () {
+    /// The property the bidirectional binding rests on: what field mode
+    /// writes, command mode reads back as the same thing.
+    void roundTrips(String command) {
+      final first = planOk(r, command);
+      final rendered = renderQuickAdd(r, first);
+      final second = planOk(r, rendered);
+
+      expect(second.quantity, first.quantity, reason: rendered);
+      expect(second.family, first.family, reason: rendered);
+      expect(second.connector, first.connector, reason: rendered);
+      expect(second.direction, first.direction, reason: rendered);
+      expect(second.bothFaces, first.bothFaces, reason: rendered);
+      expect(second.passthrough, first.passthrough, reason: rendered);
+      expect(second.bankName, first.bankName, reason: rendered);
+      expect(second.labels, first.labels, reason: rendered);
+      expect(
+        second.face ?? Face.rear,
+        first.face ?? Face.rear,
+        reason: rendered,
+      );
+    }
+
+    test('EVERY STEP OF THE THIRTEEN-STEP PATH ROUND-TRIPS', () {
+      // If any of these lost a field, a user who touched one dropdown
+      // would silently change something they never looked at.
+      for (final step in const <String>[
+        '16 hdmi in "HDMI IN {n:2}"',
+        '16 hdbt out "HDBT OUT {n:2}"',
+        '16 hdmi out "MIRROR {n:2}" @Mirror Outputs',
+        '16 ir35 out "IR OUT {n:2}"',
+        '1 rj45 in "LAN" @Control',
+        '1 de9 bi "RS-232" @Control',
+        '1 ir35 in "IR IN" @Control',
+        '1 c14 in',
+      ]) {
+        roundTrips(step);
+      }
+    });
+
+    test('and so do the awkward ones', () {
+      roundTrips('4 xlr in');
+      roundTrips('16 euro2 out');
+      roundTrips('24 rj45 pass both "{n:2}"');
+      roundTrips('16 hdmi');
+      roundTrips('8 5-15r out @Power');
+      roundTrips('16 euro2 out "ZONE {n@2} {L,R}"');
+    });
+
+    test('the family token is the trade spelling, not the display name', () {
+      // `HDMI 2.0 (18 Gbps)` resolves, but nobody types it, and putting
+      // it on the command line would teach the wrong vocabulary.
+      expect(renderQuickAdd(r, planOk(r, '16 hdmi in')), '16 hdmi in rear');
+    });
+
+    test('the connector is written only when it is not the default', () {
+      // `16 hdmi hdmi in` parses and reads like an argument.
+      expect(
+        renderQuickAdd(r, planOk(r, '16 hdmi in')),
+        isNot(contains('hdmi hdmi')),
+      );
+      // `c13` DOES differ from its family's default, so it is written.
+      expect(renderQuickAdd(r, planOk(r, '1 c13 out')), contains('c13'));
+    });
+
+    test('the family comes first, so no token has to override another', () {
+      final rendered = renderQuickAdd(r, planOk(r, '1 c13 out'));
+      expect(rendered.indexOf('iec'), lessThan(rendered.indexOf('c13')));
+    });
+
+    test('an unfamilied plan still names its connector', () {
+      expect(renderQuickAdd(r, planOk(r, '4 xlr in')), '4 xlr in rear');
+    });
+
+    test('it writes the face it INFERRED, which is the point', () {
+      // Field mode shows `rear`, so field mode must write `rear`. A
+      // render that omitted it would make the fields and the command
+      // line disagree about what will happen.
+      expect(renderQuickAdd(r, planOk(r, '16 hdmi in')), endsWith('rear'));
+    });
+  });
+
+  group('inline autocomplete (M4-G4, AC-050 / A2.4)', () {
+    /// Completes at the end of the string, which is where a typing user
+    /// is. The caret is passed explicitly because the offer depends on
+    /// it and a default would hide that.
+    QuickAddCompletion? complete(String text) =>
+        quickAddCompletion(r, text, text.length);
+
+    test('a prefix offers the rest of the word', () {
+      expect(complete('16 hdb')?.token, 'hdbt');
+      expect(complete('16 hdb')?.suffix, 't');
+    });
+
+    test('THE OFFER IS DETERMINISTIC AND SHORTEST-FIRST', () {
+      // A ghost that moves cannot be learned, and the short spellings
+      // are what the grammar is built from. `i` must be `in`, not
+      // whichever entry a map happened to yield first.
+      expect(complete('16 hdmi i')?.token, 'in');
+      for (var n = 0; n < 5; n++) {
+        expect(complete('16 hdmi i')?.token, 'in', reason: 'run $n');
+      }
+    });
+
+    test('it reaches vocabulary the user could not have guessed', () {
+      // The whole point: someone who has seen the tool once does not
+      // know `hdbaset` exists. AC-050's discoverability argument.
+      expect(complete('16 hdba')?.token, 'hdbaset');
+      expect(complete('1 c1')?.token, 'c13');
+      expect(complete('16 spd')?.token, 'spdif');
+    });
+
+    test('a completed word offers nothing, rather than offering itself', () {
+      // Ghost text repeating what is already typed is noise.
+      expect(complete('16 hdbt'), isNull);
+      expect(complete('16 hdmi in'), isNull);
+    });
+
+    test('THE QUANTITY IS NEVER COMPLETED', () {
+      // It is a number being chosen, not a word being recalled.
+      expect(complete('1'), isNull);
+      expect(complete('16'), isNull);
+    });
+
+    test('nothing inside quotes is completed', () {
+      // A label is the user's own vocabulary; a tool guessing at it is
+      // a tool fighting them.
+      expect(complete('16 hdmi in "HDMI IN'), isNull);
+      expect(complete('16 hdmi in "hdb'), isNull);
+    });
+
+    test("a bank name is not completed, which is M4-J's offer to make", () {
+      expect(complete('16 hdmi in @Contr'), isNull);
+    });
+
+    test('MID-WORD, THE CARET IS LEFT ALONE', () {
+      // '16 hdb out' — offset 5 sits between `d` and `b`, so the next
+      // character is not a space. Completing here would rewrite text
+      // the user is standing in the middle of.
+      expect(quickAddCompletion(r, '16 hdb out', 5), isNull);
+    });
+
+    test('but at the END of a token it completes, even mid-command', () {
+      // Offset 6 in the same string is the end of `hdb`, with more
+      // command after it. That is a real place to be typing.
+      expect(quickAddCompletion(r, '16 hdb out', 6)?.token, 'hdbt');
+      expect(quickAddCompletion(r, '16 hdb', 6)?.token, 'hdbt');
+    });
+
+    test('an unknown prefix offers nothing rather than a wrong guess', () {
+      expect(complete('16 zzz'), isNull);
+    });
+
+    test('completions never throw, on any prefix of a real command', () {
+      const full = '16 hdmi out "MIRROR {n:2}" @Mirror Outputs';
+      for (var i = 0; i <= full.length; i++) {
+        expect(
+          () => quickAddCompletion(r, full.substring(0, i), i),
+          returnsNormally,
+          reason: 'caret $i',
+        );
+      }
+    });
+
+    test('and every offer, once accepted, still parses or explains', () {
+      // A suggestion that produces a command the parser refuses would
+      // be teaching the wrong vocabulary.
+      for (final stem in ['16 hd', '16 rj', '1 c1', '16 hdmi i', '4 xl']) {
+        final offer = complete(stem);
+        expect(offer, isNotNull, reason: stem);
+        expect(
+          () => parseQuickAdd(r, '$stem${offer!.suffix}'),
+          returnsNormally,
+        );
+      }
     });
   });
 

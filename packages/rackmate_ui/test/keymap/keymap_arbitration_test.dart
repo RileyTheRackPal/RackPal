@@ -160,21 +160,29 @@ void main() {
       // row would shadow a framework default (see the fifteen below) to
       // reimplement what it does correctly.
       //
-      // M4-G OPENS A SIXTH SCOPE AND PUTS ONE ROW IN IT: the device
-      // builder's Quick Add `Enter`. ONE, and the smallness is the
-      // finding rather than an omission. docs/06 §9.1's whole
-      // thirteen-step path is built from a text field and this single
-      // key; everything else the bar does is typing. A `Tab` row was NOT
-      // added for the same reason M3-C declined one, and autocomplete
-      // (M4-G4) will need one, which is a row and an argument then
-      // rather than a guess now.
+      // M4-G OPENS A SIXTH SCOPE AND PUTS TWO ROWS IN IT: the device
+      // builder's Quick Add `Enter` and its autocomplete right-arrow.
+      // TWO, and the smallness is the finding rather than an omission.
+      // docs/06 §9.1's whole thirteen-step path is built from a text
+      // field and these two keys; everything else the bar does is
+      // typing.
+      //
+      // THE SECOND ROW WAS MEANT TO BE `Tab` AND meaningDrift REFUSED
+      // IT. The schematic already spends `Tab` on "next candidate pin
+      // for the wire in flight", and advancing THROUGH offers is close
+      // to the opposite of taking one, so no shared label was honest.
+      // Right-arrow is fish and zsh-autosuggestions' accept, and it
+      // shares a label with `pinCaretRight` without straining, because
+      // the caret does move right. It shadows caret movement, so it is
+      // gated on a suggestion existing through a real `Action` whose
+      // `isActionEnabled` is false when there is none.
       expect(keyBindingsIn(KeyScope.global), hasLength(7));
       expect(keyBindingsIn(KeyScope.rack), hasLength(16));
       expect(keyBindingsIn(KeyScope.schematic), hasLength(24));
       expect(keyBindingsIn(KeyScope.structure), hasLength(2));
-      expect(keyBindingsIn(KeyScope.builder), hasLength(1));
+      expect(keyBindingsIn(KeyScope.builder), hasLength(2));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(51));
+      expect(kKeymap, hasLength(52));
     });
   });
 
@@ -507,7 +515,7 @@ void main() {
   });
 
   group('the framework defaults this app takes keys away from', () {
-    testWidgets('are exactly these sixteen, and no more', (tester) async {
+    testWidgets('are exactly these seventeen, and no more', (tester) async {
       // A REPORT WITH TEETH, NOT A FAILURE. `WidgetsApp` installs `Enter`
       // -> ActivateIntent, `Esc` -> DismissIntent, the arrows ->
       // DirectionalFocusIntent and the page keys -> ScrollIntent at the
@@ -517,8 +525,9 @@ void main() {
       // Each one is deliberate and each is argued where it is handled —
       // the rack canvas's caret, its compaction Enter, the universal
       // cancel, the schematic's whole keyboard connect route since M2-F,
-      // and since M4-G the builder's Quick Add commit. What must not
-      // happen is a SEVENTEENTH arriving unnoticed: an
+      // and since M4-G the builder's Quick Add commit and its
+      // autocomplete. What must not happen is an EIGHTEENTH arriving
+      // unnoticed: an
       // ungated binding on a framework chord does not merely shadow a
       // default, it took `Backspace` away from six text fields for nine
       // days (see `_GatedAction`).
@@ -575,6 +584,18 @@ void main() {
           // needed a click has failed M4's exit criterion regardless of
           // what it adds.
           KeyBindingId.quickAddCommit,
+          // M4-G4, AC-050/A2.4. THE SEVENTEENTH, and it shadows CARET
+          // MOVEMENT inside a text field, which is a key the user needs
+          // several times per command rather than once. Same remedy as
+          // the schematic's gated rows: a real `Action` whose
+          // `isActionEnabled` is false when no completion is offered.
+          // The bar narrows it further and offers ONLY at the end of the
+          // line, so what is drawn in grey is exactly what the key
+          // takes. A widget test presses right-arrow with nothing
+          // suggested and asserts the text is UNCHANGED and focus is
+          // KEPT, which is what tells this apart from a binding that
+          // swallows the key silently.
+          KeyBindingId.quickAddComplete,
         ]),
         reason:
             'a binding that shadows a WidgetsApp default must be gated on '

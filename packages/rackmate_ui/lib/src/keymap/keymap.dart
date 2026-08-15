@@ -194,6 +194,7 @@ enum KeyBindingId {
 
   // --- builder (M4-G) -------------------------------------------------
   quickAddCommit,
+  quickAddComplete,
   commitWireChained,
   nextCandidatePin,
   previousCandidatePin,
@@ -405,6 +406,20 @@ final class CommitWireIntent extends Intent {
 /// is in flight in exactly the sense a half-drawn wire is.
 final class QuickAddCommitIntent extends Intent {
   const QuickAddCommitIntent();
+}
+
+/// Accept Quick Add's inline completion (`→`, docs/06 §4.1).
+///
+/// **ITS ACTION MUST BE DISABLED WHEN THERE IS NO COMPLETION, AND THAT
+/// IS NOT AN OPTIMISATION.** Right-arrow MOVES THE CARET in a text
+/// field. A `CallbackAction` consumes the key regardless of what its
+/// body does, so a bar that bound it unconditionally would stop a user
+/// walking through their own command, which is the exact failure
+/// `keymap_arbitration_test.dart` demands a real `Action` with
+/// `isActionEnabled` for. The schematic's two `Tab` rows are gated on a
+/// wire being in flight for the same reason and it is the same argument.
+final class QuickAddCompleteIntent extends Intent {
+  const QuickAddCompleteIntent();
 }
 
 /// Move the pin caret to the next/previous candidate while a wire is in
@@ -1116,6 +1131,35 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         'types, one meaning.',
   ),
   KeyBinding(
+    id: KeyBindingId.quickAddComplete,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.arrowRight,
+    label: 'Caret right',
+    intent: QuickAddCompleteIntent(),
+    source: 'docs/06 §4.1 · AC-050/A2.4',
+    note:
+        'AUTOCOMPLETE IS NOT OPTIONAL (AC-050/A2.4, board #216): the '
+        'discoverability argument for shipping a DSL at all is void '
+        "without it, and the population M4's exit criterion names is "
+        '"a user who has seen the tool once", who does not know `hdbt` '
+        'exists. '
+        'IT IS NOT `Tab`, AND THIS GATE IS WHY. `Tab` was the design the '
+        'user picked and meaningDrift refused it: the schematic already '
+        'spends `Tab` on "next candidate pin for the wire in flight", '
+        'and advancing THROUGH offers is close to the opposite of taking '
+        'one, so no shared label was honest. Right-arrow is the accept '
+        'in fish and zsh-autosuggestions, so it is a convention rather '
+        'than an invention, and it shares a label with pinCaretRight '
+        'WITHOUT STRAINING: the caret moves right, through the '
+        'suggestion when one is showing. Settled by the user on '
+        '2026-08-15 after the collision was put to them. '
+        'GATED ON AN OFFER EXISTING AND ON THE CARET BEING AT THE END OF '
+        'THE LINE, through a real Action whose isActionEnabled is false '
+        'otherwise. Right-arrow MOVES THE CARET in a text field, so a '
+        'binding that swallowed it would stop a user navigating their '
+        'own command; what you can see is exactly what the key takes.',
+  ),
+  KeyBinding(
     id: KeyBindingId.commitWire,
     scope: KeyScope.schematic,
     trigger: LogicalKeyboardKey.enter,
@@ -1209,7 +1253,13 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     id: KeyBindingId.pinCaretRight,
     scope: KeyScope.schematic,
     trigger: LogicalKeyboardKey.arrowRight,
-    label: 'Caret to the pin on the right',
+    // ONE LABEL WITH THE BUILDER'S quickAddComplete, DR-011.6's shape
+    // applied to a second key. The generalisation is honest: in the
+    // schematic the caret moves to the pin on the right, in Quick Add
+    // it moves right through a ghosted suggestion. meaningDrift is
+    // what holds the two together, and it REFUSED the first draft of
+    // this pair when the builder's row was `Tab`.
+    label: 'Caret right',
     intent: MovePinCaretIntent(AxisDirection.right),
     source: 'docs/05 §7',
   ),
