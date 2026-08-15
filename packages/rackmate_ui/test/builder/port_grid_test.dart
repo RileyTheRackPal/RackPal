@@ -992,6 +992,60 @@ void main() {
   });
 
   group('the keyboard, which is how this grid is actually used', () {
+    testWidgets('ENTER COMMITS AND MOVES DOWN, so a column of labels is '
+        'typed without ever reaching for the mouse (M4-F0)', (tester) async {
+      final harness = await _pump(
+        tester,
+        template: _saveable()
+          ..ports.addAll([
+            _port('p1', order: 'a0000'),
+            _port('p2', order: 'a0001'),
+            _port('p3', order: 'a0002'),
+          ]),
+      );
+
+      // One cell picked with the mouse, and then the hand stays home.
+      await tester.enterText(find.text('P1'), 'HDMI 1');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      // No finder between the two: whatever Enter moved to is what this
+      // types into, which is the only way to test the ROUTE rather than
+      // the destination.
+      tester.testTextInput.enterText('HDMI 2');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      tester.testTextInput.enterText('HDMI 3');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(
+        body.ports.map((p) => p.label),
+        ['HDMI 1', 'HDMI 2', 'HDMI 3'],
+        reason:
+            'Enter landed in the LABEL cell of the next row down each '
+            'time; had it stayed put, the last write would win and the '
+            'first two rows would still read P1 and P2',
+      );
+    });
+
+    testWidgets('Enter on the last row commits rather than losing what was '
+        'typed on the way to nowhere', (tester) async {
+      final harness = await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('p1', order: 'a0000')),
+      );
+
+      await tester.enterText(find.text('P1'), 'ONLY');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.single.label, 'ONLY');
+    });
+
     testWidgets('Tab walks the row left to right and never lands on the '
         'section rail', (tester) async {
       // `drive the keyboard, not the finder`. The last surface this file

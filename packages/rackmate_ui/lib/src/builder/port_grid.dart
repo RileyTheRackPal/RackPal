@@ -396,6 +396,14 @@ class _PortGridState extends State<PortGrid> {
                                     _selection = _selection.toggle(key);
                                   }),
                                   onTapRow: (key) => _onRowTap(key, visible),
+                                  // NO `setState`. Nothing on screen is
+                                  // drawn from the focused column, and a
+                                  // rebuild of a 68-row grid on every
+                                  // Tab would be a cost paid for no
+                                  // pixel. F1 reads it at the moment
+                                  // Ctrl+D is pressed.
+                                  onColumnFocused: (id) =>
+                                      _selection = _selection.withColumn(id),
                                 ),
                         ),
                       ],
@@ -584,6 +592,7 @@ class _Bands extends StatelessWidget {
     required this.onToggleBand,
     required this.onToggleRow,
     required this.onTapRow,
+    required this.onColumnFocused,
   });
 
   final PortTable table;
@@ -604,6 +613,7 @@ class _Bands extends StatelessWidget {
   final ValueChanged<String?> onToggleBand;
   final ValueChanged<String> onToggleRow;
   final ValueChanged<String> onTapRow;
+  final ValueChanged<PortColumnId> onColumnFocused;
 
   @override
   Widget build(BuildContext context) => CustomScrollView(
@@ -652,6 +662,7 @@ class _Bands extends StatelessWidget {
               selected: selection.contains(band.rows[index].port.key.v),
               onToggleRow: onToggleRow,
               onTapRow: onTapRow,
+              onColumnFocused: onColumnFocused,
             ),
           ),
       ],
@@ -771,6 +782,7 @@ class _PortRow extends StatelessWidget {
     required this.selected,
     required this.onToggleRow,
     required this.onTapRow,
+    required this.onColumnFocused,
     super.key,
   });
 
@@ -815,6 +827,10 @@ class _PortRow extends StatelessWidget {
 
   /// A click in the row's BODY, which reads its own modifiers.
   final ValueChanged<String> onTapRow;
+
+  /// Which column focus just landed in, which is the half of DR-061's
+  /// selection that is not rows. `Fill down` (F1) is what reads it.
+  final ValueChanged<PortColumnId> onColumnFocused;
 
   PortDef get _port => row.port;
 
@@ -950,7 +966,23 @@ class _PortRow extends StatelessWidget {
                     width: portColumnWidth(id) * scale,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: _cell(context, id),
+                      // A LISTENER, NOT A STOP. `canRequestFocus: false`
+                      // and `skipTraversal: true` keep this node out of
+                      // the tab order and out of the directional
+                      // traversal Enter uses, so it reports which column
+                      // has focus without becoming a place focus can
+                      // land. Wrapping the cell rather than asking each
+                      // control to report is what makes the dropdowns and
+                      // the two menu cells answer as well as the text
+                      // boxes.
+                      child: Focus(
+                        canRequestFocus: false,
+                        skipTraversal: true,
+                        onFocusChange: (has) {
+                          if (has) onColumnFocused(id);
+                        },
+                        child: _cell(context, id),
+                      ),
                     ),
                   ),
               ],
@@ -1348,10 +1380,20 @@ class _ReadOnlyCell extends StatelessWidget {
 ///
 /// COMMITS ON BLUR AND ON ENTER, never per keystroke. That is docs/06
 /// §4.6's rule and it is also why the port commands do not coalesce: one
-/// committed value is one edit. Moving DOWN on Enter is spreadsheet
-/// ergonomics and belongs with M4-F (`#177`), which owns fill-down,
-/// multi-row edit and the rest of the Excel muscle memory; Tab already
-/// moves right through the row because the cells are in reading order.
+/// committed value is one edit. Tab moves right through the row because
+/// the cells are in reading order.
+///
+/// ENTER ALSO MOVES DOWN, which M4-E deferred to M4-F and M4-F0 (`#695`)
+/// now owns. It is Flutter's own directional traversal rather than a
+/// registry of focus nodes keyed by row and column: the cells are laid out
+/// in a grid, so "the nearest focusable below" already means "the same
+/// column, next row", and a registry would have to be kept in step with a
+/// virtualised list that builds and discards rows as it scrolls.
+///
+/// The one thing that costs: a row far enough off screen not to be built
+/// has no node to move to, so Enter on the last VISIBLE row stops there.
+/// Typing down a column keeps the next row inside the sliver's cache
+/// extent, which is the case this is for.
 class _TextCell extends StatefulWidget {
   const _TextCell({
     required this.value,
@@ -1445,6 +1487,25 @@ class _TextCellState extends State<_TextCell> {
           color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
+      // ═══════════════════════════════════════════════════════════════
+      // THE MOVE IS HERE AND NOT IN `onSubmitted`, WHICH IS TOO LATE
+      // ═══════════════════════════════════════════════════════════════
+      // `EditableText` calls `onEditingComplete` first and, when it is
+      // null, its default for a `done` action is to UNFOCUS the field.
+      // Only then does `onSubmitted` run. So a move written there has
+      // nothing to move from: the commit lands, focus is already gone,
+      // and directional traversal has no origin. Written that way first,
+      // and the route test below is what found it, because the second
+      // line of text went into the same cell as the first.
+      //
+      // COMMIT BEFORE MOVING, because the last row has nowhere to go and
+      // must still write what was typed. The blur a successful move
+      // causes calls `_commit` again and it returns early, so this costs
+      // one command rather than two.
+      onEditingComplete: () {
+        _commit();
+        FocusScope.of(context).focusInDirection(TraversalDirection.down);
+      },
       onSubmitted: (_) => _commit(),
     );
   }
