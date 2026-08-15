@@ -15,6 +15,7 @@
 // the RU-height clause of `_canSave` was `frontU >= 0`, which is a gate
 // that always passes.
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
@@ -347,6 +348,66 @@ void main() {
       await _type(tester, 'RU height (front) *', '0');
 
       expect(_saveEnabled(tester), isTrue);
+    });
+  });
+
+  group('Ctrl+Enter reaches Ports (docs/06 §9.1 step 5)', () {
+    // BUILT AFTER THE DRILL AND BECAUSE OF IT. §9.1 spends step 5 on
+    // this chord and the binding had never existed, so the 93-second
+    // run on 2026-08-15 reached for the MOUSE there. No test in this
+    // repository could have reported that; a person with a stopwatch
+    // did, on the first attempt, which is what M4-Q is for.
+    testWidgets('from the metadata form, with focus in a field', (
+      tester,
+    ) async {
+      await _pump(tester);
+      expect(find.byType(PortGrid), findsNothing);
+
+      await _type(tester, 'Display name *', 'HDMI Matrix 16x16');
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PortGrid), findsOneWidget);
+    });
+
+    testWidgets('IT DOES NOT WAIT FOR THE REQUIRED FIELDS (AC-049)', (
+      tester,
+    ) async {
+      // AC-049 took the metadata form off the critical path. A jump
+      // refused because a field is blank would put back the gate that
+      // ruling removed, on the one surface a stopwatch is pointed at.
+      await _pump(tester);
+      expect(_saveEnabled(tester), isFalse, reason: 'nothing filled in');
+
+      // FOCUS WITHOUT TYPING, so all three required fields stay empty.
+      // The chord is only in the focus path when focus is inside the
+      // builder, which is where a person tabbing through the form is.
+      await tester.showKeyboard(
+        find.widgetWithText(TextField, 'Display name *'),
+      );
+      await tester.pump();
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PortGrid), findsOneWidget);
+    });
+
+    testWidgets('and a BARE Enter in the form does not jump', (tester) async {
+      // `SingleActivator` matches modifiers exactly, which is what keeps
+      // this chord and Quick Add's bare Enter apart.
+      await _pump(tester);
+      await tester.showKeyboard(
+        find.widgetWithText(TextField, 'Display name *'),
+      );
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(find.byType(PortGrid), findsNothing);
     });
   });
 }

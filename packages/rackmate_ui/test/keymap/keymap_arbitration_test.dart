@@ -160,12 +160,17 @@ void main() {
       // row would shadow a framework default (see the fifteen below) to
       // reimplement what it does correctly.
       //
-      // M4-G OPENS A SIXTH SCOPE AND PUTS TWO ROWS IN IT: the device
-      // builder's Quick Add `Enter` and its autocomplete right-arrow.
-      // TWO, and the smallness is the finding rather than an omission.
-      // docs/06 §9.1's whole thirteen-step path is built from a text
-      // field and these two keys; everything else the bar does is
-      // typing.
+      // M4-G OPENS A SIXTH SCOPE. It holds THREE rows: Quick Add's
+      // `Enter`, its autocomplete right-arrow, and `Ctrl+Enter` to reach
+      // the Ports section. docs/06 §9.1's whole thirteen-step path is
+      // built from a text field and these three keys; everything else
+      // the bar does is typing.
+      //
+      // THE THIRD ARRIVED AFTER THE DRILL AND BECAUSE OF IT. §9.1 spends
+      // step 5 on `Ctrl+Enter` and the binding had never been built, so
+      // the 93-second run reached for the MOUSE there. No test in this
+      // repository could have reported that; a person with a stopwatch
+      // did, on the first try, which is what M4-Q exists for.
       //
       // THE SECOND ROW WAS MEANT TO BE `Tab` AND meaningDrift REFUSED
       // IT. The schematic already spends `Tab` on "next candidate pin
@@ -180,9 +185,9 @@ void main() {
       expect(keyBindingsIn(KeyScope.rack), hasLength(16));
       expect(keyBindingsIn(KeyScope.schematic), hasLength(24));
       expect(keyBindingsIn(KeyScope.structure), hasLength(2));
-      expect(keyBindingsIn(KeyScope.builder), hasLength(2));
+      expect(keyBindingsIn(KeyScope.builder), hasLength(3));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(52));
+      expect(kKeymap, hasLength(53));
     });
   });
 

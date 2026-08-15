@@ -195,6 +195,7 @@ enum KeyBindingId {
   // --- builder (M4-G) -------------------------------------------------
   quickAddCommit,
   quickAddComplete,
+  builderJumpToPorts,
   commitWireChained,
   nextCandidatePin,
   previousCandidatePin,
@@ -406,6 +407,24 @@ final class CommitWireIntent extends Intent {
 /// is in flight in exactly the sense a half-drawn wire is.
 final class QuickAddCommitIntent extends Intent {
   const QuickAddCommitIntent();
+}
+
+/// Jump to the builder's PORTS section (`Ctrl+Enter`, docs/06 §9.1 step 5).
+///
+/// **BUILT AFTER THE DRILL, BECAUSE THE DRILL FOUND IT MISSING.** §9.1's
+/// worked example spends step 5 on this chord, and the binding had never
+/// existed: `KeyScope.builder` held the Quick Add commit and its
+/// autocomplete and nothing else. The user timed the criterion at 93
+/// seconds and reached for the MOUSE at exactly this step, which is the
+/// one thing no test in this repository can report.
+///
+/// The rail was always reachable by `Tab`, deliberately (M4-D's
+/// `FocusTraversalGroup` note), so this is not a missing route: it is
+/// the difference between one chord and tabbing out of a form, across a
+/// rail, to the right tile. On a criterion measured with a stopwatch
+/// that difference is the whole point.
+final class JumpToPortsIntent extends Intent {
+  const JumpToPortsIntent();
 }
 
 /// Accept Quick Add's inline completion (`→`, docs/06 §4.1).
@@ -1129,6 +1148,26 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         'IS something in flight, exactly as a wire is and as a compaction '
         'preview is. Three surfaces, three Actions maps, three intent '
         'types, one meaning.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderJumpToPorts,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.enter,
+    primary: true,
+    label: 'Go to ports',
+    intent: JumpToPortsIntent(),
+    source: 'docs/06 §9.1 step 5',
+    note:
+        'THE DRILL FOUND THIS MISSING. §9.1 spends step 5 on Ctrl+Enter '
+        'and the binding had never been built, so the 93-second run '
+        'reached for the mouse there. `SingleActivator` matches '
+        'modifiers EXACTLY, so this does not fire while the bare Enter '
+        'above is committing a Quick Add command, and it shadows no '
+        'framework default because WidgetsApp binds bare Enter only. '
+        'It does NOT gate on the required fields being satisfied: '
+        'AC-049 took the metadata form off the critical path, so a jump '
+        'refused because a field is blank would reintroduce exactly the '
+        'gate that ruling removed.',
   ),
   KeyBinding(
     id: KeyBindingId.quickAddComplete,

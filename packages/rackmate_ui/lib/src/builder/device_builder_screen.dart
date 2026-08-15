@@ -63,6 +63,7 @@
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/builder/port_grid.dart';
+import 'package:rackmate_ui/src/keymap/keymap.dart';
 
 /// What the app does when the builder asks for something.
 ///
@@ -286,7 +287,34 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Column(
+  Widget build(BuildContext context) => Shortcuts(
+    // THE BUILDER'S SCOPE IS INSTALLED AT THE SCREEN, not only around
+    // Quick Add, because `Ctrl+Enter` has to work while focus is in the
+    // METADATA FORM: docs/06 §9.1 spends step 5 on it, from the
+    // designator prefix. The bar re-declares the same map lower down,
+    // which is harmless -- the nearer `Shortcuts` wins for the keys it
+    // has an enabled `Action` for, and this one only handles the jump.
+    shortcuts: keymapShortcuts(
+      KeyScope.builder,
+      platform: Theme.of(context).platform,
+    ),
+    child: Actions(
+      actions: <Type, Action<Intent>>{
+        JumpToPortsIntent: CallbackAction<JumpToPortsIntent>(
+          onInvoke: (_) {
+            // NOT GATED ON THE REQUIRED FIELDS. AC-049 took the metadata
+            // form off the critical path; a jump refused because a field
+            // is blank would put the gate back that ruling removed.
+            setState(() => _section = BuilderSection.ports);
+            return null;
+          },
+        ),
+      },
+      child: _body(context),
+    ),
+  );
+
+  Widget _body(BuildContext context) => Column(
     children: [
       _Header(
         session: _session,
