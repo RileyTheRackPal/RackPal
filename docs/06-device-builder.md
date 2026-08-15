@@ -247,6 +247,8 @@ Two column shapes also changed under measurement. `Dir` is a dropdown spelling a
 | Sort | click header | **View-only by default**, shown with a badge. `Commit sort order` is a separate explicit action, because sorting is destructive to symbol pin order |
 | Mirror bank | bank context menu | Duplicates a bank with direction flipped and the label prefix swapped IN↔OUT, the output side of a matrix in one click |
 
+**What "the selection" is (DR-061).** The table above describes it two ways, a column of cells with a top and a set of rows, and it is the second: **a contiguous run of rows plus whatever `Ctrl`+click has added or removed, and a column taken from whichever cell holds focus.** Click selects, `Shift`+click extends, `Ctrl`+click toggles, and the gutter checkbox toggles the same row in the same set, so the tick box M4-E ships **is** the selection rather than a second thing beside it. Not a 2D cell rectangle: of the fourteen rows above, nine want whole rows, three name their own columns, one wants a single column, and one is a single cell, so a rectangle would be read by `Fill down` alone.
+
 Reorder is semantic: it drives symbol pin order and panel auto-layout. Because `order` is a `FracIndex`, dragging one row rewrites one row.
 
 **Passthrough pairing.** With `isPassthrough` on, the grid gains the `Paired port` column and a **Pair front↔rear by order** action, and both write `TemplateBody.passthroughPairs: [{frontKey, rearKey, sameNet}]`, which now exists in `.rmdx` (CR-057). A passthrough template whose pairs are missing is a **load warning, not an error**. Paired ports share a net, so a trace resolves `Living Room jack → PP-1 F12 → PP-1 R12 → SW-1 P04` as one logical path.
