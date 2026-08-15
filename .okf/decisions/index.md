@@ -61,6 +61,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` ย
 * [DR-057, pitch is a refinement, not a prerequisite](dr-057-pitch-is-a-refinement-not-a-prerequisite.md) - sparse pitch was priced as a feature cut at 14 of 45 templates, off a derived document's pseudocode; every ruling says the layout flows from footprints, so the cut was never real.
 * [DR-058, a fork whose source cannot be seen is silent and counted](dr-058-an-unseen-source-is-silent-and-counted.md) - CR-062 rules what a corrected source shows and not what an invisible one does; no badge on the device, and the rollup reports the count, which is G4 applied to a comparison.
 * [DR-059, the device glyph ships](dr-059-the-device-glyph-ships.md) - a ยง8.3 scope amendment; the census found `accentColor` authored on 0 of 48 seeds and read by no renderer, so shipping it alone would have been hue alone on the sheet that gets photocopied.
+* [DR-060, Quick Add resolves family-first](dr-060-quick-add-resolves-family-first.md) - the alias table CR-058 built the DSL on was empty on all 55 families; the two registries now answer independently, because `c13` and `c14` share a family and disagree about the connector.
 
 # Not yet written up
 

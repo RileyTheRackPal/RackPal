@@ -16,6 +16,15 @@ unreachable if the gesture in front of the writer has no caller. Ask **"what
 does a person click"**, and follow that answer all the way down, rather than
 starting at the field and stopping at the first thing that assigns it.
 
+**And a third shape, which is the cheapest to miss: the field is reachable, and
+the DATA is not there.** `SignalFamilyDef.aliases` was modelled, persisted,
+byte-round-tripped and read by a picker's search key, and was **the empty list
+on all 55 seeded families**, behind a `_family()` helper that did not accept the
+parameter. Two board tasks and canon CR-058 all asserted it was populated. The
+grep that answers this one is not "what writes it" but **"what is in it"**: a
+count of non-empty values across the seed, which took a minute and unblocked a
+milestone task written from the opposite belief (DR-060 §11.59.2).
+
 # Why, with the evidence
 
 **All but the last were found the same way: by trying to use the thing.** Not by

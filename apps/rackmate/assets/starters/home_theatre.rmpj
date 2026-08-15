@@ -1161,7 +1161,9 @@
           "id": "conn.dp"
         },
         "conn.euroblock_2": {
-          "aliases": [],
+          "aliases": [
+            "euro2"
+          ],
           "displayName": "Euroblock 2-pole",
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 9000000,
@@ -1424,8 +1426,7 @@
         },
         "conn.rj45": {
           "aliases": [
-            "rj45",
-            "hdbt"
+            "rj45"
           ],
           "displayName": "RJ45 (8P8C)",
           "footprintHeightNm": 13000000,
@@ -2218,7 +2219,9 @@
           "shortTag": "PHNO"
         },
         "audio.spdif_coax": {
-          "aliases": [],
+          "aliases": [
+            "spdif"
+          ],
           "dashOverride": [
             12000,
             4000,
@@ -2249,7 +2252,10 @@
           "shortTag": "OPT"
         },
         "audio.speaker_cv": {
-          "aliases": [],
+          "aliases": [
+            "100v",
+            "cv"
+          ],
           "dashOverride": [
             10000,
             3000,
@@ -2266,7 +2272,10 @@
           "shortTag": "70V"
         },
         "audio.speaker_lowz": {
-          "aliases": [],
+          "aliases": [
+            "speaker",
+            "euro2"
+          ],
           "defaultConnector": "conn.binding_post",
           "defaultDirection": "source",
           "defaultTopology": "p2p",
@@ -2359,7 +2368,10 @@
           "shortTag": "DMX"
         },
         "ctl.ir_emitter": {
-          "aliases": [],
+          "aliases": [
+            "ir",
+            "ir35"
+          ],
           "defaultConnector": "conn.3_5mm_ts",
           "defaultDirection": "source",
           "defaultTopology": "p2p",
@@ -2417,7 +2429,10 @@
           "shortTag": "QS"
         },
         "ctl.rs232": {
-          "aliases": [],
+          "aliases": [
+            "rs232",
+            "de9"
+          ],
           "dashOverride": [
             6000,
             3000,
@@ -2476,7 +2491,10 @@
           "shortTag": "DAC"
         },
         "net.ethernet": {
-          "aliases": [],
+          "aliases": [
+            "lan",
+            "rj45"
+          ],
           "defaultConnector": "conn.rj45",
           "defaultDirection": "bidirectional",
           "defaultTopology": "star",
@@ -2542,7 +2560,14 @@
           "shortTag": "PoH"
         },
         "power.ac_branch": {
-          "aliases": [],
+          "aliases": [
+            "ac",
+            "5-15p",
+            "5-15r",
+            "5-20p",
+            "5-20r",
+            "l5-30p"
+          ],
           "defaultConnector": "conn.nema_5_15p",
           "defaultDirection": "source",
           "defaultTopology": "p2p",
@@ -2568,7 +2593,13 @@
           "shortTag": "HW"
         },
         "power.ac_iec": {
-          "aliases": [],
+          "aliases": [
+            "iec",
+            "c13",
+            "c14",
+            "c19",
+            "c20"
+          ],
           "dashOverride": [
             8000,
             3000,
@@ -2754,7 +2785,9 @@
           "shortTag": "DP"
         },
         "video.hdbaset": {
-          "aliases": [],
+          "aliases": [
+            "hdbt"
+          ],
           "dashOverride": [
             14000,
             4000
@@ -2769,7 +2802,9 @@
           "shortTag": "HBT"
         },
         "video.hdmi.1_4": {
-          "aliases": [],
+          "aliases": [
+            "hdmi14"
+          ],
           "defaultConnector": "conn.hdmi_a",
           "defaultDirection": "source",
           "defaultTopology": "p2p",
@@ -2780,7 +2815,10 @@
           "shortTag": "HD14"
         },
         "video.hdmi.2_0": {
-          "aliases": [],
+          "aliases": [
+            "hdmi",
+            "hdmi20"
+          ],
           "defaultConnector": "conn.hdmi_a",
           "defaultDirection": "source",
           "defaultTopology": "p2p",
@@ -2790,7 +2828,9 @@
           "shortTag": "HD20"
         },
         "video.hdmi.2_1": {
-          "aliases": [],
+          "aliases": [
+            "hdmi21"
+          ],
           "defaultConnector": "conn.hdmi_a",
           "defaultDirection": "source",
           "defaultTopology": "p2p",

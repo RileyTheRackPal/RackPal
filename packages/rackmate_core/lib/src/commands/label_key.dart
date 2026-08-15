@@ -277,6 +277,19 @@ enum LabelKey {
   addPort,
   removePort,
 
+  // QUICK ADD (builder/quick_add.dart), M4-G. Its own value on the same
+  // test the three above were split on: what the Edit menu has to say.
+  // One command creates SIXTEEN ports and often a bank, in one
+  // transaction, and "Undo Add Port" would name one row of what it is
+  // about to remove. A user who typed `16 hdbt out` and wants it back
+  // is looking for the whole line, not a port.
+  //
+  // The bank the command may also create rides under this key rather
+  // than one of its own: creating a bank nobody asked for and then
+  // making it separately undoable would let a user undo the ports and
+  // strand an empty bank behind them.
+  quickAddPorts,
+
   // ITS OWN VALUE BECAUSE IT IS NOT A CELL EDIT. `PortDef.key` is the
   // migration join (CR-051) and renaming one rewrites `renamedFrom` and
   // every passthrough pair that named it, so the Edit menu says what

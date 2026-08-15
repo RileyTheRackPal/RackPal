@@ -10617,6 +10617,187 @@ the glyph is not the category default, so every document already on disk still s
 reach `device_layer.dart` changes the elevation, regenerates four starters' goldens and must clear
 PAL-1, none of which belongs in a metadata form.
 
+### 11.59 DR-060 · Quick Add resolves family-first, because the family already names its connector
+
+**Settled on 2026-08-15**, during M4-G's census of the Quick Add DSL (board `#178`, `#214`). **This
+is not a §8.3 amendment**: roadmap §2 already names *"the pattern DSL with autocomplete and designed
+parse errors"*, and nothing here adds or removes scope. It has a ruling ID because it **reverses the
+lookup direction docs/06 §4.1 states** and settles a precedence question CR-058 never reached.
+
+**11.59.1 What the question was.** CR-058 rules that bare trade names become registry aliases and
+that *"the Quick Add DSL resolves against them"*, holding them on both `ConnectorTypeDef.aliases`
+and `SignalFamilyDef.aliases`. docs/06 §4.1 spells the resolution out one way round: a token yields
+a connector **and** a family, and `hdbt` and `rj45` are offered as the proof that the design works,
+*"a different family on the same connector, which is the entire point of keeping connector, family
+and direction orthogonal"*. What neither document says is **which table is consulted first**, which
+matters the moment one token appears in both.
+
+**11.59.2 The census, which found the premise unbuilt.** Board `#178` and `#214` both assert that
+`aliases` *"already exists on both `ConnectorTypeDef` and `SignalFamilyDef`"*. Measured against the
+tree:
+
+| | Finding |
+|---|---|
+| `ConnectorTypeDef.aliases` | **Populated.** 22 entries in `catalog/catalog_connectors.dart` |
+| `SignalFamilyDef.aliases` | **55 families, zero aliases.** The `_family()` helper at `catalog/seed_registries.dart:274` **does not accept an `aliases` parameter at all**, so the seed could not express one if it wanted to |
+| canon §6.3's alias table | Lists **connector aliases only**. §6.4, which specifies `SignalFamilyDef`, lists none |
+
+So the field exists and the data does not, and the orthogonality claim was **unresolvable by
+anything in the tree**: `hdbt` and `rj45` are both aliases on `conn.rj45`, and no table anywhere
+maps either token to a family. `a modelled field is not a reachable one`, for the fifth consecutive
+M4 task, and the fifth time the first useful hour went into reading rather than typing.
+
+**11.59.3 THE RESOLVER ALREADY EXISTS, AND ITS OWN DOCSTRING ASKED FOR THIS RULING.**
+`resolveSignalFamilyToken` (`structure/drop_line_planner.dart:707`, exported) implements DR-025
+§11.24.3's chain, `shortTag` then the id's own tail then `displayName`, and it is already shared by
+two callers: the Structure CSV `signal` column (M3-F/6) and `@signal=` (`#587`). Its docstring is
+explicit about the gap and about the remedy:
+
+> **`aliases` IS NOT IN THE CHAIN, AND DR-025 IS WHY.** The ruling names three steps and
+> `SignalFamilyDef.aliases` is not among them. That reads like an oversight next to
+> [resolveMediaToken], where aliases are the authority, and it is not: media aliases are the
+> user-extensible surface RJ-009 governs, and a signal family's are catalog data serving the
+> schematic. **Widening this chain is a ruling.**
+
+**This is that ruling, and the consequence is that Quick Add does not get a resolver of its own.**
+The same docstring already gives the reason, one paragraph up: *"Two copies would be two chances to
+disagree about what `hbt` means."* A third caller is exactly the case it was written against.
+
+**11.59.4 Ruling: aliases join the chain at its head, and THE TWO REGISTRIES ANSWER INDEPENDENTLY.**
+A Quick Add token yields a **pair**, and each half is resolved by its own registry:
+
+```text
+family    := aliases → shortTag → id tail → displayName          (may be UNKNOWN)
+connector := ConnectorTypeDef.aliases → id tail                  (may be UNKNOWN)
+            ELSE family.defaultConnector, when the family resolved
+direction := family.defaultDirection, unless the command states one
+```
+
+The family half is `resolveSignalFamilyToken` widened by one step; the connector half is new and
+belongs to Quick Add. **Aliases go at the head rather than the tail**, which is `resolveMediaToken`'s
+shape (*"`aliases` is the authority, then `shortTag`, then the id's own tail, then `displayName`"*)
+applied to the family for the same reason: an alias is authored deliberately and the other three are
+derivations that happen to collide usefully. `hbt`, `hdbaset` and `avoip` already landed through the
+later steps and still do; **`hdbt`, the spelling docs/06 §4.1 and §9.1 actually type, landed nowhere
+at all**, and that is what the new step is for.
+
+**A SINGLE FIRST-HIT-WINS CHAIN WAS THE FIRST DRAFT OF THIS CLAUSE AND `c13` KILLED IT.** A rack PDU
+has C13 **outlets** and a C14 **inlet**, and both are `power.ac_iec`, because CR-058 already ruled
+that inlet and outlet are `PortPowerSpec.role` rather than families of their own. Under one chain,
+`c13` would resolve family-first to `power.ac_iec` and take that family's `defaultConnector`, which
+is `conn.iec_c14`, and **every outlet on every power strip in the catalog would be authored with the
+wrong connector**, silently, on the panel drawing an electrician builds from. Resolving the two
+halves separately gives `c13` → `power.ac_iec` + `conn.iec_c13` and `c14` → `power.ac_iec` +
+`conn.iec_c14`, which is what the words mean. The general statement: **a family knows a *default*
+connector, and a default loses to a named one.**
+
+**Either half may come back UNKNOWN, and that is the feature.** `xlr` matches a connector and no
+family, because an XLR3 carries `audio.line_bal`, `audio.mic`, `audio.aes3` or `ctl.dmx512` and the
+token does not say which. The port is created with the connector set and the family blank rather
+than with a guess, which is G4 arriving in a parser: **null is unknown, never estimated.** The grid's
+validation dots (M4-E) already mark a family-less port, so the state is visible and correctable
+rather than silent.
+
+**The dependency runs one way and only one way, which is why the family is resolved first.**
+`SignalFamilyDef`
+carries `defaultConnector`, `defaultDirection` and `defaultTopology`, all three populated for all 55
+families since M0. A family therefore determines a connector. **A connector determines nothing**:
+`conn.rj45` is worn by `net.ethernet`, `video.hdbaset`, `net.poe`, `ctl.rs485` and more, and asking
+it which family was meant is asking a question it does not hold the answer to. Family-first makes
+`hdbt` → `video.hdbaset` → `conn.rj45` and `rj45` → `net.ethernet` → `conn.rj45` fall out of a field
+that has been sitting in the model since M0, rather than out of a second parallel table that has to
+be kept honest against the first. docs/06 §4.1's `hdmi` → `conn.hdmi_a` + `video.hdmi.2_0` reaches
+the identical answer by the reverse route; the difference only shows on a token that collides, and
+every interesting token collides.
+
+**11.59.5 `hdbt` LEAVES THE CONNECTOR TABLE and `rj45` STAYS, and the difference is measured, not
+tidy.** Both are presently aliases on `conn.rj45`. `hdbt` is a data error rather than a redundancy:
+HDBaseT is a transmission standard carried over twisted pair, and the connector it lands on is an
+8P8C. Under §11.59.4 it is outranked by step 1 and never read again, which is worse than wrong, it
+is dead data that reads as live. **It moves to `video.hdbaset.aliases` and the connector table loses
+it.** The general test is that **a connector alias must be a name for the connector**.
+
+**`rj45` passes that test and has a second reason to stay that a tidy-up would have deleted.**
+`portConnectorShortLabel` (`builder/port_summary.dart:113`) reads `def.aliases.first.toUpperCase()`
+to print the port grid's `Conn` column and its footer, so `conn.rj45` prints `RJ45` **because of
+this list**. Removing the entry would have made the column M4-E shipped seven commits ago start
+printing a display name. `hdbt` is `aliases[1]`, so its removal changes no rendered cell. Grepping
+the readers before editing seeded data is the whole of the difference here.
+
+**11.59.6 SEEDING FAMILY ALIASES CHANGES A SURFACE THAT IS ALREADY SHIPPED, and it changes it for
+the better.** `structure_table.dart:667` already spreads `...family.aliases` into
+`SignalFamilyCellOption.searchKey`, the M3 signal picker's filter text. The list has been empty since
+M0, so the picker has been searching over label, `shortTag`, id and display name and nothing else.
+**Every alias seeded here immediately becomes a search term in a picker no task in M4 names**, which
+is a behaviour change on a shipped surface and is recorded here rather than discovered later by
+someone wondering why the filter got better. It is the outcome that field was written for.
+
+**11.59.7 What this costs on disk, which is less than it looks.** `_encodeSignalFamilyDef` writes
+`'aliases': d.aliases` **unconditionally** (`json_codec.dart:2474`), unlike `MediaTypeDef`, which
+that file's own comment at :2601 explains is conditional precisely to avoid adding a key to every
+entry in every existing document. So `"aliases":[]` is **already present on all 55 families in every
+starter on disk**. Seeding them changes values, never the key set, so **`kSchemaVersion` does not
+move** and CR-117 is untouched: a document written before this ruling still decodes and re-encodes
+byte-for-byte through its own recorded values. The four checked-in starters are regenerated because
+they are generated artifacts of the seed, which is a visible line in the diff and not a golden being
+quietly relaxed.
+
+**11.59.8 The alias set is trade vocabulary and is authored as a reviewable table, not inferred.**
+`trade knowledge beats workflow reasoning` is a practice in this bundle because reasoning about how
+installers speak has produced a wrong ruling before. The seeded set is therefore **deliberately
+narrow**: the tokens docs/06 §4.1 and §9.1 already name, plus the unambiguous ones, and **no family
+is given an alias merely to have one**. A family with no alias is still reachable by its full id.
+A gate asserts the set is collision-free under §11.59.4's precedence, that every family alias
+resolves, and that no alias is also a family id or a connector id.
+
+**11.59.9 Who builds what.** **M4-G (`#178`) widens the shared resolver and owns the alias seed**,
+and widening it is the change the CSV `signal` column and `@signal=` inherit for free. M4-P (`#187`)
+keeps the **alias editor**, the surface on which a user adds their own; the two do not overlap and
+the split is the ordinary one between seeded catalog data and a user-authoring UI. M4-H (`#179`,
+tasks `#217`, `#218`, `#219`) is **folded into M4-G's delivery** rather than sequenced after it,
+settled by the user on 2026-08-15: the DSL's grammar quotes label patterns in every one of §9.1's
+thirteen steps, so a Quick Add shipped without the pattern language produces sixteen identically
+named ports and cannot perform a single step of the example the milestone is measured by. That is
+`check a decomposition for holes` on the same milestone that earned the practice. **Folding is a
+decomposition change, not a scope change**, so it is recorded on the board and in docs/12 §5.3.6,
+and §8.3 is not engaged.
+
+**11.59.10 TWO CALLS THE USER MADE AND THE AGENT DID NOT, both settled on 2026-08-15 against a
+stated recommendation.** `trade knowledge beats workflow reasoning` is a practice here because
+reasoning about how installers work has produced a wrong ruling before, so both are recorded with
+the recommendation they overruled rather than presented as if they had always been the plan.
+
+**(a) A derived bank name is built from the family's FIRST ALIAS, falling back to `shortTag`, and
+docs/06 §4.2's stated rule is wrong.** §4.2 says the name is `"{family display name} {direction
+plural}"`. The seeded display name for `video.hdmi.2_0` is `HDMI 2.0 (18 Gbps)`, so that rule yields
+**"HDMI 2.0 (18 Gbps) Inputs"**, while §4.1's own example table and §2's layout sketch BOTH show the
+bank as **"HDMI Inputs"**. The rule and its worked examples contradict each other, which is
+`a spec table is an illustration until censused` arriving from the other direction: here the PROSE
+is the illustration and the examples are the specification. Alias-then-`shortTag` reproduces
+"HDMI Inputs" and "HDBT Outputs" exactly as both examples write them. **docs/06 §4.2 is edited to
+match rather than pointered**, so §12 is owed nothing.
+
+The cost is that **alias ORDER now carries display meaning**, which it already did for connectors:
+`portConnectorShortLabel` has printed `aliases.first` in the port grid's CONN column since M4-E. The
+convention is therefore extended rather than invented, and it is stated on both fields. `ctl
+.ir_emitter` gains `ir` AHEAD of `ir35` for this reason and no other, so its bank derives as
+**"IR Outputs"** rather than "IR35 Outputs"; an installer writes the former, and `ir` already
+resolved to that family through `shortTag` anyway, so the alias adds a display fact rather than a
+vocabulary one.
+
+**(b) `euro2` DEFAULTS TO `audio.speaker_lowz`, and the recommendation to leave it unknown is
+overruled.** The agent's argument was that a 2-pole euroblock carries low-Z or constant-voltage,
+that the token does not say which, and that guessing wrong puts 70 V on an 8 Ω run. **The user ruled
+that low-Z is the overwhelming case in the racks this tool is for**, which is a fact about the trade
+and not about the parser, and the cell remains editable in the grid with one keystroke. Recorded
+because §11.59.4's "either half may come back UNKNOWN" is now carried by `xlr` alone, and a later
+reader finding `euro2` resolved would otherwise think the invariant had eroded. **It has not**: `xlr`
+still refuses, because an XLR3 carries four families with no majority among them, and that is the
+distinction, a default is legitimate where the trade HAS a default and never where it merely has a
+most-common-guess. The resolution runs through §11.59.4's two-registry split unchanged: `euro2` names
+`audio.speaker_lowz`, whose `defaultConnector` is `conn.binding_post`, and the connector table's own
+`euro2` overrides it to `conn.euroblock_2`. The same mechanism `c13` forced.
+
 ---
 
 ## 12. Superseded rulings

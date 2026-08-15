@@ -61,11 +61,21 @@
 //    M3-C/4, because seventeen outlets in the whole-house starter name
 //    ids that resolved to nothing. Both were seeded once something
 //    needed them, which is DR-010 §11.10.4's rule working.
-//  * `SignalFamilyDef.aliases` is empty on all 55. §2.3's alias table is
-//    real, but it is the Quick Add DSL's resolution table (CR-058) and
-//    nothing in this build resolves an alias — §2.3 itself says "the
-//    file never stores one". Populating it would ship 40 rows no code
-//    reads and no gate checks.
+//  * `SignalFamilyDef.aliases` WAS empty on all 55, and this bullet used
+//    to explain why: it is the Quick Add DSL's resolution table (CR-058)
+//    and nothing in the build resolved an alias, so populating it would
+//    have shipped rows no code read and no gate checked. **DR-060
+//    §11.59 is the something that needed it** — the same DR-010 §11.10.4
+//    rule that moved `.mediaTypes` and `.outletTemplates` out of this
+//    list. `resolveSignalFamilyToken` now reads them and
+//    `signal_family_alias_test.dart` gates them.
+//
+//    THE SET IS SPARSE ON PURPOSE and the reason is not restraint for
+//    its own sake: that resolver already reaches a family by `shortTag`,
+//    by the id's own tail and by `displayName`, so most trade spellings
+//    ALREADY LANDED and an entry here would be a second way to say what
+//    one already says. `hdbaset`, `hbt`, `dante`, `ethernet` and `avoip`
+//    have no alias for exactly that reason. See `_family`'s docstring.
 //  * NO `glyphOverride`, and no per-family glyph. DR-010 §11.10.3 adds
 //    exactly `shortTag`, `dashOverride` and a weight override; §11.10.4
 //    keeps the rest of the ~20-field corpus shape out. §4.4's per-family
@@ -271,6 +281,14 @@ Map<SignalDomainId, SignalDomainDef> buildSeedSignalDomains() {
 /// took at §14.3) reaches every family that never overrode it. The
 /// parity gate applies the same fallback before comparing, so it checks
 /// the inheritance rule as well as the values.
+/// [aliases] is DR-060 §11.59.8's set, and it is DELIBERATELY SPARSE.
+/// `resolveSignalFamilyToken` already reaches a family by `shortTag`, by
+/// the id's own tail and by `displayName`, so `hdbaset`, `hbt`, `dante`
+/// and `ethernet` have always landed and none of them needs an entry
+/// here. **An alias is authored only where the trade's spelling reaches
+/// nothing**: `hdbt` is docs/06 §4.1's own token and matched no step of
+/// that chain. A family with no alias is not unreachable, and adding one
+/// "for symmetry" widens the collision surface for nothing.
 SignalFamilyDef _family(
   String id,
   String displayName,
@@ -281,6 +299,7 @@ SignalFamilyDef _family(
   String shortTag, {
   List<int>? dash,
   int? weight,
+  List<String> aliases = const [],
 }) => SignalFamilyDef(
   id: SignalFamilyId(id),
   displayName: displayName,
@@ -291,6 +310,7 @@ SignalFamilyDef _family(
   shortTag: shortTag,
   dashOverride: dash,
   lineWeightPermilleOverride: weight,
+  aliases: aliases,
 );
 
 /// The 55 shipped signal families (§4.4).
@@ -357,6 +377,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       p2p,
       'HD14',
       weight: 750,
+      aliases: const ['hdmi14'],
     ),
     _family(
       'video.hdmi.2_0',
@@ -366,6 +387,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       src,
       p2p,
       'HD20',
+      aliases: const ['hdmi', 'hdmi20'],
     ),
     _family(
       'video.hdmi.2_1',
@@ -376,6 +398,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       p2p,
       'HD21',
       weight: 1250,
+      aliases: const ['hdmi21'],
     ),
     _family(
       'video.displayport',
@@ -413,6 +436,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       'HBT',
       dash: [14000, 4000],
       weight: 1250,
+      aliases: const ['hdbt'],
     ),
     _family(
       'video.usbc_dpalt',
@@ -589,6 +613,17 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       p2p,
       'SPK',
       weight: 2000,
+      // `euro2` IS HERE AND NOT ON `audio.speaker_cv`, WHOSE DEFAULT
+      // CONNECTOR THE EUROBLOCK ACTUALLY IS. DR-060 §11.59.10(b): the
+      // user ruled low-Z the overwhelming case in the racks this tool
+      // is for, overruling a recommendation to leave the family unknown.
+      // The connector table's own `euro2` then overrides this family's
+      // `conn.binding_post` default, which is §11.59.4's two-registry
+      // split doing the same work `c13` forced it to do.
+      //
+      // `speaker` is first, so the derived bank name is "Speaker
+      // Outputs" rather than "EURO2 Outputs" (§11.59.10(a)).
+      aliases: const ['speaker', 'euro2'],
     ),
     _family(
       'audio.speaker_cv',
@@ -600,6 +635,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       '70V',
       dash: [10000, 3000, 2000, 3000],
       weight: 2000,
+      aliases: const ['100v', 'cv'],
     ),
     _family(
       'audio.sub',
@@ -645,6 +681,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       p2p,
       'SPD',
       dash: [12000, 4000, 3000, 4000],
+      aliases: const ['spdif'],
     ),
     // TOSLINK's weight was raised from 1.00×: at 1.00× it collided with
     // `ctl.ir_emitter` on every non-hue channel — ΔL 0.0715, both fine-
@@ -727,6 +764,9 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       bi,
       star,
       'NET',
+      // `lan` LEADS, for §11.59.10(a)'s reason: `rj45` is the
+      // connector, and a bank of Ethernet ports is "LAN", not "RJ45".
+      aliases: const ['lan', 'rj45'],
     ),
     _family(
       'net.poe',
@@ -796,6 +836,12 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       src,
       p2p,
       'IR',
+      // `ir` IS FIRST AND THAT IS THE WHOLE REASON IT IS HERE. It
+      // already resolved to this family through `shortTag`, so it adds
+      // no vocabulary; it adds a DISPLAY fact, because DR-060
+      // §11.59.10(a) derives a bank name from `aliases.first` and an
+      // installer writes "IR Outputs" rather than "IR35 Outputs".
+      aliases: const ['ir', 'ir35'],
     ),
     _family(
       'ctl.ir_receiver',
@@ -816,6 +862,12 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       p2p,
       '232',
       dash: [6000, 3000, 1500, 3000],
+      // `rs232` LEADS AND `de9` FOLLOWS. DR-060 §11.59.10(a) makes
+      // `aliases.first` the bank-name head, and `de9` is a CONNECTOR,
+      // so leading with it derived a bank called "DE9 Ports": a plug
+      // labelling a signal. `rs232` already resolved through the id
+      // tail, so it adds a display fact and no vocabulary.
+      aliases: const ['rs232', 'de9'],
     ),
     _family(
       'ctl.rs485',
@@ -920,6 +972,8 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       src,
       p2p,
       'PWR',
+      // `ac` LEADS, same rule: the NEMA tokens all name connectors.
+      aliases: const ['ac', '5-15p', '5-15r', '5-20p', '5-20r', 'l5-30p'],
     ),
     _family(
       'power.ac_iec',
@@ -930,6 +984,10 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       p2p,
       'IEC',
       dash: [8000, 3000, 1500, 3000],
+      // `iec` LEADS so the bank derives "IEC Inputs" rather than
+      // "C13 Inputs" (§11.59.10(a)); the four cordage tokens follow
+      // and are what an integrator actually types.
+      aliases: const ['iec', 'c13', 'c14', 'c19', 'c20'],
     ),
     _family(
       'power.ac_hardwired',

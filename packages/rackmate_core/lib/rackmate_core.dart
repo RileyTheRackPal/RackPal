@@ -51,10 +51,12 @@
 library;
 
 export 'src/builder/fork_status.dart';
+export 'src/builder/label_pattern.dart';
 export 'src/builder/port_commands.dart';
 export 'src/builder/port_summary.dart';
 export 'src/builder/port_table.dart';
 export 'src/builder/port_validation.dart';
+export 'src/builder/quick_add.dart';
 export 'src/builder/template_change_class.dart';
 export 'src/builder/template_commands.dart';
 export 'src/builder/template_draft.dart';

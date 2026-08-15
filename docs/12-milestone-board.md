@@ -111,7 +111,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED**: `NOT BUILT` | Model only. **Its M2 block has lifted**: the gate was M2 putting `Link` + `Endpoint` in the UI, and M2-F did (§5.1). Row otherwise as of `0fa532d` |
-| **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **IN PROGRESS**: `PARTIAL` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **A 16×16 matrix can now be authored from scratch**; the clause still open is *under three minutes by a user who has seen the tool once*, which rests on Quick Add (`#178`) and the drill that measures it (`#188`). **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
+| **M4** | Device builder | **`L`** *(was `M`)* | **0 of 2** | **IN PROGRESS**: `PARTIAL` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. The clause still open is the half no test can reach, *under three minutes by a user who has seen the tool once*, and it now rests on the drill (`#188`) alone. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED**: `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
@@ -2366,12 +2366,14 @@ lists or to neither.
 > ports places into a rack and appears correctly in the equipment list with `—` in every unknown
 > column and an accurate unknown count in the rollup.
 
-**M4-A through M4-E are CLOSED** (board #172, #173, #174, #175, #176), and §5.3.1 through §5.3.5
+**M4-A through M4-E, M4-G and M4-H are CLOSED** (board #172, #173, #174, #175, #176, #178, #179),
+and §5.3.1 through §5.3.6
 below are their record. The first three are machinery under no surface at all; **M4-D builds the
-surface** and **M4-E builds the product**, which is the first of them to move the exit criterion at
-all. A 16×16 matrix can now be authored from scratch. Whether it takes **under three minutes by a
-user who has seen the tool once** is the clause still open, and it rests on Quick Add (M4-G, `#178`)
-and the drill that measures it (M4-Q, `#188`).
+surface**, **M4-E builds the product** and **M4-G makes it fast**, which is the pair that moves the
+exit criterion at
+all. A 16×16 matrix can now be authored from scratch, and **M4-G types one in eight lines**
+(§5.3.6). Whether it takes **under three minutes by a user who has seen the tool once** is the
+clause still open, and it rests on the drill (M4-Q, `#188`) alone.
 
 **A pattern across all five, and the next one should expect it.** Every one was written from a
 field's or a type's ABSENCE, and every one turned out to be partly a corpus question rather than an
@@ -2911,6 +2913,156 @@ M4-F through M4-J own those, and the grid's Bank and Paired columns are read-onl
 panel layout, no previews, no batch inspector. Enter commits and stays rather than moving down,
 because moving down is spreadsheet ergonomics and belongs with M4-F's fill-down; Tab already moves
 right, and a test drives real Tab events rather than finding the next cell.
+
+#### 5.3.6 M4-G and M4-H, Quick Add and the pattern language · CLOSED · `0d60b80`, `a16bc73`, `158a60f`, `70d4fc5`, `34e4c3b`, `06cf577`, `3947192`, `c57c6b1`, `560fc98`, `438e268`, `34091b5`, `2a8180c`
+
+**THE EXIT CRITERION'S SHAPE IS DEMONSTRATED FOR THE FIRST TIME, AND ONLY ITS SHAPE.** A test types
+docs/06 §9.1's eight commands into the bar and asserts **68 ports across 6 banks with focus still in
+the field**. That number is computed by running the commands, not restated from the document.
+**Whether a person can do it in under three minutes remains entirely unmeasured** and is M4-Q
+(`#188`), which no agent can perform. Board `#213`, `#214`, `#217`, `#218` and `#219` are closed;
+`#215` and `#216` closed last, and with them the DSL teaches itself: AC-050's discoverability
+argument is answered.
+
+**M4-H WAS FOLDED INTO M4-G's DELIVERY**, settled by the user on 2026-08-15. Every one of §9.1's
+thirteen steps quotes a label pattern, so a Quick Add without the pattern language produces sixteen
+ports called `HDMI IN {n:2}` and cannot perform a single step of the example the milestone is
+measured by. That is `check a decomposition for holes` firing on the milestone that earned the
+practice. **A decomposition change, not a scope one**: roadmap §2 already names the pattern DSL, so
+§8.3 is not engaged.
+
+##### The census, and it is five for five
+
+DR-060 §11.59.2. Board `#178` and `#214` both assert that `aliases` *"already exists on both
+`ConnectorTypeDef` and `SignalFamilyDef`"*, and canon CR-058 says the same. Measured:
+
+| | Finding |
+|---|---|
+| `ConnectorTypeDef.aliases` | **Populated**, 22 entries |
+| `SignalFamilyDef.aliases` | **55 families, zero aliases**, behind a `_family()` helper that did not accept the parameter |
+| canon §6.3's alias table | Lists **connector aliases only**; §6.4 lists none |
+
+So CR-058's orthogonality claim, `hdbt` and `rj45` giving the same connector and different families,
+**was unresolvable by anything in the tree**: both were aliases on `conn.rj45` and nothing mapped
+either to a family. **The fifth consecutive M4 issue written from a document's assertion that
+dissolved on contact with the source**, and the first useful hour went into reading for the fifth
+time.
+
+##### Three findings that came from reading a caller rather than a document
+
+1. **`resolveSignalFamilyToken` ALREADY EXISTED** (`drop_line_planner.dart:707`), exported, shared by
+   the CSV `signal` column and `@signal=`, **and its own docstring named this ruling as the
+   precondition for widening it**, warning one paragraph earlier that *"two copies would be two
+   chances to disagree about what `hbt` means"*. Quick Add widened the chain by one step; both
+   callers inherit it.
+2. **A SINGLE FIRST-HIT-WINS CHAIN WAS THE FIRST DRAFT AND `c13` KILLED IT.** A rack PDU has C13
+   outlets and a C14 inlet, both `power.ac_iec` because CR-058 makes inlet/outlet a role. One chain
+   resolves `c13` family-first and takes that family's `defaultConnector`, which is `conn.iec_c14`,
+   **putting the wrong connector on every outlet of every power strip in the catalog, silently, on
+   the panel drawing an electrician builds from.** The two registries now answer independently: a
+   family knows a *default* connector and a default loses to a named one.
+3. **`rj45` WAS ONE EDIT FROM A SILENT REGRESSION.** It was reasoned to be dead data and nearly
+   deleted; `portConnectorShortLabel` prints `aliases.first.toUpperCase()` in the grid's CONN column,
+   so every `RJ45` cell M4-E shipped would have become `RJ45 (8P8C)`. `hdbt` was genuinely dead and
+   did go. **Grep the readers before tidying seeded data.**
+
+##### What the tests caught that reasoning did not
+
+**Four defects, and every one was found by a test that asserted an artifact rather than a
+mechanism.**
+
+- **`{n@2:2}` reported the wrong error.** The "modifiers do not compose" check sat after the branch
+  that swallowed it, so the message read *"`2:2` is not a whole number"*: a true sentence about the
+  wrong problem. Visible only because the test asserts the MESSAGE.
+- **`repair` promised a whole pattern and delivered a fragment** in three of six sites, and the test
+  file carried a comment EXCUSING the exceptions. The gate had been written around the defect rather
+  than at it: `a stated difference the code does not make`, one milestone after M4-E recorded it.
+- **The chip for `{L,}` did not parse.** `{L}` is read as a token NAME, so the repair handed back a
+  second error. Found by widening the "every chip parses" loop from two cases to twelve. **The
+  narrow loop was the bug's hiding place and the comment explaining the exemption was the lid.**
+- **`@Control` built three banks.** docs/06 §4.2 states the numeric suffix inside the clause about
+  `@bank` being OMITTED; applying it to explicit names gave Control, Control 2 and Control 3, and a
+  template with EIGHT banks against a criterion that says six. **The parse-level test was green
+  throughout**: it asserted three steps yielded the string `Control` three times, which they did.
+  Only building the ports and counting banks caught it.
+
+##### An invariant was invented, gated, and disproved by its own gate
+
+DR-060 §11.59.10(a) made `aliases.first` a display token, and `1 de9 bi` promptly derived a bank
+called **"DE9 Ports"**: a connector shell labelling a signal bank. A gate was written, *"no family
+may lead with a token that names a connector"*, and **it failed on the first run against `hdmi`**,
+which names `conn.hdmi_a` AND `video.hdmi.2_0` and where "HDMI Inputs" is exactly what §4.1 asks
+for. What separates `hdmi` from `de9` is that one word is the signal's own name and the other is a
+shell it arrives on, **which is a fact about English and not about the data model**. The artifact is
+pinned instead: eight commands and the exact bank each derives. The failed attempt is recorded in
+the test file so nobody rebuilds it.
+
+##### Three keymap gates, in sequence, on one commit
+
+**And the middle one caught a comment that stated its rule backwards.**
+
+1. **D7's source ban** caught a `SingleActivator` built inline in the widget. `one-keymap-registry`
+   is a named practice in this repo's own OKF bundle and the violation was written anyway.
+2. **`meaningDrift`** caught a note explaining, confidently and at length, that differing labels
+   across scopes were permitted *"precisely because the labels differ"*. Differing labels are what
+   the rule forbids. `CommitWireIntent`'s docstring had already argued the case and named that
+   position as *"the smaller edit and the wrong one"*, because **a keyboard-only user cannot see a
+   scope boundary**. The correct answer was better than the draft: `Enter` already means *"Commit
+   what is in flight"* in two scopes under DR-011.6, and a typed Quick Add command is in flight in
+   exactly the sense a half-drawn wire is. Three surfaces, three intent types, one meaning.
+3. **The framework-shadow tripwire**, whose comment reads *"What must not happen is a SIXTEENTH
+   arriving unnoticed"*. This is the sixteenth. The row carries its argument: it shadows `Enter`
+   over **one text field**, the narrowest scope in that list, because the failure that test
+   remembers is a `Backspace` taken from six text fields for nine days.
+
+`KeyScope.builder` is a sixth scope holding exactly one row, and the smallness is the finding: the
+whole thirteen-step path is a text field and one key. **`Tab` is deliberately unclaimed** until
+M4-G4 needs it and can argue for it.
+
+##### Two user calls, recorded with what they overruled
+
+DR-060 §11.59.10. **(a)** A derived bank name comes from the family's first alias, not docs/06
+§4.2's stated display name, which would produce "HDMI 2.0 (18 Gbps) Inputs" against the "HDMI
+Inputs" §4.1's own table prints: **here the prose was the illustration and the examples were the
+specification.** **(b)** `euro2` defaults to `audio.speaker_lowz`, overruling a recommendation to
+leave it unknown; the user ruled low-Z the overwhelming case in these racks, which is a fact about
+the trade. §11.59.4's "either half may come back UNKNOWN" is now carried by `xlr` alone, and the
+ruling says so, because a later reader finding `euro2` resolved would otherwise think the invariant
+had eroded.
+
+##### The two tasks that close it, and what each cost
+
+**AUTOCOMPLETE IS NOT ON `Tab`, AND THE KEYMAP DECIDED THAT.** Tab was the design the user picked;
+`meaningDrift` refused it, because the schematic already spends Tab on *"next candidate pin for the
+wire in flight"* and advancing THROUGH offers is close to the opposite of taking one. Put back to
+the user as a real collision, they chose **right-arrow**, which is fish and zsh-autosuggestions'
+accept and shares a label with `pinCaretRight` **without straining**: the caret does move right,
+through the suggestion when one is showing. DR-011.6's shape on a second key. It is gated on an
+offer existing AND on the caret being at the end of the line, through a real `Action` whose
+`isActionEnabled` is false otherwise, because right-arrow MOVES THE CARET and a binding that
+swallowed it would stop a user walking their own command. **A ghost the key would not take is a lie
+drawn in grey.**
+
+**A PROPERTY GATE FOUND A PARSER BUG NO HAND-WRITTEN TEST HAD.** Field mode needs
+`renderQuickAdd`, and gating it with `parse(render(p)) == p` failed immediately on `16 euro2 out`.
+The cause was in the **parser**: `connector ??= connectorHit?.id ?? familyHit?.defaultConnector`
+lets the FIRST token's family DEFAULT occupy the connector slot, so no later token can name one, and
+`16 speaker euro2 out` resolved to a **binding post** instead of a euroblock. DR-060 §11.59.4's rule
+is *"a default loses to a named one"*, and that draft applied it **within a token but not across
+tokens**. Named and inherited connectors are tracked separately now.
+
+**EVERY TEST IN THE BAR'S FILE FAILED THE MOMENT FIELD MODE LANDED**, and the failure was the useful
+part: `find.byType(TextField)` had silently stopped meaning "the command line" the instant five more
+text fields appeared beside it. **The finder had been standing in for identity** and worked only
+while there was exactly one. The same mistake then repeated one layer down: the first fix navigated
+`find.ancestor(of: text('Qty'), matching: Column)`, which resolves to the bar's ENTIRE Column, so
+the test typed into the command line and asserted against it. Both are keys now.
+
+**What M4-G does NOT deliver.** No archetype generators, no paste (M4-I). `both`
+and `pass` create their ports and **not** their `PassthroughPairDef` pairing, which is M4-J and is
+asserted absent by a test so its arrival is a visible diff. No `poe:`, `z:`, `dte` or `tap:`
+modifiers: §9.1's thirteen steps exercise none of them, and the grid's column packs already author
+all four.
 
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 

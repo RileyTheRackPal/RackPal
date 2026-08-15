@@ -836,6 +836,41 @@ final class AddPortCommand extends Command<TemplateBody> {
   }
 }
 
+/// Appends one bank.
+///
+/// **APPEND-ONLY, LIKE [AddPortCommand], AND FOR THE SAME REASON.** Bank
+/// order is a `FracIndex` so that inserting between two banks never
+/// renumbers their neighbours, but Quick Add only ever adds at the end:
+/// a command names a bank that does not exist yet, so there is nothing
+/// to insert before. Reordering banks is M4-J (`#181`).
+///
+/// HOLDS THE BANK IT ADDED rather than a copy, so redo restores the
+/// identical object and nothing can reach it in between to mutate it.
+final class AddBankCommand extends Command<TemplateBody> {
+  const AddBankCommand(this.bank);
+
+  final BankDef bank;
+
+  @override
+  LabelKey get label => LabelKey.quickAddPorts;
+
+  @override
+  EpochMask? get touches => null;
+
+  @override
+  Iterable<Uuid> get affects => const <Uuid>[];
+
+  @override
+  void apply(TemplateBody aggregate) => aggregate.banks.add(bank);
+
+  @override
+  void revert(TemplateBody aggregate) {
+    final at = aggregate.banks.indexWhere((b) => b.key == bank.key);
+    if (at < 0) throw StateError('no bank ${bank.key} to remove');
+    aggregate.banks.removeAt(at);
+  }
+}
+
 /// Removes one port, and every passthrough pair that named it.
 ///
 /// **THE PAIRS GO WITH IT, AND COME BACK WITH IT.** A `PassthroughPairDef`

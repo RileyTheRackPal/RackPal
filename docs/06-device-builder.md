@@ -169,7 +169,9 @@ Aliases resolve aggressively **against the registry** (CR-058): `ConnectorTypeDe
 | `{L,R}` / `{a,b,c}` | cycling literal set | L, R, L, R · Y, Pb, Pr |
 | `{rev}` | descending | 16, 15, 14 |
 
-Parse errors are *designed*, not thrown: the offending span is underlined in the input with a one-line explanation and a suggested repair chip (AC-050 / A2.4). If `@bank` is omitted the bank name is derived as `"{family display name} {direction plural}"` and collisions take a numeric suffix. Renaming a bank never touches port labels.
+Parse errors are *designed*, not thrown: the offending span is underlined in the input with a one-line explanation and a suggested repair chip (AC-050 / A2.4). If `@bank` is omitted the bank name is derived as `"{family alias, else shortTag} {direction plural}"` and collisions take a numeric suffix. Renaming a bank never touches port labels.
+
+> **Corrected by DR-060 §11.59.10(a).** This sentence used to say *"{family display name}"*, which yields **"HDMI 2.0 (18 Gbps) Inputs"** against the **"HDMI Inputs"** that §4.1's own example table and §2's layout sketch both show. The prose was the illustration and the examples were the specification.
 
 ### 4.3 Archetype generators
 
