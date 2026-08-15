@@ -90,8 +90,48 @@ question, and they are different tests.** A surface can pass the first and lose
 a stopwatch run on the second. Where a spec names a chord, the chord is the
 requirement, not the route it shortens.
 
+# The positive form: to test a route, name only its start (M4-F0, 2026-08-15)
+
+Everything above says what not to do. M4-F0 produced the rule for what to do
+instead, and it is one sentence: **name the first control and then nothing
+else.**
+
+`Enter` was supposed to commit a cell and move down one row. It was written into
+`TextField.onSubmitted`. `EditableText` calls `onEditingComplete` FIRST, and its
+default for a `done` action is to **unfocus the field**; only then does
+`onSubmitted` run. So the commit landed, focus was already gone, and directional
+traversal had no origin to move from. **All fourteen gates passed.**
+
+The test that caught it:
+
+```dart
+await tester.enterText(find.text('P1'), 'HDMI 1');       // the ONE finder
+await tester.testTextInput.receiveAction(TextInputAction.done);
+await tester.pumpAndSettle();
+
+tester.testTextInput.enterText('HDMI 2');                 // no finder
+await tester.testTextInput.receiveAction(TextInputAction.done);
+await tester.pumpAndSettle();
+
+final body = await harness.read(tester);
+expect(body.ports.map((p) => p.label), ['HDMI 1', 'HDMI 2', 'HDMI 3']);
+```
+
+The second `enterText` goes to **whatever holds focus**, which is the assertion.
+Both lines had gone into the same cell.
+
+**The counterfactual is the whole point.** A test that had found row 2's cell and
+typed into it would have passed against a grid where `Enter` does nothing
+whatsoever, because it would have been asserting that a `TextField` stores text.
+Every finder after the first one is a fact the test supplies instead of checks.
+
+The tell that a test has this defect: **remove the navigation step and see
+whether it still passes.** If it does, it was never about navigation.
+
 # Citations
 
 [1] `packages/rackmate_ui/test/builder/builder_copy_and_focus_test.dart`
 [2] `packages/rackmate_ui/lib/src/builder/device_builder_screen.dart`
 [3] [assert the artifact, not the mechanism](assert-the-artifact-not-the-mechanism.md)
+[4] `packages/rackmate_ui/test/builder/port_grid_test.dart`, the `Enter`
+    route cases; docs/12 §5.3.9; commit `9969ded`
