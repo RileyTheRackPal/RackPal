@@ -613,7 +613,17 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       p2p,
       'SPK',
       weight: 2000,
-      aliases: const ['speaker'],
+      // `euro2` IS HERE AND NOT ON `audio.speaker_cv`, WHOSE DEFAULT
+      // CONNECTOR THE EUROBLOCK ACTUALLY IS. DR-060 §11.59.10(b): the
+      // user ruled low-Z the overwhelming case in the racks this tool
+      // is for, overruling a recommendation to leave the family unknown.
+      // The connector table's own `euro2` then overrides this family's
+      // `conn.binding_post` default, which is §11.59.4's two-registry
+      // split doing the same work `c13` forced it to do.
+      //
+      // `speaker` is first, so the derived bank name is "Speaker
+      // Outputs" rather than "EURO2 Outputs" (§11.59.10(a)).
+      aliases: const ['speaker', 'euro2'],
     ),
     _family(
       'audio.speaker_cv',
@@ -754,7 +764,9 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       bi,
       star,
       'NET',
-      aliases: const ['rj45', 'lan'],
+      // `lan` LEADS, for §11.59.10(a)'s reason: `rj45` is the
+      // connector, and a bank of Ethernet ports is "LAN", not "RJ45".
+      aliases: const ['lan', 'rj45'],
     ),
     _family(
       'net.poe',
@@ -824,7 +836,12 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       src,
       p2p,
       'IR',
-      aliases: const ['ir35'],
+      // `ir` IS FIRST AND THAT IS THE WHOLE REASON IT IS HERE. It
+      // already resolved to this family through `shortTag`, so it adds
+      // no vocabulary; it adds a DISPLAY fact, because DR-060
+      // §11.59.10(a) derives a bank name from `aliases.first` and an
+      // installer writes "IR Outputs" rather than "IR35 Outputs".
+      aliases: const ['ir', 'ir35'],
     ),
     _family(
       'ctl.ir_receiver',
@@ -845,7 +862,12 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       p2p,
       '232',
       dash: [6000, 3000, 1500, 3000],
-      aliases: const ['de9'],
+      // `rs232` LEADS AND `de9` FOLLOWS. DR-060 §11.59.10(a) makes
+      // `aliases.first` the bank-name head, and `de9` is a CONNECTOR,
+      // so leading with it derived a bank called "DE9 Ports": a plug
+      // labelling a signal. `rs232` already resolved through the id
+      // tail, so it adds a display fact and no vocabulary.
+      aliases: const ['rs232', 'de9'],
     ),
     _family(
       'ctl.rs485',
@@ -950,7 +972,8 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       src,
       p2p,
       'PWR',
-      aliases: const ['5-15p', '5-15r', '5-20p', '5-20r', 'l5-30p'],
+      // `ac` LEADS, same rule: the NEMA tokens all name connectors.
+      aliases: const ['ac', '5-15p', '5-15r', '5-20p', '5-20r', 'l5-30p'],
     ),
     _family(
       'power.ac_iec',
@@ -961,7 +984,10 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       p2p,
       'IEC',
       dash: [8000, 3000, 1500, 3000],
-      aliases: const ['c13', 'c14', 'c19', 'c20'],
+      // `iec` LEADS so the bank derives "IEC Inputs" rather than
+      // "C13 Inputs" (§11.59.10(a)); the four cordage tokens follow
+      // and are what an integrator actually types.
+      aliases: const ['iec', 'c13', 'c14', 'c19', 'c20'],
     ),
     _family(
       'power.ac_hardwired',

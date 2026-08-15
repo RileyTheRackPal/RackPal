@@ -27,6 +27,15 @@ QuickAddPlan planOk(Registries r, String command) {
   return result as QuickAddPlan;
 }
 
+/// A minimal body to derive bank names against. `order` is a
+/// `FracIndex`, not an int: banks sort by fractional index so a reorder
+/// never renumbers its neighbours.
+TemplateBody emptyBody() =>
+    TemplateBody(manufacturer: 'Generic', model: 'M', displayName: 'D');
+
+BankDef bank(String key, String label) =>
+    BankDef(key: key, label: label, abbr: 'AB', order: const FracIndex('a0'));
+
 QuickAddFailure planFail(Registries r, String command) {
   final result = parseQuickAdd(r, command);
   expect(
@@ -128,11 +137,14 @@ void main() {
       expect(p.family, isNull);
     });
 
-    test('euro2 sets the connector and leaves the family blank', () {
-      // Low-Z or constant-voltage; guessing puts 70 V on an 8 ohm run.
+    test('euro2 defaults to low-Z, and lands on the euroblock', () {
+      // DR-060 §11.59.10(b), a user call against the recommendation.
+      // The family's own default connector is a binding post, so this
+      // asserts the named connector wins: authoring a speaker port on
+      // the wrong connector is the failure this pair guards.
       final p = planOk(r, '16 euro2 out');
+      expect(p.family?.v, 'audio.speaker_lowz');
       expect(p.connector?.v, 'conn.euroblock_2');
-      expect(p.family, isNull);
     });
 
     test('direction is null when unstated, for the family to fill in', () {
@@ -198,6 +210,127 @@ void main() {
       expect(p.family?.v, 'power.ac_iec');
       expect(p.connector?.v, 'conn.iec_c14');
       expect(p.direction, PortDirection.sink);
+    });
+  });
+
+  group('bank derivation (M4-H3, DR-060 §11.59.10(a))', () {
+    // The rule is the family's FIRST ALIAS then shortTag, NOT the
+    // display name docs/06 §4.2 used to state. The assertions below are
+    // the strings §4.1's example table and §2's layout sketch print.
+    test('16 hdmi in derives "HDMI Inputs", as §4.1 prints it', () {
+      expect(deriveBankName(r, planOk(r, '16 hdmi in')), 'HDMI Inputs');
+    });
+
+    test('16 hdbt out derives "HDBT Outputs", as §2 prints it', () {
+      expect(deriveBankName(r, planOk(r, '16 hdbt out')), 'HDBT Outputs');
+    });
+
+    test('the display-name rule would have produced neither', () {
+      // Guards the correction itself: if someone "restores" §4.2's
+      // stated rule, these two names come back and this test says why
+      // they are wrong.
+      final hdmi = r.signalFamilies[const SignalFamilyId('video.hdmi.2_0')]!;
+      expect(hdmi.displayName, 'HDMI 2.0 (18 Gbps)');
+      expect(
+        deriveBankName(r, planOk(r, '16 hdmi in')),
+        isNot(contains('18 Gbps')),
+      );
+    });
+
+    test('ir35 derives "IR Outputs" because ir is seeded first', () {
+      // The alias is there for this and nothing else: `ir` already
+      // resolved through shortTag, so it adds a display fact.
+      expect(deriveBankName(r, planOk(r, '16 ir35 out')), 'IR Outputs');
+    });
+
+    test('EVERY DELIBERATELY ORDERED ALIAS LIST DERIVES ITS INTENDED HEAD', () {
+      // The alias list's ORDER is display data (§11.59.10(a)), and six
+      // families were reordered specifically so their banks read as an
+      // installer writes them. This is the artifact that ordering
+      // exists for, so it is pinned here rather than left to a rule:
+      // an attempt to gate it structurally is recorded as failed in
+      // `signal_family_alias_test.dart`.
+      const wanted = <String, String>{
+        '16 hdmi in': 'HDMI Inputs',
+        '16 hdbt out': 'HDBT Outputs',
+        '16 ir35 out': 'IR Outputs',
+        '1 de9 bi': 'RS232 Ports',
+        '24 rj45 in': 'LAN Inputs',
+        '1 c14 in': 'IEC Inputs',
+        '8 5-15r out': 'AC Outputs',
+        '16 euro2 out': 'SPEAKER Outputs',
+      };
+      for (final row in wanted.entries) {
+        expect(
+          deriveBankName(r, planOk(r, row.key)),
+          row.value,
+          reason: row.key,
+        );
+      }
+    });
+
+    test('a direction with no plural noun falls back to Ports', () {
+      expect(deriveBankName(r, planOk(r, '1 de9 bi')), 'RS232 Ports');
+    });
+
+    test('an unfamilied plan names itself from the connector', () {
+      // `16 xlr in` has to land somewhere, and "Inputs" alone would
+      // collide with every other unfamilied bank on the first try.
+      expect(deriveBankName(r, planOk(r, '16 xlr in')), 'XLR Inputs');
+    });
+
+    test('direction falls back to the family default when unstated', () {
+      // `video.hdmi.2_0` is a source, so a bare `16 hdmi` is Outputs.
+      expect(deriveBankName(r, planOk(r, '16 hdmi')), 'HDMI Outputs');
+    });
+
+    test('an explicit @bank wins over any derivation', () {
+      expect(
+        uniqueBankName(r, emptyBody(), planOk(r, '16 hdmi in @Sources')),
+        'Sources',
+      );
+    });
+
+    test('collisions take a numeric suffix, compared on the LABEL', () {
+      final body = emptyBody()..banks.add(bank('a', 'HDMI Inputs'));
+      expect(uniqueBankName(r, body, planOk(r, '16 hdmi in')), 'HDMI Inputs 2');
+
+      body.banks.add(bank('b', 'HDMI Inputs 2'));
+      expect(uniqueBankName(r, body, planOk(r, '16 hdmi in')), 'HDMI Inputs 3');
+    });
+
+    test('the 13-step path produces six distinct bank names', () {
+      // The exit criterion says 68 ports across 6 banks. Five banks are
+      // derived and one is named, and no two may collide, because two
+      // banks reading the same thing is what the suffix exists to stop.
+      const steps = <String>[
+        '16 hdmi in "HDMI IN {n:2}"',
+        '16 hdbt out "HDBT OUT {n:2}"',
+        '16 hdmi out "MIRROR {n:2}" @Mirror Outputs',
+        '16 ir35 out "IR OUT {n:2}"',
+        '1 rj45 in "LAN" @Control',
+        '1 c14 in',
+      ];
+      final body = emptyBody();
+      final names = <String>[];
+      for (final step in steps) {
+        final name = uniqueBankName(r, body, planOk(r, step));
+        if (!names.contains(name)) {
+          names.add(name);
+          body.banks.add(bank('k${body.banks.length}', name));
+        }
+      }
+      expect(names, hasLength(6));
+      expect(
+        names,
+        containsAll(<String>[
+          'HDMI Inputs',
+          'HDBT Outputs',
+          'Mirror Outputs',
+          'IR Outputs',
+          'Control',
+        ]),
+      );
     });
   });
 

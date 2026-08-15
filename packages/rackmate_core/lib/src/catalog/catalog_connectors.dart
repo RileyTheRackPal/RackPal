@@ -231,10 +231,13 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
     // `euro2` mirrors the `euro3` alias three lines down, which has been
     // here since M1. The id's tail normalises to `euroblock2`, so the
     // spelling docs/06 §4.1's table actually types reached nothing.
-    // NOTE the family stays UNKNOWN for this token on purpose (DR-060
-    // §11.59.4): a 2-pole euroblock carries low-Z speaker OR
-    // constant-voltage, and `16 euro2 out` does not say which. Guessing
-    // would put 70 V on an 8 Ω run.
+    //
+    // THIS ENTRY IS LOAD-BEARING AND NOT A CONVENIENCE. `euro2` also
+    // names `audio.speaker_lowz` (DR-060 §11.59.10(b)), whose default
+    // connector is `conn.binding_post`, so WITHOUT this line the token
+    // would author a low-Z speaker port on a binding post. A named
+    // connector beating the family's default is §11.59.4's two-registry
+    // split, and it is the same mechanism `c13` forced.
     _c(
       'conn.euroblock_2',
       'Euroblock 2-pole',

@@ -2273,7 +2273,8 @@
         },
         "audio.speaker_lowz": {
           "aliases": [
-            "speaker"
+            "speaker",
+            "euro2"
           ],
           "defaultConnector": "conn.binding_post",
           "defaultDirection": "source",
@@ -2368,6 +2369,7 @@
         },
         "ctl.ir_emitter": {
           "aliases": [
+            "ir",
             "ir35"
           ],
           "defaultConnector": "conn.3_5mm_ts",
@@ -2428,6 +2430,7 @@
         },
         "ctl.rs232": {
           "aliases": [
+            "rs232",
             "de9"
           ],
           "dashOverride": [
@@ -2489,8 +2492,8 @@
         },
         "net.ethernet": {
           "aliases": [
-            "rj45",
-            "lan"
+            "lan",
+            "rj45"
           ],
           "defaultConnector": "conn.rj45",
           "defaultDirection": "bidirectional",
@@ -2558,6 +2561,7 @@
         },
         "power.ac_branch": {
           "aliases": [
+            "ac",
             "5-15p",
             "5-15r",
             "5-20p",
@@ -2590,6 +2594,7 @@
         },
         "power.ac_iec": {
           "aliases": [
+            "iec",
             "c13",
             "c14",
             "c19",

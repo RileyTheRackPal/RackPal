@@ -342,6 +342,81 @@ QuickAddResult parseQuickAdd(Registries registries, String source) {
   );
 }
 
+/// What a direction is called in a bank name, plural.
+///
+/// `bidirectional` and `passive` are BOTH "Ports" and that is not a gap
+/// being papered over: nobody writes "Bidirectionals" on a rack drawing,
+/// and a bank of RS-232 ports is called exactly that. `busNode` gets
+/// "Bus" because a Cresnet or DALI run genuinely is one.
+const _kDirectionPlural = <PortDirection, String>{
+  PortDirection.sink: 'Inputs',
+  PortDirection.source: 'Outputs',
+  PortDirection.bidirectional: 'Ports',
+  PortDirection.busNode: 'Bus',
+  PortDirection.passive: 'Ports',
+};
+
+/// The bank name a plan implies, before collisions are resolved.
+///
+/// DR-060 §11.59.10(a): the FAMILY'S FIRST ALIAS, falling back to
+/// `shortTag`, then to `displayName`. docs/06 §4.2 used to say
+/// `displayName` outright, which yields "HDMI 2.0 (18 Gbps) Inputs"
+/// against the "HDMI Inputs" that §4.1's own example table and §2's
+/// layout sketch both print. The prose was the illustration.
+///
+/// A PLAN WITH NO FAMILY STILL GETS A NAME, from the connector, because
+/// `16 xlr in` has to land somewhere and "Ports" alone would collide
+/// with every other unfamilied bank on the first try.
+String deriveBankName(Registries registries, QuickAddPlan plan) {
+  final family = plan.family == null
+      ? null
+      : registries.signalFamilies[plan.family];
+  final direction = plan.direction ?? family?.defaultDirection;
+  final plural = _kDirectionPlural[direction] ?? 'Ports';
+
+  final head = switch (family) {
+    final f? when f.aliases.isNotEmpty => f.aliases.first.toUpperCase(),
+    final f? when (f.shortTag ?? '').isNotEmpty => f.shortTag!,
+    final f? => f.displayName,
+    _ =>
+      plan.connector == null ? '' : _connectorHead(registries, plan.connector!),
+  };
+
+  return head.isEmpty ? plural : '$head $plural';
+}
+
+/// The same first-alias rule applied to a connector, which is already
+/// what `portConnectorShortLabel` prints in the grid's CONN column. Kept
+/// here rather than imported so `rackmate_core`'s builder layer does not
+/// depend on its own summary module for a two-line fallback.
+String _connectorHead(Registries registries, ConnectorTypeId id) {
+  final def = registries.connectorTypes[id];
+  if (def == null) return id.v;
+  return def.aliases.isEmpty
+      ? def.displayName
+      : def.aliases.first.toUpperCase();
+}
+
+/// [deriveBankName] with collisions resolved against [body].
+///
+/// COLLISIONS TAKE A NUMERIC SUFFIX (docs/06 §4.2), and the comparison
+/// is on the LABEL rather than the key, because the label is what the
+/// user reads and two banks reading "HDMI Inputs" are the confusion the
+/// suffix exists to prevent, whatever their keys say.
+String uniqueBankName(
+  Registries registries,
+  TemplateBody body,
+  QuickAddPlan plan,
+) {
+  final wanted = plan.bankName ?? deriveBankName(registries, plan);
+  final taken = {for (final b in body.banks) b.label};
+  if (!taken.contains(wanted)) return wanted;
+  for (var n = 2; ; n++) {
+    final candidate = '$wanted $n';
+    if (!taken.contains(candidate)) return candidate;
+  }
+}
+
 /// Whether [text] belongs to the `@bank` name currently being read.
 ///
 /// TRUE MEANS "THE PARSER HAS NO OTHER USE FOR THIS WORD". A bank name

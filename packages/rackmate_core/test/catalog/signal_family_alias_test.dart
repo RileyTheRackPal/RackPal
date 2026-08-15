@@ -98,6 +98,34 @@ void main() {
     });
   });
 
+  group('the first alias is a DISPLAY token (DR-060 §11.59.10(a))', () {
+    // `aliases.first` heads a derived bank name, so the list's ORDER
+    // carries display meaning. `ctl.rs232` once led with `de9` and
+    // derived a bank called "DE9 Ports", a plug labelling a signal.
+    //
+    // THERE IS NO MECHANICAL RULE HERE, AND ONE WAS TRIED. "The head
+    // must not name a connector" was written as a gate and disproved
+    // itself on the first run: `hdmi` names `conn.hdmi_a` AND
+    // `video.hdmi.2_0`, and "HDMI Inputs" is exactly what docs/06 §4.1
+    // asks for. What separates `hdmi` from `de9` is that one word is
+    // the signal's own name and the other is a shell it happens to
+    // arrive on, which is a fact about English. So the ARTIFACT is
+    // pinned instead, in `quick_add_test.dart`'s bank-derivation group,
+    // and what stays here is the property that survives: leading with a
+    // display token must not cost the vocabulary.
+    test('the tokens that DO name connectors are still reachable', () {
+      // Leading with a display token must not cost the vocabulary. Each
+      // of these is a connector-shaped alias sitting behind the head.
+      for (final token in ['de9', 'rj45', 'c13', 'c14', 'euro2', '5-15r']) {
+        expect(
+          resolveSignalFamilyToken(registries, token),
+          isNotNull,
+          reason: '"$token" must still reach its family',
+        );
+      }
+    });
+  });
+
   group('the chain still answers what it answered before (DR-025)', () {
     // §11.59.4 puts aliases at the HEAD of the chain, so the risk this
     // group covers is a new alias stealing a token the old three steps
@@ -209,14 +237,26 @@ void main() {
       expect(resolveSignalFamilyToken(registries, 'xlr'), isNull);
     });
 
-    test('euro2 names a connector and refuses to name a family', () {
-      // Low-Z speaker or constant-voltage; guessing puts 70 V on an
-      // 8 ohm run.
+    test('euro2 DOES resolve, and its connector beats the default', () {
+      // DR-060 §11.59.10(b): the user ruled low-Z the overwhelming case,
+      // overruling a recommendation to leave this unknown. The
+      // interesting half is the connector: `audio.speaker_lowz` defaults
+      // to `conn.binding_post`, so without the connector table's own
+      // `euro2` this token would author a speaker port on a binding
+      // post. It is `c13`'s mechanism, on a different pair.
+      expect(
+        resolveSignalFamilyToken(registries, 'euro2')?.id.v,
+        'audio.speaker_lowz',
+      );
+      expect(
+        resolveSignalFamilyToken(registries, 'euro2')?.defaultConnector.v,
+        'conn.binding_post',
+        reason: 'the family default this must override',
+      );
       expect(
         resolveConnectorToken(registries, 'euro2')?.id.v,
         'conn.euroblock_2',
       );
-      expect(resolveSignalFamilyToken(registries, 'euro2'), isNull);
     });
 
     test('a token in neither registry answers null on both halves', () {
