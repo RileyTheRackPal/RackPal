@@ -53,21 +53,52 @@ void _writeProbe(PortField<Object?> subject, PortDef port) {
       subject.set(port, 'probe.${subject.key}');
     case PortField<String?>():
       subject.set(port, 'probe.${subject.key}');
+    case PortField<int>():
+      subject.set(port, subject.get(port) + 7);
+    case PortField<int?>():
+      subject.set(port, (subject.get(port) ?? 0) + 7);
+    // A THIRD STATE, WHICH IS WHY THESE ARE `bool?`. The probe must move
+    // a field that starts UNKNOWN, so it cannot simply negate.
+    case PortField<bool?>():
+      subject.set(port, subject.get(port) != true);
     case PortField<PortDirection>():
-      final now = subject.get(port);
-      subject.set(
-        port,
-        PortDirection.values[(now.index + 1) % PortDirection.values.length],
-      );
+      subject.set(port, _next(PortDirection.values, subject.get(port)));
     case PortField<Face>():
       subject.set(
         port,
         subject.get(port) == Face.rear ? Face.front : Face.rear,
       );
+    case PortField<PortTopology>():
+      subject.set(port, _next(PortTopology.values, subject.get(port)));
+    case PortField<Gender>():
+      subject.set(port, _next(Gender.values, subject.get(port)));
+    case PortField<AudioLevel?>():
+      subject.set(port, _next(AudioLevel.values, subject.get(port)));
+    case PortField<Polarity?>():
+      subject.set(port, _next(Polarity.values, subject.get(port)));
+    case PortField<PoeRole?>():
+      subject.set(port, _next(PoeRole.values, subject.get(port)));
+    case PortField<PoeStandard?>():
+      subject.set(port, _next(PoeStandard.values, subject.get(port)));
+    case PortField<SfpFormFactor?>():
+      subject.set(port, _next(SfpFormFactor.values, subject.get(port)));
+    case PortField<FiberMode?>():
+      subject.set(port, _next(FiberMode.values, subject.get(port)));
+    case PortField<SerialRole?>():
+      subject.set(port, _next(SerialRole.values, subject.get(port)));
+    case PortField<PortPowerRole?>():
+      subject.set(port, _next(PortPowerRole.values, subject.get(port)));
+    case PortField<ReturnChannel?>():
+      subject.set(port, _next(ReturnChannel.values, subject.get(port)));
     default:
       fail('no probe for ${subject.key}: teach this switch its type');
   }
 }
+
+/// A value of [values] that is not [now]. `values.first` when nothing is
+/// set, which is the state most pack fields start in.
+T _next<T extends Enum>(List<T> values, T? now) =>
+    now == null ? values.first : values[(now.index + 1) % values.length];
 
 List<Object?> _readings(PortDef port) => [
   for (final field in PortDefField.all) field.get(port),
@@ -121,6 +152,75 @@ void main() {
           if (before[j] != after[j]) PortDefField.all[j].key,
       ];
       expect(moved, ['notes'], reason: 'the probe lands on the WRONG name');
+    });
+  });
+
+  group('the four nullable sub-specs', () {
+    test('writing one field creates the spec, and clearing it removes the '
+        'spec again', () {
+      final port = _fullPort('p');
+      expect(port.poe, isNull);
+
+      PortDefField.poeWatts.set(port, 30);
+      expect(port.poe?.watts, 30);
+
+      PortDefField.poeWatts.set(port, null);
+      expect(
+        port.poe,
+        isNull,
+        reason:
+            'a PoeSpec with every field null encodes as "poe": {}, which '
+            'is a key asserting this port has PoE information when it has '
+            'none: the explicit null G4 forbids, in an object',
+      );
+    });
+
+    test('a spec with another field set survives clearing one', () {
+      final port = _fullPort('p');
+      PortDefField.poeWatts.set(port, 30);
+      PortDefField.poeRole.set(port, PoeRole.pse);
+
+      PortDefField.poeWatts.set(port, null);
+
+      expect(port.poe?.role, PoeRole.pse);
+      expect(port.poe?.watts, isNull);
+    });
+
+    test('undo leaves the port byte-identical, which the codec proves', () {
+      const cmd = SetPortFieldCommand<int?>(
+        port: PortKey('p1'),
+        field: PortDefField.busUnitLoads,
+        from: null,
+        to: 4,
+      );
+      final body = _body()..ports.add(_fullPort('p1'));
+      final before = templateBodyToJson(body);
+
+      cmd.apply(body);
+      expect(templateBodyToJson(body), isNot(before));
+
+      cmd.revert(body);
+      expect(
+        templateBodyToJson(body),
+        before,
+        reason:
+            'apply creates the BusCapability, revert empties it, and the '
+            'tidy-up drops it, so CR-117 holds across an undo',
+      );
+    });
+
+    test('all four behave the same way, because one of them behaving '
+        'differently is how a file grows an empty object', () {
+      final port = _fullPort('p');
+      PortDefField.serialRole.set(port, SerialRole.dte);
+      PortDefField.busUnitLoads.set(port, 2);
+      PortDefField.powerVolts.set(port, 120);
+      expect([port.serial, port.bus, port.power], everyElement(isNotNull));
+
+      PortDefField.serialRole.set(port, null);
+      PortDefField.busUnitLoads.set(port, null);
+      PortDefField.powerVolts.set(port, null);
+      expect([port.serial, port.bus, port.power], everyElement(isNull));
     });
   });
 

@@ -21,7 +21,24 @@ Registries _registries() => Registries(
       displayName: 'HDMI Type A',
     ),
   },
+  signalFamilies: {
+    const SignalFamilyId('net.ethernet'): const SignalFamilyDef(
+      id: SignalFamilyId('net.ethernet'),
+      displayName: 'Ethernet',
+      domain: SignalDomainId('net'),
+      defaultConnector: ConnectorTypeId('conn.rj45'),
+      defaultDirection: PortDirection.bidirectional,
+      defaultTopology: PortTopology.p2p,
+    ),
+  },
 );
+
+/// A port the auto-reveal reacts to: its family sits in the `net` domain.
+PortDef _netPort(String key, {required String order}) =>
+    _port(key, order: order)
+      ..signalFamily = const SignalFamilyId(
+        'net.ethernet',
+      );
 
 PortDef _port(String key, {required String order, String? bank}) => PortDef(
   key: PortKey(key),
@@ -521,6 +538,141 @@ void main() {
             'G4: an absent key is unknown, and an empty string would be a '
             'note somebody wrote',
       );
+    });
+  });
+
+  group('the seven column packs (M4-E3)', () {
+    testWidgets('closed by default, and the gear opens one', (tester) async {
+      await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('p1', order: 'a0')),
+      );
+
+      expect(find.text('PoE ROLE'), findsNothing);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Network'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('PoE ROLE'), findsOneWidget);
+      expect(
+        find.text('LABEL'),
+        findsOneWidget,
+        reason: 'a pack joins the core columns rather than replacing them',
+      );
+    });
+
+    testWidgets('a pack the user closes stays closed even when the bank '
+        'would open it', (tester) async {
+      // Without the override, closing a pack the auto-reveal wants would
+      // last exactly one rebuild.
+      final harness = await _pump(
+        tester,
+        template: _saveable()..ports.add(_netPort('n1', order: 'a0')),
+      );
+
+      expect(
+        find.text('PoE ROLE'),
+        findsOneWidget,
+        reason: 'a bank of ethernet ports reveals the Network pack',
+      );
+
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Network'));
+      await tester.pumpAndSettle();
+      expect(find.text('PoE ROLE'), findsNothing);
+      expect(harness, isNotNull);
+    });
+
+    testWidgets('the app is handed the set to remember, keyed on the '
+        'category', (tester) async {
+      final remembered = <String, Set<PortColumnPack>>{};
+      tester.view.physicalSize = const Size(1400, 820);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DeviceBuilderScreen(
+              // ONE OF `kCatalogCategoryOrder`'S NINE. The Identity
+              // section's category dropdown asserts that exactly one item
+              // matches its value, so a made-up category takes the whole
+              // screen down: the same assertion M3-L found on SERVICE,
+              // met here by a test rather than by a user.
+              template: _saveable()..category = kCatNetwork,
+              registries: _registries(),
+              actions: DeviceBuilderActions(
+                onSave: (_) => null,
+                rememberedPacks: (c) => remembered[c] ?? const {},
+                onPacksRemembered: (c, packs) => remembered[c] = packs,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.widgetWithText(ListTile, 'Ports'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Serial'));
+      await tester.pumpAndSettle();
+
+      expect(remembered[kCatNetwork], contains(PortColumnPack.serial));
+    });
+
+    testWidgets('GENDER is dead on a connector that has none (CR-059)', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('p1', order: 'a0')),
+      );
+
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Advanced'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('GENDER'), findsOneWidget);
+      expect(
+        find.byTooltip('This connector has no gender.'),
+        findsOneWidget,
+        reason:
+            'disabled rather than hidden: the column is open because the '
+            'person opened the pack, and a gap where a control should be '
+            'reads as a rendering fault',
+      );
+    });
+
+    testWidgets('a number cell writes an int and an empty one writes '
+        'UNKNOWN', (tester) async {
+      final harness = await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('p1', order: 'a0')),
+      );
+
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Electrical'));
+      await tester.pumpAndSettle();
+
+      final column = tester.getTopLeft(find.text('IMPEDANCE')).dx;
+      final fields = find.byType(TextField);
+      for (var i = 0; i < tester.widgetList(fields).length; i++) {
+        if ((tester.getTopLeft(fields.at(i)).dx - column).abs() < 8) {
+          await tester.enterText(fields.at(i), '75');
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pumpAndSettle();
+          break;
+        }
+      }
+
+      expect((await harness.read(tester)).ports.single.impedanceOhms, 75);
     });
   });
 

@@ -155,6 +155,7 @@ final class AppPrefs {
     this.displayId,
     this.lastSaveDirectory,
     this.coachMarksSeen = const <String>{},
+    this.portColumnPacks = const <String, Set<String>>{},
   });
 
   /// Parses `prefs.json`'s decoded root, defaulting anything missing or
@@ -166,8 +167,13 @@ final class AppPrefs {
     final lastSaveDirectory = raw['lastSaveDirectory'];
     final lastDir = lastSaveDirectory is String ? lastSaveDirectory : null;
     final seen = _coachMarksFromJson(raw['coachMarksSeen']);
+    final packs = _packsFromJson(raw['portColumnPacks']);
     if (window is! Map) {
-      return AppPrefs(lastSaveDirectory: lastDir, coachMarksSeen: seen);
+      return AppPrefs(
+        lastSaveDirectory: lastDir,
+        coachMarksSeen: seen,
+        portColumnPacks: packs,
+      );
     }
     final displayId = window['displayId'];
     return AppPrefs(
@@ -176,7 +182,24 @@ final class AppPrefs {
       displayId: displayId is String ? displayId : null,
       lastSaveDirectory: lastDir,
       coachMarksSeen: seen,
+      portColumnPacks: packs,
     );
+  }
+
+  /// UNKNOWN NAMES ARE KEPT, NOT DROPPED. A pack name this build does
+  /// not recognise belongs to a newer one, and a user who runs both
+  /// should not have the older build quietly forget their choice. The
+  /// grid resolves names to packs and ignores what it cannot place.
+  static Map<String, Set<String>> _packsFromJson(Object? raw) {
+    if (raw is! Map) return const <String, Set<String>>{};
+    return <String, Set<String>>{
+      for (final entry in raw.entries)
+        if (entry.key is String && entry.value is List)
+          entry.key! as String: <String>{
+            for (final name in entry.value! as List)
+              if (name is String && name.isNotEmpty) name,
+          },
+    };
   }
 
   static Set<String> _coachMarksFromJson(Object? raw) {
@@ -229,6 +252,31 @@ final class AppPrefs {
   /// window position on an unplugged monitor.
   final Set<String> coachMarksSeen;
 
+  /// Which port-grid column packs each device CATEGORY was last left
+  /// showing (docs/06 §4.5, M4-E3).
+  ///
+  /// PER USER AND NOT PER PROJECT, for `coachMarksSeen`'s reason: which
+  /// columns an installer likes to see when authoring a network switch is
+  /// a fact about the installer. It is also UI chrome, which §11.12.4
+  /// rules out of the document by name because it would put it inside
+  /// CR-117's byte-exact surface.
+  ///
+  /// STORED AS NAMES rather than as an enum, because this file outlives
+  /// the build that wrote it.
+  final Map<String, Set<String>> portColumnPacks;
+
+  /// The packs remembered for [category]; empty when none are.
+  Set<String> packsFor(String category) =>
+      portColumnPacks[category] ?? const <String>{};
+
+  /// This, with [category]'s packs replaced.
+  AppPrefs withPacksFor(String category, Set<String> packs) => copyWith(
+    portColumnPacks: <String, Set<String>>{
+      ...portColumnPacks,
+      category: packs,
+    },
+  );
+
   /// Whether [id] has already been shown to this user.
   bool hasSeenCoachMark(String id) => coachMarksSeen.contains(id);
 
@@ -242,12 +290,14 @@ final class AppPrefs {
     String? displayId,
     String? lastSaveDirectory,
     Set<String>? coachMarksSeen,
+    Map<String, Set<String>>? portColumnPacks,
   }) => AppPrefs(
     window: window ?? this.window,
     maximized: maximized ?? this.maximized,
     displayId: displayId ?? this.displayId,
     lastSaveDirectory: lastSaveDirectory ?? this.lastSaveDirectory,
     coachMarksSeen: coachMarksSeen ?? this.coachMarksSeen,
+    portColumnPacks: portColumnPacks ?? this.portColumnPacks,
   );
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -264,6 +314,13 @@ final class AppPrefs {
     // whose diffs nobody reads.
     if (coachMarksSeen.isNotEmpty)
       'coachMarksSeen': coachMarksSeen.toList()..sort(),
+    // SORTED TWICE, keys and values, for the reason above it: a
+    // preferences file that churns is one whose diffs nobody reads.
+    if (portColumnPacks.isNotEmpty)
+      'portColumnPacks': <String, Object?>{
+        for (final key in portColumnPacks.keys.toList()..sort())
+          key: portColumnPacks[key]!.toList()..sort(),
+      },
   };
 }
 

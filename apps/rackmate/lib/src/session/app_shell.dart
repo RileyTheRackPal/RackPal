@@ -773,7 +773,10 @@ final class AppShellState extends State<AppShell>
         model: '',
         displayName: '',
       ),
-      actions: buildDeviceBuilderActions(controller: session.controller),
+      actions: buildDeviceBuilderActions(
+        controller: session.controller,
+        prefs: _services.prefsStore,
+      ),
       // THE PROJECT'S OWN REGISTRIES AND FORMAT, so the port grid prints
       // `HDMI Type A` where the model holds `conn.hdmi_a`, and previews
       // the designators THIS project would allocate rather than a default

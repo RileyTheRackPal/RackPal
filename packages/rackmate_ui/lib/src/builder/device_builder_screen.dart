@@ -71,7 +71,28 @@ import 'package:rackmate_ui/src/builder/port_grid.dart';
 /// session layer.
 @immutable
 final class DeviceBuilderActions {
-  const DeviceBuilderActions({required this.onSave});
+  const DeviceBuilderActions({
+    required this.onSave,
+    this.rememberedPacks = _nothingRemembered,
+    this.onPacksRemembered = _rememberNothing,
+  });
+
+  /// Which column packs this device CATEGORY was last left showing
+  /// (docs/06 §4.5).
+  ///
+  /// **NOT NULLABLE, AND THE FIRST DRAFT WAS.** It carried a doc comment
+  /// explaining that null meant "nobody is remembering" while an empty
+  /// set meant "this category was left with everything closed" — a
+  /// distinction nothing downstream could act on, because the screen
+  /// folded null to empty on the way past. A stated difference the code
+  /// does not make is worse than no difference: the next person builds on
+  /// it. A degraded session (no writable data folder) supplies the
+  /// default below and remembers nothing, which is the same behaviour
+  /// with one fewer state to reason about.
+  final Set<PortColumnPack> Function(String category) rememberedPacks;
+
+  final void Function(String category, Set<PortColumnPack> packs)
+  onPacksRemembered;
 
   /// Persists the body handed to it and returns a refusal sentence, or
   /// null on success.
@@ -83,6 +104,12 @@ final class DeviceBuilderActions {
   /// business.
   final String? Function(TemplateBody body) onSave;
 }
+
+/// A caller that keeps no preferences: the grid still auto-reveals.
+Set<PortColumnPack> _nothingRemembered(String category) =>
+    const <PortColumnPack>{};
+
+void _rememberNothing(String category, Set<PortColumnPack> packs) {}
 
 /// Opens the builder over [template].
 ///
@@ -348,6 +375,16 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
                     },
                     keyTouched: _keyTouched,
                     onKeyTouched: (was, now) => _keyTouched.addAll([was, now]),
+                    // PER CATEGORY, keyed on the body's CURRENT category
+                    // rather than the one it opened with: change a
+                    // template from Distribution to Network and the
+                    // columns a person keeps for network gear are the
+                    // ones they should get.
+                    remembered: widget.actions.rememberedPacks(
+                      _session.body.category,
+                    ),
+                    onPacksRemembered: (packs) => widget.actions
+                        .onPacksRemembered(_session.body.category, packs),
                     portDesignatorFormat: widget.portDesignatorFormat,
                     actions: PortGridActions(
                       run: _runCommand,

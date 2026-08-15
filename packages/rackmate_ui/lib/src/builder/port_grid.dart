@@ -84,6 +84,8 @@ class PortGrid extends StatefulWidget {
     required this.openedPortKeys,
     required this.keyTouched,
     required this.onKeyTouched,
+    required this.remembered,
+    required this.onPacksRemembered,
     required this.actions,
     this.portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
     super.key,
@@ -132,6 +134,14 @@ class PortGrid extends StatefulWidget {
   /// Records a hand-typed rename in [keyTouched]. Both sides; see there.
   final void Function(String was, String now) onKeyTouched;
 
+  /// Packs this device's CATEGORY was last left showing (docs/06 §4.5).
+  /// Empty when the app has nothing remembered, which is honest: the
+  /// auto-reveal still runs.
+  final Set<PortColumnPack> remembered;
+
+  /// Hands the app the set to remember against this category.
+  final ValueChanged<Set<PortColumnPack>> onPacksRemembered;
+
   final PortGridActions actions;
 
   /// The project's port designator format, so the DESIG column previews
@@ -163,6 +173,47 @@ class _PortGridState extends State<PortGrid> {
   bool _keyFollows(PortDef port) =>
       !widget.keyTouched.contains(port.key.v) &&
       !widget.openedPortKeys.contains(port.key.v);
+
+  /// Packs the person has switched on or off by hand, which is what makes
+  /// auto-reveal a SUGGESTION rather than a rule. A pack the user closed
+  /// stays closed even when the bank's traffic would open it, and a pack
+  /// they opened stays open when it would not.
+  final _packOverrides = <PortColumnPack, bool>{};
+
+  /// Which packs are showing: the auto-revealed set, then the overrides.
+  Set<PortColumnPack> _openPacks() {
+    final open = {
+      ...autoRevealedPacks(
+        widget.body.ports,
+        widget.registries,
+        isPassthrough: widget.body.isPassthrough,
+      ),
+      ...widget.remembered,
+    };
+    for (final entry in _packOverrides.entries) {
+      entry.value ? open.add(entry.key) : open.remove(entry.key);
+    }
+    return open;
+  }
+
+  void _togglePack(PortColumnPack pack, {required bool on}) {
+    setState(() => _packOverrides[pack] = on);
+    // REMEMBERED PER CATEGORY (docs/06 §4.5). An installer who opens the
+    // Network pack on one switch means it for the next switch too, and
+    // not for the next amplifier.
+    widget.onPacksRemembered(_openPacks());
+  }
+
+  /// Which port each passthrough pair puts on the other end.
+  ///
+  /// BOTH DIRECTIONS, because a pair names a front and a rear and either
+  /// row may be the one a person is looking at.
+  Map<String, String> _pairs() => {
+    for (final pair in widget.body.passthroughPairs) ...{
+      pair.frontKey.v: pair.rearKey.v,
+      pair.rearKey.v: pair.frontKey.v,
+    },
+  };
 
   void _addPort() {
     final port = blankPort(widget.body);
@@ -196,12 +247,10 @@ class _PortGridState extends State<PortGrid> {
       (key) => !widget.body.ports.any((p) => p.key.v == key),
     );
 
+    final columns = portVisibleColumns(_openPacks());
     final total =
         kPortSelectGutter +
-        _kColumns.fold<double>(
-          0,
-          (n, c) => n + portColumnWidth(c),
-        );
+        columns.fold<double>(0, (n, c) => n + portColumnWidth(c));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -211,6 +260,8 @@ class _PortGridState extends State<PortGrid> {
           tickedCount: _ticked.length,
           onAdd: _addPort,
           onDelete: _ticked.isEmpty ? null : _deleteTicked,
+          openPacks: _openPacks(),
+          onTogglePack: _togglePack,
         ),
         const Divider(height: 1),
         Expanded(
@@ -235,7 +286,7 @@ class _PortGridState extends State<PortGrid> {
                         // is what makes an empty grid readable rather
                         // than blank: a person can see what the columns
                         // will be before deciding what to type.
-                        _HeaderRow(scale: scale),
+                        _HeaderRow(scale: scale, columns: columns),
                         const Divider(height: 1, thickness: 1),
                         Expanded(
                           child: table.bands.isEmpty
@@ -251,6 +302,9 @@ class _PortGridState extends State<PortGrid> {
                                   takenKeys: {
                                     for (final p in widget.body.ports) p.key.v,
                                   },
+                                  columns: columns,
+                                  pairedWith: _pairs(),
+                                  registriesForGender: widget.registries,
                                   onKeyTouched: widget.onKeyTouched,
                                   collapsed: _collapsed,
                                   ticked: _ticked,
@@ -283,22 +337,22 @@ class _PortGridState extends State<PortGrid> {
 /// The tick-box gutter, in the same points the columns are authored in.
 const double kPortSelectGutter = 34;
 
-/// The core columns, left to right (docs/06 §4.5). The seven packs join
-/// this list in M4-E3, which is why it is a list and not the enum itself.
-const List<PortColumnId> _kColumns = PortColumnId.values;
-
 class _Toolbar extends StatelessWidget {
   const _Toolbar({
     required this.portCount,
     required this.tickedCount,
     required this.onAdd,
     required this.onDelete,
+    required this.openPacks,
+    required this.onTogglePack,
   });
 
   final int portCount;
   final int tickedCount;
   final VoidCallback onAdd;
   final VoidCallback? onDelete;
+  final Set<PortColumnPack> openPacks;
+  final void Function(PortColumnPack pack, {required bool on}) onTogglePack;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -327,15 +381,48 @@ class _Toolbar extends StatelessWidget {
           portCount == 1 ? '1 port' : '$portCount ports',
           style: Theme.of(context).textTheme.labelMedium,
         ),
+        const SizedBox(width: 12),
+        // ═══════════════════════════════════════════════════════════════
+        // TICKS, NOT A LIST OF NAMES, AND THE STATE IS ALREADY DECIDED
+        // ═══════════════════════════════════════════════════════════════
+        // Every pack opens itself when the bank's own traffic calls for
+        // it, so this menu opens showing what the grid decided, and a
+        // tick a person changes OVERRIDES that for the rest of the
+        // session. Without the override, closing a pack the auto-reveal
+        // wants would last exactly one rebuild.
+        MenuAnchor(
+          menuChildren: [
+            for (final pack in PortColumnPack.values)
+              MenuItemButton(
+                closeOnActivate: false,
+                leadingIcon: Icon(
+                  openPacks.contains(pack)
+                      ? Icons.check_box
+                      : Icons.check_box_outline_blank,
+                  size: 18,
+                ),
+                onPressed: () =>
+                    onTogglePack(pack, on: !openPacks.contains(pack)),
+                child: Text(pack.label),
+              ),
+          ],
+          builder: (context, controller, child) => TextButton.icon(
+            onPressed: () =>
+                controller.isOpen ? controller.close() : controller.open(),
+            icon: const Icon(Icons.settings_outlined, size: 18),
+            label: const Text('Columns'),
+          ),
+        ),
       ],
     ),
   );
 }
 
 class _HeaderRow extends StatelessWidget {
-  const _HeaderRow({required this.scale});
+  const _HeaderRow({required this.scale, required this.columns});
 
   final double scale;
+  final List<PortColumnId> columns;
 
   @override
   Widget build(BuildContext context) {
@@ -346,7 +433,7 @@ class _HeaderRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           SizedBox(width: kPortSelectGutter * scale),
-          for (final id in _kColumns)
+          for (final id in columns)
             SizedBox(
               width: portColumnWidth(id) * scale,
               child: Padding(
@@ -376,6 +463,9 @@ class _Bands extends StatelessWidget {
     required this.keyFollows,
     required this.isPublished,
     required this.takenKeys,
+    required this.columns,
+    required this.pairedWith,
+    required this.registriesForGender,
     required this.onKeyTouched,
     required this.collapsed,
     required this.ticked,
@@ -391,6 +481,9 @@ class _Bands extends StatelessWidget {
   final bool Function(PortDef port) keyFollows;
   final bool Function(String portKey) isPublished;
   final Set<String> takenKeys;
+  final List<PortColumnId> columns;
+  final Map<String, String> pairedWith;
+  final Registries registriesForGender;
   final void Function(String was, String now) onKeyTouched;
   final Set<String?> collapsed;
   final Set<String> ticked;
@@ -432,6 +525,12 @@ class _Bands extends StatelessWidget {
               keyFollowsLabel: keyFollows(band.rows[index].port),
               keyIsPublished: isPublished(band.rows[index].port.key.v),
               takenKeys: takenKeys,
+              columns: columns,
+              pairedWith: pairedWith[band.rows[index].port.key.v],
+              genderApplies: portGenderApplies(
+                registriesForGender,
+                band.rows[index].port.connector,
+              ),
               onKeyTouched: onKeyTouched,
               ticked: ticked.contains(band.rows[index].port.key.v),
               onTick: onTick,
@@ -546,6 +645,9 @@ class _PortRow extends StatelessWidget {
     required this.keyFollowsLabel,
     required this.keyIsPublished,
     required this.takenKeys,
+    required this.columns,
+    required this.pairedWith,
+    required this.genderApplies,
     required this.onKeyTouched,
     required this.ticked,
     required this.onTick,
@@ -561,6 +663,17 @@ class _PortRow extends StatelessWidget {
   /// Every port key on this template, so an automatic key can be made
   /// unique without asking the body again.
   final Set<String> takenKeys;
+
+  /// The columns to draw, core plus whichever packs are open.
+  final List<PortColumnId> columns;
+
+  /// The key this port is paired with, for the Passthrough pack. Read
+  /// only: pairing is M4-J3 (`#225`).
+  final String? pairedWith;
+
+  /// Whether GENDER may be edited here (CR-059, gated on the registry's
+  /// `genderApplies` for this port's connector).
+  final bool genderApplies;
 
   /// Whether typing a LABEL should carry the key along with it.
   final bool keyFollowsLabel;
@@ -666,7 +779,7 @@ class _PortRow extends StatelessWidget {
               onChanged: (v) => onTick(_port.key.v, on: v ?? false),
             ),
           ),
-          for (final id in _kColumns)
+          for (final id in columns)
             SizedBox(
               width: portColumnWidth(id) * scale,
               child: Padding(
@@ -750,10 +863,316 @@ class _PortRow extends StatelessWidget {
     ),
     PortColumnId.notes => _TextCell(
       value: _port.notes,
-      onCommit: (v) =>
-          _set(PortDefField.notes, v.trim().isEmpty ? null : v.trim()),
+      onCommit: (v) => _set(PortDefField.notes, _orNull(v)),
+    ),
+    PortColumnId.impedanceOhms => _NumberCell(
+      value: _port.impedanceOhms,
+      hint: '75',
+      onCommit: (v) => _set(PortDefField.impedanceOhms, v),
+    ),
+    PortColumnId.audioLevel => _NullableChoiceCell<AudioLevel>(
+      value: _port.level,
+      options: AudioLevel.values,
+      label: portAudioLevelLabel,
+      onPick: (v) => _set(PortDefField.audioLevel, v),
+    ),
+    PortColumnId.balanced => _TriStateCell(
+      value: _port.balanced,
+      onPick: (v) => _set(PortDefField.balanced, v),
+    ),
+    PortColumnId.phantomPower => _TriStateCell(
+      value: _port.phantomPowerCapable,
+      onPick: (v) => _set(PortDefField.phantomPower, v),
+    ),
+    PortColumnId.polarity => _NullableChoiceCell<Polarity>(
+      value: _port.polarity,
+      options: Polarity.values,
+      label: portPolarityLabel,
+      onPick: (v) => _set(PortDefField.polarity, v),
+    ),
+    PortColumnId.nominalVoltage => _NumberCell(
+      value: _port.nominalVoltage,
+      onCommit: (v) => _set(PortDefField.nominalVoltage, v),
+    ),
+    PortColumnId.maxCurrentMa => _NumberCell(
+      value: _port.maxCurrentMa,
+      onCommit: (v) => _set(PortDefField.maxCurrentMa, v),
+    ),
+    PortColumnId.poeRole => _NullableChoiceCell<PoeRole>(
+      value: _port.poe?.role,
+      options: PoeRole.values,
+      label: portPoeRoleLabel,
+      onPick: (v) => _set(PortDefField.poeRole, v),
+    ),
+    PortColumnId.poeStandard => _NullableChoiceCell<PoeStandard>(
+      value: _port.poe?.standard,
+      options: PoeStandard.values,
+      label: portPoeStandardLabel,
+      onPick: (v) => _set(PortDefField.poeStandard, v),
+    ),
+    PortColumnId.poeType => _NumberCell(
+      value: _port.poe?.type,
+      onCommit: (v) => _set(PortDefField.poeType, v),
+    ),
+    PortColumnId.poeClass => _NumberCell(
+      value: _port.poe?.poeClass,
+      onCommit: (v) => _set(PortDefField.poeClass, v),
+    ),
+    PortColumnId.poeWatts => _NumberCell(
+      value: _port.poe?.watts,
+      onCommit: (v) => _set(PortDefField.poeWatts, v),
+    ),
+    PortColumnId.linkSpeedMbps => _NumberCell(
+      value: _port.linkSpeedMbps,
+      hint: '1000',
+      onCommit: (v) => _set(PortDefField.linkSpeedMbps, v),
+    ),
+    PortColumnId.sfpFormFactor => _NullableChoiceCell<SfpFormFactor>(
+      value: _port.sfp,
+      options: SfpFormFactor.values,
+      label: portSfpLabel,
+      onPick: (v) => _set(PortDefField.sfpFormFactor, v),
+    ),
+    PortColumnId.fiberMode => _NullableChoiceCell<FiberMode>(
+      value: _port.fiberMode,
+      options: FiberMode.values,
+      label: portFiberModeLabel,
+      onPick: (v) => _set(PortDefField.fiberMode, v),
+    ),
+    PortColumnId.wavelengthNm => _NumberCell(
+      value: _port.wavelengthNm,
+      hint: '1310',
+      onCommit: (v) => _set(PortDefField.wavelengthNm, v),
+    ),
+    PortColumnId.serialRole => _NullableChoiceCell<SerialRole>(
+      value: _port.serial?.role,
+      options: SerialRole.values,
+      label: portSerialRoleLabel,
+      onPick: (v) => _set(PortDefField.serialRole, v),
+    ),
+    PortColumnId.baud => _NumberCell(
+      value: _port.serial?.baud,
+      hint: '9600',
+      onCommit: (v) => _set(PortDefField.baud, v),
+    ),
+    PortColumnId.dataBits => _NumberCell(
+      value: _port.serial?.dataBits,
+      hint: '8',
+      onCommit: (v) => _set(PortDefField.dataBits, v),
+    ),
+    PortColumnId.stopBits => _NumberCell(
+      value: _port.serial?.stopBits,
+      hint: '1',
+      onCommit: (v) => _set(PortDefField.stopBits, v),
+    ),
+    PortColumnId.parity => _TextCell(
+      value: _port.serial?.parity,
+      hint: 'none',
+      onCommit: (v) => _set(PortDefField.parity, _orNull(v)),
+    ),
+    PortColumnId.flowControl => _TextCell(
+      value: _port.serial?.flowControl,
+      hint: 'none',
+      onCommit: (v) => _set(PortDefField.flowControl, _orNull(v)),
+    ),
+    PortColumnId.busProtocol => _TextCell(
+      value: _port.bus?.protocol,
+      hint: 'rs485',
+      onCommit: (v) => _set(PortDefField.busProtocol, _orNull(v)),
+    ),
+    PortColumnId.busTermination => _TriStateCell(
+      value: _port.bus?.supportsTermination,
+      onPick: (v) => _set(PortDefField.busTermination, v),
+    ),
+    PortColumnId.busUnitLoads => _NumberCell(
+      value: _port.bus?.unitLoads,
+      onCommit: (v) => _set(PortDefField.busUnitLoads, v),
+    ),
+    PortColumnId.busAddressable => _TriStateCell(
+      value: _port.bus?.addressable,
+      onPick: (v) => _set(PortDefField.busAddressable, v),
+    ),
+    PortColumnId.busMaxTapWatts => _NumberCell(
+      value: _port.bus?.maxTapWatts,
+      onCommit: (v) => _set(PortDefField.busMaxTapWatts, v),
+    ),
+    PortColumnId.powerRole => _NullableChoiceCell<PortPowerRole>(
+      value: _port.power?.role,
+      options: PortPowerRole.values,
+      label: portPowerRoleLabel,
+      onPick: (v) => _set(PortDefField.powerRole, v),
+    ),
+    PortColumnId.powerVolts => _NumberCell(
+      value: _port.power?.volts,
+      hint: '120',
+      onCommit: (v) => _set(PortDefField.powerVolts, v),
+    ),
+    PortColumnId.powerDrawWatts => _NumberCell(
+      value: _port.power?.drawWatts,
+      onCommit: (v) => _set(PortDefField.powerDrawWatts, v),
+    ),
+    PortColumnId.powerMaxAmps => _NumberCell(
+      value: _port.power?.maxAmps,
+      onCommit: (v) => _set(PortDefField.powerMaxAmps, v),
+    ),
+    // READ-ONLY, AND SAYS SO BY BEING TEXT. Pairing is M4-J3 (`#225`),
+    // which owns the bank-level `Pair front to rear by order` action;
+    // typing a key into a cell here would write half a pair.
+    PortColumnId.pairedPort => _ReadOnlyCell(value: pairedWith),
+    PortColumnId.maxConnections => _NumberCell(
+      value: _port.maxConnections,
+      onCommit: (v) => _set(PortDefField.maxConnections, v ?? 1),
+    ),
+    PortColumnId.topology => _ChoiceCell<PortTopology>(
+      value: _port.topology,
+      options: PortTopology.values,
+      label: portTopologyLabel,
+      onPick: (v) => _set(PortDefField.topology, v),
+    ),
+    // GATED ON THE CONNECTOR (CR-059, M4-B). Gender is meaningless on an
+    // RJ45 and load-bearing on an XLR, and `genderApplies` is the field
+    // M4-B authored to say which. A disabled cell rather than a hidden
+    // one: the column is open because the person opened the pack, and a
+    // gap where a control should be reads as a rendering fault.
+    PortColumnId.gender =>
+      genderApplies
+          ? _ChoiceCell<Gender>(
+              value: _port.gender,
+              options: Gender.values,
+              label: portGenderLabel,
+              onPick: (v) => _set(PortDefField.gender, v),
+            )
+          : const _ReadOnlyCell(
+              value: null,
+              tooltip: 'This connector has no gender.',
+            ),
+    PortColumnId.pinoutVariant => _TextCell(
+      value: _port.pinoutVariant,
+      hint: 'emitter',
+      onCommit: (v) => _set(PortDefField.pinoutVariant, _orNull(v)),
+    ),
+    PortColumnId.conductorCount => _NumberCell(
+      value: _port.conductorCount,
+      onCommit: (v) => _set(PortDefField.conductorCount, v),
+    ),
+    PortColumnId.returnChannel => _NullableChoiceCell<ReturnChannel>(
+      value: _port.returnChannel,
+      options: ReturnChannel.values,
+      label: portReturnChannelLabel,
+      onPick: (v) => _set(PortDefField.returnChannel, v),
+    ),
+    // READ-ONLY: `renamedFrom` is written by a rename, never typed.
+    PortColumnId.renamedFrom => _ReadOnlyCell(
+      value: _port.renamedFrom.isEmpty
+          ? null
+          : _port.renamedFrom.map((k) => k.v).join(', '),
     ),
   };
+
+  static String? _orNull(String v) => v.trim().isEmpty ? null : v.trim();
+}
+
+/// A cell holding a whole number.
+///
+/// KEEPS WHAT WAS TYPED WHEN IT DOES NOT PARSE, rather than silently
+/// reverting. `9,600` and `9600 baud` are things a person types, and a box
+/// that empties itself when they tab away tells them nothing about which
+/// of the two the app disliked. Nothing is written until it parses; an
+/// empty box writes UNKNOWN.
+class _NumberCell extends StatelessWidget {
+  const _NumberCell({required this.value, required this.onCommit, this.hint});
+
+  final int? value;
+  final ValueChanged<int?> onCommit;
+  final String? hint;
+
+  @override
+  Widget build(BuildContext context) => _TextCell(
+    value: value?.toString(),
+    hint: hint,
+    onCommit: (typed) {
+      final text = typed.trim();
+      if (text.isEmpty) {
+        onCommit(null);
+        return;
+      }
+      final parsed = int.tryParse(text);
+      if (parsed != null) onCommit(parsed);
+    },
+  );
+}
+
+/// A closed set that also accepts "nobody has said" (G4).
+///
+/// THE UNKNOWN ROW IS FIRST AND IS ALWAYS OFFERED. Every one of these
+/// fields is nullable in the model because absent means unknown, so a menu
+/// a person cannot get back out of would make the first pick permanent.
+class _NullableChoiceCell<T extends Enum> extends StatelessWidget {
+  const _NullableChoiceCell({
+    required this.value,
+    required this.options,
+    required this.label,
+    required this.onPick,
+  });
+
+  final T? value;
+  final List<T> options;
+  final String Function(T value) label;
+  final ValueChanged<T?> onPick;
+
+  @override
+  Widget build(BuildContext context) => _ChoiceCell<T?>(
+    value: value,
+    options: [null, ...options],
+    label: (v) => v == null ? kUnknownCell : label(v),
+    onPick: onPick,
+  );
+}
+
+/// A `bool?` cell: yes, no, or nobody has said.
+///
+/// A DROPDOWN AND NOT A CHECKBOX, and that is G4 rather than taste. A
+/// checkbox has two states, so an unmeasured port would have to render as
+/// a no, which is a measurement nobody took.
+class _TriStateCell extends StatelessWidget {
+  const _TriStateCell({required this.value, required this.onPick});
+
+  final bool? value;
+  final ValueChanged<bool?> onPick;
+
+  @override
+  Widget build(BuildContext context) => _ChoiceCell<bool?>(
+    value: value,
+    options: const [null, true, false],
+    label: (v) => portTriStateLabel(value: v),
+    onPick: onPick,
+  );
+}
+
+/// A cell nothing writes through: derived, or not applicable here.
+class _ReadOnlyCell extends StatelessWidget {
+  const _ReadOnlyCell({required this.value, this.tooltip});
+
+  final String? value;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final text = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Text(
+        value ?? kUnknownCell,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+    final message = tooltip;
+    return message == null ? text : Tooltip(message: message, child: text);
+  }
 }
 
 /// A cell a person types into.

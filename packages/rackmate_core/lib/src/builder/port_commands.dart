@@ -63,13 +63,16 @@ final class PortField<T> {
   String toString() => 'PortField($key)';
 }
 
-/// The [PortDef] properties the grid's CORE columns edit (docs/06 §4.5).
+/// The [PortDef] properties the grid edits: the core columns first, then
+/// one entry per pack column (docs/06 §4.5).
 ///
-/// **Nine of the port's ~35 fields, and the same restraint
-/// `TemplateBodyField` opened with.** The seven column packs are M4-E3 and
-/// bring their own entries; adding them now would be twenty-six accessors
-/// with no cell in front of them, which is the state this package already
-/// found `NetworkConfig` in.
+/// **ONE ENTRY PER COLUMN, AND NO ENTRY WITHOUT ONE.** The table opened at
+/// nine, for the reason `TemplateBodyField` opened at five, and grew when
+/// M4-E3 gave the packs their cells. It does not grow ahead of them:
+/// `channelIndex`, `carriedProtocols` and `acceptedFamilies` are on the
+/// model, have no column, and are therefore absent here rather than
+/// sitting as accessors nothing calls, which is the state this package
+/// already found `NetworkConfig` in.
 ///
 /// `key` is NOT here, and cannot be: `PortDef.key` is `final`, so renaming
 /// one is a replacement rather than a write. See [RenamePortKeyCommand].
@@ -152,6 +155,267 @@ abstract final class PortDefField {
     set: _setNotes,
   );
 
+  // ════════════════════════════════════════════════════════════════════
+  // THE SEVEN PACKS (M4-E3, #205)
+  // ════════════════════════════════════════════════════════════════════
+  // One entry per column `port_table.dart` declares, and no entry
+  // without one: the census that produced that column list is recorded
+  // there, including the nine columns docs/06 §4.5 names that have no
+  // field to write to.
+
+  // --- Electrical -----------------------------------------------------
+
+  /// Ohms. `75` on an RCA carrying S/PDIF is the one M4-E4 checks for.
+  static const impedanceOhms = PortField<int?>(
+    key: 'impedanceOhms',
+    get: _getImpedance,
+    set: _setImpedance,
+  );
+
+  static const audioLevel = PortField<AudioLevel?>(
+    key: 'audioLevel',
+    get: _getAudioLevel,
+    set: _setAudioLevel,
+  );
+
+  /// THREE STATES, NOT TWO, which is why it is `bool?` and why its cell
+  /// is a dropdown rather than a checkbox. Unknown is a real answer for
+  /// a port nobody has measured, and a checkbox can only say no (G4).
+  static const balanced = PortField<bool?>(
+    key: 'balanced',
+    get: _getBalanced,
+    set: _setBalanced,
+  );
+
+  static const phantomPower = PortField<bool?>(
+    key: 'phantomPower',
+    get: _getPhantom,
+    set: _setPhantom,
+  );
+
+  /// On the TERMINAL, so a wiring typo that inverts polarity is
+  /// inexpressible rather than silently wrong (AC-030).
+  static const polarity = PortField<Polarity?>(
+    key: 'polarity',
+    get: _getPolarity,
+    set: _setPolarity,
+  );
+
+  static const nominalVoltage = PortField<int?>(
+    key: 'nominalVoltage',
+    get: _getNominalVoltage,
+    set: _setNominalVoltage,
+  );
+
+  static const maxCurrentMa = PortField<int?>(
+    key: 'maxCurrentMa',
+    get: _getMaxCurrentMa,
+    set: _setMaxCurrentMa,
+  );
+
+  // --- Network --------------------------------------------------------
+
+  static const poeRole = PortField<PoeRole?>(
+    key: 'poeRole',
+    get: _getPoeRole,
+    set: _setPoeRole,
+  );
+
+  static const poeStandard = PortField<PoeStandard?>(
+    key: 'poeStandard',
+    get: _getPoeStandard,
+    set: _setPoeStandard,
+  );
+
+  static const poeType = PortField<int?>(
+    key: 'poeType',
+    get: _getPoeType,
+    set: _setPoeType,
+  );
+
+  static const poeClass = PortField<int?>(
+    key: 'poeClass',
+    get: _getPoeClass,
+    set: _setPoeClass,
+  );
+
+  static const poeWatts = PortField<int?>(
+    key: 'poeWatts',
+    get: _getPoeWatts,
+    set: _setPoeWatts,
+  );
+
+  static const linkSpeedMbps = PortField<int?>(
+    key: 'linkSpeedMbps',
+    get: _getLinkSpeed,
+    set: _setLinkSpeed,
+  );
+
+  static const sfpFormFactor = PortField<SfpFormFactor?>(
+    key: 'sfpFormFactor',
+    get: _getSfp,
+    set: _setSfp,
+  );
+
+  static const fiberMode = PortField<FiberMode?>(
+    key: 'fiberMode',
+    get: _getFiberMode,
+    set: _setFiberMode,
+  );
+
+  static const wavelengthNm = PortField<int?>(
+    key: 'wavelengthNm',
+    get: _getWavelength,
+    set: _setWavelength,
+  );
+
+  // --- Serial ---------------------------------------------------------
+
+  static const serialRole = PortField<SerialRole?>(
+    key: 'serialRole',
+    get: _getSerialRole,
+    set: _setSerialRole,
+  );
+
+  static const baud = PortField<int?>(
+    key: 'baud',
+    get: _getBaud,
+    set: _setBaud,
+  );
+
+  static const dataBits = PortField<int?>(
+    key: 'dataBits',
+    get: _getDataBits,
+    set: _setDataBits,
+  );
+
+  static const stopBits = PortField<int?>(
+    key: 'stopBits',
+    get: _getStopBits,
+    set: _setStopBits,
+  );
+
+  /// Free text, because the model's own comment says the value set is
+  /// not yet specified. A dropdown here would fix a vocabulary the
+  /// corpus has not ruled on.
+  static const parity = PortField<String?>(
+    key: 'parity',
+    get: _getParity,
+    set: _setParity,
+  );
+
+  static const flowControl = PortField<String?>(
+    key: 'flowControl',
+    get: _getFlowControl,
+    set: _setFlowControl,
+  );
+
+  // --- Bus ------------------------------------------------------------
+
+  static const busProtocol = PortField<String?>(
+    key: 'busProtocol',
+    get: _getBusProtocol,
+    set: _setBusProtocol,
+  );
+
+  static const busTermination = PortField<bool?>(
+    key: 'busTermination',
+    get: _getBusTermination,
+    set: _setBusTermination,
+  );
+
+  static const busUnitLoads = PortField<int?>(
+    key: 'busUnitLoads',
+    get: _getBusUnitLoads,
+    set: _setBusUnitLoads,
+  );
+
+  static const busAddressable = PortField<bool?>(
+    key: 'busAddressable',
+    get: _getBusAddressable,
+    set: _setBusAddressable,
+  );
+
+  static const busMaxTapWatts = PortField<int?>(
+    key: 'busMaxTapWatts',
+    get: _getBusMaxTapWatts,
+    set: _setBusMaxTapWatts,
+  );
+
+  // --- Power ----------------------------------------------------------
+
+  /// `inlet` or `outlet`, and NOT a direction (CR-058, CR-060). The
+  /// direction of a power port is `sink` or `source` like any other; the
+  /// role is what makes a C14 an inlet.
+  static const powerRole = PortField<PortPowerRole?>(
+    key: 'powerRole',
+    get: _getPowerRole,
+    set: _setPowerRole,
+  );
+
+  static const powerVolts = PortField<int?>(
+    key: 'powerVolts',
+    get: _getPowerVolts,
+    set: _setPowerVolts,
+  );
+
+  static const powerDrawWatts = PortField<int?>(
+    key: 'powerDrawWatts',
+    get: _getPowerDrawWatts,
+    set: _setPowerDrawWatts,
+  );
+
+  static const powerMaxAmps = PortField<int?>(
+    key: 'powerMaxAmps',
+    get: _getPowerMaxAmps,
+    set: _setPowerMaxAmps,
+  );
+
+  // --- Advanced -------------------------------------------------------
+
+  static const maxConnections = PortField<int>(
+    key: 'maxConnections',
+    get: _getMaxConnections,
+    set: _setMaxConnections,
+  );
+
+  static const topology = PortField<PortTopology>(
+    key: 'topology',
+    get: _getTopology,
+    set: _setTopology,
+  );
+
+  /// THREE values (CR-059), and its cell is enabled only where
+  /// `ConnectorTypeDef.genderApplies` is true. The five-value enum with
+  /// `jack` and `plug` was rejected because it contained two synonym
+  /// pairs and silently broke `CON-002`.
+  static const gender = PortField<Gender>(
+    key: 'gender',
+    get: _getGender,
+    set: _setGender,
+  );
+
+  /// The IR emitter/receiver hazard, and every other pinout a connector
+  /// can be wired two ways for. Safety-adjacent: a template shipping in
+  /// the catalog with an uncited value here does not ship (AC-052).
+  static const pinoutVariant = PortField<String?>(
+    key: 'pinoutVariant',
+    get: _getPinoutVariant,
+    set: _setPinoutVariant,
+  );
+
+  static const conductorCount = PortField<int?>(
+    key: 'conductorCount',
+    get: _getConductorCount,
+    set: _setConductorCount,
+  );
+
+  static const returnChannel = PortField<ReturnChannel?>(
+    key: 'returnChannel',
+    get: _getReturnChannel,
+    set: _setReturnChannel,
+  );
+
   /// Every entry above. The unit test walks this to prove no two share a
   /// [PortField.key] and that no accessor pair is aliased onto another
   /// field, which is the census M4-A's field table needed three attempts
@@ -167,6 +431,43 @@ abstract final class PortDefField {
     setKey,
     setRole,
     notes,
+    impedanceOhms,
+    audioLevel,
+    balanced,
+    phantomPower,
+    polarity,
+    nominalVoltage,
+    maxCurrentMa,
+    poeRole,
+    poeStandard,
+    poeType,
+    poeClass,
+    poeWatts,
+    linkSpeedMbps,
+    sfpFormFactor,
+    fiberMode,
+    wavelengthNm,
+    serialRole,
+    baud,
+    dataBits,
+    stopBits,
+    parity,
+    flowControl,
+    busProtocol,
+    busTermination,
+    busUnitLoads,
+    busAddressable,
+    busMaxTapWatts,
+    powerRole,
+    powerVolts,
+    powerDrawWatts,
+    powerMaxAmps,
+    maxConnections,
+    topology,
+    gender,
+    pinoutVariant,
+    conductorCount,
+    returnChannel,
   ];
 }
 
@@ -199,6 +500,244 @@ void _setSetRole(PortDef p, String? v) => p.setRole = v;
 
 String? _getNotes(PortDef p) => p.notes;
 void _setNotes(PortDef p, String? v) => p.notes = v;
+
+// ══════════════════════════════════════════════════════════════════════
+// THE FOUR SUB-SPECS, AND WHY AN EMPTY ONE IS NOT LEFT BEHIND
+// ══════════════════════════════════════════════════════════════════════
+// `poe`, `serial`, `bus` and `power` are nullable objects, so writing one
+// of their fields on a port that has none has to CREATE the object, and
+// clearing the last field of one has to remove it again. A `PoeSpec` with
+// every field null encodes as `"poe": {}`, which is a key asserting that
+// this port has PoE information when it has none: precisely the explicit
+// null G4 forbids, wearing an object's clothes.
+//
+// The tidy-up runs on every write, which is also what keeps undo exact.
+// `apply` creates the spec, `revert` writes the old null back, the spec
+// goes empty and is dropped, and the port is byte-identical to what it
+// was (CR-117).
+
+int? _getImpedance(PortDef p) => p.impedanceOhms;
+void _setImpedance(PortDef p, int? v) => p.impedanceOhms = v;
+
+AudioLevel? _getAudioLevel(PortDef p) => p.level;
+void _setAudioLevel(PortDef p, AudioLevel? v) => p.level = v;
+
+bool? _getBalanced(PortDef p) => p.balanced;
+void _setBalanced(PortDef p, bool? v) => p.balanced = v;
+
+bool? _getPhantom(PortDef p) => p.phantomPowerCapable;
+void _setPhantom(PortDef p, bool? v) => p.phantomPowerCapable = v;
+
+Polarity? _getPolarity(PortDef p) => p.polarity;
+void _setPolarity(PortDef p, Polarity? v) => p.polarity = v;
+
+int? _getNominalVoltage(PortDef p) => p.nominalVoltage;
+void _setNominalVoltage(PortDef p, int? v) => p.nominalVoltage = v;
+
+int? _getMaxCurrentMa(PortDef p) => p.maxCurrentMa;
+void _setMaxCurrentMa(PortDef p, int? v) => p.maxCurrentMa = v;
+
+PoeSpec _poe(PortDef p) => p.poe ??= PoeSpec();
+void _tidyPoe(PortDef p) {
+  final poe = p.poe;
+  if (poe == null) return;
+  if (poe.role == null &&
+      poe.standard == null &&
+      poe.type == null &&
+      poe.poeClass == null &&
+      poe.watts == null) {
+    p.poe = null;
+  }
+}
+
+PoeRole? _getPoeRole(PortDef p) => p.poe?.role;
+void _setPoeRole(PortDef p, PoeRole? v) {
+  _poe(p).role = v;
+  _tidyPoe(p);
+}
+
+PoeStandard? _getPoeStandard(PortDef p) => p.poe?.standard;
+void _setPoeStandard(PortDef p, PoeStandard? v) {
+  _poe(p).standard = v;
+  _tidyPoe(p);
+}
+
+int? _getPoeType(PortDef p) => p.poe?.type;
+void _setPoeType(PortDef p, int? v) {
+  _poe(p).type = v;
+  _tidyPoe(p);
+}
+
+int? _getPoeClass(PortDef p) => p.poe?.poeClass;
+void _setPoeClass(PortDef p, int? v) {
+  _poe(p).poeClass = v;
+  _tidyPoe(p);
+}
+
+int? _getPoeWatts(PortDef p) => p.poe?.watts;
+void _setPoeWatts(PortDef p, int? v) {
+  _poe(p).watts = v;
+  _tidyPoe(p);
+}
+
+int? _getLinkSpeed(PortDef p) => p.linkSpeedMbps;
+void _setLinkSpeed(PortDef p, int? v) => p.linkSpeedMbps = v;
+
+SfpFormFactor? _getSfp(PortDef p) => p.sfp;
+void _setSfp(PortDef p, SfpFormFactor? v) => p.sfp = v;
+
+FiberMode? _getFiberMode(PortDef p) => p.fiberMode;
+void _setFiberMode(PortDef p, FiberMode? v) => p.fiberMode = v;
+
+int? _getWavelength(PortDef p) => p.wavelengthNm;
+void _setWavelength(PortDef p, int? v) => p.wavelengthNm = v;
+
+SerialSpec _serial(PortDef p) => p.serial ??= SerialSpec();
+void _tidySerial(PortDef p) {
+  final s = p.serial;
+  if (s == null) return;
+  if (s.baud == null &&
+      s.dataBits == null &&
+      s.stopBits == null &&
+      s.parity == null &&
+      s.flowControl == null &&
+      s.role == null) {
+    p.serial = null;
+  }
+}
+
+SerialRole? _getSerialRole(PortDef p) => p.serial?.role;
+void _setSerialRole(PortDef p, SerialRole? v) {
+  _serial(p).role = v;
+  _tidySerial(p);
+}
+
+int? _getBaud(PortDef p) => p.serial?.baud;
+void _setBaud(PortDef p, int? v) {
+  _serial(p).baud = v;
+  _tidySerial(p);
+}
+
+int? _getDataBits(PortDef p) => p.serial?.dataBits;
+void _setDataBits(PortDef p, int? v) {
+  _serial(p).dataBits = v;
+  _tidySerial(p);
+}
+
+int? _getStopBits(PortDef p) => p.serial?.stopBits;
+void _setStopBits(PortDef p, int? v) {
+  _serial(p).stopBits = v;
+  _tidySerial(p);
+}
+
+String? _getParity(PortDef p) => p.serial?.parity;
+void _setParity(PortDef p, String? v) {
+  _serial(p).parity = v;
+  _tidySerial(p);
+}
+
+String? _getFlowControl(PortDef p) => p.serial?.flowControl;
+void _setFlowControl(PortDef p, String? v) {
+  _serial(p).flowControl = v;
+  _tidySerial(p);
+}
+
+BusCapability _bus(PortDef p) => p.bus ??= BusCapability();
+void _tidyBus(PortDef p) {
+  final b = p.bus;
+  if (b == null) return;
+  if (b.protocol == null &&
+      b.supportsTermination == null &&
+      b.unitLoads == null &&
+      b.addressable == null &&
+      b.maxTapWatts == null) {
+    p.bus = null;
+  }
+}
+
+String? _getBusProtocol(PortDef p) => p.bus?.protocol;
+void _setBusProtocol(PortDef p, String? v) {
+  _bus(p).protocol = v;
+  _tidyBus(p);
+}
+
+bool? _getBusTermination(PortDef p) => p.bus?.supportsTermination;
+void _setBusTermination(PortDef p, bool? v) {
+  _bus(p).supportsTermination = v;
+  _tidyBus(p);
+}
+
+int? _getBusUnitLoads(PortDef p) => p.bus?.unitLoads;
+void _setBusUnitLoads(PortDef p, int? v) {
+  _bus(p).unitLoads = v;
+  _tidyBus(p);
+}
+
+bool? _getBusAddressable(PortDef p) => p.bus?.addressable;
+void _setBusAddressable(PortDef p, bool? v) {
+  _bus(p).addressable = v;
+  _tidyBus(p);
+}
+
+int? _getBusMaxTapWatts(PortDef p) => p.bus?.maxTapWatts;
+void _setBusMaxTapWatts(PortDef p, int? v) {
+  _bus(p).maxTapWatts = v;
+  _tidyBus(p);
+}
+
+PortPowerSpec _power(PortDef p) => p.power ??= PortPowerSpec();
+void _tidyPower(PortDef p) {
+  final w = p.power;
+  if (w == null) return;
+  if (w.role == null &&
+      w.volts == null &&
+      w.drawWatts == null &&
+      w.maxAmps == null) {
+    p.power = null;
+  }
+}
+
+PortPowerRole? _getPowerRole(PortDef p) => p.power?.role;
+void _setPowerRole(PortDef p, PortPowerRole? v) {
+  _power(p).role = v;
+  _tidyPower(p);
+}
+
+int? _getPowerVolts(PortDef p) => p.power?.volts;
+void _setPowerVolts(PortDef p, int? v) {
+  _power(p).volts = v;
+  _tidyPower(p);
+}
+
+int? _getPowerDrawWatts(PortDef p) => p.power?.drawWatts;
+void _setPowerDrawWatts(PortDef p, int? v) {
+  _power(p).drawWatts = v;
+  _tidyPower(p);
+}
+
+int? _getPowerMaxAmps(PortDef p) => p.power?.maxAmps;
+void _setPowerMaxAmps(PortDef p, int? v) {
+  _power(p).maxAmps = v;
+  _tidyPower(p);
+}
+
+int _getMaxConnections(PortDef p) => p.maxConnections;
+void _setMaxConnections(PortDef p, int v) => p.maxConnections = v;
+
+PortTopology _getTopology(PortDef p) => p.topology;
+void _setTopology(PortDef p, PortTopology v) => p.topology = v;
+
+Gender _getGender(PortDef p) => p.gender;
+void _setGender(PortDef p, Gender v) => p.gender = v;
+
+String? _getPinoutVariant(PortDef p) => p.pinoutVariant;
+void _setPinoutVariant(PortDef p, String? v) => p.pinoutVariant = v;
+
+int? _getConductorCount(PortDef p) => p.conductorCount;
+void _setConductorCount(PortDef p, int? v) => p.conductorCount = v;
+
+ReturnChannel? _getReturnChannel(PortDef p) => p.returnChannel;
+void _setReturnChannel(PortDef p, ReturnChannel? v) => p.returnChannel = v;
 
 /// The port [key] names, or a [StateError] naming what went wrong.
 ///
