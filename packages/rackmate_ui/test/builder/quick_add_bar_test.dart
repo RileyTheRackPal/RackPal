@@ -394,24 +394,42 @@ void main() {
     });
   });
 
-  group('the summary line, which is what stops a 16-port typo', () {
-    test('it names the resolved family and the derived bank', () {
-      final plan =
-          parseQuickAdd(registries, '16 hdbt out "HDBT OUT {n:2}"')
-              as QuickAddPlan;
-      final text = describeQuickAddPlan(registries, _body(), plan);
+  group('the summary line says ONLY what the controls cannot', () {
+    // Trimmed on 2026-08-15 after the user read the real output beside
+    // field mode: Qty, Signal, Dir, Face and Bank all appear as controls
+    // now, so repeating them was a wall of middle dots restating the row
+    // above. What survives is the connector, the fact that a bank is
+    // NEW, the label expansion, and a port count only when it surprises.
+    String describe(String command, [TemplateBody? over]) =>
+        describeQuickAddPlan(
+          registries,
+          over ?? _body(),
+          parseQuickAdd(registries, command) as QuickAddPlan,
+        );
 
-      expect(text, contains('16 ports'));
-      expect(text, contains('HDBaseT (5Play)'));
-      expect(text, contains('RJ45 (8P8C)'));
-      expect(text, contains('output'));
-      expect(text, contains('rear'));
-      expect(text, contains('bank "HDBT Outputs" (new)'));
-      expect(text, contains('HDBT OUT 01'));
-      expect(text, contains('HDBT OUT 16'));
+    test('it is short, and it names the connector and the new bank', () {
+      expect(
+        describe('16 hdbt out "HDBT OUT {n:2}"'),
+        'HDBT · RJ45 · new bank "HDBT Outputs" · HDBT OUT 01 … HDBT OUT 16',
+      );
     });
 
-    test('"(new)" disappears once the bank exists', () {
+    test('THE TRADE TOKEN, NEVER THE CATALOG DISPLAY NAME', () {
+      // `IEC device power (C13/C14, C19/C20)` is accurate, belongs in
+      // the grid's SIGNAL column, and is not what anyone says out loud.
+      final text = describe('1 c14 in');
+      expect(text, contains('IEC'));
+      expect(text, isNot(contains('C13/C14')));
+    });
+
+    test('the connector is dropped when it is the same word', () {
+      // `HDMI · HDMI` reads as a bug. The connector is named after the
+      // signal, so both tables hold `hdmi` as their first alias.
+      expect(describe('16 hdmi in'), 'HDMI · new bank "HDMI Inputs"');
+    });
+
+    test('an EXISTING bank drops out of the line entirely', () {
+      // The Bank control already prints the name; only "new" is news.
       final body = _body()
         ..banks.add(
           BankDef(
@@ -421,37 +439,31 @@ void main() {
             order: const FracIndex('a0'),
           ),
         );
-      final plan =
-          parseQuickAdd(registries, '1 rj45 in @Control') as QuickAddPlan;
-      final text = describeQuickAddPlan(registries, body, plan);
-      expect(text, contains('bank "Control"'));
-      expect(text, isNot(contains('(new)')));
+      expect(describe('1 rj45 in @Control', body), 'LAN · RJ45');
     });
 
     test('an unresolved family SAYS SO rather than going quiet', () {
-      // `4 xlr in` is legal and leaves the family blank; a summary that
-      // simply omitted it would read as a complete command.
-      final plan = parseQuickAdd(registries, '4 xlr in') as QuickAddPlan;
-      final text = describeQuickAddPlan(registries, _body(), plan);
-      expect(text, contains('signal not set'));
+      expect(describe('4 xlr in'), contains('signal not set'));
     });
 
-    test('it counts PORTS, so both reports 48 for a 24-way panel', () {
-      final plan =
-          parseQuickAdd(registries, '24 rj45 pass both "{n:2}"')
-              as QuickAddPlan;
-      final text = describeQuickAddPlan(registries, _body(), plan);
-      expect(text, contains('48 ports'));
-      expect(text, contains('front and rear'));
+    test('THE COUNT APPEARS ONLY WHEN IT IS NOT THE QUANTITY', () {
+      // The Qty control says 24; `both` creates 48, and that doubling is
+      // the one arithmetic surprise in the grammar.
+      expect(describe('16 hdmi in'), isNot(contains('ports')));
+      final both = describe('24 rj45 pass both "{n:2}"');
+      expect(both, contains('48 ports'));
+      expect(both, contains('front and rear'));
     });
 
-    test('directions read as trade words, never as enum names', () {
-      // M4-D found twenty-six strings citing the corpus at the user and
-      // dropdowns showing raw Dart identifiers. `sink` would be that.
-      final plan = parseQuickAdd(registries, '16 hdmi in') as QuickAddPlan;
-      final text = describeQuickAddPlan(registries, _body(), plan);
-      expect(text, contains('input'));
-      expect(text, isNot(contains('sink')));
+    test('and it never prints a raw enum name', () {
+      // M4-D found twenty-six strings citing the corpus at the user.
+      for (final c in ['16 hdmi in', '4 xlr in', '1 c14 in']) {
+        final text = describe(c);
+        expect(text, isNot(contains('sink')));
+        expect(text, isNot(contains('source')));
+        expect(text, isNot(contains('conn.')));
+        expect(text, isNot(contains('video.')));
+      }
     });
   });
 }

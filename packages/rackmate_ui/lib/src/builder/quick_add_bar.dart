@@ -334,51 +334,73 @@ String describeQuickAddPlan(
   TemplateBody body,
   QuickAddPlan plan,
 ) {
-  final parts = <String>['${plan.portCount} ports'];
+  final parts = <String>[];
+
+  // THE COUNT APPEARS ONLY WHEN IT IS NOT THE QUANTITY BESIDE IT. The
+  // Qty control says 24; `both` creates 48, and that doubling is the one
+  // arithmetic surprise in the grammar.
+  if (plan.portCount != plan.quantity) {
+    parts.add('${plan.portCount} ports');
+  }
 
   final family = plan.family == null
       ? null
       : registries.signalFamilies[plan.family];
-  parts.add(family?.displayName ?? 'signal not set');
+  // THE TRADE TOKEN, NOT `displayName`. The catalog name is authored for
+  // a table cell: `IEC device power (C13/C14, C19/C20)` is accurate and
+  // is not what anyone calls it. Same rule bank derivation uses.
+  parts.add(family == null ? 'signal not set' : _familyWord(family));
 
-  final connector = plan.connector == null
-      ? null
-      : registries.connectorTypes[plan.connector];
-  if (connector != null) parts.add(connector.displayName);
+  // The connector is the one type fact field mode does NOT show, so it
+  // stays. Short label, which is what the port grid's CONN column
+  // already prints.
+  //
+  // UNLESS IT IS THE SAME WORD. `16 hdmi in` printed `HDMI · HDMI`,
+  // because the connector was named after the signal and both tables
+  // hold `hdmi` as their first alias. Saying it twice tells nobody
+  // anything and reads as a bug.
+  if (plan.connector case final id?) {
+    final short = portConnectorShortLabel(registries, id);
+    if (parts.isEmpty || short.toUpperCase() != parts.last.toUpperCase()) {
+      parts.add(short);
+    }
+  }
 
-  final direction = plan.direction ?? family?.defaultDirection;
-  if (direction != null) parts.add(_directionWord(direction));
+  // FACE ONLY WHEN `both`, because the Face control cannot show two.
+  if (plan.bothFaces) parts.add('front and rear');
 
-  parts.add(plan.bothFaces ? 'front and rear' : (plan.face ?? Face.rear).name);
-
-  // "(new)" IS THE POINT OF THIS CLAUSE. A user typing `@Contol` wants
-  // to see that they are about to create a bank rather than add to one.
+  // ONLY WHEN THE BANK IS NEW. The Bank control already prints the name;
+  // what it cannot say is that nothing of that name exists yet, which is
+  // how a typo'd `@Contol` quietly makes a second bank.
   final bank = uniqueBankName(registries, body, plan);
-  final exists = body.banks.any((b) => b.label == bank);
-  parts.add('bank "$bank"${exists ? '' : ' (new)'}');
+  if (!body.banks.any((b) => b.label == bank)) {
+    parts.add('new bank "$bank"');
+  }
 
+  // The Label control shows the PATTERN; this shows what it expands to,
+  // which is the only place a user sees `{n:2}` become `01`.
   final labels = plan.labels;
-  if (labels.isNotEmpty) {
-    parts.add(
-      labels.length == 1 || labels.first == labels.last
-          ? 'labelled ${labels.first}'
-          : '${labels.first} … ${labels.last}',
-    );
+  if (labels.isNotEmpty && labels.first != labels.last) {
+    parts.add('${labels.first} … ${labels.last}');
   }
 
   return parts.join(' · ');
 }
 
-/// Trade words rather than enum names. M4-D found twenty-six strings
-/// citing the corpus at the user and dropdowns showing raw Dart
-/// identifiers; `sink` on a summary line would be the same defect.
-String _directionWord(PortDirection d) => switch (d) {
-  PortDirection.sink => 'input',
-  PortDirection.source => 'output',
-  PortDirection.bidirectional => 'bidirectional',
-  PortDirection.busNode => 'bus',
-  PortDirection.passive => 'passthrough',
-};
+/// The family's own trade token, upper-cased, falling back to
+/// `shortTag` then `displayName`.
+///
+/// THE SAME CHAIN `deriveBankName` USES, and for the same reason. A
+/// catalog `displayName` is authored for a table cell: `IEC device power
+/// (C13/C14, C19/C20)` is correct, is what the grid's SIGNAL column
+/// should print, and is not what anyone says. This line is read at a
+/// glance before committing sixteen ports, so it gets the word an
+/// installer would use.
+String _familyWord(SignalFamilyDef family) {
+  if (family.aliases.isNotEmpty) return family.aliases.first.toUpperCase();
+  if (family.shortTag case final t? when t.isNotEmpty) return t;
+  return family.displayName;
+}
 
 /// Accepts the inline completion, and DECLINES WHEN THERE IS NONE.
 ///
