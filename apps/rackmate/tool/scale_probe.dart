@@ -94,6 +94,30 @@ const List<SignalFamilyId> kFamilies = [
   SignalFamilyId('audio.speaker_lowz'),
 ];
 
+/// The same proportional stand-in `schematic_perf_test.dart` uses.
+///
+/// A REAL FONT IS NOT THE POINT HERE. Text metrics belong to
+/// `rackmate_text` and have their own parity test (AC-007); what this
+/// probe is asking is how the SCENE BUILD scales with entity count, and a
+/// measurer that allocates no glyph cache keeps the answer about that.
+/// The absolute milliseconds are therefore optimistic on the text-bound
+/// path by construction, which is stated here rather than discovered.
+final class _ProbeMeasurer implements TextMeasurer {
+  @override
+  TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
+    advanceWidth: text.length * style.sizePt * 0.55,
+    ascent: style.sizePt * 0.75,
+    descent: style.sizePt * 0.25,
+    capHeight: style.sizePt * 0.7,
+    xHeight: style.sizePt * 0.5,
+    lineHeight: style.sizePt * 1.2,
+  );
+}
+
+/// One frame at 60 Hz, which is `schematic_perf_test.dart`'s own unit and
+/// M2's exit criterion rather than a threshold invented here.
+const double kOneFrameMs = 1000 / 60;
+
 void main(List<String> args) {
   final multipliers = args.isEmpty
       ? const [1.0, 1.5, 3.0]
@@ -211,6 +235,30 @@ void _probe(double multiplier) {
   final footage = buildCableFootage(loaded);
   footageWatch.stop();
 
+  // The other three the UI calls from inside a `build()`.
+  final structureBodyId = loaded.structures.keys.first;
+  final tableWatch = Stopwatch()..start();
+  final table = buildStructureTable(loaded, structureBodyId: structureBodyId);
+  tableWatch.stop();
+
+  final matrixWatch = Stopwatch()..start();
+  final matrix = buildStructureMatrix(loaded, structureBodyId: structureBodyId);
+  matrixWatch.stop();
+
+  final pathwayWatch = Stopwatch()..start();
+  final pathwayTable = buildPathwayTable(loaded);
+  pathwayWatch.stop();
+
+  // THE SCHEMATIC SCENE, which is the whole commit-path recompute:
+  // the document projected onto the graph, Sugiyama phases 0 to 3, and
+  // the display list emitted. `schematic_perf_test.dart` measures this
+  // at 300 connections against a one-frame budget and passes at 5.8 ms;
+  // what nobody has asked is what it does at ten times that.
+  final sceneWatch = Stopwatch()..start();
+  final scene = buildSchematicScene(doc: loaded, measurer: _ProbeMeasurer());
+  sceneWatch.stop();
+  final ops = scene.scene.ops.length;
+
   stdout
     ..writeln('── ${multiplier}x ${'─' * 52}')
     ..writeln(
@@ -240,6 +288,23 @@ void _probe(double multiplier) {
       '     footage       ${_msValue(footageWatch.elapsedMicroseconds)}   '
       '(${footage.lines.length} lines)',
     )
+    ..writeln(
+      '     structure     ${_msValue(tableWatch.elapsedMicroseconds)}   '
+      '(${table.dropCount} drops)',
+    )
+    ..writeln(
+      '     matrix        ${_msValue(matrixWatch.elapsedMicroseconds)}   '
+      '(${matrix.rows.length} rows)',
+    )
+    ..writeln(
+      '     pathways      ${_msValue(pathwayWatch.elapsedMicroseconds)}   '
+      '(${pathwayTable.rows.length} rows)',
+    )
+    ..writeln('   SCHEMATIC SCENE, one frame = 16.7 ms')
+    ..writeln(
+      '     build         ${_msValue(sceneWatch.elapsedMicroseconds)}   '
+      '($ops ops, ${_verdict(sceneWatch.elapsedMicroseconds)} budget)',
+    )
     // A DELTA, NOT A TOTAL. The probe holds every document it has built,
     // so absolute RSS is the sum of all rounds and says nothing about
     // one project. Even the delta is generous: it includes the JSON tree
@@ -250,6 +315,10 @@ void _probe(double multiplier) {
     )
     ..writeln();
 }
+
+/// Whether a stage fits in one frame. Named rather than inlined so the
+/// comparison is stated once and reads the same in every row.
+String _verdict(int micros) => micros / 1000 > kOneFrameMs ? 'OVER' : 'within';
 
 String _msValue(int micros) =>
     '${(micros / 1000).toStringAsFixed(1).padLeft(8)} ms';
