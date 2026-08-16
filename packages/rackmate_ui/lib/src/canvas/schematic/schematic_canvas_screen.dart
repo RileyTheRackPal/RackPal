@@ -919,6 +919,69 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     return built;
   }
 
+  /// The plan without the overlay, rebuilt only when something it reads
+  /// has changed (`#705`).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// EVERY `setState` ON THIS SCREEN WAS REBUILDING THE WHOLE DRAWING
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `buildSchematicPaintPlan` ran inside `build`, so selecting a cable,
+  /// moving the pin caret, arming a wire or changing the pin selection —
+  /// all of which are `setState` and none of which move a symbol — emitted
+  /// every symbol, every wire and every net label again. Measured on the
+  /// 300-link fixture: 7,155 ops and 5.6 ms, per keystroke of `Tab`.
+  ///
+  /// THE KEY IS THE SCENE'S IDENTITY, AND THAT IS SOUND RATHER THAN
+  /// CONVENIENT. `buildSchematicPaintPlan` reads `(scene, doc, filter,
+  /// scope)`. [_sceneFor] rebuilds the scene whenever any of the five
+  /// epochs this screen listens to advances, so a scene this screen is
+  /// still holding is proof the document has not changed in any way the
+  /// schematic reads. The other three are compared by value.
+  ///
+  /// The overlay is spliced on afterwards by `withOverlay`, which is a
+  /// list copy. A caret move therefore costs a copy of 7,155 references
+  /// instead of a layout, and when there is no overlay at all the plan is
+  /// the SAME OBJECT, so `RenderSchematicCanvas.plan`'s `identical` guard
+  /// short-circuits and the frame does not even repaint.
+  SchematicPaintPlan? _basePlan;
+  ({
+    SchematicScene scene,
+    SchematicViewFilter filter,
+    DrawnScope? scope,
+    SchematicPalette palette,
+    int groundArgb,
+  })?
+  _basePlanKey;
+
+  SchematicPaintPlan _basePlanFor({
+    required SchematicScene scene,
+    required DrawnScope? scope,
+    required SchematicPalette palette,
+    required int groundArgb,
+  }) {
+    final key = (
+      scene: scene,
+      filter: _filter,
+      scope: scope,
+      palette: palette,
+      groundArgb: groundArgb,
+    );
+    final cached = _basePlan;
+    if (cached != null && _basePlanKey == key) return cached;
+    final built = buildSchematicPaintPlan(
+      scene: scene,
+      doc: _doc,
+      filter: _filter,
+      scope: scope,
+      measurer: widget.measurer,
+      palette: palette,
+      groundArgb: groundArgb,
+    );
+    _basePlan = built;
+    _basePlanKey = key;
+    return built;
+  }
+
   // ── input ─────────────────────────────────────────────────────────────
 
   /// The point query over [scene]'s symbols at the CURRENT zoom.
@@ -2829,16 +2892,12 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       pairs: _multiDrawBands(),
       selectedLink: _selectedLink,
     );
-    final plan = buildSchematicPaintPlan(
+    final plan = _basePlanFor(
       scene: scene,
-      doc: _doc,
-      filter: _filter,
       scope: scope,
-      measurer: widget.measurer,
       palette: palette,
       groundArgb: _argbOfColor(scheme.surfaceContainerLowest),
-      overlayOps: overlay.ops,
-    );
+    ).withOverlay(overlay.ops);
 
     // THE KEYS ARE DECLARED IN `keymap.dart`, NOT HERE. Eleven
     // `SingleActivator` literals stood in this map; they are eleven rows in

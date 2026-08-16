@@ -142,6 +142,41 @@ void main() {
     expect(canvas.debugSceneRecordings, greaterThan(painted));
   });
 
+  testWidgets('THE BASE PLAN SURVIVES AN OVERLAY CHANGE (`#705`)', (
+    tester,
+  ) async {
+    // `buildSchematicPaintPlan` ran inside `build`, so every `setState` on
+    // the screen — selecting a cable, moving the pin caret, arming a wire
+    // — re-emitted every symbol and every net label in the document.
+    // 7,155 ops and 5.6 ms on the 300-link fixture, per keystroke.
+    //
+    // THE ARTIFACT IS SHARED IDENTITY, not a counter. `withOverlay` copies
+    // the op list and SHARES every other field, so a `drawnWires` list
+    // that is the same object across an overlay change is proof the base
+    // was reused rather than rebuilt. A counter would have needed the
+    // private State to be reachable; this needs nothing.
+    final plan = _plan();
+    final overlaid = plan.withOverlay(const <DiagramOp>[]);
+    expect(
+      identical(overlaid, plan),
+      isTrue,
+      reason:
+          'an empty overlay must not even copy: it is what lets the '
+          'render object short-circuit on `identical` and skip the '
+          'frame entirely',
+    );
+
+    final withRing = plan.withOverlay([plan.ops.first]);
+    expect(withRing.ops, hasLength(plan.ops.length + 1));
+    expect(
+      identical(withRing.drawnWires, plan.drawnWires),
+      isTrue,
+      reason: 'the base was rebuilt for a caret ring',
+    );
+    expect(identical(withRing.scope, plan.scope), isTrue);
+    expect(withRing.ground, plan.ground);
+  });
+
   // THE RACK CANVAS'S OWN CASE LIVES IN `render_rack_canvas_test.dart`,
   // beside the harness that already builds a rack with three devices in
   // it. It is the heavier half of `#704`: `RenderDeviceBox` is not a

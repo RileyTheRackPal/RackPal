@@ -117,6 +117,38 @@ final class SchematicPaintPlan {
   /// The painted sheet ground, in scene coordinates — what the viewport is
   /// framed against on first layout.
   final DBox ground;
+
+  /// This plan with [overlayOps] appended, and everything else shared.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE SPLIT THIS CLASS ALREADY DESCRIBED, MADE USABLE (`#705`)
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `buildSchematicPaintPlan`'s own note says it: the base is a pure
+  /// projection of `(scene, doc, filter, scope)` and the connect overlay
+  /// is a projection of the SCREEN's transient state, a caret and an
+  /// armed pin. The two were nonetheless built together, so moving the
+  /// caret one pin rebuilt every symbol and every net label in the
+  /// document: 7,155 ops on the 300-link fixture, 78,660 at headroom.
+  ///
+  /// With this, the screen memoises the base and splices the overlay,
+  /// which is a list copy rather than a layout. Every field below the ops
+  /// is shared rather than recomputed, because every one of them is a
+  /// fact about the BASE: a caret ring cannot change which links are
+  /// unroutable or how big the ground is.
+  SchematicPaintPlan withOverlay(List<DiagramOp> overlayOps) {
+    if (overlayOps.isEmpty) return this;
+    return SchematicPaintPlan(
+      ops: List<DiagramOp>.unmodifiable([...ops, ...overlayOps]),
+      mode: mode,
+      scope: scope,
+      replayedDomainRuns: replayedDomainRuns,
+      rebuiltDomainRuns: rebuiltDomainRuns,
+      hiddenDomainRuns: hiddenDomainRuns,
+      drawnWires: drawnWires,
+      unroutableLinkIds: unroutableLinkIds,
+      ground: ground,
+    );
+  }
 }
 
 /// Composes one frame.
