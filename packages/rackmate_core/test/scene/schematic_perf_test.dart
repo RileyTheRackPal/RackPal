@@ -71,7 +71,7 @@ const int _kHeadroomDevices = 94 * _kHeadroomPods;
 /// time is not stable across runners — `schematic_perf_test.dart`'s own
 /// header says op count is the machine-independent signal and wall time
 /// is not. It exists to catch a regression that makes an already
-/// unacceptable number worse, and for nothing else. **Delete it when #703
+/// unacceptable number worse, and for nothing else. **Delete it when #702
 /// lands**; the budget is `_oneFrameMs` and always was.
 const double _kHeadroomCeilingMs = 400;
 
@@ -293,7 +293,7 @@ void main() {
   // receives, so this is the same key at one remove, and it costs no
   // Flutter binding in a pure-Dart package.
   // ══════════════════════════════════════════════════════════════════════
-  // THE HEADROOM CASE, AND THE DEBT IT RECORDS (M8-F1, board #703)
+  // THE HEADROOM CASE, AND THE DEBT IT RECORDS (M8-F1, board #702)
   // ══════════════════════════════════════════════════════════════════════
   // The group above measures 300 links and passes at ~5.8 ms. Nobody had
   // asked what happens past 300, and `tool/scale_probe.dart` answered:
@@ -313,7 +313,7 @@ void main() {
   // somebody hearing about it, and which is deliberately far too loose to
   // be mistaken for the budget.
   //
-  // THE ASSERTION FLIPS WHEN #703 LANDS. AC-008 already prescribes the
+  // THE ASSERTION FLIPS WHEN #702 LANDS. AC-008 already prescribes the
   // remedy — eight per-domain sub-pictures, so an edit rebuilds one and
   // seven replay untouched — and `domainFragments` exists but is read
   // only by `schematic_paint_plan.dart`, which is a PAINT-side saving.
@@ -352,7 +352,7 @@ void main() {
     });
 
     test('IT IS OVER THE ONE-FRAME BUDGET, and this test says so out loud '
-        'rather than leaving it to be rediscovered (#703)', () {
+        'rather than leaving it to be rediscovered (#702)', () {
       final doc = buildSchematicFixture(pods: _kHeadroomPods);
       final measurer = _Measurer();
 
@@ -380,7 +380,7 @@ void main() {
         '${doc.links.length} links, ${doc.devices.length} devices\n'
         '  total      $ops ops, best of 5 = ${ms}ms\n'
         '  budget     ${_oneFrameMs}ms  '
-        '(OVER by ${(ms / _oneFrameMs).toStringAsFixed(1)}x — see #703)\n'
+        '(OVER by ${(ms / _oneFrameMs).toStringAsFixed(1)}x — see #702)\n'
         '  ceiling    $_kHeadroomCeilingMs ms (the ratchet this defends)',
       );
 
@@ -390,14 +390,14 @@ void main() {
         reason:
             'the schematic scene build at 3,600 links got WORSE. This is a '
             'ratchet, not the budget: the budget is one frame and this '
-            'case has never met it (#703). Something made an already '
+            'case has never met it (#702). Something made an already '
             'unacceptable number worse.',
       );
       expect(
         ms,
         greaterThan(_oneFrameMs),
         reason:
-            'the headroom case now fits in ONE FRAME, which means #703 '
+            'the headroom case now fits in ONE FRAME, which means #702 '
             'has been fixed. Delete _kHeadroomCeilingMs and assert '
             '_oneFrameMs here, the way the 300-link group does.',
       );
