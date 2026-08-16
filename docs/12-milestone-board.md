@@ -3276,6 +3276,55 @@ line had gone into the same cell as the first. **A test that had looked up row 2
 into it would have passed against a grid where `Enter` does nothing at all**, which is `drive the
 keyboard, not the finder` stated as a positive rule: to test a route, name only its start.
 
+#### 5.3.10 M4-F2, and the two things `docs/06` §4.6 said that could not both be true
+
+**Closed 2026-08-15/16** by `e48f2ec` (DR-063), `fdb14ee` (core), `a855589` (the grid), `f17645f`
+(the widget cases) and `6d16e5b` (the dock). 29 cases: 16 in core, 13 widget.
+
+**§4.6's multi-row row asked for a `—` that already meant something else.** *"Mixed values render
+`—` and are left untouched unless explicitly set."* The second half is the safety property and is
+enforced. The first half spells a **disagreement** the way the whole product spells an **unknown**.
+Eight ports nobody has measured and eight carrying 75 Ω and 110 Ω are different facts, and the dash
+told the reader the first while the second was true, on the one surface built for looking at many
+rows at once. **DR-063: `—` keeps its single meaning and a disagreement reads `Mixed (N values)`.**
+That is CR-114's rollup rule (report the unknown count, never fabricate a total) pointed at a column
+of N rows.
+
+**§4.6 also said "edit any cell", and two cells could not survive it.** One label written across
+eight selected rows names eight ports `HDMI IN`, and on ports created that session the key follows
+the label, so the same gesture mints eight colliding keys suffixed `.2`, `.3`, `.4`. `LABEL` and
+`DESIG` therefore edit one row; `Ctrl+Shift+D` already writes a column of labels (DR-062), so the
+capability is routed rather than lost. A confirmation dialog was rejected: §4 says any interaction
+costing one click per port is a design failure, and a modal in the grid is that failure wearing a
+safety label.
+
+**THE DOCK EXISTS, IN ONE STATE, AND IT READS.** §2's 340 px third pane is drawn only when more than
+one row is selected, because its other state is M4-K's three live previews. Editing across a
+selection happens in the grid, which is §4.6's own sentence and is built. Setting a field **from**
+the dock is `#703`: every column's control lives in `port_grid.dart` bound to one port's value, and
+`Mixed` is not a value, so a shared control needs extracting and giving a third valueless state
+first. That is a refactor across ~40 call sites and it was filed rather than rushed.
+
+**Three findings worth keeping.**
+
+`PortColumnFill` needed a type-erased `read` and `write`, and only one of those is easy. Return
+types are covariant so reading is sound; **parameters are contravariant**, so `PortField<Object?>
+.set` throws before it is called. The cast lives inside the closure at the switch arm where `T` is
+still known. **Extension types make the failure silent rather than loud** (a `PortField<
+ConnectorTypeId>` IS a `PortField<String>` at run time), so a test walks every batch column, reads a
+port and writes the value straight back, asserting no command comes out.
+
+**The widget tests failed twice on a finder before they failed on the code.** `find.byType(
+DropdownButton<PortDirection>).at(row)` is off by one: Quick Add's field-mode bar sits above the grid
+and carries its own direction picker. The fix is not `.at(row + 1)`, which silently tests the wrong
+row the day Quick Add changes; the bar's picker is unset and a row's never is, so a non-null value
+identifies a row cell and the helper asserts the count first. **One throwaway diagnostic printing
+the count and each widget's value settled in a minute what two guesses had not.**
+
+**A test caught the author rather than the code.** The dock's close case clicked a row *inside* the
+selection and failed, because DR-061 deliberately leaves the selection alone there: collapsing it
+would make multi-row edit impossible to start. The test was wrong and the ruling was right.
+
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing

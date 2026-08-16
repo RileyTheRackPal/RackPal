@@ -54,6 +54,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/builder/batch_inspector.dart';
 import 'package:rackmate_ui/src/builder/quick_add_bar.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
 import 'package:rackmate_ui/src/widgets/family_picker.dart';
@@ -90,6 +91,7 @@ class PortGrid extends StatefulWidget {
     required this.remembered,
     required this.onPacksRemembered,
     required this.actions,
+    required this.onBatchContext,
     this.portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
     this.quickAddAutofocus = true,
     super.key,
@@ -102,6 +104,11 @@ class PortGrid extends StatefulWidget {
   /// For the connector and signal-family display names. A port naming
   /// something this does not hold still draws, showing the raw id.
   final Registries registries;
+
+  /// Told the selection whenever it changes, so docs/06 §2's right dock
+  /// can be the batch inspector (M4-F2). Null when fewer than two rows
+  /// are selected, which is the dock's own "not in this state".
+  final ValueChanged<PortBatchContext?> onBatchContext;
 
   /// Whether Quick Add takes focus on entering the section.
   ///
@@ -303,6 +310,95 @@ class _PortGridState extends State<PortGrid> {
     });
   }
 
+  /// Offers one cell write to the whole selection (M4-F2, DR-063).
+  ///
+  /// Returns TRUE when it took the write, so the row does not also write
+  /// itself. Three conditions, and all three are the ruling:
+  ///
+  ///   * the row being edited is IN the selection. Editing a row outside
+  ///     it is an edit to that row, which is what a person means when
+  ///     they click somewhere else;
+  ///   * more than one row is selected, because a batch of one is a cell
+  ///     edit and routing it through a transaction would relabel it in
+  ///     the Edit menu for no reason;
+  ///   * the column is batch-editable. `LABEL` and `DESIG` are not
+  ///     (DR-063): one label across eight rows names eight ports the same
+  ///     and mints eight colliding keys.
+  bool _writeBatch(String portKey, PortColumnId column, Object? value) {
+    if (_selection.length < 2) return false;
+    if (!_selection.contains(portKey)) return false;
+    if (!portColumnBatchEditable(column)) return false;
+
+    final commands = buildBatchWrite(
+      body: widget.body,
+      column: column,
+      portKeys: _selection.inOrder(_visibleRowKeys()),
+      value: value,
+    );
+    // TAKEN EVEN WHEN EMPTY. Every selected row already holding the value
+    // is a batch that changed nothing, not a batch that did not happen,
+    // and returning false there would let the row write itself a second
+    // time.
+    if (commands.isNotEmpty) {
+      widget.actions.transact(LabelKey.setPortProperty, (tx) {
+        for (final command in commands) {
+          tx.add(command);
+        }
+      });
+    }
+    return true;
+  }
+
+  /// The rows the grid is showing, which is what a batch acts on and what
+  /// a `Shift` range walks (DR-061).
+  List<String> _visibleRowKeys() {
+    final table = buildPortTable(
+      widget.body,
+      portDesignatorFormat: widget.portDesignatorFormat,
+    );
+    return [
+      for (final band in table.bands)
+        if (!_collapsed.contains(band.bankKey))
+          for (final row in band.rows) row.port.key.v,
+    ];
+  }
+
+  /// The last thing handed to `onBatchContext`, so an unchanged selection
+  /// does not call it every frame.
+  ({int rows, int columns, String keys})? _reported;
+
+  /// Tells the screen what the dock should show.
+  ///
+  /// POST-FRAME, AND THAT IS NOT A FLOURISH. This runs from `build`,
+  /// because the selection is pruned there and the visible columns are
+  /// computed there; calling the parent's `setState` from inside a build
+  /// is the error Flutter names outright. The frame that reports is
+  /// therefore one behind, which is invisible: the dock redraws on the
+  /// next frame, and there is no next gesture inside one frame.
+  void _reportBatchContext(
+    List<String> visible,
+    List<PortColumnId> columns,
+  ) {
+    final keys = _selection.inOrder(visible);
+    final batch = [
+      for (final id in columns)
+        if (portColumnBatchEditable(id)) id,
+    ];
+    final stamp = (
+      rows: keys.length,
+      columns: batch.length,
+      keys: keys.join(','),
+    );
+    if (_reported == stamp) return;
+    _reported = stamp;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      widget.onBatchContext(
+        keys.length < 2 ? null : (portKeys: keys, columns: batch),
+      );
+    });
+  }
+
   /// A click in a row's body, with whatever modifiers were down.
   ///
   /// A PLAIN CLICK ON AN ALREADY-SELECTED ROW LEAVES THE SELECTION ALONE,
@@ -353,6 +449,7 @@ class _PortGridState extends State<PortGrid> {
 
     final issues = validatePorts(widget.body);
     final columns = portVisibleColumns(_openPacks());
+    _reportBatchContext(visible, columns);
 
     // THE ACTIONS ARE HERE AND THE `Shortcuts` IS AT THE SCREEN.
     // `device_builder_screen.dart` already installs `KeyScope.builder`'s
@@ -481,6 +578,7 @@ class _PortGridState extends State<PortGrid> {
                                   // Ctrl+D is pressed.
                                   onColumnFocused: (id) =>
                                       _selection = _selection.withColumn(id),
+                                  onBatchWrite: _writeBatch,
                                 ),
                         ),
                       ],
@@ -692,6 +790,7 @@ class _Bands extends StatelessWidget {
     required this.onToggleRow,
     required this.onTapRow,
     required this.onColumnFocused,
+    required this.onBatchWrite,
   });
 
   final PortTable table;
@@ -713,6 +812,8 @@ class _Bands extends StatelessWidget {
   final ValueChanged<String> onToggleRow;
   final ValueChanged<String> onTapRow;
   final ValueChanged<PortColumnId> onColumnFocused;
+  final bool Function(String portKey, PortColumnId column, Object? value)
+  onBatchWrite;
 
   @override
   Widget build(BuildContext context) => CustomScrollView(
@@ -762,6 +863,7 @@ class _Bands extends StatelessWidget {
               onToggleRow: onToggleRow,
               onTapRow: onTapRow,
               onColumnFocused: onColumnFocused,
+              onBatchWrite: onBatchWrite,
             ),
           ),
       ],
@@ -882,6 +984,7 @@ class _PortRow extends StatelessWidget {
     required this.onToggleRow,
     required this.onTapRow,
     required this.onColumnFocused,
+    required this.onBatchWrite,
     super.key,
   });
 
@@ -931,9 +1034,27 @@ class _PortRow extends StatelessWidget {
   /// selection that is not rows. `Fill down` (F1) is what reads it.
   final ValueChanged<PortColumnId> onColumnFocused;
 
+  /// Offers a cell write to the selection first. True when the grid took
+  /// it as a batch (M4-F2), false when this row should write alone.
+  ///
+  /// A PREDICATE RATHER THAN A FLAG PASSED DOWN, because whether a write
+  /// is a batch depends on the SELECTION, which the row does not hold and
+  /// should not: a row that knew the selection would rebuild whenever it
+  /// changed.
+  final bool Function(String portKey, PortColumnId column, Object? value)
+  onBatchWrite;
+
   PortDef get _port => row.port;
 
-  void _set<T>(PortField<T> field, T value) {
+  /// Writes one cell, or the whole selection when this row is part of one.
+  ///
+  /// THE COLUMN IS A PARAMETER BECAUSE THE BATCH RULE IS PER COLUMN.
+  /// DR-063 keeps `LABEL` and `DESIG` single-row, so `_set` cannot decide
+  /// from the `PortField` alone: the field knows what it writes and not
+  /// which column drew the control. Every call below sits inside
+  /// [_cell]'s switch, where `id` is already in hand.
+  void _set<T>(PortColumnId id, PortField<T> field, T value) {
+    if (onBatchWrite(_port.key.v, id, value)) return;
     if (field.get(_port) == value) return;
     actions.run(
       SetPortFieldCommand<T>(
@@ -969,7 +1090,7 @@ class _PortRow extends StatelessWidget {
     final label = typed.trim();
     if (label == _port.label) return;
     if (!keyFollowsLabel) {
-      _set(PortDefField.label, label);
+      _set(PortColumnId.label, PortDefField.label, label);
       return;
     }
     final wanted = autoPortKey(
@@ -1118,6 +1239,7 @@ class _PortRow extends StatelessWidget {
       automatic: !row.isDesignatorPinned,
       // EMPTY MEANS BACK TO AUTOMATIC, not "deliberately unnumbered".
       onCommit: (v) => _set(
+        id,
         PortDefField.designatorHint,
         v.trim().isEmpty ? null : v.trim(),
       ),
@@ -1125,24 +1247,24 @@ class _PortRow extends StatelessWidget {
     PortColumnId.connector => _ConnectorCell(
       registries: registries,
       value: _port.connector,
-      onPick: (v) => _set(PortDefField.connector, v),
+      onPick: (v) => _set(id, PortDefField.connector, v),
     ),
     PortColumnId.family => _FamilyCell(
       registries: registries,
       value: _port.signalFamily,
-      onPick: (v) => _set(PortDefField.signalFamily, v),
+      onPick: (v) => _set(id, PortDefField.signalFamily, v),
     ),
     PortColumnId.direction => _ChoiceCell<PortDirection>(
       value: _port.direction,
       options: PortDirection.values,
       label: portDirectionLabel,
-      onPick: (v) => _set(PortDefField.direction, v),
+      onPick: (v) => _set(id, PortDefField.direction, v),
     ),
     PortColumnId.face => _ChoiceCell<Face>(
       value: _port.face,
       options: Face.values,
       label: portFaceLabel,
-      onPick: (v) => _set(PortDefField.face, v),
+      onPick: (v) => _set(id, PortDefField.face, v),
     ),
     PortColumnId.portSet => _ChoiceCell<String?>(
       value: _port.setKey,
@@ -1153,167 +1275,167 @@ class _PortRow extends StatelessWidget {
       label: (v) => v == null
           ? kUnknownCell
           : portSets.firstWhere((s) => s.key == v).label,
-      onPick: (v) => _set(PortDefField.setKey, v),
+      onPick: (v) => _set(id, PortDefField.setKey, v),
     ),
     PortColumnId.setRole => _TextCell(
       value: _port.setRole,
       hint: 'L',
       onCommit: (v) =>
-          _set(PortDefField.setRole, v.trim().isEmpty ? null : v.trim()),
+          _set(id, PortDefField.setRole, v.trim().isEmpty ? null : v.trim()),
     ),
     PortColumnId.notes => _TextCell(
       value: _port.notes,
-      onCommit: (v) => _set(PortDefField.notes, _orNull(v)),
+      onCommit: (v) => _set(id, PortDefField.notes, _orNull(v)),
     ),
     PortColumnId.impedanceOhms => _NumberCell(
       value: _port.impedanceOhms,
       hint: '75',
-      onCommit: (v) => _set(PortDefField.impedanceOhms, v),
+      onCommit: (v) => _set(id, PortDefField.impedanceOhms, v),
     ),
     PortColumnId.audioLevel => _NullableChoiceCell<AudioLevel>(
       value: _port.level,
       options: AudioLevel.values,
       label: portAudioLevelLabel,
-      onPick: (v) => _set(PortDefField.audioLevel, v),
+      onPick: (v) => _set(id, PortDefField.audioLevel, v),
     ),
     PortColumnId.balanced => _TriStateCell(
       value: _port.balanced,
-      onPick: (v) => _set(PortDefField.balanced, v),
+      onPick: (v) => _set(id, PortDefField.balanced, v),
     ),
     PortColumnId.phantomPower => _TriStateCell(
       value: _port.phantomPowerCapable,
-      onPick: (v) => _set(PortDefField.phantomPower, v),
+      onPick: (v) => _set(id, PortDefField.phantomPower, v),
     ),
     PortColumnId.polarity => _NullableChoiceCell<Polarity>(
       value: _port.polarity,
       options: Polarity.values,
       label: portPolarityLabel,
-      onPick: (v) => _set(PortDefField.polarity, v),
+      onPick: (v) => _set(id, PortDefField.polarity, v),
     ),
     PortColumnId.nominalVoltage => _NumberCell(
       value: _port.nominalVoltage,
-      onCommit: (v) => _set(PortDefField.nominalVoltage, v),
+      onCommit: (v) => _set(id, PortDefField.nominalVoltage, v),
     ),
     PortColumnId.maxCurrentMa => _NumberCell(
       value: _port.maxCurrentMa,
-      onCommit: (v) => _set(PortDefField.maxCurrentMa, v),
+      onCommit: (v) => _set(id, PortDefField.maxCurrentMa, v),
     ),
     PortColumnId.poeRole => _NullableChoiceCell<PoeRole>(
       value: _port.poe?.role,
       options: PoeRole.values,
       label: portPoeRoleLabel,
-      onPick: (v) => _set(PortDefField.poeRole, v),
+      onPick: (v) => _set(id, PortDefField.poeRole, v),
     ),
     PortColumnId.poeStandard => _NullableChoiceCell<PoeStandard>(
       value: _port.poe?.standard,
       options: PoeStandard.values,
       label: portPoeStandardLabel,
-      onPick: (v) => _set(PortDefField.poeStandard, v),
+      onPick: (v) => _set(id, PortDefField.poeStandard, v),
     ),
     PortColumnId.poeType => _NumberCell(
       value: _port.poe?.type,
-      onCommit: (v) => _set(PortDefField.poeType, v),
+      onCommit: (v) => _set(id, PortDefField.poeType, v),
     ),
     PortColumnId.poeClass => _NumberCell(
       value: _port.poe?.poeClass,
-      onCommit: (v) => _set(PortDefField.poeClass, v),
+      onCommit: (v) => _set(id, PortDefField.poeClass, v),
     ),
     PortColumnId.poeWatts => _NumberCell(
       value: _port.poe?.watts,
-      onCommit: (v) => _set(PortDefField.poeWatts, v),
+      onCommit: (v) => _set(id, PortDefField.poeWatts, v),
     ),
     PortColumnId.linkSpeedMbps => _NumberCell(
       value: _port.linkSpeedMbps,
       hint: '1000',
-      onCommit: (v) => _set(PortDefField.linkSpeedMbps, v),
+      onCommit: (v) => _set(id, PortDefField.linkSpeedMbps, v),
     ),
     PortColumnId.sfpFormFactor => _NullableChoiceCell<SfpFormFactor>(
       value: _port.sfp,
       options: SfpFormFactor.values,
       label: portSfpLabel,
-      onPick: (v) => _set(PortDefField.sfpFormFactor, v),
+      onPick: (v) => _set(id, PortDefField.sfpFormFactor, v),
     ),
     PortColumnId.fiberMode => _NullableChoiceCell<FiberMode>(
       value: _port.fiberMode,
       options: FiberMode.values,
       label: portFiberModeLabel,
-      onPick: (v) => _set(PortDefField.fiberMode, v),
+      onPick: (v) => _set(id, PortDefField.fiberMode, v),
     ),
     PortColumnId.wavelengthNm => _NumberCell(
       value: _port.wavelengthNm,
       hint: '1310',
-      onCommit: (v) => _set(PortDefField.wavelengthNm, v),
+      onCommit: (v) => _set(id, PortDefField.wavelengthNm, v),
     ),
     PortColumnId.serialRole => _NullableChoiceCell<SerialRole>(
       value: _port.serial?.role,
       options: SerialRole.values,
       label: portSerialRoleLabel,
-      onPick: (v) => _set(PortDefField.serialRole, v),
+      onPick: (v) => _set(id, PortDefField.serialRole, v),
     ),
     PortColumnId.baud => _NumberCell(
       value: _port.serial?.baud,
       hint: '9600',
-      onCommit: (v) => _set(PortDefField.baud, v),
+      onCommit: (v) => _set(id, PortDefField.baud, v),
     ),
     PortColumnId.dataBits => _NumberCell(
       value: _port.serial?.dataBits,
       hint: '8',
-      onCommit: (v) => _set(PortDefField.dataBits, v),
+      onCommit: (v) => _set(id, PortDefField.dataBits, v),
     ),
     PortColumnId.stopBits => _NumberCell(
       value: _port.serial?.stopBits,
       hint: '1',
-      onCommit: (v) => _set(PortDefField.stopBits, v),
+      onCommit: (v) => _set(id, PortDefField.stopBits, v),
     ),
     PortColumnId.parity => _TextCell(
       value: _port.serial?.parity,
       hint: 'none',
-      onCommit: (v) => _set(PortDefField.parity, _orNull(v)),
+      onCommit: (v) => _set(id, PortDefField.parity, _orNull(v)),
     ),
     PortColumnId.flowControl => _TextCell(
       value: _port.serial?.flowControl,
       hint: 'none',
-      onCommit: (v) => _set(PortDefField.flowControl, _orNull(v)),
+      onCommit: (v) => _set(id, PortDefField.flowControl, _orNull(v)),
     ),
     PortColumnId.busProtocol => _TextCell(
       value: _port.bus?.protocol,
       hint: 'rs485',
-      onCommit: (v) => _set(PortDefField.busProtocol, _orNull(v)),
+      onCommit: (v) => _set(id, PortDefField.busProtocol, _orNull(v)),
     ),
     PortColumnId.busTermination => _TriStateCell(
       value: _port.bus?.supportsTermination,
-      onPick: (v) => _set(PortDefField.busTermination, v),
+      onPick: (v) => _set(id, PortDefField.busTermination, v),
     ),
     PortColumnId.busUnitLoads => _NumberCell(
       value: _port.bus?.unitLoads,
-      onCommit: (v) => _set(PortDefField.busUnitLoads, v),
+      onCommit: (v) => _set(id, PortDefField.busUnitLoads, v),
     ),
     PortColumnId.busAddressable => _TriStateCell(
       value: _port.bus?.addressable,
-      onPick: (v) => _set(PortDefField.busAddressable, v),
+      onPick: (v) => _set(id, PortDefField.busAddressable, v),
     ),
     PortColumnId.busMaxTapWatts => _NumberCell(
       value: _port.bus?.maxTapWatts,
-      onCommit: (v) => _set(PortDefField.busMaxTapWatts, v),
+      onCommit: (v) => _set(id, PortDefField.busMaxTapWatts, v),
     ),
     PortColumnId.powerRole => _NullableChoiceCell<PortPowerRole>(
       value: _port.power?.role,
       options: PortPowerRole.values,
       label: portPowerRoleLabel,
-      onPick: (v) => _set(PortDefField.powerRole, v),
+      onPick: (v) => _set(id, PortDefField.powerRole, v),
     ),
     PortColumnId.powerVolts => _NumberCell(
       value: _port.power?.volts,
       hint: '120',
-      onCommit: (v) => _set(PortDefField.powerVolts, v),
+      onCommit: (v) => _set(id, PortDefField.powerVolts, v),
     ),
     PortColumnId.powerDrawWatts => _NumberCell(
       value: _port.power?.drawWatts,
-      onCommit: (v) => _set(PortDefField.powerDrawWatts, v),
+      onCommit: (v) => _set(id, PortDefField.powerDrawWatts, v),
     ),
     PortColumnId.powerMaxAmps => _NumberCell(
       value: _port.power?.maxAmps,
-      onCommit: (v) => _set(PortDefField.powerMaxAmps, v),
+      onCommit: (v) => _set(id, PortDefField.powerMaxAmps, v),
     ),
     // READ-ONLY, AND SAYS SO BY BEING TEXT. Pairing is M4-J3 (`#225`),
     // which owns the bank-level `Pair front to rear by order` action;
@@ -1321,13 +1443,13 @@ class _PortRow extends StatelessWidget {
     PortColumnId.pairedPort => _ReadOnlyCell(value: pairedWith),
     PortColumnId.maxConnections => _NumberCell(
       value: _port.maxConnections,
-      onCommit: (v) => _set(PortDefField.maxConnections, v ?? 1),
+      onCommit: (v) => _set(id, PortDefField.maxConnections, v ?? 1),
     ),
     PortColumnId.topology => _ChoiceCell<PortTopology>(
       value: _port.topology,
       options: PortTopology.values,
       label: portTopologyLabel,
-      onPick: (v) => _set(PortDefField.topology, v),
+      onPick: (v) => _set(id, PortDefField.topology, v),
     ),
     // GATED ON THE CONNECTOR (CR-059, M4-B). Gender is meaningless on an
     // RJ45 and load-bearing on an XLR, and `genderApplies` is the field
@@ -1340,7 +1462,7 @@ class _PortRow extends StatelessWidget {
               value: _port.gender,
               options: Gender.values,
               label: portGenderLabel,
-              onPick: (v) => _set(PortDefField.gender, v),
+              onPick: (v) => _set(id, PortDefField.gender, v),
             )
           : const _ReadOnlyCell(
               value: null,
@@ -1349,17 +1471,17 @@ class _PortRow extends StatelessWidget {
     PortColumnId.pinoutVariant => _TextCell(
       value: _port.pinoutVariant,
       hint: 'emitter',
-      onCommit: (v) => _set(PortDefField.pinoutVariant, _orNull(v)),
+      onCommit: (v) => _set(id, PortDefField.pinoutVariant, _orNull(v)),
     ),
     PortColumnId.conductorCount => _NumberCell(
       value: _port.conductorCount,
-      onCommit: (v) => _set(PortDefField.conductorCount, v),
+      onCommit: (v) => _set(id, PortDefField.conductorCount, v),
     ),
     PortColumnId.returnChannel => _NullableChoiceCell<ReturnChannel>(
       value: _port.returnChannel,
       options: ReturnChannel.values,
       label: portReturnChannelLabel,
-      onPick: (v) => _set(PortDefField.returnChannel, v),
+      onPick: (v) => _set(id, PortDefField.returnChannel, v),
     ),
     // READ-ONLY: `renamedFrom` is written by a rename, never typed.
     PortColumnId.renamedFrom => _ReadOnlyCell(

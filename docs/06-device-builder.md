@@ -235,7 +235,7 @@ Two column shapes also changed under measurement. `Dir` is a dropdown spelling a
 | Edit cell | click, or type over selection | Enter commits + moves down; Tab commits + moves right; Esc reverts |
 | **Fill down** | `Ctrl+D` | Copies the top cell of the selection to every cell below it |
 | **Fill series** | `Ctrl+Shift+D` | Counts down the selection from the top cell (DR-062). **There is no stored label pattern to re-apply**, so the sequence is inferred: the **last** run of digits becomes the counter, `HDMI 2.0 IN 1` → `HDMI 2.0 IN 2`. `LABEL`, `DESIG` and `NOTES` only |
-| **Multi-row edit** | select N rows, edit any cell | Applies to every selected row; the right dock becomes the batch inspector; mixed values render `—` and are left untouched unless explicitly set |
+| **Multi-row edit** | select N rows, edit any cell | Applies to every selected row; the right dock becomes the batch inspector. **Mixed values read `Mixed (N values)` and NOT `—`** (DR-063): the dash is G4's unknown and a disagreement is a different fact. Left untouched unless explicitly set. **`LABEL` and `DESIG` edit one row only**, because one label across eight rows mints eight colliding keys; `Ctrl+Shift+D` is the gesture for a column of labels |
 | Duplicate | `Ctrl+J` | Clones the selection below, labels auto-incremented past the highest existing index |
 | Delete | `Del` | Undoable on the builder's stack; warns if the port is in a passthrough pair |
 | **Reorder** | drag, or `Alt+↑/↓` | `PortDef.order` is a `FracIndex` (CR-027), a reorder is one field write on one row, not a renumber of the bank |

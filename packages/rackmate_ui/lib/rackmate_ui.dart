@@ -43,6 +43,7 @@
 /// something true to show.
 library;
 
+export 'src/builder/batch_inspector.dart';
 export 'src/builder/device_builder_screen.dart';
 export 'src/builder/port_grid.dart';
 export 'src/builder/quick_add_bar.dart';

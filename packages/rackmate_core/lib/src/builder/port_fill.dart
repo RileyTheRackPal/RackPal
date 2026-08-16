@@ -56,11 +56,34 @@ import 'package:rackmate_core/src/model/template.dart';
 /// So the static type is kept where it is known, at the switch arm, and
 /// what escapes is a closure that has already been checked.
 final class PortColumnFill {
-  const PortColumnFill({required this.copy, this.text});
+  const PortColumnFill({
+    required this.copy,
+    required this.read,
+    required this.write,
+    this.text,
+  });
 
   /// One command copying this column from one port to another, or null
   /// when the two already agree.
   final Command<TemplateBody>? Function(PortDef from, PortDef to) copy;
+
+  /// This column's value on one port, type-erased.
+  ///
+  /// Reading is the safe direction: `T Function(PortDef)` IS an `Object?
+  /// Function(PortDef)`, because return types are covariant. It is the
+  /// WRITE below that could not be done this way with a bare field.
+  final Object? Function(PortDef port) read;
+
+  /// One command writing a value into this column, or null when the port
+  /// already holds it.
+  ///
+  /// THE CAST IS INSIDE THE CLOSURE, where `T` is still known, so a
+  /// caller passing the wrong type throws at the write rather than
+  /// corrupting a field. Callers build their control from the same
+  /// `PortColumnId` this came from, so the two can only disagree through
+  /// a code defect, and the batch tests walk every column to
+  /// prove they do not.
+  final Command<TemplateBody>? Function(PortDef port, Object? value) write;
 
   /// Reading and writing this column as text, for the columns that hold
   /// it and null for the rest.
@@ -104,11 +127,15 @@ Command<TemplateBody>? _set<T>(PortField<T> field, PortDef port, T value) {
 /// A column that fills down and carries no series.
 PortColumnFill _plain<T>(PortField<T> field) => PortColumnFill(
   copy: (from, to) => _set<T>(field, to, field.get(from)),
+  read: field.get,
+  write: (port, value) => _set<T>(field, port, value as T),
 );
 
 /// A text column, whose value is always present.
 PortColumnFill _text(PortField<String> field) => PortColumnFill(
   copy: (from, to) => _set<String>(field, to, field.get(from)),
+  read: field.get,
+  write: (port, value) => _set<String>(field, port, value! as String),
   text: PortTextColumn(
     read: field.get,
     write: (port, value) => _set<String>(field, port, value),
@@ -118,6 +145,8 @@ PortColumnFill _text(PortField<String> field) => PortColumnFill(
 /// A text column that may be UNKNOWN.
 PortColumnFill _textOrNull(PortField<String?> field) => PortColumnFill(
   copy: (from, to) => _set<String?>(field, to, field.get(from)),
+  read: field.get,
+  write: (port, value) => _set<String?>(field, port, value as String?),
   text: PortTextColumn(
     read: field.get,
     write: (port, value) => _set<String?>(field, port, value),

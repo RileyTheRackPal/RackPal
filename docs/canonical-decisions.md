@@ -10951,6 +10951,55 @@ series down one invents memberships no set declares, which is the dangling-refer
 already draws a red band for. Both still fill **down**, where copying one valid key into four rows
 is exactly what a person means.
 
+### 11.62 DR-063 · A disagreement is not an unknown, and the identity columns are not batch-editable
+
+**Settled by the user on 2026-08-15**, during M4-F2 (`#209`). **Not a §8.3 amendment**: docs/06 §4.6
+already gives multi-row edit its row and §2 already draws the batch inspector. It has a ruling ID
+because it **corrects two things §4.6 says**, and the first of them is a G4 collision.
+
+**11.62.1 `—` ALREADY MEANS SOMETHING.** §4.6's multi-row row reads *"mixed values render `—` and
+are left untouched unless explicitly set"*. The second half is right and is enforced. The first half
+spells a disagreement the way the whole product spells an **unknown**: `kUnknownCell`, G4/CR-114,
+*nobody has measured this*.
+
+Eight ports nobody has measured and eight ports carrying 75 Ω and 110 Ω are **different facts**, and
+an installer reading `—` on `IMPEDANCE` concludes the first while the second is true. That happens on
+the one surface built specifically for looking at many rows at once.
+
+**Ruling: `—` keeps its single meaning. A disagreement renders as `Mixed (N values)`**, naming how
+many distinct values the selection holds. CR-114 states the same discipline for a document: a rollup
+**reports its unknown count rather than fabricating a total**. This is that rule applied to a column
+of N rows.
+
+**AN UNKNOWN AMONG VALUES IS A DISAGREEMENT**, counted as one of the values. Three ports at 75 Ω and
+five unmeasured is `Mixed (2 values)`, because calling it either agreement or unknown fabricates.
+
+**11.62.2 THE IDENTITY COLUMNS ARE EXCLUDED FROM MULTI-ROW EDIT.** §4.6 says *"edit any cell, it
+applies to every selected row"*, and `LABEL` and `DESIG` are the two cells where that is almost
+never the intent and is expensive when it is not:
+
+| | What one edit across eight rows does |
+|---|---|
+| `LABEL` | eight ports called `HDMI IN`; and on a port this session created the KEY follows the label, so `autoPortKey` also mints eight colliding keys suffixed `.2`, `.3`, `.4` |
+| `DESIG` | eight duplicate designators, which the grid's own validation dot then reports on every row |
+
+**The capability is not lost, it is routed.** `Ctrl+Shift+D` writes a column of labels and is the
+gesture designed for it (DR-062), so the answer to *"name all sixteen"* is a key that already exists
+rather than one that collides. **A confirmation dialog was the rejected third option**: docs/06 §4's
+binding premise is that any interaction costing one click per port is a design failure, and a modal
+in the middle of the grid whose criterion is measured with a stopwatch is that failure wearing a
+safety label.
+
+`KEY`, `PAIRED WITH` and `WAS CALLED` remain out for `port_fill.dart`'s reasons, which have not
+changed: a key is `final` on the model, a pairing is a `passthroughPairs` entry rather than a field,
+and `renamedFrom` is CR-051's alias trail, which a batch write would be forging.
+
+**11.62.3 WHAT IT DOES NOT DECIDE.** The batch inspector is what docs/06 §2 already says it is: the
+right dock **swaps** to it when more than one row is selected. The three live previews that occupy
+the dock the rest of the time are M4-K (`#182`) and are not built, so the dock exists only in the
+batch state until then, which is `device_builder_screen.dart`'s standing rule that a pane opening
+onto nothing is the `UnbuiltView` defect wearing a different hat.
+
 ---
 
 ## 12. Superseded rulings
