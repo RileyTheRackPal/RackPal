@@ -196,6 +196,16 @@ enum KeyBindingId {
   quickAddCommit,
   quickAddComplete,
   builderJumpToPorts,
+
+  // --- builder (M4-F1) ------------------------------------------------
+  // THE PORT GRID'S OWN FILLS, and they are separate ids from
+  // `fillDown` rather than that row widened to a second scope.
+  // `bindingFor` is a `firstWhere` over `id`, so two rows sharing one
+  // would make it ambiguous, and the two are not the same act: the
+  // Structure editor's copies from the cell ABOVE because that table has
+  // no selection, and this one fills a RANGE (DR-061).
+  builderFillDown,
+  builderFillSeries,
   commitWireChained,
   nextCandidatePin,
   previousCandidatePin,
@@ -528,6 +538,22 @@ final class FillDownIntent extends Intent {
 /// (docs/07 §4.1, and §5's spreadsheet entry path).
 final class PasteCellsIntent extends Intent {
   const PasteCellsIntent();
+}
+
+/// Copy the top selected cell down the focused column of the DEVICE
+/// BUILDER's port grid (docs/06 §4.6, M4-F1).
+///
+/// A RANGE, WHICH IS WHAT SEPARATES IT FROM [FillDownIntent]. The
+/// Structure editor's table has no selection, so its `Ctrl+D` copies from
+/// the cell directly above; DR-061 gave this grid a row range, so this one
+/// fills from the top of it.
+final class BuilderFillDownIntent extends Intent {
+  const BuilderFillDownIntent();
+}
+
+/// Count down the focused column from the top selected cell (DR-062).
+final class BuilderFillSeriesIntent extends Intent {
+  const BuilderFillSeriesIntent();
 }
 
 /// A single declared binding: what key, in what scope, meaning what.
@@ -1170,6 +1196,55 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         'gate that ruling removed.',
   ),
   KeyBinding(
+    id: KeyBindingId.builderFillDown,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyD,
+    primary: true,
+    label: 'Fill down',
+    intent: BuilderFillDownIntent(),
+    source: 'docs/06 §4.6',
+    note:
+        'THE SPREADSHEET KEY, AND HERE IT HAS A RANGE. Two rows rather '
+        'than one widened row, because `bindingFor` is a `firstWhere` '
+        'over the id and because the acts differ in reach: the Structure '
+        "editor's table has no selection, so its `Ctrl+D` copies from "
+        'the cell ABOVE, while DR-061 gave this grid a row range to fill '
+        'from the top of. '
+        'ONE LABEL ACROSS BOTH, AND `meaningDrift` INSISTED. It was '
+        'written as "Fill down the selection" beside the structure '
+        "row's \"Fill down from the cell above\", and arbitration "
+        'refused the pair on sight. It was right: a keyboard-only user '
+        'cannot see a scope boundary, so one chord wears one meaning '
+        "across the product (DR-011.6's rule). The generalisation holds "
+        'without straining, which is the test: both copy a value down a '
+        'column, and the reach is a detail for the note rather than a '
+        'second meaning. The scope-specific half now lives here, where '
+        'the next implementer stands. '
+        'IT SHADOWS NO FRAMEWORK DEFAULT. `Ctrl+D` is not a Flutter text '
+        'editing binding on any platform this ships to, which matters '
+        'because focus is almost always inside a cell `TextField` when '
+        'it is pressed.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderFillSeries,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyD,
+    primary: true,
+    shift: true,
+    label: 'Fill a series down the selection',
+    intent: BuilderFillSeriesIntent(),
+    source: 'docs/06 §4.6 · DR-062',
+    note:
+        'ITS OWN LABEL AND NOT A SHARE WITH FILL DOWN, because the two '
+        'do different things to the same rows: one copies, one counts. '
+        "`meaningDrift`'s test is whether the generalisation holds "
+        'without straining, and "fill" alone would have to cover both, '
+        'which is how a person presses the wrong one. '
+        'THE SEQUENCE IS INFERRED FROM THE TOP CELL (DR-062), because '
+        "docs/06 §4.6's \"the label pattern\" names an artifact that is "
+        'stored nowhere in the tree.',
+  ),
+  KeyBinding(
     id: KeyBindingId.quickAddComplete,
     scope: KeyScope.builder,
     trigger: LogicalKeyboardKey.arrowRight,
@@ -1359,13 +1434,20 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     scope: KeyScope.structure,
     trigger: LogicalKeyboardKey.keyD,
     primary: true,
-    label: 'Fill down from the cell above',
+    label: 'Fill down',
     intent: FillDownIntent(),
     source: 'docs/07 §4.1',
     note:
         'The spreadsheet key, and the spreadsheet meaning for a single '
         'selected cell: copy what is directly above. There is no range '
-        'selection in the table yet, so there is no range to fill.',
+        'selection in the table yet, so there is no range to fill. '
+        'THE LABEL LOST ITS SECOND HALF when M4-F1 bound the same chord '
+        'in the port grid: it read "Fill down from the cell above", and '
+        '`meaningDrift` refuses two labels on one chord because a '
+        'keyboard-only user cannot see a scope boundary. The reach is '
+        "the note's business, not the label's. DR-061 §11.60.6 already "
+        "records that this table's own selection question is open; when "
+        "it is answered, this row and the builder's converge outright.",
   ),
   KeyBinding(
     id: KeyBindingId.pasteCells,

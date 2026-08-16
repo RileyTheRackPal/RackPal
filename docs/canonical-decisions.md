@@ -10821,6 +10821,136 @@ seed a field once something needs it. **If a second pair ever appears, that is t
 a reader finding it does not conclude the rule has eroded. The test for admitting another is the one
 this passed: a wrong answer is not merely inconvenient but **destroys hardware**.
 
+### 11.60 DR-061 · The port grid's selection is a row range and a focused column, and the tick box is that selection
+
+**Settled by the user on 2026-08-15**, at M4-F's pick-up census (board `#177`, and the task `#695`
+this ruling created). **This is not a §8.3 amendment**: docs/06 §4.6 already tabulates every editing
+operation and roadmap §2 already carries the grid. It has a ruling ID because **§4.6 describes the
+selection two incompatible ways and the corpus never says what one is**, so every M4-F task rested
+on a word with no referent.
+
+**11.60.1 The two phrasings.** §4.6's `Fill down` row reads *"copies the top cell of the selection
+to every cell below it"*, which describes a **column of cells with a top**. Its `Multi-row edit` row
+reads *"select N rows, edit any cell"*, which describes a **set of rows**. A cell range and a row
+set are different objects, and a reader building either one satisfies half the table.
+
+**11.60.2 The census: there was no selection at all.** `port_grid.dart:175` holds `_ticked`, a
+`Set<String>` of port keys, fed by a checkbox in the gutter and read by exactly one thing, the
+delete button. There is no anchor, no focused cell, no range and no painting of one. **None of
+M4-F's five tasks builds one**, because each was written from its own operation's risk and the
+selection was never in dispute: `check a decomposition for holes` in its input form, for the sixth
+time in this repository.
+
+**11.60.3 The ruling.** The grid's selection is:
+
+```text
+selection := a contiguous run of rows, plus the individual rows Ctrl+click has added or removed
+column    := whichever cell holds focus
+```
+
+Click selects one row. `Shift`+click extends from the anchor. `Ctrl`+click toggles one row. The
+checkbox in the gutter toggles the same row in the same set. `Delete` acts on it, unchanged from
+M4-E.
+
+**11.60.4 WHY NOT A 2D CELL RECTANGLE, WHICH IS WHAT EXCEL DOES.** The premise for one is real:
+docs/06 §4 is explicit that *"integrators live in Excel"* and that every ergonomic they know has to
+work. So the rectangle was priced against §4.6's own table rather than against the sentence, row by
+row:
+
+| What the operation needs | §4.6 rows |
+|---|---|
+| Whole rows, no column at all | `Multi-row edit`, `Duplicate`, `Delete`, `Reorder`, `Renumber…`, `Move to bank…`, `Copy / paste`, `Sort`, `Mirror bank` |
+| Rows, and it **names its own columns** | `Fill series` (the label), `Change type…` (connector and family), `Find & replace` (a scope the dialog picks from labels, keys, designators or notes) |
+| Rows, and **one** column from elsewhere | `Fill down` |
+| One cell | `Edit cell` |
+
+**A rectangle would be consulted by one row of fourteen, and that one wants a single column rather
+than a range.** The three operations that look column-shaped each carry their own column in their
+definition, which is why they read as column-shaped and why a selection cannot tell them anything
+they do not already know. Building the rectangle would be `measure the control before choosing it`
+answered the wrong way: a painting layer, a keyboard model crossing collapsed bands and sticky
+headers, and a partial-row TSV paste whose meaning nobody has decided, bought for `Ctrl+D`.
+
+**The Excel premise is honoured where it is actually load-bearing**, which is `Copy / paste`: M4-F3's
+own test is a **whole bank** copied out and pasted back, byte-compared on the resulting
+`TemplateBody`. Whole rows are what round-trips.
+
+**11.60.5 THE TICK BOX IS THE SELECTION, one set with two affordances.** The alternatives were both
+rejected for the same reason. Keeping ticks and selection as separate sets puts two highlight states
+on one row and makes every operation carry a question about which set it reads, which is reported as
+a bug rather than as confusion. Deleting the tick boxes removes the grid's only affordance that is
+discoverable without knowing a modifier key.
+
+Subsuming them costs nothing and preserves something: a tick set is already non-contiguous, so
+`Ctrl`+click needs no new state, and **M4-E's delete tests keep their meaning exactly**, because the
+set they act on is the same set under a new name.
+
+**11.60.6 WHAT THIS DOES NOT DECIDE.** The selection is a view concept and does not serialize:
+nothing here reaches `TemplateBody`, the codec or `kSchemaVersion`, and CR-117 is untouched. It says
+nothing about the Structure editor's table, which has its own selection question and no ruling; when
+that surface grows one, this is the precedent to argue from and not a rule it already obeys.
+
+### 11.61 DR-062 · Fill series infers its sequence from the top selected cell, because there is no stored pattern to re-apply
+
+**Settled by the user on 2026-08-15**, during M4-F1 (`#208`). **This is not a §8.3 amendment**:
+docs/06 §4.6 already gives `Fill series` its key and its row. It has a ruling ID because **the row
+names a stored artifact that has never existed**, so the feature could not be built as written.
+
+**11.61.1 The census.** §4.6 reads *"Re-applies **the** label pattern across the selection with a
+fresh `start`"*. Measured against the tree:
+
+| | Finding |
+|---|---|
+| `PortDef` | no pattern field |
+| `BankDef` | `key`, `label`, `abbr`, `symbolSide`, `collapseInSymbol`, `order`. **No pattern** |
+| `TemplateBody` | no pattern field |
+| `LabelPattern` | referenced by **two files in the tree**: its own, and `quick_add.dart`, where it lives in a `TextField` and is discarded when the bar clears |
+
+The definite article points at nothing. `a modelled field is not a reachable one` inverted: not a
+field with no gesture, but **a gesture naming a field nobody modelled**.
+
+**11.61.2 The row four lines below it is what settles the shape.** `Renumber…` `Ctrl+R` reads
+*"re-applies **a** label pattern to the selection in current display order"*. **Indefinite article,
+and an ellipsis**, which by convention means a dialog. `Fill series` has neither. So the corpus
+already distinguishes them: one asks the user for a pattern, the other acts immediately from
+something it can work out for itself. A `Fill series` that prompted would be `Renumber…` with a
+second binding, and one of the two would then have to be deleted.
+
+**11.61.3 The ruling.** The series is **inferred from the top selected cell**, on Excel's own rule:
+the **last** run of digits becomes the counter, everything around it stays literal. `IN 01` yields
+`IN 01, IN 02, IN 03`.
+
+**THE LAST RUN AND NOT THE FIRST, and this catalog is why.** Labels here routinely carry a
+standard's number before the port's: `HDMI 2.0 IN 1`, `802.3bt PORT 4`, `RS-232 CTL 2`. A rule
+reading the first run would count the standard and leave the port number alone, wrong in exactly the
+cases that matter most.
+
+**THE TOP CELL IS THE START**, which is what *"a fresh `start`"* becomes once the pattern is
+inferred: fresh relative to the selection rather than to the bank. Selecting rows 9 through 16 and
+pressing it keeps them 09 through 16; a counter restarting at 1 would renumber them over the eight
+above.
+
+**11.61.4 Why not store the pattern.** `BankDef.labelPattern` is the only reading that makes *"the"*
+literally true, and it was rejected on coverage rather than on cost. It is **null for every port
+created by `+ Add port`, by paste (M4-I3), or by any archetype generator M4-I builds**, so the
+feature would work on Quick Add's banks and silently decline everywhere else. Inference works on all
+of them. DR-010 §11.10.4's rule is to seed a field once something needs it, and one feature that
+would half-use it is not that.
+
+**11.61.5 A REFUSAL IS A SENTENCE, NEVER A SILENCE.** Five ways a fill declines, each with its own
+message naming the way forward: fewer than two rows, no focused column, a column no fill may write
+(`KEY`, `PAIRED WITH`, `WAS CALLED`), a series asked of a non-text column, and a top cell holding no
+digits. **A key that quietly does nothing is indistinguishable from one that is not bound**, which
+is how a person concludes a feature does not exist. `SPEAKER` therefore refuses rather than falling
+back to a copy, because the fallback would be discovered sixteen rows later.
+
+**11.61.6 Fill series is text-only, and narrowly.** Three columns carry one: `LABEL`, `DESIG`,
+`NOTES`. `poeWatts` 15, 16, 17 would rewrite a bank's electrical facts as a counting sequence.
+**`SET` and `ROLE` are excluded for a stronger reason**: they are keys into `PortSetDef`, so a
+series down one invents memberships no set declares, which is the dangling-reference state the grid
+already draws a red band for. Both still fill **down**, where copying one valid key into four rows
+is exactly what a person means.
+
 ---
 
 ## 12. Superseded rulings

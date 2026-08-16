@@ -234,7 +234,7 @@ Two column shapes also changed under measurement. `Dir` is a dropdown spelling a
 |---|---|---|
 | Edit cell | click, or type over selection | Enter commits + moves down; Tab commits + moves right; Esc reverts |
 | **Fill down** | `Ctrl+D` | Copies the top cell of the selection to every cell below it |
-| **Fill series** | `Ctrl+Shift+D` | Re-applies the label pattern across the selection with a fresh `start` |
+| **Fill series** | `Ctrl+Shift+D` | Counts down the selection from the top cell (DR-062). **There is no stored label pattern to re-apply**, so the sequence is inferred: the **last** run of digits becomes the counter, `HDMI 2.0 IN 1` → `HDMI 2.0 IN 2`. `LABEL`, `DESIG` and `NOTES` only |
 | **Multi-row edit** | select N rows, edit any cell | Applies to every selected row; the right dock becomes the batch inspector; mixed values render `—` and are left untouched unless explicitly set |
 | Duplicate | `Ctrl+J` | Clones the selection below, labels auto-incremented past the highest existing index |
 | Delete | `Del` | Undoable on the builder's stack; warns if the port is in a passthrough pair |
@@ -246,6 +246,8 @@ Two column shapes also changed under measurement. `Dir` is a dropdown spelling a
 | Copy / paste | `Ctrl+C` / `Ctrl+V` | TSV round-trips to Excel and back |
 | Sort | click header | **View-only by default**, shown with a badge. `Commit sort order` is a separate explicit action, because sorting is destructive to symbol pin order |
 | Mirror bank | bank context menu | Duplicates a bank with direction flipped and the label prefix swapped IN↔OUT, the output side of a matrix in one click |
+
+**What "the selection" is (DR-061).** The table above describes it two ways, a column of cells with a top and a set of rows, and it is the second: **a contiguous run of rows plus whatever `Ctrl`+click has added or removed, and a column taken from whichever cell holds focus.** Click selects, `Shift`+click extends, `Ctrl`+click toggles, and the gutter checkbox toggles the same row in the same set, so the tick box M4-E ships **is** the selection rather than a second thing beside it. Not a 2D cell rectangle: of the fourteen rows above, nine want whole rows, three name their own columns, one wants a single column, and one is a single cell, so a rectangle would be read by `Fill down` alone.
 
 Reorder is semantic: it drives symbol pin order and panel auto-layout. Because `order` is a `FracIndex`, dragging one row rewrites one row.
 

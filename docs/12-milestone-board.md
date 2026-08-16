@@ -3177,6 +3177,53 @@ of them creates a port"*: **ask what produces each task's input.** This is the o
 what it saved. A decomposition can be complete on both counts and still leave a milestone's criterion
 unreachable, because the two questions are asked of different ends of the same task.
 
+#### 5.3.9 M4-F0, the selection five tasks needed and none of them built
+
+**M4-F (`#177`) was censused against its own tasks at pick-up on 2026-08-15, before any code.**
+Two findings, and the second is the one that would have cost time.
+
+**FINDING 1: FIVE OPERATIONS ARE NAMED BY BOTH docs/06 §4.6 AND `#177`'s OWN DESCRIPTION, AND BY NO
+TASK.** §4.6 tabulates fourteen editing operations. M4-F/1 through /5 own five. `Mirror bank`
+correctly belongs to M4-J1 and `Delete` shipped in M4-E. The remainder had no home:
+
+| Orphan | Filed as |
+|---|---|
+| `Duplicate` `Ctrl+J` | `#696` |
+| `Renumber…` `Ctrl+R` | `#697` |
+| `Find & replace` `Ctrl+H` | `#698` |
+| `Change type…` `Ctrl+T` | `#699` |
+| `Move to bank…` `Ctrl+M` | `#700` |
+
+Three of the five turn out to depend on F4's between-generator, which is why filing them before
+building mattered rather than after: `Duplicate` clones *below itself*, `Move to bank…` must write
+`order` as well as `bankKey` or it splits the target band in two, and both are the `FracIndex`
+midpoint `nextOrder` has declined to mint since M0.
+
+**FINDING 2: "THE SELECTION" HAD NO REFERENT.** §4.6 describes the thing all fourteen operations act
+on twice, incompatibly: *"the top cell of the selection"* is a column of cells with a top, and
+*"select N rows, edit any cell"* is a set of rows. The grid had neither. It had `_ticked`, a
+`Set<String>` read by exactly one thing, the delete button.
+
+**Settled by the user as DR-061** (§11.60) and filed as `#695`, landing before F1. The rectangle was
+priced against §4.6's own table rather than against its *"integrators live in Excel"* sentence: nine
+rows want whole rows, three name their own columns inside their own definitions, one wants a single
+column, one is a single cell. **A rectangle would have been read by `Fill down` alone.**
+
+**Closed the same day** by `9239849`, `81cd430`, `2b65402` and `9969ded`, fourteen gates green on
+each. 41 cases: 33 in core over the algebra, 8 widget cases over the gestures.
+
+**THE PART WORTH KEEPING IS HOW THE ONE DEFECT WAS FOUND.** Enter's move down was written into
+`onSubmitted`. `EditableText` calls `onEditingComplete` first, and its default for a `done` action
+is to **unfocus the field**; only then does `onSubmitted` run. So the commit landed, focus was
+already gone, and directional traversal had no origin to move from. **Every one of the fourteen
+gates passed.**
+
+What found it was the shape of the test rather than its subject: type into row 1, press `Enter`,
+then type again **with no finder in between**, and assert all three labels at the end. The second
+line had gone into the same cell as the first. **A test that had looked up row 2's cell and typed
+into it would have passed against a grid where `Enter` does nothing at all**, which is `drive the
+keyboard, not the finder` stated as a positive rule: to test a route, name only its start.
+
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing

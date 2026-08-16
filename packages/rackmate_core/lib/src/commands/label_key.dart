@@ -296,6 +296,20 @@ enum LabelKey {
   // happened rather than calling it a property write like the other nine.
   renamePortKey,
 
+  // FILL DOWN AND FILL SERIES (builder/port_fill.dart), M4-F1. Its own
+  // value on `quickAddPorts`' argument: one keystroke rewrites a column
+  // of sixteen cells, and "Undo Set Port Property" would name one of
+  // them.
+  //
+  // ONE VALUE FOR BOTH FILLS, and the split test is what the Edit menu
+  // has to say. `addPort` and `removePort` are two because they are
+  // opposite acts and confusing them is expensive; fill down and fill
+  // series are the SAME act with different values in it, and only one of
+  // them has just happened, so "Undo Fill" is unambiguous for both. A
+  // second value here would be the growth this enum's comments keep
+  // arguing against.
+  fillPorts,
+
   // SAVING A TEMPLATE INTO THE PROJECT (commands/template_snapshot_
   // commands.dart), M4-D. This one IS a document command and belongs on
   // the document's stack, unlike `setTemplateProperty` above: the

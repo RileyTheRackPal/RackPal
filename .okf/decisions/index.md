@@ -62,6 +62,8 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` �
 * [DR-058, a fork whose source cannot be seen is silent and counted](dr-058-an-unseen-source-is-silent-and-counted.md) - CR-062 rules what a corrected source shows and not what an invisible one does; no badge on the device, and the rollup reports the count, which is G4 applied to a comparison.
 * [DR-059, the device glyph ships](dr-059-the-device-glyph-ships.md) - a §8.3 scope amendment; the census found `accentColor` authored on 0 of 48 seeds and read by no renderer, so shipping it alone would have been hue alone on the sheet that gets photocopied.
 * [DR-060, Quick Add resolves family-first](dr-060-quick-add-resolves-family-first.md) - the alias table CR-058 built the DSL on was empty on all 55 families; the two registries now answer independently, because `c13` and `c14` share a family and disagree about the connector.
+* [DR-062, fill series infers its sequence](dr-062-fill-series-infers-its-sequence.md) - docs/06 §4.6 says it re-applies "the label pattern" and no such pattern is stored anywhere; storing one would have covered only the ports Quick Add made, and the row four lines below already reserves the prompting version for `Renumber…`.
+* [DR-061, the grid's selection is a row range](dr-061-grid-selection-is-a-row-range.md) - docs/06 §4.6 described it two incompatible ways and no M4-F task built either; a 2D cell rectangle would have been consulted by one of that table's fourteen operations, and the tick box M4-E already ships is the selection under a new name.
 
 # Not yet written up
 

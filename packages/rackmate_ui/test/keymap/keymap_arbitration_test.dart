@@ -185,9 +185,17 @@ void main() {
       expect(keyBindingsIn(KeyScope.rack), hasLength(16));
       expect(keyBindingsIn(KeyScope.schematic), hasLength(24));
       expect(keyBindingsIn(KeyScope.structure), hasLength(2));
-      expect(keyBindingsIn(KeyScope.builder), hasLength(3));
+      //
+      // FIVE IN THE BUILDER SINCE M4-F1, which added `Ctrl+D` and
+      // `Ctrl+Shift+D` over the port grid. The first of those made
+      // `Ctrl+D` a chord this app binds in TWO scopes, and
+      // `meaningDrift` refused the pair until both wore one label: the
+      // structure row read "Fill down from the cell above" and now reads
+      // "Fill down", with the reach moved into its note. A keyboard-only
+      // user cannot see a scope boundary.
+      expect(keyBindingsIn(KeyScope.builder), hasLength(5));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(53));
+      expect(kKeymap, hasLength(55));
     });
   });
 
