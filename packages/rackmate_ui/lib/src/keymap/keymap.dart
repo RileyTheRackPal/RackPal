@@ -210,6 +210,10 @@ enum KeyBindingId {
   // --- builder (M4-F3) ------------------------------------------------
   builderCopyCells,
   builderPasteCells,
+
+  // --- builder (M4-F4) ------------------------------------------------
+  builderMoveRowUp,
+  builderMoveRowDown,
   commitWireChained,
   nextCandidatePin,
   previousCandidatePin,
@@ -568,6 +572,18 @@ final class BuilderCopyCellsIntent extends Intent {
 /// Paste tab-separated cells into the port grid from the focused cell.
 final class BuilderPasteCellsIntent extends Intent {
   const BuilderPasteCellsIntent();
+}
+
+/// Slide the selected rows one position through their bank (M4-F4).
+///
+/// ONE INTENT WITH A DIRECTION, not two classes. `Alt+Up` and `Alt+Down`
+/// are the same act aimed two ways, which is the reading `LabelKey
+/// .reorderPorts` takes and the one `ExtendPinSelectionIntent(1)` already
+/// established one scope over.
+final class BuilderMoveRowIntent extends Intent {
+  const BuilderMoveRowIntent({required this.up});
+
+  final bool up;
 }
 
 /// A single declared binding: what key, in what scope, meaning what.
@@ -1298,6 +1314,39 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         'cells from the caret into a grid. '
         'A PASTE DOES NOT CREATE ROWS, in either grid, and both say so '
         'by how much rather than truncating.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderMoveRowUp,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.arrowUp,
+    alt: true,
+    label: 'Move the selected rows up',
+    intent: BuilderMoveRowIntent(up: true),
+    source: 'docs/06 §4.6 · CR-027 · DR-064',
+    note:
+        'THE KEYBOARD HALF OF THE DRAG HANDLE, and the half a person on '
+        'a laptop trackpad actually uses. `PortDef.order` is a '
+        '`FracIndex`, so this writes the rows that move and nothing '
+        'else: §4.6 rules that a reorder is not a renumber of the bank. '
+        'IT STOPS AT THE BAND EDGE AND SAYS SO (DR-064). Crossing would '
+        "have to rewrite the port's `bankKey`, and a structural edit "
+        'delivered by an arrow key is how a jack ends up in the wrong '
+        'bank on a printed panel. The Bank column is the way across, and '
+        'the refusal names it. '
+        'ALT AND NOT SHIFT, because Shift+Arrow is the range extension '
+        'every grid on earth binds and this one will want it. Alt+Arrow '
+        'is what a spreadsheet, an outliner and a task list all use for '
+        'moving a row, so the chord is where a hand already goes.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderMoveRowDown,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.arrowDown,
+    alt: true,
+    label: 'Move the selected rows down',
+    intent: BuilderMoveRowIntent(up: false),
+    source: 'docs/06 §4.6 · CR-027 · DR-064',
+    note: 'See builderMoveRowUp.',
   ),
   KeyBinding(
     id: KeyBindingId.quickAddComplete,
