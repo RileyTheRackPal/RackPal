@@ -513,6 +513,325 @@ void main() {
     });
   });
 
+  group('multi-row edit (DR-063, M4-F2)', () {
+    Future<_Harness> four(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001'),
+          _port('p3', order: 'a0002'),
+          _port('p4', order: 'a0003'),
+        ]),
+    );
+
+    Future<void> clickCell(
+      WidgetTester tester,
+      String text, {
+      LogicalKeyboardKey? holding,
+    }) async {
+      if (holding != null) await tester.sendKeyDownEvent(holding);
+      await tester.tap(find.text(text));
+      if (holding != null) await tester.sendKeyUpEvent(holding);
+      await tester.pumpAndSettle();
+    }
+
+    /// The DIRECTION dropdowns belonging to GRID ROWS.
+    ///
+    /// NOT `find.byType(...).at(n)`, and the first draft of this file
+    /// was: Quick Add's field-mode bar sits above the grid and carries a
+    /// `DropdownButton<PortDirection>` of its own, so index 0 is the bar
+    /// and every row is off by one. Its picker is UNSET until somebody
+    /// chooses, and a row always carries a direction, so a non-null value
+    /// is exactly "a row cell" and the count assertion below fails loudly
+    /// if that ever stops being true.
+    Finder rowDirections() => find.byWidgetPredicate(
+      (w) => w is DropdownButton<PortDirection> && w.value != null,
+    );
+
+    Future<void> pickDirection(
+      WidgetTester tester,
+      int row,
+      String value,
+    ) async {
+      expect(
+        rowDirections(),
+        findsNWidgets(4),
+        reason: 'one DIRECTION cell per row and none from Quick Add',
+      );
+      await tester.tap(rowDirections().at(row));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(value).last);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('EDITING ONE CELL WRITES EVERY SELECTED ROW, which is the '
+        'whole of the feature', (tester) async {
+      final harness = await four(tester);
+
+      await clickCell(tester, 'P1');
+      await clickCell(tester, 'P4', holding: LogicalKeyboardKey.shift);
+      await pickDirection(tester, 0, 'Output');
+
+      final body = await harness.read(tester);
+      expect(
+        body.ports.map((p) => p.direction),
+        everyElement(PortDirection.source),
+      );
+    });
+
+    testWidgets('a row OUTSIDE the selection writes only itself, because '
+        'clicking elsewhere is what a person does to edit one row', (
+      tester,
+    ) async {
+      final harness = await four(tester);
+
+      await clickCell(tester, 'P1');
+      await clickCell(tester, 'P2', holding: LogicalKeyboardKey.shift);
+      await clickCell(tester, 'P4');
+      await pickDirection(tester, 3, 'Output');
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.direction), [
+        PortDirection.sink,
+        PortDirection.sink,
+        PortDirection.sink,
+        PortDirection.source,
+      ]);
+    });
+
+    testWidgets('THE WHOLE BATCH IS ONE Ctrl+Z, because one edit made it', (
+      tester,
+    ) async {
+      final harness = await four(tester);
+
+      await clickCell(tester, 'P1');
+      await clickCell(tester, 'P4', holding: LogicalKeyboardKey.shift);
+      await pickDirection(tester, 0, 'Output');
+
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(
+        body.ports.map((p) => p.direction),
+        everyElement(PortDirection.sink),
+      );
+    });
+
+    testWidgets('A LABEL STILL WRITES ONE ROW (DR-063). One label across '
+        'four rows would name four ports the same and mint four colliding '
+        'keys', (tester) async {
+      final harness = await four(tester);
+
+      await clickCell(tester, 'P1');
+      await clickCell(tester, 'P4', holding: LogicalKeyboardKey.shift);
+      await tester.enterText(find.text('P2'), 'HDMI');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(
+        body.ports.map((p) => p.label),
+        ['P1', 'HDMI', 'P3', 'P4'],
+        reason: 'only the row that was typed into changed',
+      );
+    });
+
+    testWidgets('ONE selected row is a plain cell edit and not a batch', (
+      tester,
+    ) async {
+      final harness = await four(tester);
+
+      await clickCell(tester, 'P2');
+      await pickDirection(tester, 1, 'Output');
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.direction), [
+        PortDirection.sink,
+        PortDirection.source,
+        PortDirection.sink,
+        PortDirection.sink,
+      ]);
+    });
+  });
+
+  group('the batch inspector (docs/06 §2, DR-063)', () {
+    Future<void> four(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001'),
+          _port('p3', order: 'a0002'),
+          _port('p4', order: 'a0003'),
+        ]),
+    ).then((_) {});
+
+    Future<void> select(
+      WidgetTester tester,
+      String from,
+      String to,
+    ) async {
+      await tester.tap(find.text(from));
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+      await tester.tap(find.text(to));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('THE DOCK IS ABSENT UNTIL THERE IS SOMETHING TO INSPECT, '
+        'because a pane that opens onto nothing is the UnbuiltView '
+        'defect wearing a hat', (tester) async {
+      await four(tester);
+
+      expect(find.byType(BatchInspector), findsNothing);
+
+      await tester.tap(find.text('P1'));
+      await tester.pumpAndSettle();
+      expect(
+        find.byType(BatchInspector),
+        findsNothing,
+        reason: 'one row is a cell edit, not a batch',
+      );
+    });
+
+    testWidgets('it opens on the second row and counts them', (tester) async {
+      await four(tester);
+
+      await select(tester, 'P1', 'P3');
+
+      expect(find.byType(BatchInspector), findsOne);
+      expect(find.text('3 ports selected'), findsOne);
+    });
+
+    testWidgets("AGREEMENT PRINTS THE VALUE, in the grid's own words and "
+        'never an enum name', (tester) async {
+      await four(tester);
+
+      await select(tester, 'P1', 'P4');
+
+      // All four are `sink`, which the product calls Input.
+      expect(
+        find.descendant(
+          of: find.byType(BatchInspector),
+          matching: find.text('Input'),
+        ),
+        findsOne,
+      );
+      expect(find.textContaining('PortDirection'), findsNothing);
+    });
+
+    testWidgets('A DISAGREEMENT READS "Mixed", NOT THE DASH. That is the '
+        "whole of DR-063: the dash is G4's unknown and these rows are "
+        'not unmeasured, they differ', (tester) async {
+      await _pump(
+        tester,
+        template: _saveable()
+          ..ports.addAll([
+            _port('p1', order: 'a0000'),
+            _port('p2', order: 'a0001')..face = Face.front,
+          ]),
+      );
+
+      await select(tester, 'P1', 'P2');
+
+      expect(
+        find.descendant(
+          of: find.byType(BatchInspector),
+          matching: find.textContaining('Mixed (2 values)'),
+        ),
+        findsOne,
+      );
+    });
+
+    testWidgets('ALL-UNMEASURED STILL READS THE DASH, which is the other '
+        'half of the same ruling', (tester) async {
+      await four(tester);
+
+      await select(tester, 'P1', 'P4');
+
+      // NOTES is unset on every row: that is unknown, not a disagreement.
+      expect(
+        find.descendant(
+          of: find.byType(BatchInspector),
+          matching: find.text('—'),
+        ),
+        findsWidgets,
+      );
+    });
+
+    testWidgets('IT NAMES THE IDENTITY COLUMNS NOWHERE, because a batch '
+        'may not write them (DR-063)', (tester) async {
+      await four(tester);
+
+      await select(tester, 'P1', 'P4');
+
+      for (final header in ['LABEL', 'DESIG', 'KEY']) {
+        expect(
+          find.descendant(
+            of: find.byType(BatchInspector),
+            matching: find.text(header),
+          ),
+          findsNothing,
+          reason: '$header is not batch-writable',
+        );
+      }
+    });
+
+    testWidgets('it follows the selection down to one row and closes', (
+      tester,
+    ) async {
+      await four(tester);
+
+      await select(tester, 'P1', 'P2');
+      expect(find.byType(BatchInspector), findsOne);
+
+      // OUTSIDE THE SELECTION, and the first draft of this clicked a row
+      // INSIDE it and failed. That is DR-061 working: a plain click on an
+      // already-selected row leaves the selection alone, because clicking
+      // into a cell to start a batch edit must not collapse the batch.
+      await tester.tap(find.text('P4'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BatchInspector), findsNothing);
+    });
+
+    testWidgets('AN EDIT IN THE GRID MOVES THE READING, so the two panes '
+        'cannot disagree about the same ports', (tester) async {
+      await four(tester);
+
+      await select(tester, 'P1', 'P4');
+      expect(
+        find.descendant(
+          of: find.byType(BatchInspector),
+          matching: find.text('Input'),
+        ),
+        findsOne,
+      );
+
+      await tester.tap(
+        find
+            .byWidgetPredicate(
+              (w) => w is DropdownButton<PortDirection> && w.value != null,
+            )
+            .at(0),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Output').last);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byType(BatchInspector),
+          matching: find.text('Output'),
+        ),
+        findsOne,
+      );
+    });
+  });
+
   group('bands', () {
     testWidgets('one per bank, with its count, and they fold', (tester) async {
       await _pump(
