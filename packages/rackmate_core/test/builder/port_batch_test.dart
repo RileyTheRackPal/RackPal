@@ -136,7 +136,7 @@ void main() {
     test('an enum column summarises the same way', () {
       final body = _body([
         _port('a', order: 'a0', face: Face.front),
-        _port('b', order: 'a1', face: Face.rear),
+        _port('b', order: 'a1'),
       ]);
 
       expect(
@@ -264,7 +264,7 @@ void main() {
       expect(body.ports.map((p) => p.label), ['A', 'B']);
     });
 
-    test('KEY, PAIRED WITH and WAS CALLED stay out, for port_fill\'s '
+    test("KEY, PAIRED WITH and WAS CALLED stay out, for port_fill's "
         'reasons rather than for a new one', () {
       for (final column in [
         PortColumnId.portKey,
