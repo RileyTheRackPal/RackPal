@@ -310,6 +310,17 @@ enum LabelKey {
   // arguing against.
   fillPorts,
 
+  // REORDERING (builder/port_reorder.dart), M4-F4. Its own value on the
+  // same test as every value above it: what the Edit menu has to say. A
+  // drag and an `Alt+Up` are not cell edits, and "Undo Set Port Property"
+  // in front of somebody who just dragged a row is the menu describing
+  // the mechanism rather than the act.
+  //
+  // ONE VALUE FOR THE DRAG AND THE KEY, on `fillPorts`' precedent: they
+  // are the same act arrived at two ways, and only one of them has just
+  // happened.
+  reorderPorts,
+
   // SAVING A TEMPLATE INTO THE PROJECT (commands/template_snapshot_
   // commands.dart), M4-D. This one IS a document command and belongs on
   // the document's stack, unlike `setTemplateProperty` above: the
