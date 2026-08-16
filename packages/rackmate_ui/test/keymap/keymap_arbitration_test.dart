@@ -193,9 +193,16 @@ void main() {
       // structure row read "Fill down from the cell above" and now reads
       // "Fill down", with the reach moved into its note. A keyboard-only
       // user cannot see a scope boundary.
-      expect(keyBindingsIn(KeyScope.builder), hasLength(5));
+      // SEVEN SINCE M4-F3, which added `Ctrl+C` and `Ctrl+V` over the
+      // port grid. The paste made `Ctrl+V` a chord this app binds in two
+      // scopes, and `meaningDrift` refused the pair until both wore one
+      // label: the structure row read "Paste tab-separated cells from
+      // the caret" and now reads "Paste cells", exactly as `fillDown`
+      // lost its tail one task earlier. Twice in two tasks is the gate
+      // doing its job rather than being tuned.
+      expect(keyBindingsIn(KeyScope.builder), hasLength(7));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(55));
+      expect(kKeymap, hasLength(57));
     });
   });
 

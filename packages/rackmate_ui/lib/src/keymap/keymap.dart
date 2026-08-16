@@ -206,6 +206,10 @@ enum KeyBindingId {
   // no selection, and this one fills a RANGE (DR-061).
   builderFillDown,
   builderFillSeries,
+
+  // --- builder (M4-F3) ------------------------------------------------
+  builderCopyCells,
+  builderPasteCells,
   commitWireChained,
   nextCandidatePin,
   previousCandidatePin,
@@ -554,6 +558,16 @@ final class BuilderFillDownIntent extends Intent {
 /// Count down the focused column from the top selected cell (DR-062).
 final class BuilderFillSeriesIntent extends Intent {
   const BuilderFillSeriesIntent();
+}
+
+/// Put the selected rows on the clipboard as TSV (M4-F3, docs/06 §4.6).
+final class BuilderCopyCellsIntent extends Intent {
+  const BuilderCopyCellsIntent();
+}
+
+/// Paste tab-separated cells into the port grid from the focused cell.
+final class BuilderPasteCellsIntent extends Intent {
+  const BuilderPasteCellsIntent();
 }
 
 /// A single declared binding: what key, in what scope, meaning what.
@@ -1245,6 +1259,47 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         'stored nowhere in the tree.',
   ),
   KeyBinding(
+    id: KeyBindingId.builderCopyCells,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyC,
+    primary: true,
+    label: 'Copy cells',
+    intent: BuilderCopyCellsIntent(),
+    source: 'docs/06 §4.6',
+    note:
+        'THE ESCAPE HATCH THAT MAKES THE GRID TRUSTWORTHY (`#210`). '
+        'docs/06 §4 rests its whole case on integrators living in Excel, '
+        'and a grid they cannot get their own rows OUT of is one they '
+        'have to take on faith. A header row leads the clipboard so what '
+        'lands in Excel is a sheet rather than eight anonymous columns. '
+        'IT SHADOWS NO FRAMEWORK DEFAULT IN A CELL. Flutter binds '
+        '`Ctrl+C` to copy inside a focused text field, and that is '
+        'exactly where focus is when a person presses it here, so this '
+        'Action is DISABLED while a text selection exists: copying two '
+        'characters out of a label is what the key means then, and '
+        'taking it would be the shadowing `frameworkShadowedBindings` '
+        'exists to catch.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderPasteCells,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyV,
+    primary: true,
+    label: 'Paste cells',
+    intent: BuilderPasteCellsIntent(),
+    source: 'docs/06 §4.6',
+    note:
+        "ONE LABEL WITH THE STRUCTURE EDITOR'S ROW, which read \"Paste "
+        'tab-separated cells from the caret" and now reads the same four '
+        'words as this one. `meaningDrift` refuses two labels on one '
+        'chord because a keyboard-only user cannot see a scope boundary, '
+        'and it refused `fillDown` for the same reason one task ago. The '
+        'two acts generalise without straining: both paste a block of '
+        'cells from the caret into a grid. '
+        'A PASTE DOES NOT CREATE ROWS, in either grid, and both say so '
+        'by how much rather than truncating.',
+  ),
+  KeyBinding(
     id: KeyBindingId.quickAddComplete,
     scope: KeyScope.builder,
     trigger: LogicalKeyboardKey.arrowRight,
@@ -1454,7 +1509,7 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     scope: KeyScope.structure,
     trigger: LogicalKeyboardKey.keyV,
     primary: true,
-    label: 'Paste tab-separated cells from the caret',
+    label: 'Paste cells',
     intent: PasteCellsIntent(),
     source: 'docs/07 §4.1 · §5',
     note:
