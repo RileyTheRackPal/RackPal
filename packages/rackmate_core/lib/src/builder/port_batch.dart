@@ -27,7 +27,12 @@
 import 'package:rackmate_core/src/builder/port_fill.dart';
 import 'package:rackmate_core/src/builder/port_table.dart';
 import 'package:rackmate_core/src/commands/command.dart';
+import 'package:rackmate_core/src/derived/equipment_list.dart'
+    show kUnknownCell;
+import 'package:rackmate_core/src/model/placement.dart' show Face;
+import 'package:rackmate_core/src/model/registries.dart';
 import 'package:rackmate_core/src/model/template.dart';
+import 'package:rackmate_core/src/units/ids.dart';
 
 /// What one column holds across a selection.
 sealed class BatchValue {
@@ -152,3 +157,68 @@ List<Command<TemplateBody>> buildBatchWrite({
         if (target.write(port, value) case final Command<TemplateBody> w) w,
   ];
 }
+
+/// What the batch inspector prints for [value] in [column].
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// ONE VOCABULARY, AND IT IS ALREADY WRITTEN
+/// ═══════════════════════════════════════════════════════════════════════
+/// Every spelling below comes from `port_table.dart`'s label functions,
+/// the same ones the grid's cells use. The moment this file writes
+/// `value.name` the product owns a second speller, and the first time one
+/// of them changes the dock and the grid disagree about what a port is
+/// while both are on screen at once.
+///
+/// [registries] resolves the two id columns, and a value it does not hold
+/// prints the raw id for `portConnectorText`'s reason: the fact stays
+/// visible and the pane stays on screen.
+String portValueLabel(
+  PortColumnId column,
+  Object? value,
+  Registries registries,
+) {
+  if (value == null) return kUnknownCell;
+  return switch (column) {
+    PortColumnId.connector =>
+      portConnectorText(registries, value as ConnectorTypeId) ?? kUnknownCell,
+    PortColumnId.family =>
+      portFamilyText(registries, value as SignalFamilyId) ?? kUnknownCell,
+    PortColumnId.direction => portDirectionLabel(value as PortDirection),
+    PortColumnId.face => portFaceLabel(value as Face),
+    PortColumnId.audioLevel => portAudioLevelLabel(value as AudioLevel),
+    PortColumnId.polarity => portPolarityLabel(value as Polarity),
+    PortColumnId.poeRole => portPoeRoleLabel(value as PoeRole),
+    PortColumnId.poeStandard => portPoeStandardLabel(value as PoeStandard),
+    PortColumnId.sfpFormFactor => portSfpLabel(value as SfpFormFactor),
+    PortColumnId.fiberMode => portFiberModeLabel(value as FiberMode),
+    PortColumnId.serialRole => portSerialRoleLabel(value as SerialRole),
+    PortColumnId.powerRole => portPowerRoleLabel(value as PortPowerRole),
+    PortColumnId.topology => portTopologyLabel(value as PortTopology),
+    PortColumnId.gender => portGenderLabel(value as Gender),
+    PortColumnId.returnChannel => portReturnChannelLabel(
+      value as ReturnChannel,
+    ),
+    PortColumnId.balanced ||
+    PortColumnId.phantomPower ||
+    PortColumnId.busAddressable ||
+    PortColumnId.busTermination => portTriStateLabel(value: value as bool),
+    // Numbers and free text print themselves. `toString` is right here
+    // and nowhere above: an int IS its own spelling, an enum is not.
+    _ => '$value',
+  };
+}
+
+/// What the batch inspector prints for a whole selection.
+///
+/// THE `Mixed` READING IS THE WHOLE OF DR-063. It is deliberately a
+/// sentence rather than a glyph: `—` is taken, and any second glyph would
+/// have to be learned from nowhere.
+String portBatchLabel(
+  PortColumnId column,
+  BatchValue value,
+  Registries registries,
+) => switch (value) {
+  BatchUnknown() => kUnknownCell,
+  BatchAgreed(:final value) => portValueLabel(column, value, registries),
+  BatchMixed(:final distinct) => 'Mixed ($distinct values)',
+};

@@ -54,6 +54,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/builder/batch_inspector.dart';
 import 'package:rackmate_ui/src/builder/quick_add_bar.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
 import 'package:rackmate_ui/src/widgets/family_picker.dart';
@@ -90,6 +91,7 @@ class PortGrid extends StatefulWidget {
     required this.remembered,
     required this.onPacksRemembered,
     required this.actions,
+    required this.onBatchContext,
     this.portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
     this.quickAddAutofocus = true,
     super.key,
@@ -102,6 +104,11 @@ class PortGrid extends StatefulWidget {
   /// For the connector and signal-family display names. A port naming
   /// something this does not hold still draws, showing the raw id.
   final Registries registries;
+
+  /// Told the selection whenever it changes, so docs/06 §2's right dock
+  /// can be the batch inspector (M4-F2). Null when fewer than two rows
+  /// are selected, which is the dock's own "not in this state".
+  final ValueChanged<PortBatchContext?> onBatchContext;
 
   /// Whether Quick Add takes focus on entering the section.
   ///
@@ -356,6 +363,42 @@ class _PortGridState extends State<PortGrid> {
     ];
   }
 
+  /// The last thing handed to `onBatchContext`, so an unchanged selection
+  /// does not call it every frame.
+  ({int rows, int columns, String keys})? _reported;
+
+  /// Tells the screen what the dock should show.
+  ///
+  /// POST-FRAME, AND THAT IS NOT A FLOURISH. This runs from `build`,
+  /// because the selection is pruned there and the visible columns are
+  /// computed there; calling the parent's `setState` from inside a build
+  /// is the error Flutter names outright. The frame that reports is
+  /// therefore one behind, which is invisible: the dock redraws on the
+  /// next frame, and there is no next gesture inside one frame.
+  void _reportBatchContext(
+    List<String> visible,
+    List<PortColumnId> columns,
+  ) {
+    final keys = _selection.inOrder(visible);
+    final batch = [
+      for (final id in columns)
+        if (portColumnBatchEditable(id)) id,
+    ];
+    final stamp = (
+      rows: keys.length,
+      columns: batch.length,
+      keys: keys.join(','),
+    );
+    if (_reported == stamp) return;
+    _reported = stamp;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      widget.onBatchContext(
+        keys.length < 2 ? null : (portKeys: keys, columns: batch),
+      );
+    });
+  }
+
   /// A click in a row's body, with whatever modifiers were down.
   ///
   /// A PLAIN CLICK ON AN ALREADY-SELECTED ROW LEAVES THE SELECTION ALONE,
@@ -406,6 +449,7 @@ class _PortGridState extends State<PortGrid> {
 
     final issues = validatePorts(widget.body);
     final columns = portVisibleColumns(_openPacks());
+    _reportBatchContext(visible, columns);
 
     // THE ACTIONS ARE HERE AND THE `Shortcuts` IS AT THE SCREEN.
     // `device_builder_screen.dart` already installs `KeyScope.builder`'s

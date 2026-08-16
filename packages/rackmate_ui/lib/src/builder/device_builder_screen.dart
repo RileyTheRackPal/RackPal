@@ -62,6 +62,7 @@
 // would need a scope this screen does not yet have.
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/builder/batch_inspector.dart';
 import 'package:rackmate_ui/src/builder/port_grid.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
 
@@ -286,6 +287,10 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
     if (close) widget.onDone?.call();
   }
 
+  /// What the port grid last reported about its selection, or null when
+  /// fewer than two rows are selected (M4-F2).
+  PortBatchContext? _batch;
+
   @override
   Widget build(BuildContext context) => Shortcuts(
     // THE BUILDER'S SCOPE IS INSTALLED AT THE SCREEN, not only around
@@ -418,6 +423,10 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
                       run: _runCommand,
                       transact: _transact,
                     ),
+                    onBatchContext: (batch) {
+                      if (_batch == batch) return;
+                      setState(() => _batch = batch);
+                    },
                   ),
                   BuilderSection.physical => _PhysicalSection(
                     body: _session.body,
@@ -434,6 +443,30 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
                 },
               ),
             ),
+            // ═══════════════════════════════════════════════════════════
+            // docs/06 §2's RIGHT DOCK, IN ITS ONE BUILT STATE
+            // ═══════════════════════════════════════════════════════════
+            // §2 says the dock "swaps to a batch inspector when more than
+            // one grid row is selected". The other state is three live
+            // previews, which are M4-K (`#182`), so the pane is DRAWN
+            // ONLY when there is a selection to inspect. That keeps the
+            // rule this file has held since M4-D: a pane that opens onto
+            // nothing is the `UnbuiltView` defect wearing a hat.
+            //
+            // Gated on the section too. `_batch` survives a trip to
+            // Physical and back, deliberately, so the selection is still
+            // there when the person returns; drawing the dock over the
+            // METADATA FORM would put a pane about ports beside a field
+            // about weight.
+            if (_batch case final PortBatchContext batch
+                when _section == BuilderSection.ports) ...[
+              const VerticalDivider(width: 1),
+              BatchInspector(
+                body: _session.body,
+                registries: widget.registries ?? Registries(),
+                context_: batch,
+              ),
+            ],
           ],
         ),
       ),
