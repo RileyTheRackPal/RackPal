@@ -2877,7 +2877,8 @@ fields, M4-C's change-class table, now this). **Four for four counting M4-B.**
 than a re-sort of it, so the grid's reading and `PORT_SEQ`'s reading are the same reading. That is
 also why `AddPortCommand` only appends: `PortDef.order` is a `FracIndex` compared as a raw string,
 nothing in this package mints one BETWEEN two others, and inserting mid-list is a reorder, which is
-M4-F4 (`#211`).
+M4-F4 (`#211`). **Closed: `orderBetween` exists as of `5a0d922`** (§5.3.11), and `AddPortCommand`
+still appends, because appending is what an add means.
 
 **THE DESIG COLUMN GOES THROUGH `allocatePortDesignator`.** CR-042 rules that the template supplies
 a hint and the project allocates, so the cell previews what THIS project would render, honours a
@@ -3324,6 +3325,61 @@ the count and each widget's value settled in a minute what two guesses had not.*
 **A test caught the author rather than the code.** The dock's close case clicked a row *inside* the
 selection and failed, because DR-061 deliberately leaves the selection alone there: collapsing it
 would make multi-row edit impossible to start. The test was wrong and the ruling was right.
+
+#### 5.3.11 M4-F4, and the character `nextOrder` had been extending with since M0
+
+**Closed 2026-08-16** by `5a0d922` (the index generator), `4572d49` (the planner) and `bc09185` (the
+handle and the chords). 46 cases: 15 on the generator, 22 on the planner, 9 widget.
+
+**THE DEFECT IS THE FINDING, and it was in code that had been correct for four milestones.**
+`nextOrder` bumps the last character of the largest index, or appends one when that character is
+already the alphabet's last. It appended `'0'`. `'0'` is the **lowest** character, so `'az'` was
+followed by `'az0'`, and **nothing is representable between that pair**: an index strictly between
+them would have to be `'az'` plus something below the lowest character there is.
+
+Nothing had ever needed to insert between two ports, so nothing had ever asked. A template reaches
+that pair at its **63rd port**. `16 hdmi in` typed four times reaches it, and a 64-port patchbay is
+the canonical device this grid exists for. The fix is one character: extending with `'1'` spends one
+of 62 slots and leaves the gap open permanently (DR-064). **Reverting it was tried, and the 200-long
+allocation chain test fails**, which is the only evidence that the test is doing anything.
+
+**The general midpoint generator `nextOrder` declined to write in M0 was right to wait.** Its comment
+called it *"untested generality"* while no surface reordered, and that was true until this task. It
+is now written with the tests the comment was holding out for, including a seeded 1000-insertion
+property test, and it returns **null rather than renumbering** for the one shape that has no answer.
+CR-027 chose a string index over an integer `sortOrder` precisely so neighbours are never renumbered;
+a generator that quietly renumbered to avoid a null would have thrown away the reason for the type.
+
+**A CHAIN OF INSERTIONS WALKS THE ALPHABET INSTEAD OF GROWING.** When two neighbours have no room at
+the character where they part, the naive answer is `before` plus a middle character, which chains to
+`a3V`, `a3VV`, `a3VVV`: a byte per drag, forever. Growing `before`'s own **tail** through `nextOrder`
+gives `a3V`, `a3W`, `a3X`. Both are correct and one of them is a file that grows.
+
+**THE BAND EDGE IS A WALL, AND THE TOOLKIT DECIDED THAT, NOT TASTE.** No reorderable list hands a
+dragged item to a sibling list, and the grid's bands are pinned sticky headers over per-band lists.
+The alternative was one flat list with the headers demoted to ordinary items, which costs the pinned
+header a person forty rows into the HDMI inputs is reading to know they are the HDMI inputs. So the
+drag stays within a bank and the `Bank` column is the way across (DR-064). The keyboard follows the
+same wall on purpose: `Alt+↑` could have crossed, being pure arithmetic, and a chord that sometimes
+means *move* and sometimes means *move and reclassify* is how a jack ends up in the wrong bank on a
+printed panel.
+
+**THE DRAG TEST OVERSHOOTS ON PURPOSE.** Two attempts to pin a landing spot by pixel distance gave
+two different answers (`2 × pitch` landed one slot, `2.6 × pitch` landed three), because how much
+travel becomes one index is `SliverReorderableList`'s arithmetic over animations that are still
+running. Pinning a distance would have been asserting Flutter's easing curve. Aiming the drag far
+past the second bank exercises the same path, clamps at the band's end, and **asserts the wall
+through the actual gesture**, which is a stronger claim than the middle landing was.
+
+**`onReorder` is deprecated for the off-by-one this would have hit.** It reports a destination
+measured against the list *before* the dragged row leaves it, so dropping row 0 at the foot answers
+`length` rather than `length - 1`. The analyzer named the replacement before the bug could be
+written, which is one of the few times a deprecation warning has been load-bearing here.
+
+**Arbitration took the pair without an argument**, which is the first time in three builder tasks.
+`Alt+↑`/`Alt+↓` are bound nowhere else, unlike `Ctrl+D` (F1) and `Ctrl+V` (F3), each of which forced
+a shipped label to be rewritten. Alt rather than Shift because `Shift+Arrow` is the range extension
+every grid binds and this one will want it.
 
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
