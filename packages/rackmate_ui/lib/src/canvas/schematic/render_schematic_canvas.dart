@@ -151,11 +151,56 @@ final class RenderSchematicCanvas extends RenderBox {
   ViewportController get viewport => _viewport;
   set viewport(ViewportController value) {
     if (identical(_viewport, value)) return;
-    if (attached) _viewport.removeListener(markNeedsPaint);
+    if (attached) _viewport.removeListener(_onViewportChanged);
     _viewport = value;
-    if (attached) _viewport.addListener(markNeedsPaint);
+    if (attached) _viewport.addListener(_onViewportChanged);
     markNeedsPaint();
   }
+
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A PAN REPAINTS NOTHING (`#704`)
+  /// ═══════════════════════════════════════════════════════════════════
+  /// This was `markNeedsPaint`, and that is the whole of the defect. The
+  /// viewport notifies on every pointer move of a drag; `markNeedsPaint`
+  /// re-runs [paint], which walks EVERY op in the plan and re-issues
+  /// every `ui.Canvas` call, for a document the user has not touched.
+  /// On the 300-link fixture that is 4,155 ops per frame, and the
+  /// fixture is one pod.
+  ///
+  /// Nothing about the display list depends on the viewport: the ops are
+  /// recorded in SCENE space and the matrix lives in a layer above them.
+  /// `FlutterDiagramCanvas` even keeps its own transform stack starting
+  /// at identity, so the hairline floor and the width clamp never saw the
+  /// zoom in the first place. A pan is therefore a change to one matrix
+  /// and to nothing else, which is exactly what a retained
+  /// `TransformLayer` is for.
+  ///
+  /// SO THE LAYER IS MUTATED IN PLACE and a visual update is requested.
+  /// The render object stays clean, [paint] does not run, the child
+  /// picture is retained, and the compositor re-applies the new matrix.
+  ///
+  /// THE FALLBACK IS NOT DEFENSIVE PADDING. Before the first paint there
+  /// is no layer to move, and after a plan change the render object is
+  /// already dirty and will repaint anyway; both take the old path.
+  void _onViewportChanged() {
+    final layer = _transformLayer.layer;
+    if (layer == null || debugNeedsPaint) {
+      markNeedsPaint();
+      return;
+    }
+    final matrix = schematicSceneToScreen(
+      _lastPaintOffset,
+      _viewport.transform,
+    );
+    debugSceneToScreen = matrix;
+    layer.transform = matrix;
+    owner?.requestVisualUpdate();
+  }
+
+  /// The offset [paint] was last called with, so [_onViewportChanged] can
+  /// rebuild the same matrix without a repaint. Not a cache of a
+  /// computation: it is an input this object is only handed during paint.
+  Offset _lastPaintOffset = Offset.zero;
 
   TextMeasurer _measurer;
   TextMeasurer get measurer => _measurer;
@@ -179,15 +224,28 @@ final class RenderSchematicCanvas extends RenderBox {
   @override
   bool get isRepaintBoundary => true;
 
+  /// FORCES THE TRANSFORM TO BE A LAYER, which is what makes a pan free
+  /// (`#704`). `PaintingContext.pushTransform` only creates a
+  /// `TransformLayer` when compositing is needed; otherwise it transforms
+  /// the canvas directly and returns NULL, leaving [_onViewportChanged]
+  /// nothing to move. This canvas has no compositing children of its own,
+  /// so without this override the layer never exists and every pan is a
+  /// full repaint.
+  ///
+  /// The cost is one extra layer per canvas. The saving is every op in
+  /// the plan, on every frame of every drag.
+  @override
+  bool get alwaysNeedsCompositing => true;
+
   @override
   void attach(PipelineOwner owner) {
     super.attach(owner);
-    _viewport.addListener(markNeedsPaint);
+    _viewport.addListener(_onViewportChanged);
   }
 
   @override
   void detach() {
-    _viewport.removeListener(markNeedsPaint);
+    _viewport.removeListener(_onViewportChanged);
     super.detach();
   }
 
@@ -205,6 +263,7 @@ final class RenderSchematicCanvas extends RenderBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
+    _lastPaintOffset = offset;
     _clipLayer.layer = context.pushClipRect(
       needsCompositing,
       offset,
@@ -229,8 +288,17 @@ final class RenderSchematicCanvas extends RenderBox {
     );
   }
 
+  /// How many times the plan has actually been walked.
+  ///
+  /// THE ARTIFACT `#704` IS ABOUT, and the only honest way to assert it:
+  /// a timing test on a build machine measures the build machine. A pan
+  /// that adds nothing to this number is a pan that painted nothing.
+  @visibleForTesting
+  int debugSceneRecordings = 0;
+
   void _paintScene(PaintingContext context, Offset offset) {
     // `offset` is Offset.zero here; the canvas is in scene space.
+    debugSceneRecordings++;
     final canvas = FlutterDiagramCanvas(
       context.canvas,
       measurer: _measurer,

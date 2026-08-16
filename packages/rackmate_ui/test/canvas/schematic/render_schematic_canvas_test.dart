@@ -314,16 +314,39 @@ void main() {
     });
   });
 
-  group('the viewport drives repaints without a setState', () {
-    testWidgets('panning marks the canvas needing paint', (tester) async {
-      // docs/03 §7.3: "no setState in the canvas path". The render object
-      // subscribes to the `ViewportController` in `attach`, so a pan is a
-      // pure repaint.
+  group('the viewport drives the canvas without a setState', () {
+    testWidgets('panning moves the canvas and marks NOTHING needing paint', (
+      tester,
+    ) async {
+      // ═══════════════════════════════════════════════════════════════
+      // THIS CASE USED TO ASSERT `debugNeedsPaint` IS TRUE (`#704`)
+      // ═══════════════════════════════════════════════════════════════
+      // It read "panning marks the canvas needing paint", and it was
+      // pinning the MECHANISM rather than the artifact. The mechanism
+      // turned out to be the defect: marking the canvas needing paint
+      // re-walked the entire display list on every pointer move of a
+      // drag, for a document nobody had touched.
+      //
+      // docs/03 §7.3's actual requirement is "no `setState` in the canvas
+      // path", and that is what is asserted here now, alongside the
+      // stronger property that replaced it. `pan_repaint_test.dart` holds
+      // the recording count; this holds the matrix, so a canvas that goes
+      // still cannot pass either.
       final vp = await pump(tester, planFor());
       final ro = renderObjectIn(tester);
       expect(ro.debugNeedsPaint, isFalse);
+
+      final before = ro.debugSceneToScreen!.clone();
       vp.panBy(const Offset(5, 5));
-      expect(ro.debugNeedsPaint, isTrue);
+
+      expect(
+        ro.debugNeedsPaint,
+        isFalse,
+        reason: 'a pan is a layer move, not a repaint',
+      );
+      final after = ro.debugSceneToScreen!;
+      expect(after.storage[12] - before.storage[12], closeTo(5, 0.001));
+      expect(after.storage[13] - before.storage[13], closeTo(5, 0.001));
     });
   });
 }
