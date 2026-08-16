@@ -52,6 +52,29 @@ const double _oneFrameMs = 1000 / 60;
 const int _kM2cOps = 4155;
 const double _kM2cMs = 3.052;
 
+/// The headroom fixture: twelve copies of the 300-link pod, which is a
+/// building with twelve IDFs rather than a house with one rack.
+const int _kHeadroomPods = 12;
+
+/// Devices in the headroom fixture, asserted before anything is timed.
+///
+/// **94 per pod**, and the arithmetic is written out because the first
+/// draft said 93 and the shape assertion caught it: 16 rail (1 MTX, 2 AMP,
+/// 2 SW, 6 PP, 1 CTL, 1 PWR, 1 SHF, 2 BLK), 5 shelf (1 AVR, 4 STB), 72
+/// field (8 DIS, 10 SPK, 12 IWS, 8 CAM, 6 WAP, 4 TP, 16 KEY, 8 VOL), and
+/// the Structure device. `schematic_fixture.dart`'s own header says "93
+/// devices", which is the same count with `STR-1` left out of it.
+const int _kHeadroomDevices = 94 * _kHeadroomPods;
+
+/// THE RATCHET, NOT THE BUDGET. Measured at ~110 ms on the machine that
+/// wrote this (32 cores, Dart 3.12), and set well above it because wall
+/// time is not stable across runners — `schematic_perf_test.dart`'s own
+/// header says op count is the machine-independent signal and wall time
+/// is not. It exists to catch a regression that makes an already
+/// unacceptable number worse, and for nothing else. **Delete it when #703
+/// lands**; the budget is `_oneFrameMs` and always was.
+const double _kHeadroomCeilingMs = 400;
+
 /// Regeneration is a deliberate act, never a side effect of a test run —
 /// `byte_roundtrip_test.dart`'s rule, applied to this golden too.
 final bool _updateGoldens = Platform.environment['UPDATE_GOLDENS'] == '1';
@@ -269,6 +292,118 @@ void main() {
   // `OpText` carries the exact `(text, TextStyleSpec)` pair `drawText`
   // receives, so this is the same key at one remove, and it costs no
   // Flutter binding in a pure-Dart package.
+  // ══════════════════════════════════════════════════════════════════════
+  // THE HEADROOM CASE, AND THE DEBT IT RECORDS (M8-F1, board #703)
+  // ══════════════════════════════════════════════════════════════════════
+  // The group above measures 300 links and passes at ~5.8 ms. Nobody had
+  // asked what happens past 300, and `tool/scale_probe.dart` answered:
+  // the scene build is 93 ms at 1,200 links and 110 ms at 3,600. A large
+  // commercial job is therefore FIVE TO SEVEN TIMES over the one-frame
+  // budget M2's criterion states.
+  //
+  // It is not a once-per-open cost. `schematic_canvas_screen.dart` bumps
+  // `_sceneEpoch` in `_onDocumentChanged`, which fires on EVERY document
+  // change, so the scene cache misses and this whole build reruns on
+  // every edit while the schematic tab is open.
+  //
+  // ── WHY THIS DOES NOT ASSERT THE BUDGET ──────────────────────────────
+  // Because it would fail, today, on every commit, and a permanently red
+  // gate is one people learn to ignore. So it asserts a CEILING instead:
+  // the measured figure plus headroom, which cannot get worse without
+  // somebody hearing about it, and which is deliberately far too loose to
+  // be mistaken for the budget.
+  //
+  // THE ASSERTION FLIPS WHEN #703 LANDS. AC-008 already prescribes the
+  // remedy — eight per-domain sub-pictures, so an edit rebuilds one and
+  // seven replay untouched — and `domainFragments` exists but is read
+  // only by `schematic_paint_plan.dart`, which is a PAINT-side saving.
+  // The recompute is still whole-document, always. When the incremental
+  // rebuild ships, delete [_kHeadroomCeilingMs] and assert `_oneFrameMs`
+  // like the group above.
+  //
+  // ── WHY IT IS BUILT AND NOT COMMITTED ────────────────────────────────
+  // `schematic_fixture.dart`'s header argues for a committed golden, and
+  // that argument is honoured for the 300-link case which remains a file.
+  // A 3,600-link golden is roughly 10 MB of JSON whose diff no human will
+  // read, in a repo whose plain-JSON decision (CR-091) was taken so that
+  // diffs WOULD be reviewable. The stated risk of building in-process is
+  // that "a later change to this builder quietly shrink the fixture", and
+  // the shape assertions below are the actual guard against that: the
+  // builder is deterministic, so every machine gets the same document.
+  group('the headroom case — 12 pods, 3,600 links (M8-F1)', () {
+    test('THE SHAPE IS WHAT IT CLAIMS, asserted before anything is timed, '
+        'because a budget met by a smaller graph is not met', () {
+      final doc = buildSchematicFixture(pods: _kHeadroomPods);
+
+      expect(doc.links, hasLength(kSchematicFixtureLinkCount * _kHeadroomPods));
+      expect(doc.devices, hasLength(_kHeadroomDevices));
+      expect(
+        doc.racks,
+        hasLength(2 * _kHeadroomPods),
+        reason: 'two racks per pod, which is what makes each one an IDF',
+      );
+      expect(
+        doc.sheets,
+        hasLength(1),
+        reason:
+            'DR-004 keeps the sheet set single-sheet, so twelve pods are '
+            'twelve rack clusters on ONE drawing',
+      );
+    });
+
+    test('IT IS OVER THE ONE-FRAME BUDGET, and this test says so out loud '
+        'rather than leaving it to be rediscovered (#703)', () {
+      final doc = buildSchematicFixture(pods: _kHeadroomPods);
+      final measurer = _Measurer();
+
+      buildSchematicScene(doc: doc, measurer: measurer);
+      var bestUs = 1 << 30;
+      var ops = 0;
+      for (var i = 0; i < 5; i++) {
+        final watch = Stopwatch()..start();
+        final scene = buildSchematicScene(doc: doc, measurer: measurer);
+        watch.stop();
+        ops = scene.scene.ops.length;
+        if (watch.elapsedMicroseconds < bestUs) {
+          bestUs = watch.elapsedMicroseconds;
+        }
+      }
+      final ms = bestUs / 1000;
+
+      // `print` rather than `printOnFailure`, for the reason the 300-link
+      // group gives: a number that only appears when a test FAILS is
+      // recorded nowhere, and this one is the debt's running total in the
+      // CI log of every green run.
+      // ignore: avoid_print
+      print(
+        'M8-F1 headroom [12 pods]: '
+        '${doc.links.length} links, ${doc.devices.length} devices\n'
+        '  total      $ops ops, best of 5 = ${ms}ms\n'
+        '  budget     ${_oneFrameMs}ms  '
+        '(OVER by ${(ms / _oneFrameMs).toStringAsFixed(1)}x — see #703)\n'
+        '  ceiling    $_kHeadroomCeilingMs ms (the ratchet this defends)',
+      );
+
+      expect(
+        ms,
+        lessThan(_kHeadroomCeilingMs),
+        reason:
+            'the schematic scene build at 3,600 links got WORSE. This is a '
+            'ratchet, not the budget: the budget is one frame and this '
+            'case has never met it (#703). Something made an already '
+            'unacceptable number worse.',
+      );
+      expect(
+        ms,
+        greaterThan(_oneFrameMs),
+        reason:
+            'the headroom case now fits in ONE FRAME, which means #703 '
+            'has been fixed. Delete _kHeadroomCeilingMs and assert '
+            '_oneFrameMs here, the way the 300-link group does.',
+      );
+    });
+  });
+
   group('M2-G — the text-run census', () {
     test('the schematic, in the TEXT-BOUND case DR-001 made the default', () {
       final doc = _withNetsAndRegistries();
