@@ -308,6 +308,12 @@ class RenderRackCanvas extends RenderBox
   void _paintScene(PaintingContext context, Offset offset) {
     // `offset` is Offset.zero here; the canvas is in scene space.
     debugSceneRecordings++;
+    // The schematic's twin: see `render_schematic_canvas.dart`'s note.
+    // `#704` removed the Dart cost of a pan and left the RASTER cost, and
+    // an elevation zoomed in is a lot of fill. The picture does not change
+    // while the viewport moves, so a pan should re-project a cached
+    // texture rather than re-fill every chassis and every device.
+    context.setIsComplexHint();
     // L1 — chassis: replay its absolute fragment as the background.
     if (_scene.fragments.containsKey(_rackId)) {
       final canvas = FlutterDiagramCanvas(

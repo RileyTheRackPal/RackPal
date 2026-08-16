@@ -299,6 +299,24 @@ final class RenderSchematicCanvas extends RenderBox {
   void _paintScene(PaintingContext context, Offset offset) {
     // `offset` is Offset.zero here; the canvas is in scene space.
     debugSceneRecordings++;
+    // ═══════════════════════════════════════════════════════════════════
+    // ASK THE ENGINE TO KEEP THE RASTER, NOT JUST THE DISPLAY LIST
+    // ═══════════════════════════════════════════════════════════════════
+    // `#704` removed the Dart cost of a pan and left the RASTER cost,
+    // which is the half a widget test cannot see because a widget test
+    // never rasterises. The symptom is diagnostic: zoomed out is smooth
+    // and zoomed in is not, and the op count is identical at both, so the
+    // cost scales with pixels covered rather than with ops issued.
+    //
+    // This picture is expensive to raster and does not change while the
+    // viewport moves, which is precisely the pair of facts the engine's
+    // raster cache wants told. With the transform ABOVE this layer, a pan
+    // is then a re-projection of a cached texture rather than a re-fill.
+    //
+    // NO `setWillChangeHint`, and that is the point: it means the
+    // opposite, and setting it would tell the engine not to bother
+    // caching the thing this is trying to cache.
+    context.setIsComplexHint();
     final canvas = FlutterDiagramCanvas(
       context.canvas,
       measurer: _measurer,
