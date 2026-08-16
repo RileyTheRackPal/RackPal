@@ -49,6 +49,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/widgets/document_memo.dart';
 
 /// The first line of the no-cables state.
 ///
@@ -120,12 +121,21 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   ScheduleSort? _sort;
   bool _includeJumpers = false;
 
+  /// `buildSchedule` is 39 ms on a 3x project (tool/scale_probe.dart) and
+  /// none of the three fields above is an input to it: changing a preset,
+  /// a sort or the jumper toggle re-projects the SAME `Schedule`. Without
+  /// this, every one of those recomputed it from the document.
+  final _schedule = DocumentMemo<Schedule>();
+
   @override
   Widget build(BuildContext context) {
     // ONE derivation. If this screen ever shows both presets side by side
     // it projects this same `Schedule` twice rather than building two —
     // see `derived/schedule.dart`'s header.
-    final schedule = buildSchedule(widget.document);
+    final schedule = _schedule.of(
+      widget.document,
+      () => buildSchedule(widget.document),
+    );
     final view = buildScheduleView(
       schedule,
       preset: _preset,

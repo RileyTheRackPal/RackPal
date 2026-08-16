@@ -217,7 +217,7 @@ List<_Run> _wiring() => <_Run>[
 /// Every id is derived from a counter, every timestamp is a fixed UTC
 /// instant and every string is authored — nothing here reads a clock or a
 /// random source, because the encoded bytes are a golden.
-RackDocument buildSchematicFixture() {
+RackDocument buildSchematicFixture({int pods = 1}) {
   final catalog = buildSeedCatalog();
   final at = DateTime.utc(2026, 7, 28, 9);
   EntityMeta meta() =>
@@ -266,228 +266,252 @@ RackDocument buildSchematicFixture() {
     contentHash: 'sha256:seed-$id',
   );
 
-  // ── racks ────────────────────────────────────────────────────────────
-  final racks = <Rack>[
-    Rack(
-      id: nextId('01'),
-      name: 'HEAD END',
-      designator: 'RK-1',
-      heightU: 42,
-      order: const FracIndex('a0'),
-      meta: meta(),
-    ),
-    Rack(
-      id: nextId('01'),
-      name: 'NETWORK',
-      designator: 'RK-2',
-      heightU: 42,
-      order: const FracIndex('a1'),
-      meta: meta(),
-    ),
-  ];
-  for (final rack in racks) {
-    doc.racks[rack.id] = rack;
-  }
-
-  // ── devices ──────────────────────────────────────────────────────────
+  // ── devices, ports and links, once per pod ───────────────────────────
+  // ACCUMULATED ACROSS PODS. Every key below is a designator that [d] has
+  // already made pod-unique, so one map serves all of them and the link
+  // numbering runs W001 upward across the whole document.
   final byDesignator = <String, DeviceInstance>{};
+  final cursors = <String, int>{};
+  final taken = <String, Set<String>>{};
+  var w = 0;
+
   void add(DeviceInstance device) {
     doc.devices[device.id] = device;
     byDesignator[device.designator] = device;
   }
 
-  var ru = 1;
-  var rackIndex = 0;
-  for (final entry in _rackRoster) {
-    final body = catalog[entry.catalogId]!;
-    final height = body.frontU > 0 ? body.frontU : 1;
-    for (var i = 1; i <= entry.count; i++) {
-      // Roll to the second rack rather than overflow the first.
-      if (ru + height - 1 > 42) {
-        rackIndex = 1;
-        ru = 1;
-      }
-      add(
-        DeviceInstance(
-          id: nextId('02'),
-          kind: DeviceKind.rackDevice,
-          templateRef: refTo(entry.catalogId),
-          designator: '${entry.prefix}-$i',
-          name: body.displayName,
-          placement: RailPlacement(
-            rackId: racks[rackIndex].id,
-            ruIndex: ru,
-            face: Face.front,
-          ),
-          meta: meta(),
-        ),
-      );
-      ru += height;
-    }
-  }
+  for (var pod = 1; pod <= pods; pod++) {
+    /// Pod 1 IS THE COMMITTED GOLDEN, unsuffixed, which is what lets
+    /// `buildSchematicFixture()` stay byte-identical while this function
+    /// grew a parameter. Every later pod suffixes its designators so the
+    /// wiring below, which names devices by designator, stays inside its
+    /// own pod without being rewritten.
+    String d(String designator) => pod == 1 ? designator : '$designator-P$pod';
 
-  // On the shelf. `ShelfPlacement` points child -> parent only (CR-029),
-  // and `hostRackOf` walks the chain, which is what the sort key needs.
-  final shelf = byDesignator['SHF-1']!;
-  var shelfOrder = 0;
-  for (final entry in _shelfRoster) {
-    final body = catalog[entry.catalogId]!;
-    for (var i = 1; i <= entry.count; i++) {
-      shelfOrder++;
-      add(
-        DeviceInstance(
-          id: nextId('02'),
-          kind: DeviceKind.rackDevice,
-          templateRef: refTo(entry.catalogId),
-          designator: '${entry.prefix}-$i',
-          name: body.displayName,
-          placement: ShelfPlacement(
-            hostDeviceId: shelf.id,
-            order: FracIndex('a$shelfOrder'),
-          ),
-          meta: meta(),
-        ),
-      );
-    }
-  }
-
-  for (final entry in _fieldRoster) {
-    final body = catalog[entry.catalogId]!;
-    for (var i = 1; i <= entry.count; i++) {
-      add(
-        DeviceInstance(
-          id: nextId('03'),
-          kind: DeviceKind.offRackPassive,
-          templateRef: refTo(entry.catalogId),
-          designator: '${entry.prefix}-$i',
-          name: body.displayName,
-          placement: const OffRackPlacement(),
-          meta: meta(),
-        ),
-      );
-    }
-  }
-
-  // The Structure device — CR-072's left sheet edge, and the reason phase
-  // 1 has an anchor to honour at all. It is a rack device with a
-  // `StructureBody`, exactly as `structure_body.dart` requires.
-  final structureDeviceId = nextId('02');
-  final structureBodyId = nextId('04');
-  add(
-    DeviceInstance(
-      id: structureDeviceId,
-      kind: DeviceKind.structure,
-      // A structured-wiring enclosure IS a patch field, so it carries the
-      // patch-panel body. It needs ports: a Structure device with none
-      // would get no symbol and CR-072's anchor would have nothing to
-      // anchor.
-      templateRef: refTo('N03'),
-      designator: 'STR-1',
-      name: 'Rough-In — First Floor',
-      placement: RailPlacement(
-        rackId: racks[1].id,
-        ruIndex: 40,
-        face: Face.front,
+    // ── racks ────────────────────────────────────────────────────────────
+    final racks = <Rack>[
+      Rack(
+        id: nextId('01'),
+        name: 'HEAD END',
+        designator: d('RK-1'),
+        heightU: 42,
+        order: const FracIndex('a0'),
+        meta: meta(),
       ),
-      meta: meta(),
-      structureBodyId: structureBodyId,
-    ),
-  );
-  doc.structures[structureBodyId] = StructureBody(
-    id: structureBodyId,
-    deviceId: structureDeviceId,
-    title: 'Rough-In — First Floor',
-    meta: meta(),
-  );
+      Rack(
+        id: nextId('01'),
+        name: 'NETWORK',
+        designator: d('RK-2'),
+        heightU: 42,
+        order: const FracIndex('a1'),
+        meta: meta(),
+      ),
+    ];
+    for (final rack in racks) {
+      doc.racks[rack.id] = rack;
+    }
 
-  // ── the one schematic sheet (CR-073, DR-004, AC-037) ─────────────────
-  final sheetId = nextId('05');
-  doc.sheets[sheetId] = Sheet(
-    id: sheetId,
-    number: 'T3.01',
-    title: 'SIGNAL FLOW',
-    order: const FracIndex('a0'),
-    meta: meta(),
-  );
+    // ── devices ──────────────────────────────────────────────────────────
+    var ru = 1;
+    var rackIndex = 0;
+    for (final entry in _rackRoster) {
+      final body = catalog[entry.catalogId]!;
+      final height = body.frontU > 0 ? body.frontU : 1;
+      for (var i = 1; i <= entry.count; i++) {
+        // Roll to the second rack rather than overflow the first.
+        if (ru + height - 1 > 42) {
+          rackIndex = 1;
+          ru = 1;
+        }
+        add(
+          DeviceInstance(
+            id: nextId('02'),
+            kind: DeviceKind.rackDevice,
+            templateRef: refTo(entry.catalogId),
+            designator: d('${entry.prefix}-$i'),
+            name: body.displayName,
+            placement: RailPlacement(
+              rackId: racks[rackIndex].id,
+              ruIndex: ru,
+              face: Face.front,
+            ),
+            meta: meta(),
+          ),
+        );
+        ru += height;
+      }
+    }
 
-  // ── ports and links ──────────────────────────────────────────────────
-  final cursors = <String, int>{};
-  final taken = <String, Set<String>>{};
+    // On the shelf. `ShelfPlacement` points child -> parent only (CR-029),
+    // and `hostRackOf` walks the chain, which is what the sort key needs.
+    final shelf = byDesignator[d('SHF-1')]!;
+    var shelfOrder = 0;
+    for (final entry in _shelfRoster) {
+      final body = catalog[entry.catalogId]!;
+      for (var i = 1; i <= entry.count; i++) {
+        shelfOrder++;
+        add(
+          DeviceInstance(
+            id: nextId('02'),
+            kind: DeviceKind.rackDevice,
+            templateRef: refTo(entry.catalogId),
+            designator: d('${entry.prefix}-$i'),
+            name: body.displayName,
+            placement: ShelfPlacement(
+              hostDeviceId: shelf.id,
+              order: FracIndex('a$shelfOrder'),
+            ),
+            meta: meta(),
+          ),
+        );
+      }
+    }
 
-  Port materialise(DeviceInstance device, PortDef def) {
-    final id = derivePortId(device.id, def.key);
-    final existing = doc.ports[id];
-    if (existing != null) return existing;
-    final index = (cursors[device.designator] ?? 0) + 1;
-    cursors[device.designator] = index;
-    final port = Port(
-      id: id,
-      deviceId: device.id,
-      designator: 'J${index.toString().padLeft(2, '0')}',
-      templatePortKey: def.key,
+    for (final entry in _fieldRoster) {
+      final body = catalog[entry.catalogId]!;
+      for (var i = 1; i <= entry.count; i++) {
+        add(
+          DeviceInstance(
+            id: nextId('03'),
+            kind: DeviceKind.offRackPassive,
+            templateRef: refTo(entry.catalogId),
+            designator: d('${entry.prefix}-$i'),
+            name: body.displayName,
+            placement: const OffRackPlacement(),
+            meta: meta(),
+          ),
+        );
+      }
+    }
+
+    // The Structure device — CR-072's left sheet edge, and the reason phase
+    // 1 has an anchor to honour at all. It is a rack device with a
+    // `StructureBody`, exactly as `structure_body.dart` requires.
+    final structureDeviceId = nextId('02');
+    final structureBodyId = nextId('04');
+    add(
+      DeviceInstance(
+        id: structureDeviceId,
+        kind: DeviceKind.structure,
+        // A structured-wiring enclosure IS a patch field, so it carries the
+        // patch-panel body. It needs ports: a Structure device with none
+        // would get no symbol and CR-072's anchor would have nothing to
+        // anchor.
+        templateRef: refTo('N03'),
+        designator: d('STR-1'),
+        name: 'Rough-In — First Floor',
+        placement: RailPlacement(
+          rackId: racks[1].id,
+          ruIndex: 40,
+          face: Face.front,
+        ),
+        meta: meta(),
+        structureBodyId: structureBodyId,
+      ),
     );
-    doc.ports[id] = port;
-    return port;
-  }
+    doc.structures[structureBodyId] = StructureBody(
+      id: structureBodyId,
+      deviceId: structureDeviceId,
+      title: 'Rough-In — First Floor',
+      meta: meta(),
+    );
 
-  /// The next unused port on `designator`, preferring `outgoing`-shaped
-  /// ones. Throws on exhaustion — a fixture that quietly wired fewer than
-  /// 300 links would falsify the budget it exists to measure.
-  Port claim(String designator, {required bool outgoing}) {
-    final device = byDesignator[designator];
-    if (device == null) throw StateError('no device "$designator"');
-    final body = catalog[device.templateRef.templateId.v]!;
-    final seen = taken.putIfAbsent(designator, () => <String>{});
-    for (final preferred in [true, false]) {
+    // ── the one schematic sheet (CR-073, DR-004, AC-037) ─────────────────
+    // POD 1 ONLY, AND IN THIS EXACT POSITION. DR-004 makes the sheet set
+    // single-sheet, so twelve pods are twelve rack clusters on ONE drawing,
+    // which is what a building with twelve IDFs is. It stays HERE rather
+    // than being hoisted above the loop because `nextId` is one global
+    // counter: hoisting it shifted every later id by one and pod 1 stopped
+    // matching its committed golden, which is exactly what that golden is
+    // for.
+    if (pod == 1) {
+      final sheetId = nextId('05');
+      doc.sheets[sheetId] = Sheet(
+        id: sheetId,
+        number: 'T3.01',
+        title: 'SIGNAL FLOW',
+        order: const FracIndex('a0'),
+        meta: meta(),
+      );
+    }
+
+    // ── ports and links ──────────────────────────────────────────────────
+    Port materialise(DeviceInstance device, PortDef def) {
+      final id = derivePortId(device.id, def.key);
+      final existing = doc.ports[id];
+      if (existing != null) return existing;
+      final index = (cursors[device.designator] ?? 0) + 1;
+      cursors[device.designator] = index;
+      final port = Port(
+        id: id,
+        deviceId: device.id,
+        designator: 'J${index.toString().padLeft(2, '0')}',
+        templatePortKey: def.key,
+      );
+      doc.ports[id] = port;
+      return port;
+    }
+
+    /// The next unused port on `designator`, preferring `outgoing`-shaped
+    /// ones. Throws on exhaustion — a fixture that quietly wired fewer than
+    /// 300 links would falsify the budget it exists to measure.
+    Port claim(String designator, {required bool outgoing}) {
+      final device = byDesignator[designator];
+      if (device == null) throw StateError('no device "$designator"');
+      final body = catalog[device.templateRef.templateId.v]!;
+      final seen = taken.putIfAbsent(designator, () => <String>{});
+      for (final preferred in [true, false]) {
+        for (final def in body.ports) {
+          if (seen.contains(def.key.v)) continue;
+          if (preferred && !_shaped(def, outgoing: outgoing)) continue;
+          seen.add(def.key.v);
+          return materialise(device, def);
+        }
+      }
+      throw StateError('"$designator" ran out of ports');
+    }
+
+    /// The named template port on `designator` — see `_Run.fromKey`.
+    Port claimExact(String designator, String portKey) {
+      final device = byDesignator[designator];
+      if (device == null) throw StateError('no device "$designator"');
+      final body = catalog[device.templateRef.templateId.v]!;
+      final seen = taken.putIfAbsent(designator, () => <String>{});
       for (final def in body.ports) {
-        if (seen.contains(def.key.v)) continue;
-        if (preferred && !_shaped(def, outgoing: outgoing)) continue;
-        seen.add(def.key.v);
+        if (def.key.v != portKey) continue;
+        if (!seen.add(def.key.v)) {
+          throw StateError('"$designator" port "$portKey" is already used');
+        }
         return materialise(device, def);
       }
+      throw StateError('"$designator" has no port "$portKey"');
     }
-    throw StateError('"$designator" ran out of ports');
-  }
 
-  /// The named template port on `designator` — see `_Run.fromKey`.
-  Port claimExact(String designator, String portKey) {
-    final device = byDesignator[designator];
-    if (device == null) throw StateError('no device "$designator"');
-    final body = catalog[device.templateRef.templateId.v]!;
-    final seen = taken.putIfAbsent(designator, () => <String>{});
-    for (final def in body.ports) {
-      if (def.key.v != portKey) continue;
-      if (!seen.add(def.key.v)) {
-        throw StateError('"$designator" port "$portKey" is already used');
+    for (final run in _wiring()) {
+      for (var i = 0; i < run.count; i++) {
+        w++;
+        final from = run.fromKey == null
+            ? claim(d(run.from), outgoing: true)
+            : claimExact(d(run.from), run.fromKey!);
+        final to = claim(d(run.to), outgoing: false);
+        final id = nextId('06');
+        doc.links[id] = Link(
+          id: id,
+          designator: 'W${w.toString().padLeft(3, '0')}',
+          media: const MediaTypeId('media.cat6'),
+          order: FracIndex('a${w.toString().padLeft(4, '0')}'),
+          meta: meta(),
+          conductors: [
+            Conductor(from: PortEndpoint(from.id), to: PortEndpoint(to.id)),
+          ],
+        );
       }
-      return materialise(device, def);
     }
-    throw StateError('"$designator" has no port "$portKey"');
   }
 
-  var w = 0;
-  for (final run in _wiring()) {
-    for (var i = 0; i < run.count; i++) {
-      w++;
-      final from = run.fromKey == null
-          ? claim(run.from, outgoing: true)
-          : claimExact(run.from, run.fromKey!);
-      final to = claim(run.to, outgoing: false);
-      final id = nextId('06');
-      doc.links[id] = Link(
-        id: id,
-        designator: 'W${w.toString().padLeft(3, '0')}',
-        media: const MediaTypeId('media.cat6'),
-        order: FracIndex('a${w.toString().padLeft(4, '0')}'),
-        meta: meta(),
-        conductors: [
-          Conductor(from: PortEndpoint(from.id), to: PortEndpoint(to.id)),
-        ],
-      );
-    }
-  }
-  if (w != kSchematicFixtureLinkCount) {
-    throw StateError('wiring plan produced $w links, expected 300');
+  final expected = kSchematicFixtureLinkCount * pods;
+  if (w != expected) {
+    throw StateError('wiring plan produced $w links, expected $expected');
   }
 
   return doc;

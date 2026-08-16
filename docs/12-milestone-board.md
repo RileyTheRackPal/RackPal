@@ -978,6 +978,58 @@ Microsoft's signature on the three redistributable VC++ DLLs with a self-signed 
 that validates on every Windows machine for one that validates only where the GPO has landed.
 Binaries already signed by another publisher are now skipped.
 
+#### 5.1.9 THE PERFORMANCE CRITERION IS MET AT 300 LINKS AND MISSED BY 5.8x AT 3,600 (`#702`)
+
+**Measured on 2026-08-15**, when M8-F1's scale probe was pulled forward to answer a question about
+persistence and answered a different one instead.
+
+M2's criterion is *"routes a 300-connection fixture within one frame at commit"*, and it is met:
+**5.8 ms against a 16.7 ms budget**. 300 links is a house with one rack, and the criterion was
+written for it. Nobody had asked what happens past 300.
+
+| Document | Links | Scene build | Ops |
+|---|---|---|---|
+| committed fixture | 300 | **5.8 ms** | 7,155 |
+| headroom fixture, 12 pods | 3,600 | **97 ms** | 78,660 |
+| scale probe, 1x | 1,200 | 93 ms | 17,304 |
+| scale probe, 3x | 3,600 | 110 ms | 51,800 |
+| scale probe, 6x | 7,200 | 207 ms | 103,600 |
+
+Two independently-shaped documents agree on the order of magnitude, which is what makes this a
+property of the layout rather than of one fixture.
+
+**IT IS NOT A ONCE-PER-OPEN COST, WHICH IS THE PART THAT MATTERS.**
+`schematic_canvas_screen.dart` caches the scene on `(epoch, palette, theme)` and its header argues
+correctly that it must not rebuild "because a chip was clicked, a symbol was hovered or a pointer
+moved". But `_onDocumentChanged` bumps `_sceneEpoch` on **every** document change, so the cache
+misses on every edit. With the schematic tab open on a large job, **every cable drawn costs about
+100 ms**, which is six dropped frames per gesture.
+
+**AC-008 PRESCRIBED THE REMEDY AND HALF OF IT WAS BUILT.** It rules that L3a splits into eight
+per-domain sub-pictures so *"an edit to one HDMI run rebuilds ~1,200 ops and seven pictures replay
+untouched"*. `SchematicScene.domainFragments` exists and `schematic_paint_plan.dart:257` reads it,
+**but that is a paint-side saving**: the recompute still runs `buildSchematicScene` over the whole
+document. The partition was built for the half that was already cheap.
+
+**Filed as `#702`, parented under M6, and the user's ruling on 2026-08-15 is that it is fixed before
+M6's testing phase**, on the ground that a schematic which janks on every edit is the specific
+experience this product exists to beat. A ruling is owed first: DR-011.4 says a link must not
+re-lay-out the sheet, which is the shape of an incremental rebuild, but nothing says what a rename,
+a delete, a template change or a registry edit invalidate, and Sugiyama's determinism guarantees
+have to survive the answer.
+
+**The gate now defends it as a ratchet rather than a budget.** `schematic_perf_test.dart` gained a
+headroom group at 12 pods asserting a 400 ms ceiling, because a case asserting the real budget would
+fail on every commit and a permanently red gate is one people learn to ignore. It **also** asserts
+the number is over one frame, so the day `#702` lands the test fails and tells whoever fixed it to
+delete the ceiling and assert `_oneFrameMs`.
+
+**Two things the fixture work is worth keeping.** `buildSchematicFixture` gained a `pods` parameter
+and pod 1 is byte-identical to the committed golden: the first draft hoisted the sheet block above
+the pod loop, shifting `nextId`'s global counter by one for every later id, and the golden caught it
+on the first run. And the shape assertion caught the device count: **94 per pod, not 93**, because
+`schematic_fixture.dart`'s own header omits the Structure device from its total.
+
 ### 5.2 M3, Structure and the field · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** A 60-drop whole-house rough-in is entered in under fifteen minutes,
