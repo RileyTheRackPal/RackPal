@@ -55,6 +55,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/builder/quick_add_bar.dart';
+import 'package:rackmate_ui/src/keymap/keymap.dart';
 import 'package:rackmate_ui/src/widgets/family_picker.dart';
 
 /// How the grid asks the builder to change the template.
@@ -264,6 +265,44 @@ class _PortGridState extends State<PortGrid> {
     setState(() => _selection = PortSelection.empty);
   }
 
+  /// What the last fill refused to do, or null.
+  ///
+  /// SHOWN UNTIL THE NEXT GESTURE, not on a timer. A message about a key
+  /// that appeared to do nothing has to still be there when the person
+  /// looks up from the grid to find out why.
+  String? _fillRefusal;
+
+  /// `Ctrl+D` and `Ctrl+Shift+D`, which differ only in what they build.
+  ///
+  /// ONE TRANSACTION, so sixteen rewritten cells are one `Ctrl+Z`. The
+  /// same shape the delete path and Quick Add already use.
+  void _fill(
+    PortFillResult Function({
+      required TemplateBody body,
+      required PortColumnId? column,
+      required List<String> selectedInOrder,
+    })
+    build,
+    List<String> visible,
+  ) {
+    final result = build(
+      body: widget.body,
+      column: _selection.column,
+      selectedInOrder: _selection.inOrder(visible),
+    );
+    if (result.refusal case final PortFillRefusal refusal) {
+      setState(() => _fillRefusal = portFillRefusalMessage(refusal));
+      return;
+    }
+    setState(() => _fillRefusal = null);
+    if (result.commands.isEmpty) return;
+    widget.actions.transact(LabelKey.fillPorts, (tx) {
+      for (final command in result.commands) {
+        tx.add(command);
+      }
+    });
+  }
+
   /// A click in a row's body, with whatever modifiers were down.
   ///
   /// A PLAIN CLICK ON AN ALREADY-SELECTED ROW LEAVES THE SELECTION ALONE,
@@ -281,6 +320,9 @@ class _PortGridState extends State<PortGrid> {
       } else if (!_selection.contains(portKey)) {
         _selection = _selection.selectOnly(portKey);
       }
+      // The complaint was about the selection that just changed, so it
+      // stops being true the moment the person acts on it.
+      _fillRefusal = null;
     });
   }
 
@@ -311,6 +353,40 @@ class _PortGridState extends State<PortGrid> {
 
     final issues = validatePorts(widget.body);
     final columns = portVisibleColumns(_openPacks());
+
+    // THE ACTIONS ARE HERE AND THE `Shortcuts` IS AT THE SCREEN.
+    // `device_builder_screen.dart` already installs `KeyScope.builder`'s
+    // map above everything, because `Ctrl+Enter` has to reach the rail
+    // from the metadata form. A chord resolves to its intent up there and
+    // then looks DOWN from the focused widget for an enabled handler, so
+    // declaring these here is what keeps the fills acting on this grid's
+    // own selection without the screen having to know it has one.
+    return Actions(
+      actions: <Type, Action<Intent>>{
+        BuilderFillDownIntent: CallbackAction<BuilderFillDownIntent>(
+          onInvoke: (_) {
+            _fill(buildFillDown, visible);
+            return null;
+          },
+        ),
+        BuilderFillSeriesIntent: CallbackAction<BuilderFillSeriesIntent>(
+          onInvoke: (_) {
+            _fill(buildFillSeries, visible);
+            return null;
+          },
+        ),
+      },
+      child: _grid(context, table, columns, visible, issues),
+    );
+  }
+
+  Widget _grid(
+    BuildContext context,
+    PortTable table,
+    List<PortColumnId> columns,
+    List<String> visible,
+    Map<String, List<PortIssue>> issues,
+  ) {
     final total =
         kPortSelectGutter +
         columns.fold<double>(0, (n, c) => n + portColumnWidth(c));
@@ -335,6 +411,7 @@ class _PortGridState extends State<PortGrid> {
           onDelete: _selection.isEmpty ? null : _deleteSelected,
           openPacks: _openPacks(),
           onTogglePack: _togglePack,
+          refusal: _fillRefusal,
         ),
         const Divider(height: 1),
         Expanded(
@@ -470,6 +547,7 @@ class _Toolbar extends StatelessWidget {
     required this.onDelete,
     required this.openPacks,
     required this.onTogglePack,
+    required this.refusal,
   });
 
   final int selectedCount;
@@ -477,6 +555,14 @@ class _Toolbar extends StatelessWidget {
   final VoidCallback? onDelete;
   final Set<PortColumnPack> openPacks;
   final void Function(PortColumnPack pack, {required bool on}) onTogglePack;
+
+  /// Why the last fill did nothing, or null.
+  ///
+  /// BESIDE THE SELECTION COUNT, which is the other thing on this row
+  /// that is about what the keys will act on. It is not a `SnackBar`: a
+  /// message that slides away on a timer is gone by the time somebody
+  /// has finished wondering why `Ctrl+D` appeared to do nothing.
+  final String? refusal;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -500,6 +586,19 @@ class _Toolbar extends StatelessWidget {
             selectedCount == 0 ? 'Delete' : 'Delete $selectedCount selected',
           ),
         ),
+        if (refusal case final String message) ...[
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              message,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
         const Spacer(),
         // ═══════════════════════════════════════════════════════════════
         // TICKS, NOT A LIST OF NAMES, AND THE STATE IS ALREADY DECIDED

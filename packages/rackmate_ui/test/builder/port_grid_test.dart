@@ -355,6 +355,164 @@ void main() {
     });
   });
 
+  group('fill down and fill series (DR-062, M4-F1)', () {
+    Future<_Harness> four(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001'),
+          _port('p3', order: 'a0002'),
+          _port('p4', order: 'a0003'),
+        ]),
+    );
+
+    /// Clicks a cell, which both focuses its column and selects its row.
+    Future<void> clickCell(
+      WidgetTester tester,
+      String text, {
+      LogicalKeyboardKey? holding,
+    }) async {
+      if (holding != null) await tester.sendKeyDownEvent(holding);
+      await tester.tap(find.text(text));
+      if (holding != null) await tester.sendKeyUpEvent(holding);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> press(
+      WidgetTester tester,
+      LogicalKeyboardKey key, {
+      bool shift = false,
+    }) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      if (shift) await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+      await tester.sendKeyEvent(key);
+      if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('Ctrl+D copies the top cell of the selection down the '
+        'focused column', (tester) async {
+      final harness = await four(tester);
+
+      await tester.enterText(find.text('P1'), 'HDMI');
+      await clickCell(tester, 'HDMI');
+      await clickCell(tester, 'P4', holding: LogicalKeyboardKey.shift);
+      await press(tester, LogicalKeyboardKey.keyD);
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.label), [
+        'HDMI',
+        'HDMI',
+        'HDMI',
+        'HDMI',
+      ]);
+    });
+
+    testWidgets('Ctrl+Shift+D counts instead of copying', (tester) async {
+      final harness = await four(tester);
+
+      await tester.enterText(find.text('P1'), 'IN 01');
+      await clickCell(tester, 'IN 01');
+      await clickCell(tester, 'P4', holding: LogicalKeyboardKey.shift);
+      await press(tester, LogicalKeyboardKey.keyD, shift: true);
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.label), [
+        'IN 01',
+        'IN 02',
+        'IN 03',
+        'IN 04',
+      ]);
+    });
+
+    testWidgets('THE WHOLE FILL IS ONE Ctrl+Z, because one keystroke made '
+        'it and one should take it back', (tester) async {
+      final harness = await four(tester);
+
+      await tester.enterText(find.text('P1'), 'IN 01');
+      await clickCell(tester, 'IN 01');
+      await clickCell(tester, 'P4', holding: LogicalKeyboardKey.shift);
+      await press(tester, LogicalKeyboardKey.keyD, shift: true);
+
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.label), ['IN 01', 'P2', 'P3', 'P4']);
+    });
+
+    testWidgets('THE COLUMN IS THE ONE WITH FOCUS, so the same rows fill '
+        'differently depending on which cell was clicked', (tester) async {
+      final harness = await four(tester);
+
+      // DESIG this time, and the LABELS must come out untouched. The
+      // whole selection is identical to the test above; only the column
+      // the hand was in differs.
+      await tester.enterText(find.text('J01'), 'X 5');
+      await clickCell(tester, 'X 5');
+      await clickCell(tester, 'J04', holding: LogicalKeyboardKey.shift);
+      await press(tester, LogicalKeyboardKey.keyD, shift: true);
+
+      final body = await harness.read(tester);
+      expect(
+        body.ports.map((p) => p.label),
+        ['P1', 'P2', 'P3', 'P4'],
+        reason: 'the labels were never focused, so nothing wrote to them',
+      );
+      expect(body.ports.map((p) => p.designatorHint), [
+        'X 5',
+        'X 6',
+        'X 7',
+        'X 8',
+      ]);
+    });
+
+    testWidgets('A REFUSAL IS A SENTENCE ON SCREEN, because a key that '
+        'quietly does nothing reads as a key that is not bound', (
+      tester,
+    ) async {
+      await four(tester);
+
+      // One row selected, so there is nothing below to fill into.
+      await clickCell(tester, 'P2');
+      await press(tester, LogicalKeyboardKey.keyD);
+
+      expect(find.textContaining('Select two or more rows'), findsOne);
+    });
+
+    testWidgets('a series refused for want of a number names the key to '
+        'press instead', (tester) async {
+      await four(tester);
+
+      await tester.enterText(find.text('P1'), 'SPEAKER');
+      await clickCell(tester, 'SPEAKER');
+      await clickCell(tester, 'P3', holding: LogicalKeyboardKey.shift);
+      await press(tester, LogicalKeyboardKey.keyD, shift: true);
+
+      expect(find.textContaining('no number in it'), findsOne);
+      expect(
+        find.textContaining('Fill down'),
+        findsOne,
+        reason: 'a refusal that does not name the way forward is a dead end',
+      );
+    });
+
+    testWidgets('the complaint clears the moment the selection changes, '
+        'because it was about that selection', (tester) async {
+      await four(tester);
+
+      await clickCell(tester, 'P2');
+      await press(tester, LogicalKeyboardKey.keyD);
+      expect(find.textContaining('Select two or more rows'), findsOne);
+
+      await clickCell(tester, 'P3');
+
+      expect(find.textContaining('Select two or more rows'), findsNothing);
+    });
+  });
+
   group('bands', () {
     testWidgets('one per bank, with its count, and they fold', (tester) async {
       await _pump(
