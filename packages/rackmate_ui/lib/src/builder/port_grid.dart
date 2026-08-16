@@ -190,6 +190,14 @@ class _PortGridState extends State<PortGrid> {
   /// here is the gestures and the paint.
   PortSelection _selection = PortSelection.empty;
 
+  /// The view sort (M4-F5, DR-065), or null for the declared order.
+  ///
+  /// STATE ON THE WIDGET AND NOT ON THE TEMPLATE, which is the whole of
+  /// this feature: a sort is a way of looking at the ports and never a
+  /// fact about them, so it lives here, dies with the window, and is
+  /// absent from every byte of the file.
+  PortSort? _sort;
+
   /// Whether this port's key still follows its label.
   ///
   /// Two conditions, and both are about whether the key can still be
@@ -375,12 +383,77 @@ class _PortGridState extends State<PortGrid> {
     });
   }
 
+  /// A click on a column header cycles that column's sort (M4-F5).
+  void _onSort(PortColumnId column) => setState(() {
+    _sort = nextPortSort(_sort, column);
+    // The message was about the gesture before this one, and clicking a
+    // header is a gesture.
+    _fillRefusal = null;
+  });
+
+  /// `Commit sort order`: writes the view into the declared order.
+  ///
+  /// THE CONFIRM IS AC-058/D5, which lists this beside `Ctrl+X` on a wired
+  /// device as a data-loss edge. It is the only place in this grid where a
+  /// single click rewrites a whole bank, and the three things that follow
+  /// the order are none of them visible from here.
+  Future<void> _commitSort() async {
+    final commit = buildSortCommit(
+      body: widget.body,
+      sortedTable: sortPortTable(
+        buildPortTable(
+          widget.body,
+          portDesignatorFormat: widget.portDesignatorFormat,
+        ),
+        _sort,
+        widget.registries,
+      ),
+    );
+    if (commit.refusal case final PortSortCommitRefusal refusal) {
+      setState(() => _fillRefusal = portSortCommitRefusalMessage(refusal));
+      return;
+    }
+
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Commit sort order'),
+        content: Text(portSortCommitPrompt(commit.movedPorts)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Commit'),
+          ),
+        ],
+      ),
+    );
+    if (go != true || !mounted) return;
+
+    widget.actions.transact(LabelKey.commitPortSort, (tx) {
+      for (final command in commit.commands) {
+        tx.add(command);
+      }
+    });
+    // THE SORT CLEARS ITSELF. The view and the declared order are now the
+    // same thing, so a badge still saying "this is only a view" would be
+    // describing a state that ended one line ago.
+    setState(() {
+      _sort = null;
+      _fillRefusal = null;
+    });
+  }
+
   /// `Alt+Up` and `Alt+Down`: the selection slides one row (M4-F4).
   void _nudge({required bool up}) => _reorderBy(
     buildPortNudge(
       body: widget.body,
       moving: _selection.inOrder(_visibleRowKeys()),
       up: up,
+      viewIsSorted: _sort != null,
     ),
   );
 
@@ -425,6 +498,7 @@ class _PortGridState extends State<PortGrid> {
         body: widget.body,
         moving: moving,
         afterKey: afterKey,
+        viewIsSorted: _sort != null,
       ),
     );
   }
@@ -490,9 +564,16 @@ class _PortGridState extends State<PortGrid> {
   /// The rows the grid is showing, which is what a batch acts on and what
   /// a `Shift` range walks (DR-061).
   List<String> _visibleRowKeys() {
-    final table = buildPortTable(
-      widget.body,
-      portDesignatorFormat: widget.portDesignatorFormat,
+    // SORTED, because "visible" means what is on screen. A `Shift` range,
+    // a fill and a paste all walk this list, and under a sort the top of
+    // the selection is the top of what the person can see (DR-061).
+    final table = sortPortTable(
+      buildPortTable(
+        widget.body,
+        portDesignatorFormat: widget.portDesignatorFormat,
+      ),
+      _sort,
+      widget.registries,
     );
     return [
       for (final band in table.bands)
@@ -562,9 +643,13 @@ class _PortGridState extends State<PortGrid> {
 
   @override
   Widget build(BuildContext context) {
-    final table = buildPortTable(
-      widget.body,
-      portDesignatorFormat: widget.portDesignatorFormat,
+    final table = sortPortTable(
+      buildPortTable(
+        widget.body,
+        portDesignatorFormat: widget.portDesignatorFormat,
+      ),
+      _sort,
+      widget.registries,
     );
     // Ports the user selected and then deleted, or that a rename moved:
     // dropped here rather than in the writer, so the count under the
@@ -667,6 +752,17 @@ class _PortGridState extends State<PortGrid> {
           refusal: _fillRefusal,
         ),
         const Divider(height: 1),
+        // ONLY WHEN THERE IS A SORT. A permanent bar reading "not sorted"
+        // is a row of pixels spent saying nothing, and it would train a
+        // person to stop reading the place the warning appears.
+        if (_sort case final PortSort sort) ...[
+          _SortBadge(
+            sort: sort,
+            onClear: () => setState(() => _sort = null),
+            onCommit: () => unawaited(_commitSort()),
+          ),
+          const Divider(height: 1),
+        ],
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -689,7 +785,12 @@ class _PortGridState extends State<PortGrid> {
                         // is what makes an empty grid readable rather
                         // than blank: a person can see what the columns
                         // will be before deciding what to type.
-                        _HeaderRow(scale: scale, columns: columns),
+                        _HeaderRow(
+                          scale: scale,
+                          columns: columns,
+                          sort: _sort,
+                          onSort: _onSort,
+                        ),
                         const Divider(height: 1, thickness: 1),
                         Expanded(
                           child: table.bands.isEmpty
@@ -736,6 +837,7 @@ class _PortGridState extends State<PortGrid> {
                                       _selection = _selection.withColumn(id),
                                   onBatchWrite: _writeBatch,
                                   onReorder: _reorder,
+                                  dragDisabled: _sort != null,
                                 ),
                         ),
                       ],
@@ -896,10 +998,20 @@ class _Toolbar extends StatelessWidget {
 }
 
 class _HeaderRow extends StatelessWidget {
-  const _HeaderRow({required this.scale, required this.columns});
+  const _HeaderRow({
+    required this.scale,
+    required this.columns,
+    required this.sort,
+    required this.onSort,
+  });
 
   final double scale;
   final List<PortColumnId> columns;
+
+  /// The view sort, or null for the declared order (M4-F5).
+  final PortSort? sort;
+
+  final ValueChanged<PortColumnId> onSort;
 
   @override
   Widget build(BuildContext context) {
@@ -913,18 +1025,114 @@ class _HeaderRow extends StatelessWidget {
           for (final id in columns)
             SizedBox(
               width: portColumnWidth(id) * scale,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Text(
-                  portColumnHeader(id),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.4,
+              child: InkWell(
+                // THE WHOLE HEADER CELL, not the word. A four-character
+                // header like `KEY` is a tap target the width of three
+                // letters, and this is the only affordance a sort has.
+                onTap: portColumnSortable(id) ? () => onSort(id) : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          portColumnHeader(id),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.4,
+                            // THE SORTED COLUMN IS TONED AS WELL AS
+                            // ARROWED, because at 11 points an arrow is
+                            // four pixels and a person scanning 43 columns
+                            // for which one is sorted needs the answer
+                            // from the shape of the row.
+                            color: sort?.column == id
+                                ? theme.colorScheme.primary
+                                : null,
+                          ),
+                        ),
+                      ),
+                      if (sort?.column == id)
+                        Icon(
+                          sort!.direction == PortSortDirection.ascending
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          size: 12,
+                          color: theme.colorScheme.primary,
+                        ),
+                    ],
                   ),
                 ),
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// docs/06 §4.6's sort badge, which is the only thing telling a person the
+/// rows in front of them are not the rows in the file.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// IT IS A BAR AND NOT A CHIP, AND IT CARRIES BOTH EXITS
+/// ═══════════════════════════════════════════════════════════════════════
+/// A sort is a state the grid can be left in, and every state a person can
+/// be stuck in needs its way out on screen beside the thing that says they
+/// are in it. `Clear` restores the declared order and costs nothing;
+/// `Commit sort order` writes it and goes through the confirm AC-058/D5
+/// requires. Putting the destructive one in a menu somewhere else would
+/// leave the badge saying "this is only a view" with no answer to the
+/// obvious next question.
+class _SortBadge extends StatelessWidget {
+  const _SortBadge({
+    required this.sort,
+    required this.onClear,
+    required this.onCommit,
+  });
+
+  final PortSort sort;
+  final VoidCallback onClear;
+  final VoidCallback onCommit;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ColoredBox(
+      color: theme.colorScheme.tertiaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+        child: Row(
+          children: [
+            Icon(
+              Icons.sort,
+              size: 18,
+              color: theme.colorScheme.onTertiaryContainer,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                // THE SENTENCE IS BUILT IN CORE, for `portSummaryLine`'s
+                // reason: a second speller here and the badge and the
+                // confirm would disagree about what a sort is.
+                portSortBadge(sort),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onTertiaryContainer,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            TextButton(onPressed: onClear, child: const Text('Clear sort')),
+            const SizedBox(width: 4),
+            TextButton(
+              onPressed: onCommit,
+              child: const Text('Commit sort order'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -953,6 +1161,7 @@ class _Bands extends StatelessWidget {
     required this.onColumnFocused,
     required this.onBatchWrite,
     required this.onReorder,
+    required this.dragDisabled,
   });
 
   final PortTable table;
@@ -980,6 +1189,11 @@ class _Bands extends StatelessWidget {
   /// A row dropped: which band, where it came from, and where it landed
   /// in the band with itself already taken out.
   final void Function(PortTableBand band, int from, int at) onReorder;
+
+  /// True while a view sort is showing (M4-F5, DR-065): the handle greys
+  /// out, because dragging a row would land it where the person cannot
+  /// see it. The keyboard's half of this refuses in words.
+  final bool dragDisabled;
 
   @override
   Widget build(BuildContext context) => CustomScrollView(
@@ -1054,6 +1268,7 @@ class _Bands extends StatelessWidget {
               onTapRow: onTapRow,
               onColumnFocused: onColumnFocused,
               onBatchWrite: onBatchWrite,
+              dragDisabled: dragDisabled,
             ),
           ),
       ],
@@ -1176,8 +1391,14 @@ class _PortRow extends StatelessWidget {
     required this.onTapRow,
     required this.onColumnFocused,
     required this.onBatchWrite,
+    required this.dragDisabled,
     super.key,
   });
+
+  /// True while a view sort is showing: the handle is drawn dimmed and
+  /// inert rather than removed, so the gutter does not reflow and the
+  /// affordance is visibly unavailable rather than absent.
+  final bool dragDisabled;
 
   final PortTableRow row;
 
@@ -1349,20 +1570,30 @@ class _PortRow extends StatelessWidget {
                 // opens a cell for editing, and a press that might mean
                 // either would have to guess from how far the pointer
                 // travelled.
-                ReorderableDragStartListener(
-                  index: dragIndex,
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.grab,
-                    child: Tooltip(
-                      message: 'Drag to reorder · Alt+Up, Alt+Down',
-                      child: Icon(
-                        Icons.drag_indicator,
-                        size: 16,
-                        color: theme.colorScheme.onSurfaceVariant,
+                if (dragDisabled)
+                  Tooltip(
+                    message: 'Clear the sort to reorder rows',
+                    child: Icon(
+                      Icons.drag_indicator,
+                      size: 16,
+                      color: theme.disabledColor,
+                    ),
+                  )
+                else
+                  ReorderableDragStartListener(
+                    index: dragIndex,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.grab,
+                      child: Tooltip(
+                        message: 'Drag to reorder · Alt+Up, Alt+Down',
+                        child: Icon(
+                          Icons.drag_indicator,
+                          size: 16,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ),
-                ),
                 // SHRUNK, because a `Checkbox` reserves Material's 48-point
                 // TAP TARGET by default and the gutter now has to hold a
                 // dot beside it. Measured: the default overflowed this row
