@@ -167,16 +167,24 @@ const String _fracAlphabet =
 /// `doc.links` would be the same eleven lines written twice, which is the
 /// shape that produced this project's 1000x mass error.
 ///
-/// NOT a general LexoRank `between(a, b)`. Fractional indices exist so an
-/// item can be inserted BETWEEN two others without renumbering, and this
-/// codebase has no surface that reorders racks or links; writing the
-/// general form now would be untested generality. The rule here is small
-/// enough to state in full: take the largest existing index, and either
-/// bump its last character to the next one in [_fracAlphabet], or — when
-/// it is already the last character — append `'0'`. Both produce a
-/// strictly greater string under `compareTo` (a greater character at the
-/// same position, or a proper extension of the same prefix), which is the
-/// entire postcondition.
+/// The rule is small enough to state in full: take the largest existing
+/// index, and either bump its last character to the next one in
+/// [_fracAlphabet], or, when it is already the last character, append one.
+/// Both produce a strictly greater string under `compareTo` (a greater
+/// character at the same position, or a proper extension of the same
+/// prefix), which is the entire postcondition.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE EXTENSION APPENDS `'1'`, NOT `'0'`, AND THAT IS DR-064
+/// ═══════════════════════════════════════════════════════════════════════
+/// This branch appended `_fracAlphabet[0]` while nothing reordered, and it
+/// was free to. It is not free now. `'0'` is the LOWEST character, so
+/// `'az'` followed by `'az0'` is a pair with nothing between it: any index
+/// strictly greater than `'az'` and strictly less than `'az0'` would have
+/// to be `'az'` plus something below the lowest character there is. That
+/// is the one input [orderBetween] cannot answer, and a template reaches
+/// it at its 63rd port, which is a patchbay. Appending `'1'` spends one of
+/// 62 slots and leaves the gap open permanently.
 FracIndex nextOrder(Iterable<FracIndex> existing) {
   var max = '';
   for (final index in existing) {
@@ -187,11 +195,131 @@ FracIndex nextOrder(Iterable<FracIndex> existing) {
   if (lastAt < 0 || lastAt == _fracAlphabet.length - 1) {
     // An unrecognised character (a hand-edited file) or `'z'`: extending is
     // correct for both, and is the branch that cannot fail.
-    return FracIndex('$max${_fracAlphabet[0]}');
+    return FracIndex('$max${_fracAlphabet[1]}');
   }
   return FracIndex(
     max.substring(0, max.length - 1) + _fracAlphabet[lastAt + 1],
   );
+}
+
+/// The middle of [_fracAlphabet], which is what an index reaches for when
+/// it is opening a span nothing has divided yet.
+const int _fracMid = 31;
+
+/// A [FracIndex] strictly between [before] and [after], or null when the
+/// two are neighbours with nothing representable between them.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE GENERATOR [nextOrder] SPENT FOUR MILESTONES DECLINING TO WRITE
+/// ═══════════════════════════════════════════════════════════════════════
+/// Its comment called the general form "untested generality", and that was
+/// correct for exactly as long as no surface reordered anything. M4-F4
+/// reorders. docs/06 §4.6 says a reorder is one field write on one row and
+/// NOT a renumber of the bank, and that sentence is true only if a value
+/// can be minted between two neighbours. So here is the general form, with
+/// the tests the old comment was holding out for.
+///
+/// A null [before] means "above everything", a null [after] means "below
+/// everything", and both null is the seed. The result is strictly ordered
+/// against whichever ends are given, under the same raw `compareTo` every
+/// consumer of `order` already uses.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// NULL IS A FACT ABOUT THE ENCODING, NOT A SHRUG
+/// ═══════════════════════════════════════════════════════════════════════
+/// There is exactly one shape this cannot answer: [after] is [before] plus
+/// the single lowest character. Nothing fits, because the answer would
+/// have to be [before] plus something below the lowest character there is.
+/// [nextOrder] no longer mints that pair (see DR-064 above), so a document
+/// this program wrote cannot contain one; a hand-edited file can, and the
+/// caller refuses in words rather than renumbering the bank behind the
+/// user's back.
+FracIndex? orderBetween(FracIndex? before, FracIndex? after) {
+  if (after == null) {
+    return nextOrder(before == null ? const <FracIndex>[] : [before]);
+  }
+  final b = after.v;
+  if (before == null) {
+    final below = _below(b);
+    return below == null ? null : FracIndex(below);
+  }
+
+  final a = before.v;
+  if (a.compareTo(b) >= 0) return null;
+
+  var i = 0;
+  while (i < a.length && a[i] == b[i]) {
+    i++;
+  }
+  if (i == a.length) {
+    // [before] is a prefix of [after], so the answer is [before] plus
+    // something below whatever [after] adds to it.
+    final below = _below(b.substring(i));
+    return below == null ? null : FracIndex(a + below);
+  }
+
+  final x = _fracAlphabet.indexOf(a[i]);
+  final y = _fracAlphabet.indexOf(b[i]);
+  if (x >= 0 && y >= 0 && y - x >= 2) {
+    // Room at the position where they part, which is the short answer and
+    // the one that keeps an index from growing a character per drag.
+    return FracIndex(a.substring(0, i) + _fracAlphabet[(x + y) ~/ 2]);
+  }
+
+  // Adjacent characters at the divergence, so the answer has to be longer
+  // than [before]. EVERY string carrying [before]'s first `i + 1`
+  // characters is below [after], whatever follows them, because position
+  // `i` has already decided the comparison. So growing [before]'s own tail
+  // is always in range, and growing it through [nextOrder] is what makes
+  // a run of these walk the alphabet (`a3V`, `a3W`, `a3X`) instead of
+  // growing a character each time (`a3V`, `a3VV`, `a3VVV`).
+  final tail = a.substring(i + 1);
+  return FracIndex(
+    a.substring(0, i + 1) +
+        (tail.isEmpty
+            ? _fracAlphabet[_fracMid]
+            : nextOrder([FracIndex(tail)]).v),
+  );
+}
+
+/// [count] indices, strictly increasing, all strictly between [before] and
+/// [after]. Null when any one of them has nowhere to go.
+///
+/// ALL OR NOTHING, because a block of eight rows landing as six is a
+/// reorder that half happened, and the two rows left behind are somewhere
+/// the person did not put them.
+List<FracIndex>? ordersBetween(
+  FracIndex? before,
+  FracIndex? after,
+  int count,
+) {
+  final minted = <FracIndex>[];
+  var cursor = before;
+  for (var n = 0; n < count; n++) {
+    final next = orderBetween(cursor, after);
+    if (next == null) return null;
+    minted.add(next);
+    cursor = next;
+  }
+  return minted;
+}
+
+/// A non-empty string strictly below [t], or null when there is none.
+///
+/// The null case is [t] being exactly the lowest character: everything
+/// below it would have to start with that character and be shorter, and
+/// the empty string is not an index.
+String? _below(String t) {
+  if (t.isEmpty) return null;
+  final d = _fracAlphabet.indexOf(t[0]);
+  if (d < 0) return null;
+  if (d >= 2) return _fracAlphabet[d ~/ 2];
+  if (d == 1) return '${_fracAlphabet[0]}${_fracAlphabet[_fracMid]}';
+  // [t] starts with the lowest character, so anything below it starts with
+  // that character too and the question repeats one position along.
+  if (t.length == 1) return null;
+  final rest = _below(t.substring(1));
+  return rest == null ? _fracAlphabet[0] : '${_fracAlphabet[0]}$rest';
 }
 
 /// [nextOrder] over rack orders. Kept as a named entry point rather than
