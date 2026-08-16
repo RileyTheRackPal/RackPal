@@ -3381,6 +3381,48 @@ written, which is one of the few times a deprecation warning has been load-beari
 a shipped label to be rewritten. Alt rather than Shift because `Shift+Arrow` is the range extension
 every grid binds and this one will want it.
 
+#### 5.3.12 M4-F5, the one place in the grid where the obvious behaviour is wrong
+
+**Closed 2026-08-16** by `83bed51` (core) and `a695bc8` (the headers, the badge and the confirm).
+33 cases: 23 core, 10 widget.
+
+**EVERY SPREADSHEET SORTS BY WRITING THE ROWS, and here that is the wrong answer.** In a spreadsheet
+the row order carries no meaning beyond itself. In this grid it carries four: FIXED_ORDER draws the
+symbol's pins in it, `PORT_SEQ` numbers the schedule by it, the panel auto-layout places jacks by
+it, and `J{PORT_SEQ:2}` prints it on the silkscreen. Somebody who clicks `IMPEDANCE` to find the odd
+one out has said nothing about where the jacks are on the chassis. So a click sorts the view, and
+most of the core cases assert the **declared order is unchanged**, which is the half a screenshot
+cannot show.
+
+**THE EVIDENCE IS LEFT VISIBLE ON PURPOSE.** A sorted grid shows `J01` somewhere in the middle,
+because `portSeq` is the declared rank and the designator renders from it. Suppressing that would
+have been easy and would have removed the one glance that tells a person what they are looking at.
+It is the reason the badge can be believed.
+
+**THE COMMIT IS A PERMUTATION, WHICH FELL OUT OF SORTING WITHIN A BAND.** Each band's ports already
+occupy a set of positions; the commit hands those same positions back out in the sorted order. Three
+things follow and all three were wanted: no index is minted so a commit can never run out of room,
+the band keeps its place so sorting the HDMI inputs cannot move the outputs, and only the ports that
+actually move are written. Had the sort flattened the bands instead, the commit would have
+interleaved the banks in the declared order, which reorders the bands themselves.
+
+**AN UNKNOWN SORTS LAST IN BOTH DIRECTIONS**, so the null branch runs outside the direction flip. A
+blank-is-smallest sort answers *"the lowest impedance on this device is eight ports nobody has
+measured"*, to the person most likely to act on it. That is DR-063's argument one task later against
+a different reading of the same absence, and it went the same way.
+
+**AC-058/D5 HAD ALREADY RULED THE CONFIRM**, which is the second time in this milestone that reading
+the corpus first replaced a decision with a lookup. `completeness §D5` lists `Commit sort order`
+beside `Ctrl+X` on a wired device as an unaudited data-loss edge, and credits `Renumber` with having
+a diff. The diff is the honest reading and it is 64 lines in a modal on the device this grid exists
+for. What a person cannot see is not *which* rows move, which is on screen in front of them, but
+what else follows the order.
+
+**A FINDER CAUGHT THE AUTHOR, for the third time in this milestone.** The confirm's `3 ports` also
+matched the band header's own row count, which reads `3 ports`. Unscoped, the assertion passed on
+the wrong widget in one arrangement and failed in another. Every count assertion in this grid now
+has two candidates by construction, because the bands count rows too.
+
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing
