@@ -139,48 +139,27 @@ class RenderRackCanvas extends RenderBox
   ViewportController get viewport => _viewport;
   set viewport(ViewportController value) {
     if (identical(_viewport, value)) return;
-    if (attached) _viewport.removeListener(_onViewportChanged);
+    if (attached) _viewport.removeListener(markNeedsPaint);
     _viewport = value;
-    if (attached) _viewport.addListener(_onViewportChanged);
+    if (attached) _viewport.addListener(markNeedsPaint);
     markNeedsPaint();
   }
 
-  /// ═══════════════════════════════════════════════════════════════════
-  /// A PAN REPAINTS NOTHING (`#704`)
-  /// ═══════════════════════════════════════════════════════════════════
-  /// The schematic's twin, and here it is worse: this was
-  /// `markNeedsPaint`, and this render object's [_paintScene] replays the
-  /// chassis fragment AND calls `paintChild` on every device in the rack.
-  /// `RenderDeviceBox` is not a repaint boundary, so each of those replays
-  /// its own fragment too. Every pointer move of a drag repainted the
-  /// whole elevation for a document nobody had touched.
-  ///
-  /// Nothing below the transform depends on the viewport: the fragments
-  /// are recorded in SCENE space and the matrix lives in a layer above
-  /// them. So a pan is a change to one matrix, the layer is mutated in
-  /// place, and the retained child layers are re-composited untouched.
-  ///
-  /// The fallback covers the two states where there is no layer to move:
-  /// before the first paint, and while the object is already dirty and
-  /// about to repaint anyway.
-  void _onViewportChanged() {
-    final layer = _transformLayer.layer;
-    if (layer == null || debugNeedsPaint) {
-      markNeedsPaint();
-      return;
-    }
-    layer.transform = _sceneToScreen(_lastPaintOffset);
-    owner?.requestVisualUpdate();
-  }
+  // A MUTATED TRANSFORM LAYER WAS TRIED HERE AND REVERTED (`#707`).
+  // See `render_schematic_canvas.dart`'s note of the same name: it broke
+  // the app, and the widget cases that were supposed to protect it were
+  // asserting on a field the listener itself had just written.
+  //
+  // The symptom HERE was the more informative of the two. The rack's
+  // content moved with the pan and its chrome did not, which is what a
+  // layer mutated behind the framework's back looks like: the siblings
+  // that still repaint through `markNeedsPaint` moved, and the ones the
+  // mutation was steering did not agree with them.
 
   /// scene → screen: this render object's paint offset, then the viewport.
   Matrix4 _sceneToScreen(Offset offset) =>
       Matrix4.translationValues(offset.dx, offset.dy, 0)
         ..multiply(_viewport.transform);
-
-  /// The offset [paint] was last called with, so [_onViewportChanged] can
-  /// rebuild the same matrix without a repaint.
-  Offset _lastPaintOffset = Offset.zero;
 
   TextMeasurer _measurer;
   TextMeasurer get measurer => _measurer;
@@ -201,24 +180,15 @@ class RenderRackCanvas extends RenderBox
   @override
   bool get isRepaintBoundary => true;
 
-  /// FORCES THE TRANSFORM TO BE A LAYER (`#704`).
-  /// `PaintingContext.pushTransform` only builds a `TransformLayer` when
-  /// compositing is needed, and otherwise transforms the canvas directly
-  /// and returns NULL, leaving [_onViewportChanged] nothing to move. One
-  /// extra layer per rack buys every fragment in it, on every frame of
-  /// every drag.
-  @override
-  bool get alwaysNeedsCompositing => true;
-
   @override
   void attach(PipelineOwner owner) {
     super.attach(owner);
-    _viewport.addListener(_onViewportChanged);
+    _viewport.addListener(markNeedsPaint);
   }
 
   @override
   void detach() {
-    _viewport.removeListener(_onViewportChanged);
+    _viewport.removeListener(markNeedsPaint);
     super.detach();
   }
 
@@ -260,7 +230,6 @@ class RenderRackCanvas extends RenderBox
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    _lastPaintOffset = offset;
     _clipLayer.layer = context.pushClipRect(
       needsCompositing,
       offset,

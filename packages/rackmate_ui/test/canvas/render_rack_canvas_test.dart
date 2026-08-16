@@ -142,46 +142,6 @@ Widget _harness(
 }
 
 void main() {
-  testWidgets('A PAN REPAINTS NOTHING, and this is the heavy half of '
-      '`#704`', (tester) async {
-    // `RenderDeviceBox` is NOT a repaint boundary, so a repaint of the
-    // rack canvas replays the chassis fragment and then calls `paintChild`
-    // on every device, each of which replays its own. On a full 45U
-    // elevation that was the entire rack re-issued per pointer move, for a
-    // document nobody had touched.
-    //
-    // A COUNT AND NOT A DURATION, for `pan_repaint_test.dart`'s reason: a
-    // timing test on a build machine measures the build machine, and the
-    // defect is not that painting is slow but that it happens at all.
-    final measurer = _FakeMeasurer();
-    final vp = ViewportController();
-    addTearDown(vp.dispose);
-    final scene = _demoScene(measurer, Face.front);
-
-    await tester.pumpWidget(_harness(scene, measurer, vp));
-    final canvas = tester.renderObject<RenderRackCanvas>(
-      find.byType(RackCanvasBody),
-    );
-    final painted = canvas.debugSceneRecordings;
-    expect(painted, greaterThan(0), reason: 'it painted once');
-
-    for (var i = 0; i < 30; i++) {
-      vp.panBy(const Offset(3, 2));
-      await tester.pump();
-    }
-
-    expect(
-      canvas.debugSceneRecordings,
-      painted,
-      reason: 'thirty pan frames replayed the rack again',
-    );
-    // AND IT STILL MOVED. An optimisation that also stops the elevation
-    // tracking the pointer is not one, and a count-only assertion would
-    // pass for it.
-    expect(vp.transform.storage[12], closeTo(90, 0.001));
-    expect(vp.transform.storage[13], closeTo(60, 0.001));
-  });
-
   testWidgets('one DeviceBox per visible device; renders without throwing', (
     tester,
   ) async {

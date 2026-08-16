@@ -151,57 +151,36 @@ final class RenderSchematicCanvas extends RenderBox {
   ViewportController get viewport => _viewport;
   set viewport(ViewportController value) {
     if (identical(_viewport, value)) return;
-    if (attached) _viewport.removeListener(_onViewportChanged);
+    if (attached) _viewport.removeListener(markNeedsPaint);
     _viewport = value;
-    if (attached) _viewport.addListener(_onViewportChanged);
+    if (attached) _viewport.addListener(markNeedsPaint);
     markNeedsPaint();
   }
 
-  /// ═══════════════════════════════════════════════════════════════════
-  /// A PAN REPAINTS NOTHING (`#704`)
-  /// ═══════════════════════════════════════════════════════════════════
-  /// This was `markNeedsPaint`, and that is the whole of the defect. The
-  /// viewport notifies on every pointer move of a drag; `markNeedsPaint`
-  /// re-runs [paint], which walks EVERY op in the plan and re-issues
-  /// every `ui.Canvas` call, for a document the user has not touched.
-  /// On the 300-link fixture that is 4,155 ops per frame, and the
-  /// fixture is one pod.
-  ///
-  /// Nothing about the display list depends on the viewport: the ops are
-  /// recorded in SCENE space and the matrix lives in a layer above them.
-  /// `FlutterDiagramCanvas` even keeps its own transform stack starting
-  /// at identity, so the hairline floor and the width clamp never saw the
-  /// zoom in the first place. A pan is therefore a change to one matrix
-  /// and to nothing else, which is exactly what a retained
-  /// `TransformLayer` is for.
-  ///
-  /// SO THE LAYER IS MUTATED IN PLACE and a visual update is requested.
-  /// The render object stays clean, [paint] does not run, the child
-  /// picture is retained, and the compositor re-applies the new matrix.
-  ///
-  /// THE FALLBACK IS NOT DEFENSIVE PADDING. Before the first paint there
-  /// is no layer to move, and after a plan change the render object is
-  /// already dirty and will repaint anyway; both take the old path.
-  void _onViewportChanged() {
-    final layer = _transformLayer.layer;
-    if (layer == null || debugNeedsPaint) {
-      markNeedsPaint();
-      return;
-    }
-    final matrix = schematicSceneToScreen(
-      _lastPaintOffset,
-      _viewport.transform,
-    );
-    debugSceneToScreen = matrix;
-    layer.transform = matrix;
-    owner?.requestVisualUpdate();
-  }
-
-  /// The offset [paint] was last called with, so [_onViewportChanged] can
-  /// rebuild the same matrix without a repaint. Not a cache of a
-  /// computation: it is an input this object is only handed during paint.
-  Offset _lastPaintOffset = Offset.zero;
-
+  // ═══════════════════════════════════════════════════════════════════
+  // A MUTATED TRANSFORM LAYER WAS TRIED HERE AND REVERTED (`#707`)
+  // ═══════════════════════════════════════════════════════════════════
+  // `#704` replaced this object's `markNeedsPaint` viewport listener with
+  // one that mutated the retained `TransformLayer` and called
+  // `requestVisualUpdate`, so a pan would cost no Dart painting at all.
+  // It shipped to the branch with four green widget cases and BROKE THE
+  // APP: the schematic stopped panning entirely and the rack's chrome
+  // stayed put while its content moved.
+  //
+  // THE TESTS WERE VACUOUS AND IT IS WORTH SAYING HOW. The listener
+  // assigned `debugSceneToScreen = matrix` and then mutated the layer;
+  // the tests asserted that `debugSceneToScreen` had moved. That is a
+  // field the listener had just written, so it moved whether or not
+  // anything reached the compositor. A widget test does not composite, so
+  // nothing in this package could have caught it. `M4-F0`'s `Enter` that
+  // moved nowhere was the same shape and this is the second time.
+  //
+  // The defect `#704` describes is real and measured: 30 pan frames
+  // produced 31 full recordings. It is not the defect the user was
+  // feeling — a pan is smooth zoomed out and abysmal zoomed in at an
+  // identical op count, which is raster cost, not Dart cost. So the cure
+  // was risky, unproven and aimed at the wrong half, and it goes back
+  // until there is an instrument that can see the difference.
   TextMeasurer _measurer;
   TextMeasurer get measurer => _measurer;
   set measurer(TextMeasurer value) {
@@ -224,28 +203,15 @@ final class RenderSchematicCanvas extends RenderBox {
   @override
   bool get isRepaintBoundary => true;
 
-  /// FORCES THE TRANSFORM TO BE A LAYER, which is what makes a pan free
-  /// (`#704`). `PaintingContext.pushTransform` only creates a
-  /// `TransformLayer` when compositing is needed; otherwise it transforms
-  /// the canvas directly and returns NULL, leaving [_onViewportChanged]
-  /// nothing to move. This canvas has no compositing children of its own,
-  /// so without this override the layer never exists and every pan is a
-  /// full repaint.
-  ///
-  /// The cost is one extra layer per canvas. The saving is every op in
-  /// the plan, on every frame of every drag.
-  @override
-  bool get alwaysNeedsCompositing => true;
-
   @override
   void attach(PipelineOwner owner) {
     super.attach(owner);
-    _viewport.addListener(_onViewportChanged);
+    _viewport.addListener(markNeedsPaint);
   }
 
   @override
   void detach() {
-    _viewport.removeListener(_onViewportChanged);
+    _viewport.removeListener(markNeedsPaint);
     super.detach();
   }
 
@@ -263,7 +229,6 @@ final class RenderSchematicCanvas extends RenderBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    _lastPaintOffset = offset;
     _clipLayer.layer = context.pushClipRect(
       needsCompositing,
       offset,
