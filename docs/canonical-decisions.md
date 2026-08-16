@@ -11000,6 +11000,69 @@ the dock the rest of the time are M4-K (`#182`) and are not built, so the dock e
 batch state until then, which is `device_builder_screen.dart`'s standing rule that a pane opening
 onto nothing is the `UnbuiltView` defect wearing a different hat.
 
+### 11.63 DR-064 · The reorder is within a band, and the index generator gets its missing character
+
+**Settled by the user on 2026-08-16**, during M4-F4 (`#211`). **A §8.3 amendment in one clause**
+(11.63.1 narrows a sentence in docs/06 §4.5); the rest either implements what §4.6 already rules or
+fixes a defect found while doing so.
+
+**11.63.1 THE DRAG HANDLE REORDERS WITHIN A BANK, NOT ACROSS BANKS.** docs/06 §4.5's column table
+says the `⠿` handle reorders *"within and across banks"*. Within is built. Across is not, and the
+reason is structural rather than an omission: the grid's bands are **pinned sticky headers over
+per-band lists**, and no toolkit reorderable list hands a dragged item to a sibling list. The three
+ways out were priced:
+
+| Option | What it costs |
+|---|---|
+| **(a) Within a band, taken** | One reorderable list per band. The sticky header survives, the drop indicator and the autoscroll come from the framework, and a widget test can drive the whole gesture. Moving a port to another bank stays the `Bank` column, which is already built and is one edit. |
+| (b) Across banks, headers demoted to list items | Cross-bank drag works as drawn. The **pinned bank header goes**, so a person forty rows into the HDMI inputs can no longer see that these are the HDMI inputs. That header was built deliberately in M4-E1. |
+| (c) Across banks, hand-built over the pinned layout | Both behaviours. Custom hit-testing, a custom drop indicator and hand-written autoscroll inside a widget that already scrolls in both axes: roughly three times the code, and the part no widget test can reach is exactly the part that breaks. |
+
+**Ruling: (a).** The capability is **routed, not lost**, on DR-063's precedent: the `Bank` column is
+the way across and every refusal names it out loud. §4.5's handle row is amended to read *"Reorder
+within a bank"*, with the routing stated beside it.
+
+**11.63.2 AN ARROW KEY NEVER RETYPES A PORT.** `Alt+↑` on the top row of a band **refuses and says
+so**, rather than moving the row into the band above and adopting its `bankKey`. The keyboard path
+is pure arithmetic and could have crossed even though the drag cannot, and that is exactly the
+argument against it: the chord would then sometimes mean *move* and sometimes mean *move and
+reclassify*, and a structural edit to the template delivered by an arrow key is how a jack ends up
+in the wrong bank on a printed panel. The keyboard and the mouse agree about where the wall is.
+
+**11.63.3 A SELECTION MOVES AS A BLOCK.** A drag or an `Alt` press with N rows selected moves all N,
+keeping their order relative to each other and landing them contiguous. This is DR-061 and DR-063's
+reading continued: selecting N rows and acting means acting on N rows, and a reorder that ignored
+the selection would be the one grid verb that does, which is an exception learned by being
+surprised. A block with a gap in it lands closed up, above the nearest row above it that is staying
+put. **N rows moved is N field writes and no others**, which is what §4.6 means by *not a renumber of
+the bank*.
+
+**11.63.4 `nextOrder` EXTENDS WITH `'1'`, NOT `'0'`.** A defect, found while building the midpoint
+generator, in code that shipped in M0 and was correct until this task.
+
+`nextOrder` allocates the next `FracIndex` by bumping the last character, or by appending one when
+that character is already the alphabet's last. It appended `'0'`, which is the **lowest** character,
+so `'az'` was followed by `'az0'`: a pair with **nothing representable between it**, since any index
+strictly between them would have to be `'az'` plus something below the lowest character there is.
+A template reaches that pair at its **63rd port**, which is a patchbay. Every insertion between those
+two rows would have had to be refused for a reason nobody could see or fix.
+
+**Appending `'1'` costs one of 62 slots and leaves the gap open permanently.** The test that pins it
+walks a 200-long allocation chain and splits every adjacent pair, and it was checked that reverting
+the character fails it. No shipped starter or catalog template contains an index ending in `'z'`, so
+no file on disk holds the pair.
+
+**`orderBetween` returns null rather than renumbering.** One input shape has no answer and it is now
+unreachable by anything this program mints. A hand-edited file can still hold it, and the honest
+response is a named refusal: renumbering the neighbours is precisely the operation CR-027 chose this
+field's type to avoid.
+
+**11.63.5 WHAT IT DOES NOT DECIDE.** The auto-designator renumbering that follows a reorder is not
+changed and is not a defect. `PORT_SEQ` is the rank in the declared order and `J{PORT_SEQ:2}` renders
+from it, so moving a port renumbers it and everything below it. A silkscreen follows the physical
+order of the jacks; CR-042 leaves the project to allocate, and a `designatorHint` the author pinned
+survives untouched, because that is what pinning means.
+
 ---
 
 ## 12. Superseded rulings

@@ -323,12 +323,18 @@ void main() {
       expect(nextRackOrder(const [FracIndex('aZ')]).v, 'aa');
     });
 
-    test('extends rather than wrapping at the last character', () {
-      expect(nextRackOrder(const [FracIndex('az')]).v, 'az0');
+    test('extends rather than wrapping at the last character, and extends '
+        'with the SECOND character rather than the lowest (DR-064)', () {
+      // `az0` is what this asserted while nothing reordered. It leaves a
+      // pair with nothing between it, which M4-F4 turns into a drag the
+      // grid has to refuse for a reason the person cannot see. The
+      // artifact is asserted in `order_between_test.dart`; this pins the
+      // spelling that produces it.
+      expect(nextRackOrder(const [FracIndex('az')]).v, 'az1');
     });
 
     test('an unrecognised trailing character extends rather than throwing', () {
-      expect(nextRackOrder(const [FracIndex('a~')]).v, 'a~0');
+      expect(nextRackOrder(const [FracIndex('a~')]).v, 'a~1');
     });
 
     test('the result sorts strictly after every input, for 200 successive '

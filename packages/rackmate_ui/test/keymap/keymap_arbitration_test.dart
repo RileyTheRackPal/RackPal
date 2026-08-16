@@ -200,9 +200,16 @@ void main() {
       // the caret" and now reads "Paste cells", exactly as `fillDown`
       // lost its tail one task earlier. Twice in two tasks is the gate
       // doing its job rather than being tuned.
-      expect(keyBindingsIn(KeyScope.builder), hasLength(7));
+      // NINE SINCE M4-F4, which added `Alt+Up` and `Alt+Down` over the
+      // port grid. Neither chord is bound anywhere else in the product,
+      // so this is the first builder pair in three tasks that arbitration
+      // took without an argument. Alt rather than Shift because
+      // `Shift+Arrow` is the range extension every grid binds and this one
+      // will want it, and because Alt+Arrow is already the row move in a
+      // spreadsheet, an outliner and a task list.
+      expect(keyBindingsIn(KeyScope.builder), hasLength(9));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(57));
+      expect(kKeymap, hasLength(59));
     });
   });
 

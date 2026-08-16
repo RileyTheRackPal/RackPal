@@ -198,7 +198,7 @@ A virtualised data grid, rows grouped by bank under sticky collapsible headers. 
 
 | Col | Editor | Notes |
 |---|---|---|
-| `⠿` | drag handle | Reorder within and across banks |
+| `⠿` | drag handle | Reorder **within a bank** (DR-064). The `Bank` column is how a port moves to another bank, and every refusal names it: the bands are pinned sticky headers over per-band lists, and dragging across would cost the header a person forty rows in is reading |
 | `☐` | checkbox | Multi-select |
 | `Key` | text | `PortDef.key`: stable, author-assigned, **the migration join** (CR-051). Auto-derived from the first label, editable, shown greyed until touched |
 | `Label` | text | The silkscreen text |
@@ -238,7 +238,7 @@ Two column shapes also changed under measurement. `Dir` is a dropdown spelling a
 | **Multi-row edit** | select N rows, edit any cell | Applies to every selected row; the right dock becomes the batch inspector. **Mixed values read `Mixed (N values)` and NOT `—`** (DR-063): the dash is G4's unknown and a disagreement is a different fact. Left untouched unless explicitly set. **`LABEL` and `DESIG` edit one row only**, because one label across eight rows mints eight colliding keys; `Ctrl+Shift+D` is the gesture for a column of labels |
 | Duplicate | `Ctrl+J` | Clones the selection below, labels auto-incremented past the highest existing index |
 | Delete | `Del` | Undoable on the builder's stack; warns if the port is in a passthrough pair |
-| **Reorder** | drag, or `Alt+↑/↓` | `PortDef.order` is a `FracIndex` (CR-027), a reorder is one field write on one row, not a renumber of the bank |
+| **Reorder** | drag, or `Alt+↑/↓` | `PortDef.order` is a `FracIndex` (CR-027), a reorder is one field write on one row, not a renumber of the bank. **The whole selection travels as a block**, keeping its own order and landing contiguous (DR-064), so N rows moved is N writes and no others. **The band edge is a wall in both gestures**: `Alt+↑` on a band's top row refuses and names the `Bank` column, because crossing would have to rewrite `bankKey` and an arrow key must not retype a port |
 | Renumber… | `Ctrl+R` | Re-applies a label pattern to the selection in current display order |
 | Find & replace | `Ctrl+H` | Scoped to labels, keys, designators or notes; regex opt-in |
 | Change type… | `Ctrl+T` | Bulk connector/family change with an impact preview |
@@ -249,7 +249,7 @@ Two column shapes also changed under measurement. `Dir` is a dropdown spelling a
 
 **What "the selection" is (DR-061).** The table above describes it two ways, a column of cells with a top and a set of rows, and it is the second: **a contiguous run of rows plus whatever `Ctrl`+click has added or removed, and a column taken from whichever cell holds focus.** Click selects, `Shift`+click extends, `Ctrl`+click toggles, and the gutter checkbox toggles the same row in the same set, so the tick box M4-E ships **is** the selection rather than a second thing beside it. Not a 2D cell rectangle: of the fourteen rows above, nine want whole rows, three name their own columns, one wants a single column, and one is a single cell, so a rectangle would be read by `Fill down` alone.
 
-Reorder is semantic: it drives symbol pin order and panel auto-layout. Because `order` is a `FracIndex`, dragging one row rewrites one row.
+Reorder is semantic: it drives symbol pin order and panel auto-layout. Because `order` is a `FracIndex`, dragging one row rewrites one row. It also **renumbers the automatic designators** of that port and everything below it, and that is the point rather than a side effect: `PORT_SEQ` is the rank in the declared order, `J{PORT_SEQ:2}` renders from it, and a silkscreen follows the physical order of the jacks. A `designatorHint` the author pinned survives untouched.
 
 **Passthrough pairing.** With `isPassthrough` on, the grid gains the `Paired port` column and a **Pair front↔rear by order** action, and both write `TemplateBody.passthroughPairs: [{frontKey, rearKey, sameNet}]`, which now exists in `.rmdx` (CR-057). A passthrough template whose pairs are missing is a **load warning, not an error**. Paired ports share a net, so a trace resolves `Living Room jack → PP-1 F12 → PP-1 R12 → SW-1 P04` as one logical path.
 

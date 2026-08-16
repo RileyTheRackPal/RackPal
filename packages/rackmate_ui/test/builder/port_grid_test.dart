@@ -975,6 +975,230 @@ void main() {
     });
   });
 
+  group('reorder (M4-F4)', () {
+    /// Four rows in one bank, plus two in a second so the band edge is a
+    /// real edge rather than the end of the template.
+    Future<_Harness> rows(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000', bank: 'in'),
+          _port('p2', order: 'a0001', bank: 'in'),
+          _port('p3', order: 'a0002', bank: 'in'),
+          _port('p4', order: 'a0003', bank: 'in'),
+          _port('q1', order: 'a0004', bank: 'out'),
+          _port('q2', order: 'a0005', bank: 'out'),
+        ]),
+    );
+
+    /// THE DECLARED ORDER, WHICH IS THE ARTIFACT. `body.ports` is the list
+    /// the decoder happened to build; what every consumer of a template
+    /// reads is `portsInDeclaredOrder`, and a reorder that changed only
+    /// the former would be a reorder that did nothing.
+    List<String> order(TemplateBody body) => [
+      for (final port in portsInDeclaredOrder(body.ports)) port.label,
+    ];
+
+    Future<void> alt(WidgetTester tester, LogicalKeyboardKey arrow) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.alt);
+      await tester.sendKeyEvent(arrow);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.alt);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> click(
+      WidgetTester tester,
+      String text, {
+      LogicalKeyboardKey? holding,
+    }) async {
+      if (holding != null) await tester.sendKeyDownEvent(holding);
+      await tester.tap(find.text(text));
+      if (holding != null) await tester.sendKeyUpEvent(holding);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('THE CHORD REACHES THE GRID: Alt+Down moves the selected '
+        'row past the one below it', (tester) async {
+      // The route, not the planner. `buildPortNudge` is tested in core
+      // over 22 cases; what a widget test can see and core cannot is
+      // whether pressing the key gets there at all. M4-F0 shipped an
+      // `Enter` that moved nowhere with fourteen gates green.
+      final harness = await rows(tester);
+
+      await click(tester, 'P2');
+      await alt(tester, LogicalKeyboardKey.arrowDown);
+
+      expect(order(await harness.read(tester)), [
+        'P1',
+        'P3',
+        'P2',
+        'P4',
+        'Q1',
+        'Q2',
+      ]);
+    });
+
+    testWidgets('Alt+Up moves it back, and the pair is a round trip', (
+      tester,
+    ) async {
+      final harness = await rows(tester);
+
+      await click(tester, 'P2');
+      await alt(tester, LogicalKeyboardKey.arrowDown);
+      await alt(tester, LogicalKeyboardKey.arrowUp);
+
+      expect(order(await harness.read(tester)), [
+        'P1',
+        'P2',
+        'P3',
+        'P4',
+        'Q1',
+        'Q2',
+      ]);
+    });
+
+    testWidgets('a selection of two travels as a block', (tester) async {
+      final harness = await rows(tester);
+
+      await click(tester, 'P1');
+      await click(tester, 'P2', holding: LogicalKeyboardKey.shift);
+      await alt(tester, LogicalKeyboardKey.arrowDown);
+
+      expect(order(await harness.read(tester)), [
+        'P3',
+        'P1',
+        'P2',
+        'P4',
+        'Q1',
+        'Q2',
+      ]);
+    });
+
+    testWidgets('a block move is ONE undo, not one per row', (tester) async {
+      final harness = await rows(tester);
+
+      await click(tester, 'P1');
+      await click(tester, 'P2', holding: LogicalKeyboardKey.shift);
+      await alt(tester, LogicalKeyboardKey.arrowDown);
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+
+      expect(order(await harness.read(tester)), [
+        'P1',
+        'P2',
+        'P3',
+        'P4',
+        'Q1',
+        'Q2',
+      ]);
+    });
+
+    testWidgets('THE BAND EDGE IS A WALL, and the toolbar says which one '
+        'it hit', (tester) async {
+      // The ruling: an arrow key never retypes a port. A chord that
+      // quietly did nothing would be indistinguishable from one that is
+      // not bound, which is how a person concludes the feature does not
+      // exist.
+      final harness = await rows(tester);
+
+      await click(tester, 'Q1');
+      await alt(tester, LogicalKeyboardKey.arrowUp);
+
+      expect(find.textContaining('as far as this bank goes'), findsOne);
+      expect(order(await harness.read(tester)), [
+        'P1',
+        'P2',
+        'P3',
+        'P4',
+        'Q1',
+        'Q2',
+      ]);
+    });
+
+    testWidgets('a row that crosses no wall does not change its bank', (
+      tester,
+    ) async {
+      final harness = await rows(tester);
+
+      await click(tester, 'Q1');
+      await alt(tester, LogicalKeyboardKey.arrowUp);
+
+      final body = await harness.read(tester);
+      expect(body.ports.firstWhere((p) => p.label == 'Q1').bankKey, 'out');
+    });
+
+    testWidgets('a selection spanning two banks is refused by name', (
+      tester,
+    ) async {
+      await rows(tester);
+
+      await click(tester, 'P4');
+      await click(tester, 'Q1', holding: LogicalKeyboardKey.shift);
+      await alt(tester, LogicalKeyboardKey.arrowDown);
+
+      expect(find.textContaining('different banks'), findsOne);
+    });
+
+    testWidgets('every row carries a drag handle, one each', (tester) async {
+      await rows(tester);
+
+      expect(find.byIcon(Icons.drag_indicator), findsNWidgets(6));
+      expect(find.byType(ReorderableDragStartListener), findsNWidgets(6));
+    });
+
+    testWidgets('DRAGGING THE HANDLE REORDERS, AND THE BAND CATCHES IT: '
+        'a drag aimed well past the bank lands at the foot of its own', (
+      tester,
+    ) async {
+      // TWO CLAIMS IN ONE GESTURE, and the second is the ruling. The
+      // drag is aimed far below the last row of the SECOND bank; a
+      // reorderable list does not hand an item to a sibling list, so the
+      // index clamps at this band's end and P1 lands after P4 rather than
+      // among the Q rows.
+      //
+      // OVERSHOT ON PURPOSE, rather than aimed at a row in the middle.
+      // How many pixels of travel become one index is `SliverReorderable
+      // List`'s arithmetic over animations that are still running, and a
+      // test that pinned a distance would be asserting Flutter's easing
+      // curve. Clamping at the end is the same code path and has one
+      // answer.
+      final harness = await rows(tester);
+
+      // The handles are in row order within their band, so the first is
+      // P1's. The row PITCH is the gap between two gutters, which is the
+      // only measurement here that assumes no padding.
+      final handle = find.byType(ReorderableDragStartListener).first;
+      final gutters = find.byType(Checkbox);
+      final pitch =
+          tester.getCenter(gutters.at(1)).dy -
+          tester.getCenter(gutters.at(0)).dy;
+
+      final drag = await tester.startGesture(tester.getCenter(handle));
+      await tester.pump(const Duration(milliseconds: 50));
+      for (var step = 0; step < 8; step++) {
+        await drag.moveBy(Offset(0, pitch));
+        await tester.pumpAndSettle();
+      }
+      await drag.up();
+      await tester.pumpAndSettle();
+
+      expect(order(await harness.read(tester)), [
+        'P2',
+        'P3',
+        'P4',
+        'P1',
+        'Q1',
+        'Q2',
+      ]);
+      expect(
+        (await harness.read(
+          tester,
+        )).ports.firstWhere((p) => p.label == 'P1').bankKey,
+        'in',
+      );
+    });
+  });
+
   group('bands', () {
     testWidgets('one per bank, with its count, and they fold', (tester) async {
       await _pump(

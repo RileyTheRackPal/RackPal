@@ -375,6 +375,79 @@ class _PortGridState extends State<PortGrid> {
     });
   }
 
+  /// `Alt+Up` and `Alt+Down`: the selection slides one row (M4-F4).
+  void _nudge({required bool up}) => _reorderBy(
+    buildPortNudge(
+      body: widget.body,
+      moving: _selection.inOrder(_visibleRowKeys()),
+      up: up,
+    ),
+  );
+
+  /// A row dropped inside its band.
+  ///
+  /// THE WHOLE SELECTION TRAVELS WHEN THE GRABBED ROW IS IN IT, and only
+  /// the grabbed row otherwise: dragging a row that is not selected is the
+  /// same act as clicking one that is not selected, and neither should
+  /// drag eight rows nobody pointed at.
+  void _reorder(PortTableBand band, int from, int at) {
+    final dragged = band.rows[from].port.key.v;
+    final takesTheSelection =
+        _selection.length > 1 && _selection.contains(dragged);
+    final moving = takesTheSelection
+        ? [
+            for (final row in band.rows)
+              if (_selection.contains(row.port.key.v)) row.port.key.v,
+          ]
+        : [dragged];
+
+    // `at` is measured against the band with the dragged row already out
+    // of it, which is what `onReorderItem` guarantees and what the older
+    // `onReorder` did not.
+    final without = [
+      for (final row in band.rows)
+        if (row.port.key.v != dragged) row.port.key.v,
+    ];
+
+    // The nearest row above the drop that is NOT travelling. Walking
+    // backwards is what makes a block drop land where the pointer is
+    // rather than after one of its own members.
+    String? afterKey;
+    for (var i = at - 1; i >= 0; i--) {
+      if (!moving.contains(without[i])) {
+        afterKey = without[i];
+        break;
+      }
+    }
+
+    _reorderBy(
+      buildPortReorder(
+        body: widget.body,
+        moving: moving,
+        afterKey: afterKey,
+      ),
+    );
+  }
+
+  /// Runs a reorder plan, or shows why there is none.
+  ///
+  /// ONE TRANSACTION, so a block of eight rows is one `Ctrl+Z`, and its
+  /// own `LabelKey` so the Edit menu says "Reorder" rather than describing
+  /// the field write underneath.
+  void _reorderBy(PortReorderPlan plan) {
+    if (plan.refusal case final PortReorderRefusal refusal) {
+      setState(() => _fillRefusal = portReorderRefusalMessage(refusal));
+      return;
+    }
+    setState(() => _fillRefusal = null);
+    if (plan.commands.isEmpty) return;
+    widget.actions.transact(LabelKey.reorderPorts, (tx) {
+      for (final command in plan.commands) {
+        tx.add(command);
+      }
+    });
+  }
+
   /// Offers one cell write to the whole selection (M4-F2, DR-063).
   ///
   /// Returns TRUE when it took the write, so the row does not also write
@@ -549,6 +622,12 @@ class _PortGridState extends State<PortGrid> {
             return null;
           },
         ),
+        BuilderMoveRowIntent: CallbackAction<BuilderMoveRowIntent>(
+          onInvoke: (intent) {
+            _nudge(up: intent.up);
+            return null;
+          },
+        ),
       },
       child: _grid(context, table, columns, visible, issues),
     );
@@ -656,6 +735,7 @@ class _PortGridState extends State<PortGrid> {
                                   onColumnFocused: (id) =>
                                       _selection = _selection.withColumn(id),
                                   onBatchWrite: _writeBatch,
+                                  onReorder: _reorder,
                                 ),
                         ),
                       ],
@@ -713,7 +793,11 @@ class _Footer extends StatelessWidget {
 /// word ("a severity dot in the row gutter") and is also the only place
 /// it can go: a finding is about the ROW, and half of them name a column
 /// that may not be showing.
-const double kPortSelectGutter = 56;
+///
+/// 56 UNTIL M4-F4 PUT A DRAG HANDLE IN FRONT OF THE TICK BOX. §4.5's
+/// column table opens with `⠿` and the handle is 16 points plus the two
+/// the row already had no slack for, which is where the 20 went.
+const double kPortSelectGutter = 76;
 
 class _Toolbar extends StatelessWidget {
   const _Toolbar({
@@ -868,6 +952,7 @@ class _Bands extends StatelessWidget {
     required this.onTapRow,
     required this.onColumnFocused,
     required this.onBatchWrite,
+    required this.onReorder,
   });
 
   final PortTable table;
@@ -892,6 +977,10 @@ class _Bands extends StatelessWidget {
   final bool Function(String portKey, PortColumnId column, Object? value)
   onBatchWrite;
 
+  /// A row dropped: which band, where it came from, and where it landed
+  /// in the band with itself already taken out.
+  final void Function(PortTableBand band, int from, int at) onReorder;
+
   @override
   Widget build(BuildContext context) => CustomScrollView(
     slivers: [
@@ -909,8 +998,31 @@ class _Bands extends StatelessWidget {
           ),
         ),
         if (!collapsed.contains(band.bankKey))
-          SliverList.builder(
+          // ONE REORDERABLE LIST PER BAND, WHICH IS WHY THE BAND EDGE IS
+          // A WALL (DR-064). Flutter's reorderable lists do not hand an
+          // item to a sibling list, and the alternative was one flat list
+          // with the bank headers as ordinary items in it, which would
+          // cost the pinned header a person forty rows into the HDMI
+          // inputs is reading to know they are the HDMI inputs. The Bank
+          // column is the way across, and the refusal names it.
+          SliverReorderableList(
             itemCount: band.rows.length,
+            // `onReorderItem` and not `onReorder`: the older callback
+            // reports a `to` measured against the list BEFORE the dragged
+            // row leaves it, so dropping row 0 at the foot answers
+            // `length` rather than `length - 1`. Flutter deprecated it for
+            // exactly that off-by-one, and the replacement has already
+            // subtracted.
+            onReorderItem: (from, to) => onReorder(band, from, to),
+            // NO LIFT ANIMATION ON A GRID ROW. The default proxy scales
+            // and elevates the dragged item, which on a row 1400 points
+            // wide with cell borders reads as the row breaking apart
+            // rather than being carried.
+            proxyDecorator: (child, index, animation) => Material(
+              elevation: 4,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              child: child,
+            ),
             itemBuilder: (context, index) => _PortRow(
               // KEYED ON THE PORT, so that when M4-E2 puts a
               // `TextField` in a cell its controller follows the PORT
@@ -920,6 +1032,7 @@ class _Bands extends StatelessWidget {
               // third afterwards.
               key: ValueKey(band.rows[index].port.key.v),
               row: band.rows[index],
+              dragIndex: index,
               scale: scale,
               registries: registries,
               portSets: portSets,
@@ -1045,6 +1158,7 @@ class _BandDelegate extends SliverPersistentHeaderDelegate {
 class _PortRow extends StatelessWidget {
   const _PortRow({
     required this.row,
+    required this.dragIndex,
     required this.scale,
     required this.registries,
     required this.portSets,
@@ -1066,6 +1180,12 @@ class _PortRow extends StatelessWidget {
   });
 
   final PortTableRow row;
+
+  /// This row's position within its BAND, which is the index
+  /// `SliverReorderableList` speaks in. Not `portSeq`: that one counts the
+  /// whole template and the two part the moment a second bank exists.
+  final int dragIndex;
+
   final double scale;
   final Registries registries;
   final List<PortSetDef> portSets;
@@ -1223,6 +1343,26 @@ class _PortRow extends StatelessWidget {
             width: kPortSelectGutter * scale,
             child: Row(
               children: [
+                // docs/06 §4.5's first column, and the reason it is a
+                // HANDLE rather than the whole row being draggable: the
+                // row body is already a click target that selects and
+                // opens a cell for editing, and a press that might mean
+                // either would have to guess from how far the pointer
+                // travelled.
+                ReorderableDragStartListener(
+                  index: dragIndex,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.grab,
+                    child: Tooltip(
+                      message: 'Drag to reorder · Alt+Up, Alt+Down',
+                      child: Icon(
+                        Icons.drag_indicator,
+                        size: 16,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
                 // SHRUNK, because a `Checkbox` reserves Material's 48-point
                 // TAP TARGET by default and the gutter now has to hold a
                 // dot beside it. Measured: the default overflowed this row

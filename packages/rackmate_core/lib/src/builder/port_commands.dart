@@ -416,6 +416,27 @@ abstract final class PortDefField {
     set: _setReturnChannel,
   );
 
+  /// The declared position (CR-027), which has no column and is edited by
+  /// dragging a row (M4-F4).
+  ///
+  /// THE ONLY ENTRY HERE THAT IS NOT A CELL, and it is here rather than in
+  /// a command of its own for the reason the rest are: a reorder is a
+  /// single typed write to a single port, so it is the shape
+  /// [SetPortFieldCommand] already is. Giving it a bespoke command would
+  /// be a second undo path to the same field, and `port_reorder.dart` is
+  /// where the interesting part lives anyway.
+  ///
+  /// It is absent from `PortDefField.all`'s neighbours in the grid on
+  /// purpose: `portColumnFill` and `portColumnBatchEditable` are keyed on
+  /// `PortColumnId`, and there is no `PortColumnId.order`, so no fill and
+  /// no batch write can reach this. A column of order values would be a
+  /// second way to say what the drag handle says, and the two would drift.
+  static const order = PortField<FracIndex>(
+    key: 'order',
+    get: _getOrder,
+    set: _setOrder,
+  );
+
   /// Every entry above. The unit test walks this to prove no two share a
   /// [PortField.key] and that no accessor pair is aliased onto another
   /// field, which is the census M4-A's field table needed three attempts
@@ -468,6 +489,7 @@ abstract final class PortDefField {
     pinoutVariant,
     conductorCount,
     returnChannel,
+    order,
   ];
 }
 
@@ -491,6 +513,9 @@ void _setFace(PortDef p, Face v) => p.face = v;
 
 String? _getBankKey(PortDef p) => p.bankKey;
 void _setBankKey(PortDef p, String? v) => p.bankKey = v;
+
+FracIndex _getOrder(PortDef p) => p.order;
+void _setOrder(PortDef p, FracIndex v) => p.order = v;
 
 String? _getSetKey(PortDef p) => p.setKey;
 void _setSetKey(PortDef p, String? v) => p.setKey = v;
