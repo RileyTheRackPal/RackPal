@@ -57,6 +57,7 @@ export 'src/builder/port_commands.dart';
 export 'src/builder/port_fill.dart';
 export 'src/builder/port_reorder.dart';
 export 'src/builder/port_selection.dart';
+export 'src/builder/port_sort.dart';
 export 'src/builder/port_summary.dart';
 export 'src/builder/port_table.dart';
 export 'src/builder/port_tsv.dart';
