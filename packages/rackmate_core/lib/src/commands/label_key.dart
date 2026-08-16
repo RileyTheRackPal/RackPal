@@ -321,6 +321,14 @@ enum LabelKey {
   // happened.
   reorderPorts,
 
+  // COMMITTING A VIEW SORT (builder/port_sort.dart), M4-F5. Its own value
+  // and not `reorderPorts`, on the test every value here is split on:
+  // what the Edit menu has to say. A sort commit rewrites a whole bank at
+  // once and AC-058/D5 classes it as a data-loss edge; "Undo Reorder" in
+  // front of somebody who has just been through a confirm dialog names
+  // the wrong act, and the one they want back is the big one.
+  commitPortSort,
+
   // SAVING A TEMPLATE INTO THE PROJECT (commands/template_snapshot_
   // commands.dart), M4-D. This one IS a document command and belongs on
   // the document's stack, unlike `setTemplateProperty` above: the

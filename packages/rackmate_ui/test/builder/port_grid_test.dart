@@ -1199,6 +1199,234 @@ void main() {
     });
   });
 
+  group('view-only sort (M4-F5)', () {
+    /// Three rows whose labels sort differently from their declared
+    /// order, plus a second bank so the band rule is visible.
+    Future<_Harness> rows(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('c', order: 'a0000', bank: 'in')..label = 'CHARLIE',
+          _port('a', order: 'a0001', bank: 'in')..label = 'ALPHA',
+          _port('b', order: 'a0002', bank: 'in')..label = 'BRAVO',
+          _port('z', order: 'a0003', bank: 'out')..label = 'ZULU',
+        ]),
+    );
+
+    /// The labels as they are stacked on screen, top to bottom.
+    List<String> onScreen(WidgetTester tester, List<String> labels) {
+      final placed = [
+        for (final label in labels)
+          (label: label, y: tester.getCenter(find.text(label)).dy),
+      ]..sort((a, b) => a.y.compareTo(b.y));
+      return [for (final row in placed) row.label];
+    }
+
+    List<String> declared(TemplateBody body) => [
+      for (final port in portsInDeclaredOrder(body.ports)) port.label,
+    ];
+
+    Future<void> clickHeader(WidgetTester tester, String header) async {
+      await tester.tap(find.text(header));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('A CLICK SORTS THE VIEW AND NOT THE FILE, which is the '
+        'whole feature', (tester) async {
+      final harness = await rows(tester);
+
+      await clickHeader(tester, 'LABEL');
+
+      expect(onScreen(tester, ['CHARLIE', 'ALPHA', 'BRAVO']), [
+        'ALPHA',
+        'BRAVO',
+        'CHARLIE',
+      ]);
+      expect(declared(await harness.read(tester)), [
+        'CHARLIE',
+        'ALPHA',
+        'BRAVO',
+        'ZULU',
+      ]);
+    });
+
+    testWidgets('the badge says it is a view, and carries both ways out', (
+      tester,
+    ) async {
+      await rows(tester);
+      await clickHeader(tester, 'LABEL');
+
+      expect(find.textContaining('still in their declared order'), findsOne);
+      expect(find.widgetWithText(TextButton, 'Clear sort'), findsOne);
+      expect(find.widgetWithText(TextButton, 'Commit sort order'), findsOne);
+    });
+
+    testWidgets('a third click returns to the declared order', (tester) async {
+      // The way back matters more here than in a spreadsheet: the
+      // declared order is the truth, and somebody who clicked a header by
+      // accident needs a route to it that is not reloading the template.
+      await rows(tester);
+
+      await clickHeader(tester, 'LABEL');
+      await clickHeader(tester, 'LABEL');
+      expect(find.textContaining('Z–A'), findsOne);
+
+      await clickHeader(tester, 'LABEL');
+      expect(find.textContaining('declared order'), findsNothing);
+      expect(onScreen(tester, ['CHARLIE', 'ALPHA', 'BRAVO']), [
+        'CHARLIE',
+        'ALPHA',
+        'BRAVO',
+      ]);
+    });
+
+    testWidgets('the sort works inside each bank, and the bands stay', (
+      tester,
+    ) async {
+      await rows(tester);
+      await clickHeader(tester, 'LABEL');
+
+      // ZULU is alphabetically last but it is in the other bank, so it
+      // stays below all three IN rows rather than sorting among them.
+      expect(onScreen(tester, ['CHARLIE', 'ALPHA', 'BRAVO', 'ZULU']), [
+        'ALPHA',
+        'BRAVO',
+        'CHARLIE',
+        'ZULU',
+      ]);
+    });
+
+    testWidgets('THE DRAG HANDLE GOES INERT while a sort is showing', (
+      tester,
+    ) async {
+      await rows(tester);
+      expect(find.byType(ReorderableDragStartListener), findsNWidgets(4));
+
+      await clickHeader(tester, 'LABEL');
+
+      expect(find.byType(ReorderableDragStartListener), findsNothing);
+      // Drawn, not removed: the gutter does not reflow and the
+      // affordance reads as unavailable rather than as never existing.
+      expect(find.byIcon(Icons.drag_indicator), findsNWidgets(4));
+    });
+
+    testWidgets('Alt+Up refuses in words while a sort is showing', (
+      tester,
+    ) async {
+      final harness = await rows(tester);
+      await clickHeader(tester, 'LABEL');
+
+      await tester.tap(find.text('ALPHA'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.alt);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.alt);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Clear the sort first'), findsOne);
+      expect(declared(await harness.read(tester)), [
+        'CHARLIE',
+        'ALPHA',
+        'BRAVO',
+        'ZULU',
+      ]);
+    });
+
+    testWidgets('COMMIT ASKS FIRST, and cancelling changes nothing '
+        '(AC-058/D5)', (tester) async {
+      final harness = await rows(tester);
+      await clickHeader(tester, 'LABEL');
+
+      await tester.tap(find.widgetWithText(TextButton, 'Commit sort order'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsOne);
+      expect(find.textContaining('symbol pin order'), findsOne);
+      // Three, not two. CHARLIE, ALPHA, BRAVO into ALPHA, BRAVO, CHARLIE
+      // is a 3-cycle, so every row changes position and the count says
+      // so. A confirm that under-counted would be the one number in the
+      // dialog a person could check against the grid.
+      //
+      // SCOPED TO THE DIALOG, because the `in` band's own header also
+      // reads "3 ports" and an unscoped finder matched both. The count
+      // being right in the wrong widget is not the claim.
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.textContaining('3 ports'),
+        ),
+        findsOne,
+      );
+
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(declared(await harness.read(tester)), [
+        'CHARLIE',
+        'ALPHA',
+        'BRAVO',
+        'ZULU',
+      ]);
+      expect(find.textContaining('declared order'), findsOne);
+    });
+
+    testWidgets('confirming writes the order and clears the badge', (
+      tester,
+    ) async {
+      final harness = await rows(tester);
+      await clickHeader(tester, 'LABEL');
+
+      await tester.tap(find.widgetWithText(TextButton, 'Commit sort order'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Commit'));
+      await tester.pumpAndSettle();
+
+      expect(declared(await harness.read(tester)), [
+        'ALPHA',
+        'BRAVO',
+        'CHARLIE',
+        'ZULU',
+      ]);
+      // The view and the file are now the same thing, so a badge still
+      // saying "this is only a view" would describe a state that ended.
+      expect(find.textContaining('declared order'), findsNothing);
+      expect(find.byType(ReorderableDragStartListener), findsNWidgets(4));
+    });
+
+    testWidgets('a committed sort is one undo away', (tester) async {
+      final harness = await rows(tester);
+      await clickHeader(tester, 'LABEL');
+      await tester.tap(find.widgetWithText(TextButton, 'Commit sort order'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Commit'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+
+      expect(declared(await harness.read(tester)), [
+        'CHARLIE',
+        'ALPHA',
+        'BRAVO',
+        'ZULU',
+      ]);
+    });
+
+    testWidgets('committing an order that is already the declared one says '
+        'so rather than opening a dialog', (tester) async {
+      await rows(tester);
+      // KEY sorts a, b, c, z which is not the declared order; PORT SEQ is
+      // the declared order itself, so sorting by DESIG commits nothing.
+      await clickHeader(tester, 'DESIG');
+
+      await tester.tap(find.widgetWithText(TextButton, 'Commit sort order'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.textContaining('already in this order'), findsOne);
+    });
+  });
+
   group('bands', () {
     testWidgets('one per bank, with its count, and they fold', (tester) async {
       await _pump(

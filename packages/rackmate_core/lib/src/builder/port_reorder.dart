@@ -64,6 +64,15 @@ enum PortReorderRefusal {
   /// The destination is not a row this move may land after.
   destinationIsNotInTheBand,
 
+  /// A view sort is showing, so "up" on screen is not "up" in the order
+  /// this would write (M4-F5, DR-065).
+  ///
+  /// The drag handle is disabled outright while a sort is on; this is the
+  /// keyboard's answer and the belt to that pair of braces. Moving a row
+  /// under a sort would land it somewhere the person cannot predict from
+  /// what is in front of them, which is how a grid loses their trust.
+  theViewIsSorted,
+
   /// The two neighbours have no representable index between them.
   ///
   /// A hand-edited file only: `nextOrder` no longer mints the one pair
@@ -95,7 +104,11 @@ PortReorderPlan buildPortReorder({
   required TemplateBody body,
   required List<String> moving,
   required String? afterKey,
+  bool viewIsSorted = false,
 }) {
+  if (viewIsSorted) {
+    return const PortReorderPlan.refused(PortReorderRefusal.theViewIsSorted);
+  }
   if (moving.isEmpty) {
     return const PortReorderPlan.refused(PortReorderRefusal.nothingToMove);
   }
@@ -187,7 +200,11 @@ PortReorderPlan buildPortNudge({
   required TemplateBody body,
   required List<String> moving,
   required bool up,
+  bool viewIsSorted = false,
 }) {
+  if (viewIsSorted) {
+    return const PortReorderPlan.refused(PortReorderRefusal.theViewIsSorted);
+  }
   if (moving.isEmpty) {
     return const PortReorderPlan.refused(PortReorderRefusal.nothingToMove);
   }
@@ -274,6 +291,9 @@ String portReorderRefusalMessage(PortReorderRefusal refusal) =>
             'port to another bank.',
       PortReorderRefusal.destinationIsNotInTheBand =>
         'A row can only be dropped among the rows of its own bank.',
+      PortReorderRefusal.theViewIsSorted =>
+        'The grid is sorted, so moving a row would put it somewhere you '
+            'cannot see. Clear the sort first, or commit it.',
       PortReorderRefusal.noRoomBetweenTheRows =>
         'These two rows have no position left between them. Reordering '
             'never renumbers the bank, so there is nowhere to put this one.',

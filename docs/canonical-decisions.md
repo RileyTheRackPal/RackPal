@@ -11063,6 +11063,61 @@ from it, so moving a port renumbers it and everything below it. A silkscreen fol
 order of the jacks; CR-042 leaves the project to allocate, and a `designatorHint` the author pinned
 survives untouched, because that is what pinning means.
 
+### 11.64 DR-065 · A sort is a way of looking, and four things follow from saying so
+
+**Settled by the user on 2026-08-16**, during M4-F5 (`#212`). **Not a §8.3 amendment.** docs/06
+§4.6 already rules the sort view-only with a badge and `Commit sort order` a separate explicit
+action, and AC-058/D5 already gives that action a confirm. This records the four things neither
+document decides, each of which is a fork the implementation could not avoid.
+
+**11.64.1 A SORT WORKS INSIDE EACH BAND.** A bank is a presentation grouping the template's author
+made (CR-055) and the grid draws it as a pinned sticky header. A sort is a question about the rows,
+not about whether the grouping exists, so each band sorts within itself and the headers stay.
+
+Flattening the bands while sorted was the alternative and it loses twice: it hides the structure at
+the moment a person is scanning for an outlier, and it makes the commit **interleave the banks in
+the declared order**, which reorders the bands themselves. That is a large structural edit arriving
+from a header click.
+
+Sorting within a band also makes the commit a **permutation of the positions each band already
+occupies**: the k-th smallest index the band held goes to the k-th row on screen. No index is
+minted, so a commit can never be refused for lack of room; the band keeps its place among the other
+banks, so committing a sort of the HDMI inputs cannot move the outputs; and only the ports that
+actually move are written.
+
+**11.64.2 AN UNKNOWN IS NOT A VALUE, SO IT LEADS NEITHER ORDERING.** Unknowns sort **last ascending
+and last descending**, which means the null branch runs outside the direction flip.
+
+A spreadsheet treats a blank as the smallest thing there is. Here that answers *"the lowest
+impedance on this device is eight ports nobody has measured"*, which is the precise fabrication G4
+and CR-114 exist to prevent, delivered to the one person most likely to act on it. DR-063 made the
+same call one task earlier for a different reading of the same dash.
+
+**11.64.3 A REORDER REFUSES WHILE A SORT IS SHOWING.** The drag handle is drawn dimmed and inert,
+and `Alt+↑`/`Alt+↓` refuse in words naming the badge.
+
+Under a sort, *up on screen* is not *up in the order a move would write*, so a drag would land the
+row somewhere the person cannot predict from what is in front of them. The two rejected options
+were both worse: letting the gesture operate on the declared order makes the row visibly jump to an
+unrelated place, and having it silently commit the sort first turns a data-loss edge into an
+accident, which is the exact thing AC-058/D5 gave the action a confirm to prevent.
+
+**11.64.4 THE CONFIRM NAMES THE CONSEQUENCE, NOT THE ROWS.** *"This rewrites the declared order of N
+ports. The symbol pin order, the rear panel layout and the automatic designators all follow it.
+Undoable."*
+
+`completeness §D5` credits `Renumber` with having a diff and names `Commit sort order` as lacking
+one. A full before-and-after list is the honest reading of that, and it is 64 lines inside a modal
+on the device this grid exists for; **a list nobody reads is a confirm nobody reads.** What a person
+cannot see is not *which* rows move, which is on screen in front of them, but *what else follows the
+order*, which is three things and none of them visible here. The count is what makes it checkable.
+
+**11.64.5 WHAT IT DOES NOT DECIDE, AND ONE THING LEFT VISIBLE ON PURPOSE.** A sorted grid shows
+`J01` somewhere in the middle, because `PortTableRow.portSeq` is the rank in the **declared** order
+and the designator renders from it. That is not a defect to paper over: it is the one glance that
+tells a person the rows in front of them are not the rows in the file, and it is the reason the
+badge can be believed.
+
 ---
 
 ## 12. Superseded rulings
