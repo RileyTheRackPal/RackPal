@@ -222,3 +222,44 @@ String portBatchLabel(
   BatchAgreed(:final value) => portValueLabel(column, value, registries),
   BatchMixed(:final distinct) => 'Mixed ($distinct values)',
 };
+
+/// [column]'s closed answer set, or null when its values are open.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE OTHER HALF OF `portValueLabel`, AND THEY MUST STAY A PAIR
+/// ═══════════════════════════════════════════════════════════════════════
+/// One writes a value as text, this one lists the values that could have
+/// produced it, and `port_tsv.dart` inverts the first over the second to
+/// read a pasted cell. A second table of spellings would drift from the
+/// first the day an enum gains a member; walking `.values` cannot.
+///
+/// NULL IS NOT "NO OPTIONS". It means the column's values are OPEN: free
+/// text, a number, or a registry id whose set lives in `Registries` and
+/// is resolved by `resolveConnectorToken` / `resolveSignalFamilyToken`
+/// rather than enumerated here.
+///
+/// THE TRI-STATES LIST ONLY `true` AND `false`. Null is UNKNOWN and is
+/// every column's third answer, spelled by an empty cell on the clipboard
+/// and by `—` on screen, so listing it here would offer it twice.
+List<Object>? portColumnOptions(PortColumnId column) => switch (column) {
+  PortColumnId.direction => PortDirection.values,
+  PortColumnId.face => Face.values,
+  PortColumnId.audioLevel => AudioLevel.values,
+  PortColumnId.polarity => Polarity.values,
+  PortColumnId.poeRole => PoeRole.values,
+  PortColumnId.poeStandard => PoeStandard.values,
+  PortColumnId.sfpFormFactor => SfpFormFactor.values,
+  PortColumnId.fiberMode => FiberMode.values,
+  PortColumnId.serialRole => SerialRole.values,
+  PortColumnId.powerRole => PortPowerRole.values,
+  PortColumnId.topology => PortTopology.values,
+  PortColumnId.gender => Gender.values,
+  PortColumnId.returnChannel => ReturnChannel.values,
+
+  PortColumnId.balanced ||
+  PortColumnId.phantomPower ||
+  PortColumnId.busAddressable ||
+  PortColumnId.busTermination => const [true, false],
+
+  _ => null,
+};

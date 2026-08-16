@@ -51,6 +51,8 @@
 // Delete is here for the same reason, and it is not in M4-E's five tasks
 // either: a grid you can add to and not remove from is one nobody can
 // correct a mis-click in.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rackmate_core/rackmate_core.dart';
@@ -310,6 +312,69 @@ class _PortGridState extends State<PortGrid> {
     });
   }
 
+  /// `Ctrl+C`: the selected rows, as TSV, on the clipboard (M4-F3).
+  ///
+  /// THE VISIBLE COLUMNS, because what a person copied is what they can
+  /// see. Opening a pack widens the copy, which is the same rule the
+  /// batch inspector follows and needs no second explanation.
+  void _copy(List<String> visible, List<PortColumnId> columns) {
+    final keys = _selection.inOrder(visible);
+    if (keys.isEmpty) {
+      setState(() => _fillRefusal = kCopyNeedsRows);
+      return;
+    }
+    unawaited(
+      Clipboard.setData(
+        ClipboardData(
+          text: buildPortTsv(
+            body: widget.body,
+            columns: columns,
+            portKeys: keys,
+            registries: widget.registries,
+          ),
+        ),
+      ),
+    );
+    setState(
+      () => _fillRefusal = keys.length == 1
+          ? '1 port copied.'
+          : '${keys.length} ports copied.',
+    );
+  }
+
+  /// `Ctrl+V`: tab-separated cells from the focused cell (M4-F3).
+  Future<void> _paste(
+    List<String> visible,
+    List<PortColumnId> columns,
+  ) async {
+    final clip = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
+    final plan = parsePortTsv(
+      body: widget.body,
+      text: clip?.text ?? '',
+      columns: columns,
+      visibleRowKeys: visible,
+      // THE CARET, WHICH IS ONE ROW AND ONE COLUMN. The selection may be
+      // eight rows; a paste still lands from the cell the hand is in,
+      // exactly as it does in a spreadsheet, and the rows it covers are
+      // however many the clipboard holds.
+      anchorKey: _selection.anchor,
+      anchorColumn: _selection.column,
+      registries: widget.registries,
+    );
+    if (plan.refusal case final PortPasteRefusal refusal) {
+      setState(() => _fillRefusal = portPasteRefusalMessage(refusal, plan));
+      return;
+    }
+    setState(() => _fillRefusal = null);
+    if (plan.commands.isEmpty) return;
+    widget.actions.transact(LabelKey.fillPorts, (tx) {
+      for (final command in plan.commands) {
+        tx.add(command);
+      }
+    });
+  }
+
   /// Offers one cell write to the whole selection (M4-F2, DR-063).
   ///
   /// Returns TRUE when it took the write, so the row does not also write
@@ -469,6 +534,18 @@ class _PortGridState extends State<PortGrid> {
         BuilderFillSeriesIntent: CallbackAction<BuilderFillSeriesIntent>(
           onInvoke: (_) {
             _fill(buildFillSeries, visible);
+            return null;
+          },
+        ),
+        BuilderCopyCellsIntent: CallbackAction<BuilderCopyCellsIntent>(
+          onInvoke: (_) {
+            _copy(visible, columns);
+            return null;
+          },
+        ),
+        BuilderPasteCellsIntent: CallbackAction<BuilderPasteCellsIntent>(
+          onInvoke: (_) {
+            unawaited(_paste(visible, columns));
             return null;
           },
         ),

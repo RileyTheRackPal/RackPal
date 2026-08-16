@@ -832,6 +832,149 @@ void main() {
     });
   });
 
+  group('TSV copy and paste (M4-F3)', () {
+    /// The platform clipboard is a channel, not a variable: a widget test
+    /// has no OS behind it, so the handler below IS the clipboard for the
+    /// duration of a test. Without it `Clipboard.getData` answers null
+    /// and every paste case would pass by doing nothing.
+    String? clipboard;
+
+    setUp(() {
+      clipboard = null;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+            if (call.method == 'Clipboard.setData') {
+              clipboard = (call.arguments as Map)['text'] as String?;
+              return null;
+            }
+            if (call.method == 'Clipboard.getData') {
+              return clipboard == null ? null : {'text': clipboard};
+            }
+            return null;
+          });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    Future<_Harness> three(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001'),
+          _port('p3', order: 'a0002'),
+        ]),
+    );
+
+    Future<void> chord(WidgetTester tester, LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> click(
+      WidgetTester tester,
+      String text, {
+      LogicalKeyboardKey? holding,
+    }) async {
+      if (holding != null) await tester.sendKeyDownEvent(holding);
+      await tester.tap(find.text(text));
+      if (holding != null) await tester.sendKeyUpEvent(holding);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('Ctrl+C puts the selected rows on the clipboard, headed', (
+      tester,
+    ) async {
+      await three(tester);
+
+      await click(tester, 'P1');
+      await click(tester, 'P3', holding: LogicalKeyboardKey.shift);
+      await chord(tester, LogicalKeyboardKey.keyC);
+
+      final text = clipboard;
+      expect(text, isNotNull);
+      final lines = text!.split('\n');
+      expect(lines, hasLength(4), reason: 'a header and three rows');
+      expect(lines.first, contains('LABEL'));
+      expect(lines[1], contains('P1'));
+      expect(find.textContaining('3 ports copied'), findsOne);
+    });
+
+    testWidgets('THE ROUND TRIP THROUGH THE REAL CLIPBOARD: copy three '
+        'rows, paste them back, and nothing moved', (tester) async {
+      final harness = await three(tester);
+
+      await click(tester, 'P1');
+      await click(tester, 'P3', holding: LogicalKeyboardKey.shift);
+      await chord(tester, LogicalKeyboardKey.keyC);
+      await chord(tester, LogicalKeyboardKey.keyV);
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.label), ['P1', 'P2', 'P3']);
+    });
+
+    testWidgets('a paste writes what the clipboard says, from the caret', (
+      tester,
+    ) async {
+      final harness = await three(tester);
+
+      clipboard = 'ONE\nTWO';
+      await click(tester, 'P1');
+      await chord(tester, LogicalKeyboardKey.keyV);
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.label), ['ONE', 'TWO', 'P3']);
+    });
+
+    testWidgets('A PASTE DOES NOT CREATE PORTS, and says by how many', (
+      tester,
+    ) async {
+      final harness = await three(tester);
+
+      clipboard = 'A\nB\nC\nD\nE';
+      await click(tester, 'P1');
+      await chord(tester, LogicalKeyboardKey.keyV);
+
+      expect(find.textContaining('2 rows more'), findsOne);
+      final body = await harness.read(tester);
+      expect(
+        body.ports.map((p) => p.label),
+        ['P1', 'P2', 'P3'],
+        reason:
+            'it refused entirely rather than writing three and truncating: '
+            'a half-applied paste is worse than none',
+      );
+    });
+
+    testWidgets('the whole paste is ONE Ctrl+Z', (tester) async {
+      final harness = await three(tester);
+
+      clipboard = 'ONE\nTWO\nTHREE';
+      await click(tester, 'P1');
+      await chord(tester, LogicalKeyboardKey.keyV);
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.label), ['P1', 'P2', 'P3']);
+    });
+
+    testWidgets('copying nothing says so rather than putting an empty '
+        'sheet on the clipboard', (tester) async {
+      await three(tester);
+
+      await chord(tester, LogicalKeyboardKey.keyC);
+
+      expect(find.textContaining('Select one or more rows'), findsOne);
+      expect(clipboard, isNull);
+    });
+  });
+
   group('bands', () {
     testWidgets('one per bank, with its count, and they fold', (tester) async {
       await _pump(

@@ -243,7 +243,7 @@ Two column shapes also changed under measurement. `Dir` is a dropdown spelling a
 | Find & replace | `Ctrl+H` | Scoped to labels, keys, designators or notes; regex opt-in |
 | Change type… | `Ctrl+T` | Bulk connector/family change with an impact preview |
 | Move to bank… | `Ctrl+M` | |
-| Copy / paste | `Ctrl+C` / `Ctrl+V` | TSV round-trips to Excel and back |
+| Copy / paste | `Ctrl+C` / `Ctrl+V` | TSV round-trips to Excel and back. **A header row leads the clipboard** so what lands in Excel is a sheet, and a paste drops a first line whose every cell is a column header. The connector writes its trade alias (`RJ45`) and the family its display name, both of which the existing resolvers read back, so it is readable and lossless at once. **An unknown is an EMPTY cell, never `—`.** **A paste does not create ports**: it refuses and says by how many, as the drop table's does |
 | Sort | click header | **View-only by default**, shown with a badge. `Commit sort order` is a separate explicit action, because sorting is destructive to symbol pin order |
 | Mirror bank | bank context menu | Duplicates a bank with direction flipped and the label prefix swapped IN↔OUT, the output side of a matrix in one click |
 
