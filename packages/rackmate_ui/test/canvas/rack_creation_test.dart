@@ -173,6 +173,63 @@ void main() {
     expect(find.text('RK-1'), findsNothing);
   });
 
+  testWidgets('EACH RACK REMEMBERS WHERE IT WAS LEFT (DR-066)', (
+    tester,
+  ) async {
+    // A viewport is a way of LOOKING at the document, so it lives on the
+    // screen's state and nowhere else: not in the `.rmpj`, where a pan
+    // would dirty a file under CR-117's byte round-trip, and not in
+    // preferences, where a bad view would outlive the restart that is
+    // currently how you escape one.
+    //
+    // ASSERTED THROUGH THE LIVE VIEWPORT, not through a remembered field.
+    // The transform is what the canvas actually paints with, so a restore
+    // that wrote the map and not the matrix cannot pass this.
+    await tester.pumpWidget(_app());
+    await tester.pump();
+
+    final viewport = tester
+        .renderObject<RenderRackCanvas>(find.byType(RackCanvasBody))
+        .viewport;
+
+    // Move RK-1's view somewhere distinctive.
+    final onRk1 = (viewport..panBy(const Offset(-140, -55))).transform.clone();
+    await tester.pump();
+
+    await _createRackByKeyboard(tester, name: 'Equipment Room');
+    expect(find.text('RK-2'), findsOneWidget);
+
+    // NOTHING IS ASSERTED ABOUT RK-2's OWN FRAMING HERE, and the first
+    // draft of this case got that wrong: it expected RK-2 not to inherit
+    // RK-1's pan, and RK-2 inherits the HORIZONTAL pan because seeding a
+    // rack nobody has visited is still `#710`'s minimum vertical nudge.
+    // Fit-and-centre is filed, not built, and a test that asserted it
+    // here would be asserting the feature that is not in this commit.
+
+    // Move RK-2 somewhere else, so the restore below cannot pass by the
+    // viewport simply never having moved.
+    viewport.panBy(const Offset(60, 30));
+    await tester.pump();
+
+    // Back to RK-1 through the switcher the header only shows once there
+    // is something to switch between.
+    await tester.tap(find.byTooltip('Switch rack'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('RK-1').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('RK-1'), findsOneWidget);
+    expect(
+      viewport.transform.storage[12],
+      closeTo(onRk1.storage[12], 0.001),
+      reason: 'RK-1 did not come back to where it was left',
+    );
+    expect(
+      viewport.transform.storage[13],
+      closeTo(onRk1.storage[13], 0.001),
+    );
+  });
+
   testWidgets('the new rack starts empty: the demo devices belong to RK-1 '
       'and are not drawn on RK-2', (tester) async {
     await tester.pumpWidget(_app());
