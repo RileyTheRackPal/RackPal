@@ -11176,6 +11176,67 @@ change to the opening view costs nothing in test edits.
 
 ---
 
+### 11.66 DR-067 · A class you can assert, and a classifier you can hear disagree
+
+**Settled by the user on 2026-08-17**, during M3 (`#712`). **Not a §8.3 amendment.** DR-008 §11.8.2
+already rules the classifier advisory, a user's class binding, and the disagreement visible. What
+none of that decided is where a person does it, which is why for two milestones the answer was
+**nowhere**: `SetLinkClassCommand` and `ClearLinkClassOverrideCommand` were complete in core, with
+undo, and no surface in the product called either. A class could be classified and never asserted.
+
+**11.66.1 THE CONTROL IS A `CLASS` COLUMN IN THE STRUCTURE EDITOR, AND ITS MENU HAS FIVE ENTRIES.**
+Four classes plus `AUTO`.
+
+The editor already owns the machinery this needs: closed-set dropdown cells, fill-down, the batch
+bar, and one edit path per column. The schematic's selection inspector was the alternative and it
+reaches more links, jumpers and rack-to-rack runs included, but setting a class one wire at a time
+is the ergonomics DR-020 §11.19.2(5) rejected for lengths in the same words: "one table with a
+column they tab down, not sixty inspector visits". **What this deliberately does not reach is a link
+with no `structureOrigin`**, which is a real gap and is recorded as one rather than papered over;
+the inspector remains the right home for it and is not built.
+
+**`AUTO` IS NOT THE DASH AND THE DIFFERENCE IS THE COLUMN'S POINT.** The dash means the classifier
+could not resolve an end, which is G4 applied to a classifier and is a fact about the document.
+`AUTO` means "let the classifier decide", which is a decision and is the default state of every
+link. Spelling them the same would make handing a run back indistinguishable from declaring it a
+mystery. It also follows that the dash is **not on the menu**, so a run with an effective class of
+nothing has no option to sit on and renders as a hint over an empty value.
+
+**11.66.2 THE COLUMN IS OPTIONAL, NOT A NINTH DEFAULT.** §4.1's set answers *"what am I pulling and
+where does it land"*. A class is normally derived and normally right, so a column carrying it by
+default would spend width teaching people something the classifier already knows. `FIELD TERM`
+became a default at DR-046 because two ends were being conflated into one; nothing here is being
+got wrong by default.
+
+**11.66.3 AN OVERRIDE IS PINNED, AND THE PIN CARRIES THE CLASSIFIER'S ANSWER IN WORDS.** A cell a
+person has set draws a pin; resting on it says so, and says what the classifier now reads the run as
+when the two differ.
+
+**NOT AN ERROR, AND NOT A VALIDATION FINDING.** Overruling the classifier is something §11.8.2
+provides for. A rule not in the 28-rule catalogue does not exist (CR-021), and a warning on a
+legitimate act is how people learn to ignore warnings. The mark is drawn in `tertiary`, never in
+`error`.
+
+**A SENTENCE, NOT A COLOUR.** §11.8.2's clause is that the disagreement stays *visible*, and a
+glyph that changes shade says only "something". *"You set jumper; this now looks like a field
+cable"* is the statement the ruling asks for, and it is the only thing that keeps an override
+auditable after the document moves under it. Both endings name `AUTO`, because a pin a person cannot
+see how to remove is the one-way door `ClearLinkClassOverrideCommand` exists to prevent.
+
+**11.66.4 PICKING THE WORD ALREADY ON SCREEN IS AN EDIT HERE, AND ONLY HERE.** For `ROUGH-IN`,
+`FIELD TERM` and `RACK TERM` the label shown is the stored value, so re-picking it changes nothing.
+For `CLASS` the label shown is normally the **classifier's**, so picking it moves the run from
+"nobody has said" to "a person says so". That is a real change of state, and it is the one
+`SetLinkClassCommand` explicitly refuses to demote: an assertion that happens to agree today is
+still an assertion, and dropping it would lose the person's word the next time the document moved.
+
+**11.66.5 WHAT `AUTO` DOES NOT DO.** It drops the pin and leaves the stored class where it was,
+inert. Writing the classifier's current answer into the field on the way out would store a value
+computable from other stored facts, which is what CR-107 deleted `StructureDrop` for, and would make
+undo restore a value no person ever chose.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
