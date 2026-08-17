@@ -145,6 +145,22 @@ class RenderRackCanvas extends RenderBox
     markNeedsPaint();
   }
 
+  // A MUTATED TRANSFORM LAYER WAS TRIED HERE AND REVERTED (`#707`).
+  // See `render_schematic_canvas.dart`'s note of the same name: it broke
+  // the app, and the widget cases that were supposed to protect it were
+  // asserting on a field the listener itself had just written.
+  //
+  // The symptom HERE was the more informative of the two. The rack's
+  // content moved with the pan and its chrome did not, which is what a
+  // layer mutated behind the framework's back looks like: the siblings
+  // that still repaint through `markNeedsPaint` moved, and the ones the
+  // mutation was steering did not agree with them.
+
+  /// scene → screen: this render object's paint offset, then the viewport.
+  Matrix4 _sceneToScreen(Offset offset) =>
+      Matrix4.translationValues(offset.dx, offset.dy, 0)
+        ..multiply(_viewport.transform);
+
   TextMeasurer _measurer;
   TextMeasurer get measurer => _measurer;
   set measurer(TextMeasurer value) {
@@ -224,9 +240,7 @@ class RenderRackCanvas extends RenderBox
   }
 
   void _paintTransformed(PaintingContext context, Offset offset) {
-    // scene → screen: this render object's paint offset, then the viewport.
-    final matrix = Matrix4.translationValues(offset.dx, offset.dy, 0)
-      ..multiply(_viewport.transform);
+    final matrix = _sceneToScreen(offset);
     _transformLayer.layer = context.pushTransform(
       needsCompositing,
       Offset.zero,
@@ -252,8 +266,23 @@ class RenderRackCanvas extends RenderBox
     super.dispose();
   }
 
+  /// How many times the scene has actually been replayed.
+  ///
+  /// THE ARTIFACT `#704` IS ABOUT. A pan that does not increment this is a
+  /// pan that did no Dart painting, which is a claim a timing test on a
+  /// build machine cannot make.
+  @visibleForTesting
+  int debugSceneRecordings = 0;
+
   void _paintScene(PaintingContext context, Offset offset) {
     // `offset` is Offset.zero here; the canvas is in scene space.
+    debugSceneRecordings++;
+    // The schematic's twin: see `render_schematic_canvas.dart`'s note.
+    // `#704` removed the Dart cost of a pan and left the RASTER cost, and
+    // an elevation zoomed in is a lot of fill. The picture does not change
+    // while the viewport moves, so a pan should re-project a cached
+    // texture rather than re-fill every chassis and every device.
+    context.setIsComplexHint();
     // L1 — chassis: replay its absolute fragment as the background.
     if (_scene.fragments.containsKey(_rackId)) {
       final canvas = FlutterDiagramCanvas(

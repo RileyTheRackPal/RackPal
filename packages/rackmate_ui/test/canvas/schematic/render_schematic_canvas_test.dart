@@ -319,6 +319,14 @@ void main() {
       // docs/03 §7.3: "no setState in the canvas path". The render object
       // subscribes to the `ViewportController` in `attach`, so a pan is a
       // pure repaint.
+      //
+      // `#704` REPLACED THIS CASE AND `#707` PUT IT BACK. The replacement
+      // asserted that a pan marks NOTHING needing paint, which was true of
+      // the mechanism it shipped with and false of what reached the
+      // screen: the schematic stopped panning in the real app while this
+      // file stayed green. A widget test does not composite, so "the
+      // canvas is clean" is a claim it can check and "the canvas moved" is
+      // not. This case is back to checking the thing it can actually see.
       final vp = await pump(tester, planFor());
       final ro = renderObjectIn(tester);
       expect(ro.debugNeedsPaint, isFalse);

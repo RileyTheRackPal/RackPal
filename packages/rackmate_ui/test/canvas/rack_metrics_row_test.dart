@@ -17,6 +17,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
+import 'rack_scene_to_screen.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -629,11 +631,14 @@ void main() {
     /// — the same geometry the scene was built with, and nothing the chip
     /// strip has any part in computing.
     Set<int> renderedRu(WidgetTester tester) {
-      final origin = tester.getTopLeft(find.byType(CanvasIntentDetector));
       final out = <int>{};
       for (final box in tester.allRenderObjects.whereType<RenderDeviceBox>()) {
         final deviceH = (box.size.height / RackGeometry.unitsPerRu).round();
-        final top = box.localToGlobal(Offset.zero).dy - origin.dy;
+        // THROUGH THE VIEWPORT (`#710`). This subtracted the canvas origin,
+        // which converts screen to scene only while the two differ by a
+        // translation — i.e. only at zoom 1. The opening view now frames
+        // the rack, so the inverse has to be the real one.
+        final top = sceneOf(tester, box.localToGlobal(Offset.zero)).dy;
         final ru = geo.ruIndexForTopY(top, deviceH);
         for (var u = ru; u < ru + deviceH; u++) {
           out.add(u);

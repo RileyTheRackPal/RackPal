@@ -11120,6 +11120,62 @@ badge can be believed.
 
 ---
 
+### 11.65 DR-066 · The viewport is a way of looking: framed on arrival, remembered on return
+
+**Settled by the user on 2026-08-17**, during M6 (`#710`, and DR-066's own commit). **Not a §8.3
+amendment.** No document decided what a rack canvas shows when you first look at it; the screen
+did whatever `reset()` plus a caret nudge happened to produce, which was zoom 1.0 with U1 pushed
+just far enough onto the screen to be legal.
+
+**11.65.1 A RACK ARRIVES SHOWING ALL OF ITSELF.** The opening view fits the whole rack into the
+canvas and centres it.
+
+At zoom 1.0 a 42U rack shows about two thirds of its height, so the first act of every session was
+to zoom out, and the state a person judges an elevation from was one they had to build by hand
+every time. Nothing in the corpus required unity: CR-001's integer units fix what a scene
+coordinate *means*, not what magnification it is drawn at, in the same way that defining a metre
+does not commit a map to printing at 1:1.
+
+**11.65.2 CENTRED IN THE SPACE THAT IS FREE, NOT IN THE BOX.** The fit targets the canvas minus an
+84px top band, and the result is then pushed down past it.
+
+The zoom HUD, the face toggle and the header row are all pinned at `top: 12` and span roughly 60px
+of floating chrome. docs/04 §4.1's drag-to-resize is an 8px grab band centred on the rack's **top
+edge**, which is precisely where a raw centring puts that edge: under the chrome, where no pointer
+reaches it. A documented affordance that cannot be clicked is not a cosmetic defect, and nine
+widget cases reported it within the same minute the framing changed.
+
+**11.65.3 EACH RACK REMEMBERS WHERE IT WAS LEFT, FOR THE SESSION.** Switching to RK-2 and back
+returns RK-1 to the pan and zoom it was left at. The memory lives on the screen's state: not in the
+`.rmpj`, where a pan would dirty a file under CR-117's byte round-trip, and not in preferences,
+where a bad view would outlive the restart that is currently the only way to escape one.
+
+**A REMEMBERED VIEW IS DECLINED WHEN THE RACK'S HEIGHT CHANGED.** Growing a rack from 9U to 42U
+moves U1 by up to 726 scene units, which is off the bottom of any window this app supports, so a
+view remembered at the old height is not a view of the same thing. The height is therefore stored
+beside the matrix and a mismatch re-frames under 11.65.1 rather than restoring.
+
+**11.65.4 NOTHING CHASES A CARET ACROSS A RACK SWITCH.** The keep-the-caret-visible pan declines
+while the viewport still belongs to a different rack than the model does.
+
+This is recorded because the bug it fixes is invisible by construction and will be re-introduced by
+anyone who does not know it. The caret listener fires from `setState`, one layout **before** the
+framing pass, so for one moment the geometry is the incoming rack's while the matrix is still the
+outgoing rack's. A screen-space answer computed across that mismatch describes neither rack:
+switching a 12U view to a 42U rack put U1 at y = 2960 on a 1000px canvas, so the pan "rescued" a
+caret that was never lost by moving 1984px, and the memory in 11.65.3 then recorded that as where
+the outgoing rack was left. The restore was returning RK-1 to a place it had never been.
+
+**11.65.5 WHAT THIS COSTS THE TEST SUITE, RECORDED SO IT IS NOT RE-LEARNED.** Sixty-six widget
+cases failed on the first framing change, none of them because the behaviour was wrong. Every one
+had written `canvasOrigin(tester) + Offset(rect.left, rect.top)`, which is scene→screen **only
+while the transform is the identity**, and eight drag cases had passed scene units to `moveBy` as
+though they were pixels. A test that hard-codes a camera is asserting the mechanism, not the
+artifact. They now go through the same `ViewportController` the canvas paints with, so the next
+change to the opening view costs nothing in test edits.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

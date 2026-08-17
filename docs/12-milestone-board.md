@@ -1030,6 +1030,44 @@ the pod loop, shifting `nextId`'s global counter by one for every later id, and 
 on the first run. And the shape assertion caught the device count: **94 per pod, not 93**, because
 `schematic_fixture.dart`'s own header omits the Structure device from its total.
 
+#### 5.1.10 THE PAN JANK WAS THE GRID, AND FOUR COMMITS CHASED THE WRONG THING FIRST (`#709`)
+
+**Reported by the user on 2026-08-16**: panning either canvas ran "at an abysmal framerate", with
+the middle mouse button, the wheel and sideways scroll alike. Fixed on 2026-08-17 by `#709`.
+
+**THE CAUSE.** `GridPainter` padded the region it baked by **one full viewport on every side**,
+which is nine screens of anti-aliased lines rasterised for every frame of a pan. `_minScreenSpacing
+= 5` switches the minor tier on below about 0.71x zoom and the major below about 0.14x, so the cost
+appeared exactly at working zoom and vanished when zoomed out. Both canvases share the painter,
+which is why both were slow. The padding is now two tiles.
+
+**FOUR COMMITS LANDED BEFORE THAT, ALL ON A PREMISE THAT WAS FALSE**, and the sequence is recorded
+because the mistake was cheap to make and expensive to unmake.
+
+| | What it assumed | What was true |
+|---|---|---|
+| `#704` | A pan should repaint nothing; move the transform to a layer | Broke both canvases in the user's hands. Its tests asserted a field the listener under test had just written, so they were vacuous |
+| `#705` | The base plan is rebuilt per frame | Real and kept: the memoised plan stands on its own |
+| `#706` | The engine should keep the raster | Six lines, no state; kept |
+| `#708` | The display-list walk is expensive during a pan | Reverted. The profiler, once bounded to the pan window, returned **seven samples, six with no Dart frame at all** |
+
+**Dart is idle while you pan.** Every commit above `#709` was optimising Dart-side work in a frame
+where Dart does nothing. The first profiling run said otherwise only because the query was
+unbounded (`timeOrigin: 0`, `timeExtent: 1 << 40`) and returned the whole ring buffer back to
+launch. The decisive evidence was the user's own: *"buttery smooth zoomed all the way out"*, which
+says the cost scales with **pixels covered**, not with ops issued, and no amount of Dart-side
+caching addresses that.
+
+**`#702` IS UNAFFECTED AND STAYS FILED.** §5.1.9's 88 ms is at twelve pods; the largest shipped
+starter, `whole_house.rmpj`, has 96 devices and 27 links. It is a headroom defect, not an MVP one,
+and it was never what the user was feeling.
+
+**AND THE PAINT WORK EXPOSED A SECOND DEFECT WORTH NAMING.** Once the opening view framed the whole
+rack (DR-066, `#710`), the keep-the-caret-visible pan began firing across rack switches with the
+incoming rack's geometry and the outgoing rack's matrix, panning 1984px to rescue a caret that was
+never lost. Canon §11.65.4 has the mechanism. It predates the framing change and was merely too
+small to notice at zoom 1.0.
+
 ### 5.2 M3, Structure and the field · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** A 60-drop whole-house rough-in is entered in under fifteen minutes,

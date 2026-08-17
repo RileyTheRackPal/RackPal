@@ -27,6 +27,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
+import 'rack_scene_to_screen.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -158,17 +160,28 @@ Widget _app(RackDocument doc) => MaterialApp(
   ),
 );
 
-/// A point inside §4.1's 8px top-edge grab band — scene y == 0 is the rack's
-/// top edge and the viewport starts at identity (see
-/// canvas_exclusivity_test.dart's own copy).
+/// A point inside §4.1's 8px top-edge grab band.
+///
+/// THE ANCHOR GOES THROUGH THE VIEWPORT AND THE INSET DOES NOT (`#710`).
+/// The band is 8 SCREEN px scale-compensated, so the 2px offset stays in
+/// screen units while scene y == 0 — the rack's top edge — is asked of the
+/// live transform rather than assumed to be the canvas corner.
+///
+/// The x is the RACK'S CENTRE for `rack_resize_drag_test.dart`'s reason: a
+/// fixed scene x that cleared the zoom HUD on the left at identity zoom
+/// lands under the face toggle on the right once the rack is framed, and
+/// centring puts the rack's middle at the canvas's middle, clear of both.
 Offset _topEdgeGrab(WidgetTester tester) =>
-    tester.getTopLeft(find.byType(CanvasIntentDetector)) + const Offset(200, 2);
+    sceneToScreen(tester, _hatchGeo.rackWidth / 2, 0) + const Offset(0, 2);
+
+/// The document under test is a 24U rack.
+const _hatchGeo = RackGeometry(24);
 
 /// Drags the top edge from 24U down to 12U, leaving the pointer DOWN so the
 /// live preview can be inspected.
 Future<TestGesture> _dragTopEdgeTo12U(WidgetTester tester) async {
   final g = await tester.startGesture(_topEdgeGrab(tester));
-  await g.moveBy(const Offset(0, 12 * RackGeometry.unitsPerRu));
+  await g.moveBy(sceneDelta(tester, 0, 12 * RackGeometry.unitsPerRu));
   await tester.pump();
   return g;
 }

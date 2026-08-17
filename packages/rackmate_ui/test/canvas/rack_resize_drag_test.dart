@@ -34,6 +34,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
+import 'rack_scene_to_screen.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -57,35 +59,49 @@ Widget _app() => MaterialApp(
   home: Scaffold(body: RackCanvasScreen(measurer: _FakeMeasurer())),
 );
 
-Offset _canvasOrigin(WidgetTester tester) =>
-    tester.getTopLeft(find.byType(CanvasIntentDetector));
-
-/// A scene point expressed on screen. The viewport is identity at startup,
-/// so scene (0, 0) is the canvas widget's own top-left — the rack's top edge.
+/// A scene point expressed on screen, THROUGH THE LIVE VIEWPORT (`#710`).
+///
+/// This used to be `canvasOrigin + Offset(x, y)` and said so: "the viewport
+/// is identity at startup, so scene (0, 0) is the canvas widget's own
+/// top-left". That stopped being true when the screen started framing the
+/// rack on open, and it was the assumption, not the arithmetic, that had
+/// to change.
 Offset _scene(WidgetTester tester, double x, double y) =>
-    _canvasOrigin(tester) + Offset(x, y);
+    sceneToScreen(tester, x, y);
 
 /// The rack's top edge, this far INSIDE §4.1's 8px band. The band is centred
 /// on the edge (`|y| <= 8`), and grabbing at a non-zero offset is the
 /// realistic case: it is what proves the offset is preserved rather than the
 /// edge teleporting to the pointer on the first move.
+///
+/// SCREEN PIXELS, NOT SCENE UNITS, and `#710` is what made the difference
+/// visible. `_topEdgeBandPx` is 8 SCREEN px divided by the viewport scale
+/// before it is compared, exactly like the 4px click slop, so it stays 8
+/// physical pixels at every zoom. While the opening view was the identity
+/// transform the two units were the same number and nothing said which one
+/// this was; at a fitted zoom a 4-unit scene inset is 9.6 screen px and
+/// falls OUTSIDE the band it is supposed to be inside.
 const double _grabInset = 4;
 
-/// The scene x every gesture in this file presses at, and NOT the rack's
-/// centre — which is where this was first written, and it made a test pass
-/// vacuously.
+/// The scene x every gesture in this file presses at.
 ///
-/// The zoom HUD is a `Positioned` Card occupying scene x 12–188, y 12–72, so
-/// a press at the rack's horizontal centre (x ≈ 133) lands ON THE HUD for any
-/// y at or below 12. The band-boundary probe below therefore never reached
-/// `_onBeginDrag` at all, and passed identically with the 8px band widened to
-/// 40 — it was asserting that a button swallows pointers. 220 is inside the
-/// rack panel (which spans 28–267) and clear of the HUD at every y this file
-/// presses at, and the band test now proves the column is live canvas by
-/// pressing the SAME x twice with only the y differing.
-const double _probeX = 220;
+/// THE RACK'S HORIZONTAL CENTRE, AND IT HAS BEEN BOTH ANSWERS. It was the
+/// centre once and that was wrong: the zoom HUD is a `Positioned` Card at
+/// the canvas's top-left, and at identity zoom the rack's centre (x ≈ 133)
+/// sat under it, so the band probe never reached `_onBeginDrag` and passed
+/// identically with the 8px band widened to 40. It was moved to 220, which
+/// cleared the HUD at identity.
+///
+/// `#710` inverted that. With the rack framed and CENTRED, scene x 220 maps
+/// to screen x ≈ 1071 on a 1600px window, which is underneath the face
+/// toggle in the canvas's top-RIGHT — the same defect, mirrored. The rack's
+/// centre is now the one x that is clear of both, because centring is what
+/// the opening view does: it puts the rack's middle at the canvas's middle,
+/// as far from either corner's chrome as the geometry allows.
+double get _probeX => _geo.rackWidth / 2;
 
-Offset _topEdgeGrab(WidgetTester tester) => _scene(tester, _probeX, _grabInset);
+Offset _topEdgeGrab(WidgetTester tester) =>
+    _scene(tester, _probeX, 0) + const Offset(0, _grabInset);
 
 /// Where the pointer must be for the top edge to imply [heightU].
 ///
@@ -96,7 +112,8 @@ Offset _topEdgeGrab(WidgetTester tester) => _scene(tester, _probeX, _grabInset);
 /// re-deriving `(12 - heightU) * 22`, so this helper cannot drift from the
 /// production inverse it is aiming at.
 Offset _pointerFor(WidgetTester tester, int heightU) =>
-    _scene(tester, _probeX, _geo.yOfBoundary(heightU) + _grabInset);
+    _scene(tester, _probeX, _geo.yOfBoundary(heightU)) +
+    const Offset(0, _grabInset);
 
 /// Where the pointer must be for the top edge to imply a FRACTIONAL
 /// [heightU], i.e. a position between two U boundaries.
@@ -104,11 +121,13 @@ Offset _pointerFor(WidgetTester tester, int heightU) =>
 /// The whole-U [_pointerFor] can say nothing about the snap RULE, because
 /// `round`, `ceil` and `floor` all agree on an exact boundary. This one
 /// aims at deliberately off-boundary positions so they disagree.
-Offset _pointerForFractional(WidgetTester tester, double heightU) => _scene(
-  tester,
-  _probeX,
-  _geo.rackHeight - heightU * RackGeometry.unitsPerRu + _grabInset,
-);
+Offset _pointerForFractional(WidgetTester tester, double heightU) =>
+    _scene(
+      tester,
+      _probeX,
+      _geo.rackHeight - heightU * RackGeometry.unitsPerRu,
+    ) +
+    const Offset(0, _grabInset);
 
 /// Pans the viewport DOWN by [dy] screen px through `CanvasIntentDetector`'s
 /// own middle-button pan route (a BUTTON check, not a device-kind one — see
@@ -120,7 +139,8 @@ Offset _pointerForFractional(WidgetTester tester, double heightU) => _scene(
 /// §4.1's centred grab band is then off-widget and simply unreachable by a
 /// pointer. Every "above the edge" probe in this file depends on this.
 Future<double> _panDown(WidgetTester tester, double dy) async {
-  final start = _canvasOrigin(tester) + const Offset(400, 300);
+  final before = sceneToScreen(tester, 0, 0).dy;
+  final start = emptyCanvasPoint(tester);
   final pan = await tester.startGesture(
     start,
     kind: PointerDeviceKind.mouse,
@@ -130,15 +150,23 @@ Future<double> _panDown(WidgetTester tester, double dy) async {
   await pan.up();
   await tester.pumpAndSettle();
 
-  final sceneOriginY = _canvasOrigin(tester).dy + dy;
+  // WHERE SCENE y == 0 NOW SITS, asked of the viewport rather than derived
+  // from the canvas corner (`#710`). The corner only equalled scene zero
+  // while the opening view was the identity transform.
+  final sceneOriginY = sceneToScreen(tester, 0, 0).dy;
+  expect(
+    sceneOriginY - before,
+    closeTo(dy, 0.5),
+    reason: 'the middle-button pan did not move the viewport by $dy',
+  );
   // The pan is asserted, not assumed: a pan route that silently stopped
   // working would put every probe below back at the un-panned origin and
   // quietly turn the "above the edge" half of the band test into a second
-  // copy of the "below" half.
+  // copy of the "below" half. Asserted twice over, because the check above
+  // is about the MATRIX and this one is about what is on screen.
   expect(
     _topOf(tester, 'dev-ups'),
-    closeTo(sceneOriginY + _geo.deviceRect(1, 2).top, 0.5),
-    reason: 'the middle-button pan did not move the viewport by $dy',
+    closeTo(topLeftOfRu(tester, _geo, 1, 2).dy, 0.5),
   );
   return sceneOriginY;
 }
@@ -231,7 +259,7 @@ void main() {
       // Scene y < 0 is off-widget until the viewport moves; see [_panDown].
       final originY = await _panDown(tester, 120);
       Offset at(double sceneY) => Offset(
-        _canvasOrigin(tester).dx + _probeX,
+        sceneToScreen(tester, _probeX, 0).dx,
         originY + sceneY,
       );
 
@@ -458,7 +486,7 @@ void main() {
       const after = RackGeometry(10);
       expect(
         _topOf(tester, 'dev-ups'),
-        closeTo(_canvasOrigin(tester).dy + after.deviceRect(1, 2).top, 0.5),
+        closeTo(topLeftOfRu(tester, after, 1, 2).dy, 0.5),
       );
 
       // ONE undo entry for the whole gesture.
@@ -525,10 +553,9 @@ void main() {
       // U it started on, positioned against the NEW 9U geometry. A top trim
       // renumbers nobody, and 9U fits all of them.
       const after = RackGeometry(9);
-      final origin = _canvasOrigin(tester).dy;
       void expectAt(String id, int ru, int h) => expect(
         _topOf(tester, id),
-        closeTo(origin + after.deviceRect(ru, h).top, 0.5),
+        closeTo(topLeftOfRu(tester, after, ru, h).dy, 0.5),
       );
       expectAt('dev-ups', 1, 2);
       expectAt('dev-amp', 4, 2);

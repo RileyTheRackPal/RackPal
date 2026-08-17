@@ -157,6 +157,30 @@ final class RenderSchematicCanvas extends RenderBox {
     markNeedsPaint();
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // A MUTATED TRANSFORM LAYER WAS TRIED HERE AND REVERTED (`#707`)
+  // ═══════════════════════════════════════════════════════════════════
+  // `#704` replaced this object's `markNeedsPaint` viewport listener with
+  // one that mutated the retained `TransformLayer` and called
+  // `requestVisualUpdate`, so a pan would cost no Dart painting at all.
+  // It shipped to the branch with four green widget cases and BROKE THE
+  // APP: the schematic stopped panning entirely and the rack's chrome
+  // stayed put while its content moved.
+  //
+  // THE TESTS WERE VACUOUS AND IT IS WORTH SAYING HOW. The listener
+  // assigned `debugSceneToScreen = matrix` and then mutated the layer;
+  // the tests asserted that `debugSceneToScreen` had moved. That is a
+  // field the listener had just written, so it moved whether or not
+  // anything reached the compositor. A widget test does not composite, so
+  // nothing in this package could have caught it. `M4-F0`'s `Enter` that
+  // moved nowhere was the same shape and this is the second time.
+  //
+  // The defect `#704` describes is real and measured: 30 pan frames
+  // produced 31 full recordings. It is not the defect the user was
+  // feeling — a pan is smooth zoomed out and abysmal zoomed in at an
+  // identical op count, which is raster cost, not Dart cost. So the cure
+  // was risky, unproven and aimed at the wrong half, and it goes back
+  // until there is an instrument that can see the difference.
   TextMeasurer _measurer;
   TextMeasurer get measurer => _measurer;
   set measurer(TextMeasurer value) {
@@ -229,8 +253,35 @@ final class RenderSchematicCanvas extends RenderBox {
     );
   }
 
+  /// How many times the plan has actually been walked.
+  ///
+  /// THE ARTIFACT `#704` IS ABOUT, and the only honest way to assert it:
+  /// a timing test on a build machine measures the build machine. A pan
+  /// that adds nothing to this number is a pan that painted nothing.
+  @visibleForTesting
+  int debugSceneRecordings = 0;
+
   void _paintScene(PaintingContext context, Offset offset) {
     // `offset` is Offset.zero here; the canvas is in scene space.
+    debugSceneRecordings++;
+    // ═══════════════════════════════════════════════════════════════════
+    // ASK THE ENGINE TO KEEP THE RASTER, NOT JUST THE DISPLAY LIST
+    // ═══════════════════════════════════════════════════════════════════
+    // `#704` removed the Dart cost of a pan and left the RASTER cost,
+    // which is the half a widget test cannot see because a widget test
+    // never rasterises. The symptom is diagnostic: zoomed out is smooth
+    // and zoomed in is not, and the op count is identical at both, so the
+    // cost scales with pixels covered rather than with ops issued.
+    //
+    // This picture is expensive to raster and does not change while the
+    // viewport moves, which is precisely the pair of facts the engine's
+    // raster cache wants told. With the transform ABOVE this layer, a pan
+    // is then a re-projection of a cached texture rather than a re-fill.
+    //
+    // NO `setWillChangeHint`, and that is the point: it means the
+    // opposite, and setting it would tell the engine not to bother
+    // caching the thing this is trying to cache.
+    context.setIsComplexHint();
     final canvas = FlutterDiagramCanvas(
       context.canvas,
       measurer: _measurer,

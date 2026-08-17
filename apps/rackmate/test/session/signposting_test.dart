@@ -35,6 +35,7 @@ import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_text/rackmate_text.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
+import '../rack_scene_to_screen.dart';
 import '../storage/fake_file_store.dart';
 import 'session_fakes.dart';
 
@@ -209,13 +210,12 @@ void main() {
       label: label,
       measurer: measurer,
     )!;
-    final origin = tester.getTopLeft(find.byType(CanvasIntentDetector));
     await tester.tapAt(
-      origin +
-          Offset(
-            device.left + chip.left + chip.width / 2,
-            device.top + chip.top + chip.height / 2,
-          ),
+      sceneToScreen(
+        tester,
+        device.left + chip.left + chip.width / 2,
+        device.top + chip.top + chip.height / 2,
+      ),
     );
     await tester.pumpAndSettle();
   }

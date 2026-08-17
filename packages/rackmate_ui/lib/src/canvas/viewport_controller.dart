@@ -141,6 +141,18 @@ class ViewportController extends ChangeNotifier {
     _setScaleTranslation(s, tx, ty);
   }
 
+  /// Adopts [value] wholesale, for restoring a remembered view (DR-066).
+  ///
+  /// COPIES RATHER THAN ALIASES. [transform] is exposed as the live
+  /// instance for zero-allocation reads, so storing the caller's matrix
+  /// here would let a later pan mutate the very thing somebody is holding
+  /// as a remembered view.
+  void setTransform(Matrix4 value) {
+    _transform.setFrom(value);
+    _inverse = null;
+    notifyListeners();
+  }
+
   /// Returns to the identity transform (scale 1, no translation).
   void reset() {
     _transform.setIdentity();

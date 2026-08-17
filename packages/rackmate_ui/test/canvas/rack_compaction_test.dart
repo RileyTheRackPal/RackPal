@@ -15,6 +15,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
+import 'rack_scene_to_screen.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -33,9 +35,6 @@ Widget _app() => MaterialApp(
   home: Scaffold(body: RackCanvasScreen(measurer: _FakeMeasurer())),
 );
 
-Offset _canvasOrigin(WidgetTester tester) =>
-    tester.getTopLeft(find.byType(CanvasIntentDetector));
-
 Finder _device(String id) => find.descendant(
   of: find.byKey(ValueKey(id)),
   matching: find.byType(DeviceBox),
@@ -52,7 +51,7 @@ double _topOf(WidgetTester tester, String id) =>
     tester.getTopLeft(_device(id)).dy;
 
 double _expectedTop(WidgetTester tester, int ru, int deviceH) =>
-    _canvasOrigin(tester).dy + _geo.deviceRect(ru, deviceH).top;
+    topLeftOfRu(tester, _geo, ru, deviceH).dy;
 
 /// Opens the rack header's overflow menu and picks [item] — the affordance
 /// §3.6's commands actually ship behind, since `Ctrl+B` stays RESERVED AND
@@ -293,11 +292,7 @@ void main() {
 
     // Make an edit there is something to undo: nudge SW-1 up one U.
     await tester.tapAt(
-      _canvasOrigin(tester) +
-          Offset(
-            (_geo.deviceRect(7, 1).left + _geo.deviceRect(7, 1).right) / 2,
-            (_geo.deviceRect(7, 1).top + _geo.deviceRect(7, 1).bottom) / 2,
-          ),
+      centreOfRu(tester, _geo, 7, 1),
     );
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
@@ -341,7 +336,7 @@ void main() {
     // A plain click on the canvas is a new interaction. Aimed WELL clear of
     // the floating chrome (the zoom HUD sits at 12,12 and would otherwise
     // swallow the tap) and clear of every device.
-    await tester.tapAt(_canvasOrigin(tester) + const Offset(300, 500));
+    await tester.tapAt(emptyCanvasPoint(tester));
     await tester.pump();
 
     expect(_barFinder, findsNothing);
@@ -391,7 +386,7 @@ void main() {
     await tester.pump();
 
     // Canvas focused, NO preview: the binding must decline the key.
-    await tester.tapAt(_canvasOrigin(tester) + const Offset(300, 500));
+    await tester.tapAt(emptyCanvasPoint(tester));
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pump();
@@ -427,7 +422,7 @@ void main() {
 
     final before = tester.allRenderObjects.whereType<RenderDeviceBox>().length;
 
-    await tester.tapAt(_canvasOrigin(tester) + const Offset(300, 500));
+    await tester.tapAt(emptyCanvasPoint(tester));
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.slash);
     await tester.pump();

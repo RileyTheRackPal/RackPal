@@ -41,6 +41,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
+import '../canvas/rack_scene_to_screen.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -136,11 +138,9 @@ Finder get _inspectorScrollable => find
 /// `DropdownButtonFormField` wrapper because only the inner button exposes
 /// `items`.
 Future<List<String>> _locationOptions(WidgetTester tester) async {
-  final rect = const RackGeometry(12).deviceRect(3, 1);
-  final origin = tester.getTopLeft(find.byType(CanvasIntentDetector));
-  await tester.tapAt(
-    origin + Offset((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2),
-  );
+  // Through the live viewport (`#710`): U3's centre is a SCENE point, and
+  // the screen no longer paints scene (0, 0) at the canvas's corner.
+  await tester.tapAt(centreOfRu(tester, const RackGeometry(12), 3, 1));
   await tester.pump();
   await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
   await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);

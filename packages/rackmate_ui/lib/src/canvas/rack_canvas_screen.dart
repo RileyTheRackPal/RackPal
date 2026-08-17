@@ -67,6 +67,17 @@ import 'package:rackmate_ui/src/shell/no_racks_view.dart';
 /// onto the screen does not sit flush against the edge it came in from.
 const double _kViewportMargin = 24;
 
+/// The band of canvas the floating chrome owns, in screen pixels: the zoom
+/// HUD, the face toggle and the header row are all pinned at `top: 12` and
+/// stand about 60px tall.
+///
+/// THE OPENING VIEW FRAMES BELOW THIS, and `#710` is why the constant
+/// exists. A rack centred in the RAW canvas puts its top edge under that
+/// chrome, and docs/04 §4.1's drag-to-resize is an 8px grab band centred on
+/// exactly that edge — so the gesture became unreachable, which nine widget
+/// cases reported as soon as the framing changed.
+const double _kTopChromeInset = 84;
+
 class RackCanvasScreen extends StatefulWidget {
   const RackCanvasScreen({
     required this.measurer,
@@ -732,36 +743,57 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// bottom of any window this app supports.
   ({Uuid id, int heightU})? _seededFor;
 
-  /// Puts U1 ON SCREEN.
+  /// Where each rack was last left, for THIS session (DR-066).
   ///
   /// ═══════════════════════════════════════════════════════════════════
-  /// WHY THIS EXISTS: THE CARET WAS NEVER MISSING, IT WAS BELOW THE FOLD
+  /// A VIEWPORT IS A WAY OF LOOKING, NOT A FACT ABOUT THE DOCUMENT
   /// ═══════════════════════════════════════════════════════════════════
-  /// `ViewportController` starts at `Matrix4.identity()` and, until now,
-  /// nothing ever moved it — the only `fitToContent` call in this file is
-  /// behind the HUD's manual Fit button. Scene space is bottom-origin for
-  /// racks: `yBottomOfU(1) == rackHeight`, so on the default Blank project's
-  /// 42U rack the insertion caret is drawn at scene y = 924 while the canvas
-  /// column is around 870px tall. The caret was active, and painting, ~54px
-  /// below the last visible row. So was the bottom of the rack.
+  /// So it lives here and nowhere else: not in the `.rmpj`, which is
+  /// under CR-117's byte round-trip and where a pan would dirty the file
+  /// and prompt a save; and not in preferences, which would let a bad
+  /// view outlive the restart that is currently how you escape one.
+  /// `design-ux-schematic.md` already states the same rule for the theme:
+  /// "the switch is view-only, never persisted in the document".
   ///
-  /// SCALE IS LEFT AT 1.0 rather than calling `fitToContent`, because
-  /// docs/04 §2.1 fixes "zoom 1.0 = 1U is 22px" and silently choosing 0.55
-  /// to make a 42U rack fit would trade a documented constant for an
-  /// undocumented one. A tall rack is clipped at the TOP and scrolls into
-  /// view, which is the conventional direction to clip a bottom-origin
-  /// object: U1 is where placement starts and where the caret seeds, so U1
-  /// is what must be visible.
+  /// KEYED BY RACK, AND THE HEIGHT IS PART OF THE VALUE RATHER THAN THE
+  /// KEY. A resize moves U1 by up to 726 scene units, so a view
+  /// remembered at 9U is meaningless at 42U; storing the height beside
+  /// the matrix lets the restore decline and re-frame instead.
+  final _rememberedViews = <Uuid, ({Matrix4 transform, int heightU})>{};
+
+  /// Frames the rack on first sight, and restores it on every return.
   ///
-  /// MINIMUM DELTA, VERTICAL ONLY, AND ONLY WHEN U1 IS ACTUALLY OFF-SCREEN.
-  /// The first version of this panned unconditionally — squaring the rack's
-  /// bottom edge against the viewport's and centring it horizontally — and
-  /// broke 79 tests, because scene (0,0) landing on the canvas's top-left
-  /// corner is an assumption that runs through most of this package's
-  /// pointer-coordinate helpers. It was also simply wrong on its own terms:
-  /// a rack that already fits has nothing to fix, and moving it anyway
-  /// means every 12U project opens somewhere other than where it did
-  /// before. Horizontal position was never part of the defect at all.
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THIS USED TO NUDGE U1 INTO VIEW AND LEAVE THE ZOOM AT 1.0
+  /// ═══════════════════════════════════════════════════════════════════
+  /// It existed because scene space is bottom-origin for racks
+  /// (`yBottomOfU(1) == rackHeight`), so on a 42U rack the caret painted
+  /// at scene y = 924 in a column about 870px tall: active, painting, and
+  /// below the fold. The minimum-delta nudge fixed that and nothing else.
+  ///
+  /// The old comment argued that scale had to stay at 1.0 because
+  /// docs/04 §2.1 fixes "zoom 1.0 = 1U is 22px", and that fitting would
+  /// "trade a documented constant for an undocumented one". THAT WAS
+  /// OVERSTATED, and re-reading §2.1 is what settled it: the line defines
+  /// what 1.0 MEANS. It does not say the editor opens at it, any more
+  /// than defining a metre commits a map to being printed at 1:1. So
+  /// framing the whole rack is compatible with the corpus rather than a
+  /// departure from it.
+  ///
+  /// ON EVERY RETURN, RESTORE. Switching to RK-2 and back should not cost
+  /// you the place you were working, which is the whole of
+  /// [_rememberedViews].
+  ///
+  /// ON FIRST SIGHT, FIT AND CENTRE (`#710`). You cannot judge an
+  /// elevation you can only see two thirds of, and the first thing anyone
+  /// does on opening a rack is look at the whole of it.
+  ///
+  /// THIS MOVED SCENE (0,0) OFF THE CANVAS CORNER AND 66 WIDGET CASES
+  /// ASSUMED IT WAS THERE. They turned a scene rect into a tap position
+  /// by adding the canvas origin, which is only the identity transform
+  /// wearing a disguise. They now route through the live viewport, which
+  /// is both correct and framing-agnostic: the next change to the opening
+  /// view costs nothing in test edits.
   ///
   /// Runs from `LayoutBuilder` but defers the mutation to a post-frame
   /// callback: `ViewportController` is a `ChangeNotifier` and notifying
@@ -770,20 +802,59 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     if (viewportSize.isEmpty || _activeRack == null) return;
     final key = (id: _rack.id, heightU: _rack.heightU);
     if (_seededFor == key) return;
+
+    // REMEMBER THE OUTGOING RACK BEFORE ANYTHING MOVES. Read here rather
+    // than in the callback below: by the time that runs the new rack has
+    // been framed and the matrix is no longer the one being left.
+    final leaving = _seededFor;
+    if (leaving != null && leaving.id != key.id) {
+      _rememberedViews[leaving.id] = (
+        transform: _viewport.transform.clone(),
+        heightU: leaving.heightU,
+      );
+    }
     _seededFor = key;
 
     final geo = _geo;
+    final remembered = _rememberedViews[key.id];
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      // `yBottomOfU(1) == rackHeight` — U1's bottom edge, the lowest thing
-      // the rack owns and the row the caret seeds on.
-      final y = _viewport.sceneToScreen(DPt(0, geo.rackHeight)).y;
-      // Tested against the RAW viewport, corrected to one margin inside it.
-      // Testing against the inset bound instead would nudge the view for a
-      // rack that is visible but merely close to the edge, which is motion
-      // with no cause.
-      if (y <= viewportSize.height) return;
-      _viewport.panBy(Offset(0, viewportSize.height - _kViewportMargin - y));
+      if (remembered != null && remembered.heightU == key.heightU) {
+        _viewport.setTransform(remembered.transform);
+        return;
+      }
+      // The whole rack, centred, with `fitToContent`'s own 10% margin.
+      // Scene space is bottom-origin for racks, so this is also what puts
+      // U1 — where placement starts and where the caret seeds — reliably
+      // on screen, which is what the nudge this replaced existed for.
+      //
+      // ═══════════════════════════════════════════════════════════════
+      // CENTRED IN THE SPACE THAT IS ACTUALLY FREE, NOT IN THE BOX
+      // ═══════════════════════════════════════════════════════════════
+      // The canvas carries floating chrome pinned at `top: 12`: the zoom
+      // HUD, the face toggle and the header row, together occupying about
+      // y 12–72. Centring in the raw box put the rack's TOP EDGE at y ≈ 56
+      // on a 1000px canvas — underneath all three.
+      //
+      // That is not cosmetic. docs/04 §4.1's drag-to-resize is an 8px grab
+      // band CENTRED ON THAT EDGE, so the edge landing under a `Card` made
+      // a shipped gesture unreachable: the pointer never reached
+      // `_onBeginDrag` at all. Nine widget cases caught it, which is the
+      // one part of this evening that worked the way it should.
+      //
+      // So the rack is framed into the canvas MINUS that band and then
+      // pushed down past it, which centres it in the space a pointer can
+      // actually reach.
+      final free = Size(
+        viewportSize.width,
+        math.max(1, viewportSize.height - _kTopChromeInset),
+      );
+      _viewport
+        ..fitToContent(
+          Box.fromLtwh(0, 0, geo.rackWidth.ceil(), geo.rackHeight.ceil()),
+          free,
+        )
+        ..panBy(const Offset(0, _kTopChromeInset));
     });
   }
 
@@ -798,6 +869,24 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   void _ensureCaretVisible() {
     final active = _caret.caret;
     if (active == null) return;
+
+    // NOT WHILE THE VIEWPORT BELONGS TO A DIFFERENT RACK (`#710`).
+    //
+    // The caret listener fires from `setState`, before the layout pass in
+    // which [_seedViewport] frames the incoming rack — so for one moment
+    // `_rack` (and therefore `_geo`) is the new rack while `_viewport`
+    // still holds the old one's matrix. Asking where U1 is across that
+    // mismatch returns a screen y for the WRONG rack: switching a 12U view
+    // to a 42U rack put U1 at y = 2960 on a 1000px canvas, so this method
+    // "rescued" a caret that was never lost by panning nearly two thousand
+    // pixels — and [_seedViewport] then filed that wreckage as where the
+    // OUTGOING rack was left, breaking DR-066's restore in the one gesture
+    // it exists for.
+    //
+    // Declining costs nothing: the framing pass is one layout away and it
+    // puts the whole rack, caret included, on screen by construction.
+    if (_seededFor != (id: _rack.id, heightU: _rack.heightU)) return;
+
     final box = _canvasBoxKey.currentContext?.findRenderObject();
     if (box is! RenderBox || !box.attached || box.size.isEmpty) return;
 

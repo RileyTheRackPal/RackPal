@@ -27,6 +27,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
+import 'rack_scene_to_screen.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -43,27 +45,14 @@ final class _FakeMeasurer implements TextMeasurer {
 // tests can aim gestures at real device rects.
 const _geo = RackGeometry(12);
 
-/// The canvas's live top-left in screen space — the palette panel now sits
-/// to its left, so scene (0, 0) is no longer the Scaffold body's origin.
-Offset _canvasOrigin(WidgetTester tester) =>
-    tester.getTopLeft(find.byType(CanvasIntentDetector));
-
-Offset _centreOf(WidgetTester tester, int ru, int deviceH) {
-  final rect = _geo.deviceRect(ru, deviceH);
-  final scene = Offset(
-    (rect.left + rect.right) / 2,
-    (rect.top + rect.bottom) / 2,
-  );
-  return _canvasOrigin(tester) + scene;
-}
+Offset _centreOf(WidgetTester tester, int ru, int deviceH) =>
+    centreOfRu(tester, _geo, ru, deviceH);
 
 /// The screen top-left a 1U device sitting at [ru] would have — used by
 /// the caret tests to check WHERE a newly placed device landed, without
 /// needing to know its (freshly-minted, unpredictable) entity id.
-Offset _topLeftOf1U(WidgetTester tester, int ru) {
-  final rect = _geo.deviceRect(ru, 1);
-  return _canvasOrigin(tester) + Offset(rect.left, rect.top);
-}
+Offset _topLeftOf1U(WidgetTester tester, int ru) =>
+    topLeftOfRu(tester, _geo, ru);
 
 Finder _device(String id) => find.descendant(
   of: find.byKey(ValueKey(id)),
@@ -107,7 +96,7 @@ Offset _swCentre(WidgetTester tester) => _centreOf(tester, 7, 1);
 /// `_onBeginDrag`, matching production use — a real user always clicks the
 /// canvas at least once before typing at it).
 Future<void> _focusCanvas(WidgetTester tester) async {
-  await tester.tapAt(_canvasOrigin(tester) + const Offset(300, 400));
+  await tester.tapAt(emptyCanvasPoint(tester));
   await tester.pump();
 }
 
@@ -195,7 +184,7 @@ void main() {
 
     // Click far from any device (well inside the canvas, past the
     // palette) → selection clears.
-    await tester.tapAt(_canvasOrigin(tester) + const Offset(300, 400));
+    await tester.tapAt(emptyCanvasPoint(tester));
     await tester.pump();
     expect(_render(tester, 'dev-sw').selected, isFalse);
   });
@@ -229,7 +218,7 @@ void main() {
 
     // Drag up 88px: AMP (U4–U5) → U8–U9 (free; SW is only U7). 88px = 4U.
     final gesture = await tester.startGesture(_ampCentre(tester));
-    await gesture.moveBy(const Offset(0, -88));
+    await gesture.moveBy(sceneDelta(tester, 0, -88));
     await gesture.up();
     await tester.pump();
 
@@ -238,7 +227,7 @@ void main() {
     // Snapped exactly to U8's top edge (proves the inverse RU geometry ran).
     expect(
       afterTop,
-      closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(8, 2).top, 0.5),
+      closeTo(topLeftOfRu(tester, _geo, 8, 2).dy, 0.5),
     );
   });
 
@@ -260,7 +249,9 @@ void main() {
 
     // Drag AMP (2U) down so its target would overlap UPS at U1–U2.
     final gesture = await tester.startGesture(_ampCentre(tester));
-    await gesture.moveBy(const Offset(0, 66)); // ~3U down → U1-ish, occupied
+    await gesture.moveBy(
+      sceneDelta(tester, 0, 66),
+    ); // ~3U down → U1-ish, occupied
     await gesture.up();
     await tester.pump();
 
@@ -297,7 +288,7 @@ void main() {
     // Now a move, then undo, restores the original ruIndex (position).
     final originalTop = tester.getTopLeft(_device('dev-amp')).dy;
     final gesture = await tester.startGesture(_ampCentre(tester));
-    await gesture.moveBy(const Offset(0, -88));
+    await gesture.moveBy(sceneDelta(tester, 0, -88));
     await gesture.up();
     await tester.pump();
     expect(tester.getTopLeft(_device('dev-amp')).dy, lessThan(originalTop));
@@ -545,7 +536,7 @@ void main() {
       await tester.pump();
       expect(
         tester.getTopLeft(_device('dev-sw')).dy,
-        closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(8, 1).top, 0.5),
+        closeTo(topLeftOfRu(tester, _geo, 8).dy, 0.5),
       );
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
@@ -553,7 +544,7 @@ void main() {
       await tester.pump();
       expect(
         tester.getTopLeft(_device('dev-sw')).dy,
-        closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(6, 1).top, 0.5),
+        closeTo(topLeftOfRu(tester, _geo, 6).dy, 0.5),
       );
     });
 
@@ -570,7 +561,7 @@ void main() {
       // U7 + 10 = U17, clamped to the 12U rack's top (maxRuIndexFor(1)=12).
       expect(
         tester.getTopLeft(_device('dev-sw')).dy,
-        closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(12, 1).top, 0.5),
+        closeTo(topLeftOfRu(tester, _geo, 12).dy, 0.5),
       );
     });
 
@@ -586,7 +577,7 @@ void main() {
       // Highest fitting position for a 2U device in a 12U rack: U11-U12.
       expect(
         tester.getTopLeft(_device('dev-amp')).dy,
-        closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(11, 2).top, 0.5),
+        closeTo(topLeftOfRu(tester, _geo, 11, 2).dy, 0.5),
       );
     });
 
@@ -603,7 +594,7 @@ void main() {
       final afterFirstMove = tester.getTopLeft(_device('dev-amp')).dy;
       expect(
         afterFirstMove,
-        closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(3, 2).top, 0.5),
+        closeTo(topLeftOfRu(tester, _geo, 3, 2).dy, 0.5),
       );
 
       // … but one MORE U down targets U2-U3, which overlaps UPS-1's U1-U2.
@@ -643,7 +634,7 @@ void main() {
         await tester.pump();
         expect(
           tester.getTopLeft(_device('dev-sw')).dy,
-          closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(9, 1).top, 0.5),
+          closeTo(topLeftOfRu(tester, _geo, 9).dy, 0.5),
         );
 
         // Both nudges landed inside the merge window — a SINGLE undo must
@@ -677,7 +668,7 @@ void main() {
         final afterFirstNudge = tester.getTopLeft(_device('dev-sw')).dy;
         expect(
           afterFirstNudge,
-          closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(8, 1).top, 0.5),
+          closeTo(topLeftOfRu(tester, _geo, 8).dy, 0.5),
         );
 
         // Past the 400ms merge window — the second nudge must start a NEW
@@ -687,7 +678,7 @@ void main() {
         await tester.pump();
         expect(
           tester.getTopLeft(_device('dev-sw')).dy,
-          closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(9, 1).top, 0.5),
+          closeTo(topLeftOfRu(tester, _geo, 9).dy, 0.5),
         );
 
         // A FIRST undo reverts ONLY the second nudge (U8 -> U9 undone),
@@ -978,6 +969,11 @@ void main() {
       // movement, so a click still means show details" (§3.1 step 1, which
       // §3.3 step 1 reuses verbatim). This must arm nothing: no fade, no
       // ghost chrome.
+      // SCREEN PIXELS, DELIBERATELY, and the one delta in this file that
+      // must not be scaled: §3.1's slop is 4 SCREEN px, so a twitch that
+      // stays a click stays a click at any zoom. Scaling it turned a 2px
+      // twitch into a 4.8px drag and armed the very gesture this asserts
+      // does not arm.
       await gesture.moveBy(const Offset(0, -2));
       await tester.pump();
       expect(
@@ -987,7 +983,9 @@ void main() {
       );
       expect(find.text('U4-U5'), findsNothing); // no RU-range chip yet
 
-      await gesture.moveBy(const Offset(0, -86)); // total 88 = 4U up -> U8-U9
+      await gesture.moveBy(
+        sceneDelta(tester, 0, -88),
+      ); // 4U up -> U8-U9
       await tester.pump();
 
       // Past the threshold: the source is now the 30%-opacity vacated-U
@@ -1010,7 +1008,7 @@ void main() {
       );
       expect(
         tester.getTopLeft(_device('dev-amp')).dy,
-        closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(4, 2).top, 0.5),
+        closeTo(topLeftOfRu(tester, _geo, 4, 2).dy, 0.5),
         reason: 'the source stays put mid-drag, showing the vacated U',
       );
       // No OTHER device is dimmed -- this is a per-device flag, not a
@@ -1025,7 +1023,7 @@ void main() {
       // ...and the move really did commit, at the previewed U8.
       expect(
         tester.getTopLeft(_device('dev-amp')).dy,
-        closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(8, 2).top, 0.5),
+        closeTo(topLeftOfRu(tester, _geo, 8, 2).dy, 0.5),
       );
     });
 
@@ -1035,13 +1033,13 @@ void main() {
       await tester.pump();
 
       final gesture = await grabAmp(tester);
-      await gesture.moveBy(const Offset(0, -88)); // 4U up: U4-U5 -> U8-U9
+      await gesture.moveBy(sceneDelta(tester, 0, -88)); // 4U up: U4-U5 -> U8-U9
       await tester.pump();
       expect(find.text('U8-U9'), findsOneWidget);
 
       // Drag one more U up and the chip re-snaps -- proof it is recomputed
       // per frame from the live evaluation, not captured once at grab.
-      await gesture.moveBy(const Offset(0, -22));
+      await gesture.moveBy(sceneDelta(tester, 0, -22));
       await tester.pump();
       expect(find.text('U9-U10'), findsOneWidget);
       expect(find.text('U8-U9'), findsNothing);
@@ -1060,7 +1058,7 @@ void main() {
       final beforeTop = tester.getTopLeft(_device('dev-amp')).dy;
 
       // 3U down: AMP (2U) would land at U1-U2, straight onto UPS-1.
-      await gesture.moveBy(const Offset(0, 66));
+      await gesture.moveBy(sceneDelta(tester, 0, 66));
       await tester.pump();
 
       // THE HEART OF THIS STAGE: the conflict is reported DURING the drag,
@@ -1099,7 +1097,7 @@ void main() {
 
       // A perfectly VALID target (U8-U9 is free) -- so if anything commits,
       // it is because Esc failed, not because the drop was refused anyway.
-      await gesture.moveBy(const Offset(0, -88));
+      await gesture.moveBy(sceneDelta(tester, 0, -88));
       await tester.pump();
       expect(_isDragSource(tester, 'dev-amp'), isTrue);
       expect(find.text('U8-U9'), findsOneWidget);
@@ -1119,7 +1117,7 @@ void main() {
       // The pointer is still physically down and `CanvasIntentDetector`
       // will still deliver moveBy/up for it -- neither may revive the
       // cancelled move.
-      await gesture.moveBy(const Offset(0, -22));
+      await gesture.moveBy(sceneDelta(tester, 0, -22));
       await tester.pump();
       expect(_isDragSource(tester, 'dev-amp'), isFalse);
 
@@ -1155,7 +1153,7 @@ void main() {
       // pinned here because consolidating onto the core query is exactly
       // where such an exclusion could have been dropped.)
       final gesture = await grabAmp(tester);
-      await gesture.moveBy(const Offset(0, -22)); // 1U up -> U5-U6
+      await gesture.moveBy(sceneDelta(tester, 0, -22)); // 1U up -> U5-U6
       await tester.pump();
 
       expect(find.text('U5-U6'), findsOneWidget);
@@ -1165,7 +1163,7 @@ void main() {
       await tester.pump();
       expect(
         tester.getTopLeft(_device('dev-amp')).dy,
-        closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(5, 2).top, 0.5),
+        closeTo(topLeftOfRu(tester, _geo, 5, 2).dy, 0.5),
       );
     });
 
@@ -1185,7 +1183,7 @@ void main() {
 
       // Drag 1: blocked (AMP -> U1-U2, onto UPS-1), released.
       final blockedDrag = await grabAmp(tester);
-      await blockedDrag.moveBy(const Offset(0, 66));
+      await blockedDrag.moveBy(sceneDelta(tester, 0, 66));
       await tester.pump();
       await blockedDrag.up();
       await tester.pump();
@@ -1194,7 +1192,7 @@ void main() {
       // Drag 2 begins only 300ms later -- well inside drag 1's linger.
       await tester.pump(const Duration(milliseconds: 300));
       final secondDrag = await grabAmp(tester);
-      await secondDrag.moveBy(const Offset(0, -88)); // -> U8-U9, free
+      await secondDrag.moveBy(sceneDelta(tester, 0, -88)); // -> U8-U9, free
       await tester.pump();
       expect(find.text('U8-U9'), findsOneWidget);
 
@@ -1212,7 +1210,7 @@ void main() {
       await tester.pump();
       expect(
         tester.getTopLeft(_device('dev-amp')).dy,
-        closeTo(_canvasOrigin(tester).dy + _geo.deviceRect(8, 2).top, 0.5),
+        closeTo(topLeftOfRu(tester, _geo, 8, 2).dy, 0.5),
       );
     });
 
@@ -1227,7 +1225,7 @@ void main() {
       final swBefore = tester.getTopLeft(_device('dev-sw')).dy;
 
       final gesture = await tester.startGesture(_swCentre(tester));
-      await gesture.moveBy(const Offset(0, -66));
+      await gesture.moveBy(sceneDelta(tester, 0, -66));
       await tester.pump();
 
       expect(_isDragSource(tester, 'dev-sw'), isFalse);
