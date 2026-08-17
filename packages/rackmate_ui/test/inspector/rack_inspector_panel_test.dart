@@ -19,6 +19,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
+import '../canvas/rack_scene_to_screen.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -65,9 +67,6 @@ RackDocument _docWithOneLocation(String name) {
   ).apply(doc);
   return doc;
 }
-
-Offset _canvasOrigin(WidgetTester tester) =>
-    tester.getTopLeft(find.byType(CanvasIntentDetector));
 
 /// The live `Rack` the screen is editing, reached through the widget tree
 /// rather than a private field: these tests observe the DOCUMENT, which is
@@ -140,11 +139,12 @@ Offset _freeRackSpot(WidgetTester tester) => _rackSpot(tester, 12, 3);
 
 /// The screen centre of [ru] on a rack of [heightU] — the general form of
 /// [_freeRackSpot], for tests whose rack is no longer 12U.
-Offset _rackSpot(WidgetTester tester, int heightU, int ru) {
-  final rect = RackGeometry(heightU).deviceRect(ru, 1);
-  return _canvasOrigin(tester) +
-      Offset((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
-}
+///
+/// THROUGH THE LIVE VIEWPORT (`#710`): the screen frames the whole rack on
+/// first sight, so scene (0, 0) is no longer the canvas's corner and a rect
+/// added to that corner aims at nothing in particular.
+Offset _rackSpot(WidgetTester tester, int heightU, int ru) =>
+    centreOfRu(tester, RackGeometry(heightU), ru, 1);
 
 /// Opens the RackInspector via `Ctrl+Alt+U` (docs/04 §4's third entry
 /// point) — the cheapest of the three, used as setup by tests that are
@@ -267,11 +267,12 @@ void main() {
       expect(find.byType(RackInspectorPanel), findsOneWidget);
 
       // Well outside the rack's extent: that is just empty canvas, and
-      // means "deselect", nothing more.
-      await tester.tapAt(
-        _canvasOrigin(tester) +
-            Offset(_geo.rackWidth + 120, _geo.rackHeight + 80),
-      );
+      // means "deselect", nothing more. Taken from the CANVAS'S OWN BOX
+      // rather than from a scene coordinate past the rack's corner — the
+      // rack is framed with a margin now, so "rackWidth + 120" in scene
+      // units can be off the canvas widget entirely and land on the
+      // inspector column instead of on empty canvas.
+      await tester.tapAt(emptyCanvasPoint(tester));
       await tester.pumpAndSettle();
       expect(find.byType(RackInspectorPanel), findsNothing);
     });
@@ -303,11 +304,7 @@ void main() {
       await _openInspector(tester);
       expect(find.byType(RackInspectorPanel), findsOneWidget);
 
-      final amp = _geo.deviceRect(4, 2);
-      await tester.tapAt(
-        _canvasOrigin(tester) +
-            Offset((amp.left + amp.right) / 2, (amp.top + amp.bottom) / 2),
-      );
+      await tester.tapAt(centreOfRu(tester, _geo, 4, 2));
       await tester.pumpAndSettle();
 
       expect(find.byType(RackInspectorPanel), findsNothing);

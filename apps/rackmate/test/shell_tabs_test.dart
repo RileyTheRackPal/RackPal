@@ -441,7 +441,12 @@ void main() {
     expect(find.byType(UnbuiltView), findsNothing);
     expect(find.byType(RackCanvasScreen), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('AMP-1')), findsOneWidget);
-    expect(find.text('100%'), findsOneWidget);
+    // The zoom HUD is live again. ASSERTED AS "a percentage", not as
+    // "100%" (`#710`): the screen now frames the whole rack on first
+    // sight, so the opening zoom is whatever fits the window — pinning it
+    // to unity was pinning the camera, and the question here is whether
+    // the editor came back alive at all.
+    expect(find.textContaining(RegExp(r'^\d+%$')), findsOneWidget);
   });
 
   // ── #96 — a sideways scroll is a PAN, not a view switch ────────────────

@@ -42,6 +42,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
+import 'rack_scene_to_screen.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -76,9 +78,6 @@ class _KeyEscapeCounter extends StatelessWidget {
   );
 }
 
-Offset _canvasOrigin(WidgetTester tester) =>
-    tester.getTopLeft(find.byType(CanvasIntentDetector));
-
 Finder get _searchField => find.byType(TextField);
 
 TextEditingController _searchController(WidgetTester tester) =>
@@ -86,7 +85,7 @@ TextEditingController _searchController(WidgetTester tester) =>
 
 /// Click empty canvas — the focus a real user gets by looking at the window.
 Future<void> _focusCanvas(WidgetTester tester) async {
-  await tester.tapAt(_canvasOrigin(tester) + const Offset(300, 400));
+  await tester.tapAt(emptyCanvasPoint(tester));
   await tester.pump();
 }
 
@@ -196,7 +195,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Select a device the way a user would, then go and type.
-        await tester.tapAt(_canvasOrigin(tester) + const Offset(300, 400));
+        await tester.tapAt(emptyCanvasPoint(tester));
         await tester.pump();
         final before = _deviceCount(tester);
         expect(before, greaterThan(0));

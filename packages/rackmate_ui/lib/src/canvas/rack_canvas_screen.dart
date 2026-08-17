@@ -67,6 +67,17 @@ import 'package:rackmate_ui/src/shell/no_racks_view.dart';
 /// onto the screen does not sit flush against the edge it came in from.
 const double _kViewportMargin = 24;
 
+/// The band of canvas the floating chrome owns, in screen pixels: the zoom
+/// HUD, the face toggle and the header row are all pinned at `top: 12` and
+/// stand about 60px tall.
+///
+/// THE OPENING VIEW FRAMES BELOW THIS, and `#710` is why the constant
+/// exists. A rack centred in the RAW canvas puts its top edge under that
+/// chrome, and docs/04 §4.1's drag-to-resize is an 8px grab band centred on
+/// exactly that edge — so the gesture became unreachable, which nine widget
+/// cases reported as soon as the framing changed.
+const double _kTopChromeInset = 84;
+
 class RackCanvasScreen extends StatefulWidget {
   const RackCanvasScreen({
     required this.measurer,
@@ -773,15 +784,16 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// you the place you were working, which is the whole of
   /// [_rememberedViews].
   ///
-  /// ON FIRST SIGHT THE NUDGE STANDS, AND FIT-AND-CENTRE IS FILED
-  /// (`#710`). Framing the whole rack on open is the better opening view
-  /// and was asked for; it also moves scene (0,0) off the canvas corner,
-  /// which 66 widget cases across 10 files assume when they convert a
-  /// scene rect into a tap position. Those helpers should route through
-  /// the live viewport rather than adding the canvas origin — that is the
-  /// correct fix and it makes them framing-agnostic for good — but it is
-  /// its own task with its own diff, not a rider on a viewport-memory
-  /// change.
+  /// ON FIRST SIGHT, FIT AND CENTRE (`#710`). You cannot judge an
+  /// elevation you can only see two thirds of, and the first thing anyone
+  /// does on opening a rack is look at the whole of it.
+  ///
+  /// THIS MOVED SCENE (0,0) OFF THE CANVAS CORNER AND 66 WIDGET CASES
+  /// ASSUMED IT WAS THERE. They turned a scene rect into a tap position
+  /// by adding the canvas origin, which is only the identity transform
+  /// wearing a disguise. They now route through the live viewport, which
+  /// is both correct and framing-agnostic: the next change to the opening
+  /// view costs nothing in test edits.
   ///
   /// Runs from `LayoutBuilder` but defers the mutation to a post-frame
   /// callback: `ViewportController` is a `ChangeNotifier` and notifying
@@ -811,14 +823,38 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
         _viewport.setTransform(remembered.transform);
         return;
       }
-      // `yBottomOfU(1) == rackHeight` — U1's bottom edge, the lowest thing
-      // the rack owns and the row the caret seeds on. Tested against the
-      // RAW viewport and corrected to one margin inside it: testing
-      // against the inset bound would nudge a rack that is visible but
-      // merely close to the edge, which is motion with no cause.
-      final y = _viewport.sceneToScreen(DPt(0, geo.rackHeight)).y;
-      if (y <= viewportSize.height) return;
-      _viewport.panBy(Offset(0, viewportSize.height - _kViewportMargin - y));
+      // The whole rack, centred, with `fitToContent`'s own 10% margin.
+      // Scene space is bottom-origin for racks, so this is also what puts
+      // U1 — where placement starts and where the caret seeds — reliably
+      // on screen, which is what the nudge this replaced existed for.
+      //
+      // ═══════════════════════════════════════════════════════════════
+      // CENTRED IN THE SPACE THAT IS ACTUALLY FREE, NOT IN THE BOX
+      // ═══════════════════════════════════════════════════════════════
+      // The canvas carries floating chrome pinned at `top: 12`: the zoom
+      // HUD, the face toggle and the header row, together occupying about
+      // y 12–72. Centring in the raw box put the rack's TOP EDGE at y ≈ 56
+      // on a 1000px canvas — underneath all three.
+      //
+      // That is not cosmetic. docs/04 §4.1's drag-to-resize is an 8px grab
+      // band CENTRED ON THAT EDGE, so the edge landing under a `Card` made
+      // a shipped gesture unreachable: the pointer never reached
+      // `_onBeginDrag` at all. Nine widget cases caught it, which is the
+      // one part of this evening that worked the way it should.
+      //
+      // So the rack is framed into the canvas MINUS that band and then
+      // pushed down past it, which centres it in the space a pointer can
+      // actually reach.
+      final free = Size(
+        viewportSize.width,
+        math.max(1, viewportSize.height - _kTopChromeInset),
+      );
+      _viewport
+        ..fitToContent(
+          Box.fromLtwh(0, 0, geo.rackWidth.ceil(), geo.rackHeight.ceil()),
+          free,
+        )
+        ..panBy(const Offset(0, _kTopChromeInset));
     });
   }
 
@@ -833,6 +869,24 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   void _ensureCaretVisible() {
     final active = _caret.caret;
     if (active == null) return;
+
+    // NOT WHILE THE VIEWPORT BELONGS TO A DIFFERENT RACK (`#710`).
+    //
+    // The caret listener fires from `setState`, before the layout pass in
+    // which [_seedViewport] frames the incoming rack — so for one moment
+    // `_rack` (and therefore `_geo`) is the new rack while `_viewport`
+    // still holds the old one's matrix. Asking where U1 is across that
+    // mismatch returns a screen y for the WRONG rack: switching a 12U view
+    // to a 42U rack put U1 at y = 2960 on a 1000px canvas, so this method
+    // "rescued" a caret that was never lost by panning nearly two thousand
+    // pixels — and [_seedViewport] then filed that wreckage as where the
+    // OUTGOING rack was left, breaking DR-066's restore in the one gesture
+    // it exists for.
+    //
+    // Declining costs nothing: the framing pass is one layout away and it
+    // puts the whole rack, caret included, on screen by construction.
+    if (_seededFor != (id: _rack.id, heightU: _rack.heightU)) return;
+
     final box = _canvasBoxKey.currentContext?.findRenderObject();
     if (box is! RenderBox || !box.attached || box.size.isEmpty) return;
 

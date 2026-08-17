@@ -34,6 +34,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
+import 'rack_scene_to_screen.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -53,20 +55,12 @@ final class _FakeMeasurer implements TextMeasurer {
 // looking at where the devices landed.
 const _geo = RackGeometry(12);
 
-Offset _canvasOrigin(WidgetTester tester) =>
-    tester.getTopLeft(find.byType(CanvasIntentDetector));
-
-Offset _topLeftOf1U(WidgetTester tester, int ru) {
-  final rect = _geo.deviceRect(ru, 1);
-  return _canvasOrigin(tester) + Offset(rect.left, rect.top);
-}
+Offset _topLeftOf1U(WidgetTester tester, int ru) =>
+    topLeftOfRu(tester, _geo, ru);
 
 /// The screen-space centre of the [h]U device occupying [ru].
-Offset _centreOf(WidgetTester tester, int ru, int h) {
-  final rect = _geo.deviceRect(ru, h);
-  return _canvasOrigin(tester) +
-      Offset((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
-}
+Offset _centreOf(WidgetTester tester, int ru, int h) =>
+    centreOfRu(tester, _geo, ru, h);
 
 /// How many device boxes are rendering with their top-left at [ru]'s 1U
 /// slot. Position, not id: the ids are freshly minted per placement.
@@ -91,7 +85,7 @@ Widget _app() => MaterialApp(
 /// pointer, and only to establish the canvas focus a real user gets by
 /// looking at the window. Every assertion after it is keyboard-driven.
 Future<void> _focusCanvas(WidgetTester tester) async {
-  await tester.tapAt(_canvasOrigin(tester) + const Offset(300, 400));
+  await tester.tapAt(emptyCanvasPoint(tester));
   await tester.pump();
 }
 
@@ -223,11 +217,7 @@ void main() {
       // not create. docs/04 §3.4: the caret conceptually does not exist
       // while something is selected.
       await tester.tapAt(
-        _canvasOrigin(tester) +
-            Offset(
-              (_geo.deviceRect(4, 2).left + _geo.deviceRect(4, 2).right) / 2,
-              (_geo.deviceRect(4, 2).top + _geo.deviceRect(4, 2).bottom) / 2,
-            ),
+        _centreOf(tester, 4, 2),
       );
       await tester.pump();
       expect(_render(tester, 'dev-amp').selected, isTrue);
@@ -258,11 +248,7 @@ void main() {
       // change happened in between can.
       await _focusCanvas(tester);
       await tester.tapAt(
-        _canvasOrigin(tester) +
-            Offset(
-              (_geo.deviceRect(3, 1).left + _geo.deviceRect(3, 1).right) / 2,
-              (_geo.deviceRect(3, 1).top + _geo.deviceRect(3, 1).bottom) / 2,
-            ),
+        _centreOf(tester, 3, 1),
       );
       await tester.pump();
 
@@ -390,11 +376,7 @@ void main() {
       await tester.pump();
 
       await tester.tapAt(
-        _canvasOrigin(tester) +
-            Offset(
-              (_geo.deviceRect(4, 2).left + _geo.deviceRect(4, 2).right) / 2,
-              (_geo.deviceRect(4, 2).top + _geo.deviceRect(4, 2).bottom) / 2,
-            ),
+        _centreOf(tester, 4, 2),
       );
       await tester.pump();
       expect(_render(tester, 'dev-amp').selected, isTrue);
@@ -425,11 +407,7 @@ void main() {
       // Now make a REAL selection — the kind that legitimately suppresses
       // the caret (docs/04 §3.4) and that no placement created.
       await tester.tapAt(
-        _canvasOrigin(tester) +
-            Offset(
-              (_geo.deviceRect(7, 1).left + _geo.deviceRect(7, 1).right) / 2,
-              (_geo.deviceRect(7, 1).top + _geo.deviceRect(7, 1).bottom) / 2,
-            ),
+        _centreOf(tester, 7, 1),
       );
       await tester.pump();
       expect(_render(tester, 'dev-sw').selected, isTrue);

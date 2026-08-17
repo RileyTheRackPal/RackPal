@@ -23,6 +23,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
+import 'rack_scene_to_screen.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -43,14 +45,8 @@ Widget _app() => MaterialApp(
   home: Scaffold(body: RackCanvasScreen(measurer: _FakeMeasurer())),
 );
 
-Offset _canvasOrigin(WidgetTester tester) =>
-    tester.getTopLeft(find.byType(CanvasIntentDetector));
-
-Offset _centreOf(WidgetTester tester, int ru, int deviceH) {
-  final rect = _geo.deviceRect(ru, deviceH);
-  return _canvasOrigin(tester) +
-      Offset((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
-}
+Offset _centreOf(WidgetTester tester, int ru, int deviceH) =>
+    centreOfRu(tester, _geo, ru, deviceH);
 
 Finder _device(String id) => find.descendant(
   of: find.byKey(ValueKey(id)),
@@ -70,16 +66,17 @@ double _topOf(WidgetTester tester, String id) =>
 /// Where a device's top edge WOULD be if it sat at [ru] on the 12U demo
 /// rack.
 double _expectedTop(WidgetTester tester, int ru, int deviceH) =>
-    _canvasOrigin(tester).dy + _geo.deviceRect(ru, deviceH).top;
+    topLeftOfRu(tester, _geo, ru, deviceH).dy;
 
 /// A point inside docs/04 §4.1's 8px top-edge grab band.
 ///
-/// Scene y == 0 IS the rack's top edge and the viewport starts at identity,
-/// so canvas-local y == 2 is 2px below it — inside the band. x == 200 is
-/// within the rack's own width and clear of the floating chrome, all of
-/// which is positioned at y >= 12.
+/// Scene y == 0 IS the rack's top edge, so a couple of screen pixels below
+/// where scene y == 0 LANDS is inside the band. The band is 8 SCREEN px,
+/// so the offset stays in screen units while the anchor comes through the
+/// viewport (`#710`): x == 200 in scene units is within the rack's own
+/// width and clear of the floating chrome, all of which is at y >= 12.
 Offset _topEdgeGrab(WidgetTester tester) =>
-    _canvasOrigin(tester) + const Offset(200, 2);
+    sceneToScreen(tester, 200, 0) + const Offset(0, 2);
 
 /// Searches the palette and returns the matching row's centre.
 Future<Offset> _paletteRow(WidgetTester tester) async {
@@ -147,7 +144,7 @@ void main() {
       await tester.pump();
 
       final a = await tester.startGesture(_topEdgeGrab(tester), pointer: 1);
-      await a.moveBy(const Offset(0, 3 * RackGeometry.unitsPerRu));
+      await a.moveBy(sceneDelta(tester, 0, 3 * RackGeometry.unitsPerRu));
       await tester.pump();
       expect(
         find.text('9U (-3)'),
@@ -156,7 +153,7 @@ void main() {
       );
 
       final b = await tester.startGesture(
-        _canvasOrigin(tester) + const Offset(320, 520),
+        emptyCanvasPoint(tester),
         pointer: 2,
       );
       await tester.pump();
@@ -179,7 +176,7 @@ void main() {
       expect(
         _topOf(tester, 'dev-ups'),
         closeTo(
-          _canvasOrigin(tester).dy + const RackGeometry(9).deviceRect(1, 2).top,
+          topLeftOfRu(tester, const RackGeometry(9), 1, 2).dy,
           0.5,
         ),
       );
@@ -208,7 +205,7 @@ void main() {
       expect(find.text('U3'), findsOneWidget, reason: 'the RU-range chip');
 
       final b = await tester.startGesture(_topEdgeGrab(tester), pointer: 2);
-      await b.moveBy(const Offset(0, 3 * RackGeometry.unitsPerRu));
+      await b.moveBy(sceneDelta(tester, 0, 3 * RackGeometry.unitsPerRu));
       await tester.pump();
 
       expect(
@@ -266,7 +263,7 @@ void main() {
       await tester.tapAt(_centreOf(tester, 4, 2));
       await tester.pump();
       final move = await tester.startGesture(_centreOf(tester, 4, 2));
-      await move.moveBy(const Offset(0, -6 * RackGeometry.unitsPerRu));
+      await move.moveBy(sceneDelta(tester, 0, -6 * RackGeometry.unitsPerRu));
       await tester.pump();
       await move.up();
       await tester.pump();
@@ -292,7 +289,7 @@ void main() {
       await tester.tapAt(_centreOf(tester, 4, 2));
       await tester.pump();
       final a = await tester.startGesture(_centreOf(tester, 4, 2), pointer: 1);
-      await a.moveBy(const Offset(0, -6 * RackGeometry.unitsPerRu));
+      await a.moveBy(sceneDelta(tester, 0, -6 * RackGeometry.unitsPerRu));
       await tester.pump();
       expect(find.text('U10-U11'), findsOneWidget, reason: 'the ghost is live');
 
@@ -346,7 +343,7 @@ void main() {
 
       // Finger A scrubs the empty canvas below the rack and holds.
       final a = await tester.startGesture(
-        _canvasOrigin(tester) + const Offset(320, 520),
+        emptyCanvasPoint(tester),
         pointer: 1,
       );
       await a.moveBy(const Offset(30, 30));
@@ -367,7 +364,7 @@ void main() {
       await a.up();
       await tester.pump();
 
-      await b.moveBy(const Offset(0, -10 * RackGeometry.unitsPerRu));
+      await b.moveBy(sceneDelta(tester, 0, -10 * RackGeometry.unitsPerRu));
       await tester.pump();
       expect(find.text('U11-U12'), findsOneWidget, reason: "B's ghost is live");
       await b.up();
@@ -401,7 +398,7 @@ void main() {
 
       // A grabs the selected AMP-1 (U4-U5) and drags it up to U10.
       final a = await tester.startGesture(_centreOf(tester, 4, 2), pointer: 1);
-      await a.moveBy(const Offset(0, -6 * RackGeometry.unitsPerRu));
+      await a.moveBy(sceneDelta(tester, 0, -6 * RackGeometry.unitsPerRu));
       await tester.pump();
       expect(find.text('U10-U11'), findsOneWidget);
 
@@ -409,7 +406,7 @@ void main() {
       // gesture. If it were adopted now, A's ghost would retarget UPS-1.
       final b = await tester.startGesture(_centreOf(tester, 1, 2), pointer: 2);
       await tester.pump();
-      await a.moveBy(const Offset(0, -RackGeometry.unitsPerRu));
+      await a.moveBy(sceneDelta(tester, 0, -RackGeometry.unitsPerRu));
       await tester.pump();
       expect(
         find.text('U11-U12'),
@@ -466,7 +463,7 @@ void main() {
 
       // Grab it at U6 and drag toward the free U10.
       final g = await tester.startGesture(_centreOf(tester, 6, 1));
-      await g.moveBy(const Offset(0, -4 * RackGeometry.unitsPerRu));
+      await g.moveBy(sceneDelta(tester, 0, -4 * RackGeometry.unitsPerRu));
       await tester.pump();
       expect(find.text('U10'), findsOneWidget, reason: 'the ghost is live');
 
@@ -527,7 +524,7 @@ void main() {
       );
 
       // NOW cross the threshold and drag on to U10.
-      await g.moveBy(const Offset(0, -4 * RackGeometry.unitsPerRu));
+      await g.moveBy(sceneDelta(tester, 0, -4 * RackGeometry.unitsPerRu));
       await tester.pump();
       await g.up();
       await tester.pump();
@@ -631,7 +628,7 @@ void main() {
       // highest occupant is the rear PP-1 at U9, so 10U is lossless and this
       // commits one `SetRackHeightCommand` with no modal.
       final grow = await tester.startGesture(_topEdgeGrab(tester));
-      await grow.moveBy(const Offset(0, 2 * RackGeometry.unitsPerRu));
+      await grow.moveBy(sceneDelta(tester, 0, 2 * RackGeometry.unitsPerRu));
       await tester.pump();
       expect(find.text('10U (-2)'), findsOneWidget);
       await grow.up();
@@ -640,7 +637,7 @@ void main() {
 
       // A SECOND top-edge drag, now baselined at 10U.
       final g = await tester.startGesture(_topEdgeGrab(tester));
-      await g.moveBy(const Offset(0, RackGeometry.unitsPerRu));
+      await g.moveBy(sceneDelta(tester, 0, RackGeometry.unitsPerRu));
       await tester.pump();
       expect(find.text('9U (-1)'), findsOneWidget);
 
@@ -705,7 +702,7 @@ void main() {
       await tester.tapAt(_centreOf(tester, 4, 2));
       await tester.pump();
       final a = await tester.startGesture(_centreOf(tester, 4, 2), pointer: 7);
-      await a.moveBy(const Offset(0, -6 * RackGeometry.unitsPerRu));
+      await a.moveBy(sceneDelta(tester, 0, -6 * RackGeometry.unitsPerRu));
       await tester.pump();
       expect(find.text('U10-U11'), findsOneWidget, reason: 'the ghost is live');
 

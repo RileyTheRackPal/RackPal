@@ -28,6 +28,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
+import 'rack_scene_to_screen.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -153,9 +155,6 @@ RackDocument _doc() {
   );
   return doc;
 }
-
-Offset _canvasOrigin(WidgetTester tester) =>
-    tester.getTopLeft(find.byType(CanvasIntentDetector));
 
 /// How many paths [box] emits when it paints. `drawRoundRect` on
 /// `FlutterDiagramCanvas` is implemented as a path, so this counts the
@@ -293,8 +292,10 @@ void main() {
 
       final chip = _chipSceneRect(4, 2, '0/4');
       await tester.tapAt(
-        _canvasOrigin(tester) +
-            Offset(chip.left + chip.width / 2, chip.top + chip.height / 2),
+        scenePoint(
+          tester,
+          Offset(chip.left + chip.width / 2, chip.top + chip.height / 2),
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -312,7 +313,7 @@ void main() {
 
       final device = _geo.deviceRect(4, 2);
       await tester.tapAt(
-        _canvasOrigin(tester) + Offset(device.left + 8, device.top + 6),
+        scenePoint(tester, Offset(device.left + 8, device.top + 6)),
       );
       await tester.pumpAndSettle();
 
@@ -327,8 +328,7 @@ void main() {
 
       final chip = _chipSceneRect(4, 2, '0/4');
       await tester.tapAt(
-        _canvasOrigin(tester) +
-            Offset(chip.left - 3, chip.top + chip.height / 2),
+        scenePoint(tester, Offset(chip.left - 3, chip.top + chip.height / 2)),
       );
       await tester.pumpAndSettle();
       expect(revealed, isEmpty);
@@ -343,8 +343,10 @@ void main() {
 
       final chip = _chipSceneRect(4, 2, '0/4');
       await tester.tapAt(
-        _canvasOrigin(tester) +
-            Offset(chip.left + chip.width / 2, chip.top + chip.height / 2),
+        scenePoint(
+          tester,
+          Offset(chip.left + chip.width / 2, chip.top + chip.height / 2),
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -359,9 +361,10 @@ void main() {
       await tester.pumpAndSettle();
 
       final chip = _chipSceneRect(4, 2, '0/4');
-      final start =
-          _canvasOrigin(tester) +
-          Offset(chip.left + chip.width / 2, chip.top + chip.height / 2);
+      final start = scenePoint(
+        tester,
+        Offset(chip.left + chip.width / 2, chip.top + chip.height / 2),
+      );
       final drag = await tester.startGesture(start);
       await tester.pump();
       await drag.moveBy(const Offset(0, 60));

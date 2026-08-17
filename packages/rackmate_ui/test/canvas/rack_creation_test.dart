@@ -20,6 +20,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
+import 'rack_scene_to_screen.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -45,11 +47,8 @@ RackDocument _racklessDocument() => buildDemoRackDocument()
   ..racks.clear()
   ..devices.clear();
 
-Offset _canvasOrigin(WidgetTester tester) =>
-    tester.getTopLeft(find.byType(CanvasIntentDetector));
-
 Future<void> _focusCanvas(WidgetTester tester) async {
-  await tester.tapAt(_canvasOrigin(tester) + const Offset(300, 400));
+  await tester.tapAt(emptyCanvasPoint(tester));
   await tester.pump();
 }
 
@@ -185,31 +184,37 @@ void main() {
     // ASSERTED THROUGH THE LIVE VIEWPORT, not through a remembered field.
     // The transform is what the canvas actually paints with, so a restore
     // that wrote the map and not the matrix cannot pass this.
+    // `pumpAndSettle`, NOT `pump`: the opening frame-and-centre runs in a
+    // post-frame callback (`#710`), so a single pump leaves it pending and
+    // the pan below is captured and then silently overwritten by it.
     await tester.pumpWidget(_app());
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    final viewport = tester
-        .renderObject<RenderRackCanvas>(find.byType(RackCanvasBody))
-        .viewport;
-
-    // Move RK-1's view somewhere distinctive.
-    final onRk1 = (viewport..panBy(const Offset(-140, -55))).transform.clone();
-    await tester.pump();
+    // Moved somewhere distinctive on the way in, then settled, so the
+    // capture below is of a viewport nothing else is still about to touch.
+    final viewport =
+        tester
+            .renderObject<RenderRackCanvas>(find.byType(RackCanvasBody))
+            .viewport
+          ..panBy(const Offset(-140, -55));
+    await tester.pumpAndSettle();
+    final onRk1 = viewport.transform.clone();
 
     await _createRackByKeyboard(tester, name: 'Equipment Room');
     expect(find.text('RK-2'), findsOneWidget);
 
-    // NOTHING IS ASSERTED ABOUT RK-2's OWN FRAMING HERE, and the first
-    // draft of this case got that wrong: it expected RK-2 not to inherit
-    // RK-1's pan, and RK-2 inherits the HORIZONTAL pan because seeding a
-    // rack nobody has visited is still `#710`'s minimum vertical nudge.
-    // Fit-and-centre is filed, not built, and a test that asserted it
-    // here would be asserting the feature that is not in this commit.
+    // RK-2 IS FRAMED ON ITS OWN TERMS, not handed RK-1's view. It is a 42U
+    // rack where RK-1 is 12U, so the two cannot share a sensible framing.
+    expect(
+      viewport.transform.storage[12],
+      isNot(closeTo(onRk1.storage[12], 0.001)),
+      reason: 'RK-2 inherited RK-1 viewport',
+    );
 
     // Move RK-2 somewhere else, so the restore below cannot pass by the
     // viewport simply never having moved.
     viewport.panBy(const Offset(60, 30));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     // Back to RK-1 through the switcher the header only shows once there
     // is something to switch between.

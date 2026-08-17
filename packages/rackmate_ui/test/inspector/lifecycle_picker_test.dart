@@ -27,6 +27,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/rackmate_ui.dart';
 
+import '../canvas/rack_scene_to_screen.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -43,15 +45,11 @@ Widget _app() => MaterialApp(
   home: Scaffold(body: RackCanvasScreen(measurer: _FakeMeasurer())),
 );
 
-Offset _canvasOrigin(WidgetTester tester) =>
-    tester.getTopLeft(find.byType(CanvasIntentDetector));
-
-/// The screen centre of [ru] on the 12U demo rack.
-Offset _rackSpot(WidgetTester tester, int ru) {
-  final rect = const RackGeometry(12).deviceRect(ru, 1);
-  return _canvasOrigin(tester) +
-      Offset((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
-}
+/// The screen centre of [ru] on the 12U demo rack, THROUGH THE LIVE
+/// VIEWPORT — the screen frames the whole rack on first sight (`#710`), so
+/// scene (0, 0) is not the canvas's corner.
+Offset _rackSpot(WidgetTester tester, int ru) =>
+    centreOfRu(tester, const RackGeometry(12), ru, 1);
 
 /// The live document, read through `InspectorPanel` because it is the one
 /// inspector widget mounted in BOTH targets — `RackInspectorPanel` is not
