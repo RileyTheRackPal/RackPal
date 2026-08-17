@@ -274,22 +274,6 @@ class RenderDeviceBox extends RenderBox {
     markNeedsPaint();
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // NOT PICTURE-CACHED, AND THAT IS A DECISION (`#708`)
-  // ═══════════════════════════════════════════════════════════════════
-  // `render_schematic_canvas.dart` records its display list once because
-  // its paint is a pure replay of an immutable plan. This one is not.
-  // [_paintBody] reads a SHAKE OFFSET fresh on every paint by design, and
-  // draws a hover ring, a focus ring, a selection outline and CR-105's
-  // chip beside the fragment, each on its own state.
-  //
-  // Caching it would mean invalidating on six inputs and getting the
-  // shake wrong, to save the replay of ONE device's fragment. The
-  // schematic's picture is 4,155 ops; a device's is a chassis box and
-  // some text. The measured problem was the schematic, so the fix is the
-  // schematic's, and this file is left alone on purpose rather than by
-  // omission.
-
   String _deviceId;
   String get deviceId => _deviceId;
   set deviceId(String value) {

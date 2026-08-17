@@ -157,32 +157,24 @@ void main() {
     //     went inside, which is the whole of the defect and is exactly
     //     what an ordering assertion catches.
 
-    testWidgets('the clip comes first, the transform second, and the scene '
-        'third', (tester) async {
+    testWidgets('the clip comes first, the transform second, and the sheet '
+        'ground third', (tester) async {
       final plan = planFor();
       await pump(tester, plan);
       final size = tester.getSize(find.byType(SchematicCanvasBody));
       // THE ORDER IS THE ASSERTION, not the rect's coordinates: the
-      // deleted canvas emitted its fill BEFORE the transform.
-      //
-      // THE THIRD CALL IS NOW `drawPicture` AND NOT `rect` (`#708`). The
-      // scene is recorded once into a `ui.Picture` and drawn as one call,
-      // so the ground's own `drawRect` is inside the picture rather than
-      // on this canvas. The defect this case exists for is UNCHANGED and
-      // is now structurally harder to reintroduce: there is exactly ONE
-      // draw under the transform, so the ground cannot take a different
-      // path from the symbols even by accident. Its VALUE stays pinned
-      // op-for-op in `the sheet ground is op ZERO` below.
-      //
-      // `something` rather than a named matcher, because `PaintPattern`
-      // has no `picture()` — the same escape hatch `rack_canvas_screen
-      // _test.dart` uses to reach `saveLayer`.
+      // deleted canvas emitted its fill BEFORE the transform. The rect's
+      // VALUE is pinned op-for-op in `the sheet ground is op ZERO` below —
+      // asserting it here as well would compare a `Rect` this test
+      // rebuilt from `DBox` doubles against one `FlutterDiagramCanvas`
+      // rebuilt from the same doubles a different way, which differs in
+      // the last ULP and prints identically.
       expect(
         find.byType(SchematicCanvasBody),
         paints
           ..clipRect(rect: Offset.zero & size)
           ..transform()
-          ..something((symbol, args) => symbol == #drawPicture),
+          ..rect(),
       );
     });
 

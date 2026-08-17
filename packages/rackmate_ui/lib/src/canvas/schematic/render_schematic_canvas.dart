@@ -49,8 +49,6 @@
 // `LayerHandle`s so their ref-counted lifecycle survives repaints. A raw
 // cached layer gets disposed between frames and reusing it asserts.
 
-import 'dart:ui' as ui;
-
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rackmate_core/rackmate_core.dart';
@@ -146,7 +144,6 @@ final class RenderSchematicCanvas extends RenderBox {
     // against a value nothing mutates.
     if (identical(_plan, value)) return;
     _plan = value;
-    _dropPicture();
     markNeedsPaint();
   }
 
@@ -189,46 +186,7 @@ final class RenderSchematicCanvas extends RenderBox {
   set measurer(TextMeasurer value) {
     if (identical(_measurer, value)) return;
     _measurer = value;
-    _dropPicture();
     markNeedsPaint();
-  }
-
-  /// The display list, recorded once (`#708`).
-  ///
-  /// ═══════════════════════════════════════════════════════════════════
-  /// WHY THIS AND NOT `#704`'s MUTATED LAYER
-  /// ═══════════════════════════════════════════════════════════════════
-  /// Both attack the same measured defect: the viewport notifies on every
-  /// pointer move of a drag, `markNeedsPaint` runs, and every op in the
-  /// plan is re-issued for a document nobody has touched.
-  ///
-  /// `#704` stopped the repaint by steering the retained `TransformLayer`
-  /// by hand, and broke the app: the schematic stopped panning and the
-  /// rack's chrome parted company with its content. It could not be
-  /// tested here because a widget test does not composite.
-  ///
-  /// THIS NEVER LEAVES `paint`. The listener still calls
-  /// `markNeedsPaint`, `paint` still runs on every pan, the clip and the
-  /// transform are still pushed by the framework in the usual way, and
-  /// the canvas is still drawn under them. The ONLY change is that the
-  /// scene arrives as one recorded picture instead of 4,155 live calls.
-  /// There is no state the framework does not know about, so the failure
-  /// mode that broke `#704` has nowhere to live.
-  ///
-  /// AND IT IS THE HALF THE RASTER THREAD WANTED TOO. A `ui.Picture`
-  /// marked complex is what the engine's raster cache can promote to a
-  /// texture; 4,155 individual draw calls are not. Both bars were pinned,
-  /// and this is the one change that speaks to both.
-  ///
-  /// INVALIDATED BY THE TWO THINGS THAT CHANGE WHAT IS DRAWN, and by
-  /// nothing else: a new plan and a new measurer. The viewport is
-  /// deliberately absent from that list, because the ops are recorded in
-  /// SCENE space and the matrix lives in a layer above them.
-  ui.Picture? _picture;
-
-  void _dropPicture() {
-    _picture?.dispose();
-    _picture = null;
   }
 
   /// The scene→screen matrix the last paint actually used.
@@ -297,42 +255,41 @@ final class RenderSchematicCanvas extends RenderBox {
 
   /// How many times the plan has actually been walked.
   ///
-  /// NOT A VACUOUS ASSERTION, and `#704`'s were. This counts inside
-  /// [_record], which is the work itself, and the picture it produces is
-  /// drawn through the framework's own canvas on every single frame. So
-  /// "the count did not move" cannot be true of a canvas that stopped
-  /// drawing: a canvas that stopped drawing would fail every other case
-  /// in this file first.
+  /// THE ARTIFACT `#704` IS ABOUT, and the only honest way to assert it:
+  /// a timing test on a build machine measures the build machine. A pan
+  /// that adds nothing to this number is a pan that painted nothing.
   @visibleForTesting
   int debugSceneRecordings = 0;
 
   void _paintScene(PaintingContext context, Offset offset) {
     // `offset` is Offset.zero here; the canvas is in scene space.
-    //
-    // ASK THE ENGINE TO KEEP THE RASTER TOO. A `ui.Picture` marked
-    // complex is something the engine's raster cache can promote to a
-    // texture; 4,155 individual draw calls are not. Both bars of the
-    // performance overlay were pinned, and this line and the picture
-    // above it are aimed at one each.
-    //
-    // NO `setWillChangeHint`: it means the opposite, and would tell the
-    // engine not to bother caching the thing this is trying to cache.
-    context.setIsComplexHint();
-    context.canvas.drawPicture(_picture ??= _record());
-  }
-
-  ui.Picture _record() {
     debugSceneRecordings++;
-    final recorder = ui.PictureRecorder();
+    // ═══════════════════════════════════════════════════════════════════
+    // ASK THE ENGINE TO KEEP THE RASTER, NOT JUST THE DISPLAY LIST
+    // ═══════════════════════════════════════════════════════════════════
+    // `#704` removed the Dart cost of a pan and left the RASTER cost,
+    // which is the half a widget test cannot see because a widget test
+    // never rasterises. The symptom is diagnostic: zoomed out is smooth
+    // and zoomed in is not, and the op count is identical at both, so the
+    // cost scales with pixels covered rather than with ops issued.
+    //
+    // This picture is expensive to raster and does not change while the
+    // viewport moves, which is precisely the pair of facts the engine's
+    // raster cache wants told. With the transform ABOVE this layer, a pan
+    // is then a re-projection of a cached texture rather than a re-fill.
+    //
+    // NO `setWillChangeHint`, and that is the point: it means the
+    // opposite, and setting it would tell the engine not to bother
+    // caching the thing this is trying to cache.
+    context.setIsComplexHint();
     final canvas = FlutterDiagramCanvas(
-      ui.Canvas(recorder),
+      context.canvas,
       measurer: _measurer,
       runs: _runs,
     );
     for (final op in _plan.ops) {
       op.replay(canvas);
     }
-    return recorder.endRecording();
   }
 
   /// M2-G's laid-out-run cache, owned here rather than by the canvas.
@@ -347,10 +304,6 @@ final class RenderSchematicCanvas extends RenderBox {
   @override
   void dispose() {
     _runs.clear();
-    // NATIVE MEMORY, so it is released here beside the text runs rather
-    // than left to the collector — the same rule `GridCache.dispose`
-    // follows for the picture it owns.
-    _dropPicture();
     _clipLayer.layer = null;
     _transformLayer.layer = null;
     super.dispose();
