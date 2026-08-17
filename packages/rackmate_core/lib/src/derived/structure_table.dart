@@ -44,11 +44,13 @@
 import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/derived/equipment_list.dart'
     show kUnknownCell;
+import 'package:rackmate_core/src/derived/link_class.dart';
 import 'package:rackmate_core/src/derived/location_tree.dart';
 import 'package:rackmate_core/src/derived/schedule.dart';
 import 'package:rackmate_core/src/model/enums.dart'
     show TerminationType, UnitSystem;
-import 'package:rackmate_core/src/model/link.dart' show RoughInStatus;
+import 'package:rackmate_core/src/model/link.dart'
+    show LinkClass, RoughInStatus;
 import 'package:rackmate_core/src/model/pathway.dart' show PathwayKind;
 import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/model/registries.dart';
@@ -323,6 +325,12 @@ enum StructureColumnId {
   installedBy,
   terminatedAt,
   notes,
+
+  // DR-067, `#712`. LAST, rather than beside `MEDIA` where it would read
+  // as a peer of the columns describing the cable: this is the only
+  // column whose value is normally DERIVED, and `values` order is the
+  // order `⚙ Columns` presents them in.
+  linkClass,
 }
 
 /// §4.1's eight, in the wireframe's own left-to-right order.
@@ -370,6 +378,12 @@ const List<StructureColumnId> kStructureOptionalColumns = <StructureColumnId>[
   StructureColumnId.installedBy,
   StructureColumnId.terminatedAt,
   StructureColumnId.notes,
+  // OPTIONAL, NOT A NINTH DEFAULT (DR-067 §11.66.2). §4.1's eight are a
+  // ruled list answering "what am I pulling and where does it land", and
+  // a class is not that question: it is normally derived and normally
+  // right, so a column carrying it by default would spend width teaching
+  // people a fact the classifier already knows.
+  StructureColumnId.linkClass,
 ];
 
 /// The as-built set, as one thing to switch on (DR-020 §11.19.2(5)).
@@ -424,6 +438,7 @@ String structureColumnHeader(StructureColumnId id) => switch (id) {
   StructureColumnId.installedBy => 'INSTALLED BY',
   StructureColumnId.terminatedAt => 'TERMINATED',
   StructureColumnId.notes => 'NOTES',
+  StructureColumnId.linkClass => 'CLASS',
 };
 
 /// Points, at the same scale `kPullSheetColumns` uses, so the editor and
@@ -451,6 +466,9 @@ double structureColumnWidth(StructureColumnId id) => switch (id) {
   StructureColumnId.installedBy => 84,
   StructureColumnId.terminatedAt => 78,
   StructureColumnId.notes => 140,
+  // Wide enough for `FIELD CABLE` plus the override marker the cell puts
+  // in front of it, since a badge that clips is a badge nobody sees.
+  StructureColumnId.linkClass => 96,
 };
 
 /// Whether a person can type into this column.
@@ -517,6 +535,19 @@ bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
   // does NOT follow: it still has no command, and RJ-012 makes it
   // user-extensible, which is a different question from this one.
   StructureColumnId.service => true,
+
+  // THE LINK CLASS (DR-067 §11.66, board `#712`). `SetLinkClassCommand`
+  // and `ClearLinkClassOverrideCommand` had been complete in core, with
+  // undo, since DR-008, and no surface in the product called either: a
+  // class could be classified and never asserted. This makes the cell
+  // reachable.
+  //
+  // EDITABLE EVEN THOUGH THE VALUE IS NORMALLY DERIVED, which is the
+  // whole of DR-008 §11.8.2: the classifier is advisory, and a person
+  // must be able to overrule it and to hand it back. `MEDIA` is not the
+  // precedent to read this against — that column is derived AND has no
+  // command; this one is derived and has two.
+  StructureColumnId.linkClass => true,
 
   _ => false,
 };
@@ -920,7 +951,82 @@ String structureCell(
     },
 
     StructureColumnId.notes => _text(link?.notes),
+
+    // THE EFFECTIVE CLASS, WHICH IS THE ONLY ONE ANY SURFACE MAY ASK FOR
+    // (DR-008 §11.8.2, DR-067 §11.66.1). `effectiveLinkClassOf` returns
+    // the person's assertion when they have made one and the classifier's
+    // answer otherwise; reading `Link.linkClass` here would print a
+    // stored default nobody chose, on every link nobody has classified.
+    //
+    // AND `null` IS THE DASH, not `FIELD CABLE`. The classifier returns
+    // null when an end will not resolve, and `link_class.dart`'s header
+    // spends a paragraph on why guessing there is worse than counting:
+    // defaulting to a field cable asserts a pull nobody established, and
+    // defaulting to a jumper hides the run from the sheet an installer
+    // works from. G4 applies to a classifier exactly as it does to a
+    // measurement.
+    StructureColumnId.linkClass => switch (link) {
+      final l? => switch (effectiveLinkClassOf(doc, l)) {
+        final c? => linkClassLabel(c),
+        null => kUnknownCell,
+      },
+      null => kUnknownCell,
+    },
   };
+}
+
+/// The `CLASS` option meaning "hand this back to the classifier".
+///
+/// NOT [kUnknownCell], and the difference is the whole point of the
+/// column. The dash means "nobody knows what this is", which is what an
+/// unresolvable end produces; this means "let the classifier decide",
+/// which is a decision and the DEFAULT state of every link. Spelling them
+/// the same would make handing a link back indistinguishable from
+/// declaring it a mystery.
+const String kLinkClassAutoCell = 'AUTO';
+
+/// The label a chosen `CLASS` cell maps back to, or null if it is not one
+/// this column offers.
+///
+/// THE INVERSE OF `linkClassLabel`, WHICH IS THE SCHEDULE'S SPELLER AND
+/// NOT A SECOND ONE. The sheet has printed these four words since DR-008;
+/// a column that offered its own spelling would round-trip wrong the
+/// first time either changed, which is the rule `resolveSignalFamilyCell`
+/// and `terminationLabel` already work under.
+///
+/// `UNDETERMINED` DOES NOT RESOLVE, though `linkClassLabel(null)` prints
+/// it: that word is the sheet's rendering of "the classifier could not
+/// tell", which is a fact about a document rather than a choice a person
+/// can make. [kLinkClassAutoCell] is not a class either and returns null
+/// too; a caller must check for it before calling this.
+LinkClass? resolveLinkClassCell(String label) {
+  final wanted = label.trim().toUpperCase();
+  return LinkClass.values.where((c) => linkClassLabel(c) == wanted).firstOrNull;
+}
+
+/// Whether this row's `CLASS` is a PERSON'S assertion rather than the
+/// classifier's answer, so a surface can mark it (DR-067 §11.66.3).
+///
+/// The mark is what makes an override auditable: `effectiveLinkClassOf`
+/// returns the same kind of value either way, and a cell that showed no
+/// difference would let a pin set months ago go on quietly outranking a
+/// document that has moved underneath it.
+bool structureLinkClassIsUserSet(RackDocument doc, ScheduleEntry row) =>
+    doc.links[row.linkId]?.linkClassLocked ?? false;
+
+/// What the classifier would say instead, spelled, or null when it does
+/// not disagree.
+///
+/// Reads [linkClassDisagreementOf], which is careful about one case this
+/// must not lose: an UNDETERMINED classifier is not a disagreement. It
+/// has failed to resolve an end, not formed a competing opinion, and
+/// reporting those as conflicts would mark every link touching a staged
+/// device.
+String? structureLinkClassDisagreement(RackDocument doc, ScheduleEntry row) {
+  final link = doc.links[row.linkId];
+  if (link == null) return null;
+  final derived = linkClassDisagreementOf(doc, link);
+  return derived == null ? null : linkClassLabel(derived);
 }
 
 /// A stored string, or the unknown dash. AN EMPTY STRING IS UNKNOWN here

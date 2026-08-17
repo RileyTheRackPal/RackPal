@@ -479,6 +479,23 @@ final class _Harness {
             actor: 'editor',
           );
           if (c != null) commands.add(c);
+        // DR-067, `#712`. The one column whose two answers are two
+        // COMMANDS rather than two values. Mirrored here only far enough
+        // to let the widget cases below drive the control; what the
+        // answers MEAN is asserted against the real
+        // `buildStructureEditAction` in
+        // `apps/rackmate/test/session/structure_editor_route_test.dart`,
+        // for the reason the `rackTerm` arm above now records at length.
+        case StructureColumnId.linkClass:
+          if (e.value.trim().toUpperCase() == kLinkClassAutoCell) {
+            commands.add(ClearLinkClassOverrideCommand(linkId: e.linkId));
+            break;
+          }
+          final klass = resolveLinkClassCell(e.value);
+          if (klass == null) return '"${e.value}" is not a class.';
+          commands.add(
+            SetLinkClassCommand(linkId: e.linkId, linkClass: klass),
+          );
         case _:
           return 'That column cannot be typed into.';
       }
@@ -1103,6 +1120,194 @@ void main() {
         before,
         reason: 'the first edit must not have been applied either',
       );
+    });
+  });
+
+  group('the CLASS column (DR-067 §11.66, board `#712`)', () {
+    /// Turns `CLASS` on the way a person does, through `⚙ Columns`.
+    Future<void> showClass(WidgetTester tester) async {
+      await tester.tap(find.text('Columns'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('CLASS'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('CLASS'));
+      await tester.pumpAndSettle();
+      // The menu stays open on purpose so three columns can be ticked in
+      // one visit; dismiss it before reading the table underneath.
+      await tester.tapAt(const Offset(4, 4));
+      await tester.pumpAndSettle();
+    }
+
+    Finder pin() => find.byIcon(Icons.push_pin);
+    Finder faintPin() => find.byIcon(Icons.push_pin_outlined);
+
+    /// The `CLASS` menu, identified by the one option no other column
+    /// offers rather than by its current value: the point of most of
+    /// these cases is that the value changes.
+    Finder classMenu() => find.byWidgetPredicate(
+      (w) =>
+          w is DropdownButton<String> &&
+          (w.items ?? const <DropdownMenuItem<String>>[]).any(
+            (i) => i.value == kLinkClassAutoCell,
+          ),
+      description: 'the CLASS menu',
+    );
+
+    /// Picks [label] the way a person does. THROUGH THE CONTROL, never
+    /// by calling the harness: the screen's own `_edit` is what rebuilds
+    /// the table, so an edit applied around the side of it changes the
+    /// document and leaves the screen showing the previous answer.
+    Future<void> pickClass(WidgetTester tester, String label) async {
+      await tester.tap(classMenu());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(label).last);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('it is off until asked for, and then it is a real control', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      expect(find.text('CLASS'), findsNothing);
+
+      await showClass(tester);
+      expect(find.text('CLASS'), findsOneWidget, reason: 'the header');
+      // A DROPDOWN, NOT A TEXT BOX. The four classes are an enum, so
+      // there is nothing to parse and nothing to typo.
+      expect(classMenu(), findsOneWidget);
+    });
+
+    testWidgets('an unclassified run shows the classifier and wears no pin', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      await showClass(tester);
+
+      // A drop with a wall end and an open rack end is a field cable,
+      // and nobody has said so: the cell reads it and stays unmarked.
+      expect(find.text('FIELD CABLE'), findsOneWidget);
+      expect(pin(), findsNothing);
+      expect(faintPin(), findsNothing);
+    });
+
+    testWidgets('picking one pins it, and the pin names what the classifier '
+        'still thinks', (tester) async {
+      // DR-008 §11.8.2's visible-disagreement clause is a SENTENCE and
+      // not a colour: "you set jumper; this now looks like a field
+      // cable" is what keeps an override auditable after the document
+      // moves under it, and a coloured glyph alone says none of it.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      await showClass(tester);
+
+      await pickClass(tester, linkClassLabel(LinkClass.jumper));
+
+      expect(find.text('JUMPER'), findsWidgets);
+      expect(h.doc.links.values.single.linkClassLocked, isTrue);
+      expect(
+        pin(),
+        findsOneWidget,
+        reason:
+            'the classifier still reads this run as a field cable, so '
+            'the mark is the filled pin',
+      );
+
+      final tip = tester.widget<Tooltip>(
+        find.ancestor(of: pin(), matching: find.byType(Tooltip)),
+      );
+      // THE WHOLE SENTENCE. A green `contains` over a line reading
+      // "1 ports" has shipped in this project before now.
+      expect(
+        tip.message,
+        'Set by hand. The classifier now reads this as FIELD CABLE. '
+        'Pick AUTO to let it decide again.',
+      );
+    });
+
+    testWidgets('an override the classifier agrees with is marked more '
+        'quietly, and still marked', (tester) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      await showClass(tester);
+
+      await pickClass(tester, linkClassLabel(LinkClass.fieldCable));
+
+      expect(h.doc.links.values.single.linkClassLocked, isTrue);
+      expect(faintPin(), findsOneWidget, reason: 'asserted, not disputed');
+      expect(pin(), findsNothing);
+      final tip = tester.widget<Tooltip>(
+        find.ancestor(of: faintPin(), matching: find.byType(Tooltip)),
+      );
+      expect(
+        tip.message,
+        'Set by hand. Pick AUTO to let the classifier decide again.',
+      );
+    });
+
+    testWidgets('AUTO takes the pin off and the classifier is heard again', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      await showClass(tester);
+
+      await pickClass(tester, linkClassLabel(LinkClass.jumper));
+      expect(pin(), findsOneWidget);
+
+      await pickClass(tester, kLinkClassAutoCell);
+
+      expect(pin(), findsNothing);
+      expect(faintPin(), findsNothing);
+      expect(find.text('FIELD CABLE'), findsOneWidget);
+      expect(h.doc.links.values.single.linkClassLocked, isFalse);
+    });
+
+    testWidgets('a run the classifier cannot read shows the dash and does '
+        'not take the table down with it', (tester) async {
+      // THE CRASH THIS COLUMN COULD HAVE INTRODUCED. `DropdownButton`
+      // asserts that exactly one item carries its value, and the dash is
+      // deliberately NOT one of this column's options: `AUTO` occupies
+      // that slot and means something else entirely. An effective class
+      // of nothing therefore renders as a hint over a null value, and a
+      // cell that passed the dash straight through would take out the
+      // whole editor for every document with a staged panel in it.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+
+      // Point the rack end at a port no device in this document owns,
+      // which is what a deleted or staged panel leaves behind. Done
+      // BEFORE the column is switched on, so turning it on is the only
+      // rebuild and this never re-pumps a screen out from under itself:
+      // `⚙ Columns` is a `setState` on the editor.
+      final link = h.doc.links.values.single;
+      final was = link.conductors.first;
+      link.conductors[0] = Conductor(
+        from: was.from,
+        to: const PortEndpoint(Uuid('port-gone')),
+        role: was.role,
+        pairNumber: was.pairNumber,
+        colorCode: was.colorCode,
+      );
+
+      await showClass(tester);
+
+      expect(find.text('FIELD CABLE'), findsNothing);
+      expect(
+        find.text(kUnknownCell),
+        findsWidgets,
+        reason:
+            'the classifier has failed to resolve an end, and G4 says '
+            'that prints as unknown rather than as a guess',
+      );
+      expect(tester.takeException(), isNull);
     });
   });
 

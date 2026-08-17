@@ -1958,6 +1958,17 @@ List<String>? structureCellChoices(
   // HAS a family and `structure.undetermined` is the encouraged value.
   // Choosing it is a statement, not a clearing.
   StructureColumnId.service => signalFamilyCellOptions(registries),
+  // `AUTO` FIRST AND IT IS NOT AN UNKNOWN (DR-067 §11.66.1). The two
+  // termination arms above open with [kUnknownCell] because nobody
+  // having decided is a real state of a cable end. Here the equivalent
+  // first entry means "the classifier decides", which is the DEFAULT
+  // state of every link and a decision rather than an absence: a run
+  // whose ends will not resolve still prints the dash, and that is a
+  // different fact from this one.
+  StructureColumnId.linkClass => <String>[
+    kLinkClassAutoCell,
+    ...LinkClass.values.map(linkClassLabel),
+  ],
   _ => null,
 };
 
@@ -2072,6 +2083,28 @@ class _DataRow extends StatelessWidget {
             onFocused: () => onCaret((row.linkId, id)),
           );
         }
+      } else if (id == StructureColumnId.linkClass && options != null) {
+        // THE ONE COLUMN WHOSE VALUE CAN BE OFF ITS OWN MENU (DR-067).
+        // An unresolvable end gives an effective class of nothing, which
+        // prints the dash, and the dash is deliberately not an option:
+        // `AUTO` occupies that slot and means something else. Handing
+        // `DropdownButton` a value no item carries is an assertion
+        // failure, so the dash goes in as the HINT and the value is null.
+        final derived = structureLinkClassDisagreement(doc, row);
+        return _ChoiceCell(
+          linkId: row.linkId,
+          column: id,
+          value: text == kUnknownCell ? null : text,
+          hint: kUnknownCell,
+          options: options,
+          badge: structureLinkClassIsUserSet(doc, row)
+              ? _linkClassBadge(derived)
+              : null,
+          badgeDisagrees: derived != null,
+          reportsUnchangedPick: true,
+          onEdit: onEdit,
+          onCaret: onCaret,
+        );
       } else if (options != null) {
         return _ChoiceCell(
           linkId: row.linkId,
@@ -2110,6 +2143,25 @@ class _DataRow extends StatelessWidget {
       ),
     );
   }
+
+  /// What the `CLASS` pin says when you rest on it.
+  ///
+  /// TWO SENTENCES, AND THE SECOND ONLY WHEN THERE IS SOMETHING TO SAY.
+  /// DR-008 §11.8.2's visible-disagreement clause is the reason the
+  /// classifier's competing answer is named here rather than merely
+  /// implied by the pin being filled in: "you set jumper; this now looks
+  /// like a field cable" is the sentence the ruling asks for, and it is
+  /// the only thing that keeps an override auditable after the document
+  /// moves under it.
+  ///
+  /// Both endings name the way out, because a pin a person cannot see how
+  /// to remove is the one-way door `ClearLinkClassOverrideCommand` exists
+  /// to prevent.
+  String _linkClassBadge(String? disagreement) => disagreement == null
+      ? 'Set by hand. Pick $kLinkClassAutoCell to let the classifier '
+            'decide again.'
+      : 'Set by hand. The classifier now reads this as $disagreement. '
+            'Pick $kLinkClassAutoCell to let it decide again.';
 }
 
 /// One typed cell.
@@ -2251,14 +2303,55 @@ class _ChoiceCell extends StatelessWidget {
     required this.options,
     required this.onEdit,
     required this.onCaret,
+    this.hint,
+    this.badge,
+    this.badgeDisagrees = false,
+    this.reportsUnchangedPick = false,
   });
 
   final Uuid linkId;
   final StructureColumnId column;
 
-  /// The label showing now. [kUnknownCell] when nothing is recorded, and
-  /// it must then also be in [options] or the dropdown has no value.
-  final String value;
+  /// The label showing now, which must be in [options] or the dropdown
+  /// has no value.
+  ///
+  /// NULL RENDERS [hint] INSTEAD, and `CLASS` is why it may be null
+  /// (DR-067). Three of the four columns here open their menu with
+  /// [kUnknownCell], so "nothing recorded" is a legal SELECTION and this
+  /// is never null for them. `CLASS` offers `AUTO` in that slot, which is
+  /// a different statement, so a run whose ends will not resolve has an
+  /// effective class of nothing at all and no option to sit on.
+  final String? value;
+
+  /// What to show when [value] is null. The dash, for the one column that
+  /// can be in that state.
+  final String? hint;
+
+  /// A sentence explaining why this cell is marked, or null for no mark.
+  /// `CLASS` uses it for DR-067 §11.66.3's override badge.
+  final String? badge;
+
+  /// Whether the mark should read as a live disagreement rather than a
+  /// plain override. Not an error in either case: overruling the
+  /// classifier is a legitimate act (DR-008 §11.8.2).
+  final bool badgeDisagrees;
+
+  /// Whether picking the label already showing is still worth reporting.
+  ///
+  /// FALSE FOR THREE COLUMNS AND TRUE FOR `CLASS`, and the difference is
+  /// not a preference. For `ROUGH-IN`, `FIELD TERM` and `RACK TERM` the
+  /// label on screen IS the stored value, so re-picking it changes
+  /// nothing and reporting it would cost an undo entry for a gesture
+  /// with no effect. For `CLASS` the label on screen is normally the
+  /// CLASSIFIER'S, so picking the word already there moves the run from
+  /// "nobody has said" to "a person says so" — which is a real change of
+  /// state and exactly the one `SetLinkClassCommand` refuses to demote:
+  /// an assertion that happens to agree today is still an assertion.
+  ///
+  /// Reporting it is safe because every arm behind `onEdit` decides for
+  /// itself whether there is anything to do; this widget is not the
+  /// place that knows.
+  final bool reportsUnchangedPick;
 
   /// Every label this column accepts, in the order a person reads them.
   final List<String> options;
@@ -2275,27 +2368,61 @@ class _ChoiceCell extends StatelessWidget {
     // keystroke: "everything from here down is pulled" is the gesture a
     // person makes walking a job, and a status is legal to repeat where a
     // label is not.
+    final mark = badge;
+    final menu = DropdownButton<String>(
+      value: value,
+      isDense: true,
+      isExpanded: true,
+      underline: const SizedBox.shrink(),
+      style: theme.textTheme.bodySmall,
+      hint: hint == null
+          ? null
+          : Text(
+              hint!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+      items: [
+        for (final label in options)
+          DropdownMenuItem<String>(value: label, child: Text(label)),
+      ],
+      onChanged: (next) {
+        if (next == null) return;
+        if (next == value && !reportsUnchangedPick) return;
+        onEdit([
+          StructureCellEdit(linkId: linkId, column: column, value: next),
+        ]);
+      },
+    );
     return Focus(
       onFocusChange: (has) {
         if (has) onCaret((linkId, column));
       },
-      child: DropdownButton<String>(
-        value: value,
-        isDense: true,
-        isExpanded: true,
-        underline: const SizedBox.shrink(),
-        style: theme.textTheme.bodySmall,
-        items: [
-          for (final label in options)
-            DropdownMenuItem<String>(value: label, child: Text(label)),
-        ],
-        onChanged: (next) {
-          if (next == null || next == value) return;
-          onEdit([
-            StructureCellEdit(linkId: linkId, column: column, value: next),
-          ]);
-        },
-      ),
+      // THE MARK IS A PIN, and the word is DR-008 §11.8.2's own: a user's
+      // class "pins it against re-classification". It is drawn in
+      // `tertiary` and never in `error`, because overruling the
+      // classifier is something the ruling provides for rather than
+      // something to be scolded about, and the tooltip is where the
+      // classifier's competing answer goes.
+      child: mark == null
+          ? menu
+          : Row(
+              children: [
+                Tooltip(
+                  message: mark,
+                  child: Icon(
+                    badgeDisagrees ? Icons.push_pin : Icons.push_pin_outlined,
+                    size: 12,
+                    color: badgeDisagrees
+                        ? theme.colorScheme.tertiary
+                        : theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(child: menu),
+              ],
+            ),
     );
   }
 }

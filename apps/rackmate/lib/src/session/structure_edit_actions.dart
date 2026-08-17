@@ -155,6 +155,11 @@ StructureEditFn buildStructureEditAction({
         edit: edit,
         into: commands,
       ),
+      StructureColumnId.linkClass => _linkClass(
+        controller: controller,
+        edit: edit,
+        into: commands,
+      ),
 
       // ── the other two lengths (AC-024, M3-D/2) ─────────────────────
       // THE SAME PARSER THE AS-BUILT LENGTH USES, deliberately. Three
@@ -504,6 +509,52 @@ String? _certificateId({
     to: next,
     into: into,
   );
+}
+
+/// `CLASS`, which is the only column here whose two answers are two
+/// different COMMANDS rather than two values (DR-067 §11.66, DR-008
+/// §11.8.2).
+///
+/// `AUTO` is not a class and never lands in `Link.linkClass`. It drops
+/// the pin and hands the run back to the classifier, which is
+/// `ClearLinkClassOverrideCommand`'s whole job; folding it into the
+/// setter as a nullable would give one gesture two opposite meanings, and
+/// `link_class_commands.dart`'s header says why the two are separate.
+///
+/// NEITHER ARM CONSULTS THE CLASSIFIER, deliberately. An assertion that
+/// happens to agree with the classifier today is still an assertion, and
+/// quietly declining to pin it because it matches would drop the person's
+/// word the next time the document moved. That is the same reason
+/// `SetLinkClassCommand` sets both fields rather than one.
+///
+/// NOTHING TO DO IS CHECKED HERE, because neither command builder does
+/// it: setting a class a link already holds AND is already pinned to
+/// would otherwise cost an undo step that changes nothing, which is the
+/// state a fill-down over an already-classified column lands in.
+String? _linkClass({
+  required DocumentController controller,
+  required StructureCellEdit edit,
+  required List<Command<RackDocument>> into,
+}) {
+  final link = controller.doc.links[edit.linkId];
+  if (link == null) return 'That cable is not in this project.';
+  final wanted = edit.value.trim().toUpperCase();
+
+  if (wanted == kLinkClassAutoCell) {
+    if (!link.linkClassLocked) return null;
+    into.add(ClearLinkClassOverrideCommand(linkId: edit.linkId));
+    return null;
+  }
+
+  final value = resolveLinkClassCell(edit.value);
+  if (value == null) {
+    return '"${edit.value}" is not a class. Use one of: '
+        '$kLinkClassAutoCell, '
+        '${LinkClass.values.map(linkClassLabel).join(', ')}.';
+  }
+  if (link.linkClassLocked && link.linkClass == value) return null;
+  into.add(SetLinkClassCommand(linkId: edit.linkId, linkClass: value));
+  return null;
 }
 
 /// An ordinary `Link` field, through the generic table.

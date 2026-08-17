@@ -758,6 +758,146 @@ void main() {
       expect(reverted.terminationRack, isNull);
     });
 
+    testWidgets('CLASS asserts, AUTO hands back, and both undo (DR-067, '
+        '`#712`)', (tester) async {
+      // THE COLUMN DR-008 HAD BEEN WAITING FOR SINCE ITS OWN RULING.
+      // `SetLinkClassCommand` and `ClearLinkClassOverrideCommand` were
+      // complete in core with undo, and no surface in the product called
+      // either: a class could be classified and never asserted.
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final edit = buildStructureEditAction(controller: controller);
+
+      expect(doc.links[ids.first]!.linkClassLocked, isFalse);
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.linkClass,
+            value: linkClassLabel(LinkClass.jumper),
+          ),
+        ]),
+        isNull,
+      );
+      expect(doc.links[ids.first]!.linkClass, LinkClass.jumper);
+      expect(
+        doc.links[ids.first]!.linkClassLocked,
+        isTrue,
+        reason:
+            'the pin is the half that makes the assertion outrank the '
+            'classifier; writing the value alone would be inert',
+      );
+
+      // AUTO IS THE OTHER COMMAND, not a value. It drops the pin and
+      // leaves the stored class where it was, inert, which is what
+      // `link_class_commands.dart` argues for at length.
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.linkClass,
+            value: kLinkClassAutoCell,
+          ),
+        ]),
+        isNull,
+      );
+      expect(doc.links[ids.first]!.linkClassLocked, isFalse);
+      expect(
+        doc.links[ids.first]!.linkClass,
+        LinkClass.jumper,
+        reason: 'clearing drops the lock and does not rewrite the value',
+      );
+
+      // AND HANDING IT BACK IS ITS OWN UNDO STEP, because it was its own
+      // gesture. One Ctrl+Z restores the pin rather than skipping past
+      // the override entirely.
+      controller.undoLast();
+      expect(doc.links[ids.first]!.linkClassLocked, isTrue);
+      controller.undoLast();
+      expect(doc.links[ids.first]!.linkClassLocked, isFalse);
+    });
+
+    testWidgets('AUTO on an unpinned run costs no undo step', (tester) async {
+      // The state a fill-down lands in: `AUTO` down a column where most
+      // rows were never pinned must apply to the ones that were and
+      // charge nothing for the rest. Neither command builder checks this,
+      // so the action does.
+      final (doc, ids) = job(3);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final edit = buildStructureEditAction(controller: controller);
+      final before = controller.undo.depth;
+
+      expect(
+        edit([
+          for (final id in ids)
+            StructureCellEdit(
+              linkId: id,
+              column: StructureColumnId.linkClass,
+              value: kLinkClassAutoCell,
+            ),
+        ]),
+        isNull,
+      );
+      expect(controller.undo.depth, before, reason: 'nothing was pinned');
+
+      // Setting the same class twice is likewise nothing the second time.
+      edit([
+        StructureCellEdit(
+          linkId: ids.first,
+          column: StructureColumnId.linkClass,
+          value: linkClassLabel(LinkClass.powerCord),
+        ),
+      ]);
+      final afterFirst = controller.undo.depth;
+      edit([
+        StructureCellEdit(
+          linkId: ids.first,
+          column: StructureColumnId.linkClass,
+          value: linkClassLabel(LinkClass.powerCord),
+        ),
+      ]);
+      expect(controller.undo.depth, afterFirst);
+    });
+
+    testWidgets('a class the column does not offer is refused, and the '
+        'refusal names AUTO', (tester) async {
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final edit = buildStructureEditAction(
+        controller: built.session.services.session.controller,
+      );
+
+      // `UNDETERMINED` is what the SHEET prints for a classifier that
+      // could not tell. It is a fact about a document, not a choice, and
+      // a column that accepted it would let a person assert an unknown.
+      final refusal = edit([
+        StructureCellEdit(
+          linkId: ids.first,
+          column: StructureColumnId.linkClass,
+          value: 'UNDETERMINED',
+        ),
+      ]);
+      // THE WHOLE SENTENCE, not a `contains`. A green `contains` over a
+      // line reading "1 ports" has shipped in this project before, and a
+      // refusal is copy: the only way to know it reads as English is to
+      // write down what it says.
+      expect(
+        refusal,
+        '"UNDETERMINED" is not a class. Use one of: AUTO, FIELD CABLE, '
+        'JUMPER, POWER CORD, INTERNAL.',
+      );
+      expect(doc.links[ids.first]!.linkClassLocked, isFalse);
+    });
+
     testWidgets('closing out sixty runs costs three gestures, not sixty '
         'inspector visits', (tester) async {
       // THE MEASUREMENT THE BRIEF ASKS FOR, in the shape M3-C/1 took its

@@ -1298,4 +1298,180 @@ void main() {
       expect(resolveSignalFamilyCell(orphaned, 'VID·HDBaseT (5Play)'), isNull);
     });
   });
+
+  group('the CLASS column (DR-067 §11.66, board `#712`)', () {
+    /// A drop that lands on a real rack port, so the classifier can
+    /// resolve both ends and has an opinion to be overruled.
+    (_Doc, ScheduleEntry) landed() {
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      final o = d.outlet('LR-1', locationId: lr);
+      _drop(
+        d,
+        outletId: o,
+        locationId: lr,
+        fieldLabel: 'LR-TV-1',
+        rackPort: d.panelPort('A01'),
+      );
+      return (d, buildStructureTable(d.doc).groups.single.rows.single);
+    }
+
+    test('it is optional, editable and batchable, and headed CLASS', () {
+      // OPTIONAL AND NOT A NINTH DEFAULT. §4.1's set answers "what am I
+      // pulling and where does it land"; a class is normally derived and
+      // normally right, so it does not spend default width.
+      expect(kStructureOptionalColumns, contains(StructureColumnId.linkClass));
+      expect(
+        kStructureDefaultColumns,
+        isNot(contains(StructureColumnId.linkClass)),
+      );
+      expect(structureColumnHeader(StructureColumnId.linkClass), 'CLASS');
+      expect(structureColumnIsEditable(StructureColumnId.linkClass), isTrue);
+      expect(
+        structureColumnIsBatchable(StructureColumnId.linkClass),
+        isTrue,
+        reason:
+            'a class is not unique, so the fill-down that closes out sixty '
+            'drops covers it too',
+      );
+    });
+
+    test('the cell reads the EFFECTIVE class, so an unclassified run '
+        "shows the classifier's answer", () {
+      final (d, row) = landed();
+      final link = d.doc.links[row.linkId]!;
+      expect(link.linkClassLocked, isFalse, reason: 'nobody has said');
+      expect(
+        structureCell(
+          d.doc,
+          row,
+          StructureColumnId.linkClass,
+          units: UnitSystem.imperial,
+        ),
+        'FIELD CABLE',
+      );
+      expect(
+        structureLinkClassIsUserSet(d.doc, row),
+        isFalse,
+        reason: 'the classifier answering is not a person asserting',
+      );
+    });
+
+    test("a person's class outranks the classifier and is marked", () {
+      final (d, row) = landed();
+      SetLinkClassCommand(
+        linkId: row.linkId,
+        linkClass: LinkClass.jumper,
+      ).apply(d.doc);
+
+      expect(
+        structureCell(
+          d.doc,
+          row,
+          StructureColumnId.linkClass,
+          units: UnitSystem.imperial,
+        ),
+        'JUMPER',
+      );
+      expect(structureLinkClassIsUserSet(d.doc, row), isTrue);
+      // AND THE CLASSIFIER'S COMPETING ANSWER IS RECOVERABLE, which is
+      // §11.8.2's visible-disagreement clause. The person's word stands;
+      // standing is not the same as hiding.
+      expect(structureLinkClassDisagreement(d.doc, row), 'FIELD CABLE');
+    });
+
+    test('clearing the override hands the run back, and the mark goes', () {
+      final (d, row) = landed();
+      SetLinkClassCommand(
+        linkId: row.linkId,
+        linkClass: LinkClass.jumper,
+      ).apply(d.doc);
+      ClearLinkClassOverrideCommand(linkId: row.linkId).apply(d.doc);
+
+      expect(structureLinkClassIsUserSet(d.doc, row), isFalse);
+      expect(structureLinkClassDisagreement(d.doc, row), isNull);
+      expect(
+        structureCell(
+          d.doc,
+          row,
+          StructureColumnId.linkClass,
+          units: UnitSystem.imperial,
+        ),
+        'FIELD CABLE',
+        reason:
+            'the classifier is heard again, and it never stopped saying '
+            'this',
+      );
+    });
+
+    test('an agreeing override is still an override, and still marked', () {
+      // The case that would tempt an implementation to demote the pin
+      // "because it matches". `SetLinkClassCommand`'s own doc refuses
+      // that: an assertion agreeing with the classifier today is still an
+      // assertion, and dropping it would lose the person's word the next
+      // time the document moved.
+      final (d, row) = landed();
+      SetLinkClassCommand(
+        linkId: row.linkId,
+        linkClass: LinkClass.fieldCable,
+      ).apply(d.doc);
+
+      expect(structureLinkClassIsUserSet(d.doc, row), isTrue);
+      expect(
+        structureLinkClassDisagreement(d.doc, row),
+        isNull,
+        reason: 'agreeing is not disagreeing',
+      );
+    });
+
+    test('an undetermined class is the DASH, never a class name and never '
+        'the word UNDETERMINED (G4)', () {
+      final (d, row) = landed();
+      // Take the DEVICE out from under the port, which is the shape a
+      // staged or deleted panel leaves behind. `linkClassOf` then fails
+      // to resolve that end and returns null, which is the state its own
+      // header spends a paragraph refusing to guess about: defaulting to
+      // FIELD CABLE asserts a pull nobody established, and defaulting to
+      // JUMPER hides the run from the sheet an installer works from.
+      //
+      // Emptying `doc.racks` alone does NOT do it, and that is worth
+      // knowing rather than working around: `rackOfEndpoint` reads the
+      // rack id off the device's own placement and never asks whether
+      // that rack is still in the document.
+      d.doc.devices.clear();
+
+      expect(
+        structureCell(
+          d.doc,
+          row,
+          StructureColumnId.linkClass,
+          units: UnitSystem.imperial,
+        ),
+        kUnknownCell,
+      );
+      expect(
+        structureLinkClassDisagreement(d.doc, row),
+        isNull,
+        reason:
+            'an undetermined classifier has failed to resolve an end, '
+            'not formed a competing opinion',
+      );
+    });
+
+    test('every label the menu offers resolves back to its own class', () {
+      // The round trip that keeps the picker and the writer speaking one
+      // language. `linkClassLabel` is the SHEET's speller and this column
+      // borrows it rather than growing a second one.
+      for (final value in LinkClass.values) {
+        expect(resolveLinkClassCell(linkClassLabel(value)), value);
+      }
+      // AND THE TWO WORDS THAT ARE NOT CLASSES DO NOT RESOLVE. `AUTO` is
+      // a different command; `UNDETERMINED` is what the sheet prints for
+      // a classifier that could not tell, which is a fact about the
+      // document rather than a choice.
+      expect(resolveLinkClassCell(kLinkClassAutoCell), isNull);
+      expect(resolveLinkClassCell(linkClassLabel(null)), isNull);
+      expect(resolveLinkClassCell('BANANA'), isNull);
+    });
+  });
 }
