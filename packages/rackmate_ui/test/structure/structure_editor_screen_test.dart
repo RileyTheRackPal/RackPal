@@ -410,9 +410,19 @@ final class _Harness {
           );
           if (result is SetStructureOriginRefused) return result.reason;
           if (result is SetStructureOriginReady) commands.add(result.command);
-        // DR-046. The harness mirrors the app, and the app has handled
-        // both ends since this ruling; a harness that refused one of
-        // them would test a product that does not exist.
+        // DR-046. THIS COMMENT USED TO SAY "the app has handled both ends
+        // since this ruling" AND THAT WAS FALSE (`#711`). The app had an
+        // arm for the field end only, so the rack column drew an enabled
+        // dropdown and answered every pick with "That column cannot be
+        // typed into." A harness MORE capable than the product tests a
+        // product that does not exist just as surely as one that is
+        // stricter, and this file's whole shape (a reimplementation of
+        // `buildStructureEditAction`, which lives in `apps/rackmate` and
+        // cannot be imported here) is what let the two drift for a whole
+        // ruling. The real action is now driven by
+        // `apps/rackmate/test/session/structure_editor_route_test.dart`,
+        // which is the file that can reach it; what is asserted HERE is
+        // the surface, and nothing about what the surface's answers mean.
         case StructureColumnId.rackTerm:
           final value = e.value.trim();
           final termination = value == kUnknownCell || value.isEmpty

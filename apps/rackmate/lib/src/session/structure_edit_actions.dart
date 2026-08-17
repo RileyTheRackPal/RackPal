@@ -118,9 +118,26 @@ StructureEditFn buildStructureEditAction({
         to: edit.value.trim().isEmpty ? null : edit.value.trim(),
         into: commands,
       ),
-      StructureColumnId.fieldTerm => _fieldTermination(
+      StructureColumnId.fieldTerm => _termination(
         controller: controller,
         edit: edit,
+        field: StructureOriginField.terminationField,
+        end: 'field',
+        into: commands,
+      ),
+      // THE RACK END, WHICH THIS SWITCH DID NOT HAVE (`#711`). DR-046
+      // §11.45.4 split one termination field into two, and four of the
+      // five places that had to know were updated: the column is
+      // editable, it is in the default eight, it offers the full menu,
+      // and `StructureOriginField.terminationRack` exists. This arm did
+      // not, so every pick fell to the catch-all below and the enabled
+      // dropdown refused itself on every line, with a sentence written
+      // for a text box.
+      StructureColumnId.rackTerm => _termination(
+        controller: controller,
+        edit: edit,
+        field: StructureOriginField.terminationRack,
+        end: 'rack',
         into: commands,
       ),
       StructureColumnId.testResult => _testResult(
@@ -287,16 +304,28 @@ String? _parsed<T>({
   ),
 };
 
-/// `FIELD TERM`, from the label back to the enum.
+/// `FIELD TERM` or `RACK TERM`, from the label back to the enum.
+///
+/// ONE ARM FOR BOTH ENDS, which is DR-046 §11.45.4's own words: "a
+/// termination is a termination; the end it is on is which column it sits
+/// in". `structureCellChoices` already offers the two columns the
+/// identical menu for that reason, and this is the same statement on the
+/// write side. Two copies is how the rack end came to have a dropdown, a
+/// menu, an editable flag and a field with nothing behind it (`#711`).
 ///
 /// THE UNKNOWN OPTION CLEARS IT, and that is why the field is nullable at
 /// all: M3-J/1 made `StructureOrigin.terminationField` nullable because
 /// `unterminated` is a DECISION (a coil left deliberately bare) and a
 /// drop at rough-in has no answer. A control that could not go back to
 /// unknown would make the second state unreachable once anybody guessed.
-String? _fieldTermination({
+///
+/// [end] is the word the refusal uses, so a person who typed into the
+/// wrong column is told which one answered.
+String? _termination({
   required DocumentController controller,
   required StructureCellEdit edit,
+  required EntityField<Link, TerminationType?> field,
+  required String end,
   required List<Command<RackDocument>> into,
 }) {
   final wanted = edit.value.trim().toUpperCase();
@@ -306,14 +335,14 @@ String? _fieldTermination({
         .where((t) => terminationLabel(t) == wanted)
         .firstOrNull;
     if (value == null) {
-      return '"${edit.value}" is not a termination. Use one of: '
+      return '"${edit.value}" is not a $end termination. Use one of: '
           '${TerminationType.values.map(terminationLabel).join(', ')}.';
     }
   }
   final result = buildSetStructureOriginProperty<TerminationType?>(
     doc: controller.doc,
     linkId: edit.linkId,
-    field: StructureOriginField.terminationField,
+    field: field,
     to: value,
     now: controller.clock.nowUtc(),
     actor: controller.actor,

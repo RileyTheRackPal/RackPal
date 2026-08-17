@@ -648,6 +648,116 @@ void main() {
       expect(doc.links[ids.first]!.structureOrigin!.terminationField, isNull);
     });
 
+    testWidgets('RACK TERM writes the RACK end, and does not refuse itself '
+        '(DR-046, `#711`)', (tester) async {
+      // THE DEFECT: the column was editable, in the default eight, and
+      // offered the whole `TerminationType` menu, while
+      // `buildStructureEditAction` had an arm for the field end only. So
+      // the cell drew an ENABLED dropdown and answered every pick with
+      // "That column cannot be typed into." on every line, which is what
+      // the user reported.
+      //
+      // WHY NO TEST SAW IT, and why this one lives in the app package.
+      // `structure_editor_screen_test.dart` stubs `onEdit` with its own
+      // reimplementation, and that stub HAD a rack arm, under a comment
+      // asserting "the app has handled both ends since this ruling". The
+      // harness was more capable than the product and the suite was green
+      // against the fake. `buildStructureEditAction` lives here and
+      // `rackmate_ui` may not import it, so this is where a test can
+      // reach the real thing.
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final edit = buildStructureEditAction(controller: controller);
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.rackTerm,
+            value: terminationLabel(TerminationType.punchdown),
+          ),
+        ]),
+        isNull,
+        reason: 'a legal pick from the column’s own menu is not a refusal',
+      );
+      final origin = doc.links[ids.first]!.structureOrigin!;
+      expect(origin.terminationRack, TerminationType.punchdown);
+      expect(
+        origin.terminationField,
+        isNull,
+        reason:
+            'DR-046 split the ends: writing the rack end must not touch '
+            'the field end, which is the defect the split removed',
+      );
+
+      // IT CLEARS BACK TO UNKNOWN like its neighbour, for M3-J/1's
+      // reason: nobody having decided how this end is finished is a real
+      // state, not a value.
+      edit([
+        StructureCellEdit(
+          linkId: ids.first,
+          column: StructureColumnId.rackTerm,
+          value: kUnknownCell,
+        ),
+      ]);
+      expect(doc.links[ids.first]!.structureOrigin!.terminationRack, isNull);
+
+      // AND THE REFUSAL NAMES THE END. One arm serves both columns now,
+      // so the sentence has to say which one answered.
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.rackTerm,
+            value: 'BANANA',
+          ),
+        ]),
+        contains('rack termination'),
+      );
+    });
+
+    testWidgets('the two ends are set independently, in one gesture', (
+      tester,
+    ) async {
+      // The pair DR-046 exists for: a run punched down at the panel and
+      // keystoned at the wall is the ordinary case, and it was unsayable
+      // while one of the two columns could not be written.
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final edit = buildStructureEditAction(controller: controller);
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.fieldTerm,
+            value: terminationLabel(TerminationType.keystone),
+          ),
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.rackTerm,
+            value: terminationLabel(TerminationType.punchdown),
+          ),
+        ]),
+        isNull,
+      );
+      final origin = doc.links[ids.first]!.structureOrigin!;
+      expect(origin.terminationField, TerminationType.keystone);
+      expect(origin.terminationRack, TerminationType.punchdown);
+
+      // ONE UNDO FOR THE PAIR, because one gesture wrote both.
+      controller.undoLast();
+      final reverted = doc.links[ids.first]!.structureOrigin!;
+      expect(reverted.terminationField, isNull);
+      expect(reverted.terminationRack, isNull);
+    });
+
     testWidgets('closing out sixty runs costs three gestures, not sixty '
         'inspector visits', (tester) async {
       // THE MEASUREMENT THE BRIEF ASKS FOR, in the shape M3-C/1 took its
