@@ -140,15 +140,39 @@ class GridPainter extends CustomPainter {
     final tl = viewport.screenToScene(const DPt(0, 0));
     final br = viewport.screenToScene(DPt(size.width, size.height));
 
-    // Coverage: pad by one viewport on each side, then snap OUT to a coarse
-    // tile so a small pan stays inside the baked region and reuses the cache.
+    // ═══════════════════════════════════════════════════════════════════
+    // THE PADDING WAS ONE FULL VIEWPORT EACH SIDE, AND IT WAS THE JANK
+    // ═══════════════════════════════════════════════════════════════════
+    // Three viewports wide by three tall is NINE SCREENS of area, so the
+    // baked picture held on the order of a thousand anti-aliased lines
+    // and had bounds far past any raster-cache budget. It was therefore
+    // re-rasterised in full on every frame of every pan.
+    //
+    // THE SYMPTOM MATCHED THE TIER GATE EXACTLY. `_minScreenSpacing`
+    // drops the minor tier below ~0.71x zoom and the major tier below
+    // ~0.14x, so the grid vanishes when zoomed right out and switches on
+    // at working zoom. "Buttery smooth zoomed all the way out, abysmal
+    // where I actually work" is that gate read aloud, and it is why both
+    // canvases were affected: they share this painter.
+    //
+    // THE TRADE WAS BACKWARDS AND NOBODY HAD MEASURED WHICH SIDE WAS
+    // SCARCE. A full viewport of padding spends GPU FILL, every frame, to
+    // save a Dart RE-BAKE on pan. Profiling the live app found the Dart
+    // isolate essentially idle during a pan (7 samples in 20 seconds, six
+    // of them with no Dart frame at all) while frames were barely being
+    // produced. Dart was the abundant side; fill was the scarce one.
+    //
+    // So the padding is now TWO TILES rather than a viewport. The snap
+    // below already grants up to a tile of slack on each side, so a pan
+    // still reuses the picture until it has travelled roughly two major
+    // divisions, and a re-bake is a few hundred `drawLine` calls recorded
+    // into a picture out of a budget that is sitting unused.
     final tile = majorSpacing;
-    final padX = (br.x - tl.x).abs();
-    final padY = (br.y - tl.y).abs();
-    final covL = _snapDown(tl.x - padX, tile);
-    final covT = _snapDown(tl.y - padY, tile);
-    final covR = _snapUp(br.x + padX, tile);
-    final covB = _snapUp(br.y + padY, tile);
+    final pad = tile * 2;
+    final covL = _snapDown(math.min(tl.x, br.x) - pad, tile);
+    final covT = _snapDown(math.min(tl.y, br.y) - pad, tile);
+    final covR = _snapUp(math.max(tl.x, br.x) + pad, tile);
+    final covB = _snapUp(math.max(tl.y, br.y) + pad, tile);
     final coverage = ui.Rect.fromLTRB(covL, covT, covR, covB);
 
     // Cache key: bucket + snapped coverage + LOD flags + style + spacing. Round
