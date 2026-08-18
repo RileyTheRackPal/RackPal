@@ -342,6 +342,8 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     // candidates, the arbiter). A handler that reached into the scene
     // would be a second place that knows where a pin is.
     pinAt: _pinAt,
+    landingAt: _landingAt,
+    onLandingBegin: _armLandingFrom,
     claimConnect: () => _claimPointerGesture(_PointerGesture.connectDrag),
     releaseConnect: () => _releasePointerGesture(_PointerGesture.connectDrag),
     onConnectBegin: _beginWireAt,
@@ -444,6 +446,28 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// The pin a wire is armed from — docs/05 §7's `WIRE_STICKY` — or null
   /// when no wire is in flight.
   PinRef? _wireFrom;
+
+  /// The half-landed home run this gesture is LANDING, and which of its
+  /// ends is the loose one, or null when the gesture is an ordinary
+  /// connect (`#719`, DR-073).
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// LANDING IS NOT CONNECTING, AND THE WHOLE ITEM TURNS ON THAT
+  /// ═════════════════════════════════════════════════════════════════
+  /// `ConnectPortsCommand` CREATES a cable. A run pulled at framing stage
+  /// already exists, carries a `W` number, a length, a jacket and
+  /// possibly a test result, and what it lacks is a pin at one end. A
+  /// connect run against it makes a SECOND cable beside the one the
+  /// person is trying to finish, which is the defect `#713` was filed
+  /// for. So when this is set, the commit calls `BindEndpointCommand`.
+  ///
+  /// [_wireFrom] IS STILL SET, and to the pin the run is ALREADY landed
+  /// on. That is not a fudge to reuse the preview: a half-landed run
+  /// landed onto a second pin genuinely is a cable between those two
+  /// pins, so the band the overlay draws is what the document will hold
+  /// one event later. Everything downstream — the magnet, the candidate
+  /// rings, the caret, the teardown — therefore needs no branch at all.
+  ({Uuid linkId, LinkEnd loose})? _landingFrom;
 
   /// The pins a conductor from [_wireFrom] may legally land on, in sheet
   /// order. Empty when no wire is armed.
@@ -2417,6 +2441,99 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     )?.ref;
   }
 
+  /// A press landed on a net-label pennant: is there a run to LAND here,
+  /// and which end of it is loose (`#719`, DR-073)?
+  ///
+  /// Null unless every one of these holds, and each exclusion hands the
+  /// press back to the ordinary click that selects the cable:
+  ///
+  ///  * it is a HOME RUN. `buildBindEndpointCommand` refuses anything
+  ///    with no `StructureOrigin` ("that cable is not a home run"), so a
+  ///    patch cable's pennant must not arm a gesture whose every commit
+  ///    is refused, which is `#711`'s defect drawn on purpose.
+  ///  * EXACTLY ONE end is on a pin. Both landed is a finished cable with
+  ///    nothing to land; neither draws no pennant, so it is unreachable
+  ///    here anyway and the guard is a statement rather than a filter.
+  ///
+  /// EITHER END MAY BE THE LOOSE ONE, which is why this reports WHICH.
+  /// DR-068 §11.67.1 lets a speaker run land on its driver, so a run
+  /// drawn at its amplifier is waiting for a field end and a run drawn at
+  /// its wall plate is waiting for a rack end. A gesture that assumed the
+  /// rack end would silently rewrite the wrong half of the cable.
+  ({Uuid linkId, LinkEnd loose})? _landingAt(DPt scenePoint) {
+    final scene = _scene;
+    if (scene == null) return null;
+    final linkId = linkAtPoint(
+      scene,
+      scenePoint,
+      tolerance: _portHitTolerancePx / _viewport.scale,
+    );
+    if (linkId == null) return null;
+    final link = _doc.links[linkId];
+    if (link == null || link.structureOrigin == null) return null;
+    if (link.conductors.isEmpty) return null;
+    final conductor = link.conductors.first;
+    final fromLanded = conductor.from is PortEndpoint;
+    final toLanded = conductor.to is PortEndpoint;
+    if (fromLanded == toLanded) return null;
+    return (linkId: linkId, loose: fromLanded ? LinkEnd.rack : LinkEnd.field);
+  }
+
+  /// A press landed on a pennant with a loose end: arm the landing.
+  ///
+  /// THE SOURCE IS THE PIN THE RUN IS ALREADY ON, so the preview band is
+  /// the cable this gesture is about to complete. See [_landingFrom].
+  ///
+  /// THE CANDIDATES ARE THE FREE PINS, and that is a DIFFERENT question
+  /// from `evaluateConnect`'s. A bind's only occupancy rule is
+  /// `TOP-003` — one cable per punchdown position — asked through
+  /// `portConductorCount` rather than answered again here, because
+  /// `buildBindEndpointCommand` asks it the same way and two copies would
+  /// let the ring say yes where the commit says no.
+  bool _armLandingFrom(({Uuid linkId, LinkEnd loose}) grab) {
+    final scene = _scene;
+    if (scene == null) return false;
+    final link = _doc.links[grab.linkId];
+    if (link == null) return false;
+    final landedEnd = grab.loose == LinkEnd.rack
+        ? link.conductors.first.from
+        : link.conductors.first.to;
+    if (landedEnd is! PortEndpoint) return false;
+    final port = _doc.ports[landedEnd.portId];
+    final key = port?.templatePortKey;
+    if (port == null || key == null) return false;
+    final source = PinRef(deviceId: port.deviceId.v, portKey: key.v);
+
+    final free = <PinRef>[
+      for (final pin in locatePins(scene))
+        if (pin.ref != source)
+          if (_targetFor(pin.ref) case final t?)
+            if (portConductorCount(_doc, t.portId) == 0) pin.ref,
+    ];
+    if (free.isEmpty) {
+      _status.show(
+        'Every jack on this sheet already has a cable, so ${link.designator} '
+        'has nowhere to land.',
+      );
+      return false;
+    }
+
+    setState(() {
+      _wireFrom = source;
+      _landingFrom = grab;
+      _candidates = free;
+      // NO PREFERRED SET. DR-012.3's magnet ranks candidates by whether
+      // they accept the SOURCE's family, which is a question about a
+      // cable being created. This one exists already and its family is
+      // whatever it was pulled as.
+      _preferred = const <PinRef>{};
+    });
+    _status.show(
+      'Landing ${link.designator}. Drop it on a free jack, or press Esc.',
+    );
+    return true;
+  }
+
   /// A press landed on [ref]: arm a wire from it, exactly as `W` does.
   ///
   /// Returns false when nothing armed — an already-full pin, or one no
@@ -2581,6 +2698,64 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     _cancelWire();
   }
 
+  /// Lands [grab]'s loose end on [to] (`#719`, DR-073).
+  ///
+  /// THE RACK LABEL IS ALLOCATED ONLY FOR A RACK END, which is DR-068
+  /// §11.67.2 on the write side: the rack label is derived from the
+  /// panel position, so the bind is the only moment it can be known; the
+  /// field label names the wall plate and landing a speaker says nothing
+  /// about what the plate is called.
+  void _commitLanding(({Uuid linkId, LinkEnd loose}) grab, PinRef to) {
+    final target = _targetFor(to);
+    if (target == null) {
+      _cancelWire();
+      _status.show('That jack is no longer in this document.');
+      return;
+    }
+    final link = _doc.links[grab.linkId];
+    if (link == null) {
+      _clearWire();
+      _status.show('That cable is no longer in this project.');
+      return;
+    }
+
+    final String? label;
+    if (grab.loose == LinkEnd.rack) {
+      label = resolveRackLabel(
+        doc: _doc,
+        panelDeviceId: target.deviceId,
+        // THE NUMBER ON THE PART, not the designator this product
+        // allocated (DR-040 §11.39.8).
+        portDesignator: target.portDesignator,
+        usedRackLabels: usedRackLabels(_doc),
+      ).label;
+    } else {
+      label = null;
+    }
+
+    final built = buildBindEndpointCommand(
+      doc: _doc,
+      linkId: grab.linkId,
+      port: PortMaterialisation.of(target, designator: target.portDesignator),
+      rackLabel: label,
+      usedRackLabels: usedRackLabels(_doc),
+      now: widget.controller.clock.nowUtc(),
+      actor: widget.controller.actor,
+      end: grab.loose,
+    );
+    switch (built) {
+      case BindEndpointRefused(:final reason):
+        _clearWire();
+        _status.show(reason);
+      case BindEndpointReady(:final command):
+        _clearWire();
+        widget.controller.run(command);
+        _status.show(
+          '${link.designator} landed on ${target.citation}.',
+        );
+    }
+  }
+
   /// `Esc` while a wire is in flight — docs/05 §7's cancel.
   ///
   /// "All three abort with no model mutation and no undo entry" (docs/05
@@ -2600,6 +2775,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   void _clearWire() {
     setState(() {
       _wireFrom = null;
+      _landingFrom = null;
       _wireFromSetKey = null;
       _wireFromBankKey = null;
       _multiPlans = const <(String, String), MultiDrawPlan>{};
@@ -2614,6 +2790,13 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     final from = _wireFrom;
     final to = _pinCaret;
     if (from == null || to == null) return;
+    // LANDING FIRST, because it is not a connect at all. See
+    // [_landingFrom]: the run exists, so completing it must MOVE an end
+    // rather than create a second cable beside it.
+    if (_landingFrom case final grab?) {
+      _commitLanding(grab, to);
+      return;
+    }
     // The same three-way branch [_armWireFrom] took, read back off the
     // field each limb set. Multi-draw first, for the reason stated there.
     if (_wireFromBankKey != null) {
@@ -3291,6 +3474,8 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     required this.claim,
     required this.release,
     required this.pinAt,
+    required this.landingAt,
+    required this.onLandingBegin,
     required this.claimConnect,
     required this.releaseConnect,
     required this.onConnectBegin,
@@ -3308,6 +3493,15 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
   /// BRANCH POINT of this whole class — see [beginDrag].
   final PinRef? Function(DPt scenePoint) pinAt;
 
+  /// A half-landed home run whose pennant is under the scene point, or
+  /// null (`#719`). Asked ONLY when [pinAt] found nothing, so a pin
+  /// always wins: a pennant sits beside its pin and the boxes touch.
+  final ({Uuid linkId, LinkEnd loose})? Function(DPt scenePoint) landingAt;
+
+  /// Arms a landing. Same contract as [onConnectBegin]: false hands the
+  /// press back to the ordinary click claim.
+  final bool Function(({Uuid linkId, LinkEnd loose}) grab) onLandingBegin;
+
   /// The arbiter, for the connect gesture's own claim. SEPARATE FROM
   /// [claim] because they are separate gestures: a connect that is refused
   /// must not release a click's claim, and `_PointerGesture`'s two values
@@ -3315,7 +3509,7 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
   final bool Function() claimConnect;
   final VoidCallback releaseConnect;
 
-  /// Arms a cable from [PinRef]; false when nothing armed (a full pin, or
+  /// Arms a cable from a `PinRef`; false when nothing armed (a full pin, or
   /// one no cable can leave), in which case the press stays a click.
   final bool Function(PinRef ref) onConnectBegin;
   final void Function(DPt scenePoint) onConnectUpdate;
@@ -3394,7 +3588,11 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     // decides WHICH claim to ask for. It reads the scene and nothing else,
     // so it is safe to ask while another gesture holds the canvas.
     final pin = pinAt(sceneStart);
-    final wantsConnect = pin != null;
+    // A PENNANT ONLY WHEN NO PIN ANSWERED. The two hit boxes touch, and a
+    // press on a jack must always mean the jack: landing a run is the
+    // rarer act and must never steal the commoner one (`#719`).
+    final landing = pin == null ? landingAt(sceneStart) : null;
+    final wantsConnect = pin != null || landing != null;
     if (!(wantsConnect ? claimConnect() : claim())) {
       // NOTHING IS TOUCHED, and nothing is remembered either. `_start` and
       // `_travelPx` belong to the gesture that owns the canvas and is still
@@ -3413,12 +3611,13 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     _connecting = false;
 
     if (!wantsConnect) return;
-    if (onConnectBegin(pin)) {
+    if (pin != null ? onConnectBegin(pin) : onLandingBegin(landing!)) {
       _connecting = true;
       return;
     }
-    // THE PIN REFUSED TO ARM — full, or nothing on the sheet can take a
-    // cable from it. The press is not wasted: it hands the claim back and
+    // THE ARM REFUSED. A full pin, one no cable can leave, or a run whose
+    // sheet has no free jack to land it on (`#719`). The press is not
+    // wasted: it hands the claim back and
     // takes the ordinary one, so it still selects on release exactly as a
     // press on the device body would. Two claims are never held at once,
     // because this runs before any pointer movement can arrive.
