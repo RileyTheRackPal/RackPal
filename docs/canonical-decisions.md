@@ -11235,6 +11235,96 @@ inert. Writing the classifier's current answer into the field on the way out wou
 computable from other stored facts, which is what CR-107 deleted `StructureDrop` for, and would make
 undo restore a value no person ever chose.
 
+
+### 11.67 DR-068 · Either end of a run may land on a device, because a speaker run is one cable
+
+**Settled by the user on 2026-08-18**, during M3 (`#713`, `#714`), after diagramming a real system.
+**Not a §8.3 amendment.** AC-018 already names `BindEndpoint` and rules that binding preserves the
+id, the length, the jacket and the test result. What it did not decide is which END may bind, and
+the implementation answered "the rack one" without the question being put.
+
+**11.67.1 A HOME RUN MAY TERMINATE ON A DEVICE AT EITHER END.** `BindEndpointCommand` takes a
+`LinkEnd` and writes `Conductor.from` or `.to` accordingly. It defaults to the rack end, so every
+call site written before this keeps its meaning untouched.
+
+For structured cabling the old behaviour was right and stays available: a Cat6 drop ends at a wall
+plate, and whatever plugs in there is a separate patch cord that the schedule should show as a
+separate cable. For AV it was wrong often enough to matter. **An in-wall or in-ceiling speaker run
+is ONE continuous conductor from the amplifier to the binding posts on the driver**, and a product
+that could not say so forced the user to draw a second cable that does not exist, on the sheet whose
+whole purpose is to be true.
+
+**11.67.2 THE ENDPOINT IS SYMMETRIC AND THE LABELS ARE NOT.** A rack bind writes the rack label; a
+field bind writes no label at all, and the constructor asserts that a field bind is not handed one.
+
+This is a fact about the two labels rather than an omission. A **rack label is derived from where
+the run landed**: `{FLOOR}`, `{PORT}`, allocated against the panel position, and therefore
+unknowable until the bind happens. A **field label names the wall plate**, was typed when the drop
+was created, and is unique project-wide under CR-113. Landing a speaker records where the copper
+ends and says nothing about what the plate is called; writing one from the other would be the fusion
+G4 forbids, and would collide the moment two speakers landed in one room. The revert is scoped the
+same way, or a field bind would clear a panel position out of a null it never captured.
+
+**11.67.3 DR-040 §11.39.2 CLAUSE 4 STANDS, AND STOPS BEING INHERITED.** Rear-only is a rule about
+**the two sides of a panel in a rack**: one takes pulled cable, the other takes patch cords, and the
+drop belongs on the first. An in-wall speaker has no such geometry, its binding posts are simply its
+terminals, and inheriting the split offered it zero positions and refused every direct run. The free
+position walk now takes the end, so clause 4 governs the rack end exactly as before.
+
+**11.67.4 WHAT THE SCHEMATIC CAN AND CANNOT SHOW, RECORDED AS A CONSTRAINT.** The sheet is a device
+graph: symbols come from `doc.devices`, and `_edgeFor` returns null when either end is not a
+`PortEndpoint`. So a run with **one** end landed can hang a stub off the device it reached, and a
+run with **neither** end landed has nothing to hang off and cannot be drawn at all. Those must be
+**counted on the sheet** rather than omitted from it, because the user's own reason for asking is the
+one that matters: *"someone's going to forget one or two and not notice it until the schematic is
+ready to be printed."* A sheet that silently holds fewer runs than the project does is the failure
+this ruling exists to prevent, not a lesser version of it.
+
+---
+
+### 11.68 DR-069 · Whose binding posts are they? The plate's, or the speaker's
+
+**Settled by the user on 2026-08-18** (`#717`), reported from real use: tagging a ceiling speaker's
+run `BINDING POST` demanded two plate cells, *"and a ceiling speaker wouldn't even get a low voltage
+box let alone keystones"*. **Amends DR-007 §11.7.2.1's binding-post arm.**
+
+**11.68.1 THE CELL COUNT FOLLOWS WHERE THE RUN LANDS, NOT THE TERMINATION WORD.** A `bindingPost`
+field end that is bound to a device port needs **zero** cells. One that is still a place needs **one
+cell per conductor**, exactly as before.
+
+Both readings of the word are real hardware, and that is what makes this the one arm the enum cannot
+answer alone. A **speaker binding-post wall plate** is a product: its posts are on the plate, each
+conductor lands in a cell, and §11.7.2.1's original arm was written for it and is still right. An
+**in-ceiling driver's** posts are on the driver, and nothing sits in a cell because there is no
+plate. `keystone` and `punchdown` are always the plate's; `euroblock` and `rj45Plug` are always the
+device's; only `bindingPost` is genuinely either. DR-068 is what made the difference expressible.
+
+**11.68.2 NO OTHER ARM READS THE LANDING**, and the narrowness is the rule rather than an
+implementation detail. A test asserts it for every other member, because a landed end says where the
+copper goes and not what it goes into. An unknown termination stays unknown either way: there is no
+"probably zero" arm and there must never be one (G4).
+
+**11.68.3 TWO ALTERNATIVES WERE REFUSED, AND ONE OF THEM BY THIS RECORD'S OWN PRECEDENT.**
+
+`fieldConnector` as a catch-all is refused for the reason DR-045 §11.44.1 already refused it for
+`rj45Plug`: it *"names no connector at all and would leave the Termination Schedule saying nothing
+useful to somebody deciding whether to reach for a crimper or a punchdown tool"*. A ceiling speaker
+has no connector at all, so the tag would be both uninformative and false, on the one column a trim
+tech actually works from.
+
+A new `directTermination` member is refused because it puts one fact in two places. The topology is
+already recorded, by DR-068, as which endpoint the conductor holds; a second statement of it in the
+termination enum lets a document say `DIRECT TERMINATION` on a run whose field end is an unlanded
+wall plate, and the schedule would then print a termination the model says did not happen. That is
+the conflation DR-046 spent a ruling undoing when one field was serving two cable ends.
+
+**11.68.4 THIS IS THE THIRD TIME THE ENUM HAS BEEN ASKED A QUESTION IT CANNOT ANSWER, and the
+pattern is the finding.** DR-044 §11.43.4 corrected `euroblock` from one cell to zero on precisely
+this reasoning, after M3-H had put it beside `keystone` *"on an inference nobody wrote down"*. DR-045
+§11.44.2 then asked it of `rj45Plug` out loud rather than inferring it, and said why. The question a
+cell count actually turns on is **whose hardware is this**, and for two of the nine terminations the
+word does not carry it.
+
 ---
 
 ## 12. Superseded rulings
@@ -11722,6 +11812,28 @@ which git does not fix and makes slightly worse. **DR-033 §11.32's no-secrets c
 authentication** and is not re-opened. **DR-034 §11.33's "fetched, never cloned"** is not contradicted:
 it ruled how a *library* arrives, on the ground that clone does not survive a platform with no git,
 and that ground is why §11.51.6 puts the v1 item on plain file divergence rather than on git.
+
+
+---
+
+### 12.23 Amended by DR-069 (a binding post is on a plate or on a driver, and the word does not say)
+
+**Listed because §12's preamble makes an unlisted row read as still binding**, and because the row
+below is the one a reader consults when sizing a strap.
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-007 §11.7.2.1**, the binding-post row | "binding post / single post (speaker) &#124; **one per `Conductor` landing there**: 16/2 → 2 cells, 16/4 → 4 cells" | **Amended, and only for a landed field end.** The row stands unchanged for a run that terminates AT A PLATE, which is what it was written for: a speaker binding-post wall plate is a product, its posts are on the plate and each conductor lands in a cell. A run whose field end is bound to a DEVICE port needs **zero** cells, because the posts are the driver's and there is no plate. See §11.68.1. |
+
+**Nothing else in DR-007 moves.** The modular-jack row, the `punchdown` row and the "nothing is on
+the plate" row are untouched, and §11.68.2 asserts that no other termination reads the landing at
+all.
+
+**The same table's closing paragraph is now spent rather than wrong.** It says `TerminationType`
+*"does not yet name a binding-post case, and adding one is the smallest change that makes this table
+computable"*. The member was added and the table is computable; what the sentence could not
+anticipate is that the member would turn out to name two different objects. That is §11.68.4's
+finding, and it is the third time the enum has been asked whose hardware a termination belongs to.
 
 ---
 
