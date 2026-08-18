@@ -3086,6 +3086,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
                 scene: scene,
                 plan: plan,
                 deviceCount: _doc.devices.length,
+                unlandedHomeRuns: unlandedHomeRunIds(_doc).length,
               ),
             ],
           ),
@@ -3637,11 +3638,19 @@ final class _SchematicStatusStrip extends StatelessWidget {
     required this.scene,
     required this.plan,
     required this.deviceCount,
+    required this.unlandedHomeRuns,
   });
 
   final SchematicScene scene;
   final SchematicPaintPlan plan;
   final int deviceCount;
+
+  /// Home runs whose RACK end is not punched down (DR-072 §11.71).
+  ///
+  /// SEPARATE FROM `unlabelledLinkIds` BELOW, which folds "nobody landed
+  /// this" together with "this device has no symbol". Two problems, two
+  /// fixes, and only one of them is something a person can go and do.
+  final int unlandedHomeRuns;
 
   @override
   Widget build(BuildContext context) {
@@ -3658,6 +3667,11 @@ final class _SchematicStatusStrip extends StatelessWidget {
         '${scene.unsymbolisedDeviceIds.length} without ports, so without '
         'a symbol',
       );
+    }
+    // FIRST OF THE EXCEPTIONS, because it is the only one on this strip
+    // that names a job rather than a limitation of the drawing.
+    if (unlandedHomeRuns > 0) {
+      notes.add('$unlandedHomeRuns home runs not landed at the rack');
     }
     if (scene.unlabelledLinkIds.isNotEmpty) {
       notes.add('${scene.unlabelledLinkIds.length} cables with no drawn end');

@@ -1299,6 +1299,74 @@ void main() {
     });
   });
 
+  group('the runs nobody landed (DR-072 §11.71, `#716`)', () {
+    test('an unlanded rack end is counted, and a landed one is not', () {
+      // THE QUESTION THE SCHEMATIC COULD NOT ANSWER: "did I forget one".
+      // A half-landed run is drawn, so it is not in `unlabelledLinkIds`
+      // and the sheet said nothing about it at all.
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      final o = d.outlet('LR-1', locationId: lr);
+      final unlanded = _drop(
+        d,
+        outletId: o,
+        locationId: lr,
+        fieldLabel: 'LR-TV-1',
+      );
+      _drop(
+        d,
+        outletId: o,
+        locationId: lr,
+        fieldLabel: 'LR-TV-2',
+        rackPort: d.panelPort('A01'),
+      );
+
+      expect(unlandedHomeRunIds(d.doc), [unlanded]);
+    });
+
+    test('an unlanded FIELD end is not counted, because it is not a job', () {
+      // DR-068 lets a speaker run land on its driver and a Cat6 drop end
+      // at a wall plate for good. Counting those puts a number on the
+      // sheet that never reaches zero, which is how a person learns to
+      // stop reading it.
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      final o = d.outlet('LR-1', locationId: lr);
+      _drop(
+        d,
+        outletId: o,
+        locationId: lr,
+        fieldLabel: 'LR-TV-1',
+        rackPort: d.panelPort('A01'),
+      );
+
+      final link = d.doc.links.values.single;
+      expect(link.conductors.first.from, isNot(isA<PortEndpoint>()));
+      expect(
+        unlandedHomeRunIds(d.doc),
+        isEmpty,
+        reason:
+            'the rack end is punched down, which is the end that is a '
+            'job somebody has to do',
+      );
+    });
+
+    test('an ordinary patch cable is not a home run and is not counted', () {
+      // The count is about the structured wiring. A rack-to-rack jumper
+      // has no `structureOrigin` and nothing to land.
+      final d = _Doc();
+      AddLinkCommand(
+        designator: 'W900',
+        netName: 'N900',
+        media: const MediaTypeId('media.cat6'),
+        order: nextLinkOrder(d.doc),
+        now: _when,
+        actor: 'test',
+      ).apply(d.doc);
+      expect(unlandedHomeRunIds(d.doc), isEmpty);
+    });
+  });
+
   group('the OUTLET column has THREE states (DR-070 §11.69, `#718`)', () {
     /// A run that comes out of no box: a ceiling speaker, whose
     /// conductors land on the driver's own binding posts.

@@ -49,6 +49,7 @@ import 'package:rackmate_core/src/derived/equipment_list.dart'
 import 'package:rackmate_core/src/derived/link_class.dart';
 import 'package:rackmate_core/src/derived/location_tree.dart';
 import 'package:rackmate_core/src/derived/schedule.dart';
+import 'package:rackmate_core/src/model/conductor.dart' show PortEndpoint;
 import 'package:rackmate_core/src/model/enums.dart'
     show TerminationType, UnitSystem;
 import 'package:rackmate_core/src/model/link.dart'
@@ -1075,6 +1076,40 @@ bool structureRowIsLanded(ScheduleEntry row) => switch (row.to.kind) {
   ScheduleEndKind.rackPort || ScheduleEndKind.unrackedPort => true,
   _ => false,
 };
+
+/// Every home run whose RACK end is not punched down, in document order
+/// (DR-072 §11.71).
+///
+/// ═══════════════════════════════════════════════════════════════════
+/// THE ONE UNLANDED END THAT IS A JOB AND NOT A STATE
+/// ═══════════════════════════════════════════════════════════════════
+/// An unlanded FIELD end is ordinary and often permanent: DR-068 §11.67.1
+/// lets a speaker run land on its driver, and a Cat6 drop that ends at a
+/// wall plate ends there for good. Counting those would put a number on
+/// the sheet that never goes to zero, which is how a person learns to
+/// stop reading it.
+///
+/// An unlanded RACK end is different. AC-018 makes it a legitimate state
+/// at rough-in — fourteen of sixty, by that criterion's own arithmetic —
+/// and a job somebody is printing a schematic for is past rough-in. This
+/// is the count that answers "did I forget one", which is the question
+/// the schematic could not answer at all before `#716`.
+///
+/// NOT THE SAME AS `unlabelledLinkIds`, which the sheet already reports.
+/// That one is "this cable has no drawn end at all" and folds together a
+/// run nobody landed with a link whose device carries no symbol: two
+/// different problems with two different fixes. This one names only the
+/// first, so the sentence a person reads is one they can act on.
+List<Uuid> unlandedHomeRunIds(RackDocument doc) {
+  final out = <Uuid>[];
+  for (final link in doc.links.values) {
+    if (link.structureOrigin == null) continue;
+    if (link.conductors.isEmpty) continue;
+    if (link.conductors.first.to is PortEndpoint) continue;
+    out.add(link.id);
+  }
+  return out;
+}
 
 /// The devices a drop may be landed on, by designator, in document
 /// order.
