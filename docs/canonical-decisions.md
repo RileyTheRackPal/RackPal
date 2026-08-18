@@ -11436,6 +11436,55 @@ because an unbind is a different gesture with different consequences for the rac
 termination, and §11.39.6 has never ruled it. Recorded here as an absence a person will meet, not as
 one this ruling closes.
 
+
+### 11.71 DR-072 · The sheet counts the runs nobody landed, and only the end that is a job
+
+**Settled by the user on 2026-08-18** (`#716`), the last phase of `#713`, and prompted by the
+reason they gave for wanting it at all: *"someone's going to forget one or two and not notice it
+until the schematic is ready to be printed."* **Not a §8.3 amendment.**
+
+**11.71.1 TWO OF THIS PHASE'S THREE CLAUSES WERE ALREADY BUILT, and the record says so because the
+finding is worth more than the work.** `net_label_layer.dart`'s `_endsOf` drops one end without
+dropping the other, so a **half-landed run already draws the stub for the end it has**; its own doc
+gives the reason (*"that flag is the only place the reader learns the run exists at all"*). A run
+with neither end drawn is already in `unlabelledLinkIds`, the status strip already prints it, and
+`net_label_layer_test.dart` pins both.
+
+This was **checked rather than believed**. A comment asserting the product already handles something
+is exactly what `#711` cost a ruling's worth of time over, and the alternative here was rebuilding
+working machinery beside itself.
+
+**11.71.2 WHAT WAS MISSING WAS A SENTENCE A PERSON CAN ACT ON.** *"N cables with no drawn end"* folds
+together a run nobody landed and a link whose device carries no symbol: two problems with two
+different fixes. A **half-landed** run is in neither, because it is drawn. So the sheet said nothing
+whatever about the case that prompted the request.
+
+`unlandedHomeRunIds` counts home runs whose **rack end** is not punched down, and the strip prints
+it **first**, because it is the only note there that names a job rather than a limitation of the
+drawing.
+
+**11.71.3 THE FIELD END IS DELIBERATELY NOT COUNTED.** DR-068 §11.67.1 lets a speaker run land on
+its driver, and a Cat6 drop ends at a wall plate for good. Counting unlanded field ends would put a
+number on the sheet that never reaches zero, which is how a person learns to stop reading a number.
+
+The rack end is different in kind. AC-018 makes an unbound one legitimate **at rough-in** (fourteen
+of sixty, by that criterion's own arithmetic), and a job somebody is printing a schematic for is
+past rough-in.
+
+**11.71.4 WHAT IS STILL OWED, AND IT IS THE HALF THE USER ASKED FOR BY NAME.** There is no gesture
+yet to **drag a stub onto a pin** and land the run from the sheet. The pieces exist (pennants are
+hit-testable through `linkAtPoint`, and `buildBindEndpointCommand` takes it from there); what is
+missing is a second arming path through `CanvasIntentDetector`, a wire origin that can hold a
+pending landing as well as a pin, and a release that **binds rather than connects**. The distinction
+is the whole point: `ConnectPortsCommand` would make a second cable beside the one the person is
+trying to finish, which is the defect `#713` was filed for.
+
+**IT IS RECORDED AS OWED RATHER THAN STARTED**, on the user's call, because that gesture lives in
+the file with the exclusivity arbiter and the `_owned` token, whose header records three prior
+defects in its mirror and which shipped `#704` green four days earlier while breaking both canvases
+in the user's hands. The count above stands on its own and the sheet is honest without it; the
+gesture is convenience on top of an accurate drawing, and it is worth starting rested.
+
 ---
 
 ## 12. Superseded rulings
