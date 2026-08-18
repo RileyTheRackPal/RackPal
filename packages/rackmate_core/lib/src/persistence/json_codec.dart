@@ -1591,9 +1591,24 @@ TestResult _decodeTestResult(JsonMap json) => TestResult(
 JsonMap _encodeStructureOrigin(StructureOrigin o) {
   final json = <String, Object?>{
     'structureBodyId': o.structureBodyId.v,
-    'outletId': o.outletId.v,
     'fieldLabel': o.fieldLabel,
   };
+  // ═══════════════════════════════════════════════════════════════════
+  // `outletId` STOPPED BEING UNCONDITIONAL AND CR-117 STILL HOLDS
+  // ═══════════════════════════════════════════════════════════════════
+  // The key was required until `#718`, so EVERY document ever written
+  // carries one: reading yields that id and writing writes it back, and
+  // no existing file moves a byte. Only a run somebody has said comes out
+  // of no box omits it, and that run could not be authored before this
+  // change. `kSchemaVersion` therefore does not move.
+  //
+  // Sorted-key order is unaffected: `putIfNotNull` writes into the same
+  // map the literal above builds, and the encoder sorts on the way out.
+  putIfNotNull(json, 'outletId', o.outletId?.v);
+  // AND `boxless` IS WRITTEN ONLY WHEN TRUE, for the same reason and one
+  // more: false is what every older document means, so emitting it would
+  // rewrite every file in the corpus on first save.
+  if (o.boxless) json['boxless'] = true;
   // ADDITIVE FROM M3-J, and CR-117 holds without a schema bump because
   // the key was UNCONDITIONAL before it: every document ever written
   // carries it, reading yields that value and writing writes it back, so
@@ -1623,8 +1638,13 @@ StructureOrigin _decodeStructureOrigin(JsonMap json) => StructureOrigin(
     json['structureBodyId'],
     'StructureOrigin.structureBodyId',
   ),
-  outletId: _decodeUuid(json['outletId'], 'StructureOrigin.outletId'),
+  outletId: _decodeUuidOrNull(json['outletId'], 'StructureOrigin.outletId'),
   fieldLabel: asStr(json['fieldLabel'], 'StructureOrigin.fieldLabel'),
+  // ABSENT MEANS FALSE, which is what every document written before
+  // `#718` means: they all name a box.
+  boxless:
+      json['boxless'] != null &&
+      asBool(json['boxless'], 'StructureOrigin.boxless'),
   terminationField: json['terminationField'] == null
       ? null
       : decodeEnumStrict(

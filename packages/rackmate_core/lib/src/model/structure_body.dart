@@ -90,6 +90,7 @@ final class StructureOrigin {
     required this.structureBodyId,
     required this.outletId,
     required String fieldLabel,
+    this.boxless = false,
     TerminationType? terminationField,
     TerminationType? terminationRack,
     String? rackLabel,
@@ -105,7 +106,38 @@ final class StructureOrigin {
        _mountHeightAff = mountHeightAff;
 
   final Uuid structureBodyId;
-  final Uuid outletId;
+
+  /// The box this run comes out of, or NULL.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// NULL IS "NOBODY HAS SAID", AND [boxless] IS "THERE IS NO BOX"
+  /// ═══════════════════════════════════════════════════════════════════
+  /// Two facts, two fields, because G4 gives an absent value exactly one
+  /// meaning and it is `unknown`. A ceiling speaker has NO low-voltage
+  /// box: that is something a person stated, not a gap in what they
+  /// know, and the Outlets page has to be able to tell it from a drop
+  /// nobody has assigned yet. Folding both into a null would make the
+  /// two indistinguishable in the file and uncountable on the page,
+  /// which is the fusion DR-046 spent a ruling undoing when one field
+  /// was serving two cable ends.
+  ///
+  /// Settled by the user on 2026-08-18 (`#718`), reported from real use:
+  /// *"a ceiling speaker wouldn't even get a low voltage box let alone
+  /// keystones"*.
+  final Uuid? outletId;
+
+  /// This run terminates on a device and comes out of no box at all.
+  ///
+  /// A STATEMENT, NOT AN ABSENCE. See [outletId]. It is deliberately NOT
+  /// derived from whether the field end is landed: a speaker run that
+  /// has been pulled and not yet terminated is boxless the day it is
+  /// pulled, and a rule that waited for the bind would leave the Outlets
+  /// page claiming a plate for it in the meantime, which is the fiction
+  /// this exists to remove.
+  ///
+  /// DEFAULTS TO FALSE, so every document written before this decodes to
+  /// exactly what it meant, and encodes back to the same bytes (CR-117).
+  final bool boxless;
 
   // Every field below is wired to `StructureOriginField`
   // (commands/home_run_commands.dart), so all six are converted. THE TWO

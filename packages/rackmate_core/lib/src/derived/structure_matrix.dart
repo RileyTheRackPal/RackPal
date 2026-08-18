@@ -180,8 +180,11 @@ StructureMatrix buildStructureMatrix(
     final outlets = plates[group.locationId] ??= <Uuid>{};
     for (final row in group.rows) {
       byMedia[row.mediaId] = (byMedia[row.mediaId] ?? 0) + 1;
-      if (doc.links[row.linkId]?.structureOrigin case final origin?) {
-        outlets.add(origin.outletId);
+      // A BOXLESS RUN ADDS NO PLATE, which is the whole of `#718` as it
+      // reaches this grid: the count below is "how many outlets does
+      // this room have", and a ceiling speaker is not one of them.
+      if (doc.links[row.linkId]?.structureOrigin?.outletId case final id?) {
+        outlets.add(id);
       }
     }
   }

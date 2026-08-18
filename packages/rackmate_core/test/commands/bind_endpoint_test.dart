@@ -459,7 +459,7 @@ void main() {
       final p = _project();
       _ready(_build(p.doc, p.linkId)).apply(p.doc);
 
-      final outlet = p.doc.links[p.linkId]!.structureOrigin!.outletId;
+      final outlet = p.doc.links[p.linkId]!.structureOrigin!.outletId!;
       final second =
           (buildAddHomeRunCommand(
                     doc: p.doc,

@@ -240,6 +240,7 @@ final class AddHomeRunCommand extends Command<RackDocument> {
     required this.fieldEnd,
     required this.now,
     required this.actor,
+    this.boxless = false,
     this.rackEnd,
     this.rackLabel,
     this.terminationField,
@@ -267,7 +268,11 @@ final class AddHomeRunCommand extends Command<RackDocument> {
   final Uuid netId;
 
   final Uuid structureBodyId;
-  final Uuid outletId;
+
+  /// This run comes out of no box, so it has no `Outlet` (`#718`).
+  /// Carried onto the `StructureOrigin` verbatim.
+  final bool boxless;
+  final Uuid? outletId;
 
   /// The signal family this run carries, or null for "nobody has said"
   /// (DR-025 §11.24). Null becomes `structure.undetermined`, which is
@@ -339,7 +344,7 @@ final class AddHomeRunCommand extends Command<RackDocument> {
   EpochMask get touches => EpochMask.wires | EpochMask.meta;
 
   @override
-  Iterable<Uuid> get affects => [id, netId, outletId];
+  Iterable<Uuid> get affects => [id, netId, if (outletId case final o?) o];
 
   /// ONE PLACE THE DEFAULT LIVES, so the Net and the Service cannot
   /// drift apart. See [signalFamily].
@@ -380,6 +385,13 @@ final class AddHomeRunCommand extends Command<RackDocument> {
       structureOrigin: StructureOrigin(
         structureBodyId: structureBodyId,
         outletId: outletId,
+        // FORWARDED, and the line beneath `signalFamily`'s own warning in
+        // this file says why it is worth a comment: a parameter that
+        // parsed, planned and then vanished at the last hop is a defect
+        // this project has shipped more than once, most recently as
+        // `#711`. The test asserts the flag off the DOCUMENT, not off
+        // the command.
+        boxless: boxless,
         fieldLabel: fieldLabel,
         terminationField: terminationField,
         terminationRack: terminationRack,
@@ -423,7 +435,6 @@ final class AddHomeRunRefused extends AddHomeRunResult {
 /// number and never notice two rows sharing a field label.
 AddHomeRunResult buildAddHomeRunCommand({
   required RackDocument doc,
-  required Uuid outletId,
   required String fieldLabel,
   required String designator,
   required String netName,
@@ -437,6 +448,15 @@ AddHomeRunResult buildAddHomeRunCommand({
   TerminationType? terminationRack,
   Uuid? pathwayId,
   SignalFamilyId? signalFamily,
+
+  /// The box this run comes out of. Null ONLY with `structureBodyId`
+  /// given instead, which is `#718`'s boxless run.
+  Uuid? outletId,
+
+  /// Required when `outletId` is null, and ignored otherwise: with a box
+  /// the outlet is the authority on which body owns the run, and reading
+  /// a caller's copy instead would let the two disagree.
+  Uuid? structureBodyId,
 
   /// Orders already spent by earlier drops in THIS gesture (#691).
   Iterable<FracIndex> alsoUsedOrders = const [],
@@ -455,15 +475,47 @@ AddHomeRunResult buildAddHomeRunCommand({
   // It is a LOOKUP FALLBACK, not an override: a stored outlet always
   // wins, so a caller cannot accidentally validate against a stale copy
   // of an outlet the document already has.
-  final outlet = doc.outlets[outletId] ?? alsoOutlets[outletId];
-  if (outlet == null) {
-    return const AddHomeRunRefused('That outlet is not in this project.');
-  }
-  if (!doc.structures.containsKey(outlet.structureBodyId)) {
-    return AddHomeRunRefused(
-      'Outlet ${outlet.designation} names a Structure body this project '
-      'does not carry.',
+  // ═════════════════════════════════════════════════════════════════
+  // A RUN WITH NO BOX (`#718`, DR-070)
+  // ═════════════════════════════════════════════════════════════════
+  // A ceiling speaker has no low-voltage box, so it has no `Outlet`, and
+  // demanding one made the Outlets page list a plate for a speaker that
+  // has none. The two facts the outlet used to supply then have to come
+  // from somewhere: which Structure body owns the run, and where on the
+  // wall it sits. The first is the caller's to state; the second does
+  // not exist, and is left unknown rather than invented (G4).
+  //
+  // EXACTLY ONE OF THE TWO IS REQUIRED, and saying neither or both is a
+  // caller bug rather than a user error, so it refuses in words that
+  // name the API and not the job.
+  if ((outletId == null) == (structureBodyId == null)) {
+    return const AddHomeRunRefused(
+      'A home run names an outlet, or a Structure body when it comes out '
+      'of no box. Give exactly one.',
     );
+  }
+
+  Outlet? outlet;
+  final Uuid ownerBodyId;
+  if (outletId != null) {
+    outlet = doc.outlets[outletId] ?? alsoOutlets[outletId];
+    if (outlet == null) {
+      return const AddHomeRunRefused('That outlet is not in this project.');
+    }
+    if (!doc.structures.containsKey(outlet.structureBodyId)) {
+      return AddHomeRunRefused(
+        'Outlet ${outlet.designation} names a Structure body this project '
+        'does not carry.',
+      );
+    }
+    ownerBodyId = outlet.structureBodyId;
+  } else {
+    if (!doc.structures.containsKey(structureBodyId)) {
+      return const AddHomeRunRefused(
+        'That Structure body is not in this project.',
+      );
+    }
+    ownerBodyId = structureBodyId!;
   }
 
   // A home run's field end is by definition not a live port. Refused
@@ -510,8 +562,11 @@ AddHomeRunResult buildAddHomeRunCommand({
 
   return AddHomeRunReady(
     AddHomeRunCommand(
-      structureBodyId: outlet.structureBodyId,
+      structureBodyId: ownerBodyId,
       outletId: outletId,
+      // THE FLAG IS THE STATEMENT, not the absent id. See
+      // `StructureOrigin.outletId`: null alone is "nobody has said".
+      boxless: outletId == null,
       fieldLabel: trimmedLabel,
       designator: designator,
       netName: netName,
@@ -522,13 +577,17 @@ AddHomeRunResult buildAddHomeRunCommand({
       terminationRack: terminationRack,
       rackEnd: rackEnd,
       rackLabel: (trimmedRackLabel?.isEmpty ?? true) ? null : trimmedRackLabel,
-      // The outlet is the authority on where it is. Copying its placement
-      // onto the origin is what lets the Pull Sheet print a wall and a
-      // height for a run whose far end has no device.
-      wall: outlet.wall,
-      mountSurface: outlet.mountSurface,
-      mountHeightAff: outlet.mountHeightAff,
-      pathwayId: pathwayId ?? outlet.pathwayId,
+      // WITH a box the outlet is the authority on where it is, and
+      // copying its placement onto the origin is what lets the Pull Sheet
+      // print a wall and a height for a run whose far end has no device.
+      // UNKNOWN WITHOUT ONE, never a default. The outlet is the
+      // authority on where it is, and a run with no outlet has nobody to
+      // ask; substituting a height would put a number on a schedule that
+      // no one measured (G4, CR-114).
+      wall: outlet?.wall,
+      mountSurface: outlet?.mountSurface,
+      mountHeightAff: outlet?.mountHeightAff,
+      pathwayId: pathwayId ?? outlet?.pathwayId,
       // FORWARDED, and this line is why the task says to probe the chain
       // rather than read it. DR-046's own record is of a parameter that
       // parsed, planned, and then vanished here, with every layer correct

@@ -308,4 +308,129 @@ void main() {
       );
     },
   );
+
+  group('A RUN THAT COMES OUT OF NO BOX (DR-070, `#718`)', () {
+    // Reported from real use: a ceiling speaker has no low-voltage box,
+    // and every home run demanded an `Outlet`, so the Outlets page listed
+    // a plate for a speaker that has none.
+
+    AddHomeRunResult boxless(
+      RackDocument doc,
+      Uuid bodyId, {
+      String fieldLabel = 'LR-SPK-L',
+    }) => buildAddHomeRunCommand(
+      doc: doc,
+      structureBodyId: bodyId,
+      fieldLabel: fieldLabel,
+      designator: 'W900',
+      netName: 'N900',
+      media: const MediaTypeId('media.cat6_utp'),
+      fieldEnd: const PlaceEndpoint(description: 'Living Room ceiling'),
+      terminationField: TerminationType.bindingPost,
+      now: _now,
+      actor: 'test',
+    );
+
+    test('it is created, and says so with the FLAG and not the absence', () {
+      final p = _project();
+      _ready(boxless(p.doc, p.bodyId)).apply(p.doc);
+
+      final origin = p.doc.links.values.single.structureOrigin!;
+      expect(origin.outletId, isNull);
+      expect(
+        origin.boxless,
+        isTrue,
+        reason:
+            'null alone is "nobody has said"; the flag is the person '
+            'stating there is no box (G4)',
+      );
+      expect(
+        origin.structureBodyId,
+        p.bodyId,
+        reason:
+            'the body came from the caller, since there is no outlet '
+            'to read it off',
+      );
+    });
+
+    test('and its placement is UNKNOWN rather than defaulted', () {
+      // The outlet is the authority on where a run sits, and a run with
+      // no outlet has nobody to ask. Substituting a height would put a
+      // number on a schedule nobody measured.
+      final p = _project();
+      _ready(boxless(p.doc, p.bodyId)).apply(p.doc);
+
+      final origin = p.doc.links.values.single.structureOrigin!;
+      expect(origin.wall, isNull);
+      expect(origin.mountSurface, isNull);
+      expect(origin.mountHeightAff, isNull);
+    });
+
+    test('a run WITH a box still carries the outlet"s placement', () {
+      // The other direction, without which the case above is satisfied
+      // by "never copy anything".
+      final p = _project();
+      _ready(_build(p.doc, p.outletId)).apply(p.doc);
+
+      final origin = p.doc.links.values.single.structureOrigin!;
+      expect(origin.outletId, p.outletId);
+      expect(origin.boxless, isFalse);
+      expect(origin.wall, Wall.n);
+      expect(origin.mountSurface, MountSurface.wall);
+    });
+
+    test('naming NEITHER an outlet nor a body is refused', () {
+      final p = _project();
+      final refusal = buildAddHomeRunCommand(
+        doc: p.doc,
+        fieldLabel: 'LR-SPK-R',
+        designator: 'W901',
+        netName: 'N901',
+        media: const MediaTypeId('media.cat6_utp'),
+        fieldEnd: const PlaceEndpoint(description: 'ceiling'),
+        now: _now,
+        actor: 'test',
+      );
+      expect(_refusal(refusal), contains('exactly one'));
+    });
+
+    test('naming BOTH is refused too, rather than one quietly winning', () {
+      // A caller that passed both would otherwise get the outlet's body
+      // and never learn its own `structureBodyId` was ignored.
+      final p = _project();
+      final refusal = buildAddHomeRunCommand(
+        doc: p.doc,
+        outletId: p.outletId,
+        structureBodyId: p.bodyId,
+        fieldLabel: 'LR-SPK-R',
+        designator: 'W901',
+        netName: 'N901',
+        media: const MediaTypeId('media.cat6_utp'),
+        fieldEnd: const PlaceEndpoint(description: 'ceiling'),
+        now: _now,
+        actor: 'test',
+      );
+      expect(_refusal(refusal), contains('exactly one'));
+    });
+
+    test('a body this project does not carry is refused', () {
+      final p = _project();
+      expect(
+        _refusal(boxless(p.doc, const Uuid('body-that-is-not-here'))),
+        contains('not in this project'),
+      );
+    });
+
+    test('the field label is still unique project-wide (CR-113)', () {
+      // Losing the outlet must not lose the invariant that goes with the
+      // label, which is the one thing a boxless run shares with every
+      // other drop.
+      final p = _project();
+      _ready(_build(p.doc, p.outletId, fieldLabel: 'LR-1')).apply(p.doc);
+      expect(
+        _refusal(boxless(p.doc, p.bodyId, fieldLabel: 'LR-1')),
+        isNotEmpty,
+      );
+    });
+  });
 }
