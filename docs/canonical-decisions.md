@@ -11485,6 +11485,56 @@ defects in its mirror and which shipped `#704` green four days earlier while bre
 in the user's hands. The count above stands on its own and the sheet is honest without it; the
 gesture is convenience on top of an accurate drawing, and it is worth starting rested.
 
+
+### 11.72 DR-073 · Finishing a run is not making a cable, and the sheet now knows the difference
+
+**Settled by the user on 2026-08-18** (`#719`), closing `#713`. **Not a §8.3 amendment.** DR-011
+scopes drag-to-connect into the schematic and DR-071 §11.70.4 recorded this gesture as owed.
+
+**11.72.1 DRAGGING A HALF-LANDED RUN'S PENNANT ONTO A FREE JACK LANDS IT.** The commit is
+`BindEndpointCommand`, never `ConnectPortsCommand`.
+
+This is the sentence `#713` was filed over, in the user's own words: *"if a user were to just
+directly connect a speaker to an amplifier in the schematic view it would create two wires on the
+project."* A run pulled at framing stage **already exists**. It carries a `W` number, a length, a
+jacket and possibly a `TestResult`, and what it lacks is a pin at one end. A connect run against it
+puts a second cable on the sheet beside the one the person is trying to finish, and the schedule
+then prints two rows for one piece of copper.
+
+**11.72.2 THE PREVIEW BAND IS THE CABLE, WHICH IS WHY THIS FITS THE EXISTING GESTURE.** The armed
+source is the pin the run is **already** on, not the pennant.
+
+That is a statement about the model rather than a convenience. A half-landed run landed onto a
+second pin genuinely is a cable between those two pins, so the band drawn while the pointer is down
+is exactly what the document holds one event later. The magnet, the candidate rings, the caret and
+the whole teardown path therefore need no branch at all, which is most of the reason this change is
+small in a file whose header records three prior gesture defects.
+
+**11.72.3 EITHER END MAY BE THE LOOSE ONE, SO THE GRAB CARRIES WHICH.** DR-068 §11.67.1 lets a
+speaker run land on its driver: a run drawn at its amplifier is waiting for a **field** end, and one
+drawn at its wall plate is waiting for a **rack** end. A gesture that assumed the rack end would
+rewrite the wrong half of the cable. The rack label is allocated only for a rack end, per §11.67.2.
+
+**11.72.4 A PIN ALWAYS BEATS A PENNANT.** They sit beside one another and their hit boxes touch.
+Landing a run is the rarer act and must never steal the commoner one, so the pennant is asked only
+where the pin question found nothing.
+
+**11.72.5 A PATCH CABLE'S PENNANT ARMS NOTHING.** `buildBindEndpointCommand` refuses anything with
+no `StructureOrigin`, so arming there would be a control whose every use is refused, which is
+`#711`'s defect drawn on purpose and the same call DR-071 §11.70.3 made for a landed row in the
+table. The press falls back to the ordinary click that selects the cable.
+
+**11.72.6 THE CANDIDATE SET IS THE FREE PINS, WHICH IS A DIFFERENT QUESTION FROM `evaluateConnect`'S.**
+A bind's only occupancy rule is `TOP-003`, one cable per position, asked through
+`portConductorCount` rather than answered a second time in the surface, because the command asks it
+that way and two copies would let a ring say yes where the commit says no. There is no preferred
+set: DR-012.3's magnet ranks candidates by whether they accept the SOURCE's family, which is a
+question about a cable being created, and this one exists already.
+
+**11.72.7 WHAT IS STILL NOT POSSIBLE, unchanged from DR-071 §11.70.4.** There is no gesture to move
+a run OFF a pin it is landed on, here or in the table, because DR-040 §11.39.6 has never ruled the
+unbind. Dropping onto an occupied jack refuses in the command's own words.
+
 ---
 
 ## 12. Superseded rulings
