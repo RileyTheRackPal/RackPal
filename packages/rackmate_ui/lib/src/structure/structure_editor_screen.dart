@@ -545,6 +545,7 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
       // selection, which is the defect `shell_tabs_test.dart` gates.
       if (_selected.isNotEmpty)
         _BatchBar(
+          doc: doc,
           selectedVisible: _selectedVisible(doc).length,
           selectedHidden: _selected.length - _selectedVisible(doc).length,
           registries: doc.registries,
@@ -1580,6 +1581,7 @@ class _BatchBar extends StatefulWidget {
     required this.selectedVisible,
     required this.selectedHidden,
     required this.registries,
+    required this.doc,
     required this.column,
     required this.columns,
     required this.onColumn,
@@ -1595,6 +1597,12 @@ class _BatchBar extends StatefulWidget {
   /// other batchable column's options are a Dart enum; `SERVICE` reads
   /// the signal-family registry, so the bar cannot build its own list.
   final Registries registries;
+
+  /// THE WHOLE DOCUMENT, because `LANDS ON` offers the devices that have
+  /// somewhere for a cable to go and that is not registry data
+  /// (DR-071 §11.70.1). `registries` stays for the `SERVICE` picker's
+  /// groups, which genuinely are.
+  final RackDocument doc;
   final StructureColumnId? column;
 
   /// The batchable columns currently on screen. Filtered by
@@ -1629,7 +1637,7 @@ class _BatchBarState extends State<_BatchBar> {
     final column = widget.column;
     final choices = column == null
         ? null
-        : structureCellChoices(column, widget.registries);
+        : structureCellChoices(column, widget.doc);
     return ColoredBox(
       color: theme.colorScheme.surfaceContainerHighest,
       child: Padding(
@@ -1923,7 +1931,7 @@ class _BandDelegate extends SliverPersistentHeaderDelegate {
 /// second time a label stops being the enum name uppercased.
 List<String>? structureCellChoices(
   StructureColumnId id,
-  Registries registries,
+  RackDocument doc,
 ) => switch (id) {
   StructureColumnId.roughIn => RoughInStatus.values.map(roughInLabel).toList(),
   StructureColumnId.testResult => kTestCellOptions,
@@ -1957,7 +1965,7 @@ List<String>? structureCellChoices(
   // because nobody deciding is a real absence, while a `Service` always
   // HAS a family and `structure.undetermined` is the encouraged value.
   // Choosing it is a statement, not a clearing.
-  StructureColumnId.service => signalFamilyCellOptions(registries),
+  StructureColumnId.service => signalFamilyCellOptions(doc.registries),
   // `AUTO` FIRST AND IT IS NOT AN UNKNOWN (DR-067 §11.66.1). The two
   // termination arms above open with [kUnknownCell] because nobody
   // having decided is a real state of a cable end. Here the equivalent
@@ -1969,6 +1977,13 @@ List<String>? structureCellChoices(
     kLinkClassAutoCell,
     ...LinkClass.values.map(linkClassLabel),
   ],
+  // THE PANELS, NOT THE POSITIONS (DR-071 §11.70.1). A menu of every
+  // free hole on the job would be hundreds of rows and would ask a
+  // person to choose something the product allocates better than they
+  // can. `landingCellOptions` is document data, like `SERVICE`'s, but it
+  // is a short list of designators rather than a registry, so it needs
+  // no filtering picker.
+  StructureColumnId.landing => landingCellOptions(doc),
   _ => null,
 };
 
@@ -2056,7 +2071,7 @@ class _DataRow extends StatelessWidget {
       // three of these store an enum, so there is nothing to parse and
       // nothing to typo. The text columns beside them store strings and
       // numbers, and their parsing lives in core.
-      final options = structureCellChoices(id, doc.registries);
+      final options = structureCellChoices(id, doc);
       // A REGISTRY-BACKED COLUMN GETS THE FILTERING PICKER INSTEAD, and
       // the split is core's answer rather than an `id ==` test here, so
       // the batch bar below reaches the same one.
@@ -2083,6 +2098,46 @@ class _DataRow extends StatelessWidget {
             onFocused: () => onCaret((row.linkId, id)),
           );
         }
+      } else if (id == StructureColumnId.landing) {
+        // ═══════════════════════════════════════════════════════════════
+        // THE ONLY CELL THAT IS A CONTROL ON SOME ROWS AND TEXT ON OTHERS
+        // ═══════════════════════════════════════════════════════════════
+        // `buildBindEndpointCommand` refuses a drop that is already
+        // landed, because DR-040 §11.39.6 leaves moving one to a
+        // different port unruled and silently re-landing would rewrite a
+        // termination somebody recorded. A dropdown on a landed row would
+        // therefore be a control whose every use is refused, which is
+        // `#711`'s defect drawn on purpose.
+        //
+        // So a landed row shows WHERE IT LANDED, as text, and an unlanded
+        // one shows the picker. `structureColumnIsEditable` cannot make
+        // this call: it answers per COLUMN, and this is per row.
+        if (structureRowIsLanded(row) || options == null || options.isEmpty) {
+          return Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: text == kUnknownCell
+                  ? theme.colorScheme.onSurfaceVariant
+                  : theme.colorScheme.onSurface,
+            ),
+          );
+        }
+        return _ChoiceCell(
+          linkId: row.linkId,
+          column: id,
+          // NO VALUE AND A HINT, because the options are PANELS and the
+          // cell's text is a POSITION: `PP-1 · 01` is not one of the
+          // things this menu offers, and handing `DropdownButton` a value
+          // no item carries is an assertion failure.
+          value: null,
+          hint: text,
+          options: options,
+          reportsUnchangedPick: true,
+          onEdit: onEdit,
+          onCaret: onCaret,
+        );
       } else if (id == StructureColumnId.linkClass && options != null) {
         // THE ONE COLUMN WHOSE VALUE CAN BE OFF ITS OWN MENU (DR-067).
         // An unresolvable end gives an effective class of nothing, which

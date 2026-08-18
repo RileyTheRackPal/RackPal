@@ -49,6 +49,81 @@ RackDocument _project({List<(String, String)> rooms = const []}) {
   return doc;
 }
 
+/// A patch panel with [positions] free rear punchdowns, added straight to
+/// [doc]. Returns its designator, which is what `LANDS ON` is given.
+///
+/// REAR PORTS, because DR-040 §11.39.2 clause 4 rules that a pulled cable
+/// lands on the back of a panel and `freePanelPositions` filters on it.
+/// A front-faced fixture would offer zero positions and every landing
+/// below would refuse for a reason that had nothing to do with the case
+/// under test.
+String _addPanel(RackDocument doc, {required int positions}) {
+  const tplId = 'tpl.pp-land';
+  const deviceId = Uuid('dev-pp-land');
+  EntityMeta meta() =>
+      EntityMeta(createdAt: _when, updatedAt: _when, updatedBy: 'test');
+
+  doc.templates['$tplId@1'] = TemplateSnapshot(
+    templateId: const TemplateId(tplId),
+    version: 1,
+    contentHash: 'sha256:$tplId',
+    capturedAt: _when,
+    body: TemplateBody(
+      manufacturer: 'Generic',
+      model: 'PP-LAND',
+      displayName: 'Patch Panel',
+      typePrefix: 'PP',
+      ports: [
+        for (var i = 1; i <= positions; i++)
+          PortDef(
+            key: PortKey('rear.$i'),
+            label: i.toString().padLeft(2, '0'),
+            connector: const ConnectorTypeId('conn.punchdown_110'),
+            signalFamily: const SignalFamilyId('net.ethernet'),
+            face: Face.rear,
+            position: const PanelPosition(
+              ruOffset: 0,
+              xTwelfth: 0,
+              xFineNm: Len.zero,
+              yFineNm: Len.zero,
+            ),
+            order: FracIndex('a$i'),
+          ),
+      ],
+    ),
+  );
+  // A ROOM WITH A FLOOR AND A SPACE, so `{FLOOR}` and `{SPACE}` render
+  // and the bind can allocate a rack label. DR-040 §11.39.5 rules that a
+  // bind whose label CANNOT render still binds, which is right and which
+  // also means a panel with no location tests the landing while quietly
+  // skipping the allocation. This fixture exercises both halves.
+  final room = AddLocationCommand(
+    name: 'Media Closet',
+    code: 'MC',
+    order: nextLocationOrder(doc),
+    floorNumber: 1,
+    spaceCode: 'A',
+    now: _when,
+    actor: 'test',
+  )..apply(doc);
+
+  doc.devices[deviceId] = DeviceInstance(
+    id: deviceId,
+    kind: DeviceKind.rackDevice,
+    templateRef: const TemplateRef(
+      templateId: TemplateId(tplId),
+      version: 1,
+      contentHash: 'sha256:$tplId',
+    ),
+    designator: 'PP-1',
+    name: 'Patch Panel',
+    placement: const OffRackPlacement(),
+    locationId: room.id,
+    meta: meta(),
+  );
+  return 'PP-1';
+}
+
 void main() {
   late TextMeasurer measurer;
 
@@ -896,6 +971,181 @@ void main() {
         'JUMPER, POWER CORD, INTERNAL.',
       );
       expect(doc.links[ids.first]!.linkClassLocked, isFalse);
+    });
+
+    testWidgets('LANDS ON punches a stray drop down (DR-071, `#715`)', (
+      tester,
+    ) async {
+      // THE GESTURE `label_key.dart` ANTICIPATED IN PROSE AND NOBODY
+      // BUILT: "the single bind a person makes when they punch one stray
+      // drop down". `BindEndpointCommand` was complete and reachable
+      // only from `@panel=` on the line that CREATES the drops, so a run
+      // typed without it could never be landed at all.
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final panel = _addPanel(doc, positions: 4);
+      final edit = buildStructureEditAction(controller: controller);
+
+      expect(
+        doc.links[ids.first]!.conductors.first.to,
+        isNot(isA<PortEndpoint>()),
+      );
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.landing,
+            value: panel,
+          ),
+        ]),
+        isNull,
+      );
+      final landed = doc.links[ids.first]!;
+      expect(landed.conductors.first.to, isA<PortEndpoint>());
+      expect(
+        landed.structureOrigin!.rackLabel,
+        isNotNull,
+        reason:
+            'the rack label is DERIVED from the position, so the bind '
+            'is the only moment it can be allocated (DR-040 §11.39.3)',
+      );
+
+      // ONE UNDO, and it takes the pin and the label together.
+      controller.undoLast();
+      final reverted = doc.links[ids.first]!;
+      expect(reverted.conductors.first.to, isNot(isA<PortEndpoint>()));
+      expect(reverted.structureOrigin!.rackLabel, isNull);
+    });
+
+    testWidgets('a batch lands on DISTINCT positions, one gesture', (
+      tester,
+    ) async {
+      // THE PROPERTY THAT MAKES THE COLUMN WORTH HAVING. Landing
+      // forty-six drops is ONE value across forty-six rows and forty-six
+      // DIFFERENT holes, so each edit must see the ones its siblings
+      // took. Without the running reservation every drop lands on
+      // position 1 and the batch is silently nonsense.
+      final (doc, ids) = job(3);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final panel = _addPanel(doc, positions: 4);
+      final edit = buildStructureEditAction(controller: controller);
+
+      expect(
+        edit([
+          for (final id in ids)
+            StructureCellEdit(
+              linkId: id,
+              column: StructureColumnId.landing,
+              value: panel,
+            ),
+        ]),
+        isNull,
+      );
+
+      final ports = <Uuid>{
+        for (final id in ids)
+          (doc.links[id]!.conductors.first.to as PortEndpoint).portId,
+      };
+      expect(ports, hasLength(3), reason: 'three drops, three holes');
+
+      final labels = <String>{
+        for (final id in ids) doc.links[id]!.structureOrigin!.rackLabel!,
+      };
+      expect(
+        labels,
+        hasLength(3),
+        reason:
+            'CR-113 makes a rack label unique project-wide, and the '
+            'reservation is what keeps three allocated in one gesture from '
+            'colliding',
+      );
+    });
+
+    testWidgets('a batch too big for the panel applies NONE of itself', (
+      tester,
+    ) async {
+      // The all-or-nothing rule this file opens with. A landing that
+      // punched two of three down and then said "no room" leaves a person
+      // to work out which two moved, at the panel.
+      final (doc, ids) = job(3);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final panel = _addPanel(doc, positions: 2);
+      final edit = buildStructureEditAction(controller: controller);
+
+      final refusal = edit([
+        for (final id in ids)
+          StructureCellEdit(
+            linkId: id,
+            column: StructureColumnId.landing,
+            value: panel,
+          ),
+      ]);
+      expect(refusal, isNotNull);
+      expect(refusal, contains('no free position'));
+      for (final id in ids) {
+        expect(
+          doc.links[id]!.conductors.first.to,
+          isNot(isA<PortEndpoint>()),
+          reason: 'not one of the three may have moved',
+        );
+      }
+    });
+
+    testWidgets('a drop already landed is refused, not silently re-landed', (
+      tester,
+    ) async {
+      // DR-040 §11.39.6 leaves moving a drop off a jack unruled, so
+      // re-landing would rewrite a termination somebody recorded. The
+      // table draws a landed row as TEXT for this reason; the action
+      // refuses anyway, because the batch bar can still aim at one.
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final panel = _addPanel(doc, positions: 4);
+      final edit = buildStructureEditAction(controller: controller);
+
+      StructureCellEdit land() => StructureCellEdit(
+        linkId: ids.first,
+        column: StructureColumnId.landing,
+        value: panel,
+      );
+      expect(edit([land()]), isNull);
+      expect(edit([land()]), contains('already landed'));
+    });
+
+    testWidgets('a panel this project does not hold is refused by name', (
+      tester,
+    ) async {
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final edit = buildStructureEditAction(
+        controller: built.session.services.session.controller,
+      );
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.landing,
+            value: 'PP-99',
+          ),
+        ]),
+        contains('"PP-99"'),
+      );
     });
 
     testWidgets('closing out sixty runs costs three gestures, not sixty '

@@ -42,6 +42,8 @@
 // and it answers it against an unmutated document so a widget can rebuild
 // it on every frame.
 import 'package:meta/meta.dart';
+import 'package:rackmate_core/src/commands/bind_endpoint_command.dart'
+    show freePanelPositions;
 import 'package:rackmate_core/src/derived/equipment_list.dart'
     show kUnknownCell;
 import 'package:rackmate_core/src/derived/link_class.dart';
@@ -336,6 +338,11 @@ enum StructureColumnId {
   // column whose value is normally DERIVED, and `values` order is the
   // order `⚙ Columns` presents them in.
   linkClass,
+
+  // DR-071, `#715`. Where the rack end LANDS, and the only column that
+  // is a gesture rather than a value: picking a panel here punches the
+  // drop down onto its next free position.
+  landing,
 }
 
 /// §4.1's eight, in the wireframe's own left-to-right order.
@@ -383,6 +390,10 @@ const List<StructureColumnId> kStructureOptionalColumns = <StructureColumnId>[
   StructureColumnId.installedBy,
   StructureColumnId.terminatedAt,
   StructureColumnId.notes,
+  // DR-071 §11.70. Optional for `RACK LBL`'s reason: the label is the
+  // default column that says whether a drop is landed, and this one is
+  // how it gets that way.
+  StructureColumnId.landing,
   // OPTIONAL, NOT A NINTH DEFAULT (DR-067 §11.66.2). §4.1's eight are a
   // ruled list answering "what am I pulling and where does it land", and
   // a class is not that question: it is normally derived and normally
@@ -444,6 +455,7 @@ String structureColumnHeader(StructureColumnId id) => switch (id) {
   StructureColumnId.terminatedAt => 'TERMINATED',
   StructureColumnId.notes => 'NOTES',
   StructureColumnId.linkClass => 'CLASS',
+  StructureColumnId.landing => 'LANDS ON',
 };
 
 /// Points, at the same scale `kPullSheetColumns` uses, so the editor and
@@ -474,6 +486,9 @@ double structureColumnWidth(StructureColumnId id) => switch (id) {
   // Wide enough for `FIELD CABLE` plus the override marker the cell puts
   // in front of it, since a badge that clips is a badge nobody sees.
   StructureColumnId.linkClass => 96,
+  // `PP-1 · 01` plus room for a longer designator. Wider than `RACK LBL`
+  // because it carries two identifiers rather than one.
+  StructureColumnId.landing => 104,
 };
 
 /// Whether a person can type into this column.
@@ -553,6 +568,22 @@ bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
   // precedent to read this against — that column is derived AND has no
   // command; this one is derived and has two.
   StructureColumnId.linkClass => true,
+
+  // WHERE THE RACK END LANDS (DR-071 §11.70, board `#715`).
+  //
+  // `BindEndpointCommand` has been complete since M3-K/2 and reachable
+  // only by typing `@panel=` on the line that CREATES the drops.
+  // `label_key.dart` anticipated the missing gesture in prose: "the
+  // single bind a person makes when they punch one stray drop down". It
+  // was never built, so a run typed without `@panel=` could never be
+  // landed at all.
+  //
+  // THE CELL IS A GESTURE, NOT A VALUE, which is what makes it the odd
+  // one out here. Every other editable column writes what it is given;
+  // this one is given a PANEL and allocates a position, exactly as
+  // `@panel=` does, because which hole a drop goes in is the product's
+  // job and not something a person should have to type sixty times.
+  StructureColumnId.landing => true,
 
   _ => false,
 };
@@ -976,6 +1007,22 @@ String structureCell(
     // defaulting to a jumper hides the run from the sheet an installer
     // works from. G4 applies to a classifier exactly as it does to a
     // measurement.
+    // WHERE THE RACK END IS PUNCHED DOWN (DR-071 §11.70). Two
+    // identifiers, because a position without its panel names nothing on
+    // a job with four of them.
+    //
+    // READ OFF THE RESOLVED END, not off `rackLabel`. The label is what
+    // the CABLE is called and is allocated separately; a drop can carry
+    // one and be unlanded, and DR-040 §11.39.5 rules that a bind whose
+    // label cannot render still binds. A column that showed the label
+    // would report the naming and not the punchdown.
+    StructureColumnId.landing => switch (row.to.kind) {
+      ScheduleEndKind.rackPort || ScheduleEndKind.unrackedPort =>
+        '${row.to.deviceDesignator ?? kUnknownCell} · '
+            '${row.to.portDesignator ?? kUnknownCell}',
+      _ => kUnknownCell,
+    },
+
     StructureColumnId.linkClass => switch (link) {
       final l? => switch (effectiveLinkClassOf(doc, l)) {
         final c? => linkClassLabel(c),
@@ -1013,6 +1060,42 @@ const String kLinkClassAutoCell = 'AUTO';
 LinkClass? resolveLinkClassCell(String label) {
   final wanted = label.trim().toUpperCase();
   return LinkClass.values.where((c) => linkClassLabel(c) == wanted).firstOrNull;
+}
+
+/// Whether this row's rack end is already punched down (DR-071 §11.70).
+///
+/// A LANDED ROW IS NOT EDITABLE, and that is the model's rule rather
+/// than a UI preference: `buildBindEndpointCommand` refuses a drop that
+/// is already landed, because DR-040 §11.39.6 leaves moving one to a
+/// different port unruled and silently re-landing would rewrite a
+/// termination somebody recorded. The surface draws the landing as text
+/// instead of a control, so the refusal is something a person cannot
+/// walk into rather than something they are told about afterwards.
+bool structureRowIsLanded(ScheduleEntry row) => switch (row.to.kind) {
+  ScheduleEndKind.rackPort || ScheduleEndKind.unrackedPort => true,
+  _ => false,
+};
+
+/// The devices a drop may be landed on, by designator, in document
+/// order.
+///
+/// EVERY DEVICE WITH A FREE REAR POSITION, and not "every patch panel".
+/// `_resolvePanel` in the drop-line planner matches `@panel=` on
+/// designator against any device for the same reason: DR-068 §11.67.1's
+/// speaker run lands on an amplifier, and a filter that knew what a
+/// patch panel was would refuse the case the ruling exists for. What
+/// makes a device offerable is that it HAS somewhere for a pulled cable
+/// to go, which `freePanelPositions` already answers.
+List<String> landingCellOptions(RackDocument doc) {
+  final out = <String>[];
+  for (final device in doc.devices.values) {
+    if (freePanelPositions(doc, panelDeviceId: device.id).isEmpty) continue;
+    final designator = device.designator.trim();
+    if (designator.isEmpty || out.contains(designator)) continue;
+    out.add(designator);
+  }
+  out.sort();
+  return out;
 }
 
 /// Whether this row's `CLASS` is a PERSON'S assertion rather than the

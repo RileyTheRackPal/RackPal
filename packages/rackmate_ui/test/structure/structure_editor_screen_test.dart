@@ -2472,12 +2472,12 @@ void main() {
       await _pump(tester, h);
       final options = structureCellChoices(
         StructureColumnId.service,
-        h.doc.registries,
+        h.doc,
       );
       expect(options, isNotNull);
       expect(options, isNot(contains(kUnknownCell)));
       expect(
-        structureCellChoices(StructureColumnId.fieldTerm, h.doc.registries),
+        structureCellChoices(StructureColumnId.fieldTerm, h.doc),
         contains(kUnknownCell),
       );
     });

@@ -41,6 +41,14 @@ StructureEditFn buildStructureEditAction({
   final claimedLabels = <String>{};
   final claimedRackLabels = <String>{};
 
+  // THE FOURTH RUNNING RESERVATION, and the one that makes `LANDS ON`
+  // batchable (DR-071 §11.70.2). Landing forty-six drops on PP-1 is ONE
+  // value across forty-six rows and forty-six DIFFERENT positions, so
+  // each edit has to see the holes its siblings took. `@panel=` already
+  // works this way through `freePanelPositions(alsoClaimed:)`; this is
+  // the same reservation on the same walk.
+  final claimedPorts = <Uuid>{};
+
   for (final edit in edits) {
     final refusal = switch (edit.column) {
       StructureColumnId.fieldLabel => _origin(
@@ -158,6 +166,13 @@ StructureEditFn buildStructureEditAction({
       StructureColumnId.linkClass => _linkClass(
         controller: controller,
         edit: edit,
+        into: commands,
+      ),
+      StructureColumnId.landing => _landing(
+        controller: controller,
+        edit: edit,
+        claimedPorts: claimedPorts,
+        claimedRackLabels: claimedRackLabels,
         into: commands,
       ),
 
@@ -555,6 +570,88 @@ String? _linkClass({
   if (link.linkClassLocked && link.linkClass == value) return null;
   into.add(SetLinkClassCommand(linkId: edit.linkId, linkClass: value));
   return null;
+}
+
+/// `LANDS ON`: punch this drop down onto the next free position of the
+/// panel named by [StructureCellEdit.value] (DR-071 §11.70).
+///
+/// THE VALUE IS A PANEL AND THE COMMAND NEEDS A POSITION, which is what
+/// makes this the one column whose cell is a GESTURE rather than a value.
+/// `@panel=` has allocated positions this way since M3-K/2 and this is
+/// the same allocation reached by pointer: which hole a drop goes in is
+/// the product's job, and a person landing forty-six of them should not
+/// have to type forty-six numbers.
+///
+/// THE RACK LABEL RIDES WITH THE BIND, through `resolveRackLabel`, for
+/// DR-040 §11.39.3's reason: the label is DERIVED from the position, so
+/// the moment the position is known is the only moment it can be
+/// allocated. A label that cannot render does not undo the punchdown
+/// (§11.39.5) — the pin is a physical fact and the name is not.
+String? _landing({
+  required DocumentController controller,
+  required StructureCellEdit edit,
+  required Set<Uuid> claimedPorts,
+  required Set<String> claimedRackLabels,
+  required List<Command<RackDocument>> into,
+}) {
+  final wanted = edit.value.trim();
+  if (wanted.isEmpty) {
+    // NOT AN UNLAND. DR-040 §11.39.6 leaves moving a drop off a jack it
+    // is punched into unruled, so an empty value is a person clearing a
+    // box rather than an instruction this can carry out.
+    return 'Clearing this cell would unland the drop, and moving a drop '
+        'off a port is not something this can do yet.';
+  }
+
+  final doc = controller.doc;
+  final panel = doc.devices.values
+      .where((d) => d.designator.trim().toLowerCase() == wanted.toLowerCase())
+      .firstOrNull;
+  if (panel == null) {
+    return 'No device in this project is called "$wanted".';
+  }
+
+  final free = freePanelPositions(
+    doc,
+    panelDeviceId: panel.id,
+    alsoClaimed: claimedPorts,
+  );
+  if (free.isEmpty) {
+    // NAMES THE PANEL AND THE SHORTFALL, because the person is looking
+    // at a selection of rows and needs to know whether to pick a bigger
+    // panel or land fewer of them.
+    return '${panel.designator} has no free position left, so that drop '
+        'was not landed. Nothing in this batch was applied.';
+  }
+
+  final position = free.first;
+  final resolved = resolveRackLabel(
+    doc: doc,
+    panelDeviceId: panel.id,
+    // THE NUMBER ON THE PART, not the designator this product allocated
+    // (DR-040 §11.39.8).
+    portDesignator: position.positionToken,
+    usedRackLabels: usedRackLabels(doc, alsoUsed: claimedRackLabels),
+  );
+
+  final built = buildBindEndpointCommand(
+    doc: doc,
+    linkId: edit.linkId,
+    port: position.port,
+    rackLabel: resolved.label,
+    usedRackLabels: usedRackLabels(doc, alsoUsed: claimedRackLabels),
+    now: controller.clock.nowUtc(),
+    actor: controller.actor,
+  );
+  switch (built) {
+    case BindEndpointRefused(:final reason):
+      return reason;
+    case BindEndpointReady(:final command):
+      into.add(command);
+      claimedPorts.add(position.port.portId);
+      if (resolved.label case final l?) claimedRackLabels.add(l);
+      return null;
+  }
 }
 
 /// An ordinary `Link` field, through the generic table.
