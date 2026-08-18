@@ -11386,6 +11386,56 @@ copied from the outlet when there is one and left **unknown** when there is not.
 authority on where a run sits; substituting a height for a run with no outlet would put a number on
 a schedule nobody measured.
 
+
+### 11.70 DR-071 · Landing a drop is a gesture, and the product picks the hole
+
+**Settled by the user on 2026-08-18** (`#715`), as the third phase of `#713`. **Not a §8.3
+amendment.** AC-018 names `BindEndpoint` and DR-040 §11.39.2 rules how a drop lands; neither says
+where a person does it, and for two milestones the answer was **only while typing the line that
+creates the drops**. A run entered without `@panel=` could never be landed at all.
+`label_key.dart` had already described the missing gesture in prose: *"the single bind a person
+makes when they punch one stray drop down"*.
+
+**11.70.1 THE CONTROL IS A `LANDS ON` COLUMN, AND ITS MENU OFFERS PANELS RATHER THAN POSITIONS.**
+
+Every other editable column in that table writes what it is handed. This one is handed a **panel**
+and allocates a position, which is what `@panel=` has done since M3-K/2: which hole a drop goes in
+is the product's job. A menu of every free position on a job is hundreds of rows and asks a person
+to choose something the allocator does better and faster.
+
+**IT OFFERS EVERY DEVICE WITH A FREE REAR POSITION, not "every patch panel".** `@panel=` matches on
+designator against any device for the same reason, and DR-068 §11.67.1's speaker run lands on an
+**amplifier**: a filter that knew what a patch panel was would refuse the case that ruling exists
+for. What makes a device offerable is that it has somewhere for a pulled cable to go, which
+`freePanelPositions` already answers.
+
+**11.70.2 IT IS BATCHABLE ON A RUNNING RESERVATION, and that is the property that makes it worth
+building.** Landing forty-six drops on one panel is **one value across forty-six rows and forty-six
+different holes**. Each edit therefore has to see the positions its siblings took, which
+`freePanelPositions(alsoClaimed:)` was written for. Without it every drop in a batch lands on
+position 1 and the gesture is silently nonsense: the kind of defect that is invisible in the app and
+discovered at the panel.
+
+The rack label rides with the bind, because it is **derived from the position** and the bind is the
+only moment the position is known (DR-040 §11.39.3). A label that cannot render does not undo the
+punchdown (§11.39.5): the pin is a physical fact and the name is not.
+
+**11.70.3 A LANDED ROW SHOWS TEXT, NOT A CONTROL.** This is the only cell in the table that differs
+per **row** rather than per column, and the model is what decides it rather than a preference.
+`buildBindEndpointCommand` refuses a drop that is already landed, because DR-040 §11.39.6 leaves
+moving one to a different port **unruled** and silently re-landing would rewrite a termination
+somebody recorded. A dropdown on such a row would be a control whose every use is refused, which is
+`#711`'s defect drawn on purpose.
+
+The action refuses anyway rather than trusting the surface, because the batch bar can still aim at a
+landed row.
+
+**11.70.4 WHAT THIS DOES NOT DO, AND IT IS THE SAME GAP DR-040 LEFT.** There is still no way to move
+a drop OFF a port it is punched into. Clearing the cell refuses in words rather than unlanding,
+because an unbind is a different gesture with different consequences for the rack label and the
+termination, and §11.39.6 has never ruled it. Recorded here as an absence a person will meet, not as
+one this ruling closes.
+
 ---
 
 ## 12. Superseded rulings
