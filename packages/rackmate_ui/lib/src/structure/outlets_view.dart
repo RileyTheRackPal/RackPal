@@ -666,6 +666,12 @@ class _PlatePane extends StatelessWidget {
     final needed = cellsRequiredFor(
       link.structureOrigin?.terminationField,
       link.conductors.length,
+      // THE SAME QUESTION `computePlateFill` ASKS (DR-069 §11.68). Left
+      // off, this dialog would offer one option per post for a run whose
+      // posts are on the speaker, on a plate the fill says needs no cells
+      // for it — the two halves of one rule disagreeing across a package
+      // boundary, which is the shape `#711` took.
+      fieldEndIsLanded: fieldEndIsLanded(link),
     );
     // ONE OPTION PER POST for a binding-post drop, because a cell holds
     // one conductor and the person has to say which (§11.7.2.1).

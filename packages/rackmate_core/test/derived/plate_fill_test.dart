@@ -17,6 +17,7 @@ Link _drop({
   required Uuid outletId,
   TerminationType? termination,
   int conductors = 2,
+  bool fieldLanded = false,
 }) => Link(
   id: id,
   designator: 'W001',
@@ -25,7 +26,15 @@ Link _drop({
   meta: _meta(),
   conductors: [
     for (var i = 0; i < conductors; i++)
-      const Conductor(from: OpenEndpoint('a'), to: OpenEndpoint('b')),
+      Conductor(
+        // `from` IS THE FIELD END (CR-014, and the reading
+        // `link_class.dart` takes). Landed means it names a port on a
+        // real device rather than a place on a wall.
+        from: fieldLanded
+            ? const PortEndpoint(Uuid('port-speaker'))
+            : const OpenEndpoint('a'),
+        to: const OpenEndpoint('b'),
+      ),
   ],
   structureOrigin: StructureOrigin(
     structureBodyId: _u('11111111-1111-4111-8111-111111111111'),
@@ -144,15 +153,71 @@ void main() {
       expect(cellsRequiredFor(TerminationType.fBarrel, 1), 1);
     });
 
-    test('a 16/4 binding-post drop is FOUR cells', () {
+    test('a 16/4 binding-post drop TO A PLATE is FOUR cells', () {
       // §11.7.2.2's case that bites: four cells do not fit on a 1-, 2-
       // or 3-port strap, so this is a real constraint on plate choice.
+      // Unlanded, so the posts are the PLATE'S — which is what this arm
+      // was always about (DR-069 §11.68).
       expect(cellsRequiredFor(TerminationType.bindingPost, 4), 4);
       expect(cellsRequiredFor(TerminationType.bindingPost, 2), 2);
       expect(smallestStrapFor(4), (width: 2, height: 2));
       expect(smallestStrapFor(3), (width: 1, height: 3));
       expect(smallestStrapFor(5), (width: 2, height: 3));
       expect(smallestStrapFor(7), isNull);
+    });
+
+    test("A CEILING SPEAKER'S POSTS ARE THE SPEAKER'S, AND COST NO CELL "
+        '(DR-069 §11.68, `#717`)', () {
+      // Reported by a user diagramming a real system: tagging a ceiling
+      // speaker `BINDING POST` demanded two plate cells, and a ceiling
+      // speaker has no low-voltage box, let alone a strap.
+      //
+      // BOTH READINGS OF THE WORD ARE REAL HARDWARE, which is why this
+      // is the one arm the termination type cannot answer alone. A
+      // speaker binding-post WALL PLATE is a product and its posts are
+      // on the plate; a driver's posts are on the driver. The answer
+      // comes from where the run lands.
+      expect(
+        cellsRequiredFor(
+          TerminationType.bindingPost,
+          2,
+          fieldEndIsLanded: true,
+        ),
+        0,
+      );
+      expect(
+        cellsRequiredFor(
+          TerminationType.bindingPost,
+          4,
+          fieldEndIsLanded: true,
+        ),
+        0,
+        reason:
+            'conductor count stops mattering once the posts are not '
+            'on the plate',
+      );
+    });
+
+    test('and the landing changes NO other arm', () {
+      // The narrowness is the point. `keystone` and `punchdown` are
+      // always the plate's; `euroblock` and `rj45Plug` are always the
+      // device's. Only `bindingPost` is genuinely either, so only
+      // `bindingPost` reads the landing.
+      for (final t in TerminationType.values) {
+        if (t == TerminationType.bindingPost) continue;
+        expect(
+          cellsRequiredFor(t, 4, fieldEndIsLanded: true),
+          cellsRequiredFor(t, 4),
+          reason: '$t must not change meaning because a run was landed',
+        );
+      }
+    });
+
+    test('an unknown termination stays unknown, landed or not (G4)', () {
+      // There is no "probably zero" arm either. A landed end says where
+      // the copper goes and not what it goes into.
+      expect(cellsRequiredFor(null, 2, fieldEndIsLanded: true), isNull);
+      expect(cellsRequiredFor(null, 2), isNull);
     });
 
     test('a coil and a field connector need NO cell, stated as zero', () {
@@ -198,6 +263,39 @@ void main() {
       // G4. The arm that would return 1 here is the whole defect this
       // signature exists to make impossible.
       expect(cellsRequiredFor(null, 4), isNull);
+    });
+  });
+
+  group('the whole plate agrees with the landing (DR-069, `#717`)', () {
+    test("a landed speaker drop needs NO cells of the outlet's plate", () {
+      // THE END-TO-END SHAPE OF `#717`, not just the arithmetic. The user
+      // saw this on the Outlets page, so the assertion is the number that
+      // page reads.
+      final outlet = _outlet(outletId);
+      final landed = _drop(
+        id: linkId,
+        outletId: outletId,
+        termination: TerminationType.bindingPost,
+        fieldLanded: true,
+      );
+      expect(computePlateFill(outlet, [landed]).cellsRequired, 0);
+      expect(
+        computePlateFill(outlet, [landed]).dropCount,
+        1,
+        reason:
+            'the run still belongs to this location; what it does not '
+            'do is take up a cell',
+      );
+
+      // AND THE SAME RUN LEFT AT A WALL PLATE STILL NEEDS ITS TWO. The
+      // pair is the assertion: a single-sided test would pass against a
+      // rule that had simply zeroed the arm.
+      final onPlate = _drop(
+        id: linkId,
+        outletId: outletId,
+        termination: TerminationType.bindingPost,
+      );
+      expect(computePlateFill(outlet, [onPlate]).cellsRequired, 2);
     });
   });
 

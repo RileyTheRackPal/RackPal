@@ -56,52 +56,104 @@
 // it is M6's under DR-027; the derivation is M3's under §11.26.4, which
 // is the same seam the Pull Sheet already straddles.
 import 'package:meta/meta.dart';
+import 'package:rackmate_core/src/model/conductor.dart' show PortEndpoint;
 import 'package:rackmate_core/src/model/enums.dart' show TerminationType;
 import 'package:rackmate_core/src/model/gang.dart';
 import 'package:rackmate_core/src/model/link.dart';
 import 'package:rackmate_core/src/model/outlet.dart';
 import 'package:rackmate_core/src/units/ids.dart';
 
-/// How many cells one field end needs, per DR-007 §11.7.2.1.
+/// How many cells one field end needs, per DR-007 §11.7.2.1 as amended by
+/// DR-069 §11.68.
 ///
 /// [conductorCount] is only read for [TerminationType.bindingPost]; every
 /// other termination is one cell per link end or none at all, whatever
 /// the cable carries. Passing the wrong conductor count for an RJ45
 /// therefore cannot change the answer, which is deliberate.
 ///
+/// [fieldEndIsLanded] is whether the run's FIELD end is bound to a device
+/// port rather than to a place, and it changes exactly one arm. See
+/// [TerminationType.bindingPost] below.
+///
 /// Returns `null` when [termination] is null: that is UNKNOWN and callers
 /// must count it rather than substitute a number (G4). There is no
 /// "probably one" arm here and there must never be one.
-int? cellsRequiredFor(TerminationType? termination, int conductorCount) =>
-    switch (termination) {
-      null => null,
-      TerminationType.bindingPost => conductorCount,
-      TerminationType.keystone ||
-      TerminationType.punchdown ||
-      TerminationType.fBarrel => 1,
-      // NOTHING IS ON THE PLATE. Not "one cell we cannot name" — zero, and
-      // §11.7.2.1 states it as zero. A coil in a J-hook and a run brought
-      // to a field connector both leave the plate alone.
-      //
-      // `euroblock` JOINED THIS ROW AT DR-044 (§11.43.4) AND WAS IN THE
-      // ARM ABOVE, WRONGLY, FROM M3-H UNTIL THEN. §11.7.2.1's table does
-      // not mention it at all, and M3-H put it beside `keystone` on an
-      // inference nobody wrote down. A euroblock is a pluggable screw
-      // terminal on a DEVICE: the conductors land on a keypad or an
-      // amplifier and no jack occupies a cell. The keypad is the case
-      // that makes it concrete, because the device fills the gang, and a
-      // plate sized to give it a keystone as well is one cell too big on
-      // every keypad drop in a house.
-      //
-      // `rj45Plug` JOINED THIS ROW AT DR-045 (§11.44.2), and unlike
-      // `euroblock` above it was ASKED rather than assumed. The plug is
-      // crimped on the cable and goes into the device, so an AP that
-      // mounts to the box needs no strap at all.
-      TerminationType.euroblock ||
-      TerminationType.unterminated ||
-      TerminationType.fieldConnector ||
-      TerminationType.rj45Plug => 0,
-    };
+int? cellsRequiredFor(
+  TerminationType? termination,
+  int conductorCount, {
+  bool fieldEndIsLanded = false,
+}) => switch (termination) {
+  null => null,
+  // ═══════════════════════════════════════════════════════════════
+  // WHOSE POSTS ARE THEY? THE ONLY ARM WHERE THE WORD DOES NOT SAY
+  // ═══════════════════════════════════════════════════════════════
+  // Reported by a user diagramming a real system (`#717`): tagging a
+  // ceiling speaker's run `BINDING POST` demanded two plate cells,
+  // and a ceiling speaker has no low-voltage box, let alone a strap.
+  //
+  // Both readings of the word are real hardware. A speaker
+  // binding-post WALL PLATE is a product, its posts are on the plate,
+  // and each conductor lands in a cell: that is what §11.7.2.1's
+  // original arm was written for and it is still right. An in-wall or
+  // in-ceiling driver's posts are on the DRIVER, and nothing sits in
+  // a cell because there is no plate.
+  //
+  // `keystone` and `punchdown` are ALWAYS the plate's; `euroblock`
+  // and `rj45Plug` are ALWAYS the device's. This is the one arm where
+  // the termination type genuinely cannot say, so it stopped being
+  // asked: the answer comes from where the run LANDS, which DR-068
+  // made expressible by letting a field end bind to a device port.
+  //
+  // THE THIRD TIME THIS QUESTION HAS BEEN PUT. DR-044 corrected
+  // `euroblock` from one cell to zero on exactly this reasoning, and
+  // DR-045 asked it of `rj45Plug` out loud rather than inferring it.
+  // Adding a `directTermination` member was the alternative and was
+  // refused: it would put one fact in two places and let a document
+  // say `DIRECT TERMINATION` on a run whose field end is an unlanded
+  // wall plate.
+  TerminationType.bindingPost => fieldEndIsLanded ? 0 : conductorCount,
+  TerminationType.keystone ||
+  TerminationType.punchdown ||
+  TerminationType.fBarrel => 1,
+  // NOTHING IS ON THE PLATE. Not "one cell we cannot name" — zero, and
+  // §11.7.2.1 states it as zero. A coil in a J-hook and a run brought
+  // to a field connector both leave the plate alone.
+  //
+  // `euroblock` JOINED THIS ROW AT DR-044 (§11.43.4) AND WAS IN THE
+  // ARM ABOVE, WRONGLY, FROM M3-H UNTIL THEN. §11.7.2.1's table does
+  // not mention it at all, and M3-H put it beside `keystone` on an
+  // inference nobody wrote down. A euroblock is a pluggable screw
+  // terminal on a DEVICE: the conductors land on a keypad or an
+  // amplifier and no jack occupies a cell. The keypad is the case
+  // that makes it concrete, because the device fills the gang, and a
+  // plate sized to give it a keystone as well is one cell too big on
+  // every keypad drop in a house.
+  //
+  // `rj45Plug` JOINED THIS ROW AT DR-045 (§11.44.2), and unlike
+  // `euroblock` above it was ASKED rather than assumed. The plug is
+  // crimped on the cable and goes into the device, so an AP that
+  // mounts to the box needs no strap at all.
+  TerminationType.euroblock ||
+  TerminationType.unterminated ||
+  TerminationType.fieldConnector ||
+  TerminationType.rj45Plug => 0,
+};
+
+/// Whether [link]'s FIELD end is bound to a device port rather than to a
+/// place (DR-069 §11.68).
+///
+/// `Conductor.from` is the field end and `.to` is the rack end, which is
+/// the reading `link_class.dart` and `schematic_scene.dart` both take:
+/// CR-014 fixes each conductor at two ends and every conductor of one
+/// cable shares the same pair, so the first speaks for the link.
+///
+/// A LINK WITH NO CONDUCTORS IS NOT LANDED, rather than an error. It is
+/// reachable from a file, and answering "landed" for it would zero a
+/// plate's requirement on the strength of a cable that states nothing.
+bool fieldEndIsLanded(Link link) {
+  if (link.conductors.isEmpty) return false;
+  return link.conductors.first.from is PortEndpoint;
+}
 
 /// What one `Outlet`'s plate needs and what it currently provides.
 ///
@@ -276,6 +328,7 @@ PlateFill computePlateFill(Outlet outlet, Iterable<Link> links) {
     final needed = cellsRequiredFor(
       origin.terminationField,
       link.conductors.length,
+      fieldEndIsLanded: fieldEndIsLanded(link),
     );
     if (needed == null) {
       unknownDrops++;
