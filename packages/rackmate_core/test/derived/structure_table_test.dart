@@ -1299,6 +1299,94 @@ void main() {
     });
   });
 
+  group('the OUTLET column has THREE states (DR-070 §11.69, `#718`)', () {
+    /// A run that comes out of no box: a ceiling speaker, whose
+    /// conductors land on the driver's own binding posts.
+    ScheduleEntry boxlessRow(_Doc d, Uuid roomId) {
+      final built =
+          buildAddHomeRunCommand(
+                doc: d.doc,
+                structureBodyId: d.bodyId,
+                fieldLabel: 'LR-SPK-L',
+                designator: 'W900',
+                netName: 'N900',
+                media: const MediaTypeId('media.cat6'),
+                fieldEnd: PlaceEndpoint(
+                  description: 'Living Room ceiling',
+                  locationId: roomId,
+                ),
+                terminationField: TerminationType.bindingPost,
+                now: _when,
+                actor: 'test',
+              )
+              as AddHomeRunReady;
+      built.command.apply(d.doc);
+      final id = built.command.id;
+      return buildStructureTable(
+        d.doc,
+      ).groups.expand((g) => g.rows).firstWhere((r) => r.linkId == id);
+    }
+
+    String outletCell(_Doc d, ScheduleEntry row) => structureCell(
+      d.doc,
+      row,
+      StructureColumnId.outlet,
+      units: UnitSystem.imperial,
+    );
+
+    test('a box prints its designation', () {
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      final o = d.outlet('LR-1', locationId: lr);
+      _drop(d, outletId: o, locationId: lr, fieldLabel: 'LR-TV-1');
+      final row = buildStructureTable(d.doc).groups.single.rows.single;
+      expect(outletCell(d, row), 'LR-1');
+    });
+
+    test('NO BOX prints its own token, never the unknown dash', () {
+      // The whole point of the second field. `—` means "nobody has said
+      // which box"; a ceiling speaker having none is something a person
+      // stated, and an estimator counting plates off this column is who
+      // the difference is for.
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      final row = boxlessRow(d, lr);
+
+      expect(outletCell(d, row), kNoBoxCell);
+      expect(outletCell(d, row), isNot(kUnknownCell));
+      expect(row.boxless, isTrue);
+    });
+
+    test('and a boxless run adds no outlet to the count', () {
+      // `outletCount` collected `o.outletId` unconditionally, so once the
+      // field became nullable a body of nothing but ceiling speakers
+      // reported ONE outlet: every drop contributed the same null.
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      boxlessRow(d, lr);
+      expect(buildStructureTable(d.doc).outletCount, 0);
+
+      final o = d.outlet('LR-1', locationId: lr);
+      _drop(d, outletId: o, locationId: lr, fieldLabel: 'LR-TV-1');
+      expect(buildStructureTable(d.doc).outletCount, 1);
+    });
+
+    test("a boxless run keeps its ROOM, and does not fall into the rack's", () {
+      // `buildScheduleEntry` reads the room as
+      // `from.locationId ?? outlet?.locationId ?? to.locationId`. With no
+      // outlet the middle term is gone, and the last one is the
+      // equipment room. The builder refuses a boxless run that cannot
+      // answer; this is the other half, that the answer is USED.
+      final d = _Doc();
+      final lr = d.room('Living Room', code: 'LR');
+      boxlessRow(d, lr);
+
+      final group = buildStructureTable(d.doc).groups.single;
+      expect(group.locationId, lr);
+      expect(group.title, 'Living Room');
+    });
+  });
+
   group('the CLASS column (DR-067 §11.66, board `#712`)', () {
     /// A drop that lands on a real rack port, so the classifier can
     /// resolve both ends and has an opinion to be overruled.

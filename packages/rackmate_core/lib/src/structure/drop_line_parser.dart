@@ -173,6 +173,7 @@ final class DropLineParsed extends DropLineParse {
     this.outletDesignation,
     this.pathwayName,
     this.panelDesignator,
+    this.noBox = false,
     this.unknownModifiers = const {},
   });
 
@@ -223,6 +224,19 @@ final class DropLineParsed extends DropLineParse {
   /// `@pathway="…"`, the conduit sense.
   final String? pathwayName;
 
+  /// `@nobox` — this line's runs come out of NO BOX (DR-070 §11.69).
+  ///
+  /// A FLAG, NOT A VALUE, and the only one in this DSL. Every other
+  /// modifier answers "which one"; this answers "there is none", so
+  /// `@nobox=true` would invite `@nobox=false`, which is the default and
+  /// says nothing. Bare presence is the whole statement.
+  ///
+  /// IT IS NOT SPELLED `@outlet=none`. That reading would put "there is
+  /// no box" into the same field as "the box is called none", which is
+  /// the fusion `#718` removed from the model; a person who names an
+  /// outlet `none` is doing something legal and unrelated.
+  final bool noBox;
+
   /// `@panel=PP-1` — the patch panel every drop on this line lands on
   /// (DR-040 §11.39.2 clause 2). A device DESIGNATOR, not resolved here:
   /// this file has no document.
@@ -258,6 +272,10 @@ final class DropLineMalformed extends DropLineParse {
   final int column;
 }
 
+/// The modifiers that are FLAGS: legal bare, and meaningless with a
+/// value. See the scanner for why the set is closed there.
+const Set<String> _flagModifiers = {'nobox'};
+
 const Set<String> _knownModifiers = {
   'service',
   // DR-025 §11.24.3. The word is `signal` and not a third spelling
@@ -267,6 +285,9 @@ const Set<String> _knownModifiers = {
   'status',
   'outlet',
   'pathway',
+  // DR-070 §11.69. A ceiling speaker has no low-voltage box, so it has
+  // no `Outlet`, and every other route into a drop demanded one.
+  'nobox',
   // DR-040 §11.39.2 clause 2. The `unknownModifiers` map below is what
   // this was added to: its own comment named "a future `@wall=`" as the
   // shape it was holding open, and this is the first key to take it up.
@@ -331,6 +352,11 @@ DropLineParse parseDropLine(String line) {
     status: mods['status'],
     outletDesignation: mods['outlet'],
     pathwayName: mods['pathway'],
+    // PRESENCE IS THE STATEMENT. `mods` holds an empty string for a bare
+    // `@nobox`, so a containsKey is the read and any value a person types
+    // after it is simply ignored rather than parsed into a second
+    // meaning.
+    noBox: mods.containsKey('nobox'),
     panelDesignator: mods['panel'],
     unknownModifiers: {
       for (final e in mods.entries)
@@ -374,6 +400,15 @@ final class _ItemBad extends _ItemResult {
   final DropLineMalformed error;
 }
 
+/// The first space at or after [from], or -1. Used to find where a bare
+/// flag modifier ends.
+int _indexOfSpaceFrom(String s, int from) {
+  for (var k = from; k < s.length; k++) {
+    if (_isSpace(s[k])) return k;
+  }
+  return -1;
+}
+
 /// Splits the text after the colon into its item region and its `@`
 /// modifiers, respecting quotes so that `@outlet="A @ B"` stays whole.
 _ScanResult _splitModifiers(String rest, int base) {
@@ -387,8 +422,34 @@ _ScanResult _splitModifiers(String rest, int base) {
       i++;
       continue;
     }
+    // ═══════════════════════════════════════════════════════════════
+    // A VALUELESS MODIFIER IS A FLAG, AND ONLY A DECLARED ONE MAY BE
+    // ═══════════════════════════════════════════════════════════════
+    // Every modifier until DR-070 answered "which one", so a missing `=`
+    // could only be a typo and refusing was right. `@nobox` answers
+    // "there is none", and a flag with a value invites its own negation:
+    // `@nobox=false` is the default and states nothing.
+    //
+    // THE SET IS CLOSED HERE AND NOT LEFT TO THE RESOLVER, because the
+    // two readings are not distinguishable afterwards. `@service` with
+    // no value is a typo a person can fix, and treating every bare word
+    // as a flag turned that refusal into a silent empty `@service=`.
+    // Its own test caught it, which is why this paragraph exists.
     final eq = rest.indexOf('=', i);
-    if (eq < 0) {
+    final nextAt = rest.indexOf('@', i + 1);
+    final nextSpace = _indexOfSpaceFrom(rest, i + 1);
+    final wordEnd = [
+      if (nextAt >= 0) nextAt,
+      if (nextSpace >= 0) nextSpace,
+      rest.length,
+    ].reduce((a, b) => a < b ? a : b);
+    if (eq < 0 || eq > wordEnd) {
+      final flag = rest.substring(i + 1, wordEnd).trim().toLowerCase();
+      if (_flagModifiers.contains(flag)) {
+        mods[flag] = '';
+        i = wordEnd;
+        continue;
+      }
       return _ScanFailed(
         'A modifier looks like "@service=camera". This one has no "=".',
         base + i,

@@ -18,7 +18,7 @@ EntityMeta _meta() =>
 
 /// A project with one Structure body and one Outlet on it — the smallest
 /// document a home run can be pulled from.
-({RackDocument doc, Uuid bodyId, Uuid outletId}) _project() {
+({RackDocument doc, Uuid bodyId, Uuid outletId, Uuid roomId}) _project() {
   final doc = RackDocument(
     id: const Uuid('doc-home-run'),
     appVersion: '0.1.0',
@@ -42,7 +42,22 @@ EntityMeta _meta() =>
     mountSurface: MountSurface.wall,
   )..apply(doc);
 
-  return (doc: doc, bodyId: structure.bodyId, outletId: outlet.id);
+  // A ROOM, because a run with no outlet has nothing else to say which
+  // room it is in and the builder refuses one that cannot.
+  final room = AddLocationCommand(
+    name: 'Living Room',
+    code: 'LR',
+    order: nextLocationOrder(doc),
+    now: _now,
+    actor: 'test',
+  )..apply(doc);
+
+  return (
+    doc: doc,
+    bodyId: structure.bodyId,
+    outletId: outlet.id,
+    roomId: room.id,
+  );
 }
 
 AddHomeRunResult _build(
@@ -318,6 +333,8 @@ void main() {
       RackDocument doc,
       Uuid bodyId, {
       String fieldLabel = 'LR-SPK-L',
+      Uuid? roomId,
+      bool withRoom = true,
     }) => buildAddHomeRunCommand(
       doc: doc,
       structureBodyId: bodyId,
@@ -325,7 +342,10 @@ void main() {
       designator: 'W900',
       netName: 'N900',
       media: const MediaTypeId('media.cat6_utp'),
-      fieldEnd: const PlaceEndpoint(description: 'Living Room ceiling'),
+      fieldEnd: PlaceEndpoint(
+        description: 'Living Room ceiling',
+        locationId: withRoom ? roomId : null,
+      ),
       terminationField: TerminationType.bindingPost,
       now: _now,
       actor: 'test',
@@ -333,7 +353,7 @@ void main() {
 
     test('it is created, and says so with the FLAG and not the absence', () {
       final p = _project();
-      _ready(boxless(p.doc, p.bodyId)).apply(p.doc);
+      _ready(boxless(p.doc, p.bodyId, roomId: p.roomId)).apply(p.doc);
 
       final origin = p.doc.links.values.single.structureOrigin!;
       expect(origin.outletId, isNull);
@@ -358,7 +378,7 @@ void main() {
       // no outlet has nobody to ask. Substituting a height would put a
       // number on a schedule nobody measured.
       final p = _project();
-      _ready(boxless(p.doc, p.bodyId)).apply(p.doc);
+      _ready(boxless(p.doc, p.bodyId, roomId: p.roomId)).apply(p.doc);
 
       final origin = p.doc.links.values.single.structureOrigin!;
       expect(origin.wall, isNull);
@@ -413,10 +433,30 @@ void main() {
       expect(_refusal(refusal), contains('exactly one'));
     });
 
+    test('a boxless run whose field end names NO ROOM is refused', () {
+      // `buildScheduleEntry` reads a run's room as
+      // `from.locationId ?? outlet?.locationId ?? to.locationId`, and its
+      // own comment calls the last of those a trap: "a run's room is
+      // where its drop is, not where its rack is". With a box the outlet
+      // answers. Without one, a run carrying no location would sort
+      // itself silently into the EQUIPMENT ROOM on the Pull Sheet the
+      // installer walks the house with.
+      final p = _project();
+      final refusal = _refusal(boxless(p.doc, p.bodyId, withRoom: false));
+      expect(refusal, contains('which room'));
+      expect(p.doc.links, isEmpty);
+    });
+
     test('a body this project does not carry is refused', () {
       final p = _project();
       expect(
-        _refusal(boxless(p.doc, const Uuid('body-that-is-not-here'))),
+        _refusal(
+          boxless(
+            p.doc,
+            const Uuid('body-that-is-not-here'),
+            roomId: p.roomId,
+          ),
+        ),
         contains('not in this project'),
       );
     });
@@ -428,7 +468,9 @@ void main() {
       final p = _project();
       _ready(_build(p.doc, p.outletId, fieldLabel: 'LR-1')).apply(p.doc);
       expect(
-        _refusal(boxless(p.doc, p.bodyId, fieldLabel: 'LR-1')),
+        _refusal(
+          boxless(p.doc, p.bodyId, roomId: p.roomId, fieldLabel: 'LR-1'),
+        ),
         isNotEmpty,
       );
     });

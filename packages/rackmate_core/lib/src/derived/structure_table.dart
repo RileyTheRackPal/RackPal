@@ -252,9 +252,14 @@ StructureTable buildStructureTable(
     dropCount: rows.length,
     connectedCount: rows.where(_isConnected).length,
     spareCount: rows.where(_isSpare).length,
+    // BOXLESS RUNS COUNT NO OUTLET (`#718`). The set used to collect
+    // `o.outletId` unconditionally; once that field became nullable, a
+    // body holding nothing but ceiling speakers reported ONE outlet,
+    // because every one of them contributed the same null. The count is
+    // "how many boxes are there", and the answer for a speaker is none.
     outletCount: {
       for (final row in rows)
-        if (doc.links[row.linkId]?.structureOrigin case final o?) o.outletId,
+        if (doc.links[row.linkId]?.structureOrigin?.outletId case final id?) id,
     }.length,
     // See [StructureTable.pathwayCount]: the document's, not this body's
     // drops', because DR-032 makes a pathway with nothing running through
@@ -869,7 +874,13 @@ String structureCell(
     // The two the sheet has no column of its own for. `OUTLET` is half of
     // the Pull Sheet's `FROM (ROOM / OUTLET)`; splitting it is what makes
     // it an editable cell rather than a rendered sentence.
-    StructureColumnId.outlet => row.outletDesignation ?? kUnknownCell,
+    // THREE STATES, NOT TWO (DR-070 §11.69). A designation when there is
+    // a box, `— NO BOX —` when somebody has said there is none, and the
+    // dash when nobody has said. Collapsing the last two is the fusion
+    // this ruling removed from the model, and the editor is the surface
+    // people trust most because they are typing into it.
+    StructureColumnId.outlet =>
+      row.boxless ? kNoBoxCell : row.outletDesignation ?? kUnknownCell,
     StructureColumnId.roughIn => roughInLabel(row.roughInStatus),
 
     StructureColumnId.jacketRating => switch (row.jacketRating) {

@@ -119,7 +119,11 @@ final class DropBuildRefused extends DropBuildOutcome {
 DropBuildOutcome buildDropsFor({
   required RackDocument doc,
   required Location location,
-  required Outlet outlet,
+
+  /// The box these runs come out of, or NULL for a line carrying
+  /// `@nobox` (DR-070 §11.69). A ceiling speaker has no low-voltage box,
+  /// so it has no `Outlet`, and the caller creates none.
+  required Outlet? outlet,
   required List<PlannedDropItem> items,
   required String? Function(PlannedDropItem item) serviceTag,
   required DateTime now,
@@ -127,6 +131,10 @@ DropBuildOutcome buildDropsFor({
   required Set<String> usedLabels,
   required Set<String> usedDesignators,
   required Set<String> usedNetNames,
+
+  /// Which Structure body owns these runs. Required only when `outlet` is
+  /// null, since with a box the outlet is the authority.
+  Uuid? structureBodyId,
   Uuid? pathwayId,
 
   /// The family every drop on this line carries, from `@signal=`
@@ -184,7 +192,11 @@ DropBuildOutcome buildDropsFor({
 
       final built = buildAddHomeRunCommand(
         doc: doc,
-        outletId: outlet.id,
+        outletId: outlet?.id,
+        // WITHOUT A BOX THE BODY COMES FROM HERE, since there is no
+        // outlet to read it off. `buildAddHomeRunCommand` refuses both
+        // or neither, so exactly one of these two is non-null.
+        structureBodyId: outlet == null ? structureBodyId : null,
         fieldLabel: label,
         designator: designator,
         netName: netName,
@@ -242,7 +254,7 @@ DropBuildOutcome buildDropsFor({
         alsoUsedLabels: usedLabels,
         alsoUsedDesignators: usedDesignators,
         alsoUsedOrders: usedOrders,
-        alsoOutlets: {outlet.id: outlet},
+        alsoOutlets: {if (outlet != null) outlet.id: outlet},
       );
       switch (built) {
         case AddHomeRunRefused(:final reason):

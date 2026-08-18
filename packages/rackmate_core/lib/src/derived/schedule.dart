@@ -345,6 +345,18 @@ String signalFamilyCellLabel(SignalDomainDef domain, SignalFamilyDef family) =>
 /// know" is not.
 const String kOpenEndCell = '— OPEN —';
 
+/// What the `OUTLET` column prints for a run that comes out of no box
+/// (DR-070 §11.69).
+///
+/// A DISTINCT TOKEN FROM [kUnknownCell], for exactly [kOpenEndCell]'s
+/// reason and it is worth restating: the dash means "nobody has said
+/// which box", and a ceiling speaker having no box is something a person
+/// stated. Printing the dash for both would put the fusion this ruling
+/// removed from the MODEL straight back onto the sheet, where an
+/// estimator reading the column cannot tell an unassigned drop from one
+/// that will never have a plate.
+const String kNoBoxCell = '— NO BOX —';
+
 /// What an end that resolved to a device outside every rack prints, and
 /// the band title those rows group under. Again not [kUnknownCell] — the
 /// document states where it is.
@@ -508,6 +520,9 @@ final class ScheduleEntry {
     required this.crossover,
     required this.terminationType,
     required this.notes,
+    // OPTIONAL AND LAST, so the twenty-two required names above it
+    // keep the lint's required-first order (DR-070 §11.69).
+    this.boxless = false,
   });
 
   final Uuid linkId;
@@ -554,6 +569,10 @@ final class ScheduleEntry {
   /// The `Outlet`'s own field designation, via
   /// `StructureOrigin.outletId`.
   final String? outletDesignation;
+
+  /// This run comes out of NO BOX and never will (DR-070 §11.69). Not the
+  /// same as [outletDesignation] being null, which is "nobody has said".
+  final bool boxless;
 
   /// The room this run belongs to — the FROM end's, falling back to the
   /// outlet's and then the TO end's. The Pull Sheet's default grouping
@@ -827,6 +846,13 @@ final class ScheduleEntry {
   String get _fromRoomOutletCell {
     final outlet = outletDesignation;
     final base = from.locationCell;
+    // NAMED, NOT LEFT BLANK (DR-070 §11.69). A boxless run has a room and
+    // no plate, and a cell showing only the room reads as a drop whose
+    // outlet nobody filled in. The estimator counting plates off this
+    // column is the person the difference is for.
+    if (boxless) {
+      return base == kUnknownCell ? kNoBoxCell : '$base $kNoBoxCell';
+    }
     if (outlet == null || outlet.isEmpty) return base;
     return base == kUnknownCell ? outlet : '$base $outlet';
   }
@@ -991,6 +1017,7 @@ ScheduleEntry _row(RackDocument doc, Link link) {
     fieldLabel: _trimToNull(origin?.fieldLabel),
     rackLabel: _trimToNull(origin?.rackLabel),
     outletDesignation: _trimToNull(outlet?.designation),
+    boxless: origin?.boxless ?? false,
     roomId: roomId,
     roomName: _locationName(doc, roomId),
     pathwayId: pathwayId,

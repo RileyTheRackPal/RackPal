@@ -516,6 +516,29 @@ AddHomeRunResult buildAddHomeRunCommand({
       );
     }
     ownerBodyId = structureBodyId!;
+
+    // ═══════════════════════════════════════════════════════════════
+    // WITHOUT A BOX, THE FIELD END MUST SAY WHICH ROOM IT IS IN
+    // ═══════════════════════════════════════════════════════════════
+    // `buildScheduleEntry` reads a run's room as
+    // `from.locationId ?? outlet?.locationId ?? to.locationId`, and its
+    // own comment says why the last of those is a trap: "a run's room is
+    // where its drop is, not where its rack is ... AC-025's 'the order
+    // the tech walks the house' means nothing if every row groups under
+    // the equipment room."
+    //
+    // With a box the outlet answers. Without one the only remaining
+    // answer is the field end's, and a boxless run that did not carry a
+    // location would silently sort itself into the rack's room on the
+    // Pull Sheet the installer works from. Refused at creation rather
+    // than papered over at render time.
+    final place = fieldEnd is PlaceEndpoint ? fieldEnd : null;
+    if (place?.locationId == null) {
+      return const AddHomeRunRefused(
+        'A run with no outlet has nothing to say which room it is in, so '
+        'its field end needs a location.',
+      );
+    }
   }
 
   // A home run's field end is by definition not a live port. Refused

@@ -984,4 +984,79 @@ void main() {
       );
     });
   });
+  group('@nobox: a run that comes out of no box (DR-070 §11.69, `#718`)', () {
+    test('it creates NO outlet, and the runs say boxless', () {
+      // The gesture the user asked for by example: a ceiling speaker has
+      // no low-voltage box, so there is nothing for an `Outlet` to be.
+      final p = _project();
+      final plan = _ready(_plan(p.doc, 'Living Room: 2x Cat6 @nobox'));
+      _apply(p.doc, plan);
+
+      expect(
+        p.doc.outlets,
+        isEmpty,
+        reason:
+            'the planner had one job up to here, find the box or make '
+            'one, and this line skips both',
+      );
+      final origins = [
+        for (final l in p.doc.links.values) l.structureOrigin!,
+      ];
+      expect(origins, hasLength(2));
+      for (final o in origins) {
+        expect(o.outletId, isNull);
+        expect(o.boxless, isTrue);
+      }
+    });
+
+    test('the runs still carry their room, so the sheet groups them', () {
+      // `buildScheduleEntry` falls back to the RACK's room when nothing
+      // else answers, and its own comment calls that a trap. With no
+      // outlet the field end is the only thing that can say.
+      final p = _project();
+      _apply(p.doc, _ready(_plan(p.doc, 'Living Room: 1x Cat6 @nobox')));
+
+      final table = buildStructureTable(p.doc);
+      expect(table.groups.single.title, 'Living Room');
+      expect(table.outletCount, 0);
+      expect(table.dropCount, 1);
+    });
+
+    test('an ordinary line still makes its outlet', () {
+      // The other direction, without which the cases above are satisfied
+      // by a planner that stopped making outlets at all.
+      final p = _project();
+      _apply(p.doc, _ready(_plan(p.doc, 'Living Room: 1x Cat6')));
+      expect(p.doc.outlets, hasLength(1));
+      expect(p.doc.links.values.single.structureOrigin!.boxless, isFalse);
+    });
+
+    test('@nobox with @outlet= is refused rather than ranked', () {
+      // The line states two incompatible things and the person meant one
+      // of them. Picking a winner silently is how a document comes to
+      // disagree with what somebody typed.
+      final p = _project();
+      final refusal = _refusal(
+        _plan(p.doc, 'Living Room: 1x Cat6 @nobox @outlet="LR-1"'),
+      );
+      expect(refusal, contains('one or the other'));
+      expect(p.doc.links, isEmpty);
+      expect(p.doc.outlets, isEmpty);
+    });
+
+    test('it lands on a panel like any other line', () {
+      // `@nobox` is about the FIELD end. The rack end is untouched by it,
+      // and a speaker run landing on an amplifier is the whole point.
+      final p = _project();
+      _panel(p.doc);
+      _apply(
+        p.doc,
+        _ready(_plan(p.doc, 'Living Room: 1x Cat6 @nobox @panel=PP-1')),
+      );
+
+      final origin = p.doc.links.values.single.structureOrigin!;
+      expect(origin.boxless, isTrue);
+      expect(origin.rackLabel, isNotNull);
+    });
+  });
 }

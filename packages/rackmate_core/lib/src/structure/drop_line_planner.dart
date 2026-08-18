@@ -288,10 +288,30 @@ DropLinePlan planDropLine({
   }
 
   final commands = <Command<RackDocument>>[];
-  final Outlet plannedOutlet;
+  final Outlet? plannedOutlet;
   final bool outletCreated;
 
-  if (existing != null) {
+  // ═══════════════════════════════════════════════════════════════════
+  // `@nobox` MAKES NO OUTLET AT ALL (DR-070 §11.69)
+  // ═══════════════════════════════════════════════════════════════════
+  // A ceiling speaker has no low-voltage box, and this planner's job up
+  // to here has been "find the box or make one". A line carrying the
+  // flag skips both: no `AddOutletCommand` is emitted, and the runs name
+  // the Structure body directly.
+  //
+  // `@outlet=` AND `@nobox` TOGETHER ARE REFUSED rather than silently
+  // ranked, because the line states two incompatible things and the
+  // person meant one of them.
+  if (line.noBox) {
+    if (line.outletDesignation != null) {
+      return const DropLinePlanRefused(
+        '@nobox says these runs come out of no box, and @outlet= names '
+        'one. Use one or the other.',
+      );
+    }
+    plannedOutlet = null;
+    outletCreated = false;
+  } else if (existing != null) {
     plannedOutlet = existing;
     outletCreated = false;
   } else {
@@ -389,11 +409,22 @@ DropLinePlan planDropLine({
   }
 
   // --- the drops -----------------------------------------------------
-  final template = _templateOf(doc, plannedOutlet);
+  final template = plannedOutlet == null
+      ? null
+      : _templateOf(doc, plannedOutlet);
   final built = buildDropsFor(
     doc: doc,
     location: location,
     outlet: plannedOutlet,
+    // ONLY WHEN THERE IS NO OUTLET, because with one the outlet is the
+    // authority on which body owns the run and passing both is refused.
+    // Resolved the same way the outlet path resolves it: the editor's
+    // current body, else the default, else the only one.
+    structureBodyId: plannedOutlet != null
+        ? null
+        : structureBodyId ??
+              defaultStructureBody(doc)?.id ??
+              doc.structures.keys.first,
     signalFamily: signalFamily,
     // THE CABLE ITEMS ONLY. Conduit was partitioned out above and has
     // already become `AddPathwayCommand`s.
