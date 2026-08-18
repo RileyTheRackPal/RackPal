@@ -39,6 +39,51 @@ const _panel = Uuid('dev-pp1');
 /// REAR, WHICH IS DR-040 §11.39.2 CLAUSE 4. The N03 archetype models front
 /// RJ45 jacks and rear 110 punchdowns separately and says why in its own
 /// description; a drop lands on the punchdown.
+/// An in-wall speaker with two binding posts, modelled the way a driver
+/// actually is: its terminals are simply its terminals, and nothing about
+/// it has a rack panel's front/rear split.
+const Uuid _speaker = Uuid('dev-speaker');
+
+void _addSpeaker(RackDocument doc) {
+  const tplId = 'tpl.spk';
+  doc.templates['$tplId@1'] = TemplateSnapshot(
+    templateId: const TemplateId(tplId),
+    version: 1,
+    contentHash: 'sha256:$tplId',
+    body: TemplateBody(
+      manufacturer: 'Generic',
+      model: 'IW-6',
+      displayName: 'In-wall speaker, 6.5in',
+      typePrefix: 'SPK',
+      ports: [
+        PortDef(
+          key: const PortKey('post.1'),
+          label: '+/-',
+          connector: const ConnectorTypeId('conn.binding_post'),
+          signalFamily: const SignalFamilyId('aud.speaker'),
+          face: Face.front,
+          position: _pos,
+          order: const FracIndex('a0'),
+        ),
+      ],
+    ),
+    capturedAt: _now,
+  );
+  doc.devices[_speaker] = DeviceInstance(
+    id: _speaker,
+    kind: DeviceKind.rackDevice,
+    templateRef: const TemplateRef(
+      templateId: TemplateId(tplId),
+      version: 1,
+      contentHash: 'sha256:$tplId',
+    ),
+    designator: 'SPK-1',
+    name: 'Living Room L',
+    placement: const OffRackPlacement(),
+    meta: _meta(),
+  );
+}
+
 PortDef _rear(String key, String label, String order) => PortDef(
   key: PortKey(key),
   label: label,
@@ -609,6 +654,203 @@ void main() {
       );
 
       expect(r.label, '1A-PP-101');
+    });
+  });
+
+  group('EITHER END MAY LAND (DR-068, `#714`)', () {
+    // WHY THIS EXISTS. The command bound the rack end and nothing else,
+    // so a run could land on a patch panel and never on the thing at the
+    // other end of it. For a Cat6 drop that is right: the run ends at a
+    // wall plate and whatever plugs in is a separate patch cord. For an
+    // in-wall speaker it is wrong, because the run IS one continuous
+    // conductor from the amplifier to the binding posts on the driver,
+    // and a product that could not say so made the user draw a second
+    // cable that does not exist.
+
+    test('a field bind lands `from`, and leaves the rack end alone', () {
+      final p = _project();
+      final before = p.doc.links[p.linkId]!.conductors.first.to;
+
+      final result = buildBindEndpointCommand(
+        doc: p.doc,
+        linkId: p.linkId,
+        port: _pin('rear.1', '01'),
+        rackLabel: null,
+        usedRackLabels: const {},
+        now: _later,
+        actor: 'tech',
+        end: LinkEnd.field,
+      );
+      _ready(result).apply(p.doc);
+
+      final conductor = p.doc.links[p.linkId]!.conductors.first;
+      expect(conductor.from, isA<PortEndpoint>());
+      expect((conductor.from as PortEndpoint).portId, _pid('rear.1'));
+      expect(
+        conductor.to,
+        same(before),
+        reason:
+            'the gesture is about one end; rebuilding both would let a '
+            'caller that passed the wrong pin move the drop out of its own '
+            'room',
+      );
+    });
+
+    test('a field bind does NOT touch the field label', () {
+      // The two labels are not symmetric and this is the asymmetry. A
+      // rack label is DERIVED from where the run landed, so the bind is
+      // what can know it. A field label names the wall plate, was typed
+      // when the drop was created, and is unique project-wide (CR-113):
+      // landing a speaker records where the copper ends and says nothing
+      // about what the plate is called.
+      final p = _project();
+      final was = p.doc.links[p.linkId]!.structureOrigin!.fieldLabel;
+
+      _ready(
+        buildBindEndpointCommand(
+          doc: p.doc,
+          linkId: p.linkId,
+          port: _pin('rear.1', '01'),
+          rackLabel: null,
+          usedRackLabels: const {},
+          now: _later,
+          actor: 'tech',
+          end: LinkEnd.field,
+        ),
+      ).apply(p.doc);
+
+      final origin = p.doc.links[p.linkId]!.structureOrigin!;
+      expect(origin.fieldLabel, was);
+      expect(
+        origin.rackLabel,
+        isNull,
+        reason:
+            'and it wrote no rack label either: the panel position is '
+            'untouched by what happened at the wall',
+      );
+    });
+
+    test('undoing a field bind restores the field end and nothing else', () {
+      final p = _project();
+      final beforeFrom = p.doc.links[p.linkId]!.conductors.first.from;
+      _ready(
+          buildBindEndpointCommand(
+            doc: p.doc,
+            linkId: p.linkId,
+            port: _pin('rear.1', '01'),
+            rackLabel: null,
+            usedRackLabels: const {},
+            now: _later,
+            actor: 'tech',
+            end: LinkEnd.field,
+          ),
+        )
+        ..apply(p.doc)
+        ..revert(p.doc);
+
+      final conductor = p.doc.links[p.linkId]!.conductors.first;
+      expect(conductor.from, same(beforeFrom));
+      expect(
+        p.doc.links[p.linkId]!.structureOrigin!.rackLabel,
+        isNull,
+        reason:
+            'a field bind never wrote one, so the revert must not '
+            'clear a panel position from a null it never captured',
+      );
+    });
+
+    test('the two ends land independently, and both stick', () {
+      // The pair the whole ruling is for: a speaker run with the driver
+      // at one end and the amplifier at the other, as ONE cable.
+      final p = _project();
+      _ready(
+        buildBindEndpointCommand(
+          doc: p.doc,
+          linkId: p.linkId,
+          port: _pin('rear.1', '01'),
+          rackLabel: null,
+          usedRackLabels: const {},
+          now: _later,
+          actor: 'tech',
+          end: LinkEnd.field,
+        ),
+      ).apply(p.doc);
+      _ready(
+        _build(p.doc, p.linkId, key: 'rear.2', designator: '02'),
+      ).apply(p.doc);
+
+      final conductor = p.doc.links[p.linkId]!.conductors.first;
+      expect((conductor.from as PortEndpoint).portId, _pid('rear.1'));
+      expect((conductor.to as PortEndpoint).portId, _pid('rear.2'));
+      expect(
+        p.doc.links[p.linkId]!.structureOrigin!.rackLabel,
+        '1A-PP-101',
+        reason: 'the rack bind still allocates its label',
+      );
+    });
+
+    test('an already-landed FIELD end refuses, and says which end', () {
+      final p = _project();
+      BindEndpointResult attempt() => buildBindEndpointCommand(
+        doc: p.doc,
+        linkId: p.linkId,
+        port: _pin('rear.1', '01'),
+        rackLabel: null,
+        usedRackLabels: const {},
+        now: _later,
+        actor: 'tech',
+        end: LinkEnd.field,
+      );
+      _ready(attempt()).apply(p.doc);
+
+      final refusal = _refusal(attempt());
+      expect(refusal, contains('field end'));
+      expect(
+        refusal,
+        isNot(contains('rack end')),
+        reason:
+            'a refusal naming the wrong end sends a person to look at '
+            'the wrong half of the cable',
+      );
+    });
+
+    test('a rack bind still refuses in the rack end`s own words', () {
+      final p = _project();
+      _ready(_build(p.doc, p.linkId)).apply(p.doc);
+      expect(_refusal(_build(p.doc, p.linkId)), contains('rack end'));
+    });
+
+    test("a speaker's binding posts are reachable to a FIELD bind and "
+        'invisible to a rack one', () {
+      // DR-040 §11.39.2 clause 4 is a rule about the two SIDES OF A PANEL
+      // IN A RACK: one side takes pulled cable, the other takes patch
+      // cords, and the drop belongs on the first. An in-wall speaker has
+      // no such geometry — its binding posts are simply its terminals —
+      // so inheriting the split offers it ZERO positions and refuses
+      // every direct run, which is the defect `#713` was filed for.
+      final p = _project();
+      _addSpeaker(p.doc);
+
+      expect(
+        freePanelPositions(p.doc, panelDeviceId: _speaker),
+        isEmpty,
+        reason:
+            'clause 4 still holds for the rack end, and a speaker has '
+            'no rear',
+      );
+      final field = freePanelPositions(
+        p.doc,
+        panelDeviceId: _speaker,
+        end: LinkEnd.field,
+      );
+      expect(field, hasLength(1));
+      expect(field.single.port.deviceId, _speaker);
+    });
+
+    test('and clause 4 is untouched for the rack end of a real panel', () {
+      final p = _project();
+      final rear = freePanelPositions(p.doc, panelDeviceId: _panel);
+      expect(rear, hasLength(3), reason: "the panel's three punchdowns");
     });
   });
 

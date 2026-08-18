@@ -73,6 +73,28 @@ import 'package:rackmate_core/src/units/ids.dart';
 
 /// Lands one home run's far end on one panel pin, and records the rack
 /// label that landing makes renderable.
+/// Which end of a home run a gesture is landing (`#714`).
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// TWO ENDS, ONE COMMAND, AND ONE OF THEM WAS UNREACHABLE FOR A YEAR
+/// ═════════════════════════════════════════════════════════════════════
+/// This command bound the RACK end and nothing else, so a run could land
+/// on a patch panel and never on the thing at the other end of it. In
+/// structured cabling that is right: a Cat6 drop ends at a wall plate and
+/// whatever plugs in there is a separate patch cord. In AV it is wrong
+/// often enough to matter, because a speaker run is ONE continuous
+/// conductor from the amplifier to the driver, and a product that could
+/// not say so made the user draw a second cable that does not exist.
+///
+/// Settled by the user on 2026-08-18 (DR-068): either end may bind.
+enum LinkEnd {
+  /// `Conductor.from` — the wall plate, the speaker, the camera.
+  field,
+
+  /// `Conductor.to` — the panel, the switch, the amplifier in the rack.
+  rack,
+}
+
 final class BindEndpointCommand extends Command<RackDocument> {
   BindEndpointCommand({
     required this.linkId,
@@ -80,9 +102,28 @@ final class BindEndpointCommand extends Command<RackDocument> {
     required this.rackLabel,
     required this.now,
     required this.actor,
-  });
+    this.end = LinkEnd.rack,
+  }) : assert(
+         end == LinkEnd.rack || rackLabel == null,
+         'A field bind may not write a rack label: the two ends carry two '
+         'labels and landing a speaker does not rename the panel position.',
+       );
 
   final Uuid linkId;
+
+  /// Which end is landing. DEFAULTS TO `rack`, so every call site written
+  /// before DR-068 keeps its meaning without being touched.
+  ///
+  /// THE LABEL IS NOT SYMMETRIC EVEN THOUGH THE ENDPOINT IS, and that is
+  /// a fact about the two labels rather than an omission. A rack label is
+  /// DERIVED FROM WHERE THE RUN LANDED — `{FLOOR}`, `{PORT}` — so it is
+  /// unknowable until the bind happens and is written by it. A field
+  /// label names the wall plate, was typed when the drop was created, and
+  /// is unique project-wide under CR-113: landing a speaker on the run
+  /// records where the copper ends and says nothing about what the plate
+  /// is called. Rewriting it here would be the fusion G4 forbids, and
+  /// would collide the moment two speakers landed in one room.
+  final LinkEnd end;
 
   /// The pin, flat, for `PortMaterialisation`'s stated reason: a command
   /// replayed against a moved document may not re-derive an allocation.
@@ -142,21 +183,27 @@ final class BindEndpointCommand extends Command<RackDocument> {
     final link = doc.links[linkId];
     if (link == null) return;
     final conductor = link.conductors.first;
-    _previousEnd = conductor.to;
+    final landed = PortEndpoint(port.portId);
+    // THE OTHER END IS UNTOUCHED, WHICHEVER ONE THIS IS. Rebuilding both
+    // would let a caller that passed the wrong pin move the drop out of
+    // its own room, which is the failure the one-sided version of this
+    // comment was guarding against when only the rack end could land.
+    _previousEnd = switch (end) {
+      LinkEnd.field => conductor.from,
+      LinkEnd.rack => conductor.to,
+    };
     _previousMeta = link.meta;
-    // FIELD END UNTOUCHED. `Conductor.from` is the wall plate and this
-    // gesture is about the other end; rebuilding both would let a caller
-    // that passed the wrong pin move the drop out of its own room.
     link.conductors[0] = Conductor(
-      from: conductor.from,
-      to: PortEndpoint(port.portId),
+      from: end == LinkEnd.field ? landed : conductor.from,
+      to: end == LinkEnd.rack ? landed : conductor.to,
       role: conductor.role,
       pairNumber: conductor.pairNumber,
       colorCode: conductor.colorCode,
     );
 
+    // RACK ONLY. See [end] for why the two labels are not symmetric.
     final origin = link.structureOrigin;
-    if (origin != null) {
+    if (origin != null && end == LinkEnd.rack) {
       _previousRackLabel = origin.rackLabel;
       origin.rackLabel = rackLabel;
     }
@@ -171,18 +218,23 @@ final class BindEndpointCommand extends Command<RackDocument> {
   void revert(RackDocument doc) {
     final link = doc.links[linkId];
     if (link != null) {
-      if (_previousEnd case final end?) {
+      if (_previousEnd case final was?) {
         final conductor = link.conductors.first;
         link.conductors[0] = Conductor(
-          from: conductor.from,
-          to: end,
+          from: end == LinkEnd.field ? was : conductor.from,
+          to: end == LinkEnd.rack ? was : conductor.to,
           role: conductor.role,
           pairNumber: conductor.pairNumber,
           colorCode: conductor.colorCode,
         );
       }
-      if (link.structureOrigin case final origin?) {
-        origin.rackLabel = _previousRackLabel;
+      // Restored on a rack bind only, because only a rack bind wrote it:
+      // a field bind left `_previousRackLabel` null and clearing the
+      // label from that null would erase a panel position nobody touched.
+      if (end == LinkEnd.rack) {
+        if (link.structureOrigin case final origin?) {
+          origin.rackLabel = _previousRackLabel;
+        }
       }
       if (_previousMeta case final meta?) link.meta = meta;
     }
@@ -201,12 +253,21 @@ final class BindEndpointCommand extends Command<RackDocument> {
 /// The positions on [panelDeviceId] a drop may land on, in the template's
 /// declared order, lowest first.
 ///
-/// REAR ONLY, WHICH IS DR-040 §11.39.2 CLAUSE 4 AS A FILTER. `Face.rear`
-/// is `PortBuilder.p`'s default and is what the N03 archetype's twenty-four
-/// punchdowns carry; its front twenty-four are `Face.front` and are where a
-/// patch cord goes, not a pulled cable. A walk that offered both would hand
-/// the first drop `front.1` and put the whole rough-in on the wrong side of
-/// the panel.
+/// REAR ONLY ON A RACK PANEL, WHICH IS DR-040 §11.39.2 CLAUSE 4 AS A
+/// FILTER. `Face.rear` is `PortBuilder.p`'s default and is what the N03
+/// archetype's twenty-four punchdowns carry; its front twenty-four are
+/// `Face.front` and are where a patch cord goes, not a pulled cable. A
+/// walk that offered both would hand the first drop `front.1` and put the
+/// whole rough-in on the wrong side of the panel.
+///
+/// AND NOT ON A FIELD DEVICE (`#714`). Clause 4 is a rule about the two
+/// SIDES OF A PANEL IN A RACK: one side takes pulled cable, the other
+/// takes patch cords, and the drop belongs on the first. An in-wall
+/// speaker has no such geometry — its binding posts are simply its
+/// terminals — and inheriting a rack panel's front/rear split would
+/// offer a speaker zero positions and refuse every direct run. [end]
+/// selects which rule applies, and it is the caller's statement about
+/// what it is landing on rather than a guess made from the template.
 ///
 /// DECLARED ORDER, NOT MAP ORDER. `TemplateBody.ports` is the declared
 /// sequence (the catalog port-order gate is what keeps it so), and it is
@@ -220,6 +281,7 @@ List<PanelLanding> freePanelPositions(
   RackDocument doc, {
   required Uuid panelDeviceId,
   Set<Uuid> alsoClaimed = const <Uuid>{},
+  LinkEnd end = LinkEnd.rack,
 }) {
   final device = doc.devices[panelDeviceId];
   if (device == null) return const [];
@@ -228,7 +290,7 @@ List<PanelLanding> freePanelPositions(
 
   final free = <PanelLanding>[];
   for (final def in body.ports) {
-    if (def.face != Face.rear) continue;
+    if (end == LinkEnd.rack && def.face != Face.rear) continue;
     final target = resolveConnectTarget(
       doc,
       deviceId: panelDeviceId,
@@ -336,6 +398,7 @@ BindEndpointResult buildBindEndpointCommand({
   required Set<String> usedRackLabels,
   required DateTime now,
   required String actor,
+  LinkEnd end = LinkEnd.rack,
 }) {
   final link = doc.links[linkId];
   if (link == null) {
@@ -346,9 +409,9 @@ BindEndpointResult buildBindEndpointCommand({
     // `StructureOrigin`, and a link without one is an ordinary connection
     // between two devices; binding it here would be a connect wearing the
     // wrong gesture's undo label.
-    return const BindEndpointRefused(
-      'That cable is not a home run, so it has no rack end to land. Use '
-      'the schematic to connect two devices.',
+    return BindEndpointRefused(
+      'That cable is not a home run, so it has no ${_endWord(end)} end to '
+      'land. Use the schematic to connect two devices.',
     );
   }
   if (link.conductors.isEmpty) {
@@ -357,15 +420,19 @@ BindEndpointResult buildBindEndpointCommand({
     );
   }
 
-  final existing = link.conductors.first.to;
+  final conductor = link.conductors.first;
+  final existing = switch (end) {
+    LinkEnd.field => conductor.from,
+    LinkEnd.rack => conductor.to,
+  };
   if (existing is PortEndpoint) {
     // NOT AN UNBIND, AND DR-040 §11.39.6 says so out loud: moving a drop
     // off a jack it is already punched into is its own gesture and is not
     // ruled. Silently re-landing it would rewrite a termination somebody
     // recorded, and the rack label with it.
-    return const BindEndpointRefused(
-      'That drop is already landed. Moving a drop to a different port is '
-      'not something this can do yet.',
+    return BindEndpointRefused(
+      "That drop's ${_endWord(end)} end is already landed. Moving a drop "
+      'to a different port is not something this can do yet.',
     );
   }
 
@@ -380,7 +447,10 @@ BindEndpointResult buildBindEndpointCommand({
     );
   }
 
-  final trimmed = rackLabel?.trim();
+  // THE LABEL GATE IS RACK-ONLY, like the write it guards. A field bind
+  // passes no label (the constructor asserts it), so there is nothing to
+  // normalise and nothing that could collide.
+  final trimmed = end == LinkEnd.rack ? rackLabel?.trim() : null;
   final normalised = (trimmed?.isEmpty ?? true) ? null : trimmed;
   if (normalised != null && usedRackLabels.contains(normalised)) {
     // CR-113, project-wide. Two cables sharing a rack label is two rows
@@ -398,6 +468,17 @@ BindEndpointResult buildBindEndpointCommand({
       rackLabel: normalised,
       now: now,
       actor: actor,
+      end: end,
     ),
   );
 }
+
+/// The word a refusal uses for [end].
+///
+/// SPELLED ONCE. Three refusals name the end, and three copies of
+/// "field"/"rack" is how one of them comes to say "rear" after somebody
+/// reworded the others.
+String _endWord(LinkEnd end) => switch (end) {
+  LinkEnd.field => 'field',
+  LinkEnd.rack => 'rack',
+};
