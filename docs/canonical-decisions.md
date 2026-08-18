@@ -11325,6 +11325,67 @@ this reasoning, after M3-H had put it beside `keystone` *"on an inference nobody
 cell count actually turns on is **whose hardware is this**, and for two of the nine terminations the
 word does not carry it.
 
+
+### 11.69 DR-070 · A run may come out of no box, and "there is none" is not "nobody has said"
+
+**Settled by the user on 2026-08-18** (`#713`, `#718`), from the same session as DR-068 and DR-069
+and for the same reason: *"a ceiling speaker wouldn't even get a low voltage box let alone
+keystones"*. **Amends AC-018 and DR-007's shared assumption that every home run has an `Outlet`.**
+
+**11.69.1 A HOME RUN NAMES A LOCATION ALWAYS AND AN OUTLET ONLY WHEN THERE IS A BOX.**
+`StructureOrigin.outletId` becomes nullable.
+
+The Outlets page listed a plate for a speaker that has none, which is the class of quiet fiction
+that gets believed on site. Every other reading of the field was already correct by construction:
+`computePlateFill`, `plate_arrange` and the CSV importer all filter on `origin.outletId != outlet.id`,
+which excludes a boxless run without being told to.
+
+**11.69.2 THE ABSENCE IS NOT THE STATEMENT. A SECOND FIELD IS.** `StructureOrigin.boxless` sits
+beside the nullable id.
+
+G4 gives an absent value exactly one meaning and it is **unknown**. A ceiling speaker having no box
+is something a person **stated**, and a drop nobody has assigned yet is a gap in what is known.
+Folding both into a null makes them indistinguishable in the file and uncountable on the page, which
+is the fusion DR-046 spent a ruling undoing when one field was serving two cable ends. Two facts,
+two fields.
+
+**IT IS NOT DERIVED FROM THE LANDING.** A speaker run is boxless the day it is pulled, months before
+anyone terminates it, so a rule that waited for DR-068's field-end bind would leave the Outlets page
+claiming a plate for it in the meantime. That is the fiction this removes, not a smaller version of
+it.
+
+**11.69.3 CR-117 HOLDS AND `kSchemaVersion` DOES NOT MOVE.** `outletId` was required until now, so
+every document ever written carries one: reading yields it and writing writes it back. `boxless` is
+written **only when true**, because false is what every older document means and emitting it would
+rewrite every home run in the corpus on first save. This is the same permission DR-008 §11.8.2 took
+for `linkClassLocked`, and it rests on the same property, so it is gated the same way: by a wire
+test whose load-bearing cases are the **negative** ones.
+
+**11.69.4 THE GESTURE IS `@nobox`, A FLAG.** The first valueless modifier in the drop-line DSL.
+Every other one answers *which one*; this answers *there is none*, and `@nobox=true` invites
+`@nobox=false`, which is the default and states nothing. It is deliberately **not** `@outlet=none`,
+which would put "there is no box" into the field that names the box, and a person naming an outlet
+`none` is doing something legal and unrelated. With `@outlet=` it **refuses** rather than ranking
+one above the other, because the line states two incompatible things and the person meant one.
+
+**11.69.5 THE OUTLET COLUMN HAS THREE STATES.** A designation, `— NO BOX —`, or the dash.
+`kNoBoxCell` is a distinct token for the reason `kOpenEndCell` is: an estimator counting plates off
+that column cannot otherwise tell an unassigned drop from one that will never have a plate.
+
+**11.69.6 WITHOUT A BOX THE FIELD END MUST NAME A ROOM, AND A RUN THAT CANNOT IS REFUSED.**
+`buildScheduleEntry` resolves a run's room as `from.locationId ?? outlet?.locationId ??
+to.locationId`, and its own comment calls the last term a trap: *"a run's room is where its drop is,
+not where its rack is ... AC-025's 'the order the tech walks the house' means nothing if every row
+groups under the equipment room."* With a box the outlet answers. Without one the field end is the
+only thing that can, so a boxless run carrying no location would sort itself silently onto the
+wrong page of the sheet an installer walks the house with. Refused at creation rather than papered
+over at render time.
+
+**11.69.7 WHAT IS STILL UNKNOWN WITHOUT A BOX.** `wall`, `mountSurface` and `mountHeightAff` are
+copied from the outlet when there is one and left **unknown** when there is not. The outlet is the
+authority on where a run sits; substituting a height for a run with no outlet would put a number on
+a schedule nobody measured.
+
 ---
 
 ## 12. Superseded rulings
@@ -11834,6 +11895,22 @@ all.
 computable"*. The member was added and the table is computable; what the sentence could not
 anticipate is that the member would turn out to name two different objects. That is §11.68.4's
 finding, and it is the third time the enum has been asked whose hardware a termination belongs to.
+
+
+---
+
+### 12.24 Premise changed by DR-070 (`outletId` is no longer non-nullable)
+
+**A premise rather than a judgement, listed because §12's preamble makes an unlisted sentence read
+as still binding**, and because the sentence is load-bearing in the reasoning of a ruling that
+stands.
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-047 §11.46.1** | Ruling the plate a property of neither the outlet nor the drop, it priced the drop reading as buying nothing *"(`outletId` is non-nullable)"* and costing a de-duplication rule. | **Premise changed, conclusion UNAFFECTED and reaffirmed.** `outletId` is nullable under §11.69.1, so the parenthesis is no longer true. The conclusion never rested on it: the plate is a property of the **gangs**, `coverPlateGangs` returns `gangs.length`, and a boxless run has no outlet to carry a plate either way. The de-duplication cost the ruling named is likewise untouched. Recorded so a later reader does not take a false parenthesis for a live argument, or reopen a settled question on the strength of it. |
+
+**Nothing else in DR-047 moves.** §11.46.2's three gang states and §11.46.5's derived-never-stored
+rule are untouched.
 
 ---
 
