@@ -555,6 +555,182 @@ void main() {
     });
   });
 
+  group('unlanding (§11.73.1)', () {
+    UnlandEndpointResult unland(
+      RackDocument doc,
+      Uuid linkId, {
+      LinkEnd end = LinkEnd.rack,
+    }) => buildUnlandEndpointCommand(
+      doc: doc,
+      linkId: linkId,
+      now: _later,
+      actor: 'tester',
+      end: end,
+    );
+
+    UnlandEndpointCommand ready(UnlandEndpointResult r) =>
+        (r as UnlandEndpointReady).command;
+
+    test('returns the end to an OpenEndpoint', () {
+      final p = _project();
+      _land(p.doc, p.linkId);
+      ready(unland(p.doc, p.linkId)).apply(p.doc);
+
+      final end = p.doc.links[p.linkId]!.conductors.first.to;
+      expect(end, isA<OpenEndpoint>());
+      expect((end as OpenEndpoint).description, kUnlandedEndDescription);
+    });
+
+    test('and undo puts it back on the exact pin', () {
+      final p = _project();
+      final was = _land(p.doc, p.linkId);
+      final command = ready(unland(p.doc, p.linkId));
+      command.apply(p.doc);
+      command.revert(p.doc);
+      expect(_rackPin(p.doc, p.linkId), was.portId);
+    });
+
+    test('the pin STAYS on the panel (§11.73.4)', () {
+      final p = _project();
+      final was = _land(p.doc, p.linkId);
+      // Materialised by the bind, so this is the case where the port
+      // exists and is not this command's to remove.
+      expect(p.doc.ports, contains(was.portId));
+
+      ready(unland(p.doc, p.linkId)).apply(p.doc);
+      expect(
+        p.doc.ports,
+        contains(was.portId),
+        reason:
+            'the jack was on the panel before this cable arrived; a '
+            'gesture that removed it would take a position somebody '
+            "else's cable may be about to use",
+      );
+      expect(portConductorCount(p.doc, was.portId), 0);
+    });
+
+    test('the RACK TERMINATION survives (§11.73.3)', () {
+      // The clause with the sharpest reason: a run can be punched onto a
+      // block this project does not model, so clearing the termination
+      // would assert the crew undid work they may never have touched.
+      final p = _project();
+      _land(p.doc, p.linkId);
+      SetEntityPropertyCommand<Link, TerminationType?>(
+        id: p.linkId,
+        field: StructureOriginField.terminationRack,
+        from: null,
+        to: TerminationType.punchdown,
+        now: _now,
+        actor: 'seed',
+      ).apply(p.doc);
+
+      ready(unland(p.doc, p.linkId)).apply(p.doc);
+      expect(
+        p.doc.links[p.linkId]!.structureOrigin!.terminationRack,
+        TerminationType.punchdown,
+        reason: 'a person who really did pull it out clears RACK TERM',
+      );
+    });
+
+    test('an ALLOCATED rack label is cleared with the position', () {
+      final p = _project();
+      _land(p.doc, p.linkId);
+      expect(p.doc.links[p.linkId]!.structureOrigin!.rackLabel, 'PP1-01');
+
+      final result = unland(p.doc, p.linkId);
+      expect((result as UnlandEndpointReady).keptRackLabel, isNull);
+      ready(result).apply(p.doc);
+      expect(
+        p.doc.links[p.linkId]!.structureOrigin!.rackLabel,
+        isNull,
+        reason:
+            'a label naming a position the cable has left is wrong '
+            'whether it went to another hole or to no hole',
+      );
+    });
+
+    test('and undo brings that label back', () {
+      final p = _project();
+      _land(p.doc, p.linkId);
+      final command = ready(unland(p.doc, p.linkId));
+      command.apply(p.doc);
+      command.revert(p.doc);
+      expect(p.doc.links[p.linkId]!.structureOrigin!.rackLabel, 'PP1-01');
+    });
+
+    test('a HAND-SET rack label survives, and the result says so', () {
+      final p = _project();
+      _land(p.doc, p.linkId);
+      SetRackLabelCommand(
+        linkId: p.linkId,
+        rackLabel: 'BY-HAND-7',
+        now: _now,
+        actor: 'seed',
+      ).apply(p.doc);
+
+      final result = unland(p.doc, p.linkId);
+      expect((result as UnlandEndpointReady).keptRackLabel, 'BY-HAND-7');
+      ready(result).apply(p.doc);
+      final origin = p.doc.links[p.linkId]!.structureOrigin!;
+      expect(origin.rackLabel, 'BY-HAND-7');
+      expect(origin.rackLabelLocked, isTrue);
+    });
+
+    test('the cable itself survives: it is not a delete', () {
+      final p = _project();
+      _land(p.doc, p.linkId);
+      ready(unland(p.doc, p.linkId)).apply(p.doc);
+      final link = p.doc.links[p.linkId]!;
+      expect(link.designator, 'W001');
+      expect(link.structureOrigin!.fieldLabel, 'GR-DATA-1');
+      expect(link.conductors.first.from, isA<PlaceEndpoint>());
+    });
+
+    test('it counts as unlanded again on the sheet (DR-072)', () {
+      // The sheet's count is what tells a person they forgot one, so an
+      // unland has to put the run back into it. Asserting the artifact
+      // rather than the endpoint type.
+      final p = _project();
+      _land(p.doc, p.linkId);
+      expect(unlandedHomeRunIds(p.doc), isEmpty);
+      ready(unland(p.doc, p.linkId)).apply(p.doc);
+      expect(unlandedHomeRunIds(p.doc), [p.linkId]);
+    });
+
+    test('it refuses an end that is not landed', () {
+      final p = _project();
+      expect(
+        (unland(p.doc, p.linkId) as UnlandEndpointRefused).reason,
+        "That drop's rack end is not landed, so there is nothing to take "
+        'off.',
+      );
+    });
+
+    test('it refuses a cable that is not a home run', () {
+      final p = _project();
+      p.doc.links[const Uuid('patch-2')] = Link(
+        id: const Uuid('patch-2'),
+        designator: 'W900',
+        media: const MediaTypeId('media.cat6'),
+        order: const FracIndex('a5'),
+        meta: _meta(),
+      );
+      expect(
+        (unland(p.doc, const Uuid('patch-2')) as UnlandEndpointRefused).reason,
+        contains('is not a home run'),
+      );
+    });
+
+    test('revert before apply names itself', () {
+      final p = _project();
+      _land(p.doc, p.linkId);
+      expect(
+        () => ready(unland(p.doc, p.linkId)).revert(p.doc),
+        throwsA(isA<StateError>()),
+      );
+    });
+  });
+
   test('revert before apply names itself', () {
     final p = _project();
     _land(p.doc, p.linkId);

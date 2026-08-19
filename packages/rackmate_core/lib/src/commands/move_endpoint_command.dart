@@ -352,6 +352,215 @@ MoveEndpointResult buildMoveEndpointCommand({
   );
 }
 
+/// What an unlanded end says on the schedule.
+///
+/// THE SAME SENTENCE `AddHomeRunCommand` WRITES, and that is a decision
+/// rather than a copy-paste. `_endOf` prints an `OpenEndpoint`'s
+/// description straight into the schedule's TO column, so a second wording
+/// would put two sentences on one sheet for one physical state: a cable
+/// end nobody has punched down. The history of how it got there is in the
+/// undo stack and in the link's own `updatedBy`, which is where history
+/// belongs; the column says what an installer will find at the panel.
+const String kUnlandedEndDescription = 'not yet landed';
+
+/// Takes one end of a home run back off its jack (DR-074 §11.73.1).
+///
+/// Rarer than a move and real: the panel is being replaced, or the drop
+/// turned out to be spare after all.
+///
+/// Build it through [buildUnlandEndpointCommand].
+final class UnlandEndpointCommand extends Command<RackDocument> {
+  UnlandEndpointCommand({
+    required this.linkId,
+    required this.clearsRackLabel,
+    required this.now,
+    required this.actor,
+    this.end = LinkEnd.rack,
+  }) : assert(
+         !clearsRackLabel || end == LinkEnd.rack,
+         'Only a rack end carries a rack label, so only a rack unland can '
+         'clear one.',
+       );
+
+  final Uuid linkId;
+  final LinkEnd end;
+
+  /// Whether this unland clears the rack label.
+  ///
+  /// TRUE FOR AN ALLOCATED LABEL, FALSE FOR A HAND-SET ONE, which is
+  /// §11.73.2's rule extended: a label naming a position the cable has
+  /// left is wrong whether the cable went to another hole or to no hole,
+  /// and a person's own identifier survives either way. The ruling records
+  /// that this half was NOT put to the user as its own question, so it is
+  /// written here as the reasoning it is rather than as settled law.
+  final bool clearsRackLabel;
+
+  final DateTime now;
+  final String actor;
+
+  Endpoint? _previousEnd;
+  String? _previousRackLabel;
+  EntityMeta? _previousMeta;
+  bool _applied = false;
+
+  @override
+  LabelKey get label => LabelKey.unlandEndpoint;
+
+  @override
+  EpochMask get touches => EpochMask.wires | EpochMask.meta;
+
+  @override
+  Iterable<Uuid> get affects => [linkId];
+
+  @override
+  void apply(RackDocument doc) {
+    final link = doc.links[linkId];
+    if (link == null) return;
+    if (link.conductors.isEmpty) return;
+    final conductor = link.conductors.first;
+    _previousEnd = switch (end) {
+      LinkEnd.field => conductor.from,
+      LinkEnd.rack => conductor.to,
+    };
+    _previousMeta = link.meta;
+    _applied = true;
+
+    const loose = OpenEndpoint(kUnlandedEndDescription);
+    link.conductors[0] = Conductor(
+      from: end == LinkEnd.field ? loose : conductor.from,
+      to: end == LinkEnd.rack ? loose : conductor.to,
+      role: conductor.role,
+      pairNumber: conductor.pairNumber,
+      colorCode: conductor.colorCode,
+    );
+
+    // THE PIN STAYS, AND SO DOES THE TERMINATION. §11.73.4 for the first:
+    // the jack was on the panel before this cable arrived and it is not
+    // this gesture's to delete. §11.73.3 for the second: clearing
+    // `terminationRack` would assert the crew undid work they may never
+    // have touched, and a person who really did pull the cable back out
+    // clears it in the `RACK TERM` column, which is one cell and already
+    // exists.
+    if (clearsRackLabel) {
+      if (link.structureOrigin case final origin?) {
+        _previousRackLabel = origin.rackLabel;
+        origin.rackLabel = null;
+      }
+    }
+    link.meta = EntityMeta(
+      createdAt: link.meta.createdAt,
+      updatedAt: now,
+      updatedBy: actor,
+    );
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    if (!_applied) {
+      throw StateError('UnlandEndpointCommand.revert called before apply().');
+    }
+    final link = doc.links[linkId];
+    if (link != null && link.conductors.isNotEmpty) {
+      if (_previousEnd case final was?) {
+        final conductor = link.conductors.first;
+        link.conductors[0] = Conductor(
+          from: end == LinkEnd.field ? was : conductor.from,
+          to: end == LinkEnd.rack ? was : conductor.to,
+          role: conductor.role,
+          pairNumber: conductor.pairNumber,
+          colorCode: conductor.colorCode,
+        );
+      }
+      if (clearsRackLabel) {
+        if (link.structureOrigin case final origin?) {
+          origin.rackLabel = _previousRackLabel;
+        }
+      }
+      if (_previousMeta case final meta?) link.meta = meta;
+    }
+    _previousEnd = null;
+    _previousRackLabel = null;
+    _previousMeta = null;
+    _applied = false;
+  }
+}
+
+/// The outcome of [buildUnlandEndpointCommand].
+sealed class UnlandEndpointResult {
+  const UnlandEndpointResult();
+}
+
+final class UnlandEndpointReady extends UnlandEndpointResult {
+  const UnlandEndpointReady(this.command, {this.keptRackLabel});
+
+  final UnlandEndpointCommand command;
+
+  /// The hand-set label this unland is LEAVING ALONE, or null when the
+  /// label was cleared with the position. The surface says so, for
+  /// [MoveEndpointReady.keptRackLabel]'s reason.
+  final String? keptRackLabel;
+}
+
+final class UnlandEndpointRefused extends UnlandEndpointResult {
+  const UnlandEndpointRefused(this.reason);
+  final String reason;
+}
+
+/// Builds an unland, or refuses with a sentence.
+///
+/// NO CONFIRMATION IS ASKED, and §11.73.3 refused one out loud: AC-058/D5
+/// does not list this as a data-loss edge, and a confirm people learn to
+/// click through is worse than a default they can see and correct. Undo is
+/// one keystroke and takes the pin, the label and the stamp together.
+UnlandEndpointResult buildUnlandEndpointCommand({
+  required RackDocument doc,
+  required Uuid linkId,
+  required DateTime now,
+  required String actor,
+  LinkEnd end = LinkEnd.rack,
+}) {
+  final link = doc.links[linkId];
+  if (link == null) {
+    return const UnlandEndpointRefused('That cable is not in this project.');
+  }
+  final origin = link.structureOrigin;
+  if (origin == null) {
+    return UnlandEndpointRefused(
+      'That cable is not a home run, so it has no ${_endWord(end)} end to '
+      'unland. Delete the cable instead.',
+    );
+  }
+  if (link.conductors.isEmpty) {
+    return const UnlandEndpointRefused(
+      'That cable has no conductors, so there is nothing to unland.',
+    );
+  }
+
+  final existing = switch (end) {
+    LinkEnd.field => link.conductors.first.from,
+    LinkEnd.rack => link.conductors.first.to,
+  };
+  if (existing is! PortEndpoint) {
+    return UnlandEndpointRefused(
+      "That drop's ${_endWord(end)} end is not landed, so there is nothing "
+      'to take off.',
+    );
+  }
+
+  final locked = origin.rackLabelLocked;
+  final clears = end == LinkEnd.rack && !locked && origin.rackLabel != null;
+  return UnlandEndpointReady(
+    UnlandEndpointCommand(
+      linkId: linkId,
+      clearsRackLabel: clears,
+      now: now,
+      actor: actor,
+      end: end,
+    ),
+    keptRackLabel: end == LinkEnd.rack && locked ? origin.rackLabel : null,
+  );
+}
+
 /// The word a refusal uses for [end]. Spelled once, on
 /// `bind_endpoint_command.dart`'s rule: three refusals name the end, and
 /// three copies is how one of them comes to say "rear".
