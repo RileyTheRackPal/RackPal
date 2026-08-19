@@ -92,6 +92,31 @@ final class PlaceableTemplate {
   bool get isProjectAuthored => provenance == TemplateProvenance.project;
 }
 
+/// The newest snapshot of [templateId] in [doc], or null when no version
+/// of it is there.
+///
+/// **WHAT "PLACE THIS TEMPLATE" MEANS** (DR-077 §11.76.3). A gesture
+/// carries an id and not a version, because a person picking a row means
+/// the template as it stands. Devices already placed are unaffected: each
+/// carries its own version in its `TemplateRef`, which is the guarantee
+/// CR-050 exists to make.
+///
+/// Behaviour is identical to the `"$id@1"` this replaced wherever only v1
+/// exists, which is every seeded id in every project, so this is a
+/// widening rather than a change.
+///
+/// A LINEAR SCAN, not a `latestTemplateVersions` map, because the caller
+/// wants one id: building a map of every id to answer about one is the
+/// reduction done backwards. Placement is a gesture, never a frame.
+TemplateSnapshot? resolveLatestTemplate(RackDocument doc, String templateId) {
+  TemplateSnapshot? best;
+  for (final snapshot in doc.templates.values) {
+    if (snapshot.templateId.v != templateId) continue;
+    if (best == null || snapshot.version > best.version) best = snapshot;
+  }
+  return best;
+}
+
 /// Every template [doc] can place, newest version of each id, in a total
 /// and deterministic order.
 ///

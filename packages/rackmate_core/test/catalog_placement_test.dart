@@ -464,4 +464,88 @@ void main() {
       expect(placement.ruIndex, 2); // U1 occupied, U2 is the lowest free.
     });
   });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // DR-077 §11.76.3: placement resolves the NEWEST version of an id.
+  // ═════════════════════════════════════════════════════════════════════
+  // The key was pinned to `"$id@1"`, which was invisible for as long as
+  // nothing could save a second version. `#735` makes a second Save fork
+  // one, at which point a pinned read places a stale body.
+  group('buildPlaceFromCatalogCommand — the version it resolves', () {
+    test('places the newest version when a document holds two', () {
+      final rack = _rack();
+      final doc = _docWithCatalog(rack, {
+        'tpl.amp': _rackTemplate(frontU: 1, model: 'amp v1'),
+      });
+      doc.templates['tpl.amp@2'] = TemplateSnapshot(
+        templateId: const TemplateId('tpl.amp'),
+        version: 2,
+        contentHash: 'unhashed:tpl.amp@2',
+        body: _rackTemplate(frontU: 2, model: 'amp v2'),
+        capturedAt: _now,
+      );
+
+      final result = buildPlaceFromCatalogCommand(
+        doc: doc,
+        catalogId: 'tpl.amp',
+        targetRack: rack,
+        now: _now,
+        actor: 'tester',
+      );
+
+      final ready = result as CatalogPlacementReady;
+      expect(ready.command.templateRef.version, 2);
+      expect(ready.command.name, 'amp v2');
+      // The 2U height of v2 is what the placement was computed against,
+      // which is the half a stale read would have got wrong silently.
+      expect(ready.command.templateRef.contentHash, 'unhashed:tpl.amp@2');
+    });
+
+    test('a device placed from v1 keeps resolving v1 after v2 exists', () {
+      final rack = _rack();
+      final doc = _docWithCatalog(rack, {
+        'tpl.amp': _rackTemplate(frontU: 1, model: 'amp v1'),
+      });
+      final first =
+          (buildPlaceFromCatalogCommand(
+                    doc: doc,
+                    catalogId: 'tpl.amp',
+                    targetRack: rack,
+                    now: _now,
+                    actor: 'tester',
+                  )
+                  as CatalogPlacementReady)
+              .command
+            ..apply(doc);
+
+      doc.templates['tpl.amp@2'] = TemplateSnapshot(
+        templateId: const TemplateId('tpl.amp'),
+        version: 2,
+        contentHash: 'unhashed:tpl.amp@2',
+        body: _rackTemplate(frontU: 2, model: 'amp v2'),
+        capturedAt: _now,
+      );
+
+      expect(doc.devices[first.id]!.templateRef.version, 1);
+      expect(bodyFor(doc.devices[first.id]!, doc.templates)!.model, 'amp v1');
+    });
+
+    test('an id no version of which is present still refuses by name', () {
+      final rack = _rack();
+      final doc = _docWithCatalog(rack, {
+        'V1': _rackTemplate(frontU: 1),
+      });
+      final result = buildPlaceFromCatalogCommand(
+        doc: doc,
+        catalogId: 'NOPE',
+        targetRack: rack,
+        now: _now,
+        actor: 'tester',
+      );
+      expect(
+        (result as CatalogPlacementFailed).reason,
+        'Unknown catalog template "NOPE".',
+      );
+    });
+  });
 }
