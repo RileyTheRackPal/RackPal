@@ -11436,6 +11436,12 @@ because an unbind is a different gesture with different consequences for the rac
 termination, and §11.39.6 has never ruled it. Recorded here as an absence a person will meet, not as
 one this ruling closes.
 
+> **CLOSED BY DR-074 §11.73** (`#720`, built `#722`–`#725`). The clause above keeps its own words
+> because it is DR-071's record of what was true on 2026-08-18. What is no longer true: a landed row
+> now offers the same panel menu an unlanded one does, meaning MOVE, plus `NOT LANDED`; the cell
+> that used to draw as text draws a control again, and §11.70.3's reasoning is spent rather than
+> wrong. **Clearing the cell still refuses**, and now names the option that does the job.
+
 
 ### 11.71 DR-072 · The sheet counts the runs nobody landed, and only the end that is a job
 
@@ -11534,6 +11540,13 @@ question about a cable being created, and this one exists already.
 **11.72.7 WHAT IS STILL NOT POSSIBLE, unchanged from DR-071 §11.70.4.** There is no gesture to move
 a run OFF a pin it is landed on, here or in the table, because DR-040 §11.39.6 has never ruled the
 unbind. Dropping onto an occupied jack refuses in the command's own words.
+
+> **CLOSED BY DR-074 §11.73** (`#720`, built `#722`–`#725`). Dragging a landed run's pennant onto a
+> free jack now MOVES that end. The gesture is this one, with the hit test taught to answer WHICH
+> pennant: both flags of a run carry the same link id, so the reading that finishes a half-landed
+> run and the reading that moves a landed one run in opposite directions off the same press.
+> **Dropping onto an occupied jack still refuses**, in the move command's words rather than the
+> bind's.
 
 
 ### 11.73 DR-074 · A drop punched into the wrong port can be moved, and the label follows the hole

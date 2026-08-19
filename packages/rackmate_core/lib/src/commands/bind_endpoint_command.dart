@@ -428,13 +428,20 @@ BindEndpointResult buildBindEndpointCommand({
     LinkEnd.rack => conductor.to,
   };
   if (existing is PortEndpoint) {
-    // NOT AN UNBIND, AND DR-040 §11.39.6 says so out loud: moving a drop
-    // off a jack it is already punched into is its own gesture and is not
-    // ruled. Silently re-landing it would rewrite a termination somebody
-    // recorded, and the rack label with it.
+    // STILL NOT AN UNBIND, AND NOW THERE IS SOMEWHERE TO SEND THEM.
+    // DR-040 §11.39.6 left the gesture unruled and this sentence used to
+    // say so ("not something this can do yet"); DR-074 §11.73.1 rules it
+    // and `MoveEndpointCommand` performs it. Re-landing here would still
+    // be wrong: it would rewrite a termination somebody recorded and take
+    // the rack label with it, silently, under the wrong undo label.
+    //
+    // THE WORDS NAME AN ACT, NOT A CONTROL. This is `rackmate_core`; the
+    // menu item that performs the act lives in a surface, and a refusal
+    // that named it would be wrong the first time a second surface grew
+    // one.
     return BindEndpointRefused(
-      "That drop's ${_endWord(end)} end is already landed. Moving a drop "
-      'to a different port is not something this can do yet.',
+      "That drop's ${_endWord(end)} end is already landed. To put it in a "
+      'different port, move it rather than landing it again.',
     );
   }
 
