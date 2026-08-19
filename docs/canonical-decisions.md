@@ -11535,6 +11535,67 @@ question about a cable being created, and this one exists already.
 a run OFF a pin it is landed on, here or in the table, because DR-040 §11.39.6 has never ruled the
 unbind. Dropping onto an occupied jack refuses in the command's own words.
 
+
+### 11.73 DR-074 · A drop punched into the wrong port can be moved, and the label follows the hole
+
+**Settled by the user on 2026-08-18** (`#720`). **Closes the gap DR-040 §11.39.6 left open** and
+which DR-071 §11.70.4 and DR-073 §11.72.7 each recorded as still owed. §11.39.6's own words are the
+need: *"a deliberate 'this was punched into the wrong port' gesture is not specified here."*
+
+**11.73.1 TWO COMMANDS, BECAUSE THEY ARE TWO ACTS WITH TWO CONSEQUENCES.**
+
+* **MOVE** re-lands an end on a different jack. **One command and one undo entry**, because
+  correcting a hole is the case the gap was named for and making a person unland then re-land costs
+  two steps and leaves the document momentarily saying something false.
+* **UNLAND** returns an end to an `OpenEndpoint`. Rarer and real: the panel is being replaced, or
+  the drop turned out to be spare after all.
+
+This is `link_class_commands.dart`'s split, for its stated reason: folding the second into the first
+as a nullable parameter makes the common case carry a null it never wants and gives the Edit menu
+one label for two opposite actions.
+
+**11.73.2 THE RACK LABEL FOLLOWS THE POSITION, UNLESS A PERSON TYPED IT.** A move re-derives the
+label; a hand-set one survives, and the surface says it was kept.
+
+A rack label is derived from where the run landed (DR-040 §11.39.3), so `1A-PP-101` on a cable now
+sitting in position 04 is a wrong hole number on the one column a trim tech works from. That is
+worse than no label. But the `RACK LBL` column lets a person type one, CR-113 makes it unique
+project-wide, and silently discarding somebody's own identifier is the loss G4 exists to refuse.
+
+**THIS NEEDS A BIT, AND IT IS SPELLED THE WAY ITS TWO PRECEDENTS ARE.** `rackLabelLocked` on
+`StructureOrigin`, written by the `RACK LBL` cell's own edit path and by nothing else. On the wire
+it is **absent when false**, following `Link.linkClassLocked` and deliberately **not**
+`designatorLocked`, which is written unconditionally: an always-written key here would rewrite every
+document already on disk and move `kSchemaVersion` for nothing (CR-117).
+
+**AND AN UNLAND CLEARS AN ALLOCATED LABEL, BY THE SAME ARGUMENT EXTENDED.** A label naming a
+position the cable has left is wrong whether the cable went to another hole or to no hole. A
+hand-set label survives an unland for the same reason it survives a move. **This clause was not put
+to the user as its own question** and is recorded as an extension of §11.73.2's reasoning rather
+than as a separate decision, so that a later reader can see which is which.
+
+**11.73.3 THE TERMINATION SURVIVES BOTH, AND THE SURFACE SAYS SO.** `terminationRack` describes how
+the cable END is finished, not which hole it sits in: a run can be punched onto a block this project
+does not model at all. Clearing it on an unland would assert the crew undid work they may not have
+touched, which is a fabrication in the direction G4 forbids. A person who really did pull the cable
+back out clears it in the `RACK TERM` column, which is one cell and already exists.
+
+Asking each time was considered and refused: AC-058/D5 does not list this as a data-loss edge, and a
+confirm people learn to click through is worse than a default they can see and correct.
+
+**11.73.4 NEITHER COMMAND REMOVES A PORT IT DID NOT CREATE.** `ConnectPortsCommand`'s rule, and
+`BindEndpointCommand` already follows it: a pin the document already held is not this gesture's to
+delete, and guessing wrong deletes a jack somebody else's cable may be about to use. A freed pin
+that came from a template was always drawn and stays drawn.
+
+**11.73.5 WHAT THIS DOES NOT DECIDE.** Which gestures reach the two commands. The `LANDS ON` cell
+currently draws a landed row as plain text (DR-071 §11.70.3) precisely because re-landing was
+unruled, and that reasoning is now spent; whether the cell becomes a menu, and whether dragging a
+landed run's pennant to another jack means MOVE, are surface questions this ruling deliberately
+leaves to the task. **Dragging a run to empty canvas must not mean unland**, which is the one
+gesture named here, and named to forbid: it is a stray drag away from silently undoing a
+termination.
+
 ---
 
 ## 12. Superseded rulings
@@ -12060,6 +12121,24 @@ stands.
 
 **Nothing else in DR-047 moves.** §11.46.2's three gang states and §11.46.5's derived-never-stored
 rule are untouched.
+
+
+---
+
+### 12.25 Answered by DR-074 (unbinding is ruled)
+
+**Listed because §12's preamble makes an unlisted sentence read as still binding**, and this one has
+been cited three times since it was written.
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-040 §11.39.6** | *"**Unbinding is not ruled**: `BindEndpoint` gets a `revert` because every command does, and a deliberate 'this was punched into the wrong port' gesture is not specified here."* | **Answered by DR-074 §11.73.** A MOVE and an UNLAND are two commands; the rack label follows the position unless a person typed it; the termination survives both. The sentence's other half stands: a `revert` is still not an unbind, and the two commands are forward acts with their own undo entries. |
+
+**Two rulings leaned on the gap while it was open, and both are now spent rather than wrong.**
+DR-071 §11.70.3 draws a landed `LANDS ON` row as plain text, and DR-073 §11.72.5 refuses an already
+landed pennant, each citing §11.39.6's silence as the reason. The refusals were correct while
+re-landing had no meaning. **Whether either surface should now offer the gesture is left to the
+task** by §11.73.5 rather than decided here, and until it is built both behave exactly as ruled.
 
 ---
 
