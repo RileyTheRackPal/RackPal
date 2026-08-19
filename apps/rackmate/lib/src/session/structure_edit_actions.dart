@@ -65,12 +65,14 @@ StructureEditFn buildStructureEditAction({
       // third state the schedule has to guess about" (G4). It is passed
       // through untrimmed-of-meaning rather than normalised here, so
       // there is one place that decides.
-      StructureColumnId.rackLabel => _origin(
+      //
+      // AND IT IS THE ONE ORIGIN FIELD THAT DOES NOT GO THROUGH `_origin`
+      // (DR-074 §11.73.2). This cell is the only write path allowed to say
+      // a PERSON named the hole, so it runs `SetRackLabelCommand`, which
+      // carries the lock beside the label in one undo entry.
+      StructureColumnId.rackLabel => _rackLabel(
         controller: controller,
         edit: edit,
-        field: StructureOriginField.rackLabel,
-        to: edit.value,
-        claimedLabels: claimedLabels,
         claimedRackLabels: claimedRackLabels,
         into: commands,
       ),
@@ -268,6 +270,48 @@ String? _origin<T>({
         } else {
           claimedRackLabels.add(claimed);
         }
+      }
+      return null;
+  }
+}
+
+/// `RACK LBL`: the one cell that records WHO named the hole (DR-074
+/// §11.73.2).
+///
+/// Every other `StructureOrigin` field goes through [_origin] and its
+/// generic command. This one does not, because it writes a second piece of
+/// state: `rackLabelLocked`, which is what makes a person's label survive
+/// a move while an allocated one is re-derived. `SetEntityPropertyCommand`
+/// writes exactly one declared field, so the pair needs its own command,
+/// which is `SetLinkClassCommand`'s precedent for the same shape.
+///
+/// THE CLAIMED SET IS FED THE NORMALISED VALUE, not `edit.value`, so a
+/// batch whose second row types the same label with a trailing space is
+/// caught by the same scan rather than by the file.
+String? _rackLabel({
+  required DocumentController controller,
+  required StructureCellEdit edit,
+  required Set<String> claimedRackLabels,
+  required List<Command<RackDocument>> into,
+}) {
+  final result = buildSetRackLabel(
+    doc: controller.doc,
+    linkId: edit.linkId,
+    to: edit.value,
+    now: controller.clock.nowUtc(),
+    actor: controller.actor,
+    alsoUsedRackLabels: claimedRackLabels,
+  );
+  switch (result) {
+    case SetRackLabelRefused(:final reason):
+      return reason;
+    // NOTHING TO DO IS NOT A FAILURE — see [_origin].
+    case SetRackLabelUnchanged():
+      return null;
+    case SetRackLabelReady(:final command):
+      into.add(command);
+      if (command.rackLabel case final claimed?) {
+        claimedRackLabels.add(claimed);
       }
       return null;
   }

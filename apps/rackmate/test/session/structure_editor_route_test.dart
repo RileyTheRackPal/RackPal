@@ -1198,6 +1198,146 @@ void main() {
         reason: 'one gesture came back, not all three',
       );
     });
+    testWidgets('typing a RACK LBL says a PERSON named the hole (`#721`)', (
+      tester,
+    ) async {
+      // DR-074 §11.73.2. The lock is what makes a move re-derive an
+      // allocated label and keep a typed one, and this cell is the ONLY
+      // write path allowed to set it: `AddHomeRunCommand` and
+      // `BindEndpointCommand` both write what the allocator produced.
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final edit = buildStructureEditAction(controller: controller);
+
+      expect(
+        doc.links[ids.first]!.structureOrigin!.rackLabelLocked,
+        isFalse,
+        reason: 'nothing has been typed yet',
+      );
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.rackLabel,
+            value: 'BY-HAND-7',
+          ),
+        ]),
+        isNull,
+      );
+      expect(doc.links[ids.first]!.structureOrigin!.rackLabel, 'BY-HAND-7');
+      expect(doc.links[ids.first]!.structureOrigin!.rackLabelLocked, isTrue);
+
+      // ONE UNDO TAKES BOTH. A revert that restored the label and left the
+      // lock would leave a re-derivable name pinned by an assertion the
+      // person has just taken back.
+      controller.undoLast();
+      expect(doc.links[ids.first]!.structureOrigin!.rackLabelLocked, isFalse);
+    });
+
+    testWidgets('clearing a RACK LBL hands the name back to the allocator', (
+      tester,
+    ) async {
+      // The one-way door this avoids: a locked null says "nobody may ever
+      // name this", which no surface can undo. See `SetRackLabelCommand`.
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final edit = buildStructureEditAction(
+        controller: built.session.services.session.controller,
+      );
+
+      StructureCellEdit type(String value) => StructureCellEdit(
+        linkId: ids.first,
+        column: StructureColumnId.rackLabel,
+        value: value,
+      );
+      expect(edit([type('BY-HAND-7')]), isNull);
+      expect(edit([type('')]), isNull);
+
+      final origin = doc.links[ids.first]!.structureOrigin!;
+      expect(origin.rackLabel, isNull);
+      expect(origin.rackLabelLocked, isFalse);
+    });
+
+    testWidgets('a RACK LBL another drop holds is still refused (CR-113)', (
+      tester,
+    ) async {
+      // The uniqueness scan has to survive the move to
+      // `buildSetRackLabel`: the previous path guarded it, and a new
+      // command that forgot would write two rows an installer cannot tell
+      // apart, silently, through the ordinary edit path.
+      final (doc, ids) = job(2);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final edit = buildStructureEditAction(
+        controller: built.session.services.session.controller,
+      );
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.rackLabel,
+            value: 'SHARED-1',
+          ),
+        ]),
+        isNull,
+      );
+      final refusal = edit([
+        StructureCellEdit(
+          linkId: ids.last,
+          column: StructureColumnId.rackLabel,
+          value: 'SHARED-1',
+        ),
+      ]);
+      expect(
+        refusal,
+        'SHARED-1 is already used at the panel. Rack labels are unique '
+        'where set (CR-113).',
+      );
+      expect(
+        doc.links[ids.last]!.structureOrigin!.rackLabel,
+        isNot('SHARED-1'),
+      );
+    });
+
+    testWidgets('two rows of ONE batch cannot agree on a rack label', (
+      tester,
+    ) async {
+      // The running reservation, on the path that replaced the generic
+      // one. A batch planned against an unmutated document would let both
+      // rows look fine on their own.
+      final (doc, ids) = job(2);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final edit = buildStructureEditAction(
+        controller: built.session.services.session.controller,
+      );
+
+      final refusal = edit([
+        for (final id in ids)
+          StructureCellEdit(
+            linkId: id,
+            column: StructureColumnId.rackLabel,
+            value: 'SHARED-1',
+          ),
+      ]);
+      expect(refusal, isNotNull);
+      for (final id in ids) {
+        expect(
+          doc.links[id]!.structureOrigin!.rackLabel,
+          isNot('SHARED-1'),
+          reason: 'all-or-nothing: neither row may have moved',
+        );
+      }
+    });
   });
 
   // ══════════════════════════════════════════════════════════════════
