@@ -204,6 +204,7 @@ final class SchematicScene {
     required this.nonForwardLinkIds,
     required this.crossings,
     required this.layout,
+    required this.symbolTier,
   });
 
   /// The one composed display list. `fragmentFor(deviceId.v)` → that
@@ -254,6 +255,12 @@ final class SchematicScene {
   /// place symbols by a stale map. The holder decides; this only carries.
   final SugiyamaLayout layout;
 
+  /// The half of this scene a `wires` change cannot move, so a caller can
+  /// hand it back (DR-076 §11.75.2). See [SchematicSymbolTier], which
+  /// carries the same "the holder decides, this only carries" contract
+  /// [layout] does — and which contains that layout.
+  final SchematicSymbolTier symbolTier;
+
   final Map<SignalDomainId, IntRange> domainFragments;
 
   /// The label ops whose domain did not resolve, or `null` when there are
@@ -299,31 +306,79 @@ final class SchematicScene {
   final int crossings;
 }
 
-/// Lays out [doc]'s schematic and builds its display list.
+/// Everything a `wires` change cannot move (DR-076 §11.75.2).
 ///
-/// FULL DETERMINISTIC RECOMPUTE (CR-013 as amended by DR-001): there is no
-/// cache, no invalidation and no incremental path, because "full recompute
-/// is perfectly stable and the invalidation bookkeeping costs more than it
-/// saves" (docs/03 §5.2). Calling this twice on the same document produces
-/// byte-identical ops; so does calling it on a document whose entities were
-/// inserted in a different order. Both are asserted in
-/// `schematic_scene_test.dart`.
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE PREFIX OF THE DISPLAY LIST, AND WHY IT IS A PREFIX
+/// ═══════════════════════════════════════════════════════════════════════
+/// `buildSchematicScene` emits every symbol and then every net label, in
+/// that order and for a reason the label stage states: a pennant must not
+/// be overpainted by a body it sits beside, and the IR has no z-index. So
+/// the symbol half is a contiguous run at the head of `ops`, and a rebuild
+/// that only needs new labels can keep it whole rather than re-emitting it.
 ///
-/// [measurer] is injected per CR-081/AC-016 #13 and does real work — docs/05
-/// §3's width formula is a text measurement, and nothing here guesses a
-/// width from a character count.
-/// [netLabelStyle] tunes the stubs. It has no `enabled` flag and there is
-/// no way to ask for a scene without them: DR-001 makes the labels the
-/// DEFAULT render of a Link, not an option over one, and a boolean here
-/// would be the "Draw all / Auto / Label all" toggle §11.5 deletes — "a
-/// global override that fights the filter is a second source of truth for
-/// the same question". `drawn` mode arrives as a FILTER SCOPE, not as a
-/// flag on this function.
-/// [holdAt] freezes the listed devices where a PREVIOUS layout put them —
-/// DR-011.4's "creating a link does not re-lay-out the sheet". See its own
-/// doc below; a caller that passes nothing gets exactly the behaviour this
-/// function has always had.
-SchematicScene buildSchematicScene({
+/// Measured at 3,600 links: this half is the majority of the build and
+/// 49,860 of its 78,660 ops, BEFORE a single cable exists. It is also
+/// domain-independent, which is why AC-008's per-domain split cannot reach
+/// it and why §11.75.1 calls that remedy the smaller half.
+///
+/// WHAT INVALIDATES IT IS THE CALLER'S QUESTION, exactly as with
+/// [SchematicScene.layout]: §11.75.2 keys it on `structure` and `meta`,
+/// which every command already declares. Handing back a tier built before
+/// a device was added draws a sheet missing that device, and nothing in
+/// here could tell.
+///
+/// ONE STALENESS IT DOES CARRY, STATED RATHER THAN HIDDEN. [layout]'s
+/// `reversedEdgeIds` and `nonForwardEdgeIds` describe the EDGES that
+/// existed when it ran, so a link added under a reused tier appears in
+/// neither. Censused at the time of writing: nothing in `lib/` reads
+/// `SchematicScene.reversedLinkIds` or `nonForwardLinkIds` — the only
+/// callers are two tests — so this costs no drawing today. It is written
+/// down because the first consumer to appear inherits it silently.
+@immutable
+final class SchematicSymbolTier {
+  const SchematicSymbolTier({
+    required this.ops,
+    required this.fragments,
+    required this.symbols,
+    required this.layers,
+    required this.positions,
+    required this.unsymbolisedDeviceIds,
+    required this.minTextPt,
+    required this.bounds,
+    required this.layout,
+  });
+
+  /// The symbol ops, in scene order, each bracketed by its own
+  /// save/transform/restore exactly as a whole build emits them.
+  final List<DiagramOp> ops;
+
+  /// Symbol fragments only, keyed by `DeviceInstance.id.v`. The domain
+  /// fragments belong to the label half and are added by the scene build.
+  final Map<String, IntRange> fragments;
+
+  final List<RenderedSymbol> symbols;
+  final List<List<Uuid>> layers;
+  final Map<Uuid, Pt> positions;
+  final List<Uuid> unsymbolisedDeviceIds;
+
+  /// The smallest text the SYMBOLS emit. The labels lower it further.
+  final double minTextPt;
+
+  /// The symbols' union, or null when there are none. The label ink is
+  /// unioned in by the scene build.
+  final DBox? bounds;
+
+  final SugiyamaLayout layout;
+}
+
+/// Builds [SchematicSymbolTier] — the layout and every symbol, with no
+/// label in it (DR-076 §11.75.2).
+///
+/// Split out of [buildSchematicScene] rather than duplicated: the scene
+/// build calls this when it is handed no tier to reuse, so there is one
+/// symbol path and a held tier cannot drift from a fresh one.
+SchematicSymbolTier buildSchematicSymbolTier({
   required RackDocument doc,
   required TextMeasurer measurer,
   SchematicPalette palette = const SchematicPalette(),
@@ -534,6 +589,79 @@ SchematicScene buildSchematicScene({
     layers.add(List<Uuid>.unmodifiable(row));
   }
 
+  return SchematicSymbolTier(
+    ops: ops,
+    fragments: fragments,
+    symbols: symbols,
+    layers: layers,
+    positions: <Uuid, Pt>{
+      for (final c in drawn)
+        if (layout.positions[c.device.id.v] case final p?) c.device.id: p,
+    },
+    unsymbolisedDeviceIds: unsymbolised,
+    minTextPt: minText,
+    bounds: bounds,
+    layout: layout,
+  );
+}
+
+/// Lays out [doc]'s schematic and builds its display list.
+///
+/// FULL DETERMINISTIC RECOMPUTE (CR-013 as amended by DR-001): there is no
+/// cache, no invalidation and no incremental path, because "full recompute
+/// is perfectly stable and the invalidation bookkeeping costs more than it
+/// saves" (docs/03 §5.2). Calling this twice on the same document produces
+/// byte-identical ops; so does calling it on a document whose entities were
+/// inserted in a different order. Both are asserted in
+/// `schematic_scene_test.dart`.
+///
+/// [measurer] is injected per CR-081/AC-016 #13 and does real work — docs/05
+/// §3's width formula is a text measurement, and nothing here guesses a
+/// width from a character count.
+/// [netLabelStyle] tunes the stubs. It has no `enabled` flag and there is
+/// no way to ask for a scene without them: DR-001 makes the labels the
+/// DEFAULT render of a Link, not an option over one, and a boolean here
+/// would be the "Draw all / Auto / Label all" toggle §11.5 deletes — "a
+/// global override that fights the filter is a second source of truth for
+/// the same question". `drawn` mode arrives as a FILTER SCOPE, not as a
+/// flag on this function.
+/// [holdAt] freezes the listed devices where a PREVIOUS layout put them —
+/// DR-011.4's "creating a link does not re-lay-out the sheet". See its own
+/// doc below; a caller that passes nothing gets exactly the behaviour this
+/// function has always had.
+SchematicScene buildSchematicScene({
+  required RackDocument doc,
+  required TextMeasurer measurer,
+  SchematicPalette palette = const SchematicPalette(),
+  SchematicMetrics metrics = const SchematicMetrics(),
+  NetLabelStyle netLabelStyle = const NetLabelStyle(),
+  Map<Uuid, Pt> holdAt = const <Uuid, Pt>{},
+  SugiyamaLayout? reuseLayout,
+  SchematicSymbolTier? reuseSymbols,
+}) {
+  final upg = kSchematicUnitsPerGrid;
+  final tier =
+      reuseSymbols ??
+      buildSchematicSymbolTier(
+        doc: doc,
+        measurer: measurer,
+        palette: palette,
+        metrics: metrics,
+        netLabelStyle: netLabelStyle,
+        holdAt: holdAt,
+        reuseLayout: reuseLayout,
+      );
+  final layout = tier.layout;
+  final symbols = tier.symbols;
+  final layers = tier.layers;
+  final unsymbolised = tier.unsymbolisedDeviceIds;
+  // COPIED, because the labels are appended to both and a tier handed
+  // back a second time must be the same tier it was the first time.
+  final ops = <DiagramOp>[...tier.ops];
+  final fragments = <String, IntRange>{...tier.fragments};
+  var minText = tier.minTextPt;
+  var bounds = tier.bounds;
+
   // ── the net labels (DR-001's default render) ─────────────────────────
   //
   // AFTER every symbol, so a pennant is never overpainted by a body it
@@ -595,10 +723,7 @@ SchematicScene buildSchematicScene({
   return SchematicScene(
     scene: scene,
     symbols: List<RenderedSymbol>.unmodifiable(symbols),
-    positions: Map<Uuid, Pt>.unmodifiable(<Uuid, Pt>{
-      for (final c in drawn)
-        if (layout.positions[c.device.id.v] case final p?) c.device.id: p,
-    }),
+    positions: Map<Uuid, Pt>.unmodifiable(tier.positions),
     layers: List<List<Uuid>>.unmodifiable(layers),
     netLabels: labelLayer.labels,
     domainFragments: Map<SignalDomainId, IntRange>.unmodifiable(
@@ -617,6 +742,7 @@ SchematicScene buildSchematicScene({
     ]),
     crossings: layout.crossings,
     layout: layout,
+    symbolTier: tier,
   );
 }
 

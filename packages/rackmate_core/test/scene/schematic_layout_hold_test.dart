@@ -157,4 +157,115 @@ void main() {
       expect(scene.layout.crossings, scene.crossings);
     });
   });
+  group('a held symbol tier produces the same scene (`#729`)', () {
+    // ═══════════════════════════════════════════════════════════════════
+    // THE SECOND TIER, AND THE SAME GATE
+    // ═══════════════════════════════════════════════════════════════════
+    // Symbols are a contiguous PREFIX of the display list, because the
+    // label stage runs after every symbol so a pennant is never
+    // overpainted. Holding that prefix is what takes a wires-only rebuild
+    // down to the label work; the property that makes it legal is that
+    // the scene comes out identical.
+    test('op for op, against a whole rebuild', () {
+      final doc = readSchematicFixture();
+      final measurer = _Measurer();
+      final whole = buildSchematicScene(doc: doc, measurer: measurer);
+      final held = buildSchematicScene(
+        doc: doc,
+        measurer: measurer,
+        reuseSymbols: whole.symbolTier,
+      );
+
+      expect(digestOps(held.scene.ops), digestOps(whole.scene.ops));
+      expect(held.scene.fragments, whole.scene.fragments);
+      expect(held.scene.bounds, whole.scene.bounds);
+      expect(held.scene.minTextSizePt, whole.scene.minTextSizePt);
+      expect(held.positions, whole.positions);
+      expect(held.domainFragments, whole.domainFragments);
+    });
+
+    test('a WIRE edit under a held tier matches one under a held layout', () {
+      // The reference is a HELD LAYOUT, never a fresh one: DR-011.4
+      // forbids a cable moving a symbol, so a full re-layout is not the
+      // behaviour either path is trying to reproduce (§11.75.2).
+      final doc = readSchematicFixture();
+      final measurer = _Measurer();
+      final before = buildSchematicScene(doc: doc, measurer: measurer);
+
+      final source = doc.links.values.first;
+      doc.links[const Uuid('lnk-new')] = Link(
+        id: const Uuid('lnk-new'),
+        designator: 'W900',
+        media: source.media,
+        order: const FracIndex('zz'),
+        meta: source.meta,
+        conductors: [
+          Conductor(
+            from: source.conductors.first.from,
+            to: const OpenEndpoint('probe'),
+          ),
+        ],
+      );
+
+      final byLayout = buildSchematicScene(
+        doc: doc,
+        measurer: measurer,
+        reuseLayout: before.layout,
+      );
+      final byTier = buildSchematicScene(
+        doc: doc,
+        measurer: measurer,
+        reuseSymbols: before.symbolTier,
+      );
+
+      expect(
+        digestOps(byTier.scene.ops),
+        digestOps(byLayout.scene.ops),
+        reason:
+            'the tier holds what the layout would have rebuilt identically, '
+            'so the cheaper path must draw the same sheet',
+      );
+      expect(byTier.netLabels.length, byLayout.netLabels.length);
+      expect(
+        byTier.netLabels.length,
+        greaterThan(before.netLabels.length),
+        reason: 'and the new cable is drawn, which is the point of rebuilding',
+      );
+    });
+
+    test('the tier it hands back is the one it drew', () {
+      final doc = readSchematicFixture();
+      final scene = buildSchematicScene(doc: doc, measurer: _Measurer());
+      expect(scene.symbolTier.symbols, scene.symbols);
+      expect(scene.symbolTier.layers, scene.layers);
+      expect(scene.symbolTier.positions, scene.positions);
+      expect(scene.symbolTier.layout, same(scene.layout));
+      expect(
+        scene.symbolTier.ops.length,
+        lessThan(scene.scene.ops.length),
+        reason: 'the tier is the PREFIX; the labels are the rest',
+      );
+    });
+
+    test('reusing a tier twice gives the same scene both times', () {
+      // The copy the scene build makes of `ops` and `fragments` is what
+      // this pins: appending labels to the tier's own lists would make
+      // the second reuse draw the first one's labels twice.
+      final doc = readSchematicFixture();
+      final measurer = _Measurer();
+      final first = buildSchematicScene(doc: doc, measurer: measurer);
+      final a = buildSchematicScene(
+        doc: doc,
+        measurer: measurer,
+        reuseSymbols: first.symbolTier,
+      );
+      final b = buildSchematicScene(
+        doc: doc,
+        measurer: measurer,
+        reuseSymbols: first.symbolTier,
+      );
+      expect(digestOps(b.scene.ops), digestOps(a.scene.ops));
+      expect(b.scene.ops.length, a.scene.ops.length);
+    });
+  });
 }

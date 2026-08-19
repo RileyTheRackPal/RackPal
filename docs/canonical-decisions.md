@@ -11671,6 +11671,7 @@ HDMI run rebuilds ~1,200 ops and seven pictures replay untouched"*. Measured on 
 | cold build | **87 ms** | 78,660 |
 | `holdAt`, which is what a wire edit does TODAY | **92 ms** | |
 | `reuseLayout`, this ruling's first tier | **48 ms** | |
+| `reuseSymbols`, the second tier | **20 ms** | |
 | symbols alone, zero links (single run, indicative) | ~75 ms | 49,860 |
 
 Best of five per figure, which is `schematic_perf_test.dart`'s own method; the symbols-only row is a
@@ -11696,6 +11697,12 @@ The scene splits in three tiers, each keyed on what can move it:
 | **Layout** — Sugiyama phases 0–3, symbol positions | `structure` | ~50 ms |
 | **Symbols** — the symbol layer's ops and text | `structure`, `meta` | ~75 ms |
 | **Wires and labels** — net-label pennants, drawn wires | `wires` | ~19 ms |
+
+The wire tier was **predicted at ~19 ms from the decomposition and measured at 19.6 ms** once
+`#729` built it, which is the corroboration this table was worth taking. Note what it does NOT
+say: 19.6 ms is still over a 16.7 ms frame at twelve pods. §11.75.6's domain split is where the
+remaining margin would come from, and §11.75.4's budget binds the edit at a size a real job
+reaches rather than at the largest fixture anyone can build.
 
 A cable drawn declares `wires | meta`. Under §11.75.3 that rebuilds the symbol tier and the wire
 tier and **reuses the layout**, which is DR-011.4's clause restated as a cache key rather than as a
