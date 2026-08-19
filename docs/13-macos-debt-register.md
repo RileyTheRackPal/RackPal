@@ -237,6 +237,41 @@ D13's filter argument on the existing `rackmate/file_dialog` channel: no new cha
 
 ---
 
+## 3.6 What M4 costs this register: one shadowed framework binding
+
+Checked 2026-08-19 at M4-F's pick-up, over the five chords `docs/06` §4.6 binds for the grid
+operations. **No M4 task is blocked by any item here**, and the register grows by exactly one row,
+which is a behaviour v1 deliberately takes away from macOS rather than a port that is owed.
+
+| M4 chord | macOS | Detail |
+|---|---|---|
+| `Ctrl+J` `Duplicate` | clean | In no platform map of `default_text_editing_shortcuts.dart` |
+| `Ctrl+R` `Renumber…` | clean | As above |
+| `Ctrl+H` `Find & replace` | clean | As above |
+| **`Ctrl+T` `Change type…`** | **SHADOWS `TransposeCharactersIntent`** | See below |
+| `Ctrl+M` `Move to bank…` | clean | As above |
+
+**`Ctrl+T` is `TransposeCharactersIntent` in `_macShortcuts`**, one of the emacs-derived bindings
+Flutter installs in every text field, and focus is almost always inside a cell `TextField` when a
+grid chord is pressed. `docs/04` §8 records that Flutter dispatches key events **leaf to root**
+while `DefaultTextEditingShortcuts` sits at the app root, so **the collision runs our way**: on
+macOS, inside a builder cell, `Ctrl+T` opens `Change type…` and does not transpose two characters.
+
+**Ruled deliberately as DR-078 §11.77.1** rather than absorbed: `docs/06` §4.6 specifies the chord,
+and DR-011.6 requires one chord to wear one meaning across the product, which a per-platform split
+would break on an axis a keyboard-only user can see even less than a scope boundary.
+
+**WHAT IS OWED HERE IS AN OBSERVATION, NOT A PORT.** Nothing needs writing for macOS to work; what
+is owed is that the first macOS user who reaches for transpose in a builder cell finds this row
+instead of a mystery. If it turns out to matter to a real person, the fix is an amendment to §4.6's
+table and not a platform branch.
+
+**The check was run over the framework's own source, not recalled.** That is how the one collision
+was found among five, and it is the method the next binding pass should copy: `Ctrl+D`'s keymap note
+had already established the check, and this is the first time it came back positive.
+
+---
+
 ## 4. Honest summary
 
 The debt is **smaller than §10.10 feared**, and the reason is recorded above: the seams macOS needs
