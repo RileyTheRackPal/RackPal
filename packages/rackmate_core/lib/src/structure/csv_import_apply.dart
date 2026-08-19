@@ -127,6 +127,13 @@ CsvImportBuild buildCsvImport({
 
   // Reservations, carried across every row in this import.
   final usedLabels = usedFieldLabels(doc);
+  // THE ONE THIS IMPORTER NEVER HAD (DR-075 §11.74.2). Every origin field
+  // was handed `usedLabels`, which is the FIELD-label scan, and the rack
+  // label's uniqueness check reads a different parameter — so nothing
+  // filled it and two rows of one sheet could write one label onto two
+  // drops. Measured before it was fixed: a re-import naming `PP1-05` on
+  // two rows produced two links carrying it.
+  final usedRackLabelSet = usedRackLabels(doc);
   final usedDesignators = {for (final l in doc.links.values) l.designator};
   final usedNetNames = {for (final n in doc.nets.values) n.name};
 
@@ -233,6 +240,7 @@ CsvImportBuild buildCsvImport({
           now: now,
           actor: actor,
           usedLabels: usedLabels,
+          usedRackLabels: usedRackLabelSet,
         );
         updates.addAll(built);
         updatedDrops += planned.drops;
@@ -384,6 +392,7 @@ List<Command<RackDocument>> _buildUpdates({
   required DateTime now,
   required String actor,
   required Set<String> usedLabels,
+  required Set<String> usedRackLabels,
 }) {
   final row = planned.row;
   final out = <Command<RackDocument>>[];
@@ -435,16 +444,32 @@ List<Command<RackDocument>> _buildUpdates({
     final origin = link.structureOrigin;
     if (origin == null) continue;
     if (row.rackLabel != null && row.rackLabel != origin.rackLabel) {
-      _origin(
-        out,
+      // NOT `_origin`, AND NOT `StructureOriginField.rackLabel` (DR-075
+      // §11.74.1). A `rack_label` column is a person choosing an
+      // identifier: they typed it into a spreadsheet instead of into the
+      // cell, which is the same act reaching the same field through a
+      // different door. So it locks, and a later move keeps it rather
+      // than re-deriving it from the new position.
+      final built = buildSetRackLabel(
         doc: doc,
         linkId: linkId,
-        field: StructureOriginField.rackLabel,
         to: row.rackLabel,
         now: now,
         actor: actor,
-        usedLabels: usedLabels,
+        alsoUsedRackLabels: usedRackLabels,
       );
+      if (built case SetRackLabelReady(:final command)) {
+        out.add(command);
+        // SPENT ON SUCCESS ONLY, and with the NORMALISED value the
+        // command carries rather than the sheet's cell, so a second row
+        // spelling it with a trailing space is caught by the same scan.
+        if (command.rackLabel case final claimed?) usedRackLabels.add(claimed);
+      }
+      // A refusal is SKIPPED rather than reported, which is this
+      // importer's existing contract for an origin field and not a new
+      // decision (§11.74.3): `_origin` has always dropped a non-`Ready`
+      // result and left the rest of the row to apply. It is recorded as a
+      // known limitation against docs/04 §3.4 rather than defended.
     }
     if (row.terminationField != null &&
         row.terminationField != origin.terminationField) {
