@@ -139,10 +139,12 @@ final class BindEndpointCommand extends Command<RackDocument> {
   /// What was there before, so `revert` restores rather than guesses.
   ///
   /// AN `OpenEndpoint` CARRIES A DESCRIPTION AND IT IS NOT ALWAYS THE
-  /// DEFAULT ONE. `AddHomeRunCommand` writes `'not yet landed'`, but a
-  /// document round-tripped from a file or built by a starter may carry a
-  /// person's own words, and an undo that replaced them with the constant
-  /// would quietly edit a note somebody wrote.
+  /// DEFAULT ONE. `AddHomeRunCommand` writes `kUnlandedEndDescription`,
+  /// but a document round-tripped from a file or built by a starter may
+  /// carry a person's own words — the shipped starters say "Rack end not
+  /// yet terminated", and files written before DR-074 say "not yet
+  /// landed" — and an undo that replaced them with the constant would
+  /// quietly edit a note somebody wrote.
   Endpoint? _previousEnd;
   String? _previousRackLabel;
   EntityMeta? _previousMeta;

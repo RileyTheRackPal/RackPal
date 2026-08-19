@@ -42,6 +42,34 @@ final class OpenEndpoint extends Endpoint {
   final String description;
 }
 
+/// What an end nobody has punched down says on the schedule.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// ONE SENTENCE FOR ONE STATE, IN THE TWO PLACES THE CODE CONTROLS
+/// ═══════════════════════════════════════════════════════════════════════
+/// `derived/schedule.dart`'s `_endOf` prints an [OpenEndpoint]'s
+/// description straight into the schedule's TO column, so the wording is
+/// not internal: it is what an installer reads. Two code paths write one,
+/// `AddHomeRunCommand` when a drop is created and `UnlandEndpointCommand`
+/// when one is taken back off its jack (DR-074 §11.73.1), and a person
+/// reading the sheet is being told the same physical fact by both.
+///
+/// TENSELESS ON PURPOSE, settled by the user on 2026-08-19. The earlier
+/// wording was "not yet landed", which is a small lie after an unland:
+/// that end HAS been landed and somebody took it off. "no longer landed"
+/// tells the truer story and needs the create path to keep a second
+/// sentence, so the column would carry two spellings for one thing an
+/// installer will find identical at the panel.
+///
+/// TWO THINGS THIS DOES NOT REACH, stated so nobody reads it as tidier
+/// than it is. Documents already on disk carry whatever string they were
+/// written with, because the description is PERSISTED and rewriting one
+/// would move the bytes of every file holding a drop (CR-117). And the
+/// shipped starters say "Rack end not yet terminated" on 27 open ends,
+/// authored data rather than a default, left alone rather than
+/// regenerating goldens inside a task about moving cables.
+const String kUnlandedEndDescription = 'not landed';
+
 /// ONE electrical path within a `Link`'s cable. A 16/4 speaker cable is
 /// one `Link` with four `Conductor`s (RJ-016). Each conductor spans
 /// EXACTLY two ends (CR-014).

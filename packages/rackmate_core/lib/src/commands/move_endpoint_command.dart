@@ -352,17 +352,6 @@ MoveEndpointResult buildMoveEndpointCommand({
   );
 }
 
-/// What an unlanded end says on the schedule.
-///
-/// THE SAME SENTENCE `AddHomeRunCommand` WRITES, and that is a decision
-/// rather than a copy-paste. `_endOf` prints an `OpenEndpoint`'s
-/// description straight into the schedule's TO column, so a second wording
-/// would put two sentences on one sheet for one physical state: a cable
-/// end nobody has punched down. The history of how it got there is in the
-/// undo stack and in the link's own `updatedBy`, which is where history
-/// belongs; the column says what an installer will find at the panel.
-const String kUnlandedEndDescription = 'not yet landed';
-
 /// Takes one end of a home run back off its jack (DR-074 §11.73.1).
 ///
 /// Rarer than a move and real: the panel is being replaced, or the drop

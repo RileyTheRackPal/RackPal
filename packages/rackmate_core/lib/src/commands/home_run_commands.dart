@@ -379,7 +379,7 @@ final class AddHomeRunCommand extends Command<RackDocument> {
       conductors: [
         Conductor(
           from: fieldEnd,
-          to: rackEnd ?? const OpenEndpoint('not yet landed'),
+          to: rackEnd ?? const OpenEndpoint(kUnlandedEndDescription),
         ),
       ],
       structureOrigin: StructureOrigin(

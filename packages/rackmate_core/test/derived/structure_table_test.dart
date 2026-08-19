@@ -1630,4 +1630,162 @@ void main() {
       expect(resolveLinkClassCell('BANANA'), isNull);
     });
   });
+
+  group('the LANDS ON menu (DR-071 §11.70.1, DR-074 §11.73.1)', () {
+    /// The snapshot `_Doc.panelPort`'s device REFERS TO and the fixture
+    /// never had, because nothing before this asked what a panel has room
+    /// for. `freePanelPositions` walks the template body, so without it
+    /// every device offers zero positions and the menu is empty.
+    ///
+    /// REAR, which is DR-040 §11.39.2 clause 4: the front jacks take
+    /// patch cords and a pulled cable lands on the back.
+    void addPanelTemplate(_Doc d) {
+      d.doc.templates['tpl.pp@1'] = TemplateSnapshot(
+        templateId: const TemplateId('tpl.pp'),
+        version: 1,
+        contentHash: 'sha256:tpl.pp',
+        body: TemplateBody(
+          manufacturer: 'Generic',
+          model: 'PP-24',
+          displayName: 'Patch Panel, 24-port',
+          typePrefix: 'PP',
+          ports: [
+            for (var i = 1; i <= 3; i++)
+              PortDef(
+                key: PortKey('rear.$i'),
+                label: i.toString().padLeft(2, '0'),
+                connector: const ConnectorTypeId('conn.punchdown_110'),
+                signalFamily: const SignalFamilyId('net.ethernet'),
+                face: Face.rear,
+                position: const PanelPosition(
+                  ruOffset: 0,
+                  xTwelfth: 0,
+                  xFineNm: Len.zero,
+                  yFineNm: Len.zero,
+                ),
+                order: FracIndex('a$i'),
+              ),
+          ],
+        ),
+        capturedAt: _when,
+      );
+    }
+
+    test('an UNLANDED row is offered panels and nothing else', () {
+      final d = _Doc();
+      final room = d.room('Great Room');
+      final outlet = d.outlet('GR-TV-1', locationId: room);
+      d.panelPort('01');
+      addPanelTemplate(d);
+      _drop(
+        d,
+        outletId: outlet,
+        locationId: room,
+        fieldLabel: 'GR-DATA-1',
+      );
+
+      final options = landingCellOptions(d.doc);
+      expect(options, contains('PP-1'));
+      expect(
+        options,
+        isNot(contains(kUnlandCell)),
+        reason:
+            'there is nothing to take off, so an option whose every use '
+            'is refused would be `#711` drawn on purpose',
+      );
+    });
+
+    test('a LANDED row is offered NOT LANDED, last', () {
+      final d = _Doc();
+      final room = d.room('Great Room');
+      final outlet = d.outlet('GR-TV-1', locationId: room);
+      final port = d.panelPort('01');
+      addPanelTemplate(d);
+      _drop(
+        d,
+        outletId: outlet,
+        locationId: room,
+        fieldLabel: 'GR-DATA-1',
+        rackPort: port,
+      );
+
+      final options = landingCellOptions(d.doc, landed: true);
+      expect(options, contains(kUnlandCell));
+      expect(
+        options.last,
+        kUnlandCell,
+        reason:
+            'it goes in AFTER the sort: a destructive option hiding '
+            'between MDF-1 and PP-1 is one a person picks by aiming badly',
+      );
+    });
+
+    test('NOT LANDED names a state, like every other closed-set cell', () {
+      // The user settled the word on 2026-08-19. Pinned as a whole string
+      // rather than a `contains`, because it is copy: it is read off a
+      // menu by whoever is holding the punch tool.
+      expect(kUnlandCell, 'NOT LANDED');
+    });
+  });
+
+  group('a rack label that a person typed (DR-074 §11.73.2)', () {
+    ({_Doc d, Uuid linkId}) landed() {
+      final d = _Doc();
+      final room = d.room('Great Room');
+      final outlet = d.outlet('GR-TV-1', locationId: room);
+      final port = d.panelPort('01');
+      final linkId = _drop(
+        d,
+        outletId: outlet,
+        locationId: room,
+        fieldLabel: 'GR-DATA-1',
+        rackPort: port,
+      );
+      return (d: d, linkId: linkId);
+    }
+
+    test('is not marked while the allocator owns the name', () {
+      final p = landed();
+      final row = buildStructureTable(p.d.doc).groups.single.rows.single;
+      expect(structureRackLabelIsUserSet(p.d.doc, row), isFalse);
+    });
+
+    test('is marked once the cell has been typed into', () {
+      final p = landed();
+      SetRackLabelCommand(
+        linkId: p.linkId,
+        rackLabel: 'BY-HAND-7',
+        now: _when,
+        actor: 'test',
+      ).apply(p.d.doc);
+
+      final row = buildStructureTable(p.d.doc).groups.single.rows.single;
+      expect(
+        structureRackLabelIsUserSet(p.d.doc, row),
+        isTrue,
+        reason:
+            'the mark is how a person learns why a move left their label '
+            'alone',
+      );
+    });
+
+    test('and the mark goes away when the cell is cleared', () {
+      final p = landed();
+      SetRackLabelCommand(
+        linkId: p.linkId,
+        rackLabel: 'BY-HAND-7',
+        now: _when,
+        actor: 'test',
+      ).apply(p.d.doc);
+      SetRackLabelCommand(
+        linkId: p.linkId,
+        rackLabel: null,
+        now: _when,
+        actor: 'test',
+      ).apply(p.d.doc);
+
+      final row = buildStructureTable(p.d.doc).groups.single.rows.single;
+      expect(structureRackLabelIsUserSet(p.d.doc, row), isFalse);
+    });
+  });
 }

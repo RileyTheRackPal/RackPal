@@ -616,8 +616,8 @@ String? _linkClass({
   return null;
 }
 
-/// `LANDS ON`: punch this drop down onto the next free position of the
-/// panel named by [StructureCellEdit.value] (DR-071 §11.70).
+/// `LANDS ON`: punch this drop down, move it, or take it off (DR-071
+/// §11.70, DR-074 §11.73).
 ///
 /// THE VALUE IS A PANEL AND THE COMMAND NEEDS A POSITION, which is what
 /// makes this the one column whose cell is a GESTURE rather than a value.
@@ -626,11 +626,25 @@ String? _linkClass({
 /// the product's job, and a person landing forty-six of them should not
 /// have to type forty-six numbers.
 ///
+/// THREE COMMANDS BEHIND ONE COLUMN, chosen by what the row and the value
+/// say rather than by three controls:
+///
+///  * [kUnlandCell] takes the end off its jack, and is offered only where
+///    there is something to take off.
+///  * a panel on an UNLANDED row lands the drop there.
+///  * a panel on a LANDED row MOVES it to that panel's next free hole,
+///    including the panel it is already on: that is the only way to say
+///    "not this hole" from a table where the product picks the hole
+///    (settled by the user on 2026-08-19). A mis-click is one undo away,
+///    and the schematic is where a person names an exact jack.
+///
 /// THE RACK LABEL RIDES WITH THE BIND, through `resolveRackLabel`, for
 /// DR-040 §11.39.3's reason: the label is DERIVED from the position, so
 /// the moment the position is known is the only moment it can be
 /// allocated. A label that cannot render does not undo the punchdown
-/// (§11.39.5) — the pin is a physical fact and the name is not.
+/// (§11.39.5) — the pin is a physical fact and the name is not. A move
+/// re-derives it on the same call unless a person typed it (DR-074
+/// §11.73.2), which `buildMoveEndpointCommand` decides rather than this.
 String? _landing({
   required DocumentController controller,
   required StructureCellEdit edit,
@@ -639,21 +653,45 @@ String? _landing({
   required List<Command<RackDocument>> into,
 }) {
   final wanted = edit.value.trim();
+  final doc = controller.doc;
+
   if (wanted.isEmpty) {
-    // NOT AN UNLAND. DR-040 §11.39.6 leaves moving a drop off a jack it
-    // is punched into unruled, so an empty value is a person clearing a
-    // box rather than an instruction this can carry out.
-    return 'Clearing this cell would unland the drop, and moving a drop '
-        'off a port is not something this can do yet.';
+    // STILL NOT AN UNLAND, and now for a different reason. DR-074 gives
+    // the gesture a name and puts it in this menu; an empty cell is a
+    // person clearing a box, and reading that as "take the cable off the
+    // panel" would make a stray keystroke undo a termination.
+    return 'An empty cell does not unland a drop. Pick $kUnlandCell to '
+        'take this end off its jack.';
   }
 
-  final doc = controller.doc;
+  if (wanted.toUpperCase() == kUnlandCell) {
+    final built = buildUnlandEndpointCommand(
+      doc: doc,
+      linkId: edit.linkId,
+      now: controller.clock.nowUtc(),
+      actor: controller.actor,
+    );
+    switch (built) {
+      case UnlandEndpointRefused(:final reason):
+        return reason;
+      case UnlandEndpointReady(:final command):
+        into.add(command);
+        return null;
+    }
+  }
+
   final panel = doc.devices.values
       .where((d) => d.designator.trim().toLowerCase() == wanted.toLowerCase())
       .firstOrNull;
   if (panel == null) {
     return 'No device in this project is called "$wanted".';
   }
+
+  // WHICH COMMAND IS A QUESTION ABOUT THE DOCUMENT, not about the menu.
+  // The batch bar can aim at a mixed selection, so a landed row and an
+  // unlanded one in the same gesture each get the command that fits.
+  final landedOn = doc.links[edit.linkId]?.conductors.firstOrNull?.to;
+  final isLanded = landedOn is PortEndpoint;
 
   final free = freePanelPositions(
     doc,
@@ -664,8 +702,17 @@ String? _landing({
     // NAMES THE PANEL AND THE SHORTFALL, because the person is looking
     // at a selection of rows and needs to know whether to pick a bigger
     // panel or land fewer of them.
-    return '${panel.designator} has no free position left, so that drop '
-        'was not landed. Nothing in this batch was applied.';
+    //
+    // AND IT SAYS WHICH ACT DID NOT HAPPEN. A move that reported "that
+    // drop was not landed" would tell a person their cable is loose when
+    // it is still exactly where it was, which is the worse of the two
+    // things they could believe about a rack they cannot see.
+    return isLanded
+        ? '${panel.designator} has no other free position, so '
+              '${doc.links[edit.linkId]?.designator ?? 'that drop'} stayed '
+              'where it is. Nothing in this batch was applied.'
+        : '${panel.designator} has no free position left, so that drop '
+              'was not landed. Nothing in this batch was applied.';
   }
 
   final position = free.first;
@@ -675,8 +722,43 @@ String? _landing({
     // THE NUMBER ON THE PART, not the designator this product allocated
     // (DR-040 §11.39.8).
     portDesignator: position.positionToken,
-    usedRackLabels: usedRackLabels(doc, alsoUsed: claimedRackLabels),
+    // EXCLUDES THIS DROP, which matters only for a move: the label it is
+    // about to give up is still on the document, and a scan that counted
+    // it would allocate a suffixed variant to work around a name nobody
+    // else holds.
+    usedRackLabels: usedRackLabels(
+      doc,
+      exceptLinkId: edit.linkId,
+      alsoUsed: claimedRackLabels,
+    ),
   );
+
+  if (isLanded) {
+    final built = buildMoveEndpointCommand(
+      doc: doc,
+      linkId: edit.linkId,
+      port: position.port,
+      rackLabel: resolved.label,
+      usedRackLabels: usedRackLabels(
+        doc,
+        exceptLinkId: edit.linkId,
+        alsoUsed: claimedRackLabels,
+      ),
+      now: controller.clock.nowUtc(),
+      actor: controller.actor,
+    );
+    switch (built) {
+      case MoveEndpointRefused(:final reason):
+        return reason;
+      case MoveEndpointReady(:final command):
+        into.add(command);
+        claimedPorts.add(position.port.portId);
+        if (command.rewritesRackLabel) {
+          if (resolved.label case final l?) claimedRackLabels.add(l);
+        }
+        return null;
+    }
+  }
 
   final built = buildBindEndpointCommand(
     doc: doc,

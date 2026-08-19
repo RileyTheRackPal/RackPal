@@ -1637,7 +1637,9 @@ class _BatchBarState extends State<_BatchBar> {
     final column = widget.column;
     final choices = column == null
         ? null
-        : structureCellChoices(column, widget.doc);
+        // TRUE, because the bar has no row to ask about — see
+        // `structureCellChoices`.
+        : structureCellChoices(column, widget.doc, landed: true);
     return ColoredBox(
       color: theme.colorScheme.surfaceContainerHighest,
       child: Padding(
@@ -1929,10 +1931,17 @@ class _BandDelegate extends SliverPersistentHeaderDelegate {
 /// it DISPLAYED, so core stays the only speller: `directBury` already
 /// prints `DIRECT BURY`, so a `.name` match is a bug waiting for the
 /// second time a label stops being the enum name uppercased.
+/// [landed] reaches `LANDS ON` alone and adds `NOT LANDED` (DR-074
+/// §11.73.1). The BATCH BAR passes true: it aims at a selection rather
+/// than at a row, and a person replacing a panel is exactly who wants to
+/// unland forty-six drops at once. A row in that selection with nothing
+/// to take off refuses by name, and the batch is all-or-nothing, so the
+/// blunt menu cannot half-apply.
 List<String>? structureCellChoices(
   StructureColumnId id,
-  RackDocument doc,
-) => switch (id) {
+  RackDocument doc, {
+  bool landed = false,
+}) => switch (id) {
   StructureColumnId.roughIn => RoughInStatus.values.map(roughInLabel).toList(),
   StructureColumnId.testResult => kTestCellOptions,
   // UNKNOWN IS AN OPTION HERE and is not on `ROUGH-IN`, which is the
@@ -1983,7 +1992,7 @@ List<String>? structureCellChoices(
   // can. `landingCellOptions` is document data, like `SERVICE`'s, but it
   // is a short list of designators rather than a registry, so it needs
   // no filtering picker.
-  StructureColumnId.landing => landingCellOptions(doc),
+  StructureColumnId.landing => landingCellOptions(doc, landed: landed),
   _ => null,
 };
 
@@ -2071,7 +2080,14 @@ class _DataRow extends StatelessWidget {
       // three of these store an enum, so there is nothing to parse and
       // nothing to typo. The text columns beside them store strings and
       // numbers, and their parsing lives in core.
-      final options = structureCellChoices(id, doc);
+      // THE ROW IS PART OF THE QUESTION for `LANDS ON` alone (DR-074
+      // §11.73.1): `NOT LANDED` is offered only where there is something
+      // to take off.
+      final options = structureCellChoices(
+        id,
+        doc,
+        landed: structureRowIsLanded(row),
+      );
       // A REGISTRY-BACKED COLUMN GETS THE FILTERING PICKER INSTEAD, and
       // the split is core's answer rather than an `id ==` test here, so
       // the batch bar below reaches the same one.
@@ -2100,19 +2116,20 @@ class _DataRow extends StatelessWidget {
         }
       } else if (id == StructureColumnId.landing) {
         // ═══════════════════════════════════════════════════════════════
-        // THE ONLY CELL THAT IS A CONTROL ON SOME ROWS AND TEXT ON OTHERS
+        // THE ONLY CELL WHOSE MENU DIFFERS PER ROW (DR-071, DR-074)
         // ═══════════════════════════════════════════════════════════════
-        // `buildBindEndpointCommand` refuses a drop that is already
-        // landed, because DR-040 §11.39.6 leaves moving one to a
-        // different port unruled and silently re-landing would rewrite a
-        // termination somebody recorded. A dropdown on a landed row would
-        // therefore be a control whose every use is refused, which is
-        // `#711`'s defect drawn on purpose.
+        // A landed row used to show TEXT, because `buildBindEndpointCommand`
+        // refuses an end that is already landed and a dropdown whose every
+        // use is refused is `#711`'s defect drawn on purpose. DR-074
+        // §11.73.1 gives that row two commands of its own, so the control
+        // comes back: picking a panel MOVES the drop there, and
+        // `kUnlandCell` takes it off.
         //
-        // So a landed row shows WHERE IT LANDED, as text, and an unlanded
-        // one shows the picker. `structureColumnIsEditable` cannot make
-        // this call: it answers per COLUMN, and this is per row.
-        if (structureRowIsLanded(row) || options == null || options.isEmpty) {
+        // WHICH ROWS GET `NOT LANDED` IS CORE'S ANSWER, through
+        // `structureCellChoices`, so the batch bar reaches the same list.
+        // `structureColumnIsEditable` still cannot make this call: it
+        // answers per COLUMN, and this is per row.
+        if (options == null || options.isEmpty) {
           return Text(
             text,
             maxLines: 1,
@@ -2181,6 +2198,23 @@ class _DataRow extends StatelessWidget {
           // like when it is editable, and the hint says so.
           value: text == kUnknownCell ? '' : text,
           bold: id == StructureColumnId.fieldLabel,
+          // THE SAME PIN THE `CLASS` COLUMN DRAWS, for the same reason
+          // one ruling later: a value a PERSON asserted outranks one the
+          // product would derive, and a cell that showed no difference
+          // leaves them unable to see why (DR-074 §11.73.2, DR-067
+          // §11.66.3).
+          //
+          // IT IS ALSO THE ANSWER TO A QUESTION ASKED AT A MOMENT: they
+          // moved a drop, the position changed, this did not. The ruling
+          // requires the surface to say the label was kept, and a mark
+          // that is still there tomorrow says it better than a banner
+          // that was gone before they looked up.
+          badge:
+              id == StructureColumnId.rackLabel &&
+                  structureRackLabelIsUserSet(doc, row)
+              ? 'Typed by hand, so it stays put when this drop moves. '
+                    'Clear the cell to let the product name it again.'
+              : null,
           onEdit: onEdit,
         );
       }
@@ -2238,6 +2272,7 @@ class _TextCell extends StatefulWidget {
     required this.bold,
     required this.onEdit,
     required this.onCaret,
+    this.badge,
   });
 
   final Uuid linkId;
@@ -2246,6 +2281,11 @@ class _TextCell extends StatefulWidget {
   final bool bold;
   final String? Function(List<StructureCellEdit> edits) onEdit;
   final ValueChanged<(Uuid, StructureColumnId)?> onCaret;
+
+  /// A tooltip on a pin drawn before the box, or null for no mark.
+  /// `_ChoiceCell.badge`'s twin: `RACK LBL` uses it for DR-074 §11.73.2's
+  /// hand-set label, as `CLASS` uses it for DR-067 §11.66.3's override.
+  final String? badge;
 
   @override
   State<_TextCell> createState() => _TextCellState();
@@ -2313,7 +2353,7 @@ class _TextCellState extends State<_TextCell> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return TextField(
+    final box = TextField(
       controller: _text,
       focusNode: _focus,
       style: theme.textTheme.bodySmall?.copyWith(
@@ -2330,6 +2370,29 @@ class _TextCellState extends State<_TextCell> {
       ),
       onSubmitted: (_) => _commit(),
     );
+    // THE PIN SITS BESIDE THE BOX AND NOT INSIDE IT. An `InputDecoration`
+    // prefix would move the text the person types, and this cell is
+    // typed into constantly; `_ChoiceCell` draws its mark the same way,
+    // in `onSurfaceVariant` rather than `error`, because naming a hole by
+    // hand is something the ruling provides for rather than something to
+    // be scolded about.
+    if (widget.badge case final mark?) {
+      return Row(
+        children: [
+          Tooltip(
+            message: mark,
+            child: Icon(
+              Icons.push_pin_outlined,
+              size: 12,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(child: box),
+        ],
+      );
+    }
+    return box;
   }
 }
 

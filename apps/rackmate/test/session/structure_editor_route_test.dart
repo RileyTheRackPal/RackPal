@@ -57,14 +57,21 @@ RackDocument _project({List<(String, String)> rooms = const []}) {
 /// A front-faced fixture would offer zero positions and every landing
 /// below would refuse for a reason that had nothing to do with the case
 /// under test.
-String _addPanel(RackDocument doc, {required int positions}) {
-  const tplId = 'tpl.pp-land';
-  const deviceId = Uuid('dev-pp-land');
+String _addPanel(
+  RackDocument doc, {
+  required int positions,
+  // A SECOND PANEL IS WHAT A MOVE NEEDS (`#724`), so the ids follow the
+  // designator rather than being constants: two devices sharing one id
+  // would silently be one panel, and the move would look like a no-op.
+  String designator = 'PP-1',
+}) {
+  final tplId = 'tpl.pp-land-$designator';
+  final deviceId = Uuid('dev-pp-land-$designator');
   EntityMeta meta() =>
       EntityMeta(createdAt: _when, updatedAt: _when, updatedBy: 'test');
 
   doc.templates['$tplId@1'] = TemplateSnapshot(
-    templateId: const TemplateId(tplId),
+    templateId: TemplateId(tplId),
     version: 1,
     contentHash: 'sha256:$tplId',
     capturedAt: _when,
@@ -98,7 +105,7 @@ String _addPanel(RackDocument doc, {required int positions}) {
   // also means a panel with no location tests the landing while quietly
   // skipping the allocation. This fixture exercises both halves.
   final room = AddLocationCommand(
-    name: 'Media Closet',
+    name: 'Media Closet $designator',
     code: 'MC',
     order: nextLocationOrder(doc),
     floorNumber: 1,
@@ -110,18 +117,18 @@ String _addPanel(RackDocument doc, {required int positions}) {
   doc.devices[deviceId] = DeviceInstance(
     id: deviceId,
     kind: DeviceKind.rackDevice,
-    templateRef: const TemplateRef(
+    templateRef: TemplateRef(
       templateId: TemplateId(tplId),
       version: 1,
       contentHash: 'sha256:$tplId',
     ),
-    designator: 'PP-1',
+    designator: designator,
     name: 'Patch Panel',
     placement: const OffRackPlacement(),
     locationId: room.id,
     meta: meta(),
   );
-  return 'PP-1';
+  return designator;
 }
 
 void main() {
@@ -1101,13 +1108,15 @@ void main() {
       }
     });
 
-    testWidgets('a drop already landed is refused, not silently re-landed', (
+    testWidgets('a drop already landed is MOVED, where it was refused', (
       tester,
     ) async {
-      // DR-040 §11.39.6 leaves moving a drop off a jack unruled, so
-      // re-landing would rewrite a termination somebody recorded. The
-      // table draws a landed row as TEXT for this reason; the action
-      // refuses anyway, because the batch bar can still aim at one.
+      // THIS CASE USED TO ASSERT THE OPPOSITE, and the reversal is the
+      // point. DR-071 §11.70.3 drew a landed row as TEXT and refused the
+      // second pick, because DR-040 §11.39.6 left moving a drop off a
+      // jack unruled and silently re-landing would rewrite a termination
+      // somebody recorded. DR-074 §11.73.1 rules it, so the second pick
+      // is now a MOVE with its own command and its own undo entry.
       final (doc, ids) = job(1);
       final built = await buildTestApp(measurer, document: doc);
       await tester.pumpWidget(built.app);
@@ -1122,7 +1131,51 @@ void main() {
         value: panel,
       );
       expect(edit([land()]), isNull);
-      expect(edit([land()]), contains('already landed'));
+      final wasOn =
+          (doc.links[ids.first]!.conductors.first.to as PortEndpoint).portId;
+      expect(edit([land()]), isNull);
+      expect(
+        (doc.links[ids.first]!.conductors.first.to as PortEndpoint).portId,
+        isNot(wasOn),
+      );
+
+      // AND IT NEVER EXHAUSTS THE PANEL, which is not obvious and is
+      // worth pinning: a moving cable frees the hole it leaves, so the
+      // fourth pick on a four-hole panel still has three to choose from.
+      for (var i = 0; i < 4; i++) {
+        expect(edit([land()]), isNull);
+      }
+      expect(doc.links[ids.first]!.conductors.first.to, isA<PortEndpoint>());
+    });
+
+    testWidgets('a panel with ONE hole says the drop stayed where it is', (
+      tester,
+    ) async {
+      // THE REFUSAL A MOVE NEEDED AND A LANDING'S WORDING WOULD HAVE GOT
+      // WRONG. The only free position on this panel is the one this cable
+      // is already in, so there is nowhere to move it. Telling a person
+      // "that drop was not landed" would say their cable is loose when it
+      // is exactly where they left it.
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final panel = _addPanel(doc, positions: 1, designator: 'PP-ONE');
+      final edit = buildStructureEditAction(controller: controller);
+
+      StructureCellEdit land() => StructureCellEdit(
+        linkId: ids.first,
+        column: StructureColumnId.landing,
+        value: panel,
+      );
+      expect(edit([land()]), isNull);
+      expect(
+        edit([land()]),
+        'PP-ONE has no other free position, so W001 stayed where it is. '
+        'Nothing in this batch was applied.',
+      );
+      expect(doc.links[ids.first]!.conductors.first.to, isA<PortEndpoint>());
     });
 
     testWidgets('a panel this project does not hold is refused by name', (
@@ -1198,6 +1251,266 @@ void main() {
         reason: 'one gesture came back, not all three',
       );
     });
+    testWidgets('LANDS ON moves a landed drop to another panel (`#724`)', (
+      tester,
+    ) async {
+      // DR-074 §11.73.1 through the cell. The same value that LANDS a
+      // stray drop MOVES a landed one, because which command runs is a
+      // question about the row rather than about the menu.
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final first = _addPanel(doc, positions: 2);
+      final second = _addPanel(doc, positions: 2, designator: 'PP-2');
+      final edit = buildStructureEditAction(controller: controller);
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.landing,
+            value: first,
+          ),
+        ]),
+        isNull,
+      );
+      final wasOn =
+          (doc.links[ids.first]!.conductors.first.to as PortEndpoint).portId;
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.landing,
+            value: second,
+          ),
+        ]),
+        isNull,
+        reason: 'a landed row is no longer refused',
+      );
+      final nowOn =
+          (doc.links[ids.first]!.conductors.first.to as PortEndpoint).portId;
+      expect(nowOn, isNot(wasOn));
+      expect(
+        doc.ports,
+        contains(wasOn),
+        reason: 'the freed jack stays on the panel (§11.73.4)',
+      );
+
+      // ONE UNDO PUTS IT BACK ON THE ORIGINAL HOLE, which is the whole
+      // argument for a single command: unland-then-re-land would cost
+      // two.
+      controller.undoLast();
+      expect(
+        (doc.links[ids.first]!.conductors.first.to as PortEndpoint).portId,
+        wasOn,
+      );
+    });
+
+    testWidgets('the SAME panel means the next free hole on it', (
+      tester,
+    ) async {
+      // Settled by the user on 2026-08-19: it is the only way to say "not
+      // this hole" from a table where the product picks the hole
+      // (DR-071 §11.70.1).
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final panel = _addPanel(doc, positions: 3);
+      final edit = buildStructureEditAction(controller: controller);
+
+      StructureCellEdit land() => StructureCellEdit(
+        linkId: ids.first,
+        column: StructureColumnId.landing,
+        value: panel,
+      );
+      expect(edit([land()]), isNull);
+      final wasOn =
+          (doc.links[ids.first]!.conductors.first.to as PortEndpoint).portId;
+
+      expect(edit([land()]), isNull);
+      expect(
+        (doc.links[ids.first]!.conductors.first.to as PortEndpoint).portId,
+        isNot(wasOn),
+      );
+    });
+
+    testWidgets('NOT LANDED takes the drop off its jack', (tester) async {
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final panel = _addPanel(doc, positions: 2);
+      final edit = buildStructureEditAction(controller: controller);
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.landing,
+            value: panel,
+          ),
+        ]),
+        isNull,
+      );
+      expect(doc.links[ids.first]!.structureOrigin!.rackLabel, isNotNull);
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.landing,
+            value: kUnlandCell,
+          ),
+        ]),
+        isNull,
+      );
+      final link = doc.links[ids.first]!;
+      expect(link.conductors.first.to, isA<OpenEndpoint>());
+      expect(
+        link.structureOrigin!.rackLabel,
+        isNull,
+        reason: 'an allocated label names a position the cable has left',
+      );
+
+      controller.undoLast();
+      expect(doc.links[ids.first]!.conductors.first.to, isA<PortEndpoint>());
+      expect(doc.links[ids.first]!.structureOrigin!.rackLabel, isNotNull);
+    });
+
+    testWidgets('a hand-set label survives both a move and an unland', (
+      tester,
+    ) async {
+      // §11.73.2's whole point, reached the way a person reaches it:
+      // type a name in RACK LBL, then move the drop.
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final first = _addPanel(doc, positions: 2);
+      final second = _addPanel(doc, positions: 2, designator: 'PP-2');
+      final edit = buildStructureEditAction(controller: controller);
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.landing,
+            value: first,
+          ),
+        ]),
+        isNull,
+      );
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.rackLabel,
+            value: 'BY-HAND-7',
+          ),
+        ]),
+        isNull,
+      );
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.landing,
+            value: second,
+          ),
+        ]),
+        isNull,
+      );
+      expect(doc.links[ids.first]!.structureOrigin!.rackLabel, 'BY-HAND-7');
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.landing,
+            value: kUnlandCell,
+          ),
+        ]),
+        isNull,
+      );
+      expect(
+        doc.links[ids.first]!.structureOrigin!.rackLabel,
+        'BY-HAND-7',
+        reason:
+            'a person who typed an identifier keeps it whether the cable '
+            'went to another hole or to no hole',
+      );
+    });
+
+    testWidgets('an EMPTY cell still does not unland, and says what does', (
+      tester,
+    ) async {
+      // The sentence changed but the refusal did not: reading a cleared
+      // box as "take the cable off the panel" would let a stray keystroke
+      // undo a termination.
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final controller = built.session.services.session.controller;
+      final panel = _addPanel(doc, positions: 2);
+      final edit = buildStructureEditAction(controller: controller);
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.landing,
+            value: panel,
+          ),
+        ]),
+        isNull,
+      );
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.landing,
+            value: '',
+          ),
+        ]),
+        'An empty cell does not unland a drop. Pick NOT LANDED to take '
+        'this end off its jack.',
+      );
+      expect(doc.links[ids.first]!.conductors.first.to, isA<PortEndpoint>());
+    });
+
+    testWidgets('NOT LANDED on a drop that never landed refuses by name', (
+      tester,
+    ) async {
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final edit = buildStructureEditAction(
+        controller: built.session.services.session.controller,
+      );
+
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.landing,
+            value: kUnlandCell,
+          ),
+        ]),
+        "That drop's rack end is not landed, so there is nothing to take "
+        'off.',
+      );
+    });
+
     testWidgets('typing a RACK LBL says a PERSON named the hole (`#721`)', (
       tester,
     ) async {

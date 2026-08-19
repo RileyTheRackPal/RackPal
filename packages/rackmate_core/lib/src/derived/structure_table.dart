@@ -1065,17 +1065,45 @@ LinkClass? resolveLinkClassCell(String label) {
 
 /// Whether this row's rack end is already punched down (DR-071 §11.70).
 ///
-/// A LANDED ROW IS NOT EDITABLE, and that is the model's rule rather
-/// than a UI preference: `buildBindEndpointCommand` refuses a drop that
-/// is already landed, because DR-040 §11.39.6 leaves moving one to a
-/// different port unruled and silently re-landing would rewrite a
-/// termination somebody recorded. The surface draws the landing as text
-/// instead of a control, so the refusal is something a person cannot
-/// walk into rather than something they are told about afterwards.
+/// WHICH MENU THE ROW GETS, and it is the model's answer rather than a UI
+/// preference. It used to mean something stronger: until DR-074 a landed
+/// row was not editable at all, because `buildBindEndpointCommand` refuses
+/// a drop that is already landed and a dropdown whose every use is refused
+/// is `#711`'s defect drawn on purpose.
+///
+/// DR-074 §11.73.1 spends that reasoning. A landed row now offers the same
+/// panels an unlanded one does, meaning MOVE rather than land, plus
+/// [kUnlandCell]. The distinction survives because the two rows run
+/// different commands, and because [kUnlandCell] must not appear on a row
+/// with nothing to take off.
 bool structureRowIsLanded(ScheduleEntry row) => switch (row.to.kind) {
   ScheduleEndKind.rackPort || ScheduleEndKind.unrackedPort => true,
   _ => false,
 };
+
+/// The `LANDS ON` option meaning "take this end back off its jack"
+/// (DR-074 §11.73.1).
+///
+/// NAMES THE RESULTING STATE, not the act, which is what every other
+/// closed-set cell in this table does: `FIELD CABLE`, `PLANNED`,
+/// `KEYSTONE`. Settled by the user on 2026-08-19 against `UNLAND`, which
+/// is this project's word rather than a word anybody says holding a punch
+/// tool, and against `TAKE OFF PANEL`, which does not fit the column.
+///
+/// It reads correctly beside the dash an unlanded row already shows: after
+/// picking it, the cell says `—` and the row is not landed.
+const String kUnlandCell = 'NOT LANDED';
+
+/// Whether this row's rack label is A PERSON'S rather than the
+/// allocator's (DR-074 §11.73.2).
+///
+/// `structureLinkClassIsUserSet`'s shape one column over, and for
+/// DR-067 §11.66.3's reason: the mark is what makes an override
+/// auditable. Here it also answers a question the person asks at a
+/// specific moment — they moved a drop, the position changed, the label
+/// did not, and the cell has to be able to say why.
+bool structureRackLabelIsUserSet(RackDocument doc, ScheduleEntry row) =>
+    doc.links[row.linkId]?.structureOrigin?.rackLabelLocked ?? false;
 
 /// Every home run whose RACK end is not punched down, in document order
 /// (DR-072 §11.71).
@@ -1121,7 +1149,12 @@ List<Uuid> unlandedHomeRunIds(RackDocument doc) {
 /// patch panel was would refuse the case the ruling exists for. What
 /// makes a device offerable is that it HAS somewhere for a pulled cable
 /// to go, which `freePanelPositions` already answers.
-List<String> landingCellOptions(RackDocument doc) {
+///
+/// [landed] adds [kUnlandCell], because taking an end off its jack is only
+/// offered where there is something to take off. It is a parameter rather
+/// than a second function so that both callers — the cell and the batch
+/// bar — reach one list and cannot disagree about what the column offers.
+List<String> landingCellOptions(RackDocument doc, {bool landed = false}) {
   final out = <String>[];
   for (final device in doc.devices.values) {
     if (freePanelPositions(doc, panelDeviceId: device.id).isEmpty) continue;
@@ -1130,6 +1163,10 @@ List<String> landingCellOptions(RackDocument doc) {
     out.add(designator);
   }
   out.sort();
+  // AFTER THE SORT, so it sits at the end rather than wherever `N` falls
+  // among the panel designators. A destructive option hiding between
+  // `MDF-1` and `PP-1` is one a person picks by aiming badly.
+  if (landed) out.add(kUnlandCell);
   return out;
 }
 
