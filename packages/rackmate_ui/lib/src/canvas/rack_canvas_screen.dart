@@ -3964,7 +3964,13 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
             SizedBox(
               width: 280,
               child: DevicePalettePanel(
-                catalog: _catalog,
+                // WHAT THE DOCUMENT CAN PLACE, not what this build ships
+                // (DR-077 §11.76.1). `_catalog` is still the seed data
+                // this screen's demo document is built FROM; it is no
+                // longer what the palette lists, because a template
+                // authored in the Device Builder is in the document and
+                // was in no catalog.
+                templates: buildPlaceableTemplates(_doc),
                 categoryOrder: kCatalogCategoryOrder,
                 searchFocusNode: _paletteSearchFocus,
                 searchController: _paletteSearchController,
