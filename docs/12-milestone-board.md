@@ -2449,6 +2449,49 @@ stricter than the product tests a product that does not exist"**.
 reachable. If a second surface ever wants domains in trade-frequency order, that is a change to both
 lists or to neither.
 
+**DR-074 IS BUILT (`#720`, phases `#721`–`#725`, `af79813`, `229fde2`, `c967d8b`, `fb50f67`,
+`fb7811d`).** A drop punched into the wrong port can be moved, and either end can be taken back off
+its jack. This closes the gap DR-040 §11.39.6 opened and which DR-071 §11.70.4 and DR-073 §11.72.7
+each recorded as still owed; both keep their own words and carry a pointer, because each is that
+ruling's record of what was true on the day.
+
+**THE MOVE IS ONE COMMAND WITH ONE UNDO ENTRY**, which is the clause worth the record: unland then
+re-land costs two steps and leaves the document momentarily saying a cable nobody has moved is lying
+loose in the rack. Three things survive a move and each survives for its own reason, so each has its
+own test: the freed pin (`ConnectPortsCommand`'s rule), the termination (it says how the cable END is
+finished, not which hole it is in), and a hand-set rack label.
+
+**THE HAND-SET LABEL NEEDED A BIT, AND THE BIT COULD NOT BE A TABLE ROW.** `StructureOriginField`
+drives every other origin field through `SetEntityPropertyCommand`, whose `revert` calls the same
+`set` closure `apply` does. A row that locked on the way in would re-lock on the way back out, so an
+assertion would survive its own undo. `SetRackLabelCommand` writes the pair instead, on
+`SetLinkClassCommand`'s precedent, and the `@internal`-setter agreement test names the exemption
+literally so a second field escaping the table still fails it.
+
+**THREE FINDINGS CAME OUT OF WRITING THE TESTS RATHER THAN THE CODE, and all three are copy.**
+
+* **A move never exhausts a panel**, because a moving cable frees the hole it leaves. The first
+  test written asserted the opposite from arithmetic. What DOES refuse is a panel whose only free
+  position is the one this cable is in, and the refusal it hit said *"that drop was not landed"*:
+  telling a person their cable is loose when it is exactly where they left it, which is the worse of
+  the two things they can believe about a rack they cannot see. A move now has its own sentence.
+* **`buildBindEndpointCommand` was still telling users a move is impossible** (*"not something this
+  can do yet"*), four commits after it became possible. Its test asserted
+  `contains('already landed')` and would have gone on passing over copy that had become false; it
+  now pins the whole sentence.
+* **The corpus has three spellings for one physical state.** `AddHomeRunCommand` wrote *"not yet
+  landed"*, the shipped starters say *"Rack end not yet terminated"* on 27 open ends, and an unland
+  needed a third. `_endOf` prints that string straight into the schedule's TO column, so this is
+  what an installer reads. The two paths CODE controls now share `kUnlandedEndDescription` (*"not
+  landed"*, settled by the user 2026-08-19); **documents already on disk and the authored starters
+  keep their own words**, because the description is persisted and rewriting it would move the bytes
+  of every file holding a drop (CR-117).
+
+**ONE CORPUS GAP FOUND AND NOT CLOSED HERE.** `docs/10-decisions.md`'s short-form table **stops at
+DR-036** while canon is at DR-074: thirty-eight rulings have no summary row. Adding one row for
+DR-074 alone would make an abandoned table look current, which is worse than an obviously stale one.
+Recorded as a task somebody should take deliberately.
+
 ### 5.3 M4, The device builder · `L` · IN PROGRESS, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three

@@ -143,6 +143,31 @@ enum LabelKey {
   // when they punch one stray drop down; "Undo bind" is true of both.
   bindEndpoint,
 
+  // MOVING A LANDED END TO ANOTHER JACK
+  // (commands/move_endpoint_command.dart), `#722`, DR-074 §11.73.1. NOT
+  // `bindEndpoint`, because the two are what the ruling calls two acts
+  // with two consequences: a bind records a punchdown that has happened,
+  // and a move says the recorded one was wrong. "Undo bind" offered after
+  // a correction would name the act the person was correcting.
+  moveEndpoint,
+
+  // TAKING A LANDED END BACK OFF ITS JACK
+  // (commands/move_endpoint_command.dart), `#723`, DR-074 §11.73.1. The
+  // third value of the same family, on `SetLinkClassCommand`'s split:
+  // folding it into `moveEndpoint` would give the Edit menu one label for
+  // two opposite actions, and an unland is the one a person most needs
+  // the menu to name before they take it back.
+  unlandEndpoint,
+
+  // NAMING THE HOLE BY HAND (commands/home_run_commands.dart), `#721`,
+  // DR-074 §11.73.2. Its own value rather than `setEntityProperty`,
+  // because this is the write that MAKES a label a person's, and three
+  // gestures now touch that field: a landing allocates one, a move
+  // re-derives it, and this one asserts it. A menu saying "Undo edit" for
+  // all three would leave the person unable to see which of them they
+  // are about to take back.
+  setRackLabel,
+
   // EDITING ONE PROPERTY (commands/set_entity_property_command.dart),
   // M3-A/5. ONE value covering `Outlet`, `StructureBody`, `DeviceInstance`
   // and `Link` and every field of each: the Edit menu offers "Undo edit",

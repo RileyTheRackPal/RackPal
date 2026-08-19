@@ -1,5 +1,65 @@
 # Update Log
 
+## 2026-08-19
+
+* **Creation**: [DR-074, a wrong hole can be corrected](/decisions/dr-074-a-wrong-hole-can-be-corrected.md),
+  **BUILT** across `#721`–`#725` (`af79813`, `229fde2`, `c967d8b`, `fb50f67`,
+  `fb7811d`). A drop punched into the wrong port can be moved and either end can
+  be taken back off its jack. This closes the gap DR-040 §11.39.6 opened and
+  which DR-071 §11.70.4 and DR-073 §11.72.7 each recorded as **still owed**;
+  both keep their own words in canon and carry a pointer, because each is that
+  ruling's record of what was true on the day.
+* **Note**: **THE LOCK COULD NOT BE A TABLE ROW, AND THE REASON GENERALISES.**
+  `SetEntityPropertyCommand.revert` calls the same `set` closure `apply` does,
+  so an `EntityField` that wrote `rackLabelLocked` beside the label would
+  **re-lock on the way back out** and an assertion would survive its own undo.
+  The general shape: **a generic write path is the wrong home for a rule whose
+  inverse is not its own mirror.** `SetLinkClassCommand`'s split is the
+  precedent and it was already carrying the same argument for the same pair.
+* **Note**: the `@internal`-setter agreement test caught the new field within a
+  minute of it existing, which is the second time that gate has paid. The
+  exemption is **named literally** rather than filtered by a predicate, on
+  `location.dart`'s `parentId` precedent, so a SECOND field escaping the table
+  still fails the case:
+  [a test's exemption list is where the bug lives](/practices/a-tests-exemption-list-is-where-the-bug-lives.md).
+* **Note**: **A BLANK CELL HAD TO CLEAR THE LOCK, or the feature shipped a
+  one-way door.** A locked null says "nobody may ever name this", is reachable
+  by the ordinary act of emptying a box, and no surface could undo it. That is
+  exactly what `ClearLinkClassOverrideCommand` exists to refuse, one ruling
+  earlier, and nothing in DR-074 required noticing it.
+* **Note**: **THREE FINDINGS THIS TASK WERE COPY, AND ALL THREE CAME OUT OF
+  WRITING TESTS RATHER THAN CODE.** A move never exhausts a panel, because a
+  moving cable frees the hole it leaves, and the refusal that DOES fire said
+  *"that drop was not landed"*: telling a person their cable is loose when it is
+  exactly where they left it. `buildBindEndpointCommand` was still telling users
+  a move is *"not something this can do yet"* four commits after it became
+  possible, behind a `contains('already landed')` assertion that could not see
+  it. And the corpus had **three spellings for one physical state**, because
+  `_endOf` prints an `OpenEndpoint`'s description straight into the schedule's
+  TO column. See
+  [print the output before claiming copy is done](/practices/print-the-output-before-claiming-copy-is-done.md).
+* **Note**: the third of those is **not fully closeable and the record says so**.
+  The two paths code controls now share `kUnlandedEndDescription`, but documents
+  already on disk carry whatever string they were written with, and the shipped
+  starters say *"Rack end not yet terminated"* on 27 open ends. The description
+  is PERSISTED, so a sweep would move the bytes of every file holding a drop
+  ([CR-117](/invariants/cr-117-byte-exactness.md)). **A wording decision reaches
+  further than the code that makes it when the wording is stored.**
+* **Note**: **A LINK ID IS NOT ENOUGH TO NAME AN END.** `linkAtPoint` answers
+  with a link, and a run landed at both ends draws two pennants carrying the
+  same one, so a move built on that answer moves whichever end the code names
+  first, silently, on a cable somebody has to find in a rack. The two readings
+  run in **opposite directions** off one press: a half-landed run's single
+  pennant means *finish the other end*, a landed run's means *move this one*.
+  One rule covers both and keeps the preview honest: **the anchor is the end the
+  gesture is not writing.**
+* **Note**: **`docs/10-decisions.md` STOPS AT DR-036 while canon is at DR-074**,
+  so thirty-eight rulings have no summary row. Not closed here: adding one row
+  for DR-074 alone would make an abandoned table look current, which is worse
+  than an obviously stale one. Recorded in `docs/12` §5.2 as work somebody
+  should take deliberately.
+
+
 ## 2026-08-15 (tenth entry)
 
 * **Note**: **M4'S CLAUSE 2 CANNOT BE PERFORMED, AND THE BLOCKER BELONGS TO NO

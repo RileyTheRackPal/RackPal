@@ -29,6 +29,7 @@
 // distance-to-centre instead would hand back the pennant underneath
 // whenever the visible one is the larger of the two.
 
+import 'package:meta/meta.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 
 /// The link whose pennant contains [point], or null when none does.
@@ -50,6 +51,73 @@ Uuid? linkAtPoint(
   for (var i = scene.netLabels.length - 1; i >= 0; i--) {
     final label = scene.netLabels[i];
     if (label.pennant.inflate(tolerance).contains(point)) return label.linkId;
+  }
+  return null;
+}
+
+/// What a press on a pennant would write: which run, which END of it, and
+/// whether writing it LANDS the run or MOVES it.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// THE ANCHOR IS THE END THIS GESTURE IS NOT WRITING
+/// ═════════════════════════════════════════════════════════════════════
+/// One rule covering two opposite readings of a pennant (see
+/// `_runEndAt`), and it is what makes the preview honest: the band drawn
+/// while the pointer is down spans [anchorPortId] and whatever pin the
+/// pointer is over, which is exactly the pair the document holds one
+/// event later (DR-073 §11.72.2). A landing anchors on the pin the run
+/// already has; a move anchors on the FAR end and swings the near one.
+@immutable
+final class RunEndGrab {
+  const RunEndGrab({
+    required this.linkId,
+    required this.end,
+    required this.anchorPortId,
+    required this.moving,
+  });
+
+  /// The home run being finished or corrected.
+  final Uuid linkId;
+
+  /// The end a commit will write. `Conductor.from` for [LinkEnd.field],
+  /// `to` for [LinkEnd.rack].
+  final LinkEnd end;
+
+  /// The pin at the OTHER end, which the preview band starts from.
+  final Uuid anchorPortId;
+
+  /// True when [end] already sits on a pin, so the commit is
+  /// `MoveEndpointCommand` rather than `BindEndpointCommand` (DR-074
+  /// §11.73.1). They are two acts with two undo labels, and the surface
+  /// carries the distinction because the model does.
+  final bool moving;
+
+  @override
+  String toString() =>
+      'RunEndGrab(${moving ? 'move' : 'land'} ${end.name} of $linkId)';
+}
+
+/// The rendered pennant containing [point], or null when none does.
+///
+/// WHICH PENNANT, NOT WHICH LINK, and that distinction is what DR-074
+/// §11.73.1 needs. [linkAtPoint] answers with a link id, and a run landed
+/// at BOTH ends draws two pennants carrying the same one: a gesture that
+/// moves "the end you grabbed" cannot be built on an answer that cannot
+/// tell the two apart. `RenderedNetLabel` already carries the device and
+/// the port key it was drawn against, so the end is readable off the hit
+/// with no new geometry.
+///
+/// Same walk, same LAST DRAWN WINS rule, same tolerance contract as
+/// [linkAtPoint] — one measurement, read two ways, rather than two walks
+/// that can disagree about which pennant is on top.
+RenderedNetLabel? netLabelAtPoint(
+  SchematicScene scene,
+  DPt point, {
+  double tolerance = 0,
+}) {
+  for (var i = scene.netLabels.length - 1; i >= 0; i--) {
+    final label = scene.netLabels[i];
+    if (label.pennant.inflate(tolerance).contains(point)) return label;
   }
   return null;
 }

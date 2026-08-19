@@ -94,6 +94,7 @@ final class StructureOrigin {
     TerminationType? terminationField,
     TerminationType? terminationRack,
     String? rackLabel,
+    bool rackLabelLocked = false,
     Wall? wall,
     MountSurface? mountSurface,
     Len? mountHeightAff,
@@ -101,6 +102,7 @@ final class StructureOrigin {
        _terminationField = terminationField,
        _terminationRack = terminationRack,
        _rackLabel = rackLabel,
+       _rackLabelLocked = rackLabelLocked,
        _wall = wall,
        _mountSurface = mountSurface,
        _mountHeightAff = mountHeightAff;
@@ -140,11 +142,18 @@ final class StructureOrigin {
   final bool boxless;
 
   // Every field below is wired to `StructureOriginField`
-  // (commands/home_run_commands.dart), so all six are converted. THE TWO
-  // LABELS ARE NOT SAFE TO SET DIRECTLY even from `src/commands/`: CR-113
-  // makes them unique project-wide, and only
-  // `buildSetStructureOriginProperty` scans for a collision. `@internal`
-  // buys the package boundary; the builder buys the invariant.
+  // (commands/home_run_commands.dart) EXCEPT [rackLabelLocked], which is
+  // written by `SetRackLabelCommand` beside the label it qualifies: a
+  // table row's `set` is called by `revert` as well as by `apply`, so a
+  // row that locked on the way in would re-lock on the way back out.
+  // (The table was six rows when this note was written; DR-046 made it
+  // seven by splitting the terminations, and DR-074 adds no eighth.)
+  //
+  // THE TWO LABELS ARE NOT SAFE TO SET DIRECTLY even from `src/commands/`:
+  // CR-113 makes them unique project-wide, and only
+  // `buildSetStructureOriginProperty` and `buildSetRackLabel` scan for a
+  // collision. `@internal` buys the package boundary; the builders buy the
+  // invariant.
 
   /// "LR-TV-1A" — on the wall plate. REQUIRED, unique project-wide across
   /// ALL Structure bodies (CR-113).
@@ -159,6 +168,35 @@ final class StructureOrigin {
   String? get rackLabel => _rackLabel;
   @internal
   set rackLabel(String? v) => _rackLabel = v;
+
+  /// TRUE ONLY WHEN A PERSON TYPED THE RACK LABEL (DR-074 §11.73.2).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// WHOSE NAME IS THIS, AND WHAT HAPPENS WHEN THE CABLE MOVES
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A rack label is DERIVED from where the run landed (DR-040 §11.39.3),
+  /// so `1A-PP-101` on a cable now sitting in position 04 is a wrong hole
+  /// number on the one column a trim tech works from: worse than no label
+  /// at all. A move therefore re-derives it. But the `RACK LBL` column
+  /// lets a person type one, CR-113 makes it unique project-wide, and
+  /// discarding somebody's own identifier is the loss G4 exists to
+  /// refuse. One field cannot tell those two apart, which is the same
+  /// shape as `Link.linkClassLocked` and for the same reason.
+  ///
+  /// WRITTEN BY THE `RACK LBL` CELL'S OWN EDIT PATH AND BY NOTHING ELSE.
+  /// `AddHomeRunCommand` and `BindEndpointCommand` both write labels the
+  /// ALLOCATOR produced, and locking those would freeze a derived name
+  /// onto a cable that is free to move.
+  ///
+  /// ON THE WIRE THIS KEY IS ABSENT WHEN FALSE, following
+  /// `Link.linkClassLocked` and deliberately NOT `designatorLocked`,
+  /// which is written unconditionally: an always-written key here would
+  /// rewrite every document already on disk and move `kSchemaVersion` to
+  /// record something nobody has said (CR-117).
+  bool _rackLabelLocked;
+  bool get rackLabelLocked => _rackLabelLocked;
+  @internal
+  set rackLabelLocked(bool v) => _rackLabelLocked = v;
 
   Wall? _wall;
   Wall? get wall => _wall;

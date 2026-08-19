@@ -1625,6 +1625,12 @@ JsonMap _encodeStructureOrigin(StructureOrigin o) {
     json['terminationRack'] = encodeEnumName(t);
   }
   putIfNotNull(json, 'rackLabel', o.rackLabel);
+  // DR-074 §11.73.2, AND WRITTEN ONLY WHEN TRUE for `linkClassLocked`'s
+  // reason rather than `designatorLocked`'s: false is what every document
+  // written before this key means, since nothing could hand-set a label
+  // and say so, and emitting it would rewrite every file in the corpus on
+  // first save. `kSchemaVersion` does not move (CR-117).
+  if (o.rackLabelLocked) json['rackLabelLocked'] = true;
   if (o.wall != null) json['wall'] = encodeEnumName(o.wall!);
   if (o.mountSurface != null) {
     json['mountSurface'] = encodeEnumName(o.mountSurface!);
@@ -1660,6 +1666,11 @@ StructureOrigin _decodeStructureOrigin(JsonMap json) => StructureOrigin(
           'StructureOrigin.terminationRack',
         ),
   rackLabel: asStrOrNull(json['rackLabel'], 'StructureOrigin.rackLabel'),
+  // ABSENT MEANS FALSE: every document written before DR-074 carries a
+  // label the allocator produced, and none of them could say otherwise.
+  rackLabelLocked:
+      json['rackLabelLocked'] != null &&
+      asBool(json['rackLabelLocked'], 'StructureOrigin.rackLabelLocked'),
   wall: json['wall'] == null
       ? null
       : decodeEnumStrict(

@@ -2515,4 +2515,128 @@ void main() {
       );
     });
   });
+
+  group('the LANDS ON cell after DR-074 (`#724`)', () {
+    /// A panel with [positions] rear punchdowns, so `freePanelPositions`
+    /// has something to walk.
+    void addPanel(RackDocument doc, {int positions = 2}) {
+      const tplId = 'tpl.pp-ui';
+      doc.templates['$tplId@1'] = TemplateSnapshot(
+        templateId: const TemplateId(tplId),
+        version: 1,
+        contentHash: 'sha256:$tplId',
+        capturedAt: _now,
+        body: TemplateBody(
+          manufacturer: 'Generic',
+          model: 'PP-UI',
+          displayName: 'Patch Panel',
+          typePrefix: 'PP',
+          ports: [
+            for (var i = 1; i <= positions; i++)
+              PortDef(
+                key: PortKey('rear.$i'),
+                label: i.toString().padLeft(2, '0'),
+                connector: const ConnectorTypeId('conn.punchdown_110'),
+                signalFamily: const SignalFamilyId('net.ethernet'),
+                face: Face.rear,
+                position: const PanelPosition(
+                  ruOffset: 0,
+                  xTwelfth: 0,
+                  xFineNm: Len.zero,
+                  yFineNm: Len.zero,
+                ),
+                order: FracIndex('a$i'),
+              ),
+          ],
+        ),
+      );
+      doc.devices[const Uuid('dev-pp-ui')] = DeviceInstance(
+        id: const Uuid('dev-pp-ui'),
+        kind: DeviceKind.rackDevice,
+        templateRef: const TemplateRef(
+          templateId: TemplateId(tplId),
+          version: 1,
+          contentHash: 'sha256:$tplId',
+        ),
+        designator: 'PP-1',
+        name: 'Patch Panel',
+        placement: const OffRackPlacement(),
+        meta: _meta(),
+      );
+    }
+
+    /// Turns `LANDS ON` on, the way a person does. It is an OPTIONAL
+    /// column (DR-071 §11.70), so without this the cell under test is not
+    /// built at all and a finder would pass or fail for the wrong reason.
+    Future<void> showLandsOn(WidgetTester tester) async {
+      await tester.tap(find.text('Columns'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('LANDS ON'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('LANDS ON'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(4, 4));
+      await tester.pumpAndSettle();
+    }
+
+    /// Every option the `LANDS ON` menus on screen offer.
+    ///
+    /// READS THE ITEMS RATHER THAN TAPPING, because the row carries
+    /// several dropdowns and picking one by position passes for the wrong
+    /// column the next time a column is added.
+    Set<String> landingOptions(WidgetTester tester) => {
+      for (final menu in tester.widgetList<DropdownButton<String>>(
+        find.byType(DropdownButton<String>),
+      ))
+        for (final item in menu.items ?? const <DropdownMenuItem<String>>[])
+          if (item.value case final v?) v,
+    };
+
+    testWidgets('a LANDED row offers NOT LANDED, where it showed text', (
+      tester,
+    ) async {
+      // DR-071 §11.70.3 drew a landed row as TEXT because every use of a
+      // control there was refused. DR-074 §11.73.1 gives that row two
+      // commands, so the control is back and this is what changed on
+      // screen.
+      final doc = _project();
+      addPanel(doc);
+      final h = _Harness(doc);
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6 @panel=PP-1');
+      await tester.pumpAndSettle();
+      expect(
+        doc.links.values.single.conductors.first.to,
+        isA<PortEndpoint>(),
+        reason: 'the line landed it, so this row is the landed case',
+      );
+
+      await showLandsOn(tester);
+      expect(landingOptions(tester), contains(kUnlandCell));
+    });
+
+    testWidgets('an UNLANDED row is offered no way to unland', (tester) async {
+      final doc = _project();
+      addPanel(doc);
+      final h = _Harness(doc);
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      await tester.pumpAndSettle();
+      expect(
+        doc.links.values.single.conductors.first.to,
+        isNot(isA<PortEndpoint>()),
+      );
+
+      await showLandsOn(tester);
+      final options = landingOptions(tester);
+      expect(options, contains('PP-1'));
+      expect(
+        options,
+        isNot(contains(kUnlandCell)),
+        reason:
+            'an option whose every use is refused is `#711` drawn on '
+            'purpose',
+      );
+    });
+  });
 }

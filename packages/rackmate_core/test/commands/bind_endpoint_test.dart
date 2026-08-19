@@ -437,9 +437,14 @@ void main() {
     });
 
     test('a drop that is ALREADY landed is refused, not re-landed', () {
-      // DR-040 §11.39.6: moving a drop off a jack it is punched into is
-      // its own gesture and is not ruled. Silently re-landing it would
-      // rewrite a termination somebody recorded.
+      // A BIND IS STILL NOT A MOVE, which is the half of DR-040 §11.39.6
+      // that DR-074 did not change: re-landing here would rewrite a
+      // termination somebody recorded and take the rack label with it,
+      // under the undo label of the wrong act. What DID change is where
+      // the sentence sends a person, so it is pinned WHOLE rather than by
+      // `contains`: it used to end "not something this can do yet", and a
+      // `contains('already landed')` would have gone on passing over copy
+      // that had become false.
       final p = _project();
       _ready(_build(p.doc, p.linkId)).apply(p.doc);
 
@@ -450,7 +455,11 @@ void main() {
         designator: '02',
         rackLabel: '1A-PP-102',
       );
-      expect(_refusal(second), contains('already landed'));
+      expect(
+        _refusal(second),
+        "That drop's rack end is already landed. To put it in a different "
+        'port, move it rather than landing it again.',
+      );
     });
 
     test('a punchdown position that already has a cable in it', () {

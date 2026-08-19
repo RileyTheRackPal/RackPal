@@ -379,7 +379,7 @@ final class AddHomeRunCommand extends Command<RackDocument> {
       conductors: [
         Conductor(
           from: fieldEnd,
-          to: rackEnd ?? const OpenEndpoint('not yet landed'),
+          to: rackEnd ?? const OpenEndpoint(kUnlandedEndDescription),
         ),
       ],
       structureOrigin: StructureOrigin(
@@ -858,6 +858,233 @@ SetStructureOriginResult buildSetStructureOriginProperty<T>({
       field: field,
       from: from,
       to: value,
+      now: now,
+      actor: actor,
+    ),
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// THE ONE EDIT PATH THAT MAY SAY "A PERSON TYPED THIS" (DR-074 §11.73.2)
+// ═════════════════════════════════════════════════════════════════════════
+// A rack label has two authors. The allocator writes one at the moment a
+// run lands, because the label is DERIVED from the position it landed in
+// (DR-040 §11.39.3); a person writes one in the `RACK LBL` column, and
+// CR-113 makes theirs unique project-wide. Both end up in the same string
+// field, and until DR-074 nothing had to tell them apart.
+//
+// A MOVE IS WHAT MAKES THE DIFFERENCE MATTER. Re-deriving is right for an
+// allocated label — `1A-PP-101` on a cable now sitting in position 04 names
+// the wrong hole on the one column a trim tech works from — and wrong for
+// somebody's own identifier, which G4 refuses to discard. So the write path
+// a person drives records that it was a person, and
+// `StructureOrigin.rackLabelLocked` is that record.
+//
+// TWO FIELDS IN ONE COMMAND, on `SetLinkClassCommand`'s precedent and not
+// through `SetEntityPropertyCommand`: that command writes exactly one
+// declared field and reverts it, so a lock written beside it would be a
+// second mutation with no undo. `EntityField` cannot carry the pair either,
+// because its `set` is called by `revert` as well and would re-lock on the
+// way back out.
+
+/// Sets a home run's `RACK LBL` and records that A PERSON set it
+/// (DR-074 §11.73.2).
+///
+/// CLEARING THE CELL CLEARS THE LOCK TOO, and that is the half worth
+/// stating out loud. A blank label means "I do not know where this lands"
+/// (G4), and a locked null would say instead "nobody may ever name this",
+/// which no surface can undo and no person asked for: a one-way door of
+/// exactly the kind `ClearLinkClassOverrideCommand` exists to refuse. So a
+/// blank hands the label back to the allocator, and the next landing
+/// derives one again.
+///
+/// Drive this through [buildSetRackLabel], never directly: CR-113's
+/// project-wide uniqueness is the builder's job, and a bare command writes
+/// and returns with no way to refuse.
+final class SetRackLabelCommand extends Command<RackDocument> {
+  SetRackLabelCommand({
+    required this.linkId,
+    required this.rackLabel,
+    required this.now,
+    required this.actor,
+  });
+
+  final Uuid linkId;
+
+  /// The label, ALREADY NORMALISED by the builder: trimmed, and null
+  /// rather than empty.
+  final String? rackLabel;
+
+  final DateTime now;
+  final String actor;
+
+  /// The pair replaced. `_applied` carries the "has run" bit rather than a
+  /// null check, matching `SetLinkClassCommand`, and here it is
+  /// load-bearing twice over: null is an ordinary previous label and false
+  /// is an ordinary previous lock.
+  String? _previousLabel;
+  bool _previousLocked = false;
+  EntityMeta? _previousMeta;
+  bool _applied = false;
+
+  /// ITS OWN WORD, not `setEntityProperty`. A rack label is the identifier
+  /// a trim tech reads off the cable, and "Undo edit" beside a move and a
+  /// landing that both also touch it would leave three gestures sharing
+  /// one sentence.
+  @override
+  LabelKey get label => LabelKey.setRackLabel;
+
+  /// The same pair every `StructureOriginField` declares: the schedule
+  /// prints this in the cable's own row.
+  @override
+  EpochMask get touches => EpochMask.wires | EpochMask.meta;
+
+  @override
+  Iterable<Uuid> get affects => [linkId];
+
+  /// Per LINK, so typing into one cell coalesces into one undo entry and
+  /// typing into the next does not merge with it. Same contract as
+  /// `SetEntityPropertyCommand.mergeKey`, which this replaces for this one
+  /// field.
+  @override
+  Object? get mergeKey => (SetRackLabelCommand, linkId);
+
+  @override
+  void apply(RackDocument doc) {
+    final link = doc.links[linkId];
+    final origin = link?.structureOrigin;
+    if (link == null || origin == null) return;
+    _previousLabel = origin.rackLabel;
+    _previousLocked = origin.rackLabelLocked;
+    _previousMeta = link.meta;
+    _applied = true;
+    origin
+      ..rackLabel = rackLabel
+      // FALSE WHEN THE CELL WAS CLEARED. See the class doc: a locked null
+      // is a door that only closes.
+      ..rackLabelLocked = rackLabel != null;
+    link.meta = EntityMeta(
+      createdAt: link.meta.createdAt,
+      updatedAt: now,
+      updatedBy: actor,
+    );
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    final link = doc.links[linkId];
+    final origin = link?.structureOrigin;
+    if (link == null || origin == null) return;
+    if (!_applied) {
+      throw StateError('SetRackLabelCommand.revert called before apply().');
+    }
+    // BOTH, and the lock is the one that matters: restoring the label
+    // alone would leave a re-derivable name pinned by an assertion the
+    // user has just undone.
+    origin
+      ..rackLabel = _previousLabel
+      ..rackLabelLocked = _previousLocked;
+    if (_previousMeta case final meta?) link.meta = meta;
+  }
+
+  @override
+  Command<RackDocument>? mergeWith(Command<RackDocument> next) {
+    if (next is! SetRackLabelCommand) return null;
+    if (next.linkId != linkId) return null;
+    // Carries THIS command's captured "before" forward, because the merged
+    // object never has apply() called on it before a possible revert().
+    // Same reasoning as `SetEntityPropertyCommand.mergeWith`.
+    return SetRackLabelCommand(
+        linkId: linkId,
+        rackLabel: next.rackLabel,
+        now: next.now,
+        actor: next.actor,
+      )
+      .._previousLabel = _previousLabel
+      .._previousLocked = _previousLocked
+      .._previousMeta = _previousMeta
+      .._applied = _applied;
+  }
+}
+
+/// The outcome of [buildSetRackLabel].
+///
+/// THREE ARMS, for [SetStructureOriginResult]'s stated reason: "it did
+/// nothing because there was nothing to do" and "it did nothing because the
+/// edit was not allowed" are different things to report.
+sealed class SetRackLabelResult {
+  const SetRackLabelResult();
+}
+
+final class SetRackLabelReady extends SetRackLabelResult {
+  const SetRackLabelReady(this.command);
+  final SetRackLabelCommand command;
+}
+
+/// The label AND the lock already say what the edit asks for.
+final class SetRackLabelUnchanged extends SetRackLabelResult {
+  const SetRackLabelUnchanged();
+}
+
+final class SetRackLabelRefused extends SetRackLabelResult {
+  const SetRackLabelRefused(this.reason);
+  final String reason;
+}
+
+/// Builds the `RACK LBL` cell's edit, refusing rather than breaking CR-113.
+///
+/// [alsoUsedRackLabels] exists for [buildSetStructureOriginProperty]'s
+/// reason: a batch built against one unmutated document would otherwise let
+/// two rows agree on a label and never notice.
+///
+/// A LABEL THE LINK ALREADY HOLDS IS STILL AN EDIT WHEN THE LOCK IS OFF,
+/// and that is deliberate: the run may be carrying an allocated label that
+/// happens to read the way the person would have typed it, and typing it is
+/// them adopting it. Reporting "nothing to do" there would silently decline
+/// to record the assertion, which is the call `SetLinkClassCommand` makes
+/// for the same reason one field up.
+SetRackLabelResult buildSetRackLabel({
+  required RackDocument doc,
+  required Uuid linkId,
+  required String? to,
+  required DateTime now,
+  required String actor,
+  Set<String> alsoUsedRackLabels = const {},
+}) {
+  final link = doc.links[linkId];
+  if (link == null) {
+    return const SetRackLabelRefused('That cable is not in this project.');
+  }
+  final origin = link.structureOrigin;
+  if (origin == null) {
+    return SetRackLabelRefused(
+      '${link.designator} is not a home run, so it has no rack label.',
+    );
+  }
+
+  final trimmed = to?.trim();
+  final value = (trimmed?.isEmpty ?? true) ? null : trimmed;
+  if (value != null &&
+      usedRackLabels(
+        doc,
+        exceptLinkId: linkId,
+        alsoUsed: alsoUsedRackLabels,
+      ).contains(value)) {
+    return SetRackLabelRefused(
+      '$value is already used at the panel. Rack labels are unique where '
+      'set (CR-113).',
+    );
+  }
+
+  final locked = value != null;
+  if (origin.rackLabel == value && origin.rackLabelLocked == locked) {
+    return const SetRackLabelUnchanged();
+  }
+
+  return SetRackLabelReady(
+    SetRackLabelCommand(
+      linkId: linkId,
+      rackLabel: value,
       now: now,
       actor: actor,
     ),

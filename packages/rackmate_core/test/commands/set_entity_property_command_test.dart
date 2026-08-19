@@ -946,8 +946,8 @@ void main() {
       );
     });
 
-    test('every @internal StructureBody setter has a table row, and vice '
-        'versa', () {
+    test('every @internal StructureBody setter has a table row, except the '
+        'one DR-074 keeps out', () {
       // ONE FILE, TWO TABLES. `structure_body.dart` declares both
       // `StructureBody` and `StructureOrigin`, and the second's table
       // lives in `home_run_commands.dart` beside the builder that guards
@@ -960,9 +960,21 @@ void main() {
       // The origin keys are NAMESPACED (`origin.fieldLabel`) so their
       // merge keys cannot collide with a future `Link.fieldLabel`, so the
       // comparison is against the setter NAME: the part after the dot.
+      //
+      // `rackLabelLocked` IS an `@internal` setter and is deliberately NOT
+      // a table row, which is `parentId`'s exemption two cases down for a
+      // related reason: a row's `set` is called by `revert` as well as by
+      // `apply`, so a row that locked on the way in would re-lock on the
+      // way back out and an undone assertion would survive its own undo.
+      // `SetRackLabelCommand` writes the pair (DR-074 §11.73.2).
+      //
+      // Named literally rather than filtered by a predicate, so a SECOND
+      // field escaping the table fails this case instead of slipping
+      // through a rule that was written for one.
       expect(_internalSetters('structure_body.dart'), {
         for (final f in StructureBodyField.all) f.key,
         for (final f in StructureOriginField.all) f.key.split('.').last,
+        'rackLabelLocked',
       });
     });
 

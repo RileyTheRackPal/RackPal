@@ -461,6 +461,38 @@ Command<RackDocument>? _buildSetOriginProperty(
         actor: 'gen',
       );
 
+  // THE RACK LABEL HAS A SECOND WRITE PATH AND IT IS NOT A TABLE ROW.
+  // DR-074 §11.73.2: the `RACK LBL` cell writes the label AND the bit
+  // saying a person typed it, through `SetRackLabelCommand`. It is walked
+  // here rather than only in its own file because the property this
+  // sequence proves is the one a stray lock breaks: the document must
+  // return to the ORIGINAL BYTES after every command is reverted, and a
+  // lock left standing is a key on the wire that was not there before.
+  if (rnd.nextInt(5) == 4) {
+    final rackLabel = switch (rnd.nextInt(3)) {
+      // The same small space, for the same reason: collisions are the
+      // interesting half.
+      0 => 'PP1-0${rnd.nextInt(5)}',
+      1 => '  PP1-0${rnd.nextInt(5)}  ',
+      // Clearing, which is the case that must drop the lock as well.
+      _ => null,
+    };
+    return switch (buildSetRackLabel(
+      doc: s.doc,
+      linkId: linkId,
+      to: rackLabel,
+      now: now,
+      actor: 'gen',
+    )) {
+      SetRackLabelReady(:final command) => command,
+      // Both legitimate outcomes with no command behind them: a duplicate
+      // label is refused (CR-113) and a value already held is nothing to
+      // do.
+      SetRackLabelUnchanged() => null,
+      SetRackLabelRefused() => null,
+    };
+  }
+
   final result = switch (rnd.nextInt(4)) {
     // Deliberately a SMALL label space: `GR-DATA-0`..`GR-DATA-4` over a
     // sequence that makes several drops means collisions are common

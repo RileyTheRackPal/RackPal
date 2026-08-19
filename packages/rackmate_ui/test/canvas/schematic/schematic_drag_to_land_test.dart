@@ -280,4 +280,186 @@ void main() {
           'entry, and a landing is no different',
     );
   });
+
+  // ══════════════════════════════════════════════════════════════════
+  // `#725`, DR-074 §11.73.1 — THE SAME DRAG ON A RUN THAT IS ALREADY IN
+  // ══════════════════════════════════════════════════════════════════
+  // A half-landed run draws ONE pennant and dragging it finishes the
+  // cable. A run landed at both ends draws TWO, and dragging one MOVES
+  // that end: the ruling's "this was punched into the wrong port", and
+  // the only surface in the product where a person names the exact hole
+  // the crew actually used rather than taking the allocator's next free
+  // one.
+  //
+  // THE LOAD-BEARING ASSERTION IS WHICH END MOVED. Both pennants carry
+  // the same link id, so a hit test that answered with the link alone
+  // would move whichever end the code named first — silently, on a cable
+  // somebody has to find in a rack.
+
+  /// Turns one of the fixture's cables into a FULLY LANDED home run: a
+  /// `StructureOrigin` and a pin at both ends, which is what a drop looks
+  /// like after trim.
+  Uuid makeLandedRun() {
+    // NO CONDUCTOR IS TOUCHED, unlike `makeHalfLandedRun`: the fixture's
+    // cable already has a pin at both ends, and what turns it into a
+    // movable home run is the origin alone.
+    final link =
+        doc.links.values.firstWhere(
+            (l) =>
+                l.conductors.isNotEmpty &&
+                l.conductors.first.to is PortEndpoint &&
+                l.conductors.first.from is PortEndpoint,
+          )
+          ..structureOrigin = StructureOrigin(
+            structureBodyId: const Uuid('body-1'),
+            outletId: const Uuid('outlet-1'),
+            fieldLabel: 'LR-TV-1',
+            rackLabel: 'PP1-01',
+          );
+    reference = buildFixtureScene(doc);
+    return link.id;
+  }
+
+  /// The centre of the pennant drawn at [linkId]'s `to` end (the RACK
+  /// end), read off the rendered label's own device and port key rather
+  /// than by position: the two flags of one run are interchangeable to
+  /// every finder that looks at link ids.
+  DPt rackPennantOf(Uuid linkId) {
+    final to = doc.links[linkId]!.conductors.first.to as PortEndpoint;
+    final label = reference.netLabels.firstWhere((l) {
+      if (l.linkId != linkId) return false;
+      return derivePortId(Uuid(l.deviceId), PortKey(l.portKey)) == to.portId;
+    });
+    final box = label.pennant;
+    return DPt((box.left + box.right) / 2, (box.top + box.bottom) / 2);
+  }
+
+  testWidgets('dragging a LANDED pennant moves that end, and makes no cable', (
+    tester,
+  ) async {
+    final runId = makeLandedRun();
+    await pump(tester);
+    final before = doc.links.length;
+    final wasOn =
+        (doc.links[runId]!.conductors.first.to as PortEndpoint).portId;
+    final wasFrom = doc.links[runId]!.conductors.first.from;
+    final target = freePin('MTX-1');
+
+    await dragFromTo(tester, rackPennantOf(runId), target.centre);
+
+    expect(
+      doc.links.length,
+      before,
+      reason: 'a move corrects a cable; it does not create one',
+    );
+    final now = doc.links[runId]!.conductors.first;
+    expect(
+      (now.to as PortEndpoint).portId,
+      derivePortId(Uuid(target.ref.deviceId), PortKey(target.ref.portKey)),
+    );
+    expect((now.to as PortEndpoint).portId, isNot(wasOn));
+    expect(
+      now.from,
+      same(wasFrom),
+      reason: 'the end nobody grabbed is the end nobody moved',
+    );
+    expect(
+      doc.ports,
+      contains(wasOn),
+      reason: 'the freed jack stays on its panel (§11.73.4)',
+    );
+  });
+
+  testWidgets('one undo puts the moved end back on the hole it came off', (
+    tester,
+  ) async {
+    final runId = makeLandedRun();
+    await pump(tester);
+    final wasOn =
+        (doc.links[runId]!.conductors.first.to as PortEndpoint).portId;
+
+    await dragFromTo(tester, rackPennantOf(runId), freePin('MTX-1').centre);
+    expect(
+      (doc.links[runId]!.conductors.first.to as PortEndpoint).portId,
+      isNot(wasOn),
+    );
+
+    controller.undoLast();
+    expect(
+      (doc.links[runId]!.conductors.first.to as PortEndpoint).portId,
+      wasOn,
+      reason:
+          'ONE undo entry, which is the whole argument for a single '
+          'command: unland-then-re-land would cost two',
+    );
+  });
+
+  testWidgets('a hand-set rack label survives the move, and is said aloud', (
+    tester,
+  ) async {
+    // §11.73.2. The status line is the only place a person finds out why
+    // their label did not follow the hole.
+    final runId = makeLandedRun();
+    SetRackLabelCommand(
+      linkId: runId,
+      rackLabel: 'BY-HAND-7',
+      now: DateTime.utc(2026, 8, 19),
+      actor: 'test',
+    ).apply(doc);
+    reference = buildFixtureScene(doc);
+    await pump(tester);
+
+    await dragFromTo(tester, rackPennantOf(runId), freePin('MTX-1').centre);
+
+    expect(doc.links[runId]!.structureOrigin!.rackLabel, 'BY-HAND-7');
+    expect(
+      find.textContaining('was typed by hand, so it stayed'),
+      findsOneWidget,
+      reason:
+          'a person who moved a drop and sees the old name needs to know '
+          'it survived because they typed it',
+    );
+  });
+
+  testWidgets('an ALLOCATED rack label follows the hole', (tester) async {
+    final runId = makeLandedRun();
+    await pump(tester);
+    expect(doc.links[runId]!.structureOrigin!.rackLabel, 'PP1-01');
+
+    await dragFromTo(tester, rackPennantOf(runId), freePin('MTX-1').centre);
+
+    // WHAT IT BECOMES IS THE ALLOCATOR'S BUSINESS, and this fixture's
+    // panel may render no label at all (DR-040 §11.39.5). What must not
+    // happen is the old one surviving to name a hole the cable has left.
+    expect(doc.links[runId]!.structureOrigin!.rackLabel, isNot('PP1-01'));
+  });
+
+  testWidgets('a patch cable pennant still arms nothing (§11.72.5)', (
+    tester,
+  ) async {
+    // No `StructureOrigin`, so both builders refuse: arming there would
+    // be a control whose every use is refused. The press falls back to
+    // the ordinary click that selects the cable.
+    final link = doc.links.values.firstWhere(
+      (l) =>
+          l.structureOrigin == null &&
+          l.conductors.isNotEmpty &&
+          l.conductors.first.to is PortEndpoint,
+    );
+    await pump(tester);
+    final wasOn = (link.conductors.first.to as PortEndpoint).portId;
+    final labels = reference.netLabels.where((l) => l.linkId == link.id);
+    final box = labels.first.pennant;
+
+    await dragFromTo(
+      tester,
+      DPt((box.left + box.right) / 2, (box.top + box.bottom) / 2),
+      freePin('MTX-1').centre,
+    );
+
+    expect(
+      (doc.links[link.id]!.conductors.first.to as PortEndpoint).portId,
+      wasOn,
+    );
+  });
 }
