@@ -17,6 +17,7 @@
 
 import 'package:rackmate_core/src/commands/device_commands.dart';
 import 'package:rackmate_core/src/derived/device_loads.dart';
+import 'package:rackmate_core/src/derived/placeable_templates.dart';
 import 'package:rackmate_core/src/idformat/designator_allocator.dart';
 import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/placement.dart';
@@ -25,11 +26,19 @@ import 'package:rackmate_core/src/model/rack_document.dart';
 import 'package:rackmate_core/src/model/template.dart';
 import 'package:rackmate_core/src/units/ids.dart';
 
-/// The `RackDocument.templates` key for a seed catalog id at version 1,
-/// through `derived/device_loads.dart`'s [templateKey] so the `@` join has
-/// exactly one spelling. The old comment here named `scene_builder.dart` as
-/// the scheme's owner, which stopped being true when the key moved to
-/// `device_loads.dart` and left this the last hand-built one.
+/// The `RackDocument.templates` key a SEEDED template lands under: catalog
+/// id at version 1, through `derived/device_loads.dart`'s [templateKey] so
+/// the `@` join has exactly one spelling. The old comment here named
+/// `scene_builder.dart` as the scheme's owner, which stopped being true
+/// when the key moved to `device_loads.dart` and left this the last
+/// hand-built one.
+///
+/// **A WRITE-SIDE KEY, NOT A READ-SIDE ONE** (DR-077 §11.76.3). Seeding
+/// writes v1 and this spells that; RESOLVING a template for placement asks
+/// for the newest version and goes through
+/// `derived/placeable_templates.dart`'s [resolveLatestTemplate]. The pin
+/// was on both sides until an authored template could be saved twice, at
+/// which point the palette offered a row that resolved a stale body.
 String catalogTemplateKey(String catalogId) => templateKey(catalogId, 1);
 
 /// One rail-placed device on one face, with its per-face height already
@@ -318,11 +327,13 @@ CatalogPlacementResult buildPlaceFromCatalogCommand({
   required String actor,
   int? explicitRuIndex,
 }) {
-  final key = catalogTemplateKey(catalogId);
-  final snapshot = doc.templates[key];
+  final snapshot = resolveLatestTemplate(doc, catalogId);
   if (snapshot == null) {
     return CatalogPlacementFailed('Unknown catalog template "$catalogId".');
   }
+  // The ref below is built from the SNAPSHOT rather than from a key
+  // spelled here, so the device records whichever version was resolved
+  // and stays pinned to it for life (CR-050).
   final body = snapshot.body;
 
   final Placement placement;

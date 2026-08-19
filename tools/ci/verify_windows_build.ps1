@@ -117,9 +117,14 @@ if ($actualNative -contains 'dartjni.dll') {
 # --- the starters ---------------------------------------------------------
 # PACKAGED, not OPENED. See the header.
 $starterDir = Join-Path $ReleaseDir 'data/flutter_assets/assets/starters'
+# `.rmpj` SINCE DR-015 (`dc22ddc`), and this list was not updated with the
+# files. The gate then reported four missing starters that no longer exist
+# while the four that do exist shipped correctly, and it stayed that way
+# because `run_local.ps1 -SkipBuild` is the documented iteration path and
+# these two release gates only run when the build does. Board `#739`.
 $expectedStarters = @(
-    'apartment.rackmate', 'home_theatre.rackmate',
-    'small_office.rackmate', 'whole_house.rackmate'
+    'apartment.rmpj', 'home_theatre.rmpj',
+    'small_office.rmpj', 'whole_house.rmpj'
 )
 if (-not (Test-Path $starterDir)) {
     $problems += "the starter projects were not packaged: no $starterDir"

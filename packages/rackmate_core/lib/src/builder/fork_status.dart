@@ -21,14 +21,23 @@
 //
 // ─────────────────────────────────────────────────────────────────────
 // NO WIDGET SHIPS WITH THIS FILE, and the reason is sequencing rather
-// than shyness. Nothing forks yet: `Duplicate` is the builder shell's
-// (M4-D, board #175), the palette lists only `buildSeedCatalog()` -- 48
-// templates, all version 1, none of them a fork -- and the library
-// directory service that would hold one is M4-N. So the badge has neither
-// a producer nor a shelf. What M4-C owes is the RULE, which is the part
-// that needs deciding; the badge is a `Row` once the rule is right.
-// Recorded here rather than left to be discovered, per
+// than shyness. What M4-C owes is the RULE, which is the part that needs
+// deciding; the badge is a `Row` once the rule is right. Recorded here
+// rather than left to be discovered, per
 // `a modelled field is not a reachable one`.
+//
+// THE SEQUENCING HALF OF THAT PARAGRAPH IS NOW HALF FALSE, and it is
+// corrected rather than deleted because the correction is the useful
+// part. It used to read "nothing forks yet: the palette lists only
+// `buildSeedCatalog()` -- 48 templates, all version 1, none of them a
+// fork". Since M4-S (DR-077 §11.76) the palette lists the DOCUMENT'S
+// shelf, and a second `Save` in one builder session forks `version + 1`
+// rather than minting a second id, so **a document can now hold several
+// versions of one template and this file has a producer for the first
+// time.** What is still true is the rest: `Duplicate & edit` from a
+// catalog card is M4-O's, so nothing writes a `derivedFrom` yet, and the
+// library directory service that would hold a second shelf is M4-N's. So
+// the badge has a producer and still no fork to badge.
 // ─────────────────────────────────────────────────────────────────────
 //
 // WHERE THE VERSIONS COME FROM IS THE CALLER'S PROBLEM, deliberately. The

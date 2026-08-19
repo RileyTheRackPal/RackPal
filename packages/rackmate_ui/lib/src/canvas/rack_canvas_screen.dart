@@ -37,6 +37,7 @@ import 'package:rackmate_ui/src/inspector/shrink_rack_dialog.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
 import 'package:rackmate_ui/src/palette/device_palette_panel.dart';
 import 'package:rackmate_ui/src/shell/no_racks_view.dart';
+import 'package:rackmate_ui/src/widgets/document_memo.dart';
 
 /// The rack editor canvas: the pannable/zoomable grid (L0) with a real rack
 /// chassis (L1) and device bodies (L2) rendered on top, per CR-086 — the
@@ -362,10 +363,27 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
 
   /// The seeded catalog (docs/09-roadmap.md M1 checklist #6,
   /// docs/catalog/seed-devices.md): 30 rack-side archetypes + 18 field
-  /// devices. Every entry is ALSO embedded into `_doc.templates` at
-  /// document construction (see `_buildDemoDocument`) so a palette
-  /// placement always resolves a real `TemplateSnapshot`.
+  /// devices, embedded into `_doc.templates` at document construction
+  /// (see `_buildDemoDocument`).
+  ///
+  /// **SEED DATA FOR A DEMO DOCUMENT, AND NOTHING ELSE NOW.** It was also
+  /// what the palette listed, which is what made a template authored in
+  /// the Device Builder unplaceable: it saved into the document and the
+  /// palette was reading a constant beside it (DR-077 §11.76.1, docs/12
+  /// §5.3.8). The palette reads [_placeable]; a body needed for a message
+  /// or a gesture is resolved out of the document.
   late final Map<String, TemplateBody> _catalog = buildSeedCatalog();
+
+  /// What the palette lists: the DOCUMENT's own shelf, newest version of
+  /// each id, remembered until the document moves.
+  ///
+  /// `buildPlaceableTemplates` is O(templates) and the palette rebuilds
+  /// on every drag phase, hover and status message, so this is
+  /// `ScheduleScreen`'s memo used for `ScheduleScreen`'s reason. This
+  /// screen qualifies for it: it owns the `DocumentController` that
+  /// maintains `stateId`, so a save moves the key and the palette shows
+  /// the new template without a reopen.
+  final DocumentMemo<List<PlaceableTemplate>> _placeable = DocumentMemo();
 
   // Four hand-built demo devices (see _buildDemoDocument) still seed the
   // INITIAL rack contents — kept for continuity with earlier stages rather
@@ -3178,7 +3196,10 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     final prefix = caretRefusal == null ? '' : '$caretRefusal ';
     final placement = command.placement;
     if (placement is RailPlacement) {
-      final body = _doc.templates[catalogTemplateKey(catalogId)]?.body;
+      // THE REF THE COMMAND BUILT, not a key spelled again here: the
+      // command resolved a version (DR-077 §11.76.3) and the height in
+      // this sentence must be that version's, not v1's.
+      final body = _doc.templates[templateKeyFor(command.templateRef)]?.body;
       final placedH = body == null
           ? 1
           : (placement.face == Face.front ? body.frontU : body.rearU);
@@ -3273,7 +3294,11 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // to start. (A subsequent click/double-click on that row places the
     // device, which runs a command, which the stale-state guard turns into
     // that same cancel — through the one path, at the moment it is true.)
-    final body = _catalog[catalogId];
+    // OUT OF THE DOCUMENT, at the version the palette is offering. Read
+    // from the seeded catalog, this refused to arm a drag on every
+    // template a person had authored, silently, because a row the palette
+    // draws and the map this consulted were two different lists.
+    final body = resolveLatestTemplate(_doc, catalogId)?.body;
     if (body == null) return;
     // Field devices: click/double-click-only, see above.
     final mountable = body.frontU > 0 || body.rearU > 0;
@@ -3964,7 +3989,16 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
             SizedBox(
               width: 280,
               child: DevicePalettePanel(
-                catalog: _catalog,
+                // WHAT THE DOCUMENT CAN PLACE, not what this build ships
+                // (DR-077 §11.76.1). `_catalog` is still the seed data
+                // this screen's demo document is built FROM; it is no
+                // longer what the palette lists, because a template
+                // authored in the Device Builder is in the document and
+                // was in no catalog.
+                templates: _placeable.of(
+                  _doc,
+                  () => buildPlaceableTemplates(_doc),
+                ),
                 categoryOrder: kCatalogCategoryOrder,
                 searchFocusNode: _paletteSearchFocus,
                 searchController: _paletteSearchController,

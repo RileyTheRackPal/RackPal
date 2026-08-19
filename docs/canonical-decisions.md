@@ -11758,6 +11758,110 @@ second invalidation axis to reason about. The clause stays true and stops being 
 
 ---
 
+### 11.76 DR-077 · A template authored in this project reaches the rack, and the palette says where it came from
+
+**Settled by the user on 2026-08-19** (`#701`). M4's exit criterion has two clauses and the second
+one could not be performed at all. `docs/12` §5.3.8 found it while writing the drill route for
+`#251`: a template saved in the Device Builder lands in `RackDocument.templates`, round-trips, and
+**no surface offers it for placement**. Four questions had to be answered before anything could be
+built, and the fourth is about what the criterion MEANS rather than about what is missing.
+
+**NOT a §8.3 amendment.** Nothing moves between milestones and no scope is added: the exit criterion
+already requires this and the decomposition simply never filed it. §11.76.4 declines the one thing
+that would have been an amendment.
+
+**11.76.1 THE SHELF IS THE DOCUMENT, AND IT ALWAYS WAS.** The census found the machinery already
+correct and the palette reading the wrong source while standing next to the right one:
+
+| | |
+|---|---|
+| `blank_document.dart` | writes all 48 seeded archetypes **into `doc.templates`** at version 1 |
+| `buildPlaceFromCatalogCommand` | resolves from `doc.templates`, never from the seed catalog |
+| `SaveTemplateToProjectCommand` | writes an authored body into the same map, under `"$id@$version"` |
+| `DevicePalettePanel` | is handed `buildSeedCatalog()` by `rack_canvas_screen.dart:368` |
+
+So `doc.templates` is the one shelf a project has, the seeded catalog is one **contributor** to it
+rather than a second shelf beside it, and the palette is built from the document. This is what makes
+the fix small: nothing about placement, resolution or persistence changes, and one widget stops
+being handed a constant.
+
+**`_catalog` IS `late final`, which is the second half of the same defect.** Pointed at the right
+shelf it would still never notice a save, because it is computed once and held for the screen's
+life. The placeable set is memoised on `stateId` through `DocumentMemo`, the mechanism
+`ScheduleScreen` already uses and which `RackCanvasScreen` qualifies for by owning its
+`DocumentController`.
+
+**11.76.2 PROVENANCE SHOWS TWICE WHILE BROWSING AND ONCE WHILE SEARCHING.** An authored template is
+filed into its own category beside the seeded ones **and** repeated in a `This project` group pinned
+above the nine seeded categories. The two answers are answering two different questions: the
+category is where a person looks for a network switch, and the pinned group is where a person looks
+for the thing they saved thirty seconds ago. Both readers are real and the second is the one the
+exit criterion's drill has.
+
+**THE PINNED GROUP IS A BROWSE-STATE AFFORDANCE, and that limit is part of the ruling rather than an
+implementation detail.** A non-empty query flattens the panel to one filtered list across every
+category, and a row appearing twice in a search result is a defect: it makes the count wrong, it
+makes `Enter` on the top match ambiguous, and it teaches the reader that the list has duplicates in
+it. Search shows each template once, badged.
+
+**A TEMPLATE WITH NO CATEGORY MUST STILL HAVE A HOME.** `_canSave` requires a display name, a type
+prefix and a meant occupancy, and it does **not** require a category. The panel iterates
+`kCatalogCategoryOrder`, so an uncategorised template is today invisible: not refused, not badged,
+simply absent. An authored template that cannot be found is the same failure as one that cannot be
+placed, arrived at one step later.
+
+**11.76.3 A SECOND `Save` FORKS A VERSION. IT DOES NOT MINT A SECOND TEMPLATE.** This is CR-050's own
+rule, implemented in `nextTemplateVersion`, and never called: `buildDeviceBuilderActions` is
+constructed once with `editing: null`, so every save calls `templateIdFor`, finds the id taken, and
+returns `tpl.foo_2`. The builder offers a plain `[Save]` beside `[Save & Close]` precisely so a
+person can save and keep working, so this is the ordinary path and not an edge case. It was
+invisible for exactly as long as nothing read what `Save` wrote.
+
+The actions closure remembers the id it minted; later saves in the same authoring session pass it as
+`editing` and fork `version + 1`. **Devices already placed keep resolving to the version they were
+placed from**, because a `TemplateRef` carries its own version, which is the guarantee CR-050 exists
+to make. Closing the builder and opening it again authors a NEW template, because that is a new
+authoring session and not an edit.
+
+**THE CONSEQUENCE FOR PLACEMENT, and it is a real one.** `catalogTemplateKey` pins `@1`, so the
+instant a v2 exists the palette offers a row that resolves a stale body or nothing at all. Placement
+resolves the **highest** version for an id, because placing means placing the current version.
+Behaviour is byte-identical wherever only v1 exists, which is every seeded id in every existing
+project and every fixture, and that is the check that this is a widening rather than a change.
+
+**11.76.4 THE EQUIPMENT LIST IS A SHEET, AND THAT IS WHERE CLAUSE 2 IS CHECKED.** §5.3.8's second
+finding was that `buildEquipmentList` has exactly one caller in the tree, `rackmate_export`, so the
+criterion's *"appears correctly in the equipment list"* could only be read through a PDF. **That is
+not a gap; it is the criterion's own reading.** `T6.30 EQUIPMENT LIST AND MATERIALS` is a sheet
+(docs/08 §2.2), the corpus promises no view of it anywhere, and M1's exit criterion already reads
+the equipment list through an exported PDF in the same words. `File ▸ Export PDF…` is wired and
+emits `T6.30` today.
+
+**NO ON-SCREEN EQUIPMENT LIST IS BUILT AND NONE IS OWED.** Building one is the §8.3 amendment this
+ruling declines: it is a second table that must never drift from the sheet, added to unblock a
+criterion that did not ask for it. The drill route for `#251` names the export step rather than
+leaving a user to discover there is no view.
+
+**11.76.5 WHAT THIS DOES NOT DELIVER, stated so nobody reads the closure as more than it is.** No
+library subsystem: M4-N (`#170`) still owns `.rmda` archives, several libraries loaded at once, and
+filtering by which one a device came from, and a template authored in one project still does not
+appear in another. No `Duplicate & edit` from a catalog card: docs/06 §7.3 offers one and it belongs
+with the library browser (M4-O, `#186`), so the one route into the builder is still
+`Project ▸ New device template…` and it still authors a new template rather than forking a seeded
+one. No stale-fork badge: CR-062's badge now has a producer for the first time, and DR-058's rule is
+built (`builder/fork_status.dart`) while its `Row` is not.
+
+**11.76.6 THE FINDING WORTH KEEPING IS THE ONE §5.3.5 ALREADY WROTE DOWN, POINTING THE OTHER WAY.**
+M4-E's was *"five tasks build a grid and not one of them creates a port"*: **ask what produces each
+task's input.** This is **ask what CONSUMES each task's output.** M4-D built a save, gated it,
+tested it, and nothing read what it saved; `device_builder_actions.dart`'s own header has asserted
+*"a template authored here is therefore placeable immediately"* since the day it shipped. Seventeen
+issues, sixty-three tasks and fourteen green gates could not see it, because a decomposition can be
+complete on both counts and still leave a milestone's criterion unreachable: the two questions are
+asked of different ends of the same task.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

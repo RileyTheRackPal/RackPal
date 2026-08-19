@@ -67,6 +67,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` ย
 * [DR-061, the grid's selection is a row range](dr-061-grid-selection-is-a-row-range.md) - docs/06 ยง4.6 described it two incompatible ways and no M4-F task built either; a 2D cell rectangle would have been consulted by one of that table's fourteen operations, and the tick box M4-E already ships is the selection under a new name.
 * [DR-074, a wrong hole can be corrected](dr-074-a-wrong-hole-can-be-corrected.md) - two commands, because a move and an unland are two acts with two consequences; the rack label follows the position unless a person typed it, which needs a bit that a table row could not carry; the termination and the freed pin both survive.
 * [DR-076, the schematic rebuilds what changed](dr-076-the-schematic-rebuilds-what-changed.md) - the prescribed remedy was the smaller half, and the invalidation model was already in the tree unread: six epoch notifiers every command declares against, collapsed into one counter.
+* [DR-077, a template authored here reaches the rack](dr-077-a-template-authored-here-reaches-the-rack.md) - the builder saved into a map nothing read; the shelf was already the document, the palette was reading a constant beside it, and a second Save minted a second template instead of forking a version.
 
 # Not yet written up
 
