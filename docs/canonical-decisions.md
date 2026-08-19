@@ -11654,6 +11654,103 @@ current behaviour is fine would be worse than naming it.
 
 ---
 
+### 11.75 DR-076 · The schematic rebuilds what changed, and the epochs already say what that is
+
+**Settled by the user on 2026-08-19** (`#702`). The issue's own description says a ruling is owed
+before building, because *"which epochs invalidate which fragments"* is a design question DR-011.4
+only half answers. This is that ruling. **Not a §8.3 amendment**: nothing moves between milestones,
+and AC-008's remedy is refined rather than withdrawn.
+
+**11.75.1 THE PRESCRIBED REMEDY CANNOT MEET THE BUDGET ON ITS OWN, AND THE NUMBERS ARE WHY THIS
+RULING EXISTS.** AC-008 rules that L3a splits into eight per-domain sub-pictures so *"an edit to one
+HDMI run rebuilds ~1,200 ops and seven pictures replay untouched"*. Measured on the 12-pod fixture,
+3,600 links across 1,128 devices, warm:
+
+| | time | ops |
+|---|---|---|
+| cold build | **87 ms** | 78,660 |
+| `holdAt`, which is what a wire edit does TODAY | **92 ms** | |
+| `reuseLayout`, this ruling's first tier | **48 ms** | |
+| symbols alone, zero links (single run, indicative) | ~75 ms | 49,860 |
+
+Best of five per figure, which is `schematic_perf_test.dart`'s own method; the symbols-only row is a
+single run and is marked so, because it was taken to decompose the build rather than to bound it.
+
+**The symbol half is the majority of the build before a single cable exists, and it is
+domain-independent.** A perfect eight-way domain split saves at best the seven-eighths of the link
+half that did not change and cannot touch the rest. AC-008 is not wrong; it is **half the answer**,
+and the half it names is the smaller one.
+
+**11.75.2 THE INVALIDATION MODEL IS THE EPOCH MODEL THAT ALREADY EXISTS.** `DocEpochs` carries six
+independent notifiers (`structure`, `wires`, `rack`, `meta`, `style`, `sheet`) and its own doc says
+they exist so `rackmate_ui` *"can subscribe to exactly the epochs one widget cares about instead of
+rebuilding on every commit"*. Every command declares its `touches` mask, and `MoveEndpointCommand`,
+`ConnectPortsCommand` and `BindEndpointCommand` all declare `wires | meta`. **The schematic collapses
+all six into one `_sceneEpoch` and rebuilds everything.** The matrix this ruling asks for is
+therefore mostly written already, per command, and unread.
+
+The scene splits in three tiers, each keyed on what can move it:
+
+| Tier | Rebuilt when | Cost at 3,600 links |
+|---|---|---|
+| **Layout** — Sugiyama phases 0–3, symbol positions | `structure` | ~50 ms |
+| **Symbols** — the symbol layer's ops and text | `structure`, `meta` | ~75 ms |
+| **Wires and labels** — net-label pennants, drawn wires | `wires` | ~19 ms |
+
+A cable drawn declares `wires | meta`. Under §11.75.3 that rebuilds the symbol tier and the wire
+tier and **reuses the layout**, which is DR-011.4's clause restated as a cache key rather than as a
+parameter: *"committing a link must not re-lay-out the sheet"* is already the rule, and freezing the
+layout is how it stops being re-derived.
+
+**WHAT AN UNHELD REBUILD WOULD DO, MEASURED, AND WHAT ALREADY PREVENTS IT.** Adding **one** cable to
+the shipped fixture and rebuilding from scratch moves **88 of its 91 symbols**: the new edge changes
+what Sugiyama's ordering sweep sees, and the two label measurements feeding its params change with
+it. **This is not a live defect.** `schematic_canvas_screen.dart` already passes `holdAt` on a
+`wires` bump, and DR-011.4 is why; the figure is what that hold is buying, stated because a later
+reader deciding to "simplify the cache" needs to know what it costs.
+
+The first tier is therefore **a cheaper mechanism for a guarantee the product already makes**, not a
+new guarantee: `holdAt` freezes the positions and still runs the layout and both measurements, at
+**92 ms**; handing the layout back is **48 ms** for the identical scene. That is where §11.75.2's
+saving actually comes from, and it is roughly half of a wire edit rather than all of it — phases two
+and three carry the rest.
+
+The equality gate in §11.75.5 is against the SAME document, never against a fresh layout of a changed
+one: a test asserting the latter would be asserting the churn as intended behaviour.
+
+**11.75.3 A RENAME REBUILDS SYMBOLS AND NOT LAYOUT.** A designator changes what a symbol PRINTS and
+not where anything sits. Re-running layout for one would move symbols under the person's cursor,
+which is the failure DR-011.4 forbids for its own reason and which is worse during trim-out, when
+renames arrive in bursts. Paying the symbol tier for a rename is accepted: it is 75 ms on an
+infrequent act, against 144 ms today.
+
+**NOT DEFERRING THE REDRAW WAS CONSIDERED AND REFUSED.** A stale designator on the sheet while the
+schedule shows the new one is two documents disagreeing about a device's name, which is the class of
+defect this product exists to prevent.
+
+**11.75.4 THE ONE-FRAME BUDGET BINDS THE EDIT, NOT THE OPEN.** M2's criterion was written against a
+house with one rack and states one frame; a cold build of a twelve-pod commercial job is ~144 ms and
+happens **once, behind a file load the person is already waiting through**. So the incremental path
+asserts `_oneFrameMs` and the cold build keeps a ratchet ceiling.
+
+This is a narrowing of what the budget was assumed to cover, and it is stated rather than assumed
+because the alternative is real work with a real cost: meeting one frame on a cold build means
+attacking Sugiyama and the symbol layer themselves, inside the determinism guarantees
+`sugiyama.dart`'s header defends. **No user has reported open time.** If one does, this clause is
+where to argue with.
+
+**11.75.5 DETERMINISM IS NOT NEGOTIABLE AND IS WHAT THE TESTS PIN.** CR-012 and `sugiyama.dart`'s
+rules survive unchanged: no hash-container iteration, total orders, and the same document producing
+the same display list. **An incremental rebuild must produce the byte-identical scene a whole rebuild
+would**, and that equality is the gate, not the timing. A cache that is faster and different is a
+defect this project would ship as a golden diff nobody could read.
+
+**11.75.6 AC-008'S DOMAIN SPLIT IS RETAINED AND RESEQUENCED.** It is measured after the tiers land,
+not before: if the wire tier is already inside one frame, eight sub-pictures buy nothing and add a
+second invalidation axis to reason about. The clause stays true and stops being the first move.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

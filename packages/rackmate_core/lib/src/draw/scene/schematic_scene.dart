@@ -203,6 +203,7 @@ final class SchematicScene {
     required this.reversedLinkIds,
     required this.nonForwardLinkIds,
     required this.crossings,
+    required this.layout,
   });
 
   /// The one composed display list. `fragmentFor(deviceId.v)` → that
@@ -235,6 +236,24 @@ final class SchematicScene {
   /// filter switches ONE domain to `drawn` (DR-001 §11.1.1); with a
   /// per-domain sub-picture it rebuilds that one and replays seven, and
   /// without one it rebuilds all eight on every filter click.
+  /// The layout this scene was placed by, so a caller can hand it back
+  /// (DR-076 §11.75.2).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A VALUE, NOT A CACHE, AND THE DIFFERENCE IS WHOSE JOB IT IS
+  /// ═══════════════════════════════════════════════════════════════════
+  /// Measured at 3,600 links, re-deriving this is ~50 ms of a 144 ms
+  /// build, and the two label measurements it needs walk every symbol.
+  /// DR-011.4 already rules that committing a link must not re-lay-out
+  /// the sheet, so a wire edit reusing it is that clause kept rather than
+  /// re-derived.
+  ///
+  /// WHEN IT IS SAFE TO REUSE IS NOT A QUESTION THIS TYPE CAN ANSWER.
+  /// §11.75.2 keys it on the `structure` epoch, which every command
+  /// already declares; handing it back after a device was added would
+  /// place symbols by a stale map. The holder decides; this only carries.
+  final SugiyamaLayout layout;
+
   final Map<SignalDomainId, IntRange> domainFragments;
 
   /// The label ops whose domain did not resolve, or `null` when there are
@@ -311,6 +330,7 @@ SchematicScene buildSchematicScene({
   SchematicMetrics metrics = const SchematicMetrics(),
   NetLabelStyle netLabelStyle = const NetLabelStyle(),
   Map<Uuid, Pt> holdAt = const <Uuid, Pt>{},
+  SugiyamaLayout? reuseLayout,
 }) {
   final upg = kSchematicUnitsPerGrid;
   final pinned = _holdOrPin(doc, holdAt);
@@ -386,62 +406,86 @@ SchematicScene buildSchematicScene({
     );
   }
 
-  // ── the gutter the LABELS need, before the layout that reserves it ───
-  //
-  // THE ONE PLACE M2-D REACHES BACK INTO M2-C'S LAYOUT, and it is not an
-  // optimisation: `SugiyamaParams.layerGutterGu`'s 12 gu was sized when
-  // the channel between two layers held nothing, and under DR-001 it holds
-  // the drawing. Two facing pennants run to roughly 28 gu on the shipped
-  // figures, so at 12 gu the two flags of every forward link would
-  // overprint — see `netLabelGutterGu`, which measures it rather than
-  // guessing, and `net_label_layer_test.dart`'s overlap assertion, which
-  // is what caught it.
-  //
-  // MAX, NEVER REPLACE. A caller who widened the gutter deliberately keeps
-  // their figure; the labels only ever ask for more.
-  final labelGutterGu = netLabelGutterGu(
-    doc: doc,
-    symbols: [for (final c in drawn) c.geometry],
-    measurer: measurer,
-    unitsPerGrid: upg,
-    style: netLabelStyle,
-  );
-
-  // ── and the room the VERTICAL combs need (#96-H) ─────────────────────
-  //
-  // THE SAME REACH-BACK, ON THE OTHER AXIS, and it closes the half the
-  // gutter above deliberately left open. `nodeGapGu`'s 4 gu was sized when
-  // the space between two stacked symbols held air; a top/bottom comb grows
-  // into it, so a symbol below another was being placed into the room the
-  // one above was labelling. That is what the field reported as net labels
-  // drawing over devices.
-  //
-  // IT COULD NOT BE DONE UNTIL THE COMB WAS BOUNDED. `netLabelGutterGu`'s
-  // doc carried the objection: an unbounded comb would have made a 48-port
-  // switch ask for 48 lanes of clearance and pushed every node gap on the
-  // sheet into the hundreds. #96-H caps it at `ceil(widest / pitch)`, so
-  // the worst case is a small number and the trade is worth making.
-  //
-  // MAX, NEVER REPLACE — the same rule as the gutter, for the same reason.
-  final labelNodeGapGu = netLabelNodeGapGu(
-    doc: doc,
-    symbols: [for (final c in drawn) c.geometry],
-    measurer: measurer,
-    unitsPerGrid: upg,
-    style: netLabelStyle,
-  );
-
   // ── phases 0–3 ───────────────────────────────────────────────────────
-  final layout = layoutSugiyama(
-    nodes: [for (final c in drawn) c.node],
-    edges: edges,
-    params: SugiyamaParams(
-      layerGutterGu: math.max(metrics.layout.layerGutterGu, labelGutterGu),
-      nodeGapGu: math.max(metrics.layout.nodeGapGu, labelNodeGapGu),
-      maxOrderingSweeps: metrics.layout.maxOrderingSweeps,
-      priorityIterations: metrics.layout.priorityIterations,
-    ),
-  );
+  //
+  // ═════════════════════════════════════════════════════════════════════
+  // HELD, WHEN A CALLER CAN PROVE NOTHING STRUCTURAL MOVED (DR-076)
+  // ═════════════════════════════════════════════════════════════════════
+  // Measured at 3,600 links: this phase is ~50 ms of a 144 ms build, and
+  // it is pure over (nodes, edges, params). DR-011.4 already rules that
+  // committing a link must NOT re-lay-out the sheet, so a wire edit
+  // holding the layout is that clause expressed as a cache key rather
+  // than re-derived every frame.
+  //
+  // THE CALLER OWNS THE INVALIDATION AND THIS FUNCTION DOES NOT GUESS.
+  // §11.75.2 keys it on the `structure` epoch, which every command
+  // already declares; a `reuseLayout` handed in after a device was added
+  // would place symbols by a stale map, and no test here could tell —
+  // which is exactly why the key lives where the epochs are and the
+  // parameter stays dumb.
+  //
+  // THE TWO MEASUREMENTS ABOVE ARE SKIPPED WITH IT, deliberately:
+  // `labelGutterGu` and `labelNodeGapGu` feed nothing but this call's
+  // params, and both walk every symbol measuring text.
+  final SugiyamaLayout layout;
+  if (reuseLayout != null) {
+    layout = reuseLayout;
+  } else {
+    // ── the gutter the LABELS need, before the layout that reserves it ───
+    //
+    // THE ONE PLACE M2-D REACHES BACK INTO M2-C'S LAYOUT, and it is not an
+    // optimisation: `SugiyamaParams.layerGutterGu`'s 12 gu was sized when
+    // the channel between two layers held nothing, and under DR-001 it holds
+    // the drawing. Two facing pennants run to roughly 28 gu on the shipped
+    // figures, so at 12 gu the two flags of every forward link would
+    // overprint — see `netLabelGutterGu`, which measures it rather than
+    // guessing, and `net_label_layer_test.dart`'s overlap assertion, which
+    // is what caught it.
+    //
+    // MAX, NEVER REPLACE. A caller who widened the gutter deliberately keeps
+    // their figure; the labels only ever ask for more.
+    final labelGutterGu = netLabelGutterGu(
+      doc: doc,
+      symbols: [for (final c in drawn) c.geometry],
+      measurer: measurer,
+      unitsPerGrid: upg,
+      style: netLabelStyle,
+    );
+
+    // ── and the room the VERTICAL combs need (#96-H) ─────────────────────
+    //
+    // THE SAME REACH-BACK, ON THE OTHER AXIS, and it closes the half the
+    // gutter above deliberately left open. `nodeGapGu`'s 4 gu was sized when
+    // the space between two stacked symbols held air; a top/bottom comb grows
+    // into it, so a symbol below another was being placed into the room the
+    // one above was labelling. That is what the field reported as net labels
+    // drawing over devices.
+    //
+    // IT COULD NOT BE DONE UNTIL THE COMB WAS BOUNDED. `netLabelGutterGu`'s
+    // doc carried the objection: an unbounded comb would have made a 48-port
+    // switch ask for 48 lanes of clearance and pushed every node gap on the
+    // sheet into the hundreds. #96-H caps it at `ceil(widest / pitch)`, so
+    // the worst case is a small number and the trade is worth making.
+    //
+    // MAX, NEVER REPLACE — the same rule as the gutter, for the same reason.
+    final labelNodeGapGu = netLabelNodeGapGu(
+      doc: doc,
+      symbols: [for (final c in drawn) c.geometry],
+      measurer: measurer,
+      unitsPerGrid: upg,
+      style: netLabelStyle,
+    );
+    layout = layoutSugiyama(
+      nodes: [for (final c in drawn) c.node],
+      edges: edges,
+      params: SugiyamaParams(
+        layerGutterGu: math.max(metrics.layout.layerGutterGu, labelGutterGu),
+        nodeGapGu: math.max(metrics.layout.nodeGapGu, labelNodeGapGu),
+        maxOrderingSweeps: metrics.layout.maxOrderingSweeps,
+        priorityIterations: metrics.layout.priorityIterations,
+      ),
+    );
+  }
 
   // ── the display list ─────────────────────────────────────────────────
   final byId = <String, _Candidate>{for (final c in drawn) c.device.id.v: c};
@@ -572,6 +616,7 @@ SchematicScene buildSchematicScene({
       for (final id in layout.nonForwardEdgeIds) Uuid(id),
     ]),
     crossings: layout.crossings,
+    layout: layout,
   );
 }
 
