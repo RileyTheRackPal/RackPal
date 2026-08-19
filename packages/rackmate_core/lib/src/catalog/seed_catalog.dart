@@ -12,6 +12,8 @@
 // than every combination; picking a size in the palette/Device Builder is
 // out of scope for this stage (M4).
 
+import 'dart:collection';
+
 import 'package:rackmate_core/src/catalog/catalog_audio.dart';
 import 'package:rackmate_core/src/catalog/catalog_control.dart';
 import 'package:rackmate_core/src/catalog/catalog_field.dart';
@@ -75,6 +77,22 @@ const List<String> kCatalogCategoryOrder = [
 /// docs/catalog/seed-devices.md §3 itself uses). Each key is used
 /// verbatim as the `TemplateId` so a device placed from the palette
 /// resolves to `"$id@1"` in `RackDocument.templates`.
+/// The ids [buildSeedCatalog] ships, as a set.
+///
+/// **The one place "did this build ship this id" is answered**
+/// (`derived/placeable_templates.dart`, DR-077 §11.76.1). Derived from
+/// the catalog rather than written out beside it, because a hand-kept
+/// second list of 48 strings is a list that drifts, and the drift would
+/// show up as a template badged as somebody's own work.
+///
+/// Lazily initialised, so the 48 templates are built once per isolate
+/// rather than once per palette rebuild, and unmodifiable for the same
+/// reason `buildRackPresets` copies: a caller must not be able to teach
+/// this build that it ships a template it does not.
+final Set<String> kSeedCatalogIds = UnmodifiableSetView(
+  buildSeedCatalog().keys.toSet(),
+);
+
 Map<String, TemplateBody> buildSeedCatalog() => {
   ...buildVideoCatalog(),
   ...buildAudioCatalog(),

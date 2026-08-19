@@ -115,6 +115,7 @@ export 'src/derived/link_lookup.dart';
 export 'src/derived/location_removal.dart';
 export 'src/derived/location_tree.dart';
 export 'src/derived/pathway_table.dart';
+export 'src/derived/placeable_templates.dart';
 export 'src/derived/plate_fill.dart';
 export 'src/derived/plate_materials.dart';
 export 'src/derived/port_fill.dart';
