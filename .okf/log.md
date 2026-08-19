@@ -1,5 +1,48 @@
 # Update Log
 
+## 2026-08-19 (third entry)
+
+* **Creation**: [DR-076, the schematic rebuilds what
+  changed](/decisions/dr-076-the-schematic-rebuilds-what-changed.md), **BUILT**
+  across `#728`-`#731`. A wires-only rebuild on the shipped 300-link fixture is
+  **0.913 ms against a 16.7 ms frame**, where a wire edit used to cost the whole
+  document.
+* **Note**: **THE ISSUE'S OWN PRESCRIPTION WAS THE SMALLER HALF.** `#702` cites
+  AC-008's eight per-domain sub-pictures. Symbols alone, with zero links, are
+  ~75 ms of a ~96 ms build and 49,860 of its 78,660 ops, and they are
+  domain-independent, so a perfect eight-way split cannot touch them. **A
+  prescription in an issue is a hypothesis until it is measured**, even when it
+  comes from a standing acceptance criterion. AC-008 is resequenced rather than
+  withdrawn.
+* **Note**: **THE INVALIDATION MODEL WAS ALREADY IN THE TREE AND NOTHING READ
+  IT.** `DocEpochs` has carried six independent notifiers since M0, with its own
+  doc saying they exist so a widget can subscribe to exactly the epochs it cares
+  about; the schematic collapsed all six into one counter. The matrix `#702`
+  asked for was mostly written already, per command, in every `touches`
+  declaration. Same shape as
+  [a modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md):
+  the mechanism existed, was correct, and had no caller.
+* **Note**: **THE HEADLINE FIGURE IS NOT THE COMMON CASE, and the census is what
+  said so.** Seven commands declare `wires` alone; eight declare `wires | meta`,
+  including every connect, bind and move, because materialising a port mints a
+  designator. So drawing a cable takes the ~46 ms path and not the ~20 ms one.
+  Reporting only the best number would have been true and misleading.
+* **Note**: **TWO FIGURES IN MY OWN RULING WERE WRONG AND MEASURING CAUGHT
+  BOTH.** Single runs where this repo measures best-of-N (144 ms for what is
+  87 ms), and a claim that a full rebuild reshuffles the sheet TODAY when
+  `holdAt` already prevents it. Corrected in place at `4724e7f`, before anything
+  cited them. **A ruling's numbers get quoted; a wrong one outlives the session
+  that wrote it.**
+* **Note**: **A MUTATION TEST CHANGED WHAT ITS OWN CASE CLAIMS.** With the
+  layout reuse removed, a rename to `MTX-9` moves nothing and neither does
+  `MATRIX-SWITCHER-MAIN-RACK-1`; only a ~180-character designator makes a full
+  rebuild demonstrably move the sheet. So at any realistic name both paths agree
+  on that fixture, and the rename tier is justified by COST rather than by an
+  observed churn. The test records the three lengths, because the absurd one is
+  the first thing a later reader would tidy away and the case would then pass
+  whatever the code did.
+
+
 ## 2026-08-19 (second entry)
 
 * **Creation**: **DR-075** (`#727`), amending

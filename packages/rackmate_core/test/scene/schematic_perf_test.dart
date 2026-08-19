@@ -393,13 +393,133 @@ void main() {
             'case has never met it (#702). Something made an already '
             'unacceptable number worse.',
       );
+      // THE "STILL OVER BUDGET" TRIPWIRE IS GONE, AND DR-076 §11.75.4 IS
+      // WHY. This case used to assert `ms > _oneFrameMs` so that fixing
+      // #702 would fail the test and force the ceiling to be replaced by
+      // the budget. The ruling narrowed what the budget covers: it binds
+      // an EDIT, not an open, because a cold build of a twelve-pod job
+      // happens once, behind a file load the person is already waiting
+      // through. A cold build over one frame is therefore no longer a
+      // debt to be tripped over, and the group below asserts the budget
+      // where the ruling puts it.
+    });
+
+    test('AN EDIT at this size is what the tiers actually changed', () {
+      // The running total for the INCREMENTAL path, printed for the same
+      // reason the cold figure is: a number that appears only on failure
+      // is recorded nowhere.
+      final doc = buildSchematicFixture(pods: _kHeadroomPods);
+      final measurer = _Measurer();
+      final base = buildSchematicScene(doc: doc, measurer: measurer);
+
+      double best(SchematicScene Function() build) {
+        var bestUs = 1 << 30;
+        for (var i = 0; i < 5; i++) {
+          final watch = Stopwatch()..start();
+          build();
+          watch.stop();
+          if (watch.elapsedMicroseconds < bestUs) {
+            bestUs = watch.elapsedMicroseconds;
+          }
+        }
+        return bestUs / 1000;
+      }
+
+      final held = best(
+        () => buildSchematicScene(
+          doc: doc,
+          measurer: measurer,
+          holdAt: base.positions,
+        ),
+      );
+      final byLayout = best(
+        () => buildSchematicScene(
+          doc: doc,
+          measurer: measurer,
+          reuseLayout: base.layout,
+        ),
+      );
+      final byTier = best(
+        () => buildSchematicScene(
+          doc: doc,
+          measurer: measurer,
+          reuseSymbols: base.symbolTier,
+        ),
+      );
+
+      // A running total belongs in every green CI log, not only in a
+      // failure — the same reason the cold figure above is printed.
+      // ignore: avoid_print
+      print(
+        'DR-076 tiers [12 pods]: holdAt = ${held}ms  '
+        'reuseLayout = ${byLayout}ms  reuseSymbols = ${byTier}ms  '
+        '(one frame = ${_oneFrameMs}ms)',
+      );
+
+      expect(
+        byTier,
+        lessThan(byLayout),
+        reason: 'holding the symbols must beat holding only the layout',
+      );
+      expect(
+        byLayout,
+        lessThan(held),
+        reason:
+            'and holding the layout must beat the `holdAt` path it '
+            'replaced, which lays out and then overrides',
+      );
+    });
+  });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // THE BUDGET, WHERE DR-076 §11.75.4 PUTS IT (`#731`)
+  // ══════════════════════════════════════════════════════════════════════
+  // One frame binds an EDIT at a size a real job reaches. The shipped
+  // 300-link fixture is that size: it is a house with one rack, which is
+  // what M2's exit criterion was written against.
+  //
+  // THE TWELVE-POD CASE IS NOT ASSERTED AGAINST THE BUDGET and the group
+  // above says why: an edit there is ~20 ms, still over a frame, and
+  // §11.75.6's domain split is where the remaining margin would come
+  // from. Asserting it here would make a red gate out of work the ruling
+  // deliberately sequenced later.
+  group('the incremental path meets one frame (DR-076 §11.75.4)', () {
+    test('a wires-only rebuild on the shipped fixture', () {
+      final doc = readSchematicFixture();
+      final measurer = _Measurer();
+      final base = buildSchematicScene(doc: doc, measurer: measurer);
+
+      var bestUs = 1 << 30;
+      for (var i = 0; i < 5; i++) {
+        final watch = Stopwatch()..start();
+        buildSchematicScene(
+          doc: doc,
+          measurer: measurer,
+          reuseSymbols: base.symbolTier,
+        );
+        watch.stop();
+        if (watch.elapsedMicroseconds < bestUs) {
+          bestUs = watch.elapsedMicroseconds;
+        }
+      }
+      final ms = bestUs / 1000;
+
+      // Printed on green runs for the reason above: this is the number
+      // that says whether the budget is still met, and it is worth
+      // reading before it fails rather than after.
+      // ignore: avoid_print
+      print(
+        'DR-076 edit budget [300 links]: ${ms}ms against '
+        '${_oneFrameMs}ms',
+      );
+
       expect(
         ms,
-        greaterThan(_oneFrameMs),
+        lessThan(_oneFrameMs),
         reason:
-            'the headroom case now fits in ONE FRAME, which means #702 '
-            'has been fixed. Delete _kHeadroomCeilingMs and assert '
-            '_oneFrameMs here, the way the 300-link group does.',
+            'a cable drawn on a one-rack house must cost less than a '
+            'frame, which is the budget M2 states and the one DR-076 '
+            '§11.75.4 keeps',
       );
     });
   });

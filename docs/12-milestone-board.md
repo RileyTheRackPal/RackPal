@@ -2492,6 +2492,43 @@ DR-036** while canon is at DR-074: thirty-eight rulings have no summary row. Add
 DR-074 alone would make an abandoned table look current, which is worse than an obviously stale one.
 Recorded as a task somebody should take deliberately.
 
+**#702 IS BUILT (DR-076, phases `#728`–`#731`).** The schematic no longer rebuilds the whole document
+on every edit. Measured at 3,600 links, best of five: a cold build is ~96 ms, the `holdAt` path a
+wire edit used to take is ~90 ms, reusing the layout is ~46 ms and reusing the whole symbol tier is
+~20 ms. **On the shipped 300-link fixture — a house with one rack, which is what M2's criterion was
+written against — a wires-only rebuild is 0.913 ms against a 16.7 ms frame**, and that case now
+fails if an edit ever costs a frame.
+
+**THE ISSUE'S OWN PRESCRIPTION WAS THE SMALLER HALF, AND THE MEASUREMENT IS WHY THE RULING EXISTS.**
+#702 cites AC-008's eight per-domain sub-pictures. Symbols alone, with zero links, are ~75 ms and
+49,860 of the 78,660 ops, and they are domain-independent: a perfect eight-way split cannot touch
+them. AC-008 is retained and **resequenced** (§11.75.6) rather than withdrawn.
+
+**THE MECHANISM WAS ALREADY IN THE TREE AND NOTHING READ IT.** `DocEpochs` has carried six
+independent notifiers since M0, with its own doc saying they exist so a widget can subscribe to
+exactly the epochs it cares about. The schematic collapsed all six into one `_sceneEpoch`. The
+invalidation matrix the issue asked for was therefore mostly written already, per command, in every
+`touches` declaration.
+
+**WHICH EDIT GETS WHICH PATH IS WORTH RECORDING, because the headline figure is not the common one.**
+Seven commands declare `wires` alone (a link class, a jacket colour) and eight declare
+`wires | meta`, including every connect, bind and move, because materialising a port mints a
+designator. So **drawing a cable takes the ~46 ms path, not the ~20 ms one.** Splitting `meta` into
+device-affecting and link-affecting would close that and is a new epoch channel and a new ruling.
+
+**TWO CORRECTIONS TO THIS TASK'S OWN RECORD, kept because both were caught by measuring rather than
+by review.** The ruling first quoted single-run figures where this repo measures best-of-N, which
+made the cold build read 144 ms instead of 87. And it claimed a full rebuild "reshuffles the sheet
+under the cursor of the person who just drew a wire" as though that happened today: it does not,
+because `holdAt` already prevents it, and the 88-of-91 figure is what that hold buys.
+
+**A TEST WAS VERIFIED BY MUTATION AND THE RESULT CHANGED WHAT IT CLAIMS.** The rename case asserts
+§11.75.3's "symbols rebuild, layout does not". With the reuse removed, a rename to `MTX-9` still
+moves nothing, and so does `MATRIX-SWITCHER-MAIN-RACK-1`; only a ~180-character designator makes a
+full rebuild demonstrably move the sheet. **At any name a person would type, both paths agree on
+this fixture**, so §11.75.3's reuse is justified by cost rather than by an observed churn, and the
+test says so where a later reader would otherwise tidy the absurd length away.
+
 ### 5.3 M4, The device builder · `L` · IN PROGRESS, weakest mark `NOT BUILT`
 
 > **Exit criterion, verbatim.** A 16×16 matrix template is authored from scratch **in under three

@@ -66,6 +66,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` �
 * [DR-062, fill series infers its sequence](dr-062-fill-series-infers-its-sequence.md) - docs/06 §4.6 says it re-applies "the label pattern" and no such pattern is stored anywhere; storing one would have covered only the ports Quick Add made, and the row four lines below already reserves the prompting version for `Renumber…`.
 * [DR-061, the grid's selection is a row range](dr-061-grid-selection-is-a-row-range.md) - docs/06 §4.6 described it two incompatible ways and no M4-F task built either; a 2D cell rectangle would have been consulted by one of that table's fourteen operations, and the tick box M4-E already ships is the selection under a new name.
 * [DR-074, a wrong hole can be corrected](dr-074-a-wrong-hole-can-be-corrected.md) - two commands, because a move and an unland are two acts with two consequences; the rack label follows the position unless a person typed it, which needs a bit that a table row could not carry; the termination and the freed pin both survive.
+* [DR-076, the schematic rebuilds what changed](dr-076-the-schematic-rebuilds-what-changed.md) - the prescribed remedy was the smaller half, and the invalidation model was already in the tree unread: six epoch notifiers every command declares against, collapsed into one counter.
 
 # Not yet written up
 
