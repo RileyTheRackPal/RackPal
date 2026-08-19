@@ -319,11 +319,13 @@ Storage is the app catalog directory (seeded, read-only) plus the user library d
 
 The palette in the browser is the **same widget** used to insert devices everywhere, one palette, one insert command, placement decided by the drop target (CR-104). Dropping on a rack yields a `RailPlacement`; dropping on the schematic, or inserting with no rack focused, yields a `StagedPlacement` plus a `SheetItem`.
 
+**The plain in-project case is built and is not the browser** (DR-077 §11.76, M4-S). The palette lists what the **document** can place: the newest version of every template in `RackDocument.templates`, which is the seeded archetypes a project is created with plus everything saved here since. A template authored in the builder is filed into its own category with a badge and repeated in a `This project` group pinned above the nine categories; a search shows it once, badged. A template saved with no category lands in a trailing `Uncategorised` group, because §3's metadata form does not require one. None of that is the browser, the smart folders or the favourites above, which need the library directory service (M4-N) and are M4-O's.
+
 The v1 template count is stated in exactly one place, the summary table in [Seed devices](catalog/seed-devices.md#310-catalog-summary-and-what-is-deliberately-not-in-it), and in no prose anywhere (CR-061).
 
 ### 7.2 Versioning
 
-Templates are immutable versioned records. Editing a published template does not mutate it; it forks `version + 1` in the library. `templateId` is stable, every version stays resolvable, and the snapshot key is `"$templateId@$version"` (CR-050). The change class is computed from the diff and shown prominently before save:
+Templates are immutable versioned records. Editing a published template does not mutate it; it forks `version + 1` in the library. `templateId` is stable, every version stays resolvable, and the snapshot key is `"$templateId@$version"` (CR-050). **A second `Save` in one builder session is such an edit** and forks accordingly (DR-077 §11.76.3): it does not mint a second template, the id is not re-derived when the display name changes, and the devices already placed keep resolving the version they were placed from. **The palette offers the newest version of an id**, because placing means placing the template as it stands. The change class is computed from the diff and shown prominently before save:
 
 | Class | Examples |
 |---|---|

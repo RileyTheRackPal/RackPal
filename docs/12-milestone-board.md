@@ -111,7 +111,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED**: `NOT BUILT` | Model only. **Its M2 block has lifted**: the gate was M2 putting `Link` + `Endpoint` in the UI, and M2-F did (§5.1). Row otherwise as of `0fa532d` |
-| **M4** | Device builder | **`L`** *(was `M`)* | **1 of 2** | **IN PROGRESS**: `CONFIRMED` on clause 1 | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **Clause 2 is untouched AND CANNOT CURRENTLY BE PERFORMED** (§5.3.8): a template authored in the builder saves into the project and **no surface offers it for placement**, because the palette is built from the seeded catalog alone. That blocks `#251` and belongs to no issue. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
+| **M4** | Device builder | **`L`** *(was `M`)* | **1 of 2** | **IN PROGRESS**: `CONFIRMED` on clause 1 | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **Clause 2 IS NOW PERFORMABLE and has not yet been performed** (§5.3.13): it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` is unblocked and is the remaining work on this criterion. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED**: `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
@@ -3313,6 +3313,14 @@ on M4-I, which is not built; the DSL path is the only one that exists.
 
 #### 5.3.8 CLAUSE 2 CANNOT BE PERFORMED, and the reason is a hole in the decomposition
 
+> **CLOSED BY M4-S on 2026-08-19** (`#701`, DR-077 §11.76, built `#732`–`#738`). Everything below is
+> the record of what was true for four days and is kept unedited, because the finding is the useful
+> part. The palette now lists `buildPlaceableTemplates(doc)`, a second `Save` forks a version rather
+> than minting a second template, and placement resolves the newest version rather than a pinned
+> `@1`. **Clause 2 can be performed and `#251` is unblocked.** The second finding below was
+> ANSWERED rather than built: `T6.30` is a sheet, and the criterion is read through
+> `File ▸ Export PDF…` (DR-077 §11.76.4). See §5.3.13.
+
 **Found on 2026-08-15 while writing the drill route for `#251`, before the user spent time on it.**
 
 > **Clause 2, verbatim.** *A template saved with exactly three fields plus ports **places into a
@@ -3540,6 +3548,91 @@ what else follows the order.
 matched the band header's own row count, which reads `3 ports`. Unscoped, the assertion passed on
 the wrong widget in one arrangement and failed in another. Every count assertion in this grid now
 has two candidates by construction, because the bands count rows too.
+
+#### 5.3.13 M4-S, the template that could not reach a rack · CLOSED · `60b2b33`, `90a015f`, `b131dcd`, `4904be8`, `e224cbc`, `94a6e01`
+
+**Closed 2026-08-19**, six commits, fourteen gates green on each. 42 cases: 15 core, 7 app, 20
+widget. Settled by the user as **DR-077** (canon §11.76) before any code, because three of the four
+questions were product decisions and the fourth was about what the criterion means.
+
+**§5.3.8's finding is discharged. Clause 2 can now be performed**, and `#251` is unblocked.
+
+**THE CENSUS IS THE PART WORTH KEEPING, because three of the four pieces needed no change at all.**
+
+| | |
+|---|---|
+| `blank_document.dart` | already wrote all 48 seeded archetypes **into `doc.templates`** at version 1 |
+| `buildPlaceFromCatalogCommand` | already resolved from `doc.templates`, never from the seed catalog |
+| `SaveTemplateToProjectCommand` | already wrote an authored body into that same map |
+| `DevicePalettePanel` | was handed `buildSeedCatalog()`, a constant, by `rack_canvas_screen.dart:368` |
+
+**A document's `templates` map is the one shelf a project has**, and the seeded catalog is a
+contributor to it rather than a second shelf beside it. The whole defect was one widget reading a
+constant while standing next to the answer, and §5.3.8 had already named the line.
+
+**FOUR MORE THINGS THE CENSUS FOUND THAT §5.3.8 DID NOT, and two of them were live defects.**
+
+| Found | What it was |
+|---|---|
+| `_catalog` is `late final` | Pointed at the right shelf it would still never have noticed a save. Now memoised on `stateId` through `DocumentMemo`, which is `ScheduleScreen`'s mechanism used for `ScheduleScreen`'s reason |
+| `catalogTemplateKey` pins `@1` | A **read-side** pin on a **write-side** key. The moment a second version exists the palette offers a row resolving a stale body |
+| The arm-drag body lookup read `_catalog` | It would have refused to arm a drag on **every authored template, silently**, because the row the palette drew and the map the gesture consulted were two different lists |
+| A second `[Save]` minted `tpl.foo_2` | `editing` was null on every call, so the ordinary save-and-keep-working path produced two templates with one display name |
+
+The last is CR-050's own rule sitting implemented and uncalled in `nextTemplateVersion`, and it is
+the reason the version pin mattered: fixing the save without the read would have made the palette
+offer v1 of a template the user had corrected twice.
+
+**A TEMPLATE WITH NO CATEGORY WAS INVISIBLE**, which is the same class as the rest and one step
+later. `_canSave` requires a display name, a type prefix and a meant occupancy, and **not** a
+category; the panel iterated `kCatalogCategoryOrder`. Such a template was not refused and not
+badged: it was absent. It now lands in a trailing `Uncategorised` group, and so does a category from
+a build this one does not know.
+
+**THE PROVENANCE ANSWER IS THE USER'S AND IT IS BOTH.** An authored template is filed into its own
+category with a badge **and** repeated in a `This project` group pinned above the nine, because the
+category is where a person looks for a network switch and the pinned group is where a person looks
+for what they saved thirty seconds ago. **The pinned group is browse-state only**: a search flattens
+to one list, and a row appearing twice there makes the match count wrong and `Enter`-on-the-top-match
+ambiguous, so search shows each template once, still badged.
+
+**THE EQUIPMENT LIST QUESTION WAS ANSWERED AND NOT BUILT** (DR-077 §11.76.4). `T6.30` is a sheet,
+the corpus promises no view of it, M1's own criterion already reads it through an exported PDF, and
+`File ▸ Export PDF…` emits it today. An on-screen equipment list is the §8.3 amendment the ruling
+declines: a second table that must never drift from the sheet, added to unblock a criterion that did
+not ask for it.
+
+**TWO DEFECTS IN THE TESTS THEMSELVES ARE RECORDED, because both were caught by output rather than
+by review.** The palette fixture was named `HDMI Matrix 16x16` and **V03 already ships under that
+exact name**, so a two-row assertion found three; and the placement case was written against
+`buildDemoRackDocument`, whose AMP-1 occupies the U the insertion caret opens on, so the route
+refused with `Occupied by AMP-1 (U4-U5).` and the first reading of that was "the feature does not
+work". **Printing the refusal is what settled it**, which is
+`print the output before claiming copy is done` in its other register: the run said the feature
+worked and the assertion said it did not.
+
+**WHAT M4-S DOES NOT DELIVER.** No library subsystem: M4-N (`#170`) still owns `.rmda` archives,
+several libraries at once and filtering by which one a device came from, and a template authored in
+one project still does not appear in another. No `Duplicate & edit` from a catalog card, which is
+M4-O's (`#186`), so nothing writes a `derivedFrom` and CR-062's badge has a producer for the first
+time with still nothing to badge. No on-screen equipment list, by ruling. No version number on a
+palette row: a row shows the newest version's body and does not print which version that is.
+
+**THE DRILL ROUTE FOR `#251` IS WRITTEN AND UNRUN.** `docs/17-m4q2-drill.md` carries the script, the
+thirteen-column expectation table, the refutation list and the verdict form. Two of its cells were
+MEASURED rather than described: `MANUFACTURER` prints `Generic` and not a dash (DR-056's pre-fill is
+not an unknown), and the subtotal band reads verbatim
+`RK-1 SUBTOTAL   1 DEVICE   — (1 unknown)   — (1 unknown)`, which is CR-114's rollup rule in one
+line. Both came out of running the derivation against a minimal authored template and printing it,
+not out of reading `equipment_sheet.dart`.
+
+**THE LESSON IS §5.3.5's, POINTING THE OTHER WAY**, and it is now a practice in the bundle rather
+than a paragraph in this file. M4-E's was *"five tasks build a grid and not one of them creates a
+port"*: ask what **produces** each task's input. This one is ask what **consumes** each task's
+output. M4-D built a save, gated it, tested it, and nothing read what it saved, while
+`device_builder_actions.dart`'s own header asserted *"a template authored here is therefore
+placeable immediately"* from the day it shipped. **Seventeen issues, sixty-three tasks and fourteen
+green gates could not see it.**
 
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 

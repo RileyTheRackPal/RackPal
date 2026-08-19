@@ -12,10 +12,24 @@
 // service is M4-N's, so the only writable one that exists is the
 // project's own embedded snapshots — which have been in every `.rmpj`
 // since M0 and are what `TemplateRef` resolves against (CR-054). A
-// template authored here is therefore placeable immediately and travels
-// with the file, and does NOT appear in another project until M4-N. The
-// builder says that above the Save button rather than letting somebody
-// find out by opening a second job.
+// template authored here therefore travels with the file, and does NOT
+// appear in another project until M4-N. The builder says that above the
+// Save button rather than letting somebody find out by opening a second
+// job.
+//
+// ═════════════════════════════════════════════════════════════════════
+// "PLACEABLE IMMEDIATELY" WAS A CLAIM THIS FILE MADE AND NOTHING KEPT
+// ═════════════════════════════════════════════════════════════════════
+// That sentence sat in this header from the day M4-D shipped, and it was
+// false the whole time: the palette was built from `buildSeedCatalog()`,
+// so what this file wrote could be saved, round-tripped and never
+// placed. M4's exit criterion clause 2 was unperformable for eleven days
+// behind a comment asserting it (docs/12 §5.3.8, DR-077 §11.76).
+//
+// It is true now, and by a mechanism rather than by assertion: the
+// palette lists `buildPlaceableTemplates(doc)`, this document's own
+// shelf. If a later change makes it false again, the failing test is
+// `rackmate_ui/test/canvas/palette_reads_the_document_test.dart`.
 import 'dart:async';
 
 import 'package:rackmate/src/storage/prefs_store.dart';

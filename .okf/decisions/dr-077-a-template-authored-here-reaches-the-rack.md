@@ -4,7 +4,7 @@ title: DR-077 — A template authored in this project reaches the rack, and the 
 description: The builder saved into a map nothing read. The shelf was already the document; the palette was reading a constant beside it.
 tags: [m4, device-builder, palette, templates, cr-050, provenance, exit-criterion]
 timestamp: 2026-08-19T00:00:00Z
-status: ruled
+status: built
 ---
 
 M4's exit criterion has two clauses and the second one could not be performed at
@@ -85,8 +85,9 @@ that did not ask for it.
 
 [Ask what produces each task's input](/practices/ask-what-produces-each-tasks-input.md)
 was filed when five tasks built a port grid and none of them created a port.
-This is the same lesson wearing the other shoe: **ask what consumes each task's
-output.** A save was built, gated, tested, and nothing read it. Seventeen
+This is the same lesson wearing the other shoe, and it is now a practice of its
+own:
+[ask what consumes each task's output](/practices/ask-what-consumes-each-tasks-output.md). A save was built, gated, tested, and nothing read it. Seventeen
 issues, sixty-three tasks and fourteen green gates could not see it, and the
 builder's own file header had been asserting *"a template authored here is
 therefore placeable immediately"* since the day it shipped.

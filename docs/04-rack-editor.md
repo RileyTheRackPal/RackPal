@@ -49,6 +49,8 @@ Single window, one document (RJ-013). Three resizable regions between a fixed to
 | Validation drawer | 28 px | 28 / 320 | Auto-expands to 180 px once, on the first *error* per session, never again. |
 | Status bar | 24 px | fixed | Cursor context · zoom · selection rollup · project counts. |
 
+**What the palette lists, and in what order** (DR-077 §11.76, M4-S). It lists what the **document** can place, not what the build ships: the newest version of every template in `RackDocument.templates`. Browsing shows a `This project` group pinned first when the project holds anything authored in the Device Builder, then the nine catalog categories in `kCatalogCategoryOrder`, then a trailing `Uncategorised` group for any template whose category is none of the nine, the empty string included. An authored template appears in **both** its category and the pinned group, badged in each. Searching flattens to one list across every group and shows each template **once**, still badged: a duplicate row in a result list makes the match count wrong and `Enter`-on-the-top-match (§3.2) ambiguous. The mockup's `▾ Recent` group is illustrative and is not built; smart folders and favourites are M4-O's.
+
 Panels are collapsible and resizable but **not floatable or re-dockable** in v1; rejected alternative, a full dock manager, near-zero payoff for a three-panel app. Each panel sits behind a `PanelHost` keyed by `PanelId` so a dock manager is a swap, not a rewrite. Widths persist in app settings, never in the `.rmpj` file. Below 1080 logical px the shell collapses to the read-only tablet viewer (AC-056): canvas fills, inspector becomes a three-detent bottom sheet, palette is unavailable, and the app states that mobile is read-only rather than shipping a squeezed editor.
 
 ---

@@ -75,8 +75,16 @@ const List<String> kCatalogCategoryOrder = [
 /// Builds the full 48-template seed catalog, keyed by its stable catalog
 /// id ("V01".."V07", "A01".."A06", ..., "F01".."F18" — the ids
 /// docs/catalog/seed-devices.md §3 itself uses). Each key is used
-/// verbatim as the `TemplateId` so a device placed from the palette
-/// resolves to `"$id@1"` in `RackDocument.templates`.
+/// verbatim as the `TemplateId`, and a document's constructor writes each
+/// one into `RackDocument.templates` at version 1.
+///
+/// **THE PALETTE LISTS THE DOCUMENT, NOT THIS** (DR-077 §11.76.1). This
+/// used to end "so a device placed from the palette resolves to
+/// `"$id@1"`", which was true of a seed and false of everything else: a
+/// template authored in the Device Builder is in the document and in no
+/// catalog, and pinning `@1` made a second version unplaceable. Placement
+/// resolves the newest version of an id through
+/// `derived/placeable_templates.dart`.
 /// The ids [buildSeedCatalog] ships, as a set.
 ///
 /// **The one place "did this build ship this id" is answered**
