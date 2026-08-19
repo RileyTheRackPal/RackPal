@@ -342,7 +342,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     // candidates, the arbiter). A handler that reached into the scene
     // would be a second place that knows where a pin is.
     pinAt: _pinAt,
-    landingAt: _landingAt,
+    landingAt: _runEndAt,
     onLandingBegin: _armLandingFrom,
     claimConnect: () => _claimPointerGesture(_PointerGesture.connectDrag),
     releaseConnect: () => _releasePointerGesture(_PointerGesture.connectDrag),
@@ -467,7 +467,14 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// pins, so the band the overlay draws is what the document will hold
   /// one event later. Everything downstream — the magnet, the candidate
   /// rings, the caret, the teardown — therefore needs no branch at all.
-  ({Uuid linkId, LinkEnd loose})? _landingFrom;
+  ///
+  /// DR-074 §11.73.1 ADDS THE SECOND HALF. A run landed at BOTH ends may
+  /// have either end dragged to a different jack, which commits
+  /// `MoveEndpointCommand` instead. [RunEndGrab.moving] says which, and
+  /// everything above stays true of both: the armed source is always the
+  /// end this gesture is NOT writing, so the band is the cable as it will
+  /// be either way.
+  RunEndGrab? _landingFrom;
 
   /// The pins a conductor from [_wireFrom] may legally land on, in sheet
   /// order. Empty when no wire is armed.
@@ -2441,42 +2448,97 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     )?.ref;
   }
 
-  /// A press landed on a net-label pennant: is there a run to LAND here,
-  /// and which end of it is loose (`#719`, DR-073)?
+  /// A press landed on a net-label pennant: is there a run END to write
+  /// here, which one, and does writing it LAND the run or MOVE it
+  /// (`#719` / DR-073, `#725` / DR-074)?
   ///
   /// Null unless every one of these holds, and each exclusion hands the
   /// press back to the ordinary click that selects the cable:
   ///
-  ///  * it is a HOME RUN. `buildBindEndpointCommand` refuses anything
-  ///    with no `StructureOrigin` ("that cable is not a home run"), so a
-  ///    patch cable's pennant must not arm a gesture whose every commit
-  ///    is refused, which is `#711`'s defect drawn on purpose.
-  ///  * EXACTLY ONE end is on a pin. Both landed is a finished cable with
-  ///    nothing to land; neither draws no pennant, so it is unreachable
-  ///    here anyway and the guard is a statement rather than a filter.
+  ///  * it is a HOME RUN. `buildBindEndpointCommand` and
+  ///    `buildMoveEndpointCommand` both refuse anything with no
+  ///    `StructureOrigin`, so a patch cable's pennant must not arm a
+  ///    gesture whose every commit is refused, which is `#711`'s defect
+  ///    drawn on purpose.
+  ///  * AT LEAST ONE end is on a pin. A run landed nowhere draws no
+  ///    pennant, so that case is unreachable here and the guard is a
+  ///    statement rather than a filter.
   ///
-  /// EITHER END MAY BE THE LOOSE ONE, which is why this reports WHICH.
-  /// DR-068 §11.67.1 lets a speaker run land on its driver, so a run
-  /// drawn at its amplifier is waiting for a field end and a run drawn at
-  /// its wall plate is waiting for a rack end. A gesture that assumed the
-  /// rack end would silently rewrite the wrong half of the cable.
-  ({Uuid linkId, LinkEnd loose})? _landingAt(DPt scenePoint) {
+  /// ═════════════════════════════════════════════════════════════════════
+  /// THE TWO CASES READ THE PENNANT IN OPPOSITE DIRECTIONS
+  /// ═════════════════════════════════════════════════════════════════════
+  /// A HALF-LANDED run draws ONE pennant, at the end that has a pin, and
+  /// pressing it means "finish the OTHER end" — there is nothing else it
+  /// could mean, and DR-068 §11.67.1's speaker run is why the loose end
+  /// may be either (a run drawn at its amplifier waits for a field end;
+  /// one drawn at its wall plate waits for a rack end).
+  ///
+  /// A FULLY LANDED run draws TWO, and pressing one means "move THIS
+  /// end". That is the opposite reading, and it is why this asks
+  /// [netLabelAtPoint] rather than `linkAtPoint`: both pennants carry the
+  /// same link id, and an answer that cannot tell them apart would move
+  /// whichever end the code happened to name first — silently, on a
+  /// cable somebody else has to find in a rack.
+  ///
+  /// EITHER WAY THE ANCHOR IS THE END NOT BEING WRITTEN, which is one
+  /// rule rather than two: the preview band then spans the pins the
+  /// document will hold one event later (DR-073 §11.72.2).
+  RunEndGrab? _runEndAt(DPt scenePoint) {
     final scene = _scene;
     if (scene == null) return null;
-    final linkId = linkAtPoint(
+    final label = netLabelAtPoint(
       scene,
       scenePoint,
       tolerance: _portHitTolerancePx / _viewport.scale,
     );
-    if (linkId == null) return null;
-    final link = _doc.links[linkId];
+    if (label == null) return null;
+    final link = _doc.links[label.linkId];
     if (link == null || link.structureOrigin == null) return null;
     if (link.conductors.isEmpty) return null;
     final conductor = link.conductors.first;
-    final fromLanded = conductor.from is PortEndpoint;
-    final toLanded = conductor.to is PortEndpoint;
-    if (fromLanded == toLanded) return null;
-    return (linkId: linkId, loose: fromLanded ? LinkEnd.rack : LinkEnd.field);
+    final from = conductor.from;
+    final to = conductor.to;
+    final fromLanded = from is PortEndpoint;
+    final toLanded = to is PortEndpoint;
+    if (!fromLanded && !toLanded) return null;
+
+    if (fromLanded != toLanded) {
+      // Promoted by the `is` tests above; `to` still needs its cast
+      // because only one of the two is promoted on this branch.
+      final anchor = fromLanded ? from : (to as PortEndpoint);
+      return RunEndGrab(
+        linkId: label.linkId,
+        end: fromLanded ? LinkEnd.rack : LinkEnd.field,
+        anchorPortId: anchor.portId,
+        moving: false,
+      );
+    }
+
+    // WHICH PENNANT IS THIS. Resolved through the same `ConnectTarget`
+    // walk every other pin question uses, so a pennant and a pin agree
+    // about what port they are on.
+    final pinned = _targetFor(
+      PinRef(deviceId: label.deviceId, portKey: label.portKey),
+    );
+    if (pinned == null) return null;
+    final portId = pinned.portId;
+    if (portId == (from as PortEndpoint).portId) {
+      return RunEndGrab(
+        linkId: label.linkId,
+        end: LinkEnd.field,
+        anchorPortId: (to as PortEndpoint).portId,
+        moving: true,
+      );
+    }
+    if (portId == (to as PortEndpoint).portId) {
+      return RunEndGrab(
+        linkId: label.linkId,
+        end: LinkEnd.rack,
+        anchorPortId: from.portId,
+        moving: true,
+      );
+    }
+    return null;
   }
 
   /// A press landed on a pennant with a loose end: arm the landing.
@@ -2490,16 +2552,16 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// `portConductorCount` rather than answered again here, because
   /// `buildBindEndpointCommand` asks it the same way and two copies would
   /// let the ring say yes where the commit says no.
-  bool _armLandingFrom(({Uuid linkId, LinkEnd loose}) grab) {
+  bool _armLandingFrom(RunEndGrab grab) {
     final scene = _scene;
     if (scene == null) return false;
     final link = _doc.links[grab.linkId];
     if (link == null) return false;
-    final landedEnd = grab.loose == LinkEnd.rack
-        ? link.conductors.first.from
-        : link.conductors.first.to;
-    if (landedEnd is! PortEndpoint) return false;
-    final port = _doc.ports[landedEnd.portId];
+    // THE ANCHOR THE GRAB NAMED, which is the end this gesture is NOT
+    // writing. Reading it off the conductor again here would be a second
+    // answer to a question `_runEndAt` already settled, and the two
+    // readings run in opposite directions for the two cases.
+    final port = _doc.ports[grab.anchorPortId];
     final key = port?.templatePortKey;
     if (port == null || key == null) return false;
     final source = PinRef(deviceId: port.deviceId.v, portKey: key.v);
@@ -2511,9 +2573,17 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
             if (portConductorCount(_doc, t.portId) == 0) pin.ref,
     ];
     if (free.isEmpty) {
+      // THE PIN THIS RUN IS LEAVING IS NOT FREE, because this cable is
+      // still in it: `portConductorCount` counts it, exactly as
+      // `buildMoveEndpointCommand` does. So a move offers the same set a
+      // landing does, minus the hole it is moving out of, and a sheet
+      // with nowhere to go says so before the drag starts.
       _status.show(
-        'Every jack on this sheet already has a cable, so ${link.designator} '
-        'has nowhere to land.',
+        grab.moving
+            ? 'Every other jack on this sheet already has a cable, so '
+                  '${link.designator} has nowhere to move.'
+            : 'Every jack on this sheet already has a cable, so '
+                  '${link.designator} has nowhere to land.',
       );
       return false;
     }
@@ -2529,7 +2599,10 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       _preferred = const <PinRef>{};
     });
     _status.show(
-      'Landing ${link.designator}. Drop it on a free jack, or press Esc.',
+      grab.moving
+          ? 'Moving ${link.designator}. Drop it on a free jack, or press Esc.'
+          : 'Landing ${link.designator}. Drop it on a free jack, or press '
+                'Esc.',
     );
     return true;
   }
@@ -2698,14 +2771,22 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     _cancelWire();
   }
 
-  /// Lands [grab]'s loose end on [to] (`#719`, DR-073).
+  /// Writes [grab]'s end onto [to]: a LANDING when the run is waiting for
+  /// that end, a MOVE when it already has one (`#719` / DR-073, `#725` /
+  /// DR-074 §11.73.1).
+  ///
+  /// TWO COMMANDS AND ONE GESTURE, which is the ruling's split reached
+  /// from the surface: `BindEndpointCommand` records a punchdown that has
+  /// happened, `MoveEndpointCommand` says the recorded one was wrong, and
+  /// the Edit menu names them differently because they are different acts.
   ///
   /// THE RACK LABEL IS ALLOCATED ONLY FOR A RACK END, which is DR-068
   /// §11.67.2 on the write side: the rack label is derived from the
-  /// panel position, so the bind is the only moment it can be known; the
+  /// panel position, so the write is the only moment it can be known; the
   /// field label names the wall plate and landing a speaker says nothing
-  /// about what the plate is called.
-  void _commitLanding(({Uuid linkId, LinkEnd loose}) grab, PinRef to) {
+  /// about what the plate is called. A move re-derives it unless a person
+  /// typed it, which `buildMoveEndpointCommand` decides rather than this.
+  void _commitLanding(RunEndGrab grab, PinRef to) {
     final target = _targetFor(to);
     if (target == null) {
       _cancelWire();
@@ -2719,29 +2800,73 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       return;
     }
 
+    // EXCLUDES THIS RUN'S OWN LABEL, which matters only for a move: the
+    // name it is about to give up is still on the document, and a scan
+    // that counted it would allocate a suffixed variant to dodge a label
+    // nobody else holds.
+    final used = usedRackLabels(
+      _doc,
+      exceptLinkId: grab.moving ? grab.linkId : null,
+    );
     final String? label;
-    if (grab.loose == LinkEnd.rack) {
+    if (grab.end == LinkEnd.rack) {
       label = resolveRackLabel(
         doc: _doc,
         panelDeviceId: target.deviceId,
         // THE NUMBER ON THE PART, not the designator this product
         // allocated (DR-040 §11.39.8).
         portDesignator: target.portDesignator,
-        usedRackLabels: usedRackLabels(_doc),
+        usedRackLabels: used,
       ).label;
     } else {
       label = null;
+    }
+    final port = PortMaterialisation.of(
+      target,
+      designator: target.portDesignator,
+    );
+
+    if (grab.moving) {
+      final built = buildMoveEndpointCommand(
+        doc: _doc,
+        linkId: grab.linkId,
+        port: port,
+        rackLabel: label,
+        usedRackLabels: used,
+        now: widget.controller.clock.nowUtc(),
+        actor: widget.controller.actor,
+        end: grab.end,
+      );
+      switch (built) {
+        case MoveEndpointRefused(:final reason):
+          _clearWire();
+          _status.show(reason);
+        case MoveEndpointReady(:final command, :final keptRackLabel):
+          _clearWire();
+          widget.controller.run(command);
+          // THE KEPT LABEL IS SAID OUT LOUD (§11.73.2). A person who
+          // moved a drop and sees the old name needs to know it survived
+          // because they typed it, rather than because the move
+          // half-failed.
+          _status.show(
+            keptRackLabel == null
+                ? '${link.designator} moved to ${target.citation}.'
+                : '${link.designator} moved to ${target.citation}. Its rack '
+                      'label $keptRackLabel was typed by hand, so it stayed.',
+          );
+      }
+      return;
     }
 
     final built = buildBindEndpointCommand(
       doc: _doc,
       linkId: grab.linkId,
-      port: PortMaterialisation.of(target, designator: target.portDesignator),
+      port: port,
       rackLabel: label,
-      usedRackLabels: usedRackLabels(_doc),
+      usedRackLabels: used,
       now: widget.controller.clock.nowUtc(),
       actor: widget.controller.actor,
-      end: grab.loose,
+      end: grab.end,
     );
     switch (built) {
       case BindEndpointRefused(:final reason):
@@ -2750,9 +2875,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       case BindEndpointReady(:final command):
         _clearWire();
         widget.controller.run(command);
-        _status.show(
-          '${link.designator} landed on ${target.citation}.',
-        );
+        _status.show('${link.designator} landed on ${target.citation}.');
     }
   }
 
@@ -3493,14 +3616,16 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
   /// BRANCH POINT of this whole class — see [beginDrag].
   final PinRef? Function(DPt scenePoint) pinAt;
 
-  /// A half-landed home run whose pennant is under the scene point, or
-  /// null (`#719`). Asked ONLY when [pinAt] found nothing, so a pin
-  /// always wins: a pennant sits beside its pin and the boxes touch.
-  final ({Uuid linkId, LinkEnd loose})? Function(DPt scenePoint) landingAt;
+  /// A home run whose pennant is under the scene point, and which end of
+  /// it a press would write (`#719`, `#725`). Asked ONLY when [pinAt]
+  /// found nothing, so a pin always wins: a pennant sits beside its pin
+  /// and the boxes touch, and DR-073 §11.72.4 makes the rarer act give
+  /// way to the commoner one.
+  final RunEndGrab? Function(DPt scenePoint) landingAt;
 
-  /// Arms a landing. Same contract as [onConnectBegin]: false hands the
-  /// press back to the ordinary click claim.
-  final bool Function(({Uuid linkId, LinkEnd loose}) grab) onLandingBegin;
+  /// Arms a landing or a move. Same contract as [onConnectBegin]: false
+  /// hands the press back to the ordinary click claim.
+  final bool Function(RunEndGrab grab) onLandingBegin;
 
   /// The arbiter, for the connect gesture's own claim. SEPARATE FROM
   /// [claim] because they are separate gestures: a connect that is refused
