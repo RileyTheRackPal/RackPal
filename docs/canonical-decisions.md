@@ -11668,14 +11668,18 @@ HDMI run rebuilds ~1,200 ops and seven pictures replay untouched"*. Measured on 
 
 | | time | ops |
 |---|---|---|
-| whole build | **144 ms** | 78,660 |
-| every symbol position held | 94 ms | |
-| **symbols alone, zero links** | **75 ms** | **49,860** |
+| cold build | **87 ms** | 78,660 |
+| `holdAt`, which is what a wire edit does TODAY | **92 ms** | |
+| `reuseLayout`, this ruling's first tier | **48 ms** | |
+| symbols alone, zero links (single run, indicative) | ~75 ms | 49,860 |
 
-**The symbol half is 52% of the build before a single cable exists, and it is domain-independent.** A
-perfect eight-way domain split saves at best the seven-eighths of the link half that did not change,
-about 60 ms, and lands at ~84 ms against a 16.7 ms frame. AC-008 is not wrong; it is **half the
-answer**, and the half it names is the smaller one.
+Best of five per figure, which is `schematic_perf_test.dart`'s own method; the symbols-only row is a
+single run and is marked so, because it was taken to decompose the build rather than to bound it.
+
+**The symbol half is the majority of the build before a single cable exists, and it is
+domain-independent.** A perfect eight-way domain split saves at best the seven-eighths of the link
+half that did not change and cannot touch the rest. AC-008 is not wrong; it is **half the answer**,
+and the half it names is the smaller one.
 
 **11.75.2 THE INVALIDATION MODEL IS THE EPOCH MODEL THAT ALREADY EXISTS.** `DocEpochs` carries six
 independent notifiers (`structure`, `wires`, `rack`, `meta`, `style`, `sheet`) and its own doc says
@@ -11698,17 +11702,21 @@ tier and **reuses the layout**, which is DR-011.4's clause restated as a cache k
 parameter: *"committing a link must not re-lay-out the sheet"* is already the rule, and freezing the
 layout is how it stops being re-derived.
 
-**MEASURED WHILE BUILDING §11.75.2, AND IT CHANGES WHAT THIS RULING IS FOR.** Adding **one** cable to
-the shipped fixture and rebuilding the scene from scratch moves **88 of its 91 symbols**. The new
-edge changes what Sugiyama's ordering sweep sees, and the two label measurements feeding its params
-change with it, so the whole sheet reshuffles under the cursor of the person who just drew a wire.
-Holding the layout moves none.
+**WHAT AN UNHELD REBUILD WOULD DO, MEASURED, AND WHAT ALREADY PREVENTS IT.** Adding **one** cable to
+the shipped fixture and rebuilding from scratch moves **88 of its 91 symbols**: the new edge changes
+what Sugiyama's ordering sweep sees, and the two label measurements feeding its params change with
+it. **This is not a live defect.** `schematic_canvas_screen.dart` already passes `holdAt` on a
+`wires` bump, and DR-011.4 is why; the figure is what that hold is buying, stated because a later
+reader deciding to "simplify the cache" needs to know what it costs.
 
-So the tier model is not only a performance remedy: **it is how DR-011.4's "committing a link must
-not re-lay-out the sheet" is actually kept.** A scene cache that missed and rebuilt honestly would be
-correct by this ruling's timing argument and wrong by that one. The equality gate in §11.75.5 is
-therefore against the SAME document, never against a fresh layout of a changed one, and a test
-asserting the latter would be asserting the churn as intended behaviour.
+The first tier is therefore **a cheaper mechanism for a guarantee the product already makes**, not a
+new guarantee: `holdAt` freezes the positions and still runs the layout and both measurements, at
+**92 ms**; handing the layout back is **48 ms** for the identical scene. That is where §11.75.2's
+saving actually comes from, and it is roughly half of a wire edit rather than all of it — phases two
+and three carry the rest.
+
+The equality gate in §11.75.5 is against the SAME document, never against a fresh layout of a changed
+one: a test asserting the latter would be asserting the churn as intended behaviour.
 
 **11.75.3 A RENAME REBUILDS SYMBOLS AND NOT LAYOUT.** A designator changes what a symbol PRINTS and
 not where anything sits. Re-running layout for one would move symbols under the person's cursor,
