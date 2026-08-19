@@ -1,5 +1,46 @@
 # Update Log
 
+## 2026-08-19 (second entry)
+
+* **Creation**: **DR-075** (`#727`), amending
+  [DR-074](/decisions/dr-074-a-wrong-hole-can-be-corrected.md) §11.73.2. **A
+  rack label somebody imported is a rack label somebody typed**: the test is who
+  AUTHORED the name, not which control carried it, so a `rack_label` column
+  locks exactly as the cell does. The counter-argument is real and outweighed —
+  a sheet exported from this product carries allocator labels, and a round trip
+  would lock names nobody chose — but **the product cannot tell the two sheets
+  apart and must not guess**, and the two mistakes are not equal: a wrongly
+  locked label is visible, carries the pin, and is cleared by emptying the box;
+  a wrongly discarded one is gone.
+* **Note**: **THE CENSUS FOUND A LIVE CR-113 DEFECT THAT HAD NOTHING TO DO WITH
+  THE RULING.** `csv_import_apply.dart` passes `usedFieldLabels(doc)` into
+  `alsoUsedLabels` for EVERY origin field, and the rack label's uniqueness check
+  reads `alsoUsedRackLabels`, which nothing ever filled. Two rows of one sheet
+  could write one label onto two drops. The importer had **no rack-label
+  reservation at all**, in a file whose own header explains why the other three
+  exist. [census before building](/practices/census-before-building.md), for the
+  fifth time.
+* **Note**: **THE FIRST PROBE WAS WRONG AND SAYING SO IS THE POINT.** It
+  imported two rows carrying the same rack label and passed, because a drop
+  CREATED by an import takes no rack label from the sheet: the write path is
+  reachable only on the UPDATE pass. The defect was confirmed on the second
+  attempt, by a two-pass import printing `[PP1-05, PP1-05]`. Had the first probe
+  been read as evidence of correctness, the hole would have been recorded as
+  absent. **A green probe against the wrong path is not a measurement.**
+* **Note**: the same session's second wrong assumption, one file over: a test
+  asserting "the rest of the row still applies" reached for an `Installed By`
+  column that **the header map does not have**. Both mistakes are the same
+  shape as
+  [a spec table is an illustration until censused](/practices/a-spec-table-is-an-illustration-until-censused.md),
+  turned inward: I wrote the fixture I wished existed instead of the one the
+  parser accepts.
+* **Note**: a collision is **skipped rather than reported**, which is the
+  importer's existing per-field contract rather than a new decision, and
+  §11.74.3 records it as a **known limitation against docs/04 §3.4** instead of
+  defending it. The import already has a `warnings` channel; wiring it is
+  somebody's task and not this ruling's.
+
+
 ## 2026-08-19
 
 * **Creation**: [DR-074, a wrong hole can be corrected](/decisions/dr-074-a-wrong-hole-can-be-corrected.md),

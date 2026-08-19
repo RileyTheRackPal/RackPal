@@ -342,4 +342,130 @@ void main() {
       expect(built, isA<CsvImportRefused>());
     });
   });
+  group('an imported rack label (DR-075, `#727`)', () {
+    // ═══════════════════════════════════════════════════════════════
+    // TWO CLAIMS, AND THE SECOND WAS A LIVE DEFECT BEFORE THE FIRST
+    // ═══════════════════════════════════════════════════════════════
+    // §11.74.1: a `rack_label` column is a person choosing an
+    // identifier, so it LOCKS and a later move keeps it.
+    //
+    // §11.74.2: the importer passed `usedFieldLabels(doc)` into every
+    // origin field's `alsoUsedLabels`, and the rack label's uniqueness
+    // check reads `alsoUsedRackLabels`, which nothing filled. Two rows
+    // of one sheet could write one label onto two drops.
+    //
+    // BOTH CASES NEED TWO PASSES, and that is why the round-trip suite
+    // above never met either: a drop CREATED by an import takes no rack
+    // label from the sheet, so this write path is reachable only on the
+    // update pass.
+
+    test('locks, so a later move keeps it (§11.74.1)', () {
+      final d = _Doc();
+      _import(d, 'Room,Outlet,Cable Type,Qty\nLiving Room,WP-1,Cat6,1\n');
+      expect(
+        d.doc.links.values.single.structureOrigin!.rackLabelLocked,
+        isFalse,
+        reason: 'nothing has named it yet',
+      );
+
+      _import(
+        d,
+        'Room,Outlet,Cable Type,Qty,Rack Label\n'
+        'Living Room,WP-1,Cat6,1,PP1-05\n',
+      );
+      final origin = d.doc.links.values.single.structureOrigin!;
+      expect(origin.rackLabel, 'PP1-05');
+      expect(
+        origin.rackLabelLocked,
+        isTrue,
+        reason:
+            'they typed it into a spreadsheet instead of into the cell, '
+            'which is the same act through a different door',
+      );
+    });
+
+    test('two rows of ONE sheet cannot share one (CR-113, §11.74.2)', () {
+      // THE DEFECT THIS FILE EXISTS TO KEEP FIXED. Measured before the
+      // fix: this exact sheet wrote `PP1-05` onto both drops.
+      final d = _Doc();
+      _import(
+        d,
+        'Room,Outlet,Cable Type,Qty\n'
+        'Living Room,WP-1,Cat6,1\n'
+        'Attic,AP-1,Cat6,1\n',
+      );
+      _import(
+        d,
+        'Room,Outlet,Cable Type,Qty,Rack Label\n'
+        'Living Room,WP-1,Cat6,1,PP1-05\n'
+        'Attic,AP-1,Cat6,1,PP1-05\n',
+      );
+
+      final labels = d.doc.links.values
+          .map((l) => l.structureOrigin?.rackLabel)
+          .whereType<String>()
+          .toList();
+      expect(labels, ['PP1-05'], reason: 'the second row is skipped');
+    });
+
+    test('a label another drop ALREADY holds is skipped, not written', () {
+      // The against-document half, which the reservation now matches.
+      final d = _Doc();
+      _import(
+        d,
+        'Room,Outlet,Cable Type,Qty\n'
+        'Living Room,WP-1,Cat6,1\n'
+        'Attic,AP-1,Cat6,1\n',
+      );
+      _import(
+        d,
+        'Room,Outlet,Cable Type,Qty,Rack Label\n'
+        'Living Room,WP-1,Cat6,1,PP1-05\n',
+      );
+      _import(
+        d,
+        'Room,Outlet,Cable Type,Qty,Rack Label\n'
+        'Attic,AP-1,Cat6,1,PP1-05\n',
+      );
+
+      final labels = d.doc.links.values
+          .map((l) => l.structureOrigin?.rackLabel)
+          .whereType<String>()
+          .toList();
+      expect(labels, ['PP1-05']);
+    });
+
+    test('the rest of the row still applies when the label is skipped', () {
+      // §11.74.3: a skip is per FIELD, not per row. The importer has
+      // always behaved this way for an origin field and the reservation
+      // must not change it into an all-or-nothing refusal.
+      final d = _Doc();
+      _import(
+        d,
+        'Room,Outlet,Cable Type,Qty\n'
+        'Living Room,WP-1,Cat6,1\n'
+        'Attic,AP-1,Cat6,1\n',
+      );
+      _import(
+        d,
+        'Room,Outlet,Cable Type,Qty,Rack Label\n'
+        'Living Room,WP-1,Cat6,1,PP1-05\n',
+      );
+      _import(
+        d,
+        'Room,Outlet,Cable Type,Qty,Rack Label,Bundle\n'
+        'Attic,AP-1,Cat6,1,PP1-05,Riser A\n',
+      );
+
+      final attic = d.doc.links.values.firstWhere(
+        (l) => l.structureOrigin!.rackLabel == null,
+      );
+      expect(
+        attic.pathwayId,
+        isNotNull,
+        reason: 'the colliding label was skipped; the row was not',
+      );
+      expect(d.doc.pathways.values.single.name, 'Riser A');
+    });
+  });
 }

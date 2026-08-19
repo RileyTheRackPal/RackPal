@@ -11609,6 +11609,49 @@ leaves to the task. **Dragging a run to empty canvas must not mean unland**, whi
 gesture named here, and named to forbid: it is a stray drag away from silently undoing a
 termination.
 
+### 11.74 DR-075 · A rack label somebody imported is a rack label somebody typed
+
+**Settled by the user on 2026-08-19** (`#727`). **Amends DR-074 §11.73.2**, whose mechanism clause
+reads *"written by the `RACK LBL` column's own edit path and by nothing else"*. That sentence was
+written to keep the ALLOCATOR out, and it kept the CSV importer out with it.
+
+**11.74.1 THE TEST IS WHO AUTHORED THE NAME, NOT WHICH CONTROL CARRIED IT.** `rackLabelLocked` means
+*a person chose this identifier*, and a `rack_label` column in an imported sheet is a person choosing
+one: they typed it into a spreadsheet instead of into a cell, which is the same act reaching the same
+field through a different door. So an imported label locks, and a later move keeps it (§11.73.2)
+rather than re-deriving it from the new position.
+
+**THE COUNTER-ARGUMENT IS REAL AND IS OUTWEIGHED.** A sheet exported from this product carries
+labels the ALLOCATOR produced, so a round trip out and back would lock names nobody chose, and a
+later move would then keep a label naming the hole the cable has left: the failure §11.73.2 exists
+to prevent, arrived at from the other side. It is outweighed because **the product cannot tell the
+two sheets apart and must not guess**, and because the two mistakes are not equal: a wrongly locked
+label is visible in the `RACK LBL` cell, carries the pin that says a person set it, and is cleared by
+emptying the box; a wrongly discarded one is gone. G4's direction of travel decides it.
+
+**11.74.2 AND THE IMPORTER HAD NO RUNNING RACK-LABEL RESERVATION AT ALL, WHICH IS A LIVE CR-113
+DEFECT AND NOT A CONSEQUENCE OF THIS RULING.** `csv_import_apply.dart` passes `usedFieldLabels(doc)`
+into `alsoUsedLabels` for **every** origin field it writes. `buildSetStructureOriginProperty` reads
+that parameter for the FIELD label and reads `alsoUsedRackLabels` for the rack label, and nothing
+ever filled the second. Two rows of one import naming the same rack label were each checked against
+one unmutated document, and both passed.
+
+**MEASURED, NOT REASONED.** A probe written before the fix imported two drops and then re-imported
+the same sheet carrying `PP1-05` on both rows: two links, one label. It is reachable only on the
+**update** pass, because a drop created by an import takes no rack label from the sheet, which is
+why the existing suite's round-trip cases never met it.
+
+**11.74.3 A COLLISION IS SKIPPED, NOT REFUSED, AND THAT IS THE IMPORTER'S EXISTING CONTRACT RATHER
+THAN A NEW DECISION.** `_origin` drops any result that is not `Ready`, so a rack label colliding with
+one already in the document has always been silently left alone while the rest of the row applied.
+The reservation makes the within-sheet case behave the same way as the against-document case, which
+is the smaller change and the consistent one.
+
+**IT IS RECORDED AS A KNOWN LIMITATION.** docs/04 §3.4 says never silently do nothing, and an import
+that skips a field without saying so is doing exactly that. The import already has a `warnings`
+channel and this is a candidate for it; wiring it is not this ruling's work, and pretending the
+current behaviour is fine would be worse than naming it.
+
 ---
 
 ## 12. Superseded rulings
@@ -12153,6 +12196,16 @@ landed pennant, each citing §11.39.6's silence as the reason. The refusals were
 re-landing had no meaning. **Whether either surface should now offer the gesture is left to the
 task** by §11.73.5 rather than decided here, and until it is built both behave exactly as ruled.
 
+
+### 12.26 Amended by DR-075 (an imported rack label is a person's assertion)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-074 §11.73.2** | *"`rackLabelLocked` on `StructureOrigin`, written by the `RACK LBL` cell's own edit path **and by nothing else**."* | **Amended by DR-075 §11.74.** The clause was written to keep the ALLOCATOR out and kept the CSV importer out with it. A `rack_label` column in an imported sheet is a person choosing an identifier, so it locks too. **The rest of §11.73.2 is untouched:** `AddHomeRunCommand` and `BindEndpointCommand` still write allocator labels and still do not lock, absent-when-false is unchanged, and a blank cell still clears both. |
+
+**The defect DR-075 §11.74.2 records is not a consequence of this amendment.** The importer had no
+running rack-label reservation before it either, so two rows of one sheet could already write one
+label onto two drops.
 ---
 
 ## 13. Resolved §10 questions

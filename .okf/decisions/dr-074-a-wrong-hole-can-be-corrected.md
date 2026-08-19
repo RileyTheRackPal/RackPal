@@ -40,6 +40,12 @@ the wire** following `Link.linkClassLocked` and deliberately not
 `designatorLocked`, which is written unconditionally and would rewrite every
 document on disk ([CR-117](/invariants/cr-117-byte-exactness.md)).
 
+> **AMENDED BY DR-075 (§12.26).** §11.73.2 said the bit is written by the
+> `RACK LBL` cell *"and by nothing else"*, which was aimed at the ALLOCATOR and
+> caught the CSV importer with it. **An imported rack label locks too**: a
+> `rack_label` column is a person choosing an identifier through a different
+> door. Everything else in the clause stands.
+
 **It is not a `StructureOriginField` row, and could not be.**
 `SetEntityPropertyCommand.revert` calls the same `set` closure `apply` does, so
 a row that locked on the way in would re-lock on the way back out and an
