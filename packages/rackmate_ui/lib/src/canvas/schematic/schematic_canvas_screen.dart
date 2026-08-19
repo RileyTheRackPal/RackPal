@@ -598,6 +598,26 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   Map<Uuid, Pt> _heldPositions = const <Uuid, Pt>{};
   bool _holdLayoutOnNextBuild = false;
 
+  /// Which epochs have moved since the last scene was built (DR-076
+  /// §11.75.2).
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// LATCHES FOR THE REASON [_holdLayoutOnNextBuild] IS ONE
+  /// ═════════════════════════════════════════════════════════════════
+  /// Several epochs bump inside one transaction — `ConnectPortsCommand`
+  /// declares `wires | meta` — every listener runs before any `build`,
+  /// and the scene is rebuilt lazily in [_sceneFor]. So the question is
+  /// "what has moved since the last layout", answered once and cleared
+  /// where it is used. An epoch STAMP would lose the race the same way
+  /// the first draft of the hold did.
+  ///
+  /// They decide what may be CARRIED OVER, never whether to rebuild:
+  /// `_sceneEpoch` still misses the cache on every change, so a scene is
+  /// never a commit behind.
+  bool _structureDirty = false;
+  bool _metaDirty = false;
+  bool _wiresDirty = false;
+
   /// True only while THIS screen's own connect command is being applied.
   ///
   /// ═════════════════════════════════════════════════════════════════
@@ -640,14 +660,18 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     // pinned layout), `style` moves the registries and the per-family
     // colour overrides. Missing any one of them would leave the sheet a
     // commit behind in a way no test that only edits devices could see.
-    widget.controller.epochs.structure.addListener(_onDocumentChanged);
+    widget.controller.epochs.structure.addListener(_onStructureChanged);
     // `wires` gets its OWN callback, and that is DR-011.4 — see
     // [_holdLayoutForEpoch]. It is the one epoch whose bump must not move
     // a symbol.
     widget.controller.epochs.wires.addListener(_onWiresChanged);
-    widget.controller.epochs.meta.addListener(_onDocumentChanged);
-    widget.controller.epochs.sheet.addListener(_onDocumentChanged);
-    widget.controller.epochs.style.addListener(_onDocumentChanged);
+    widget.controller.epochs.meta.addListener(_onMetaChanged);
+    // `sheet` and `style` COUNT AS STRUCTURE for this cache and not as
+    // meta: `sheet` moves `SheetItem.pinned`/`position`, which is where a
+    // symbol sits, and `style` resolves into the display list rather than
+    // over it (see [_sceneFor]'s key). Neither can reuse a layout.
+    widget.controller.epochs.sheet.addListener(_onStructureChanged);
+    widget.controller.epochs.style.addListener(_onStructureChanged);
     _selection.addListener(_onSelectionChanged);
     // `Alt` is a MODIFIER, and Flutter delivers no hover event when only a
     // modifier changes. Without this hook, holding `Alt` over a symbol the
@@ -671,11 +695,11 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_onRawKey);
     widget.reveal?.removeListener(_onRevealRequested);
-    widget.controller.epochs.structure.removeListener(_onDocumentChanged);
+    widget.controller.epochs.structure.removeListener(_onStructureChanged);
     widget.controller.epochs.wires.removeListener(_onWiresChanged);
-    widget.controller.epochs.meta.removeListener(_onDocumentChanged);
-    widget.controller.epochs.sheet.removeListener(_onDocumentChanged);
-    widget.controller.epochs.style.removeListener(_onDocumentChanged);
+    widget.controller.epochs.meta.removeListener(_onMetaChanged);
+    widget.controller.epochs.sheet.removeListener(_onStructureChanged);
+    widget.controller.epochs.style.removeListener(_onStructureChanged);
     _selection
       ..removeListener(_onSelectionChanged)
       ..dispose();
@@ -692,6 +716,32 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   void _onWiresChanged() {
     if (!mounted) return;
     _holdLayoutOnNextBuild = true;
+    _wiresDirty = true;
+    _onDocumentChanged();
+  }
+
+  /// A `structure`, `sheet` or `style` bump: nothing may be carried over.
+  ///
+  /// DR-076 §11.75.2's top tier. A device added or removed changes what
+  /// Sugiyama is laying out, and a style change is resolved INTO the ops
+  /// rather than applied over them, so neither a held layout nor a held
+  /// symbol tier describes the sheet any more.
+  void _onStructureChanged() {
+    if (!mounted) return;
+    _structureDirty = true;
+    _onDocumentChanged();
+  }
+
+  /// A `meta` bump: the symbols are rebuilt, the layout is not
+  /// (DR-076 §11.75.3).
+  ///
+  /// A designator changes what a symbol PRINTS and, through docs/05 §3's
+  /// width formula, how wide it is — so the symbol tier is stale. It does
+  /// not change what Sugiyama was ordering, and re-running it would move
+  /// symbols under the cursor of somebody who just renamed one.
+  void _onMetaChanged() {
+    if (!mounted) return;
+    _metaDirty = true;
     _onDocumentChanged();
   }
 
@@ -925,6 +975,25 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     final key = (epoch: _sceneEpoch, palette: palette, theme: theme);
     final cached = _scene;
     if (cached != null && _sceneKey == key) return cached;
+    // ═════════════════════════════════════════════════════════════════
+    // WHAT MAY BE CARRIED OVER (DR-076 §11.75.2)
+    // ═════════════════════════════════════════════════════════════════
+    // Measured at 3,600 links, best of five: a full build is 96 ms, the
+    // `holdAt` path this replaced is 90 ms, reusing the layout is 46 ms
+    // and reusing the whole symbol tier is 19.6 ms.
+    //
+    // THE LOOK IS PART OF THE QUESTION. Palette and theme are resolved
+    // INTO the ops, so a scene built under one may not lend its symbols
+    // to another; when either moved, nothing is carried.
+    //
+    // A STRUCTURE BUMP CARRIES NOTHING EVEN WHEN WIRES MOVED WITH IT.
+    // `AtomicConnectCommand` declares `structure | wires | meta`: it
+    // creates a device, and a held layout has never seen it. That case
+    // keeps the `holdAt` path exactly as before, so DR-011.4's freeze
+    // still applies to it and this change stays additive.
+    final previous = cached;
+    final sameLook = _sceneKey?.palette == palette && _sceneKey?.theme == theme;
+    final carry = previous != null && sameLook && !_structureDirty;
     final built = buildSchematicScene(
       doc: _doc,
       measurer: widget.measurer,
@@ -933,9 +1002,29 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       // DR-011.4 — see [_holdLayoutOnNextBuild]. A hold is a layout INPUT
       // and never a document write, which is the whole reason the ruling
       // chose this shape over pinning every symbol into CR-117's byte
-      // surface.
-      holdAt: _holdLayoutOnNextBuild ? _heldPositions : const <Uuid, Pt>{},
+      // surface. It is still what a structure-and-wires commit uses.
+      holdAt: _holdLayoutOnNextBuild && !carry
+          ? _heldPositions
+          : const <Uuid, Pt>{},
+      // §11.75.3: a rename rebuilds the symbols and keeps the layout.
+      reuseLayout: carry && _metaDirty ? previous.layout : null,
+      // §11.75.2: a wires-only edit keeps the symbols too. Seven commands
+      // declare `wires` alone — a class, a jacket colour — and eight
+      // declare `wires | meta`, which lands on the line above because
+      // materialising a port mints a designator.
+      //
+      // BOTH ARMS REQUIRE THEIR OWN FLAG, so a rebuild reached by some
+      // path that set none of them carries nothing. That is the
+      // conservative direction: a scene built from a stale tier is a
+      // drawing that is wrong, and a scene built from scratch is only
+      // slow.
+      reuseSymbols: carry && _wiresDirty && !_metaDirty
+          ? previous.symbolTier
+          : null,
     );
+    _structureDirty = false;
+    _metaDirty = false;
+    _wiresDirty = false;
     // Cleared HERE and not in the listener: a cache hit is not a layout,
     // and a latch cleared on a frame that reused the previous scene would
     // lose the hold before the rebuild it was set for ever happened.

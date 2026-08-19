@@ -350,6 +350,108 @@ void main() {
       );
     });
 
+    testWidgets('a RENAME does not move a symbol either (DR-076 §11.75.3)', (
+      tester,
+    ) async {
+      // ═══════════════════════════════════════════════════════════════
+      // NEW BEHAVIOUR, AND THE REASON IT BELONGS IN THIS GROUP
+      // ═══════════════════════════════════════════════════════════════
+      // DR-011.4 froze the sheet for a `wires` bump only. A `meta` bump —
+      // a designator typed — took the full path, so Sugiyama ran again and
+      // could place the sheet differently while somebody was renaming one
+      // device. DR-076 §11.75.3 rules that a rename rebuilds the SYMBOLS
+      // and keeps the layout, which makes this the same guarantee one
+      // epoch over.
+      //
+      // The symbol text must still change, or "does not move" would have
+      // shipped as "does not update" — the trap the case below this one
+      // exists to catch for wires.
+      await pump(tester);
+
+      List<(double, double)> origins() {
+        final ops = tester
+            .renderObject<RenderSchematicCanvas>(
+              find.byType(SchematicCanvasBody),
+            )
+            .plan
+            .ops;
+        final out = <(double, double)>[];
+        var depth = 0;
+        for (var i = 0; i < ops.length; i++) {
+          final op = ops[i];
+          if (op is OpRestore) {
+            depth--;
+            continue;
+          }
+          if (op is! OpSave) continue;
+          depth++;
+          if (depth != 1) continue;
+          final next = i + 1 < ops.length ? ops[i + 1] : null;
+          if (next is OpTransform) {
+            out.add((next.m.storage[12], next.m.storage[13]));
+          }
+        }
+        return out;
+      }
+
+      bool drawsText(String text) => tester
+          .renderObject<RenderSchematicCanvas>(
+            find.byType(SchematicCanvasBody),
+          )
+          .plan
+          .ops
+          .whereType<OpText>()
+          .any((op) => op.text == text);
+
+      // BUILT, NOT WRITTEN OUT: a 180-character literal is a line no
+      // formatter can break, and the analyzer ratchet counts it.
+      final longName = 'MATRIX-SWITCHER-${'X' * 160}-1';
+
+      final before = origins();
+      expect(drawsText('MTX-1'), isTrue, reason: 'the premise');
+
+      controller.run(
+        RenameEntityCommand(
+          targetKind: RenameTargetKind.device,
+          id: deviceNamed(doc, 'MTX-1').id,
+          from: 'MTX-1',
+          // ABSURDLY LONG ON PURPOSE, AND THAT IS THE FINDING.
+          // docs/05 §3 sizes a symbol from its measured text, so only a
+          // rename that changes the width can move the layout. VERIFIED BY
+          // MUTATION at three lengths, with the reuse removed:
+          //
+          //   `MTX-9`                        — nothing moves. Same width.
+          //   `MATRIX-SWITCHER-MAIN-RACK-1`  — nothing moves either.
+          //   this one, ~180 characters      — the sheet moves, and the
+          //                                    case fails as it should.
+          //
+          // So at any designator a person would actually type, a full
+          // rebuild and a held layout agree on this fixture, and §11.75.3's
+          // reuse is justified by COST rather than by an observed churn.
+          // The length here is what makes the guarantee DETECTABLE; a
+          // later reader tidying it back to something realistic would
+          // leave a case that passes whatever the code does.
+          to: longName,
+          now: DateTime.utc(2026, 8, 19),
+          actor: 'test',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        drawsText(longName),
+        isTrue,
+        reason: 'the symbols rebuilt, so the new designator is drawn',
+      );
+      expect(
+        origins(),
+        before,
+        reason:
+            'and the layout was kept, so nothing moved under the cursor '
+            'of the person who just renamed it',
+      );
+    });
+
     testWidgets('...and the labels DID rebuild — held is not frozen', (
       tester,
     ) async {
