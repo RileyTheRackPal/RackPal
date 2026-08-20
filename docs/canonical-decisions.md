@@ -2329,6 +2329,17 @@ code citation and a red-tagged job.
 Both are acknowledgeable like every other rule (CR-019), because an inspector's judgement
 outranks ours, but the finding must exist.
 
+> **CORRECTED BY DR-079 §11.78 on 2026-08-19**, in place rather than pointered, on two clauses.
+> **`CODE-002`'s predicate was wrong**: `lszh` is a jacket compound characteristic and not a UL
+> listing, so accepting it as satisfying NEC 800.154 was a **false pass**, which is worse than a
+> false failure. The predicate now resolves the cable's LISTING against its own NEC article
+> (`JacketListing`, `jacket_substitution.dart`), and a listing from another article is unknown and
+> skips (G4). **Both severities become `warning`**: 725.136 has permitted arrangements this product
+> models none of the facts to distinguish, and 300.22(C) permits ordinary cable in a plenum inside
+> metal raceway, which this product does not model at all. Each names its article, names the
+> exception it cannot see, and says what to verify. **The sentence above is otherwise untouched and
+> still governs**: the finding must exist, and it is still acknowledgeable.
+
 ### AC-028 · M14: no unsupported-weight model
 
 **Accepted.** A 34 lb amplifier or a 48 lb UPS on front ears alone sags, strips the rail
@@ -4539,10 +4550,13 @@ CSV import is not rejected; it is created as a new user media type with a confir
 | `media.conduit_emt` · `media.conduit_ent` | EMT conduit · ENT (smurf tube) | `EMT` `ENT` | — | — | — | — | — | **`isPathwayOnly: true`** |
 | `media.pull_string` | Pull string | `PULL` | — | — | — | — | — | **`isPathwayOnly: true`** |
 
-`JacketRating` is `cl2 | cl3 | cmr | cmp | lszh | directBurial`. It is not decorative: `CODE-002`
-is an error when `Pathway.kind == plenumSpace` and the jacket is not `cmp` or `lszh` (NEC
-800.154), and `CODE-001` is an error when a Class 2/3 conductor shares a pathway with line
-voltage (NEC 725.136). Both are acknowledgeable like every other rule (CR-019), an inspector's
+`JacketRating` was `cl2 | cl3 | cmr | cmp | lszh | directBurial`; **DR-079 §11.78.1 replaces it
+with `JacketListing`**, which carries only NEC/UL listings across five articles, moves LSZH to
+`Link.lowSmokeZeroHalogen` as the jacket-compound fact it always was, and moves direct burial to
+`Link.directBurialRated` as the application it always was. It is not decorative: `CODE-002` is a
+**warning** when `Pathway.kind == plenumSpace` and the jacket's listing is not plenum-rated for its
+own article (NEC 800.154), and `CODE-001` is a **warning** when a Class 2/3 conductor shares a
+pathway with line voltage (NEC 725.136). Both are acknowledgeable like every other rule (CR-019), an inspector's
 judgement outranks ours, but **the finding must exist**, because these are two of the very few
 checks in the whole product that protect the user from a code citation and a red-tagged job
 (AC-027).

@@ -431,16 +431,23 @@ Full table in `assets/catalog/registries.json`; the load-bearing rows:
 | `media.om3` · `om4` · `os2` | Fibre | 2 strands | — | — | ~300–400 m at 10 G · 10–40 km | `net.fiber_mm` · `net.fiber_sm` |
 | `media.conduit_emt` · `conduit_ent` · `pull_string` | EMT · ENT (smurf) · pull string | — | — | — | — | **`isPathwayOnly: true`** |
 
-`JacketRating { cl2, cl3, cmr, cmp, lszh, directBurial }` is not decorative:
+`JacketListing` carries **only NEC/UL listings**, 28 values across the five articles this product's media touch: communications `CM`/`CMG`/`CMR`/`CMP`/`CMX` (Art. 800/805), Class 2 and 3 `CL2`/`CL3` with their `R`/`P`/`X` variants (725), power-limited fire alarm `FPL`/`FPLR`/`FPLP` (760), optical fibre `OFN`/`OFC` with their `G`/`R`/`P` variants (770) and coax `CATV`/`CATVR`/`CATVP`/`CATVX` (820). **LSZH is not among them and never was a listing**; it is `Link.lowSmokeZeroHalogen`, an independent fact about the jacket compound, and direct burial is `Link.directBurialRated`, an application (DR-079 §11.78.1). NEC's substitution hierarchy is data (`jacket_substitution.dart`), so `CMP` satisfies a riser requirement and a listing from another article answers **unknown rather than false**.
+
+None of it is decorative:
 
 ```text
-CODE-001 (error) [std NEC 725.136]: a Class 2/3 conductor shares a pathway
-                                     with line-voltage circuits
-CODE-002 (error) [std NEC 800.154]: Pathway.kind == plenumSpace and the
-                                     jacket is not cmp or lszh
+CODE-001 (warning) [std NEC 725.136]: a Class 2/3 conductor shares a
+                                       pathway with line-voltage circuits
+CODE-002 (warning) [std NEC 800.154]: Pathway.kind == plenumSpace and the
+                                       jacket's LISTING is not plenum-rated
+                                       for its own NEC article
 ```
 
 Both are acknowledgeable like every other rule (CR-019), an inspector's judgement outranks ours, **but the finding must exist**, because these are two of the very few checks in the product that protect the user from a code citation and a red-tagged job (AC-027).
+
+**Both are WARNINGS that name what to verify, and neither asserts a violation** (DR-079 §11.78.3). A code citation is a claim about somebody's licence, and these two are held to a higher standard than the other twenty-six. NEC 725.136 runs to a substantial list of permitted arrangements and separations, and this product models none of the facts that would distinguish them, so a blanket error fires hardest on the commercial rows where the arrangement is most likely deliberate. NEC 300.22(C) permits ordinary cable in a plenum inside metal raceway, and **this product models no raceway**, so `CODE-002` cannot see the exception it would be citing. Each names its article, names the exception it cannot see, and says what to check. **This costs nothing that was ever enforced**: G2 and G3 already guarantee that no finding at any severity blocks a deliverable or gates the bytes.
+
+**`CODE-002` reads a LISTING, never a material.** Its predicate named `lszh` until DR-079 §11.78.1, and LSZH is a jacket compound characteristic rather than a UL listing: it says nothing about the flame spread and smoke development testing a plenum listing rests on. The rule therefore produced a **false pass**, telling somebody an unlisted cable was fine in a plenum. It now resolves the cable's listing against its own NEC article through the substitution hierarchy, and a listing from another article, or none at all, is **unknown and skips** rather than failing (G4).
 
 ---
 

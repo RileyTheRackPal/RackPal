@@ -904,8 +904,8 @@ Severity vocabulary is `error | warning | advisory | off`, "info" is renamed `ad
 | `RCK-003` | Σ device weight > `Rack.weightCapacity`. | **warning** (advisory at 85%) | CR-020 |
 | `RCK-012` | Front device depth + rear device depth + 50 mm cable allowance > usable depth, for overlapping RU ranges. | error | AC-022/M7 |
 | `RCK-013` | Device mass exceeds `maxUnsupportedMass` on front ears only; requires rear support or a shelf. | warning | AC-028/M14 |
-| `CODE-001` | Class 2/3 conductor in a `Pathway` with `containsLineVoltage == true` (NEC 725.136). | error | AC-027/M13 |
-| `CODE-002` | `Pathway.kind == plenumSpace` and jacket is not `cmp`/`lszh` (NEC 800.154). | error | AC-027/M13 |
+| `CODE-001` | Class 2/3 conductor in a `Pathway` with `containsLineVoltage == true`. **Cites NEC 725.136 and says the article has permitted arrangements this product does not model**, so it asks the user to verify rather than asserting a violation (DR-079 §11.78.3). | **warning** (demoted from error) | AC-027/M13, DR-079 |
+| `CODE-002` | `Pathway.kind == plenumSpace` and the jacket's **listing** is not plenum-rated for its own NEC article, resolved through `jacket_substitution.dart`. **`lszh` is gone from the predicate**: LSZH is a jacket compound and not a listing, and accepting it was a false pass (DR-079 §11.78.1). Cites NEC 800.154 and names 300.22(C)'s metal-raceway exception, which this product cannot see because it models no raceway. A listing from another article, or none at all, is **unknown and skips** (G4). | **warning** (demoted from error) | AC-027/M13, DR-079 |
 | `LNK-020` | N links have unbound endpoints. A checklist, not a failure. | advisory | AC-018/B1 |
 
 **v1 ships this set and no more** (AC-040, as amended by DR-020), fourteen tier-3 rules, completing the 28. Everything else in the full catalogue (the remaining `DIR`, `CON`, `ELE`, `LEN`, `BUS`, `SER`, `NET`, `PWR` and `RCK` rules, plus `PWR-006`, `RCK-003b`, `RCK-007`, `RCK-014`, `TOP-010`, `TOP-011` and `SEQ-001` adopted by CR-021 and AC-033) moves to v1.2 behind a fixture corpus. **No rule ships without a known-bad and a known-good fixture** (AC-040, AC-051).
