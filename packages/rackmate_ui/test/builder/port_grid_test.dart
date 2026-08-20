@@ -1068,6 +1068,117 @@ void main() {
     });
   });
 
+  group('the batch inspector WRITES (M4-F11, DR-063)', () {
+    Future<_Harness> two(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001')..face = Face.front,
+        ]),
+    );
+
+    Future<void> select(WidgetTester tester) async {
+      await tester.tap(find.text('P1'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+      await tester.tap(find.text('P2'));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+      await tester.pumpAndSettle();
+    }
+
+    Finder inDock(Finder matching) =>
+        find.descendant(of: find.byType(BatchInspector), matching: matching);
+
+    // THE TRAP `#703` NAMED, and it is the first case for that reason: a
+    // control seeded from mixed that fires onChanged on construction or on
+    // focus writes the dash back across N rows.
+    testWidgets('opening the dock on a mixed field writes nothing', (
+      tester,
+    ) async {
+      final harness = await two(tester);
+      await select(tester);
+
+      expect(inDock(find.textContaining('Mixed (2 values)')), findsOne);
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.face), [Face.rear, Face.front]);
+    });
+
+    testWidgets('focusing and leaving a mixed text cell writes nothing', (
+      tester,
+    ) async {
+      final harness = await two(tester);
+      await select(tester);
+
+      // NOTES AND NOT LABEL. DR-063 keeps `LABEL` and `DESIG` to one row
+      // (one label across eight rows mints eight colliding keys), so the
+      // dock draws no control for them at all, which the first draft of
+      // this case discovered by asking for one.
+      //
+      // Focus the box and leave without typing: `_commit` compares
+      // against the EMPTY seed, so this is equal to it and returns early.
+      // That is the trap `#703` named, expressed as a route.
+      final box = find.byKey(batchCellKey(PortColumnId.notes));
+      expect(box, findsOne, reason: 'the dock draws no NOTES control');
+      await tester.tap(box);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.notes), [null, null]);
+    });
+
+    testWidgets('picking a value in the dock writes it to every row', (
+      tester,
+    ) async {
+      final harness = await two(tester);
+      await select(tester);
+
+      // THE DOCK'S FACE MENU, BY KEY. Tapping the `Mixed (2 values)`
+      // TEXT missed its hit test, the menu never opened, and
+      // `find.text('Front').last` then hit a GRID cell: the multi-row
+      // edit applied, this assertion passed, and the dock was never
+      // touched. The tap warning is what found it.
+      await tester.tap(find.byKey(batchCellKey(PortColumnId.face)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Front').last);
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.face), [Face.front, Face.front]);
+    });
+
+    testWidgets('one Undo takes the whole batch write back', (tester) async {
+      final harness = await two(tester);
+      await select(tester);
+
+      await tester.tap(find.byKey(batchCellKey(PortColumnId.face)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Front').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.face), [Face.rear, Face.front]);
+    });
+
+    testWidgets('the dock says the rule rather than pointing at the grid', (
+      tester,
+    ) async {
+      await two(tester);
+      await select(tester);
+
+      expect(inDock(find.text(kBatchInspectorHint)), findsOne);
+      expect(
+        find.text('Edit any cell in the grid to change all of them.'),
+        findsNothing,
+      );
+    });
+  });
+
   group('fill down and fill series (DR-062, M4-F1)', () {
     Future<_Harness> four(WidgetTester tester) => _pump(
       tester,

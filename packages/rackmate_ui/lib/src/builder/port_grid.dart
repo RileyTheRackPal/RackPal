@@ -60,10 +60,10 @@ import 'package:rackmate_ui/src/builder/batch_inspector.dart';
 import 'package:rackmate_ui/src/builder/change_type_dialog.dart';
 import 'package:rackmate_ui/src/builder/find_replace_dialog.dart';
 import 'package:rackmate_ui/src/builder/move_to_bank_dialog.dart';
+import 'package:rackmate_ui/src/builder/port_cells.dart';
 import 'package:rackmate_ui/src/builder/quick_add_bar.dart';
 import 'package:rackmate_ui/src/builder/renumber_dialog.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
-import 'package:rackmate_ui/src/widgets/family_picker.dart';
 
 /// How the grid asks the builder to change the template.
 ///
@@ -1946,17 +1946,17 @@ class _PortRow extends StatelessWidget {
   Widget _cell(BuildContext context, PortColumnId id) => switch (id) {
     // THE KEY IS GREY UNTIL IT IS TOUCHED (docs/06 §4.5), because while
     // it follows the label it is not a value the author has chosen.
-    PortColumnId.portKey => _TextCell(
+    PortColumnId.portKey => PortTextCell(
       value: _port.key.v,
       automatic: keyFollowsLabel,
       onCommit: _renameKey,
     ),
-    PortColumnId.label => _TextCell(
+    PortColumnId.label => PortTextCell(
       value: _port.label,
       hint: 'HDMI IN 1',
       onCommit: _setLabel,
     ),
-    PortColumnId.designator => _TextCell(
+    PortColumnId.designator => PortTextCell(
       value: row.isDesignatorPinned ? _port.designatorHint : row.autoDesignator,
       // AUTOMATIC VALUES ARE ITALIC AND PINNED ONES ARE NOT (docs/06
       // §4.5). One glance says which designators a renumber would move
@@ -1969,29 +1969,29 @@ class _PortRow extends StatelessWidget {
         v.trim().isEmpty ? null : v.trim(),
       ),
     ),
-    PortColumnId.connector => _ConnectorCell(
+    PortColumnId.connector => PortConnectorCell(
       registries: registries,
       value: _port.connector,
       onPick: (v) => _set(id, PortDefField.connector, v),
     ),
-    PortColumnId.family => _FamilyCell(
+    PortColumnId.family => PortFamilyCell(
       registries: registries,
       value: _port.signalFamily,
       onPick: (v) => _set(id, PortDefField.signalFamily, v),
     ),
-    PortColumnId.direction => _ChoiceCell<PortDirection>(
+    PortColumnId.direction => PortChoiceCell<PortDirection>(
       value: _port.direction,
       options: PortDirection.values,
       label: portDirectionLabel,
       onPick: (v) => _set(id, PortDefField.direction, v),
     ),
-    PortColumnId.face => _ChoiceCell<Face>(
+    PortColumnId.face => PortChoiceCell<Face>(
       value: _port.face,
       options: Face.values,
       label: portFaceLabel,
       onPick: (v) => _set(id, PortDefField.face, v),
     ),
-    PortColumnId.portSet => _ChoiceCell<String?>(
+    PortColumnId.portSet => PortChoiceCell<String?>(
       value: _port.setKey,
       // NULL IS AN OPTION AND IS LISTED FIRST. Most ports belong to no
       // set, and a dropdown a person cannot get back out of is worse
@@ -2002,175 +2002,175 @@ class _PortRow extends StatelessWidget {
           : portSets.firstWhere((s) => s.key == v).label,
       onPick: (v) => _set(id, PortDefField.setKey, v),
     ),
-    PortColumnId.setRole => _TextCell(
+    PortColumnId.setRole => PortTextCell(
       value: _port.setRole,
       hint: 'L',
       onCommit: (v) =>
           _set(id, PortDefField.setRole, v.trim().isEmpty ? null : v.trim()),
     ),
-    PortColumnId.notes => _TextCell(
+    PortColumnId.notes => PortTextCell(
       value: _port.notes,
       onCommit: (v) => _set(id, PortDefField.notes, _orNull(v)),
     ),
-    PortColumnId.impedanceOhms => _NumberCell(
+    PortColumnId.impedanceOhms => PortNumberCell(
       value: _port.impedanceOhms,
       hint: '75',
       onCommit: (v) => _set(id, PortDefField.impedanceOhms, v),
     ),
-    PortColumnId.audioLevel => _NullableChoiceCell<AudioLevel>(
+    PortColumnId.audioLevel => PortNullableChoiceCell<AudioLevel>(
       value: _port.level,
       options: AudioLevel.values,
       label: portAudioLevelLabel,
       onPick: (v) => _set(id, PortDefField.audioLevel, v),
     ),
-    PortColumnId.balanced => _TriStateCell(
+    PortColumnId.balanced => PortTriStateCell(
       value: _port.balanced,
       onPick: (v) => _set(id, PortDefField.balanced, v),
     ),
-    PortColumnId.phantomPower => _TriStateCell(
+    PortColumnId.phantomPower => PortTriStateCell(
       value: _port.phantomPowerCapable,
       onPick: (v) => _set(id, PortDefField.phantomPower, v),
     ),
-    PortColumnId.polarity => _NullableChoiceCell<Polarity>(
+    PortColumnId.polarity => PortNullableChoiceCell<Polarity>(
       value: _port.polarity,
       options: Polarity.values,
       label: portPolarityLabel,
       onPick: (v) => _set(id, PortDefField.polarity, v),
     ),
-    PortColumnId.nominalVoltage => _NumberCell(
+    PortColumnId.nominalVoltage => PortNumberCell(
       value: _port.nominalVoltage,
       onCommit: (v) => _set(id, PortDefField.nominalVoltage, v),
     ),
-    PortColumnId.maxCurrentMa => _NumberCell(
+    PortColumnId.maxCurrentMa => PortNumberCell(
       value: _port.maxCurrentMa,
       onCommit: (v) => _set(id, PortDefField.maxCurrentMa, v),
     ),
-    PortColumnId.poeRole => _NullableChoiceCell<PoeRole>(
+    PortColumnId.poeRole => PortNullableChoiceCell<PoeRole>(
       value: _port.poe?.role,
       options: PoeRole.values,
       label: portPoeRoleLabel,
       onPick: (v) => _set(id, PortDefField.poeRole, v),
     ),
-    PortColumnId.poeStandard => _NullableChoiceCell<PoeStandard>(
+    PortColumnId.poeStandard => PortNullableChoiceCell<PoeStandard>(
       value: _port.poe?.standard,
       options: PoeStandard.values,
       label: portPoeStandardLabel,
       onPick: (v) => _set(id, PortDefField.poeStandard, v),
     ),
-    PortColumnId.poeType => _NumberCell(
+    PortColumnId.poeType => PortNumberCell(
       value: _port.poe?.type,
       onCommit: (v) => _set(id, PortDefField.poeType, v),
     ),
-    PortColumnId.poeClass => _NumberCell(
+    PortColumnId.poeClass => PortNumberCell(
       value: _port.poe?.poeClass,
       onCommit: (v) => _set(id, PortDefField.poeClass, v),
     ),
-    PortColumnId.poeWatts => _NumberCell(
+    PortColumnId.poeWatts => PortNumberCell(
       value: _port.poe?.watts,
       onCommit: (v) => _set(id, PortDefField.poeWatts, v),
     ),
-    PortColumnId.linkSpeedMbps => _NumberCell(
+    PortColumnId.linkSpeedMbps => PortNumberCell(
       value: _port.linkSpeedMbps,
       hint: '1000',
       onCommit: (v) => _set(id, PortDefField.linkSpeedMbps, v),
     ),
-    PortColumnId.sfpFormFactor => _NullableChoiceCell<SfpFormFactor>(
+    PortColumnId.sfpFormFactor => PortNullableChoiceCell<SfpFormFactor>(
       value: _port.sfp,
       options: SfpFormFactor.values,
       label: portSfpLabel,
       onPick: (v) => _set(id, PortDefField.sfpFormFactor, v),
     ),
-    PortColumnId.fiberMode => _NullableChoiceCell<FiberMode>(
+    PortColumnId.fiberMode => PortNullableChoiceCell<FiberMode>(
       value: _port.fiberMode,
       options: FiberMode.values,
       label: portFiberModeLabel,
       onPick: (v) => _set(id, PortDefField.fiberMode, v),
     ),
-    PortColumnId.wavelengthNm => _NumberCell(
+    PortColumnId.wavelengthNm => PortNumberCell(
       value: _port.wavelengthNm,
       hint: '1310',
       onCommit: (v) => _set(id, PortDefField.wavelengthNm, v),
     ),
-    PortColumnId.serialRole => _NullableChoiceCell<SerialRole>(
+    PortColumnId.serialRole => PortNullableChoiceCell<SerialRole>(
       value: _port.serial?.role,
       options: SerialRole.values,
       label: portSerialRoleLabel,
       onPick: (v) => _set(id, PortDefField.serialRole, v),
     ),
-    PortColumnId.baud => _NumberCell(
+    PortColumnId.baud => PortNumberCell(
       value: _port.serial?.baud,
       hint: '9600',
       onCommit: (v) => _set(id, PortDefField.baud, v),
     ),
-    PortColumnId.dataBits => _NumberCell(
+    PortColumnId.dataBits => PortNumberCell(
       value: _port.serial?.dataBits,
       hint: '8',
       onCommit: (v) => _set(id, PortDefField.dataBits, v),
     ),
-    PortColumnId.stopBits => _NumberCell(
+    PortColumnId.stopBits => PortNumberCell(
       value: _port.serial?.stopBits,
       hint: '1',
       onCommit: (v) => _set(id, PortDefField.stopBits, v),
     ),
-    PortColumnId.parity => _TextCell(
+    PortColumnId.parity => PortTextCell(
       value: _port.serial?.parity,
       hint: 'none',
       onCommit: (v) => _set(id, PortDefField.parity, _orNull(v)),
     ),
-    PortColumnId.flowControl => _TextCell(
+    PortColumnId.flowControl => PortTextCell(
       value: _port.serial?.flowControl,
       hint: 'none',
       onCommit: (v) => _set(id, PortDefField.flowControl, _orNull(v)),
     ),
-    PortColumnId.busProtocol => _TextCell(
+    PortColumnId.busProtocol => PortTextCell(
       value: _port.bus?.protocol,
       hint: 'rs485',
       onCommit: (v) => _set(id, PortDefField.busProtocol, _orNull(v)),
     ),
-    PortColumnId.busTermination => _TriStateCell(
+    PortColumnId.busTermination => PortTriStateCell(
       value: _port.bus?.supportsTermination,
       onPick: (v) => _set(id, PortDefField.busTermination, v),
     ),
-    PortColumnId.busUnitLoads => _NumberCell(
+    PortColumnId.busUnitLoads => PortNumberCell(
       value: _port.bus?.unitLoads,
       onCommit: (v) => _set(id, PortDefField.busUnitLoads, v),
     ),
-    PortColumnId.busAddressable => _TriStateCell(
+    PortColumnId.busAddressable => PortTriStateCell(
       value: _port.bus?.addressable,
       onPick: (v) => _set(id, PortDefField.busAddressable, v),
     ),
-    PortColumnId.busMaxTapWatts => _NumberCell(
+    PortColumnId.busMaxTapWatts => PortNumberCell(
       value: _port.bus?.maxTapWatts,
       onCommit: (v) => _set(id, PortDefField.busMaxTapWatts, v),
     ),
-    PortColumnId.powerRole => _NullableChoiceCell<PortPowerRole>(
+    PortColumnId.powerRole => PortNullableChoiceCell<PortPowerRole>(
       value: _port.power?.role,
       options: PortPowerRole.values,
       label: portPowerRoleLabel,
       onPick: (v) => _set(id, PortDefField.powerRole, v),
     ),
-    PortColumnId.powerVolts => _NumberCell(
+    PortColumnId.powerVolts => PortNumberCell(
       value: _port.power?.volts,
       hint: '120',
       onCommit: (v) => _set(id, PortDefField.powerVolts, v),
     ),
-    PortColumnId.powerDrawWatts => _NumberCell(
+    PortColumnId.powerDrawWatts => PortNumberCell(
       value: _port.power?.drawWatts,
       onCommit: (v) => _set(id, PortDefField.powerDrawWatts, v),
     ),
-    PortColumnId.powerMaxAmps => _NumberCell(
+    PortColumnId.powerMaxAmps => PortNumberCell(
       value: _port.power?.maxAmps,
       onCommit: (v) => _set(id, PortDefField.powerMaxAmps, v),
     ),
     // READ-ONLY, AND SAYS SO BY BEING TEXT. Pairing is M4-J3 (`#225`),
     // which owns the bank-level `Pair front to rear by order` action;
     // typing a key into a cell here would write half a pair.
-    PortColumnId.pairedPort => _ReadOnlyCell(value: pairedWith),
-    PortColumnId.maxConnections => _NumberCell(
+    PortColumnId.pairedPort => PortReadOnlyCell(value: pairedWith),
+    PortColumnId.maxConnections => PortNumberCell(
       value: _port.maxConnections,
       onCommit: (v) => _set(id, PortDefField.maxConnections, v ?? 1),
     ),
-    PortColumnId.topology => _ChoiceCell<PortTopology>(
+    PortColumnId.topology => PortChoiceCell<PortTopology>(
       value: _port.topology,
       options: PortTopology.values,
       label: portTopologyLabel,
@@ -2183,33 +2183,33 @@ class _PortRow extends StatelessWidget {
     // gap where a control should be reads as a rendering fault.
     PortColumnId.gender =>
       genderApplies
-          ? _ChoiceCell<Gender>(
+          ? PortChoiceCell<Gender>(
               value: _port.gender,
               options: Gender.values,
               label: portGenderLabel,
               onPick: (v) => _set(id, PortDefField.gender, v),
             )
-          : const _ReadOnlyCell(
+          : const PortReadOnlyCell(
               value: null,
               tooltip: 'This connector has no gender.',
             ),
-    PortColumnId.pinoutVariant => _TextCell(
+    PortColumnId.pinoutVariant => PortTextCell(
       value: _port.pinoutVariant,
       hint: 'emitter',
       onCommit: (v) => _set(id, PortDefField.pinoutVariant, _orNull(v)),
     ),
-    PortColumnId.conductorCount => _NumberCell(
+    PortColumnId.conductorCount => PortNumberCell(
       value: _port.conductorCount,
       onCommit: (v) => _set(id, PortDefField.conductorCount, v),
     ),
-    PortColumnId.returnChannel => _NullableChoiceCell<ReturnChannel>(
+    PortColumnId.returnChannel => PortNullableChoiceCell<ReturnChannel>(
       value: _port.returnChannel,
       options: ReturnChannel.values,
       label: portReturnChannelLabel,
       onPick: (v) => _set(id, PortDefField.returnChannel, v),
     ),
     // READ-ONLY: `renamedFrom` is written by a rename, never typed.
-    PortColumnId.renamedFrom => _ReadOnlyCell(
+    PortColumnId.renamedFrom => PortReadOnlyCell(
       value: _port.renamedFrom.isEmpty
           ? null
           : _port.renamedFrom.map((k) => k.v).join(', '),
@@ -2217,452 +2217,6 @@ class _PortRow extends StatelessWidget {
   };
 
   static String? _orNull(String v) => v.trim().isEmpty ? null : v.trim();
-}
-
-/// A cell holding a whole number.
-///
-/// KEEPS WHAT WAS TYPED WHEN IT DOES NOT PARSE, rather than silently
-/// reverting. `9,600` and `9600 baud` are things a person types, and a box
-/// that empties itself when they tab away tells them nothing about which
-/// of the two the app disliked. Nothing is written until it parses; an
-/// empty box writes UNKNOWN.
-class _NumberCell extends StatelessWidget {
-  const _NumberCell({required this.value, required this.onCommit, this.hint});
-
-  final int? value;
-  final ValueChanged<int?> onCommit;
-  final String? hint;
-
-  @override
-  Widget build(BuildContext context) => _TextCell(
-    value: value?.toString(),
-    hint: hint,
-    onCommit: (typed) {
-      final text = typed.trim();
-      if (text.isEmpty) {
-        onCommit(null);
-        return;
-      }
-      final parsed = int.tryParse(text);
-      if (parsed != null) onCommit(parsed);
-    },
-  );
-}
-
-/// A closed set that also accepts "nobody has said" (G4).
-///
-/// THE UNKNOWN ROW IS FIRST AND IS ALWAYS OFFERED. Every one of these
-/// fields is nullable in the model because absent means unknown, so a menu
-/// a person cannot get back out of would make the first pick permanent.
-class _NullableChoiceCell<T extends Enum> extends StatelessWidget {
-  const _NullableChoiceCell({
-    required this.value,
-    required this.options,
-    required this.label,
-    required this.onPick,
-  });
-
-  final T? value;
-  final List<T> options;
-  final String Function(T value) label;
-  final ValueChanged<T?> onPick;
-
-  @override
-  Widget build(BuildContext context) => _ChoiceCell<T?>(
-    value: value,
-    options: [null, ...options],
-    label: (v) => v == null ? kUnknownCell : label(v),
-    onPick: onPick,
-  );
-}
-
-/// A `bool?` cell: yes, no, or nobody has said.
-///
-/// A DROPDOWN AND NOT A CHECKBOX, and that is G4 rather than taste. A
-/// checkbox has two states, so an unmeasured port would have to render as
-/// a no, which is a measurement nobody took.
-class _TriStateCell extends StatelessWidget {
-  const _TriStateCell({required this.value, required this.onPick});
-
-  final bool? value;
-  final ValueChanged<bool?> onPick;
-
-  @override
-  Widget build(BuildContext context) => _ChoiceCell<bool?>(
-    value: value,
-    options: const [null, true, false],
-    label: (v) => portTriStateLabel(value: v),
-    onPick: onPick,
-  );
-}
-
-/// A cell nothing writes through: derived, or not applicable here.
-class _ReadOnlyCell extends StatelessWidget {
-  const _ReadOnlyCell({required this.value, this.tooltip});
-
-  final String? value;
-  final String? tooltip;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final text = Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Text(
-        value ?? kUnknownCell,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
-    );
-    final message = tooltip;
-    return message == null ? text : Tooltip(message: message, child: text);
-  }
-}
-
-/// A cell a person types into.
-///
-/// COMMITS ON BLUR AND ON ENTER, never per keystroke. That is docs/06
-/// §4.6's rule and it is also why the port commands do not coalesce: one
-/// committed value is one edit. Tab moves right through the row because
-/// the cells are in reading order.
-///
-/// ENTER ALSO MOVES DOWN, which M4-E deferred to M4-F and M4-F0 (`#695`)
-/// now owns. It is Flutter's own directional traversal rather than a
-/// registry of focus nodes keyed by row and column: the cells are laid out
-/// in a grid, so "the nearest focusable below" already means "the same
-/// column, next row", and a registry would have to be kept in step with a
-/// virtualised list that builds and discards rows as it scrolls.
-///
-/// The one thing that costs: a row far enough off screen not to be built
-/// has no node to move to, so Enter on the last VISIBLE row stops there.
-/// Typing down a column keeps the next row inside the sliver's cache
-/// extent, which is the case this is for.
-class _TextCell extends StatefulWidget {
-  const _TextCell({
-    required this.value,
-    required this.onCommit,
-    this.hint,
-    this.automatic = false,
-  });
-
-  final String? value;
-  final ValueChanged<String> onCommit;
-
-  /// Shown greyed inside an EMPTY box only, which is the distinction M4-D
-  /// had to be told twice: an example that stays under a filled field
-  /// reads as a second value.
-  final String? hint;
-
-  /// Drawn italic and dimmed: a value this editor derived rather than one
-  /// the author chose.
-  final bool automatic;
-
-  @override
-  State<_TextCell> createState() => _TextCellState();
-}
-
-class _TextCellState extends State<_TextCell> {
-  late final TextEditingController _text = TextEditingController(
-    text: widget.value ?? '',
-  );
-  final FocusNode _focus = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-    _focus.addListener(_onFocusChange);
-  }
-
-  @override
-  void didUpdateWidget(_TextCell old) {
-    super.didUpdateWidget(old);
-    // THE MODEL WINS, EXCEPT WHILE SOMEBODY IS TYPING IN THIS BOX. An
-    // undo, or a key following a label typed one cell to the right,
-    // changes the stored value under a cell that is not focused, and the
-    // cell must follow. Overwriting a FOCUSED cell would delete what the
-    // person is halfway through typing. M4-D shipped without this and
-    // undo looked like a button that did nothing.
-    if (widget.value != old.value && !_focus.hasFocus) {
-      _text.text = widget.value ?? '';
-    }
-  }
-
-  @override
-  void dispose() {
-    _focus
-      ..removeListener(_onFocusChange)
-      ..dispose();
-    _text.dispose();
-    super.dispose();
-  }
-
-  void _onFocusChange() {
-    if (!_focus.hasFocus) _commit();
-  }
-
-  void _commit() {
-    if (_text.text == (widget.value ?? '')) return;
-    widget.onCommit(_text.text);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return TextField(
-      controller: _text,
-      focusNode: _focus,
-      style: theme.textTheme.bodySmall?.copyWith(
-        fontStyle: widget.automatic ? FontStyle.italic : null,
-        color: widget.automatic
-            ? theme.colorScheme.onSurfaceVariant
-            : theme.colorScheme.onSurface,
-      ),
-      decoration: InputDecoration(
-        isDense: true,
-        border: InputBorder.none,
-        contentPadding: const EdgeInsets.symmetric(vertical: 10),
-        // THE DASH, and not an empty box. An empty cell says nothing
-        // about whether anybody has looked at this field; the dash is
-        // what the equipment list and every schedule print for a fact
-        // nobody has supplied.
-        hintText: widget.hint ?? kUnknownCell,
-        hintStyle: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
-      // ═══════════════════════════════════════════════════════════════
-      // THE MOVE IS HERE AND NOT IN `onSubmitted`, WHICH IS TOO LATE
-      // ═══════════════════════════════════════════════════════════════
-      // `EditableText` calls `onEditingComplete` first and, when it is
-      // null, its default for a `done` action is to UNFOCUS the field.
-      // Only then does `onSubmitted` run. So a move written there has
-      // nothing to move from: the commit lands, focus is already gone,
-      // and directional traversal has no origin. Written that way first,
-      // and the route test below is what found it, because the second
-      // line of text went into the same cell as the first.
-      //
-      // COMMIT BEFORE MOVING, because the last row has nowhere to go and
-      // must still write what was typed. The blur a successful move
-      // causes calls `_commit` again and it returns early, so this costs
-      // one command rather than two.
-      onEditingComplete: () {
-        _commit();
-        FocusScope.of(context).focusInDirection(TraversalDirection.down);
-      },
-      onSubmitted: (_) => _commit(),
-    );
-  }
-}
-
-/// A cell whose column has a short closed set of answers.
-///
-/// A `DropdownButton` HERE AND A MENU FOR CONNECTOR AND SIGNAL, and the
-/// difference is measured rather than stylistic: this widget's menu
-/// inherits its BUTTON's width, which is fine for `Bidirectional` in a
-/// 116-point column and is not fine for `AUD·Speaker, constant-voltage 70
-/// / 100 / 25 V`. See `family_picker.dart`.
-class _ChoiceCell<T> extends StatelessWidget {
-  const _ChoiceCell({
-    required this.value,
-    required this.options,
-    required this.label,
-    required this.onPick,
-  });
-
-  final T value;
-  final List<T> options;
-  final String Function(T value) label;
-  final ValueChanged<T> onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return DropdownButtonHideUnderline(
-      child: DropdownButton<T>(
-        value: value,
-        isDense: true,
-        isExpanded: true,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurface,
-        ),
-        items: [
-          for (final option in options)
-            DropdownMenuItem<T>(
-              value: option,
-              child: Text(
-                label(option),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-        ],
-        onChanged: (v) {
-          if (v is T) onPick(v);
-        },
-      ),
-    );
-  }
-}
-
-/// The CONNECTOR cell: a menu sized to its content, for the SIGNAL
-/// column's measured reason.
-///
-/// THE CURRENT VALUE IS ALWAYS IN THE MENU, even when the registry does
-/// not hold it. A `DropdownButton` asserts that exactly one item matches
-/// its value, and M3-L found what that costs: a document naming something
-/// no menu offers takes the WHOLE table down rather than misbehaving in
-/// one cell. A `MenuAnchor` has no such assertion, and an unset port (a
-/// brand-new row names no connector at all) still has a menu to pick from,
-/// which read-only degradation would deny it.
-class _ConnectorCell extends StatelessWidget {
-  const _ConnectorCell({
-    required this.registries,
-    required this.value,
-    required this.onPick,
-  });
-
-  final Registries registries;
-  final ConnectorTypeId value;
-  final ValueChanged<ConnectorTypeId> onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    final options = [...registries.connectorTypes.values]
-      ..sort((a, b) => a.displayName.compareTo(b.displayName));
-    return _MenuCell(
-      text: portConnectorText(registries, value),
-      hint: 'Connector',
-      entries: [
-        for (final def in options) (def.id.v, def.displayName),
-      ],
-      selected: value.v,
-      onPick: (id) => onPick(ConnectorTypeId(id)),
-    );
-  }
-}
-
-/// The SIGNAL cell, on the Structure editor's own picker.
-///
-/// THE SAME WIDGET, NOT A SECOND ONE. `family_picker.dart` carries the
-/// measurement that rejected a `DropdownButton` and the ruling that its
-/// filter narrows without ever committing (DR-025 §11.24.3: an
-/// unresolved value never invents a family). A copy here would be a
-/// second place for one of those to be forgotten.
-class _FamilyCell extends StatelessWidget {
-  const _FamilyCell({
-    required this.registries,
-    required this.value,
-    required this.onPick,
-  });
-
-  final Registries registries;
-  final SignalFamilyId value;
-  final ValueChanged<SignalFamilyId> onPick;
-
-  @override
-  Widget build(BuildContext context) => FamilyPicker(
-    groups: signalFamilyCellGroups(registries),
-    value: portFamilyText(registries, value),
-    hint: 'Signal',
-    onPick: (label) {
-      final picked = resolveSignalFamilyCell(registries, label);
-      if (picked != null) onPick(picked);
-    },
-  );
-}
-
-/// A menu of `(value, label)` pairs, wider than the cell that opened it.
-class _MenuCell extends StatefulWidget {
-  const _MenuCell({
-    required this.text,
-    required this.hint,
-    required this.entries,
-    required this.selected,
-    required this.onPick,
-  });
-
-  final String? text;
-  final String hint;
-  final List<(String, String)> entries;
-  final String selected;
-  final ValueChanged<String> onPick;
-
-  @override
-  State<_MenuCell> createState() => _MenuCellState();
-}
-
-class _MenuCellState extends State<_MenuCell> {
-  final MenuController _menu = MenuController();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return MenuAnchor(
-      controller: _menu,
-      menuChildren: [
-        SizedBox(
-          width: kFamilyPickerWidth,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxHeight: kFamilyPickerMaxHeight,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (final (id, label) in widget.entries)
-                    MenuItemButton(
-                      onPressed: () {
-                        _menu.close();
-                        widget.onPick(id);
-                      },
-                      leadingIcon: Icon(
-                        Icons.check,
-                        size: 16,
-                        color: id == widget.selected
-                            ? theme.colorScheme.primary
-                            : Colors.transparent,
-                      ),
-                      child: Text(label),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-      builder: (context, controller, child) => InkWell(
-        onTap: () => controller.isOpen ? controller.close() : controller.open(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  widget.text ?? kUnknownCell,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: widget.text == null
-                        ? theme.colorScheme.onSurfaceVariant
-                        : theme.colorScheme.onSurface,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.arrow_drop_down,
-                size: 18,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// The severity dot docs/06 §4.5 puts in the row gutter.

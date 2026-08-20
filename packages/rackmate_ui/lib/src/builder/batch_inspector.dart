@@ -21,14 +21,21 @@
 // the selection agrees on and which it does not**, at a glance, before
 // somebody decides what to change.
 //
-// SETTING A FIELD FROM THIS PANE IS NOT BUILT, and the reason is worth
-// stating rather than discovering. Every column's control lives in
-// `port_grid.dart` as a private cell bound to ONE port's value, and
-// "mixed" is not a value: a shared control would have to be extracted and
-// given a third, valueless state first. That is a refactor with its own
-// risks and it is filed rather than rushed. Until then the two panes
-// divide honestly: inspect here, edit there, and both are on screen at
-// once.
+// SETTING A FIELD FROM THIS PANE IS BUILT NOW (M4-F11, `#703`), and the
+// refactor it waited on is why. Every column's control used to be private
+// to `port_grid.dart` and bound to ONE port's value, and "mixed" is not a
+// value; `port_cells.dart` is those controls extracted, with an explicit
+// `mixedLabel` that makes a control hold NOTHING and write nothing until
+// it is touched. The dock draws the same control the grid draws, so the
+// two panes cannot disagree about what a column offers.
+//
+// THE SAFETY PROPERTY IS STRUCTURAL, NOT REMEMBERED. docs/06 §4.6's
+// "left untouched unless explicitly set" is enforced by the controls
+// themselves: a menu in the mixed state holds null and fires only from a
+// pick, and a text cell seeds EMPTY and compares its commit against that
+// seed. `#703` named the exact defect this prevents, a control that fires
+// `onChanged` on construction or on focus and writes the dash back across
+// N rows.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // EVERY SPELLING COMES FROM CORE
@@ -40,9 +47,20 @@
 // are visible.
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/builder/batch_cells.dart';
 
 /// The dock's authored width (docs/06 §2).
 const double kBatchInspectorWidth = 340;
+
+/// The line under the count once this pane can write.
+///
+/// STATES THE SAFETY RULE RATHER THAN THE CAPABILITY. "You can edit here"
+/// is obvious from the controls; what is not obvious, and what DR-063
+/// spends its argument on, is that a field showing `Mixed` is not about
+/// to be flattened by looking at it.
+const String kBatchInspectorHint =
+    'Set a field to change all of them. Nothing changes until you change '
+    'it.';
 
 /// What the grid tells the screen about its selection.
 ///
@@ -68,12 +86,22 @@ class BatchInspector extends StatelessWidget {
     required this.body,
     required this.registries,
     required this.context_,
+    this.onWrite,
     super.key,
   });
 
   final TemplateBody body;
   final Registries registries;
   final PortBatchContext context_;
+
+  /// Runs one column's write across the whole selection, as ONE undo
+  /// entry. Null makes this pane read-only, which is what a render test
+  /// wants and is the state it shipped in at M4-F2.
+  ///
+  /// THE PANE DOES NOT BUILD THE COMMANDS. `buildBatchWrite` does, in
+  /// core, and the caller transacts them: a dock that assembled its own
+  /// would be the second place a batch edit is defined.
+  final void Function(PortColumnId column, Object? value)? onWrite;
 
   @override
   Widget build(BuildContext context) {
@@ -98,10 +126,15 @@ class BatchInspector extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    // NAMES WHERE THE EDIT HAPPENS, because a pane that
-                    // shows values a person cannot type into is one they
-                    // will try to type into first.
-                    'Edit any cell in the grid to change all of them.',
+                    // WHAT IT SAYS DEPENDS ON WHAT IT CAN DO. Before
+                    // M4-F11 this pane could only read, and it pointed at
+                    // the grid rather than showing values a person would
+                    // try to type into. It can write now, and says the
+                    // rule that matters instead: nothing moves until you
+                    // move it (docs/06 §4.6, DR-063).
+                    onWrite == null
+                        ? 'Edit any cell in the grid to change all of them.'
+                        : kBatchInspectorHint,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -116,17 +149,22 @@ class BatchInspector extends StatelessWidget {
                 itemCount: context_.columns.length,
                 itemBuilder: (context, index) {
                   final column = context_.columns[index];
+                  final batch = summariseBatch(
+                    body: body,
+                    column: column,
+                    portKeys: context_.portKeys,
+                  );
                   return _Field(
                     header: portColumnHeader(column),
-                    reading: portBatchLabel(
-                      column,
-                      summariseBatch(
-                        body: body,
-                        column: column,
-                        portKeys: context_.portKeys,
-                      ),
-                      registries,
-                    ),
+                    reading: portBatchLabel(column, batch, registries),
+                    control: onWrite == null
+                        ? null
+                        : buildBatchCell(
+                            column: column,
+                            batch: batch,
+                            registries: registries,
+                            onWrite: (value) => onWrite!(column, value),
+                          ),
                   );
                 },
               ),
@@ -140,10 +178,16 @@ class BatchInspector extends StatelessWidget {
 
 /// One column's header and what the selection holds for it.
 class _Field extends StatelessWidget {
-  const _Field({required this.header, required this.reading});
+  const _Field({required this.header, required this.reading, this.control});
 
   final String header;
   final String reading;
+
+  /// The editable control, or null when this pane is read-only or the
+  /// column has none. A column with no control still shows its READING,
+  /// which is what keeps `KEY` and `WAS CALLED` on the pane: they are
+  /// facts worth seeing and not facts a batch may write.
+  final Widget? control;
 
   @override
   Widget build(BuildContext context) {
@@ -167,15 +211,17 @@ class _Field extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(
-              reading,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontStyle: mixed ? FontStyle.italic : null,
-                color: mixed
-                    ? theme.colorScheme.onSurfaceVariant
-                    : theme.colorScheme.onSurface,
-              ),
-            ),
+            child:
+                control ??
+                Text(
+                  reading,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontStyle: mixed ? FontStyle.italic : null,
+                    color: mixed
+                        ? theme.colorScheme.onSurfaceVariant
+                        : theme.colorScheme.onSurface,
+                  ),
+                ),
           ),
         ],
       ),

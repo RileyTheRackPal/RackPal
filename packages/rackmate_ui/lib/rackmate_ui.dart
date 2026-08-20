@@ -43,6 +43,7 @@
 /// something true to show.
 library;
 
+export 'src/builder/batch_cells.dart';
 export 'src/builder/batch_inspector.dart';
 export 'src/builder/change_type_dialog.dart';
 export 'src/builder/device_builder_screen.dart';
