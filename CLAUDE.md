@@ -126,6 +126,11 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
   **Derive the number in the commit message**, counted two ways that agree, so
   the next person can re-derive it rather than trust it. `M4-0`-style
   decomposition items are Issues and are not counted.
+- **The version tracks the CURRENT milestone, not the one an issue is filed
+  under.** Work landed early against a later milestone (M5-0a during M4, say)
+  does not move the number: the minor would have to jump forward while the
+  current milestone is unfinished, and the patch would count backwards. Such an
+  issue closes without a bump and is counted when its milestone becomes current.
 
 ## House style
 
