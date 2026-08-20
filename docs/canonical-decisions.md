@@ -3724,7 +3724,7 @@ final class Circuit {
   int breakerAmps, volts;         // volts is AUTHORITATIVE downstream. CR-039.
   int? phase; bool dedicated;
   Uuid? locationId;
-  int get continuousLimitAmps => (breakerAmps * 4) ~/ 5;   // NEC 210.19(A)(1)
+  int get continuousLimitAmps => (breakerAmps * 4) ~/ 5;   // planning estimate
   EntityMeta meta;
 }
 ```

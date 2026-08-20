@@ -330,7 +330,7 @@ Rules that make these honest:
 
 - **No fabricated numbers, ever** (G4, CR-114). `typicalWatts` does **not** default to half of nameplate, the rejected behaviour that made every derived figure suspect. Unknown is `null`, `null` renders `—`, and **every rollup states its unknown count** (`3 devices have no weight — not counted`). Estimated values carry a dotted underline on screen and italics in print.
 - Front and rear RU are tracked separately, because "how much room is left" genuinely has two answers.
-- Amps derive from `Circuit.volts`, never from a rack-level voltage. Continuous limits are NEC 210.19(A)(1): 15 A → 12 A, 20 A → 16 A. Breaker math uses nameplate, thermal math uses typical, regardless of which the toggle displays, and the tooltip says so.
+- Amps derive from `Circuit.volts`, never from a rack-level voltage. The continuous limit is 80% of the breaker, the figure NEC 210.19(A)(1) gives: 15 A → 12 A, 20 A → 16 A. **It is a planning estimate and the tooltip says so** (DR-079 §11.78.4): nothing here classifies a load as continuous, no demand factor is applied, and a person sizing a service still does a load calculation. Breaker math uses nameplate, thermal math uses typical, regardless of which the toggle displays, and the tooltip says that too.
 - BTU/hr uses the single constant `kBtuPerWattHour = 3.412142` from `rackmate_core/units/thermal.dart`; heat is derived, never stored (CR-005).
 - **No computed number blocks anything** (G3, CR-022). Errors gate only `ExportSpec.issuedForConstruction`, the stamp, never the bytes.
 

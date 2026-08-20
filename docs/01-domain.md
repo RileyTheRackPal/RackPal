@@ -201,6 +201,16 @@ must be rated ≥ 125% of it — equivalently, continuous load ≤ 80% of rating
    20 A circuit → 16 A continuous
 ```
 
+**WHAT RACKMATE COMPUTES IS A PLANNING ESTIMATE, AND IT IS NOT THE CODE RULE ABOVE** (DR-079 §11.78.4). The statement of 210.19(A)(1) is accurate; the arithmetic this product performs is a different thing, and the gap is worth stating rather than leaving a reader to assume it closed:
+
+| The code rule | What this product does |
+|---|---|
+| Classifies each load as continuous (≥ 3 hours) or not | **Classifies nothing.** No field on any entity records it |
+| Applies demand factors from Art. 220 | **Applies none** |
+| Sizes the OCPD and the conductor against the result | Sums `typicalWatts × diversity` in **VA** and compares it to 80% of the breaker |
+
+So `PWR-001` names the circuit to look at first. **It does not assert compliance, and a person sizing a service still does a load calculation.** It is a warning rather than an error for exactly this reason (CR-020), and `derived/totals.dart` refuses to invent a power factor to reach VA from watts rather than fabricating an input it was not given (AC-039). The three together are one position: this product estimates, says so, and declines to make up what it was not told.
+
 `PowerProfile` carries `nameplateWatts`, `typicalWatts`, `apparentVA`, `powerFactor` (permille) and `poeBudgetWatts`, all `int?` (CR-056). **`typicalWatts` never defaults to a fraction of nameplate**: a silent 50%-of-nameplate estimate is prohibited (G4, AC-039). Default diversity factors: amplifiers 350‰, switches 1000‰, UPS 1000‰; configurable per project.
 
 Power factor is not decorative. A linear-supply amplifier at PF 0.65 under-reports current by 35% under a naive `watts ÷ 120`, which is exactly how a system that "calculated fine" trips a breaker.
@@ -737,7 +747,7 @@ Full professional CI deliverable sets also contain floor plans, reflected ceilin
 - ANSI/AVIXA D401.01:2023, Documentation Requirements for Audiovisual Systems. <https://cdn.avixa.org/production/docs/default-source/default-document-library/d401.01_tech_review.pdf>
 - ANSI/AVIXA F501.01:2015, Cable Labeling for Audiovisual Systems. <https://www.avixa.org/standards/cable-labeling-for-audiovisual-systems>
 - ANSI/AVIXA F502.01:2018 Rack Building · F502.02:2020 Rack Design. <https://www.avixa.org/standards/rack-design-for-av-systems>
-- NEC 210.19(A)(1) continuous load · NEC 725.136 Class 2/3 separation · NEC 800.154 plenum.
+- NEC 210.19(A)(1) continuous load · NEC 725.136 Class 2/3 separation · NEC 800.154 plenum · NEC 300.22(C) wiring in plenums. **All four are cited informatively**: this product estimates and warns, and asserts compliance with none of them (DR-079).
 - US National CAD Standard v5, Uniform Drawing System, sheet identification. <https://www.nationalcadstandard.org/ncs5/pdfs/ncs5_uds1.pdf>
 - IEEE 802.3af / 802.3at / 802.3bt, Power over Ethernet. <https://ethernetalliance.org/wp-content/uploads/2018/04/WP_EA_Overview8023bt_FINAL.pdf>
 - ASME Y14.44 / IEEE 315, reference designator prefixes.
