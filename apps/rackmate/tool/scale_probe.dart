@@ -448,7 +448,7 @@ RackDocument _build(double multiplier) {
         mountSurface: MountSurface.wall,
       ),
       pathwayId: pathways[i % pathways.length],
-      jacket: JacketRating.cmr,
+      jacket: JacketListing.cmr,
       routedLength: feet(60 + (i % 90)),
     );
   }

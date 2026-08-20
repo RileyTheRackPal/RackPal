@@ -209,7 +209,7 @@ RackDocument _fullerProjectFixture() {
     meta: meta,
     designatorLocked: true,
     gaugeAwg: 23,
-    jacket: JacketRating.cmr,
+    jacket: JacketListing.cmr,
     // A POPULATED value, not an absent one. The three colour-ish facts
     // this cable carries are all here at once and all different: `cmr`
     // is the NEC fire rating, `T568B` below is (mis)used as the pair

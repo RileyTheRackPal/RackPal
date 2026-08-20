@@ -2526,7 +2526,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0001",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -2561,7 +2560,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0002",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -2596,7 +2594,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0003",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -2631,7 +2628,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0004",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -2666,7 +2662,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0005",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -2701,7 +2696,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0006",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -2736,7 +2730,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0007",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -2771,7 +2764,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0008",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -2806,7 +2798,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0009",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -2841,7 +2832,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0010",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -2876,7 +2866,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0011",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -2911,7 +2900,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0012",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -2946,7 +2934,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0013",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -2981,7 +2968,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0014",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3016,7 +3002,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0015",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3051,7 +3036,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0016",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3086,7 +3070,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0017",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3121,7 +3104,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0018",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3156,7 +3138,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0019",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3191,7 +3172,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0020",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3226,7 +3206,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0021",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3261,7 +3240,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0022",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3296,7 +3274,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0023",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3331,7 +3308,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0024",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3366,7 +3342,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0025",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3401,7 +3376,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0026",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3436,7 +3410,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0027",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3471,7 +3444,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0028",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3506,7 +3478,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0029",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3541,7 +3512,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0030",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3576,7 +3546,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0031",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3611,7 +3580,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0032",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3646,7 +3614,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0033",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3681,7 +3648,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0034",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3716,7 +3682,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0035",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3751,7 +3716,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0036",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3786,7 +3750,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0037",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3821,7 +3784,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0038",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3856,7 +3818,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0039",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3891,7 +3852,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0040",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3926,7 +3886,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0041",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3961,7 +3920,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0042",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -3996,7 +3954,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0043",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4031,7 +3988,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0044",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4066,7 +4022,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0045",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4101,7 +4056,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0046",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4136,7 +4090,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0047",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4171,7 +4124,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0048",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4206,7 +4158,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0049",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4241,7 +4192,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0050",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4276,7 +4226,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0051",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4311,7 +4260,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0052",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4346,7 +4294,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0053",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4381,7 +4328,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0054",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4416,7 +4362,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0055",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4451,7 +4396,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0056",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4486,7 +4430,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0057",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4521,7 +4464,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0058",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4556,7 +4498,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0059",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4591,7 +4532,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0060",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4626,7 +4566,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0061",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4661,7 +4600,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0062",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4696,7 +4634,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0063",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4731,7 +4668,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0064",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4766,7 +4702,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0065",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4801,7 +4736,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0066",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4836,7 +4770,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0067",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4871,7 +4804,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0068",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4906,7 +4838,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0069",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4941,7 +4872,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0070",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -4976,7 +4906,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0071",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5011,7 +4940,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0072",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5046,7 +4974,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0073",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5081,7 +5008,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0074",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5116,7 +5042,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0075",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5151,7 +5076,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0076",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5186,7 +5110,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0077",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5221,7 +5144,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0078",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5256,7 +5178,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0079",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5291,7 +5212,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0080",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5326,7 +5246,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0081",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5361,7 +5280,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0082",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5396,7 +5314,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0083",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5431,7 +5348,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0084",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5466,7 +5382,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0085",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5501,7 +5416,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0086",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5536,7 +5450,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0087",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5571,7 +5484,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0088",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5606,7 +5518,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0089",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5641,7 +5552,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0090",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5676,7 +5586,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0091",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5711,7 +5620,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0092",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5746,7 +5654,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0093",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5781,7 +5688,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0094",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5816,7 +5722,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0095",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5851,7 +5756,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0096",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5886,7 +5790,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0097",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5921,7 +5824,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0098",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5956,7 +5858,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0099",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -5991,7 +5892,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0100",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6026,7 +5926,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0101",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6061,7 +5960,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0102",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6096,7 +5994,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0103",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6131,7 +6028,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0104",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6166,7 +6062,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0105",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6201,7 +6096,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0106",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6236,7 +6130,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0107",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6271,7 +6164,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0108",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6306,7 +6198,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0109",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6341,7 +6232,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0110",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6376,7 +6266,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0111",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6411,7 +6300,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0112",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6446,7 +6334,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0113",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6481,7 +6368,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0114",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6516,7 +6402,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0115",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6551,7 +6436,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0116",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6586,7 +6470,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0117",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6621,7 +6504,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0118",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6656,7 +6538,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0119",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6691,7 +6572,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0120",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6726,7 +6606,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0121",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6761,7 +6640,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0122",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6796,7 +6674,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0123",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6831,7 +6708,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0124",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6866,7 +6742,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0125",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6901,7 +6776,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0126",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6936,7 +6810,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0127",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -6971,7 +6844,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0128",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7006,7 +6878,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0129",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7041,7 +6912,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0130",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7076,7 +6946,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0131",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7111,7 +6980,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0132",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7146,7 +7014,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0133",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7181,7 +7048,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0134",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7216,7 +7082,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0135",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7251,7 +7116,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0136",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7286,7 +7150,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0137",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7321,7 +7184,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0138",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7356,7 +7218,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0139",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7391,7 +7252,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0140",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7426,7 +7286,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0141",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7461,7 +7320,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0142",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7496,7 +7354,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0143",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7531,7 +7388,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0144",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7566,7 +7422,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0145",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7601,7 +7456,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0146",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7636,7 +7490,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0147",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7671,7 +7524,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0148",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7706,7 +7558,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0149",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7741,7 +7592,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0150",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7776,7 +7626,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0151",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7811,7 +7660,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0152",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7846,7 +7694,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0153",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7881,7 +7728,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0154",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7916,7 +7762,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0155",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7951,7 +7796,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0156",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -7986,7 +7830,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0157",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8021,7 +7864,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0158",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8056,7 +7898,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0159",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8091,7 +7932,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0160",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8126,7 +7966,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0161",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8161,7 +8000,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0162",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8196,7 +8034,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0163",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8231,7 +8068,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0164",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8266,7 +8102,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0165",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8301,7 +8136,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0166",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8336,7 +8170,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0167",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8371,7 +8204,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0168",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8406,7 +8238,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0169",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8441,7 +8272,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0170",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8476,7 +8306,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0171",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8511,7 +8340,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0172",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8546,7 +8374,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0173",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8581,7 +8408,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0174",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8616,7 +8442,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0175",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8651,7 +8476,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0176",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8686,7 +8510,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0177",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8721,7 +8544,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0178",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8756,7 +8578,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0179",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8791,7 +8612,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0180",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8826,7 +8646,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0181",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8861,7 +8680,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0182",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8896,7 +8714,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0183",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8931,7 +8748,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0184",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -8966,7 +8782,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0185",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9001,7 +8816,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0186",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9036,7 +8850,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0187",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9071,7 +8884,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0188",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9106,7 +8918,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0189",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9141,7 +8952,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0190",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9176,7 +8986,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0191",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9211,7 +9020,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0192",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9246,7 +9054,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0193",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9281,7 +9088,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0194",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9316,7 +9122,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0195",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9351,7 +9156,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0196",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9386,7 +9190,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0197",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9421,7 +9224,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0198",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9456,7 +9258,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0199",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9491,7 +9292,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0200",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9526,7 +9326,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0201",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9561,7 +9360,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0202",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9596,7 +9394,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0203",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9631,7 +9428,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0204",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9666,7 +9462,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0205",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9701,7 +9496,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0206",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9736,7 +9530,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0207",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9771,7 +9564,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0208",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9806,7 +9598,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0209",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9841,7 +9632,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0210",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9876,7 +9666,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0211",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9911,7 +9700,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0212",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9946,7 +9734,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0213",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -9981,7 +9768,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0214",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10016,7 +9802,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0215",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10051,7 +9836,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0216",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10086,7 +9870,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0217",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10121,7 +9904,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0218",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10156,7 +9938,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0219",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10191,7 +9972,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0220",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10226,7 +10006,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0221",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10261,7 +10040,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0222",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10296,7 +10074,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0223",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10331,7 +10108,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0224",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10366,7 +10142,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0225",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10401,7 +10176,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0226",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10436,7 +10210,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0227",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10471,7 +10244,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0228",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10506,7 +10278,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0229",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10541,7 +10312,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0230",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10576,7 +10346,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0231",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10611,7 +10380,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0232",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10646,7 +10414,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0233",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10681,7 +10448,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0234",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10716,7 +10482,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0235",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10751,7 +10516,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0236",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10786,7 +10550,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0237",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10821,7 +10584,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0238",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10856,7 +10618,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0239",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10891,7 +10652,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0240",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10926,7 +10686,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0241",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10961,7 +10720,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0242",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -10996,7 +10754,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0243",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11031,7 +10788,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0244",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11066,7 +10822,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0245",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11101,7 +10856,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0246",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11136,7 +10890,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0247",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11171,7 +10924,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0248",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11206,7 +10958,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0249",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11241,7 +10992,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0250",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11276,7 +11026,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0251",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11311,7 +11060,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0252",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11346,7 +11094,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0253",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11381,7 +11128,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0254",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11416,7 +11162,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0255",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11451,7 +11196,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0256",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11486,7 +11230,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0257",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11521,7 +11264,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0258",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11556,7 +11298,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0259",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11591,7 +11332,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0260",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11626,7 +11366,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0261",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11661,7 +11400,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0262",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11696,7 +11434,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0263",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11731,7 +11468,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0264",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11766,7 +11502,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0265",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11801,7 +11536,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0266",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11836,7 +11570,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0267",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11871,7 +11604,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0268",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11906,7 +11638,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0269",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11941,7 +11672,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0270",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -11976,7 +11706,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0271",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12011,7 +11740,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0272",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12046,7 +11774,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0273",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12081,7 +11808,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0274",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12116,7 +11842,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0275",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12151,7 +11876,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0276",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12186,7 +11910,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0277",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12221,7 +11944,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0278",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12256,7 +11978,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0279",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12291,7 +12012,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0280",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12326,7 +12046,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0281",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12361,7 +12080,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0282",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12396,7 +12114,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0283",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12431,7 +12148,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0284",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12466,7 +12182,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0285",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12501,7 +12216,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0286",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12536,7 +12250,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0287",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12571,7 +12284,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0288",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12606,7 +12318,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0289",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12641,7 +12352,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0290",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12676,7 +12386,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0291",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12711,7 +12420,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0292",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12746,7 +12454,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0293",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12781,7 +12488,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0294",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12816,7 +12522,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0295",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12851,7 +12556,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0296",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12886,7 +12590,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0297",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12921,7 +12624,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0298",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12956,7 +12658,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0299",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false
@@ -12991,7 +12692,6 @@
           "updatedBy": "fixture"
         },
         "order": "a0300",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false

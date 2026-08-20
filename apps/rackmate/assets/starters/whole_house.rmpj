@@ -1580,7 +1580,6 @@
         },
         "order": "a000",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 19507200000,
         "services": [
@@ -1639,7 +1638,6 @@
         },
         "order": "a001",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 19507200000,
         "services": [
@@ -1697,7 +1695,6 @@
         },
         "order": "a002",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 20116800000,
         "services": [
@@ -1755,7 +1752,6 @@
         },
         "order": "a003",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "pulled",
         "services": [
           {
@@ -1858,7 +1854,6 @@
         },
         "order": "a004",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "pulled",
         "services": [
           {
@@ -1913,7 +1908,6 @@
         },
         "order": "a005",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 17983200000,
         "services": [
@@ -1972,7 +1966,6 @@
         },
         "order": "a006",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 15849600000,
         "services": [
@@ -2029,7 +2022,6 @@
         },
         "order": "a007",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 17678400000,
         "services": [
@@ -2087,7 +2079,6 @@
         },
         "order": "a008",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "pulled",
         "services": [
           {
@@ -2190,7 +2181,6 @@
         },
         "order": "a009",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "pulled",
         "services": [
           {
@@ -2245,7 +2235,6 @@
         },
         "order": "a00a",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 13106400000,
         "services": [
@@ -2304,7 +2293,6 @@
         },
         "order": "a00b",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 13106400000,
         "services": [
@@ -2363,7 +2351,6 @@
         },
         "order": "a00c",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 8839200000,
         "services": [
@@ -2421,7 +2408,6 @@
         },
         "order": "a00d",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 11582400000,
         "services": [
@@ -2479,7 +2465,6 @@
         },
         "order": "a00e",
         "pathwayId": "019bb13c-a3e0-7000-8000-00000000000f",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 24688800000,
         "services": [
@@ -2536,7 +2521,6 @@
         },
         "order": "a00f",
         "pathwayId": "019bb13c-a3e0-7000-8000-00000000000f",
-        "plenum": false,
         "roughInStatus": "pulled",
         "services": [
           {
@@ -2590,7 +2574,6 @@
         },
         "order": "a00g",
         "pathwayId": "019bb13c-a3e0-7000-8000-00000000000f",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [
           {
@@ -2691,7 +2674,6 @@
         },
         "order": "a00h",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000011",
-        "plenum": false,
         "roughInStatus": "pulled",
         "services": [
           {
@@ -2746,7 +2728,6 @@
         },
         "order": "a00i",
         "pathwayId": "019bb13c-a3e0-7000-8000-00000000000f",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 28041600000,
         "services": [
@@ -2805,7 +2786,6 @@
         },
         "order": "a00j",
         "pathwayId": "019bb13c-a3e0-7000-8000-00000000000f",
-        "plenum": false,
         "roughInStatus": "pulled",
         "services": [
           {
@@ -2861,7 +2841,6 @@
         },
         "order": "a00k",
         "pathwayId": "019bb13c-a3e0-7000-8000-00000000000f",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 28651200000,
         "services": [
@@ -2919,7 +2898,6 @@
         },
         "order": "a00l",
         "pathwayId": "019bb13c-a3e0-7000-8000-00000000000f",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [
           {
@@ -3022,7 +3000,6 @@
         },
         "order": "a00m",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000011",
-        "plenum": false,
         "roughInStatus": "pulled",
         "services": [
           {
@@ -3077,7 +3054,6 @@
         },
         "order": "a00n",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000011",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 26212800000,
         "services": [
@@ -3134,7 +3110,6 @@
         },
         "order": "a00o",
         "pathwayId": "019bb13c-a3e0-7000-8000-00000000000f",
-        "plenum": false,
         "roughInStatus": "pulled",
         "services": [
           {
@@ -3221,10 +3196,10 @@
         ],
         "designator": "W026",
         "designatorLocked": false,
+        "directBurialRated": true,
         "gaugeAwg": 16,
         "id": "019bb13c-a3e0-7000-8000-000000000088",
         "inlineAdapters": [],
-        "jacket": "directBurial",
         "lifecycleStatus": "new",
         "linkClass": "fieldCable",
         "media": "media.16_4",
@@ -3237,7 +3212,6 @@
         },
         "order": "a00p",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000012",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [
           {
@@ -3290,7 +3264,6 @@
         },
         "order": "a00q",
         "pathwayId": "019bb13c-a3e0-7000-8000-000000000010",
-        "plenum": false,
         "roughInStatus": "terminated",
         "routedLengthNm": 3352800000,
         "services": [

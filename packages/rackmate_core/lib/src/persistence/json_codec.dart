@@ -1707,7 +1707,14 @@ JsonMap _encodeLink(Link l) {
       for (final a in l.inlineAdapters) _encodeInlineAdapter(a),
     ],
     'shielded': l.shielded,
-    'plenum': l.plenum,
+    // `plenum` IS GONE (DR-079 §11.78.1). `Link` carried it beside
+    // `jacket` with no doc comment and no stated relationship, so a link
+    // could say `cmp` and `plenum: false` at once and nothing noticed.
+    // The listing already answers the question; two fields for one fact
+    // is one field too many. It was `false` on all 27 links that carried
+    // it and `true` on none, so it never held information.
+    if (l.lowSmokeZeroHalogen case final bool v) 'lowSmokeZeroHalogen': v,
+    if (l.directBurialRated case final bool v) 'directBurialRated': v,
     'lifecycleStatus': encodeLifecycleStatus(l.lifecycleStatus),
     'roughInStatus': encodeEnumName(l.roughInStatus),
   };
@@ -1801,7 +1808,7 @@ Link _decodeLink(Uuid id, JsonMap json) => Link(
   jacket: json['jacket'] == null
       ? null
       : decodeEnumStrict(
-          JacketRating.values,
+          JacketListing.values,
           asStr(json['jacket'], 'Link.jacket'),
           'Link.jacket',
         ),
@@ -1824,7 +1831,17 @@ Link _decodeLink(Uuid id, JsonMap json) => Link(
     'Link.jacketColorPulledId',
   ),
   shielded: asBool(json['shielded'], 'Link.shielded'),
-  plenum: asBool(json['plenum'], 'Link.plenum'),
+  // ABSENT MEANS UNKNOWN (G4/CR-114), which is why these two are
+  // written only when they hold a value and read back as null when they
+  // are missing. A `false` here is a recorded no.
+  lowSmokeZeroHalogen: asBoolOrNull(
+    json['lowSmokeZeroHalogen'],
+    'Link.lowSmokeZeroHalogen',
+  ),
+  directBurialRated: asBoolOrNull(
+    json['directBurialRated'],
+    'Link.directBurialRated',
+  ),
   routedLength: _decodeLenOrNull(json['routedLengthNm'], 'Link.routedLengthNm'),
   cutLength: _decodeLenOrNull(json['cutLengthNm'], 'Link.cutLengthNm'),
   terminatedLength: _decodeLenOrNull(
@@ -2672,7 +2689,7 @@ MediaTypeDef _decodeMediaTypeDef(MediaTypeId id, JsonMap json) => MediaTypeDef(
       'MediaTypeDef.jacketOptions',
     ))
       decodeEnumStrict(
-        JacketRating.values,
+        JacketListing.values,
         asStr(v, 'MediaTypeDef.jacketOptions[]'),
         'MediaTypeDef.jacketOptions',
       ),

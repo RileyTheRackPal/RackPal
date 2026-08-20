@@ -172,7 +172,7 @@ Uuid _link(
   MediaTypeId media = const MediaTypeId('media.cat6a_futp'),
   SignalFamilyId? signalFamily,
   List<Conductor>? conductors,
-  JacketRating? jacket,
+  JacketListing? jacket,
   CrossoverKind? crossover,
   RoughInStatus roughInStatus = RoughInStatus.planned,
   // NULLABLE FROM M3-J, so a home run can say "nobody has decided how
@@ -1732,7 +1732,7 @@ void main() {
         designator: 'W001',
         from: const PlaceEndpoint(description: 'wall'),
         to: const OpenEndpoint('coil'),
-        jacket: JacketRating.cmr,
+        jacket: JacketListing.cmr,
       );
       expect(_pull(d.doc).rows.single.mediaCell, 'Cat6A F/UTP CMR');
     });

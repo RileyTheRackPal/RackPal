@@ -55,7 +55,6 @@
           "updatedBy": "rriley"
         },
         "order": "a0",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false,
@@ -107,7 +106,6 @@
           "updatedBy": "rriley"
         },
         "order": "a1",
-        "plenum": false,
         "roughInStatus": "planned",
         "services": [],
         "shielded": false,

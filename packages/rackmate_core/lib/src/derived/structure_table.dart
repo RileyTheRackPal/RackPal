@@ -916,7 +916,7 @@ String structureCell(
     StructureColumnId.roughIn => roughInLabel(row.roughInStatus),
 
     StructureColumnId.jacketRating => switch (row.jacketRating) {
-      final r? => jacketRatingLabel(r),
+      final r? => jacketListingLabel(r),
       null => kUnknownCell,
     },
     // SPLIT WHERE `jacketColorCell` JOINS. The sheet prints `BLU→YEL` in
