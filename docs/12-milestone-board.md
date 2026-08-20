@@ -3703,6 +3703,50 @@ no dock control at all, by DR-063.
 | Domain-expert sign-off on the 28 rules and the catalog data | **UNPERFORMED** | Has not happened |
 | No rule prevents a PDF being written | **VACUOUS: true, trivially** | True because no rule exists. `packages/rackmate_core/lib/src/draw/sheet/sheet_def.dart:96-98` does correctly encode CR-023/G3 for the one heuristic that exists (a malformed NCS id is a **NOTICE, never a gate**) which is the right shape for when rules arrive |
 
+#### 5.4.1 M5-0a, the catalogue corrected before the engine exists · CLOSED · `bd71eef`, `91ac48f`, `31eac36`, `6f2ad64`, `4933588`, `aa25cba`
+
+**Closed 2026-08-19** (`#740`, DR-079 §11.78), six commits, fourteen gates green on each. 21 core
+cases. **The user reviewed the corpus against NEC and US practice and returned four findings**, three
+of which the text confirmed.
+
+**THE ONE THAT MATTERED WAS A FALSE PASS.** `CODE-002` read *"error when the pathway is a plenum
+space and the jacket is not `cmp`/`lszh`"*. **LSZH is a jacket compound characteristic, not a UL
+listing**: it is an IEC concern about smoke density and halogen acid gas and says nothing about the
+flame spread testing a plenum listing rests on. So the product would have told somebody their
+unlisted cable was **fine** in a plenum. **A false pass is worse than a false failure**, because the
+false failure gets argued with and the false pass gets built.
+
+**READING THE MODEL RATHER THAN THE RULE FOUND THREE MORE.** `JacketRating` mixed four axes (article,
+listing, material, application); `Link` carried **both** a `JacketRating?` **and** a bare
+undocumented `bool plenum`, so it could say `cmp` and `plenum: false` at once; and the vocabulary had
+no `CL2P`/`CL3P`, no `FPL` family, no fibre `OFN`/`OFC` classes and no `CATV` family.
+
+**THE TIMING IS THE ARGUMENT FOR NOT WAITING FOR M5.** No file on disk carried `lszh` (the starters
+use `cmr` and `cl2`), the codec resolves by enum **name**, `jacketOptions` is empty on all 38 seeded
+media types, and the only reader outside core was one label table. **Today it was a rename; the first
+customer file carrying a value makes it a migration.**
+
+| Finding | Landed as |
+|---|---|
+| LSZH treated as satisfying NEC plenum | `JacketListing`, 28 values across five articles; LSZH and direct burial become tri-state fields; `Link.plenum` deleted |
+| Rules over-simplified | `CODE-001` and `CODE-002` become **warnings** that cite the article and name the exception the product cannot see |
+| Power arithmetic reads as compliance | The 80% figure is a planning estimate and says so in five places. **No arithmetic changed** |
+| TIA citations stale | Retrieved-on dates (DR-051's mechanism), and **`TIA-607` is cited nowhere in this corpus**, which is recorded rather than worked around |
+
+**THE SUBSTITUTION TABLE ANSWERS THREE WAYS AND THAT IS THE DESIGN.** `substitutesFor` returns yes,
+no, or **null when the two listings are from different articles** (G4): a fibre listing does not
+satisfy a communications requirement. A caller reading that null as `false` reintroduces the false
+failure and reading it as `true` reintroduces the false pass the whole ruling was raised over. Twelve
+of the 21 cases are negative, because **a table recording only permissions cannot fail**.
+
+**WHAT M5 STILL OWES IS UNCHANGED.** No rule engine exists, so §11.78.3 and §11.78.4 are catalogue
+rows and prose that become behaviour when M5 builds them. The catalogue stays at **28**. Every clause
+below still stands.
+
+**FOURTH TIME THE TRADE HAS OVERRULED THE CORPUS** (`trade knowledge beats my workflow reasoning`),
+and the first time the corpus was wrong **in the user's favour**, which is the direction that does
+not announce itself.
+
 Two persisted shells survive from M0 (`packages/rackmate_core/lib/src/model/acked_finding.dart` and
 `rule_override.dart`) both codec-round-tripped and **never produced by anything**. The rack
 editor's Validation drawer and Rack Vitals are both listed *not started* in

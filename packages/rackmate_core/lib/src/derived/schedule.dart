@@ -602,10 +602,10 @@ final class ScheduleEntry {
   /// `Registries` does not carry one. Counted, never invented.
   final MediaTypeDef? media;
 
-  /// The NEC fire rating (`Link.jacket`) — `CMR`, `CMP`. One of the three
+  /// The NEC/UL LISTING (`Link.jacket`) — `CMR`, `CMP`. One of the three
   /// colour-ish facts on a `Link` that must not be confused; see
   /// `link.dart`.
-  final JacketRating? jacketRating;
+  final JacketListing? jacketRating;
 
   /// The run's jacket colour, resolved through the SHARED
   /// `resolveJacketColor` — never a second reading of the two stored ids.
@@ -733,7 +733,7 @@ final class ScheduleEntry {
   String get mediaCell {
     final name = media?.displayName ?? mediaId.v;
     final rating = jacketRating;
-    return rating == null ? name : '$name ${jacketRatingLabel(rating)}';
+    return rating == null ? name : '$name ${jacketListingLabel(rating)}';
   }
 
   /// §3.1's jacket-colour cell. TWO TOKENS WHEN THE RUN IS AN EXCEPTION —
@@ -898,20 +898,42 @@ String scheduleLengthCell(Len? value, UnitSystem units) {
   return '${(value.nm / divisor).round()}';
 }
 
-/// What a `JacketRating` prints. PUBLIC because the Structure editor
+/// What a `JacketListing` prints. PUBLIC because the Structure editor
 /// offers fire rating as its own optional column (docs/07 §4.1) and a
 /// second spelling of `CMR` is a second vocabulary.
-String jacketRatingLabel(JacketRating rating) => switch (rating) {
-  JacketRating.cl2 => 'CL2',
-  JacketRating.cl3 => 'CL3',
-  JacketRating.cmr => 'CMR',
-  JacketRating.cmp => 'CMP',
-  JacketRating.lszh => 'LSZH',
-  JacketRating.directBurial => 'DIRECT BURIAL',
+String jacketListingLabel(JacketListing listing) => switch (listing) {
+  JacketListing.cm => 'CM',
+  JacketListing.cmg => 'CMG',
+  JacketListing.cmr => 'CMR',
+  JacketListing.cmp => 'CMP',
+  JacketListing.cmx => 'CMX',
+  JacketListing.cl2 => 'CL2',
+  JacketListing.cl2r => 'CL2R',
+  JacketListing.cl2p => 'CL2P',
+  JacketListing.cl2x => 'CL2X',
+  JacketListing.cl3 => 'CL3',
+  JacketListing.cl3r => 'CL3R',
+  JacketListing.cl3p => 'CL3P',
+  JacketListing.cl3x => 'CL3X',
+  JacketListing.fpl => 'FPL',
+  JacketListing.fplr => 'FPLR',
+  JacketListing.fplp => 'FPLP',
+  JacketListing.ofn => 'OFN',
+  JacketListing.ofng => 'OFNG',
+  JacketListing.ofnr => 'OFNR',
+  JacketListing.ofnp => 'OFNP',
+  JacketListing.ofc => 'OFC',
+  JacketListing.ofcg => 'OFCG',
+  JacketListing.ofcr => 'OFCR',
+  JacketListing.ofcp => 'OFCP',
+  JacketListing.catv => 'CATV',
+  JacketListing.catvr => 'CATVR',
+  JacketListing.catvp => 'CATVP',
+  JacketListing.catvx => 'CATVX',
 };
 
 /// What a `TerminationType` prints. PUBLIC for the same reason
-/// [jacketRatingLabel] is: docs/07 §4.1 gives the FIELD termination its
+/// [jacketListingLabel] is: docs/07 §4.1 gives the FIELD termination its
 /// own optional column, and the rack end already prints through here.
 String terminationLabel(TerminationType type) => switch (type) {
   TerminationType.keystone => 'KEYSTONE',

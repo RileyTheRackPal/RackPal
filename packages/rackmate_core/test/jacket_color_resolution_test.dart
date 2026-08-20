@@ -73,7 +73,7 @@ Link _link({JacketColorId? convention, JacketColorId? pulled}) => Link(
   media: const MediaTypeId('media.cat6_utp'),
   order: const FracIndex('a0'),
   meta: _meta(),
-  jacket: JacketRating.cmr,
+  jacket: JacketListing.cmr,
   jacketColorId: convention,
   jacketColorPulledId: pulled,
 );

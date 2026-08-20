@@ -6,7 +6,7 @@ The Structure device is RackMate's answer to brief requirement 6: a first-class 
 
 ## 1. What structured wiring is, and how it actually arrives
 
-ANSI/TIA-570-D (July 2018) specifies residential telecommunications infrastructure as a **star / home-run topology**: every cabled outlet location runs back unbroken to a central **Distribution Device**. No daisy chains. That single architectural fact is what the Structure device models, not a piece of equipment, but the boundary at which N unbroken runs from elsewhere in the building present themselves at the rack.
+ANSI/TIA-570-D (July 2018) specifies residential telecommunications infrastructure as a **star / home-run topology**: every cabled outlet location runs back unbroken to a central **Distribution Device**. No daisy chains. That single architectural fact is what the Structure device models, not a piece of equipment, but the boundary at which N unbroken runs from elsewhere in the building present themselves at the rack. **The revision is stated rather than tracked** (DR-079 §11.78.5, and docs/01 §10 carries the retrieved-on date): the topology and the Distribution Device are revision-independent, so a later revision does not move this section.
 
 The standard defines grades as a minimum media count per outlet location:
 

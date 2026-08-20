@@ -294,7 +294,7 @@ final class Circuit {
   int breakerAmps, volts;         // volts is AUTHORITATIVE downstream. CR-039.
   int? phase; bool dedicated;
   Uuid? locationId;
-  int get continuousLimitAmps => (breakerAmps * 4) ~/ 5;   // NEC 210.19(A)(1) — DERIVED
+  int get continuousLimitAmps => (breakerAmps * 4) ~/ 5;   // PLANNING ESTIMATE, DERIVED
   EntityMeta meta;
 }
 ```
@@ -307,7 +307,7 @@ final class Circuit {
 | `usableDepth` is nullable | AC-050/A1.3 | A required depth. Depth rules **skip** rather than fabricate for 2-post frames (G4). |
 | `Circuit` is flat on the document, with an optional `rackId` | CR-028 | `List<Circuit>` on `Rack`. A branch circuit routinely feeds more than one rack. |
 | `Rack.lineVoltage` is deleted | CR-039 | Three sources of truth for voltage. `Circuit.volts` is authoritative. |
-| `continuousLimitAmps` is derived, never stored | CR-048/I-48 | A stored 80% figure that drifts out of sync with the breaker rating. |
+| `continuousLimitAmps` is derived, never stored, and is a **planning estimate rather than an NEC load calculation** (DR-079 §11.78.4) | CR-048/I-48, DR-079 | A stored 80% figure that drifts out of sync with the breaker rating; and a citation that reads as though the arithmetic were the code rule. 80% is the continuous-load allowance: there are no demand factors, nothing classifies a load as continuous, and `PWR-001` sums a third quantity again (typical × diversity, in VA). |
 
 Circuit membership itself is **derived** by walking power Links (device inlet → PDU outlet → PDU inlet → circuit). `Port.circuitId` survives only where the rack meets the building, PDU and UPS inlets and hardwired devices (CR-028).
 
@@ -895,7 +895,7 @@ Severity vocabulary is `error | warning | advisory | off`, "info" is renamed `ad
 |---|---|---|---|
 | `ELE-003` | Speaker polarity inverted between the two ends of a conductor pair. | **warning** (demoted from error) | AC-030/M12 |
 | `NET-001` | Σ PD class draw on a switch exceeds `PowerProfile.poeBudgetWatts`. | error | CR-056 |
-| `PWR-001` | Σ continuous amps on a circuit > 80% of the breaker, computed on **typical × diversity factor, in VA**. | **warning** (demoted from error) | CR-020, AC-020 |
+| `PWR-001` | Σ continuous amps on a circuit > 80% of the breaker, computed on **typical × diversity factor, in VA**. **A planning estimate and not a compliance check** (DR-079 §11.78.4): it names the circuit to look at first and asserts nothing about NEC. | **warning** (demoted from error) | CR-020, AC-020, DR-079 |
 | `PWR-003` | Outlets consumed exceed outlets provided in the rack. | error | AC-040 |
 | `LEN-001` | Ethernet channel > 100 m (90 m horizontal + 10 m patch). When length is null it emits *"length unknown, cannot verify"* rather than passing silently, silence reads as approval. | error | AC-024/M9 |
 | `LEN-002` | A run's known length exceeds the declared maximum for its media type, which is `MediaTypeDef.maxRunLengthPassive` and **not** the empty `maxRunLengthActive` beside it (canon §11.19.7). **Generic by construction**: one rule reading the registry, not one rule per medium, so a new limit is a registry row rather than a new ruling. Seven of the 38 shipped types declare one, so the rule is silent on the other thirty-one and counts them rather than treating null as zero. Fed by `cutLength`/`terminatedLength` when known, and by a `planLowerBound` when that alone already exceeds the limit, a bound can prove a violation and can never prove compliance. Null length emits *"length unknown, cannot verify"* like `LEN-001`. | warning | DR-020 |
@@ -904,8 +904,8 @@ Severity vocabulary is `error | warning | advisory | off`, "info" is renamed `ad
 | `RCK-003` | Σ device weight > `Rack.weightCapacity`. | **warning** (advisory at 85%) | CR-020 |
 | `RCK-012` | Front device depth + rear device depth + 50 mm cable allowance > usable depth, for overlapping RU ranges. | error | AC-022/M7 |
 | `RCK-013` | Device mass exceeds `maxUnsupportedMass` on front ears only; requires rear support or a shelf. | warning | AC-028/M14 |
-| `CODE-001` | Class 2/3 conductor in a `Pathway` with `containsLineVoltage == true` (NEC 725.136). | error | AC-027/M13 |
-| `CODE-002` | `Pathway.kind == plenumSpace` and jacket is not `cmp`/`lszh` (NEC 800.154). | error | AC-027/M13 |
+| `CODE-001` | Class 2/3 conductor in a `Pathway` with `containsLineVoltage == true`. **Cites NEC 725.136 and says the article has permitted arrangements this product does not model**, so it asks the user to verify rather than asserting a violation (DR-079 §11.78.3). | **warning** (demoted from error) | AC-027/M13, DR-079 |
+| `CODE-002` | `Pathway.kind == plenumSpace` and the jacket's **listing** is not plenum-rated for its own NEC article, resolved through `jacket_substitution.dart`. **`lszh` is gone from the predicate**: LSZH is a jacket compound and not a listing, and accepting it was a false pass (DR-079 §11.78.1). Cites NEC 800.154 and names 300.22(C)'s metal-raceway exception, which this product cannot see because it models no raceway. A listing from another article, or none at all, is **unknown and skips** (G4). | **warning** (demoted from error) | AC-027/M13, DR-079 |
 | `LNK-020` | N links have unbound endpoints. A checklist, not a failure. | advisory | AC-018/B1 |
 
 **v1 ships this set and no more** (AC-040, as amended by DR-020), fourteen tier-3 rules, completing the 28. Everything else in the full catalogue (the remaining `DIR`, `CON`, `ELE`, `LEN`, `BUS`, `SER`, `NET`, `PWR` and `RCK` rules, plus `PWR-006`, `RCK-003b`, `RCK-007`, `RCK-014`, `TOP-010`, `TOP-011` and `SEQ-001` adopted by CR-021 and AC-033) moves to v1.2 behind a fixture corpus. **No rule ships without a known-bad and a known-good fixture** (AC-040, AC-051).
@@ -1863,7 +1863,7 @@ Structural invariants (**I-n**) mean the model is *corrupt* if violated: assert 
 41. There is **no** legend-note invariant. The exporter auto-fills `SYMBOL LEGEND: SEE SHEET T0.01` (CR-023).
 42. `AckedFinding.ruleId` is preserved even when unknown to this build (forward compat, AC-011). A stale acknowledgement (one whose `targetFingerprint` is no longer produced by any current finding) is garbage-collected on load with a log entry, so an acknowledgement can never silently suppress a *different* problem than the one the user reviewed.
 43. Every `SignalFamilyId` / `ConnectorTypeId` / `MediaTypeId` referenced anywhere resolves in the embedded registries, **or** degrades to an `unknown(rawId)` placeholder that round-trips, renders grey with the raw id as its tag, and never throws.
-44. `Circuit.continuousLimitAmps` is derived, never stored, so the NEC 80% figure cannot drift out of sync with the breaker rating.
+44. `Circuit.continuousLimitAmps` is derived, never stored, so the 80% figure cannot drift out of sync with the breaker rating. **It is a planning estimate, not an NEC load calculation** (DR-079 §11.78.4).
 45. Nothing in this list blocks an export (G3, CR-022).
 
 ---

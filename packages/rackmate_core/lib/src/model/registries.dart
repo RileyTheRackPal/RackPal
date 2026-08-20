@@ -1,4 +1,4 @@
-import 'package:rackmate_core/src/model/link.dart' show JacketRating;
+import 'package:rackmate_core/src/model/link.dart' show JacketListing;
 import 'package:rackmate_core/src/model/outlet.dart' show OutletTemplate;
 import 'package:rackmate_core/src/model/template.dart'
     show PortDirection, PortTopology;
@@ -309,7 +309,7 @@ final class MediaTypeDef {
   /// worst failure mode a validation rule has, which is why canon
   /// §11.19.7 rules the choice rather than leaving it to be discovered.
   final Len? maxRunLengthActive;
-  final List<JacketRating> jacketOptions;
+  final List<JacketListing> jacketOptions;
 
   /// CR-109: **conduit is not a cable.** A medium with this set creates a
   /// `Pathway`, never a `Link` and never a `Port`.

@@ -17,11 +17,81 @@ import 'package:rackmate_core/src/units/permille.dart';
 /// user-overridable (AC-026). The schedule excludes jumpers by default.
 enum LinkClass { fieldCable, jumper, powerCord, internal }
 
-/// cl2|cl3|cmr|cmp|lszh|directBurial. Not decorative: `CODE-002` is an
-/// error when a pathway is a plenum space and the jacket is not `cmp`/
-/// `lszh` (NEC 800.154) — given directly in docs/canonical-decisions.md
-/// line 4425.
-enum JacketRating { cl2, cl3, cmr, cmp, lszh, directBurial }
+/// The NEC/UL LISTING printed on a cable's jacket. DR-079 §11.78.1.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A LISTING IS NOT A MATERIAL, AND CONFLATING THEM PRODUCED A FALSE PASS
+/// ═══════════════════════════════════════════════════════════════════════
+/// This was `JacketRating { cl2, cl3, cmr, cmp, lszh, directBurial }`, and
+/// `CODE-002` accepted `lszh` as satisfying NEC 800.154's plenum
+/// requirement. **LSZH is a jacket compound characteristic, not a
+/// listing**: low smoke zero halogen is an IEC and European concern about
+/// smoke density and halogen acid gas during evacuation, and it says
+/// nothing about the flame spread and smoke development testing (UL 910 /
+/// NFPA 262) a plenum listing rests on. An LSZH cable may carry no plenum
+/// listing at all.
+///
+/// So the product would have told somebody their unlisted cable was FINE
+/// in a plenum. **A false pass is worse than a false failure**: the false
+/// failure gets argued with and the false pass gets built. LSZH is now
+/// [Link.lowSmokeZeroHalogen] and direct burial, which is an APPLICATION
+/// rather than a listing, is [Link.directBurialRated].
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// FIVE ARTICLES, BECAUSE THIS PRODUCT'S MEDIA TOUCH FIVE
+/// ═══════════════════════════════════════════════════════════════════════
+/// Ordered by article and then by rating, ascending, which is also the
+/// substitution order within each family (`port_jacket_listing.dart`
+/// carries that as data). The suffix convention is the NEC's own: no
+/// suffix is general purpose, `G` general purpose (fibre), `R` riser,
+/// `P` plenum, `X` limited use / dwelling.
+///
+/// **THE ARTICLE IS PART OF THE FACT.** `cmp` and `cl3p` are both plenum
+/// and are not interchangeable, because they are tested and listed under
+/// different articles for different uses. Anything that reasons about
+/// these values reasons per article or answers UNKNOWN (G4).
+enum JacketListing {
+  // ── Art. 800 / 805, communications ──────────────────────────────────
+  cm,
+  cmg,
+  cmr,
+  cmp,
+  cmx,
+
+  // ── Art. 725, Class 2 and Class 3 ───────────────────────────────────
+  cl2,
+  cl2r,
+  cl2p,
+  cl2x,
+  cl3,
+  cl3r,
+  cl3p,
+  cl3x,
+
+  // ── Art. 760, power-limited fire alarm ──────────────────────────────
+  fpl,
+  fplr,
+  fplp,
+
+  // ── Art. 770, optical fibre ─────────────────────────────────────────
+  // Nonconductive (`OFN`) and conductive (`OFC`) are separate families:
+  // a conductive fibre cable carries a metallic member and is not a
+  // substitute for a nonconductive one.
+  ofn,
+  ofng,
+  ofnr,
+  ofnp,
+  ofc,
+  ofcg,
+  ofcr,
+  ofcp,
+
+  // ── Art. 820, coaxial ───────────────────────────────────────────────
+  catv,
+  catvr,
+  catvp,
+  catvx,
+}
 
 /// straight|nullModem|fiberPolarityAB.
 enum CrossoverKind { straight, nullModem, fiberPolarityAB }
@@ -70,7 +140,8 @@ final class Link {
     JacketColorId? jacketColorId,
     JacketColorId? jacketColorPulledId,
     this.shielded = false,
-    this.plenum = false,
+    this.lowSmokeZeroHalogen,
+    this.directBurialRated,
     Len? routedLength,
     Len? cutLength,
     Len? terminatedLength,
@@ -376,13 +447,29 @@ final class Link {
   MediaTypeId media;
   String? cableSpecId;
   int? gaugeAwg;
-  JacketRating? jacket;
+  JacketListing? jacket;
 
   // The two jacket-COLOUR fields are declared above, in the
   // AC-013-converted region — see the block header there for why.
 
   bool shielded;
-  bool plenum;
+
+  /// Whether the jacket compound is low smoke zero halogen.
+  ///
+  /// **NOT A LISTING AND NEVER A SUBSTITUTE FOR ONE** (DR-079 §11.78.1).
+  /// It is an independent fact about the compound: an LSZH cable may
+  /// carry any [JacketListing] or none, and nothing may read this field
+  /// to answer a question about NEC 800.154.
+  ///
+  /// TRI-STATE, because G4 applies to it like everything else: null is
+  /// "nobody recorded this", not "no".
+  bool? lowSmokeZeroHalogen;
+
+  /// Whether the cable is rated for direct burial.
+  ///
+  /// An APPLICATION rather than a listing, which is why it left the
+  /// listing enum with LSZH. Tri-state for the same reason.
+  bool? directBurialRated;
 
   // AC-024's three lengths ARE NOT HERE ANY MORE. All three are wired to
   // Commands and all three sit in the converted region above; M3-D/2

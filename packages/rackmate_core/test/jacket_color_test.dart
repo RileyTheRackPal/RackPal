@@ -54,7 +54,7 @@ RackDocument _docWithLink({
     media: const MediaTypeId('media.cat6_utp'),
     order: const FracIndex('a0'),
     meta: meta,
-    jacket: JacketRating.cmr,
+    jacket: JacketListing.cmr,
     jacketColorId: jacketColorId,
   );
   return doc;

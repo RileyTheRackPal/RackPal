@@ -565,7 +565,7 @@ final class StarterAuthor {
     // `AddLinkCommand` produces.
     List<({String role, int? pairNumber, String colorCode})>? conductorRoles,
     Uuid? pathwayId,
-    JacketRating? jacket,
+    JacketListing? jacket,
     // The colour of the SHEATH, which is not [jacket] (the NEC fire
     // rating) and not a `Conductor.colorCode` (the pair colour inside
     // it). Null means the run's colour was not recorded — the ordinary
@@ -576,7 +576,8 @@ final class StarterAuthor {
     Len? routedLength,
     RoughInStatus roughInStatus = RoughInStatus.planned,
     LinkClass linkClass = LinkClass.fieldCable,
-    bool plenum = false,
+    bool? lowSmokeZeroHalogen,
+    bool? directBurialRated,
     String? serviceLabel,
     String? notes,
   }) {
@@ -619,7 +620,8 @@ final class StarterAuthor {
       gaugeAwg: gaugeAwg,
       jacket: jacket,
       jacketColorId: jacketColorId,
-      plenum: plenum,
+      lowSmokeZeroHalogen: lowSmokeZeroHalogen,
+      directBurialRated: directBurialRated,
       routedLength: routedLength,
       pathwayId: pathwayId,
       roughInStatus: roughInStatus,

@@ -201,6 +201,16 @@ must be rated ≥ 125% of it — equivalently, continuous load ≤ 80% of rating
    20 A circuit → 16 A continuous
 ```
 
+**WHAT RACKMATE COMPUTES IS A PLANNING ESTIMATE, AND IT IS NOT THE CODE RULE ABOVE** (DR-079 §11.78.4). The statement of 210.19(A)(1) is accurate; the arithmetic this product performs is a different thing, and the gap is worth stating rather than leaving a reader to assume it closed:
+
+| The code rule | What this product does |
+|---|---|
+| Classifies each load as continuous (≥ 3 hours) or not | **Classifies nothing.** No field on any entity records it |
+| Applies demand factors from Art. 220 | **Applies none** |
+| Sizes the OCPD and the conductor against the result | Sums `typicalWatts × diversity` in **VA** and compares it to 80% of the breaker |
+
+So `PWR-001` names the circuit to look at first. **It does not assert compliance, and a person sizing a service still does a load calculation.** It is a warning rather than an error for exactly this reason (CR-020), and `derived/totals.dart` refuses to invent a power factor to reach VA from watts rather than fabricating an input it was not given (AC-039). The three together are one position: this product estimates, says so, and declines to make up what it was not told.
+
 `PowerProfile` carries `nameplateWatts`, `typicalWatts`, `apparentVA`, `powerFactor` (permille) and `poeBudgetWatts`, all `int?` (CR-056). **`typicalWatts` never defaults to a fraction of nameplate**: a silent 50%-of-nameplate estimate is prohibited (G4, AC-039). Default diversity factors: amplifiers 350‰, switches 1000‰, UPS 1000‰; configurable per project.
 
 Power factor is not decorative. A linear-supply amplifier at PF 0.65 under-reports current by 35% under a naive `watts ÷ 120`, which is exactly how a system that "calculated fine" trips a breaker.
@@ -431,16 +441,23 @@ Full table in `assets/catalog/registries.json`; the load-bearing rows:
 | `media.om3` · `om4` · `os2` | Fibre | 2 strands | — | — | ~300–400 m at 10 G · 10–40 km | `net.fiber_mm` · `net.fiber_sm` |
 | `media.conduit_emt` · `conduit_ent` · `pull_string` | EMT · ENT (smurf) · pull string | — | — | — | — | **`isPathwayOnly: true`** |
 
-`JacketRating { cl2, cl3, cmr, cmp, lszh, directBurial }` is not decorative:
+`JacketListing` carries **only NEC/UL listings**, 28 values across the five articles this product's media touch: communications `CM`/`CMG`/`CMR`/`CMP`/`CMX` (Art. 800/805), Class 2 and 3 `CL2`/`CL3` with their `R`/`P`/`X` variants (725), power-limited fire alarm `FPL`/`FPLR`/`FPLP` (760), optical fibre `OFN`/`OFC` with their `G`/`R`/`P` variants (770) and coax `CATV`/`CATVR`/`CATVP`/`CATVX` (820). **LSZH is not among them and never was a listing**; it is `Link.lowSmokeZeroHalogen`, an independent fact about the jacket compound, and direct burial is `Link.directBurialRated`, an application (DR-079 §11.78.1). NEC's substitution hierarchy is data (`jacket_substitution.dart`), so `CMP` satisfies a riser requirement and a listing from another article answers **unknown rather than false**.
+
+None of it is decorative:
 
 ```text
-CODE-001 (error) [std NEC 725.136]: a Class 2/3 conductor shares a pathway
-                                     with line-voltage circuits
-CODE-002 (error) [std NEC 800.154]: Pathway.kind == plenumSpace and the
-                                     jacket is not cmp or lszh
+CODE-001 (warning) [std NEC 725.136]: a Class 2/3 conductor shares a
+                                       pathway with line-voltage circuits
+CODE-002 (warning) [std NEC 800.154]: Pathway.kind == plenumSpace and the
+                                       jacket's LISTING is not plenum-rated
+                                       for its own NEC article
 ```
 
 Both are acknowledgeable like every other rule (CR-019), an inspector's judgement outranks ours, **but the finding must exist**, because these are two of the very few checks in the product that protect the user from a code citation and a red-tagged job (AC-027).
+
+**Both are WARNINGS that name what to verify, and neither asserts a violation** (DR-079 §11.78.3). A code citation is a claim about somebody's licence, and these two are held to a higher standard than the other twenty-six. NEC 725.136 runs to a substantial list of permitted arrangements and separations, and this product models none of the facts that would distinguish them, so a blanket error fires hardest on the commercial rows where the arrangement is most likely deliberate. NEC 300.22(C) permits ordinary cable in a plenum inside metal raceway, and **this product models no raceway**, so `CODE-002` cannot see the exception it would be citing. Each names its article, names the exception it cannot see, and says what to check. **This costs nothing that was ever enforced**: G2 and G3 already guarantee that no finding at any severity blocks a deliverable or gates the bytes.
+
+**`CODE-002` reads a LISTING, never a material.** Its predicate named `lszh` until DR-079 §11.78.1, and LSZH is a jacket compound characteristic rather than a UL listing: it says nothing about the flame spread and smoke development testing a plenum listing rests on. The rule therefore produced a **false pass**, telling somebody an unlisted cable was fine in a plenum. It now resolves the cable's listing against its own NEC article through the substitution hierarchy, and a listing from another article, or none at all, is **unknown and skips** rather than failing (G4).
 
 ---
 
@@ -723,14 +740,33 @@ Full professional CI deliverable sets also contain floor plans, reflected ceilin
 
 ### Standards
 
+> **EVERY CITATION BELOW CARRIES A RETRIEVED-ON DATE, AND THE DATE IS THE POINT** (DR-079 §11.78.5).
+> These standards are paywalled, so this corpus can state which revision it was written against and
+> cannot state which revision is current. G4 handles unknown and has no mechanism for **stale**,
+> which is the same gap DR-051 built the retrieved-on date for when it ruled that device
+> documentation is referenced and never embedded: a link rots silently.
+>
+> **A REVISION NUMBER IS NEVER ASSERTED FROM MEMORY HERE.** A wrong revision in a normative document
+> is worse than a dated one, because the dated one announces what it does not know. Where a later
+> revision is known to exist it is named beside the one this corpus used, and where it is not, the
+> date is the whole claim.
+>
+> **The architectural facts taken from these standards are revision-independent**: TIA-570-D's star /
+> home-run topology and its Distribution Device, which the Structure device models, are not going to
+> change in a revision, and the corpus's use of them was never a version claim.
+>
+> **TIA-607 (bonding and grounding) is cited NOWHERE in this corpus**, because bonding and grounding
+> are not modelled at all. Recorded here so the absence reads as a scope boundary rather than an
+> oversight.
+
 - ANSI/EIA-310-D, Cabinets, Racks, Panels and Associated Equipment. IEC 60297-3-100 and DIN 41494 are the harmonised metric expressions.
-- ANSI/TIA-606-C (2017), 606-D, Administration Standard for Telecommunications Infrastructure. <https://www.tiafotc.org/tia-standards-update/tia-606-d/>
-- ANSI/TIA-570-D (2018), Residential Telecommunications Infrastructure Standard. <https://www.tiafotc.org/tia-standards-update/tia-570-d/>
+- ANSI/TIA-606-C (2017), Administration Standard for Telecommunications Infrastructure. **606-D is known to exist and this corpus was written against 606-C.** *Retrieved 2026-08-19.* <https://www.tiafotc.org/tia-standards-update/tia-606-d/>
+- ANSI/TIA-570-D (2018), Residential Telecommunications Infrastructure Standard. **A later revision may exist and has not been obtained**; the facts this corpus takes from it are architectural and revision-independent. *Retrieved 2026-08-19.* <https://www.tiafotc.org/tia-standards-update/tia-570-d/>
 - ANSI J-STD-710 (2015), Audio, Video and Control Architectural Drawing Symbols Method. <https://webstore.ansi.org/preview-pages/ANSI/preview_ANSI+J-STD-710-2015.pdf>
 - ANSI/AVIXA D401.01:2023, Documentation Requirements for Audiovisual Systems. <https://cdn.avixa.org/production/docs/default-source/default-document-library/d401.01_tech_review.pdf>
 - ANSI/AVIXA F501.01:2015, Cable Labeling for Audiovisual Systems. <https://www.avixa.org/standards/cable-labeling-for-audiovisual-systems>
 - ANSI/AVIXA F502.01:2018 Rack Building · F502.02:2020 Rack Design. <https://www.avixa.org/standards/rack-design-for-av-systems>
-- NEC 210.19(A)(1) continuous load · NEC 725.136 Class 2/3 separation · NEC 800.154 plenum.
+- NEC 210.19(A)(1) continuous load · NEC 725.136 Class 2/3 separation · NEC 800.154 plenum · NEC 300.22(C) wiring in plenums. **All four are cited informatively**: this product estimates and warns, and asserts compliance with none of them (DR-079).
 - US National CAD Standard v5, Uniform Drawing System, sheet identification. <https://www.nationalcadstandard.org/ncs5/pdfs/ncs5_uds1.pdf>
 - IEEE 802.3af / 802.3at / 802.3bt, Power over Ethernet. <https://ethernetalliance.org/wp-content/uploads/2018/04/WP_EA_Overview8023bt_FINAL.pdf>
 - ASME Y14.44 / IEEE 315, reference designator prefixes.

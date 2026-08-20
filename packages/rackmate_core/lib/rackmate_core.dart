@@ -175,6 +175,7 @@ export 'src/model/entity_meta.dart';
 export 'src/model/enums.dart';
 export 'src/model/gang.dart';
 export 'src/model/jacket_color.dart';
+export 'src/model/jacket_substitution.dart';
 export 'src/model/link.dart';
 export 'src/model/location.dart';
 export 'src/model/net.dart';
