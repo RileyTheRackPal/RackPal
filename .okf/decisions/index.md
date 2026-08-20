@@ -69,6 +69,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-076, the schematic rebuilds what changed](dr-076-the-schematic-rebuilds-what-changed.md) - the prescribed remedy was the smaller half, and the invalidation model was already in the tree unread: six epoch notifiers every command declares against, collapsed into one counter.
 * [DR-077, a template authored here reaches the rack](dr-077-a-template-authored-here-reaches-the-rack.md) - the builder saved into a map nothing read; the shelf was already the document, the palette was reading a constant beside it, and a second Save minted a second template instead of forking a version.
 * [DR-078, the five grid operations](dr-078-the-five-grid-operations.md) - one chord collides with a Flutter macOS default and is taken anyway; a move offers only the banks that exist; and both bulk-write dialogs show a per-row impact list, because undo covers the open document and cannot reach a published key.
+* [DR-079, a listing is not a material](dr-079-a-listing-is-not-a-material.md) - LSZH was treated as satisfying NEC plenum, which is a false pass and worse than a false failure; two code rules asserted violations the product cannot establish; and an 80 percent figure was labelled as a code result.
 
 # Not yet written up
 

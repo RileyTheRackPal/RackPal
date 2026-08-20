@@ -11937,6 +11937,137 @@ across rows, which is the distinction DR-063 drew and this preserves.
 
 ---
 
+### 11.78 DR-079 · A listing is not a material, and three code rules stop overstating what they know
+
+**Settled by the user on 2026-08-19** (`#740`), from their own review of the corpus against NEC and US
+practice. Four findings, three of which the text confirms and one of which has no target here.
+
+**A CORRECTION, NOT A §8.3 AMENDMENT.** The catalogue stays at **28 rules**, no rule is added or
+removed, no milestone moves, and roadmap §2 already names *"plenum and Class 2/3 code rules"*. What
+changes is that two of them stop being wrong and one number stops implying something it never
+computed.
+
+**THE TRADE OVERRULED THE CORPUS AGAIN, AND THAT IS NOW FOUR TIMES.** `trade knowledge beats my
+workflow reasoning` was filed after three rulings in which an objection grounded in how the work
+actually happens beat one grounded in the documents. This is the fourth, and it is the first where
+the corpus was not merely incomplete but **actively wrong in the user's favour**, which is the
+direction that does not announce itself.
+
+**11.78.1 LSZH IS A MATERIAL, `CMP` IS A LISTING, AND CONFLATING THEM PRODUCES A FALSE PASS.**
+`CODE-002` reads *"error when `Pathway.kind == plenumSpace` and jacket is not `cmp`/`lszh`"*, citing
+NEC 800.154. **Low smoke zero halogen is a jacket compound characteristic**, an IEC and European
+concern about smoke density and halogen acid gas during evacuation. It says nothing about the flame
+spread and smoke development testing (UL 910 / NFPA 262) that a plenum listing rests on, and an LSZH
+cable may carry no plenum listing at all.
+
+So the product would have told somebody their unlisted cable was **fine** in a plenum. **A false
+pass is worse than a false failure**, because the false failure gets argued with and the false pass
+gets built.
+
+Three more defects sit under it, found by reading the model rather than the rule:
+
+| | |
+|---|---|
+| `enum JacketRating { cl2, cl3, cmr, cmp, lszh, directBurial }` | **Four axes in one enum**: NEC article (`cl2`/`cl3`), listing (`cmr`/`cmp`), material (`lszh`), application (`directBurial`) |
+| `Link` | carries **both** `JacketRating? jacket` **and** a bare `bool plenum`, the second with no doc comment and no stated relationship to the first. A link can say `cmp` and `plenum: false` at once and nothing notices |
+| The vocabulary | has no `CL2P`/`CL3P`/`CL2R`/`CL3R`, no `FPL`/`FPLR`/`FPLP`, no `OFN`/`OFC` fibre classes, no `CATV`/`CATVR`/`CATVP`, and no `CM`/`CMG`/`CMX` |
+
+**THE RULING.** `JacketRating` becomes **`JacketListing`** and carries only NEC/UL listings, across
+the five articles this product's media actually touch: communications (`CM`, `CMG`, `CMR`, `CMP`,
+`CMX`, Art. 800/805), Class 2 and 3 (`CL2`, `CL3` and their `R`/`P`/`X` variants, Art. 725),
+power-limited fire alarm (`FPL`, `FPLR`, `FPLP`, Art. 760), optical fibre (`OFN`/`OFC` and their
+`G`/`R`/`P` variants, Art. 770) and coax (`CATV`, `CATVR`, `CATVP`, `CATVX`, Art. 820). **LSZH leaves
+the enum and becomes a separate material characteristic**, because it may accompany any listing or
+none. `Link`'s two plenum facts are reconciled: the listing already carries the answer.
+
+**FIRE ALARM AND COAX ARE IN, AND THE USER NAMED BOTH.** `FPLP` was named directly; coax is `RG6`,
+which is in every residential job this product exists for, and a coax run in a plenum is exactly the
+row `CODE-002` is aimed at.
+
+**THE MIGRATION COST IS ZERO TODAY AND WILL NOT BE LATER**, which is the whole argument for doing it
+now rather than at M5. **No file on disk carries `lszh`** (the four starters use `cmr` and `cl2`),
+the codec resolves by enum **name** over `JacketRating.values`, and `jacketOptions` is empty on all
+38 seeded media types. Nothing reads the field but one label table. The first customer file carrying
+a value makes this a migration; today it is a rename.
+
+**11.78.2 SUBSTITUTIONS ARE A LOOKUP TABLE, BECAUSE THE ALTERNATIVE FAILS CORRECT WORK.** NEC permits
+a higher listing wherever a lower one is required: `CMP` is acceptable in a riser, `CL3P` where
+`CL2P` is required, and so on. A rule that checked only *"is this exactly the listing this pathway
+requires"* would fail a correctly-specified plenum cable in a riser, which is **the same
+false-positive failure §11.78.3 is about**, arriving from the other direction.
+
+So the hierarchy is **data**, the way the connector-by-signal-family compatibility matrix already is:
+CR-024's own distinction is that a genuine lookup table stays data while a rule stays a Dart
+function, and this is a genuine lookup table.
+
+**THE ARTICLE BOUNDARY IS THE CLAUSE THAT WILL BE GOT WRONG.** A fibre listing does not substitute
+for a communications one: different articles, different tests, different failure modes. The table is
+therefore **per-article**, and a listing from an article the requirement does not name resolves to
+**UNKNOWN rather than to false** (G4). A rule must be able to say *"this cable's listing is from
+another article and I cannot judge it"*, because that is true, and because the alternative is the
+false failure this ruling exists to stop.
+
+**11.78.3 `CODE-001` AND `CODE-002` BECOME WARNINGS THAT NAME WHAT TO VERIFY.** Both currently assert
+a violation the product cannot actually establish.
+
+**`CODE-001`** (Class 2/3 sharing a pathway with line voltage, NEC 725.136) is stated as a blanket
+error. 725.136 runs to a substantial list of permitted arrangements and separations, and this product
+models none of the facts that would distinguish them. A blanket error therefore fires most often on
+the commercial rows where the arrangement is most likely to be deliberate and permitted.
+
+**`CODE-002`** is accurate for the common case once §11.78.1 lands, and still cannot see NEC
+300.22(C), which permits ordinary cable in a plenum inside metal raceway. **This product does not
+model raceway**, so it cannot know whether the exception applies.
+
+Both become **warnings** that cite the article, name the exception the product cannot see, and say
+what to verify. **This costs nothing that was ever enforced**: G2 and G3 already guarantee that no
+finding at any severity blocks a deliverable or gates the bytes. What changes is whether the product
+tells a professional they are in violation when it does not know that.
+
+**A CODE CITATION IS A CLAIM ABOUT SOMEBODY'S LICENCE.** That is the standard these two rules are
+held to, and it is higher than the standard for the other twenty-six.
+
+**11.78.4 THE POWER ARITHMETIC IS A PLANNING ESTIMATE AND WILL SAY SO.** `Circuit.continuousLimitAmps`
+is 80% of the breaker rating, commented `NEC 210.19(A)(1)`. **Eighty percent is the continuous-load
+allowance, not a load calculation.** There are no demand factors, nothing classifies a load as
+continuous or non-continuous, and what the product actually sums is *typical × diversity, in VA*,
+which is a third quantity again.
+
+**THE CODE IS ALREADY MORE CAREFUL THAN THE DOCUMENTS, and that half is protected rather than
+changed.** `derived/totals.dart` refuses to convert `typicalWatts` into VA without an authored power
+factor (AC-039's rejected *"half of nameplate"* behaviour, restated in its own doc comment), and
+`PWR-001` was already demoted from error to warning (CR-020). **No arithmetic changes.** The citation
+becomes informative rather than definitional, the derived getter stops claiming a code result in its
+name and its comment, and the figure says what it is wherever it prints.
+
+**11.78.5 A STALE CITATION CARRIES A DATE, NOT A GUESSED REVISION.** `ANSI/TIA-570-D` (2018) is cited
+in five documents and `TIA-606-C` in one, the latter already noting 606-D beside it.
+
+**`TIA-607` IS CITED NOWHERE IN THIS CORPUS.** Bonding and grounding are not modelled at all, so that
+half of the finding has no target, and recording that is worth more than inventing work to match it.
+
+**NO REVISION NUMBER IS ASSERTED FROM MEMORY.** TIA standards are paywalled, the user's own
+instruction was that a standard which cannot be located freely may be left alone, and a wrong
+revision number in a normative document is worse than a dated one. DR-051 already built the
+mechanism for exactly this shape: a reference carries a **retrieved-on date**, because G4 handles
+unknown and has no mechanism for stale, and a link rots silently. Every standards citation gains
+one.
+
+**The architectural facts the corpus takes from 570-D are revision-independent and are untouched**:
+the star / home-run topology and the Distribution Device that the Structure device models. Those are
+not going to change in a revision, and the corpus's use of them was never a version claim.
+
+**11.78.6 WHAT THIS DOES NOT RULE.** It does not build the rule engine: M5 is not started, no
+`rules/` directory exists, and `CODE-001`, `CODE-002` and `PWR-001` are catalogue rows in `docs/02`
+§5 and nothing else, so §11.78.3 and §11.78.4 are **documentation today** and land as behaviour when
+M5 builds them. It does not add a rule about riser spaces, though the vocabulary now permits one. It
+does not model raceway, which is what would let `CODE-002` see 300.22(C)'s exception rather than
+naming it. It does not model bonding or grounding. And it does not touch AC-040's deferred length
+rules or the jacket **colour** convention, which is a different fact wearing a similar word and whose
+own file already says so.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
