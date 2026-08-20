@@ -368,6 +368,13 @@ enum LabelKey {
   // half of the act they were not thinking about.
   movePortsToBank,
 
+  // BULK RETYPING (builder/port_type_change.dart), M4-F9. Its own value:
+  // a retype is the one act in this family that changes what a port IS
+  // rather than what it is called or where it sits, and the Edit menu
+  // saying "Undo Set Port Property" after a person has been through an
+  // impact preview names the mechanism at exactly the wrong moment.
+  changePortType,
+
   // COMMITTING A VIEW SORT (builder/port_sort.dart), M4-F5. Its own value
   // and not `reorderPorts`, on the test every value here is split on:
   // what the Edit menu has to say. A sort commit rewrites a whole bank at

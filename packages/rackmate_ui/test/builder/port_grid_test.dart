@@ -20,6 +20,14 @@ Registries _registries() => Registries(
       id: ConnectorTypeId('conn.hdmi_a'),
       displayName: 'HDMI Type A',
     ),
+    // A SECOND CONNECTOR, added at M4-F9: `Change type…` cannot be
+    // exercised against a registry offering exactly one, and the
+    // `net.ethernet` family below has named `conn.rj45` as its default
+    // since this harness was written without anything defining it.
+    const ConnectorTypeId('conn.rj45'): const ConnectorTypeDef(
+      id: ConnectorTypeId('conn.rj45'),
+      displayName: 'RJ45',
+    ),
   },
   signalFamilies: {
     const SignalFamilyId('net.ethernet'): const SignalFamilyDef(
@@ -775,6 +783,123 @@ void main() {
 
       expect(find.textContaining('Move 1 port'), findsNothing);
       expect(find.textContaining('Select the ports to move'), findsOneWidget);
+    });
+  });
+
+  group('Ctrl+T changes type behind a preview (M4-F9, DR-078)', () {
+    Future<_Harness> three(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001'),
+          _port('p3', order: 'a0002'),
+        ]),
+    );
+
+    Future<void> ctrl(WidgetTester tester, LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> openOn(WidgetTester tester, List<String> rows) async {
+      await tester.tap(find.text(rows.first));
+      await tester.pumpAndSettle();
+      for (final row in rows.skip(1)) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+        await tester.tap(find.text(row));
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+        await tester.pumpAndSettle();
+      }
+      await ctrl(tester, LogicalKeyboardKey.keyT);
+    }
+
+    testWidgets('Apply is dead until something is picked', (tester) async {
+      await three(tester);
+      await openOn(tester, ['P1', 'P3']);
+
+      expect(find.text('Change type on 3 ports'), findsOneWidget);
+      expect(
+        find.text('Pick a signal family, a connector, or both.'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Apply'))
+            .onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('picking a connector previews it and Apply writes it', (
+      tester,
+    ) async {
+      final harness = await three(tester);
+      await openOn(tester, ['P1', 'P3']);
+
+      await tester.tap(find.byType(DropdownButton<ConnectorTypeId>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('RJ45').last);
+      await tester.pumpAndSettle();
+
+      // The preview is on screen BEFORE anything is written.
+      expect(find.textContaining('3 rows will change'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Apply'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(
+        body.ports.map((p) => p.connector.v).toSet(),
+        {'conn.rj45'},
+      );
+    });
+
+    // #699's own sentence, on screen: what it will leave alone.
+    testWidgets('it says direction and topology are left as they are', (
+      tester,
+    ) async {
+      await three(tester);
+      await openOn(tester, ['P1', 'P3']);
+
+      await tester.tap(find.byType(DropdownButton<ConnectorTypeId>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('RJ45').last);
+      await tester.pumpAndSettle();
+
+      // A connector-only change makes no claim about direction, so the
+      // note is absent here and present once a family is picked.
+      expect(find.text(kChangeTypeKeepsNote), findsNothing);
+    });
+
+    testWidgets('cancelling writes nothing', (tester) async {
+      final harness = await three(tester);
+      await openOn(tester, ['P1', 'P3']);
+
+      await tester.tap(find.byType(DropdownButton<ConnectorTypeId>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('RJ45').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.connector.v).toSet(), {'conn.hdmi_a'});
+    });
+
+    testWidgets('nothing selected refuses without opening a dialog', (
+      tester,
+    ) async {
+      await three(tester);
+      await ctrl(tester, LogicalKeyboardKey.keyT);
+
+      expect(find.textContaining('Change type on'), findsNothing);
+      expect(
+        find.textContaining('Select the ports to change'),
+        findsOneWidget,
+      );
     });
   });
 

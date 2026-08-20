@@ -221,6 +221,9 @@ enum KeyBindingId {
   // --- builder (M4-F7, DR-078) -----------------------------------------
   builderRenumber,
 
+  // --- builder (M4-F9, DR-078) -----------------------------------------
+  builderChangeType,
+
   // --- builder (M4-F10, DR-078) ----------------------------------------
   builderMoveToBank,
   commitWireChained,
@@ -596,6 +599,11 @@ final class BuilderRenumberIntent extends Intent {
 /// Move the selected rows to another bank (M4-F10, docs/06 §4.6).
 final class BuilderMoveToBankIntent extends Intent {
   const BuilderMoveToBankIntent();
+}
+
+/// Bulk connector and family change over the selection (M4-F9).
+final class BuilderChangeTypeIntent extends Intent {
+  const BuilderChangeTypeIntent();
 }
 
 /// Slide the selected rows one position through their bank (M4-F4).
@@ -1431,6 +1439,34 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         '`bankKey` and an arrow key must not retype a port (§4.6). This '
         'is the gesture that does rewrite it, deliberately and through a '
         'dialog. Same word, two acts, and the labels say which.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderChangeType,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyT,
+    primary: true,
+    label: 'Change the type of the selected rows',
+    intent: BuilderChangeTypeIntent(),
+    source: 'docs/06 §4.6 · DR-078 §11.77.1',
+    note:
+        'IT SHADOWS A FRAMEWORK DEFAULT, DELIBERATELY, AND IT IS THE ONLY '
+        'ONE IN THIS SCOPE THAT DOES. `Ctrl+T` is '
+        '`TransposeCharactersIntent` in Flutter `_macShortcuts`, and DR-009 '
+        'puts macOS in v1. The collision runs OUR way: Flutter dispatches '
+        'leaf to root and `DefaultTextEditingShortcuts` sits at the app '
+        'root (docs/04 §8), so on macOS, inside a builder cell, this opens '
+        '`Change type…` and does not transpose two characters. '
+        'TAKEN ANYWAY under DR-078 §11.77.1, because docs/06 §4.6 '
+        'specifies the chord and DR-011.6 requires one chord to wear one '
+        'meaning across the product, which a per-platform split would '
+        'break on an axis a keyboard-only user can see even less than a '
+        'scope boundary. The cost is recorded in docs/13 §3.6 rather than '
+        'absorbed, so the first macOS user who reaches for transpose finds '
+        'a note and not a mystery. '
+        'ARBITRATION CANNOT SEE THIS. It checks this registry against '
+        'itself across platforms; a framework default is outside it, and '
+        'the check was run by hand over '
+        '`default_text_editing_shortcuts.dart`.',
   ),
   KeyBinding(
     id: KeyBindingId.quickAddComplete,

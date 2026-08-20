@@ -57,6 +57,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/builder/batch_inspector.dart';
+import 'package:rackmate_ui/src/builder/change_type_dialog.dart';
 import 'package:rackmate_ui/src/builder/move_to_bank_dialog.dart';
 import 'package:rackmate_ui/src/builder/quick_add_bar.dart';
 import 'package:rackmate_ui/src/builder/renumber_dialog.dart';
@@ -471,6 +472,50 @@ class _PortGridState extends State<PortGrid> {
     });
   }
 
+  /// `Ctrl+T`: bulk connector and family change (M4-F9).
+  ///
+  /// THE DIALOG IS THE DELIVERABLE, so this method is a router: it refuses
+  /// early where there is nothing to show, opens the preview, and runs
+  /// what came back. Everything worth arguing about is in
+  /// `port_type_change.dart` and `change_type_dialog.dart`.
+  Future<void> _changeType(List<String> visible) async {
+    final selected = _selection.inOrder(visible);
+    if (selected.isEmpty) {
+      setState(
+        () => _fillRefusal = portTypeChangeRefusalMessage(
+          PortTypeChangeRefusal.nothingSelected,
+        ),
+      );
+      return;
+    }
+    final choice = await showChangeTypeDialog(
+      context: context,
+      body: widget.body,
+      selectedInOrder: selected,
+      registries: widget.registries,
+    );
+    if (choice == null || !mounted) return;
+
+    final result = buildPortTypeChange(
+      body: widget.body,
+      selectedInOrder: _selection.inOrder(visible),
+      registries: widget.registries,
+      family: choice.family,
+      connector: choice.connector,
+    );
+    if (result.refusal case final PortTypeChangeRefusal refusal) {
+      setState(() => _fillRefusal = portTypeChangeRefusalMessage(refusal));
+      return;
+    }
+    setState(() => _fillRefusal = null);
+    if (result.commands.isEmpty) return;
+    widget.actions.transact(LabelKey.changePortType, (tx) {
+      for (final command in result.commands) {
+        tx.add(command);
+      }
+    });
+  }
+
   /// `Ctrl+C`: the selected rows, as TSV, on the clipboard (M4-F3).
   ///
   /// THE VISIBLE COLUMNS, because what a person copied is what they can
@@ -879,6 +924,12 @@ class _PortGridState extends State<PortGrid> {
         BuilderMoveToBankIntent: CallbackAction<BuilderMoveToBankIntent>(
           onInvoke: (_) {
             unawaited(_moveToBank(visible));
+            return null;
+          },
+        ),
+        BuilderChangeTypeIntent: CallbackAction<BuilderChangeTypeIntent>(
+          onInvoke: (_) {
+            unawaited(_changeType(visible));
             return null;
           },
         ),
