@@ -20,6 +20,14 @@ Registries _registries() => Registries(
       id: ConnectorTypeId('conn.hdmi_a'),
       displayName: 'HDMI Type A',
     ),
+    // A SECOND CONNECTOR, added at M4-F9: `Change type…` cannot be
+    // exercised against a registry offering exactly one, and the
+    // `net.ethernet` family below has named `conn.rj45` as its default
+    // since this harness was written without anything defining it.
+    const ConnectorTypeId('conn.rj45'): const ConnectorTypeDef(
+      id: ConnectorTypeId('conn.rj45'),
+      displayName: 'RJ45',
+    ),
   },
   signalFamilies: {
     const SignalFamilyId('net.ethernet'): const SignalFamilyDef(
@@ -351,6 +359,822 @@ void main() {
             .widget<TextButton>(find.widgetWithText(TextButton, 'Delete'))
             .onPressed,
         isNull,
+      );
+    });
+  });
+
+  group('Ctrl+J duplicates the selection (M4-F6, DR-078)', () {
+    Future<_Harness> four(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001'),
+          _port('p3', order: 'a0002'),
+          _port('p4', order: 'a0003'),
+        ]),
+    );
+
+    Future<void> clickRowNamed(
+      WidgetTester tester,
+      String text, {
+      LogicalKeyboardKey? holding,
+    }) async {
+      if (holding != null) await tester.sendKeyDownEvent(holding);
+      await tester.tap(find.text(text));
+      if (holding != null) await tester.sendKeyUpEvent(holding);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> ctrl(WidgetTester tester, LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('two selected rows become four, cloned below themselves', (
+      tester,
+    ) async {
+      final harness = await four(tester);
+
+      await clickRowNamed(tester, 'P1');
+      await clickRowNamed(tester, 'P2', holding: LogicalKeyboardKey.shift);
+      await ctrl(tester, LogicalKeyboardKey.keyJ);
+
+      final body = await harness.read(tester);
+      // P5 AND P6, NOT P3 AND P4: `_port` labels a row from its key, so
+      // the template already runs to P4 and §4.6's "past the highest
+      // existing index" counts on from there. And they land after P2,
+      // the last SELECTED row, not at the end of the template.
+      expect(portsInDeclaredOrder(body.ports).map((p) => p.label), [
+        'P1',
+        'P2',
+        'P5',
+        'P6',
+        'P3',
+        'P4',
+      ]);
+    });
+
+    // THE ROUTE, NAMED ONLY BY ITS START. `Ctrl+J` then typing must land
+    // on the CLONES: duplicate-then-retype is the gesture this exists
+    // for, and a test that looked up the new row and typed into it would
+    // pass against a grid that left the selection on the sources.
+    testWidgets('the selection follows the clones, so typing retypes them', (
+      tester,
+    ) async {
+      final harness = await four(tester);
+
+      await clickRowNamed(tester, 'P1');
+      await ctrl(tester, LogicalKeyboardKey.keyJ);
+      // No finder in between: whatever is selected now takes this one.
+      await ctrl(tester, LogicalKeyboardKey.keyJ);
+
+      final body = await harness.read(tester);
+      // The second clone is of P5 and lands under it. Had the selection
+      // stayed on the source, the second press would have cloned P1
+      // again and put P6 BEFORE P5, which is a different list: that is
+      // what makes this assertion able to fail.
+      expect(portsInDeclaredOrder(body.ports).map((p) => p.label), [
+        'P1',
+        'P5',
+        'P6',
+        'P2',
+        'P3',
+        'P4',
+      ]);
+    });
+
+    // ONE UNDO, not four. Through the toolbar button rather than a
+    // chord, because focus is inside a cell `TextField` after a click and
+    // `Ctrl+Z` there belongs to the field (docs/04 §8).
+    testWidgets('one Undo takes the whole clone back', (tester) async {
+      final harness = await four(tester);
+
+      await clickRowNamed(tester, 'P1');
+      await clickRowNamed(tester, 'P4', holding: LogicalKeyboardKey.shift);
+      await ctrl(tester, LogicalKeyboardKey.keyJ);
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports, hasLength(4));
+    });
+
+    testWidgets('nothing selected refuses out loud rather than silently', (
+      tester,
+    ) async {
+      await four(tester);
+      await ctrl(tester, LogicalKeyboardKey.keyJ);
+
+      expect(
+        find.textContaining('Select the ports to duplicate'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group('Ctrl+R renumbers through a dialog (M4-F7, DR-078)', () {
+    Future<_Harness> four(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001'),
+          _port('p3', order: 'a0002'),
+          _port('p4', order: 'a0003'),
+        ]),
+    );
+
+    Future<void> clickRowNamed(
+      WidgetTester tester,
+      String text, {
+      LogicalKeyboardKey? holding,
+    }) async {
+      if (holding != null) await tester.sendKeyDownEvent(holding);
+      await tester.tap(find.text(text));
+      if (holding != null) await tester.sendKeyUpEvent(holding);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> ctrl(WidgetTester tester, LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> openOn(WidgetTester tester, List<String> rows) async {
+      await clickRowNamed(tester, rows.first);
+      for (final row in rows.skip(1)) {
+        await clickRowNamed(tester, row, holding: LogicalKeyboardKey.shift);
+      }
+      await ctrl(tester, LogicalKeyboardKey.keyR);
+    }
+
+    testWidgets('the pattern is seeded from the first selected label', (
+      tester,
+    ) async {
+      await four(tester);
+      await openOn(tester, ['P1', 'P4']);
+
+      // `P1` infers prefix `P` and start 1, so the field offers `P{n}`
+      // and the common case is pressing Enter. Same reader `Ctrl+Shift+D`
+      // uses, so the two gestures cannot disagree about what the number
+      // in a label is.
+      final field = tester.widget<TextField>(
+        find.ancestor(
+          of: find.text('P{n}'),
+          matching: find.byType(TextField),
+        ),
+      );
+      expect(field.controller?.text, 'P{n}');
+    });
+
+    testWidgets('the impact list shows every row before anything is written', (
+      tester,
+    ) async {
+      final harness = await four(tester);
+      await openOn(tester, ['P1', 'P4']);
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'P{n}'),
+        'IN {n}',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('4 rows will change'), findsOneWidget);
+      expect(find.text('IN 1'), findsOneWidget);
+      expect(find.text('IN 4'), findsOneWidget);
+
+      // NOT WRITTEN YET. Cancelling leaves the grid alone, which is the
+      // property the whole preview rests on.
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.pumpAndSettle();
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.label), ['P1', 'P2', 'P3', 'P4']);
+    });
+
+    testWidgets('Renumber writes the labels the preview promised', (
+      tester,
+    ) async {
+      final harness = await four(tester);
+      await openOn(tester, ['P1', 'P4']);
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'P{n}'),
+        'IN {n:2}',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Renumber'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(portsInDeclaredOrder(body.ports).map((p) => p.label), [
+        'IN 01',
+        'IN 02',
+        'IN 03',
+        'IN 04',
+      ]);
+    });
+
+    testWidgets('Start numbers a sub-range from where the person says', (
+      tester,
+    ) async {
+      final harness = await four(tester);
+      await openOn(tester, ['P3', 'P4']);
+
+      await tester.enterText(find.widgetWithText(TextField, 'P{n}'), 'IN {n}');
+      await tester.enterText(find.widgetWithText(TextField, 'Start'), '9');
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Renumber'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(portsInDeclaredOrder(body.ports).map((p) => p.label), [
+        'P1',
+        'P2',
+        'IN 9',
+        'IN 10',
+      ]);
+    });
+
+    // M4-H's designed parse error, shown where the person is typing, with
+    // the repair chip that carries the WHOLE fixed pattern.
+    testWidgets('a bad pattern refuses to apply and offers its repair', (
+      tester,
+    ) async {
+      await four(tester);
+      await openOn(tester, ['P1', 'P4']);
+
+      await tester.enterText(find.widgetWithText(TextField, 'P{n}'), 'IN {q}');
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Renumber'),
+            )
+            .onPressed,
+        isNull,
+        reason: 'Renumber must not be pressable on a pattern that failed',
+      );
+      expect(find.byType(ActionChip), findsOneWidget);
+
+      // Accepting the repair makes it applicable again, which is what
+      // makes the chip a fix rather than a suggestion.
+      await tester.tap(find.byType(ActionChip));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Renumber'),
+            )
+            .onPressed,
+        isNotNull,
+      );
+    });
+
+    testWidgets('nothing selected refuses without opening a dialog', (
+      tester,
+    ) async {
+      await four(tester);
+      await ctrl(tester, LogicalKeyboardKey.keyR);
+
+      expect(find.text('Renumber ports'), findsNothing);
+      expect(
+        find.textContaining('Select the ports to renumber'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('one Undo takes the whole renumber back', (tester) async {
+      final harness = await four(tester);
+      await openOn(tester, ['P1', 'P4']);
+      await tester.enterText(find.widgetWithText(TextField, 'P{n}'), 'IN {n}');
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Renumber'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.label), ['P1', 'P2', 'P3', 'P4']);
+    });
+  });
+
+  group('Ctrl+M moves ports between banks (M4-F10, DR-078)', () {
+    Future<_Harness> banked(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..banks.addAll([
+          BankDef(
+            key: 'in',
+            label: 'Inputs',
+            abbr: 'IN',
+            order: const FracIndex('a1'),
+          ),
+          BankDef(
+            key: 'out',
+            label: 'Outputs',
+            abbr: 'OUT',
+            order: const FracIndex('a2'),
+          ),
+        ])
+        ..ports.addAll([
+          _port('p1', order: 'a0000', bank: 'in'),
+          _port('p2', order: 'a0001', bank: 'in'),
+          _port('p3', order: 'a0002', bank: 'out'),
+        ]),
+    );
+
+    Future<void> ctrl(WidgetTester tester, LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a picked bank moves the row and keeps the band whole', (
+      tester,
+    ) async {
+      final harness = await banked(tester);
+
+      await tester.tap(find.text('P1'));
+      await tester.pumpAndSettle();
+      await ctrl(tester, LogicalKeyboardKey.keyM);
+
+      expect(find.text('Move 1 port'), findsOneWidget);
+      await tester.tap(find.widgetWithText(RadioListTile<String?>, 'Outputs'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Move'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(buildPortTable(body).bands.map((b) => b.title), [
+        'Inputs',
+        'Outputs',
+      ]);
+      expect(
+        buildPortTable(body).bands.last.rows.map((r) => r.port.key.v),
+        ['p3', 'p1'],
+      );
+    });
+
+    // NOTHING PRESELECTED, so a careless Enter cannot move eight ports
+    // into whichever bank sorted first: this dialog has no impact list to
+    // catch that.
+    testWidgets('Move is disabled until a destination is picked', (
+      tester,
+    ) async {
+      await banked(tester);
+      await tester.tap(find.text('P1'));
+      await tester.pumpAndSettle();
+      await ctrl(tester, LogicalKeyboardKey.keyM);
+
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Move'))
+            .onPressed,
+        isNull,
+      );
+    });
+
+    // DR-078 section 11.77.2: it offers what exists and mints nothing, so
+    // a template whose only bank is the one the rows are in refuses with a
+    // sentence rather than opening a dialog with a text field in it.
+    testWidgets('one bank and nowhere to go refuses without a dialog', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        template: _saveable()
+          ..banks.add(
+            BankDef(
+              key: 'in',
+              label: 'Inputs',
+              abbr: 'IN',
+              order: const FracIndex('a1'),
+            ),
+          )
+          ..ports.addAll([
+            _port('p1', order: 'a0000', bank: 'in'),
+            _port('p2', order: 'a0001', bank: 'in'),
+          ]),
+      );
+
+      await tester.tap(find.text('P1'));
+      await tester.pumpAndSettle();
+      await ctrl(tester, LogicalKeyboardKey.keyM);
+
+      expect(find.textContaining('Move 1 port'), findsNothing);
+      expect(
+        find.textContaining('no other bank to move to'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('nothing selected refuses without opening a dialog', (
+      tester,
+    ) async {
+      await banked(tester);
+      await ctrl(tester, LogicalKeyboardKey.keyM);
+
+      expect(find.textContaining('Move 1 port'), findsNothing);
+      expect(find.textContaining('Select the ports to move'), findsOneWidget);
+    });
+  });
+
+  group('Ctrl+T changes type behind a preview (M4-F9, DR-078)', () {
+    Future<_Harness> three(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001'),
+          _port('p3', order: 'a0002'),
+        ]),
+    );
+
+    Future<void> ctrl(WidgetTester tester, LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> openOn(WidgetTester tester, List<String> rows) async {
+      await tester.tap(find.text(rows.first));
+      await tester.pumpAndSettle();
+      for (final row in rows.skip(1)) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+        await tester.tap(find.text(row));
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+        await tester.pumpAndSettle();
+      }
+      await ctrl(tester, LogicalKeyboardKey.keyT);
+    }
+
+    testWidgets('Apply is dead until something is picked', (tester) async {
+      await three(tester);
+      await openOn(tester, ['P1', 'P3']);
+
+      expect(find.text('Change type on 3 ports'), findsOneWidget);
+      expect(
+        find.text('Pick a signal family, a connector, or both.'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Apply'))
+            .onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('picking a connector previews it and Apply writes it', (
+      tester,
+    ) async {
+      final harness = await three(tester);
+      await openOn(tester, ['P1', 'P3']);
+
+      await tester.tap(find.byType(DropdownButton<ConnectorTypeId>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('RJ45').last);
+      await tester.pumpAndSettle();
+
+      // The preview is on screen BEFORE anything is written.
+      expect(find.textContaining('3 rows will change'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Apply'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(
+        body.ports.map((p) => p.connector.v).toSet(),
+        {'conn.rj45'},
+      );
+    });
+
+    // #699's own sentence, on screen: what it will leave alone.
+    testWidgets('it says direction and topology are left as they are', (
+      tester,
+    ) async {
+      await three(tester);
+      await openOn(tester, ['P1', 'P3']);
+
+      await tester.tap(find.byType(DropdownButton<ConnectorTypeId>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('RJ45').last);
+      await tester.pumpAndSettle();
+
+      // A connector-only change makes no claim about direction, so the
+      // note is absent here and present once a family is picked.
+      expect(find.text(kChangeTypeKeepsNote), findsNothing);
+    });
+
+    testWidgets('cancelling writes nothing', (tester) async {
+      final harness = await three(tester);
+      await openOn(tester, ['P1', 'P3']);
+
+      await tester.tap(find.byType(DropdownButton<ConnectorTypeId>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('RJ45').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.connector.v).toSet(), {'conn.hdmi_a'});
+    });
+
+    testWidgets('nothing selected refuses without opening a dialog', (
+      tester,
+    ) async {
+      await three(tester);
+      await ctrl(tester, LogicalKeyboardKey.keyT);
+
+      expect(find.textContaining('Change type on'), findsNothing);
+      expect(
+        find.textContaining('Select the ports to change'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group('Ctrl+H finds and replaces behind a preview (M4-F8, DR-078)', () {
+    Future<_Harness> three(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001'),
+          _port('p3', order: 'a0002'),
+        ]),
+    );
+
+    Future<void> ctrl(WidgetTester tester, LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> openOnAll(WidgetTester tester) async {
+      await tester.tap(find.text('P1'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+      await tester.tap(find.text('P3'));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+      await tester.pumpAndSettle();
+      await ctrl(tester, LogicalKeyboardKey.keyH);
+    }
+
+    testWidgets('a label replacement previews, then writes', (tester) async {
+      final harness = await three(tester);
+      await openOnAll(tester);
+
+      await tester.enterText(find.widgetWithText(TextField, 'Find'), 'P');
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Replace with'),
+        'Q',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('3 rows will change'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Replace'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.label), ['Q1', 'Q2', 'Q3']);
+    });
+
+    testWidgets('an empty Find box says so and Replace is dead', (
+      tester,
+    ) async {
+      await three(tester);
+      await openOnAll(tester);
+
+      expect(find.text('Type what to find.'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Replace'),
+            )
+            .onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('regex is off by default, so a bracket is a character', (
+      tester,
+    ) async {
+      await three(tester);
+      await openOnAll(tester);
+
+      await tester.enterText(find.widgetWithText(TextField, 'Find'), '[');
+      await tester.pumpAndSettle();
+
+      // Literal: not a refusal, just a search that matches nothing. The
+      // same string with the box ticked IS a refusal, below.
+      expect(
+        find.text('That is not a valid regular expression.'),
+        findsNothing,
+      );
+
+      // SCOPED: the grid's row gutter is full of tick boxes.
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(Checkbox),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text('That is not a valid regular expression.'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Replace'),
+            )
+            .onPressed,
+        isNull,
+      );
+    });
+
+    // THE DANGEROUS SCOPE, on screen. `_pump` opens the builder on a
+    // template whose ports were already there, so every key is published
+    // and every rename row says so.
+    testWidgets('the KEY scope marks a published key in the preview', (
+      tester,
+    ) async {
+      await three(tester);
+      await openOnAll(tester);
+
+      // SCOPED TO THE DIALOG, and both halves of that mattered.
+      // `widgetWithText(SegmentedButton, 'KEY')` finds the whole button
+      // and taps its centre, which with four segments lands between KEY
+      // and DESIG; and a bare `find.text('KEY')` is ambiguous because the
+      // grid's own KEY column header is still on screen behind the modal.
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('KEY'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.widgetWithText(TextField, 'Find'), 'p');
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Replace with'),
+        'j',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(kPublishedKeyNote), findsWidgets);
+      expect(find.textContaining('3 to check'), findsOneWidget);
+    });
+
+    testWidgets('cancelling writes nothing', (tester) async {
+      final harness = await three(tester);
+      await openOnAll(tester);
+
+      await tester.enterText(find.widgetWithText(TextField, 'Find'), 'P');
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Replace with'),
+        'Q',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.label), ['P1', 'P2', 'P3']);
+    });
+
+    testWidgets('nothing selected refuses without opening a dialog', (
+      tester,
+    ) async {
+      await three(tester);
+      await ctrl(tester, LogicalKeyboardKey.keyH);
+
+      expect(find.text('Find and replace'), findsNothing);
+      expect(
+        find.textContaining('Select the ports to search'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group('the batch inspector WRITES (M4-F11, DR-063)', () {
+    Future<_Harness> two(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001')..face = Face.front,
+        ]),
+    );
+
+    Future<void> select(WidgetTester tester) async {
+      await tester.tap(find.text('P1'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+      await tester.tap(find.text('P2'));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+      await tester.pumpAndSettle();
+    }
+
+    Finder inDock(Finder matching) =>
+        find.descendant(of: find.byType(BatchInspector), matching: matching);
+
+    // THE TRAP `#703` NAMED, and it is the first case for that reason: a
+    // control seeded from mixed that fires onChanged on construction or on
+    // focus writes the dash back across N rows.
+    testWidgets('opening the dock on a mixed field writes nothing', (
+      tester,
+    ) async {
+      final harness = await two(tester);
+      await select(tester);
+
+      expect(inDock(find.textContaining('Mixed (2 values)')), findsOne);
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.face), [Face.rear, Face.front]);
+    });
+
+    testWidgets('focusing and leaving a mixed text cell writes nothing', (
+      tester,
+    ) async {
+      final harness = await two(tester);
+      await select(tester);
+
+      // NOTES AND NOT LABEL. DR-063 keeps `LABEL` and `DESIG` to one row
+      // (one label across eight rows mints eight colliding keys), so the
+      // dock draws no control for them at all, which the first draft of
+      // this case discovered by asking for one.
+      //
+      // Focus the box and leave without typing: `_commit` compares
+      // against the EMPTY seed, so this is equal to it and returns early.
+      // That is the trap `#703` named, expressed as a route.
+      final box = find.byKey(batchCellKey(PortColumnId.notes));
+      expect(box, findsOne, reason: 'the dock draws no NOTES control');
+      await tester.tap(box);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.notes), [null, null]);
+    });
+
+    testWidgets('picking a value in the dock writes it to every row', (
+      tester,
+    ) async {
+      final harness = await two(tester);
+      await select(tester);
+
+      // THE DOCK'S FACE MENU, BY KEY. Tapping the `Mixed (2 values)`
+      // TEXT missed its hit test, the menu never opened, and
+      // `find.text('Front').last` then hit a GRID cell: the multi-row
+      // edit applied, this assertion passed, and the dock was never
+      // touched. The tap warning is what found it.
+      await tester.tap(find.byKey(batchCellKey(PortColumnId.face)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Front').last);
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.face), [Face.front, Face.front]);
+    });
+
+    testWidgets('one Undo takes the whole batch write back', (tester) async {
+      final harness = await two(tester);
+      await select(tester);
+
+      await tester.tap(find.byKey(batchCellKey(PortColumnId.face)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Front').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.face), [Face.rear, Face.front]);
+    });
+
+    testWidgets('the dock says the rule rather than pointing at the grid', (
+      tester,
+    ) async {
+      await two(tester);
+      await select(tester);
+
+      expect(inDock(find.text(kBatchInspectorHint)), findsOne);
+      expect(
+        find.text('Edit any cell in the grid to change all of them.'),
+        findsNothing,
       );
     });
   });

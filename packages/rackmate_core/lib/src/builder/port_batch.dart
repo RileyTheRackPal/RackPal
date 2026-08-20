@@ -241,6 +241,48 @@ String portBatchLabel(
 /// THE TRI-STATES LIST ONLY `true` AND `false`. Null is UNKNOWN and is
 /// every column's third answer, spelled by an empty cell on the clipboard
 /// and by `—` on screen, so listing it here would offer it twice.
+/// Whether [column] holds a whole number rather than free text.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE THIRD MEMBER OF `portValueLabel` AND `portColumnOptions`' FAMILY
+/// ═══════════════════════════════════════════════════════════════════════
+/// Those two answer "how does a value print" and "what values are there".
+/// This answers "what shape of box does it want", and it is here rather
+/// than in the widget for the reason its two siblings are: the batch dock
+/// (M4-F11) and the grid both need it, and a second list in `rackmate_ui`
+/// would drift from the grid's own `switch` the day a column is added.
+///
+/// **A NUMERIC COLUMN IS ALWAYS AN OPEN ONE**, so this is only ever asked
+/// of a column [portColumnOptions] answered null for. `port_batch_test`
+/// asserts that, because the two answering yes at once would be a column
+/// offering a menu into a number field.
+///
+/// CENSUSED AGAINST `port_grid.dart`'s OWN CELL SWITCH, not recalled: it
+/// draws exactly these eighteen through its number cell. The first draft
+/// of the dock's copy of this list named four columns that do not exist
+/// and one that is not a column at all.
+bool portColumnIsNumeric(PortColumnId column) => switch (column) {
+  PortColumnId.impedanceOhms ||
+  PortColumnId.nominalVoltage ||
+  PortColumnId.maxCurrentMa ||
+  PortColumnId.poeType ||
+  PortColumnId.poeClass ||
+  PortColumnId.poeWatts ||
+  PortColumnId.linkSpeedMbps ||
+  PortColumnId.wavelengthNm ||
+  PortColumnId.baud ||
+  PortColumnId.dataBits ||
+  PortColumnId.stopBits ||
+  PortColumnId.busUnitLoads ||
+  PortColumnId.busMaxTapWatts ||
+  PortColumnId.powerVolts ||
+  PortColumnId.powerDrawWatts ||
+  PortColumnId.powerMaxAmps ||
+  PortColumnId.maxConnections ||
+  PortColumnId.conductorCount => true,
+  _ => false,
+};
+
 List<Object>? portColumnOptions(PortColumnId column) => switch (column) {
   PortColumnId.direction => PortDirection.values,
   PortColumnId.face => Face.values,

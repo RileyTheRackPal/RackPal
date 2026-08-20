@@ -11862,6 +11862,81 @@ asked of different ends of the same task.
 
 ---
 
+### 11.77 DR-078 · The five grid operations, and what a bulk write shows before it fires
+
+**Settled by the user on 2026-08-19** (`#177`, M4-F). Three questions the census raised at pick-up,
+before any code, over the six tasks M4-F has left: `Duplicate`, `Renumber…`, `Find & replace`,
+`Change type…`, `Move to bank…` and writing a field from the batch inspector.
+
+**NOT a §8.3 amendment.** Every operation ruled here is already in `docs/06` §4.6's table with a
+binding beside it; what was missing was a behaviour column, a platform collision nobody had checked,
+and a safety question the table does not reach.
+
+**11.77.1 `Ctrl+T` IS TAKEN, AND THE COST IS A macOS BEHAVIOUR WE SHADOW ON PURPOSE.**
+`Ctrl+T` is `TransposeCharactersIntent` in Flutter's `_macShortcuts`, one of the emacs-derived
+bindings the framework installs in every text field, and DR-009 puts macOS in v1. **Focus is almost
+always inside a cell `TextField` when a grid chord is pressed**, which is the same sentence
+`builderFillDown`'s note already used to justify checking, and `Ctrl+D` passed that check where this
+one does not.
+
+The direction of the collision is the part worth stating. `docs/04` §8 records that Flutter
+dispatches key events **leaf to root** while `DefaultTextEditingShortcuts` is installed at the app
+root, so **RackMate's binding wins**: transpose does not eat `Change type…`, `Change type…` eats
+transpose. On macOS, inside a builder cell, `Ctrl+T` stops transposing two characters.
+
+**Taken anyway, for two reasons and against one.** `docs/06` §4.6 specifies `Ctrl+T` and moving it is
+an amendment to a shipped table; and **DR-011.6's rule is that one chord wears one meaning across the
+product**, which a per-platform split would break on the one axis a keyboard-only user can see even
+less than a scope boundary. Against it: this is a documented platform behaviour, and shadowing one is
+not free. **It is recorded as macOS debt (`docs/13`) rather than absorbed silently**, because the
+next person to meet it should find a note and not a mystery.
+
+**The other four chords were checked in the same pass and are clean.** `Ctrl+J`, `Ctrl+R`, `Ctrl+H`
+and `Ctrl+M` appear in no platform map of `default_text_editing_shortcuts.dart` and in no other scope
+of this product's own registry. **The check was run over the file, not recalled**, which is how the
+one collision was found.
+
+**11.77.2 `Move to bank…` OFFERS THE BANKS THAT EXIST AND MINTS NONE.** The dialog lists the
+template's declared banks and refuses, with a sentence, when there are none to move to.
+
+**Creating a bank is `BankDef` CRUD and belongs to M4-J1.** A creation path here would be a second
+surface that has to agree with J1's about naming, ordering and collision handling **before J1 has
+decided any of those**, and the losing move in this codebase is consistently the one that invents a
+rule in a dialog and leaves a later task to match it. The cost is accepted and named: reorganising a
+template into a bank that does not exist yet is two trips until J1 ships.
+
+**11.77.3 A BULK WRITE SHOWS A PER-ROW IMPACT LIST BEFORE IT FIRES, AND BOTH DIALOGS SHOW THE SAME
+ONE.** `Find & replace` and `Change type…` each write across N rows at once, and each gets a
+scrollable before-and-after list, a count, and then `Apply`.
+
+`#699` already said the impact preview **is** the deliverable for `Change type…`, because
+`SignalFamilyDef` carries `defaultConnector`, `defaultDirection` and `defaultTopology` and DR-060
+rules that a default loses to a named value: without a preview, retyping a bank is a silent
+overwrite of whatever somebody had already named, N rows at a time. **The ruling extends that shape
+to `Find & replace` rather than giving it a lighter one**, so there is one thing to learn and one
+widget to maintain.
+
+**THE KEY SCOPE IS WHY THE LIGHTER OPTION LOSES.** `PortDef.key` is the template migration join
+(CR-051), and a key that was already published when the builder opened may have another project's
+cables resolving through it. Undo covers the open document completely and **cannot reach that**, so
+"replace all and press `Ctrl+Z` if it looks wrong" is a safety story that works for every scope
+except the one that needs it. The preview is the only place a person sees what a key rename will do
+before it is done.
+
+**A per-scope split was rejected**: an impact list for keys and a plain count for everything else is
+two behaviours in one dialog selected by a dropdown, which is a rule a person learns by being
+surprised rather than by reading the screen.
+
+**11.77.4 WHAT THIS DOES NOT RULE.** It does not decide `Renumber…`'s dialog copy, which is
+`label_pattern.dart`'s existing parse errors and repair chips shown where the user is (`#697` forbids
+a second parser and this ruling adds nothing to that). It does not rule the batch inspector's control
+set (`#703` is a refactor with a stated trap, not a design question). It does not touch `Mirror bank`,
+which is M4-J1's. And it does not weaken §4.6's own rule that `LABEL` and `DESIG` edit one row: a
+`Find & replace` scoped to labels is a **matched** rewrite per row rather than one value written
+across rows, which is the distinction DR-063 drew and this preserves.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

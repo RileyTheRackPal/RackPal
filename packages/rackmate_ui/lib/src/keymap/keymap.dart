@@ -214,6 +214,21 @@ enum KeyBindingId {
   // --- builder (M4-F4) ------------------------------------------------
   builderMoveRowUp,
   builderMoveRowDown,
+
+  // --- builder (M4-F6, DR-078) -----------------------------------------
+  builderDuplicateRows,
+
+  // --- builder (M4-F7, DR-078) -----------------------------------------
+  builderRenumber,
+
+  // --- builder (M4-F8, DR-078) -----------------------------------------
+  builderFindReplace,
+
+  // --- builder (M4-F9, DR-078) -----------------------------------------
+  builderChangeType,
+
+  // --- builder (M4-F10, DR-078) ----------------------------------------
+  builderMoveToBank,
   commitWireChained,
   nextCandidatePin,
   previousCandidatePin,
@@ -572,6 +587,31 @@ final class BuilderCopyCellsIntent extends Intent {
 /// Paste tab-separated cells into the port grid from the focused cell.
 final class BuilderPasteCellsIntent extends Intent {
   const BuilderPasteCellsIntent();
+}
+
+/// Clone the selected rows below themselves (M4-F6, docs/06 §4.6).
+final class BuilderDuplicateRowsIntent extends Intent {
+  const BuilderDuplicateRowsIntent();
+}
+
+/// Re-apply a label pattern to the selection (M4-F7, docs/06 §4.6).
+final class BuilderRenumberIntent extends Intent {
+  const BuilderRenumberIntent();
+}
+
+/// Move the selected rows to another bank (M4-F10, docs/06 §4.6).
+final class BuilderMoveToBankIntent extends Intent {
+  const BuilderMoveToBankIntent();
+}
+
+/// Bulk connector and family change over the selection (M4-F9).
+final class BuilderChangeTypeIntent extends Intent {
+  const BuilderChangeTypeIntent();
+}
+
+/// Find and replace over the selection's text (M4-F8, docs/06 §4.6).
+final class BuilderFindReplaceIntent extends Intent {
+  const BuilderFindReplaceIntent();
 }
 
 /// Slide the selected rows one position through their bank (M4-F4).
@@ -1347,6 +1387,115 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     intent: BuilderMoveRowIntent(up: false),
     source: 'docs/06 §4.6 · CR-027 · DR-064',
     note: 'See builderMoveRowUp.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderDuplicateRows,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyJ,
+    primary: true,
+    label: 'Duplicate the selected rows',
+    intent: BuilderDuplicateRowsIntent(),
+    source: 'docs/06 §4.6 · DR-078 §11.77.1',
+    note:
+        'IT SHADOWS NO FRAMEWORK DEFAULT, and that was checked over '
+        '`default_text_editing_shortcuts.dart` rather than recalled. '
+        '`Ctrl+J` appears in no platform map, which matters because '
+        'focus is almost always inside a cell `TextField` when a grid '
+        'chord is pressed. Four of the five chords M4-F6 through F10 add '
+        'passed that check; `Ctrl+T` did not, and DR-078 §11.77.1 takes '
+        'it anyway '
+        'with the cost recorded in docs/13 §3.6. '
+        'THE ACT IS "BELOW THE SELECTION" AND THEREFORE MINTS `order`, '
+        'so it refuses while a sort badge is showing, on the same ground '
+        '§4.6 disables reorder there: the person is not looking at the '
+        'declared order and "below" is a claim about it.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderRenumber,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyR,
+    primary: true,
+    label: 'Renumber the selected rows',
+    intent: BuilderRenumberIntent(),
+    source: 'docs/06 §4.6 · DR-078',
+    note:
+        'IT SHADOWS NO FRAMEWORK DEFAULT: `Ctrl+R` appears in no platform '
+        'map of `default_text_editing_shortcuts.dart`, checked over the '
+        'source rather than recalled. '
+        'ITS OWN LABEL AND NOT A SHARE WITH `builderFillSeries`, because '
+        'the two do different things to the same rows and meaningDrift '
+        'tests whether the generalisation holds without straining. A fill '
+        'series CONTINUES what the top cell already says (DR-062 infers '
+        'the sequence); a renumber REPLACES it with a pattern somebody '
+        'typed into a dialog. One counts on, one restates.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderMoveToBank,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyM,
+    primary: true,
+    label: 'Move the selected rows to a bank',
+    intent: BuilderMoveToBankIntent(),
+    source: 'docs/06 §4.6 · DR-078 §11.77.2',
+    note:
+        'IT SHADOWS NO FRAMEWORK DEFAULT: `Ctrl+M` appears in no platform '
+        'map of `default_text_editing_shortcuts.dart`, checked over the '
+        'source rather than recalled. '
+        'NOT A SHARE WITH `builderMoveRowUp`/`Down`, and the pair was '
+        'looked at: those slide a block one slot THROUGH its own band and '
+        'refuse at the band edge, because crossing would have to rewrite '
+        '`bankKey` and an arrow key must not retype a port (§4.6). This '
+        'is the gesture that does rewrite it, deliberately and through a '
+        'dialog. Same word, two acts, and the labels say which.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderChangeType,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyT,
+    primary: true,
+    label: 'Change the type of the selected rows',
+    intent: BuilderChangeTypeIntent(),
+    source: 'docs/06 §4.6 · DR-078 §11.77.1',
+    note:
+        'IT SHADOWS A FRAMEWORK DEFAULT, DELIBERATELY, AND IT IS THE ONLY '
+        'ONE IN THIS SCOPE THAT DOES. `Ctrl+T` is '
+        '`TransposeCharactersIntent` in Flutter `_macShortcuts`, and DR-009 '
+        'puts macOS in v1. The collision runs OUR way: Flutter dispatches '
+        'leaf to root and `DefaultTextEditingShortcuts` sits at the app '
+        'root (docs/04 §8), so on macOS, inside a builder cell, this opens '
+        '`Change type…` and does not transpose two characters. '
+        'TAKEN ANYWAY under DR-078 §11.77.1, because docs/06 §4.6 '
+        'specifies the chord and DR-011.6 requires one chord to wear one '
+        'meaning across the product, which a per-platform split would '
+        'break on an axis a keyboard-only user can see even less than a '
+        'scope boundary. The cost is recorded in docs/13 §3.6 rather than '
+        'absorbed, so the first macOS user who reaches for transpose finds '
+        'a note and not a mystery. '
+        'ARBITRATION CANNOT SEE THIS. It checks this registry against '
+        'itself across platforms; a framework default is outside it, and '
+        'the check was run by hand over '
+        '`default_text_editing_shortcuts.dart`.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderFindReplace,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyH,
+    primary: true,
+    label: 'Find and replace in the selected rows',
+    intent: BuilderFindReplaceIntent(),
+    source: 'docs/06 §4.6 · DR-078 §11.77.3',
+    note:
+        'IT SHADOWS NO FRAMEWORK DEFAULT, and this one was worth checking '
+        'twice: `Ctrl+H` is emacs delete-backward in several toolkits, and '
+        'focus is almost always inside a cell `TextField` when a grid '
+        'chord is pressed. It appears in NO platform map of '
+        '`default_text_editing_shortcuts.dart`, checked over the source '
+        'rather than recalled. '
+        'THE KEY SCOPE IS WHY THIS ONE HAS A PREVIEW. `PortDef.key` is the '
+        'migration join (CR-051) and a published key may have another '
+        "project's cables resolving through it, which undo cannot reach. "
+        'DR-078 §11.77.3 therefore gives this dialog the same per-row '
+        'impact list `Change type…` has rather than a lighter count.',
   ),
   KeyBinding(
     id: KeyBindingId.quickAddComplete,

@@ -346,6 +346,42 @@ enum LabelKey {
   // happened.
   reorderPorts,
 
+  // DUPLICATING ROWS (builder/port_duplicate.dart), M4-F6. Its own value
+  // on the same test as every value above it: what the Edit menu has to
+  // say. `Ctrl+J` ADDS N rows, so "Undo Add Port" would name one of them
+  // and "Undo Reorder" would name an act that did not happen; the thing
+  // the person wants back is the whole clone.
+  duplicatePorts,
+
+  // RENUMBERING (builder/port_renumber.dart), M4-F7. Its own value and
+  // not `fillPorts`: a fill CONTINUES what the top cell says and a
+  // renumber REPLACES it with a pattern somebody typed, so "Undo Fill" in
+  // front of a person who has just been through a dialog names the wrong
+  // act. `Ctrl+Shift+D` and `Ctrl+R` are the two the Edit menu has to
+  // tell apart, because they are the two that both end in new labels.
+  renumberPorts,
+
+  // MOVING PORTS BETWEEN BANKS (builder/port_move_to_bank.dart), M4-F10.
+  // Its own value and not `reorderPorts`, on the same Edit-menu test: a
+  // move rewrites `bankKey` as well as `order`, and "Undo Reorder" in
+  // front of somebody who just moved six ports into Outputs names the
+  // half of the act they were not thinking about.
+  movePortsToBank,
+
+  // BULK RETYPING (builder/port_type_change.dart), M4-F9. Its own value:
+  // a retype is the one act in this family that changes what a port IS
+  // rather than what it is called or where it sits, and the Edit menu
+  // saying "Undo Set Port Property" after a person has been through an
+  // impact preview names the mechanism at exactly the wrong moment.
+  changePortType,
+
+  // FIND AND REPLACE (builder/port_find_replace.dart), M4-F8. Its own
+  // value, and the one in this family whose Edit-menu entry matters most:
+  // the KEY scope runs `RenamePortKeyCommand`s, and a person reaching for
+  // undo after a bulk key rename wants to see the words they typed named
+  // back to them rather than "Undo Rename Port Key" nine times.
+  findAndReplacePorts,
+
   // COMMITTING A VIEW SORT (builder/port_sort.dart), M4-F5. Its own value
   // and not `reorderPorts`, on the test every value here is split on:
   // what the Edit menu has to say. A sort commit rewrites a whole bank at

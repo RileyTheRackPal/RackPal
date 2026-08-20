@@ -465,6 +465,24 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
                 body: _session.body,
                 registries: widget.registries ?? Registries(),
                 context_: batch,
+                // THE DOCK WRITES THROUGH THE SESSION, in ONE transaction
+                // per field, so setting a value across eight rows is one
+                // `Ctrl+Z` (M4-F11). `buildBatchWrite` builds the commands
+                // in core; this closure only decides which stack they land
+                // on, which is the same division the grid's own edits use.
+                onWrite: (column, value) => _transact(
+                  LabelKey.setPortProperty,
+                  (tx) {
+                    for (final command in buildBatchWrite(
+                      body: _session.body,
+                      column: column,
+                      portKeys: batch.portKeys,
+                      value: value,
+                    )) {
+                      tx.add(command);
+                    }
+                  },
+                ),
               ),
             ],
           ],

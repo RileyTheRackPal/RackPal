@@ -3634,6 +3634,62 @@ output. M4-D built a save, gated it, tested it, and nothing read what it saved, 
 placeable immediately"* from the day it shipped. **Seventeen issues, sixty-three tasks and fourteen
 green gates could not see it.**
 
+#### 5.3.14 M4-F6 through M4-F11, the five orphans and the refactor · CLOSED · `0ed6e71`, `bba3102`, `c0f657c`, `3c76f76`, `98ebc99`, `25d57aa`, `9c8efdb`
+
+**Closed 2026-08-19**, seven commits, fourteen gates green on each. 96 cases: 72 in core, 24 widget.
+**M4-F (`#177`) is now CLOSED**, twelve tasks, and every operation `docs/06` §4.6 tabulates exists.
+
+**Settled by the user as DR-078** (canon §11.77) before any code, on three questions the census raised
+and no task could answer alone.
+
+**THE CENSUS FOUND A COLLISION FIVE CHORDS DEEP, AND IT WAS THE FOURTH ONE.** `builderFillDown`'s
+note established the check ("`Ctrl+D` is not a Flutter text editing binding on any platform this
+ships to") and this is the first time it has come back positive: **`Ctrl+T` is
+`TransposeCharactersIntent` in `_macShortcuts`**, and DR-009 puts macOS in v1. The collision runs
+**our** way, because Flutter dispatches leaf to root while `DefaultTextEditingShortcuts` sits at the
+app root (`docs/04` §8), so on macOS inside a builder cell `Ctrl+T` opens `Change type…` and does not
+transpose. Taken deliberately, recorded in `docs/13` §3.6. `Ctrl+J`, `Ctrl+R`, `Ctrl+H` and `Ctrl+M`
+are clean in every platform map. **Arbitration structurally cannot see a framework default**, so the
+keymap notes are the only place that check is written down.
+
+| Task | What the trap turned out to be |
+|---|---|
+| `#696` `Ctrl+J` | *"Past the highest existing index"* is a claim about the TEMPLATE, and the series key must NOT include the digit width, or `IN 1` and `IN 01` count as two and one lands on the other |
+| `#697` `Ctrl+R` | `Start` is not decoration: `{n}` counts from 1, so renumbering a sub-range was otherwise unexpressible. Renumber does **not** refuse under a sort, unlike `Duplicate`, and the dialog says which order it means |
+| `#700` `Ctrl+M` | A move writes `bankKey` **and** `order`, or the destination band splits in two. The core case asserts the BANDS a person sees rather than the key values |
+| `#699` `Ctrl+T` | `direction` and `topology` are never written, because the model cannot tell a chosen value from a defaulted one and DR-060 forbids the overwrite. The preview NAMES what it leaves alone |
+| `#698` `Ctrl+H` | A rename that would collide, or empty a key, is marked and skipped: `RenamePortKeyCommand` throws on both, and a dialog must not hand it a command that will |
+| `#703` dock writes | `null` is a legitimate menu item (G4), so a mixed control passing `value: null` MATCHED the unknown row and displayed the dash: the exact confusion DR-063 exists to end |
+
+**THE TESTS FOUND FIVE THINGS NO READING WOULD HAVE, and three of them were the tests themselves.**
+Three label assertions indexed positionally into a list whose clones land after the last SELECTED
+row. A `Find & replace` toolbar overflowed its dialog by **243 px**, which is `_ScheduleToolbar`'s
+lesson one screen over: a toolbar sized by its labels cannot be laid out on one line by assertion.
+Two finders were ambiguous against the grid BEHIND a modal, because the grid has a `KEY` column
+header and a gutter full of checkboxes. **A record of records holding `List`s compared unequal while
+printing two identical-looking values**, which is why the band assertions are flat strings.
+
+**THE FIFTH IS THE ONE WORTH KEEPING, and Flutter's own warning found it rather than an assertion.**
+A tap on the dock's `Mixed (2 values)` **text** missed its hit test, so the menu never opened;
+`find.text('Front').last` then hit a **grid** cell, the multi-row edit applied, and the assertion
+passed **with the dock never touched**. The test was green and testing the wrong pane. Every dock
+control is keyed now, which is a production affordance rather than a test hook: the dock and the grid
+draw the same widget types over the same columns, so without a key nothing can say which it is
+looking at. **That is the fourth time in this milestone a finder has caught the author** (§5.3.12),
+and the first time the catch came from a warning nobody had asserted on.
+
+**M4-F11 IS A REFACTOR THAT WAS FILED RATHER THAN RUSHED, AND THE FILING PAID.** `#703` recorded at
+M4-F2 exactly why the dock could not write: every control was private to `port_grid.dart` and bound
+to ONE port's value, and *"mixed is not a value"*. 445 lines moved to `port_cells.dart` behind 118
+existing widget cases, and the mixed state came out as **one parameter**: `mixedLabel` non-null means
+render DR-063's reading and hold NOTHING. The safety property is then structural rather than
+remembered, which is what the task asked for.
+
+**WHAT M4-F DOES NOT DELIVER.** `Mirror bank` is M4-J1's and remains the one §4.6 row with no
+implementation. A mixed control cannot express *"set them all to unknown"*, which is available per
+row in the grid and is written down in three places rather than discovered. `LABEL` and `DESIG` have
+no dock control at all, by DR-063.
+
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing

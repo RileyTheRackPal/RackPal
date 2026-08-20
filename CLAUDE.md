@@ -117,6 +117,16 @@ The board mirrors **structure**; the reasoning lives in `docs/12` and `docs/13`.
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ```
 
+- **Bump the version when an issue closes.** `0.EPIC.TASK` (docs/14 §14.0): the
+  minor is the milestone epic, the patch is the count of **Done board Tasks**
+  under that epic's issues. Not semver, and not per commit. It lives in **six
+  files** and `version_parity_test.dart` gates them against each other, which is
+  structurally blind to all six being stale together: that is how `v0.2.0` sat
+  through thirty M3 tasks (`bdbbdb4`) and `v0.3.30` through forty-six M4 ones.
+  **Derive the number in the commit message**, counted two ways that agree, so
+  the next person can re-derive it rather than trust it. `M4-0`-style
+  decomposition items are Issues and are not counted.
+
 ## House style
 
 Tests **assert the artifact, not the mechanism**. A test that pins an intermediate
