@@ -467,6 +467,195 @@ void main() {
     });
   });
 
+  group('Ctrl+R renumbers through a dialog (M4-F7, DR-078)', () {
+    Future<_Harness> four(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001'),
+          _port('p3', order: 'a0002'),
+          _port('p4', order: 'a0003'),
+        ]),
+    );
+
+    Future<void> clickRowNamed(
+      WidgetTester tester,
+      String text, {
+      LogicalKeyboardKey? holding,
+    }) async {
+      if (holding != null) await tester.sendKeyDownEvent(holding);
+      await tester.tap(find.text(text));
+      if (holding != null) await tester.sendKeyUpEvent(holding);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> ctrl(WidgetTester tester, LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> openOn(WidgetTester tester, List<String> rows) async {
+      await clickRowNamed(tester, rows.first);
+      for (final row in rows.skip(1)) {
+        await clickRowNamed(tester, row, holding: LogicalKeyboardKey.shift);
+      }
+      await ctrl(tester, LogicalKeyboardKey.keyR);
+    }
+
+    testWidgets('the pattern is seeded from the first selected label', (
+      tester,
+    ) async {
+      await four(tester);
+      await openOn(tester, ['P1', 'P4']);
+
+      // `P1` infers prefix `P` and start 1, so the field offers `P{n}`
+      // and the common case is pressing Enter. Same reader `Ctrl+Shift+D`
+      // uses, so the two gestures cannot disagree about what the number
+      // in a label is.
+      final field = tester.widget<TextField>(
+        find.ancestor(
+          of: find.text('P{n}'),
+          matching: find.byType(TextField),
+        ),
+      );
+      expect(field.controller?.text, 'P{n}');
+    });
+
+    testWidgets('the impact list shows every row before anything is written', (
+      tester,
+    ) async {
+      final harness = await four(tester);
+      await openOn(tester, ['P1', 'P4']);
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'P{n}'),
+        'IN {n}',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('4 rows will change'), findsOneWidget);
+      expect(find.text('IN 1'), findsOneWidget);
+      expect(find.text('IN 4'), findsOneWidget);
+
+      // NOT WRITTEN YET. Cancelling leaves the grid alone, which is the
+      // property the whole preview rests on.
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.pumpAndSettle();
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.label), ['P1', 'P2', 'P3', 'P4']);
+    });
+
+    testWidgets('Renumber writes the labels the preview promised', (
+      tester,
+    ) async {
+      final harness = await four(tester);
+      await openOn(tester, ['P1', 'P4']);
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'P{n}'),
+        'IN {n:2}',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Renumber'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(portsInDeclaredOrder(body.ports).map((p) => p.label), [
+        'IN 01',
+        'IN 02',
+        'IN 03',
+        'IN 04',
+      ]);
+    });
+
+    testWidgets('Start numbers a sub-range from where the person says', (
+      tester,
+    ) async {
+      final harness = await four(tester);
+      await openOn(tester, ['P3', 'P4']);
+
+      await tester.enterText(find.widgetWithText(TextField, 'P{n}'), 'IN {n}');
+      await tester.enterText(find.widgetWithText(TextField, 'Start'), '9');
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Renumber'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(portsInDeclaredOrder(body.ports).map((p) => p.label), [
+        'P1',
+        'P2',
+        'IN 9',
+        'IN 10',
+      ]);
+    });
+
+    // M4-H's designed parse error, shown where the person is typing, with
+    // the repair chip that carries the WHOLE fixed pattern.
+    testWidgets('a bad pattern refuses to apply and offers its repair', (
+      tester,
+    ) async {
+      await four(tester);
+      await openOn(tester, ['P1', 'P4']);
+
+      await tester.enterText(find.widgetWithText(TextField, 'P{n}'), 'IN {q}');
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Renumber'),
+            )
+            .onPressed,
+        isNull,
+        reason: 'Renumber must not be pressable on a pattern that failed',
+      );
+      expect(find.byType(ActionChip), findsOneWidget);
+
+      // Accepting the repair makes it applicable again, which is what
+      // makes the chip a fix rather than a suggestion.
+      await tester.tap(find.byType(ActionChip));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Renumber'),
+            )
+            .onPressed,
+        isNotNull,
+      );
+    });
+
+    testWidgets('nothing selected refuses without opening a dialog', (
+      tester,
+    ) async {
+      await four(tester);
+      await ctrl(tester, LogicalKeyboardKey.keyR);
+
+      expect(find.text('Renumber ports'), findsNothing);
+      expect(
+        find.textContaining('Select the ports to renumber'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('one Undo takes the whole renumber back', (tester) async {
+      final harness = await four(tester);
+      await openOn(tester, ['P1', 'P4']);
+      await tester.enterText(find.widgetWithText(TextField, 'P{n}'), 'IN {n}');
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Renumber'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.label), ['P1', 'P2', 'P3', 'P4']);
+    });
+  });
+
   group('fill down and fill series (DR-062, M4-F1)', () {
     Future<_Harness> four(WidgetTester tester) => _pump(
       tester,

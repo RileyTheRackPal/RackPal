@@ -353,6 +353,14 @@ enum LabelKey {
   // the person wants back is the whole clone.
   duplicatePorts,
 
+  // RENUMBERING (builder/port_renumber.dart), M4-F7. Its own value and
+  // not `fillPorts`: a fill CONTINUES what the top cell says and a
+  // renumber REPLACES it with a pattern somebody typed, so "Undo Fill" in
+  // front of a person who has just been through a dialog names the wrong
+  // act. `Ctrl+Shift+D` and `Ctrl+R` are the two the Edit menu has to
+  // tell apart, because they are the two that both end in new labels.
+  renumberPorts,
+
   // COMMITTING A VIEW SORT (builder/port_sort.dart), M4-F5. Its own value
   // and not `reorderPorts`, on the test every value here is split on:
   // what the Edit menu has to say. A sort commit rewrites a whole bank at

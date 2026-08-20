@@ -217,6 +217,9 @@ enum KeyBindingId {
 
   // --- builder (M4-F6, DR-078) -----------------------------------------
   builderDuplicateRows,
+
+  // --- builder (M4-F7, DR-078) -----------------------------------------
+  builderRenumber,
   commitWireChained,
   nextCandidatePin,
   previousCandidatePin,
@@ -580,6 +583,11 @@ final class BuilderPasteCellsIntent extends Intent {
 /// Clone the selected rows below themselves (M4-F6, docs/06 §4.6).
 final class BuilderDuplicateRowsIntent extends Intent {
   const BuilderDuplicateRowsIntent();
+}
+
+/// Re-apply a label pattern to the selection (M4-F7, docs/06 §4.6).
+final class BuilderRenumberIntent extends Intent {
+  const BuilderRenumberIntent();
 }
 
 /// Slide the selected rows one position through their bank (M4-F4).
@@ -1377,6 +1385,25 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         'so it refuses while a sort badge is showing, on the same ground '
         '§4.6 disables reorder there: the person is not looking at the '
         'declared order and "below" is a claim about it.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderRenumber,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyR,
+    primary: true,
+    label: 'Renumber the selected rows',
+    intent: BuilderRenumberIntent(),
+    source: 'docs/06 §4.6 · DR-078',
+    note:
+        'IT SHADOWS NO FRAMEWORK DEFAULT: `Ctrl+R` appears in no platform '
+        'map of `default_text_editing_shortcuts.dart`, checked over the '
+        'source rather than recalled. '
+        'ITS OWN LABEL AND NOT A SHARE WITH `builderFillSeries`, because '
+        'the two do different things to the same rows and meaningDrift '
+        'tests whether the generalisation holds without straining. A fill '
+        'series CONTINUES what the top cell already says (DR-062 infers '
+        'the sequence); a renumber REPLACES it with a pattern somebody '
+        'typed into a dialog. One counts on, one restates.',
   ),
   KeyBinding(
     id: KeyBindingId.quickAddComplete,

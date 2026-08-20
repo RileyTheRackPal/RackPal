@@ -58,6 +58,7 @@ import 'package:flutter/services.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/builder/batch_inspector.dart';
 import 'package:rackmate_ui/src/builder/quick_add_bar.dart';
+import 'package:rackmate_ui/src/builder/renumber_dialog.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
 import 'package:rackmate_ui/src/widgets/family_picker.dart';
 
@@ -352,6 +353,58 @@ class _PortGridState extends State<PortGrid> {
         for (final command in result.commands)
           if (command case final AddPortCommand add) add.port.key.v,
       ]);
+    });
+  }
+
+  /// `Ctrl+R`: re-apply a label pattern to the selection (M4-F7).
+  ///
+  /// THE DIALOG PARSES AND THIS RUNS. `label_pattern.dart` is the one
+  /// grammar, the dialog shows its designed failure where the person is
+  /// typing, and nothing reaches here until there is a compiled pattern.
+  ///
+  /// IT DOES NOT REFUSE UNDER A SORT, unlike `Ctrl+J`: §4.6 says renumber
+  /// works in CURRENT DISPLAY ORDER, so a sorted view is a legitimate
+  /// thing to number, and the dialog says which order it is about rather
+  /// than this method guessing that the person knew.
+  Future<void> _renumber(List<String> visible) async {
+    final selected = _selection.inOrder(visible);
+    if (selected.isEmpty) {
+      setState(
+        () => _fillRefusal = portRenumberRefusalMessage(
+          PortRenumberRefusal.nothingSelected,
+        ),
+      );
+      return;
+    }
+    final choice = await showRenumberDialog(
+      context: context,
+      body: widget.body,
+      selectedInOrder: selected,
+      viewIsSorted: _sort != null,
+    );
+    if (choice == null || !mounted) return;
+
+    final result = buildPortRenumber(
+      body: widget.body,
+      // RE-READ rather than the list captured before the dialog. Nothing
+      // can edit the body under a modal today, and a selection read once
+      // and used later is the kind of thing that stops being true without
+      // anybody noticing.
+      selectedInOrder: _selection.inOrder(visible),
+      pattern: choice.pattern,
+      start: choice.start,
+      step: choice.step,
+    );
+    if (result.refusal case final PortRenumberRefusal refusal) {
+      setState(() => _fillRefusal = portRenumberRefusalMessage(refusal));
+      return;
+    }
+    setState(() => _fillRefusal = null);
+    if (result.commands.isEmpty) return;
+    widget.actions.transact(LabelKey.renumberPorts, (tx) {
+      for (final command in result.commands) {
+        tx.add(command);
+      }
     });
   }
 
@@ -751,6 +804,12 @@ class _PortGridState extends State<PortGrid> {
         BuilderDuplicateRowsIntent: CallbackAction<BuilderDuplicateRowsIntent>(
           onInvoke: (_) {
             _duplicate(visible);
+            return null;
+          },
+        ),
+        BuilderRenumberIntent: CallbackAction<BuilderRenumberIntent>(
+          onInvoke: (_) {
+            unawaited(_renumber(visible));
             return null;
           },
         ),
