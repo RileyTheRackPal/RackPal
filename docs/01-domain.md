@@ -740,9 +740,28 @@ Full professional CI deliverable sets also contain floor plans, reflected ceilin
 
 ### Standards
 
+> **EVERY CITATION BELOW CARRIES A RETRIEVED-ON DATE, AND THE DATE IS THE POINT** (DR-079 §11.78.5).
+> These standards are paywalled, so this corpus can state which revision it was written against and
+> cannot state which revision is current. G4 handles unknown and has no mechanism for **stale**,
+> which is the same gap DR-051 built the retrieved-on date for when it ruled that device
+> documentation is referenced and never embedded: a link rots silently.
+>
+> **A REVISION NUMBER IS NEVER ASSERTED FROM MEMORY HERE.** A wrong revision in a normative document
+> is worse than a dated one, because the dated one announces what it does not know. Where a later
+> revision is known to exist it is named beside the one this corpus used, and where it is not, the
+> date is the whole claim.
+>
+> **The architectural facts taken from these standards are revision-independent**: TIA-570-D's star /
+> home-run topology and its Distribution Device, which the Structure device models, are not going to
+> change in a revision, and the corpus's use of them was never a version claim.
+>
+> **TIA-607 (bonding and grounding) is cited NOWHERE in this corpus**, because bonding and grounding
+> are not modelled at all. Recorded here so the absence reads as a scope boundary rather than an
+> oversight.
+
 - ANSI/EIA-310-D, Cabinets, Racks, Panels and Associated Equipment. IEC 60297-3-100 and DIN 41494 are the harmonised metric expressions.
-- ANSI/TIA-606-C (2017), 606-D, Administration Standard for Telecommunications Infrastructure. <https://www.tiafotc.org/tia-standards-update/tia-606-d/>
-- ANSI/TIA-570-D (2018), Residential Telecommunications Infrastructure Standard. <https://www.tiafotc.org/tia-standards-update/tia-570-d/>
+- ANSI/TIA-606-C (2017), Administration Standard for Telecommunications Infrastructure. **606-D is known to exist and this corpus was written against 606-C.** *Retrieved 2026-08-19.* <https://www.tiafotc.org/tia-standards-update/tia-606-d/>
+- ANSI/TIA-570-D (2018), Residential Telecommunications Infrastructure Standard. **A later revision may exist and has not been obtained**; the facts this corpus takes from it are architectural and revision-independent. *Retrieved 2026-08-19.* <https://www.tiafotc.org/tia-standards-update/tia-570-d/>
 - ANSI J-STD-710 (2015), Audio, Video and Control Architectural Drawing Symbols Method. <https://webstore.ansi.org/preview-pages/ANSI/preview_ANSI+J-STD-710-2015.pdf>
 - ANSI/AVIXA D401.01:2023, Documentation Requirements for Audiovisual Systems. <https://cdn.avixa.org/production/docs/default-source/default-document-library/d401.01_tech_review.pdf>
 - ANSI/AVIXA F501.01:2015, Cable Labeling for Audiovisual Systems. <https://www.avixa.org/standards/cable-labeling-for-audiovisual-systems>
