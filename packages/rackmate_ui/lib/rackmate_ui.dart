@@ -46,6 +46,7 @@ library;
 export 'src/builder/batch_inspector.dart';
 export 'src/builder/change_type_dialog.dart';
 export 'src/builder/device_builder_screen.dart';
+export 'src/builder/find_replace_dialog.dart';
 export 'src/builder/move_to_bank_dialog.dart';
 export 'src/builder/port_grid.dart';
 export 'src/builder/port_impact_list.dart';

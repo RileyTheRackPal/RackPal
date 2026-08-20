@@ -375,6 +375,13 @@ enum LabelKey {
   // impact preview names the mechanism at exactly the wrong moment.
   changePortType,
 
+  // FIND AND REPLACE (builder/port_find_replace.dart), M4-F8. Its own
+  // value, and the one in this family whose Edit-menu entry matters most:
+  // the KEY scope runs `RenamePortKeyCommand`s, and a person reaching for
+  // undo after a bulk key rename wants to see the words they typed named
+  // back to them rather than "Undo Rename Port Key" nine times.
+  findAndReplacePorts,
+
   // COMMITTING A VIEW SORT (builder/port_sort.dart), M4-F5. Its own value
   // and not `reorderPorts`, on the test every value here is split on:
   // what the Edit menu has to say. A sort commit rewrites a whole bank at

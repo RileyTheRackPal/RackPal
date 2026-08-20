@@ -903,6 +903,171 @@ void main() {
     });
   });
 
+  group('Ctrl+H finds and replaces behind a preview (M4-F8, DR-078)', () {
+    Future<_Harness> three(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001'),
+          _port('p3', order: 'a0002'),
+        ]),
+    );
+
+    Future<void> ctrl(WidgetTester tester, LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> openOnAll(WidgetTester tester) async {
+      await tester.tap(find.text('P1'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
+      await tester.tap(find.text('P3'));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
+      await tester.pumpAndSettle();
+      await ctrl(tester, LogicalKeyboardKey.keyH);
+    }
+
+    testWidgets('a label replacement previews, then writes', (tester) async {
+      final harness = await three(tester);
+      await openOnAll(tester);
+
+      await tester.enterText(find.widgetWithText(TextField, 'Find'), 'P');
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Replace with'),
+        'Q',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('3 rows will change'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Replace'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.label), ['Q1', 'Q2', 'Q3']);
+    });
+
+    testWidgets('an empty Find box says so and Replace is dead', (
+      tester,
+    ) async {
+      await three(tester);
+      await openOnAll(tester);
+
+      expect(find.text('Type what to find.'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Replace'),
+            )
+            .onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('regex is off by default, so a bracket is a character', (
+      tester,
+    ) async {
+      await three(tester);
+      await openOnAll(tester);
+
+      await tester.enterText(find.widgetWithText(TextField, 'Find'), '[');
+      await tester.pumpAndSettle();
+
+      // Literal: not a refusal, just a search that matches nothing. The
+      // same string with the box ticked IS a refusal, below.
+      expect(
+        find.text('That is not a valid regular expression.'),
+        findsNothing,
+      );
+
+      // SCOPED: the grid's row gutter is full of tick boxes.
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(Checkbox),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text('That is not a valid regular expression.'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Replace'),
+            )
+            .onPressed,
+        isNull,
+      );
+    });
+
+    // THE DANGEROUS SCOPE, on screen. `_pump` opens the builder on a
+    // template whose ports were already there, so every key is published
+    // and every rename row says so.
+    testWidgets('the KEY scope marks a published key in the preview', (
+      tester,
+    ) async {
+      await three(tester);
+      await openOnAll(tester);
+
+      // SCOPED TO THE DIALOG, and both halves of that mattered.
+      // `widgetWithText(SegmentedButton, 'KEY')` finds the whole button
+      // and taps its centre, which with four segments lands between KEY
+      // and DESIG; and a bare `find.text('KEY')` is ambiguous because the
+      // grid's own KEY column header is still on screen behind the modal.
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('KEY'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.widgetWithText(TextField, 'Find'), 'p');
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Replace with'),
+        'j',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(kPublishedKeyNote), findsWidgets);
+      expect(find.textContaining('3 to check'), findsOneWidget);
+    });
+
+    testWidgets('cancelling writes nothing', (tester) async {
+      final harness = await three(tester);
+      await openOnAll(tester);
+
+      await tester.enterText(find.widgetWithText(TextField, 'Find'), 'P');
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Replace with'),
+        'Q',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports.map((p) => p.label), ['P1', 'P2', 'P3']);
+    });
+
+    testWidgets('nothing selected refuses without opening a dialog', (
+      tester,
+    ) async {
+      await three(tester);
+      await ctrl(tester, LogicalKeyboardKey.keyH);
+
+      expect(find.text('Find and replace'), findsNothing);
+      expect(
+        find.textContaining('Select the ports to search'),
+        findsOneWidget,
+      );
+    });
+  });
+
   group('fill down and fill series (DR-062, M4-F1)', () {
     Future<_Harness> four(WidgetTester tester) => _pump(
       tester,

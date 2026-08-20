@@ -221,6 +221,9 @@ enum KeyBindingId {
   // --- builder (M4-F7, DR-078) -----------------------------------------
   builderRenumber,
 
+  // --- builder (M4-F8, DR-078) -----------------------------------------
+  builderFindReplace,
+
   // --- builder (M4-F9, DR-078) -----------------------------------------
   builderChangeType,
 
@@ -604,6 +607,11 @@ final class BuilderMoveToBankIntent extends Intent {
 /// Bulk connector and family change over the selection (M4-F9).
 final class BuilderChangeTypeIntent extends Intent {
   const BuilderChangeTypeIntent();
+}
+
+/// Find and replace over the selection's text (M4-F8, docs/06 §4.6).
+final class BuilderFindReplaceIntent extends Intent {
+  const BuilderFindReplaceIntent();
 }
 
 /// Slide the selected rows one position through their bank (M4-F4).
@@ -1467,6 +1475,27 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         'itself across platforms; a framework default is outside it, and '
         'the check was run by hand over '
         '`default_text_editing_shortcuts.dart`.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderFindReplace,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyH,
+    primary: true,
+    label: 'Find and replace in the selected rows',
+    intent: BuilderFindReplaceIntent(),
+    source: 'docs/06 §4.6 · DR-078 §11.77.3',
+    note:
+        'IT SHADOWS NO FRAMEWORK DEFAULT, and this one was worth checking '
+        'twice: `Ctrl+H` is emacs delete-backward in several toolkits, and '
+        'focus is almost always inside a cell `TextField` when a grid '
+        'chord is pressed. It appears in NO platform map of '
+        '`default_text_editing_shortcuts.dart`, checked over the source '
+        'rather than recalled. '
+        'THE KEY SCOPE IS WHY THIS ONE HAS A PREVIEW. `PortDef.key` is the '
+        'migration join (CR-051) and a published key may have another '
+        "project's cables resolving through it, which undo cannot reach. "
+        'DR-078 §11.77.3 therefore gives this dialog the same per-row '
+        'impact list `Change type…` has rather than a lighter count.',
   ),
   KeyBinding(
     id: KeyBindingId.quickAddComplete,

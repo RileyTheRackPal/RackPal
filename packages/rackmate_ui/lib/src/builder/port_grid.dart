@@ -58,6 +58,7 @@ import 'package:flutter/services.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/builder/batch_inspector.dart';
 import 'package:rackmate_ui/src/builder/change_type_dialog.dart';
+import 'package:rackmate_ui/src/builder/find_replace_dialog.dart';
 import 'package:rackmate_ui/src/builder/move_to_bank_dialog.dart';
 import 'package:rackmate_ui/src/builder/quick_add_bar.dart';
 import 'package:rackmate_ui/src/builder/renumber_dialog.dart';
@@ -516,6 +517,56 @@ class _PortGridState extends State<PortGrid> {
     });
   }
 
+  /// `Ctrl+H`: find and replace across the selection's text (M4-F8).
+  ///
+  /// `widget.openedPortKeys` IS THE LOAD-BEARING ARGUMENT. It is the set
+  /// the template had when the builder opened, and it decides two things
+  /// the person can see: which rows the preview marks as a published key,
+  /// and which renames record a `renamedFrom` alias so another project's
+  /// cables still join (CR-051). Passed rather than recomputed, because
+  /// this widget is rebuilt every time the rail returns to the Ports
+  /// section and capturing it here would call this session's own new
+  /// ports published.
+  Future<void> _findReplace(List<String> visible) async {
+    final selected = _selection.inOrder(visible);
+    if (selected.isEmpty) {
+      setState(
+        () => _fillRefusal = portFindReplaceRefusalMessage(
+          PortFindReplaceRefusal.nothingSelected,
+        ),
+      );
+      return;
+    }
+    final choice = await showFindReplaceDialog(
+      context: context,
+      body: widget.body,
+      selectedInOrder: selected,
+      openedPortKeys: widget.openedPortKeys,
+    );
+    if (choice == null || !mounted) return;
+
+    final result = buildPortFindReplace(
+      body: widget.body,
+      selectedInOrder: _selection.inOrder(visible),
+      scope: choice.scope,
+      find: choice.find,
+      replace: choice.replace,
+      openedPortKeys: widget.openedPortKeys,
+      useRegex: choice.useRegex,
+    );
+    if (result.refusal case final PortFindReplaceRefusal refusal) {
+      setState(() => _fillRefusal = portFindReplaceRefusalMessage(refusal));
+      return;
+    }
+    setState(() => _fillRefusal = null);
+    if (result.commands.isEmpty) return;
+    widget.actions.transact(LabelKey.findAndReplacePorts, (tx) {
+      for (final command in result.commands) {
+        tx.add(command);
+      }
+    });
+  }
+
   /// `Ctrl+C`: the selected rows, as TSV, on the clipboard (M4-F3).
   ///
   /// THE VISIBLE COLUMNS, because what a person copied is what they can
@@ -930,6 +981,12 @@ class _PortGridState extends State<PortGrid> {
         BuilderChangeTypeIntent: CallbackAction<BuilderChangeTypeIntent>(
           onInvoke: (_) {
             unawaited(_changeType(visible));
+            return null;
+          },
+        ),
+        BuilderFindReplaceIntent: CallbackAction<BuilderFindReplaceIntent>(
+          onInvoke: (_) {
+            unawaited(_findReplace(visible));
             return null;
           },
         ),
