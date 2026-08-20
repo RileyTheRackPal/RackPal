@@ -320,6 +320,41 @@ class _PortGridState extends State<PortGrid> {
     });
   }
 
+  /// `Ctrl+J`: clone the selection below itself (M4-F6, docs/06 §4.6).
+  ///
+  /// ONE TRANSACTION, so four clones are one `Ctrl+Z`, and its own
+  /// `LabelKey` so the Edit menu names the act rather than the mechanism.
+  ///
+  /// THE SELECTION FOLLOWS THE CLONES. Duplicating and then typing is the
+  /// gesture this exists for (clone a bank, retype its labels), and
+  /// leaving the selection on the sources means the next keystroke edits
+  /// the rows the person just copied FROM. The keys are known here
+  /// because the plan built them.
+  void _duplicate(List<String> visible) {
+    final result = buildPortDuplicate(
+      body: widget.body,
+      selectedInOrder: _selection.inOrder(visible),
+      viewIsSorted: _sort != null,
+    );
+    if (result.refusal case final PortDuplicateRefusal refusal) {
+      setState(() => _fillRefusal = portDuplicateRefusalMessage(refusal));
+      return;
+    }
+    if (result.commands.isEmpty) return;
+    widget.actions.transact(LabelKey.duplicatePorts, (tx) {
+      for (final command in result.commands) {
+        tx.add(command);
+      }
+    });
+    setState(() {
+      _fillRefusal = null;
+      _selection = _selection.replacedWith([
+        for (final command in result.commands)
+          if (command case final AddPortCommand add) add.port.key.v,
+      ]);
+    });
+  }
+
   /// `Ctrl+C`: the selected rows, as TSV, on the clipboard (M4-F3).
   ///
   /// THE VISIBLE COLUMNS, because what a person copied is what they can
@@ -710,6 +745,12 @@ class _PortGridState extends State<PortGrid> {
         BuilderMoveRowIntent: CallbackAction<BuilderMoveRowIntent>(
           onInvoke: (intent) {
             _nudge(up: intent.up);
+            return null;
+          },
+        ),
+        BuilderDuplicateRowsIntent: CallbackAction<BuilderDuplicateRowsIntent>(
+          onInvoke: (_) {
+            _duplicate(visible);
             return null;
           },
         ),

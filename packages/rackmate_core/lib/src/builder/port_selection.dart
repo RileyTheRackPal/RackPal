@@ -98,6 +98,27 @@ final class PortSelection {
     return null;
   }
 
+  /// Selects exactly [rows], anchoring on the last of them, and keeps the
+  /// focused column.
+  ///
+  /// FOR AN OPERATION THAT CREATED THE ROWS IT WANTS SELECTED, which is
+  /// `Ctrl+J` (M4-F6): duplicate-then-retype is the gesture the clone
+  /// exists for, and leaving the selection on the SOURCES means the next
+  /// keystroke edits the rows the person just copied from. Not built out
+  /// of `toggle`, which anchors per call and would leave the anchor on
+  /// whichever row happened to be last in the loop.
+  ///
+  /// An empty [rows] gives an empty selection rather than leaving the old
+  /// one: a caller that produced nothing is saying so.
+  PortSelection replacedWith(Iterable<String> rows) {
+    final keys = rows.toList();
+    return PortSelection(
+      keys: keys.toSet(),
+      anchor: keys.isEmpty ? null : keys.last,
+      column: column,
+    );
+  }
+
   /// Selects [key] alone and anchors there. A plain click.
   PortSelection selectOnly(String key) =>
       PortSelection(keys: {key}, anchor: key, column: column);

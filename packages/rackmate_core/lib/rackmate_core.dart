@@ -54,6 +54,7 @@ export 'src/builder/fork_status.dart';
 export 'src/builder/label_pattern.dart';
 export 'src/builder/port_batch.dart';
 export 'src/builder/port_commands.dart';
+export 'src/builder/port_duplicate.dart';
 export 'src/builder/port_fill.dart';
 export 'src/builder/port_reorder.dart';
 export 'src/builder/port_selection.dart';

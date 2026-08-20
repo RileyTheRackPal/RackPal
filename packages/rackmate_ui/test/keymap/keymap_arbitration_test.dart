@@ -207,9 +207,17 @@ void main() {
       // `Shift+Arrow` is the range extension every grid binds and this one
       // will want it, and because Alt+Arrow is already the row move in a
       // spreadsheet, an outliner and a task list.
-      expect(keyBindingsIn(KeyScope.builder), hasLength(9));
+      // TEN SINCE M4-F6, which added `Ctrl+J`. Checked against
+      // `default_text_editing_shortcuts.dart` before it was written, and
+      // that check is now the interesting one: four of the five chords
+      // docs/06 §4.6 binds for these operations are clean on every
+      // platform and `Ctrl+T` is `TransposeCharactersIntent` on macOS.
+      // DR-078 §11.77.1 takes it anyway and docs/13 §3.6 records what it
+      // costs. Arbitration cannot see a framework default, so this
+      // comment is the only place that check is written down.
+      expect(keyBindingsIn(KeyScope.builder), hasLength(10));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(59));
+      expect(kKeymap, hasLength(60));
     });
   });
 

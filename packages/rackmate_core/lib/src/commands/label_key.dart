@@ -346,6 +346,13 @@ enum LabelKey {
   // happened.
   reorderPorts,
 
+  // DUPLICATING ROWS (builder/port_duplicate.dart), M4-F6. Its own value
+  // on the same test as every value above it: what the Edit menu has to
+  // say. `Ctrl+J` ADDS N rows, so "Undo Add Port" would name one of them
+  // and "Undo Reorder" would name an act that did not happen; the thing
+  // the person wants back is the whole clone.
+  duplicatePorts,
+
   // COMMITTING A VIEW SORT (builder/port_sort.dart), M4-F5. Its own value
   // and not `reorderPorts`, on the test every value here is split on:
   // what the Edit menu has to say. A sort commit rewrites a whole bank at

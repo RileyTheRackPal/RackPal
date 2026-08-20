@@ -355,6 +355,118 @@ void main() {
     });
   });
 
+  group('Ctrl+J duplicates the selection (M4-F6, DR-078)', () {
+    Future<_Harness> four(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..ports.addAll([
+          _port('p1', order: 'a0000'),
+          _port('p2', order: 'a0001'),
+          _port('p3', order: 'a0002'),
+          _port('p4', order: 'a0003'),
+        ]),
+    );
+
+    Future<void> clickRowNamed(
+      WidgetTester tester,
+      String text, {
+      LogicalKeyboardKey? holding,
+    }) async {
+      if (holding != null) await tester.sendKeyDownEvent(holding);
+      await tester.tap(find.text(text));
+      if (holding != null) await tester.sendKeyUpEvent(holding);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> ctrl(WidgetTester tester, LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('two selected rows become four, cloned below themselves', (
+      tester,
+    ) async {
+      final harness = await four(tester);
+
+      await clickRowNamed(tester, 'P1');
+      await clickRowNamed(tester, 'P2', holding: LogicalKeyboardKey.shift);
+      await ctrl(tester, LogicalKeyboardKey.keyJ);
+
+      final body = await harness.read(tester);
+      // P5 AND P6, NOT P3 AND P4: `_port` labels a row from its key, so
+      // the template already runs to P4 and §4.6's "past the highest
+      // existing index" counts on from there. And they land after P2,
+      // the last SELECTED row, not at the end of the template.
+      expect(portsInDeclaredOrder(body.ports).map((p) => p.label), [
+        'P1',
+        'P2',
+        'P5',
+        'P6',
+        'P3',
+        'P4',
+      ]);
+    });
+
+    // THE ROUTE, NAMED ONLY BY ITS START. `Ctrl+J` then typing must land
+    // on the CLONES: duplicate-then-retype is the gesture this exists
+    // for, and a test that looked up the new row and typed into it would
+    // pass against a grid that left the selection on the sources.
+    testWidgets('the selection follows the clones, so typing retypes them', (
+      tester,
+    ) async {
+      final harness = await four(tester);
+
+      await clickRowNamed(tester, 'P1');
+      await ctrl(tester, LogicalKeyboardKey.keyJ);
+      // No finder in between: whatever is selected now takes this one.
+      await ctrl(tester, LogicalKeyboardKey.keyJ);
+
+      final body = await harness.read(tester);
+      // The second clone is of P5 and lands under it. Had the selection
+      // stayed on the source, the second press would have cloned P1
+      // again and put P6 BEFORE P5, which is a different list: that is
+      // what makes this assertion able to fail.
+      expect(portsInDeclaredOrder(body.ports).map((p) => p.label), [
+        'P1',
+        'P5',
+        'P6',
+        'P2',
+        'P3',
+        'P4',
+      ]);
+    });
+
+    // ONE UNDO, not four. Through the toolbar button rather than a
+    // chord, because focus is inside a cell `TextField` after a click and
+    // `Ctrl+Z` there belongs to the field (docs/04 §8).
+    testWidgets('one Undo takes the whole clone back', (tester) async {
+      final harness = await four(tester);
+
+      await clickRowNamed(tester, 'P1');
+      await clickRowNamed(tester, 'P4', holding: LogicalKeyboardKey.shift);
+      await ctrl(tester, LogicalKeyboardKey.keyJ);
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(body.ports, hasLength(4));
+    });
+
+    testWidgets('nothing selected refuses out loud rather than silently', (
+      tester,
+    ) async {
+      await four(tester);
+      await ctrl(tester, LogicalKeyboardKey.keyJ);
+
+      expect(
+        find.textContaining('Select the ports to duplicate'),
+        findsOneWidget,
+      );
+    });
+  });
+
   group('fill down and fill series (DR-062, M4-F1)', () {
     Future<_Harness> four(WidgetTester tester) => _pump(
       tester,

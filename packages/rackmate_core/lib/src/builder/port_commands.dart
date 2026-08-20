@@ -1032,10 +1032,19 @@ final class RenamePortKeyCommand extends Command<TemplateBody> {
     if (body.ports.any((p) => p.key.v == now.v)) {
       throw StateError('port ${now.v} already exists');
     }
-    body.ports[at] = _withKey(
-      body.ports[at],
-      now,
-      aliases(body.ports[at].renamedFrom),
+    final was_ = body.ports[at];
+    body.ports[at] = portWithIdentity(
+      was_,
+      key: now,
+      // A RENAME CHANGES THE KEY AND NOTHING ELSE. The other five are
+      // passed through unchanged, spelled out rather than defaulted, so
+      // that adding a seventh varying field cannot silently give this
+      // call site a behaviour nobody chose for it.
+      label: was_.label,
+      order: was_.order,
+      position: was_.position,
+      renamedFrom: aliases(was_.renamedFrom),
+      designatorHint: was_.designatorHint,
     );
 
     for (var i = 0; i < body.passthroughPairs.length; i++) {
@@ -1050,8 +1059,7 @@ final class RenamePortKeyCommand extends Command<TemplateBody> {
   }
 }
 
-/// [port] with a different [key] and [renamedFrom], and every other field
-/// carried across.
+/// [port] with a new identity, and every other field carried across.
 ///
 /// EVERY FIELD, WHICH IS WHY IT IS EXHAUSTIVE AND UGLY. A rename that
 /// silently dropped `poe` or `serial` would be a data loss with no error
@@ -1059,47 +1067,65 @@ final class RenamePortKeyCommand extends Command<TemplateBody> {
 /// mutates every field of a port, renames it, and asserts the encoded JSON
 /// differs only in `key`, which is a check that survives a new field being
 /// added to `PortDef` because the codec is what it reads.
-PortDef _withKey(PortDef port, PortKey key, List<PortKey> renamedFrom) =>
-    PortDef(
-      key: key,
-      label: port.label,
-      connector: port.connector,
-      signalFamily: port.signalFamily,
-      face: port.face,
-      position: port.position,
-      order: port.order,
-      renamedFrom: renamedFrom,
-      designatorHint: port.designatorHint,
-      carriedProtocols: List<SignalFamilyId>.from(port.carriedProtocols),
-      acceptedFamilies: List<SignalFamilyId>.from(port.acceptedFamilies),
-      direction: port.direction,
-      returnChannel: port.returnChannel,
-      topology: port.topology,
-      maxConnections: port.maxConnections,
-      gender: port.gender,
-      pinoutVariant: port.pinoutVariant,
-      conductorCount: port.conductorCount,
-      impedanceOhms: port.impedanceOhms,
-      level: port.level,
-      balanced: port.balanced,
-      phantomPowerCapable: port.phantomPowerCapable,
-      polarity: port.polarity,
-      nominalVoltage: port.nominalVoltage,
-      maxCurrentMa: port.maxCurrentMa,
-      bankKey: port.bankKey,
-      setKey: port.setKey,
-      setRole: port.setRole,
-      channelIndex: port.channelIndex,
-      poe: port.poe,
-      linkSpeedMbps: port.linkSpeedMbps,
-      sfp: port.sfp,
-      fiberMode: port.fiberMode,
-      wavelengthNm: port.wavelengthNm,
-      bus: port.bus,
-      serial: port.serial,
-      power: port.power,
-      notes: port.notes,
-    );
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// SIX EXPLICIT PARAMETERS RATHER THAN A `copyWith` WITH DEFAULTS
+/// ═══════════════════════════════════════════════════════════════════════
+/// Its two callers vary exactly these six between them, a rename and a
+/// duplicate (`port_duplicate.dart`), and both must be able to CLEAR
+/// `designatorHint` rather than only to set it. A nullable optional cannot
+/// tell "leave it alone" from "make it null" without a sentinel, and a
+/// sentinel in the one helper that exists to prevent silent field loss
+/// would be the thing most likely to cause some. Naming all six at both
+/// call sites costs two lines and removes the question.
+PortDef portWithIdentity(
+  PortDef port, {
+  required PortKey key,
+  required String label,
+  required FracIndex order,
+  required PanelPosition position,
+  required List<PortKey> renamedFrom,
+  required String? designatorHint,
+}) => PortDef(
+  key: key,
+  label: label,
+  connector: port.connector,
+  signalFamily: port.signalFamily,
+  face: port.face,
+  position: position,
+  order: order,
+  renamedFrom: renamedFrom,
+  designatorHint: designatorHint,
+  carriedProtocols: List<SignalFamilyId>.from(port.carriedProtocols),
+  acceptedFamilies: List<SignalFamilyId>.from(port.acceptedFamilies),
+  direction: port.direction,
+  returnChannel: port.returnChannel,
+  topology: port.topology,
+  maxConnections: port.maxConnections,
+  gender: port.gender,
+  pinoutVariant: port.pinoutVariant,
+  conductorCount: port.conductorCount,
+  impedanceOhms: port.impedanceOhms,
+  level: port.level,
+  balanced: port.balanced,
+  phantomPowerCapable: port.phantomPowerCapable,
+  polarity: port.polarity,
+  nominalVoltage: port.nominalVoltage,
+  maxCurrentMa: port.maxCurrentMa,
+  bankKey: port.bankKey,
+  setKey: port.setKey,
+  setRole: port.setRole,
+  channelIndex: port.channelIndex,
+  poe: port.poe,
+  linkSpeedMbps: port.linkSpeedMbps,
+  sfp: port.sfp,
+  fiberMode: port.fiberMode,
+  wavelengthNm: port.wavelengthNm,
+  bus: port.bus,
+  serial: port.serial,
+  power: port.power,
+  notes: port.notes,
+);
 
 /// A key derived from [label], in the catalog's own dotted-lowercase
 /// spelling (`HDMI IN 1` becomes `hdmi.in.1`), made unique against [taken].

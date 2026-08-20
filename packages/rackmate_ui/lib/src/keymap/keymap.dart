@@ -214,6 +214,9 @@ enum KeyBindingId {
   // --- builder (M4-F4) ------------------------------------------------
   builderMoveRowUp,
   builderMoveRowDown,
+
+  // --- builder (M4-F6, DR-078) -----------------------------------------
+  builderDuplicateRows,
   commitWireChained,
   nextCandidatePin,
   previousCandidatePin,
@@ -572,6 +575,11 @@ final class BuilderCopyCellsIntent extends Intent {
 /// Paste tab-separated cells into the port grid from the focused cell.
 final class BuilderPasteCellsIntent extends Intent {
   const BuilderPasteCellsIntent();
+}
+
+/// Clone the selected rows below themselves (M4-F6, docs/06 §4.6).
+final class BuilderDuplicateRowsIntent extends Intent {
+  const BuilderDuplicateRowsIntent();
 }
 
 /// Slide the selected rows one position through their bank (M4-F4).
@@ -1347,6 +1355,28 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     intent: BuilderMoveRowIntent(up: false),
     source: 'docs/06 §4.6 · CR-027 · DR-064',
     note: 'See builderMoveRowUp.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderDuplicateRows,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyJ,
+    primary: true,
+    label: 'Duplicate the selected rows',
+    intent: BuilderDuplicateRowsIntent(),
+    source: 'docs/06 §4.6 · DR-078 §11.77.1',
+    note:
+        'IT SHADOWS NO FRAMEWORK DEFAULT, and that was checked over '
+        '`default_text_editing_shortcuts.dart` rather than recalled. '
+        '`Ctrl+J` appears in no platform map, which matters because '
+        'focus is almost always inside a cell `TextField` when a grid '
+        'chord is pressed. Four of the five chords M4-F6 through F10 add '
+        'passed that check; `Ctrl+T` did not, and DR-078 §11.77.1 takes '
+        'it anyway '
+        'with the cost recorded in docs/13 §3.6. '
+        'THE ACT IS "BELOW THE SELECTION" AND THEREFORE MINTS `order`, '
+        'so it refuses while a sort badge is showing, on the same ground '
+        '§4.6 disables reorder there: the person is not looking at the '
+        'declared order and "below" is a claim about it.',
   ),
   KeyBinding(
     id: KeyBindingId.quickAddComplete,
