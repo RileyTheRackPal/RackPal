@@ -220,6 +220,9 @@ enum KeyBindingId {
 
   // --- builder (M4-F7, DR-078) -----------------------------------------
   builderRenumber,
+
+  // --- builder (M4-F10, DR-078) ----------------------------------------
+  builderMoveToBank,
   commitWireChained,
   nextCandidatePin,
   previousCandidatePin,
@@ -588,6 +591,11 @@ final class BuilderDuplicateRowsIntent extends Intent {
 /// Re-apply a label pattern to the selection (M4-F7, docs/06 §4.6).
 final class BuilderRenumberIntent extends Intent {
   const BuilderRenumberIntent();
+}
+
+/// Move the selected rows to another bank (M4-F10, docs/06 §4.6).
+final class BuilderMoveToBankIntent extends Intent {
+  const BuilderMoveToBankIntent();
 }
 
 /// Slide the selected rows one position through their bank (M4-F4).
@@ -1404,6 +1412,25 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         'series CONTINUES what the top cell already says (DR-062 infers '
         'the sequence); a renumber REPLACES it with a pattern somebody '
         'typed into a dialog. One counts on, one restates.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderMoveToBank,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyM,
+    primary: true,
+    label: 'Move the selected rows to a bank',
+    intent: BuilderMoveToBankIntent(),
+    source: 'docs/06 §4.6 · DR-078 §11.77.2',
+    note:
+        'IT SHADOWS NO FRAMEWORK DEFAULT: `Ctrl+M` appears in no platform '
+        'map of `default_text_editing_shortcuts.dart`, checked over the '
+        'source rather than recalled. '
+        'NOT A SHARE WITH `builderMoveRowUp`/`Down`, and the pair was '
+        'looked at: those slide a block one slot THROUGH its own band and '
+        'refuse at the band edge, because crossing would have to rewrite '
+        '`bankKey` and an arrow key must not retype a port (§4.6). This '
+        'is the gesture that does rewrite it, deliberately and through a '
+        'dialog. Same word, two acts, and the labels say which.',
   ),
   KeyBinding(
     id: KeyBindingId.quickAddComplete,

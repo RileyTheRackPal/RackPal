@@ -361,6 +361,13 @@ enum LabelKey {
   // tell apart, because they are the two that both end in new labels.
   renumberPorts,
 
+  // MOVING PORTS BETWEEN BANKS (builder/port_move_to_bank.dart), M4-F10.
+  // Its own value and not `reorderPorts`, on the same Edit-menu test: a
+  // move rewrites `bankKey` as well as `order`, and "Undo Reorder" in
+  // front of somebody who just moved six ports into Outputs names the
+  // half of the act they were not thinking about.
+  movePortsToBank,
+
   // COMMITTING A VIEW SORT (builder/port_sort.dart), M4-F5. Its own value
   // and not `reorderPorts`, on the test every value here is split on:
   // what the Edit menu has to say. A sort commit rewrites a whole bank at

@@ -57,6 +57,7 @@ export 'src/builder/port_commands.dart';
 export 'src/builder/port_duplicate.dart';
 export 'src/builder/port_fill.dart';
 export 'src/builder/port_impact.dart';
+export 'src/builder/port_move_to_bank.dart';
 export 'src/builder/port_renumber.dart';
 export 'src/builder/port_reorder.dart';
 export 'src/builder/port_selection.dart';

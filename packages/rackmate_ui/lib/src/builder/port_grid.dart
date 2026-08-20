@@ -57,6 +57,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/builder/batch_inspector.dart';
+import 'package:rackmate_ui/src/builder/move_to_bank_dialog.dart';
 import 'package:rackmate_ui/src/builder/quick_add_bar.dart';
 import 'package:rackmate_ui/src/builder/renumber_dialog.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
@@ -402,6 +403,68 @@ class _PortGridState extends State<PortGrid> {
     setState(() => _fillRefusal = null);
     if (result.commands.isEmpty) return;
     widget.actions.transact(LabelKey.renumberPorts, (tx) {
+      for (final command in result.commands) {
+        tx.add(command);
+      }
+    });
+  }
+
+  /// `Ctrl+M`: move the selection into another bank (M4-F10).
+  ///
+  /// THE REFUSALS COME FIRST, BEFORE THE DIALOG, because two of them are
+  /// about whether there is anything to show: a template with one bank has
+  /// nowhere to move to, and DR-078 §11.77.2 forbids offering to create
+  /// one. A dialog listing a single destination that is where the rows
+  /// already are would be a screen with nothing on it.
+  Future<void> _moveToBank(List<String> visible) async {
+    final selected = _selection.inOrder(visible);
+    void refuse(PortMoveToBankRefusal refusal) => setState(
+      () => _fillRefusal = portMoveToBankRefusalMessage(refusal),
+    );
+    if (selected.isEmpty) {
+      refuse(PortMoveToBankRefusal.nothingSelected);
+      return;
+    }
+    if (_sort != null) {
+      refuse(PortMoveToBankRefusal.theViewIsSorted);
+      return;
+    }
+    // THE DESTINATIONS THE SELECTION IS NOT ALREADY WHOLLY IN. A row for
+    // the bank every selected port already sits in would be the one
+    // choice that cannot do anything, offered first.
+    final banks = {
+      for (final key in selected)
+        widget.body.ports.firstWhere((p) => p.key.v == key).bankKey,
+    };
+    final targets = [
+      for (final target in movableBanks(widget.body))
+        if (!(banks.length == 1 && banks.single == target.key)) target,
+    ];
+    if (targets.isEmpty) {
+      refuse(PortMoveToBankRefusal.nowhereToMoveTo);
+      return;
+    }
+
+    final choice = await showMoveToBankDialog(
+      context: context,
+      targets: targets,
+      portCount: selected.length,
+    );
+    if (choice == null || !mounted) return;
+
+    final result = buildPortMoveToBank(
+      body: widget.body,
+      selectedInOrder: _selection.inOrder(visible),
+      targetBankKey: choice.bankKey,
+      viewIsSorted: _sort != null,
+    );
+    if (result.refusal case final PortMoveToBankRefusal refusal) {
+      refuse(refusal);
+      return;
+    }
+    setState(() => _fillRefusal = null);
+    if (result.commands.isEmpty) return;
+    widget.actions.transact(LabelKey.movePortsToBank, (tx) {
       for (final command in result.commands) {
         tx.add(command);
       }
@@ -810,6 +873,12 @@ class _PortGridState extends State<PortGrid> {
         BuilderRenumberIntent: CallbackAction<BuilderRenumberIntent>(
           onInvoke: (_) {
             unawaited(_renumber(visible));
+            return null;
+          },
+        ),
+        BuilderMoveToBankIntent: CallbackAction<BuilderMoveToBankIntent>(
+          onInvoke: (_) {
+            unawaited(_moveToBank(visible));
             return null;
           },
         ),

@@ -207,7 +207,7 @@ void main() {
       // `Shift+Arrow` is the range extension every grid binds and this one
       // will want it, and because Alt+Arrow is already the row move in a
       // spreadsheet, an outliner and a task list.
-      // ELEVEN SINCE M4-F7, which added `Ctrl+R`. Checked against
+      // TWELVE SINCE M4-F10, which added `Ctrl+M`. Checked against
       // `default_text_editing_shortcuts.dart` before it was written, and
       // that check is now the interesting one: four of the five chords
       // docs/06 §4.6 binds for these operations are clean on every
@@ -215,9 +215,9 @@ void main() {
       // DR-078 §11.77.1 takes it anyway and docs/13 §3.6 records what it
       // costs. Arbitration cannot see a framework default, so this
       // comment is the only place that check is written down.
-      expect(keyBindingsIn(KeyScope.builder), hasLength(11));
+      expect(keyBindingsIn(KeyScope.builder), hasLength(12));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(61));
+      expect(kKeymap, hasLength(62));
     });
   });
 

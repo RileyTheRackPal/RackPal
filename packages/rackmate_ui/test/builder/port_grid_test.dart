@@ -656,6 +656,128 @@ void main() {
     });
   });
 
+  group('Ctrl+M moves ports between banks (M4-F10, DR-078)', () {
+    Future<_Harness> banked(WidgetTester tester) => _pump(
+      tester,
+      template: _saveable()
+        ..banks.addAll([
+          BankDef(
+            key: 'in',
+            label: 'Inputs',
+            abbr: 'IN',
+            order: const FracIndex('a1'),
+          ),
+          BankDef(
+            key: 'out',
+            label: 'Outputs',
+            abbr: 'OUT',
+            order: const FracIndex('a2'),
+          ),
+        ])
+        ..ports.addAll([
+          _port('p1', order: 'a0000', bank: 'in'),
+          _port('p2', order: 'a0001', bank: 'in'),
+          _port('p3', order: 'a0002', bank: 'out'),
+        ]),
+    );
+
+    Future<void> ctrl(WidgetTester tester, LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a picked bank moves the row and keeps the band whole', (
+      tester,
+    ) async {
+      final harness = await banked(tester);
+
+      await tester.tap(find.text('P1'));
+      await tester.pumpAndSettle();
+      await ctrl(tester, LogicalKeyboardKey.keyM);
+
+      expect(find.text('Move 1 port'), findsOneWidget);
+      await tester.tap(find.widgetWithText(RadioListTile<String?>, 'Outputs'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Move'));
+      await tester.pumpAndSettle();
+
+      final body = await harness.read(tester);
+      expect(buildPortTable(body).bands.map((b) => b.title), [
+        'Inputs',
+        'Outputs',
+      ]);
+      expect(
+        buildPortTable(body).bands.last.rows.map((r) => r.port.key.v),
+        ['p3', 'p1'],
+      );
+    });
+
+    // NOTHING PRESELECTED, so a careless Enter cannot move eight ports
+    // into whichever bank sorted first: this dialog has no impact list to
+    // catch that.
+    testWidgets('Move is disabled until a destination is picked', (
+      tester,
+    ) async {
+      await banked(tester);
+      await tester.tap(find.text('P1'));
+      await tester.pumpAndSettle();
+      await ctrl(tester, LogicalKeyboardKey.keyM);
+
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Move'))
+            .onPressed,
+        isNull,
+      );
+    });
+
+    // DR-078 section 11.77.2: it offers what exists and mints nothing, so
+    // a template whose only bank is the one the rows are in refuses with a
+    // sentence rather than opening a dialog with a text field in it.
+    testWidgets('one bank and nowhere to go refuses without a dialog', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        template: _saveable()
+          ..banks.add(
+            BankDef(
+              key: 'in',
+              label: 'Inputs',
+              abbr: 'IN',
+              order: const FracIndex('a1'),
+            ),
+          )
+          ..ports.addAll([
+            _port('p1', order: 'a0000', bank: 'in'),
+            _port('p2', order: 'a0001', bank: 'in'),
+          ]),
+      );
+
+      await tester.tap(find.text('P1'));
+      await tester.pumpAndSettle();
+      await ctrl(tester, LogicalKeyboardKey.keyM);
+
+      expect(find.textContaining('Move 1 port'), findsNothing);
+      expect(
+        find.textContaining('no other bank to move to'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('nothing selected refuses without opening a dialog', (
+      tester,
+    ) async {
+      await banked(tester);
+      await ctrl(tester, LogicalKeyboardKey.keyM);
+
+      expect(find.textContaining('Move 1 port'), findsNothing);
+      expect(find.textContaining('Select the ports to move'), findsOneWidget);
+    });
+  });
+
   group('fill down and fill series (DR-062, M4-F1)', () {
     Future<_Harness> four(WidgetTester tester) => _pump(
       tester,
