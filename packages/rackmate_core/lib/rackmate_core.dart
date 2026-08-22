@@ -133,6 +133,7 @@ export 'src/derived/totals.dart';
 export 'src/document_controller.dart';
 export 'src/draw/bounds_canvas.dart';
 export 'src/draw/canvas.dart';
+export 'src/draw/contrast.dart';
 export 'src/draw/geometry.dart';
 export 'src/draw/hit_test.dart';
 export 'src/draw/ops.dart';
