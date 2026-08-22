@@ -70,6 +70,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-077, a template authored here reaches the rack](dr-077-a-template-authored-here-reaches-the-rack.md) - the builder saved into a map nothing read; the shelf was already the document, the palette was reading a constant beside it, and a second Save minted a second template instead of forking a version.
 * [DR-078, the five grid operations](dr-078-the-five-grid-operations.md) - one chord collides with a Flutter macOS default and is taken anyway; a move offers only the banks that exist; and both bulk-write dialogs show a per-row impact list, because undo covers the open document and cannot reach a published key.
 * [DR-079, a listing is not a material](dr-079-a-listing-is-not-a-material.md) - LSZH was treated as satisfying NEC plenum, which is a false pass and worse than a false failure; two code rules asserted violations the product cannot establish; and an 80 percent figure was labelled as a code result.
+* [DR-080, the accent colour reaches the elevation](dr-080-the-accent-reaches-the-elevation.md) - a colour control shipped four months ago and no renderer ever read it; DR-059 deferred the fix and priced it wrongly in both halves, and the real cost was that one of the eight swatches is pure black under four dark text ops.
 
 # Not yet written up
 

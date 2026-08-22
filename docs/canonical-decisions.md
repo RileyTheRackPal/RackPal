@@ -12082,6 +12082,92 @@ own file already says so.
 
 ---
 
+### 11.79 DR-080 · The accent colour reaches the elevation, and the text colour follows it
+
+**Settled by the user on 2026-08-21** (`#747`, `#748`), on the question DR-059 §11.58.8 deferred in
+its own last paragraph and filed separately.
+
+**A §8.3 AMENDMENT, and a narrow one.** Roadmap §2's device-builder line already names the glyph,
+which DR-059 put there. This adds the channel that ruling was written *beside*: the accent reaches
+paper. No milestone moves, no rule is added or removed, and `kSchemaVersion` does not advance,
+because the key is already written and already read back.
+
+**11.79.1 THE FIELD IS AUTHORABLE, PERSISTED, UNDOABLE, AND INVISIBLE.** `TemplateBody.accentColor`
+and `DeviceOverrides.accentColor` are both declared, both round-trip through `json_codec.dart`, both
+carry a `_safe` change-class rule, and `device_builder_screen.dart:958` ships a control for the
+first: **eight fixed Okabe-Ito hues and a `Clear`**, a fixed set rather than a wheel precisely so
+that no unchecked hue could reach the greyscale gate. `draw/scene/device_layer.dart:134` computes
+`final fill = Fill(palette.deviceFill)` **unconditionally**, and that is every device on every
+elevation, on screen and on the sheet. **So the builder has shipped a control that changes nothing
+since M4-D**, and the section note beside it tells the user about a mark that is not drawn either.
+
+**11.79.2 DR-059 PRICED THIS AND THE PRICE WAS WRONG, MEASURED BOTH WAYS.** §11.58.8 reads that
+making `accentColor` reach `device_layer.dart` *"changes the elevation, regenerates four starters'
+goldens and must clear PAL-1"*. Against the tree at `3245e6b`:
+
+| The claim | What the tree says |
+|---|---|
+| *"regenerates four starters' goldens"* | `accentColor` occurs **0 times** in all four `.rmpj` starters and **0 times** anywhere in `catalog/`. Every device resolves the field absent, the fill is unchanged, and **no golden moves at all** |
+| *"must clear PAL-1"* | `tools/pal1_check.py` enumerates in-band `SignalFamilyDef` pairs. It has **no device concept whatsoever** and cannot see a device fill. PAL-1 is not implicated |
+
+Both halves were read off a ruling rather than measured. That is the third time this project has
+priced a decision from a derived artifact, and it is why that is a practice rather than an anecdote.
+**The correction is recorded here and §11.58 is left as written**, because §11.58 is the record of
+what was believed on the day and the mis-pricing is the useful half of it.
+
+**11.79.3 THE COST DR-059 DID NOT NAME IS THE ONLY REAL ONE.** `device_layer.dart` fills the body
+and then draws **four text ops over it**: the designator, the name, the type and the U-height badge,
+each in a fixed `RackStyle` colour (`deviceDesignator` `0xFF0F172A`, `deviceName` `0xFF334155`,
+`deviceType` `0xFF64748B`, `deviceBadge` `0xFF475569`). All four are dark inks chosen against
+`deviceFill`, which is `0xFFEFF3F8`, a near-white. **One of the eight shipped swatches is
+`Rgb(0x00, 0x00, 0x00)`.** A body filled with it carries black text on black. The hazard is not the
+hue: it is that the fill and the ink over it were chosen by different parties, a year apart, and
+nothing made them meet.
+
+**11.79.4 THE RULING.** The accent becomes the **device body fill**, resolved **instance override
+first, then the template body, then `palette.deviceFill`** when both are absent. That order is not
+new law: door 1 of CR-054 exists so a person can say something about *this* device, and an
+instance-level statement is by construction the more specific one. `device_layer.dart`'s own header
+already records that `DeviceOverrides` *"are still not applied"* there, so this is the first thing
+that reads one on the elevation and the precedence is written down before there are two readers to
+disagree.
+
+The four label colours are **computed from the resolved fill's WCAG relative luminance** rather than
+read from the palette. `pal1_check.py`'s `luminance()` is the reference implementation already in
+the tree and is what the Dart must agree with, so **the product does not acquire a second definition
+of contrast**: that is the mistake CR-080's font drift and the `family_glyph` measurement both took,
+one authority per fact.
+
+**11.79.5 TWO COSTS ARE ACCEPTED IN WRITING, SO M6 IS NOT AMBUSHED BY THEM.** The user was shown
+both and took them, and naming them here is what makes that a decision rather than an oversight.
+
+- **The elevation's text palette becomes data-dependent.** `RackStyle.deviceDesignator` is one value
+  today and every consumer assumes it is. A sheet whose ink colour depends on document content is a
+  new property of this renderer, and the `RackStyle` equality and `hashCode` members that enumerate
+  those fields are where a later reader will first notice.
+- **Ink coverage on a real laser.** M6's exit criterion is a **physical** print on an ANSI B laser
+  plus an ANSI D plotter plus a photocopy, signed off by a person (AC-058 D13). A 42U rack of
+  saturated bodies is a toner load nothing has measured, and it is exactly the class of thing that
+  is discovered on paper. **`M6-J`'s print matrix (`#357`) is where this is checked**, and this
+  clause is what tells it to look.
+
+**11.79.6 SEQUENCING IS CR-078, NOT A PREFERENCE, AND IT IS THIS RULING'S ONE HARD CONSTRAINT.**
+*"Hue is never used alone."* Every device is one uniform fill today, so no two devices differ by hue
+at all and the invariant is satisfied trivially and vacuously. **The instant accents render, devices
+differ by hue and nothing else**, until DR-059's seventeen marks exist to carry the redundant
+channel. So **the fill must not ship before M4-R's artwork** (`#694`): they are one deliverable in
+two tasks, not two deliverables. This is what makes `#694`'s decomposition urgent rather than tidy,
+and it is the reason a milestone that looked fully adjudicated was not.
+
+**11.79.7 WHAT THIS DOES NOT RULE.** It does not add a swatch, remove one, or make the set editable:
+the eight are Okabe-Ito and the argument for them is unchanged. It does not give the accent a
+*meaning*: it is the author's mark, not a category, a lifecycle state or a signal domain, and
+nothing derives from it, which is what keeps it out of CR-078's four channels rather than beside
+them. It does not touch the schematic. And it does not make `accentColor` reachable from a placed
+device's inspector, which is door 1 and is M4-L1's (`#230`).
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

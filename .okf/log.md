@@ -1,5 +1,41 @@
 # Update Log
 
+## 2026-08-21
+
+* **Creation**: [DR-080, the accent colour reaches the
+  elevation](/decisions/dr-080-the-accent-reaches-the-elevation.md) (`#748`),
+  the last ruling M4 owed and the only one of three that blocked anything.
+  `accentColor` has had a control since M4-D and **no renderer since ever**:
+  `device_layer.dart:134` computes `Fill(palette.deviceFill)` unconditionally.
+* **Note**: **DR-059 PRICED THIS AND BOTH HALVES WERE WRONG.** It said the fix
+  *"regenerates four starters' goldens and must clear PAL-1"*. `accentColor`
+  occurs **0 times** in all four starters and **0 times** in `catalog/`, so no
+  golden moves; and `pal1_check.py` enumerates `SignalFamilyDef` pairs and has
+  **no device concept at all**. Third instance of
+  [a stated cost is a hypothesis](/practices/a-stated-cost-is-a-hypothesis.md),
+  and the first where the over-priced artifact was one of this project's own
+  rulings. §11.58 is **left as written**, because it records what was believed.
+* **Note**: **THE COST NOBODY HAD NAMED IS THE ONLY REAL ONE.** `device_layer`
+  fills the body and then draws **four** text ops over it, all dark inks chosen
+  against a near-white `deviceFill`, and one of the eight shipped swatches is
+  `Rgb(0x00, 0x00, 0x00)`. A ruling that had been deferred for its cost was
+  deferred for the wrong cost entirely.
+* **Creation**: [A stated cost is a hypothesis until it is
+  measured](/practices/a-stated-cost-is-a-hypothesis.md), filed on the third
+  instance: DR-057's sparse-`pitch` feature cut that was never real, `#702`'s
+  eight-way split that could not touch the 75 ms symbols are domain-independent,
+  and DR-080's two wrong halves. **The tell is the useful part**: the cost that
+  justifies a DEFERRAL is the least likely to have been measured, because
+  deferring is exactly what excused measuring it. The log had already written
+  *"a prescription in an issue is a hypothesis until it is measured"* on
+  2026-08-19 and not filed it, which is the drift a practice file exists to stop.
+* **Note**: **THE SEQUENCING CLAUSE IS THE LOAD-BEARING ONE.**
+  [CR-078](/invariants/four-encoding-channels.md)'s *"hue is never used alone"*
+  is satisfied **vacuously** today: every device is one fill, so no two differ by
+  hue. Accents make them differ by hue ALONE until DR-059's seventeen marks
+  exist, so the fill may not ship before `#694`'s artwork. A milestone that read
+  as fully adjudicated was one paragraph short of it.
+
 ## 2026-08-19 (third entry)
 
 * **Creation**: [DR-076, the schematic rebuilds what
