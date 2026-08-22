@@ -3746,6 +3746,80 @@ multi-select cell, neither dropdown exists, and `device_layer.dart` still fills 
 `palette.deviceFill`. **These rulings are what that work will cite. The work itself is unstarted**,
 and this section is not evidence that any of it is built.
 
+#### 5.3.16 M4-R, the seventeen marks and the accent that ships with them · CODE COMPLETE, DRILL UNRUN · `a915a04`, `95be9e6`, `64b953c`, `e58a922`, `365b3b7`, `77e9cf1`, `e356866`, `42f3391`, `811c5c6`
+
+**Nine commits, 2026-08-21, fourteen gates green on each. `#694` had ZERO tasks that morning** and
+now has nine, of which eight are closed and `#757`'s printed half is not. `rackmate_core` went
+**3,140 → 3,197** and `rackmate_ui` **1,115 → 1,117**.
+
+**TWO RULINGS CAME OUT OF THE PICK-UP CENSUS, BEFORE ANY ARTWORK.** DR-083 (§11.82) placed the mark
+and settled the hatch collision; DR-084 (§11.83) made the seeded catalog author its own marks. Both
+were taken from measurements rather than from the corpus, which is the whole difference between this
+section and the three DR-059 sentences it had to correct.
+
+**DR-059 WAS WRONG THREE TIMES AND THE TREE SAID SO EACH TIME.** This is the finding of the whole
+issue and it generalises past the glyph:
+
+| The sentence | What the tree said |
+|---|---|
+| *"regenerates four starters' goldens and must clear PAL-1"* (§11.58.8) | `accentColor` occurs **0 times** in the starters and **0 times** in `catalog/`, so no golden moved; `pal1_check.py` enumerates 385 `SignalFamilyDef` pairs and has **no device concept** |
+| *"sequenced with M4-K, the first surface a device glyph appears on at all"* (§11.58.7) | `panel_layer.dart` **does not exist**. M4-K is unstarted and DR-080 made `device_layer.dart` that surface, so `#694` was never blocked on `#182` |
+| *"`display` is the modal answer rather than the right one"*, deferred to the picker | True, and its cost was never counted: **0 of 48** templates authored a glyph, so seventeen marks shipped as **nine** and **eight were unreachable** |
+
+**§11.58 IS LEFT AS WRITTEN.** Each correction lives in the ruling that found it, on DR-080
+§11.79.2's precedent. A ruling records what was believed on the day, and editing that falsifies the
+record rather than improving it.
+
+**AND TWO OF THIS SESSION'S OWN RULINGS WERE WRONG IN THE SAME WAY**, which is the reason the table
+above is not a complaint about DR-059. **DR-084's first draft** said the codec writes `glyph` *"only
+when it differs from the category default"*; `json_codec.dart:3420` writes it whenever it is
+non-null and the comment above it explains why, so the economy is a property of what is AUTHORED and
+the real figure is **26 of 48**. **DR-083 said the knockout costs "two extra ops"**; it costs
+**one**, because the ruling counted the mark, which draws on every device hatched or not. Both were
+caught by writing something that had to COMPUTE the number rather than assert it, and both are
+recorded in place.
+
+**THE COLLAPSE IS THE FINDING WORTH KEEPING.** `device_glyph_test` asserted *"every one of the 48
+seeded templates resolves to a mark"* and passed, correctly, for weeks: they do. **An existence
+assertion cannot see a collapse.** Forty-eight resolving to nine satisfies it exactly as well as
+forty-eight resolving to seventeen, and the number that mattered was never asked for. `census before
+building` gains that as its sixth instance and its first of a different shape: the earlier five found
+a field that was **empty**, which the first query anybody writes catches, while this one **resolves
+perfectly and collapses**.
+
+**THE ELEVATION HAD NO OP CENSUS AT ALL, AND THAT IS WHY NONE OF THIS WAS VISIBLE.** `#753` added a
+path op to every device on every elevation and all 3,152 core cases stayed green. The schematic has
+`schematic_perf_test`'s baselines; the elevation had a **text-run** census beside them and nothing
+else, and a mark is a path. `#757` adds one, pinning the relationship rather than a total: **exactly
+one mark per visible device**, which is what a person could check by eye. On the committed fixture:
+24 devices, 24 marks, 14 distinct silhouettes.
+
+**WHAT THE GATES CAUGHT THAT LOCAL GREEN COULD NOT**, listed because each is an argument for keeping
+them: `tracked sources` found an untracked `lib/` file **twice**, either of which would have shipped
+a commit no clone could compile while every local command stayed green; the analyzer ratchet caught
+`DIRECTIVES_ORDERING` and `DOCUMENT_IGNORES`, both diagnosed only by **diffing the by-rule table**
+against the previous green run because the headline named an unrelated pre-existing info; and
+`draw_source_gate_test` failed a production comment citing a test file that does not exist, which was
+**my own header, in the sentence explaining that the port is missing**.
+
+| Task | What it did |
+|---|---|
+| `#751` | DR-083: the mark rides the designator line; the mark wins over a hatch; DR-059's sequencing corrected |
+| `#752` | The seventeen marks as geometry. One op per mark, advance computed from the type size, circles as four cubics so no op-kind assertion depends on which mark a device carries |
+| `#753` | The mark reaches the elevation. The guard chooses between mark and no mark, **never** between text and no text, because this function has already shipped a blackout |
+| `#758` | DR-084: the seeded catalog authors its own marks |
+| `#759` | 26 templates authored, four starters and the perf fixture regenerated. Three independent counts agree on 26 |
+| `#755` | DR-080's accent fill, and the four label inks computed from its WCAG luminance. `pal1_check.py`'s figures pinned in Dart, because no port of it has ever existed |
+| `#754` | The hatch knockout, asserted by **order** rather than presence: a backing rect drawn before the hatch is painted over and does nothing while still appearing in the op list |
+| `#756` | The builder picker draws the marks through the elevation's own geometry (CR-086), never a look-alike |
+| `#757` | The elevation op census, and `docs/18`'s printed drill. **The print is unrun** |
+
+**WHAT M4-R DOES NOT DELIVER.** The drill (`docs/18`) has not been performed, so **whether seventeen
+silhouettes are tellable apart at 8 pt on a photocopy is unmeasured**, and that is the question
+DR-059 capped the set to answer. `#694` stays open and no version bump rides on it: eight tasks
+closed and the issue did not. The previews M4-K owns are still unbuilt, so the builder picker is the
+only surface besides the elevation that draws a mark.
+
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing

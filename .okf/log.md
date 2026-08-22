@@ -1,5 +1,46 @@
 # Update Log
 
+## 2026-08-21 (third entry)
+
+* **Note**: **M4-R IS CODE COMPLETE AND ITS DRILL IS UNRUN** (`#694`, nine
+  commits, `a915a04`..`811c5c6`). The seventeen marks draw, the accent fills the
+  body, the ink follows the fill, the knockout clears the hatch and the builder
+  picker shows the real geometry. `docs/18` carries the printed legibility drill
+  and **nobody has run it**, so whether seventeen silhouettes are tellable apart
+  at 8 pt on a photocopy is the one thing still unmeasured, and it is the
+  question DR-059 capped the set to answer.
+* **Note**: **DR-059 WAS WRONG THREE TIMES AND EACH WAS CAUGHT BY MEASURING, NOT
+  BY READING.** Its golden/PAL-1 price, its M4-K sequencing, and the cost of
+  deferring the seed data. **§11.58 is left as written** and each correction
+  lives in the ruling that found it, on DR-080 §11.79.2's precedent: a ruling
+  records what was believed on the day.
+* **Note**: **TWO OF MY OWN RULINGS THIS SESSION WERE WRONG THE SAME WAY**, which
+  is why the above is not a complaint about DR-059. DR-084's draft asserted a
+  codec behaviour that does not exist (`json_codec` writes `glyph` whenever
+  non-null, so the economy is a property of what is AUTHORED, and the figure is
+  **26 of 48**); DR-083 said the knockout costs "two extra ops" when it costs
+  **one**, having counted the mark that draws on every device anyway. Both were
+  caught by writing something that had to COMPUTE the number rather than assert
+  it. That is the practical form of
+  [a stated cost is a hypothesis](/practices/a-stated-cost-is-a-hypothesis.md):
+  the cheapest way to stop asserting numbers is to make a test derive them.
+* **Note**: **THE ELEVATION HAD NO OP CENSUS**, which is why a path op added to
+  every device on every elevation left 3,152 cases green. The schematic had
+  baselines; the elevation had a TEXT-RUN census beside them, and a mark is a
+  path. `#757` pins the RELATIONSHIP rather than a total: exactly one mark per
+  visible device, which is what a person could check by eye on a printed sheet.
+  A pinned grand total moves on every unrelated change and teaches the next
+  reader to regenerate it without looking, which is how a baseline stops being a
+  gate.
+* **Note**: **THREE GATES CAUGHT WHAT LOCAL GREEN COULD NOT.** `tracked sources`
+  found an untracked `lib/` file TWICE. The analyzer ratchet caught
+  `DIRECTIVES_ORDERING` and `DOCUMENT_IGNORES`, both diagnosable only by diffing
+  the **by-rule table** against the last green run, because the gate's headline
+  named an unrelated pre-existing info each time. And `draw_source_gate_test`
+  failed a production comment citing a test file that does not exist: **my own
+  header, in the sentence explaining that the port is missing**.
+
+
 ## 2026-08-21 (second entry)
 
 * **Creation**: [DR-083, the mark rides the designator
