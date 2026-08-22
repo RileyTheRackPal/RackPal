@@ -315,6 +315,19 @@ enum LabelKey {
   // strand an empty bank behind them.
   quickAddPorts,
 
+  // BANK CRUD (builder/bank_commands.dart), M4-J1. Three values on the
+  // same test the port trio was split on: what the Edit menu has to say.
+  //
+  // `removeBank` is emphatically its own. It does not only delete a
+  // `BankDef`: it clears `bankKey` on every port that named one, so the
+  // act a user undoes is "my ports went loose" and not "a heading
+  // vanished". `mirrorBank` creates a bank AND N ports in one
+  // transaction, on `quickAddPorts`' argument, and "Undo Add Port" would
+  // name one row of the sixteen it is about to remove.
+  renameBank,
+  removeBank,
+  mirrorBank,
+
   // ITS OWN VALUE BECAUSE IT IS NOT A CELL EDIT. `PortDef.key` is the
   // migration join (CR-051) and renaming one rewrites `renamedFrom` and
   // every passthrough pair that named it, so the Edit menu says what

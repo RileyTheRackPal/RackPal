@@ -714,7 +714,7 @@ List<Command<TemplateBody>> buildQuickAdd(
 
   final bankLabel = uniqueBankName(registries, body, plan);
   final existing = body.banks.where((b) => b.label == bankLabel).firstOrNull;
-  final bankKey = existing?.key ?? _uniqueBankKey(body, bankLabel);
+  final bankKey = existing?.key ?? uniqueBankKey(body, bankLabel);
   if (existing == null) {
     commands.add(
       AddBankCommand(
@@ -790,7 +790,7 @@ List<Command<TemplateBody>> buildQuickAdd(
 ///
 /// Slugged from the label on `autoPortKey`'s convention, so a reader
 /// seeing `hdmi.inputs` beside `port.3` does not have to learn two.
-String _uniqueBankKey(TemplateBody body, String label) {
+String uniqueBankKey(TemplateBody body, String label) {
   final slug = label
       .toLowerCase()
       .replaceAll(RegExp('[^a-z0-9]+'), '.')
