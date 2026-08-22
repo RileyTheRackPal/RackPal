@@ -12233,6 +12233,78 @@ assertion: `two documents agreeing is not verification`.
 
 ---
 
+### 11.81 DR-082 · `parity` and `flowControl` are closed sets, and the corpus can now say so
+
+**Settled by the user on 2026-08-21** (`#747`, `#750`). **The only one of `#747`'s three rulings that
+blocks nothing**: it is a comment in shipped code reading *"the corpus has not ruled on"*, settled
+because a census found it rather than because it stood in the way of anything.
+
+**A CORRECTION, NOT A §8.3 AMENDMENT.** No column is added, no milestone moves, no rule changes, no
+sheet gains a field. Two free-text cells acquire a value set.
+
+**11.81.1 WHAT SHIPPED, AND THE COMMENT THAT WAS RIGHT TO REFUSE.** `port_commands.dart:300`
+declares `parity` as `PortField<String?>` under the note: *"Free text, because the model's own
+comment says the value set is not yet specified. A dropdown here would fix a vocabulary the corpus
+has not ruled on."* `flowControl` sits beside it on the same terms, and `SerialSpec` in
+`template.dart` carries the same disclaimer on both fields.
+
+**That refusal was correct at M4-F.** Fixing a vocabulary by picking one while building a cell is
+how a product acquires rules nobody decided, and it is the shape `a rule you invent must be checked
+against the good cases` exists to catch. The refusal was correct; leaving it refused indefinitely
+was not, and nothing was going to raise it except a census.
+
+**11.81.2 THE RULING: both become closed value sets.**
+
+| Field | Values |
+|---|---|
+| `parity` | `none`, `even`, `odd`, `mark`, `space` |
+| `flowControl` | `none`, `rtsCts`, `xonXoff` |
+
+Neither is an open vocabulary the corpus was wise to leave alone. **RS-232 has not gained a parity
+bit since the corpus was written** and is not going to; these are settled trade facts an installer
+can recite, which is exactly the class of thing this project settles by censusing rather than by
+inventing.
+
+**11.81.3 THE MODEL'S OWN COMMENT PROPOSES THREE PARITY VALUES AND THIS RULING TAKES FIVE, WHICH IS
+A DIFFERENCE AND IS RECORDED RATHER THAN GLOSSED.** `SerialSpec.parity` reads
+*"e.g. `none` | `even` | `odd`"*. The comment says **"e.g."** and was illustrating rather than
+enumerating: `a spec table is an illustration until censused`, applied to a doc comment.
+
+**The five are RS-232's own set, not an invention of this ruling**, which is what makes taking them
+a transcription in DR-057's sense rather than a judgement. **Whether `mark` and `space` appear on
+gear a RackMate user actually meets is a TRADE question and this ruling does not claim to answer
+it**: `trade objections are questions, not findings` has overruled a confident workflow claim from
+this side of the keyboard four times, and this is not the fifth. The argument for including them is
+asymmetric cost and nothing else: **an unused enum value costs one line, while a missing one costs a
+workaround in the notes column on a port somebody has to physically wire.** If the trade says two of
+the five are dead, deleting them later is a smaller edit than this paragraph.
+
+**11.81.4 A FREE-TEXT COLUMN IS THE DEFECT, NOT THE TYPING.** One column holding `none`, `NONE`, `N`
+and `no parity` is four values for one fact. The port grid **sorts**, DR-078's `Find & replace`
+**matches**, and the schedule **prints**. A column that cannot be sorted is a defect in the
+schedule, and it is not repaired by asking users to be careful.
+
+**11.81.5 NO `Other` ROW SHIPS, and this clause has an argument rather than a preference behind it.**
+An escape hatch re-introduces exactly the dirty column the value set exists to prevent, and **G4
+already supplies what an escape hatch usually reaches for**: absent means unknown, unknown is
+expressible today, and the grid already renders it. **A value set with a free-text row is a
+free-text column wearing a dropdown.**
+
+**11.81.6 MIGRATION IS NEARLY EMPTY, AND THE REMAINDER FOLLOWS DR-075.** **0 of the 727 seed ports
+author either field**, so nothing seeded needs mapping and no starter moves. A value already typed
+into a user's project that does not match the set is **retained and shown as it was typed**, not
+silently dropped. DR-075 settled this exact shape one domain over for an imported rack label and its
+reasoning transfers unchanged: **a wrongly discarded assertion is gone, while a retained one is
+visible and correctable.**
+
+**11.81.7 WHAT THIS DOES NOT RULE.** It does not touch `baud`, `dataBits` or `stopBits`, which are
+integers and were never ambiguous. **It deliberately does not fix `busProtocol`**, which sits three
+declarations away and is genuinely open: there is no closed set of control-bus protocols, and it
+stays free text for precisely the reason `parity` no longer does. And it does not decide whether
+either value prints on any sheet, which is M6's question about columns and widths.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

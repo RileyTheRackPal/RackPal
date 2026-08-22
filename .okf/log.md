@@ -20,6 +20,32 @@
   against a near-white `deviceFill`, and one of the eight shipped swatches is
   `Rgb(0x00, 0x00, 0x00)`. A ruling that had been deferred for its cost was
   deferred for the wrong cost entirely.
+* **Creation**: [DR-082, parity and flowControl are closed
+  sets](/decisions/dr-082-parity-and-flowcontrol-are-closed-sets.md) (`#750`),
+  the only one of `#747`'s three that **blocks nothing**: a comment in shipped
+  code reading *"a vocabulary the corpus has not ruled on"*, settled because a
+  census found it rather than because it was in the way.
+* **Note**: **THE REFUSAL WAS RIGHT AND LEAVING IT STANDING WAS THE ERROR.**
+  Fixing a vocabulary while building a cell is how a product acquires rules
+  nobody decided, so M4-F was correct to write free text and say why. Nothing
+  was ever going to raise it again except a census, which is the argument for
+  censusing a milestone's own comments and not only its model.
+* **Note**: **THE DRAFT MADE A TRADE CLAIM AND IT WAS CUT BEFORE IT REACHED
+  CANON.** The first version argued `mark` and `space` parity *"appear on control
+  gear and legacy head-end equipment"*, which is a claim about the field that
+  nothing here can support. The clause now says the five are RS-232's own set,
+  that whether a RackMate user meets those two is a TRADE question this ruling
+  does not answer, and that the only argument is asymmetric cost: an unused enum
+  value costs one line, a missing one costs a workaround in the notes column on a
+  port somebody has to wire. See
+  [trade objections are questions, not findings](/practices/trade-knowledge-beats-workflow-reasoning.md),
+  caught on the way in for once rather than overruled on the way out.
+* **Note**: **NO `Other` ROW, and the argument generalises.** An escape hatch
+  re-introduces the dirty column the value set exists to prevent, and
+  [G4](/invariants/g4-unknowns-are-counted.md) already supplies what one usually
+  reaches for. `busProtocol` sits three declarations away and is deliberately
+  untouched, because there IS no closed set of control-bus protocols: the ruling
+  names what it declines, so the next census does not re-open it.
 * **Creation**: [DR-081, three unreachable port fields get a
   cell](/decisions/dr-081-three-port-fields-get-a-cell.md) (`#749`).
   `channelIndex`, `acceptedFamilies` and `carriedProtocols` are declared,
