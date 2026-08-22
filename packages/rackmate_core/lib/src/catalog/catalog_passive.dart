@@ -16,6 +16,7 @@
 // U-height variants are a picker/Device-Builder concern, not three
 // separate catalog entries).
 
+import 'package:rackmate_core/src/model/device_glyph.dart';
 import 'package:rackmate_core/src/model/template.dart';
 import 'package:rackmate_core/src/units/len.dart';
 import 'package:rackmate_core/src/units/mass.dart';
@@ -71,6 +72,7 @@ Map<String, TemplateBody> buildPassiveCatalog() => {
         'no list of its own.',
     category: kCatPassive,
     typePrefix: 'SHF',
+    glyph: DeviceGlyph.shelf,
     tags: const ['shelf', 'container'],
     frontU: 2,
     rearU: 0,

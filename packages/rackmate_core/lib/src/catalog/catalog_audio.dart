@@ -1,6 +1,7 @@
 // Seed catalog — "Audio" (docs/catalog/seed-devices.md §3.2).
 
 import 'package:rackmate_core/src/catalog/catalog_ports.dart';
+import 'package:rackmate_core/src/model/device_glyph.dart';
 import 'package:rackmate_core/src/model/placement.dart' show Face;
 import 'package:rackmate_core/src/model/template.dart';
 import 'package:rackmate_core/src/units/len.dart';
@@ -576,6 +577,7 @@ Map<String, TemplateBody> buildAudioCatalog() {
     displayName: 'DSP Audio Processor, 8x8 + Dante',
     category: kCatAudio,
     typePrefix: 'DSP',
+    glyph: DeviceGlyph.processor,
     tags: const ['dsp', 'dante', 'commercial'],
     frontU: 1,
     rearU: 1,
@@ -926,6 +928,7 @@ Map<String, TemplateBody> buildAudioCatalog() {
         'prefix (CR-043).',
     category: kCatAudio,
     typePrefix: 'STRM',
+    glyph: DeviceGlyph.source,
     tags: const ['streaming', 'multizone'],
     frontU: 1,
     rearU: 1,

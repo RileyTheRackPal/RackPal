@@ -37,6 +37,10 @@ final class RackPalette {
     this.deviceName = 0xFF334155,
     this.deviceType = 0xFF64748B,
     this.deviceBadge = 0xFF475569,
+    this.deviceDesignatorOnDark = 0xFFF8FAFC,
+    this.deviceNameOnDark = 0xFFE2E8F0,
+    this.deviceTypeOnDark = 0xFFCBD5E1,
+    this.deviceBadgeOnDark = 0xFFCBD5E1,
     this.hover = 0xFF2563EB,
     this.focus = 0xFF1D4ED8,
     this.selection = 0xFF7C3AED,
@@ -82,6 +86,27 @@ final class RackPalette {
   /// U-height badge text.
   final int deviceBadge;
 
+  /// The same four inks for a device whose resolved fill is DARK
+  /// (DR-080 §11.79.4). One of the eight shipped accent swatches is pure
+  /// black, so a fixed dark ink over it is black text on a black device.
+  ///
+  /// FOUR PALETTE ENTRIES RATHER THAN A COMPUTED LIGHTENING, because
+  /// colour in this product is palette DATA that a gate can read, and a
+  /// colour algebra would put a second authority beside PAL-1 and
+  /// `registry_parity`. The luminance decides WHICH ink; it does not
+  /// invent one. They mirror the light ramp: designator brightest, then
+  /// name, then type and badge together.
+  final int deviceDesignatorOnDark;
+
+  /// See [deviceDesignatorOnDark].
+  final int deviceNameOnDark;
+
+  /// See [deviceDesignatorOnDark].
+  final int deviceTypeOnDark;
+
+  /// See [deviceDesignatorOnDark].
+  final int deviceBadgeOnDark;
+
   /// Hover outline (drawn by the device widget, not the scene).
   final int hover;
 
@@ -111,6 +136,10 @@ final class RackPalette {
       other.deviceName == deviceName &&
       other.deviceType == deviceType &&
       other.deviceBadge == deviceBadge &&
+      other.deviceDesignatorOnDark == deviceDesignatorOnDark &&
+      other.deviceNameOnDark == deviceNameOnDark &&
+      other.deviceTypeOnDark == deviceTypeOnDark &&
+      other.deviceBadgeOnDark == deviceBadgeOnDark &&
       other.hover == hover &&
       other.focus == focus &&
       other.selection == selection;
@@ -130,6 +159,10 @@ final class RackPalette {
     deviceName,
     deviceType,
     deviceBadge,
+    deviceDesignatorOnDark,
+    deviceNameOnDark,
+    deviceTypeOnDark,
+    deviceBadgeOnDark,
     hover,
     focus,
     selection,

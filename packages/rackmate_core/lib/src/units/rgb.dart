@@ -44,6 +44,14 @@ final class Rgb {
   /// Alpha-aware `#AARRGGBB` form.
   String toHexArgb() => '#${_hx(a)}${_hx(r)}${_hx(g)}${_hx(b)}';
 
+  /// The packed `0xAARRGGBB` form the draw layer speaks.
+  ///
+  /// `Fill`, `Stroke` and `RackPalette` all carry colour as a packed int,
+  /// so a model colour reaching a scene has to be packed somewhere. Here,
+  /// once, rather than at each call site: DR-080 put the first one in
+  /// `device_layer` and there will be more.
+  int get argb => (a << 24) | (r << 16) | (g << 8) | b;
+
   static String _hx(int v) => v.toRadixString(16).padLeft(2, '0').toUpperCase();
 
   @override

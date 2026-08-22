@@ -64,6 +64,7 @@ import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/builder/batch_inspector.dart';
 import 'package:rackmate_ui/src/builder/port_grid.dart';
+import 'package:rackmate_ui/src/draw/device_glyph_mark.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
 
 /// What the app does when the builder asks for something.
@@ -1017,12 +1018,19 @@ class _AppearanceSection extends StatelessWidget {
           values: const [null, ...DeviceGlyph.values],
           nameOf: (v) =>
               v == null ? 'from category (${resolved.name})' : v.name,
+          // THE PICKER DRAWS THE MARK THROUGH THE ELEVATION'S OWN
+          // GEOMETRY (CR-086), never a look-alike: `DeviceGlyphMark`
+          // replays the same `DiagramOp` the sheet emits. `null` shows
+          // the category's resolved mark, because that is what choosing
+          // it would draw.
+          leadingOf: (v) => DeviceGlyphMark(glyph: v ?? resolved),
           onChanged: (v) => onEdit(TemplateBodyField.glyph, v),
         ),
         const _SectionNote(
-          'The marks are not drawn on anything yet. Choosing one now '
-          'means it is already set when they start appearing on '
-          'elevations.',
+          'Both appear on the rack elevation. Leaving the mark on the '
+          'category default is a good answer; change it when the '
+          'category picture is wrong for this device, the way a screen '
+          'on a stand is wrong for a speaker.',
         ),
       ],
     );
@@ -1642,6 +1650,7 @@ class _EnumRow<T> extends StatelessWidget {
     required this.values,
     required this.nameOf,
     required this.onChanged,
+    this.leadingOf,
   });
 
   final String label;
@@ -1649,6 +1658,10 @@ class _EnumRow<T> extends StatelessWidget {
   final List<T> values;
   final String Function(T) nameOf;
   final ValueChanged<T> onChanged;
+
+  /// An optional mark drawn beside each option, so a picker whose values
+  /// ARE pictures shows the picture (#756). Null for every other row.
+  final Widget Function(T)? leadingOf;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -1661,7 +1674,19 @@ class _EnumRow<T> extends StatelessWidget {
       ),
       items: [
         for (final v in values)
-          DropdownMenuItem<T>(value: v, child: Text(nameOf(v))),
+          DropdownMenuItem<T>(
+            value: v,
+            child: leadingOf == null
+                ? Text(nameOf(v))
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      leadingOf!(v),
+                      const SizedBox(width: 8),
+                      Text(nameOf(v)),
+                    ],
+                  ),
+          ),
       ],
       onChanged: (v) {
         if (v is T) onChanged(v);

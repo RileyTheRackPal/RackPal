@@ -12305,6 +12305,156 @@ either value prints on any sheet, which is M6's question about columns and width
 
 ---
 
+### 11.82 DR-083 · The mark rides the designator line, and it wins over a hatch
+
+**Settled by the user on 2026-08-21** (`#694`, `#751`), at M4-R's pick-up and **before any artwork**,
+on three things the census found that DR-059 does not answer.
+
+**A DECOMPOSITION RULING, NOT A §8.3 AMENDMENT.** Nothing enters or leaves scope: DR-059 already
+ruled the seventeen marks in and DR-080 already ruled the accent onto the elevation. This settles
+**where the mark goes, what happens where it collides, and which milestone it waits for**, none of
+which either ruling states.
+
+**11.82.1 THE MARK RIDES THE DESIGNATOR LINE, INLINE, AHEAD OF THE TEXT.** It draws at cap height on
+the line the designator occupies, and the designator, name and type shift right by a **computed
+advance**. Three reasons, and the first is that this is not a new pattern:
+
+- **`family_glyph.dart` already does exactly this and exists because the alternative failed in the
+  field.** Its shape is one op whatever the glyph, an advance computed from the type size alone, and
+  the emitter and the measurer reading **the same function** so they cannot disagree. That file was
+  written after Jost's missing codepoints made the signal glyph measure short and draw wide, putting
+  `NET-NEN006` over a net name. Reusing its shape is reusing a fix, not copying a style.
+- **It rides the one line that always draws.** `device_layer.dart`'s header records a shipped
+  blackout in which guarding the designator suppressed the entire label branch for every 1U device at
+  1:10 or smaller. A mark on that line inherits its survival; a mark anywhere else needs a new fit
+  rule in the function that has already produced that bug once.
+- **It cannot collide with the badge**, which is anchored top-right, or with the name and type, which
+  a 1U body drops before the mark is ever reached.
+
+**The rejected alternative is worth recording**: a larger mark on the right, vertically centred, reads
+across a whole rack at a glance and is the better picture. It was declined because at 1U it must dodge
+a 9 pt badge, which is a new drop tier in exactly the function whose drop tiers went wrong before.
+**The picture that reads better is not worth a second blackout.**
+
+**11.82.2 WHERE THE MARK MEETS A HATCH, THE MARK WINS ON A KNOCKED-OUT PANEL.** The collision is real
+and no ruling had named it: `kCategoryDefaultGlyph` maps `kCatPassive` to `DeviceGlyph.blank`, and
+`scene_builder.dart:344` sets `hatched: options.hatchPassive && body.category == kCatPassive`. **The
+devices that default to the `blank` mark are precisely the devices covered in 45° lines.** Order is
+hatch, then a padded backing rect **in the resolved body fill**, then the mark. **ONE extra op**, on
+passive devices only: this ruling's own text said "two" and counted the mark, which is drawn on
+every device hatched or not. `#754`'s case asserts the difference and is what caught it.
+
+**SUPPRESSING THE MARK INSTEAD WAS THE TEMPTING ANSWER AND IT IS THE WRONG ONE.** A blank panel is
+already identified by its hatch, so the mark is redundant there, and redundancy is DR-059's own
+argument. But `hatchPassive` is on by default, so suppression makes **`blank` and `shelf` draw
+nothing at all**: two of seventeen ruled values become unreachable, which is
+`a modelled field is not a reachable one` re-created **inside the fix for it**. The knockout costs
+two ops and keeps every value real.
+
+**11.82.3 DR-059'S STATED SEQUENCING IS STALE, AND THE CORRECTION LIVES HERE.** §11.58.7 reads that
+the artwork *"is a new issue sequenced with M4-K (`#182`), which owns the three live previews and is
+the first surface a device glyph appears on at all"*. Against the tree at `2055450`:
+**`draw/scene/panel_layer.dart` does not exist**, M4-K is not started, and **DR-080 has made
+`device_layer.dart` the first surface a device glyph appears on.** So `#694` is **not blocked on
+`#182`**, and the previews become the second surface rather than the first.
+
+**§11.58 is left as written**, on the precedent DR-080 §11.79.2 set one ruling earlier: a ruling
+records what was true when it was made, and a correction belongs in the ruling that found it. This is
+the second time in three days that a sequencing or costing sentence in DR-059 has not survived
+contact with the tree, which is `a stated cost is a hypothesis until it is measured` pointing at
+sequencing rather than at cost.
+
+**11.82.4 WHAT THIS DOES NOT RULE.** It does not choose the seventeen silhouettes: the value set is
+fixed by DR-059 §11.58.5 and censused against the 48 seeded templates, and the artwork answers to
+`device_glyph_test.dart` rather than to this. It does not set the cap-height factor or the bearing,
+which are numbers to be **looked at on a printed sheet** rather than argued (`#757`). It does not
+give the mark a meaning beyond identification: it is not a status, a lifecycle state or a domain. And
+it does not touch the schematic symbol, whose four encoding channels CR-078 already governs.
+
+---
+
+### 11.83 DR-084 · The seeded catalog authors its own marks, so seventeen does not ship as nine
+
+**Settled by the user on 2026-08-21** (`#694`, `#758`), from a probe run while building `#753` and
+before the mark had reached a single sheet.
+
+**A §8.3 AMENDMENT, and a narrow one.** DR-059 ruled the seventeen marks into scope and ruled the
+**category defaults**; it deliberately left the seeded catalog's own `glyph` field alone. This
+changes that one thing. No mark is added or removed, the cap stays at seventeen, the picker is
+untouched, and `kCategoryDefaultGlyph` keeps doing its job for every template nobody has authored.
+
+**11.83.1 THE MEASUREMENT, WHICH IS THE WHOLE ARGUMENT.** A probe over `buildSeedCatalog()` at
+`64b953c`:
+
+| | |
+|---|---|
+| Templates authoring a `glyph` | **0 of 48** |
+| Distinct marks the 48 actually draw | **9**, not 17 |
+| Marks no seeded device ever draws | **8**: `extender`, `patchPanel`, `battery`, `shelf`, `speaker`, `camera`, `antenna`, `control` |
+| Ids resolving to `display` | **18**, the whole `Field Devices` category |
+
+So on a starter, and on every project a user has not hand-edited, **a speaker, a camera, a keypad and
+a projector all draw a rectangle on a stand**, and eight of the marks are unreachable.
+
+**11.83.2 DR-059 SAW THIS AND DEFERRED IT, WHICH IS WHY THIS IS AN AMENDMENT AND NOT A BUG FIX.**
+`device_glyph.dart` says so in its own table, unprompted: *"The 18 field devices are the widest
+category by a factor of four and the only one whose members share no silhouette at all: a speaker, a
+camera, a keypad and a projector. `display` is the modal answer rather than the right one, which is
+why the form's picker matters more here than anywhere else."* That was a defensible call. **What it
+costs is the first impression**: the elevation is the sheet taped inside the rack door, and the
+mark's whole job is to be right at a glance on a document nobody edited.
+
+**11.83.3 THE ASSIGNMENT IS ALREADY WRITTEN DOWN, AND THAT IS WHAT MAKES THIS CHEAP.** Every
+`DeviceGlyph` value's doc comment names the catalog ids that motivated it: `F04` through `F08` are
+the speakers, `F09` the camera, `F11` and `F17` the antennas, `N03` and `N04` the patch panels, `X03`
+the shelf, `P03` the battery, `V06` and `V07` the extenders. DR-059 §11.58.5 calls those ids
+*"the evidence that the set was censused rather than invented"*. **This ruling turns that evidence
+into the assignment it always described.** No judgement is added; a table already in the tree is
+transcribed onto the field that reads it.
+
+**11.83.4 WHAT IT COSTS, MEASURED: AND THIS RULING'S OWN FIRST DRAFT GOT THE MECHANISM WRONG.**
+The draft said the key *"is written only when it differs from the category default"*, as though that
+were the codec's behaviour. **It is not.** `json_codec.dart:3420` writes `glyph` whenever it is
+non-null, and the comment directly above it says why: *"Absent means INHERIT THE CATEGORY'S DEFAULT,
+not unknown (DR-059)"*, and writing a resolved value instead would *"put a key on all 48 seeded
+templates and regenerate four starters for nothing, and would lose the author's choice the moment
+the category changed."*
+
+**So the economy is a property of what this ruling AUTHORS, not of the codec**, and stating it the
+other way would have sent the next reader looking for a suppression rule that does not exist. This
+is the same failure DR-080 §11.79.2 and DR-083 §11.82.3 each found in DR-059: a mechanism asserted
+from the corpus rather than read off the tree. It is recorded here rather than quietly corrected,
+because a ruling that hides its own draft error teaches nothing.
+
+**Twenty-six of the forty-eight get a `glyph`**, being exactly those whose mark differs from their
+category's default; the other twenty-two inherit and stay null, which is the codec's own reading of
+absence. So twenty-six templates gain a key and their bytes move, and **the four checked-in starters
+embed snapshots generated from the old seed and must be regenerated**. A starter left alone would
+draw the old category mark while a new project drew the authored one, which is worse than either,
+and is why the regeneration belongs to this task rather than to a follow-up.
+
+**11.83.5 THE TEST WAS GREEN, CORRECT, AND ASKING THE WRONG QUESTION. THIS IS THE PART TO KEEP.**
+`device_glyph_test.dart` asserts *"every one of the 48 seeded templates resolves to a mark"*, and it
+has always passed, because they do. **An existence assertion cannot see a collapse.** Forty-eight
+templates resolving to nine marks satisfies it exactly as well as forty-eight resolving to
+seventeen, and the number that mattered was never asked for. The replacement asks for the **count of
+distinct marks**, which is the artifact a person actually looks at.
+
+That is `census before building` for the sixth time, with a twist worth naming separately: the
+earlier five found a field that was **empty**, and this one found a field that **resolves perfectly
+and collapses**. An empty field is caught by the first query anybody writes. A collapsing one
+survives every query except the one that counts the range.
+
+**11.83.6 WHAT THIS DOES NOT RULE.** It does not widen the set: a seeded device fitting none of the
+seventeen is a finding for DR-059's cap and goes to the user, never an eighteenth value added inside
+a data pass. It does not remove `kCategoryDefaultGlyph`, which is still what a user-authored template
+gets and still what `effectiveGlyph` falls back to. It does not touch `accentColor`, whose seeds stay
+unauthored on purpose: an accent is the author's own mark and a seeded catalog has no business
+choosing one. And it does not make the marks correct, only assigned: whether seventeen silhouettes are
+tellable apart at 8 pt remains `#757`'s printed sheet.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

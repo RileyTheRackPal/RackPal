@@ -19,9 +19,15 @@
 // band that marks a blank, a vent or a shelf. DEFERRED and NOT drawn: the
 // rear port strip, weight microtext, PDU outlet map, finding/lock/reversed
 // badges, ⚡ amps, and the 🔗 port-count chip (docs/04 §2.1 ≥0.75 / ≥1.50
-// tiers) — ports and wiring are M2's job. `DeviceOverrides`
-// (device_instance.dart) are still not applied to the type name, which
-// comes straight from the template body.
+// tiers) — ports and wiring are M2's job.
+//
+// `DeviceOverrides` REACHES THIS FILE NOW, but only through one field.
+// DR-080 makes `overrides.accentColor` the body fill, resolved ahead of
+// the template's own; the type NAME is still taken straight from
+// `TemplateBody.displayName` and ignores `overrides.displayName`. Two
+// sentences rather than one, because "overrides are not applied here"
+// stopped being true and a comment that has quietly become false is the
+// thing this repository has been bitten by most.
 //
 // ─────────────────────────────────────────────────────────────────────────
 // TEXT IS EMITTED ONLY WHEN IT FITS — AND THE DESIGNATOR IS DROPPED LAST
@@ -59,13 +65,16 @@
 import 'dart:math' as math;
 
 import 'package:rackmate_core/src/draw/bounds_canvas.dart';
+import 'package:rackmate_core/src/draw/contrast.dart';
 import 'package:rackmate_core/src/draw/geometry.dart';
 import 'package:rackmate_core/src/draw/ops.dart';
+import 'package:rackmate_core/src/draw/scene/device_glyph_art.dart';
 import 'package:rackmate_core/src/draw/scene/rack_geometry.dart';
 import 'package:rackmate_core/src/draw/scene/rack_layer.dart' show LayerBuild;
 import 'package:rackmate_core/src/draw/scene/rack_style.dart';
 import 'package:rackmate_core/src/draw/spec.dart';
 import 'package:rackmate_core/src/draw/text.dart';
+import 'package:rackmate_core/src/model/device_glyph.dart';
 import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/template.dart' show TemplateBody;
 
@@ -130,8 +139,29 @@ DeviceLayerBuild buildDeviceLayer(
   final typePt = typeScale.size(RackTextSizes.type);
   final badgePt = typeScale.size(RackTextSizes.badge);
 
+  // DR-080 §11.79.4: the accent IS the body fill, resolved instance
+  // override first, then the template, then the palette. That order is
+  // door 1 of CR-054 read literally, an instance-level statement being by
+  // construction the more specific one, and this is the first thing on
+  // the elevation to read a `DeviceOverrides` at all.
+  final fillArgb =
+      device.overrides.accentColor?.argb ??
+      body.accentColor?.argb ??
+      palette.deviceFill;
+
+  // The ink then follows the FILL rather than the palette, because one of
+  // the eight shipped swatches is pure black while all four label colours
+  // are dark inks chosen against a near-white default.
+  final onDark = prefersLightInk(fillArgb);
+  final inkDesignator = onDark
+      ? palette.deviceDesignatorOnDark
+      : palette.deviceDesignator;
+  final inkName = onDark ? palette.deviceNameOnDark : palette.deviceName;
+  final inkType = onDark ? palette.deviceTypeOnDark : palette.deviceType;
+  final inkBadge = onDark ? palette.deviceBadgeOnDark : palette.deviceBadge;
+
   final rect = DBox.fromLtwh(0, 0, width, height);
-  final fill = Fill(palette.deviceFill);
+  final fill = Fill(fillArgb);
   final stroke = lifecycleBorder
       ? lifecycleStroke(device.lifecycleStatus, palette.deviceStroke)
       : Stroke(argb: palette.deviceStroke, widthPt: 1);
@@ -156,7 +186,7 @@ DeviceLayerBuild buildDeviceLayer(
     // body is at least 20 units wide.
     final style = rackText(
       designatorPt,
-      palette.deviceDesignator,
+      inkDesignator,
       TextAnchor.midCenter,
     );
     final m = measurer.measureText(designator, style);
@@ -178,11 +208,78 @@ DeviceLayerBuild buildDeviceLayer(
     if (pad < 0) {
       labelDropped = true;
     } else {
+      // DR-083 §11.82.1: the mark rides THIS line, ahead of the text, and
+      // the text shifts right by an advance computed from the type size.
+      // It sits here because this line always draws, so it inherits that
+      // survival; a mark anywhere else needs its own drop tier, in the one
+      // function whose drop tiers have already shipped a blackout (header).
+      //
+      // READ THROUGH `effectiveGlyph`, NEVER `body.glyph`: 22 of the 48
+      // seeded templates still inherit their mark from the category
+      // (DR-084 authored the other 26), so reading the field directly
+      // draws nothing for those.
+      final advance = deviceGlyphAdvance(designatorPt);
+      // The mark is given up when it would take more than a quarter of the
+      // label band. Past that it competes with the designator instead of
+      // labelling it, and the designator is what a person in front of the
+      // rack actually needs.
+      //
+      // DROPPING THE MARK CANNOT SUPPRESS A LINE, and that is the property
+      // this shape exists to guarantee: the guard chooses between mark and
+      // no mark, never between text and no text. It is also NOT reported
+      // through `labelDropped`, which is about the label — a caller warned
+      // that a device lost its identifier when it only lost its mark would
+      // be told something false.
+      final mark = advance * 4 <= width - 2 * _pad
+          ? deviceGlyphOp(
+              effectiveGlyph(body.glyph, body.category),
+              DPt(_pad, pad + designatorPt / 2),
+              designatorPt,
+              inkDesignator,
+              strokeWidthPt: deviceGlyphStrokeWidth(designatorPt),
+            )
+          : null;
+      if (mark != null) {
+        // DR-083 §11.82.2: over a hatch, the mark wins, on a panel knocked
+        // out of the 45° band in the RESOLVED fill.
+        //
+        // THE COLLISION IS NOT HYPOTHETICAL AND NO RULING HAD NAMED IT.
+        // `kCategoryDefaultGlyph` maps `kCatPassive` to `blank`, and
+        // `scene_builder` hatches exactly `kCatPassive`, so the devices
+        // defaulting to the blank mark are precisely the ones buried in
+        // 45° lines. Suppressing the mark there was the tempting answer
+        // and would have made `blank` and `shelf` draw nothing whenever
+        // `hatchPassive` is on, which is its default: two of seventeen
+        // ruled values unreachable, inside the fix for unreachable values.
+        if (hatched) {
+          final r = designatorPt * kDeviceGlyphCapFactor / 2;
+          final midY = pad + designatorPt / 2;
+          final bleed = r / 3;
+          ops.add(
+            OpRect(
+              DBox.fromLtwh(
+                _pad - bleed,
+                midY - r - bleed,
+                2 * (r + bleed),
+                2 * (r + bleed),
+              ),
+              fill: fill,
+            ),
+          );
+        }
+        ops.add(mark);
+      }
+
+      // The whole text column starts after the mark, so its left edge runs
+      // straight down all three lines rather than the designator alone
+      // stepping in and the two under it hanging back.
+      final textLeft = mark == null ? _pad : _pad + advance;
+
       ops.add(
         OpText(
           designator,
-          DPt(_pad, pad),
-          rackText(designatorPt, palette.deviceDesignator, TextAnchor.topLeft),
+          DPt(textLeft, pad),
+          rackText(designatorPt, inkDesignator, TextAnchor.topLeft),
         ),
       );
       sizes.add(designatorPt);
@@ -193,7 +290,7 @@ DeviceLayerBuild buildDeviceLayer(
         OpText(
           ruSpanLabel ?? '${deviceH}U',
           DPt(width - _pad, pad),
-          rackText(badgePt, palette.deviceBadge, TextAnchor.topRight),
+          rackText(badgePt, inkBadge, TextAnchor.topRight),
         ),
       );
       sizes.add(badgePt);
@@ -208,8 +305,8 @@ DeviceLayerBuild buildDeviceLayer(
           ops.add(
             OpText(
               name,
-              DPt(_pad, y),
-              rackText(namePt, palette.deviceName, TextAnchor.topLeft),
+              DPt(textLeft, y),
+              rackText(namePt, inkName, TextAnchor.topLeft),
             ),
           );
           sizes.add(namePt);
@@ -219,8 +316,8 @@ DeviceLayerBuild buildDeviceLayer(
           ops.add(
             OpText(
               typeName,
-              DPt(_pad, y),
-              rackText(typePt, palette.deviceType, TextAnchor.topLeft),
+              DPt(textLeft, y),
+              rackText(typePt, inkType, TextAnchor.topLeft),
             ),
           );
           sizes.add(typePt);

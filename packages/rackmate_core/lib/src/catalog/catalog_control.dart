@@ -1,6 +1,7 @@
 // Seed catalog — "Control" (docs/catalog/seed-devices.md §3.4).
 
 import 'package:rackmate_core/src/catalog/catalog_ports.dart';
+import 'package:rackmate_core/src/model/device_glyph.dart';
 import 'package:rackmate_core/src/model/placement.dart' show Face;
 import 'package:rackmate_core/src/model/template.dart';
 import 'package:rackmate_core/src/units/len.dart';
@@ -199,6 +200,7 @@ Map<String, TemplateBody> buildControlCatalog() {
         '3.5 mm IR port here and is safety-adjacent (AC-052).',
     category: kCatControl,
     typePrefix: 'IRB',
+    glyph: DeviceGlyph.distribution,
     tags: const ['ir', 'distribution'],
     frontU: 1,
     rearU: 1,

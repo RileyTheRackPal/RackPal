@@ -1,5 +1,124 @@
 # Update Log
 
+## 2026-08-21 (third entry)
+
+* **Note**: **M4-R IS CODE COMPLETE AND ITS DRILL IS UNRUN** (`#694`, nine
+  commits, `a915a04`..`811c5c6`). The seventeen marks draw, the accent fills the
+  body, the ink follows the fill, the knockout clears the hatch and the builder
+  picker shows the real geometry. `docs/18` carries the printed legibility drill
+  and **nobody has run it**, so whether seventeen silhouettes are tellable apart
+  at 8 pt on a photocopy is the one thing still unmeasured, and it is the
+  question DR-059 capped the set to answer.
+* **Note**: **DR-059 WAS WRONG THREE TIMES AND EACH WAS CAUGHT BY MEASURING, NOT
+  BY READING.** Its golden/PAL-1 price, its M4-K sequencing, and the cost of
+  deferring the seed data. **§11.58 is left as written** and each correction
+  lives in the ruling that found it, on DR-080 §11.79.2's precedent: a ruling
+  records what was believed on the day.
+* **Note**: **TWO OF MY OWN RULINGS THIS SESSION WERE WRONG THE SAME WAY**, which
+  is why the above is not a complaint about DR-059. DR-084's draft asserted a
+  codec behaviour that does not exist (`json_codec` writes `glyph` whenever
+  non-null, so the economy is a property of what is AUTHORED, and the figure is
+  **26 of 48**); DR-083 said the knockout costs "two extra ops" when it costs
+  **one**, having counted the mark that draws on every device anyway. Both were
+  caught by writing something that had to COMPUTE the number rather than assert
+  it. That is the practical form of
+  [a stated cost is a hypothesis](/practices/a-stated-cost-is-a-hypothesis.md):
+  the cheapest way to stop asserting numbers is to make a test derive them.
+* **Note**: **THE ELEVATION HAD NO OP CENSUS**, which is why a path op added to
+  every device on every elevation left 3,152 cases green. The schematic had
+  baselines; the elevation had a TEXT-RUN census beside them, and a mark is a
+  path. `#757` pins the RELATIONSHIP rather than a total: exactly one mark per
+  visible device, which is what a person could check by eye on a printed sheet.
+  A pinned grand total moves on every unrelated change and teaches the next
+  reader to regenerate it without looking, which is how a baseline stops being a
+  gate.
+* **Note**: **THREE GATES CAUGHT WHAT LOCAL GREEN COULD NOT.** `tracked sources`
+  found an untracked `lib/` file TWICE. The analyzer ratchet caught
+  `DIRECTIVES_ORDERING` and `DOCUMENT_IGNORES`, both diagnosable only by diffing
+  the **by-rule table** against the last green run, because the gate's headline
+  named an unrelated pre-existing info each time. And `draw_source_gate_test`
+  failed a production comment citing a test file that does not exist: **my own
+  header, in the sentence explaining that the port is missing**.
+
+
+## 2026-08-21 (second entry)
+
+* **Creation**: [DR-083, the mark rides the designator
+  line](/decisions/dr-083-the-mark-rides-the-designator-line.md) (`#751`), taken
+  at M4-R's pick-up and **before any artwork**. `#694` is decomposed into seven
+  tasks (`#751`-`#757`), which it had none of an hour ago.
+* **Creation**: [DR-084, the seeded catalog authors its own
+  marks](/decisions/dr-084-the-seeds-author-their-own-marks.md) (`#758`), from a
+  probe run while building `#753` and before the mark reached a single sheet.
+  **0 of 48 seeded templates author a `glyph`**, so the seventeen-mark set
+  resolved to **9** category defaults, **8 marks were unreachable**, and
+  `display` covered all 18 Field Devices: a speaker, a camera, a keypad and a
+  projector all drawing a screen on a stand.
+* **Note**: **THE TEST THAT MISSED IT WAS GREEN AND CORRECT, AND THAT IS THE
+  PART TO KEEP.** `device_glyph_test` asserts *"every one of the 48 seeded
+  templates resolves to a mark"* and always passed, because they do. **An
+  existence assertion cannot see a COLLAPSE**: 48 resolving to 9 satisfies it
+  exactly as well as 48 resolving to 17, and the number that mattered was never
+  asked for. [census before building](/practices/census-before-building.md) for
+  the sixth time, with a twist: the earlier five found a field that was EMPTY,
+  which the first query anybody writes catches. This one found a field that
+  **resolves perfectly and collapses**, which survives every query except the one
+  that counts the range.
+* **Note**: the amendment is cheap because **the assignment was already written
+  down**: each `DeviceGlyph` value's doc comment names the catalog ids that
+  motivated it, and DR-059 calls those ids *"the evidence that the set was
+  censused rather than invented"*. No judgement is added; a table already in the
+  tree is transcribed onto the field that reads it.
+* **Note**: **DR-084's OWN FIRST DRAFT ASSERTED A MECHANISM THAT DOES NOT EXIST,
+  AND IT WAS CAUGHT BY READING THE CODEC RATHER THAN BY A GATE.** The draft said
+  the `glyph` key *"is written only when it differs from the category default"*,
+  as though the codec suppressed default-equal values. `json_codec.dart:3420`
+  writes it whenever it is NON-NULL, and the comment above it says why: *"Absent
+  means INHERIT THE CATEGORY'S DEFAULT, not unknown"*, and writing a resolved
+  value would *"lose the author's choice the moment the category changed"*. The
+  economy is a property of what is AUTHORED, not of the codec, and **26 of the 48
+  gain a key** rather than some unstated subset. Corrected in place before the
+  ruling committed, and recorded, because a ruling that hides its own draft error
+  teaches nothing. Third DR-059-shaped failure this week and the first of mine.
+* **Note**: **`accentColor`'s seeds stay unauthored ON PURPOSE**, and the two
+  fields part company here. An accent is the AUTHOR's own mark and a seeded
+  catalog has no business choosing one, which is also why DR-080 moves no golden
+  and DR-084 moves the bytes of four starters.
+* **Note**: **THE PLACEMENT REUSES A FIX, NOT A STYLE.** The mark rides the
+  designator line because `family_glyph.dart` already draws that way and exists
+  because the alternative failed in the field. The rejected option, a larger mark
+  centred on the right, is the better PICTURE and was declined because at 1U it
+  must dodge a 9 pt badge, which means a new drop tier in the one function whose
+  drop tiers have already shipped a blackout. **The better picture is not worth a
+  second blackout.**
+* **Note**: **THE CENSUS FOUND A COLLISION NO RULING HAD NAMED.**
+  `kCategoryDefaultGlyph` maps `kCatPassive` to `DeviceGlyph.blank`, and
+  `scene_builder.dart:344` hatches exactly `kCatPassive`: the devices defaulting
+  to the blank mark are precisely the ones covered in 45 degree lines. Suppressing
+  the mark there was tempting and wrong, because `hatchPassive` is on by default
+  and two of seventeen ruled values would then draw nothing:
+  [a modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md)
+  **re-created inside the fix for it**.
+* **Note**: **DR-059's SEQUENCING NO LONGER DESCRIBES THE TREE, WHICH IS THE
+  SECOND SENTENCE OF ITS TO FAIL IN THREE DAYS.** It sequences the artwork with
+  M4-K as *"the first surface a device glyph appears on at all"*.
+  `panel_layer.dart` does not exist, M4-K is not started, and DR-080 made
+  `device_layer.dart` that surface. `#694` is not blocked on `#182` and could
+  have been started at any point. See
+  [a stated cost is a hypothesis](/practices/a-stated-cost-is-a-hypothesis.md),
+  which now points at sequencing as well as cost: both failures share a cause, a
+  ruling written from the corpus about a part of the tree nobody re-read.
+* **Note**: **THE TWO RULINGS HAVE OPPOSITE COST PROFILES AND ONLY ONE WAS EVER
+  MEASURED.** DR-080's accent moves nothing, because 0 of 4 starters and 0 of 48
+  seeds author `accentColor`. But `glyph` defaults FROM CATEGORY and
+  `device_glyph_test` already asserts all 48 seeded templates resolve to a mark,
+  so **every device on every elevation gains ops**. `#757` owns that and is not
+  the tidy-up task it looks like.
+* **Note**: `buildDeviceLayer` already takes `(DeviceInstance, TemplateBody)`, so
+  the glyph and both accent fields are in scope today. **No plumbing task exists
+  because none is needed**, which is worth recording before somebody files one.
+
+
 ## 2026-08-21
 
 * **Creation**: [DR-080, the accent colour reaches the

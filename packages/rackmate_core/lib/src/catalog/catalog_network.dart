@@ -2,6 +2,7 @@
 // devices.md §3.3).
 
 import 'package:rackmate_core/src/catalog/catalog_ports.dart';
+import 'package:rackmate_core/src/model/device_glyph.dart';
 import 'package:rackmate_core/src/model/placement.dart' show Face;
 import 'package:rackmate_core/src/model/template.dart';
 import 'package:rackmate_core/src/units/ids.dart';
@@ -272,6 +273,7 @@ Map<String, TemplateBody> buildNetworkCatalog() {
         'the one column the trim tech actually needs (AC-025).',
     category: kCatNetwork,
     typePrefix: 'PP',
+    glyph: DeviceGlyph.patchPanel,
     tags: const ['patchpanel', 'structured-cabling'],
     frontU: 1,
     rearU: 0,
@@ -319,6 +321,7 @@ Map<String, TemplateBody> buildNetworkCatalog() {
     displayName: 'Fibre Enclosure / LIU, 24-fibre',
     category: kCatNetwork,
     typePrefix: 'LIU',
+    glyph: DeviceGlyph.patchPanel,
     tags: const ['fibre', 'liu'],
     frontU: 1,
     rearU: 1,

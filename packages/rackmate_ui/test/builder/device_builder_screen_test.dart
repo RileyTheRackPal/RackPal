@@ -304,6 +304,71 @@ void main() {
 
       expect(find.textContaining('from category (amplifier)'), findsOneWidget);
     });
+
+    testWidgets('#756: the picker DRAWS each mark, through the geometry the '
+        'elevation itself emits rather than a look-alike (CR-086)', (
+      tester,
+    ) async {
+      await _pump(tester, template: _named()..category = kCatAudio);
+      await openSection(tester, 'Appearance');
+
+      // The closed dropdown shows the selected option, which is `null`:
+      // "from category (amplifier)", drawn with the category's mark.
+      final marks = find.byType(DeviceGlyphMark);
+      expect(
+        marks,
+        findsWidgets,
+        reason: 'a picker whose values ARE pictures must show the picture',
+      );
+      expect(
+        tester.widget<DeviceGlyphMark>(marks.first).glyph,
+        DeviceGlyph.amplifier,
+        reason:
+            'null must preview what CHOOSING it would draw, which is '
+            'the resolved category default and not a blank',
+      );
+    });
+
+    testWidgets('#756: the Appearance note no longer says the marks are '
+        'undrawn, because they are', (tester) async {
+      await _pump(tester, template: _named());
+      await openSection(tester, 'Appearance');
+
+      // PRINTED, not asserted blind: a `contains` cannot see a sentence
+      // that has quietly become false, which is exactly what this note
+      // was for three commits.
+      final notes = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((t) => t.data ?? '')
+          .where((s) => s.contains('mark'))
+          .toList();
+      // `print` rather than `printOnFailure`, on schematic_perf_test's
+      // reasoning: copy that only surfaces when a case FAILS is copy
+      // nobody reads, and the whole lesson here is that a sentence has to
+      // be LOOKED at. This one goes in the log of every green run.
+      // ignore: avoid_print
+      print('APPEARANCE COPY: $notes');
+
+      expect(
+        notes.any((s) => s.contains('not drawn on anything yet')),
+        isFalse,
+        reason: 'the marks reach the elevation as of #753',
+      );
+      expect(
+        notes.any((s) => s.contains('appear on the rack elevation')),
+        isTrue,
+        reason: 'and the note should say where the mark GOES',
+      );
+      expect(
+        notes.where((s) => s.contains('photocopy')),
+        hasLength(1),
+        reason:
+            'PRINTING THE COPY IS WHY THIS EXISTS: the replacement '
+            'note originally ended on the same photocopy point as the one '
+            'above it, so the section said one thing twice and nothing '
+            'about what to DO. No `contains` assertion can see that',
+      );
+    });
   });
 
   group('the two defects this file was written to catch', () {

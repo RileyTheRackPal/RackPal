@@ -1,6 +1,7 @@
 // Seed catalog — "RF / Coax" (docs/catalog/seed-devices.md §3.6).
 
 import 'package:rackmate_core/src/catalog/catalog_ports.dart';
+import 'package:rackmate_core/src/model/device_glyph.dart';
 import 'package:rackmate_core/src/model/template.dart';
 import 'package:rackmate_core/src/units/len.dart';
 import 'package:rackmate_core/src/units/mass.dart';
@@ -137,6 +138,7 @@ Map<String, TemplateBody> buildRfCatalog() {
         '(a v1.2 count rule; maxDevicesPerSegment is carried as data now).',
     category: kCatRf,
     typePrefix: 'SWM',
+    glyph: DeviceGlyph.switcher,
     tags: const ['satellite', 'multiswitch'],
     frontU: 1,
     rearU: 1,

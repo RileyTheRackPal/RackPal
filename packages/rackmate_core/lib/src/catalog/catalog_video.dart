@@ -4,6 +4,7 @@
 // catalog entry — §3.10 counts template ids, not expanded configurations).
 
 import 'package:rackmate_core/src/catalog/catalog_ports.dart';
+import 'package:rackmate_core/src/model/device_glyph.dart';
 import 'package:rackmate_core/src/model/placement.dart' show Face;
 import 'package:rackmate_core/src/model/template.dart';
 import 'package:rackmate_core/src/units/len.dart';
@@ -389,6 +390,7 @@ Map<String, TemplateBody> buildVideoCatalog() {
     displayName: 'HDMI Distribution Amplifier 1x8',
     category: kCatVideo,
     typePrefix: 'DA',
+    glyph: DeviceGlyph.distribution,
     tags: const ['hdmi', 'distribution'],
     frontU: 1,
     rearU: 1,
@@ -512,6 +514,7 @@ Map<String, TemplateBody> buildVideoCatalog() {
     displayName: 'Presentation Switcher / Scaler 4x1',
     category: kCatVideo,
     typePrefix: 'SCL',
+    glyph: DeviceGlyph.switcher,
     tags: const ['presentation', 'commercial'],
     frontU: 1,
     rearU: 1,
@@ -603,6 +606,7 @@ Map<String, TemplateBody> buildVideoCatalog() {
         'halves only).',
     category: kCatVideo,
     typePrefix: 'TX',
+    glyph: DeviceGlyph.extender,
     tags: const ['hdbaset', 'extender'],
     frontU: 0,
     rearU: 0,
@@ -702,6 +706,7 @@ Map<String, TemplateBody> buildVideoCatalog() {
         'of this shape.',
     category: kCatVideo,
     typePrefix: 'ENC',
+    glyph: DeviceGlyph.extender,
     tags: const ['avoip', 'sdvoe'],
     frontU: 0,
     rearU: 0,

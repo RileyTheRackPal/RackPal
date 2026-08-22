@@ -7,9 +7,18 @@
 // spelling eight categories against a catalog shipping nine, which is
 // exactly the drift a second list produces.
 //
-// Nothing here asserts what a glyph LOOKS like. There are no paths yet:
-// the 17 vector marks are M4-K's (§11.58.7), and a test pinning artwork
-// that does not exist would be asserting a mechanism nobody built.
+// Nothing here asserts what a glyph LOOKS like, and that is still the
+// split: the 17 vector marks live in `device_glyph_art.dart` with their
+// own cases (#752), and the elevation's placement in
+// `device_layer_glyph_test.dart` (#753). §11.58.7 sequenced the artwork
+// with M4-K; DR-083 §11.82.3 corrected that, because `panel_layer.dart`
+// does not exist and DR-080 made the elevation the first surface.
+//
+// WHAT THIS FILE NOW GATES THAT IT DID NOT is the last group: every one
+// of the 17 marks must be REACHABLE from the seeded catalog. The case
+// above it, "every template resolves to a mark", passed for weeks while
+// 48 templates resolved to nine marks and eight were drawn by nothing
+// (DR-084). An existence assertion cannot see a collapse.
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:test/test.dart';
 
@@ -120,23 +129,81 @@ void main() {
 
     test('several catalog ids share one silhouette, which is the cap doing '
         'its job rather than a gap in it', () {
-      // F04..F08 are five different speakers and one picture.
+      // F04..F08 are five different speakers and one picture. THAT is the
+      // cap working. What was NOT the cap working is the state DR-084
+      // ended, where all EIGHTEEN field devices shared one picture
+      // because none of them authored a glyph.
       final field = buildSeedCatalog().entries.where(
         (e) => e.value.category == kCatField,
       );
-
       expect(field, hasLength(18));
+
+      final marks = {
+        for (final e in field) effectiveGlyph(e.value.glyph, e.value.category),
+      };
+      expect(
+        marks,
+        hasLength(6),
+        reason:
+            'DR-084 authored these: display (F01-F03, F12), speaker '
+            '(F04-F08), camera (F09), source (F10), antenna (F11, F17) '
+            'and control (F13-F16, F18). Before it, all 18 answered '
+            '`display` and a speaker drew a screen on a stand',
+      );
       expect(
         {
           for (final e in field)
-            effectiveGlyph(e.value.glyph, e.value.category),
+            if (e.key.startsWith('F0') &&
+                int.parse(e.key.substring(1)) >= 4 &&
+                int.parse(e.key.substring(1)) <= 8)
+              effectiveGlyph(e.value.glyph, e.value.category),
         },
-        hasLength(1),
+        {DeviceGlyph.speaker},
+        reason: 'five speakers, one silhouette: the cap doing its job',
+      );
+    });
+  });
+
+  group('DR-084: the seeded catalog authors its own marks', () {
+    test('EVERY mark is reachable from the seeded catalog, which is the '
+        'assertion that would have caught the collapse', () {
+      final drawn = {
+        for (final e in buildSeedCatalog().values)
+          effectiveGlyph(e.glyph, e.category),
+      };
+      final unreachable = DeviceGlyph.values
+          .where((g) => g != DeviceGlyph.none && !drawn.contains(g))
+          .toList();
+
+      expect(
+        unreachable,
+        isEmpty,
         reason:
-            'none of the 18 has authored a glyph yet, so all 18 currently '
-            'take the category default, which is why the picker on the FORM '
-            'matters more in this category than anywhere else (see the note '
-            'on kCategoryDefaultGlyph)',
+            'AN EXISTENCE ASSERTION CANNOT SEE A COLLAPSE. The case above '
+            'this one asserts every template resolves to a mark, and it '
+            'passed while 48 templates resolved to NINE marks and eight '
+            'were drawn by nothing. This counts the RANGE, which is the '
+            'number a person looking at an elevation would count',
+      );
+      expect(drawn, hasLength(17));
+    });
+
+    test('a template only authors a glyph when it DIFFERS from its '
+        'category default, so the other 22 stay byte-identical', () {
+      final wrong = [
+        for (final e in buildSeedCatalog().entries)
+          if (e.value.glyph != null &&
+              e.value.glyph == kCategoryDefaultGlyph[e.value.category])
+            e.key,
+      ];
+
+      expect(
+        wrong,
+        isEmpty,
+        reason:
+            'json_codec writes `glyph` whenever it is non-null, so a '
+            'template authoring its own default gains a key and moves '
+            'bytes for nothing (DR-084 §11.83.4)',
       );
     });
   });
