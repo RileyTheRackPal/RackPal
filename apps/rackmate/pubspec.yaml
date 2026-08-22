@@ -1,7 +1,7 @@
 name: rackmate
 description: RackMate — A/V rack and wiring design for custom integration.
 publish_to: none
-version: 0.4.46
+version: 0.4.49
 
 environment:
   sdk: ^3.12.0

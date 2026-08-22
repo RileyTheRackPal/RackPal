@@ -12082,6 +12082,229 @@ own file already says so.
 
 ---
 
+### 11.79 DR-080 · The accent colour reaches the elevation, and the text colour follows it
+
+**Settled by the user on 2026-08-21** (`#747`, `#748`), on the question DR-059 §11.58.8 deferred in
+its own last paragraph and filed separately.
+
+**A §8.3 AMENDMENT, and a narrow one.** Roadmap §2's device-builder line already names the glyph,
+which DR-059 put there. This adds the channel that ruling was written *beside*: the accent reaches
+paper. No milestone moves, no rule is added or removed, and `kSchemaVersion` does not advance,
+because the key is already written and already read back.
+
+**11.79.1 THE FIELD IS AUTHORABLE, PERSISTED, UNDOABLE, AND INVISIBLE.** `TemplateBody.accentColor`
+and `DeviceOverrides.accentColor` are both declared, both round-trip through `json_codec.dart`, both
+carry a `_safe` change-class rule, and `device_builder_screen.dart:958` ships a control for the
+first: **eight fixed Okabe-Ito hues and a `Clear`**, a fixed set rather than a wheel precisely so
+that no unchecked hue could reach the greyscale gate. `draw/scene/device_layer.dart:134` computes
+`final fill = Fill(palette.deviceFill)` **unconditionally**, and that is every device on every
+elevation, on screen and on the sheet. **So the builder has shipped a control that changes nothing
+since M4-D**, and the section note beside it tells the user about a mark that is not drawn either.
+
+**11.79.2 DR-059 PRICED THIS AND THE PRICE WAS WRONG, MEASURED BOTH WAYS.** §11.58.8 reads that
+making `accentColor` reach `device_layer.dart` *"changes the elevation, regenerates four starters'
+goldens and must clear PAL-1"*. Against the tree at `3245e6b`:
+
+| The claim | What the tree says |
+|---|---|
+| *"regenerates four starters' goldens"* | `accentColor` occurs **0 times** in all four `.rmpj` starters and **0 times** anywhere in `catalog/`. Every device resolves the field absent, the fill is unchanged, and **no golden moves at all** |
+| *"must clear PAL-1"* | `tools/pal1_check.py` enumerates in-band `SignalFamilyDef` pairs. It has **no device concept whatsoever** and cannot see a device fill. PAL-1 is not implicated |
+
+Both halves were read off a ruling rather than measured. That is the third time this project has
+priced a decision from a derived artifact, and it is why that is a practice rather than an anecdote.
+**The correction is recorded here and §11.58 is left as written**, because §11.58 is the record of
+what was believed on the day and the mis-pricing is the useful half of it.
+
+**11.79.3 THE COST DR-059 DID NOT NAME IS THE ONLY REAL ONE.** `device_layer.dart` fills the body
+and then draws **four text ops over it**: the designator, the name, the type and the U-height badge,
+each in a fixed `RackStyle` colour (`deviceDesignator` `0xFF0F172A`, `deviceName` `0xFF334155`,
+`deviceType` `0xFF64748B`, `deviceBadge` `0xFF475569`). All four are dark inks chosen against
+`deviceFill`, which is `0xFFEFF3F8`, a near-white. **One of the eight shipped swatches is
+`Rgb(0x00, 0x00, 0x00)`.** A body filled with it carries black text on black. The hazard is not the
+hue: it is that the fill and the ink over it were chosen by different parties, a year apart, and
+nothing made them meet.
+
+**11.79.4 THE RULING.** The accent becomes the **device body fill**, resolved **instance override
+first, then the template body, then `palette.deviceFill`** when both are absent. That order is not
+new law: door 1 of CR-054 exists so a person can say something about *this* device, and an
+instance-level statement is by construction the more specific one. `device_layer.dart`'s own header
+already records that `DeviceOverrides` *"are still not applied"* there, so this is the first thing
+that reads one on the elevation and the precedence is written down before there are two readers to
+disagree.
+
+The four label colours are **computed from the resolved fill's WCAG relative luminance** rather than
+read from the palette. `pal1_check.py`'s `luminance()` is the reference implementation already in
+the tree and is what the Dart must agree with, so **the product does not acquire a second definition
+of contrast**: that is the mistake CR-080's font drift and the `family_glyph` measurement both took,
+one authority per fact.
+
+**11.79.5 TWO COSTS ARE ACCEPTED IN WRITING, SO M6 IS NOT AMBUSHED BY THEM.** The user was shown
+both and took them, and naming them here is what makes that a decision rather than an oversight.
+
+- **The elevation's text palette becomes data-dependent.** `RackStyle.deviceDesignator` is one value
+  today and every consumer assumes it is. A sheet whose ink colour depends on document content is a
+  new property of this renderer, and the `RackStyle` equality and `hashCode` members that enumerate
+  those fields are where a later reader will first notice.
+- **Ink coverage on a real laser.** M6's exit criterion is a **physical** print on an ANSI B laser
+  plus an ANSI D plotter plus a photocopy, signed off by a person (AC-058 D13). A 42U rack of
+  saturated bodies is a toner load nothing has measured, and it is exactly the class of thing that
+  is discovered on paper. **`M6-J`'s print matrix (`#357`) is where this is checked**, and this
+  clause is what tells it to look.
+
+**11.79.6 SEQUENCING IS CR-078, NOT A PREFERENCE, AND IT IS THIS RULING'S ONE HARD CONSTRAINT.**
+*"Hue is never used alone."* Every device is one uniform fill today, so no two devices differ by hue
+at all and the invariant is satisfied trivially and vacuously. **The instant accents render, devices
+differ by hue and nothing else**, until DR-059's seventeen marks exist to carry the redundant
+channel. So **the fill must not ship before M4-R's artwork** (`#694`): they are one deliverable in
+two tasks, not two deliverables. This is what makes `#694`'s decomposition urgent rather than tidy,
+and it is the reason a milestone that looked fully adjudicated was not.
+
+**11.79.7 WHAT THIS DOES NOT RULE.** It does not add a swatch, remove one, or make the set editable:
+the eight are Okabe-Ito and the argument for them is unchanged. It does not give the accent a
+*meaning*: it is the author's mark, not a category, a lifecycle state or a signal domain, and
+nothing derives from it, which is what keeps it out of CR-078's four channels rather than beside
+them. It does not touch the schematic. And it does not make `accentColor` reachable from a placed
+device's inspector, which is door 1 and is M4-L1's (`#230`).
+
+---
+
+### 11.80 DR-081 · Three unreachable port fields get a cell, and the rule that would read one is M5's
+
+**Settled by the user on 2026-08-21** (`#747`, `#749`), on a gap `port_table.dart` recorded at M4-E
+in its own comment and no task ever owned.
+
+**A §8.3 AMENDMENT.** docs/06 §4.5's column table gains two columns and a **cell shape it does not
+have**. No milestone moves; M4-J2 (`#224`) grows by the cell, which is where the scope lands.
+
+**11.80.1 THE GAP, IN THE WORDS OF THE FILE THAT WROTE IT DOWN.** M4-E built seven column packs from
+the intersection of docs/06 §4.5's table and the model, and `port_table.dart:86` names what fell
+out: `channelIndex` *"belongs with port sets (M4-J2)"*, and `carriedProtocols`/`acceptedFamilies`
+*"need a multi-select the grid has no cell shape for"*. All three are declared on `PortDef`, all
+three round-trip through the codec, and **not one has ever had a writer**. That comment ends
+*"which is `a modelled field is not a reachable one` in its original form"*, and it was right.
+
+**11.80.2 THE RULING: all three get a cell.** `channelIndex` is an **integer cell on the port-set
+surface**, which is where its meaning lives: it says which conductor of a `PortSetDef` this port is,
+and it is meaningless without one. `acceptedFamilies` and `carriedProtocols` get a **multi-select
+cell over the seeded signal families**.
+
+**THE CELL SHAPE IS THE DELIVERABLE, NOT THE TWO COLUMNS.** The grid has single-value cells and
+nothing else; a list-valued column is a shape it has never had. Building it once, keyed and testable
+like every other cell since M4-F11, is the difference between a pattern the next list-valued field
+reuses and a special case that gets copied badly. M4-F11 is the precedent and its lesson was exactly
+this: the mixed state came out as **one parameter** once the controls left `port_grid.dart`.
+
+**11.80.3 AUTHORING ONLY, AND THIS CLAUSE IS WHAT KEEPS M5 WHOLE.** **Nothing reads
+`acceptedFamilies` at connect time in v1.** The value is authored, persisted, and available to
+whatever describes a port; it is a fact about the port for the person reading the drawing.
+
+Whether a connect springs back is a **validation rule**, and validation is M5: a 28-rule catalogue
+behind AC-051, which forbids any rule shipping without a known-bad fixture **and** a known-good
+near-miss. A rule armed here would be an M5 rule built outside M5's registry, without its pair, and
+M5 would inherit a rule it did not write and cannot count against its own exit criterion. **The
+milestone's fixture-pair gate is the thing this clause protects**, and roadmap §4 names the pressure
+to add "just one more obvious rule" as the mechanism by which M5 overruns.
+
+**11.80.4 DR-012 IS NOT DISTURBED, AND THE DEFAULT IS THE WHOLE REASON.** §11.12 deferred three
+gesture rules on the arithmetic that `acceptedFamilies`, `channelIndex` and `maxConnections` are
+populated on **none of the 727 seed ports**, so a rule reading one does nothing on every real
+document. **Both lists are non-nullable and default to `[]`.** An empty list reads as *this port
+states no constraint*, so all 727 seed ports, all four starters and every file on disk keep exactly
+the behaviour they have today. **A field gaining a writer does not re-arm a rule that was never
+built**, and DR-012's arithmetic stays true of every document this ruling does not touch.
+
+**11.80.5 AN EMPTY LIST IS NOT `null`, AND THE DISTINCTION IS LOAD-BEARING.** G4's absent-key
+convention is about **unknowns**. *"This port constrains nothing"* is a **statement**, not an
+unknown, and a port whose author has said nothing is not the same as a port whose author has said
+*anything goes*. The model already encodes this by making the lists non-nullable, and the multi-select
+must not quietly introduce a third state to be helpful. This is DR-063's distinction one field over:
+**a disagreement is not an unknown**, and neither is a deliberate emptiness.
+
+**CR-117 holds because the codec writes no key for an empty list**, which is its existing behaviour
+rather than a new rule. The 48-template byte sweep is the check, and it fails first if that changes.
+
+**11.80.6 WHAT THIS DOES NOT RULE.** It does not decide `maxConnections`, the third field DR-012
+named: that one already has `effectiveMaxConnections` reading it and a different problem. It does not
+add, arm, move or re-tier any validation rule. It does not extend the multi-select to `bankKey` or
+`setKey`, which are **single-valued** keys and would be actively worse for it. And it does not rule
+what a `carriedProtocols` entry means where it disagrees with the port's own `signalFamily`, which is
+a question the seed catalog can answer by being censused and which this ruling cannot answer by
+assertion: `two documents agreeing is not verification`.
+
+---
+
+### 11.81 DR-082 · `parity` and `flowControl` are closed sets, and the corpus can now say so
+
+**Settled by the user on 2026-08-21** (`#747`, `#750`). **The only one of `#747`'s three rulings that
+blocks nothing**: it is a comment in shipped code reading *"the corpus has not ruled on"*, settled
+because a census found it rather than because it stood in the way of anything.
+
+**A CORRECTION, NOT A §8.3 AMENDMENT.** No column is added, no milestone moves, no rule changes, no
+sheet gains a field. Two free-text cells acquire a value set.
+
+**11.81.1 WHAT SHIPPED, AND THE COMMENT THAT WAS RIGHT TO REFUSE.** `port_commands.dart:300`
+declares `parity` as `PortField<String?>` under the note: *"Free text, because the model's own
+comment says the value set is not yet specified. A dropdown here would fix a vocabulary the corpus
+has not ruled on."* `flowControl` sits beside it on the same terms, and `SerialSpec` in
+`template.dart` carries the same disclaimer on both fields.
+
+**That refusal was correct at M4-F.** Fixing a vocabulary by picking one while building a cell is
+how a product acquires rules nobody decided, and it is the shape `a rule you invent must be checked
+against the good cases` exists to catch. The refusal was correct; leaving it refused indefinitely
+was not, and nothing was going to raise it except a census.
+
+**11.81.2 THE RULING: both become closed value sets.**
+
+| Field | Values |
+|---|---|
+| `parity` | `none`, `even`, `odd`, `mark`, `space` |
+| `flowControl` | `none`, `rtsCts`, `xonXoff` |
+
+Neither is an open vocabulary the corpus was wise to leave alone. **RS-232 has not gained a parity
+bit since the corpus was written** and is not going to; these are settled trade facts an installer
+can recite, which is exactly the class of thing this project settles by censusing rather than by
+inventing.
+
+**11.81.3 THE MODEL'S OWN COMMENT PROPOSES THREE PARITY VALUES AND THIS RULING TAKES FIVE, WHICH IS
+A DIFFERENCE AND IS RECORDED RATHER THAN GLOSSED.** `SerialSpec.parity` reads
+*"e.g. `none` | `even` | `odd`"*. The comment says **"e.g."** and was illustrating rather than
+enumerating: `a spec table is an illustration until censused`, applied to a doc comment.
+
+**The five are RS-232's own set, not an invention of this ruling**, which is what makes taking them
+a transcription in DR-057's sense rather than a judgement. **Whether `mark` and `space` appear on
+gear a RackMate user actually meets is a TRADE question and this ruling does not claim to answer
+it**: `trade objections are questions, not findings` has overruled a confident workflow claim from
+this side of the keyboard four times, and this is not the fifth. The argument for including them is
+asymmetric cost and nothing else: **an unused enum value costs one line, while a missing one costs a
+workaround in the notes column on a port somebody has to physically wire.** If the trade says two of
+the five are dead, deleting them later is a smaller edit than this paragraph.
+
+**11.81.4 A FREE-TEXT COLUMN IS THE DEFECT, NOT THE TYPING.** One column holding `none`, `NONE`, `N`
+and `no parity` is four values for one fact. The port grid **sorts**, DR-078's `Find & replace`
+**matches**, and the schedule **prints**. A column that cannot be sorted is a defect in the
+schedule, and it is not repaired by asking users to be careful.
+
+**11.81.5 NO `Other` ROW SHIPS, and this clause has an argument rather than a preference behind it.**
+An escape hatch re-introduces exactly the dirty column the value set exists to prevent, and **G4
+already supplies what an escape hatch usually reaches for**: absent means unknown, unknown is
+expressible today, and the grid already renders it. **A value set with a free-text row is a
+free-text column wearing a dropdown.**
+
+**11.81.6 MIGRATION IS NEARLY EMPTY, AND THE REMAINDER FOLLOWS DR-075.** **0 of the 727 seed ports
+author either field**, so nothing seeded needs mapping and no starter moves. A value already typed
+into a user's project that does not match the set is **retained and shown as it was typed**, not
+silently dropped. DR-075 settled this exact shape one domain over for an imported rack label and its
+reasoning transfers unchanged: **a wrongly discarded assertion is gone, while a retained one is
+visible and correctable.**
+
+**11.81.7 WHAT THIS DOES NOT RULE.** It does not touch `baud`, `dataBits` or `stopBits`, which are
+integers and were never ambiguous. **It deliberately does not fix `busProtocol`**, which sits three
+declarations away and is genuinely open: there is no closed set of control-bus protocols, and it
+stays free text for precisely the reason `parity` no longer does. And it does not decide whether
+either value prints on any sheet, which is M6's question about columns and widths.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

@@ -1,5 +1,89 @@
 # Update Log
 
+## 2026-08-21
+
+* **Creation**: [DR-080, the accent colour reaches the
+  elevation](/decisions/dr-080-the-accent-reaches-the-elevation.md) (`#748`),
+  the last ruling M4 owed and the only one of three that blocked anything.
+  `accentColor` has had a control since M4-D and **no renderer since ever**:
+  `device_layer.dart:134` computes `Fill(palette.deviceFill)` unconditionally.
+* **Note**: **DR-059 PRICED THIS AND BOTH HALVES WERE WRONG.** It said the fix
+  *"regenerates four starters' goldens and must clear PAL-1"*. `accentColor`
+  occurs **0 times** in all four starters and **0 times** in `catalog/`, so no
+  golden moves; and `pal1_check.py` enumerates `SignalFamilyDef` pairs and has
+  **no device concept at all**. Third instance of
+  [a stated cost is a hypothesis](/practices/a-stated-cost-is-a-hypothesis.md),
+  and the first where the over-priced artifact was one of this project's own
+  rulings. §11.58 is **left as written**, because it records what was believed.
+* **Note**: **THE COST NOBODY HAD NAMED IS THE ONLY REAL ONE.** `device_layer`
+  fills the body and then draws **four** text ops over it, all dark inks chosen
+  against a near-white `deviceFill`, and one of the eight shipped swatches is
+  `Rgb(0x00, 0x00, 0x00)`. A ruling that had been deferred for its cost was
+  deferred for the wrong cost entirely.
+* **Creation**: [DR-082, parity and flowControl are closed
+  sets](/decisions/dr-082-parity-and-flowcontrol-are-closed-sets.md) (`#750`),
+  the only one of `#747`'s three that **blocks nothing**: a comment in shipped
+  code reading *"a vocabulary the corpus has not ruled on"*, settled because a
+  census found it rather than because it was in the way.
+* **Note**: **THE REFUSAL WAS RIGHT AND LEAVING IT STANDING WAS THE ERROR.**
+  Fixing a vocabulary while building a cell is how a product acquires rules
+  nobody decided, so M4-F was correct to write free text and say why. Nothing
+  was ever going to raise it again except a census, which is the argument for
+  censusing a milestone's own comments and not only its model.
+* **Note**: **THE DRAFT MADE A TRADE CLAIM AND IT WAS CUT BEFORE IT REACHED
+  CANON.** The first version argued `mark` and `space` parity *"appear on control
+  gear and legacy head-end equipment"*, which is a claim about the field that
+  nothing here can support. The clause now says the five are RS-232's own set,
+  that whether a RackMate user meets those two is a TRADE question this ruling
+  does not answer, and that the only argument is asymmetric cost: an unused enum
+  value costs one line, a missing one costs a workaround in the notes column on a
+  port somebody has to wire. See
+  [trade objections are questions, not findings](/practices/trade-knowledge-beats-workflow-reasoning.md),
+  caught on the way in for once rather than overruled on the way out.
+* **Note**: **NO `Other` ROW, and the argument generalises.** An escape hatch
+  re-introduces the dirty column the value set exists to prevent, and
+  [G4](/invariants/g4-unknowns-are-counted.md) already supplies what one usually
+  reaches for. `busProtocol` sits three declarations away and is deliberately
+  untouched, because there IS no closed set of control-bus protocols: the ruling
+  names what it declines, so the next census does not re-open it.
+* **Creation**: [DR-081, three unreachable port fields get a
+  cell](/decisions/dr-081-three-port-fields-get-a-cell.md) (`#749`).
+  `channelIndex`, `acceptedFamilies` and `carriedProtocols` are declared,
+  round-trip, and have **never had a writer**; `port_table.dart:86` recorded why
+  each fell out of M4-E's packs and no task ever owned the remainder.
+* **Note**: **THE CELL SHAPE IS THE DELIVERABLE, NOT THE TWO COLUMNS.** The grid
+  has single-value cells and nothing else, so a list-valued column is a shape it
+  has never had. M4-F11 is the precedent: once the controls left `port_grid.dart`
+  the mixed state came out as ONE parameter, and a shape built once is the
+  difference between a pattern and a special case that gets copied badly.
+* **Note**: **AUTHORING ONLY, AND THAT CLAUSE IS WHAT KEEPS M5 WHOLE.** Arming a
+  connect-time rule here would build an M5 rule outside M5's registry without the
+  fixture pair AC-051 requires, and roadmap §4 names *"just one more obvious
+  rule"* as the mechanism by which that milestone overruns.
+* **Note**: **DR-012 IS UNDISTURBED, AND THE DEFAULT IS THE WHOLE REASON.** Both
+  lists are NON-NULLABLE and default to `[]`, so an empty list reads as *this port
+  states no constraint*: every one of the 727 seed ports and every file on disk
+  keeps the behaviour it has. **A field gaining a writer does not re-arm a rule
+  that was never built.** And an empty list is not `null`:
+  [G4](/invariants/g4-unknowns-are-counted.md)'s absent key is about unknowns,
+  while a deliberate emptiness is a statement, which is
+  [DR-063](/decisions/dr-063-a-disagreement-is-not-an-unknown.md) one field over.
+* **Creation**: [A stated cost is a hypothesis until it is
+  measured](/practices/a-stated-cost-is-a-hypothesis.md), filed on the third
+  instance: DR-057's sparse-`pitch` feature cut that was never real, `#702`'s
+  eight-way split that could not touch the 75 ms symbols are domain-independent,
+  and DR-080's two wrong halves. **The tell is the useful part**: the cost that
+  justifies a DEFERRAL is the least likely to have been measured, because
+  deferring is exactly what excused measuring it. The log had already written
+  *"a prescription in an issue is a hypothesis until it is measured"* on
+  2026-08-19 and not filed it, which is the drift a practice file exists to stop.
+* **Note**: **THE SEQUENCING CLAUSE IS THE LOAD-BEARING ONE.**
+  [CR-078](/invariants/four-encoding-channels.md)'s *"hue is never used alone"*
+  is satisfied **vacuously** today: every device is one fill, so no two differ by
+  hue. Accents make them differ by hue ALONE until DR-059's seventeen marks
+  exist, so the fill may not ship before `#694`'s artwork. A milestone that read
+  as fully adjudicated was one paragraph short of it.
+
 ## 2026-08-19 (third entry)
 
 * **Creation**: [DR-076, the schematic rebuilds what

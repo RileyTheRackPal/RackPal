@@ -3690,6 +3690,62 @@ implementation. A mixed control cannot express *"set them all to unknown"*, whic
 row in the grid and is written down in three places rather than discovered. `LABEL` and `DESIG` have
 no dock control at all, by DR-063.
 
+#### 5.3.15 M4-T, the three rulings M4 owed · CLOSED · `b119a1b`, `d7cc706`, `7bef94f`
+
+**Closed 2026-08-21**, three commits, fourteen gates green on each. **There is no code in any of
+them**: the deliverable is canon §11.79 through §11.81 and three concepts in the bundle.
+
+**THE CENSUS'S HEADLINE IS THAT THERE WAS ALMOST NOTHING TO FIND, and that is a result rather than
+an absence.** Every remaining M4 issue was read against canon for a decision nobody had adjudicated.
+Against **ten open issues and thirty-one open tasks**, the census produced **one genuine blocker, one
+half-blocker and one loose thread**. DR-057, DR-059, DR-060, DR-061, DR-062, DR-063, DR-077 and
+DR-078 all landed *during* this milestone for exactly this purpose, and a thin census is the
+evidence that they worked.
+
+**DR-059's OWN STATED PRICE WAS WRONG IN BOTH HALVES, AND MEASURING IT TOOK FOUR MINUTES.** §11.58.8
+deferred `accentColor` on the ground that reaching `device_layer.dart` *"changes the elevation,
+regenerates four starters' goldens and must clear PAL-1"*. `accentColor` occurs **0 times** in all
+four `.rmpj` starters and **0 times** anywhere in `catalog/`, so no golden moves; and the PAL-1 gate
+prints its own scope on every run, *"55 families, 385 in-band cross-domain pairs checked"*, which has
+no device in it. **Neither half survives contact with the tree.** §11.58 is **left as written**,
+because it is the record of what was believed on the day.
+
+**THE REAL COST WAS THE ONE NOBODY HAD NAMED.** `device_layer.dart:134` fills the body and then
+draws **four** text ops over it, all dark inks chosen against a near-white `deviceFill`, and one of
+the eight shipped swatches is `Rgb(0x00, 0x00, 0x00)`. **A ruling deferred for its cost had been
+deferred for the wrong cost entirely.** That is `a stated cost is a hypothesis until it is measured`,
+filed in the bundle on this its third instance, after DR-057's sparse-`pitch` cut that was never real
+and `#702`'s eight-way split that could not touch the domain-independent symbols.
+
+**THE SEQUENCING CLAUSE IS THE ONE THAT MOVES THIS BOARD.** CR-078's *"hue is never used alone"* is
+satisfied **vacuously** today: every device is one uniform fill, so no two differ by hue at all.
+Accents make them differ by hue **and nothing else** until DR-059's seventeen marks exist, so DR-080
+forbids the fill shipping before `#694`'s artwork. **`#694` is an Issue carrying zero Tasks**, and it
+has moved from beside M4's critical path onto it.
+
+| Ruling | What it settles | What it unblocks |
+|---|---|---|
+| **DR-080** §11.79 | The accent becomes the device body fill, instance override first; the four label colours are computed from its WCAG luminance rather than read from `RackStyle` | `#694` (M4-R), and it tells `#228`'s previews what to draw |
+| **DR-081** §11.80 | `channelIndex`, `acceptedFamilies` and `carriedProtocols` each get a cell, and the multi-select **shape** is the deliverable. **Authoring only** | `#224` (M4-J2) |
+| **DR-082** §11.81 | `parity` and `flowControl` become closed value sets, with no `Other` row | Nothing. It was a comment, not a blocker, and is recorded as such |
+
+**DR-081'S RESTRAINT CLAUSE IS WORTH MORE THAN ITS CELL.** Nothing reads `acceptedFamilies` at
+connect time in v1. Arming a rule here would have built an M5 rule outside M5's registry without the
+fixture pair AC-051 demands, and **roadmap §4 names "just one more obvious rule" as the mechanism by
+which M5 overruns**. DR-012 is undisturbed for a mechanical reason rather than a diplomatic one: both
+lists are non-nullable and default to `[]`, so an empty list reads as *states no constraint* and
+every one of the 727 seed ports keeps the behaviour it has.
+
+**TWO COSTS ARE ACCEPTED IN WRITING SO M6 IS NOT AMBUSHED BY THEM**: the elevation's text palette
+becomes data-dependent where `RackStyle.deviceDesignator` is one value today, and a 42U rack of
+saturated bodies is an ink load nothing has measured. **`#357`'s print matrix is now told to look**,
+which is the difference between an accepted cost and a discovery on paper.
+
+**WHAT M4-T DOES NOT DELIVER.** No code, anywhere. `#694` is still undecomposed, `#224` still has no
+multi-select cell, neither dropdown exists, and `device_layer.dart` still fills every device with
+`palette.deviceFill`. **These rulings are what that work will cite. The work itself is unstarted**,
+and this section is not evidence that any of it is built.
+
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing
