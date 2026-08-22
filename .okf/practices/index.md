@@ -9,7 +9,7 @@ by something going wrong.
 * [A modelled field is not a reachable one](a-modelled-field-is-not-a-reachable-one.md) - fields with no writer, a callback with no caller, and `NetworkConfig`, whose only writer in the whole tree is the JSON decoder; the last was found by censusing a feature request before pricing it.
 * [Check a decomposition for holes](check-a-decomposition-for-holes.md) - a healthy-looking four-task issue had nothing that read a CSV file; ask what produces each task's input, and know a gap from a scope change.
 * [A dimension sits in an inequality](a-dimension-sits-in-an-inequality.md) - a 22 mm gang pitch against a 33.34 mm opening is two holes overlapping; the check is free, and the reading was real but was answering a different axis.
-* [Census before building](census-before-building.md) - print the field over the whole corpus first; it has caught an empty field, an unmeasured cost and a wrong ordering.
+* [Census before building](census-before-building.md) - print the field over the whole corpus first; it has caught an empty field, an unmeasured cost, a wrong ordering, and a field that RESOLVES perfectly while collapsing 48 templates onto 9 of 17 marks.
 * [Decompose before building](decompose-before-building.md) - the first task of a milestone is its own breakdown, and task descriptions carry the traps.
 * [Diagnose before fixing](diagnose-before-fixing.md) - twelve fix commits touched neither cause; what that means and what shape of fix held.
 * [The ZIP trap](the-zip-trap.md) - how a file arrives decides whether it is trusted; a property that lives in the channel cannot be gated at the source.

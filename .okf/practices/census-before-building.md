@@ -59,6 +59,26 @@ itself, and reading it with human eyes rather than an `expect`.
 rule that would have depended on them, which is the whole margin: the same
 finding a week later is a regression in a released build.
 
+# The variant that survives a census: a field that collapses
+
+**DR-084 is the sixth instance and it is not the same shape as the other
+five.** Those found a field that was **empty**, and an empty field is caught by
+the first query anybody writes: `accentColor` on 0 of 48 templates,
+`acceptedFamilies` on 0 of 727 ports, `NetworkConfig` with no writer.
+
+`TemplateBody.glyph` was different. It is null on all 48 seeds, but it
+**resolves**, through `effectiveGlyph`, to a category default. So every query of
+the form *"does this have a value"* answers yes, and
+`device_glyph_test.dart` asserted exactly that and passed, correctly, for weeks:
+*"every one of the 48 seeded templates resolves to a mark."*
+
+**They resolved to nine marks out of seventeen.** An existence assertion cannot
+see a collapse: 48 resolving to 9 satisfies it as well as 48 resolving to 17.
+
+So the census question is not only *is the field populated*. It is **how many
+distinct values does the corpus actually produce**, which is the number a person
+looking at the artifact would count. Print the histogram, not the coverage.
+
 **Then leave a gate behind.** A census is a one-off; the assertion it justifies
 is what stops the finding coming back. DR-012's became
 `multi_draw_test.dart`'s first group, M2-G's became `paint_budget_test.dart`,

@@ -6,6 +6,43 @@
   line](/decisions/dr-083-the-mark-rides-the-designator-line.md) (`#751`), taken
   at M4-R's pick-up and **before any artwork**. `#694` is decomposed into seven
   tasks (`#751`-`#757`), which it had none of an hour ago.
+* **Creation**: [DR-084, the seeded catalog authors its own
+  marks](/decisions/dr-084-the-seeds-author-their-own-marks.md) (`#758`), from a
+  probe run while building `#753` and before the mark reached a single sheet.
+  **0 of 48 seeded templates author a `glyph`**, so the seventeen-mark set
+  resolved to **9** category defaults, **8 marks were unreachable**, and
+  `display` covered all 18 Field Devices: a speaker, a camera, a keypad and a
+  projector all drawing a screen on a stand.
+* **Note**: **THE TEST THAT MISSED IT WAS GREEN AND CORRECT, AND THAT IS THE
+  PART TO KEEP.** `device_glyph_test` asserts *"every one of the 48 seeded
+  templates resolves to a mark"* and always passed, because they do. **An
+  existence assertion cannot see a COLLAPSE**: 48 resolving to 9 satisfies it
+  exactly as well as 48 resolving to 17, and the number that mattered was never
+  asked for. [census before building](/practices/census-before-building.md) for
+  the sixth time, with a twist: the earlier five found a field that was EMPTY,
+  which the first query anybody writes catches. This one found a field that
+  **resolves perfectly and collapses**, which survives every query except the one
+  that counts the range.
+* **Note**: the amendment is cheap because **the assignment was already written
+  down**: each `DeviceGlyph` value's doc comment names the catalog ids that
+  motivated it, and DR-059 calls those ids *"the evidence that the set was
+  censused rather than invented"*. No judgement is added; a table already in the
+  tree is transcribed onto the field that reads it.
+* **Note**: **DR-084's OWN FIRST DRAFT ASSERTED A MECHANISM THAT DOES NOT EXIST,
+  AND IT WAS CAUGHT BY READING THE CODEC RATHER THAN BY A GATE.** The draft said
+  the `glyph` key *"is written only when it differs from the category default"*,
+  as though the codec suppressed default-equal values. `json_codec.dart:3420`
+  writes it whenever it is NON-NULL, and the comment above it says why: *"Absent
+  means INHERIT THE CATEGORY'S DEFAULT, not unknown"*, and writing a resolved
+  value would *"lose the author's choice the moment the category changed"*. The
+  economy is a property of what is AUTHORED, not of the codec, and **26 of the 48
+  gain a key** rather than some unstated subset. Corrected in place before the
+  ruling committed, and recorded, because a ruling that hides its own draft error
+  teaches nothing. Third DR-059-shaped failure this week and the first of mine.
+* **Note**: **`accentColor`'s seeds stay unauthored ON PURPOSE**, and the two
+  fields part company here. An accent is the AUTHOR's own mark and a seeded
+  catalog has no business choosing one, which is also why DR-080 moves no golden
+  and DR-084 moves the bytes of four starters.
 * **Note**: **THE PLACEMENT REUSES A FIX, NOT A STYLE.** The mark rides the
   designator line because `family_glyph.dart` already draws that way and exists
   because the alternative failed in the field. The rejected option, a larger mark

@@ -12372,6 +12372,88 @@ it does not touch the schematic symbol, whose four encoding channels CR-078 alre
 
 ---
 
+### 11.83 DR-084 · The seeded catalog authors its own marks, so seventeen does not ship as nine
+
+**Settled by the user on 2026-08-21** (`#694`, `#758`), from a probe run while building `#753` and
+before the mark had reached a single sheet.
+
+**A §8.3 AMENDMENT, and a narrow one.** DR-059 ruled the seventeen marks into scope and ruled the
+**category defaults**; it deliberately left the seeded catalog's own `glyph` field alone. This
+changes that one thing. No mark is added or removed, the cap stays at seventeen, the picker is
+untouched, and `kCategoryDefaultGlyph` keeps doing its job for every template nobody has authored.
+
+**11.83.1 THE MEASUREMENT, WHICH IS THE WHOLE ARGUMENT.** A probe over `buildSeedCatalog()` at
+`64b953c`:
+
+| | |
+|---|---|
+| Templates authoring a `glyph` | **0 of 48** |
+| Distinct marks the 48 actually draw | **9**, not 17 |
+| Marks no seeded device ever draws | **8**: `extender`, `patchPanel`, `battery`, `shelf`, `speaker`, `camera`, `antenna`, `control` |
+| Ids resolving to `display` | **18**, the whole `Field Devices` category |
+
+So on a starter, and on every project a user has not hand-edited, **a speaker, a camera, a keypad and
+a projector all draw a rectangle on a stand**, and eight of the marks are unreachable.
+
+**11.83.2 DR-059 SAW THIS AND DEFERRED IT, WHICH IS WHY THIS IS AN AMENDMENT AND NOT A BUG FIX.**
+`device_glyph.dart` says so in its own table, unprompted: *"The 18 field devices are the widest
+category by a factor of four and the only one whose members share no silhouette at all: a speaker, a
+camera, a keypad and a projector. `display` is the modal answer rather than the right one, which is
+why the form's picker matters more here than anywhere else."* That was a defensible call. **What it
+costs is the first impression**: the elevation is the sheet taped inside the rack door, and the
+mark's whole job is to be right at a glance on a document nobody edited.
+
+**11.83.3 THE ASSIGNMENT IS ALREADY WRITTEN DOWN, AND THAT IS WHAT MAKES THIS CHEAP.** Every
+`DeviceGlyph` value's doc comment names the catalog ids that motivated it: `F04` through `F08` are
+the speakers, `F09` the camera, `F11` and `F17` the antennas, `N03` and `N04` the patch panels, `X03`
+the shelf, `P03` the battery, `V06` and `V07` the extenders. DR-059 §11.58.5 calls those ids
+*"the evidence that the set was censused rather than invented"*. **This ruling turns that evidence
+into the assignment it always described.** No judgement is added; a table already in the tree is
+transcribed onto the field that reads it.
+
+**11.83.4 WHAT IT COSTS, MEASURED: AND THIS RULING'S OWN FIRST DRAFT GOT THE MECHANISM WRONG.**
+The draft said the key *"is written only when it differs from the category default"*, as though that
+were the codec's behaviour. **It is not.** `json_codec.dart:3420` writes `glyph` whenever it is
+non-null, and the comment directly above it says why: *"Absent means INHERIT THE CATEGORY'S DEFAULT,
+not unknown (DR-059)"*, and writing a resolved value instead would *"put a key on all 48 seeded
+templates and regenerate four starters for nothing, and would lose the author's choice the moment
+the category changed."*
+
+**So the economy is a property of what this ruling AUTHORS, not of the codec**, and stating it the
+other way would have sent the next reader looking for a suppression rule that does not exist. This
+is the same failure DR-080 §11.79.2 and DR-083 §11.82.3 each found in DR-059: a mechanism asserted
+from the corpus rather than read off the tree. It is recorded here rather than quietly corrected,
+because a ruling that hides its own draft error teaches nothing.
+
+**Twenty-six of the forty-eight get a `glyph`**, being exactly those whose mark differs from their
+category's default; the other twenty-two inherit and stay null, which is the codec's own reading of
+absence. So twenty-six templates gain a key and their bytes move, and **the four checked-in starters
+embed snapshots generated from the old seed and must be regenerated**. A starter left alone would
+draw the old category mark while a new project drew the authored one, which is worse than either,
+and is why the regeneration belongs to this task rather than to a follow-up.
+
+**11.83.5 THE TEST WAS GREEN, CORRECT, AND ASKING THE WRONG QUESTION. THIS IS THE PART TO KEEP.**
+`device_glyph_test.dart` asserts *"every one of the 48 seeded templates resolves to a mark"*, and it
+has always passed, because they do. **An existence assertion cannot see a collapse.** Forty-eight
+templates resolving to nine marks satisfies it exactly as well as forty-eight resolving to
+seventeen, and the number that mattered was never asked for. The replacement asks for the **count of
+distinct marks**, which is the artifact a person actually looks at.
+
+That is `census before building` for the sixth time, with a twist worth naming separately: the
+earlier five found a field that was **empty**, and this one found a field that **resolves perfectly
+and collapses**. An empty field is caught by the first query anybody writes. A collapsing one
+survives every query except the one that counts the range.
+
+**11.83.6 WHAT THIS DOES NOT RULE.** It does not widen the set: a seeded device fitting none of the
+seventeen is a finding for DR-059's cap and goes to the user, never an eighteenth value added inside
+a data pass. It does not remove `kCategoryDefaultGlyph`, which is still what a user-authored template
+gets and still what `effectiveGlyph` falls back to. It does not touch `accentColor`, whose seeds stay
+unauthored on purpose: an accent is the author's own mark and a seeded catalog has no business
+choosing one. And it does not make the marks correct, only assigned: whether seventeen silhouettes are
+tellable apart at 8 pt remains `#757`'s printed sheet.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
