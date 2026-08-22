@@ -1,5 +1,38 @@
 # Update Log
 
+## 2026-08-22
+
+* **Creation**: [DR-085, Mirror bank and the two missing
+  producers](/decisions/dr-085-mirror-bank-and-the-missing-producers.md)
+  (`#760`), taken at M4-J's pick-up and before any code. The WHOLE
+  specification of `Mirror bank` is one docs/06 §4.6 table row, and reading it as
+  a spec produces three questions it cannot answer: what "flipped" means for the
+  three `PortDirection` values with no opposite, what "swapped" means for the
+  majority of banks containing neither word, and where duplicated ports' keys
+  come from when `PortDef.key` is CR-051's migration join.
+* **Note**: **THE CENSUS FOUND SOMETHING LARGER THAN THE MISSING ACTION.**
+  `PortSetDef` has **zero writers** outside the seeded catalog while
+  `port_grid.dart:1994` ships a LIVE `SET` dropdown whose options are that empty
+  list, so a person authoring from scratch opens a picker holding only `—` and
+  always will. `PassthroughPairDef` has zero CREATORS, its one writer being
+  `RenamePortKeyCommand` rewriting pairs that already exist, and `PAIRED WITH` is
+  read-only. **So M4-J is the two missing producers, and `Mirror bank` is its
+  smallest task rather than its largest.**
+* **Note**: **THIS IS
+  [a modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md)
+  WITH THE HALVES REVERSED.** That practice was filed on `NetworkConfig`, whose
+  only writer was the JSON decoder: a writer and no reader. Here the READER
+  shipped, is editable, and waits on a producer that does not exist. Worth
+  keeping as a distinct shape, because the usual census question ("what writes
+  this?") finds the first and misses the second entirely.
+* **Note**: the ruling reuses DR-078's `Change type…` PREVIEW affordance and
+  explicitly **not its reasoning**. That refuses to write `direction` because the
+  model cannot tell a chosen value from a defaulted one; a mirror is a person
+  asking for a flip in so many words. What carries over is the honesty about what
+  was left untouched, which is a different thing from the rule that produced it.
+
+
+
 ## 2026-08-21 (third entry)
 
 * **Note**: **M4-R IS CODE COMPLETE AND ITS DRILL IS UNRUN** (`#694`, nine

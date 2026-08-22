@@ -12455,6 +12455,85 @@ tellable apart at 8 pt remains `#757`'s printed sheet.
 
 ---
 
+### 11.84 DR-085 · Mirror bank, and the two models with a reader and no writer
+
+**Settled by the user on 2026-08-22** (`#181`, `#760`), at M4-J's pick-up and **before any code**,
+on three questions the corpus does not answer and one finding that outgrew them.
+
+**A DECOMPOSITION RULING, NOT A §8.3 AMENDMENT.** `Mirror bank` is already in scope: docs/06 §4.6
+tabulates it and DR-078 §11.77 records that it was deliberately left untouched. Nothing enters or
+leaves; this settles how it behaves.
+
+**11.84.1 THE ENTIRE SPECIFICATION IS ONE TABLE ROW.** docs/06 §4.6 reads, in full:
+
+> | Mirror bank | bank context menu | Duplicates a bank with direction flipped and the label prefix
+> | swapped IN↔OUT, the output side of a matrix in one click |
+
+That is an illustration, not a specification, and reading it as one produces three questions it
+cannot answer: what "flipped" means for the three `PortDirection` values that have no opposite, what
+"swapped" means for the majority of banks that contain neither word, and where the duplicated ports'
+keys come from when `PortDef.key` is unique and is CR-051's migration join.
+`a spec table is an illustration until censused`, for the fifth time in this milestone.
+
+**11.84.2 THE CENSUS FOUND SOMETHING LARGER THAN THE MISSING ACTION, AND IT IS WHY M4-J IS NOT
+"AN EDITOR OVER THREE MODELS".**
+
+| Model | Writers outside the seeded catalog | The surface that reads it |
+|---|---|---|
+| `PortSetDef` | **none** | `port_grid.dart:1994` ships a **live** `SET` dropdown whose options are that empty list |
+| `PassthroughPairDef` | **none that create one**; `RenamePortKeyCommand` only rewrites pairs that already exist | `PAIRED WITH`, a read-only cell |
+| `BankDef` | one: `quick_add.dart:721`, via `AddBankCommand` | the grid's bands, and `Ctrl+M`'s destination list |
+
+**So a person authoring a template from scratch opens the `SET` picker and finds exactly one entry,
+`—`, and will find only that one forever.** This is
+`a modelled field is not a reachable one` **with the halves reversed**: the usual shape is a field
+with a writer and no reader, and the practice was filed on `NetworkConfig`, whose only writer was the
+JSON decoder. Here the READER shipped, is editable, and waits on a producer that does not exist.
+**M4-J's real work is the two missing producers**, and `Mirror bank` is the smallest of its three
+tasks rather than the largest.
+
+**11.84.3 CLAUSE 1: `source` AND `sink` FLIP; THE OTHER THREE COPY THROUGH UNCHANGED.** CR-060 gives
+`PortDirection` five values and only two are opposites. `bidirectional`, `busNode` and `passive` have
+no mirror image, and inventing one is a guess made on a port somebody has to wire.
+
+**The preview NAMES every row it leaves alone**, which is not a new affordance: DR-078 §11.77 built
+exactly that for `Change type…`, where `direction` and `topology` are never written and the preview
+says which rows keep a value the new family would not have chosen. **The reasoning does not
+transfer, only the affordance does**: `Change type…` refuses to write `direction` because the model
+cannot tell a chosen value from a defaulted one, while a mirror is a person asking for a flip in so
+many words. What carries over is the honesty about what was not touched.
+
+**11.84.4 CLAUSE 2: SWAP `IN`/`OUT` WHERE THEY OCCUR; OTHERWISE THE PERSON NAMES THE BANK.** The
+row's example is a matrix, where the banks really are called `IN` and `OUT`. **The general case is
+not.** `uniqueBankName` derives a bank's label from the signal family, so a bank Quick Add minted is
+called `HDMI` or `HDBaseT` and contains nothing to swap; `abbr` is *"the label's own head"* and
+inherits the problem.
+
+So where the swap applies it happens, and where it does not the mirror dialog opens with the new
+name focused and the person decides. **The product does not invent a name it cannot justify.** These
+labels are silkscreen text: they reach the panel drawing and the schedule, and no device has
+`(mirrored)` printed on it. This is G4's temperament applied to a string rather than to a number:
+where the answer is not known, ask, and do not fabricate a plausible one.
+
+**11.84.5 CLAUSE 3: THE NEW KEYS COME FROM THE NEW BANK KEY, THROUGH QUICK ADD'S OWN GENERATOR.**
+`PortDef.key` is unique and is CR-051's migration join. The mirrored ports are **new ports, not
+renamed ones**, so nothing writes a `renamedFrom` and the join is untouched.
+
+**Suffixing the source key was the rejected alternative and reads well in a diff**, which is its
+whole appeal: `hdmi.1` → `hdmi.1.mirror` says where it came from. It is declined because it encodes
+a relationship in a string that no field records, and a key that means something is a composite key
+wearing a different hat. If the lineage is ever wanted, it is a field.
+
+**11.84.6 WHAT THIS DOES NOT RULE.** It does not pair the two banks: a matrix's mirrored output is a
+**second output**, not a passthrough, and `PassthroughPairDef` means the same net traced through a
+panel. Whether a mirror ever creates pairs is M4-J3's question and is answered there or not at all.
+It does not decide what deleting a bank does to the ports in it, which is M4-J1's own and is a
+cascade question in DR-013's family. It does not give `PortSetDef` its producer, which is M4-J2's
+whole task and is the larger half of this issue. And it does not touch `Ctrl+M`, which moves ports
+between banks that already exist and is DR-078's.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
