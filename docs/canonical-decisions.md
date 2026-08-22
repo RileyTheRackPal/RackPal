@@ -12168,6 +12168,71 @@ device's inspector, which is door 1 and is M4-L1's (`#230`).
 
 ---
 
+### 11.80 DR-081 · Three unreachable port fields get a cell, and the rule that would read one is M5's
+
+**Settled by the user on 2026-08-21** (`#747`, `#749`), on a gap `port_table.dart` recorded at M4-E
+in its own comment and no task ever owned.
+
+**A §8.3 AMENDMENT.** docs/06 §4.5's column table gains two columns and a **cell shape it does not
+have**. No milestone moves; M4-J2 (`#224`) grows by the cell, which is where the scope lands.
+
+**11.80.1 THE GAP, IN THE WORDS OF THE FILE THAT WROTE IT DOWN.** M4-E built seven column packs from
+the intersection of docs/06 §4.5's table and the model, and `port_table.dart:86` names what fell
+out: `channelIndex` *"belongs with port sets (M4-J2)"*, and `carriedProtocols`/`acceptedFamilies`
+*"need a multi-select the grid has no cell shape for"*. All three are declared on `PortDef`, all
+three round-trip through the codec, and **not one has ever had a writer**. That comment ends
+*"which is `a modelled field is not a reachable one` in its original form"*, and it was right.
+
+**11.80.2 THE RULING: all three get a cell.** `channelIndex` is an **integer cell on the port-set
+surface**, which is where its meaning lives: it says which conductor of a `PortSetDef` this port is,
+and it is meaningless without one. `acceptedFamilies` and `carriedProtocols` get a **multi-select
+cell over the seeded signal families**.
+
+**THE CELL SHAPE IS THE DELIVERABLE, NOT THE TWO COLUMNS.** The grid has single-value cells and
+nothing else; a list-valued column is a shape it has never had. Building it once, keyed and testable
+like every other cell since M4-F11, is the difference between a pattern the next list-valued field
+reuses and a special case that gets copied badly. M4-F11 is the precedent and its lesson was exactly
+this: the mixed state came out as **one parameter** once the controls left `port_grid.dart`.
+
+**11.80.3 AUTHORING ONLY, AND THIS CLAUSE IS WHAT KEEPS M5 WHOLE.** **Nothing reads
+`acceptedFamilies` at connect time in v1.** The value is authored, persisted, and available to
+whatever describes a port; it is a fact about the port for the person reading the drawing.
+
+Whether a connect springs back is a **validation rule**, and validation is M5: a 28-rule catalogue
+behind AC-051, which forbids any rule shipping without a known-bad fixture **and** a known-good
+near-miss. A rule armed here would be an M5 rule built outside M5's registry, without its pair, and
+M5 would inherit a rule it did not write and cannot count against its own exit criterion. **The
+milestone's fixture-pair gate is the thing this clause protects**, and roadmap §4 names the pressure
+to add "just one more obvious rule" as the mechanism by which M5 overruns.
+
+**11.80.4 DR-012 IS NOT DISTURBED, AND THE DEFAULT IS THE WHOLE REASON.** §11.12 deferred three
+gesture rules on the arithmetic that `acceptedFamilies`, `channelIndex` and `maxConnections` are
+populated on **none of the 727 seed ports**, so a rule reading one does nothing on every real
+document. **Both lists are non-nullable and default to `[]`.** An empty list reads as *this port
+states no constraint*, so all 727 seed ports, all four starters and every file on disk keep exactly
+the behaviour they have today. **A field gaining a writer does not re-arm a rule that was never
+built**, and DR-012's arithmetic stays true of every document this ruling does not touch.
+
+**11.80.5 AN EMPTY LIST IS NOT `null`, AND THE DISTINCTION IS LOAD-BEARING.** G4's absent-key
+convention is about **unknowns**. *"This port constrains nothing"* is a **statement**, not an
+unknown, and a port whose author has said nothing is not the same as a port whose author has said
+*anything goes*. The model already encodes this by making the lists non-nullable, and the multi-select
+must not quietly introduce a third state to be helpful. This is DR-063's distinction one field over:
+**a disagreement is not an unknown**, and neither is a deliberate emptiness.
+
+**CR-117 holds because the codec writes no key for an empty list**, which is its existing behaviour
+rather than a new rule. The 48-template byte sweep is the check, and it fails first if that changes.
+
+**11.80.6 WHAT THIS DOES NOT RULE.** It does not decide `maxConnections`, the third field DR-012
+named: that one already has `effectiveMaxConnections` reading it and a different problem. It does not
+add, arm, move or re-tier any validation rule. It does not extend the multi-select to `bankKey` or
+`setKey`, which are **single-valued** keys and would be actively worse for it. And it does not rule
+what a `carriedProtocols` entry means where it disagrees with the port's own `signalFamily`, which is
+a question the seed catalog can answer by being censused and which this ruling cannot answer by
+assertion: `two documents agreeing is not verification`.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

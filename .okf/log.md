@@ -20,6 +20,28 @@
   against a near-white `deviceFill`, and one of the eight shipped swatches is
   `Rgb(0x00, 0x00, 0x00)`. A ruling that had been deferred for its cost was
   deferred for the wrong cost entirely.
+* **Creation**: [DR-081, three unreachable port fields get a
+  cell](/decisions/dr-081-three-port-fields-get-a-cell.md) (`#749`).
+  `channelIndex`, `acceptedFamilies` and `carriedProtocols` are declared,
+  round-trip, and have **never had a writer**; `port_table.dart:86` recorded why
+  each fell out of M4-E's packs and no task ever owned the remainder.
+* **Note**: **THE CELL SHAPE IS THE DELIVERABLE, NOT THE TWO COLUMNS.** The grid
+  has single-value cells and nothing else, so a list-valued column is a shape it
+  has never had. M4-F11 is the precedent: once the controls left `port_grid.dart`
+  the mixed state came out as ONE parameter, and a shape built once is the
+  difference between a pattern and a special case that gets copied badly.
+* **Note**: **AUTHORING ONLY, AND THAT CLAUSE IS WHAT KEEPS M5 WHOLE.** Arming a
+  connect-time rule here would build an M5 rule outside M5's registry without the
+  fixture pair AC-051 requires, and roadmap §4 names *"just one more obvious
+  rule"* as the mechanism by which that milestone overruns.
+* **Note**: **DR-012 IS UNDISTURBED, AND THE DEFAULT IS THE WHOLE REASON.** Both
+  lists are NON-NULLABLE and default to `[]`, so an empty list reads as *this port
+  states no constraint*: every one of the 727 seed ports and every file on disk
+  keeps the behaviour it has. **A field gaining a writer does not re-arm a rule
+  that was never built.** And an empty list is not `null`:
+  [G4](/invariants/g4-unknowns-are-counted.md)'s absent key is about unknowns,
+  while a deliberate emptiness is a statement, which is
+  [DR-063](/decisions/dr-063-a-disagreement-is-not-an-unknown.md) one field over.
 * **Creation**: [A stated cost is a hypothesis until it is
   measured](/practices/a-stated-cost-is-a-hypothesis.md), filed on the third
   instance: DR-057's sparse-`pitch` feature cut that was never real, `#702`'s
