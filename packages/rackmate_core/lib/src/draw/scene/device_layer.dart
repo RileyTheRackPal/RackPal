@@ -61,11 +61,13 @@ import 'dart:math' as math;
 import 'package:rackmate_core/src/draw/bounds_canvas.dart';
 import 'package:rackmate_core/src/draw/geometry.dart';
 import 'package:rackmate_core/src/draw/ops.dart';
+import 'package:rackmate_core/src/draw/scene/device_glyph_art.dart';
 import 'package:rackmate_core/src/draw/scene/rack_geometry.dart';
 import 'package:rackmate_core/src/draw/scene/rack_layer.dart' show LayerBuild;
 import 'package:rackmate_core/src/draw/scene/rack_style.dart';
 import 'package:rackmate_core/src/draw/spec.dart';
 import 'package:rackmate_core/src/draw/text.dart';
+import 'package:rackmate_core/src/model/device_glyph.dart';
 import 'package:rackmate_core/src/model/device_instance.dart';
 import 'package:rackmate_core/src/model/template.dart' show TemplateBody;
 
@@ -178,10 +180,47 @@ DeviceLayerBuild buildDeviceLayer(
     if (pad < 0) {
       labelDropped = true;
     } else {
+      // DR-083 §11.82.1: the mark rides THIS line, ahead of the text, and
+      // the text shifts right by an advance computed from the type size.
+      // It sits here because this line always draws, so it inherits that
+      // survival; a mark anywhere else needs its own drop tier, in the one
+      // function whose drop tiers have already shipped a blackout (header).
+      //
+      // READ THROUGH `effectiveGlyph`, NEVER `body.glyph`: the field is
+      // null on all 48 seeded templates and the mark comes from the
+      // category default, so reading it directly draws nothing, ever.
+      final advance = deviceGlyphAdvance(designatorPt);
+      // The mark is given up when it would take more than a quarter of the
+      // label band. Past that it competes with the designator instead of
+      // labelling it, and the designator is what a person in front of the
+      // rack actually needs.
+      //
+      // DROPPING THE MARK CANNOT SUPPRESS A LINE, and that is the property
+      // this shape exists to guarantee: the guard chooses between mark and
+      // no mark, never between text and no text. It is also NOT reported
+      // through `labelDropped`, which is about the label — a caller warned
+      // that a device lost its identifier when it only lost its mark would
+      // be told something false.
+      final mark = advance * 4 <= width - 2 * _pad
+          ? deviceGlyphOp(
+              effectiveGlyph(body.glyph, body.category),
+              DPt(_pad, pad + designatorPt / 2),
+              designatorPt,
+              palette.deviceDesignator,
+              strokeWidthPt: deviceGlyphStrokeWidth(designatorPt),
+            )
+          : null;
+      if (mark != null) ops.add(mark);
+
+      // The whole text column starts after the mark, so its left edge runs
+      // straight down all three lines rather than the designator alone
+      // stepping in and the two under it hanging back.
+      final textLeft = mark == null ? _pad : _pad + advance;
+
       ops.add(
         OpText(
           designator,
-          DPt(_pad, pad),
+          DPt(textLeft, pad),
           rackText(designatorPt, palette.deviceDesignator, TextAnchor.topLeft),
         ),
       );
@@ -208,7 +247,7 @@ DeviceLayerBuild buildDeviceLayer(
           ops.add(
             OpText(
               name,
-              DPt(_pad, y),
+              DPt(textLeft, y),
               rackText(namePt, palette.deviceName, TextAnchor.topLeft),
             ),
           );
@@ -219,7 +258,7 @@ DeviceLayerBuild buildDeviceLayer(
           ops.add(
             OpText(
               typeName,
-              DPt(_pad, y),
+              DPt(textLeft, y),
               rackText(typePt, palette.deviceType, TextAnchor.topLeft),
             ),
           );
