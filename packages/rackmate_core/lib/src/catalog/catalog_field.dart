@@ -5,6 +5,7 @@
 // read `impedanceOhms`/`tapWatts` from at all (AC-031).
 
 import 'package:rackmate_core/src/catalog/catalog_ports.dart';
+import 'package:rackmate_core/src/model/device_glyph.dart';
 import 'package:rackmate_core/src/model/template.dart';
 import 'package:rackmate_core/src/units/mass.dart';
 
@@ -18,6 +19,7 @@ TemplateBody _field({
   String description = '',
   required String typePrefix,
   List<String> tags = const [],
+  DeviceGlyph? glyph,
   required Mass weight,
   PowerProfile? power,
   required List<PortDef> ports,
@@ -31,6 +33,7 @@ TemplateBody _field({
   category: kCatField,
   typePrefix: typePrefix,
   tags: tags,
+  glyph: glyph,
   frontU: 0,
   rearU: 0,
   side: OccupancySide.none,
@@ -313,6 +316,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
         'One ceiling location, one 16/4 pull, four conductors, one '
         'gesture — the canonical atomicConnect case (AC-053, RJ-016).',
     typePrefix: 'SPK',
+    glyph: DeviceGlyph.speaker,
     tags: const ['speaker', 'ceiling', 'field'],
     weight: _kg(2.7),
     ports: f04.ports,
@@ -352,6 +356,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
     model: 'SPK-WALL-1',
     displayName: 'In-Wall Speaker',
     typePrefix: 'SPK',
+    glyph: DeviceGlyph.speaker,
     tags: const ['speaker', 'wall', 'field'],
     weight: _kg(3.2),
     ports: f05.ports,
@@ -404,6 +409,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
     displayName: 'Subwoofer, powered',
     description: 'Needs a signal run AND a receptacle at the same location.',
     typePrefix: 'SUB',
+    glyph: DeviceGlyph.speaker,
     tags: const ['subwoofer', 'field'],
     weight: _kg(22.7),
     power: PowerProfile(
@@ -454,6 +460,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
     displayName: 'Outdoor / Landscape Speaker',
     description: 'Runs to this device default to a directBurial jacket.',
     typePrefix: 'SPK',
+    glyph: DeviceGlyph.speaker,
     tags: const ['speaker', 'outdoor', 'field'],
     weight: _kg(1.8),
     ports: f07.ports,
@@ -495,6 +502,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
         'tapWatts is a per-installation selector (2.5/5/10/15/20 W), not a '
         'per-device fact — the transformer tap is set on the ladder.',
     typePrefix: 'SPK',
+    glyph: DeviceGlyph.speaker,
     tags: const ['speaker', '70v', 'field'],
     weight: _kg(2.3),
     ports: f08.ports,
@@ -539,6 +547,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
     model: 'CAM-IP-1',
     displayName: 'IP Camera',
     typePrefix: 'CAM',
+    glyph: DeviceGlyph.camera,
     tags: const ['camera', 'poe', 'field'],
     weight: _kg(0.7),
     power: PowerProfile(
@@ -610,6 +619,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
     model: 'NVR-8CH',
     displayName: 'NVR',
     typePrefix: 'NVR',
+    glyph: DeviceGlyph.source,
     tags: const ['nvr', 'video-surveillance', 'field'],
     weight: _kg(6.8),
     power: PowerProfile(
@@ -659,6 +669,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
         'The AP and the camera together make NET-001 meaningful: eight '
         'class-4 PDs against a switch budget well below ports x max class.',
     typePrefix: 'AP',
+    glyph: DeviceGlyph.antenna,
     tags: const ['wifi', 'poe', 'field'],
     weight: _kg(0.9),
     power: PowerProfile(
@@ -749,6 +760,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
         'Lutron QS is 2000 ft on 12 AWG; Cresnet is limited twice over '
         '(data length and 24V power drop).',
     typePrefix: 'KP',
+    glyph: DeviceGlyph.control,
     tags: const ['keypad', 'control', 'field'],
     weight: _kg(0.2),
     power: PowerProfile(
@@ -816,6 +828,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
     model: 'VC-1',
     displayName: 'Volume Control',
     typePrefix: 'VC',
+    glyph: DeviceGlyph.control,
     tags: const ['volume-control', 'passive', 'field'],
     weight: _kg(0.3),
     ports: f14.ports,
@@ -844,6 +857,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
         'connector with an emitter — pinoutVariant is the only thing '
         'standing between the drawing and a dead emitter (AC-052).',
     typePrefix: 'IRR',
+    glyph: DeviceGlyph.control,
     tags: const ['ir', 'receiver', 'field'],
     weight: _kg(0.05),
     ports: f15.ports,
@@ -911,6 +925,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
         'Physically present in essentially every North American '
         'residential rack, and the device the whole network hangs off.',
     typePrefix: 'ONT',
+    glyph: DeviceGlyph.control,
     tags: const ['isp', 'ont', 'field'],
     weight: _kg(1.1),
     power: PowerProfile(
@@ -940,6 +955,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
     model: 'ANT-OTA-1',
     displayName: 'OTA Antenna',
     typePrefix: 'ANT',
+    glyph: DeviceGlyph.antenna,
     tags: const ['antenna', 'ota', 'field'],
     weight: _kg(3.6),
     ports: f17.ports,
@@ -982,6 +998,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
     description:
         'A code item and an actual lightning-damage liability (AC-034/m21).',
     typePrefix: 'GB',
+    glyph: DeviceGlyph.control,
     tags: const ['ground-block', 'code', 'field'],
     weight: _kg(0.1),
     ports: f18.ports,

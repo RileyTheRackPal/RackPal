@@ -1,6 +1,7 @@
 // Seed catalog — "Power" (docs/catalog/seed-devices.md §3.7).
 
 import 'package:rackmate_core/src/catalog/catalog_ports.dart';
+import 'package:rackmate_core/src/model/device_glyph.dart';
 import 'package:rackmate_core/src/model/template.dart';
 import 'package:rackmate_core/src/units/len.dart';
 import 'package:rackmate_core/src/units/mass.dart';
@@ -310,6 +311,7 @@ Map<String, TemplateBody> buildPowerCatalog() {
         'the 3000 VA is outputCapacityVA, not a draw.',
     category: kCatPower,
     typePrefix: 'UPS',
+    glyph: DeviceGlyph.battery,
     tags: const ['ups', 'battery', 'placeLow'],
     frontU: 3,
     rearU: 3,

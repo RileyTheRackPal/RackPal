@@ -49,9 +49,18 @@ DeviceInstance _device() => DeviceInstance(
   ),
 );
 
-/// A real seeded body, so the case exercises the resolution a shipped
-/// project actually takes rather than a hand-built fixture.
-TemplateBody _body() => buildSeedCatalog().values.first;
+/// A real seeded body that INHERITS its mark from its category: V01's
+/// silhouette is `matrix` and so is Video's default, so DR-084 left its
+/// `glyph` null. Named explicitly rather than taken as `values.first`,
+/// because after DR-084 "the first one" is no longer a statement about
+/// whether a body authors a glyph.
+TemplateBody _body() => buildSeedCatalog()['V01']!;
+
+/// A real seeded body that AUTHORS its mark, so the other half of
+/// `effectiveGlyph` is exercised too. F04 is an in-ceiling speaker and
+/// Field Devices default to `display`, which is exactly the case DR-084
+/// exists to fix.
+TemplateBody _authored() => buildSeedCatalog()['F04']!;
 
 DeviceLayerBuild _build({
   double width = 240,
@@ -76,6 +85,7 @@ void main() {
   group('the mark is drawn, which 3152 green cases could not see', () {
     test('a seeded body emits exactly one path, and that is the mark', () {
       expect(_paths(_build()), hasLength(1));
+      expect(_paths(_build(body: _authored())), hasLength(1));
     });
 
     test('an author who chose `none` gets no mark, and that is a choice '
@@ -84,11 +94,23 @@ void main() {
       expect(_paths(_build(body: body)), isEmpty);
     });
 
-    test('the mark is resolved through the CATEGORY, because glyph is null '
-        'on all 48 seeds and reading it directly would draw nothing', () {
+    test('a body that INHERITS its mark still draws one, because the layer '
+        'reads through effectiveGlyph and not through body.glyph', () {
       final body = _body();
-      expect(body.glyph, isNull);
+      expect(body.glyph, isNull, reason: "V01 inherits Video's `matrix`");
       expect(_paths(_build(body: body)), hasLength(1));
+    });
+
+    test('a body that AUTHORS its mark draws that one, which is the half '
+        'DR-084 added and the reason a speaker stopped drawing a screen', () {
+      final body = _authored();
+      expect(body.glyph, DeviceGlyph.speaker);
+      expect(_paths(_build(body: body)), hasLength(1));
+      expect(
+        effectiveGlyph(body.glyph, body.category),
+        isNot(kCategoryDefaultGlyph[body.category]),
+        reason: 'if this ever equals the default, the case is vacuous',
+      );
     });
   });
 
