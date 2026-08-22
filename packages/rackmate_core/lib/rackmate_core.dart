@@ -137,6 +137,7 @@ export 'src/draw/geometry.dart';
 export 'src/draw/hit_test.dart';
 export 'src/draw/ops.dart';
 export 'src/draw/path.dart';
+export 'src/draw/scene/device_glyph_art.dart';
 export 'src/draw/scene/device_layer.dart';
 export 'src/draw/scene/family_glyph.dart';
 export 'src/draw/scene/net_label_layer.dart';
