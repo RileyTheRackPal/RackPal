@@ -12340,8 +12340,9 @@ a 9 pt badge, which is a new drop tier in exactly the function whose drop tiers 
 and no ruling had named it: `kCategoryDefaultGlyph` maps `kCatPassive` to `DeviceGlyph.blank`, and
 `scene_builder.dart:344` sets `hatched: options.hatchPassive && body.category == kCatPassive`. **The
 devices that default to the `blank` mark are precisely the devices covered in 45° lines.** Order is
-hatch, then a padded backing rect **in the resolved body fill**, then the mark. Two extra ops, on
-passive devices only.
+hatch, then a padded backing rect **in the resolved body fill**, then the mark. **ONE extra op**, on
+passive devices only: this ruling's own text said "two" and counted the mark, which is drawn on
+every device hatched or not. `#754`'s case asserts the difference and is what caught it.
 
 **SUPPRESSING THE MARK INSTEAD WAS THE TEMPTING ANSWER AND IT IS THE WRONG ONE.** A blank panel is
 already identified by its hatch, so the mark is redundant there, and redundancy is DR-059's own

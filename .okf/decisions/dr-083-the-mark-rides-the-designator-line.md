@@ -50,7 +50,8 @@ exactly `kCatPassive`. **The devices defaulting to the `blank` mark are precisel
 the ones covered in 45° lines.**
 
 Order is hatch, then a padded backing rect in the **resolved** body fill, then the
-mark.
+mark. **One extra op**, on passive bodies only: the ruling's first text said
+"two" and counted the mark, which draws on every device regardless.
 
 **Suppressing the mark was the tempting answer and it is wrong.** A blank is
 already identified by its hatch, so the mark is redundant, and redundancy is

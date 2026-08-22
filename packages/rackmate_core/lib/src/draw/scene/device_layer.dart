@@ -214,9 +214,10 @@ DeviceLayerBuild buildDeviceLayer(
       // survival; a mark anywhere else needs its own drop tier, in the one
       // function whose drop tiers have already shipped a blackout (header).
       //
-      // READ THROUGH `effectiveGlyph`, NEVER `body.glyph`: the field is
-      // null on all 48 seeded templates and the mark comes from the
-      // category default, so reading it directly draws nothing, ever.
+      // READ THROUGH `effectiveGlyph`, NEVER `body.glyph`: 22 of the 48
+      // seeded templates still inherit their mark from the category
+      // (DR-084 authored the other 26), so reading the field directly
+      // draws nothing for those.
       final advance = deviceGlyphAdvance(designatorPt);
       // The mark is given up when it would take more than a quarter of the
       // label band. Past that it competes with the designator instead of
@@ -238,7 +239,36 @@ DeviceLayerBuild buildDeviceLayer(
               strokeWidthPt: deviceGlyphStrokeWidth(designatorPt),
             )
           : null;
-      if (mark != null) ops.add(mark);
+      if (mark != null) {
+        // DR-083 §11.82.2: over a hatch, the mark wins, on a panel knocked
+        // out of the 45° band in the RESOLVED fill.
+        //
+        // THE COLLISION IS NOT HYPOTHETICAL AND NO RULING HAD NAMED IT.
+        // `kCategoryDefaultGlyph` maps `kCatPassive` to `blank`, and
+        // `scene_builder` hatches exactly `kCatPassive`, so the devices
+        // defaulting to the blank mark are precisely the ones buried in
+        // 45° lines. Suppressing the mark there was the tempting answer
+        // and would have made `blank` and `shelf` draw nothing whenever
+        // `hatchPassive` is on, which is its default: two of seventeen
+        // ruled values unreachable, inside the fix for unreachable values.
+        if (hatched) {
+          final r = designatorPt * kDeviceGlyphCapFactor / 2;
+          final midY = pad + designatorPt / 2;
+          final bleed = r / 3;
+          ops.add(
+            OpRect(
+              DBox.fromLtwh(
+                _pad - bleed,
+                midY - r - bleed,
+                2 * (r + bleed),
+                2 * (r + bleed),
+              ),
+              fill: fill,
+            ),
+          );
+        }
+        ops.add(mark);
+      }
 
       // The whole text column starts after the mark, so its left edge runs
       // straight down all three lines rather than the designator alone
