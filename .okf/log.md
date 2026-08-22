@@ -1,5 +1,46 @@
 # Update Log
 
+## 2026-08-21 (second entry)
+
+* **Creation**: [DR-083, the mark rides the designator
+  line](/decisions/dr-083-the-mark-rides-the-designator-line.md) (`#751`), taken
+  at M4-R's pick-up and **before any artwork**. `#694` is decomposed into seven
+  tasks (`#751`-`#757`), which it had none of an hour ago.
+* **Note**: **THE PLACEMENT REUSES A FIX, NOT A STYLE.** The mark rides the
+  designator line because `family_glyph.dart` already draws that way and exists
+  because the alternative failed in the field. The rejected option, a larger mark
+  centred on the right, is the better PICTURE and was declined because at 1U it
+  must dodge a 9 pt badge, which means a new drop tier in the one function whose
+  drop tiers have already shipped a blackout. **The better picture is not worth a
+  second blackout.**
+* **Note**: **THE CENSUS FOUND A COLLISION NO RULING HAD NAMED.**
+  `kCategoryDefaultGlyph` maps `kCatPassive` to `DeviceGlyph.blank`, and
+  `scene_builder.dart:344` hatches exactly `kCatPassive`: the devices defaulting
+  to the blank mark are precisely the ones covered in 45 degree lines. Suppressing
+  the mark there was tempting and wrong, because `hatchPassive` is on by default
+  and two of seventeen ruled values would then draw nothing:
+  [a modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md)
+  **re-created inside the fix for it**.
+* **Note**: **DR-059's SEQUENCING NO LONGER DESCRIBES THE TREE, WHICH IS THE
+  SECOND SENTENCE OF ITS TO FAIL IN THREE DAYS.** It sequences the artwork with
+  M4-K as *"the first surface a device glyph appears on at all"*.
+  `panel_layer.dart` does not exist, M4-K is not started, and DR-080 made
+  `device_layer.dart` that surface. `#694` is not blocked on `#182` and could
+  have been started at any point. See
+  [a stated cost is a hypothesis](/practices/a-stated-cost-is-a-hypothesis.md),
+  which now points at sequencing as well as cost: both failures share a cause, a
+  ruling written from the corpus about a part of the tree nobody re-read.
+* **Note**: **THE TWO RULINGS HAVE OPPOSITE COST PROFILES AND ONLY ONE WAS EVER
+  MEASURED.** DR-080's accent moves nothing, because 0 of 4 starters and 0 of 48
+  seeds author `accentColor`. But `glyph` defaults FROM CATEGORY and
+  `device_glyph_test` already asserts all 48 seeded templates resolve to a mark,
+  so **every device on every elevation gains ops**. `#757` owns that and is not
+  the tidy-up task it looks like.
+* **Note**: `buildDeviceLayer` already takes `(DeviceInstance, TemplateBody)`, so
+  the glyph and both accent fields are in scope today. **No plumbing task exists
+  because none is needed**, which is worth recording before somebody files one.
+
+
 ## 2026-08-21
 
 * **Creation**: [DR-080, the accent colour reaches the

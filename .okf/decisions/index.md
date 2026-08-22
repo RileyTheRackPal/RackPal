@@ -73,6 +73,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-080, the accent colour reaches the elevation](dr-080-the-accent-reaches-the-elevation.md) - a colour control shipped four months ago and no renderer ever read it; DR-059 deferred the fix and priced it wrongly in both halves, and the real cost was that one of the eight swatches is pure black under four dark text ops.
 * [DR-081, three unreachable port fields get a cell](dr-081-three-port-fields-get-a-cell.md) - all three round-trip and none has ever had a writer; the multi-select cell shape is the deliverable, and none of them arms a rule, because a rule without its fixture pair is an M5 rule built outside M5.
 * [DR-082, parity and flowControl are closed sets](dr-082-parity-and-flowcontrol-are-closed-sets.md) - a comment reading "a vocabulary the corpus has not ruled on" was right at M4-F and wrong to leave standing; no Other row ships, because a value set with a free-text row is a free-text column wearing a dropdown.
+* [DR-083, the mark rides the designator line](dr-083-the-mark-rides-the-designator-line.md) - placement reuses family_glyph's fix rather than its style; the mark wins over a hatch because suppressing it would make two of seventeen ruled values unreachable; and DR-059's M4-K sequencing no longer describes the tree.
 
 # Not yet written up
 

@@ -12305,6 +12305,73 @@ either value prints on any sheet, which is M6's question about columns and width
 
 ---
 
+### 11.82 DR-083 · The mark rides the designator line, and it wins over a hatch
+
+**Settled by the user on 2026-08-21** (`#694`, `#751`), at M4-R's pick-up and **before any artwork**,
+on three things the census found that DR-059 does not answer.
+
+**A DECOMPOSITION RULING, NOT A §8.3 AMENDMENT.** Nothing enters or leaves scope: DR-059 already
+ruled the seventeen marks in and DR-080 already ruled the accent onto the elevation. This settles
+**where the mark goes, what happens where it collides, and which milestone it waits for**, none of
+which either ruling states.
+
+**11.82.1 THE MARK RIDES THE DESIGNATOR LINE, INLINE, AHEAD OF THE TEXT.** It draws at cap height on
+the line the designator occupies, and the designator, name and type shift right by a **computed
+advance**. Three reasons, and the first is that this is not a new pattern:
+
+- **`family_glyph.dart` already does exactly this and exists because the alternative failed in the
+  field.** Its shape is one op whatever the glyph, an advance computed from the type size alone, and
+  the emitter and the measurer reading **the same function** so they cannot disagree. That file was
+  written after Jost's missing codepoints made the signal glyph measure short and draw wide, putting
+  `NET-NEN006` over a net name. Reusing its shape is reusing a fix, not copying a style.
+- **It rides the one line that always draws.** `device_layer.dart`'s header records a shipped
+  blackout in which guarding the designator suppressed the entire label branch for every 1U device at
+  1:10 or smaller. A mark on that line inherits its survival; a mark anywhere else needs a new fit
+  rule in the function that has already produced that bug once.
+- **It cannot collide with the badge**, which is anchored top-right, or with the name and type, which
+  a 1U body drops before the mark is ever reached.
+
+**The rejected alternative is worth recording**: a larger mark on the right, vertically centred, reads
+across a whole rack at a glance and is the better picture. It was declined because at 1U it must dodge
+a 9 pt badge, which is a new drop tier in exactly the function whose drop tiers went wrong before.
+**The picture that reads better is not worth a second blackout.**
+
+**11.82.2 WHERE THE MARK MEETS A HATCH, THE MARK WINS ON A KNOCKED-OUT PANEL.** The collision is real
+and no ruling had named it: `kCategoryDefaultGlyph` maps `kCatPassive` to `DeviceGlyph.blank`, and
+`scene_builder.dart:344` sets `hatched: options.hatchPassive && body.category == kCatPassive`. **The
+devices that default to the `blank` mark are precisely the devices covered in 45° lines.** Order is
+hatch, then a padded backing rect **in the resolved body fill**, then the mark. Two extra ops, on
+passive devices only.
+
+**SUPPRESSING THE MARK INSTEAD WAS THE TEMPTING ANSWER AND IT IS THE WRONG ONE.** A blank panel is
+already identified by its hatch, so the mark is redundant there, and redundancy is DR-059's own
+argument. But `hatchPassive` is on by default, so suppression makes **`blank` and `shelf` draw
+nothing at all**: two of seventeen ruled values become unreachable, which is
+`a modelled field is not a reachable one` re-created **inside the fix for it**. The knockout costs
+two ops and keeps every value real.
+
+**11.82.3 DR-059'S STATED SEQUENCING IS STALE, AND THE CORRECTION LIVES HERE.** §11.58.7 reads that
+the artwork *"is a new issue sequenced with M4-K (`#182`), which owns the three live previews and is
+the first surface a device glyph appears on at all"*. Against the tree at `2055450`:
+**`draw/scene/panel_layer.dart` does not exist**, M4-K is not started, and **DR-080 has made
+`device_layer.dart` the first surface a device glyph appears on.** So `#694` is **not blocked on
+`#182`**, and the previews become the second surface rather than the first.
+
+**§11.58 is left as written**, on the precedent DR-080 §11.79.2 set one ruling earlier: a ruling
+records what was true when it was made, and a correction belongs in the ruling that found it. This is
+the second time in three days that a sequencing or costing sentence in DR-059 has not survived
+contact with the tree, which is `a stated cost is a hypothesis until it is measured` pointing at
+sequencing rather than at cost.
+
+**11.82.4 WHAT THIS DOES NOT RULE.** It does not choose the seventeen silhouettes: the value set is
+fixed by DR-059 §11.58.5 and censused against the 48 seeded templates, and the artwork answers to
+`device_glyph_test.dart` rather than to this. It does not set the cap-height factor or the bearing,
+which are numbers to be **looked at on a printed sheet** rather than argued (`#757`). It does not
+give the mark a meaning beyond identification: it is not a status, a lifecycle state or a domain. And
+it does not touch the schematic symbol, whose four encoding channels CR-078 already governs.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
