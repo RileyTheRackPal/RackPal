@@ -1,5 +1,36 @@
 # Update Log
 
+## 2026-08-25 (second entry)
+
+* **Creation**: [DR-086, the port set gets its
+  producer](/decisions/dr-086-the-port-set-gets-its-producer.md) (`#761`), taken
+  at M4-J2's pick-up and **before any code**.
+* **Note**: **`PortSetDef.kind` IS READ BY NOTHING BUT THE CODEC.** Not
+  `resolvePortSet`, not `planAtomicConnect`, not any drawing, schedule or rule.
+  Seventeen seeded declarations write it and no decision anywhere consults it.
+  That is the SECOND unreachable field this issue has turned up in two days, and
+  the two are opposite shapes: `PortSetDef` is a reader with no producer,
+  `PortSetDef.kind` is a producer with no reader. DR-086 clause 2 gives it one.
+* **Note**: **THE SEED CATALOG IS THE ARGUMENT FOR THE GESTURE, and it is a
+  measured argument rather than a taste.** A `SETS` tree beside M4-J1's `BANKS`
+  is the symmetric answer and would have been the easy one to build on what J1
+  just landed. `port_set_integrity_test.dart` records what separating "declare a
+  set" from "fill it" cost when the catalog did it: **90 references, 72
+  dangling, 7 sets referenced by nothing, 7 atomic sets under two members**. So
+  the set is made FROM the rows, and a one-member set becomes inexpressible
+  rather than warned about.
+* **Note**: **`SetKind.componentVideo` IS AUTHORED ZERO TIMES**, and it is the
+  case CR-055 leads with. `balancedPair` is authored **once**, as A04's `bal`
+  with roles `L` and `R`: it means *a stereo pair that happens to be balanced*,
+  which `PortDef.balanced` already records, and NOT the two legs of one balanced
+  line. The ruling keeps the value for CR-117's sake and does not offer it.
+* **Note**: **THE CLOSED ROLE LIST IS A CORRECTNESS FIX WEARING A TIDINESS
+  HAT.** `planAtomicConnect` compares `setRole` by **string equality** to report
+  a `RoleMismatch`, and `atomic_connect.dart`'s header already warned the
+  exposure *"opens the moment M4 lets a user author a template"*. The list must
+  be spelled exactly as the seed spells it, ASCII hyphen and all: one prettier
+  glyph in the picker and every authored-to-seeded connect warns.
+
 ## 2026-08-25
 
 * **Note**: **M4-J1 IS CLOSED** (`#760`, `#223`, four commits, `dbd7d19`..`ab7eeb8`,

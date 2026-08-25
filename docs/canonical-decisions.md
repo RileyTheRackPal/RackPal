@@ -12557,6 +12557,126 @@ navigation and the surface it navigates cannot disagree. **No ruling is taken an
 reordering banks is not a docs/06 §4.6 operation, so no gesture can write the field. If one is ever
 ruled it takes this field, and the grid takes a reader with it.
 
+### 11.85 DR-086 · The port set gets its producer, and the role column stops being free text
+
+**Settled by the user on 2026-08-25** (`#181`, `#224`, `#761`), at M4-J2's pick-up and **before any
+code**, on four questions the corpus does not answer.
+
+**A DECOMPOSITION RULING, NOT A §8.3 AMENDMENT.** Port sets are in scope: CR-055 rules both groupings
+into v1, `#181` names the editor and DR-085 §11.84.6 hands `PortSetDef`'s producer to M4-J2 by name.
+Nothing enters or leaves; this settles how it is authored.
+
+**11.85.1 THE FIELD IS UNREACHABLE IN THE OTHER DIRECTION, WHICH IS WHY THIS IS THE ISSUE'S LARGER
+HALF.** DR-085 §11.84.2's census: `PortSetDef` has **no producer outside the seeded catalog**, and
+`port_grid.dart` ships a **live, editable `SET` dropdown built from that empty list**. A person
+authoring a template from scratch opens that picker, finds one entry, `—`, and finds only that one
+for ever.
+
+**AND `PortSetDef.kind` IS UNREACHABLE IN BOTH DIRECTIONS.** Censused here: `SetKind` is read by
+**nothing but the codec**. Not by `resolvePortSet`, not by `planAtomicConnect`, not by any drawing,
+schedule or rule. It is written by 17 seeded declarations, round-tripped, and consulted by no
+decision anywhere in the product. §11.85.3 gives it its first reader.
+
+**11.85.2 CLAUSE 1: A SET IS MADE FROM A SELECTION, NEVER FROM AN EMPTY HEADING.** `Group as set…`
+(`Ctrl+G`) over **two or more** ticked rows writes the `PortSetDef` **and** `setKey`/`setRole` on
+every member, in one transaction and therefore one `Ctrl+Z`.
+
+Two alternatives were put and both declined. A `SETS` tree in the rail beside M4-J1's `BANKS` is the
+symmetric answer and is cheap on what J1 already built; a `New set…` entry in the `SET` dropdown is
+the smallest change. **Both separate declaring a set from filling it, and the seed catalog is the
+evidence for what that costs.** `port_set_integrity_test.dart` records the shipped catalog failing
+its own gate: **90 `setKey` references, 72 dangling; 16 sets declared, 7 referenced by nothing; 7
+`atomicConnect` sets with fewer than two members.** Below two members the gesture AC-053 specifies is
+undefined and degrades to a one-conductor link **with no error**. A product that can mint a
+one-member set has to warn about a state it created; making it inexpressible is cheaper than warning
+about it.
+
+**IT REFUSES UNDER A SORT**, on `Duplicate`'s ground (DR-078 §11.77.1) and not quite for its reason.
+It writes no `order`. What it READS is `order`: roles are assigned **in declared order**, which is
+`resolvePortSet`'s stated contract and what §11.8.3 pairs conductors on. Under a sort badge the
+person is looking at a different order from the one the roles will follow, so `L` lands on the row
+they see second and the wrong pin reaches the drawing.
+
+**IT SHOWS AN IMPACT LIST** (DR-078 §11.77.3), because it can overwrite: a row already in another set
+leaves that set, and the row is where that gets said. Same widget, fourth caller.
+
+**`Ctrl+G` SHADOWS NO FRAMEWORK DEFAULT**, checked over `default_text_editing_shortcuts.dart` rather
+than recalled, with `keyT` as a positive control: `keyG` occurs **zero** times in that file and
+`keyT` once, which is the transpose DR-078 §11.77.1 knowingly takes. The chord earns its keymap row
+against `structure_editor_screen.dart`'s standing objection that an unnecessary one is a real cost:
+an eight-zone amplifier is eight `Group as set` gestures over sixteen Quick Added ports, which is the
+same repetition the other five chords exist for.
+
+**11.85.3 CLAUSE 2: THE ROLE LIST IS CLOSED, AND `SetKind` IS WHAT OPENS IT.**
+
+| `SetKind` | Roles, in order |
+|---|---|
+| `stereoPair` | `L`, `R` |
+| `speakerPair` | `+`, `-` |
+| `componentVideo` | `Y`, `Pb`, `Pr` |
+
+**No `Other` row** (DR-082 §11.81's rule, third application). **And the reason here is mechanical
+rather than tidiness.** `planAtomicConnect` pairs members by declared position and reports a
+`RoleMismatch` by **string equality**, and `atomic_connect.dart`'s own header says the exposure
+*"opens the moment M4 lets a user author a template"*. With a free-text cell, `+`, `plus`, `POS` and
+`Pos` are four distinct roles, and a person who types `Pos` gets a mismatch warning against every
+seeded amplifier they connect to. AC-030 exists so that a polarity inversion is **inexpressible**
+rather than silently wrong; a column that can spell `+` four ways is the opposite of that.
+
+**SPELLED EXACTLY AS THE SEED SPELLS THEM.** The catalog's 35 member ports carry `L` (8), `R` (8),
+`+` (9) and `-` (9). ASCII hyphen, not a minus sign, and the picker must not improve on it: one
+prettier glyph and every authored-to-seeded connect reports a mismatch. `Y`/`Pb`/`Pr` has no seed
+precedent, because **`componentVideo` is authored zero times**, and is taken from the trade's own
+spelling.
+
+**A BLANK ROLE STAYS LEGAL AND STAYS OFFERED.** `PortSetMember.role` is nullable and its doc says so
+in terms: a member with no role is legal and *"the position carries the meaning"*. So the picker
+carries an empty option, and **roles run out into blank rather than cycling**: grouping four rows as
+a stereo pair gives `L`, `R`, blank, blank, and the impact list names the two it left. Cycling would
+write `L`, `R`, `L`, `R` and produce two members claiming one role, which is the mis-wiring
+`resolvePortSet`'s header refuses to let a filtered list cause, arriving by another door.
+
+**11.85.4 CLAUSE 3: `balancedPair` IS NOT OFFERED FOR NEW AUTHORING, AND THE ENUM VALUE STAYS.** Its
+**one** use in the seed is A04's `bal`, *"Balanced input pair"*, whose two ports carry roles `L` and
+`R`. So as authored it means *a stereo pair that happens to be balanced*, which `PortDef.balanced`
+already records on each port. The thing the NAME suggests, the two legs of one balanced line, is
+`balanced` plus `Polarity` on the terminal (AC-030), and modelling it as two ports would put the
+inversion back into expressible territory.
+
+**The value is kept and the picker simply does not offer it.** Removing it moves seeded bytes for no
+gain and would break CR-117's round trip on the one template carrying it. **A set that already has
+this kind keeps it, decodes it, and the picker includes it while that set is the one being edited**,
+which is M3-L's `SERVICE` finding stated as a rule: a value no menu offers must not take the surface
+down with it, and must not be silently retyped by the act of opening a dialog.
+
+**11.85.5 CLAUSE 4: `atomicConnect` GETS ITS FIRST EDITOR, IN THE SAME DIALOG.** DR-011.2 made it
+*"load-bearing for the first time"* and `planAtomicConnect` reads it **before any rule runs**,
+because a set that has opted out is not model-illegal. It has an editor nowhere. It is a switch in
+the group dialog, defaulted **on**, matching both `PortSetDef`'s own default and all 17 seeded sets.
+
+**11.85.6 A SET BELOW TWO MEMBERS IS A NOTICE, NOT AN ERROR.** §11.85.2 makes the gesture unable to
+mint one, and that is not the same as the state being unreachable: `Delete` on a member leaves one,
+and a hand-edited `.rmdx` can arrive holding one. `port_set_integrity_test` gates the **seed** and
+nothing gates an authored template. So it is a `PortIssue` **notice** on the `SET` column, on the
+passthrough notice's precedent (docs/06 §4.6: a passthrough template with missing pairs is a load
+warning, not an error) and for its reason: a half-finished template mid-authoring must not shout.
+
+**Removing the last member does NOT remove the set.** `RemovePortCommand` takes passthrough pairs
+with a port because a dangling pair *"reads as a pairing the user can no longer see"*; an empty set
+is not dangling, it is empty, and it is what a person is about to put two ports back into.
+
+**11.85.7 THE `SET` COLUMN KEEPS ITS JOB AND MINTS NOTHING.** It moves a port between sets that
+already exist, exactly as the `Bank` column moves between banks that already exist, which is DR-078
+§11.77.2's shape reused rather than a new idea. The `ROLE` column becomes a picker over the row's own
+set's kind, and is **empty and disabled on a row in no set**, because a role without a set is a value
+about nothing.
+
+**11.85.8 WHAT THIS DOES NOT RULE.** It does not touch passthrough pairing, which is M4-J3 (`#225`)
+and a different model. It does not give `SetKind` a job in any drawing, schedule or rule: §11.85.3
+makes it the source of a role vocabulary in the BUILDER, and nothing downstream reads it yet. And it
+does not put a set on the schematic symbol or in the panel layout, both of which are banks' work
+(CR-055).
+
 ---
 
 ## 12. Superseded rulings
