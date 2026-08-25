@@ -3820,6 +3820,76 @@ DR-059 capped the set to answer. `#694` stays open and no version bump rides on 
 closed and the issue did not. The previews M4-K owns are still unbuilt, so the builder picker is the
 only surface besides the elevation that draws a mark.
 
+#### 5.3.17 M4-J1, the bank tree, and the field that has never had a reader · CLOSED · `dbd7d19`, `6a4e41c`, `817acfd`, `ab7eeb8`
+
+**Four commits, fourteen gates green on each.** `rackmate_core` **3,197 → 3,227**, `rackmate_ui`
+**1,117 → 1,139**. `#760` is DR-085 (§11.84); `#223` is the CRUD, the tree, the menu and the mirror.
+
+**THE PICK-UP CENSUS FOUND SOMETHING LARGER THAN THE MISSING ACTION, and it re-scoped the issue.**
+`#181` reads as *"the editor over three models"*. It is not:
+
+| Model | Writers outside the seeded catalog | The surface reading it |
+|---|---|---|
+| `PortSetDef` | **none** | a **live** `SET` dropdown built from that empty list (`port_grid.dart`) |
+| `PassthroughPairDef` | **none that create one** | `PAIRED WITH`, read-only |
+| `BankDef` | one, `quick_add.dart:721` | the grid's bands, and `Ctrl+M`'s destinations |
+
+**A person authoring a template from scratch opens the `SET` picker, finds one entry, `—`, and will
+find only that one forever.** So M4-J is **the two missing producers**, and `Mirror bank` is its
+smallest task rather than its largest. That is
+`a modelled field is not a reachable one` **with the halves reversed**: the practice was filed on
+`NetworkConfig`, a writer with no reader, and the census question everybody writes, *"what writes
+this?"*, finds that shape and misses this one entirely.
+
+**`BankDef.order` HAS NO READER AND NEVER HAS.** Found while deciding what the tree should sort by.
+It is allocated by `nextOrder`, encoded by `json_codec`, and read by **nothing that orders
+anything**: `symbol_layer.dart` orders pins by `PortDef.order`, `buildPortTable` bands by first
+appearance over the declared port order, and `movableBanks` follows the grid. **Making the tree its
+first reader was the tempting move and is the wrong one**, because the tree is navigation and a
+navigation list whose order differs from the surface it navigates is a defect rather than a
+preference. Recorded rather than fixed: reordering banks is not a docs/06 §4.6 operation, so no
+gesture can write the field, and if one is ever ruled it takes this field and the grid takes a
+reader with it.
+
+**THREE UI DECISIONS WERE PUT TO THE USER BEFORE ANY WIDGET, and all three were taken.** The tree
+**jumps and hides nothing** (a filter would leave `Fill down`, `Renumber…` and `Duplicate` reasoning
+about rows the person cannot see, against a full declared order they no longer share); it is mounted
+on **every** section, with a click switching to Ports (a rail that reflowed under the cursor is how
+somebody clicks the wrong tile); and the menu hangs off **both** the tree row and the grid's band
+header, built once by `bankMenuItems`.
+
+**THE JUMP IS A LOOP AND NOT AN OFFSET, which is the implementation note worth keeping.** Two
+obvious approaches are both wrong on this grid. Computing the target offset needs a row height, and
+a row has none declared: it is as tall as a `TextField` at the current text scale, so the arithmetic
+would have to invent a constant and the next person to change the row's padding would break
+navigation with fourteen gates green. `Scrollable.ensureVisible` needs a `BuildContext`, and a
+`SliverPersistentHeader` four screens down has never been laid out, so its `GlobalKey` holds
+nothing. The grid therefore pages toward the target a viewport at a time until the header exists,
+then lets `ensureVisible` place it: no invented constants, bounded by the scroll extent over the
+viewport, and the intermediate frames read as the fast scroll the gesture is.
+
+**FOUR GRID TESTS WENT RED AND ALL FOUR WERE RIGHT TO.** They asserted `find.text('HDMI Inputs')`
+over the whole screen, which silently meant *the band header* right up until the rail started naming
+banks too. Scoped through a `_inGrid` finder rather than loosened, because a bank's name is now on
+screen twice **by design** and a finder that cannot say which one it means is not asserting what its
+name claims.
+
+**Two smaller things the work settled, each because a surface arrived.** `AddBankCommand`'s
+`LabelKey` moved from `quickAddPorts` to a new `addBank`: inside a transaction the transaction's
+label is what the Edit menu shows, so while Quick Add was the only caller that getter was
+unreachable prose, and the tree runs it bare. And `portMoveToBankRefusalMessage` stopped pointing at
+a *"Banks section"* that has never existed; it names the tree's `+`.
+
+| Task | What it did |
+|---|---|
+| `#760` | DR-085 (§11.84): the three clauses `Mirror bank`'s one docs/06 row cannot answer, and the census above |
+| `#223` | `RenameBankCommand`, `RemoveBankCommand`, `planMirrorBank`, `mirrorBankCommands`, `buildBankTree`, `bankLabelIsTaken`, `mirrorBankImpact`; the rail's tree, both menu mount points, and the three dialogs |
+
+**WHAT M4-J1 DOES NOT DELIVER.** No `PortSetDef` producer (`#224`) and no `PassthroughPairDef`
+producer (`#225`), which the census above makes the larger half of `#181`. No bank reordering, for
+the reason `BankDef.order` is recorded above. A mirror does **not** pair the two banks: a matrix's
+mirrored output is a second output, not a passthrough (DR-085 §11.84.6).
+
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing

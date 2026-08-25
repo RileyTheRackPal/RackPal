@@ -128,6 +128,42 @@ of at a corpus. **That is the cheap moment**: an unreachable field discovered
 while scoping costs a paragraph, and the same field discovered mid-build costs an
 unscheduled command.
 
+# And one with the halves reversed: a reader that shipped, with no producer
+
+**`PortSetDef`, censused at M4-J's pick-up** (DR-085, board `#760`). Every entry
+above is a writer missing behind a field. This one is the mirror image, and the
+usual check cannot see it.
+
+`port_grid.dart` ships a **live `SET` dropdown**. It is editable, it writes
+`PortDef.setKey`, it lists `body.portSets` with a null option first, and it works.
+**Nothing outside the seeded catalog has ever created a `PortSetDef`.** So a
+person authoring a template from scratch opens that picker, finds one entry, the
+unknown dash, and will find only that one for ever. `PassthroughPairDef` is the
+same shape one column over: its only writer is `RenamePortKeyCommand`, which
+rewrites pairs that already exist, and `PAIRED WITH` is read-only.
+
+**The question at the top of this file is *"what writes this?"*, and here the
+answer is reassuring and useless.** A cell writes it. What is missing is the
+thing that mints the row the cell points at, and no grep for a field name asks
+that. The question that finds this shape is **"where does a person make the
+FIRST one?"**, asked of every collection a control offers choices from.
+
+**It re-scoped an issue rather than adding a task.** `#181` reads as an editor
+over three existing models; the census turned it into **two missing producers
+plus a small action**, which is a different size and a different order of work.
+Found before any code, which is the whole return on
+[census before building](census-before-building.md).
+
+**Beside it, a field with no reader at all: `BankDef.order`.** Allocated by
+`nextOrder`, encoded by the codec, and read by nothing that orders anything. The
+symbol orders pins by `PortDef.order`, the grid bands by first appearance, and
+`movableBanks` follows the grid. It surfaced only because M4-J1's bank tree had
+to decide what to sort by, and the answer was *not this field*: the tree is
+navigation, and a navigation list ordered differently from the surface it
+navigates is a defect. **An unreachable field is not always a thing to make
+reachable.** Sometimes the honest move is to record that nothing reads it and
+leave it alone until a ruled gesture needs it.
+
 # The check, which costs a minute
 
 For each field the work will read or write:
@@ -145,7 +181,7 @@ well-integrated precisely because every consumer already handles it.
 
 # Why the corpus does not catch this
 
-The corpus describes the MODEL, and the model is right in all four cases. The
+The corpus describes the MODEL, and the model is right in every case above. The
 data-model document lists the field, the codec test round-trips it, and the
 design document describes the behaviour that reads it. Every one of those
 artifacts is accurate. None of them is evidence that a person can change the
@@ -154,8 +190,10 @@ value, and
 is the same lesson one layer up: there, a field named by a ruling AND a design
 document was in neither the model nor the codec.
 
-**So the estimate is what this costs.** All four were found while implementing
-something else, and each added a command nobody had scheduled.
+**So the estimate is what this costs.** Every one found by USING the thing was
+found while implementing something else, and each added a command nobody had
+scheduled. The ones found by reading cost a paragraph, which is the argument for
+reading first.
 
 # Citations
 

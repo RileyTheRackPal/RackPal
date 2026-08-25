@@ -12532,6 +12532,31 @@ cascade question in DR-013's family. It does not give `PortSetDef` its producer,
 whole task and is the larger half of this issue. And it does not touch `Ctrl+M`, which moves ports
 between banks that already exist and is DR-078's.
 
+**11.84.7 BUILT 2026-08-25** (`#223`, `817acfd`, `ab7eeb8`; docs/12 §5.3.17). All three clauses ship,
+on a menu built once by `bankMenuItems` and mounted twice, on the rail's bank tree and on the grid's
+band header, because §11.84.1's row says *"bank context menu"* and never says whose. The preview
+reads its `after` column off the port the command will add rather than recomputing the flip, so it
+cannot disagree with the write, and it is a fourth caller of `port_impact_list.dart` rather than a
+second impact list; its summary line reads *"3 rows matched, 2 will change, 1 to check"*, which is
+§11.84.3's clause arriving as a sentence.
+
+**§11.84.6 LEFT THE BANK-DELETE CASCADE TO M4-J1 AND M4-J1 ANSWERED IT: the ports SURVIVE.**
+`RemoveBankCommand` takes the `BankDef` and clears `bankKey` on every port that named it, so they
+land in `Not in a bank`, which the grid already draws. CR-055 makes a bank **presentation**, so
+taking authored ports with a cosmetic action would destroy data; it clears rather than dangles on
+`RemovePortCommand`'s precedent one type over, which takes passthrough pairs with a port because a
+dangling reference *"reads as a pairing the user can no longer see"*. It is therefore **not
+confirmed**: a confirm on an act that destroys nothing is how people learn to click through the one
+on `Commit sort order` (AC-058/D5).
+
+**AND THE CENSUS ANSWERED A QUESTION §11.84.2 DID NOT ASK: `BankDef.order` HAS NO READER ANYWHERE.**
+It is allocated by `nextOrder`, encoded by the codec, and read by nothing that orders anything:
+`symbol_layer.dart` orders pins by `PortDef.order`, `buildPortTable` bands by first appearance, and
+`movableBanks` follows the grid. The bank tree reads through `movableBanks` for that reason, so the
+navigation and the surface it navigates cannot disagree. **No ruling is taken and none is needed:**
+reordering banks is not a docs/06 §4.6 operation, so no gesture can write the field. If one is ever
+ruled it takes this field, and the grid takes a reader with it.
+
 ---
 
 ## 12. Superseded rulings

@@ -72,9 +72,13 @@ String portMoveToBankRefusalMessage(
     'The grid is sorted. A move rewrites the declared order, so clear '
         'the sort or commit it first.',
   PortMoveToBankRefusal.alreadyThere => 'Those ports are already in that bank.',
+  // NAMES THE CONTROL, NOT A SECTION. This sentence was written before
+  // M4-J1 built anywhere to go and pointed at a "Banks section" that has
+  // never existed; the tree is in the left rail, under BANKS, and its
+  // `+` is what a person has to press.
   PortMoveToBankRefusal.nowhereToMoveTo =>
-    'This template has no other bank to move to. Add one in the Banks '
-        'section first.',
+    'This template has no other bank to move to. Make one with + in the '
+        'BANKS list on the left.',
   PortMoveToBankRefusal.noRoomBetweenTheRows =>
     'No room to place the ports at the end of that bank. Commit a sort '
         'or move the rows apart first.',

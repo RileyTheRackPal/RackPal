@@ -9,7 +9,7 @@ tags: [ruling, m4, m4-j, banks, port-sets, passthrough, cr-051, cr-060, dr-078, 
 timestamp: 2026-08-22T00:00:00Z
 ruling_id: DR-085
 canon_section: "11.84"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-22 (board `#181`, `#760`), at M4-J's pick-up and
@@ -68,6 +68,24 @@ mirrored ports are NEW ports, so nothing writes a `renamedFrom` and CR-051's joi
 is untouched. Suffixing the source key reads well in a diff and is declined for
 that appeal: it encodes a relationship in a string no field records, and a key
 that means something is a composite key wearing a different hat.
+
+# Built 2026-08-25
+
+All three clauses ship (`#223`, `817acfd`, `ab7eeb8`). `Mirror bank` is on a menu
+built once by `bankMenuItems` and hung off two places: the rail's bank tree and
+the grid's band header. `mirrorBankImpact` reads its `after` column off the port
+the command will actually add, so the preview that names the untouched rows
+cannot disagree with the write; the summary line says *"3 rows matched, 2 will
+change, 1 to check"*, which is clause 1 arriving as a sentence.
+
+**The bank-delete cascade below was left to M4-J1 and M4-J1 answered it:
+removing a bank keeps every port and clears its `bankKey`.** CR-055 makes a bank
+PRESENTATION, so taking authored ports with a cosmetic action would destroy data,
+and it CLEARS rather than dangles on `RemovePortCommand`'s precedent one type
+over. The ports land in `Not in a bank`, which the grid already draws.
+
+**The census's larger half is still open.** `#224` gives `PortSetDef` its
+producer and `#225` gives `PassthroughPairDef` its own.
 
 # What it does not rule
 

@@ -1,5 +1,53 @@
 # Update Log
 
+## 2026-08-25
+
+* **Note**: **M4-J1 IS CLOSED** (`#760`, `#223`, four commits, `dbd7d19`..`ab7eeb8`,
+  fourteen gates green on each). The bank tree is in the rail on every section, a
+  click switches to Ports and jumps to the band, and DR-085's mirror has the
+  preview that names every row it leaves alone. `rackmate_core` 3,197 → 3,227,
+  `rackmate_ui` 1,117 → 1,139.
+* **Update**: [DR-085](/decisions/dr-085-mirror-bank-and-the-missing-producers.md)
+  is BUILT for its own three clauses. The two missing producers it named are
+  still missing and are `#224` and `#225`.
+* **Update**: [a modelled field is not a reachable
+  one](/practices/a-modelled-field-is-not-a-reachable-one.md) gains the shape
+  with **the halves reversed**, and it is the one the file's own check cannot
+  find. Every earlier entry is a writer missing behind a field, so the guidance
+  is *"grep for what writes it"*. `PortSetDef` has a live, editable `SET`
+  dropdown that writes `PortDef.setKey` perfectly; what is missing is anything
+  that mints the row the cell points at. The question that finds this is **"where
+  does a person make the FIRST one?"**, asked of every collection a control
+  offers choices from. Two stale counts in that file were corrected in the same
+  edit, which is the failure it already documents having had once.
+* **Note**: **`BankDef.order` HAS NO READER ANYWHERE AND NEVER HAS**, found only
+  because the tree had to decide what to sort by. Allocated, encoded, read by
+  nothing that orders anything. **The tempting fix was the wrong one**: making
+  the tree its first reader would put the navigation out of step with the grid
+  it navigates, in exchange for honouring a field no docs/06 §4.6 gesture can
+  write. An unreachable field is not always a thing to make reachable.
+* **Note**: **THE JUMP IS A LOOP AND NOT AN OFFSET**, and both obvious
+  alternatives fail on this grid. Computing the offset needs a row height and a
+  row has none declared, so the arithmetic would invent a constant that the next
+  padding change silently breaks with every gate green.
+  `Scrollable.ensureVisible` needs a `BuildContext` and a `SliverPersistentHeader`
+  four screens down has never been laid out. The grid pages toward the target a
+  viewport at a time until the header exists, then reveals it exactly.
+* **Note**: **FOUR GRID TESTS WENT RED AND ALL FOUR WERE RIGHT TO.** They
+  asserted `find.text('HDMI Inputs')` over the whole screen, which silently meant
+  *the band header* until the rail started naming banks too. Scoped rather than
+  loosened:
+  [assert the artifact, not the mechanism](/practices/assert-the-artifact-not-the-mechanism.md)
+  cuts both ways, and a finder that cannot say which of two identical strings it
+  means is not asserting what its name claims.
+* **Note**: **TWO OF MY OWN TEST EXPECTATIONS WERE WRONG AND THE FIXTURE WAS
+  WHY.** Every port in the bank fixture carried order `a0000`, so
+  `portsInDeclaredOrder` tie-breaks on the key and the unbanded port lands in the
+  middle of the bands. The behaviour was right and the assertion was written from
+  what the fixture LOOKED like. The banding cases now read a fixture whose
+  declared order is stated rather than incidental.
+
+
 ## 2026-08-22
 
 * **Creation**: [DR-085, Mirror bank and the two missing
