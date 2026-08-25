@@ -21,8 +21,10 @@ Fourteen gates. All must pass before a commit. Notes that cost real time:
 - **Anything you leave in `packages/*/tool/` is analyzed.** Scratch scripts inflate
   the info count and fail the gate. Delete them before committing, or keep them in
   the scratchpad.
-- **Test floors** (`tools/ci/run_suite.ps1`): core 976, text 1, export 183, ui 382,
-  app 664. Lowering one must be a visible line in a diff.
+- **Test floors** (`tools/ci/run_suite.ps1`): core 3263, text 1, export 189, ui 1162,
+  app 838. Lowering one must be a visible line in a diff. **Re-measure them in any
+  commit that adds or removes tests**, which the script says in its own comment and
+  which went unheeded until #764 found 3,247 tests of slack under five floors.
 - **Run suites from the package directory**, not the repo root. Several tests read
   files relative to CWD and fail spuriously otherwise.
 - **Stale `build/unit_test_assets` and `build/flutter_assets` cause phantom asset

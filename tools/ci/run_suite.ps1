@@ -105,12 +105,18 @@ $ErrorActionPreference = 'Stop'
 #
 # LOWERING ONE IS A REVIEWED ACT and belongs in the same commit as the test
 # removal that made it necessary.
+# RE-MEASURED 2026-08-25 (#764). The instruction above had not been followed
+# for a long time and the slack it warns about had grown from 131 to 3,247:
+# core 976 against 3263 actual, ui 382 against 1162, app 664 against 838.
+# Two thousand two hundred and eighty-seven core tests could have stopped
+# being discovered while this script printed "+2287" and exited 0. Measured
+# by `run_local.ps1 -SkipBuild` on that date, all five suites green.
 $SuiteFloors = @{
-    'rackmate_core'   = 976
+    'rackmate_core'   = 3263
     'rackmate_text'   = 1
-    'rackmate_export' = 183
-    'rackmate_ui'     = 382
-    'rackmate_app'    = 664
+    'rackmate_export' = 189
+    'rackmate_ui'     = 1162
+    'rackmate_app'    = 838
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
