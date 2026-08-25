@@ -139,7 +139,7 @@ const kPinPitch          = 2;                 // gu
 const kBtuPerWattHour    = 3.412142;          // CR-005 — derived heat, never stored
 const kBankCollapseThreshold = 8;
 const kMaxRackHeightU    = 60;                // CR-038
-const kSchemaVersion     = 1;
+const kSchemaVersion     = 2;
 ```
 
 Two unit tests are written **before any other code** (AC-001): exact 1/32-in inter-panel clearance, and zero accumulated error across a 45U stack.
@@ -164,7 +164,7 @@ Four rules from CR-045 and §4.0 govern every identifier in this document. They 
 ```dart
 final class RackDocument {
   final Uuid id;
-  int schemaVersion, minReaderVersion;      // 1, 1
+  int schemaVersion, minReaderVersion;      // 2, 2
   String appVersion;                        // diagnostics only
   DateTime createdAt, modifiedAt;
 
@@ -957,9 +957,9 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
   "createdAt": "2026-07-18T09:14:02.113847Z",
   "generator": "RackMate",
   "id": "0190e3c1-7a2f-7c9d-8b11-a0f2c4e51d33",
-  "minReaderVersion": 1,
+  "minReaderVersion": 2,
   "modifiedAt": "2026-07-18T16:42:55.902310Z",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "sequence": 412,
 
   "document": {
@@ -1706,17 +1706,20 @@ Two integers, and they do different jobs (CR-092, CR-093):
 | `schemaVersion` | The version this file was written at. | `> kSchemaVersion` and `minReaderVersion <= kSchemaVersion` ⇒ open **read-only** with a banner, preserving unknown fields for Save As. |
 | `minReaderVersion` | The oldest reader that can safely round-trip this file. | `> kSchemaVersion` ⇒ **refuse**. A genuinely breaking change happened. |
 
+> **`kMinReaderVersion` IS 2, AND THAT SENTENCE IS ABOUT WHAT WE WRITE RATHER THAN HOW WE READ.** The two rows above describe how a reader treats a file it is handed. The constant decides what goes INTO every file this build saves, and it moved to 2 with `migrateV1ToV2`: so **a v1 reader refuses a file written today** rather than opening it read-only, which is the row above running in the other direction. That is correct and deliberate, because v1 had no `sequence` and a v1 reader silently round-tripping a v2 document would drop it. It is written down here because raising the constant is a one-line change with a product consequence, and the consequence lived in nobody's head (docs/12 §4.7).
+
 Migration returns an `Outcome<T>`, never an exception (CR-093), the source snippet's `throw NewerSchemaException` is a control-flow defect in a path that must degrade gracefully.
 
 ```dart
-const kSchemaVersion = 1;
+const kSchemaVersion = 2;
 typedef JsonMap  = Map<String, Object?>;
 typedef Migration = JsonMap Function(JsonMap);
 
 /// APPEND-ONLY. Frozen the moment a version ships. A migration is a historical
 /// record — editing one corrupts users' files.
 const migrations = <int, Migration>{
-  // 1: _v1ToV2,   // added when schemaVersion 2 ships. Never deleted. Never edited.
+  0: _v0ToV1,      // synthetic, and it exists to prove the chain runs
+  1: _v1ToV2,      // the first REAL one. Never deleted. Never edited.
 };
 
 sealed class LoadOutcome { }

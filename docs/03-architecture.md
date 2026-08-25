@@ -770,8 +770,8 @@ The envelope puts format metadata at the root and all entity maps under a `"docu
 ```json
 {
   "generator": "RackMate",
-  "schemaVersion": 1,
-  "minReaderVersion": 1,
+  "schemaVersion": 2,
+  "minReaderVersion": 2,
   "appVersion": "1.0.0",
   "document": { "racks": {}, "devices": {}, "links": {}, "nets": {} }
 }
@@ -786,13 +786,13 @@ Two codec rules: **enums are strings, never ordinals** (`"hdmi"`, not `3`), with
 ### 9.2 Migration
 
 ```dart
-const kSchemaVersion = 1;
+const kSchemaVersion = 2;
 typedef JsonMap = Map<String, Object?>;
 typedef Migration = JsonMap Function(JsonMap);
 
 /// APPEND-ONLY. A shipped migration is a historical record — editing one
 /// corrupts users' files. Never delete, never modify.
-const migrations = <int, Migration>{};
+const migrations = <int, Migration>{0: _v0ToV1, 1: _v1ToV2};
 
 Outcome<MigratedDoc> migrateToCurrent(JsonMap raw) { … }
 ```

@@ -606,7 +606,13 @@ Mono cuts CR-080 requires do not exist; and the **Noto Sans Symbols 2 fallback d
 which is what docs/05:171's glyph-resolution test depends on. A tofu box in an exported drawing is
 the defect that test exists to prevent, and neither the test nor the fallback is present.
 
-### 4.7 `kSchemaVersion` is 2; the documents still print 1
+### 4.7 CLOSED 2026-08-25: `kSchemaVersion` is 2 and the documents now print 2
+
+**Ten sites corrected in docs/02 and docs/03**, and the semantic change below is written down in docs/02's reader-behaviour table where it belongs. **docs/06's `.rmdev` example was left alone**, exactly as the warning at the foot of this section says: `.rmdev` has its own parallel migration chain (CR-063) and no codec exists to decide its version, so bumping it would have been inventing a fact. The warning was worth its space.
+
+**This section's own line numbers had drifted and its fixture path was pre-rename** (`v1_templates_and_power.rackmate.json`; the file is `.rmpj.json`), so the sites were found by content rather than by the line numbers recorded below. A drift register drifts too.
+
+The record of what was wrong, unchanged:
 
 `packages/rackmate_core/lib/src/units/constants.dart:22`, `const kSchemaVersion = 2`, and `:35`,
 `const kMinReaderVersion = 2`, with a real `migrateV1ToV2` in `persistence/migrations.dart` and a
