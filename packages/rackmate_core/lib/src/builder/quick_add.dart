@@ -714,7 +714,7 @@ List<Command<TemplateBody>> buildQuickAdd(
 
   final bankLabel = uniqueBankName(registries, body, plan);
   final existing = body.banks.where((b) => b.label == bankLabel).firstOrNull;
-  final bankKey = existing?.key ?? _uniqueBankKey(body, bankLabel);
+  final bankKey = existing?.key ?? uniqueBankKey(body, bankLabel);
   if (existing == null) {
     commands.add(
       AddBankCommand(
@@ -790,13 +790,30 @@ List<Command<TemplateBody>> buildQuickAdd(
 ///
 /// Slugged from the label on `autoPortKey`'s convention, so a reader
 /// seeing `hdmi.inputs` beside `port.3` does not have to learn two.
-String _uniqueBankKey(TemplateBody body, String label) {
+String uniqueBankKey(TemplateBody body, String label) => uniqueSlugKey(
+  label,
+  taken: {for (final b in body.banks) b.key},
+  fallback: 'bank.${body.banks.length + 1}',
+);
+
+/// [label] slugged to a key that is not already in [taken].
+///
+/// **EXTRACTED SO THERE IS ONE DERIVATION, NOT TWO.** `uniqueBankKey` and
+/// `uniquePortSetKey` (M4-J2) mint keys for two different collections out
+/// of the same vocabulary, and this file's own `abbr` comment states the
+/// objection to a second copy: it would be "a third place for the same
+/// vocabulary to drift". [fallback] is what an all-punctuation label
+/// slugs down to, and is the only part the two callers differ on.
+String uniqueSlugKey(
+  String label, {
+  required Set<String> taken,
+  required String fallback,
+}) {
   final slug = label
       .toLowerCase()
       .replaceAll(RegExp('[^a-z0-9]+'), '.')
       .replaceAll(RegExp(r'^\.+|\.+$'), '');
-  final base = slug.isEmpty ? 'bank.${body.banks.length + 1}' : slug;
-  final taken = {for (final b in body.banks) b.key};
+  final base = slug.isEmpty ? fallback : slug;
   if (!taken.contains(base)) return base;
   for (var n = 2; ; n++) {
     final candidate = '$base.$n';

@@ -871,13 +871,19 @@ final class AddPortCommand extends Command<TemplateBody> {
 ///
 /// HOLDS THE BANK IT ADDED rather than a copy, so redo restores the
 /// identical object and nothing can reach it in between to mutate it.
+///
+/// **THE LABEL IS `addBank` AND USED TO BE `quickAddPorts`.** Inside a
+/// transaction the transaction's own label is what the Edit menu shows,
+/// so while Quick Add was the only caller this getter was unreachable
+/// prose. M4-J1's bank tree runs it BARE to create an empty bank, which
+/// makes it the label a person reads.
 final class AddBankCommand extends Command<TemplateBody> {
   const AddBankCommand(this.bank);
 
   final BankDef bank;
 
   @override
-  LabelKey get label => LabelKey.quickAddPorts;
+  LabelKey get label => LabelKey.addBank;
 
   @override
   EpochMask? get touches => null;

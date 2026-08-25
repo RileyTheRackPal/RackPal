@@ -12455,6 +12455,340 @@ tellable apart at 8 pt remains `#757`'s printed sheet.
 
 ---
 
+### 11.84 DR-085 · Mirror bank, and the two models with a reader and no writer
+
+**Settled by the user on 2026-08-22** (`#181`, `#760`), at M4-J's pick-up and **before any code**,
+on three questions the corpus does not answer and one finding that outgrew them.
+
+**A DECOMPOSITION RULING, NOT A §8.3 AMENDMENT.** `Mirror bank` is already in scope: docs/06 §4.6
+tabulates it and DR-078 §11.77 records that it was deliberately left untouched. Nothing enters or
+leaves; this settles how it behaves.
+
+**11.84.1 THE ENTIRE SPECIFICATION IS ONE TABLE ROW.** docs/06 §4.6 reads, in full:
+
+> | Mirror bank | bank context menu | Duplicates a bank with direction flipped and the label prefix
+> | swapped IN↔OUT, the output side of a matrix in one click |
+
+That is an illustration, not a specification, and reading it as one produces three questions it
+cannot answer: what "flipped" means for the three `PortDirection` values that have no opposite, what
+"swapped" means for the majority of banks that contain neither word, and where the duplicated ports'
+keys come from when `PortDef.key` is unique and is CR-051's migration join.
+`a spec table is an illustration until censused`, for the fifth time in this milestone.
+
+**11.84.2 THE CENSUS FOUND SOMETHING LARGER THAN THE MISSING ACTION, AND IT IS WHY M4-J IS NOT
+"AN EDITOR OVER THREE MODELS".**
+
+| Model | Writers outside the seeded catalog | The surface that reads it |
+|---|---|---|
+| `PortSetDef` | **none** | `port_grid.dart:1994` ships a **live** `SET` dropdown whose options are that empty list |
+| `PassthroughPairDef` | **none that create one**; `RenamePortKeyCommand` only rewrites pairs that already exist | `PAIRED WITH`, a read-only cell |
+| `BankDef` | one: `quick_add.dart:721`, via `AddBankCommand` | the grid's bands, and `Ctrl+M`'s destination list |
+
+**So a person authoring a template from scratch opens the `SET` picker and finds exactly one entry,
+`—`, and will find only that one forever.** This is
+`a modelled field is not a reachable one` **with the halves reversed**: the usual shape is a field
+with a writer and no reader, and the practice was filed on `NetworkConfig`, whose only writer was the
+JSON decoder. Here the READER shipped, is editable, and waits on a producer that does not exist.
+**M4-J's real work is the two missing producers**, and `Mirror bank` is the smallest of its three
+tasks rather than the largest.
+
+**11.84.3 CLAUSE 1: `source` AND `sink` FLIP; THE OTHER THREE COPY THROUGH UNCHANGED.** CR-060 gives
+`PortDirection` five values and only two are opposites. `bidirectional`, `busNode` and `passive` have
+no mirror image, and inventing one is a guess made on a port somebody has to wire.
+
+**The preview NAMES every row it leaves alone**, which is not a new affordance: DR-078 §11.77 built
+exactly that for `Change type…`, where `direction` and `topology` are never written and the preview
+says which rows keep a value the new family would not have chosen. **The reasoning does not
+transfer, only the affordance does**: `Change type…` refuses to write `direction` because the model
+cannot tell a chosen value from a defaulted one, while a mirror is a person asking for a flip in so
+many words. What carries over is the honesty about what was not touched.
+
+**11.84.4 CLAUSE 2: SWAP `IN`/`OUT` WHERE THEY OCCUR; OTHERWISE THE PERSON NAMES THE BANK.** The
+row's example is a matrix, where the banks really are called `IN` and `OUT`. **The general case is
+not.** `uniqueBankName` derives a bank's label from the signal family, so a bank Quick Add minted is
+called `HDMI` or `HDBaseT` and contains nothing to swap; `abbr` is *"the label's own head"* and
+inherits the problem.
+
+So where the swap applies it happens, and where it does not the mirror dialog opens with the new
+name focused and the person decides. **The product does not invent a name it cannot justify.** These
+labels are silkscreen text: they reach the panel drawing and the schedule, and no device has
+`(mirrored)` printed on it. This is G4's temperament applied to a string rather than to a number:
+where the answer is not known, ask, and do not fabricate a plausible one.
+
+**11.84.5 CLAUSE 3: THE NEW KEYS COME FROM THE NEW BANK KEY, THROUGH QUICK ADD'S OWN GENERATOR.**
+`PortDef.key` is unique and is CR-051's migration join. The mirrored ports are **new ports, not
+renamed ones**, so nothing writes a `renamedFrom` and the join is untouched.
+
+**Suffixing the source key was the rejected alternative and reads well in a diff**, which is its
+whole appeal: `hdmi.1` → `hdmi.1.mirror` says where it came from. It is declined because it encodes
+a relationship in a string that no field records, and a key that means something is a composite key
+wearing a different hat. If the lineage is ever wanted, it is a field.
+
+**11.84.6 WHAT THIS DOES NOT RULE.** It does not pair the two banks: a matrix's mirrored output is a
+**second output**, not a passthrough, and `PassthroughPairDef` means the same net traced through a
+panel. Whether a mirror ever creates pairs is M4-J3's question and is answered there or not at all.
+It does not decide what deleting a bank does to the ports in it, which is M4-J1's own and is a
+cascade question in DR-013's family. It does not give `PortSetDef` its producer, which is M4-J2's
+whole task and is the larger half of this issue. And it does not touch `Ctrl+M`, which moves ports
+between banks that already exist and is DR-078's.
+
+**11.84.7 BUILT 2026-08-25** (`#223`, `817acfd`, `ab7eeb8`; docs/12 §5.3.17). All three clauses ship,
+on a menu built once by `bankMenuItems` and mounted twice, on the rail's bank tree and on the grid's
+band header, because §11.84.1's row says *"bank context menu"* and never says whose. The preview
+reads its `after` column off the port the command will add rather than recomputing the flip, so it
+cannot disagree with the write, and it is a fourth caller of `port_impact_list.dart` rather than a
+second impact list; its summary line reads *"3 rows matched, 2 will change, 1 to check"*, which is
+§11.84.3's clause arriving as a sentence.
+
+**§11.84.6 LEFT THE BANK-DELETE CASCADE TO M4-J1 AND M4-J1 ANSWERED IT: the ports SURVIVE.**
+`RemoveBankCommand` takes the `BankDef` and clears `bankKey` on every port that named it, so they
+land in `Not in a bank`, which the grid already draws. CR-055 makes a bank **presentation**, so
+taking authored ports with a cosmetic action would destroy data; it clears rather than dangles on
+`RemovePortCommand`'s precedent one type over, which takes passthrough pairs with a port because a
+dangling reference *"reads as a pairing the user can no longer see"*. It is therefore **not
+confirmed**: a confirm on an act that destroys nothing is how people learn to click through the one
+on `Commit sort order` (AC-058/D5).
+
+**AND THE CENSUS ANSWERED A QUESTION §11.84.2 DID NOT ASK: `BankDef.order` HAS NO READER ANYWHERE.**
+It is allocated by `nextOrder`, encoded by the codec, and read by nothing that orders anything:
+`symbol_layer.dart` orders pins by `PortDef.order`, `buildPortTable` bands by first appearance, and
+`movableBanks` follows the grid. The bank tree reads through `movableBanks` for that reason, so the
+navigation and the surface it navigates cannot disagree. **No ruling is taken and none is needed:**
+reordering banks is not a docs/06 §4.6 operation, so no gesture can write the field. If one is ever
+ruled it takes this field, and the grid takes a reader with it.
+
+### 11.85 DR-086 · The port set gets its producer, and the role column stops being free text
+
+**Settled by the user on 2026-08-25** (`#181`, `#224`, `#761`), at M4-J2's pick-up and **before any
+code**, on four questions the corpus does not answer.
+
+**A DECOMPOSITION RULING, NOT A §8.3 AMENDMENT.** Port sets are in scope: CR-055 rules both groupings
+into v1, `#181` names the editor and DR-085 §11.84.6 hands `PortSetDef`'s producer to M4-J2 by name.
+Nothing enters or leaves; this settles how it is authored.
+
+**11.85.1 THE FIELD IS UNREACHABLE IN THE OTHER DIRECTION, WHICH IS WHY THIS IS THE ISSUE'S LARGER
+HALF.** DR-085 §11.84.2's census: `PortSetDef` has **no producer outside the seeded catalog**, and
+`port_grid.dart` ships a **live, editable `SET` dropdown built from that empty list**. A person
+authoring a template from scratch opens that picker, finds one entry, `—`, and finds only that one
+for ever.
+
+**AND `PortSetDef.kind` IS UNREACHABLE IN BOTH DIRECTIONS.** Censused here: `SetKind` is read by
+**nothing but the codec**. Not by `resolvePortSet`, not by `planAtomicConnect`, not by any drawing,
+schedule or rule. It is written by 17 seeded declarations, round-tripped, and consulted by no
+decision anywhere in the product. §11.85.3 gives it its first reader.
+
+**11.85.2 CLAUSE 1: A SET IS MADE FROM A SELECTION, NEVER FROM AN EMPTY HEADING.** `Group as set…`
+(`Ctrl+G`) over **two or more** ticked rows writes the `PortSetDef` **and** `setKey`/`setRole` on
+every member, in one transaction and therefore one `Ctrl+Z`.
+
+Two alternatives were put and both declined. A `SETS` tree in the rail beside M4-J1's `BANKS` is the
+symmetric answer and is cheap on what J1 already built; a `New set…` entry in the `SET` dropdown is
+the smallest change. **Both separate declaring a set from filling it, and the seed catalog is the
+evidence for what that costs.** `port_set_integrity_test.dart` records the shipped catalog failing
+its own gate: **90 `setKey` references, 72 dangling; 16 sets declared, 7 referenced by nothing; 7
+`atomicConnect` sets with fewer than two members.** Below two members the gesture AC-053 specifies is
+undefined and degrades to a one-conductor link **with no error**. A product that can mint a
+one-member set has to warn about a state it created; making it inexpressible is cheaper than warning
+about it.
+
+**IT REFUSES UNDER A SORT**, on `Duplicate`'s ground (DR-078 §11.77.1) and not quite for its reason.
+It writes no `order`. What it READS is `order`: roles are assigned **in declared order**, which is
+`resolvePortSet`'s stated contract and what §11.8.3 pairs conductors on. Under a sort badge the
+person is looking at a different order from the one the roles will follow, so `L` lands on the row
+they see second and the wrong pin reaches the drawing.
+
+**IT SHOWS AN IMPACT LIST** (DR-078 §11.77.3), because it can overwrite: a row already in another set
+leaves that set, and the row is where that gets said. Same widget, fourth caller.
+
+**`Ctrl+G` SHADOWS NO FRAMEWORK DEFAULT**, checked over `default_text_editing_shortcuts.dart` rather
+than recalled, with `keyT` as a positive control: `keyG` occurs **zero** times in that file and
+`keyT` once, which is the transpose DR-078 §11.77.1 knowingly takes. The chord earns its keymap row
+against `structure_editor_screen.dart`'s standing objection that an unnecessary one is a real cost:
+an eight-zone amplifier is eight `Group as set` gestures over sixteen Quick Added ports, which is the
+same repetition the other five chords exist for.
+
+**11.85.3 CLAUSE 2: THE ROLE LIST IS CLOSED, AND `SetKind` IS WHAT OPENS IT.**
+
+| `SetKind` | Roles, in order |
+|---|---|
+| `stereoPair` | `L`, `R` |
+| `speakerPair` | `+`, `-` |
+| `componentVideo` | `Y`, `Pb`, `Pr` |
+
+**No `Other` row** (DR-082 §11.81's rule, third application). **And the reason here is mechanical
+rather than tidiness.** `planAtomicConnect` pairs members by declared position and reports a
+`RoleMismatch` by **string equality**, and `atomic_connect.dart`'s own header says the exposure
+*"opens the moment M4 lets a user author a template"*. With a free-text cell, `+`, `plus`, `POS` and
+`Pos` are four distinct roles, and a person who types `Pos` gets a mismatch warning against every
+seeded amplifier they connect to. AC-030 exists so that a polarity inversion is **inexpressible**
+rather than silently wrong; a column that can spell `+` four ways is the opposite of that.
+
+**SPELLED EXACTLY AS THE SEED SPELLS THEM.** The catalog's 35 member ports carry `L` (8), `R` (8),
+`+` (9) and `-` (9). ASCII hyphen, not a minus sign, and the picker must not improve on it: one
+prettier glyph and every authored-to-seeded connect reports a mismatch. `Y`/`Pb`/`Pr` has no seed
+precedent, because **`componentVideo` is authored zero times**, and is taken from the trade's own
+spelling.
+
+**A BLANK ROLE STAYS LEGAL AND STAYS OFFERED.** `PortSetMember.role` is nullable and its doc says so
+in terms: a member with no role is legal and *"the position carries the meaning"*. So the picker
+carries an empty option, and **roles run out into blank rather than cycling**: grouping four rows as
+a stereo pair gives `L`, `R`, blank, blank, and the impact list names the two it left. Cycling would
+write `L`, `R`, `L`, `R` and produce two members claiming one role, which is the mis-wiring
+`resolvePortSet`'s header refuses to let a filtered list cause, arriving by another door.
+
+**11.85.4 CLAUSE 3: `balancedPair` IS NOT OFFERED FOR NEW AUTHORING, AND THE ENUM VALUE STAYS.** Its
+**one** use in the seed is A04's `bal`, *"Balanced input pair"*, whose two ports carry roles `L` and
+`R`. So as authored it means *a stereo pair that happens to be balanced*, which `PortDef.balanced`
+already records on each port. The thing the NAME suggests, the two legs of one balanced line, is
+`balanced` plus `Polarity` on the terminal (AC-030), and modelling it as two ports would put the
+inversion back into expressible territory.
+
+**The value is kept and the picker simply does not offer it.** Removing it moves seeded bytes for no
+gain and would break CR-117's round trip on the one template carrying it. **A set that already has
+this kind keeps it, decodes it, and the picker includes it while that set is the one being edited**,
+which is M3-L's `SERVICE` finding stated as a rule: a value no menu offers must not take the surface
+down with it, and must not be silently retyped by the act of opening a dialog.
+
+**11.85.5 CLAUSE 4: `atomicConnect` GETS ITS FIRST EDITOR, IN THE SAME DIALOG.** DR-011.2 made it
+*"load-bearing for the first time"* and `planAtomicConnect` reads it **before any rule runs**,
+because a set that has opted out is not model-illegal. It has an editor nowhere. It is a switch in
+the group dialog, defaulted **on**, matching both `PortSetDef`'s own default and all 17 seeded sets.
+
+**11.85.6 A SET BELOW TWO MEMBERS IS A NOTICE, NOT AN ERROR.** §11.85.2 makes the gesture unable to
+mint one, and that is not the same as the state being unreachable: `Delete` on a member leaves one,
+and a hand-edited `.rmdx` can arrive holding one. `port_set_integrity_test` gates the **seed** and
+nothing gates an authored template. So it is a `PortIssue` **notice** on the `SET` column, on the
+passthrough notice's precedent (docs/06 §4.6: a passthrough template with missing pairs is a load
+warning, not an error) and for its reason: a half-finished template mid-authoring must not shout.
+
+**Removing the last member does NOT remove the set.** `RemovePortCommand` takes passthrough pairs
+with a port because a dangling pair *"reads as a pairing the user can no longer see"*; an empty set
+is not dangling, it is empty, and it is what a person is about to put two ports back into.
+
+**11.85.7 THE `SET` COLUMN KEEPS ITS JOB AND MINTS NOTHING.** It moves a port between sets that
+already exist, exactly as the `Bank` column moves between banks that already exist, which is DR-078
+§11.77.2's shape reused rather than a new idea. The `ROLE` column becomes a picker over the row's own
+set's kind, and is **empty and disabled on a row in no set**, because a role without a set is a value
+about nothing.
+
+**11.85.8 `Ungroup` (`Ctrl+Shift+G`), FOUND WHILE BUILDING AND ADDED HERE RATHER THAN INVENTED IN
+CODE.** §11.85.2 through §11.85.7 leave a hole, and the hole is where the SETS a person no longer
+wants go. **The capability was already there and only the cleanup was missing**: the `SET` column
+lists `null` first, so setting both members of a pair to `—` already takes them out of the set, and
+leaves the `PortSetDef` behind with no members and no way to remove it. That is the *"declared,
+referenced by nothing"* row of `port_set_integrity_test`'s own failure table, arriving in an authored
+template instead of the seed.
+
+So the inverse gesture is built: `Ctrl+Shift+G` clears `setKey` and `setRole` on the selection **and
+removes every set it leaves with no members**. It is the **only** thing in the product that removes a
+`PortSetDef`, and §11.85.6's rule that deleting the last member does NOT remove the set stands
+unchanged beside it. The two are different acts: deleting a port is somebody editing the hardware,
+and a set left waiting for its second member back is the right outcome; ungrouping is somebody saying
+in so many words that these ports are not a set, and there the heading goes with them.
+
+**No dialog and no preview**, on `Remove (ports stay)`'s argument one type over (§11.84.7): it
+removes a grouping, touches no value anybody typed, the grid redraws it instantly, and one `Ctrl+Z`
+puts it back.
+
+**`Ctrl+Shift+G` IS THE ONLY REUSED TRIGGER IN THE BUILDER SCOPE**, and it is reused because the two
+acts are inverses a person already expects to be spelled that way. `BuilderMoveRowIntent(up:)` is not
+the precedent and was checked against: `Alt+↑`/`Alt+↓` are one act aimed two ways and share an
+intent, while these are a create and a delete and get two, for the reason `LabelKey` splits them.
+
+**11.85.9 WHAT THIS DOES NOT RULE.** It does not touch passthrough pairing, which is M4-J3 (`#225`)
+and a different model. It does not give `SetKind` a job in any drawing, schedule or rule: §11.85.3
+makes it the source of a role vocabulary in the BUILDER, and nothing downstream reads it yet. And it
+does not put a set on the schematic symbol or in the panel layout, both of which are banks' work
+(CR-055).
+
+### 11.86 DR-087 · The passthrough pair gets its creator, and the LIU that cannot be paired
+
+**Settled by the user on 2026-08-25** (`#181`, `#225`, `#762`), at M4-J3's pick-up and **before any
+code**, on four questions the corpus does not answer.
+
+**A DECOMPOSITION RULING, NOT A §8.3 AMENDMENT.** CR-057 rules `passthroughPairs` into `.rmdx` and
+says in terms that *"the grid column and the pairing action write it"*; `#181` names both. Nothing
+enters or leaves.
+
+**11.86.1 THE THIRD MODEL IN THIS ISSUE WITH A SURFACE AND NO PRODUCER.** DR-085 §11.84.2 found it:
+`PassthroughPairDef` has **zero creators**. Its one writer is `RenamePortKeyCommand`, which rewrites
+pairs that already exist, and `PAIRED WITH` is a **read-only** cell. Two of the 48 seeded templates
+are `isPassthrough`, and **one of them carries every pair in the catalog**: N03's 24.
+
+**AND `sameNet` IS THE THIRD FIELD IN THIS ISSUE WITH NO READER.** Beside `BankDef.order`
+(§11.84.7) and `PortSetDef.kind` (§11.85.1): written by 24 seeded pairs, round-tripped by the codec,
+classified by `template_change_class`, and consulted by **no trace, no schedule and no rule**. The
+sentence docs/06 §4.7 promises for it, *"a trace resolves `Living Room jack → PP-1 F12 → PP-1 R12 →
+SW-1 P04` as one logical path"*, has no implementation anywhere: `wire_trace.dart` does not mention
+passthrough at all.
+
+**11.86.2 CLAUSE 1: `Pair front↔rear by order` IS ADDITIVE AND IDEMPOTENT.** It walks both faces in
+**declared order**, pairs every **unpaired** front port to every **unpaired** rear port, stops when
+either side runs out, and **leaves existing pairs untouched**.
+
+That makes pressing it twice safe, and makes pressing it after adding eight more ports pair only the
+eight. The alternative, replacing every pair, was put and declined: **one press over a panel where
+somebody corrected a crossed pair by hand puts the crossing back**, and the undo entry is 24 pairs
+deep. Acting on the ticked selection was also declined, though every other §4.6 bulk operation does:
+the natural gesture on a fresh 24-port panel is *pair the whole thing*, and requiring 48 ticks first
+makes the fast path slower than the slow one.
+
+**IT IS NOT A §4.6 SELECTION OPERATION AND THEREFORE HAS NO CHORD.** It is a button in the grid's
+toolbar, beside `Delete`, **shown only when `isPassthrough` is on**, which is the same switch that
+reveals the `PAIRED WITH` column it writes. A button that could do nothing on 46 of the 48 seeded
+templates is the `UnbuiltView` defect wearing a toolbar. `structure_editor_screen.dart`'s standing objection applies
+in full here: a `kKeymap` row is a real cost against M7's generated table and `arbitrate()` on every
+platform, and this is an action a person runs **once per template**.
+
+**IT REFUSES UNDER A SORT**, on `Group as set…`'s ground (§11.85.2) rather than `Duplicate`'s: it
+writes no `order` and it READS one, so under a badge the person is looking at a different order from
+the one the pairs will follow.
+
+**11.86.3 CLAUSE 2: `PAIRED WITH` BECOMES EDITABLE, AND ITS OPTIONS MAKE THE WRONG ANSWERS
+INEXPRESSIBLE.** The picker offers only ports on the **other face** that are **not already paired**,
+plus a blank that unpairs. A front-to-front pair and a double-booked port are therefore not states
+this product can mint, rather than states it validates after the fact, which is AC-030's temperament
+applied one type over.
+
+A 24-port panel with one crossed pair needs a **one-cell** fix, and a bulk action cannot express it:
+without this, correcting one pair means unpairing the panel and re-running it.
+
+**11.86.4 CLAUSE 3: N04 STAYS UNPAIRED, AND THE NOTICE STANDS.** The seeded 24-fibre LIU is
+`isPassthrough: true` with **12 `conn.lc_duplex` front adapters, 24 rear splices and zero pairs**. A
+duplex adapter carries two fibres, so the real relationship is **1 front : 2 rear**, and
+`PassthroughPairDef` is **1:1 by construction**: it holds one `frontKey` and one `rearKey`.
+
+**A 1:1 pairing here would be a false fact on a sheet somebody works from.** `LC 01 → SPL 01` is half
+true: LC 01 terminates splice 1 **and** splice 2, and the schedule the trim tech reads would name one
+of them. G4's temperament decides it: an honest unknown beats a confident wrong value, and the
+existing notice already says the pairs are missing. Re-authoring N04 as 24 simplex front ports was
+put and declined for AC-025's reason, which is N03's own description: modelling both faces the same
+way is the error that makes the Termination Schedule wrong on the one column that matters. **The
+front of a 24-fibre LIU has twelve duplex adapters you can put a finger on.**
+
+**SO THE PRODUCT CARRIES A PASSTHROUGH IT CANNOT EXPRESS, DELIBERATELY, AND SAYS SO.** Whether
+`PassthroughPairDef` should ever become 1:N is not ruled here and is not M4's question: it is a model
+change with a codec, a migration and a schedule column behind it.
+
+**11.86.5 CLAUSE 4: THE ACTION ALWAYS WRITES `sameNet: true`, AND NO CONTROL IS BUILT FOR IT.** A
+patch panel's front jack and the punchdown behind it are one electrical path; that is what
+passthrough means, and it is what all 24 seeded pairs say. **Nothing reads the field** (§11.86.1), so
+a switch for it would be a control whose only observable effect is a byte in a file, which is the
+`UnbuiltView` defect this product refuses on every other surface.
+
+**IT IS KEPT RATHER THAN REMOVED**, because deleting it moves N03's bytes and breaks CR-117's round
+trip for no gain. Recorded here as **a field with no reader and no false case**: if a pairing that is
+positionally associated but electrically separate is ever a real thing, this field is where it goes,
+and the first person to need it will find this paragraph.
+
+**11.86.6 WHAT THIS DOES NOT RULE.** It does not build the trace docs/06 §4.7 promises: nothing
+follows a pair from a front jack to a rear punchdown, and that is M5's and M6's. It does not touch
+`isPassthrough` itself, which has had a switch on the Physical section since M4-D. And it does not
+decide what a pair means for a template that is **not** `isPassthrough`: the column is hidden there,
+the pairs survive a toggle, and `RemovePortCommand` still takes them with their ports.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

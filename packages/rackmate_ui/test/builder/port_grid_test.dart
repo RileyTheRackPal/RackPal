@@ -84,6 +84,16 @@ final class _Harness {
   }
 }
 
+/// A finder scoped to the GRID.
+///
+/// The rail carries docs/06 §2's bank tree beside the section list, so a
+/// bank's name is now on screen TWICE by design and a bare `find.text`
+/// over the whole screen cannot mean "the band header". Every assertion
+/// that is about a BAND goes through here; the ones about the tree go
+/// through `BankTree` in `bank_tree_test.dart`.
+Finder _inGrid(Finder matching) =>
+    find.descendant(of: find.byType(PortGrid), matching: matching);
+
 /// The builder, opened on the Ports section.
 Future<_Harness> _pump(
   WidgetTester tester, {
@@ -2270,11 +2280,11 @@ void main() {
           ]),
       );
 
-      expect(find.text('HDMI Inputs'), findsOneWidget);
+      expect(_inGrid(find.text('HDMI Inputs')), findsOneWidget);
       expect(find.text('2 ports'), findsWidgets);
       expect(find.text('P1'), findsOneWidget);
 
-      await tester.tap(find.text('HDMI Inputs'));
+      await tester.tap(_inGrid(find.text('HDMI Inputs')));
       await tester.pumpAndSettle();
 
       expect(
@@ -2282,7 +2292,7 @@ void main() {
         findsNothing,
         reason: 'a folded band hides its rows and keeps its header',
       );
-      expect(find.text('HDMI Inputs'), findsOneWidget);
+      expect(_inGrid(find.text('HDMI Inputs')), findsOneWidget);
     });
 
     testWidgets('a bank key nothing declares keeps its rows on screen and '
@@ -2295,7 +2305,7 @@ void main() {
         template: _blank()..ports.add(_port('p1', bank: 'ghost', order: 'a0')),
       );
 
-      expect(find.text('ghost'), findsOneWidget);
+      expect(_inGrid(find.text('ghost')), findsOneWidget);
       expect(find.text('No such bank'), findsOneWidget);
       expect(find.text('P1'), findsOneWidget);
     });
@@ -2308,7 +2318,7 @@ void main() {
         template: _blank()..ports.add(_port('p1', order: 'a0')),
       );
 
-      expect(find.text('Not in a bank'), findsOneWidget);
+      expect(_inGrid(find.text('Not in a bank')), findsOneWidget);
     });
   });
 
@@ -3044,8 +3054,8 @@ void main() {
           ]),
       );
 
-      final aBand = tester.getTopLeft(find.text('a'));
-      final bBand = tester.getTopLeft(find.text('b'));
+      final aBand = tester.getTopLeft(_inGrid(find.text('a')));
+      final bBand = tester.getTopLeft(_inGrid(find.text('b')));
       expect(aBand.dy, lessThan(bBand.dy));
       expect(
         tester.getTopLeft(find.text('A1')).dy,

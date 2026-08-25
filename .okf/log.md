@@ -1,5 +1,221 @@
 # Update Log
 
+## 2026-08-25 (fifth entry)
+
+* **Note**: **M4-J IS CLOSED** (`#181`; `#760`, `#223`, `#761`, `#224`, `#762`,
+  `#225`), version `v0.4.63`, derived two ways that agree.
+  [DR-087](/decisions/dr-087-the-passthrough-pair-gets-its-creator.md) is BUILT.
+* **Update**: [a modelled field is not a reachable
+  one](/practices/a-modelled-field-is-not-a-reachable-one.md) gains the haul and,
+  more usefully, **the two questions its own check does not ask**. `#181` turned
+  up SIX unreachable things across three models and three fields, and the common
+  cause is scheduling rather than carelessness: all six were modelled at M0,
+  encoded, and gated by the byte round trip, while the surfaces that would have
+  exercised them were four milestones away. **A field with no writer round-trips
+  perfectly, and a field with no reader round-trips perfectly too**, so nothing
+  could fail in between.
+* **Note**: **THE TWO QUESTIONS ARE "WHERE DOES A PERSON MAKE THE FIRST ONE?" AND
+  "WHAT READS THIS, AND WHAT WOULD IT DO DIFFERENTLY IF THE VALUE CHANGED?"** The
+  file's existing check, *grep for what writes it*, finds one of the three shapes
+  and misses both others.
+* **Note**: **AND THE SECOND QUESTION'S ANSWER IS SOMETIMES "NOTHING, AND LEAVE IT
+  THAT WAY".** Making the bank tree the first reader of `BankDef.order` was the
+  tempting move and would have put the navigation out of step with the grid it
+  navigates. An unreachable field is not always a thing to make reachable.
+* **Note**: **TWO TEST DEFECTS IN M4-J3, both found by running rather than
+  reading, and both of the class this repo keeps hitting.** `SET` and `PAIRED
+  WITH` are both a `DropdownButton` over a nullable string, so
+  `find.byType(...).first` picks the SET cell of row one and every `PAIRED WITH`
+  case in the first draft tested the wrong column **and passed**. And finding a
+  row by its LABEL broke the moment a pair existed, because once F1 is paired with
+  R2 the string `R2` is on screen twice. Rows are found by KEY, which appears in
+  exactly one place.
+
+## 2026-08-25 (fourth entry)
+
+* **Creation**: [DR-087, the passthrough pair gets its
+  creator](/decisions/dr-087-the-passthrough-pair-gets-its-creator.md) (`#762`),
+  taken at M4-J3's pick-up and **before any code**.
+* **Note**: **THREE MODELS, THREE FIELDS, ONE ISSUE.** `#181` has now turned up
+  `PassthroughPairDef` with a surface and no creator, and `sameNet` as the THIRD
+  field in this issue read by nothing: after `BankDef.order` and
+  `PortSetDef.kind`. Three in one issue is not three coincidences. The common
+  cause is that all three were modelled from a design document in M0 and the
+  surfaces that would have exercised them were scheduled four milestones later.
+* **Note**: **THE SEEDED CATALOG SHIPS A PASSTHROUGH THE MODEL CANNOT EXPRESS,
+  and finding it took reading the port loop rather than the field.** N04, the
+  24-fibre LIU, is `isPassthrough: true` with **12 duplex LC front adapters, 24
+  rear splices and zero pairs**. A duplex adapter carries two fibres, so the
+  relationship is 1 front : 2 rear and `PassthroughPairDef` holds exactly one key
+  each side. A naive pair-by-order would have written twelve half-true pairings
+  and called the other twelve splices forgotten.
+* **Note**: **THE RULING LEAVES IT UNPAIRED, WHICH IS G4 APPLIED TO A JOIN RATHER
+  THAN TO A NUMBER.** `LC 01 -> SPL 01` is not a rounding error, it is a row on
+  the Termination Schedule naming one of the two splices that adapter really
+  terminates. Re-authoring the panel as 24 simplex ports would make it
+  expressible and was declined on AC-025's ground, which is N03's own description:
+  modelling both faces the same way is the error that breaks the schedule on the
+  one column the trim tech needs. **Sometimes the honest answer is that the model
+  is too narrow, recorded rather than worked around.**
+* **Note**: **THE ACTION IS ADDITIVE AND IDEMPOTENT, and the argument is a repair
+  rather than a purity.** Replacing every pair is the simpler rule and puts a
+  hand-corrected crossing back on one press, twenty-four pairs deep in the undo
+  stack. Pairing only the UNPAIRED means the action can be pressed after adding
+  eight more ports and touches only the eight.
+
+## 2026-08-25 (third entry)
+
+* **Note**: **M4-J2 IS CLOSED** (`#761`, `#224`, `109d5e6`, `a02eeef`). `PortSetDef`
+  has a producer, the `ROLE` column is a closed list, `atomicConnect` has its first
+  editor anywhere, and `Ungroup` is the only thing that removes a set.
+  `rackmate_core` 3,227 → 3,248, `rackmate_ui` 1,139 → 1,151.
+* **Update**: [DR-086](/decisions/dr-086-the-port-set-gets-its-producer.md) is
+  BUILT, and it grew a clause while being built.
+* **Note**: **`Ungroup` IS A DECOMPOSITION HOLE FOUND MID-BUILD, and the shape of
+  it is worth more than the fix.** The ruling settled how a set is MADE and never
+  asked where an unwanted one goes. **The capability was already there and only
+  the cleanup was missing**: the `SET` column lists null first, so clearing both
+  members already takes them out and strands the `PortSetDef`. That is
+  `port_set_integrity_test`'s own *"declared, referenced by nothing"* row arriving
+  in an authored template.
+  [check a decomposition for holes](/practices/check-a-decomposition-for-holes.md)
+  with a twist: the hole was not a missing capability, it was a missing INVERSE,
+  and a decomposition read for "what can a person not do?" does not find it. The
+  question that does is **"what undoes each thing this adds, and what does the
+  undo leave behind?"**
+* **Note**: **A FALSE EXPLANATION NEARLY SHIPPED IN A COMMENT, AND A PROBE STOPPED
+  IT.** The analyzer warned `COLLECTION_METHODS_UNRELATED_TYPE` on a test looking
+  up a `Map<String, …>` with a `PortKey`. I wrote that the test had been passing
+  **vacuously**, which is a very believable story and is false: `PortKey` is an
+  `extension type` over `String`, so at runtime it IS the key and the assertion
+  was real. Found by writing eight lines that PRINTED the behaviour rather than by
+  re-reading the paragraph, which is
+  [a stated cost is a hypothesis](/practices/a-stated-cost-is-a-hypothesis.md)
+  aimed at a claim about a test instead of at a number. My probe used an ordinary
+  class and threw, which was the tell that sent me to the declaration.
+* **Note**: **TWO DEFECTS THE WIDGET CASES CAUGHT BEFORE ANYONE OPENED THE
+  DIALOG**, and neither is visible from the code: the kind dropdown overflowed by
+  **0.65 points** on its longest row and painted the striped bar, and a refusal
+  stayed on screen after the condition producing it had gone away. Both are the
+  first thing a person would hit.
+* **Note**: **THE CLOSED ROLE LIST IS A CORRECTNESS FIX WEARING A TIDINESS HAT**,
+  and its test asserts BOTH halves of the join: that the hyphen is `U+002D`, and
+  that the 35 seeded member ports carry nothing outside the closed list. The
+  second half is what makes it a join and not a preference; without it the list is
+  a taste that happens to agree with the catalog today.
+
+## 2026-08-25 (second entry)
+
+* **Creation**: [DR-086, the port set gets its
+  producer](/decisions/dr-086-the-port-set-gets-its-producer.md) (`#761`), taken
+  at M4-J2's pick-up and **before any code**.
+* **Note**: **`PortSetDef.kind` IS READ BY NOTHING BUT THE CODEC.** Not
+  `resolvePortSet`, not `planAtomicConnect`, not any drawing, schedule or rule.
+  Seventeen seeded declarations write it and no decision anywhere consults it.
+  That is the SECOND unreachable field this issue has turned up in two days, and
+  the two are opposite shapes: `PortSetDef` is a reader with no producer,
+  `PortSetDef.kind` is a producer with no reader. DR-086 clause 2 gives it one.
+* **Note**: **THE SEED CATALOG IS THE ARGUMENT FOR THE GESTURE, and it is a
+  measured argument rather than a taste.** A `SETS` tree beside M4-J1's `BANKS`
+  is the symmetric answer and would have been the easy one to build on what J1
+  just landed. `port_set_integrity_test.dart` records what separating "declare a
+  set" from "fill it" cost when the catalog did it: **90 references, 72
+  dangling, 7 sets referenced by nothing, 7 atomic sets under two members**. So
+  the set is made FROM the rows, and a one-member set becomes inexpressible
+  rather than warned about.
+* **Note**: **`SetKind.componentVideo` IS AUTHORED ZERO TIMES**, and it is the
+  case CR-055 leads with. `balancedPair` is authored **once**, as A04's `bal`
+  with roles `L` and `R`: it means *a stereo pair that happens to be balanced*,
+  which `PortDef.balanced` already records, and NOT the two legs of one balanced
+  line. The ruling keeps the value for CR-117's sake and does not offer it.
+* **Note**: **THE CLOSED ROLE LIST IS A CORRECTNESS FIX WEARING A TIDINESS
+  HAT.** `planAtomicConnect` compares `setRole` by **string equality** to report
+  a `RoleMismatch`, and `atomic_connect.dart`'s header already warned the
+  exposure *"opens the moment M4 lets a user author a template"*. The list must
+  be spelled exactly as the seed spells it, ASCII hyphen and all: one prettier
+  glyph in the picker and every authored-to-seeded connect warns.
+
+## 2026-08-25
+
+* **Note**: **M4-J1 IS CLOSED** (`#760`, `#223`, four commits, `dbd7d19`..`ab7eeb8`,
+  fourteen gates green on each). The bank tree is in the rail on every section, a
+  click switches to Ports and jumps to the band, and DR-085's mirror has the
+  preview that names every row it leaves alone. `rackmate_core` 3,197 → 3,227,
+  `rackmate_ui` 1,117 → 1,139.
+* **Update**: [DR-085](/decisions/dr-085-mirror-bank-and-the-missing-producers.md)
+  is BUILT for its own three clauses. The two missing producers it named are
+  still missing and are `#224` and `#225`.
+* **Update**: [a modelled field is not a reachable
+  one](/practices/a-modelled-field-is-not-a-reachable-one.md) gains the shape
+  with **the halves reversed**, and it is the one the file's own check cannot
+  find. Every earlier entry is a writer missing behind a field, so the guidance
+  is *"grep for what writes it"*. `PortSetDef` has a live, editable `SET`
+  dropdown that writes `PortDef.setKey` perfectly; what is missing is anything
+  that mints the row the cell points at. The question that finds this is **"where
+  does a person make the FIRST one?"**, asked of every collection a control
+  offers choices from. Two stale counts in that file were corrected in the same
+  edit, which is the failure it already documents having had once.
+* **Note**: **`BankDef.order` HAS NO READER ANYWHERE AND NEVER HAS**, found only
+  because the tree had to decide what to sort by. Allocated, encoded, read by
+  nothing that orders anything. **The tempting fix was the wrong one**: making
+  the tree its first reader would put the navigation out of step with the grid
+  it navigates, in exchange for honouring a field no docs/06 §4.6 gesture can
+  write. An unreachable field is not always a thing to make reachable.
+* **Note**: **THE JUMP IS A LOOP AND NOT AN OFFSET**, and both obvious
+  alternatives fail on this grid. Computing the offset needs a row height and a
+  row has none declared, so the arithmetic would invent a constant that the next
+  padding change silently breaks with every gate green.
+  `Scrollable.ensureVisible` needs a `BuildContext` and a `SliverPersistentHeader`
+  four screens down has never been laid out. The grid pages toward the target a
+  viewport at a time until the header exists, then reveals it exactly.
+* **Note**: **FOUR GRID TESTS WENT RED AND ALL FOUR WERE RIGHT TO.** They
+  asserted `find.text('HDMI Inputs')` over the whole screen, which silently meant
+  *the band header* until the rail started naming banks too. Scoped rather than
+  loosened:
+  [assert the artifact, not the mechanism](/practices/assert-the-artifact-not-the-mechanism.md)
+  cuts both ways, and a finder that cannot say which of two identical strings it
+  means is not asserting what its name claims.
+* **Note**: **TWO OF MY OWN TEST EXPECTATIONS WERE WRONG AND THE FIXTURE WAS
+  WHY.** Every port in the bank fixture carried order `a0000`, so
+  `portsInDeclaredOrder` tie-breaks on the key and the unbanded port lands in the
+  middle of the bands. The behaviour was right and the assertion was written from
+  what the fixture LOOKED like. The banding cases now read a fixture whose
+  declared order is stated rather than incidental.
+
+
+## 2026-08-22
+
+* **Creation**: [DR-085, Mirror bank and the two missing
+  producers](/decisions/dr-085-mirror-bank-and-the-missing-producers.md)
+  (`#760`), taken at M4-J's pick-up and before any code. The WHOLE
+  specification of `Mirror bank` is one docs/06 §4.6 table row, and reading it as
+  a spec produces three questions it cannot answer: what "flipped" means for the
+  three `PortDirection` values with no opposite, what "swapped" means for the
+  majority of banks containing neither word, and where duplicated ports' keys
+  come from when `PortDef.key` is CR-051's migration join.
+* **Note**: **THE CENSUS FOUND SOMETHING LARGER THAN THE MISSING ACTION.**
+  `PortSetDef` has **zero writers** outside the seeded catalog while
+  `port_grid.dart:1994` ships a LIVE `SET` dropdown whose options are that empty
+  list, so a person authoring from scratch opens a picker holding only `—` and
+  always will. `PassthroughPairDef` has zero CREATORS, its one writer being
+  `RenamePortKeyCommand` rewriting pairs that already exist, and `PAIRED WITH` is
+  read-only. **So M4-J is the two missing producers, and `Mirror bank` is its
+  smallest task rather than its largest.**
+* **Note**: **THIS IS
+  [a modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md)
+  WITH THE HALVES REVERSED.** That practice was filed on `NetworkConfig`, whose
+  only writer was the JSON decoder: a writer and no reader. Here the READER
+  shipped, is editable, and waits on a producer that does not exist. Worth
+  keeping as a distinct shape, because the usual census question ("what writes
+  this?") finds the first and misses the second entirely.
+* **Note**: the ruling reuses DR-078's `Change type…` PREVIEW affordance and
+  explicitly **not its reasoning**. That refuses to write `direction` because the
+  model cannot tell a chosen value from a defaulted one; a mirror is a person
+  asking for a flip in so many words. What carries over is the honesty about what
+  was left untouched, which is a different thing from the rule that produced it.
+
+
+
 ## 2026-08-21 (third entry)
 
 * **Note**: **M4-R IS CODE COMPLETE AND ITS DRILL IS UNRUN** (`#694`, nine

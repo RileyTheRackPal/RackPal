@@ -215,9 +215,20 @@ void main() {
       // DR-078 §11.77.1 takes it anyway and docs/13 §3.6 records what it
       // costs. Arbitration cannot see a framework default, so this
       // comment is the only place that check is written down.
-      expect(keyBindingsIn(KeyScope.builder), hasLength(14));
+      // SIXTEEN SINCE M4-J2, which added `Ctrl+G` and `Ctrl+Shift+G`
+      // (DR-086 §11.85.2). `keyG` appears ZERO times in
+      // `default_text_editing_shortcuts.dart`, checked over the source
+      // with `keyT` as a positive control, so neither shadows anything
+      // and docs/13 §3.6 gains no row. They are the FIRST pair in this
+      // scope to share a trigger and differ by Shift, which is
+      // deliberate: they are inverses, and a person who has learned one
+      // guesses the other. `BuilderMoveRowIntent(up:)` is not the
+      // precedent for that and was checked — those two are one act aimed
+      // two ways, while these are a create and a delete, which is also
+      // why `LabelKey` splits them.
+      expect(keyBindingsIn(KeyScope.builder), hasLength(16));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(64));
+      expect(kKeymap, hasLength(66));
     });
   });
 

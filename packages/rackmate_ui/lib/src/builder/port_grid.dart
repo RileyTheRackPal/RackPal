@@ -56,9 +56,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/builder/bank_tree.dart';
 import 'package:rackmate_ui/src/builder/batch_inspector.dart';
 import 'package:rackmate_ui/src/builder/change_type_dialog.dart';
 import 'package:rackmate_ui/src/builder/find_replace_dialog.dart';
+import 'package:rackmate_ui/src/builder/group_as_set_dialog.dart';
 import 'package:rackmate_ui/src/builder/move_to_bank_dialog.dart';
 import 'package:rackmate_ui/src/builder/port_cells.dart';
 import 'package:rackmate_ui/src/builder/quick_add_bar.dart';
@@ -100,6 +102,8 @@ class PortGrid extends StatefulWidget {
     required this.onBatchContext,
     this.portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
     this.quickAddAutofocus = true,
+    this.bankActions,
+    this.bankJump,
     super.key,
   });
 
@@ -115,6 +119,20 @@ class PortGrid extends StatefulWidget {
   /// can be the batch inspector (M4-F2). Null when fewer than two rows
   /// are selected, which is the dock's own "not in this state".
   final ValueChanged<PortBatchContext?> onBatchContext;
+
+  /// docs/06 §4.6's bank menu, on the band header. Null draws no menu,
+  /// which is the state every caller that is not the builder shell is in.
+  final BankActions? bankActions;
+
+  /// The bank the tree last asked the grid to show, and a nonce.
+  ///
+  /// **A NONCE RATHER THAN A BARE KEY, and it is load-bearing twice.**
+  /// Clicking the same bank twice must scroll twice, and the grid is
+  /// REBUILT FROM SCRATCH when the rail switches out of another section,
+  /// so the jump has to be honoured on a first build as readily as on an
+  /// update. A value that changes on every request satisfies both; a key
+  /// compared against the last one satisfies neither.
+  final ({String? bankKey, int nonce})? bankJump;
 
   /// Whether Quick Add takes focus on entering the section.
   ///
@@ -468,6 +486,137 @@ class _PortGridState extends State<PortGrid> {
     if (result.commands.isEmpty) return;
     widget.actions.transact(LabelKey.movePortsToBank, (tx) {
       for (final command in result.commands) {
+        tx.add(command);
+      }
+    });
+  }
+
+  /// `Pair front↔rear by order` (M4-J3, DR-087 §11.86.2).
+  ///
+  /// NOT A CHORD. It is run once per template and a `kKeymap` row is a
+  /// real cost against M7's generated table, which is the objection
+  /// `structure_editor_screen.dart` states and this action cannot answer.
+  void _pairByOrder() {
+    final result = buildPairFrontToRearByOrder(
+      body: widget.body,
+      viewIsSorted: _sort != null,
+    );
+    if (result.refusal case final PairByOrderRefusal refusal) {
+      setState(() => _fillRefusal = pairByOrderRefusalMessage(refusal));
+      return;
+    }
+    widget.actions.transact(LabelKey.pairPassthrough, (tx) {
+      for (final command in result.commands) {
+        tx.add(command);
+      }
+    });
+    // THE OUTCOME AND NOT ONLY THE REFUSALS. On a panel with more rear
+    // ports than front ones the run pairs what it can, and a person who
+    // is not told stands there counting rows. This is the LIU's case
+    // (DR-087 §11.86.4) arriving on a template somebody authored.
+    setState(() => _fillRefusal = pairByOrderOutcome(result));
+  }
+
+  /// The `PAIRED WITH` cell (M4-J3, DR-087 §11.86.3).
+  void _setPartner(String portKey, String? partnerKey) {
+    final commands = buildSetPassthroughPartner(
+      body: widget.body,
+      portKey: PortKey(portKey),
+      partnerKey: partnerKey == null ? null : PortKey(partnerKey),
+    );
+    if (commands.isEmpty) return;
+    widget.actions.transact(
+      partnerKey == null
+          ? LabelKey.unpairPassthrough
+          : LabelKey.pairPassthrough,
+      (tx) {
+        for (final command in commands) {
+          tx.add(command);
+        }
+      },
+    );
+  }
+
+  /// `Ctrl+G`: make the selection into a `PortSetDef` (M4-J2, DR-086).
+  ///
+  /// A ROUTER, like `_changeType`. The refusals and the plan are in
+  /// `port_set_commands.dart` and the preview is the dialog's; this method
+  /// decides only which stack the commands land on.
+  Future<void> _groupAsSet(List<String> visible) async {
+    final selected = _selection.inOrder(visible).toSet();
+    void refuse(GroupAsSetRefusal refusal) =>
+        setState(() => _fillRefusal = groupAsSetRefusalMessage(refusal));
+
+    // REFUSED BEFORE THE DIALOG OPENS, both of them. A dialog that opens
+    // on two rows a person cannot group, only to refuse on the button, is
+    // a dialog that wasted the trip.
+    if (_sort != null) {
+      refuse(GroupAsSetRefusal.theViewIsSorted);
+      return;
+    }
+    if (selected.length < 2) {
+      refuse(GroupAsSetRefusal.needsTwoRows);
+      return;
+    }
+    setState(() => _fillRefusal = null);
+
+    final choice = await showGroupAsSetDialog(
+      context: context,
+      body: widget.body,
+      selectedKeys: selected,
+    );
+    if (choice == null || !mounted) return;
+
+    final result = buildGroupAsSet(
+      body: widget.body,
+      selectedKeys: selected,
+      label: choice.label,
+      kind: choice.kind,
+      atomicConnect: choice.atomicConnect,
+      viewIsSorted: _sort != null,
+    );
+    if (result.refusal case final GroupAsSetRefusal refusal) {
+      refuse(refusal);
+      return;
+    }
+    if (result.commands.isEmpty) return;
+    widget.actions.transact(LabelKey.groupAsSet, (tx) {
+      for (final command in result.commands) {
+        tx.add(command);
+      }
+    });
+  }
+
+  /// `Ctrl+Shift+G`: take the selection out of its sets (DR-086 §11.85.6).
+  ///
+  /// NO DIALOG AND NO PREVIEW. It removes a grouping and touches no value
+  /// a person typed, which is `Remove (ports stay)`'s argument one type
+  /// over: the grid redraws it instantly and one `Ctrl+Z` puts it back.
+  void _ungroupSet(List<String> visible) {
+    final selected = _selection.inOrder(visible).toSet();
+    final commands = buildUngroupPortSets(
+      body: widget.body,
+      selectedKeys: selected,
+    );
+    if (commands.isEmpty) {
+      // NOT A REFUSAL WHEN THERE IS SIMPLY NOTHING IN A SET, which is the
+      // ordinary state of most rows. It is a refusal when nothing is
+      // selected, because then the person aimed at nothing.
+      //
+      // EITHER WAY THE OLD MESSAGE GOES. A widget case caught this: press
+      // the chord with nothing selected, tick two rows, press it again,
+      // and the refusal about selecting rows was still on screen with two
+      // rows plainly selected.
+      setState(
+        () => _fillRefusal = selected.isEmpty
+            ? 'Select the ports to take out of a set first.'
+            : null,
+      );
+      return;
+    }
+    setState(() => _fillRefusal = null);
+    widget.actions.transact(LabelKey.ungroupSet, (tx) {
+      for (final command in commands) {
         tx.add(command);
       }
     });
@@ -984,6 +1133,18 @@ class _PortGridState extends State<PortGrid> {
             return null;
           },
         ),
+        BuilderGroupAsSetIntent: CallbackAction<BuilderGroupAsSetIntent>(
+          onInvoke: (_) {
+            unawaited(_groupAsSet(visible));
+            return null;
+          },
+        ),
+        BuilderUngroupSetIntent: CallbackAction<BuilderUngroupSetIntent>(
+          onInvoke: (_) {
+            _ungroupSet(visible);
+            return null;
+          },
+        ),
         BuilderFindReplaceIntent: CallbackAction<BuilderFindReplaceIntent>(
           onInvoke: (_) {
             unawaited(_findReplace(visible));
@@ -1024,6 +1185,11 @@ class _PortGridState extends State<PortGrid> {
           selectedCount: _selection.length,
           onAdd: _addPort,
           onDelete: _selection.isEmpty ? null : _deleteSelected,
+          // ONLY ON A PASSTHROUGH, which is the same condition that
+          // reveals the `PAIRED WITH` column it writes. A button that
+          // could do nothing on 46 of the 48 seeded templates is the
+          // `UnbuiltView` defect wearing a toolbar.
+          onPairByOrder: widget.body.isPassthrough ? _pairByOrder : null,
           openPacks: _openPacks(),
           onTogglePack: _togglePack,
           refusal: _fillRefusal,
@@ -1115,6 +1281,13 @@ class _PortGridState extends State<PortGrid> {
                                   onBatchWrite: _writeBatch,
                                   onReorder: _reorder,
                                   dragDisabled: _sort != null,
+                                  bankActions: widget.bankActions,
+                                  jump: widget.bankJump,
+                                  partnersFor: (key) => passthroughPartners(
+                                    widget.body,
+                                    PortKey(key),
+                                  ),
+                                  onPair: _setPartner,
                                 ),
                         ),
                       ],
@@ -1183,6 +1356,7 @@ class _Toolbar extends StatelessWidget {
     required this.selectedCount,
     required this.onAdd,
     required this.onDelete,
+    required this.onPairByOrder,
     required this.openPacks,
     required this.onTogglePack,
     required this.refusal,
@@ -1191,15 +1365,24 @@ class _Toolbar extends StatelessWidget {
   final int selectedCount;
   final VoidCallback onAdd;
   final VoidCallback? onDelete;
+
+  /// docs/06 §4.7's `Pair front↔rear by order`, or null when this
+  /// template is not a passthrough and the action has nothing to act on.
+  final VoidCallback? onPairByOrder;
   final Set<PortColumnPack> openPacks;
   final void Function(PortColumnPack pack, {required bool on}) onTogglePack;
 
-  /// Why the last fill did nothing, or null.
+  /// What the last action had to say, or null.
   ///
   /// BESIDE THE SELECTION COUNT, which is the other thing on this row
   /// that is about what the keys will act on. It is not a `SnackBar`: a
   /// message that slides away on a timer is gone by the time somebody
   /// has finished wondering why `Ctrl+D` appeared to do nothing.
+  ///
+  /// IT CARRIES OUTCOMES AS WELL AS REFUSALS since M4-J3. `Pair
+  /// front↔rear by order` can succeed and still leave ports over, and
+  /// "Paired 12 ports. 12 rear ports had no partner left." is the one
+  /// sentence that stops a person counting rows.
   final String? refusal;
 
   @override
@@ -1224,6 +1407,14 @@ class _Toolbar extends StatelessWidget {
             selectedCount == 0 ? 'Delete' : 'Delete $selectedCount selected',
           ),
         ),
+        if (onPairByOrder case final VoidCallback pair) ...[
+          const SizedBox(width: 8),
+          TextButton.icon(
+            onPressed: pair,
+            icon: const Icon(Icons.swap_horiz, size: 18),
+            label: const Text('Pair front to rear'),
+          ),
+        ],
         if (refusal case final String message) ...[
           const SizedBox(width: 12),
           Flexible(
@@ -1415,7 +1606,7 @@ class _SortBadge extends StatelessWidget {
   }
 }
 
-class _Bands extends StatelessWidget {
+class _Bands extends StatefulWidget {
   const _Bands({
     required this.table,
     required this.scale,
@@ -1439,6 +1630,10 @@ class _Bands extends StatelessWidget {
     required this.onBatchWrite,
     required this.onReorder,
     required this.dragDisabled,
+    required this.bankActions,
+    required this.jump,
+    required this.partnersFor,
+    required this.onPair,
   });
 
   final PortTable table;
@@ -1472,10 +1667,131 @@ class _Bands extends StatelessWidget {
   /// see it. The keyboard's half of this refuses in words.
   final bool dragDisabled;
 
+  /// docs/06 §4.6's bank menu, hung off the band header. Null draws none.
+  final BankActions? bankActions;
+
+  /// The bank the rail's tree last asked for, with its nonce.
+  final ({String? bankKey, int nonce})? jump;
+
+  /// What `PAIRED WITH` may offer this row (DR-087 §11.86.3). A CALLBACK
+  /// rather than a map, because it is asked once per visible row and a
+  /// map would compute 68 lists to draw twenty.
+  final List<PortDef> Function(String portKey) partnersFor;
+
+  final void Function(String portKey, String? partnerKey) onPair;
+
+  @override
+  State<_Bands> createState() => _BandsState();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// JUMPING TO A BAND, AND WHY IT IS A LOOP RATHER THAN AN OFFSET
+// ═══════════════════════════════════════════════════════════════════════
+// docs/06 §2 makes the bank tree "the primary navigation once you are in
+// the Ports section", so clicking a bank has to put its band under the
+// person's eyes. Two obvious implementations are both wrong here:
+//
+//   * COMPUTE THE OFFSET. A band is a 30-point header plus N rows, and a
+//     row has no declared height: it is as tall as a `TextField` plus its
+//     borders at the current text scale. Any arithmetic would have to
+//     invent a row height, and the first person to change the row's
+//     padding would silently break navigation with every gate green.
+//
+//   * `Scrollable.ensureVisible` ON THE HEADER. Correct, and it needs a
+//     `BuildContext`, which a `SliverPersistentHeader` only has once it
+//     has been laid out. A band four screens down has never been built,
+//     so its `GlobalKey` holds nothing to reveal.
+//
+// So: page toward the target a viewport at a time until its header exists,
+// then let `ensureVisible` place it exactly. No invented constants, and
+// the loop is bounded by the scroll extent divided by the viewport. The
+// intermediate frames read as a fast scroll, which is what the gesture is.
+class _BandsState extends State<_Bands> {
+  final _scroll = ScrollController();
+
+  /// One key per band, so a built header can be found and revealed.
+  final _headerKeys = <String?, GlobalKey>{};
+
+  /// The last jump served, so a rebuild does not re-scroll and a repeat
+  /// click on the same bank does.
+  int? _servedNonce;
+
+  @override
+  void initState() {
+    super.initState();
+    _serve();
+  }
+
+  @override
+  void didUpdateWidget(_Bands oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _serve();
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _serve() {
+    final jump = widget.jump;
+    if (jump == null || jump.nonce == _servedNonce) return;
+    _servedNonce = jump.nonce;
+    // AFTER THE FRAME, because on the first build of this widget the
+    // controller has no position attached to it yet.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reveal(jump.bankKey));
+  }
+
+  Future<void> _reveal(String? bankKey) async {
+    final bands = widget.table.bands;
+    final target = bands.indexWhere((band) => band.bankKey == bankKey);
+    // A DECLARED BANK WITH NO PORTS HAS NO BAND, so there is nothing to
+    // scroll to and nothing to apologise for: the tree still marks it as
+    // the current bank and its menu still works.
+    if (target < 0) return;
+
+    // Bounded by the number of pages the grid has, plus slack for the
+    // frame in which the target finally builds.
+    var guard = 0;
+    while (mounted && _scroll.hasClients) {
+      if (_headerKeys[bankKey]?.currentContext != null) break;
+      final position = _scroll.position;
+      final built = [
+        for (var i = 0; i < bands.length; i++)
+          if (_headerKeys[bands[i].bankKey]?.currentContext != null) i,
+      ];
+      final down = built.isEmpty || target > built.last;
+      final next = down
+          ? position.pixels + position.viewportDimension
+          : position.pixels - position.viewportDimension;
+      final clamped = next.clamp(0.0, position.maxScrollExtent);
+      if (clamped == position.pixels) break;
+      position.jumpTo(clamped);
+      if (++guard >
+          2 + position.maxScrollExtent ~/ position.viewportDimension) {
+        break;
+      }
+      await WidgetsBinding.instance.endOfFrame;
+    }
+    if (!mounted) return;
+    // ITS OWN `mounted`, NOT THIS STATE'S. The context belongs to a
+    // `SliverPersistentHeader` that the loop above may have scrolled back
+    // out of the tree while this state stayed perfectly alive.
+    final found = _headerKeys[bankKey]?.currentContext;
+    if (found == null || !found.mounted) return;
+    await Scrollable.ensureVisible(
+      found,
+      duration: const Duration(milliseconds: 160),
+      curve: Curves.easeOut,
+    );
+  }
+
   @override
   Widget build(BuildContext context) => CustomScrollView(
+    controller: _scroll,
     slivers: [
-      for (final band in table.bands) ...[
+      for (final band in widget.table.bands) ...[
         // PINNED, which is what a sticky band header means: a person
         // forty rows into the HDMI inputs must still be able to see that
         // these are the HDMI inputs.
@@ -1483,12 +1799,17 @@ class _Bands extends StatelessWidget {
           pinned: true,
           delegate: _BandDelegate(
             band: band,
-            collapsed: collapsed.contains(band.bankKey),
-            onToggle: () => onToggleBand(band.bankKey),
+            // THE KEY IS WHAT `ensureVisible` NEEDS, and it is minted per
+            // bank key rather than per build so that it survives the
+            // rebuild a jump causes.
+            headerKey: _headerKeys.putIfAbsent(band.bankKey, GlobalKey.new),
+            collapsed: widget.collapsed.contains(band.bankKey),
+            onToggle: () => widget.onToggleBand(band.bankKey),
+            bankActions: widget.bankActions,
             theme: Theme.of(context),
           ),
         ),
-        if (!collapsed.contains(band.bankKey))
+        if (!widget.collapsed.contains(band.bankKey))
           // ONE REORDERABLE LIST PER BAND, WHICH IS WHY THE BAND EDGE IS
           // A WALL (DR-064). Flutter's reorderable lists do not hand an
           // item to a sibling list, and the alternative was one flat list
@@ -1504,7 +1825,7 @@ class _Bands extends StatelessWidget {
             // `length` rather than `length - 1`. Flutter deprecated it for
             // exactly that off-by-one, and the replacement has already
             // subtracted.
-            onReorderItem: (from, to) => onReorder(band, from, to),
+            onReorderItem: (from, to) => widget.onReorder(band, from, to),
             // NO LIFT ANIMATION ON A GRID ROW. The default proxy scales
             // and elevates the dragged item, which on a row 1400 points
             // wide with cell borders reads as the row breaking apart
@@ -1524,28 +1845,33 @@ class _Bands extends StatelessWidget {
               key: ValueKey(band.rows[index].port.key.v),
               row: band.rows[index],
               dragIndex: index,
-              scale: scale,
-              registries: registries,
-              portSets: portSets,
-              actions: actions,
-              keyFollowsLabel: keyFollows(band.rows[index].port),
-              keyIsPublished: isPublished(band.rows[index].port.key.v),
-              takenKeys: takenKeys,
-              columns: columns,
-              pairedWith: pairedWith[band.rows[index].port.key.v],
+              scale: widget.scale,
+              registries: widget.registries,
+              portSets: widget.portSets,
+              actions: widget.actions,
+              keyFollowsLabel: widget.keyFollows(band.rows[index].port),
+              keyIsPublished: widget.isPublished(band.rows[index].port.key.v),
+              takenKeys: widget.takenKeys,
+              columns: widget.columns,
+              pairedWith: widget.pairedWith[band.rows[index].port.key.v],
+              partners: widget.partnersFor(band.rows[index].port.key.v),
+              onPair: widget.onPair,
               issues:
-                  issues[band.rows[index].port.key.v] ?? const <PortIssue>[],
+                  widget.issues[band.rows[index].port.key.v] ??
+                  const <PortIssue>[],
               genderApplies: portGenderApplies(
-                registriesForGender,
+                widget.registriesForGender,
                 band.rows[index].port.connector,
               ),
-              onKeyTouched: onKeyTouched,
-              selected: selection.contains(band.rows[index].port.key.v),
-              onToggleRow: onToggleRow,
-              onTapRow: onTapRow,
-              onColumnFocused: onColumnFocused,
-              onBatchWrite: onBatchWrite,
-              dragDisabled: dragDisabled,
+              onKeyTouched: widget.onKeyTouched,
+              selected: widget.selection.contains(
+                band.rows[index].port.key.v,
+              ),
+              onToggleRow: widget.onToggleRow,
+              onTapRow: widget.onTapRow,
+              onColumnFocused: widget.onColumnFocused,
+              onBatchWrite: widget.onBatchWrite,
+              dragDisabled: widget.dragDisabled,
             ),
           ),
       ],
@@ -1556,14 +1882,25 @@ class _Bands extends StatelessWidget {
 class _BandDelegate extends SliverPersistentHeaderDelegate {
   _BandDelegate({
     required this.band,
+    required this.headerKey,
     required this.collapsed,
     required this.onToggle,
+    required this.bankActions,
     required this.theme,
   });
 
   final PortTableBand band;
+
+  /// What `_BandsState` reveals when the rail's tree asks for this bank.
+  final GlobalKey headerKey;
+
   final bool collapsed;
   final VoidCallback onToggle;
+
+  /// docs/06 §4.6's bank menu. Null draws none, which is what every
+  /// caller outside the builder shell gets.
+  final BankActions? bankActions;
+
   final ThemeData theme;
 
   static const double _height = 30;
@@ -1587,7 +1924,16 @@ class _BandDelegate extends SliverPersistentHeaderDelegate {
     final foreground = band.isUndeclaredBank
         ? scheme.onErrorContainer
         : scheme.onSurface;
+    // ONLY A DECLARED BANK GETS A MENU. `Not in a bank` has no `BankDef`
+    // to rename or remove, and an undeclared key has none either: the fix
+    // for that band is in the `Bank` column, not in a menu that would have
+    // to mint the definition it is complaining about.
+    final actions = bankActions;
+    final menu = actions == null || band.bankKey == null || band.bank == null
+        ? null
+        : bankMenuItems(bankKey: band.bankKey!, actions: actions);
     return Material(
+      key: headerKey,
       color: background,
       child: InkWell(
         onTap: onToggle,
@@ -1634,6 +1980,23 @@ class _BandDelegate extends SliverPersistentHeaderDelegate {
                     color: foreground,
                   ),
                 ),
+                if (menu != null)
+                  MenuAnchor(
+                    menuChildren: menu,
+                    builder: (context, controller, child) => IconButton(
+                      icon: Icon(Icons.more_vert, size: 16, color: foreground),
+                      tooltip: 'Bank actions',
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 24,
+                        minHeight: 24,
+                      ),
+                      onPressed: () => controller.isOpen
+                          ? controller.close()
+                          : controller.open(),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -1644,7 +2007,10 @@ class _BandDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(_BandDelegate old) =>
-      old.band != band || old.collapsed != collapsed || old.theme != theme;
+      old.band != band ||
+      old.collapsed != collapsed ||
+      old.bankActions != bankActions ||
+      old.theme != theme;
 }
 
 class _PortRow extends StatelessWidget {
@@ -1660,6 +2026,8 @@ class _PortRow extends StatelessWidget {
     required this.takenKeys,
     required this.columns,
     required this.pairedWith,
+    required this.partners,
+    required this.onPair,
     required this.genderApplies,
     required this.issues,
     required this.onKeyTouched,
@@ -1696,9 +2064,15 @@ class _PortRow extends StatelessWidget {
   /// The columns to draw, core plus whichever packs are open.
   final List<PortColumnId> columns;
 
-  /// The key this port is paired with, for the Passthrough pack. Read
-  /// only: pairing is M4-J3 (`#225`).
+  /// The key of the port on the other face, or null. Drawn in the
+  /// Passthrough pack, which is revealed only when `isPassthrough` is on.
   final String? pairedWith;
+
+  /// What this row may be paired WITH (DR-087 §11.86.3): the other face,
+  /// unpaired, plus whatever it is paired with now.
+  final List<PortDef> partners;
+
+  final void Function(String portKey, String? partnerKey) onPair;
 
   /// Whether GENDER may be edited here (CR-059, gated on the registry's
   /// `genderApplies` for this port's connector).
@@ -1758,6 +2132,33 @@ class _PortRow extends StatelessWidget {
         from: field.get(_port),
         to: value,
       ),
+    );
+  }
+
+  /// The `ROLE` cell (DR-086 §11.85.3).
+  ///
+  /// **A CLOSED LIST, AND NOT FOR TIDINESS.** `planAtomicConnect` compares
+  /// roles by STRING EQUALITY to report a mismatch, so a free-text cell
+  /// makes `+`, `plus` and `Pos` three roles, and whoever types the third
+  /// gets a warning against every seeded amplifier they connect to. Blank
+  /// stays offered, because a member with no role is legal and
+  /// `PortSetMember.role`'s own doc says "the position carries the
+  /// meaning".
+  ///
+  /// **EMPTY AND UNEDITABLE ON A ROW IN NO SET**, because a role without a
+  /// set is a value about nothing, and because the options come from the
+  /// set's KIND and there is none to read.
+  Widget _roleCell(PortColumnId id) {
+    final setKey = _port.setKey;
+    final set = setKey == null
+        ? null
+        : portSets.where((s) => s.key == setKey).firstOrNull;
+    if (set == null) return const PortReadOnlyCell(value: null);
+    return PortChoiceCell<String?>(
+      value: _port.setRole,
+      options: [null, ...setRolesFor(set.kind)],
+      label: (v) => v ?? kUnknownCell,
+      onPick: (v) => _set(id, PortDefField.setRole, v),
     );
   }
 
@@ -2002,12 +2403,7 @@ class _PortRow extends StatelessWidget {
           : portSets.firstWhere((s) => s.key == v).label,
       onPick: (v) => _set(id, PortDefField.setKey, v),
     ),
-    PortColumnId.setRole => PortTextCell(
-      value: _port.setRole,
-      hint: 'L',
-      onCommit: (v) =>
-          _set(id, PortDefField.setRole, v.trim().isEmpty ? null : v.trim()),
-    ),
+    PortColumnId.setRole => _roleCell(id),
     PortColumnId.notes => PortTextCell(
       value: _port.notes,
       onCommit: (v) => _set(id, PortDefField.notes, _orNull(v)),
@@ -2165,7 +2561,21 @@ class _PortRow extends StatelessWidget {
     // READ-ONLY, AND SAYS SO BY BEING TEXT. Pairing is M4-J3 (`#225`),
     // which owns the bank-level `Pair front to rear by order` action;
     // typing a key into a cell here would write half a pair.
-    PortColumnId.pairedPort => PortReadOnlyCell(value: pairedWith),
+    // DR-087 §11.86.3: THE OPTIONS ARE THE VALIDATION. `partners` holds
+    // only ports on the other face that are unpaired, so a front-to-front
+    // pair and a double-booked port are states this grid cannot mint
+    // rather than states it flags afterwards. Null unpairs.
+    PortColumnId.pairedPort => PortChoiceCell<String?>(
+      value: pairedWith,
+      options: [null, for (final p in partners) p.key.v],
+      // THE LABEL, NOT THE KEY. `PAIRED WITH` is read by a person looking
+      // at a panel, and `R12` is what is printed on the jack while
+      // `rj45.rear.12` is what the file calls it.
+      label: (v) => v == null
+          ? kUnknownCell
+          : partners.where((p) => p.key.v == v).firstOrNull?.label ?? v,
+      onPick: (v) => onPair(_port.key.v, v),
+    ),
     PortColumnId.maxConnections => PortNumberCell(
       value: _port.maxConnections,
       onCommit: (v) => _set(id, PortDefField.maxConnections, v ?? 1),

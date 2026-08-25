@@ -315,6 +315,55 @@ enum LabelKey {
   // strand an empty bank behind them.
   quickAddPorts,
 
+  // BANK CRUD (builder/bank_commands.dart), M4-J1. Four values on the
+  // same test the port trio was split on: what the Edit menu has to say.
+  //
+  // `removeBank` is emphatically its own. It does not only delete a
+  // `BankDef`: it clears `bankKey` on every port that named one, so the
+  // act a user undoes is "my ports went loose" and not "a heading
+  // vanished". `mirrorBank` creates a bank AND N ports in one
+  // transaction, on `quickAddPorts`' argument, and "Undo Add Port" would
+  // name one row of the sixteen it is about to remove.
+  //
+  // `addBank` ARRIVED WITH ITS FIRST BARE CALLER, and until the bank
+  // tree there was none. `AddBankCommand` answered `quickAddPorts`
+  // because Quick Add was the only thing that ran it, and inside a
+  // transaction it is the TRANSACTION's label the Edit menu shows. The
+  // tree creates an empty bank by running the command alone, so its own
+  // label is now the one a person reads, and "Undo Quick add ports" over
+  // a bank with no ports in it names neither the act nor its result.
+  addBank,
+  renameBank,
+  removeBank,
+  mirrorBank,
+
+  // PORT SETS (builder/port_set_commands.dart), M4-J2, DR-086 §11.85.
+  // TWO values and not one, on the jacket pair's test: grouping and
+  // ungrouping are different gestures and the Edit menu must name the one
+  // being undone. "Undo Group as set" offered for an ungroup would be the
+  // wrong sentence in the one place a person looks to find out what they
+  // just did.
+  //
+  // `groupAsSet` is also what `AddPortSetCommand` answers, because the
+  // transaction it rides in carries the same label and a bare run of it
+  // has no other caller.
+  groupAsSet,
+  ungroupSet,
+
+  // PASSTHROUGH PAIRING (builder/passthrough_commands.dart), M4-J3,
+  // DR-087 §11.86. TWO values, on the jacket pair's test: pairing and
+  // unpairing are opposite acts on one panel, and "Undo Pair" offered for
+  // an unpair names the wrong direction on the one screen a person reads
+  // to find out what they just did.
+  //
+  // ONE VALUE FOR ONE PAIR AND FOR TWENTY-FOUR, unlike `quickAddPorts`.
+  // `Pair front to rear by order` is the same act repeated rather than a
+  // different act at scale, and "Undo pair passthrough" is true of both;
+  // the bulk run is one transaction under this label, so the menu offers
+  // one entry either way.
+  pairPassthrough,
+  unpairPassthrough,
+
   // ITS OWN VALUE BECAUSE IT IS NOT A CELL EDIT. `PortDef.key` is the
   // migration join (CR-051) and renaming one rewrites `renamedFrom` and
   // every passthrough pair that named it, so the Edit menu says what

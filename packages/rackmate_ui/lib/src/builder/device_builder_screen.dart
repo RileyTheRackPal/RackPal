@@ -62,6 +62,8 @@
 // would need a scope this screen does not yet have.
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/builder/bank_dialogs.dart';
+import 'package:rackmate_ui/src/builder/bank_tree.dart';
 import 'package:rackmate_ui/src/builder/batch_inspector.dart';
 import 'package:rackmate_ui/src/builder/port_grid.dart';
 import 'package:rackmate_ui/src/draw/device_glyph_mark.dart';
@@ -292,6 +294,114 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
   /// fewer than two rows are selected (M4-F2).
   PortBatchContext? _batch;
 
+  // ═══════════════════════════════════════════════════════════════════
+  // docs/06 §2's BANK TREE, AND THE FOUR ACTIONS BEHIND IT
+  // ═══════════════════════════════════════════════════════════════════
+  // The tree is mounted PERMANENTLY, under the section list, because a
+  // bank count is a fact about the template in the way the section list
+  // is: a rail that grew and shrank as a person moved down the sections
+  // would move the tile under their cursor. Clicking a bank switches to
+  // Ports, so the tree is never navigation into a section a person is not
+  // in.
+
+  /// The bank the tree last had clicked, for its own highlight.
+  ({String? key})? _bankSelected;
+
+  /// The jump handed to the grid, and the nonce that makes a repeat click
+  /// on one bank scroll a second time.
+  ({String? bankKey, int nonce})? _bankJump;
+  int _jumpNonce = 0;
+
+  void _selectBank(String? bankKey) => setState(() {
+    _section = BuilderSection.ports;
+    _bankSelected = (key: bankKey);
+    _bankJump = (bankKey: bankKey, nonce: ++_jumpNonce);
+  });
+
+  BankDef? _bank(String key) =>
+      _session.body.banks.where((b) => b.key == key).firstOrNull;
+
+  Future<void> _createBank() async {
+    final choice = await showBankNameDialog(
+      context: context,
+      body: _session.body,
+    );
+    if (choice == null || !mounted) return;
+    // THE KEY COMES FROM QUICK ADD'S GENERATOR (DR-085 §11.84.5), so the
+    // vocabulary has one derivation and not a second one here.
+    _runCommand(
+      AddBankCommand(
+        BankDef(
+          key: uniqueBankKey(_session.body, choice.label),
+          label: choice.label,
+          abbr: choice.abbr,
+          order: nextOrder(_session.body.banks.map((b) => b.order)),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _renameBank(String bankKey) async {
+    final bank = _bank(bankKey);
+    if (bank == null) return;
+    final choice = await showBankNameDialog(
+      context: context,
+      body: _session.body,
+      bank: bank,
+    );
+    if (choice == null || !mounted) return;
+    if (choice.label == bank.label && choice.abbr == bank.abbr) return;
+    _runCommand(
+      RenameBankCommand(
+        bankKey,
+        toLabel: choice.label,
+        toAbbr: choice.abbr,
+      ),
+    );
+  }
+
+  /// No confirm: CR-055 makes a bank presentation, so this keeps every
+  /// port and lands them in `Not in a bank`, in front of the person, one
+  /// `Ctrl+Z` from where they were. See `bank_tree.dart`'s header.
+  void _removeBank(String bankKey) {
+    if (_bank(bankKey) == null) return;
+    _runCommand(RemoveBankCommand(bankKey));
+    if (_bankSelected?.key == bankKey) {
+      setState(() => _bankSelected = null);
+    }
+  }
+
+  Future<void> _mirrorBank(String bankKey) async {
+    final source = _bank(bankKey);
+    if (source == null) return;
+    final choice = await showMirrorBankDialog(
+      context: context,
+      body: _session.body,
+      source: source,
+    );
+    if (choice == null || !mounted) return;
+    final plan = planMirrorBank(
+      _session.body,
+      sourceBankKey: bankKey,
+      label: choice.label,
+      abbr: choice.abbr,
+    );
+    // ONE TRANSACTION, so a mirrored sixteen-port bank is one Ctrl+Z.
+    _transact(LabelKey.mirrorBank, (tx) {
+      for (final command in mirrorBankCommands(plan)) {
+        tx.add(command);
+      }
+    });
+    _selectBank(plan.bank.key);
+  }
+
+  late final _bankActions = BankActions(
+    onCreate: _createBank,
+    onRename: _renameBank,
+    onRemove: _removeBank,
+    onMirror: _mirrorBank,
+  );
+
   @override
   Widget build(BuildContext context) => Shortcuts(
     // THE BUILDER'S SCOPE IS INSTALLED AT THE SCREEN, not only around
@@ -385,6 +495,10 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
                   selected: _section,
                   canSave: _canSave,
                   onSelect: (s) => setState(() => _section = s),
+                  body: _session.body,
+                  bankActions: _bankActions,
+                  bankSelected: _bankSelected,
+                  onSelectBank: _selectBank,
                 ),
               ),
             ),
@@ -428,6 +542,8 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
                       if (_batch == batch) return;
                       setState(() => _batch = batch);
                     },
+                    bankActions: _bankActions,
+                    bankJump: _bankJump,
                   ),
                   BuilderSection.physical => _PhysicalSection(
                     body: _session.body,
@@ -658,15 +774,30 @@ class _SectionRail extends StatelessWidget {
     required this.selected,
     required this.canSave,
     required this.onSelect,
+    required this.body,
+    required this.bankActions,
+    required this.bankSelected,
+    required this.onSelectBank,
   });
 
   final BuilderSection selected;
   final bool canSave;
   final ValueChanged<BuilderSection> onSelect;
 
+  final TemplateBody body;
+  final BankActions bankActions;
+  final ({String? key})? bankSelected;
+  final ValueChanged<String?> onSelectBank;
+
   @override
-  Widget build(BuildContext context) => ListView(
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      // THE SECTION LIST DOES NOT SCROLL AND THE TREE DOES. Five tiles
+      // fit any window this app opens in; a bank list does not, and
+      // putting both in one scroller would let a template with nine banks
+      // push `Identity` off the top, which is the one tile that can be
+      // blocking a save.
       for (final s in BuilderSection.values)
         ListTile(
           dense: true,
@@ -684,6 +815,14 @@ class _SectionRail extends StatelessWidget {
           title: Text(s.label),
           onTap: () => onSelect(s),
         ),
+      Expanded(
+        child: BankTree(
+          body: body,
+          actions: bankActions,
+          selected: bankSelected,
+          onSelect: onSelectBank,
+        ),
+      ),
     ],
   );
 }
