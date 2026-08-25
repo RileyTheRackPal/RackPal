@@ -63,6 +63,7 @@ export 'src/builder/port_move_to_bank.dart';
 export 'src/builder/port_renumber.dart';
 export 'src/builder/port_reorder.dart';
 export 'src/builder/port_selection.dart';
+export 'src/builder/port_set_commands.dart';
 export 'src/builder/port_sort.dart';
 export 'src/builder/port_summary.dart';
 export 'src/builder/port_table.dart';

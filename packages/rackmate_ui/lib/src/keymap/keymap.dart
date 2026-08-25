@@ -229,6 +229,10 @@ enum KeyBindingId {
 
   // --- builder (M4-F10, DR-078) ----------------------------------------
   builderMoveToBank,
+
+  // --- builder (M4-J2, DR-086) -----------------------------------------
+  builderGroupAsSet,
+  builderUngroupSet,
   commitWireChained,
   nextCandidatePin,
   previousCandidatePin,
@@ -607,6 +611,21 @@ final class BuilderMoveToBankIntent extends Intent {
 /// Bulk connector and family change over the selection (M4-F9).
 final class BuilderChangeTypeIntent extends Intent {
   const BuilderChangeTypeIntent();
+}
+
+/// Make the selected rows into a `PortSetDef` (M4-J2, DR-086 §11.85.2).
+final class BuilderGroupAsSetIntent extends Intent {
+  const BuilderGroupAsSetIntent();
+}
+
+/// Take the selected rows out of their sets (M4-J2, DR-086 §11.85.6).
+///
+/// ITS OWN INTENT AND NOT A FLAG ON THE ONE ABOVE, unlike
+/// `BuilderMoveRowIntent(up:)`. That pair is one act aimed two ways;
+/// these two are a create and a delete, and `LabelKey` splits them for
+/// the same reason.
+final class BuilderUngroupSetIntent extends Intent {
+  const BuilderUngroupSetIntent();
 }
 
 /// Find and replace over the selection's text (M4-F8, docs/06 §4.6).
@@ -1447,6 +1466,49 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         '`bankKey` and an arrow key must not retype a port (§4.6). This '
         'is the gesture that does rewrite it, deliberately and through a '
         'dialog. Same word, two acts, and the labels say which.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderGroupAsSet,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyG,
+    primary: true,
+    label: 'Group the selected rows into a port set',
+    intent: BuilderGroupAsSetIntent(),
+    source: 'docs/06 §4.6 · DR-086 §11.85.2',
+    note:
+        'IT SHADOWS NO FRAMEWORK DEFAULT: `keyG` appears ZERO times in '
+        '`default_text_editing_shortcuts.dart`, checked over the source '
+        'with `keyT` as a positive control (one hit, the transpose DR-078 '
+        '§11.77.1 knowingly takes). That check matters here for the reason '
+        '`builderDuplicateRows` gives: focus is almost always inside a '
+        'cell `TextField` when a grid chord is pressed. '
+        'IT WRITES NO `order` AND STILL REFUSES UNDER A SORT, which is '
+        'the one refusal in this scope not shared with `Duplicate`. It '
+        'READS the declared order, because roles go on in it (DR-008 '
+        '§11.8.3 pairs conductors that way), so under a badge `L` would '
+        'land on the row the person sees second and the wrong pin would '
+        'reach the drawing.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.builderUngroupSet,
+    scope: KeyScope.builder,
+    trigger: LogicalKeyboardKey.keyG,
+    primary: true,
+    shift: true,
+    label: 'Take the selected rows out of their port sets',
+    intent: BuilderUngroupSetIntent(),
+    source: 'docs/06 §4.6 · DR-086 §11.85.6',
+    note:
+        'THE SHIFTED PAIR OF THE ONE ABOVE, which is the one place in '
+        'this scope a chord is reused, and it is reused because the two '
+        'acts are inverses a person already expects to be spelled that '
+        'way. '
+        'IT IS THE ONLY THING THAT REMOVES A `PortSetDef`. Deleting the '
+        'last member of a set deliberately does NOT (DR-086 §11.85.6): an '
+        'empty set is not a dangling reference, it is an empty one, and '
+        'it is what somebody is about to put two ports back into. '
+        'Ungrouping is a person saying in so many words that these ports '
+        'are not a set, so the heading goes with them.',
   ),
   KeyBinding(
     id: KeyBindingId.builderChangeType,

@@ -144,6 +144,46 @@ Map<String, List<PortIssue>> validatePorts(TemplateBody body) {
     }
   }
 
+  // ── A port set with fewer than two members ─────────────────────────
+  // A NOTICE, on the passthrough notice's precedent above and for its
+  // reason: a half-finished template mid-authoring must not shout.
+  //
+  // `Group as set…` cannot mint one (DR-086 §11.85.2 refuses under two
+  // rows), and that is not the same as the state being unreachable:
+  // `Delete` on a member leaves one, the `SET` column can move the other
+  // member out, and a hand-edited `.rmdx` can arrive holding one.
+  // `port_set_integrity_test.dart` gates the SEED on exactly this and
+  // nothing gates an authored template.
+  //
+  // WHY IT MATTERS RATHER THAN BEING UNTIDY: `planAtomicConnect` resolves
+  // the set, finds one member, and degrades to a ONE-CONDUCTOR LINK WITH
+  // NO ERROR. The half-declared pair is the failure docs/catalog's own
+  // C-table names, and it looks complete on the schedule.
+  //
+  // AN EMPTY SET GETS NO NOTICE, because there is no row to hang one on.
+  // `Ungroup` sweeps the set it empties for that reason.
+  final setMembers = <String, List<PortKey>>{};
+  for (final port in body.ports) {
+    final key = port.setKey;
+    if (key == null || key.isEmpty) continue;
+    setMembers.putIfAbsent(key, () => <PortKey>[]).add(port.key);
+  }
+  for (final set in body.portSets) {
+    final members = setMembers[set.key] ?? const <PortKey>[];
+    if (members.length != 1) continue;
+    add(
+      members.single,
+      PortIssue(
+        severity: PortIssueSeverity.notice,
+        column: PortColumnId.portSet,
+        message:
+            'The only port in "${set.label}". A set of one has nothing to '
+            'connect atomically, so a cable drawn to it carries one '
+            'conductor and says nothing about the missing half.',
+      ),
+    );
+  }
+
   for (final port in body.ports) {
     // ── Coaxial S/PDIF at the wrong impedance ────────────────────────
     // KEYED ON THE FAMILY AND NOT ON THE CONNECTOR, though docs/06 §4.5

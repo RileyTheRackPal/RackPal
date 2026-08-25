@@ -337,6 +337,19 @@ enum LabelKey {
   removeBank,
   mirrorBank,
 
+  // PORT SETS (builder/port_set_commands.dart), M4-J2, DR-086 §11.85.
+  // TWO values and not one, on the jacket pair's test: grouping and
+  // ungrouping are different gestures and the Edit menu must name the one
+  // being undone. "Undo Group as set" offered for an ungroup would be the
+  // wrong sentence in the one place a person looks to find out what they
+  // just did.
+  //
+  // `groupAsSet` is also what `AddPortSetCommand` answers, because the
+  // transaction it rides in carries the same label and a bare run of it
+  // has no other caller.
+  groupAsSet,
+  ungroupSet,
+
   // ITS OWN VALUE BECAUSE IT IS NOT A CELL EDIT. `PortDef.key` is the
   // migration join (CR-051) and renaming one rewrites `renamedFrom` and
   // every passthrough pair that named it, so the Edit menu says what

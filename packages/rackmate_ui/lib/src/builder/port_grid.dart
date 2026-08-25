@@ -60,6 +60,7 @@ import 'package:rackmate_ui/src/builder/bank_tree.dart';
 import 'package:rackmate_ui/src/builder/batch_inspector.dart';
 import 'package:rackmate_ui/src/builder/change_type_dialog.dart';
 import 'package:rackmate_ui/src/builder/find_replace_dialog.dart';
+import 'package:rackmate_ui/src/builder/group_as_set_dialog.dart';
 import 'package:rackmate_ui/src/builder/move_to_bank_dialog.dart';
 import 'package:rackmate_ui/src/builder/port_cells.dart';
 import 'package:rackmate_ui/src/builder/quick_add_bar.dart';
@@ -485,6 +486,91 @@ class _PortGridState extends State<PortGrid> {
     if (result.commands.isEmpty) return;
     widget.actions.transact(LabelKey.movePortsToBank, (tx) {
       for (final command in result.commands) {
+        tx.add(command);
+      }
+    });
+  }
+
+  /// `Ctrl+G`: make the selection into a `PortSetDef` (M4-J2, DR-086).
+  ///
+  /// A ROUTER, like `_changeType`. The refusals and the plan are in
+  /// `port_set_commands.dart` and the preview is the dialog's; this method
+  /// decides only which stack the commands land on.
+  Future<void> _groupAsSet(List<String> visible) async {
+    final selected = _selection.inOrder(visible).toSet();
+    void refuse(GroupAsSetRefusal refusal) =>
+        setState(() => _fillRefusal = groupAsSetRefusalMessage(refusal));
+
+    // REFUSED BEFORE THE DIALOG OPENS, both of them. A dialog that opens
+    // on two rows a person cannot group, only to refuse on the button, is
+    // a dialog that wasted the trip.
+    if (_sort != null) {
+      refuse(GroupAsSetRefusal.theViewIsSorted);
+      return;
+    }
+    if (selected.length < 2) {
+      refuse(GroupAsSetRefusal.needsTwoRows);
+      return;
+    }
+    setState(() => _fillRefusal = null);
+
+    final choice = await showGroupAsSetDialog(
+      context: context,
+      body: widget.body,
+      selectedKeys: selected,
+    );
+    if (choice == null || !mounted) return;
+
+    final result = buildGroupAsSet(
+      body: widget.body,
+      selectedKeys: selected,
+      label: choice.label,
+      kind: choice.kind,
+      atomicConnect: choice.atomicConnect,
+      viewIsSorted: _sort != null,
+    );
+    if (result.refusal case final GroupAsSetRefusal refusal) {
+      refuse(refusal);
+      return;
+    }
+    if (result.commands.isEmpty) return;
+    widget.actions.transact(LabelKey.groupAsSet, (tx) {
+      for (final command in result.commands) {
+        tx.add(command);
+      }
+    });
+  }
+
+  /// `Ctrl+Shift+G`: take the selection out of its sets (DR-086 §11.85.6).
+  ///
+  /// NO DIALOG AND NO PREVIEW. It removes a grouping and touches no value
+  /// a person typed, which is `Remove (ports stay)`'s argument one type
+  /// over: the grid redraws it instantly and one `Ctrl+Z` puts it back.
+  void _ungroupSet(List<String> visible) {
+    final selected = _selection.inOrder(visible).toSet();
+    final commands = buildUngroupPortSets(
+      body: widget.body,
+      selectedKeys: selected,
+    );
+    if (commands.isEmpty) {
+      // NOT A REFUSAL WHEN THERE IS SIMPLY NOTHING IN A SET, which is the
+      // ordinary state of most rows. It is a refusal when nothing is
+      // selected, because then the person aimed at nothing.
+      //
+      // EITHER WAY THE OLD MESSAGE GOES. A widget case caught this: press
+      // the chord with nothing selected, tick two rows, press it again,
+      // and the refusal about selecting rows was still on screen with two
+      // rows plainly selected.
+      setState(
+        () => _fillRefusal = selected.isEmpty
+            ? 'Select the ports to take out of a set first.'
+            : null,
+      );
+      return;
+    }
+    setState(() => _fillRefusal = null);
+    widget.actions.transact(LabelKey.ungroupSet, (tx) {
+      for (final command in commands) {
         tx.add(command);
       }
     });
@@ -998,6 +1084,18 @@ class _PortGridState extends State<PortGrid> {
         BuilderChangeTypeIntent: CallbackAction<BuilderChangeTypeIntent>(
           onInvoke: (_) {
             unawaited(_changeType(visible));
+            return null;
+          },
+        ),
+        BuilderGroupAsSetIntent: CallbackAction<BuilderGroupAsSetIntent>(
+          onInvoke: (_) {
+            unawaited(_groupAsSet(visible));
+            return null;
+          },
+        ),
+        BuilderUngroupSetIntent: CallbackAction<BuilderUngroupSetIntent>(
+          onInvoke: (_) {
+            _ungroupSet(visible);
             return null;
           },
         ),
@@ -1944,6 +2042,33 @@ class _PortRow extends StatelessWidget {
     );
   }
 
+  /// The `ROLE` cell (DR-086 §11.85.3).
+  ///
+  /// **A CLOSED LIST, AND NOT FOR TIDINESS.** `planAtomicConnect` compares
+  /// roles by STRING EQUALITY to report a mismatch, so a free-text cell
+  /// makes `+`, `plus` and `Pos` three roles, and whoever types the third
+  /// gets a warning against every seeded amplifier they connect to. Blank
+  /// stays offered, because a member with no role is legal and
+  /// `PortSetMember.role`'s own doc says "the position carries the
+  /// meaning".
+  ///
+  /// **EMPTY AND UNEDITABLE ON A ROW IN NO SET**, because a role without a
+  /// set is a value about nothing, and because the options come from the
+  /// set's KIND and there is none to read.
+  Widget _roleCell(PortColumnId id) {
+    final setKey = _port.setKey;
+    final set = setKey == null
+        ? null
+        : portSets.where((s) => s.key == setKey).firstOrNull;
+    if (set == null) return const PortReadOnlyCell(value: null);
+    return PortChoiceCell<String?>(
+      value: _port.setRole,
+      options: [null, ...setRolesFor(set.kind)],
+      label: (v) => v ?? kUnknownCell,
+      onPick: (v) => _set(id, PortDefField.setRole, v),
+    );
+  }
+
   /// The Key cell, typed by hand. Records the rename and stops the
   /// automatic following for good.
   void _renameKey(String typed) {
@@ -2185,12 +2310,7 @@ class _PortRow extends StatelessWidget {
           : portSets.firstWhere((s) => s.key == v).label,
       onPick: (v) => _set(id, PortDefField.setKey, v),
     ),
-    PortColumnId.setRole => PortTextCell(
-      value: _port.setRole,
-      hint: 'L',
-      onCommit: (v) =>
-          _set(id, PortDefField.setRole, v.trim().isEmpty ? null : v.trim()),
-    ),
+    PortColumnId.setRole => _roleCell(id),
     PortColumnId.notes => PortTextCell(
       value: _port.notes,
       onCommit: (v) => _set(id, PortDefField.notes, _orNull(v)),
