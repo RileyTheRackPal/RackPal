@@ -159,8 +159,8 @@ RackMate/
 |---|---|---|
 | **Domain** | `rackmate_core/src/{units,idformat,model,routing,derived,draw}` | Entities, value objects, invariants, the router, the DRC rule functions, the scene builder. Knows nothing about files, PDFs, pixels or Flutter. |
 | **Application** | `rackmate_core/src/{commands,document_controller.dart}` | `Command`, `Transaction`, `UndoStack`, `DocumentController`. Every state transition the product supports is a class here; this is the app's verb list. |
-| **Infrastructure** | `rackmate_core/src/persistence`, all of `rackmate_text` and `rackmate_export`, `apps/rackmate/lib/{files,export,diagnostics}` | Codecs, migrations, font metrics, PDF emission, disk I/O, isolates, logging, OS dialogs. |
-| **Presentation** | all of `rackmate_ui`, `apps/rackmate/lib/{providers,shell}` | Widgets, render objects, viewport, input, Riverpod wiring, menus. |
+| **Infrastructure** | `rackmate_core/src/persistence`, all of `rackmate_text` and `rackmate_export`, `apps/rackmate/lib/src/storage`, and the file/export/dialog members of `apps/rackmate/lib/src/session` | Codecs, migrations, font metrics, PDF emission, disk I/O, isolates, logging, OS dialogs. |
+| **Presentation** | all of `rackmate_ui`, and the shell members of `apps/rackmate/lib/src/session` (`app_shell.dart`, the `*_actions.dart` builders, `session_prompts.dart`) | Widgets, render objects, viewport, input, menus, and the composition root that injects `AppServices`. |
 
 > **The dependency rule.** Dependencies point inward and downward only. Domain depends on nothing. Application depends only on Domain. Infrastructure depends on Domain and Application. Presentation depends on all three. No layer may name a type from a layer above it, and `rackmate_export` and `rackmate_ui` may not name each other.
 
@@ -211,19 +211,24 @@ test('entity setters are called only from src/commands/', () { /* grep lib/ */ }
 
 ### 4.1 The choice
 
-> **Riverpod 3.x, codegen-free, used strictly as a DI and lifetime container. The document is *not* in Riverpod.** It lives in a plain-Dart `DocumentController` owned by a provider.
+> **Constructor injection and hand-rolled `Listenable`s. There is no state-management package and no DI container.** The document lives in a plain-Dart `DocumentController`, and one `AppServices` is built in `main` and passed down.
 
-A `RackDocument` at the scale targets is ~200 `DeviceInstance`s, ~1000 `Link`s, and ~600 KB of JSON (the corrected figure from **AC-006**, after lazy port materialisation). Riverpod earns its place for four things, none of which is holding the document:
+**Ruled by DR-088** (canon §11.87, §12.27), which **supersedes ADR-011's Riverpod clause**. This section previously specified Riverpod 3.x as a DI and lifetime container. That layer was never written: at v0.4.63 the package appears in no `pubspec.yaml` and `ProviderScope` in no Dart file. What follows describes what is built, and DR-088 makes it the ruled answer rather than an accident anybody may quietly reverse.
 
-- **Scoped lifetime.** One `ProviderScope` per open document, with automatic disposal. v1 is single-document and single-window (**CR-119**), but the scope costs nothing now and makes tabs (v1.2) and multi-window mechanical rather than a rewrite.
-- **DI without service locators.** `FileService`, `Logger`, `RecentFiles`, `Clock` and the UUID generator are overridable in tests via `ProviderScope(overrides:)`.
-- **Cheap chrome read-models.** Window title, dirty dot, Undo/Redo enablement, the totals chip strip, the open-findings count. These rebuild rarely and `ref.watch(p.select(...))` is exactly right.
-- **Ecosystem stability.** Flutter Favorite, one maintainer with a decade of track record.
+A `RackDocument` at the scale targets is ~200 `DeviceInstance`s, ~1000 `Link`s, and ~600 KB of JSON (the corrected figure from **AC-006**, after lazy port materialisation). Riverpod had been kept for four things, none of which was holding the document, and **each is supplied by something already built**:
+
+- **Scoped lifetime.** **CR-119** makes v1 single-document and single-window, so there is exactly one scope, and a scope of one is a variable. The lifetime problem that remained, the shell's `State` surviving rebuilds, is solved by the `GlobalKey<AppShellState>` minted in `main` and documented there as load-bearing.
+- **DI without service locators.** `AppServices` is **one constructor parameter**. A test supplies a fake by constructing one, which needs no override mechanism.
+- **Cheap chrome read-models.** Window title, dirty dot, Undo/Redo enablement, the totals chip strip, the open-findings count. The granularity `ref.watch(p.select(...))` would buy is bought instead by **`DocEpochs` holding seven counters rather than one revision number**: a consumer subscribing to `rack` is not woken by a `style` edit. That is the same optimisation performed in the model rather than in the view layer.
+- **Ecosystem stability.** An argument about *which* dependency to take, never that one is needed.
+
+**The built shape is also the reversible one**, which is why DR-088 ratifies rather than merely notes it: adding a container to a tree that passes one object down is mechanical; removing one that several hundred widgets read from is not.
 
 Rejected alternatives, with the one-line reason each:
 
 | Rejected | Reason |
 |---|---|
+| `flutter_riverpod` | **Rejected by DR-088**, having been accepted by ADR-011 and never built. Its four benefits are each answered above by something already in the tree; taking the dependency now would buy a container for a single scope and a `select()` the epoch counters already provide. Not forbidden forever: when tabs (v1.2) are designed, the question reopens on its own evidence. |
 | `signals` | Its advantage is automatic fine-grained tracking of *widget* rebuilds; the canvas hot path bypasses widget rebuilds entirely via `CustomPainter(repaint:)`, so it is ecosystem risk for a benefit already engineered around. |
 | Bloc | Event-sourcing a canvas means an event object per interaction tick; its good idea, an explicit replayable log, is the command stack, built by hand with better ergonomics (menu labels, inversion). |
 | Immutable document + `copyWith` | Dart has no lens library worth using; deep `copyWith` chains are the largest source of tedium in Flutter document editors, and the two reasons to want immutability (safe undo, change detection) are already supplied by the command stack and the epoch counters. |
@@ -231,21 +236,36 @@ Rejected alternatives, with the one-line reason each:
 
 ### 4.2 Ownership map
 
-```text
-ProviderScope                                       ← one per open document
-└── documentControllerProvider : DocumentController          [plain Dart, in core]
-    ├── RackDocument doc            flat UUID-keyed entity maps; @internal setters
-    ├── UndoStack<RackDocument>     document-scoped stack (one of three — CR-106)
-    ├── DocEpochs epochs            ValueNotifier<int> × 6   ← repaint + invalidation triggers
-    └── DerivedRegistry derived     epoch-keyed memo cells
+**Read as built at v0.4.63, not as planned.** Every name below resolves to a class in the repository.
 
-└── selectionControllerProvider   : SelectionController    Listenable, NOT document state
-└── viewportControllerProvider    : ViewportController     Listenable, Matrix4 + inverse cache
-└── toolModeProvider              : NotifierProvider<ToolMode>   changes at human speed
-└── interactionControllerProvider : InteractionController  ephemeral drag state (D5)
+```text
+main()                                              ← the composition root
+├── AppServices                                     built once, then passed by constructor
+│   ├── DocumentSession          ChangeNotifier; owns the CURRENT controller
+│   │   └── DocumentController                      [plain Dart, in core]
+│   │       ├── RackDocument doc     flat UUID-keyed entity maps; @internal setters
+│   │       ├── UndoStack<RackDocument>  document-scoped stack (one of three, CR-106)
+│   │       ├── DocEpochs epochs     SimpleNotifier<int> × 7  ← repaint + invalidation
+│   │       └── SimpleNotifier<int> changes   ← dirty state, title, undo enablement
+│   ├── SessionController        new / open / save / close
+│   ├── ExportController · AutosaveScheduler · WindowChrome · WindowTitleWriter
+│   └── (stores: prefs, recents, recovery, snapshots, documents)
+└── RackMateApp                  StatelessWidget; holds services, measurer, keys
+    └── AppShell                 GlobalKey<AppShellState> minted in main, never in build
+        └── canvas screens       each State owns its own ephemeral controllers:
+            SelectionController · ViewportController · DragPreviewController
+            ResizePreviewController · CompactionPreviewController
+            StatusMessageController · CaretController · ShakeController
+            SchematicRevealController        (nine at v0.4.63, an open count)
 ```
 
-`VERIFY:` Riverpod 3 demoted `ChangeNotifierProvider` and `StateProvider` to a `legacy` library (**AC-016/#19**). These controllers are consumed by painters as plain `Listenable`s, which is correct and unaffected; the single place needing Riverpod integration, an adapter exposing `epochs.sequence` to chrome providers, is hand-written (~15 lines: `Provider` + `ref.onDispose(n.removeListener)`). Confirm before the provider layer is written; do not import the legacy library for it.
+**Three things this map used to name and the repository does not contain**, all corrected here rather than pointered:
+
+- **`ProviderScope` and the four `*Provider` declarations.** Never written (DR-088 §11.87.1).
+- **`DerivedRegistry derived`.** Also never written, and **deliberately**: `document_controller.dart`'s own header records it as *"a later milestone's derived-data pipeline (§6) that does not exist yet, omitted rather than stubbed, since there is nothing yet for it to invalidate."* That is the right call and the honest record of it is in the source, not here.
+- **`DocEpochs` as `ValueNotifier<int> × 6`.** It is `SimpleNotifier<int> × 7`. Pure Dart, because **D1 forbids Flutter imports in `rackmate_core`**, and seven because `sequence`, `structure`, `wires`, `rack`, `meta`, `style` and `sheet` are separate invalidation domains.
+
+The ephemeral controllers are consumed by painters as plain `Listenable`s via `CustomPainter(repaint:)`, which is what keeps the canvas hot path off the widget rebuild path entirely.
 
 ### 4.3 The document: epochs, not equality
 
@@ -846,32 +866,34 @@ Recent files are a JSON list in application support (`{path, displayName, lastOp
 
 ### 10.1 The full table
 
-| Package | Constraint | Package it lives in | Purpose | Risk | Fallback |
-|---|---|---|---|---|---|
-| `meta` | `^1.16.0` | core | `@internal` (the setter gate: AC-013), `@immutable`, `@useResult`. Zero runtime cost. | none | — |
-| `collection` | `^1.19.0` | core | `UnmodifiableSetView`, `firstWhereOrNull`, deep-equality helpers. | none | trivial to inline |
-| `uuid` | `^4.6.0` | core | **UUIDv7** entity IDs (time-ordered, sortable, index-local) and **v5** for deterministic port IDs (AC-006). | low | ~80 lines |
-| `pdf` | `^3.13.0` | text, export | `PdfGraphics` vector output, `pw.Widget` layout for schedules, `PdfFont.stringMetrics` for the one `TextMeasurer`. Pure Dart ⇒ isolate-safe; Apache-2.0. | **Highest-consequence dependency in the project.** Single maintainer, headline feature. | `DiagramCanvas` **is** the hedge: swapping backends is one file. Failing that: emit PDF 1.7 content streams for pure vector plus Type0 embedding (~2 k lines of well-specified work), or route through `SvgDiagramCanvas` to an external converter. |
-| `flutter` | sdk | ui, app | — | — | — |
-| `path_drawing` | `^1.0.1` | ui | `dashPath()`: `dart:ui` has no native dashing (§8.3). | low activity, but tiny | ~60 lines over `PathMetrics` |
-| `vector_math` | `^2.2.0` | ui | `Matrix4` for the viewport. Transitively available; pin it explicitly. | none | — |
-| `flutter_riverpod` | `^3.3.2` | app | DI, per-document lifetime, chrome read-models. Codegen-free. | `ChangeNotifierProvider` moved to `legacy`, `VERIFY:` before writing the provider layer | hand-written `Listenable`→`Provider` adapter, ~15 lines |
-| *(no file-dialog package)* | — | app | **Native open/save dialogs are ours.** `windows/runner/file_dialog_channel.cpp` drives `IFileDialog` directly (~150 lines of COM) behind a two-method Dart seam, `lib/src/session/file_picker.dart`. `file_selector ^1.1.0` USED TO BE THIS ROW AND WAS DELIBERATELY REMOVED: its Windows plugin calls `AddOptions` only for `select_folders` and `allow_multiple` and its Pigeon `SelectionOptions` has no other field, so `FOS_DONTADDTORECENT` cannot be requested through it at any price, and without that flag every open and every save writes the project's file name and full path into `HKCU\…\Explorer\ComDlg32\OpenSavePidlMRU` and drops a shortcut in `%APPDATA%\Microsoft\Windows\Recent`. It also dragged in `file_selector_android`, which shipped `dartjni.dll` into a Windows-only Release build. | ~150 lines of COM we maintain, and the flag closes only **half** the leak. The other half is stated as a BOUND and not as a list, because naming the measured keys and closing the list has been wrong four times running. Ours and gated: RackMate's own code writes no registry key. Measured against the shipped binary: `OpenSavePidlMRU` and the Recent shortcut are suppressed, so no project file name reaches the host. Beyond that, **the shell writes values under ComDlg32 that RackMate does not control**, at minimum `LastVisitedPidlMRU` (this executable plus the last folder browsed) and `CIDSizeMRU` (this executable, written even when the user cancels the dialog), measured examples and not an inventory, and no supported option prevents them while the shell common dialog is the dialog. So a portable build leaves shell-owned HKCU entries on a client's machine naming this executable and the folders it browsed, and never a project file name. | None wanted. Re-adding `file_selector` fails `session_layering_test.dart` RULE 14d, and `registry_claim_test.dart` fails if this row stops stating the bound, or restates it as a closed list. Suppressing the shell's own records as well would mean a hand-built file browser instead of `IFileDialog`, weighed and declined: large scope, worse dialog, internal tool. |
-| `window_manager` | `^0.5.2` | app | Title with dirty marker, size/position restore, minimum size, and critically `setPreventClose`. | 0.x, single maintainer | the only load-bearing API is `setPreventClose` + the close event: ~80 lines of Win32 platform channel. Do **not** plan on `bitsdojo_window` |
-| `path_provider_windows` | `^2.3.0` | app | `getApplicationSupportPath()` for recovery, snapshots, recents, logs, prefs. Called from **exactly one function** (`productionApplicationSupportDirectory` in `lib/src/storage/data_root.dart`) and a grep test asserts that single call site, which is what keeps M2's portable build a one-function change. **The platform package directly, NOT the `path_provider` umbrella:** on Windows the umbrella forwards to precisely this class, so the resolved path is identical, but it also drags `path_provider_android` in, and that package pulls the `jni` FFI plugin, which put `dartjni.dll` in the Release output beside `rackmate.exe`. Dart-only, no native plugin, no extra DLL. | none | the umbrella, if a second desktop platform ever needs one; then re-check the Release output for `dartjni.dll` (`flutter_dependency_test.dart` asserts it is absent) |
-| `path` | `^1.9.0` | app | Cross-platform joining. Never string-concatenate paths on Windows. | none | — |
-| `printing` | `^5.15.0` | app | **Behind an explicit "Verify output" button only.** `PdfPreview`; `layoutPdf` is v1.1. | `PdfPreview`/`raster` need **pdfium**, which the plugin's CMake downloads at build time, a fresh or network-restricted machine fails `flutter build windows` | **Binaries are vendored into the repo (CR-100)**; a network-fetched binary in a signed release is a supply-chain and reproducibility problem, not just a CI one. Degrade to export + "Open in system viewer", which needs no pdfium |
-| `desktop_drop` | `^0.6.0` | app | Drag a `.rmpj` onto the window. | 0.x, low activity | a nicety: degrade to File ▸ Open. Alternative `super_drag_and_drop` |
-| `logging` | `^1.3.0` | app | Structured, level-based, zero-dependency. Sinks are ours. | none | — |
-| `intl` | `^0.20.0` | app | Number/date/unit formatting; the runtime half of ARB localization. | none | — |
-| `flutter_localizations` | sdk | app | Locale resolution, `MaterialLocalizations`, `Directionality`. | — | — |
-| `test` | `^1.26.0` | dev | Pure-Dart tests in core/text/export. | — | — |
-| `flutter_test` · `integration_test` | sdk | dev | Widget, golden and desktop end-to-end tests. | — | — |
-| `very_good_analysis` | `9.0.0` **exact** | dev | Strictest widely-used lint set: catches the `prefer_final` / `avoid_dynamic_calls` / unawaited-future classes that matter in a document editor. | third-party; a major bump can fail CI on unchanged code | pinned exactly, bumped deliberately. Fallback `flutter_lints ^6.0.0` |
-| `leak_tracker_flutter_testing` | `^3.0.0` | dev | Catches undisposed `TextPainter` / `ui.Picture` / `ChangeNotifier`. Given §7.3's native-resource caching, **not optional**. | — | — |
-| `benchmark_harness` | `^2.3.0` | dev | The perf-budget harness. | — | — |
+| Package | Status | Constraint | Package it lives in | Purpose | Risk | Fallback |
+|---|---|---|---|---|---|---|
+| `meta` | `in use` | `^1.16.0` | core | `@internal` (the setter gate: AC-013), `@immutable`, `@useResult`. Zero runtime cost. | none | — |
+| `collection` | `in use` | `^1.19.0` | core | `UnmodifiableSetView`, `firstWhereOrNull`, deep-equality helpers. | none | trivial to inline |
+| `uuid` | `in use` | `^4.6.0` | core | **UUIDv7** entity IDs (time-ordered, sortable, index-local) and **v5** for deterministic port IDs (AC-006). | low | ~80 lines |
+| `pdf` | `in use` | `^3.13.0` | text, export | `PdfGraphics` vector output, `pw.Widget` layout for schedules, `PdfFont.stringMetrics` for the one `TextMeasurer`. Pure Dart ⇒ isolate-safe; Apache-2.0. | **Highest-consequence dependency in the project.** Single maintainer, headline feature. | `DiagramCanvas` **is** the hedge: swapping backends is one file. Failing that: emit PDF 1.7 content streams for pure vector plus Type0 embedding (~2 k lines of well-specified work), or route through `SvgDiagramCanvas` to an external converter. |
+| `flutter` | `in use` | sdk | ui, app | — | — | — |
+| `path_drawing` | `in use` | `^1.0.1` | ui | `dashPath()`: `dart:ui` has no native dashing (§8.3). | low activity, but tiny | ~60 lines over `PathMetrics` |
+| `vector_math` | `in use` | `^2.2.0` | ui | `Matrix4` for the viewport. Transitively available; pin it explicitly. | none | — |
+| *(no file-dialog package)* | n/a | — | app | **Native open/save dialogs are ours.** `windows/runner/file_dialog_channel.cpp` drives `IFileDialog` directly (~150 lines of COM) behind a two-method Dart seam, `lib/src/session/file_picker.dart`. `file_selector ^1.1.0` USED TO BE THIS ROW AND WAS DELIBERATELY REMOVED: its Windows plugin calls `AddOptions` only for `select_folders` and `allow_multiple` and its Pigeon `SelectionOptions` has no other field, so `FOS_DONTADDTORECENT` cannot be requested through it at any price, and without that flag every open and every save writes the project's file name and full path into `HKCU\…\Explorer\ComDlg32\OpenSavePidlMRU` and drops a shortcut in `%APPDATA%\Microsoft\Windows\Recent`. It also dragged in `file_selector_android`, which shipped `dartjni.dll` into a Windows-only Release build. | ~150 lines of COM we maintain, and the flag closes only **half** the leak. The other half is stated as a BOUND and not as a list, because naming the measured keys and closing the list has been wrong four times running. Ours and gated: RackMate's own code writes no registry key. Measured against the shipped binary: `OpenSavePidlMRU` and the Recent shortcut are suppressed, so no project file name reaches the host. Beyond that, **the shell writes values under ComDlg32 that RackMate does not control**, at minimum `LastVisitedPidlMRU` (this executable plus the last folder browsed) and `CIDSizeMRU` (this executable, written even when the user cancels the dialog), measured examples and not an inventory, and no supported option prevents them while the shell common dialog is the dialog. So a portable build leaves shell-owned HKCU entries on a client's machine naming this executable and the folders it browsed, and never a project file name. | None wanted. Re-adding `file_selector` fails `session_layering_test.dart` RULE 14d, and `registry_claim_test.dart` fails if this row stops stating the bound, or restates it as a closed list. Suppressing the shell's own records as well would mean a hand-built file browser instead of `IFileDialog`, weighed and declined: large scope, worse dialog, internal tool. |
+| `window_manager` | `in use` | `^0.5.2` | app | Title with dirty marker, size/position restore, minimum size, and critically `setPreventClose`. | 0.x, single maintainer | the only load-bearing API is `setPreventClose` + the close event: ~80 lines of Win32 platform channel. Do **not** plan on `bitsdojo_window` |
+| `screen_retriever` | `in use` | `^0.2.0` | app | The display work-area list, which is what lets `validateRestoredBounds` answer "is this saved rectangle still on a monitor that is plugged in?". Without it the honest answer is always "cannot tell", every launch centres, and position restore does not exist. **NOT A FIFTH CHOICE**: it is `window_manager`'s own transitive dependency, named here only because the analyzer requires a direct declaration for a direct import (`depend_on_referenced_packages`), and it is already compiled into the runner as `screen_retriever_windows`. | inherits `window_manager`'s | none needed; it adds no native plugin and no binary weight |
+| `path_provider_windows` | `in use` | `^2.3.0` | app | `getApplicationSupportPath()` for recovery, snapshots, recents, logs, prefs. Called from **exactly one function** (`productionApplicationSupportDirectory` in `lib/src/storage/data_root.dart`) and a grep test asserts that single call site, which is what keeps M2's portable build a one-function change. **The platform package directly, NOT the `path_provider` umbrella:** on Windows the umbrella forwards to precisely this class, so the resolved path is identical, but it also drags `path_provider_android` in, and that package pulls the `jni` FFI plugin, which put `dartjni.dll` in the Release output beside `rackmate.exe`. Dart-only, no native plugin, no extra DLL. | none | the umbrella, if a second desktop platform ever needs one; then re-check the Release output for `dartjni.dll` (`flutter_dependency_test.dart` asserts it is absent) |
+| `path` | `in use` | `^1.9.0` | app | Cross-platform joining. Never string-concatenate paths on Windows. | none | — |
+| `printing` | `planned (M6)` | `^5.15.0` | app | **Behind an explicit "Verify output" button only.** `PdfPreview`; `layoutPdf` is v1.1. | `PdfPreview`/`raster` need **pdfium**, which the plugin's CMake downloads at build time, a fresh or network-restricted machine fails `flutter build windows` | **Binaries are vendored into the repo (CR-100)**; a network-fetched binary in a signed release is a supply-chain and reproducibility problem, not just a CI one. Degrade to export + "Open in system viewer", which needs no pdfium |
+| `desktop_drop` | `planned (unscheduled)` | `^0.6.0` | app | Drag a `.rmpj` onto the window. | 0.x, low activity | a nicety: degrade to File ▸ Open. Alternative `super_drag_and_drop` |
+| `logging` | `planned (unscheduled)` | `^1.3.0` | app | Structured, level-based, zero-dependency. Sinks are ours. | none | — |
+| `intl` | `planned (M7)` | `^0.20.0` | app | Number/date/unit formatting; the runtime half of ARB localization. | none | — |
+| `flutter_localizations` | `planned (M7)` | sdk | app | Locale resolution, `MaterialLocalizations`, `Directionality`. | — | — |
+| `test` | `in use` | `^1.26.0` | dev | Pure-Dart tests in core/text/export. | — | — |
+| `flutter_test` | `in use` | sdk | dev | Widget and golden tests. | — | — |
+| `integration_test` | `planned (unscheduled)` | sdk | dev | Desktop end-to-end tests: the file lifecycle, crash recovery, and the two error-surface cases nothing else catches (docs/11 §5). **Planned and not installed**: no `integration_test/` directory exists in `apps/rackmate`, and no milestone in docs/09 names this work. | the plan it belongs to is unscheduled, which is the risk | — |
+| `very_good_analysis` | `in use` | `9.0.0` **exact** | dev | Strictest widely-used lint set: catches the `prefer_final` / `avoid_dynamic_calls` / unawaited-future classes that matter in a document editor. | third-party; a major bump can fail CI on unchanged code | pinned exactly, bumped deliberately. Fallback `flutter_lints ^6.0.0` |
+| `leak_tracker_flutter_testing` | `in use` | `^3.0.0` | dev | Catches undisposed `TextPainter` / `ui.Picture` / `ChangeNotifier`. Given §7.3's native-resource caching, **not optional**. | — | — |
+| `fake_async` | `in use` | `^1.3.3` | dev | Deterministic `Timer` control in `status_message_controller_test.dart`, so the auto-clear is tested without a real sleep. Already resolved transitively through `flutter_test`; declared directly per pub's "declare what you import". | none | `Future.delayed` and a slower suite |
+| `benchmark_harness` | `planned (unscheduled)` | `^2.3.0` | dev | The perf-budget harness (docs/11 §6's commit-time budget). **Planned and not installed**: the shipped perf tests are op-count baselines in `schematic_perf_test.dart`, which need no harness, and no milestone in docs/09 names this work. | the plan it belongs to is unscheduled | the op-count baselines, which is what is actually in use |
 
-Explicitly **not** used: any node-editor package (`vyuh_node_flow`, `fl_nodes`, `flutter_flow_chart`, `diagram_editor`, `graphview`), any spatial-index package, `undo`, `freezed`, `json_serializable`, `build_runner`, `InteractiveViewer`, `golden_toolkit`, `desktop_multi_window`.
+Explicitly **not** used: any node-editor package (`vyuh_node_flow`, `fl_nodes`, `flutter_flow_chart`, `diagram_editor`, `graphview`), any spatial-index package, `undo`, `freezed`, `json_serializable`, `build_runner`, `InteractiveViewer`, `golden_toolkit`, `desktop_multi_window`, and **`flutter_riverpod`** or any other state-management package (**DR-088**; state management is constructor injection plus hand-rolled `Listenable`s, §4.1).
 
 The node-editor rejection deserves its reason, because the best of them is genuinely good work: **RackMate is not a node graph.** Node editors model free-floating nodes in unconstrained 2D. RackMate's devices are constrained to integer RU indices in a fixed-width column, with a front/rear dimension no node editor has any concept of, and its "nodes" do not move in x at all. Adopting one means fighting its core layout assumption on every feature, and the canvas *is* the product, not a feature of it. Read their source for port-validation models and LOD thresholds; take the dependency on none of them.
 
@@ -992,8 +1014,8 @@ void main() {
     };
     ErrorWidget.builder = (d) => RackMateErrorPane(d);   // never a red-and-yellow box
 
-    await bootstrap();
-    runApp(const ProviderScope(child: RackMateApp()));
+    final services = await bootstrap();          // the composition root (§4.2)
+    runApp(RackMateApp(services: services, shellKey: GlobalKey<AppShellState>()));
   }, (e, st) { Log.root.shout('zone', e, st); CrashReporter.record(e, st); });
 }
 ```
@@ -1046,7 +1068,7 @@ Poisoning the stack rather than pretending is the honest behaviour: a user who k
 | **DPI** | Users run 125%/150% scaling and mixed-DPI multi-monitor. All canvas geometry is in document units with an explicit zoom transform, never in logical pixels. The 4K↔1080p window drag is a named pre-release check. |
 | **Canvas text entry** | **No inline canvas editing in v1.** Names are edited in the inspector with a real `TextField`. IME positioning, context menus and selection over a `CustomPaint` are the classic Flutter desktop pain point, and CAD tools do it in a panel anyway. |
 | **Input** | `Listener` for wheel and precision mouse work (the gesture arena adds disambiguation delay); recognizers for trackpad and touch. `PointerScrollEvent` pans, `Ctrl+scroll` zooms at the cursor, `PointerScaleEvent` handles trackpad pinch. All of it enters through `CanvasIntent`, and no editor logic branches on `PointerDeviceKind` (**AC-016/#23**). |
-| **Multi-window** | Not shipping. Canonical's work has no committed version. One `ProviderScope` per document already makes the model correct in-process. Do **not** use `desktop_multi_window`, each window is a separate engine with no shared memory, which is fatal for a shared document. |
+| **Multi-window** | Not shipping. Canonical's work has no committed version. The model is already correct in-process because **one `DocumentSession` owns one `DocumentController`** and nothing reaches a document except through it (DR-088 §11.87.4 supersedes the `ProviderScope` reason previously given here). Do **not** use `desktop_multi_window`, each window is a separate engine with no shared memory, which is fatal for a shared document. |
 | **Code signing** | Certificate procurement starts **two milestones early** (**AC-058/D10**), with vendored pdfium and symbol archival in the release pipeline. |
 
 ### 13.2 macOS
@@ -1098,7 +1120,7 @@ Collected so none is lost in prose. Each is an API or environment claim the desi
 | 2 | `PdfTtfFont` requires a `PdfDocument` to construct, forcing a throwaway document for metrics; measure the parse cost of three families | §8.2, cold-start budget |
 | 3 | `Printing.layoutPdf` on Windows does not itself require the fetched pdfium | CR-100: whether the OS print dialog can ship at all |
 | 4 | `path_drawing.dashPath` cost under repeated re-synthesis; profile rather than assume the cache absorbs it | §8.3, frame budget |
-| 5 | Riverpod 3.3.2 `legacy` demotion of `ChangeNotifierProvider` | §4.2: the hand-written adapter |
+| ~~5~~ | ~~Riverpod 3.3.2 `legacy` demotion of `ChangeNotifierProvider`~~, **MOOT: DR-088.** There is no Riverpod dependency and no adapter to write. **This row is the reason the `VERIFY:` mechanism is not a tripwire**: it was conditioned on "before the provider layer is written", the layer was never written, and the check therefore never fired while §4 went on describing it. The remedy is §10.1's status column and its gate, which assert a claim instead of scheduling a look | §4.2: superseded |
 | ~~6~~ | ~~The pinned Flutter stable version (3.44.4 vs 3.41 in the corpus)~~, **RESOLVED: 3.44.4.** Pinned in `azure-pipelines.yml` and *enforced* by `tools/ci/ensure_flutter.ps1`, which measures `flutter --version --machine` and fails the build on any other version. See §10.2 | §10.2: goldens do not survive Flutter bumps |
 | 7 | Impeller default status on Windows | §11: all raster budgets are Skia numbers |
 | 8 | **Label-layer commit cost** on a real 300-link fixture (text-run count and commit time in `netLabels` mode, which is now the dominant term | §6.2) DR-001 makes labels, not wires, the commit-path budget |

@@ -72,7 +72,7 @@ Mobile is read-only by confirmed product decision. The architecture must not pre
 |---|---|---|
 | Language / SDK | Dart 3.12.2 stable | `package:pdf` ^3.13.0 requires Dart ≥ 3.12.0, matches exactly |
 | UI | Flutter desktop | Single codebase across the desktop target and the read-only mobile shell |
-| State / DI | `flutter_riverpod` ^3.3.2 | Per-document lifetime scoping and chrome read-models, codegen-free. VERIFY: Riverpod 3 moved `ChangeNotifierProvider` to legacy, the `epochs.revision` adapter is hand-written (~15 lines) and the legacy library is not imported |
+| State / DI | No package. Constructor injection plus hand-rolled `Listenable`s | One `AppServices` is built in `main` and passed down; the document lives in a plain-Dart `DocumentController`, and `DocEpochs` holds seven `SimpleNotifier<int>` counters that painters subscribe to directly. `flutter_riverpod` was accepted by ADR-011 and never built; **DR-088** ratifies what exists and rejects the dependency (docs/03 §4.1) |
 | PDF | `pdf` ^3.13.0 | Pure Dart, therefore isolate-safe; Apache-2.0. `pw.Widget` for schedules, `PdfGraphics` for vector diagram output |
 | Print preview | `printing` ^5.15.0 | Behind an explicit "Verify output" button only; primary preview uses the screen renderer and has no native dependency. pdfium is vendored, never downloaded at build time (CR-100) |
 | IDs | `uuid` ^4.6.0 | UUIDv7: time-ordered, so creation order needs no extra field |
