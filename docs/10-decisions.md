@@ -28,7 +28,7 @@ overruled is marked as void where it stands.
 | [008](#adr-008-route-geometry-is-not-persisted) | Route geometry is not persisted | Accepted | CR-012 |
 | [009](#adr-009-the-v1-routing-algorithm) | The v1 routing algorithm | Accepted | CR-013, AC-016 (#20) |
 | [010](#adr-010-three-tier-validation-strictness) | Three-tier validation strictness | Accepted | CR-017, CR-018, CR-019, CR-022 |
-| [011](#adr-011-state-management-riverpod-over-a-single-mutation-gate) | State management | Accepted | CR-119, AC-016 (#19), AC-013 |
+| [011](#adr-011-state-management-riverpod-over-a-single-mutation-gate) | State management | **Superseded by DR-088** | CR-119, AC-016 (#19), AC-013 |
 | [012](#adr-012-undoredo-one-command-machinery-three-stacks) | Undo/redo: one machinery, three stacks | Accepted | CR-106, CR-094, AC-014 |
 | [013](#adr-013-one-renderer-for-screen-and-pdf) | One renderer for screen and PDF | Accepted | CR-086, CR-081, CR-083, CR-087, CR-088 |
 | [014](#adr-014-two-views-elevation-and-schematic) | Two views: elevation and schematic | Accepted | RJ-002, CR-105, CR-104 |
@@ -439,7 +439,21 @@ expressed in a boolean tree, and the user-authored-rules claim is withdrawn from
 
 ## ADR-011: State management: Riverpod over a single mutation gate
 
-**Status:** Accepted. **VERIFY:** Riverpod 3 API surface before the provider layer is written.
+**Status: SUPERSEDED by DR-088 (canon §11.87, §12.27), 2026-08-25.** The Riverpod half was never
+built: at v0.4.63 the package is in no `pubspec.yaml` and `ProviderScope` appears in no Dart file.
+The state management is **constructor injection of one `AppServices`**, `SimpleNotifier` in core and
+`ChangeNotifier` in `rackmate_ui`. **The rest of this ADR is unaffected and still binding**:
+`DocumentController` as the single mutation gate, `@internal` setters (AC-013), the three-tier
+epoch-driven derived pipeline, `lodLevel` in every scene-builder signature and cache key, and the
+rejection of `ChangeNotifier`-on-the-document. The text below is retained as the record of the
+argument, per canon's Part 4 preamble.
+
+**The `VERIFY:` below is the point of the supersession, not a footnote to it.** It reads *"before the
+provider layer is written"*, and it never fired because that layer was never written. A precondition
+attached to work that does not happen is not a tripwire. The remedy is the dependency-table gate
+(canon §11.87.7), which asserts a claim rather than scheduling a check.
+
+**Original status:** Accepted. **VERIFY:** Riverpod 3 API surface before the provider layer is written.
 
 **Context.** The document is a large mutable aggregate with expensive derived values (occupancy,
 rollups, findings, the routed scene). Naive rebuild-everything is not viable at 45U × several

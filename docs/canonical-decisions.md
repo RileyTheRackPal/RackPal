@@ -1828,6 +1828,8 @@ Save / Cancel and then replace. The per-document `ProviderScope` stays exactly a
 costs nothing now and makes tabs (v1.2) and multi-window (whenever Flutter ships it) mechanical
 rather than a rewrite. Tabs without a design are not a feature.
 
+> **The `ProviderScope` sentence is superseded: see §12.27 and §11.87.** There is no `ProviderScope`; Riverpod is in no `pubspec.yaml`. **CR-119's ruling is unaffected and still binding** (v1 is single-document and single-window, with the three-button prompt on replace). Tabs stay cheap for a different reason: adding a container to a tree that passes one `AppServices` down is the mechanical direction, and removing one is not.
+
 ### CR-120 · The two build orders conflict
 
 - **design-architecture.md §13:** PDF export is step 10 of 12.
@@ -2137,6 +2139,8 @@ All accepted; each is small and each is recorded so it is not rediscovered.
 | #22 web has no isolates | One-line `kIsWeb` guard (CR-099). Web is not a v1 target. |
 | #23 the touch intent layer is in the UX doc and absent from the architecture | `CanvasIntent{beginDrag, updateDrag, commitDrag, cancel}` is built **first**, in M1, and no editor logic branches on `PointerDeviceKind`. This is a confirmed product decision ("architecture must not preclude touch"), so it is not optional. |
 | #24 the round-trip invariant tests the wrong property | CR-117: assert the byte round-trip. |
+
+> **#19 is moot: see §12.27 and §11.87.1.** No `epochs.revision` adapter was written, because no provider layer was, and the finding concerns a package this project does not depend on. Its closing clause survives by construction: the legacy library is not imported, because nothing is.
 
 ### AC-017 · SEV-1 #5: there is no roadmap and the implied scope is 16–22 months solo
 
@@ -3029,6 +3033,8 @@ shows them and no document specifies `Ctrl+N`/`Ctrl+O` with a dirty document ope
 save prompt on replace. A tab strip with no design is not a feature, and the per-document
 `ProviderScope` already makes tabs mechanical when they are designed. The finding that the
 behaviour was unspecified is accepted; the feature is not.
+
+> **The `ProviderScope` clause is superseded: see §12.27 and §11.87.4.** **The rejection stands**: multi-document tabs are out of v1 and a tab strip with no design is not a feature. Only the stated reason changes, per the CR-119 pointer above.
 
 ### RJ-014 · `critique-completeness.md` D6: an app update mechanism in v1
 
@@ -12790,6 +12796,113 @@ follows a pair from a front jack to a rear punchdown, and that is M5's and M6's.
 decide what a pair means for a template that is **not** `isPassthrough`: the column is hidden there,
 the pairs survive a toggle, and `RemovePortCommand` still takes them with their ports.
 
+### 11.87 DR-088 · State management is constructor injection and hand-rolled Listenables, and the dependency table gets a gate
+
+**Settled by the user on 2026-08-25** (`#764`), in answer to the question *"what state management are
+we using and why"*. **A RATIFICATION, NOT A CHANGE OF DIRECTION.** No line of shipped code moves.
+Nothing enters or leaves roadmap §2, so this is not a §8.3 amendment; it is a ruling because it
+supersedes **ADR-011** and four Part 1–3 sites that describe a layer nobody built.
+
+**11.87.1 THE MEASUREMENT, WHICH IS THE WHOLE OF THE CASE.** ADR-011 accepted **Riverpod 3.x** and
+docs/03 §4 spends a numbered section on the provider layer. At **v0.4.63**, five milestones later, a
+grep over every tracked file finds **zero** occurrences of `riverpod` and **zero** of `ProviderScope`
+in any Dart file, any `pubspec.yaml` or the lockfile. Seven tracked files mention the package at all
+and **all seven are prose**: `README.md`, `docs/03`, `docs/10`, this document, and three under
+`docs/research/`. The last three are working papers and are **not edited** (`docs/research/README.md`
+makes the plan documents authoritative over them), which is why the sweep this ruling orders stops
+at four files.
+
+**IT WAS NEVER REJECTED. IT WAS NEVER REACHED.** ADR-011 carries `VERIFY: Riverpod 3 API surface
+**before the provider layer is written**`, and the condition is still perfectly true, because the
+provider layer was never written. A precondition on work that does not happen never fires, and a
+`VERIFY:` marker is therefore **not a tripwire**. That is the transferable lesson and it is why the
+remedy here is a gate rather than a correction.
+
+**11.87.2 WHAT IS ACTUALLY BUILT, AND IS HEREBY THE ANSWER.**
+
+| Layer | Mechanism | Site |
+|---|---|---|
+| core (zero Flutter imports, gated) | `SimpleNotifier<T>`, a pure-Dart `ValueNotifier` in 34 lines; `DocEpochs` holds **seven** of them | `commands/simple_notifier.dart`, `commands/command.dart` |
+| core, mutation | `DocumentController.run` / `.transact`, the single gate, bumping the epochs and `changes` | `document_controller.dart` |
+| app, re-broadcast | `DocumentSession extends ChangeNotifier`, turning core's pure-Dart ticks into a Flutter `Listenable` | `session/document_session.dart` |
+| ui, ephemeral | `ChangeNotifier` controllers consumed by painters as plain `Listenable`s. **Nine at v0.4.63**, an open count and not a closed list: selection, viewport, drag preview, resize preview, compaction preview, status message, insertion caret, schematic reveal, shake | `packages/rackmate_ui/lib/src/canvas/` |
+| DI | **constructor injection of one `AppServices`**, built in `main` and passed to `RackMateApp` and then `AppShell`. **No `InheritedWidget` and no `InheritedNotifier` exist anywhere in the repository.** | `session/app_services.dart` |
+
+**11.87.3 EACH OF RIVERPOD'S FOUR CLAIMED BENEFITS WAS ANSWERED BY SOMETHING ALREADY BUILT.** This
+is the reasoning, and it is stated so the question is not re-litigated by someone reading only the
+absence:
+
+1. **Scoped lifetime.** CR-119 makes v1 single-document and single-window, so there is exactly one
+   scope, and **a scope of one is a variable**. The lifetime problem that remained, the shell's
+   `State` surviving rebuilds, is solved by the `GlobalKey<AppShellState>` minted in `main` and
+   documented there as load-bearing.
+2. **DI without service locators.** `AppServices` is one constructor parameter. A test that wants a
+   fake supplies one by **constructing it**, which needs no override mechanism and no container.
+3. **Cheap chrome read-models.** The granularity `ref.watch(p.select(...))` would buy is bought
+   instead by **having seven epoch counters rather than one revision number**. A consumer subscribes
+   to `rack` or to `wires` and is not woken by a `style` edit. That is the same optimisation,
+   performed in the model rather than in the view layer, and it is the one ADR-011 itself insisted
+   on when it kept the document out of Riverpod.
+4. **Ecosystem stability.** An argument for **which** dependency to take, never an argument that one
+   is needed.
+
+**11.87.4 THE BUILT SHAPE IS THE REVERSIBLE DIRECTION, WHICH IS WHY IT IS RATIFIED RATHER THAN
+MERELY OBSERVED.** DR-026's test applied to architecture: **adding a container to a tree that passes
+one object down is mechanical; removing one that several hundred widgets read from is not.** So the
+cheap move is available later and the expensive move is not being forced now. Nothing here forbids
+Riverpod, `signals` or anything else; it forbids **documenting one as though it were present**.
+
+**11.87.5 WHAT THIS DOES NOT RULE.** It does not settle tabs (v1.2) or multi-window, and it does not
+weaken CR-119: when tabs are designed, the per-document scope question reopens **on its own
+evidence**, and the paragraph above says which way it will be cheap to answer. It does not touch the
+three-tier derived pipeline, `lodLevel` in scene-builder signatures (AC-016 #13), or the epoch-mask
+coverage test, all of which ADR-011 also carried and all of which are built. And it does not make
+`SimpleNotifier` a public idiom: it exists because **D1 forbids Flutter in core**, and a package that
+may import Flutter should use `ValueNotifier`.
+
+**11.87.6 THE SECOND FINDING: docs/03 §10.1 IS TITLED "THE FULL TABLE" AND HAS NEVER BEEN FULL.**
+Auditing the table against every `pubspec.yaml` in the workspace found it wrong **in both
+directions**:
+
+- **Named in the table, present in no pubspec: eight.** `flutter_riverpod`, `printing`,
+  `desktop_drop`, `logging`, `intl`, `flutter_localizations`, `integration_test`,
+  `benchmark_harness`.
+- **Present in a pubspec, named in no row: two.** `screen_retriever ^0.2.0` (a direct app
+  dependency) and `fake_async ^1.3.3` (a `rackmate_ui` dev dependency).
+
+**`screen_retriever` IS THE ONE THAT SETTLES THE ARGUMENT FOR A GATE.** Its twenty-line pubspec
+justification **cites "§10.1's `window_manager` row"** by name. Somebody read a row out of the table,
+added a package on the strength of it, and did not add the row. Care was not the missing ingredient;
+**nothing could fail**, because a dependency table is prose no gate reads. That is the identical
+mechanism the M5 decomposition audit found on the board (`04a8448`), one document over.
+
+**11.87.7 THE TABLE GAINS A STATUS COLUMN AND A TWO-DIRECTION GATE.** Every row declares `in use`,
+`planned (Mn)`, `planned (unscheduled)` or `rejected`. The gate asserts three things:
+
+1. every **`in use`** row resolves to a real dependency in some workspace `pubspec.yaml`;
+2. every dependency in every workspace `pubspec.yaml` resolves to a **row**;
+3. no **`planned`** row is already installed, which is the drift that turns a plan into a stale
+   record without anyone editing a word.
+
+**`planned (unscheduled)` IS A FINDING AND NOT A SCHEDULE.** Four rows get it: `desktop_drop`,
+`logging`, `integration_test` and `benchmark_harness` are named in no milestone in docs/09 anywhere.
+Writing a plausible milestone beside them would have been the confident wrong value **G4** exists to
+refuse, and the honest unknown is what makes them findable later. `printing` is `planned (M6)` on
+M6's own *"export progress, cancel and preview"* line; `intl` and `flutter_localizations` are
+`planned (M7)` on M7's *"localisation plumbing verified end to end with a pseudo-locale"*.
+
+**AN EXEMPTION LIST WAS PUT AND DECLINED**, being the cheapest shape and a repeat of a failure this
+project has already written down: **a test's exemption list is where the bug lives**. A status cell
+on the row it describes is the same information with nowhere to hide, and it is read by the gate
+rather than trusted by it.
+
+**11.87.8 SEVEN ROWS ARE RECORDED RATHER THAN ADJUDICATED, DELIBERATELY.** Only `flutter_riverpod`
+is ruled `rejected` here, and it moves to §10.1's existing *"explicitly not used"* line with its
+reason. Whether `printing`, `intl` and the other five are still the right plan is **seven separate
+decisions with their own evidence**, several of them M6's and M7's, and bundling them into one
+ruling made from inside an M5 window is how a ruling becomes unciteable. They are marked, gated
+against silent installation, and left for the milestone that owns them.
+
 ---
 
 ## 12. Superseded rulings
@@ -12963,6 +13076,9 @@ pointer does not restate the new ruling; it names where the new ruling lives.
 | 16 | §9.9, M8 exit criterion | after the exit paragraph | `> **The SmartScreen clause is superseded — see §11.6.2.** It splits into a build-side gate (signed, timestamped, valid publisher, **and the signature still validates after the certificate has expired**) and a distribution-side requirement that is documented rather than gated (Local Intranet UNC or Intune/GPO so Mark-of-the-Web is never applied; the ZIP trap stated explicitly). The other three clauses stand as written.` |
 | 17 | §10.3 recommendation | after the recommendation paragraph | `> **Moot — see §13 and §11.6, consequence 12.** DR-006 rules that no commercial release is planned, so there is nothing to price. This section is retained in full as the record of the argument: if DR-006 is ever reversed, §10.3 reopens exactly as written, watermark hazard included.` |
 | 18 | §7.6, cable-dressing row | after the table | `> **Superseded in part — see §12.11 (DR-018).** **Floor plans leave the cable-dressing row** and are v1.1, conditionally: v1.2 unless the underlay carrier ships in v1 (roadmap §2.2's additive membership criterion). Cable dressing, 3D and thermal simulation are unaffected and stay out. The row's rationale had only ever argued cable dressing.` |
+| 19 | CR-119, the `ProviderScope` sentence | after the CR-119 ruling paragraph | ``> **The `ProviderScope` sentence is superseded: see §12.27 and §11.87.** There is no `ProviderScope`; Riverpod is in no `pubspec.yaml`. **CR-119's ruling is unaffected and still binding** (v1 is single-document and single-window, with the three-button prompt on replace). Tabs stay cheap for a different reason: adding a container to a tree that passes one `AppServices` down is the mechanical direction, and removing one is not.`` |
+| 20 | RJ-013, the tabs-are-mechanical sentence | after the RJ-013 body | ``> **The `ProviderScope` clause is superseded: see §12.27 and §11.87.4.** **The rejection stands**: multi-document tabs are out of v1 and a tab strip with no design is not a feature. Only the stated reason changes, per the CR-119 pointer above.`` |
+| 21 | AC-016 #19, the disposition cell | after the §2.1 disposition table | ``> **#19 is moot: see §12.27 and §11.87.1.** No `epochs.revision` adapter was written, because no provider layer was, and the finding concerns a package this project does not depend on. Its closing clause survives by construction: the legacy library is not imported, because nothing is.`` |
 
 ---
 
@@ -13344,6 +13460,22 @@ task** by §11.73.5 rather than decided here, and until it is built both behave 
 **The defect DR-075 §11.74.2 records is not a consequence of this amendment.** The importer had no
 running rack-label reservation before it either, so two rows of one sheet could already write one
 label onto two drops.
+
+### 12.27 Superseded by DR-088 (state management is what was built)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **ADR-011** (docs/10) | *"Riverpod, with one `ProviderScope` per open document"*, with `VERIFY:` the Riverpod 3 API surface before the provider layer is written. | **Superseded by DR-088 §11.87.** The provider layer was never written and Riverpod is in no `pubspec.yaml`. The state management is **constructor injection of one `AppServices`** plus `SimpleNotifier` in core and `ChangeNotifier` in `rackmate_ui`. **ADR-011's other clauses are untouched and still binding:** `DocumentController` as the single mutation gate, `@internal` entity setters (AC-013), the three-tier derived pipeline driven by epoch counters, and `lodLevel` in every scene-builder signature and cache key (AC-016 #13). Its rejection of `ChangeNotifier`-on-the-document also stands: the document is still not a `ChangeNotifier`. |
+| **CR-119**, `ProviderScope` clause | *"The per-document `ProviderScope` stays exactly as designed; it costs nothing now and makes tabs (v1.2) and multi-window mechanical rather than a rewrite."* | **Superseded by DR-088 §11.87.4.** There is no `ProviderScope`. **CR-119's actual ruling is unaffected and still binding**: v1 is single-document and single-window, and `Ctrl+N`/`Ctrl+O` prompt Save / Don't Save / Cancel and then replace. What changes is only the reason tabs stay cheap, which is now that **adding** a container to a tree passing one object is the mechanical direction. |
+| **RJ-013** | *"the per-document `ProviderScope` already makes tabs mechanical when they are designed."* | **Superseded by DR-088 §11.87.4**, on the CR-119 row's reasoning. **The rejection itself stands**: a tab strip with no design is not a feature, and multi-document tabs remain out of v1. |
+| **AC-016 #19** (§2.1 disposition table) | *"Verified before the provider layer is written; the `epochs.revision` adapter is hand-written (~15 lines, `Provider` + `ref.onDispose`). The legacy library is not imported."* | **Moot under DR-088 §11.87.1.** No adapter was written because no provider layer was. The finding's own subject, whether Riverpod 3 demoted `ChangeNotifierProvider`, is now about a package this project does not depend on. **The last sentence survives by construction**: the legacy library is not imported, because nothing is. |
+
+> **This subsection is the reason a `VERIFY:` marker is not a tripwire.** Every row above is a
+> statement that was true when written and became false by **work that did not happen**. No edit
+> introduced any of them, no reviewer could have caught them in a diff, and the corpus is under test
+> without a single gate that reads a dependency claim. DR-088 §11.87.7 is the remedy and it is
+> deliberately narrow: it gates the **dependency table**, not prose in general.
+
 ---
 
 ## 13. Resolved §10 questions
