@@ -53,6 +53,7 @@ library;
 export 'src/builder/bank_commands.dart';
 export 'src/builder/fork_status.dart';
 export 'src/builder/label_pattern.dart';
+export 'src/builder/passthrough_commands.dart';
 export 'src/builder/port_batch.dart';
 export 'src/builder/port_commands.dart';
 export 'src/builder/port_duplicate.dart';

@@ -491,6 +491,52 @@ class _PortGridState extends State<PortGrid> {
     });
   }
 
+  /// `Pair front↔rear by order` (M4-J3, DR-087 §11.86.2).
+  ///
+  /// NOT A CHORD. It is run once per template and a `kKeymap` row is a
+  /// real cost against M7's generated table, which is the objection
+  /// `structure_editor_screen.dart` states and this action cannot answer.
+  void _pairByOrder() {
+    final result = buildPairFrontToRearByOrder(
+      body: widget.body,
+      viewIsSorted: _sort != null,
+    );
+    if (result.refusal case final PairByOrderRefusal refusal) {
+      setState(() => _fillRefusal = pairByOrderRefusalMessage(refusal));
+      return;
+    }
+    widget.actions.transact(LabelKey.pairPassthrough, (tx) {
+      for (final command in result.commands) {
+        tx.add(command);
+      }
+    });
+    // THE OUTCOME AND NOT ONLY THE REFUSALS. On a panel with more rear
+    // ports than front ones the run pairs what it can, and a person who
+    // is not told stands there counting rows. This is the LIU's case
+    // (DR-087 §11.86.4) arriving on a template somebody authored.
+    setState(() => _fillRefusal = pairByOrderOutcome(result));
+  }
+
+  /// The `PAIRED WITH` cell (M4-J3, DR-087 §11.86.3).
+  void _setPartner(String portKey, String? partnerKey) {
+    final commands = buildSetPassthroughPartner(
+      body: widget.body,
+      portKey: PortKey(portKey),
+      partnerKey: partnerKey == null ? null : PortKey(partnerKey),
+    );
+    if (commands.isEmpty) return;
+    widget.actions.transact(
+      partnerKey == null
+          ? LabelKey.unpairPassthrough
+          : LabelKey.pairPassthrough,
+      (tx) {
+        for (final command in commands) {
+          tx.add(command);
+        }
+      },
+    );
+  }
+
   /// `Ctrl+G`: make the selection into a `PortSetDef` (M4-J2, DR-086).
   ///
   /// A ROUTER, like `_changeType`. The refusals and the plan are in
@@ -1139,6 +1185,11 @@ class _PortGridState extends State<PortGrid> {
           selectedCount: _selection.length,
           onAdd: _addPort,
           onDelete: _selection.isEmpty ? null : _deleteSelected,
+          // ONLY ON A PASSTHROUGH, which is the same condition that
+          // reveals the `PAIRED WITH` column it writes. A button that
+          // could do nothing on 46 of the 48 seeded templates is the
+          // `UnbuiltView` defect wearing a toolbar.
+          onPairByOrder: widget.body.isPassthrough ? _pairByOrder : null,
           openPacks: _openPacks(),
           onTogglePack: _togglePack,
           refusal: _fillRefusal,
@@ -1232,6 +1283,11 @@ class _PortGridState extends State<PortGrid> {
                                   dragDisabled: _sort != null,
                                   bankActions: widget.bankActions,
                                   jump: widget.bankJump,
+                                  partnersFor: (key) => passthroughPartners(
+                                    widget.body,
+                                    PortKey(key),
+                                  ),
+                                  onPair: _setPartner,
                                 ),
                         ),
                       ],
@@ -1300,6 +1356,7 @@ class _Toolbar extends StatelessWidget {
     required this.selectedCount,
     required this.onAdd,
     required this.onDelete,
+    required this.onPairByOrder,
     required this.openPacks,
     required this.onTogglePack,
     required this.refusal,
@@ -1308,15 +1365,24 @@ class _Toolbar extends StatelessWidget {
   final int selectedCount;
   final VoidCallback onAdd;
   final VoidCallback? onDelete;
+
+  /// docs/06 §4.7's `Pair front↔rear by order`, or null when this
+  /// template is not a passthrough and the action has nothing to act on.
+  final VoidCallback? onPairByOrder;
   final Set<PortColumnPack> openPacks;
   final void Function(PortColumnPack pack, {required bool on}) onTogglePack;
 
-  /// Why the last fill did nothing, or null.
+  /// What the last action had to say, or null.
   ///
   /// BESIDE THE SELECTION COUNT, which is the other thing on this row
   /// that is about what the keys will act on. It is not a `SnackBar`: a
   /// message that slides away on a timer is gone by the time somebody
   /// has finished wondering why `Ctrl+D` appeared to do nothing.
+  ///
+  /// IT CARRIES OUTCOMES AS WELL AS REFUSALS since M4-J3. `Pair
+  /// front↔rear by order` can succeed and still leave ports over, and
+  /// "Paired 12 ports. 12 rear ports had no partner left." is the one
+  /// sentence that stops a person counting rows.
   final String? refusal;
 
   @override
@@ -1341,6 +1407,14 @@ class _Toolbar extends StatelessWidget {
             selectedCount == 0 ? 'Delete' : 'Delete $selectedCount selected',
           ),
         ),
+        if (onPairByOrder case final VoidCallback pair) ...[
+          const SizedBox(width: 8),
+          TextButton.icon(
+            onPressed: pair,
+            icon: const Icon(Icons.swap_horiz, size: 18),
+            label: const Text('Pair front to rear'),
+          ),
+        ],
         if (refusal case final String message) ...[
           const SizedBox(width: 12),
           Flexible(
@@ -1558,6 +1632,8 @@ class _Bands extends StatefulWidget {
     required this.dragDisabled,
     required this.bankActions,
     required this.jump,
+    required this.partnersFor,
+    required this.onPair,
   });
 
   final PortTable table;
@@ -1596,6 +1672,13 @@ class _Bands extends StatefulWidget {
 
   /// The bank the rail's tree last asked for, with its nonce.
   final ({String? bankKey, int nonce})? jump;
+
+  /// What `PAIRED WITH` may offer this row (DR-087 §11.86.3). A CALLBACK
+  /// rather than a map, because it is asked once per visible row and a
+  /// map would compute 68 lists to draw twenty.
+  final List<PortDef> Function(String portKey) partnersFor;
+
+  final void Function(String portKey, String? partnerKey) onPair;
 
   @override
   State<_Bands> createState() => _BandsState();
@@ -1771,6 +1854,8 @@ class _BandsState extends State<_Bands> {
               takenKeys: widget.takenKeys,
               columns: widget.columns,
               pairedWith: widget.pairedWith[band.rows[index].port.key.v],
+              partners: widget.partnersFor(band.rows[index].port.key.v),
+              onPair: widget.onPair,
               issues:
                   widget.issues[band.rows[index].port.key.v] ??
                   const <PortIssue>[],
@@ -1941,6 +2026,8 @@ class _PortRow extends StatelessWidget {
     required this.takenKeys,
     required this.columns,
     required this.pairedWith,
+    required this.partners,
+    required this.onPair,
     required this.genderApplies,
     required this.issues,
     required this.onKeyTouched,
@@ -1977,9 +2064,15 @@ class _PortRow extends StatelessWidget {
   /// The columns to draw, core plus whichever packs are open.
   final List<PortColumnId> columns;
 
-  /// The key this port is paired with, for the Passthrough pack. Read
-  /// only: pairing is M4-J3 (`#225`).
+  /// The key of the port on the other face, or null. Drawn in the
+  /// Passthrough pack, which is revealed only when `isPassthrough` is on.
   final String? pairedWith;
+
+  /// What this row may be paired WITH (DR-087 §11.86.3): the other face,
+  /// unpaired, plus whatever it is paired with now.
+  final List<PortDef> partners;
+
+  final void Function(String portKey, String? partnerKey) onPair;
 
   /// Whether GENDER may be edited here (CR-059, gated on the registry's
   /// `genderApplies` for this port's connector).
@@ -2468,7 +2561,21 @@ class _PortRow extends StatelessWidget {
     // READ-ONLY, AND SAYS SO BY BEING TEXT. Pairing is M4-J3 (`#225`),
     // which owns the bank-level `Pair front to rear by order` action;
     // typing a key into a cell here would write half a pair.
-    PortColumnId.pairedPort => PortReadOnlyCell(value: pairedWith),
+    // DR-087 §11.86.3: THE OPTIONS ARE THE VALIDATION. `partners` holds
+    // only ports on the other face that are unpaired, so a front-to-front
+    // pair and a double-booked port are states this grid cannot mint
+    // rather than states it flags afterwards. Null unpairs.
+    PortColumnId.pairedPort => PortChoiceCell<String?>(
+      value: pairedWith,
+      options: [null, for (final p in partners) p.key.v],
+      // THE LABEL, NOT THE KEY. `PAIRED WITH` is read by a person looking
+      // at a panel, and `R12` is what is printed on the jack while
+      // `rj45.rear.12` is what the file calls it.
+      label: (v) => v == null
+          ? kUnknownCell
+          : partners.where((p) => p.key.v == v).firstOrNull?.label ?? v,
+      onPick: (v) => onPair(_port.key.v, v),
+    ),
     PortColumnId.maxConnections => PortNumberCell(
       value: _port.maxConnections,
       onCommit: (v) => _set(id, PortDefField.maxConnections, v ?? 1),

@@ -350,6 +350,20 @@ enum LabelKey {
   groupAsSet,
   ungroupSet,
 
+  // PASSTHROUGH PAIRING (builder/passthrough_commands.dart), M4-J3,
+  // DR-087 §11.86. TWO values, on the jacket pair's test: pairing and
+  // unpairing are opposite acts on one panel, and "Undo Pair" offered for
+  // an unpair names the wrong direction on the one screen a person reads
+  // to find out what they just did.
+  //
+  // ONE VALUE FOR ONE PAIR AND FOR TWENTY-FOUR, unlike `quickAddPorts`.
+  // `Pair front to rear by order` is the same act repeated rather than a
+  // different act at scale, and "Undo pair passthrough" is true of both;
+  // the bulk run is one transaction under this label, so the menu offers
+  // one entry either way.
+  pairPassthrough,
+  unpairPassthrough,
+
   // ITS OWN VALUE BECAUSE IT IS NOT A CELL EDIT. `PortDef.key` is the
   // migration join (CR-051) and renaming one rewrites `renamedFrom` and
   // every passthrough pair that named it, so the Edit menu says what
