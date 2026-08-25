@@ -36,6 +36,10 @@
 //
 // The ports land in `Not in a bank`, which `port_move_to_bank.dart` calls
 // "a state the grid already draws and a person can already see".
+import 'package:rackmate_core/src/builder/port_commands.dart'
+    show AddBankCommand, AddPortCommand;
+import 'package:rackmate_core/src/builder/port_move_to_bank.dart'
+    show movableBanks;
 import 'package:rackmate_core/src/builder/quick_add.dart' show uniqueBankKey;
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/label_key.dart';
@@ -274,3 +278,100 @@ MirrorBankPlan planMirrorBank(
 
   return (bank: bank, ports: ports, notFlipped: notFlipped);
 }
+
+// ═════════════════════════════════════════════════════════════════════
+// THE BANK TREE, docs/06 §2's LEFT-RAIL NAVIGATION
+// ═════════════════════════════════════════════════════════════════════
+// §2: *"The left rail carries the section list plus the bank tree, which
+// becomes the primary navigation once you are in the Ports section."* So
+// this is a list a person clicks to GET somewhere, and a navigation list
+// whose order differs from the thing it navigates is a defect rather than
+// a preference.
+//
+// **THAT IS WHY IT DELEGATES TO `movableBanks` AND DOES NOT SORT BY
+// `BankDef.order`.** `buildPortTable` bands by FIRST APPEARANCE over the
+// declared port order, so the grid's band order is a fact about the
+// ports; `movableBanks` already reproduces it, already appends the
+// declared banks that have no band because they have no ports, and
+// already names the unbanded band the way the grid's own header does. A
+// second list-builder here would be a second opinion about the order, and
+// the two would part on the first template where they could.
+//
+// **`BankDef.order` HAS NO READER IN THE TREE, AND HAD NONE ANYWHERE.**
+// Censused at M4-J1: it is allocated by `nextOrder`, encoded by the codec
+// and read by nothing that orders anything. The symbol orders pins by
+// `PortDef.order` (`symbol_layer.dart`), the grid bands by first
+// appearance, and `movableBanks` follows the grid. Making the tree its
+// first reader was the tempting move and is the wrong one: it would put
+// the navigation out of step with the surface it navigates, in exchange
+// for honouring a field no gesture in docs/06 §4.6 can even write.
+// Reordering banks is not a §4.6 operation; if one is ever ruled, it gets
+// this field and the grid gets a reader with it.
+
+/// One row of docs/06 §2's bank tree.
+///
+/// `isDeclared` is what separates a bank from a band. Only a row with a
+/// `BankDef` behind it can be renamed, removed or mirrored; `Not in a
+/// bank` and a `bankKey` naming no definition are places the grid draws
+/// and this tree navigates to, and neither is a thing to edit.
+typedef BankTreeRow = ({
+  String? key,
+  String label,
+  int portCount,
+  bool isDeclared,
+});
+
+/// docs/06 §2's bank tree over [body], in the grid's own band order.
+List<BankTreeRow> buildBankTree(TemplateBody body) {
+  final declared = {for (final bank in body.banks) bank.key};
+  return [
+    for (final target in movableBanks(body))
+      (
+        key: target.key,
+        label: target.label,
+        portCount: target.portCount,
+        isDeclared: target.key != null && declared.contains(target.key),
+      ),
+  ];
+}
+
+/// Whether [label] already names a bank of [body], ignoring [exceptKey].
+///
+/// **A DUPLICATE LABEL IS REFUSED RATHER THAN SUFFIXED, and the two
+/// callers differ for a reason.** `uniqueBankName` suffixes because Quick
+/// Add derives its label from the signal family and a person who types
+/// `16 hdmi in` twice did not choose the name either time. A person typing
+/// into the tree's own field DID choose it, and quietly handing back
+/// `HDMI 2` would be the product renaming a bank behind them. Worse, the
+/// label is what `buildQuickAdd` matches on to decide whether to reuse a
+/// bank rather than mint one, so two banks sharing a label make that
+/// lookup answer by list position.
+///
+/// [exceptKey] is the bank being renamed, which is allowed to keep its
+/// own name: without it, opening Rename and pressing Enter is a refusal.
+bool bankLabelIsTaken(
+  TemplateBody body,
+  String label, {
+  String? exceptKey,
+}) {
+  final wanted = label.trim().toLowerCase();
+  return body.banks.any(
+    (bank) => bank.key != exceptKey && bank.label.toLowerCase() == wanted,
+  );
+}
+
+/// The commands that carry out [plan], bank first.
+///
+/// **BANK FIRST, AND NO `MirrorBankCommand`.** `buildQuickAdd` settled
+/// both halves: a `Transaction` is itself a `Command` holding children, so
+/// a batch command would be a second mechanism for a solved problem, and
+/// the bank leads because a port naming a bank that does not exist yet is
+/// a dangling reference for however long the list takes to apply, while
+/// `revert` runs the list backwards.
+///
+/// The caller runs these inside ONE `transact(LabelKey.mirrorBank, …)`, so
+/// a mirrored 16-port bank is one `Ctrl+Z`.
+List<Command<TemplateBody>> mirrorBankCommands(MirrorBankPlan plan) => [
+  AddBankCommand(plan.bank),
+  for (final port in plan.ports) AddPortCommand(port),
+];

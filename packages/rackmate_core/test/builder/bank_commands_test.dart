@@ -55,6 +55,21 @@ TemplateBody _body() => TemplateBody(
   ],
 );
 
+/// `_body()` with the four ports given DISTINCT orders.
+///
+/// The shared fixture gives every port `a0000`, so `portsInDeclaredOrder`
+/// tie-breaks on the key and `loose.1` lands ahead of `other.1`. That is
+/// correct and it is not what the banding tests are about, so they read a
+/// body whose declared order is stated rather than incidental.
+TemplateBody _ordered() {
+  final body = _body();
+  const orders = ['a0000', 'a1000', 'a2000', 'a3000'];
+  for (var i = 0; i < body.ports.length; i++) {
+    body.ports[i].order = FracIndex(orders[i]);
+  }
+  return body;
+}
+
 void main() {
   group('rename writes both strings and puts both back', () {
     test('label and abbr change together', () {
@@ -254,6 +269,123 @@ void main() {
         ),
         throwsStateError,
       );
+    });
+  });
+
+  group('the bank tree is the grid own band order, not a second opinion', () {
+    test('every band the grid draws is a row, in the same order', () {
+      final rows = buildBankTree(_ordered());
+
+      expect(
+        rows.map((r) => r.key).toList(),
+        ['inputs', 'other', null],
+        reason: 'movableBanks bands by first appearance and the tree follows',
+      );
+      expect(rows.map((r) => r.portCount).toList(), [2, 1, 1]);
+      expect(rows.last.label, kUnbandedBankLabel);
+    });
+
+    test('a declared bank with no ports is a row, because it has no band', () {
+      final b = _body()
+        ..banks.add(
+          BankDef(
+            key: 'empty',
+            label: 'Empty',
+            abbr: 'E',
+            order: const FracIndex('a2000'),
+          ),
+        );
+
+      final rows = buildBankTree(b);
+      final empty = rows.singleWhere((r) => r.key == 'empty');
+      expect(empty.portCount, 0);
+      expect(empty.isDeclared, isTrue);
+      expect(
+        rows.last.key,
+        'empty',
+        reason: 'it has no band, so it appends past the ones that do',
+      );
+    });
+
+    test('ONLY A ROW WITH A BankDef IS EDITABLE: the unbanded band and an '
+        'undeclared key are places, not banks', () {
+      final b = _body()..ports.add(_port('ghost.1', bank: 'ghost'));
+
+      final rows = buildBankTree(b);
+      expect(rows.singleWhere((r) => r.key == 'inputs').isDeclared, isTrue);
+      expect(rows.singleWhere((r) => r.key == 'ghost').isDeclared, isFalse);
+      expect(rows.singleWhere((r) => r.key == null).isDeclared, isFalse);
+    });
+
+    test('a bank order this template scrambles does NOT move a tree row', () {
+      final b = _ordered();
+      // `BankDef.order` now says `other` leads and `inputs` trails. The
+      // ports say otherwise, and the ports are what the grid bands.
+      b.banks[0].order = const FracIndex('a9000');
+
+      expect(
+        buildBankTree(b).map((r) => r.key).toList(),
+        ['inputs', 'other', null],
+        reason: 'the tree navigates the GRID, which bands by first appearance',
+      );
+    });
+  });
+
+  group('a duplicate bank label is refused, not suffixed', () {
+    test('an existing label is taken, in any case', () {
+      final b = _body();
+      expect(bankLabelIsTaken(b, 'Other'), isTrue);
+      expect(bankLabelIsTaken(b, '  other '), isTrue);
+      expect(bankLabelIsTaken(b, 'Outputs'), isFalse);
+    });
+
+    test('A BANK MAY KEEP ITS OWN NAME, or Rename refuses on open', () {
+      final b = _body();
+      expect(bankLabelIsTaken(b, 'Other', exceptKey: 'other'), isFalse);
+      expect(bankLabelIsTaken(b, 'Other', exceptKey: 'inputs'), isTrue);
+    });
+  });
+
+  group('mirrorBankCommands', () {
+    test('THE BANK LEADS, so no port ever names a bank that is not there', () {
+      final b = _body();
+      final plan = planMirrorBank(
+        b,
+        sourceBankKey: 'inputs',
+        label: 'OUT',
+        abbr: 'OUT',
+      );
+
+      final commands = mirrorBankCommands(plan);
+      expect(commands.first, isA<AddBankCommand>());
+      expect(commands.length, 1 + plan.ports.length);
+
+      // Applied in order, every port finds its bank already declared.
+      for (final command in commands) {
+        if (command is AddPortCommand) {
+          expect(b.banks.any((x) => x.key == command.port.bankKey), isTrue);
+        }
+        command.apply(b);
+      }
+      expect(b.ports.where((p) => p.bankKey == plan.bank.key).length, 2);
+    });
+
+    test('reverted backwards, the body is exactly what it was', () {
+      final b = _body();
+      final was = b.ports.length;
+      final commands = mirrorBankCommands(
+        planMirrorBank(b, sourceBankKey: 'inputs', label: 'OUT', abbr: 'OUT'),
+      );
+
+      for (final command in commands) {
+        command.apply(b);
+      }
+      for (final command in commands.reversed) {
+        command.revert(b);
+      }
+
+      expect(b.ports.length, was);
+      expect(b.banks.map((x) => x.key), ['inputs', 'other']);
     });
   });
 }

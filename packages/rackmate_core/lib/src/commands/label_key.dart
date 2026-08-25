@@ -315,7 +315,7 @@ enum LabelKey {
   // strand an empty bank behind them.
   quickAddPorts,
 
-  // BANK CRUD (builder/bank_commands.dart), M4-J1. Three values on the
+  // BANK CRUD (builder/bank_commands.dart), M4-J1. Four values on the
   // same test the port trio was split on: what the Edit menu has to say.
   //
   // `removeBank` is emphatically its own. It does not only delete a
@@ -324,6 +324,15 @@ enum LabelKey {
   // vanished". `mirrorBank` creates a bank AND N ports in one
   // transaction, on `quickAddPorts`' argument, and "Undo Add Port" would
   // name one row of the sixteen it is about to remove.
+  //
+  // `addBank` ARRIVED WITH ITS FIRST BARE CALLER, and until the bank
+  // tree there was none. `AddBankCommand` answered `quickAddPorts`
+  // because Quick Add was the only thing that ran it, and inside a
+  // transaction it is the TRANSACTION's label the Edit menu shows. The
+  // tree creates an empty bank by running the command alone, so its own
+  // label is now the one a person reads, and "Undo Quick add ports" over
+  // a bank with no ports in it names neither the act nor its result.
+  addBank,
   renameBank,
   removeBank,
   mirrorBank,
