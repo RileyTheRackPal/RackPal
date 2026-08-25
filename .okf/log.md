@@ -1,5 +1,34 @@
 # Update Log
 
+## 2026-08-25 (eighth entry)
+
+* **Note**: **M5'S DECOMPOSITION WAS A RULE SHORT, AND NINE BOARD ITEMS CARRIED
+  THE PRE-DR-020 COUNT.** Audited before any M5 work. Canon's catalogue is 28
+  rules (8 + 6 + 14); the board enumerated 27, missing the generic `LEN-002` that
+  DR-020 added. Filed as `#763`, and the nine stale items corrected.
+* **Note**: **THE BOARD IS A DOCUMENT AND THE COUNT SWEEP NEVER REACHED IT.**
+  DR-020 corrected **31 sites across 10 files** in `docs/`, which is the strongest
+  instance
+  [counts in prose are a liability](/practices/census-before-building.md) has, and
+  Azure DevOps was not one of the ten. The corpus and the board have disagreed for
+  as long as that ruling has existed and nothing could fail, because a board item
+  is prose that no gate reads.
+* **Note**: **TWO OF THE NINE WOULD HAVE SHIPPED THE WRONG NUMBER AS A GATE**,
+  which is what made this worth an hour before the milestone rather than a
+  correction during it. `M5-A4` is *"the 27-rule count, asserted by a test"*: a
+  PASSING test pinning the catalogue one short, which every later reader then
+  trusts. `M5-G2`/`G3` would have built 27 fixture pairs, leaving `LEN-002`
+  shipping without the pair AC-051 requires, which is the milestone's own exit
+  criterion.
+* **Note**: **A BLIND 27→28 WOULD HAVE BROKEN ONE OF THEM.** `M5-A2`'s
+  description reads *"8 tier-1, 6 tier-2, 13 tier-3 = 27"*, so changing only the
+  total leaves arithmetic that does not add up. A count sweep has to read the
+  sentence, not match the number.
+* **Note**: the rest of the decomposition needs no subdivision. **One rule per
+  task is the right grain because AC-051 makes a rule and its fixture pair
+  indivisible**: a rule task that closed without its two fixtures would break the
+  exit criterion silently.
+
 ## 2026-08-25 (seventh entry)
 
 * **Update**: **`Ungroup` IS KEPT**, ratified by the user on being shown it

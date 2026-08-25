@@ -4129,6 +4129,47 @@ editor's Validation drawer and Rack Vitals are both listed *not started* in
 `docs/m1-implementation-log.md` §2 §1, `:47` (*"Rack Vitals stays not-started (§5, needs the
 validation engine)"*) and `:56` (*"Validation drawer … not started"*), for this reason.
 
+#### 5.4.2 The M5 decomposition was audited before the jump, and it was a rule short
+
+**Censused 2026-08-25, before any M5 work.** `#23` holds **14 issues and 51 tasks**, of which
+`#72` (decompose) and `#740` (M5-0a) are closed. The nine build issues `M5-A` through `M5-I` were
+decomposed at `#72` and have not been read since. Two findings, and the first is a hole.
+
+**`LEN-002` HAD NO TASK.** Canon's catalogue is **28 rules = 8 tier-1 + 6 tier-2 + 14 tier-3**
+(docs/02 §5). The board enumerated **27**: `M5-C` 8, `M5-D` 6 plus a chips task, `M5-E` **13**. The
+missing one is the fourteenth tier-3 rule, the generic `LEN-002` that DR-020 added (canon §11.19,
+§12.13) and that reads its maximum off `MediaTypeDef.maxRunLengthPassive`. Filed as `#763`.
+
+**AND NINE BOARD ITEMS STILL SAID 27.** `counts written out in prose are a liability` with the board
+as the document: DR-020's sweep corrected **31 sites across 10 files** in `docs/` and **never touched
+Azure DevOps**, so every M5 item authored before that ruling kept the old number and nothing could
+fail. The corpus and the board have disagreed for as long as DR-020 has existed.
+
+**TWO OF THE NINE WOULD HAVE SHIPPED THE WRONG NUMBER AS A GATE**, which is why this was worth an
+hour before the milestone rather than a correction during it:
+
+| Item | What it would have built |
+|---|---|
+| `#256` `M5-A4` | *"the 27-rule count, asserted by a test"*: a **passing** test pinning the catalogue one short, which is then the thing every later reader trusts |
+| `#300` / `#301` `M5-G2/G3` | 27 known-bad fixtures and 27 near-misses, leaving `LEN-002` shipping **without its pair** and breaking AC-051, which is this milestone's own exit criterion |
+
+`#254`'s description needed more than the total changed: it read *"8 tier-1, 6 tier-2, 13 tier-3 =
+27"*, so swapping only the sum would have left arithmetic that does not add up. All nine carry a note
+saying what moved and why.
+
+**THE DECOMPOSITION IS OTHERWISE SOUND AND NEEDS NO FURTHER SUBDIVISION.** Every rule is one task,
+which is the right grain because AC-051 makes a rule and its fixture pair indivisible: a rule task
+that closed without its two fixtures would break the exit criterion silently. The four non-rule
+issues (`M5-A` registry, `M5-B` findings and acknowledgement, `M5-F` the issues list and `Why?`
+viewer, `M5-G` the fixture corpus and its gate) are 4, 4, 4 and 4 tasks, which is the size M4's
+closed issues actually ran at. **`M5-H` is a human act with an external dependency** and cannot be
+subdivided usefully; `M5-I` is three assertions about one property.
+
+**WHAT THE AUDIT DID NOT CHECK, stated so nobody reads it as more than it is.** It compared the rule
+IDs and the counts. It did **not** re-read each task's description against the catalogue row it
+implements, so a task whose body describes the rule wrongly would still be there. That is the
+`re-read a task against canon` pass, and it belongs to whoever picks up each rule.
+
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 
 > **Exit criterion, verbatim.** All four starter projects export a complete sheet set; the legend has
