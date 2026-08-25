@@ -700,9 +700,19 @@ decisions or schedule §10.3, and DR-006 falsifies both. They are recorded here,
 **verbatim** and state the DR-006 amendment beneath, the same pattern canon §12.8 uses inside the
 record, precisely so that a reader who meets the stale sentence first is not misled by it.
 
-### 4.12 Minor: three stale fixture copies at the repo root
+### 4.12 CLOSED 2026-08-25: three stale fixture copies at the repo root
 
-`test/fixtures/{a_empty_project,b_rack_and_device,c_fuller_project}.rackmate.json` are **tracked**
+**Deleted, and `kByteExactRoots` lost the root with them.** The three carried the **pre-rename**
+extension `.rackmate.json` while the live ones are `.rmpj.json`, so they predated DR-015's rename and
+had been unreferenced ever since. **The vacuity guard in
+`gitattributes_byte_exactness_test.dart` is what forced the second half of the edit**: it asserts
+every root holds files and says *"either it moved — update `kByteExactRoots` — or the goldens are
+gone"*. Deleting the files alone would have failed it, correctly, and the message named the fix. A
+guard doing its job on a tidy-up is the cheapest possible demonstration that it works.
+
+The record of what was wrong, unchanged:
+
+`test/fixtures/{a_empty_project,b_rack_and_device,c_fuller_project}.rackmate.json` were **tracked**
 (`git ls-files test/`). The real ones live at `packages/rackmate_core/test/fixtures/`, because
 `byte_roundtrip_test.dart:443` and `codec_split_test.dart:29` use the package-relative path
 `test/fixtures/…`. The root copies are an artefact of running the suite from the wrong directory,
