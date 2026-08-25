@@ -1,5 +1,19 @@
 # Update Log
 
+## 2026-08-25 (seventh entry)
+
+* **Update**: **`Ungroup` IS KEPT**, ratified by the user on being shown it
+  (canon §11.85.8,
+  [DR-086](/decisions/dr-086-the-port-set-gets-its-producer.md)). Recorded with
+  the order it happened in rather than tidied: **it was built before it was
+  ruled**, so the clause was written from the code instead of the code from the
+  clause. That is the wrong way round and the corpus says so, because a ruling
+  that reads as if it preceded its implementation when it did not teaches the
+  next reader that the sequence does not matter.
+* **Note**: the surrounding decisions were all taken the right way round, at
+  pick-up and before any code (DR-085, DR-086, DR-087). This one is the exception
+  in the run, which is exactly why it is worth naming.
+
 ## 2026-08-25 (sixth entry)
 
 * **Note**: **I STATED A SUITE TOTAL INSTEAD OF READING ONE, and it propagated

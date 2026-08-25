@@ -91,7 +91,12 @@ notice's precedent. The gesture cannot mint one; `Delete` on a member can leave
 one. Removing the last member does **not** remove the set: an empty set is not a
 dangling reference, and it is what somebody is about to refill.
 
-# Ungroup, found while building
+# Ungroup, found while building and ratified after
+
+**Built before it was ruled, which is the wrong order.** The clause was written
+from the code rather than the code from the clause; it was put to the user with
+the build in front of them (2026-08-25) and kept.
+
 
 §11.85.2 through §11.85.7 left a hole, and it is where the sets a person no
 longer wants go. **The capability was already there and only the cleanup was

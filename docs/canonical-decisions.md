@@ -12671,8 +12671,11 @@ already exist, exactly as the `Bank` column moves between banks that already exi
 set's kind, and is **empty and disabled on a row in no set**, because a role without a set is a value
 about nothing.
 
-**11.85.8 `Ungroup` (`Ctrl+Shift+G`), FOUND WHILE BUILDING AND ADDED HERE RATHER THAN INVENTED IN
-CODE.** §11.85.2 through §11.85.7 leave a hole, and the hole is where the SETS a person no longer
+**11.85.8 `Ungroup` (`Ctrl+Shift+G`), FOUND WHILE BUILDING AND RATIFIED BY THE USER ON BEING SHOWN
+IT** (2026-08-25, after `a02eeef`). It was built before it was ruled, which is the wrong order and is
+recorded as such: the clause was written from the code rather than the code from the clause, and it
+was put to the user with the build in front of them and kept. **§11.85.2 through §11.85.7 leave a
+hole, and the hole is where the SETS a person no longer
 wants go. **The capability was already there and only the cleanup was missing**: the `SET` column
 lists `null` first, so setting both members of a pair to `—` already takes them out of the set, and
 leaves the `PortSetDef` behind with no members and no way to remove it. That is the *"declared,
