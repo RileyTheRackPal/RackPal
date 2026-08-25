@@ -606,7 +606,13 @@ Mono cuts CR-080 requires do not exist; and the **Noto Sans Symbols 2 fallback d
 which is what docs/05:171's glyph-resolution test depends on. A tofu box in an exported drawing is
 the defect that test exists to prevent, and neither the test nor the fallback is present.
 
-### 4.7 `kSchemaVersion` is 2; the documents still print 1
+### 4.7 CLOSED 2026-08-25: `kSchemaVersion` is 2 and the documents now print 2
+
+**Ten sites corrected in docs/02 and docs/03**, and the semantic change below is written down in docs/02's reader-behaviour table where it belongs. **docs/06's `.rmdev` example was left alone**, exactly as the warning at the foot of this section says: `.rmdev` has its own parallel migration chain (CR-063) and no codec exists to decide its version, so bumping it would have been inventing a fact. The warning was worth its space.
+
+**This section's own line numbers had drifted and its fixture path was pre-rename** (`v1_templates_and_power.rackmate.json`; the file is `.rmpj.json`), so the sites were found by content rather than by the line numbers recorded below. A drift register drifts too.
+
+The record of what was wrong, unchanged:
 
 `packages/rackmate_core/lib/src/units/constants.dart:22`, `const kSchemaVersion = 2`, and `:35`,
 `const kMinReaderVersion = 2`, with a real `migrateV1ToV2` in `persistence/migrations.dart` and a
@@ -668,7 +674,9 @@ milestone's **closing commit message**, and that part works, `b94bd60` for M0 an
 M1's exporter are both detailed and honest. What is missing is the **index from milestone to
 commit**, which is what this file is.
 
-### 4.11 Owed: DR-006's propagation into the derived documents
+### 4.11 DISCHARGED: DR-006's propagation into the derived documents
+
+**All nine sites were paid on 2026-08-03 and this section is kept as the record of what was owed, not as a list of work.** Re-verified 2026-08-25 before the M5 jump: every site below carries its own *(Owed edit, paid 2026-08-03)* marker in the document it belongs to, and docs/09 §4 M6's carries the sentence that makes this section worth keeping: *"a board task had already been written against the stale sentence and had to be withdrawn."* **A debt list that stays phrased as a debt after it is paid sends the next reader to chase nine finished things**, which is the same failure one direction over.
 
 DR-006 (canon §11.6) is recorded, and canon §12.9 indexes what it supersedes. Parts 1–3 of the
 canon carry their pointers already (canon §12.8, rows 12–17). **The derived documents do not**, and
@@ -698,9 +706,19 @@ decisions or schedule §10.3, and DR-006 falsifies both. They are recorded here,
 **verbatim** and state the DR-006 amendment beneath, the same pattern canon §12.8 uses inside the
 record, precisely so that a reader who meets the stale sentence first is not misled by it.
 
-### 4.12 Minor: three stale fixture copies at the repo root
+### 4.12 CLOSED 2026-08-25: three stale fixture copies at the repo root
 
-`test/fixtures/{a_empty_project,b_rack_and_device,c_fuller_project}.rackmate.json` are **tracked**
+**Deleted, and `kByteExactRoots` lost the root with them.** The three carried the **pre-rename**
+extension `.rackmate.json` while the live ones are `.rmpj.json`, so they predated DR-015's rename and
+had been unreferenced ever since. **The vacuity guard in
+`gitattributes_byte_exactness_test.dart` is what forced the second half of the edit**: it asserts
+every root holds files and says *"either it moved — update `kByteExactRoots` — or the goldens are
+gone"*. Deleting the files alone would have failed it, correctly, and the message named the fix. A
+guard doing its job on a tidy-up is the cheapest possible demonstration that it works.
+
+The record of what was wrong, unchanged:
+
+`test/fixtures/{a_empty_project,b_rack_and_device,c_fuller_project}.rackmate.json` were **tracked**
 (`git ls-files test/`). The real ones live at `packages/rackmate_core/test/fixtures/`, because
 `byte_roundtrip_test.dart:443` and `codec_split_test.dart:29` use the package-relative path
 `test/fixtures/…`. The root copies are an artefact of running the suite from the wrong directory,
@@ -4170,6 +4188,21 @@ IDs and the counts. It did **not** re-read each task's description against the c
 implements, so a task whose body describes the rule wrongly would still be there. That is the
 `re-read a task against canon` pass, and it belongs to whoever picks up each rule.
 
+#### 5.4.3 M5 landing is the trigger on the last open canon question
+
+**§10.11, *what the beta gate actually is*, is the only entry in canon §10 still owing an answer**
+(canon §13), and it was **DEFERRED 2026-08-03 with a trigger rather than a date**: held *"until M5
+(Validation) lands and the UI is largely frozen, on the ground that the bar is easier to state
+against a product than against a plan."*
+
+**So starting M5 starts the clock on it.** The answer is owed **before the M6 recruiting ask
+(M6-J5)** and not before M9, because you cannot ask three people to commit real jobs without saying
+what you will judge. Recorded here rather than left in §13 alone, because a trigger that fires on a
+milestone belongs in that milestone's section: this is where somebody looks when they pick M5 up, and
+§13 is where somebody looks when they are already thinking about open questions.
+
+Nothing about M5's own scope depends on it. It is an M6 input that M5 unblocks.
+
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 
 > **Exit criterion, verbatim.** All four starter projects export a complete sheet set; the legend has
@@ -4377,7 +4410,7 @@ decomposition: `PLAN-E`'s canvas row rests on the claim that the viewport, selec
 drag-preview machinery are reusable, and **that claim has not been tested by anything except a
 read**.
 
-#### 5.4.3 ARCH-A, a question that had two answers, and the third recorded number to stop tracking · CLOSED · `962dfa7`, `63e5850`, `33f4708`, `789cfec`
+#### 5.4.4 ARCH-A, a question that had two answers, and the third recorded number to stop tracking · CLOSED · `962dfa7`, `63e5850`, `33f4708`, `789cfec`
 
 **It began as a question, not a task.** *"What state management are we using and why?"* The corpus
 answered **Riverpod** in four places. The repository answered **nothing** in every place.

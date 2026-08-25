@@ -1,6 +1,6 @@
 # Update Log
 
-## 2026-08-25 (ninth entry)
+## 2026-08-25 (tenth entry)
 
 * **New**: [DR-088, state management is what was built](/decisions/dr-088-state-management-ratified.md).
   Asked *"what state management are we using and why"*, the honest answer was
@@ -28,6 +28,33 @@
   ui 382 against 1162, app 664 against 838. Re-measured, all five now exact.
   A third instance of a recorded number quietly ceasing to track its subject,
   in one week.
+
+## 2026-08-25 (ninth entry)
+
+* **Note**: **docs/09 §8 ITEM 7 SAID "TWENTY BINDING USER DECISIONS, DR-001
+  THROUGH DR-020". CANON HOLDS 87.** The roadmap's process section was 66 rulings
+  behind. That sentence is the repeat offender
+  [counts in prose are a liability](/practices/census-before-building.md) already
+  names, and it has now been stale a third time.
+* **Update**: **it is rewritten to carry a RANGE and no total**, which is the form
+  that cannot rot: `DR-001` through `DR-087`, with the note that `DR-016` alone is
+  ruled inside §10.12(c) rather than in its own subsection. Canon §11's own list
+  is the one place the rulings can be counted, and pointing at it beats restating
+  its length.
+* **Update**: **docs/12 §4.11's DR-006 debt list is marked DISCHARGED.** All nine
+  sites were paid on 2026-08-03 and each carries its own marker in the document it
+  belongs to; the section stayed phrased as a debt for three weeks. **A debt list
+  that reads as a debt after it is paid sends the next reader to chase nine
+  finished things**, which is the same failure as a stale count, one direction
+  over. Verified site by site rather than by trusting docs/12's own PAID row, on
+  [two documents agreeing is not
+  verification](/practices/two-documents-agreeing-is-not-verification.md).
+* **Note**: **STARTING M5 FIRES THE TRIGGER ON THE LAST OPEN CANON QUESTION.**
+  §10.11, *what the beta gate actually is*, was deferred with a trigger rather
+  than a date: held until M5 lands and the UI is largely frozen. The answer is
+  owed before the M6 recruiting ask, not before M9. Recorded in docs/12 §5.4.3,
+  because a trigger that fires on a milestone belongs in that milestone's section
+  where somebody picking it up will see it.
 
 ## 2026-08-25 (eighth entry)
 

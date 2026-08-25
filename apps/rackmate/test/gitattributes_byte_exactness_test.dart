@@ -52,18 +52,29 @@ const String kRepoRoot = '../..';
 /// that actually drifts — a fixture in a NEW FORMAT landing in one of
 /// them — is not listed anywhere: the extensions are read off the disk.
 ///
-/// `assets/starters` is the one that has actually bitten. The two fixture
-/// directories are included because they are committed artifacts of a
-/// format defined by its bytes, and the cost of protecting them is a line
-/// each; `byte_roundtrip_test.dart` happens to rewrite its own before
-/// comparing, and `migration_corpus_test.dart` happens to parse rather
-/// than byte-compare, so neither would fail on a CRLF checkout TODAY. The
-/// day one of them is compared as bytes — which is exactly what a golden
+/// `assets/starters` is the one that has actually bitten. The fixture
+/// directory is included because it is a committed artifact of a format
+/// defined by its bytes, and the cost of protecting it is one line;
+/// `byte_roundtrip_test.dart` happens to rewrite its own before comparing,
+/// and `migration_corpus_test.dart` happens to parse rather than
+/// byte-compare, so neither would fail on a CRLF checkout TODAY. The day
+/// one of them is compared as bytes — which is exactly what a golden
 /// corpus is for — nobody should have to remember this.
+///
+/// **`test/fixtures` LEFT THIS LIST WHEN ITS CONTENTS WERE DELETED**
+/// (docs/12 §4.12). It held three copies of `a_empty_project`,
+/// `b_rack_and_device` and `c_fuller_project` under the PRE-RENAME
+/// extension `.rackmate.json`, referenced by nothing: the real ones live
+/// at `packages/rackmate_core/test/fixtures` under `.rmpj.json`, because
+/// `byte_roundtrip_test.dart` and `codec_split_test.dart` read the
+/// package-relative path. **The vacuity guard below is what forced this
+/// edit rather than letting the root sit empty in the list**, which is the
+/// guard doing exactly its job: it says "either it moved — update
+/// kByteExactRoots — or the goldens are gone", and here the first was
+/// true.
 const List<String> kByteExactRoots = <String>[
   'apps/rackmate/assets/starters',
   'packages/rackmate_core/test/fixtures',
-  'test/fixtures',
 ];
 
 /// The check-out states in which the committed bytes survive verbatim.
