@@ -12701,6 +12701,91 @@ makes it the source of a role vocabulary in the BUILDER, and nothing downstream 
 does not put a set on the schematic symbol or in the panel layout, both of which are banks' work
 (CR-055).
 
+### 11.86 DR-087 · The passthrough pair gets its creator, and the LIU that cannot be paired
+
+**Settled by the user on 2026-08-25** (`#181`, `#225`, `#762`), at M4-J3's pick-up and **before any
+code**, on four questions the corpus does not answer.
+
+**A DECOMPOSITION RULING, NOT A §8.3 AMENDMENT.** CR-057 rules `passthroughPairs` into `.rmdx` and
+says in terms that *"the grid column and the pairing action write it"*; `#181` names both. Nothing
+enters or leaves.
+
+**11.86.1 THE THIRD MODEL IN THIS ISSUE WITH A SURFACE AND NO PRODUCER.** DR-085 §11.84.2 found it:
+`PassthroughPairDef` has **zero creators**. Its one writer is `RenamePortKeyCommand`, which rewrites
+pairs that already exist, and `PAIRED WITH` is a **read-only** cell. Two of the 48 seeded templates
+are `isPassthrough`, and **one of them carries every pair in the catalog**: N03's 24.
+
+**AND `sameNet` IS THE THIRD FIELD IN THIS ISSUE WITH NO READER.** Beside `BankDef.order`
+(§11.84.7) and `PortSetDef.kind` (§11.85.1): written by 24 seeded pairs, round-tripped by the codec,
+classified by `template_change_class`, and consulted by **no trace, no schedule and no rule**. The
+sentence docs/06 §4.7 promises for it, *"a trace resolves `Living Room jack → PP-1 F12 → PP-1 R12 →
+SW-1 P04` as one logical path"*, has no implementation anywhere: `wire_trace.dart` does not mention
+passthrough at all.
+
+**11.86.2 CLAUSE 1: `Pair front↔rear by order` IS ADDITIVE AND IDEMPOTENT.** It walks both faces in
+**declared order**, pairs every **unpaired** front port to every **unpaired** rear port, stops when
+either side runs out, and **leaves existing pairs untouched**.
+
+That makes pressing it twice safe, and makes pressing it after adding eight more ports pair only the
+eight. The alternative, replacing every pair, was put and declined: **one press over a panel where
+somebody corrected a crossed pair by hand puts the crossing back**, and the undo entry is 24 pairs
+deep. Acting on the ticked selection was also declined, though every other §4.6 bulk operation does:
+the natural gesture on a fresh 24-port panel is *pair the whole thing*, and requiring 48 ticks first
+makes the fast path slower than the slow one.
+
+**IT IS NOT A §4.6 SELECTION OPERATION AND THEREFORE HAS NO CHORD.** It is a button in the
+`Passthrough` pack's own header, visible only when `isPassthrough` is on, which is the condition that
+already reveals the `PAIRED WITH` column. `structure_editor_screen.dart`'s standing objection applies
+in full here: a `kKeymap` row is a real cost against M7's generated table and `arbitrate()` on every
+platform, and this is an action a person runs **once per template**.
+
+**IT REFUSES UNDER A SORT**, on `Group as set…`'s ground (§11.85.2) rather than `Duplicate`'s: it
+writes no `order` and it READS one, so under a badge the person is looking at a different order from
+the one the pairs will follow.
+
+**11.86.3 CLAUSE 2: `PAIRED WITH` BECOMES EDITABLE, AND ITS OPTIONS MAKE THE WRONG ANSWERS
+INEXPRESSIBLE.** The picker offers only ports on the **other face** that are **not already paired**,
+plus a blank that unpairs. A front-to-front pair and a double-booked port are therefore not states
+this product can mint, rather than states it validates after the fact, which is AC-030's temperament
+applied one type over.
+
+A 24-port panel with one crossed pair needs a **one-cell** fix, and a bulk action cannot express it:
+without this, correcting one pair means unpairing the panel and re-running it.
+
+**11.86.4 CLAUSE 3: N04 STAYS UNPAIRED, AND THE NOTICE STANDS.** The seeded 24-fibre LIU is
+`isPassthrough: true` with **12 `conn.lc_duplex` front adapters, 24 rear splices and zero pairs**. A
+duplex adapter carries two fibres, so the real relationship is **1 front : 2 rear**, and
+`PassthroughPairDef` is **1:1 by construction**: it holds one `frontKey` and one `rearKey`.
+
+**A 1:1 pairing here would be a false fact on a sheet somebody works from.** `LC 01 → SPL 01` is half
+true: LC 01 terminates splice 1 **and** splice 2, and the schedule the trim tech reads would name one
+of them. G4's temperament decides it: an honest unknown beats a confident wrong value, and the
+existing notice already says the pairs are missing. Re-authoring N04 as 24 simplex front ports was
+put and declined for AC-025's reason, which is N03's own description: modelling both faces the same
+way is the error that makes the Termination Schedule wrong on the one column that matters. **The
+front of a 24-fibre LIU has twelve duplex adapters you can put a finger on.**
+
+**SO THE PRODUCT CARRIES A PASSTHROUGH IT CANNOT EXPRESS, DELIBERATELY, AND SAYS SO.** Whether
+`PassthroughPairDef` should ever become 1:N is not ruled here and is not M4's question: it is a model
+change with a codec, a migration and a schedule column behind it.
+
+**11.86.5 CLAUSE 4: THE ACTION ALWAYS WRITES `sameNet: true`, AND NO CONTROL IS BUILT FOR IT.** A
+patch panel's front jack and the punchdown behind it are one electrical path; that is what
+passthrough means, and it is what all 24 seeded pairs say. **Nothing reads the field** (§11.86.1), so
+a switch for it would be a control whose only observable effect is a byte in a file, which is the
+`UnbuiltView` defect this product refuses on every other surface.
+
+**IT IS KEPT RATHER THAN REMOVED**, because deleting it moves N03's bytes and breaks CR-117's round
+trip for no gain. Recorded here as **a field with no reader and no false case**: if a pairing that is
+positionally associated but electrically separate is ever a real thing, this field is where it goes,
+and the first person to need it will find this paragraph.
+
+**11.86.6 WHAT THIS DOES NOT RULE.** It does not build the trace docs/06 §4.7 promises: nothing
+follows a pair from a front jack to a rear punchdown, and that is M5's and M6's. It does not touch
+`isPassthrough` itself, which has had a switch on the Physical section since M4-D. And it does not
+decide what a pair means for a template that is **not** `isPassthrough`: the column is hidden there,
+the pairs survive a toggle, and `RemovePortCommand` still takes them with their ports.
+
 ---
 
 ## 12. Superseded rulings

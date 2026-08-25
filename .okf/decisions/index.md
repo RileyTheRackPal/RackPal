@@ -77,6 +77,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-084, the seeded catalog authors its own marks](dr-084-the-seeds-author-their-own-marks.md) - 0 of 48 seeds authored a glyph, so seventeen marks shipped as nine and eight were unreachable; the test that missed it was green and correct, because an existence assertion cannot see a collapse.
 * [DR-085, Mirror bank and the two missing producers](dr-085-mirror-bank-and-the-missing-producers.md) - the whole spec is one table row; the census beside it found a live SET dropdown built from a list nothing can add to, which is "a modelled field is not a reachable one" with the halves reversed.
 * [DR-086, the port set gets its producer](dr-086-the-port-set-gets-its-producer.md) - a set is made FROM a selection and never beside it, because the seeded catalog already paid for the other arrangement with 72 dangling references; and the role column closes, for a mechanical reason rather than a tidy one.
+* [DR-087, the passthrough pair gets its creator](dr-087-the-passthrough-pair-gets-its-creator.md) - the action is additive and idempotent, the cell makes a front-to-front pair inexpressible, and one seeded panel stays unpaired because the model is 1:1 and a duplex LC adapter is not.
 
 # Not yet written up
 

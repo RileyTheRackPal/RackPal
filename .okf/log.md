@@ -1,5 +1,37 @@
 # Update Log
 
+## 2026-08-25 (fourth entry)
+
+* **Creation**: [DR-087, the passthrough pair gets its
+  creator](/decisions/dr-087-the-passthrough-pair-gets-its-creator.md) (`#762`),
+  taken at M4-J3's pick-up and **before any code**.
+* **Note**: **THREE MODELS, THREE FIELDS, ONE ISSUE.** `#181` has now turned up
+  `PassthroughPairDef` with a surface and no creator, and `sameNet` as the THIRD
+  field in this issue read by nothing: after `BankDef.order` and
+  `PortSetDef.kind`. Three in one issue is not three coincidences. The common
+  cause is that all three were modelled from a design document in M0 and the
+  surfaces that would have exercised them were scheduled four milestones later.
+* **Note**: **THE SEEDED CATALOG SHIPS A PASSTHROUGH THE MODEL CANNOT EXPRESS,
+  and finding it took reading the port loop rather than the field.** N04, the
+  24-fibre LIU, is `isPassthrough: true` with **12 duplex LC front adapters, 24
+  rear splices and zero pairs**. A duplex adapter carries two fibres, so the
+  relationship is 1 front : 2 rear and `PassthroughPairDef` holds exactly one key
+  each side. A naive pair-by-order would have written twelve half-true pairings
+  and called the other twelve splices forgotten.
+* **Note**: **THE RULING LEAVES IT UNPAIRED, WHICH IS G4 APPLIED TO A JOIN RATHER
+  THAN TO A NUMBER.** `LC 01 -> SPL 01` is not a rounding error, it is a row on
+  the Termination Schedule naming one of the two splices that adapter really
+  terminates. Re-authoring the panel as 24 simplex ports would make it
+  expressible and was declined on AC-025's ground, which is N03's own description:
+  modelling both faces the same way is the error that breaks the schedule on the
+  one column the trim tech needs. **Sometimes the honest answer is that the model
+  is too narrow, recorded rather than worked around.**
+* **Note**: **THE ACTION IS ADDITIVE AND IDEMPOTENT, and the argument is a repair
+  rather than a purity.** Replacing every pair is the simpler rule and puts a
+  hand-corrected crossing back on one press, twenty-four pairs deep in the undo
+  stack. Pairing only the UNPAIRED means the action can be pressed after adding
+  eight more ports and touches only the eight.
+
 ## 2026-08-25 (third entry)
 
 * **Note**: **M4-J2 IS CLOSED** (`#761`, `#224`, `109d5e6`, `a02eeef`). `PortSetDef`
