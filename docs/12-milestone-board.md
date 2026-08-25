@@ -3964,6 +3964,95 @@ symbol or in the panel layout, both of which are banks' work (CR-055). And **no 
 downstream of the builder**: it opens a role vocabulary and nothing in a drawing, schedule or rule
 consults it yet.
 
+#### 5.3.19 M4-J3, the pair with no creator, and the panel the model cannot describe · CLOSED · `b73e1f4`, `9cb1f51`
+
+**Two commits, fourteen gates green on each.** `rackmate_core` **3,248 → 3,266**, `rackmate_ui`
+**1,151 → 1,162**. `#762` is DR-087 (§11.86); `#225` is the action, the editable cell and the
+commands under both.
+
+**THE THIRD MODEL IN THIS ISSUE WITH A SURFACE AND NO PRODUCER, and the third FIELD with no
+reader.** `PassthroughPairDef`'s only writer was `RenamePortKeyCommand`, rewriting pairs that
+already existed, and `PAIRED WITH` was read-only. Beside it, `sameNet` joins `BankDef.order`
+(§5.3.17) and `PortSetDef.kind` (§5.3.18): written by 24 seeded pairs, round-tripped, and consulted
+by no trace, schedule or rule. **Three in one issue is not three coincidences.** All three were
+modelled from a design document at M0 and the surfaces that would have exercised them were scheduled
+four milestones later, so nothing failed in between.
+
+**THE SEEDED CATALOG SHIPS A PASSTHROUGH THE MODEL CANNOT EXPRESS, and finding it took reading the
+port loop rather than the field.** N04, the 24-fibre LIU, is `isPassthrough: true` with **12
+`conn.lc_duplex` front adapters, 24 rear splices and zero pairs**. A duplex adapter carries two
+fibres, so the relationship is **1 front : 2 rear**, and `PassthroughPairDef` holds exactly one key
+each side. A naive pair-by-order would have written **twelve half-true pairings** and left twelve
+splices looking forgotten rather than deliberately unpaired.
+
+**DR-087 §11.86.4 LEAVES IT UNPAIRED, WHICH IS G4 APPLIED TO A JOIN RATHER THAN TO A NUMBER.** `LC 01
+→ SPL 01` is not a rounding error: it is a row on the Termination Schedule naming one of the two
+splices that adapter really terminates. Re-authoring the panel as 24 simplex ports would make it
+expressible and was declined on AC-025's ground, which is N03's own description in the catalog:
+modelling both faces the same way is the error that makes the schedule wrong on the one column the
+trim tech needs. **Sometimes the honest answer is that the model is too narrow, recorded rather than
+worked around.** A core case pins the 12/24/zero and asserts `rears == fronts * 2`, so whoever
+re-authors N04 reads the reason first.
+
+**THE ACTION IS ADDITIVE, AND THE ARGUMENT IS A REPAIR RATHER THAN A PURITY.** Replacing every pair
+is the simpler rule and puts a hand-corrected crossing back on one press, twenty-four pairs deep in
+the undo stack. The core case that proves the difference **crosses two positions on purpose first**
+and asserts they survive the run; a case that ran once over a blank panel would have proved the
+pairing and said nothing about the property that decided the design.
+
+**IT REPORTS ITS OUTCOME AND NOT ONLY ITS REFUSALS**, which is new on this toolbar. *"Paired 12
+ports. 12 rear ports had no partner left."* is the sentence that stops a person counting rows, and
+it is the LIU's shape arriving on a template somebody authored.
+
+**TWO TEST DEFECTS WORTH THE SPACE, both found by running rather than by reading.** `SET` and `PAIRED
+WITH` are both a `DropdownButton` over a nullable string, so a finder written
+`find.byType(...).first` picks the **SET** cell of row one: every `PAIRED WITH` case in the first
+draft tested the wrong column and passed. And locating a row by its **label** broke the moment a pair
+existed, because once F1 is paired with R2 the string `R2` is on screen twice, in R2's own label cell
+and in F1's picker. Rows are found by **key**, which appears in exactly one place.
+
+| Task | What it did |
+|---|---|
+| `#762` | DR-087 (§11.86): the additive run, the cell whose options are the validation, the LIU, and `sameNet` |
+| `#225` | `AddPassthroughPairCommand`, `RemovePassthroughPairCommand`, `buildPairFrontToRearByOrder`, `buildSetPassthroughPartner`, `passthroughPartners`; the toolbar action and the editable `PAIRED WITH` cell |
+
+**WHAT M4-J3 DOES NOT DELIVER.** The trace docs/06 §4.7 promises: nothing follows a pair from a front
+jack to a rear punchdown, and `wire_trace.dart` does not mention passthrough at all. That is M5's and
+M6's, and it is the reason `sameNet` still has no reader.
+
+#### 5.3.20 M4-J closes, and what three unreachable models in one issue have in common
+
+**`#181` IS CLOSED** with `#760`, `#223`, `#761`, `#224`, `#762` and `#225` all Done. Its title,
+*"banks, port sets and passthrough pairing in the UI"*, describes an **editor over three existing
+models**; the pick-up census turned it into **two missing producers plus a small action**, and the
+build turned up a third missing producer and three fields nothing reads.
+
+| Model or field | What was missing | Where it is recorded |
+|---|---|---|
+| `BankDef` | partly reachable: one writer, no rename, remove or mirror | §5.3.17 |
+| `BankDef.order` | **no reader anywhere** | §5.3.17, canon §11.84.7 |
+| `PortSetDef` | **no producer** under a live picker | §5.3.18, canon §11.85.1 |
+| `PortSetDef.kind` | **no reader** outside the codec | §5.3.18 |
+| `PassthroughPairDef` | **no creator** under a read-only cell | §5.3.19, canon §11.86.1 |
+| `sameNet` | **no reader** anywhere | §5.3.19 |
+
+**THE COMMON CAUSE IS SCHEDULING, NOT CARELESSNESS.** All six were modelled from a design document at
+M0, encoded by the codec, and gated by the byte round trip. The surfaces that would have exercised
+them were scheduled four milestones later, so between M0 and M4 nothing could fail: a field with no
+writer round-trips perfectly, and a field with no reader round-trips perfectly too.
+
+**AND THE CENSUS QUESTION THAT FINDS THEM IS NOT THE ONE THIS REPO HAD.**
+`a modelled field is not a reachable one` prescribes *"grep for what WRITES it"*, which finds
+`PortSetDef`'s shape and misses the other two entirely. The two that work here are **"where does a
+person make the FIRST one?"**, asked of every collection a control offers choices from, and **"what
+reads this, and what would it do differently if the value changed?"** Both are now in the OKF
+practice.
+
+**Version `v0.4.63`, derived two ways that agree.** By hierarchy walk: Epic `#22`'s 21 issues hold 92
+tasks, of which **63** are `Done` once `#225` and `#762` close. By arithmetic from the last release:
+`v0.4.49` plus M4-R's **8** closed tasks (`#751`-`#756`, `#758`, `#759`; `#757` is the unrun printed
+drill and is still open) plus M4-J's **6** (`#760`, `#223`, `#761`, `#224`, `#762`, `#225`) is **63**.
+
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing

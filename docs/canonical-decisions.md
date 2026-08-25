@@ -12733,9 +12733,10 @@ deep. Acting on the ticked selection was also declined, though every other §4.6
 the natural gesture on a fresh 24-port panel is *pair the whole thing*, and requiring 48 ticks first
 makes the fast path slower than the slow one.
 
-**IT IS NOT A §4.6 SELECTION OPERATION AND THEREFORE HAS NO CHORD.** It is a button in the
-`Passthrough` pack's own header, visible only when `isPassthrough` is on, which is the condition that
-already reveals the `PAIRED WITH` column. `structure_editor_screen.dart`'s standing objection applies
+**IT IS NOT A §4.6 SELECTION OPERATION AND THEREFORE HAS NO CHORD.** It is a button in the grid's
+toolbar, beside `Delete`, **shown only when `isPassthrough` is on**, which is the same switch that
+reveals the `PAIRED WITH` column it writes. A button that could do nothing on 46 of the 48 seeded
+templates is the `UnbuiltView` defect wearing a toolbar. `structure_editor_screen.dart`'s standing objection applies
 in full here: a `kKeymap` row is a real cost against M7's generated table and `arbitrate()` on every
 platform, and this is an action a person runs **once per template**.
 

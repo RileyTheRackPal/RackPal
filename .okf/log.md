@@ -1,5 +1,36 @@
 # Update Log
 
+## 2026-08-25 (fifth entry)
+
+* **Note**: **M4-J IS CLOSED** (`#181`; `#760`, `#223`, `#761`, `#224`, `#762`,
+  `#225`), version `v0.4.63`, derived two ways that agree.
+  [DR-087](/decisions/dr-087-the-passthrough-pair-gets-its-creator.md) is BUILT.
+* **Update**: [a modelled field is not a reachable
+  one](/practices/a-modelled-field-is-not-a-reachable-one.md) gains the haul and,
+  more usefully, **the two questions its own check does not ask**. `#181` turned
+  up SIX unreachable things across three models and three fields, and the common
+  cause is scheduling rather than carelessness: all six were modelled at M0,
+  encoded, and gated by the byte round trip, while the surfaces that would have
+  exercised them were four milestones away. **A field with no writer round-trips
+  perfectly, and a field with no reader round-trips perfectly too**, so nothing
+  could fail in between.
+* **Note**: **THE TWO QUESTIONS ARE "WHERE DOES A PERSON MAKE THE FIRST ONE?" AND
+  "WHAT READS THIS, AND WHAT WOULD IT DO DIFFERENTLY IF THE VALUE CHANGED?"** The
+  file's existing check, *grep for what writes it*, finds one of the three shapes
+  and misses both others.
+* **Note**: **AND THE SECOND QUESTION'S ANSWER IS SOMETIMES "NOTHING, AND LEAVE IT
+  THAT WAY".** Making the bank tree the first reader of `BankDef.order` was the
+  tempting move and would have put the navigation out of step with the grid it
+  navigates. An unreachable field is not always a thing to make reachable.
+* **Note**: **TWO TEST DEFECTS IN M4-J3, both found by running rather than
+  reading, and both of the class this repo keeps hitting.** `SET` and `PAIRED
+  WITH` are both a `DropdownButton` over a nullable string, so
+  `find.byType(...).first` picks the SET cell of row one and every `PAIRED WITH`
+  case in the first draft tested the wrong column **and passed**. And finding a
+  row by its LABEL broke the moment a pair existed, because once F1 is paired with
+  R2 the string `R2` is on screen twice. Rows are found by KEY, which appears in
+  exactly one place.
+
 ## 2026-08-25 (fourth entry)
 
 * **Creation**: [DR-087, the passthrough pair gets its

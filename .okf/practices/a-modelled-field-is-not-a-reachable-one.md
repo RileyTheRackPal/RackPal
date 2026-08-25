@@ -164,6 +164,41 @@ navigates is a defect. **An unreachable field is not always a thing to make
 reachable.** Sometimes the honest move is to record that nothing reads it and
 leave it alone until a ruled gesture needs it.
 
+# Three in one issue, and the two questions that find them
+
+**Board `#181` turned up six**, across three models and three fields, and the
+haul is worth the entry because none of them was carelessness:
+
+| | What was missing |
+|---|---|
+| `BankDef.order` | no reader anywhere |
+| `PortSetDef` | no producer, under a live picker |
+| `PortSetDef.kind` | no reader outside the codec |
+| `PassthroughPairDef` | no creator, under a read-only cell |
+| `sameNet` | no reader anywhere |
+| `BankDef` | one writer, and no rename, remove or mirror |
+
+**THE COMMON CAUSE IS SCHEDULING.** All six were modelled from a design document
+at M0, encoded, and gated by the byte round trip. The surfaces that would have
+exercised them were scheduled four milestones later, so between M0 and M4 nothing
+could fail: **a field with no writer round-trips perfectly, and a field with no
+reader round-trips perfectly too.** A codec gate cannot tell a value that is
+inert from a value that is correct.
+
+**AND THE QUESTION AT THE TOP OF THIS FILE FINDS ONLY ONE OF THE THREE SHAPES.**
+*"Grep for what writes it"* finds `PortSetDef`'s and misses both others. Two more
+questions earn their place beside it:
+
+* **"Where does a person make the FIRST one?"** Asked of every collection a
+  control offers choices from. This is what catches a picker that is editable,
+  correct, and permanently empty.
+* **"What READS this, and what would it do differently if the value changed?"**
+  Asked of every field the work is about to write. A field whose only readers are
+  the encoder and the decoder is a field describing nothing, and the honest move
+  is often to record that rather than to invent a reader for it: making the bank
+  tree sort by `BankDef.order` would have put the navigation out of step with the
+  grid it navigates, in exchange for honouring a field no ruled gesture can write.
+
 # The check, which costs a minute
 
 For each field the work will read or write:

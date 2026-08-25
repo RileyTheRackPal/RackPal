@@ -9,7 +9,7 @@ tags: [ruling, m4, m4-j, passthrough, cr-057, ac-025, g4, dr-087]
 timestamp: 2026-08-25T00:00:00Z
 ruling_id: DR-087
 canon_section: "11.86"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-25 (board `#181`, `#225`, `#762`), at M4-J3's
@@ -42,9 +42,9 @@ selection was declined too, though every other §4.6 bulk operation does: the
 natural gesture on a fresh 24-port panel is *pair the whole thing*, and 48 ticks
 first makes the fast path slower than the slow one.
 
-**It gets no chord.** It is a button in the `Passthrough` pack's header, shown
-only when `isPassthrough` is on, because it is run once per template and a keymap
-row is a real cost against M7's generated table.
+**It gets no chord.** It is a button in the grid's toolbar beside `Delete`,
+shown only when `isPassthrough` is on, because it is run once per template and a
+keymap row is a real cost against M7's generated table.
 
 # The cell makes the wrong answers inexpressible
 
@@ -84,6 +84,15 @@ kept rather than removed because deleting it moves N03's bytes and breaks CR-117
 Recorded as **a field with no reader and no false case**: if a pairing that is
 positionally associated but electrically separate is ever real, this is where it
 goes, and whoever needs it will find this paragraph.
+
+# Built 2026-08-25
+
+All four clauses ship (`#225`, `9cb1f51`). The action reports its OUTCOME as well
+as its refusals, which is new on this toolbar: *"Paired 12 ports. 12 rear ports
+had no partner left."* is the sentence that stops a person counting rows, and it
+is the LIU's shape arriving on a template somebody authored. A core case pins
+N04's 12 front over 24 rear with zero pairs, and asserts `rears == fronts * 2`,
+so whoever re-authors it reads the reason first.
 
 # What it does not rule
 
