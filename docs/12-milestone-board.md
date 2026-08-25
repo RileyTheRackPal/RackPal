@@ -3822,7 +3822,7 @@ only surface besides the elevation that draws a mark.
 
 #### 5.3.17 M4-J1, the bank tree, and the field that has never had a reader · CLOSED · `dbd7d19`, `6a4e41c`, `817acfd`, `ab7eeb8`
 
-**Four commits, fourteen gates green on each.** `rackmate_core` **3,197 → 3,227**, `rackmate_ui`
+**Four commits, fourteen gates green on each.** `rackmate_core` **3,197 → 3,224**, `rackmate_ui`
 **1,117 → 1,139**. `#760` is DR-085 (§11.84); `#223` is the CRUD, the tree, the menu and the mirror.
 
 **THE PICK-UP CENSUS FOUND SOMETHING LARGER THAN THE MISSING ACTION, and it re-scoped the issue.**
@@ -3892,7 +3892,7 @@ mirrored output is a second output, not a passthrough (DR-085 §11.84.6).
 
 #### 5.3.18 M4-J2, the port set's missing producer and the role column that could spell `+` four ways · CLOSED · `109d5e6`, `a02eeef`
 
-**Two commits, fourteen gates green on each.** `rackmate_core` **3,227 → 3,248**, `rackmate_ui`
+**Two commits, fourteen gates green on each.** `rackmate_core` **3,224 → 3,245**, `rackmate_ui`
 **1,139 → 1,151**. `#761` is DR-086 (§11.85); `#224` is the gesture, the closed role list and the
 first editor `atomicConnect` has ever had.
 
@@ -3966,7 +3966,7 @@ consults it yet.
 
 #### 5.3.19 M4-J3, the pair with no creator, and the panel the model cannot describe · CLOSED · `b73e1f4`, `9cb1f51`
 
-**Two commits, fourteen gates green on each.** `rackmate_core` **3,248 → 3,266**, `rackmate_ui`
+**Two commits, fourteen gates green on each.** `rackmate_core` **3,245 → 3,263**, `rackmate_ui`
 **1,151 → 1,162**. `#762` is DR-087 (§11.86); `#225` is the action, the editable cell and the
 commands under both.
 
@@ -4047,6 +4047,19 @@ writer round-trips perfectly, and a field with no reader round-trips perfectly t
 person make the FIRST one?"**, asked of every collection a control offers choices from, and **"what
 reads this, and what would it do differently if the value changed?"** Both are now in the OKF
 practice.
+
+**THE `rackmate_core` FIGURES IN FOUR COMMIT MESSAGES ARE THREE TOO HIGH, and the corpus is corrected
+rather than the history.** `ab7eeb8` states the suite going `3,221 → 3,227` when the three cases it
+added took it to **3,224**, and the next two commits and the merge did arithmetic on that base. The
+true chain, measured file by file after the merge, is
+**3,213 → 3,221 → 3,224 → 3,245 → 3,263**: the three new core files hold 27, 21 and 18 cases and
+`bank_commands_test.dart` began the session at 16.
+
+The messages are on `main` and stay as written, on §11.79.2's precedent for a ruling: a record says
+what was believed on the day, and rewriting a pushed history to hide an arithmetic slip costs more
+than the slip. **This paragraph is where the number is true**, and `counts written out in prose are a
+liability` gains an instance whose whole content is that I stated a suite total instead of reading
+one. `ui` was stated four times and was right four times, because those figures came off a run.
 
 **Version `v0.4.63`, derived two ways that agree.** By hierarchy walk: Epic `#22`'s 21 issues hold 92
 tasks, of which **63** are `Done` once `#225` and `#762` close. By arithmetic from the last release:

@@ -1,5 +1,21 @@
 # Update Log
 
+## 2026-08-25 (sixth entry)
+
+* **Note**: **I STATED A SUITE TOTAL INSTEAD OF READING ONE, and it propagated
+  through three commits and a merge.** `ab7eeb8` says `rackmate_core` went
+  `3,221 → 3,227` when the three cases it added took it to **3,224**, and every
+  later figure was arithmetic on that base. Measured after the merge the true
+  chain is **3,213 → 3,221 → 3,224 → 3,245 → 3,263**.
+* **Note**: **THE TELL IS THAT `rackmate_ui` WAS RIGHT ALL FOUR TIMES.** Those
+  figures came off a run; the core ones came off addition. Same session, same
+  author, one habit different.
+* **Update**: docs/12 §5.3.17 through §5.3.20 and the two entries below are
+  corrected. **The commit messages on `main` stay as written**, on DR-080
+  §11.79.2's precedent: a record says what was believed on the day, and
+  rewriting a pushed history to hide an arithmetic slip costs more than the slip.
+  docs/12 §5.3.20 now names where the stale number lives.
+
 ## 2026-08-25 (fifth entry)
 
 * **Note**: **M4-J IS CLOSED** (`#181`; `#760`, `#223`, `#761`, `#224`, `#762`,
@@ -68,7 +84,7 @@
 * **Note**: **M4-J2 IS CLOSED** (`#761`, `#224`, `109d5e6`, `a02eeef`). `PortSetDef`
   has a producer, the `ROLE` column is a closed list, `atomicConnect` has its first
   editor anywhere, and `Ungroup` is the only thing that removes a set.
-  `rackmate_core` 3,227 → 3,248, `rackmate_ui` 1,139 → 1,151.
+  `rackmate_core` 3,224 → 3,245, `rackmate_ui` 1,139 → 1,151.
 * **Update**: [DR-086](/decisions/dr-086-the-port-set-gets-its-producer.md) is
   BUILT, and it grew a clause while being built.
 * **Note**: **`Ungroup` IS A DECOMPOSITION HOLE FOUND MID-BUILD, and the shape of
@@ -140,7 +156,7 @@
 * **Note**: **M4-J1 IS CLOSED** (`#760`, `#223`, four commits, `dbd7d19`..`ab7eeb8`,
   fourteen gates green on each). The bank tree is in the rail on every section, a
   click switches to Ports and jumps to the band, and DR-085's mirror has the
-  preview that names every row it leaves alone. `rackmate_core` 3,197 → 3,227,
+  preview that names every row it leaves alone. `rackmate_core` 3,197 → 3,224,
   `rackmate_ui` 1,117 → 1,139.
 * **Update**: [DR-085](/decisions/dr-085-mirror-bank-and-the-missing-producers.md)
   is BUILT for its own three clauses. The two missing producers it named are
