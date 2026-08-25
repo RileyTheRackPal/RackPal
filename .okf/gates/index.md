@@ -11,6 +11,7 @@ gate's blind spot is as worth knowing as its coverage.
 * [Release signature](release-signature.md) - signed, timestamped, and still valid after the certificate expires; canon's recipe for the last one has an unstated precondition.
 
 * [Callbacks have callers](callbacks-have-callers.md) - every function-typed `*Actions` member in `rackmate_ui` must be invoked somewhere; 18 callbacks, one hole on its first run, and two false positives it must not report.
+* [Dependency table parity](dependency-table-parity.md) - docs/03 §10.1 and the five pubspecs must agree in BOTH directions; a documented package nobody installed hid for five milestones, and an installed one nobody documented cited the table it was missing from.
 
 # Not yet written up
 

@@ -1,5 +1,34 @@
 # Update Log
 
+## 2026-08-25 (ninth entry)
+
+* **New**: [DR-088, state management is what was built](/decisions/dr-088-state-management-ratified.md).
+  Asked *"what state management are we using and why"*, the honest answer was
+  two answers. **ADR-011 accepted Riverpod and docs/03 §4 described the provider
+  layer in detail; at v0.4.63 the package is in ZERO Dart files, pubspecs and
+  lockfiles**, five milestones on. The real answer is constructor injection of
+  one `AppServices`, `SimpleNotifier` in core and `ChangeNotifier` in the ui,
+  and it is now ruled rather than accidental.
+* **Note**: **A `VERIFY:` MARKER IS NOT A TRIPWIRE, AND THAT GENERALISES.**
+  ADR-011's read *"before the provider layer is written"*. The layer was never
+  written, so the condition stayed true and the check never fired while the
+  document went on describing it. Every `VERIFY:` in this corpus conditioned on
+  future work is inert on the same reasoning.
+* **New**: [Dependency table parity](/gates/dependency-table-parity.md). The
+  remedy, and it had to run in **both directions**: `docs/03` §10.1 is titled
+  *"The full table"* and named **eight** packages installed nowhere while missing
+  **two** that were installed. `screen_retriever`'s own pubspec comment cites
+  *"§10.1's `window_manager` row"*, so somebody read the table and did not write
+  to it. **Care was not the missing ingredient: nothing could fail**, which is
+  the same sentence the M5 board audit earned three days earlier.
+* **Note**: **FOUR OF FIVE TEST FLOORS HAD STOPPED TRACKING, BY 3,247 TESTS.**
+  Found while raising the app floor for the new gate. `run_suite.ps1`'s own
+  comment says to re-measure in any commit that adds tests and records 131 tests
+  of slack as the defect that prompted it; the slack was core 976 against 3263,
+  ui 382 against 1162, app 664 against 838. Re-measured, all five now exact.
+  A third instance of a recorded number quietly ceasing to track its subject,
+  in one week.
+
 ## 2026-08-25 (eighth entry)
 
 * **Note**: **M5'S DECOMPOSITION WAS A RULE SHORT, AND NINE BOARD ITEMS CARRIED

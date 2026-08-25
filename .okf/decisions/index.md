@@ -78,6 +78,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-085, Mirror bank and the two missing producers](dr-085-mirror-bank-and-the-missing-producers.md) - the whole spec is one table row; the census beside it found a live SET dropdown built from a list nothing can add to, which is "a modelled field is not a reachable one" with the halves reversed.
 * [DR-086, the port set gets its producer](dr-086-the-port-set-gets-its-producer.md) - a set is made FROM a selection and never beside it, because the seeded catalog already paid for the other arrangement with 72 dangling references; and the role column closes, for a mechanical reason rather than a tidy one.
 * [DR-087, the passthrough pair gets its creator](dr-087-the-passthrough-pair-gets-its-creator.md) - the action is additive and idempotent, the cell makes a front-to-front pair inexpressible, and one seeded panel stays unpaired because the model is 1:1 and a duplex LC adapter is not.
+* [DR-088, state management is what was built](dr-088-state-management-ratified.md) - ADR-011 accepted Riverpod, nobody built it, and its `VERIFY:` never fired because it was conditioned on the work that never started; the answer is constructor injection and seven epoch counters, and the dependency table gets a gate.
 
 # Not yet written up
 
