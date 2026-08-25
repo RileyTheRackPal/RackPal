@@ -3890,6 +3890,80 @@ producer (`#225`), which the census above makes the larger half of `#181`. No ba
 the reason `BankDef.order` is recorded above. A mirror does **not** pair the two banks: a matrix's
 mirrored output is a second output, not a passthrough (DR-085 §11.84.6).
 
+#### 5.3.18 M4-J2, the port set's missing producer and the role column that could spell `+` four ways · CLOSED · `109d5e6`, `a02eeef`
+
+**Two commits, fourteen gates green on each.** `rackmate_core` **3,227 → 3,248**, `rackmate_ui`
+**1,139 → 1,151**. `#761` is DR-086 (§11.85); `#224` is the gesture, the closed role list and the
+first editor `atomicConnect` has ever had.
+
+**THE PICK-UP CENSUS FOUND THE SAME FIELD UNREACHABLE IN BOTH DIRECTIONS, WHICH IS TWO DIFFERENT
+DEFECTS.** DR-085 §11.84.2 had already found the producer missing under a live `SET` dropdown. This
+one adds the other half:
+
+| | |
+|---|---|
+| `PortSetDef` | **no producer** outside the seeded catalog, under a live, editable picker |
+| `PortSetDef.kind` | **no reader** outside the codec: not `resolvePortSet`, not `planAtomicConnect`, not any drawing, schedule or rule |
+
+Seventeen seeded declarations write `kind`, `json_codec` round-trips it, and **no decision anywhere
+in the product consults it**. DR-086 §11.85.3 gives it its first reader by making it the source of
+the role vocabulary.
+
+**AND THE ENUM'S OWN RANGE WAS THE THIRD FINDING.** `SetKind` has four values. `componentVideo` is
+authored **zero** times, and it is the case CR-055 leads with. `balancedPair` is authored **once**,
+as A04's `bal`, *"Balanced input pair"*, whose two ports carry roles `L` and `R`: as authored it
+means *a stereo pair that happens to be balanced*, which `PortDef.balanced` already records on each
+port, and **not** the two legs of one balanced line. It is kept for CR-117's sake and not offered.
+
+**THE GESTURE WAS CHOSEN AGAINST MEASURED EVIDENCE, NOT TASTE.** A `SETS` tree in the rail beside
+M4-J1's `BANKS` is the symmetric answer and was the cheap one to build on what J1 had just landed.
+`port_set_integrity_test.dart` records what separating *declare a set* from *fill it* cost when the
+catalog did exactly that: **90 `setKey` references, 72 dangling; 16 sets declared, 7 referenced by
+nothing; 7 `atomicConnect` sets with fewer than two members.** Below two members the AC-053 gesture
+is undefined and degrades to a one-conductor link **with no error**. So the set is made FROM the
+rows, and a one-member set became something only a `Delete` or a hand-edited file can produce.
+
+**THE CLOSED ROLE LIST IS A CORRECTNESS FIX WEARING A TIDINESS HAT.** `planAtomicConnect` compares
+`setRole` by **string equality** to report a `RoleMismatch`, and `atomic_connect.dart`'s header had
+already written the warning down: the exposure *"opens the moment M4 lets a user author a
+template"*. With free text, `+`, `plus`, `POS` and `Pos` are four roles, and whoever types the fourth
+warns against every seeded amplifier they connect to. The list is spelled exactly as the seed spells
+it, ASCII hyphen included, and a test asserts **both** halves: that the hyphen is `U+002D`, and that
+the 35 seeded member ports carry nothing outside the closed list. That second half is what makes it
+a join rather than a preference.
+
+**`Ungroup` IS A DECOMPOSITION HOLE FOUND WHILE BUILDING, and it is recorded as one** (DR-086
+§11.85.8, added after the ruling). The clauses left nowhere for a set a person no longer wants to go,
+and **the capability was already there with only the cleanup missing**: the `SET` column lists `null`
+first, so clearing both members already takes them out and strands the `PortSetDef`. That is
+`port_set_integrity_test`'s own *"declared, referenced by nothing"* row arriving in an authored
+template. `Ctrl+Shift+G` is now the **only** thing that removes a `PortSetDef`, and §11.85.6's rule
+that DELETING the last member does not remove one stands unchanged beside it.
+
+**TWO DEFECTS THE WIDGET CASES CAUGHT BEFORE ANYBODY OPENED THE DIALOG.** The kind dropdown
+overflowed by **0.65 points** on its longest row, `Component video · Y / Pb / Pr`, and Flutter
+painted the striped bar over it. And pressing `Ctrl+Shift+G` with nothing selected, then ticking two
+rows and pressing it again, left *"select the ports first"* on screen with two rows plainly selected.
+Neither is visible from the code and both are the first thing a person would hit.
+
+**AND ONE FALSE EXPLANATION THAT NEARLY SHIPPED IN A COMMENT.** The analyzer warned
+`COLLECTION_METHODS_UNRELATED_TYPE` on a test looking up a `Map<String, …>` with a `PortKey`, and the
+comment written for the fix said the test had been passing **vacuously**. It had not: `PortKey` is an
+`extension type` over `String` (`ids.dart:37`), so at runtime it **is** the key, and the assertion had
+been real all along. Caught by running a probe rather than by re-reading the paragraph, which is
+`a stated cost is a hypothesis` pointed at a claim about a test. The warning is obeyed anyway,
+because warnings are gated at zero.
+
+| Task | What it did |
+|---|---|
+| `#761` | DR-086 (§11.85): the gesture, the closed role list, the kind that is not offered, `atomicConnect`'s editor, and `Ungroup` |
+| `#224` | `AddPortSetCommand`, `RemovePortSetCommand`, `buildGroupAsSet`, `buildUngroupPortSets`, `setRolesFor`, `setKindOptions`, `portSetLabelIsTaken`, `uniquePortSetKey`; `Ctrl+G`, `Ctrl+Shift+G`, the group dialog, and the `ROLE` cell |
+
+**WHAT M4-J2 DOES NOT DELIVER.** No `PassthroughPairDef` producer (`#225`). No set on the schematic
+symbol or in the panel layout, both of which are banks' work (CR-055). And **no reader for `SetKind`
+downstream of the builder**: it opens a role vocabulary and nothing in a drawing, schedule or rule
+consults it yet.
+
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing

@@ -1,5 +1,46 @@
 # Update Log
 
+## 2026-08-25 (third entry)
+
+* **Note**: **M4-J2 IS CLOSED** (`#761`, `#224`, `109d5e6`, `a02eeef`). `PortSetDef`
+  has a producer, the `ROLE` column is a closed list, `atomicConnect` has its first
+  editor anywhere, and `Ungroup` is the only thing that removes a set.
+  `rackmate_core` 3,227 → 3,248, `rackmate_ui` 1,139 → 1,151.
+* **Update**: [DR-086](/decisions/dr-086-the-port-set-gets-its-producer.md) is
+  BUILT, and it grew a clause while being built.
+* **Note**: **`Ungroup` IS A DECOMPOSITION HOLE FOUND MID-BUILD, and the shape of
+  it is worth more than the fix.** The ruling settled how a set is MADE and never
+  asked where an unwanted one goes. **The capability was already there and only
+  the cleanup was missing**: the `SET` column lists null first, so clearing both
+  members already takes them out and strands the `PortSetDef`. That is
+  `port_set_integrity_test`'s own *"declared, referenced by nothing"* row arriving
+  in an authored template.
+  [check a decomposition for holes](/practices/check-a-decomposition-for-holes.md)
+  with a twist: the hole was not a missing capability, it was a missing INVERSE,
+  and a decomposition read for "what can a person not do?" does not find it. The
+  question that does is **"what undoes each thing this adds, and what does the
+  undo leave behind?"**
+* **Note**: **A FALSE EXPLANATION NEARLY SHIPPED IN A COMMENT, AND A PROBE STOPPED
+  IT.** The analyzer warned `COLLECTION_METHODS_UNRELATED_TYPE` on a test looking
+  up a `Map<String, …>` with a `PortKey`. I wrote that the test had been passing
+  **vacuously**, which is a very believable story and is false: `PortKey` is an
+  `extension type` over `String`, so at runtime it IS the key and the assertion
+  was real. Found by writing eight lines that PRINTED the behaviour rather than by
+  re-reading the paragraph, which is
+  [a stated cost is a hypothesis](/practices/a-stated-cost-is-a-hypothesis.md)
+  aimed at a claim about a test instead of at a number. My probe used an ordinary
+  class and threw, which was the tell that sent me to the declaration.
+* **Note**: **TWO DEFECTS THE WIDGET CASES CAUGHT BEFORE ANYONE OPENED THE
+  DIALOG**, and neither is visible from the code: the kind dropdown overflowed by
+  **0.65 points** on its longest row and painted the striped bar, and a refusal
+  stayed on screen after the condition producing it had gone away. Both are the
+  first thing a person would hit.
+* **Note**: **THE CLOSED ROLE LIST IS A CORRECTNESS FIX WEARING A TIDINESS HAT**,
+  and its test asserts BOTH halves of the join: that the hyphen is `U+002D`, and
+  that the 35 seeded member ports carry nothing outside the closed list. The
+  second half is what makes it a join and not a preference; without it the list is
+  a taste that happens to agree with the catalog today.
+
 ## 2026-08-25 (second entry)
 
 * **Creation**: [DR-086, the port set gets its

@@ -9,7 +9,7 @@ tags: [ruling, m4, m4-j, port-sets, atomic-connect, cr-055, ac-030, dr-078, dr-0
 timestamp: 2026-08-25T00:00:00Z
 ruling_id: DR-086
 canon_section: "11.85"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-25 (board `#181`, `#224`, `#761`), at M4-J2's
@@ -90,6 +90,33 @@ runs.
 notice's precedent. The gesture cannot mint one; `Delete` on a member can leave
 one. Removing the last member does **not** remove the set: an empty set is not a
 dangling reference, and it is what somebody is about to refill.
+
+# Ungroup, found while building
+
+§11.85.2 through §11.85.7 left a hole, and it is where the sets a person no
+longer wants go. **The capability was already there and only the cleanup was
+missing**: the `SET` column lists `null` first, so setting both members of a pair
+to the dash already takes them out and leaves the `PortSetDef` behind with no
+members and no way to remove it. That is the *"declared, referenced by nothing"*
+row of `port_set_integrity_test`'s own failure table, arriving in an authored
+template instead of the seed.
+
+`Ctrl+Shift+G` clears `setKey`/`setRole` on the selection **and removes every set
+it leaves empty**. It is the only thing that removes a `PortSetDef`, and the rule
+that DELETING the last member does not remove the set stands beside it unchanged:
+deleting a port is somebody editing hardware, and ungrouping is somebody saying
+these ports are not a set.
+
+# Built 2026-08-25
+
+All four clauses plus the one above ship (`#224`, `a02eeef`). The role picker
+closed, `atomicConnect` got its first editor anywhere, and a set below two
+members became a notice on the `SET` column.
+
+**Two defects the widget cases caught before anyone opened the dialog**: the kind
+dropdown overflowed by 0.65 points on its longest row and painted the striped
+bar, and a stale refusal stayed on screen after the condition producing it had
+gone away.
 
 # What it does not rule
 

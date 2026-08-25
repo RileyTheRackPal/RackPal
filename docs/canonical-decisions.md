@@ -12671,7 +12671,31 @@ already exist, exactly as the `Bank` column moves between banks that already exi
 set's kind, and is **empty and disabled on a row in no set**, because a role without a set is a value
 about nothing.
 
-**11.85.8 WHAT THIS DOES NOT RULE.** It does not touch passthrough pairing, which is M4-J3 (`#225`)
+**11.85.8 `Ungroup` (`Ctrl+Shift+G`), FOUND WHILE BUILDING AND ADDED HERE RATHER THAN INVENTED IN
+CODE.** §11.85.2 through §11.85.7 leave a hole, and the hole is where the SETS a person no longer
+wants go. **The capability was already there and only the cleanup was missing**: the `SET` column
+lists `null` first, so setting both members of a pair to `—` already takes them out of the set, and
+leaves the `PortSetDef` behind with no members and no way to remove it. That is the *"declared,
+referenced by nothing"* row of `port_set_integrity_test`'s own failure table, arriving in an authored
+template instead of the seed.
+
+So the inverse gesture is built: `Ctrl+Shift+G` clears `setKey` and `setRole` on the selection **and
+removes every set it leaves with no members**. It is the **only** thing in the product that removes a
+`PortSetDef`, and §11.85.6's rule that deleting the last member does NOT remove the set stands
+unchanged beside it. The two are different acts: deleting a port is somebody editing the hardware,
+and a set left waiting for its second member back is the right outcome; ungrouping is somebody saying
+in so many words that these ports are not a set, and there the heading goes with them.
+
+**No dialog and no preview**, on `Remove (ports stay)`'s argument one type over (§11.84.7): it
+removes a grouping, touches no value anybody typed, the grid redraws it instantly, and one `Ctrl+Z`
+puts it back.
+
+**`Ctrl+Shift+G` IS THE ONLY REUSED TRIGGER IN THE BUILDER SCOPE**, and it is reused because the two
+acts are inverses a person already expects to be spelled that way. `BuilderMoveRowIntent(up:)` is not
+the precedent and was checked against: `Alt+↑`/`Alt+↓` are one act aimed two ways and share an
+intent, while these are a create and a delete and get two, for the reason `LabelKey` splits them.
+
+**11.85.9 WHAT THIS DOES NOT RULE.** It does not touch passthrough pairing, which is M4-J3 (`#225`)
 and a different model. It does not give `SetKind` a job in any drawing, schedule or rule: §11.85.3
 makes it the source of a role vocabulary in the BUILDER, and nothing downstream reads it yet. And it
 does not put a set on the schematic symbol or in the panel layout, both of which are banks' work
