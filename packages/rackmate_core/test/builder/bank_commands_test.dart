@@ -388,4 +388,70 @@ void main() {
       expect(b.banks.map((x) => x.key), ['inputs', 'other']);
     });
   });
+
+  group('the mirror preview is read off the plan, so it cannot lie', () {
+    test('one row per copied port, before and after taken from the plan', () {
+      final b = _ordered()
+        ..ports.add(
+          _port('inputs.3', bank: 'inputs', dir: PortDirection.busNode),
+        );
+      final plan = planMirrorBank(
+        b,
+        sourceBankKey: 'inputs',
+        label: 'OUT',
+        abbr: 'OUT',
+      );
+
+      final rows = mirrorBankImpact(b, plan, sourceBankKey: 'inputs');
+      expect(rows.length, plan.ports.length);
+      for (var i = 0; i < rows.length; i++) {
+        expect(rows[i].after, portDirectionLabel(plan.ports[i].direction));
+      }
+      expect(rows.map((r) => r.key), ['inputs.1', 'inputs.2', 'inputs.3']);
+    });
+
+    test('ONLY THE ROWS THAT KEEP A DIRECTION CARRY A NOTE, which is what '
+        'makes the summary say how many to check', () {
+      final b = _ordered()
+        ..ports.add(
+          _port('inputs.3', bank: 'inputs', dir: PortDirection.busNode),
+        );
+      final plan = planMirrorBank(
+        b,
+        sourceBankKey: 'inputs',
+        label: 'OUT',
+        abbr: 'OUT',
+      );
+
+      final rows = mirrorBankImpact(b, plan, sourceBankKey: 'inputs');
+      expect(portImpactNoteCount(rows), 1);
+      expect(portImpactChanges(rows).length, 2);
+      expect(
+        rows.singleWhere((r) => r.key == 'inputs.3').note,
+        contains('has no opposite'),
+      );
+      // `portImpactSummary` lives in `rackmate_ui`, which core may not
+      // import; the sentence those two numbers produce is asserted there.
+    });
+
+    test('the rows the preview shows are the ports the commands add', () {
+      final b = _ordered();
+      final plan = planMirrorBank(
+        b,
+        sourceBankKey: 'inputs',
+        label: 'OUT',
+        abbr: 'OUT',
+      );
+
+      final rows = mirrorBankImpact(b, plan, sourceBankKey: 'inputs');
+      final added = [
+        for (final command in mirrorBankCommands(plan))
+          if (command is AddPortCommand) command.port,
+      ];
+      expect(added.length, rows.length);
+      for (var i = 0; i < rows.length; i++) {
+        expect(rows[i].after, portDirectionLabel(added[i].direction));
+      }
+    });
+  });
 }

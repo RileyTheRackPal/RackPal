@@ -38,8 +38,11 @@
 // "a state the grid already draws and a person can already see".
 import 'package:rackmate_core/src/builder/port_commands.dart'
     show AddBankCommand, AddPortCommand;
+import 'package:rackmate_core/src/builder/port_impact.dart' show PortImpactRow;
 import 'package:rackmate_core/src/builder/port_move_to_bank.dart'
     show movableBanks;
+import 'package:rackmate_core/src/builder/port_table.dart'
+    show portDirectionLabel;
 import 'package:rackmate_core/src/builder/quick_add.dart' show uniqueBankKey;
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/commands/label_key.dart';
@@ -375,3 +378,42 @@ List<Command<TemplateBody>> mirrorBankCommands(MirrorBankPlan plan) => [
   AddBankCommand(plan.bank),
   for (final port in plan.ports) AddPortCommand(port),
 ];
+
+/// DR-085 §11.84.3's preview: what [plan] does to each port it copies.
+///
+/// **DERIVED FROM THE PLAN, NOT COMPUTED BESIDE IT.** `port_impact.dart`
+/// states the rule this family runs on: *"a preview that is a second
+/// implementation of the write is a preview that can lie, and a lying
+/// preview is worse than none"*. So `after` is read off the port the
+/// command will actually add, and the two cannot disagree.
+///
+/// The KEY column shows the SOURCE port, because the copies do not exist
+/// yet and the key column's job is to be findable in the grid behind the
+/// dialog. The note is carried only by the rows a direction is NOT flipped
+/// on, which is what makes `portImpactSummary` say *"16 rows matched, 12
+/// will change, 4 to check"*: DR-085's clause, in a sentence.
+List<PortImpactRow> mirrorBankImpact(
+  TemplateBody body,
+  MirrorBankPlan plan, {
+  required String sourceBankKey,
+}) {
+  // THE SAME WALK `planMirrorBank` MAKES, so row i describes port i. A
+  // different iteration here (declared order, say) would pair a row with
+  // a copy of some other port and the list would be confidently wrong.
+  final source = [
+    for (final port in body.ports)
+      if (port.bankKey == sourceBankKey) port,
+  ];
+  return [
+    for (var i = 0; i < source.length && i < plan.ports.length; i++)
+      (
+        key: source[i].key.v,
+        before: portDirectionLabel(source[i].direction),
+        after: portDirectionLabel(plan.ports[i].direction),
+        note: plan.ports[i].direction == source[i].direction
+            ? '${portDirectionLabel(source[i].direction)} has no opposite, '
+                  'so the copy keeps it.'
+            : null,
+      ),
+  ];
+}

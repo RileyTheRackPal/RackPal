@@ -56,6 +56,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/builder/bank_tree.dart';
 import 'package:rackmate_ui/src/builder/batch_inspector.dart';
 import 'package:rackmate_ui/src/builder/change_type_dialog.dart';
 import 'package:rackmate_ui/src/builder/find_replace_dialog.dart';
@@ -100,6 +101,8 @@ class PortGrid extends StatefulWidget {
     required this.onBatchContext,
     this.portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
     this.quickAddAutofocus = true,
+    this.bankActions,
+    this.bankJump,
     super.key,
   });
 
@@ -115,6 +118,20 @@ class PortGrid extends StatefulWidget {
   /// can be the batch inspector (M4-F2). Null when fewer than two rows
   /// are selected, which is the dock's own "not in this state".
   final ValueChanged<PortBatchContext?> onBatchContext;
+
+  /// docs/06 §4.6's bank menu, on the band header. Null draws no menu,
+  /// which is the state every caller that is not the builder shell is in.
+  final BankActions? bankActions;
+
+  /// The bank the tree last asked the grid to show, and a nonce.
+  ///
+  /// **A NONCE RATHER THAN A BARE KEY, and it is load-bearing twice.**
+  /// Clicking the same bank twice must scroll twice, and the grid is
+  /// REBUILT FROM SCRATCH when the rail switches out of another section,
+  /// so the jump has to be honoured on a first build as readily as on an
+  /// update. A value that changes on every request satisfies both; a key
+  /// compared against the last one satisfies neither.
+  final ({String? bankKey, int nonce})? bankJump;
 
   /// Whether Quick Add takes focus on entering the section.
   ///
@@ -1115,6 +1132,8 @@ class _PortGridState extends State<PortGrid> {
                                   onBatchWrite: _writeBatch,
                                   onReorder: _reorder,
                                   dragDisabled: _sort != null,
+                                  bankActions: widget.bankActions,
+                                  jump: widget.bankJump,
                                 ),
                         ),
                       ],
@@ -1415,7 +1434,7 @@ class _SortBadge extends StatelessWidget {
   }
 }
 
-class _Bands extends StatelessWidget {
+class _Bands extends StatefulWidget {
   const _Bands({
     required this.table,
     required this.scale,
@@ -1439,6 +1458,8 @@ class _Bands extends StatelessWidget {
     required this.onBatchWrite,
     required this.onReorder,
     required this.dragDisabled,
+    required this.bankActions,
+    required this.jump,
   });
 
   final PortTable table;
@@ -1472,10 +1493,124 @@ class _Bands extends StatelessWidget {
   /// see it. The keyboard's half of this refuses in words.
   final bool dragDisabled;
 
+  /// docs/06 §4.6's bank menu, hung off the band header. Null draws none.
+  final BankActions? bankActions;
+
+  /// The bank the rail's tree last asked for, with its nonce.
+  final ({String? bankKey, int nonce})? jump;
+
+  @override
+  State<_Bands> createState() => _BandsState();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// JUMPING TO A BAND, AND WHY IT IS A LOOP RATHER THAN AN OFFSET
+// ═══════════════════════════════════════════════════════════════════════
+// docs/06 §2 makes the bank tree "the primary navigation once you are in
+// the Ports section", so clicking a bank has to put its band under the
+// person's eyes. Two obvious implementations are both wrong here:
+//
+//   * COMPUTE THE OFFSET. A band is a 30-point header plus N rows, and a
+//     row has no declared height: it is as tall as a `TextField` plus its
+//     borders at the current text scale. Any arithmetic would have to
+//     invent a row height, and the first person to change the row's
+//     padding would silently break navigation with every gate green.
+//
+//   * `Scrollable.ensureVisible` ON THE HEADER. Correct, and it needs a
+//     `BuildContext`, which a `SliverPersistentHeader` only has once it
+//     has been laid out. A band four screens down has never been built,
+//     so its `GlobalKey` holds nothing to reveal.
+//
+// So: page toward the target a viewport at a time until its header exists,
+// then let `ensureVisible` place it exactly. No invented constants, and
+// the loop is bounded by the scroll extent divided by the viewport. The
+// intermediate frames read as a fast scroll, which is what the gesture is.
+class _BandsState extends State<_Bands> {
+  final _scroll = ScrollController();
+
+  /// One key per band, so a built header can be found and revealed.
+  final _headerKeys = <String?, GlobalKey>{};
+
+  /// The last jump served, so a rebuild does not re-scroll and a repeat
+  /// click on the same bank does.
+  int? _servedNonce;
+
+  @override
+  void initState() {
+    super.initState();
+    _serve();
+  }
+
+  @override
+  void didUpdateWidget(_Bands oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _serve();
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _serve() {
+    final jump = widget.jump;
+    if (jump == null || jump.nonce == _servedNonce) return;
+    _servedNonce = jump.nonce;
+    // AFTER THE FRAME, because on the first build of this widget the
+    // controller has no position attached to it yet.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reveal(jump.bankKey));
+  }
+
+  Future<void> _reveal(String? bankKey) async {
+    final bands = widget.table.bands;
+    final target = bands.indexWhere((band) => band.bankKey == bankKey);
+    // A DECLARED BANK WITH NO PORTS HAS NO BAND, so there is nothing to
+    // scroll to and nothing to apologise for: the tree still marks it as
+    // the current bank and its menu still works.
+    if (target < 0) return;
+
+    // Bounded by the number of pages the grid has, plus slack for the
+    // frame in which the target finally builds.
+    var guard = 0;
+    while (mounted && _scroll.hasClients) {
+      if (_headerKeys[bankKey]?.currentContext != null) break;
+      final position = _scroll.position;
+      final built = [
+        for (var i = 0; i < bands.length; i++)
+          if (_headerKeys[bands[i].bankKey]?.currentContext != null) i,
+      ];
+      final down = built.isEmpty || target > built.last;
+      final next = down
+          ? position.pixels + position.viewportDimension
+          : position.pixels - position.viewportDimension;
+      final clamped = next.clamp(0.0, position.maxScrollExtent);
+      if (clamped == position.pixels) break;
+      position.jumpTo(clamped);
+      if (++guard >
+          2 + position.maxScrollExtent ~/ position.viewportDimension) {
+        break;
+      }
+      await WidgetsBinding.instance.endOfFrame;
+    }
+    if (!mounted) return;
+    // ITS OWN `mounted`, NOT THIS STATE'S. The context belongs to a
+    // `SliverPersistentHeader` that the loop above may have scrolled back
+    // out of the tree while this state stayed perfectly alive.
+    final found = _headerKeys[bankKey]?.currentContext;
+    if (found == null || !found.mounted) return;
+    await Scrollable.ensureVisible(
+      found,
+      duration: const Duration(milliseconds: 160),
+      curve: Curves.easeOut,
+    );
+  }
+
   @override
   Widget build(BuildContext context) => CustomScrollView(
+    controller: _scroll,
     slivers: [
-      for (final band in table.bands) ...[
+      for (final band in widget.table.bands) ...[
         // PINNED, which is what a sticky band header means: a person
         // forty rows into the HDMI inputs must still be able to see that
         // these are the HDMI inputs.
@@ -1483,12 +1618,17 @@ class _Bands extends StatelessWidget {
           pinned: true,
           delegate: _BandDelegate(
             band: band,
-            collapsed: collapsed.contains(band.bankKey),
-            onToggle: () => onToggleBand(band.bankKey),
+            // THE KEY IS WHAT `ensureVisible` NEEDS, and it is minted per
+            // bank key rather than per build so that it survives the
+            // rebuild a jump causes.
+            headerKey: _headerKeys.putIfAbsent(band.bankKey, GlobalKey.new),
+            collapsed: widget.collapsed.contains(band.bankKey),
+            onToggle: () => widget.onToggleBand(band.bankKey),
+            bankActions: widget.bankActions,
             theme: Theme.of(context),
           ),
         ),
-        if (!collapsed.contains(band.bankKey))
+        if (!widget.collapsed.contains(band.bankKey))
           // ONE REORDERABLE LIST PER BAND, WHICH IS WHY THE BAND EDGE IS
           // A WALL (DR-064). Flutter's reorderable lists do not hand an
           // item to a sibling list, and the alternative was one flat list
@@ -1504,7 +1644,7 @@ class _Bands extends StatelessWidget {
             // `length` rather than `length - 1`. Flutter deprecated it for
             // exactly that off-by-one, and the replacement has already
             // subtracted.
-            onReorderItem: (from, to) => onReorder(band, from, to),
+            onReorderItem: (from, to) => widget.onReorder(band, from, to),
             // NO LIFT ANIMATION ON A GRID ROW. The default proxy scales
             // and elevates the dragged item, which on a row 1400 points
             // wide with cell borders reads as the row breaking apart
@@ -1524,28 +1664,31 @@ class _Bands extends StatelessWidget {
               key: ValueKey(band.rows[index].port.key.v),
               row: band.rows[index],
               dragIndex: index,
-              scale: scale,
-              registries: registries,
-              portSets: portSets,
-              actions: actions,
-              keyFollowsLabel: keyFollows(band.rows[index].port),
-              keyIsPublished: isPublished(band.rows[index].port.key.v),
-              takenKeys: takenKeys,
-              columns: columns,
-              pairedWith: pairedWith[band.rows[index].port.key.v],
+              scale: widget.scale,
+              registries: widget.registries,
+              portSets: widget.portSets,
+              actions: widget.actions,
+              keyFollowsLabel: widget.keyFollows(band.rows[index].port),
+              keyIsPublished: widget.isPublished(band.rows[index].port.key.v),
+              takenKeys: widget.takenKeys,
+              columns: widget.columns,
+              pairedWith: widget.pairedWith[band.rows[index].port.key.v],
               issues:
-                  issues[band.rows[index].port.key.v] ?? const <PortIssue>[],
+                  widget.issues[band.rows[index].port.key.v] ??
+                  const <PortIssue>[],
               genderApplies: portGenderApplies(
-                registriesForGender,
+                widget.registriesForGender,
                 band.rows[index].port.connector,
               ),
-              onKeyTouched: onKeyTouched,
-              selected: selection.contains(band.rows[index].port.key.v),
-              onToggleRow: onToggleRow,
-              onTapRow: onTapRow,
-              onColumnFocused: onColumnFocused,
-              onBatchWrite: onBatchWrite,
-              dragDisabled: dragDisabled,
+              onKeyTouched: widget.onKeyTouched,
+              selected: widget.selection.contains(
+                band.rows[index].port.key.v,
+              ),
+              onToggleRow: widget.onToggleRow,
+              onTapRow: widget.onTapRow,
+              onColumnFocused: widget.onColumnFocused,
+              onBatchWrite: widget.onBatchWrite,
+              dragDisabled: widget.dragDisabled,
             ),
           ),
       ],
@@ -1556,14 +1699,25 @@ class _Bands extends StatelessWidget {
 class _BandDelegate extends SliverPersistentHeaderDelegate {
   _BandDelegate({
     required this.band,
+    required this.headerKey,
     required this.collapsed,
     required this.onToggle,
+    required this.bankActions,
     required this.theme,
   });
 
   final PortTableBand band;
+
+  /// What `_BandsState` reveals when the rail's tree asks for this bank.
+  final GlobalKey headerKey;
+
   final bool collapsed;
   final VoidCallback onToggle;
+
+  /// docs/06 §4.6's bank menu. Null draws none, which is what every
+  /// caller outside the builder shell gets.
+  final BankActions? bankActions;
+
   final ThemeData theme;
 
   static const double _height = 30;
@@ -1587,7 +1741,16 @@ class _BandDelegate extends SliverPersistentHeaderDelegate {
     final foreground = band.isUndeclaredBank
         ? scheme.onErrorContainer
         : scheme.onSurface;
+    // ONLY A DECLARED BANK GETS A MENU. `Not in a bank` has no `BankDef`
+    // to rename or remove, and an undeclared key has none either: the fix
+    // for that band is in the `Bank` column, not in a menu that would have
+    // to mint the definition it is complaining about.
+    final actions = bankActions;
+    final menu = actions == null || band.bankKey == null || band.bank == null
+        ? null
+        : bankMenuItems(bankKey: band.bankKey!, actions: actions);
     return Material(
+      key: headerKey,
       color: background,
       child: InkWell(
         onTap: onToggle,
@@ -1634,6 +1797,23 @@ class _BandDelegate extends SliverPersistentHeaderDelegate {
                     color: foreground,
                   ),
                 ),
+                if (menu != null)
+                  MenuAnchor(
+                    menuChildren: menu,
+                    builder: (context, controller, child) => IconButton(
+                      icon: Icon(Icons.more_vert, size: 16, color: foreground),
+                      tooltip: 'Bank actions',
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 24,
+                        minHeight: 24,
+                      ),
+                      onPressed: () => controller.isOpen
+                          ? controller.close()
+                          : controller.open(),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -1644,7 +1824,10 @@ class _BandDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(_BandDelegate old) =>
-      old.band != band || old.collapsed != collapsed || old.theme != theme;
+      old.band != band ||
+      old.collapsed != collapsed ||
+      old.bankActions != bankActions ||
+      old.theme != theme;
 }
 
 class _PortRow extends StatelessWidget {
