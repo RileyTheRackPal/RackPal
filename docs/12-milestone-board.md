@@ -668,7 +668,9 @@ milestone's **closing commit message**, and that part works, `b94bd60` for M0 an
 M1's exporter are both detailed and honest. What is missing is the **index from milestone to
 commit**, which is what this file is.
 
-### 4.11 Owed: DR-006's propagation into the derived documents
+### 4.11 DISCHARGED: DR-006's propagation into the derived documents
+
+**All nine sites were paid on 2026-08-03 and this section is kept as the record of what was owed, not as a list of work.** Re-verified 2026-08-25 before the M5 jump: every site below carries its own *(Owed edit, paid 2026-08-03)* marker in the document it belongs to, and docs/09 §4 M6's carries the sentence that makes this section worth keeping: *"a board task had already been written against the stale sentence and had to be withdrawn."* **A debt list that stays phrased as a debt after it is paid sends the next reader to chase nine finished things**, which is the same failure one direction over.
 
 DR-006 (canon §11.6) is recorded, and canon §12.9 indexes what it supersedes. Parts 1–3 of the
 canon carry their pointers already (canon §12.8, rows 12–17). **The derived documents do not**, and
@@ -4169,6 +4171,21 @@ subdivided usefully; `M5-I` is three assertions about one property.
 IDs and the counts. It did **not** re-read each task's description against the catalogue row it
 implements, so a task whose body describes the rule wrongly would still be there. That is the
 `re-read a task against canon` pass, and it belongs to whoever picks up each rule.
+
+#### 5.4.3 M5 landing is the trigger on the last open canon question
+
+**§10.11, *what the beta gate actually is*, is the only entry in canon §10 still owing an answer**
+(canon §13), and it was **DEFERRED 2026-08-03 with a trigger rather than a date**: held *"until M5
+(Validation) lands and the UI is largely frozen, on the ground that the bar is easier to state
+against a product than against a plan."*
+
+**So starting M5 starts the clock on it.** The answer is owed **before the M6 recruiting ask
+(M6-J5)** and not before M9, because you cannot ask three people to commit real jobs without saying
+what you will judge. Recorded here rather than left in §13 alone, because a trigger that fires on a
+milestone belongs in that milestone's section: this is where somebody looks when they pick M5 up, and
+§13 is where somebody looks when they are already thinking about open questions.
+
+Nothing about M5's own scope depends on it. It is an M6 input that M5 unblocks.
 
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 
