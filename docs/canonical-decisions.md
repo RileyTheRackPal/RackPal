@@ -13186,11 +13186,47 @@ accident, arriving with no way to carry the second cue §11.89.6 requires. Statu
 `ConsoleStatus`, which returns a colour **and** the ink that belongs on it so a caller cannot
 separate them. The slot is still populated, so a stray use is at least the right hue.
 
-**TWO THINGS INSIDE THIS RULING ARE NOT BUILT AND ARE NOT IMPLIED TO BE.** §11.89.6 has **no
-gate**: "hue is never the only cue" is a property of a WIDGET, and no assertion over ARGB integers
-can see a marker, so `console_palette_test.dart`'s last group asserts nothing and says why. It is
-`#774`. And the 28 sites at §11.89.8 still request `w600`/`w700` and still synthesise, now from 500;
-retargeting them is `#775` and is a visual judgement rather than a mechanical edit.
+**BOTH OF THE THINGS THIS SUBSECTION ONCE LISTED AS UNBUILT ARE NOW BUILT**, and how §11.89.6 got
+built is worth recording because it is not what `#774` was filed expecting.
+
+**§11.89.6 GOT A CONSTRUCTION, NOT A GATE, AND THE REASON IS VACUITY.** The obvious check is over
+the display list: find status markers emitted as colour alone. **Nothing in this project draws a
+status marker**, so that gate would have counted zero offenders and passed forever, which is the
+exact shape this corpus keeps finding in its own suite. A gate whose subject does not exist is not
+a gate.
+
+So the rule was made **structural**. `ConsoleStatus` already refuses to hand out a fill without the
+ink that belongs on it; `StatusMarker` now refuses to hand out a fill without a **shape**, and there
+is no constructor in it that takes a colour and draws a rectangle. Two tests hold it:
+`status_marker_test.dart` paints the five at ONE colour and requires them to differ, which is the
+ruling read literally and rasterised rather than compared by shape NAME; and
+`status_marker_source_test.dart` checks that `ConsoleStatus.fill` is reachable from one file, so the
+bypass is gated even though the rule is not.
+
+**THE CIRCLE IS AN OUTLINE AND CRITICAL IS AN X**, both for the same reason. A filled round mark is
+precisely the "bare coloured dot" this ruling forbids, so the set must not contain one; and the
+conventional severity octagon reads as a circle below about 24 px, which would have made the two
+most different severities the two hardest to tell apart. That is asserted, not asserted about.
+
+**AND THE ONE CHARACTER LEFT ON FALLBACK TURNED OUT TO BE THE WRONG CHARACTER.** §11.89.8's glyph
+gate carried a single exemption: `U+03A3`, the structure matrix's sum header, recorded as the one
+addition this project would not make because a letterform has a design where a triangle has only a
+construction. Both alternatives were real and both answered the wrong question. Unicode separates
+the LETTER `U+03A3` from the N-ARY SUMMATION operator `U+2211`; a column that adds a row up wants
+the operator; and Jost carries `U+2211` and not `U+03A3`. **The correct character is also the one
+that renders**, so no glyph was drawn, no copy changed and no exemption remains. The gate's exempt
+set is now empty and is kept only to make the next entry argue past this one: a missing glyph may be
+a missing character rather than a missing design.
+
+**WHAT IS STILL NOT GATED, said plainly.** The source check reads text. A widget that obtained the
+colour indirectly, or through `colorScheme.error`, is invisible to it. The `error` slot is a known
+hole and is accepted deliberately: it is populated with Critical's value so a stray use is at least
+the right hue.
+
+§11.89.8's 28 sites were retargeted at `#775`. They asked for `w600`/`w700` against a bundle
+carrying one real weight, so the two-tier emphasis was notional; all 28 now use `kConsoleEmphasis`,
+and a gate reads the weights the pubspec declares **per family** and scans for requests the bundle
+cannot draw.
 
 **11.89.10 WHAT THIS DOES NOT RULE.** It does not touch **CR-078**, the eight domain hues, PAL-1 or
 the selection yellow. It does not settle **user-customisable accent colours**, which are `#565` and
