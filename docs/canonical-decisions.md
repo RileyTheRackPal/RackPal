@@ -13321,6 +13321,93 @@ here.
 
 ---
 
+### 11.91 DR-092 · The Matrix archetype emits the port §4.3 could not, and four defaults it had no opinion on
+
+**Settled by the user on 2026-08-26** (`#220`, M4-I1), from a census run against docs/06 §4.3 and §9
+before the generator was written.
+
+**11.91.1 §4.3'S CHECKBOX LIST EMITS 67 PORTS AND §9.2 PROMISES 68.** §4.3 offers Matrix I/O as
+*"N inputs × M outputs, connector per side, with checkboxes for the usual companions: mirrored
+outputs, per-output audio de-embed, per-output IR, control (LAN + RS-232), AC inlet"*. §9's target
+device is *"16 HDMI inputs, 16 HDBaseT outputs on RJ45, 16 mirrored HDMI outputs, 16 IR emitter
+outputs, LAN, RS-232, IR in, C14 inlet, 68 ports across 6 banks"*, and §9.2's step 6 says the button
+emits **"68 ports, 6 banks"**.
+
+The four bulk rows are 64. Control as §4.3 writes it is two. The inlet is one. **67.** The `IR IN`
+that §9.1 types at step 12 has no checkbox and therefore **no producer**, which is
+`ask what produces each task's input` arriving one level down from where that practice found it: the
+feature's own worked example names a port the feature's own control list cannot make.
+
+**11.91.2 IR IN RIDES THE PER-OUTPUT IR TICK.** Control emits LAN and RS-232 always, and adds the IR
+receiver input **only when per-output IR is also ticked**. Three reasons, in order of weight:
+
+1. **It is what the device is.** A matrix carrying IR emitter outputs is routing IR, and IR has to
+   arrive from somewhere. A matrix with no emitters has nothing to route, and an IR input on it is a
+   port somebody deletes.
+2. **It costs no step.** §9.2's step 5 is one tick group; the conditional fires off a box already
+   being ticked, so the seven-step count is unchanged.
+3. **It reaches 68 across 6 banks exactly**, which is the number the exit criterion is measured in.
+
+Rejected: an unconditional third port, which gives every matrix an orphan receiver; and a fourth
+checkbox, which is honest and free in step count and is still one more decision for a user who by
+the criterion's own wording **has seen the tool once**.
+
+**The two IR families are not interchangeable and the generator picks between them.**
+`ctl.ir_emitter` for the outputs, `ctl.ir_receiver` for the input. That is DR-060 §11.59.11's
+direction rule applied by a generator rather than by a parser.
+
+**11.91.3 THE GENERATOR WRITES `pinoutVariant`, AND THE DSL PATH'S SILENCE IS A GAP RATHER THAN A
+PRECEDENT.** `port_validation.dart` raises the file's only hardware warning when an IR port's pinout
+is blank, on AC-052 and on the destruction `seed_registries.dart` describes where the two families
+are declared: an emitter plugged into a receiver jack meets +12 V on the ring. The thirteen-step DSL
+path leaves all seventeen blank, because a parser cannot know more than the token it was handed.
+
+**A generator can.** It chose the family, so it knows the pinout. Emitters take `mono-tip-sleeve`
+and the receiver takes `xantech-stereo`, which are the strings the seeded catalog already writes in
+fourteen places rather than a new vocabulary invented here.
+
+This makes the two paths produce templates that differ, and the difference is the point: the
+archetype path ships clean where the DSL path ships seventeen warning dots. Closing the DSL side is
+not this ruling's business, and it is not free either: `16 ir35 out` would have to infer a pinout
+from a family, which is the one inference AC-052 wants a person to make deliberately.
+
+**11.91.4 AUDIO DE-EMBED IS BALANCED ON A 3-PIN EUROBLOCK.** `audio.line_bal`'s registry default
+connector is `conn.xlr3`, which is right for the family in general and wrong for every rack matrix
+ever built. The de-embed row defaults to `audio.line_bal` on `conn.euroblock_3`, one port per
+output, and the connector picker stays editable: this is a **default and not a rule**.
+
+Rejected: unbalanced RCA, which is correct on consumer matrices and turns 16 outputs into 32 ports
+because L and R are two connectors; and leaving the family default, which is a re-pick on every
+generate.
+
+**11.91.5 "CONNECTOR PER SIDE" IS AN ILLUSTRATION AND THE CONTROL IS A TYPE.** A connector alone
+cannot express either side of the worked example: `rj45` defaults to `net.ethernet` and the output
+side is `video.hdbaset` **on the same connector**, which is the orthogonality DR-060 §11.59.4 exists
+to preserve. So each side offers the pair Quick Add's field mode already offers, family and
+connector, through `family_picker.dart` rather than a second control, and a named connector
+overrides the family's default exactly as a second DSL token does.
+
+**11.91.6 "EMITS 4 TO 7 BANKS" IS AN ILLUSTRATION AND THE RANGE IS 2 TO 7.** Inputs and outputs are
+the only two rows the dialog cannot switch off. Every companion is a checkbox and **all five default
+off**, which is what §9.2's step 5 says by asking the user to tick four of them. The 4 describes a
+matrix somebody would actually author; it is not a floor the generator enforces.
+
+**11.91.7 THE GENERATOR OWNS NO SECOND BUILDER.** It emits `QuickAddPlan`s and Quick Add's own
+`buildQuickAdd` turns them into commands, against **one shared allocator** so that six banks in one
+action cannot mint two ports with the same key. A generator that constructed `PortDef`s itself would
+be a second copy of the bank-reuse rule, the label expander and the ordinal allocator, which is the
+objection `uniqueSlugKey`'s own comment already records against a third derivation of a key.
+
+**11.91.8 WHAT THIS DOES NOT RULE.** It does not add `poe:`, `z:`, `dte` or `tap:` to the DSL, which
+docs/12 §5.3.6 records as deliberately absent; the archetypes write those fields on the ports they
+construct, which is what the grid's column packs already do. It does not settle the Switch
+archetype's defaults (`#221`) or the paste sheet's synonym table (`#222`). And it pairs nothing:
+`PassthroughPairDef` is M4-J's, and a matrix's mirrored output is a second output rather than a
+passthrough (docs/06 §4.6).
+
+---
+
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

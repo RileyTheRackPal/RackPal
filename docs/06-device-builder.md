@@ -181,11 +181,30 @@ Parse errors are *designed*, not thrown: the offending span is underlined in the
 
 ### 4.3 Archetype generators
 
-Three buttons above Quick Add that emit whole topologies:
+Three buttons **directly below Quick Add** that emit whole topologies:
 
-- **Matrix I/O…**: *N* inputs × *M* outputs, connector per side, with checkboxes for the usual companions: mirrored outputs, per-output audio de-embed, per-output IR, control (LAN + RS-232), AC inlet. Emits 4–7 banks in one action.
+- **Matrix I/O…**: *N* inputs × *M* outputs, a type per side, with checkboxes for the usual companions: mirrored outputs, per-output audio de-embed, per-output IR, control (LAN + RS-232 + IR IN), AC inlet. Emits 2–7 banks in one action.
 - **Switch ports…**: *N* access ports + *M* uplinks, PoE standard and per-port class, SFP form factor, management port, redundant PSU.
 - **Paste from spreadsheet**: TSV/CSV with a column-mapping sheet, sharing the engine with the Structure CSV import.
+
+> **Five clauses here were illustrations and DR-092 (§11.91) is the specification.** *(a)* **"above
+> Quick Add"** contradicts §2's own layout sketch, which draws the buttons under the bar, and the
+> invariant §9.3 rests on: the fast path is the first thing under the hand on entering the section,
+> so nothing gets inserted above it. *(b)* **"connector per side"** cannot express either side of §9's
+> worked example, because `rj45` defaults to `net.ethernet` while the output side is `video.hdbaset`
+> on that same connector; each side offers the family-and-connector pair Quick Add's field mode
+> offers, through the same picker. *(c)* **"control (LAN + RS-232)"** is two ports, and §9's Control
+> bank holds three: the `IR IN` of §9.1 step 12 had no producer in this list at all. It now arrives
+> with **per-output IR**, because a matrix that flashes emitters is routing IR and a matrix with no
+> emitters has nothing to route. *(d)* **"4–7 banks"** counts a matrix somebody would actually
+> author; inputs and outputs are the only two rows that cannot be switched off, and all five
+> companions default **off**, which is what §9.2's step 5 says by asking for four ticks. *(e)* The
+> de-embed row defaults to **balanced audio on a 3-pin Euroblock**, not to `audio.line_bal`'s
+> registry default of XLR3, which is right for the family and wrong for every rack matrix ever built.
+>
+> The generator also **writes `pinoutVariant`** on the IR ports it makes, `mono-tip-sleeve` for
+> emitters and `xantech-stereo` for the receiver. It chose the family, so it knows the pinout, and
+> §4.5's validation dot would otherwise mark all seventeen (AC-052). The DSL path cannot and does not.
 
 ### 4.4 Banks and port sets: two concepts, two names
 
@@ -495,13 +514,13 @@ The M4 exit criterion is that a user who has seen the tool once authors this tem
 |---|---|---|
 | 1 | `Ctrl+Shift+N`, type `HDMI Matrix 16x16`, `Tab` `4` `Tab`, `Ctrl+Enter` | — |
 | 2 | Click **Matrix I/O…** | dialog |
-| 3 | Inputs `16`, connector `hdmi` | — |
-| 4 | Outputs `16`, connector `hdbt` | — |
-| 5 | Tick ☑ Mirrored outputs · ☑ Per-output IR · ☑ Control (LAN + RS-232) · ☑ AC inlet | — |
+| 3 | Inputs `16`, type `hdmi` | — |
+| 4 | Outputs `16`, type `hdbt` | — |
+| 5 | Tick ☑ Mirrored outputs · ☑ Per-output IR · ☑ Control · ☑ AC inlet | — |
 | 6 | `[ Generate ]` | **68 ports, 6 banks** |
 | 7 | `Ctrl+S` | saved |
 
-**7 steps.** Step 6 does the work of steps 6–13 above.
+**7 steps.** Step 6 does the work of steps 6–13 above. The 68th port is `IR IN`, which arrives inside Control because **per-output IR** is ticked (DR-092 §11.91.2); with the emitters switched off, Control is LAN and RS-232 and the template is 51 ports across 5 banks.
 
 ### 9.3 What the speed goal is measured against
 
