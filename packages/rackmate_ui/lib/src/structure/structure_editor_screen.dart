@@ -1941,6 +1941,12 @@ List<String>? structureCellChoices(
   StructureColumnId id,
   RackDocument doc, {
   bool landed = false,
+  // A SECOND PER-ROW PARAMETER, for the same reason [landed] is one:
+  // `PORT`'s menu is the free positions on the panel THIS row is landed
+  // on, so it cannot be answered per column. Null is the batch bar, which
+  // has no single row and therefore offers no positions: a bar that
+  // offered them would be aiming one position at a whole selection.
+  ScheduleEntry? row,
 }) => switch (id) {
   StructureColumnId.roughIn => RoughInStatus.values.map(roughInLabel).toList(),
   StructureColumnId.testResult => kTestCellOptions,
@@ -1993,6 +1999,12 @@ List<String>? structureCellChoices(
   // is a short list of designators rather than a registry, so it needs
   // no filtering picker.
   StructureColumnId.landing => landingCellOptions(doc, landed: landed),
+  // THE POSITIONS ON ONE PANEL, which is why DR-071 §11.70.1's objection
+  // to a menu of every free hole on the job does not reach this: it is
+  // the ports of the panel this row already landed on, typically 12 to
+  // 48, and the row is already there to be corrected.
+  StructureColumnId.landingPort =>
+    row == null ? null : landingPortCellOptions(doc, row),
   _ => null,
 };
 
@@ -2087,6 +2099,7 @@ class _DataRow extends StatelessWidget {
         id,
         doc,
         landed: structureRowIsLanded(row),
+        row: row,
       );
       // A REGISTRY-BACKED COLUMN GETS THE FILTERING PICKER INSTEAD, and
       // the split is core's answer rather than an `id ==` test here, so

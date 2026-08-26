@@ -177,6 +177,13 @@ StructureEditFn buildStructureEditAction({
         claimedRackLabels: claimedRackLabels,
         into: commands,
       ),
+      StructureColumnId.landingPort => _landingPort(
+        controller: controller,
+        edit: edit,
+        claimedPorts: claimedPorts,
+        claimedRackLabels: claimedRackLabels,
+        into: commands,
+      ),
 
       // ── the other two lengths (AC-024, M3-D/2) ─────────────────────
       // THE SAME PARSER THE AS-BUILT LENGTH USES, deliberately. Three
@@ -784,6 +791,117 @@ String? _landing({
 ///
 /// `buildSetEntityProperty` RETURNS NULL FOR "nothing to do", which is
 /// not a refusal; there is nothing to add and nothing to report.
+/// `PORT`: move a landed drop to a DIFFERENT position on the panel it is
+/// already on. `#779`.
+///
+/// WHY THIS EXISTS AT ALL, given `structureColumnIsEditable` says which
+/// hole a drop goes in is the product's job: that reasoning is right for
+/// the batch it was written for, where a person lands sixty drops and
+/// would not type sixty positions. It leaves the single case
+/// unexpressible, and a person hit exactly that. So `LANDS ON` still
+/// allocates and the batch stays cheap; this overrides one of them.
+///
+/// IT ONLY MOVES WITHIN THE CURRENT PANEL. Changing panel is `LANDS ON`'s
+/// gesture and already works. A `PORT` cell that could also re-panel
+/// would give one column two meanings and make `PP-1 · 3` ambiguous
+/// between "position 3 here" and "wherever 3 is".
+String? _landingPort({
+  required DocumentController controller,
+  required StructureCellEdit edit,
+  required Set<Uuid> claimedPorts,
+  required Set<String> claimedRackLabels,
+  required List<Command<RackDocument>> into,
+}) {
+  final wanted = edit.value.trim();
+  if (wanted.isEmpty) {
+    return 'An empty cell does not move a drop. Pick a position, or use '
+        'LANDS ON to change panel.';
+  }
+
+  final doc = controller.doc;
+  final to = doc.links[edit.linkId]?.conductors.firstOrNull?.to;
+  if (to is! PortEndpoint) {
+    return 'That drop is not landed, so it has no position to change. '
+        'Pick a panel in LANDS ON first.';
+  }
+
+  // `doc.ports` RATHER THAN THE DERIVED TABLE. `PortEndpoint` carries only
+  // a `portId`, and the materialised port already knows its device, so
+  // building a `StructureTable` here to read one field would be a second
+  // derivation of a fact the document holds directly.
+  final deviceId = doc.ports[to.portId]?.deviceId;
+  if (deviceId == null) {
+    return 'That drop is landed on a port this project no longer has.';
+  }
+  final designator = doc.devices[deviceId]?.designator ?? 'that panel';
+
+  final free = freePanelPositions(
+    doc,
+    panelDeviceId: deviceId,
+    alsoClaimed: claimedPorts,
+  );
+  final target = free
+      .where((f) => f.positionToken.toLowerCase() == wanted.toLowerCase())
+      .firstOrNull;
+  if (target == null) {
+    // "ALREADY THERE" IS NOT A FAILURE and must not read like one.
+    // `freePanelPositions` excludes the occupied position, so the row's
+    // own port is absent from `free` and would otherwise be reported as
+    // "not free", which tells a person their cable did not move when it
+    // is exactly where they asked for.
+    final onIt = doc.ports[to.portId];
+    final body = onIt == null
+        ? null
+        : bodyFor(doc.devices[deviceId]!, doc.templates);
+    final def = body?.ports
+        .where((d) => d.key == onIt?.templatePortKey)
+        .firstOrNull;
+    final current = def == null
+        ? null
+        : panelPositionToken(def, onIt?.templatePortKey?.v ?? '');
+    if (current != null && current.toLowerCase() == wanted.toLowerCase()) {
+      return null;
+    }
+    return 'Position $wanted on $designator is not free. Nothing was moved.';
+  }
+
+  final resolved = resolveRackLabel(
+    doc: doc,
+    panelDeviceId: deviceId,
+    portDesignator: target.positionToken,
+    usedRackLabels: usedRackLabels(
+      doc,
+      exceptLinkId: edit.linkId,
+      alsoUsed: claimedRackLabels,
+    ),
+  );
+
+  final built = buildMoveEndpointCommand(
+    doc: doc,
+    linkId: edit.linkId,
+    port: target.port,
+    rackLabel: resolved.label,
+    usedRackLabels: usedRackLabels(
+      doc,
+      exceptLinkId: edit.linkId,
+      alsoUsed: claimedRackLabels,
+    ),
+    now: controller.clock.nowUtc(),
+    actor: controller.actor,
+  );
+  switch (built) {
+    case MoveEndpointRefused(:final reason):
+      return reason;
+    case MoveEndpointReady(:final command):
+      into.add(command);
+      claimedPorts.add(target.port.portId);
+      if (command.rewritesRackLabel) {
+        if (resolved.label case final l?) claimedRackLabels.add(l);
+      }
+      return null;
+  }
+}
+
 String? _plain<T>({
   required DocumentController controller,
   required StructureCellEdit edit,

@@ -344,6 +344,17 @@ enum StructureColumnId {
   // is a gesture rather than a value: picking a panel here punches the
   // drop down onto its next free position.
   landing,
+
+  // `#779`. WHICH position, once [landing] has chosen the panel.
+  //
+  // ADDITIVE, AND THAT IS THE WHOLE DESIGN. `structureColumnIsEditable`
+  // explains why [landing] allocates rather than asks: *"which hole a
+  // drop goes in is the product's job and not something a person should
+  // have to type sixty times"*. That reasoning is right for the batch it
+  // was written for and leaves the single case unexpressible, which is
+  // what a person hit. So [landing] still allocates and sixty drops stay
+  // cheap; this column overrides ONE of them afterwards.
+  landingPort,
 }
 
 /// §4.1's eight, in the wireframe's own left-to-right order.
@@ -395,6 +406,7 @@ const List<StructureColumnId> kStructureOptionalColumns = <StructureColumnId>[
   // default column that says whether a drop is landed, and this one is
   // how it gets that way.
   StructureColumnId.landing,
+  StructureColumnId.landingPort,
   // OPTIONAL, NOT A NINTH DEFAULT (DR-067 §11.66.2). §4.1's eight are a
   // ruled list answering "what am I pulling and where does it land", and
   // a class is not that question: it is normally derived and normally
@@ -457,6 +469,7 @@ String structureColumnHeader(StructureColumnId id) => switch (id) {
   StructureColumnId.notes => 'NOTES',
   StructureColumnId.linkClass => 'CLASS',
   StructureColumnId.landing => 'LANDS ON',
+  StructureColumnId.landingPort => 'PORT',
 };
 
 /// Points, at the same scale `kPullSheetColumns` uses, so the editor and
@@ -490,6 +503,7 @@ double structureColumnWidth(StructureColumnId id) => switch (id) {
   // `PP-1 · 01` plus room for a longer designator. Wider than `RACK LBL`
   // because it carries two identifiers rather than one.
   StructureColumnId.landing => 104,
+  StructureColumnId.landingPort => 64,
 };
 
 /// Whether a person can type into this column.
@@ -585,6 +599,7 @@ bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
   // `@panel=` does, because which hole a drop goes in is the product's
   // job and not something a person should have to type sixty times.
   StructureColumnId.landing => true,
+  StructureColumnId.landingPort => true,
 
   _ => false,
 };
@@ -1024,6 +1039,14 @@ String structureCell(
       _ => kUnknownCell,
     },
 
+    // THE NUMBER PRINTED ON THE PART, which is `positionToken` and not
+    // the `portDesignator` the LANDS ON cell shows beside the panel.
+    // DR-040 §11.39.8 is explicit that `J04` "appears nowhere on the
+    // physical part", so a column a person uses to CHOOSE a hole must
+    // offer what is written on it. The two columns therefore disagree on
+    // purpose, and each is right for its own question.
+    StructureColumnId.landingPort => landingPortToken(row) ?? kUnknownCell,
+
     StructureColumnId.linkClass => switch (link) {
       final l? => switch (effectiveLinkClassOf(doc, l)) {
         final c? => linkClassLabel(c),
@@ -1167,6 +1190,43 @@ List<String> landingCellOptions(RackDocument doc, {bool landed = false}) {
   // among the panel designators. A destructive option hiding between
   // `MDF-1` and `PP-1` is one a person picks by aiming badly.
   if (landed) out.add(kUnlandCell);
+  return out;
+}
+
+/// What `PORT` shows for [row]: the token printed on the panel, or null
+/// when the drop is not landed on one.
+///
+/// READ OFF THE RESOLVED END rather than walked back through the link.
+/// `ScheduleEnd` already carries `portPositionToken` and did the template
+/// resolution once; a second walk here would be a second answer to a
+/// question already answered, and the two could drift.
+String? landingPortToken(ScheduleEntry row) => switch (row.to.kind) {
+  ScheduleEndKind.rackPort || ScheduleEndKind.unrackedPort =>
+    row.to.portPositionToken ?? row.to.portDesignator,
+  _ => null,
+};
+
+/// The positions this row could land on, by printed token, INCLUDING the
+/// one it currently occupies.
+///
+/// The current position is in the list because a dropdown whose value is
+/// absent from its own options is `#711`'s defect again: it renders blank,
+/// or the framework asserts, and either way the person cannot see where
+/// the drop actually is.
+///
+/// Empty when the row is not landed, which the surface reads as "pick a
+/// panel first". Offering ports for a drop with no panel would be asking a
+/// question with no subject.
+List<String> landingPortCellOptions(RackDocument doc, ScheduleEntry row) {
+  final deviceId = row.to.deviceId;
+  if (deviceId == null || landingPortToken(row) == null) return const [];
+  final out = <String>[
+    for (final f in freePanelPositions(doc, panelDeviceId: deviceId))
+      f.positionToken,
+  ];
+  final current = landingPortToken(row);
+  if (current != null && !out.contains(current)) out.add(current);
+  out.sort();
   return out;
 }
 

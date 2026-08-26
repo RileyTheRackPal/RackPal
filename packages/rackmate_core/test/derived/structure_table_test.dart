@@ -65,7 +65,21 @@ final class _Doc {
 
   /// A rack, a device in it and one port, so a drop has something real to
   /// land on. Returns the port id.
-  Uuid panelPort(String designator) {
+  /// [templatePortKey] TIES THE MATERIALISED PORT TO A `PortDef`, which is
+  /// what makes `freePanelPositions` see the position as OCCUPIED.
+  ///
+  /// It defaults to null because every caller before `#779` wanted only a
+  /// port to hang a link off, and null is what they got.
+  ///
+  /// THE ID HAS TO BE THE DERIVED ONE OR THE PORT IS UNREACHABLE.
+  /// `resolveConnectTarget` does not look a port up by its
+  /// `templatePortKey`; it computes `derivePortId(deviceId, def.key)` and
+  /// asks `doc.ports` for that. A port materialised under any other id is
+  /// therefore invisible to every occupancy check in the project, so a
+  /// test that bound a conductor to one and then asked which positions
+  /// were free was told ALL of them. That is how a `#779` test passed and
+  /// went on passing when the line it defended was deleted.
+  Uuid panelPort(String designator, {String? templatePortKey}) {
     final rackId = Uuid('rack-${_seq++}');
     doc.racks[rackId] = Rack(
       id: rackId,
@@ -89,11 +103,15 @@ final class _Doc {
       placement: RailPlacement(rackId: rackId, ruIndex: 1, face: Face.rear),
       meta: _meta(),
     );
-    final portId = Uuid('port-${_seq++}');
+    final key = templatePortKey == null ? null : PortKey(templatePortKey);
+    final portId = key == null
+        ? Uuid('port-${_seq++}')
+        : derivePortId(deviceId, key);
     doc.ports[portId] = Port(
       id: portId,
       deviceId: deviceId,
       designator: designator,
+      templatePortKey: key,
     );
     return portId;
   }
@@ -1717,6 +1735,72 @@ void main() {
         reason:
             'it goes in AFTER the sort: a destructive option hiding '
             'between MDF-1 and PP-1 is one a person picks by aiming badly',
+      );
+    });
+
+    // ── `#779`, the PORT column ────────────────────────────────────
+    // The artifact is that a person can CHOOSE the hole. Until this
+    // column existed `structure_edit_actions.dart` took `free.first` and
+    // the choice could not be expressed at all, which is what a person
+    // reported. `LANDS ON` still allocates, so the batch case
+    // `structureColumnIsEditable` argues for is untouched.
+
+    test('an UNLANDED row is offered no positions, not an empty menu', () {
+      final d = _Doc();
+      final room = d.room('Great Room');
+      final outlet = d.outlet('GR-TV-1', locationId: room);
+      d.panelPort('01');
+      addPanelTemplate(d);
+      _drop(d, outletId: outlet, locationId: room, fieldLabel: 'GR-DATA-1');
+
+      final row = buildStructureTable(d.doc).groups.single.rows.single;
+      expect(
+        landingPortCellOptions(d.doc, row),
+        isEmpty,
+        reason:
+            'a position menu with no panel asks a question that has '
+            'no subject; the surface reads empty as "pick a panel first"',
+      );
+      expect(landingPortToken(row), isNull);
+    });
+
+    test('a LANDED row can always see the position it is on', () {
+      // `freePanelPositions` EXCLUDES the occupied one, so without the
+      // explicit re-add the dropdown's own value is absent from its own
+      // options. That renders blank or asserts, and either way a person
+      // cannot read where the drop actually is: `#711` again.
+      final d = _Doc();
+      final room = d.room('Great Room');
+      final outlet = d.outlet('GR-TV-1', locationId: room);
+      final port = d.panelPort('01', templatePortKey: 'rear.1');
+      addPanelTemplate(d);
+      _drop(
+        d,
+        outletId: outlet,
+        locationId: room,
+        fieldLabel: 'GR-DATA-1',
+        rackPort: port,
+      );
+
+      final row = buildStructureTable(d.doc).groups.single.rows.single;
+      final current = landingPortToken(row);
+      expect(
+        freePanelPositions(
+          d.doc,
+          panelDeviceId: d.doc.ports[port]!.deviceId,
+        ).map((f) => f.positionToken),
+        isNot(contains(current)),
+        reason:
+            'the fixture has to actually OCCUPY the position, or the '
+            'assertion below passes on a free list that never excluded it',
+      );
+      expect(current, isNotNull);
+      expect(
+        landingPortCellOptions(d.doc, row),
+        contains(current),
+        reason:
+            'a dropdown whose value is not among its options is the '
+            'defect this project already has a number for',
       );
     });
 
