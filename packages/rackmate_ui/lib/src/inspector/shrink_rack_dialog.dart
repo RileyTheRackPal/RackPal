@@ -74,6 +74,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 
 /// Which of §4.1's options the user settled on.
 enum ShrinkChoice {
@@ -523,7 +524,7 @@ class _CasualtyList extends StatelessWidget {
                   child: Text(
                     d.designator,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: kConsoleEmphasis,
                     ),
                   ),
                 ),

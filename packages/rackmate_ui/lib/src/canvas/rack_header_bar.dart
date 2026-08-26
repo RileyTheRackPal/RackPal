@@ -47,6 +47,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show SchedulerBinding;
 import 'package:rackmate_core/rackmate_core.dart' show Uuid, kMaxRackHeightU;
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 
 /// The actions the rack header's overflow menu offers.
 enum RackHeaderAction {
@@ -187,7 +188,7 @@ class RackHeaderBar extends StatelessWidget {
                     Text(
                       designator,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
+                        fontWeight: kConsoleEmphasis,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -319,7 +320,7 @@ class _HeightStepper extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
+                fontWeight: kConsoleEmphasis,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),

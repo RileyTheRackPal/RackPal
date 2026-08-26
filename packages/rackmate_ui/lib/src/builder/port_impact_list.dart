@@ -27,6 +27,7 @@
 // hand-written semantics layer.
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 
 /// What the `after` column prints when an operation would clear a value.
 ///
@@ -123,7 +124,7 @@ class PortImpactList extends StatelessWidget {
                                       : row.after,
                                   overflow: TextOverflow.ellipsis,
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: kConsoleEmphasis,
                                   ),
                                 ),
                               ),

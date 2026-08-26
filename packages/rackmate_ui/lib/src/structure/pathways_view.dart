@@ -41,6 +41,7 @@
 // M3 is only where the fact is entered.
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 
 /// What the tab can ask the application to do.
 ///
@@ -295,7 +296,7 @@ class _HeaderRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: kConsoleEmphasis,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -532,7 +533,7 @@ class _TextCellState extends State<_TextCell> {
       controller: _text,
       focusNode: _focus,
       style: theme.textTheme.bodySmall?.copyWith(
-        fontWeight: widget.bold ? FontWeight.w700 : FontWeight.w400,
+        fontWeight: widget.bold ? kConsoleEmphasis : FontWeight.w400,
       ),
       decoration: InputDecoration(
         isDense: true,

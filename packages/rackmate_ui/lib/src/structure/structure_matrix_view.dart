@@ -33,6 +33,7 @@
 // last drew is `+1` against a stale number.
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 
 /// One cell, as an edit request: which room, which cable, how many.
 @immutable
@@ -190,7 +191,7 @@ class _HeaderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final style = theme.textTheme.labelSmall?.copyWith(
-      fontWeight: FontWeight.w700,
+      fontWeight: kConsoleEmphasis,
       letterSpacing: 0.4,
     );
     return Padding(
@@ -397,7 +398,7 @@ class _TotalRow extends StatelessWidget {
                 child: Text(
                   kMatrixTotalLabel,
                   style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: kConsoleEmphasis,
                   ),
                 ),
               ),
@@ -445,7 +446,7 @@ class _Number extends StatelessWidget {
       textAlign: TextAlign.right,
       style: theme.textTheme.bodySmall?.copyWith(
         color: color,
-        fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+        fontWeight: bold ? kConsoleEmphasis : FontWeight.w400,
         fontFeatures: const [FontFeature.tabularFigures()],
       ),
     );

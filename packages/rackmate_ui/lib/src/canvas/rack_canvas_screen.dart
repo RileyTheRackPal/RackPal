@@ -37,6 +37,7 @@ import 'package:rackmate_ui/src/inspector/shrink_rack_dialog.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
 import 'package:rackmate_ui/src/palette/device_palette_panel.dart';
 import 'package:rackmate_ui/src/shell/no_racks_view.dart';
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 import 'package:rackmate_ui/src/widgets/document_memo.dart';
 
 /// The rack editor canvas: the pannable/zoomable grid (L0) with a real rack
@@ -5007,7 +5008,7 @@ class _RuRangeChip extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: scheme.onTertiaryContainer,
-            fontWeight: FontWeight.w600,
+            fontWeight: kConsoleEmphasis,
           ),
         ),
       ),
@@ -5075,7 +5076,7 @@ class _ResizePreviewOverlay extends StatelessWidget {
                             color: blocked
                                 ? scheme.onErrorContainer
                                 : scheme.onTertiaryContainer,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: kConsoleEmphasis,
                           ),
                         ),
                         if (blocked)

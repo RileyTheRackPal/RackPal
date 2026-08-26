@@ -66,6 +66,7 @@ import 'package:rackmate_ui/src/builder/port_cells.dart';
 import 'package:rackmate_ui/src/builder/quick_add_bar.dart';
 import 'package:rackmate_ui/src/builder/renumber_dialog.dart';
 import 'package:rackmate_ui/src/keymap/keymap.dart';
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 
 /// How the grid asks the builder to change the template.
 ///
@@ -1508,7 +1509,7 @@ class _HeaderRow extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
+                            fontWeight: kConsoleEmphasis,
                             letterSpacing: 0.4,
                             // THE SORTED COLUMN IS TONED AS WELL AS
                             // ARROWED, because at 11 points an arrow is
@@ -1960,7 +1961,7 @@ class _BandDelegate extends SliverPersistentHeaderDelegate {
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.labelLarge?.copyWith(
                       color: foreground,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: kConsoleEmphasis,
                     ),
                   ),
                 ),

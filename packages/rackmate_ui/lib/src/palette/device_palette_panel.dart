@@ -61,6 +61,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show KeyDownEvent, LogicalKeyboardKey;
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 
 /// The pinned group's heading. A constant so the panel, its tests and
 /// DR-077 §11.76.2 spell it once.
@@ -560,7 +561,7 @@ class _PaletteRow extends StatelessWidget {
                   color: authored
                       ? scheme.onTertiaryContainer
                       : scheme.onSecondaryContainer,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: kConsoleEmphasis,
                 ),
               ),
             ),
@@ -648,7 +649,7 @@ class _ProvenanceSubtitle extends StatelessWidget {
               fontSize: 9,
               height: 1.2,
               letterSpacing: 0.4,
-              fontWeight: FontWeight.w700,
+              fontWeight: kConsoleEmphasis,
               color: theme.colorScheme.onTertiaryContainer,
             ),
           ),
