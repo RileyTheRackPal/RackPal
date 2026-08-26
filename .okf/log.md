@@ -1,5 +1,29 @@
 # Update Log
 
+## 2026-08-25 (twelfth entry)
+
+* **Note**: **A PER-TOKEN FIX SATISFIED EVERY TOKEN AND BROKE THE SET.**
+  Lightening the two lower text tiers so each cleared AA left them **dE 0.87**
+  apart, below the just-noticeable difference: two tokens, one colour, where
+  the values as given had been dE 4.85 apart. **The contrast fix destroyed a
+  distinction the user had made.** Ratified at `#929EAF`, dE 5.83. This is the
+  same shape as the status/domain collision one level down, and the pair is
+  worth stating as a rule: **a constraint checked token by token cannot see the
+  set, and both failures this week were set-level.**
+* **Note**: **THE CHROME WAS NEVER THE APP'S OWN FACE.** `ThemeData` carried no
+  `fontFamily`, so from M1 to M4 RackMate drew its **diagram in Jost and its
+  chrome in Segoe UI**: a rack label and the inspector row describing it, in two
+  faces, on one screen. **No gate could see it because both faces render.**
+  Fixed at `875db98` with `fontFamily: 'Jost'`, and Jost Medium bundled beside
+  Regular because 28 sites were asking for `w600`/`w700` against a lone Regular
+  and Flutter was synthesising the difference.
+* **Note**: **THE SHEET IS RENDERED FROM THE TREE, NOT FROM NOTES.** The
+  reference sheet reads the wordmark back out of `brand.dart` and the type out
+  of `assets/fonts`, so it drifts with the repository instead of quietly
+  disagreeing with it. Two figures in the DR-090 draft were wrong because they
+  were quoted from my own earlier prose rather than from a run, and were caught
+  only by recomputing. **Render the artifact; do not transcribe it.**
+
 ## 2026-08-25 (eleventh entry)
 
 * **New**: [DR-089, the wordmark ships as outlines](/decisions/dr-089-the-wordmark-ships-as-outlines.md).

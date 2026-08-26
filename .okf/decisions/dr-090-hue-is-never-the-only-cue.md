@@ -61,12 +61,34 @@ finding cannot be seen at a glance.
 See [assert the artifact not the mechanism](/practices/assert-the-artifact-not-the-mechanism.md)
 and [measure at the size the criterion will meet](/practices/measure-at-the-size-the-criterion-will-meet.md).
 
-## Two secondary catches
+## Two ways the token set failed as a set
 
 `#64748B`, given as the Secondary Text tier, is **already** `kUnresolvedSignalArgb` in
 `signal_style.dart`. It would have carried two unrelated meanings in one window. Found by
 grepping the value, not by reasoning about the token. Lightening it to `#8190A4` for AA
 fixes both.
+
+**A per-token fix broke the set.** Lightening both lower tiers for AA left Secondary
+`#8190A4` and Non-critical `#8390A3` at **dE 0.87**, below the just-noticeable
+difference: two tokens, one colour, where the values as given were dE 4.85 apart.
+Non-critical is ratified at **`#929EAF`**, dE 5.83. Same shape as the domain
+collision one level down: every token satisfied its own constraint and the set
+still failed.
+
+## The type
+
+The chrome was never Jost. `ThemeData` carried no `fontFamily`, so the app drew its
+**diagram in Jost and its chrome in the platform default** from M1 to M4, and no gate
+could see it because both faces render. And 28 sites asked for `w600`/`w700` against a
+lone Regular, which Flutter synthesises, worst on a geometric face because the counters
+close before the stems thicken. **Jost Medium (500) is bundled**, same v3.710 build,
+verified to share outlines and advances with Regular.
+
+The 28 sites still synthesise, now from 500. Retargeting is `#770`. The PDF side was
+checked and is unaffected: the `bold: true` call sites are Flutter widgets, not
+`FontRef`, so no drawing op requests bold.
+
+## Inactive was one token doing two jobs
 
 `inactiveSurface` `#2D3748` measures 1.22:1 on Card and is invisible **as text** while
 being perfectly adequate **as a line**. One token, two jobs, so it splits, with
@@ -76,4 +98,5 @@ to legibility, because at 13 px the highlight competes for the stem's own pixels
 
 ## Not yet shipped
 
-The theme is `#770` and unbuilt. Until it lands this ruling describes no shipped pixel.
+The **colour** half is `#770` and unbuilt; until it lands the colour here describes no
+shipped pixel. The **type** half is built at `875db98` (`#771`).
