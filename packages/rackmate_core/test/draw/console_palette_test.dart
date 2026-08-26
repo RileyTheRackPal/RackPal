@@ -9,8 +9,9 @@
 // The interesting case is §11.89.6, which cannot be tested here at all: "hue
 // is never the only cue" is a property of a WIDGET, not of a colour, and no
 // assertion over ARGB integers can see it. It is named in the last group so
-// that its absence is deliberate rather than an oversight, and #770 carries
-// the display-list gate that could actually check it.
+// that its absence is deliberate rather than an oversight. It IS checked, in
+// `rackmate_ui`: `status_marker_test.dart` paints the five severities at one
+// colour and requires them to differ.
 
 import 'dart:math' as math;
 
@@ -153,8 +154,10 @@ void main() {
   group('what is NOT tested here', () {
     test('the second-cue rule is a widget property, not a colour one', () {
       // §11.89.6 says a status marker must carry a cue that survives its
-      // colour being deleted. Nothing in this file can see a marker. The
-      // check belongs on the display list and is #770's.
+      // colour being deleted. Nothing in this file can see a marker, and
+      // that is still true. What changed at #774 is that the check now
+      // EXISTS, one package up, where a marker can be rasterised: see
+      // `rackmate_ui/test/theme/status_marker_test.dart`.
       expect(kConsoleStatusLadder, hasLength(5));
     });
   });
