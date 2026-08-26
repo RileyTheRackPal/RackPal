@@ -137,6 +137,7 @@ export 'src/document_controller.dart';
 export 'src/draw/bounds_canvas.dart';
 export 'src/draw/brand.dart';
 export 'src/draw/canvas.dart';
+export 'src/draw/console_palette.dart';
 export 'src/draw/contrast.dart';
 export 'src/draw/geometry.dart';
 export 'src/draw/hit_test.dart';

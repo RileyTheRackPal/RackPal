@@ -111,8 +111,12 @@ $ErrorActionPreference = 'Stop'
 # Two thousand two hundred and eighty-seven core tests could have stopped
 # being discovered while this script printed "+2287" and exited 0. Measured
 # by `run_local.ps1 -SkipBuild` on that date, all five suites green.
+# RE-MEASURED 2026-08-25 again, at #770/#772: core 3263 -> 3279, the seven
+# `brand_test.dart` cases and the nine `console_palette_test.dart` ones, less
+# nothing. Raised in the same commit that added them, which is the whole
+# instruction above and is cheap only while it stays a habit.
 $SuiteFloors = @{
-    'rackmate_core'   = 3263
+    'rackmate_core'   = 3279
     'rackmate_text'   = 1
     'rackmate_export' = 189
     'rackmate_ui'     = 1162
