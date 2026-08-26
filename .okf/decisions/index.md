@@ -80,6 +80,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-087, the passthrough pair gets its creator](dr-087-the-passthrough-pair-gets-its-creator.md) - the action is additive and idempotent, the cell makes a front-to-front pair inexpressible, and one seeded panel stays unpaired because the model is 1:1 and a duplex LC adapter is not.
 * [DR-088, state management is what was built](dr-088-state-management-ratified.md) - ADR-011 accepted Riverpod, nobody built it, and its `VERIFY:` never fired because it was conditioned on the work that never started; the answer is constructor injection and seven epoch counters, and the dependency table gets a gate.
 * [DR-089, the wordmark ships as outlines](dr-089-the-wordmark-ships-as-outlines.md) - a font licence decides an implementation: 4.3 keeps the face out of the tree, 4.6 would have closed the GPLv3 option had it been bundled, and 4.5 is why the lockup is one merged path rather than seven addressable letters.
+* [DR-090, hue is never the only cue](dr-090-hue-is-never-the-only-cue.md) - the status ladder was tuned against greyscale and deuteranopia and never against the eight domain hues it shares a window with; four of five collide and two of those are fixed brand values, so the remedy is a second cue rather than a repaint.
 
 # Not yet written up
 

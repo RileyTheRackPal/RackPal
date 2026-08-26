@@ -37,6 +37,7 @@
   walked the other twelve `Mn-0` items against the rulings they decomposed, so
   the count in this class is **at least one and unknown**, which is the fourth
   time in a week a recorded fact stopped tracking its subject.
+* **New**: [DR-090, hue is never the only cue](/decisions/dr-090-hue-is-never-the-only-cue.md).
 * **Note**: **A STATUS PALETTE WAS OPTIMISED AGAINST THE WRONG NEIGHBOURS.**
   Five status colours were tuned for greyscale and deuteranopia separation and
   never measured against the **eight domain hues they share a window with**.
