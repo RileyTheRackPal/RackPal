@@ -135,6 +135,7 @@ export 'src/derived/structure_table.dart';
 export 'src/derived/totals.dart';
 export 'src/document_controller.dart';
 export 'src/draw/bounds_canvas.dart';
+export 'src/draw/brand.dart';
 export 'src/draw/canvas.dart';
 export 'src/draw/contrast.dart';
 export 'src/draw/geometry.dart';

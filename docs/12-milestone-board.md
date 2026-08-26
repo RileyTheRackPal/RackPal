@@ -756,6 +756,42 @@ order values inside one would silently change a device the user placed months ag
 
 ---
 
+### 4.14 RJ-017 accepted five items into hardening and the decomposition produced tasks for none
+
+**Found while placing DR-089's wordmark on the board, 2026-08-25.** RJ-017 accepted *"Icon,
+wordmark, window and document icons, file-type registration for `.rackmate` and `.rmdev`, and a
+trademark search before any certificate or domain is bought"* into the hardening milestone under
+AC-058/D9. Canon §10.12(f) then named the mascot, **Riley the RackMate**, and filed three surfaces
+as `#563`–`#565`.
+
+**Neither `M8-0` nor `M9-0` produced a task for any of the five, and both are marked Done.** M8
+carries `M8-A`…`M8-G`, M9 carries `M9-A`…`M9-F`, and not one of the thirteen is the icon, the
+wordmark, the window icon, the document icon or the trademark search. File-type registration
+survives only by accident, inside `#498` under the Store epic, because a Store listing needed it
+for its own reasons. `#768` is the row that should have existed since the decomposition and now
+does; `#769` is the wordmark inside it, closed at `28ba595`.
+
+**THE SHAPE, WHICH IS THE POINT OF RECORDING IT.** A ruling that accepts something into a milestone
+is not a task in that milestone. The only thing between the two is a decomposition that has to
+remember, and `M8-0`/`M9-0` are Done, so nothing was ever going to look again. This is the same
+class as §4.11's DR-006 debt and §4.7's `schemaVersion`, and it is **not** the class §8.8 addresses:
+no closed task lied about a commit, the task simply never existed.
+
+**WHAT IS STILL OWED, AND IT IS NOT NOTHING.** Of the five, the wordmark is done. The **application
+icon** is scoped by §10.12(f) to Riley and blocked on assets, and it needs a reduced mark for 16 and
+32 px because a character face at taskbar size is mud. The **window and document icons** are
+unstarted, and the document icon interacts with `#498`'s open question about distinct `.rmdx` and
+`.rmda` marks. The **trademark search** is unstarted and is the one with an external gate on it:
+RJ-017 places it *before any certificate or domain is bought*, so it is cheap now and expensive at
+the moment someone reaches for a code-signing certificate in M8-A.
+
+**A SECOND DECOMPOSITION SHOULD BE SUSPECTED, NOT ASSUMED.** This one was found by walking from a
+ruling to the board for an unrelated reason. Nothing has walked the other twelve `Mn-0` items
+against the rulings they were meant to decompose, and until something does, the count of items in
+this class is **at least one and unknown**.
+
+---
+
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
 
 ### 5.1 M2, Wiring and the live schedule · `M` · CRITERION MET, weakest mark `CONFIRMED`
