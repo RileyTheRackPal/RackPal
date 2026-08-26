@@ -291,7 +291,21 @@ class RackMateApp extends StatelessWidget {
         ...buildFileActions(services.controller),
         ...buildViewActions(shellKey),
       },
-      theme: ThemeData(colorSchemeSeed: Colors.blueGrey, useMaterial3: true),
+      // DR-090. `fontFamily` is the whole of the type half: without it the
+      // app drew its DIAGRAM in Jost and its CHROME in whatever Material
+      // picked (Segoe UI on Windows), so a rack label and the inspector
+      // row describing it were set in two different faces on one screen.
+      // Nothing was wrong enough to fail a test, which is why it survived
+      // to M4.
+      //
+      // The COLOUR half of DR-090 is #770 and deliberately not here yet:
+      // seeding from blueGrey keeps the current appearance while the type
+      // lands, so this commit changes one variable rather than two.
+      theme: ThemeData(
+        colorSchemeSeed: Colors.blueGrey,
+        useMaterial3: true,
+        fontFamily: 'Jost',
+      ),
       home: AppShell(
         key: shellKey,
         services: services,
