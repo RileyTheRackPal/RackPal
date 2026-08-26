@@ -13015,6 +13015,129 @@ adopting a wordmark brings closer rather than satisfies.
 
 ---
 
+### 11.89 DR-090 · The console palette, and the rule that hue is never the only cue
+
+**Settled by the user on 2026-08-25** (`#770`), alongside DR-089 and from the same identity
+exploration. The indicator colours are the user's, given as Pantone references; the surface and text
+ramps are the user's; **three values are derived and are marked as such** in §11.89.3.
+
+**NOT A §8.3 AMENDMENT, AND NOT A CHANGE TO CR-078.** The eight signal domains keep their hues,
+their dashes, their weights and PAL-1 unchanged. This rules the **application chrome**, which had no
+palette at all: surfaces, text tiers, controls and the five status indicators. The two palettes now
+coexist on one screen, which is what §11.89.5 is about.
+
+**11.89.1 THE NORTH STARS, RECORDED BECAUSE THEY EXPLAIN THE CHOICES.** Art Deco, 1950s to 1970s
+NASA, and "New Century Ambient". The indicator set follows the NASA influence and is given as
+Pantone: **186** for Critical, **152** for Warning, **109** for Caution.
+
+**11.89.2 THE SURFACES AND THE CONTROLS, AS SPECIFIED.**
+
+| Token | Value | Role |
+|---|---|---|
+| Canvas Back | `#0B0D10` | the drawing surface |
+| Console Base | `#14181E` | sidebar nav, equipment drawer |
+| Card / Panel | `#222933` | panels, cards, raised surfaces |
+| Button / Slider base | `#0D1117` | control grounds |
+| Primary Text | `#E2E8F0` | body |
+| Control Text | `#E4E7EB` | on controls |
+| Active | `#A0AEC0` | active state |
+
+**11.89.3 THE FIVE STATUS COLOURS, THREE FIXED AND TWO DERIVED.**
+
+| Status | Value | Greyscale luminance | Provenance |
+|---|---|---|---|
+| Critical | `#C8102E` | 0.128 | Pantone 186, **fixed** |
+| Warning | `#E57200` | 0.287 | Pantone 152, **fixed** |
+| Notice | `#86BDDA` | 0.465 | **DERIVED**, moved from the user's `#BFCED6` |
+| Caution | `#FFD100` | 0.669 | Pantone 109, **fixed** |
+| Nominal | `#C2FFE0` | 0.884 | **DERIVED**, moved from the user's `#93E9BE` |
+
+The two derived values were searched for jointly, keeping each seed's hue and maximising the **worst
+adjacent gap across greyscale and deuteranopia simultaneously**. The worst gap is **0.158**, against
+PAL-1's 0.10 floor. Optimising one space and then checking the other is what produced two earlier
+wrong answers in the same sitting, including a proposed Notice that fixed a collision with Caution
+by creating a new one with Warning.
+
+**11.89.4 CRITICAL IS A FILL AND NEVER INK, AND ONLY CRITICAL TAKES LIGHT TEXT.** Pantone 186 is
+specified for print on white. On `#222933` it measures **2.49:1** and fails AA as text. As a chip
+with `#E4E7EB` on it, **4.74:1**, and passes. Warning, Notice, Caution and Nominal all take **dark**
+text on them; Critical is the only one that does not.
+
+**AND TWO TEXT TIERS FAIL ON CARD AS GIVEN.** Secondary `#64748B` measures 3.08:1 and Non-critical
+`#718096` 3.65:1 against `#222933`. Lightened to **`#8190A4`** and **`#8390A3`**, both clear 4.5:1.
+
+**`#64748B` HAD A SECOND PROBLEM THE CONTRAST NUMBER HID.** It is already
+`kUnresolvedSignalArgb` in `signal_style.dart`, the colour a signal draws when it cannot be
+resolved. Shipping it as the Secondary Text tier would have given one value two unrelated meanings
+in one window. The lightening fixes both, and the collision was found by grepping the value rather
+than by reasoning about the token.
+
+**11.89.5 THE STATUS PALETTE COLLIDES WITH THE DOMAIN PALETTE, AND FOUR OF THE FIVE CANNOT BE MOVED
+OUT OF THE WAY.** The ladder above was tuned for greyscale and deuteranopia and **never measured
+against the eight domain hues it shares a window with**. Measured afterwards, as CIE76 ΔE against
+the dark-theme domain values, taking the worse of normal and deuteranopic vision:
+
+| Status | Nearest domain | ΔE | |
+|---|---|---|---|
+| Critical `#C8102E` | `audio.digital` `#F07A33` | 39.2 | distinct |
+| Caution `#FFD100` | `audio.analog` `#F0B443` | 23.7 | **collides** |
+| Warning `#E57200` | `audio.digital` `#F07A33` | 9.5 | **collides** |
+| Notice `#86BDDA` | `video.analog` `#8ACFF5` | 8.2 | **collides** |
+| Nominal `#C2FFE0` | `pwr` `#E8E8E8` | 6.3 | **collides** |
+
+Caution also sits ΔE 24.8 from the reserved selection yellow `#F5E76B`, so "selected" and "caution"
+are near enough to trade places.
+
+**RE-DERIVING THE TWO FREE COLOURS CANNOT FIX THIS, AND THAT WAS CHECKED BEFORE IT WAS CLAIMED.**
+Warning and Caution are fixed brand values and **collide on their own**, without reference to Notice
+or Nominal. No search over the free colours reaches a clean set.
+
+**11.89.6 THE RULING: HUE IS NEVER THE ONLY CUE FOR STATUS.** A status colour may appear anywhere,
+including on the schematic canvas, **provided the marker carries a second cue that survives the
+colour being removed**: a shape, an icon, a border, or a word. A bare coloured dot, chip or line
+whose only distinguishing property is its hue is not a status marker and does not ship.
+
+**THIS IS PAL-1'S OWN LOGIC APPLIED ONE LEVEL UP.** PAL-1 is deliberately **disjunctive**, dash
+class differs **or** weight ratio ≥ 1.4, precisely because hue alone was found unable to carry eight
+domains. The same finding at the status/domain boundary gets the same remedy rather than a new one.
+It also discharges directly against **AC-054**, whose named acceptance criteria are a deuteranopia
+simulation and a real greyscale laser print: a marker that survives its colour being deleted passes
+both by construction.
+
+**WHY NOT THE ALTERNATIVE.** Banning status hue from the canvas outright was considered and is
+simpler to gate. It was rejected because it makes the canvas the one surface where a finding cannot
+be seen at a glance, which is the surface where findings matter most.
+
+**11.89.7 INACTIVE IS ONE TOKEN DOING TWO JOBS, AND SPLITS.** `#2D3748` measures **1.62:1** on
+Canvas and **1.22:1** on Card. As a border, a divider or a switch track that is fine, because a line
+against a known edge needs almost no contrast to be found. As a **disabled label** it is absent: a
+shape the eye must decode needs more than a line does.
+
+| Token | Value | Job |
+|---|---|---|
+| `inactiveSurface` | `#2D3748` | tracks, borders, dividers, off-state fills. Unchanged |
+| `inactiveInk` | `#586679` | **DERIVED.** Disabled labels and icons. 2.51:1 on Card |
+
+**THE ENGRAVED TREATMENT WAS TESTED AND IS NOT A SUBSTITUTE.** A one-pixel lighter edge below the
+glyph, which is what an engraved panel legend does, raises the **rendered** peak from 1.22 to
+**1.94:1**, measured on rasterised 13 px text rather than computed from the nominal values.
+Antialiasing is why: at that size the highlight competes for the same pixels as the stem. It remains
+available as a style on large panel legends and is not a legibility mechanism.
+
+**`inactiveInk` IS DERIVED FROM THE TEXT RAMP, NOT FROM `#2D3748`.** Raising `#2D3748`'s own
+lightness to 3:1 gives `#5D7295` at saturation 0.23, against the text ramp's 0.16, so the disabled
+tier would arrive **more chromatic than the live text above it**. Dimmer should also mean less
+chromatic. `#586679` is `#8190A4` darkened and stays in family.
+
+**11.89.8 WHAT THIS DOES NOT RULE.** It does not touch **CR-078**, the eight domain hues, PAL-1 or
+the selection yellow. It does not settle **user-customisable accent colours**, which are `#565` and
+which now inherit §11.89.6 as a constraint they must not break. It does not apply the palette: the
+theme is `#770` and unbuilt, and until it lands **this ruling describes no shipped pixel**. And it
+does not extend the second-cue rule to the **printed sheet**, where AC-054's greyscale criterion
+already governs and is stricter.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
