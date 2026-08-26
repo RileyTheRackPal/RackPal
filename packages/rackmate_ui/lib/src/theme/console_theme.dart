@@ -79,20 +79,53 @@ abstract final class ConsoleColors {
 /// diagram in Jost and its chrome in the platform default, which on
 /// Windows is Segoe UI.
 ThemeData buildConsoleTheme() {
-  const scheme = ColorScheme.dark(
-    surface: Color(kConsoleCard),
-    onSurface: Color(kConsolePrimaryText),
-    primary: Color(kConsoleActive),
-    onPrimary: Color(kConsoleCanvas),
-    secondary: Color(kConsoleNotice),
-    onSecondary: Color(kConsoleCanvas),
+  // ═════════════════════════════════════════════════════════════════════
+  // GENERATED FIRST, THEN OVERRIDDEN. NOT HAND-WRITTEN.
+  // ═════════════════════════════════════════════════════════════════════
+  // The first version of this function built a `ColorScheme.dark(...)` by
+  // hand with the nine roles DR-090 rules. The app uses TWENTY-ONE, and the
+  // twelve left unspecified did not stay neutral: every `surfaceContainer*`
+  // tone collapsed onto `surface`, so the schematic filter bar drew its chips
+  // in exactly the colour of the bar behind them and became unreadable;
+  // `outlineVariant` resolved to PURE WHITE at nine sites; and
+  // `onSurfaceVariant`, which 94 sites use for secondary text, fell back to
+  // `onSurface` and flattened the hierarchy it exists to create.
+  //
+  // Seeding generates a coherent value for every role, including the ones
+  // this project has no opinion about. The ruled values are then imposed on
+  // top. A role must never be left to a default again: the count is checked
+  // in `console_theme_test.dart`.
+  final seeded = ColorScheme.fromSeed(
+    seedColor: _c(kConsoleNotice),
+    brightness: Brightness.dark,
+  );
+
+  // The surface ladder, mapped onto the four ruled surfaces. Material wants
+  // five tones and DR-090 rules four, so `container` doubles with `low` and
+  // `highest` with `high`. That is stated rather than hidden, and the pairs
+  // are chosen so no widget draws a surface on its own colour: the filter bar
+  // puts `highest` chips on a `low` bar, which is Card on Console Base.
+  final scheme = seeded.copyWith(
+    surface: _c(kConsoleCard),
+    onSurface: _c(kConsolePrimaryText),
+    onSurfaceVariant: _c(kConsoleSecondaryText),
+    surfaceContainerLowest: _c(kConsoleCanvas),
+    surfaceContainerLow: _c(kConsoleBase),
+    surfaceContainer: _c(kConsoleBase),
+    surfaceContainerHigh: _c(kConsoleCard),
+    surfaceContainerHighest: _c(kConsoleCard),
+    primary: _c(kConsoleActive),
+    onPrimary: _c(kConsoleCanvas),
+    secondary: _c(kConsoleNotice),
+    onSecondary: _c(kConsoleCanvas),
+    outline: _c(kConsoleInactiveSurface),
+    outlineVariant: _c(kConsoleInactiveSurface),
     // Material insists on an error colour and widgets reach for it. It is
     // Critical's value so a stray use is at least the right hue, but
     // §11.89.6 still applies: anything that MEANS a severity goes through
     // `ConsoleStatus` and carries a second cue.
-    error: Color(kConsoleCritical),
-    onError: Color(kConsoleControlText),
-    outline: Color(kConsoleInactiveSurface),
+    error: _c(kConsoleCritical),
+    onError: _c(kConsoleControlText),
   );
 
   final base = ThemeData(
