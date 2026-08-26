@@ -604,18 +604,29 @@ table), docs/11:236, docs/03:146's asset tree, docs/05:171, and canon:1203, :121
 Two consequences beyond the stale prose, **one of them now partly discharged**. The weights: this
 entry read *"only Regular is bundled"* until `875db98`, which added **Medium (500)** under DR-090
 §11.89.8 after an audit found **28 sites asking for `w600`/`w700`** against a single face and
-Flutter synthesising the difference. **SemiBold, Condensed and `RackMono` still do not exist**, and
-`RackMono` has two live call sites already asking for it: `quick_add_bar.dart:227` and
-`drop_entry_panel.dart:414` both request `fontFamily: 'monospace'`, a generic name nothing in the
-bundle provides, and **whether Flutter resolves it on Windows or falls back silently is untested**.
+Flutter synthesising the difference. **`RackMono` now exists**: Space Mono (SIL OFL 1.1, no Reserved Font Name), Regular and Bold,
+bundled at `71b9bd1` and wired into the two call sites that were asking for a generic
+`fontFamily: 'monospace'` nothing provided. `drop_entry_panel.dart` places its caret by counting
+spaces, so a proportional fallback would have put it under the wrong character with nothing
+failing. **SemiBold and Condensed still do not exist**, nor does `RackMono` **Italic**, which
+docs/08 §10.1 wants for a derived `LEN`: `FontRef` carries a `bool bold` and no slant, so the file
+would be an asset no code could reach.
 
-The second is undischarged. The **Noto Sans Symbols 2 fallback does not exist**, which is what
-docs/05:171's glyph-resolution test depends on. A tofu box in an exported drawing is the defect that
-test exists to prevent, and neither the test nor the fallback is present. **The four codepoints are
-named now rather than left abstract**: `U+2192`, `U+2194`, `U+2032` and `U+2033` are absent from the
-bundled 524-codepoint build, they map to `.notdef`, and two live schedule cells emit `U+2192` onto
-printed sheets `T6.10` and `T6.11`. No shipped starter emits one, which is why nothing has ever
-failed.
+The second is **partly discharged and now gated**. The four codepoints, `U+2192`, `U+2194`,
+`U+2032` and `U+2033`, were absent from the bundled build and mapped to `.notdef`, which draws as
+NOTHING rather than as a box; two live schedule cells emit the first onto `T6.10` and `T6.11`, and
+no shipped starter does, which is why nothing ever failed. All four, plus seven more, are added at
+`b7b5ac2` by `tools/build_jost_glyphs.py`, built from the face's own contours with every constant
+measured per weight. **`tools/glyph_coverage_check.py` is now the fifteenth gate** and reads the
+font binary, which is the only place this class of defect is visible.
+
+**The Noto Sans Symbols 2 fallback still does not exist**, which is what docs/05:171's
+glyph-resolution test depends on, and neither the test nor the fallback is present. What the new
+gate covers instead is narrower and its blind spots are in its header: it sees Dart string
+literals, not runtime-composed strings or user data. It carries one closed exempt set, the fifteen
+domain and device glyphs that are registry DATA drawn as geometry, and one single entry, `U+03A3`,
+which is a letterform rather than a shape and therefore the one thing here that could not be built
+from the face's own material and checked by measurement.
 
 **A third consequence was found by the same audit and is not about weights at all.** `main.dart`
 set no `fontFamily`, so the application drew its **diagram in Jost and its chrome in Segoe UI**

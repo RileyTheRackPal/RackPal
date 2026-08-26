@@ -13169,11 +13169,32 @@ build may keep the name. That matters for the four codepoints this build still l
 `U+2194`, `U+2032` and `U+2033`, which two live schedule cells emit onto `T6.10` and `T6.11`, and
 which remain owed.
 
-**11.89.9 WHAT THIS DOES NOT RULE.** It does not touch **CR-078**, the eight domain hues, PAL-1 or
+**11.89.9 BUILT, AND WHAT REMAINS UNBUILT INSIDE IT.** The palette is applied at `b2b12fb` (`#770`)
+and `RackMono` is bundled at `71b9bd1` (`#773`, Space Mono, chosen by the user).
+
+**THE PALETTE LIVES IN `rackmate_core`, NOT IN THE WIDGET LAYER, AND THE REASON IS DR-080
+§11.79.4**: the product must not acquire a second definition of contrast. Defined as Flutter
+`Color` constants it could only be checked by a second implementation of relative luminance, which
+is the mistake CR-080's font drift and the `family_glyph` measurement each made in their own
+register. In `console_palette.dart` the authority is `contrast.dart`, and
+`console_palette_test.dart` recomputes every figure this ruling quotes, so the corpus and the
+constants cannot drift apart in silence. `console_theme.dart` defines **no colour at all**.
+
+**STATUS IS DELIBERATELY ABSENT FROM THE `ColorScheme`.** Material's `error` slot is the only
+status-shaped thing it has, and mapping Critical onto it lets any widget acquire a severity by
+accident, arriving with no way to carry the second cue §11.89.6 requires. Status is reached through
+`ConsoleStatus`, which returns a colour **and** the ink that belongs on it so a caller cannot
+separate them. The slot is still populated, so a stray use is at least the right hue.
+
+**TWO THINGS INSIDE THIS RULING ARE NOT BUILT AND ARE NOT IMPLIED TO BE.** §11.89.6 has **no
+gate**: "hue is never the only cue" is a property of a WIDGET, and no assertion over ARGB integers
+can see a marker, so `console_palette_test.dart`'s last group asserts nothing and says why. It is
+`#774`. And the 28 sites at §11.89.8 still request `w600`/`w700` and still synthesise, now from 500;
+retargeting them is `#775` and is a visual judgement rather than a mechanical edit.
+
+**11.89.10 WHAT THIS DOES NOT RULE.** It does not touch **CR-078**, the eight domain hues, PAL-1 or
 the selection yellow. It does not settle **user-customisable accent colours**, which are `#565` and
-which now inherit §11.89.6 as a constraint they must not break. It does not apply the palette: the
-colour half is `#770` and unbuilt, and until it lands **the colour in this ruling describes no
-shipped pixel**, though §11.89.8's type half is built. And it
+which now inherit §11.89.6 as a constraint they must not break. And it
 does not extend the second-cue rule to the **printed sheet**, where AC-054's greyscale criterion
 already governs and is stricter.
 
