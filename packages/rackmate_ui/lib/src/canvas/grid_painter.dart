@@ -119,7 +119,20 @@ class GridPainter extends CustomPainter {
   /// Below this many screen pixels between lines, a tier is dropped as
   /// illegible clutter. Decided on the bucket's representative scale so the
   /// choice is stable within a bucket (and consistent with the cache key).
-  static const double _minScreenSpacing = 5;
+  ///
+  /// WAS 5, WHICH IS NOT A LEGIBILITY FLOOR BUT A DRAWING ONE. Five pixels
+  /// between anti-aliased hairlines is a texture, not a grid: it reads as
+  /// noise laid over the drawing, and because the buckets are powers of two
+  /// a tier stays on across a whole 2x range of zoom while it crowds. The
+  /// user's report was "the grid when zoomed out looks awful", and this
+  /// constant is the whole of it.
+  ///
+  /// At 14 the minor tier drops roughly two zoom steps sooner and what
+  /// survives is the major tier alone, which is the one carrying alignment
+  /// information anyway. The grid still disappears entirely when even the
+  /// major tier crosses the floor, and that is unchanged and deliberate:
+  /// a grid nobody can resolve is worse than no grid.
+  static const double _minScreenSpacing = 14;
 
   @override
   void paint(ui.Canvas canvas, ui.Size size) {
@@ -149,11 +162,16 @@ class GridPainter extends CustomPainter {
     // re-rasterised in full on every frame of every pan.
     //
     // THE SYMPTOM MATCHED THE TIER GATE EXACTLY. `_minScreenSpacing`
-    // drops the minor tier below ~0.71x zoom and the major tier below
-    // ~0.14x, so the grid vanishes when zoomed right out and switches on
+    // drops the minor tier below ~1.98x zoom and the major tier below
+    // ~0.40x, so the grid vanishes when zoomed right out and switches on
     // at working zoom. "Buttery smooth zoomed all the way out, abysmal
     // where I actually work" is that gate read aloud, and it is why both
     // canvases were affected: they share this painter.
+    //
+    // THOSE TWO FIGURES MOVED when `_minScreenSpacing` went from 5 to 14;
+    // they were 0.71x and 0.14x and are quoted post-change. The jank
+    // argument below is unaffected, and in fact strengthened: a sparser
+    // grid records fewer lines into the picture.
     //
     // THE TRADE WAS BACKWARDS AND NOBODY HAD MEASURED WHICH SIDE WAS
     // SCARCE. A full viewport of padding spends GPU FILL, every frame, to
