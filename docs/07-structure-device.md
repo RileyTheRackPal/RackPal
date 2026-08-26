@@ -200,7 +200,7 @@ Grid operations are the device builder's, unchanged: fill-down, fill-series, mul
 Rooms down, media across, integer spinners at the intersections. Changing a cell from 0 to 2 materialises two `Link`s with generated labels in one command; decrementing it deletes the two highest-sequence unconnected drops in that cell and refuses (with a spring-back chip, CR-017) to delete a connected one.
 
 ```
-                Cat6  Cat6a  RG6  RG6q  16/2  16/4  22/4  OS2  EMT     Σ   Outlets
+                Cat6  Cat6a  RG6  RG6q  16/2  16/4  22/4  OS2  EMT     ∑   Outlets
  ──────────────────────────────────────────────────────────────────────────────────
  Living Room     [4]   [0]   [2]   [0]   [0]   [2]   [1]  [0]  [0]     9      2
  Kitchen         [2]   [0]   [1]   [0]   [0]   [1]   [1]  [0]  [0]     5      1
@@ -213,7 +213,9 @@ Rooms down, media across, integer spinners at the intersections. Changing a cell
                                                     [ + Media column ]  [ + Room ]
 ```
 
-The `EMT` column is `isPathwayOnly` and creates `Pathway`s, not drops, its cells are tinted and excluded from the Σ drop count (CR-109). Media columns are user-configurable; `+ Media column` opens the media-type picker with an inline "create new type" row.
+> **The summation header is `∑` (U+2211), not `Σ` (U+03A3).** It read as the Greek capital until the glyph-coverage gate found the product's one fallback character: Unicode separates the LETTER from the N-ARY SUMMATION operator, a column that adds a row up wants the operator, and the two look alike in most faces. Jost carries U+2211 and not U+03A3, so the right character is also the one that renders.
+
+The `EMT` column is `isPathwayOnly` and creates `Pathway`s, not drops, its cells are tinted and excluded from the ∑ drop count (CR-109). Media columns are user-configurable; `+ Media column` opens the media-type picker with an inline "create new type" row.
 
 **A cell is a target and not a step** (M3-C/3). The surface hands over the
 number a person typed and `planMatrixCell` works out what it means against the
@@ -256,7 +258,7 @@ it would have claimed CR-109 held when it did not. The last piece was **DR-035**
 which gives a created pathway the medium and the room, and it is not
 bookkeeping: a cell is a target, so a column that created entities it could not
 then find would accept a number and read back `0` forever. The cells are excluded
-from the `Σ` drop count, a decrement **refuses** to take a pathway with cable
+from the `∑` drop count, a decrement **refuses** to take a pathway with cable
 running through it and names the `[ Pathways ]` tab, and the column needs no
 Structure device at all, because a `Pathway` hangs off the document as a
 `Location` does (CR-112).

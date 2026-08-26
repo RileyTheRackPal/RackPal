@@ -13208,6 +13208,16 @@ precisely the "bare coloured dot" this ruling forbids, so the set must not conta
 conventional severity octagon reads as a circle below about 24 px, which would have made the two
 most different severities the two hardest to tell apart. That is asserted, not asserted about.
 
+**AND THE ONE CHARACTER LEFT ON FALLBACK TURNED OUT TO BE THE WRONG CHARACTER.** §11.89.8's glyph
+gate carried a single exemption: `U+03A3`, the structure matrix's sum header, recorded as the one
+addition this project would not make because a letterform has a design where a triangle has only a
+construction. Both alternatives were real and both answered the wrong question. Unicode separates
+the LETTER `U+03A3` from the N-ARY SUMMATION operator `U+2211`; a column that adds a row up wants
+the operator; and Jost carries `U+2211` and not `U+03A3`. **The correct character is also the one
+that renders**, so no glyph was drawn, no copy changed and no exemption remains. The gate's exempt
+set is now empty and is kept only to make the next entry argue past this one: a missing glyph may be
+a missing character rather than a missing design.
+
 **WHAT IS STILL NOT GATED, said plainly.** The source check reads text. A widget that obtained the
 colour indirectly, or through `colorScheme.error`, is invisible to it. The `error` slot is a known
 hole and is accepted deliberately: it is populated with Critical's value so a stray use is at least

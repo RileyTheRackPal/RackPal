@@ -57,7 +57,8 @@ WEIGHTS = ['Jost-Regular.ttf', 'Jost-Medium.ttf']
 REQUIRED = {0x2192: 'passthrough arrow, schedules T6.10/T6.11',
             0x2194: 'bidirectional',
             0x2032: 'feet', 0x2033: 'inches',
-            0x2014: 'G4 unknown, the em dash', 0x00B7: 'separator'}
+            0x2014: 'G4 unknown, the em dash', 0x00B7: 'separator',
+            0x2211: 'the structure matrix sum header'}
 
 # THE ONE EXEMPT SET, AND WHY IT IS SAFE TO HAVE ONE.
 #
@@ -83,20 +84,26 @@ PATH_BACKED = {
     0x2B21, 0x2B22,          # pwr
 }
 
-# NOT path-backed, and not a shape either. U+03A3 is the sum header from
-# docs/04 §4.2 (`kMatrixSumHeader`), and it is a LETTERFORM: a Greek capital
-# has a design, where a triangle and a ballot box have only a construction.
-# Everything else this project adds to Jost is built from the face's own
-# contours and can be checked against them; a sigma would be invented, and an
-# invented letterform in someone else's face is the one thing here that cannot
-# be verified by measurement.
+# EMPTY, AND THE STORY OF HOW IT EMPTIED IS THE REASON IT STAYS HERE.
 #
-# So it falls to per-glyph system fallback: one column header in a different
-# sans, which is a cosmetic cost of naming Jost on the chrome (DR-090
-# §11.89.8), not a defect. It is listed here rather than fixed because the
-# alternatives are a drawn sigma or a change to on-screen copy, and both are
-# the user's call rather than a build step's.
-UNDRAWN = {0x03A3}
+# It held U+03A3 GREEK CAPITAL SIGMA, the structure matrix's sum header,
+# recorded as the one character this project would not add: a letterform has
+# a design where a triangle has only a construction, so a sigma drawn into
+# someone else's face is the one addition that could not be checked by
+# measurement. The alternative was changing on-screen copy, which is not a
+# build step's call. Both were true and both were the wrong question.
+#
+# THE HEADER WAS THE WRONG CHARACTER. Unicode separates the LETTER U+03A3
+# from the N-ARY SUMMATION operator U+2211, a column that adds a row up wants
+# the operator, and the two look alike in most faces, which is why the
+# substitution survived. Jost carries U+2211 and not U+03A3, so the correct
+# character is also the one that renders: no glyph drawn, no copy changed,
+# no exemption needed.
+#
+# The set is kept rather than deleted because the next entry proposed for it
+# should have to argue past this one: a missing glyph may be a missing
+# character rather than a missing design.
+UNDRAWN: set[int] = set()
 
 # A scan that finds nothing must be a failure, not a pass. This floor is well
 # under the count at the time of writing and exists only to catch the regex

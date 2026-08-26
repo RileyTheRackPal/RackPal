@@ -156,8 +156,29 @@ const double _outletWidth = 62;
 /// What the `+ Media column` button says.
 const String kAddMediaColumnLabel = 'Media column';
 
-/// §4.2's `Σ` header.
-const String kMatrixSumHeader = 'Σ';
+/// §4.2's summation header.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// U+2211, THE OPERATOR, NOT U+03A3, THE GREEK LETTER
+/// ═════════════════════════════════════════════════════════════════════
+/// This was `Σ` (U+03A3 GREEK CAPITAL SIGMA) and should never have been:
+/// Unicode separates the letter from the N-ARY SUMMATION operator on
+/// purpose, and a column that adds a row up wants the operator. The two
+/// look alike in most faces, which is why the substitution survives.
+///
+/// It was FOUND by the glyph-coverage gate rather than by reading. Jost
+/// carries U+2211 in both weights and does not carry U+03A3, so the
+/// header was the one character in the product falling back to a system
+/// font. The gate reported a missing glyph; the missing glyph turned out
+/// to be the wrong character.
+///
+/// THE ALTERNATIVES ARE BOTH WORSE. Drawing a Greek capital into someone
+/// else's face is the one addition this project could not check by
+/// measurement, because a letterform has a design where a triangle has
+/// only a construction. Changing the header to a Latin word would have
+/// been on-screen copy, which is not a build step's call. Using the right
+/// character is neither.
+const String kMatrixSumHeader = '∑';
 
 /// §4.2's `Outlets` header, in the table's own casing.
 const String kMatrixOutletsHeader = 'OUTLETS';
