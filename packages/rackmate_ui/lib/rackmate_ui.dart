@@ -43,6 +43,7 @@
 /// something true to show.
 library;
 
+export 'src/builder/archetype_dialogs.dart';
 export 'src/builder/bank_dialogs.dart';
 export 'src/builder/bank_tree.dart';
 export 'src/builder/batch_cells.dart';

@@ -56,6 +56,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/builder/archetype_dialogs.dart';
 import 'package:rackmate_ui/src/builder/bank_tree.dart';
 import 'package:rackmate_ui/src/builder/batch_inspector.dart';
 import 'package:rackmate_ui/src/builder/change_type_dialog.dart';
@@ -285,6 +286,32 @@ class _PortGridState extends State<PortGrid> {
   void _runQuickAdd(List<Command<TemplateBody>> commands) {
     if (commands.isEmpty) return;
     widget.actions.transact(LabelKey.quickAddPorts, (tx) {
+      for (final command in commands) {
+        tx.add(command);
+      }
+    });
+  }
+
+  /// `Matrix I/O…`: one dialog, one transaction, one `Ctrl+Z`.
+  ///
+  /// **IT RUNS THE GROUPS THE DIALOG HANDS BACK AND KNOWS NOTHING ABOUT
+  /// MATRICES.** `Switch ports…` and anything after it return the same
+  /// `List<ArchetypeGroup>`, so this is the one call site rather than the
+  /// first of three.
+  Future<void> _matrixArchetype() async {
+    final groups = await showMatrixArchetypeDialog(
+      context: context,
+      body: widget.body,
+      registries: widget.registries,
+    );
+    if (groups == null || groups.isEmpty || !mounted) return;
+    // BUILT AFTER THE AWAIT, against the body as it stands now. The
+    // dialog was open while nothing else could edit, but planning keys
+    // off a snapshot taken before it opened is the class of bug the
+    // batch allocator exists to prevent and it costs one line not to.
+    final commands = buildArchetype(widget.registries, widget.body, groups);
+    if (commands.isEmpty) return;
+    widget.actions.transact(LabelKey.generateArchetype, (tx) {
       for (final command in commands) {
         tx.add(command);
       }
@@ -1182,6 +1209,13 @@ class _PortGridState extends State<PortGrid> {
           autofocus: widget.quickAddAutofocus,
         ),
         const Divider(height: 1),
+        // THE GENERATORS SIT UNDER QUICK ADD AND ABOVE THE TOOLBAR,
+        // which is docs/06 §2's own layout sketch. §4.3's prose says
+        // "above Quick Add" and DR-092 §11.91 rules that an illustration:
+        // the fast path is the first thing under the hand on entering the
+        // section, and nothing gets inserted over it.
+        _ArchetypeBar(onMatrix: () => unawaited(_matrixArchetype())),
+        const Divider(height: 1),
         _Toolbar(
           selectedCount: _selection.length,
           onAdd: _addPort,
@@ -1351,6 +1385,35 @@ class _Footer extends StatelessWidget {
 /// column table opens with `⠿` and the handle is 16 points plus the two
 /// the row already had no slack for, which is where the 20 went.
 const double kPortSelectGutter = 76;
+
+/// docs/06 §2's `[Matrix I/O…] [Switch ports…] [Paste]` row.
+///
+/// **IT CARRIES ONLY THE GENERATORS THAT EXIST.** A button wired to
+/// nothing is the `UnbuiltView` defect wearing a toolbar, which is the
+/// objection `_Toolbar` already records against a `Pair front to rear`
+/// that could do nothing on 46 of the 48 seeded templates.
+class _ArchetypeBar extends StatelessWidget {
+  const _ArchetypeBar({required this.onMatrix});
+
+  final VoidCallback onMatrix;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+    child: Row(
+      children: [
+        OutlinedButton.icon(
+          onPressed: onMatrix,
+          icon: const Icon(Icons.grid_on, size: 18),
+          // THE ELLIPSIS IS A PROMISE, and this package keeps it: a
+          // trailing `…` means a dialog opens rather than something
+          // happening. `Renumber…` and `Change type…` read the same way.
+          label: const Text('Matrix I/O…'),
+        ),
+      ],
+    ),
+  );
+}
 
 class _Toolbar extends StatelessWidget {
   const _Toolbar({

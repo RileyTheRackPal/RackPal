@@ -13383,9 +13383,18 @@ generate.
 **11.91.5 "CONNECTOR PER SIDE" IS AN ILLUSTRATION AND THE CONTROL IS A TYPE.** A connector alone
 cannot express either side of the worked example: `rj45` defaults to `net.ethernet` and the output
 side is `video.hdbaset` **on the same connector**, which is the orthogonality DR-060 §11.59.4 exists
-to preserve. So each side offers the pair Quick Add's field mode already offers, family and
-connector, through `family_picker.dart` rather than a second control, and a named connector
-overrides the family's default exactly as a second DSL token does.
+to preserve. So each side offers **both** pickers, and they are the port grid's own two cells,
+`PortFamilyCell` and `PortConnectorCell`, rather than a third pair: the first carries
+`family_picker.dart`'s measurement and DR-025 §11.24.3's non-committing filter, the second carries
+M3-L's finding that a `DropdownButton` asserting on its value takes a whole table down when a
+document names something no menu offers. Picking a family takes that family's default connector, and
+a connector picked afterwards overrides it, which is DR-060 §11.59.4's rule and
+`quick_add_fields.dart`'s behaviour.
+
+**Quick Add's own field mode ships a family picker and NO connector picker**, because docs/12 §5.3.6
+records five of its seven fields being ruled down as redundant. That is a fact about a docked strip
+beside a command line that can already say `rj45 hdbt` in one breath; a dialog with no command line
+has no second way to name the connector, so it carries the control the strip could do without.
 
 **11.91.6 "EMITS 4 TO 7 BANKS" IS AN ILLUSTRATION AND THE RANGE IS 2 TO 7.** Inputs and outputs are
 the only two rows the dialog cannot switch off. Every companion is a checkbox and **all five default
