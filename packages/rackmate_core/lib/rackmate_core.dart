@@ -50,6 +50,7 @@
 /// worse than no signpost.
 library;
 
+export 'src/builder/archetypes.dart';
 export 'src/builder/bank_commands.dart';
 export 'src/builder/fork_status.dart';
 export 'src/builder/label_pattern.dart';

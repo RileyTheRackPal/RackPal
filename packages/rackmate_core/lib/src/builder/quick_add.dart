@@ -432,16 +432,32 @@ String deriveBankName(Registries registries, QuickAddPlan plan) {
       : registries.signalFamilies[plan.family];
   final direction = plan.direction ?? family?.defaultDirection;
   final plural = _kDirectionPlural[direction] ?? 'Ports';
+  final head = deriveTypeHead(registries, plan.family, plan.connector);
+  return head.isEmpty ? plural : '$head $plural';
+}
 
-  final head = switch (family) {
+/// The word a person calls this type, uppercased: `HDMI`, `HDBT`, `IR`.
+///
+/// **THE HEAD OF `deriveBankName`, EXTRACTED BECAUSE A GENERATOR NEEDS IT
+/// WITHOUT THE PLURAL.** The archetypes (M4-I) write silkscreen labels
+/// like `HDMI IN {n:2}`, and deriving that prefix a second way is how the
+/// bank in the tree comes to disagree with the text on the ports inside
+/// it. Same chain, same order, one implementation.
+///
+/// Empty when neither half resolves, which is a real state: `16 out`
+/// names no type and the caller decides what to do about it.
+String deriveTypeHead(
+  Registries registries,
+  SignalFamilyId? family,
+  ConnectorTypeId? connector,
+) {
+  final def = family == null ? null : registries.signalFamilies[family];
+  return switch (def) {
     final f? when f.aliases.isNotEmpty => f.aliases.first.toUpperCase(),
     final f? when (f.shortTag ?? '').isNotEmpty => f.shortTag!,
     final f? => f.displayName,
-    _ =>
-      plan.connector == null ? '' : _connectorHead(registries, plan.connector!),
+    _ => connector == null ? '' : _connectorHead(registries, connector),
   };
-
-  return head.isEmpty ? plural : '$head $plural';
 }
 
 /// The same first-alias rule applied to a connector, which is already
@@ -477,14 +493,30 @@ String uniqueBankName(
   Registries registries,
   TemplateBody body,
   QuickAddPlan plan,
+) => uniqueBankNameAmong(
+  registries,
+  {for (final b in body.banks) b.label},
+  plan,
+);
+
+/// [uniqueBankName] over an explicit label set.
+///
+/// **THE SET AND NOT THE BODY, because [QuickAddBatch] has banks in flight
+/// that `body` cannot see.** Plan two of an archetype has to collide with
+/// plan one's bank, whose `AddBankCommand` has not run. Extracted rather
+/// than copied for the reason this file already gives twice: a second
+/// derivation of one rule is where the two come to disagree.
+String uniqueBankNameAmong(
+  Registries registries,
+  Set<String> takenLabels,
+  QuickAddPlan plan,
 ) {
   if (plan.bankName case final named?) return named;
   final wanted = deriveBankName(registries, plan);
-  final taken = {for (final b in body.banks) b.label};
-  if (!taken.contains(wanted)) return wanted;
+  if (!takenLabels.contains(wanted)) return wanted;
   for (var n = 2; ; n++) {
     final candidate = '$wanted $n';
-    if (!taken.contains(candidate)) return candidate;
+    if (!takenLabels.contains(candidate)) return candidate;
   }
 }
 
@@ -709,91 +741,165 @@ List<Command<TemplateBody>> buildQuickAdd(
   Registries registries,
   TemplateBody body,
   QuickAddPlan plan,
-) {
-  final commands = <Command<TemplateBody>>[];
+) => QuickAddBatch(registries, body).add(plan);
 
-  final bankLabel = uniqueBankName(registries, body, plan);
-  final existing = body.banks.where((b) => b.label == bankLabel).firstOrNull;
-  final bankKey = existing?.key ?? uniqueBankKey(body, bankLabel);
-  if (existing == null) {
-    commands.add(
-      AddBankCommand(
-        BankDef(
-          key: bankKey,
-          label: bankLabel,
-          // The abbr is the label's own head, which is already the
-          // family's display token; a separate derivation here would be
-          // a third place for the same vocabulary to drift.
-          abbr: bankLabel.split(' ').first,
-          order: nextOrder(body.banks.map((b) => b.order)),
-        ),
-      ),
+/// The key, order and bank allocation a RUN of plans shares.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// ONE PLAN NEEDS NO SUCH OBJECT; SIX IN ONE ACTION DO
+/// ═════════════════════════════════════════════════════════════════════
+/// [buildQuickAdd] used to allocate straight off `body`, which is right
+/// while the one command list it returns is the only thing in flight.
+/// **An archetype generator emits six plans from one button** (M4-I,
+/// DR-092 §11.91.7) and none of their commands has run when the next is
+/// planned, so six independent snapshots mint six ports keyed `port.1`
+/// and two banks both labelled `HDMI Inputs`.
+///
+/// So the allocation moved out of the function and into an object the
+/// caller can hold across plans, and `buildQuickAdd` became its one-plan
+/// case. **That is the whole point of the shape**: an archetype that
+/// constructed its own `PortDef`s would be a second copy of the bank
+/// reuse rule, the label expander and the ordinal allocator, which is the
+/// objection [uniqueSlugKey]'s own comment records against a third
+/// derivation of a key.
+///
+/// **IT APPLIES NOTHING.** Commands come back unapplied exactly as they
+/// always did and the caller runs them inside one `transact`. What is
+/// shared here is the ALLOCATION, not the mutation.
+final class QuickAddBatch {
+  QuickAddBatch(this.registries, TemplateBody body)
+    : _takenPortKeys = {for (final p in body.ports) p.key.v},
+      _bankKeyByLabel = {for (final b in body.banks) b.label: b.key},
+      _takenBankKeys = {for (final b in body.banks) b.key},
+      _portOrder = nextOrder(body.ports.map((p) => p.order)),
+      _bankOrder = nextOrder(body.banks.map((b) => b.order)),
+      _ordinal = body.ports.length + 1;
+
+  final Registries registries;
+
+  final Set<String> _takenPortKeys;
+
+  /// LABEL TO KEY, and the label is the join for `uniqueBankName`'s own
+  /// stated reason: the label is what the user reads, and it is what
+  /// decides whether a plan reuses a bank or mints one.
+  final Map<String, String> _bankKeyByLabel;
+  final Set<String> _takenBankKeys;
+
+  FracIndex _portOrder;
+  FracIndex _bankOrder;
+  int _ordinal;
+
+  /// The commands realising [plan], allocated against everything this
+  /// batch has already handed out.
+  ///
+  /// [decorate] runs on each freshly constructed [PortDef] BEFORE it goes
+  /// into its `AddPortCommand`, which is how an archetype writes the
+  /// fields the DSL has no token for: PoE, an SFP form factor, a power
+  /// role, an IR pinout. Writing them here rather than as trailing
+  /// `SetPortFieldCommand`s keeps one command per port and keeps `revert`
+  /// symmetrical: `AddPortCommand` holds the port it added, so undo takes
+  /// the decorated object out and redo puts the same one back.
+  List<Command<TemplateBody>> add(
+    QuickAddPlan plan, {
+    void Function(PortDef port)? decorate,
+  }) {
+    final commands = <Command<TemplateBody>>[];
+
+    final bankLabel = uniqueBankNameAmong(
+      registries,
+      _bankKeyByLabel.keys.toSet(),
+      plan,
     );
-  }
-
-  final family = plan.family == null
-      ? null
-      : registries.signalFamilies[plan.family];
-  final direction =
-      plan.direction ?? family?.defaultDirection ?? PortDirection.bidirectional;
-  final labels = plan.labels;
-
-  // Keys and orders are allocated against a GROWING set rather than
-  // against `body` as it stands, because none of these commands has run
-  // yet. Allocating all sixteen against the same snapshot would mint
-  // sixteen identical keys.
-  final taken = {for (final p in body.ports) p.key.v};
-  var order = nextOrder(body.ports.map((p) => p.order));
-  var ordinal = body.ports.length + 1;
-
-  void addPort(String label, Face face) {
-    final key = autoPortKey(label, taken: taken, ordinal: ordinal);
-    taken.add(key.v);
-    ordinal++;
-    commands.add(
-      AddPortCommand(
-        PortDef(
-          key: key,
-          label: label,
-          // AN UNRESOLVED HALF IS WRITTEN AS THE EMPTY ID, which is what
-          // `blankPort` already does and what the grid's validation dot
-          // already marks. G4's absent-key rule governs the CODEC, not
-          // this constructor: `PortDef.connector` is non-nullable.
-          connector: plan.connector ?? const ConnectorTypeId(''),
-          signalFamily: plan.family ?? const SignalFamilyId(''),
-          face: face,
-          position: kUnplacedPanelPosition,
-          order: order,
-          direction: direction,
-          topology: family?.defaultTopology ?? PortTopology.p2p,
-          bankKey: bankKey,
+    var bankKey = _bankKeyByLabel[bankLabel];
+    if (bankKey == null) {
+      bankKey = bankKeyAmong(_takenBankKeys, bankLabel);
+      _takenBankKeys.add(bankKey);
+      _bankKeyByLabel[bankLabel] = bankKey;
+      commands.add(
+        AddBankCommand(
+          BankDef(
+            key: bankKey,
+            label: bankLabel,
+            // The abbr is the label's own head, which is already the
+            // family's display token; a separate derivation here would be
+            // a third place for the same vocabulary to drift.
+            abbr: bankLabel.split(' ').first,
+            order: _bankOrder,
+          ),
         ),
-      ),
-    );
-    order = nextOrder([order]);
-  }
-
-  for (var i = 0; i < plan.quantity; i++) {
-    final label = i < labels.length ? labels[i] : '';
-    if (plan.bothFaces) {
-      addPort(label, Face.front);
-      addPort(label, Face.rear);
-    } else {
-      addPort(label, plan.face ?? Face.rear);
+      );
+      _bankOrder = nextOrder([_bankOrder]);
     }
-  }
 
-  return commands;
+    final family = plan.family == null
+        ? null
+        : registries.signalFamilies[plan.family];
+    final direction =
+        plan.direction ??
+        family?.defaultDirection ??
+        PortDirection.bidirectional;
+    final labels = plan.labels;
+
+    void addPort(String label, Face face) {
+      // Keys and orders come off a GROWING set rather than off `body` as
+      // it stands, because none of these commands has run yet.
+      // Allocating all sixteen against one snapshot would mint sixteen
+      // identical keys.
+      final key = autoPortKey(label, taken: _takenPortKeys, ordinal: _ordinal);
+      _takenPortKeys.add(key.v);
+      _ordinal++;
+      final port = PortDef(
+        key: key,
+        label: label,
+        // AN UNRESOLVED HALF IS WRITTEN AS THE EMPTY ID, which is what
+        // `blankPort` already does and what the grid's validation dot
+        // already marks. G4's absent-key rule governs the CODEC, not
+        // this constructor: `PortDef.connector` is non-nullable.
+        connector: plan.connector ?? const ConnectorTypeId(''),
+        signalFamily: plan.family ?? const SignalFamilyId(''),
+        face: face,
+        position: kUnplacedPanelPosition,
+        order: _portOrder,
+        direction: direction,
+        topology: family?.defaultTopology ?? PortTopology.p2p,
+        bankKey: bankKey,
+      );
+      decorate?.call(port);
+      commands.add(AddPortCommand(port));
+      _portOrder = nextOrder([_portOrder]);
+    }
+
+    for (var i = 0; i < plan.quantity; i++) {
+      final label = i < labels.length ? labels[i] : '';
+      if (plan.bothFaces) {
+        addPort(label, Face.front);
+        addPort(label, Face.rear);
+      } else {
+        addPort(label, plan.face ?? Face.rear);
+      }
+    }
+
+    return commands;
+  }
 }
 
 /// A bank key that no bank in [body] already holds.
 ///
 /// Slugged from the label on `autoPortKey`'s convention, so a reader
 /// seeing `hdmi.inputs` beside `port.3` does not have to learn two.
-String uniqueBankKey(TemplateBody body, String label) => uniqueSlugKey(
+String uniqueBankKey(TemplateBody body, String label) =>
+    bankKeyAmong({for (final b in body.banks) b.key}, label);
+
+/// [uniqueBankKey] over an explicit key set, for [QuickAddBatch]'s sake.
+///
+/// The FALLBACK is why this is a function rather than two call sites: a
+/// label that slugs to nothing has to land on `bank.<n>`, and that string
+/// written twice is the "third place for the same vocabulary to drift"
+/// this file objects to two comments above.
+String bankKeyAmong(Set<String> taken, String label) => uniqueSlugKey(
   label,
-  taken: {for (final b in body.banks) b.key},
-  fallback: 'bank.${body.banks.length + 1}',
+  taken: taken,
+  fallback: 'bank.${taken.length + 1}',
 );
 
 /// [label] slugged to a key that is not already in [taken].

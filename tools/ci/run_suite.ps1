@@ -116,10 +116,11 @@ $ErrorActionPreference = 'Stop'
 # nothing, and ui 1162 -> 1170 for console_theme_test. Raised in the same
 # commit that added them, core 3279 -> 3281 at #779, and app 838 -> 839 at
 # DR-091 for the landing-view case, then 839 -> 841 at #775 for the font
-# weight gate, and ui 1170 -> 1176 at #774. Which is the whole
-# instruction above and is cheap only while it stays a habit.
+# weight gate, and ui 1170 -> 1176 at #774. RE-MEASURED 2026-08-26 at #220
+# (M4-I1): core 3281 -> 3309, the 28 cases of `archetypes_test.dart`. Which
+# is the whole instruction above and is cheap only while it stays a habit.
 $SuiteFloors = @{
-    'rackmate_core'   = 3281
+    'rackmate_core'   = 3309
     'rackmate_text'   = 1
     'rackmate_export' = 189
     'rackmate_ui'     = 1176
