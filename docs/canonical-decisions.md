@@ -12905,6 +12905,116 @@ against silent installation, and left for the milestone that owns them.
 
 ---
 
+### 11.88 DR-089 · The wordmark is Nasalization, shipped as outlines, and the licence is what forbids the obvious implementation
+
+**Settled by the user on 2026-08-25** (`#768`, `#769`), at an identity exploration taken up between
+M4 and M5 to break the run of business logic, and **before any of it entered the tree**.
+
+**NOT A §8.3 AMENDMENT.** **RJ-017** already accepted *"Icon, wordmark, window and document icons,
+file-type registration for `.rackmate` and `.rmdev`, and a trademark search before any certificate
+or domain is bought"* into the hardening milestone under **AC-058/D9**. Canon §10.12(f) then named
+the mascot. Nothing enters scope here; what changes is that a scheduled item acquires a decision, a
+board home and an implementation.
+
+**11.88.1 THE SCOPE WAS ACCEPTED AND THEN DECOMPOSED OUT OF EXISTENCE.** RJ-017 put five things
+into hardening. `M8-0` and `M9-0` are both **Done**, and between them they produced **no task for
+any of the five**. File-type registration survives by accident, inside `#498` under the Store epic,
+because a Store listing needed it. The other four had no board row at all until `#768`. This is
+worth naming as a shape rather than an incident: **a ruling that accepts something into a milestone
+is not a task in that milestone**, and the only thing standing between the two is a decomposition
+that has to remember.
+
+**11.88.2 THE FACE.** **Nasalization**, by Raymond Larabie (Typodermic Fonts Inc.), version 5.101.
+Chosen by the user from their own library after a drawn-from-scratch alternative was built and
+rejected as *"needs a lot of work"*, which it did. The face is worm-adjacent by design and carries
+the two gestures the brief wanted: extended monoline proportions and a **crossbarless A** by
+default, with `ss01` adding the bar for anyone who wants it.
+
+**THIS DOES NOT MAKE NASALIZATION A UI FONT.** **CR-080**'s text face is a separate question and is
+untouched here. Nasalization is a wordmark face and appears in exactly one artifact.
+
+**11.88.3 THE LICENCE DECIDES THE IMPLEMENTATION, AND IT DECIDES IT AGAINST THE OBVIOUS ONE.** The
+Typodermic Desktop EULA v260817 was read in full rather than assumed. Five clauses bind, and they
+do not agree with each other until the definitions section is read:
+
+| Clause | Effect here |
+|---|---|
+| **2.2** Finished materials | Logos are **named** as permitted, for commercial use, with no volume limit (3.2), provided the distributed material contains no Font Software and is fixed artwork |
+| **Definitions**, `Font Software` | *"does not include fixed artwork lawfully created and distributed under Section 2.2"*, and such artwork *"is not a Derivative Work"* |
+| **4.3** Embedding | No font file may be embedded in *"an app, game, desktop application, plug-in"*. **No `.otf` enters this repository, now or later** |
+| **4.5** Reusable glyph products | Fixed artwork must not *"let a recipient compose new text"*. **One merged path per lockup, never seven letters** |
+| **4.6** Publicly Available Software | No inclusion in anything requiring source disclosure or free redistribution |
+
+**4.6 IS THE ONE THAT WOULD HAVE COST A RELEASE, AND THE DEFINITION IS WHAT DEFUSES IT.** The GPLv3
+release under consideration is *"Publicly Available Software"* by 4.6's own definition in all but
+spelling. Had the font been bundled, adopting this wordmark would have quietly closed that option.
+It does not, because 4.6 reaches **Font Software**, and the definitions section puts permitted fixed
+artwork outside that term explicitly. **The GPLv3 question is left exactly as open as it was.**
+
+**4.7, THE AI CLAUSE, IS RECORDED AND NOT RESOLVED HERE.** It forbids using *"glyph outlines,
+spacing or kerning data, or rendered visual elements"* in connection with the development, training
+or fine-tuning of a model, and its final paragraph then permits *"ordinary use of software that
+incorporates an AI feature"* where nothing is supplied to a model. Producing artwork trains nothing
+and reads as the second. The clause is eight days old, the reading is the **user's as Licensee**,
+and it is written down here rather than settled quietly so that a later reader can see it was
+considered.
+
+**11.88.4 4.5 IS A CONSTRAINT ON THE DATA, NOT ON THE PROCESS, AND MUST SURVIVE REFACTORING.** Seven
+addressable letterforms is a recombinable character sheet whatever file extension it wears. The
+lockup is therefore **one `DiagramPath` holding every letter as a subpath**, and `brand_test.dart`
+counts them, so that a later refactor which notices the subpaths and thinks them separable fails a
+test rather than a licence. That test's first draft asserted `isA<DiagramPath>()`, which the return
+type makes true whatever the data holds; it is recorded because it is precisely the failure mode
+house style names, an assertion that survives the behaviour it was protecting.
+
+**11.88.5 THE CONSTRAINT LANDS ON MACHINERY THAT ALREADY EXISTS.** docs/08 §8.3 says *"There is no
+drawSvgPath"* and **CR-086** exists so that two backends cannot parse separately. The wordmark is a
+`d` string read once by `DiagramPath.fromSvg` and replayed by both. No new dependency, no font
+loading, no asset bundle, and no second parse site.
+
+**AND IT IS THE ARGUMENT `device_glyph_art.dart` ALREADY RECORDS.** A signal glyph shipped as a
+codepoint returned a near-zero advance from `PdfFontMeasurer` while the screen's `TextPainter` fell
+back to a system face and drew it full width, and `NET-NEN006` printed over a net name. Both
+backends emitted **identical ops**; only the font behind one differed, so every gate passed. A
+wordmark set as text reopens that, and a wordmark is worse than a glyph: it is the one mark on the
+sheet a reader is expected to recognise by shape rather than read. **The licence and the field bug
+point the same way**, which is the only reason this ruling is cheap.
+
+**11.88.6 THE LOCKUP.** `RACK` over `MATE`, stacked, with a rule between. Two rows of four, because
+one line measures **8.95:1** against its cap height and is a banner rather than a badge.
+
+`MATE` is **262 upem units wider** than `RACK`, so `RACK` is tracked **+70/1000 em** and the rows
+flush to a residual of **zero units**. The tracking is solved against **ink**, not advances:
+advances carry side bearings, so flushing on them measures as flush and does not look it.
+
+The nominal box is **2999 × 1486**, cap line to baseline, cap height **675** (the face's own
+`sCapHeight`). Round letters overshoot **12 units** past the cap line and the baseline, symmetrically,
+and the box is **not** trimmed to the ink: a box tight to the ink sits the wordmark visibly high
+against type set beside it. Coordinates are integers throughout, so the geometry is byte stable in
+the sense **CR-117** wants of anything that reaches a file.
+
+**11.88.7 THE RULE IS DROPPED BELOW A 20 px CAP, AND THAT NUMBER WAS MEASURED.** At a 13 pt cap the
+rule is under a third of a point and prints as a smudge, which on a sheet whose whole job is to be
+trusted reads as a printing defect rather than a design. `kRackMateLockupMinRuledCapPx` carries it,
+and the unruled lockup exists for below it.
+
+**11.88.8 EVERY GLYPH IN THIS FACE IS A SINGLE CONTOUR, AND THAT IS LOAD BEARING.** Nasalization's
+counters are open, so no contour nests inside another, so **nonzero and even-odd fills agree** and
+the two backends cannot diverge on fill rule. This is a property of the chosen face rather than a
+decision anyone made, which is exactly why it is gated: a later addition that closes a counter would
+break it, and would break it **only in whichever backend picked the other rule**.
+
+**11.88.9 WHAT THIS DOES NOT RULE.** It does not settle the **application icon**: §10.12(f) already
+ruled that branding is **Riley the RackMate**, *"in neutral warm white and greys so it never
+competes with the eight domain hues"*, and the user intends Riley for the icon once assets exist.
+The open work there is the size ladder, since a character face at 16 px is mud and what a taskbar
+actually shows is a reduced mark derived from the silhouette. It does not settle the **console
+palette**, which is **DR-090**. It does not touch **CR-080**'s text face. And it does not discharge
+RJ-017's **trademark search**, which is owed before any certificate or domain is bought, and which
+adopting a wordmark brings closer rather than satisfies.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
