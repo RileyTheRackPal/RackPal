@@ -71,7 +71,11 @@ Future<void> showLocationsPanel(
     child: SizedBox(
       width: 720,
       height: 520,
-      child: LocationsPanel(doc: doc, actions: actions),
+      child: LocationsPanel(
+        doc: doc,
+        actions: actions,
+        onClose: () => Navigator.of(context).pop(),
+      ),
     ),
   ),
 );
@@ -152,11 +156,24 @@ class LocationsPanel extends StatefulWidget {
   const LocationsPanel({
     required this.doc,
     required this.actions,
+    this.onClose,
     super.key,
   });
 
   final RackDocument doc;
   final LocationsPanelActions actions;
+
+  /// How to dismiss, or NULL when there is nothing to dismiss.
+  ///
+  /// DR-091 §11.90 made this a view in the strip as well as a dialog, and
+  /// the two hosts differ in exactly one way: a dialog can be closed and a
+  /// tab cannot. Both the `Close` button and the Escape binding are
+  /// therefore conditional rather than hardcoded to `Navigator.pop`, which
+  /// is what they were: as a tab that call popped the APPLICATION's route.
+  ///
+  /// Null is not "no way out". It is "the way out is the strip", which is
+  /// the same answer Rack and Schematic give.
+  final VoidCallback? onClose;
 
   @override
   State<LocationsPanel> createState() => _LocationsPanelState();
@@ -218,8 +235,11 @@ class _LocationsPanelState extends State<LocationsPanel> {
     final tree = _tree;
     final nodes = tree.preOrder;
 
+    final onClose = widget.onClose;
     return CallbackShortcuts(
-      bindings: dialogDismissShortcut(() => Navigator.of(context).pop()),
+      bindings: onClose == null
+          ? const <ShortcutActivator, VoidCallback>{}
+          : dialogDismissShortcut(onClose),
       child: Focus(
         autofocus: true,
         child: Column(
@@ -271,7 +291,7 @@ class _LocationsPanelState extends State<LocationsPanel> {
               addUnderLabel: _selectedLocation == null
                   ? null
                   : _displayName(_selectedLocation),
-              onClose: () => Navigator.of(context).pop(),
+              onClose: onClose,
             ),
           ],
         ),
@@ -777,7 +797,7 @@ class _Footer extends StatelessWidget {
   /// on a panel with a selection is ambiguous about exactly the thing this
   /// panel is for.
   final String? addUnderLabel;
-  final VoidCallback onClose;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -804,7 +824,8 @@ class _Footer extends StatelessWidget {
           TextButton(onPressed: onAddAtTop, child: const Text('New at top')),
         ],
         const Spacer(),
-        TextButton(onPressed: onClose, child: const Text('Close')),
+        if (onClose != null)
+          TextButton(onPressed: onClose, child: const Text('Close')),
       ],
     ),
   );

@@ -13,6 +13,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
+import 'package:rackmate/src/session/app_shell.dart';
 import 'package:rackmate/src/session/locations_actions.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_text/rackmate_text.dart';
@@ -253,7 +254,7 @@ void main() {
     });
   });
 
-  group('the menu that reaches it', () {
+  group('the view that reaches it', () {
     late TextMeasurer measurer;
 
     setUpAll(() {
@@ -279,19 +280,25 @@ void main() {
         ..resetDevicePixelRatio();
     });
 
-    testWidgets('Project ▸ Locations… opens the panel (CR-112)', (
+    testWidgets('the Locations TAB reaches the panel (CR-112, DR-091)', (
       tester,
     ) async {
-      // The claim: the panel is REACHABLE. A wiring nothing opens is the
-      // shape M2-F found on `doc.ports`.
+      // The claim is unchanged and is the one that matters: the panel is
+      // REACHABLE. A wiring nothing opens is the shape M2-F found on
+      // `doc.ports`. What changed is the route, not the claim: DR-091
+      // §11.90 made this a view, and `Project ▸ Locations…` is gone
+      // because two routes to one surface is two things to keep true.
       final built = await buildTestApp(measurer);
       await tester.pumpWidget(built.app);
       await tester.pumpAndSettle();
 
-      expect(find.text('Project'), findsOneWidget);
-      await tester.tap(find.text('Project'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Locations…'));
+      expect(
+        find.text('Project'),
+        findsNothing,
+        reason: 'the Project menu held only views and went with them',
+      );
+
+      await tester.tap(find.text(ShellView.locations.label));
       await tester.pumpAndSettle();
 
       expect(find.byType(LocationsPanel), findsOneWidget);
@@ -304,9 +311,7 @@ void main() {
       await tester.pumpWidget(built.app);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Project'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Locations…'));
+      await tester.tap(find.text(ShellView.locations.label));
       await tester.pumpAndSettle();
       await tester.tap(find.text('New location'));
       await tester.pumpAndSettle();

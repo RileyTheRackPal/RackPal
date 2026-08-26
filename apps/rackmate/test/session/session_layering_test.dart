@@ -561,16 +561,21 @@ final class AppServices {
       // gesture in a loop. Its own keyboard cost is zero rows, because
       // every control in it is a real input and Flutter's traversal
       // already makes tab order the widget order.
-      [8, 4],
+      //
+      // 8 -> 5 at DR-091 §11.90, AND THE SECOND TIME THIS NUMBER HAS GONE
+      // DOWN. All three Project items became VIEWS in the strip, so the
+      // menu that held them is gone entirely rather than emptied: the
+      // ruling's own reason is this file's, that two routes to one
+      // surface is two things to keep true. What is left is the five File
+      // items, and the accelerator count did not move for the sixth time.
+      [5, 4],
       reason:
           'five File-menu items — New, Open…, Save, Save As…, Export PDF… '
-          '— plus Project ▸ Locations…, Structured wiring… and New device '
-          'template…, and four accelerators, because none of Export PDF, '
-          'Locations, Structured wiring or the device builder has one. '
-          'docs/08 §8.1 gives export Ctrl+P; the dialog is not built and '
-          'neither is the binding. The three Project items open surfaces '
-          "and do not earn a row in kKeymap, M7's table and arbitration "
-          'across every platform.',
+          '— and four accelerators. The Project menu is gone: DR-091 '
+          '§11.90 made Locations, Structured Wiring and Device Manager '
+          'views in the strip, and a menu item beside a tab is a second '
+          'route to one surface. docs/08 §8.1 gives export Ctrl+P; the '
+          'dialog is not built and neither is the binding.',
     );
   });
 
@@ -580,9 +585,13 @@ final class AppServices {
     // `Ctrl+4` is the Schedule in v1 and forever. Do not rebind the
     // Schedule to `Ctrl+3` — `Ctrl+n` is a view identity, not an ordinal."
     //
-    // The strip has three tabs and the keys are 1, 2 and 4, which reads
-    // like an off-by-one to anybody who has not read that ruling. This is
-    // the test that stops the "tidy-up" — moving Schedule onto Ctrl+3
+    // The strip has SIX views and the keys are 1, 2 and 4 pointing at
+    // indices 2, 4 and 5, which reads like nonsense to anybody who has
+    // not read two rulings. DR-091 §11.90.4 is the second: the strip was
+    // reordered by job and the KEYS were deliberately not renumbered,
+    // because the view set is not final until Plan lands and renumbering
+    // twice costs two relearnings where renumbering once costs one. This
+    // is the test that stops the "tidy-up" — moving Schedule onto Ctrl+3
     // would break the same muscle memory twice, once now and once in v1.1
     // when the Rear Panel arrives and takes its key back.
     //
@@ -642,10 +651,16 @@ final class AppServices {
     }
 
     // AND THE ORDINAL IS SEPARATE FROM THE IDENTITY, which is the other
-    // half of the ruling and the half a registry could quietly undo. The
-    // Schedule is the third TAB and the fourth KEY; a map that sent key 3
-    // anywhere, or sent key 4 to index 3, would be the conflation docs/04
-    // §8 forbids.
-    expect(kViewKeyToTabIndex, {1: 0, 2: 1, 4: 2});
+    // half of the ruling and the half a registry could quietly undo. A
+    // map that sent key 3 anywhere, or sent key 4 to the Schematic, would
+    // be the conflation docs/04 §8 forbids.
+    //
+    // EVERY INDEX MOVED AT DR-091 AND NO KEY DID, which is the clearest
+    // statement of that separation the project has: the strip was
+    // reordered by job, so Rack went 0 -> 2, Schematic 1 -> 4 and
+    // Schedule 2 -> 5, while Ctrl+1, Ctrl+2 and Ctrl+4 still mean exactly
+    // what they meant. If a future edit "fixes" this to {1: 0, 2: 1,
+    // 4: 2} it has renumbered the keys, which §11.90.4 defers past M6.
+    expect(kViewKeyToTabIndex, {1: 2, 2: 4, 4: 5});
   });
 }
