@@ -42,6 +42,7 @@ import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_ui/src/inspector/rack_inspector_panel.dart'
     show InspectorDropdown, RackInspectorPanel;
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 
 /// Which of the two things the inspector column is currently showing.
 enum InspectorTarget {
@@ -169,7 +170,7 @@ class _SelectionSummary extends StatelessWidget {
             'SELECTION',
             style: theme.textTheme.labelSmall?.copyWith(
               color: scheme.primary,
-              fontWeight: FontWeight.w700,
+              fontWeight: kConsoleEmphasis,
               letterSpacing: 0.8,
             ),
           ),
@@ -185,7 +186,7 @@ class _SelectionSummary extends StatelessWidget {
             Text(
               focused.designator,
               style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight: kConsoleEmphasis,
               ),
             ),
             Text(

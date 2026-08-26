@@ -68,6 +68,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
     show FilteringTextInputFormatter, KeyDownEvent, LogicalKeyboardKey;
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 
 /// §4's `RackInspector`. Stateless in its own right; the mutable buffers
 /// live in the individual field widgets below, each of which re-syncs from
@@ -341,7 +342,7 @@ class _SectionHeader extends StatelessWidget {
         text.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: scheme.primary,
-          fontWeight: FontWeight.w700,
+          fontWeight: kConsoleEmphasis,
           letterSpacing: 0.8,
         ),
       ),

@@ -46,6 +46,7 @@
 // assertion that actually holds the line here.
 
 import 'package:flutter/material.dart';
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 
 /// A view that has not been built, said plainly.
 ///
@@ -165,7 +166,7 @@ final class _MilestoneBadge extends StatelessWidget {
           style: theme.textTheme.labelMedium?.copyWith(
             color: scheme.onSurfaceVariant,
             letterSpacing: 0.8,
-            fontWeight: FontWeight.w600,
+            fontWeight: kConsoleEmphasis,
           ),
         ),
       ),

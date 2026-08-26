@@ -47,6 +47,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 
 /// docs/04 §5's chip strip. Stateless and fully driven by [rollups], so a
 /// widget test can pump it against a hand-built rack in three lines.
@@ -79,7 +80,7 @@ class RackMetricsRow extends StatelessWidget {
     final scheme = theme.colorScheme;
     final valueStyle = theme.textTheme.labelSmall?.copyWith(
       color: scheme.onSurface,
-      fontWeight: FontWeight.w600,
+      fontWeight: kConsoleEmphasis,
       height: 1,
     );
     final dimStyle = theme.textTheme.labelSmall?.copyWith(

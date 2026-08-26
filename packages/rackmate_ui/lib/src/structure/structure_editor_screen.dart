@@ -66,6 +66,7 @@ import 'package:rackmate_ui/src/structure/drop_entry_panel.dart';
 import 'package:rackmate_ui/src/structure/outlets_view.dart';
 import 'package:rackmate_ui/src/structure/pathways_view.dart';
 import 'package:rackmate_ui/src/structure/structure_matrix_view.dart';
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 import 'package:rackmate_ui/src/widgets/family_picker.dart';
 
 /// What the app does when the editor asks for something.
@@ -1202,7 +1203,7 @@ class _LocationPane extends StatelessWidget {
           child: Text(
             'LOCATIONS',
             style: theme.textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: kConsoleEmphasis,
               letterSpacing: 0.6,
             ),
           ),
@@ -1818,7 +1819,7 @@ class _HeaderRow extends StatelessWidget {
                   structureColumnHeader(id),
                   textAlign: _align(structureColumnAlign(id)),
                   style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: kConsoleEmphasis,
                     letterSpacing: 0.4,
                   ),
                 ),
@@ -1880,7 +1881,7 @@ class _BandDelegate extends SliverPersistentHeaderDelegate {
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelLarge?.copyWith(
                   color: foreground,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: kConsoleEmphasis,
                 ),
               ),
             ),
@@ -2370,7 +2371,7 @@ class _TextCellState extends State<_TextCell> {
       controller: _text,
       focusNode: _focus,
       style: theme.textTheme.bodySmall?.copyWith(
-        fontWeight: widget.bold ? FontWeight.w700 : FontWeight.w400,
+        fontWeight: widget.bold ? kConsoleEmphasis : FontWeight.w400,
       ),
       decoration: InputDecoration(
         isDense: true,

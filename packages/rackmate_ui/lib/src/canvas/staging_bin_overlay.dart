@@ -30,6 +30,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:rackmate_ui/src/canvas/drag_preview_controller.dart';
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 
 /// The chip shown while a palette drag is outside every rack (docs/04
 /// §3.1). Read the file header before changing its copy: the wording is
@@ -107,7 +108,7 @@ class StagingBinOverlay extends StatelessWidget {
                                 'Staging Bin — not in this build',
                                 style: theme.textTheme.labelMedium?.copyWith(
                                   color: scheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: kConsoleEmphasis,
                                 ),
                               ),
                               if (name.isNotEmpty)

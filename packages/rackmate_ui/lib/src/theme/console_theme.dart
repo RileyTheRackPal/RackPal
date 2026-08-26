@@ -27,6 +27,27 @@ import 'package:rackmate_core/rackmate_core.dart';
 
 Color _c(int argb) => Color(argb);
 
+/// The emphasis weight, and the only heavier one the bundle can draw.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// A CONSTANT BECAUSE TWENTY-EIGHT LITERALS IS HOW THE LAST ONE DRIFTED
+/// ═════════════════════════════════════════════════════════════════════
+/// These sites asked for `w700` (22 of them) and `w600` (6) against a
+/// bundle that carried only Regular, so Flutter SYNTHESISED both. That
+/// made the two-tier emphasis notional: a reader saw one faked weight
+/// wherever either was requested, and on a geometric face synthesis
+/// closes the counters before it thickens the stems.
+///
+/// DR-090 §11.89.8 bundled Jost Medium, so there is now exactly one real
+/// weight above Regular and this names it. Collapsing `w600` and `w700`
+/// onto it loses nothing that was ever drawn.
+///
+/// WHEN A SECOND REAL WEIGHT ARRIVES, this is the one line that decides
+/// what "emphasis" means, and a second constant beside it is how a real
+/// two-tier hierarchy would start. A literal at a call site is a decision
+/// nobody can find again.
+const FontWeight kConsoleEmphasis = FontWeight.w500;
+
 /// The five severities, as the only supported way to reach a status colour.
 enum ConsoleStatus {
   critical(kConsoleCritical),

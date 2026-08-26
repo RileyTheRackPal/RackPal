@@ -49,6 +49,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:rackmate_core/rackmate_core.dart';
+import 'package:rackmate_ui/src/theme/console_theme.dart';
 import 'package:rackmate_ui/src/widgets/document_memo.dart';
 
 /// The first line of the no-cables state.
@@ -465,7 +466,7 @@ class _HeaderRow extends StatelessWidget {
                   column.header,
                   textAlign: _align(column.align),
                   style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: kConsoleEmphasis,
                     letterSpacing: 0.4,
                   ),
                 ),
@@ -608,7 +609,7 @@ class _BandRow extends StatelessWidget {
                 '${group.title} — ${group.rowCount} runs',
                 style: theme.textTheme.labelLarge?.copyWith(
                   color: foreground,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: kConsoleEmphasis,
                 ),
               ),
             ),
@@ -703,7 +704,7 @@ class _DataRow extends StatelessWidget {
             ? theme.colorScheme.onSurfaceVariant
             : theme.colorScheme.onSurface,
         fontWeight: column.id == ScheduleColumnId.cableId
-            ? FontWeight.w700
+            ? kConsoleEmphasis
             : FontWeight.w400,
       ),
     );
