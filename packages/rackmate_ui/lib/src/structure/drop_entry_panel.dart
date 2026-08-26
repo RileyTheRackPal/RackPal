@@ -411,7 +411,10 @@ class _Preview extends StatelessWidget {
               Text(
                 '${" " * column}^',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  fontFamily: 'monospace',
+                  // RackMono: the caret above is placed by counting
+                  // spaces, so a proportional fallback puts it under the
+                  // wrong character and nothing fails.
+                  fontFamily: 'RackMono',
                   color: scheme.error,
                 ),
               ),

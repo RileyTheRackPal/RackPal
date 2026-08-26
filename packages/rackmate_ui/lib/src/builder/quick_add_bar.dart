@@ -224,7 +224,11 @@ class _QuickAddBarState extends State<QuickAddBar> {
                         hintText: '16 hdmi in "HDMI IN {n:2}"',
                         labelText: 'Quick Add',
                       ),
-                      style: const TextStyle(fontFamily: 'monospace'),
+                      // RackMono, not the generic 'monospace' alias: the
+                      // pattern's column positions are what the user is
+                      // counting, so the face has to actually be fixed
+                      // width rather than resolve to one by luck.
+                      style: const TextStyle(fontFamily: 'RackMono'),
                     ),
                   ),
                 ),
