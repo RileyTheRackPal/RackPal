@@ -98,6 +98,12 @@ try {
     # made packages/rackmate_core/.../seed_registries.dart a fourth copy of
     # the same 8 hues and 55 dash/weight pairs.
     Invoke-Gate 'registry parity'     { python tools/registry_parity.py }
+    # DR-090 section 11.89.8. The only gate here that reads a font BINARY,
+    # because it is the only one that can: the two backends emit IDENTICAL
+    # ops for a missing glyph and differ solely in what a rasteriser does
+    # with one of them, which is how `NET-NEN006` printed over a net name
+    # with every op-level gate green. Its blind spots are in its header.
+    Invoke-Gate 'glyph coverage'      { python tools/glyph_coverage_check.py }
     Invoke-Gate 'JUnit converter self-test' {
         python (Join-Path $ci 'junit_converter_selftest.py')
     }

@@ -9,7 +9,7 @@ schedules, PDF sheet set. Windows-first, macOS ruled in for v1 (DR-009).
 pwsh -File tools/ci/run_local.ps1 -SkipBuild
 ```
 
-Fourteen gates. All must pass before a commit. Notes that cost real time:
+Fifteen gates. All must pass before a commit. Notes that cost real time:
 
 - **Analyzer is a ratchet pinned to an exact number** in
   `tools/ci/analyze_info_baseline.txt` (currently 173 infos). Errors and warnings
