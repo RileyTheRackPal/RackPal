@@ -646,16 +646,30 @@ void main() {
     });
   });
 
-  group('the three-tab strip survives the shell move', () {
-    testWidgets('is still Rack / Schematic / Schedule, in that order', (
-      tester,
-    ) async {
+  group('the strip survives the shell move', () {
+    testWidgets('it runs in job order (DR-091 §11.90.3)', (tester) async {
+      // The group was `the three-tab strip` and this asserted `['Rack',
+      // 'Schematic', 'Schedule']`. DR-091 §11.90 promoted three editors
+      // that were already full-screen surfaces reached from a menu, and
+      // ordered the six by the order the work is done rather than by the
+      // order they were built.
+      //
+      // WHAT THE GROUP IS ACTUALLY FOR IS UNCHANGED: the strip survives
+      // the shell move, and Ctrl+S below still resolves from the app root
+      // rather than from whichever tab has focus.
       await pump(tester);
       final tabs = tester
           .widgetList<Tab>(find.byType(Tab))
           .map((t) => t.text)
           .toList();
-      expect(tabs, ['Rack', 'Schematic', 'Schedule']);
+      expect(tabs, [
+        'Locations',
+        'Device Manager',
+        'Rack',
+        'Structured Wiring',
+        'Schematic',
+        'Schedule',
+      ]);
     });
 
     testWidgets('and Ctrl+S works from the Schedule tab, because the '

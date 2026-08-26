@@ -114,14 +114,15 @@ $ErrorActionPreference = 'Stop'
 # RE-MEASURED 2026-08-25 again, at #770/#772/#776: core 3263 -> 3279, the seven
 # `brand_test.dart` cases and the nine `console_palette_test.dart` ones, less
 # nothing, and ui 1162 -> 1170 for console_theme_test. Raised in the same
-# commit that added them, and core 3279 -> 3281 at #779. Which is the whole
+# commit that added them, core 3279 -> 3281 at #779, and app 838 -> 839 at
+# DR-091 for the landing-view case. Which is the whole
 # instruction above and is cheap only while it stays a habit.
 $SuiteFloors = @{
     'rackmate_core'   = 3281
     'rackmate_text'   = 1
     'rackmate_export' = 189
     'rackmate_ui'     = 1170
-    'rackmate_app'    = 838
+    'rackmate_app'    = 839
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

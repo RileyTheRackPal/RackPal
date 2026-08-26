@@ -97,7 +97,55 @@ import 'package:rackmate_ui/rackmate_ui.dart';
 /// KEY, permanently. See this file's header, and
 /// `session_layering_test.dart` RULE 14e — the test that exists to stop
 /// the tidy-up.
-const Map<int, int> kViewKeyToTabIndex = <int, int>{1: 0, 2: 1, 4: 2};
+///
+/// DR-091 §11.90 REORDERED THE STRIP AND DELIBERATELY DID NOT RENUMBER
+/// THE KEYS. The strip now runs in job order, Locations, Device Manager,
+/// Rack, Structured Wiring, Schematic, Schedule, so every INDEX below
+/// moved; every KEY is exactly what it was. `Ctrl+1` is still the Rack,
+/// `Ctrl+2` still the Schematic, `Ctrl+4` still the Schedule.
+///
+/// That is §11.90.4 in one line of data: the view set is not final until
+/// Plan lands (DR-029), and renumbering once against a settled set costs
+/// one relearning where renumbering now costs two. This map being the
+/// only place the two systems meet is what makes the deferral cheap.
+///
+/// PLAN IS ABSENT FROM THE STRIP, not present and empty. CR-071 does
+/// exactly this for the Rear Panel: docs/05 §827 says the binding is an
+/// unbound no-op and *"the tab is absent from the strip"*. A tab that
+/// opens onto nothing is the untruth `shell_tabs_test.dart` already
+/// names, pointing the other way.
+const Map<int, int> kViewKeyToTabIndex = <int, int>{1: 2, 2: 4, 4: 5};
+
+/// The strip, in DR-091 §11.90.3's order, and the group each view is in.
+///
+/// THE GROUPS ARE NOT DECORATION. Three tabs need no structure and six
+/// do; the divider between them is what stops the strip reading as one
+/// undifferentiated run, which is the thing the amendment set out to fix.
+enum ShellView {
+  locations('Locations', Icons.place_outlined, ShellViewGroup.project),
+  deviceManager(
+    'Device Manager',
+    Icons.developer_board_outlined,
+    ShellViewGroup.project,
+  ),
+  rack('Rack', Icons.dashboard_outlined, ShellViewGroup.design),
+  structuredWiring(
+    'Structured Wiring',
+    Icons.lan_outlined,
+    ShellViewGroup.design,
+  ),
+  schematic('Schematic', Icons.polyline_outlined, ShellViewGroup.design),
+  schedule('Schedule', Icons.table_rows_outlined, ShellViewGroup.deliverable);
+
+  const ShellView(this.label, this.icon, this.group);
+
+  final String label;
+  final IconData icon;
+  final ShellViewGroup group;
+}
+
+/// What a view is FOR, which is what the strip's dividers separate.
+enum ShellViewGroup { project, design, deliverable }
 
 /// Where the Schematic sits in THIS milestone's strip.
 ///
@@ -203,8 +251,12 @@ final class AppShellState extends State<AppShell>
     with SingleTickerProviderStateMixin
     implements WindowChromeListener {
   late final TabController _tabController;
+
+  /// What the `IndexedStack` is showing. Mirrors `_tabController.index`,
+  /// pushed by [_onTabChanged] rather than read during build, because a
+  /// `TabController` notifies mid-animation and a body that swapped on
+  /// the first tick would change under the animation.
   final MenuController _fileMenu = MenuController();
-  final MenuController _projectMenu = MenuController();
 
   /// CR-105's signpost, carried across the strip.
   ///
@@ -246,8 +298,22 @@ final class AppShellState extends State<AppShell>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this)
-      ..addListener(_onTabChanged);
+    // ORDER IS NOT DEFAULT, and DR-091 §11.90.3 rules only the order.
+    // The strip runs in JOB order, which teaches the workflow to someone
+    // meeting it; the view a person LANDS on is a different question,
+    // because most openings are a return to work in progress rather than
+    // a first pass through a new site. Opening onto Locations every time
+    // would make a returning user's first act a tab switch.
+    //
+    // So the app opens on the Rack, exactly as it did before the strip
+    // was reordered. `kViewKeyToTabIndex[1]` rather than a literal: the
+    // Rack's ordinal is a property of the strip, and this file already
+    // refuses to hard-code the Schematic's for the same reason.
+    _tabController = TabController(
+      length: ShellView.values.length,
+      initialIndex: kViewKeyToTabIndex[1]!,
+      vsync: this,
+    )..addListener(_onTabChanged);
     _services.session.addListener(_onSessionChanged);
     // Persistence can fail at any point in the session, not only at
     // startup — see app_services.dart's header.
@@ -491,12 +557,6 @@ final class AppShellState extends State<AppShell>
               onExportPdf: _exportPdf,
               onOpenRecent: _openRecent,
             ),
-            _ProjectMenu(
-              controller: _projectMenu,
-              onLocations: () => unawaited(_openLocations()),
-              onStructure: () => unawaited(_openStructureEditor()),
-              onNewDevice: () => unawaited(_openDeviceBuilder()),
-            ),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
@@ -518,21 +578,30 @@ final class AppShellState extends State<AppShell>
         // tab was rescued from.
         bottom: _startCardVisible
             ? null
+            // NO CONSTRUCTION GLYPH ON ANY TAB. The marker said which
+            // view did nothing yet; the Schedule lost it at M2-B and the
+            // Schematic at M2-E, because "a tab that works while still
+            // wearing the 'not built' marker is the same class of untruth
+            // as the panel this replaced, pointing the other way"
+            // (shell_tabs_test.dart). DR-091 keeps that rule by keeping
+            // PLAN OUT of the strip until it is built, rather than adding
+            // a seventh tab onto nothing.
             : TabBar(
                 controller: _tabController,
-                tabs: const [
-                  Tab(icon: Icon(Icons.dashboard_outlined), text: 'Rack'),
-                  // NO CONSTRUCTION GLYPH ON ANY TAB NOW. The marker said
-                  // which view did nothing yet; the Schedule lost it at
-                  // M2-B and the Schematic loses it at M2-E, because "a
-                  // tab that works while still wearing the 'not built'
-                  // marker is the same class of untruth as the panel this
-                  // replaced, pointing the other way"
-                  // (shell_tabs_test.dart). The tab TEXT stays exactly as
-                  // docs/05 §12 spells it.
-                  Tab(icon: Icon(Icons.polyline_outlined), text: 'Schematic'),
-                  Tab(icon: Icon(Icons.table_rows_outlined), text: 'Schedule'),
+                tabs: [
+                  for (final view in ShellView.values)
+                    Tab(
+                      icon: Icon(view.icon),
+                      // THE DIVIDER IS DRAWN ON THE TAB, not between two
+                      // of them, because `TabBar` takes a flat list and
+                      // has nowhere to put a separator. A leading rule on
+                      // the first tab of each group after the first is
+                      // the same mark in the only place the widget
+                      // offers.
+                      text: view.label,
+                    ),
                 ],
+                dividerColor: Theme.of(context).colorScheme.outline,
               ),
       ),
       body: _startCardVisible
@@ -574,31 +643,26 @@ final class AppShellState extends State<AppShell>
             // ═════════════════════════════════════════════════════════
             // THE VIEW IS NOT A THING YOU SCROLL TO — #96, from the field
             // ═════════════════════════════════════════════════════════
-            // `TabBarView` is a `PageView` and takes page-scroll physics by
-            // default, so a horizontal wheel or a two-finger sideways
-            // trackpad swipe drags the whole view sideways. On a phone that
-            // is the affordance; here it is a collision, because BOTH
-            // canvases already claim exactly that gesture for panning —
-            // `CanvasIntentDetector._onPointerSignal` pans by the full
-            // scroll delta, `dx` included, and `_onPanZoomUpdate` does the
-            // same for a native trackpad pan.
+            // `TabBarView` is a `PageView` and takes page-scroll physics
+            // by default, so a horizontal wheel or a two-finger sideways
+            // trackpad swipe drags the whole view sideways. On a phone
+            // that is the affordance; here it is a collision, because
+            // BOTH canvases already claim exactly that gesture for
+            // panning.
             //
-            // So one sideways scroll moved the sheet AND dragged the page,
-            // which then settled back to the nearest tab: the "jumps around
-            // erratically" the user reported. Nothing was ever designed to
-            // switch views this way — the affordance is the tab bar and
-            // `Ctrl+1/2/4` (CR-071), and canon §1.10 principle (a) makes
-            // view-switching a GLOBAL command rather than a canvas gesture.
-            //
-            // THIS DOES NOT DISABLE PROGRAMMATIC SWITCHING.
-            // `TabController.animateTo` is unaffected, so the tab bar, the
-            // keymap and `switchToTab` all still work — see
-            // `.okf/practices/defer-past-the-gesture.md` for the separate
-            // hazard of switching mid-click, which this neither fixes nor
-            // reintroduces.
+            // AN IndexedStack WAS TRIED AT DR-091 AND REVERTED. It keeps
+            // every child mounted, which is what the Device Manager's
+            // draft wants, but mounting all six at once puts every hidden
+            // view's text in front of every global finder in the suite.
+            // The draft is kept by `AutomaticKeepAliveClientMixin` on the
+            // one screen that needs it instead, which is the standard
+            // mechanism and touches nothing else.
             physics: const NeverScrollableScrollPhysics(),
             children: [
+              _locationsTab(session),
+              _deviceManagerTab(session),
               _rackTab(session),
+              _structuredWiringTab(session),
               // THE SCHEMATIC IS BUILT NOW (M2-E), and the `UnbuiltView`
               // that stood here is gone rather than softened — the same
               // move, for the same reason, as the Schedule's one tab over.
@@ -661,6 +725,85 @@ final class AppShellState extends State<AppShell>
     );
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // THE THREE VIEWS DR-091 §11.90 PROMOTED
+  // ═══════════════════════════════════════════════════════════════════
+  // Each builds the SAME screen the dialog built, with the SAME actions.
+  // What changes is the host, and the one difference a host makes is
+  // whether there is anything to close: `onClose`/`onDone` is null here,
+  // and each screen hides its dismissal control rather than offering a
+  // button that would pop the application's own route.
+  //
+  // KEYED ON THE CONTROLLER, as the rack and schedule tabs are. Replacing
+  // the document must reset a selection, a draft or an expanded tree,
+  // because each of those is an answer about a document and a replacement
+  // is a different one.
+
+  Widget _locationsTab(DocumentSession session) => LocationsPanel(
+    key: ValueKey(session.controller),
+    doc: session.document,
+    actions: buildLocationsPanelActions(
+      controller: session.controller,
+      confirmRemoval: _confirmLocationRemoval,
+      onRefuse: _showRefusal,
+    ),
+  );
+
+  Widget _structuredWiringTab(DocumentSession session) => StructureEditorScreen(
+    key: ValueKey(session.controller),
+    // A CALLBACK AND NOT A VALUE, for the reason the dialog gave: nine
+    // drops committed by the first line change the document the second
+    // must plan against, and a captured reference would offer labels the
+    // first line just spent.
+    currentDoc: () => session.document,
+    actions: StructureEditorActions(
+      dropEntry: buildDropEntryActions(controller: session.controller),
+      onAddOutlet: (bodyId) => unawaited(_openOutletPicker(bodyId)),
+      onEdit: buildStructureEditAction(controller: session.controller),
+      onSetCount: buildStructureMatrixAction(controller: session.controller),
+      onEditPathways: buildPathwayEditAction(controller: session.controller),
+      onAddPathway: buildPathwayAddAction(controller: session.controller),
+      onRemovePathway: buildPathwayRemoveAction(
+        controller: session.controller,
+      ),
+      onImportCsv: (bodyId) => _runCsvImport(session, bodyId),
+      outlets: buildOutletsActions(controller: session.controller),
+    ),
+  );
+
+  /// The Device Manager. DR-091 §11.90.5 renamed it from `New device
+  /// template`, because a tab names a place and that named an action.
+  ///
+  /// IT STARTS ON A BLANK BODY WITH `Generic` ALREADY IN IT (DR-056,
+  /// §11.55), exactly as the dialog did: `Generic` is the trade's own
+  /// token for *unspecified / by others*, so pre-filling it is the
+  /// industry's spelling of an unknown rather than a fabricated value
+  /// under G4. `model` stays blank by the same ruling.
+  ///
+  /// THE DRAFT LIVES AS LONG AS THE VIEW DOES, which is what the
+  /// `IndexedStack` above buys and why it is there rather than a
+  /// `TabBarView`.
+  Widget _deviceManagerTab(DocumentSession session) {
+    final doc = session.controller.doc;
+    return DeviceBuilderScreen(
+      key: ValueKey(session.controller),
+      template: TemplateBody(
+        manufacturer: 'Generic',
+        model: '',
+        displayName: '',
+      ),
+      actions: buildDeviceBuilderActions(
+        controller: session.controller,
+        prefs: _services.prefsStore,
+      ),
+      // THE PROJECT'S OWN REGISTRIES AND FORMAT, so the port grid prints
+      // `HDMI Type A` where the model holds `conn.hdmi_a` and previews the
+      // designators THIS project would allocate (CR-042).
+      registries: doc.registries,
+      portDesignatorFormat: doc.settings.portDesignatorFormat,
+    );
+  }
+
   /// docs/04 §9's New-rack dialog, opened from the rack-less panel.
   ///
   /// The SAME `showNewRack` the rack canvas's `Ctrl+Alt+N` calls, so there
@@ -689,18 +832,6 @@ final class AppShellState extends State<AppShell>
   /// PROJECT-LEVEL, which is the whole ruling: a project with racks and no
   /// Structure device must still be able to say which room a rack is in,
   /// so this hangs off the menu bar rather than off either editor.
-  Future<void> _openLocations() async {
-    final session = _services.session;
-    await showLocationsPanel(
-      context,
-      doc: session.document,
-      actions: buildLocationsPanelActions(
-        controller: session.controller,
-        confirmRemoval: _confirmLocationRemoval,
-        onRefuse: _showRefusal,
-      ),
-    );
-  }
 
   /// `Project ▸ Structured wiring…` — docs/07 §4's editor (M3-C/2,
   /// AC-048).
@@ -723,30 +854,6 @@ final class AppShellState extends State<AppShell>
   /// the first line change the document the second line must plan
   /// against; a captured reference would offer labels the first line just
   /// spent.
-  Future<void> _openStructureEditor() async {
-    final session = _services.session;
-    await showStructureEditor(
-      context,
-      currentDoc: () => session.document,
-      actions: StructureEditorActions(
-        dropEntry: buildDropEntryActions(controller: session.controller),
-        onAddOutlet: (bodyId) => unawaited(_openOutletPicker(bodyId)),
-        onEdit: buildStructureEditAction(controller: session.controller),
-        onSetCount: buildStructureMatrixAction(
-          controller: session.controller,
-        ),
-        onEditPathways: buildPathwayEditAction(
-          controller: session.controller,
-        ),
-        onAddPathway: buildPathwayAddAction(controller: session.controller),
-        onRemovePathway: buildPathwayRemoveAction(
-          controller: session.controller,
-        ),
-        onImportCsv: (bodyId) => _runCsvImport(session, bodyId),
-        outlets: buildOutletsActions(controller: session.controller),
-      ),
-    );
-  }
 
   /// docs/06's Device Builder, from `Project ▸ New device template…`
   /// (M4-D, #175).
@@ -763,29 +870,6 @@ final class AppShellState extends State<AppShell>
   /// every catalog card, and that belongs with the library browser
   /// (M4-O, #186); this menu item is the one route that exists, and it
   /// authors a NEW template rather than forking a seeded one.
-  Future<void> _openDeviceBuilder() async {
-    final session = _services.session;
-    final doc = session.controller.doc;
-    await showDeviceBuilder(
-      context,
-      template: TemplateBody(
-        manufacturer: 'Generic',
-        model: '',
-        displayName: '',
-      ),
-      actions: buildDeviceBuilderActions(
-        controller: session.controller,
-        prefs: _services.prefsStore,
-      ),
-      // THE PROJECT'S OWN REGISTRIES AND FORMAT, so the port grid prints
-      // `HDMI Type A` where the model holds `conn.hdmi_a`, and previews
-      // the designators THIS project would allocate rather than a default
-      // project's (CR-042). Read once at open: the builder edits a
-      // template and cannot change either of these.
-      registries: doc.registries,
-      portDesignatorFormat: doc.settings.portDesignatorFormat,
-    );
-  }
 
   /// docs/07 §5's import, from the editor's `Import CSV…` (M3-F/2).
   ///
@@ -1010,65 +1094,6 @@ final class _FileMenu extends StatelessWidget {
       ],
     );
   }
-}
-
-/// The Project menu.
-///
-/// A SECOND TOP-LEVEL MENU, and the first thing to need one. `Project ▸
-/// Locations…` is CR-112's own spelling, and CR-110 already owes this menu
-/// a second entry (`Project ▸ Structured wiring…`), so the menu is where
-/// the corpus put it rather than where one item happened to land.
-///
-/// NO `shortcut:` ON THE ITEM, and deliberately: an accelerator would have
-/// to name a `KeyBindingId`, which means a row in `kKeymap` and a place in
-/// M7's generated table and in `arbitrate()`'s four conflict checks across
-/// every platform. A panel opened once per project does not earn that, and
-/// `session_layering_test.dart` RULE 14 counts the global bindings for
-/// exactly this reason.
-final class _ProjectMenu extends StatelessWidget {
-  const _ProjectMenu({
-    required this.controller,
-    required this.onLocations,
-    required this.onStructure,
-    required this.onNewDevice,
-  });
-
-  final MenuController controller;
-  final VoidCallback onLocations;
-  final VoidCallback onStructure;
-
-  /// docs/06's builder. Under `Project` rather than beside the palette,
-  /// because what it authors is a template the PROJECT holds (§7.1's
-  /// per-project embedded snapshots) until M4-N gives templates a
-  /// library of their own.
-  final VoidCallback onNewDevice;
-
-  @override
-  Widget build(BuildContext context) => MenuBar(
-    children: [
-      SubmenuButton(
-        controller: controller,
-        menuChildren: [
-          MenuItemButton(
-            onPressed: onLocations,
-            child: const Text('Locations…'),
-          ),
-          // TWO ITEMS BECAME ONE AT M3-C/2. `Add drops…` and `Add
-          // outlet…` were both temporary lodgers here by their own doc
-          // comments; the editor they were waiting for now holds both.
-          MenuItemButton(
-            onPressed: onStructure,
-            child: const Text('Structured wiring…'),
-          ),
-          MenuItemButton(
-            onPressed: onNewDevice,
-            child: const Text('New device template…'),
-          ),
-        ],
-        child: const Text('Project'),
-      ),
-    ],
-  );
 }
 
 /// The production [SessionPrompts]: the real dialogs, over a navigator.

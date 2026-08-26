@@ -73,6 +73,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
+import 'package:rackmate/src/session/app_shell.dart';
 import 'package:rackmate/src/session/starter_projects.dart';
 import 'package:rackmate_core/rackmate_core.dart';
 import 'package:rackmate_text/rackmate_text.dart';
@@ -178,15 +179,50 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('the strip is Rack / Schematic / Schedule, in that order '
-      '(docs/05 §12 line 780)', (tester) async {
+  testWidgets('the strip runs in JOB order (DR-091 §11.90.3)', (tester) async {
+    // This read `['Rack', 'Schematic', 'Schedule']` and cited docs/05
+    // §12 line 780 until DR-091 §11.90 rewrote that sentence. The order
+    // is now the order the work is done in: survey the site, decide what
+    // equipment exists, mount it, pull cable to it, interconnect it, hand
+    // over the paperwork.
+    //
+    // PLAN IS ABSENT and this list says so by omission. DR-091 §11.90.3
+    // puts it between Schematic and Schedule; it is not built (DR-029,
+    // before M6), and CR-071 already sets the precedent that an unbuilt
+    // view is absent from the strip rather than present and empty.
     await tester.pumpWidget((await buildTestApp(measurer)).app);
 
     final tabs = tester
         .widgetList<Tab>(find.byType(Tab))
         .map((t) => t.text)
         .toList();
-    expect(tabs, ['Rack', 'Schematic', 'Schedule']);
+    expect(tabs, [
+      'Locations',
+      'Device Manager',
+      'Rack',
+      'Structured Wiring',
+      'Schematic',
+      'Schedule',
+    ]);
+    expect(
+      tabs,
+      isNot(contains('Plan')),
+      reason:
+          'a tab that opens onto nothing is the untruth this file '
+          'already names, pointing the other way',
+    );
+  });
+
+  testWidgets('the app OPENS on the Rack, which order does not decide', (
+    tester,
+  ) async {
+    // DR-091 §11.90.3 rules the ORDER. Where a person lands is a separate
+    // question: most openings are a return to work in progress, so
+    // landing on Locations every time would make a returning user's first
+    // act a tab switch.
+    await tester.pumpWidget((await buildTestApp(measurer)).app);
+
+    expect(find.byType(RackCanvasScreen), findsOneWidget);
   });
 
   testWidgets('the Rack tab is the one that works, and still does', (
@@ -522,12 +558,18 @@ void main() {
       await tester.drag(_tabBody(), const Offset(-600, 0));
       await tester.pumpAndSettle();
       expect(pageOffset(tester), settled);
-      expect(tabIndex(tester), 1);
+      // Schematic, by KEY rather than by ordinal: DR-091 moved every
+      // index and no key, so a literal here would have to be edited
+      // again the next time the strip grows.
+      expect(tabIndex(tester), kViewKeyToTabIndex[2]);
 
       await tester.drag(_tabBody(), const Offset(600, 0));
       await tester.pumpAndSettle();
       expect(pageOffset(tester), settled);
-      expect(tabIndex(tester), 1);
+      // Schematic, by KEY rather than by ordinal: DR-091 moved every
+      // index and no key, so a literal here would have to be edited
+      // again the next time the strip grows.
+      expect(tabIndex(tester), kViewKeyToTabIndex[2]);
     });
 
     testWidgets('a horizontal wheel scroll does not move the page', (
@@ -560,7 +602,10 @@ void main() {
         await tester.pumpAndSettle();
         expect(pageOffset(tester), settled, reason: 'dx=$dx, settled');
       }
-      expect(tabIndex(tester), 1);
+      // Schematic, by KEY rather than by ordinal: DR-091 moved every
+      // index and no key, so a literal here would have to be edited
+      // again the next time the strip grows.
+      expect(tabIndex(tester), kViewKeyToTabIndex[2]);
     });
 
     testWidgets('and the two affordances that DO switch still switch', (
@@ -571,17 +616,26 @@ void main() {
       // that took the controller away instead would strand the user on
       // whichever tab opened first.
       await openTab(tester, 'Schematic');
-      expect(tabIndex(tester), 1);
+      // Schematic, by KEY rather than by ordinal: DR-091 moved every
+      // index and no key, so a literal here would have to be edited
+      // again the next time the strip grows.
+      expect(tabIndex(tester), kViewKeyToTabIndex[2]);
 
       await tester.tap(find.text('Schedule'));
       await tester.pumpAndSettle();
-      expect(tabIndex(tester), 2);
+      // Schedule, by KEY rather than by ordinal: DR-091 moved every
+      // index and no key, so a literal here would have to be edited
+      // again the next time the strip grows.
+      expect(tabIndex(tester), kViewKeyToTabIndex[4]);
 
       await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
       await tester.sendKeyEvent(LogicalKeyboardKey.digit1);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
       await tester.pumpAndSettle();
-      expect(tabIndex(tester), 0);
+      // Rack, by KEY rather than by ordinal: DR-091 moved every
+      // index and no key, so a literal here would have to be edited
+      // again the next time the strip grows.
+      expect(tabIndex(tester), kViewKeyToTabIndex[1]);
       expect(find.byType(RackCanvasScreen), findsOneWidget);
     });
   });

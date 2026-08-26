@@ -18,6 +18,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
+import 'package:rackmate/src/session/app_shell.dart';
 import 'package:rackmate/src/session/blank_document.dart';
 import 'package:rackmate/src/session/structure_edit_actions.dart';
 import 'package:rackmate/src/session/structure_matrix_actions.dart';
@@ -164,14 +165,16 @@ void main() {
     matching: find.byType(TextField),
   );
 
+  /// DR-091 §11.90 made this a VIEW. It was `Project ▸ Structured
+  /// wiring…`, a menu item, and the menu is gone with it: the ruling's
+  /// reason is the shell's own, that two routes to one surface is two
+  /// things to keep true.
   Future<void> openEditor(WidgetTester tester) async {
-    await tester.tap(find.text('Project'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Structured wiring…'));
+    await tester.tap(find.text(ShellView.structuredWiring.label));
     await tester.pumpAndSettle();
   }
 
-  testWidgets('Project ▸ Structured wiring… opens the editor (AC-048)', (
+  testWidgets('the Structured Wiring TAB opens the editor (AC-048)', (
     tester,
   ) async {
     final built = await buildTestApp(measurer, document: _project());
@@ -187,19 +190,35 @@ void main() {
     }
   });
 
-  testWidgets('the two temporary items it replaces are gone', (tester) async {
+  testWidgets('the menu that held it is gone, and so are its lodgers', (
+    tester,
+  ) async {
+    // This asserted the SHAPE OF A MENU: Locations and Structured
+    // wiring… present, `Add drops…` and `Add outlet…` gone because the
+    // editor they were waiting for had arrived. DR-091 §11.90 took the
+    // last step in the same direction and removed the menu itself.
+    //
+    // THE TWO LODGERS ARE STILL ASSERTED ABSENT. That claim outlived the
+    // menu: quick add is the bar across the top of the drop table and
+    // `Add outlet` the button beneath it, which is where docs/07 §4 draws
+    // each, and a stray revival of either would be two routes again.
     final built = await buildTestApp(measurer, document: _project());
     await tester.pumpWidget(built.app);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Project'));
-    await tester.pumpAndSettle();
-    expect(find.text('Locations…'), findsOneWidget);
-    // CR-110'S OWN WORDS. The ruling names this item, and a menu that
-    // paraphrases a ruling is a menu the corpus cannot be searched for.
-    expect(find.text('Structured wiring…'), findsOneWidget);
+    expect(
+      find.text('Project'),
+      findsNothing,
+      reason: 'the Project menu held only views and went with them',
+    );
+    expect(find.text('Structured wiring…'), findsNothing);
     expect(find.text('Add drops…'), findsNothing);
     expect(find.text('Add outlet…'), findsNothing);
+
+    // CR-110'S OWN WORDS SURVIVE, on the tab rather than in the menu. A
+    // surface that paraphrases a ruling is one the corpus cannot be
+    // searched for.
+    expect(find.text(ShellView.structuredWiring.label), findsOneWidget);
   });
 
   testWidgets('a line typed there lands in the real document', (tester) async {

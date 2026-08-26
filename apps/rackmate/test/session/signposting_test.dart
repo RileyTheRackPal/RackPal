@@ -233,7 +233,14 @@ void main() {
   group('1 — CR-105, joined up across the strip', () {
     testWidgets('clicking the chip switches to the Schematic', (tester) async {
       await pump(tester);
-      expect(tabIndex(tester), 0, reason: 'the app opens on the Rack tab');
+      // BY KEY, NOT BY ORDINAL. DR-091 reordered the strip and the Rack
+      // moved from index 0 to 2; the app still OPENS there, because
+      // §11.90.3 rules the order and not the landing view.
+      expect(
+        tabIndex(tester),
+        kViewKeyToTabIndex[1],
+        reason: 'the app opens on the Rack tab',
+      );
 
       await tapChip(tester, 4, 2, '1/6');
 

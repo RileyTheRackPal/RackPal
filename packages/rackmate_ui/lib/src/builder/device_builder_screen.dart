@@ -196,7 +196,8 @@ class DeviceBuilderScreen extends StatefulWidget {
   State<DeviceBuilderScreen> createState() => _DeviceBuilderScreenState();
 }
 
-class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
+class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
+    with AutomaticKeepAliveClientMixin {
   late final TemplateEditSession _session = TemplateEditSession(
     widget.template,
   );
@@ -402,8 +403,29 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen> {
     onMirror: _mirrorBank,
   );
 
+  // ═════════════════════════════════════════════════════════════════════
+  // THE DRAFT OUTLIVES A TAB SWITCH (DR-091 §11.90.6)
+  // ═════════════════════════════════════════════════════════════════════
+  // This screen holds an EDIT SESSION, not a view of the document: the
+  // template is never mutated, `TemplateEditSession` deep-copies it, and
+  // that copy is what makes closing without saving a complete undo.
+  //
+  // As a dialog that discard is a decision a person takes by pressing
+  // Close. As a view in the strip it would happen on `Ctrl+2`, which is
+  // not a decision about anything, so the state has to survive being
+  // scrolled out of a `TabBarView`. Nothing else in the strip needs this:
+  // the other five are views OF the document and rebuild from it.
   @override
-  Widget build(BuildContext context) => Shortcuts(
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    // Required by the mixin, and its whole effect.
+    super.build(context);
+    return _buildScreen(context);
+  }
+
+  Widget _buildScreen(BuildContext context) => Shortcuts(
     // THE BUILDER'S SCOPE IS INSTALLED AT THE SCREEN, not only around
     // Quick Add, because `Ctrl+Enter` has to work while focus is in the
     // METADATA FORM: docs/06 §9.1 spends step 5 on it, from the
@@ -718,13 +740,20 @@ class _Header extends StatelessWidget {
                   child: const Text('Save'),
                 ),
               ),
-              const SizedBox(width: 8),
-              FilledButton.tonal(
-                onPressed: onSaveAndClose,
-                child: const Text('Save & Close'),
-              ),
-              const SizedBox(width: 8),
-              TextButton(onPressed: onClose, child: const Text('Close')),
+              // BOTH CONTROLS ARE CONDITIONAL, because DR-091 §11.90 hosts
+              // this screen in the view strip as well as in a dialog and a
+              // tab has nothing to close. `Save` alone is the whole footer
+              // there, which is the honest shape: the draft is committed or
+              // it is not, and leaving the view is not a decision about it.
+              if (onClose != null) ...[
+                const SizedBox(width: 8),
+                FilledButton.tonal(
+                  onPressed: onSaveAndClose,
+                  child: const Text('Save & Close'),
+                ),
+                const SizedBox(width: 8),
+                TextButton(onPressed: onClose, child: const Text('Close')),
+              ],
             ],
           ),
         ],
