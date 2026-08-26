@@ -13200,6 +13200,91 @@ already governs and is stricter.
 
 ---
 
+### 11.90 DR-091 · The view strip carries every full-screen surface, ordered by the job
+
+**Settled by the user on 2026-08-26** (`#778`), from four usability reports taken against the
+built application.
+
+**A §8.3 SCOPE AMENDMENT.** docs/05 §827 says *"The v1 tab strip shows three tabs: Rack, Schematic,
+Schedule"*, and this changes that sentence. It adds no capability: Locations, the structured wiring
+editor and the device builder all exist and all ship. What changes is how they are reached and in
+what order they sit.
+
+**11.90.1 THE PROBLEM IS TWO NAVIGATION MODELS FOR ONE KIND OF THING.** Rack, Schematic and Schedule
+are full-screen surfaces reached from a strip. Locations, Structured Wiring and the device builder
+are full-screen surfaces reached from a menu, one of them as a 720×520 modal. A user has to learn
+that some views are places and others are errands, and nothing about the work distinguishes them: a
+person editing locations is doing the same kind of sustained work as a person editing a rack.
+
+**11.90.2 IT DISCHARGES A LIMITATION THE CODE ALREADY STATES.** `locations_panel.dart`'s header:
+
+> **MODAL**, which is what the ellipsis in `Project ▸ Locations…` promises and what the package's
+> three existing dialogs do. The alternative, a window left open while rooms are assigned in the
+> inspector, needs a surface the app does not have.
+
+**This amendment IS that surface.** The modality was never a decision about locations; it was a
+consequence of there being nowhere else to put them. The ruling discharges a known debt rather than
+indulging a preference.
+
+**11.90.3 THE ORDER IS THE JOB, NOT THE BUILD HISTORY.** The strip runs in the order the work is
+actually done, in three groups with a divider between them:
+
+| | View | Group |
+|---|---|---|
+| 1 | Locations | **the project**: what exists and where |
+| 2 | Device Manager | |
+| 3 | Rack | **the design**: what is built |
+| 4 | Structured Wiring | |
+| 5 | Schematic | |
+| 6 | Plan | |
+| 7 | Schedule | **the deliverable** |
+
+The sequence is a job: survey the site, decide what equipment exists, mount it, pull cable to it,
+interconnect it, mark where it physically sits, hand over the paperwork. Each view's inputs come
+from views to its left. Locations is a prerequisite for Structured Wiring, because a drop comes FROM
+a room; device templates are a prerequisite for Rack, because a rack is filled with them; Rack is a
+prerequisite for Structured Wiring landing, because a drop lands on a panel that is IN a rack.
+
+**Rear Panel joins the design group beside Rack** when it ships in v1.1 (CR-071), which is where it
+belongs and is one more reason not to freeze positions now.
+
+**THE FIRST DRAFT OF THIS SECTION ORDERED THE STRIP TO AVOID MOVING ANY KEYBINDING, AND THAT WAS THE
+WRONG THING TO OPTIMISE.** It produced Rack, Schematic, Schedule, Plan, Locations, Structured
+Wiring, Device Manager: the order in which the views happened to get built. A strip a person reads
+top to bottom should teach them the workflow, and preserving four accelerators is not worth teaching
+them the commit log.
+
+**11.90.4 THE `Ctrl+n` MAPPING IS DEFERRED PAST M6, DELIBERATELY.** CR-101 rules that `Ctrl+n` is
+*"a stable view identity, not an ordinal"*, and docs/05 §827 refuses to move Schedule onto `Ctrl+3`
+because *"moving it in v1 only to move it back in v1.1 breaks muscle memory for a cosmetic gain"*.
+That argument is sound and it applies with more force here, in the opposite direction: **the view
+set is not final until M6.** Plan lands before M6 (DR-029) and Rear Panel in v1.1.
+
+So the accelerators keep their current targets and the strip is reordered underneath them, which is
+temporarily inconsistent and is accepted as such. **Renumbering once against a settled set costs one
+relearning; renumbering now costs two.** The mapping is settled after M6, when there is nothing left
+to insert, and until then `Ctrl+3` stays reserved and unbound exactly as CR-071 requires.
+
+**11.90.5 THE RENAME.** `New Device Template` becomes **`Device Manager`**. Tabs name places and this
+one named an action, which is part of why it read as an errand. The screen already does more than
+create: it edits and manages templates.
+
+**11.90.6 A DIALOG AND A TAB MAKE DIFFERENT PROMISES, AND THIS IS THE REAL WORK.** A modal implies
+commit-on-close; a tab implies live editing. `LocationsPanelActions` already delegates every mutation
+to the application, so the change may be smaller than it looks, but **that must be verified per
+editor rather than assumed** and is the first task, not a detail. An editor that silently changes
+from *confirm to apply* to *applies as you type* is a data-loss surface, and the undo stack is what
+has to carry it.
+
+**11.90.7 WHAT THIS DOES NOT RULE.** It does not change any editor's behaviour beyond its placement
+and, per §11.90.6, its commit semantics. It does not touch DR-029's Plan timing or CR-071's Rear
+Panel deferral. It does not add a view for anything not already built. It does not settle the
+`Ctrl+n` mapping, which is §11.90.4's whole point. And it does not settle whether the strip must
+scroll or collapse on a small window, which is a real question at seven entries and has no answer
+here.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

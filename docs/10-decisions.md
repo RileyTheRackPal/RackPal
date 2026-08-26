@@ -586,7 +586,7 @@ fixed directly and cheaply instead:
    collisions.
 
 **The v1 tab strip shows three tabs: Rack (`Ctrl+1`), Schematic (`Ctrl+2`), Schedule (`Ctrl+4`).**
-`Ctrl+3` is **reserved** for the interactive Rear Panel view, which is v1.1 (CR-071); in v1 the
+**DR-091 §11.90.4 defers the whole `Ctrl+n` mapping past M6**, and the reservation below survives it untouched. `Ctrl+3` is **reserved** for the interactive Rear Panel view, which is v1.1 (CR-071); in v1 the
 binding is an unbound no-op and the tab is absent from the strip. Schedule is not rebound to
 `Ctrl+3` to close the gap, `Ctrl+n` is a stable view identity, not an ordinal, and moving it in
 v1 to move it back in v1.1 breaks muscle memory for a cosmetic gain. Sheet `T2.02 Rack Elevation
