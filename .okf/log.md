@@ -1,5 +1,51 @@
 # Update Log
 
+## 2026-08-25 (eleventh entry)
+
+* **New**: [DR-089, the wordmark ships as outlines](/decisions/dr-089-the-wordmark-ships-as-outlines.md).
+  The wordmark is set in **Nasalization** (Larabie / Typodermic) and ships as
+  **one merged `DiagramPath` per lockup**, not as a bundled face. The licence,
+  not taste, decided that: **4.3** bars embedding a font in an application and
+  **4.5** bars fixed artwork that lets a recipient compose new text, so seven
+  addressable letters would have been an alphabet product whatever the file
+  extension.
+* **Note**: **A LICENCE CLAUSE ALMOST CLOSED A RELEASE OPTION, AND THE
+  DEFINITIONS SECTION IS WHAT SAVED IT.** Typodermic **4.6** forbids inclusion
+  in *"Publicly Available Software"*, defined as anything requiring source
+  disclosure or free redistribution, which is the GPLv3 option in all but
+  spelling. Bundling the face would have foreclosed it **silently**, with no
+  gate, test or reviewer positioned to notice. It does not, because 4.6 reaches
+  `Font Software` and the definitions section excludes permitted fixed artwork
+  from that term by name. **The rule generalises past fonts: for any third-party
+  asset, read the definitions before the restrictions**, because the
+  restrictions are written against terms the definitions move.
+* **Note**: **THE LICENCE AND A FIELD BUG POINTED THE SAME WAY.**
+  `device_glyph_art.dart` already records why a mark must be a path: a signal
+  glyph shipped as a codepoint measured near zero in `PdfFontMeasurer` while the
+  screen fell back to a system face, and `NET-NEN006` printed over a net name,
+  with both backends emitting **identical ops**. The EULA forbade the font
+  anyway. When a constraint arrives twice from unrelated directions, the cheap
+  move is to notice rather than to argue with either.
+* **Note**: **RJ-017 ACCEPTED FIVE ITEMS INTO HARDENING AND THE DECOMPOSITION
+  PRODUCED TASKS FOR NONE.** Found by walking from a ruling to the board for an
+  unrelated reason, and recorded as docs/12 §4.14. `M8-0` and `M9-0` are both
+  **Done**; between them the two milestones carry thirteen issues and not one is
+  the icon, the wordmark, the window icon, the document icon or the trademark
+  search. File-type registration survives **by accident**, inside `#498`,
+  because a Store listing needed it for its own reasons. **A ruling that accepts
+  something into a milestone is not a task in that milestone.** Nothing has
+  walked the other twelve `Mn-0` items against the rulings they decomposed, so
+  the count in this class is **at least one and unknown**, which is the fourth
+  time in a week a recorded fact stopped tracking its subject.
+* **Note**: **A STATUS PALETTE WAS OPTIMISED AGAINST THE WRONG NEIGHBOURS.**
+  Five status colours were tuned for greyscale and deuteranopia separation and
+  never measured against the **eight domain hues they share a window with**.
+  Four of the five collide, and **Warning and Caution are fixed brand values
+  that collide on their own**, so re-deriving the two free colours cannot fix
+  it. Checked before saying so. The remedy is ruled separately as DR-090: hue is
+  never the only cue. **A palette is not a closed set until you enumerate what
+  else is on the screen.**
+
 ## 2026-08-25 (tenth entry)
 
 * **New**: [DR-088, state management is what was built](/decisions/dr-088-state-management-ratified.md).
