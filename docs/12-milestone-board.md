@@ -583,10 +583,10 @@ was honest when written and quietly stopped covering the thing it names.**
 
 ### 4.6 Font: Jost supersedes CR-080's IBM Plex; the docs have not caught up
 
-The code is unambiguous. `apps/rackmate/pubspec.yaml` bundles `assets/fonts/Jost-Regular.ttf`
-twice (under `fonts:` at `:135-137` and under `assets:` at `:139`) with the reasoning inline at
-`:122-125`; commit `0545090`, *"style: swap the bundled font from IBM Plex Sans to Jost"*, made the
-swap; every test fixture uses Jost, `apps/rackmate/test/baseline_parity_test.dart:81-82`
+The code is unambiguous. `apps/rackmate/pubspec.yaml` bundles **Jost Regular AND Jost Medium**,
+each twice (under `fonts:` at `:146-151` and under `assets:` at `:153-154`), with the reasoning
+inline at `:125-144`; commit `0545090`, *"style: swap the bundled font from IBM Plex Sans to Jost"*,
+made the swap and `875db98` added the second weight; every test fixture uses Jost, `apps/rackmate/test/baseline_parity_test.dart:81-82`
 (`const String _kFamily = 'Jost'; const FontRef _kFont = FontRef(_kFamily);`) and a literal
 `const FontRef _font = FontRef('Jost')` in eight `packages/rackmate_export/test/` files, including
 `elevation_true_scale_test.dart:132` and `starters_export_test.dart:41`.
@@ -601,10 +601,25 @@ table), docs/11:236, docs/03:146's asset tree, docs/05:171, and canon:1203, :121
 > and the working tree gives **3299** and **4089**. The figures above are the working-tree ones.
 > `:1203` and `:1211` are above the first insertion and did not move.
 
-Two consequences beyond the stale prose: **only Regular is bundled**, so the SemiBold / Condensed /
-Mono cuts CR-080 requires do not exist; and the **Noto Sans Symbols 2 fallback does not exist**,
-which is what docs/05:171's glyph-resolution test depends on. A tofu box in an exported drawing is
-the defect that test exists to prevent, and neither the test nor the fallback is present.
+Two consequences beyond the stale prose, **one of them now partly discharged**. The weights: this
+entry read *"only Regular is bundled"* until `875db98`, which added **Medium (500)** under DR-090
+§11.89.8 after an audit found **28 sites asking for `w600`/`w700`** against a single face and
+Flutter synthesising the difference. **SemiBold, Condensed and `RackMono` still do not exist**, and
+`RackMono` has two live call sites already asking for it: `quick_add_bar.dart:227` and
+`drop_entry_panel.dart:414` both request `fontFamily: 'monospace'`, a generic name nothing in the
+bundle provides, and **whether Flutter resolves it on Windows or falls back silently is untested**.
+
+The second is undischarged. The **Noto Sans Symbols 2 fallback does not exist**, which is what
+docs/05:171's glyph-resolution test depends on. A tofu box in an exported drawing is the defect that
+test exists to prevent, and neither the test nor the fallback is present. **The four codepoints are
+named now rather than left abstract**: `U+2192`, `U+2194`, `U+2032` and `U+2033` are absent from the
+bundled 524-codepoint build, they map to `.notdef`, and two live schedule cells emit `U+2192` onto
+printed sheets `T6.10` and `T6.11`. No shipped starter emits one, which is why nothing has ever
+failed.
+
+**A third consequence was found by the same audit and is not about weights at all.** `main.dart`
+set no `fontFamily`, so the application drew its **diagram in Jost and its chrome in Segoe UI**
+from M1 until `875db98`. Both faces render, so no gate could see it.
 
 ### 4.7 CLOSED 2026-08-25: `kSchemaVersion` is 2 and the documents now print 2
 

@@ -13064,7 +13064,16 @@ with `#E4E7EB` on it, **4.74:1**, and passes. Warning, Notice, Caution and Nomin
 text on them; Critical is the only one that does not.
 
 **AND TWO TEXT TIERS FAIL ON CARD AS GIVEN.** Secondary `#64748B` measures 3.08:1 and Non-critical
-`#718096` 3.65:1 against `#222933`. Lightened to **`#8190A4`** and **`#8390A3`**, both clear 4.5:1.
+`#718096` 3.65:1 against `#222933`. Lightened to **`#8190A4`** and **`#929EAF`**, both clear 4.5:1.
+
+**THE FIRST LIGHTENING WAS WRONG AND SHIPPED IN A PROOF SHEET BEFORE IT WAS CAUGHT.** Non-critical
+was `#8390A3`, which clears AA and sits **ΔE 0.87** from Secondary: below the just-noticeable
+difference, so the palette carried **two tokens and one colour**. The values as GIVEN were ΔE 4.85
+apart, so the fix for contrast destroyed a distinction the user had made. `#929EAF` restores it at
+**ΔE 5.83** and preserves the given ordering, in which Non-critical is the brighter of the two.
+**Ratified by the user on 2026-08-25** after being shown as a marked correction rather than folded
+in. The general form is worth keeping: **a per-token constraint applied token by token can satisfy
+every token and break the set**, which is the same shape as §11.89.5 one level down.
 
 **`#64748B` HAD A SECOND PROBLEM THE CONTRAST NUMBER HID.** It is already
 `kUnresolvedSignalArgb` in `signal_style.dart`, the colour a signal draws when it cannot be
@@ -13129,10 +13138,42 @@ lightness to 3:1 gives `#5D7295` at saturation 0.23, against the text ramp's 0.1
 tier would arrive **more chromatic than the live text above it**. Dimmer should also mean less
 chromatic. `#586679` is `#8190A4` darkened and stays in family.
 
-**11.89.8 WHAT THIS DOES NOT RULE.** It does not touch **CR-078**, the eight domain hues, PAL-1 or
+**11.89.8 THE TYPE: JOST EVERYWHERE, AND A SECOND WEIGHT.** Two findings from auditing the type
+rather than assuming it, both settled by the user on 2026-08-25 and built at `875db98` (`#771`).
+
+**THE CHROME WAS NEVER JOST.** `main.dart` carried `ThemeData(colorSchemeSeed: Colors.blueGrey)` with
+**no `fontFamily`**, and the only `fontFamily` assignment in the tree resolves a `FontRef` inside
+`flutter_canvas.dart`. So the application drew its **diagram in Jost and its chrome in the platform
+default**, Segoe UI on Windows: a rack label and the inspector row describing it were set in two
+different faces, on one screen, from M1 to M4. No gate could see it, because both faces render.
+`fontFamily: 'Jost'` is now set.
+
+**AND 28 SITES ASKED FOR A WEIGHT THAT WAS NOT BUNDLED**, 22 × `w700` and 6 × `w600` against a lone
+Regular, which Flutter answers by **synthesising**. Synthesis is worst on precisely this kind of
+face: a geometric sans closes its counters before its stems thicken. **Jost Medium (500) is bundled**
+beside Regular (400), both v3.710 of the same build, verified to carry identical outlines and
+advances on the shared codepoints so the pair cannot disagree about metrics the way two vendors'
+builds would.
+
+**THE 28 SITES STILL SYNTHESISE, AND THIS RULING SAYS SO RATHER THAN IMPLYING OTHERWISE.** What
+changed is the base, 500 rather than 400. Retargeting them to `w500` is `#770`'s, where a visual
+pass can judge whether Medium carries the emphasis Bold intended.
+
+**THE PDF SIDE IS UNAFFECTED, AND THAT WAS CHECKED.** The three `bold: true` call sites are Flutter
+widgets, not `FontRef`, so **no drawing op requests bold** and no screen/print divergence exists. If
+a scene builder ever adds one, `pdf_canvas.dart`'s `_fonts[s.font]!` throws at export rather than
+substituting silently, which is the right failure and is left as-is.
+
+**JOST DECLARES NO RESERVED FONT NAME.** Its OFL copyright line carries no such clause, so a modified
+build may keep the name. That matters for the four codepoints this build still lacks, `U+2192`,
+`U+2194`, `U+2032` and `U+2033`, which two live schedule cells emit onto `T6.10` and `T6.11`, and
+which remain owed.
+
+**11.89.9 WHAT THIS DOES NOT RULE.** It does not touch **CR-078**, the eight domain hues, PAL-1 or
 the selection yellow. It does not settle **user-customisable accent colours**, which are `#565` and
 which now inherit §11.89.6 as a constraint they must not break. It does not apply the palette: the
-theme is `#770` and unbuilt, and until it lands **this ruling describes no shipped pixel**. And it
+colour half is `#770` and unbuilt, and until it lands **the colour in this ruling describes no
+shipped pixel**, though §11.89.8's type half is built. And it
 does not extend the second-cue rule to the **printed sheet**, where AC-054's greyscale criterion
 already governs and is stricter.
 
