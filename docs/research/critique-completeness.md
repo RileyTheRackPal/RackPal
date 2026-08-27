@@ -487,13 +487,13 @@ Document-format migration is well designed. Everything else is absent:
 Privacy posture is strong (`architecture §11.5`: no telemetry by default, local crash files, opt-in, view-before-send, self-hosted Sentry not even added as a v1 dependency). Gaps:
 - **The redaction policy contradicts the crash attachment** (B77).
 - No privacy statement surface, no retention policy, no "clear diagnostics" action, no documented on-disk locations per OS.
-- **No security review of file import at all.** `.rmdev`, `.rmlib`, and `.rackpal` arrive by email from strangers. Needed and absent: zip-slip protection on `.rmlib` extraction, entry-count and uncompressed-size limits (zip bomb), image decode bounds, JSON depth/size limits, and, critically, **`RulePredicate` is an evaluated program that can arrive inside an imported `.rmlib`**. `ux-device-builder §4.3` asserts "Templates are **inert data, no executable content**"; a rule AST is not inert. Bound the evaluator (no recursion, no unbounded graph traversal, a step budget) or make rules code-only (C10).
+- **No security review of file import at all.** `.rmdev`, `.rmlib`, and `.rackmate` arrive by email from strangers. Needed and absent: zip-slip protection on `.rmlib` extraction, entry-count and uncompressed-size limits (zip bomb), image decode bounds, JSON depth/size limits, and, critically, **`RulePredicate` is an evaluated program that can arrive inside an imported `.rmlib`**. `ux-device-builder §4.3` asserts "Templates are **inert data, no executable content**"; a rule AST is not inert. Bound the evaluator (no recursion, no unbounded graph traversal, a step budget) or make rules code-only (C10).
 
 ### D9. App naming, branding, icon, file association
 
-- Name is used consistently; **no trademark search is mentioned**: "RackPal" is a plausible collision in adjacent hardware/AV markets and should be checked before any signing certificate or domain is bought.
-- **No icon, no logo, no wordmark asset, no splash, no window icon, no document icon, no colour identity** beyond the wire palette. `ux-rack §9.1` shows "▦ RackPal", a placeholder glyph. The PDF title block prints "RackPal" as text (`ux-schematic §1.7`).
-- **No file-type registration** for `.rackpal` / `.rmdev` / `.rmlib` on Windows/macOS. Without it, double-click-to-open fails, the recents list is half-useful, and `desktop_drop` is the only entry path.
+- Name is used consistently; **no trademark search is mentioned**: "RackMate" is a plausible collision in adjacent hardware/AV markets and should be checked before any signing certificate or domain is bought.
+- **No icon, no logo, no wordmark asset, no splash, no window icon, no document icon, no colour identity** beyond the wire palette. `ux-rack §9.1` shows "▦ RackMate", a placeholder glyph. The PDF title block prints "RackPal" as text (`ux-schematic §1.7`).
+- **No file-type registration** for `.rackmate` / `.rmdev` / `.rmlib` on Windows/macOS. Without it, double-click-to-open fails, the recents list is half-useful, and `desktop_drop` is the only entry path.
 - No branding hook in the PDF title block, despite `architecture §12.3` naming "Company branding in the PDF title block" as a *later* feature, for a firm handing drawings to clients, the integrator's logo is close to table stakes.
 
 ### D10. Distribution and code signing: **absent from all six documents**

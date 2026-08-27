@@ -785,7 +785,7 @@ order values inside one would silently change a device the user placed months ag
 ### 4.14 RJ-017 accepted five items into hardening and the decomposition produced tasks for none
 
 **Found while placing DR-089's wordmark on the board, 2026-08-25.** RJ-017 accepted *"Icon,
-wordmark, window and document icons, file-type registration for `.rackpal` and `.rmdev`, and a
+wordmark, window and document icons, file-type registration for `.rackmate` and `.rmdev`, and a
 trademark search before any certificate or domain is bought"* into the hardening milestone under
 AC-058/D9. Canon §10.12(f) then named the mascot, **Riley the RackPal**, and filed three surfaces
 as `#563`–`#565`.

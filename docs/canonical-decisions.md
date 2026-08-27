@@ -3090,7 +3090,7 @@ no file-type registration; no trademark search; and "for a firm handing drawings
 integrator's logo is close to table stakes" in the PDF title block.
 
 **Accepted except for the last clause.** Icon, wordmark, window and document icons, file-type
-registration for `.rackpal` and `.rmdev`, and a trademark search before any certificate or
+registration for `.rackmate` and `.rmdev`, and a trademark search before any certificate or
 domain is bought are all accepted into the hardening milestone (AC-058), without file
 association, double-click-to-open fails and the recents list is half-useful, which is a real
 defect rather than a polish item.
@@ -7158,7 +7158,7 @@ today. The subsystem is M4 work and is tracked on the board.
 
 **11.15.6 What this does not settle.** File-type REGISTRATION (double-click-to-open, the shell
 icon, the MSIX `FileTypeAssociation`) is not ruled here and does not exist for any extension,
-old or new (critique-completeness: *"No file-type registration for `.rackpal` / `.rmdev` /
+old or new (critique-completeness: *"No file-type registration for `.rackmate` / `.rmdev` /
 `.rmlib` on Windows/macOS"*). It is now cheaper to do, because there is one coherent family to
 register instead of three idioms, and it belongs with the MSIX epic where the manifest is.
 
@@ -12911,7 +12911,7 @@ against silent installation, and left for the milestone that owns them.
 M4 and M5 to break the run of business logic, and **before any of it entered the tree**.
 
 **NOT A §8.3 AMENDMENT.** **RJ-017** already accepted *"Icon, wordmark, window and document icons,
-file-type registration for `.rackpal` and `.rmdev`, and a trademark search before any certificate
+file-type registration for `.rackmate` and `.rmdev`, and a trademark search before any certificate
 or domain is bought"* into the hardening milestone under **AC-058/D9**. Canon §10.12(f) then named
 the mascot. Nothing enters scope here; what changes is that a scheduled item acquires a decision, a
 board home and an implementation.
@@ -13705,7 +13705,7 @@ not.
 
 ### 11.95 DR-096 · The product is RackPal, and the wordmark is the one thing this repository cannot re-cut
 
-**Settled by the user on 2026-08-26.** The name **RackPal** is withdrawn and the product is
+**Settled by the user on 2026-08-26.** The name **RackMate** is withdrawn and the product is
 **RackPal**. Both searches are the user's; both results are recorded below rather than assumed.
 
 **NOT A §8.3 AMENDMENT**, on DR-089's own reasoning (§11.88): §8.3 governs moving an item between
@@ -13717,7 +13717,7 @@ authorises would otherwise be a large untraceable diff.
 **11.95.1 THE SEARCH THAT FOUND THIS IS THE SEARCH RJ-017 SCHEDULED, AND IT RAN IN TIME.** RJ-017
 put *"a trademark search before any certificate or domain is bought"* into hardening under
 AC-058/D9, and DR-089 §11.88 restated it while shipping the wordmark. It ran. **A company producing
-homelab-focused hardware is using RackPal, and the user assesses the likelihood of a cease and
+homelab-focused hardware is using RackMate, and the user assesses the likelihood of a cease and
 desist as high.**
 
 Nothing had been bought and nothing had been signed when that came back. DR-006 had already made
@@ -13772,7 +13772,7 @@ time under the name in force at the time.**
 
 So the rule for the sweep is: **rename the PRODUCT, never the RECORD.** A blockquote, the M1
 implementation log (65 hits) and the `.okf` decision bundle (191, of which 95 are the decision
-files) are history, and history said RackPal. Everything else, code, identifiers, package names,
+files) are history, and history said RackMate. Everything else, code, identifiers, package names,
 paths, live prose, becomes RackPal.
 
 **AND A QUOTED PATH STAYS QUOTED, EVEN THOUGH THE SWEEP MAKES IT STALE.** The twenty-four split
@@ -13789,12 +13789,28 @@ current path reads the sentence under the quote.
 in the corpus, and the split runs cleanly between them: `.rmpj` (451 hits), `.rmdev` (79) and
 `.rmlib` (31) are `rm`-prefixed and **do not spell the name**, so they carry over untouched and
 **CR-117's byte round-trip is not in play at all**: no fixture is rewritten, no golden regenerated,
-no migration written. `.rackpal` (209) does spell it and goes.
+no migration written. `.rackmate` (209) does spell it and goes.
 
-The `rm` stood for RackPal and now stands for nothing in particular. **Leave it.** Re-cutting the
-project extension to `rp` would invalidate every file a user already has, in exchange for two
-letters nobody reads, and DR-006's shared-file reality (§11.6) makes that a real cost rather than a
-notional one.
+The `rm` stood for RackMate and now stands for nothing in particular. **Leave it in this sweep.**
+
+**THE USER WANTS THEM TO MATCH, LATER (2026-08-26), AND THE COST THIS RULING FIRST GAVE FOR NOT
+DOING IT WAS WRONG.** The sentence that stood here said re-cutting to `rp` *"would invalidate every
+file a user already has"*, citing DR-006's shared-file reality. **Counted rather than asserted, the
+tree holds four files carrying any of these extensions**, and all four are the checked-in starter
+projects; `.rmdev` and `.rmlib` have **no actual files at all** and exist only as strings in code
+and prose. M8 is `NOT STARTED` with no installer, nothing signed and nothing published, so **there
+is no user, anywhere, holding a file this would invalidate.** The cost quoted was a real one
+described in the wrong tense.
+
+So this is **DEFERRED WITH A TRIGGER, and the trigger is M8**, on canon §10.11's pattern. Before M8
+the change costs four regenerated starters, which `tool/generate_starters.dart` already produces,
+plus the strings. After M8 it costs exactly what the withdrawn sentence claimed, because that is
+the milestone at which files start leaving this machine. **A deferral whose cost rises at a known
+event is not the same as a deferral, and writing it as one is how the expensive version gets
+chosen by default.** Filed as `#782`.
+
+Not ruled here: which letters. `rp` is the obvious mapping and it is not the only one, and the
+choice interacts with `.rmdev` and `.rmlib` as a set rather than one at a time.
 
 **11.95.4 THE WORDMARK CANNOT BE RE-CUT INSIDE THIS REPOSITORY, BY ANYONE, AND IT IS THE LONG POLE.**
 `brand.dart` is the wordmark as fixed outlines, and DR-089 §11.88 shipped it that way on two
@@ -13839,7 +13855,42 @@ re-running the count above and getting nine; **`.rmpj` and `.rmdev` hit-counts u
 **every `package:` import resolving**, which the analyzer proves at zero errors rather than a grep
 does.
 
-**11.95.8 WHAT THIS DOES NOT RULE.** It does not change the file format, the schema version or any
+**11.95.8 THE SWEEP FALSIFIED THIS RULING, AND A THIRD PROTECTED CLASS IS WHY.** §11.95.2 named two
+things the sweep must not touch: quotation lines and whole record files. It ran, and it rewrote
+**this subsection's own parent** into nonsense. The opening read *"The name RackPal is withdrawn and
+the product is RackPal."* §11.95.1 read *"a company producing homelab-focused hardware is using
+RackPal"*, which is not merely wrong but the reverse of the legal fact it exists to record.
+§11.95.3 read *"the `rm` stood for RackPal"* and *"`.rackpal` does spell it and goes."*
+
+**The missing class is prose that ASSERTS A FACT ABOUT THE OLD NAME**, as distinct from prose that
+merely uses the product's name. A blockquote was protected because of its marker, not because of
+what it contained, and the sentences above carry exactly the same content with no marker on them.
+Two further kinds fell to it:
+
+* **Inline quotation.** RJ-017's wording is quoted in running prose in four places, and each became
+  *"file-type registration for `.rackpal`"* against a ruling that said `.rackmate`. An inline quote
+  is a quotation; only the `^ *>` test could not see it.
+* **A prediction, which is the sharpest loss.** `docs/research/critique-completeness.md` D9 reads
+  *"no trademark search is mentioned: 'RackMate' is a plausible collision in adjacent hardware/AV
+  markets and should be checked before any signing certificate or domain is bought."* **That
+  critique is the origin of RJ-017's rule and it was correct**, and the sweep rewrote it to name
+  RackPal, converting a record of a right call into a false warning about the name that replaced
+  it. A prediction with its subject swapped is worse than a deleted one, because it still reads as
+  evidence.
+
+All of it is restored, and the count is the check: after restoration the only strings matching the
+withdrawn name outside the record files are the twenty-four quotation lines and the frozen remote
+URL, which is what §11.95.2 said the answer should be.
+
+**WHAT THIS COSTS A FUTURE SWEEP, stated so the next one does not learn it the same way.** A
+mechanical substitution over a corpus that documents its own decisions cannot be verified by
+counting what changed. It has to be verified by reading what a changed sentence now CLAIMS, and the
+sentences most likely to be wrong are the ones nearest the subject: the ruling that authorises the
+sweep is the single most dangerous file in it. **This one was caught by reading §11.95.3 for an
+unrelated reason.** No post-condition in §11.95.7 would have found it, and none is added here that
+would, because the honest position is that this class needs a reader rather than a check.
+
+**11.95.9 WHAT THIS DOES NOT RULE.** It does not change the file format, the schema version or any
 extension but `.rackpal` (§11.95.3). It does not rename the Azure DevOps project, the repository or
 the board's area path (§11.95.6). It does not buy a domain: RJ-017 sequences that after the search
 and the search is now clear, but a purchase is the user's act and its own decision. It does not
