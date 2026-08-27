@@ -11,6 +11,7 @@
 // over-declare" — §5.2); this test only ever asserts a superset relation,
 // never exact equality.
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:rackpal_core/rackpal_core.dart';
@@ -64,12 +65,167 @@ Map<String, Object?> _documentMap(RackDocument doc) {
 /// top-level `document` key whose value differs.
 Set<String> _changedTopLevelKeys(RackDocument doc, void Function() mutate) {
   final before = _documentMap(doc);
+  final derivedBefore = _derivedProjection(doc);
   mutate();
   final after = _documentMap(doc);
+  final derivedAfter = _derivedProjection(doc);
   return {
     for (final key in before.keys)
       if (!_deepEq.equals(before[key], after[key])) key,
+    // Folded in under a `derived:` prefix so every per-command test below
+    // gains derived coverage without changing a line of any of them.
+    for (final key in derivedBefore.keys)
+      if (!_deepEq.equals(derivedBefore[key], derivedAfter[key])) key,
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// THE DERIVED HALF (M0 clause 5, AC-014's LETTER)
+// ═══════════════════════════════════════════════════════════════════
+// The header above records that this file snapshots PERSISTED maps
+// because no derived pipeline existed at M0, and calls itself "a
+// coverage test in spirit rather than the letter". docs/12 §2.4 names
+// the remedy and the three files it needs: `device_loads.dart`,
+// `equipment_list.dart` and `totals.dart`. All three now exist, so the
+// letter is reachable and this is it.
+//
+// The derived outputs are folded into the SAME changed-key set the
+// persisted maps use, under a `derived:` prefix, so every one of the
+// per-command tests below gains derived coverage without a line
+// changing in any of them. A command whose mask does not cover a
+// derived output it moved now fails, which is the bug class AC-014
+// names and which the persisted-map version could only approximate.
+//
+// MEASURED, NOT ASSUMED: instrumented once, the derived half moves on 9
+// of the 35 command cases below, across both outputs and across add,
+// remove, move, rename, height and lifecycle commands. An arm that never
+// fires is the trap #587 recorded, and a derived snapshot nothing moves
+// would be that trap with more machinery.
+//
+// WHY A HAND-WRITTEN PROJECTION, AND WHAT STOPS IT ROTTING. None of
+// `EquipmentRow`, `EquipmentList`, `RackRollups` or `Rollup` declares
+// `==` or `toString`, so there is nothing to diff but a projection. A
+// projection that silently omits a field is `VACUOUS` in exactly this
+// file's sense: it would pass over a change it cannot see. So
+// `_projectionCoversEveryField` reads the two source files and counts
+// their `final` declarations against the numbers this projection was
+// written for. Add a field and that guard fails until the projection
+// learns it, which is the same trick `no_flutter_import_test.dart`
+// plays with its file counter.
+
+/// Field counts the projection below was written against, per class.
+///
+/// MEASURED FROM SOURCE by [_projectionCoversEveryField], never trusted.
+const _projectedFieldCounts = <String, int>{
+  'EquipmentRow': 13,
+  'RackRollups': 10,
+  'Rollup<T>': 3,
+};
+
+/// Every derived output docs/12 §2.4 names, as comparable plain data.
+///
+/// `device_loads.dart` is covered THROUGH `EquipmentRow.loads` rather
+/// than separately: `DeviceLoads` has no whole-document builder, it is
+/// resolved per device, and the equipment list resolves it for every
+/// device in the document. Snapshotting it twice would not cover more.
+Map<String, Object?> _derivedProjection(RackDocument doc) {
+  final list = buildEquipmentList(doc);
+
+  Object? rollup(Rollup<Object?> r) => <String, Object?>{
+    'value': r.value?.toString(),
+    'knownCount': r.knownCount,
+    'unknownCount': r.unknownCount,
+  };
+
+  Object? loads(DeviceLoads l) => l.toString();
+
+  final rows = <Object?>[
+    for (final group in list.groups)
+      for (final row in group.rows)
+        <String, Object?>{
+          'deviceId': row.deviceId.v,
+          'designator': row.designator,
+          'manufacturer': row.manufacturer,
+          'model': row.model,
+          'description': row.description,
+          'ruIndex': row.ruIndex,
+          'ruSpan': row.ruSpan,
+          'rackDesignator': row.rackDesignator,
+          'location': row.location,
+          'mounting': row.mounting.name,
+          'loads': loads(row.loads),
+          'lifecycleStatus': row.lifecycleStatus.name,
+          'notes': row.notes,
+        },
+  ];
+
+  final rollups = <Object?>[
+    for (final rack in doc.racks.values)
+      for (final face in Face.values)
+        () {
+          final r = computeRackRollups(
+            rack: rack,
+            devices: doc.devices.values,
+            templates: doc.templates,
+            face: face,
+          );
+          return <String, Object?>{
+            'rack': rack.id.v,
+            'face': r.face.name,
+            'ruCapacity': r.ruCapacity,
+            'ruUsed': r.ruUsed,
+            'ruUnknownCount': r.ruUnknownCount,
+            'weight': rollup(r.weight),
+            'weightCapacity': r.weightCapacity?.toString(),
+            'apparentVA': rollup(r.apparentVA),
+            'outletsConsumed': rollup(r.outletsConsumed),
+            'outletsProvided': rollup(r.outletsProvided),
+            'outletsUnknownCount': r.outletsUnknownCount,
+          };
+        }(),
+  ];
+
+  return <String, Object?>{
+    'derived:equipmentList': rows,
+    'derived:rackRollups': rollups,
+  };
+}
+
+/// Reads the two derived source files and asserts the projection above
+/// still sees every field. See this section's header for why.
+void _projectionCoversEveryField() {
+  const paths = <String, String>{
+    'EquipmentRow': 'lib/src/derived/equipment_list.dart',
+    'RackRollups': 'lib/src/derived/totals.dart',
+    'Rollup<T>': 'lib/src/derived/totals.dart',
+  };
+  for (final entry in _projectedFieldCounts.entries) {
+    final src = File(paths[entry.key]!).readAsStringSync();
+    final start = src.indexOf('final class ${entry.key} ');
+    expect(
+      start,
+      isNonNegative,
+      reason:
+          'epoch_mask_test could not find `final class ${entry.key}` in '
+          '${paths[entry.key]}. The projection is keyed off that name.',
+    );
+    final end = src.indexOf('\n}', start);
+    final body = src.substring(start, end);
+    final fields = RegExp(
+      r'^  final [A-Za-z_][A-Za-z0-9_<>?, ]*\s+[a-zA-Z_][a-zA-Z0-9_]*;',
+      multiLine: true,
+    ).allMatches(body).length;
+    expect(
+      fields,
+      entry.value,
+      reason:
+          '${entry.key} now declares $fields fields, and '
+          '`_derivedProjection` was written for ${entry.value}. A field '
+          'the projection does not read is a change this test cannot '
+          'see, which is the VACUOUS mark one level down. Extend the '
+          'projection, then update `_projectedFieldCounts`.',
+    );
+  }
 }
 
 /// Whether [touches] declares an epoch that plausibly explains a change
@@ -102,6 +258,16 @@ bool _epochPlausiblyCovers(EpochMask touches, String key) => switch (key) {
   // are "where a thing is", so both sit under `structure`.
   'circuits' ||
   'pathways' => touches.has(EpochMask.structure) || touches.has(EpochMask.meta),
+  // THE DERIVED OUTPUTS. The equipment list is a row per device carrying
+  // its designator, its placement and its loads, so it moves under
+  // `structure`, `meta` or `rack`. The rollups are per rack and per face
+  // and sum what is mounted, so they move under the same three. Permissive
+  // in this function's own sense: AC-014 wants a superset, never the
+  // minimal set.
+  'derived:equipmentList' || 'derived:rackRollups' =>
+    touches.has(EpochMask.structure) ||
+        touches.has(EpochMask.meta) ||
+        touches.has(EpochMask.rack),
   _ => false,
 };
 
@@ -119,6 +285,8 @@ const _knownMutableKeys = {
   'locations',
   'circuits',
   'pathways',
+  'derived:equipmentList',
+  'derived:rackRollups',
 };
 
 void _expectTouchesCoversChanges(
@@ -197,6 +365,14 @@ Uuid _seedLocation(RackDocument doc, String name, String code) =>
 void main() {
   group('AC-014 — declared EpochMask covers what a command actually '
       'changes', () {
+    // THE GUARD THAT KEEPS THE DERIVED HALF HONEST. Runs first because a
+    // projection that has fallen behind its source makes every assertion
+    // below weaker without failing any of them.
+    test(
+      'the derived projection still reads every field it must',
+      _projectionCoversEveryField,
+    );
+
     test('AddDeviceCommand', () {
       final doc = _freshDoc();
       const rackId = Uuid('rack-1');
