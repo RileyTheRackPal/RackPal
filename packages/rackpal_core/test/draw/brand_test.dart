@@ -144,12 +144,19 @@ void main() {
       expect(box.right, kRackPalLockupWidth);
     });
 
-    test('ink overshoots the cap line and baseline, symmetrically', () {
-      // If this ever reads 0 the outlines were trimmed to their ink, which
-      // would sit the wordmark high against type set beside it.
+    test('ink overshoots the cap line, and ONLY the cap line', () {
+      // If the top ever reads 0 the outlines were trimmed to their ink,
+      // which would sit the wordmark high against type set beside it.
+      //
+      // THE BOTTOM IS EXACT AND THAT IS NOT A TRIM. RACKMATE overshot at
+      // both ends because `M` is the only glyph here that passes below
+      // the baseline; RACKPAL has no M, so the baseline is flush. This
+      // assertion used to read `height + overshoot` and would have kept
+      // passing over the old mark's data, which is how a suite ends up
+      // pinning the wrong wordmark.
       final box = _bounds(_contours(rackPalLockupPath(ruled: false)));
       expect(box.top, -kRackPalLockupOvershoot);
-      expect(box.bottom, kRackPalLockupHeight + kRackPalLockupOvershoot);
+      expect(box.bottom, kRackPalLockupHeight);
     });
 
     test('the rule sits where the constants say, and spans the full width', () {
@@ -191,8 +198,35 @@ void main() {
       // turns a logo into an alphabet product. Asserting the type alone
       // would pass whatever the data holds, so count the subpaths: eight
       // letters in one object, plus the rule in the ruled variant.
-      expect(_contours(rackPalLockupPath(ruled: false)), hasLength(8));
-      expect(_contours(rackPalLockupPath(ruled: true)), hasLength(9));
+      expect(_contours(rackPalLockupPath(ruled: false)), hasLength(7));
+      expect(_contours(rackPalLockupPath(ruled: true)), hasLength(8));
+    });
+
+    test('the mark spells RACK over PAL, and not some other seven letters', () {
+      // THE ASSERTION THIS FILE DID NOT HAVE, AND THE REASON IT MATTERS.
+      // Every other test here is geometric, so the whole suite stayed
+      // green when the rename swept this file's comments and constants
+      // to RackPal while the outlines still drew RACK over MATE. Counting
+      // contours does not help either: eight letters became seven, but
+      // seven is seven whatever they spell.
+      //
+      // What is specific to THIS mark is the shape of the split. Row 1
+      // carries four letters at the full measure; row 2 carries three,
+      // ending 812 units short. RACKMATE was four and four, both flush.
+      // No other arrangement of this wordmark produces these numbers.
+      final cs = _contours(rackPalLockupPath(ruled: false));
+      final row1 = cs
+          .where((c) => c.box.bottom <= kRackPalLockupCapHeight)
+          .toList();
+      final row2 = cs.where((c) => c.box.top >= kRackPalLockupRuleTop).toList();
+
+      expect(row1, hasLength(4), reason: 'R A C K');
+      expect(row2, hasLength(3), reason: 'P A L');
+      expect(row1.length + row2.length, cs.length, reason: 'no stray subpath');
+
+      expect(_bounds(row1).right, kRackPalLockupWidth);
+      expect(_bounds(row2).right, kRackPalLockupWidth - 812);
+      expect(_bounds(row2).left, 0, reason: 'PAL is flush left, not centred');
     });
 
     test('no contour nests inside another, so the fill rule cannot matter', () {
@@ -226,6 +260,66 @@ void main() {
         ),
         isTrue,
       );
+    });
+  });
+
+  group('Riley is a second mark and behaves like one', () {
+    test('occupies the box the constants declare', () {
+      // TOLERANCED WHERE THE WORDMARK IS EXACT, AND THE DIFFERENCE IS
+      // REAL. A type designer puts curve extrema on integers, so the
+      // letterforms' flattened ink lands exactly on their declared box.
+      // Riley is traced from a raster and has no such guarantee: a cubic
+      // may bulge marginally past the endpoint that bounded it, and here
+      // it does, by about 0.05 units in 675. Asserting equality would be
+      // asserting a property the artwork was never given.
+      const slack = 0.5;
+      final box = _bounds(_contours(rackPalRileyPath()));
+      expect(box.left, closeTo(0, slack));
+      expect(box.top, closeTo(0, slack));
+      expect(box.right, closeTo(kRackPalRileyWidth, slack));
+      expect(box.bottom, closeTo(kRackPalRileyHeight, slack));
+    });
+
+    test('stands exactly cap-high, so it is not fitted by eye', () {
+      // The number the lockup composition depends on: Riley's height IS
+      // the cap height, which is what lets it sit on the row-2 baseline
+      // with no scaling decision to get wrong later.
+      expect(kRackPalRileyHeight, kRackPalLockupCapHeight);
+    });
+
+    test('is taller than wide, which is what decides the app icon', () {
+      // A 1.876:1 wordmark cannot fill a square icon slot. Riley can.
+      // If this ever inverts, the icon guidance in this file is wrong.
+      expect(kRackPalRileyWidth, lessThan(kRackPalRileyHeight));
+    });
+
+    test('has a hole, so it needs even-odd and the wordmark does not', () {
+      // The eye. `brand.dart` promises nonzero and even-odd AGREE for the
+      // letterforms, because their counters are open; that promise does
+      // not extend here, and this is the assertion that says so out loud.
+      final cs = _contours(rackPalRileyPath());
+      expect(cs, hasLength(2), reason: 'silhouette plus the eye');
+      final outer =
+          cs.first.box.right - cs.first.box.left >
+              cs.last.box.right - cs.last.box.left
+          ? cs.first
+          : cs.last;
+      final inner = identical(outer, cs.first) ? cs.last : cs.first;
+      expect(
+        inner.box.left > outer.box.left &&
+            inner.box.right < outer.box.right &&
+            inner.box.top > outer.box.top &&
+            inner.box.bottom < outer.box.bottom,
+        isTrue,
+        reason: 'the eye nests inside the silhouette',
+      );
+    });
+
+    test('placed flush right on row 2, clear of PAL', () {
+      expect(kRackPalRileyLeft + kRackPalRileyWidth, kRackPalLockupWidth);
+      expect(kRackPalRileyTop + kRackPalRileyHeight, kRackPalLockupHeight);
+      // 268 units of air between the L and the silhouette.
+      expect(kRackPalRileyLeft - (kRackPalLockupWidth - 812), 268);
     });
   });
 }
