@@ -32,12 +32,17 @@
 // the first arm that READS a link before building it to turn that silent
 // pass into a crash.
 //
-// `doc.templates` is never touched by any M0 command (AC-015 template-
-// snapshot refcounting is explicitly deferred — see device_commands.dart)
-// so there is nothing to assert about `templates.keys` here; noted rather
-// than silently skipped. The document does now CARRY one snapshot, because
-// `connectPorts` names pins off a real `TemplateBody` — see `_portKeys` —
-// but no generated command reads or writes the map.
+// `doc.templates` HAS A WRITER AS OF M4-S, and this harness gained the arm
+// on 2026-08-27. Until then the note here read that no M0 command touched
+// the map, so there was nothing to assert about `templates.keys` — true
+// when written, and the reason M0's clause 4a sat `VACUOUS` rather than
+// failing. `SaveTemplateToProjectCommand` writes a key and its inverse
+// removes it, which is the shape the clause asks about.
+//
+// AC-015 template-snapshot REFCOUNTING is still deferred (see
+// device_commands.dart) and this arm does not speak to it. What it covers
+// is the narrower thing the M0 criterion actually names: that a command
+// touching `templates` leaves the map byte-identical after apply-revert.
 //
 // ═════════════════════════════════════════════════════════════════════
 // `connectPorts` IS THE STEP THIS HARNESS EXISTS FOR
@@ -256,6 +261,11 @@ enum _StepKind {
   // only a byte-identity fuzz sees it.
   setSignalFamily,
   setLifecycleStatus,
+
+  // M0's clause 4a, wired in 2026-08-27. See this file's header: the
+  // clause asks for byte identity "including `templates.keys`", and until
+  // M4-S there was no command that touched the map to ask it of.
+  saveTemplateToProject,
 }
 
 /// The convention ids the generator draws from, plus `null` (clear) and
@@ -621,6 +631,12 @@ final class _SequenceState {
   DateTime nextNow() => DateTime.utc(2026).add(Duration(seconds: _tick++));
 
   List<_StepKind> availableKinds() => [
+    // UNCONDITIONAL, and MEASURED RATHER THAN ASSUMED: instrumented once
+    // over the 1000 sequences, this arm was drawn 717 times. #587's
+    // lesson is that an arm can be offered thousands of times and fire
+    // zero, which is the `VACUOUS` mark one level down, so a new arm that
+    // is not counted is a new arm that is not known to run.
+    _StepKind.saveTemplateToProject,
     _StepKind.addDevice,
     if (aliveDeviceIds.isNotEmpty) _StepKind.removeDevice,
     if (aliveDeviceIds.isNotEmpty) _StepKind.moveDevice,
@@ -689,6 +705,44 @@ Command<RackDocument>? _buildCommand(
         ),
         now: s.nextNow(),
         actor: 'gen',
+      );
+
+    case _StepKind.saveTemplateToProject:
+      // THE VERSION COMES FROM `nextTemplateVersion`, BECAUSE THAT IS THE
+      // COMMAND'S CONTRACT AND NOT A CONVENIENCE. Its `revert` removes the
+      // key rather than restoring what was under it, and the doc comment
+      // says why that is safe: the key "was free", guaranteed by this
+      // function, which the one production caller
+      // (`device_builder_actions.dart:139`) calls on the line before it
+      // constructs the command.
+      //
+      // A FIRST DRAFT OF THIS ARM DREW THE VERSION FROM A RANGE OF THREE
+      // instead, to make sequences rewrite a key they had already
+      // written. It failed on seed 20260724 at step 2: the generated key
+      // collided with the seeded fixture's, apply overwrote it, revert
+      // removed it, and `"templates"` came back `{}` where it had held a
+      // snapshot. That is the command behaving as documented against a
+      // caller that broke its precondition, not a defect in it.
+      //
+      // Worth keeping anyway, because it says what the command does NOT
+      // defend: a future second caller that skips `nextTemplateVersion`
+      // destroys a snapshot on undo and nothing here would see it. Do not
+      // "simplify" this line back to a literal.
+      final version = nextTemplateVersion(s.doc, _templateRef.templateId);
+      return SaveTemplateToProjectCommand(
+        templateId: _templateRef.templateId,
+        version: version,
+        contentHash: 'gen-hash-$version',
+        capturedAt: s.nextNow(),
+        body: TemplateBody(
+          manufacturer: 'Property Test',
+          model: 'PT-$version',
+          displayName: 'Saved v$version',
+          ports: [
+            _portDef(0, PortDirection.source),
+            _portDef(1, PortDirection.sink),
+          ],
+        ),
       );
 
     case _StepKind.removeDevice:
@@ -955,6 +1009,11 @@ void _reconcileTrackingAfterCommit(
   _SequenceState s,
 ) {
   switch (kind) {
+    // Tracks nothing: the generator draws its version from a fixed range
+    // rather than from document state, so there is no alive-id set for a
+    // later step to draw on.
+    case _StepKind.saveTemplateToProject:
+      break;
     case _StepKind.addDevice:
       s.aliveDeviceIds.add((cmd as AddDeviceCommand).id);
     case _StepKind.removeDevice:
