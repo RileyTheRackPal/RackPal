@@ -13583,6 +13583,126 @@ the ports, and `Ctrl+Z` is one keystroke away.
 
 ---
 
+### 11.94 DR-095 · A milestone closes on clauses discharged or parked, and parking costs a ruling
+
+**Settled by the user on 2026-08-26.** In DR-017's lineage (§11.16), which roadmap §8.7 records as
+the first ruling to govern **process rather than product**. No count of such rulings is written
+here: §8.7's own `DR-001` through `DR-087` range is already stale by several IDs, which is the
+liability a written-out count always becomes.
+
+**11.94.1 THE PRACTICE HELD FOR TWO TRANSITIONS AND WAS NEVER A RULE.** The user's account was that
+M1 through M3 each finished before the next opened. Checked against the record, that is true of two
+transitions and false of two others:
+
+| Transition | Held | The record |
+|---|---|---|
+| M0 to M1 | no | M0 stands at six of eight clauses, `PARTIAL`, weakest mark `VACUOUS`, today |
+| M1 to M2 | yes | M1 eight of eight, weakest mark `CONFIRMED`, drill 2026-07-27 and 2026-07-28 |
+| M2 to M3 | yes | M2 five of five, weakest mark `CONFIRMED`, drill 2026-08-01 |
+| M3 to M4 | no | M3's subject-tagged work ran 2026-08-05 to 2026-08-10; M4 opens at `e964e28`, 2026-08-13 |
+
+The habit was real and it was a habit. Nothing named it, so nothing noticed when it lapsed, and the
+lapse was invisible for thirteen days because the thing that would have shown it (docs/12 §5.2's
+header row) is itself stale and has `#92` filed against it.
+
+**11.94.2 THE DEFINITION ALREADY EXISTED. WHAT WAS MISSING WAS A PLACE IT HAD TO BE TRUE.** §8.1
+rules that the exit criterion is the unit of truth and that done means demonstrated. docs/12 §0
+rules that `DEMONSTRATED` and `CONFIRMED` are the only two of the seven marks that discharge an exit
+clause. Between them, "complete" has been precisely defined since the board was written: **every
+exit clause of the milestone carries `DEMONSTRATED` or `CONFIRMED`.** No new definition is created
+here and none was needed. What is created is a **boundary** at which that definition is checked.
+
+**11.94.3 A STRICT READING DEADLOCKS, AND DR-027 HAD ALREADY BUILT THE WAY OUT.** Some clauses
+cannot be discharged by the milestone that owns them, because the thing they name belongs to a
+later one. M3's exit criterion asks for a Pull Sheet export; `SheetRole` carries no such value and
+building it is M6's work. DR-027 resolved that by **splitting the clause**: M3 owes the derivation,
+M6 owes the sheet. AC-018's PRINTS limb is parked on M6 the same way, as `#574`.
+
+M6 is itself a join on M2, M3 and M5 (docs/12 §5.5). So a rule reading *"every clause discharged
+before the next milestone opens"*, applied without that split, requires M3 to wait on M6 and M6 to
+wait on M3. **The mechanism that avoids the cycle is therefore not an exception to this ruling; it
+is half of it**, and DR-027 is its precedent rather than its violation.
+
+**11.94.4 THE RULE.** A milestone may not **open** while the milestone before it holds an exit
+clause that is neither:
+
+* **discharged**, carrying `DEMONSTRATED` or `CONFIRMED` under docs/12 §0; nor
+* **parked**, reassigned by ruling ID to a **named later milestone**, with the structural reason it
+  cannot be discharged where it sits.
+
+A milestone may not **close** while it holds an undischarged clause that is not parked. The two are
+one rule read at two moments, and the second is the load-bearing one: opening is a soft edge that
+`M5-0a` and `M8-F1` both crossed usefully, whereas closing is the act the version number and the
+board both key off.
+
+**11.94.5 PARKING COSTS A RULING ID, AND THAT PRICE IS THE POINT.** A park is an amendment to what a
+milestone owes, so it is §8.3's machinery and not a note: an ID, a named destination, and the
+reason. Without the price, "parked" becomes the word for every clause nobody wants to do, and the
+board goes back to being a list of things believed. With it, a milestone's open work reads as a
+number a person can act on: *n discharged, m parked on a named milestone, k owed*, and only `k`
+blocks.
+
+**11.94.6 THE MARKS ARE THE VOCABULARY, AND NOT EVERY CLAUSE TABLE USES THEM.** M0 §2.2 and M6 §5.5
+mark clauses with the seven. M3's current clause table (§5.2, against `01c698d`) does not: its
+states read `BUILT`, `needs a person`, `NOTHING ALLOCATES ONE` and `M6's`. Those are honest and they
+are informative, and none of them is a mark. §0 already rules that *"a mark that reads 'demonstrated
+in spirit' or 'demonstrated but' is not a mark, it is a negotiation"*, and `BUILT` is that sentence
+with the negotiation left out: it says code exists, which is `BELIEVED`, while reading as though it
+discharges.
+
+**Normalising every clause table to the seven marks is a prerequisite of this ruling and not a
+tidy-up.** It is not formatting. `BUILT` resolving to `DEMONSTRATED` or to `BELIEVED` is the
+difference between M3 owing one clause and owing four, and no reader can tell which from the word.
+
+**11.94.7 THIS APPLIES RETROACTIVELY TO M0, WHICH IS A DEPARTURE FROM §8.8 AND IS DELIBERATE.** §8.8
+adopted its record-keeping rule forward-only, on the ground that a hash reconstructed months later
+is a guess wearing the costume of a record. That reasoning does not transfer: a clause's mark is not
+archaeology. The evidence for every clause is in the tree right now and can be re-run, so applying
+this backwards recovers facts rather than inventing them.
+
+The retroactive reading surfaces this much, and the cost is stated rather than discovered later:
+
+| Milestone | Clause | Today | Disposition this ruling forces |
+|---|---|---|---|
+| M0 | 4a, `templates.keys` (AC-015) | `VACUOUS` | **Park on M4.** §2.4 already says it *"becomes real the day M4 or M1's copy-on-place lands, and not before"*, which is a park written in prose |
+| M0 | 5, epoch-mask letter (AC-014) | `VACUOUS`, and drifting (§4.5) | **Owed.** Cheap today, dearer with every derived consumer added |
+| M3 | 1, sixty drops under fifteen minutes | needs a person | **Owed.** A drill, and nothing else discharges it |
+| M3 | 2b, one `rackLabel` each | nothing allocates one | **Owed, and the expensive one.** See below |
+| M3 | 4, fourteen unbound far ends | sixty of sixty are unbound | **Owed.** The criterion names fourteen; the builder produces sixty |
+| M3 | 4c, prints | `M6's` | **Already parked**, by DR-027 as `#574`. No action |
+
+**11.94.8 M3'S CLAUSE 2b IS FEATURE WORK AND THE USER TOOK THIS DECISION BEFORE SEEING ITS SIZE.**
+The shipped rack-label pattern is `{FLOOR}{SPACE}-{PANEL}{PORT:2}`, and `{PANEL}` and `{PORT}` are
+facts about a landing. **Nothing in the product records a landing**, so the pattern cannot render,
+so `allocateOutletRackLabel` is never called, and its only four callers are its own test. §5.2 adds
+that clause 2b and clause 4 *"are one hole wearing two numbers"* and that closing either alone
+closes nothing.
+
+So the honest reading of §11.94.7 is that **M4 cannot close until landings exist in the model**, or
+until clause 2b is itself parked on the milestone that builds them. That is a real cost and it is
+recorded here at full size, because a ruling whose price is discovered afterwards is the failure
+mode the board's own opening table catalogues.
+
+**11.94.9 THE MECHANICAL GATE IS SEQUENCED BEHIND THE NORMALISATION, NOT SHIPPED WITH THIS RULING.**
+This ruling is enforced by review on the day it lands. A CI gate reading docs/12's clause tables and
+failing on an undischarged, unparked clause in any milestone before the current one is filed as
+`#780` under `#92`, **blocked on the §11.94.6 normalisation**, and joins the family in `tools/`.
+Precedent for a gate that parses the corpus is `pal1_check.py`, `palette_parity.py` and
+`registry_parity.py`.
+Shipping the script first would have it read `BUILT` and either crash or, far worse, guess.
+
+**11.94.10 WHAT THIS DOES NOT RULE.** It does not change any milestone's exit criterion; every
+criterion stands verbatim as written, and a park moves who owes a clause rather than what it says.
+It does not forbid work landing against a later milestone: `M5-0a` and `M8-F1` both did so
+usefully, the version rule in docs/14 §14.0 already contemplates it, and §11.94.4 gates **closing**
+rather than touching. It does not make CI mechanical for anything else (§4.1 stands). It does not
+rule on whether M0's epoch-mask clause is discharged by extending `epoch_mask_test.dart`, which is
+§4.5's question and is unchanged. And it does not backfill closed **tasks**, which remains §8.8's
+forward-only rule: this ruling reaches clauses, which are re-runnable, and not hashes, which are
+not.
+
+---
+
 
 ## 12. Superseded rulings
 
