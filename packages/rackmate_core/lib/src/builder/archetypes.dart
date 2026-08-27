@@ -478,5 +478,14 @@ void _irReceiverPinout(PortDef port) => port.pinoutVariant = 'xantech-stereo';
 
 /// docs/06 §4.1's own table: `1 c14 in` is an AC inlet, and an inlet is a
 /// `power.*` family plus a ROLE. "Inlet and outlet are not directions."
-void _acInlet(PortDef port) =>
-    port.power = PortPowerSpec(role: PortPowerRole.inlet);
+///
+/// **AND IT IS MALE, WHICH IS NOT A GUESS AND NOT AN UNKNOWN.**
+/// `conn.iec_c14` declares `genderApplies: true`, and all thirteen C14
+/// inlets in the seeded catalog write `Gender.male` because a C14 IS the
+/// pinned appliance inlet: the C13 on the cord carries the sockets. The
+/// field is non-nullable and defaults to `genderless`, so leaving it
+/// alone is not silence, it is a positive claim that the connector has no
+/// gender when its own registry entry says it does.
+void _acInlet(PortDef port) => port
+  ..power = PortPowerSpec(role: PortPowerRole.inlet)
+  ..gender = Gender.male;

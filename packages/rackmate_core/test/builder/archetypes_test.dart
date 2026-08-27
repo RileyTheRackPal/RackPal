@@ -362,6 +362,32 @@ void main() {
       expect(inlet.direction, PortDirection.sink);
       expect(inlet.power?.role, PortPowerRole.inlet);
     });
+
+    test('the inlet is MALE, because `gender` has no unknown', () {
+      // `PortDef.gender` is non-nullable and defaults to `genderless`, so
+      // saying nothing is not silence: it claims a C14 has no gender
+      // while `conn.iec_c14` declares `genderApplies: true` and all
+      // thirteen seeded C14 inlets write male.
+      final inlet = generate(
+        r,
+        worked(r),
+      ).ports.singleWhere((p) => p.signalFamily.v == 'power.ac_iec');
+      expect(inlet.gender, Gender.male);
+    });
+
+    test('a connector with no gender is left genderless', () {
+      // The other half, so the rule reads as "the registry decides" and
+      // not as "the generator likes male". `conn.hdmi_a` and `conn.rj45`
+      // both declare `genderApplies: false`.
+      final body = generate(r, worked(r));
+      expect(
+        body.ports
+            .where((p) => p.connector.v == 'conn.hdmi_a')
+            .map((p) => p.gender)
+            .toSet(),
+        <Gender>{Gender.genderless},
+      );
+    });
   });
 
   group('the preview says what Generate will do, before it does it', () {
