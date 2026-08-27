@@ -491,4 +491,266 @@ void main() {
       );
     });
   });
+
+  group('Switch ports rebuilds the seeded N01', () {
+    // N01 IS THE SPECIFICATION (`catalog_network.dart`): a 48-port PoE
+    // switch, four SFP28 uplinks, OOB MGMT, a front CONSOLE and two PSU
+    // inlets. If this generator and that template describe the same
+    // device differently, one of them is wrong, and it is not the one a
+    // domain review has already passed.
+    SwitchArchetype n01() => const SwitchArchetype(
+      accessPorts: 48,
+      poe: true,
+      poeStandard: PoeStandard.btType3,
+      uplinks: 4,
+      sfp: SfpFormFactor.sfp28,
+      managementPort: true,
+      console: true,
+      acInlet: true,
+      redundantPsu: true,
+    );
+
+    TemplateBody build(SwitchArchetype spec) {
+      final body = emptyBody();
+      for (final c in buildArchetype(r, body, planSwitchArchetype(r, spec))) {
+        c.apply(body);
+      }
+      return body;
+    }
+
+    test('it is 56 ports across 4 banks', () {
+      final body = build(n01());
+      expect(body.ports, hasLength(48 + 4 + 2 + 2));
+      expect(body.banks.map((b) => b.label).toList(), <String>[
+        'Access Ports',
+        'Uplinks',
+        'Management',
+        'Power',
+      ]);
+    });
+
+    test('the access ports are numbered bare, 01 to 48', () {
+      final labels = labelsIn(build(n01()), 'Access Ports');
+      expect(labels.first, '01');
+      expect(labels.last, '48');
+    });
+
+    test('every access port supplies power and none claims a wattage', () {
+      // The half that matters: `watts` is a per-device budget, not a
+      // standard's number, and a rollup reading 60 W off 48 ports would
+      // be the false pass DR-079 was raised over.
+      final access = build(n01()).ports.where((p) => p.poe != null);
+      expect(access, hasLength(48));
+      for (final port in access) {
+        expect(port.poe!.role, PoeRole.pse);
+        expect(port.poe!.standard, PoeStandard.btType3);
+        expect(port.poe!.watts, isNull);
+        expect(port.poe!.type, isNull);
+      }
+    });
+
+    test('EACH PORT HOLDS ITS OWN PoeSpec', () {
+      // `PoeSpec` is mutable. One instance shared across the bank means
+      // editing one port's class in the grid edits all forty-eight, and
+      // nothing else in this suite would notice.
+      final access = build(n01()).ports.where((p) => p.poe != null).toList();
+      access.first.poe!.poeClass = 4;
+      expect(access.last.poe!.poeClass, isNull);
+    });
+
+    test('a class given is written and a class withheld stays unknown', () {
+      final withClass = build(
+        const SwitchArchetype(accessPorts: 2, poe: true, poeClass: 6),
+      );
+      expect(withClass.ports.first.poe!.poeClass, 6);
+      final without = build(const SwitchArchetype(accessPorts: 2, poe: true));
+      expect(without.ports.first.poe!.poeClass, isNull);
+    });
+
+    test('no PoE means no PoeSpec at all, not an empty one', () {
+      final body = build(const SwitchArchetype(accessPorts: 8));
+      expect(body.ports.where((p) => p.poe != null), isEmpty);
+    });
+
+    test('the uplinks read SFP28 1 to SFP28 4 and carry the cage rate', () {
+      final body = build(n01());
+      expect(labelsIn(body, 'Uplinks'), <String>[
+        'SFP28 1',
+        'SFP28 2',
+        'SFP28 3',
+        'SFP28 4',
+      ]);
+      final uplinks = body.ports.where((p) => p.sfp != null);
+      expect(uplinks.map((p) => p.sfp).toSet(), <SfpFormFactor>{
+        SfpFormFactor.sfp28,
+      });
+      expect(uplinks.map((p) => p.linkSpeedMbps).toSet(), <int>{25000});
+      expect(uplinks.map((p) => p.connector.v).toSet(), <String>{
+        'conn.sfp_cage',
+      });
+    });
+
+    test('the cage label is spelled by the grid column, not twice', () {
+      // One derivation: the SFP column prints these three and the
+      // silkscreen label reads off the same function.
+      for (final form in SfpFormFactor.values) {
+        final body = build(
+          SwitchArchetype(accessPorts: 1, uplinks: 1, sfp: form),
+        );
+        expect(labelsIn(body, 'Uplinks').single, '${portSfpLabel(form)} 1');
+      }
+    });
+
+    test('the cage sets both its label and its rate', () {
+      for (final (form, label, speed) in <(SfpFormFactor, String, int)>[
+        (SfpFormFactor.sfp, 'SFP 1', 1000),
+        (SfpFormFactor.sfpPlus, 'SFP+ 1', 10000),
+        (SfpFormFactor.sfp28, 'SFP28 1', 25000),
+      ]) {
+        final body = build(
+          SwitchArchetype(accessPorts: 1, uplinks: 1, sfp: form),
+        );
+        expect(labelsIn(body, 'Uplinks').single, label);
+        expect(
+          body.ports.where((p) => p.sfp != null).single.linkSpeedMbps,
+          speed,
+        );
+      }
+    });
+
+    test('zero uplinks is a real answer and builds no bank', () {
+      final body = build(const SwitchArchetype(accessPorts: 8));
+      expect(body.banks.map((b) => b.label), <String>['Access Ports']);
+    });
+
+    test('THE CONSOLE IS ON THE FRONT AND THE MGMT PORT IS NOT', () {
+      final body = build(n01());
+      final console = body.ports.singleWhere((p) => p.label == 'CONSOLE');
+      final mgmt = body.ports.singleWhere((p) => p.label == 'OOB MGMT');
+      expect(console.face, Face.front);
+      expect(console.signalFamily.v, 'ctl.rs232');
+      expect(mgmt.face, Face.rear);
+      expect(mgmt.signalFamily.v, 'net.ethernet');
+      expect(
+        console.bankKey,
+        mgmt.bankKey,
+        reason: 'both are Management, which is one bank on two faces',
+      );
+    });
+
+    test('the two management ports are independent', () {
+      expect(
+        labelsIn(
+          build(const SwitchArchetype(accessPorts: 8, managementPort: true)),
+          'Management',
+        ),
+        <String>['OOB MGMT'],
+      );
+      expect(
+        labelsIn(
+          build(const SwitchArchetype(accessPorts: 8, console: true)),
+          'Management',
+        ),
+        <String>['CONSOLE'],
+      );
+    });
+
+    test('redundant PSU is PSU A and PSU B; one inlet is AC IN', () {
+      expect(labelsIn(build(n01()), 'Power'), <String>['PSU A', 'PSU B']);
+      expect(
+        labelsIn(
+          build(const SwitchArchetype(accessPorts: 8, acInlet: true)),
+          'Power',
+        ),
+        <String>['AC IN'],
+      );
+    });
+
+    test('redundant PSU does nothing without an inlet', () {
+      final body = build(
+        const SwitchArchetype(accessPorts: 8, redundantPsu: true),
+      );
+      expect(
+        body.ports.where((p) => p.signalFamily.v == 'power.ac_iec'),
+        isEmpty,
+      );
+    });
+
+    test('both PSU inlets are male and carry the inlet role', () {
+      final inlets = build(
+        n01(),
+      ).ports.where((p) => p.signalFamily.v == 'power.ac_iec');
+      expect(inlets, hasLength(2));
+      for (final inlet in inlets) {
+        expect(inlet.gender, Gender.male);
+        expect(inlet.power?.role, PortPowerRole.inlet);
+      }
+    });
+
+    test('EACH INLET HOLDS ITS OWN PortPowerSpec', () {
+      final inlets = build(
+        n01(),
+      ).ports.where((p) => p.signalFamily.v == 'power.ac_iec').toList();
+      inlets.first.power!.volts = 120;
+      expect(inlets.last.power?.volts, isNull);
+    });
+
+    test('the access link speed is what was asked for, and may be unknown', () {
+      expect(
+        build(
+          const SwitchArchetype(accessPorts: 4, accessLinkSpeedMbps: 2500),
+        ).ports.first.linkSpeedMbps,
+        2500,
+      );
+      expect(
+        build(
+          const SwitchArchetype(accessPorts: 4, accessLinkSpeedMbps: null),
+        ).ports.first.linkSpeedMbps,
+        isNull,
+      );
+    });
+
+    test('the preview and the build never disagree here either', () {
+      for (final spec in <SwitchArchetype>[
+        n01(),
+        const SwitchArchetype(accessPorts: 8),
+        const SwitchArchetype(
+          accessPorts: 24,
+          uplinks: 2,
+          console: true,
+          acInlet: true,
+        ),
+      ]) {
+        final body = emptyBody();
+        final groups = planSwitchArchetype(r, spec);
+        final preview = previewArchetype(r, body, groups);
+        for (final c in buildArchetype(r, body, groups)) {
+          c.apply(body);
+        }
+        expect(body.ports, hasLength(preview.ports));
+        expect(body.banks, hasLength(preview.banks));
+      }
+    });
+
+    test('one undo takes all 56 back', () {
+      final body = emptyBody();
+      final commands = buildArchetype(r, body, planSwitchArchetype(r, n01()));
+      for (final c in commands) {
+        c.apply(body);
+      }
+      for (var i = commands.length - 1; i >= 0; i--) {
+        commands[i].revert(body);
+      }
+      expect(body.ports, isEmpty);
+      expect(body.banks, isEmpty);
+    });
+
+    test('no two of the 56 keys collide', () {
+      final body = build(n01());
+      expect(
+        body.ports.map((p) => p.key.v).toSet(),
+        hasLength(body.ports.length),
+      );
+    });
+  });
 }

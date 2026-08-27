@@ -118,13 +118,15 @@ $ErrorActionPreference = 'Stop'
 # DR-091 for the landing-view case, then 839 -> 841 at #775 for the font
 # weight gate, and ui 1170 -> 1176 at #774. RE-MEASURED 2026-08-26 at #220
 # (M4-I1): core 3281 -> 3311, the 30 cases of `archetypes_test.dart`, and
-# ui 1176 -> 1190 for the 14 of `archetype_dialogs_test.dart`. Which is the
-# whole instruction above and is cheap only while it stays a habit.
+# ui 1176 -> 1190 for the 14 of `archetype_dialogs_test.dart`. RE-MEASURED
+# again at #221 (M4-I2): core 3311 -> 3331 for the 20 Switch cases, ui
+# 1190 -> 1201 for its 11. Which is the whole instruction above and is
+# cheap only while it stays a habit.
 $SuiteFloors = @{
-    'rackmate_core'   = 3311
+    'rackmate_core'   = 3331
     'rackmate_text'   = 1
     'rackmate_export' = 189
-    'rackmate_ui'     = 1190
+    'rackmate_ui'     = 1201
     'rackmate_app'    = 841
 }
 

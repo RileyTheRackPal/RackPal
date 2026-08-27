@@ -13416,6 +13416,78 @@ passthrough (docs/06 §4.6).
 
 ---
 
+### 11.92 DR-093 · The Switch generator copies the seeded switch, including what it declines to say
+
+**Settled by the user on 2026-08-26** (`#221`, M4-I2). DR-092 §11.91.8 left these open by name.
+
+**11.92.1 THE SPECIFICATION WAS ALREADY IN THE REPOSITORY AND IT IS NOT docs/06 §4.3.** §4.3's whole
+statement of this generator is one line: *"N access ports + M uplinks, PoE standard and per-port
+class, SFP form factor, management port, redundant PSU"*. `catalog_network.dart`'s **N01** is a
+48-port PoE switch with four SFP28 uplinks, an out-of-band management port, a front-panel console
+and two PSU inlets, authored at M0 and reviewed since. Every field the generator writes is a field
+N01 writes, in the bank N01 puts it in.
+
+**A census of the seed answered four questions the sentence could not**, which is
+`a spec table is an illustration until censused` arriving for the fifth time.
+
+**11.92.2 THE GENERATOR WRITES `role` AND `standard` AND STOPS.** N01's PoE ports carry
+`PoeSpec(role: pse, standard: btType3)` and nothing else. `type` and `watts` are absent and stay
+absent:
+
+* **`type` is a second spelling of `standard`.** The IEEE type number maps 1:1 onto the four
+  standards. Two fields holding one fact is a pair that can disagree the first time somebody edits
+  one of them, and nothing in the model says which wins.
+* **`watts` is a per-device budget, not a standard's number, and N01 proves it on its own row.**
+  802.3bt Type 3's PSE maximum is 60 W per port. N01 declares `standard: btType3` **and**
+  `poeBudget: 740` across 48 ports, which is **15.4 W each**: 802.3af's figure, on a switch that
+  supports Type 3. Both facts are true and they are about different things, which is why they are
+  different fields. A generator writing 60 into every port would offer a rollup 2,880 W of PoE on a
+  device whose nameplate is 900. That is the **false pass** DR-079 §11.78 was raised over, in the
+  direction that does not announce itself.
+
+`class` is the one PoE value the dialog asks for, because a switch may support a lower class than
+its standard permits and the person authoring the template knows which. Left blank it is an absent
+key (G4), which is the honest answer and the one the seed gives.
+
+**11.92.3 TWO MANAGEMENT CHECKBOXES, AND THE CONSOLE IS ON THE FRONT.** `#221` says "management
+port", singular. N01 carries **two**: `OOB MGMT` on RJ45 at the rear, and `CONSOLE` on a DE9 at the
+**front**, which is where a technician standing in front of the rack with a laptop reaches for it.
+
+They tick independently, because many switches have one and not the other, and one checkbox emitting
+both would put a port on a drawing that is not on the device. Both land in the **`Management`** bank:
+a bank is presentation (CR-055) and a bank spanning two faces is ordinary.
+
+**11.92.4 THE UPLINK CAGE SETS ITS OWN LABEL AND ITS OWN RATE.** SFP is 1 Gb/s, SFP+ is 10 and SFP28
+is 25, **by definition of the form factor**, and N01 writes `linkSpeedMbps: 25000` beside its SFP28
+cages for exactly that reason. This is not the `watts` case: the cage's rate is what the cage IS,
+where the port's wattage is what the device's supply can spare.
+
+The access bank's speed is a control, defaulting to **1000** as N01 writes it, because 2.5 Gb/s
+access switches are now ordinary in an AV rack and the field is one the seed bothered to fill.
+`#221` does not mention link speed; omitting it would have made every generated switch poorer than
+the seeded one in two columns.
+
+**11.92.5 THE LABELS ARE THE SILKSCREEN AND NOT THE BANK.** Access ports read `01` … `48`, bare, with
+no prefix, which is what is printed between the jacks on every switch ever made and what N01 writes.
+Uplinks read `SFP28 1` … `SFP28 4`, unpadded, because four is a list of names rather than a column a
+schedule sorts on. The four bank labels are **named, not derived**: `deriveBankName` would answer
+"LAN Ports" for the access bank and "DAC Ports" for the uplinks, two spellings of Ethernet that tell
+nobody which bank is which, and access-versus-uplink is not a signal-family distinction at all.
+
+**11.92.6 REDUNDANT PSU IS A SECOND INLET AND IS DISABLED WITHOUT A FIRST.** One inlet is `AC IN`;
+two are `PSU A` and `PSU B`, which is what N01 calls them and what M4-H's `{A}` token expands to. The
+checkbox is **greyed with its reason beside it** while there is no AC inlet, rather than tickable and
+inert: a disabled control with no explanation reads as broken, and reads as a decision with
+*"Needs an AC inlet first"* next to it.
+
+**11.92.7 WHAT THIS DOES NOT RULE.** It does not settle the paste sheet's synonym table (`#222`). It
+does not add a PoE budget field or any rollup over one, which is a `PowerProfile` question and M5's.
+And it does not touch `1 c14 in` through the DSL, which still writes a genderless C14 for the reason
+`fix(#220)` records: a parser would need a per-connector table of definitional genders, and that is a
+registry field nobody has authored.
+
+---
+
 
 ## 12. Superseded rulings
 

@@ -359,19 +359,27 @@ class _TypePickers extends StatelessWidget {
   );
 }
 
-/// A checkbox with an optional pair of pickers beside it.
+/// A checkbox with an optional pair of pickers, or a reason, beside it.
 class _Companion extends StatelessWidget {
   const _Companion({
     required this.label,
     required this.value,
     required this.onChanged,
     this.trailing,
+    this.enabled = true,
+    this.note,
   });
 
   final String label;
   final bool value;
   final ValueChanged<bool> onChanged;
   final Widget? trailing;
+
+  /// False greys the row out. **A DISABLED CONTROL IS ONLY HONEST WITH A
+  /// [note]**: `Redundant PSU` off with no explanation reads as broken,
+  /// and reads as a decision with "Needs an AC inlet first" beside it.
+  final bool enabled;
+  final String? note;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -380,14 +388,24 @@ class _Companion extends StatelessWidget {
         width: 260,
         child: CheckboxListTile(
           value: value,
-          onChanged: (on) => onChanged(on ?? false),
+          onChanged: enabled ? (on) => onChanged(on ?? false) : null,
           title: Text(label),
           dense: true,
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
         ),
       ),
-      if (trailing case final Widget t) Expanded(child: t),
+      if (trailing case final Widget t)
+        Expanded(child: t)
+      else if (note case final String reason)
+        Expanded(
+          child: Text(
+            reason,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
     ],
   );
 }
@@ -439,5 +457,307 @@ class _CountState extends State<_Count> {
     // rather than generating nothing. `int.tryParse` returning null on a
     // half-typed value must not throw away the digit already typed.
     onChanged: (text) => widget.onChanged(int.tryParse(text.trim()) ?? 0),
+  );
+}
+
+// ─── Switch ports ────────────────────────────────────────────────────
+
+/// The dialog's title, and what a test finds it by.
+const String kSwitchDialogTitle = 'Switch ports';
+
+/// Names the two count fields. See [kMatrixInputsField].
+const ValueKey<String> kSwitchAccessField = ValueKey<String>('switch.access');
+const ValueKey<String> kSwitchUplinksField = ValueKey<String>('switch.uplinks');
+
+/// The PoE class field, which is the one PoE value the dialog asks for
+/// rather than deriving (DR-092 §11.91.8 and `#221`).
+const ValueKey<String> kSwitchPoeClassField = ValueKey<String>('switch.class');
+
+/// Said under the form while the access side names no type.
+const String kSwitchNeedsATypeNote =
+    'Name a signal for the access ports. A side with neither a signal nor '
+    'a connector has not said what to add.';
+
+/// Why `Redundant PSU` is disabled: it is a SECOND inlet, and there is no
+/// first one to be second to.
+const String kSwitchRedundantNeedsInlet = 'Needs an AC inlet first';
+
+/// Shows `Switch ports…` and returns the groups to build, or null.
+Future<List<ArchetypeGroup>?> showSwitchArchetypeDialog({
+  required BuildContext context,
+  required TemplateBody body,
+  required Registries registries,
+}) => showDialog<List<ArchetypeGroup>>(
+  context: context,
+  builder: (context) => _SwitchDialog(body: body, registries: registries),
+);
+
+class _SwitchDialog extends StatefulWidget {
+  const _SwitchDialog({required this.body, required this.registries});
+
+  final TemplateBody body;
+  final Registries registries;
+
+  @override
+  State<_SwitchDialog> createState() => _SwitchDialogState();
+}
+
+class _SwitchDialogState extends State<_SwitchDialog> {
+  /// TWENTY-FOUR AND FOUR, which is the switch in the middle of the range
+  /// this product serves. `catalog_network.dart`'s own parameter note
+  /// gives 8 / 24 / 48 as the three sizes.
+  int _access = 24;
+  int _uplinks = 4;
+
+  /// PRE-FILLED, unlike the matrix's sides. An access port is RJ45
+  /// Ethernet on every switch there has ever been, so an empty picker
+  /// here would be asking a question with one answer.
+  PortType _accessType = kSwitchDefaultAccessType;
+
+  int? _linkSpeed = 1000;
+
+  bool _poe = false;
+  PoeStandard _poeStandard = PoeStandard.at;
+  int? _poeClass;
+
+  SfpFormFactor _sfp = SfpFormFactor.sfpPlus;
+
+  bool _management = false;
+  bool _console = false;
+  bool _acInlet = false;
+  bool _redundantPsu = false;
+
+  SwitchArchetype get _spec => SwitchArchetype(
+    accessPorts: _access,
+    accessType: _accessType,
+    accessLinkSpeedMbps: _linkSpeed,
+    poe: _poe,
+    poeStandard: _poeStandard,
+    poeClass: _poeClass,
+    uplinks: _uplinks,
+    sfp: _sfp,
+    managementPort: _management,
+    console: _console,
+    acInlet: _acInlet,
+    // TICKED AND INERT IS NOT A STATE THE FORM ALLOWS: the checkbox is
+    // disabled without an inlet, and this guard is what makes the
+    // preview agree with it if the two ever drift.
+    redundantPsu: _redundantPsu && _acInlet,
+  );
+
+  bool get _canGenerate =>
+      _access >= 1 &&
+      (_accessType.family != null || _accessType.connector != null);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final groups = planSwitchArchetype(widget.registries, _spec);
+    final preview = previewArchetype(widget.registries, widget.body, groups);
+
+    return AlertDialog(
+      title: const Text(kSwitchDialogTitle),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _TypeRow(
+                label: 'Access',
+                slot: 'access',
+                fieldKey: kSwitchAccessField,
+                count: _access,
+                onCount: (n) => setState(() => _access = n),
+                type: _accessType,
+                registries: widget.registries,
+                onType: (t) => setState(() => _accessType = t),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const SizedBox(width: 84, child: Text('Link speed')),
+                  SizedBox(
+                    width: 200,
+                    child: _Choice<int?>(
+                      value: _linkSpeed,
+                      values: const [null, 100, 1000, 2500, 10000],
+                      name: switchLinkSpeedLabel,
+                      onChanged: (v) => setState(() => _linkSpeed = v),
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+              _Companion(
+                label: 'PoE on the access ports',
+                value: _poe,
+                onChanged: (on) => setState(() => _poe = on),
+                trailing: _poe
+                    ? Row(
+                        children: [
+                          Expanded(
+                            child: _Choice<PoeStandard>(
+                              value: _poeStandard,
+                              values: PoeStandard.values,
+                              name: portPoeStandardLabel,
+                              onChanged: (v) =>
+                                  setState(() => _poeStandard = v),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 96,
+                            child: TextField(
+                              key: kSwitchPoeClassField,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                border: OutlineInputBorder(),
+                                labelText: 'Class',
+                                // EMPTY IS UNKNOWN AND SAYS SO. A switch
+                                // may support a lower class than its
+                                // standard permits, and G4's answer to
+                                // not knowing is an absent key.
+                                hintText: 'unknown',
+                              ),
+                              onChanged: (text) => setState(
+                                () => _poeClass = int.tryParse(text.trim()),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : null,
+              ),
+              const Divider(height: 24),
+              Row(
+                children: [
+                  const SizedBox(width: 84, child: Text('Uplinks')),
+                  SizedBox(
+                    width: 64,
+                    child: _Count(
+                      key: kSwitchUplinksField,
+                      value: _uplinks,
+                      onChanged: (n) => setState(() => _uplinks = n),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _Choice<SfpFormFactor>(
+                      value: _sfp,
+                      values: SfpFormFactor.values,
+                      // THE CAGE IS THE RATE. `SFP+ (10 Gb/s)` says the
+                      // thing the person is choosing between, because
+                      // nobody picks a cage for its plastic.
+                      name: switchSfpChoiceLabel,
+                      onChanged: (v) => setState(() => _sfp = v),
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+              _Companion(
+                label: 'Management port (RJ45)',
+                value: _management,
+                onChanged: (on) => setState(() => _management = on),
+              ),
+              _Companion(
+                label: 'Console (RS-232, front panel)',
+                value: _console,
+                onChanged: (on) => setState(() => _console = on),
+              ),
+              _Companion(
+                label: 'AC inlet (C14)',
+                value: _acInlet,
+                onChanged: (on) => setState(() => _acInlet = on),
+              ),
+              _Companion(
+                label: 'Redundant PSU (PSU A + PSU B)',
+                value: _redundantPsu && _acInlet,
+                enabled: _acInlet,
+                note: _acInlet ? null : kSwitchRedundantNeedsInlet,
+                onChanged: (on) => setState(() => _redundantPsu = on),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _canGenerate
+                    ? archetypePreviewLine(preview)
+                    : kSwitchNeedsATypeNote,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: _canGenerate
+                      ? theme.colorScheme.onSurface
+                      : theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _canGenerate
+              ? () => Navigator.of(context).pop(groups)
+              : null,
+          child: const Text(kArchetypeGenerateLabel),
+        ),
+      ],
+    );
+  }
+}
+
+/// `SFP+ (10 Gb/s)`: the cage and the rate it IS.
+///
+/// Nobody picks a cage for its plastic, so the rate belongs in the label
+/// rather than being something a person learns after generating.
+String switchSfpChoiceLabel(SfpFormFactor sfp) =>
+    '${portSfpLabel(sfp)} '
+    '(${switchLinkSpeedLabel(switchSfpLinkSpeedMbps(sfp))})';
+
+/// `1 Gb/s`, `100 Mb/s`, or the G4 dash.
+///
+/// **Gb/s ABOVE A THOUSAND**, because `10000 Mb/s` is a number a person
+/// has to count the zeroes of, and every switch datasheet in the trade
+/// says 10G.
+String switchLinkSpeedLabel(int? mbps) => switch (mbps) {
+  null => 'Unknown',
+  final m when m >= 1000 && m % 1000 == 0 => '${m ~/ 1000} Gb/s',
+  final m => '$m Mb/s',
+};
+
+/// A dropdown over a closed set, sized to the box it is given.
+class _Choice<T> extends StatelessWidget {
+  const _Choice({
+    required this.value,
+    required this.values,
+    required this.name,
+    required this.onChanged,
+  });
+
+  final T value;
+  final List<T> values;
+  final String Function(T) name;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) => DropdownButtonFormField<T>(
+    initialValue: value,
+    isExpanded: true,
+    decoration: const InputDecoration(
+      isDense: true,
+      border: OutlineInputBorder(),
+    ),
+    items: [
+      for (final v in values)
+        DropdownMenuItem<T>(value: v, child: Text(name(v))),
+    ],
+    onChanged: (v) {
+      if (v != null || null is T) onChanged(v as T);
+    },
   );
 }

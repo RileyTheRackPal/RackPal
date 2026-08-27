@@ -121,8 +121,8 @@ void main() {
     ) async {
       // A control wired to nothing is the defect `_Toolbar` already
       // records against a `Pair front to rear` that could do nothing.
+      // `Paste` is M4-I3 and has no button until it has a dialog.
       await pump(tester);
-      expect(find.text('Switch ports…'), findsNothing);
       expect(find.text('Paste'), findsNothing);
     });
 
@@ -267,6 +267,175 @@ void main() {
 
       final body = await h.read(tester);
       expect(body.ports, isEmpty);
+    });
+  });
+
+  group('Switch ports (M4-I2, #221)', () {
+    Future<void> openSwitch(WidgetTester tester) async {
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Switch ports…'));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> generate(WidgetTester tester) async {
+      await tester.tap(
+        find.widgetWithText(FilledButton, kArchetypeGenerateLabel),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the button is beside Matrix I/O', (tester) async {
+      await pump(tester);
+      expect(
+        find.widgetWithText(OutlinedButton, 'Switch ports…'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('it opens ready to generate, unlike the matrix', (
+      tester,
+    ) async {
+      // An access port is RJ45 Ethernet on every switch there has ever
+      // been, so the picker is pre-filled and Generate is live. The
+      // matrix has no such single answer for either side.
+      await pump(tester);
+      await openSwitch(tester);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, kArchetypeGenerateLabel),
+            )
+            .onPressed,
+        isNotNull,
+      );
+      expect(find.text('28 ports across 2 banks'), findsOneWidget);
+    });
+
+    testWidgets('THE DEFAULT IS A 24-PORT SWITCH WITH FOUR UPLINKS', (
+      tester,
+    ) async {
+      final h = await pump(tester);
+      await openSwitch(tester);
+      await generate(tester);
+      final body = await h.read(tester);
+      expect(body.ports, hasLength(28));
+      expect(body.banks.map((b) => b.label), <String>[
+        'Access Ports',
+        'Uplinks',
+      ]);
+    });
+
+    testWidgets('Redundant PSU is disabled, and says why', (tester) async {
+      await pump(tester);
+      await openSwitch(tester);
+      expect(find.text(kSwitchRedundantNeedsInlet), findsOneWidget);
+      expect(
+        tester
+            .widget<CheckboxListTile>(
+              find.widgetWithText(
+                CheckboxListTile,
+                'Redundant PSU (PSU A + PSU B)',
+              ),
+            )
+            .onChanged,
+        isNull,
+      );
+    });
+
+    testWidgets('ticking AC inlet enables it and the reason goes', (
+      tester,
+    ) async {
+      await pump(tester);
+      await openSwitch(tester);
+      await tick(tester, 'AC inlet (C14)');
+      expect(find.text(kSwitchRedundantNeedsInlet), findsNothing);
+      expect(
+        tester
+            .widget<CheckboxListTile>(
+              find.widgetWithText(
+                CheckboxListTile,
+                'Redundant PSU (PSU A + PSU B)',
+              ),
+            )
+            .onChanged,
+        isNotNull,
+      );
+    });
+
+    testWidgets('the SFP dropdown names the rate the cage IS', (tester) async {
+      // A person picking a cage is picking a speed, and `SFP+` alone
+      // makes them look it up.
+      expect(switchSfpChoiceLabel(SfpFormFactor.sfp), 'SFP (1 Gb/s)');
+      expect(switchSfpChoiceLabel(SfpFormFactor.sfpPlus), 'SFP+ (10 Gb/s)');
+      expect(switchSfpChoiceLabel(SfpFormFactor.sfp28), 'SFP28 (25 Gb/s)');
+    });
+
+    testWidgets('link speed reads in Gb/s above a thousand', (tester) async {
+      expect(switchLinkSpeedLabel(100), '100 Mb/s');
+      expect(switchLinkSpeedLabel(1000), '1 Gb/s');
+      expect(switchLinkSpeedLabel(2500), '2500 Mb/s');
+      expect(switchLinkSpeedLabel(10000), '10 Gb/s');
+      expect(switchLinkSpeedLabel(null), 'Unknown');
+    });
+
+    testWidgets('the PoE row appears only when PoE is ticked', (tester) async {
+      await pump(tester);
+      await openSwitch(tester);
+      expect(find.byKey(kSwitchPoeClassField), findsNothing);
+      await tick(tester, 'PoE on the access ports');
+      expect(find.byKey(kSwitchPoeClassField), findsOneWidget);
+    });
+
+    testWidgets('N01 END TO END: 56 PORTS ACROSS 4 BANKS', (tester) async {
+      final h = await pump(tester);
+      await openSwitch(tester);
+      await count(tester, kSwitchAccessField, '48');
+      await tick(tester, 'PoE on the access ports');
+      await tick(tester, 'Management port (RJ45)');
+      await tick(tester, 'Console (RS-232, front panel)');
+      await tick(tester, 'AC inlet (C14)');
+      await tick(tester, 'Redundant PSU (PSU A + PSU B)');
+      expect(find.text('56 ports across 4 banks'), findsOneWidget);
+
+      await generate(tester);
+      final body = await h.read(tester);
+      expect(body.ports, hasLength(56));
+      expect(body.ports.where((p) => p.face == Face.front), hasLength(1));
+      expect(
+        body.ports.singleWhere((p) => p.face == Face.front).label,
+        'CONSOLE',
+      );
+    });
+
+    testWidgets('ONE Undo takes the whole switch back', (tester) async {
+      final h = await pump(tester);
+      await openSwitch(tester);
+      await generate(tester);
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+      final body = await h.read(tester);
+      expect(body.ports, isEmpty);
+      expect(body.banks, isEmpty);
+    });
+
+    testWidgets('a switch and a matrix can share one template', (
+      tester,
+    ) async {
+      // The batch allocator across TWO generators rather than across six
+      // plans: nothing here may mint a key the other already took.
+      final h = await pump(tester);
+      await openSwitch(tester);
+      await generate(tester);
+      await openDialog(tester);
+      await fillWorkedExample(tester);
+      await generate(tester);
+
+      final body = await h.read(tester);
+      expect(body.ports, hasLength(28 + 68));
+      expect(body.ports.map((p) => p.key.v).toSet(), hasLength(96));
+      expect(
+        body.banks.map((b) => b.key).toSet(),
+        hasLength(body.banks.length),
+      );
     });
   });
 }

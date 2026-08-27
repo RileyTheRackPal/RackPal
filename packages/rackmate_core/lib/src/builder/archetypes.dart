@@ -42,6 +42,7 @@
 // eight commands it replaces, which is what a reviewer needs to check it.
 import 'package:meta/meta.dart';
 import 'package:rackmate_core/src/builder/label_pattern.dart';
+import 'package:rackmate_core/src/builder/port_table.dart' show portSfpLabel;
 import 'package:rackmate_core/src/builder/quick_add.dart';
 import 'package:rackmate_core/src/commands/command.dart';
 import 'package:rackmate_core/src/model/placement.dart';
@@ -423,6 +424,7 @@ QuickAddPlan archetypePlan(
   required PortDirection direction,
   required String label,
   String? bank,
+  Face face = Face.rear,
 }) {
   final pattern = parseLabelPattern(label);
   QuickAddPlan make(String source) => QuickAddPlan(
@@ -431,10 +433,12 @@ QuickAddPlan archetypePlan(
     connector: type.connector,
     family: type.family,
     direction: direction,
-    // REAR, EXPLICITLY. `buildQuickAdd` treats null as rear anyway, and
-    // saying so here is what makes `renderQuickAdd`'s output a command a
-    // person could paste back.
-    face: Face.rear,
+    // EXPLICIT, NEVER NULL. `buildQuickAdd` treats null as rear anyway,
+    // and saying so is what makes `renderQuickAdd`'s output a command a
+    // person could paste back. Rear is the default because that is where
+    // rack device I/O lives; a switch's CONSOLE port is the exception the
+    // parameter exists for, and the seeded N01 puts it on the front.
+    face: face,
     bothFaces: false,
     passthrough: false,
     // A pattern that will not parse is dropped rather than thrown: the
@@ -489,3 +493,218 @@ void _irReceiverPinout(PortDef port) => port.pinoutVariant = 'xantech-stereo';
 void _acInlet(PortDef port) => port
   ..power = PortPowerSpec(role: PortPowerRole.inlet)
   ..gender = Gender.male;
+
+// ─── Switch ports ────────────────────────────────────────────────────
+
+/// docs/06 §4.3's Switch ports generator, as data (`#221`).
+///
+/// **THE SPECIFICATION IS `catalog_network.dart`'s N01, NOT §4.3's
+/// SENTENCE.** The seeded catalog already holds this device: a 48-port
+/// PoE switch with SFP28 uplinks, an out-of-band management port, a
+/// front-panel console and two PSU inlets. Every field below is the field
+/// N01 writes, in the bank N01 puts it in, and the two places this
+/// generator could have invented something it instead reads off the seed.
+///
+/// The one place it deliberately writes LESS than it could: `PoeSpec.type`
+/// is a second spelling of [poeStandard] and `PoeSpec.watts` is a
+/// per-device power budget rather than a standard's number. N01 leaves
+/// both absent and so does this.
+@immutable
+final class SwitchArchetype {
+  const SwitchArchetype({
+    required this.accessPorts,
+    this.accessType,
+    this.accessLinkSpeedMbps = 1000,
+    this.poe = false,
+    this.poeStandard = PoeStandard.at,
+    this.poeClass,
+    this.uplinks = 0,
+    this.sfp = SfpFormFactor.sfpPlus,
+    this.managementPort = false,
+    this.console = false,
+    this.acInlet = false,
+    this.redundantPsu = false,
+  });
+
+  final int accessPorts;
+
+  /// Null means [kSwitchDefaultAccessType], RJ45 Ethernet.
+  final PortType? accessType;
+
+  /// N01 writes 1000 here. Null is a legal unknown and the grid marks it.
+  final int? accessLinkSpeedMbps;
+
+  /// The access ports supply power: `PoeSpec.role: pse`.
+  final bool poe;
+  final PoeStandard poeStandard;
+
+  /// IEEE class 0 to 8, or null. **THE ONE PoE FIELD THE DIALOG ASKS FOR
+  /// RATHER THAN DERIVING**, because a switch may support a lower class
+  /// than its standard permits and the person authoring knows which.
+  final int? poeClass;
+
+  /// SFP-caged uplinks. Zero is a real answer: an unmanaged eight-port
+  /// switch has none.
+  final int uplinks;
+
+  /// Sets the uplink label and its link speed, both definitionally: an
+  /// SFP cage IS 1G, an SFP+ 10G and an SFP28 25G.
+  final SfpFormFactor sfp;
+
+  /// `OOB MGMT`, RJ45 Ethernet, rear.
+  final bool managementPort;
+
+  /// `CONSOLE`, DE9 / RS-232, **front**, which is where N01 puts it and
+  /// where a technician commissioning a switch reaches for it.
+  final bool console;
+
+  /// One C14 inlet, or two when [redundantPsu].
+  final bool acInlet;
+
+  /// A second inlet, so the pair is labelled `PSU A` and `PSU B` rather
+  /// than `AC IN`. Does nothing while [acInlet] is off, and the dialog
+  /// disables it there rather than letting it read as ticked and inert.
+  final bool redundantPsu;
+}
+
+/// RJ45 Ethernet, which is what an access port is.
+const PortType kSwitchDefaultAccessType = PortType(
+  connector: ConnectorTypeId('conn.rj45'),
+  family: SignalFamilyId('net.ethernet'),
+);
+
+/// The four bank labels, spelled as `catalog_network.dart` spells them.
+///
+/// **NAMED AND NOT DERIVED, and the uplinks are why.** `deriveBankName`
+/// would answer "LAN Ports" for the access bank and "DAC Ports" for the
+/// uplinks, which are two spellings of "Ethernet" that tell a person
+/// nothing about which bank is which. Access and uplink is the
+/// distinction that matters on a switch and it is not a signal-family
+/// distinction at all.
+const String kAccessPortsBank = 'Access Ports';
+const String kUplinksBank = 'Uplinks';
+const String kManagementBank = 'Management';
+const String kPowerBank = 'Power';
+
+/// [spec] as the groups that build it, in N01's order.
+List<ArchetypeGroup> planSwitchArchetype(
+  Registries registries,
+  SwitchArchetype spec,
+) {
+  final groups = <ArchetypeGroup>[
+    ArchetypeGroup(
+      archetypePlan(
+        registries,
+        quantity: spec.accessPorts,
+        type: spec.accessType ?? kSwitchDefaultAccessType,
+        direction: PortDirection.bidirectional,
+        // BARE NUMBERS, which is what is silkscreened between the jacks
+        // on every switch ever made and what N01 writes: `01` … `48`.
+        label: _seq(spec.accessPorts),
+        bank: kAccessPortsBank,
+      ),
+      decorate: (port) {
+        port.linkSpeedMbps = spec.accessLinkSpeedMbps;
+        if (!spec.poe) return;
+        // A NEW `PoeSpec` PER PORT. It is a mutable class, so one
+        // instance captured by this closure would be SHARED by all
+        // forty-eight ports, and editing one port's class in the grid
+        // would silently edit the whole bank.
+        port.poe = PoeSpec(
+          role: PoeRole.pse,
+          standard: spec.poeStandard,
+          poeClass: spec.poeClass,
+        );
+      },
+    ),
+  ];
+
+  if (spec.uplinks > 0) {
+    groups.add(
+      ArchetypeGroup(
+        archetypePlan(
+          registries,
+          quantity: spec.uplinks,
+          type: PortType.token(registries, 'dac'),
+          direction: PortDirection.bidirectional,
+          // `{n}` AND NOT `{n:2}`, unlike the access bank. N01 spells
+          // `SFP28 1`, and a bank of four is a list of names rather than
+          // a numbered column a schedule sorts on.
+          // `portSfpLabel` AND NOT A SECOND SWITCH. The grid's SFP
+          // column already prints `SFP`, `SFP+`, `SFP28`, and a label
+          // function beside it would be one more place for the three to
+          // be spelled differently.
+          label: '${portSfpLabel(spec.sfp)} {n}',
+          bank: kUplinksBank,
+        ),
+        decorate: (port) => port
+          ..sfp = spec.sfp
+          ..linkSpeedMbps = switchSfpLinkSpeedMbps(spec.sfp),
+      ),
+    );
+  }
+
+  if (spec.managementPort) {
+    groups.add(
+      ArchetypeGroup(
+        archetypePlan(
+          registries,
+          quantity: 1,
+          type: PortType.token(registries, 'lan'),
+          direction: PortDirection.bidirectional,
+          label: 'OOB MGMT',
+          bank: kManagementBank,
+        ),
+      ),
+    );
+  }
+
+  if (spec.console) {
+    groups.add(
+      ArchetypeGroup(
+        archetypePlan(
+          registries,
+          quantity: 1,
+          type: PortType.token(registries, 'rs232'),
+          direction: PortDirection.bidirectional,
+          label: 'CONSOLE',
+          bank: kManagementBank,
+          // THE ONE FRONT-FACE PORT IN EITHER GENERATOR, and N01 is why:
+          // a console port is reached while standing in front of the
+          // rack with a laptop, so it is on the front of the switch.
+          face: Face.front,
+        ),
+      ),
+    );
+  }
+
+  if (spec.acInlet) {
+    groups.add(
+      ArchetypeGroup(
+        archetypePlan(
+          registries,
+          quantity: spec.redundantPsu ? 2 : 1,
+          type: PortType.token(registries, 'c14'),
+          direction: PortDirection.sink,
+          // `{A}` IS M4-H's ALPHA TOKEN, expanding to `PSU A` and
+          // `PSU B`, which is exactly what N01 calls them. A single
+          // inlet is `AC IN` because there is no B to be the A of.
+          label: spec.redundantPsu ? 'PSU {A}' : 'AC IN',
+          bank: kPowerBank,
+        ),
+        decorate: _acInlet,
+      ),
+    );
+  }
+
+  return groups;
+}
+
+/// The cage's own rate, which is not an estimate: SFP is 1G, SFP+ is 10G
+/// and SFP28 is 25G by definition of the form factor. N01 writes 25000
+/// beside its SFP28 cages for this reason.
+int switchSfpLinkSpeedMbps(SfpFormFactor sfp) => switch (sfp) {
+  SfpFormFactor.sfp => 1000,
+  SfpFormFactor.sfpPlus => 10000,
+  SfpFormFactor.sfp28 => 25000,
+};

@@ -295,15 +295,33 @@ class _PortGridState extends State<PortGrid> {
   /// `Matrix I/O…`: one dialog, one transaction, one `Ctrl+Z`.
   ///
   /// **IT RUNS THE GROUPS THE DIALOG HANDS BACK AND KNOWS NOTHING ABOUT
-  /// MATRICES.** `Switch ports…` and anything after it return the same
-  /// `List<ArchetypeGroup>`, so this is the one call site rather than the
-  /// first of three.
+  /// MATRICES.** Every generator returns the same `List<ArchetypeGroup>`,
+  /// so `_generate` is one call site rather than the first of three.
   Future<void> _matrixArchetype() async {
-    final groups = await showMatrixArchetypeDialog(
-      context: context,
-      body: widget.body,
-      registries: widget.registries,
+    await _generate(
+      showMatrixArchetypeDialog(
+        context: context,
+        body: widget.body,
+        registries: widget.registries,
+      ),
     );
+  }
+
+  /// `Switch ports…`, through the same one call site.
+  Future<void> _switchArchetype() async {
+    await _generate(
+      showSwitchArchetypeDialog(
+        context: context,
+        body: widget.body,
+        registries: widget.registries,
+      ),
+    );
+  }
+
+  /// Runs whatever groups a generator dialog hands back, as ONE undo
+  /// entry. Every archetype goes through here.
+  Future<void> _generate(Future<List<ArchetypeGroup>?> dialog) async {
+    final groups = await dialog;
     if (groups == null || groups.isEmpty || !mounted) return;
     // BUILT AFTER THE AWAIT, against the body as it stands now. The
     // dialog was open while nothing else could edit, but planning keys
@@ -1214,7 +1232,10 @@ class _PortGridState extends State<PortGrid> {
         // "above Quick Add" and DR-092 §11.91 rules that an illustration:
         // the fast path is the first thing under the hand on entering the
         // section, and nothing gets inserted over it.
-        _ArchetypeBar(onMatrix: () => unawaited(_matrixArchetype())),
+        _ArchetypeBar(
+          onMatrix: () => unawaited(_matrixArchetype()),
+          onSwitch: () => unawaited(_switchArchetype()),
+        ),
         const Divider(height: 1),
         _Toolbar(
           selectedCount: _selection.length,
@@ -1393,9 +1414,10 @@ const double kPortSelectGutter = 76;
 /// objection `_Toolbar` already records against a `Pair front to rear`
 /// that could do nothing on 46 of the 48 seeded templates.
 class _ArchetypeBar extends StatelessWidget {
-  const _ArchetypeBar({required this.onMatrix});
+  const _ArchetypeBar({required this.onMatrix, required this.onSwitch});
 
   final VoidCallback onMatrix;
+  final VoidCallback onSwitch;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -1409,6 +1431,12 @@ class _ArchetypeBar extends StatelessWidget {
           // trailing `…` means a dialog opens rather than something
           // happening. `Renumber…` and `Change type…` read the same way.
           label: const Text('Matrix I/O…'),
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton.icon(
+          onPressed: onSwitch,
+          icon: const Icon(Icons.lan_outlined, size: 18),
+          label: const Text('Switch ports…'),
         ),
       ],
     ),

@@ -184,7 +184,7 @@ Parse errors are *designed*, not thrown: the offending span is underlined in the
 Three buttons **directly below Quick Add** that emit whole topologies:
 
 - **Matrix I/O…**: *N* inputs × *M* outputs, a type per side, with checkboxes for the usual companions: mirrored outputs, per-output audio de-embed, per-output IR, control (LAN + RS-232 + IR IN), AC inlet. Emits 2–7 banks in one action.
-- **Switch ports…**: *N* access ports + *M* uplinks, PoE standard and per-port class, SFP form factor, management port, redundant PSU.
+- **Switch ports…**: *N* access ports + *M* uplinks, PoE standard and per-port class, SFP form factor, management port **and console**, redundant PSU. Access link speed too, which this line does not mention and the seed does write.
 - **Paste from spreadsheet**: TSV/CSV with a column-mapping sheet, sharing the engine with the Structure CSV import.
 
 > **Five clauses here were illustrations and DR-092 (§11.91) is the specification.** *(a)* **"above
@@ -205,6 +205,14 @@ Three buttons **directly below Quick Add** that emit whole topologies:
 > The generator also **writes `pinoutVariant`** on the IR ports it makes, `mono-tip-sleeve` for
 > emitters and `xantech-stereo` for the receiver. It chose the family, so it knows the pinout, and
 > §4.5's validation dot would otherwise mark all seventeen (AC-052). The DSL path cannot and does not.
+>
+> **The Switch generator's specification is `catalog_network.dart`'s N01 and DR-093 (§11.92) records
+> why.** The sentence above is one line; the seeded 48-port switch is the device, and it settles four
+> things the line does not: the console port exists and sits on the **front**, `PoeSpec.type` and
+> `PoeSpec.watts` are left **absent** because the first is a second spelling of `standard` and the
+> second is a per-device budget (N01 declares `btType3` and a 740 W budget across 48 ports, which is
+> 15.4 W each), the SFP cage sets its own link speed because a cage's rate is what the cage *is*, and
+> `Redundant PSU` is a second inlet so it is greyed until there is a first.
 
 ### 4.4 Banks and port sets: two concepts, two names
 
