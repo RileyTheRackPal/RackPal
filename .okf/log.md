@@ -1,5 +1,49 @@
 # Update Log
 
+## 2026-08-26 (thirteenth entry)
+
+* **Added**: [DR-092](decisions/dr-092-the-archetype-emits-the-port-4-3-could-not.md),
+  [DR-093](decisions/dr-093-the-switch-copies-the-seeded-switch.md) and
+  [DR-094](decisions/dr-094-the-paste-sheet-declares-its-separator.md), M4-I's three
+  generators. Concepts, not summaries: each carries the census that produced it.
+* **Added**: [a non-nullable field with a default has already answered](practices/a-defaulted-enum-has-already-answered.md).
+* **Note**: **THE SPEC LINE EMITTED 67 PORTS AND THE WORKED EXAMPLE PROMISED 68.**
+  docs/06 §4.3's Matrix I/O checkbox list has **no producer for `IR IN`**, which §9.1
+  types at step 12 and which §9.2's "68 ports, 6 banks" counts. `ask what produces each
+  task's input` has now fired one level below where it was written: not a task list with
+  no producer, but a *control list* with no producer, inside a feature whose own worked
+  example names the port. **The check that finds it is arithmetic on the spec, done
+  before the code.** Four more of §4.3's clauses were illustrations in the same pass.
+* **Note**: **THE SWITCH'S SPECIFICATION WAS ALREADY IN THE REPOSITORY AND IT IS NOT THE
+  SPEC.** `#221`'s statement is one line; `catalog_network.dart`'s N01 is the device,
+  authored at M0 and reviewed since. **The most valuable thing the census found was what
+  N01 declines to write**: `PoeSpec.watts` is absent, and N01 explains why on its own row
+  by declaring `btType3` (60 W per port) beside a `poeBudget` of 740 W across 48 ports,
+  which is 15.4 W each. **A seed that has passed a domain review is a specification whose
+  silences are also load-bearing**, and reading only what it writes gets half of it.
+* **Note**: **USING A SHARED COMPONENT SOMETIMES MEANS CHANGING IT, AND A GOOD COMPONENT
+  DOCUMENTS THE TERMS.** M3's `readCsv` is comma-only and refuses tabs by design, which
+  is fatal for a feature whose input is a spreadsheet clipboard. Rather than fork it or
+  argue with it, its own header named the price: *"a ruling and a user-visible choice,
+  not a counter"*. `CsvDelimiter` is a parameter defaulting to comma and a dropdown in
+  the dialog. **Read the refusal's terms before you route around it.**
+* **Note**: **G4 HAS A BLIND SPOT AND IT IS SHAPED LIKE AN ENUM DEFAULT.** Every C14
+  inlet the Matrix generator made claimed `Gender.genderless`, while `conn.iec_c14`
+  declares `genderApplies: true` and thirteen seeded inlets write `male`. `PortDef.gender`
+  is **non-nullable with a default**, so writing nothing is not a gap for somebody to
+  fill: it is a claim the constructor already made. Nothing could fail, because the value
+  is legal, round-trips and renders. **Found by censusing the seed before writing the NEXT
+  generator, not by any gate.**
+* **Note**: **TWO FALSE PASSES IN ONE ISSUE, AND BOTH WERE IN TESTS WRITTEN TO CATCH
+  THEM.** A paste fixture said `Source (out)` in a direction column, a spelling
+  `parsePortCell` refuses, and `expect(direction, source)` passed anyway off the family's
+  default. A preview counted banks one way and the build derived them another, so a sheet
+  with no bank column previewed `0` and made `1`. **A cell asserted against a value the
+  port would have held anyway proves nothing about the cell**, and two derivations of one
+  number will disagree eventually. Both now assert against a value the default cannot
+  supply, and the plan and the build read one object.
+* **Version**: `v0.4.66`. Epic `#22`: 22 issues, 92 tasks, **66** Done.
+
 ## 2026-08-25 (twelfth entry)
 
 * **Note**: **A PER-TOKEN FIX SATISFIED EVERY TOKEN AND BROKE THE SET.**
