@@ -13739,17 +13739,30 @@ WHOLE RISK.** Measured at `21b42fe` with `git grep`, so a reader can re-derive r
 | `rackmate`, any case | 4,359 hits in 807 files | `git grep -Iic rackmate` |
 | `package:rackmate` | 2,109 lines in 608 files | `git grep -Ic "package:rackmate" -- '*.dart'` |
 | `.rackmate` literal | 209 hits in 59 files | `git grep -IFc -- .rackmate` |
-| Inside a blockquote | **27 lines in 12 files** | `git grep -Iic "^> .*rackmate" -- '*.md'` |
+| Inside a blockquote | **30 lines in 12 files**, of which **24 in 11** are in swept files | `git grep -Iic "^ *>.*rackmate" -- '*.md'` |
 
-**That last row was first written as nine, and the error is worth keeping rather than quietly
-correcting**, because it is this repository's own recurring one. `git grep -Ic "^> .*RackMate"`
-returns 9. The same query case-insensitively returns **27**. The eighteen it could not see are the
-LOWERCASE form inside quotations: `rackmate_core` in docs/03's dependency rule and docs/07 §385,
+**THAT LAST ROW WAS WRONG TWICE BEFORE IT WAS RIGHT, AND BOTH ERRORS ARE KEPT HERE RATHER THAN
+CORRECTED AWAY**, because this ruling authorises a substitution at 4,359 sites and the reader needs
+to know how the counting failed rather than only what it settled at.
+
+**First it read 9.** `git grep -Ic "^> .*RackMate"` is case-sensitive, and eighteen occurrences are
+the LOWERCASE form inside quotations: `rackmate_core` in docs/03's dependency rule and docs/07 §385,
 `packages/rackmate_core/…` in docs/08 §386, `.rackmate` in docs/10 §173. A pattern written against
-the name as a reader says it cannot see the name as a machine spells it, which is the census
-failure this project has now made five times.
+the name as a reader says it cannot see the name as a machine spells it.
 
-Those twenty-seven are the ones a `sed -i` gets wrong. **Canon quotes rulings, criteria and critiques
+**Then it read 27.** `^>` anchors the quote marker to column zero, and three lines in
+docs/m1-implementation-log.md §§1862, 1863, 1865 are indented inside a list. `^ *>` finds them and
+returns **30**. That second miss happened *in the same paragraph that was documenting the first
+one*, which is the most useful fact in this subsection: a count corrected once is not a count
+verified, and the correcting pass inherits the blind spot of whatever it corrected with.
+
+**The number the sweep is actually measured against is 24, in 11 files.** The other six are in
+docs/m1-implementation-log.md, which is excluded whole (below), so they are protected by the file
+rule rather than by the line rule and must not be counted twice. **Post-conditions on two different
+sets are how a sweep passes its own check and still fails**, so the two are separated here: 30 is
+the corpus fact, 24 is the obligation.
+
+Those twenty-four are the ones a `sed -i` gets wrong. **Canon quotes rulings, criteria and critiques
 word for word, and the house style already protects that: the em-dash sweep left blockquotes alone
 "because canon quotes rulings and critiques word for word and editing a quotation falsifies the
 record."** The identical argument governs here and is stronger, because a name inside a quotation is
@@ -13762,8 +13775,9 @@ implementation log (65 hits) and the `.okf` decision bundle (191, of which 95 ar
 files) are history, and history said RackMate. Everything else, code, identifiers, package names,
 paths, live prose, becomes RackPal.
 
-**AND A QUOTED PATH STAYS QUOTED, EVEN THOUGH THE SWEEP MAKES IT STALE.** Eighteen of the
-twenty-seven quote an identifier rather than a sentence, so leaving them means canon will hold
+**AND A QUOTED PATH STAYS QUOTED, EVEN THOUGH THE SWEEP MAKES IT STALE.** The twenty-four split
+**15 lowercase to 9 cased, with no line carrying both**, so fifteen of them quote an identifier
+rather than a sentence. Leaving them means canon will hold
 blockquotes naming `rackmate_core` after no such package exists. That is correct and it is the
 lesser of the two errors: a quotation altered to stay accurate is no longer evidence of what was
 said, and this corpus turns on being able to tell those apart. The practice already exists and is
