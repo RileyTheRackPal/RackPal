@@ -4146,6 +4146,101 @@ tasks, of which **63** are `Done` once `#225` and `#762` close. By arithmetic fr
 `v0.4.49` plus M4-R's **8** closed tasks (`#751`-`#756`, `#758`, `#759`; `#757` is the unrun printed
 drill and is still open) plus M4-J's **6** (`#760`, `#223`, `#761`, `#224`, `#762`, `#225`) is **63**.
 
+#### 5.3.21 M4-I, the three generators, and the spec that was already in the repository · CLOSED · `8c5d502`, `1910f84`, `3660b81`, `8f664fc`, `5d26036`, `84bb162`
+
+**`#180` IS CLOSED** with `#220`, `#221` and `#222` all Done, six commits, fifteen gates green on
+each. Three rulings: **DR-092** (§11.91), **DR-093** (§11.92), **DR-094** (§11.93). **77 core cases
+and 37 UI cases**, counted off three runs rather than summed from the commit messages: 50 in
+`archetypes_test.dart`, 27 in `port_import_test.dart`, 37 in `archetype_dialogs_test.dart`. The
+floors moved core 3281 to 3358 and ui 1176 to 1213, which is the same 77 and 37 arriving a second
+way.
+
+**THE PATTERN OF THE PREVIOUS FIVE HELD FOR A SIXTH TIME, AND THIS TIME IT WAS AN ARITHMETIC HOLE.**
+§5.3 records that every M4 issue so far turned out to be partly a corpus question rather than an
+authoring job. M4-I's was a **count**:
+
+> docs/06 §4.3's Matrix I/O checkbox list emits **67** ports. §9.2 step 6 promises **68 across 6
+> banks**, and §9's target device enumerates all sixty-eight.
+
+The missing one is `IR IN`, which §9.1 types at step 12 and for which §4.3's control list, written
+as *"control (LAN + RS-232)"*, has **no producer at all**. That is
+`ask what produces each task's input` arriving one level down from where the practice found it: the
+feature's own worked example names a port the feature's own controls cannot make. DR-092 §11.91.2
+puts it on the per-output IR tick, because a matrix that flashes emitters is routing IR and one
+without them has nothing to route.
+
+**FOUR MORE OF §4.3's CLAUSES WERE ILLUSTRATIONS.** "Above Quick Add" contradicts §2's own layout
+sketch and the invariant §9.3 rests on. "Connector per side" cannot express either side of the
+worked example, because `rj45` defaults to `net.ethernet` and the output side is `video.hdbaset` on
+that same connector. "4 to 7 banks" describes a matrix somebody would author; the range the
+generator enforces is **2 to 7**. And the de-embed default of `audio.line_bal` on XLR3 is right for
+the family and wrong for every rack matrix ever built.
+
+**THE SWITCH'S SPECIFICATION WAS ALREADY IN THE REPOSITORY, AND IT IS NOT §4.3.** `#221`'s whole
+statement is one line. `catalog_network.dart`'s **N01** is a 48-port PoE switch with four SFP28
+uplinks, an out-of-band management port, a front-panel console and two PSU inlets, authored at M0
+and reviewed since. Censusing it answered four questions the line could not, and the most valuable
+answer was **what N01 declines to say**:
+
+| N01 writes | N01 omits | Why the omission is the finding |
+|---|---|---|
+| `PoeSpec.role: pse` | `PoeSpec.type` | A second spelling of `standard`; two fields holding one fact disagree the first time somebody edits one |
+| `PoeSpec.standard` | `PoeSpec.watts` | N01 declares `btType3`, whose PSE maximum is 60 W, **and** a `poeBudget` of 740 W across 48 ports, which is **15.4 W each**. Writing 60 into every port offers a rollup 2,880 W on a device whose nameplate is 900 |
+
+That is DR-079 §11.78's false pass, in the direction that does not announce itself, and the seed had
+already declined to make it.
+
+**THE ONE SHARED-COMPONENT CHANGE M4-I3 NEEDED WAS THE ONE THAT COMPONENT'S OWN COMMENT ASKED FOR.**
+`readCsv` is comma-only and **refuses** a tab file rather than sniffing one, which is a problem for a
+feature whose input is a spreadsheet clipboard. Its header states the shape the fix had to take,
+verbatim: *"a ruling and a user-visible choice, not a counter"*. `CsvDelimiter` is a parameter
+defaulting to comma, so every M3 caller is untouched, and the dialog exposes it as *"Tabs (from a
+spreadsheet)"* / *"Commas (from a .csv file)"*. **No sniffing was added.**
+
+**AND ONE COMPONENT COULD NOT BE SHARED, FOR A REASON CANON ALREADY RECORDS.** `csv_mapping.dart`
+refuses a "discard this column" option outright, on docs/07 §5.1's unconditional rule that unmapped
+columns are preserved into the row's `unknown` map. **`PortDef` has no such map**, and AC-012 (§2)
+is why: *"`TemplateBody` is app-defined and closed; there is no forward-compat argument"*. So the
+column is dropped and **counted** rather than dropped and hidden, which is the only honest option a
+closed model leaves.
+
+**FOUR DEFECTS, AND EVERY ONE WAS FOUND BY WRITING SOMETHING OTHER THAN THE FEATURE.**
+
+| Defect | Found by | Class |
+|---|---|---|
+| A side whose type resolved to neither registry was labelled `IN IN 01`: the fallback substituted the direction word and then appended it again | a test over an unresolvable type | fallback that reads as a value |
+| Every generated C14 claimed `Gender.genderless`, while `conn.iec_c14` declares `genderApplies: true` and all thirteen seeded C14 inlets write `male` | censusing the seed before writing the NEXT generator | **a non-nullable enum with a default has already answered before anybody asks** |
+| The paste preview counted banks by looking for an explicit bank cell, so a sheet with no bank column previewed `0 banks` and then made one | the preview-versus-build test | two derivations of one number |
+| The paste test's fixture said `Source (out)` in a direction column, a spelling `parsePortCell` refuses, and `direction == source` passed anyway off `video.hdmi.2_0`'s default | reading the assertion again after the connector column failed beside it | **a false pass in a test written to catch false passes** |
+
+**THE SECOND ONE IS THE ONE WORTH KEEPING.** G4 governs nullable fields: *null is unknown, never
+estimated*. `PortDef.gender` is a **non-nullable `Gender` defaulting to `genderless`**, so silence
+there is not a gap somebody can later fill: it is a positive claim, made by the constructor, that
+this connector has no gender. The defence is knowing which fields are shaped that way, and the
+generators now write the one whose answer is definitional. `1 c14 in` through Quick Add still has
+the defect, and the fix is a per-connector table of definitional genders that no registry field
+carries.
+
+**THE ALLOCATOR IS THE MECHANISM ALL THREE TASKS SHARE.** `buildQuickAdd` allocated keys, orders and
+ordinals straight off `body`, which is correct while the one command list it returns is the only
+thing in flight. Six plans from one button are not, and neither are forty-eight pasted rows: none of
+their commands has run when the next is planned, so independent snapshots mint repeated keys.
+`QuickAddBatch` holds that state across a run and `buildQuickAdd` became its one-plan case, so there
+is **one allocator** and not three. A test generates a switch and a matrix into one template and
+another pastes a sheet on top of an archetype, in both cases asserting that no key repeats.
+
+**WHAT M4-I DOES NOT DELIVER.** The import is **not idempotent**, unlike `csv_import_plan.dart`'s
+Structure re-import: a template has no `fieldLabel` to dedup on and CR-051's key join is a migration
+record rather than a match key, so re-pasting the same sheet doubles the ports and `Ctrl+Z` is one
+keystroke away (DR-094 §11.93.8). No accelerator is bound to any of the three buttons. And nothing
+here pairs a passthrough: that is M4-J's and it is closed.
+
+**Version `v0.4.66`, derived two ways that agree.** By hierarchy walk: Epic `#22`'s **22** issues
+hold **92** tasks, of which **66** are `Done`. By arithmetic from the last release: `v0.4.63` plus
+M4-I's **3** closed tasks (`#220`, `#221`, `#222`) is **66**. The issue count moved 21 to 22 since
+§5.3.20 was written and the task count did not, which is a decomposition item added with no tasks
+under it and does not touch the patch number.
+
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing

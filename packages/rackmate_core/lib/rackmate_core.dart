@@ -50,6 +50,7 @@
 /// worse than no signpost.
 library;
 
+export 'src/builder/archetypes.dart';
 export 'src/builder/bank_commands.dart';
 export 'src/builder/fork_status.dart';
 export 'src/builder/label_pattern.dart';
@@ -60,6 +61,7 @@ export 'src/builder/port_duplicate.dart';
 export 'src/builder/port_fill.dart';
 export 'src/builder/port_find_replace.dart';
 export 'src/builder/port_impact.dart';
+export 'src/builder/port_import.dart';
 export 'src/builder/port_move_to_bank.dart';
 export 'src/builder/port_renumber.dart';
 export 'src/builder/port_reorder.dart';

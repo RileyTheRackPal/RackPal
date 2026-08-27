@@ -53,6 +53,13 @@ a board task instructing weeks of work that a ruling had abolished.
   commit. There is one scope list and it is roadmap §2.
 - **§8.8** A closed task **names the commit that closed it**. Forward-only from
   2026-08-03; do not backfill.
+- **§8.9** A milestone **opens only over a predecessor whose clauses are all
+  discharged or parked** (DR-095). Discharged is `DEMONSTRATED` or `CONFIRMED`,
+  docs/12 §0's only two discharging marks. **Parked** is reassigned by ruling ID
+  to a **named later** milestone, with the structural reason: DR-027 splitting
+  M3's Pull Sheet clause is the precedent. **Closing** is the moment that binds;
+  opening is soft, and work landing against a later milestone stays legal.
+  **Retroactive to M0**, unlike §8.8, because a clause's evidence can be re-run.
 
 ## Invariants that bite
 

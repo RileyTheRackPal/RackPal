@@ -103,6 +103,29 @@ enum CsvRefusal {
   tooManyFields,
 }
 
+/// The one character that separates fields, **DECLARED AND NEVER
+/// SNIFFED**.
+///
+/// [readCsv]'s own doc says a dialect other than comma is *"a ruling and a
+/// user-visible choice, not a counter"*. This is that choice. The device
+/// builder's `[Paste]` (M4-I3, `#222`) reads what a spreadsheet puts on
+/// the clipboard, which is TAB-separated, and the alternative to a
+/// parameter here was a second reader in `builder/` forking every quoting
+/// rule, every limit and every refusal in this file.
+///
+/// The default is [comma], so every M3 caller is unchanged.
+enum CsvDelimiter {
+  comma(0x2c, 'comma'),
+  tab(0x09, 'tab');
+
+  const CsvDelimiter(this.codeUnit, this.word);
+
+  final int codeUnit;
+
+  /// What a refusal calls this separator: "reading it as tab-separated".
+  final String word;
+}
+
 /// The outcome of [readCsv].
 sealed class CsvRead {
   const CsvRead();
@@ -194,7 +217,9 @@ final class CsvTable {
 }
 
 const int _quote = 0x22;
-const int _comma = 0x2c;
+// `_comma` was here and is now [CsvDelimiter.comma]'s own code unit, so
+// the separator is one value the caller names rather than two constants
+// that could drift.
 const int _cr = 0x0d;
 const int _lf = 0x0a;
 const int _bom = 0xfeff;
@@ -221,7 +246,11 @@ const int _bom = 0xfeff;
 /// exports of the same sheet, and nothing on screen shows why.
 ///
 /// Never throws. Every failure is a [CsvReadRefused].
-CsvRead readCsv(String text, {CsvLimits limits = CsvLimits.standard}) {
+CsvRead readCsv(
+  String text, {
+  CsvLimits limits = CsvLimits.standard,
+  CsvDelimiter delimiter = CsvDelimiter.comma,
+}) {
   if (text.length > limits.maxCharacters) {
     return CsvReadRefused(
       CsvRefusal.tooLarge,
@@ -291,7 +320,7 @@ CsvRead readCsv(String text, {CsvLimits limits = CsvLimits.standard}) {
       i++;
       continue;
     }
-    if (c == _comma) {
+    if (c == delimiter.codeUnit) {
       endField();
       if (record.length + 1 > limits.maxFields) {
         return CsvReadRefused(
@@ -361,15 +390,28 @@ CsvRead readCsv(String text, {CsvLimits limits = CsvLimits.standard}) {
   final headerRecord = kept.first;
   final headers = headerRecord.fields.map((f) => f.trim()).toList();
 
-  if (headers.length == 1 &&
-      (headers.single.contains(';') || headers.single.contains('\t'))) {
-    final found = headers.single.contains(';') ? 'semicolons' : 'tabs';
-    return CsvReadRefused(
-      CsvRefusal.wrongDelimiter,
-      'This file separates its columns with $found. RackMate reads '
-      'comma-separated CSV; re-export or save it with commas.',
-      line: headerRecord.line,
-    );
+  // THE DIAGNOSIS FOLLOWS THE DECLARED DELIMITER. In comma mode a lone
+  // header full of tabs is the classic wrong export; in tab mode it is
+  // somebody pasting the contents of a `.csv` into a clipboard box.
+  // Either way the refusal names what was FOUND, which is the thing the
+  // operator has to change, and neither mode ever re-parses the text a
+  // second way to see if that works better.
+  final wrong = <String, String>{
+    if (delimiter != CsvDelimiter.comma) ',': 'commas',
+    ';': 'semicolons',
+    if (delimiter != CsvDelimiter.tab) '\t': 'tabs',
+  };
+  if (headers.length == 1) {
+    for (final MapEntry(key: separator, value: found) in wrong.entries) {
+      if (!headers.single.contains(separator)) continue;
+      return CsvReadRefused(
+        CsvRefusal.wrongDelimiter,
+        'This file separates its columns with $found. RackMate is reading '
+        'it as ${delimiter.word}-separated; change the separator or '
+        're-export it.',
+        line: headerRecord.line,
+      );
+    }
   }
   if (headers.length > limits.maxFields) {
     return CsvReadRefused(

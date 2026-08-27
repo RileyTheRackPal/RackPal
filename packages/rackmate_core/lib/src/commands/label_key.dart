@@ -315,6 +315,18 @@ enum LabelKey {
   // strand an empty bank behind them.
   quickAddPorts,
 
+  // ARCHETYPE GENERATORS (builder/archetypes.dart), M4-I, DR-092 §11.91.
+  // Its own value on the same test again: one click creates SIXTY-EIGHT
+  // ports across SIX banks, and "Undo Quick add ports" names a gesture
+  // the person did not make. They clicked a button in a dialog, and what
+  // they want back is the whole device.
+  //
+  // ONE VALUE FOR EVERY GENERATOR, unlike the bank quartet above. Matrix
+  // I/O and Switch ports differ in what they emit and not in what the
+  // Edit menu has to say about undoing it; splitting them would put the
+  // dialog's title in the menu, which is a caption rather than an act.
+  generateArchetype,
+
   // BANK CRUD (builder/bank_commands.dart), M4-J1. Four values on the
   // same test the port trio was split on: what the Edit menu has to say.
   //

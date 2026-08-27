@@ -13321,6 +13321,389 @@ here.
 
 ---
 
+### 11.91 DR-092 · The Matrix archetype emits the port §4.3 could not, and four defaults it had no opinion on
+
+**Settled by the user on 2026-08-26** (`#220`, M4-I1), from a census run against docs/06 §4.3 and §9
+before the generator was written.
+
+**11.91.1 §4.3'S CHECKBOX LIST EMITS 67 PORTS AND §9.2 PROMISES 68.** §4.3 offers Matrix I/O as
+*"N inputs × M outputs, connector per side, with checkboxes for the usual companions: mirrored
+outputs, per-output audio de-embed, per-output IR, control (LAN + RS-232), AC inlet"*. §9's target
+device is *"16 HDMI inputs, 16 HDBaseT outputs on RJ45, 16 mirrored HDMI outputs, 16 IR emitter
+outputs, LAN, RS-232, IR in, C14 inlet, 68 ports across 6 banks"*, and §9.2's step 6 says the button
+emits **"68 ports, 6 banks"**.
+
+The four bulk rows are 64. Control as §4.3 writes it is two. The inlet is one. **67.** The `IR IN`
+that §9.1 types at step 12 has no checkbox and therefore **no producer**, which is
+`ask what produces each task's input` arriving one level down from where that practice found it: the
+feature's own worked example names a port the feature's own control list cannot make.
+
+**11.91.2 IR IN RIDES THE PER-OUTPUT IR TICK.** Control emits LAN and RS-232 always, and adds the IR
+receiver input **only when per-output IR is also ticked**. Three reasons, in order of weight:
+
+1. **It is what the device is.** A matrix carrying IR emitter outputs is routing IR, and IR has to
+   arrive from somewhere. A matrix with no emitters has nothing to route, and an IR input on it is a
+   port somebody deletes.
+2. **It costs no step.** §9.2's step 5 is one tick group; the conditional fires off a box already
+   being ticked, so the seven-step count is unchanged.
+3. **It reaches 68 across 6 banks exactly**, which is the number the exit criterion is measured in.
+
+Rejected: an unconditional third port, which gives every matrix an orphan receiver; and a fourth
+checkbox, which is honest and free in step count and is still one more decision for a user who by
+the criterion's own wording **has seen the tool once**.
+
+**The two IR families are not interchangeable and the generator picks between them.**
+`ctl.ir_emitter` for the outputs, `ctl.ir_receiver` for the input. That is DR-060 §11.59.11's
+direction rule applied by a generator rather than by a parser.
+
+**11.91.3 THE GENERATOR WRITES `pinoutVariant`, AND THE DSL PATH'S SILENCE IS A GAP RATHER THAN A
+PRECEDENT.** `port_validation.dart` raises the file's only hardware warning when an IR port's pinout
+is blank, on AC-052 and on the destruction `seed_registries.dart` describes where the two families
+are declared: an emitter plugged into a receiver jack meets +12 V on the ring. The thirteen-step DSL
+path leaves all seventeen blank, because a parser cannot know more than the token it was handed.
+
+**A generator can.** It chose the family, so it knows the pinout. Emitters take `mono-tip-sleeve`
+and the receiver takes `xantech-stereo`, which are the strings the seeded catalog already writes in
+fourteen places rather than a new vocabulary invented here.
+
+This makes the two paths produce templates that differ, and the difference is the point: the
+archetype path ships clean where the DSL path ships seventeen warning dots. Closing the DSL side is
+not this ruling's business, and it is not free either: `16 ir35 out` would have to infer a pinout
+from a family, which is the one inference AC-052 wants a person to make deliberately.
+
+**11.91.4 AUDIO DE-EMBED IS BALANCED ON A 3-PIN EUROBLOCK.** `audio.line_bal`'s registry default
+connector is `conn.xlr3`, which is right for the family in general and wrong for every rack matrix
+ever built. The de-embed row defaults to `audio.line_bal` on `conn.euroblock_3`, one port per
+output, and the connector picker stays editable: this is a **default and not a rule**.
+
+Rejected: unbalanced RCA, which is correct on consumer matrices and turns 16 outputs into 32 ports
+because L and R are two connectors; and leaving the family default, which is a re-pick on every
+generate.
+
+**11.91.5 "CONNECTOR PER SIDE" IS AN ILLUSTRATION AND THE CONTROL IS A TYPE.** A connector alone
+cannot express either side of the worked example: `rj45` defaults to `net.ethernet` and the output
+side is `video.hdbaset` **on the same connector**, which is the orthogonality DR-060 §11.59.4 exists
+to preserve. So each side offers **both** pickers, and they are the port grid's own two cells,
+`PortFamilyCell` and `PortConnectorCell`, rather than a third pair: the first carries
+`family_picker.dart`'s measurement and DR-025 §11.24.3's non-committing filter, the second carries
+M3-L's finding that a `DropdownButton` asserting on its value takes a whole table down when a
+document names something no menu offers. Picking a family takes that family's default connector, and
+a connector picked afterwards overrides it, which is DR-060 §11.59.4's rule and
+`quick_add_fields.dart`'s behaviour.
+
+**Quick Add's own field mode ships a family picker and NO connector picker**, because docs/12 §5.3.6
+records five of its seven fields being ruled down as redundant. That is a fact about a docked strip
+beside a command line that can already say `rj45 hdbt` in one breath; a dialog with no command line
+has no second way to name the connector, so it carries the control the strip could do without.
+
+**11.91.6 "EMITS 4 TO 7 BANKS" IS AN ILLUSTRATION AND THE RANGE IS 2 TO 7.** Inputs and outputs are
+the only two rows the dialog cannot switch off. Every companion is a checkbox and **all five default
+off**, which is what §9.2's step 5 says by asking the user to tick four of them. The 4 describes a
+matrix somebody would actually author; it is not a floor the generator enforces.
+
+**11.91.7 THE GENERATOR OWNS NO SECOND BUILDER.** It emits `QuickAddPlan`s and Quick Add's own
+`buildQuickAdd` turns them into commands, against **one shared allocator** so that six banks in one
+action cannot mint two ports with the same key. A generator that constructed `PortDef`s itself would
+be a second copy of the bank-reuse rule, the label expander and the ordinal allocator, which is the
+objection `uniqueSlugKey`'s own comment already records against a third derivation of a key.
+
+**11.91.8 WHAT THIS DOES NOT RULE.** It does not add `poe:`, `z:`, `dte` or `tap:` to the DSL, which
+docs/12 §5.3.6 records as deliberately absent; the archetypes write those fields on the ports they
+construct, which is what the grid's column packs already do. It does not settle the Switch
+archetype's defaults (`#221`) or the paste sheet's synonym table (`#222`). And it pairs nothing:
+`PassthroughPairDef` is M4-J's, and a matrix's mirrored output is a second output rather than a
+passthrough (docs/06 §4.6).
+
+---
+
+### 11.92 DR-093 · The Switch generator copies the seeded switch, including what it declines to say
+
+**Settled by the user on 2026-08-26** (`#221`, M4-I2). DR-092 §11.91.8 left these open by name.
+
+**11.92.1 THE SPECIFICATION WAS ALREADY IN THE REPOSITORY AND IT IS NOT docs/06 §4.3.** §4.3's whole
+statement of this generator is one line: *"N access ports + M uplinks, PoE standard and per-port
+class, SFP form factor, management port, redundant PSU"*. `catalog_network.dart`'s **N01** is a
+48-port PoE switch with four SFP28 uplinks, an out-of-band management port, a front-panel console
+and two PSU inlets, authored at M0 and reviewed since. Every field the generator writes is a field
+N01 writes, in the bank N01 puts it in.
+
+**A census of the seed answered four questions the sentence could not**, which is
+`a spec table is an illustration until censused` arriving for the fifth time.
+
+**11.92.2 THE GENERATOR WRITES `role` AND `standard` AND STOPS.** N01's PoE ports carry
+`PoeSpec(role: pse, standard: btType3)` and nothing else. `type` and `watts` are absent and stay
+absent:
+
+* **`type` is a second spelling of `standard`.** The IEEE type number maps 1:1 onto the four
+  standards. Two fields holding one fact is a pair that can disagree the first time somebody edits
+  one of them, and nothing in the model says which wins.
+* **`watts` is a per-device budget, not a standard's number, and N01 proves it on its own row.**
+  802.3bt Type 3's PSE maximum is 60 W per port. N01 declares `standard: btType3` **and**
+  `poeBudget: 740` across 48 ports, which is **15.4 W each**: 802.3af's figure, on a switch that
+  supports Type 3. Both facts are true and they are about different things, which is why they are
+  different fields. A generator writing 60 into every port would offer a rollup 2,880 W of PoE on a
+  device whose nameplate is 900. That is the **false pass** DR-079 §11.78 was raised over, in the
+  direction that does not announce itself.
+
+`class` is the one PoE value the dialog asks for, because a switch may support a lower class than
+its standard permits and the person authoring the template knows which. Left blank it is an absent
+key (G4), which is the honest answer and the one the seed gives.
+
+**11.92.3 TWO MANAGEMENT CHECKBOXES, AND THE CONSOLE IS ON THE FRONT.** `#221` says "management
+port", singular. N01 carries **two**: `OOB MGMT` on RJ45 at the rear, and `CONSOLE` on a DE9 at the
+**front**, which is where a technician standing in front of the rack with a laptop reaches for it.
+
+They tick independently, because many switches have one and not the other, and one checkbox emitting
+both would put a port on a drawing that is not on the device. Both land in the **`Management`** bank:
+a bank is presentation (CR-055) and a bank spanning two faces is ordinary.
+
+**11.92.4 THE UPLINK CAGE SETS ITS OWN LABEL AND ITS OWN RATE.** SFP is 1 Gb/s, SFP+ is 10 and SFP28
+is 25, **by definition of the form factor**, and N01 writes `linkSpeedMbps: 25000` beside its SFP28
+cages for exactly that reason. This is not the `watts` case: the cage's rate is what the cage IS,
+where the port's wattage is what the device's supply can spare.
+
+The access bank's speed is a control, defaulting to **1000** as N01 writes it, because 2.5 Gb/s
+access switches are now ordinary in an AV rack and the field is one the seed bothered to fill.
+`#221` does not mention link speed; omitting it would have made every generated switch poorer than
+the seeded one in two columns.
+
+**11.92.5 THE LABELS ARE THE SILKSCREEN AND NOT THE BANK.** Access ports read `01` … `48`, bare, with
+no prefix, which is what is printed between the jacks on every switch ever made and what N01 writes.
+Uplinks read `SFP28 1` … `SFP28 4`, unpadded, because four is a list of names rather than a column a
+schedule sorts on. The four bank labels are **named, not derived**: `deriveBankName` would answer
+"LAN Ports" for the access bank and "DAC Ports" for the uplinks, two spellings of Ethernet that tell
+nobody which bank is which, and access-versus-uplink is not a signal-family distinction at all.
+
+**11.92.6 REDUNDANT PSU IS A SECOND INLET AND IS DISABLED WITHOUT A FIRST.** One inlet is `AC IN`;
+two are `PSU A` and `PSU B`, which is what N01 calls them and what M4-H's `{A}` token expands to. The
+checkbox is **greyed with its reason beside it** while there is no AC inlet, rather than tickable and
+inert: a disabled control with no explanation reads as broken, and reads as a decision with
+*"Needs an AC inlet first"* next to it.
+
+**11.92.7 WHAT THIS DOES NOT RULE.** It does not settle the paste sheet's synonym table (`#222`). It
+does not add a PoE budget field or any rollup over one, which is a `PowerProfile` question and M5's.
+And it does not touch `1 c14 in` through the DSL, which still writes a genderless C14 for the reason
+`fix(#220)` records: a parser would need a per-connector table of definitional genders, and that is a
+registry field nobody has authored.
+
+---
+
+### 11.93 DR-094 · The paste sheet declares its separator, and drops what a closed model cannot hold
+
+**Settled by the user on 2026-08-26** (`#222`, M4-I3). DR-092 §11.91.8 and DR-093 §11.92.7 both
+left this open by name.
+
+**11.93.1 THE ENGINE IS M3'S AND THE ONE THING IT NEEDED WAS A DECLARED DELIMITER.** `#222` says
+*"sharing the engine with the Structure CSV import, use it, do not fork it"*, and it is used: the
+quoting rules, the ragged-row handling, the limits, the refusals and `normaliseCsvHeader` are all
+`structure/csv_reader.dart`'s and `structure/csv_header_map.dart`'s.
+
+**But `readCsv` is comma-only and REFUSES a tab file rather than sniffing one**, and a spreadsheet
+puts tabs on the clipboard. Its own comment names the shape the fix had to take, verbatim:
+
+> If a semicolon dialect later has to be read, it is **a ruling and a user-visible choice, not a
+> counter**.
+
+`CsvDelimiter` is that choice. It is a parameter defaulting to comma, so every M3 caller is
+unchanged, and the paste dialog exposes it as a two-row dropdown reading *"Tabs (from a
+spreadsheet)"* and *"Commas (from a .csv file)"*: a person who has just copied cells does not know
+what separates them, and the parenthesis is what makes the control answerable. **No sniffing was
+added.** A comma sheet read in tab mode is still diagnosed by name, in the reader's own sentence.
+
+**11.93.2 AN UNMAPPED COLUMN IS DROPPED, WHICH LOOKS LIKE A DEPARTURE AND IS A CONSEQUENCE.**
+`csv_mapping.dart` refuses a "discard this column" option outright, because docs/07 §5.1 is
+unconditional that unmapped columns are *"preserved into the row's `unknown` map"*. **`PortDef` has
+no such map, and that is canon rather than an oversight**: AC-012 (§2) rules that
+
+> `TemplateBody` is app-defined and **closed**; there is no forward-compat argument, because unknown
+> *keys* are already handled by `EntityMeta.unknown`.
+
+A port inside a template body is not one of the document's entities and carries no `EntityMeta`. So
+a column nobody maps genuinely cannot be kept, and the choice is between dropping it silently and
+dropping it out loud.
+
+**IT IS DROPPED OUT LOUD.** The mapping sheet shows the column as `Not imported`, and the summary
+line counts it: *"12 ports across 2 new banks · 1 column not imported"*. The word is **not
+imported** rather than "ignored", because it is a loss. A visible discard is not the silent one
+canon §4.2 forbids.
+
+Giving `PortDef` an `unknown` map is a model change, a codec change, four regenerated starters and
+an argument against AC-012. It is a ruling somebody should raise the first time a shop actually
+needs it, and this is not that day.
+
+**11.93.3 THE BANK IS A TARGET AND NOT A COLUMN.** `PortColumnId` has no `bank` member: the grid
+bands by `PortDef.bankKey` and `Move to bank…` is the editing path (CR-055, a bank is
+presentation). A spreadsheet of ports very often has a Group column, and a paste that could not read
+one would land sixty-eight rows in `Not in a bank`. So the mapping sheet's target set is
+`PortImportTarget`, which is **the grid's columns plus the bank**, and a bank cell is matched or
+created by LABEL through `uniqueBankNameAmong`, the same function Quick Add and the archetypes use.
+
+**11.93.4 A PASTED CELL IS DATA AND NEVER A PATTERN.** A label column reading `HDMI {n}` means those
+seven characters. Running it through `parseLabelPattern` would silently expand it to `HDMI 1`, and
+the label grammar has **no escape for a literal brace** by design: roadmap §2 names generalising
+that grammar as this milestone's scope hazard, by name, and `label_pattern.dart`'s header repeats
+it. So `QuickAddBatch.add` takes literal labels beside the plan rather than through it.
+
+They travel with the plan rather than being written afterwards because `autoPortKey` derives a
+port's KEY from its label: a label arriving after construction leaves every pasted port keyed
+`port.<n>`.
+
+**11.93.5 ONE TARGET, ONE COLUMN.** Assigning a target releases whichever column held it. Two
+columns both feeding `LABEL` means the second silently wins and a person reading the sheet cannot
+see which; the earlier one falls back to `Not imported`, visibly.
+
+**11.93.6 WHAT THE PLAN COUNTS, AND THE DEFECT THAT SHAPED IT.** The summary reports ports, **new**
+banks, empty rows skipped, columns not imported, and cells nothing could be made of. Every clause is
+conditional and every one is singularised, because `1 ports` is what M4-G shipped under a dozen
+green `contains` assertions (docs/12 §5.3.6).
+
+**The first draft counted banks by looking for an explicit bank cell**, and a sheet with no bank
+column therefore previewed "0 banks" and then made one, because a row with no bank derives its name.
+The plan and the build now read the same `QuickAddPlan` per row, which is the only arrangement in
+which the two cannot disagree. A count computed one way and a template built another is precisely
+what a preview exists to prevent.
+
+**11.93.7 IT CREATES PORTS, WHICH `Ctrl+V` REFUSES TO.** `port_tsv.dart` states the rule for §4.6's
+clipboard paste and keeps it: ten values into the last three rows would invent seven ports, each
+needing a key nobody chose. **This is the opposite feature and creating is the point of it**: a
+sheet of forty-eight rows is forty-eight ports that do not exist yet, and the mapping step is where
+the person says what they are. The two share `parsePortCell` and nothing else, so `RJ45` and
+`Ethernet` mean the same thing on both paths.
+
+The type collision between them was a compiler error rather than a subtle one, which is the good
+kind: this file's plan is `PortImportPlan` and §4.6's stays `PortPastePlan`.
+
+**11.93.8 WHAT THIS DOES NOT RULE.** It does not add a semicolon dialect, which would be a third
+`CsvDelimiter` value and its own decision. It does not give `PortDef` an `unknown` map (§11.93.2).
+It does not touch M3's Structure import, whose default is still comma and whose behaviour is
+unchanged. And it does not make the import idempotent the way `csv_import_plan.dart`'s Structure
+re-import is: **every import creates**, because a template has no `fieldLabel` to dedup on and
+CR-051's key join is a migration record rather than a match key. Re-pasting the same sheet doubles
+the ports, and `Ctrl+Z` is one keystroke away.
+
+---
+
+### 11.94 DR-095 · A milestone closes on clauses discharged or parked, and parking costs a ruling
+
+**Settled by the user on 2026-08-26.** In DR-017's lineage (§11.16), which roadmap §8.7 records as
+the first ruling to govern **process rather than product**. No count of such rulings is written
+here: §8.7's own `DR-001` through `DR-087` range is already stale by several IDs, which is the
+liability a written-out count always becomes.
+
+**11.94.1 THE PRACTICE HELD FOR TWO TRANSITIONS AND WAS NEVER A RULE.** The user's account was that
+M1 through M3 each finished before the next opened. Checked against the record, that is true of two
+transitions and false of two others:
+
+| Transition | Held | The record |
+|---|---|---|
+| M0 to M1 | no | M0 stands at six of eight clauses, `PARTIAL`, weakest mark `VACUOUS`, today |
+| M1 to M2 | yes | M1 eight of eight, weakest mark `CONFIRMED`, drill 2026-07-27 and 2026-07-28 |
+| M2 to M3 | yes | M2 five of five, weakest mark `CONFIRMED`, drill 2026-08-01 |
+| M3 to M4 | no | M3's subject-tagged work ran 2026-08-05 to 2026-08-10; M4 opens at `e964e28`, 2026-08-13 |
+
+The habit was real and it was a habit. Nothing named it, so nothing noticed when it lapsed, and the
+lapse was invisible for thirteen days because the thing that would have shown it (docs/12 §5.2's
+header row) is itself stale and has `#92` filed against it.
+
+**11.94.2 THE DEFINITION ALREADY EXISTED. WHAT WAS MISSING WAS A PLACE IT HAD TO BE TRUE.** §8.1
+rules that the exit criterion is the unit of truth and that done means demonstrated. docs/12 §0
+rules that `DEMONSTRATED` and `CONFIRMED` are the only two of the seven marks that discharge an exit
+clause. Between them, "complete" has been precisely defined since the board was written: **every
+exit clause of the milestone carries `DEMONSTRATED` or `CONFIRMED`.** No new definition is created
+here and none was needed. What is created is a **boundary** at which that definition is checked.
+
+**11.94.3 A STRICT READING DEADLOCKS, AND DR-027 HAD ALREADY BUILT THE WAY OUT.** Some clauses
+cannot be discharged by the milestone that owns them, because the thing they name belongs to a
+later one. M3's exit criterion asks for a Pull Sheet export; `SheetRole` carries no such value and
+building it is M6's work. DR-027 resolved that by **splitting the clause**: M3 owes the derivation,
+M6 owes the sheet. AC-018's PRINTS limb is parked on M6 the same way, as `#574`.
+
+M6 is itself a join on M2, M3 and M5 (docs/12 §5.5). So a rule reading *"every clause discharged
+before the next milestone opens"*, applied without that split, requires M3 to wait on M6 and M6 to
+wait on M3. **The mechanism that avoids the cycle is therefore not an exception to this ruling; it
+is half of it**, and DR-027 is its precedent rather than its violation.
+
+**11.94.4 THE RULE.** A milestone may not **open** while the milestone before it holds an exit
+clause that is neither:
+
+* **discharged**, carrying `DEMONSTRATED` or `CONFIRMED` under docs/12 §0; nor
+* **parked**, reassigned by ruling ID to a **named later milestone**, with the structural reason it
+  cannot be discharged where it sits.
+
+A milestone may not **close** while it holds an undischarged clause that is not parked. The two are
+one rule read at two moments, and the second is the load-bearing one: opening is a soft edge that
+`M5-0a` and `M8-F1` both crossed usefully, whereas closing is the act the version number and the
+board both key off.
+
+**11.94.5 PARKING COSTS A RULING ID, AND THAT PRICE IS THE POINT.** A park is an amendment to what a
+milestone owes, so it is §8.3's machinery and not a note: an ID, a named destination, and the
+reason. Without the price, "parked" becomes the word for every clause nobody wants to do, and the
+board goes back to being a list of things believed. With it, a milestone's open work reads as a
+number a person can act on: *n discharged, m parked on a named milestone, k owed*, and only `k`
+blocks.
+
+**11.94.6 THE MARKS ARE THE VOCABULARY, AND NOT EVERY CLAUSE TABLE USES THEM.** M0 §2.2 and M6 §5.5
+mark clauses with the seven. M3's current clause table (§5.2, against `01c698d`) does not: its
+states read `BUILT`, `needs a person`, `NOTHING ALLOCATES ONE` and `M6's`. Those are honest and they
+are informative, and none of them is a mark. §0 already rules that *"a mark that reads 'demonstrated
+in spirit' or 'demonstrated but' is not a mark, it is a negotiation"*, and `BUILT` is that sentence
+with the negotiation left out: it says code exists, which is `BELIEVED`, while reading as though it
+discharges.
+
+**Normalising every clause table to the seven marks is a prerequisite of this ruling and not a
+tidy-up.** It is not formatting. `BUILT` resolving to `DEMONSTRATED` or to `BELIEVED` is the
+difference between M3 owing one clause and owing four, and no reader can tell which from the word.
+
+**11.94.7 THIS APPLIES RETROACTIVELY TO M0, WHICH IS A DEPARTURE FROM §8.8 AND IS DELIBERATE.** §8.8
+adopted its record-keeping rule forward-only, on the ground that a hash reconstructed months later
+is a guess wearing the costume of a record. That reasoning does not transfer: a clause's mark is not
+archaeology. The evidence for every clause is in the tree right now and can be re-run, so applying
+this backwards recovers facts rather than inventing them.
+
+The retroactive reading surfaces this much, and the cost is stated rather than discovered later:
+
+| Milestone | Clause | Today | Disposition this ruling forces |
+|---|---|---|---|
+| M0 | 4a, `templates.keys` (AC-015) | `VACUOUS` | **Park on M4.** §2.4 already says it *"becomes real the day M4 or M1's copy-on-place lands, and not before"*, which is a park written in prose |
+| M0 | 5, epoch-mask letter (AC-014) | `VACUOUS`, and drifting (§4.5) | **Owed.** Cheap today, dearer with every derived consumer added |
+| M3 | 1, sixty drops under fifteen minutes | needs a person | **Owed.** A drill, and nothing else discharges it |
+| M3 | 2b, one `rackLabel` each | nothing allocates one | **Owed, and the expensive one.** See below |
+| M3 | 4, fourteen unbound far ends | sixty of sixty are unbound | **Owed.** The criterion names fourteen; the builder produces sixty |
+| M3 | 4c, prints | `M6's` | **Already parked**, by DR-027 as `#574`. No action |
+
+**11.94.8 M3'S CLAUSE 2b IS FEATURE WORK AND THE USER TOOK THIS DECISION BEFORE SEEING ITS SIZE.**
+The shipped rack-label pattern is `{FLOOR}{SPACE}-{PANEL}{PORT:2}`, and `{PANEL}` and `{PORT}` are
+facts about a landing. **Nothing in the product records a landing**, so the pattern cannot render,
+so `allocateOutletRackLabel` is never called, and its only four callers are its own test. §5.2 adds
+that clause 2b and clause 4 *"are one hole wearing two numbers"* and that closing either alone
+closes nothing.
+
+So the honest reading of §11.94.7 is that **M4 cannot close until landings exist in the model**, or
+until clause 2b is itself parked on the milestone that builds them. That is a real cost and it is
+recorded here at full size, because a ruling whose price is discovered afterwards is the failure
+mode the board's own opening table catalogues.
+
+**11.94.9 THE MECHANICAL GATE IS SEQUENCED BEHIND THE NORMALISATION, NOT SHIPPED WITH THIS RULING.**
+This ruling is enforced by review on the day it lands. A CI gate reading docs/12's clause tables and
+failing on an undischarged, unparked clause in any milestone before the current one is filed as
+`#780` under `#92`, **blocked on the §11.94.6 normalisation**, and joins the family in `tools/`.
+Precedent for a gate that parses the corpus is `pal1_check.py`, `palette_parity.py` and
+`registry_parity.py`.
+Shipping the script first would have it read `BUILT` and either crash or, far worse, guess.
+
+**11.94.10 WHAT THIS DOES NOT RULE.** It does not change any milestone's exit criterion; every
+criterion stands verbatim as written, and a park moves who owes a clause rather than what it says.
+It does not forbid work landing against a later milestone: `M5-0a` and `M8-F1` both did so
+usefully, the version rule in docs/14 §14.0 already contemplates it, and §11.94.4 gates **closing**
+rather than touching. It does not make CI mechanical for anything else (§4.1 stands). It does not
+rule on whether M0's epoch-mask clause is discharged by extending `epoch_mask_test.dart`, which is
+§4.5's question and is unchanged. And it does not backfill closed **tasks**, which remains §8.8's
+forward-only rule: this ruling reaches clauses, which are re-runnable, and not hashes, which are
+not.
+
+---
+
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

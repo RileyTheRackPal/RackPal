@@ -60,6 +60,7 @@ final class PortColumnFill {
     required this.copy,
     required this.read,
     required this.write,
+    required this.set,
     this.text,
   });
 
@@ -84,6 +85,20 @@ final class PortColumnFill {
   /// a code defect, and the batch tests walk every column to
   /// prove they do not.
   final Command<TemplateBody>? Function(PortDef port, Object? value) write;
+
+  /// Writes one value straight onto a port, with no command and no
+  /// no-op check.
+  ///
+  /// **FOR A PORT THAT DOES NOT EXIST YET** (M4-I3, `#222`). Every other
+  /// member here builds a `Command`, which is right for a port already in
+  /// the body: a write to one has to be undoable on its own. A port being
+  /// CONSTRUCTED has no key in the body for `SetPortFieldCommand` to
+  /// address, and `AddPortCommand` holds the object it added, so the whole
+  /// port is one undo entry and its fields need no second one.
+  ///
+  /// The cast is inside the closure for [write]'s reason, and the type it
+  /// casts to is the same `PortField`'s, so the two cannot disagree.
+  final void Function(PortDef port, Object? value) set;
 
   /// Reading and writing this column as text, for the columns that hold
   /// it and null for the rest.
@@ -129,6 +144,7 @@ PortColumnFill _plain<T>(PortField<T> field) => PortColumnFill(
   copy: (from, to) => _set<T>(field, to, field.get(from)),
   read: field.get,
   write: (port, value) => _set<T>(field, port, value as T),
+  set: (port, value) => field.set(port, value as T),
 );
 
 /// A text column, whose value is always present.
@@ -136,6 +152,7 @@ PortColumnFill _text(PortField<String> field) => PortColumnFill(
   copy: (from, to) => _set<String>(field, to, field.get(from)),
   read: field.get,
   write: (port, value) => _set<String>(field, port, value! as String),
+  set: (port, value) => field.set(port, value! as String),
   text: PortTextColumn(
     read: field.get,
     write: (port, value) => _set<String>(field, port, value),
@@ -147,6 +164,7 @@ PortColumnFill _textOrNull(PortField<String?> field) => PortColumnFill(
   copy: (from, to) => _set<String?>(field, to, field.get(from)),
   read: field.get,
   write: (port, value) => _set<String?>(field, port, value as String?),
+  set: (port, value) => field.set(port, value as String?),
   text: PortTextColumn(
     read: field.get,
     write: (port, value) => _set<String?>(field, port, value),
