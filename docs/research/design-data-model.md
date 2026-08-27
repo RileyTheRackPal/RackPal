@@ -1,4 +1,4 @@
-# RackMate: Domain & Persistence Data Model
+# RackPal: Domain & Persistence Data Model
 
 **Status:** design spec, v1 schema. Opinionated throughout. Every rejected alternative is named.
 
@@ -85,7 +85,7 @@ Project ────────────────────────
 
 ## 2. Dart class definitions
 
-Package: `rackmate_core`, pure Dart, **no `package:flutter` import** (not even for `Offset`/`Color`).
+Package: `rackpal_core`, pure Dart, **no `package:flutter` import** (not even for `Offset`/`Color`).
 
 ### 2.0 Primitives & value types
 
@@ -355,7 +355,7 @@ final class DeviceTemplate {
   EntityMeta meta;
 }
 
-/// Immutable, embedded in the .rackmate file. Cannot be edited in place.
+/// Immutable, embedded in the .rackpal file. Cannot be edited in place.
 final class TemplateSnapshot {
   final TemplateId templateId;
   final int version;
@@ -988,7 +988,7 @@ final class Tombstone {
 
 The dividing line: **if two identical units in two different projects would disagree about it, it belongs on the instance.** A 70 V transformer tap is per-installation → instance. Panel width is per-model → template.
 
-**Propagation.** `DeviceInstance.templateRef` pins `(templateId, version, contentHash)` to an **immutable `TemplateSnapshot` embedded in the project file**. Template edits do **not** propagate. Instead, on open, RackMate compares each snapshot version to the library and sets `templateUpdateAvailable`. The user sees *"3 devices use an outdated version of 8×8 HDMI Matrix, Review update."* Applying it is a single undoable `MigrateTemplateCommand` producing a diff report.
+**Propagation.** `DeviceInstance.templateRef` pins `(templateId, version, contentHash)` to an **immutable `TemplateSnapshot` embedded in the project file**. Template edits do **not** propagate. Instead, on open, RackPal compares each snapshot version to the library and sets `templateUpdateAvailable`. The user sees *"3 devices use an outdated version of 8×8 HDMI Matrix, Review update."* Applying it is a single undoable `MigrateTemplateCommand` producing a diff report.
 
 **Rejected: live reference to a mutable library template.** This is what most tools do and it is wrong for a deliverable-producing app. Consequences: (a) the project file is not self-contained, opening it on the installer's laptop, whose library differs, silently changes the drawing; (b) a template edit can delete a port that has three connections, mid-project, with no undo scope; (c) an issued-for-construction PDF stops being reproducible from its own file. Deliverable integrity beats convenience.
 
@@ -1291,7 +1291,7 @@ TIA-606 explicitly declines to mandate a format but *requires* consistency and u
 
 ### 4.1 Container
 
-v1 is **plain, pretty-printed, key-sorted UTF-8 JSON** with extension `.rackmate`. Deterministic key ordering and 2-space indentation make it `git diff`-able, which matters more than the ~3× size for files in the 100–500 KB range.
+v1 is **plain, pretty-printed, key-sorted UTF-8 JSON** with extension `.rackpal`. Deterministic key ordering and 2-space indentation make it `git diff`-able, which matters more than the ~3× size for files in the 100–500 KB range.
 
 Behind a `DocumentCodec` interface from commit one:
 
@@ -1306,13 +1306,13 @@ abstract interface class DocumentCodec {
 // v1 files keep opening forever.
 ```
 
-Saves are **atomic**: write `foo.rackmate.tmp` in the same directory → `flush()` → `rename()`. Optionally retain `foo.rackmate.bak`.
+Saves are **atomic**: write `foo.rackpal.tmp` in the same directory → `flush()` → `rename()`. Optionally retain `foo.rackpal.bak`.
 
 ### 4.2 Envelope
 
 ```json
 {
-  "generator": "RackMate",
+  "generator": "RackPal",
   "schemaVersion": 1,
   "minReaderVersion": 1,
   "appVersion": "0.1.0+build.42",
@@ -1340,8 +1340,8 @@ const migrations = <int, Migration>{
 };
 
 JsonMap migrateToCurrent(JsonMap raw) {
-  if (raw['generator'] != 'RackMate') {
-    throw const FormatException('Not a RackMate document');
+  if (raw['generator'] != 'RackPal') {
+    throw const FormatException('Not a RackPal document');
   }
   final minReader = raw['minReaderVersion'] as int? ?? 1;
   if (minReader > kCurrentSchemaVersion) {
@@ -1364,7 +1364,7 @@ Five rules committed to on day one:
 
 1. **Migrations are pure functions on raw `Map<String, Object?>`, never on typed objects.** Migrate the map fully, *then* deserialize. Typed migration requires keeping every historical class shape alive in the codebase.
 2. **`schemaVersion` + `minReaderVersion` together** give both directions: an old app opens a newer file read-only (preserving unknown fields on a subsequent save-as), and refuses outright only when a genuinely breaking change bumped `minReaderVersion`.
-3. **Golden fixture corpus.** `test/fixtures/v1_sample.rackmate`, `v2_sample.rackmate`, … Every release, one test opens *every* historical fixture and asserts it migrates to a valid current document. Add a fixture the day each version ships. Highest value-per-line test in the project.
+3. **Golden fixture corpus.** `test/fixtures/v1_sample.rackpal`, `v2_sample.rackpal`, … Every release, one test opens *every* historical fixture and asserts it migrates to a valid current document. Add a fixture the day each version ships. Highest value-per-line test in the project.
 4. **Enums are strings, never ordinals.** `"hdmi"`, not `3`. Unknown enum values fall back to an `unknown(raw)` variant that round-trips rather than throwing.
 5. **Additive-only within a major.** Deprecate, never remove or rename.
 
@@ -1372,13 +1372,13 @@ Five rules committed to on day one:
 
 Every entity carries `EntityMeta.unknown: Map<String, Object?>`. The codec routes every unrecognized key there on read and re-emits it verbatim on write. A v1.0 app opening a v1.4 file round-trips without destroying newer data. Combined with `minReaderVersion`, this is what stops old builds silently corrupting new files.
 
-### 4.5 Abbreviated `.rackmate` example
+### 4.5 Abbreviated `.rackpal` example
 
 One 12U rack, an 8×8 HDMI matrix, a 24-port PoE switch, one Structure device with a Grade-2 bundle, and two links. `…` marks elision.
 
 ```json
 {
-  "generator": "RackMate",
+  "generator": "RackPal",
   "schemaVersion": 1,
   "minReaderVersion": 1,
   "appVersion": "0.1.0",

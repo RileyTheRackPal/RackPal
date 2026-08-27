@@ -65,7 +65,7 @@ expensive.
 
 | Requirement | Already in the tree |
 |---|---|
-| Rooms, arbitrary depth | `Location`, CR-047, `packages/rackmate_core/lib/src/model/location.dart` |
+| Rooms, arbitrary depth | `Location`, CR-047, `packages/rackpal_core/lib/src/model/location.dart` |
 | Field devices not in a rack | `OffRackPlacement{locationId, mountNote}`, `model/placement.dart:112` |
 | Conduit and j-hook runs with endpoints and a length | `Pathway{kind, fromLocationId, toLocationId, nominalLength}`, `model/pathway.dart` |
 | Low-voltage boxes and plates | `Outlet`, `StructureBody` (DR-007 puts the keystone strap in M3) |
@@ -73,7 +73,7 @@ expensive.
 | Estimated-versus-measured honesty | Built into the schedule already: estimates render italic and are tagged, null prints an em rule, `LEN-*` emits *"length unknown, cannot verify"* (G4) |
 | The pull schedule itself | `derived/schedule.dart`, one derivation and two presets |
 | Sheet furniture, title block, revision block, drawing index | Done, both backends, DR-005 |
-| Viewport, selection, hit-test, drag preview, undo | Two canvases' worth in `rackmate_ui`, reusable |
+| Viewport, selection, hit-test, drag preview, undo | Two canvases' worth in `rackpal_ui`, reusable |
 
 The load-bearing one is `Location.estimatedRunLengthFromRack`. AC-024 put it there as the pull
 sheet's length source and gave it the honesty apparatus that G4 demands. **A plan measurement is a
@@ -88,7 +88,7 @@ This is the entire cost, and it is one gap with four consequences.
 
 ### 3.1 `DiagramCanvas` has no `drawImage`, deliberately
 
-`packages/rackmate_core/lib/src/draw/canvas.dart:20`:
+`packages/rackpal_core/lib/src/draw/canvas.dart:20`:
 
 > The single drawing IR both the screen and PDF backends replay (CR-086). No `drawImage`/`ImageRef`
 > in v1 (RJ-017 defers the title-block logo to v2) and no `RendererCaps` (CR-088). The interface is
@@ -97,7 +97,7 @@ This is the entire cost, and it is one gap with four consequences.
 The same file's header states that it *"must not gain a method beyond the ones below without an
 amendment"*, and `draw/sheet/title_block.dart:48` repeats the reasoning from the other side. Adding
 a raster op touches the interface, `draw/ops.dart` (a new `OpImage` in a sealed hierarchy), the
-bounds canvas, `rackmate_ui/src/draw/flutter_canvas.dart`, `rackmate_export/src/draw/pdf_canvas.dart`,
+bounds canvas, `rackpal_ui/src/draw/flutter_canvas.dart`, `rackpal_export/src/draw/pdf_canvas.dart`,
 hit-test, and the op-count baselines in `schematic_perf_test.dart` that are M2-C's record.
 
 ### 3.2 `.rmpj` is plain JSON and the codec actively refuses a container
@@ -133,7 +133,7 @@ therefore requires a rasterizer:
 
 The native-DLL option deserves weight beyond its engineering hours. This project removed
 `file_selector` and the `path_provider` umbrella in part because they dragged an Android JNI bridge
-and `dartjni.dll` into a Windows Release build, and `apps/rackmate/pubspec.yaml` carries a long
+and `dartjni.dll` into a Windows Release build, and `apps/rackpal/pubspec.yaml` carries a long
 comment explaining that trade and a test that fails the build if the package returns. Adding a
 multi-megabyte unsigned native binary to a self-signed internal distribution (DR-006) runs directly
 against that grain.
@@ -245,11 +245,11 @@ schematic semantics more tightly than a read suggests, that row grows first.
 
 ## 7. Two risks worth naming before any of this is scheduled
 
-**The device is an iPad and RackMate is not on it.** The stated current workflow is coloured dots in
-iOS Notes, which implies a tablet and plausibly a walkthrough on site. RackMate is a Windows-first
+**The device is an iPad and RackPal is not on it.** The stated current workflow is coloured dots in
+iOS Notes, which implies a tablet and plausibly a walkthrough on site. RackPal is a Windows-first
 desktop application with macOS ruled in by DR-009. Roadmap §2.4 defers mobile **editing** to v2 and
 AC-056 makes v1 mobile read-only on exactly three surfaces, with the app saying so rather than
-shipping a squeezed editor. **A Plan view in RackMate does not replace the iPad workflow. It moves
+shipping a squeezed editor. **A Plan view in RackPal does not replace the iPad workflow. It moves
 it to a desk.** If the value of the current practice depends on marking up a plan while walking the
 house, this feature does not deliver that value, and the real question is a much larger one about
 mobile editing. Establishing which of the two is true costs a conversation and should happen before

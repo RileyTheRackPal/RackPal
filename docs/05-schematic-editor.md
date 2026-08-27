@@ -1,6 +1,6 @@
 # The Schematic
 
-The Schematic is the wiring authoring view (`Ctrl+2`) and **the only place a `Link` is created in v1** (per CR-105). This document specifies its visual language, its cable colour system, the connection-creation state machine, validation feedback, the layout and routing pipeline, and (at greatest length, because it is the feature the product lives or dies on) density management. It is normative for `rackmate_ui/canvas/` and for the scene builders in `rackmate_core/draw/` that both the screen and the PDF backends replay (per CR-086). Where it appears to disagree with [`docs/research/design-ux-schematic.md`](research/design-ux-schematic.md), that document is non-normative rationale and this one governs; where it appears to disagree with the [canonical decision record](canonical-decisions.md), the record governs.
+The Schematic is the wiring authoring view (`Ctrl+2`) and **the only place a `Link` is created in v1** (per CR-105). This document specifies its visual language, its cable colour system, the connection-creation state machine, validation feedback, the layout and routing pipeline, and (at greatest length, because it is the feature the product lives or dies on) density management. It is normative for `rackpal_ui/canvas/` and for the scene builders in `rackpal_core/draw/` that both the screen and the PDF backends replay (per CR-086). Where it appears to disagree with [`docs/research/design-ux-schematic.md`](research/design-ux-schematic.md), that document is non-normative rationale and this one governs; where it appears to disagree with the [canonical decision record](canonical-decisions.md), the record governs.
 
 ---
 
@@ -12,7 +12,7 @@ Three commitments, each of which is a ruling rather than a preference.
 
 > Rejected alternative: `design-ux-schematic.md §2.3`'s waypoints and pinned routes, which its own §0.1 forbids three pages earlier. Manual rerouting returns in v1.1 as `routeConstraintsBySheet` — an ordered list of grid points the router must pass through — never as geometry.
 
-**1.2: There is no free-line tool.** Every stroke on the canvas is a `Link`, a net label, an annotation `Note`, or chrome. The typed netlist is the entire wedge against Visio and draw.io; an arbitrary line between two arbitrary points makes RackMate a worse draw.io.
+**1.2: There is no free-line tool.** Every stroke on the canvas is a `Link`, a net label, an annotation `Note`, or chrome. The typed netlist is the entire wedge against Visio and draw.io; an arbitrary line between two arbitrary points makes RackPal a worse draw.io.
 
 **1.3: The Schematic is navigation; the Schedule is the deliverable** (G1). Any `Link` may be rendered as a pair of **net labels** or as a **drawn wire**: two renderings of one identical model object, switchable losslessly at any time. **Net labels are the default** (DR-001); wires are drawn when the user filters to one signal domain, `Alt`-hovers, or focuses a selection. Render mode is derived from the active filter and is never persisted (canon §11.1.1). The PDF ships both the drawing and the schedule (Requirement 7).
 
@@ -49,7 +49,7 @@ Sheet numbering is `ProjectSettings.sheetNumbering: ncs | simple`, **default `si
 
 ## 3. The device symbol
 
-A symbol is a body rectangle with a header band and pins on its four edges. It is drawn by `symbol_layer.dart` in `rackmate_core/draw/` and replayed by both backends (CR-071, CR-086), the symbol cannot be a widget-only artifact if it is to print.
+A symbol is a body rectangle with a header band and pins on its four edges. It is drawn by `symbol_layer.dart` in `rackpal_core/draw/` and replayed by both backends (CR-071, CR-086), the symbol cannot be a widget-only artifact if it is to print.
 
 ```
  ┌ header band, height 6 gu ──────────────────────────┐
@@ -219,7 +219,7 @@ There are ~50 signal families in the registry. **No categorical palette is colou
 
 The palette is designed for a sheet that is handed to a client, a GC and a job site (DR-005), and it is verified on the hardware that reproduces it, not in simulation. That is a statement about ink on paper and about sheet furniture; it is orthogonal to wire idiom and does not argue for drawn wires (DR-001 governs that, and net labels remain the default).
 
-So RackMate uses **four independent encoding channels**, and hue is never one of them alone (per CR-078, AC-054):
+So RackPal uses **four independent encoding channels**, and hue is never one of them alone (per CR-078, AC-054):
 
 | Channel | Encodes | Survives CVD | Survives greyscale | Survives photocopy |
 |---|---|---|---|---|
@@ -254,8 +254,8 @@ exact failure CR-078 rejected, arriving through a different door.
 
 Jacket colour belongs on the **schedule, the label and the keystone**, never on
 the drawn wire. This is enforced, not merely documented:
-`packages/rackmate_core/test/jacket_colour_is_not_hue_test.dart` scans
-`lib/src/draw/` and `rackmate_export/lib/src/draw/` for every jacket-colour name
+`packages/rackpal_core/test/jacket_colour_is_not_hue_test.dart` scans
+`lib/src/draw/` and `rackpal_export/lib/src/draw/` for every jacket-colour name
 , including the resolver's `asBuiltColorId`, the most tempting one to reach for
 ("just draw the wire the colour it actually is"), and fails the build if one
 appears. The resolver deliberately lives in `derived/`, never in `draw/`.
@@ -293,7 +293,7 @@ Dash patterns, weights, glyphs and tags are **identical across themes**. Only hu
 
 ### 6.3 The honest greyscale caveat, and the rule it generates
 
-Several sources claim Okabe–Ito "has distinct luminance values so it works in greyscale." **Computing WCAG relative luminance shows that claim is false**, and RackMate does not repeat it. Two collision bands exist in the shipped palette:
+Several sources claim Okabe–Ito "has distinct luminance values so it works in greyscale." **Computing WCAG relative luminance shows that claim is false**, and RackPal does not repeat it. Two collision bands exist in the shipped palette:
 
 - **Sky Blue `#56B4E9` (L 0.4050) vs Orange `#E69F00` (L 0.4162)**: ΔL 0.0112, indistinguishable in greyscale. These are analog video and analog audio.
 - **Vermillion `#D55E00` (0.2215) / Bluish Green `#009E73` (0.2569) / Reddish Purple `#CC79A7` (0.2930)**: a crowded 0.07 band. These are digital audio, network and control.
@@ -375,7 +375,7 @@ The two within-domain collisions the requirement would have produced are both re
 
 RG6 is correctly a **medium**, not a signal, so it is colour-coded by what it carries; its legend row shows all three families, which is more informative than one "RG6" swatch. `ProjectSettings.familyColorOverrides` lets a user override any hue in v1 (AC-054).
 
-**Acceptance is on hardware, not in simulation** (canon §6.7): the legend is rendered under protanopia and deuteranopia simulation with every domain pair distinguishable; and the same legend is printed on a real greyscale office laser at ANSI B and photocopied once, with all ten requirement-4 types remaining identifiable. PAL-1 **over rendered family values, pairwise, every cross-domain pair** (canon §14.5), the **≥ 4.5 pt** dash-period floor, and glyph font coverage are each executable checks, never review items. PAL-1 and the period floor ship today as [`tools/pal1_check.py`](../tools/pal1_check.py); that file is ported to `pal1_conformance_test.dart` in `rackmate_core` at M0 and is the authority before and after the port.
+**Acceptance is on hardware, not in simulation** (canon §6.7): the legend is rendered under protanopia and deuteranopia simulation with every domain pair distinguishable; and the same legend is printed on a real greyscale office laser at ANSI B and photocopied once, with all ten requirement-4 types remaining identifiable. PAL-1 **over rendered family values, pairwise, every cross-domain pair** (canon §14.5), the **≥ 4.5 pt** dash-period floor, and glyph font coverage are each executable checks, never review items. PAL-1 and the period floor ship today as [`tools/pal1_check.py`](../tools/pal1_check.py); that file is ported to `pal1_conformance_test.dart` in `rackpal_core` at M0 and is the authority before and after the port.
 
 ### 6.5 Themes
 
@@ -518,7 +518,7 @@ Be honest in the copy, as KiCad is: **this catches class errors, not intent erro
 
 ## 9. Selecting, editing, re-terminating, deleting
 
-**Hit-testing** is split by concern (CR-084): the *geometric* test (`DiagramScene.hits`, point-to-segment distance, nearest-hit selection) lives in `rackmate_core/draw/hit_test.dart`, pure and synchronously testable and reusable by the read-only mobile shell; the *pointer plumbing* (one query per frame, spatial hash, cursor policy, hover throttle) lives in `rackmate_ui/canvas/input/`.
+**Hit-testing** is split by concern (CR-084): the *geometric* test (`DiagramScene.hits`, point-to-segment distance, nearest-hit selection) lives in `rackpal_core/draw/hit_test.dart`, pure and synchronously testable and reusable by the read-only mobile shell; the *pointer plumbing* (one query per frame, spatial hash, cursor policy, hover throttle) lives in `rackpal_ui/canvas/input/`.
 
 - **Nearest hit wins, not first hit.** At a crossing, constant in a schematic, first-hit picks arbitrarily and feels broken.
 - Tolerance is 6 screen px, converted to scene units as `6 / viewport.scale`.
@@ -574,7 +574,7 @@ Rack devices are ordered along one axis at discrete integer RU positions. That i
 
 **Phase 3: Coordinate assignment.** Insert dummy nodes for every edge spanning more than one layer, so that **every edge crosses exactly one gutter**. Then Sugiyama's priority method, 3 iterations, priority = degree. Pinned symbols contribute fixed coordinates and are excluded from relaxation. `O(3N)`.
 
-**Phase 4: The deterministic per-link orthogonal trace.** Runs only in `drawn` mode. Each link in scope becomes a layer-ordered staircase with a fixed bend budget: out of the first pin along its own edge's axis, across a corridor, into the second the same way. It collapses to a straight line when the two ends already share an axis. **No channel allocation, no track ordering, no interval colouring.** `O(N)`. Built in `packages/rackmate_ui/lib/src/canvas/schematic/wire_trace.dart`, which is the whole v1 router.
+**Phase 4: The deterministic per-link orthogonal trace.** Runs only in `drawn` mode. Each link in scope becomes a layer-ordered staircase with a fixed bend budget: out of the first pin along its own edge's axis, across a corridor, into the second the same way. It collapses to a straight line when the two ends already share an axis. **No channel allocation, no track ordering, no interval colouring.** `O(N)`. Built in `packages/rackpal_ui/lib/src/canvas/schematic/wire_trace.dart`, which is the whole v1 router.
 
 > **The original sentence specified a mechanism, and three of its clauses did not survive being built.** It read: *"a two-bend staple `[(srcPin), (midX, srcY), (midX, dstY), (dstPin)]` where `midX` sits in the gutter between the two layers, offset within the gutter by the link's rank in a total order terminating in UUID."* Corrected here rather than left for the next reader, because two of the three were found by the field rather than by review.
 >

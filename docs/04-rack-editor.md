@@ -10,7 +10,7 @@ Single window, one document (RJ-013). Three resizable regions between a fixed to
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ ≡  RackMate   Hillcrest Residence*            [Rack|Schematic|Schedule]  [Front|Rear|Both] ⚙ │ 44
+│ ≡  RackPal   Hillcrest Residence*            [Rack|Schematic|Schedule]  [Front|Rear|Both] ⚙ │ 44
 ├────────────┬───────────────────────────────────────────────────────────┬─────────────────────┤
 │ PALETTE    │  RACK CANVAS                                              │ INSPECTOR           │
 │ 280px      │  flex, min 480px                                          │ 320px               │
@@ -168,7 +168,7 @@ Dragging is not the fastest route and must not be the only one. One insert comma
 3. Same checks and same blocked rendering as §3.1.
 4. Pointer up commits one `MoveDeviceCommand`; `Esc` mid-drag reverts.
 5. `Ctrl` at drag start → **duplicate**: the original stays opaque, the ghost is a copy, the designator increments on drop.
-6. `Alt` at drop → **insert and push**: occupants above shift up by the device's height; the devices that will move are drawn with dashed outlines **at their destination positions** before commit. If pushing up overflows, RackMate tries pushing down; if neither fits, the drop is blocked with `Insert would overflow rack by 2U`.
+6. `Alt` at drop → **insert and push**: occupants above shift up by the device's height; the devices that will move are drawn with dashed outlines **at their destination positions** before commit. If pushing up overflows, RackPal tries pushing down; if neither fits, the drop is blocked with `Insert would overflow rack by 2U`.
 7. `Ctrl+Shift` at drop over an equal-height device → **swap**, both showing a ↔ badge.
 
 Face change is deliberately **not** a drag gesture, dragging between two mirrored columns in `Both` view is ambiguous. It is the inspector's Face field or the face action on the selection; `ruIndex` is preserved.
@@ -333,7 +333,7 @@ Rules that make these honest:
 - **No fabricated numbers, ever** (G4, CR-114). `typicalWatts` does **not** default to half of nameplate, the rejected behaviour that made every derived figure suspect. Unknown is `null`, `null` renders `—`, and **every rollup states its unknown count** (`3 devices have no weight — not counted`). Estimated values carry a dotted underline on screen and italics in print.
 - Front and rear RU are tracked separately, because "how much room is left" genuinely has two answers.
 - Amps derive from `Circuit.volts`, never from a rack-level voltage. The continuous limit is 80% of the breaker, the figure NEC 210.19(A)(1) gives: 15 A → 12 A, 20 A → 16 A. **It is a planning estimate and the tooltip says so** (DR-079 §11.78.4): nothing here classifies a load as continuous, no demand factor is applied, and a person sizing a service still does a load calculation. Breaker math uses nameplate, thermal math uses typical, regardless of which the toggle displays, and the tooltip says that too.
-- BTU/hr uses the single constant `kBtuPerWattHour = 3.412142` from `rackmate_core/units/thermal.dart`; heat is derived, never stored (CR-005).
+- BTU/hr uses the single constant `kBtuPerWattHour = 3.412142` from `rackpal_core/units/thermal.dart`; heat is derived, never stored (CR-005).
 - **No computed number blocks anything** (G3, CR-022). Errors gate only `ExportSpec.issuedForConstruction`, the stamp, never the bytes.
 
 ### 5.1 Findings and their surfacing
@@ -410,7 +410,7 @@ Three distinct strings per device, and conflating them is what makes competitors
 | `name` | `Living Room Amp` | free text, need not be unique | `Ctrl+F2` |
 | type name | `16-channel amplifier` | from the `TemplateSnapshot` | template only |
 
-Format is `{TYPE_PREFIX}{SEP}{SEQ}` through the one format engine in `rackmate_core/idformat/` (CR-041, CR-045); `n` is the lowest unused positive integer for that prefix in scope. Per-rack scoping composes from `Rack.designator` directly, `RK-1-AMP-1`, because `refDesPrefix` is deleted and two identifiers for one rack is the exact failure the schedule exists to prevent (CR-040). Seed prefixes: `AMP · SW · RTR · MTX · AVR · DISP · PROJ · STB · MP · NVR · CAM · PP · PDU · UPS · PWR · CTL · KP · SHF · BLK · VNT · FAN · CM · LB`. Note that `STR` is **not** in this list, it collides in shipped data and the Structure device uses its own prefix (CR-043); see [Structure device](07-structure-device.md).
+Format is `{TYPE_PREFIX}{SEP}{SEQ}` through the one format engine in `rackpal_core/idformat/` (CR-041, CR-045); `n` is the lowest unused positive integer for that prefix in scope. Per-rack scoping composes from `Rack.designator` directly, `RK-1-AMP-1`, because `refDesPrefix` is deleted and two identifiers for one rack is the exact failure the schedule exists to prevent (CR-040). Seed prefixes: `AMP · SW · RTR · MTX · AVR · DISP · PROJ · STB · MP · NVR · CAM · PP · PDU · UPS · PWR · CTL · KP · SHF · BLK · VNT · FAN · CM · LB`. Note that `STR` is **not** in this list, it collides in shipped data and the Structure device uses its own prefix (CR-043); see [Structure device](07-structure-device.md).
 
 **Every designator is evaluated once at creation and stored** (CR-048). Nothing is recomputed at render time; changing a scheme offers a renumber with a diff, never a silent rewrite. A manual edit sets `DeviceInstance.designatorLocked` and draws a 🔒 in the designator chip. On a collision, the inline field turns red with `AMP-1 is used by Living Room Amp [Swap] [Go to]`, `Swap` exchanges the two values in one command, which is what the user wants most of the time.
 

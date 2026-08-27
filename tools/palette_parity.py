@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Documentation-vs-registry parity check for the RackMate signal palette.
+"""Documentation-vs-registry parity check for the RackPal signal palette.
 
 tools/pal1_check.py proves the palette itself is legible in greyscale. This proves the
 DOCUMENTS agree with it. Those are different failures, and the second one shipped four times:

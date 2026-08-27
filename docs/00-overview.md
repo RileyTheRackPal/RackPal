@@ -1,6 +1,6 @@
-# RackMate: Product Overview
+# RackPal: Product Overview
 
-RackMate is a Windows-first desktop application in which a custom-integration professional builds one or more equipment racks, wires them port-to-port on a schematic canvas, watches a cable schedule fill in live beside them, and exports a PDF sheet set that an installer can carry into an attic and work from without making a phone call. This document is the entry point to the planning set: it states the problem, the vision, the core loop, who the product is for, the seven brief requirements restated as things you can check by running something, what the project explicitly refuses to build, where it sits against the incumbents, and how success is measured. Every statement here is downstream of the canonical decision record; where a ruling governs, it is cited by ID (`CR-nnn` contradiction resolved, `AC-nnn` accepted critique, `RJ-nnn` rejected critique) and the full adjudication is in [the canonical decision record](canonical-decisions.md).
+RackPal is a Windows-first desktop application in which a custom-integration professional builds one or more equipment racks, wires them port-to-port on a schematic canvas, watches a cable schedule fill in live beside them, and exports a PDF sheet set that an installer can carry into an attic and work from without making a phone call. This document is the entry point to the planning set: it states the problem, the vision, the core loop, who the product is for, the seven brief requirements restated as things you can check by running something, what the project explicitly refuses to build, where it sits against the incumbents, and how success is measured. Every statement here is downstream of the canonical decision record; where a ruling governs, it is cited by ID (`CR-nnn` contradiction resolved, `AC-nnn` accepted critique, `RJ-nnn` rejected critique) and the full adjudication is in [the canonical decision record](canonical-decisions.md).
 
 ---
 
@@ -21,7 +21,7 @@ The documented reason nobody produces these documents is that every available to
 
 Nobody ships a cheap, desktop, AV-typed, netlist-backed rack-and-wiring tool that emits a correct cable schedule. That is the gap.
 
-The second half of the problem is a documentation failure that no data model fixes by accident: **labels that do not match the language people use.** The plan says "Study", the homeowner says "Office", the label says "Room 3", and nobody wins. RackMate binds a location vocabulary to the model so one rename propagates to every label, schedule row and diagram callout (CR-047, CR-112).
+The second half of the problem is a documentation failure that no data model fixes by accident: **labels that do not match the language people use.** The plan says "Study", the homeowner says "Office", the label says "Room 3", and nobody wins. RackPal binds a location vocabulary to the model so one rename propagates to every label, schedule row and diagram callout (CR-047, CR-112).
 
 ---
 
@@ -41,7 +41,7 @@ Five principles decide the close calls (canon §0.1), and they are quoted here b
 | **G4** | Never fabricate data. Show `unknown`. |
 | **G5** | Cut features, never foundations. |
 
-G4 has teeth. `typicalWatts` never defaults to half of nameplate (AC-039, RJ-007); a missing weight contributes nothing to a rollup and the rollup reports its unknown count. The failure mode being avoided is not a missing feature; it is an integrator who puts a clamp meter on a circuit RackMate called 14.2 A, reads 6 A, and stops trusting every number in the product including the correct ones.
+G4 has teeth. `typicalWatts` never defaults to half of nameplate (AC-039, RJ-007); a missing weight contributes nothing to a rollup and the rollup reports its unknown count. The failure mode being avoided is not a missing feature; it is an integrator who puts a clamp meter on a circuit RackPal called 14.2 A, reads 6 A, and stops trusting every number in the product including the correct ones.
 
 G3 has teeth too. `blockExportOnErrors` is **deleted, not deferred** (CR-022). Nothing gates the bytes of a PDF. Open errors gate exactly one thing: the `ISSUED FOR CONSTRUCTION` stamp.
 
@@ -95,7 +95,7 @@ Conference rooms, phased retrofits, drawings that may go to a GC or a permit off
 
 ### 4.3 The installer receiving the output: the person the product is actually for
 
-Never opens RackMate. Holds paper, in an attic, at 7 pm, possibly wearing gloves. Needs one page: a unique cable ID, both ends as device designator plus physical port label, the cable type, the room, and a box to tick. That is the **Pull Sheet**: portrait, sorted **room then pathway**, with `Pulled ☐ Terminated ☐ Tested ☐ Init ___`, excluding jumpers and power cords by default (AC-025, AC-026). Every constraint this persona imposes wins over every drafting preference: it is why the schedule is sorted for the person holding the cable rather than the person who drew it, and why a watermark, if the product ever ships one, goes on client-facing sheets and never on the pull sheet.
+Never opens RackPal. Holds paper, in an attic, at 7 pm, possibly wearing gloves. Needs one page: a unique cable ID, both ends as device designator plus physical port label, the cable type, the room, and a box to tick. That is the **Pull Sheet**: portrait, sorted **room then pathway**, with `Pulled ☐ Terminated ☐ Tested ☐ Init ___`, excluding jumpers and power cords by default (AC-025, AC-026). Every constraint this persona imposes wins over every drafting preference: it is why the schedule is sorted for the person holding the cable rather than the person who drew it, and why a watermark, if the product ever ships one, goes on client-facing sheets and never on the pull sheet.
 
 ### 4.4 The owner-operator: the person who buys it
 
@@ -146,7 +146,7 @@ Two refusals from the raw prior-art analysis were themselves **overruled** and a
 
 ## 7. Competitive positioning
 
-| | **RackMate** | **D-Tools SI** | **Visio + stencils** | **draw.io / Lucidchart** | **RackOnline** |
+| | **RackPal** | **D-Tools SI** | **Visio + stencils** | **draw.io / Lucidchart** | **RackOnline** |
 |---|---|---|---|---|---|
 | Price | Desktop, anchored to Stardraw ($275–$1,050 yr 1) and free AVSnap, not to D-Tools | **$1,800/user/yr, 5-user min = $9,000/yr floor**; $200/hr services | Licence + stencil packs; commercial libraries draw open contempt on price | Free–low subscription | **Domain does not resolve: appears defunct** |
 | Owns its canvas | Yes | **No**: drives Visio or AutoCAD | N/A (is the canvas) | Yes | Unknown |
@@ -159,9 +159,9 @@ Two refusals from the raw prior-art analysis were themselves **overruled** and a
 | Diffable local project file | **Yes**: pretty-printed key-sorted JSON, stable UUIDs, `schemaVersion` | Proprietary / cloud | Binary | Cloud | Unknown |
 | Blocks your export on a heuristic | **Never** (G3) | — | — | — | — |
 
-Two competitors outside that table set the real bar. **NetBox** has the reference data model (typed templated components, front/rear pass-through ports that let a trace run straight through a patch panel, and cables carrying type, colour, length and label) but its rack elevations are read-only rendered images and its signal vocabulary is Ethernet, fibre and power. **Q-SYS Designer** has the reference interaction model, pin shape encodes type, only complementary directions connect, and a loose wire is prohibited outright. RackMate takes the data model from the first and the gesture from the second, and applies both to a domain neither serves. Notably, Q-SYS, the most refined tool in this space, ships **no auto-routing at all**; RackMate builds one anyway (CR-013, DR-001), scoped to the `drawn` render mode a domain filter or a hover turns on, and that is a deliberate, costed bet, not an oversight.
+Two competitors outside that table set the real bar. **NetBox** has the reference data model (typed templated components, front/rear pass-through ports that let a trace run straight through a patch panel, and cables carrying type, colour, length and label) but its rack elevations are read-only rendered images and its signal vocabulary is Ethernet, fibre and power. **Q-SYS Designer** has the reference interaction model, pin shape encodes type, only complementary directions connect, and a loose wire is prohibited outright. RackPal takes the data model from the first and the gesture from the second, and applies both to a domain neither serves. Notably, Q-SYS, the most refined tool in this space, ships **no auto-routing at all**; RackPal builds one anyway (CR-013, DR-001), scoped to the `drawn` render mode a domain filter or a hover turns on, and that is a deliberate, costed bet, not an oversight.
 
-The other axis RackMate competes on is the sheet itself. The exported set is a **client deliverable with full drafting furniture**: title block, revision block, revision clouds, `ISSUED FOR CONSTRUCTION` stamp, drawing border, zone references and sheet numbering (DR-005). Sheet furniture is orthogonal to wire idiom: the schematic's reader is technical (GC, electrician, low-voltage sub, technically-literate homeowner) so the sheet is polished fully and the wires stay net-labelled (DR-001).
+The other axis RackPal competes on is the sheet itself. The exported set is a **client deliverable with full drafting furniture**: title block, revision block, revision clouds, `ISSUED FOR CONSTRUCTION` stamp, drawing border, zone references and sheet numbering (DR-005). Sheet furniture is orthogonal to wire idiom: the schematic's reader is technical (GC, electrician, low-voltage sub, technically-literate homeowner) so the sheet is polished fully and the wires stay net-labelled (DR-001).
 
 ---
 

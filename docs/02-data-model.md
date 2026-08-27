@@ -1,6 +1,6 @@
 # Data Model and File Format
 
-This is the authoritative specification of RackMate's domain model, its on-disk `.rmpj` format, and the rules that decide whether a document is coherent. It is derived from [the canonical decision record](canonical-decisions.md) §4 (canonical naming), §5 (canonical data model summary) and §6 (registry), and from the §1.2 and §1.3 rulings on the wiring entity model and validation philosophy. Where any raw working paper in [docs/research/](research/) disagrees with this document, this document wins; where this document disagrees with the canonical decision record, the record wins and this document is defective. Every non-obvious statement below cites the ruling that adjudicated it, so any reader can trace a field back to the argument that put it there.
+This is the authoritative specification of RackPal's domain model, its on-disk `.rmpj` format, and the rules that decide whether a document is coherent. It is derived from [the canonical decision record](canonical-decisions.md) §4 (canonical naming), §5 (canonical data model summary) and §6 (registry), and from the §1.2 and §1.3 rulings on the wiring entity model and validation philosophy. Where any raw working paper in [docs/research/](research/) disagrees with this document, this document wins; where this document disagrees with the canonical decision record, the record wins and this document is defective. Every non-obvious statement below cites the ruling that adjudicated it, so any reader can trace a field back to the argument that put it there.
 
 **Companion documents:** [Overview](00-overview.md) · [Domain](01-domain.md) · [Architecture](03-architecture.md) · [Rack editor](04-rack-editor.md) · [Schematic editor](05-schematic-editor.md) · [Device builder](06-device-builder.md) · [Structure device](07-structure-device.md) · [PDF export](08-pdf-export.md) · [Roadmap](09-roadmap.md) · [Decisions](10-decisions.md) · [Testing and quality](11-testing-and-quality.md) · [Seed catalog](catalog/seed-devices.md)
 
@@ -130,7 +130,7 @@ final class Rgb { final int r, g, b, a; }
 | Rotation | `int` | quarter turns, 0..3 | §3.7 | Arbitrary float angles. Schematics are orthogonal; free rotation costs float geometry throughout the router. |
 | Unknown value | `null` | — | CR-114, G4 | `sealed class Extent { Known \| Unknown }`. One mechanism; the obligation moves to the UI, which must **report** its unknown count rather than silently treating null as zero. |
 
-Constants live once, in `rackmate_core/units/`:
+Constants live once, in `rackpal_core/units/`:
 
 ```dart
 const kRackUnit          = Len(44_450_000);   // 44.45 mm exactly
@@ -933,7 +933,7 @@ This section **is** the file-format specification; `docs/file-format.md` is not 
 | Container | Plain, **pretty-printed, key-sorted UTF-8 JSON**. 2-space indent. | CR-091 |
 | Codec | `DocumentCodec` from commit one, sniffing `PK\x03\x04` on read, so a v2 zip container is a non-event. The extension never changes; v1 files keep opening forever. | CR-091 |
 | Envelope | Format metadata at the root; all entity maps under `"document"`. | CR-092 |
-| Round trip | **Byte** round trip: `write(read(bytes)) == bytes`, asserted over files RackMate wrote, an explicit `null` in a hand-edited file reads as absent and re-emits as absent. | CR-117 |
+| Round trip | **Byte** round trip: `write(read(bytes)) == bytes`, asserted over files RackPal wrote, an explicit `null` in a hand-edited file reads as absent and re-emits as absent. | CR-117 |
 | Unknown values | Written as an **absent key**, never an explicit `null`. `weightUg` and `bodyDepthNm` are the two that most often go missing. | CR-114, G4 |
 | Saves | Atomic: write `foo.rmpj.tmp` in the same directory → `flush()` → `rename()`. One sibling `.bak`. **No `.history/` folder** in the user's directory. | CR-098 |
 | Snapshots | `getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rmpj`, last 10. | CR-098 |
@@ -955,7 +955,7 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
 {
   "appVersion": "0.1.0+build.42",
   "createdAt": "2026-07-18T09:14:02.113847Z",
-  "generator": "RackMate",
+  "generator": "RackPal",
   "id": "0190e3c1-7a2f-7c9d-8b11-a0f2c4e51d33",
   "minReaderVersion": 2,
   "modifiedAt": "2026-07-18T16:42:55.902310Z",
@@ -1209,7 +1209,7 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
           "bodyDepthNm": 0, "category": "system.structure",
           "chassisWidthNm": 0, "displayName": "Structured Wiring",
           "frontU": 0, "isContainer": false, "isPassthrough": false,
-          "manufacturer": "RackMate", "model": "Structure",
+          "manufacturer": "RackPal", "model": "Structure",
           "mountMethod": "notInRack", "nominalSpanTwelfths": 0,
           "ports": [], "portSets": [],
           "power": { "isContinuousLoad": false, "outletsConsumed": 0,
@@ -1667,7 +1667,7 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
 
 | Line of interest | The ruling it exercises |
 |---|---|
-| `generator: "RackMate"` | A magic key, so foreign JSON is rejected with a real error rather than a null-cast crash (CR-092). |
+| `generator: "RackPal"` | A magic key, so foreign JSON is rejected with a real error rather than a null-cast crash (CR-092). |
 | `sequence: 412` at the root, no `revision` key | CR-094. `stateId` is in-memory and absent from the file. |
 | `usableDepthNm`, `weightCapacityUg`, `mountHeightAffNm` | N4: the unit is in the name. All integers (CR-001, CR-003). |
 | The matrix template carries `weightUg` and `bodyDepthNm`; the patch panel carries **neither** | `null` means unknown and is written as an **absent key**, never an explicit `null` (G4, CR-114). The rack rollup reports the panel in its unknown count rather than adding a fabricated zero; `RCK-012` skips it. |
@@ -1726,11 +1726,11 @@ sealed class LoadOutcome { }
 final class LoadOk       extends LoadOutcome { final JsonMap raw; final bool openReadOnly; }
 final class LoadErr      extends LoadOutcome { final LoadError error; }
 
-enum LoadError { notARackMateDocument, newerSchemaRefused, corruptEnvelope }
+enum LoadError { notARackPalDocument, newerSchemaRefused, corruptEnvelope }
 
 LoadOutcome migrateToCurrent(JsonMap raw) {
-  if (raw['generator'] != 'RackMate') {
-    return LoadErr(LoadError.notARackMateDocument);
+  if (raw['generator'] != 'RackPal') {
+    return LoadErr(LoadError.notARackPalDocument);
   }
   final minReader = raw['minReaderVersion'] as int? ?? 1;
   if (minReader > kSchemaVersion) {
@@ -1796,7 +1796,7 @@ The design win worth stating plainly: by making templates and registries immutab
 
 Sync-hostile constructs deliberately avoided: auto-incrementing integer keys anywhere; "the first element of the list is special" semantics; any entity whose identity is a composite of mutable fields; derived data persisted as authoritative (CR-115). Designators (`MTX-1`, `W042`) are **unique but not identity**: two peers can independently allocate `W042`, and renumbering on merge is a cosmetic fix-up command, not data loss.
 
-**How much further to invest was [question 10.8](canonical-decisions.md), and it is ANSWERED (2026-08-03): (a), spend nothing further. RackMate is a local application.** No sync cursor plumbing, no conflict-resolution implementation, nothing beyond the six properties above, until a user asks twice for two people in one project.
+**How much further to invest was [question 10.8](canonical-decisions.md), and it is ANSWERED (2026-08-03): (a), spend nothing further. RackPal is a local application.** No sync cursor plumbing, no conflict-resolution implementation, nothing beyond the six properties above, until a user asks twice for two people in one project.
 
 **This section is the page that answer ratifies.** §10.8's recommendation asked for one page stating the intended conflict unit and merge story, so that AC-006's device-plus-ports assumption was recorded rather than folkloric. This is it, and the ruling adopts it as the canonical statement rather than commissioning a new one. Two consequences follow. First, **the six properties are retained in full**: option (c), drop the cloud-ready constraint and simplify, was never available and was not taken, so nothing above is dead weight to be pruned on the grounds that the product is local. Second, the tables above are now load-bearing, and a change to any conflict-unit row is a change to a ruled position, not an edit to derived prose.
 

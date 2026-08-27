@@ -1,4 +1,4 @@
-# RackMate
+# RackPal
 
 Flutter desktop app for AV/low-voltage rack design: elevations, wiring schematic,
 schedules, PDF sheet set. Windows-first, macOS ruled in for v1 (DR-009).
@@ -71,8 +71,8 @@ a board task instructing weeks of work that a ruling had abolished.
   micrograms, `Permille` for fractions. **No floating-point millimetres**, in the
   model or in any file format.
 - **CR-117**: byte round-trip. `write(read(bytes)) == bytes`, keys sorted.
-- **Package layering**: `rackmate_core` has **zero Flutter imports** (gated).
-  `rackmate_export` may never import `rackmate_ui`.
+- **Package layering**: `rackpal_core` has **zero Flutter imports** (gated).
+  `rackpal_export` may never import `rackpal_ui`.
 - **Determinism**: same document, same display list, same exported bytes. Sort
   comparators must be **total** (Dart's `List.sort` is not stable), so every chain
   ends in a unique id.
@@ -81,15 +81,15 @@ a board task instructing weeks of work that a ruling had abolished.
 
 ## Workspace
 
-- `packages/rackmate_core` model, commands, derived, persistence, draw scene, catalog
-- `packages/rackmate_ui` Flutter widgets, canvas, inspector, palette
-- `packages/rackmate_export` PDF backend
-- `packages/rackmate_text` text metrics
-- `apps/rackmate` shell, session, storage
+- `packages/rackpal_core` model, commands, derived, persistence, draw scene, catalog
+- `packages/rackpal_ui` Flutter widgets, canvas, inspector, palette
+- `packages/rackpal_export` PDF backend
+- `packages/rackpal_text` text metrics
+- `apps/rackpal` shell, session, storage
 
 ## Goldens
 
-- Starters: `cd apps/rackmate && dart run tool/generate_starters.dart`
+- Starters: `cd apps/rackpal && dart run tool/generate_starters.dart`
   (`--check` for CI-style verification). They are checked in and do triple duty as
   goldens, perf fixtures and screenshot source.
 - Perf/scene fixtures: `UPDATE_GOLDENS=1 flutter test <path>`. The op-count
@@ -101,7 +101,7 @@ a board task instructing weeks of work that a ruling had abolished.
 ## Board (Azure DevOps)
 
 Hierarchy is **Epic → Issue → Task**. Org `https://{org}.visualstudio.com`,
-project `RackMate`, area and iteration `RackMate`, tags `rackmate-sync; task`.
+project `RackPal`, area and iteration `RackPal`, tags `rackpal-sync; task`.
 States: `To Do`, `Doing`, `Done` (there is no `Removed`).
 
 The board mirrors **structure**; the reasoning lives in `docs/12` and `docs/13`.

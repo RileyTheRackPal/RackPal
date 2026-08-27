@@ -4,17 +4,17 @@
     PRODUCED, as opposed to what the dependency graph said it would.
 
 .DESCRIPTION
-    apps/rackmate/test/flutter_dependency_test.dart is the existing gate here
+    apps/rackpal/test/flutter_dependency_test.dart is the existing gate here
     and it is a good one, but it reads `pubspec.lock` and
     `windows/flutter/generated_plugins.cmake` -- the INPUTS. Nothing in this
     repository has ever looked at the directory that gets zipped and copied
     onto a client's USB stick. That is the gap `dartjni.dll` sat in: an
-    Android JNI bridge shipped beside rackmate.exe in a Windows-only build,
+    Android JNI bridge shipped beside rackpal.exe in a Windows-only build,
     invisible to every test, found by somebody listing a folder.
 
     So this closes the loop at the other end, on the real output:
 
-      * rackmate.exe exists and is not a stub;
+      * rackpal.exe exists and is not a stub;
       * NO Android/JNI native library is in the shipped set;
       * THE SHIPPED NATIVE SET IS PRINTED ON EVERY RUN, and compared to the
         expected list. A new DLL appearing is reported, because the interesting
@@ -41,7 +41,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 if (-not $ReleaseDir) {
-    $ReleaseDir = Join-Path $RepoRoot 'apps/rackmate/build/windows/x64/runner/Release'
+    $ReleaseDir = Join-Path $RepoRoot 'apps/rackpal/build/windows/x64/runner/Release'
 }
 
 Write-Host "== windows release output =="
@@ -55,18 +55,18 @@ if (-not (Test-Path $ReleaseDir)) {
 }
 
 # --- the executable -------------------------------------------------------
-$exe = Join-Path $ReleaseDir 'rackmate.exe'
+$exe = Join-Path $ReleaseDir 'rackpal.exe'
 if (-not (Test-Path $exe)) {
-    $problems += "rackmate.exe is missing from $ReleaseDir"
+    $problems += "rackpal.exe is missing from $ReleaseDir"
 } else {
     $size = (Get-Item $exe).Length
-    Write-Host ("  rackmate.exe : {0:N0} bytes" -f $size)
+    Write-Host ("  rackpal.exe : {0:N0} bytes" -f $size)
     # A linker that produced a few kilobytes produced something that is not
     # this application. The bound is deliberately far below the real size
     # (~1 MB) so it never becomes a maintenance chore, and far above zero so
     # it cannot pass on an empty file.
     if ($size -lt 100KB) {
-        $problems += "rackmate.exe is only $size bytes -- that is not a built application"
+        $problems += "rackpal.exe is only $size bytes -- that is not a built application"
     }
 }
 
@@ -142,7 +142,7 @@ if (-not (Test-Path $starterDir)) {
         if ($bytes.Length -eq 0) {
             $problems += "packaged starter $starter is empty"
         }
-        # The same CR check apps/rackmate/test/gitattributes_byte_exactness_
+        # The same CR check apps/rackpal/test/gitattributes_byte_exactness_
         # _test.dart makes on the source side, repeated on the SHIPPED copy:
         # if a clean clone checked these out CRLF-normalised, this is where
         # the corrupted file would be sitting in the artifact.

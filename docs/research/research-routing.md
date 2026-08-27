@@ -123,7 +123,7 @@ This is essentially libavoid's idea with a coarser, 2-shape-local grid. A relate
 
 ### 2.1 What the EDA tools actually do: they do *not* auto-order
 
-This is the finding that matters most for RackMate: **KiCad, Altium and Q-SYS do not run crossing-minimisation over pins. They impose a fixed human convention and let the wire router deal with it.**
+This is the finding that matters most for RackPal: **KiCad, Altium and Q-SYS do not run crossing-minimisation over pins. They impose a fixed human convention and let the wire router deal with it.**
 
 The [KiCad Library Convention](https://klc.kicad.org/) codifies:
 - Power pins **top**, ground **bottom**, inputs/control **left**, outputs/drivers **right** ([S4.2, pins grouped by function](https://klc.kicad.org/symbol/s4/s4.2/)).
@@ -144,7 +144,7 @@ Q-SYS goes further and makes pin **type** a first-class, colour-coded, type-chec
 
 And it **hard-enforces type compatibility**: "You cannot connect an input to an input, a control connector to a data connector, or a data connector of an amplifier to a data connector of another amplifier." Loose wires are prohibited; both ends must land.
 
-**Directly applicable to RackMate:** your typed connectors (RCA/HDMI/Cat6/IR/RS-232/RG6/S-PDIF/TOSLINK/speaker/mains) should be a *validated* type system with direction (in/out/bidir), not just a colour. Reject HDMI-out→HDMI-out at the model layer. Colour-code the wire *by cable type*, as you already planned, this exactly matches Q-SYS.
+**Directly applicable to RackPal:** your typed connectors (RCA/HDMI/Cat6/IR/RS-232/RG6/S-PDIF/TOSLINK/speaker/mains) should be a *validated* type system with direction (in/out/bidir), not just a colour. Reject HDMI-out→HDMI-out at the model layer. Colour-code the wire *by cable type*, as you already planned, this exactly matches Q-SYS.
 
 ### 2.2 Where crossing minimisation genuinely applies
 
@@ -234,9 +234,9 @@ Label scopes and syntax:
 
 The acknowledged downside: **"typos can prevent signals from being connected."** In a GUI tool with a device library this is fully avoidable, generate labels, never let the user free-type them.
 
-Q-SYS independently arrived at the same three-tier answer, and its terminology maps 1:1 onto what RackMate needs:
+Q-SYS independently arrived at the same three-tier answer, and its terminology maps 1:1 onto what RackPal needs:
 
-| Q-SYS | KiCad | RackMate |
+| Q-SYS | KiCad | RackPal |
 |---|---|---|
 | Traditional wiring | drawn wire | drawn cable |
 | **Signal Names** ("allow for less cluttered schematics", work across pages, case-insensitive, support sequential numbering e.g. Mix 1/Mix 2) | net label | **named home run / net label** |
@@ -253,13 +253,13 @@ The operative heuristics, distilled:
 3. **Bus** when ≥4 wires run *parallel between the same two regions* and are members of a natural family.
 4. **Never** draw a wire whose path is so contorted that following it is harder than reading a name.
 
-**Concrete threshold rule for RackMate** (defensible, tunable): draw the cable if `span_RU ≤ K` (K ≈ 6–8) **and** local channel density at that span is below a cap; otherwise degrade to a labelled home-run stub at both endpoints. Make `K` a user setting with live preview, and make the mode overridable per-connection. Always render the **wiring schedule table** as the authoritative connectivity record, the diagram is a *navigational aid*, the schedule is the truth. This also perfectly matches your PDF export requirement (diagram + schedule).
+**Concrete threshold rule for RackPal** (defensible, tunable): draw the cable if `span_RU ≤ K` (K ≈ 6–8) **and** local channel density at that span is below a cap; otherwise degrade to a labelled home-run stub at both endpoints. Make `K` a user setting with live preview, and make the mode overridable per-connection. Always render the **wiring schedule table** as the authoritative connectivity record, the diagram is a *navigational aid*, the schedule is the truth. This also perfectly matches your PDF export requirement (diagram + schedule).
 
 Domain note: this aligns with AV documentation practice generally, AVIXA's cable-labelling standard **F501.01:2015, *Cable Labeling for Audiovisual Systems*** is the reference for the label text itself, and is normatively cited by the draft **AVIXA D401 *Documentation Requirements for Audiovisual Systems***. Deriving your net labels from an F501-shaped scheme means your on-diagram labels match the physical labels an installer will find on the actual cable, which is the entire point.
 
 ### 4.3 Hyperedges (one source → many sinks)
 
-Relevant to RackMate: an IR emitter bus, a speaker daisy-chain, an RS-232 loop-through, a 1→N distribution amp.
+Relevant to RackPal: an IR emitter bus, a speaker daisy-chain, an RS-232 loop-through, a 1→N distribution amp.
 
 [Wybrow, Marriott & Stuckey, *Orthogonal Hyperedge Routing*, Diagrams 2012](https://users.monash.edu/~mwybrow/papers/wybrow-diagrams-2012.pdf): this generalises the **minimum rectilinear Steiner tree (MRST)**, which is **NP-complete**. Their interaction model is worth copying wholesale:
 
@@ -288,7 +288,7 @@ Established convention ([Circuit diagram, Wikipedia](https://en.wikipedia.org/wi
 - **Modern best practice avoids 4-way junctions entirely**: draw a straight wire and **stagger** the other wires along it with dots, making **two T-junctions** rather than one crossover, because a 4-way dot that loses its dot silently becomes a crossover, and vice versa.
 - **IEEE standard drafting practice recommends straight-line crossovers** (i.e. *no* hops), relying on the dot convention. Hops are legacy/optional.
 
-**Recommendation for RackMate:** default to **no hops**; use dots only at genuine multi-drop junctions; **forbid 4-way junctions** in the geometry emitter by staggering. Offer hops as a user preference, AV integrators skew toward the "draw it like a wiring diagram" aesthetic where hops read as friendly, and this is cheap to implement once you have crossings computed.
+**Recommendation for RackPal:** default to **no hops**; use dots only at genuine multi-drop junctions; **forbid 4-way junctions** in the geometry emitter by staggering. Offer hops as a user preference, AV integrators skew toward the "draw it like a wiring diagram" aesthetic where hops read as friendly, and this is cheap to implement once you have crossings computed.
 
 **Hop/dot detection** is a Bentley–Ottmann orthogonal sweep: sort vertical segments by x, sweep with an interval tree of active horizontals, report intersections in **O((n + k) log n)** for k crossings. For rack-scale n this is trivial. Render the arc on the *horizontal* segment by convention (consistent choice matters more than which).
 
@@ -323,7 +323,7 @@ Note `crossingPenalty` was future work in the 2009 paper, the OVG + shared-path-
 - The pragmatic industrial answer (and yWorks' documented approach, [Automatic Label Placement in Diagrams](https://www.yworks.com/pages/automatic-label-placement-in-diagrams)) is: **avoid the problem in the layout phase** (reserve vertical space between layers, truncate long strings) rather than solving ELP after the fact.
 - Exact methods exist (MILP, branch-and-cut for optimally labelled orthogonal drawings) but are wildly overkill here.
 
-**For RackMate:** don't solve ELP at all. Place labels at **deterministic anchors**: at the port stub (reference-designator style, e.g. `AMP1-OUT3 → SPK-A`), and optionally at the midpoint of the longest straight segment of the route. Reserve a fixed label gutter. Because your tracks are on a known grid (§7), label slots are collision-free *by construction*. This is a genuine architectural payoff of the channel-routing approach.
+**For RackPal:** don't solve ELP at all. Place labels at **deterministic anchors**: at the port stub (reference-designator style, e.g. `AMP1-OUT3 → SPK-A`), and optionally at the midpoint of the longest straight segment of the route. Reserve a fixed label gutter. Because your tracks are on a known grid (§7), label slots are collision-free *by construction*. This is a genuine architectural payoff of the channel-routing approach.
 
 ---
 
@@ -346,7 +346,7 @@ Route instability has two distinct causes, and they need different fixes:
 1. **Non-determinism / arbitrary tie-breaking.** Fixed by making the router a *pure deterministic function* of the model with **total-order tie-breaking on stable keys** (your UUIDs). libavoid does this with insertion timestamps and fixed neighbour expansion order (*straight, right, left*); ELK does it with **model order** as tie-breaker across cycle breaking, layering *and* crossing minimisation.
 2. **Genuine global re-optimisation.** Fixed by separating topology from geometry (hyperedge paper) or by hysteresis: keep the current assignment if it remains feasible and within ε of optimal.
 
-**For RackMate specifically, cause 2 largely evaporates**: see §7. A deterministic O(N log N) full recompute is both *cheaper* than incremental bookkeeping and *perfectly stable*, because identical input yields identical output, and small input changes yield small output changes when the assignment rule is a monotone sweep. **Do not build incremental machinery in v1. It is the wrong optimisation and it will cost you correctness bugs.**
+**For RackPal specifically, cause 2 largely evaporates**: see §7. A deterministic O(N log N) full recompute is both *cheaper* than incremental bookkeeping and *perfectly stable*, because identical input yields identical output, and small input changes yield small output changes when the assignment rule is a monotone sweep. **Do not build incremental machinery in v1. It is the wrong optimisation and it will cost you correctness bugs.**
 
 ---
 

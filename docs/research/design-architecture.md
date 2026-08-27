@@ -1,7 +1,7 @@
-# RackMate: Software Architecture
+# RackPal: Software Architecture
 
 **Target:** Dart 3.12.2 / Flutter 3.44.4 stable, Windows-first desktop.
-**Repo:** `C:\Users\riley\Documents\Projects\Vibecoding\RackMate` (currently empty except `.editorconfig`, `.gitattributes`, `.gitignore`, `docs/`).
+**Repo:** `C:\Users\riley\Documents\Projects\Vibecoding\RackPal` (currently empty except `.editorconfig`, `.gitattributes`, `.gitignore`, `docs/`).
 
 ---
 
@@ -11,7 +11,7 @@ Stated up front so the rest of the document can reference them.
 
 | # | Decision | Consequence |
 |---|---|---|
-| **D1** | **Monorepo, 3 pure-Dart packages + 1 Flutter app**, joined by pub workspaces. `rackmate_core` must not import `dart:ui` or `package:flutter`. | Model, undo, routing, validation, and the scene builder all test in `dart test` in <1s, and run inside a background isolate for PDF export. |
+| **D1** | **Monorepo, 3 pure-Dart packages + 1 Flutter app**, joined by pub workspaces. `rackpal_core` must not import `dart:ui` or `package:flutter`. | Model, undo, routing, validation, and the scene builder all test in `dart test` in <1s, and run inside a background isolate for PDF export. |
 | **D2** | **One mutable document aggregate, mutated only through `Command`s.** No immutable-tree + `copyWith`. Change detection by **epoch counters**, not equality. | Undo is free and exact; repaint invalidation is exact; no deep-copy churn on drag. |
 | **D3** | **Geometry stored as `int` in hundredths of a millimetre (10 µm).** Never `double`, never device pixels. | 1U = **4445** exactly, 19″ rail = **48260** exactly. No float drift in the file format, clean diffs, sync-safe. *(Note: tenths-of-mm, a plausible first choice, is **not** exact: 44.45 mm = 444.5 tenths. Use hundredths.)* |
 | **D4** | **A display list (`DiagramScene`) is the single drawing IR.** Screen and PDF are two interpreters of it. | Screen and print cannot diverge. Also gives hit-test regions, bounds for scale-to-fit, and a deterministic golden-test artifact for free. |
@@ -27,28 +27,28 @@ Stated up front so the rest of the document can reference them.
 
 1. **PDF export must run in a background isolate.** A background isolate has no `rootBundle`, no plugins, no `BuildContext`, and critically, code that touches `dart:ui` types drags in Flutter binding assumptions. The scene builder therefore *must* be free of `dart:ui`. A package boundary is the only way to enforce that mechanically; a folder convention will be violated within a month by an `Offset` that "was just easier."
 2. **Test-loop economics.** The wire router, the DRC, the migration chain, and the command apply/revert property tests are where the bugs live and where you will iterate hundreds of times. `dart test` on a pure package is ~600 ms cold. `flutter test` on an app is 8–20 s. Over a multi-year project this difference is measured in days.
-3. **The `pdf` package is a single-maintainer dependency on a headline feature.** Isolating it behind `rackmate_export` + the `DiagramCanvas` interface means replacing it is one package, not a rewrite.
+3. **The `pdf` package is a single-maintainer dependency on a headline feature.** Isolating it behind `rackpal_export` + the `DiagramCanvas` interface means replacing it is one package, not a rewrite.
 
-**Not two packages either** (core + app). Putting `package:pdf` into `rackmate_core` re-pollutes the dependency-light core and makes `dart pub get` on the fast test package pull the PDF toolchain. And putting Flutter painters in the app blocks reuse by the future read-only mobile shell.
+**Not two packages either** (core + app). Putting `package:pdf` into `rackpal_core` re-pollutes the dependency-light core and makes `dart pub get` on the fast test package pull the PDF toolchain. And putting Flutter painters in the app blocks reuse by the future read-only mobile shell.
 
 **Not melos.** Dart 3.6+ pub workspaces do the resolution; melos adds orchestration you don't need at four packages. Add it when you exceed ~6 packages or start publishing.
 
 ### 1.2 Directory tree
 
 ```
-RackMate/
+RackPal/
 ├─ pubspec.yaml                          # workspace root: `workspace: [packages/*, apps/*]`
 ├─ analysis_options.yaml                 # shared lint baseline, inherited by all members
 ├─ dart_test.yaml                        # test tag definitions (golden, slow, perf)
 ├─ .github/workflows/ci.yaml             # analyze+test matrix; goldens Linux-only
 ├─ docs/
 │  ├─ architecture.md                    # this document
-│  ├─ file-format.md                     # THE durable spec: .rackmate v1 wire format
+│  ├─ file-format.md                     # THE durable spec: .rackpal v1 wire format
 │  └─ adr/0001-mutable-doc-command-stack.md   # one ADR per D1..D5 decision
 │
 ├─ packages/
-│  ├─ rackmate_core/                     # ══ PURE DART. no flutter, no dart:ui, no pdf ══
-│  │  ├─ lib/rackmate_core.dart          #   the only public export barrel
+│  ├─ rackpal_core/                     # ══ PURE DART. no flutter, no dart:ui, no pdf ══
+│  │  ├─ lib/rackpal_core.dart          #   the only public export barrel
 │  │  ├─ lib/src/
 │  │  │  ├─ units/
 │  │  │  │  ├─ length.dart               #   Cmm (int extension type), Ru, unit conversions
@@ -103,14 +103,14 @@ RackMate/
 │  │  │  └─ util/result.dart             #   sealed Outcome<T> — no exceptions for user errors
 │  │  ├─ assets/catalog/starter_v1.json  #   the seeded generic device catalog
 │  │  └─ test/
-│  │     ├─ fixtures/v1_minimal.rackmate #   golden corpus, one per shipped schema version
+│  │     ├─ fixtures/v1_minimal.rackpal #   golden corpus, one per shipped schema version
 │  │     ├─ migration_corpus_test.dart   #   HIGHEST-VALUE TEST IN THE REPO (§9.1)
 │  │     ├─ command_roundtrip_test.dart  #   property: apply∘revert == identity
 │  │     ├─ router_test.dart
 │  │     ├─ scene_golden_test.dart       #   display-list text dumps (§9.3)
 │  │     └─ no_flutter_import_test.dart  #   enforces D1 mechanically (§2.4)
 │  │
-│  ├─ rackmate_export/                   # ══ PURE DART. core + package:pdf. isolate-safe ══
+│  ├─ rackpal_export/                   # ══ PURE DART. core + package:pdf. isolate-safe ══
 │  │  ├─ lib/src/
 │  │  │  ├─ pdf_diagram_canvas.dart      #   DiagramCanvas -> PdfGraphics (Y-flip, state cache)
 │  │  │  ├─ sheets.dart                  #   ANSI A/B/C/D, ARCH B/C/D, ISO A3/A2 formats
@@ -121,10 +121,10 @@ RackMate/
 │  │  │  └─ build_document.dart          #   top-level fn; the Isolate.run entry point
 │  │  └─ test/pdf_structure_test.dart
 │  │
-│  └─ rackmate_ui/                       # ══ FLUTTER. widgets, painters, theme. NO app shell ══
+│  └─ rackpal_ui/                       # ══ FLUTTER. widgets, painters, theme. NO app shell ══
 │     ├─ lib/src/
 │     │  ├─ theme/
-│     │  │  ├─ rackmate_theme.dart       #   ThemeExtension<RackMateTheme>
+│     │  │  ├─ rackpal_theme.dart       #   ThemeExtension<RackPalTheme>
 │     │  │  └─ palette_adapter.dart      #   core Palette -> ui.Color
 │     │  ├─ canvas/
 │     │  │  ├─ flutter_diagram_canvas.dart   # DiagramCanvas -> ui.Canvas (dash synthesis)
@@ -145,7 +145,7 @@ RackMate/
 │     └─ test/goldens/
 │
 └─ apps/
-   └─ rackmate/                          # ══ FLUTTER DESKTOP SHELL ══
+   └─ rackpal/                          # ══ FLUTTER DESKTOP SHELL ══
       ├─ lib/
       │  ├─ main.dart                    #   runZonedGuarded, error hooks, window setup
       │  ├─ providers/                   #   Riverpod: the ONLY place providers are declared
@@ -179,10 +179,10 @@ RackMate/
 
 | Layer | Lives in | Contains |
 |---|---|---|
-| **Domain** | `rackmate_core/src/{units,model,routing,derived,draw}` | Entities, value objects, invariants, the wire router, DRC rules, the scene builder. Knows nothing about files, PDFs, pixels, or Flutter. |
-| **Application** | `rackmate_core/src/{commands,document_controller}` | `Command`, `Transaction`, `UndoStack`, `DocumentController`. Every state transition the product supports is a class here. This is the app's *verb list*. |
-| **Infrastructure** | `rackmate_core/src/persistence`, all of `rackmate_export`, `apps/rackmate/lib/{files,export,diagnostics}` | Codecs, migrations, PDF emission, disk I/O, isolates, logging, OS dialogs. |
-| **Presentation** | all of `rackmate_ui`, `apps/rackmate/lib/{providers,shell}` | Widgets, painters, render objects, viewport, input, Riverpod wiring, menus. |
+| **Domain** | `rackpal_core/src/{units,model,routing,derived,draw}` | Entities, value objects, invariants, the wire router, DRC rules, the scene builder. Knows nothing about files, PDFs, pixels, or Flutter. |
+| **Application** | `rackpal_core/src/{commands,document_controller}` | `Command`, `Transaction`, `UndoStack`, `DocumentController`. Every state transition the product supports is a class here. This is the app's *verb list*. |
+| **Infrastructure** | `rackpal_core/src/persistence`, all of `rackpal_export`, `apps/rackpal/lib/{files,export,diagnostics}` | Codecs, migrations, PDF emission, disk I/O, isolates, logging, OS dialogs. |
+| **Presentation** | all of `rackpal_ui`, `apps/rackpal/lib/{providers,shell}` | Widgets, painters, render objects, viewport, input, Riverpod wiring, menus. |
 
 ### 2.2 The dependency rule, stated explicitly
 
@@ -191,17 +191,17 @@ RackMate/
 Concretely, the permitted import edges:
 
 ```
-rackmate_core        →  (dart:core, dart:math, dart:convert, meta, collection, uuid)
-rackmate_export      →  rackmate_core, package:pdf
-rackmate_ui          →  rackmate_core, flutter
-apps/rackmate        →  rackmate_core, rackmate_export, rackmate_ui, flutter, plugins
+rackpal_core        →  (dart:core, dart:math, dart:convert, meta, collection, uuid)
+rackpal_export      →  rackpal_core, package:pdf
+rackpal_ui          →  rackpal_core, flutter
+apps/rackpal        →  rackpal_core, rackpal_export, rackpal_ui, flutter, plugins
 ```
 
-Note `rackmate_export` and `rackmate_ui` are **siblings that cannot see each other**. That is deliberate: it is what guarantees the PDF path is isolate-safe, because there is no compile path from the export code to `dart:ui`.
+Note `rackpal_export` and `rackpal_ui` are **siblings that cannot see each other**. That is deliberate: it is what guarantees the PDF path is isolate-safe, because there is no compile path from the export code to `dart:ui`.
 
 ### 2.3 Three rules that carry most of the weight
 
-1. **`rackmate_core` must not import `package:flutter` or `dart:ui`**: not for `Offset`, not for `Color`, not for `Rect`. Define `Pt`, `Box`, and store colours as `int` ARGB. Adapters live in `rackmate_ui`.
+1. **`rackpal_core` must not import `package:flutter` or `dart:ui`**: not for `Offset`, not for `Color`, not for `Rect`. Define `Pt`, `Box`, and store colours as `int` ARGB. Adapters live in `rackpal_ui`.
 2. **The document is mutated only via `DocumentController.run(Command)`.** No widget, service, or painter ever calls a setter on a `RackDevice`. Enforced by making entity fields private with library-private setters (`part of` the commands library), Dart's library privacy is the right tool here.
 3. **Nothing in Domain or Application may be `async`.** The document is a synchronous, single-threaded data structure. All `Future`s live in Infrastructure and Presentation. This eliminates an entire class of interleaved-mutation bugs and makes every core test synchronous.
 
@@ -210,9 +210,9 @@ Note `rackmate_export` and `rackmate_ui` are **siblings that cannot see each oth
 Two cheap guards, both dependency-free:
 
 ```dart
-// packages/rackmate_core/test/no_flutter_import_test.dart
+// packages/rackpal_core/test/no_flutter_import_test.dart
 void main() {
-  test('rackmate_core is Flutter-free', () {
+  test('rackpal_core is Flutter-free', () {
     final banned = RegExp(r'''import\s+['"](package:flutter/|dart:ui|package:pdf/)''');
     for (final f in Directory('lib').listSync(recursive: true).whereType<File>()
                     .where((f) => f.path.endsWith('.dart'))) {
@@ -223,7 +223,7 @@ void main() {
 }
 ```
 
-Plus: `rackmate_core`'s pubspec declares `environment: {sdk: ^3.12.0}` with **no `flutter:` key at all**, so a stray Flutter import is also a hard compile error under `dart test`. Belt and braces, the pubspec catches it at build, the test catches it in review with a readable message.
+Plus: `rackpal_core`'s pubspec declares `environment: {sdk: ^3.12.0}` with **no `flutter:` key at all**, so a stray Flutter import is also a hard compile error under `dart test`. Belt and braces, the pubspec catches it at build, the test catches it in review with a readable message.
 
 ---
 
@@ -317,7 +317,7 @@ class SelectionController extends ChangeNotifier {
 }
 ```
 
-Selection is **not persisted** to `.rackmate` and does not bump `revision` (selecting a device must not mark the file dirty). But every `Transaction` captures `selectionBefore`/`selectionAfter`, so undo restores it, without which undoing a delete leaves the caret pointing at a device that no longer exists, and undoing a move leaves nothing highlighted. That is the single most-noticed undo polish detail.
+Selection is **not persisted** to `.rackpal` and does not bump `revision` (selecting a device must not mark the file dirty). But every `Transaction` captures `selectionBefore`/`selectionAfter`, so undo restores it, without which undoing a delete leaves the caret pointing at a device that no longer exists, and undoing a move leaves nothing highlighted. That is the single most-noticed undo polish detail.
 
 ### 3.5 Viewport, tool mode
 
@@ -386,7 +386,7 @@ The split of wires into *settled* (replay a cached `ui.Picture`) and *active* (r
 ### 4.1 The `Command` interface
 
 ```dart
-// packages/rackmate_core/lib/src/commands/command.dart
+// packages/rackpal_core/lib/src/commands/command.dart
 abstract base class Command {
   const Command();
 
@@ -723,7 +723,7 @@ void scheduleSweep() {
 }
 ```
 
-**The isolate payload is a projection, not the document.** `ValidationInput` carries only the graph (IDs, connector types, directions, RU spans, power ratings) as flat typed lists. ~30 KB at 200 devices versus ~500 KB for full JSON, and it's cheaply sendable. This is only possible because `rackmate_core` is Flutter-free (§2.2).
+**The isolate payload is a projection, not the document.** `ValidationInput` carries only the graph (IDs, connector types, directions, RU spans, power ratings) as flat typed lists. ~30 KB at 200 devices versus ~500 KB for full JSON, and it's cheaply sendable. This is only possible because `rackpal_core` is Flutter-free (§2.2).
 
 ### 5.4 Invalidation summary
 
@@ -838,7 +838,7 @@ Start with brute force plus an AABB reject (`if (!w.bounds.inflate(tol).contains
 ### 6.6 How the shared drawing abstraction plugs in
 
 ```dart
-// rackmate_core — pure Dart, no dart:ui
+// rackpal_core — pure Dart, no dart:ui
 abstract interface class DiagramCanvas {
   void save(); void restore();
   void translate(double dx, double dy);
@@ -874,7 +874,7 @@ Defining every connector symbol once as an SVG path `d` string is what eliminate
 
 ### 7.1 File format
 
-`.rackmate` v1 is **plain, pretty-printed, key-sorted JSON**. Not zipped, not binary. Users can diff it in git, you can read bug reports, and support becomes tractable. The ~3× size penalty is irrelevant at 500 KB.
+`.rackpal` v1 is **plain, pretty-printed, key-sorted JSON**. Not zipped, not binary. Users can diff it in git, you can read bug reports, and support becomes tractable. The ~3× size penalty is irrelevant at 500 KB.
 
 But hide it behind an interface from commit one, because the day someone embeds a faceplate PNG you need a container:
 
@@ -892,7 +892,7 @@ Root keys, all four mandatory:
 
 ```json
 {
-  "generator": "RackMate",     // magic: reject foreign JSON with a good error, not a null cast
+  "generator": "RackPal",     // magic: reject foreign JSON with a good error, not a null cast
   "schemaVersion": 1,          // bumped by every format change
   "minReaderVersion": 1,       // bumped ONLY for genuinely breaking changes
   "appVersion": "1.0.0",       // diagnostics only, never branched on
@@ -923,7 +923,7 @@ const migrations = <int, Migration>{
 };
 
 Outcome<JsonMap> migrateToCurrent(JsonMap raw) {
-  if (raw['generator'] != 'RackMate') return Outcome.err(NotARackMateFile());
+  if (raw['generator'] != 'RackPal') return Outcome.err(NotARackPalFile());
   var v = raw['schemaVersion'] as int?;
   if (v == null) return Outcome.err(MalformedDocument('missing schemaVersion'));
   final minReader = raw['minReaderVersion'] as int? ?? v;
@@ -944,10 +944,10 @@ Outcome<JsonMap> migrateToCurrent(JsonMap raw) {
 ```
 1. Serialize on the main isolate (~15 ms at 500 KB — acceptable, and avoids
    the payload transfer cost that would dominate for a doc this size).
-2. Write bytes to  <target>.rackmate.tmp   in the SAME directory (same volume ⇒ atomic rename).
+2. Write bytes to  <target>.rackpal.tmp   in the SAME directory (same volume ⇒ atomic rename).
 3. flush() + close().
-4. If <target> exists → rename to <target>.rackmate.bak (overwrite previous .bak).
-5. rename(<target>.rackmate.tmp → <target>.rackmate).
+4. If <target> exists → rename to <target>.rackpal.bak (overwrite previous .bak).
+5. rename(<target>.rackpal.tmp → <target>.rackpal).
 6. _lastSavedRevision = epochs.revision.value;   → isDirty goes false
 7. Delete this document's recovery snapshot.
 8. Push to recent files; update window title.
@@ -967,11 +967,11 @@ Revision counters, never document equality, equality is O(document) on every key
 
 ### 7.5 Autosave and crash recovery
 
-- Every **30 s** and on **window blur**, if dirty, write a recovery snapshot to `getApplicationSupportDirectory()/recovery/<docUuid>.rackmate`, plus a sidecar JSON `{realPath, revision, savedAt, displayName}`.
+- Every **30 s** and on **window blur**, if dirty, write a recovery snapshot to `getApplicationSupportDirectory()/recovery/<docUuid>.rackpal`, plus a sidecar JSON `{realPath, revision, savedAt, displayName}`.
 - **Never autosave over the user's file.** CAD users expect explicit saves and will file a bug the first time an autosave clobbers something.
 - Autosave serialization runs in `Isolate.run`, unlike explicit save, nobody is waiting, so the transfer cost is free and the UI must not hitch.
 - Delete the snapshot on clean save and clean exit.
-- On startup, scan the recovery dir. Any survivor ⇒ `"RackMate closed unexpectedly. Recover Smith Residence Rack 2 (12 unsaved changes)?"` with Recover / Discard / Keep for later.
+- On startup, scan the recovery dir. Any survivor ⇒ `"RackPal closed unexpectedly. Recover Smith Residence Rack 2 (12 unsaved changes)?"` with Recover / Discard / Keep for later.
 - Recovery files are also the crash-report attachment (§11).
 
 ### 7.6 Close interception, recents, window state
@@ -991,7 +991,7 @@ await windowManager.setPreventClose(true);
 
 ## 8. Dependency list
 
-### 8.1 `rackmate_core`: pure Dart, deliberately tiny
+### 8.1 `rackpal_core`: pure Dart, deliberately tiny
 
 | Package | Constraint | Why |
 |---|---|---|
@@ -1003,13 +1003,13 @@ That is the entire production dependency set for the layer where 80% of the logi
 
 **On skipping codegen entirely:** Dart macros were cancelled in January 2025, so there is no codegen-free path to generated `==`/`copyWith`/`fromJson` and there will not be one soon. That means the choice is "hand-write ~15 value types" versus "adopt `build_runner` forever." Dart 3 sealed classes with exhaustive `switch` already cover the union-type case that was freezed's killer feature, and §7.1 argues hand-written JSON is *actively better* for a document format. Retrofitting freezed onto a plain class later is mechanical; ripping codegen out is not. Start without it. The payoff is sub-second `dart test` cycles for the life of the project.
 
-### 8.2 `rackmate_export`
+### 8.2 `rackpal_export`
 
 | Package | Constraint | Why |
 |---|---|---|
 | `pdf` | `^3.13.0` | The only real option. Pure Dart (no Flutter dep ⇒ isolate-safe), Apache-2.0, `pw.Widget` layout for the schedule, `PdfGraphics` for vector diagram output. Requires Dart ≥3.12.0, matches this SDK exactly. |
 
-### 8.3 `rackmate_ui`
+### 8.3 `rackpal_ui`
 
 | Package | Constraint | Why |
 |---|---|---|
@@ -1017,7 +1017,7 @@ That is the entire production dependency set for the layer where 80% of the logi
 | `path_drawing` | `^1.0.1` | `dashPath()`: synthesizes dashes that `dart:ui` cannot do natively (§6.6). Small, stable, single-purpose. |
 | `vector_math` | `^2.2.0` | `Matrix4` for the viewport. Transitively available via Flutter; pin it explicitly since core geometry code touches it. |
 
-### 8.4 `apps/rackmate`
+### 8.4 `apps/rackpal`
 
 | Package | Constraint | Why |
 |---|---|---|
@@ -1027,7 +1027,7 @@ That is the entire production dependency set for the layer where 80% of the logi
 | `path_provider` | `^2.1.5` | `getApplicationSupportDirectory()` for recovery, recents, logs, prefs. flutter.dev. |
 | `path` | `^1.9.0` | Cross-platform path joining. Never string-concatenate paths on Windows. |
 | `printing` | `^5.15.0` | `layoutPdf` for the print dialog, `PdfPreview` for in-app preview. See risk note. |
-| `desktop_drop` | `^0.6.0` | Drag a `.rackmate` onto the window to open it. Not built in to Flutter. |
+| `desktop_drop` | `^0.6.0` | Drag a `.rackpal` onto the window to open it. Not built in to Flutter. |
 | `logging` | `^1.3.0` | Structured, level-based, zero-dependency. Sinks are ours (§11). |
 | `intl` | `^0.20.0` | Number/date/unit formatting; the runtime half of ARB localization. |
 | `flutter_localizations` | sdk | `MaterialLocalizations`, `Directionality`, locale resolution. |
@@ -1066,12 +1066,12 @@ Ordered by value per line of test code.
 ### 9.1 The migration golden corpus: highest value in the repo
 
 ```
-packages/rackmate_core/test/fixtures/
-  v1_minimal.rackmate        # empty 42U rack
-  v1_full.rackmate           # every entity type, every connector, every cable type
-  v1_unicode.rackmate        # Ω ° ± µ → × ≈ — " " and an accented client name
-  v1_unknown_fields.rackmate # hand-edited to include future keys
-  v2_*.rackmate              # added the day v2 ships. NEVER edited afterwards.
+packages/rackpal_core/test/fixtures/
+  v1_minimal.rackpal        # empty 42U rack
+  v1_full.rackpal           # every entity type, every connector, every cable type
+  v1_unicode.rackpal        # Ω ° ± µ → × ≈ — " " and an accented client name
+  v1_unknown_fields.rackpal # hand-edited to include future keys
+  v2_*.rackpal              # added the day v2 ships. NEVER edited afterwards.
 ```
 
 The test opens **every historical fixture**, migrates it, asserts it produces a valid current document, and asserts unknown fields survive a round-trip. Add a fixture on the day each schema version ships. This test is what lets you refactor the model confidently for years.
@@ -1153,7 +1153,7 @@ jobs:
       - run: dart analyze --fatal-infos --fatal-warnings
       - run: dart format --output=none --set-exit-if-changed .
       - run: dart test                     # core + export: fast, all 3 OSes
-        working-directory: packages/rackmate_core
+        working-directory: packages/rackpal_core
       - run: flutter test --exclude-tags golden
       - run: flutter build windows --release      # if: windows
       - run: flutter build macos --release        # if: macos
@@ -1184,7 +1184,7 @@ jobs:
 | Ports | 2 000 | 6 000 |
 | Connections | 1 000 | 3 000 |
 | Undo history | 200 entries | — |
-| `.rackmate` file size | 500 KB | 3 MB |
+| `.rackpal` file size | 500 KB | 3 MB |
 
 ### 10.2 Time budgets
 
@@ -1209,7 +1209,7 @@ jobs:
 
 Three mechanisms, all in CI or one command away:
 
-1. **`packages/rackmate_core/test/perf/`: `benchmark_harness` benchmarks over synthetic documents at 50 / 200 / 500 devices.** Pure Dart, deterministic, runs headless in CI under the `perf` tag. Thresholds are asserted, but the job is **warn-only for the first three months**: establish the baseline curve on CI hardware before it can fail a build, or you will spend that time chasing runner variance instead of writing the app.
+1. **`packages/rackpal_core/test/perf/`: `benchmark_harness` benchmarks over synthetic documents at 50 / 200 / 500 devices.** Pure Dart, deterministic, runs headless in CI under the `perf` tag. Thresholds are asserted, but the job is **warn-only for the first three months**: establish the baseline curve on CI hardware before it can fail a build, or you will spend that time chasing runner variance instead of writing the app.
 2. **DevTools timeline in `--profile` mode**, driven by a scripted interaction (`integration_test` performing a fixed 30-second pan/zoom/drag script), with `flutter drive --profile --trace-startup` producing a timeline JSON. Assert on `frame_build_times` p95 and `frame_rasterizer_times` p95 from `TimelineSummary`. This runs on demand, not per-PR (desktop CI runners have no GPU worth trusting).
 3. **Manual pre-release checklist**, three items, each of which catches a class of regression nothing automated will: `debugRepaintRainbowEnabled` (assert only the overlay flickers during a drag), `checkerboardOffscreenLayers` (must be **zero**: any `saveLayer` is a bug per §6.4), and dragging the window between a 4K and a 1080p monitor (mixed-DPI breaks naive viewport implementations, and Windows users genuinely run this configuration).
 
@@ -1238,7 +1238,7 @@ sealed class AppError {
 }
 ```
 
-Every `AppError` carries a **user-facing message that says what to do next** ("This file was created by a newer version of RackMate. Update RackMate, or open it read-only."), not a stack trace.
+Every `AppError` carries a **user-facing message that says what to do next** ("This file was created by a newer version of RackPal. Update RackPal, or open it read-only."), not a stack trace.
 
 - **Programmer errors** (broken invariants, unreachable switch arms, null entity lookups) throw. They are bugs, and they should be loud in debug and captured in release.
 
@@ -1261,10 +1261,10 @@ void main() {
       return true;                      // handled; do not kill the isolate
     };
 
-    ErrorWidget.builder = (details) => RackMateErrorPane(details);   // never a red screen
+    ErrorWidget.builder = (details) => RackPalErrorPane(details);   // never a red screen
 
     await bootstrap();
-    runApp(const ProviderScope(child: RackMateApp()));
+    runApp(const ProviderScope(child: RackPalApp()));
   }, (error, stack) {
     Log.root.shout('zone', error, stack);
     CrashReporter.record(error, stack);
@@ -1290,7 +1290,7 @@ void _rollback(_TxnBuilder b, Object e, StackTrace st) {
     Log.root.shout('ROLLBACK FAILED — poisoning undo stack', e2, st2);
     undo.poison();                         // canUndo/canRedo → false
     _forceRecoverySnapshot();              // write it out before anything else touches it
-    _notifyUnrecoverable();                // "Save a copy and restart RackMate."
+    _notifyUnrecoverable();                // "Save a copy and restart RackPal."
   }
 }
 ```
@@ -1311,7 +1311,7 @@ Poisoning the stack rather than pretending is the honest behaviour: a user who k
 **No telemetry by default.** This is a locally-installed professional tool handling client project data; silent network egress is a trust violation and, for some commercial CI clients, a contractual one.
 
 - On an uncaught error, write `crashes/<timestamp>.json` (redacted bundle + stack) to app-support.
-- On next launch, if crash files exist: *"RackMate encountered a problem last session. Send a report?"* with **View report** (shows the exact JSON, no hidden payload), **Send**, and **Never ask again**.
+- On next launch, if crash files exist: *"RackPal encountered a problem last session. Send a report?"* with **View report** (shows the exact JSON, no hidden payload), **Send**, and **Never ask again**.
 - Only if the user opts in does anything leave the machine, and then to a self-hosted Sentry (`sentry_flutter`), deliberately **not added as a dependency in v1**, because until there's a place to send reports, it's dead weight and an extra native surface on every platform.
 
 ---
@@ -1322,7 +1322,7 @@ Poisoning the stack rather than pretending is the honest behaviour: a user who k
 
 **Now (non-negotiable, cheap):**
 - `flutter_localizations` + `intl` + `gen-l10n` with `app_en.arb`. All user-facing strings go through `AppLocalizations` from the first commit. Retrofitting this across a mature app is a multi-week grind that never quite finishes, and the incremental cost per string today is ~15 seconds.
-- Command `label`s are the interesting case: they live in `rackmate_core`, which cannot import Flutter. Resolve by having commands expose a **`LabelKey` enum + arguments**, with `rackmate_ui` mapping key → localized string. The Edit menu shows *"Undo Move device"* localized; the log shows the stable enum name.
+- Command `label`s are the interesting case: they live in `rackpal_core`, which cannot import Flutter. Resolve by having commands expose a **`LabelKey` enum + arguments**, with `rackpal_ui` mapping key → localized string. The Edit menu shows *"Undo Move device"* localized; the log shows the stable enum name.
 - `intl` `NumberFormat`/`DateFormat` for every number and date shown. Never `toString()` a double into the UI.
 - `Directionality` respected throughout the chrome.
 
@@ -1338,21 +1338,21 @@ Rack dimensions are a mess of mixed units and this trips people up: racks are 19
 
 - **Storage is always metric integer** (hundredths-mm, D3). Never store display units.
 - **Display units are a user preference independent of locale**, with three settings: RU (always, vertical), and metric/imperial for depths, cable lengths, and weights. A German integrator working a US-spec commercial job needs imperial output regardless of their system locale.
-- Formatting lives in one place: `UnitFormatter` in `rackmate_ui`, taking `(Cmm value, UnitPreference pref, Locale locale)`.
+- Formatting lives in one place: `UnitFormatter` in `rackpal_ui`, taking `(Cmm value, UnitPreference pref, Locale locale)`.
 
 ### 12.3 Theming
 
 **Now:**
-- **`ThemeExtension<RackMateTheme>`** carrying every canvas colour, stroke width, corner radius, and font size. The painters read from the theme extension; **no hard-coded colours anywhere below the widget layer.** In `rackmate_core` colours are `int` ARGB in a `CablePalette` value object; `rackmate_ui` adapts to `ui.Color`.
+- **`ThemeExtension<RackPalTheme>`** carrying every canvas colour, stroke width, corner radius, and font size. The painters read from the theme extension; **no hard-coded colours anywhere below the widget layer.** In `rackpal_core` colours are `int` ARGB in a `CablePalette` value object; `rackpal_ui` adapts to `ui.Color`.
 - **Three palettes from day one**, all derived from one `CablePalette` abstraction: `screenDark` (the default; this is a pro tool used in equipment rooms and dark UIs are the genre convention), `screenLight`, and **`print`**. The print palette is genuinely different, not a tint: dark-theme wire colours print as muddy pastels on white, so print gets darker, more saturated values and a white background. Shipping the print palette in v1 costs almost nothing and prevents the "why does my PDF look wrong" bug class entirely.
 - **Cable type is never encoded by colour alone.** Every cable type carries `(colour, dashPattern, abbreviation)`, and the diagram renders all three. This is required for: the ~8% of male users with colour-vision deficiency, black-and-white laser printing (extremely common for job-site copies), and photocopied/faxed drawings (still real in construction). Validate the palette against deuteranopia/protanopia simulation before locking it, and note that the dash pattern requirement is what makes §6.6's dash-parity gotcha load-bearing rather than cosmetic.
-- **Fonts bundled, not system.** `Inter-Regular`, `Inter-SemiBold`, `JetBrainsMono-Regular` in `apps/rackmate/assets/fonts/`, declared **twice** in `pubspec.yaml`, under `fonts:` (for Flutter's text engine) *and* under `assets:` (so `rootBundle.load()` works for `pw.Font.ttf`). Missing the second entry is an easy and confusing bug. Bundling the *same TTF file* for screen and PDF is what makes text metrics agree between the two, without which every label's measured width differs and leader lines / callout boxes / collision avoidance diverge between screen and print. A monospace face for reference designators, port numbers, and cable IDs is worth it, column alignment reads far better and it matches the schematic aesthetic.
+- **Fonts bundled, not system.** `Inter-Regular`, `Inter-SemiBold`, `JetBrainsMono-Regular` in `apps/rackpal/assets/fonts/`, declared **twice** in `pubspec.yaml`, under `fonts:` (for Flutter's text engine) *and* under `assets:` (so `rootBundle.load()` works for `pw.Font.ttf`). Missing the second entry is an easy and confusing bug. Bundling the *same TTF file* for screen and PDF is what makes text metrics agree between the two, without which every label's measured width differs and leader lines / callout boxes / collision avoidance diverge between screen and print. A monospace face for reference designators, port numbers, and cable IDs is worth it, column alignment reads far better and it matches the schematic aesthetic.
 - Bundling also means **never ship default Helvetica in the PDF**: the standard-14 Type1 fonts are WinAnsi single-byte and throw on any non-Latin-1 codepoint. A/V documentation routinely contains `Ω`, `°`, `±`, `µ`, `→`, `×`, `—`, and smart quotes pasted from a proposal. Set `fontFallback` on the PDF theme as a safety net even when you think you don't need it.
 
 **Later:**
 - User-customisable cable colours (the data model already supports it, `style` epoch and per-entity overrides exist from day one; only the settings UI is missing).
 - High-contrast theme.
-- Company branding in the PDF title block (logo asset + colour), which is a straightforward extension once `.rackmate` moves to the zip container.
+- Company branding in the PDF title block (logo asset + colour), which is a straightforward extension once `.rackpal` moves to the zip container.
 
 ---
 
@@ -1361,7 +1361,7 @@ Rack dimensions are a mess of mixed units and this trips people up: racks are 19
 The sequencing matters, because two of these are painful to retrofit and cheap to do early.
 
 1. **`ViewportController` + wheel/trackpad input + grid painter.** Get pan/zoom feeling *right* first; everything sits on it and it's cheapest to iterate on when nothing else exists.
-2. **Integer unit model + `.rackmate` schema + codec + migration harness + the first golden fixture.** The format is the durable asset; establish it before anything depends on its shape.
+2. **Integer unit model + `.rackpal` schema + codec + migration harness + the first golden fixture.** The format is the durable asset; establish it before anything depends on its shape.
 3. **`Command` / `Transaction` / `UndoStack` / `DocumentController`.** ← **Do this before the feature surface grows.** Retrofitting undo is one of the genuinely painful refactors, and every feature built without it will need rewriting.
 4. **`RenderRackCanvas` hybrid + device widgets + RU snapping.**
 5. **Ports, typed connections, the snap cascade.**

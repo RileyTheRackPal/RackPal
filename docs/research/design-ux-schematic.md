@@ -1,4 +1,4 @@
-# RackMate: Wiring / Schematic Editor Specification
+# RackPal: Wiring / Schematic Editor Specification
 
 **Document:** `SPEC-SCHEM-001` · v1 draft · target Flutter desktop (Dart 3.12)
 **Scope:** the schematic canvas, its visual language, its interaction model, its layout engine, and its relationship to the other views.
@@ -11,7 +11,7 @@ Three commitments, stated up front because the rest of the document is downstrea
 
 **0.1: The schematic is a *derived projection*, not a drawing.** The document stores **connectivity only**: `Connection(uuid, fromPortRef, toPortRef, domain, media, label, layerId, sheetId, routeOverrides?)`. No wire coordinates. No route geometry. Symbol positions are stored (they're user intent) but wire geometry is *always* recomputed. This is the KiCad/Q-SYS model and it is why the tool can never drift out of sync with itself, why the wiring schedule is trivially exact, why the PDF is vector, and why the router is a one-file swap. If you ever find yourself persisting a polyline, you have made an architectural error.
 
-**0.2: Constraint is the feature.** A typed netlist with enforced rules is the entire wedge against Visio, Lucidchart, and AVSnap. The moment the canvas allows an arbitrary line between two arbitrary points, RackMate is a worse draw.io. **There is no free-line tool. Ever.** Every stroke on the canvas is a `Connection`, a `Bus`, an annotation, or chrome.
+**0.2: Constraint is the feature.** A typed netlist with enforced rules is the entire wedge against Visio, Lucidchart, and AVSnap. The moment the canvas allows an arbitrary line between two arbitrary points, RackPal is a worse draw.io. **There is no free-line tool. Ever.** Every stroke on the canvas is a `Connection`, a `Bus`, an annotation, or chrome.
 
 **0.3: The schematic is a navigational aid; the schedule is the truth.** This is the release valve that makes density tractable. Any connection may be rendered as a drawn wire, a net label, or a bus member, three renderings of one identical model object, switchable per-net, losslessly, at any time. When the diagram gets dense, we *degrade the rendering*, never the model. The PDF always ships both.
 
@@ -32,7 +32,7 @@ Three commitments, stated up front because the rest of the document is downstrea
 | Gutter clearance from body | **4U (10 mm)** | |
 | Snap grid (default) | **1U** | `Alt` = free (0.1 mm), `Shift` = 4U coarse |
 
-Everything is stored as `int` tenths-of-a-millimetre. No doubles in the model, ever, `173.99999999999997` in a `.rackmate` file is a bug that will surface in cloud-sync conflict resolution three years from now.
+Everything is stored as `int` tenths-of-a-millimetre. No doubles in the model, ever, `173.99999999999997` in a `.rackpal` file is a bug that will surface in cloud-sync conflict resolution three years from now.
 
 **Grid rendering.** Dot grid at 4U (10 mm) in light theme, 15% ink. Line grid is too loud behind orthogonal wires, the wires *are* lines and the grid competes. Below 0.35× zoom the grid is suppressed entirely. Draw it as a single GPU fragment-shader quad (lift the technique from `fl_nodes`' `grid.frag`), infinite, zoom-independent, zero CPU, no re-baking.
 
@@ -290,7 +290,7 @@ Two distinct concepts. Do not conflate them.
 
 Vector syntax `NAME[0..7]` expands to members; group syntax `USB1{DP DM}` yields `USB1.DP`, `USB1.DM`; groups may nest vectors. Bus entries are **purely graphical and establish no connectivity**: membership is carried by net name. This is KiCad's model and it is correct: it means a bus can be formed, dissolved, or re-formed on a different axis without touching a single netlist entry.
 
-**Bundle (snake)**: a *purely organisational* grouping of physical runs that share a conduit or a trunk, for the schedule and the pull sheet. Bundles may contain **mixed domains** (2× HDMI + 1× Cat6 + IR in one conduit is a real AV trunk; Q-SYS's snakes explicitly allow mixed types for exactly this reason). A bundle **does not affect tracing or connectivity**: NetBox states this explicitly about its cable bundles and it is precisely right for RackMate's confirmed "no cable dressing" decision. It gets you 90% of cable-management value for 5% of the complexity.
+**Bundle (snake)**: a *purely organisational* grouping of physical runs that share a conduit or a trunk, for the schedule and the pull sheet. Bundles may contain **mixed domains** (2× HDMI + 1× Cat6 + IR in one conduit is a real AV trunk; Q-SYS's snakes explicitly allow mixed types for exactly this reason). A bundle **does not affect tracing or connectivity**: NetBox states this explicitly about its cable bundles and it is precisely right for RackPal's confirmed "no cable dressing" decision. It gets you 90% of cable-management value for 5% of the complexity.
 
 Rendering: bundle members route on adjacent tracks and are wrapped in a 2U-inset rounded outline at 20% ink with a bundle tag `B03 · 4 runs · 40'`. Collapse a bundle (`Ctrl+Shift+K`) to render it as a single trunk with a fan at each end.
 
@@ -306,7 +306,7 @@ Rendering: bundle members route on adjacent tracks and are wrapped in a 2U-inset
 
 ```
 ┌────────────────────────────────────────────────────────┬───────────────┐
-│ PROJECT   Smith Residence — Head End Rack              │  RackMate     │
+│ PROJECT   Smith Residence — Head End Rack              │  RackPal     │
 │ SHEET     2 of 6 · VIDEO                               │  ANSI B       │
 ├──────────────┬──────────────┬──────────────┬───────────┼───────────────┤
 │ DRAWN  J.S.  │ DATE 18JUL26 │ REV  C       │ SCALE NTS │  DRG SR-0247  │
@@ -542,7 +542,7 @@ Rack devices are ordered along one axis at discrete integer RU positions. That i
 1. **As the initial and tie-break ordering within each Sugiyama layer.** Free the layout from arbitrariness *and* make the schematic read roughly top-to-bottom in rack order, so cross-referencing between the elevation and the schematic is near-automatic.
 2. **As the reason the routing region has no obstacles.** Once devices are in layers, each inter-layer gutter is an empty vertical channel. Routing through an empty channel is not graph search; it is **interval-graph colouring**, solved optimally in 1971.
 
-The consequence: **RackMate never needs a general orthogonal router.** libavoid measures 2,007 ms on a 305-node/413-edge diagram. The algorithm below is sub-millisecond at N=300 *and* provably optimal in track count, because it exploits structure instead of discarding it.
+The consequence: **RackPal never needs a general orthogonal router.** libavoid measures 2,007 ms on a 305-node/413-edge diagram. The algorithm below is sub-millisecond at N=300 *and* provably optimal in track count, because it exploits structure instead of discarding it.
 
 ### 3.2 v1 pipeline
 
@@ -706,7 +706,7 @@ Applied in this order as a rack grows:
 
 ### 5.1 One document, four projections
 
-They are **four views of one model**, absolutely. "Design the system twice" is the loudest structural complaint in this entire product category and the whole point of RackMate is to not do it.
+They are **four views of one model**, absolutely. "Design the system twice" is the loudest structural complaint in this entire product category and the whole point of RackPal is to not do it.
 
 | View | Shows | Geometry from |
 |---|---|---|
@@ -921,7 +921,7 @@ macOS: substitute `⌘` for `Ctrl` throughout; `Alt` = `⌥`.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ File  Edit  View  Place  Route  Validate  Window  Help                    RackMate — Smith Residence.rackmate │
+│ File  Edit  View  Place  Route  Validate  Window  Help                    RackPal — Smith Residence.rackpal │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ ▣ Rack  │ ⚡ SCHEMATIC │ ▤ Rear │ ☰ Schedule       Sheet ▾ [2 · VIDEO ]  ◀ ▶     ⊞ Split   🖨 Preview   ⌕     │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────┤

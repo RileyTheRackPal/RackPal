@@ -1,6 +1,6 @@
 """Add the four codepoints Jost lacks, BUILT FROM JOST'S OWN CONTOURS.
 
-DR-090 §11.89.8. Regenerates `apps/rackmate/assets/fonts/Jost-*.ttf` in place
+DR-090 §11.89.8. Regenerates `apps/rackpal/assets/fonts/Jost-*.ttf` in place
 from a pristine upstream copy.
 
     python tools/build_jost_glyphs.py <upstream.ttf> <out.ttf>
@@ -334,10 +334,10 @@ add('triagrt', 0x25B8, round(XH * 0.78 * 0.86) + 2 * SIDE,
 for record in list(font['name'].names):
     if record.nameID == 5:
         font['name'].setName(
-            'Version 3.710; RackMate build: +11 glyphs',
+            'Version 3.710; RackPal build: +11 glyphs',
             5, record.platformID, record.platEncID, record.langID)
 font['name'].setName(
-    "Modified for RackMate: four glyphs added, built from the face's own "
+    "Modified for RackPal: four glyphs added, built from the face's own "
     'contours by tools/build_jost_glyphs.py. SIL OFL 1.1, no Reserved Font '
     'Name.', 10, 3, 1, 0x409)
 

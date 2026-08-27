@@ -1,6 +1,6 @@
 # Seed Device Catalog
 
-This document is the authoring specification and the shipping content for RackMate's seeded
+This document is the authoring specification and the shipping content for RackPal's seeded
 template library: the generic archetypes that ship in v1 (per CR-061; the counts are in §3.10 and
 nowhere else), the compact port notation the catalog is authored in, the four registries those templates
 reference (signal domain, signal family, connector type, media type, reproduced from canon §6
@@ -1431,7 +1431,7 @@ a `DeviceTemplate` would rebuild the Structure device badly inside the catalog. 
 ## 4. Signal domain and signal family registries
 
 **This section is data that ships.** It is the authored content of
-`assets/catalog/registries.json`, embedded into every `.rackmate` as the subset the document
+`assets/catalog/registries.json`, embedded into every `.rackpal` as the subset the document
 references (CR-090's self-describing-file argument). It is reproduced here verbatim from canon §6
 because it is not illustrative; it is the file.
 
@@ -1507,7 +1507,7 @@ Three palette rules are checkable, not aspirational:
 **PAL-1 is verified by `tools/pal1_check.py`, and by nothing else.** That file enumerates all 385
 in-band cross-domain pairs over the 55 shipped families and exits non-zero on any violation; it is
 the authority, and §§4.3–4.5 below are a projection of it. It must be ported to
-`pal1_conformance_test.dart` in `rackmate_core` at M0 (§7 criterion 4) and remain the authority
+`pal1_conformance_test.dart` in `rackpal_core` at M0 (§7 criterion 4) and remain the authority
 after the port.
 
 The rule is not checkable by reading a table of domain rows, and the attempt is what produced the
@@ -2093,7 +2093,7 @@ one shown. The generator expands the §2 notation into exactly this.
 
 ```json
 {
-  "$schema": "https://rackmate.app/schema/device/1.json",
+  "$schema": "https://rackpal.app/schema/device/1.json",
   "contentHash": "sha256:7b1f…",
   "createdAt": "2026-07-18T10:00:00Z",
   "derivedFrom": null,
@@ -2477,7 +2477,7 @@ that reaches a drawing.
 
 ### 7.3 Fixture obligations this catalog carries
 
-Four of the sample projects are authored as **real `.rackmate` files** and do triple duty as the
+Four of the sample projects are authored as **real `.rackpal` files** and do triple duty as the
 golden corpus, the performance fixtures and the screenshot source (AC-052). The catalog owes them
 the following, and a sample project that cannot be built from shipped templates alone is a catalog
 bug:

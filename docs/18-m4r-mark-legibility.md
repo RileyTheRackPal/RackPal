@@ -2,7 +2,7 @@
 
 **Board `#757`. DR-059 §11.58.5, DR-083 §11.82.1, AC-054.**
 
-This is the half of M4-R that no assertion in `rackmate_core` can perform. Everything else about the
+This is the half of M4-R that no assertion in `rackpal_core` can perform. Everything else about the
 seventeen marks is gated: they all resolve, they all draw, each is a distinct drawing, every seeded
 template reaches one, the ink flips on a dark accent, and the elevation emits exactly one mark per
 device. **None of that says whether a person can tell them apart.**
@@ -27,8 +27,8 @@ set against and it is the one most likely to fail.
 
 ## 1. Print an elevation
 
-1. Launch RackMate. `File ▸ Open` and choose `whole_house.rmpj` from
-   `apps/rackmate/assets/starters/`. It is the densest starter and it draws the widest spread of
+1. Launch RackPal. `File ▸ Open` and choose `whole_house.rmpj` from
+   `apps/rackpal/assets/starters/`. It is the densest starter and it draws the widest spread of
    marks.
 2. `File ▸ Export PDF…`. Save anywhere.
 3. Open the PDF, find the elevation sheet, and print **that page only**, at **100%** scale. Do not

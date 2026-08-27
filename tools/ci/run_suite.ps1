@@ -13,7 +13,7 @@
     which have teeth:
 
       * ONE COMMAND TO REPRODUCE LOCALLY. `pwsh -File tools/ci/run_suite.ps1
-        -Package packages/rackmate_core -Runner dart -Name rackmate_core`
+        -Package packages/rackpal_core -Runner dart -Name rackpal_core`
         does on this machine exactly what the agent does. A gate you cannot
         run by hand is a gate you debug by pushing commits.
       * REDIRECTION IS NOT AS SIMPLE AS `>`. `Out-File` and `>` apply a width
@@ -33,7 +33,7 @@
     somebody writes -- the precise failure the pipeline header warns about.
 
 .PARAMETER Package
-    Repo-relative directory of the package, e.g. packages/rackmate_core.
+    Repo-relative directory of the package, e.g. packages/rackpal_core.
 
 .PARAMETER Runner
     'dart' for pure-Dart packages, 'flutter' for the Flutter ones.
@@ -45,7 +45,7 @@
 .PARAMETER OutDir
     Where the .jsonl stream and .junit.xml land. Default build/ci at the repo
     root -- gitignored, and skipped by the tree sweep in
-    apps/rackmate/test/gitattributes_byte_exactness_test.dart.
+    apps/rackpal/test/gitattributes_byte_exactness_test.dart.
 
 .PARAMETER ExtraArgs
     Passed through to the runner. FOR LOCAL USE ONLY -- the pipeline passes
@@ -64,7 +64,7 @@
     moved, or whose `main()` came back empty after a bad merge. Green over
     nothing is the failure this repository keeps meeting in other forms --
     the "rule is not vacuous" test in
-    apps/rackmate/test/gitattributes_byte_exactness_test.dart exists for
+    apps/rackpal/test/gitattributes_byte_exactness_test.dart exists for
     exactly this reason -- and it is the one failure a passing test run
     cannot report on its own.
 
@@ -124,11 +124,11 @@ $ErrorActionPreference = 'Stop'
 # `port_import_test.dart`'s 27, ui 1201 -> 1213 for its 12. Which is the
 # whole instruction above and is cheap only while it stays a habit.
 $SuiteFloors = @{
-    'rackmate_core'   = 3358
-    'rackmate_text'   = 1
-    'rackmate_export' = 189
-    'rackmate_ui'     = 1213
-    'rackmate_app'    = 841
+    'rackpal_core'   = 3358
+    'rackpal_text'   = 1
+    'rackpal_export' = 189
+    'rackpal_ui'     = 1213
+    'rackpal_app'    = 841
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

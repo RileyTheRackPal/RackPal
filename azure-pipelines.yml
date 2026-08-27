@@ -1,5 +1,5 @@
 # ======================================================================
-# RackMate CI — Azure DevOps, Windows.
+# RackPal CI — Azure DevOps, Windows.
 # ======================================================================
 #
 # ----------------------------------------------------------------------
@@ -16,7 +16,7 @@
 # observed to FAIL before being restored:
 #
 #   * tools/ci/analyze_gate.ps1 — read 0 errors / 0 warnings / 195 infos and
-#     exited 0 when this was written. Planting one long line in apps/rackmate
+#     exited 0 when this was written. Planting one long line in apps/rackpal
 #     made it read 196 and exit 1; planting an unused local made it read a
 #     warning and exit 1; planting a type error made it read 2 errors and
 #     exit 1. Its `dart analyze --format=machine` output was also compared
@@ -43,7 +43,7 @@
 #     which produced a non-zero exit and a well-formed JUnit document
 #     carrying the diagnostic. The converter's case counts reproduce this
 #     repository's own published totals exactly for three of the five suites
-#     (rackmate_export 183, rackmate_text 1, apps/rackmate 664), which is
+#     (rackpal_export 183, rackpal_text 1, apps/rackpal 664), which is
 #     what makes the non-vacuity floors below trustworthy numbers.
 #   * The non-vacuity floor — a floor of 500 over a genuinely-passing
 #     183-test suite failed with exit 1, so "everything passed" cannot by
@@ -116,8 +116,8 @@
 # WHY WINDOWS, AND ONLY WINDOWS
 # ----------------------------------------------------------------------
 # `flutter build windows` is required, and several suites are Windows-
-# specific: the first-party IFileDialog channel in apps/rackmate/windows/
-# runner/, apps/rackmate/test/session/registry_claim_test.dart, and MAX_PATH
+# specific: the first-party IFileDialog channel in apps/rackpal/windows/
+# runner/, apps/rackpal/test/session/registry_claim_test.dart, and MAX_PATH
 # handling in the storage layer. docs/11 section 7 sketches a three-OS
 # matrix; that is a later question, and a green Linux job would not tell us
 # anything about the product, which ships as a Windows desktop application.
@@ -125,7 +125,7 @@
 # ----------------------------------------------------------------------
 # A CLEAN CHECKOUT IS ITSELF A GATE
 # ----------------------------------------------------------------------
-# During the persistence stage `*.rackmate` matched no `.gitattributes`
+# During the persistence stage `*.rackpal` matched no `.gitattributes`
 # rule, so a fresh clone on Windows would have checked the byte-exact
 # starter assets out as CRLF and failed CR-117 — a defect invisible on a
 # working tree that already had them right. `workspace: clean: all` plus
@@ -135,7 +135,7 @@
 # rather than assumed.
 #
 # THE SAME CLASS BIT AGAIN, DIFFERENTLY, WHILE THIS FILE WAS BEING WRITTEN.
-# `packages/rackmate_core/lib/rackmate_core.dart` was committed carrying
+# `packages/rackpal_core/lib/rackpal_core.dart` was committed carrying
 # `export 'src/commands/rack_commands.dart';` while that file was never
 # added to the index. Locally everything stayed green — the file is on the
 # disk, so the analyzer resolved it and all five suites passed — and a clone
@@ -185,7 +185,7 @@ variables:
 
   # Test streams and JUnit reports. Under build/ because that directory is
   # gitignored AND is skipped by the repo sweep in
-  # apps/rackmate/test/gitattributes_byte_exactness_test.dart — writing CI
+  # apps/rackpal/test/gitattributes_byte_exactness_test.dart — writing CI
   # output anywhere else makes that test report files no clone ever sees.
   ciOutDir: '$(Build.SourcesDirectory)/build/ci'
 
@@ -249,16 +249,16 @@ jobs:
           Write-Host "pwsh          : $pwshVersion"
           Write-Host ''
           Write-Host '-- how git resolved the byte-exact goldens --'
-          git check-attr text eol -- apps/rackmate/assets/starters/apartment.rackmate
-          git check-attr text eol -- packages/rackmate_core/test/fixtures/a_empty_project.rackmate.json
+          git check-attr text eol -- apps/rackpal/assets/starters/apartment.rackpal
+          git check-attr text eol -- packages/rackpal_core/test/fixtures/a_empty_project.rackpal.json
           # Created here so the artifact-publish steps at the end always have
           # a directory to point at, even when the run died before any suite
           # wrote into it.
           New-Item -ItemType Directory -Path '$(ciOutDir)' -Force | Out-Null
         displayName: 'Checkout forensics'
         # RECORDING, NOT GATING. The assertion lives in
-        # apps/rackmate/test/gitattributes_byte_exactness_test.dart, which
-        # runs in the apps/rackmate suite below and cross-checks its own
+        # apps/rackpal/test/gitattributes_byte_exactness_test.dart, which
+        # runs in the apps/rackpal suite below and cross-checks its own
         # reader against real `git check-attr`. This step exists so that when
         # that test fails, the log already says what the agent's git was
         # configured to do.
@@ -414,35 +414,35 @@ jobs:
       # floor recorded for that suite name in `$SuiteFloors` in
       # tools/ci/run_suite.ps1 — ONE place, so this file and
       # tools/ci/run_local.ps1 cannot drift apart on the numbers. Floors as
-      # measured on the tree this file ships with: rackmate_core 976,
-      # rackmate_ui 382, apps/rackmate 664, rackmate_export 183,
-      # rackmate_text 1 = 2206. THE NUMBERS ARE NOT COPIED HERE TO BE
+      # measured on the tree this file ships with: rackpal_core 976,
+      # rackpal_ui 382, apps/rackpal 664, rackpal_export 183,
+      # rackpal_text 1 = 2206. THE NUMBERS ARE NOT COPIED HERE TO BE
       # AUTHORITATIVE — the script is — and they are restated only so a
       # reader of this file knows the order of magnitude. Going ABOVE a
       # floor is logged and nothing more; tests going up is the point, and a
       # gate that nags on every good day is ignored on the bad one.
       - pwsh: |
-          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackmate_core -Runner dart -Name rackmate_core -OutDir '$(ciOutDir)'
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_core -Runner dart -Name rackpal_core -OutDir '$(ciOutDir)'
           exit $LASTEXITCODE
-        displayName: 'Test: rackmate_core (pure Dart)'
+        displayName: 'Test: rackpal_core (pure Dart)'
         condition: succeededOrFailed()
 
       - pwsh: |
-          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackmate_text -Runner dart -Name rackmate_text -OutDir '$(ciOutDir)'
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_text -Runner dart -Name rackpal_text -OutDir '$(ciOutDir)'
           exit $LASTEXITCODE
-        displayName: 'Test: rackmate_text (pure Dart)'
+        displayName: 'Test: rackpal_text (pure Dart)'
         condition: succeededOrFailed()
 
       - pwsh: |
-          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackmate_export -Runner dart -Name rackmate_export -OutDir '$(ciOutDir)'
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_export -Runner dart -Name rackpal_export -OutDir '$(ciOutDir)'
           exit $LASTEXITCODE
-        displayName: 'Test: rackmate_export (pure Dart)'
+        displayName: 'Test: rackpal_export (pure Dart)'
         condition: succeededOrFailed()
 
       - pwsh: |
-          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackmate_ui -Runner flutter -Name rackmate_ui -OutDir '$(ciOutDir)'
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_ui -Runner flutter -Name rackpal_ui -OutDir '$(ciOutDir)'
           exit $LASTEXITCODE
-        displayName: 'Test: rackmate_ui (Flutter)'
+        displayName: 'Test: rackpal_ui (Flutter)'
         condition: succeededOrFailed()
 
       # Carries the load-bearing source gates: the byte-exactness /
@@ -450,9 +450,9 @@ jobs:
       # RULE 15, baseline parity (CR-081/CR-086), the starter byte-exactness
       # assertions and the no-print gate.
       - pwsh: |
-          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package apps/rackmate -Runner flutter -Name rackmate_app -OutDir '$(ciOutDir)'
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package apps/rackpal -Runner flutter -Name rackpal_app -OutDir '$(ciOutDir)'
           exit $LASTEXITCODE
-        displayName: 'Test: apps/rackmate (Flutter)'
+        displayName: 'Test: apps/rackpal (Flutter)'
         condition: succeededOrFailed()
 
       # ==================================================================
@@ -466,7 +466,7 @@ jobs:
           testResultsFiles: '**/*.junit.xml'
           searchFolder: '$(ciOutDir)'
           mergeTestResults: true
-          testRunTitle: 'RackMate — Windows — Flutter $(flutterVersion)'
+          testRunTitle: 'RackPal — Windows — Flutter $(flutterVersion)'
           # A SECOND, INDEPENDENT VERDICT. The suite steps above already
           # failed the job on a non-zero runner exit; this fails it again if
           # the published XML contains a failure the step somehow did not.
@@ -502,12 +502,12 @@ jobs:
           }
           exit $code
         displayName: 'Build Windows release'
-        workingDirectory: 'apps/rackmate'
+        workingDirectory: 'apps/rackpal'
         condition: succeededOrFailed()
 
       # Asserts things about what the build ACTUALLY PRODUCED, which nothing
       # in this repository has ever looked at —
-      # apps/rackmate/test/flutter_dependency_test.dart reads the dependency
+      # apps/rackpal/test/flutter_dependency_test.dart reads the dependency
       # graph, the inputs. dartjni.dll shipped for weeks in the gap between
       # the two.
       - pwsh: |
@@ -522,10 +522,10 @@ jobs:
         inputs:
           # Absolute: task inputs are not all resolved against the same
           # relative root, and this one is worth not guessing about.
-          rootFolderOrFile: '$(Build.SourcesDirectory)/apps/rackmate/build/windows/x64/runner/Release'
+          rootFolderOrFile: '$(Build.SourcesDirectory)/apps/rackpal/build/windows/x64/runner/Release'
           includeRootFolder: false
           archiveType: 'zip'
-          archiveFile: '$(Build.ArtifactStagingDirectory)/rackmate-windows-x64-$(Build.BuildNumber).zip'
+          archiveFile: '$(Build.ArtifactStagingDirectory)/rackpal-windows-x64-$(Build.BuildNumber).zip'
           replaceExistingArchive: true
 
       # THE FIRST STEP TOWARD THE M2 PORTABLE BUILD (task #5). This is a ZIP
@@ -536,6 +536,6 @@ jobs:
         displayName: 'Publish Windows release artifact'
         condition: and(succeededOrFailed(), eq(variables['windowsBuildProduced'], 'true'))
         inputs:
-          targetPath: '$(Build.ArtifactStagingDirectory)/rackmate-windows-x64-$(Build.BuildNumber).zip'
-          artifact: 'rackmate-windows-x64'
+          targetPath: '$(Build.ArtifactStagingDirectory)/rackpal-windows-x64-$(Build.BuildNumber).zip'
+          artifact: 'rackpal-windows-x64'
           publishLocation: 'pipeline'

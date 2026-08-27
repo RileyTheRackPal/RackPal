@@ -1,4 +1,4 @@
-I'll research this thoroughly. Let me load the web tools and start fanning out searches.# RackMate, Architecture Research Report
+I'll research this thoroughly. Let me load the web tools and start fanning out searches.# RackPal, Architecture Research Report
 **Dart 3.12 / Flutter desktop-first document editor**
 Research date: 2026-07-18. Versions verified against pub.dev on this date.
 
@@ -37,7 +37,7 @@ ProviderScope (one per open document → free multi-document + future multi-wind
      └── Listenables:  docRevision · selectionNotifier · hoverNotifier · viewportNotifier
 ```
 
-- The document lives in a **plain-Dart `DocumentController`** in `rackmate_core`. Riverpod holds the controller, not the document.
+- The document lives in a **plain-Dart `DocumentController`** in `rackpal_core`. Riverpod holds the controller, not the document.
 - Riverpod handles: open-document lifetime, disposal, DI of file services, and derived read-models the *chrome* needs (window title, dirty flag, wiring-schedule table, validation errors). Use `ref.watch(p.select(...))` for those, they're cheap and rebuild rarely.
 - The **canvas never watches a provider**. It reads the controller once and subscribes `CustomPainter(repaint: ...)` to narrow `Listenable`s.
 
@@ -73,7 +73,7 @@ Dart packages: [`undo` 1.6.0](https://pub.dev/packages/undo) (rodydavis, `Change
 
 ### Recommendation
 
-**Hand-roll it in `rackmate_core`. ~200 lines. Do not take a dependency.**
+**Hand-roll it in `rackpal_core`. ~200 lines. Do not take a dependency.**
 
 ```dart
 abstract class Command {
@@ -140,7 +140,7 @@ Rationale: full immutability in Dart without optics means `doc.copyWith(devices:
 
 **Where to use freezed:** the small, genuinely-immutable leaf types where `==`/`hashCode` matter, and only if you want it. Honestly, for ~15 value types, `sealed class` + `const` constructors + a hand-written `==` (or a `records`-based `_key` getter) is competitive and costs you zero build time. Dart 3's sealed classes + exhaustive `switch` cover the union-type use case that was freezed's killer feature, natively.
 
-**My opinionated call: start RackMate with zero `build_runner`.** Hand-write the ~15 value types and the JSON codecs (see §4 for why hand-written JSON is *actively better* here). If the model triples in size and the boilerplate hurts, add freezed then, retrofitting freezed onto a plain class is a mechanical change, whereas ripping codegen out later is not. This also keeps `rackmate_core` a dependency-light pure-Dart package with sub-second test cycles, which is worth a lot over a multi-year project.
+**My opinionated call: start RackPal with zero `build_runner`.** Hand-write the ~15 value types and the JSON codecs (see §4 for why hand-written JSON is *actively better* here). If the model triples in size and the boilerplate hurts, add freezed then, retrofitting freezed onto a plain class is a mechanical change, whereas ripping codegen out later is not. This also keeps `rackpal_core` a dependency-light pure-Dart package with sub-second test cycles, which is worth a lot over a multi-year project.
 
 ---
 
@@ -165,7 +165,7 @@ This is a contrarian call, so the reasoning: generated JSON *couples your on-dis
 If you want codegen anyway, use **`json_serializable` 6.14.0** (Google-maintained, huge install base) over `dart_mappable`, but then introduce an explicit DTO layer so the generated classes are *format* classes, separate from domain classes. That's more code than just hand-writing it.
 
 ```dart
-// rackmate_core/lib/src/persistence/
+// rackpal_core/lib/src/persistence/
 const kCurrentSchemaVersion = 1;
 
 typedef JsonMap = Map<String, dynamic>;
@@ -177,7 +177,7 @@ const migrations = <int, Migration>{
 
 JsonMap migrateToCurrent(JsonMap raw) {
   var v = raw['schemaVersion'] as int?
-      ?? (throw FormatException('Not a RackMate document'));
+      ?? (throw FormatException('Not a RackPal document'));
   if (v > kCurrentSchemaVersion) throw NewerSchemaException(v);
   while (v < kCurrentSchemaVersion) {
     raw = migrations[v]!(raw);
@@ -189,10 +189,10 @@ JsonMap migrateToCurrent(JsonMap raw) {
 
 Rules to commit to on day one:
 
-1. **`schemaVersion` (int) + `appVersion` (string, diagnostics only) + `generator: "RackMate"` magic key** at the root. The magic key lets you reject foreign JSON with a good error instead of a null-cast crash.
+1. **`schemaVersion` (int) + `appVersion` (string, diagnostics only) + `generator: "RackPal"` magic key** at the root. The magic key lets you reject foreign JSON with a good error instead of a null-cast crash.
 2. **Migrations are append-only and frozen once released.** A migration function is a historical record; editing one corrupts users' files.
-3. **Golden fixture corpus.** `test/fixtures/v1_sample.rackmate`, `v2_sample.rackmate`, … Every release, a test opens *every* historical fixture and asserts it migrates to a valid current document. This is the single highest-value test in the project. Add a fixture the day each schema version ships.
-4. **Forward compatibility: preserve unknown fields.** Each entity keeps `Map<String, dynamic> _unknown` for keys it didn't recognize, and re-emits them on save. A v1.0 app opening a v1.4 file then round-trips without destroying the newer data. Combine with a **`minReaderVersion`** field: bump it only for genuinely breaking changes; if `minReaderVersion > kCurrentSchemaVersion`, refuse to open with "This file was made with a newer RackMate." Otherwise open read-only with a warning banner. This two-field scheme (`schemaVersion` + `minReaderVersion`) is how you get both "old app opens new file" and "old app can't silently corrupt new file."
+3. **Golden fixture corpus.** `test/fixtures/v1_sample.rackpal`, `v2_sample.rackpal`, … Every release, a test opens *every* historical fixture and asserts it migrates to a valid current document. This is the single highest-value test in the project. Add a fixture the day each schema version ships.
+4. **Forward compatibility: preserve unknown fields.** Each entity keeps `Map<String, dynamic> _unknown` for keys it didn't recognize, and re-emits them on save. A v1.0 app opening a v1.4 file then round-trips without destroying the newer data. Combine with a **`minReaderVersion`** field: bump it only for genuinely breaking changes; if `minReaderVersion > kCurrentSchemaVersion`, refuse to open with "This file was made with a newer RackPal." Otherwise open read-only with a warning banner. This two-field scheme (`schemaVersion` + `minReaderVersion`) is how you get both "old app opens new file" and "old app can't silently corrupt new file."
 5. **Enums are strings, never ordinals.** `"hdmi"`, not `3`. Unknown enum value → fall back to an `unknown(raw)` sealed variant that round-trips, don't throw. This matters enormously for `CableType`, which will grow.
 
 ---
@@ -217,7 +217,7 @@ Rules to commit to on day one:
 
 **`file_selector` 1.1.0.** It's the flutter.dev package, it uses native OS APIs rather than shelling out, and desktop is exactly where that difference bites. `file_picker`'s popularity is driven by mobile.
 
-**Container format:** ship v1 as **plain, pretty-printed, key-sorted JSON**: `.rackmate` is a text file. Benefits: users can diff it in git, you can eyeball bug reports, and support requests become readable. Pretty-print + deterministic key order makes the file diff-friendly, which matters more than the ~3× size.
+**Container format:** ship v1 as **plain, pretty-printed, key-sorted JSON**: `.rackpal` is a text file. Benefits: users can diff it in git, you can eyeball bug reports, and support requests become readable. Pretty-print + deterministic key order makes the file diff-friendly, which matters more than the ~3× size.
 
 But **hide it behind an interface from commit one**, because the moment someone embeds a device faceplate PNG you need a zip:
 
@@ -231,7 +231,7 @@ abstract class DocumentCodec {
 // dispatch — the extension never changes, old files keep opening forever.
 ```
 
-**Atomic saves, always:** write to `foo.rackmate.tmp` in the same directory → `flush()` → `rename()` over the target. A crash mid-save must never destroy the previous good file. Optionally keep `foo.rackmate.bak` (previous version), cheap insurance, users love it.
+**Atomic saves, always:** write to `foo.rackpal.tmp` in the same directory → `flush()` → `rename()` over the target. A crash mid-save must never destroy the previous good file. Optionally keep `foo.rackpal.bak` (previous version), cheap insurance, users love it.
 
 **Dirty tracking via revision counters, not equality:**
 ```dart
@@ -241,7 +241,7 @@ bool get isDirty => revision != lastSavedRevision;
 ```
 Never compare documents for equality to detect dirtiness, it's O(document) on every keystroke and gets subtly wrong with floats. Note this gives correct behaviour for free when the user undoes back to the saved state… *if* you make undo restore the revision rather than increment it. Decide deliberately; I'd restore (undoing back to the save point marks the doc clean, matches user intuition).
 
-**Autosave / crash recovery:** every 30s *and* on window blur, if dirty, write a recovery snapshot to `getApplicationSupportDirectory()/recovery/<docUuid>.rackmate` plus a small sidecar recording the real path and revision. Delete on clean save and on clean exit. On startup, any surviving recovery file ⇒ offer "RackMate closed unexpectedly. Recover *Smith Residence Rack 2*?" Do **not** autosave over the user's file, CAD users expect explicit saves.
+**Autosave / crash recovery:** every 30s *and* on window blur, if dirty, write a recovery snapshot to `getApplicationSupportDirectory()/recovery/<docUuid>.rackpal` plus a small sidecar recording the real path and revision. Delete on clean save and on clean exit. On startup, any surviving recovery file ⇒ offer "RackPal closed unexpectedly. Recover *Smith Residence Rack 2*?" Do **not** autosave over the user's file, CAD users expect explicit saves.
 
 **Close interception:**
 ```dart
@@ -300,27 +300,27 @@ With those five, adding last-write-wins-per-field sync later is a weekend; addin
 **Use pub workspaces. Skip melos until it earns its place** (probably when you have >4 packages or start publishing them). For a 2–3 package repo, melos is orchestration you don't need yet, and it's easy to add later.
 
 ```
-rackmate/
+rackpal/
   pubspec.yaml                         # workspace root: workspace: [packages/*, apps/*]
   packages/
-    rackmate_core/                     # PURE DART — no flutter dependency
+    rackpal_core/                     # PURE DART — no flutter dependency
       lib/src/model/                   #   entities, value objects, flat maps
       lib/src/commands/                #   Command, Transaction, UndoStack
       lib/src/persistence/             #   codec, schemaVersion, migration chain
       lib/src/geometry/                #   RU math, port coordinates, orthogonal routing
       lib/src/netlist/                 #   wiring schedule derivation, DRC/validation
       test/                            #   dart test — sub-second, no flutter
-      test/fixtures/                   #   v1_sample.rackmate, v2_sample.rackmate, ...
-    rackmate_ui/                       # Flutter: painters, widgets, theme, cable colours
+      test/fixtures/                   #   v1_sample.rackpal, v2_sample.rackpal, ...
+    rackpal_ui/                       # Flutter: painters, widgets, theme, cable colours
       test/goldens/
   apps/
-    rackmate_app/                      # Flutter desktop shell: menus, windows, file dialogs
+    rackpal_app/                      # Flutter desktop shell: menus, windows, file dialogs
       integration_test/
 ```
 
-The hard rule that makes this pay off: **`rackmate_core` must not import `package:flutter`.** Not for `Offset`, not for `Color`, not for `Rect`. Define your own `Pt`, `Rgb`, `Box` (they're 10 lines each) with adapters in `rackmate_ui`. The payoff is that your entire model, undo stack, migration chain, orthogonal wire router and netlist derivation test in `dart test` in under a second with no widget tree; you will run those tests a thousand times.
+The hard rule that makes this pay off: **`rackpal_core` must not import `package:flutter`.** Not for `Offset`, not for `Color`, not for `Rect`. Define your own `Pt`, `Rgb`, `Box` (they're 10 lines each) with adapters in `rackpal_ui`. The payoff is that your entire model, undo stack, migration chain, orthogonal wire router and netlist derivation test in `dart test` in under a second with no widget tree; you will run those tests a thousand times.
 
-Inside `rackmate_app`, **feature-first** (`features/rack_canvas/`, `features/device_builder/`, `features/wiring/`, `features/export_pdf/`, `features/library/`). Layer-first collapses at this size.
+Inside `rackpal_app`, **feature-first** (`features/rack_canvas/`, `features/device_builder/`, `features/wiring/`, `features/export_pdf/`, `features/library/`). Layer-first collapses at this size.
 
 **Testing strategy, in priority order:**
 1. **Migration golden corpus** (§4.3), highest value per line of test code in the project.
@@ -352,7 +352,7 @@ Inside `rackmate_app`, **feature-first** (`features/rack_canvas/`, `features/dev
 ```
 Every item dispatches an `Intent` through `Actions`, so the menu item, the keyboard shortcut, the toolbar button and the context menu all funnel to one `Action`, with one enablement rule. This also makes menu state (greyed-out Undo, checked "Show Rear View") derive automatically from the document, and it's the only structure that makes a later macOS port cheap.
 
-**Windowing:** `window_manager` 0.5.2 for title (`Smith Residence — RackMate` with a `•` dirty marker), size/position restore across launches, minimum window size (set one, a rack editor below ~1000px is unusable), and `setPreventClose` for the save prompt.
+**Windowing:** `window_manager` 0.5.2 for title (`Smith Residence — RackPal` with a `•` dirty marker), size/position restore across launches, minimum window size (set one, a rack editor below ~1000px is unusable), and `setPreventClose` for the save prompt.
 
 **Multi-window:** design for it, don't build it. The one thing that matters is **no global singletons for document state**: one `ProviderScope` per document (§1) means "open a second document" is already correct in-process, and becomes multi-window mechanically when the API lands. Ship v1 as single-window, possibly with in-app document tabs.
 
@@ -363,7 +363,7 @@ Every item dispatches an `Intent` through `Actions`, so the menu item, the keybo
 - **File drag-and-drop onto the window** needs [`desktop_drop`](https://pub.dev/packages/desktop_drop); not built in.
 - **Right-click** needs `Listener`/`GestureDetector` with `PointerDeviceKind` checks; `onSecondaryTap` exists but pair it with hover cursors (`MouseRegion` + `SystemMouseCursors.resizeUpDown` etc.), desktop users read the cursor to know what's draggable.
 - **Trackpad/scroll semantics:** handle `PointerScrollEvent` for pan, `Ctrl+scroll` for zoom, and `PointerScaleEvent` for trackpad pinch. Getting zoom-to-cursor right (zoom anchored at the pointer, not the viewport centre) is table stakes and is easy to get subtly wrong.
-- **PDF export** ([`pdf` 3.13.0](https://pub.dev/packages/pdf)): its `pw.Widget` layout system covers the wiring *schedule* table well (`MultiPage` auto-paginates with repeating headers). For the *diagram*, do **not** re-implement your painter in `pw` widgets, render your canvas geometry to vector via `pw.CustomPaint`/path primitives from the same `rackmate_core` geometry code, so the PDF and the screen can never diverge. Rasterizing the canvas to a PNG and embedding it is the tempting shortcut and it produces unprofessional output for a document an installer will print at A3 and mark up by hand.
+- **PDF export** ([`pdf` 3.13.0](https://pub.dev/packages/pdf)): its `pw.Widget` layout system covers the wiring *schedule* table well (`MultiPage` auto-paginates with repeating headers). For the *diagram*, do **not** re-implement your painter in `pw` widgets, render your canvas geometry to vector via `pw.CustomPaint`/path primitives from the same `rackpal_core` geometry code, so the PDF and the screen can never diverge. Rasterizing the canvas to a PNG and embedding it is the tempting shortcut and it produces unprofessional output for a document an installer will print at A3 and mark up by hand.
 
 ---
 
@@ -377,7 +377,7 @@ Every item dispatches an `Intent` through `Actions`, so the menu item, the keybo
 | 4 | Serialization | **Hand-written** `toJson`/`fromJson`: the file format is the durable asset, don't couple it to class shape. `schemaVersion` + `minReaderVersion` + append-only pure-JSON migration chain + **golden fixture corpus per version** + unknown-field preservation + string enums |
 | 5 | File I/O | `file_selector` **1.1.0** (flutter.dev). Plain JSON v1 behind a `DocumentCodec` interface (→ `archive` 4.0.9 zip later, sniffed by magic bytes). Atomic temp+rename. Revision-counter dirty tracking. `window_manager` 0.5.2 `setPreventClose`. Autosave to a separate recovery dir, never over the user's file |
 | 6 | IDs / cloud | **UUID v7** (`uuid` 4.6.0). No CRDT now. But now: flat `Map<Uuid,Entity>` (not nested), fractional-index ordering strings, per-entity `updatedAt`/`updatedBy`, doc `revision`, and **tombstones for deletes** |
-| 7 | Structure | Pub workspaces (skip melos for now). `rackmate_core` **must not import flutter**. Feature-first in the app. Test priority: migration goldens → command apply/revert round-trip property tests → serialization round-trip → geometry → painter goldens → integration |
+| 7 | Structure | Pub workspaces (skip melos for now). `rackpal_core` **must not import flutter**. Feature-first in the app. Test priority: migration goldens → command apply/revert round-trip property tests → serialization round-trip → geometry → painter goldens → integration |
 | 8 | Windows | Material `MenuBar` (PlatformMenuBar is macOS-only); menu as a data model dispatching `Intent`s through `Actions`. Multi-window not ready, one `ProviderScope` per document keeps the door open. No inline canvas text editing in v1. Geometry in document units, not pixels. Vector PDF, not rasterized |
 
 **Sources:**

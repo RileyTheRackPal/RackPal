@@ -1,4 +1,4 @@
-# RackMate: Rack Elevation Editor Specification
+# RackPal: Rack Elevation Editor Specification
 
 **Document scope:** the view where a user creates racks, sets RU height, and places occupants. Wiring/schematic view is out of scope except where the elevation must expose connection state.
 
@@ -12,7 +12,7 @@
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ ≡  RackMate   Project: Hillcrest Residence*                          [Front|Rear|Both]  ⌕  ⚙ │ 44px  Toolbar
+│ ≡  RackPal   Project: Hillcrest Residence*                          [Front|Rear|Both]  ⌕  ⚙ │ 44px  Toolbar
 ├────────────┬───────────────────────────────────────────────────────────┬─────────────────────┤
 │ PALETTE    │  RACK CANVAS                                              │ INSPECTOR           │
 │ 280px      │  flex                                                     │ 320px               │
@@ -259,7 +259,7 @@ Dragging is not the fastest path and shouldn't be the only one.
 - Commit on pointer-up = one `MoveDeviceCommand`. `Esc` mid-drag reverts.
 - **Modifiers during move:**
   - `Ctrl` (drag start) → **duplicate**: original stays at full opacity, ghost is a copy, RefDes auto-increments on drop.
-  - `Alt` (held at drop) → **insert & push**: occupants above the drop point shift up by the device's height. If pushing overflows the rack top, RackMate tries pushing *down* instead; if neither fits, the drop is invalid with `Insert would overflow rack by 2U`. During `Alt`, the devices that will move are drawn with a 1 px dashed outline at their *destination* positions, so the consequence is visible before commit.
+  - `Alt` (held at drop) → **insert & push**: occupants above the drop point shift up by the device's height. If pushing overflows the rack top, RackPal tries pushing *down* instead; if neither fits, the drop is invalid with `Insert would overflow rack by 2U`. During `Alt`, the devices that will move are drawn with a 1 px dashed outline at their *destination* positions, so the consequence is visible before commit.
   - `Ctrl+Shift` (held at drop, over a device of identical U height) → **swap**: both devices show a ↔ badge and exchange positions.
 - **Face change** is not a drag gesture (dragging between two mirrored columns in Both view is ambiguous and error-prone). It is `Shift+F` on the selection, or the Face field in the inspector. The device keeps its U.
 
@@ -289,7 +289,7 @@ The **insertion caret** is a first-class object: a 2 px accent line at a U bound
 
 | Command | Behaviour |
 |---|---|
-| `Ctrl+C` | Copies selection to an internal clipboard **and** as JSON to the system clipboard (so it pastes into another RackMate window, and is inspectable/diffable). Relative U offsets within the selection are preserved. |
+| `Ctrl+C` | Copies selection to an internal clipboard **and** as JSON to the system clipboard (so it pastes into another RackPal window, and is inspectable/diffable). Relative U offsets within the selection are preserved. |
 | `Ctrl+X` | Cut. Removes from rack; **wiring is preserved on the clipboard** and restored on paste. |
 | `Ctrl+V` | Pastes into the focused rack at the **insertion caret**, or if no caret, at the lowest free region that fits the whole group. If the group cannot fit contiguously, paste offers `Place what fits (3 of 5) — remainder to Staging Bin` in a toast with an `Undo` action. |
 | `Ctrl+Shift+V` | **Paste in place**: same U positions as the source, into the focused rack. Invalid if occupied; the toast names the blockers. |
@@ -688,7 +688,7 @@ A **Labels** toolbar cycle (`L`) rotates the primary label through `RefDes` → 
 | Key | Action |
 |---|---|
 | `Ctrl+N` | New project |
-| `Ctrl+O` | Open `.rackmate` |
+| `Ctrl+O` | Open `.rackpal` |
 | `Ctrl+S` / `Ctrl+Shift+S` | Save / Save as |
 | `Ctrl+P` | Export PDF (diagram + schedule) |
 | `Ctrl+Z` | Undo |
@@ -787,7 +787,7 @@ No project. A centered start card, not an empty canvas:
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                                                              │
-│                      ▦  RackMate                             │
+│                      ▦  RackPal                             │
 │              Design racks. Get a real schedule.              │
 │                                                              │
 │   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
@@ -929,7 +929,7 @@ For **canvas-painted** content (rails, ruler, 0U bars, snap overlays), `CustomPa
 
 ### 10.3 The outline tree: the primary AT surface
 
-A canvas is inherently visual, and heroic canvas semantics are a poor substitute for a real structure. RackMate ships a **Rack Outline** panel (`Ctrl+Alt+3`, a real Flutter `TreeView` of standard widgets) that is a complete, editable, screen-reader-native mirror of the model:
+A canvas is inherently visual, and heroic canvas semantics are a poor substitute for a real structure. RackPal ships a **Rack Outline** panel (`Ctrl+Alt+3`, a real Flutter `TreeView` of standard widgets) that is a complete, editable, screen-reader-native mirror of the model:
 
 ```
 ▾ Hillcrest Residence

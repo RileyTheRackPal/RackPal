@@ -1,0 +1,366 @@
+{
+  "appVersion": "0.1.0+build.42",
+  "createdAt": "2026-07-18T09:14:02.113847Z",
+  "document": {
+    "ackedFindings": {
+      "0190e3c1-f2b0-7f65-9056-7d4192c3e645": {
+        "at": "2026-07-18T15:11:03.000Z",
+        "by": "rriley",
+        "demotedTo": "advisory",
+        "id": "0190e3c1-f2b0-7f65-9056-7d4192c3e645",
+        "meta": {
+          "createdAt": "2026-07-18T09:30:00.000Z",
+          "localRevision": 4,
+          "unknown": {},
+          "updatedAt": "2026-07-18T16:41:55.000Z",
+          "updatedBy": "rriley"
+        },
+        "reason": "Existing condition; corrected in Phase 2 under change order CO-3.",
+        "ruleId": "SIG-001",
+        "targetEntityId": "0190e3c1-cf80-75bb-96ac-d3b7ef294cab",
+        "targetFingerprint": "SIG-001:W002:6d2bef45/7e3cb056"
+      }
+    },
+    "circuits": {},
+    "devices": {
+      "0190e3c1-ad60-7e44-8f35-6c407eb2d534": {
+        "designator": "MTX-1",
+        "designatorLocked": false,
+        "designatorWatermark": 0,
+        "id": "0190e3c1-ad60-7e44-8f35-6c407eb2d534",
+        "kind": "rackDevice",
+        "lifecycleStatus": "new",
+        "meta": {
+          "createdAt": "2026-07-18T09:30:00.000Z",
+          "localRevision": 4,
+          "unknown": {},
+          "updatedAt": "2026-07-18T16:41:55.000Z",
+          "updatedBy": "rriley"
+        },
+        "name": "HDMI Matrix",
+        "overrides": {},
+        "placement": {
+          "chassisRotation": "normal",
+          "face": "front",
+          "locked": false,
+          "rackId": "0190e3c1-9c50-7d33-9e24-5b3f6da1c423",
+          "ruIndex": 9,
+          "spanTwelfths": 12,
+          "startTwelfth": 0,
+          "type": "rail"
+        },
+        "templateRef": {
+          "contentHash": "sha256:1f4c8b2e9a0d4471bc35e6f708a19d2c5b4e37f10a9c8d6e2b1f0a3c7d5e9b04",
+          "templateId": "tpl.generic.hdmi_matrix_4x4",
+          "version": 2
+        }
+      },
+      "0190e3c1-ad63-7177-9268-9f73abe50867": {
+        "designator": "STR-1",
+        "designatorLocked": false,
+        "designatorWatermark": 0,
+        "id": "0190e3c1-ad63-7177-9268-9f73abe50867",
+        "kind": "structure",
+        "lifecycleStatus": "new",
+        "meta": {
+          "createdAt": "2026-07-18T09:30:00.000Z",
+          "localRevision": 4,
+          "unknown": {},
+          "updatedAt": "2026-07-18T16:41:55.000Z",
+          "updatedBy": "rriley"
+        },
+        "name": "Rough-In - First Floor",
+        "overrides": {},
+        "placement": {
+          "mountNote": "Structured media enclosure, hallway",
+          "type": "offRack"
+        },
+        "structureBodyId": "0190e3c1-be70-7288-8379-a084bcf61978",
+        "templateRef": {
+          "contentHash": "sha256:0d5e91af73c2b846e10f7d3a95c6b280e4f1a7d93b05c8e26af14d7302b9c651",
+          "templateId": "tpl.system.structure",
+          "version": 1
+        }
+      }
+    },
+    "info": {
+      "projectName": "Untitled Project"
+    },
+    "links": {
+      "0190e3c1-cf80-75bb-96ac-d3b7ef294cab": {
+        "breakouts": [],
+        "conductors": [
+          {
+            "colorCode": "T568B",
+            "from": {
+              "portId": "0a4286e6-e011-5ab5-a2ee-e91d438d6e27",
+              "type": "port"
+            },
+            "role": "",
+            "to": {
+              "description": "LR TV wall plate, north wall, 60 in AFF",
+              "intendedTermination": "keystone",
+              "serviceLoopNm": 914400000,
+              "type": "place"
+            }
+          }
+        ],
+        "cutLengthNm": 19812000000,
+        "designator": "W001",
+        "designatorLocked": true,
+        "gaugeAwg": 23,
+        "id": "0190e3c1-cf80-75bb-96ac-d3b7ef294cab",
+        "inlineAdapters": [],
+        "jacket": "cmr",
+        "jacketColorId": "jc.blue",
+        "jacketColorPulledId": "jc.yellow",
+        "lifecycleStatus": "new",
+        "linkClass": "fieldCable",
+        "media": "media.cat6a_futp",
+        "meta": {
+          "createdAt": "2026-07-18T09:30:00.000Z",
+          "localRevision": 4,
+          "unknown": {},
+          "updatedAt": "2026-07-18T16:41:55.000Z",
+          "updatedBy": "rriley"
+        },
+        "order": "a0",
+        "roughInStatus": "pulled",
+        "routedLengthNm": 18288000000,
+        "services": [
+          {
+            "conductorRoles": [
+              ""
+            ],
+            "id": "svc-1",
+            "netId": "0190e3c1-d090-79ff-9af0-17fb3c6d80ef",
+            "signalFamily": "structure.undetermined"
+          }
+        ],
+        "shielded": true,
+        "structureOrigin": {
+          "fieldLabel": "LR-TV-1A",
+          "mountHeightAffNm": 1524000000,
+          "mountSurface": "wall",
+          "outletId": "0190e3c1-be71-7399-948a-b195cd072a89",
+          "rackLabel": "1A-A12",
+          "structureBodyId": "0190e3c1-be70-7288-8379-a084bcf61978",
+          "terminationField": "keystone",
+          "wall": "n"
+        }
+      }
+    },
+    "locations": {},
+    "meta": {
+      "createdAt": "2026-07-18T09:30:00.000Z",
+      "localRevision": 4,
+      "unknown": {},
+      "updatedAt": "2026-07-18T16:41:55.000Z",
+      "updatedBy": "rriley"
+    },
+    "nets": {
+      "0190e3c1-d090-79ff-9af0-17fb3c6d80ef": {
+        "id": "0190e3c1-d090-79ff-9af0-17fb3c6d80ef",
+        "isImplicit": true,
+        "meta": {
+          "createdAt": "2026-07-18T09:30:00.000Z",
+          "localRevision": 4,
+          "unknown": {},
+          "updatedAt": "2026-07-18T16:41:55.000Z",
+          "updatedBy": "rriley"
+        },
+        "name": "",
+        "signalFamily": "structure.undetermined",
+        "topology": "p2p"
+      }
+    },
+    "notes": {},
+    "outlets": {
+      "0190e3c1-be71-7399-948a-b195cd072a89": {
+        "designation": "LR-TV-1",
+        "id": "0190e3c1-be71-7399-948a-b195cd072a89",
+        "meta": {
+          "createdAt": "2026-07-18T09:30:00.000Z",
+          "localRevision": 4,
+          "unknown": {},
+          "updatedAt": "2026-07-18T16:41:55.000Z",
+          "updatedBy": "rriley"
+        },
+        "mountHeightAffNm": 1524000000,
+        "mountSurface": "wall",
+        "order": "a0",
+        "structureBodyId": "0190e3c1-be70-7288-8379-a084bcf61978",
+        "tia570Grade": "TIA-570-D Grade 2",
+        "wall": "n"
+      }
+    },
+    "pathways": {},
+    "ports": {
+      "0a4286e6-e011-5ab5-a2ee-e91d438d6e27": {
+        "designator": "J05",
+        "deviceId": "0190e3c1-ad60-7e44-8f35-6c407eb2d534",
+        "id": "0a4286e6-e011-5ab5-a2ee-e91d438d6e27",
+        "orphaned": false,
+        "overrides": {},
+        "reserved": false,
+        "templatePortKey": "hdmi_out_1",
+        "unknown": {
+          "aNestedFutureBlob": {
+            "a": 2,
+            "z": 1
+          },
+          "zPlannedFutureField": 42
+        }
+      }
+    },
+    "racks": {
+      "0190e3c1-9c50-7d33-9e24-5b3f6da1c423": {
+        "designator": "RK-1",
+        "formFactor": "floorEnclosure",
+        "fullHoleRail": false,
+        "groundBarPresent": false,
+        "hasFrontDoor": false,
+        "hasRearDoor": false,
+        "heightU": 12,
+        "id": "0190e3c1-9c50-7d33-9e24-5b3f6da1c423",
+        "isSwingFrame": false,
+        "meta": {
+          "createdAt": "2026-07-18T09:30:00.000Z",
+          "localRevision": 4,
+          "unknown": {},
+          "updatedAt": "2026-07-18T16:41:55.000Z",
+          "updatedBy": "rriley"
+        },
+        "mirrorRearElevation": true,
+        "name": "AV Rack",
+        "order": "a0",
+        "railType": "tapped10_32",
+        "ruNumbering": "bottomUpFromOne",
+        "widthClass": "eia19",
+        "zeroUChannels": []
+      }
+    },
+    "registries": {
+      "cableSpecs": {},
+      "connectors": {},
+      "media": {},
+      "outletTemplates": {},
+      "signalDomains": {},
+      "signalFamilies": {}
+    },
+    "revisionBlock": [],
+    "settings": {
+      "cableWasteFactor": 100,
+      "collisionPolicy": "suffixLetter",
+      "defaultLineVolts": 120,
+      "defaultMirrorRearElevation": true,
+      "defaultNetworkMedia": "media.cat6a_futp",
+      "defaultRackHeightU": 12,
+      "defaultRuNumbering": "bottomUpFromOne",
+      "designatorBlockSize": 100,
+      "designatorPad": 0,
+      "designatorSeparator": "-",
+      "deviceDesignatorFormat": "{TYPE_PREFIX}{SEP}{SEQ}",
+      "displayUnits": "imperial",
+      "diversityFactorsByCategory": {},
+      "familyColorOverrides": {},
+      "jacketColorConventions": {
+        "jc.blue": {
+          "abbr": "BLU",
+          "color": "#FF1F5FA8",
+          "displayName": "Blue",
+          "meaning": "Control — touchscreen / IR balun / RS-232 balun"
+        },
+        "jc.white": {
+          "abbr": "WHT",
+          "color": "#FFF2F2EF",
+          "displayName": "White",
+          "meaning": ""
+        },
+        "jc.yellow": {
+          "abbr": "YEL",
+          "color": "#FFEFC81E",
+          "displayName": "Yellow",
+          "meaning": "General data drops"
+        }
+      },
+      "linkDesignatorFormat": "W{SEQ:3}",
+      "netNameFormat": "N{SEQ:3}",
+      "outletFieldLabelFormat": "{ROOM_ABBR}-{SERVICE}-{SEQ}",
+      "outletRackLabelFormat": "{FLOOR}{SPACE}-{PANEL}{PORT:2}",
+      "portDesignatorFormat": "J{PORT_SEQ:2}",
+      "ruleOverrides": {},
+      "sheetNumbering": "simple"
+    },
+    "sheets": {
+      "0190e3c1-e1a0-7d43-9e34-5b2f70a1c423": {
+        "carriesLegend": false,
+        "domainFilter": [],
+        "id": "0190e3c1-e1a0-7d43-9e34-5b2f70a1c423",
+        "includedDeviceIds": [],
+        "includedRackIds": [],
+        "items": {
+          "0190e3c1-e1a1-7e54-8f45-6c3081b2d534": {
+            "collapsed": false,
+            "id": "0190e3c1-e1a1-7e54-8f45-6c3081b2d534",
+            "pinned": true,
+            "position": {
+              "gx": 48,
+              "gy": 20
+            },
+            "rotationQuarterTurns": 0,
+            "targetId": "0190e3c1-ad60-7e44-8f35-6c407eb2d534",
+            "unknown": {},
+            "zOrder": "a1"
+          }
+        },
+        "kind": "schematic",
+        "lifecycleFilter": [
+          "existing",
+          "new",
+          "designIntent"
+        ],
+        "meta": {
+          "createdAt": "2026-07-18T09:30:00.000Z",
+          "localRevision": 4,
+          "unknown": {},
+          "updatedAt": "2026-07-18T16:41:55.000Z",
+          "updatedBy": "rriley"
+        },
+        "number": "2",
+        "order": "a1",
+        "orientation": "landscape",
+        "paper": "ansiB",
+        "scaleDenominator": 0,
+        "scaleNumerator": 0,
+        "title": "SYSTEM SCHEMATIC"
+      }
+    },
+    "structures": {
+      "0190e3c1-be70-7288-8379-a084bcf61978": {
+        "deviceId": "0190e3c1-ad63-7177-9268-9f73abe50867",
+        "enclosureModel": "Generic 42 in structured media enclosure",
+        "id": "0190e3c1-be70-7288-8379-a084bcf61978",
+        "meta": {
+          "createdAt": "2026-07-18T09:30:00.000Z",
+          "localRevision": 4,
+          "unknown": {},
+          "updatedAt": "2026-07-18T16:41:55.000Z",
+          "updatedBy": "rriley"
+        },
+        "role": "homeRunField",
+        "sheetEdge": "left",
+        "title": "Rough-In - First Floor"
+      }
+    },
+    "templates": {},
+    "tombstones": {}
+  },
+  "generator": "RackPal",
+  "id": "0190e3c1-0000-7000-8000-000000000002",
+  "minReaderVersion": 2,
+  "modifiedAt": "2026-07-18T16:42:55.902310Z",
+  "schemaVersion": 2,
+  "sequence": 412,
+  "unknown": {}
+}

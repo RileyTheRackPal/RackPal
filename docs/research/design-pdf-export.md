@@ -1,6 +1,6 @@
-# RackMate: PDF Export Design
+# RackPal: PDF Export Design
 
-**Status:** design spec, v1 target. Nothing implemented yet (`RackMate/` currently holds only `.editorconfig`, `.gitattributes`, `.gitignore`, and an empty `docs/`).
+**Status:** design spec, v1 target. Nothing implemented yet (`RackPal/` currently holds only `.editorconfig`, `.gitattributes`, `.gitignore`, and an empty `docs/`).
 
 **The load-bearing decision in this document is §6.** Everything else is layout and policy that can be revised cheaply; the renderer boundary cannot. Read §6 first if you read nothing else.
 
@@ -319,7 +319,7 @@ Note what the NOTES column is doing: it is carrying the output of the validation
 
 ### 3.1 The core decision
 
-TIA-606-C is explicit: *the format is not mandated, but must be consistent and unique.* So RackMate ships an **identifier format engine**, a token template with presets, not a hardcoded scheme. Anything else will be wrong for half the userbase.
+TIA-606-C is explicit: *the format is not mandated, but must be consistent and unique.* So RackPal ships an **identifier format engine**, a token template with presets, not a hardcoded scheme. Anything else will be wrong for half the userbase.
 
 ### 3.2 Token grammar
 
@@ -396,7 +396,7 @@ The drop schedule (`T6.20`) has both `OUTLET ID` and `PANEL / PORT` columns side
 
 ### 3.6 Storage
 
-IDs are **materialised onto the link at creation time** and stored in the `.rackmate` file. They are never recomputed from the template at render time. Changing the scheme offers to renumber; it does not silently renumber. A PDF exported yesterday and a PDF exported today from an unmodified project are byte-comparable except for the date field (§7.7).
+IDs are **materialised onto the link at creation time** and stored in the `.rackpal` file. They are never recomputed from the template at render time. Changing the scheme offers to renumber; it does not silently renumber. A PDF exported yesterday and a PDF exported today from an unmodified project are byte-comparable except for the date field (§7.7).
 
 ---
 
@@ -446,7 +446,7 @@ Bottom-right, **396 × 115 pt** (5.5 × 1.6 in) on ANSI B and larger. On ANSI A 
 │  RK-1  MASTER RACK  ·  42U                                                 │
 ├──────────────┬──────────────┬──────────────┬──────────────┬────────────────┤
 │ DRAWN   J.S. │ SCALE  1:8   │ SIZE   B     │ DATE 2026-07-18│ REV       C   │
-│ CHK'D    —   │ PROJ  25-1183│ DISC   T     │ FILE smith.rackmate│SHEET 5 OF 14│
+│ CHK'D    —   │ PROJ  25-1183│ DISC   T     │ FILE smith.rackpal│SHEET 5 OF 14│
 ├──────────────┴──────────────┴──────────────┴──────────────┴────────────────┤
 │  NBS INTEGRATION LLC  ·  (503) 555-0142  ·  OR CCB #219884                 │
 │  SYMBOL LEGEND: SEE SHEET T0.01          SHEET NO.  T6.01                  │
@@ -683,8 +683,8 @@ DiagramScene { List<DiagramOp> ops; Box bounds; List<HitRegion> hits; double min
 ```
 ```dart
 // test/headless/headless_test.dart
-import 'package:rackmate/diagram/scene_builder.dart';
-import 'package:rackmate/export/document.dart';
+import 'package:rackpal/diagram/scene_builder.dart';
+import 'package:rackpal/export/document.dart';
 
 void main() {
   test('full document builds with no Flutter binding', () async {
@@ -1624,7 +1624,7 @@ Three columns: **What** (left), **How** (middle), **Preview** (right, live).
 ║ TITLE BLOCK           │ COLOUR                        │                           ║
 ║ Drawn by   [J.S.    ] │ ◉ Colour   ○ Greyscale        │                           ║
 ║ Checked by [        ] │ ○ CMYK (for plotter/print)    │                           ║
-║ Revision   [C  ▾]     │ ☐ Embed .rackmate source      │                           ║
+║ Revision   [C  ▾]     │ ☐ Embed .rackpal source      │                           ║
 ║ Issue date [2026-07-18]│ ☐ PDF/A-3b (archival)        │                           ║
 ╠═══════════════════════╧═══════════════════════════════╧═══════════════════════════╣
 ║  Est. 14 sheets · ~420 KB                       [ Preview ]  [ Cancel ]  [ Export ]║
@@ -1766,13 +1766,13 @@ Set the document metadata too, it populates Acrobat's Document Properties and ma
 final doc = pw.Document(
   title:    'Smith Residence — RK-1 — Rev C',
   author:   'NBS Integration LLC',
-  creator:  'RackMate 1.0',
+  creator:  'RackPal 1.0',
   subject:  'A/V rack wiring plan and schedule',
   keywords: 'rack, wiring, schedule, RK-1, 25-1183',
 );
 ```
 
-**Embed the source.** With PDF/A-3b (supported since `pdf` 3.11.2) you can attach the `.rackmate` file inside the PDF. The drawing then carries its own editable source, hand a client or a successor integrator one file and they have both the deliverable and the project. That is a genuinely good feature and it costs almost nothing.
+**Embed the source.** With PDF/A-3b (supported since `pdf` 3.11.2) you can attach the `.rackpal` file inside the PDF. The drawing then carries its own editable source, hand a client or a successor integrator one file and they have both the deliverable and the project. That is a genuinely good feature and it costs almost nothing.
 
 ---
 
@@ -1877,7 +1877,7 @@ The 14 standard Type1 fonts (Helvetica ×4, Times ×4, Courier ×4, Symbol, Zapf
 Exception: Helvetica has no Unicode support
 ```
 
-This is the single most-reported issue in dart_pdf (#76, #196, #252, #384, #405, #810, #1538), and **for RackMate it is not theoretical**. A/V documentation routinely contains `Ω` (speaker impedance), `°`, `±`, `µ`, `→`, `×`, `≈`, `Ø`, `′`/`″` (feet/inches), `—`, and smart quotes pasted out of a proposal, plus client and street names with accents. Never ship default Helvetica.
+This is the single most-reported issue in dart_pdf (#76, #196, #252, #384, #405, #810, #1538), and **for RackPal it is not theoretical**. A/V documentation routinely contains `Ω` (speaker impedance), `°`, `±`, `µ`, `→`, `×`, `≈`, `Ø`, `′`/`″` (feet/inches), `—`, and smart quotes pasted out of a proposal, plus client and street names with accents. Never ship default Helvetica.
 
 `PdfGoogleFonts` from `printing` is also out: it does a **network round-trip**, so it cannot run in a background isolate (§7.3) and fails offline, which is precisely the rack room with no Wi-Fi where someone re-exports a drawing.
 

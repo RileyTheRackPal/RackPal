@@ -70,7 +70,7 @@ def _done_test(test_id, result='success', hidden=False, skipped=False, t=10):
 
 SUITE = {'type': 'suite',
          'suite': {'id': 0, 'platform': 'vm',
-                   'path': 'C:/repo/packages/rackmate_core/test/x_test.dart'}}
+                   'path': 'C:/repo/packages/rackpal_core/test/x_test.dart'}}
 GROUP = {'type': 'group',
          'group': {'id': 2, 'suiteID': 0, 'parentID': None,
                    'name': 'CR-117 round trip', 'testCount': 1}}
@@ -93,7 +93,7 @@ def clean_stream() -> list[dict]:
 # ----------------------------------------------------------------------
 # 1. A green run reports green, and reports NOTHING extra.
 # ----------------------------------------------------------------------
-root, totals = convert(clean_stream(), 'rackmate_core')
+root, totals = convert(clean_stream(), 'rackpal_core')
 suite = suite_of(root)
 cases = suite.findall('testcase')
 check(len(cases) == 1, f'green run should yield 1 case, got {len(cases)}')
@@ -103,7 +103,7 @@ check(suite.get('failures') == '0' and suite.get('errors') == '0',
       'green run must not report failures or errors')
 check(not cases[0].findall('failure') and not cases[0].findall('error'),
       'green case must carry no failure/error child')
-check(cases[0].get('classname') == 'rackmate_core.test.x_test',
+check(cases[0].get('classname') == 'rackpal_core.test.x_test',
       f'classname wrong: {cases[0].get("classname")}')
 # The doubling bug: the group name is already inside the test name.
 check(cases[0].get('name') == 'CR-117 round trip (a) empty project',
@@ -253,7 +253,7 @@ lines = ['Resolving dependencies in `C:\\repo`...',
          '"a bare string"',
          '[1, 2, 3]',
          ''] + [json.dumps(e) for e in clean_stream()]
-document, totals = build_xml(parse_events(lines), 'rackmate')
+document, totals = build_xml(parse_events(lines), 'rackpal')
 ET.fromstring(document)
 check(totals['tests'] == 1,
       f'non-JSON preamble must be skipped, not counted: {totals}')

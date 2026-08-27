@@ -3,7 +3,7 @@
 This is the citation record AC-052 requires: "a template ships only when every
 numeric field it carries has a cited source (manufacturer datasheet, published
 standard, or measured) recorded in `assets/catalog/sources.md`." It covers the
-48-template seed catalog built at `packages/rackmate_core/lib/src/catalog/`
+48-template seed catalog built at `packages/rackpal_core/lib/src/catalog/`
 (docs/09-roadmap.md M1 checklist #6, docs/catalog/seed-devices.md §3).
 
 ## 0. The governing constraint: DR-002, and what it means for this file
@@ -56,7 +56,7 @@ uncited guess. That is the gate AC-052 actually enforces, and it is met.
 | `impedanceOhms` on `rf.catv` / `rf.satellite` / `rf.ota` / `video.composite`-class RF ports | Published standard | 75 Ω is the standard nominal impedance for RG-6/coax video and RF distribution (SCTE / ANSI). |
 | PoE `PoeSpec` class wattages (802.3af/at/bt Type 3/4) | Published standard | IEEE 802.3-2018 Clause 33/145 PSE/PD power budgets: af ≤ 15.4 W, at ≤ 30 W, bt Type 3 ≤ 60 W, bt Type 4 ≤ 90 W (PSE-side figures; the catalog's `poeBudgetWatts` values are synthesized per-device totals within these ceilings, see §2). |
 | NEMA/IEC connector families (`5-15`, `5-20`, `L5-30`, `C13/C14/C19/C20`) | Published standard | NEMA WD-6 and IEC 60320 respectively define these families' physical/electrical ratings; this catalog uses them only as connector identities, not as a claim about a specific cord-set manufacturer. |
-| `kRackUnit` (44.45 mm / 1 U), EIA-19 panel width (482.6 mm) | Published standard | EIA-310-D. Defined in `rackmate_core/units/constants.dart` and `draw/scene/rack_geometry.dart`, reused (not re-derived) here. |
+| `kRackUnit` (44.45 mm / 1 U), EIA-19 panel width (482.6 mm) | Published standard | EIA-310-D. Defined in `rackpal_core/units/constants.dart` and `draw/scene/rack_geometry.dart`, reused (not re-derived) here. |
 | Connector panel-cutout footprints (`ConnectorTypeDef.footprintWidth/Height`) | Mixed: see §3 | Values taken verbatim from docs/catalog/seed-devices.md §5.2 where that section states one; the remaining connector ids are a representative, standardised physical envelope for that connector class (e.g. "an RCA jack is about 8–9 mm", "an XLR3 shell is about 24 mm"), not a specific manufacturer's part. |
 | `weight`, `nameplateWatts`, `typicalWatts`, `bodyDepth`, `connectorProjection` (all rack-side templates) | Representative / synthesized | See §2: realistic for the archetype's class, not sourced to any datasheet. |
 | `weight`, `nameplateWatts`, `typicalWatts` (field devices) | Representative / synthesized | See §2. |
@@ -84,7 +84,7 @@ these numbers with cited manufacturer figures; today's job is only to be
 
 ## 3. Connector footprints: full table
 
-`packages/rackmate_core/lib/src/catalog/catalog_connectors.dart` ships one
+`packages/rackpal_core/lib/src/catalog/catalog_connectors.dart` ships one
 `ConnectorTypeDef` per connector id referenced anywhere in the catalog's
 ports, each with a `footprintWidth`/`footprintHeight` (the connector-footprint
 CI assertion, AC-050/A2.2, see `seed_catalog_test.dart`). Values marked
@@ -172,7 +172,7 @@ rather than off any ruling.
   category split so a future edit here or in `catalog_*.dart` cannot drift
   from docs/catalog/seed-devices.md §3.10 silently.
 
-## 5. Rack presets (`rackmate_core/src/catalog/rack_presets.dart`)
+## 5. Rack presets (`rackpal_core/src/catalog/rack_presets.dart`)
 
 The eleven rack presets docs/04-rack-editor.md §4 names carry a height, a
 usable depth, a static weight capacity, a rail type and a `RackFormFactor`.

@@ -13,7 +13,7 @@
 # That failure has already happened once during this stage.
 #
 # So every byte-exact-tested artifact gets an explicit `eol=lf`, and
-# `apps/rackmate/test/gitattributes_byte_exactness_test.dart` FAILS if one
+# `apps/rackpal/test/gitattributes_byte_exactness_test.dart` FAILS if one
 # of them is not covered here. THE TEST IS THE MECHANISM; this list is
 # just where the answer is written down. Adding a fixture with a new
 # extension and forgetting this file is a red suite, not a surprise on
@@ -21,12 +21,12 @@
 #
 # WHY `eol=lf` AND NOT `binary` FOR THE GOLDENS: `binary` (= `-text -diff
 # -merge`) would guarantee byte-exactness unconditionally, but it also
-# turns off `git diff`. CR-091 makes `.rackmate` plain, pretty-printed,
+# turns off `git diff`. CR-091 makes `.rackpal` plain, pretty-printed,
 # key-sorted UTF-8 JSON precisely so a change to one is readable, and the
 # four starters are goldens whose diff IS the review — `binary` would
 # reduce a regenerated starter to "Bin 812345 -> 812901 bytes". `eol=lf`
 # keeps the diff and is exactly as safe here: the canonical writer escapes
-# control characters, so a `.rackmate` never contains a raw CR for
+# control characters, so a `.rackpal` never contains a raw CR for
 # normalisation to touch, and the suite asserts that too rather than
 # assuming it.
 * text=auto
@@ -45,7 +45,7 @@
 # first one committed is already protected. `.rmda` is the device archive
 # DR-015 names and nothing writes yet — listed for the same reason.
 #
-# THE PRE-DR-015 SPELLINGS STAY LISTED. This app still opens a `.rackmate`
+# THE PRE-DR-015 SPELLINGS STAY LISTED. This app still opens a `.rackpal`
 # and still saves one in place, so one arriving through a checkout must
 # survive it byte-for-byte exactly as before; dropping the line the day
 # the extension changed would corrupt precisely the files the back-compat
@@ -53,7 +53,7 @@
 *.rmpj      text eol=lf
 *.rmdx      text eol=lf
 *.rmda      text eol=lf
-*.rackmate  text eol=lf
+*.rackpal  text eol=lf
 *.rmdev     text eol=lf
 
 *.png    binary

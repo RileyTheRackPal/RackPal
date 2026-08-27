@@ -1,4 +1,4 @@
-I'll research this thoroughly. Let me start by loading the web tools and searching in parallel.I'll research this thoroughly. Let me fan out searches across all seven topic areas in parallel.Let me fetch the actual package pages and API docs for concrete versions and API surfaces.Now let me dig into the most important part, the shared-renderer abstraction, plus the remaining topics.Let me examine the source-level APIs: CustomPaint, PdfPageFormat, TableHelper, and font handling.# PDF generation from Flutter, deep technical research for RackMate
+I'll research this thoroughly. Let me start by loading the web tools and searching in parallel.I'll research this thoroughly. Let me fan out searches across all seven topic areas in parallel.Let me fetch the actual package pages and API docs for concrete versions and API surfaces.Now let me dig into the most important part, the shared-renderer abstraction, plus the remaining topics.Let me examine the source-level APIs: CustomPaint, PdfPageFormat, TableHelper, and font handling.# PDF generation from Flutter, deep technical research for RackPal
 
 Researched July 2026. Versions verified against pub.dev on the date of writing.
 
@@ -45,9 +45,9 @@ import 'package:pdf/pdf.dart';           // PdfColor, PdfPageFormat, PdfGraphics
 import 'package:pdf/widgets.dart' as pw; // the widget layer
 
 final doc = pw.Document(
-  title: 'RackMate — Rack 1 Interconnect',
-  author: 'RackMate',
-  creator: 'RackMate 1.0',
+  title: 'RackPal — Rack 1 Interconnect',
+  author: 'RackPal',
+  creator: 'RackPal 1.0',
   subject: 'A/V rack wiring plan',
 );
 
@@ -84,7 +84,7 @@ pw.MultiPage({
 footer: (ctx) => pw.Row(
   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
   children: [
-    pw.Text('RackMate — Smith Residence'),
+    pw.Text('RackPal — Smith Residence'),
     pw.Text('SHEET ${ctx.pageNumber} OF ${ctx.pagesCount}'),
   ],
 ),
@@ -127,7 +127,7 @@ Exception: Helvetica has no Unicode support see https://github.com/DavBfr/dart_p
 
 This is the single most-reported issue in the repo ([#76](https://github.com/DavBfr/dart_pdf/issues/76), [#196](https://github.com/DavBfr/dart_pdf/issues/196), [#252](https://github.com/DavBfr/dart_pdf/issues/252), [#384](https://github.com/DavBfr/dart_pdf/issues/384), [#405](https://github.com/DavBfr/dart_pdf/issues/405), [#810](https://github.com/DavBfr/dart_pdf/issues/810), [#1538](https://github.com/DavBfr/dart_pdf/issues/1538)).
 
-**For RackMate this is not theoretical.** A/V documentation routinely contains `Ω` (speaker impedance), `°` (temperature/angle), `±`, `µ`, `→`, `×`, `≈`, `—` (em dash), `“ ”` smart quotes pasted from a proposal, and client names with accents. **Never ship default Helvetica.**
+**For RackPal this is not theoretical.** A/V documentation routinely contains `Ω` (speaker impedance), `°` (temperature/angle), `±`, `µ`, `→`, `×`, `≈`, `—` (em dash), `“ ”` smart quotes pasted from a proposal, and client names with accents. **Never ship default Helvetica.**
 
 Two routes:
 
@@ -575,7 +575,7 @@ const isoA2 = PdfPageFormat(420 * PdfPageFormat.mm, 594 * PdfPageFormat.mm, marg
 const isoA1 = PdfPageFormat(594 * PdfPageFormat.mm, 841 * PdfPageFormat.mm, marginAll: 10 * PdfPageFormat.mm);
 ```
 
-**Recommendation for RackMate:** default to **ANSI B (11×17) landscape** for diagram sheets and **ANSI A portrait** for the schedule, with the sheet size user-selectable per export. Rationale: 11×17 is the largest size that comes out of a common office MFP, plots cheaply anywhere, **folds exactly to letter** for a job binder, and is the de facto residential-CI documentation size. ANSI D/ARCH D matter only for commercial jobs going to a plotter. Offer ISO A3/A2 for non-US users, same reasoning, A3 is the 11×17 analogue.
+**Recommendation for RackPal:** default to **ANSI B (11×17) landscape** for diagram sheets and **ANSI A portrait** for the schedule, with the sheet size user-selectable per export. Rationale: 11×17 is the largest size that comes out of a common office MFP, plots cheaply anywhere, **folds exactly to letter** for a job binder, and is the de facto residential-CI documentation size. ANSI D/ARCH D matter only for commercial jobs going to a plotter. Offer ISO A3/A2 for non-US users, same reasoning, A3 is the 11×17 analogue.
 
 Note the rack elevation is a different shape problem: 45 RU × 1.75"/RU = **78.75 inches tall**. At 1:8 it's ~9.8", fits ANSI B portrait comfortably. Elevations want portrait; interconnect diagrams want landscape. Let them differ within one document (`pw.Page` takes a per-page `pageFormat`).
 
@@ -644,7 +644,7 @@ for (var r = 0; r < rows; r++) {
 
 The **key plan** (a small outline of the whole diagram in the corner of every sheet with the current tile hatched) is what makes a tiled set navigable. It's cheap: replay the scene at tiny scale into a 1.5" box with stroke-only specs, or use the low-res raster thumbnail (this is the one legitimate use for `RepaintBoundary`).
 
-**But for RackMate, geometric tiling is usually the wrong answer.**
+**But for RackPal, geometric tiling is usually the wrong answer.**
 
 You've said the wiring planner takes inspiration from schematics and netlists. **Real schematic capture tools (Altium, KiCad, OrCAD) do not tile geometrically: they partition by subsystem and use off-sheet connectors.** That is a much better fit for a wiring plan:
 
@@ -942,7 +942,7 @@ This works **only if your renderer has no `dart:ui` dependency**, which is exact
 - No `TextPainter` equivalent; measure with `PdfFont.stringMetrics` (§2.7).
 - Long-token overflow/disappearance (§4.4).
 - `TextOverflow` / `maxLines` support in `pw.Text` is partial compared to Flutter's, don't assume parity.
-- **RTL:** `textDirection` exists on `MultiPage`, `Table`, and `TableHelper`, and there is bidi handling, but complex-script shaping (Arabic ligature forms, Indic conjuncts) is imperfect, dart_pdf does not run a full HarfBuzz-class shaper. Low priority for RackMate; note it if you localize.
+- **RTL:** `textDirection` exists on `MultiPage`, `Table`, and `TableHelper`, and there is bidi handling, but complex-script shaping (Arabic ligature forms, Indic conjuncts) is imperfect, dart_pdf does not run a full HarfBuzz-class shaper. Low priority for RackPal; note it if you localize.
 
 ### 7.4 Other
 

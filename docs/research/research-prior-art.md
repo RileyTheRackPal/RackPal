@@ -1,4 +1,4 @@
-I'll research the competitive landscape systematically. Let me load the web tools and run parallel searches.I'll start with the incumbent, D-Tools, and fan out from there.Vendor marketing dominates those results. Let me get real practitioner complaints from forums.Search engines aren't surfacing Reddit. Let me fetch review sites and Reddit directly.Reddit is blocked to direct fetch. Let me try alternate routes and widen to the other tool categories.Q-SYS pin typing is directly relevant to invalid-connection prevention. Let me go deep on the primary sources.D-Tools has a $9,000/year floor, significant positioning data. Let me chase real user complaints and the remaining tools.Now the critical piece, real practitioner complaints. Let me try alternate Reddit access routes.Reddit is hard-blocked. Let me mine review aggregators and AV trade forums, which are citable."No way to assign unique device names", that validates the reference-designator requirement. Let me cover the remaining tool categories.AVSnap surfaced as a notable free competitor. Let me get verbatim forum discussion and AVSnap details.Following the AVS Forum redirects.AVS Forum is paywalled. Let me try open forums and fill remaining gaps.Strong find on documentation practices. Two final checks.# RackMate, Competitive & Prior-Art Analysis
+I'll research the competitive landscape systematically. Let me load the web tools and run parallel searches.I'll start with the incumbent, D-Tools, and fan out from there.Vendor marketing dominates those results. Let me get real practitioner complaints from forums.Search engines aren't surfacing Reddit. Let me fetch review sites and Reddit directly.Reddit is blocked to direct fetch. Let me try alternate routes and widen to the other tool categories.Q-SYS pin typing is directly relevant to invalid-connection prevention. Let me go deep on the primary sources.D-Tools has a $9,000/year floor, significant positioning data. Let me chase real user complaints and the remaining tools.Now the critical piece, real practitioner complaints. Let me try alternate Reddit access routes.Reddit is hard-blocked. Let me mine review aggregators and AV trade forums, which are citable."No way to assign unique device names", that validates the reference-designator requirement. Let me cover the remaining tool categories.AVSnap surfaced as a notable free competitor. Let me get verbatim forum discussion and AVSnap details.Following the AVS Forum redirects.AVS Forum is paywalled. Let me try open forums and fill remaining gaps.Strong find on documentation practices. Two final checks.# RackPal, Competitive & Prior-Art Analysis
 
 ## Research caveats (read first)
 - **Reddit was inaccessible**: `reddit.com` and `old.reddit.com` are both hard-blocked to fetch in this environment, and `site:reddit.com` searches returned empty. No r/CustomIntegration or r/commercialav quotes could be verified. Treat that opportunity vein as **unmined**, not absent.
@@ -58,7 +58,7 @@ From **$99/month**, ~**$150+/seat** at enterprise ([D-Tools Cloud pricing](https
 **$275–$1,050 first year**; structured as **50% perpetual licence + 50% mandatory annual subscription**, so the "perpetual" licence stops receiving support if you lapse ([Stardraw purchase](https://stardraw.com/sd7/purchase), [FAQ](https://stardraw.com/sd7/support/faq)). Prices were flat for 10+ years then raised in 2023. Windows desktop, AV-specific, long-established (founded 1993, [Wikipedia](https://en.wikipedia.org/wiki/Stardraw)). Positioning is legacy-incumbent; the low entry price makes it the realistic price anchor for a desktop tool, **not D-Tools**.
 
 ### AVSnap
-**Free**, AV-specific, Windows, active since 2004. "DrawAssist" cable routing, rack elevations, control-GUI building, custom symbol creation "within minutes", 8 customisable symbol properties including pricing. Self-compares as *"more user-friendly, easier to learn and easier to use than D-Tools, Stardraw, or AutoCAD"* ([avsnap.com/compare](https://avsnap.com/compare/)). **This is RackMate's most dangerous competitor on price**: it is free, AV-native, and repeatedly recommended on AVS Forum threads. Its weakness is that it is a *drawing* tool with symbol properties, not a typed connection model.
+**Free**, AV-specific, Windows, active since 2004. "DrawAssist" cable routing, rack elevations, control-GUI building, custom symbol creation "within minutes", 8 customisable symbol properties including pricing. Self-compares as *"more user-friendly, easier to learn and easier to use than D-Tools, Stardraw, or AutoCAD"* ([avsnap.com/compare](https://avsnap.com/compare/)). **This is RackPal's most dangerous competitor on price**: it is free, AV-native, and repeatedly recommended on AVS Forum threads. Its weakness is that it is a *drawing* tool with symbol properties, not a typed connection model.
 
 ### Jetbuilt
 ~**$69/seat/mo** (first 3 users), ~$59 additional; **AV drawings are a paid add-on module**, as are Installation, Service, Stock, Portal. Sales/quoting-first, drawings secondary.
@@ -88,18 +88,18 @@ Citable pain ([CocoonTech](https://cocoontech.com/threads/visio-stencils-for-gea
 - Cables carry **type, colour, length, label**.
 - **Validation prevents incompatible connections**: you cannot plug a network interface into a power outlet.
 - **Multi-termination**: either end may terminate to multiple objects of the same type (fibre to multiple panel ports).
-- **Cable bundles** exist but are *"purely organizational: it does not affect cable tracing or connectivity"*, an elegant precedent for RackMate's "no cable dressing" decision.
+- **Cable bundles** exist but are *"purely organizational: it does not affect cable tracing or connectivity"*, an elegant precedent for RackPal's "no cable dressing" decision.
 - Front/rear pass-through ports enable **cable tracing straight through patch panels**: critical for structured wiring.
 
 **Weakness:** rack elevations are read-only rendered images. There is a standing community request for **drag-and-drop rack elevations**: NetBox users must place devices via forms, not by dragging.
 
 ### Device42
-Patch-panel layout page lets you **drag from a port directly to a target device or switch port**, with per-port back-connectivity, cable type and attributes ([docs](https://docs.device42.com/connectivity/patch-panels/patch-panel-cable-management-definitions-and-legends-2/)). Closest existing thing to RackMate's intended port-to-port gesture.
+Patch-panel layout page lets you **drag from a port directly to a target device or switch port**, with per-port back-connectivity, cable type and attributes ([docs](https://docs.device42.com/connectivity/patch-panels/patch-panel-cable-management-definitions-and-legends-2/)). Closest existing thing to RackPal's intended port-to-port gesture.
 
 ### Sunbird dcTrack
 dcTrack Operations **$13.99**, Suite bundle **$19.77**; licensing is **per-rack**. Cited complaint: users want licensing *based on equipment within a rack*, not a full-rack licence when only a few devices are installed ([Capterra](https://www.capterra.com/p/106991/Sunbird-DCIM/), [Sunbird pricing](https://www.sunbirddcim.com/pricing)).
 
-**All DCIM tools share one fatal mismatch for CI:** they model Ethernet, fibre and power almost exclusively. There is no first-class HDMI, IR, RS-232, RG6, TOSLINK, or speaker-level concept, precisely RackMate's domain.
+**All DCIM tools share one fatal mismatch for CI:** they model Ethernet, fibre and power almost exclusively. There is no first-class HDMI, IR, RS-232, RG6, TOSLINK, or speaker-level concept, precisely RackPal's domain.
 
 ---
 
@@ -144,7 +144,7 @@ ERC checks unconnected pins, output pin conflicts, duplicated names, missing dri
 
 ## 6. The market gap, stated plainly
 
-The industry body for high-end residential integration reports that **"in over 95% of technology projects, no final engineering documents are ever created"** ([HTA Certified](https://htacertified.org/articles/low-voltage-design-and-engineering-documentation/)). HTA's required document set at Luxury/Estate tier maps almost 1:1 onto RackMate's scope: **line diagrams / I/O sheets, component rack drawings, prewire & device placement drawings**, plus electrical and cooling requirements.
+The industry body for high-end residential integration reports that **"in over 95% of technology projects, no final engineering documents are ever created"** ([HTA Certified](https://htacertified.org/articles/low-voltage-design-and-engineering-documentation/)). HTA's required document set at Luxury/Estate tier maps almost 1:1 onto RackPal's scope: **line diagrams / I/O sheets, component rack drawings, prewire & device placement drawings**, plus electrical and cooling requirements.
 
 Consequences they attribute to missing docs: installation inefficiency, higher final cost, more change orders, longer service times, and difficulty transitioning to a new service provider.
 
@@ -217,7 +217,7 @@ Scale context: a home with **80–150 cable runs is "not unusual"**, and every r
 
 9. **Do not attempt full DCIM.** Asset lifecycle, discovery, IPAM, power monitoring, environmental sensors, Sunbird and Device42 live here, their per-rack licensing already draws complaints, and none of it serves a residential rack.
 
-10. **Do not gate drawing behind an add-on module.** Jetbuilt charges separately for AV drawings; for RackMate the drawing *is* the product.
+10. **Do not gate drawing behind an add-on module.** Jetbuilt charges separately for AV drawings; for RackPal the drawing *is* the product.
 
 11. **Do not build a general-purpose diagram editor.** The moment arbitrary shapes and free-form connectors appear, the typed-port model is unenforceable and you have become a worse draw.io. Constraint is the feature.
 

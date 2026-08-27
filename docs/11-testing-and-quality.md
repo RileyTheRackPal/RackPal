@@ -1,12 +1,12 @@
 # Testing and Quality
 
-RackMate's deliverable is a printed sheet set an installer follows in an attic at 7 pm, so the quality bar is set by G1 ("the schedule is the deliverable") and G4 ("never fabricate data"): a test suite that proves the drawing is pretty but not that the schedule is right has tested the wrong thing. This document fixes the testing pyramid, the fixture corpora, the golden strategy and its font determinism, how PDF output is asserted without byte comparison, the performance harness, the CI matrix, the lint stance, the definition of done, and the diagnostics/privacy posture. It is binding on every milestone exit criterion in [Roadmap](09-roadmap.md); where a test is named there, its mechanism is specified here.
+RackPal's deliverable is a printed sheet set an installer follows in an attic at 7 pm, so the quality bar is set by G1 ("the schedule is the deliverable") and G4 ("never fabricate data"): a test suite that proves the drawing is pretty but not that the schedule is right has tested the wrong thing. This document fixes the testing pyramid, the fixture corpora, the golden strategy and its font determinism, how PDF output is asserted without byte comparison, the performance harness, the CI matrix, the lint stance, the definition of done, and the diagnostics/privacy posture. It is binding on every milestone exit criterion in [Roadmap](09-roadmap.md); where a test is named there, its mechanism is specified here.
 
 ---
 
 ## 1. The pyramid, and why it is bottom-heavy
 
-The `rackmate_core` package is pure, synchronous Dart with no `package:flutter`, no `dart:ui` and no `package:pdf` (per CR-083). Every rule, every derived number, every route and every byte of the file format is therefore testable in `dart test` in milliseconds, with no binding, no golden, and no runner variance. That is the reason the pyramid is shaped the way it is.
+The `rackpal_core` package is pure, synchronous Dart with no `package:flutter`, no `dart:ui` and no `package:pdf` (per CR-083). Every rule, every derived number, every route and every byte of the file format is therefore testable in `dart test` in milliseconds, with no binding, no golden, and no runner variance. That is the reason the pyramid is shaped the way it is.
 
 ```text
                  ┌───────────────────────────┐
@@ -25,12 +25,12 @@ The `rackmate_core` package is pure, synchronous Dart with no `package:flutter`,
 
 | Tier | Package | Runs | Gate |
 |---|---|---|---|
-| Unit / property | `rackmate_core`, `rackmate_text`, `rackmate_export` | every PR, all 3 OSes | blocking |
-| Display-list goldens | `rackmate_core` (`dart test`) | every PR, all 3 OSes | blocking |
-| Widget / pixel goldens | `rackmate_ui` | every PR, **Linux only** | blocking |
-| Integration | `apps/rackmate` | every PR, Windows + macOS | blocking |
-| Performance | `rackmate_core/test/perf/` | every PR under `perf` tag | warn-only for 3 months, then blocking |
-| Pixel-diff PDF | `rackmate_export` | nightly | non-blocking, triaged |
+| Unit / property | `rackpal_core`, `rackpal_text`, `rackpal_export` | every PR, all 3 OSes | blocking |
+| Display-list goldens | `rackpal_core` (`dart test`) | every PR, all 3 OSes | blocking |
+| Widget / pixel goldens | `rackpal_ui` | every PR, **Linux only** | blocking |
+| Integration | `apps/rackpal` | every PR, Windows + macOS | blocking |
+| Performance | `rackpal_core/test/perf/` | every PR under `perf` tag | warn-only for 3 months, then blocking |
+| Pixel-diff PDF | `rackpal_export` | nightly | non-blocking, triaged |
 | Manual / hardware | — | per milestone | milestone exit criterion |
 
 Rejected alternative: a Flutter-first suite where the model is exercised through widgets. It makes every domain assertion cost a pump-and-settle and it cannot run the 1,000-seed property tests at all.
@@ -60,7 +60,7 @@ Companion invariant tests, each named for the ruling it defends: `ruIndex` is 1-
 
 Two mechanical guards, both dependency-free, both cheap enough to keep forever:
 
-1. `no_flutter_import_test.dart`, greps `packages/rackmate_core/lib` for `package:flutter/`, `dart:ui` and `package:pdf/` and fails the build with the offending path (CR-083). Belt and braces: core's pubspec has no `flutter:` key, so a stray import is also a compile error.
+1. `no_flutter_import_test.dart`, greps `packages/rackpal_core/lib` for `package:flutter/`, `dart:ui` and `package:pdf/` and fails the build with the offending path (CR-083). Belt and braces: core's pubspec has no `flutter:` key, so a stray import is also a compile error.
 2. `banned_names_test.dart`, greps the whole repository, including prose and comments, for the [canon §4.7](canonical-decisions.md#47-banned-names) banned vocabulary (`Connection`, `PhysicalLink`, `CableType`, `bottomU`, `refDes`, `StructureDrop`, `StructureBundle`, `bundleStatus`, `RulePredicate`, `RendererCaps`, `ObstacleField`, `blockExportOnErrors`, `Money`, …). `StructureBundle` and `bundleStatus` are named explicitly because bare "bundle" is banned (CR-016) and `Outlet.bundleStatus` survived in prose long after the field became `Outlet.roughInStatus`; the word survives only as UI copy for `Pathway`. Registry IDs are **not** in this list; those are caught by the resolve test in §2.6. N2 makes a banned word banned in prose too; without a test that is an aspiration. One allowlisted file: the migration note that explains each removal.
 3. A third grep asserts no entity setter is invoked outside `src/commands/`, backing the `@internal` decision (AC-013).
 
@@ -88,7 +88,7 @@ The **epoch-mask coverage test** (AC-014) is forty lines and is the highest valu
 The v1 catalogue is **28 rules**, 8 tier-1, 6 tier-2, 14 tier-3, with `PLC-001..003` ratified (canon §12.6(b)) and `LEN-002` added (DR-020, canon §11.19), and every one is a Dart function in a registry keyed by `ruleId` (CR-024, AC-011). The gate is AC-051, and it is absolute: **no rule ships without its fixture pair.**
 
 ```text
-packages/rackmate_core/test/fixtures/drc/
+packages/rackpal_core/test/fixtures/drc/
   DIR-003.bad.rmpj      # output driven into output — the rule that describes hardware damage
   DIR-003.near.rmpj     # bidirectional port pair, superficially identical, must be silent
   SIG-001.bad.rmpj      SIG-001.near.rmpj
@@ -118,7 +118,7 @@ The router is Sugiyama phases 0–3 plus a deterministic layer-ordered orthogona
 The migration corpus is the highest-value directory in the repository: it is what allows the model to be refactored for years. `migrateToCurrent` returns `Outcome<T>` and never throws for an expected condition (CR-093).
 
 ```text
-packages/rackmate_core/test/fixtures/schema/
+packages/rackpal_core/test/fixtures/schema/
   v1_minimal.rmpj         # one empty 42U rack
   v1_full.rmpj            # every entity type, every connector, every media type
   v1_unicode.rmpj         # Ω ° ± µ → × ≈ — " " plus an accented client name
@@ -183,7 +183,7 @@ What it checks, in one pass over the 55 shipped families:
 3. **The period floor.** Every dash period ≥ 4.5 pt, the same rule the Dash-floor row above states.
 4. **Requirement-4 attribution.** A violation touching one of the ten cable types the brief names by hand is reported with that name attached, because such a collision is not a style nit; it is requirement 4 failing its own acceptance test.
 
-**This file is the reference implementation, and it is ported, not re-derived, to `pal1_conformance_test.dart` in `rackmate_core` at M0.** The port reads the shipped registry rather than a transcribed family list, and thereafter the Dart test is the authority; `pal1_check.py` remains in the tree as the executable statement of intent the port is diffed against. **Both run in CI on every PR** (§7), the Python check as a dependency-free job that cannot be broken by a Dart refactor.
+**This file is the reference implementation, and it is ported, not re-derived, to `pal1_conformance_test.dart` in `rackpal_core` at M0.** The port reads the shipped registry rather than a transcribed family list, and thereafter the Dart test is the authority; `pal1_check.py` remains in the tree as the executable statement of intent the port is diffed against. **Both run in CI on every PR** (§7), the Python check as a dependency-free job that cannot be broken by a Dart refactor.
 
 **The port must carry a known-bad fixture, and that requirement is not negotiable: a conformance test that cannot fail is worthless.** `pal1_check.py` is verified in both directions, it passes on the corrected palette, and it reproduces **all fourteen** violations when the five corrections below are reverted, six of them naming S/PDIF, one of the brief's ten types. The Dart port asserts the same two directions: green on the shipped registry, and exactly fourteen findings on a checked-in reverted-palette fixture, matched by family pair rather than by count alone. A count-only assertion passes when one collision is fixed and another introduced.
 
@@ -261,7 +261,7 @@ Two further families of assertion, each defending a ruling that is easy to erode
 
 ### 4.3 The CR-081 baseline parity assertion, concretely
 
-CR-081 makes one injected `TextMeasurer`, backed by `PdfFont.stringMetrics` and living in `rackmate_text`, the single source of truth for both backends, and AC-007 requires the parity test to assert on **baseline Y**, not just a bounding box. The test is written against the one declared shape: `TextMetrics measureText(String text, TextStyleSpec style)`, declared in `rackmate_core/draw/text.dart` alongside `TextMetrics`, `TextStyleSpec` and the 12-value `TextAnchor`, with `DiagramCanvas` in `rackmate_core/draw/canvas.dart` carrying the identical signature on every backend. Neither `draw/text_measurer.dart` nor `draw/diagram_canvas.dart` exists; a test that imports one is testing a file the design does not have. That is directly testable in four steps:
+CR-081 makes one injected `TextMeasurer`, backed by `PdfFont.stringMetrics` and living in `rackpal_text`, the single source of truth for both backends, and AC-007 requires the parity test to assert on **baseline Y**, not just a bounding box. The test is written against the one declared shape: `TextMetrics measureText(String text, TextStyleSpec style)`, declared in `rackpal_core/draw/text.dart` alongside `TextMetrics`, `TextStyleSpec` and the 12-value `TextAnchor`, with `DiagramCanvas` in `rackpal_core/draw/canvas.dart` carrying the identical signature on every backend. Neither `draw/text_measurer.dart` nor `draw/diagram_canvas.dart` exists; a test that imports one is testing a file the design does not have. That is directly testable in four steps:
 
 ```dart
 const kFixtures = ['AV Wa To Ty', 'W014', 'WO14', 'Ω 75 µs', 'RK1-PP2-24'];
@@ -379,7 +379,7 @@ The Flutter version pin is load-bearing and lives in exactly one place.
 Project additions on top of the base set:
 
 - **Errors and warnings gated at zero; infos ratcheted, not `--fatal-infos`.** The principle below is unchanged and is why the ratchet exists at all: an info-level lint that nobody fixes is a lint that trains people to ignore output. What the 2026-08-03 ruling changed is the enforcement, because switching on `--fatal-infos` against a 195-info tree would have made `main` red on the first push and taught the same lesson faster. The pin only moves down. See §7 gate 4 and `tools/ci/analyze_info_baseline.txt`.
-- `public_member_api_docs` **on for `rackmate_core` only**. The core is the shared vocabulary; the UI package is not.
+- `public_member_api_docs` **on for `rackpal_core` only**. The core is the shared vocabulary; the UI package is not.
 - Generated code (`*.g.dart`, `l10n/`) excluded; nothing else is.
 - Custom naming is enforced by test rather than by lint, because no analyzer rule expresses it: N3 (types `UpperCamelCase`, JSON keys `lowerCamelCase`, registry IDs `lower.dotted.snake`, tokens `UPPER_SNAKE`, rule IDs `AAA-000`) and N4 (a serialized `weight` or `length` without a unit suffix or a unit type is a defect) are asserted over the codec layer in `naming_conventions_test.dart`.
 
@@ -407,7 +407,7 @@ A milestone is done when its exit criterion in [Roadmap](09-roadmap.md) is demon
 
 ## 10. Crash reporting, diagnostics, and the privacy stance
 
-**No telemetry by default.** RackMate is a locally installed professional tool holding client project data; silent network egress is a trust violation and for some commercial clients a contractual one.
+**No telemetry by default.** RackPal is a locally installed professional tool holding client project data; silent network egress is a trust violation and for some commercial clients a contractual one.
 
 - On an uncaught error, write a redacted bundle plus stack to `crashes/<timestamp>.json` in application support. `ErrorWidget.builder` is replaced by a neutral pane offering "Copy diagnostics" and "Save a recovery copy", a red-and-yellow error box inside a professional tool destroys credibility.
 - On next launch, offer **View report** (showing the exact JSON, no hidden payload), **Send**, and **Never ask again**. Nothing leaves the machine without an opt-in, and then only to a self-hosted Sentry, which is deliberately **not a v1 dependency** until there is somewhere to send reports.

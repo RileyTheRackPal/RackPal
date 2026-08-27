@@ -15,7 +15,7 @@ assertion broke. This is that conversion step and nothing more.
     dart test --reporter=json    > events.jsonl
     flutter test --machine       > events.jsonl        # same protocol
     python tools/ci/junit_from_dart_test.py \
-        --input events.jsonl --output results.xml --suite rackmate_core
+        --input events.jsonl --output results.xml --suite rackpal_core
 
 EXIT CODE IS NOT THE VERDICT. This script exits 0 whenever it produced a
 readable report, INCLUDING when that report is full of failures -- the
@@ -307,7 +307,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument('--output', required=True,
                         help='JUnit XML file to write')
     parser.add_argument('--suite', default='',
-                        help='name prefix for the suite, e.g. rackmate_core')
+                        help='name prefix for the suite, e.g. rackpal_core')
     args = parser.parse_args(argv)
 
     try:

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Stage the portable RackMate tree: Release build + app-local VC++ runtime
+    Stage the portable RackPal tree: Release build + app-local VC++ runtime
     + the `portable.txt` marker.
 
 .DESCRIPTION
@@ -33,7 +33,7 @@
     ================================================================
     `lib/src/storage/data_root.dart` is the portable seam and has been
     since M0: presence of `portable.txt` beside the executable switches the
-    data root to a `RackMateData` sibling, and a grep test keeps
+    data root to a `RackPalData` sibling, and a grep test keeps
     `getApplicationSupportDirectory` to that one call site. docs/03:847
     predicted this: pinning `path_provider_windows` to a single call site
     "keeps M2's portable build a one-function change". It did. This script
@@ -45,7 +45,7 @@
     `Get-VCRuntimeClosure` reads the shipped binaries' PE import tables and
     follows the runtime DLLs' own imports until the set closes. Measured on
     the M2 build it closes at three -- MSVCP140.dll, VCRUNTIME140.dll,
-    VCRUNTIME140_1.dll -- across `rackmate.exe` and both plugin DLLs;
+    VCRUNTIME140_1.dll -- across `rackpal.exe` and both plugin DLLs;
     `flutter_windows.dll` needs none. The set is PRINTED on every run and
     compared with [ExpectedRuntime], so a plugin added in a later milestone
     that drags in `msvcp140_2.dll` is reported rather than discovered on a
@@ -65,7 +65,7 @@
     this script.
 
 .PARAMETER OutDir
-    Where the portable tree is written. Defaults to `dist/RackMate-portable`
+    Where the portable tree is written. Defaults to `dist/RackPal-portable`
     at the repo root, which `.gitignore` excludes.
 
 .EXAMPLE
@@ -98,8 +98,8 @@ if ($Configuration -eq 'Debug') {
     throw 'Debug builds cannot be staged: the debug CRT is not redistributable.'
 }
 
-$appDir = Join-Path $RepoRoot 'apps/rackmate'
-if (-not $OutDir) { $OutDir = Join-Path $RepoRoot 'dist/RackMate-portable' }
+$appDir = Join-Path $RepoRoot 'apps/rackpal'
+if (-not $OutDir) { $OutDir = Join-Path $RepoRoot 'dist/RackPal-portable' }
 
 Write-Host '== stage the portable tree =='
 Write-Host "  repo   : $RepoRoot"
@@ -196,16 +196,16 @@ if (($expected -join '|') -ne ($actual -join '|')) {
 # changing it changes nothing.
 $marker = Join-Path $OutDir 'portable.txt'
 @'
-RackMate portable mode.
+RackPal portable mode.
 
-The PRESENCE of this file beside rackmate.exe is the entire signal; its
-contents are never read. Delete it and RackMate stores its recovery
+The PRESENCE of this file beside rackpal.exe is the entire signal; its
+contents are never read. Delete it and RackPal stores its recovery
 snapshots, recents, logs and window preferences under the user's
 AppData instead.
 
-With it, all of that lives in the RackMateData folder beside this file.
-RackMateData is NOT part of the release -- updating by unzipping a newer
-version over this folder replaces `data`, never RackMateData.
+With it, all of that lives in the RackPalData folder beside this file.
+RackPalData is NOT part of the release -- updating by unzipping a newer
+version over this folder replaces `data`, never RackPalData.
 '@ | Set-Content -Path $marker -Encoding UTF8
 
 # --- 5. what was produced ------------------------------------------------

@@ -1,6 +1,6 @@
-# RackMate
+# RackPal
 
-RackMate is a desktop application for designing A/V equipment racks for custom-integration work, **residential-CI-first, commercial-capable** (DR-002): you enter a rack height in rack units, populate the rack from a seeded catalog of generic archetypes, wire the gear together on a schematic canvas, and export a PDF sheet set containing both the drawing and the cable schedule. The repository holds the specification (the canonical decision record, twelve documents derived from it, and the working papers they were adjudicated from) **and a Flutter application that builds and runs on Windows**.
+RackPal is a desktop application for designing A/V equipment racks for custom-integration work, **residential-CI-first, commercial-capable** (DR-002): you enter a rack height in rack units, populate the rack from a seeded catalog of generic archetypes, wire the gear together on a schematic canvas, and export a PDF sheet set containing both the drawing and the cable schedule. The repository holds the specification (the canonical decision record, twelve documents derived from it, and the working papers they were adjudicated from) **and a Flutter application that builds and runs on Windows**.
 
 ## Status: IN BUILD: M0, M1 and M2 shipped, M3 next
 
@@ -40,7 +40,7 @@ Read [00-overview](docs/00-overview.md) first, then [canonical-decisions](docs/c
 |---|---|
 | [docs/00-overview.md](docs/00-overview.md) | The product in one read: the core loop, the v1 line, who it is for |
 | [docs/01-domain.md](docs/01-domain.md) | Rack and A/V trade concepts, the glossary, the signal and cable registry |
-| [docs/02-data-model.md](docs/02-data-model.md) | Entities, primitives, units, the `.rackmate` envelope and migration chain |
+| [docs/02-data-model.md](docs/02-data-model.md) | Entities, primitives, units, the `.rackpal` envelope and migration chain |
 | [docs/03-architecture.md](docs/03-architecture.md) | Five packages, the command stack, the drawing IR, the derived pipeline |
 | [docs/04-rack-editor.md](docs/04-rack-editor.md) | Elevation authoring: placement, quick-add, staging, compaction, locks |
 | [docs/05-schematic-editor.md](docs/05-schematic-editor.md) | The wiring canvas, drag-to-connect, layout and routing, the live schedule |
@@ -76,7 +76,7 @@ Mobile is read-only by confirmed product decision. The architecture must not pre
 | PDF | `pdf` ^3.13.0 | Pure Dart, therefore isolate-safe; Apache-2.0. `pw.Widget` for schedules, `PdfGraphics` for vector diagram output |
 | Print preview | `printing` ^5.15.0 | Behind an explicit "Verify output" button only; primary preview uses the screen renderer and has no native dependency. pdfium is vendored, never downloaded at build time (CR-100) |
 | IDs | `uuid` ^4.6.0 | UUIDv7: time-ordered, so creation order needs no extra field |
-| File dialogs | first-party `IFileDialog`, no package | `file_selector` was removed: it cannot set `FOS_DONTADDTORECENT`, without which every open and save writes the project file name into `HKCU\…\ComDlg32\OpenSavePidlMRU`. ~150 lines of COM in the Windows runner. Half a fix, and the other half is bounded rather than listed: RackMate's own code writes no registry key, but **the shell writes values under ComDlg32 that RackMate does not control**: at minimum `LastVisitedPidlMRU` (this executable plus the last folder browsed) and `CIDSizeMRU` (this executable, written even on a cancelled dialog), measured examples and not an inventory. So a portable build leaves shell-owned HKCU entries naming this executable and folders browsed, and no project file names (docs/03 §10.1) |
+| File dialogs | first-party `IFileDialog`, no package | `file_selector` was removed: it cannot set `FOS_DONTADDTORECENT`, without which every open and save writes the project file name into `HKCU\…\ComDlg32\OpenSavePidlMRU`. ~150 lines of COM in the Windows runner. Half a fix, and the other half is bounded rather than listed: RackPal's own code writes no registry key, but **the shell writes values under ComDlg32 that RackPal does not control**: at minimum `LastVisitedPidlMRU` (this executable plus the last folder browsed) and `CIDSizeMRU` (this executable, written even on a cancelled dialog), measured examples and not an inventory. So a portable build leaves shell-owned HKCU entries naming this executable and folders browsed, and no project file names (docs/03 §10.1) |
 | Window | `window_manager` ^0.5.2 | `setPreventClose` for the save prompt is the load-bearing API |
 | Persistence | Hand-written JSON codecs | Plain, pretty-printed, key-sorted UTF-8 JSON. No `freezed`, no `json_serializable`, the migration chain and byte-round-trip contract need explicit control (CR-091, CR-092) |
 | Lints | `very_good_analysis` ^9.0.0 | Strictest widely-used set; `flutter_lints` ^6.0.0 is the fallback if it proves noisy |
@@ -89,7 +89,7 @@ There is nothing to run. Once M0 lands, the entry point will be:
 
 ```text
 flutter pub get
-flutter run -d windows          # from apps/rackmate
+flutter run -d windows          # from apps/rackpal
 dart test                       # pure-Dart tests in core / text / export
 flutter test                    # widget and golden tests in ui / app
 ```
@@ -118,26 +118,26 @@ The analyzer gate is **zero errors, zero warnings, and a ratcheted info count** 
 
 ## Planned project layout
 
-Five packages, not one tree. The split is mechanically enforced by `no_flutter_import_test`, which bans `package:flutter/`, `dart:ui` **and** `package:pdf/` from `rackmate_core` (CR-083). Rejected alternative: a single `lib/` tree with the Flutter and PDF canvas backends in one directory; it puts a concrete font engine in the core package and breaks the isolate-safety guarantee within a month.
+Five packages, not one tree. The split is mechanically enforced by `no_flutter_import_test`, which bans `package:flutter/`, `dart:ui` **and** `package:pdf/` from `rackpal_core` (CR-083). Rejected alternative: a single `lib/` tree with the Flutter and PDF canvas backends in one directory; it puts a concrete font engine in the core package and breaks the isolate-safety guarantee within a month.
 
 ```text
-RackMate/
+RackPal/
 ├─ packages/
-│  ├─ rackmate_core/      pure Dart. no flutter, no dart:ui, NO pdf.
+│  ├─ rackpal_core/      pure Dart. no flutter, no dart:ui, NO pdf.
 │  │                      model/ commands/ derived/ routing/ persistence/
 │  │                      units/ idformat/ library/
 │  │                      draw/  scene builders, hit_test.dart, BoundsCanvas
 │  │                      declares abstract TextMeasurer + TextMetrics
-│  ├─ rackmate_text/      pure Dart. core + package:pdf for PdfTtfFont only.
+│  ├─ rackpal_text/      pure Dart. core + package:pdf for PdfTtfFont only.
 │  │                      ~5 files. The single concrete TextMeasurer.
-│  ├─ rackmate_export/    pure Dart. core + text + pdf.
+│  ├─ rackpal_export/    pure Dart. core + text + pdf.
 │  │                      PdfDiagramCanvas, sheets, furniture, tables,
 │  │                      document assembly. The isolate entry point.
-│  └─ rackmate_ui/        flutter. core + text.
+│  └─ rackpal_ui/        flutter. core + text.
 │                         FlutterDiagramCanvas, render objects, widgets,
 │                         canvas/input/ (pointer plumbing, spatial hash)
 ├─ apps/
-│  └─ rackmate/           the app. everything + plugins.
+│  └─ rackpal/           the app. everything + plugins.
 ├─ assets/
 │  └─ catalog/            seeded templates + sources.md (a cited source for
 │                         every numeric field in every shipped template)
@@ -147,13 +147,13 @@ RackMate/
 └─ docs/                  the specification set + research/
 ```
 
-`rackmate_export` and `rackmate_ui` are siblings that cannot see each other. That is what makes the PDF path isolate-safe, and it is a build-time invariant rather than a convention.
+`rackpal_export` and `rackpal_ui` are siblings that cannot see each other. That is what makes the PDF path isolate-safe, and it is a build-time invariant rather than a convention.
 
 ## Design principles
 
 Five principles decide most of the close calls in the decision record. Where a ruling looks arbitrary, it is almost always one of these applied mechanically.
 
-1. **The schedule is the deliverable; the drawing is the receipt** (G1). RackMate is a cable-schedule generator with a rack elevation and a schematic on the front of it. Effort and risk budget follow the schedule; anything that delays or degrades it loses. The drawing is not decoration either; it is what the integrator hands the client to prove the schedule describes a real system, and what the integrator reads to find their own mistake.
+1. **The schedule is the deliverable; the drawing is the receipt** (G1). RackPal is a cable-schedule generator with a rack elevation and a schematic on the front of it. Effort and risk budget follow the schedule; anything that delays or degrades it loses. The drawing is not decoration either; it is what the integrator hands the client to prove the schedule describes a real system, and what the integrator reads to find their own mistake.
 2. **The document must be able to represent a wrong, incomplete, or found-in-the-field world** (G2). A model that cannot draw a mistake cannot document reality. A cable can run to a location that has no device yet, or to nothing at all. Only model-incoherence is illegal.
 3. **A heuristic may never hold a user's deliverable hostage** (G3). No computed number, trade opinion or drafting convention blocks an export. Errors gate one thing, the `ISSUED FOR CONSTRUCTION` stamp, and never gate bytes. `blockExportOnErrors` is deleted, not deferred (CR-022).
 4. **Never fabricate data; show `unknown`** (G4). A missing weight contributes nothing to a rollup and the rollup reports its unknown count. `typicalWatts` never silently defaults to half of nameplate. `null` means unknown everywhere and renders `—`.

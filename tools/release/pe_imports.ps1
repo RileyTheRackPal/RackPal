@@ -98,14 +98,14 @@ function Get-PEImports {
     naming pattern, then follows those DLLs' OWN imports until the set
     stops growing. The closure step is not theoretical: `msvcp140.dll`
     imports `vcruntime140.dll` and `vcruntime140_1.dll`, and a stage that
-    copied only what `rackmate.exe` names directly could ship a runtime DLL
+    copied only what `rackpal.exe` names directly could ship a runtime DLL
     whose own dependency is missing.
 
     Measured on the M2 build: the set closes at three -- MSVCP140,
     VCRUNTIME140, VCRUNTIME140_1 -- for all four shipped binaries.
     `flutter_windows.dll` needs none of them.
 
-    THE UNIVERSAL CRT IS NOT IN THIS SET AND MUST NOT BE. `rackmate.exe`
+    THE UNIVERSAL CRT IS NOT IN THIS SET AND MUST NOT BE. `rackpal.exe`
     also imports `api-ms-win-crt-*.dll`, which are the UCRT: shipped IN-BOX
     with Windows 10 and 11, serviced by Windows Update, and not ours to
     carry. App-local UCRT deployment exists for Windows 7/8 targets, which

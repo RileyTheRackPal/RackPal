@@ -27,7 +27,7 @@ Read [§4](#4-what-would-refute-it) before you start, not after.
 Do all of this first. It is the state a real job is in when somebody sits down to enter a rough-in,
 and timing it would be timing the wrong thing.
 
-1. Launch RackMate. `File ▸ New` for a blank project.
+1. Launch RackPal. `File ▸ New` for a blank project.
 2. `Project ▸ Locations…`. Create **one telecom room** and set three fields on it:
    - Name `Media Closet`, Code `MC`
    - **Floor** `1`, **Space** `A`
@@ -120,7 +120,7 @@ teaches us to check rather than assume.
 From the repo root, against the file you saved:
 
 ```bash
-cd apps/rackmate && dart run tool/verify_drill.dart "C:\path\to\your\drill.rmpj"
+cd apps/rackpal && dart run tool/verify_drill.dart "C:\path\to\your\drill.rmpj"
 ```
 
 It prints one line per AC-018 clause with `PASS` or `FAIL` and the number it measured, then an

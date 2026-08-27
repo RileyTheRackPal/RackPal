@@ -1,6 +1,6 @@
 # Architecture
 
-This document specifies how RackMate is built: the five packages and the dependency rule that keeps them apart, where the document lives and how it is observed, the command and undo system that is the only way it changes, the derived-data pipeline, the single drawing IR that feeds both the screen and the PDF, persistence, and the platform surface. It is normative for structure and for names; where it states a decision, the governing ruling ID from the [decision record](10-decisions.md) is cited so any statement can be traced back to its adjudication. Anything not verified against a live API is marked `VERIFY:` rather than asserted, per [`critique-feasibility.md`](research/critique-feasibility.md), unverified API claims are the cheapest failure to prevent and the most expensive to discover late.
+This document specifies how RackPal is built: the five packages and the dependency rule that keeps them apart, where the document lives and how it is observed, the command and undo system that is the only way it changes, the derived-data pipeline, the single drawing IR that feeds both the screen and the PDF, persistence, and the platform surface. It is normative for structure and for names; where it states a decision, the governing ruling ID from the [decision record](10-decisions.md) is cited so any statement can be traced back to its adjudication. Anything not verified against a live API is marked `VERIFY:` rather than asserted, per [`critique-feasibility.md`](research/critique-feasibility.md), unverified API claims are the cheapest failure to prevent and the most expensive to discover late.
 
 ---
 
@@ -10,7 +10,7 @@ Restated after adjudication. Three of the five survive intact; two were amended 
 
 | # | Decision | Status | Consequence |
 |---|---|---|---|
-| **D1** | **Monorepo, four pure-Dart packages + one Flutter app**, joined by pub workspaces. `rackmate_core` imports neither `package:flutter`, `dart:ui`, nor `package:pdf`. | **Amended by CR-083**: four packages became five. | Model, commands, routing, validation and the scene builder test in `dart test` in under a second, and run inside a background isolate for PDF export. |
+| **D1** | **Monorepo, four pure-Dart packages + one Flutter app**, joined by pub workspaces. `rackpal_core` imports neither `package:flutter`, `dart:ui`, nor `package:pdf`. | **Amended by CR-083**: four packages became five. | Model, commands, routing, validation and the scene builder test in `dart test` in under a second, and run inside a background isolate for PDF export. |
 | **D2** | **One mutable document aggregate, mutated only through `Command`s.** No immutable tree, no `copyWith`. Change detection by **epoch counters**, not equality. | Intact. | Undo is exact and free; repaint invalidation is exact; no deep-copy churn on drag. |
 | **D3** | **Geometry stored as integers.** | **Superseded by CR-001**: the unit is `int64` **nanometres**, not hundredths-mm. | 1U = `Len(44_450_000)` exactly; 1/32 in = 793 750 nm exactly. The original hundredths-mm claim fails on the exact case it was written for. |
 | **D4** | **A display list (`DiagramScene`) is the single drawing IR.** Screen and PDF are two interpreters of it. | **Strengthened by CR-086**: devices no longer escape it. | Screen and print cannot diverge, including on faceplates, which is where the divergence would have mattered most. |
@@ -28,13 +28,13 @@ Per **CR-083**. `design-architecture.md` argued four packages; `design-pdf-expor
 
 | Package | Kind | Depends on | Owns |
 |---|---|---|---|
-| `rackmate_core` | pure Dart | `meta`, `collection`, `uuid` | model, commands, derived, routing, `draw/` (scene builders, `hit_test.dart`, `BoundsCanvas`), persistence, `units/`, `idformat/`, `library/`. Declares **abstract** `TextMeasurer` + `TextMetrics`. |
-| `rackmate_text` | pure Dart | core + `pdf` (for `PdfTtfFont` only) | ~5 files. **The single concrete `TextMeasurer`.** |
-| `rackmate_export` | pure Dart | core + `rackmate_text` + `pdf` | `PdfDiagramCanvas`, sheet furniture, tables, document assembly, the isolate entry point. |
-| `rackmate_ui` | Flutter | core + `rackmate_text` | `FlutterDiagramCanvas`, render objects, widgets, `canvas/input/`. |
-| `apps/rackmate` | Flutter app | everything + plugins | shell, providers, files, export service, diagnostics. |
+| `rackpal_core` | pure Dart | `meta`, `collection`, `uuid` | model, commands, derived, routing, `draw/` (scene builders, `hit_test.dart`, `BoundsCanvas`), persistence, `units/`, `idformat/`, `library/`. Declares **abstract** `TextMeasurer` + `TextMetrics`. |
+| `rackpal_text` | pure Dart | core + `pdf` (for `PdfTtfFont` only) | ~5 files. **The single concrete `TextMeasurer`.** |
+| `rackpal_export` | pure Dart | core + `rackpal_text` + `pdf` | `PdfDiagramCanvas`, sheet furniture, tables, document assembly, the isolate entry point. |
+| `rackpal_ui` | Flutter | core + `rackpal_text` | `FlutterDiagramCanvas`, render objects, widgets, `canvas/input/`. |
+| `apps/rackpal` | Flutter app | everything + plugins | shell, providers, files, export service, diagnostics. |
 
-`rackmate_ui` depending on `rackmate_text` is harmless: `package:pdf` is pure Dart and isolate-safe. The invariant that actually matters survives and is mechanically enforced, **`rackmate_core`, where the scene builder lives, has no concrete font engine and no `dart:ui`; it receives a `TextMeasurer` by injection.**
+`rackpal_ui` depending on `rackpal_text` is harmless: `package:pdf` is pure Dart and isolate-safe. The invariant that actually matters survives and is mechanically enforced, **`rackpal_core`, where the scene builder lives, has no concrete font engine and no `dart:ui`; it receives a `TextMeasurer` by injection.**
 
 Rejected alternative: a folder convention inside one Flutter package. `design-architecture.md §1.1` predicts it "will be violated within a month by an `Offset` that 'was just easier'", and that prediction is the reason a package boundary, which the compiler enforces, is used instead of a lint.
 
@@ -43,7 +43,7 @@ Not using melos. Dart 3.6+ pub workspaces do the resolution; melos earns its pla
 ### 2.2 Annotated directory tree
 
 ```text
-RackMate/
+RackPal/
 ├─ pubspec.yaml                       workspace root: workspace: [packages/*, apps/*]
 ├─ analysis_options.yaml              shared lint baseline, inherited by all members
 ├─ dart_test.yaml                     tag definitions: golden, slow, perf
@@ -55,8 +55,8 @@ RackMate/
 │                                     see the redirect table in canon §13.
 │
 ├─ packages/
-│  ├─ rackmate_core/                  ══ PURE DART. no flutter, no dart:ui, NO pdf ══
-│  │  ├─ lib/rackmate_core.dart       the only public export barrel
+│  ├─ rackpal_core/                  ══ PURE DART. no flutter, no dart:ui, NO pdf ══
+│  │  ├─ lib/rackpal_core.dart       the only public export barrel
 │  │  └─ lib/src/
 │  │     ├─ units/                    Len(nm), Mass(ug), Permille, Pt{gx,gy}, UnitFormatter,
 │  │     │                            thermal.dart (kBtuPerWattHour). CR-001, CR-003, CR-005
@@ -107,19 +107,19 @@ RackMate/
 │  │                                  epoch_mask_test (AC-014) · byte_roundtrip_test (CR-117) ·
 │  │                                  no_flutter_import_test · internal_setter_grep_test
 │  │
-│  ├─ rackmate_text/                  ══ PURE DART. core + pdf ══  ~5 files
+│  ├─ rackpal_text/                  ══ PURE DART. core + pdf ══  ~5 files
 │  │  └─ lib/src/pdf_font_measurer.dart  PdfFontMeasurer — the ONE concrete
 │  │                                     TextMeasurer. CR-081, CR-083
 │  │
-│  ├─ rackmate_export/                ══ PURE DART. isolate entry point ══
+│  ├─ rackpal_export/                ══ PURE DART. isolate entry point ══
 │  │  └─ lib/src/                     pdf_diagram_canvas.dart (global Y-flip — CR-085) ·
 │  │                                  sheets.dart · title_block.dart · schedule_table.dart ·
 │  │                                  svg_canvas.dart (v1.1 — CR-089) · export_request.dart ·
 │  │                                  build_document.dart (Isolate.spawn target — CR-099)
 │  │
-│  └─ rackmate_ui/                    ══ FLUTTER. no app shell ══
+│  └─ rackpal_ui/                    ══ FLUTTER. no app shell ══
 │     └─ lib/src/
-│        ├─ theme/                    ThemeExtension<RackMateTheme>; SignalDomainDef → ui.Color
+│        ├─ theme/                    ThemeExtension<RackPalTheme>; SignalDomainDef → ui.Color
 │        ├─ canvas/
 │        │  ├─ flutter_diagram_canvas.dart   DiagramCanvas → ui.Canvas (dash synthesis)
 │        │  ├─ render_rack_canvas.dart       MultiChildRenderObjectWidget + RenderBox
@@ -134,7 +134,7 @@ RackMate/
 │        ├─ inspector/ device_builder/ schedule/ structure/ outline/
 │        └─ l10n/
 │
-└─ apps/rackmate/
+└─ apps/rackpal/
    ├─ lib/main.dart                   runZonedGuarded, error hooks, window setup
    ├─ lib/providers/                  the ONLY place providers are declared
    ├─ lib/shell/                      app_menu.dart · intents.dart (the ONE Intent registry
@@ -157,29 +157,29 @@ RackMate/
 
 | Layer | Lives in | Contains |
 |---|---|---|
-| **Domain** | `rackmate_core/src/{units,idformat,model,routing,derived,draw}` | Entities, value objects, invariants, the router, the DRC rule functions, the scene builder. Knows nothing about files, PDFs, pixels or Flutter. |
-| **Application** | `rackmate_core/src/{commands,document_controller.dart}` | `Command`, `Transaction`, `UndoStack`, `DocumentController`. Every state transition the product supports is a class here; this is the app's verb list. |
-| **Infrastructure** | `rackmate_core/src/persistence`, all of `rackmate_text` and `rackmate_export`, `apps/rackmate/lib/src/storage`, and the file/export/dialog members of `apps/rackmate/lib/src/session` | Codecs, migrations, font metrics, PDF emission, disk I/O, isolates, logging, OS dialogs. |
-| **Presentation** | all of `rackmate_ui`, and the shell members of `apps/rackmate/lib/src/session` (`app_shell.dart`, the `*_actions.dart` builders, `session_prompts.dart`) | Widgets, render objects, viewport, input, menus, and the composition root that injects `AppServices`. |
+| **Domain** | `rackpal_core/src/{units,idformat,model,routing,derived,draw}` | Entities, value objects, invariants, the router, the DRC rule functions, the scene builder. Knows nothing about files, PDFs, pixels or Flutter. |
+| **Application** | `rackpal_core/src/{commands,document_controller.dart}` | `Command`, `Transaction`, `UndoStack`, `DocumentController`. Every state transition the product supports is a class here; this is the app's verb list. |
+| **Infrastructure** | `rackpal_core/src/persistence`, all of `rackpal_text` and `rackpal_export`, `apps/rackpal/lib/src/storage`, and the file/export/dialog members of `apps/rackpal/lib/src/session` | Codecs, migrations, font metrics, PDF emission, disk I/O, isolates, logging, OS dialogs. |
+| **Presentation** | all of `rackpal_ui`, and the shell members of `apps/rackpal/lib/src/session` (`app_shell.dart`, the `*_actions.dart` builders, `session_prompts.dart`) | Widgets, render objects, viewport, input, menus, and the composition root that injects `AppServices`. |
 
 > **The dependency rule.** Dependencies point inward and downward only. Domain depends on nothing. Application depends only on Domain. Infrastructure depends on Domain and Application. Presentation depends on all three. No layer may name a type from a layer above it, and `rackmate_export` and `rackmate_ui` may not name each other.
 
 Permitted import edges, exhaustively:
 
 ```text
-rackmate_core    →  dart:core, dart:math, dart:convert, meta, collection, uuid
-rackmate_text    →  rackmate_core, package:pdf
-rackmate_export  →  rackmate_core, rackmate_text, package:pdf
-rackmate_ui      →  rackmate_core, rackmate_text, flutter
-apps/rackmate    →  all of the above, flutter, plugins
+rackpal_core    →  dart:core, dart:math, dart:convert, meta, collection, uuid
+rackpal_text    →  rackpal_core, package:pdf
+rackpal_export  →  rackpal_core, rackpal_text, package:pdf
+rackpal_ui      →  rackpal_core, rackpal_text, flutter
+apps/rackpal    →  all of the above, flutter, plugins
 ```
 
-`rackmate_export` and `rackmate_ui` remain siblings that cannot see each other. That is what guarantees the PDF path is isolate-safe: there is no compile path from export code to `dart:ui`.
+`rackpal_export` and `rackpal_ui` remain siblings that cannot see each other. That is what guarantees the PDF path is isolate-safe: there is no compile path from export code to `dart:ui`.
 
 ### 3.1 Three rules that carry the weight
 
-1. **`rackmate_core` imports no `package:flutter`, no `dart:ui`, no `package:pdf`.** Not for `Offset`, not for `Color`, not for `Rect`. Core defines `Pt`, `Box`, and stores colour as `int` ARGB on `SignalDomainDef` (CR-078). Adapters live in `rackmate_ui`.
-2. **The document is mutated only via `DocumentController.run(Command)`.** Enforced with `@internal` from `package:meta` on entity setters, an analyzer error for any consumer outside `rackmate_core`, which `rackmate_ui` and `apps/rackmate` are. Rejected alternative: `part of` the commands library (**AC-013**), `part` files cannot carry their own imports, so ~40 entity types plus ~30 command types collapse into one library file importing everything and 70 parts that cannot be reasoned about independently.
+1. **`rackpal_core` imports no `package:flutter`, no `dart:ui`, no `package:pdf`.** Not for `Offset`, not for `Color`, not for `Rect`. Core defines `Pt`, `Box`, and stores colour as `int` ARGB on `SignalDomainDef` (CR-078). Adapters live in `rackpal_ui`.
+2. **The document is mutated only via `DocumentController.run(Command)`.** Enforced with `@internal` from `package:meta` on entity setters, an analyzer error for any consumer outside `rackpal_core`, which `rackpal_ui` and `apps/rackpal` are. Rejected alternative: `part of` the commands library (**AC-013**), `part` files cannot carry their own imports, so ~40 entity types plus ~30 command types collapse into one library file importing everything and 70 parts that cannot be reasoned about independently.
 3. **Nothing in Domain or Application is `async`.** The document is a synchronous, single-threaded data structure. Every `Future` lives in Infrastructure or Presentation. This deletes an entire class of interleaved-mutation bug and makes every core test synchronous.
 
 ### 3.2 Mechanical enforcement
@@ -187,8 +187,8 @@ apps/rackmate    →  all of the above, flutter, plugins
 Two dependency-free guards, plus the pubspec:
 
 ```dart
-// packages/rackmate_core/test/no_flutter_import_test.dart
-test('rackmate_core has no UI, no Flutter, and no PDF engine', () {
+// packages/rackpal_core/test/no_flutter_import_test.dart
+test('rackpal_core has no UI, no Flutter, and no PDF engine', () {
   final banned = RegExp(r'''import\s+['"](package:flutter/|dart:ui|package:pdf/)''');
   for (final f in Directory('lib').listSync(recursive: true).whereType<File>()
                   .where((f) => f.path.endsWith('.dart'))) {
@@ -203,7 +203,7 @@ test('rackmate_core has no UI, no Flutter, and no PDF engine', () {
 test('entity setters are called only from src/commands/', () { /* grep lib/ */ });
 ```
 
-`rackmate_core`'s pubspec declares `environment: {sdk: ^3.12.0}` with **no `flutter:` key at all**, so a stray Flutter import is a hard compile error under `dart test` as well as a readable test failure in review.
+`rackpal_core`'s pubspec declares `environment: {sdk: ^3.12.0}` with **no `flutter:` key at all**, so a stray Flutter import is a hard compile error under `dart test` as well as a readable test failure in review.
 
 ---
 
@@ -250,7 +250,7 @@ main()                                              ← the composition root
 │   ├── SessionController        new / open / save / close
 │   ├── ExportController · AutosaveScheduler · WindowChrome · WindowTitleWriter
 │   └── (stores: prefs, recents, recovery, snapshots, documents)
-└── RackMateApp                  StatelessWidget; holds services, measurer, keys
+└── RackPalApp                  StatelessWidget; holds services, measurer, keys
     └── AppShell                 GlobalKey<AppShellState> minted in main, never in build
         └── canvas screens       each State owns its own ephemeral controllers:
             SelectionController · ViewportController · DragPreviewController
@@ -263,7 +263,7 @@ main()                                              ← the composition root
 
 - **`ProviderScope` and the four `*Provider` declarations.** Never written (DR-088 §11.87.1).
 - **`DerivedRegistry derived`.** Also never written, and **deliberately**: `document_controller.dart`'s own header records it as *"a later milestone's derived-data pipeline (§6) that does not exist yet, omitted rather than stubbed, since there is nothing yet for it to invalidate."* That is the right call and the honest record of it is in the source, not here.
-- **`DocEpochs` as `ValueNotifier<int> × 6`.** It is `SimpleNotifier<int> × 7`. Pure Dart, because **D1 forbids Flutter imports in `rackmate_core`**, and seven because `sequence`, `structure`, `wires`, `rack`, `meta`, `style` and `sheet` are separate invalidation domains.
+- **`DocEpochs` as `ValueNotifier<int> × 6`.** It is `SimpleNotifier<int> × 7`. Pure Dart, because **D1 forbids Flutter imports in `rackpal_core`**, and seven because `sequence`, `structure`, `wires`, `rack`, `meta`, `style` and `sheet` are separate invalidation domains.
 
 The ephemeral controllers are consumed by painters as plain `Listenable`s via `CustomPainter(repaint:)`, which is what keeps the canvas hot path off the widget rebuild path entirely.
 
@@ -345,7 +345,7 @@ class InteractionController extends ChangeNotifier {
 ### 5.1 The `Command` interface
 
 ```dart
-// packages/rackmate_core/lib/src/commands/command.dart
+// packages/rackpal_core/lib/src/commands/command.dart
 abstract base class Command<A> {                  // generic over the aggregate — CR-106
   const Command();
 
@@ -552,7 +552,7 @@ It snapshots only the **affected entities'** JSON, ~60 KB for a 200-device re-fl
 
 The Structure editor's edits are ordinary document commands and use the document stack. Stated once so nobody builds a second mechanism.
 
-**Built at M4-A.** `TemplateEditSession` (`packages/rackmate_core/lib/src/builder/`) is the second row, and it shares `Command<A>`, `Transaction<A>`, `TxnScope<A>` and `UndoStack<A>` with the first: everything the session adds is policy (a dirty save point, a close), and none of it is undo. **The session edits a deep COPY of the body**, made by `copyTemplateBody`, and that is what makes "discarded on close without save" a behaviour rather than a comment: a session mutating the library's own `TemplateBody` would leave every cancelled edit in memory for the next device placed from that template.
+**Built at M4-A.** `TemplateEditSession` (`packages/rackpal_core/lib/src/builder/`) is the second row, and it shares `Command<A>`, `Transaction<A>`, `TxnScope<A>` and `UndoStack<A>` with the first: everything the session adds is policy (a dirty save point, a close), and none of it is undo. **The session edits a deep COPY of the body**, made by `copyTemplateBody`, and that is what makes "discarded on close without save" a behaviour rather than a comment: a session mutating the library's own `TemplateBody` would leave every cancelled edit in memory for the next device placed from that template.
 
 The third row is a rule with no code, and it stays that way. An undo scoped to one template cannot coherently undo an act on the shelf that template sits on.
 
@@ -613,7 +613,7 @@ class IncrementalValidator {
 }
 ```
 
-Incremental is the **primary** path, not the isolate. An isolate round-trip plus debounce makes issue badges lag the edit by 250–400 ms, which users read as "the app is slow"; synchronous incremental validation is imperceptible and always correct for local edits. The sweep is debounced at 500 ms with a generation token so a superseded result is discarded. **The isolate payload is a projection, not the document**: `ValidationInput` carries only the graph as flat typed lists (~30 KB), which is only possible because `rackmate_core` is Flutter-free.
+Incremental is the **primary** path, not the isolate. An isolate round-trip plus debounce makes issue badges lag the edit by 250–400 ms, which users read as "the app is slow"; synchronous incremental validation is imperceptible and always correct for local edits. The sweep is debounced at 500 ms with a generation token so a superseded result is discarded. **The isolate payload is a projection, not the document**: `ValidationInput` carries only the graph as flat typed lists (~30 KB), which is only possible because `rackpal_core` is Flutter-free.
 
 Nothing here blocks anything. `Finding`s are computed and never stored; errors gate only `ExportSpec.issuedForConstruction` (**CR-022**, G3).
 
@@ -717,7 +717,7 @@ Hard rules:
 
 ### 7.4 Hit-testing (CR-084)
 
-Split by concern. The **geometric** test (`DiagramScene.hits`, point-to-segment distance, nearest-hit selection) lives in `rackmate_core/draw/hit_test.dart`: pure, synchronously testable, and reusable by the read-only mobile shell. The **pointer plumbing** (one query per frame, spatial hash, cursor policy, hover throttle) lives in `rackmate_ui/canvas/input/`.
+Split by concern. The **geometric** test (`DiagramScene.hits`, point-to-segment distance, nearest-hit selection) lives in `rackpal_core/draw/hit_test.dart`: pure, synchronously testable, and reusable by the read-only mobile shell. The **pointer plumbing** (one query per frame, spatial hash, cursor policy, hover throttle) lives in `rackpal_ui/canvas/input/`.
 
 Two facts that contradict plausible assumptions:
 
@@ -732,7 +732,7 @@ Start with brute force plus an AABB reject (`if (!w.bounds.inflate(tol).contains
 
 ### 8.1 The interface
 
-The single declaration of `DiagramCanvas` is [PDF export §7.3](08-pdf-export.md), in `rackmate_core/draw/canvas.dart`. It is not restated here: CR-086 makes this the one drawing IR both backends replay, and two declarations of it are two chances to diverge.
+The single declaration of `DiagramCanvas` is [PDF export §7.3](08-pdf-export.md), in `rackpal_core/draw/canvas.dart`. It is not restated here: CR-086 makes this the one drawing IR both backends replay, and two declarations of it are two chances to diverge.
 
 There is **no `RendererCaps` (CR-088)**. The moment a scene builder branches on capabilities there are two code paths and the abstraction has already leaked. The interface is the common denominator, and the visual-language restriction, **flat fills, strokes, dashes and text only; no gradients, no shadows, no blurs, no blend modes, no shaders**: is promoted from prose to an invariant with a test. This is not a hardship; it *is* the schematic aesthetic, and it is what guarantees the backends agree.
 
@@ -742,13 +742,13 @@ There is **no `RendererCaps` (CR-088)**. The moment a scene builder branches on 
 
 **CR-081** is what forces the five-package split, so it is worth stating exactly.
 
-`TextMeasurer`, `TextMetrics`, `TextStyleSpec`, `TextAnchor` and the shared `anchorOffset` helper are declared once, in `rackmate_core/draw/text.dart`, see [PDF export §7.5](08-pdf-export.md). One file, one cluster; there is no `draw/text_measurer.dart`.
+`TextMeasurer`, `TextMetrics`, `TextStyleSpec`, `TextAnchor` and the shared `anchorOffset` helper are declared once, in `rackpal_core/draw/text.dart`, see [PDF export §7.5](08-pdf-export.md). One file, one cluster; there is no `draw/text_measurer.dart`.
 
 The rejected alternative was `Pt measureText(...)` with each backend answering independently. It fails at exactly one point, and the failure is invisible until it is printed: `PdfGraphics.drawString` positions at the **baseline**, while `TextPainter.paint` positions at the **top-left of the line box**. Converting between them needs `ascent`, which `Pt` cannot express, so each adapter derives a baseline independently, one from `PdfFontMetrics.ascent` and the other from a fudge of `height × 0.8`, and they do not agree. The result is text sitting a fraction of a line off between screen and print, uniformly, everywhere: invisible in code review, invisible in a display-list golden (which records the anchor, not the resolved baseline), and glaring on a printed drawing beside a leader line.
 
 The binding rules:
 
-1. **One injected `TextMeasurer`, backed by `PdfFont.stringMetrics`, used by the scene builder and by *every* backend including the Flutter one.** It lives in `rackmate_text`; core declares only the interface.
+1. **One injected `TextMeasurer`, backed by `PdfFont.stringMetrics`, used by the scene builder and by *every* backend including the Flutter one.** It lives in `rackpal_text`; core declares only the interface.
 2. `measureText` returns `TextMetrics`, never `Pt` (**CR-087**, recorded separately because it is a signature that will otherwise be copied from the wrong document).
 3. `TextStyleSpec` carries an explicit `TextAnchor`, resolved in **one shared pure-Dart helper**, so no adapter ever guesses a baseline.
 4. The Flutter side sets `FontFeature.disable('kern')` **and** `FontFeature.disable('liga')`. `VERIFY:` there is no first-class API for "disable kerning"; these two feature flags are the only route, and standard ligatures are on by default and also affect advances. This is two flags plus a test, not a checkbox.
@@ -760,11 +760,11 @@ The residual error is understood and accepted: Skia *paints* a string a fraction
 
 ### 8.3 The two backends
 
-**`FlutterDiagramCanvas`** (`rackmate_ui`) replays a scene into a `ui.Canvas`. It absorbs one mismatch: **`dart:ui Canvas` has no dashing at all**, while `PdfGraphics.setLineDashPattern` is native. Without handling this, dashed domains render solid on screen and dashed in the PDF. It synthesizes via `path_drawing`'s `dashPath` and caches the dashed `ui.Path` per `(geometry, dash)` pair. One consequence is recorded rather than discovered later (**AC-016/#17**): `dashPath` resamples via `PathMetrics`, which is an approximation on curves, so dash phase can diverge between screen and print on corner fillets, documented in [the visual language](05-schematic-editor.md#66-rendering-constants-stated-once). There are no hop arcs in v1 (DR-001), so that half of the original concern is gone; straight dashed segments remain squarely on the hot path. `VERIFY:` profile `dashPath` explicitly in the perf harness rather than assuming the cache absorbs it.
+**`FlutterDiagramCanvas`** (`rackpal_ui`) replays a scene into a `ui.Canvas`. It absorbs one mismatch: **`dart:ui Canvas` has no dashing at all**, while `PdfGraphics.setLineDashPattern` is native. Without handling this, dashed domains render solid on screen and dashed in the PDF. It synthesizes via `path_drawing`'s `dashPath` and caches the dashed `ui.Path` per `(geometry, dash)` pair. One consequence is recorded rather than discovered later (**AC-016/#17**): `dashPath` resamples via `PathMetrics`, which is an approximation on curves, so dash phase can diverge between screen and print on corner fillets, documented in [the visual language](05-schematic-editor.md#66-rendering-constants-stated-once). There are no hop arcs in v1 (DR-001), so that half of the original concern is gone; straight dashed segments remain squarely on the hot path. `VERIFY:` profile `dashPath` explicitly in the perf harness rather than assuming the cache absorbs it.
 
-**`PdfDiagramCanvas`** (`rackmate_export`) replays into `PdfGraphics`. It uses a **global Y-flip (CR-085)**, not per-coordinate negation. Per-coordinate flipping is valid only for an axis-aligned, rotation-free interface, and `DiagramCanvas` exposes `rotate()`; a rotation composed with per-coordinate negation is not a valid transform, and the failure is invisible until someone rotates a label 90° for a vertical rail, at which point it is diagnosed as "the PDF is wrong" months later. Text is counter-flipped in exactly one method. Recorded normatively because it will otherwise cost a day: **`pw.CustomPaint` pre-translates to the *widget box's* bottom-left, so the flip height is `size.y`, not the page height.**
+**`PdfDiagramCanvas`** (`rackpal_export`) replays into `PdfGraphics`. It uses a **global Y-flip (CR-085)**, not per-coordinate negation. Per-coordinate flipping is valid only for an axis-aligned, rotation-free interface, and `DiagramCanvas` exposes `rotate()`; a rotation composed with per-coordinate negation is not a valid transform, and the failure is invisible until someone rotates a label 90° for a vertical rail, at which point it is diagnosed as "the PDF is wrong" months later. Text is counter-flipped in exactly one method. Recorded normatively because it will otherwise cost a day: **`pw.CustomPaint` pre-translates to the *widget box's* bottom-left, so the flip height is `size.y`, not the page height.**
 
-**`BoundsCanvas`** (`rackmate_core`) ships in v1 (**CR-089**). Bounds are not optional, scale-to-fit, zoom-to-fit and the tile count for the one over-tall rack elevation all need the diagram's true extent and there is no other way to get it. Key plans are cut with the rest of the multi-sheet apparatus (CR-073, DR-004). `SvgDiagramCanvas` is v1.1: one file on top of an architecture that already exists.
+**`BoundsCanvas`** (`rackpal_core`) ships in v1 (**CR-089**). Bounds are not optional, scale-to-fit, zoom-to-fit and the tile count for the one over-tall rack elevation all need the diagram's true extent and there is no other way to get it. Key plans are cut with the rest of the multi-sheet apparatus (CR-073, DR-004). `SvgDiagramCanvas` is v1.1: one file on top of an architecture that already exists.
 
 Defining every connector symbol once as an SVG path `d` string eliminates the remaining duplication risk, but **the parse happens once, at catalog load**, via `DiagramPath.fromSvg(String d)`, and both backends then draw the resulting `DiagramPath` through `drawPath`. There is no `drawSvgPath` on the interface: a backend that parses strings is a backend that can disagree with the other one, which is exactly what CR-086 exists to prevent. `PdfGraphics.drawShape` and `parseSvgPathData` remain useful below that boundary, and both signatures were verified in the feasibility review.
 
@@ -772,7 +772,7 @@ Defining every connector symbol once as an SVG path `d` string eliminates the re
 
 ## 9. Persistence
 
-Full field-level detail is in [the file format](02-data-model.md#6-the-rackmate-file-format); this section covers the machinery.
+Full field-level detail is in [the file format](02-data-model.md#6-the-rackpal-file-format); this section covers the machinery.
 
 ### 9.1 Container and envelope
 
@@ -789,7 +789,7 @@ The envelope puts format metadata at the root and all entity maps under a `"docu
 
 ```json
 {
-  "generator": "RackMate",
+  "generator": "RackPal",
   "schemaVersion": 2,
   "minReaderVersion": 2,
   "appVersion": "1.0.0",
@@ -823,7 +823,7 @@ Migration returns `Outcome<T>` and never throws (**CR-093**), expected outcomes 
 |---|---|
 | `minReaderVersion > kSchemaVersion` | `Err(NewerSchema(refuse))`: the original returned `readOnly: false`, which is backwards |
 | `schemaVersion > kSchemaVersion && minReaderVersion <= kSchemaVersion` | `Ok(doc, openReadOnly: true)`, unknown fields preserved for a subsequent Save As |
-| `generator != "RackMate"` | `Err(NotARackMateFile())`: a good error, not a null-cast crash |
+| `generator != "RackPal"` | `Err(NotARackPalFile())`: a good error, not a null-cast crash |
 
 **Migrate the raw map before any typed deserialization.** Migrating typed objects requires keeping historical Dart class shapes alive forever.
 
@@ -849,7 +849,7 @@ A crash at any step leaves either the previous good file, or the previous good f
 - Every **30 s** and on **window blur**, if dirty, write a recovery snapshot to `getApplicationSupportDirectory()/recovery/<docUuid>.rmpj` plus a sidecar `{realPath, sequence, savedAt, displayName}`.
 - **Never autosave over the user's file.** CAD users expect explicit saves and will file a bug the first time an autosave clobbers something.
 - Autosave serialization runs in `Isolate.run`; nobody is waiting, so the transfer cost is free and the UI must not hitch (**CR-099**: `Isolate.run` is correct precisely where neither progress nor cancellation is wanted).
-- Delete the snapshot on clean save and on clean exit. On startup, scan the recovery directory; any survivor produces *"RackMate closed unexpectedly. Recover Smith Residence (12 unsaved changes)?"* with Recover / Discard / Keep for later.
+- Delete the snapshot on clean save and on clean exit. On startup, scan the recovery directory; any survivor produces *"RackPal closed unexpectedly. Recover Smith Residence (12 unsaved changes)?"* with Recover / Discard / Keep for later.
 - **Recovery files are never auto-attached to a crash report (CR-096).** A recovery file is a complete project containing the client's name and site address. The crash dialog offers an explicit, default-off checkbox labelled *"This includes your client's name and site address."*
 
 ### 9.5 Close interception, recents, window state
@@ -875,10 +875,10 @@ Recent files are a JSON list in application support (`{path, displayName, lastOp
 | `flutter` | `in use` | sdk | ui, app | — | — | — |
 | `path_drawing` | `in use` | `^1.0.1` | ui | `dashPath()`: `dart:ui` has no native dashing (§8.3). | low activity, but tiny | ~60 lines over `PathMetrics` |
 | `vector_math` | `in use` | `^2.2.0` | ui | `Matrix4` for the viewport. Transitively available; pin it explicitly. | none | — |
-| *(no file-dialog package)* | n/a | — | app | **Native open/save dialogs are ours.** `windows/runner/file_dialog_channel.cpp` drives `IFileDialog` directly (~150 lines of COM) behind a two-method Dart seam, `lib/src/session/file_picker.dart`. `file_selector ^1.1.0` USED TO BE THIS ROW AND WAS DELIBERATELY REMOVED: its Windows plugin calls `AddOptions` only for `select_folders` and `allow_multiple` and its Pigeon `SelectionOptions` has no other field, so `FOS_DONTADDTORECENT` cannot be requested through it at any price, and without that flag every open and every save writes the project's file name and full path into `HKCU\…\Explorer\ComDlg32\OpenSavePidlMRU` and drops a shortcut in `%APPDATA%\Microsoft\Windows\Recent`. It also dragged in `file_selector_android`, which shipped `dartjni.dll` into a Windows-only Release build. | ~150 lines of COM we maintain, and the flag closes only **half** the leak. The other half is stated as a BOUND and not as a list, because naming the measured keys and closing the list has been wrong four times running. Ours and gated: RackMate's own code writes no registry key. Measured against the shipped binary: `OpenSavePidlMRU` and the Recent shortcut are suppressed, so no project file name reaches the host. Beyond that, **the shell writes values under ComDlg32 that RackMate does not control**, at minimum `LastVisitedPidlMRU` (this executable plus the last folder browsed) and `CIDSizeMRU` (this executable, written even when the user cancels the dialog), measured examples and not an inventory, and no supported option prevents them while the shell common dialog is the dialog. So a portable build leaves shell-owned HKCU entries on a client's machine naming this executable and the folders it browsed, and never a project file name. | None wanted. Re-adding `file_selector` fails `session_layering_test.dart` RULE 14d, and `registry_claim_test.dart` fails if this row stops stating the bound, or restates it as a closed list. Suppressing the shell's own records as well would mean a hand-built file browser instead of `IFileDialog`, weighed and declined: large scope, worse dialog, internal tool. |
+| *(no file-dialog package)* | n/a | — | app | **Native open/save dialogs are ours.** `windows/runner/file_dialog_channel.cpp` drives `IFileDialog` directly (~150 lines of COM) behind a two-method Dart seam, `lib/src/session/file_picker.dart`. `file_selector ^1.1.0` USED TO BE THIS ROW AND WAS DELIBERATELY REMOVED: its Windows plugin calls `AddOptions` only for `select_folders` and `allow_multiple` and its Pigeon `SelectionOptions` has no other field, so `FOS_DONTADDTORECENT` cannot be requested through it at any price, and without that flag every open and every save writes the project's file name and full path into `HKCU\…\Explorer\ComDlg32\OpenSavePidlMRU` and drops a shortcut in `%APPDATA%\Microsoft\Windows\Recent`. It also dragged in `file_selector_android`, which shipped `dartjni.dll` into a Windows-only Release build. | ~150 lines of COM we maintain, and the flag closes only **half** the leak. The other half is stated as a BOUND and not as a list, because naming the measured keys and closing the list has been wrong four times running. Ours and gated: RackPal's own code writes no registry key. Measured against the shipped binary: `OpenSavePidlMRU` and the Recent shortcut are suppressed, so no project file name reaches the host. Beyond that, **the shell writes values under ComDlg32 that RackPal does not control**, at minimum `LastVisitedPidlMRU` (this executable plus the last folder browsed) and `CIDSizeMRU` (this executable, written even when the user cancels the dialog), measured examples and not an inventory, and no supported option prevents them while the shell common dialog is the dialog. So a portable build leaves shell-owned HKCU entries on a client's machine naming this executable and the folders it browsed, and never a project file name. | None wanted. Re-adding `file_selector` fails `session_layering_test.dart` RULE 14d, and `registry_claim_test.dart` fails if this row stops stating the bound, or restates it as a closed list. Suppressing the shell's own records as well would mean a hand-built file browser instead of `IFileDialog`, weighed and declined: large scope, worse dialog, internal tool. |
 | `window_manager` | `in use` | `^0.5.2` | app | Title with dirty marker, size/position restore, minimum size, and critically `setPreventClose`. | 0.x, single maintainer | the only load-bearing API is `setPreventClose` + the close event: ~80 lines of Win32 platform channel. Do **not** plan on `bitsdojo_window` |
 | `screen_retriever` | `in use` | `^0.2.0` | app | The display work-area list, which is what lets `validateRestoredBounds` answer "is this saved rectangle still on a monitor that is plugged in?". Without it the honest answer is always "cannot tell", every launch centres, and position restore does not exist. **NOT A FIFTH CHOICE**: it is `window_manager`'s own transitive dependency, named here only because the analyzer requires a direct declaration for a direct import (`depend_on_referenced_packages`), and it is already compiled into the runner as `screen_retriever_windows`. | inherits `window_manager`'s | none needed; it adds no native plugin and no binary weight |
-| `path_provider_windows` | `in use` | `^2.3.0` | app | `getApplicationSupportPath()` for recovery, snapshots, recents, logs, prefs. Called from **exactly one function** (`productionApplicationSupportDirectory` in `lib/src/storage/data_root.dart`) and a grep test asserts that single call site, which is what keeps M2's portable build a one-function change. **The platform package directly, NOT the `path_provider` umbrella:** on Windows the umbrella forwards to precisely this class, so the resolved path is identical, but it also drags `path_provider_android` in, and that package pulls the `jni` FFI plugin, which put `dartjni.dll` in the Release output beside `rackmate.exe`. Dart-only, no native plugin, no extra DLL. | none | the umbrella, if a second desktop platform ever needs one; then re-check the Release output for `dartjni.dll` (`flutter_dependency_test.dart` asserts it is absent) |
+| `path_provider_windows` | `in use` | `^2.3.0` | app | `getApplicationSupportPath()` for recovery, snapshots, recents, logs, prefs. Called from **exactly one function** (`productionApplicationSupportDirectory` in `lib/src/storage/data_root.dart`) and a grep test asserts that single call site, which is what keeps M2's portable build a one-function change. **The platform package directly, NOT the `path_provider` umbrella:** on Windows the umbrella forwards to precisely this class, so the resolved path is identical, but it also drags `path_provider_android` in, and that package pulls the `jni` FFI plugin, which put `dartjni.dll` in the Release output beside `rackpal.exe`. Dart-only, no native plugin, no extra DLL. | none | the umbrella, if a second desktop platform ever needs one; then re-check the Release output for `dartjni.dll` (`flutter_dependency_test.dart` asserts it is absent) |
 | `path` | `in use` | `^1.9.0` | app | Cross-platform joining. Never string-concatenate paths on Windows. | none | — |
 | `printing` | `planned (M6)` | `^5.15.0` | app | **Behind an explicit "Verify output" button only.** `PdfPreview`; `layoutPdf` is v1.1. | `PdfPreview`/`raster` need **pdfium**, which the plugin's CMake downloads at build time, a fresh or network-restricted machine fails `flutter build windows` | **Binaries are vendored into the repo (CR-100)**; a network-fetched binary in a signed release is a supply-chain and reproducibility problem, not just a CI one. Degrade to export + "Open in system viewer", which needs no pdfium |
 | `desktop_drop` | `planned (unscheduled)` | `^0.6.0` | app | Drag a `.rmpj` onto the window. | 0.x, low activity | a nicety: degrade to File ▸ Open. Alternative `super_drag_and_drop` |
@@ -887,7 +887,7 @@ Recent files are a JSON list in application support (`{path, displayName, lastOp
 | `flutter_localizations` | `planned (M7)` | sdk | app | Locale resolution, `MaterialLocalizations`, `Directionality`. | — | — |
 | `test` | `in use` | `^1.26.0` | dev | Pure-Dart tests in core/text/export. | — | — |
 | `flutter_test` | `in use` | sdk | dev | Widget and golden tests. | — | — |
-| `integration_test` | `planned (unscheduled)` | sdk | dev | Desktop end-to-end tests: the file lifecycle, crash recovery, and the two error-surface cases nothing else catches (docs/11 §5). **Planned and not installed**: no `integration_test/` directory exists in `apps/rackmate`, and no milestone in docs/09 names this work. | the plan it belongs to is unscheduled, which is the risk | — |
+| `integration_test` | `planned (unscheduled)` | sdk | dev | Desktop end-to-end tests: the file lifecycle, crash recovery, and the two error-surface cases nothing else catches (docs/11 §5). **Planned and not installed**: no `integration_test/` directory exists in `apps/rackpal`, and no milestone in docs/09 names this work. | the plan it belongs to is unscheduled, which is the risk | — |
 | `very_good_analysis` | `in use` | `9.0.0` **exact** | dev | Strictest widely-used lint set: catches the `prefer_final` / `avoid_dynamic_calls` / unawaited-future classes that matter in a document editor. | third-party; a major bump can fail CI on unchanged code | pinned exactly, bumped deliberately. Fallback `flutter_lints ^6.0.0` |
 | `leak_tracker_flutter_testing` | `in use` | `^3.0.0` | dev | Catches undisposed `TextPainter` / `ui.Picture` / `ChangeNotifier`. Given §7.3's native-resource caching, **not optional**. | — | — |
 | `fake_async` | `in use` | `^1.3.3` | dev | Deterministic `Timer` control in `status_message_controller_test.dart`, so the auto-clear is tested without a real sleep. Already resolved transitively through `flutter_test`; declared directly per pub's "declare what you import". | none | `Future.delayed` and a slower suite |
@@ -895,7 +895,7 @@ Recent files are a JSON list in application support (`{path, displayName, lastOp
 
 Explicitly **not** used: any node-editor package (`vyuh_node_flow`, `fl_nodes`, `flutter_flow_chart`, `diagram_editor`, `graphview`), any spatial-index package, `undo`, `freezed`, `json_serializable`, `build_runner`, `InteractiveViewer`, `golden_toolkit`, `desktop_multi_window`, and **`flutter_riverpod`** or any other state-management package (**DR-088**; state management is constructor injection plus hand-rolled `Listenable`s, §4.1).
 
-The node-editor rejection deserves its reason, because the best of them is genuinely good work: **RackMate is not a node graph.** Node editors model free-floating nodes in unconstrained 2D. RackMate's devices are constrained to integer RU indices in a fixed-width column, with a front/rear dimension no node editor has any concept of, and its "nodes" do not move in x at all. Adopting one means fighting its core layout assumption on every feature, and the canvas *is* the product, not a feature of it. Read their source for port-validation models and LOD thresholds; take the dependency on none of them.
+The node-editor rejection deserves its reason, because the best of them is genuinely good work: **RackPal is not a node graph.** Node editors model free-floating nodes in unconstrained 2D. RackPal's devices are constrained to integer RU indices in a fixed-width column, with a front/rear dimension no node editor has any concept of, and its "nodes" do not move in x at all. Adopting one means fighting its core layout assumption on every feature, and the canvas *is* the product, not a feature of it. Read their source for port-validation models and LOD thresholds; take the dependency on none of them.
 
 ### 10.2 Two version facts: the Flutter pin (resolved), Impeller (open)
 
@@ -991,7 +991,7 @@ sealed class AppError {
 }
 ```
 
-Every `AppError` carries a message that says **what to do next**: *"This file was created by a newer version of RackMate. Update RackMate, or open it read-only."*, not a stack trace. There is one error-message catalogue with one voice (**AC-058/D1**).
+Every `AppError` carries a message that says **what to do next**: *"This file was created by a newer version of RackPal. Update RackPal, or open it read-only."*, not a stack trace. There is one error-message catalogue with one voice (**AC-058/D1**).
 
 **Programmer errors throw.** Broken invariants, unreachable switch arms and null entity lookups are bugs: loud in debug, captured in release.
 
@@ -1012,10 +1012,10 @@ void main() {
       CrashReporter.record(e, st);
       return true;                                  // handled; do not kill the isolate
     };
-    ErrorWidget.builder = (d) => RackMateErrorPane(d);   // never a red-and-yellow box
+    ErrorWidget.builder = (d) => RackPalErrorPane(d);   // never a red-and-yellow box
 
     final services = await bootstrap();          // the composition root (§4.2)
-    runApp(RackMateApp(services: services, shellKey: GlobalKey<AppShellState>()));
+    runApp(RackPalApp(services: services, shellKey: GlobalKey<AppShellState>()));
   }, (e, st) { Log.root.shout('zone', e, st); CrashReporter.record(e, st); });
 }
 ```
@@ -1037,7 +1037,7 @@ void _rollback(_TxnBuilder b, Object e, StackTrace st) {
     Log.root.shout('ROLLBACK FAILED — poisoning undo stack', e2, st2);
     undo.poison();                    // canUndo/canRedo → false
     _forceRecoverySnapshot();         // write it out before anything else touches it
-    _notifyUnrecoverable();           // "Save a copy and restart RackMate."
+    _notifyUnrecoverable();           // "Save a copy and restart RackPal."
   }
 }
 ```
@@ -1081,7 +1081,7 @@ macOS is a v1 target only if [§10.10 of the decision record](10-decisions.md) r
 
 Theme is a UI preference and is **never persisted in the document**. Light is the first-run default and dark is one click away (**CR-076**), the moment that decides whether a user trusts the tool is comparing the screen to the printed sheet, and that comparison must succeed on first run. **The screen theme never affects the export** (**CR-077**): export palette is an explicit `ExportSpec.palette: colour | greyscale | cmyk`, never inherited from the UI.
 
-All user-facing strings go through `AppLocalizations` from the first commit with one locale, `l10n.yaml` in CI, and localisable registry display names. Command labels are the interesting case: they live in `rackmate_core`, which cannot import Flutter, so commands expose a **`LabelKey` enum plus arguments** and `rackmate_ui` maps key → localized string. The Edit menu shows a localized *"Undo Move device"*; the log shows the stable enum name. Retrofitting this across a mature app is a multi-week grind that never quite finishes; the incremental cost per string today is about fifteen seconds.
+All user-facing strings go through `AppLocalizations` from the first commit with one locale, `l10n.yaml` in CI, and localisable registry display names. Command labels are the interesting case: they live in `rackpal_core`, which cannot import Flutter, so commands expose a **`LabelKey` enum plus arguments** and `rackpal_ui` maps key → localized string. The Edit menu shows a localized *"Undo Move device"*; the log shows the stable enum name. Retrofitting this across a mature app is a multi-week grind that never quite finishes; the incremental cost per string today is about fifteen seconds.
 
 Explicit non-goal: **the canvas stays LTR under an RTL locale.** Electrical schematics are LTR by universal convention and mirroring a rack elevation would be actively wrong. Say so in the code so nobody "fixes" it.
 

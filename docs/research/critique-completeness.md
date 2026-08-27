@@ -1,4 +1,4 @@
-# RackMate Design: Completeness Audit
+# RackPal Design: Completeness Audit
 
 **Audit limitation, stated up front:** the `pdf` document was supplied truncated; it begins mid-sentence inside §9.2. I audited it against its own §12 decision summary (which enumerates §1–§8), its §10 file layout, and its §11 build order. Findings that depend on §1–§8 content are marked *(inferred)*. Everything else was read in full.
 
@@ -237,7 +237,7 @@ A template-authored `J1` cannot also be a project-unique `J2301`, and `ux-device
 
 **B45: Passthrough pairing has no file format.** `data-model`: `PassthroughPairDef{frontKey, rearKey, sameNet}` on the template; invariant I-32. `ux-device-builder`: a `Paired port` grid column and a "Pair front↔rear by order" action, and the seeded panels annotate "[paired 1:1 with front]", but the `.rmdev` schema in §3.2 has **no pair array** and no `sameNet` flag.
 
-**B46: Vocabulary namespaces are incompatible.** `data-model` uses reverse-hierarchical namespaced IDs (`conn.rj45`, `video.hdmi.2_0`, `net.ethernet`, `power.ac_120`). `ux-device-builder` uses flat bare names (`HDMI-A`, `RJ45`, `hdmi20`, `ethernet`, `ac-inlet`) and its catalog is by far the largest vocabulary in the project (~35 connectors, ~45 signal families). Note `ac-inlet` is used as a *signal family* in the catalog while `data-model` models it as family `power.ac_120` + `PortPowerSpec.role: inlet`. No shared registry file exists; `.rmdev` → `.rackmate` import is undefined.
+**B46: Vocabulary namespaces are incompatible.** `data-model` uses reverse-hierarchical namespaced IDs (`conn.rj45`, `video.hdmi.2_0`, `net.ethernet`, `power.ac_120`). `ux-device-builder` uses flat bare names (`HDMI-A`, `RJ45`, `hdmi20`, `ethernet`, `ac-inlet`) and its catalog is by far the largest vocabulary in the project (~35 connectors, ~45 signal families). Note `ac-inlet` is used as a *signal family* in the catalog while `data-model` models it as family `power.ac_120` + `PortPowerSpec.role: inlet`. No shared registry file exists; `.rmdev` → `.rackpal` import is undefined.
 
 **B47: Gender enum is ambiguous.** `data-model`: `male | female | genderless | jack | plug`, five values containing two synonym pairs, with `ConnectorTypeDef.matesWith` described as a "gender-aware mating table." `ux-schematic §1.3`: "**filled = female/jack, hollow = male/plug**", treats them as synonyms. Consequence: `CON-002` ("genders both male or both female") does not fire for `jack`+`jack`. Concrete bug in a shipped rule.
 
@@ -277,7 +277,7 @@ A template-authored `J1` cannot also be a project-unique `J2301`, and `ux-device
 
 **B61: Where colour and dash are defined.** `data-model` puts `color`, `dashPattern`, `lineWeightPermille`, `glyph` on `SignalFamilyDef` (43+ entries) while `§3.4` argues "Colour is on the `SignalDomain` (7 values), **not** the family." No `SignalDomainDef` exists. Also `dashPattern: List<int>` has **no stated unit** anywhere; `ux-schematic` specifies dashes in grid units U.
 
-**B62: Fonts: a named rejection contradicted. *(Blocking for goldens.)*** `pdf §9`: IBM Plex Sans / Sans Condensed / Mono, SIL OFL, aliases `RackBody`/`RackCond`/`RackMono`, six TTFs ~1.0 MB, and explicitly: "**Runner-up considered and rejected: Inter** … and **Roboto / Roboto Mono**." `architecture §12.3`: "`Inter-Regular`, `Inter-SemiBold`, `JetBrainsMono-Regular` in `apps/rackmate/assets/fonts/`." `architecture §9.4`'s golden test then asserts families are `RackBody`/`RackMono`, the pdf doc's aliases with the pdf doc's rejected fonts, and no `RackCond`.
+**B62: Fonts: a named rejection contradicted. *(Blocking for goldens.)*** `pdf §9`: IBM Plex Sans / Sans Condensed / Mono, SIL OFL, aliases `RackBody`/`RackCond`/`RackMono`, six TTFs ~1.0 MB, and explicitly: "**Runner-up considered and rejected: Inter** … and **Roboto / Roboto Mono**." `architecture §12.3`: "`Inter-Regular`, `Inter-SemiBold`, `JetBrainsMono-Regular` in `apps/rackpal/assets/fonts/`." `architecture §9.4`'s golden test then asserts families are `RackBody`/`RackMono`, the pdf doc's aliases with the pdf doc's rejected fonts, and no `RackCond`.
 
 **B63: Text-metric source of truth. *(Blocking: this is the parity bug both docs warn about.)***
 - `pdf §12` decision 11: "**`PdfFont.stringMetrics` is the single source of truth for text metrics on both backends**, with Skia kerning disabled to match." Decision 18 and the closing note: "the two failures that produce a PDF which is subtly, unfixably different from the preview."
@@ -286,10 +286,10 @@ A template-authored `J1` cannot also be a project-unique `J2301`, and `ux-device
 ### Architecture and packaging
 
 **B64: Package layout: four packages or one. *(Blocking.)***
-- `architecture §1.2/§2.2`: four packages; "`rackmate_export` and `rackmate_ui` are **siblings that cannot see each other**. That is deliberate: it is what guarantees the PDF path is isolate-safe."
+- `architecture §1.2/§2.2`: four packages; "`rackpal_export` and `rackpal_ui` are **siblings that cannot see each other**. That is deliberate: it is what guarantees the PDF path is isolate-safe."
 - `pdf §10`: a **single** `lib/` tree with `diagram/backends/{pdf_canvas.dart, svg_canvas.dart, bounds_canvas.dart, flutter_canvas.dart}`, the Flutter and PDF backends **in the same directory**, annotated "the ONLY Flutter-dependent file here." This is exactly the folder-convention arrangement `architecture §1.1` rejects: "a folder convention will be violated within a month by an `Offset` that 'was just easier.'"
-- Worse: `pdf §10` places `diagram/text.dart # TextMeasurer, **PdfFontMeasurer**` inside the core tree. Combined with B63, core must depend on `package:pdf`, a direct violation of `architecture §2.2`'s import table (`rackmate_core → no pdf`) and of its `no_flutter_import_test`, which bans `package:pdf/` by regex.
-- `hit_test.dart` lives in core (`pdf §10`) vs `rackmate_ui/canvas/input/hit_tester.dart` (`architecture §1.2`).
+- Worse: `pdf §10` places `diagram/text.dart # TextMeasurer, **PdfFontMeasurer**` inside the core tree. Combined with B63, core must depend on `package:pdf`, a direct violation of `architecture §2.2`'s import table (`rackpal_core → no pdf`) and of its `no_flutter_import_test`, which bans `package:pdf/` by regex.
+- `hit_test.dart` lives in core (`pdf §10`) vs `rackpal_ui/canvas/input/hit_tester.dart` (`architecture §1.2`).
 
 **B65: Devices are rendered by two code paths, and no document notices.** All three UX documents and `architecture §6.2` agree device bodies are **real Flutter widgets** ("Device faceplates + ports + ref-designators | real widgets"). But `architecture D4` states the display list is "the single drawing IR … Screen and PDF are two interpreters of it," and `draw/scene/device_layer.dart` emits devices into the scene for PDF. So device faceplates, the most information-dense content in the deliverable, are drawn by a widget tree on screen and by a scene builder in print, with **no parity mechanism**, defeating D4 exactly where it matters most. `pdf`'s parity test (`canvas_parity_test`, build step 3, "the thing that's expensive to fix late") tests the two *canvas backends*, not the two *device renderers*.
 
@@ -301,7 +301,7 @@ A template-authored `J1` cannot also be a project-unique `J2301`, and `ux-device
 
 **B69: Model class names in `pdf §10`.** `RackProject, Device, Port, PhysicalLink, LogicalSignal, CableType, Rack, Structure`, `RackProject` vs `Project`, `Device` vs `DeviceInstance`, `PhysicalLink`/`LogicalSignal` vs `Link`/`Net` vs `Connection`, `CableType` vs the three-registry split `data-model` explicitly renamed it away from.
 
-**B70: `.rackmate` container: plain JSON or zip.** `data-model §4.1`: "v1 is **plain, pretty-printed, key-sorted UTF-8 JSON** … v2: ZipCodec." `architecture §7.1`: "**Not zipped**, not binary." `ux-device-builder §3.1`: "`.rackmate` | A project | **Zip: `project.json` + embedded template snapshots + `assets/`**." The third document is the one that specifies device images (512 KB `frontImage`/`rearImage`), which force a container. Decide images in/out first, then the container follows.
+**B70: `.rackpal` container: plain JSON or zip.** `data-model §4.1`: "v1 is **plain, pretty-printed, key-sorted UTF-8 JSON** … v2: ZipCodec." `architecture §7.1`: "**Not zipped**, not binary." `ux-device-builder §3.1`: "`.rackpal` | A project | **Zip: `project.json` + embedded template snapshots + `assets/`**." The third document is the one that specifies device images (512 KB `frontImage`/`rearImage`), which force a container. Decide images in/out first, then the container follows.
 
 **B71: Envelope shape.** `data-model §4.2`: root keys + all entity maps nested under `"document": {…}`. `architecture §7.1`: root keys with `Project` fields at root, no `document` wrapper. `ux-device-builder`: `project.json` inside a zip.
 
@@ -374,7 +374,7 @@ Grouped by what they block. The first six block *everything*.
 
 **C1. The unit.** nm / hundredths / tenths / float-mm (B1). Deciding factor: must 1/32″ EIA clearances be exact (⇒ nm) or is 0.01 mm sufficient (⇒ hundredths)? Write the answer into one normative doc and delete the other three.
 **C2. The wiring entity set** (B6–B11). `Connection` alone, or `Link`+`Conductor`+`Net`+`SignalRoute`. This determines the schedule, the DRC, the schematic, the PDF, and the format. Recommend: `Link`+`Conductor`+`Net` in v1, `SignalRoute` deferred (nothing in v1 needs Dante flow modelling).
-**C3. `.rackmate` container** (B70), decided by C4.
+**C3. `.rackpal` container** (B70), decided by C4.
 **C4. Do device images ship in v1?** `.rmdev` allows 512 KB embedded PNG/SVG per face. If yes ⇒ zip container now. Recommend **no**: `ux-device-builder §1.5` already calls them a scope trap and says they are "not needed for correct output."
 **C5. Template version type and migration join key** (B37, B38). Recommend: `int` version (a semver whose meaning is computed from a diff adds a vocabulary without adding a capability), and **`PortKey` string + `renamedFrom`** as the join, a UUID cannot express "this port was renamed from that one," which is the case the whole mechanism exists for.
 **C6. Ordering type** (B18), `FracIndex` everywhere or `int` everywhere. Recommend `FracIndex`; retrofitting it is a format migration touching every entity.
@@ -413,7 +413,7 @@ Grouped by what they block. The first six block *everything*.
 ### Blocks the build
 
 **C29. Package layout**: four packages or one tree (B64), and where `hit_test` and text measurement live.
-**C30. Text-metric source of truth** (B63), and therefore whether `rackmate_core` may depend on a font engine. This is the decision `pdf §12` calls "the one thing to get right."
+**C30. Text-metric source of truth** (B63), and therefore whether `rackpal_core` may depend on a font engine. This is the decision `pdf §12` calls "the one thing to get right."
 **C31. Device rendering: one path or two** (B65). If devices stay widgets, the parity test must cover device faceplates specifically, or D4's guarantee is void for the most important content.
 **C32. Fonts** (B62).
 **C33. Isolate API** (B66).
@@ -492,7 +492,7 @@ Privacy posture is strong (`architecture §11.5`: no telemetry by default, local
 ### D9. App naming, branding, icon, file association
 
 - Name is used consistently; **no trademark search is mentioned**: "RackMate" is a plausible collision in adjacent hardware/AV markets and should be checked before any signing certificate or domain is bought.
-- **No icon, no logo, no wordmark asset, no splash, no window icon, no document icon, no colour identity** beyond the wire palette. `ux-rack §9.1` shows "▦ RackMate", a placeholder glyph. The PDF title block prints "RackMate" as text (`ux-schematic §1.7`).
+- **No icon, no logo, no wordmark asset, no splash, no window icon, no document icon, no colour identity** beyond the wire palette. `ux-rack §9.1` shows "▦ RackMate", a placeholder glyph. The PDF title block prints "RackPal" as text (`ux-schematic §1.7`).
 - **No file-type registration** for `.rackmate` / `.rmdev` / `.rmlib` on Windows/macOS. Without it, double-click-to-open fails, the recents list is half-useful, and `desktop_drop` is the only entry path.
 - No branding hook in the PDF title block, despite `architecture §12.3` naming "Company branding in the PDF title block" as a *later* feature, for a firm handing drawings to clients, the integrator's logo is close to table stakes.
 

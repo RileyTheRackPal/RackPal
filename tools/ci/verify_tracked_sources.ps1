@@ -4,12 +4,12 @@
     i.e. if the tree compiles here but a fresh clone would not.
 
 .DESCRIPTION
-    WHY THIS EXISTS. The barrel `packages/rackmate_core/lib/rackmate_core.dart`
+    WHY THIS EXISTS. The barrel `packages/rackpal_core/lib/rackpal_core.dart`
     was committed carrying `export 'src/commands/rack_commands.dart';` while
     that file was never added to the index. Every local command stayed green:
     the file is right there on disk, so `flutter analyze` resolved it and all
     five suites passed. A clone of that same commit gets an `export` of a
-    URI that does not exist -- an analyzer ERROR in rackmate_core and a
+    URI that does not exist -- an analyzer ERROR in rackpal_core and a
     compile failure in every package that imports the barrel. The pipeline
     checks out clean on purpose, so run 1 would have gone red for a reason
     invisible in the working tree.

@@ -1,4 +1,4 @@
-I'll research this thoroughly. Let me load the web tools first.Let me dig into the primary sources and parallel topics.# Rack & Rack-Mount A/V Domain Facts, RackMate
+I'll research this thoroughly. Let me load the web tools first.Let me dig into the primary sources and parallel topics.# Rack & Rack-Mount A/V Domain Facts, RackPal
 
 Compiled from standards references and manufacturer data. Numbers marked **[verified]** appear consistently across ≥2 independent sources. Disagreements flagged inline with ⚠.
 
@@ -38,7 +38,7 @@ Center-to-center spacing repeats **0.500 / 0.625 / 0.625 in** (12.70 / 15.88 / 1
 
 **Hole positions relative to the U boundary:** holes are centered at **0.25, 0.875, and 1.50 in (6.35, 22.23, 38.10 mm)** from the boundary of the U. The **U boundary falls at the midpoint of the 0.5-in gap**: i.e. in the middle of the narrowest metal web between two holes, *not* at a hole center. **[verified]**
 
-This matters: a rack-position ruler drawn in RackMate should place the U division lines through the tight 0.5-in pair, and a 1U device's two ears land on the outer holes of its U (0.25 and 1.50), with the center hole (0.875) usually unused on 1U gear and used by 2U+ gear.
+This matters: a rack-position ruler drawn in RackPal should place the U division lines through the tight 0.5-in pair, and a 1U device's two ears land on the outer holes of its U (0.25 and 1.50), with the center hole (0.875) usually unused on 1U gear and used by 2U+ gear.
 
 Note "universal" or "full-hole" rail = every EIA hole present. Some cheap rails omit holes; Middle Atlantic markets "full-hole rackrail" (RRF series) explicitly.
 
@@ -47,11 +47,11 @@ Note "universal" or "full-hole" rail = every EIA hole present. Some cheap rails 
 - Most vendor references and EIA-310 itself: **18.312 in (465.1 mm)** exact.
 - Wikipedia gives a **range: 18.28–18.34 in (464.2–465.8 mm)** center-to-center.
 
-Reconciliation: 465.1 mm is nominal; the range reflects manufacturing tolerance in the standard. **Use 465.1 mm nominal.** Not user-facing in RackMate, but relevant if you ever emit dimensioned drawings.
+Reconciliation: 465.1 mm is nominal; the range reflects manufacturing tolerance in the standard. **Use 465.1 mm nominal.** Not user-facing in RackPal, but relevant if you ever emit dimensioned drawings.
 
 ### 1.4 Mounting hole / fastener types
 
-Three rail styles exist; a rack in RackMate should carry a `railType` enum because it constrains what hardware the integrator buys, not what fits geometrically:
+Three rail styles exist; a rack in RackPal should carry a `railType` enum because it constrains what hardware the integrator buys, not what fits geometrically:
 
 1. **Tapped/threaded round holes**: screws thread directly into the rail.
    - **10-32**: the de-facto standard in pro A/V. Middle Atlantic RRF rackrail is "tapped for 10-32 threads." **[verified]**
@@ -80,7 +80,7 @@ Common screw sizes across all: **10-32, 12-24, M6**.
 
 Sources are explicit: *"there is no standard for half-width rack mount equipment, and there is no official 9.5 inch standard width."* Manufacturers ship 9.5, 10, 10.4, and 10.5 in. One source cites ½-rack ear hole centers at 244 mm (9.60 in). Vertical U dimension is unchanged across all widths.
 
-**Modeling implication:** do **not** model half-rack as "0.5 rack width." Model a device as `widthClass: full | half | third | custom_mm` plus an explicit `mountMethod`. In practice half-rack A/V gear (wireless mic receivers, small matrix switchers, media players) is **almost always shelf-mounted or mounted on a half-rack ear kit**, and two half-rack devices sharing 1U is a real, common arrangement RackMate must represent (see §7).
+**Modeling implication:** do **not** model half-rack as "0.5 rack width." Model a device as `widthClass: full | half | third | custom_mm` plus an explicit `mountMethod`. In practice half-rack A/V gear (wireless mic receivers, small matrix switchers, media players) is **almost always shelf-mounted or mounted on a half-rack ear kit**, and two half-rack devices sharing 1U is a real, common arrangement RackPal must represent (see §7).
 
 **Sources:** [CP Cases half racks](https://cpcases.com/products/19-inch-racks/half-racks) · [ProCase half-size racks](https://www.procaseshop.com/19-inch-rack/half-size-rack) · [Penn Elcom 9.5" half rack shelves](https://www.penn-elcom.com/us/9-5-half-rack-shelves-r1194-905-series)
 
@@ -107,7 +107,7 @@ Sources are explicit: *"there is no standard for half-width rack mount equipment
 - Middle Atlantic **SGR / 12RS swing gate wall rack: 100 lb** chassis capacity.
 - Middle Atlantic **EWR pivoting wall cabinet (10U): up to 150 lb**. ⚠ One source describes it as "17-inch wide"; that is almost certainly a typo for 17-in *deep*, 19-in rail spacing is fixed. Treat with caution.
 
-**Wall-mount weight capacity is the single most binding constraint in residential CI**: a 12U wall rack rated 100 lb will hit its limit long before it runs out of RU if it holds a UPS and an amp. RackMate should surface a `rackWeightCapacityLb` field and warn on exceedance.
+**Wall-mount weight capacity is the single most binding constraint in residential CI**: a 12U wall rack rated 100 lb will hit its limit long before it runs out of RU if it holds a UPS and an amp. RackPal should surface a `rackWeightCapacityLb` field and warn on exceedance.
 
 ### Swing-gate / swing-frame implication for the wiring planner
 
@@ -119,7 +119,7 @@ Swing racks rotate 90° on a hinge. Rear-panel cabling must have **service loop 
 
 ## 4. Non-device rack occupants: RU-consuming vs zero-U
 
-This is the taxonomy RackMate's object model needs. **Occupancy is a property of the mount, not the object class.**
+This is the taxonomy RackPal's object model needs. **Occupancy is a property of the mount, not the object class.**
 
 ### Consumes front RU (occupies panel space)
 
@@ -162,7 +162,7 @@ occupancy: {
 }
 ```
 
-A 1U blank = `{frontU:1, rearU:0}`. A rear LBP lace bar = `{frontU:0, rearU:1}`. A 0U PDU = `{frontU:0, rearU:0, side:zeroU_vertical}`. A 2U patch panel = `{frontU:2, rearU:2}`. This single change is what lets RackMate correctly answer "how many U do I have left?", which is *different for front and rear*.
+A 1U blank = `{frontU:1, rearU:0}`. A rear LBP lace bar = `{frontU:0, rearU:1}`. A 0U PDU = `{frontU:0, rearU:0, side:zeroU_vertical}`. A 2U patch panel = `{frontU:2, rearU:2}`. This single change is what lets RackPal correctly answer "how many U do I have left?", which is *different for front and rear*.
 
 **Sources:** [Middle Atlantic VT1 vent panel](https://www.rackmountsolutions.net/middle-atlantic-vt1-1u-steel-rack-vent-panel/) · [VTB-2 (64% open)](https://www.performanceaudio.com/products/middle-atlantic-vtb-2-light-blocking-rack-vent-panel-2u) · [VTF1 tight-pattern](https://www.bhphotovideo.com/c/product/418871-REG/Middle_Atlantic_VTF1_VTF1_1U_Tight_Pattern_Vented.html) · [LBP lace bars at CDW](https://www.cdw.com/product/middle-atlantic-lbp-horizontal-rack-cable-management-lace-bar-l-shaped/794426) · [LACE-23-OP strips](https://matrixsolutionsinc.com/middle-atlantic-products-lace-23-op-rack-accessory-cable-lacing-bar) · [Vertical vs horizontal PDUs (Enconnex)](https://www.enconnex.com/vertical-pdus-vs-horizontal-pdus/) · [Eaton/Tripp Lite PDU buying guide](https://tripplite.eaton.com/products/pdu-buying-guide) · [Tripp Lite 24-port 1U keystone panel](https://tripplite.eaton.com/24-port-1u-rack-mount-unshielded-blank-keystone-multimedia-patch-panel-rj45-ethernet-usb-hdmi-cat5e-cat6~N062024KJSH) vs [24-port 2U](https://tripplite.eaton.com/24-port-2u-rack-mount-unshielded-blank-keystone-multimedia-patch-panel~N062024KJ)
 
@@ -170,14 +170,14 @@ A 1U blank = `{frontU:1, rearU:0}`. A rear LBP lace bar = `{frontU:0, rearU:1}`.
 
 ## 5. Planning concerns integrators actually track
 
-These are the fields that make RackMate a *tool* rather than a drawing program. Each should be a per-device attribute with a per-rack rollup.
+These are the fields that make RackPal a *tool* rather than a drawing program. Each should be a per-device attribute with a per-rack rollup.
 
 ### 5.1 Weight & weight distribution
 - Per-device `weightLb/kg`; rack rollup vs `rackCapacity`.
 - **Heaviest items at the bottom**: UPS, battery packs, amplifiers. Documented failure mode: a UPS installed at the top of a 42U rack caused the rack to lean forward within days; relocating it to the bottom resolved it.
 - Avoid heavy gear on slide rails (cantilever stress).
 - Anchor to floor/wall in seismic zones.
-- **Useful RackMate feature:** center-of-gravity height indicator + "top-heavy" warning, and a wall-rack "over capacity" hard warning (100 lb limits are easy to blow past).
+- **Useful RackPal feature:** center-of-gravity height indicator + "top-heavy" warning, and a wall-rack "over capacity" hard warning (100 lb limits are easy to blow past).
 
 ### 5.2 Power
 - Per-device: `watts`, `amps`, `voltage`, `isContinuousLoad`, `plugType`, `outletsProvided`, `outletsConsumed`.
@@ -185,7 +185,7 @@ These are the fields that make RackMate a *tool* rather than a drawing program. 
   - **15 A circuit → 12 A max continuous**
   - **20 A circuit → 16 A max continuous**
 - Exception: assemblies listed for 100% operation (rare in CI).
-- **RackMate feature:** model **circuits** as a first-class object; assign PDUs/devices to circuits; show per-circuit amps against 12 A / 16 A thresholds. Also track outlet count balance (outlets provided by PDUs vs consumed by devices), running out of outlets is as common as running out of RU.
+- **RackPal feature:** model **circuits** as a first-class object; assign PDUs/devices to circuits; show per-circuit amps against 12 A / 16 A thresholds. Also track outlet count balance (outlets provided by PDUs vs consumed by devices), running out of outlets is as common as running out of RU.
 - Nameplate vs actual: equipment typically draws **30–70% of rated** power. Offer both `nameplateWatts` and `typicalWatts`; do heat math on typical, breaker math on nameplate.
 
 ### 5.3 Heat load & ventilation
@@ -203,7 +203,7 @@ Trade guidance (blog-level consensus, not a standard, ⚠ flag as heuristic, not
 - Budget **1U–2U between heat generators** and **1U–2U for cable managers**.
 - **Reserve 15–25% spare RU** before finalizing a design.
 
-**RackMate feature:** per-device `requiresClearanceAboveU` / `requiresClearanceBelowU` integers, validated as an occupancy conflict. This is a genuinely differentiating feature, most rack tools don't model it.
+**RackPal feature:** per-device `requiresClearanceAboveU` / `requiresClearanceBelowU` integers, validated as an occupancy conflict. This is a genuinely differentiating feature, most rack tools don't model it.
 
 ### 5.5 Depth clearance
 - Track `deviceDepthMm` and `rackUsableDepthMm`. A 20-in-deep device does not fit a 15-in-deep rack.
@@ -258,7 +258,7 @@ Shelf (occupies N U, has depth + weight capacity)
   └── hosts[] : Device (each with own weight, depth, ports, but NO independent U position)
 ```
 
-Rules RackMate should encode:
+Rules RackPal should encode:
 - A shelf consumes its own RU; **hosted devices consume zero additional RU**.
 - **Sum of hosted device weights ≤ shelf weight capacity** (25/35/50 lb are low, two STBs and a wall wart get there fast).
 - **Each hosted device's depth ≤ shelf usable depth** (10 in shelves are shallow; many STBs exceed it).
@@ -309,7 +309,7 @@ Your requirement #6. Real-world grounding for what this pseudo-device represents
 
 ---
 
-## 10. Condensed data-model takeaways for RackMate
+## 10. Condensed data-model takeaways for RackPal
 
 1. **Height is an integer U count.** Render at `44.45n − 0.79` mm. Never store floats.
 2. **Occupancy is a struct, not a scalar:** `{frontU, rearU, side, depthMm, weightKg}`. Front and rear capacity are independent.

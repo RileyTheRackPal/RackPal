@@ -45,7 +45,7 @@
     apiece, symmetric difference empty. So a number produced here and a
     number produced by `flutter analyze` are the same number, and a
     developer's habitual command agrees with the gate. It also confirms that
-    the root sweep reaches apps/rackmate, which nothing about `dart analyze .`
+    the root sweep reaches apps/rackpal, which nothing about `dart analyze .`
     in a pub workspace guarantees on its face.
 
 .PARAMETER RepoRoot

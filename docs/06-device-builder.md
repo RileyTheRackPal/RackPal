@@ -106,7 +106,7 @@ Depth and weight are **optional, with a visible `unknown` state**: the fields ar
 Three things the form does **not** do:
 
 1. It does not derive `typicalWatts`. The field sits blank with the hint *"typical draw is usually 30–70% of nameplate"* and stays blank until a human types a sourced number (AC-039).
-2. It does not store heat. BTU/h is derived as `typicalWatts × kBtuPerWattHour` where the constant is `3.412142`, defined once in `rackmate_core/units/thermal.dart` (CR-005). `btuPerHourOverride` exists only for the rare manufacturer figure that disagrees with the arithmetic.
+2. It does not store heat. BTU/h is derived as `typicalWatts × kBtuPerWattHour` where the constant is `3.412142`, defined once in `rackpal_core/units/thermal.dart` (CR-005). `btuPerHourOverride` exists only for the rare manufacturer figure that disagrees with the arithmetic.
 3. It does not compute circuit loading in watts. Loading is computed in **VA**, because a linear-supply amplifier at PF 0.65 under-reports current by 35% on exactly the gear where it matters (CR-056, AC-020).
 
 `outletsProvided` and `outletsConsumed` are read-only, counted from ports whose family is `power.*` with `PortPowerSpec.role` of `outlet` / `inlet`. External power bricks count: a 4×4 matrix with a 12 V barrel jack still eats a PDU outlet.
@@ -432,7 +432,7 @@ Note also what is **absent rather than null**: `typicalWatts` and `apparentVA` a
 
 **v1.1, DR-033, and conditional**: canon §11.32.7 holds the surface behind a release posture that is not yet ruled. **The `submittedBy` field itself is v1** and ships ahead of the surface, because `TemplateBody` has no `unknown` passthrough and a v1 build that re-saved a v1.1 file would drop the credit silently.
 
-**Where it goes.** A second repository holds the community library as one `.rmdx` per device. **Not** `packages/rackmate_core/lib/src/catalog/`, which is Dart and stays Dart: DR-002 binds the seeded catalog to generic archetypes and AC-052 requires cited provenance for it, so a real manufacturer and model cannot land there. Canon §10.9 permits real SKUs on user-authored templates and refuses them in the seed, and this is that boundary made into two repositories.
+**Where it goes.** A second repository holds the community library as one `.rmdx` per device. **Not** `packages/rackpal_core/lib/src/catalog/`, which is Dart and stays Dart: DR-002 binds the seeded catalog to generic archetypes and AC-052 requires cited provenance for it, so a real manufacturer and model cannot land there. Canon §10.9 permits real SKUs on user-authored templates and refuses them in the seed, and this is that boundary made into two repositories.
 
 **The gesture.** A `Submit to community catalog` action in the editor's toolbar opens a **review sheet** before anything leaves the machine. The sheet shows three things: the exact JSON to be proposed, the citation, and the sign-in state. Submission is deliberate and reviewable, which matters because the failure this prevents is a template carrying a client's name in `description` becoming public. *Rejected alternative:* a prompt in the save-or-close flow. It submits more devices and it asks everyone every time, which trains the dismissal reflex and makes the accidental publication above routine rather than rare.
 
@@ -544,8 +544,8 @@ The M4 exit criterion is that a user who has seen the tool once authors this tem
 |---|---|
 | One dialog per port, 8 fields each | ~544 field edits + 68 dialog dismissals |
 | Grid only, no Quick Add, no generators | 68 rows × ~5 cells with fill-down ≈ 90 edits |
-| **RackMate, DSL path** | **13** |
-| **RackMate, archetype path** | **7** |
+| **RackPal, DSL path** | **13** |
+| **RackPal, archetype path** | **7** |
 
 Two invariants make the numbers real rather than a demo. First, **focus never leaves Quick Add** during steps 6–13, no reach for the mouse, no modal dismissal. Second, **nothing in the metadata form was touched after step 4**, because AC-049 removed it from the critical path; the same template, with the same 68 ports, is a complete and placeable template whether or not anyone ever fills in its weight.
 
