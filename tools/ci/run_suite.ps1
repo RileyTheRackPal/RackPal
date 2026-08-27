@@ -124,7 +124,7 @@ $ErrorActionPreference = 'Stop'
 # `port_import_test.dart`'s 27, ui 1201 -> 1213 for its 12. Which is the
 # whole instruction above and is cheap only while it stays a habit.
 $SuiteFloors = @{
-    'rackpal_core'   = 3358
+    'rackpal_core'   = 3364
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1213
